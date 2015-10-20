@@ -1,0 +1,63 @@
+/****************************************************************************
+**
+** Copyright (C) 2015 Pelagicore AG
+** Contact: http://www.pelagicore.com/
+**
+** This file is part of the Pelagicore Application Manager.
+**
+** SPDX-License-Identifier: GPL-3.0
+**
+** $QT_BEGIN_LICENSE:GPL3$
+** Commercial License Usage
+** Licensees holding valid commercial Pelagicore Application Manager
+** licenses may use this file in accordance with the commercial license
+** agreement provided with the Software or, alternatively, in accordance
+** with the terms contained in a written agreement between you and
+** Pelagicore. For licensing terms and conditions, contact us at:
+** http://www.pelagicore.com.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3 as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPLv3 included in the
+** packaging of this file. Please review the following information to
+** ensure the GNU General Public License version 3 requirements will be
+** met: http://www.gnu.org/licenses/gpl-3.0.html.
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+  \page qml-elements.html
+  \target elements
+  \title QML Elements
+  \brief A listing of standard QML elements.
+
+These are the functionally grouped lists of QML elements as part of \c
+com.pelagicore.ApplicationManager.
+
+QML Singletons need not to be declared, but can be referenced by just their element name.
+
+Basic QML Elements are declared with the their name and two curly braces. Elements may be nested in
+elements, thereby creating a parent-child relationship between the two elements.
+
+\section1 QML Singletons
+\list
+\li \l {com.pelagicore.ApplicationManager::ApplicationManager}{ApplicationManager}
+    - The application model and controller
+\li \l {com.pelagicore.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
+    - The package installation/removal/update part of the application-manager.
+\li \l {com.pelagicore.ApplicationManager::WindowManager}{WindowManager}
+    - The window model and controller
+\li \l {com.pelagicore.ApplicationManager::NotificationManager}{NotificationManager}
+    - The notification model, which receives freedesktop.org compliant notification requests
+\endlist
+
+\section1 Basic QML Elements
+\list
+\li \l {com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow}
+    - The window element that is required in a multi-process environment
+\endlist
+
+*/

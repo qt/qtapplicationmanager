@@ -1,0 +1,29 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'com.pelagicore.test'
+icon:    'icon.png'
+code:    'Test.qml'
+runtime: 'qml'
+runtimeParameters:
+  loadDummyData: true
+name:
+  en: 'english'
+  de: 'deutsch'
+built-in: true
+preload: true
+importance: 0.5
+backgroundMode: 'location'
+
+mimeTypes:
+- "x-scheme-handler/mailto"
+- "text/plain"
+
+capabilities:
+- "cameraAccess"
+- "locationAccess"
+
+categories:
+- "foo"
+- "bar"
+

@@ -1,0 +1,14 @@
+formatVersion: 1
+formatType: am-application
+---
+id: 'com.pelagicore.test.bigtest'
+icon: 'icon.png'
+name:
+  en: "Big Test"
+  de: "Grosser Test"
+
+runtime: 'native'
+code: 'bigtest'
+
+categories:
+- "big test category"

@@ -1,0 +1,57 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="com.pelagicore.ApplicationManager">
+    <property name="count" type="i" access="read"/>
+    <property name="securityChecksEnabled" type="b" access="read"/>
+    <property name="dummy" type="b" access="read"/>
+    <property name="additionalConfiguration" type="a{sv}" access="read">
+      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
+    </property>
+    <signal name="applicationStateChanged">
+      <arg name="id" type="s" direction="out"/>
+      <arg name="changedState" type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+    </signal>
+    <method name="applicationIds">
+      <arg type="as" direction="out"/>
+    </method>
+    <method name="get">
+      <arg type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="startApplication">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+      <arg name="document" type="s" direction="in"/>
+    </method>
+    <method name="startApplication">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="stopApplication">
+      <arg name="id" type="s" direction="in"/>
+      <arg name="forceKill" type="b" direction="in"/>
+    </method>
+    <method name="stopApplication">
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="openUrl">
+      <arg type="b" direction="out"/>
+      <arg name="url" type="s" direction="in"/>
+    </method>
+    <method name="capabilities">
+      <arg type="as" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="identifyApplication">
+      <arg type="s" direction="out"/>
+      <arg name="pid" type="x" direction="in"/>
+    </method>
+    <method name="applicationState">
+      <arg type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>

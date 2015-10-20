@@ -1,0 +1,23 @@
+{
+  *AbstractRuntime;
+  *RuntimeFactory;
+  *Application;
+  *ApplicationManager;
+  *ApplicationInterface;
+  *ExecutionContainer;
+  *ExecutionContainerFactory;
+  *ExecutionContainerProcess;
+  *FakePelagicoreWindow;
+  extern "C++" {
+    AbstractRuntime::*;
+    Application::*;
+    ApplicationManager::*;
+    ApplicationInterface::*;
+    RuntimeFactory::*;
+    ExecutionContainer::*;
+    ExecutionContainerFactory::*;
+    ExecutionContainerProcess::*;
+    FakePelagicoreWindow::*;
+    Log*;
+  };
+};

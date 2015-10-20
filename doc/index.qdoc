@@ -1,0 +1,408 @@
+/****************************************************************************
+**
+** Copyright (C) 2015 Pelagicore AG
+** Contact: http://www.pelagicore.com/
+**
+** This file is part of the Pelagicore Application Manager.
+**
+** SPDX-License-Identifier: GPL-3.0
+**
+** $QT_BEGIN_LICENSE:GPL3$
+** Commercial License Usage
+** Licensees holding valid commercial Pelagicore Application Manager
+** licenses may use this file in accordance with the commercial license
+** agreement provided with the Software or, alternatively, in accordance
+** with the terms contained in a written agreement between you and
+** Pelagicore. For licensing terms and conditions, contact us at:
+** http://www.pelagicore.com.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3 as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPLv3 included in the
+** packaging of this file. Please review the following information to
+** ensure the GNU General Public License version 3 requirements will be
+** met: http://www.gnu.org/licenses/gpl-3.0.html.
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\page index.html
+\keyword Pelagicore Application Manager Reference Documentation
+\indexpage
+\title Pelagicore Application-Manager
+
+\chapter Server
+
+The application-manager binary (\c appman) is a headless daemon by itself. A suitable QML file
+needs to be supplied on the command-line at startup, which will act as compositing window manager
+using the APIs that are exported from the C++ side:
+
+\list
+    \li \l {com.pelagicore.ApplicationManager::ApplicationManager}{ApplicationManager}
+    \li \l {com.pelagicore.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
+    \li \l {com.pelagicore.ApplicationManager::WindowManager}{WindowManager}
+    \li \l {com.pelagicore.ApplicationManager::NotificationManager}{NotificationManager}
+\endlist
+
+\chapter Configuration
+
+The application-manager can be configured through config files and the command line.
+
+The currently supported command-line options can always be displayed by running \c{appman --help}.
+Some of these options can also be set via config files, which in itself are referenced on the
+command-line with the \c{--config-file <filename>} option.
+
+The config file is a YAML file, consisting of exactly one object and it supports a subset of the
+command-line options.
+
+\table
+\header
+    \li Command Line
+    \li Config Key
+    \li Type
+    \li Description
+\row
+    \li \e {(first non-option)}
+    \li \c ui/mainQml
+    \li \c string
+    \li The main QML file.
+\row
+    \li \c --config-file or \c -c
+    \li \c -
+    \li \c array<string>
+    \li Loads configuration settings from a set of file. Using more than one config file could be
+        used to cleanly split the configuration into a device specific and a UI specific part.
+        (default: \c /opt/am/config.yaml)
+\row
+    \li \c --database
+    \li \c applications/database
+    \li \c string
+    \li The location of the application database. (default: \c /opt/am/apps.db)
+\row
+    \li \c --recreate-database or \c -r
+    \li \c -
+    \li \c bool
+    \li Recreate the application database by (re)scanning all \c info.yaml files in \c
+        builtin-apps-manifest-dir and \c installed-apps-manifest-dir. (default: false)
+\row
+    \li \c --builtin-apps-manifest-dir
+    \li \c applications/builtinAppsManifestDir
+    \li \c string
+    \li The base directory for built-in application manifests.
+\row
+    \li \c --installed-apps-manifest-dir
+    \li \c applications/installedAppsManifestDir
+    \li \c string
+    \li The base directory for installed application manifests. (defaults: \c /opt/am/manifests)
+\row
+    \li \c --app-image-mount-dir
+    \li \c applications/appImageMountDir
+    \li \c string
+    \li The base directory where application images are mounted to. (defaults: \c /opt/am/image-mounts)
+\row
+    \li \c --dbus
+    \li \c -
+    \li \c string
+    \li Register the ApplicationManager, ApplicationInstaller, NotificationManager and
+        WindowManger on the specified D-Bus: can be either \c session, \c system, \c none (for no
+        registration at all) or a full D-Bus bus specification string. (default: session)
+        \note On production systems, you most likely want to put the application-manager on the
+              \c system bus, where you can set detailed security policies using standard D-Bus
+              mechanisms, while keeping the NotificationManager on the session bus. See the more
+              advanced config-file option \c dbus below.
+\row
+    \li \c -
+    \li \c dbus
+    \li \c map<object>
+    \li Allows for more fine-grained control over D-Bus registrations and function call policies.
+        Every key in this map corresponds to the D-Bus interface name you want to configure (
+        \c com.pelagicore.ApplicationManager, \c com.pelagicore.ApplicationInstaller or \c
+        org.freedesktop.Notifications). If such a key is present, it will take precedence over the
+        command-line option \c dbus.
+        Each key's value is a \l{D-Bus specification} object.
+\row
+    \li \c --fullscreen
+    \li \c ui/fullscreen
+    \li \c bool
+    \li Display in full-screen. (default: false)
+\row
+    \li \c -I
+    \li \c ui/importPaths
+    \li \c array<string>
+    \li Add an additional QML import path to the system UI.
+\row
+    \li \c -
+    \li \c ui/additionalConfiguration
+    \li \c object
+    \li Exports the YAML object as the ApplicationManager property ApplicationManager::additionalConfiguration
+        to the system UI. The object will just be converted to a QVariantMap, but the application-manager
+        will not interpret it in any way.
+\row
+    \li \c --verbose
+    \li \c -
+    \li \c bool
+    \li Enable verbose output. For more control over the logging output, see \c logging-rules
+        below. (default: false)
+\row
+    \li \c --slow-animations
+    \li \c -
+    \li \c bool
+    \li Run all animations in slow motion. (default: false)
+\row
+    \li \c --load-dummydata
+    \li \c ui/loadDummyData
+    \li \c bool
+    \li Loads QML dummy-data into the system UI (just like qml-scene would).
+\row
+    \li \c --no-security
+    \li \c flags/noSecurity
+    \li \c bool
+    \li Disables all security related checks. Use this in a development setup only! (default: false)
+\row
+    \li \c --no-ui-watchdog
+    \li \c flags/noUiWatchdog
+    \li \c bool
+    \li Disables detecting hung UI applications (e.g. via Wayland's ping/pong). (default: false)
+\row
+    \li \c --force-single-process
+    \li \c flags/forceSingleProcess
+    \li \c bool
+    \li Forces single-process mode even on a Wayland enabled build. (default: false)
+\row
+    \li \c --single-app
+    \li \c -
+    \li \c string
+    \li Runs the application-manager with a single application only (ignoring the database).
+        In this mode, the application-manager can act as a qml-scene replacement.
+\row
+    \li \c --logging-rule
+    \li \c logging/rules
+    \li \c array<string>
+    \li Adds a standard Qt logging rules - please see the Qt documentation for the required
+        format.
+\row
+    \li \c -
+    \li \c installationLocation
+    \li \c array<object>
+    \li Definition of available installation locations on the system. This is an array of
+        \l {Installation Locations} objects.
+\row
+    \li \c -
+    \li \c runtimes
+    \li \c map<object>
+    \li This can be used to specify options for runtimes - the key in this map is the
+        runtime's name and the value is interpreted by the respective runtime implementation.
+        See below for specific information.
+\endtable
+
+\keyword D-Bus specification
+
+These YAML objects describe both which D-Bus interfaces are registered on as well as access
+policies.
+
+\table
+\header
+    \li \c Name
+    \li \c Type
+    \li Description
+\row
+    \li \c register
+    \li \c string
+    \li Register the interface on the specified D-Bus: can be either \c session, \c system, \c none
+        or \c ~ (for no registration at all) or a full D-Bus bus specification string.
+\row
+    \li \c policy
+    \li \c map<object>
+    \li These optional access policies can be used either instead of or in addition to the standard
+        D-Bus policy configuration. The keys into this map are the (undecorated) D-Bus function
+        names (e.g. \c startApplication). As soon as a key is specified, the corresponding function's
+        access policy is \c deny, until you add \c allow criterias (all of them are and-ed):
+
+
+\endtable
+
+A simple example, that would only allow applications with the capability \c appstore, running with
+user-id \c 1000 to call the installer's \c startPackageInstallation function, while preventing anyone
+to remotely call \c acknowledgePackageInstallation:
+
+\code
+...
+dbus:
+  com.pelagicore.ApplicationInstaller:
+    register: 'session'
+    policy:
+      startPackageInstallation:
+        uids: [ 1000 ]
+        capabilities: [ 'appstore' ]
+      acknowledgePackageInstallation: ~
+...
+\endcode
+
+
+\keyword Installation Locations
+
+The \c installationLocations YAML field is a list of YAML objects, very similar to
+\l{com.pelagicore.ApplicationManager::}{ApplicationInstaller::getInstallationLocation}
+
+\table
+\header
+    \li \c Name
+    \li \c Type
+    \li Description
+\row
+    \li \c id
+    \li \c string
+    \li The installation location id that is used as the handle all other ApplicationInstaller
+        function calls. The \c id consists of the \c type and \c index field, concatenated by
+        a single dash (e.g. \c removable-0).
+
+        Valid values for \c type are \c internal and \c removable.
+
+        In case there is more than one installation location for the same type of device, this
+        \c 0 based index is used for disambiguation. (e.g. two SD-Card slots will result in the
+        ids \c removable-0 and \c removable-1). Otherwise it should always be \c 0.
+\row
+    \li \c isDefault
+    \li \c bool
+    \li Exactly one installation location can be the default location which must be mounted and
+        accessible at all times. This can be used by an UI application to get a sensible
+        default for the installation location that it needs to pass to startPackageInstallation().
+\row
+    \li \c installationPath
+    \li \c string
+    \li The absolute file-system path to the base directory under which applications are installed.
+\row
+    \li \c documentPath
+    \li \c string
+    \li The absolute file-system path to the base directory under which per-user document
+        directories are created. This entry can either be located on this device or it can be the
+        same as the \c documentPath of the master installation location.
+\row
+    \li \c mountPoint
+    \li \c string
+    \li Only required for \c removable installation location: The absolute file-system path to the
+        mount-point of the device where \c installationPath is located.
+\endtable
+
+
+\chapter Apps for the Application-Manager
+
+Writing an application that can be run as a client within the application-manager is not that
+much different from writing a stand-alone QML application. It basically boils down to three
+additional tasks:
+
+\list 1
+
+    \li If you write a QML application, make the root element of your QML-scene a
+    \l{com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow} (or derive your own
+    custom root item from it).
+
+    \li Provide a valid \l{Manifest definition}{info.yaml} file.
+
+    \li Make the application-manager aware of your application by running \c{appman
+    --recreate-database}.
+
+\endlist
+
+\section2 The root element
+
+Making the root element of your QML application a
+\l{com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow} is only mandatory if you
+ever want to run in single-process mode (without Wayland). Please see the
+\l{com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow documentaton} for more
+information.
+
+\section2 The manifest and updating the database
+
+The \l{Manifest definition} documentation has all the information to produce a minimal \c info.yaml
+file that should get you going.
+
+Since recursively finding and parsing \c info.yaml files for potentially hundredes of apps can
+become a very time consuming task that would severly slow down the application-manager's startup,
+all manifest files are cached in a binary database. In order to make changes to an \c info.yaml
+file known to the application-manager, you have to force a rebuild of this database by calling
+\c{appman --recreate-database}.
+
+\note Dynamically adding/updating/removing single applications is supported via the
+\l {com.pelagicore.ApplicationManager::ApplicationInstaller}{ApplicationInstaller} interface.
+
+
+\chapter API Reference
+
+You can find further information about the different application-manager interfaces here:
+
+\list
+\li \l{QML Elements}
+\li \l{Manifest definition}
+\endlist
+
+
+\chapter Packaging Tool
+
+The \c{application-packager} is a command-line utility that is used by the developer to manage installation
+packages. At the moment the application-manager supports unsigned packages, packages that are signed by the
+developer only and packages that are signed by an app-store. The \c{application-packager} can create all
+these variations with these commands:
+
+\table
+\header
+    \li Action
+    \li Options
+    \li Description
+\row
+    \li \span {style="white-space: nowrap"} {\c create-package}
+    \li \c{<package> <source directory>}
+    \li Create a new package named \a package from the application in \a{source directory}. The
+        directory needs to at least contain an \l{Manifest definition}{\c info.yaml} as well as an
+        \c{icon.png} file.
+        The tool will do a sanity-check on the \c info.yaml file before actually creating the
+        package.
+\row
+    \li \span {style="white-space: nowrap"} {\c dev-sign-package}
+    \li \c{<package> <signed-package> <certificate> <password>}
+    \li Takes the input \c package, adds a developer signature and writes the output \c signed-package.
+        You need to supply a \c certificate in P12 format together with a matching \c password.
+\row
+    \li \span {style="white-space: nowrap"} {\c dev-verify-package}
+    \li \c{<package> <ca-certificates...>}
+    \li Reads the input \c package and tries to verify the developer signature using the given \c
+        ca-certificates.
+\row
+    \li \span {style="white-space: nowrap"} {\c store-sign-package}
+    \li \c{<package> <signed-package> <certificate> <password> [device-id]}
+    \li Takes the input \c package, adds a store signature and writes the output \c signed-package.
+        You need to supply a \c certificate in P12 format together with a matching \c password. If
+        you specify the optional \c device-id, the resulting package can only be installed on this
+        specific device.
+\row
+    \li \span {style="white-space: nowrap"} {\c store-verify-package}
+    \li \c{<package> <ca-certificates...> <device-id>}
+    \li Reads the input \c package and tries to verify the store signature using the given \c
+        ca-certificates.
+
+\endtable
+
+The application-packager naturally supports the standard Unix \c{--help} command-line option.
+
+
+\chapter Dynamically installing, removing and updating applications
+
+After applications have been packaged by the \c application-packager, they can be installed by the
+application-manager at runtime. There are two interfaces for this functionality:
+
+\list
+    \li a Qml interface which can be used within the application-manager process and
+    \li a D-Bus interface which can be used by any process which is allowed to talk to the
+        application-manager's \c ApplicationInstaller interface.
+\endlist
+
+Both interfaces are very similar and are both documented in the \l {com.pelagicore.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
+
+\note A prerequisite for dynamically installed application packages is a valid \l{installation locations}
+configuration for the application-manager.
+
+*/

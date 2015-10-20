@@ -1,0 +1,108 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="com.pelagicore.ApplicationInstaller">
+    <property name="allowInstallationOfUnsignedPackages" type="b" access="read"/>
+    <property name="developmentMode" type="b" access="read"/>
+    <property name="applicationUserIdSeparation" type="b" access="read"/>
+    <property name="commonApplicationGroupId" type="u" access="read"/>
+    <signal name="taskStarted">
+      <arg name="taskId" type="s" direction="out"/>
+    </signal>
+    <signal name="taskProgress">
+      <arg name="taskId" type="s" direction="out"/>
+      <arg name="progress" type="d" direction="out"/>
+    </signal>
+    <signal name="taskFinished">
+      <arg name="taskId" type="s" direction="out"/>
+    </signal>
+    <signal name="taskFailed">
+      <arg name="taskId" type="s" direction="out"/>
+      <arg name="errorCode" type="i" direction="out"/>
+      <arg name="errorString" type="s" direction="out"/>
+    </signal>
+    <signal name="taskStateChanged">
+      <arg name="taskId" type="s" direction="out"/>
+      <arg name="newState" type="s" direction="out"/>
+    </signal>
+    <signal name="taskRequestingInstallationAcknowledge">
+      <arg name="taskId" type="s" direction="out"/>
+      <arg name="applicationAsVariantMap" type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+    </signal>
+    <signal name="taskBlockingUntilInstallationAcknowledge">
+      <arg name="taskId" type="s" direction="out"/>
+    </signal>
+    <signal name="packageActivated">
+      <arg name="id" type="s" direction="out"/>
+      <arg name="successful" type="b" direction="out"/>
+    </signal>
+    <signal name="packageDeactivated">
+      <arg name="id" type="s" direction="out"/>
+      <arg name="successful" type="b" direction="out"/>
+    </signal>
+    <method name="installationLocationIds">
+      <arg type="as" direction="out"/>
+    </method>
+    <method name="installationLocationIdFromApplication">
+      <arg type="s" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="getInstallationLocation">
+      <arg type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="installationLocationId" type="s" direction="in"/>
+    </method>
+    <method name="startPackageInstallation">
+      <arg type="s" direction="out"/>
+      <arg name="installationLocationId" type="s" direction="in"/>
+      <arg name="sourceUrl" type="s" direction="in"/>
+    </method>
+    <method name="acknowledgePackageInstallation">
+      <arg name="taskId" type="s" direction="in"/>
+    </method>
+    <method name="removePackage">
+      <arg type="s" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+      <arg name="keepDocuments" type="b" direction="in"/>
+      <arg name="force" type="b" direction="in"/>
+    </method>
+    <method name="removePackage">
+      <arg type="s" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+      <arg name="keepDocuments" type="b" direction="in"/>
+    </method>
+    <method name="taskState">
+      <arg type="s" direction="out"/>
+      <arg name="taskId" type="s" direction="in"/>
+    </method>
+    <method name="cancelTask">
+      <arg type="b" direction="out"/>
+      <arg name="taskId" type="s" direction="in"/>
+    </method>
+    <method name="compareVersions">
+      <arg type="i" direction="out"/>
+      <arg name="version1" type="s" direction="in"/>
+      <arg name="version2" type="s" direction="in"/>
+    </method>
+    <method name="installedApplicationSize">
+      <arg type="x" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="doesPackageNeedActivation">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="isPackageActivated">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="activatePackage">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="deactivatePackage">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>

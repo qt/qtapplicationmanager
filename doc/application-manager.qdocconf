@@ -1,0 +1,95 @@
+
+sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
+headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
+
+headerdirs = \
+    ../src/manager \
+    ../src/manager-lib \
+    ../src/installer-lib \
+    ../src/launchers/qml \
+
+sourcedirs = \
+    ../src/manager \
+    ../src/manager-lib \
+    ../src/installer-lib \
+    ../src/launchers/qml \
+
+imagedirs = images
+
+sources = \
+    index.qdoc \
+    elements.qdoc \
+    manifest.qdoc \
+
+
+sourceencoding = UTF-8
+outputencoding = UTF-8
+naturallanguage = en_US
+
+outputdir = html
+
+#indexes = $QTDIR/doc/html/qt.index
+
+project = appman
+description = Public API of the application manager: QML and DBus
+
+
+# Define the location of the templates to use. Style sheets and scripts are
+# specified relative to the template directory and will be copied into
+# subdirectories of the output directory.
+
+HTML.stylesheets = style/offline.css \
+
+# Adding jquery and functions - providing online tools and search features
+HTML.scripts     =
+
+# Files not referenced in any qdoc file.
+# See also qhp.Qt.extraFiles
+HTML.extraimages = \
+    images/arrow.png \
+    images/bgrContent.png \
+    images/btn_next.png \
+    images/btn_prev.png \
+    images/home.png \
+    images/ico_note_attention.png \
+    images/ico_note.png \
+    images/ico_out.png \
+    images/logo.png \
+
+
+# Include the style sheets and scripts used.
+
+HTML.headerstyles = \
+    "  <link rel=\"stylesheet\" type=\"text/css\" href=\"style/offline.css\" />\n"
+
+HTML.postheader = \
+    " <div class=\"breadcrumb toolblock\">\n" \
+    " <ul>\n" \
+    " <li class=\"first\"><a href=\"index.html\">Home</a></li>\n" \
+    " <!-- Breadcrumbs go here -->\n" \
+
+HTML.postpostheader = \
+    " </ul>\n" \
+    " </div>\n" \
+    "<div class=\"content mainContent\">\n" \
+
+HTML.footer = \
+    "</div>\n" \
+    "<div class=\"footer\">\n" \
+    "  <acronym title=\"Copyright\">&copy;</acronym> 2015 Pelagicore AG" \
+    "</div>\n" \
+
+
+
+qhp.projects            = appman
+
+qhp.appman.file                = appman.qhp
+qhp.appman.namespace           = com.pelagicore.appman.100
+qhp.appman.virtualFolder       = qdoc
+qhp.appman.indexTitle          = Public API of the application manager: QML and DBus
+qhp.appman.indexRoot           =
+qhp.appman.extraFiles          = style/offline.css
+qhp.appman.filterAttributes    = appman application manager
+
+
+

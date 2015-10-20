@@ -1,0 +1,8 @@
+# even cygwin's sh wants scripts with lf only
+*.sh    eol=lf
+
+# certificates
+*.p12   binary
+*.crt   binary
+
+*.bin   binary

@@ -1,0 +1,32 @@
+HOME            = .
+RANDFILE        = $ENV::HOME/.rnd
+
+####################################################################
+[ req ]
+prompt              = no
+distinguished_name  = store_distinguished_name
+req_extensions      = store_req_extensions
+string_mask         = utf8only
+
+####################################################################
+[ store_distinguished_name ]
+C = DE
+O = Developer 1 GmbH
+CN = Developer 1
+emailAddress = dev1@developer1.com
+
+####################################################################
+[ store_req_extensions ]
+
+subjectKeyIdentifier= hash
+basicConstraints    = CA:FALSE
+keyUsage            = nonRepudiation, digitalSignature, keyEncipherment
+#subjectAltName      = @alternate_names
+
+####################################################################
+#[ alternate_names ]
+#
+#DNS.1       = example.com
+#DNS.2       = www.example.com
+#DNS.3       = mail.example.com
+#DNS.4       = ftp.example.com

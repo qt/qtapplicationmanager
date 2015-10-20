@@ -1,0 +1,13 @@
+formatVersion: 1
+formatType: am-application
+---
+runtime: "native"
+name: {
+    "en" : "Hello",
+    "de" : "Hallo"
+}
+id: "com.pelagicore.test"
+categories: [ "test-category" ]
+code: "test"
+icon: "icon.png"
+version: "1.0"

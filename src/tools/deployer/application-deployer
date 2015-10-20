@@ -1,0 +1,16 @@
+#!/bin/sh
+
+USER="$1"
+TARGET="$2"
+PKGURL="$3"
+
+DEVTOOL=/usr/bin/appman-dev-tool
+#DEVTOOL=`dirname $0`/appman-dev-tool
+
+
+if [ -z "$USER" ] || [ -z "$TARGET" ] || [ -z "$PKGURL" ]; then
+    echo "Usage: `basename $0` <user> <target name/ip> <packagefile>"
+    exit 1
+fi
+
+cat "$3" | ssh "${USER}@${TARGET}" "$DEVTOOL" -

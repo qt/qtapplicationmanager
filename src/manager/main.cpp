@@ -96,6 +96,7 @@
 #include "configuration.h"
 #include "utilities.h"
 #include "qmllogger.h"
+#include "startuptimer.h"
 
 #if defined(MALIIT_INTEGRATION)
 #include "minputcontextconnection.h"
@@ -276,6 +277,8 @@ static QList<const Application *> scanForApplications(const QDir &builtinAppsDir
 
 int main(int argc, char *argv[])
 {
+    StartupTimer startupTimer;
+
     QCoreApplication::setApplicationName("ApplicationManager");
     QCoreApplication::setOrganizationName(QLatin1String("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(QLatin1String("pelagicore.com"));
@@ -283,6 +286,8 @@ int main(int argc, char *argv[])
 
     qInstallMessageHandler(colorLogToStderr);
     QString error;
+
+    startupTimer.checkpoint("after basic initialization");
 
 #if !defined(AM_DISABLE_INSTALLER)
     {
@@ -295,6 +300,8 @@ int main(int argc, char *argv[])
     }
 #endif
 
+    startupTimer.checkpoint("after sudo server fork");
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0) && QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 #endif
@@ -305,8 +312,12 @@ int main(int argc, char *argv[])
     QGuiApplication a(argc, argv);
 #endif
 
+    startupTimer.checkpoint("after application constructor");
+
     Configuration config_;
     configuration = &config_;
+
+    startupTimer.checkpoint("after command line parse");
 
     try {
         if (!QFile::exists(configuration->mainQmlFile()))
@@ -327,6 +338,8 @@ int main(int argc, char *argv[])
         // setting this for child processes //TODO: use a more generic IPC approach
         qputenv("AM_LOGGING_RULES", loggingRules.join(QLatin1Char('\n')).toUtf8());
 
+        startupTimer.checkpoint("after logging setup");
+
 #if !defined(AM_DISABLE_INSTALLER)
         if (hardwareId().isEmpty())
             throw Exception(Error::System, "the installer is enabled, but the device-id is empty");
@@ -338,6 +351,8 @@ int main(int argc, char *argv[])
 
         if (!QDir::root().mkpath(configuration->appImageMountDir()))
             throw Exception(Error::System, "could not create the image-mount directory %1").arg(configuration->appImageMountDir());
+
+        startupTimer.checkpoint("after installer setup checks");
 #endif
 
         AbstractRuntime::setConfiguration(configuration->runtimeConfigurations());
@@ -359,6 +374,7 @@ int main(int argc, char *argv[])
 
             qCDebug(LogSystem) << (ok ? " OK " : "FAIL") << pluginPath << (ok ? QString() : pluginLoader.errorString());
         }
+        startupTimer.checkpoint("after plugin load");
 
 #if defined(AM_SINGLEPROCESS_MODE)
         if (true) {
@@ -375,6 +391,7 @@ int main(int argc, char *argv[])
             //RuntimeFactory::instance()->registerRuntime<NativeRuntime>("html");
 #endif
         }
+        startupTimer.checkpoint("after runtime registration");
 
         QScopedPointer<ApplicationDatabase> adb(configuration->singleApp().isEmpty()
                                                 ? new ApplicationDatabase(configuration->database())
@@ -402,12 +419,16 @@ int main(int argc, char *argv[])
             adb->write(apps);
         }
 
+        startupTimer.checkpoint("after application database loading");
+
         ApplicationManager *am = ApplicationManager::createInstance(adb.take(), &error);
         if (!am)
             throw Exception(Error::System, error);
         if (configuration->noSecurity())
             am->setSecurityChecksEnabled(false);
         am->setAdditionalConfiguration(configuration->additionalUiConfiguration());
+
+        startupTimer.checkpoint("after ApplicationManager instantiation");
 
 #if !defined(AM_DISABLE_INSTALLER)
         ApplicationInstaller *ai = ApplicationInstaller::createInstance(installationLocations,
@@ -433,6 +454,8 @@ int main(int argc, char *argv[])
 
         ai->cleanupBrokenInstallations();
 
+        startupTimer.checkpoint("after ApplicationInstaller instantiation");
+
         qmlRegisterSingletonType<ApplicationInstaller>("com.pelagicore.ApplicationInstaller", 0, 1, "ApplicationInstaller",
                                                        &ApplicationInstaller::instanceForQml);
 #endif // AM_DISABLE_INSTALLER
@@ -447,10 +470,14 @@ int main(int argc, char *argv[])
         qmlRegisterType<FakePelagicoreWindow>("com.pelagicore.ApplicationManager", 0, 1, "PelagicoreWindow");
 #endif
 
+        startupTimer.checkpoint("after QML registrations");
+
         QQmlApplicationEngine *engine = new QQmlApplicationEngine(&a);
         new QmlLogger(engine);
         engine->setOutputWarningsToStandardError(false);
         engine->setImportPathList(engine->importPathList() + configuration->importPaths());
+
+        startupTimer.checkpoint("after QML engine instantiation");
 
 #if !defined(AM_HEADLESS)
         QUnifiedTimer::instance()->setSlowModeEnabled(configuration->slowAnimations());
@@ -463,11 +490,23 @@ int main(int argc, char *argv[])
                          wm, &WindowManager::setupInProcessRuntime);
         QObject::connect(am, &ApplicationManager::applicationWasReactivated,
                          wm, &WindowManager::raiseApplicationWindow);
+
+        startupTimer.checkpoint("after WindowManager/QuickView instantiation");
+        QMetaObject::Connection conn = QObject::connect(view, &QQuickView::frameSwapped, qApp, [&startupTimer, &conn]() {
+            static bool once = true;
+            if (once) {
+                startupTimer.checkpoint("after first frame drawn");
+                QObject::disconnect(conn);
+                once = false;
+            }
+        });
 #endif
         NotificationManager *nm = NotificationManager::createInstance();
 
         if (configuration->loadDummyData())
             loadDummyDataFiles(*engine, QFileInfo(configuration->mainQmlFile()).path());
+
+        startupTimer.checkpoint("after NotificationManager instantiation");
 
 #if defined(QT_DBUS_LIB)
         registerDBusObject(new ApplicationManagerAdaptor(am), "com.pelagicore.ApplicationManager", "/Manager");
@@ -486,6 +525,7 @@ int main(int argc, char *argv[])
             //TODO: what should we do here? on the desktop this will obviously always fail
             qCCritical(LogSystem) << "WARNING:" << e.what();
         }
+        startupTimer.checkpoint("after D-Bus registrations");
 #endif // QT_DBUS_LIB
 
 #if defined(QT_PSHELLSERVER_LIB)
@@ -531,12 +571,17 @@ int main(int argc, char *argv[])
         engine->load(configuration->mainQmlFile());
         if (engine->rootObjects().isEmpty())
             throw Exception(Error::System, "Qml scene does not have a root object");
+
+        startupTimer.checkpoint("after loading main QML file");
+
 #if !defined(AM_HEADLESS)
         view->setContent(configuration->mainQmlFile(), 0, engine->rootObjects().first());
         if (configuration->fullscreen())
             view->showFullScreen();
         else
             view->show();
+
+        startupTimer.checkpoint("after window show");
 #endif
 
 #if defined(MALIIT_INTEGRATION)
@@ -549,7 +594,7 @@ int main(int argc, char *argv[])
         MImServer::configureSettings(MImServer::PersistentSettings);
         MImServer imServer(icConnection, platform);
 #endif
-
+        startupTimer.createReport();
         int res = a.exec();
 
         // Normally we would delete view here (which would in turn delete am and wm). This will

@@ -18,6 +18,7 @@ SOURCES += \
     global.cpp \
     utilities.cpp \
     qtyaml.cpp \
+    startuptimer.cpp
 
 HEADERS += \
     error.h \
@@ -25,3 +26,4 @@ HEADERS += \
     global.h \
     utilities.h \
     qtyaml.h \
+    startuptimer.h

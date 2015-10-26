@@ -1,18 +1,14 @@
-
-bundled-libz {
-    error("bundled-libz is not supported ATM")
-
-#    LIBZ_PATH = $$PWD/zlib-1.2.8
-#    LIBZ_BUILD_PATH = $$shadowed($$LIBZ_PATH)
-#
-#    INCLUDEPATH += $$LIBZ_PATH
-#    LIBS += $$fixLibraryPath(-L$$LIBZ_BUILD_PATH) -lz
-#
-#    CONFIG *= link_prl
+# zlib dependency satisfied by bundled 3rd party zlib or system zlib
+contains(QT_CONFIG, system-zlib) {
+    unix|mingw: LIBS_PRIVATE += -lz
+    else:       LIBS += zdll.lib
 } else {
-    osx:exists(/usr/local/bin/pkg-config):PKG_CONFIG=/usr/local/bin/pkg-config
+    CONFIG *= qt
+    QT *= core
 
-    PKGCONFIG += zlib
+    load(qt_build_paths)
+    git_build: \
+        INCLUDEPATH += $$[QT_INSTALL_HEADERS/get]/QtZlib
+    else: \
+        INCLUDEPATH += $$[QT_INSTALL_HEADERS/src]/QtZlib
 }
-
-

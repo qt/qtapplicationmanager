@@ -9,7 +9,6 @@ CONFIG += ordered
 
 include($$BASE_PRI)
 
-bundled-libz:error("libz-bundled is not supported ATM") # SUBDIRS += 3rdparty/zlib-1.2.8/libz.pro
 bundled-liblzma:error("liblzma-bundled is not supported ATM") # SUBDIRS += 3rdparty/xz-5.2.1/liblzma.pro
 bundled-libarchive:error("libarchive-bundled is not supported ATM") # SUBDIRS += 3rdparty/libarchive-3.1.2/libarchive.pro
 bundled-libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
@@ -38,7 +37,6 @@ printConfigLine("QtCompositor support", $$yesNo(qtHaveModule(compositor)), auto)
 printConfigLine("Multi-process mode", $$check_multi, auto)
 printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)
 printConfigLine("Tests enabled", $$yesNo(CONFIG(enable-tests)), auto)
-printConfigLine("Bundled libz", $$yesNo(CONFIG(bundled-libz)), auto)
 printConfigLine("Bundled liblzma", $$yesNo(CONFIG(bundled-liblzma)), auto)
 printConfigLine("Bundled libarchive", $$yesNo(CONFIG(bundled-libarchive)), auto)
 printConfigLine("Bundled libyaml", $$yesNo(CONFIG(bundled-libyaml)), auto)

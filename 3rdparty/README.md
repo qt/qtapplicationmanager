@@ -66,3 +66,7 @@ Prerequisite: build zlib 1.2.8
 * `cmake -DENABLE_TAR=OFF -DENABLE_CPIO=OFF -DENABLE_XATTR=OFF -DENABLE_ACL=OFF -DENABLE_TEST=OFF
          -DENABLE_OPENSSL=OFF -DZLIB_LIBRARY=..\..\zlib-1.2.8\release\z.lib -DZLIB_INCLUDE_DIR=..\..\zlib-1.2.8`
 * `copy /Y config.h config-windows.h`
+
+## libyaml
+
+* `rm -rf CMakeLists.txt Makefile.* aclocal.m4 config* doc tests win32 yaml-0.1.pc.in include/Makefile.* src/Makefile.*`

@@ -12,7 +12,7 @@ include($$BASE_PRI)
 bundled-libz:error("libz-bundled is not supported ATM") # SUBDIRS += 3rdparty/zlib-1.2.8/libz.pro
 bundled-liblzma:error("liblzma-bundled is not supported ATM") # SUBDIRS += 3rdparty/xz-5.2.1/liblzma.pro
 bundled-libarchive:error("libarchive-bundled is not supported ATM") # SUBDIRS += 3rdparty/libarchive-3.1.2/libarchive.pro
-bundled-libyaml:error("libyaml-bundled is not supported ATM") # SUBDIRS += 3rdparty/libyaml-0.1.6/libyaml.pro
+bundled-libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 bundled-libcrypto:error("libcrypto-bundled is not supported ATM") # SUBDIRS += 3rdparty/openssl-1.0.2d/libcrypto.pro
 
 force-singleprocess:force-multiprocess:error("You cannot both specify force-singleprocess and force-multiprocess")

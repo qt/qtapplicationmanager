@@ -10,7 +10,7 @@ CONFIG += ordered
 include($$BASE_PRI)
 
 bundled-liblzma:error("liblzma-bundled is not supported ATM") # SUBDIRS += 3rdparty/xz-5.2.1/liblzma.pro
-bundled-libarchive:error("libarchive-bundled is not supported ATM") # SUBDIRS += 3rdparty/libarchive-3.1.2/libarchive.pro
+bundled-libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 bundled-libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 bundled-libcrypto:error("libcrypto-bundled is not supported ATM") # SUBDIRS += 3rdparty/openssl-1.0.2d/libcrypto.pro
 

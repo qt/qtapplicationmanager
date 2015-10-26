@@ -51,6 +51,7 @@
                --without-bz2lib --without-lzmadec --without-lzo2 --without-nettle --without-openssl
                --without-xml2 --without-expat`
 * `cp config.h config-unix.h`
+* `rm -rf CMakeLists.txt Makefile.* aclocal.m4 config.h.in configure* build/ contrib doc examples cpio libarchive_fe/ tar test_utils libarchive/CMakeLists.txt libarchive/test libarchive/*.5 libarchive/*.3`
 
 ### Mac OS X
 * `./configure --disable-shared --disable-bsdtar --disable-bsdcpio --disable-xattr --disable-acl

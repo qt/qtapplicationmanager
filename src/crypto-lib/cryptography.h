@@ -30,9 +30,10 @@
 
 #include <QByteArray>
 
-namespace Cryptography
-{
-    QByteArray generateRandomBytes(int size);
+namespace Cryptography {
 
-    void initialize();
+QByteArray generateRandomBytes(int size);
+
+void initialize();
+
 }

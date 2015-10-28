@@ -29,8 +29,11 @@ defineTest(CONFIG_VALUE) {
 
 !CONFIG_VALUE(install-prefix, INSTALL_PREFIX):INSTALL_PREFIX = /usr/local
 
-CONFIG_VALUE(hardware-id, hw_id):DEFINES *= AM_HARDWARE_ID=\\\"$$hw_id\\\"
-else:CONFIG_VALUE(hardware-id-from-file, hw_id_ff):DEFINES *= AM_HARDWARE_ID_FROM_FILE=\\\"$$hw_id_ff\\\"
+CONFIG_VALUE(hardware-id, AM_HARDWARE_ID):DEFINES *= AM_HARDWARE_ID=\\\"$$AM_HARDWARE_ID\\\"
+else:CONFIG_VALUE(hardware-id-from-file, AM_HARDWARE_ID_FF):DEFINES *= AM_HARDWARE_ID_FROM_FILE=\\\"$$AM_HARDWARE_ID_FF\\\"
+
+CONFIG_VALUE(libcrypto-defines, AM_LIBCRYPTO_DEFINES)
+CONFIG_VALUE(libcrypto-includes, AM_LIBCRYPTO_INCLUDES)
 
 
 defineReplace(fixLibraryPath) {
@@ -109,8 +112,8 @@ defineTest(printConfigLine) {
         epilog = $$system(echo "\\\\033")[0m
     }
 
-    isEmpty(val) {
-        log($$prolog$$msg$$epilog$$escape_expand(\\n))
+    isEmpty(msg)|contains(msg, "^-- .*") {
+        log($$prolog$$section(msg, "-- ", 1, -1)$$epilog$$escape_expand(\\n))
         return()
     }
 

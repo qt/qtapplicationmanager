@@ -9,10 +9,8 @@ CONFIG += ordered
 
 include($$BASE_PRI)
 
-bundled-liblzma:error("liblzma-bundled is not supported ATM") # SUBDIRS += 3rdparty/xz-5.2.1/liblzma.pro
 bundled-libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 bundled-libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
-bundled-libcrypto:error("libcrypto-bundled is not supported ATM") # SUBDIRS += 3rdparty/openssl-1.0.2d/libcrypto.pro
 
 force-singleprocess:force-multiprocess:error("You cannot both specify force-singleprocess and force-multiprocess")
 qtHaveModule(compositor)|headless { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
@@ -20,12 +18,15 @@ force-singleprocess { check_multi = "no (force-singleprocess)" }
 force-multiprocess  { check_multi = "yes (force-multiprocess)" }
 CONFIG(debug, debug|release) { check_debug = "debug" } else { check_debug = "release" }
 
-CONFIG_VALUE(hardware-id-from-file, hw_id_ff):check_hwid = "(from file) $$hw_id_ff"
-else:CONFIG_VALUE(hardware-id, hw_id):check_hwid = "$$hw_id"
+!isEmpty(AM_HARDWARE_ID_FF):check_hwid = "(from file) $$AM_HARDWARE_ID_FF"
+else:!isEmpty(AM_HARDWARE_ID):check_hwid = "$$AM_HARDWARE_ID"
 else:check_hwid = "auto (derived from network MAC address)"
 
+isEmpty(AM_LIBCRYPTO_DEFINES) { check_libcrypto_defines = "(none)" } else { check_libcrypto_defines = $$AM_LIBCRYPTO_DEFINES }
+isEmpty(AM_LIBCRYPTO_INCLUDES) { check_libcrypto_includes = "(system)" } else { check_libcrypto_includes = $$AM_LIBCRYPTO_INCLUDES }
+
 printConfigLine()
-printConfigLine("Application Manager configuration", , orange)
+printConfigLine("-- Application Manager configuration", , orange)
 printConfigLine("Version", $$GIT_VERSION, white)
 printConfigLine("Hardware Id", $$check_hwid, auto)
 printConfigLine("Qt version", $$[QT_VERSION], white)
@@ -37,10 +38,10 @@ printConfigLine("QtCompositor support", $$yesNo(qtHaveModule(compositor)), auto)
 printConfigLine("Multi-process mode", $$check_multi, auto)
 printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)
 printConfigLine("Tests enabled", $$yesNo(CONFIG(enable-tests)), auto)
-printConfigLine("Bundled liblzma", $$yesNo(CONFIG(bundled-liblzma)), auto)
 printConfigLine("Bundled libarchive", $$yesNo(CONFIG(bundled-libarchive)), auto)
 printConfigLine("Bundled libyaml", $$yesNo(CONFIG(bundled-libyaml)), auto)
-printConfigLine("Bundled libcrypto", $$yesNo(CONFIG(bundled-libcrypto)), auto)
+printConfigLine("libcrypto defines", $$check_libcrypto_defines, auto)
+printConfigLine("libcrypto includes", $$check_libcrypto_includes, auto)
 printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)
 printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto)
 printConfigLine("Genivi support", $$yesNo(qtHaveModule(geniviextras)), auto)

@@ -30,9 +30,26 @@
 
 #include "cipherfilter.h"
 #include "cryptography.h"
+#include "libcryptofunction.h"
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
+
+static AM_LIBCRYPTO_FUNCTION(ERR_get_error, ERR_R_INTERNAL_ERROR);
+static AM_LIBCRYPTO_FUNCTION(ERR_error_string, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_aes_128_cbc, nullptr);
+static AM_LIBCRYPTO_FUNCTION(EVP_aes_128_cfb128, nullptr);
+static AM_LIBCRYPTO_FUNCTION(EVP_aes_128_ofb, nullptr);
+static AM_LIBCRYPTO_FUNCTION(EVP_aes_256_cbc, nullptr);
+static AM_LIBCRYPTO_FUNCTION(EVP_aes_256_cfb128, nullptr);
+static AM_LIBCRYPTO_FUNCTION(EVP_aes_256_ofb, nullptr);
+static AM_LIBCRYPTO_FUNCTION(EVP_CIPHER_block_size, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_CIPHER_key_length, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_CIPHER_iv_length, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_CIPHER_CTX_cleanup, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_CipherInit, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_CipherUpdate, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_CipherFinal, 0);
 
 
 class CipherFilterPrivate
@@ -52,7 +69,7 @@ public:
 
     void setError()
     {
-        error = ERR_get_error();
+        error = am_ERR_get_error();
         customError.clear();
     }
     void setError(const QString &str)
@@ -65,7 +82,7 @@ public:
         if (error == (unsigned long) -1)
             return customError;
         else
-            return QString::fromLocal8Bit(ERR_error_string(error, 0));
+            return QString::fromLocal8Bit(am_ERR_error_string(error, nullptr));
     }
 };
 
@@ -87,18 +104,18 @@ CipherFilter::CipherFilter(Type t, Cipher cipher)
     Cryptography::initialize();
 
     switch (cipher) {
-    case AES_128_CBC: d->cipher = EVP_aes_128_cbc(); break;
-    case AES_128_CFB: d->cipher = EVP_aes_128_cfb(); break;
-    case AES_128_OFB: d->cipher = EVP_aes_128_ofb(); break;
-    case AES_256_CBC: d->cipher = EVP_aes_256_cbc(); break;
-    case AES_256_CFB: d->cipher = EVP_aes_256_cfb(); break;
-    case AES_256_OFB: d->cipher = EVP_aes_256_ofb(); break;
+    case AES_128_CBC: d->cipher = am_EVP_aes_128_cbc(); break;
+    case AES_128_CFB: d->cipher = am_EVP_aes_128_cfb128(); break;
+    case AES_128_OFB: d->cipher = am_EVP_aes_128_ofb(); break;
+    case AES_256_CBC: d->cipher = am_EVP_aes_256_cbc(); break;
+    case AES_256_CFB: d->cipher = am_EVP_aes_256_cfb128(); break;
+    case AES_256_OFB: d->cipher = am_EVP_aes_256_ofb(); break;
     default         : d->cipher = 0; break;
     }
 
-    d->cipherBlockSize = d->cipher ? EVP_CIPHER_block_size(d->cipher) : 0;
-    d->cipherKeySize = d->cipher ? EVP_CIPHER_key_length(d->cipher) : 0;
-    d->cipherIVSize = d->cipher ? EVP_CIPHER_iv_length(d->cipher) : 0;
+    d->cipherBlockSize = d->cipher ? am_EVP_CIPHER_block_size(d->cipher) : 0;
+    d->cipherKeySize = d->cipher ? am_EVP_CIPHER_key_length(d->cipher) : 0;
+    d->cipherIVSize = d->cipher ? am_EVP_CIPHER_iv_length(d->cipher) : 0;
     d->error = 0;
 
     d->initialized = false;
@@ -107,7 +124,7 @@ CipherFilter::CipherFilter(Type t, Cipher cipher)
 CipherFilter::~CipherFilter()
 {
     if (d->initialized)
-        EVP_CIPHER_CTX_cleanup(&d->ctx);
+        am_EVP_CIPHER_CTX_cleanup(&d->ctx);
     delete d;
 }
 
@@ -130,11 +147,11 @@ bool CipherFilter::start(const char *key, int keyLen, const char *iv, int ivLen)
         return false;
     }
 
-    int ret = EVP_CipherInit(&d->ctx,
-                             d->cipher,
-                             s2u(key),
-                             s2u(iv),
-                             d->type == Encrypt ? 1 : 0);
+    int ret = am_EVP_CipherInit(&d->ctx,
+                                d->cipher,
+                                s2u(key),
+                                s2u(iv),
+                                d->type == Encrypt ? 1 : 0);
     if (ret == 0)
         d->setError();
 
@@ -162,7 +179,7 @@ bool CipherFilter::finish(QByteArray &dst)
     }
 
     bool result = internalProcessData(QByteArray(), dst, true); // final chunk
-    EVP_CIPHER_CTX_cleanup(&d->ctx);
+    am_EVP_CIPHER_CTX_cleanup(&d->ctx);
     d->initialized = false;
 
     return result;
@@ -177,16 +194,16 @@ bool CipherFilter::internalProcessData(const QByteArray &src, QByteArray &dst, b
     int ret;
     if (!lastChunk) {
         dst.resize(src.size() + d->cipherBlockSize - (d->type == CipherFilter::Encrypt ? 1 : 0));
-        ret = EVP_CipherUpdate(&d->ctx,
-                               s2u(dst.data()),
-                               &outlen,
-                               s2u(src.constData()),
-                               src.size());
+        ret = am_EVP_CipherUpdate(&d->ctx,
+                                  s2u(dst.data()),
+                                  &outlen,
+                                  s2u(src.constData()),
+                                  src.size());
     } else {
         dst.resize(d->cipherBlockSize);
-        ret = EVP_CipherFinal(&d->ctx,
-                              s2u(dst.data()),
-                              &outlen);
+        ret = am_EVP_CipherFinal(&d->ctx,
+                                 s2u(dst.data()),
+                                 &outlen);
     }
     if (ret == 1) {
         dst.resize(outlen);

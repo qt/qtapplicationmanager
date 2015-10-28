@@ -28,6 +28,8 @@ addStaticLibrary(../notification-lib)
 #LIBS += -Wl,-E  # all
 unix:!osx:!android:LIBS += -Wl,--dynamic-list=$$PWD/syms.txt  # sub set
 
+win32:LIBS += -luser32
+
 force-singleprocess|!qtHaveModule(compositor) {
     DEFINES *= AM_SINGLEPROCESS_MODE
 } else:qtHaveModule(compositor) {

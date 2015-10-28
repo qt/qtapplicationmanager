@@ -30,6 +30,7 @@
 
 #include "cryptography.h"
 #include "digestfilter.h"
+#include "libcryptofunction.h"
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -39,24 +40,43 @@
 #  error "OpenSSL version >= 1.0.0 is needed due to a HMAC API change"
 #endif
 
+static AM_LIBCRYPTO_FUNCTION(EVP_sha512, nullptr);
+static AM_LIBCRYPTO_FUNCTION(EVP_sha256, nullptr);
+static AM_LIBCRYPTO_FUNCTION(EVP_sha1, nullptr);
+static AM_LIBCRYPTO_FUNCTION(ERR_get_error, ERR_R_INTERNAL_ERROR);
+static AM_LIBCRYPTO_FUNCTION(ERR_error_string, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_MD_size, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_DigestInit, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_MD_CTX_cleanup, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_DigestUpdate, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_DigestFinal, 0);
+static AM_LIBCRYPTO_FUNCTION(HMAC_Init, 0);
+static AM_LIBCRYPTO_FUNCTION(HMAC_CTX_cleanup);
+static AM_LIBCRYPTO_FUNCTION(HMAC_Update, 0);
+static AM_LIBCRYPTO_FUNCTION(HMAC_Final, 0);
+static AM_LIBCRYPTO_FUNCTION(EVP_get_digestbyname, nullptr);
+static AM_LIBCRYPTO_FUNCTION(OBJ_nid2sn, nullptr);
+static AM_LIBCRYPTO_FUNCTION(EVP_MD_type, 0);
+
+
 class DigestFilterPrivate
 {
 public:
     DigestFilterPrivate(DigestFilter::Type t)
         : type(t)
         , initialized(false)
-        , digest(typeToDigest(t))
         , error(0)
     {
         Cryptography::initialize();
+        digest = typeToDigest(t);
     }
 
     static const EVP_MD *typeToDigest(DigestFilter::Type t)
     {
         switch (t) {
-        case DigestFilter::Sha512: return EVP_sha512();
-        case DigestFilter::Sha256: return EVP_sha256();
-        case DigestFilter::Sha1  : return EVP_sha1();
+        case DigestFilter::Sha512: return am_EVP_sha512();
+        case DigestFilter::Sha256: return am_EVP_sha256();
+        case DigestFilter::Sha1  : return am_EVP_sha1();
         default                  : return 0;
         }
     }
@@ -80,7 +100,7 @@ public:
 
     void setError()
     {
-        error = ERR_get_error();
+        error = am_ERR_get_error();
         customError.clear();
     }
     void setError(const QString &str)
@@ -93,7 +113,7 @@ public:
         if (error == (unsigned long) -1)
             return customError;
         else
-            return QString::fromLocal8Bit(ERR_error_string(error, 0));
+            return QString::fromLocal8Bit(am_ERR_error_string(error, nullptr));
     }
 };
 
@@ -106,11 +126,11 @@ public:
 
     EVP_MD_CTX ctx;
 
-    int size() override { return EVP_MD_size(digest); }
-    int init() override { return EVP_DigestInit(&ctx, digest); }
-    void cleanup() override { EVP_MD_CTX_cleanup(&ctx); }
-    int process(const char *data, unsigned int size) override { return EVP_DigestUpdate(&ctx, data, size); }
-    int finish(char *result, unsigned int *size) override { return EVP_DigestFinal(&ctx, (unsigned char *) result, size); }
+    int size() override { return am_EVP_MD_size(digest); }
+    int init() override { return am_EVP_DigestInit(&ctx, digest); }
+    void cleanup() override { am_EVP_MD_CTX_cleanup(&ctx); }
+    int process(const char *data, unsigned int size) override { return am_EVP_DigestUpdate(&ctx, data, size); }
+    int finish(char *result, unsigned int *size) override { return am_EVP_DigestFinal(&ctx, (unsigned char *) result, size); }
 };
 
 class HMACFilterPrivate : public DigestFilterPrivate
@@ -124,11 +144,11 @@ public:
     QByteArray key;
     HMAC_CTX ctx;
 
-    int size() override { return EVP_MD_size(digest); }
-    int init() override { return HMAC_Init(&ctx, key.constData(), key.size(), digest); }
-    void cleanup() override { HMAC_CTX_cleanup(&ctx); }
-    int process(const char *data, unsigned int size) override { return HMAC_Update(&ctx, (const unsigned char *) data, size); }
-    int finish(char *result, unsigned int *size) override { return HMAC_Final(&ctx, (unsigned char *) result, size); }
+    int size() override { return am_EVP_MD_size(digest); }
+    int init() override { return am_HMAC_Init(&ctx, key.constData(), key.size(), digest); }
+    void cleanup() override { am_HMAC_CTX_cleanup(&ctx); }
+    int process(const char *data, unsigned int size) override { return am_HMAC_Update(&ctx, (const unsigned char *) data, size); }
+    int finish(char *result, unsigned int *size) override { return am_HMAC_Final(&ctx, (unsigned char *) result, size); }
 };
 
 HMACFilter::HMACFilter(Type t, const QByteArray &key)
@@ -263,22 +283,24 @@ int DigestFilter::size() const
 QString DigestFilter::nameFromType(Type t)
 {
     const EVP_MD *md = DigestFilterPrivate::typeToDigest(t);
-    if (md)
-        return QString::fromLatin1(EVP_MD_name(md));
+    if (md) {
+        // EVP_MD_name(e)  OBJ_nid2sn(EVP_MD_type(e))
+        return QString::fromLatin1(am_OBJ_nid2sn(am_EVP_MD_type(md)));
+    }
     return QString();
 }
 
 DigestFilter::Type DigestFilter::typeFromName(const QString &name, bool *ok)
 {
     // const EVP_MD *EVP_get_digestbyname(const char *name);
-    const EVP_MD *md = EVP_get_digestbyname(name.toLatin1().constData());
+    const EVP_MD *md = am_EVP_get_digestbyname(name.toLatin1().constData());
     if (ok)
         *ok = (md);
-    if (md == EVP_sha512()) {
+    if (md == am_EVP_sha512()) {
         return DigestFilter::Sha512;
-    } else if (md == EVP_sha256()) {
+    } else if (md == am_EVP_sha256()) {
         return DigestFilter::Sha256;
-    } else if (md == EVP_sha1()) {
+    } else if (md == am_EVP_sha1()) {
         return DigestFilter::Sha1;
     } else {
         if (ok)

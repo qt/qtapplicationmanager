@@ -30,10 +30,8 @@
 
 #include <QMutex>
 
-#include <openssl/evp.h>
-#include <openssl/err.h>
-
 #include "cryptography.h"
+#include "libcryptofunction.h"
 
 #ifdef Q_OS_WIN
 // all this mess is needed to get RtlGenRandom()
@@ -77,8 +75,8 @@ void Cryptography::initialize()
 
     QMutexLocker locker(initMutex());
     if (!openSslInitialized) {
-        OpenSSL_add_all_algorithms();
-        ERR_load_crypto_strings();
+        if (!LibCryptoFunctionBase::initialize())
+            qFatal("Could not load libcrypto");
         openSslInitialized = true;
     }
 }

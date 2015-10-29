@@ -39,10 +39,8 @@
 
 Q_PID getDBusPeerPid(const QDBusConnection &conn)
 {
-    qWarning() << "INTERNAL POINTER" << conn.internalPointer();
     int socketFd = -1;
     if (dbus_connection_get_socket(static_cast<DBusConnection *>(conn.internalPointer()), &socketFd)) {
-        qWarning() << "SOCKET FD" << socketFd;
         struct ucred ucred;
         socklen_t ucredSize = sizeof(struct ucred);
         if (getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0)

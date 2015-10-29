@@ -90,6 +90,7 @@ private:
 
     bool m_launchWhenReady = false;
     bool m_launched = false;
+    bool m_dbusConnection = false;
 
     NativeRuntimeApplicationInterface *m_applicationInterface = 0;
     NativeRuntimeInterface *m_runtimeInterface = 0;

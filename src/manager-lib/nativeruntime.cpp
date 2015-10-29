@@ -147,7 +147,7 @@ void NativeRuntime::onProcessError(QProcess::ProcessError error)
 
     m_process->deleteLater();
     m_process = 0;
-    m_shutingDown = m_launched = m_launchWhenReady = false;
+    m_shutingDown = m_launched = m_launchWhenReady = m_dbusConnection = false;
 
     emit finished(-1, QProcess::CrashExit);
 }
@@ -156,7 +156,7 @@ void NativeRuntime::onProcessFinished(int exitCode, QProcess::ExitStatus status)
 {
     m_process->deleteLater();
     m_process = 0;
-    m_shutingDown = m_launched = m_launchWhenReady = false;
+    m_shutingDown = m_launched = m_launchWhenReady = m_dbusConnection = false;
 
     qCDebug(LogSystem) << "NativeRuntume: process finished" << exitCode << status;
 
@@ -165,15 +165,18 @@ void NativeRuntime::onProcessFinished(int exitCode, QProcess::ExitStatus status)
 
 void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 {
-    if (!m_app)
+    if (!m_app || m_dbusConnection)
         return;
 
+    // If multiple apps are starting in parallel, there will be multiple NativeRuntime objects
+    // listening to the newConnection signal from the one and only DBusServer.
+    // We have to make sure that we are only reacting on "our" client's connection attempt.
     Q_PID pid = getDBusPeerPid(connection);
-
-    if (pid != applicationPID()) {
-        qCWarning(LogSystem) << "ERROR: the application connecting to the peer DBus has the wrong pid (is:" << pid << "/ should be:" << applicationPID();
+    if (pid != applicationPID())
         return;
-    }
+
+    // We have a valid connection - ignore all further connection attempts
+    m_dbusConnection = true;
 
     QDBusConnection conn = connection;
 

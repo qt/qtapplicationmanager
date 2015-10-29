@@ -72,7 +72,7 @@ public:
     ~WindowManager();
     static WindowManager *createInstance(QQuickView* view);
     static WindowManager *instance();
-    static QObject *instanceForQml(QQmlEngine *, QJSEngine *) { return instance(); }
+    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
     void enableWatchdog(bool enable);
     bool isWatchdogEnabled() const;

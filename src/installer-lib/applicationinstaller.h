@@ -72,7 +72,7 @@ public:
                                                 const QDir &manifestDir, const QDir &imageMountDir,
                                                 QString *error);
     static ApplicationInstaller *instance();
-    static QObject *instanceForQml(QQmlEngine *, QJSEngine *);
+    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
     bool developmentMode() const;
     void setDevelopmentMode(bool b);

@@ -486,8 +486,6 @@ int main(int argc, char *argv[])
             //TODO: what should we do here? on the desktop this will obviously always fail
             qCCritical(LogSystem) << "WARNING:" << e.what();
         }
-#else
-        Q_UNUSED(nm)
 #endif // QT_DBUS_LIB
 
 #if defined(QT_PSHELLSERVER_LIB)
@@ -558,10 +556,13 @@ int main(int argc, char *argv[])
         // however dead-lock the process in Qt 5.2.1 with the main thread and the scene-graph
         // thread both waiting for each other.
 
+        delete nm;
 #if !defined(AM_HEADLESS)
         delete wm;
 #endif
         delete am;
+
+        delete engine;
 
 
 #if defined(QT_PSSDP_LIB)

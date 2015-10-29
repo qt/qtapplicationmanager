@@ -37,6 +37,7 @@
 #include "application.h"
 #include "applicationmanager.h"
 #include "notificationmanager.h"
+#include "qml-utilities.h"
 
 /*!
     \class NotificationManager
@@ -269,6 +270,13 @@ NotificationManager *NotificationManager::instance()
     if (!s_instance)
         qFatal("NotificationManager::instance() was called before createInstance().");
     return s_instance;
+}
+
+QObject *NotificationManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+{
+    if (qmlEngine)
+        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    return instance();
 }
 
 NotificationManager::NotificationManager(QObject *parent)

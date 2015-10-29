@@ -43,6 +43,7 @@
 #include "exception.h"
 #include "global.h"
 #include "applicationmanager.h"
+#include "qml-utilities.h"
 
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
@@ -218,8 +219,10 @@ ApplicationInstaller *ApplicationInstaller::instance()
     return s_instance;
 }
 
-QObject *ApplicationInstaller::instanceForQml(QQmlEngine *, QJSEngine *)
+QObject *ApplicationInstaller::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
 {
+    if (qmlEngine)
+        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
     return instance();
 }
 

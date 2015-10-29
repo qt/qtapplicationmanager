@@ -47,7 +47,7 @@ public:
     ~NotificationManager();
     static NotificationManager *createInstance();
     static NotificationManager *instance();
-    static QObject *instanceForQml(QQmlEngine *, QJSEngine *) { return instance(); }
+    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const;

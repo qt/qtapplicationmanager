@@ -46,7 +46,7 @@
 #include "jsonapplicationscanner.h"
 #include "executioncontainer.h"
 #include "dbus-utilities.h"
-
+#include "qml-utilities.h"
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
     do { \
@@ -267,6 +267,13 @@ ApplicationManager *ApplicationManager::instance()
     if (!s_instance)
         qFatal("ApplicationManager::instance() was called before createInstance().");
     return s_instance;
+}
+
+QObject *ApplicationManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+{
+    if (qmlEngine)
+        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    return instance();
 }
 
 ApplicationManager::ApplicationManager(ApplicationDatabase *adb, QObject *parent)

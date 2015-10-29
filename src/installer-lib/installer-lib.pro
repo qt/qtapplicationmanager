@@ -6,7 +6,7 @@ include($$BASE_PRI)
 
 CONFIG += static create_prl
 
-QT = core network
+QT = core network qml
 qtHaveModule(dbus):QT *= dbus
 
 DEFINES *= AM_BUILD_APPMAN

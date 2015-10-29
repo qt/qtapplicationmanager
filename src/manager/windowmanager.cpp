@@ -46,6 +46,7 @@
 #include "windowmanager.h"
 #include "waylandwindow.h"
 #include "inprocesswindow.h"
+#include "qml-utilities.h"
 
 /*!
     \class WindowManager
@@ -281,6 +282,13 @@ WindowManager *WindowManager::instance()
     if (!s_instance)
         qFatal("WindowManager::instance() was called before createInstance().");
     return s_instance;
+}
+
+QObject *WindowManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+{
+    if (qmlEngine)
+        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    return instance();
 }
 
 WindowManager::WindowManager(QQuickView *parent)

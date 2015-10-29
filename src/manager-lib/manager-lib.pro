@@ -6,7 +6,7 @@ include($$BASE_PRI)
 
 CONFIG += static create_prl
 
-QT = core network qml
+QT = core network qml qml-private
 !headless:QT *= gui quick
 
 qtHaveModule(dbus) {
@@ -46,6 +46,7 @@ HEADERS += \
     notificationmanager.h \
     qmlinprocessruntime.h \
     qmlinprocessapplicationinterface.h \
+    qml-utilities.h
 
 !headless:HEADERS += \
     fakepelagicorewindow.h \
@@ -72,6 +73,7 @@ SOURCES += \
     notificationmanager.cpp \
     qmlinprocessruntime.cpp \
     qmlinprocessapplicationinterface.cpp \
+    qml-utilities.cpp
 
 !headless:SOURCES += \
     fakepelagicorewindow.cpp \

@@ -90,7 +90,7 @@ public:
     ~ApplicationManager();
     static ApplicationManager *createInstance(ApplicationDatabase *adb, QString *error);
     static ApplicationManager *instance();
-    static QObject *instanceForQml(QQmlEngine *, QJSEngine *) { return instance(); }
+    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
     bool isDummy() const { return false; }
     QVariantMap additionalConfiguration() const;

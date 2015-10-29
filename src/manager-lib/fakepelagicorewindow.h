@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include <QColor>
 #include <QQuickItem>
 #include "global.h"
 

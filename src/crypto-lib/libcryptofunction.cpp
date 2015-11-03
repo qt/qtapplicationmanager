@@ -35,11 +35,11 @@
 
 #include "libcryptofunction.h"
 
-// we want at least openssl 1.0.2d
-#define AM_MINIMUM_OPENSSL_VERSION 0x1000204fL
+// we want at least openssl 1.0.1
+#define AM_MINIMUM_OPENSSL_VERSION 0x1000100fL
 
 #if OPENSSL_VERSION_NUMBER < AM_MINIMUM_OPENSSL_VERSION
-#  error "Your OpenSSL version is too old - the minimum supported version is 1.0.2d"
+#  error "Your OpenSSL version is too old - the minimum supported version is 1.0.1"
 #endif
 
 static AM_LIBCRYPTO_FUNCTION(SSLeay, 0);
@@ -75,7 +75,7 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
                 am_ERR_load_crypto_strings();
                 return true;
             } else {
-                qCritical("Loaded libcrypto (%s), but the version is too old: 0x%08x (minimum supported version is: 0x%08x)",
+                qCritical("Loaded libcrypto (%s), but the version is too old: 0x%08lx (minimum supported version is: 0x%08lx)",
                           qPrintable(s_library->fileName()), version, AM_MINIMUM_OPENSSL_VERSION);
             }
         }

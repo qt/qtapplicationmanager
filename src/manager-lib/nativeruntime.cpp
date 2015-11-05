@@ -100,6 +100,18 @@ bool NativeRuntime::start()
     env.insert("AM_RUNTIME_CONFIGURATION", QtYaml::yamlFromVariantDocuments({ configuration() }));
     env.insert("AM_BASE_DIR", QDir::currentPath());
 
+    for (QMapIterator<QString, QVariant> it(configuration().value("environmentVariables").toMap()); it.hasNext(); ) {
+        it.next();
+        QString name = it.key();
+        if (!name.isEmpty()) {
+            QString value = it.value().toString();
+            if (value.isEmpty())
+                env.remove(it.key());
+            else
+                env.insert(name, value);
+        }
+    }
+
     if (m_launcherCommand.isEmpty()) {
         QStringList args;
         if (!m_document.isNull())

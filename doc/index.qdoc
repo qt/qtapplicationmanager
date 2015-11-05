@@ -156,7 +156,7 @@ command-line options.
     \li \c --load-dummydata
     \li \c ui/loadDummyData
     \li \c bool
-    \li Loads QML dummy-data into the system UI (just like qml-scene would).
+    \li Loads QML dummy-data into the system UI (just like \c qmlscene would).
 \row
     \li \c --no-security
     \li \c flags/noSecurity
@@ -177,7 +177,7 @@ command-line options.
     \li \c -
     \li \c string
     \li Runs the application-manager with a single application only (ignoring the database).
-        In this mode, the application-manager can act as a qml-scene replacement.
+        In this mode, the application-manager can act as a \c qmlscene replacement.
 \row
     \li \c --logging-rule
     \li \c logging/rules
@@ -196,7 +196,7 @@ command-line options.
     \li \c map<object>
     \li This can be used to specify options for runtimes - the key in this map is the
         runtime's name and the value is interpreted by the respective runtime implementation.
-        See below for specific information.
+        \l {Runtime configuration}{See below} for specific information.
 \endtable
 
 \keyword D-Bus specification
@@ -288,6 +288,41 @@ The \c installationLocations YAML field is a list of YAML objects, very similar 
         mount-point of the device where \c installationPath is located.
 \endtable
 
+\keyword Runtime configuration
+
+The runtime configuration sub-objects are specific to the actual runtimes, so the table below has
+an additional column specifying which runtime a configuration option applies to:
+
+\table
+\header
+    \li \c Name
+    \li \c Runtimes
+    \li \c Type
+    \li Description
+\row
+    \li \c environmentVariables
+    \li \c native, \c qml
+    \li \c map<string>
+    \li A simple string to string map, describing the environment variables that should be set when
+        spawning the runtime process. You can remove a variable from the default environment by
+        giving it an empty or null value.
+\row
+    \li \c importPaths
+    \li \c qml
+    \li \c array<string>
+    \li Add an additional QML import path for apps started via this runtime.
+\row
+    \li \c loadDummyData
+    \li \c qml
+    \li \c bool
+    \li Loads QML dummy-data into the app (just like \c qmlscene would). Defaults to \c false.
+\row
+    \li \c backgroundColor
+    \li \c qml
+    \li \c string
+    \li If set, the main window of the app will get this color set as the default clear color. This
+        will also give the surface an 8-bit alpha buffer.
+\endtable
 
 \chapter Apps for the Application-Manager
 
@@ -297,7 +332,7 @@ additional tasks:
 
 \list 1
 
-    \li If you write a QML application, make the root element of your QML-scene a
+    \li If you write a QML application, make the root element of your QML scene a
     \l{com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow} (or derive your own
     custom root item from it).
 

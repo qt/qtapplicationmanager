@@ -1,6 +1,6 @@
 
 lessThan(QT_MAJOR_VERSION, 5):error("This application needs to be built against Qt 5")
-win32-msvc2010:error("This application needs to be built with at least MSVC 2012")
+win32:!win32-msvc2013:!win32-msvc2015:error("This application needs to be built with at least MSVC 2013")
 
 CONFIG *= c++11
 CONFIG *= link_pkgconfig

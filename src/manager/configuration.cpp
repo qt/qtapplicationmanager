@@ -131,8 +131,14 @@ void ConfigurationPrivate::mergeConfig(const QVariantMap &other)
 Configuration::Configuration()
     : d(new ConfigurationPrivate())
 {
-    d->clp.setApplicationDescription("Pelagicore ApplicationManager");
-
+    d->clp.setApplicationDescription("Pelagicore ApplicationManager"
+                                     "\n\n"
+                                     "In addition to the commandline options below, the following environment\n"
+                                     "variables can be set:\n\n"
+                                     "  AM_FAKE_SUDO      if set to 1, no root privileges will be acquired\n"
+                                     "  AM_STARTUP_TIMER  if set to 1, a startup performance analysis will be printed\n"
+                                     "                    on the console. Anything other than 1 will interpreted\n"
+                                     "                    as the name of a file that is used instead of the console\n");
     d->clp.addHelpOption();
     d->clp.addVersionOption();
 
@@ -145,7 +151,7 @@ Configuration::Configuration()
     d->clp.addOption({ "installed-apps-manifest-dir", "base directory for installed application manifests.", "dir", "/opt/am/manifests" });
     d->clp.addOption({ "app-image-mount-dir", "base directory where application images are mounted to.", "dir", "/opt/am/image-mounts" });
 #if defined(QT_DBUS_LIB)
-    d->clp.addOption({ "dbus",                 "register on the specified D-Bus.", "<bus>|system|session", "session" });
+    d->clp.addOption({ "dbus",                 "register on the specified D-Bus.", "<bus>|system|session|none", "session" });
 #endif
     d->clp.addOption({ "fullscreen",           "display in full-screen." });
     d->clp.addOption({ "I",                    "additional QML import path.", "dir" });

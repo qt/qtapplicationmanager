@@ -1,3 +1,5 @@
+load(configure)
+qtCompileTest(libyaml)
 
 MIN_MINOR=4
 headless:MIN_MINOR=2
@@ -10,7 +12,7 @@ CONFIG += ordered
 include($$BASE_PRI)
 
 bundled-libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
-bundled-libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
+!config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 
 force-singleprocess:force-multiprocess:error("You cannot both specify force-singleprocess and force-multiprocess")
 qtHaveModule(compositor)|headless { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
@@ -39,7 +41,6 @@ printConfigLine("Multi-process mode", $$check_multi, auto)
 printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)
 printConfigLine("Tests enabled", $$yesNo(CONFIG(enable-tests)), auto)
 printConfigLine("Bundled libarchive", $$yesNo(CONFIG(bundled-libarchive)), auto)
-printConfigLine("Bundled libyaml", $$yesNo(CONFIG(bundled-libyaml)), auto)
 printConfigLine("libcrypto defines", $$check_libcrypto_defines, auto)
 printConfigLine("libcrypto includes", $$check_libcrypto_includes, auto)
 printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)

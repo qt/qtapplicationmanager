@@ -1,5 +1,5 @@
 
-bundled-libyaml {
+!config_libyaml {
     LIBYAML_PATH = $$PWD/libyaml
     LIBYAML_BUILD_PATH = $$shadowed($$LIBYAML_PATH)
 

@@ -128,7 +128,7 @@ public:
 
 signals:
     Q_SCRIPTABLE void taskStarted(const QString &taskId);
-    Q_SCRIPTABLE void taskProgress(const QString &taskId, qreal progress);
+    Q_SCRIPTABLE void taskProgressChanged(const QString &taskId, qreal progress);
     Q_SCRIPTABLE void taskFinished(const QString &taskId);
     Q_SCRIPTABLE void taskFailed(const QString &taskId, int errorCode, const QString &errorString);
     Q_SCRIPTABLE void taskStateChanged(const QString &taskId, const QString &newState);

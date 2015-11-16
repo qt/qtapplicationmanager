@@ -150,7 +150,7 @@
 */
 
 /*!
-    \qmlsignal ApplicationInstaller::requestingInstallationAcknowledge(string taskId, object application)
+    \qmlsignal ApplicationInstaller::taskRequestingInstallationAcknowledge(string taskId, object application)
 
     This signal is emitted when the installation task identified by \a taskId has received enough
     meta-data to be able to emit this signal. The task maybe in either \c executing or \c
@@ -159,17 +159,30 @@
     The contents of package's manifest file are supplied via \a application as a JavaScript object.
     Please see the \l {ApplicationManager Roles}{role names} for the expected object fields.
 
-    \sa taskStateChanged, startPackageInstallation()
+    Following this signal, either cancelTask() or acknowledgePackageInstallation() have to be called
+    for this \a taskId for the installer to either cancel the installation or try to complete it.
+
+    \sa taskStateChanged, startPackageInstallation
 */
 
 /*!
-    \qmlsignal ApplicationInstaller::taskProgress(string taskId, qreal progress)
+    \qmlsignal ApplicationInstaller::taskBlockingUntilInstallationAcknowledge(string taskId)
+
+    This signal is emitted when the installation task identified by \a taskId cannot continue
+    anymore due to a missing acknowledgePackageInstallation() call for the task.
+
+    \sa taskStateChanged, acknowledgePackageInstallation
+*/
+
+/*!
+    \qmlsignal ApplicationInstaller::taskProgressChanged(string taskId, qreal progress)
 
     This signal is emitted whenever the task identified by \a taskId makes progress towards its
-    completition. The \a progress is reported as a floating-point number ranging from \c 0.0 to \c 1.0.
+    completion. The \a progress is reported as a floating-point number ranging from \c 0.0 to \c 1.0.
 
     \sa taskStateChanged
 */
+
 
 ApplicationInstaller *ApplicationInstaller::s_instance = 0;
 
@@ -651,18 +664,20 @@ QString ApplicationInstaller::startPackageInstallation(const QString &installati
     described by \a installationLocationId.
 
     The actual download and installation will happen asynchronously in the background. The
-    ApplicationInstaller will emit the signals \l started, \l progress, \l requestingInstallationAcknowledge,
-    \l finished, \l failed, and \l stateChanged for the returned taskId when applicable.
+    ApplicationInstaller will emit the signals \l taskStarted, \l taskProgressChanged, \l
+    taskRequestingInstallationAcknowledge, \l taskFinished, \l taskFailed, and \l taskStateChanged
+    for the returned taskId when applicable.
 
     \note Just calling this function is not enough to complete a package installation! The
-    \l requestingInstallationAcknowledge signal needs to be connected to a slot where the supplied
-    application meta-data can be validated (either programmatically or by asking the user). If the
-    validation is successful, the installation can be completed by calling acknowledgePackageInstallation()
-    or, if the validation was unsuccessful, the installation should be canceled by calling cancelTask().
+    \l taskRequestingInstallationAcknowledge signal needs to be connected to a slot where the
+    supplied application meta-data can be validated (either programmatically or by asking the user).
+    If the validation is successful, the installation can be completed by calling
+    acknowledgePackageInstallation() or, if the validation was unsuccessful, the installation should
+    be canceled by calling cancelTask().
     Failing to do one or the other will leave an unfinished "zombie" installation.
 
-    The return value is an unique \c taskId. This can also be empty, if the task could not be created
-    in the first place (no signals will be emitted in this case).
+    The return value is an unique \c taskId. This can also be empty, if the task could not be
+    created in the first place (no signals will be emitted in this case).
 */
 QString ApplicationInstaller::startPackageInstallation(const QString &installationLocationId, const QString &sourceUrl)
 {
@@ -703,8 +718,8 @@ void ApplicationInstaller::acknowledgePackageInstallation(const QString &taskId)
     application is deleted on removal, but this can be prevented by setting \a keepDocuments to \c true.
 
     The actual removal will happen asynchronously in the background. The ApplicationInstaller will
-    emit the signals \l started, \l progress, \l finished, \l failed and \l stateChanged for the returned
-    \c taskId when applicable.
+    emit the signals \l taskStarted, \l taskProgressChanged, \l taskFinished, \l taskFailed and \l
+    taskStateChanged for the returned \c taskId when applicable.
 
     Normally \a force should only be set to \c true, if a call to removePackage() failed in the first
     place. This may become necessary if the installation process was interrupted, or if a SD-Card
@@ -1014,7 +1029,7 @@ void ApplicationInstaller::executeNextTask()
     });
 
     connect(task, &AsynchronousTask::progress, this, [this, task](qreal p) {
-        emit taskProgress(task->id(), p);
+        emit taskProgressChanged(task->id(), p);
         QMetaObject::invokeMethod(ApplicationManager::instance(),
                                   "progressingApplicationInstall",
                                   Qt::DirectConnection,

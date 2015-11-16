@@ -349,7 +349,7 @@ void tst_ApplicationInstaller::initTestCase()
     m_startedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskStarted);
     m_requestingInstallationAcknowledgeSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskRequestingInstallationAcknowledge);
     m_blockingUntilInstallationAcknowledgeSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskBlockingUntilInstallationAcknowledge);
-    m_progressSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskProgress);
+    m_progressSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskProgressChanged);
     m_finishedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskFinished);
     m_failedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskFailed);
     m_packageActivatedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::packageActivated);

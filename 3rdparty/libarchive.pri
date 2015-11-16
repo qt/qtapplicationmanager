@@ -1,7 +1,7 @@
 
 include(libz.pri)
 
-bundled-libarchive {
+!config_libarchive {
     LIBARCHIVE_PATH = $$PWD/libarchive
     LIBARCHIVE_BUILD_PATH = $$shadowed($$LIBARCHIVE_PATH)
 

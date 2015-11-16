@@ -29,8 +29,6 @@ There are various options that can be applied to the `qmake` step to tailor the 
 | Option | Description |
 | ------ | ----------- |
 | `-config bundled-libz`          | Build and link against the bundled version of zlib, instead of using a system version.
-| `-config bundled-libarchive`    | Build and link against the bundled version of libyaml, instead of using a system version.
-| `-config bundled-libarchive`    | Build and link against the bundled version of libarchive, instead of using a system version.
 | `-config bundled-libcrypto`     | Build and link against the bundled version of openssl, instead of using a system version.
 | `-config force-singleprocess`   | Force a single-process build, even if Qt's Wayland `compositor` module is available.
 | `-config force-multiprocess`    | Force a multi-process build - this will break if Qt's Wayland `compositor` module is not available.

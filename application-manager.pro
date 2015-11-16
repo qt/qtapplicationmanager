@@ -1,4 +1,5 @@
 load(configure)
+qtCompileTest(libarchive)
 qtCompileTest(libyaml)
 
 MIN_MINOR=4
@@ -11,7 +12,7 @@ CONFIG += ordered
 
 include($$BASE_PRI)
 
-bundled-libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
+!config_libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 !config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 
 force-singleprocess:force-multiprocess:error("You cannot both specify force-singleprocess and force-multiprocess")
@@ -40,13 +41,14 @@ printConfigLine("QtCompositor support", $$yesNo(qtHaveModule(compositor)), auto)
 printConfigLine("Multi-process mode", $$check_multi, auto)
 printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)
 printConfigLine("Tests enabled", $$yesNo(CONFIG(enable-tests)), auto)
-printConfigLine("Bundled libarchive", $$yesNo(CONFIG(bundled-libarchive)), auto)
 printConfigLine("libcrypto defines", $$check_libcrypto_defines, auto)
 printConfigLine("libcrypto includes", $$check_libcrypto_includes, auto)
 printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)
 printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto)
 printConfigLine("Genivi support", $$yesNo(qtHaveModule(geniviextras)), auto)
 printConfigLine("Systemd workaround", $$yesNo(CONFIG(systemd-workaround)), auto)
+printConfigLine("System libarchive", $$yesNo(config_libarchive), auto)
+printConfigLine("System libyaml", $$yesNo(config_libyaml), auto)
 
 include(doc/doc.pri)
 

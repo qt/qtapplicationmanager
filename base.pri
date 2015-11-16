@@ -10,7 +10,7 @@ CONFIG -= app_bundle
 win32-msvc*:QMAKE_CXXFLAGS += /FS /wd4290 /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS
 
 disable-installer:DEFINES *= AM_DISABLE_INSTALLER
-systemd-sucks:DEFINES *= AM_SYSTEMD_SUCKS
+systemd-workaround:DEFINES *= AM_SYSTEMD_WORKAROUND
 headless:DEFINES *= AM_HEADLESS
 
 !win32:exists($$SOURCE_DIR/.git):GIT_VERSION=$$system(cd "$$SOURCE_DIR" && git describe --tags --always 2>/dev/null)

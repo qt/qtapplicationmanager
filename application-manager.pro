@@ -45,7 +45,7 @@ printConfigLine("libcrypto includes", $$check_libcrypto_includes, auto)
 printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)
 printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto)
 printConfigLine("Genivi support", $$yesNo(qtHaveModule(geniviextras)), auto)
-printConfigLine("Systemd workaround", $$yesNo(CONFIG(systemd-sucks)), auto)
+printConfigLine("Systemd workaround", $$yesNo(CONFIG(systemd-workaround)), auto)
 
 include(doc/doc.pri)
 

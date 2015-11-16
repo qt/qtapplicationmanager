@@ -39,7 +39,7 @@ There are various options that can be applied to the `qmake` step to tailor the 
 | `-config install-prefix=<path>` | Uses `path` as the base directory for `make install`. (default: `/usr/local`)
 | `-config hardware-id=<id>`      | Compiles with a hard-coded hardware-id (used for store-signed packages, default: ethernet MAC).
 | `-config hardware-id-from-file=<file>` | The hardware-id will be read from the specified file at runtime (used for store-signed packages, default: ethernet MAC).
-| `-config systemd-sucks`         | Paramount if you are running systemd and plan on supporting SD-Card installations. Works around systemd interfering with loopback mounts.
+| `-config systemd-workaround`    | Paramount if you are running systemd and plan on supporting SD-Card installations. Works around systemd interfering with loopback mounts.
 
 All executables (including the unit-tests) will be in the `bin` directory after compiling.
 

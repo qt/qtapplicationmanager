@@ -579,7 +579,7 @@ bool SudoServer::detachLoopback(const QString &loopDev)
 
         EINTR_LOOP(close(loopFd));
 
-#if !defined(AM_SYSTEMD_SUCKS)
+#if !defined(AM_SYSTEMD_WORKAROUND)
         // be nice and tell the kernel to clean up
         EINTR_LOOP(ioctl(m_loopControl, LOOP_CTL_REMOVE, loopId));
 #endif

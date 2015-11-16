@@ -5,7 +5,9 @@
 **
 ** This file is part of the Pelagicore Application Manager.
 **
-** $QT_BEGIN_LICENSE:LGPL3$
+** SPDX-License-Identifier: GPL-3.0
+**
+** $QT_BEGIN_LICENSE:GPL3$
 ** Commercial License Usage
 ** Licensees holding valid commercial Pelagicore Application Manager
 ** licenses may use this file in accordance with the commercial license

@@ -248,7 +248,7 @@
 /* #undef HAVE_EXPAT_H */
 
 /* Define to 1 if you have the <ext2fs/ext2_fs.h> header file. */
-#define HAVE_EXT2FS_EXT2_FS_H 1
+/* #undef HAVE_EXT2FS_EXT2_FS_H */
 
 /* Define to 1 if you have the `extattr_get_file' function. */
 /* #undef HAVE_EXTATTR_GET_FILE */

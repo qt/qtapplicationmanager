@@ -91,5 +91,6 @@ public:
 
 };
 
+QT_BEGIN_NAMESPACE
 Q_DECLARE_INTERFACE(ExecutionContainer, "com.pelagicore.applicationmanager.Container")
-
+QT_END_NAMESPACE

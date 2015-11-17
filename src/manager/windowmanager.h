@@ -49,11 +49,13 @@
 #  include <QProcess>
 #endif
 
-
+QT_BEGIN_NAMESPACE
 class QQuickView;
 class QQuickItem;
 class QQmlEngine;
 class QJSEngine;
+QT_END_NAMESPACE
+
 class Window;
 class WindowManagerPrivate;
 class Application;

@@ -12,13 +12,14 @@ SUBDIRS = \
     signature \
     utilities \
     packagecreator \
-    packageextractor \
-    installationreport \
-    applicationinstaller \
-    packager-tool \
+    installationreport
 
-linux*:SUBDIRS += \
-    sudo \
+#linux*:SUBDIRS += \
+#    sudo \
+
+# packageextractor kept back due to missing test assets
+# applicationinstaller
+# packager-tool
 
 OTHER_FILES += \
     tests.pri \

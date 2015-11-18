@@ -1,3 +1,5 @@
+requires(linux*:!android)
+
 load(configure)
 qtCompileTest(libarchive)
 qtCompileTest(libyaml)

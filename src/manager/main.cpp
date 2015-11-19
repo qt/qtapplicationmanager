@@ -100,6 +100,7 @@
 #include "utilities.h"
 #include "qmllogger.h"
 #include "startuptimer.h"
+#include "systemmonitor.h"
 
 #if defined(MALIIT_INTEGRATION)
 #include "minputcontextconnection.h"
@@ -441,6 +442,14 @@ int main(int argc, char *argv[])
 
         startupTimer.checkpoint("after ApplicationManager instantiation");
 
+        NotificationManager *nm = NotificationManager::createInstance();
+
+        startupTimer.checkpoint("after NotificationManager instantiation");
+
+        SystemMonitor *sysmon = SystemMonitor::createInstance();
+
+        startupTimer.checkpoint("after SystemMonitor instantiation");
+
 #if !defined(AM_DISABLE_INSTALLER)
         ApplicationInstaller *ai = ApplicationInstaller::createInstance(installationLocations,
                                                                         configuration->installedAppsManifestDir(),
@@ -473,7 +482,11 @@ int main(int argc, char *argv[])
 
         qmlRegisterSingletonType<ApplicationManager>("com.pelagicore.ApplicationManager", 0, 1, "ApplicationManager",
                                                      &ApplicationManager::instanceForQml);
-        qmlRegisterType<QmlInProcessNotification>("com.pelagicore.Notification", 0, 1, "Notification");
+        qmlRegisterSingletonType<SystemMonitor>("com.pelagicore.ApplicationManager", 0, 1, "SystemMonitor",
+                                                     &SystemMonitor::instanceForQml);
+        qmlRegisterSingletonType<NotificationManager>("com.pelagicore.ApplicationManager", 0, 1, "NotificationManager",
+                                                     &NotificationManager::instanceForQml);
+        qmlRegisterType<QmlInProcessNotification>("com.pelagicore.ApplicationManager", 0, 1, "Notification");
 
 #if !defined(AM_HEADLESS)
         qmlRegisterSingletonType<WindowManager>("com.pelagicore.ApplicationManager", 0, 1, "WindowManager",
@@ -512,12 +525,11 @@ int main(int argc, char *argv[])
             }
         });
 #endif
-        NotificationManager *nm = NotificationManager::createInstance();
 
-        if (configuration->loadDummyData())
+        if (configuration->loadDummyData()) {
             loadDummyDataFiles(*engine, QFileInfo(configuration->mainQmlFile()).path());
-
-        startupTimer.checkpoint("after NotificationManager instantiation");
+            startupTimer.checkpoint("after loading dummy-data");
+        }
 
 #if defined(QT_DBUS_LIB)
         registerDBusObject(new ApplicationManagerAdaptor(am), "com.pelagicore.ApplicationManager", "/Manager");
@@ -618,6 +630,7 @@ int main(int argc, char *argv[])
 #endif
         delete am;
         delete ql;
+        delete sysmon;
 
         delete engine;
 

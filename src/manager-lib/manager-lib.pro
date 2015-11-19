@@ -48,12 +48,15 @@ HEADERS += \
     processcontainer.h \
     abstractcontainer.h \
     containerfactory.h \
-    quicklauncher.h
+    quicklauncher.h \
+    systemmonitor.h \
 
 !headless:HEADERS += \
     fakepelagicorewindow.h \
     window.h \
 
+linux:HEADERS += systemmonitor_linux.h
+else:HEADERS += systemmonitor_dummy.h
 
 qtHaveModule(dbus):HEADERS += \
     nativeruntime.h \
@@ -77,11 +80,14 @@ SOURCES += \
     processcontainer.cpp \
     abstractcontainer.cpp \
     containerfactory.cpp \
-    quicklauncher.cpp
+    quicklauncher.cpp \
+    systemmonitor.cpp \
 
 !headless:SOURCES += \
     fakepelagicorewindow.cpp \
     window.cpp \
+
+linux:SOURCES += systemmonitor_linux.cpp
 
 qtHaveModule(dbus):SOURCES += \
     nativeruntime.cpp \

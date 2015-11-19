@@ -1131,7 +1131,11 @@ typedef uint64_t uintmax_t;
 /* #undef size_t */
 
 /* Define to `int' if <sys/types.h> does not define. */
-#define ssize_t long
+#if defined(_WIN64)
+# define ssize_t __int64
+#else
+# define ssize_t long
+#endif
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #define uid_t short

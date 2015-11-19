@@ -1,13 +1,12 @@
 /****************************************************************************
 **
+** Copyright (C) 2015 Pelagicore AG
 ** Copyright (C) 2015 The Qt Company Ltd.
-** Contact: http://www.qt.io/licensing/
+** Contact: http://www.qt.io/ or http://www.pelagicore.com/
 **
 ** This file is part of the Pelagicore Application Manager.
 **
-** SPDX-License-Identifier: GPL-3.0
-**
-** $QT_BEGIN_LICENSE:GPL3$
+** $QT_BEGIN_LICENSE:GPL3-PELAGICORE$
 ** Commercial License Usage
 ** Licensees holding valid commercial Pelagicore Application Manager
 ** licenses may use this file in accordance with the commercial license
@@ -25,6 +24,8 @@
 ** met: http://www.gnu.org/licenses/gpl-3.0.html.
 **
 ** $QT_END_LICENSE$
+**
+** SPDX-License-Identifier: GPL-3.0
 **
 ****************************************************************************/
 

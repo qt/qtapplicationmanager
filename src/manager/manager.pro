@@ -78,17 +78,17 @@ INSTALLS += dbusif
 
 qtPrepareTool(QDBUSCPP2XML, qdbuscpp2xml)
 
-recreate_manager_dbus_xml.target = $$PWD/../dbus/com.pelagicore.applicationmanager.xml
-recreate_manager_dbus_xml.CONFIG = phony
-recreate_manager_dbus_xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager-lib/applicationmanager.h -o $$recreate_manager_dbus_xml.target
+#recreate-manager-dbus-xml.target = $$PWD/../dbus/com.pelagicore.applicationmanager.xml
+recreate-manager-dbus-xml.CONFIG = phony
+recreate-manager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager-lib/applicationmanager.h -o $$recreate-manager-dbus-xml.target
 
-recreate_installer_dbus_xml.target = $$PWD/../dbus/com.pelagicore.applicationinstaller.xml
-recreate_installer_dbus_xml.CONFIG = phony
-recreate_installer_dbus_xml.commands = $$QDBUSCPP2XML -a $$PWD/../installer-lib/applicationinstaller.h -o $$recreate_installer_dbus_xml.target
+#recreate-installer-dbus-xml.target = $$PWD/../dbus/com.pelagicore.applicationinstaller.xml
+recreate-installer-dbus-xml.CONFIG = phony
+recreate-installer-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../installer-lib/applicationinstaller.h -o $$recreate-installer-dbus-xml.target
 
-recreate-dbus-xml.depends = recreate_manager_dbus_xml recreate_installer_dbus_xml
+recreate-dbus-xml.depends = recreate-manager-dbus-xml recreate-installer-dbus-xml
 
-QMAKE_EXTRA_TARGETS += recreate-dbus-xml recreate_manager_dbus_xml recreate_installer_dbus_xml
+QMAKE_EXTRA_TARGETS += recreate-dbus-xml recreate-manager-dbus-xml recreate-installer-dbus-xml
 
 
 OTHER_FILES = \

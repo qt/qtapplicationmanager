@@ -4,8 +4,7 @@ DESTDIR  = $$BUILD_DIR/bin
 
 include($$BASE_PRI)
 
-CONFIG -= release
-CONFIG *= debug console testcase
+CONFIG *= console testcase
 QT = core network testlib
 qtHaveModule(dbus):QT *= dbus
 

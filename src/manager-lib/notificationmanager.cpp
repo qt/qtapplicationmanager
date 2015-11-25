@@ -283,6 +283,11 @@ NotificationManager::NotificationManager(QObject *parent)
     : QAbstractListModel(parent)
     , d(new NotificationManagerPrivate())
 {
+    connect(this, &QAbstractItemModel::rowsInserted, this, &NotificationManager::countChanged);
+    connect(this, &QAbstractItemModel::rowsRemoved, this, &NotificationManager::countChanged);
+    connect(this, &QAbstractItemModel::layoutChanged, this, &NotificationManager::countChanged);
+    connect(this, &QAbstractItemModel::modelReset, this, &NotificationManager::countChanged);
+
     d->q = this;
     d->roleNames.insert(Id, "id");
     d->roleNames.insert(ApplicationId, "applicationId");

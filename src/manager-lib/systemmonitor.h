@@ -48,6 +48,7 @@ class SystemMonitor : public QAbstractListModel
     Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
     Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE enableMemoryReporting)
     Q_PROPERTY(bool cpuLoadReportingEnabled READ isCpuLoadReportingEnabled WRITE enableCpuLoadReporting)
+    Q_PROPERTY(bool idle READ isIdle NOTIFY idleChanged)
 
 public:
     ~SystemMonitor();
@@ -68,6 +69,8 @@ public:
 
     void setIdleLoadAverage(qreal loadAverage);
     qreal idleLoadAverage() const;
+
+    bool isIdle() const;
 
     Q_INVOKABLE bool setMemoryWarningThresholds(qreal lowWarning, qreal criticalWarning);
     Q_INVOKABLE qreal memoryLowWarningThreshold() const;
@@ -91,7 +94,7 @@ public:
 
 signals:
     void countChanged();
-    void idle();
+    void idleChanged(bool idle);
     void memoryLowWarning();
     void memoryCriticalWarning();
 

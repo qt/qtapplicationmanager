@@ -46,7 +46,7 @@ public:
     static QuickLauncher *instance();
     ~QuickLauncher();
 
-    void initialize();
+    void initialize(int runtimesPerContainer, qreal idleLoad = 0);
 
     QPair<AbstractContainer *, AbstractRuntime *> take(const QString &containerId, const QString &runtimeId);
 
@@ -70,4 +70,5 @@ private:
     };
 
     QVector<QuickLaunchEntry> m_quickLaunchPool;
+    bool m_onlyRebuildWhenIdle = false;
 };

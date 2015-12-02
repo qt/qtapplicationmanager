@@ -166,8 +166,8 @@ public:
         } else if (te && te->timerId() == idleTimerId) {
             QPair<int, qreal> idleVal = idleCpu->readLoadValue();
             bool nowIdle = (idleVal.second <= idleAverage);
-            if (nowIdle && !isIdle)
-                emit q->idle();
+            if (nowIdle != isIdle)
+                emit q->idleChanged(nowIdle);
             isIdle = nowIdle;
         }
     }
@@ -384,6 +384,13 @@ qreal SystemMonitor::idleLoadAverage() const
     Q_D(const SystemMonitor);
 
     return d->idleAverage;
+}
+
+bool SystemMonitor::isIdle() const
+{
+    Q_D(const SystemMonitor);
+
+    return d->isIdle;
 }
 
 void SystemMonitor::enableMemoryReporting(bool enabled)

@@ -418,3 +418,17 @@ bool Configuration::applicationUserIdSeparation(uint *minUserId, uint *maxUserId
     }
     return false;
 }
+
+qreal Configuration::quickLaunchIdleLoad() const
+{
+    bool found, conversionOk;
+    qreal idleLoad = d->findInConfigFile({ "quicklaunch", "idleLoad" }, &found).toReal(&conversionOk);
+    return (found && conversionOk) ? idleLoad : qreal(0);
+}
+
+int Configuration::quickLaunchRuntimesPerContainer() const
+{
+    bool found, conversionOk;
+    int rpc = d->findInConfigFile({ "quicklaunch", "runtimesPerContainer" }, &found).toInt(&conversionOk);
+    return (found && conversionOk && rpc > 1 && rpc < 10) ? rpc : 1;
+}

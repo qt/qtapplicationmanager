@@ -36,6 +36,7 @@
 #include "containerfactory.h"
 #include "runtimefactory.h"
 #include "quicklauncher.h"
+#include "systemmonitor.h"
 
 
 QuickLauncher *QuickLauncher::s_instance = nullptr;
@@ -54,7 +55,7 @@ QuickLauncher::QuickLauncher(QObject *parent)
 QuickLauncher::~QuickLauncher()
 { }
 
-void QuickLauncher::initialize()
+void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
 {
     ContainerFactory *cf = ContainerFactory::instance();
     RuntimeFactory *rf = RuntimeFactory::instance();
@@ -69,7 +70,7 @@ void QuickLauncher::initialize()
 
             QuickLaunchEntry entry;
             entry.m_containerId = containerId;
-            entry.m_maximum = 1; //TODO: make configurable via config file
+            entry.m_maximum = runtimesPerContainer;
 
             if (rf->manager(runtimeId)->supportsQuickLaunch())
                 entry.m_runtimeId = runtimeId;
@@ -79,11 +80,21 @@ void QuickLauncher::initialize()
             qCDebug(LogSystem) << "Created quick-launch slot for" << containerId + "/" + runtimeId;
         }
     }
+    if (idleLoad > 0) {
+        SystemMonitor::instance()->setIdleLoadAverage(idleLoad);
+        m_onlyRebuildWhenIdle = true;
+        connect(SystemMonitor::instance(), &SystemMonitor::idleChanged, this, &QuickLauncher::rebuild);
+    }
     triggerRebuild();
 }
 
 void QuickLauncher::rebuild()
 {
+    if (m_onlyRebuildWhenIdle) {
+        if (!SystemMonitor::instance()->isIdle())
+            return;
+    }
+
     int todo = 0;
     int done = 0;
 
@@ -123,7 +134,7 @@ void QuickLauncher::rebuild()
         }
     }
     if (todo > done)
-        triggerRebuild(500);
+        triggerRebuild(1000);
 }
 
 void QuickLauncher::triggerRebuild(int delay)

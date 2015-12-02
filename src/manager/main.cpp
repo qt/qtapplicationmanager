@@ -401,7 +401,7 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after runtime registration");
 
         QuickLauncher *ql = QuickLauncher::instance();
-        ql->initialize();
+        ql->initialize(configuration->quickLaunchRuntimesPerContainer(), configuration->quickLaunchIdleLoad());
 
         startupTimer.checkpoint("after quick-launcher setup");
 

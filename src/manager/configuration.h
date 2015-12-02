@@ -70,6 +70,9 @@ public:
 
     bool applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const;
 
+    qreal quickLaunchIdleLoad() const;
+    int quickLaunchRuntimesPerContainer() const;
+
 private:
     void initialize();
 

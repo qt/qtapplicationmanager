@@ -35,7 +35,7 @@
 #  include <QProcess>
 #  include <QDBusContext>
 
-Q_PID getDBusPeerPid(const QDBusConnection &conn);
+qint64 getDBusPeerPid(const QDBusConnection &conn);
 #endif
 
 struct DBusPolicy

@@ -34,13 +34,12 @@
 #include "cryptography.h"
 #include "exception.h"
 
-const Q_PID AbstractRuntime::INVALID_PID = Q_PID(-1);
 
-QVariantMap AbstractRuntime::s_config;
-
-AbstractRuntime::AbstractRuntime(QObject *parent)
-    : QObject(parent)
-    , m_app(0)
+AbstractRuntime::AbstractRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager)
+    : QObject(manager)
+    , m_container(container)
+    , m_app(app)
+    , m_manager(manager)
 {
     m_securityToken = Cryptography::generateRandomBytes(SecurityTokenSize);
     if (m_securityToken.size() != SecurityTokenSize) {
@@ -51,14 +50,9 @@ AbstractRuntime::AbstractRuntime(QObject *parent)
 
 QVariantMap AbstractRuntime::configuration() const
 {
-    if (m_app)
-        return s_config.value(m_app->runtimeName()).toMap();
+    if (m_manager)
+        return m_manager->configuration();
     return QVariantMap();
-}
-
-bool AbstractRuntime::inProcess() const
-{
-    return false;
 }
 
 QByteArray AbstractRuntime::securityToken() const
@@ -82,9 +76,20 @@ AbstractRuntime::~AbstractRuntime()
         m_app->setCurrentRuntime(0);
 }
 
-QString AbstractRuntime::identifier()
+AbstractRuntimeManager *AbstractRuntime::manager() const
 {
-    return QString();
+    return m_manager;
+}
+
+bool AbstractRuntime::isQuickLauncher() const
+{
+    return false;
+}
+
+bool AbstractRuntime::attachApplicationToQuickLauncher(const Application *app)
+{
+    Q_UNUSED(app)
+    return false;
 }
 
 void AbstractRuntime::setInProcessQmlEngine(QQmlEngine *engine)
@@ -97,7 +102,42 @@ QQmlEngine *AbstractRuntime::inProcessQmlEngine() const
     return m_inProcessQmlEngine;
 }
 
-void AbstractRuntime::setConfiguration(const QVariantMap &config)
+AbstractContainer *AbstractRuntime::container() const
 {
-    s_config = config;
+    return m_container;
+}
+
+AbstractRuntimeManager::AbstractRuntimeManager(const QString &id, QObject *parent)
+    : QObject(parent)
+    , m_id(id)
+{ }
+
+QString AbstractRuntimeManager::defaultIdentifier()
+{
+    return QString();
+}
+
+QString AbstractRuntimeManager::identifier() const
+{
+    return m_id;
+}
+
+bool AbstractRuntimeManager::inProcess() const
+{
+    return false;
+}
+
+bool AbstractRuntimeManager::supportsQuickLaunch() const
+{
+    return false;
+}
+
+QVariantMap AbstractRuntimeManager::configuration() const
+{
+    return m_configuration;
+}
+
+void AbstractRuntimeManager::setConfiguration(const QVariantMap &configuration)
+{
+    m_configuration = configuration;
 }

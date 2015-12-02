@@ -74,8 +74,8 @@ static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
     }
 }
 
-QmlInProcessRuntime::QmlInProcessRuntime(QObject *parent)
-    : AbstractRuntime(parent)
+QmlInProcessRuntime::QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager)
+    : AbstractRuntime(nullptr, app, manager)
 { }
 
 QmlInProcessRuntime::~QmlInProcessRuntime()
@@ -84,19 +84,6 @@ QmlInProcessRuntime::~QmlInProcessRuntime()
     // because it's still the duty of WindowManager together with qml-ui to free and delete this item!!
 
     stop(false);
-}
-
-bool QmlInProcessRuntime::inProcess() const
-{
-    return true;
-}
-
-bool QmlInProcessRuntime::create(const Application *app)
-{
-    if (!app) // || app->runtimeName() != QmlInProcessRuntime::identifier())
-        return false;
-    m_app = app;
-    return true;
 }
 
 bool QmlInProcessRuntime::start()
@@ -249,8 +236,29 @@ void QmlInProcessRuntime::openDocument(const QString &document)
         m_applicationIf->openDocument(document);
 }
 
-Q_PID QmlInProcessRuntime::applicationPID() const
+qint64 QmlInProcessRuntime::applicationProcessId() const
 {
-    return INVALID_PID;
+    return QCoreApplication::applicationPid();
 }
 
+
+QmlInProcessRuntimeManager::QmlInProcessRuntimeManager(const QString &id, QObject *parent)
+    : AbstractRuntimeManager(id, parent)
+{ }
+
+QString QmlInProcessRuntimeManager::defaultIdentifier()
+{
+    return QLatin1String("qml-inprocess");
+}
+
+bool QmlInProcessRuntimeManager::inProcess() const
+{
+    return true;
+}
+
+AbstractRuntime *QmlInProcessRuntimeManager::create(AbstractContainer *container, const Application *app)
+{
+    if (container)
+        return nullptr;
+    return new QmlInProcessRuntime(app, this);
+}

@@ -403,7 +403,7 @@ QVariantMap WindowManager::get(int row) const
 void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 {
     // special hacks to get in-process mode working transparently
-    if (runtime->inProcess()) {
+    if (runtime->manager()->inProcess()) {
         QQuickView *qv = qobject_cast<QQuickView*>(QObject::parent());
 
         runtime->setInProcessQmlEngine(qv->engine());

@@ -46,36 +46,26 @@ private slots:
     void factory();
 };
 
+class TestRuntimeManager;
+
 class TestRuntime : public AbstractRuntime
 {
     Q_OBJECT
 
 public:
-    Q_INVOKABLE explicit TestRuntime(QObject *parent = 0)
-        : AbstractRuntime(parent)
+    explicit TestRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager)
+        : AbstractRuntime(container, app, manager)
         , m_running(false)
     { }
-
-    static QString identifier() { return "foo"; }
-
-    bool inProcess() const
-    {
-        return !AbstractRuntime::inProcess();
-    }
-
-    bool create(const Application *app) override
-    {
-        return (m_app = app);
-    }
 
     State state() const
     {
         return m_running ? Active : Inactive;
     }
 
-    Q_PID applicationPID() const
+    qint64 applicationProcessId() const
     {
-        return m_running ? Q_PID(1) : Q_PID(0);
+        return m_running ? 1 : 0;
     }
 
 public slots:
@@ -96,6 +86,29 @@ private:
 
 };
 
+class TestRuntimeManager : public AbstractRuntimeManager
+{
+    Q_OBJECT
+
+public:
+    TestRuntimeManager(const QString &id, QObject *parent)
+        : AbstractRuntimeManager(id, parent)
+    { }
+
+    static QString defaultIdentifier() { return "foo"; }
+
+    bool inProcess() const
+    {
+        return !AbstractRuntimeManager::inProcess();
+    }
+
+    TestRuntime *create(AbstractContainer *container, const Application *app)
+    {
+        return new TestRuntime(container, app, this);
+    }
+};
+
+
 tst_Runtime::tst_Runtime()
 { }
 
@@ -107,10 +120,10 @@ void tst_Runtime::factory()
     QVERIFY(rf == RuntimeFactory::instance());
     QVERIFY(rf->runtimeIds().isEmpty());
 
-    QVERIFY(rf->registerRuntime<TestRuntime>());
+    QVERIFY(rf->registerRuntime<TestRuntimeManager>());
     QVERIFY(rf->runtimeIds() == QStringList() << "foo");
 
-    QVERIFY(!rf->create(0));
+    QVERIFY(!rf->create(0, 0));
 
     QVariantMap map;
     map.insert("id", "com.foo.test");
@@ -122,12 +135,12 @@ void tst_Runtime::factory()
     Application *a = Application::fromVariantMap(map, &error);
     QVERIFY2(a, qPrintable(error));
 
-    AbstractRuntime *r = rf->create(a);
+    AbstractRuntime *r = rf->create(0, a);
     QVERIFY(r);
     QVERIFY(r->application() == a);
-    QVERIFY(r->inProcess());
+    QVERIFY(r->manager()->inProcess());
     QVERIFY(r->state() == AbstractRuntime::Inactive);
-    QVERIFY(r->applicationPID() == 0);
+    QVERIFY(r->applicationProcessId() == 0);
     {
         QScopedPointer<QQmlEngine> engine(new QQmlEngine());
         QVERIFY(!r->inProcessQmlEngine());
@@ -137,7 +150,7 @@ void tst_Runtime::factory()
     }
     QVERIFY(r->start());
     QVERIFY(r->state() == AbstractRuntime::Active);
-    QVERIFY(r->applicationPID() == Q_PID(1));
+    QVERIFY(r->applicationProcessId() == 1);
     r->stop();
     QVERIFY(r->state() == AbstractRuntime::Inactive);
     QVERIFY(!r->securityToken().isEmpty());

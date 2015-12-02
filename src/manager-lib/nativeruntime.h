@@ -38,7 +38,7 @@
 #include <QProcess>
 
 #include "abstractruntime.h"
-#include "executioncontainer.h"
+#include "abstractcontainer.h"
 
 #define AM_NATIVE_RUNTIME_AVAILABLE
 
@@ -49,30 +49,45 @@ class NativeRuntimeApplicationInterface;
 QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 QT_FORWARD_DECLARE_CLASS(QDBusServer)
 
+
+class NativeRuntimeManager : public AbstractRuntimeManager
+{
+    Q_OBJECT
+public:
+    NativeRuntimeManager(const QString &id, QObject *parent = 0);
+
+    static QString defaultIdentifier();
+    bool supportsQuickLaunch() const override;
+
+    AbstractRuntime *create(AbstractContainer *container, const Application *app) override;
+
+    QDBusServer *applicationInterfaceServer() const;
+
+private:
+    QDBusServer *m_applicationInterfaceServer;
+
+};
+
 class NativeRuntime : public AbstractRuntime
 {
     Q_OBJECT
 
 public:
-    Q_INVOKABLE explicit NativeRuntime(QObject *parent = 0);
+    explicit NativeRuntime(AbstractContainer *container, const Application *app, NativeRuntimeManager *parent);
+    ~NativeRuntime();
 
-    static QString identifier();
+    bool isQuickLauncher() const override;
+    bool attachApplicationToQuickLauncher(const Application *app) override;
 
-    bool create(const Application *app);
-
-    State state() const;
-
-    Q_PID applicationPID() const override;
-
-    static void createInProcess(bool inProcess);
-
-    virtual void openDocument(const QString &document);
+    State state() const override;
+    qint64 applicationProcessId() const override;
+    virtual void openDocument(const QString &document) override;
 
     bool sendNotificationUpdate(Notification *n);
 
 public slots:
-    bool start();
-    void stop(bool forceKill = false);
+    bool start() override;
+    void stop(bool forceKill = false) override;
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface
@@ -85,7 +100,10 @@ private slots:
     void onLauncherFinishedInitialization();
 
 private:
-    QString m_launcherCommand;
+    bool initialize();
+
+    bool m_isQuickLauncher;
+    bool m_needsLauncher;
 
     QString m_document;
     bool m_shutingDown = false;
@@ -96,9 +114,9 @@ private:
 
     NativeRuntimeApplicationInterface *m_applicationInterface = 0;
     NativeRuntimeInterface *m_runtimeInterface = 0;
-    ExecutionContainerProcess *m_process = 0;
+    AbstractContainerProcess *m_process = 0;
 
-    static QDBusServer *s_applicationInterfaceServer;
+    friend class NativeRuntimeManager;
 };
 
 #endif //defined(QT_DBUS_LIB)

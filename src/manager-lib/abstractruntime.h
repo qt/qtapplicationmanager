@@ -40,7 +40,33 @@ QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QQuickItem)
 
 class Application;
-class ExecutionContainer;
+class AbstractContainer;
+class AbstractRuntime;
+class AbstractContainer;
+
+class AbstractRuntimeManager : public QObject
+{
+    Q_OBJECT
+
+public:
+    AbstractRuntimeManager(const QString &id, QObject *parent = 0);
+
+    static QString defaultIdentifier();
+
+    QString identifier() const;
+    virtual bool inProcess() const;
+    virtual bool supportsQuickLaunch() const;
+
+    virtual AbstractRuntime *create(AbstractContainer *container, const Application *app) = 0;
+
+    QVariantMap configuration() const;
+    void setConfiguration(const QVariantMap &configuration);
+
+private:
+    QString m_id;
+    QVariantMap m_configuration;
+};
+
 
 class AM_EXPORT AbstractRuntime : public QObject
 {
@@ -55,21 +81,14 @@ public:
         Shutdown
     };
 
-    static const Q_PID INVALID_PID;
-
-    static QString identifier();
-
-    virtual bool inProcess() const;
-
-    virtual bool create(const Application *app) = 0;
+    AbstractContainer *container() const;
     const Application *application() const;
+    AbstractRuntimeManager *manager() const;
+
+    virtual bool isQuickLauncher() const;
+    virtual bool attachApplicationToQuickLauncher(const Application *app);
 
     virtual State state() const = 0;
-
-    /**
-     * Returns the PID of the application
-     */
-    virtual Q_PID applicationPID() const = 0;
 
     enum { SecurityTokenSize = 16 };
     QByteArray securityToken() const;
@@ -79,15 +98,11 @@ public:
     void setInProcessQmlEngine(QQmlEngine *view);
     QQmlEngine* inProcessQmlEngine() const;
 
-    void setExecutionContainer(ExecutionContainer* container) { m_container = container; }
-    ExecutionContainer* executionContainer() { return m_container; }
-
-    static void setConfiguration(const QVariantMap &config);
+    virtual qint64 applicationProcessId() const = 0;
 
 public slots:
     virtual bool start() = 0;
     virtual void stop(bool forceKill = false) = 0;
-
 
 signals:
     void finished(int exitCode, QProcess::ExitStatus status);
@@ -100,15 +115,16 @@ signals:
 #endif
 
 protected:
-    explicit AbstractRuntime(QObject *parent = 0);
+    explicit AbstractRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager);
 
     QVariantMap configuration() const;
 
+    AbstractContainer *m_container;
     const Application *m_app;
-    ExecutionContainer *m_container = 0;
-    QByteArray m_securityToken;
-    QQmlEngine *m_inProcessQmlEngine = 0;
+    AbstractRuntimeManager *m_manager;
 
-private:
-    static QVariantMap s_config;
+    QByteArray m_securityToken;
+    QQmlEngine *m_inProcessQmlEngine = nullptr;
+
+    friend class AbstractRuntimeManager;
 };

@@ -101,7 +101,7 @@ public:
     QList<const Application *> applications() const;
 
     const Application *fromId(const QString &id) const;
-    const Application *fromProcessId(Q_PID pid) const;
+    const Application *fromProcessId(qint64 pid) const;
     const Application *fromSecurityToken(const QByteArray &securityToken) const;
     const Application *schemeHandler(const QString &scheme) const;
     const Application *mimeTypeHandler(const QString &mimeType) const;

@@ -82,8 +82,11 @@
 #  include "applicationinstaller_adaptor.h"
 #  include "notifications_adaptor.h"
 #endif
-#include "nativeruntime.h"
 #include "runtimefactory.h"
+#include "containerfactory.h"
+#include "quicklauncher.h"
+#include "nativeruntime.h"
+#include "processcontainer.h"
 #include "notificationmanager.h"
 #include "qmlinprocessruntime.h"
 #include "qmlinprocessapplicationinterface.h"
@@ -355,8 +358,6 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after installer setup checks");
 #endif
 
-        AbstractRuntime::setConfiguration(configuration->runtimeConfigurations());
-
         QDir pluginsDir = QDir(a.applicationDirPath() + QLatin1String("/../lib/appman/"));
 
         qCDebug(LogSystem) << "Scanning for plugins in" << pluginsDir.absolutePath();
@@ -381,17 +382,27 @@ int main(int argc, char *argv[])
 #else
         if (configuration->forceSingleProcess()) {
 #endif
-            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntime>();
-            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntime>("qml");
+            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>();
+            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>("qml");
         } else {
-            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntime>();
+            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>();
 #if defined(AM_NATIVE_RUNTIME_AVAILABLE)
-            RuntimeFactory::instance()->registerRuntime<NativeRuntime>();
-            RuntimeFactory::instance()->registerRuntime<NativeRuntime>("qml");
-            //RuntimeFactory::instance()->registerRuntime<NativeRuntime>("html");
+            RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>();
+            RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>("qml");
+            //RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>("html");
+#endif
+#if defined(AM_HOST_CONTAINER_AVAILABLE)
+            ContainerFactory::instance()->registerContainer<ProcessContainerManager>();
 #endif
         }
+        RuntimeFactory::instance()->setConfiguration(configuration->runtimeConfigurations());
+
         startupTimer.checkpoint("after runtime registration");
+
+        QuickLauncher *ql = QuickLauncher::instance();
+        ql->initialize();
+
+        startupTimer.checkpoint("after quick-launcher setup");
 
         QScopedPointer<ApplicationDatabase> adb(configuration->singleApp().isEmpty()
                                                 ? new ApplicationDatabase(configuration->database())
@@ -606,6 +617,7 @@ int main(int argc, char *argv[])
         delete wm;
 #endif
         delete am;
+        delete ql;
 
         delete engine;
 

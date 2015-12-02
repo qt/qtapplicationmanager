@@ -35,26 +35,30 @@
 class FakePelagicoreWindow;
 class QmlInProcessApplicationInterface;
 
+class QmlInProcessRuntimeManager : public AbstractRuntimeManager
+{
+    Q_OBJECT
+public:
+    QmlInProcessRuntimeManager(const QString &id, QObject *parent = 0);
+
+    static QString defaultIdentifier();
+    bool inProcess() const override;
+
+    AbstractRuntime *create(AbstractContainer *container, const Application *app) override;
+};
+
+
 class QmlInProcessRuntime : public AbstractRuntime
 {
     Q_OBJECT
 
 public:
-    Q_INVOKABLE explicit QmlInProcessRuntime(QObject *parent = 0);
+    explicit QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager);
     ~QmlInProcessRuntime();
 
-    static QString identifier() { return "qml-inprocess"; }
-
-    virtual bool inProcess() const override;
-
-    bool create(const Application *app);
-
     State state() const;
-
     void openDocument(const QString &document) override;
-
-    Q_PID applicationPID() const override;
-
+    qint64 applicationProcessId() const override;
 
 public slots:
     bool start();

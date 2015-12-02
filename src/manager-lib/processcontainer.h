@@ -30,47 +30,51 @@
 
 #pragma once
 
-#include "executioncontainer.h"
+#include "abstractcontainer.h"
 
-class NativeProcess;
+#define AM_HOST_CONTAINER_AVAILABLE
 
-class HostContainer : public ExecutionContainer
+class ProcessContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "com.pelagicore.applicationmanager.container.host")
-    Q_INTERFACES (ExecutionContainer)
+public:
+    ProcessContainerManager(const QString &id, QObject *parent = 0);
 
-    class HostProcess : public ExecutionContainerProcess
-    {
-    public:
-        void start(const QString& path, const QStringList& startArguments, const QProcessEnvironment& env);
-        void setWorkingDirectory(const QString &dir);
+    static QString defaultIdentifier();
+    bool supportsQuickLaunch() const override;
 
-        qint64 write(const QByteArray& array) override;
+    AbstractContainer *create() override;
+};
 
-    private:
-        QProcess m_process;
-    };
+class HostProcess : public AbstractContainerProcess
+{
+    Q_OBJECT
 
 public:
+    virtual qint64 processId() const override;
+    virtual QProcess::ProcessState state() const override;
 
-    static const char* IDENTIFIER;
+public slots:
+    void kill() override;
+    void terminate() override;
 
-    HostContainer();
+    void start(const QString &program, const QStringList &arguments);
+    void setWorkingDirectory(const QString &dir) override;
+    void setProcessEnvironment(const QProcessEnvironment &environment) override;
 
-    ~HostContainer();
+private:
+    QProcess m_process;
+};
 
-    QDir applicationBaseDir() override;
+class ProcessContainer : public AbstractContainer
+{
+    Q_OBJECT
 
-    bool setApplication(const Application& app) override;
+public:
+    explicit ProcessContainer(ProcessContainerManager *manager);
+    ~ProcessContainer();
 
     bool isReady() override;
 
-    ExecutionContainerProcess *startApp(const QStringList& startArguments, const QProcessEnvironment& env) override;
-
-    ExecutionContainerProcess *startApp(const QString& app, const QStringList& startArguments, const QProcessEnvironment& env) override;
-
-private:
-    const Application* m_app = nullptr;
-
+    AbstractContainerProcess *start(const QStringList &arguments, const QProcessEnvironment &environment) override;
 };

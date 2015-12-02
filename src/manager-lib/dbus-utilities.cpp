@@ -39,7 +39,7 @@
 #    include <dbus/dbus.h>
 #    include <sys/socket.h>
 
-Q_PID getDBusPeerPid(const QDBusConnection &conn)
+qint64 getDBusPeerPid(const QDBusConnection &conn)
 {
     int socketFd = -1;
     if (dbus_connection_get_socket(static_cast<DBusConnection *>(conn.internalPointer()), &socketFd)) {
@@ -48,15 +48,15 @@ Q_PID getDBusPeerPid(const QDBusConnection &conn)
         if (getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0)
             return ucred.pid;
     }
-    return Q_PID(-1);
+    return 0;
 }
 
 #  else
 
-Q_PID getDBusPeerPid(const QDBusConnection &conn)
+qint64 getDBusPeerPid(const QDBusConnection &conn)
 {
     Q_UNUSED(conn)
-    return Q_PID(-1);
+    return 0;
 }
 
 #  endif

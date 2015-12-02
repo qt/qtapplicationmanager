@@ -9,7 +9,6 @@ SUBDIRS = \
     manager-lib \
     notification-lib \
     installer-lib \
-    containers \
     launchers \
     manager \
     tools \
@@ -24,5 +23,4 @@ notification-lib.depends = common-lib
 installer-lib.depends = common-lib crypto-lib manager-lib
 manager.depends = manager-lib installer-lib
 launchers.depends = manager
-containers.depends = manager
 tools.depends = installer-lib

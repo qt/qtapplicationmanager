@@ -33,9 +33,11 @@
 
 #include "application.h"
 #include "abstractruntime.h"
+#include "abstractcontainer.h"
 #include "runtimefactory.h"
 
-RuntimeFactory *RuntimeFactory::s_instance = 0;
+
+RuntimeFactory *RuntimeFactory::s_instance = nullptr;
 
 RuntimeFactory *RuntimeFactory::instance()
 {
@@ -46,46 +48,62 @@ RuntimeFactory *RuntimeFactory::instance()
 
 RuntimeFactory::RuntimeFactory(QObject *parent)
     : QObject(parent)
-{
-}
+{ }
 
 RuntimeFactory::~RuntimeFactory()
-{
-}
+{ }
 
 QStringList RuntimeFactory::runtimeIds() const
 {
     return m_runtimes.keys();
 }
 
-AbstractRuntime *RuntimeFactory::create(const Application *app)
+AbstractRuntimeManager *RuntimeFactory::manager(const QString &id)
 {
-    if (!app || app->runtimeName().isEmpty() || app->currentRuntime())
-        return 0;
-
-    const QMetaObject *metaObject = m_runtimes.value(app->runtimeName());
-    if (!metaObject)
-        metaObject =  m_runtimes.value(app->runtimeName() + "-inprocess");
-    if (!metaObject)
-        return 0;
-
-    QScopedPointer<QObject> o(metaObject->newInstance(Q_ARG(QObject *, qApp)));
-
-    if (AbstractRuntime *rt = qobject_cast<AbstractRuntime *>(o.data())) {
-        if (rt->create(app)) {
-            app->setCurrentRuntime(rt);
-            o.take();
-            return rt;
-        }
-    }
-    return 0;
+    if (id.isEmpty())
+        return nullptr;
+    AbstractRuntimeManager *arm = m_runtimes.value(id);
+    if (!arm)
+        arm = m_runtimes.value(id + "-inprocess");
+    return arm;
 }
 
-bool RuntimeFactory::registerRuntimeInternal(const QString &identifier, const QMetaObject *metaObject)
+AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, const Application *app)
 {
-    if (!metaObject || identifier.isEmpty() || m_runtimes.contains(identifier))
+    if (!app || app->runtimeName().isEmpty() || app->currentRuntime())
+        return nullptr;
+
+    AbstractRuntimeManager *arm = manager(app->runtimeName());
+    if (!arm)
+        return nullptr;
+
+    AbstractRuntime *art = arm->create(container, app);
+
+    if (art)
+        app->setCurrentRuntime(art);
+    return art;
+}
+
+AbstractRuntime *RuntimeFactory::createQuickLauncher(AbstractContainer *container, const QString &id)
+{
+    AbstractRuntimeManager *arm = manager(id);
+    if (!arm)
+        return nullptr;
+    return arm->create(container, nullptr);
+}
+
+void RuntimeFactory::setConfiguration(const QVariantMap &configuration)
+{
+    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it) {
+        it.value()->setConfiguration(configuration.value(it.key()).toMap());
+    }
+}
+
+bool RuntimeFactory::registerRuntimeInternal(const QString &identifier, AbstractRuntimeManager *manager)
+{
+    if (!manager || identifier.isEmpty() || m_runtimes.contains(identifier))
         return false;
-    m_runtimes.insert(identifier, metaObject);
+    m_runtimes.insert(identifier, manager);
     return true;
 }
 

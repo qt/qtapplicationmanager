@@ -41,10 +41,11 @@
 #include "applicationmanager.h"
 #include "application.h"
 #include "runtimefactory.h"
-#include "executioncontainerfactory.h"
+#include "containerfactory.h"
+#include "quicklauncher.h"
 #include "abstractruntime.h"
 #include "jsonapplicationscanner.h"
-#include "executioncontainer.h"
+#include "abstractcontainer.h"
 #include "dbus-utilities.h"
 #include "qml-utilities.h"
 
@@ -350,13 +351,13 @@ const Application *ApplicationManager::fromId(const QString &id) const
     return 0;
 }
 
-const Application *ApplicationManager::fromProcessId(Q_PID pid) const
+const Application *ApplicationManager::fromProcessId(qint64 pid) const
 {
     if (!pid)
         return 0;
 
     foreach (const Application *app, d->apps) {
-        if (app->currentRuntime() && (app->currentRuntime()->applicationPID() == pid))
+        if (app->currentRuntime() && (app->currentRuntime()->applicationProcessId() == pid))
             return app;
     }
     return 0;
@@ -409,14 +410,14 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         qCWarning(LogSystem) << "Application *app (" << app->id() << ") is blocked";
         return false;
     }
-    AbstractRuntime *rt = app->currentRuntime();
+    AbstractRuntime *runtime = app->currentRuntime();
 
-    if (rt) {
-        switch (rt->state()) {
+    if (runtime) {
+        switch (runtime->state()) {
         case AbstractRuntime::Startup:
         case AbstractRuntime::Active:
             if (!document.isNull())
-                rt->openDocument(document);
+                runtime->openDocument(document);
 
             emit applicationWasReactivated(app->id());
             return true;
@@ -429,58 +430,81 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         }
     }
 
-    if (!rt) {
-        rt = RuntimeFactory::instance()->create(app);
+    bool inProcess = RuntimeFactory::instance()->manager(app->runtimeName())->inProcess();
+    AbstractContainer *container = nullptr;
+    QString containerId = QLatin1String("process"); //TODO: ask SystemUI or use config file
+    bool attachRuntime = false;
 
-        if (rt && rt->inProcess()) {
+    if (!runtime) {
+        if (!inProcess) {
+            // check quicklaunch pool
+            QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
+                    QuickLauncher::instance()->take(containerId, app->m_runtimeName);
+            container = quickLaunch.first;
+            runtime = quickLaunch.second;
+
+            qCDebug(LogSystem) << "Found a quick-launch entry for container" << containerId
+                               << "and runtime" << app->m_runtimeName << "->" << container << runtime;
+
+            if (!container && runtime) {
+                runtime->deleteLater();
+                qCCritical(LogSystem) << "ERROR: QuickLauncher provided a runtime without a container.";
+                return false;
+            }
+
+            if (!container)
+                container = ContainerFactory::instance()->create(containerId);
+            if (!container) {
+                qCCritical(LogSystem) << "ERROR: Couldn't create Container for Application (" << app->id() <<")!";
+                return false;
+            }
+            if (runtime)
+                attachRuntime = true;
+        }
+        if (!runtime)
+            runtime = RuntimeFactory::instance()->create(container, app);
+
+        if (runtime && inProcess)  {
             // evil hook to get in-process mode working transparently
-            emit inProcessRuntimeCreated(rt);
+            emit inProcessRuntimeCreated(runtime);
         }
     }
-    if (!rt) {
+
+    if (!runtime) {
         qCCritical(LogSystem) << "ERROR: Couldn't create Runtime for Application (" << app->id() <<")!";
         return false;
     }
 
-    rt->openDocument(document);
+    runtime->openDocument(document);
 
-    qCDebug(LogSystem) << "app:" << app->id() << "; document:" << document << "; runtime: " << rt;
+    qCDebug(LogSystem) << "app:" << app->id() << "; document:" << document << "; runtime: " << runtime;
 
-    if (rt->inProcess()) {
-        bool ok = rt->start();
+    if (inProcess) {
+        bool ok = runtime->start();
         if (!ok)
-            rt->deleteLater();
+            runtime->deleteLater();
         return ok;
-   }
+    } else {
+        auto f = [=]() {
+            qCDebug(LogSystem) << "Container ready for app (" << app->id() <<")!";
+            bool successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app)
+                                                     : runtime->start();
+            if (!successfullyStarted)
+                runtime->deleteLater(); // ~Runtime() will clean app->m_runtime
 
-    auto container = ExecutionContainerFactory::instance()->create(app);
-    if (!container->init()) {
-        qCCritical(LogSystem) << "ERROR: Couldn't initialize container for Application (" << app->id() <<")!";
-        return false;
+            return successfullyStarted;
+        };
+
+        if (container->isReady()) {
+            // Since the container is already ready, start the app immediately
+            return f();
+        }
+        else {
+            // We postpone the starting of the application to a later point in time since the container is not ready yet
+            connect(container, &AbstractContainer::ready, f);
+            return true;       // we return true for now, since we don't know at this point in time whether the container will be able to start the application. TODO : fix
+        }
     }
-
-    container->setApplication(*app);
-
-    auto f = [=]() {
-        qCDebug(LogSystem) << "Container ready for app (" << app->id() <<")!";
-        rt->setExecutionContainer(container);
-        bool successfullyStarted = rt->start();
-        if (!successfullyStarted)
-            rt->deleteLater(); // ~Runtime() will clean app->m_runtime
-
-        return successfullyStarted;
-    };
-
-    if (container->isReady()) {
-        // Since the container is already ready, start the app immediately
-        return f();
-    }
-    else {
-        // We postpone the starting of the application to a later point in time since the container is not ready yet
-        connect(container, &ExecutionContainer::ready, f);
-        return true;       // we return true for now, since we don't know at this point in time whether the container will be able to start the application. TODO : fix
-    }
-
 }
 
 void ApplicationManager::stopApplication(const Application *app, bool forceKill)
@@ -583,14 +607,12 @@ QStringList ApplicationManager::capabilities(const QString &id)
     Calling this function will validate that the process running with process-identifier \a pid
     was indeed started by the application manager.
     Will return the application's \c id on success or an empty string otherwise.
-
-    \sa Q_PID
 */
 QString ApplicationManager::identifyApplication(qint64 pid)
 {
     AM_AUTHENTICATE_DBUS(QString)
 
-    const Application *app1 = fromProcessId(Q_PID(pid));
+    const Application *app1 = fromProcessId(pid);
 
     if (app1)
         return app1->id();

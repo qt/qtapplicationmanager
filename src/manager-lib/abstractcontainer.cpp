@@ -28,49 +28,57 @@
 **
 ****************************************************************************/
 
-#include <QScopedPointer>
-#include <QCoreApplication>
-
 #include "application.h"
-#include "executioncontainerfactory.h"
-#include "executioncontainer.h"
+#include "abstractcontainer.h"
 
-#include <assert.h>
-#include <QThreadPool>
 
-ExecutionContainerFactory *ExecutionContainerFactory::s_instance = nullptr;
+AbstractContainer::~AbstractContainer()
+{ }
 
-ExecutionContainerFactory *ExecutionContainerFactory::instance()
+bool AbstractContainer::setProgram(const QString &program)
 {
-    if (!s_instance)
-        s_instance = new ExecutionContainerFactory(QCoreApplication::instance());
-    return s_instance;
+    if (!m_program.isEmpty())
+        return false;
+    m_program = program;
+    return true;
 }
 
-ExecutionContainerFactory::ExecutionContainerFactory(QObject *parent)
+void AbstractContainer::setBaseDirectory(const QString &baseDirectory)
+{
+    m_baseDirectory = baseDirectory;
+}
+
+QString AbstractContainer::mapContainerPathToHost(const QString &containerPath) const
+{
+    return containerPath;
+}
+
+QString AbstractContainer::mapHostPathToContainer(const QString &hostPath) const
+{
+    return hostPath;
+}
+
+AbstractContainer::AbstractContainer(AbstractContainerManager *manager)
+    : QObject(manager)
+{ }
+
+
+AbstractContainerManager::AbstractContainerManager(const QString &id, QObject *parent)
     : QObject(parent)
+    , m_id(id)
+{ }
+
+QString AbstractContainerManager::defaultIdentifier()
 {
+    return QString();
 }
 
-ExecutionContainerFactory::~ExecutionContainerFactory()
+QString AbstractContainerManager::identifier() const
 {
+    return m_id;
 }
 
-ExecutionContainer *ExecutionContainerFactory::create(const Application *app)
+bool AbstractContainerManager::supportsQuickLaunch() const
 {
-    Q_UNUSED(app)
-
-    // We use the secure container if it has been registered
-    if (m_secureRuntime.id != nullptr)
-        return m_secureRuntime.m_pool.getInstance();
-    else
-        return m_defaultRuntime.m_pool.getInstance();
-}
-
-void ExecutionContainerFactory::registerExecutionContainer(const char* id, bool secure, ContainerFactoryFunction factoryFunction) {
-    auto& entry = secure ? m_secureRuntime : m_defaultRuntime;
-    entry.id = id;
-    entry.m_pool.setFactoryFunction(factoryFunction);
-    entry.secure = secure;
-    entry.m_pool.triggerInstancesCreation();
+    return false;
 }

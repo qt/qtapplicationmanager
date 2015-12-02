@@ -30,13 +30,16 @@
 
 #pragma once
 
-#include <QMap>
+#include <QHash>
 #include <QObject>
 
 #include "global.h"
 
 class Application;
 class AbstractRuntime;
+class AbstractRuntimeManager;
+class AbstractContainer;
+
 
 class AM_EXPORT RuntimeFactory : public QObject
 {
@@ -47,34 +50,30 @@ public:
 
     QStringList runtimeIds() const;
 
-    AbstractRuntime *create(const Application *app);
+    AbstractRuntimeManager *manager(const QString &id);
+    AbstractRuntime *create(AbstractContainer *container, const Application *app);
+    AbstractRuntime *createQuickLauncher(AbstractContainer *container, const QString &id);
+
+    void setConfiguration(const QVariantMap &configuration);
 
     template<typename T> bool registerRuntime()
     {
-        return registerRuntimeInternal(T::identifier(), &T::staticMetaObject);
+        return registerRuntimeInternal(T::defaultIdentifier(), new T(T::defaultIdentifier(), this));
     }
 
     template<typename T> bool registerRuntime(const QString &id)
     {
-        return registerRuntimeInternal(id, &T::staticMetaObject);
+        return registerRuntimeInternal(id, new T(id, this));
     }
 
-
 private:
-    bool registerRuntimeInternal(const QString &identifier, const QMetaObject *metaObject);
+    bool registerRuntimeInternal(const QString &identifier, AbstractRuntimeManager *manager);
 
-private:
     RuntimeFactory(QObject *parent = 0);
     RuntimeFactory(const RuntimeFactory &);
     RuntimeFactory &operator=(const RuntimeFactory &);
     static RuntimeFactory *s_instance;
 
-    QMap<QString, const QMetaObject *> m_runtimes;
-};
-
-template<typename Type> struct RuntimeRegistration {
-    RuntimeRegistration() {
-        RuntimeFactory::instance()->registerRuntime<Type>();
-    }
+    QHash<QString, AbstractRuntimeManager *> m_runtimes;
 };
 

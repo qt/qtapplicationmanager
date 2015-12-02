@@ -28,51 +28,46 @@
 **
 ****************************************************************************/
 
-#ifndef Q_OS_WIN32
-#  include <signal.h>
-#endif
+#pragma once
 
-#include "application.h"
-#include "executioncontainerfactory.h"
-#include "executioncontainer.h"
+#include <QObject>
+#include <QPair>
+#include <QVector>
+
+class AbstractContainer;
+class AbstractRuntime;
 
 
-QProcess::ProcessState ExecutionContainerProcess::state()
+class QuickLauncher : public QObject
 {
-    return m_state;
-}
+    Q_OBJECT
 
-void ExecutionContainerProcess::kill()
-{
-#ifndef Q_OS_WIN32
-    ::kill(pid(), SIGKILL);
-#endif
-}
+public:
+    static QuickLauncher *instance();
+    ~QuickLauncher();
 
-void ExecutionContainerProcess::terminate()
-{
-#ifndef Q_OS_WIN32
-    ::kill(pid(), SIGTERM);
-#endif
-}
+    void initialize();
 
-Q_PID ExecutionContainerProcess::pid()
-{
-    return m_pid;
-}
+    QPair<AbstractContainer *, AbstractRuntime *> take(const QString &containerId, const QString &runtimeId);
 
-void ExecutionContainerProcess::setFinished(int returnCode, QProcess::ExitStatus status)
-{
-    m_state = QProcess::ProcessState::NotRunning;
-    emit finished(returnCode, status);
-}
+public slots:
+    void rebuild();
 
+private:
+    QuickLauncher(QObject *parent = 0);
+    QuickLauncher(const QuickLauncher &);
+    QuickLauncher &operator=(const QuickLauncher &);
+    static QuickLauncher *s_instance;
 
-ExecutionContainer::~ExecutionContainer()
-{
-}
+    void triggerRebuild(int delay = 0);
 
-bool ExecutionContainer::init()
-{
-    return true;
-}
+    struct QuickLaunchEntry
+    {
+        QString m_containerId;
+        QString m_runtimeId;
+        int m_maximum = 1;
+        QList<QPair<AbstractContainer *, AbstractRuntime *>> m_containersAndRuntimes;
+    };
+
+    QVector<QuickLaunchEntry> m_quickLaunchPool;
+};

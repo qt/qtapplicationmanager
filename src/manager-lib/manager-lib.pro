@@ -33,10 +33,8 @@ HEADERS += \
     applicationdatabase.h \
     applicationmanager.h \
     applicationscanner.h \
-    executioncontainer.h \
     jsonapplicationscanner.h \
     runtimefactory.h \
-    executioncontainerfactory.h \
     applicationinterface.h \
     abstractruntime.h \
     yamlapplicationscanner.h \
@@ -46,7 +44,11 @@ HEADERS += \
     notificationmanager.h \
     qmlinprocessruntime.h \
     qmlinprocessapplicationinterface.h \
-    qml-utilities.h
+    qml-utilities.h \
+    processcontainer.h \
+    abstractcontainer.h \
+    containerfactory.h \
+    quicklauncher.h
 
 !headless:HEADERS += \
     fakepelagicorewindow.h \
@@ -61,10 +63,8 @@ SOURCES += \
     application.cpp \
     applicationdatabase.cpp \
     applicationmanager.cpp \
-    executioncontainer.cpp \
     jsonapplicationscanner.cpp \
     runtimefactory.cpp \
-    executioncontainerfactory.cpp \
     abstractruntime.cpp \
     yamlapplicationscanner.cpp \
     installationlocation.cpp \
@@ -73,7 +73,11 @@ SOURCES += \
     notificationmanager.cpp \
     qmlinprocessruntime.cpp \
     qmlinprocessapplicationinterface.cpp \
-    qml-utilities.cpp
+    qml-utilities.cpp \
+    processcontainer.cpp \
+    abstractcontainer.cpp \
+    containerfactory.cpp \
+    quicklauncher.cpp
 
 !headless:SOURCES += \
     fakepelagicorewindow.cpp \

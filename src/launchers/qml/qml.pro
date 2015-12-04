@@ -13,14 +13,14 @@ SOURCES += \
     qmlapplicationinterface.cpp \
 
 !headless:SOURCES += \
-    pelagicorewindow.cpp \
+    applicationmanagerwindow.cpp \
 
 HEADERS += \
     qmlapplicationinterface.h \
     $$SOURCE_DIR/src/manager-lib/applicationinterface.h \
 
 !headless:HEADERS += \
-    pelagicorewindow.h \
+    applicationmanagerwindow.h \
 
 addStaticLibrary(../../common-lib)
 addStaticLibrary(../../notification-lib)

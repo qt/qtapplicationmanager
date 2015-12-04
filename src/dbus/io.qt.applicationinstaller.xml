@@ -1,6 +1,6 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
-  <interface name="com.pelagicore.ApplicationInstaller">
+  <interface name="io.qt.ApplicationInstaller">
     <property name="allowInstallationOfUnsignedPackages" type="b" access="read"/>
     <property name="developmentMode" type="b" access="read"/>
     <property name="applicationUserIdSeparation" type="b" access="read"/>

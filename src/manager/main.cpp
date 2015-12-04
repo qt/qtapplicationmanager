@@ -93,7 +93,7 @@
 
 #if !defined(AM_HEADLESS)
 #  include "windowmanager.h"
-#  include "fakepelagicorewindow.h"
+#  include "fakeapplicationmanagerwindow.h"
 #endif
 
 #include "configuration.h"
@@ -158,7 +158,7 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &ser
                 .arg(serviceName).arg(dbus).arg(conn.lastError().message());
     }
 
-    if (interfaceName.startsWith("com.pelagicore.")) {
+    if (interfaceName.startsWith("io.qt.")) {
         // Write the bus address of the interface to a file in /tmp. This is needed for the
         // controller tool, which does not even have a session bus, when started via ssh.
 
@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("ApplicationManager");
     QCoreApplication::setOrganizationName(QLatin1String("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(QLatin1String("pelagicore.com"));
-    QCoreApplication::setApplicationVersion(AM_GIT_VERSION);
+    QCoreApplication::setApplicationVersion(AM_VERSION);
 
     qInstallMessageHandler(colorLogToStderr);
     QString error;
@@ -476,22 +476,22 @@ int main(int argc, char *argv[])
 
         startupTimer.checkpoint("after ApplicationInstaller instantiation");
 
-        qmlRegisterSingletonType<ApplicationInstaller>("com.pelagicore.ApplicationInstaller", 0, 1, "ApplicationInstaller",
+        qmlRegisterSingletonType<ApplicationInstaller>("io.qt.ApplicationInstaller", 1, 0, "ApplicationInstaller",
                                                        &ApplicationInstaller::instanceForQml);
 #endif // AM_DISABLE_INSTALLER
 
-        qmlRegisterSingletonType<ApplicationManager>("com.pelagicore.ApplicationManager", 0, 1, "ApplicationManager",
+        qmlRegisterSingletonType<ApplicationManager>("io.qt.ApplicationManager", 1, 0, "ApplicationManager",
                                                      &ApplicationManager::instanceForQml);
-        qmlRegisterSingletonType<SystemMonitor>("com.pelagicore.ApplicationManager", 0, 1, "SystemMonitor",
+        qmlRegisterSingletonType<SystemMonitor>("io.qt.ApplicationManager", 1, 0, "SystemMonitor",
                                                      &SystemMonitor::instanceForQml);
-        qmlRegisterSingletonType<NotificationManager>("com.pelagicore.ApplicationManager", 0, 1, "NotificationManager",
+        qmlRegisterSingletonType<NotificationManager>("io.qt.ApplicationManager", 1, 0, "NotificationManager",
                                                      &NotificationManager::instanceForQml);
-        qmlRegisterType<QmlInProcessNotification>("com.pelagicore.ApplicationManager", 0, 1, "Notification");
+        qmlRegisterType<QmlInProcessNotification>("io.qt.ApplicationManager", 1, 0, "Notification");
 
 #if !defined(AM_HEADLESS)
-        qmlRegisterSingletonType<WindowManager>("com.pelagicore.ApplicationManager", 0, 1, "WindowManager",
+        qmlRegisterSingletonType<WindowManager>("io.qt.ApplicationManager", 1, 0, "WindowManager",
                                                 &WindowManager::instanceForQml);
-        qmlRegisterType<FakePelagicoreWindow>("com.pelagicore.ApplicationManager", 0, 1, "PelagicoreWindow");
+        qmlRegisterType<FakeApplicationManagerWindow>("io.qt.ApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
 
         startupTimer.checkpoint("after QML registrations");
@@ -532,12 +532,12 @@ int main(int argc, char *argv[])
         }
 
 #if defined(QT_DBUS_LIB)
-        registerDBusObject(new ApplicationManagerAdaptor(am), "com.pelagicore.ApplicationManager", "/Manager");
+        registerDBusObject(new ApplicationManagerAdaptor(am), "io.qt.ApplicationManager", "/Manager");
         if (!am->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(am))))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");
 
 #  if !defined(AM_DISABLE_INSTALLER)
-        registerDBusObject(new ApplicationInstallerAdaptor(ai), "com.pelagicore.ApplicationManager", "/Installer");
+        registerDBusObject(new ApplicationInstallerAdaptor(ai), "io.qt.ApplicationManager", "/Installer");
         if (!ai->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(ai))))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationInstaller");
 #  endif

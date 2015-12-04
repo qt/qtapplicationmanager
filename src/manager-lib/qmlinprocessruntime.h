@@ -32,7 +32,7 @@
 
 #include "abstractruntime.h"
 
-class FakePelagicoreWindow;
+class FakeApplicationManagerWindow;
 class QmlInProcessApplicationInterface;
 
 class QmlInProcessRuntimeManager : public AbstractRuntimeManager
@@ -81,12 +81,12 @@ private:
     QmlInProcessApplicationInterface *m_applicationIf = 0;
 
 #if !defined(AM_HEADLESS)
-    // used by FakePelagicoreWindow to register windows
+    // used by FakeApplicationManagerWindow to register windows
     void addWindow(QQuickItem *window);
 
-    FakePelagicoreWindow *m_mainWindow = 0;
+    FakeApplicationManagerWindow *m_mainWindow = 0;
     QList<QQuickItem *> m_windows;
 
-    friend class FakePelagicoreWindow; // for emitting signals on behalf of this class in onComplete
+    friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
 #endif
 };

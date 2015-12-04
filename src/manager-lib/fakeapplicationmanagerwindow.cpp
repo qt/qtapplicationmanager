@@ -27,38 +27,38 @@
 ** SPDX-License-Identifier: GPL-3.0
 **
 ****************************************************************************/
-#include "fakepelagicorewindow.h"
+#include "fakeapplicationmanagerwindow.h"
 #include "qmlinprocessruntime.h"
 
 
-FakePelagicoreWindow::FakePelagicoreWindow(QQuickItem *parent)
+FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
     : QQuickItem(parent)
     , m_runtime(0)
 {
-    qCDebug(LogSystem) << "FakePelagicoreWindow ctor! this:" << this;
+    qCDebug(LogSystem) << "FakeApplicationManagerWindow ctor! this:" << this;
 
 }
 
-FakePelagicoreWindow::~FakePelagicoreWindow()
+FakeApplicationManagerWindow::~FakeApplicationManagerWindow()
 {
-    qCDebug(LogSystem) << "FakePelagicoreWindow dtor! this: " << this;
+    qCDebug(LogSystem) << "FakeApplicationManagerWindow dtor! this: " << this;
 }
 
-void FakePelagicoreWindow::close()
+void FakeApplicationManagerWindow::close()
 {
     emit fakeCloseSignal();
 }
 
-void FakePelagicoreWindow::showFullScreen()
+void FakeApplicationManagerWindow::showFullScreen()
 {
     emit fakeFullScreenSignal();
 }
-void FakePelagicoreWindow::showMaximized()
+void FakeApplicationManagerWindow::showMaximized()
 {
     emit fakeNoFullScreenSignal();
 }
 
-void FakePelagicoreWindow::showNormal()
+void FakeApplicationManagerWindow::showNormal()
 {
     // doesn't work in wayland right now, so do nothing... revisit later (after andies resize-redesign)
 }
@@ -81,7 +81,7 @@ static bool isName(const QByteArray &key)
 }
 
 
-bool FakePelagicoreWindow::setWindowProperty(const QString &name, const QVariant &value)
+bool FakeApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
     QByteArray key = nameToKey(name);
     QVariant oldValue = property(key);
@@ -93,13 +93,13 @@ bool FakePelagicoreWindow::setWindowProperty(const QString &name, const QVariant
     return true;
 }
 
-QVariant FakePelagicoreWindow::windowProperty(const QString &name) const
+QVariant FakeApplicationManagerWindow::windowProperty(const QString &name) const
 {
     QByteArray key = nameToKey(name);
     return property(key);
 }
 
-QVariantMap FakePelagicoreWindow::windowProperties() const
+QVariantMap FakeApplicationManagerWindow::windowProperties() const
 {
     QList<QByteArray> keys = dynamicPropertyNames();
     QVariantMap map;
@@ -115,7 +115,7 @@ QVariantMap FakePelagicoreWindow::windowProperties() const
     return map;
 }
 
-bool FakePelagicoreWindow::event(QEvent *e)
+bool FakeApplicationManagerWindow::event(QEvent *e)
 {
     if (e->type() == QEvent::DynamicPropertyChange) {
         QDynamicPropertyChangeEvent *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
@@ -132,16 +132,16 @@ bool FakePelagicoreWindow::event(QEvent *e)
     return QQuickItem::event(e);
 }
 
-void FakePelagicoreWindow::componentComplete()
+void FakeApplicationManagerWindow::componentComplete()
 {
-    qCDebug(LogSystem) << "FakePelagicoreWindow componentComplete() this:" << this;
+    qCDebug(LogSystem) << "FakeApplicationManagerWindow componentComplete() this:" << this;
 
     QQuickItem::componentComplete();
 
     QQuickItem *parent = parentItem();
 
     while (parent && !m_runtime) {
-        if (FakePelagicoreWindow *windowParent = qobject_cast<FakePelagicoreWindow *>(parent)) {
+        if (FakeApplicationManagerWindow *windowParent = qobject_cast<FakeApplicationManagerWindow *>(parent)) {
             m_runtime = windowParent->m_runtime;
         }
         parent = parent->parentItem();

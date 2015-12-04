@@ -24,3 +24,6 @@ installer-lib.depends = common-lib crypto-lib manager-lib
 manager.depends = manager-lib installer-lib
 launchers.depends = manager
 tools.depends = installer-lib
+
+OTHER_FILES = \
+    dbus/*

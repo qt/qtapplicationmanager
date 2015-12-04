@@ -42,10 +42,10 @@ needs to be supplied on the command-line at startup, which will act as compositi
 using the APIs that are exported from the C++ side:
 
 \list
-    \li \l {com.pelagicore.ApplicationManager::ApplicationManager}{ApplicationManager}
-    \li \l {com.pelagicore.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
-    \li \l {com.pelagicore.ApplicationManager::WindowManager}{WindowManager}
-    \li \l {com.pelagicore.ApplicationManager::NotificationManager}{NotificationManager}
+    \li \l {io.qt.ApplicationManager::ApplicationManager}{ApplicationManager}
+    \li \l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
+    \li \l {io.qt.ApplicationManager::WindowManager}{WindowManager}
+    \li \l {io.qt.ApplicationManager::NotificationManager}{NotificationManager}
 \endlist
 
 \chapter Configuration
@@ -120,7 +120,7 @@ command-line options.
     \li \c map<object>
     \li Allows for more fine-grained control over D-Bus registrations and function call policies.
         Every key in this map corresponds to the D-Bus interface name you want to configure (
-        \c com.pelagicore.ApplicationManager, \c com.pelagicore.ApplicationInstaller or \c
+        \c io.qt.ApplicationManager, \c io.qt.ApplicationInstaller or \c
         org.freedesktop.Notifications). If such a key is present, it will take precedence over the
         command-line option \c dbus.
         Each key's value is a \l{D-Bus specification} object.
@@ -232,7 +232,7 @@ to remotely call \c acknowledgePackageInstallation:
 \code
 ...
 dbus:
-  com.pelagicore.ApplicationInstaller:
+  io.qt.ApplicationInstaller:
     register: 'session'
     policy:
       startPackageInstallation:
@@ -246,7 +246,7 @@ dbus:
 \keyword Installation Locations
 
 The \c installationLocations YAML field is a list of YAML objects, very similar to
-\l{com.pelagicore.ApplicationManager::}{ApplicationInstaller::getInstallationLocation}
+\l{io.qt.ApplicationManager::}{ApplicationInstaller::getInstallationLocation}
 
 \table
 \header
@@ -333,7 +333,7 @@ additional tasks:
 \list 1
 
     \li If you write a QML application, make the root element of your QML scene a
-    \l{com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow} (or derive your own
+    \l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow} (or derive your own
     custom root item from it).
 
     \li Provide a valid \l{Manifest definition}{info.yaml} file.
@@ -346,9 +346,9 @@ additional tasks:
 \section2 The root element
 
 Making the root element of your QML application a
-\l{com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow} is only mandatory if you
+\l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow} is only mandatory if you
 ever want to run in single-process mode (without Wayland). Please see the
-\l{com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow documentaton} for more
+\l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow documentaton} for more
 information.
 
 \section2 The manifest and updating the database
@@ -363,7 +363,7 @@ file known to the application-manager, you have to force a rebuild of this datab
 \c{appman --recreate-database}.
 
 \note Dynamically adding/updating/removing single applications is supported via the
-\l {com.pelagicore.ApplicationManager::ApplicationInstaller}{ApplicationInstaller} interface.
+\l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller} interface.
 
 
 \chapter API Reference
@@ -435,7 +435,7 @@ application-manager at runtime. There are two interfaces for this functionality:
         application-manager's \c ApplicationInstaller interface.
 \endlist
 
-Both interfaces are very similar and are both documented in the \l {com.pelagicore.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
+Both interfaces are very similar and are both documented in the \l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
 
 \note A prerequisite for dynamically installed application packages is a valid \l{installation locations}
 configuration for the application-manager.

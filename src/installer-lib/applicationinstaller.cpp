@@ -59,7 +59,7 @@
 
 /*!
     \qmltype ApplicationInstaller
-    \inqmlmodule com.pelagicore.ApplicationManager 0.1
+    \inqmlmodule io.qt.ApplicationManager 1.0
     \brief The ApplicationInstaller singleton
 
     This singleton class handles the package installation part of the application manager. It provides
@@ -111,7 +111,7 @@
 
     The QML import for this singleton is
 
-    \c{import com.pelagicore.ApplicationManager 0.1}
+    \c{import io.qt.ApplicationManager 1.0}
 */
 
 // THIS IS MISSING AN EXAMPLE!

@@ -17,5 +17,5 @@ SOURCES +=  \
     main.cpp \
 
 DBUS_INTERFACES += \
-    ../../dbus/com.pelagicore.applicationinstaller.xml \
-    ../../dbus/com.pelagicore.applicationmanager.xml
+    ../../dbus/io.qt.applicationinstaller.xml \
+    ../../dbus/io.qt.applicationmanager.xml

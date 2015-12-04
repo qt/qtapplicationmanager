@@ -84,7 +84,7 @@ HTML.footer = \
 qhp.projects            = appman
 
 qhp.appman.file                = appman.qhp
-qhp.appman.namespace           = com.pelagicore.appman.100
+qhp.appman.namespace           = io.qt.appman.100
 qhp.appman.virtualFolder       = qdoc
 qhp.appman.indexTitle          = Public API of the application manager: QML and DBus
 qhp.appman.indexRoot           =

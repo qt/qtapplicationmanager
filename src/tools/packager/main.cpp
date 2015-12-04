@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     QCoreApplication::setApplicationName("ApplicationManager Packager");
     QCoreApplication::setOrganizationName(QLatin1String("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(QLatin1String("pelagicore.com"));
-    QCoreApplication::setApplicationVersion(AM_GIT_VERSION);
+    QCoreApplication::setApplicationVersion(AM_VERSION);
 
     QCoreApplication app(argc, argv);
 

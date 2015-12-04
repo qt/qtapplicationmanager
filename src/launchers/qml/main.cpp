@@ -53,7 +53,7 @@
 #  include <QQuickView>
 #  include <QQuickWindow>
 
-#  include "pelagicorewindow.h"
+#  include "applicationmanagerwindow.h"
 #else
 #  include <QCoreApplication>
 #endif
@@ -161,10 +161,10 @@ int main(int argc, char *argv[])
 #else
     QGuiApplication a(argc, argv);
 
-    qmlRegisterType<PelagicoreWindow>("com.pelagicore.ApplicationManager", 0, 1, "PelagicoreWindow");
+    qmlRegisterType<ApplicationManagerWindow>("io.qt.ApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
 
-    qmlRegisterType<QmlNotification>("com.pelagicore.Notification", 0, 1, "Notification");
+    qmlRegisterType<QmlNotification>("io.qt.Notification", 1, 0, "Notification");
 
     QByteArray dbusAddress = qgetenv("AM_DBUS_PEER_ADDRESS");
     if (dbusAddress.isEmpty())

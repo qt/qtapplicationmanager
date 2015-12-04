@@ -52,7 +52,7 @@ HEADERS += \
     systemmonitor.h \
 
 !headless:HEADERS += \
-    fakepelagicorewindow.h \
+    fakeapplicationmanagerwindow.h \
     window.h \
 
 linux:HEADERS += systemmonitor_linux.h
@@ -84,7 +84,7 @@ SOURCES += \
     systemmonitor.cpp \
 
 !headless:SOURCES += \
-    fakepelagicorewindow.cpp \
+    fakeapplicationmanagerwindow.cpp \
     window.cpp \
 
 linux:SOURCES += systemmonitor_linux.cpp

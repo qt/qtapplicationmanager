@@ -55,7 +55,7 @@ class ApplicationManager : public QAbstractListModel
 #endif
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "com.pelagicore.ApplicationManager")
+    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports

@@ -35,7 +35,7 @@
 #if !defined(AM_HEADLESS)
 #  include <QQuickView>
 
-#  include "fakepelagicorewindow.h"
+#  include "fakeapplicationmanagerwindow.h"
 #endif
 
 #include "application.h"
@@ -139,10 +139,10 @@ bool QmlInProcessRuntime::start()
     }
 
 #if !defined(AM_HEADLESS)
-    FakePelagicoreWindow *window = qobject_cast<FakePelagicoreWindow*>(obj);
+    FakeApplicationManagerWindow *window = qobject_cast<FakeApplicationManagerWindow*>(obj);
 
     if (!window) {
-        qCCritical(LogSystem) << "could not load" << m_app->absoluteCodeFilePath() << ": root object is not a PelagicoreWindow.";
+        qCCritical(LogSystem) << "could not load" << m_app->absoluteCodeFilePath() << ": root object is not a ApplicationManagerWindow.";
         delete obj;
         delete appContext;
         delete m_applicationIf;
@@ -192,14 +192,14 @@ void QmlInProcessRuntime::onWindowDestroyed()
 
 void QmlInProcessRuntime::onEnableFullscreen()
 {
-    FakePelagicoreWindow *window = qobject_cast<FakePelagicoreWindow *>(sender());
+    FakeApplicationManagerWindow *window = qobject_cast<FakeApplicationManagerWindow *>(sender());
 
     emit inProcessSurfaceItemFullscreenChanging(window, true);
 }
 
 void QmlInProcessRuntime::onDisableFullscreen()
 {
-    FakePelagicoreWindow *window = qobject_cast<FakePelagicoreWindow *>(sender());
+    FakeApplicationManagerWindow *window = qobject_cast<FakeApplicationManagerWindow *>(sender());
 
     emit inProcessSurfaceItemFullscreenChanging(window, false);
 }
@@ -208,10 +208,10 @@ void QmlInProcessRuntime::addWindow(QQuickItem *window)
 {
     m_windows.append(window);
 
-    if (auto pcw = qobject_cast<FakePelagicoreWindow *>(window)) {
-        connect(pcw, &FakePelagicoreWindow::fakeFullScreenSignal, this, &QmlInProcessRuntime::onEnableFullscreen);
-        connect(pcw, &FakePelagicoreWindow::fakeNoFullScreenSignal, this, &QmlInProcessRuntime::onDisableFullscreen);
-        connect(pcw, &FakePelagicoreWindow::fakeCloseSignal, this, &QmlInProcessRuntime::onWindowClose);
+    if (auto pcw = qobject_cast<FakeApplicationManagerWindow *>(window)) {
+        connect(pcw, &FakeApplicationManagerWindow::fakeFullScreenSignal, this, &QmlInProcessRuntime::onEnableFullscreen);
+        connect(pcw, &FakeApplicationManagerWindow::fakeNoFullScreenSignal, this, &QmlInProcessRuntime::onDisableFullscreen);
+        connect(pcw, &FakeApplicationManagerWindow::fakeCloseSignal, this, &QmlInProcessRuntime::onWindowClose);
         connect(pcw, &QObject::destroyed, this, &QmlInProcessRuntime::onWindowDestroyed);
 
         emit inProcessSurfaceItemReady(window);

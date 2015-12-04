@@ -48,9 +48,9 @@ QmlApplicationInterface::QmlApplicationInterface(const QString &dbusConnectionNa
         qCritical("ERROR: only one instance of QmlApplicationInterface is allowed");
     s_instance = this;
 
-    m_applicationIf = new QDBusInterface("", "/ApplicationInterface", "com.pelagicore.ApplicationManager.ApplicationInterface",
+    m_applicationIf = new QDBusInterface("", "/ApplicationInterface", "io.qt.ApplicationManager.ApplicationInterface",
                                          QDBusConnection(dbusConnectionName), this);
-    m_runtimeIf = new QDBusInterface("", "/RuntimeInterface", "com.pelagicore.ApplicationManager.RuntimeInterface",
+    m_runtimeIf = new QDBusInterface("", "/RuntimeInterface", "io.qt.ApplicationManager.RuntimeInterface",
                                      QDBusConnection(dbusConnectionName), this);
     m_notifyIf = new QDBusInterface("org.freedesktop.Notifications", "/org/freedesktop/Notifications", "org.freedesktop.Notifications",
                                     QDBusConnection::sessionBus(), this);

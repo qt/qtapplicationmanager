@@ -35,7 +35,7 @@
   \brief A listing of standard QML elements.
 
 These are the functionally grouped lists of QML elements as part of \c
-com.pelagicore.ApplicationManager.
+io.qt.ApplicationManager.
 
 QML Singletons need not to be declared, but can be referenced by just their element name.
 
@@ -44,19 +44,19 @@ elements, thereby creating a parent-child relationship between the two elements.
 
 \section1 QML Singletons
 \list
-\li \l {com.pelagicore.ApplicationManager::ApplicationManager}{ApplicationManager}
+\li \l {io.qt.ApplicationManager::ApplicationManager}{ApplicationManager}
     - The application model and controller
-\li \l {com.pelagicore.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
+\li \l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
     - The package installation/removal/update part of the application-manager.
-\li \l {com.pelagicore.ApplicationManager::WindowManager}{WindowManager}
+\li \l {io.qt.ApplicationManager::WindowManager}{WindowManager}
     - The window model and controller
-\li \l {com.pelagicore.ApplicationManager::NotificationManager}{NotificationManager}
+\li \l {io.qt.ApplicationManager::NotificationManager}{NotificationManager}
     - The notification model, which receives freedesktop.org compliant notification requests
 \endlist
 
 \section1 Basic QML Elements
 \list
-\li \l {com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow}
+\li \l {io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow}
     - The window element that is required in a multi-process environment
 \endlist
 

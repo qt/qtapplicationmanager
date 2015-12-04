@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("ApplicationManager Controller");
     QCoreApplication::setOrganizationName(QLatin1String("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(QLatin1String("pelagicore.com"));
-    QCoreApplication::setApplicationVersion(AM_GIT_VERSION);
+    QCoreApplication::setApplicationVersion(AM_VERSION);
 
     QCoreApplication a(argc, argv);
     QCommandLineParser clp;
@@ -111,8 +111,8 @@ int main(int argc, char *argv[])
         return 5;
     }
 
-    ComPelagicoreApplicationManagerInterface manager("com.pelagicore.ApplicationManager", "/Manager", conn);
-    ComPelagicoreApplicationInstallerInterface installer("com.pelagicore.ApplicationManager", "/Installer", conn);
+    IoQtApplicationManagerInterface manager("io.qt.ApplicationManager", "/Manager", conn);
+    IoQtApplicationInstallerInterface installer("io.qt.ApplicationManager", "/Installer", conn);
 
     fprintf(stdout, "Starting installation of package %s...\n", qPrintable(package));
 
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 
     // as soon as we have the manifest available: get the app id and acknowledge the installation
 
-    QObject::connect(&installer, &ComPelagicoreApplicationInstallerInterface::taskRequestingInstallationAcknowledge,
+    QObject::connect(&installer, &IoQtApplicationInstallerInterface::taskRequestingInstallationAcknowledge,
                      [&installer, &installationId, &applicationId](const QString &taskId, const QVariantMap &metadata) {
         if (taskId != installationId)
             return;
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 
     // on failure: quit
 
-    QObject::connect(&installer, &ComPelagicoreApplicationInstallerInterface::taskFailed,
+    QObject::connect(&installer, &IoQtApplicationInstallerInterface::taskFailed,
                      [&installationId](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 
     // when the installation finished successfully: launch the application
 
-    QObject::connect(&installer, &ComPelagicoreApplicationInstallerInterface::taskFinished,
+    QObject::connect(&installer, &IoQtApplicationInstallerInterface::taskFinished,
                      [&manager, &applicationId, &installationId](const QString &taskId) {
         if (taskId != installationId)
             return;

@@ -1,6 +1,6 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
-  <interface name="com.pelagicore.ApplicationManager">
+  <interface name="io.qt.ApplicationManager">
     <property name="count" type="i" access="read"/>
     <property name="securityChecksEnabled" type="b" access="read"/>
     <property name="dummy" type="b" access="read"/>

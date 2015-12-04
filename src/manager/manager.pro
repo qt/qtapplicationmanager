@@ -60,8 +60,8 @@ SOURCES += \
 
 
 DBUS_ADAPTORS += \
-    ../dbus/com.pelagicore.applicationmanager.xml \
-    ../dbus/com.pelagicore.applicationinstaller.xml \
+    ../dbus/io.qt.applicationmanager.xml \
+    ../dbus/io.qt.applicationinstaller.xml \
 
 # this is a bit more complicated than it should be, but qdbusxml2cpp cannot
 # cope with more than 1 out value out of the box
@@ -78,11 +78,11 @@ INSTALLS += dbusif
 
 qtPrepareTool(QDBUSCPP2XML, qdbuscpp2xml)
 
-#recreate-manager-dbus-xml.target = $$PWD/../dbus/com.pelagicore.applicationmanager.xml
+#recreate-manager-dbus-xml.target = $$PWD/../dbus/io.qt.applicationmanager.xml
 recreate-manager-dbus-xml.CONFIG = phony
 recreate-manager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager-lib/applicationmanager.h -o $$recreate-manager-dbus-xml.target
 
-#recreate-installer-dbus-xml.target = $$PWD/../dbus/com.pelagicore.applicationinstaller.xml
+#recreate-installer-dbus-xml.target = $$PWD/../dbus/io.qt.applicationinstaller.xml
 recreate-installer-dbus-xml.CONFIG = phony
 recreate-installer-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../installer-lib/applicationinstaller.h -o $$recreate-installer-dbus-xml.target
 

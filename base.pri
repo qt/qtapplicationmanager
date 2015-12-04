@@ -12,10 +12,7 @@ disable-installer:DEFINES *= AM_DISABLE_INSTALLER
 systemd-workaround:DEFINES *= AM_SYSTEMD_WORKAROUND
 headless:DEFINES *= AM_HEADLESS
 
-!win32:exists($$SOURCE_DIR/.git):GIT_VERSION=$$system(cd "$$SOURCE_DIR" && git describe --tags --always 2>/dev/null)
-isEmpty(GIT_VERSION):GIT_VERSION="unknown"
-DEFINES *= AM_GIT_VERSION=\\\"$$GIT_VERSION\\\"
-
+DEFINES *= AM_VERSION=\\\"$$VERSION\\\"
 
 defineTest(CONFIG_VALUE) {
     !contains(CONFIG, "^$$1=.*"):return(false)

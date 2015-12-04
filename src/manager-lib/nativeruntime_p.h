@@ -37,7 +37,7 @@ class NativeRuntime;
 class NativeRuntimeApplicationInterface : public ApplicationInterface
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "com.pelagicore.ApplicationManager.ApplicationInterface")
+    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")
 
 public:
     NativeRuntimeApplicationInterface(NativeRuntime *runtime);
@@ -51,7 +51,7 @@ private:
 class NativeRuntimeInterface : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "com.pelagicore.ApplicationManager.RuntimeInterface")
+    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.RuntimeInterface")
 
 public:
     NativeRuntimeInterface(NativeRuntime *runtime);

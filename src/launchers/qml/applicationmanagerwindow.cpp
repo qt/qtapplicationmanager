@@ -33,13 +33,13 @@
 #include <qpa/qplatformnativeinterface.h>
 #include <qpa/qplatformwindow.h>
 
-#include "pelagicorewindow.h"
+#include "applicationmanagerwindow.h"
 
 
-class PelagicoreWindowPrivate
+class ApplicationManagerWindowPrivate
 {
 public:
-    PelagicoreWindowPrivate()
+    ApplicationManagerWindowPrivate()
         : frameCount(0)
         , currentFPS(0)
         , platformNativeInterface(0)
@@ -58,34 +58,34 @@ public:
 
 
 /*!
-    \class PelagicoreWindow
+    \class ApplicationManagerWindow
     \internal
 */
 
 /*!
-    \qmltype PelagicoreWindow
-    \inqmlmodule com.pelagicore.ApplicationManager 0.1
-    \brief The PelagicoreWindow item
+    \qmltype ApplicationManagerWindow
+    \inqmlmodule io.qt.ApplicationManager 1.0
+    \brief The ApplicationManagerWindow item
 
     This QML item should be used as the root item in your QML application. In doing so, you enable
     your application to be usable in both the single-process (EGL fullscreen, X11) and
     multi-process modes (Wayland) and you enable your application to take part in the
     application-manager's MIME-type mechanism.
 
-    If you are not using PelagicoreWindow as the QML root item, your application will only work in
-    multi-process (Wayland), plus it cannot be registered as a MIME-type handler.
+    If you are not using ApplicationManagerWindow as the QML root item, your application will only
+    work in multi-process (Wayland), plus it cannot be registered as a MIME-type handler.
 
     The QML import for this item is
 
-    \c{import com.pelagicore.ApplicationManager 0.1}
+    \c{import io.qt.ApplicationManager 1.0}
 
     After importing, you can instantiate the QML item like so:
 
     \qml
     import QtQuick 2.0
-    import com.pelagicore.ApplicationManager 0.1
+    import io.qt.ApplicationManager 1.0
 
-    PelagicoreWindow {
+    ApplicationManagerWindow {
         id: root
 
         Text {
@@ -95,13 +95,13 @@ public:
     \endqml
 
     In order to make your applications easily runnable outside of the application-manager, even
-    though you are using a PelagicoreWindow as a root item, you can simply provide this little
-    dummy import to your application.
+    though you are using a ApplicationManagerWindow as a root item, you can simply provide this
+    little dummy import to your application.
 
     \list 1
-    \li Pick a base dir and create a directory hierarchy like \c{com/pelagicore/ApplicationManager}
-    \li Add a file named \c qmldir there, consisting of the single line \c{PelagicoreWindow 0.1 PelagicoreWindow.qml}
-    \li Add a second file named \c PelagicoreWindow.qml, with the following content
+    \li Pick a base dir and create a directory hierarchy like \c{io/qt/ApplicationManager}
+    \li Add a file named \c qmldir there, consisting of the single line \c{ApplicationManagerWindow 1.0 ApplicationManagerWindow.qml}
+    \li Add a second file named \c ApplicationManagerWindow.qml, with the following content
 
     \qml
     import QtQuick 2.0
@@ -124,7 +124,7 @@ public:
 */
 
 /*!
-    \qmlproperty string PelagicoreWindow::startArgument
+    \qmlproperty string ApplicationManagerWindow::startArgument
 
     This property holds start argument, supplied to the application by the application-manager.
     This could in theory be anything, but will practically most likely be an URL to a document that
@@ -133,57 +133,57 @@ public:
 */
 
 /*!
-    \qmlproperty real PelagicoreWindow::fps
+    \qmlproperty real ApplicationManagerWindow::fps
 
     This property holds the current frames-per-second value: in ideal cases the value should be
     exactly \c 60 when animations are running and \c 0 when the application is idle.
 */
 
 /*
-    \fn void PelagicoreWindow::setStartArgument(const QString& arg)
+    \fn void ApplicationManagerWindow::setStartArgument(const QString& arg)
     \internal
 */
 
 
-PelagicoreWindow::PelagicoreWindow(QWindow *parent)
+ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
     : QQuickWindow(parent)
-    , d(new PelagicoreWindowPrivate())
+    , d(new ApplicationManagerWindowPrivate())
 {
     setFlags(flags() | Qt::FramelessWindowHint);
     setWidth(1024);
     setHeight(768);
 
-    connect(this, &QQuickWindow::frameSwapped, this, &PelagicoreWindow::onFrameSwapped);
+    connect(this, &QQuickWindow::frameSwapped, this, &ApplicationManagerWindow::onFrameSwapped);
 
     (void) winId(); // force allocation of platform resources
 
     d->platformNativeInterface = qApp->platformNativeInterface();
     d->platformWindow = handle();
     if (!d->platformNativeInterface) {
-        qWarning() << "ERROR: PelagicoreWindow failed to get a valid QPlatformNativeInterface object";
+        qWarning() << "ERROR: ApplicationManagerWindow failed to get a valid QPlatformNativeInterface object";
         return;
     }
     if (!d->platformWindow) {
-        qWarning() << "ERROR: PelagicoreWindow failed to get a QPlatformWindow handle for itself";
+        qWarning() << "ERROR: ApplicationManagerWindow failed to get a QPlatformWindow handle for itself";
         return;
     }
     connect(d->platformNativeInterface, &QPlatformNativeInterface::windowPropertyChanged,
-            this, &PelagicoreWindow::onWindowPropertyChangedInternal);
+            this, &ApplicationManagerWindow::onWindowPropertyChangedInternal);
 }
 
-void PelagicoreWindow::onWindowPropertyChangedInternal(QPlatformWindow *pw, const QString &name)
+void ApplicationManagerWindow::onWindowPropertyChangedInternal(QPlatformWindow *pw, const QString &name)
 {
     if (pw == d->platformWindow && d->platformWindow && d->platformNativeInterface) {
         emit windowPropertyChanged(name, d->platformNativeInterface->windowProperty(pw, name));
     }
 }
 
-float PelagicoreWindow::fps() const
+float ApplicationManagerWindow::fps() const
 {
     return d->currentFPS;
 }
 
-bool PelagicoreWindow::setWindowProperty(const QString &name, const QVariant &value)
+bool ApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
     if (!d->platformNativeInterface && !d->platformWindow)
         return false;
@@ -191,21 +191,21 @@ bool PelagicoreWindow::setWindowProperty(const QString &name, const QVariant &va
     return true;
 }
 
-QVariant PelagicoreWindow::windowProperty(const QString &name) const
+QVariant ApplicationManagerWindow::windowProperty(const QString &name) const
 {
     if (!d->platformNativeInterface && !d->platformWindow)
         return QVariant();
     return d->platformNativeInterface->windowProperty(d->platformWindow, name);
 }
 
-QVariantMap PelagicoreWindow::windowProperties() const
+QVariantMap ApplicationManagerWindow::windowProperties() const
 {
     if (!d->platformNativeInterface && !d->platformWindow)
         return QVariantMap();
     return d->platformNativeInterface->windowProperties(d->platformWindow);
 }
 
-void PelagicoreWindow::onFrameSwapped()
+void ApplicationManagerWindow::onFrameSwapped()
 {
     if (d->frameCount == 0) {
         d->time.start();

@@ -36,15 +36,15 @@
 QT_FORWARD_DECLARE_CLASS(QPlatformWindow)
 
 
-class PelagicoreWindowPrivate;
+class ApplicationManagerWindowPrivate;
 
-class PelagicoreWindow : public QQuickWindow
+class ApplicationManagerWindow : public QQuickWindow
 {
     Q_OBJECT
     Q_PROPERTY(float fps READ fps NOTIFY fpsChanged)
 
 public:
-    explicit PelagicoreWindow(QWindow *parent = 0);
+    explicit ApplicationManagerWindow(QWindow *parent = 0);
 
     float fps() const;
 
@@ -61,5 +61,5 @@ private slots:
     void onWindowPropertyChangedInternal(QPlatformWindow *window, const QString &name);
 
 private:
-    PelagicoreWindowPrivate *d;
+    ApplicationManagerWindowPrivate *d;
 };

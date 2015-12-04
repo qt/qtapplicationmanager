@@ -58,7 +58,7 @@ class ApplicationInstaller : public QObject
 #endif
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "com.pelagicore.ApplicationInstaller")
+    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationInstaller")
 
     // both are const on purpose - these should never change in a running system
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT)

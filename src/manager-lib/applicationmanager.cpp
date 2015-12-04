@@ -63,7 +63,7 @@
 
 /*!
     \qmltype ApplicationManager
-    \inqmlmodule com.pelagicore.ApplicationManager 0.1
+    \inqmlmodule io.qt.ApplicationManager 1.0
     \brief The ApplicationManager singleton
 
     This singleton class is the core of the application manager. It provides both
@@ -151,13 +151,13 @@
 
     The QML import for this singleton is
 
-    \c{import com.pelagicore.ApplicationManager 0.1}
+    \c{import io.qt.ApplicationManager 1.0}
 
     After importing, you can just use the ApplicationManager singleton like so:
 
     \qml
     import QtQuick 2.0
-    import com.pelagicore.ApplicationManager 0.1
+    import io.qt.ApplicationManager 1.0
 
     ListView {
         id: appList

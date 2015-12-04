@@ -46,7 +46,7 @@
 
 /*!
     \qmltype NotificationManager
-    \inqmlmodule com.pelagicore.ApplicationManager 0.1
+    \inqmlmodule io.qt.ApplicationManager 1.0
     \brief The NotificationManager singleton
 
     This singleton class is the window managing part of the application manager. It provides a QML
@@ -160,7 +160,7 @@
 
     The QML import for this singleton is
 
-    \c{import com.pelagicore.ApplicationManager 0.1}
+    \c{import io.qt.ApplicationManager 1.0}
 
     The actual backend implementation that is receiving the notifications from other process is
     fully compliant to the D-Bus interface of the freedesktop.org notification specification
@@ -423,7 +423,7 @@ QString NotificationManager::GetServerInformation(QString &vendor, QString &vers
 {
     //qCDebug(LogNotifications) << "GetServerInformation";
     vendor = qApp->organizationName();
-    version = QLatin1String("0.1");
+    version = QLatin1String("1.0");
     spec_version = QLatin1String("1.2");
     return qApp->applicationName();
 }

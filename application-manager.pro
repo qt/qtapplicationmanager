@@ -32,7 +32,7 @@ isEmpty(AM_LIBCRYPTO_INCLUDES) { check_libcrypto_includes = "(system)" } else { 
 
 printConfigLine()
 printConfigLine("-- Application Manager configuration", , orange)
-printConfigLine("Version", $$GIT_VERSION, white)
+printConfigLine("Version", "$$VERSION (git: $$GIT_VERSION)", white)
 printConfigLine("Hardware Id", $$check_hwid, auto)
 printConfigLine("Qt version", $$[QT_VERSION], white)
 printConfigLine("Qt installation", $$[QT_HOST_BINS])

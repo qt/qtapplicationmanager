@@ -133,7 +133,7 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         \c native are supported by the application-manager. (\e Required)
 
         For the QML runtimes, the \c code field needs to point to the main QML file, which should
-        have a \l{com.pelagicore.ApplicationManager::PelagicoreWindow}{PelagicoreWindow} as a root
+        have a \l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow} as a root
         item.
 
         For the native runtime, the \c code field can point to an arbitrary executable, which is

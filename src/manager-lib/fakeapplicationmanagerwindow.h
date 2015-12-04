@@ -37,14 +37,14 @@
 class QmlInProcessRuntime;
 
 
-class FakePelagicoreWindow : public QQuickItem
+class FakeApplicationManagerWindow : public QQuickItem
 {
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor) // dummy to mimick Window's API
 
 public:
-    explicit FakePelagicoreWindow(QQuickItem *parent = 0);
-    ~FakePelagicoreWindow();
+    explicit FakeApplicationManagerWindow(QQuickItem *parent = 0);
+    ~FakeApplicationManagerWindow();
 
     QColor color() const { return QColor(); }
     void setColor(const QColor &) { }

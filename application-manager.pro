@@ -71,6 +71,7 @@ OTHER_FILES = \
     doc/index.qdoc \
     doc/elements.qdoc \
     doc/manifest.qdoc \
+    template-opt/am/*.yaml
 
 global-check-coverage.target = check-coverage
 global-check-coverage.depends = coverage

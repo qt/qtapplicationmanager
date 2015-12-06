@@ -37,6 +37,7 @@
 #  include <fcntl.h>
 #endif
 
+#include "global.h"
 #include "packageextractor.h"
 #include "installationreport.h"
 #include "utilities.h"
@@ -191,7 +192,7 @@ void tst_PackageExtractor::extractAndVerify()
         QVERIFY(checkEntries.removeOne(entry));
     }
 
-    QVERIFY2(checkEntries.isEmpty(), qPrintable(checkEntries.join(" ")));
+    QVERIFY2(checkEntries.isEmpty(), qPrintable(checkEntries.join(qL1C(' '))));
 
     QStringList reportEntries = extractor.installationReport().files();
     reportEntries.sort();
@@ -202,7 +203,7 @@ void tst_PackageExtractor::extractAndVerify()
 void tst_PackageExtractor::cancelExtraction()
 {
     {
-        PackageExtractor extractor(QUrl::fromLocalFile(AM_TESTDATA_DIR "packages/test.appkg"), m_extractDir->path());
+        PackageExtractor extractor(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test.appkg")), m_extractDir->path());
         extractor.cancel();
         QVERIFY(!extractor.extract());
         QVERIFY(extractor.wasCanceled());
@@ -210,7 +211,7 @@ void tst_PackageExtractor::cancelExtraction()
         QVERIFY(extractor.hasFailed());
     }
     {
-        PackageExtractor extractor(QUrl::fromLocalFile(AM_TESTDATA_DIR "packages/test.appkg"), m_extractDir->path());
+        PackageExtractor extractor(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test.appkg")), m_extractDir->path());
         connect(&extractor, &PackageExtractor::progress, this, [&extractor](qreal p) {
             if (p >= 0.1)
                 extractor.cancel();
@@ -228,7 +229,7 @@ public:
     FifoSource(const QString &file)
         : m_file(file)
     {
-        m_fifoPath = QDir::temp().absoluteFilePath("autotext-package-extractor-%1.fifo")
+        m_fifoPath = QDir::temp().absoluteFilePath(qSL("autotext-package-extractor-%1.fifo"))
                 .arg(QCoreApplication::applicationPid())
                 .toLocal8Bit();
 #ifdef Q_OS_UNIX
@@ -279,7 +280,7 @@ void tst_PackageExtractor::extractFromFifo()
     QSKIP("No FIFO support on this platform");
 #endif
 
-    FifoSource fifo(AM_TESTDATA_DIR "packages/test.appkg");
+    FifoSource fifo(qL1S(AM_TESTDATA_DIR "packages/test.appkg"));
     fifo.start();
 
     PackageExtractor extractor(QUrl::fromLocalFile(fifo.path()), m_extractDir->path());

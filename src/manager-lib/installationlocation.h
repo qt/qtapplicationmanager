@@ -69,7 +69,7 @@ public:
     static Type typeFromString(const QString &str);
     static QString typeToString(Type type);
 
-    static QList<InstallationLocation> parseInstallationLocations(const QVariantList &list) throw (Exception);
+    static QVector<InstallationLocation> parseInstallationLocations(const QVariantList &list) throw (Exception);
 
 private:
     Type m_type = Invalid;

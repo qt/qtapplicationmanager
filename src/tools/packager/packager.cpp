@@ -149,7 +149,7 @@ void Packager::execute() throw(Exception)
         if (app->type() == Application::Gui) {
             if (!QFile::exists(source.absoluteFilePath(app->displayIcon())))
                 throw Exception(Error::Package, "missing the 'icon.png' file");
-            report.addFile("icon.png");
+            report.addFile(qSL("icon.png"));
         }
 
         // check executable
@@ -171,12 +171,12 @@ void Packager::execute() throw(Exception)
             // QDirIterator::filePath() returns absolute paths, although the naming suggests otherwise
             entryPath = entryPath.mid(canonicalSourcePath.size() + 1);
 
-            if (entryInfo.fileName().startsWith("--PACKAGE-"))
+            if (entryInfo.fileName().startsWith(qL1S("--PACKAGE-")))
                 throw Exception(Error::Package, "file names starting with --PACKAGE- are reserved by the packager (found: %1)").arg(entryPath);
 
             estimatedImageSize += (entryInfo.size() + Ext2BlockSize - 1) / Ext2BlockSize;
 
-            if (entryPath != infoName && entryPath != "icon.png")
+            if (entryPath != infoName && entryPath != qL1S("icon.png"))
                 report.addFile(entryPath);
         }
 
@@ -225,31 +225,31 @@ void Packager::execute() throw(Exception)
         // check signatures
         if (m_mode == DeveloperVerify) {
             if (report.developerSignature().isEmpty()) {
-                m_output = "no developer signature";
+                m_output = qSL("no developer signature");
                 m_resultCode = 1;
             } else {
                 Signature sig(report.digest());
                 if (!sig.verify(report.developerSignature(), certificates)) {
-                    m_output = QLatin1String("invalid developer signature (") + qPrintable(sig.errorString()) + ")";
+                    m_output = qSL("invalid developer signature (") + sig.errorString() + qSL(")");
                     m_resultCode = 2;
                 } else {
-                    m_output = "valid developer signature";
+                    m_output = qSL("valid developer signature");
                 }
             }
             break; // done with DeveloperVerify
 
         } else if (m_mode == StoreVerify) {
             if (report.storeSignature().isEmpty()) {
-                m_output = "no store signature";
+                m_output = qSL("no store signature");
                 m_resultCode = 1;
             } else {
                 QByteArray digestPlusId = HMACFilter::hmac(HMACFilter::Sha256, m_hardwareId.toUtf8(), report.digest());
                 Signature sig(digestPlusId);
                 if (!sig.verify(report.storeSignature(), certificates)) {
-                    m_output = QLatin1String("invalid store signature (") + qPrintable(sig.errorString()) + ")";
+                    m_output = qSL("invalid store signature (") + sig.errorString() + qSL(")");
                     m_resultCode = 2;
                 } else {
-                    m_output = "valid store signature";
+                    m_output = qSL("valid store signature");
                 }
 
             }

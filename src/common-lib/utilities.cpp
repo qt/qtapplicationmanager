@@ -97,7 +97,7 @@ QMultiMap<QString, QString> mountedDirectories()
         result.insertMulti(QString::fromLocal8Bit(sfs->f_mntonname), QString::fromLocal8Bit(sfs->f_mntfromname));
     }
 #else
-    QFile fpm("/proc/self/mounts");
+    QFile fpm(qSL("/proc/self/mounts"));
     if (!fpm.open(QFile::ReadOnly))
         return result;
     QByteArray mountBuffer = fpm.readAll();

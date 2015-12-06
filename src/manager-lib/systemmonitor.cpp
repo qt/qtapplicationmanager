@@ -255,7 +255,7 @@ SystemMonitor::~SystemMonitor()
     delete d->idleCpu;
     delete d->memory;
     delete d->cpu;
-    qDeleteAll(d->ioHash.values());
+    qDeleteAll(d->ioHash);
     delete d->memoryThreshold;
     delete d;
 }
@@ -431,7 +431,7 @@ bool SystemMonitor::addIoLoadReporting(const QString &deviceName)
 {
     Q_D(SystemMonitor);
 
-    if (!QFile::exists(QLatin1String("/dev/") + deviceName))
+    if (!QFile::exists(qSL("/dev/") + deviceName))
         return false;
     if (d->ioHash.contains(deviceName))
         return false;

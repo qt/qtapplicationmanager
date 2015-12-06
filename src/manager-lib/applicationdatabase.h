@@ -55,4 +55,5 @@ public:
 
 private:
     ApplicationDatabasePrivate *d;
+    Q_DISABLE_COPY(ApplicationDatabase)
 };

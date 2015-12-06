@@ -30,6 +30,7 @@
 
 #include <QMutex>
 
+#include "global.h"
 #include "cryptography.h"
 
 #if defined(Q_OS_UNIX)
@@ -64,7 +65,7 @@ QByteArray Cryptography::generateRandomBytes(int size)
 
     if (size > 0) {
 #if defined(Q_OS_UNIX)
-        QFile f(QLatin1String("/dev/urandom"));
+        QFile f(qSL("/dev/urandom"));
         if (f.open(QIODevice::ReadOnly)) {
             result = f.read(size);
             if (result.size() != size)

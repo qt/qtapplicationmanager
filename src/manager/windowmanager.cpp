@@ -358,6 +358,7 @@ WindowManager::WindowManager(QQuickView *view, bool forceSingleProcess, const QS
         d->waylandCompositor->setOutputGeometry(view->geometry());
     }
 #else
+    Q_UNUSED(forceSingleProcess)
     Q_UNUSED(waylandSocketName)
 #endif
 
@@ -619,7 +620,7 @@ void WindowManager::waylandSurfaceMapped()
         return;
     }
 
-    QWaylandSurfaceItem *item = static_cast<QWaylandSurfaceItem *>(surface->views().first());
+    QWaylandSurfaceItem *item = static_cast<QWaylandSurfaceItem *>(surface->views().at(0));
     Q_ASSERT(item);
 
     item->setResizeSurfaceToItem(true);
@@ -654,7 +655,7 @@ void WindowManager::waylandSurfaceDestroyed()
     int index = d->findWindowByWaylandSurface(surface);
     if (index < 0)
         return;
-    WaylandWindow *win = qobject_cast<WaylandWindow *>(d->windows[index]);
+    WaylandWindow *win = qobject_cast<WaylandWindow *>(d->windows.at(index));
     if (!win)
         return;
 
@@ -675,9 +676,9 @@ void WindowManager::handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *sur
     if (index < 0)
         return;
 
-    Window *win = d->windows[index];
+    const Window *win = d->windows.at(index);
 
-    if (win->surfaceItem() && !d->isClosing[win]) {
+    if (win->surfaceItem() && !d->isClosing.value(win)) {
         d->isClosing[win] = true;
         surfaceItemAboutToClose(win->surfaceItem());
     }
@@ -693,7 +694,7 @@ bool WindowManager::setSurfaceWindowProperty(QQuickItem *item, const QString &na
     if (index < 0)
         return false;
 
-    Window *win = d->windows[index];
+    Window *win = d->windows.at(index);
     return win->setWindowProperty(name, value);
 }
 
@@ -704,7 +705,7 @@ QVariant WindowManager::surfaceWindowProperty(QQuickItem *item, const QString &n
     if (index < 0)
         return QVariant();
 
-    Window *win = d->windows[index];
+    const Window *win = d->windows.at(index);
     return win->windowProperty(name);
 }
 
@@ -715,7 +716,7 @@ QVariantMap WindowManager::surfaceWindowProperties(QQuickItem *item) const
     if (index < 0)
         return QVariantMap();
 
-    Window *win = d->windows[index];
+    Window *win = d->windows.at(index);
     return win->windowProperties();
 }
 
@@ -855,8 +856,8 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 #if defined(QT_DBUS_LIB)
                                 struct DBusDelayedReply
                                 {
-                                    DBusDelayedReply(QDBusMessage msg, QDBusConnection conn)
-                                        : dbusReply(msg), dbusConn(conn), ok(true)
+                                    DBusDelayedReply(const QString &connectionName)
+                                        : dbusConn(connectionName), ok(true)
                                     { }
                                     QDBusMessage dbusReply;
                                     QDBusConnection dbusConn;
@@ -864,7 +865,8 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                                 } *dbusDelayedReply = nullptr;
                                 if (calledFromDBus() && grabbers->isEmpty()) {
                                     setDelayedReply(true);
-                                    dbusDelayedReply = new DBusDelayedReply(message().createReply(), connection());
+                                    dbusDelayedReply = new DBusDelayedReply(connection().name());
+                                    dbusDelayedReply->dbusReply = message().createReply();
                                     dbusDelayedReply->ok = true;
                                 }
 #else
@@ -885,6 +887,8 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                                             dbusDelayedReply->dbusReply << QVariant(dbusDelayedReply->ok);
                                             dbusDelayedReply->dbusConn.send(dbusDelayedReply->dbusReply);
                                         }
+#else
+                                        Q_UNUSED(dbusDelayedReply)
 #endif
                                     }
                                 });

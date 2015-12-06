@@ -61,6 +61,7 @@ protected:
 
 private:
     DigestFilterPrivate *d;
+    Q_DISABLE_COPY(DigestFilter)
 };
 
 class HMACFilter : public DigestFilter
@@ -72,4 +73,5 @@ public:
 
 private:
     using DigestFilter::digest;
+    Q_DISABLE_COPY(HMACFilter)
 };

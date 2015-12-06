@@ -95,7 +95,7 @@ public:
         : AbstractRuntimeManager(id, parent)
     { }
 
-    static QString defaultIdentifier() { return "foo"; }
+    static QString defaultIdentifier() { return qSL("foo"); }
 
     bool inProcess() const
     {
@@ -121,16 +121,16 @@ void tst_Runtime::factory()
     QVERIFY(rf->runtimeIds().isEmpty());
 
     QVERIFY(rf->registerRuntime<TestRuntimeManager>());
-    QVERIFY(rf->runtimeIds() == QStringList() << "foo");
+    QVERIFY(rf->runtimeIds() == QStringList() << qSL("foo"));
 
     QVERIFY(!rf->create(0, 0));
 
     QVariantMap map;
-    map.insert("id", "com.foo.test");
-    map.insert("codeFilePath", "test.foo");
-    map.insert("runtimeName", "foo");
-    map.insert("displayIcon", "icon.png");
-    map.insert("displayName", QVariantMap { {"en", QString::fromLatin1("Foo") } });
+    map.insert(qSL("id"), qSL("com.foo.test"));
+    map.insert(qSL("codeFilePath"), qSL("test.foo"));
+    map.insert(qSL("runtimeName"), qSL("foo"));
+    map.insert(qSL("displayIcon"), qSL("icon.png"));
+    map.insert(qSL("displayName"), QVariantMap { {"en", qSL("Foo") } });
     QString error;
     Application *a = Application::fromVariantMap(map, &error);
     QVERIFY2(a, qPrintable(error));

@@ -86,7 +86,7 @@ protected:
 // copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
 static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
 {
-    QDir dir(directory+"/dummydata", "*.qml");
+    QDir dir(directory + qSL("/dummydata"), qSL("*.qml"));
     QStringList list = dir.entryList();
     for (int i = 0; i < list.size(); ++i) {
         QString qml = list.at(i);
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
     QByteArray dbusAddress = qgetenv("AM_DBUS_PEER_ADDRESS");
     if (dbusAddress.isEmpty())
         qCCritical(LogQmlRuntime) << "ERROR: $AM_DBUS_PEER_ADDRESS is empty - continuing anyway"; // should be qFatal()
-    QDBusConnection dbusConnection = QDBusConnection::connectToPeer(QString::fromUtf8(dbusAddress), "am");
+    QDBusConnection dbusConnection = QDBusConnection::connectToPeer(QString::fromUtf8(dbusAddress), qSL("am"));
 
     if (!dbusConnection.isConnected())
         qCCritical(LogQmlRuntime) << "ERROR: could not connect to the application manager's peer D-Bus at" << dbusAddress; // should be qFatal()
@@ -195,7 +195,7 @@ Controller::Controller()
 
     //qCDebug(LogQmlRuntime, 1) << " qml-runtime started with pid ==" << QCoreApplication::applicationPid () << ", waiting for qmlFile on stdin...";
 
-    m_applicationInterface = new QmlApplicationInterface("am", this);
+    m_applicationInterface = new QmlApplicationInterface(qSL("am"), this);
     connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
             this, &Controller::startApplication);
     if (!m_applicationInterface->initialize())
@@ -216,18 +216,18 @@ void Controller::startApplication(const QString &qmlFile, const QString &argumen
         return;
     }
 
-    bool loadDummyData = runtimeParameters.value("loadDummyData").toBool()
-            || m_configuration.value("loadDummydata").toBool();
+    bool loadDummyData = runtimeParameters.value(qSL("loadDummyData")).toBool()
+            || m_configuration.value(qSL("loadDummydata")).toBool();
 
     if (loadDummyData) {
         qCDebug(LogQmlRuntime) << "loading dummy-data";
         loadDummyDataFiles(m_engine, QFileInfo(qmlFile).path());
     }
 
-    QStringList importPaths = m_configuration.value("importPaths").toStringList();
-    importPaths.replaceInStrings(QRegularExpression("^(.*)$"),
+    QStringList importPaths = m_configuration.value(qSL("importPaths")).toStringList();
+    importPaths.replaceInStrings(QRegularExpression(qSL("^(.*)$")),
                                  QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/\\1"));
-    importPaths += runtimeParameters.value("importPaths").toStringList();
+    importPaths += runtimeParameters.value(qSL("importPaths")).toStringList();
 
     for (int i = 0; i < importPaths.size(); ++i)
         importPaths[i] = QDir().absoluteFilePath(importPaths[i]);
@@ -237,12 +237,12 @@ void Controller::startApplication(const QString &qmlFile, const QString &argumen
     m_engine.setImportPathList(m_engine.importPathList() + importPaths);
     //qWarning() << m_engine.importPathList();
 
-    m_engine.rootContext()->setContextProperty("ApplicationInterface", m_applicationInterface);
+    m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
 
     QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
     m_engine.load(qmlFileUrl);
 
-    QObject *topLevel = m_engine.rootObjects().first();
+    QObject *topLevel = m_engine.rootObjects().at(0);
 
     if (!topLevel) {
         qCCritical(LogSystem) << "could not load" << qmlFile << ": no root object";
@@ -270,12 +270,12 @@ void Controller::startApplication(const QString &qmlFile, const QString &argumen
     Q_ASSERT(m_window);
     QObject::connect(&m_engine, &QQmlEngine::quit, m_window, &QObject::deleteLater); // not sure if this is needed .. or even the best thing to do ... see connects above, they seem to work better
 
-    if (m_configuration.contains("background-color")) {
+    if (m_configuration.contains(qSL("background-color"))) {
         QSurfaceFormat surfaceFormat = m_window->format();
         surfaceFormat.setAlphaBufferSize(8);
         m_window->setFormat(surfaceFormat);
         m_window->setClearBeforeRendering(true);
-        m_window->setColor(QColor(m_configuration.value("backgroundColor").toString()));
+        m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
     }
     m_window->show();
 

@@ -38,8 +38,8 @@
 #include "digestfilter.h"
 
 
-ArchiveException::ArchiveException(struct ::archive *ar, const QString &errorString)
-    : Exception(Error::Archive, "[libarchive] " + errorString + QLatin1String(": ") + QString::fromLocal8Bit(::archive_error_string(ar)))
+ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString)
+    : Exception(Error::Archive, qSL("[libarchive] ") + qL1S(errorString) + qSL(": ") + QString::fromLocal8Bit(::archive_error_string(ar)))
 { }
 
 

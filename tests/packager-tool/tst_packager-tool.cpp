@@ -53,9 +53,9 @@ private Q_SLOTS:
     void brokenMetadata();
 
 private:
-    QString pathTo(const QString &file)
+    QString pathTo(const char *file)
     {
-        return QDir(m_workDir.path()).absoluteFilePath(file);
+        return QDir(m_workDir.path()).absoluteFilePath(QLatin1String(file));
     }
 
     bool createInfoYaml(TemporaryDir &tmp, const QString &changeField = QString(), const QVariant &toValue = QVariant());
@@ -87,7 +87,7 @@ void tst_PackagerTool::initTestCase()
         { "installationPath", pathTo("internal-0") },
         { "documentPath", pathTo("documents-0") },
     };
-    QList<InstallationLocation> locations = InstallationLocation::parseInstallationLocations({ internalLocation });
+    QVector<InstallationLocation> locations = InstallationLocation::parseInstallationLocations({ internalLocation });
 
     QString errorString;
     m_ai = ApplicationInstaller::createInstance(locations, pathTo("manifests"), pathTo("image-mounts"), &errorString);
@@ -98,8 +98,8 @@ void tst_PackagerTool::initTestCase()
 
     // crypto stuff - we need to load the root CA and developer CA certificates
 
-    QFile devcaFile(AM_TESTDATA_DIR "certificates/devca.crt");
-    QFile caFile(AM_TESTDATA_DIR "certificates/ca.crt");
+    QFile devcaFile(qL1S(AM_TESTDATA_DIR "certificates/devca.crt"));
+    QFile caFile(qL1S(AM_TESTDATA_DIR "certificates/ca.crt"));
     QVERIFY2(devcaFile.open(QIODevice::ReadOnly), qPrintable(devcaFile.errorString()));
     QVERIFY2(caFile.open(QIODevice::ReadOnly), qPrintable(devcaFile.errorString()));
 
@@ -111,10 +111,10 @@ void tst_PackagerTool::initTestCase()
 
     m_caFiles << devcaFile.fileName() << caFile.fileName();
 
-    m_devPassword = "password";
-    m_devCertificate = AM_TESTDATA_DIR "certificates/dev1.p12";
-    m_storePassword = "password";
-    m_storeCertificate = AM_TESTDATA_DIR "certificates/store.p12";
+    m_devPassword = qSL("password");
+    m_devCertificate = qL1S(AM_TESTDATA_DIR "certificates/dev1.p12");
+    m_storePassword = qSL("password");
+    m_storeCertificate = qL1S(AM_TESTDATA_DIR "certificates/store.p12");
 }
 
 
@@ -138,32 +138,32 @@ void tst_PackagerTool::test()
 
     // no valid destination
     QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), pathTo("test.appkg")), errorString));
-    QVERIFY2(errorString.contains("not a directory"), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("not a directory")), qPrintable(errorString));
 
     // no valid info.yaml
     QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains("could not open file for reading"), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("could not open file for reading")), qPrintable(errorString));
 
     // add an info.yaml file
     createInfoYaml(tmp);
 
     // no icon
     QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains("missing the 'icon.png' file"), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("missing the 'icon.png' file")), qPrintable(errorString));
 
     // add an icon
     createIconPng(tmp);
 
     // no valid code
     QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains("missing the file referenced by the 'code' field"), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("missing the file referenced by the 'code' field")), qPrintable(errorString));
 
     // add a code file
     createCode(tmp);
 
     // invalid destination
     QVERIFY(!packagerCheck(Packager::create(tmp.path(), tmp.path()), errorString));
-    QVERIFY2(errorString.contains("could not create package file"), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("could not create package file")), qPrintable(errorString));
 
     // now everything is correct - try again
     QVERIFY2(packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), errorString), qPrintable(errorString));
@@ -174,7 +174,7 @@ void tst_PackagerTool::test()
                                pathTo("test.dev-signed.appkg"),
                                m_devCertificate,
                                m_devPassword), errorString));
-    QVERIFY2(errorString.contains("does not exist"), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("does not exist")), qPrintable(errorString));
 
     // invalid destination package
     QVERIFY(!packagerCheck(Packager::developerSign(
@@ -182,7 +182,7 @@ void tst_PackagerTool::test()
                                pathTo("."),
                                m_devCertificate,
                                m_devPassword), errorString));
-    QVERIFY2(errorString.contains("could not create package file"), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("could not create package file")), qPrintable(errorString));
 
 
     // invalid dev key
@@ -190,17 +190,17 @@ void tst_PackagerTool::test()
                                pathTo("test.appkg"),
                                pathTo("test.dev-signed.appkg"),
                                m_devCertificate,
-                               "wrong-password"), errorString));
-    QVERIFY2(errorString.contains("could not create signature"), qPrintable(errorString));
+                               qSL("wrong-password")), errorString));
+    QVERIFY2(errorString.contains(qL1S("could not create signature")), qPrintable(errorString));
 
     // invalid store key
     QVERIFY(!packagerCheck(Packager::storeSign(
                                pathTo("test.appkg"),
                                pathTo("test.store-signed.appkg"),
                                m_storeCertificate,
-                               "wrong-password",
+                               qSL("wrong-password"),
                                hardwareId()), errorString));
-    QVERIFY2(errorString.contains("could not create signature"), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("could not create signature")), qPrintable(errorString));
 
     // sign
     QVERIFY2(packagerCheck(Packager::developerSign(
@@ -232,7 +232,7 @@ void tst_PackagerTool::test()
 
     m_ai->setDevelopmentMode(true); // allow packages without store signature
 
-    QString taskId = m_ai->startPackageInstallation("internal-0", QUrl::fromLocalFile(pathTo("test.dev-signed.appkg")));
+    QString taskId = m_ai->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(pathTo("test.dev-signed.appkg")));
     m_ai->acknowledgePackageInstallation(taskId);
 
     QVERIFY(finishedSpy.wait());
@@ -241,9 +241,9 @@ void tst_PackagerTool::test()
     m_ai->setDevelopmentMode(false);
 
     QDir checkDir(pathTo("internal-0"));
-    QVERIFY(checkDir.cd("com.pelagicore.test"));
+    QVERIFY(checkDir.cd(qSL("com.pelagicore.test")));
 
-    for (const QString &file : { "info.yaml", "icon.png", "test.qml" }) {
+    for (const QString &file : { qSL("info.yaml"), qSL("icon.png"), qSL("test.qml") }) {
         QVERIFY(checkDir.exists(file));
         QFile src(QDir(tmp.path()).absoluteFilePath(file));
         QVERIFY(src.open(QFile::ReadOnly));
@@ -303,19 +303,19 @@ bool tst_PackagerTool::createInfoYaml(TemporaryDir &tmp, const QString &changeFi
         yaml = QtYaml::yamlFromVariantDocuments({ docs.at(0), map });
     }
 
-    QFile infoYaml(QDir(tmp.path()).absoluteFilePath("info.yaml"));
+    QFile infoYaml(QDir(tmp.path()).absoluteFilePath(qSL("info.yaml")));
     return infoYaml.open(QFile::WriteOnly) && infoYaml.write(yaml) == yaml.size();
 }
 
 bool tst_PackagerTool::createIconPng(TemporaryDir &tmp)
 {
-    QFile iconPng(QDir(tmp.path()).absoluteFilePath("icon.png"));
+    QFile iconPng(QDir(tmp.path()).absoluteFilePath(qSL("icon.png")));
     return iconPng.open(QFile::WriteOnly) && iconPng.write("\x89PNG") == 4;
 }
 
 bool tst_PackagerTool::createCode(TemporaryDir &tmp)
 {
-    QFile code(QDir(tmp.path()).absoluteFilePath("test.qml"));
+    QFile code(QDir(tmp.path()).absoluteFilePath(qSL("test.qml")));
     return code.open(QFile::WriteOnly) && code.write("// test") == 7LL;
 }
 

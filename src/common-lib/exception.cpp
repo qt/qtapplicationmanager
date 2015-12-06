@@ -36,7 +36,7 @@
 
 Exception::Exception(Error errorCode, const char *errorString)
     : m_errorCode(errorCode)
-    , m_errorString(errorString ? QString::fromLatin1(errorString) : QString())
+    , m_errorString(errorString ? qL1S(errorString) : QString())
 { }
 
 Exception::Exception(Error errorCode, const QString &errorString)
@@ -44,14 +44,14 @@ Exception::Exception(Error errorCode, const QString &errorString)
     , m_errorString(errorString)
 { }
 
-Exception::Exception(int _errno, const QString &errorString)
+Exception::Exception(int _errno, const char *errorString)
     : m_errorCode(_errno == EACCES ? Error::Permissions : Error::IO)
-    , m_errorString(errorString + QLatin1String(": ") + QString::fromLocal8Bit(strerror(_errno)))
+    , m_errorString(qL1S(errorString) + qSL(": ") + QString::fromLocal8Bit(strerror(_errno)))
 { }
 
-Exception::Exception(const QFile &file, const QString &errorString)
+Exception::Exception(const QFile &file, const char *errorString)
     : m_errorCode(file.error() == QFile::PermissionsError ? Error::Permissions : Error::IO)
-    , m_errorString(errorString + QLatin1String(" (") + file.fileName() + QLatin1String("): ") + file.errorString())
+    , m_errorString(qL1S(errorString) + qSL(" (") + file.fileName() + qSL("): ") + file.errorString())
 { }
 
 Exception::Exception(const Exception &copy)

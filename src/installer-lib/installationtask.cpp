@@ -261,7 +261,7 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
     if (++m_extractedFileCount > 2)
         throw Exception(Error::Package, "could not find info.yaml and icon.png at the beginning of the package");
 
-    if (file == "info.yaml") {
+    if (file == qL1S("info.yaml")) {
         if (m_foundInfo)
             throw Exception(Error::Package, "found multiple info.yaml files in the package");
 
@@ -281,7 +281,7 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
         m_applicationId = m_app->id();
 
         m_foundInfo = true;
-    } else if (file == "icon.png") {
+    } else if (file == qL1S("icon.png")) {
         if (m_foundIcon)
             throw Exception(Error::Package, "found multiple icon.png files in the package");
 
@@ -300,8 +300,8 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
 
         startInstallation();
 
-        QFile::copy(oldDestinationDirectory.filePath("info.yaml"), m_extractionDir.filePath("info.yaml"));
-        QFile::copy(oldDestinationDirectory.filePath("icon.png"), m_extractionDir.filePath("icon.png"));
+        QFile::copy(oldDestinationDirectory.filePath(qSL("info.yaml")), m_extractionDir.filePath(qSL("info.yaml")));
+        QFile::copy(oldDestinationDirectory.filePath(qSL("icon.png")), m_extractionDir.filePath(qSL("icon.png")));
 
         {
             QMutexLocker locker(&m_mutex);
@@ -449,7 +449,7 @@ void InstallationTask::finishInstallation() throw (Exception)
     //TODO: this is not really thread-safe - find a better way
     m_app->setInstallationReport(new InstallationReport(report));
 
-    QFile reportFile(m_manifestDirPlusCreator.dir().absoluteFilePath("installation-report.yaml"));
+    QFile reportFile(m_manifestDirPlusCreator.dir().absoluteFilePath(qSL("installation-report.yaml")));
     if (!reportFile.open(QFile::WriteOnly) || !report.serialize(&reportFile))
         throw Exception(reportFile, "could not write the installation report");
     reportFile.close();

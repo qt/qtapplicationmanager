@@ -134,7 +134,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
 
     if (realUid != 0) {
         if (effectiveUid != 0) {
-            *errorString = QLatin1String("for the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred)");
+            *errorString = qL1S("for the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred)");
             return false;
         }
     }
@@ -164,7 +164,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
 
     pid_t pid = fork();
     if (pid < 0) {
-        *errorString = QLatin1String("could not fork process");
+        *errorString = qL1S("could not fork process");
         return false;
     } else if (pid == 0) {
         // child
@@ -220,7 +220,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
         umask(realUmask);
 
     if (!SudoClient::initialize(socketFds[1])) {
-        *errorString = QLatin1String("could not initialize the SudoClient");
+        *errorString = qL1S("could not initialize the SudoClient");
         kill(pid, 9);
         return false;
     }
@@ -265,7 +265,7 @@ QByteArray SudoInterface::receiveMessage(int socket, MessageType type, QString *
     qint64 bytesReceived = EINTR_LOOP(recv(socket, recvBuffer, sizeof(recvBuffer), 0));
 
     if ((bytesReceived < headerSize) || qstrncmp(recvBuffer, (type == Request ? "RQST" : "RPLY"), 4)) {
-        *errorString = QLatin1String("failed to receive command from the SudoClient process");
+        *errorString = qL1S("failed to receive command from the SudoClient process");
         //qCCritical(LogSystem) << *errorString;
         return QByteArray();
     }
@@ -377,7 +377,7 @@ QByteArray SudoClient::call(const QByteArray &msg)
 #endif
 
     //qCCritical(LogSystem) << "failed to send command to the SudoServer process";
-    m_errorString = QLatin1String("failed to send command to the SudoServer process");
+    m_errorString = qL1S("failed to send command to the SudoServer process");
     return QByteArray();
 }
 
@@ -476,7 +476,7 @@ QByteArray SudoServer::receive(const QByteArray &msg)
         m_stop = true;
     } else {
         reply.truncate(0);
-        m_errorString = QString::fromLatin1("unknown function '%1' called in SudoServer").arg(QLatin1String(function));
+        m_errorString = QString::fromLatin1("unknown function '%1' called in SudoServer").arg(qL1S(function));
     }
     return reply;
 }
@@ -500,7 +500,7 @@ QString SudoServer::attachLoopback(const QString &imagePath, bool readonly)
             if (loopId < 0)
                 throw Exception(Error::IO, "the system could not allocate more loop devices");
 
-            loopDev = QString::fromLatin1("/dev/loop%1").arg(loopId);
+            loopDev = qSL("/dev/loop%1").arg(loopId);
             loopFd = EINTR_LOOP(open(loopDev.toLocal8Bit(), readonly ? O_RDONLY : O_RDWR));
 
             if (loopFd < 0) {
@@ -559,8 +559,8 @@ bool SudoServer::detachLoopback(const QString &loopDev)
     int loopId = -1;
 
     try {
-        if (!loopDev.startsWith("/dev/loop")
-                || [&loopId,&loopDev]{ bool ok; loopId = loopDev.mid(9).toInt(&ok); return !ok; }()
+        if (!loopDev.startsWith(qL1S("/dev/loop"))
+                || [&loopId,&loopDev]{ bool ok; loopId = loopDev.midRef(9).toInt(&ok); return !ok; }()
                 || (loopId < 0)) {
             throw Exception(Error::IO, "invalid loop device name: %1").arg(loopDev);
         }
@@ -659,10 +659,10 @@ bool SudoServer::unmount(const QString &mountPoint, bool force)
 bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStringList &options)
 {
 #if defined(Q_OS_LINUX)
-    static QString mkfsBaseCmd("/sbin/mkfs.");
-    static QString tune2fsCmd("/sbin/tune2fs");
+    static QString mkfsBaseCmd(qSL("/sbin/mkfs."));
+    static QString tune2fsCmd(qSL("/sbin/tune2fs"));
 
-    bool isExt2 = fstype.startsWith("ext") && (fstype.mid(3).toInt() >= 2);
+    bool isExt2 = fstype.startsWith(qL1S("ext")) && (fstype.midRef(3).toInt() >= 2);
 
     try {
         if (!QFile::exists(device))
@@ -681,13 +681,13 @@ bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStrin
 
             // defaults to create a loop mounted app image
             if (options.isEmpty()) {
-                mkfsOptions = QStringList() << "-F"
-                                            << "-i" << "4096"
-                                            << "-I" << "128"
-                                            << "-b" << "1024"
-                                            << "-m" << "0"
-                                            << "-E" << QString::fromLatin1("root_owner=%1:%2").arg(getuid()).arg(getgid())
-                                            << "-O" << "sparse_super,^resize_inode";
+                mkfsOptions = QStringList() << qSL("-F")
+                                            << qSL("-i") << qSL("4096")
+                                            << qSL("-I") << qSL("128")
+                                            << qSL("-b") << qSL("1024")
+                                            << qSL("-m") << qSL("0")
+                                            << qSL("-E") << qSL("root_owner=%1:%2").arg(getuid()).arg(getgid())
+                                            << qSL("-O") << qSL("sparse_super,^resize_inode");
             }
         }
 
@@ -707,8 +707,8 @@ bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStrin
         if (isExt2) {
             // disable file-system checks on mount
             p.setProgram(tune2fsCmd);
-            p.setArguments(QStringList() << "-c" << "0"
-                                         << "-i" << "0"
+            p.setArguments(QStringList() << qSL("-c") << qSL("0")
+                                         << qSL("-i") << qSL("0")
                                          << device);
             p.start();
             p.waitForFinished();

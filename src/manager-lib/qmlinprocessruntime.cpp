@@ -41,14 +41,14 @@
 #include "application.h"
 #include "qmlinprocessruntime.h"
 #include "qmlinprocessapplicationinterface.h"
-
+#include "abstractcontainer.h"
 #include "global.h"
 #include "runtimefactory.h"
 
 // copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
 static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
 {
-    QDir dir(directory+"/dummydata", "*.qml");
+    QDir dir(directory + qSL("/dummydata"), qSL("*.qml"));
     QStringList list = dir.entryList();
     for (int i = 0; i < list.size(); ++i) {
         QString qml = list.at(i);
@@ -103,12 +103,12 @@ bool QmlInProcessRuntime::start()
         return false;
     }
 
-    if (m_app->runtimeParameters().value("loadDummyData").toBool()) {
+    if (m_app->runtimeParameters().value(qSL("loadDummyData")).toBool()) {
         qCDebug(LogSystem) << "Loading dummy-data";
         loadDummyDataFiles(*m_inProcessQmlEngine, QFileInfo(m_app->absoluteCodeFilePath()).path());
     }
 
-    QStringList importPaths = m_app->runtimeParameters().value("importPaths").toStringList();
+    QStringList importPaths = m_app->runtimeParameters().value(qSL("importPaths")).toStringList();
     if (!importPaths.isEmpty()) {
         qCDebug(LogSystem) << "qml-in-process-runtime: Setting QML2_IMPORT_PATH to" << importPaths;
         m_inProcessQmlEngine->setImportPathList(m_inProcessQmlEngine->importPathList() + importPaths);
@@ -125,7 +125,7 @@ bool QmlInProcessRuntime::start()
     // This way, we can export an unique ApplicationInterface object for each app
     QQmlContext *appContext = new QQmlContext(m_inProcessQmlEngine->rootContext());
     m_applicationIf = new QmlInProcessApplicationInterface(this);
-    appContext->setContextProperty("ApplicationInterface", m_applicationIf);
+    appContext->setContextProperty(qSL("ApplicationInterface"), m_applicationIf);
 
     QObject *obj = component.beginCreate(appContext);
 
@@ -248,7 +248,7 @@ QmlInProcessRuntimeManager::QmlInProcessRuntimeManager(const QString &id, QObjec
 
 QString QmlInProcessRuntimeManager::defaultIdentifier()
 {
-    return QLatin1String("qml-inprocess");
+    return qSL("qml-inprocess");
 }
 
 bool QmlInProcessRuntimeManager::inProcess() const

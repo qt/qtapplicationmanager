@@ -350,13 +350,13 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
         return n->showActionIcons;
     case Actions: {
         QVariantMap actions = n->actions;
-        actions.remove("default");
+        actions.remove(qSL("default"));
         return actions;
     }
     case DismissOnAction:
         return n->dismissOnAction;
     case IsClickable:
-        return n->actions.contains("default");
+        return n->actions.contains(qSL("default"));
     case IsSystemNotification:
         return n->isSystemNotification;
     case IsShowingProgress:
@@ -400,7 +400,7 @@ QVariantMap NotificationManager::get(int row) const
 
 void NotificationManager::notificationWasClicked(int id)
 {
-    notificationActionWasActivated(id, "default");
+    notificationActionWasActivated(id, qSL("default"));
 }
 
 void NotificationManager::notificationActionWasActivated(int id, const QString &actionId)
@@ -423,22 +423,22 @@ QString NotificationManager::GetServerInformation(QString &vendor, QString &vers
 {
     //qCDebug(LogNotifications) << "GetServerInformation";
     vendor = qApp->organizationName();
-    version = QLatin1String("1.0");
-    spec_version = QLatin1String("1.2");
+    version = qSL("1.0");
+    spec_version = qSL("1.2");
     return qApp->applicationName();
 }
 
 QStringList NotificationManager::GetCapabilities()
 {
     //qCDebug(LogNotifications) << "GetCapabilities";
-    return QStringList() << "action-icons"
-                         << "actions"
-                         << "body"
-                         << "body-hyperlinks"
-                         << "body-images"
-                         << "body-markup"
-                         << "icon-static"
-                         << "persistence";
+    return QStringList() << qSL("action-icons")
+                         << qSL("actions")
+                         << qSL("body")
+                         << qSL("body-hyperlinks")
+                         << qSL("body-images")
+                         << qSL("body-markup")
+                         << qSL("icon-static")
+                         << qSL("persistence");
 }
 
 uint NotificationManager::Notify(const QString &app_name, uint replaces_id, const QString &app_icon,
@@ -476,26 +476,26 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
         return 0;
     }
     n->application = app;
-    n->priority = hints.value("urgency", QVariant(0)).toInt();
+    n->priority = hints.value(qSL("urgency"), QVariant(0)).toInt();
     n->summary = summary;
     n->body = body;
-    n->category = hints.value("category").toString();
+    n->category = hints.value(qSL("category")).toString();
     n->iconUrl = app_icon;
 
-    if (hints.contains("image-data")) {
+    if (hints.contains(qSL("image-data"))) {
         //TODO: how can we parse this - the dbus sig of value is "(iiibiiay)"
-    } else if (hints.contains("image-path")) {
-        n->imageUrl = hints.value("image-data").toString();
+    } else if (hints.contains(qSL("image-path"))) {
+        n->imageUrl = hints.value(qSL("image-data")).toString();
     }
 
-    n->showActionIcons = hints.value("action-icons").toBool();
+    n->showActionIcons = hints.value(qSL("action-icons")).toBool();
     for (int ai = 0; ai != (actions.size() & ~1); ai += 2)
         n->actions.insert(actions.at(ai), actions.at(ai + 1));
-    n->dismissOnAction = !hints.value("resident").toBool();
+    n->dismissOnAction = !hints.value(qSL("resident")).toBool();
 
-    n->isSystemNotification = hints.value("x-pelagicore-system-notification").toBool();
-    n->isShowingProgress = hints.value("x-pelagicore-show-progress").toBool();
-    n->progress = hints.value("x-pelagicore-progress").toReal();
+    n->isSystemNotification = hints.value(qSL("x-pelagicore-system-notification")).toBool();
+    n->isShowingProgress = hints.value(qSL("x-pelagicore-show-progress")).toBool();
+    n->progress = hints.value(qSL("x-pelagicore-progress")).toReal();
     n->timeout = timeout;
 
     if (replaces_id) {

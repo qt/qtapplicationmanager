@@ -30,6 +30,7 @@
 
 #include <QUuid>
 
+#include "global.h"
 #include "asynchronoustask.h"
 
 AsynchronousTask::AsynchronousTask(QObject *parent)
@@ -61,13 +62,13 @@ void AsynchronousTask::setState(AsynchronousTask::State state)
 QString AsynchronousTask::stateToString(State state)
 {
     switch (state) {
-    case Queued: return "queued";
-    case Executing: return "executing";
-    case Failed: return "failed";
-    case Finished: return "finished";
-    case AwaitingAcknowledge: return "awaitingAcknowledge";
-    case Installing: return "installing";
-    case CleaningUp: return "cleaningUp";
+    case Queued: return qSL("queued");
+    case Executing: return qSL("executing");
+    case Failed: return qSL("failed");
+    case Finished: return qSL("finished");
+    case AwaitingAcknowledge: return qSL("awaitingAcknowledge");
+    case Installing: return qSL("installing");
+    case CleaningUp: return qSL("cleaningUp");
     default: return QString();
     }
 }
@@ -96,7 +97,7 @@ bool AsynchronousTask::cancel()
 bool AsynchronousTask::forceCancel()
 {
     if (m_state == Queued) {
-        setError(Error::Canceled, "canceled");
+        setError(Error::Canceled, qSL("canceled"));
         return true;
     }
     return cancel();

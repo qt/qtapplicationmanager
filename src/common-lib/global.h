@@ -58,3 +58,8 @@ template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest...
     for (bool qt_category_enabled = category().isDebugEnabled(); qt_category_enabled; qt_category_enabled = false) { \
         am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__); \
     }
+
+// make the source a lot less ugly and more readable (until we can finally use user defined literals)
+#define qL1S(x) QLatin1String(x)
+#define qL1C(x) QLatin1Char(x)
+#define qSL(x) QStringLiteral(x)

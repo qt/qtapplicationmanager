@@ -61,48 +61,48 @@ Application *YamlApplicationScanner::scan(const QString &filePath) throw (Except
     }
 
     if ((docs.size() != 2)
-            || (docs.first().toMap().value("formatType").toString() != "am-application")
-            || (docs.first().toMap().value("formatVersion").toInt(0) != 1)) {
+            || (docs.first().toMap().value(qSL("formatType")).toString() != qL1S("am-application"))
+            || (docs.first().toMap().value(qSL("formatVersion")).toInt(0) != 1)) {
         throw Exception(Error::Parse, "not a valid YAML application meta-data file");
     }
 
     QVariantMap o = docs.at(1).toMap();
 
     QVariantMap map;
-    map["id"] = o.value("id").toString();
-    map["codeFilePath"] = o.value("code").toString();
-    map["runtimeName"] = o.value("runtime").toString();
-    map["runtimeParameters"] = o.value("runtimeParameters").toMap();
+    map[qSL("id")] = o.value(qSL("id")).toString();
+    map[qSL("codeFilePath")] = o.value(qSL("code")).toString();
+    map[qSL("runtimeName")] = o.value(qSL("runtime")).toString();
+    map[qSL("runtimeParameters")] = o.value(qSL("runtimeParameters")).toMap();
 
-    map["displayName"] = o.value("name").toMap();
-    map["displayIcon"] = o.value("icon").toString();
-    map["preload"] = o.value("preload").toBool();
-    map["importance"] = o.value("importance").toDouble();
-    map["builtIn"] = o.value("built-in").toBool();
-    map["type"] = o.value("type").toString();
+    map[qSL("displayName")] = o.value(qSL("name")).toMap();
+    map[qSL("displayIcon")] = o.value(qSL("icon")).toString();
+    map[qSL("preload")] = o.value(qSL("preload")).toBool();
+    map[qSL("importance")] = o.value(qSL("importance")).toDouble();
+    map[qSL("builtIn")] = o.value(qSL("built-in")).toBool();
+    map[qSL("type")] = o.value(qSL("type")).toString();
 
-    map["capabilities"] = o.value("capabilities").toStringList();
-    map["categories"] = o.value("categories").toStringList();
-    map["mimeTypes"] = o.value("mimeTypes").toStringList();
+    map[qSL("capabilities")] = o.value(qSL("capabilities")).toStringList();
+    map[qSL("categories")] = o.value(qSL("categories")).toStringList();
+    map[qSL("mimeTypes")] = o.value(qSL("mimeTypes")).toStringList();
 
-    QString backgroundMode = o.value("backgroundMode").toString();
+    QString backgroundMode = o.value(qSL("backgroundMode")).toString();
     QString bgmode;
-    if (backgroundMode == QLatin1String("never"))
-        bgmode = "Never";
-    else if (backgroundMode == QLatin1String("voip"))
-        bgmode = "ProvidesVoIP";
-    else if (backgroundMode == QLatin1String("audio"))
-        bgmode = "PlaysAudio";
-    else if (backgroundMode == QLatin1String("location"))
-        bgmode = "TracksLocation";
-    else if (backgroundMode == QLatin1String("auto") || backgroundMode.isEmpty())
-        bgmode = "Auto";
+    if (backgroundMode == qL1S("never"))
+        bgmode = qSL("Never");
+    else if (backgroundMode == qL1S("voip"))
+        bgmode = qSL("ProvidesVoIP");
+    else if (backgroundMode == qL1S("audio"))
+        bgmode = qSL("PlaysAudio");
+    else if (backgroundMode == qL1S("location"))
+        bgmode = qSL("TracksLocation");
+    else if (backgroundMode == qL1S("auto") || backgroundMode.isEmpty())
+        bgmode = qSL("Auto");
     else
         throw Exception(Error::Parse, "backgroundMode field is invalid - must be one of auto, never, voip, audio or location");
-    map["backgroundMode"] = bgmode;
-    map["version"] = o.value("version").toString();
+    map[qSL("backgroundMode")] = bgmode;
+    map[qSL("version")] = o.value(qSL("version")).toString();
 
-    map["baseDir"] = QFileInfo(f).absoluteDir().absolutePath();
+    map[qSL("baseDir")] = QFileInfo(f).absoluteDir().absolutePath();
 
 
     QString appError;
@@ -115,5 +115,5 @@ Application *YamlApplicationScanner::scan(const QString &filePath) throw (Except
 
 QString YamlApplicationScanner::metaDataFileName() const
 {
-    return QLatin1String("info.yaml");
+    return qSL("info.yaml");
 }

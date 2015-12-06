@@ -78,8 +78,8 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
     QByteArray fmt("[%1 | %2] %3 %6[%4:%5]\n");
 
     QStringList args = QStringList()
-        << QLatin1String(msgType >= QtCriticalMsg ? "CRIT" : (msgType >= QtWarningMsg ? "WARN" : "DBG "))
-        << QLatin1String(context.category)
+        << qL1S(msgType >= QtCriticalMsg ? "CRIT" : (msgType >= QtWarningMsg ? "WARN" : "DBG "))
+        << qL1S(context.category)
         << message
         << file
         << QString::number(context.line)
@@ -233,7 +233,7 @@ QString hardwareId()
         if (iface.isValid() && (iface.flags() & QNetworkInterface::IsUp)
                 && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
                 && !iface.hardwareAddress().isEmpty()) {
-            return iface.hardwareAddress().replace(QLatin1Char(':'), QLatin1String("-"));
+            return iface.hardwareAddress().replace(qL1C(':'), qL1S("-"));
         }
     }
 #endif

@@ -28,6 +28,7 @@
 **
 ****************************************************************************/
 
+#include "global.h"
 #include "digestfilter.h"
 #include "digestfilter_p.h"
 #include "cryptography.h"
@@ -97,11 +98,11 @@ QByteArray HMACFilter::hmac(Type t, const QByteArray &key, const QByteArray &dat
 bool DigestFilter::start()
 {
     if (d->initialized) {
-        d->errorString = QLatin1String("Called start() on an already started DigestFilter");
+        d->errorString = qL1S("Called start() on an already started DigestFilter");
         return false;
     }
     if (d->type < DigestFilter::Sha1 || d->type > DigestFilter::Sha512) {
-        d->errorString = QLatin1String("Called start() on an invalid DigestFilter");
+        d->errorString = qL1S("Called start() on an invalid DigestFilter");
         return false;
     }
     return d->initialized = d->init();
@@ -115,7 +116,7 @@ bool DigestFilter::processData(const QByteArray &data)
 bool DigestFilter::processData(const char *data, int size)
 {
     if (!d->initialized) {
-        d->errorString = QLatin1String("Called processData() on a DigestFilter which was not start()ed yet");
+        d->errorString = qL1S("Called processData() on a DigestFilter which was not start()ed yet");
         return false;
     }
     if (!data || size <= 0)
@@ -134,7 +135,7 @@ bool DigestFilter::processData(const char *data, int size)
 bool DigestFilter::finish(QByteArray &digest)
 {
     if (!d->initialized) {
-        d->errorString = QLatin1String("Called finish() on a DigestFilter which was not start()ed yet");
+        d->errorString = qL1S("Called finish() on a DigestFilter which was not start()ed yet");
         return false;
     }
 
@@ -156,7 +157,7 @@ bool DigestFilter::finish(QByteArray &digest)
 
 QString DigestFilter::errorString() const
 {
-    return QLatin1String("Digest error: ") + d->errorString;
+    return qL1S("Digest error: ") + d->errorString;
 }
 
 int DigestFilter::size() const

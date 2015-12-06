@@ -30,6 +30,7 @@
 
 #include <QtTest>
 
+#include "global.h"
 #include "installationreport.h"
 #include "utilities.h"
 #include "packagecreator.h"
@@ -56,7 +57,7 @@ private:
 };
 
 tst_PackageCreator::tst_PackageCreator()
-    : m_baseDir(AM_TESTDATA_DIR)
+    : m_baseDir(qSL(AM_TESTDATA_DIR))
 { }
 
 void tst_PackageCreator::initTestCase()
@@ -64,7 +65,7 @@ void tst_PackageCreator::initTestCase()
     // check if tar command is available at all
 
     QProcess tar;
-    tar.start("tar", { "--version" });
+    tar.start(qSL("tar"), { qSL("--version") });
     m_tarAvailable = tar.waitForStarted(3000)
             && tar.waitForFinished(3000)
             && (tar.exitStatus() == QProcess::NormalExit);
@@ -76,8 +77,8 @@ void tst_PackageCreator::createAndVerify_data()
     QTest::addColumn<bool>("expectedSuccess");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("basic") << QStringList { "testfile" } << true << QString();
-    QTest::newRow("no-such-file") << QStringList { "tastfile" } << false << "~file not found: .*";
+    QTest::newRow("basic") << QStringList { qSL("testfile") } << true << QString();
+    QTest::newRow("no-such-file") << QStringList { qSL("tastfile") } << false << qSL("~file not found: .*");
 }
 
 void tst_PackageCreator::createAndVerify()
@@ -89,7 +90,7 @@ void tst_PackageCreator::createAndVerify()
     QTemporaryFile output;
     QVERIFY(output.open());
 
-    InstallationReport report("com.pelagicore.test");
+    InstallationReport report(qSL("com.pelagicore.test"));
     report.addFiles(files);
 
     PackageCreator creator(m_baseDir, &output, report);
@@ -112,7 +113,7 @@ void tst_PackageCreator::createAndVerify()
         QSKIP("No tar command found in PATH - skipping the verification part of the test!");
 
     QProcess tar;
-    tar.start("tar", { "-taf", output.fileName() });
+    tar.start(qSL("tar"), { qSL("-taf"), output.fileName() });
     QVERIFY2(tar.waitForStarted(3000) &&
              tar.waitForFinished(3000) &&
              (tar.exitStatus() == QProcess::NormalExit) &&
@@ -120,9 +121,9 @@ void tst_PackageCreator::createAndVerify()
 
     QStringList expectedContents = files;
     expectedContents.sort();
-    expectedContents.prepend("--PACKAGE-HEADER--");
-    expectedContents.append("--PACKAGE-FOOTER--");
-    QCOMPARE(expectedContents, QString::fromLocal8Bit(tar.readAllStandardOutput()).split('\n', QString::SkipEmptyParts));
+    expectedContents.prepend(qSL("--PACKAGE-HEADER--"));
+    expectedContents.append(qSL("--PACKAGE-FOOTER--"));
+    QCOMPARE(expectedContents, QString::fromLocal8Bit(tar.readAllStandardOutput()).split(qL1C('\n'), QString::SkipEmptyParts));
 
     // check the contents of the files
 
@@ -131,7 +132,7 @@ void tst_PackageCreator::createAndVerify()
         QVERIFY2(src.open(QFile::ReadOnly), qPrintable(src.errorString()));
         QByteArray data = src.readAll();
 
-        tar.start("tar", { "-xaOf", output.fileName(), file });
+        tar.start(qSL("tar"), { qSL("-xaOf"), output.fileName(), file });
         QVERIFY2(tar.waitForStarted(3000) &&
                  tar.waitForFinished(3000) &&
                  (tar.exitStatus() == QProcess::NormalExit) &&

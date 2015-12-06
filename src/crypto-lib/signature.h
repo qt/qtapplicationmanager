@@ -47,4 +47,5 @@ public:
 
 private:
     SignaturePrivate *d;
+    Q_DISABLE_COPY(Signature)
 };

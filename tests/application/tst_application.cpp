@@ -31,6 +31,7 @@
 #include <QtCore>
 #include <QtTest>
 
+#include "global.h"
 #include "application.h"
 #include "applicationdatabase.h"
 #include "yamlapplicationscanner.h"
@@ -60,12 +61,12 @@ tst_Application::tst_Application()
 void tst_Application::initTestCase()
 {
     YamlApplicationScanner scanner;
-    QDir baseDir(AM_TESTDATA_DIR "manifests");
+    QDir baseDir(qL1S(AM_TESTDATA_DIR "manifests"));
     foreach (const QString &appDirName, baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
         QDir dir = baseDir.absoluteFilePath(appDirName);
         QString error;
         try {
-            const Application *a = scanner.scan(dir.absoluteFilePath("info.yaml"));
+            const Application *a = scanner.scan(dir.absoluteFilePath(qSL("info.yaml")));
             QVERIFY(a);
             QCOMPARE(appDirName, a->id());
             apps << a;
@@ -79,7 +80,7 @@ void tst_Application::initTestCase()
 
 void tst_Application::database()
 {
-    QString tmpDbPath = QDir::temp().absoluteFilePath(QString::fromLatin1("autotest-appdb-%1").arg(qApp->applicationPid()));
+    QString tmpDbPath = QDir::temp().absoluteFilePath(qSL("autotest-appdb-%1").arg(qApp->applicationPid()));
 
     QFile::remove(tmpDbPath);
     QVERIFY(!QFile::exists(tmpDbPath));
@@ -118,13 +119,11 @@ void tst_Application::database()
     }
 
     {
-        QString nullDb(
 #if defined(Q_OS_WIN)
-                    "\\\\.\\NUL"
+        QString nullDb(qSL("\\\\.\\NUL"));
 #else
-                    "/dev/zero"
+        QString nullDb(qSL("/dev/zero"));
 #endif
-                );
 
         ApplicationDatabase adb(nullDb);
         QVERIFY2(adb.isValid(), qPrintable(adb.errorString()));
@@ -172,28 +171,28 @@ void tst_Application::application()
     }
 
     QCOMPARE(app->id(), id);
-    QCOMPARE(QFileInfo(app->displayIcon()).fileName(), QLatin1String("icon.png"));
+    QCOMPARE(QFileInfo(app->displayIcon()).fileName(), qSL("icon.png"));
     QCOMPARE(app->displayNames().size(), 2);
-    QCOMPARE(app->displayNames().value("en"), QLatin1String("english"));
-    QCOMPARE(app->displayNames().value("de"), QLatin1String("deutsch"));
-    QCOMPARE(app->displayName("en"), QLatin1String("english"));
-    QCOMPARE(QFileInfo(app->codeFilePath()).fileName(), QLatin1String("Test.qml"));
-    QCOMPARE(app->runtimeName(), QLatin1String("qml"));
+    QCOMPARE(app->displayNames().value(qSL("en")), qSL("english"));
+    QCOMPARE(app->displayNames().value(qSL("de")), qSL("deutsch"));
+    QCOMPARE(app->displayName(qSL("en")), qSL("english"));
+    QCOMPARE(QFileInfo(app->codeFilePath()).fileName(), qSL("Test.qml"));
+    QCOMPARE(app->runtimeName(), qSL("qml"));
     QCOMPARE(app->runtimeParameters().size(), 1);
-    QCOMPARE(app->runtimeParameters().value("loadDummyData").toBool(), true);
+    QCOMPARE(app->runtimeParameters().value(qSL("loadDummyData")).toBool(), true);
     QCOMPARE(app->isBuiltIn(), true);
     QCOMPARE(app->isPreloaded(), true);
     QCOMPARE(app->importance(), 0.5);
     QVERIFY(app->backgroundMode() == Application::TracksLocation);
     QCOMPARE(app->supportedMimeTypes().size(), 2);
-    QCOMPARE(app->supportedMimeTypes().first(), QLatin1String("text/plain"));
-    QCOMPARE(app->supportedMimeTypes().last(), QLatin1String("x-scheme-handler/mailto"));
+    QCOMPARE(app->supportedMimeTypes().first(), qSL("text/plain"));
+    QCOMPARE(app->supportedMimeTypes().last(), qSL("x-scheme-handler/mailto"));
     QCOMPARE(app->capabilities().size(), 2);
-    QCOMPARE(app->capabilities().first(), QLatin1String("cameraAccess"));
-    QCOMPARE(app->capabilities().last(), QLatin1String("locationAccess"));
+    QCOMPARE(app->capabilities().first(), qSL("cameraAccess"));
+    QCOMPARE(app->capabilities().last(), qSL("locationAccess"));
     QCOMPARE(app->categories().size(), 2);
-    QCOMPARE(app->categories().first(), QLatin1String("bar"));
-    QCOMPARE(app->categories().last(), QLatin1String("foo"));
+    QCOMPARE(app->categories().first(), qSL("bar"));
+    QCOMPARE(app->categories().last(), qSL("foo"));
 
     QVERIFY(!app->currentRuntime());
     QVERIFY(!app->isLocked());

@@ -38,33 +38,34 @@
 #include <QDBusConnection>
 #include <QDBusError>
 
+#include "global.h"
 #include "applicationmanager_interface.h"
 #include "applicationinstaller_interface.h"
 
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setApplicationName("ApplicationManager Controller");
-    QCoreApplication::setOrganizationName(QLatin1String("Pelagicore AG"));
-    QCoreApplication::setOrganizationDomain(QLatin1String("pelagicore.com"));
-    QCoreApplication::setApplicationVersion(AM_VERSION);
+    QCoreApplication::setApplicationName(qSL("ApplicationManager Controller"));
+    QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
+    QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
+    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     QCoreApplication a(argc, argv);
     QCommandLineParser clp;
 
     clp.addHelpOption();
     clp.addVersionOption();
-    clp.addPositionalArgument("package", "path to the package that should be installed");
+    clp.addPositionalArgument(qSL("package"), qSL("path to the package that should be installed"));
 
     clp.process(QCoreApplication::arguments());
     if (clp.positionalArguments().size() != 1)
         clp.showHelp(1);
 
-    QString package = clp.positionalArguments().first();
+    QString package = clp.positionalArguments().at(0);
     if (package.isEmpty())
         clp.showHelp(1);
 
-    if (package == "-") { // sent via stdin
+    if (package == qL1S("-")) { // sent via stdin
         bool success = false;
 
         QTemporaryFile *tf = new QTemporaryFile(qApp);
@@ -92,17 +93,17 @@ int main(int argc, char *argv[])
         return 3;
     }
 
-    QDBusConnection conn = QDBusConnection("");
+    QDBusConnection conn = QDBusConnection(QString());
 
-    QFile f(QDir::temp().absoluteFilePath("application-manager.dbus"));
+    QFile f(QDir::temp().absoluteFilePath(qSL("application-manager.dbus")));
     if (f.open(QFile::ReadOnly)) {
         QString dbus = QString::fromUtf8(f.readAll());
-        if (dbus == "system")
+        if (dbus == qL1S("system"))
             conn = QDBusConnection::systemBus();
         else if (dbus.isEmpty())
             conn = QDBusConnection::sessionBus();
         else
-            conn = QDBusConnection::connectToBus(dbus, "custom");
+            conn = QDBusConnection::connectToBus(dbus, qSL("custom"));
     }
 
     if (!conn.isConnected()) {
@@ -111,8 +112,8 @@ int main(int argc, char *argv[])
         return 5;
     }
 
-    IoQtApplicationManagerInterface manager("io.qt.ApplicationManager", "/Manager", conn);
-    IoQtApplicationInstallerInterface installer("io.qt.ApplicationManager", "/Installer", conn);
+    IoQtApplicationManagerInterface manager(qSL("io.qt.ApplicationManager"), qSL("/Manager"), conn);
+    IoQtApplicationInstallerInterface installer(qSL("io.qt.ApplicationManager"), qSL("/Installer"), conn);
 
     fprintf(stdout, "Starting installation of package %s...\n", qPrintable(package));
 
@@ -122,7 +123,7 @@ int main(int argc, char *argv[])
     // start the package installation
 
     QTimer::singleShot(0, [&installer, &package, &installationId]() {
-        auto reply = installer.startPackageInstallation("internal-0", package);
+        auto reply = installer.startPackageInstallation(qSL("internal-0"), package);
         reply.waitForFinished();
         if (reply.isError()) {
             fprintf(stderr, "ERROR: failed to call startPackageInstallation via DBus: %s\n", qPrintable(reply.error().message()));
@@ -142,7 +143,7 @@ int main(int argc, char *argv[])
                      [&installer, &installationId, &applicationId](const QString &taskId, const QVariantMap &metadata) {
         if (taskId != installationId)
             return;
-        applicationId = metadata.value("id").toString();
+        applicationId = metadata.value(qSL("id")).toString();
         if (applicationId.isEmpty()) {
             fprintf(stderr, "ERROR: Could not find a valid application id in the package - got: %s\n", qPrintable(applicationId));
             qApp->exit(8);

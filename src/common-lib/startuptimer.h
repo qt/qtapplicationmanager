@@ -51,4 +51,6 @@ private:
     quint64 m_processCreation = 0;
     QElapsedTimer m_timer;
     QVector<QPair<quint64, QByteArray>> m_checkpoints;
+
+    Q_DISABLE_COPY(StartupTimer)
 };

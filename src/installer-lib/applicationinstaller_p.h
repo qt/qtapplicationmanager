@@ -57,7 +57,7 @@ public:
 
     QDir manifestDir;
     QDir imageMountDir;
-    QList<InstallationLocation> installationLocations;
+    QVector<InstallationLocation> installationLocations;
     InstallationLocation invalidInstallationLocation;
 
     QString error;

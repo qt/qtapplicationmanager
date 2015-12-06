@@ -35,6 +35,7 @@
 
 #include <yaml.h>
 
+#include "global.h"
 #include "qtyaml.h"
 
 
@@ -264,7 +265,7 @@ QVector<QVariant> variantDocumentsFromYaml(const QByteArray &yaml, ParseError *e
         }
         yaml_parser_delete(&p);
     } else if (error) {
-        *error = ParseError("could not initialize YAML parser");
+        *error = ParseError(qSL("could not initialize YAML parser"));
     }
     return result;
 }

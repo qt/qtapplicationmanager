@@ -31,6 +31,7 @@
 #include <QtCore/QtCore>
 #include <QtTest/QtTest>
 
+#include "global.h"
 #include "signature.h"
 
 
@@ -57,17 +58,17 @@ tst_Signature::tst_Signature()
 
 void tst_Signature::initTestCase()
 {
-    QFile s(":/signing.p12");
+    QFile s(qSL(":/signing.p12"));
     QVERIFY(s.open(QIODevice::ReadOnly));
     m_signingP12 = s.readAll();
     QVERIFY(!m_signingP12.isEmpty());
 
-    QFile snk(":/signing-no-key.p12");
+    QFile snk(qSL(":/signing-no-key.p12"));
     QVERIFY(snk.open(QIODevice::ReadOnly));
     m_signingNoKeyP12 = snk.readAll();
     QVERIFY(!m_signingNoKeyP12.isEmpty());
 
-    QFile v(":/verifying.crt");
+    QFile v(qSL(":/verifying.crt"));
     QVERIFY(v.open(QIODevice::ReadOnly));
     m_verifyingPEM << v.readAll();
     QVERIFY(!m_verifyingPEM.first().isEmpty());
@@ -94,26 +95,26 @@ void tst_Signature::check()
     QVERIFY(!s2.verify(signature, m_verifyingPEM));
 
     QVERIFY(s.create(m_signingP12, m_signingPassword + "not").isEmpty());
-    QVERIFY2(s.errorString().contains("not parse"), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(qSL("not parse")), qPrintable(s.errorString()));
 
     QVERIFY(s.create(QByteArray(), m_signingPassword).isEmpty());
-    QVERIFY2(s.errorString().contains("not read"), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(qSL("not read")), qPrintable(s.errorString()));
 
     Signature s3(QByteArray(4096, 'x'));
     QVERIFY(!s3.create(m_signingP12, m_signingPassword).isEmpty());
 
     QVERIFY(!s.verify(signature, QList<QByteArray>()));
-    QVERIFY2(s.errorString().contains("Failed to verify"), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(qSL("Failed to verify")), qPrintable(s.errorString()));
     QVERIFY(!s.verify(signature, QList<QByteArray>() << m_signingP12));
-    QVERIFY2(s.errorString().contains("not load"), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(qSL("not load")), qPrintable(s.errorString()));
     QVERIFY(!s.verify(hash, QList<QByteArray>() << m_signingP12));
-    QVERIFY2(s.errorString().contains("not read"), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(qSL("not read")), qPrintable(s.errorString()));
 
     Signature s4 { QByteArray() };
     QVERIFY(s4.create(m_signingP12, m_signingPassword).isEmpty());
 
     QVERIFY(s.create(m_signingNoKeyP12, m_signingPassword).isEmpty());
-    QVERIFY2(s.errorString().contains("private key"), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(qSL("private key")), qPrintable(s.errorString()));
 }
 
 QTEST_APPLESS_MAIN(tst_Signature)

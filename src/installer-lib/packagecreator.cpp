@@ -118,7 +118,7 @@ Error PackageCreator::errorCode() const
 
 QString PackageCreator::errorString() const
 {
-    return wasCanceled() ? QLatin1String("canceled") : (d->m_failed ? d->m_errorString : QString());
+    return wasCanceled() ? qSL("canceled") : (d->m_failed ? d->m_errorString : QString());
 }
 
 /*! \internal
@@ -153,13 +153,13 @@ bool PackageCreatorPrivate::create()
         digest.start();
 
         QVariantMap headerFormat {
-            { "formatType", "am-package-header" },
-            { "formatVersion", 1 }
+            { qSL("formatType"), qSL("am-package-header") },
+            { qSL("formatVersion"), 1 }
         };
 
         QVariantMap headerData {
-            { "applicationId", m_report.applicationId() },
-            { "diskSpaceUsed", m_report.diskSpaceUsed() }
+            { qSL("applicationId"), m_report.applicationId() },
+            { qSL("diskSpaceUsed"), m_report.diskSpaceUsed() }
         };
 
         PackageUtilities::addImportantHeaderDataToDigest(headerData, &digest);
@@ -193,7 +193,7 @@ bool PackageCreatorPrivate::create()
 
         // Add the metadata header
 
-        if (!addVirtualFile(ar, "--PACKAGE-HEADER--", QtYaml::yamlFromVariantDocuments(QVector<QVariant> { headerFormat, headerData })))
+        if (!addVirtualFile(ar, qSL("--PACKAGE-HEADER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { headerFormat, headerData })))
             throw ArchiveException(ar, "could not write '--PACKAGE-HEADER--' to archive");
 
         // Add all regular files
@@ -301,29 +301,29 @@ bool PackageCreatorPrivate::create()
         // Add the metadata footer
 
         QVariantMap footerFormat {
-            { "formatType", "am-package-footer" },
-            { "formatVersion", 1 }
+            { qSL("formatType"), qSL("am-package-footer") },
+            { qSL("formatVersion"), 1 }
         };
 
         QVariantMap footerData {
-            { "digest", QLatin1String(m_digest.toHex()) },
+            { qSL("digest"), QLatin1String(m_digest.toHex()) },
         };
 
-        if (!addVirtualFile(ar, "--PACKAGE-FOOTER--", QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerFormat, footerData })))
+        if (!addVirtualFile(ar, qSL("--PACKAGE-FOOTER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerFormat, footerData })))
             throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
 
         if (!m_report.developerSignature().isEmpty()) {
             QVariantMap footerDevSig {
-                { "developerSignature", QLatin1String(m_report.developerSignature().toBase64()) }
+                { qSL("developerSignature"), QLatin1String(m_report.developerSignature().toBase64()) }
             };
-            if (!addVirtualFile(ar, "--PACKAGE-FOOTER--", QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerDevSig })))
+            if (!addVirtualFile(ar, qSL("--PACKAGE-FOOTER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerDevSig })))
                 throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
         }
         if (!m_report.storeSignature().isEmpty()) {
             QVariantMap footerStoreSig {
-                { "storeSignature", QLatin1String(m_report.storeSignature().toBase64()) }
+                { qSL("storeSignature"), QLatin1String(m_report.storeSignature().toBase64()) }
             };
-            if (!addVirtualFile(ar, "--PACKAGE-FOOTER--", QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerStoreSig })))
+            if (!addVirtualFile(ar, qSL("--PACKAGE-FOOTER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerStoreSig })))
                 throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
         }
 

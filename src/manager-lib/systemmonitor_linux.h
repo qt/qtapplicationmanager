@@ -51,6 +51,8 @@ private:
     int m_fd = -1;
     QByteArray m_path;
     int m_maxRead;
+
+    Q_DISABLE_COPY(SysFsReader)
 };
 
 

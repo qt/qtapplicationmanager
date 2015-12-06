@@ -100,7 +100,7 @@ void QmlInProcessNotification::componentComplete()
     if (m_mode == Declarative) {
         QQmlContext *ctxt = QQmlEngine::contextForObject(this);
         if (ctxt) {
-            QQmlExpression expr(ctxt, 0, "ApplicationInterface.applicationId", 0);
+            QQmlExpression expr(ctxt, 0, qSL("ApplicationInterface.applicationId"), 0);
             QVariant v = expr.evaluate();
             if (!v.isNull())
                 m_appId = v.toString();

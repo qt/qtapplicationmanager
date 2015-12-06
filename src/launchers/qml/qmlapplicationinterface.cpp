@@ -35,6 +35,7 @@
 #include <QDebug>
 #include <QPointer>
 
+#include "global.h"
 #include "qmlapplicationinterface.h"
 #include "notification.h"
 
@@ -48,11 +49,11 @@ QmlApplicationInterface::QmlApplicationInterface(const QString &dbusConnectionNa
         qCritical("ERROR: only one instance of QmlApplicationInterface is allowed");
     s_instance = this;
 
-    m_runtimeIf = new QDBusInterface("", "/RuntimeInterface", "io.qt.ApplicationManager.RuntimeInterface",
+    m_runtimeIf = new QDBusInterface(qSL(""), qSL("/RuntimeInterface"), qSL("io.qt.ApplicationManager.RuntimeInterface"),
                                      m_connection, this);
-    m_applicationIf = new QDBusInterface("", "/ApplicationInterface", "io.qt.ApplicationManager.ApplicationInterface",
+    m_applicationIf = new QDBusInterface(qSL(""), qSL("/ApplicationInterface"), qSL("io.qt.ApplicationManager.ApplicationInterface"),
                                          m_connection, this);
-    m_notifyIf = new QDBusInterface("org.freedesktop.Notifications", "/org/freedesktop/Notifications", "org.freedesktop.Notifications",
+    m_notifyIf = new QDBusInterface(qSL("org.freedesktop.Notifications"), qSL("/org/freedesktop/Notifications"), qSL("org.freedesktop.Notifications"),
                                     QDBusConnection::sessionBus(), this);
 }
 
@@ -89,7 +90,7 @@ bool QmlApplicationInterface::initialize()
         qCritical("ERROR: could not connect the org.freedesktop.Notifications interface via D-Bus: %s", qPrintable(m_notifyIf->lastError().name()));
 
     if (ok)
-        m_runtimeIf->asyncCall("finishedInitialization");
+        m_runtimeIf->asyncCall(qSL("finishedInitialization"));
     return ok;
 }
 
@@ -109,7 +110,7 @@ Notification *QmlApplicationInterface::createNotification()
 uint QmlApplicationInterface::notificationShow(QmlNotification *n)
 {
     if (n && m_notifyIf->isValid()) {
-        QDBusReply<uint> newId = m_notifyIf->call("Notify", applicationId(), n->notificationId(),
+        QDBusReply<uint> newId = m_notifyIf->call(qSL("Notify"), applicationId(), n->notificationId(),
                                                   n->icon().toString(), n->summary(), n->body(),
                                                   n->libnotifyActionList(), n->libnotifyHints(),
                                                   n->timeout());
@@ -125,7 +126,7 @@ uint QmlApplicationInterface::notificationShow(QmlNotification *n)
 void QmlApplicationInterface::notificationClose(QmlNotification *n)
 {
     if (n && m_notifyIf->isValid())
-        m_notifyIf->asyncCall("CloseNotification", n->notificationId());
+        m_notifyIf->asyncCall(qSL("CloseNotification"), n->notificationId());
 }
 
 void QmlApplicationInterface::notificationClosed(uint notificationId, uint reason)

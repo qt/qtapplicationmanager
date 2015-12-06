@@ -56,13 +56,13 @@ public:
     explicit QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager);
     ~QmlInProcessRuntime();
 
-    State state() const;
+    State state() const override;
     void openDocument(const QString &document) override;
     qint64 applicationProcessId() const override;
 
 public slots:
-    bool start();
-    void stop(bool forceKill = false);
+    bool start() override;
+    void stop(bool forceKill = false) override;
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface

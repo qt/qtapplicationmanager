@@ -63,7 +63,7 @@ static struct {
 static Command command(QCommandLineParser &clp)
 {
     if (!clp.positionalArguments().isEmpty()) {
-        QByteArray cmd = clp.positionalArguments().first().toLatin1();
+        QByteArray cmd = clp.positionalArguments().at(0).toLatin1();
 
         for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
             if (cmd == commandTable[i].name) {
@@ -78,25 +78,25 @@ static Command command(QCommandLineParser &clp)
 
 int main(int argc, char **argv)
 {
-    QCoreApplication::setApplicationName("ApplicationManager Packager");
-    QCoreApplication::setOrganizationName(QLatin1String("Pelagicore AG"));
-    QCoreApplication::setOrganizationDomain(QLatin1String("pelagicore.com"));
-    QCoreApplication::setApplicationVersion(AM_VERSION);
+    QCoreApplication::setApplicationName(qSL("ApplicationManager Packager"));
+    QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
+    QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
+    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     QCoreApplication app(argc, argv);
 
-    QString desc = "\nPelagicore ApplicationManager packaging tool\n\nAvailable commands are:\n";
+    QString desc = qSL("\nPelagicore ApplicationManager packaging tool\n\nAvailable commands are:\n");
     uint longestName = 0;
     for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i)
         longestName = qMax(longestName, qstrlen(commandTable[i].name));
     for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
-        desc += QString::fromLatin1("  %1%2  %3\n")
-                .arg(commandTable[i].name)
-                .arg(QString(longestName - qstrlen(commandTable[i].name), ' '))
-                .arg(commandTable[i].description);
+        desc += qSL("  %1%2  %3\n")
+                .arg(qL1S(commandTable[i].name),
+                     QString(longestName - qstrlen(commandTable[i].name), qL1C(' ')),
+                     qL1S(commandTable[i].description));
     }
 
-    desc += "\nMore information about each command can be obtained by running\n  application-packager <command> --help";
+    desc += qSL("\nMore information about each command can be obtained by running\n  application-packager <command> --help");
 
     QCommandLineParser clp;
     clp.setApplicationDescription(desc);
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
     clp.addHelpOption();
     clp.addVersionOption();
 
-    clp.addPositionalArgument("command", "The command to execute.");
+    clp.addPositionalArgument(qSL("command"), qSL("The command to execute."));
 
     if (!clp.parse(QCoreApplication::arguments())) {
         fprintf(stderr, "%s\n", qPrintable(clp.errorText()));
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     switch (command(clp)) {
     default:
     case NoCommand:
-        if (clp.isSet("version")) {
+        if (clp.isSet(qSL("version"))) {
 #if QT_VERSION < QT_VERSION_CHECK(5,4,0)
             fprintf(stdout, "%s %s\n", qPrintable(QCoreApplication::applicationName()), qPrintable(QCoreApplication::applicationVersion()));
             exit(0);
@@ -124,14 +124,14 @@ int main(int argc, char **argv)
             clp.showVersion();
 #endif
         }
-        if (clp.isSet("help"))
+        if (clp.isSet(qSL("help")))
             clp.showHelp();
         clp.showHelp(1);
         break;
 
     case CreatePackage:
-        clp.addPositionalArgument("package",          "The file name of the created package.");
-        clp.addPositionalArgument("source-directory", "The package's content root directory.");
+        clp.addPositionalArgument(qSL("package"),          qSL("The file name of the created package."));
+        clp.addPositionalArgument(qSL("source-directory"), qSL("The package's content root directory."));
         clp.process(app);
 
         if (clp.positionalArguments().size() != 3)
@@ -142,10 +142,10 @@ int main(int argc, char **argv)
         break;
 
     case DevSignPackage:
-        clp.addPositionalArgument("package",        "File name of the unsigned package (input).");
-        clp.addPositionalArgument("signed-package", "File name of the signed package (output).");
-        clp.addPositionalArgument("certificate",    "PKCS#12 certificate file.");
-        clp.addPositionalArgument("password",       "Password for the PKCS#12 certificate.");
+        clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
+        clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
+        clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
+        clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
         clp.process(app);
 
         if (clp.positionalArguments().size() != 5)
@@ -158,8 +158,8 @@ int main(int argc, char **argv)
         break;
 
     case DevVerifyPackage:
-        clp.addPositionalArgument("package",      "File name of the signed package (input).");
-        clp.addPositionalArgument("certificates", "The developer's CA certificate file(s).", "certificates...");
+        clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
+        clp.addPositionalArgument(qSL("certificates"), qSL("The developer's CA certificate file(s)."), qSL("certificates..."));
         clp.process(app);
 
         if (clp.positionalArguments().size() != 3)
@@ -170,11 +170,11 @@ int main(int argc, char **argv)
         break;
 
     case StoreSignPackage:
-        clp.addPositionalArgument("package",        "File name of the unsigned package (input).");
-        clp.addPositionalArgument("signed-package", "File name of the signed package (output).");
-        clp.addPositionalArgument("certificate",    "PKCS#12 certificate file.");
-        clp.addPositionalArgument("password",       "Password for the PKCS#12 certificate.");
-        clp.addPositionalArgument("hardware-id",    "Unique hardware id to which this package gets bound.");
+        clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
+        clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
+        clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
+        clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
+        clp.addPositionalArgument(qSL("hardware-id"),    qSL("Unique hardware id to which this package gets bound."));
         clp.process(app);
 
         if (clp.positionalArguments().size() != 6)
@@ -188,9 +188,9 @@ int main(int argc, char **argv)
         break;
 
     case StoreVerifyPackage:
-        clp.addPositionalArgument("package",     "File name of the signed package (input).");
-        clp.addPositionalArgument("certificate", "Store CA certificate file(s).", "certificates...");
-        clp.addPositionalArgument("hardware-id", "Unique hardware id to which this package was bound.");
+        clp.addPositionalArgument(qSL("package"),     qSL("File name of the signed package (input)."));
+        clp.addPositionalArgument(qSL("certificate"), qSL("Store CA certificate file(s)."), qSL("certificates..."));
+        clp.addPositionalArgument(qSL("hardware-id"), qSL("Unique hardware id to which this package was bound."));
         clp.process(app);
 
         if (clp.positionalArguments().size() != 4)
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 
         p = Packager::storeVerify(clp.positionalArguments().at(1),
                                   clp.positionalArguments().mid(2, clp.positionalArguments().size() - 2),
-                                  clp.positionalArguments().last());
+                                  *--clp.positionalArguments().cend());
         break;
     }
 

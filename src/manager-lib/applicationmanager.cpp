@@ -245,7 +245,7 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
 {
     if (s_instance) {
         if (error)
-            *error = QLatin1String("ApplicationManager::createInstance() was called a second time.");
+            *error = qL1S("ApplicationManager::createInstance() was called a second time.");
         return 0;
     }
 
@@ -287,7 +287,7 @@ ApplicationManager::ApplicationManager(ApplicationDatabase *adb, QObject *parent
     connect(this, &QAbstractItemModel::layoutChanged, this, &ApplicationManager::countChanged);
     connect(this, &QAbstractItemModel::modelReset, this, &ApplicationManager::countChanged);
 
-    QTimer::singleShot(0, this, SLOT(preload()));
+    QTimer::singleShot(0, this, &ApplicationManager::preload);
 }
 
 ApplicationManager::~ApplicationManager()
@@ -382,7 +382,7 @@ const Application *ApplicationManager::schemeHandler(const QString &scheme) cons
             int pos = mime.indexOf(QLatin1Char('/'));
 
             if ((pos > 0)
-                    && (mime.left(pos) == QLatin1String("x-scheme-handler/"))
+                    && (mime.left(pos) == qL1S("x-scheme-handler/"))
                     && (mime.mid(pos + 1) == scheme)) {
                 return app;
             }
@@ -432,7 +432,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
     bool inProcess = RuntimeFactory::instance()->manager(app->runtimeName())->inProcess();
     AbstractContainer *container = nullptr;
-    QString containerId = QLatin1String("process"); //TODO: ask SystemUI or use config file
+    QString containerId = qSL("process"); //TODO: ask SystemUI or use config file
     bool attachRuntime = false;
 
     if (!runtime) {
@@ -569,7 +569,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
     const Application *app = 0;
     if (url.isValid()) {
         QString scheme = url.scheme();
-        if (scheme == QLatin1String("file")) {
+        if (scheme == qL1S("file")) {
             // QString file = url.toLocalFile();
 
             // TODO: use the file magic database to get the mime-type
@@ -823,11 +823,11 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
         if (!app->displayNames().isEmpty()) {
             name = app->displayName(d->currentLocale);
             if (name.isEmpty())
-                name = app->displayName("en");
+                name = app->displayName(qSL("en"));
             if (name.isEmpty())
-                name = app->displayName("en_US");
+                name = app->displayName(qSL("en_US"));
             if (name.isEmpty())
-                name = app->displayNames().constBegin().value();
+                name = *app->displayNames().constBegin();
         } else {
             name = app->id();
         }
@@ -860,15 +860,15 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
     case BackgroundMode: {
         switch (app->backgroundMode()) {
         case Application::Auto:
-            return QLatin1String("Auto");
+            return qL1S("Auto");
         case Application::Never:
-            return QLatin1String("Never");
+            return qL1S("Never");
         case Application::ProvidesVoIP:
-            return QLatin1String("ProvidesVoIP");
+            return qL1S("ProvidesVoIP");
         case Application::PlaysAudio:
-            return QLatin1String("PlaysAudio");
+            return qL1S("PlaysAudio");
         case Application::TracksLocation:
-            return QLatin1String("TracksLocation");
+            return qL1S("TracksLocation");
         }
         return QString();
     }
@@ -945,6 +945,7 @@ QStringList ApplicationManager::applicationIds() const
     AM_AUTHENTICATE_DBUS(QStringList)
 
     QStringList ids;
+    ids.reserve(d->apps.size());
     for (int i = 0; i < d->apps.size(); ++i)
         ids << d->apps.at(i)->id();
     return ids;
@@ -974,12 +975,12 @@ void ApplicationManager::setApplicationAudioFocus(const QString &id, AudioFocus 
     int index = indexFromId(id);
     if (index < 0)
         return;
-    QString audioFocusName = QLatin1String("audioFocus");
-    QString audioFocusState = QLatin1String("none");
+    QString audioFocusName = qSL("audioFocus");
+    QString audioFocusState = qSL("none");
     switch (audioFocus) {
-    case FullscreenFocus : audioFocusState = QLatin1String("fullscreen"); break;
-    case SplitscreenFocus: audioFocusState = QLatin1String("splitscreen"); break;
-    case BackgroundFocus : audioFocusState = QLatin1String("background"); break;
+    case FullscreenFocus : audioFocusState = qSL("fullscreen"); break;
+    case SplitscreenFocus: audioFocusState = qSL("splitscreen"); break;
+    case BackgroundFocus : audioFocusState = qSL("background"); break;
     case NoFocus         :
     default              : break;
     }

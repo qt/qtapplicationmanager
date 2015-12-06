@@ -39,10 +39,16 @@ class Application;
 class ApplicationScanner
 {
 public:
+    virtual ~ApplicationScanner() = default;
+
     virtual Application *scan(const QString &fileName) throw (Exception) = 0;
 
     virtual QString metaDataFileName() const = 0;
 
 protected:
+    ApplicationScanner() = default;
     static bool validate(const Application *app, QString *error = 0);
+
+private:
+    Q_DISABLE_COPY(ApplicationScanner)
 };

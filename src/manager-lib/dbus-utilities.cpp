@@ -72,15 +72,16 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
         DBusPolicy dbp;
 
         bool ok;
-        foreach (const QVariant &v, policy.value("uids").toList()) {
+        const QVariantList uidList = policy.value(qSL("uids")).toList();
+        foreach (const QVariant &v, uidList) {
             uint uid = v.toUInt(&ok);
             if (ok)
                 dbp.m_uids << uid;
         }
         qSort(dbp.m_uids);
-        dbp.m_executables = policy.value("executables").toStringList();
+        dbp.m_executables = policy.value(qSL("executables")).toStringList();
         dbp.m_executables.sort();
-        dbp.m_capabilities = policy.value("capabilities").toStringList();
+        dbp.m_capabilities = policy.value(qSL("capabilities")).toStringList();
         dbp.m_capabilities.sort();
 
         result.insert(f.toLocal8Bit(), dbp);

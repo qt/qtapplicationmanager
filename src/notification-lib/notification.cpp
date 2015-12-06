@@ -29,6 +29,8 @@
 ****************************************************************************/
 
 #include "notification.h"
+#include "global.h"
+
 
 Notification::Notification(QObject *parent, Notification::ConstructionMode mode)
     : QObject(parent)
@@ -268,7 +270,7 @@ QStringList Notification::libnotifyActionList() const
 {
     QStringList actionList;
     if (isClickable())
-        actionList << "default" << QString();
+        actionList << qSL("default") << QString();
     foreach (const QVariant &action, actions()) {
         if (action.type() == QVariant::String) {
             actionList << action.toString() << QString();
@@ -287,14 +289,14 @@ QStringList Notification::libnotifyActionList() const
 QVariantMap Notification::libnotifyHints() const
 {
     QVariantMap hints;
-    hints.insert("urgency", int(priority()));
+    hints.insert(qSL("urgency"), int(priority()));
     if (!category().isEmpty())
-        hints.insert("category", category());
+        hints.insert(qSL("category"), category());
     if (!image().isEmpty())
-        hints.insert("image-path", image().toString());
+        hints.insert(qSL("image-path"), image().toString());
     if (isShowingProgress()) {
-        hints.insert("x-pelagicore-show-progress", true);
-        hints.insert("x-pelagicore-progress", progress());
+        hints.insert(qSL("x-pelagicore-show-progress"), true);
+        hints.insert(qSL("x-pelagicore-progress"), progress());
     }
 
     return hints;
@@ -333,7 +335,7 @@ void Notification::setId(uint notificationId)
 
 void Notification::libnotifyActivated(const QString &actionId)
 {
-    if (actionId == "default")
+    if (actionId == qL1S("default"))
         emit clicked();
     else
         emit actionActivated(actionId);

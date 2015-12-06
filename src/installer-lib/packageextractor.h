@@ -53,7 +53,7 @@ public:
     QDir destinationDirectory() const;
     void setDestinationDirectory(const QDir &destinationDir);
 
-    void setFileExtractedCallback(std::function<void(const QString &)> callback);
+    void setFileExtractedCallback(const std::function<void(const QString &)> &callback);
 
     bool extract();
 

@@ -58,6 +58,6 @@ enum PackageEntryType {
 class ArchiveException : public Exception
 {
 public:
-    ArchiveException(struct ::archive *ar, const QString &errorString);
+    ArchiveException(struct ::archive *ar, const char *errorString);
 };
 

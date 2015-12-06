@@ -186,7 +186,7 @@
 
 ApplicationInstaller *ApplicationInstaller::s_instance = 0;
 
-ApplicationInstaller::ApplicationInstaller(const QList<InstallationLocation> &installationLocations,
+ApplicationInstaller::ApplicationInstaller(const QVector<InstallationLocation> &installationLocations,
                                            const QDir &manifestDir, const QDir &imageMountDir,
                                            QObject *parent)
     : QObject(parent)
@@ -202,24 +202,24 @@ ApplicationInstaller::~ApplicationInstaller()
     delete d;
 }
 
-ApplicationInstaller *ApplicationInstaller::createInstance(const QList<InstallationLocation> &installationLocations,
+ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<InstallationLocation> &installationLocations,
                                                            const QDir &manifestDir, const QDir &imageMountDir, QString *error)
 {
     if (s_instance) {
         if (error)
-            *error = QLatin1String("ApplicationInstaller::createInstance() was called a second time.");
+            *error = qL1S("ApplicationInstaller::createInstance() was called a second time.");
         return 0;
     }
     qRegisterMetaType<AsynchronousTask *>();
 
     if (!manifestDir.exists()) {
         if (error)
-            *error = QLatin1String("ApplicationInstaller::createInstance() could not access the manifest directory ") + manifestDir.absolutePath();
+            *error = qL1S("ApplicationInstaller::createInstance() could not access the manifest directory ") + manifestDir.absolutePath();
         return 0;
     }
     if (!imageMountDir.exists()) {
         if (error)
-            *error = QLatin1String("ApplicationInstaller::createInstance() could not access the image-mount directory ") + imageMountDir.absolutePath();
+            *error = qL1S("ApplicationInstaller::createInstance() could not access the image-mount directory ") + imageMountDir.absolutePath();
         return 0;
     }
     return s_instance = new ApplicationInstaller(installationLocations, manifestDir, imageMountDir, QCoreApplication::instance());
@@ -357,7 +357,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
                     throw Exception(Error::System, "failed to un-mount stale mount %1 on %2: %3")
                         .arg(device, path, SudoClient::instance()->lastError());
             }
-            if (device.startsWith("/dev/loop")) {
+            if (device.startsWith(qL1S("/dev/loop"))) {
                 if (!SudoClient::instance()->detachLoopback(device)) {
                     qCWarning(LogInstaller) << "failed to detach stale loopback device" << device;
                     // we can still continue here
@@ -406,14 +406,14 @@ void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
                 else
                     checkDirs << il.installationPath() + app->id();
 
-                foreach (const QString checkFile, checkFiles) {
+                foreach (const QString &checkFile, checkFiles) {
                     QFileInfo fi(checkFile);
                     if (!fi.exists() || !fi.isFile() || !fi.isReadable()) {
                         valid = false;
                         break;
                     }
                 }
-                foreach (const QString checkDir, checkDirs) {
+                foreach (const QString &checkDir, checkDirs) {
                     QFileInfo fi(checkDir);
                     if (!fi.exists() || !fi.isDir() || !fi.isReadable()) {
                         valid = false;
@@ -471,7 +471,7 @@ bool ApplicationInstaller::checkCleanup()
     }
 }
 
-QList<InstallationLocation> ApplicationInstaller::installationLocations() const
+QVector<InstallationLocation> ApplicationInstaller::installationLocations() const
 {
     return d->installationLocations;
 }
@@ -522,6 +522,7 @@ const InstallationLocation &ApplicationInstaller::installationLocationFromApplic
 QStringList ApplicationInstaller::installationLocationIds() const
 {
     QStringList ids;
+    ids.reserve(d->installationLocations.size());
     foreach (const InstallationLocation &il, d->installationLocations)
         ids << il.id();
     return ids;
@@ -913,8 +914,8 @@ public:
 
             // better be safe than sorry - make sure this is the exact same version we installed
             // (we cannot check every single file, but we at least make sure that info.yaml matches)
-            QFile manifest1(ApplicationInstaller::instance()->manifestDirectory().absoluteFilePath(m_applicationId + "/info.yaml"));
-            QFile manifest2(QDir(mountDir).absoluteFilePath("info.yaml"));
+            QFile manifest1(ApplicationInstaller::instance()->manifestDirectory().absoluteFilePath(m_applicationId + qSL("/info.yaml")));
+            QFile manifest2(QDir(mountDir).absoluteFilePath(qSL("info.yaml")));
 
             if ((manifest1.size() != manifest2.size())
                     || (manifest1.size() > (16 * 1024))

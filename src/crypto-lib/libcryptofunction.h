@@ -49,6 +49,8 @@ template <typename R> class LibCryptoResult
 public:
     LibCryptoResult(R r) : m_r(r) { }
     LibCryptoResult(const LibCryptoResult &other) { m_r = other.m_r; }
+    LibCryptoResult operator=(const LibCryptoResult &that) { m_r = that.m_r; return *this; }
+    ~LibCryptoResult() { }
     R result() { return m_r; }
 private:
     R m_r;

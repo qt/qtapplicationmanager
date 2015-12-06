@@ -40,7 +40,7 @@ class InProcessWindow : public Window
 public:
     InProcessWindow(const Application *app, QQuickItem *surfaceItem);
 
-    bool isInProcess() const { return true; }
+    bool isInProcess() const override { return true; }
 
     //bool isClosing() const override;
 
@@ -49,7 +49,7 @@ public:
     QVariantMap windowProperties() const override;
 
 protected:
-    bool eventFilter(QObject *o, QEvent *e);
+    bool eventFilter(QObject *o, QEvent *e) override;
 
 private:
     QVariantMap m_windowProperties;

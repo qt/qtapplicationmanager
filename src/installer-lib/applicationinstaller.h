@@ -70,7 +70,7 @@ class ApplicationInstaller : public QObject
 
 public:
     ~ApplicationInstaller();
-    static ApplicationInstaller *createInstance(const QList<InstallationLocation> &installationLocations,
+    static ApplicationInstaller *createInstance(const QVector<InstallationLocation> &installationLocations,
                                                 const QDir &manifestDir, const QDir &imageMountDir,
                                                 QString *error);
     static ApplicationInstaller *instance();
@@ -97,7 +97,7 @@ public:
     Q_SCRIPTABLE bool checkCleanup();
 
     // InstallationLocation handling
-    QList<InstallationLocation> installationLocations() const;
+    QVector<InstallationLocation> installationLocations() const;
     const InstallationLocation &defaultInstallationLocation() const;
     const InstallationLocation &installationLocationFromId(const QString &installationLocationId) const;
     const InstallationLocation &installationLocationFromApplication(const QString &id) const;
@@ -155,7 +155,7 @@ private:
     uint findUnusedUserId() const throw(Exception);
 
 private:
-    ApplicationInstaller(const QList<InstallationLocation> &installationLocations, const QDir &manifestDir,
+    ApplicationInstaller(const QVector<InstallationLocation> &installationLocations, const QDir &manifestDir,
                          const QDir &imageMountDir, QObject *parent);
     ApplicationInstaller(const ApplicationInstaller &);
     static ApplicationInstaller *s_instance;

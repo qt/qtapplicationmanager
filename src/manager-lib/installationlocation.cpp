@@ -39,9 +39,9 @@
 static QString fixPath(const QString &path)
 {
     QString realPath = path;
-    realPath.replace("@HARDWARE-ID@", hardwareId());
+    realPath.replace(qL1S("@HARDWARE-ID@"), hardwareId());
     QDir dir(realPath);
-    return (dir.exists() ? dir.canonicalPath() : dir.absolutePath()) + '/';
+    return (dir.exists() ? dir.canonicalPath() : dir.absolutePath()) + qL1C('/');
 }
 
 bool InstallationLocation::operator==(const InstallationLocation &other) const
@@ -66,9 +66,9 @@ QString InstallationLocation::typeToString(Type type)
 {
     switch (type) {
     default:
-    case Invalid: return "invalid";
-    case Internal: return "internal";
-    case Removable: return "removable";
+    case Invalid: return qSL("invalid");
+    case Internal: return qSL("internal");
+    case Removable: return qSL("removable");
     }
 }
 
@@ -128,13 +128,13 @@ QString InstallationLocation::documentPath() const
 QVariantMap InstallationLocation::toVariantMap() const
 {
     QVariantMap map;
-    map["id"] = id();
-    map["type"] = typeToString(type());
-    map["index"] = index();
-    map["installationPath"] = installationPath();
-    map["documentPath"] = documentPath();
-    map["isRemovable"] = isRemovable();
-    map["isDefault"] = isDefault();
+    map[qSL("id")] = id();
+    map[qSL("type")] = typeToString(type());
+    map[qSL("index")] = index();
+    map[qSL("installationPath")] = installationPath();
+    map[qSL("documentPath")] = documentPath();
+    map[qSL("isRemovable")] = isRemovable();
+    map[qSL("isDefault")] = isDefault();
 
     bool mounted = isMounted();
 
@@ -142,16 +142,16 @@ QVariantMap InstallationLocation::toVariantMap() const
     if (mounted)
         diskUsage(installationPath(), &total, &free);
 
-    map["isMounted"] = mounted;
-    map["installationDeviceSize"] = total;
-    map["installationDeviceFree"] = free;
+    map[qSL("isMounted")] = mounted;
+    map[qSL("installationDeviceSize")] = total;
+    map[qSL("installationDeviceFree")] = free;
 
     total = free = 0;
     if (mounted)
         diskUsage(documentPath(), &total, &free);
 
-    map["documentDeviceSize"] = total;
-    map["documentDeviceFree"] = free;
+    map[qSL("documentDeviceSize")] = total;
+    map[qSL("documentDeviceFree")] = free;
 
     return map;
 }
@@ -161,19 +161,19 @@ QString InstallationLocation::mountPoint() const
     return m_mountPoint;
 }
 
-QList<InstallationLocation> InstallationLocation::parseInstallationLocations(const QVariantList &list) throw (Exception)
+QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(const QVariantList &list) throw (Exception)
 {
-    QList<InstallationLocation> locations;
+    QVector<InstallationLocation> locations;
     bool gotDefault = false;
 
     foreach (const QVariant &v, list) {
         QVariantMap map = v.toMap();
 
-        QString id = map.value("id").toString();
-        QString instPath = map.value("installationPath").toString();
-        QString documentPath = map.value("documentPath").toString();
-        QString mountPoint = map.value("mountPoint").toString();
-        bool isDefault = map.value("isDefault").toBool();
+        QString id = map.value(qSL("id")).toString();
+        QString instPath = map.value(qSL("installationPath")).toString();
+        QString documentPath = map.value(qSL("documentPath")).toString();
+        QString mountPoint = map.value(qSL("mountPoint")).toString();
+        bool isDefault = map.value(qSL("isDefault")).toBool();
 
         if (isDefault) {
             if (!gotDefault)

@@ -57,7 +57,7 @@ ApplicationDatabase::ApplicationDatabase(const QString &fileName)
 ApplicationDatabase::ApplicationDatabase()
     : d(new ApplicationDatabasePrivate())
 {
-    d->file = new QTemporaryFile("am-apps-db");
+    d->file = new QTemporaryFile(qSL("am-apps-db"));
     d->file->open(QFile::ReadWrite);
 }
 

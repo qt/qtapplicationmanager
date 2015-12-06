@@ -35,6 +35,7 @@
 
 #include <exception>
 
+#include "global.h"
 #include "qtyaml.h"
 #include "utilities.h"
 #include "digestfilter.h"
@@ -151,8 +152,8 @@ bool InstallationReport::deserialize(QIODevice *from)
         return false;
 
     if ((docs.size() != 3)
-            || (docs.first().toMap().value("formatType").toString() != "am-installation-report")
-            || (docs.first().toMap().value("formatVersion").toInt(0) != 1)) {
+            || (docs.first().toMap().value(qSL("formatType")).toString() != qL1S("am-installation-report"))
+            || (docs.first().toMap().value(qSL("formatVersion")).toInt(0) != 1)) {
         return false;
     }
 
@@ -160,35 +161,37 @@ bool InstallationReport::deserialize(QIODevice *from)
 
     try {
         if (m_applicationId.isEmpty()) {
-            m_applicationId = root["applicationId"].toString();
+            m_applicationId = root[qSL("applicationId")].toString();
             if (m_applicationId.isEmpty())
                 throw false;
-        } else if (root["applicationId"].toString() != m_applicationId) {
+        } else if (root[qSL("applicationId")].toString() != m_applicationId) {
             throw false;
         }
 
-        m_installationLocationId = root["installationLocationId"].toString();
-        m_diskSpaceUsed = root["diskSpaceUsed"].toULongLong();
-        m_digest = QByteArray::fromHex(root["digest"].toString().toLatin1());
+        m_installationLocationId = root[qSL("installationLocationId")].toString();
+        m_diskSpaceUsed = root[qSL("diskSpaceUsed")].toULongLong();
+        m_digest = QByteArray::fromHex(root[qSL("digest")].toString().toLatin1());
         if (m_digest.isEmpty())
             throw false;
 
-        if (root.contains("developerSignature")) {
-            m_developerSignature = QByteArray::fromBase64(root["developerSignature"].toString().toLatin1());
+        auto devSig = root.find(qSL("developerSignature"));
+        if (devSig != root.end()) {
+            m_developerSignature = QByteArray::fromBase64(devSig.value().toString().toLatin1());
             if (m_developerSignature.isEmpty())
                 throw false;
         }
-        if (root.contains("storeSignature")) {
-            m_storeSignature = QByteArray::fromBase64(root["storeSignature"].toString().toLatin1());
+        auto storeSig = root.find(qSL("storeSignature"));
+        if (storeSig != root.end()) {
+            m_storeSignature = QByteArray::fromBase64(storeSig.value().toString().toLatin1());
             if (m_storeSignature.isEmpty())
                 throw false;
         }
-        m_files = root["files"].toStringList();
+        m_files = root[qSL("files")].toStringList();
         if (m_files.isEmpty())
             throw false;
 
         // see if the file has been tampered with by checking the hmac
-        QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value("hmac").toString().toLatin1());
+        QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(qSL("hmac")).toString().toLatin1());
         QByteArray hmacKey = QByteArray::fromRawData((const char *) privateHmacKeyData, sizeof(privateHmacKeyData));
         QByteArray hmacCalc= HMACFilter::hmac(HMACFilter::Sha256, hmacKey, QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle));
 
@@ -215,17 +218,17 @@ bool InstallationReport::serialize(QIODevice *to) const
         { "formatType", "am-installation-report" }
     };
     QVariantMap root {
-        { "applicationId", applicationId() },
-        { "installationLocationId", installationLocationId() },
-        { "diskSpaceUsed", diskSpaceUsed() },
-        { "digest", QLatin1String(digest().toHex()) }
+        { qSL("applicationId"), applicationId() },
+        { qSL("installationLocationId"), installationLocationId() },
+        { qSL("diskSpaceUsed"), diskSpaceUsed() },
+        { qSL("digest"), QLatin1String(digest().toHex()) }
     };
     if (!m_developerSignature.isEmpty())
-        root["developerSignature"] = QLatin1String(m_developerSignature.toBase64());
+        root[qSL("developerSignature")] = QLatin1String(m_developerSignature.toBase64());
     if (!m_storeSignature.isEmpty())
-        root["storeSignature"] = QLatin1String(m_storeSignature.toBase64());
+        root[qSL("storeSignature")] = QLatin1String(m_storeSignature.toBase64());
 
-    root["files"] = files();
+    root[qSL("files")] = files();
 
     QVector<QVariant> docs;
     docs << header;
@@ -235,7 +238,7 @@ bool InstallationReport::serialize(QIODevice *to) const
     QByteArray hmacKey = QByteArray::fromRawData((const char *) privateHmacKeyData, sizeof(privateHmacKeyData));
     QByteArray hmacCalc= HMACFilter::hmac(HMACFilter::Sha256, hmacKey, QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle));
 
-    QVariantMap footer { { QLatin1String("hmac"), QString::fromLatin1(hmacCalc.toHex()) } };
+    QVariantMap footer { { qSL("hmac"), QString::fromLatin1(hmacCalc.toHex()) } };
     docs << footer;
 
     QByteArray out = QtYaml::yamlFromVariantDocuments(docs, QtYaml::BlockStyle);

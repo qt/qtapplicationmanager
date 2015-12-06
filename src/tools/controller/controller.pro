@@ -10,6 +10,8 @@ QT = core network dbus
 
 DEFINES *= AM_BUILD_APPMAN
 
+addStaticLibrary(../../common-lib)
+
 target.path = $$INSTALL_PREFIX/bin/
 INSTALLS += target
 

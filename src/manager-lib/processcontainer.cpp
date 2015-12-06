@@ -112,7 +112,7 @@ ProcessContainerManager::ProcessContainerManager(const QString &id, QObject *par
 
 QString ProcessContainerManager::defaultIdentifier()
 {
-    return QLatin1String("process");
+    return qSL("process");
 }
 
 bool ProcessContainerManager::supportsQuickLaunch() const

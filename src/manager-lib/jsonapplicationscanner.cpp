@@ -65,58 +65,58 @@ Application *JsonApplicationScanner::scan(const QString &filePath) throw (Except
     QJsonObject o = json.object();
 
     QVariantMap map;
-    map["id"] = o.value("id").toString();
-    map["codeFilePath"] = o.value("code").toString();
-    map["runtimeName"] = o.value("runtime").toString();
-    map["runtimeParameters"] = o.value("runtimeParameters").toObject().toVariantMap();
+    map[qSL("id")] = o.value(qSL("id")).toString();
+    map[qSL("codeFilePath")] = o.value(qSL("code")).toString();
+    map[qSL("runtimeName")] = o.value(qSL("runtime")).toString();
+    map[qSL("runtimeParameters")] = o.value(qSL("runtimeParameters")).toObject().toVariantMap();
 
-    QJsonObject oname = o.value("name").toObject();
+    QJsonObject oname = o.value(qSL("name")).toObject();
     QVariantMap nameMap;
     for (QJsonObject::ConstIterator it = oname.begin(); it != oname.end(); ++it)
         nameMap.insert(it.key(), it.value().toString());
-    map["displayName"] = nameMap;
-    map["displayIcon"] = o.value("icon").toString();
-    map["preload"] = o.value("preload").toBool();
-    map["importance"] = o.value("importance").toDouble();
-    map["builtIn"] = o.value("built-in").toBool();
-    map["type"] = o.value("type").toString();
+    map[qSL("displayName")] = nameMap;
+    map[qSL("displayIcon")] = o.value(qSL("icon")).toString();
+    map[qSL("preload")] = o.value(qSL("preload")).toBool();
+    map[qSL("importance")] = o.value(qSL("importance")).toDouble();
+    map[qSL("builtIn")] = o.value(qSL("built-in")).toBool();
+    map[qSL("type")] = o.value(qSL("type")).toString();
 
-    QJsonArray acaps = o.value("capabilities").toArray();
+    QJsonArray acaps = o.value(qSL("capabilities")).toArray();
     QStringList capsList;
     foreach (const QJsonValue &val, acaps)
         capsList.append(val.toString());
-    map["capabilities"] = capsList;
+    map[qSL("capabilities")] = capsList;
 
-    QJsonArray acategories = o.value("categories").toArray();
+    QJsonArray acategories = o.value(qSL("categories")).toArray();
     QStringList categoriesList;
     foreach (const QJsonValue &val, acategories)
         categoriesList.append(val.toString());
-    map["categories"] = categoriesList;
+    map[qSL("categories")] = categoriesList;
 
-    QJsonArray mimeTypes = o.value("mimeTypes").toArray();
+    QJsonArray mimeTypes = o.value(qSL("mimeTypes")).toArray();
     QStringList mimeList;
     foreach (const QJsonValue &val, mimeTypes)
         mimeList.append(val.toString());
-    map["mimeTypes"] = mimeList;
+    map[qSL("mimeTypes")] = mimeList;
 
-    QString backgroundMode = o.value("backgroundMode").toString();
+    QString backgroundMode = o.value(qSL("backgroundMode")).toString();
     QString bgmode;
-    if (backgroundMode == QLatin1String("never"))
-        bgmode = "Never";
-    else if (backgroundMode == QLatin1String("voip"))
-        bgmode = "ProvidesVoIP";
-    else if (backgroundMode == QLatin1String("audio"))
-        bgmode = "PlaysAudio";
-    else if (backgroundMode == QLatin1String("location"))
-        bgmode = "TracksLocation";
-    else if (backgroundMode == QLatin1String("auto") || backgroundMode.isEmpty())
-        bgmode = "Auto";
+    if (backgroundMode == qL1S("never"))
+        bgmode = qSL("Never");
+    else if (backgroundMode == qL1S("voip"))
+        bgmode = qSL("ProvidesVoIP");
+    else if (backgroundMode == qL1S("audio"))
+        bgmode = qSL("PlaysAudio");
+    else if (backgroundMode == qL1S("location"))
+        bgmode = qSL("TracksLocation");
+    else if (backgroundMode == qL1S("auto") || backgroundMode.isEmpty())
+        bgmode = qSL("Auto");
     else
         throw Exception(Error::Parse, "backgroundMode field is invalid - must be one of auto, never, voip, audio or location");
-    map["backgroundMode"] = bgmode;
-    map["version"] = o.value("version").toString();
+    map[qSL("backgroundMode")] = bgmode;
+    map[qSL("version")] = o.value(qSL("version")).toString();
 
-    map["baseDir"] = QFileInfo(f).absoluteDir().absolutePath();
+    map[qSL("baseDir")] = QFileInfo(f).absoluteDir().absolutePath();
 
 
     QString appError;
@@ -129,5 +129,5 @@ Application *JsonApplicationScanner::scan(const QString &filePath) throw (Except
 
 QString JsonApplicationScanner::metaDataFileName() const
 {
-    return QLatin1String("info.json");
+    return qSL("info.json");
 }

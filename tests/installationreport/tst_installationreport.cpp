@@ -31,6 +31,7 @@
 #include <QtCore>
 #include <QtTest>
 
+#include "global.h"
 #include "digestfilter.h"
 #include "installationreport.h"
 
@@ -51,9 +52,9 @@ tst_InstallationReport::tst_InstallationReport()
 
 void tst_InstallationReport::test()
 {
-    QStringList files { "test", "more/test", "another/test/file" };
+    QStringList files { qSL("test"), qSL("more/test"), qSL("another/test/file") };
 
-    InstallationReport ir("com.pelagicore.test");
+    InstallationReport ir(qSL("com.pelagicore.test"));
     QVERIFY(!ir.isValid());
     ir.addFile(files.first());
     QVERIFY(!ir.isValid());
@@ -62,16 +63,16 @@ void tst_InstallationReport::test()
     ir.setDigest("##digest##");
     QVERIFY(ir.isValid());
     ir.addFiles(files.mid(1));
-    ir.setInstallationLocationId("test-42");
+    ir.setInstallationLocationId(qSL("test-42"));
     ir.setDeveloperSignature("%%dev-sig%%");
     ir.setStoreSignature("$$store-sig$$");
 
     QVERIFY(ir.isValid());
-    QCOMPARE(ir.applicationId(), QLatin1String("com.pelagicore.test"));
+    QCOMPARE(ir.applicationId(), qSL("com.pelagicore.test"));
     QCOMPARE(ir.files(), files);
     QCOMPARE(ir.diskSpaceUsed(), 42ULL);
     QCOMPARE(ir.digest().constData(), "##digest##");
-    QCOMPARE(ir.installationLocationId(), QLatin1String("test-42"));
+    QCOMPARE(ir.installationLocationId(), qSL("test-42"));
     QCOMPARE(ir.developerSignature().constData(), "%%dev-sig%%");
     QCOMPARE(ir.storeSignature().constData(), "$$store-sig$$");
 
@@ -85,11 +86,11 @@ void tst_InstallationReport::test()
     buffer.seek(0);
 
     QVERIFY(ir2.isValid());
-    QCOMPARE(ir2.applicationId(), QLatin1String("com.pelagicore.test"));
+    QCOMPARE(ir2.applicationId(), qSL("com.pelagicore.test"));
     QCOMPARE(ir2.files(), files);
     QCOMPARE(ir2.diskSpaceUsed(), 42ULL);
     QCOMPARE(ir2.digest().constData(), "##digest##");
-    QCOMPARE(ir2.installationLocationId(), QLatin1String("test-42"));
+    QCOMPARE(ir2.installationLocationId(), qSL("test-42"));
     QCOMPARE(ir2.developerSignature().constData(), "%%dev-sig%%");
     QCOMPARE(ir2.storeSignature().constData(), "$$store-sig$$");
 

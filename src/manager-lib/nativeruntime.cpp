@@ -48,7 +48,7 @@
 NativeRuntime::NativeRuntime(AbstractContainer *container, const Application *app, NativeRuntimeManager *manager)
     : AbstractRuntime(container, app, manager)
     , m_isQuickLauncher(app == nullptr)
-    , m_needsLauncher(manager->identifier() != QLatin1String("native"))
+    , m_needsLauncher(manager->identifier() != qL1S("native"))
 {
     connect(manager->applicationInterfaceServer(), &QDBusServer::newConnection,
             this, &NativeRuntime::onDBusPeerConnection);
@@ -80,7 +80,7 @@ bool NativeRuntime::attachApplicationToQuickLauncher(const Application *app)
 bool NativeRuntime::initialize()
 {
     if (m_needsLauncher) {
-        QFileInfo fi(QString::fromLatin1("%1/appman-launcher-%2").arg(QCoreApplication::applicationDirPath(), manager()->identifier()));
+        QFileInfo fi(qSL("%1/appman-launcher-%2").arg(QCoreApplication::applicationDirPath(), manager()->identifier()));
         if (!fi.exists() || !fi.isExecutable())
             return false;
         m_container->setProgram(fi.absoluteFilePath());
@@ -97,7 +97,7 @@ bool NativeRuntime::initialize()
 
 void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
 {
-    qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : QString("(none)"))
+    qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
                        << "pid:" << m_process->processId() << ") exited with code:" << exitCode
                        << "status:" << status;
 
@@ -123,14 +123,14 @@ bool NativeRuntime::start()
     }
 
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert("QT_QPA_PLATFORM", "wayland");                               // set wayland as platform plugin
-    //env.insert("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1");                 // disable (client side) window decorations
-    env.insert("AM_SECURITY_TOKEN", securityToken().toHex());
-    env.insert("AM_DBUS_PEER_ADDRESS", static_cast<NativeRuntimeManager *>(manager())->applicationInterfaceServer()->address());
-    env.insert("AM_RUNTIME_CONFIGURATION", QtYaml::yamlFromVariantDocuments({ configuration() }));
-    env.insert("AM_BASE_DIR", QDir::currentPath());
+    env.insert(qSL("QT_QPA_PLATFORM"), qSL("wayland"));
+    //env.insert(qSL("QT_WAYLAND_DISABLE_WINDOWDECORATION"), "1");
+    env.insert(qSL("AM_SECURITY_TOKEN"), qL1S(securityToken().toHex()));
+    env.insert(qSL("AM_DBUS_PEER_ADDRESS"), static_cast<NativeRuntimeManager *>(manager())->applicationInterfaceServer()->address());
+    env.insert(qSL("AM_RUNTIME_CONFIGURATION"), QtYaml::yamlFromVariantDocuments({ configuration() }));
+    env.insert(qSL("AM_BASE_DIR"), QDir::currentPath());
 
-    for (QMapIterator<QString, QVariant> it(configuration().value("environmentVariables").toMap()); it.hasNext(); ) {
+    for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {
         it.next();
         QString name = it.key();
         if (!name.isEmpty()) {
@@ -148,7 +148,7 @@ bool NativeRuntime::start()
         m_launchWhenReady = true;
     } else {
         if (!m_document.isNull())
-            args << QLatin1String("--start-argument") << m_document;
+            args << qSL("--start-argument") << m_document;
     }
     m_process = m_container->start(args, env);
 
@@ -211,7 +211,7 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
     QDBusConnection conn = connection;
 
     m_applicationInterface = new NativeRuntimeApplicationInterface(this);
-    if (!conn.registerObject("/ApplicationInterface", m_applicationInterface, QDBusConnection::ExportScriptableContents))
+    if (!conn.registerObject(qSL("/ApplicationInterface"), m_applicationInterface, QDBusConnection::ExportScriptableContents))
         qCWarning(LogSystem) << "ERROR: could not register the /ApplicationInterface object on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
 
     // Useful for debugging the private P2P bus:
@@ -219,7 +219,7 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 
     if (m_needsLauncher && m_launchWhenReady && !m_launched) {
         m_runtimeInterface = new NativeRuntimeInterface(this);
-        if (!conn.registerObject("/RuntimeInterface", m_runtimeInterface, QDBusConnection::ExportScriptableContents))
+        if (!conn.registerObject(qSL("/RuntimeInterface"), m_runtimeInterface, QDBusConnection::ExportScriptableContents))
             qCWarning(LogSystem) << "ERROR: could not register the /RuntimeInterface object on the peer DBus.";
 
         // Useful for debugging the private P2P bus:
@@ -298,17 +298,17 @@ void NativeRuntimeInterface::finishedInitialization()
 
 NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
     : AbstractRuntimeManager(id, parent)
-    , m_applicationInterfaceServer(new QDBusServer(QLatin1String("unix:tmpdir=/tmp")))
+    , m_applicationInterfaceServer(new QDBusServer(qSL("unix:tmpdir=/tmp")))
 { }
 
 QString NativeRuntimeManager::defaultIdentifier()
 {
-    return QLatin1String("native");
+    return qSL("native");
 }
 
 bool NativeRuntimeManager::supportsQuickLaunch() const
 {
-    return identifier() != QLatin1String("native");
+    return identifier() != qL1S("native");
 }
 
 AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, const Application *app)

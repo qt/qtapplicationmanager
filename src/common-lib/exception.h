@@ -44,10 +44,10 @@ QT_FORWARD_DECLARE_CLASS(QFile)
 class AM_EXPORT Exception : public std::exception
 {
 public:
-    Exception(Error errorCode, const char *errorString = 0);
-    Exception(Error errorCode, const QString &errorString);
-    Exception(int _errno, const QString &errorString);
-    Exception(const QFile &file, const QString &errorString);
+    explicit Exception(Error errorCode, const char *errorString = 0);
+    explicit Exception(Error errorCode, const QString &errorString);
+    explicit Exception(int _errno, const char *errorString);
+    explicit Exception(const QFile &file, const char *errorString);
 
     Exception(const Exception &copy);
     Exception(Exception &&move);

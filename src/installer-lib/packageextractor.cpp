@@ -77,7 +77,7 @@ void PackageExtractor::setDestinationDirectory(const QDir &destinationDir)
     d->m_destinationPath = destinationDir.absolutePath() + QLatin1Char('/');
 }
 
-void PackageExtractor::setFileExtractedCallback(std::function<void(const QString &)> callback)
+void PackageExtractor::setFileExtractedCallback(const std::function<void(const QString &)> &callback)
 {
     d->m_fileExtractedCallback = callback;
 }
@@ -120,7 +120,7 @@ Error PackageExtractor::errorCode() const
 
 QString PackageExtractor::errorString() const
 {
-    return wasCanceled() ? QLatin1String("canceled") : (d->m_failed ? d->m_errorString : QString());
+    return wasCanceled() ? qSL("canceled") : (d->m_failed ? d->m_errorString : QString());
 }
 
 /*! \internal
@@ -275,11 +275,11 @@ void PackageExtractorPrivate::extract()
 
             // Check if this entry is special (metadata vs. data)
 
-            if (entryPath == "--PACKAGE-HEADER--")
+            if (entryPath == qL1S("--PACKAGE-HEADER--"))
                 packageEntryType = PackageEntry_Header;
-            else if (entryPath.startsWith("--PACKAGE-FOOTER--"))
+            else if (entryPath.startsWith(qL1S("--PACKAGE-FOOTER--")))
                 packageEntryType = PackageEntry_Footer;
-            else if (entryPath.startsWith("--"))
+            else if (entryPath.startsWith(qL1S("--")))
                 throw Exception(Error::Package, "filename %1 in the archive starts with the reserved characters '--'").arg(entryPath);
 
             // The first (and only the first) file in every package needs to be --PACKAGE-HEADER--
@@ -313,7 +313,7 @@ void PackageExtractorPrivate::extract()
                 if (packageEntryType == PackageEntry_Dir) {
                     QString entryName = entryPath.section('/', -1, -1);
 
-                    if ((entryName != ".") && !entryDir.mkdir(entryName))
+                    if ((entryName != qL1S(".")) && !entryDir.mkdir(entryName))
                         throw Exception(Error::IO, "could not create directory '%1'").arg(entryDir.filePath(entryName));
 
                     archive_read_data_skip(ar);
@@ -440,15 +440,15 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, Digest
             .arg(error.errorString()).arg(error.line).arg(error.column);
 
     if ((docs.size() < 2)
-        || (docs.first().toMap().value("formatType").toString() != (isHeader ? "am-package-header" : "am-package-footer"))
-        || (docs.first().toMap().value("formatVersion").toInt(0) != 1))
+        || (docs.first().toMap().value(qSL("formatType")).toString() != qL1S(isHeader ? "am-package-header" : "am-package-footer"))
+        || (docs.first().toMap().value(qSL("formatVersion")).toInt(0) != 1))
         throw Exception(Error::Package, "metadata has an invalid format specification");
 
     QVariantMap map = docs.at(1).toMap();
 
     if (isHeader) {
-        QString applicationId = map.value("applicationId").toString();
-        quint64 diskSpaceUsed = map.value("diskSpaceUsed").toULongLong();
+        QString applicationId = map.value(qSL("applicationId")).toString();
+        quint64 diskSpaceUsed = map.value(qSL("diskSpaceUsed")).toULongLong();
 
         if (applicationId.isNull() || !isValidDnsName(applicationId))
             throw Exception(Error::Package, "metadata has an invalid applicationId field (%1)").arg(applicationId);
@@ -464,7 +464,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, Digest
         for (int i = 2; i < docs.size(); ++i)
             map = map.unite(docs.at(i).toMap());
 
-        QByteArray packageDigest = QByteArray::fromHex(map.value("digest").toString().toLatin1());
+        QByteArray packageDigest = QByteArray::fromHex(map.value(qSL("digest")).toString().toLatin1());
 
         if (packageDigest.isEmpty())
             throw Exception(Error::Package, "metadata is missing the digest field");
@@ -475,8 +475,8 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, Digest
         if (calculatedDigest != packageDigest)
             throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2").arg(calculatedDigest.toHex()).arg(packageDigest.toHex());
 
-        m_report.setStoreSignature(QByteArray::fromBase64(map.value("storeSignature").toString().toLatin1()));
-        m_report.setDeveloperSignature(QByteArray::fromBase64(map.value("developerSignature").toString().toLatin1()));
+        m_report.setStoreSignature(QByteArray::fromBase64(map.value(qSL("storeSignature")).toString().toLatin1()));
+        m_report.setDeveloperSignature(QByteArray::fromBase64(map.value(qSL("developerSignature")).toString().toLatin1()));
     }
 }
 

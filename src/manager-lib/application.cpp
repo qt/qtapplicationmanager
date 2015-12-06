@@ -39,33 +39,33 @@
 QVariantMap Application::toVariantMap() const
 {
     QVariantMap map;
-    map["id"] = m_id;
-    map["codeFilePath"] = m_codeFilePath;
-    map["runtimeName"] = m_runtimeName;
-    map["runtimeParameters"] = m_runtimeParameters;
+    map[qSL("id")] = m_id;
+    map[qSL("codeFilePath")] = m_codeFilePath;
+    map[qSL("runtimeName")] = m_runtimeName;
+    map[qSL("runtimeParameters")] = m_runtimeParameters;
     QVariantMap displayName;
     for (auto it = m_displayName.constBegin(); it != m_displayName.constEnd(); ++it)
         displayName.insert(it.key(), it.value());
-    map["displayName"] = displayName;
-    map["displayIcon"] = m_displayIcon;
-    map["preload"] = m_preload;
-    map["importance"] = m_importance;
-    map["capabilities"] = m_capabilities;
-    map["mimeTypes"] = m_mimeTypes;
-    map["categories"] = m_categories;
+    map[qSL("displayName")] = displayName;
+    map[qSL("displayIcon")] = m_displayIcon;
+    map[qSL("preload")] = m_preload;
+    map[qSL("importance")] = m_importance;
+    map[qSL("capabilities")] = m_capabilities;
+    map[qSL("mimeTypes")] = m_mimeTypes;
+    map[qSL("categories")] = m_categories;
     QString backgroundMode;
     switch (m_backgroundMode) {
     default:
-    case Auto:           backgroundMode = "Auto"; break;
-    case Never:          backgroundMode = "Never"; break;
-    case ProvidesVoIP:   backgroundMode = "ProvidesVoIP"; break;
-    case PlaysAudio:     backgroundMode = "PlaysAudio"; break;
-    case TracksLocation: backgroundMode = "TracksLocation"; break;
+    case Auto:           backgroundMode = qSL("Auto"); break;
+    case Never:          backgroundMode = qSL("Never"); break;
+    case ProvidesVoIP:   backgroundMode = qSL("ProvidesVoIP"); break;
+    case PlaysAudio:     backgroundMode = qSL("PlaysAudio"); break;
+    case TracksLocation: backgroundMode = qSL("TracksLocation"); break;
     }
-    map["backgroundMode"] = backgroundMode;
-    map["version"] = m_version;
-    map["baseDir"] = m_baseDir.absolutePath();
-    map["installationLocationId"] = m_installationReport ? m_installationReport->installationLocationId() : QString();
+    map[qSL("backgroundMode")] = backgroundMode;
+    map[qSL("version")] = m_version;
+    map[qSL("baseDir")] = m_baseDir.absolutePath();
+    map[qSL("installationLocationId")] = m_installationReport ? m_installationReport->installationLocationId() : QString();
     return map;
 }
 
@@ -73,36 +73,36 @@ Application *Application::fromVariantMap(const QVariantMap &map, QString *error)
 {
     QScopedPointer<Application> app(new Application());
 
-    app->m_id = map["id"].toString();
-    app->m_codeFilePath = map["codeFilePath"].toString();
-    app->m_runtimeName = map["runtimeName"].toString();
-    app->m_type = (map["type"].toString() == "headless" ? Headless : Gui);
+    app->m_id = map[qSL("id")].toString();
+    app->m_codeFilePath = map[qSL("codeFilePath")].toString();
+    app->m_runtimeName = map[qSL("runtimeName")].toString();
+    app->m_type = (map[qSL("type")].toString() == qL1S("headless") ? Headless : Gui);
 
-    app->m_runtimeParameters = map["runtimeParameters"].toMap();
-    QVariantMap nameMap = map["displayName"].toMap();
+    app->m_runtimeParameters = map[qSL("runtimeParameters")].toMap();
+    QVariantMap nameMap = map[qSL("displayName")].toMap();
     for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
         app->m_displayName.insert(it.key(), it.value().toString());
-    app->m_displayIcon = map["displayIcon"].toString();
-    app->m_preload = map["preload"].toBool();
-    app->m_importance = map["importance"].toReal();
-    app->m_builtIn = map["builtIn"].toBool();
-    app->m_capabilities = map["capabilities"].toStringList();
+    app->m_displayIcon = map[qSL("displayIcon")].toString();
+    app->m_preload = map[qSL("preload")].toBool();
+    app->m_importance = map[qSL("importance")].toReal();
+    app->m_builtIn = map[qSL("builtIn")].toBool();
+    app->m_capabilities = map[qSL("capabilities")].toStringList();
     app->m_capabilities.sort();
-    app->m_mimeTypes = map["mimeTypes"].toStringList();
+    app->m_mimeTypes = map[qSL("mimeTypes")].toStringList();
     app->m_mimeTypes.sort();
-    app->m_categories = map["categories"].toStringList();
+    app->m_categories = map[qSL("categories")].toStringList();
     app->m_categories.sort();
-    if (map.contains("backgroundMode")) {
-        QString bgmode = map["backgroundMode"].toString();
-        if (bgmode == "Auto")
+    if (map.contains(qSL("backgroundMode"))) {
+        QString bgmode = map[qSL("backgroundMode")].toString();
+        if (bgmode == qL1S("Auto"))
             app->m_backgroundMode = Auto;
-        else if (bgmode == "Never")
+        else if (bgmode == qL1S("Never"))
             app->m_backgroundMode = Never;
-        else if (bgmode == "ProvidesVoIP")
+        else if (bgmode == qL1S("ProvidesVoIP"))
             app->m_backgroundMode = ProvidesVoIP;
-        else if (bgmode == "PlaysAudio")
+        else if (bgmode == qL1S("PlaysAudio"))
             app->m_backgroundMode = PlaysAudio;
-        else if (bgmode == "TracksLocation")
+        else if (bgmode == qL1S("TracksLocation"))
             app->m_backgroundMode = TracksLocation;
         else {
             if (error)
@@ -110,8 +110,8 @@ Application *Application::fromVariantMap(const QVariantMap &map, QString *error)
             return 0;
         }
     }
-    app->m_version = map["version"].toString();
-    app->m_baseDir = map["baseDir"].toString();
+    app->m_version = map[qSL("version")].toString();
+    app->m_baseDir = map[qSL("baseDir")].toString();
 
     if (!app->validate(error))
         return 0;

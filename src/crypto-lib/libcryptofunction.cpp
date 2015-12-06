@@ -66,7 +66,7 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
     s_library = new QLibrary(libname, 1);
     bool ok = s_library->load();
     if (!ok) {
-        s_library->setFileNameAndVersion(libname, "");
+        s_library->setFileNameAndVersion(libname, QString());
         ok = s_library->load();
     }
     if (ok) {

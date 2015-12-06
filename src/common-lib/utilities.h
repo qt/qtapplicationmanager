@@ -57,6 +57,9 @@ public:
     TemporaryDir();
     explicit TemporaryDir(const QString &templateName);
     ~TemporaryDir();
+
+private:
+    Q_DISABLE_COPY(TemporaryDir)
 };
 
 enum class RecursiveOperationType

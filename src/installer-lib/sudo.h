@@ -89,9 +89,9 @@ public:
 
     QString attachLoopback(const QString &imagePath, bool readonly = false) override;
     bool detachLoopback(const QString &loopDev) override;
-    bool mount(const QString &device, const QString &mountPoint, bool readonly = false, const QString &fstype = QLatin1String("ext2")) override;
+    bool mount(const QString &device, const QString &mountPoint, bool readonly = false, const QString &fstype = QStringLiteral("ext2")) override;
     bool unmount(const QString &mountPoint, bool force = false) override;
-    bool mkfs(const QString &device, const QString &fstype = QLatin1String("ext2"), const QStringList &options = QStringList()) override;
+    bool mkfs(const QString &device, const QString &fstype = QStringLiteral("ext2"), const QStringList &options = QStringList()) override;
     bool removeRecursive(const QString &fileOrDir) override;
     bool setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions) override;
 

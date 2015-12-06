@@ -129,21 +129,21 @@ static QString dbusInterfaceName(QObject *o) throw (Exception)
     return QLatin1String(o->metaObject()->classInfo(idx).value());
 }
 
-static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &serviceName, const QString &path) throw (Exception)
+static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *serviceName, const char *path) throw (Exception)
 {
     QString interfaceName = dbusInterfaceName(adaptor);
     QString dbus = configuration->dbusRegistration(interfaceName);
-    QDBusConnection conn("");
+    QDBusConnection conn((QString()));
 
     if (dbus.isEmpty()) {
         return;
-    } else if (dbus == "system") {
+    } else if (dbus == qL1S("system")) {
         conn = QDBusConnection::systemBus();
-    } else if (dbus == "session") {
+    } else if (dbus == qL1S("session")) {
         dbus = qgetenv("DBUS_SESSION_BUS_ADDRESS");
         conn = QDBusConnection::sessionBus();
     } else {
-        conn = QDBusConnection::connectToBus(dbus, "custom");
+        conn = QDBusConnection::connectToBus(dbus, qSL("custom"));
     }
 
     if (!conn.isConnected()) {
@@ -151,21 +151,21 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &ser
                 .arg(dbus).arg(conn.lastError().message());
     }
 
-    if (!conn.registerObject(path, adaptor->parent(), QDBusConnection::ExportAdaptors)) {
+    if (!conn.registerObject(qL1S(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
         throw Exception(Error::System, "could not register object %1 on D-Bus (%2): %3")
                 .arg(path).arg(dbus).arg(conn.lastError().message());
     }
 
-    if (!conn.registerService(serviceName)) {
+    if (!conn.registerService(qL1S(serviceName))) {
         throw Exception(Error::System, "could not register service %1 on D-Bus (%2): %3")
                 .arg(serviceName).arg(dbus).arg(conn.lastError().message());
     }
 
-    if (interfaceName.startsWith("io.qt.")) {
+    if (interfaceName.startsWith(qL1S("io.qt."))) {
         // Write the bus address of the interface to a file in /tmp. This is needed for the
         // controller tool, which does not even have a session bus, when started via ssh.
 
-        QFile f(QDir::temp().absoluteFilePath(interfaceName + ".dbus"));
+        QFile f(QDir::temp().absoluteFilePath(interfaceName + qSL(".dbus")));
         QByteArray dbusUtf8 = dbus.toUtf8();
         if (!f.open(QFile::WriteOnly | QFile::Truncate) || (f.write(dbusUtf8) != dbusUtf8.size()))
             throw Exception(f, "Could not write D-Bus address of interface %1").arg(interfaceName);
@@ -183,7 +183,7 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &ser
 // copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
 static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
 {
-    QDir dir(directory+"/dummydata", "*.qml");
+    QDir dir(directory + qSL("/dummydata"), qSL("*.qml"));
     QStringList list = dir.entryList();
     for (int i = 0; i < list.size(); ++i) {
         QString qml = list.at(i);
@@ -228,7 +228,7 @@ private:
 #endif // QT_PSHELLSERVER_LIB
 
 static QList<const Application *> scanForApplications(const QDir &builtinAppsDir, const QDir &installedAppsDir,
-                                                      const QList<InstallationLocation> &installationLocations)
+                                                      const QVector<InstallationLocation> &installationLocations)
 {
     QList<const Application *> result;
     YamlApplicationScanner yas;
@@ -242,18 +242,18 @@ static QList<const Application *> scanForApplications(const QDir &builtinAppsDir
             QDir appDir = baseDir.absoluteFilePath(appDirName);
             if (!appDir.exists())
                 continue;
-            if (!appDir.exists("info.yaml"))
+            if (!appDir.exists(qSL("info.yaml")))
                 continue;
-            if (checkInstallationReport && !appDir.exists("installation-report.yaml"))
+            if (checkInstallationReport && !appDir.exists(qSL("installation-report.yaml")))
                 continue;
 
-            QScopedPointer<Application> a(yas.scan(appDir.absoluteFilePath("info.yaml")));
+            QScopedPointer<Application> a(yas.scan(appDir.absoluteFilePath(qSL("info.yaml"))));
             if (!a)
                 continue;
             if (a->id() != appDirName)
                 continue;
             if (checkInstallationReport) {
-                QFile f(appDir.absoluteFilePath("installation-report.yaml"));
+                QFile f(appDir.absoluteFilePath(qSL("installation-report.yaml")));
                 if (!f.open(QFile::ReadOnly))
                     continue;
 
@@ -286,10 +286,10 @@ int main(int argc, char *argv[])
 {
     StartupTimer startupTimer;
 
-    QCoreApplication::setApplicationName("ApplicationManager");
-    QCoreApplication::setOrganizationName(QLatin1String("Pelagicore AG"));
-    QCoreApplication::setOrganizationDomain(QLatin1String("pelagicore.com"));
-    QCoreApplication::setApplicationVersion(AM_VERSION);
+    QCoreApplication::setApplicationName(qSL("ApplicationManager"));
+    QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
+    QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
+    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     qInstallMessageHandler(colorLogToStderr);
     QString error;
@@ -333,18 +333,18 @@ int main(int argc, char *argv[])
 
         QStringList loggingRules = configuration->loggingRules();
         if (loggingRules.isEmpty())
-            loggingRules << QLatin1String("*.warning=true");
+            loggingRules << qSL("*.warning=true");
         if (configuration->verbose()) {
-            loggingRules << QLatin1String("*.debug=true");
-            loggingRules << QLatin1String("qt.scenegraph.*.debug=false");
-            loggingRules << QLatin1String("qt.quick.*.debug=false");
-            loggingRules << QLatin1String("qt.qpa.*.debug=false");
+            loggingRules << qSL("*.debug=true");
+            loggingRules << qSL("qt.scenegraph.*.debug=false");
+            loggingRules << qSL("qt.quick.*.debug=false");
+            loggingRules << qSL("qt.qpa.*.debug=false");
         }
 
-        QLoggingCategory::setFilterRules(loggingRules.join(QLatin1Char('\n')));
+        QLoggingCategory::setFilterRules(loggingRules.join(qL1C('\n')));
 
         // setting this for child processes //TODO: use a more generic IPC approach
-        qputenv("AM_LOGGING_RULES", loggingRules.join(QLatin1Char('\n')).toUtf8());
+        qputenv("AM_LOGGING_RULES", loggingRules.join(qL1C('\n')).toUtf8());
 
         startupTimer.checkpoint("after logging setup");
 
@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
         if (hardwareId().isEmpty())
             throw Exception(Error::System, "the installer is enabled, but the device-id is empty");
 
-        QList<InstallationLocation> installationLocations = InstallationLocation::parseInstallationLocations(configuration->installationLocations());
+        QVector<InstallationLocation> installationLocations = InstallationLocation::parseInstallationLocations(configuration->installationLocations());
 
         if (!QDir::root().mkpath(configuration->installedAppsManifestDir()))
             throw Exception(Error::System, "could not create manifest directory %1").arg(configuration->installedAppsManifestDir());
@@ -370,13 +370,13 @@ int main(int argc, char *argv[])
 
         if (forceSingleProcess) {
             RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>();
-            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>("qml");
+            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>(qSL("qml"));
         } else {
             RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>();
 #if defined(AM_NATIVE_RUNTIME_AVAILABLE)
             RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>();
-            RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>("qml");
-            //RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>("html");
+            RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>(qSL("qml"));
+            //RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>(qSL("html"));
 #endif
 #if defined(AM_HOST_CONTAINER_AVAILABLE)
             ContainerFactory::instance()->registerContainer<ProcessContainerManager>();
@@ -589,7 +589,7 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after loading main QML file");
 
 #if !defined(AM_HEADLESS)
-        view->setContent(configuration->mainQmlFile(), 0, engine->rootObjects().first());
+        view->setContent(configuration->mainQmlFile(), 0, engine->rootObjects().at(0));
         if (configuration->fullscreen())
             view->showFullScreen();
         else

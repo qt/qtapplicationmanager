@@ -31,6 +31,7 @@
 #include <QtCore>
 #include <QtTest>
 
+#include "global.h"
 #include "digestfilter.h"
 
 /*
@@ -131,12 +132,12 @@ void tst_DigestFilter::misc()
         DigestFilter df(DigestFilter::Sha1);
         QVERIFY(df.start());
         QVERIFY(!df.start());
-        QVERIFY(df.errorString().contains("already start"));
+        QVERIFY(df.errorString().contains(qSL("already start")));
     }
     {
         DigestFilter df(DigestFilter::Sha1);
         QVERIFY(!df.processData(QByteArray()));
-        QVERIFY(df.errorString().contains("not start"));
+        QVERIFY(df.errorString().contains(qSL("not start")));
         QVERIFY(df.start());
         QVERIFY(df.processData(QByteArray()));
         const char *foo = "A";
@@ -146,12 +147,12 @@ void tst_DigestFilter::misc()
         DigestFilter df(DigestFilter::Sha1);
         QByteArray digest;
         QVERIFY(!df.finish(digest));
-        QVERIFY(df.errorString().contains("not start"));
+        QVERIFY(df.errorString().contains(qSL("not start")));
     }
     {
         DigestFilter df((DigestFilter::Type) -1);
         QVERIFY(!df.start());
-        QVERIFY(df.errorString().contains("invalid"));
+        QVERIFY(df.errorString().contains(qSL("invalid")));
         QCOMPARE(df.size(), 0);
     }
     QVERIFY(DigestFilter::digest((DigestFilter::Type) -1, QByteArray()).isEmpty());

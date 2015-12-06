@@ -45,7 +45,7 @@ class WaylandWindow : public Window
 public:
     WaylandWindow(const Application *app, QWaylandSurfaceItem *surfaceItem);
 
-    bool isInProcess() const { return false; }
+    bool isInProcess() const override { return false; }
 
     //bool isClosing() const override;
 

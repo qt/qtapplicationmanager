@@ -306,13 +306,14 @@ int main(int argc, char *argv[])
 
     startupTimer.checkpoint("after sudo server fork");
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0) && QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#endif
-
 #if defined(AM_HEADLESS)
     QCoreApplication a(argc, argv);
 #else
+#  if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+    // this is needed for both WebEngine and Wayland Multi-screen rendering
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#  endif
+
     QGuiApplication a(argc, argv);
 #endif
 

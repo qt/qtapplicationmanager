@@ -38,20 +38,20 @@
 #include "qmlapplicationinterface.h"
 #include "notification.h"
 
-
 QmlApplicationInterface *QmlApplicationInterface::s_instance = 0;
 
 QmlApplicationInterface::QmlApplicationInterface(const QString &dbusConnectionName, QObject *parent)
     : ApplicationInterface(parent)
+    , m_connection(dbusConnectionName)
 {
     if (QmlApplicationInterface::s_instance)
         qCritical("ERROR: only one instance of QmlApplicationInterface is allowed");
     s_instance = this;
 
-    m_applicationIf = new QDBusInterface("", "/ApplicationInterface", "io.qt.ApplicationManager.ApplicationInterface",
-                                         QDBusConnection(dbusConnectionName), this);
     m_runtimeIf = new QDBusInterface("", "/RuntimeInterface", "io.qt.ApplicationManager.RuntimeInterface",
-                                     QDBusConnection(dbusConnectionName), this);
+                                     m_connection, this);
+    m_applicationIf = new QDBusInterface("", "/ApplicationInterface", "io.qt.ApplicationManager.ApplicationInterface",
+                                         m_connection, this);
     m_notifyIf = new QDBusInterface("org.freedesktop.Notifications", "/org/freedesktop/Notifications", "org.freedesktop.Notifications",
                                     QDBusConnection::sessionBus(), this);
 }

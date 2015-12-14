@@ -216,6 +216,9 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
         if (!conn.registerObject("/RuntimeInterface", m_runtimeInterface, QDBusConnection::ExportScriptableContents))
             qCWarning(LogSystem) << "ERROR: could not register the /RuntimeInterface object on the peer DBus.";
 
+        // Useful for debugging the private P2P bus:
+        //QDBusConnection::sessionBus().registerObject("/RuntimeInterface", m_runtimeInterface, QDBusConnection::ExportScriptableContents);
+
         // we need to delay the actual start call, until the launcher side is ready to
         // listen to the interface
         connect(m_runtimeInterface, &NativeRuntimeInterface::launcherFinishedInitialization,

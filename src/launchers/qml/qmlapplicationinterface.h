@@ -32,6 +32,7 @@
 
 #include <QQmlParserStatus>
 #include <QPointer>
+#include <QDBusConnection>
 
 #include "../../manager-lib/applicationinterface.h"
 #include "notification.h"
@@ -71,6 +72,7 @@ private:
     void notificationClose(QmlNotification *n);
 
     mutable QString m_appId; // cached
+    QDBusConnection m_connection;
     QDBusInterface *m_applicationIf;
     QDBusInterface *m_runtimeIf;
     QDBusInterface *m_notifyIf;

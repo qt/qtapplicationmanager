@@ -37,6 +37,7 @@
 class ApplicationInterface : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")
     Q_PROPERTY(QString applicationId READ applicationId CONSTANT SCRIPTABLE true)
 
 public:

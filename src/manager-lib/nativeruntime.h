@@ -101,6 +101,7 @@ private slots:
 
 private:
     bool initialize();
+    void shutdown(int exitCode, QProcess::ExitStatus status);
 
     bool m_isQuickLauncher;
     bool m_needsLauncher;

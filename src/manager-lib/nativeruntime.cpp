@@ -55,7 +55,9 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, const Application *ap
 }
 
 NativeRuntime::~NativeRuntime()
-{ }
+{
+    delete m_process;
+}
 
 bool NativeRuntime::isQuickLauncher() const
 {
@@ -91,6 +93,21 @@ bool NativeRuntime::initialize()
         m_container->setBaseDirectory(m_app->baseDir().absolutePath());
     }
     return true;
+}
+
+void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
+{
+    qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : QString("(none)"))
+                       << "pid:" << m_process->processId() << ") exited with code:" << exitCode
+                       << "status:" << status;
+
+    m_shutingDown = m_launched = m_launchWhenReady = m_dbusConnection = false;
+
+    emit finished(exitCode, status);
+
+    if (m_app)
+        m_app->setCurrentRuntime(0);
+    deleteLater();
 }
 
 bool NativeRuntime::start()
@@ -167,24 +184,13 @@ void NativeRuntime::onProcessStarted()
 
 void NativeRuntime::onProcessError(QProcess::ProcessError error)
 {
-    qCCritical(LogSystem) << "QmlRuntime (id:" << (m_app ? m_app->id() : QString("(none)")) << "pid:" << m_process->processId() << ") exited with ProcessError: " << error;
-
-    m_process->deleteLater();
-    m_process = 0;
-    m_shutingDown = m_launched = m_launchWhenReady = m_dbusConnection = false;
-
-    emit finished(-1, QProcess::CrashExit);
+    Q_UNUSED(error)
+    shutdown(-1, QProcess::CrashExit);
 }
 
 void NativeRuntime::onProcessFinished(int exitCode, QProcess::ExitStatus status)
 {
-    m_process->deleteLater();
-    m_process = 0;
-    m_shutingDown = m_launched = m_launchWhenReady = m_dbusConnection = false;
-
-    qCDebug(LogSystem) << "NativeRuntume: process finished" << exitCode << status;
-
-    emit finished(exitCode, status);
+    shutdown(exitCode, status);
 }
 
 void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
@@ -228,7 +234,7 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 
 void NativeRuntime::onLauncherFinishedInitialization()
 {
-    if (m_needsLauncher && m_launchWhenReady && !m_launched && m_app) {
+    if (m_needsLauncher && m_launchWhenReady && !m_launched && m_app && m_runtimeInterface) {
         QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
 
         m_runtimeInterface->startApplication(pathInContainer, m_document, m_app->runtimeParameters());

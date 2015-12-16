@@ -70,6 +70,8 @@ AbstractRuntimeManager *RuntimeFactory::manager(const QString &id)
 
 AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, const Application *app)
 {
+    QScopedPointer<AbstractContainer> ac(container);
+
     if (!app || app->runtimeName().isEmpty() || app->currentRuntime())
         return nullptr;
 
@@ -77,7 +79,7 @@ AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, const Appl
     if (!arm)
         return nullptr;
 
-    AbstractRuntime *art = arm->create(container, app);
+    AbstractRuntime *art = arm->create(ac.take(), app);
 
     if (art)
         app->setCurrentRuntime(art);
@@ -86,10 +88,13 @@ AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, const Appl
 
 AbstractRuntime *RuntimeFactory::createQuickLauncher(AbstractContainer *container, const QString &id)
 {
+    QScopedPointer<AbstractContainer> ac(container);
+
     AbstractRuntimeManager *arm = manager(id);
     if (!arm)
         return nullptr;
-    return arm->create(container, nullptr);
+
+    return arm->create(ac.take(), nullptr);
 }
 
 void RuntimeFactory::setConfiguration(const QVariantMap &configuration)

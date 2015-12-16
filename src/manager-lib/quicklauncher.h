@@ -60,6 +60,7 @@ private:
     static QuickLauncher *s_instance;
 
     void triggerRebuild(int delay = 0);
+    void removeEntry(AbstractContainer *container, AbstractRuntime *runtime);
 
     struct QuickLaunchEntry
     {

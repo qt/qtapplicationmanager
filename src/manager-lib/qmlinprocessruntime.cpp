@@ -258,7 +258,9 @@ bool QmlInProcessRuntimeManager::inProcess() const
 
 AbstractRuntime *QmlInProcessRuntimeManager::create(AbstractContainer *container, const Application *app)
 {
-    if (container)
+    if (container) {
+        delete container;
         return nullptr;
+    }
     return new QmlInProcessRuntime(app, this);
 }

@@ -113,7 +113,7 @@ void QuickLauncher::rebuild()
 
             QScopedPointer<AbstractRuntime> ar;
             if (!entry->m_runtimeId.isEmpty()) {
-                ar.reset(RuntimeFactory::instance()->createQuickLauncher(ac.data(), entry->m_runtimeId));
+                ar.reset(RuntimeFactory::instance()->createQuickLauncher(ac.take(), entry->m_runtimeId));
                 if (!ar) {
                     qCWarning(LogSystem) << "ERROR: Could not create quick-launch runtime with id"
                                          << entry->m_runtimeId << "within container with id"
@@ -127,9 +127,16 @@ void QuickLauncher::rebuild()
                     continue;
                 }
             }
+            AbstractContainer *container = ar ? ar.data()->container() : ac.take();
+            AbstractRuntime *runtime = ar.take();
+
+            connect(container, &AbstractContainer::destroyed, this, [this, container]() { removeEntry(container, nullptr); });
+            if (runtime)
+                connect(runtime, &AbstractRuntime::destroyed, this, [this, runtime]() { removeEntry(nullptr, runtime); });
+
             qCDebug(LogSystem) << "Added" << entry->m_containerId << "/" << entry->m_runtimeId <<
-                                  "to the quick-launch pool ->" << ac.data() << ar.data();
-            entry->m_containersAndRuntimes << qMakePair(ac.take(), ar.take());
+                                  "to the quick-launch pool ->" << container << runtime;
+            entry->m_containersAndRuntimes << qMakePair(container, runtime);
             ++done;
         }
     }
@@ -140,6 +147,21 @@ void QuickLauncher::rebuild()
 void QuickLauncher::triggerRebuild(int delay)
 {
     QTimer::singleShot(delay, this, &QuickLauncher::rebuild);
+}
+
+void QuickLauncher::removeEntry(AbstractContainer *container, AbstractRuntime *runtime)
+{
+    for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
+        for (int i = 0; i < entry->m_containersAndRuntimes.size(); ++i) {
+            auto car = entry->m_containersAndRuntimes.at(i);
+            if ((container && car.first == container)
+                    || (runtime && car.second == runtime)) {
+                qCDebug(LogSystem) << "Removed quicklaunch entry for container/runtime" << container << runtime;
+
+                entry->m_containersAndRuntimes.removeAt(i--);
+            }
+        }
+    }
 }
 
 QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString &containerId, const QString &runtimeId)

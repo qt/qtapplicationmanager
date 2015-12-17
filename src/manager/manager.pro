@@ -63,6 +63,9 @@ DBUS_ADAPTORS += \
     ../dbus/io.qt.applicationmanager.xml \
     ../dbus/io.qt.applicationinstaller.xml \
 
+!headless:DBUS_ADAPTORS += \
+    ../dbus/io.qt.windowmanager.xml \
+
 # this is a bit more complicated than it should be, but qdbusxml2cpp cannot
 # cope with more than 1 out value out of the box
 # http://lists.qt-project.org/pipermail/interest/2013-July/008011.html
@@ -78,18 +81,22 @@ INSTALLS += dbusif
 
 qtPrepareTool(QDBUSCPP2XML, qdbuscpp2xml)
 
-#recreate-manager-dbus-xml.target = $$PWD/../dbus/io.qt.applicationmanager.xml
-recreate-manager-dbus-xml.CONFIG = phony
-recreate-manager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager-lib/applicationmanager.h -o $$recreate-manager-dbus-xml.target
+recreate-applicationmanager-dbus-xml.CONFIG = phony
+recreate-applicationmanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager-lib/applicationmanager.h -o $$PWD/../dbus/io.qt.applicationmanager.xml
 
-#recreate-installer-dbus-xml.target = $$PWD/../dbus/io.qt.applicationinstaller.xml
-recreate-installer-dbus-xml.CONFIG = phony
-recreate-installer-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../installer-lib/applicationinstaller.h -o $$recreate-installer-dbus-xml.target
+recreate-applicationinstaller-dbus-xml.CONFIG = phony
+recreate-applicationinstaller-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../installer-lib/applicationinstaller.h -o $$PWD/../dbus/io.qt.applicationinstaller.xml
 
-recreate-dbus-xml.depends = recreate-manager-dbus-xml recreate-installer-dbus-xml
+recreate-windowmanager-dbus-xml.CONFIG = phony
+recreate-windowmanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/windowmanager.h -o $$PWD/../dbus/io.qt.windowmanager.xml
 
-QMAKE_EXTRA_TARGETS += recreate-dbus-xml recreate-manager-dbus-xml recreate-installer-dbus-xml
+recreate-dbus-xml.depends = recreate-applicationmanager-dbus-xml recreate-applicationinstaller-dbus-xml
 
+QMAKE_EXTRA_TARGETS += \
+    recreate-dbus-xml \
+    recreate-applicationmanager-dbus-xml \
+    recreate-applicationinstaller-dbus-xml \
+    recreate-windowmanager-dbus-xml \
 
 OTHER_FILES = \
     syms.txt \

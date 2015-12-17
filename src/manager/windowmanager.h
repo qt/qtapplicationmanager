@@ -49,6 +49,12 @@
 #  include <QProcess>
 #endif
 
+#if defined(QT_DBUS_LIB)
+#  include <QDBusContext>
+#  include <QDBusConnectionInterface>
+#endif
+
+
 QT_BEGIN_NAMESPACE
 class QQuickView;
 class QQuickItem;
@@ -69,8 +75,12 @@ class WindowManager : public QAbstractListModel
                                                , private QWaylandQuickCompositor
 #endif
 #endif
+#if defined(QT_DBUS_LIB)
+                                               , protected QDBusContext
+#endif
 {
     Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "io.qt.WindowManager")
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 public:
     ~WindowManager();
@@ -116,6 +126,10 @@ public:
     Q_INVOKABLE bool setSurfaceWindowProperty(QQuickItem *item, const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant surfaceWindowProperty(QQuickItem *item, const QString &name) const;
     Q_INVOKABLE QVariantMap surfaceWindowProperties(QQuickItem *item) const;
+
+    Q_SCRIPTABLE bool makeScreenshot(const QString &filename, const QString &selector);
+
+    bool setDBusPolicy(const QVariantMap &yamlFragment);
 
 private slots:
     void windowPropertyChanged(const QString &name, const QVariant &value);

@@ -29,16 +29,17 @@
 ****************************************************************************/
 
 #include <QCoreApplication>
-#include <QtQml>
-#include <QQuickView>
-#include <QUrl>
+#include <QRegularExpression>
 #include <QQmlEngine>
-#include <QLocale>
+#include <QQuickView>
 #include <QVariant>
 #include <QQuickItem>
+#include <QQuickItemGrabResult>
+#ifndef AM_SINGLEPROCESS_MODE
+#  include <QWaylandOutput>
+#endif
 
 #include "global.h"
-
 #include "application.h"
 #include "applicationmanager.h"
 #include "abstractruntime.h"
@@ -46,7 +47,14 @@
 #include "windowmanager.h"
 #include "waylandwindow.h"
 #include "inprocesswindow.h"
+#include "dbus-utilities.h"
 #include "qml-utilities.h"
+
+#define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
+    do { \
+        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__)) \
+            return RETURN_TYPE(); \
+    } while (false);
 
 /*!
     \class WindowManager
@@ -265,6 +273,9 @@ public:
     QMap<const Window *, bool> isClosing;
 
     bool watchdogEnabled;
+
+    QMap<QByteArray, DBusPolicy> dbusPolicy;
+    QList<QQuickView *> views;
 };
 
 WindowManager *WindowManager::s_instance = 0;
@@ -314,6 +325,7 @@ WindowManager::WindowManager(QQuickView *parent)
     parent->winId();
     addDefaultShell();
 #endif
+    d->views << parent;
 
     connect(parent, &QQuickWindow::beforeSynchronizing, this, [this](){this->frameStarted();}, Qt::DirectConnection);
     connect(parent, &QQuickWindow::afterRendering, this, &WindowManager::sendCallbacks);
@@ -727,6 +739,177 @@ void WindowManager::windowPropertyChanged(const QString &name, const QVariant &v
     if (!win)
         return;
     emit surfaceWindowPropertyChanged(win->surfaceItem(), name, value);
+}
+
+bool WindowManager::setDBusPolicy(const QVariantMap &yamlFragment)
+{
+    static const QVector<QByteArray> functions {
+        QT_STRINGIFY(makeScreenshot)
+    };
+
+    d->dbusPolicy = parseDBusPolicy(yamlFragment);
+
+    foreach (const QByteArray &f, d->dbusPolicy.keys()) {
+       if (!functions.contains(f))
+           return false;
+    }
+    return true;
+}
+
+bool WindowManager::makeScreenshot(const QString &filename, const QString &selector)
+{
+    AM_AUTHENTICATE_DBUS(bool)
+
+    // filename:
+    // %s -> screenId
+    // %i -> appId
+    // %% -> %
+
+    // selector:
+    // <appid>[attribute=value]:<screenid>
+    // e.g. com.pelagicore.music[windowType=widget]:1
+    //      com.pelagicore.*[windowType=]
+
+    auto substituteFilename = [filename](const QString &screenId, const QString &appId) -> QString {
+        QString result;
+        bool percent = false;
+        for (int i = 0; i < filename.size(); ++i) {
+            QChar c = filename.at(i);
+            if (!percent) {
+                if (c != QLatin1Char('%'))
+                    result.append(c);
+                else
+                    percent = true;
+            } else {
+                switch (c.unicode()) {
+                case '%':
+                    result.append(c);
+                    break;
+                case 's':
+                    result.append(screenId);
+                    break;
+                case 'i':
+                    result.append(appId);
+                    break;
+                }
+                percent = false;
+            }
+        }
+        return result;
+    };
+
+    QRegularExpression re(QStringLiteral("^([a-z.-]+)?(\\[([a-zA-Z0-9_.]+)=([^\\]]*)\\])?(:([0-9]+))?"));
+    auto match = re.match(selector);
+    QString screenId = match.captured(6);
+    QString appId = match.captured(1);
+    QString attributeName = match.captured(3);
+    QString attributeValue = match.captured(4);
+
+    // qWarning() << "Matching result:" << match.isValid();
+    // qWarning() << "  screen ...... :" << screenId;
+    // qWarning() << "  app ......... :" << appId;
+    // qWarning() << "  attributeName :" << attributeName;
+    // qWarning() << "  attributeValue:" << attributeValue;
+
+    bool result = true;
+    bool foundAtLeastOne = false;
+
+    if (appId.isEmpty() && attributeName.isEmpty()) {
+        // fullscreen screenshot
+
+        for (int i = 0; i < d->views.count(); ++i) {
+            if (screenId.isEmpty() || screenId.toInt() == i) {
+                QImage img = d->views.at(i)->grabWindow();
+
+                foundAtLeastOne = true;
+                result &= img.save(substituteFilename(QString::number(i), QString()));
+            }
+        }
+    } else {
+        // app without system-UI
+
+        QList<const Application *> apps;
+        foreach (const Application *app, ApplicationManager::instance()->applications()) {
+            if (appId.isEmpty() || (appId == app->id()))
+                apps << app;
+        }
+
+        auto grabbers = new QList<QSharedPointer<QQuickItemGrabResult>>;
+
+        foreach (const Window *w, d->windows) {
+            if (apps.contains(w->application())) {
+                if (attributeName.isEmpty()
+                        || (w->windowProperty(attributeName).toString() == attributeValue)) {
+                    for (int i = 0; i < d->views.count(); ++i) {
+                        if (screenId.isEmpty() || screenId.toInt() == i) {
+                            QQuickView *view = d->views.at(i);
+
+                            bool onScreen = false;
+
+                            if (w->isInProcess()) {
+                                onScreen = (w->surfaceItem()->window() == view);
+                            }
+#ifndef AM_SINGLEPROCESS_MODE
+                            else if (const WaylandWindow *wlw = qobject_cast<const WaylandWindow *>(w)) {
+                                onScreen = wlw->surface() && wlw->surface()->mainOutput()
+                                        && (wlw->surface()->mainOutput()->window() == view);
+                            }
+#endif
+                            if (onScreen) {
+                                foundAtLeastOne = true;
+                                QSharedPointer<QQuickItemGrabResult> grabber = w->surfaceItem()->grabToImage();
+
+                                if (!grabber) {
+                                    result = false;
+                                    continue;
+                                }
+
+                                QString saveTo = substituteFilename(QString::number(i), w->application()->id());
+#if defined(QT_DBUS_LIB)
+                                struct DBusDelayedReply
+                                {
+                                    DBusDelayedReply(QDBusMessage msg, QDBusConnection conn)
+                                        : dbusReply(msg), dbusConn(conn), ok(true)
+                                    { }
+                                    QDBusMessage dbusReply;
+                                    QDBusConnection dbusConn;
+                                    bool ok;
+                                } *dbusDelayedReply = nullptr;
+                                if (calledFromDBus() && grabbers->isEmpty()) {
+                                    setDelayedReply(true);
+                                    dbusDelayedReply = new DBusDelayedReply(message().createReply(), connection());
+                                    dbusDelayedReply->ok = true;
+                                }
+#else
+                                void *dbusDelayedReply = nullptr;
+#endif
+                                grabbers->append(grabber);
+                                connect(grabber.data(), &QQuickItemGrabResult::ready, this, [grabbers, grabber, saveTo, dbusDelayedReply]() {
+                                    bool ok = grabber->saveToFile(saveTo);
+                                    grabbers->removeOne(grabber);
+#if defined(QT_DBUS_LIB)
+                                    if (dbusDelayedReply)
+                                        dbusDelayedReply->ok &= ok;
+#endif
+                                    if (grabbers->isEmpty()) {
+                                        delete grabbers;
+#if defined(QT_DBUS_LIB)
+                                        if (dbusDelayedReply) {
+                                            dbusDelayedReply->dbusReply << QVariant(dbusDelayedReply->ok);
+                                            dbusDelayedReply->dbusConn.send(dbusDelayedReply->dbusReply);
+                                        }
+#endif
+                                    }
+                                });
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return foundAtLeastOne & result;
 }
 
 

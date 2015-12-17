@@ -94,6 +94,9 @@
 #if !defined(AM_HEADLESS)
 #  include "windowmanager.h"
 #  include "fakeapplicationmanagerwindow.h"
+#  if defined(QT_DBUS_LIB)
+#    include "windowmanager_adaptor.h"
+#  endif
 #endif
 
 #include "configuration.h"
@@ -533,22 +536,27 @@ int main(int argc, char *argv[])
         }
 
 #if defined(QT_DBUS_LIB)
-        registerDBusObject(new ApplicationManagerAdaptor(am), "io.qt.ApplicationManager", "/Manager");
+        registerDBusObject(new ApplicationManagerAdaptor(am), "io.qt.ApplicationManager", "/ApplicationManager");
         if (!am->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(am))))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");
 
 #  if !defined(AM_DISABLE_INSTALLER)
-        registerDBusObject(new ApplicationInstallerAdaptor(ai), "io.qt.ApplicationManager", "/Installer");
+        registerDBusObject(new ApplicationInstallerAdaptor(ai), "io.qt.ApplicationManager", "/ApplicationInstaller");
         if (!ai->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(ai))))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationInstaller");
 #  endif
 
+#  if !defined(AM_HEADLESS)
         try {
             registerDBusObject(new NotificationsAdaptor(nm), "org.freedesktop.Notifications", "/org/freedesktop/Notifications");
         } catch (const Exception &e) {
             //TODO: what should we do here? on the desktop this will obviously always fail
             qCCritical(LogSystem) << "WARNING:" << e.what();
         }
+        registerDBusObject(new WindowManagerAdaptor(wm), "io.qt.ApplicationManager", "/WindowManager");
+        if (!wm->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(wm))))
+            throw Exception(Error::DBus, "could not set DBus policy for WindowManager");
+#endif
         startupTimer.checkpoint("after D-Bus registrations");
 #endif // QT_DBUS_LIB
 

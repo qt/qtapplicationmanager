@@ -363,25 +363,6 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after installer setup checks");
 #endif
 
-        QDir pluginsDir = QDir(a.applicationDirPath() + QLatin1String("/../lib/appman/"));
-
-        qCDebug(LogSystem) << "Scanning for plugins in" << pluginsDir.absolutePath();
-
-        foreach (const QString &plugin, pluginsDir.entryList(QStringList() << "*.so" << "*.dylib" << "*.dll"))  {
-            QString pluginPath = pluginsDir.absoluteFilePath(plugin);
-
-            // hack for the time being - this should be solved by the plugin's root object
-            // (which we do not have yet)
-            if (plugin.contains("runtime")) // && !plugin.contains("inprocess"))
-                continue;
-
-            QPluginLoader pluginLoader(pluginPath);
-            bool ok = pluginLoader.load();
-
-            qCDebug(LogSystem) << (ok ? " OK " : "FAIL") << pluginPath << (ok ? QString() : pluginLoader.errorString());
-        }
-        startupTimer.checkpoint("after plugin load");
-
         bool forceSingleProcess = true;
 #if !defined(AM_SINGLEPROCESS_MODE)
         forceSingleProcess = configuration->forceSingleProcess();

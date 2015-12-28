@@ -13,9 +13,6 @@ SUBDIRS = \
     manager \
     tools \
 
-!headless:!android:!windows:SUBDIRS += \
-    manager-lib/pkg-config.pro \
-
 crypto-lib.depends = common-lib
 manager-lib.depends = common-lib crypto-lib
 manager-lib.depends += notification-lib

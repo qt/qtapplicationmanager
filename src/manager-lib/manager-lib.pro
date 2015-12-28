@@ -23,11 +23,6 @@ addStaticLibrary(../common-lib)
 addStaticLibrary(../crypto-lib)
 addStaticLibrary(../notification-lib)
 
-headers.path= $$INSTALL_PREFIX/include/application-manager
-headers.files = abstractruntime.h application.h applicationmanager.h applicationinterface.h runtimefactory.h executioncontainerfactory.h executioncontainer.h ../common-lib/global.h
-
-INSTALLS += headers
-
 HEADERS += \
     application.h \
     applicationdatabase.h \

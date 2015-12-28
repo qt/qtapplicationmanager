@@ -382,11 +382,12 @@ int main(int argc, char *argv[])
         }
         startupTimer.checkpoint("after plugin load");
 
-#if defined(AM_SINGLEPROCESS_MODE)
-        if (true) {
-#else
-        if (configuration->forceSingleProcess()) {
+        bool forceSingleProcess = true;
+#if !defined(AM_SINGLEPROCESS_MODE)
+        forceSingleProcess = configuration->forceSingleProcess();
 #endif
+
+        if (forceSingleProcess) {
             RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>();
             RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>("qml");
         } else {
@@ -511,7 +512,7 @@ int main(int argc, char *argv[])
         QUnifiedTimer::instance()->setSlowModeEnabled(configuration->slowAnimations());
         QQuickView *view = new QQuickView(engine, 0);
 
-        WindowManager *wm = WindowManager::createInstance(view);
+        WindowManager *wm = WindowManager::createInstance(view, forceSingleProcess, configuration->waylandSocketName());
         wm->enableWatchdog(!configuration->noUiWatchdog());
 
         QObject::connect(am, &ApplicationManager::inProcessRuntimeCreated,

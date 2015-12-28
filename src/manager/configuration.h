@@ -73,6 +73,8 @@ public:
     qreal quickLaunchIdleLoad() const;
     int quickLaunchRuntimesPerContainer() const;
 
+    QString waylandSocketName() const;
+
 private:
     void initialize();
 

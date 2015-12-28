@@ -30,13 +30,18 @@
 
 #include <QCoreApplication>
 #include <QRegularExpression>
-#include <QQmlEngine>
 #include <QQuickView>
-#include <QVariant>
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
+#include <QQmlEngine>
+#include <QVariant>
 #ifndef AM_SINGLEPROCESS_MODE
 #  include <QWaylandOutput>
+#  include <QWaylandQuickCompositor>
+#  include <QWaylandQuickSurface>
+#  if QT_VERSION >= QT_VERSION_CHECK(5,5,0)
+#    include <QWaylandClient>
+#  endif
 #endif
 
 #include "global.h"
@@ -258,21 +263,54 @@ enum Roles
 };
 }
 
+#if !defined(AM_SINGLEPROCESS_MODE)
+class WaylandCompositor : public QWaylandQuickCompositor
+{
+public:
+    WaylandCompositor(QQuickView *view, const QString &waylandSocketName, WindowManager *manager)
+#  if QT_VERSION >= QT_VERSION_CHECK(5,5,0)
+        : QWaylandQuickCompositor(qPrintable(waylandSocketName), DefaultExtensions | SubSurfaceExtension)
+        , m_manager(manager)
+    {
+        createOutput(view, QString(), QString());
+#  else
+        : QWaylandQuickCompositor(view, qPrintable(waylandSocketName), DefaultExtensions | SubSurfaceExtension)
+        , m_manager(manager)
+    {
+#  endif
+        view->winId();
+        addDefaultShell();
+    }
+
+    void surfaceCreated(QWaylandSurface *surface) override
+    {
+        m_manager->waylandSurfaceCreated(surface);
+    }
+
+private:
+    WindowManager *m_manager;
+};
+#endif // !defined(AM_SINGLEPROCESS_MODE)
+
+
 class WindowManagerPrivate
 {
 public:
     int findWindowByApplication(const Application *app) const;
     int findWindowBySurfaceItem(QQuickItem *quickItem) const;
-#ifndef AM_SINGLEPROCESS_MODE
-    int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
 
+#if !defined(AM_SINGLEPROCESS_MODE)
+    int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
     QWaylandSurface *waylandSurfaceFromItem(QQuickItem *surfaceItem) const;
+
+    WaylandCompositor *waylandCompositor = nullptr;
 #endif
+
     QHash<int, QByteArray> roleNames;
     QList<Window *> windows;
     QMap<const Window *, bool> isClosing;
 
-    bool watchdogEnabled;
+    bool watchdogEnabled = false;
 
     QMap<QByteArray, DBusPolicy> dbusPolicy;
     QList<QQuickView *> views;
@@ -281,11 +319,11 @@ public:
 WindowManager *WindowManager::s_instance = 0;
 
 
-WindowManager *WindowManager::createInstance(QQuickView *view)
+WindowManager *WindowManager::createInstance(QQuickView *view, bool forceSingleProcess, const QString &waylandSocketName)
 {
     if (s_instance)
         qFatal("WindowManager::createInstance() was called a second time.");
-    return s_instance = new WindowManager(view);
+    return s_instance = new WindowManager(view, forceSingleProcess, waylandSocketName);
 }
 
 WindowManager *WindowManager::instance()
@@ -302,39 +340,26 @@ QObject *WindowManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
     return instance();
 }
 
-WindowManager::WindowManager(QQuickView *parent)
-    : QAbstractListModel(parent)
-#ifndef AM_SINGLEPROCESS_MODE
-#  if QT_VERSION < QT_VERSION_CHECK(5,3,0)
-    , QWaylandCompositor(parent)
-#  elif QT_VERSION >= QT_VERSION_CHECK(5,5,0)
-    , QWaylandQuickCompositor(0, DefaultExtensions | SubSurfaceExtension)
-#  else
-      , QWaylandQuickCompositor(parent, 0, DefaultExtensions | SubSurfaceExtension)
-#  endif
-#endif
+WindowManager::WindowManager(QQuickView *view, bool forceSingleProcess, const QString &waylandSocketName)
+    : QAbstractListModel(view)
     , d(new WindowManagerPrivate())
 {
-#ifndef AM_SINGLEPROCESS_MODE
-#  if QT_VERSION < QT_VERSION_CHECK(5,3,0)
-    qputenv("QT_COMPOSITOR_NEGATE_INVERTED_Y", "1");
-#  else
-    #  if QT_VERSION >= QT_VERSION_CHECK(5,5,0)
-        createOutput(parent, QString(), QString());
-    #  endif
-    parent->winId();
-    addDefaultShell();
+    d->views << view;
+
+#if !defined(AM_SINGLEPROCESS_MODE)
+    if (!forceSingleProcess) {
+        d->waylandCompositor = new WaylandCompositor(view, waylandSocketName, this);
+
+        connect(view, &QQuickWindow::beforeSynchronizing, this, [this]() { d->waylandCompositor->frameStarted(); }, Qt::DirectConnection);
+        connect(view, &QQuickWindow::afterRendering, this, &WindowManager::sendCallbacks);
+
+        connect(view, &QWindow::heightChanged, this, &WindowManager::resize);
+        connect(view, &QWindow::widthChanged, this, &WindowManager::resize);
+        d->waylandCompositor->setOutputGeometry(view->geometry());
+    }
+#else
+    Q_UNUSED(waylandSocketName)
 #endif
-    d->views << parent;
-
-    connect(parent, &QQuickWindow::beforeSynchronizing, this, [this](){this->frameStarted();}, Qt::DirectConnection);
-    connect(parent, &QQuickWindow::afterRendering, this, &WindowManager::sendCallbacks);
-
-    connect(parent, &QWindow::heightChanged, this, &WindowManager::resize);
-    connect(parent, &QWindow::widthChanged, this, &WindowManager::resize);
-    setOutputGeometry(parent->geometry());
-#endif
-
 
     d->roleNames.insert(Id, "applicationId");
     d->roleNames.insert(SurfaceItem, "surfaceItem");
@@ -345,6 +370,9 @@ WindowManager::WindowManager(QQuickView *parent)
 
 WindowManager::~WindowManager()
 {
+#if !defined(AM_SINGLEPROCESS_MODE)
+    delete d->waylandCompositor;
+#endif
     delete d;
 }
 
@@ -525,7 +553,7 @@ void WindowManager::surfaceItemAboutToClose(QQuickItem *item)
 }
 
 
-#ifndef AM_SINGLEPROCESS_MODE
+#if !defined(AM_SINGLEPROCESS_MODE)
 
 void WindowManager::sendCallbacks()
 {
@@ -543,25 +571,25 @@ void WindowManager::sendCallbacks()
 
         if (!listToSend.isEmpty()) {
             //qCDebug(LogWayland) << "sending callbacks to clients: " << listToSend; // note: debug-level 6 needs to be enabled manually...
-            sendFrameCallbacks(listToSend);
+            d->waylandCompositor->sendFrameCallbacks(listToSend);
         }
     }
 }
 
 void WindowManager::resize()
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
-    setOutputGeometry(window()->geometry());
-#endif
+#  if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
+    d->compositor->setOutputGeometry(window()->geometry());
+#  endif
 }
 
-void WindowManager::surfaceCreated(QWaylandSurface *surface)
+void WindowManager::waylandSurfaceCreated(QWaylandSurface *surface)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+#  if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
     qCDebug(LogWayland) << "waylandSurfaceCreate" << surface << "(PID:" << surface->client()->processId() << ")" << surface->windowProperties();
-#else
+#  else
     qCDebug(LogWayland) << "waylandSurfaceCreate" << surface << "(PID:" << surface->processId() << ")" << surface->windowProperties();
-#endif
+#  endif
 
     connect(surface, &QWaylandSurface::mapped, this, &WindowManager::waylandSurfaceMapped);
     connect(surface, &QWaylandSurface::unmapped, this, &WindowManager::waylandSurfaceUnmapped);
@@ -570,67 +598,27 @@ void WindowManager::surfaceCreated(QWaylandSurface *surface)
 
 void WindowManager::waylandSurfaceMapped()
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-    QWaylandSurface *surface = qobject_cast<QWaylandSurface *>(sender());
-#else
     QWaylandQuickSurface *surface = qobject_cast<QWaylandQuickSurface *>(sender());
-#endif
     qCDebug(LogWayland) << "waylandSurfaceMapped" << surface;
-
     Q_ASSERT(surface != 0);
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
-    if (surface->client()->processId() == 0) {
-#else
-    if (surface->processId() == 0) {
-#endif
-        // TODO find out what those surfaces are and what I should do with them ;)
-        return;
-    }
+    qint64 processId;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
-    const Application* app = ApplicationManager::instance()->fromProcessId(surface->client()->processId());
-#else
-    const Application* app = ApplicationManager::instance()->fromProcessId(surface->processId());
-#endif
+#  if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+    processId = surface->client()->processId();
+#  else
+    processId = surface->processId();
+#  endif
+    if (processId == 0)
+        return; //TODO: find out what those surfaces are and what I should do with them ;)
+
+    const Application* app = ApplicationManager::instance()->fromProcessId(processId);
 
     if (!app && ApplicationManager::instance()->securityChecksEnabled()) {
         qCWarning(LogWayland) << "SECURITY ALERT: an unknown application tried to create a wayland-surface!";
         return;
     }
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-    if (!surface->hasShellSurface()) {
-        // TODO find out what shellSurface is and why we get this for all lauched applications....
-        //        qCDebug(LogWayland, 1, "shell-surface not supported yet ... please find out when/how/where this is happening and add corresponding code..."); <= this is not working ;) ... we get mouse-cursors or something ...
-        return;
-    }
-
-    QWaylandSurfaceItem *item = surface->surfaceItem();
-    if (!item) {
-        // Create a WaylandSurfaceItem if we have not yet done so
-        QQuickItem* rootObject = qobject_cast<QQuickView*>(window())->rootObject(); // the qobject_cast is validated/check upton by ctor
-        Q_ASSERT(rootObject != 0); // a proper QQuickView should always have a rootObject, otherwise something really weird is going on!
-
-        item = new QWaylandSurfaceItem(surface, 0);  /* NOTE #1: QWaylandSurfaceItem ctor will do surface->setSurfaceItem(this)
-                                                        NOTE #2: no parent is set. That's the duty of qml!*/
-
-        // TODO check if this is what we want (and whether it's working properly again ...)
-        item->setResizeSurfaceToItem(true);
-        // TODO find out what this does, and if we need it or not .. in either case, leave a comment explaining the decision.
-        item->setTouchEventsEnabled(true);
-
-        WaylandWindow *w = new WaylandWindow(app, item);
-        setupWindow(w);
-
-        // switch on Wayland ping/pong
-        if (d->watchdogEnabled) {
-            w->enablePing(true);
-        }
-    } else {
-        emit surfaceItemReady(d->findWindowByWaylandSurface(surface), item);
-    }
-#else
     QWaylandSurfaceItem *item = static_cast<QWaylandSurfaceItem *>(surface->views().first());
     Q_ASSERT(item);
 
@@ -643,8 +631,6 @@ void WindowManager::waylandSurfaceMapped()
     // switch on Wayland ping/pong -- currently disabled, since it is a bit unstable
     //if (d->watchdogEnabled)
     //    w->enablePing(true);
-
-#endif
 
     if (app) {
         //We only take focus for applications.
@@ -697,7 +683,8 @@ void WindowManager::handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *sur
     }
 }
 
-#endif
+#endif // !defined(AM_SINGLEPROCESS_MODE)
+
 
 bool WindowManager::setSurfaceWindowProperty(QQuickItem *item, const QString &name, const QVariant &value)
 {
@@ -931,7 +918,8 @@ int WindowManagerPrivate::findWindowBySurfaceItem(QQuickItem *quickItem) const
     return -1;
 }
 
-#ifndef AM_SINGLEPROCESS_MODE
+#if !defined(AM_SINGLEPROCESS_MODE)
+
 int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const
 {
     for (int i = 0; i < windows.count(); ++i) {
@@ -948,4 +936,4 @@ QWaylandSurface *WindowManagerPrivate::waylandSurfaceFromItem(QQuickItem *surfac
     return 0;
 }
 
-#endif
+#endif // !defined(AM_SINGLEPROCESS_MODE)

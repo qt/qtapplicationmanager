@@ -30,51 +30,29 @@
 
 #pragma once
 
-#include <QObject>
-#include <QUrl>
 #include <QAbstractListModel>
-
-#ifndef AM_SINGLEPROCESS_MODE
-#  if QT_VERSION < QT_VERSION_CHECK(5,3,0)
-#    include <QWaylandCompositor>
-#    include <QWaylandSurface>
-#  else
-#    include <QWaylandQuickCompositor>
-#    include <QWaylandQuickSurface>
-#  endif
-#  if QT_VERSION >= QT_VERSION_CHECK(5,5,0)
-#    include <QWaylandClient>
-#  endif
-#  include <QWaylandSurfaceItem>
-#  include <QProcess>
-#endif
 
 #if defined(QT_DBUS_LIB)
 #  include <QDBusContext>
 #  include <QDBusConnectionInterface>
 #endif
 
+#ifndef AM_SINGLEPROCESS_MODE
+QT_FORWARD_DECLARE_CLASS(QWaylandSurface)
+#endif
 
-QT_BEGIN_NAMESPACE
-class QQuickView;
-class QQuickItem;
-class QQmlEngine;
-class QJSEngine;
-QT_END_NAMESPACE
+QT_FORWARD_DECLARE_CLASS(QQuickView)
+QT_FORWARD_DECLARE_CLASS(QQuickItem)
+QT_FORWARD_DECLARE_CLASS(QQmlEngine)
+QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 class Window;
 class WindowManagerPrivate;
 class Application;
 class AbstractRuntime;
+class WaylandCompositor;
 
 class WindowManager : public QAbstractListModel
-#ifndef AM_SINGLEPROCESS_MODE
-#  if QT_VERSION < QT_VERSION_CHECK(5,3,0)
-                                               , private QWaylandCompositor
-#  else
-                                               , private QWaylandQuickCompositor
-#endif
-#endif
 #if defined(QT_DBUS_LIB)
                                                , protected QDBusContext
 #endif
@@ -84,7 +62,7 @@ class WindowManager : public QAbstractListModel
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 public:
     ~WindowManager();
-    static WindowManager *createInstance(QQuickView* view);
+    static WindowManager *createInstance(QQuickView* view, bool forceSingleProcess, const QString &waylandSocketName = QString());
     static WindowManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
@@ -92,9 +70,9 @@ public:
     bool isWatchdogEnabled() const;
 
     // the item model part
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
-    QVariant data(const QModelIndex &index, int role) const;
-    QHash<int, QByteArray> roleNames() const;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
     Q_INVOKABLE int count() const { return rowCount(); }
     Q_INVOKABLE QVariantMap get(int index) const;
@@ -135,10 +113,8 @@ private slots:
     void windowPropertyChanged(const QString &name, const QVariant &value);
 
 #ifndef AM_SINGLEPROCESS_MODE
-public slots:
-    void surfaceCreated(QWaylandSurface *surface);
-
 private slots:
+    void waylandSurfaceCreated(QWaylandSurface *surface);
     void waylandSurfaceMapped();
     void waylandSurfaceUnmapped();
     void waylandSurfaceDestroyed();
@@ -152,10 +128,12 @@ private:
 #endif
 
 private:
-    WindowManager(QQuickView *parent = 0);
+    WindowManager(QQuickView *view, bool forceSingleProcess, const QString &waylandSocketName);
     WindowManager(const WindowManager &);
     WindowManager &operator=(const WindowManager &);
     static WindowManager *s_instance;
 
     WindowManagerPrivate *d;
+
+    friend class WaylandCompositor;
 };

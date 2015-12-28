@@ -161,6 +161,7 @@ Configuration::Configuration()
     d->clp.addOption({ "no-security",          "disables all security related checks (dev only!)" });
     d->clp.addOption({ "no-ui-watchdog",       "disables detecting hung UI applications (e.g. via Wayland's ping/pong)." });
     d->clp.addOption({ "force-single-process", "forces single-process mode even on a wayland enabled build." });
+    d->clp.addOption({ "wayland-socket-name",  "use this file name to create the wayland socket.", "socket", "wayland-0" });
     d->clp.addOption({ "single-app",           "runs a single application only (ignores the database)", "info.yaml file" });
     d->clp.addOption({ "logging-rule",         "adds a standard Qt logging rule.", "rule" });
 
@@ -431,4 +432,9 @@ int Configuration::quickLaunchRuntimesPerContainer() const
     bool found, conversionOk;
     int rpc = d->findInConfigFile({ "quicklaunch", "runtimesPerContainer" }, &found).toInt(&conversionOk);
     return (found && conversionOk && rpc > 1 && rpc < 10) ? rpc : 1;
+}
+
+QString Configuration::waylandSocketName() const
+{
+    return d->clp.value("wayland-socket-name");
 }

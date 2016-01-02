@@ -40,9 +40,6 @@ class DigestFilter
 public:
     enum Type { Sha1, Sha256, Sha512 };
 
-    static QString nameFromType(Type t);
-    static Type typeFromName(const QString &name, bool *ok = 0);
-
     explicit DigestFilter(Type t);
     ~DigestFilter();
 

@@ -8,7 +8,7 @@ include(libz.pri)
     INCLUDEPATH += $$LIBARCHIVE_PATH/libarchive
     osx:LIBS += $$join(LIBARCHIVE_BUILD_PATH,,,/libarchive.a) -framework CoreServices -liconv
     else:LIBS += $$fixLibraryPath(-L$$LIBARCHIVE_BUILD_PATH) -larchive
-
+    win32:LIBS += -lcrypt32
     win32:DEFINES += LIBARCHIVE_STATIC
 
     CONFIG *= link_prl

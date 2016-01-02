@@ -110,11 +110,10 @@ void tst_DigestFilter::algorithms_data()
 {
     QTest::addColumn<DigestFilter::Type>("type");
     QTest::addColumn<int>("size");
-    QTest::addColumn<QString>("name");
 
-    QTest::newRow("sha1") << DigestFilter::Sha1 << 20 << "SHA1";
-    QTest::newRow("sha256") << DigestFilter::Sha256 << 32 << "SHA256";
-    QTest::newRow("sha512") << DigestFilter::Sha512 << 64 << "SHA512";
+    QTest::newRow("sha1") << DigestFilter::Sha1 << 20;
+    QTest::newRow("sha256") << DigestFilter::Sha256 << 32;
+    QTest::newRow("sha512") << DigestFilter::Sha512 << 64;
 }
 
 
@@ -122,22 +121,12 @@ void tst_DigestFilter::algorithms()
 {
     QFETCH(DigestFilter::Type, type);
     QFETCH(int, size);
-    QFETCH(QString, name);
 
     QCOMPARE(DigestFilter(type).size(), size);
-    QCOMPARE(DigestFilter::nameFromType(type), name);
-    bool ok;
-    QCOMPARE(DigestFilter::typeFromName(name, &ok), type);
-    QVERIFY(ok);
 }
 
 void tst_DigestFilter::misc()
 {
-    bool ok;
-    QVERIFY(DigestFilter::typeFromName("foo", &ok) == DigestFilter::Sha1);
-    QVERIFY(!ok);
-    QVERIFY(DigestFilter::typeFromName("foo") == DigestFilter::Sha1);
-
     {
         DigestFilter df(DigestFilter::Sha1);
         QVERIFY(df.start());
@@ -164,17 +153,23 @@ void tst_DigestFilter::misc()
         QVERIFY(!df.start());
         QVERIFY(df.errorString().contains("invalid"));
         QCOMPARE(df.size(), 0);
-        QVERIFY(DigestFilter::nameFromType(df.type()).isEmpty());
     }
     QVERIFY(DigestFilter::digest((DigestFilter::Type) -1, QByteArray()).isEmpty());
     QVERIFY(!DigestFilter::digest(DigestFilter::Sha1, QByteArray()).isEmpty());
     QVERIFY(HMACFilter::hmac((DigestFilter::Type) -1, QByteArray(), QByteArray()).isEmpty());
-    QVERIFY(!HMACFilter::hmac(DigestFilter::Sha1, QByteArray(), QByteArray("foo")).isEmpty());
+    QVERIFY(!HMACFilter::hmac(DigestFilter::Sha1, QByteArray("foo"), QByteArray()).isEmpty());
+    QVERIFY(HMACFilter::hmac(DigestFilter::Sha1, QByteArray(), QByteArray("foo")).isEmpty());
 
     {
         HMACFilter hf(DigestFilter::Sha1, QByteArray());
+        QVERIFY(!hf.start());
+    }
+    {
+        HMACFilter hf(DigestFilter::Sha1, QByteArray("foo"));
+        QByteArray hmac;
         QVERIFY(hf.start());
-        QVERIFY(hf.processData(QByteArray("foo")));
+        QVERIFY(hf.finish(hmac));
+        QVERIFY(!hmac.isEmpty());
     }
 }
 

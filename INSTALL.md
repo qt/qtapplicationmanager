@@ -28,8 +28,9 @@ There are various options that can be applied to the `qmake` step to tailor the 
 
 | Option | Description |
 | ------ | ----------- |
-| `-config bundled-libz`          | Build and link against the bundled version of zlib, instead of using a system version.
-| `-config bundled-libcrypto`     | Build and link against the bundled version of openssl, instead of using a system version.
+| `-config force-libcrypto`       | Force building against OpenSSL, even on Windows and Mac OS X.
+| `-config libcrypto-includes`    | OpenSSL include directory, if not building against a packaged version.
+| `-config libcrypto-defines`     | Additional OpenSSL defines, if not building against a packaged version.
 | `-config force-singleprocess`   | Force a single-process build, even if Qt's Wayland `compositor` module is available.
 | `-config force-multiprocess`    | Force a multi-process build - this will break if Qt's Wayland `compositor` module is not available.
 | `-config enable-tests`          | Enable building of all unit-tests.

@@ -31,11 +31,14 @@
 #pragma once
 
 #include <QByteArray>
+#include <QString>
 
 namespace Cryptography {
 
 QByteArray generateRandomBytes(int size);
 
 void initialize();
+
+QString errorString(qint64 osCryptoError, const char *errorDescription = nullptr);
 
 }

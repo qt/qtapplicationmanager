@@ -94,26 +94,26 @@ void tst_Signature::check()
     QVERIFY(!s2.verify(signature, m_verifyingPEM));
 
     QVERIFY(s.create(m_signingP12, m_signingPassword + "not").isEmpty());
-    QVERIFY(s.errorString().contains("not parse"));
+    QVERIFY2(s.errorString().contains("not parse"), qPrintable(s.errorString()));
 
     QVERIFY(s.create(QByteArray(), m_signingPassword).isEmpty());
-    QVERIFY(s.errorString().contains("not read"));
+    QVERIFY2(s.errorString().contains("not read"), qPrintable(s.errorString()));
 
     Signature s3(QByteArray(4096, 'x'));
     QVERIFY(!s3.create(m_signingP12, m_signingPassword).isEmpty());
 
     QVERIFY(!s.verify(signature, QList<QByteArray>()));
-    QVERIFY(s.errorString().contains("Failed to verify"));
+    QVERIFY2(s.errorString().contains("Failed to verify"), qPrintable(s.errorString()));
     QVERIFY(!s.verify(signature, QList<QByteArray>() << m_signingP12));
-    QVERIFY(s.errorString().contains("not load"));
+    QVERIFY2(s.errorString().contains("not load"), qPrintable(s.errorString()));
     QVERIFY(!s.verify(hash, QList<QByteArray>() << m_signingP12));
-    QVERIFY(s.errorString().contains("not read"));
+    QVERIFY2(s.errorString().contains("not read"), qPrintable(s.errorString()));
 
     Signature s4 { QByteArray() };
-    QVERIFY(!s4.create(m_signingP12, m_signingPassword).isEmpty());
+    QVERIFY(s4.create(m_signingP12, m_signingPassword).isEmpty());
 
     QVERIFY(s.create(m_signingNoKeyP12, m_signingPassword).isEmpty());
-    QVERIFY(s.errorString().contains("private key"));
+    QVERIFY2(s.errorString().contains("private key"), qPrintable(s.errorString()));
 }
 
 QTEST_APPLESS_MAIN(tst_Signature)

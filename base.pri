@@ -28,8 +28,11 @@ defineTest(CONFIG_VALUE) {
 CONFIG_VALUE(hardware-id, AM_HARDWARE_ID):DEFINES *= AM_HARDWARE_ID=\\\"$$AM_HARDWARE_ID\\\"
 else:CONFIG_VALUE(hardware-id-from-file, AM_HARDWARE_ID_FF):DEFINES *= AM_HARDWARE_ID_FROM_FILE=\\\"$$AM_HARDWARE_ID_FF\\\"
 
-CONFIG_VALUE(libcrypto-defines, AM_LIBCRYPTO_DEFINES)
-CONFIG_VALUE(libcrypto-includes, AM_LIBCRYPTO_INCLUDES)
+linux|force-libcrypto:DEFINES *= AM_USE_LIBCRYPTO
+force-libcrypto {
+    CONFIG_VALUE(libcrypto-defines, AM_LIBCRYPTO_DEFINES)
+    CONFIG_VALUE(libcrypto-includes, AM_LIBCRYPTO_INCLUDES)
+}
 
 
 defineReplace(fixLibraryPath) {

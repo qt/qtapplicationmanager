@@ -8,7 +8,6 @@ SUBDIRS = \
     runtime \
     cryptography \
     digestfilter \
-    cipherfilter \
     signature \
     utilities \
     packagecreator \

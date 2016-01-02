@@ -16,7 +16,6 @@ addStaticLibrary(../crypto-lib)
 addStaticLibrary(../manager-lib)
 
 include($$SOURCE_DIR/3rdparty/libarchive.pri)
-include($$SOURCE_DIR/3rdparty/libcrypto.pri)
 include($$SOURCE_DIR/3rdparty/libz.pri)
 
 HEADERS += \

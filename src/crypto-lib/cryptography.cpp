@@ -31,9 +31,10 @@
 #include <QMutex>
 
 #include "cryptography.h"
-#include "libcryptofunction.h"
 
-#ifdef Q_OS_WIN
+#if defined(Q_OS_UNIX)
+#  include <QFile>
+#elif defined(Q_OS_WIN)
 // all this mess is needed to get RtlGenRandom()
 #  include "windows.h"
 #  define SystemFunction036 NTAPI SystemFunction036
@@ -41,11 +42,21 @@
 #  undef SystemFunction036
 #endif
 
-#ifdef Q_OS_UNIX
-#  include <QFile>
+#if defined(Q_OS_OSX)
+#  include <QtCore/private/qcore_mac_p.h>
+#  include <Security/SecBase.h>
 #endif
 
+#if defined(AM_USE_LIBCRYPTO)
+#  include "libcryptofunction.h"
+#  include <openssl/err.h>
+
 Q_GLOBAL_STATIC(QMutex, initMutex)
+
+static AM_LIBCRYPTO_FUNCTION(ERR_error_string_n);
+
+#endif
+
 
 QByteArray Cryptography::generateRandomBytes(int size)
 {
@@ -71,6 +82,7 @@ QByteArray Cryptography::generateRandomBytes(int size)
 
 void Cryptography::initialize()
 {
+#if defined(AM_USE_LIBCRYPTO)
     static bool openSslInitialized = false;
 
     QMutexLocker locker(initMutex());
@@ -79,4 +91,40 @@ void Cryptography::initialize()
             qFatal("Could not load libcrypto");
         openSslInitialized = true;
     }
+#endif
+}
+
+QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescription)
+{
+    QString result;
+    if (errorDescription && *errorDescription) {
+        result = QString::fromLatin1(errorDescription);
+        result.append(QLatin1String(": "));
+    }
+
+#if defined(AM_USE_LIBCRYPTO)
+    if (osCryptoError) {
+        char msg[512];
+        msg[sizeof(msg) - 1] = 0;
+
+        //void ERR_error_string_n(unsigned long e, char *buf, size_t len);
+        am_ERR_error_string_n((unsigned long) osCryptoError, msg, sizeof(msg) - 1);
+        result.append(QString::fromLocal8Bit(msg));
+    }
+#elif defined(Q_OS_WIN)
+    if (osCryptoError) {
+        LPWSTR msg = nullptr;
+        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       nullptr, osCryptoError, 0, (LPWSTR) &msg, 0, nullptr);
+        result.append(QString::fromWCharArray(msg));
+        HeapFree(GetProcessHeap(), 0, msg);
+    }
+#elif defined(Q_OS_OSX)
+    if (osCryptoError) {
+        QCFType<CFStringRef> msg = SecCopyErrorMessageString(osCryptoError, nullptr);
+        result.append(QString::fromCFString(msg));
+    }
+#endif
+
+    return result;
 }

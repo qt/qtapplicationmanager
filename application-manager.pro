@@ -1,4 +1,4 @@
-requires(linux*:!android|win32-msvc2013)
+requires(linux*:!android|win32-msvc2013|osx)
 
 load(configure)
 qtCompileTest(libarchive)

@@ -30,46 +30,17 @@
 
 #pragma once
 
-#include <QString>
-#include <QByteArray>
+#include "signature.h"
+#include "exception.h"
 
-class CipherFilterPrivate;
-
-class CipherFilter
+class SignaturePrivate
 {
 public:
-    enum Cipher
-    {
-        None = 0,
-        AES_128_CFB,
-        AES_128_OFB,
-        AES_128_CBC,
+    QByteArray hash;
+    QString error;
 
-        AES_256_CFB,
-        AES_256_OFB,
-        AES_256_CBC,
-
-        Default = AES_128_CFB
-    };
-
-    enum Type { Encrypt, Decrypt };
-
-    explicit CipherFilter(Type t, Cipher cipher = Default);
-    ~CipherFilter();
-
-    Type type() const;
-
-    int keySize() const;
-    int ivSize() const;
-    int blockSize() const;
-
-    bool start(const char *key, int keyLen, const char *iv, int ivLen);
-    bool processData(const QByteArray &src, QByteArray &dst);
-    bool finish(QByteArray &dst);
-
-    QString errorString() const;
-
-private:
-    bool internalProcessData(const QByteArray &src, QByteArray &dst, bool lastChunk);
-    CipherFilterPrivate *d;
+    QByteArray create(const QByteArray &signingCertificatePkcs12,
+                      const QByteArray &signingCertificatePassword) throw(Exception);
+    bool verify(const QByteArray &signaturePkcs7,
+                const QList<QByteArray> &chainOfTrust) throw(Exception);
 };

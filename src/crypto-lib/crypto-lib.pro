@@ -12,23 +12,43 @@ DEFINES *= AM_BUILD_APPMAN
 
 addStaticLibrary(../common-lib)
 
-include($$SOURCE_DIR/3rdparty/libcrypto.pri)
-
-# Apple has deprecated all OpenSSL calls in 10.7
-osx:QMAKE_CXXFLAGS += -Wno-deprecated-declarations
-
-win32:LIBS += -ladvapi32
-
 SOURCES += \
-    cipherfilter.cpp \
     cryptography.cpp \
     digestfilter.cpp \
     signature.cpp \
-    libcryptofunction.cpp
 
 HEADERS += \
-    cipherfilter.h \
     cryptography.h \
     digestfilter.h \
+    digestfilter_p.h \
     signature.h \
-    libcryptofunction.h
+    signature_p.h \
+
+
+win32:LIBS += -ladvapi32
+
+win32:!force-libcrypto {
+    SOURCES += \
+        digestfilter_win.cpp \
+        signature_win.cpp \
+
+    LIBS += -lcrypt32
+} else:osx:!force-libcrypto {
+    SOURCES += \
+        digestfilter_osx.cpp \
+        signature_osx.cpp \
+
+    LIBS += -framework Security
+    QT *= core-private
+} else {
+    include($$SOURCE_DIR/3rdparty/libcrypto.pri)
+
+    SOURCES += \
+        libcryptofunction.cpp \
+        digestfilter_openssl.cpp \
+        signature_openssl.cpp \
+
+    HEADERS += \
+        libcryptofunction.h \
+
+}

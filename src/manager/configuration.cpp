@@ -168,6 +168,7 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("wayland-socket-name"),  qSL("use this file name to create the wayland socket."), qSL("socket"), qSL("wayland-0") });
     d->clp.addOption({ qSL("single-app"),           qSL("runs a single application only (ignores the database)"), qSL("info.yaml file") });
     d->clp.addOption({ qSL("logging-rule"),         qSL("adds a standard Qt logging rule."), qSL("rule") });
+    d->clp.addOption({ qSL("build-config"),         qSL("dumps the build configuration and exits.") });
 
     initialize();
 }
@@ -229,8 +230,19 @@ void Configuration::initialize()
     if (d->clp.isSet(qSL("help")))
         d->clp.showHelp();
 
+    if (d->clp.isSet(qSL("build-config"))) {
+        QFile f(qSL(":/build-config.yaml"));
+        if (f.open(QFile::ReadOnly)) {
+            showParserMessage(QString::fromLocal8Bit(f.readAll()), UsageMessage);
+            exit(0);
+        } else {
+            showParserMessage(qL1S("Could not find the embedded build config.\n"), ErrorMessage);
+            exit(1);
+        }
+    }
+
     if (d->clp.positionalArguments().size() > 1) {
-        showParserMessage(QString::fromLatin1("Only one main qml file can be specified.\n"), ErrorMessage);
+        showParserMessage(qL1S("Only one main qml file can be specified.\n"), ErrorMessage);
         exit(1);
     }
 

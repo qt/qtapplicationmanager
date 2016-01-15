@@ -132,3 +132,8 @@ android {
     # hack for neptune to get all relevant Qt modules deployed
 #    DISTFILES += android-deploy-dummy.qml
 }
+
+load(build-config)
+
+createBuildConfig(_DATE_, VERSION, BUILD_DIR, INSTALL_PREFIX, QT_ARCH, \
+                  QT_VERSION, QT, CONFIG, DEFINES, INCLUDEPATH, LIBS)

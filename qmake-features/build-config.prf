@@ -1,0 +1,26 @@
+# This functions creates a resource file named build-config.yaml. All variables that are given as
+# arguments are dumped into this file in YAML format as a map.
+# Given a variable named foo:
+# - if it is empty, it gets dumped as the null value: FOO: ~
+# - if it has a single values, it gets dumped as a string: FOO: "value"
+# - if it has multiple values, it gets dumped as list of strings:
+#     FOO:
+#     - "value1"
+#     - "value2"
+
+defineTest(createBuildConfig) {
+    write_file($$OUT_PWD/build-config.yaml, $$list("---"))
+    for(var, ARGS) {
+        isEmpty($$var):out = "$$var: ~"
+        else:count($$var, 1):out = "$$var: \"$$first($$var)\""
+        else {
+            out = "$$var:"
+            for(val, $$var):out += "  - \"$$val\""
+            out=$$join(out, "$$escape_expand(\\n)")
+        }
+        write_file($$OUT_PWD/build-config.yaml, out, append)
+    }
+    write_file($$OUT_PWD/config.qrc, $$list("<RCC version=\"1.0\"><qresource prefix=\"/\"><file>build-config.yaml</file></qresource></RCC>"))
+    RESOURCES += $$OUT_PWD/config.qrc
+    export(RESOURCES)
+}

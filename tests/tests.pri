@@ -2,7 +2,7 @@
 TEMPLATE = app
 DESTDIR  = $$BUILD_DIR/bin
 
-include($$BASE_PRI)
+load(am-config)
 
 CONFIG *= console testcase
 QT = core network testlib

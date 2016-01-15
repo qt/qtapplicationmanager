@@ -3,13 +3,14 @@ TEMPLATE = app
 TARGET   = appman-controller
 DESTDIR  = $$BUILD_DIR/bin
 
-include($$BASE_PRI)
+load(am-config)
 
 CONFIG *= console
 QT = core network dbus
 
 DEFINES *= AM_BUILD_APPMAN
 
+load(add-static-library)
 addStaticLibrary(../../common-lib)
 
 target.path = $$INSTALL_PREFIX/bin/

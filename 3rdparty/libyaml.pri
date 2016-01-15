@@ -1,5 +1,7 @@
 
 !config_libyaml {
+    load(fix-library-path)
+
     LIBYAML_PATH = $$PWD/libyaml
     LIBYAML_BUILD_PATH = $$shadowed($$LIBYAML_PATH)
 

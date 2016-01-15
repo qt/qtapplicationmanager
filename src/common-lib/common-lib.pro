@@ -2,7 +2,7 @@
 TEMPLATE = lib
 TARGET = common-lib
 
-include($$BASE_PRI)
+load(am-config)
 
 CONFIG *= static create_prl
 

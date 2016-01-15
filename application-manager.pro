@@ -12,7 +12,7 @@ headless:MIN_MINOR=2
 TEMPLATE = subdirs
 CONFIG += ordered
 
-include($$BASE_PRI)
+load(am-config)
 
 !config_libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 !config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
@@ -21,6 +21,7 @@ force-singleprocess:force-multiprocess:error("You cannot both specify force-sing
 qtHaveModule(compositor)|headless { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
 force-singleprocess { check_multi = "no (force-singleprocess)" }
 force-multiprocess  { check_multi = "yes (force-multiprocess)" }
+force-multiprocess:!headless:!qtHaveModule(compositor):error("You forced multi-process mode, but the QtCompositor module is not available")
 CONFIG(debug, debug|release) { check_debug = "debug" } else { check_debug = "release" }
 
 !isEmpty(AM_HARDWARE_ID_FF):check_hwid = "(from file) $$AM_HARDWARE_ID_FF"
@@ -29,6 +30,8 @@ else:check_hwid = "auto (derived from network MAC address)"
 
 isEmpty(AM_LIBCRYPTO_DEFINES) { check_libcrypto_defines = "(none)" } else { check_libcrypto_defines = $$AM_LIBCRYPTO_DEFINES }
 isEmpty(AM_LIBCRYPTO_INCLUDES) { check_libcrypto_includes = "(system)" } else { check_libcrypto_includes = $$AM_LIBCRYPTO_INCLUDES }
+
+load(config-output)
 
 printConfigLine()
 printConfigLine("-- Application Manager configuration", , orange)
@@ -56,8 +59,6 @@ include(doc/doc.pri)
 
 printConfigLine()
 
-force-multiprocess:!qtHaveModule(compositor):error("You forced multi-process mode, but the QtCompositor module is not available")
-
 SUBDIRS += src
 enable-tests:SUBDIRS += tests
 
@@ -71,7 +72,8 @@ OTHER_FILES = \
     doc/index.qdoc \
     doc/elements.qdoc \
     doc/manifest.qdoc \
-    template-opt/am/*.yaml
+    template-opt/am/*.yaml \
+    qmake-features/*.prf
 
 global-check-coverage.target = check-coverage
 global-check-coverage.depends = coverage

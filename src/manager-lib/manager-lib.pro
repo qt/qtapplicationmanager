@@ -2,7 +2,7 @@
 TEMPLATE = lib
 TARGET = manager-lib
 
-include($$BASE_PRI)
+load(am-config)
 
 CONFIG += static create_prl
 
@@ -19,6 +19,7 @@ qtHaveModule(dbus) {
 
 DEFINES *= AM_BUILD_APPMAN
 
+load(add-static-library)
 addStaticLibrary(../common-lib)
 addStaticLibrary(../crypto-lib)
 addStaticLibrary(../notification-lib)

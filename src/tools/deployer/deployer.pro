@@ -1,7 +1,7 @@
 
 TEMPLATE = subdirs
 
-include($$BASE_PRI)
+load(am-config)
 
 deployer.files = application-deployer
 deployer.path = $$INSTALL_PREFIX/bin/

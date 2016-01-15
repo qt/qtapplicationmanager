@@ -3,7 +3,7 @@ TEMPLATE = app
 TARGET   = appman-launcher-qml
 DESTDIR  = $$BUILD_DIR/bin
 
-include($$BASE_PRI)
+load(am-config)
 
 QT = qml dbus core-private
 !headless:QT += quick gui gui-private
@@ -22,6 +22,7 @@ HEADERS += \
 !headless:HEADERS += \
     applicationmanagerwindow.h \
 
+load(add-static-library)
 addStaticLibrary(../../common-lib)
 addStaticLibrary(../../notification-lib)
 

@@ -2,7 +2,7 @@
 TEMPLATE = lib
 TARGET = yaml
 
-include($$BASE_PRI)
+load(am-config)
 
 CONFIG -= qt
 CONFIG += staticlib create_prl

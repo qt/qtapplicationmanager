@@ -1,7 +1,7 @@
 
 TEMPLATE = subdirs
 
-include($$BASE_PRI)
+load(am-config)
 
 !android:SUBDIRS += \
     packager \

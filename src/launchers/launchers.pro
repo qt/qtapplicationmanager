@@ -1,6 +1,6 @@
 
 TEMPLATE = subdirs
 
-include($$BASE_PRI)
+load(am-config)
 
 !android:!windows:!osx:qtHaveModule(dbus):SUBDIRS = qml

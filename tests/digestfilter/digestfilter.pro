@@ -3,6 +3,7 @@ TARGET = tst_digestfilter
 
 include(../tests.pri)
 
+load(add-static-library)
 addStaticLibrary(../../src/common-lib)
 addStaticLibrary(../../src/crypto-lib)
 

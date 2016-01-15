@@ -3,6 +3,7 @@ TARGET = tst_packager-tool
 
 include(../tests.pri)
 
+load(add-static-library)
 addStaticLibrary(../../src/common-lib)
 addStaticLibrary(../../src/crypto-lib)
 addStaticLibrary(../../src/manager-lib)

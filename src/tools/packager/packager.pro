@@ -3,13 +3,14 @@ TEMPLATE = app
 TARGET   = appman-packager
 DESTDIR  = $$BUILD_DIR/bin
 
-include($$BASE_PRI)
+load(am-config)
 
 CONFIG *= console
 QT = core network
 
 DEFINES *= AM_BUILD_APPMAN
 
+load(add-static-library)
 addStaticLibrary(../../common-lib)
 addStaticLibrary(../../crypto-lib)
 addStaticLibrary(../../manager-lib)

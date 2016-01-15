@@ -1,0 +1,37 @@
+
+lessThan(QT_MAJOR_VERSION, 5):error("This application needs to be built against Qt 5")
+
+CONFIG *= c++11
+CONFIG *= link_pkgconfig
+CONFIG *= no_private_qt_headers_warning
+CONFIG -= app_bundle
+
+win32-msvc*:QMAKE_CXXFLAGS += /FS /wd4290 /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS
+
+disable-installer:DEFINES *= AM_DISABLE_INSTALLER
+systemd-workaround:DEFINES *= AM_SYSTEMD_WORKAROUND
+headless:DEFINES *= AM_HEADLESS
+
+DEFINES *= AM_VERSION=\\\"$$VERSION\\\"
+
+defineTest(CONFIG_VALUE) {
+    !contains(CONFIG, "^$$1=.*"):return(false)
+    value = $$find(CONFIG, "^$$1=.*")
+    !isEmpty(value):value=$$section(value, =, 1, 1)
+    $$2 = $$value
+    export($$2)
+    return(true)
+}
+
+!CONFIG_VALUE(install-prefix, INSTALL_PREFIX):INSTALL_PREFIX = /usr/local
+
+CONFIG_VALUE(hardware-id, AM_HARDWARE_ID):DEFINES *= AM_HARDWARE_ID=\\\"$$AM_HARDWARE_ID\\\"
+else:CONFIG_VALUE(hardware-id-from-file, AM_HARDWARE_ID_FF):DEFINES *= AM_HARDWARE_ID_FROM_FILE=\\\"$$AM_HARDWARE_ID_FF\\\"
+
+linux|force-libcrypto:DEFINES *= AM_USE_LIBCRYPTO
+force-libcrypto {
+    CONFIG_VALUE(libcrypto-defines, AM_LIBCRYPTO_DEFINES)
+    CONFIG_VALUE(libcrypto-includes, AM_LIBCRYPTO_INCLUDES)
+}
+
+!win32:load(am-coverage.prf)

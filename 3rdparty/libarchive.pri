@@ -2,6 +2,8 @@
 include(libz.pri)
 
 !config_libarchive {
+    load(fix-library-path)
+
     LIBARCHIVE_PATH = $$PWD/libarchive
     LIBARCHIVE_BUILD_PATH = $$shadowed($$LIBARCHIVE_PATH)
 

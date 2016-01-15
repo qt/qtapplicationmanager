@@ -2,7 +2,7 @@
 TEMPLATE = lib
 TARGET = crypto-lib
 
-include($$BASE_PRI)
+load(am-config)
 
 CONFIG *= static create_prl
 
@@ -10,6 +10,7 @@ QT = core
 
 DEFINES *= AM_BUILD_APPMAN
 
+load(add-static-library)
 addStaticLibrary(../common-lib)
 
 SOURCES += \

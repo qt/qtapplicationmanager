@@ -28,11 +28,11 @@
 **
 ****************************************************************************/
 
-#include <QtCore/private/qcore_mac_p.h>
-
 #include "exception.h"
 #include "cryptography.h"
 #include "signature_p.h"
+
+#include <QtCore/private/qcore_mac_p.h>
 
 #include <Security/SecImportExport.h>
 #include <Security/SecPolicy.h>

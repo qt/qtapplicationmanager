@@ -17,6 +17,7 @@
   static libraries! This option is not meant for production, but for development and testing
   environments only.
 
+
 ### Building
 The application-manager is using qmake for its build-system. This means that the basic
 installation steps are:
@@ -42,6 +43,7 @@ There are various options that can be applied to the `qmake` step to tailor the 
 
 All executables (including the unit-tests) will be in the `bin` directory after compiling.
 
+
 ### Coverage
 
 Instead of doing a normal build, you can create a coverage build by running `make coverage`. Using
@@ -54,3 +56,28 @@ or
 make check-branch-coverage
 ```
 in the root build directory. The command-line output will tell you the url to the generated report.
+
+
+### System setup
+Normally the application-manager is configured via two separate config files:
+one for system specific setup and one for System-UI specific settings. The
+default location for the system specific part is `/opt/am`. A standard
+setup is shipped with the application-manager in the `template-opt` directory.
+You can either stick with the default:
+```
+sudo cp -r template-opt/am /opt
+sudo chown $(whoami) /opt/am -R
+```
+or you could copy the contents of `template-opt` somewhere else; be sure to
+edit the contained `config.yaml` file though, to reflect the changed paths.
+
+Once this is setup, you should add a file called `am-config.yaml` to your System-UI
+with UI specific settings (e.g. QML import path, path to built-in apps)
+
+When everything is in place, you can start the application-manager
+```
+cd /path/to/system-ui
+appman -c /opt/am/config.yaml -c am-config.yaml -r -v main.qml
+```
+
+`-r` makes sure to recreate the apps database and `-v` will give you verbose output.

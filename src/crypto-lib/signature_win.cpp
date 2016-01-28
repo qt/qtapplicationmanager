@@ -106,7 +106,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12, 
         cmsParams.rgpMsgCert = allCerts.data();
         cmsParams.dwFlags = CRYPT_MESSAGE_SILENT_KEYSET_FLAG;
         const BYTE *inData[] = { (const BYTE *) hash.constData() };
-        DWORD inSize[] = { hash.size() };
+        DWORD inSize[] = { (DWORD) hash.size() };
         DWORD outSize = 0;
         if (!CryptSignMessage(&cmsParams, true, 1, inData, inSize, nullptr, &outSize))
             throw WinCryptException("could not calculate size of signed message");
@@ -156,7 +156,7 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7, const QList<QByt
         cmsParams.pfnGetSignerCertificate = nullptr;
         cmsParams.pvGetArg = nullptr;
         const BYTE *inData[] = { (const BYTE *) hash.constData() };
-        DWORD inSize[] = { hash.size() };
+        DWORD inSize[] = { (DWORD) hash.size() };
         if (!CryptVerifyDetachedMessageSignature(&cmsParams, 0,
                                                  (const BYTE *) signaturePkcs7.constData(),
                                                  signaturePkcs7.size(),

@@ -50,6 +50,7 @@ public:
     virtual QQuickItem *surfaceItem() const;
     virtual const Application *application() const;
 
+    virtual void setClosing();
     virtual bool isClosing() const;
 
     virtual bool setWindowProperty(const QString &name, const QVariant &value) = 0;
@@ -66,5 +67,6 @@ signals:
 protected:
     const Application *m_application;
     QPointer<QQuickItem> m_surfaceItem;
+    bool m_isClosing = false;
 };
 

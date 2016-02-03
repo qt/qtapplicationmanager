@@ -18,10 +18,10 @@ load(am-config)
 !config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 
 force-singleprocess:force-multiprocess:error("You cannot both specify force-singleprocess and force-multiprocess")
-qtHaveModule(compositor)|headless { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
+qtHaveModule(compositor)|qtHaveModule(waylandcompositor)|headless { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
 force-singleprocess { check_multi = "no (force-singleprocess)" }
 force-multiprocess  { check_multi = "yes (force-multiprocess)" }
-force-multiprocess:!headless:!qtHaveModule(compositor):error("You forced multi-process mode, but the QtCompositor module is not available")
+force-multiprocess:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcompositor):error("You forced multi-process mode, but the QtCompositor module is not available")
 CONFIG(debug, debug|release) { check_debug = "debug" } else { check_debug = "release" }
 
 !isEmpty(AM_HARDWARE_ID_FF):check_hwid = "(from file) $$AM_HARDWARE_ID_FF"
@@ -42,7 +42,7 @@ printConfigLine("Qt installation", $$[QT_HOST_BINS])
 printConfigLine("Debug or release", $$check_debug, white)
 printConfigLine("Installation prefix", $$INSTALL_PREFIX, auto)
 printConfigLine("Headless", $$yesNo(CONFIG(headless)), auto)
-printConfigLine("QtCompositor support", $$yesNo(qtHaveModule(compositor)), auto)
+printConfigLine("QtCompositor support", $$yesNo(qtHaveModule(compositor)|qtHaveModule(waylandcompositor)), auto)
 printConfigLine("Multi-process mode", $$check_multi, auto)
 printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)
 printConfigLine("Tests enabled", $$yesNo(CONFIG(enable-tests)), auto)

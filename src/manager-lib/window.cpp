@@ -41,12 +41,17 @@ Window::~Window()
 
 bool Window::isClosing() const
 {
-    return false;
+    return m_isClosing;
 }
 
 const Application *Window::application() const
 {
     return m_application;
+}
+
+void Window::setClosing()
+{
+    m_isClosing = true;
 }
 
 QQuickItem *Window::surfaceItem() const

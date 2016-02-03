@@ -34,17 +34,17 @@
 #include "applicationmanager.h"
 #include "application.h"
 #include "global.h"
+#include "windowmanager.h"
 
-WaylandWindow::WaylandWindow(const Application *app, QWaylandSurfaceItem *surfaceItem)
-    : Window(app, surfaceItem)
+WaylandWindow::WaylandWindow(const Application *app, WindowSurface *surf)
+    : Window(app, surf->item())
     , m_pingTimer(new QTimer(this))
     , m_pongTimer(new QTimer(this))
+    , m_surface(surf)
 {
-    if (surfaceItem && surfaceItem->surface()) {
-        connect(surfaceItem->surface(), &QWaylandSurface::windowPropertyChanged,
-                this, &Window::windowPropertyChanged);
-        connect(surfaceItem->surface(), &QWaylandSurface::pong,
-                this, &WaylandWindow::pongReceived);
+    if (surf && surf->item()) {
+        surf->connectPong([this]() { pongReceived(); });
+        surf->connectWindowPropertyChanged([this](const QString &n, const QVariant &v) { emit windowPropertyChanged(n, v); });
 
         m_pingTimer->setInterval(1000);
         m_pingTimer->setSingleShot(true);
@@ -53,13 +53,6 @@ WaylandWindow::WaylandWindow(const Application *app, QWaylandSurfaceItem *surfac
         m_pongTimer->setSingleShot(true);
         connect(m_pongTimer, &QTimer::timeout, this, &WaylandWindow::pongTimeout);
     }
-}
-
-QWaylandSurface *WaylandWindow::surface() const
-{
-    if (QWaylandSurfaceItem *item = qobject_cast<QWaylandSurfaceItem *>(surfaceItem()))
-        return item->surface();
-    return 0;
 }
 
 bool WaylandWindow::isPingEnabled() const
@@ -95,19 +88,18 @@ void WaylandWindow::pingTimeout()
 {
     m_pingTimer->stop();
     m_pongTimer->start();
-    if (QWaylandSurface *wls = surface()) {
-        if (wls->handle() && wls->client())
-            wls->ping();
+    if (m_surface) {
+        m_surface->ping();
     }
 }
 
 bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
-    if (QWaylandSurface *wls = surface()) {
-        QVariant oldValue = wls->windowProperties().value(name);
+    if (m_surface) {
+        QVariant oldValue = m_surface->windowProperties().value(name);
 
         if (oldValue != value) {
-            wls->setWindowProperty(name, value);
+            m_surface->setWindowProperty(name, value);
             emit windowPropertyChanged(name, value);
         }
         return true;
@@ -117,16 +109,16 @@ bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value
 
 QVariant WaylandWindow::windowProperty(const QString &name) const
 {
-    if (const QWaylandSurface *wls = surface()) {
-        return wls->windowProperties().value(name);
+    if (m_surface) {
+        return m_surface->windowProperties().value(name);
     }
     return QVariant();
 }
 
 QVariantMap WaylandWindow::windowProperties() const
 {
-    if (const QWaylandSurface *wls = surface()) {
-        return wls->windowProperties();
+    if (m_surface) {
+        return m_surface->windowProperties();
     }
     return QVariantMap();
 }

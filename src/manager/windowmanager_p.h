@@ -30,42 +30,29 @@
 
 #pragma once
 
-#include "window.h"
+#include <QVector>
+#include <QMap>
+#include <QHash>
 
-#ifndef AM_SINGLEPROCESS_MODE
+#include "dbus-utilities.h"
 
-#include <QWaylandSurface>
-#include <QTimer>
-
-class WindowSurface;
-
-class WaylandWindow : public Window
+class WindowManagerPrivate
 {
-    Q_OBJECT
-
 public:
-    WaylandWindow(const Application *app, WindowSurface *surface);
+    int findWindowByApplication(const Application *app) const;
+    int findWindowBySurfaceItem(QQuickItem *quickItem) const;
 
-    bool isInProcess() const override { return false; }
+#if !defined(AM_SINGLEPROCESS_MODE)
+    int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
 
-    bool setWindowProperty(const QString &name, const QVariant &value) override;
-    QVariant windowProperty(const QString &name) const override;
-    QVariantMap windowProperties() const override;
+    WaylandCompositor *waylandCompositor = nullptr;
+#endif
 
-    WindowSurface *surface() const { return m_surface; }
+    QHash<int, QByteArray> roleNames;
+    QVector<Window *> windows;
 
-    void enablePing(bool b);
-    bool isPingEnabled() const;
+    bool watchdogEnabled = false;
 
-private slots:
-    void pongReceived();
-    void pongTimeout();
-    void pingTimeout();
-
-private:
-    QTimer *m_pingTimer;
-    QTimer *m_pongTimer;
-    WindowSurface *m_surface;
+    QMap<QByteArray, DBusPolicy> dbusPolicy;
+    QList<QQuickView *> views;
 };
-
-#endif // AM_SINGLEPROCESS_MODE

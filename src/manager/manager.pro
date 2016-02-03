@@ -31,10 +31,19 @@ unix:!osx:!android:LIBS += -Wl,--dynamic-list=$$PWD/syms.txt  # sub set
 
 win32:LIBS += -luser32
 
-force-singleprocess|!qtHaveModule(compositor) {
+qtHaveModule(compositor):compositor = "old"
+else:qtHaveModule(waylandcompositor):compositor = "new"
+
+force-singleprocess|isEmpty(compositor) {
     DEFINES *= AM_SINGLEPROCESS_MODE
-} else:qtHaveModule(compositor) {
+} else:equals(compositor, "new") {
+    QT *= waylandcompositor waylandcompositor-private
+    !headless:HEADERS += waylandcompositor.h
+    !headless:SOURCES += waylandcompositor.cpp
+} else:equals(compositor, "old") {
     QT *= compositor
+    !headless:HEADERS += waylandcompositor-old.h
+    !headless:SOURCES += waylandcompositor-old.cpp
 }
 
 target.path = $$INSTALL_PREFIX/bin/
@@ -42,7 +51,7 @@ INSTALLS += target
 
 HEADERS += \
     qmllogger.h \
-    configuration.h
+    configuration.h \
 
 !headless:HEADERS += \
     inprocesswindow.h \
@@ -52,7 +61,7 @@ HEADERS += \
 SOURCES += \
     main.cpp \
     qmllogger.cpp \
-    configuration.cpp
+    configuration.cpp \
 
 !headless:SOURCES += \
     inprocesswindow.cpp \

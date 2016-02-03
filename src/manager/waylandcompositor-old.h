@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2015 Pelagicore AG
+** Copyright (C) 2016 Klarälvdalens Datakonsult AB, a KDAB Group company
 ** Contact: http://www.qt.io/ or http://www.pelagicore.com/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -30,42 +31,54 @@
 
 #pragma once
 
-#include "window.h"
+#include <QWaylandQuickCompositor>
 
-#ifndef AM_SINGLEPROCESS_MODE
+#include "windowmanager.h"
 
-#include <QWaylandSurface>
-#include <QTimer>
+QT_FORWARD_DECLARE_CLASS(QWaylandSurfaceItem)
 
-class WindowSurface;
 
-class WaylandWindow : public Window
+class SurfaceQuickItem;
+
+class Surface : public WindowSurface
 {
-    Q_OBJECT
-
 public:
-    WaylandWindow(const Application *app, WindowSurface *surface);
+    Surface(QWaylandSurface *s);
 
-    bool isInProcess() const override { return false; }
+    QQuickItem *item() const override;
 
-    bool setWindowProperty(const QString &name, const QVariant &value) override;
-    QVariant windowProperty(const QString &name) const override;
+    void takeFocus() override;
+    void ping() override;
+    qint64 processId() const override;
+    QWindow *outputWindow() const;
+
     QVariantMap windowProperties() const override;
+    void setWindowProperty(const QString &n, const QVariant &v) override;
 
-    WindowSurface *surface() const { return m_surface; }
+    void connectPong(const std::function<void ()> &cb) override;
+    void connectWindowPropertyChanged(const std::function<void (const QString &, const QVariant &)> &cb) override;
 
-    void enablePing(bool b);
-    bool isPingEnabled() const;
-
-private slots:
-    void pongReceived();
-    void pongTimeout();
-    void pingTimeout();
-
-private:
-    QTimer *m_pingTimer;
-    QTimer *m_pongTimer;
-    WindowSurface *m_surface;
+    QWaylandSurfaceItem *m_item;
 };
 
-#endif // AM_SINGLEPROCESS_MODE
+
+class WaylandCompositor : public QWaylandQuickCompositor
+{
+public:
+    WaylandCompositor(QQuickView *view, const QString &waylandSocketName, WindowManager *manager);
+
+    void surfaceCreated(QWaylandSurface *surface) override;
+
+#if QT_VERSION < QT_VERSION_CHECK(5,5,0)
+    bool openUrl(WaylandClient *client, const QUrl &url) override;
+#else
+    bool openUrl(QWaylandClient *client, const QUrl &url) override;
+#endif
+
+    QWaylandSurface *waylandSurfaceFromItem(QQuickItem *surfaceItem) const;
+
+    void sendCallbacks();
+
+private:
+    WindowManager *m_manager;
+};

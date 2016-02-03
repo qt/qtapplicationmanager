@@ -30,6 +30,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include <QAbstractListModel>
 
 #if defined(QT_DBUS_LIB)
@@ -45,12 +47,40 @@ QT_FORWARD_DECLARE_CLASS(QQuickView)
 QT_FORWARD_DECLARE_CLASS(QQuickItem)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
+QT_FORWARD_DECLARE_CLASS(QWindow)
 
 class Window;
 class WindowManagerPrivate;
 class Application;
 class AbstractRuntime;
 class WaylandCompositor;
+
+#ifndef AM_SINGLEPROCESS_MODE
+
+class WindowSurface
+{
+public:
+    virtual ~WindowSurface() {}
+    QWaylandSurface *surface() const { return m_surface; }
+
+    virtual QQuickItem *item() const = 0;
+
+    virtual void takeFocus() = 0;
+    virtual void ping() = 0;
+    virtual qint64 processId() const = 0;
+    virtual QWindow *outputWindow() const = 0;
+
+    virtual QVariantMap windowProperties() const = 0;
+    virtual void setWindowProperty(const QString &name, const QVariant &value) = 0;
+
+    virtual void connectPong(const std::function<void ()> &cb) = 0;
+    virtual void connectWindowPropertyChanged(const std::function<void (const QString &name, const QVariant &value)> &cb) = 0;
+
+protected:
+    QWaylandSurface *m_surface;
+};
+
+#endif
 
 class WindowManager : public QAbstractListModel
 #if defined(QT_DBUS_LIB)
@@ -68,6 +98,8 @@ public:
 
     void enableWatchdog(bool enable);
     bool isWatchdogEnabled() const;
+
+    QVector<const Window *> windows() const;
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -115,12 +147,10 @@ private slots:
 
 #ifndef AM_SINGLEPROCESS_MODE
 private slots:
-    void waylandSurfaceCreated(QWaylandSurface *surface);
-    void waylandSurfaceMapped();
-    void waylandSurfaceUnmapped();
+    void waylandSurfaceCreated(WindowSurface *surface);
+    void waylandSurfaceMapped(WindowSurface *surface);
+    void waylandSurfaceUnmapped(WindowSurface *surface);
     void waylandSurfaceDestroyed();
-
-    void sendCallbacks();
 
     void resize();
 

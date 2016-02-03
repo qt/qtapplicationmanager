@@ -46,6 +46,8 @@ HEADERS += \
     containerfactory.h \
     quicklauncher.h \
     systemmonitor.h \
+    dbusproxyobject.h \
+    dbusproxyobject_p.h
 
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \
@@ -78,6 +80,7 @@ SOURCES += \
     containerfactory.cpp \
     quicklauncher.cpp \
     systemmonitor.cpp \
+    dbusproxyobject.cpp
 
 !headless:SOURCES += \
     fakeapplicationmanagerwindow.cpp \

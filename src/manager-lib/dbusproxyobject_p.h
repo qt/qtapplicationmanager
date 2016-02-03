@@ -29,38 +29,18 @@
 ****************************************************************************/
 
 #pragma once
-#include <qglobal.h>
 
-#if defined(AM_BUILD_APPMAN)
-#  define AM_EXPORT Q_DECL_EXPORT
-#else
-#  define AM_EXPORT Q_DECL_IMPORT
-#endif
+#include <QObject>
 
-#include <QLoggingCategory>
+class DBusProxyObject;
 
-AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogSystem)
-AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogInstaller)
-AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogWayland)
-AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogQml)
-AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogNotifications)
-AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogQmlRuntime)
-AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogQmlIpc)
+class DBusProxySignalRelay : public QObject
+{
+public:
+    DBusProxySignalRelay(DBusProxyObject *proxyObject);
 
-void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
+    int qt_metacall(QMetaObject::Call c, int id, void **argv) override;
 
-QString hardwareId();
-
-void am_trace(QDebug);
-template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest... trest)
-{ dbg << t; am_trace(dbg, trest...); }
-
-#define AM_TRACE(category, ...) \
-    for (bool qt_category_enabled = category().isDebugEnabled(); qt_category_enabled; qt_category_enabled = false) { \
-        am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__); \
-    }
-
-// make the source a lot less ugly and more readable (until we can finally use user defined literals)
-#define qL1S(x) QLatin1String(x)
-#define qL1C(x) QLatin1Char(x)
-#define qSL(x) QStringLiteral(x)
+private:
+    DBusProxyObject *m_proxyObject;
+};

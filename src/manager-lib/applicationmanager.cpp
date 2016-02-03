@@ -48,6 +48,8 @@
 #include "abstractcontainer.h"
 #include "dbus-utilities.h"
 #include "qml-utilities.h"
+#include "dbusproxyobject.h"
+
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
     do { \
@@ -205,6 +207,8 @@ public:
     QHash<int, QByteArray> roleNames;
 
     QMap<const Application *, QVariantMap> applicationState;
+
+    QVector<DBusProxyObject *> interfaceExtensions;
 
     ApplicationManagerPrivate()
         : securityChecksEnabled(true)
@@ -988,6 +992,150 @@ void ApplicationManager::setApplicationAudioFocus(const QString &id, AudioFocus 
     QVariantMap map;
     map.insert(audioFocusName, audioFocusState);
     emit applicationStateChanged(id, map);
+}
+
+/*!
+    \qmlmethod bool ApplicationManager::registerApplicationInterfaceExtension(object interface, string name, var filter)
+
+    Registers an IPC \a interface object to extend the communication API between applications and
+    the Application Manager itself. The \a interface object is a normal QtObject item, that needs
+    to stay valid during the whole lifetime of the system-UI. The \a name of the interface has to
+    adhere to D-Bus standards, so it needs to at least contain one \c . character (e.g. \c{io.qt.test}).
+    The interface is available to all applications matching the \a filter criteria (see below)
+    on the private Peer-To-Peer D-Bus as a standard, typed D-Bus interface.
+
+    Since there is no way to add type information to the parameters of JavaScript functions, the
+    \a interface is scanned for special annotation properties that are only used to deduce type
+    information, but are not exported to the applications:
+
+    \c{readonly property var _decltype_<function-name>: { "<return type>": [ "<param 1 type>", "<param 2 type>", ...] }}
+
+    The following types are supported:
+
+    \table
+    \header
+        \li Type
+        \li DBus Type
+        \li Note
+    \row
+        \li \c void
+        \li -
+        \li Only valid as return type.
+    \row
+        \li \c int
+        \li \c INT32
+        \li
+    \row
+        \li \c string, \c url
+        \li \c STRING
+        \li Urls are mapped to plain strings.
+    \row
+        \li \c bool
+        \li \c BOOLEAN
+        \li
+    \row
+        \li \c real, \c double
+        \li \c DOUBLE
+        \li
+    \row
+        \li \c var, \c variant
+        \li \c VARIANT
+        \li Can also be used for lists and maps.
+
+    \endtable
+
+    This is a simple example showing how to add these annotations to a function definition:
+
+    \qml
+    readonly property var _decltype_testFunction: { "var": [ "int", "string" ] }
+    function testFunction(ivar, strvar) {
+        return { "strvar": strvar, "intvar": intvar }
+    }
+    \endqml
+
+    You can restrict the availability of the interface in applications via the \a filter parameter:
+    either pass an empty JavaScript object (\c{{}}) or use any combination of these available
+    field names:
+
+    \table
+    \header
+        \li Key
+        \li Value
+        \li Description
+    \row
+        \li \c applicationIds
+        \li \c list<string>
+        \li A list of applications ids that are allowed to use this interface.
+    \row
+        \li \c categories
+        \li \c list<string>
+        \li A list of category names (see info.yaml). Any application that is part of one of these
+            categories is allowed to use this interface.
+    \row
+        \li \c capabilities
+        \li \c list<string>
+        \li A list of applications capabilities (see info.yaml). Any application that has on of these
+            capabilities is allowed to use this interface.
+    \endtable
+
+    All of the filter fields have to match, but only fields that are actually set are taken into
+    consideration.
+
+    \qml
+    import QtQuick 2.0
+    import io.qt.ApplicationManager 1.0
+
+    QtObject {
+        id: interface
+
+        property bool pbool: true
+        property double pdouble: 3.14
+
+        signal testSignal(string str, variant list)
+
+        readonly property var _decltype_testFunction: { "void": [ "int", "string" ] }
+        function testFunction(foo, bar) {
+            console.log("testFunction was called: " + foo + " " + bar)
+        }
+    }
+
+    ...
+
+    ApplicationManager.registerApplicationInterfaceExtension(interface, "io.qt.test.interface",
+                                                             { "capabilities": [ "media", "camera" ] })
+
+    \endqml
+
+    \note Currently only implemented for multi-process setups.
+
+    Will return \c true if the registration was successful or \c false otherwise.
+*/
+bool ApplicationManager::registerApplicationInterfaceExtension(QObject *object, const QString &name,
+                                                               const QVariantMap &filter)
+{
+    if (!object || name.isEmpty()) {
+        qCWarning(LogQmlIpc) << "Application interface extension needs a valid object as well as interface name";
+        return false;
+    }
+    if (!name.contains(QLatin1Char('.'))) {
+        qCWarning(LogQmlIpc) << "Application interface extension name" << name << "is not a valid D-Bus interface name";
+        return false;
+    }
+    foreach (const auto &ext, d->interfaceExtensions) {
+        if (ext->interfaceName() == name) {
+            qCWarning(LogQmlIpc) << "Application interface extension name" << name << "was already registered";
+            return false;
+        }
+    }
+    DBusProxyObject *dpo = new DBusProxyObject(object, qSL("io.qt.ApplicationManager"),
+                                               qSL("/ExtensionInterfaces"), name, filter);
+    d->interfaceExtensions.append(dpo);
+    return true;
+}
+
+QVector<DBusProxyObject *> ApplicationManager::applicationInterfaceExtensions() const
+{
+    return d->interfaceExtensions;
 }
 
 QVariantMap ApplicationManager::applicationState(const QString &id) const

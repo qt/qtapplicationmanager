@@ -43,6 +43,12 @@
 #include "qtyaml.h"
 #include "dbus-utilities.h"
 #include "applicationinterface.h"
+#include "dbusproxyobject.h"
+
+// You can enable this define to get all P2P-bus objects onto the session bus
+// within io.qt.ApplicationManager, /Application<pid>/...
+
+// #define EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS 1
 
 
 NativeRuntime::NativeRuntime(AbstractContainer *container, const Application *app, NativeRuntimeManager *manager)
@@ -102,6 +108,11 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
                        << "status:" << status;
 
     m_shutingDown = m_launched = m_launchWhenReady = m_dbusConnection = false;
+
+    // unregister all extension interfaces
+    foreach (DBusProxyObject *dpo, ApplicationManager::instance()->applicationInterfaceExtensions()) {
+        dpo->dbusUnregister(QDBusConnection(m_dbusConnectionName));
+    }
 
     emit finished(exitCode, status);
 
@@ -207,24 +218,39 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 
     // We have a valid connection - ignore all further connection attempts
     m_dbusConnection = true;
-
+    m_dbusConnectionName = connection.name();
     QDBusConnection conn = connection;
 
     m_applicationInterface = new NativeRuntimeApplicationInterface(this);
     if (!conn.registerObject(qSL("/ApplicationInterface"), m_applicationInterface, QDBusConnection::ExportScriptableContents))
         qCWarning(LogSystem) << "ERROR: could not register the /ApplicationInterface object on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
 
-    // Useful for debugging the private P2P bus:
-    //QDBusConnection::sessionBus().registerObject(QString::fromLatin1("/Application%1").arg(pid), m_applicationInterface, QDBusConnection::ExportScriptableContents);
+#ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
+    QDBusConnection::sessionBus().registerObject(qSL("/Application%1/ApplicationInterface").arg(pid), m_applicationInterface, QDBusConnection::ExportScriptableContents);
+#endif
+
+    // register all extension interfaces
+    foreach (DBusProxyObject *dpo, ApplicationManager::instance()->applicationInterfaceExtensions()) {
+        if (!dpo->isValidForApplication(application()))
+            continue;
+
+        if (!dpo->dbusRegister(connection)) {
+            qCWarning(LogSystem) << "ERROR: could not register the externsion interface" << dpo->interfaceName()
+                                 << "at" << dpo->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
+        }
+#ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
+        dpo->dbusRegister(QDBusConnection::sessionBus(), qSL("/Application%1").arg(pid));
+#endif
+    }
 
     if (m_needsLauncher && m_launchWhenReady && !m_launched) {
         m_runtimeInterface = new NativeRuntimeInterface(this);
         if (!conn.registerObject(qSL("/RuntimeInterface"), m_runtimeInterface, QDBusConnection::ExportScriptableContents))
             qCWarning(LogSystem) << "ERROR: could not register the /RuntimeInterface object on the peer DBus.";
 
-        // Useful for debugging the private P2P bus:
-        //QDBusConnection::sessionBus().registerObject("/RuntimeInterface", m_runtimeInterface, QDBusConnection::ExportScriptableContents);
-
+#ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
+        QDBusConnection::sessionBus().registerObject(qSL("/Application%1/RuntimeInterface").arg(pid), m_runtimeInterface, QDBusConnection::ExportScriptableContents);
+#endif
         // we need to delay the actual start call, until the launcher side is ready to
         // listen to the interface
         connect(m_runtimeInterface, &NativeRuntimeInterface::launcherFinishedInitialization,

@@ -62,6 +62,7 @@ QDLT_LOGGING_CATEGORY(LogWayland, "am.wayland", "WAYL", "Wayland sub-system")
 QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "QML messages")
 QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notification sub-system")
 QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime")
+QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC")
 
 
 void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)

@@ -36,10 +36,10 @@
 #include <QQmlEngine>
 #include <QVariant>
 #ifndef AM_SINGLEPROCESS_MODE
-#  include <QWaylandOutput>
 #  include <QWaylandQuickCompositor>
 #  include <QWaylandQuickSurface>
 #  if QT_VERSION >= QT_VERSION_CHECK(5,5,0)
+#    include <QWaylandOutput>
 #    include <QWaylandClient>
 #  endif
 #endif
@@ -580,7 +580,7 @@ void WindowManager::sendCallbacks()
 void WindowManager::resize()
 {
 #  if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
-    d->compositor->setOutputGeometry(window()->geometry());
+    d->waylandCompositor->setOutputGeometry(d->views.at(0)->geometry());
 #  endif
 }
 
@@ -839,8 +839,13 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                             }
 #ifndef AM_SINGLEPROCESS_MODE
                             else if (const WaylandWindow *wlw = qobject_cast<const WaylandWindow *>(w)) {
+#  if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
+                                Q_UNUSED(wlw)
+                                onScreen = true;
+#  else
                                 onScreen = wlw->surface() && wlw->surface()->mainOutput()
                                         && (wlw->surface()->mainOutput()->window() == view);
+#  endif
                             }
 #endif
                             if (onScreen) {

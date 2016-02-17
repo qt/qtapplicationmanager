@@ -41,7 +41,7 @@
 #include <stdlib.h>
 
 
-bool isValidDnsName(const QString &rnds, QString *errorString = 0);
+bool isValidDnsName(const QString &rnds, bool isAliasName = false, QString *errorString = 0);
 int versionCompare(const QString &version1, const QString &version2);
 
 bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree);

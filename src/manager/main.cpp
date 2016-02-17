@@ -28,6 +28,7 @@
 **
 ****************************************************************************/
 
+#include <memory>
 #include <qglobal.h>
 
 // include as eary as possible, since the <windows.h> header will re-#define "interface"
@@ -175,7 +176,35 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *servic
             atexit([]() { foreach (const QString &ftd, filesToDelete) QFile::remove(ftd); });
         filesToDelete << f.fileName();
     }
+
+    static bool once = false;
+    if (!once) {
+        once = true;
+        qDBusRegisterMetaType<QUrl>();
+    }
 }
+
+QT_BEGIN_NAMESPACE
+
+QDBusArgument &operator<<(QDBusArgument &argument, const QUrl &url)
+{
+    argument.beginStructure();
+    argument << QString::fromLatin1(url.toEncoded());
+    argument.endStructure();
+    return argument;
+}
+
+const QDBusArgument &operator>>(const QDBusArgument &argument, QUrl &url)
+{
+    QString s;
+    argument.beginStructure();
+    argument >> s;
+    argument.endStructure();
+    url = QUrl::fromEncoded(s.toLatin1());
+    return argument;
+}
+
+QT_END_NAMESPACE
 
 #endif // QT_DBUS_LIB
 
@@ -227,13 +256,13 @@ private:
 
 #endif // QT_PSHELLSERVER_LIB
 
-static QList<const Application *> scanForApplications(const QDir &builtinAppsDir, const QDir &installedAppsDir,
+static QVector<const Application *> scanForApplications(const QDir &builtinAppsDir, const QDir &installedAppsDir,
                                                       const QVector<InstallationLocation> &installationLocations)
 {
-    QList<const Application *> result;
+    QVector<const Application *> result;
     YamlApplicationScanner yas;
 
-    auto scan = [&result, &yas, &installationLocations](const QDir &baseDir, bool checkInstallationReport) {
+    auto scan = [&result, &yas, &installationLocations](const QDir &baseDir, bool scanningBuiltinApps) {
         foreach (const QString &appDirName, baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
             if (appDirName.endsWith('+') || appDirName.endsWith('-'))
                 continue;
@@ -244,15 +273,34 @@ static QList<const Application *> scanForApplications(const QDir &builtinAppsDir
                 continue;
             if (!appDir.exists(qSL("info.yaml")))
                 continue;
-            if (checkInstallationReport && !appDir.exists(qSL("installation-report.yaml")))
+            if (!scanningBuiltinApps && !appDir.exists(qSL("installation-report.yaml")))
                 continue;
 
             QScopedPointer<Application> a(yas.scan(appDir.absoluteFilePath(qSL("info.yaml"))));
-            if (!a)
-                continue;
-            if (a->id() != appDirName)
-                continue;
-            if (checkInstallationReport) {
+            Q_ASSERT(a);
+
+            if (a->id() != appDirName) {
+                throw Exception(Error::Parse, "an info.yaml for built-in applications must be in directory "
+                                              "that has the same name as the application's id: found %1 in %2")
+                    .arg(a->id(), appDirName);
+            }
+            if (scanningBuiltinApps) {
+                QStringList aliasPaths = appDir.entryList(QStringList(qSL("info-*.yaml")));
+                std::vector<std::unique_ptr<Application>> aliases;
+
+                for (int i = 0; i < aliasPaths.size(); ++i) {
+                    std::unique_ptr<Application> alias(yas.scanAlias(appDir.absoluteFilePath(aliasPaths.at(i)), a.data()));
+
+                    Q_ASSERT(alias);
+                    Q_ASSERT(alias->isAlias());
+                    Q_ASSERT(alias->nonAliased() == a.data());
+
+                    aliases.push_back(std::move(alias));
+                }
+                result << a.take();
+                for (auto &&alias : aliases)
+                    result << alias.release();
+            } else { // 3rd-party apps
                 QFile f(appDir.absoluteFilePath(qSL("installation-report.yaml")));
                 if (!f.open(QFile::ReadOnly))
                     continue;
@@ -272,13 +320,13 @@ static QList<const Application *> scanForApplications(const QDir &builtinAppsDir
                 }
 #endif
                 a->setInstallationReport(report.take());
+                result << a.take();
             }
-            result << a.take();
         }
     };
 
-    scan(builtinAppsDir, false);
-    scan(installedAppsDir, true);
+    scan(builtinAppsDir, true);
+    scan(installedAppsDir, false);
     return result;
 }
 
@@ -399,7 +447,7 @@ int main(int argc, char *argv[])
             throw Exception(Error::System, "database file %1 is not a valid application database: %2").arg(adb->name(), adb->errorString());
 
         if (!adb->isValid() || configuration->recreateDatabase()) {
-            QList<const Application *> apps;
+            QVector<const Application *> apps;
             YamlApplicationScanner yas;
 
             if (!configuration->singleApp().isEmpty()) {

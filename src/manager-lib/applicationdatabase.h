@@ -50,8 +50,8 @@ public:
     QString errorString() const;
     QString name() const;
 
-    QList<const Application *> read() throw (Exception);
-    void write(const QList<const Application *> &apps) throw (Exception);
+    QVector<const Application *> read() throw (Exception);
+    void write(const QVector<const Application *> &apps) throw (Exception);
 
 private:
     ApplicationDatabasePrivate *d;

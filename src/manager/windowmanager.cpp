@@ -287,6 +287,21 @@ public:
         m_manager->waylandSurfaceCreated(surface);
     }
 
+#  if QT_VERSION >= QT_VERSION_CHECK(5,5,0)
+    bool openUrl(QWaylandClient *client, const QUrl &url) override
+    {
+        qint64 pid = client->processId();
+#  else
+    bool openUrl(WaylandClient *client, const QUrl &url) override
+    {
+        QList<QWaylandSurface *> surfaces = surfacesForClient(client);
+        qint64 pid = surfaces.isEmpty() ? 0 : surfaces.at(0)->processId();
+#  endif
+        if (ApplicationManager::instance()->fromProcessId(pid))
+            return ApplicationManager::instance()->openUrl(url.toString());
+        return false;
+    }
+
 private:
     WindowManager *m_manager;
 };
@@ -403,7 +418,14 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
 
     switch (role) {
     case Id:
-        return win->application() ? win->application()->id() : QString();
+        if (win->application()) {
+            if (win->application()->nonAliased())
+                return win->application()->nonAliased()->id();
+            else
+                return win->application()->id();
+        } else {
+            return QString();
+        }
     case SurfaceItem:
         return QVariant::fromValue<QQuickItem*>(win->surfaceItem());
     case IsFullscreen: {
@@ -499,6 +521,8 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
         return;
     }
     const Application *app = rt->application();
+    if (app->nonAliased())
+        app = app->nonAliased();
     if (!app) {
         qCCritical(LogSystem) << "This function must be called by a signal of Runtime which actually has an application attached!";
         return;
@@ -816,9 +840,9 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
     } else {
         // app without system-UI
 
-        QList<const Application *> apps;
+        QVector<const Application *> apps;
         foreach (const Application *app, ApplicationManager::instance()->applications()) {
-            if (appId.isEmpty() || (appId == app->id()))
+            if (!app->isAlias() && (appId.isEmpty() || (appId == app->id())))
                 apps << app;
         }
 
@@ -913,6 +937,8 @@ int WindowManagerPrivate::findWindowByApplication(const Application *app) const
 {
     for (int i = 0; i < windows.count(); ++i) {
         if (app == windows.at(i)->application())
+            return i;
+        if (app->nonAliased() && app->nonAliased() == windows.at(i)->application())
             return i;
     }
     return -1;

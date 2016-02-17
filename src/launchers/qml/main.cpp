@@ -270,11 +270,14 @@ void Controller::startApplication(const QString &qmlFile, const QString &argumen
     Q_ASSERT(m_window);
     QObject::connect(&m_engine, &QQmlEngine::quit, m_window, &QObject::deleteLater); // not sure if this is needed .. or even the best thing to do ... see connects above, they seem to work better
 
+    qWarning() << m_configuration;
+
     if (m_configuration.contains(qSL("background-color"))) {
         QSurfaceFormat surfaceFormat = m_window->format();
         surfaceFormat.setAlphaBufferSize(8);
         m_window->setFormat(surfaceFormat);
         m_window->setClearBeforeRendering(true);
+        qWarning() << "Setting bg color" << m_configuration.value(qSL("backgroundColor")).toString();
         m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
     }
     m_window->show();

@@ -34,6 +34,7 @@
 #include <QProcess>
 #include <QDir>
 #include <QTimer>
+#include <QMimeDatabase>
 
 #include "global.h"
 
@@ -44,7 +45,6 @@
 #include "containerfactory.h"
 #include "quicklauncher.h"
 #include "abstractruntime.h"
-#include "jsonapplicationscanner.h"
 #include "abstractcontainer.h"
 #include "dbus-utilities.h"
 #include "qml-utilities.h"
@@ -201,7 +201,7 @@ public:
 
     QMap<QByteArray, DBusPolicy> dbusPolicy;
 
-    QList<const Application *> apps;
+    QVector<const Application *> apps;
 
     QString currentLocale;
     QHash<int, QByteArray> roleNames;
@@ -341,7 +341,7 @@ bool ApplicationManager::setDBusPolicy(const QVariantMap &yamlFragment)
     return true;
 }
 
-QList<const Application *> ApplicationManager::applications() const
+QVector<const Application *> ApplicationManager::applications() const
 {
     return d->apps;
 }
@@ -404,7 +404,7 @@ const Application *ApplicationManager::mimeTypeHandler(const QString &mimeType) 
     return 0;
 }
 
-bool ApplicationManager::startApplication(const Application *app, const QString &document)
+bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl)
 {
     if (!app) {
         qCWarning(LogSystem) << "Application *app is NULL";
@@ -420,10 +420,12 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         switch (runtime->state()) {
         case AbstractRuntime::Startup:
         case AbstractRuntime::Active:
-            if (!document.isNull())
-                runtime->openDocument(document);
+            if (!documentUrl.isNull())
+                runtime->openDocument(documentUrl);
+            else if (!app->documentUrl().isNull())
+                runtime->openDocument(app->documentUrl());
 
-            emit applicationWasReactivated(app->id());
+            emit applicationWasReactivated(app->isAlias() ? app->nonAliased()->id() : app->id());
             return true;
 
         case AbstractRuntime::Shutdown:
@@ -479,9 +481,12 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         return false;
     }
 
-    runtime->openDocument(document);
+    if (!documentUrl.isNull())
+        runtime->openDocument(documentUrl);
+    else if (!app->documentUrl().isNull())
+        runtime->openDocument(app->documentUrl());
 
-    qCDebug(LogSystem) << "app:" << app->id() << "; document:" << document << "; runtime: " << runtime;
+    qCDebug(LogSystem) << "app:" << app->id() << "; document:" << documentUrl << "; runtime: " << runtime;
 
     if (inProcess) {
         bool ok = runtime->start();
@@ -526,18 +531,18 @@ void ApplicationManager::stopApplication(const Application *app, bool forceKill)
     \qmlmethod bool ApplicationManager::startApplication(string id, string document)
 
     Tells the application manager to start the application identified by its unique \a id. The
-    optional argument \a document will be supplied to the application as is - most commonly this
+    optional argument \a documentUrl will be supplied to the application as is - most commonly this
     is used to refer to a document to display.
     Returns \c true if the application id is valid and the application manager was able to start
     the runtime plugin. Returns \c false otherwise. Please note, that even though this call may
     indicate success, the application may still later fail to start correctly, since the actual
     startup within the runtime plugin may be asynchronous.
 */
-bool ApplicationManager::startApplication(const QString &id, const QString &document)
+bool ApplicationManager::startApplication(const QString &id, const QString &documentUrl)
 {
     AM_AUTHENTICATE_DBUS(bool)
 
-    return startApplication(fromId(id), document);
+    return startApplication(fromId(id), documentUrl);
 }
 
 /*!
@@ -573,18 +578,19 @@ bool ApplicationManager::openUrl(const QString &urlStr)
     const Application *app = 0;
     if (url.isValid()) {
         QString scheme = url.scheme();
-        if (scheme == qL1S("file")) {
-            // QString file = url.toLocalFile();
-
-            // TODO: use the file magic database to get the mime-type
-            QString mimeType;
-
-            app = mimeTypeHandler(mimeType);
-        } else {
+        if (scheme != qL1S("file"))
             app = schemeHandler(scheme);
+
+        if (!app) {
+            QMimeDatabase mdb;
+            QMimeType mt = mdb.mimeTypeForUrl(url);
+
+            app = mimeTypeHandler(mt.name());
         }
     }
-    return startApplication(app, urlStr);
+    if (app)
+        return startApplication(app, urlStr);
+    return false;
 }
 
 /*!
@@ -824,21 +830,21 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
         return app->id();
     case Name: {
         QString name;
-        if (!app->displayNames().isEmpty()) {
-            name = app->displayName(d->currentLocale);
+        if (!app->names().isEmpty()) {
+            name = app->name(d->currentLocale);
             if (name.isEmpty())
-                name = app->displayName(qSL("en"));
+                name = app->name(qSL("en"));
             if (name.isEmpty())
-                name = app->displayName(qSL("en_US"));
+                name = app->name(qSL("en_US"));
             if (name.isEmpty())
-                name = *app->displayNames().constBegin();
+                name = *app->names().constBegin();
         } else {
             name = app->id();
         }
         return name;
     }
     case Icon:
-        return QUrl::fromLocalFile(app->displayIcon());
+        return QUrl::fromLocalFile(app->icon());
 
     case IsRunning:
         return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Active) : false;
@@ -1046,12 +1052,12 @@ void ApplicationManager::setApplicationAudioFocus(const QString &id, AudioFocus 
 
     This is a simple example showing how to add these annotations to a function definition:
 
-    \qml
+    \code
     readonly property var _decltype_testFunction: { "var": [ "int", "string" ] }
     function testFunction(ivar, strvar) {
         return { "strvar": strvar, "intvar": intvar }
     }
-    \endqml
+    \endcode
 
     You can restrict the availability of the interface in applications via the \a filter parameter:
     either pass an empty JavaScript object (\c{{}}) or use any combination of these available
@@ -1086,7 +1092,7 @@ void ApplicationManager::setApplicationAudioFocus(const QString &id, AudioFocus 
     import io.qt.ApplicationManager 1.0
 
     QtObject {
-        id: interface
+        id: extension
 
         property bool pbool: true
         property double pdouble: 3.14
@@ -1098,13 +1104,14 @@ void ApplicationManager::setApplicationAudioFocus(const QString &id, AudioFocus 
             console.log("testFunction was called: " + foo + " " + bar)
         }
     }
-
+    \endqml
+    \code
     ...
 
-    ApplicationManager.registerApplicationInterfaceExtension(interface, "io.qt.test.interface",
+    ApplicationManager.registerApplicationInterfaceExtension(extension, "io.qt.test.interface",
                                                              { "capabilities": [ "media", "camera" ] })
 
-    \endqml
+    \endcode
 
     \note Currently only implemented for multi-process setups.
 

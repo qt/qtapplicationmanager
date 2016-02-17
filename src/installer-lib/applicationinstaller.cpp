@@ -285,7 +285,7 @@ uint ApplicationInstaller::findUnusedUserId() const throw(Exception)
     if (!isApplicationUserIdSeparationEnabled())
         return uint(-1);
 
-    QList<const Application *> apps = ApplicationManager::instance()->applications();
+    QVector<const Application *> apps = ApplicationManager::instance()->applications();
 
     for (uint uid = d->minUserId; uid <= d->maxUserId; ++uid) {
         bool match = false;

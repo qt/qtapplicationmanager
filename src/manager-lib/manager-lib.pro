@@ -29,7 +29,6 @@ HEADERS += \
     applicationdatabase.h \
     applicationmanager.h \
     applicationscanner.h \
-    jsonapplicationscanner.h \
     runtimefactory.h \
     applicationinterface.h \
     abstractruntime.h \
@@ -64,7 +63,6 @@ SOURCES += \
     application.cpp \
     applicationdatabase.cpp \
     applicationmanager.cpp \
-    jsonapplicationscanner.cpp \
     runtimefactory.cpp \
     abstractruntime.cpp \
     yamlapplicationscanner.cpp \

@@ -31,6 +31,7 @@
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QQmlComponent>
+#include <QCoreApplication>
 
 #if !defined(AM_HEADLESS)
 #  include <QQuickView>
@@ -154,6 +155,8 @@ bool QmlInProcessRuntime::start()
 #endif
 
     component.completeCreate();
+    if (!m_document.isEmpty())
+        emit openDocument(m_document);
     return true;
 }
 

@@ -128,7 +128,7 @@ QMultiMap<QString, QString> mountedDirectories()
 }
 
 
-bool isValidDnsName(const QString &dnsName, QString *errorString)
+bool isValidDnsName(const QString &dnsName, bool isAliasName, QString *errorString)
 {
     static const int maxLength = 150;
 
@@ -147,11 +147,11 @@ bool isValidDnsName(const QString &dnsName, QString *errorString)
 
         // standard RFC compliance tests (RFC 1035/1123)
 
-        foreach (const QString &part, parts) {
+        auto partCheck = [](const QString &part, const char *type) {
             int len = part.length();
 
             if (len < 1 || len > 63)
-                throw Exception(Error::Parse, "parts (subdomains) must consist of at least 1 and at most 63 characters (found %1 characters)").arg(len);
+                throw Exception(Error::Parse, "%1 must consist of at least 1 and at most 63 characters (found %2 characters)").arg(qL1S(type)).arg(len);
 
             for (int pos = 0; pos < len; ++pos) {
                 ushort ch = part.at(pos).unicode();
@@ -162,9 +162,26 @@ bool isValidDnsName(const QString &dnsName, QString *errorString)
                 bool isLower = (ch >= 'a' && ch <= 'z');
 
                 if ((isFirst || isLast || !isDash) && !isDigit && !isLower)
-                    throw Exception(Error::Parse, "part (subdomain) must consists of only the characters '0-9', 'a-z', and '-' (which cannot be the first or last character)");
+                    throw Exception(Error::Parse, "%1 must consists of only the characters '0-9', 'a-z', and '-' (which cannot be the first or last character)").arg(qL1S(type));
             }
+        };
+
+        if (isAliasName) {
+            QString aliasTag = parts.last();
+            int sepPos = aliasTag.indexOf(qL1C('@'));
+            if (sepPos < 0 || sepPos == (aliasTag.size() - 1))
+                throw Exception(Error::Parse, "missing alias-id tag");
+
+            parts.removeLast();
+            parts << aliasTag.left(sepPos);
+            parts << aliasTag.mid(sepPos + 1);
         }
+
+        for (int i = 0; i < parts.size(); ++i) {
+            const QString &part = parts.at(i);
+            partCheck(part, isAliasName && (i == (part.size() - 1)) ? "tag name" : "parts (subdomains)");
+        }
+
         return true;
     } catch (const Exception &e) {
         if (errorString)

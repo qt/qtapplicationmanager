@@ -32,6 +32,7 @@
 #include <QQmlEngine>
 
 #include "application.h"
+#include "yamlapplicationscanner.h"
 #include "abstractruntime.h"
 #include "runtimefactory.h"
 
@@ -125,15 +126,29 @@ void tst_Runtime::factory()
 
     QVERIFY(!rf->create(0, 0));
 
-    QVariantMap map;
-    map.insert(qSL("id"), qSL("com.foo.test"));
-    map.insert(qSL("codeFilePath"), qSL("test.foo"));
-    map.insert(qSL("runtimeName"), qSL("foo"));
-    map.insert(qSL("displayIcon"), qSL("icon.png"));
-    map.insert(qSL("displayName"), QVariantMap { {"en", qSL("Foo") } });
+    QByteArray yaml =
+            "formatVersion: 1\n"
+            "formatType: am-application\n"
+            "---\n"
+            "id: com.pelagicore.test\n"
+            "name: { en_US: 'Test' }\n"
+            "icon: icon.png\n"
+            "code: test.foo\n"
+            "runtime: foo\n";
+
+    QTemporaryFile temp;
+    QVERIFY(temp.open());
+    QCOMPARE(temp.write(yaml), yaml.size());
+    temp.close();
+
     QString error;
-    Application *a = Application::fromVariantMap(map, &error);
-    QVERIFY2(a, qPrintable(error));
+    Application *a = nullptr;
+    try {
+        a = YamlApplicationScanner().scan(temp.fileName());
+    } catch (const Exception &e) {
+        QVERIFY2(false, qPrintable(e.errorString()));
+    }
+    QVERIFY(a);
 
     AbstractRuntime *r = rf->create(0, a);
     QVERIFY(r);

@@ -51,7 +51,7 @@ private slots:
     void application();
 
 private:
-    QList<const Application *> apps;
+    QVector<const Application *> apps;
 };
 
 tst_Application::tst_Application()
@@ -95,7 +95,7 @@ void tst_Application::database()
         QVERIFY(adb.isValid());
 
         try {
-            QList<const Application *> appsInDb = adb.read();
+            QVector<const Application *> appsInDb = adb.read();
             QVERIFY(appsInDb.isEmpty());
 
             adb.write(apps);
@@ -111,7 +111,7 @@ void tst_Application::database()
         QVERIFY(adb.isValid());
 
         try {
-            QList<const Application *> appsInDb = adb.read();
+            QVector<const Application *> appsInDb = adb.read();
             QCOMPARE(appsInDb.size(), apps.size());
         } catch (Exception &e) {
             QVERIFY2(false, e.what());
@@ -171,11 +171,11 @@ void tst_Application::application()
     }
 
     QCOMPARE(app->id(), id);
-    QCOMPARE(QFileInfo(app->displayIcon()).fileName(), qSL("icon.png"));
-    QCOMPARE(app->displayNames().size(), 2);
-    QCOMPARE(app->displayNames().value(qSL("en")), qSL("english"));
-    QCOMPARE(app->displayNames().value(qSL("de")), qSL("deutsch"));
-    QCOMPARE(app->displayName(qSL("en")), qSL("english"));
+    QCOMPARE(QFileInfo(app->icon()).fileName(), qSL("icon.png"));
+    QCOMPARE(app->names().size(), 2);
+    QCOMPARE(app->names().value(qSL("en")), qSL("english"));
+    QCOMPARE(app->names().value(qSL("de")), qSL("deutsch"));
+    QCOMPARE(app->name(qSL("en")), qSL("english"));
     QCOMPARE(QFileInfo(app->codeFilePath()).fileName(), qSL("Test.qml"));
     QCOMPARE(app->runtimeName(), qSL("qml"));
     QCOMPARE(app->runtimeParameters().size(), 1);

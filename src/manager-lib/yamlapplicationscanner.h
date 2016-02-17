@@ -37,7 +37,11 @@ class YamlApplicationScanner : public ApplicationScanner
 public:
     YamlApplicationScanner();
 
-    Application *scan(const QString &file) throw (Exception) override;
+    Application *scan(const QString &filePath) throw (Exception) override;
+    Application *scanAlias(const QString &filePath, const Application *application) throw (Exception) override;
 
     QString metaDataFileName() const override;
+
+private:
+    Application *scanInternal(const QString &filePath, bool scanAlias, const Application *application) throw (Exception);
 };

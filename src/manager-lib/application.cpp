@@ -30,24 +30,33 @@
 
 #include <QDebug>
 #include <QDataStream>
+#include <QBuffer>
 
 #include "application.h"
 #include "utilities.h"
 #include "exception.h"
 #include "installationreport.h"
+#include "yamlapplicationscanner.h"
+
+
+Application::Application()
+{ }
 
 QVariantMap Application::toVariantMap() const
 {
+    //TODO: only used in the installer -- replace there with code that mimicks
+    // ApplicationManager::get() to get consistent key names in the objects
+
     QVariantMap map;
     map[qSL("id")] = m_id;
     map[qSL("codeFilePath")] = m_codeFilePath;
     map[qSL("runtimeName")] = m_runtimeName;
     map[qSL("runtimeParameters")] = m_runtimeParameters;
     QVariantMap displayName;
-    for (auto it = m_displayName.constBegin(); it != m_displayName.constEnd(); ++it)
+    for (auto it = m_name.constBegin(); it != m_name.constEnd(); ++it)
         displayName.insert(it.key(), it.value());
     map[qSL("displayName")] = displayName;
-    map[qSL("displayIcon")] = m_displayIcon;
+    map[qSL("displayIcon")] = m_icon;
     map[qSL("preload")] = m_preload;
     map[qSL("importance")] = m_importance;
     map[qSL("capabilities")] = m_capabilities;
@@ -69,88 +78,138 @@ QVariantMap Application::toVariantMap() const
     return map;
 }
 
-Application *Application::fromVariantMap(const QVariantMap &map, QString *error)
+
+QString Application::id() const
 {
-    QScopedPointer<Application> app(new Application());
-
-    app->m_id = map[qSL("id")].toString();
-    app->m_codeFilePath = map[qSL("codeFilePath")].toString();
-    app->m_runtimeName = map[qSL("runtimeName")].toString();
-    app->m_type = (map[qSL("type")].toString() == qL1S("headless") ? Headless : Gui);
-
-    app->m_runtimeParameters = map[qSL("runtimeParameters")].toMap();
-    QVariantMap nameMap = map[qSL("displayName")].toMap();
-    for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
-        app->m_displayName.insert(it.key(), it.value().toString());
-    app->m_displayIcon = map[qSL("displayIcon")].toString();
-    app->m_preload = map[qSL("preload")].toBool();
-    app->m_importance = map[qSL("importance")].toReal();
-    app->m_builtIn = map[qSL("builtIn")].toBool();
-    app->m_capabilities = map[qSL("capabilities")].toStringList();
-    app->m_capabilities.sort();
-    app->m_mimeTypes = map[qSL("mimeTypes")].toStringList();
-    app->m_mimeTypes.sort();
-    app->m_categories = map[qSL("categories")].toStringList();
-    app->m_categories.sort();
-    if (map.contains(qSL("backgroundMode"))) {
-        QString bgmode = map[qSL("backgroundMode")].toString();
-        if (bgmode == qL1S("Auto"))
-            app->m_backgroundMode = Auto;
-        else if (bgmode == qL1S("Never"))
-            app->m_backgroundMode = Never;
-        else if (bgmode == qL1S("ProvidesVoIP"))
-            app->m_backgroundMode = ProvidesVoIP;
-        else if (bgmode == qL1S("PlaysAudio"))
-            app->m_backgroundMode = PlaysAudio;
-        else if (bgmode == qL1S("TracksLocation"))
-            app->m_backgroundMode = TracksLocation;
-        else {
-            if (error)
-                *error = QString::fromLatin1("the 'backgroundMode' %1 is not valid").arg(bgmode);
-            return 0;
-        }
-    }
-    app->m_version = map[qSL("version")].toString();
-    app->m_baseDir = map[qSL("baseDir")].toString();
-
-    if (!app->validate(error))
-        return 0;
-
-    return app.take();
+    return m_id;
 }
 
-bool Application::validate(QString *error) const
+QString Application::absoluteCodeFilePath() const
 {
-    try {
-        QString rdnsError;
-        if (!isValidDnsName(id(), &rdnsError))
-            throw Exception(Error::Parse, "the identifier (%1) is not a valid reverse-DNS name: %2").arg(id()).arg(rdnsError);
-        if (absoluteCodeFilePath().isEmpty())
-            throw Exception(Error::Parse, "the 'code' field must not be empty");
+    QString code = m_nonAliased ? m_nonAliased->m_codeFilePath : m_codeFilePath;
+    return code.isEmpty() ? QString() : baseDir().absoluteFilePath(code);
+}
 
-        if (runtimeName().isEmpty())
-            throw Exception(Error::Parse, "the 'runtimeName' field must not be empty");
+QString Application::codeFilePath() const
+{
+    return m_nonAliased ? m_nonAliased->m_codeFilePath : m_codeFilePath;
+}
 
-        if (type() == Gui) {
-            if (displayIcon().isEmpty())
-                throw Exception(Error::Parse, "the 'icon' field must not be empty");
+QString Application::runtimeName() const
+{
+    return m_nonAliased ? m_nonAliased->m_runtimeName : m_runtimeName;
+}
 
-            if (displayNames().isEmpty())
-                throw Exception(Error::Parse, "the 'name' field must not be empty");
-        }
+QVariantMap Application::runtimeParameters() const
+{
+    return m_nonAliased ? m_nonAliased->m_runtimeParameters : m_runtimeParameters;
+}
 
-// This check won't work during installations, since icon.png is extracted after info.json
-//        if (!QFile::exists(displayIcon()))
-//            throw Exception("the 'icon' field refers to a non-existent file");
+QMap<QString, QString> Application::names() const
+{
+    return m_name;
+}
 
-        //TODO: check for valid capabilities
+QString Application::name(const QString &language) const
+{
+    return m_name.value(language);
+}
 
-        return true;
-    } catch (const Exception &e) {
-        if (error)
-            *error = e.errorString();
-        return false;
+QString Application::icon() const
+{
+    return m_icon.isEmpty() ? QString() : baseDir().absoluteFilePath(m_icon);
+}
+
+QString Application::documentUrl() const
+{
+    return m_documentUrl;
+}
+
+bool Application::isPreloaded() const
+{
+    return m_nonAliased ? m_nonAliased->m_preload : m_preload;
+}
+
+qreal Application::importance() const
+{
+    return m_nonAliased ? m_nonAliased->m_importance : m_importance;
+}
+
+bool Application::isBuiltIn() const
+{
+    return m_nonAliased ? m_nonAliased->m_builtIn : m_builtIn;
+}
+
+bool Application::isAlias() const
+{
+    return (m_nonAliased);
+}
+
+const Application *Application::nonAliased() const
+{
+    return m_nonAliased;
+}
+
+QStringList Application::capabilities() const
+{
+    return m_nonAliased ? m_nonAliased->m_capabilities : m_capabilities;
+}
+
+QStringList Application::supportedMimeTypes() const
+{
+    return m_nonAliased ? m_nonAliased->m_mimeTypes : m_mimeTypes;
+}
+
+QStringList Application::categories() const
+{
+    return m_nonAliased ? m_nonAliased->m_categories : m_categories;
+}
+
+Application::Type Application::type() const
+{
+    return m_nonAliased ? m_nonAliased->m_type : m_type;
+}
+
+Application::BackgroundMode Application::backgroundMode() const
+{
+    return m_nonAliased ? m_nonAliased->m_backgroundMode : m_backgroundMode;
+}
+
+QString Application::version() const
+{
+    return m_nonAliased ? m_nonAliased->m_version : m_version;
+}
+
+void Application::validate() const throw(Exception)
+{
+    if (isAlias()) {
+        if (!m_id.startsWith(nonAliased()->id()))
+            throw Exception(Error::Parse, "aliasId '%1' does not match base application id '%2'")
+                    .arg(m_id, nonAliased()->id());
     }
+
+    QString rdnsError;
+    if (!isValidDnsName(id(), isAlias(), &rdnsError))
+        throw Exception(Error::Parse, "the identifier (%1) is not a valid reverse-DNS name: %2").arg(id()).arg(rdnsError);
+    if (absoluteCodeFilePath().isEmpty())
+        throw Exception(Error::Parse, "the 'code' field must not be empty");
+
+    if (runtimeName().isEmpty())
+        throw Exception(Error::Parse, "the 'runtimeName' field must not be empty");
+
+    if (type() == Gui) {
+        if (icon().isEmpty())
+            throw Exception(Error::Parse, "the 'icon' field must not be empty");
+
+        if (names().isEmpty())
+            throw Exception(Error::Parse, "the 'name' field must not be empty");
+    }
+
+    // This check won't work during installations, since icon.png is extracted after info.json
+    //        if (!QFile::exists(displayIcon()))
+    //            throw Exception("the 'icon' field refers to a non-existent file");
+
+    //TODO: check for valid capabilities
 }
 
 
@@ -161,8 +220,8 @@ void Application::mergeInto(Application *app) const
     app->m_codeFilePath = m_codeFilePath;
     app->m_runtimeName = m_runtimeName;
     app->m_runtimeParameters = m_runtimeParameters;
-    app->m_displayName = m_displayName;
-    app->m_displayIcon = m_displayIcon;
+    app->m_name = m_name;
+    app->m_icon = m_icon;
     app->m_preload = m_preload;
     app->m_importance = m_importance;
     app->m_capabilities = m_capabilities;
@@ -170,6 +229,16 @@ void Application::mergeInto(Application *app) const
     app->m_categories = m_categories;
     app->m_backgroundMode = m_backgroundMode;
     app->m_version = m_version;
+}
+
+const InstallationReport *Application::installationReport() const
+{
+    return m_installationReport.data();
+}
+
+void Application::setInstallationReport(InstallationReport *report)
+{
+    m_installationReport.reset(report);
 }
 
 QDir Application::baseDir() const
@@ -186,85 +255,142 @@ QDir Application::baseDir() const
     }
 }
 
+uint Application::uid() const
+{
+    return m_nonAliased ? m_nonAliased->m_uid : m_uid;
+}
+
 void Application::setBaseDir(const QString &path)
 {
     m_baseDir = path;
 }
 
-Application::Application()
-{ }
-
-#include <QBuffer>
-
-QDataStream &operator<<(QDataStream &ds, const Application &app)
+AbstractRuntime *Application::currentRuntime() const
 {
-    QByteArray installationReport;
-
-    if (auto report = app.installationReport()) {
-        QBuffer buffer(&installationReport);
-        buffer.open(QBuffer::ReadWrite);
-        report->serialize(&buffer);
-    }
-
-    ds << app.m_id
-       << app.m_codeFilePath
-       << app.m_runtimeName
-       << app.m_runtimeParameters
-       << app.m_displayName
-       << app.m_displayIcon
-       << app.m_preload
-       << app.m_importance
-       << app.m_builtIn
-       << app.m_capabilities
-       << app.m_categories
-       << app.m_mimeTypes
-       << qint32(app.m_backgroundMode)
-       << app.m_version
-       << app.m_baseDir.absolutePath()
-       << app.m_uid
-       << installationReport;
-    return ds;
+    return m_nonAliased ? m_nonAliased->m_runtime : m_runtime;
 }
 
-QDataStream &operator>>(QDataStream &ds, Application &app)
+void Application::setCurrentRuntime(AbstractRuntime *rt) const
 {
+    if (m_nonAliased)
+        m_nonAliased->m_runtime = rt;
+    else
+        m_runtime = rt;
+}
+
+bool Application::isLocked() const
+{
+    return (m_nonAliased ? m_nonAliased->m_locked : m_locked).load() == 1;
+}
+
+bool Application::lock() const
+{
+    return (m_nonAliased ? m_nonAliased->m_locked : m_locked).testAndSetOrdered(0, 1);
+}
+
+bool Application::unlock() const
+{
+    return (m_nonAliased ? m_nonAliased->m_locked : m_locked).testAndSetOrdered(1, 0);
+}
+
+Application::State Application::state() const
+{
+    return m_nonAliased ? m_nonAliased->m_state : m_state;
+}
+
+qreal Application::progress() const
+{
+    return m_nonAliased ? m_nonAliased->m_progress : m_progress;
+}
+
+Application *Application::readFromDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) throw (Exception)
+{
+    QScopedPointer<Application> app(new Application);
+    bool isAlias;
     qint32 backgroundMode;
     QString baseDir;
     QByteArray installationReport;
 
-    ds >> app.m_id
-       >> app.m_codeFilePath
-       >> app.m_runtimeName
-       >> app.m_runtimeParameters
-       >> app.m_displayName
-       >> app.m_displayIcon
-       >> app.m_preload
-       >> app.m_importance
-       >> app.m_builtIn
-       >> app.m_capabilities
-       >> app.m_categories
-       >> app.m_mimeTypes
+    ds >> app->m_id
+       >> app->m_codeFilePath
+       >> app->m_runtimeName
+       >> app->m_runtimeParameters
+       >> app->m_name
+       >> app->m_icon
+       >> app->m_documentUrl
+       >> app->m_preload
+       >> app->m_importance
+       >> app->m_builtIn
+       >> isAlias
+       >> app->m_capabilities
+       >> app->m_categories
+       >> app->m_mimeTypes
        >> backgroundMode
-       >> app.m_version
+       >> app->m_version
        >> baseDir
-       >> app.m_uid
+       >> app->m_uid
        >> installationReport;
 
-    app.m_capabilities.sort();
-    app.m_categories.sort();
-    app.m_mimeTypes.sort();
+    app->m_capabilities.sort();
+    app->m_categories.sort();
+    app->m_mimeTypes.sort();
 
-    app.m_backgroundMode = static_cast<Application::BackgroundMode>(backgroundMode);
-    app.m_baseDir.setPath(baseDir);
+    app->m_backgroundMode = static_cast<Application::BackgroundMode>(backgroundMode);
+    app->m_baseDir.setPath(baseDir);
     if (!installationReport.isEmpty()) {
         QBuffer buffer(&installationReport);
         buffer.open(QBuffer::ReadOnly);
-        app.m_installationReport.reset(new InstallationReport(app.m_id));
-        if (!app.m_installationReport->deserialize(&buffer))
-            app.m_installationReport.reset(0);
+        app->m_installationReport.reset(new InstallationReport(app->m_id));
+        if (!app->m_installationReport->deserialize(&buffer))
+            app->m_installationReport.reset(0);
     }
 
-    return ds;
+    if (isAlias) {
+        QString baseId = app->m_id.section(qL1C('@'), 0, 0);
+        bool found = false;
+        foreach (const Application *otherApp, applicationDatabase) {
+            if (otherApp->id() == baseId) {
+                app->m_nonAliased = otherApp;
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            throw Exception(Error::Parse, "Could not find base app id %1 for alias id %2").arg(baseId, app->m_id);
+    }
+
+    return app.take();
+}
+
+void Application::writeToDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) const throw (Exception)
+{
+    QByteArray serializedReport;
+
+    if (auto report = installationReport()) {
+        QBuffer buffer(&serializedReport);
+        buffer.open(QBuffer::WriteOnly);
+        report->serialize(&buffer);
+    }
+
+    ds << m_id
+       << m_codeFilePath
+       << m_runtimeName
+       << m_runtimeParameters
+       << m_name
+       << m_icon
+       << m_documentUrl
+       << m_preload
+       << m_importance
+       << m_builtIn
+       << bool(m_nonAliased && applicationDatabase.contains(m_nonAliased))
+       << m_capabilities
+       << m_categories
+       << m_mimeTypes
+       << qint32(m_backgroundMode)
+       << m_version
+       << m_baseDir.absolutePath()
+       << m_uid
+       << serializedReport;
 }
 
 

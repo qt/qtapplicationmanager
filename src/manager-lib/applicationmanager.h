@@ -99,7 +99,7 @@ public:
     QVariantMap additionalConfiguration() const;
     void setAdditionalConfiguration(const QVariantMap &map);
 
-    QList<const Application *> applications() const;
+    QVector<const Application *> applications() const;
 
     const Application *fromId(const QString &id) const;
     const Application *fromProcessId(qint64 pid) const;
@@ -107,7 +107,7 @@ public:
     const Application *schemeHandler(const QString &scheme) const;
     const Application *mimeTypeHandler(const QString &mimeType) const;
 
-    bool startApplication(const Application *app, const QString &document = QString());
+    bool startApplication(const Application *app, const QString &documentUrl = QString());
     void stopApplication(const Application *app, bool forceKill = false);
 
     // only use these two functions for development!
@@ -142,7 +142,7 @@ public:
     // DBus interface
     Q_SCRIPTABLE QStringList applicationIds() const;
     Q_SCRIPTABLE QVariantMap get(const QString &id) const;
-    Q_SCRIPTABLE bool startApplication(const QString &id, const QString &document = QString());
+    Q_SCRIPTABLE bool startApplication(const QString &id, const QString &documentUrl = QString());
     Q_SCRIPTABLE void stopApplication(const QString &id, bool forceKill = false);
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id);

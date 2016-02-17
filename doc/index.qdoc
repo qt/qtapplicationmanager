@@ -437,7 +437,7 @@ application-manager at runtime. There are two interfaces for this functionality:
 
 Both interfaces are very similar and are both documented in the \l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
 
-\note A prerequisite for dynamically installed application packages is a valid \l{installation locations}
+\note A prerequisite for dynamically installed application packages is a valid \l {Installation Locations}{installation location}
 configuration for the application-manager.
 
 */

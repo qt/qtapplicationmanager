@@ -86,16 +86,15 @@ QString ApplicationDatabase::name() const
     return d->file->fileName();
 }
 
-QList<const Application *> ApplicationDatabase::read() throw (Exception)
+QVector<const Application *> ApplicationDatabase::read() throw (Exception)
 {
-    QList<const Application *> apps;
+    QVector<const Application *> apps;
 
     if (d->file->seek(0)) {
         QDataStream ds(d->file);
 
         forever {
-            Application *app = new Application();
-            ds >> *app;
+            Application *app = Application::readFromDataStream(ds, apps);
 
             if (ds.status() != QDataStream::Ok) {
                 if (ds.status() != QDataStream::ReadPastEnd) {
@@ -111,7 +110,7 @@ QList<const Application *> ApplicationDatabase::read() throw (Exception)
     return apps;
 }
 
-void ApplicationDatabase::write(const QList<const Application *> &apps) throw (Exception)
+void ApplicationDatabase::write(const QVector<const Application *> &apps) throw (Exception)
 {
     if (!d->file->seek(0))
         throw Exception(*d->file, "could not not seek to position 0 in the application database");
@@ -120,7 +119,7 @@ void ApplicationDatabase::write(const QList<const Application *> &apps) throw (E
 
     QDataStream ds(d->file);
     foreach (const Application *app, apps)
-        ds << *app;
+        app->writeToDataStream(ds, apps);
     if (ds.status() != QDataStream::Ok)
         throw Exception(*d->file, "could not write to application database");
 }

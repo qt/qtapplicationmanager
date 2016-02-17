@@ -42,78 +42,154 @@
 #include "application.h"
 #include "yamlapplicationscanner.h"
 
+
 YamlApplicationScanner::YamlApplicationScanner()
 {
 }
 
 Application *YamlApplicationScanner::scan(const QString &filePath) throw (Exception)
 {
-    QFile f(filePath);
-    if (!f.open(QIODevice::ReadOnly))
-        throw Exception(f, "could not open file for reading");
-
-    QtYaml::ParseError parseError;
-    QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(f.readAll(), &parseError);
-
-    if (parseError.error != QJsonParseError::NoError) {
-        throw Exception(Error::IO, "YAML parse error at line %1, column %2: %3")
-                .arg(parseError.line).arg(parseError.column).arg(parseError.errorString());
-    }
-
-    if ((docs.size() != 2)
-            || (docs.first().toMap().value(qSL("formatType")).toString() != qL1S("am-application"))
-            || (docs.first().toMap().value(qSL("formatVersion")).toInt(0) != 1)) {
-        throw Exception(Error::Parse, "not a valid YAML application meta-data file");
-    }
-
-    QVariantMap o = docs.at(1).toMap();
-
-    QVariantMap map;
-    map[qSL("id")] = o.value(qSL("id")).toString();
-    map[qSL("codeFilePath")] = o.value(qSL("code")).toString();
-    map[qSL("runtimeName")] = o.value(qSL("runtime")).toString();
-    map[qSL("runtimeParameters")] = o.value(qSL("runtimeParameters")).toMap();
-
-    map[qSL("displayName")] = o.value(qSL("name")).toMap();
-    map[qSL("displayIcon")] = o.value(qSL("icon")).toString();
-    map[qSL("preload")] = o.value(qSL("preload")).toBool();
-    map[qSL("importance")] = o.value(qSL("importance")).toDouble();
-    map[qSL("builtIn")] = o.value(qSL("built-in")).toBool();
-    map[qSL("type")] = o.value(qSL("type")).toString();
-
-    map[qSL("capabilities")] = o.value(qSL("capabilities")).toStringList();
-    map[qSL("categories")] = o.value(qSL("categories")).toStringList();
-    map[qSL("mimeTypes")] = o.value(qSL("mimeTypes")).toStringList();
-
-    QString backgroundMode = o.value(qSL("backgroundMode")).toString();
-    QString bgmode;
-    if (backgroundMode == qL1S("never"))
-        bgmode = qSL("Never");
-    else if (backgroundMode == qL1S("voip"))
-        bgmode = qSL("ProvidesVoIP");
-    else if (backgroundMode == qL1S("audio"))
-        bgmode = qSL("PlaysAudio");
-    else if (backgroundMode == qL1S("location"))
-        bgmode = qSL("TracksLocation");
-    else if (backgroundMode == qL1S("auto") || backgroundMode.isEmpty())
-        bgmode = qSL("Auto");
-    else
-        throw Exception(Error::Parse, "backgroundMode field is invalid - must be one of auto, never, voip, audio or location");
-    map[qSL("backgroundMode")] = bgmode;
-    map[qSL("version")] = o.value(qSL("version")).toString();
-
-    map[qSL("baseDir")] = QFileInfo(f).absoluteDir().absolutePath();
-
-
-    QString appError;
-    Application *app = Application::fromVariantMap(map, &appError);
-    if (!app)
-        throw Exception(Error::Parse, appError);
-
-    return app;
+    return scanInternal(filePath, false, nullptr);
 }
+
+Application *YamlApplicationScanner::scanAlias(const QString &filePath, const Application *application) throw (Exception)
+{
+    return scanInternal(filePath, true, application);
+}
+
+Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool scanAlias, const Application *application) throw (Exception)
+{
+    try {
+        if (scanAlias && !application)
+            throw Exception(Error::System, "cannot scan an alias without a valid base application");
+
+        QFile f(filePath);
+        if (!f.open(QIODevice::ReadOnly))
+            throw Exception(f, "could not open file for reading");
+
+        QtYaml::ParseError parseError;
+        QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(f.readAll(), &parseError);
+
+        if (parseError.error != QJsonParseError::NoError) {
+            throw Exception(Error::IO, "YAML parse error at line %1, column %2: %3")
+                    .arg(parseError.line).arg(parseError.column).arg(parseError.errorString());
+        }
+
+        if ((docs.size() != 2)
+                || (docs.first().toMap().value(qSL("formatVersion")).toInt(0) != 1)) {
+            throw Exception(Error::Parse, "not a valid YAML application meta-data file");
+        }
+
+        bool isApp = (docs.first().toMap().value(qSL("formatType")).toString() == qL1S("am-application"));
+        bool isAlias = (docs.first().toMap().value(qSL("formatType")).toString() == qL1S("am-application-alias"));
+
+        if (!isApp && !isAlias)
+            throw Exception(Error::Parse, "not a valid YAML application manifest");
+        if (isAlias && !scanAlias)
+            throw Exception(Error::Parse, "is an alias, but expected a normal manifest");
+        if (!isAlias && scanAlias)
+            throw Exception(Error::Parse, "is an not alias, although expected such a manifest");
+
+        QScopedPointer<Application> app(new Application);
+        app->m_baseDir = QFileInfo(f).absoluteDir().absolutePath();
+
+        QVariantMap yaml = docs.at(1).toMap();
+        for (auto it = yaml.constBegin(); it != yaml.constEnd(); ++it) {
+            QByteArray field = it.key().toLatin1();
+            bool unknownField = false;
+            const QVariant &v = it.value();
+
+            if ((!isAlias && (field == "id"))
+                    || (isAlias && (field == "aliasId"))) {
+                app->m_id = v.toString();
+                if (isAlias) {
+                    int sepPos = app->m_id.indexOf(qL1C('@'));
+                    if (sepPos < 0 || sepPos == (app->m_id.size() - 1))
+                        throw Exception(Error::Parse, "malformed aliasId '%1'").arg(app->m_id);
+                    QString realId = app->m_id.left(sepPos);
+                    if (application->id() != realId) {
+                        throw Exception(Error::Parse, "aliasId '%1' does not match base application id '%2'")
+                                .arg(app->m_id, application->id());
+                    }
+                    app->m_nonAliased = application;
+                }
+            } else if (field == "icon") {
+                app->m_icon = v.toString();
+            } else if (field == "name") {
+                auto nameMap = v.toMap();
+                for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
+                    app->m_name.insert(it.key(), it.value().toString());
+            } else if (field == "documentUrl") {
+                app->m_documentUrl = v.toString();
+            } else if (!isAlias) {
+                if (field == "code") {
+                    app->m_codeFilePath = v.toString();
+                } else if (field == "runtime") {
+                    app->m_runtimeName = v.toString();
+                } else if (field == "runtimeParameters") {
+                    app->m_runtimeParameters = v.toMap();
+                } else if (field == "preload") {
+                    app->m_preload = v .toBool();
+                } else if (field == "importance") {
+                    app->m_importance = v.toReal();
+                } else if (field == "builtIn") {
+                    app->m_builtIn = v.toBool();
+                } else if (field == "type") {
+                    app->m_type = (v.toString() == qL1S("headless") ? Application::Headless : Application::Gui);
+                } else if (field == "capabilities") {
+                    app->m_capabilities = v.toStringList();
+                    app->m_capabilities.sort();
+                } else if (field == "categories") {
+                    app->m_categories = v.toStringList();
+                    app->m_categories.sort();
+                } else if (field == "mimeTypes") {
+                    app->m_mimeTypes = v.toStringList();
+                    app->m_mimeTypes.sort();
+                } else if (field == "version") {
+                    app->m_version = v.toString();
+                } else if (field == "backgroundMode") {
+                    static const QPair<const char *, Application::BackgroundMode> backgroundMap[] = {
+                        { "never",    Application::Never },
+                        { "voip",     Application::ProvidesVoIP },
+                        { "audio",    Application::PlaysAudio },
+                        { "location", Application::TracksLocation },
+                        { "auto",     Application::Auto },
+                        { 0,          Application::Auto }
+                    };
+                    QByteArray enumValue = v.toString().toLatin1();
+
+                    bool found = false;
+                    for (auto it = backgroundMap; backgroundMap->first; ++it) {
+                        if (enumValue == it->first) {
+                            app->m_backgroundMode = it->second;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                        throw Exception(Error::Parse, "the 'backgroundMode' value '%1' is not valid").arg(enumValue);
+                } else {
+                    unknownField = true;
+                }
+            } else {
+                unknownField = true;
+            }
+
+            if (unknownField)
+                throw Exception(Error::Parse, "contains unsupported field: '%1'").arg(field);
+        }
+
+        app->validate();
+        return app.take();
+    } catch (const Exception &e) {
+        throw Exception(e.errorCode(), "Failed to parse manifest file %1: %2").arg(filePath, e.errorString());
+    }
+
+}
+
 
 QString YamlApplicationScanner::metaDataFileName() const
 {
     return qSL("info.yaml");
 }
+

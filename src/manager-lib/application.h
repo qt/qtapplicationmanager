@@ -38,6 +38,7 @@
 
 #include "global.h"
 #include "installationreport.h"
+#include "exception.h"
 
 class AbstractRuntime;
 class ApplicationManager;
@@ -49,23 +50,26 @@ class AM_EXPORT Application
 public:
     enum Type { Gui, Headless };
 
-    QString id() const                           { return m_id; }
-    QString absoluteCodeFilePath() const         { return m_codeFilePath.isEmpty() ? QString() : baseDir().absoluteFilePath(m_codeFilePath); }
-    QString codeFilePath() const                 { return m_codeFilePath; }
-    QString runtimeName() const                  { return m_runtimeName; }
-    QVariantMap runtimeParameters() const        { return m_runtimeParameters; }
-    QMap<QString, QString> displayNames() const  { return m_displayName; }
-    QString displayName(const QString &language) const { return m_displayName.value(language); }
-    QString displayIcon() const                  { return m_displayIcon.isEmpty() ? QString() : baseDir().absoluteFilePath(m_displayIcon); }
+    QString id() const;
+    QString absoluteCodeFilePath() const;
+    QString codeFilePath() const;
+    QString runtimeName() const;
+    QVariantMap runtimeParameters() const;
+    QMap<QString, QString> names() const;
+    QString name(const QString &language) const;
+    QString icon() const;
+    QString documentUrl() const;
 
-    bool isPreloaded() const                     { return m_preload; }
-    qreal importance() const                     { return m_importance; }
-    bool isBuiltIn() const                       { return m_builtIn; }
+    bool isPreloaded() const;
+    qreal importance() const;
+    bool isBuiltIn() const;
+    bool isAlias() const;
+    const Application *nonAliased() const;
 
-    QStringList capabilities() const             { return m_capabilities; }
-    QStringList supportedMimeTypes() const       { return m_mimeTypes; }
-    QStringList categories() const               { return m_categories; }
-    Type type() const                            { return m_type; }
+    QStringList capabilities() const;
+    QStringList supportedMimeTypes() const;
+    QStringList categories() const;
+    Type type() const;
 
     enum BackgroundMode
     {
@@ -75,26 +79,26 @@ public:
         PlaysAudio,
         TracksLocation
     };
-    BackgroundMode backgroundMode() const       { return m_backgroundMode; }
+    BackgroundMode backgroundMode() const;
 
-    QString version() const                     { return m_version; }
+    QString version() const;
 
-    bool validate(QString *error) const;
+    void validate() const throw (Exception);
     QVariantMap toVariantMap() const;
     static Application *fromVariantMap(const QVariantMap &map, QString *error = 0);
     void mergeInto(Application *app) const;
 
-    const InstallationReport *installationReport() const { return m_installationReport.data(); }
-    void setInstallationReport(InstallationReport *report) { m_installationReport.reset(report); }
+    const InstallationReport *installationReport() const;
+    void setInstallationReport(InstallationReport *report);
     QDir baseDir() const;
-    uint uid() const                { return m_uid; }
+    uint uid() const;
 
     // dynamic part
-    AbstractRuntime *currentRuntime() const { return m_runtime; }
-    void setCurrentRuntime(AbstractRuntime *rt) const { m_runtime = rt; }
-    bool isLocked() const          { return m_locked.load() == 1; }
-    bool lock() const              { return m_locked.testAndSetOrdered(0, 1); }
-    bool unlock() const            { return m_locked.testAndSetOrdered(1, 0); }
+    AbstractRuntime *currentRuntime() const;
+    void setCurrentRuntime(AbstractRuntime *rt) const;
+    bool isLocked() const;
+    bool lock() const;
+    bool unlock() const;
 
     enum State {
         Installed,
@@ -102,8 +106,8 @@ public:
         BeingUpdated,
         BeingRemoved
     };
-    State state() const             { return m_state; }
-    qreal progress() const          { return m_progress; }
+    State state() const;
+    qreal progress() const;
 
     void setBaseDir(const QString &path); //TODO: replace baseDir handling with something that works :)
 
@@ -116,13 +120,14 @@ private:
     QString m_codeFilePath; // relative to info.json location
     QString m_runtimeName;
     QVariantMap m_runtimeParameters;
-    QMap<QString, QString> m_displayName; // language -> name
-    QString m_displayIcon; // relative to info.json location
-
+    QMap<QString, QString> m_name; // language -> name
+    QString m_icon; // relative to info.json location
+    QString m_documentUrl;
 
     bool m_preload = false;
     qreal m_importance = 0; // relative to all others, with 0 being "normal"
     bool m_builtIn = false; // system app - not removable
+    const Application *m_nonAliased = nullptr; // builtin only - multiple icons for the same app
 
     QStringList m_capabilities;
     QStringList m_categories;
@@ -147,16 +152,15 @@ private:
     mutable State m_state = Installed;
     mutable qreal m_progress = 0;
 
-    friend QDataStream &operator<<(QDataStream &ds, const Application &app);
-    friend QDataStream &operator>>(QDataStream &ds, Application &app);
+    friend class YamlApplicationScanner;
     friend class ApplicationManager; // needed to update installation status
     friend class ApplicationDatabase; // needed to create Application objects
     friend class InstallationTask; // needed to set m_uid and m_builtin during the installation
 
+    static Application *readFromDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) throw(Exception);
+    void writeToDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) const throw(Exception);
+
     Q_DISABLE_COPY(Application)
 };
-
-QDataStream &operator<<(QDataStream &ds, const Application &app);
-QDataStream &operator>>(QDataStream &ds, Application &app);
 
 QDebug operator<<(QDebug debug, const Application *app);

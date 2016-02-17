@@ -147,7 +147,7 @@ void Packager::execute() throw(Exception)
         report.addFile(infoName);
 
         if (app->type() == Application::Gui) {
-            if (!QFile::exists(source.absoluteFilePath(app->displayIcon())))
+            if (!QFile::exists(source.absoluteFilePath(app->icon())))
                 throw Exception(Error::Package, "missing the 'icon.png' file");
             report.addFile(qSL("icon.png"));
         }

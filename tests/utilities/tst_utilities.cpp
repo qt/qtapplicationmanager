@@ -56,40 +56,62 @@ tst_Utilities::tst_Utilities()
 void tst_Utilities::validDnsName_data()
 {
     QTest::addColumn<QString>("dnsName");
+    QTest::addColumn<bool>("alias");
     QTest::addColumn<bool>("valid");
 
     // passes
-    QTest::newRow("normal") << "com.pelagicore.test" << true;
-    QTest::newRow("shortest") << "c.p.t" << true;
-    QTest::newRow("valid-chars") << "1-2.c-d.3.z" << true;
-    QTest::newRow("longest-part") << "com.012345678901234567890123456789012345678901234567890123456789012.test" << true;
-    QTest::newRow("longest-name") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012.test" << true;
-    QTest::newRow("max-part-cnt") << "a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.0.12" << true;
+    QTest::newRow("normal") << "com.pelagicore.test" << false << true;
+    QTest::newRow("shortest") << "c.p.t" << false << true;
+    QTest::newRow("valid-chars") << "1-2.c-d.3.z" << false << true;
+    QTest::newRow("longest-part") << "com.012345678901234567890123456789012345678901234567890123456789012.test" << false << true;
+    QTest::newRow("longest-name") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012.test" << false << true;
+    QTest::newRow("max-part-cnt") << "a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.0.12" << false << true;
+
+    QTest::newRow("alias-normal") << "com.pelagicore.test@alias" << true << true;
+    QTest::newRow("alias-shortest") << "c.p.t@a" << true << true;
+    QTest::newRow("alias-valid-chars") << "1-2.c-d.3.z@1-a" << true << true;
+    QTest::newRow("alias-longest-part") << "com.012345678901234567890123456789012345678901234567890123456789012.test@012345678901234567890123456789012345678901234567890123456789012" << true << true;
+    QTest::newRow("alias-longest-name") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012@test" << true << true;
+    QTest::newRow("alias-max-part-cnt") << "a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.0@12" << true << true;
 
     // failures
-    QTest::newRow("too-few-parts") << "com.pelagicore" << false;
-    QTest::newRow("empty-part") << "com..test" << false;
-    QTest::newRow("empty") << "" << false;
-    QTest::newRow("dot-only") << "." << false;
-    QTest::newRow("invalid-char1") << "com.pelagi_core.test" << false;
-    QTest::newRow("invalid-char2") << "com.pelagi#core.test" << false;
-    QTest::newRow("invalid-char3") << "com.pelagi$core.test" << false;
-    QTest::newRow("invalid-char3") << "com.pelagi@core.test" << false;
-    QTest::newRow("unicode-char") << QString::fromUtf8("c\xc3\xb6m.pelagicore.test") << false;
-    QTest::newRow("upper-case") << "com.Pelagicore.test" << false;
-    QTest::newRow("dash-at-start") << "com.-pelagicore.test" << false;
-    QTest::newRow("dash-at-end") << "com.pelagicore-.test" << false;
-    QTest::newRow("part-too-long") << "com.x012345678901234567890123456789012345678901234567890123456789012.test" << false;
-    QTest::newRow("name-too-long") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012.xtest" << false;
+    QTest::newRow("too-few-parts") << "com.pelagicore" << false << false;
+    QTest::newRow("empty-part") << "com..test" << false << false;
+    QTest::newRow("empty") << "" << false << false;
+    QTest::newRow("dot-only") << "." << false << false;
+    QTest::newRow("invalid-char1") << "com.pelagi_core.test" << false << false;
+    QTest::newRow("invalid-char2") << "com.pelagi#core.test" << false << false;
+    QTest::newRow("invalid-char3") << "com.pelagi$core.test" << false << false;
+    QTest::newRow("invalid-char3") << "com.pelagi@core.test" << false << false;
+    QTest::newRow("unicode-char") << QString::fromUtf8("c\xc3\xb6m.pelagicore.test") << false << false;
+    QTest::newRow("upper-case") << "com.Pelagicore.test" << false << false;
+    QTest::newRow("dash-at-start") << "com.-pelagicore.test" << false << false;
+    QTest::newRow("dash-at-end") << "com.pelagicore-.test" << false << false;
+    QTest::newRow("part-too-long") << "com.x012345678901234567890123456789012345678901234567890123456789012.test" << false << false;
+    QTest::newRow("name-too-long") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012.xtest" << false << false;
+
+    QTest::newRow("alias-too-few-parts") << "com.pelagicore@foo" << true << false;
+    QTest::newRow("empty-alias") << "com.test@" << true << false;
+    QTest::newRow("alias-invalid-char1") << "c.p.t@a_" << true << false;
+    QTest::newRow("alias-invalid-char2") << "c.p.t@a#" << true << false;
+    QTest::newRow("alias-invalid-char3") << "c.p.t@a$" << true << false;
+    QTest::newRow("alias-invalid-char3") << "c.p.t@a@" << true << false;
+    QTest::newRow("alias-unicode-char") << QString::fromUtf8("c.p.t@c\xc3\xb6m") << true << false;
+    QTest::newRow("alias-upper-case") << "c.p.t@ALIAS" << true << false;
+    QTest::newRow("alias-dash-at-start") << "c.p.t@-a" << true << false;
+    QTest::newRow("alias-dash-at-end") << "c.p.t@a-" << true << false;
+    QTest::newRow("part-too-long") << "com.x012345678901234567890123456789012345678901234567890123456789012.test" << true << false;
+    QTest::newRow("name-too-long") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012.xtest" << true << false;
 }
 
 void tst_Utilities::validDnsName()
 {
     QFETCH(QString, dnsName);
+    QFETCH(bool, alias);
     QFETCH(bool, valid);
 
     QString errorString;
-    bool result = isValidDnsName(dnsName, &errorString);
+    bool result = isValidDnsName(dnsName, alias, &errorString);
 
     QVERIFY2(valid == result, qPrintable(errorString));
 }

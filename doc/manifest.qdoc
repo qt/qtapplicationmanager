@@ -34,6 +34,8 @@
 \keyword info.yaml metadata manifest format
 \title Manifest Definition
 
+\chapter Overview
+
 The package manifest (or metadata) file is a YAML (version 1.1) file named \c info.yaml, consisting
 of exactly two YAML documents: the file-type header and the actual application manifest.
 
@@ -42,31 +44,41 @@ of exactly two YAML documents: the file-type header and the actual application m
     e.g. XML, but the only meta-data loader currently implemented is based on this YAML format.
 \endquotation
 
-This is an example of a a full-featured \c info.yaml file. It also shows that you can mix and match
+Dynamically installed applications are described by a single manifest file in their root directory,
+called \c info.yaml. Built-in applications, that are shipped as part of the system-UI are allowed
+to optionally have multiple aliases: these are comparable to a Microsoft Windows shortcut, in that they
+allow to start the same program using a different icon, name and commandline arguments. These files
+have to be in the same folder as the application's main \c info.yaml file and need to named \c
+info-<descriptive name>.yaml. See \l{Alias Manifests}{below} for a description of these alias manifests.
+
+\chapter Basic Manifest
+
+This is an example of a full-featured \c info.yaml file. It also shows that you can mix and match
 classic YAML and JSON style in YAML 1.1 documents:
 
 \code
-%YAML1.1
+%YAML 1.1
 ---
 formatVersion: 1
 formatType: am-application
 ---
-id: 'com.pelagicore.twitter'
-icon: 'Twitter.png'
+id: 'com.pelagicore.radio'
+icon: 'FM-Radio.png'
 name:
-  en: "Twitter"
-  de: "Gezwitscher"
-code: "twitter"
+  en: "FM Radio"
+  de: "UKW-Rundfunk"
+code: "radio.qml"
 
 runtime: qml
 runtimeParameters: { loadDummyData: true }
+documentUrl: "fm"
 
-built-in: yes
+builtIn: yes
 preload: yes
 importance: 0.5
 backgroundMode: 'location'
 
-mimeTypes: [ "x-scheme-handler/mailto", "text/plain" ]
+mimeTypes: [ "x-scheme-handler/x-radio" ]
 
 capabilities:
 - cameraAccess
@@ -104,7 +116,8 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
 \row
     \li \c id
     \li \c string
-    \li An unique reverse-DNS id. (\e Required)
+    \li An unique reverse-DNS id. This id has to comply with RFC 1035/1123, consist of at least 3
+        parts (e.g. \c{tld.company.app}), and not exceed 150 characters in length. (\e Required)
 \row
     \li \c icon
     \li \c string
@@ -148,7 +161,12 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
 
         See below for a list of those parameters.
 \row
-    \li \c built-in
+    \li \c documentUrl
+    \li \c string
+    \li An optional default document that is used, if the application is started without specifying
+        a document (see ApplicationManager::startApplication).
+\row
+    \li \c builtIn
     \li \c bool
     \li Specifies, if this app should be user-removable (this defaults to \c true for built-in
         applications and to \c false for dynamically installed ones).
@@ -196,11 +214,81 @@ These \c runtimeParameters are currently defined by both the \c qml and \c qml-i
     \li \c bool
     \li \c Automatically load dummy-data for the application, using the same algorithm as
            Qt's \c qmlscene tool. By default no dummy-data is loaded.
-
+\row
     \li \c importPaths
     \li \c array<string>
     \li \c A list of paths that should be added to the QML-engine's import paths - this is the same
            as setting \c QML2_IMPORT_PATH for a program started from the command line.
+\endtable
+
+\chapter Alias Manifests
+
+Here is an example of an alias manifest (\c{info-am.yaml}) for the \c info.yaml file in the chapter
+\l{Basic Manifest}{above}. This way, you could have one single tuner application \c radio.qml running
+that can be started using two different entries (with different text and icons) in the application
+launcher. Starting an alias while the application is already running will not start another instance.
+Only if a \c documentUrl is set, the already running instance will receive the
+\l{ApplicationInterface::openDocument} signal containing the respective strings set via the
+\c documentUrl parameter and can then change its UI accordingly.
+
+\code
+%YAML 1.1
+---
+formatVersion: 1
+formatType: am-application-alias
+---
+aliasId: 'com.pelagicore.radio@am'
+icon: 'AM-Radio.png'
+name:
+  en: "AM Radio"
+  de: "Langwellenrundfunk"
+
+documentUrl: "am"
+
+\endcode
+
+The meaning of the fields within the \c info-am.yaml file header (first YAML document) is as follows:
+
+\table
+\header
+    \li Field name
+    \li Type
+    \li Description
+\row
+    \li \c formatVersion
+    \li \c int
+    \li Currently always \c 1. (\e Required)
+\row
+    \li \c formatType
+    \li \c string
+    \li Always \c am-application-alias. (\e Required)
+\endtable
+
+The meaning of the fields within the alias manifest data (second YAML document) is as follows:
+
+\table
+\header
+    \li Field name
+    \li Type
+    \li Description
+\row
+    \li \c aliasId
+    \li \c string
+    \li The unique reverse-DNS id of the base application (see \l{Basic Manifest}), followed by the
+        \c{@} sign and an unique tag for this alias. This tag is only allowed to contain the
+        characters \c{[a-z0-9-]}. (\e Required)
+\row
+    \li \c icon
+    \li \c string
+    \li See the \c icon field in \l{Basic Manifest}. (\e Required)
+\row
+    \li \c name
+    \li \c object
+    \li See the \c name field in \l{Basic Manifest}. (\e Required)
+\row
+    \li \c documentUrl
+    \li \c string
+    \li See the \c documentUrl in \l{Basic Manifest}
 \endtable
 
 */

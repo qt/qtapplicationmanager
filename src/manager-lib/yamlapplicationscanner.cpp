@@ -132,7 +132,7 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                     app->m_preload = v .toBool();
                 } else if (field == "importance") {
                     app->m_importance = v.toReal();
-                } else if (field == "builtIn") {
+                } else if (field == "builtIn" || field == "built-in") {
                     app->m_builtIn = v.toBool();
                 } else if (field == "type") {
                     app->m_type = (v.toString() == qL1S("headless") ? Application::Headless : Application::Gui);

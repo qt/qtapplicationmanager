@@ -35,6 +35,7 @@
 #include <QDir>
 #include <QTimer>
 #include <QMimeDatabase>
+#include <QDesktopServices>
 
 #include "global.h"
 
@@ -258,6 +259,7 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
     try {
         if (adb)
             am->d->apps = adb->read();
+        am->registerMimeTypes();
     } catch (const Exception &e) {
         if (error)
             *error = e.what();
@@ -386,7 +388,7 @@ const Application *ApplicationManager::schemeHandler(const QString &scheme) cons
             int pos = mime.indexOf(QLatin1Char('/'));
 
             if ((pos > 0)
-                    && (mime.left(pos) == qL1S("x-scheme-handler/"))
+                    && (mime.left(pos) == qL1S("x-scheme-handler"))
                     && (mime.mid(pos + 1) == scheme)) {
                 return app;
             }
@@ -402,6 +404,26 @@ const Application *ApplicationManager::mimeTypeHandler(const QString &mimeType) 
             return app;
     }
     return 0;
+}
+
+void ApplicationManager::registerMimeTypes()
+{
+    QVector<QString> schemes;
+    schemes << qSL("file") << qSL("http") << qSL("https");
+
+    foreach (const Application *a, d->apps) {
+        if (a->isAlias())
+            continue;
+
+        foreach (const QString &mime, a->supportedMimeTypes()) {
+            int pos = mime.indexOf(QLatin1Char('/'));
+
+            if ((pos > 0) && (mime.left(pos) == qL1S("x-scheme-handler")))
+                schemes << mime.mid(pos + 1);
+        }
+    }
+    foreach (const QString &scheme, schemes)
+        QDesktopServices::setUrlHandler(scheme, this, "openUrlRelay");
 }
 
 bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl)
@@ -800,6 +822,11 @@ void ApplicationManager::preload()
             }
         }
     }
+}
+
+void ApplicationManager::openUrlRelay(const QUrl &url)
+{
+    openUrl(url.toString());
 }
 
 void ApplicationManager::emitDataChanged(const Application *app)

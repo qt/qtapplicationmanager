@@ -160,6 +160,7 @@ signals:
 
 private slots:
     void preload();
+    void openUrlRelay(const QUrl &url);
 
     // Interface for the installer
     //TODO: Find something nicer than private slots with 3 friend classes.
@@ -179,6 +180,7 @@ private slots:
 
 private:
     void emitDataChanged(const Application *app);
+    void registerMimeTypes();
 
     ApplicationManager(ApplicationDatabase *adb, QObject *parent);
     ApplicationManager(const ApplicationManager &);

@@ -272,7 +272,7 @@ void Controller::startApplication(const QString &qmlFile, const QString &argumen
 
     qWarning() << m_configuration;
 
-    if (m_configuration.contains(qSL("background-color"))) {
+    if (m_configuration.contains(qSL("backgroundColor"))) {
         QSurfaceFormat surfaceFormat = m_window->format();
         surfaceFormat.setAlphaBufferSize(8);
         m_window->setFormat(surfaceFormat);

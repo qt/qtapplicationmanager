@@ -31,6 +31,18 @@
 #include "notification.h"
 #include "global.h"
 
+/*!
+    \qmltype Notification
+    \inqmlmodule io.qt.ApplicationManager 1.0
+    \brief An abstraction layer to enable QML applications to issue notifications.
+
+    This item is available for QML applications by either creating a Notification item
+    statically or by dynamically calling ApplicationInterface::createNotification.
+    For all other applications, the notification service of the application-manager is
+    available via the freedesktop.org compliant \l{https://developer.gnome.org/notification-spec/}
+    {org.freedesktop.Notifications} D-Bus interface.
+*/
+
 
 Notification::Notification(QObject *parent, Notification::ConstructionMode mode)
     : QObject(parent)

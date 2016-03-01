@@ -689,13 +689,11 @@ QString ApplicationInstaller::startPackageInstallation(const QString &installati
 }
 
 /*!
-    \qmlmethod bool ApplicationInstaller::acknowledgePackageInstallation(string taskId)
+    \qmlmethod void ApplicationInstaller::acknowledgePackageInstallation(string taskId)
 
     Calling this function enables the installer to complete the installation task identified by \a
     taskId. Normally this function will be called after the signal requestingInstallationAcknowledge
     was received and the user and/or the program logic decided to go ahead with this installation.
-
-    Returns \c true if \a taskId references a valid installation task or \c false otherwise.
 
     \sa startPackageInstallation()
  */

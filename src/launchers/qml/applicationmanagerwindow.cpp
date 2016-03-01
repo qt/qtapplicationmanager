@@ -124,24 +124,10 @@ public:
 */
 
 /*!
-    \qmlproperty string ApplicationManagerWindow::startArgument
-
-    This property holds start argument, supplied to the application by the application-manager.
-    This could in theory be anything, but will practically most likely be an URL to a document that
-    should be shown by the application. This is especially true, if the application was activated
-    via the application-manager's openUrl() MIME-type mechanism.
-*/
-
-/*!
     \qmlproperty real ApplicationManagerWindow::fps
 
     This property holds the current frames-per-second value: in ideal cases the value should be
     exactly \c 60 when animations are running and \c 0 when the application is idle.
-*/
-
-/*
-    \fn void ApplicationManagerWindow::setStartArgument(const QString& arg)
-    \internal
 */
 
 

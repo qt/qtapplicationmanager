@@ -29,10 +29,9 @@
 ****************************************************************************/
 
 /*!
-  \page qml-elements.html
-  \target elements
-  \title QML Elements
-  \brief A listing of standard QML elements.
+  \page qml-elements-apps.html
+  \title QML elements Applications
+  \brief A listing of standard QML elements used in applications.
 
 These are the functionally grouped lists of QML elements as part of \c
 io.qt.ApplicationManager.
@@ -44,20 +43,16 @@ elements, thereby creating a parent-child relationship between the two elements.
 
 \section1 QML Singletons
 \list
-\li \l {io.qt.ApplicationManager::ApplicationManager}{ApplicationManager}
-    - The application model and controller
-\li \l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
-    - The package installation/removal/update part of the application-manager.
-\li \l {io.qt.ApplicationManager::WindowManager}{WindowManager}
-    - The window model and controller
-\li \l {io.qt.ApplicationManager::NotificationManager}{NotificationManager}
-    - The notification model, which receives freedesktop.org compliant notification requests
+\li \l {io.qt.ApplicationManager::ApplicationInterface}{ApplicationInterface}
+    The application interface represents the private IPC between the app and the application-manager.
 \endlist
 
 \section1 Basic QML Elements
 \list
 \li \l {io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow}
-    - The window element that is required in a multi-process environment
+    The window element that is required in a multi-process environment
+\li \l {io.qt.ApplicationManager::Notification}{Notification}
+    Abstraction for freedesktop.org Notifications on the client side.
 \endlist
 
 */

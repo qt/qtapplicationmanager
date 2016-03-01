@@ -1,0 +1,163 @@
+/****************************************************************************
+**
+** Copyright (C) 2015 Pelagicore AG
+** Contact: http://www.qt.io/ or http://www.pelagicore.com/
+**
+** This file is part of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:GPL3-PELAGICORE$
+** Commercial License Usage
+** Licensees holding valid commercial Pelagicore Application Manager
+** licenses may use this file in accordance with the commercial license
+** agreement provided with the Software or, alternatively, in accordance
+** with the terms contained in a written agreement between you and
+** Pelagicore. For licensing terms and conditions, contact us at:
+** http://www.pelagicore.com.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3 as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPLv3 included in the
+** packaging of this file. Please review the following information to
+** ensure the GNU General Public License version 3 requirements will be
+** met: http://www.gnu.org/licenses/gpl-3.0.html.
+**
+** $QT_END_LICENSE$
+**
+** SPDX-License-Identifier: GPL-3.0
+**
+****************************************************************************/
+
+/*!
+
+\page installation.html
+\title Installation
+
+\chapter Prerequisites
+
+In order to build the application-manager with all its features, you need to provide the following
+components:
+
+\list
+    \li \b Qt 5.5 or higher
+    \li \b libyaml 1.6 or higher.
+    \li \b openssl 1.0 or higher \e{- Linux only}. At compile time only the headers need to be
+           available. The needed libraries will be dynamically loaded at runtime.
+    \li \b libarchive 3.0 or higher \e{- only if you need the installer functionality}.
+\endlist
+
+On a Debian based systems, this command should install all the required packages:
+\code
+apt-get install libyaml-dev libarchive-dev libssl-dev
+\endcode
+
+\note On platforms without \c pkg-config (e.g. Windows and Mac OS X) as well as on platforms lacking
+one of the dependencies, the bundled versions of these libraries from the \c 3rdparty folder will
+automatically be used instead. Make sure you are aware of the licensing implications, since these bundled
+3rdparty libs will be linked in as static libraries! This option is not meant for production, but for
+development and testing environments only.
+
+
+\chapter Building
+
+The application-manager is using \c qmake for its build-system. This means that the basic
+installation steps are:
+\code
+qmake && make && make install
+\endcode
+
+There are various options that can be given to \c qmake to tailor the build to your needs:
+
+\table
+\header
+  \li Option
+  \li Description
+\row
+  \li \c{-config force-libcrypto}
+  \li Force building against OpenSSL, even on Windows and Mac OS X.
+\row
+  \li \c{-config libcrypto-includes}
+  \li OpenSSL include directory, if not building against a packaged version.
+\row
+  \li \c{-config libcrypto-defines}
+  \li Additional OpenSSL defines, if not building against a packaged version.
+\row
+  \li \c{-config force-singleprocess}
+  \li Force a single-process build, even if Qt's Wayland \c compositor module is available.
+\row
+  \li \c{-config force-multiprocess}
+  \li Force a multi-process build - this will break if Qt's Wayland \c compositor module is not available.
+\row
+  \li \c{-config enable-tests}
+  \li Enable building of all unit-tests.
+\row
+  \li \c{-config disable-installer}
+  \li Disable the installer part.
+\row
+  \li \c{-config install-prefix=<path>}
+  \li Uses \c path as the base directory for \c{make install}. Defaults to \c{/usr/local}.
+\row
+  \li \c{-config hardware-id=<id>}
+  \li Compiles in \c id as a hard-coded hardware-id (used for store-signed packages, defaults to
+      the MAC address of the first ethernet device).
+\row
+  \li \c{-config hardware-id-from-file=<file>}
+  \li The hardware-id will be read from the specified \c file at runtime (used for store-signed
+      packages, defaults to the MAC address of the first ethernet device).
+\row
+  \li \c{-config systemd-workaround}
+  \li Paramount if you are running systemd and plan on supporting SD-Card installations. Works
+      around systemd interfering with loopback mounts.
+\endtable
+
+All executables (including the unit-tests) can be found in the build folder's \c bin directory after
+compiling.
+
+\chapter Generating Code-Coverage data
+
+Instead of doing a normal build, you can also create a coverage build by running \c{make coverage}.
+Using a build like this enables you to generate HTML coverage reports simply by executing:
+
+\code
+make check-coverage
+\endcode
+or
+\code
+make check-branch-coverage
+\endcode
+
+in the build directory. The command-line output will tell you the url to the generated report.
+
+\chapter System setup
+
+The runtime configuration of the application-manager is done through command-line switches and
+one or more configuration files.
+
+Normally the basic configuration is done via two separate config files:
+one for target system specific setup and one for system-UI specific settings. The
+default location for the system specific part is \c{/opt/am}. A standard
+setup is shipped with the application-manager in the \c{template-opt} directory.
+You can either stick with the default:
+
+\code
+sudo cp -r template-opt/am /opt
+sudo chown $(whoami) /opt/am -R
+\endcode
+
+or you could copy the contents of \c{template-opt} somewhere else; be sure to
+edit the contained \c{config.yaml} file though, to reflect the changed paths.
+
+Once this is setup, you should add a file called \c{am-config.yaml} to your system-UI
+with UI specific settings (e.g. QML import path, path to built-in apps)
+
+When everything is in place, you can start the application-manager:
+\code
+cd /path/to/system-ui
+appman -c /opt/am/config.yaml -c am-config.yaml -r --verbose main.qml
+\endcode
+
+
+\c{-r} makes sure to recreate the apps database and \c{--verbose} will give you verbose output,
+which is quite helpful when first setting up the environment.
+
+*/

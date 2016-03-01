@@ -3,10 +3,11 @@ TEMPLATE = subdirs
 
 load(am-config)
 
-deployer.files = application-deployer
+deployer.files = appman-deployer
 deployer.path = $$INSTALL_PREFIX/bin/
 
 INSTALLS = deployer
 
 OTHER_FILES += \
-    application-deployer
+    appman-deployer \
+    deployer.qdoc \

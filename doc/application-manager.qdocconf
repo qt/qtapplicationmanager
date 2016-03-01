@@ -6,21 +6,21 @@ headerdirs = \
     ../src/manager \
     ../src/manager-lib \
     ../src/installer-lib \
+    ../src/notification-lib \
     ../src/launchers/qml \
 
 sourcedirs = \
+    . \
     ../src/manager \
     ../src/manager-lib \
     ../src/installer-lib \
+    ../src/notification-lib \
     ../src/launchers/qml \
+    ../src/tools/packager \
+    ../src/tools/deployer \
+    ../src/tools/controller \
 
 imagedirs = images
-
-sources = \
-    index.qdoc \
-    elements.qdoc \
-    manifest.qdoc \
-
 
 sourceencoding = UTF-8
 outputencoding = UTF-8

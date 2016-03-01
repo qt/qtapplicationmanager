@@ -1,0 +1,64 @@
+/****************************************************************************
+**
+** Copyright (C) 2015 Pelagicore AG
+** Contact: http://www.qt.io/ or http://www.pelagicore.com/
+**
+** This file is part of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:GPL3-PELAGICORE$
+** Commercial License Usage
+** Licensees holding valid commercial Pelagicore Application Manager
+** licenses may use this file in accordance with the commercial license
+** agreement provided with the Software or, alternatively, in accordance
+** with the terms contained in a written agreement between you and
+** Pelagicore. For licensing terms and conditions, contact us at:
+** http://www.pelagicore.com.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3 as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPLv3 included in the
+** packaging of this file. Please review the following information to
+** ensure the GNU General Public License version 3 requirements will be
+** met: http://www.gnu.org/licenses/gpl-3.0.html.
+**
+** $QT_END_LICENSE$
+**
+** SPDX-License-Identifier: GPL-3.0
+**
+****************************************************************************/
+
+/*!
+  \page qml-elements-sysui.html
+  \title QML elements System-UI
+  \brief A listing of standard QML elements used in the System-UI.
+
+These are the functionally grouped lists of QML elements as part of \c
+io.qt.ApplicationManager.
+
+QML Singletons need not to be declared, but can be referenced by just their element name.
+
+Basic QML Elements are declared with the their name and two curly braces. Elements may be nested in
+elements, thereby creating a parent-child relationship between the two elements.
+
+\section1 QML Singletons
+\list
+\li \l {io.qt.ApplicationManager::ApplicationManager}{ApplicationManager}
+    The application model and controller
+\li \l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
+    The package installation/removal/update part of the application-manager.
+\li \l {io.qt.ApplicationManager::WindowManager}{WindowManager}
+    The window model and controller
+\li \l {io.qt.ApplicationManager::NotificationManager}{NotificationManager}
+    The notification model, which receives freedesktop.org compliant notification requests
+\li \l {io.qt.ApplicationManager::SystemMonitor}{SystemMonitor}
+    The system monitoring model, giving access to a range of measurements, e.g. cpu-load, FPS, etc.
+\endlist
+
+\section1 Basic QML Elements
+\list
+\li \l {io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow}
+    The window element that is required in a multi-process environment.
+\endlist
+
+*/

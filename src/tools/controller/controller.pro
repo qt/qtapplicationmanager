@@ -22,3 +22,6 @@ SOURCES +=  \
 DBUS_INTERFACES += \
     ../../dbus/io.qt.applicationinstaller.xml \
     ../../dbus/io.qt.applicationmanager.xml
+
+OTHER_FILES += \
+    controller.qdoc \

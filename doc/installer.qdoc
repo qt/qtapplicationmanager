@@ -30,39 +30,23 @@
 
 /*!
 
-\page index.html
-\keyword Pelagicore Application Manager Reference Documentation
-\indexpage
-\title Pelagicore Application-Manager
+\page installer.html
+\title The Application Installer
 
-\chapter Overview
+\chapter Dynamically installing, removing and updating applications
 
-The application-manager binary (\c appman) is a headless daemon by itself. A suitable QML file
-needs to be supplied on the command-line or via a config file at startup, which will act as a
-compositing window manager using the APIs that are exported from the C++ side.
+After applications have been packaged by the \c application-packager, they can be installed by the
+application-manager at runtime. There are two interfaces for this functionality:
 
-\chapter Important topics
 \list
-    \li \l{Installation}
-    \li \l{Configuration}
-    \li \l{How to write a System-UI}
-    \li \l{How to write applications}
-    \li \l{The Application Installer}
+    \li a Qml interface which can be used within the application-manager process and
+    \li a D-Bus interface which can be used by any process which is allowed to talk to the
+        application-manager's \c ApplicationInstaller interface.
 \endlist
 
-\chapter Tools
-\list
-    \li \l{Packager}
-    \li \l{Controller}
-    \li \l{Deployer}
-\endlist
+Both interfaces are very similar and are both documented in the \l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
 
-\chapter Reference
-\list
-    \li \l{Manifest definition}{info.yaml}
-    \li \l{QML elements System-UI}
-    \li \l{QML elements Applications}
-\endlist
-
+\note A prerequisite for dynamically installed application packages is a valid \l {Installation Locations}{installation location}
+configuration for the application-manager.
 
 */

@@ -45,11 +45,15 @@ public:
     virtual QString applicationId() const = 0;
     virtual QVariantMap additionalConfiguration() const = 0;
 
+#ifdef Q_QDOC
+    Q_INVOKABLE Notification *createNotification();
+#endif
+
 signals:
     Q_SCRIPTABLE void quit();
     Q_SCRIPTABLE void memoryLowWarning();
 
-    Q_SCRIPTABLE void openDocument(const QString &url);
+    Q_SCRIPTABLE void openDocument(const QString &documentUrl);
 
 protected:
     ApplicationInterface(QObject *parent)

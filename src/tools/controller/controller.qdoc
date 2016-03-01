@@ -29,40 +29,4 @@
 ****************************************************************************/
 
 /*!
-
-\page index.html
-\keyword Pelagicore Application Manager Reference Documentation
-\indexpage
-\title Pelagicore Application-Manager
-
-\chapter Overview
-
-The application-manager binary (\c appman) is a headless daemon by itself. A suitable QML file
-needs to be supplied on the command-line or via a config file at startup, which will act as a
-compositing window manager using the APIs that are exported from the C++ side.
-
-\chapter Important topics
-\list
-    \li \l{Installation}
-    \li \l{Configuration}
-    \li \l{How to write a System-UI}
-    \li \l{How to write applications}
-    \li \l{The Application Installer}
-\endlist
-
-\chapter Tools
-\list
-    \li \l{Packager}
-    \li \l{Controller}
-    \li \l{Deployer}
-\endlist
-
-\chapter Reference
-\list
-    \li \l{Manifest definition}{info.yaml}
-    \li \l{QML elements System-UI}
-    \li \l{QML elements Applications}
-\endlist
-
-
 */

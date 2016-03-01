@@ -1,0 +1,81 @@
+/****************************************************************************
+**
+** Copyright (C) 2015 Pelagicore AG
+** Contact: http://www.qt.io/ or http://www.pelagicore.com/
+**
+** This file is part of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:GPL3-PELAGICORE$
+** Commercial License Usage
+** Licensees holding valid commercial Pelagicore Application Manager
+** licenses may use this file in accordance with the commercial license
+** agreement provided with the Software or, alternatively, in accordance
+** with the terms contained in a written agreement between you and
+** Pelagicore. For licensing terms and conditions, contact us at:
+** http://www.pelagicore.com.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3 as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPLv3 included in the
+** packaging of this file. Please review the following information to
+** ensure the GNU General Public License version 3 requirements will be
+** met: http://www.gnu.org/licenses/gpl-3.0.html.
+**
+** $QT_END_LICENSE$
+**
+** SPDX-License-Identifier: GPL-3.0
+**
+****************************************************************************/
+
+/*!
+
+\page appman-packager.html
+\title Packager
+
+The \c{application-packager} is a command-line utility that is used by the developer to manage installation
+packages. At the moment the application-manager supports unsigned packages, packages that are signed by the
+developer only and packages that are signed by an app-store. The \c{application-packager} can create all
+these variations with the following commands:
+
+\table
+\header
+    \li Action
+    \li Options
+    \li Description
+\row
+    \li \span {style="white-space: nowrap"} {\c create-package}
+    \li \c{<package> <source directory>}
+    \li Create a new package named \a package from the application in \a{source directory}. The
+        directory needs to at least contain an \l{Manifest definition}{\c info.yaml} as well as an
+        \c{icon.png} file.
+        The tool will do a sanity-check on the \c info.yaml file before actually creating the
+        package.
+\row
+    \li \span {style="white-space: nowrap"} {\c dev-sign-package}
+    \li \c{<package> <signed-package> <certificate> <password>}
+    \li Takes the input \c package, adds a developer signature and writes the output \c signed-package.
+        You need to supply a \c certificate in P12 format together with a matching \c password.
+\row
+    \li \span {style="white-space: nowrap"} {\c dev-verify-package}
+    \li \c{<package> <ca-certificates...>}
+    \li Reads the input \c package and tries to verify the developer signature using the given \c
+        ca-certificates.
+\row
+    \li \span {style="white-space: nowrap"} {\c store-sign-package}
+    \li \c{<package> <signed-package> <certificate> <password> [device-id]}
+    \li Takes the input \c package, adds a store signature and writes the output \c signed-package.
+        You need to supply a \c certificate in P12 format together with a matching \c password. If
+        you specify the optional \c device-id, the resulting package can only be installed on this
+        specific device.
+\row
+    \li \span {style="white-space: nowrap"} {\c store-verify-package}
+    \li \c{<package> <ca-certificates...> <device-id>}
+    \li Reads the input \c package and tries to verify the store signature using the given \c
+        ca-certificates.
+
+\endtable
+
+The application-packager naturally supports the standard Unix \c{--help} command-line option.
+
+*/

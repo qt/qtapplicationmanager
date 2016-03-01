@@ -1,0 +1,75 @@
+/****************************************************************************
+**
+** Copyright (C) 2015 Pelagicore AG
+** Contact: http://www.qt.io/ or http://www.pelagicore.com/
+**
+** This file is part of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:GPL3-PELAGICORE$
+** Commercial License Usage
+** Licensees holding valid commercial Pelagicore Application Manager
+** licenses may use this file in accordance with the commercial license
+** agreement provided with the Software or, alternatively, in accordance
+** with the terms contained in a written agreement between you and
+** Pelagicore. For licensing terms and conditions, contact us at:
+** http://www.pelagicore.com.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3 as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPLv3 included in the
+** packaging of this file. Please review the following information to
+** ensure the GNU General Public License version 3 requirements will be
+** met: http://www.gnu.org/licenses/gpl-3.0.html.
+**
+** $QT_END_LICENSE$
+**
+** SPDX-License-Identifier: GPL-3.0
+**
+****************************************************************************/
+
+/*!
+
+\page howto-apps.html
+\title How to write applications
+
+Writing an application that can be run as a client within the application-manager is not that
+much different from writing a stand-alone QML application. It basically boils down to three
+additional tasks:
+
+\list 1
+
+    \li If you write a QML application, make the root element of your QML scene a
+    \l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow} (or derive your own
+    custom root item from it).
+
+    \li Provide a valid \l{Manifest definition}{info.yaml} file.
+
+    \li Make the application-manager aware of your application by running \c{appman
+    --recreate-database}.
+
+\endlist
+
+\section2 The root element
+
+Making the root element of your QML application a
+\l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow} is only mandatory if you
+ever want to run in single-process mode (without Wayland). Please see the
+\l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow documentaton} for more
+information.
+
+\section2 The manifest and updating the database
+
+The \l{Manifest definition} documentation has all the information to produce a minimal \c info.yaml
+file that should get you going.
+
+Since recursively finding and parsing \c info.yaml files for potentially hundredes of apps can
+become a very time consuming task that would severly slow down the application-manager's startup,
+all manifest files are cached in a binary database. In order to make changes to an \c info.yaml
+file known to the application-manager, you have to force a rebuild of this database by calling
+\c{appman --recreate-database}.
+
+\note Dynamically adding/updating/removing single applications is supported via the
+\l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller} interface.
+
+*/

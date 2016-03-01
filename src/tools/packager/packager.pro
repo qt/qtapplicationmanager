@@ -27,4 +27,6 @@ HEADERS += \
     packager.h
 
 OTHER_FILES += \
-    README
+    README \
+    packager.qdoc \
+

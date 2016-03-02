@@ -33,6 +33,8 @@
 #include <QFile>
 #include <QHash>
 #include <QTimerEvent>
+#include <QElapsedTimer>
+#include <vector>
 
 #include "systemmonitor.h"
 #if defined(Q_OS_LINUX)
@@ -51,9 +53,71 @@ enum Roles
     CpuLoad = Qt::UserRole + 5000,
     MemoryUsed,
     MemoryTotal,
-    IoLoad
+    IoLoad,
+
+    AverageFps = Qt::UserRole + 6000,
+    MinimumFps,
+    MaximumFps,
+    FpsJitter
 };
 }
+class FrameTimer
+{
+public:
+    FrameTimer()
+    { }
+
+    void newFrame()
+    {
+        int frameTime = m_timer.isValid() ? qMax(1, int(m_timer.nsecsElapsed() / 1000)) : IdealFrameTime;
+        m_timer.restart();
+
+        m_count++;
+        m_sum += frameTime;
+        m_min = qMin(m_min, frameTime);
+        m_max = qMax(m_max, frameTime);
+        m_jitter += qAbs(frameTime - IdealFrameTime);
+    }
+
+    inline void reset()
+    {
+        m_count = m_sum = m_max = m_jitter = 0;
+        m_min = INT_MAX;
+    }
+
+    inline qreal averageFps() const
+    {
+        return m_sum ? qreal(1000000) * m_count / m_sum : qreal(0);
+    }
+
+    inline qreal minimumFps() const
+    {
+        return m_max ? qreal(1000000) / m_max : qreal(0);
+    }
+
+    inline qreal maximumFps() const
+    {
+        return m_min ? qreal(1000000) / m_min : qreal(0);
+    }
+
+    inline qreal jitterFps() const
+    {
+        return m_jitter ? qreal(1000000) * m_count / m_jitter : qreal(0);
+
+    }
+
+private:
+    int m_count = 0;
+    int m_sum = 0;
+    int m_min = INT_MAX;
+    int m_max = 0;
+    int m_jitter = 0;
+
+    QElapsedTimer m_timer;
+
+    static const int IdealFrameTime = 16666; // usec - could be made configurable via an env variable
+};
+
 
 class SystemMonitorPrivate : public QObject
 {
@@ -78,19 +142,27 @@ public:
     bool hasMemoryCriticalWarning = false;
     MemoryThreshold *memoryThreshold = 0;
 
+    // fps
+    QHash<QObject *, FrameTimer *> frameTimer;
+
     // reporting
     MemoryReader *memory = 0;
     CpuReader *cpu = 0;
     QHash<QString, IoReader *> ioHash;
-    int reportingInterval = 100;
+    int reportingInterval = -1;
     int reportingRange = 100 * 100;
     int reportingTimerId = 0;
     bool reportCpu = false;
     bool reportMem = false;
+    bool reportFps = false;
 
     struct Report
     {
         qreal cpuLoad = 0;
+        qreal fpsAvg = 0;
+        qreal fpsMin = 0;
+        qreal fpsMax = 0;
+        qreal fpsJitter = 0;
         quint64 memoryUsed = 0;
         QVariantMap ioLoad;
     };
@@ -103,7 +175,7 @@ public:
     void setupTimer(int newInterval = -1)
     {
         bool useNewInterval = (newInterval != -1) && (newInterval != reportingInterval);
-        bool shouldBeOn = reportCpu | reportMem | !ioHash.isEmpty();
+        bool shouldBeOn = reportCpu | reportMem | reportFps | !ioHash.isEmpty();
 
         if (useNewInterval)
             reportingInterval = newInterval;
@@ -152,6 +224,21 @@ public:
             }
             if (!ioHash.isEmpty())
                 roles.append(IoLoad);
+
+            if (reportFps) {
+                if (FrameTimer *ft = frameTimer.value(nullptr)) {
+                    r.fpsAvg = ft->averageFps();
+                    r.fpsMin = ft->minimumFps();
+                    r.fpsMax = ft->maximumFps();
+                    r.fpsJitter = ft->jitterFps();
+                    ft->reset();
+                    emit q->fpsReportingChanged(r.fpsAvg, r.fpsMin, r.fpsMax, r.fpsJitter);
+                    roles.append(AverageFps);
+                    roles.append(MinimumFps);
+                    roles.append(MaximumFps);
+                    roles.append(FpsJitter);
+                }
+            }
 
             // ring buffer handling
             // optimization: instead of sending a dataChanged for every item, we always move the
@@ -244,6 +331,10 @@ SystemMonitor::SystemMonitor()
     d->roleNames.insert(MemoryUsed, "memoryUsed");
     d->roleNames.insert(MemoryTotal, "memoryTotal");
     d->roleNames.insert(IoLoad, "ioLoad");
+    d->roleNames.insert(AverageFps, "averageFps");
+    d->roleNames.insert(MinimumFps, "minimumFps");
+    d->roleNames.insert(MaximumFps, "maximumFps");
+    d->roleNames.insert(FpsJitter, "fpsJitter");
 
     d->updateModel();
 }
@@ -287,6 +378,14 @@ QVariant SystemMonitor::data(const QModelIndex &index, int role) const
         return totalMemory();
     case IoLoad:
         return r.ioLoad;
+    case AverageFps:
+        return r.fpsAvg;
+    case MinimumFps:
+        return r.fpsMin;
+    case MaximumFps:
+        return r.fpsMax;
+    case FpsJitter:
+        return r.fpsJitter;
     }
     return QVariant();
 }
@@ -393,13 +492,14 @@ bool SystemMonitor::isIdle() const
     return d->isIdle;
 }
 
-void SystemMonitor::enableMemoryReporting(bool enabled)
+void SystemMonitor::setMemoryReportingEnabled(bool enabled)
 {
     Q_D(SystemMonitor);
 
     if (enabled != d->reportMem) {
         d->reportMem = enabled;
         d->setupTimer();
+        emit memoryReportingEnabledChanged();
     }
 }
 
@@ -410,13 +510,14 @@ bool SystemMonitor::isMemoryReportingEnabled() const
     return d->reportMem;
 }
 
-void SystemMonitor::enableCpuLoadReporting(bool enabled)
+void SystemMonitor::setCpuLoadReportingEnabled(bool enabled)
 {
     Q_D(SystemMonitor);
 
     if (enabled != d->reportCpu) {
         d->reportCpu = enabled;
         d->setupTimer();
+        emit cpuLoadReportingEnabledChanged();
     }
 }
 
@@ -458,13 +559,30 @@ QStringList SystemMonitor::ioLoadReportingDevices() const
     return d->ioHash.keys();
 }
 
+void SystemMonitor::setFpsReportingEnabled(bool enabled)
+{
+    Q_D(SystemMonitor);
+
+    if (enabled != d->reportFps) {
+        d->reportFps = enabled;
+        d->setupTimer();
+        emit fpsReportingEnabledChanged();
+    }
+}
+
+bool SystemMonitor::isFpsReportingEnabled() const
+{
+    Q_D(const SystemMonitor);
+
+    return d->reportFps;
+}
+
 void SystemMonitor::setReportingInterval(int intervalInMSec)
 {
     Q_D(SystemMonitor);
 
     if (d->reportingInterval != intervalInMSec && intervalInMSec > 0) {
-        d->reportingInterval = intervalInMSec;
-        d->setupTimer();
+        d->setupTimer(intervalInMSec);
         d->updateModel();
     }
 }
@@ -491,4 +609,25 @@ int SystemMonitor::reportingRange() const
     Q_D(const SystemMonitor);
 
     return d->reportingRange;
+}
+
+/*! \internal
+    report a frame swap for any window. \a item is \c 0 for the system-ui
+*/
+void SystemMonitor::reportFrameSwap(QObject *item)
+{
+    Q_D(SystemMonitor);
+
+    if (!d->reportFps)
+        return;
+
+    FrameTimer *frameTimer = d->frameTimer.value(item);
+    if (!frameTimer) {
+        frameTimer = new FrameTimer();
+        d->frameTimer.insert(item, frameTimer);
+        if (item)
+            connect(item, &QObject::destroyed, this, [d](QObject *o) { delete d->frameTimer.take(o); });
+    }
+
+    frameTimer->newFrame();
 }

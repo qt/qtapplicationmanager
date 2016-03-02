@@ -54,6 +54,8 @@
 #include "inprocesswindow.h"
 #include "dbus-utilities.h"
 #include "qml-utilities.h"
+#include "systemmonitor.h"
+
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
     do { \
@@ -382,6 +384,14 @@ WindowManager::WindowManager(QQuickView *view, bool forceSingleProcess, const QS
     d->roleNames.insert(IsFullscreen, "isFullscreen");
 
     d->watchdogEnabled = true;
+
+    connect(SystemMonitor::instance(), &SystemMonitor::fpsReportingEnabledChanged, this, [this]() {
+        if (SystemMonitor::instance()->isFpsReportingEnabled()) {
+            connect(d->views.at(0), &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
+        } else {
+            disconnect(d->views.at(0), &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
+        }
+    });
 }
 
 WindowManager::~WindowManager()
@@ -751,6 +761,11 @@ void WindowManager::windowPropertyChanged(const QString &name, const QVariant &v
     if (!win)
         return;
     emit surfaceWindowPropertyChanged(win->surfaceItem(), name, value);
+}
+
+void WindowManager::reportFps()
+{
+    SystemMonitor::instance()->reportFrameSwap(nullptr);
 }
 
 bool WindowManager::setDBusPolicy(const QVariantMap &yamlFragment)

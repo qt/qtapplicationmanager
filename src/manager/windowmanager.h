@@ -111,6 +111,7 @@ public:
 
 private slots:
     void windowPropertyChanged(const QString &name, const QVariant &value);
+    void reportFps();
 
 #ifndef AM_SINGLEPROCESS_MODE
 private slots:

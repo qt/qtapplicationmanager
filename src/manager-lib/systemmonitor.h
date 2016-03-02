@@ -46,8 +46,9 @@ class SystemMonitor : public QAbstractListModel
     Q_PROPERTY(qreal idleLoadAverage READ idleLoadAverage WRITE setIdleLoadAverage)
     Q_PROPERTY(int totalMemory READ totalMemory CONSTANT)
     Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
-    Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE enableMemoryReporting)
-    Q_PROPERTY(bool cpuLoadReportingEnabled READ isCpuLoadReportingEnabled WRITE enableCpuLoadReporting)
+    Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled NOTIFY memoryReportingEnabledChanged)
+    Q_PROPERTY(bool cpuLoadReportingEnabled READ isCpuLoadReportingEnabled WRITE setCpuLoadReportingEnabled NOTIFY cpuLoadReportingEnabledChanged)
+    Q_PROPERTY(bool fpsReportingEnabled READ isFpsReportingEnabled WRITE setFpsReportingEnabled NOTIFY fpsReportingEnabledChanged)
     Q_PROPERTY(bool idle READ isIdle NOTIFY idleChanged)
 
 public:
@@ -76,21 +77,27 @@ public:
     Q_INVOKABLE qreal memoryLowWarningThreshold() const;
     Q_INVOKABLE qreal memoryCriticalWarningThreshold() const;
 
-    void enableMemoryReporting(bool enabled);
+    void setMemoryReportingEnabled(bool enabled);
     bool isMemoryReportingEnabled() const;
 
-    void enableCpuLoadReporting(bool enabled);
+    void setCpuLoadReportingEnabled(bool enabled);
     bool isCpuLoadReportingEnabled() const;
 
     Q_INVOKABLE bool addIoLoadReporting(const QString &deviceName);
     Q_INVOKABLE void removeIoLoadReporting(const QString &deviceName);
     Q_INVOKABLE QStringList ioLoadReportingDevices() const;
 
+    void setFpsReportingEnabled(bool enabled);
+    bool isFpsReportingEnabled() const;
+
     void setReportingInterval(int intervalInMSec);
     int reportingInterval() const;
 
     void setReportingRange(int rangeInMSec);
     int reportingRange() const;
+
+    // semi-public API: used for the WindowManager to report FPS
+    void reportFrameSwap(QObject *item);
 
 signals:
     void countChanged();
@@ -101,6 +108,11 @@ signals:
     void memoryReportingChanged(quint64 total, quint64 used);
     void cpuLoadReportingChanged(int interval, qreal load);
     void ioLoadReportingChanged(const QString &device, int interval, qreal load);
+    void fpsReportingChanged(qreal average, qreal minimum, qreal maximum, qreal jitter);
+
+    void memoryReportingEnabledChanged();
+    void cpuLoadReportingEnabledChanged();
+    void fpsReportingEnabledChanged();
 
 private:
     SystemMonitor();

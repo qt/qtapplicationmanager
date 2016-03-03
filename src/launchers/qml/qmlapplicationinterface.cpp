@@ -28,6 +28,8 @@
 **
 ****************************************************************************/
 
+#include <unistd.h>
+
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusMessage>
@@ -48,17 +50,30 @@ QmlApplicationInterface::QmlApplicationInterface(const QString &dbusConnectionNa
     if (QmlApplicationInterface::s_instance)
         qCritical("ERROR: only one instance of QmlApplicationInterface is allowed");
     s_instance = this;
-
-    m_runtimeIf = new QDBusInterface(qSL(""), qSL("/RuntimeInterface"), qSL("io.qt.ApplicationManager.RuntimeInterface"),
-                                     m_connection, this);
-    m_applicationIf = new QDBusInterface(qSL(""), qSL("/ApplicationInterface"), qSL("io.qt.ApplicationManager.ApplicationInterface"),
-                                         m_connection, this);
-    m_notifyIf = new QDBusInterface(qSL("org.freedesktop.Notifications"), qSL("/org/freedesktop/Notifications"), qSL("org.freedesktop.Notifications"),
-                                    QDBusConnection::sessionBus(), this);
 }
 
 bool QmlApplicationInterface::initialize()
 {
+    auto tryConnect = [](const QString &service, const QString &path, const QString &interfaceName,
+                         const QDBusConnection &conn, QObject *parent) -> QDBusInterface * {
+        for (int i = 0; i < 10; ++i) {
+            QDBusInterface *iface = new QDBusInterface(service, path, interfaceName, conn, parent);
+            if (!iface->lastError().isValid())
+                return iface;
+            delete iface;
+            usleep(1000);
+        }
+        return nullptr;
+    };
+
+    m_runtimeIf = tryConnect(qSL(""), qSL("/RuntimeInterface"), qSL("io.qt.ApplicationManager.RuntimeInterface"),
+                                     m_connection, this);
+    m_applicationIf = tryConnect(qSL(""), qSL("/ApplicationInterface"), qSL("io.qt.ApplicationManager.ApplicationInterface"),
+                                         m_connection, this);
+    m_notifyIf = tryConnect(qSL("org.freedesktop.Notifications"), qSL("/org/freedesktop/Notifications"), qSL("org.freedesktop.Notifications"),
+                                    QDBusConnection::sessionBus(), this);
+
+
     if (!m_applicationIf->isValid()) {
         qCritical("ERROR: ApplicationInterface on D-Bus is not valid: %s",
                   qPrintable(m_applicationIf->lastError().message()));

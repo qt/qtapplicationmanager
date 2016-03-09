@@ -107,7 +107,7 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
                        << "pid:" << m_process->processId() << ") exited with code:" << exitCode
                        << "status:" << status;
 
-    m_shutingDown = m_launched = m_launchWhenReady = m_dbusConnection = false;
+    m_shutingDown = m_launched = m_launchWhenReady = m_started = m_dbusConnection = false;
 
     // unregister all extension interfaces
     foreach (DBusProxyObject *dpo, ApplicationManager::instance()->applicationInterfaceExtensions()) {
@@ -191,12 +191,15 @@ void NativeRuntime::stop(bool forceKill)
 }
 
 void NativeRuntime::onProcessStarted()
-{ }
+{
+    m_started = true;
+}
 
 void NativeRuntime::onProcessError(QProcess::ProcessError error)
 {
     Q_UNUSED(error)
-    shutdown(-1, QProcess::CrashExit);
+    if (!m_started)
+        shutdown(-1, QProcess::CrashExit);
 }
 
 void NativeRuntime::onProcessFinished(int exitCode, QProcess::ExitStatus status)

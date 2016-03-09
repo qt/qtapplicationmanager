@@ -108,7 +108,7 @@ private:
 
     QString m_document;
     bool m_shutingDown = false;
-
+    bool m_started = false;
     bool m_launchWhenReady = false;
     bool m_launched = false;
     bool m_dbusConnection = false;

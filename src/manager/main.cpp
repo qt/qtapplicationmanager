@@ -412,7 +412,7 @@ int main(int argc, char *argv[])
 #endif
 
         bool forceSingleProcess = true;
-#if !defined(AM_SINGLEPROCESS_MODE)
+#if !defined(AM_SINGLE_PROCESS_MODE)
         forceSingleProcess = configuration->forceSingleProcess();
 #endif
 

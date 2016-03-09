@@ -34,8 +34,8 @@ win32:LIBS += -luser32
 qtHaveModule(compositor):compositor = "old"
 else:qtHaveModule(waylandcompositor):compositor = "new"
 
-force-singleprocess|isEmpty(compositor) {
-    DEFINES *= AM_SINGLEPROCESS_MODE
+force-single-process|isEmpty(compositor) {
+    DEFINES *= AM_SINGLE_PROCESS_MODE
 } else:equals(compositor, "new") {
     QT *= waylandcompositor waylandcompositor-private
     !headless:HEADERS += waylandcompositor.h
@@ -57,6 +57,7 @@ HEADERS += \
     inprocesswindow.h \
     waylandwindow.h \
     windowmanager.h \
+    windowmanager_p.h \
 
 SOURCES += \
     main.cpp \

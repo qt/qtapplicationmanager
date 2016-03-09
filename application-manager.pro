@@ -17,11 +17,11 @@ load(am-config)
 !config_libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 !config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 
-force-singleprocess:force-multiprocess:error("You cannot both specify force-singleprocess and force-multiprocess")
+force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 qtHaveModule(compositor)|qtHaveModule(waylandcompositor)|headless { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
-force-singleprocess { check_multi = "no (force-singleprocess)" }
-force-multiprocess  { check_multi = "yes (force-multiprocess)" }
-force-multiprocess:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcompositor):error("You forced multi-process mode, but the QtCompositor module is not available")
+force-single-process { check_multi = "no (force-single-process)" }
+force-multi-process  { check_multi = "yes (force-multi-process)" }
+force-multi-process:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcompositor):error("You forced multi-process mode, but the QtCompositor module is not available")
 CONFIG(debug, debug|release) { check_debug = "debug" } else { check_debug = "release" }
 
 !isEmpty(AM_HARDWARE_ID_FF):check_hwid = "(from file) $$AM_HARDWARE_ID_FF"

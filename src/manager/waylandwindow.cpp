@@ -28,7 +28,7 @@
 **
 ****************************************************************************/
 
-#ifndef AM_SINGLEPROCESS_MODE
+#ifndef AM_SINGLE_PROCESS_MODE
 
 #include "waylandwindow.h"
 #include "applicationmanager.h"
@@ -123,4 +123,4 @@ QVariantMap WaylandWindow::windowProperties() const
     return QVariantMap();
 }
 
-#endif // AM_SINGLEPROCESS_MODE
+#endif // AM_SINGLE_PROCESS_MODE

@@ -36,7 +36,7 @@
 #include <QQmlEngine>
 #include <QVariant>
 
-#ifndef AM_SINGLEPROCESS_MODE
+#ifndef AM_SINGLE_PROCESS_MODE
 #  if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 #    include "waylandcompositor.h"
 #  else
@@ -297,7 +297,7 @@ WindowManager::WindowManager(QQuickView *view, bool forceSingleProcess, const QS
 {
     d->views << view;
 
-#if !defined(AM_SINGLEPROCESS_MODE)
+#if !defined(AM_SINGLE_PROCESS_MODE)
     if (!forceSingleProcess) {
         d->waylandCompositor = new WaylandCompositor(view, waylandSocketName, this);
 
@@ -326,7 +326,7 @@ WindowManager::WindowManager(QQuickView *view, bool forceSingleProcess, const QS
 
 WindowManager::~WindowManager()
 {
-#if !defined(AM_SINGLEPROCESS_MODE)
+#if !defined(AM_SINGLE_PROCESS_MODE)
     delete d->waylandCompositor;
 #endif
     delete d;
@@ -524,7 +524,7 @@ void WindowManager::surfaceItemAboutToClose(QQuickItem *item)
 }
 
 
-#if !defined(AM_SINGLEPROCESS_MODE)
+#if !defined(AM_SINGLE_PROCESS_MODE)
 
 void WindowManager::resize()
 {
@@ -613,7 +613,7 @@ void WindowManager::handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *sur
     }
 }
 
-#endif // !defined(AM_SINGLEPROCESS_MODE)
+#endif // !defined(AM_SINGLE_PROCESS_MODE)
 
 
 bool WindowManager::setSurfaceWindowProperty(QQuickItem *item, const QString &name, const QVariant &value)
@@ -771,7 +771,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                             if (w->isInProcess()) {
                                 onScreen = (w->surfaceItem()->window() == view);
                             }
-#ifndef AM_SINGLEPROCESS_MODE
+#ifndef AM_SINGLE_PROCESS_MODE
                             else if (const WaylandWindow *wlw = qobject_cast<const WaylandWindow *>(w)) {
 #  if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
                                 Q_UNUSED(wlw)
@@ -862,7 +862,7 @@ int WindowManagerPrivate::findWindowBySurfaceItem(QQuickItem *quickItem) const
     return -1;
 }
 
-#if !defined(AM_SINGLEPROCESS_MODE)
+#if !defined(AM_SINGLE_PROCESS_MODE)
 
 int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const
 {
@@ -873,4 +873,4 @@ int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSur
     return -1;
 }
 
-#endif // !defined(AM_SINGLEPROCESS_MODE)
+#endif // !defined(AM_SINGLE_PROCESS_MODE)

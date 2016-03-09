@@ -32,8 +32,8 @@ There are various options that can be applied to the `qmake` step to tailor the 
 | `-config force-libcrypto`       | Force building against OpenSSL, even on Windows and Mac OS X.
 | `-config libcrypto-includes`    | OpenSSL include directory, if not building against a packaged version.
 | `-config libcrypto-defines`     | Additional OpenSSL defines, if not building against a packaged version.
-| `-config force-singleprocess`   | Force a single-process build, even if Qt's Wayland `compositor` module is available.
-| `-config force-multiprocess`    | Force a multi-process build - this will break if Qt's Wayland `compositor` module is not available.
+| `-config force-single-process`  | Force a single-process build, even if Qt's Wayland `compositor` module is available.
+| `-config force-multi-process`   | Force a multi-process build - this will break if Qt's Wayland `compositor` module is not available.
 | `-config enable-tests`          | Enable building of all unit-tests.
 | `-config disable-installer`     | Disable the installer part.
 | `-config install-prefix=<path>` | Uses `path` as the base directory for `make install`. (default: `/usr/local`)

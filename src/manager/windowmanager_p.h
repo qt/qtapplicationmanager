@@ -42,7 +42,7 @@ public:
     int findWindowByApplication(const Application *app) const;
     int findWindowBySurfaceItem(QQuickItem *quickItem) const;
 
-#if !defined(AM_SINGLEPROCESS_MODE)
+#if !defined(AM_SINGLE_PROCESS_MODE)
     int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
 
     WaylandCompositor *waylandCompositor = nullptr;

@@ -32,7 +32,7 @@
 
 #include "window.h"
 
-#ifndef AM_SINGLEPROCESS_MODE
+#ifndef AM_SINGLE_PROCESS_MODE
 
 #include <QWaylandSurface>
 #include <QTimer>
@@ -68,4 +68,4 @@ private:
     WindowSurface *m_surface;
 };
 
-#endif // AM_SINGLEPROCESS_MODE
+#endif // AM_SINGLE_PROCESS_MODE

@@ -218,6 +218,7 @@ void StartupTimer::createReport() const
             }
         }
         fprintf(m_output, "\n");
+        fflush(m_output);
     }
 }
 

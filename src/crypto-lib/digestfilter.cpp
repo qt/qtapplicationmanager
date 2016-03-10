@@ -55,6 +55,8 @@ DigestFilter::DigestFilter(Type t, const QByteArray &hmacKey)
     d->isHmac = true;
     d->type = t;
     d->key = hmacKey;
+
+    Cryptography::initialize();
 }
 
 DigestFilter::~DigestFilter()

@@ -94,25 +94,30 @@ static void sigHupHandler(int sig)
 
 bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
 {
+    bool canSudo = false;
     int loopControlFd = -1;
 
 #if defined(Q_OS_LINUX)
-    bool fakeServer = (qgetenv("AM_FAKE_SUDO").toInt() == 1);
-
     // check for new style loopback device control
     loopControlFd = EINTR_LOOP(open("/dev/loop-control", O_RDWR));
-    if (!fakeServer && (loopControlFd < 0))
+    if (canSudo && (loopControlFd < 0))
         qCCritical(LogSystem)  << "WARNING: could not open /dev/loop-control, which is needed by the installer for SD-Card installations";
 
-    if (fakeServer) {
+    uid_t realUid = getuid();
+    uid_t effectiveUid = geteuid();
+    canSudo = (realUid == 0) || (effectiveUid == 0);
+
 #else
     Q_UNUSED(errorString)
     Q_UNUSED(dropPrivileges)
-
-    {
 #endif
+
+    if (!canSudo) {
         SudoServer::initialize(-1, loopControlFd);
         SudoClient::initialize(-1, SudoServer::instance());
+        qCCritical(LogSystem)  << "WARNING: for the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred)";
+        qCCritical(LogSystem)  << "         (using fallback implementation - you might experience permission errors on installer operations)";
+
         return true;
     }
 
@@ -122,22 +127,13 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
         errorString = &dummy;
     *errorString = QString();
 
-
-    uid_t realUid = getuid();
     gid_t realGid = getgid();
-    uid_t effectiveUid = geteuid();
     uid_t sudoUid = qgetenv("SUDO_UID").toInt();
 
     // run as normal user (e.g. 1000): uid == 1000  euid == 1000
     // run with binary suid-root:      uid == 1000  euid == 0
     // run with sudo (no suid-root):   uid == 0     euid == 0    $SUDO_UID == 1000
 
-    if (realUid != 0) {
-        if (effectiveUid != 0) {
-            *errorString = qL1S("Couldn't start the SudoServer! For the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred) -- for development, you can also run with AM_FAKE_SUDO=1");
-            return false;
-        }
-    }
     // treat sudo as special variant of a SUID executable
     if (realUid == 0 && effectiveUid == 0 && sudoUid != 0) {
         realUid = sudoUid;

@@ -50,7 +50,7 @@ public:
     void takeFocus() override;
     void ping() override;
     qint64 processId() const override;
-    QWindow *outputWindow() const;
+    QWindow *outputWindow() const override;
 
     QVariantMap windowProperties() const override;
     void setWindowProperty(const QString &n, const QVariant &v) override;

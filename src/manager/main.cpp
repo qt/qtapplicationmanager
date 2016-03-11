@@ -266,13 +266,17 @@ static QVector<const Application *> scanForApplications(const QDir &builtinAppsD
         foreach (const QString &appDirName, baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
             if (appDirName.endsWith('+') || appDirName.endsWith('-'))
                 continue;
-            if (!isValidDnsName(appDirName))
+            if (!isValidDnsName(appDirName)) {
+                qCDebug(LogSystem) << "Ignoring Application Directory" << appDirName << ", as it's not following the rdns convention";
                 continue;
+            }
             QDir appDir = baseDir.absoluteFilePath(appDirName);
             if (!appDir.exists())
                 continue;
-            if (!appDir.exists(qSL("info.yaml")))
+            if (!appDir.exists(qSL("info.yaml"))) {
+                qCDebug(LogSystem) << "Couldn't find a info.yaml in:" << appDir;
                 continue;
+            }
             if (!scanningBuiltinApps && !appDir.exists(qSL("installation-report.yaml")))
                 continue;
 
@@ -459,8 +463,10 @@ int main(int argc, char *argv[])
                                            installationLocations);
             }
 
+            qCDebug(LogSystem) << "Found Applications: [";
             foreach (const Application *app, apps)
                 qCDebug(LogSystem) << " * APP:" << app->id() << "(" << app->baseDir().absolutePath() << ")";
+            qCDebug(LogSystem) << "]";
 
             adb->write(apps);
         }

@@ -455,7 +455,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
                 continue;
             }
             if (!SudoClient::instance()->removeRecursive(fi.absoluteFilePath()))
-                throw Exception(Error::IO, SudoClient::instance()->lastError());
+                throw Exception(Error::IO, "could not remove broken installation leftover %1 : %2").arg(fi.absoluteFilePath()).arg(SudoClient::instance()->lastError());
         }
     }
 }

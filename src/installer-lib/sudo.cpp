@@ -134,7 +134,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
 
     if (realUid != 0) {
         if (effectiveUid != 0) {
-            *errorString = qL1S("for the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred) -- for development, you can also run with AM_FAKE_SUDO=1");
+            *errorString = qL1S("Couldn't start the SudoServer! For the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred) -- for development, you can also run with AM_FAKE_SUDO=1");
             return false;
         }
     }

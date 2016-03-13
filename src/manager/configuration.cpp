@@ -328,6 +328,11 @@ bool Configuration::fullscreen() const
     return d->config<bool>("fullscreen", { qSL("ui"), qSL("fullscreen") });
 }
 
+QString Configuration::windowIcon() const
+{
+    return d->findInConfigFile({ qSL("ui"), qSL("windowIcon") }).toString();
+}
+
 QStringList Configuration::importPaths() const
 {
     QStringList importPaths = d->config<QStringList>("I", { qSL("ui"), qSL("importPaths") });

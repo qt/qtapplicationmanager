@@ -130,6 +130,13 @@ command-line options.
     \li \c bool
     \li Display in full-screen. (default: false)
 \row
+    \li \c -
+    \li \c ui/windowIcon
+    \li \c string
+    \li If set, the given image file will be used as a window icon for all application-manager
+        windows. This setting is only useful for development and will only take effect on Windows,
+        Mac OS X and Linux/X11.
+\row
     \li \c -I
     \li \c ui/importPaths
     \li \c array<string>

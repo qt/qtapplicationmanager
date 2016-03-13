@@ -49,6 +49,7 @@ public:
     QString appImageMountDir() const;
 
     bool fullscreen() const;
+    QString windowIcon() const;
     QStringList importPaths() const;
     bool verbose() const;
     bool slowAnimations() const;

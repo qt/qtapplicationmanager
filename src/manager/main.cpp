@@ -544,6 +544,20 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after QML engine instantiation");
 
 #if !defined(AM_HEADLESS)
+
+        // For development only: set an icon, so you know which window is the AM
+        bool setIcon =
+#  if defined(Q_OS_LINUX)
+                (a.platformName() == "xcb");
+#  else
+                true;
+#  endif
+        if (setIcon) {
+            QString icon = configuration->windowIcon();
+            if (!icon.isEmpty())
+                QGuiApplication::setWindowIcon(QIcon(icon));
+        }
+
         QUnifiedTimer::instance()->setSlowModeEnabled(configuration->slowAnimations());
         QQuickView *view = new QQuickView(engine, 0);
 

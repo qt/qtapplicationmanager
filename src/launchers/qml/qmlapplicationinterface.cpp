@@ -40,6 +40,7 @@
 #include "global.h"
 #include "qmlapplicationinterface.h"
 #include "notification.h"
+#include "ipcwrapperobject.h"
 
 QmlApplicationInterface *QmlApplicationInterface::s_instance = 0;
 
@@ -104,6 +105,8 @@ bool QmlApplicationInterface::initialize()
 
     if (!ok)
         qCritical("ERROR: could not connect the org.freedesktop.Notifications interface via D-Bus: %s", qPrintable(m_notifyIf->lastError().name()));
+
+    QmlApplicationInterfaceExtension::initialize(m_connection);
 
     if (ok)
         m_runtimeIf->asyncCall(qSL("finishedInitialization"));
@@ -190,3 +193,88 @@ uint QmlNotification::libnotifyShow()
         return QmlApplicationInterface::s_instance->notificationShow(this);
     return 0;
 }
+
+
+class QmlApplicationInterfaceExtensionPrivate
+{
+public:
+    QmlApplicationInterfaceExtensionPrivate(const QDBusConnection &connection)
+        : m_connection(connection)
+    { }
+
+    QHash<QString, QPointer<IpcWrapperObject>> m_interfaces;
+    QDBusConnection m_connection;
+};
+
+QmlApplicationInterfaceExtensionPrivate *QmlApplicationInterfaceExtension::d = nullptr;
+
+void QmlApplicationInterfaceExtension::initialize(const QDBusConnection &connection)
+{
+    if (!d)
+        d = new QmlApplicationInterfaceExtensionPrivate(connection);
+}
+
+QmlApplicationInterfaceExtension::QmlApplicationInterfaceExtension(QObject *parent)
+    : QObject(parent)
+{
+    Q_ASSERT(d);
+}
+
+QString QmlApplicationInterfaceExtension::name() const
+{
+    return m_name;
+}
+
+bool QmlApplicationInterfaceExtension::isReady() const
+{
+    return m_object;
+}
+
+QObject *QmlApplicationInterfaceExtension::object() const
+{
+    return m_object;
+}
+
+void QmlApplicationInterfaceExtension::classBegin()
+{
+}
+
+void QmlApplicationInterfaceExtension::componentComplete()
+{
+    m_complete = true;
+
+    if (m_name.isEmpty()) {
+        qCWarning(LogQmlIpc) << "ApplicationInterfaceExension.name is not set.";
+        return;
+    }
+
+    IpcWrapperObject *ext = nullptr;
+
+    auto it = d->m_interfaces.constFind(m_name);
+
+    if (it != d->m_interfaces.constEnd()) {
+        ext = *it;
+    } else {
+        ext = new IpcWrapperObject(QString(), qSL("/ExtensionInterfaces"), m_name,
+                                   d->m_connection, this);
+        if (ext->lastDBusError().isValid() || !ext->isDBusValid()) {
+            qCWarning(LogQmlIpc) << "Could not connect to ApplicationInterfaceExtension" << m_name
+                                 << ":" << ext->lastDBusError().message();
+            delete ext;
+            return;
+        }
+        d->m_interfaces.insert(m_name, ext);
+    }
+    m_object = ext;
+    emit objectChanged();
+    emit readyChanged();
+}
+
+void QmlApplicationInterfaceExtension::setName(const QString &name)
+{
+    if (!m_complete)
+        m_name = name;
+    else
+        qWarning("Cannot change the name property of an ApplicationInterfaceExtension after creation.");
+}
+

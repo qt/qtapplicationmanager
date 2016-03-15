@@ -31,6 +31,7 @@
 #include <QDBusVariant>
 #include <QDBusMessage>
 #include <QDBusConnection>
+#include <QDBusArgument>
 
 #include <QMetaObject>
 #include <QMetaMethod>
@@ -41,8 +42,9 @@
 #include <QDebug>
 
 #include "application.h"
-#include "dbusproxyobject.h"
-#include "dbusproxyobject_p.h"
+#include "dbus-utilities.h"
+#include "ipcproxyobject.h"
+#include "ipcproxyobject_p.h"
 
 #define TYPE_ANNOTATION_PREFIX "_decltype_"
 
@@ -90,38 +92,10 @@ static const char *dbusType(int typeId)
     }
 }
 
-static QVariant convertFromDBusVariant(const QVariant &variant)
-{
-    int type = variant.userType();
-
-    if (type == qMetaTypeId<QDBusVariant>()) {
-        QDBusVariant dbusVariant = variant.value<QDBusVariant>();
-        return convertFromDBusVariant(dbusVariant.variant()); // just to be on the safe side
-    }
-    return variant;
-}
-
-static QVariant convertFromJSVariant(const QVariant &variant)
-{
-    int type = variant.userType();
-    QVariant result;
-
-    if (type == qMetaTypeId<QJSValue>()) {
-        result = variant.value<QJSValue>().toVariant();
-    } else if (type == QMetaType::QUrl) {
-        result = QVariant(variant.value<QUrl>().toString());
-    } else if (type == QMetaType::QVariant) {
-        result = variant.value<QVariant>(); // got a matryoshka variant
-    } else {
-        return variant;
-    }
-    return convertFromJSVariant(result);
-}
-
-DBusProxyObject::DBusProxyObject(QObject *object, const QString &serviceName, const QString &pathName,
+IpcProxyObject::IpcProxyObject(QObject *object, const QString &serviceName, const QString &pathName,
                                  const QString &interfaceName, const QVariantMap &filter)
     : m_object(object)
-    , m_signalRelay(new DBusProxySignalRelay(this))
+    , m_signalRelay(new IpcProxySignalRelay(this))
     , m_serviceName(serviceName)
     , m_pathName(pathName)
     , m_interfaceName(interfaceName)
@@ -154,17 +128,27 @@ DBusProxyObject::DBusProxyObject(QObject *object, const QString &serviceName, co
             continue;
 
         switch (mm.methodType()) {
-        case QMetaMethod::Signal:
+        case QMetaMethod::Signal: {
             // ignore the unavoidable changed signals for our annotation properties
             if (mm.name().startsWith(TYPE_ANNOTATION_PREFIX))
                 continue;
 
-            m_signals << i;
+            int propertyIndex = mo->propertyOffset();
+            for ( ; propertyIndex < mo->propertyCount(); ++propertyIndex) {
+                if (mo->property(propertyIndex).notifySignalIndex() == i)
+                    break;
+            }
+
+            if (propertyIndex < mo->propertyCount())
+                m_signalsToProperties.insert(i, propertyIndex);
+            else
+                m_signals << i;
+
             // connect to non-existing virtual slot in the signal relay object
             // this will end up calling ProxySignalRelay::qt_metacall() - see below
             QMetaObject::connect(object, i, m_signalRelay, m_signalRelay->metaObject()->methodCount());
             break;
-
+        }
         case QMetaMethod::Slot:
         case QMetaMethod::Method:
             m_slots << i;
@@ -233,8 +217,14 @@ DBusProxyObject::DBusProxyObject(QObject *object, const QString &serviceName, co
                                      << "but the annotated function" << slotName << "is missing";
             }
         } else {
-            if (dbusType(mp.type()))
+            if (dbusType(mp.type())) {
                 m_properties << i;
+            } else {
+                qCWarning(LogQmlIpc) << "Ignoring property" << mp.name()
+                                     << "since the type of the parameter" << mp.typeName()
+                                     << "cannot be mapped to a native D-Bus type";
+
+            }
         }
     }
 
@@ -249,7 +239,7 @@ DBusProxyObject::DBusProxyObject(QObject *object, const QString &serviceName, co
     qCDebug(LogQmlIpc, "%s", xml.constData());
 }
 
-QByteArray DBusProxyObject::createIntrospectionXml()
+QByteArray IpcProxyObject::createIntrospectionXml()
 {
     QByteArray xml = "<interface name=\"" + m_interfaceName.toLatin1() + "\">\n";
 
@@ -278,7 +268,7 @@ QByteArray DBusProxyObject::createIntrospectionXml()
                     + "\" type=\"" + dbusType(mm.parameterType(pi))
                     + "\" />\n";
             if (mm.parameterType(pi) == QMetaType::QVariant) {
-                xml = xml + "  <annotation name=\"org.qtproject.QtDBus.QtTypeName.In"
+                xml = xml + "    <annotation name=\"org.qtproject.QtDBus.QtTypeName.In"
                         + QByteArray::number(pi) + "\" value=\"QVariantMap\"/>\n";
             }
         }
@@ -304,7 +294,7 @@ QByteArray DBusProxyObject::createIntrospectionXml()
                     + "\" direction=\"" + (pi == 0 ? "out" : "in")
                     + "\" />\n";
             if (mm.parameterType(pi) == QMetaType::QVariant) {
-                xml = xml + "  <annotation name=\"org.qtproject.QtDBus.QtTypeName."
+                xml = xml + "    <annotation name=\"org.qtproject.QtDBus.QtTypeName."
                         + (pi ? "In" : "Out") + QByteArray::number(pi ? pi - 1 : 0)
                         + "\" value=\"QVariantMap\"/>\n";
             }
@@ -318,32 +308,32 @@ QByteArray DBusProxyObject::createIntrospectionXml()
     return xml;
 }
 
-QObject *DBusProxyObject::object() const
+QObject *IpcProxyObject::object() const
 {
     return m_object;
 }
 
-QString DBusProxyObject::serviceName() const
+QString IpcProxyObject::serviceName() const
 {
     return m_serviceName;
 }
 
-QString DBusProxyObject::pathName() const
+QString IpcProxyObject::pathName() const
 {
     return m_pathName;
 }
 
-QString DBusProxyObject::interfaceName() const
+QString IpcProxyObject::interfaceName() const
 {
     return m_interfaceName;
 }
 
-QStringList DBusProxyObject::connectionNames() const
+QStringList IpcProxyObject::connectionNames() const
 {
     return m_connectionNames;
 }
 
-bool DBusProxyObject::isValidForApplication(const Application *app) const
+bool IpcProxyObject::isValidForApplication(const Application *app) const
 {
     if (!app)
         return false;
@@ -365,7 +355,7 @@ bool DBusProxyObject::isValidForApplication(const Application *app) const
 
 #if defined(QT_DBUS_LIB)
 
-bool DBusProxyObject::dbusRegister(QDBusConnection connection, const QString &debugPathPrefix)
+bool IpcProxyObject::dbusRegister(QDBusConnection connection, const QString &debugPathPrefix)
 {
     if (m_connectionNames.contains(connection.name()))
         return false;
@@ -384,7 +374,7 @@ bool DBusProxyObject::dbusRegister(QDBusConnection connection, const QString &de
     return false;
 }
 
-bool DBusProxyObject::dbusUnregister(QDBusConnection connection)
+bool IpcProxyObject::dbusUnregister(QDBusConnection connection)
 {
     if (m_connectionNames.contains(connection.name())) {
         connection.unregisterObject(m_pathNamePrefixForConnection.value(connection.name()) + m_pathName);
@@ -393,7 +383,7 @@ bool DBusProxyObject::dbusUnregister(QDBusConnection connection)
     return false;
 }
 
-QString DBusProxyObject::introspect(const QString &path) const
+QString IpcProxyObject::introspect(const QString &path) const
 {
     if (m_pathName != path) {
         bool found = false;
@@ -409,13 +399,11 @@ QString DBusProxyObject::introspect(const QString &path) const
     return m_xmlIntrospection;
 }
 
-bool DBusProxyObject::handleMessage(const QDBusMessage &message, const QDBusConnection &connection)
+bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConnection &connection)
 {
     QString interface = message.interface();
     QString function = message.member();
     const QMetaObject *mo = m_object->metaObject();
-
-    //qWarning() << "RECV:" << interface << function << (message.arguments().isEmpty() ? QVariant("<none>") : message.arguments().at(0));
 
     if (interface == m_interfaceName) {
         // find in registered slots only - not in all methods
@@ -497,6 +485,8 @@ bool DBusProxyObject::handleMessage(const QDBusMessage &message, const QDBusConn
                     return true;
                 }
             }
+            connection.call(message.createErrorReply(QDBusError::UnknownProperty, qL1S("unknown property")));
+            return true;
 
         } else if (function == "GetAll") {
             //TODO
@@ -506,13 +496,21 @@ bool DBusProxyObject::handleMessage(const QDBusMessage &message, const QDBusConn
             foreach (int pi, m_properties) {
                 QMetaProperty mp = mo->property(pi);
                 if (mp.name() == name) {
-                    QVariant value = convertFromDBusVariant(message.arguments().at(2));
-                    // qWarning() << "WRITING" << value;
-                    bool result = mp.write(m_object, value);
-                    // qWarning() << "  RESULT" << result;
-                    return result;
+                    if (mp.isWritable()) {
+                        QVariant value = convertFromDBusVariant(message.arguments().at(2));
+                        if (mp.write(m_object, value))
+                            connection.call(message.createReply(), QDBus::NoBlock);
+                        else
+                            connection.call(message.createErrorReply(QDBusError::InvalidArgs, qL1S("calling QMetaProperty::write() failed")));
+                    } else {
+                        connection.call(message.createErrorReply(QDBusError::PropertyReadOnly, qL1S("property is read-only")));
+                    }
+
+                    return true;
                 }
             }
+            connection.call(message.createErrorReply(QDBusError::UnknownProperty, qL1S("unknown property")));
+            return true;
         }
     }
 
@@ -521,25 +519,38 @@ bool DBusProxyObject::handleMessage(const QDBusMessage &message, const QDBusConn
 
 #endif // QT_DBUS_LIB
 
-void DBusProxyObject::relaySignal(int signalIndex, void **argv)
+void IpcProxyObject::relaySignal(int signalIndex, void **argv)
 {
 #if defined(QT_DBUS_LIB)
     foreach (const QString &connectionName, m_connectionNames) {
         QDBusConnection connection(connectionName);
         if (connection.isConnected()) {
-            const QMetaMethod mm = m_object->metaObject()->method(signalIndex);
-
-            QList<QVariant> args;
-            for (int i = 0; i < mm.parameterCount(); ++i) {
-                args << convertFromJSVariant(QVariant(mm.parameterType(i), argv[i + 1]));
-            }
-
+            int propertyIndex = m_signalsToProperties.value(signalIndex, -1);
             QString pathName = m_pathNamePrefixForConnection.value(connection.name()) + m_pathName;
 
-            QDBusMessage message = QDBusMessage::createSignal(pathName, m_interfaceName, mm.name());
-            message.setArguments(args);
+            if (propertyIndex >= 0) {
+                const QMetaProperty mp = m_object->metaObject()->property(propertyIndex);
 
-            connection.send(message);
+                QDBusMessage message = QDBusMessage::createSignal(pathName, qSL("org.freedesktop.DBus.Properties"), qSL("PropertiesChanged"));
+                message << m_interfaceName;
+                message << QVariantMap { { qL1S(mp.name()), QVariant::fromValue(QDBusVariant(convertFromJSVariant(mp.read(m_object)))) } };
+                message << QStringList();
+
+                connection.send(message);
+
+            } else {
+                const QMetaMethod mm = m_object->metaObject()->method(signalIndex);
+
+                QList<QVariant> args;
+                for (int i = 0; i < mm.parameterCount(); ++i) {
+                    args << convertFromJSVariant(QVariant(mm.parameterType(i), argv[i + 1]));
+                }
+
+                QDBusMessage message = QDBusMessage::createSignal(pathName, m_interfaceName, mm.name());
+                message.setArguments(args);
+
+                connection.send(message);
+            }
         }
     }
 #else
@@ -549,12 +560,12 @@ void DBusProxyObject::relaySignal(int signalIndex, void **argv)
 }
 
 
-DBusProxySignalRelay::DBusProxySignalRelay(DBusProxyObject *proxyObject)
+IpcProxySignalRelay::IpcProxySignalRelay(IpcProxyObject *proxyObject)
     : QObject(proxyObject)
     , m_proxyObject(proxyObject)
 { }
 
-int DBusProxySignalRelay::qt_metacall(QMetaObject::Call c, int id, void **argv)
+int IpcProxySignalRelay::qt_metacall(QMetaObject::Call c, int id, void **argv)
 {
     id = QObject::qt_metacall(c, id, argv);
     if (id < 0)

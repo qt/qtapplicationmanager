@@ -30,31 +30,21 @@
 
 #pragma once
 
-#include <QVector>
-#include <QMap>
-#include <QHash>
+#include <QObject>
 
-#include "dbus-policy.h"
+class IpcWrapperObject;
 
-class WindowManagerPrivate
+
+class IpcWrapperSignalRelay : public QObject
 {
+    Q_OBJECT
 public:
-    int findWindowByApplication(const Application *app) const;
-    int findWindowBySurfaceItem(QQuickItem *quickItem) const;
+    IpcWrapperSignalRelay(IpcWrapperObject *wrapperObject);
 
-#if !defined(AM_SINGLE_PROCESS_MODE)
-    int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
+public slots:
+    void onPropertiesChanged(const QString &interfaceName, const QVariantMap &changed,
+                             const QStringList &invalidated);
 
-    WaylandCompositor *waylandCompositor = nullptr;
-#endif
-
-    QHash<int, QByteArray> roleNames;
-    QVector<Window *> windows;
-
-    bool watchdogEnabled = false;
-
-    QMap<QByteArray, DBusPolicy> dbusPolicy;
-    QList<QQuickWindow *> views;
-    bool forceSingleProcess = false;
-    QString waylandSocketName;
+private:
+    IpcWrapperObject *m_wrapperObject;
 };

@@ -41,14 +41,40 @@
 #include "nativeruntime_p.h"
 #include "runtimefactory.h"
 #include "qtyaml.h"
-#include "dbus-utilities.h"
 #include "applicationinterface.h"
-#include "dbusproxyobject.h"
+#include "ipcproxyobject.h"
 
 // You can enable this define to get all P2P-bus objects onto the session bus
 // within io.qt.ApplicationManager, /Application<pid>/...
 
 // #define EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS 1
+
+
+#if defined(AM_LIBDBUS_AVAILABLE)
+#  include <dbus/dbus.h>
+#  include <sys/socket.h>
+
+static qint64 getDBusPeerPid(const QDBusConnection &conn)
+{
+    int socketFd = -1;
+    if (dbus_connection_get_socket(static_cast<DBusConnection *>(conn.internalPointer()), &socketFd)) {
+        struct ucred ucred;
+        socklen_t ucredSize = sizeof(struct ucred);
+        if (getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0)
+            return ucred.pid;
+    }
+    return 0;
+}
+
+#else
+
+static qint64 getDBusPeerPid(const QDBusConnection &conn)
+{
+    Q_UNUSED(conn)
+    return 0;
+}
+
+#endif
 
 
 NativeRuntime::NativeRuntime(AbstractContainer *container, const Application *app, NativeRuntimeManager *manager)
@@ -110,7 +136,7 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
     m_shutingDown = m_launched = m_launchWhenReady = m_started = m_dbusConnection = false;
 
     // unregister all extension interfaces
-    foreach (DBusProxyObject *dpo, ApplicationManager::instance()->applicationInterfaceExtensions()) {
+    foreach (IpcProxyObject *dpo, ApplicationManager::instance()->applicationInterfaceExtensions()) {
         dpo->dbusUnregister(QDBusConnection(m_dbusConnectionName));
     }
 
@@ -233,20 +259,6 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
     QDBusConnection::sessionBus().registerObject(qSL("/Application%1/ApplicationInterface").arg(pid), m_applicationInterface, QDBusConnection::ExportScriptableContents);
 #endif
 
-    // register all extension interfaces
-    foreach (DBusProxyObject *dpo, ApplicationManager::instance()->applicationInterfaceExtensions()) {
-        if (!dpo->isValidForApplication(application()))
-            continue;
-
-        if (!dpo->dbusRegister(connection)) {
-            qCWarning(LogSystem) << "ERROR: could not register the externsion interface" << dpo->interfaceName()
-                                 << "at" << dpo->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
-        }
-#ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-        dpo->dbusRegister(QDBusConnection::sessionBus(), qSL("/Application%1").arg(pid));
-#endif
-    }
-
     if (m_needsLauncher && m_launchWhenReady && !m_launched) {
         m_runtimeInterface = new NativeRuntimeInterface(this);
         if (!conn.registerObject(qSL("/RuntimeInterface"), m_runtimeInterface, QDBusConnection::ExportScriptableContents))
@@ -265,8 +277,23 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 void NativeRuntime::onLauncherFinishedInitialization()
 {
     if (m_needsLauncher && m_launchWhenReady && !m_launched && m_app && m_runtimeInterface) {
-        QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
+        // register all extension interfaces
+        QDBusConnection conn(m_dbusConnectionName);
 
+        foreach (IpcProxyObject *dpo, ApplicationManager::instance()->applicationInterfaceExtensions()) {
+            if (!dpo->isValidForApplication(application()))
+                continue;
+
+            if (!dpo->dbusRegister(conn)) {
+                qCWarning(LogSystem) << "ERROR: could not register the externsion interface" << dpo->interfaceName()
+                                     << "at" << dpo->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
+            }
+#ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
+            dpo->dbusRegister(QDBusConnection::sessionBus(), qSL("/Application%1").arg(pid));
+#endif
+        }
+
+        QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
         m_runtimeInterface->startApplication(pathInContainer, m_document, m_app->runtimeParameters());
         m_launched = true;
     }

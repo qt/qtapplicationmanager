@@ -8,6 +8,8 @@ CONFIG *= static create_prl
 
 QT = core network
 qtHaveModule(geniviextras):QT *= geniviextras
+qtHaveModule(dbus):QT *= dbus
+qtHaveModule(qml):QT *= qml
 
 DEFINES *= AM_BUILD_APPMAN
 
@@ -18,7 +20,8 @@ SOURCES += \
     global.cpp \
     utilities.cpp \
     qtyaml.cpp \
-    startuptimer.cpp
+    startuptimer.cpp \
+    dbus-utilities.cpp \
 
 HEADERS += \
     error.h \
@@ -26,4 +29,5 @@ HEADERS += \
     global.h \
     utilities.h \
     qtyaml.h \
-    startuptimer.h
+    startuptimer.h \
+    dbus-utilities.h \

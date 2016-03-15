@@ -11,6 +11,7 @@ QT = qml dbus core-private
 SOURCES += \
     main.cpp \
     qmlapplicationinterface.cpp \
+    ipcwrapperobject.cpp
 
 !headless:SOURCES += \
     applicationmanagerwindow.cpp \
@@ -18,6 +19,8 @@ SOURCES += \
 HEADERS += \
     qmlapplicationinterface.h \
     $$SOURCE_DIR/src/manager-lib/applicationinterface.h \
+    ipcwrapperobject.h \
+    ipcwrapperobject_p.h
 
 !headless:HEADERS += \
     applicationmanagerwindow.h \

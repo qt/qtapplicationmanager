@@ -47,9 +47,9 @@
 #include "quicklauncher.h"
 #include "abstractruntime.h"
 #include "abstractcontainer.h"
-#include "dbus-utilities.h"
+#include "dbus-policy.h"
 #include "qml-utilities.h"
-#include "dbusproxyobject.h"
+#include "ipcproxyobject.h"
 
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
@@ -209,7 +209,7 @@ public:
 
     QMap<const Application *, QVariantMap> applicationState;
 
-    QVector<DBusProxyObject *> interfaceExtensions;
+    QVector<IpcProxyObject *> interfaceExtensions;
 
     ApplicationManagerPrivate()
         : securityChecksEnabled(true)
@@ -1161,13 +1161,12 @@ bool ApplicationManager::registerApplicationInterfaceExtension(QObject *object, 
             return false;
         }
     }
-    DBusProxyObject *dpo = new DBusProxyObject(object, qSL("io.qt.ApplicationManager"),
-                                               qSL("/ExtensionInterfaces"), name, filter);
-    d->interfaceExtensions.append(dpo);
+    IpcProxyObject *ipo = new IpcProxyObject(object, QString(), qSL("/ExtensionInterfaces"), name, filter);
+    d->interfaceExtensions.append(ipo);
     return true;
 }
 
-QVector<DBusProxyObject *> ApplicationManager::applicationInterfaceExtensions() const
+QVector<IpcProxyObject *> ApplicationManager::applicationInterfaceExtensions() const
 {
     return d->interfaceExtensions;
 }

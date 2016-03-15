@@ -36,6 +36,7 @@
 #include "application.h"
 #include "applicationmanager.h"
 #include "notificationmanager.h"
+#include "ipcproxyobject.h"
 
 
 QmlInProcessApplicationInterface::QmlInProcessApplicationInterface(QmlInProcessRuntime *runtime)
@@ -107,7 +108,7 @@ void QmlInProcessNotification::componentComplete()
     if (m_mode == Declarative) {
         QQmlContext *ctxt = QQmlEngine::contextForObject(this);
         if (ctxt) {
-            QQmlExpression expr(ctxt, 0, qSL("ApplicationInterface.applicationId"), 0);
+            QQmlExpression expr(ctxt, nullptr, qSL("ApplicationInterface.applicationId"), nullptr);
             QVariant v = expr.evaluate();
             if (!v.isNull())
                 m_appId = v.toString();
@@ -127,3 +128,67 @@ uint QmlInProcessNotification::libnotifyShow()
                                                    libnotifyActionList(), libnotifyHints(),
                                                    timeout());
 }
+
+
+
+QmlInProcessApplicationInterfaceExtension::QmlInProcessApplicationInterfaceExtension(QObject *parent)
+    : QObject(parent)
+{ }
+
+QString QmlInProcessApplicationInterfaceExtension::name() const
+{
+    return m_name;
+}
+
+bool QmlInProcessApplicationInterfaceExtension::isReady() const
+{
+    return m_object;
+}
+
+QObject *QmlInProcessApplicationInterfaceExtension::object() const
+{
+    return m_object;
+}
+
+void QmlInProcessApplicationInterfaceExtension::classBegin()
+{ }
+
+void QmlInProcessApplicationInterfaceExtension::componentComplete()
+{
+    m_complete = true;
+
+    if (m_name.isEmpty()) {
+        qCWarning(LogQmlIpc) << "ApplicationInterfaceExension.name is not set.";
+        return;
+    }
+
+    // find out our application id
+    const Application *app = nullptr;
+
+    if (QQmlContext *ctxt = QQmlEngine::contextForObject(this)) {
+        QQmlExpression expr(ctxt, nullptr, qSL("ApplicationInterface.applicationId"), nullptr);
+        QVariant v = expr.evaluate();
+        if (!v.isNull())
+            app = ApplicationManager::instance()->fromId(v.toString());
+    }
+
+    if (app) {
+        for (const IpcProxyObject *ipc : ApplicationManager::instance()->applicationInterfaceExtensions()) {
+            if ((ipc->interfaceName() == m_name) && ipc->isValidForApplication(app)) {
+                m_object = ipc->object();
+                emit objectChanged();
+                emit readyChanged();
+                break;
+            }
+        }
+    }
+}
+
+void QmlInProcessApplicationInterfaceExtension::setName(const QString &name)
+{
+    if (!m_complete)
+        m_name = name;
+    else
+        qWarning("Cannot change the name property of an ApplicationInterfaceExtension after creation.");
+}
+

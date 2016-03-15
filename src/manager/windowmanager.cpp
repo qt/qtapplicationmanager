@@ -53,7 +53,7 @@
 #include "windowmanager_p.h"
 #include "waylandwindow.h"
 #include "inprocesswindow.h"
-#include "dbus-utilities.h"
+#include "dbus-policy.h"
 #include "qml-utilities.h"
 #include "systemmonitor.h"
 

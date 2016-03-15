@@ -30,31 +30,35 @@
 
 #pragma once
 
-#include <QVector>
-#include <QMap>
-#include <QHash>
+#include <QObject>
+#include <QDBusError>
 
-#include "dbus-policy.h"
+QT_FORWARD_DECLARE_CLASS(QDBusInterface)
+QT_FORWARD_DECLARE_CLASS(QDBusConnection)
+class IpcWrapperSignalRelay;
 
-class WindowManagerPrivate
+
+class IpcWrapperObject : public QObject
 {
 public:
-    int findWindowByApplication(const Application *app) const;
-    int findWindowBySurfaceItem(QQuickItem *quickItem) const;
+    IpcWrapperObject(const QString &service, const QString &path, const QString &interface,
+                     const QDBusConnection &connection, QObject *parent = nullptr);
 
-#if !defined(AM_SINGLE_PROCESS_MODE)
-    int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
+    ~IpcWrapperObject();
 
-    WaylandCompositor *waylandCompositor = nullptr;
-#endif
+    bool isDBusValid() const;
+    QDBusError lastDBusError() const;
 
-    QHash<int, QByteArray> roleNames;
-    QVector<Window *> windows;
+    const QMetaObject *metaObject() const override;
+    int qt_metacall(QMetaObject::Call _c, int _id, void **_a) override;
 
-    bool watchdogEnabled = false;
+    // this should be a slot, but we do not want to "pollute" the QML namespace,
+    // so we are relaying the signal via IpcWrapperHelper
+    void onPropertiesChanged(const QString &interfaceName, const QVariantMap &changed,
+                             const QStringList &invalidated);
 
-    QMap<QByteArray, DBusPolicy> dbusPolicy;
-    QList<QQuickWindow *> views;
-    bool forceSingleProcess = false;
-    QString waylandSocketName;
+private:
+    QMetaObject *m_metaObject;
+    IpcWrapperSignalRelay *m_wrapperHelper;
+    QDBusInterface *m_dbusInterface;
 };

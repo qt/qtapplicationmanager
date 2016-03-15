@@ -30,17 +30,19 @@
 
 #pragma once
 
-#include <QObject>
-
-class DBusProxyObject;
-
-class DBusProxySignalRelay : public QObject
+struct DBusPolicy
 {
-public:
-    DBusProxySignalRelay(DBusProxyObject *proxyObject);
-
-    int qt_metacall(QMetaObject::Call c, int id, void **argv) override;
-
-private:
-    DBusProxyObject *m_proxyObject;
+    QList<uint> m_uids;
+    QStringList m_executables;
+    QStringList m_capabilities;
 };
+
+QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment);
+
+#if defined(QT_DBUS_LIB)
+QT_FORWARD_DECLARE_CLASS(QDBusContext)
+#else
+typedef QObject QDBusContext; // evil hack :)
+#endif
+
+bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy, const QByteArray &function);

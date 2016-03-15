@@ -53,6 +53,7 @@ private:
     friend class QmlInProcessApplicationInterface;
 };
 
+
 class QmlInProcessApplicationInterface : public ApplicationInterface
 {
     Q_OBJECT
@@ -70,4 +71,37 @@ private:
     //QList<QPointer<QmlInProcessNotification> > m_allNotifications;
 
     friend class QmlInProcessRuntime;
+};
+
+
+class QmlInProcessApplicationInterfaceExtension : public QObject, public QQmlParserStatus
+{
+    Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
+    Q_PROPERTY(QString name READ name WRITE setName)
+    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
+    Q_PROPERTY(QObject *object READ object NOTIFY objectChanged)
+
+public:
+    explicit QmlInProcessApplicationInterfaceExtension(QObject *parent = nullptr);
+
+    QString name() const;
+    bool isReady() const;
+    QObject *object() const;
+
+protected:
+    void classBegin() override;
+    void componentComplete() override;
+
+public slots:
+    void setName(const QString &name);
+
+signals:
+    void readyChanged();
+    void objectChanged();
+
+private:
+    QString m_name;
+    QObject *m_object = nullptr;
+    bool m_complete = false;
 };

@@ -30,25 +30,17 @@
 
 #pragma once
 
-#if defined(QT_DBUS_LIB)
-#  include <QDBusConnection>
-#  include <QProcess>
-#  include <QDBusContext>
+#include <QObject>
 
-qint64 getDBusPeerPid(const QDBusConnection &conn);
-#endif
+class IpcProxyObject;
 
-struct DBusPolicy
+class IpcProxySignalRelay : public QObject
 {
-    QList<uint> m_uids;
-    QStringList m_executables;
-    QStringList m_capabilities;
+public:
+    IpcProxySignalRelay(IpcProxyObject *proxyObject);
+
+    int qt_metacall(QMetaObject::Call c, int id, void **argv) override;
+
+private:
+    IpcProxyObject *m_proxyObject;
 };
-
-QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment);
-
-#if !defined(QT_DBUS_LIB)
-typedef QObject QDBusContext; // evil hack :)
-#endif
-
-bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy, const QByteArray &function);

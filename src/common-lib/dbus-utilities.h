@@ -30,31 +30,8 @@
 
 #pragma once
 
-#include <QVector>
-#include <QMap>
-#include <QHash>
+#include <QVariant>
 
-#include "dbus-policy.h"
+QVariant convertFromJSVariant(const QVariant &variant);
 
-class WindowManagerPrivate
-{
-public:
-    int findWindowByApplication(const Application *app) const;
-    int findWindowBySurfaceItem(QQuickItem *quickItem) const;
-
-#if !defined(AM_SINGLE_PROCESS_MODE)
-    int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
-
-    WaylandCompositor *waylandCompositor = nullptr;
-#endif
-
-    QHash<int, QByteArray> roleNames;
-    QVector<Window *> windows;
-
-    bool watchdogEnabled = false;
-
-    QMap<QByteArray, DBusPolicy> dbusPolicy;
-    QList<QQuickWindow *> views;
-    bool forceSingleProcess = false;
-    QString waylandSocketName;
-};
+QVariant convertFromDBusVariant(const QVariant &variant);

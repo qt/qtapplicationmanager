@@ -47,7 +47,7 @@ class Application;
 class ApplicationDatabase;
 class ApplicationManagerPrivate;
 class AbstractRuntime;
-class DBusProxyObject;
+class IpcProxyObject;
 
 
 class ApplicationManager : public QAbstractListModel
@@ -135,7 +135,7 @@ public:
     Q_INVOKABLE void setApplicationAudioFocus(const QString &id, AudioFocus audioFocus);
 
     Q_INVOKABLE bool registerApplicationInterfaceExtension(QObject *object, const QString &name, const QVariantMap &filter);
-    QVector<DBusProxyObject *> applicationInterfaceExtensions() const;
+    QVector<IpcProxyObject *> applicationInterfaceExtensions() const;
 
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 

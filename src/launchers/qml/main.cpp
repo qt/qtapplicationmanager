@@ -169,7 +169,8 @@ int main(int argc, char *argv[])
     qmlRegisterType<ApplicationManagerWindow>("io.qt.ApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
 
-    qmlRegisterType<QmlNotification>("io.qt.Notification", 1, 0, "Notification");
+    qmlRegisterType<QmlNotification>("io.qt.ApplicationManager", 1, 0, "Notification");
+    qmlRegisterType<QmlApplicationInterfaceExtension>("io.qt.ApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
     QByteArray dbusAddress = qgetenv("AM_DBUS_PEER_ADDRESS");
     if (dbusAddress.isEmpty())

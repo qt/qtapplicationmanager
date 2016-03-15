@@ -38,7 +38,7 @@
 #include "applicationinstaller.h"
 #include "sudo.h"
 #include "exception.h"
-#include "dbus-utilities.h"
+#include "dbus-policy.h"
 #include "global.h"
 
 

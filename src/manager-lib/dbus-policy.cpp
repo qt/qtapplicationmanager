@@ -32,35 +32,8 @@
 
 #include "applicationmanager.h"
 #include "application.h"
-#include "dbus-utilities.h"
+#include "dbus-policy.h"
 
-#if defined(QT_DBUS_LIB)
-#  if defined(AM_LIBDBUS_AVAILABLE)
-#    include <dbus/dbus.h>
-#    include <sys/socket.h>
-
-qint64 getDBusPeerPid(const QDBusConnection &conn)
-{
-    int socketFd = -1;
-    if (dbus_connection_get_socket(static_cast<DBusConnection *>(conn.internalPointer()), &socketFd)) {
-        struct ucred ucred;
-        socklen_t ucredSize = sizeof(struct ucred);
-        if (getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0)
-            return ucred.pid;
-    }
-    return 0;
-}
-
-#  else
-
-qint64 getDBusPeerPid(const QDBusConnection &conn)
-{
-    Q_UNUSED(conn)
-    return 0;
-}
-
-#  endif
-#endif
 
 QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
 {

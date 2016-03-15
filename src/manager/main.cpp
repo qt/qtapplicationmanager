@@ -532,6 +532,7 @@ int main(int argc, char *argv[])
         qmlRegisterSingletonType<NotificationManager>("io.qt.ApplicationManager", 1, 0, "NotificationManager",
                                                      &NotificationManager::instanceForQml);
         qmlRegisterType<QmlInProcessNotification>("io.qt.ApplicationManager", 1, 0, "Notification");
+        qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("io.qt.ApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
 #if !defined(AM_HEADLESS)
         qmlRegisterSingletonType<WindowManager>("io.qt.ApplicationManager", 1, 0, "WindowManager",

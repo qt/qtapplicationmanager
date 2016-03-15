@@ -39,9 +39,9 @@
 #endif
 
 class Application;
-class DBusProxySignalRelay;
+class IpcProxySignalRelay;
 
-class DBusProxyObject
+class IpcProxyObject
 #if defined(QT_DBUS_LIB)
         : protected QDBusVirtualObject
 #else
@@ -49,8 +49,8 @@ class DBusProxyObject
 #endif
 {
 public:
-    DBusProxyObject(QObject *object, const QString &serviceName, const QString &pathName,
-                    const QString &interfaceName, const QVariantMap &filter);
+    IpcProxyObject(QObject *object, const QString &serviceName, const QString &pathName,
+                   const QString &interfaceName, const QVariantMap &filter);
 
     QObject *object() const;
     QString serviceName() const;
@@ -72,11 +72,11 @@ private:
     void relaySignal(int signalIndex, void **argv);
     QByteArray createIntrospectionXml();
 
-    friend class DBusProxySignalRelay;
+    friend class IpcProxySignalRelay;
 
 private:
     QPointer<QObject> m_object;
-    DBusProxySignalRelay *m_signalRelay;
+    IpcProxySignalRelay *m_signalRelay;
     QStringList m_connectionNames;
     QString m_serviceName;
     QString m_pathName;
@@ -92,4 +92,5 @@ private:
     QVector<int> m_signals;
     QVector<int> m_slots;
     QMap<int, QList<int>> m_slotSignatures;
+    QMap<int, int> m_signalsToProperties;
 };

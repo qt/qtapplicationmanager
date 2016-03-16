@@ -204,6 +204,13 @@ command-line options.
     \li This can be used to specify options for runtimes - the key in this map is the
         runtime's name and the value is interpreted by the respective runtime implementation.
         \l {Runtime configuration}{See below} for specific information.
+\row
+    \li \c -
+    \li \c containers
+    \li \c map<object>
+    \li This can be used to specify options for containers - the key in this map is the
+        container's name and the value is interpreted by the respective container implementation.
+        \l {Container configuration}{See below} for specific information.
 \endtable
 
 \keyword D-Bus specification

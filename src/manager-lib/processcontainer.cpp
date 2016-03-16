@@ -33,6 +33,12 @@
 #include "application.h"
 #include "processcontainer.h"
 
+#if defined(Q_OS_UNIX)
+#  include <csignal>
+#  include <unistd.h>
+#endif
+
+
 void HostProcess::start(const QString &program, const QStringList &arguments)
 {
     m_process.setProcessChannelMode(QProcess::ForwardedChannels);
@@ -102,6 +108,7 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
     HostProcess *process = new HostProcess();
     process->setWorkingDirectory(m_baseDirectory);
     process->setProcessEnvironment(completeEnv);
+    process->setStopBeforeExec(configuration().value(qSL("stopBeforeExec")).toBool());
     process->start(m_program, arguments);
     return process;
 }
@@ -123,4 +130,19 @@ bool ProcessContainerManager::supportsQuickLaunch() const
 AbstractContainer *ProcessContainerManager::create()
 {
     return new ProcessContainer(this);
+}
+
+void HostProcess::setStopBeforeExec(bool stopBeforeExec)
+{
+    m_process.m_stopBeforeExec = stopBeforeExec;
+}
+
+void HostProcess::MyQProcess::setupChildProcess()
+{
+    if (m_stopBeforeExec) {
+#if defined(Q_OS_UNIX)
+        fprintf(stderr, "\n*** a 'process' container was started in stopped state ***\nthe process is suspended via SIGSTOP and you can attach a debugger to it via\n\n   gdb -p %d\n\n", getpid());
+        raise(SIGSTOP);
+#endif
+    }
 }

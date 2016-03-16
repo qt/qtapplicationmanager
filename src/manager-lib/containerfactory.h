@@ -123,6 +123,8 @@ public:
     AbstractContainerManager *manager(const QString &id);
     AbstractContainer *create(const QString &id);
 
+    void setConfiguration(const QVariantMap &configuration);
+
     template<typename T> bool registerContainer()
     {
         return registerContainerInternal(T::defaultIdentifier(), new T(T::defaultIdentifier(), this));

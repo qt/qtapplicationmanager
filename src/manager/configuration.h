@@ -62,6 +62,7 @@ public:
 
     QVariantList installationLocations() const;
 
+    QVariantMap containerConfigurations() const;
     QVariantMap runtimeConfigurations() const;
 
     QVariantMap dbusPolicy(const QString &interfaceName) const;

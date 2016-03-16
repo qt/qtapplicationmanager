@@ -53,8 +53,12 @@ public:
 
     virtual AbstractContainer *create() = 0;
 
+    QVariantMap configuration() const;
+    void setConfiguration(const QVariantMap &configuration);
+
 private:
     QString m_id;
+    QVariantMap m_configuration;
 };
 
 class AbstractContainerProcess : public QObject
@@ -101,6 +105,9 @@ signals:
 protected:
     explicit AbstractContainer(AbstractContainerManager *manager);
 
+    QVariantMap configuration() const;
+
     QString m_program;
     QString m_baseDirectory;
+    AbstractContainerManager *m_manager;
 };

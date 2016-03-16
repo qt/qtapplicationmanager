@@ -60,7 +60,16 @@ QString AbstractContainer::mapHostPathToContainer(const QString &hostPath) const
 
 AbstractContainer::AbstractContainer(AbstractContainerManager *manager)
     : QObject(manager)
+    , m_manager(manager)
 { }
+
+QVariantMap AbstractContainer::configuration() const
+{
+    if (m_manager)
+        return m_manager->configuration();
+    return QVariantMap();
+}
+
 
 
 AbstractContainerManager::AbstractContainerManager(const QString &id, QObject *parent)
@@ -81,4 +90,14 @@ QString AbstractContainerManager::identifier() const
 bool AbstractContainerManager::supportsQuickLaunch() const
 {
     return false;
+}
+
+QVariantMap AbstractContainerManager::configuration() const
+{
+    return m_configuration;
+}
+
+void AbstractContainerManager::setConfiguration(const QVariantMap &configuration)
+{
+    m_configuration = configuration;
 }

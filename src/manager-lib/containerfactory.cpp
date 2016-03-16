@@ -74,6 +74,13 @@ AbstractContainer *ContainerFactory::create(const QString &id)
     return acm->create();
 }
 
+void ContainerFactory::setConfiguration(const QVariantMap &configuration)
+{
+    for (auto it = m_containers.cbegin(); it != m_containers.cend(); ++it) {
+        it.value()->setConfiguration(configuration.value(it.key()).toMap());
+    }
+}
+
 bool ContainerFactory::registerContainerInternal(const QString &identifier, AbstractContainerManager *manager)
 {
     if (!manager || identifier.isEmpty() || m_containers.contains(identifier))
@@ -82,10 +89,3 @@ bool ContainerFactory::registerContainerInternal(const QString &identifier, Abst
     return true;
 }
 
-//void ExecutionContainerFactory::registerExecutionContainer(const char* id, bool secure, ContainerFactoryFunction factoryFunction) {
-//    auto& entry = secure ? m_secureRuntime : m_defaultRuntime;
-//    entry.id = id;
-//    entry.m_pool.setFactoryFunction(factoryFunction);
-//    entry.secure = secure;
-//    entry.m_pool.triggerInstancesCreation();
-//}

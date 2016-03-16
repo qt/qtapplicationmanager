@@ -388,6 +388,11 @@ QVariantList Configuration::installationLocations() const
     return d->findInConfigFile({ qSL("installationLocations") }).toList();
 }
 
+QVariantMap Configuration::containerConfigurations() const
+{
+    return d->findInConfigFile({ qSL("containers") }).toMap();
+}
+
 QVariantMap Configuration::runtimeConfigurations() const
 {
     return d->findInConfigFile({ qSL("runtimes") }).toMap();
@@ -452,7 +457,11 @@ int Configuration::quickLaunchRuntimesPerContainer() const
 {
     bool found, conversionOk;
     int rpc = d->findInConfigFile({ qSL("quicklaunch"), qSL("runtimesPerContainer") }, &found).toInt(&conversionOk);
-    return (found && conversionOk && rpc > 1 && rpc < 10) ? rpc : 1;
+
+    // if you need more than 10 quicklaunchers per runtime, you're probably doing something wrong
+    // or you have a typo in your YAML, which could potentially freeze your target (container
+    // construction can be expensive)
+    return (found && conversionOk && rpc >= 0 && rpc < 10) ? rpc : 0;
 }
 
 QString Configuration::waylandSocketName() const

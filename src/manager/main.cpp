@@ -434,6 +434,7 @@ int main(int argc, char *argv[])
             ContainerFactory::instance()->registerContainer<ProcessContainerManager>();
 #endif
         }
+        ContainerFactory::instance()->setConfiguration(configuration->containerConfigurations());
         RuntimeFactory::instance()->setConfiguration(configuration->runtimeConfigurations());
 
         startupTimer.checkpoint("after runtime registration");

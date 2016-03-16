@@ -138,7 +138,7 @@ static void noGdbHandler()
 static void crashHandler()
 {
     pid_t pid = getpid();
-    fprintf(stderr, "\n*** qml-launcher (%d) crashed ***\nthe process will be suspended for 60 seconds and you can attach a debugger to it via\n\n   gdb -p %d\n\n", pid, pid);
+    fprintf(stderr, "\n*** appman-launcher-qml (%d) crashed ***\nthe process will be suspended for 60 seconds and you can attach a debugger to it via\n\n   gdb -p %d\n\n", pid, pid);
     signal(SIGALRM, (sighandler_t) noGdbHandler);
     alarm(60);
 

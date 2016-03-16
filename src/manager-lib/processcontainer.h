@@ -61,9 +61,18 @@ public slots:
     void start(const QString &program, const QStringList &arguments);
     void setWorkingDirectory(const QString &dir) override;
     void setProcessEnvironment(const QProcessEnvironment &environment) override;
+    void setStopBeforeExec(bool stopBeforeExec);
 
 private:
-    QProcess m_process;
+    class MyQProcess : public QProcess
+    {
+    protected:
+        void setupChildProcess() override;
+    public:
+        bool m_stopBeforeExec = false;
+    };
+
+    MyQProcess m_process;
 };
 
 class ProcessContainer : public AbstractContainer

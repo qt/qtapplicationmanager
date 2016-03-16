@@ -468,3 +468,16 @@ QString Configuration::waylandSocketName() const
 {
     return d->clp.value(qSL("wayland-socket-name"));
 }
+
+QString Configuration::telnetAddress() const
+{
+    QString s = d->findInConfigFile({ qSL("debug"), qSL("telnetAddress") }, nullptr).toString();
+    if (s.isEmpty())
+        s = qSL("0.0.0.0");
+    return s;
+}
+
+quint16 Configuration::telnetPort() const
+{
+    return d->findInConfigFile({ qSL("debug"), qSL("telnetPort") }, nullptr).value<quint16>();
+}

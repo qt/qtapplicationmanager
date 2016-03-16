@@ -242,7 +242,10 @@ public:
     AMShellFactory(QQmlEngine *engine, QObject *object)
         : m_engine(engine)
         , m_object(object)
-    { }
+    {
+        Q_ASSERT(engine);
+        Q_ASSERT(object);
+    }
 
     PAbstractShell *create(QObject *parent)
     {
@@ -611,12 +614,40 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after D-Bus registrations");
 #endif // QT_DBUS_LIB
 
+        engine->load(configuration->mainQmlFile());
+        if (engine->rootObjects().isEmpty())
+            throw Exception(Error::System, "Qml scene does not have a root object");
+
+        startupTimer.checkpoint("after loading main QML file");
+
+#if !defined(AM_HEADLESS)
+        view->setContent(configuration->mainQmlFile(), 0, engine->rootObjects().at(0));
+        if (configuration->fullscreen())
+            view->showFullScreen();
+        else
+            view->show();
+
+        startupTimer.checkpoint("after window show");
+#endif
+
+#if defined(MALIIT_INTEGRATION)
+        // Input Context Connection
+        QSharedPointer<MInputContextConnection> icConnection(Maliit::DBus::createInputContextConnectionWithDynamicAddress());
+
+        QSharedPointer<Maliit::AbstractPlatform> platform(new Maliit::UnknownPlatform);
+
+        // The actual server
+        MImServer::configureSettings(MImServer::PersistentSettings);
+        MImServer imServer(icConnection, platform);
+#endif
+
 #if defined(QT_PSHELLSERVER_LIB)
         // have a JavaScript shell reachable via telnet protocol
         PTelnetServer telnetServer;
         AMShellFactory shellFactory(view->engine(), view->rootObject());
         telnetServer.setShellFactory(&shellFactory);
-        if (!telnetServer.listen(QHostAddress::Any, 0)) {
+
+        if (!telnetServer.listen(QHostAddress(configuration->telnetAddress()), configuration->telnetPort())) {
             throw Exception(Error::System, "could not start Telnet server");
         } else {
             qCDebug(LogSystem) << "Telnet server listening on \n " << telnetServer.serverAddress().toString()
@@ -651,32 +682,6 @@ int main(int argc, char *argv[])
         view->rootContext()->setContextProperty("ssdp", &ssdp);
 #endif // QT_PSSDP_LIB
 
-        engine->load(configuration->mainQmlFile());
-        if (engine->rootObjects().isEmpty())
-            throw Exception(Error::System, "Qml scene does not have a root object");
-
-        startupTimer.checkpoint("after loading main QML file");
-
-#if !defined(AM_HEADLESS)
-        view->setContent(configuration->mainQmlFile(), 0, engine->rootObjects().at(0));
-        if (configuration->fullscreen())
-            view->showFullScreen();
-        else
-            view->show();
-
-        startupTimer.checkpoint("after window show");
-#endif
-
-#if defined(MALIIT_INTEGRATION)
-        // Input Context Connection
-        QSharedPointer<MInputContextConnection> icConnection(Maliit::DBus::createInputContextConnectionWithDynamicAddress());
-
-        QSharedPointer<Maliit::AbstractPlatform> platform(new Maliit::UnknownPlatform);
-
-        // The actual server
-        MImServer::configureSettings(MImServer::PersistentSettings);
-        MImServer imServer(icConnection, platform);
-#endif
         startupTimer.createReport();
         int res = a.exec();
 

@@ -77,6 +77,9 @@ public:
 
     QString waylandSocketName() const;
 
+    QString telnetAddress() const;
+    quint16 telnetPort() const;
+
 private:
     void initialize();
 

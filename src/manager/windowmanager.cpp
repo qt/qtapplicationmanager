@@ -106,6 +106,10 @@
         \li \c isFullscreen
         \li \c bool
         \li A boolean value telling if the app's surface is being displayed in fullscreen mode.
+    \row
+        \li \c isMapped
+        \li \c bool
+        \li A boolean value telling if the app's surface is mapped.
     \endtable
 
     The QML import for this singleton is
@@ -262,7 +266,8 @@ enum Roles
 {
     Id = Qt::UserRole + 1000,
     SurfaceItem,
-    IsFullscreen
+    IsFullscreen,
+    IsMapped
 };
 }
 
@@ -306,6 +311,7 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, con
     d->roleNames.insert(Id, "applicationId");
     d->roleNames.insert(SurfaceItem, "surfaceItem");
     d->roleNames.insert(IsFullscreen, "isFullscreen");
+    d->roleNames.insert(IsMapped, "isMapped");
 
     d->watchdogEnabled = true;
 
@@ -373,6 +379,18 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
     case IsFullscreen: {
         //TODO: find a way to handle fullscreen transparently for wayland and in-process
         return false;
+    }
+    case IsMapped: {
+        if (win->isInProcess()) {
+            return true;
+        } else {
+#ifndef AM_SINGLE_PROCESS_MODE
+            auto ww = qobject_cast<const WaylandWindow*>(win);
+            if (ww && ww->surface() && ww->surface()->surface())
+                return ww->surface()->surface()->isMapped();
+#endif
+            return false;
+        }
     }
     }
     return QVariant();
@@ -577,6 +595,9 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
         WaylandWindow *w = new WaylandWindow(app, surface);
         setupWindow(w);
     } else {
+        QModelIndex modelIndex = QAbstractListModel::index(index);
+        qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: true";
+        emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
         emit surfaceItemReady(index, d->windows.at(index)->surfaceItem());
     }
 
@@ -593,6 +614,18 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 void WindowManager::waylandSurfaceUnmapped(WindowSurface *surface)
 {
     qCDebug(LogWayland) << "waylandSurfaceUnmapped" << surface->surface();
+
+    int index = d->findWindowByWaylandSurface(surface->surface());
+
+    if (index == -1) {
+        qCWarning(LogWayland) << "could not find an application window for surfaceItem";
+        return;
+    }
+
+    QModelIndex modelIndex = QAbstractListModel::index(index);
+    qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: false";
+    emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
+
     handleWaylandSurfaceDestroyedOrUnmapped(surface->surface());
 }
 

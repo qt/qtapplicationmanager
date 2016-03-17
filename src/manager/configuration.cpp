@@ -158,6 +158,7 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none"), qSL("session") });
 #endif
     d->clp.addOption({ qSL("fullscreen"),           qSL("display in full-screen.") });
+    d->clp.addOption({ qSL("no-fullscreen"),        qSL("do not display in full-screen.") });
     d->clp.addOption({ qSL("I"),                    qSL("additional QML import path."), qSL("dir") });
     d->clp.addOption({ qSL("verbose"),              qSL("verbose output.") });
     d->clp.addOption({ qSL("slow-animations"),      qSL("run all animations in slow motion.") });
@@ -326,6 +327,11 @@ QString Configuration::appImageMountDir() const
 bool Configuration::fullscreen() const
 {
     return d->config<bool>("fullscreen", { qSL("ui"), qSL("fullscreen") });
+}
+
+bool Configuration::noFullscreen() const
+{
+    return d->clp.isSet(qSL("no-fullscreen"));
 }
 
 QString Configuration::windowIcon() const

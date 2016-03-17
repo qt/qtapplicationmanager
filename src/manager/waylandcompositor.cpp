@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Pelagicore AG
+** Copyright (C) 2016 Pelagicore AG
 ** Copyright (C) 2016 Klarälvdalens Datakonsult AB, a KDAB Group company
 ** Contact: http://www.qt.io/ or http://www.pelagicore.com/
 **

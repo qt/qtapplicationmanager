@@ -1,7 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Pelagicore AG
-** Copyright (C) 2015 The Qt Company Ltd.
+** Copyright (C) 2016 Pelagicore AG
+** Copyright (C) 2016 The Qt Company Ltd.
 ** Contact: http://www.qt.io/ or http://www.pelagicore.com/
 **
 ** This file is part of the Pelagicore Application Manager.

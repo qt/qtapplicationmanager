@@ -76,7 +76,7 @@ HTML.postpostheader = \
 HTML.footer = \
     "</div>\n" \
     "<div class=\"footer\">\n" \
-    "  <acronym title=\"Copyright\">&copy;</acronym> 2015 Pelagicore AG" \
+    "  <acronym title=\"Copyright\">&copy;</acronym> 2016 Pelagicore AG" \
     "</div>\n" \
 
 

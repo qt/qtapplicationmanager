@@ -55,6 +55,13 @@ QString QmlInProcessApplicationInterface::applicationId() const
     return QString();
 }
 
+QVariantMap QmlInProcessApplicationInterface::additionalConfiguration() const
+{
+    if (m_runtime)
+        return m_runtime->additionalConfiguration();
+    return QVariantMap();
+}
+
 Notification *QmlInProcessApplicationInterface::createNotification()
 {
     QmlInProcessNotification *n = new QmlInProcessNotification(this, Notification::Dynamic);

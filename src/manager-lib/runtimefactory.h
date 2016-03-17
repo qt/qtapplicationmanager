@@ -55,6 +55,7 @@ public:
     AbstractRuntime *createQuickLauncher(AbstractContainer *container, const QString &id);
 
     void setConfiguration(const QVariantMap &configuration);
+    void setAdditionalConfiguration(const QVariantMap &additionalConfiguration);
 
     template<typename T> bool registerRuntime()
     {

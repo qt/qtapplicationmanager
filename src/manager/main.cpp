@@ -439,6 +439,7 @@ int main(int argc, char *argv[])
         }
         ContainerFactory::instance()->setConfiguration(configuration->containerConfigurations());
         RuntimeFactory::instance()->setConfiguration(configuration->runtimeConfigurations());
+        RuntimeFactory::instance()->setAdditionalConfiguration(configuration->additionalUiConfiguration());
 
         startupTimer.checkpoint("after runtime registration");
 

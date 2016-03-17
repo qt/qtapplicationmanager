@@ -62,9 +62,13 @@ public:
     QVariantMap configuration() const;
     void setConfiguration(const QVariantMap &configuration);
 
+    QVariantMap additionalConfiguration() const;
+    void setAdditionalConfiguration(const QVariantMap &additionalConfiguration);
+
 private:
     QString m_id;
     QVariantMap m_configuration;
+    QVariantMap m_additionalConfiguration;
 };
 
 
@@ -99,6 +103,8 @@ public:
     QQmlEngine* inProcessQmlEngine() const;
 
     virtual qint64 applicationProcessId() const = 0;
+
+    QVariantMap additionalConfiguration() const;
 
 public slots:
     virtual bool start() = 0;

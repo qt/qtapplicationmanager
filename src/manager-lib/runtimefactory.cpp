@@ -104,6 +104,13 @@ void RuntimeFactory::setConfiguration(const QVariantMap &configuration)
     }
 }
 
+void RuntimeFactory::setAdditionalConfiguration(const QVariantMap &additionalConfiguration)
+{
+    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it) {
+        it.value()->setAdditionalConfiguration(additionalConfiguration);
+    }
+}
+
 bool RuntimeFactory::registerRuntimeInternal(const QString &identifier, AbstractRuntimeManager *manager)
 {
     if (!manager || identifier.isEmpty() || m_runtimes.contains(identifier))

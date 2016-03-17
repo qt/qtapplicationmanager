@@ -139,6 +139,7 @@ bool NativeRuntime::start()
     env.insert(qSL("AM_SECURITY_TOKEN"), qL1S(securityToken().toHex()));
     env.insert(qSL("AM_DBUS_PEER_ADDRESS"), static_cast<NativeRuntimeManager *>(manager())->applicationInterfaceServer()->address());
     env.insert(qSL("AM_RUNTIME_CONFIGURATION"), QtYaml::yamlFromVariantDocuments({ configuration() }));
+    env.insert(qSL("AM_RUNTIME_ADDITIONAL_CONFIGURATION"), QtYaml::yamlFromVariantDocuments({ additionalConfiguration() }));
     env.insert(qSL("AM_BASE_DIR"), QDir::currentPath());
 
     for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {
@@ -313,6 +314,12 @@ QString NativeRuntimeApplicationInterface::applicationId() const
     return QString();
 }
 
+QVariantMap NativeRuntimeApplicationInterface::additionalConfiguration() const
+{
+    if (m_runtime)
+        return m_runtime->additionalConfiguration();
+    return QVariantMap();
+}
 
 NativeRuntimeInterface::NativeRuntimeInterface(NativeRuntime *runtime)
     : QObject(runtime)

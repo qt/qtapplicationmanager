@@ -54,17 +54,18 @@ protected:
 class QmlApplicationInterface : public ApplicationInterface
 {
     Q_OBJECT
+
 public:
-    explicit QmlApplicationInterface(const QString &dbusConnectionName, QObject *parent = 0);
+    explicit QmlApplicationInterface(const QVariantMap &additionalConfiguration, const QString &dbusConnectionName, QObject *parent = 0);
     bool initialize();
 
     QString applicationId() const override;
+    QVariantMap additionalConfiguration() const override;
     Q_INVOKABLE Notification *createNotification();
 
 private slots:
     void notificationClosed(uint notificationId, uint reason);
     void notificationActivated(uint notificationId, const QString &actionId);
-
 private:
     Q_SIGNAL void startApplication(const QString &qmlFile, const QString &document, const QVariantMap &runtimeParams);
 
@@ -77,6 +78,7 @@ private:
     QDBusInterface *m_runtimeIf;
     QDBusInterface *m_notifyIf;
     QList<QPointer<QmlNotification> > m_allNotifications;
+    QVariantMap m_additionalConfiguration;
 
     static QmlApplicationInterface *s_instance;
 

@@ -61,6 +61,7 @@ public:
     explicit QmlInProcessApplicationInterface(QmlInProcessRuntime *runtime = 0);
 
     QString applicationId() const override;
+    QVariantMap additionalConfiguration() const override;
 
     Q_INVOKABLE Notification *createNotification();
 

@@ -193,9 +193,14 @@ Controller::Controller()
     if (docs.size() == 1)
         m_configuration = docs.first().toMap();
 
+    QVariantMap config;
+    auto additionalConfigurations = QtYaml::variantDocumentsFromYaml(qgetenv("AM_RUNTIME_ADDITIONAL_CONFIGURATION"));
+    if (additionalConfigurations.size() == 1)
+            config = additionalConfigurations.first().toMap();
+
     //qCDebug(LogQmlRuntime, 1) << " qml-runtime started with pid ==" << QCoreApplication::applicationPid () << ", waiting for qmlFile on stdin...";
 
-    m_applicationInterface = new QmlApplicationInterface(qSL("am"), this);
+    m_applicationInterface = new QmlApplicationInterface(config, qSL("am"), this);
     connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
             this, &Controller::startApplication);
     if (!m_applicationInterface->initialize())

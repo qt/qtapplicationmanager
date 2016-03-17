@@ -43,9 +43,10 @@
 
 QmlApplicationInterface *QmlApplicationInterface::s_instance = 0;
 
-QmlApplicationInterface::QmlApplicationInterface(const QString &dbusConnectionName, QObject *parent)
+QmlApplicationInterface::QmlApplicationInterface(const QVariantMap &additionalConfiguration, const QString &dbusConnectionName, QObject *parent)
     : ApplicationInterface(parent)
     , m_connection(dbusConnectionName)
+    , m_additionalConfiguration(additionalConfiguration)
 {
     if (QmlApplicationInterface::s_instance)
         qCritical("ERROR: only one instance of QmlApplicationInterface is allowed");
@@ -120,6 +121,11 @@ Notification *QmlApplicationInterface::createNotification()
 {
     QmlNotification *n = new QmlNotification(this, Notification::Dynamic);
     return n;
+}
+
+QVariantMap QmlApplicationInterface::additionalConfiguration() const
+{
+    return m_additionalConfiguration;
 }
 
 uint QmlApplicationInterface::notificationShow(QmlNotification *n)

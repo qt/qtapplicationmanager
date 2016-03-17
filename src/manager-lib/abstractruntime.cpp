@@ -56,6 +56,13 @@ QVariantMap AbstractRuntime::configuration() const
     return QVariantMap();
 }
 
+QVariantMap AbstractRuntime::additionalConfiguration() const
+{
+    if (m_manager)
+        return m_manager->additionalConfiguration();
+    return QVariantMap();
+}
+
 QByteArray AbstractRuntime::securityToken() const
 {
     return m_securityToken;
@@ -142,4 +149,14 @@ QVariantMap AbstractRuntimeManager::configuration() const
 void AbstractRuntimeManager::setConfiguration(const QVariantMap &configuration)
 {
     m_configuration = configuration;
+}
+
+QVariantMap AbstractRuntimeManager::additionalConfiguration() const
+{
+    return m_additionalConfiguration;
+}
+
+void AbstractRuntimeManager::setAdditionalConfiguration(const QVariantMap &additionalConfiguration)
+{
+    m_additionalConfiguration = additionalConfiguration;
 }

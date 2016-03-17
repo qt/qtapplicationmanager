@@ -98,8 +98,9 @@ public:
 class WaylandCompositor : public QWaylandQuickCompositor
 {
 public:
-    WaylandCompositor(QQuickView *view, const QString &waylandSocketName, WindowManager *manager);
+    WaylandCompositor(QQuickWindow* window, const QString &waylandSocketName, WindowManager *manager);
 
+    void registerOutputWindow(QQuickWindow *window);
     void doCreateSurface(QWaylandClient *client, uint id, int version);
     void createShellSurface(QWaylandSurface *surface, const QWaylandResource &resource);
     void extendedSurfaceReady(QtWayland::ExtendedSurface *ext, QWaylandSurface *surface);
@@ -109,6 +110,6 @@ public:
 private:
     WindowManager *m_manager;
     QWaylandShell *m_shell;
-    QWaylandOutput *m_output;
+    QVector<QWaylandOutput *> m_outputs;
     QtWayland::SurfaceExtensionGlobal *m_surfExt;
 };

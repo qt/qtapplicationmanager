@@ -124,16 +124,15 @@ Surface::Surface(QWaylandCompositor *comp, QWaylandClient *client, uint id, int 
     m_surface = this;
 }
 
-WaylandCompositor::WaylandCompositor(QQuickView *view, const QString &waylandSocketName, WindowManager *manager)
+WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager)
     : QWaylandQuickCompositor()
     , m_manager(manager)
     , m_shell(new QWaylandShell(this))
-    , m_output(new QWaylandQuickOutput(this, view))
     , m_surfExt(new QtWayland::SurfaceExtensionGlobal(this))
 {
     setSocketName(waylandSocketName.toUtf8());
 
-    view->winId();
+    registerOutputWindow(window);
 
     connect(this, &QWaylandCompositor::createSurface, this, &WaylandCompositor::doCreateSurface);
     connect(this, &QWaylandCompositor::surfaceCreated, [this](QWaylandSurface *s) {
@@ -152,6 +151,13 @@ WaylandCompositor::WaylandCompositor(QQuickView *view, const QString &waylandSoc
     });
 
     create();
+}
+
+void WaylandCompositor::registerOutputWindow(QQuickWindow* window)
+{
+    m_outputs.append(new QWaylandQuickOutput(this, window));
+
+    window->winId();
 }
 
 void WaylandCompositor::doCreateSurface(QWaylandClient *client, uint id, int version)

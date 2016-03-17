@@ -43,7 +43,7 @@
 QT_FORWARD_DECLARE_CLASS(QWaylandSurface)
 #endif
 
-QT_FORWARD_DECLARE_CLASS(QQuickView)
+QT_FORWARD_DECLARE_CLASS(QQuickWindow)
 QT_FORWARD_DECLARE_CLASS(QQuickItem)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
@@ -92,7 +92,7 @@ class WindowManager : public QAbstractListModel
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 public:
     ~WindowManager();
-    static WindowManager *createInstance(QQuickView* view, bool forceSingleProcess, const QString &waylandSocketName = QString());
+    static WindowManager *createInstance(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName = QString());
     static WindowManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
@@ -110,6 +110,8 @@ public:
     Q_INVOKABLE QVariantMap get(int index) const;
 
     Q_INVOKABLE void releaseSurfaceItem(int index, QQuickItem* item); // after 'surfaceItemClosing' has been called, this function must be called to 'free' the surfaceItem (allow deleteLater) on it, after this has been called, surfaceItemLost should happen
+
+    Q_INVOKABLE void registerOutputWindow(QQuickWindow *window);
 
 signals:
     void countChanged();
@@ -159,7 +161,7 @@ private:
 #endif
 
 private:
-    WindowManager(QQuickView *view, bool forceSingleProcess, const QString &waylandSocketName);
+    WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName);
     WindowManager(const WindowManager &);
     WindowManager &operator=(const WindowManager &);
     static WindowManager *s_instance;

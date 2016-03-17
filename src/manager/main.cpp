@@ -563,25 +563,14 @@ int main(int argc, char *argv[])
         }
 
         QUnifiedTimer::instance()->setSlowModeEnabled(configuration->slowAnimations());
-        QQuickView *view = new QQuickView(engine, 0);
 
-        WindowManager *wm = WindowManager::createInstance(view, forceSingleProcess, configuration->waylandSocketName());
+        WindowManager *wm = WindowManager::createInstance(engine, forceSingleProcess, configuration->waylandSocketName());
         wm->enableWatchdog(!configuration->noUiWatchdog());
 
         QObject::connect(am, &ApplicationManager::inProcessRuntimeCreated,
                          wm, &WindowManager::setupInProcessRuntime);
         QObject::connect(am, &ApplicationManager::applicationWasReactivated,
                          wm, &WindowManager::raiseApplicationWindow);
-
-        startupTimer.checkpoint("after WindowManager/QuickView instantiation");
-        QMetaObject::Connection conn = QObject::connect(view, &QQuickView::frameSwapped, qApp, [&startupTimer, &conn]() {
-            static bool once = true;
-            if (once) {
-                startupTimer.checkpoint("after first frame drawn");
-                QObject::disconnect(conn);
-                once = false;
-            }
-        });
 #endif
 
         if (configuration->loadDummyData()) {
@@ -617,15 +606,38 @@ int main(int argc, char *argv[])
         engine->load(configuration->mainQmlFile());
         if (engine->rootObjects().isEmpty())
             throw Exception(Error::System, "Qml scene does not have a root object");
+        QObject *rootObject = engine->rootObjects().at(0);
 
         startupTimer.checkpoint("after loading main QML file");
 
 #if !defined(AM_HEADLESS)
-        view->setContent(configuration->mainQmlFile(), 0, engine->rootObjects().at(0));
+        QQuickWindow *window = nullptr;
+
+        if (!rootObject->isWindowType()) {
+            QQuickView *view = new QQuickView(engine, 0);
+            startupTimer.checkpoint("after WindowManager/QuickView instantiation");
+            view->setContent(configuration->mainQmlFile(), 0, rootObject);
+            window = view;
+        } else {
+            window = qobject_cast<QQuickWindow *>(rootObject);
+        }
+
+        Q_ASSERT(window);
+        QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, qApp, [&startupTimer, &conn]() {
+            static bool once = true;
+            if (once) {
+                startupTimer.checkpoint("after first frame drawn");
+                QObject::disconnect(conn);
+                once = false;
+            }
+        });
+
+        wm->registerOutputWindow(window);
+
         if (configuration->fullscreen())
-            view->showFullScreen();
+            window->showFullScreen();
         else
-            view->show();
+            window->show();
 
         startupTimer.checkpoint("after window show");
 #endif
@@ -644,7 +656,7 @@ int main(int argc, char *argv[])
 #if defined(QT_PSHELLSERVER_LIB)
         // have a JavaScript shell reachable via telnet protocol
         PTelnetServer telnetServer;
-        AMShellFactory shellFactory(view->engine(), view->rootObject());
+        AMShellFactory shellFactory(engine, rootObject);
         telnetServer.setShellFactory(&shellFactory);
 
         if (!telnetServer.listen(QHostAddress(configuration->telnetAddress()), configuration->telnetPort())) {
@@ -655,8 +667,8 @@ int main(int argc, char *argv[])
         }
 
         // register all objects that should be reachable from the telnet shell
-        view->rootContext()->setContextProperty("_ApplicationManager", am);
-        view->rootContext()->setContextProperty("_WindowManager", wm);
+        engine->rootContext()->setContextProperty("_ApplicationManager", am);
+        engine->rootContext()->setContextProperty("_WindowManager", wm);
 #endif // QT_PSHELLSERVER_LIB
 
 #if defined(QT_PSSDP_LIB)
@@ -679,7 +691,7 @@ int main(int argc, char *argv[])
 
             ssdp.setActive(true);
         }
-        view->rootContext()->setContextProperty("ssdp", &ssdp);
+        engine->rootContext()->setContextProperty("ssdp", &ssdp);
 #endif // QT_PSSDP_LIB
 
         startupTimer.createReport();

@@ -54,5 +54,7 @@ public:
     bool watchdogEnabled = false;
 
     QMap<QByteArray, DBusPolicy> dbusPolicy;
-    QList<QQuickView *> views;
+    QList<QQuickWindow *> views;
+    bool forceSingleProcess = false;
+    QString waylandSocketName;
 };

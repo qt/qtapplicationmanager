@@ -270,11 +270,11 @@ enum Roles
 WindowManager *WindowManager::s_instance = 0;
 
 
-WindowManager *WindowManager::createInstance(QQuickView *view, bool forceSingleProcess, const QString &waylandSocketName)
+WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName)
 {
     if (s_instance)
         qFatal("WindowManager::createInstance() was called a second time.");
-    return s_instance = new WindowManager(view, forceSingleProcess, waylandSocketName);
+    return s_instance = new WindowManager(qmlEngine, forceSingleProcess, waylandSocketName);
 }
 
 WindowManager *WindowManager::instance()
@@ -291,19 +291,13 @@ QObject *WindowManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
     return instance();
 }
 
-WindowManager::WindowManager(QQuickView *view, bool forceSingleProcess, const QString &waylandSocketName)
-    : QAbstractListModel(view)
+WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName)
+    : QAbstractListModel(qmlEngine)
     , d(new WindowManagerPrivate())
 {
-    d->views << view;
-
 #if !defined(AM_SINGLE_PROCESS_MODE)
-    if (!forceSingleProcess) {
-        d->waylandCompositor = new WaylandCompositor(view, waylandSocketName, this);
-
-        connect(view, &QWindow::heightChanged, this, &WindowManager::resize);
-        connect(view, &QWindow::widthChanged, this, &WindowManager::resize);
-    }
+    d->forceSingleProcess = forceSingleProcess;
+    d->waylandSocketName = waylandSocketName;
 #else
     Q_UNUSED(forceSingleProcess)
     Q_UNUSED(waylandSocketName)
@@ -317,9 +311,11 @@ WindowManager::WindowManager(QQuickView *view, bool forceSingleProcess, const QS
 
     connect(SystemMonitor::instance(), &SystemMonitor::fpsReportingEnabledChanged, this, [this]() {
         if (SystemMonitor::instance()->isFpsReportingEnabled()) {
-            connect(d->views.at(0), &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
+            foreach (const QQuickWindow* view, d->views)
+                connect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
         } else {
-            disconnect(d->views.at(0), &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
+            foreach (const QQuickWindow* view, d->views)
+                disconnect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
         }
     });
 }
@@ -413,9 +409,9 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 {
     // special hacks to get in-process mode working transparently
     if (runtime->manager()->inProcess()) {
-        QQuickView *qv = qobject_cast<QQuickView*>(QObject::parent());
+        QQmlEngine *e = qobject_cast<QQmlEngine*>(QObject::parent());
 
-        runtime->setInProcessQmlEngine(qv->engine());
+        runtime->setInProcessQmlEngine(e);
 
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemFullscreenChanging,
                 this, &WindowManager::surfaceFullscreenChanged, Qt::QueuedConnection);
@@ -438,6 +434,23 @@ void WindowManager::releaseSurfaceItem(int index, QQuickItem* item)
     Q_UNUSED(index);
     item->deleteLater();
     surfaceItemDestroyed(item);
+}
+
+void WindowManager::registerOutputWindow(QQuickWindow *window)
+{
+    d->views << window;
+
+#if !defined(AM_SINGLE_PROCESS_MODE)
+    if (!d->forceSingleProcess) {
+        if (!d->waylandCompositor) {
+            d->waylandCompositor = new WaylandCompositor(window, d->waylandSocketName, this);
+            connect(window, &QWindow::heightChanged, this, &WindowManager::resize);
+            connect(window, &QWindow::widthChanged, this, &WindowManager::resize);
+        } else {
+            d->waylandCompositor->registerOutputWindow(window);
+        }
+    }
+#endif
 }
 
 void WindowManager::surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen)
@@ -558,8 +571,14 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 
     Q_ASSERT(surface->item());
 
-    WaylandWindow *w = new WaylandWindow(app, surface);
-    setupWindow(w);
+    //Only create a new Window if we don't have it already in the window list, as the user controls whether windows are removed or not
+    int index = d->findWindowByWaylandSurface(surface->surface());
+    if (index == -1) {
+        WaylandWindow *w = new WaylandWindow(app, surface);
+        setupWindow(w);
+    } else {
+        emit surfaceItemReady(index, d->windows.at(index)->surfaceItem());
+    }
 
     // switch on Wayland ping/pong -- currently disabled, since it is a bit unstable
     //if (d->watchdogEnabled)
@@ -764,7 +783,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                         || (w->windowProperty(attributeName).toString() == attributeValue)) {
                     for (int i = 0; i < d->views.count(); ++i) {
                         if (screenId.isEmpty() || screenId.toInt() == i) {
-                            QQuickView *view = d->views.at(i);
+                            QQuickWindow *view = d->views.at(i);
 
                             bool onScreen = false;
 

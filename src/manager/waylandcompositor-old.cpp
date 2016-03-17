@@ -58,18 +58,22 @@ void Surface::ping() { m_surface->ping(); }
 
 qint64 Surface::processId() const
 {
-#  if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
     return m_surface->client()->processId();
-#  else
+#else
     return m_surface->processId();
-#  endif
+#endif
 }
 
 QWindow *Surface::outputWindow() const
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
     if (QWaylandOutput *o = m_surface->mainOutput())
         return o->window();
     return 0;
+#else
+    return m_surface->compositor()->window();
+#endif
 }
 
 QVariantMap Surface::windowProperties() const { return m_surface->windowProperties(); }
@@ -86,26 +90,34 @@ void Surface::connectWindowPropertyChanged(const std::function<void (const QStri
     QObject::connect(m_surface, &QWaylandSurface::windowPropertyChanged, cb);
 }
 
-WaylandCompositor::WaylandCompositor(QQuickView *view, const QString &waylandSocketName, WindowManager *manager)
-#  if QT_VERSION >= QT_VERSION_CHECK(5,5,0)
+WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager)
+#if QT_VERSION >= QT_VERSION_CHECK(5,5,0)
     : QWaylandQuickCompositor(qPrintable(waylandSocketName), DefaultExtensions | SubSurfaceExtension)
+#else
+    : QWaylandQuickCompositor(window, qPrintable(waylandSocketName), DefaultExtensions | SubSurfaceExtension)
+#endif
     , m_manager(manager)
 {
-    createOutput(view, QString(), QString());
-#  else
-    : QWaylandQuickCompositor(view, qPrintable(waylandSocketName), DefaultExtensions | SubSurfaceExtension)
-    , m_manager(manager)
-{
-#  endif
+    registerOutputWindow(window);
 
     setenv("WAYLAND_DISPLAY", qPrintable(waylandSocketName), 1);
 
-    view->winId();
+    window->winId();
     addDefaultShell();
 
-    QObject::connect(view, &QQuickWindow::beforeSynchronizing, [this]() { frameStarted(); });
-    QObject::connect(view, &QQuickWindow::afterRendering, [this]() { sendCallbacks(); });
-    setOutputGeometry(view->geometry());
+    QObject::connect(window, &QQuickWindow::beforeSynchronizing, [this]() { frameStarted(); });
+    QObject::connect(window, &QQuickWindow::afterRendering, [this]() { sendCallbacks(); });
+    setOutputGeometry(window->geometry());
+}
+
+void WaylandCompositor::registerOutputWindow(QQuickWindow *window)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5,5,0)
+    createOutput(window, QString(), QString());
+    window->winId();
+#else
+    Q_UNUSED(window)
+#endif
 }
 
 void WaylandCompositor::surfaceCreated(QWaylandSurface *surface)

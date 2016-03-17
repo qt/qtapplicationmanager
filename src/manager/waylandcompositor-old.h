@@ -65,7 +65,9 @@ public:
 class WaylandCompositor : public QWaylandQuickCompositor
 {
 public:
-    WaylandCompositor(QQuickView *view, const QString &waylandSocketName, WindowManager *manager);
+    WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager);
+
+    void registerOutputWindow(QQuickWindow *window);
 
     void surfaceCreated(QWaylandSurface *surface) override;
 

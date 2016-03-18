@@ -211,9 +211,11 @@ IpcWrapperObject::IpcWrapperObject(const QString &service, const QString &path, 
                 case QMetaMethod::Method:
                     mob.addMethod(params, resultTypeName);
                     break;
-                case QMetaMethod::Signal:
-                    mob.addSignal(params);
+                case QMetaMethod::Signal: {
+                    auto mbb = mob.addSignal(params);
+                    QMetaObject::connect(m_dbusInterface, mm.methodIndex(), this, mbb.index());
                     break;
+                }
                 case QMetaMethod::Constructor:
                     mob.addConstructor(params);
                     break;
@@ -250,6 +252,14 @@ const QMetaObject *IpcWrapperObject::metaObject() const
 
 int IpcWrapperObject::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        QMetaMethod mm = metaObject()->method(metaObject()->methodOffset() + _id);
+        if (mm.methodType() == QMetaMethod::Signal) {
+            metaObject()->activate(this, mm.methodIndex(), _a);
+            return -1;
+        }
+    }
+
     _id = QObject::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;

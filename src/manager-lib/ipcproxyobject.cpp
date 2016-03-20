@@ -532,9 +532,9 @@ void IpcProxyObject::relaySignal(int signalIndex, void **argv)
                 const QMetaProperty mp = m_object->metaObject()->property(propertyIndex);
 
                 QDBusMessage message = QDBusMessage::createSignal(pathName, qSL("org.freedesktop.DBus.Properties"), qSL("PropertiesChanged"));
-                message << m_interfaceName;
-                message << QVariantMap { { qL1S(mp.name()), QVariant::fromValue(QDBusVariant(convertFromJSVariant(mp.read(m_object)))) } };
-                message << QStringList();
+                message << m_interfaceName
+                        << QVariantMap() // { { qL1S(mp.name()), QVariant::fromValue(QDBusVariant(convertFromJSVariant(mp.read(m_object)))) } };
+                        << QStringList(qL1S(mp.name()));
 
                 connection.send(message);
 

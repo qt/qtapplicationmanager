@@ -317,18 +317,22 @@ int IpcWrapperObject::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 
 void IpcWrapperObject::onPropertiesChanged(const QString &interfaceName, const QVariantMap &changed, const QStringList &invalidated)
 {
-    Q_UNUSED(invalidated)
+    auto emitSignal = [this](const QString &propertyName) {
+        int idx = metaObject()->indexOfProperty(propertyName.toUtf8());
+        if (idx == -1)
+            return;
+
+        QMetaProperty prop = metaObject()->property(idx);
+        if (prop.hasNotifySignal())
+            metaObject()->activate(this, prop.notifySignalIndex(), nullptr);
+    };
+
 
     if (interfaceName == m_dbusInterface->interface()) {
-        for (auto it = changed.cbegin(); it != changed.cend(); ++it) {
-            int idx = metaObject()->indexOfProperty(it.key().toUtf8());
-            if (idx == -1)
-                continue;
-
-            QMetaProperty prop = metaObject()->property(idx);
-            if (prop.hasNotifySignal())
-                metaObject()->activate(this, prop.notifySignalIndex(), nullptr);
-        }
+        for (auto it = changed.cbegin(); it != changed.cend(); ++it)
+            emitSignal(it.key());
+        for (auto it = invalidated.cbegin(); it != invalidated.cend(); ++it)
+            emitSignal(*it);
     }
 }
 

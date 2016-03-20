@@ -49,15 +49,18 @@ QVariant convertFromJSVariant(const QVariant &variant)
     QVariant result;
 
     if (type == qMetaTypeId<QJSValue>()) {
-        result = variant.value<QJSValue>().toVariant();
+        return convertFromJSVariant(variant.value<QJSValue>().toVariant());
     } else if (type == QMetaType::QUrl) {
-        result = QVariant(variant.value<QUrl>().toString());
+        return QVariant(variant.value<QUrl>().toString());
     } else if (type == QMetaType::QVariant) {
-        result = variant.value<QVariant>(); // got a matryoshka variant
+        // got a matryoshka variant
+        return convertFromJSVariant(variant.value<QVariant>());
+    } else if (type == QMetaType::UnknownType){
+        // we cannot send QVariant::Invalid via DBus, so we abuse BYTE(0) for this purpose
+        return QVariant::fromValue<uchar>(0);
     } else {
         return variant;
     }
-    return convertFromJSVariant(result);
 #endif
 }
 
@@ -68,7 +71,10 @@ QVariant convertFromDBusVariant(const QVariant &variant)
 #else
     int type = variant.userType();
 
-    if (type == qMetaTypeId<QDBusVariant>()) {
+    if (type == QMetaType::UChar && variant.value<uchar>() == 0) {
+        // we cannot send QVariant::Invalid via DBus, so we abuse BYTE(0) for this purpose
+        return QVariant();
+    } else if (type == qMetaTypeId<QDBusVariant>()) {
         QDBusVariant dbusVariant = variant.value<QDBusVariant>();
         return convertFromDBusVariant(dbusVariant.variant()); // just to be on the safe side
     } else if (type == qMetaTypeId<QDBusArgument>()) {
@@ -106,7 +112,8 @@ QVariant convertFromDBusVariant(const QVariant &variant)
         default:
             return QVariant();
         }
+    } else {
+        return variant;
     }
-    return variant;
 #endif
 }

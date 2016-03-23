@@ -41,6 +41,7 @@
 QT_FORWARD_DECLARE_CLASS(QWaylandResource)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShellSurface)
+QT_FORWARD_DECLARE_CLASS(QWaylandTextInputManager)
 QT_BEGIN_NAMESPACE
 namespace QtWayland {
 class ExtendedSurface;
@@ -113,4 +114,5 @@ private:
     QWaylandWlShell *m_shell;
     QVector<QWaylandOutput *> m_outputs;
     QtWayland::SurfaceExtensionGlobal *m_surfExt;
+    QWaylandTextInputManager *m_textInputManager;
 };

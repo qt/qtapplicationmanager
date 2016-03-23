@@ -35,6 +35,7 @@
 #include <QWaylandQuickOutput>
 #include <QWaylandWindowManagerExtension>
 #include <private/qwlextendedsurface_p.h>
+#include <QWaylandTextInputManager>
 #include <QQuickView>
 
 #include "windowmanager.h"
@@ -130,6 +131,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     , m_manager(manager)
     , m_shell(new QWaylandWlShell(this))
     , m_surfExt(new QtWayland::SurfaceExtensionGlobal(this))
+    , m_textInputManager(new QWaylandTextInputManager(this))
 {
     setSocketName(waylandSocketName.toUtf8());
 

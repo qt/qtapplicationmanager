@@ -105,6 +105,8 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
 
     QProcessEnvironment completeEnv = QProcessEnvironment::systemEnvironment();
     completeEnv.insert(environment);
+    // Applications should use wayland text input
+    completeEnv.remove(qSL("QT_IM_MODULE"));
 
     HostProcess *process = new HostProcess();
     process->setWorkingDirectory(m_baseDirectory);

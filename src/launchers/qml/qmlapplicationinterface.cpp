@@ -76,6 +76,14 @@ bool QmlApplicationInterface::initialize()
                                     QDBusConnection::sessionBus(), this);
 
 
+    if (!m_applicationIf) {
+        qCritical("ERROR: Couldn't create the ApplicationInterface on D-Bus");
+        return false;
+    }
+    if (!m_runtimeIf) {
+        qCritical("ERROR: Couldn't create the RuntimeInterface on D-Bus");
+        return false;
+    }
     if (!m_applicationIf->isValid()) {
         qCritical("ERROR: ApplicationInterface on D-Bus is not valid: %s",
                   qPrintable(m_applicationIf->lastError().message()));
@@ -100,11 +108,15 @@ bool QmlApplicationInterface::initialize()
     if (!ok)
         qCritical("ERROR: could not connect the ApplicationInterface via D-Bus: %s", qPrintable(m_applicationIf->lastError().name()));
 
-    ok = ok && connect(m_notifyIf, SIGNAL(NotificationClosed(uint,uint)), this, SLOT(notificationClosed(uint,uint)));
-    ok = ok && connect(m_notifyIf, SIGNAL(ActionInvoked(uint,QString)), this, SLOT(notificationActivated(uint,QString)));
+    if (m_notifyIf) {
+        ok = ok && connect(m_notifyIf, SIGNAL(NotificationClosed(uint,uint)), this, SLOT(notificationClosed(uint,uint)));
+        ok = ok && connect(m_notifyIf, SIGNAL(ActionInvoked(uint,QString)), this, SLOT(notificationActivated(uint,QString)));
 
-    if (!ok)
-        qCritical("ERROR: could not connect the org.freedesktop.Notifications interface via D-Bus: %s", qPrintable(m_notifyIf->lastError().name()));
+        if (!ok)
+            qCritical("ERROR: could not connect the org.freedesktop.Notifications interface via D-Bus: %s", qPrintable(m_notifyIf->lastError().name()));
+    } else {
+        qCritical("ERROR: Couldn't create the org.freedesktop.Notifications interface on D-Bus");
+    }
 
     QmlApplicationInterfaceExtension::initialize(m_connection);
 
@@ -133,7 +145,7 @@ QVariantMap QmlApplicationInterface::additionalConfiguration() const
 
 uint QmlApplicationInterface::notificationShow(QmlNotification *n)
 {
-    if (n && m_notifyIf->isValid()) {
+    if (n && m_notifyIf && m_notifyIf->isValid()) {
         QDBusReply<uint> newId = m_notifyIf->call(qSL("Notify"), applicationId(), n->notificationId(),
                                                   n->icon().toString(), n->summary(), n->body(),
                                                   n->libnotifyActionList(), n->libnotifyHints(),
@@ -149,7 +161,7 @@ uint QmlApplicationInterface::notificationShow(QmlNotification *n)
 
 void QmlApplicationInterface::notificationClose(QmlNotification *n)
 {
-    if (n && m_notifyIf->isValid())
+    if (n && m_notifyIf && m_notifyIf->isValid())
         m_notifyIf->asyncCall(qSL("CloseNotification"), n->notificationId());
 }
 

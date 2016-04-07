@@ -1,7 +1,6 @@
 /****************************************************************************
 **
 ** Copyright (C) 2016 Pelagicore AG
-** Copyright (C) 2016 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -29,13 +28,3 @@
 ** SPDX-License-Identifier: GPL-3.0
 **
 ****************************************************************************/
-
-#include <yaml.h>
-
-int main()
-{
-    yaml_parser_t p;
-    yaml_parser_initialize(&p);
-
-    return 0;
-}

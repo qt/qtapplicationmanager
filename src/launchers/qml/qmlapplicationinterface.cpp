@@ -59,7 +59,7 @@ bool QmlApplicationInterface::initialize()
 {
     auto tryConnect = [](const QString &service, const QString &path, const QString &interfaceName,
                          const QDBusConnection &conn, QObject *parent) -> QDBusInterface * {
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 100; ++i) {
             QDBusInterface *iface = new QDBusInterface(service, path, interfaceName, conn, parent);
             if (!iface->lastError().isValid())
                 return iface;

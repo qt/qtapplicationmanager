@@ -30,7 +30,7 @@
 ****************************************************************************/
 
 #include <QWaylandOutput>
-#include <QWaylandShell>
+#include <QWaylandWlShell>
 #include <QWaylandQuickOutput>
 #include <QWaylandWindowManagerExtension>
 #include <private/qwlextendedsurface_p.h>
@@ -42,7 +42,7 @@
 #include "waylandcompositor.h"
 
 
-void Surface::setShellSurface(QWaylandShellSurface *ss)
+void Surface::setShellSurface(QWaylandWlShellSurface *ss)
 {
     m_shellSurface = ss;
     m_item = new SurfaceQuickItem(this);
@@ -53,7 +53,7 @@ void Surface::setExtendedSurface(QtWayland::ExtendedSurface *ext)
     m_ext = ext;
 }
 
-QWaylandShellSurface *Surface::shellSurface() const { return m_shellSurface; }
+QWaylandWlShellSurface *Surface::shellSurface() const { return m_shellSurface; }
 
 QtWayland::ExtendedSurface *Surface::extendedSurface() const { return m_ext; }
 
@@ -83,7 +83,7 @@ void Surface::setWindowProperty(const QString &n, const QVariant &v)
 
 void Surface::connectPong(const std::function<void ()> &cb)
 {
-    connect(m_shellSurface, &QWaylandShellSurface::pong, cb);
+    connect(m_shellSurface, &QWaylandWlShellSurface::pong, cb);
 }
 
 void Surface::connectWindowPropertyChanged(const std::function<void (const QString &, const QVariant &)> &cb)
@@ -110,7 +110,7 @@ SurfaceQuickItem::SurfaceQuickItem(Surface *s)
 void SurfaceQuickItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     qCDebug(LogWayland) << "sendConfigure" << m_surface << newGeometry.size() << "(PID:" << m_surface->client()->processId() << ")";
-    m_surface->shellSurface()->sendConfigure(newGeometry.size().toSize(), QWaylandShellSurface::NoneEdge);
+    m_surface->shellSurface()->sendConfigure(newGeometry.size().toSize(), QWaylandWlShellSurface::NoneEdge);
 
     QWaylandQuickItem::geometryChanged(newGeometry, oldGeometry);
 }
@@ -127,7 +127,7 @@ Surface::Surface(QWaylandCompositor *comp, QWaylandClient *client, uint id, int 
 WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager)
     : QWaylandQuickCompositor()
     , m_manager(manager)
-    , m_shell(new QWaylandShell(this))
+    , m_shell(new QWaylandWlShell(this))
     , m_surfExt(new QtWayland::SurfaceExtensionGlobal(this))
 {
     setSocketName(waylandSocketName.toUtf8());
@@ -141,7 +141,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     setenv("WAYLAND_DISPLAY", qPrintable(waylandSocketName), 1);
 
-    connect(m_shell, &QWaylandShell::createShellSurface, this, &WaylandCompositor::createShellSurface);
+    connect(m_shell, &QWaylandWlShell::createShellSurface, this, &WaylandCompositor::createShellSurface);
     connect(m_surfExt, &QtWayland::SurfaceExtensionGlobal::extendedSurfaceReady, this, &WaylandCompositor::extendedSurfaceReady);
 
     auto wmext = new QWaylandWindowManagerExtension(this);
@@ -170,7 +170,7 @@ void WaylandCompositor::createShellSurface(QWaylandSurface *surface, const QWayl
     Surface *s = static_cast<Surface *>(surface);
 
     qCDebug(LogWayland) << "createShellSurface" << s << "(PID:" << s->client()->processId() << ")";
-    QWaylandShellSurface *ss = new QWaylandShellSurface(m_shell, s, resource);
+    QWaylandWlShellSurface *ss = new QWaylandWlShellSurface(m_shell, s, resource);
     s->setShellSurface(ss);
 
     connect(s, &QWaylandSurface::mappedChanged, this, &WaylandCompositor::waylandSurfaceMappedChanged);

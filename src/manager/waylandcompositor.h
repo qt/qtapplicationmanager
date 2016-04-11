@@ -38,8 +38,8 @@
 #include "windowmanager.h"
 
 QT_FORWARD_DECLARE_CLASS(QWaylandResource)
-QT_FORWARD_DECLARE_CLASS(QWaylandShell)
-QT_FORWARD_DECLARE_CLASS(QWaylandShellSurface)
+QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
+QT_FORWARD_DECLARE_CLASS(QWaylandWlShellSurface)
 QT_BEGIN_NAMESPACE
 namespace QtWayland {
 class ExtendedSurface;
@@ -57,10 +57,10 @@ class Surface : public QWaylandQuickSurface, public WindowSurface
 public:
     Surface(QWaylandCompositor *comp, QWaylandClient *client, uint id, int version);
 
-    void setShellSurface(QWaylandShellSurface *ss);
+    void setShellSurface(QWaylandWlShellSurface *ss);
     void setExtendedSurface(QtWayland::ExtendedSurface *e);
 
-    QWaylandShellSurface *shellSurface() const;
+    QWaylandWlShellSurface *shellSurface() const;
     QtWayland::ExtendedSurface *extendedSurface() const;
 
     QQuickItem *item() const override;
@@ -78,7 +78,7 @@ public:
 
 private:
     SurfaceQuickItem *m_item;
-    QWaylandShellSurface *m_shellSurface;
+    QWaylandWlShellSurface *m_shellSurface;
     QtWayland::ExtendedSurface *m_ext;
 };
 
@@ -109,7 +109,7 @@ public:
 
 private:
     WindowManager *m_manager;
-    QWaylandShell *m_shell;
+    QWaylandWlShell *m_shell;
     QVector<QWaylandOutput *> m_outputs;
     QtWayland::SurfaceExtensionGlobal *m_surfExt;
 };

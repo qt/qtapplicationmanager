@@ -43,6 +43,13 @@ class FakeApplicationManagerWindow : public QQuickItem
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor) // dummy to mimick Window's API
 
+    // for API compatibility with QWaylandQuickItem - we cannot really simulate these,
+    // but at least the QML code will not throw errors due to missing properties.
+    Q_PROPERTY(bool paintEnabled READ dummyGetter WRITE dummySetter)
+    Q_PROPERTY(bool touchEventsEnabled READ dummyGetter WRITE dummySetter)
+    Q_PROPERTY(bool inputEventsEnabled READ dummyGetter WRITE dummySetter)
+    Q_PROPERTY(bool focusOnClick READ dummyGetter WRITE dummySetter)
+
 public:
     explicit FakeApplicationManagerWindow(QQuickItem *parent = 0);
     ~FakeApplicationManagerWindow();
@@ -91,6 +98,9 @@ protected:
     bool event(QEvent *e) override;
 
 private:
+    bool dummyGetter() const { return false; }
+    void dummySetter(bool) { }
+
     QmlInProcessRuntime *m_runtime;
 
     friend class QmlInProcessRuntime; // for setting the m_runtime member

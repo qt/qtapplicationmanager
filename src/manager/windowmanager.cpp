@@ -29,7 +29,7 @@
 **
 ****************************************************************************/
 
-#include <QCoreApplication>
+#include <QGuiApplication>
 #include <QRegularExpression>
 #include <QQuickView>
 #include <QQuickItem>
@@ -295,6 +295,15 @@ QObject *WindowManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
     if (qmlEngine)
         retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
     return instance();
+}
+
+bool WindowManager::isRunningOnDesktop() const
+{
+#if defined(Q_OS_WIN) || defined(Q_OS_OSX)
+    return true;
+#else
+    return qApp->platformName() == qSL("xcb");
+#endif
 }
 
 WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName)

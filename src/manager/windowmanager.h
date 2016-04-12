@@ -91,11 +91,14 @@ class WindowManager : public QAbstractListModel
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.WindowManager")
     Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT)
 public:
     ~WindowManager();
     static WindowManager *createInstance(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName = QString());
     static WindowManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
+
+    bool isRunningOnDesktop() const;
 
     void enableWatchdog(bool enable);
     bool isWatchdogEnabled() const;

@@ -271,7 +271,8 @@ void Controller::startApplication(const QString &qmlFile, const QString &argumen
             return;
         }
     } else {
-        m_engine.setIncubationController(m_window->incubationController());
+        if (!m_engine.incubationController())
+            m_engine.setIncubationController(m_window->incubationController());
     }
 
     Q_ASSERT(m_window);

@@ -623,6 +623,8 @@ int main(int argc, char *argv[])
             window = view;
         } else {
             window = qobject_cast<QQuickWindow *>(rootObject);
+            if (!engine->incubationController())
+                engine->setIncubationController(window->incubationController());
         }
 
         Q_ASSERT(window);

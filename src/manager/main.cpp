@@ -631,9 +631,10 @@ int main(int argc, char *argv[])
         QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, qApp, [&startupTimer, &conn]() {
             static bool once = true;
             if (once) {
-                startupTimer.checkpoint("after first frame drawn");
                 QObject::disconnect(conn);
                 once = false;
+                startupTimer.checkpoint("after first frame drawn");
+                startupTimer.createReport();
             }
         });
 
@@ -700,7 +701,6 @@ int main(int argc, char *argv[])
         engine->rootContext()->setContextProperty("ssdp", &ssdp);
 #endif // QT_PSSDP_LIB
 
-        startupTimer.createReport();
         int res = a.exec();
 
         // Normally we would delete view here (which would in turn delete am and wm). This will

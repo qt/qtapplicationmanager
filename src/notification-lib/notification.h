@@ -59,6 +59,7 @@ class Notification : public QObject, public QQmlParserStatus
     Q_PROPERTY(qreal progress READ progress WRITE setProgress NOTIFY progressChanged)
     Q_PROPERTY(QVariantList actions READ actions WRITE setActions NOTIFY actionChanged)
     Q_PROPERTY(bool dismissOnAction READ dismissOnAction WRITE setDismissOnAction NOTIFY dismissOnActionChanged)
+    Q_PROPERTY(QVariantMap extended READ extended WRITE setExtended NOTIFY extendedChanged)
 
 public:
     enum Priority { Low, Normal, Critical };
@@ -82,6 +83,7 @@ public:
     QVariantList actions() const;
     bool isVisible() const;
     bool dismissOnAction() const;
+    QVariantMap extended() const;
 
     Q_INVOKABLE void show();
     Q_INVOKABLE void hide();
@@ -101,6 +103,7 @@ public slots:
     void setActions(const QVariantList &actions);
     void setVisible(bool visible);
     void setDismissOnAction(bool dismissOnAction);
+    void setExtended(QVariantMap extended);
 
 signals:
     void summaryChanged(const QString &summary);
@@ -118,6 +121,7 @@ signals:
     void dismissOnActionChanged(bool dismissOnAction);
     void visibleChanged(bool visible);
     void notificationIdChanged(int notificationId);
+    void extendedChanged(QVariantMap extended);
 
     void clicked();
     void actionActivated(const QString &actionId);
@@ -156,6 +160,7 @@ private:
     bool m_showProgress = false;
     qreal m_progress = -1;
     QVariantList m_actions;
+    QVariantMap m_extended;
 
     static const int defaultTimeout = 2000;
     bool m_dismissOnAction;

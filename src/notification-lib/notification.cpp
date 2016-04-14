@@ -127,6 +127,11 @@ bool Notification::dismissOnAction() const
     return m_dismissOnAction;
 }
 
+QVariantMap Notification::extended() const
+{
+    return m_extended;
+}
+
 void Notification::show()
 {
     setVisible(true);
@@ -254,6 +259,14 @@ void Notification::setDismissOnAction(bool dismissOnAction)
     }
 }
 
+void Notification::setExtended(QVariantMap extended)
+{
+    if (m_extended != extended) {
+        m_extended = extended;
+        emit extendedChanged(extended);
+    }
+}
+
 void Notification::classBegin()
 { }
 
@@ -271,6 +284,7 @@ void Notification::componentComplete()
     connect(this, &Notification::stickyChanged, this, &Notification::updateNotification);
     connect(this, &Notification::showProgressChanged, this, &Notification::updateNotification);
     connect(this, &Notification::progressChanged, this, &Notification::updateNotification);
+    connect(this, &Notification::extendedChanged, this, &Notification::updateNotification);
 }
 
 //void Notification::setCallbacks(uint (*notifyCallback)(uint, const QString &, const QString &, const QString &, const QStringList &, const QVariantMap &, int), void (*closeCallback)(uint))
@@ -311,6 +325,8 @@ QVariantMap Notification::libnotifyHints() const
         hints.insert(qSL("x-pelagicore-show-progress"), true);
         hints.insert(qSL("x-pelagicore-progress"), progress());
     }
+    if (!extended().isEmpty())
+        hints.insert(qSL("x-pelagicore-extended"), extended());
 
     return hints;
 }

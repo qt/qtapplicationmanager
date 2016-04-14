@@ -202,7 +202,9 @@ enum Roles
     Progress, // 0..1 or -1 == busy
 
     IsSticky, // no timeout == sticky
-    Timeout // in msec
+    Timeout, // in msec
+
+    Extended // QVariantMap
 };
 
 struct NotificationData
@@ -224,6 +226,7 @@ struct NotificationData
     bool isShowingProgress;
     qreal progress;
     int timeout;
+    QVariantMap extended;
 
     QTimer *timer = nullptr;
 };
@@ -307,6 +310,7 @@ NotificationManager::NotificationManager(QObject *parent)
     d->roleNames.insert(Progress, "progress");
     d->roleNames.insert(IsSticky, "isSticky");
     d->roleNames.insert(Timeout, "timeout");
+    d->roleNames.insert(Extended, "extended");
 }
 
 NotificationManager::~NotificationManager()
@@ -368,6 +372,8 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
         return n->timeout == 0;
     case Timeout:
         return n->timeout;
+    case Extended:
+        return n->extended;
     }
     return QVariant();
 }
@@ -498,6 +504,7 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
     n->isShowingProgress = hints.value(qSL("x-pelagicore-show-progress")).toBool();
     n->progress = hints.value(qSL("x-pelagicore-progress")).toReal();
     n->timeout = timeout;
+    n->extended = hints.value(qSL("x-pelagicore-extended")).toMap();
 
     if (replaces_id) {
         QModelIndex idx = index(d->notifications.indexOf(n), 0);

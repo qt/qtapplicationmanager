@@ -416,8 +416,11 @@ void NotificationManager::notificationActionWasActivated(int id, const QString &
 
     if (i >= 0) {
         NotificationData *n = d->notifications.at(i);
-        if (n->actions.contains(actionId))
-            emit ActionInvoked(id, actionId);
+        if (!n->actions.contains(actionId)) {
+            qCDebug(LogNotifications) << "Requested action activation, but the action is not registered:"
+                                      << (actionId.length() > 20 ? (actionId.left(20) + qSL("...")) : actionId);
+        }
+        emit ActionInvoked(id, actionId);
     }
 }
 

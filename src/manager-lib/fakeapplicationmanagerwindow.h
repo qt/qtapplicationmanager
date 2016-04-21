@@ -42,6 +42,7 @@ class FakeApplicationManagerWindow : public QQuickItem
 {
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor) // dummy to mimick Window's API
+    Q_PROPERTY(QString title READ dummyGetterString WRITE dummySetterString)
 
     // for API compatibility with QWaylandQuickItem - we cannot really simulate these,
     // but at least the QML code will not throw errors due to missing properties.
@@ -100,6 +101,8 @@ protected:
 private:
     bool dummyGetter() const { return false; }
     void dummySetter(bool) { }
+    QString dummyGetterString() const { return QString(); }
+    void dummySetterString(const QString&) {}
 
     QmlInProcessRuntime *m_runtime;
 

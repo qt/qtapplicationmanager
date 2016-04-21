@@ -110,45 +110,44 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE int count() const { return rowCount(); }
+    Q_INVOKABLE int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
 
-    Q_INVOKABLE void releaseSurfaceItem(int index, QQuickItem* item); // after 'surfaceItemClosing' has been called, this function must be called to 'free' the surfaceItem (allow deleteLater) on it, after this has been called, surfaceItemLost should happen
+    Q_INVOKABLE void releaseWindow(QQuickItem *window);
 
-    Q_INVOKABLE void registerOutputWindow(QQuickWindow *window);
+    Q_INVOKABLE void registerCompositorView(QQuickWindow *view);
 
 signals:
     void countChanged();
-    void raiseApplicationWindow(const QString &id);
+    void raiseApplicationWindow(const QString &applicationId);
 
-    void surfaceItemReady(int index, QQuickItem* item);             // this is emitted after a new surfaceItem (/window) has been created (new application launch) or is otherwise ready (already running application got 'launched')
-    void surfaceItemClosing(int index, QQuickItem* item);           // this is emitted when the application is about to close (e.g. process has killed himself and waylandsurface got unmapped/destroyed) or QQuickItem fired 'close'-signal (for qmlinprocess)
-    void surfaceItemLost(int index, QQuickItem* item);              // after this signal has been fired, this QQuickItem is not usable anymore. This should only happen after releaseSurfaceItem has been called!
-    // maybe more to come .. e.g. raise, hide, fullscreen(?) ...
+    void windowReady(int index, QQuickItem *window);
+    void windowClosing(int index, QQuickItem *window);
+    void windowLost(int index, QQuickItem *window);
 
-    void surfaceWindowPropertyChanged(QQuickItem *surfaceItem, const QString &name, const QVariant &value);
+    void windowPropertyChanged(QQuickItem *window, const QString &name, const QVariant &value);
 
-public slots:
+private slots:
     void surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen);
 
-    void inProcessSurfaceItemCreated(QQuickItem *surfaceItem);                       //TODO: check if still correct: calls surfaceItemCreated(QQuickItem *surfaceItem, const Application* app)
-    void setupWindow(Window *window);                                                //TODO: check if still correct: called after creating is complete. creating and registering all the created data (item and app); Also connect QObject::destroyed with WindowManger::surfaceItemDestroyed
-    void surfaceItemAboutToClose(QQuickItem *item);                                  // called when application wants to close (either because the wayland_surface disconnected/unmapped or because in-process item fired corresponding signal ... the only thing it does is firing surfaceItemClosing ... qml has(!) to call releaseSurfaceItem somewhen after this!
-    void surfaceItemDestroyed(QQuickItem* item);                                     // called after item got deleted (QObject::destroyed()). cleaning up the data-entries and firing corresponding signals
-
-    void setupInProcessRuntime(AbstractRuntime *runtime); // evil hook to support in-process runtimes
+    void inProcessSurfaceItemCreated(QQuickItem *surfaceItem);
+    void setupWindow(Window *window);
+    void surfaceItemAboutToClose(QQuickItem *item);
+    void surfaceItemDestroyed(QQuickItem *item);
 
 public:
-    Q_INVOKABLE bool setSurfaceWindowProperty(QQuickItem *item, const QString &name, const QVariant &value);
-    Q_INVOKABLE QVariant surfaceWindowProperty(QQuickItem *item, const QString &name) const;
-    Q_INVOKABLE QVariantMap surfaceWindowProperties(QQuickItem *item) const;
+    Q_INVOKABLE bool setWindowProperty(QQuickItem *window, const QString &name, const QVariant &value);
+    Q_INVOKABLE QVariant windowProperty(QQuickItem *window, const QString &name) const;
+    Q_INVOKABLE QVariantMap windowProperties(QQuickItem *window) const;
 
     Q_SCRIPTABLE bool makeScreenshot(const QString &filename, const QString &selector);
 
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 
+public slots:
+    void setupInProcessRuntime(AbstractRuntime *runtime); // evil hook to support in-process runtimes
+
 private slots:
-    void windowPropertyChanged(const QString &name, const QVariant &value);
     void reportFps();
 
 #ifndef AM_SINGLE_PROCESS_MODE

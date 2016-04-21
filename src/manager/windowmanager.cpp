@@ -100,9 +100,10 @@
             \c com.pelagicore.foo). This can be used to look up information about the application
             in the ApplicationManager model.
     \row
-        \li \c surfaceItem
+        \li \c windowItem
         \li \c Item
-        \li The window surface of the application - used to composite the windows on the screen.
+        \li The QtQuick Item representing the window surface of the application - used to actually
+            composite the window on the screen.
     \row
         \li \c isFullscreen
         \li \c bool
@@ -110,7 +111,7 @@
     \row
         \li \c isMapped
         \li \c bool
-        \li A boolean value telling if the app's surface is mapped.
+        \li A boolean value telling if the app's surface is mapped (visible).
     \endtable
 
     The QML import for this singleton is
@@ -141,34 +142,31 @@
             anchors.fill: parent
             state: "closed"
 
-            function surfaceItemReadyHandler(index, item) {
+            function windowReadyHandler(index, window) {
                 filterMouseEventsForWindowContainer.enabled = true
                 windowContainer.state = ""
-                windowContainer.windowItem = item
-                windowContainer.windowItemIndex = index
+                windowContainer.windowItem = window
             }
-            function surfaceItemClosingHandler(index, item) {
-                if (item === windowContainer.windowItem) {
+            function windowClosingHandler(index, window) {
+                if (window === windowContainer.windowItem) {
                     // start close animation
                     windowContainer.state = "closed"
                 } else {
                     // immediately close anything which is not handled by this container
-                    WindowManager.releaseSurfaceItem(index, item)
+                    WindowManager.releasewindow(index, window)
                 }
             }
-            function surfaceItemLostHandler(index, item) {
-                if (windowContainer.windowItem === item) {
-                    windowContainer.windowItemIndex = -1
+            function windowLostHandler(index, window) {
+                if (windowContainer.windowItem === window) {
                     windowContainer.windowItem = placeHolder
                 }
             }
             Component.onCompleted: {
-                WindowManager.surfaceItemReady.connect(surfaceItemReadyHandler)
-                WindowManager.surfaceItemClosing.connect(surfaceItemClosingHandler)
-                WindowManager.surfaceItemLost.connect(surfaceItemLostHandler)
+                WindowManager.windowReady.connect(windowReadyHandler)
+                WindowManager.windowClosing.connect(windowClosingHandler)
+                WindowManager.windowLost.connect(windowLostHandler)
             }
 
-            property int windowItemIndex: -1
             property Item windowItem: placeHolder
             onWindowItemChanged: {
                 windowItem.parent = windowContainer  // reset parent in any case
@@ -196,7 +194,7 @@
                         ScriptAction {
                             script: {
                                 windowContainer.windowItem.visible = false;
-                                WindowManager.releaseSurfaceItem(windowContainer.windowItemIndex, windowContainer.windowItem);
+                                WindowManager.releaseWindow(windowContainer.windowItem);
                                 filterMouseEventsForWindowContainer.enabled = false;
                             }
                         }
@@ -219,46 +217,52 @@
 */
 
 /*!
-    \qmlproperty int WindowManager::count
+    \qmlsignal WindowManager::windowReady(int index, Item window)
 
-    This property holds the number of applications available.
-*/
-
-/*!
-    \qmlsignal WindowManager::surfaceItemReady(int index, Item item)
-
-    This signal is emitted after a new surface \a item (a window) has been created. Most likely due
+    This signal is emitted after a new \a window surface has been created. Most likely due
     to an application launch.
 
-    The corresponding application can be retrieved via the model \a index.
+    More information about this window (e.g. the corresponding application) can be retrieved via the
+    model \a index.
 */
 
 /*!
-    \qmlsignal WindowManager::surfaceItemClosing(int index, Item item)
+    \qmlsignal WindowManager::windowClosing(int index, Item window)
 
-    This signal is emitted when the application is about to close. A process exited - either by
-    exiting normally or by crashing - and the corresponding Wayland surface \a item got unmapped.
+    This signal is emitted when a \a window surface is unmapped.
+
+    Either the client application closed the window, or it exited and all its Wayland surfaces got
+    implicitly unmapped.
     When using the \c qml-inprocess runtime this signal will also be emitted when the \c close
     signal of the fake surface is triggered.
 
     The actual surface can still be used for animations, since it will not be deleted right
     after this signal is emitted.
 
-    The QML code is required to answer this signal by calling releaseSurfaceItem as soon as the QML
-    animations on this surface are finished. Neglecting to do so will result in resource leaks!
+    The system-ui is required to answer this signal by calling releaseWindow as soon as the QML
+    animations on this window surface are finished. Neglecting to do so will result in resource leaks!
 
-    The corresponding application can be retrieved via the model \a index.
+    More information about this window (e.g. the corresponding application) can be retrieved via the
+    model \a index.
 
-    \sa surfaceItemLost
+    \sa windowLost
 */
 
 /*!
-    \qmlsignal WindowManager::surfaceItemLost(int index, Item item)
+    \qmlsignal WindowManager::windowLost(int index, Item window)
 
-    After this signal has been fired, the surface \a item is not usable anymore. This should only
-    happen after releaseSurfaceItem has been called.
+    After this signal has been fired, the \a window surface is not usable anymore. This should only
+    happen after releaseWindow has been called.
 
-    The corresponding application can be retrieved via the model \a index.
+    More information about this window (e.g. the corresponding application) can be retrieved via the
+    model \a index.
+*/
+
+/*!
+    \qmlsignal WindowManager::raiseApplicationWindow(string applicationId)
+
+    This signal is emitted when an application start is triggered for the already running application
+    identified by \a applicationId via the ApplicationManager.
 */
 
 
@@ -266,7 +270,7 @@ namespace {
 enum Roles
 {
     Id = Qt::UserRole + 1000,
-    SurfaceItem,
+    WindowItem,
     IsFullscreen,
     IsMapped
 };
@@ -297,6 +301,12 @@ QObject *WindowManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
     return instance();
 }
 
+/*!
+    \qmlproperty bool WindowManager::runningOnDesktop
+
+    \c true if running on a classic desktop window manager (Windows, Mac OS X or X11) and
+    \c false otherwise.
+*/
 bool WindowManager::isRunningOnDesktop() const
 {
 #if defined(Q_OS_WIN) || defined(Q_OS_OSX)
@@ -319,7 +329,7 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, con
 #endif
 
     d->roleNames.insert(Id, "applicationId");
-    d->roleNames.insert(SurfaceItem, "surfaceItem");
+    d->roleNames.insert(WindowItem, "windowItem");
     d->roleNames.insert(IsFullscreen, "isFullscreen");
     d->roleNames.insert(IsMapped, "isMapped");
 
@@ -327,10 +337,10 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, con
 
     connect(SystemMonitor::instance(), &SystemMonitor::fpsReportingEnabledChanged, this, [this]() {
         if (SystemMonitor::instance()->isFpsReportingEnabled()) {
-            foreach (const QQuickWindow* view, d->views)
+            foreach (const QQuickWindow *view, d->views)
                 connect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
         } else {
-            foreach (const QQuickWindow* view, d->views)
+            foreach (const QQuickWindow *view, d->views)
                 disconnect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
         }
     });
@@ -384,8 +394,8 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
         } else {
             return QString();
         }
-    case SurfaceItem:
-        return QVariant::fromValue<QQuickItem*>(win->surfaceItem());
+    case WindowItem:
+        return QVariant::fromValue<QQuickItem*>(win->windowItem());
     case IsFullscreen: {
         //TODO: find a way to handle fullscreen transparently for wayland and in-process
         return false;
@@ -412,24 +422,34 @@ QHash<int, QByteArray> WindowManager::roleNames() const
 }
 
 /*!
-    \qmlmethod object WindowManager::get(int row) const
+    \qmlproperty int WindowManager::count
 
-    Retrieves the model data at \a row as a JavaScript object. Please see the \l {WindowManager
+    This property holds the number of applications available.
+*/
+int WindowManager::count() const
+{
+    return rowCount();
+}
+
+/*!
+    \qmlmethod object WindowManager::get(int index) const
+
+    Retrieves the model data at \a index as a JavaScript object. Please see the \l {WindowManager
     Roles}{role names} for the expected object fields.
 
-    Will return an empty object, if the specified \a row is invalid.
+    Will return an empty object, if the specified \a index is invalid.
 */
-QVariantMap WindowManager::get(int row) const
+QVariantMap WindowManager::get(int index) const
 {
-    if (row < 0 || row >= count()) {
-        qCWarning(LogWayland) << "invalid row:" << row;
+    if (index < 0 || index >= count()) {
+        qCWarning(LogWayland) << "invalid index:" << index;
         return QVariantMap();
     }
 
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(it.value(), data(index(row), it.key()));
+        map.insert(it.value(), data(QAbstractListModel::index(index), it.key()));
     return map;
 }
 
@@ -451,31 +471,44 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 }
 
 /*!
-    \qmlmethod WindowManager::releaseSurfaceItem(int index, Item item)
+    \qmlmethod WindowManager::releaseWindow(Item window)
 
-    Releases the surface \a item for the application at \a index. After cleanup is complete, the
-    signal surfaceItemLost will be fired.
+    Releases all resources of the \a window surface.
+
+    After cleanup is complete, the signal windowLost will be fired.
 */
 
-void WindowManager::releaseSurfaceItem(int index, QQuickItem* item)
+void WindowManager::releaseWindow(QQuickItem *window)
 {
-    Q_UNUSED(index);
-    item->deleteLater();
-    surfaceItemDestroyed(item);
+    if (!window)
+        return;
+    window->deleteLater();
+    surfaceItemDestroyed(window);
 }
 
-void WindowManager::registerOutputWindow(QQuickWindow *window)
+/*!
+    \qmlmethod WindowManager::registerCompositorView(QQuickWindow *view)
+
+    Register the given \a view as a possible destination for Wayland window composition.
+
+    Wayland window items can only be rendered within top-level windows, that have been registered
+    via this function.
+
+    \note The \a view parameter is an actual top-level window on the server side - not a client
+          application window item.
+*/
+void WindowManager::registerCompositorView(QQuickWindow *view)
 {
-    d->views << window;
+    d->views << view;
 
 #if !defined(AM_SINGLE_PROCESS_MODE)
     if (!d->forceSingleProcess) {
         if (!d->waylandCompositor) {
-            d->waylandCompositor = new WaylandCompositor(window, d->waylandSocketName, this);
-            connect(window, &QWindow::heightChanged, this, &WindowManager::resize);
-            connect(window, &QWindow::widthChanged, this, &WindowManager::resize);
+            d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName, this);
+            connect(view, &QWindow::heightChanged, this, &WindowManager::resize);
+            connect(view, &QWindow::widthChanged, this, &WindowManager::resize);
         } else {
-            d->waylandCompositor->registerOutputWindow(window);
+            d->waylandCompositor->registerOutputWindow(view);
         }
     }
 #endif
@@ -497,7 +530,7 @@ void WindowManager::surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFul
     emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsFullscreen);
 }
 
-/*! /internal
+/*! \internal
     Only used for in-process surfaces
  */
 void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
@@ -519,23 +552,26 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
 }
 
 
-/*! /internal
+/*! \internal
     Used to create the Window objects for a surface
     This is called for both wayland and in-process surfaces
- */
+*/
 void WindowManager::setupWindow(Window *window)
 {
     if (!window)
         return;
 
     connect(window, &Window::windowPropertyChanged,
-            this, &WindowManager::windowPropertyChanged);
+            this, [this](const QString &name, const QVariant &value) {
+        if (Window *win = qobject_cast<Window *>(sender()))
+            emit windowPropertyChanged(win->windowItem(), name, value);
+    });
 
     beginInsertRows(QModelIndex(), d->windows.count(), d->windows.count());
     d->windows << window;
     endInsertRows();
 
-    emit surfaceItemReady(d->windows.count() - 1, window->surfaceItem());
+    emit windowReady(d->windows.count() - 1, window->windowItem());
 }
 
 void WindowManager::surfaceItemDestroyed(QQuickItem* item)
@@ -545,7 +581,7 @@ void WindowManager::surfaceItemDestroyed(QQuickItem* item)
     int index = d->findWindowBySurfaceItem(item);
 
     if (index > -1) {
-        emit surfaceItemLost(index, item);
+        emit windowLost(index, item);
 
         beginRemoveRows(QModelIndex(), index, index);
         d->windows.removeAt(index);
@@ -561,7 +597,7 @@ void WindowManager::surfaceItemAboutToClose(QQuickItem *item)
 
     if (index == -1)
         qCWarning(LogSystem) << "could not find application for surfaceItem";
-    emit surfaceItemClosing(index, item);  // is it really better to emit the signal with index==-1 then doing nothing...?
+    emit windowClosing(index, item);  // is it really better to emit the signal with index==-1 then doing nothing...?
 }
 
 
@@ -608,7 +644,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
         QModelIndex modelIndex = QAbstractListModel::index(index);
         qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: true";
         emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
-        emit surfaceItemReady(index, d->windows.at(index)->surfaceItem());
+        emit windowReady(index, d->windows.at(index)->windowItem());
     }
 
     // switch on Wayland ping/pong -- currently disabled, since it is a bit unstable
@@ -669,18 +705,29 @@ void WindowManager::handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *sur
 
     Window *win = d->windows.at(index);
 
-    if (win->surfaceItem() && !win->isClosing()) {
+    if (win->windowItem() && !win->isClosing()) {
         win->setClosing();
-        surfaceItemAboutToClose(win->surfaceItem());
+        surfaceItemAboutToClose(win->windowItem());
     }
 }
 
 #endif // !defined(AM_SINGLE_PROCESS_MODE)
 
 
-bool WindowManager::setSurfaceWindowProperty(QQuickItem *item, const QString &name, const QVariant &value)
+/*!
+    \qmlmethod bool WindowManager::setWindowProperty(Item window, string name, var value)
+
+    Sets an application \a window's shared property identified by \a name to the given \a value.
+
+    These properties are shared between the system-ui and the client application: in single-process
+    mode simply via a QVariantMap; in multi-process mode via Qt's extended surface Wayland extension.
+    Changes on either side are signalled on the other side via windowPropertyChanged.
+
+    \sa windowProperty, windowProperties
+*/
+bool WindowManager::setWindowProperty(QQuickItem *window, const QString &name, const QVariant &value)
 {
-    int index = d->findWindowBySurfaceItem(item);
+    int index = d->findWindowBySurfaceItem(window);
 
     if (index < 0)
         return false;
@@ -689,9 +736,16 @@ bool WindowManager::setSurfaceWindowProperty(QQuickItem *item, const QString &na
     return win->setWindowProperty(name, value);
 }
 
-QVariant WindowManager::surfaceWindowProperty(QQuickItem *item, const QString &name) const
+/*!
+    \qmlmethod var WindowManager::windowProperty(Item window, string name) const
+
+    Returns the value of an application \a window's shared property identified by \a name.
+
+    \sa setWindowProperty
+*/
+QVariant WindowManager::windowProperty(QQuickItem *window, const QString &name) const
 {
-    int index = d->findWindowBySurfaceItem(item);
+    int index = d->findWindowBySurfaceItem(window);
 
     if (index < 0)
         return QVariant();
@@ -700,9 +754,16 @@ QVariant WindowManager::surfaceWindowProperty(QQuickItem *item, const QString &n
     return win->windowProperty(name);
 }
 
-QVariantMap WindowManager::surfaceWindowProperties(QQuickItem *item) const
+/*!
+    \qmlmethod var WindowManager::windowProperties(Item window) const
+
+    Returns an object containing all shared properties of an application \a window.
+
+    \sa setWindowProperty
+*/
+QVariantMap WindowManager::windowProperties(QQuickItem *window) const
 {
-    int index = d->findWindowBySurfaceItem(item);
+    int index = d->findWindowBySurfaceItem(window);
 
     if (index < 0)
         return QVariantMap();
@@ -711,14 +772,14 @@ QVariantMap WindowManager::surfaceWindowProperties(QQuickItem *item) const
     return win->windowProperties();
 }
 
+/*!
+    \qmlsignal WindowManager::windowPropertyChanged(Item window, string name, var value)
 
-void WindowManager::windowPropertyChanged(const QString &name, const QVariant &value)
-{
-    Window *win = qobject_cast<Window *>(sender());
-    if (!win)
-        return;
-    emit surfaceWindowPropertyChanged(win->surfaceItem(), name, value);
-}
+    Reports a change of an application \a window's property identified by \a name to the given
+    \a value.
+
+    \sa setWindowProperty
+*/
 
 void WindowManager::reportFps()
 {
@@ -740,6 +801,11 @@ bool WindowManager::setDBusPolicy(const QVariantMap &yamlFragment)
     return true;
 }
 
+/*!
+    \qmlmethod bool WindowManager::makeScreenshot(string filename, string selector)
+
+    TODO
+*/
 bool WindowManager::makeScreenshot(const QString &filename, const QString &selector)
 {
     AM_AUTHENTICATE_DBUS(bool)
@@ -831,7 +897,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                             bool onScreen = false;
 
                             if (w->isInProcess()) {
-                                onScreen = (w->surfaceItem()->window() == view);
+                                onScreen = (w->windowItem()->window() == view);
                             }
 #ifndef AM_SINGLE_PROCESS_MODE
                             else if (const WaylandWindow *wlw = qobject_cast<const WaylandWindow *>(w)) {
@@ -845,7 +911,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 #endif
                             if (onScreen) {
                                 foundAtLeastOne = true;
-                                QSharedPointer<QQuickItemGrabResult> grabber = w->surfaceItem()->grabToImage();
+                                QSharedPointer<QQuickItemGrabResult> grabber = w->windowItem()->grabToImage();
 
                                 if (!grabber) {
                                     result = false;
@@ -918,7 +984,7 @@ int WindowManagerPrivate::findWindowByApplication(const Application *app) const
 int WindowManagerPrivate::findWindowBySurfaceItem(QQuickItem *quickItem) const
 {
     for (int i = 0; i < windows.count(); ++i) {
-        if (quickItem == windows.at(i)->surfaceItem())
+        if (quickItem == windows.at(i)->windowItem())
             return i;
     }
     return -1;
@@ -929,10 +995,11 @@ int WindowManagerPrivate::findWindowBySurfaceItem(QQuickItem *quickItem) const
 int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const
 {
     for (int i = 0; i < windows.count(); ++i) {
-        if (!windows.at(i)->isInProcess() && (waylandSurface == waylandCompositor->waylandSurfaceFromItem(windows.at(i)->surfaceItem())))
+        if (!windows.at(i)->isInProcess() && (waylandSurface == waylandCompositor->waylandSurfaceFromItem(windows.at(i)->windowItem())))
             return i;
     }
     return -1;
 }
 
 #endif // !defined(AM_SINGLE_PROCESS_MODE)
+

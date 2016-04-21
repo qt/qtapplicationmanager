@@ -163,7 +163,7 @@ void WaylandCompositor::sendCallbacks()
     // TODO: optimize! no need to send this to hidden/minimized/offscreen/etc. surfaces
     foreach (const Window *win, m_manager->windows()) {
         if (!win->isClosing() && !win->isInProcess()) {
-            if (QWaylandSurface *surface = waylandSurfaceFromItem(win->surfaceItem())) {
+            if (QWaylandSurface *surface = waylandSurfaceFromItem(win->windowItem())) {
                 listToSend << surface;
             }
         }

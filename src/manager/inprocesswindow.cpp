@@ -56,11 +56,11 @@ InProcessWindow::InProcessWindow(const Application *app, QQuickItem *surfaceItem
 bool InProcessWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
     QByteArray key = nameToKey(name);
-    QVariant oldValue = surfaceItem()->property(key);
+    QVariant oldValue = windowItem()->property(key);
     bool changed = !oldValue.isValid() || (oldValue != value);
 
     if (changed) {
-        surfaceItem()->setProperty(key, value);
+        windowItem()->setProperty(key, value);
     }
     return true;
 }
@@ -68,12 +68,12 @@ bool InProcessWindow::setWindowProperty(const QString &name, const QVariant &val
 QVariant InProcessWindow::windowProperty(const QString &name) const
 {
     QByteArray key = nameToKey(name);
-    return surfaceItem()->property(key);
+    return windowItem()->property(key);
 }
 
 QVariantMap InProcessWindow::windowProperties() const
 {
-    QList<QByteArray> keys = surfaceItem()->dynamicPropertyNames();
+    QList<QByteArray> keys = windowItem()->dynamicPropertyNames();
     QVariantMap map;
 
     foreach (const QByteArray &key, keys) {
@@ -81,7 +81,7 @@ QVariantMap InProcessWindow::windowProperties() const
             continue;
 
         QString name = QString::fromUtf8(key.mid(4));
-        map[name] = surfaceItem()->property(key);
+        map[name] = windowItem()->property(key);
     }
 
     return map;
@@ -89,13 +89,13 @@ QVariantMap InProcessWindow::windowProperties() const
 
 bool InProcessWindow::eventFilter(QObject *o, QEvent *e)
 {
-    if ((o == surfaceItem()) && (e->type() == QEvent::DynamicPropertyChange)) {
+    if ((o == windowItem()) && (e->type() == QEvent::DynamicPropertyChange)) {
         QDynamicPropertyChangeEvent *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
         QByteArray key = dpce->propertyName();
 
         if (isName(key)) {
             QString name = keyToName(dpce->propertyName());
-            emit windowPropertyChanged(name, surfaceItem()->property(key));
+            emit windowPropertyChanged(name, windowItem()->property(key));
 
             //qWarning() << "IPW: got change" << name << " --> " << surfaceItem()->property(key).toString();
         }

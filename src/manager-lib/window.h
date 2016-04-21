@@ -44,11 +44,11 @@ class Window : public QObject
     Q_OBJECT
 
 public:
-    Window(const Application *app, QQuickItem *surfaceItem);
+    Window(const Application *app, QQuickItem *windowItem);
     virtual ~Window();
 
     virtual bool isInProcess() const = 0;
-    virtual QQuickItem *surfaceItem() const;
+    virtual QQuickItem *windowItem() const;
     virtual const Application *application() const;
 
     virtual void setClosing();
@@ -67,7 +67,7 @@ signals:
 
 protected:
     const Application *m_application;
-    QPointer<QQuickItem> m_surfaceItem;
+    QPointer<QQuickItem> m_windowItem;
     bool m_isClosing = false;
 };
 

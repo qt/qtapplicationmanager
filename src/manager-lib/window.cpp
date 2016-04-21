@@ -34,7 +34,7 @@
 Window::Window(const Application *app, QQuickItem *surfaceItem)
     : QObject(0)
     , m_application(app)
-    , m_surfaceItem(surfaceItem)
+    , m_windowItem(surfaceItem)
 { }
 
 Window::~Window()
@@ -55,7 +55,7 @@ void Window::setClosing()
     m_isClosing = true;
 }
 
-QQuickItem *Window::surfaceItem() const
+QQuickItem *Window::windowItem() const
 {
-    return m_surfaceItem.data();
+    return m_windowItem.data();
 }

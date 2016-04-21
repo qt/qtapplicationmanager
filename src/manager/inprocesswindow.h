@@ -39,7 +39,7 @@
 class InProcessWindow : public Window
 {
 public:
-    InProcessWindow(const Application *app, QQuickItem *surfaceItem);
+    InProcessWindow(const Application *app, QQuickItem *windowItem);
 
     bool isInProcess() const override { return true; }
 

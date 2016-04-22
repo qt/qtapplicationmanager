@@ -721,9 +721,11 @@ void WindowManager::handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *sur
 
     These properties are shared between the system-ui and the client application: in single-process
     mode simply via a QVariantMap; in multi-process mode via Qt's extended surface Wayland extension.
-    Changes on either side are signalled on the other side via windowPropertyChanged.
+    Changes from the client side are via windowPropertyChanged.
 
-    \sa windowProperty, windowProperties
+    See ApplicationManagerWindow for the client side API.
+
+    \sa windowProperty, windowProperties, windowPropertyChanged
 */
 bool WindowManager::setWindowProperty(QQuickItem *window, const QString &name, const QVariant &value)
 {
@@ -778,7 +780,7 @@ QVariantMap WindowManager::windowProperties(QQuickItem *window) const
     Reports a change of an application \a window's property identified by \a name to the given
     \a value.
 
-    \sa setWindowProperty
+    \sa ApplicationManagerWindow::setWindowProperty
 */
 
 void WindowManager::reportFps()

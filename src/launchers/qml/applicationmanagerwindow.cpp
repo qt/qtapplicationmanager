@@ -69,12 +69,11 @@ public:
     \brief The ApplicationManagerWindow item
 
     This QML item should be used as the root item in your QML application. In doing so, you enable
-    your application to be usable in both the single-process (EGL fullscreen, X11) and
-    multi-process modes (Wayland) and you enable your application to take part in the
-    application-manager's MIME-type mechanism.
+    your application to be usable in both single-process (EGL fullscreen, desktop) and
+    multi-process (Wayland) mode.
 
     If you are not using ApplicationManagerWindow as the QML root item, your application will only
-    work in multi-process (Wayland), plus it cannot be registered as a MIME-type handler.
+    work in multi-process (Wayland) mode.
 
     The QML import for this item is
 
@@ -170,6 +169,19 @@ float ApplicationManagerWindow::fps() const
     return d->currentFPS;
 }
 
+/*!
+    \qmlmethod bool ApplicationManagerWindow::setWindowProperty(string name, var &value)
+
+    Sets this application window's shared property identified by \a name to the given \a value.
+
+    These properties are shared between the system-ui and the client applications: in single-process
+    mode simply via a QVariantMap; in multi-process mode via Qt's extended surface Wayland extension.
+    Changes from the client side are signalled via windowPropertyChanged.
+
+    See WindowManager for the server side API.
+
+    \sa windowProperty, windowProperties, windowPropertyChanged
+*/
 bool ApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
     if (!d->platformNativeInterface && !d->platformWindow)
@@ -178,6 +190,13 @@ bool ApplicationManagerWindow::setWindowProperty(const QString &name, const QVar
     return true;
 }
 
+/*!
+    \qmlmethod var ApplicationManagerWindow::windowProperty(string name)
+
+    Returns the value of this application window's shared property identified by \a name.
+
+    \sa setWindowProperty
+*/
 QVariant ApplicationManagerWindow::windowProperty(const QString &name) const
 {
     if (!d->platformNativeInterface && !d->platformWindow)
@@ -185,12 +204,28 @@ QVariant ApplicationManagerWindow::windowProperty(const QString &name) const
     return d->platformNativeInterface->windowProperty(d->platformWindow, name);
 }
 
+/*!
+    \qmlmethod object ApplicationManagerWindow::windowProperties()
+
+    Returns an object containing all shared properties of this application window.
+
+    \sa setWindowProperty
+*/
 QVariantMap ApplicationManagerWindow::windowProperties() const
 {
     if (!d->platformNativeInterface && !d->platformWindow)
         return QVariantMap();
     return d->platformNativeInterface->windowProperties(d->platformWindow);
 }
+
+/*!
+    \qmlsignal ApplicationManagerWindow::windowPropertyChanged(string name, var value)
+
+    Reports a change of this application window's property identified by \a name to the given
+    \a value.
+
+    \sa WindowManager::setWindowProperty
+*/
 
 void ApplicationManagerWindow::onFrameSwapped()
 {

@@ -526,19 +526,19 @@ int main(int argc, char *argv[])
                                                        &ApplicationInstaller::instanceForQml);
 #endif // AM_DISABLE_INSTALLER
 
-        qmlRegisterSingletonType<ApplicationManager>("io.qt.ApplicationManager", 1, 0, "ApplicationManager",
+        qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager", 1, 0, "ApplicationManager",
                                                      &ApplicationManager::instanceForQml);
-        qmlRegisterSingletonType<SystemMonitor>("io.qt.ApplicationManager", 1, 0, "SystemMonitor",
+        qmlRegisterSingletonType<SystemMonitor>("QtApplicationManager", 1, 0, "SystemMonitor",
                                                      &SystemMonitor::instanceForQml);
-        qmlRegisterSingletonType<NotificationManager>("io.qt.ApplicationManager", 1, 0, "NotificationManager",
+        qmlRegisterSingletonType<NotificationManager>("QtApplicationManager", 1, 0, "NotificationManager",
                                                      &NotificationManager::instanceForQml);
-        qmlRegisterType<QmlInProcessNotification>("io.qt.ApplicationManager", 1, 0, "Notification");
-        qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("io.qt.ApplicationManager", 1, 0, "ApplicationInterfaceExtension");
+        qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 1, 0, "Notification");
+        qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
 #if !defined(AM_HEADLESS)
-        qmlRegisterSingletonType<WindowManager>("io.qt.ApplicationManager", 1, 0, "WindowManager",
+        qmlRegisterSingletonType<WindowManager>("QtApplicationManager", 1, 0, "WindowManager",
                                                 &WindowManager::instanceForQml);
-        qmlRegisterType<FakeApplicationManagerWindow>("io.qt.ApplicationManager", 1, 0, "ApplicationManagerWindow");
+        qmlRegisterType<FakeApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
 
         startupTimer.checkpoint("after QML registrations");

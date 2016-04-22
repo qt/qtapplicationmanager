@@ -67,7 +67,7 @@
 
 /*!
     \qmltype ApplicationManager
-    \inqmlmodule io.qt.ApplicationManager 1.0
+    \inqmlmodule QtApplicationManager 1.0
     \brief The ApplicationManager singleton
 
     This singleton class is the core of the application manager. It provides both
@@ -155,13 +155,13 @@
 
     The QML import for this singleton is
 
-    \c{import io.qt.ApplicationManager 1.0}
+    \c{import QtApplicationManager 1.0}
 
     After importing, you can just use the ApplicationManager singleton like so:
 
     \qml
     import QtQuick 2.0
-    import io.qt.ApplicationManager 1.0
+    import QtApplicationManager 1.0
 
     ListView {
         id: appList
@@ -1117,7 +1117,7 @@ void ApplicationManager::setApplicationAudioFocus(const QString &id, AudioFocus 
 
     \qml
     import QtQuick 2.0
-    import io.qt.ApplicationManager 1.0
+    import QtApplicationManager 1.0
 
     QtObject {
         id: extension

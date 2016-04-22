@@ -60,7 +60,7 @@
 
 /*!
     \qmltype ApplicationInstaller
-    \inqmlmodule io.qt.ApplicationManager 1.0
+    \inqmlmodule QtApplicationManager 1.0
     \brief The ApplicationInstaller singleton
 
     This singleton class handles the package installation part of the application manager. It provides
@@ -112,7 +112,7 @@
 
     The QML import for this singleton is
 
-    \c{import io.qt.ApplicationManager 1.0}
+    \c{import QtApplicationManager 1.0}
 */
 
 // THIS IS MISSING AN EXAMPLE!

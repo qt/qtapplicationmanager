@@ -167,11 +167,11 @@ int main(int argc, char *argv[])
 
     QGuiApplication a(argc, argv);
 
-    qmlRegisterType<ApplicationManagerWindow>("io.qt.ApplicationManager", 1, 0, "ApplicationManagerWindow");
+    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
 
-    qmlRegisterType<QmlNotification>("io.qt.ApplicationManager", 1, 0, "Notification");
-    qmlRegisterType<QmlApplicationInterfaceExtension>("io.qt.ApplicationManager", 1, 0, "ApplicationInterfaceExtension");
+    qmlRegisterType<QmlNotification>("QtApplicationManager", 1, 0, "Notification");
+    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
     QByteArray dbusAddress = qgetenv("AM_DBUS_PEER_ADDRESS");
     if (dbusAddress.isEmpty())

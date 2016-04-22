@@ -31,7 +31,7 @@
 
 /*!
     \qmltype ApplicationInterface
-    \inqmlmodule io.qt.ApplicationManager 1.0
+    \inqmlmodule QtApplicationManager 1.0
     \brief The main interface between apps and the application-manager.
 
     This item is available for QML applications using the root context property

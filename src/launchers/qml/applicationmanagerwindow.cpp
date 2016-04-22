@@ -65,7 +65,7 @@ public:
 
 /*!
     \qmltype ApplicationManagerWindow
-    \inqmlmodule io.qt.ApplicationManager 1.0
+    \inqmlmodule QtApplicationManager 1.0
     \brief The ApplicationManagerWindow item
 
     This QML item should be used as the root item in your QML application. In doing so, you enable
@@ -77,13 +77,13 @@ public:
 
     The QML import for this item is
 
-    \c{import io.qt.ApplicationManager 1.0}
+    \c{import QtApplicationManager 1.0}
 
     After importing, you can instantiate the QML item like so:
 
     \qml
     import QtQuick 2.0
-    import io.qt.ApplicationManager 1.0
+    import QtApplicationManager 1.0
 
     ApplicationManagerWindow {
         id: root

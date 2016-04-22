@@ -34,7 +34,7 @@
 
 /*!
     \qmltype Notification
-    \inqmlmodule io.qt.ApplicationManager 1.0
+    \inqmlmodule QtApplicationManager 1.0
     \brief An abstraction layer to enable QML applications to issue notifications to the system-ui.
 
     This item is available for QML applications by either creating a Notification item

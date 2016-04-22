@@ -72,7 +72,7 @@
 
 /*!
     \qmltype WindowManager
-    \inqmlmodule io.qt.ApplicationManager 1.0
+    \inqmlmodule QtApplicationManager 1.0
     \brief The WindowManager singleton
 
     This singleton class is the window managing part of the application manager. It provides a QML
@@ -116,7 +116,7 @@
 
     The QML import for this singleton is
 
-    \c{import io.qt.ApplicationManager 1.0}
+    \c{import QtApplicationManager 1.0}
 
     After importing, you can just use the WindowManager singleton as shown in the example below.
     It shows how to implement a basic fullscreen window compositor that already supports window
@@ -124,7 +124,7 @@
 
     \qml
     import QtQuick 2.0
-    import io.qt.ApplicationManager 1.0
+    import QtApplicationManager 1.0
 
     // simple solution for a full-screen setup
     Item {

@@ -47,7 +47,7 @@
 
 /*!
     \qmltype NotificationManager
-    \inqmlmodule io.qt.ApplicationManager 1.0
+    \inqmlmodule QtApplicationManager 1.0
     \brief The NotificationManager singleton
 
     This singleton class is the window managing part of the application manager. It provides a QML
@@ -150,7 +150,7 @@
 
     The QML import for this singleton is
 
-    \c{import io.qt.ApplicationManager 1.0}
+    \c{import QtApplicationManager 1.0}
 
     The actual backend implementation that is receiving the notifications from other process is
     fully compliant to the D-Bus interface of the freedesktop.org notification specification

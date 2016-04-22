@@ -30,12 +30,13 @@
 ****************************************************************************/
 
 /*!
-  \page qml-elements-sysui.html
-  \title QML elements System-UI
-  \brief A listing of standard QML elements used in the System-UI.
+
+\page qml-elements-sysui.html
+\title QML elements System-UI
+\brief A listing of standard QML elements used in the System-UI.
 
 These are the functionally grouped lists of QML elements as part of \c
-io.qt.ApplicationManager.
+QtApplicationManager.
 
 QML Singletons need not to be declared, but can be referenced by just their element name.
 
@@ -44,22 +45,18 @@ elements, thereby creating a parent-child relationship between the two elements.
 
 \section1 QML Singletons
 \list
-\li \l {io.qt.ApplicationManager::ApplicationManager}{ApplicationManager}
-    The application model and controller
-\li \l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller}
-    The package installation/removal/update part of the application-manager.
-\li \l {io.qt.ApplicationManager::WindowManager}{WindowManager}
-    The window model and controller
-\li \l {io.qt.ApplicationManager::NotificationManager}{NotificationManager}
-    The notification model, which receives freedesktop.org compliant notification requests
-\li \l {io.qt.ApplicationManager::SystemMonitor}{SystemMonitor}
-    The system monitoring model, giving access to a range of measurements, e.g. cpu-load, FPS, etc.
+  \li ApplicationManager - The application model and controller.
+  \li ApplicationInstaller - The package installation/removal/update part of the application-manager.
+  \li WindowManager - The window model and controller.
+  \li NotificationManager - The notification model, which handles freedesktop.org compliant
+      notification requests.
+  \li SystemMonitor - The system monitoring model, giving access to a range of measurements, e.g.
+      cpu-load, frames-per-second, etc.
 \endlist
 
 \section1 Basic QML Elements
 \list
-\li \l {io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow}
-    The window element that is required in a multi-process environment.
+  \li ApplicationManagerWindow - The window element that is required in a multi-process environment.
 \endlist
 
 */

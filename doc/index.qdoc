@@ -46,7 +46,9 @@ compositing window manager using the APIs that are exported from the C++ side.
 \list
     \li \l{Installation}
     \li \l{Configuration}
+    \omit
     \li \l{How to write a System-UI}
+    \endomit
     \li \l{How to write applications}
     \li \l{The Application Installer}
 \endlist

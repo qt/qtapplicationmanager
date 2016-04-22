@@ -30,12 +30,13 @@
 ****************************************************************************/
 
 /*!
-  \page qml-elements-apps.html
-  \title QML elements Applications
-  \brief A listing of standard QML elements used in applications.
+
+\page qml-elements-apps.html
+\title QML elements Applications
+\brief A listing of standard QML elements used in applications.
 
 These are the functionally grouped lists of QML elements as part of \c
-io.qt.ApplicationManager.
+QtApplicationManager.
 
 QML Singletons need not to be declared, but can be referenced by just their element name.
 
@@ -44,16 +45,14 @@ elements, thereby creating a parent-child relationship between the two elements.
 
 \section1 QML Singletons
 \list
-\li \l {io.qt.ApplicationManager::ApplicationInterface}{ApplicationInterface}
-    The application interface represents the private IPC between the app and the application-manager.
+  \li ApplicationInterface -  The application interface represents the private IPC between the app
+      and the application-manager.
 \endlist
 
 \section1 Basic QML Elements
 \list
-\li \l {io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow}
-    The window element that is required in a multi-process environment
-\li \l {io.qt.ApplicationManager::Notification}{Notification}
-    Abstraction for freedesktop.org Notifications on the client side.
+  \li ApplicationManagerWindow - The window element that is required in a multi-process environment.
+  \li \l Notification - Abstraction for freedesktop.org Notifications on the client side.
 \endlist
 
 */

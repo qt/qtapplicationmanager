@@ -252,7 +252,7 @@ dbus:
 \chapter Installation Locations
 
 The \c installationLocations YAML field is a list of YAML objects, very similar to
-\l{io.qt.ApplicationManager::}{ApplicationInstaller::getInstallationLocation}
+ApplicationInstaller::getInstallationLocation
 
 \table
 \header

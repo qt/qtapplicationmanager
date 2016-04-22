@@ -41,8 +41,7 @@ additional tasks:
 \list 1
 
     \li If you write a QML application, make the root element of your QML scene a
-    \l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow} (or derive your own
-    custom root item from it).
+    ApplicationManagerWindow (or derive your own custom root item from it).
 
     \li Provide a valid \l{Manifest definition}{info.yaml} file.
 
@@ -53,11 +52,9 @@ additional tasks:
 
 \section2 The root element
 
-Making the root element of your QML application a
-\l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow} is only mandatory if you
-ever want to run in single-process mode (without Wayland). Please see the
-\l{io.qt.ApplicationManager::ApplicationManagerWindow}{ApplicationManagerWindow documentaton} for more
-information.
+Making the root element of your QML application an ApplicationManagerWindow is only mandatory if you
+ever want to run in single-process mode (without Wayland). Please see the ApplicationManagerWindow
+documentaton for more information.
 
 \section2 The manifest and updating the database
 
@@ -71,6 +68,6 @@ file known to the application-manager, you have to force a rebuild of this datab
 \c{appman --recreate-database}.
 
 \note Dynamically adding/updating/removing single applications is supported via the
-\l {io.qt.ApplicationManager::ApplicationInstaller}{ApplicationInstaller} interface.
+ApplicationInstaller interface.
 
 */

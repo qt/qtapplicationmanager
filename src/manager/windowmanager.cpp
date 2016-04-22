@@ -453,6 +453,17 @@ QVariantMap WindowManager::get(int index) const
     return map;
 }
 
+/*!
+    \qmlmethod int WindowManager::indexOfWindow(Item window)
+
+    Returns the index of the \a window within the WindowManager model or \c -1 if the window item is
+    not a managed window.
+ */
+int WindowManager::indexOfWindow(QQuickItem *window)
+{
+    return d->findWindowBySurfaceItem(window);
+}
+
 void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 {
     // special hacks to get in-process mode working transparently

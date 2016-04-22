@@ -113,6 +113,8 @@ public:
     Q_INVOKABLE int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
 
+    Q_INVOKABLE int indexOfWindow(QQuickItem *window);
+
     Q_INVOKABLE void releaseWindow(QQuickItem *window);
 
     Q_INVOKABLE void registerCompositorView(QQuickWindow *view);

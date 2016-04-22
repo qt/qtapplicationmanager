@@ -64,14 +64,10 @@ enable-tests:SUBDIRS += tests
 
 CONFIG += ordered
 
-OTHER_FILES = \
+OTHER_FILES += \
     INSTALL.md \
     .qmake.conf \
     application-manager.conf \
-    doc/application-manager.qdocconf \
-    doc/index.qdoc \
-    doc/elements.qdoc \
-    doc/manifest.qdoc \
     template-opt/am/*.yaml \
     qmake-features/*.prf
 

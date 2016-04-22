@@ -21,3 +21,7 @@ qch-docs.CONFIG += no_check_exist directory
 docs.depends = html-docs qch-docs
 
 QMAKE_EXTRA_TARGETS += html-docs qch-docs docs
+
+OTHER_FILES += \
+    $$PWD/application-manager.qdocconf \
+    $$PWD/*.qdoc \

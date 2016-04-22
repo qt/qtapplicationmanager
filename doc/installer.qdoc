@@ -50,4 +50,10 @@ Both interfaces are very similar and are both documented in the \l {io.qt.Applic
 \note A prerequisite for dynamically installed application packages is a valid \l {Installation Locations}{installation location}
 configuration for the application-manager.
 
+\chapter Packages
+
+See \l {Package Format}
+
+
+
 */

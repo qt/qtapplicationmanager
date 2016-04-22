@@ -1,0 +1,191 @@
+/****************************************************************************
+**
+** Copyright (C) 2016 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:GPL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3 or (at your option) any later version
+** approved by the KDE Free Qt Foundation. The licenses are as published by
+** the Free Software Foundation and appearing in the file LICENSE.GPL3
+** included in the packaging of this file. Please review the following
+** information to ensure the GNU General Public License requirements will
+** be met: https://www.gnu.org/licenses/gpl-3.0.html.
+**
+** $QT_END_LICENSE$
+**
+** SPDX-License-Identifier: GPL-3.0
+**
+****************************************************************************/
+
+/*!
+
+\page package-format.html
+\title Package Format
+
+\chapter Introduction
+
+The application-manager uses a very simple package format: a standard UNIX gzip-compressed TAR
+archive. Metadata is embedded as normal files, but using the reserved name prefix \c --PACKAGE-.
+Even though USTAR tar archives support a lot of features, the application-manager only supports
+standard files and directories with relative paths only (using \c ../ in a path is not allowed).
+Modes, except the owner's \c x bit, are ignored.
+
+This makes it very easy to write custom packagers as well as custom app-store server backends,
+since TAR archive handling is available as a utility library in any programming language.
+
+\note gzip is currently hardcoded, but since the (de)compression is done by libarchive, this could
+easily be replaced by bzip2 or xz compression. Both would lead to additional 3rd-party dependencies
+on Windows though.
+
+These are the important files in a package:
+
+\table
+\header
+  \li File
+  \li Description
+\row
+  \li \span {style="white-space: nowrap"} {\c --PACKAGE-HEADER--}
+  \li Exactly one YAML document that needs to be the first file in the package - see below for a
+      format description. This file is used as format selector.
+
+\row
+  \li \c info.yaml
+  \li The manifest of the application. The packaging tool needs to make sure that this file is
+      within the first 10 entries of the tar archive.
+\row
+  \li \c icon.png
+  \li The icon of the application that is used in the app-store. Can also be used as the app's icon
+      in the launcher menu on the device: see info.yaml. The packaging tool needs to make sure that
+      this file is within the first 10 entries of the tar archive.
+\row
+  \li \span {style="white-space: nowrap"} {\c --PACKAGE-FOOTER--}
+  \li One or more YAML document(s) that need to be the last file(s) in the package - see below for
+      a format description. If adding more than one footer (e.g. appending the store signature by
+      the app-store server), an arbitrary string can be appended to the file name (e.g. \c
+      --PACKAGE-FOOTER--storesig). This makes it easier to troubleshoot packages, since you can then
+      easily extract them with the standard tar command line tool.
+\endtable
+
+In short, here is what is NOT allowed inside a package:
+
+\list
+  \li You are not allowed to have file names that start with \c --PACKAGE-
+  \li You are not allowed to have absolute paths
+  \li You are not allowed to have \c ../ in relative paths
+  \li You are not allowed to have sym-links, hard-links, device files, sockets, etc.
+  \li File modes except the owner's \c x bit are ignored.
+\endlist
+
+\chapter The checksum algorithm
+
+All of package data, as well as important meta-data is protected by a SHA256 digest. This checksum
+has two purposes: firstly it protects against transmission errors and secondly signing the package
+is done by encrypting this checksum.
+
+The actual calculation of this checksum is done like this:
+\list
+  \li For every file that is not a \c{--PACKAGE-*} meta-data file, the complete content is added to
+      the digest. Afterwards the following UTF-8 encoded string is also added to the digest: \c {
+      "F/<file size in bytes>/<file path>"} (e.g. the file \c{foo/test.qml} with a size of 250 bytes
+      would generate \c{F/250/foo/test.qml})
+  \li For every directory, the following UTF-8 encoded string is added to the digst: \c {
+      "D/0/<directory path>"} (e.g. the directory \c{foo/images} would generate \c{D/0/foo/images})
+\endlist
+
+The generated digest is put into the \c{--PACKAGE-FOOTER--} as a 32 byte hex-encoded string.
+
+\chapter The signing algorithm
+
+The package format currently supports two signatures: a developer signature (generated by the
+developer before uploading to an appstore-server) and a store signature (generated by the
+appstore-server before the client actually downloads a package).
+
+Both signatures are calculated the same way and are appended to the package's meta-data the same
+way: The binary digest is used as an input to create a detached PKCS7 signature. This PKCS7
+signature is then BASE64 encoded and stored in \c{--PACKAGE-FOOTER--} - either in the
+\c{developerSignature} or \c{storeSignature} field.
+
+If you want to implement this signing algorithm yourself, then please look at four existing
+implementations:
+
+\list
+  \li C++ OpenSSL based in \c{src/crypto-lib/signature_openssl.cpp}
+  \li C++ WinCrypt based in \c{src/crypto-lib/signature_win.cpp} (Windows only)
+  \li C++ SecurityFramework based in \c{src/crypto-lib/signature_osx.cpp} (OS X only)
+  \li Python m2crypt based in the appstore-server reference implementation.
+\endlist
+
+
+\chapter Example Package
+
+This is an example of a minimal QML application package. The actual package can be created by
+tar'ing all these files up with
+
+\code
+tar cvzf qmlapp.appkg ./--PACKAGE-HEADER-- info.yaml icon.png main.qml ./--PACKAGE-FOOTER--
+\endcode
+\table
+\header
+  \li File
+  \li Contents
+\row
+  \li \c --PACKAGE-HEADER--
+  \li \code
+%YAML 1.1
+---
+formatType: am-package-header
+formatVersion: 1
+---
+applicationId: com.pelagicore.minimal
+diskSpaceUsed: 1000
+  \endcode
+\row
+  \li \c info.yaml
+  \li \code
+%YAML 1.1
+---
+formatType: am-application
+formatVersion: 1
+---
+id: 'com.pelagicore.minimal'
+icon: 'icon.png'
+name:
+  en: 'Minimal App'
+code: 'main.qml'
+
+runtime: 'qml'
+  \endcode
+\row
+  \li \c icon.png
+  \li \e{a standard png image}
+
+\row
+  \li \c main.qml
+  \li \e {your QML application}
+
+\row
+  \li \c --PACKAGE-FOOTER--
+  \li \code
+%YAML 1.1
+---
+formatType: am-package-footer
+formatVersion: 1
+---
+# SHA256 digest in 32 char hex representation
+digest: '9df5635bb50e93846954c6377468c07835119e2835475ec90b3e9a9f7261cf27'
+  \endcode
+\endtable
+
+*/

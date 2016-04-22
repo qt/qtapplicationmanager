@@ -68,7 +68,7 @@ public:
 
 private slots:
     void notificationClosed(uint notificationId, uint reason);
-    void notificationActivated(uint notificationId, const QString &actionId);
+    void notificationActionTriggered(uint notificationId, const QString &actionId);
 private:
     Q_SIGNAL void startApplication(const QString &qmlFile, const QString &document, const QVariantMap &runtimeParams);
 

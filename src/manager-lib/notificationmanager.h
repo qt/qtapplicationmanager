@@ -57,11 +57,11 @@ public:
     QVariant data(const QModelIndex &index, int role) const;
     QHash<int, QByteArray> roleNames() const;
 
-    Q_INVOKABLE int count() const { return rowCount(); }
+    Q_INVOKABLE int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
 
-    Q_INVOKABLE void notificationWasClicked(int id);
-    Q_INVOKABLE void notificationActionWasActivated(int id, const QString &actionId);
+    Q_INVOKABLE void acknowledgeNotification(int id);
+    Q_INVOKABLE void triggerNotificationAction(int id, const QString &actionId);
     Q_INVOKABLE void dismissNotification(int id);
 
     // vv libnotify DBus interface

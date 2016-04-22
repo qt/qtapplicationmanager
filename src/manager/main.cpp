@@ -638,7 +638,7 @@ int main(int argc, char *argv[])
             }
         });
 
-        wm->registerOutputWindow(window);
+        wm->registerCompositorView(window);
 
         // --no-fullscreen on the command line trumps the fullscreen setting in the config file
         if (configuration->fullscreen() && !configuration->noFullscreen())

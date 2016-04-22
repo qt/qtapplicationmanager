@@ -111,7 +111,7 @@ bool QmlApplicationInterface::initialize()
 
     if (m_notifyIf) {
         ok = ok && connect(m_notifyIf, SIGNAL(NotificationClosed(uint,uint)), this, SLOT(notificationClosed(uint,uint)));
-        ok = ok && connect(m_notifyIf, SIGNAL(ActionInvoked(uint,QString)), this, SLOT(notificationActivated(uint,QString)));
+        ok = ok && connect(m_notifyIf, SIGNAL(ActionInvoked(uint,QString)), this, SLOT(notificationActionTriggered(uint,QString)));
 
         if (!ok)
             qCritical("ERROR: could not connect the org.freedesktop.Notifications interface via D-Bus: %s", qPrintable(m_notifyIf->lastError().name()));
@@ -171,19 +171,19 @@ void QmlApplicationInterface::notificationClosed(uint notificationId, uint reaso
     qDebug("Notification was closed signal: %u", notificationId);
     foreach (const QPointer<QmlNotification> &n, m_allNotifications) {
         if (n->notificationId() == notificationId) {
-            n->libnotifyClosed(reason);
+            n->libnotifyNotificationClosed(reason);
             m_allNotifications.removeAll(n);
             break;
         }
     }
 }
 
-void QmlApplicationInterface::notificationActivated(uint notificationId, const QString &actionId)
+void QmlApplicationInterface::notificationActionTriggered(uint notificationId, const QString &actionId)
 {
     qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
     foreach (const QPointer<QmlNotification> &n, m_allNotifications) {
         if (n->notificationId() == notificationId) {
-            n->libnotifyActivated(actionId);
+            n->libnotifyActionInvoked(actionId);
             break;
         }
     }

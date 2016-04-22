@@ -56,10 +56,7 @@
     To make QML programmers lifes easier, the class is derived from \c QAbstractListModel,
     so you can directly use this singleton as a model in your notification views.
 
-    Each item in this model corresponds to an active notification. Please not that a single
-    application can have multiple notifications and system-notifications have no application
-    context at all: the \c applicationId role is neither unique within this model, nor is
-    it guaranteed to be valid at all.
+    Each item in this model corresponds to an active notification.
 
     \keyword NotificationManager Roles
 
@@ -72,65 +69,57 @@
         \li Description
     \row
         \li \c id
-        \li \c string
-        \li The unique id of this notification
+        \li \c int
+        \li The unique id of this notification.
     \row
         \li \c applicationId
         \li \c string
-        \li The unique id of an application represented as a string in reverse-dns form (e.g.
-            \c com.pelagicore.foo). This can be used to look up information about the application
-            in the ApplicationManager model.
+        \li The id of the application that created this notification. This can be used to look up
+            information about the application in the ApplicationManager model.
+            \note The \c applicationId role is neither unique within this model, nor is it
+                  guaranteed to be valid at all. On the one hand, a single application can have
+                  multiple active notifications and on the other hand, system-notifications have no
+                  application context at all.
     \row
         \li \c priority
         \li \c int
-        \li The priority of this notification. The actual value is implementation dependent, but
-            ideally any implementation should use the defined values from the freedesktop.org specification:
-            (\c 0 - Low, \c 1 - Normal, and \c 2 - Critical)
+        \li See the client side documentation of Notification::priority
     \row
         \li \c summary
         \li \c string
-        \li The summary text.
+        \li See the client side documentation of Notification::summary
     \row
         \li \c body
         \li \c string
-        \li The body text.
+        \li See the client side documentation of Notification::body
     \row
         \li \c category
         \li \c string
-        \li The category - can be empty.
+        \li See the client side documentation of Notification::category
     \row
         \li \c icon
         \li \c url
-        \li The URL to an optional icon.
+        \li See the client side documentation of Notification::icon
     \row
         \li \c image
         \li \c url
-        \li The URL to optional image.
+        \li See the client side documentation of Notification::image
     \row
         \li \c actions
         \li \c object
-        \li This is a variant-map describing the possible actions that the user can choose from.
-            Every key in this map is an \c actionId and its corresponding value is an \c actionText.
-            The notification should eiher display this \c actionText or an icon, depending on the \c
-            ShowActionsAsIcons property.
+        \li See the client side documentation of Notification::actions
     \row
-        \li \c ShowActionsAsIcons
+        \li \c showActionsAsIcons
         \li \c bool
-        \li A hint supplied by the client on how to present the \c actions. If this property is
-            false, the notification actions should be shown in text form. Otherwise the \c
-            actionText should be taken as an icon name conforming to the freedesktop.org icon
-            naming specification (in a closed system, these could also be any icon specification
-            string that the notification server understands).
+        \li See the client side documentation of Notification::showActionsAsIcons
     \row
         \li \c dismissOnAction
         \li \c bool
-        \li Tells the notification manager, whether clicking one of the supplied action texts or
-            images will dismiss the notification.
+        \li See the client side documentation of Notification::dismissOnAction
     \row
         \li \c isClickable
         \li \c bool
-        \li A boolean value describing whether the notification will react to clicking on it. If this
-            property is set to \c true, the \c default action will be triggered in the client.
+        \li See the client side documentation of Notification::clickable
     \row
         \li \c isSytemNotification
         \li \c url
@@ -139,24 +128,24 @@
     \row
         \li \c isShowingProgress
         \li \c bool
-        \li A boolean value describing whether a progress-bar/busy-indicator should be shown as part
-            of the notification.
+        \li See the client side documentation of Notification::showProgress
     \row
         \li \c progress
         \li \c qreal
-        \li A floating-point value between \c{[0.0 ... 1.0]} which can be used to show a progress-bar
-            on the notification. The special value \c -1 can be used to request a busy indicator.
+        \li See the client side documentation of Notification::progress
     \row
         \li \c isSticky
         \li \c bool
-        \li If this property is set to \c false, then the notification should be removed after
-            an \c timeout milliseconds. Otherwise the notification is sticky and should stay visible
-            until the user acknowledges it.
+        \li See the client side documentation of Notification::sticky
     \row
         \li \c timeout
         \li \c int
-        \li In case of non-sticky notifications, this value specifies after how many milliseconds
-            the notification should be removed from the screen.
+        \li See the client side documentation of Notification::timeout
+    \row
+        \li \c extended
+        \li \c object
+        \li See the client side documentation of Notification::extended.
+
     \endtable
 
     The QML import for this singleton is
@@ -166,14 +155,8 @@
     The actual backend implementation that is receiving the notifications from other process is
     fully compliant to the D-Bus interface of the freedesktop.org notification specification
     (https://developer.gnome.org/notification-spec/).
-    For testing purposes, the notify-send tool from the libnotify package can be used to create
+    For testing purposes, the notify-send tool from the \c libnotify package can be used to create
     notifications.
-*/
-
-/*!
-    \qmlproperty int NotificationManager::count
-
-    This property holds the number of applications available.
 */
 
 
@@ -384,51 +367,88 @@ QHash<int, QByteArray> NotificationManager::roleNames() const
 }
 
 /*!
-    \qmlmethod object NotificationManager::get(int row) const
+    \qmlproperty int NotificationManager::count
 
-    Retrieves the model data at \a row as a JavaScript object. Please see the \l {NotificationManager
+    This property holds the number of active notifications in the model.
+*/
+int NotificationManager::count() const
+{
+    return rowCount();
+}
+
+/*!
+    \qmlmethod object NotificationManager::get(int index) const
+
+    Retrieves the model data at \a index as a JavaScript object. Please see the \l {NotificationManager
     Roles}{role names} for the expected object fields.
 
-    Will return an empty object, if the specified \a row is invalid.
+    Will return an empty object, if the specified \a index is invalid.
 */
-QVariantMap NotificationManager::get(int row) const
+QVariantMap NotificationManager::get(int index) const
 {
-    if (row < 0 || row >= count()) {
-        qCWarning(LogNotifications) << "invalid row:" << row;
+    if (index < 0 || index >= count()) {
+        qCWarning(LogNotifications) << "invalid index:" << index;
         return QVariantMap();
     }
 
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(it.value(), data(index(row), it.key()));
+        map.insert(it.value(), data(QAbstractListModel::index(index), it.key()));
     return map;
 }
 
-void NotificationManager::notificationWasClicked(int id)
+/*!
+    \qmlmethod NotificationManager::acknowledgeNotification(int id)
+
+    This function needs to be called by the system-ui, when the user acknowledged the notification
+    identified by \a id (most likely by clicking on it).
+*/
+void NotificationManager::acknowledgeNotification(int id)
 {
-    notificationActionWasActivated(id, qSL("default"));
+    triggerNotificationAction(id, qSL("default"));
 }
 
-void NotificationManager::notificationActionWasActivated(int id, const QString &actionId)
+/*!
+    \qmlmethod NotificationManager::triggerNotificationAction(int id, string actionId)
+
+    This function needs to be called by the system-ui, when the user triggered a notification action.
+
+    The notification is identified by \a id and the action by \a actionId.
+    \note You should only use action-ids that have been set for the the given notification (see the
+          \c actions role), but the application-manager will even accept and forward an arbitray string.
+          Be aware that this string is broadcast on the session D-Bus when running in multi-process mode.
+*/
+void NotificationManager::triggerNotificationAction(int id, const QString &actionId)
 {
     int i = d->findNotificationById(id);
 
     if (i >= 0) {
         NotificationData *n = d->notifications.at(i);
         if (!n->actions.contains(actionId)) {
-            qCDebug(LogNotifications) << "Requested action activation, but the action is not registered:"
+            qCDebug(LogNotifications) << "Requested to trigger a notification action, but the action is not registered:"
                                       << (actionId.length() > 20 ? (actionId.left(20) + qSL("...")) : actionId);
         }
         emit ActionInvoked(id, actionId);
     }
 }
 
+/*!
+    \qmlmethod NotificationManager::dismissNotification(int id)
+
+    This function needs to be called by the system-ui, when the notification identified by \a id is
+    not needed anymore.
+
+    The creator of the notification will be notified about this dismissal.
+*/
 void NotificationManager::dismissNotification(int id)
 {
     d->closeNotification(id, UserDismissed);
 }
 
+/*! \internal
+    D-Bus API: identify ourselves
+*/
 QString NotificationManager::GetServerInformation(QString &vendor, QString &version, QString &spec_version)
 {
     //qCDebug(LogNotifications) << "GetServerInformation";
@@ -438,6 +458,9 @@ QString NotificationManager::GetServerInformation(QString &vendor, QString &vers
     return qApp->applicationName();
 }
 
+/*! \internal
+    D-Bus API: announce supported features
+*/
 QStringList NotificationManager::GetCapabilities()
 {
     //qCDebug(LogNotifications) << "GetCapabilities";
@@ -451,6 +474,9 @@ QStringList NotificationManager::GetCapabilities()
                          << qSL("persistence");
 }
 
+/*! \internal
+    D-Bus API: someone wants to create or update a notification
+*/
 uint NotificationManager::Notify(const QString &app_name, uint replaces_id, const QString &app_icon,
                                  const QString &summary, const QString &body, const QStringList &actions,
                                  const QVariantMap &hints, int timeout)
@@ -528,6 +554,9 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
     return id;
 }
 
+/*! \internal
+    D-Bus API: some requests that a notification should be closed
+*/
 void NotificationManager::CloseNotification(uint id)
 {
     d->closeNotification(id, CloseNotificationCalled);

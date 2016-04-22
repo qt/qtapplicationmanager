@@ -1,0 +1,5 @@
+singleton ApplicationManager 1.0 ApplicationManager.qml
+ApplicationManagerWindow 1.0 ApplicationManagerWindow.qml
+ApplicationInstaller 1.0 ApplicationInstaller.js
+singleton WindowManager 1.0 WindowManager.qml
+singleton SystemMonitor 1.0 SystemMonitor.qml

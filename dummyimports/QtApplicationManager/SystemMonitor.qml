@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Pelagicore AG
+** Copyright (C) 2016 Klaralvdalens Datakonsult AB (KDAB)
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -30,37 +30,13 @@
 ****************************************************************************/
 
 pragma Singleton
-import QtQuick 2.2
-import "ApplicationManager.js" as ApplicationManager
+
+import QtQml 2.0
 
 QtObject {
-    id: root
-    property int count: ApplicationManager.count
-    property var surfaceItems: []
-    signal surfaceItemReady(int index, Item item)
-    signal surfaceItemClosing()
-    signal surfaceItemLost()
-    signal raiseApplicationWindow()
-    signal surfaceWindowPropertyChanged(Item surfaceItem, string name, var value)
-
-    function setSurfaceWindowProperty(appItem, type, status) {
-        appItem.windowPropertyChanged(type, status)
-    }
-
-    function surfaceWindowProperty(item, type) {
-        return false
-    }
-
-    function get(index) {
-        var entry = ApplicationManager.get(index)
-        entry.surfaceItem = surfaceItems[index]
-        return entry
-    }
-
-    Component.onCompleted: {
-        for (var i = 0; i < root.count; i++) {
-            surfaceItems.push(null)
-        }
-    }
-
+    property int reportingInterval
+    property int reportingRange
+    property bool cpuLoadReportingEnabled
+    property bool fpsReportingEnabled
+    signal fpsReportingChanged(real average, real minimum, real maximum, real jitter)
 }

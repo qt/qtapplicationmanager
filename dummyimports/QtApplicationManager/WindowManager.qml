@@ -29,22 +29,46 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.0
-import com.pelagicore.ApplicationManager 0.1
+pragma Singleton
+import QtQuick 2.2
+import QtApplicationManager 1.0
 
-Item {
+QtObject {
     id: root
-    width: 768
-    height: 860
-    property color color
-
-    signal windowPropertyChanged(string name, var value)
-    function close() {}
-    function showFullScreen() {}
-    function showMaximized() {}
-    function showNormal() {}
-    function setWindowProperty(status, value) {
-        WindowManager.surfaceWindowPropertyChanged(root, status, value)
-        windowPropertyChanged(status, value)
+    property int count: ApplicationManager.count
+    property var surfaceItems: []
+    property Connections conn: Connections {
+        target: ApplicationManager
+        onEmitSurface: {
+            surfaceItems[index] = item
+            root.surfaceItemReady(index, item)
+        }
     }
+
+    signal surfaceItemReady(int index, Item item)
+    signal surfaceItemClosing()
+    signal surfaceItemLost()
+    signal raiseApplicationWindow()
+    signal surfaceWindowPropertyChanged(Item surfaceItem, string name, var value)
+
+    function setSurfaceWindowProperty(appItem, type, status) {
+        appItem.windowPropertyChanged(type, status)
+    }
+
+    function surfaceWindowProperty(item, type) {
+        return false
+    }
+
+    function get(index) {
+        var entry = ApplicationManager.get(index)
+        entry.surfaceItem = surfaceItems[index]
+        return entry
+    }
+
+    Component.onCompleted: {
+        for (var i = 0; i < root.count; i++) {
+            surfaceItems.push(null)
+        }
+    }
+
 }

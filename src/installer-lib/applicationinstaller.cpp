@@ -66,7 +66,7 @@
     This singleton class handles the package installation part of the application manager. It provides
     both a DBus and a QML API for all of its functionality.
 
-    \keyword TaskStates
+    \target TaskStates
 
     The following table describes all possible states that a background task could be in:
 

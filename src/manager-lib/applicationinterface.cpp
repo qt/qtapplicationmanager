@@ -47,6 +47,12 @@
 */
 
 /*!
+    \qmlproperty var ApplicationInterface::additionalConfiguration
+
+    Returns the project specific \l{additional configuration} that was set via the config file.
+*/
+
+/*!
     \qmlmethod Notification ApplicationInterface::createNotification()
 
     Calling this function lets you create a Notification object dynamically at runtime.

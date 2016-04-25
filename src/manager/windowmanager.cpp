@@ -84,7 +84,7 @@
     Each item in this model corresponds to an actual window surface. Please not that a single
     application can have multiple surfaces: the \c applicationId role is not unique within this model!
 
-    \keyword WindowManager Roles
+    \target WindowManager Roles
 
     The following roles are available in this model:
 

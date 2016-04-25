@@ -76,7 +76,7 @@
     To make QML programmers lifes easier, the class is derived from \c QAbstractListModel,
     so you can directly use this singleton as a model in your app-grid views.
 
-    \keyword ApplicationManager Roles
+    \target ApplicationManager Roles
 
     The following roles are available in this model:
 

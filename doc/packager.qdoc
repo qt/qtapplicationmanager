@@ -35,9 +35,11 @@
 \title Packager
 
 The \c{application-packager} is a command-line utility that is used by the developer to manage installation
-packages. At the moment the application-manager supports unsigned packages, packages that are signed by the
-developer only and packages that are signed by an app-store. The \c{application-packager} can create all
-these variations with the following commands:
+packages. It could also be used as a signing and verification tool on a app-store backend server.
+
+At the moment the application-manager supports unsigned packages, packages that are signed by the
+developer only (development mode) and packages that are signed by a trusted app-store. The
+\c{application-packager} can create all these variations with the following commands:
 
 \table
 \header
@@ -52,11 +54,15 @@ these variations with the following commands:
         \c{icon.png} file.
         The tool will do a sanity-check on the \c info.yaml file before actually creating the
         package.
+        All normal files and directories in the source directory will be copied into package. The
+        only meta-data that is copied from the filesystem is the filename, and the user's
+        eXecutable-bit.
 \row
     \li \span {style="white-space: nowrap"} {\c dev-sign-package}
     \li \c{<package> <signed-package> <certificate> <password>}
-    \li Takes the input \c package, adds a developer signature and writes the output \c signed-package.
-        You need to supply a \c certificate in P12 format together with a matching \c password.
+    \li Takes the input \c package, adds a developer signature and writes the output to \c signed-package.
+        You need to supply a \c certificate in P12 format together with a \c password matching the
+        certificate.
 \row
     \li \span {style="white-space: nowrap"} {\c dev-verify-package}
     \li \c{<package> <ca-certificates...>}
@@ -65,10 +71,10 @@ these variations with the following commands:
 \row
     \li \span {style="white-space: nowrap"} {\c store-sign-package}
     \li \c{<package> <signed-package> <certificate> <password> [device-id]}
-    \li Takes the input \c package, adds a store signature and writes the output \c signed-package.
-        You need to supply a \c certificate in P12 format together with a matching \c password. If
-        you specify the optional \c device-id, the resulting package can only be installed on this
-        specific device.
+    \li Takes the input \c package, adds a store signature and writes the output to \c signed-package.
+        You need to supply a \c certificate in P12 format together with a \c password matching the
+        certificate. If you specify the optional \c device-id, the resulting package can only be
+        installed on this specific device.
 \row
     \li \span {style="white-space: nowrap"} {\c store-verify-package}
     \li \c{<package> <ca-certificates...> <device-id>}

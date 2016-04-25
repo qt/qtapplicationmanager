@@ -82,6 +82,8 @@ public:
     QString telnetAddress() const;
     quint16 telnetPort() const;
 
+    QStringList caCertificates() const;
+
 private:
     void initialize();
 

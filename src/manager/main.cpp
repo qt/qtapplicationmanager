@@ -506,6 +506,19 @@ int main(int argc, char *argv[])
         if (configuration->noSecurity()) {
             ai->setDevelopmentMode(true);
             ai->setAllowInstallationOfUnsignedPackages(true);
+        } else {
+            QList<QByteArray> caCertificateList;
+
+            for (const auto &caFile : configuration->caCertificates()) {
+                QFile f(caFile);
+                if (!f.open(QFile::ReadOnly))
+                    throw Exception(f, "could not open CA-certificate file");
+                QByteArray cert = f.readAll();
+                if (cert.isEmpty())
+                    throw Exception(f, "CA-certificate file is empty");
+                caCertificateList << cert;
+            }
+            ai->setCACertificates(caCertificateList);
         }
 
         uint minUserId, maxUserId, commonGroupId;

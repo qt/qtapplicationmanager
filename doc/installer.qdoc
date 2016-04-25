@@ -33,6 +33,7 @@
 
 \page installer.html
 \title The Application Installer
+\keyword Installer
 
 \chapter Dynamically installing, removing and updating applications
 
@@ -45,15 +46,66 @@ application-manager at runtime. There are two interfaces for this functionality:
         application-manager's \c ApplicationInstaller interface.
 \endlist
 
-Both interfaces are very similar and are both documented in the ApplicationInstaller.
+Both interfaces are very similar and both are documented in the ApplicationInstaller.
 
 \note A prerequisite for dynamically installed application packages is a valid \l {Installation Locations}{installation location}
 configuration for the application-manager.
 
 \chapter Packages
 
-See \l {Package Format}
+The application-manager has its own \l {Package Format}. It comes with the \l {Packager}{\c
+appman-packager} command-line tool, which lets you create and verify those packages.
 
+\chapter Installation Sources
 
+When triggering a package installation, you have to provide an URL to the application-manager as
+the source of the package. Out of the box, the application-manager accepts the following schemes:
+
+\table
+\header
+  \li Scheme
+  \li Description
+\row
+  \li \c file://
+  \li A local filesystem path.
+\row
+  \li \c http://, \c https:// and \c ftp://
+  \li A remote path that will be downloaded via QNetworkAccessManager.
+\row
+  \li \c socket://
+  \li A path to a UNIX-domain socket in the local filesystem. This is very useful for streaming in
+      packages, if you do not want to (or can) use the built-in downloader, or if your packages are
+      wrapped inside another customer specific distribution file format.
+\endtable
+
+All of those methods work asynchronously and also support streaming: this means that the actual
+installation is done while the package is being downloaded. If the package verified correctly after
+the download, it only needs a quick finalization step. On the other hand, if an error occurred, the
+installation process is simply cancelled and rolled back.
+
+\chapter Public Key Infrastructure
+
+If you want to make use of signed packages, you need to setup a public key infrastructure (PKI) to
+support this:
+
+\list
+  \li You need a \e {Developer CA} which is responsible for creating certicates that are distributed
+      to developers in P12 format. The developers use these certificates to developer-sign their
+      packages (using the Packager tool), before submitting to an app-store.
+  \li You also need an \e {App-Store CA} which is responsible for creating certificates that are used
+      by app-store server backends to store-sign packages, before they are downloaded and installed
+      onto devices.
+\endlist
+
+Both these CAs can be the same, or they can be derived from a common root-CA.
+
+As for the device, you need to install one or both of these CA-certificates (plus any root and
+intermediary ones), depending on the type of package you want the user to be able to install.
+Which CA-certificates are loaded is specified \l {ca certificates} {via the config file}.
+
+The application-manager sources contain a script that sets up such a PKI for the internal
+unit-tests: it can be found in \c tests/data/certificates/create-test-certificates.sh. You should
+never use this to create a production environment, but it could be helpful to quickly and easily
+switch to developing with signed packages.
 
 */

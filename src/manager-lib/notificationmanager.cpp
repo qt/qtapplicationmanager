@@ -58,7 +58,7 @@
 
     Each item in this model corresponds to an active notification.
 
-    \keyword NotificationManager Roles
+    \target NotificationManager Roles
 
     The following roles are available in this model - please also take a look at the freedesktop.org specification for an in-depth explanation of these fields and how clients should populate them:
 

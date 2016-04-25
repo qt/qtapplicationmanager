@@ -488,3 +488,8 @@ quint16 Configuration::telnetPort() const
 {
     return d->findInConfigFile({ qSL("debug"), qSL("telnetPort") }, nullptr).value<quint16>();
 }
+
+QStringList Configuration::caCertificates() const
+{
+    return d->findInConfigFile({ qSL("installer"), qSL("caCertificates") }).value<QStringList>();
+}

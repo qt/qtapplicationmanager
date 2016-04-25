@@ -56,6 +56,21 @@ command-line options.
     \li \c string
     \li The main QML file.
 \row
+    \li \c --help
+    \li \c -
+    \li \c bool
+    \li Prints the supported options and exits.
+\row
+    \li \c --version
+    \li \c -
+    \li \c bool
+    \li Prints the current version of the application-manager and exits.
+\row
+    \li \c --build-config
+    \li \c -
+    \li \c bool
+    \li Prints the build configuration of the application-manager in YAML format and exits.
+\row
     \li \c --config-file or \c -c
     \li \c -
     \li \c array<string>
@@ -134,11 +149,15 @@ command-line options.
     \li Add an additional QML import path to the system UI.
 \row
     \li \c -
+        \target additional configuration
     \li \c ui/additionalConfiguration
     \li \c object
     \li Exports the YAML object as the ApplicationManager property ApplicationManager::additionalConfiguration
-        to the system UI. The object will just be converted to a QVariantMap, but the application-manager
+        to the system-UI and as the ApplicationInterface::additionalConfiguration to all QML
+        applications. The object will just be converted to a QVariantMap, but the application-manager
         will not interpret it in any way.
+        Non-QML applications can access this data via the environment variable \c $AM_RUNTIME_ADDITIONAL_CONFIGURATION
+        as a YAML snippet.
 \row
     \li \c --verbose
     \li \c -
@@ -202,7 +221,44 @@ command-line options.
     \li This can be used to specify options for containers - the key in this map is the
         container's name and the value is interpreted by the respective container implementation.
         \l {Container configuration}{See below} for specific information.
+\row
+    \li \c -
+    \li \c quicklaunch/idleLoad
+    \li \c real
+    \li This is a system-load value between \c 0 and \c 1. The application-manager will not start
+        a new quick-launcher, as long as the idle-load of the system is higher than this value.
+        (default: 0)
+\row
+    \li \c -
+    \li \c quicklaunch/runtimesPerContainer
+    \li \c int
+    \li Specifies how many quick-launchers should always be ready for all active container/runtime
+        combinations. (default: 0)
+        \note Values bigger than 10 will be ignored, since this does not make sense and could also
+              potentially freeze your device if you have a container plugin were instantiation
+              is expensive resource-wise.
+\row
+    \li \c --wayland-socket-name
+    \li \c -
+    \li \c string
+    \li A filesystem name for the Wayland socket that should be used when creating the compositor
+        component. (default: \c wayland-0)
+        \note You can only specify the name here, but not a path: Wayland will always create this
+              socket in \c{$XDG_RUNTIME_DIR} and will fail to start the compositor, if this
+              directory is not writable or if the environment variable is not even set in the first
+              place.
+\row
+    \li \c -
+        \target ca certificates
+    \li \c installer/caCertificates
+    \li \c list<string>
+    \li A list of file-paths to CA-certifcates that are used to verify packages. For more details,
+        see the \l {Public Key Infrastructure} {Installer documentation}.
 
+\omit
+telnetPort and telnetAddress: these are configuring the Pelagicore proprietary telnet component
+applicationUserIdSeparation: this should be factored out into a container plugin
+\endomit
 \endtable
 
 \chapter D-Bus specification

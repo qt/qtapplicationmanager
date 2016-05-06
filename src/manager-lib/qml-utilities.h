@@ -32,5 +32,6 @@
 #pragma once
 
 #include <QQmlEngine>
+#include <qqml.h>
 
 void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton);

@@ -50,7 +50,6 @@
 #include "abstractcontainer.h"
 #include "dbus-policy.h"
 #include "qml-utilities.h"
-#include "ipcproxyobject.h"
 
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
@@ -249,11 +248,8 @@ ApplicationManager *ApplicationManager::s_instance = 0;
 
 ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb, QString *error)
 {
-    if (s_instance) {
-        if (error)
-            *error = qL1S("ApplicationManager::createInstance() was called a second time.");
-        return 0;
-    }
+    if (s_instance)
+        qFatal("ApplicationManager::createInstance() was called a second time.");
 
     QScopedPointer<ApplicationManager> am(new ApplicationManager(adb, QCoreApplication::instance()));
 
@@ -267,6 +263,8 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
         return 0;
     }
 
+    qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager", 1, 0, "ApplicationManager",
+                                                 &ApplicationManager::instanceForQml);
     return s_instance = am.take();
 }
 
@@ -1026,150 +1024,6 @@ void ApplicationManager::setApplicationAudioFocus(const QString &id, AudioFocus 
     QVariantMap map;
     map.insert(audioFocusName, audioFocusState);
     emit applicationStateChanged(id, map);
-}
-
-/*!
-    \qmlmethod bool ApplicationManager::registerApplicationInterfaceExtension(object interface, string name, var filter)
-
-    Registers an IPC \a interface object to extend the communication API between applications and
-    the Application Manager itself. The \a interface object is a normal QtObject item, that needs
-    to stay valid during the whole lifetime of the system-UI. The \a name of the interface has to
-    adhere to D-Bus standards, so it needs to at least contain one \c . character (e.g. \c{io.qt.test}).
-    The interface is available to all applications matching the \a filter criteria (see below)
-    on the private Peer-To-Peer D-Bus as a standard, typed D-Bus interface.
-
-    Since there is no way to add type information to the parameters of JavaScript functions, the
-    \a interface is scanned for special annotation properties that are only used to deduce type
-    information, but are not exported to the applications:
-
-    \c{readonly property var _decltype_<function-name>: { "<return type>": [ "<param 1 type>", "<param 2 type>", ...] }}
-
-    The following types are supported:
-
-    \table
-    \header
-        \li Type
-        \li DBus Type
-        \li Note
-    \row
-        \li \c void
-        \li -
-        \li Only valid as return type.
-    \row
-        \li \c int
-        \li \c INT32
-        \li
-    \row
-        \li \c string, \c url
-        \li \c STRING
-        \li Urls are mapped to plain strings.
-    \row
-        \li \c bool
-        \li \c BOOLEAN
-        \li
-    \row
-        \li \c real, \c double
-        \li \c DOUBLE
-        \li
-    \row
-        \li \c var, \c variant
-        \li \c VARIANT
-        \li Can also be used for lists and maps.
-
-    \endtable
-
-    This is a simple example showing how to add these annotations to a function definition:
-
-    \code
-    readonly property var _decltype_testFunction: { "var": [ "int", "string" ] }
-    function testFunction(ivar, strvar) {
-        return { "strvar": strvar, "intvar": intvar }
-    }
-    \endcode
-
-    You can restrict the availability of the interface in applications via the \a filter parameter:
-    either pass an empty JavaScript object (\c{{}}) or use any combination of these available
-    field names:
-
-    \table
-    \header
-        \li Key
-        \li Value
-        \li Description
-    \row
-        \li \c applicationIds
-        \li \c list<string>
-        \li A list of applications ids that are allowed to use this interface.
-    \row
-        \li \c categories
-        \li \c list<string>
-        \li A list of category names (see info.yaml). Any application that is part of one of these
-            categories is allowed to use this interface.
-    \row
-        \li \c capabilities
-        \li \c list<string>
-        \li A list of applications capabilities (see info.yaml). Any application that has on of these
-            capabilities is allowed to use this interface.
-    \endtable
-
-    All of the filter fields have to match, but only fields that are actually set are taken into
-    consideration.
-
-    \qml
-    import QtQuick 2.0
-    import QtApplicationManager 1.0
-
-    QtObject {
-        id: extension
-
-        property bool pbool: true
-        property double pdouble: 3.14
-
-        signal testSignal(string str, variant list)
-
-        readonly property var _decltype_testFunction: { "void": [ "int", "string" ] }
-        function testFunction(foo, bar) {
-            console.log("testFunction was called: " + foo + " " + bar)
-        }
-    }
-    \endqml
-    \code
-    ...
-
-    ApplicationManager.registerApplicationInterfaceExtension(extension, "io.qt.test.interface",
-                                                             { "capabilities": [ "media", "camera" ] })
-
-    \endcode
-
-    \note Currently only implemented for multi-process setups.
-
-    Will return \c true if the registration was successful or \c false otherwise.
-*/
-bool ApplicationManager::registerApplicationInterfaceExtension(QObject *object, const QString &name,
-                                                               const QVariantMap &filter)
-{
-    if (!object || name.isEmpty()) {
-        qCWarning(LogQmlIpc) << "Application interface extension needs a valid object as well as interface name";
-        return false;
-    }
-    if (!name.contains(QLatin1Char('.'))) {
-        qCWarning(LogQmlIpc) << "Application interface extension name" << name << "is not a valid D-Bus interface name";
-        return false;
-    }
-    foreach (const auto &ext, d->interfaceExtensions) {
-        if (ext->interfaceName() == name) {
-            qCWarning(LogQmlIpc) << "Application interface extension name" << name << "was already registered";
-            return false;
-        }
-    }
-    IpcProxyObject *ipo = new IpcProxyObject(object, QString(), qSL("/ExtensionInterfaces"), name, filter);
-    d->interfaceExtensions.append(ipo);
-    return true;
-}
-
-QVector<IpcProxyObject *> ApplicationManager::applicationInterfaceExtensions() const
-{
-    return d->interfaceExtensions;
 }
 
 QVariantMap ApplicationManager::applicationState(const QString &id) const

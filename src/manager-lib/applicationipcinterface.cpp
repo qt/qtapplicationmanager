@@ -44,11 +44,43 @@
 
 #include "application.h"
 #include "dbus-utilities.h"
-#include "ipcproxyobject.h"
-#include "ipcproxyobject_p.h"
+#include "applicationipcinterface.h"
+#include "applicationipcinterface_p.h"
+
+
+ApplicationIPCInterface::ApplicationIPCInterface(QObject *parent)
+    : QObject(parent)
+{ }
+
+QString ApplicationIPCInterface::interfaceName() const
+{
+    return m_ipcProxy ? m_ipcProxy->interfaceName() : QString();
+}
+
+QString ApplicationIPCInterface::pathName() const
+{
+    return m_ipcProxy ? m_ipcProxy->pathName() : QString();
+}
+
+bool ApplicationIPCInterface::isValidForApplication(const Application *app) const
+{
+    return m_ipcProxy ? m_ipcProxy->isValidForApplication(app) : false;
+}
+
+bool ApplicationIPCInterface::dbusRegister(const Application *app, QDBusConnection connection, const QString &debugPathPrefix)
+{
+    return m_ipcProxy ? m_ipcProxy->dbusRegister(app, connection, debugPathPrefix) : false;
+}
+
+bool ApplicationIPCInterface::dbusUnregister(QDBusConnection connection)
+{
+    return m_ipcProxy ? m_ipcProxy->dbusUnregister(connection) : false;
+}
+
 
 #define TYPE_ANNOTATION_PREFIX "_decltype_"
 
+QVector<IpcProxyObject *> IpcProxyObject::s_proxies;
 
 static int qmlTypeId(const QString &qmlType)
 {
@@ -101,6 +133,8 @@ IpcProxyObject::IpcProxyObject(QObject *object, const QString &serviceName, cons
     , m_pathName(pathName)
     , m_interfaceName(interfaceName)
 {
+    s_proxies.append(this);
+
     m_appIdFilter = filter.value("applicationIds").toStringList();
     m_categoryFilter = filter.value("categories").toStringList();
     m_capabilityFilter = filter.value("capabilities").toStringList();
@@ -240,6 +274,11 @@ IpcProxyObject::IpcProxyObject(QObject *object, const QString &serviceName, cons
     qCDebug(LogQmlIpc, "%s", xml.constData());
 }
 
+IpcProxyObject::~IpcProxyObject()
+{
+    s_proxies.removeOne(this);
+}
+
 QByteArray IpcProxyObject::createIntrospectionXml()
 {
     QByteArray xml = "<interface name=\"" + m_interfaceName.toLatin1() + "\">\n";
@@ -331,7 +370,7 @@ QString IpcProxyObject::interfaceName() const
 
 QStringList IpcProxyObject::connectionNames() const
 {
-    return m_connectionNames;
+    return m_connectionNamesToApplicationIds.keys();
 }
 
 bool IpcProxyObject::isValidForApplication(const Application *app) const
@@ -356,9 +395,9 @@ bool IpcProxyObject::isValidForApplication(const Application *app) const
 
 #if defined(QT_DBUS_LIB)
 
-bool IpcProxyObject::dbusRegister(QDBusConnection connection, const QString &debugPathPrefix)
+bool IpcProxyObject::dbusRegister(const Application *app, QDBusConnection connection, const QString &debugPathPrefix)
 {
-    if (m_connectionNames.contains(connection.name()))
+    if (m_connectionNamesToApplicationIds.contains(connection.name()))
         return false;
 
     if (!m_serviceName.isEmpty() && connection.interface()) {
@@ -367,7 +406,7 @@ bool IpcProxyObject::dbusRegister(QDBusConnection connection, const QString &deb
     }
 
     if (connection.registerVirtualObject(debugPathPrefix + m_pathName, this)) {
-        m_connectionNames << connection.name();
+        m_connectionNamesToApplicationIds.insert(connection.name(), app ? app->id() : QString());
         if (!debugPathPrefix.isEmpty())
             m_pathNamePrefixForConnection.insert(connection.name(), debugPathPrefix);
         return true;
@@ -377,7 +416,7 @@ bool IpcProxyObject::dbusRegister(QDBusConnection connection, const QString &deb
 
 bool IpcProxyObject::dbusUnregister(QDBusConnection connection)
 {
-    if (m_connectionNames.contains(connection.name())) {
+    if (m_connectionNamesToApplicationIds.remove(connection.name())) {
         connection.unregisterObject(m_pathNamePrefixForConnection.value(connection.name()) + m_pathName);
         return true;
     }
@@ -405,6 +444,13 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
     QString interface = message.interface();
     QString function = message.member();
     const QMetaObject *mo = m_object->metaObject();
+
+    m_sender = m_connectionNamesToApplicationIds.value(connection.name());
+    struct ClearSender {
+        ClearSender(QString &string) : m_string(string) { }
+        ~ClearSender() { m_string.clear(); }
+        QString &m_string;
+    } clearSender(m_sender);
 
     if (interface == m_interfaceName) {
         // find in registered slots only - not in all methods
@@ -523,7 +569,18 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
 void IpcProxyObject::relaySignal(int signalIndex, void **argv)
 {
 #if defined(QT_DBUS_LIB)
-    foreach (const QString &connectionName, m_connectionNames) {
+    QMapIterator<QString, QString> it(m_connectionNamesToApplicationIds);
+    while (it.hasNext()) {
+        it.next();
+        QString connectionName = it.key();
+        QString applicationId = it.value();
+
+        // check if we have a receiver filter
+        if (!m_receivers.isEmpty()) {
+            if (applicationId.isEmpty() || !m_receivers.contains(applicationId))
+                continue;
+        }
+
         QDBusConnection connection(connectionName);
         if (connection.isConnected()) {
             int propertyIndex = m_signalsToProperties.value(signalIndex, -1);
@@ -558,6 +615,8 @@ void IpcProxyObject::relaySignal(int signalIndex, void **argv)
     Q_UNUSED(signalIndex)
     Q_UNUSED(argv)
 #endif // QT_DBUS_LIB
+
+    m_receivers.clear();
 }
 
 
@@ -584,4 +643,47 @@ int IpcProxySignalRelay::qt_metacall(QMetaObject::Call c, int id, void **argv)
         --id;
     }
     return id;
+}
+
+ApplicationIPCInterfaceAttached *ApplicationIPCInterface::qmlAttachedProperties(QObject *object)
+{
+    return new ApplicationIPCInterfaceAttached(object);
+}
+
+ApplicationIPCInterfaceAttached::ApplicationIPCInterfaceAttached(QObject *object)
+    : m_object(object)
+{
+}
+
+QString ApplicationIPCInterfaceAttached::sender() const
+{
+    if (resolveProxy())
+        return m_proxy->m_sender;
+    return QString();
+}
+
+QVariant ApplicationIPCInterfaceAttached::receivers() const
+{
+    if (resolveProxy())
+        return m_proxy->m_receivers;
+    return QVariant();
+}
+
+void ApplicationIPCInterfaceAttached::setReceivers(const QVariant &receivers)
+{
+    if (resolveProxy())
+        m_proxy->m_receivers = receivers.toStringList();
+}
+
+bool ApplicationIPCInterfaceAttached::resolveProxy() const
+{
+    if (!m_proxy) {
+        for (auto &proxy : IpcProxyObject::s_proxies) {
+            if (proxy->object() == m_object) {
+                m_proxy = proxy;
+                break;
+            }
+        }
+    }
+    return (m_proxy);
 }

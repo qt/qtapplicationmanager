@@ -45,6 +45,9 @@ HEADERS += \
     containerfactory.h \
     quicklauncher.h \
     systemmonitor.h \
+    applicationipcmanager.h \
+    applicationipcinterface.h \
+    applicationipcinterface_p.h
 
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \
@@ -56,8 +59,6 @@ else:HEADERS += systemmonitor_dummy.h
 qtHaveModule(dbus):HEADERS += \
     nativeruntime.h \
     nativeruntime_p.h \
-    ipcproxyobject.h \
-    ipcproxyobject_p.h \
 
 SOURCES += \
     application.cpp \
@@ -78,6 +79,8 @@ SOURCES += \
     containerfactory.cpp \
     quicklauncher.cpp \
     systemmonitor.cpp \
+    applicationipcmanager.cpp \
+    applicationipcinterface.cpp
 
 !headless:SOURCES += \
     fakeapplicationmanagerwindow.cpp \
@@ -87,4 +90,3 @@ linux:SOURCES += systemmonitor_linux.cpp
 
 qtHaveModule(dbus):SOURCES += \
     nativeruntime.cpp \
-    ipcproxyobject.cpp \

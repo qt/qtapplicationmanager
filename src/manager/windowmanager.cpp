@@ -284,6 +284,10 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, bool forceSi
 {
     if (s_instance)
         qFatal("WindowManager::createInstance() was called a second time.");
+
+    qmlRegisterSingletonType<WindowManager>("QtApplicationManager", 1, 0, "WindowManager",
+                                            &WindowManager::instanceForQml);
+
     return s_instance = new WindowManager(qmlEngine, forceSingleProcess, waylandSocketName);
 }
 

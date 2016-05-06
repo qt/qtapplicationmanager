@@ -206,11 +206,9 @@ ApplicationInstaller::~ApplicationInstaller()
 ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<InstallationLocation> &installationLocations,
                                                            const QDir &manifestDir, const QDir &imageMountDir, QString *error)
 {
-    if (s_instance) {
-        if (error)
-            *error = qL1S("ApplicationInstaller::createInstance() was called a second time.");
-        return 0;
-    }
+    if (s_instance)
+        qFatal("ApplicationInstaller::createInstance() was called a second time.");
+
     qRegisterMetaType<AsynchronousTask *>();
 
     if (!manifestDir.exists()) {
@@ -223,6 +221,10 @@ ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<Install
             *error = qL1S("ApplicationInstaller::createInstance() could not access the image-mount directory ") + imageMountDir.absolutePath();
         return 0;
     }
+
+    qmlRegisterSingletonType<ApplicationInstaller>("io.qt.ApplicationInstaller", 1, 0, "ApplicationInstaller",
+                                                   &ApplicationInstaller::instanceForQml);
+
     return s_instance = new ApplicationInstaller(installationLocations, manifestDir, imageMountDir, QCoreApplication::instance());
 }
 

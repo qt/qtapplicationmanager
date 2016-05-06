@@ -43,7 +43,8 @@
 #include "runtimefactory.h"
 #include "qtyaml.h"
 #include "applicationinterface.h"
-#include "ipcproxyobject.h"
+#include "applicationipcmanager.h"
+#include "applicationipcinterface.h"
 
 // You can enable this define to get all P2P-bus objects onto the session bus
 // within io.qt.ApplicationManager, /Application<pid>/...
@@ -137,8 +138,8 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
     m_shutingDown = m_launched = m_launchWhenReady = m_started = m_dbusConnection = false;
 
     // unregister all extension interfaces
-    foreach (IpcProxyObject *dpo, ApplicationManager::instance()->applicationInterfaceExtensions()) {
-        dpo->dbusUnregister(QDBusConnection(m_dbusConnectionName));
+    foreach (ApplicationIPCInterface *iface, ApplicationIPCManager::instance()->interfaces()) {
+        iface->dbusUnregister(QDBusConnection(m_dbusConnectionName));
     }
 
     emit finished(exitCode, status);
@@ -281,16 +282,16 @@ void NativeRuntime::onLauncherFinishedInitialization()
         // register all extension interfaces
         QDBusConnection conn(m_dbusConnectionName);
 
-        foreach (IpcProxyObject *dpo, ApplicationManager::instance()->applicationInterfaceExtensions()) {
-            if (!dpo->isValidForApplication(application()))
+        foreach (ApplicationIPCInterface *iface, ApplicationIPCManager::instance()->interfaces()) {
+            if (!iface->isValidForApplication(application()))
                 continue;
 
-            if (!dpo->dbusRegister(conn)) {
-                qCWarning(LogSystem) << "ERROR: could not register the externsion interface" << dpo->interfaceName()
-                                     << "at" << dpo->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
+            if (!iface->dbusRegister(application(), conn)) {
+                qCWarning(LogSystem) << "ERROR: could not register the application IPC interface" << iface->interfaceName()
+                                     << "at" << iface->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
             }
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-            dpo->dbusRegister(QDBusConnection::sessionBus(), qSL("/Application%1").arg(pid));
+            iface->dbusRegister(QDBusConnection::sessionBus(), qSL("/Application%1").arg(pid));
 #endif
         }
 

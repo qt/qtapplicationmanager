@@ -32,16 +32,31 @@
 #pragma once
 
 #include <QObject>
+#include <QVariantMap>
+#include <QVector>
+#include <qqml.h>
 
-class IpcProxyObject;
+class ApplicationIPCManagerAttached;
+class ApplicationIPCInterface;
 
-class IpcProxySignalRelay : public QObject
+class ApplicationIPCManager : public QObject
 {
-public:
-    IpcProxySignalRelay(IpcProxyObject *proxyObject);
+    Q_OBJECT
 
-    int qt_metacall(QMetaObject::Call c, int id, void **argv) override;
+public:
+    ~ApplicationIPCManager();
+    static ApplicationIPCManager *createInstance();
+    static ApplicationIPCManager *instance();
+    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
+
+    Q_INVOKABLE bool registerInterface(ApplicationIPCInterface *interface, const QString &name, const QVariantMap &filter);
+    QVector<ApplicationIPCInterface *> interfaces() const;
 
 private:
-    IpcProxyObject *m_proxyObject;
+    ApplicationIPCManager(QObject *parent = nullptr);
+    ApplicationIPCManager(const ApplicationIPCManager &);
+    ApplicationIPCManager &operator=(const ApplicationIPCManager &);
+
+    QVector<ApplicationIPCInterface *> m_interfaces;
+    static ApplicationIPCManager *s_instance;
 };

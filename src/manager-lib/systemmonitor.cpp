@@ -292,6 +292,9 @@ SystemMonitor *SystemMonitor::createInstance()
 {
     if (s_instance)
         qFatal("SystemMonitor::createInstance() was called a second time.");
+
+    qmlRegisterSingletonType<SystemMonitor>("QtApplicationManager", 1, 0, "SystemMonitor",
+                                                 &SystemMonitor::instanceForQml);
     return s_instance = new SystemMonitor();
 }
 

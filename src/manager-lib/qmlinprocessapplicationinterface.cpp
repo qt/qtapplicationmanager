@@ -37,7 +37,8 @@
 #include "application.h"
 #include "applicationmanager.h"
 #include "notificationmanager.h"
-#include "ipcproxyobject.h"
+#include "applicationipcmanager.h"
+#include "applicationipcinterface.h"
 
 
 QmlInProcessApplicationInterface::QmlInProcessApplicationInterface(QmlInProcessRuntime *runtime)
@@ -174,9 +175,9 @@ void QmlInProcessApplicationInterfaceExtension::componentComplete()
     }
 
     if (app) {
-        for (const IpcProxyObject *ipc : ApplicationManager::instance()->applicationInterfaceExtensions()) {
-            if ((ipc->interfaceName() == m_name) && ipc->isValidForApplication(app)) {
-                m_object = ipc->object();
+        for (ApplicationIPCInterface *iface : ApplicationIPCManager::instance()->interfaces()) {
+            if ((iface->interfaceName() == m_name) && iface->isValidForApplication(app)) {
+                m_object = iface;
                 emit objectChanged();
                 emit readyChanged();
                 break;

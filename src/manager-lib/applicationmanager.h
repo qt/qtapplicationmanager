@@ -135,9 +135,6 @@ public:
 
     Q_INVOKABLE void setApplicationAudioFocus(const QString &id, AudioFocus audioFocus);
 
-    Q_INVOKABLE bool registerApplicationInterfaceExtension(QObject *object, const QString &name, const QVariantMap &filter);
-    QVector<IpcProxyObject *> applicationInterfaceExtensions() const;
-
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 
     // DBus interface

@@ -31,67 +31,39 @@
 
 #pragma once
 
-#include <QtGlobal>
-#include <QVector>
-#include <QMap>
-#include <QPointer>
+#include <QObject>
+#include <qqml.h>
 #if defined(QT_DBUS_LIB)
-#  include <QDBusVirtualObject>
+#  include <QDBusConnection>
 #endif
 
 class Application;
-class IpcProxySignalRelay;
+class ApplicationIPCInterfaceAttached;
+class IpcProxyObject;
 
-class IpcProxyObject
-#if defined(QT_DBUS_LIB)
-        : protected QDBusVirtualObject
-#else
-        : protected QObject
-#endif
+
+class ApplicationIPCInterface : public QObject
 {
+    Q_OBJECT
 public:
-    IpcProxyObject(QObject *object, const QString &serviceName, const QString &pathName,
-                   const QString &interfaceName, const QVariantMap &filter);
+    explicit ApplicationIPCInterface(QObject *parent = nullptr);
 
-    QObject *object() const;
-    QString serviceName() const;
-    QString pathName() const;
     QString interfaceName() const;
-    QStringList connectionNames() const;
-
+    QString pathName() const;
     bool isValidForApplication(const Application *app) const;
 
 #if defined(QT_DBUS_LIB)
-    bool dbusRegister(QDBusConnection connection, const QString &debugPathPrefix = QString());
+    bool dbusRegister(const Application *app, QDBusConnection connection, const QString &debugPathPrefix = QString());
     bool dbusUnregister(QDBusConnection connection);
-
-    QString introspect(const QString &path) const override;
-    bool handleMessage(const QDBusMessage &message, const QDBusConnection &connection) override;
 #endif
 
-private:
-    void relaySignal(int signalIndex, void **argv);
-    QByteArray createIntrospectionXml();
-
-    friend class IpcProxySignalRelay;
+public:
+    static ApplicationIPCInterfaceAttached *qmlAttachedProperties(QObject *object);
 
 private:
-    QPointer<QObject> m_object;
-    IpcProxySignalRelay *m_signalRelay;
-    QStringList m_connectionNames;
-    QString m_serviceName;
-    QString m_pathName;
-    QMap<QString, QString> m_pathNamePrefixForConnection; // debugging only
-    QString m_interfaceName;
+    IpcProxyObject *m_ipcProxy = nullptr;
 
-    QString m_xmlIntrospection;
-    QStringList m_appIdFilter;
-    QStringList m_categoryFilter;
-    QStringList m_capabilityFilter;
-
-    QVector<int> m_properties;
-    QVector<int> m_signals;
-    QVector<int> m_slots;
-    QMap<int, QList<int>> m_slotSignatures;
-    QMap<int, int> m_signalsToProperties;
+    friend class ApplicationIPCManager;
 };
+
+QML_DECLARE_TYPEINFO(ApplicationIPCInterface, QML_HAS_ATTACHED_PROPERTIES)

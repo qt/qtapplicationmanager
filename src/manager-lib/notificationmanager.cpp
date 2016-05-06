@@ -249,6 +249,9 @@ NotificationManager *NotificationManager::createInstance()
 {
     if (s_instance)
         qFatal("NotificationManager::createInstance() was called a second time.");
+
+    qmlRegisterSingletonType<NotificationManager>("QtApplicationManager", 1, 0, "NotificationManager",
+                                                 &NotificationManager::instanceForQml);
     return s_instance = new NotificationManager();
 }
 

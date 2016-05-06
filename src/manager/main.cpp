@@ -106,6 +106,7 @@
 #include "qmllogger.h"
 #include "startuptimer.h"
 #include "systemmonitor.h"
+#include "applicationipcmanager.h"
 
 #if defined(MALIIT_INTEGRATION)
 #include "minputcontextconnection.h"
@@ -535,26 +536,17 @@ int main(int argc, char *argv[])
 
         startupTimer.checkpoint("after ApplicationInstaller instantiation");
 
-        qmlRegisterSingletonType<ApplicationInstaller>("io.qt.ApplicationInstaller", 1, 0, "ApplicationInstaller",
-                                                       &ApplicationInstaller::instanceForQml);
 #endif // AM_DISABLE_INSTALLER
 
-        qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager", 1, 0, "ApplicationManager",
-                                                     &ApplicationManager::instanceForQml);
-        qmlRegisterSingletonType<SystemMonitor>("QtApplicationManager", 1, 0, "SystemMonitor",
-                                                     &SystemMonitor::instanceForQml);
-        qmlRegisterSingletonType<NotificationManager>("QtApplicationManager", 1, 0, "NotificationManager",
-                                                     &NotificationManager::instanceForQml);
         qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 1, 0, "Notification");
         qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
 #if !defined(AM_HEADLESS)
-        qmlRegisterSingletonType<WindowManager>("QtApplicationManager", 1, 0, "WindowManager",
-                                                &WindowManager::instanceForQml);
         qmlRegisterType<FakeApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
-
         startupTimer.checkpoint("after QML registrations");
+
+        ApplicationIPCManager *aipcm = ApplicationIPCManager::createInstance();
 
         QQmlApplicationEngine *engine = new QQmlApplicationEngine(&a);
         new QmlLogger(engine);
@@ -727,6 +719,7 @@ int main(int argc, char *argv[])
         delete am;
         delete ql;
         delete sysmon;
+        delete aipcm;
 
         delete engine;
 

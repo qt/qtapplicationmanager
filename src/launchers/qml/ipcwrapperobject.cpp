@@ -214,6 +214,7 @@ IpcWrapperObject::IpcWrapperObject(const QString &service, const QString &path, 
                     break;
                 case QMetaMethod::Signal: {
                     auto mbb = mob.addSignal(params);
+                    mbb.setParameterNames(mm.parameterNames());
                     QMetaObject::connect(m_dbusInterface, mm.methodIndex(), this, mbb.index());
                     break;
                 }

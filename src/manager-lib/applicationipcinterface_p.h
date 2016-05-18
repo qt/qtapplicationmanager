@@ -121,6 +121,7 @@ class ApplicationIPCInterfaceAttached : public QObject
     Q_OBJECT
     Q_PROPERTY(QString sender READ sender)
     Q_PROPERTY(QVariant receivers READ receivers WRITE setReceivers)
+    Q_PROPERTY(QVariant inProcessReceiversOnly READ inProcessReceiversOnly CONSTANT)
 
 public:
     ApplicationIPCInterfaceAttached(QObject *object);
@@ -128,6 +129,7 @@ public:
     QString sender() const;
     QVariant receivers() const;
     void setReceivers(const QVariant &receivers);
+    QVariant inProcessReceiversOnly() const;
 
 private:
     bool resolveProxy() const;

@@ -675,6 +675,11 @@ void ApplicationIPCInterfaceAttached::setReceivers(const QVariant &receivers)
         m_proxy->m_receivers = receivers.toStringList();
 }
 
+QVariant ApplicationIPCInterfaceAttached::inProcessReceiversOnly() const
+{
+    return QStringList(qSL("{in-process}"));
+}
+
 bool ApplicationIPCInterfaceAttached::resolveProxy() const
 {
     if (!m_proxy) {

@@ -31,6 +31,7 @@
 
 #include <QQmlEngine>
 #include <QQmlExpression>
+#include <QTimer>
 
 #include "qmlinprocessapplicationinterface.h"
 #include "qmlinprocessruntime.h"
@@ -164,26 +165,23 @@ void QmlInProcessApplicationInterfaceExtension::componentComplete()
         return;
     }
 
-    // find out our application id
-    const Application *app = nullptr;
+    auto resolveObject = [this]() -> void {
+        if (m_object)
+            return;
 
-    if (QQmlContext *ctxt = QQmlEngine::contextForObject(this)) {
-        QQmlExpression expr(ctxt, nullptr, qSL("ApplicationInterface.applicationId"), nullptr);
-        QVariant v = expr.evaluate();
-        if (!v.isNull())
-            app = ApplicationManager::instance()->fromId(v.toString());
-    }
-
-    if (app) {
         for (ApplicationIPCInterface *iface : ApplicationIPCManager::instance()->interfaces()) {
-            if ((iface->interfaceName() == m_name) && iface->isValidForApplication(app)) {
+            if ((iface->interfaceName() == m_name)) {
                 m_object = iface;
                 emit objectChanged();
                 emit readyChanged();
                 break;
             }
         }
-    }
+    };
+
+    resolveObject();
+    if (!m_object)
+        QTimer::singleShot(0, this, resolveObject);
 }
 
 void QmlInProcessApplicationInterfaceExtension::setName(const QString &name)

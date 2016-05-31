@@ -206,7 +206,22 @@ bool ApplicationIPCManager::registerInterface(ApplicationIPCInterface *interface
             return false;
         }
     }
-    interface->m_ipcProxy = new IpcProxyObject(interface, QString(), qSL("/ExtensionInterfaces"), name, filter);
+
+    auto createPathFromName = [](const QString &name) -> QString {
+        QString path;
+
+        const QChar *c = name.unicode();
+        for (int i = 0; i < name.length(); ++i) {
+            ushort u = c[i].unicode();
+            path += QLatin1Char(((u >= 'a' && u <= 'z')
+                                 || (u >= 'A' && u <= 'Z')
+                                 || (u >= '0' && u <= '9')
+                                 || (u == '_')) ? u : '_');
+        }
+        return qSL("/ExtensionInterfaces/") + path;
+    };
+
+    interface->m_ipcProxy = new IpcProxyObject(interface, QString(), createPathFromName(name), name, filter);
     m_interfaces.append(interface);
     return true;
 }

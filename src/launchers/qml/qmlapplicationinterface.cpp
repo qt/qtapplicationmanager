@@ -268,7 +268,21 @@ void QmlApplicationInterfaceExtension::componentComplete()
     if (it != d->m_interfaces.constEnd()) {
         ext = *it;
     } else {
-        ext = new IpcWrapperObject(QString(), qSL("/ExtensionInterfaces"), m_name,
+        auto createPathFromName = [](const QString &name) -> QString {
+            QString path;
+
+            const QChar *c = name.unicode();
+            for (int i = 0; i < name.length(); ++i) {
+                ushort u = c[i].unicode();
+                path += QLatin1Char(((u >= 'a' && u <= 'z')
+                                     || (u >= 'A' && u <= 'Z')
+                                     || (u >= '0' && u <= '9')
+                                     || (u == '_')) ? u : '_');
+            }
+            return qSL("/ExtensionInterfaces/") + path;
+        };
+
+        ext = new IpcWrapperObject(QString(), createPathFromName(m_name), m_name,
                                    d->m_connection, this);
         if (ext->lastDBusError().isValid() || !ext->isDBusValid()) {
             qCWarning(LogQmlIpc) << "Could not connect to ApplicationInterfaceExtension" << m_name

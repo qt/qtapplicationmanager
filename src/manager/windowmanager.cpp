@@ -38,9 +38,9 @@
 #include <QVariant>
 
 #ifndef AM_SINGLE_PROCESS_MODE
-#  if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+#  if defined(QT_WAYLANDCOMPOSITOR_LIB)
 #    include "waylandcompositor.h"
-#  else
+#  elif defined(QT_COMPOSITOR_LIB)
 #    include "waylandcompositor-old.h"
 #  endif
 #endif

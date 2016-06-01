@@ -153,6 +153,7 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
     }
 
     emit finished(exitCode, status);
+    emit stateChanged(state());
 
     if (m_app)
         m_app->setCurrentRuntime(0);
@@ -211,6 +212,8 @@ bool NativeRuntime::start()
                      this, &NativeRuntime::onProcessError);
     QObject::connect(m_process, &AbstractContainerProcess::finished,
                      this, &NativeRuntime::onProcessFinished);
+
+    emit stateChanged(state());
     return true;
 }
 
@@ -222,6 +225,7 @@ void NativeRuntime::stop(bool forceKill)
     m_shutingDown = true;
 
     emit aboutToStop();
+    emit stateChanged(state());
 
     if (forceKill)
         m_process->kill();
@@ -232,6 +236,7 @@ void NativeRuntime::stop(bool forceKill)
 void NativeRuntime::onProcessStarted()
 {
     m_started = true;
+    emit stateChanged(state());
 }
 
 void NativeRuntime::onProcessError(QProcess::ProcessError error)
@@ -322,6 +327,7 @@ AbstractRuntime::State NativeRuntime::state() const
     }
     return Inactive;
 }
+
 qint64 NativeRuntime::applicationProcessId() const
 {
     return m_process ? m_process->processId() : 0;

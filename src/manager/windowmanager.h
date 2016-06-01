@@ -131,7 +131,7 @@ public:
 
 signals:
     void countChanged();
-    void raiseApplicationWindow(const QString &applicationId);
+    void raiseApplicationWindow(const QString &applicationId, const QString &applicationAliasId);
 
     void windowReady(int index, QQuickItem *window);
     void windowClosing(int index, QQuickItem *window);

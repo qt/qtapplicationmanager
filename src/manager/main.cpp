@@ -587,7 +587,7 @@ int main(int argc, char *argv[])
 
         QObject::connect(am, &ApplicationManager::inProcessRuntimeCreated,
                          wm, &WindowManager::setupInProcessRuntime);
-        QObject::connect(am, &ApplicationManager::applicationWasReactivated,
+        QObject::connect(am, &ApplicationManager::applicationWasActivated,
                          wm, &WindowManager::raiseApplicationWindow);
 #endif
 

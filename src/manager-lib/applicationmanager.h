@@ -73,6 +73,7 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
     Q_PROPERTY(QVariantMap additionalConfiguration READ additionalConfiguration CONSTANT)
     Q_ENUMS(AudioFocus)
+    Q_ENUMS(RunState)
 
 public:
     enum Roles
@@ -82,8 +83,8 @@ public:
         Icon,
 
         IsRunning,
-        IsStarting,
-        IsActive,
+        IsStartingUp,
+        IsShutingDown,
         IsBlocked,
         IsUpdating,
         IsRemovable,
@@ -99,6 +100,13 @@ public:
         Importance,
         Preload,
         Version,
+    };
+
+    enum RunState {
+        NotRunning,
+        StartingUp,
+        Running,
+        ShutingDown
     };
 
     ~ApplicationManager();
@@ -134,17 +142,6 @@ public:
     Q_INVOKABLE QVariantMap get(int index) const;
     Q_INVOKABLE int indexFromId(const QString &id) const;
 
-    // temporary audio focus
-    enum AudioFocus
-    {
-        FullscreenFocus,
-        SplitscreenFocus,
-        BackgroundFocus,
-        NoFocus
-    };
-
-    Q_INVOKABLE void setApplicationAudioFocus(const QString &id, AudioFocus audioFocus);
-
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 
     // DBus interface
@@ -155,13 +152,13 @@ public:
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id);
     Q_SCRIPTABLE QString identifyApplication(qint64 pid);
-    Q_SCRIPTABLE QVariantMap applicationState(const QString &id) const;
+    Q_SCRIPTABLE RunState applicationRunState(const QString &id) const;
 
 signals:
-    Q_SCRIPTABLE void applicationStateChanged(const QString &id, const QVariantMap &changedState);
+    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, RunState runstate);
+    Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
+    Q_SCRIPTABLE void countChanged();
 
-    void countChanged();
-    void applicationWasReactivated(const QString &id);
     void inProcessRuntimeCreated(AbstractRuntime *runtime); // evil hook to support in-process runtimes
 
     void memoryLowWarning();

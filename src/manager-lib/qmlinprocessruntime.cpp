@@ -168,6 +168,8 @@ bool QmlInProcessRuntime::start()
     component.completeCreate();
     if (!m_document.isEmpty())
         emit openDocument(m_document);
+
+    emit stateChanged(state());
     return true;
 }
 
@@ -184,6 +186,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
     m_windows.clear();
     m_mainWindow = 0;
 #endif
+    emit stateChanged(state());
 }
 
 #if !defined(AM_HEADLESS)

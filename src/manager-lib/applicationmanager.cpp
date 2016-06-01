@@ -113,13 +113,13 @@
         \li \c bool
         \li A boolean value representing the run-state of the application.
     \row
-        \li \c isStarting
+        \li \c isStartingUp
         \li \c bool
         \li A boolean value telling if the application was started, but is not fully operational yet.
     \row
-        \li \c isActive
+        \li \c isShutingDown
         \li \c bool
-        \li A boolean value describing if the application is currently the active foreground application.
+        \li A boolean value describing if the application is currently shuting down.
     \row
         \li \c isBlocked
         \li \c bool
@@ -217,8 +217,6 @@ public:
     QString currentLocale;
     QHash<int, QByteArray> roleNames;
 
-    QMap<const Application *, QVariantMap> applicationState;
-
     QVector<IpcProxyObject *> interfaceExtensions;
 
     ApplicationManagerPrivate()
@@ -231,8 +229,8 @@ public:
         roleNames.insert(ApplicationManager::Name, "name");
         roleNames.insert(ApplicationManager::Icon, "icon");
         roleNames.insert(ApplicationManager::IsRunning, "isRunning");
-        roleNames.insert(ApplicationManager::IsStarting, "isStarting");
-        roleNames.insert(ApplicationManager::IsActive, "isActive");
+        roleNames.insert(ApplicationManager::IsStartingUp, "isStartingUp");
+        roleNames.insert(ApplicationManager::IsShutingDown, "isShutingDown");
         roleNames.insert(ApplicationManager::IsBlocked, "isLocked");
         roleNames.insert(ApplicationManager::IsUpdating, "isUpdating");
         roleNames.insert(ApplicationManager::IsRemovable, "isRemovable");
@@ -456,7 +454,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             else if (!app->documentUrl().isNull())
                 runtime->openDocument(app->documentUrl());
 
-            emit applicationWasReactivated(app->isAlias() ? app->nonAliased()->id() : app->id());
+            emit applicationWasActivated(app->isAlias() ? app->nonAliased()->id() : app->id(), app->id());
             return true;
 
         case AbstractRuntime::Shutdown:
@@ -512,10 +510,17 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         return false;
     }
 
+    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app]() {
+        emit applicationRunStateChanged(app->isAlias() ? app->nonAliased()->id() : app->id(),
+                                        applicationRunState(app->id()));
+    });
+
     if (!documentUrl.isNull())
         runtime->openDocument(documentUrl);
     else if (!app->documentUrl().isNull())
         runtime->openDocument(app->documentUrl());
+
+    emit applicationWasActivated(app->isAlias() ? app->nonAliased()->id() : app->id(), app->id());
 
     qCDebug(LogSystem) << "app:" << app->id() << "; document:" << documentUrl << "; runtime: " << runtime;
 
@@ -884,10 +889,10 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
 
     case IsRunning:
         return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Active) : false;
-    case IsStarting:
+    case IsStartingUp:
         return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Startup) : false;
-    case IsActive:
-        return false;
+    case IsShutingDown:
+        return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Shutdown) : false;
     case IsBlocked:
         return app->isLocked();
     case IsUpdating:
@@ -1015,33 +1020,20 @@ QVariantMap ApplicationManager::get(const QString &id) const
     return QVariantMap();
 }
 
-
-void ApplicationManager::setApplicationAudioFocus(const QString &id, AudioFocus audioFocus)
+ApplicationManager::RunState ApplicationManager::applicationRunState(const QString &id) const
 {
+    AM_AUTHENTICATE_DBUS(ApplicationManager::RunState)
+
     int index = indexFromId(id);
     if (index < 0)
-        return;
-    QString audioFocusName = qSL("audioFocus");
-    QString audioFocusState = qSL("none");
-    switch (audioFocus) {
-    case FullscreenFocus : audioFocusState = qSL("fullscreen"); break;
-    case SplitscreenFocus: audioFocusState = qSL("splitscreen"); break;
-    case BackgroundFocus : audioFocusState = qSL("background"); break;
-    case NoFocus         :
-    default              : break;
+        return NotRunning;
+    const Application *app = d->apps.at(index);
+    if (!app->currentRuntime())
+        return NotRunning;
+    switch (app->currentRuntime()->state()) {
+    case AbstractRuntime::Startup: return StartingUp;
+    case AbstractRuntime::Active: return Running;
+    case AbstractRuntime::Shutdown: return ShutingDown;
+    default: return NotRunning;
     }
-    d->applicationState[d->apps.at(index)][audioFocusName] = audioFocusState;
-    QVariantMap map;
-    map.insert(audioFocusName, audioFocusState);
-    emit applicationStateChanged(id, map);
-}
-
-QVariantMap ApplicationManager::applicationState(const QString &id) const
-{
-    AM_AUTHENTICATE_DBUS(QVariantMap)
-
-    int index = indexFromId(id);
-    if (index < 0)
-        return QVariantMap();
-    return d->applicationState.value(d->apps.at(index));
 }

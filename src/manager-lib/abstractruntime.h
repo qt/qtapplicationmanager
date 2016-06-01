@@ -122,6 +122,7 @@ public slots:
     virtual void stop(bool forceKill = false) = 0;
 
 signals:
+    void stateChanged(State newState);
     void finished(int exitCode, QProcess::ExitStatus status);
 
 #if !defined(AM_HEADLESS)

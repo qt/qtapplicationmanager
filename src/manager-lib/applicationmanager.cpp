@@ -614,14 +614,32 @@ bool ApplicationManager::openUrl(const QString &urlStr)
     const Application *app = 0;
     if (url.isValid()) {
         QString scheme = url.scheme();
-        if (scheme != qL1S("file"))
+        if (scheme != qL1S("file")) {
             app = schemeHandler(scheme);
+
+            if (app) {
+                if (app->isAlias())
+                    app = app->nonAliased();
+
+                // try to find a better matching alias, if available
+                foreach (const Application *alias, d->apps) {
+                    if (alias->isAlias() && alias->nonAliased() == app) {
+                        if (url.toString(QUrl::PrettyDecoded | QUrl::RemoveScheme) == alias->documentUrl()) {
+                            app = alias;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
         if (!app) {
             QMimeDatabase mdb;
             QMimeType mt = mdb.mimeTypeForUrl(url);
 
             app = mimeTypeHandler(mt.name());
+            if (app->isAlias())
+                app = app->nonAliased();
         }
     }
     if (app)

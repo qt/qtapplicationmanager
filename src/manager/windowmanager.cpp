@@ -105,28 +105,24 @@
         \li Description
     \row
         \li \c applicationId
-        \li \c string
+        \li string
         \li The unique id of an application represented as a string in reverse-dns form (e.g.
             \c com.pelagicore.foo). This can be used to look up information about the application
             in the ApplicationManager model.
     \row
         \li \c windowItem
-        \li \c Item
+        \li Item
         \li The QtQuick Item representing the window surface of the application - used to actually
             composite the window on the screen.
     \row
         \li \c isFullscreen
-        \li \c bool
+        \li bool
         \li A boolean value telling if the app's surface is being displayed in fullscreen mode.
     \row
         \li \c isMapped
-        \li \c bool
+        \li bool
         \li A boolean value telling if the app's surface is mapped (visible).
     \endtable
-
-    The QML import for this singleton is
-
-    \c{import QtApplicationManager 1.0}
 
     After importing, you can just use the WindowManager singleton as shown in the example below.
     It shows how to implement a basic fullscreen window compositor that already supports window

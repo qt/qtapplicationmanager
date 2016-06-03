@@ -95,11 +95,11 @@ The meaning of the fields within the \c info.yaml file header (first YAML docume
     \li Description
 \row
     \li \c formatVersion
-    \li \c int
+    \li int
     \li Currently always \c 1. (\e Required)
 \row
     \li \c formatType
-    \li \c string
+    \li string
     \li Always \c am-application. (\e Required)
 \endtable
 
@@ -112,16 +112,16 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
     \li Description
 \row
     \li \c id
-    \li \c string
+    \li string
     \li An unique reverse-DNS id. This id has to comply with RFC 1035/1123, consist of at least 3
         parts (e.g. \c{tld.company.app}), and not exceed 150 characters in length. (\e Required)
 \row
     \li \c icon
-    \li \c string
+    \li string
     \li The filesystem path to icon, relative to the \c info.json file. (\e Required)
 \row
     \li \c name
-    \li \c object
+    \li object
     \li An object containing language (\c string) to display name (\c string) mapppings. The
         language identifiers need to adhere to the standard POSIX locale definition. Please see the
         QLocale documentation for a detailed explanation.
@@ -129,16 +129,16 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         english (\c en) mapping as a fallback. (\e Required)
 \row
     \li \c code
-    \li \c string
+    \li string
     \li The main executable - interpreted by the runtime (see below). (\e Required)
 \row
     \li \c categories
-    \li \c array<string>
+    \li array<string>
     \li The list of category names the application should be associated with. This is mainly for
         the automated app-store upload and currently work in progress.
 \row
     \li \c runtime
-    \li \c string
+    \li string
     \li A runtime id, referencing a runtime plugin - currently \c qml, \c qml-inprocess and
         \c native are supported by the application-manager. (\e Required)
 
@@ -151,50 +151,50 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         is expected to be a valid Wayland client.
 \row
     \li \c runtimeParameters
-    \li \c object
+    \li object
     \li This object can contain \c runtime specific parameters - those are directly handed down to
         the runtime plugin by the application-manager.
 
         See below for a list of those parameters.
 \row
     \li \c documentUrl
-    \li \c string
+    \li string
     \li An optional default document that is used, if the application is started without specifying
         a document (see ApplicationManager::startApplication).
 \row
     \li \c builtIn
-    \li \c bool
+    \li bool
     \li Specifies, if this app should be user-removable (this defaults to \c true for built-in
         applications and to \c false for dynamically installed ones).
 \row
     \li \c preload
-    \li \c bool
+    \li bool
     \li Try to start the application immediately after boot, but keep it in the background. By
         default, applications are not preloaded.
 \row
     \li \c importance
-    \li \c real
+    \li real
     \li A value between \c 0.0 and \c 1.0 specifying the inverse probability of being terminated in
         out-of-memory situations (the default is \c 0.0 - unimportant).
 \row
     \li \c backgroundMode
-    \li \c string
-    \li specifies if and why the applications needs to be kept running in the background - can be
+    \li string
+    \li Specifies if and why the applications needs to be kept running in the background - can be
         one of: \c auto, \c never, \c voip, \c audio or \c location.
         By default, the background mode is \c auto, which means it is up to the applicaton-manager
         to decide.
 \row
     \li \c mimeTypes
-    \li \c array<string>
+    \li array<string>
     \li An optional array of MIME types the application feels responsible for.
 \row
     \li \c capabilities
-    \li \c array<string>
+    \li array<string>
     \li An optional, platform specific list of special access rights for the application - these
         capabilities can later be queried and verified by the middleware via the application manager.
 \row
     \li \c version
-    \li \c string
+    \li string
     \li The version of the application in string form.
 \endtable
 
@@ -207,14 +207,14 @@ These \c runtimeParameters are currently defined by both the \c qml and \c qml-i
     \li Description
 \row
     \li \c loadDummyData
-    \li \c bool
-    \li \c Automatically load dummy-data for the application, using the same algorithm as
+    \li bool
+    \li Automatically load dummy-data for the application, using the same algorithm as
            Qt's \c qmlscene tool. By default no dummy-data is loaded.
 \row
     \li \c importPaths
-    \li \c array<string>
-    \li \c A list of paths that should be added to the QML-engine's import paths - this is the same
-           as setting \c QML2_IMPORT_PATH for a program started from the command line.
+    \li array<string>
+    \li A list of paths that should be added to the QML-engine's import paths - this is the same
+        as setting \c QML2_IMPORT_PATH for a program started from the command line.
 \endtable
 
 \chapter Alias Manifests
@@ -252,11 +252,11 @@ The meaning of the fields within the \c info-am.yaml file header (first YAML doc
     \li Description
 \row
     \li \c formatVersion
-    \li \c int
+    \li int
     \li Currently always \c 1. (\e Required)
 \row
     \li \c formatType
-    \li \c string
+    \li string
     \li Always \c am-application-alias. (\e Required)
 \endtable
 
@@ -269,21 +269,21 @@ The meaning of the fields within the alias manifest data (second YAML document) 
     \li Description
 \row
     \li \c aliasId
-    \li \c string
+    \li string
     \li The unique reverse-DNS id of the base application (see \l{Basic Manifest}), followed by the
         \c{@} sign and an unique tag for this alias. This tag is only allowed to contain the
         characters \c{[a-z0-9-]}. (\e Required)
 \row
     \li \c icon
-    \li \c string
+    \li string
     \li See the \c icon field in \l{Basic Manifest}. (\e Required)
 \row
     \li \c name
-    \li \c object
+    \li object
     \li See the \c name field in \l{Basic Manifest}. (\e Required)
 \row
     \li \c documentUrl
-    \li \c string
+    \li string
     \li See the \c documentUrl in \l{Basic Manifest}
 \endtable
 

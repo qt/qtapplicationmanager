@@ -42,67 +42,66 @@ command-line options.
 
 \table
 \header
-    \li Command Line
-    \li Config Key
+    \li Command Line \br \e {Config key}
     \li Type
     \li Description
 \row
-    \li \e {(first non-option)}
-    \li \c ui/mainQml
-    \li \c string
+    \li \b {(first non-option)}
+    \br \e ui/mainQml
+    \li string
     \li The main QML file.
 \row
-    \li \c --help
-    \li \c -
-    \li \c bool
+    \li \b --help
+    \br \e -
+    \li bool
     \li Prints the supported options and exits.
 \row
-    \li \c --version
-    \li \c -
-    \li \c bool
+    \li \b --version
+    \br \e -
+    \li bool
     \li Prints the current version of the application-manager and exits.
 \row
-    \li \c --build-config
-    \li \c -
-    \li \c bool
+    \li \b --build-config
+    \br \e -
+    \li bool
     \li Prints the build configuration of the application-manager in YAML format and exits.
 \row
-    \li \c --config-file or \c -c
-    \li \c -
-    \li \c array<string>
+    \li \b --config-file or \c -c
+    \br \e -
+    \li array<string>
     \li Loads configuration settings from a set of file. Using more than one config file could be
         used to cleanly split the configuration into a device specific and a UI specific part.
         (default: \c /opt/am/config.yaml)
 \row
-    \li \c --database
-    \li \c applications/database
-    \li \c string
+    \li \b --database
+    \br \e applications/database
+    \li string
     \li The location of the application database. (default: \c /opt/am/apps.db)
 \row
-    \li \c --recreate-database or \c -r
-    \li \c -
-    \li \c bool
+    \li \b --recreate-database or \c -r
+    \br \e -
+    \li bool
     \li Recreate the application database by (re)scanning all \c info.yaml files in \c
         builtin-apps-manifest-dir and \c installed-apps-manifest-dir. (default: false)
 \row
-    \li \c --builtin-apps-manifest-dir
-    \li \c applications/builtinAppsManifestDir
-    \li \c string
+    \li \b --builtin-apps-manifest-dir
+    \br \e applications/builtinAppsManifestDir
+    \li string
     \li The base directory for built-in application manifests.
 \row
-    \li \c --installed-apps-manifest-dir
-    \li \c applications/installedAppsManifestDir
-    \li \c string
+    \li \b --installed-apps-manifest-dir
+    \br \e applications/installedAppsManifestDir
+    \li string
     \li The base directory for installed application manifests. (defaults: \c /opt/am/manifests)
 \row
-    \li \c --app-image-mount-dir
-    \li \c applications/appImageMountDir
-    \li \c string
+    \li \b --app-image-mount-dir
+    \br \e applications/appImageMountDir
+    \li string
     \li The base directory where application images are mounted to. (defaults: \c /opt/am/image-mounts)
 \row
-    \li \c --dbus
-    \li \c -
-    \li \c string
+    \li \b --dbus
+    \br \e -
+    \li string
     \li Register the ApplicationManager, ApplicationInstaller, NotificationManager and
         WindowManger on the specified D-Bus: can be either \c session, \c system, \c none (for no
         registration at all) or a full D-Bus bus specification string. (default: session)
@@ -111,9 +110,9 @@ command-line options.
               mechanisms, while keeping the NotificationManager on the session bus. See the more
               advanced config-file option \c dbus below.
 \row
-    \li \c -
-    \li \c dbus
-    \li \c map<object>
+    \li \b -
+    \br \e dbus
+    \li map<object>
     \li Allows for more fine-grained control over D-Bus registrations and function call policies.
         Every key in this map corresponds to the D-Bus interface name you want to configure (
         \c io.qt.ApplicationManager, \c io.qt.ApplicationInstaller or \c
@@ -121,33 +120,33 @@ command-line options.
         command-line option \c dbus.
         Each key's value is a \l{D-Bus specification} object.
 \row
-    \li \c --fullscreen
-    \li \c ui/fullscreen
-    \li \c bool
+    \li \b --fullscreen
+    \br \e ui/fullscreen
+    \li bool
     \li Display in full-screen. (default: false)
 \row
-    \li \c --no-fullscreen
-    \li \c -
-    \li \c bool
+    \li \b --no-fullscreen
+    \br \e -
+    \li bool
     \li Override full-screen setting in the system-ui's config file. Useful for development on the
         desktop. (default: false)
 \row
-    \li \c -
-    \li \c ui/windowIcon
-    \li \c string
+    \li \b -
+    \br \e ui/windowIcon
+    \li string
     \li If set, the given image file will be used as a window icon for all application-manager
         windows. This setting is only useful for development and will only take effect on Windows,
         Mac OS X and Linux/X11.
 \row
-    \li \c -I
-    \li \c ui/importPaths
-    \li \c array<string>
+    \li \b -I
+    \br \e ui/importPaths
+    \li array<string>
     \li Add an additional QML import path to the system UI.
 \row
-    \li \c -
+    \li \b -
         \target additional configuration
-    \li \c ui/additionalConfiguration
-    \li \c object
+    \br \e ui/additionalConfiguration
+    \li object
     \li Exports the YAML object as the ApplicationManager property ApplicationManager::additionalConfiguration
         to the system-UI and as the ApplicationInterface::additionalConfiguration to all QML
         applications. The object will just be converted to a QVariantMap, but the application-manager
@@ -155,88 +154,88 @@ command-line options.
         Non-QML applications can access this data via the environment variable \c $AM_RUNTIME_ADDITIONAL_CONFIGURATION
         as a YAML snippet.
 \row
-    \li \c --verbose
-    \li \c -
-    \li \c bool
+    \li \b --verbose
+    \br \e -
+    \li bool
     \li Enable verbose output. For more control over the logging output, see \c logging-rules
         below. (default: false)
 \row
-    \li \c --slow-animations
-    \li \c -
-    \li \c bool
+    \li \b --slow-animations
+    \br \e -
+    \li bool
     \li Run all animations in slow motion. (default: false)
 \row
-    \li \c --load-dummydata
-    \li \c ui/loadDummyData
-    \li \c bool
+    \li \b --load-dummydata
+    \br \e ui/loadDummyData
+    \li bool
     \li Loads QML dummy-data into the system UI (just like \c qmlscene would).
 \row
-    \li \c --no-security
-    \li \c flags/noSecurity
-    \li \c bool
+    \li \b --no-security
+    \br \e flags/noSecurity
+    \li bool
     \li Disables all security related checks. Use this in a development setup only! (default: false)
 \row
-    \li \c --no-ui-watchdog
-    \li \c flags/noUiWatchdog
-    \li \c bool
+    \li \b --no-ui-watchdog
+    \br \e flags/noUiWatchdog
+    \li bool
     \li Disables detecting hung UI applications (e.g. via Wayland's ping/pong). (default: false)
 \row
-    \li \c --force-single-process
-    \li \c flags/forceSingleProcess
-    \li \c bool
+    \li \b --force-single-process
+    \br \e flags/forceSingleProcess
+    \li bool
     \li Forces single-process mode even on a Wayland enabled build. (default: false)
 \row
-    \li \c --single-app
-    \li \c -
-    \li \c string
+    \li \b --single-app
+    \br \e -
+    \li string
     \li Runs the application-manager with a single application only (ignoring the database).
         In this mode, the application-manager can act as a \c qmlscene replacement.
 \row
-    \li \c --logging-rule
-    \li \c logging/rules
-    \li \c array<string>
+    \li \b --logging-rule
+    \br \e logging/rules
+    \li array<string>
     \li Adds a standard Qt logging rules - please see the Qt documentation for the required
         format.
 \row
-    \li \c -
-    \li \c installationLocation
-    \li \c array<object>
+    \li \b -
+    \br \e installationLocation
+    \li array<object>
     \li Definition of available installation locations on the system. This is an array of
         \l {Installation Locations} objects.
 \row
-    \li \c -
-    \li \c runtimes
-    \li \c map<object>
+    \li \b -
+    \br \e runtimes
+    \li map<object>
     \li This can be used to specify options for runtimes - the key in this map is the
         runtime's name and the value is interpreted by the respective runtime implementation.
         \l {Runtime configuration}{See below} for specific information.
 \row
-    \li \c -
-    \li \c containers
-    \li \c map<object>
+    \li \b -
+    \br \e containers
+    \li map<object>
     \li This can be used to specify options for containers - the key in this map is the
         container's name and the value is interpreted by the respective container implementation.
         \l {Container configuration}{See below} for specific information.
 \row
-    \li \c -
-    \li \c quicklaunch/idleLoad
-    \li \c real
+    \li \b -
+    \br \e quicklaunch/idleLoad
+    \li real
     \li This is a system-load value between \c 0 and \c 1. The application-manager will not start
         a new quick-launcher, as long as the idle-load of the system is higher than this value.
         (default: 0)
 \row
-    \li \c -
-    \li \c quicklaunch/runtimesPerContainer
-    \li \c int
+    \li \b -
+    \br \e quicklaunch/runtimesPerContainer
+    \li int
     \li Specifies how many quick-launchers should always be ready for all active container/runtime
         combinations. (default: 0)
         \note Values bigger than 10 will be ignored, since this does not make sense and could also
               potentially freeze your device if you have a container plugin were instantiation
               is expensive resource-wise.
 \row
-    \li \c --wayland-socket-name
-    \li \c -
-    \li \c string
+    \li \b --wayland-socket-name
+    \br \e -
+    \li  string
     \li A filesystem name for the Wayland socket that should be used when creating the compositor
         component. (default: \c wayland-0)
         \note You can only specify the name here, but not a path: Wayland will always create this
@@ -244,10 +243,10 @@ command-line options.
               directory is not writable or if the environment variable is not even set in the first
               place.
 \row
-    \li \c -
+    \li \b -
+    \br \e installer/caCertificates
         \target ca certificates
-    \li \c installer/caCertificates
-    \li \c list<string>
+    \li list<string>
     \li A list of file-paths to CA-certifcates that are used to verify packages. For more details,
         see the \l {Public Key Infrastructure} {Installer documentation}.
 
@@ -264,17 +263,17 @@ policies.
 
 \table
 \header
-    \li \c Name
-    \li \c Type
+    \li Name
+    \li Type
     \li Description
 \row
     \li \c register
-    \li \c string
+    \li string
     \li Register the interface on the specified D-Bus: can be either \c session, \c system, \c none
         or \c ~ (for no registration at all) or a full D-Bus bus specification string.
 \row
     \li \c policy
-    \li \c map<object>
+    \li map<object>
     \li These optional access policies can be used either instead of or in addition to the standard
         D-Bus policy configuration. The keys into this map are the (undecorated) D-Bus function
         names (e.g. \c startApplication). As soon as a key is specified, the corresponding function's
@@ -308,12 +307,12 @@ ApplicationInstaller::getInstallationLocation
 
 \table
 \header
-    \li \c Name
-    \li \c Type
+    \li Name
+    \li Type
     \li Description
 \row
     \li \c id
-    \li \c string
+    \li string
     \li The installation location id that is used as the handle all other ApplicationInstaller
         function calls. The \c id consists of the \c type and \c index field, concatenated by
         a single dash (e.g. \c removable-0).
@@ -325,23 +324,23 @@ ApplicationInstaller::getInstallationLocation
         ids \c removable-0 and \c removable-1). Otherwise it should always be \c 0.
 \row
     \li \c isDefault
-    \li \c bool
+    \li bool
     \li Exactly one installation location can be the default location which must be mounted and
         accessible at all times. This can be used by an UI application to get a sensible
         default for the installation location that it needs to pass to startPackageInstallation().
 \row
     \li \c installationPath
-    \li \c string
+    \li string
     \li The absolute file-system path to the base directory under which applications are installed.
 \row
     \li \c documentPath
-    \li \c string
+    \li string
     \li The absolute file-system path to the base directory under which per-user document
         directories are created. This entry can either be located on this device or it can be the
         same as the \c documentPath of the master installation location.
 \row
     \li \c mountPoint
-    \li \c string
+    \li string
     \li Only required for \c removable installation location: The absolute file-system path to the
         mount-point of the device where \c installationPath is located.
 \endtable
@@ -353,31 +352,31 @@ an additional column specifying which runtime a configuration option applies to:
 
 \table
 \header
-    \li \c Name
-    \li \c Runtimes
-    \li \c Type
+    \li Name
+    \li Runtimes
+    \li Type
     \li Description
 \row
     \li \c environmentVariables
-    \li \c native, \c qml
-    \li \c map<string>
+    \li native, qml
+    \li map<string>
     \li A simple string to string map, describing the environment variables that should be set when
         spawning the runtime process. You can remove a variable from the default environment by
         giving it an empty or null value.
 \row
     \li \c importPaths
-    \li \c qml
-    \li \c array<string>
+    \li qml
+    \li array<string>
     \li Add an additional QML import path for apps started via this runtime.
 \row
     \li \c loadDummyData
-    \li \c qml
-    \li \c bool
+    \li qml
+    \li bool
     \li Loads QML dummy-data into the app (just like \c qmlscene would). Defaults to \c false.
 \row
     \li \c backgroundColor
-    \li \c qml
-    \li \c string
+    \li qml
+    \li string
     \li If set, the main window of the app will get this color set as the default clear color. This
         will also give the surface an 8-bit alpha buffer.
 \endtable

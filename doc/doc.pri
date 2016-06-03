@@ -28,7 +28,7 @@ html-docs.files = $$BUILD_DIR/doc/html
 html-docs-online.commands = $$qdoc($$BUILD_DIR/doc/html) $$PWD/applicationmanager-online.qdocconf
 html-docs-online.files = $$BUILD_DIR/doc/html
 
-qch-docs.commands = $$QHELPGENERATOR $$BUILD_DIR/doc/html/appman.qhp -o $$BUILD_DIR/doc/qch/application-manager.qch
+qch-docs.commands = $$QHELPGENERATOR $$BUILD_DIR/doc/html/applicationmanager.qhp -o $$BUILD_DIR/doc/qch/application-manager.qch
 qch-docs.files = $$BUILD_DIR/doc/qch
 qch-docs.CONFIG += no_check_exist directory
 

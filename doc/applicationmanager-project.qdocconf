@@ -39,9 +39,9 @@ qhp.ApplicationManager.customFilters.ApplicationManager.name = Application Manag
 qhp.ApplicationManager.customFilters.ApplicationManager.filterAttributes = ApplicationManager $APPMAN_VERSION
 
 qhp.ApplicationManager.subprojects = manual
-qhp.ApplicationManager.subprojects.manual.title = Pelagicore Application Manager
-qhp.ApplicationManager.subprojects.manual.indexTitle = Pelagicore Application Manager
+qhp.ApplicationManager.subprojects.manual.title = Qt Application Manager
+qhp.ApplicationManager.subprojects.manual.indexTitle = Qt Application Manager
 qhp.ApplicationManager.subprojects.manual.type = manual
 
-navigation.landingpage = "Pelagicore Application Manager"
-buildversion = "Pelagicore Application Manager $APPMAN_VERSION"
+navigation.landingpage = "Qt Application Manager"
+buildversion = "Qt Application Manager $APPMAN_VERSION"

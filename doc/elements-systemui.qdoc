@@ -48,6 +48,7 @@ elements, thereby creating a parent-child relationship between the two elements.
       notification requests.
   \li SystemMonitor - The system monitoring model, giving access to a range of measurements, e.g.
       cpu-load, frames-per-second, etc.
+  \li ApplicationIPCManager - Central registry for interfaces for system-UI-to-app communication.
 \endlist
 
 \section1 Basic QML Elements

@@ -152,16 +152,16 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
         \li Description
     \row
         \li \c applicationIds
-        \li \c list<string>
+        \li list<string>
         \li A list of applications ids that are allowed to use this interface.
     \row
         \li \c categories
-        \li \c list<string>
+        \li list<string>
         \li A list of category names (see info.yaml). Any application that is part of one of these
             categories is allowed to use this interface.
     \row
         \li \c capabilities
-        \li \c list<string>
+        \li list<string>
         \li A list of applications capabilities (see info.yaml). Any application that has on of these
             capabilities is allowed to use this interface.
     \endtable

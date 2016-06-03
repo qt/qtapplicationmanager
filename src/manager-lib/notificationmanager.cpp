@@ -79,11 +79,11 @@
         \li Description
     \row
         \li \c id
-        \li \c int
+        \li int
         \li The unique id of this notification.
     \row
         \li \c applicationId
-        \li \c string
+        \li string
         \li The id of the application that created this notification. This can be used to look up
             information about the application in the ApplicationManager model.
             \note The \c applicationId role is neither unique within this model, nor is it
@@ -92,75 +92,71 @@
                   application context at all.
     \row
         \li \c priority
-        \li \c int
+        \li int
         \li See the client side documentation of Notification::priority
     \row
         \li \c summary
-        \li \c string
+        \li string
         \li See the client side documentation of Notification::summary
     \row
         \li \c body
-        \li \c string
+        \li string
         \li See the client side documentation of Notification::body
     \row
         \li \c category
-        \li \c string
+        \li string
         \li See the client side documentation of Notification::category
     \row
         \li \c icon
-        \li \c url
+        \li url
         \li See the client side documentation of Notification::icon
     \row
         \li \c image
-        \li \c url
+        \li url
         \li See the client side documentation of Notification::image
     \row
         \li \c actions
-        \li \c object
+        \li object
         \li See the client side documentation of Notification::actions
     \row
         \li \c showActionsAsIcons
-        \li \c bool
+        \li bool
         \li See the client side documentation of Notification::showActionsAsIcons
     \row
         \li \c dismissOnAction
-        \li \c bool
+        \li bool
         \li See the client side documentation of Notification::dismissOnAction
     \row
         \li \c isClickable
-        \li \c bool
+        \li bool
         \li See the client side documentation of Notification::clickable
     \row
         \li \c isSytemNotification
-        \li \c url
+        \li url
         \li Set to \c true for notifications not originating from an application, but some system
             service. Always set to \c false for notifications coming from UI applications.
     \row
         \li \c isShowingProgress
-        \li \c bool
+        \li bool
         \li See the client side documentation of Notification::showProgress
     \row
         \li \c progress
-        \li \c qreal
+        \li qreal
         \li See the client side documentation of Notification::progress
     \row
         \li \c isSticky
-        \li \c bool
+        \li bool
         \li See the client side documentation of Notification::sticky
     \row
         \li \c timeout
-        \li \c int
+        \li int
         \li See the client side documentation of Notification::timeout
     \row
         \li \c extended
-        \li \c object
+        \li object
         \li See the client side documentation of Notification::extended.
 
     \endtable
-
-    The QML import for this singleton is
-
-    \c{import QtApplicationManager 1.0}
 
     The actual backend implementation that is receiving the notifications from other process is
     fully compliant to the D-Bus interface of the freedesktop.org notification specification

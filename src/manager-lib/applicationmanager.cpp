@@ -91,80 +91,76 @@
 
     \table
     \header
-        \li \c Role name
-        \li \c Type
+        \li Role name
+        \li Type
         \li Description
     \row
         \li \c id
-        \li \c string
+        \li string
         \li The unique of an application represented as a string in reverse-dns form (e.g.
             \c com.pelagicore.foo)
     \row
         \li \c name
-        \li \c string
+        \li string
         \li The name of the application. If possible already translated to the current locale.
     \row
         \li \c icon
-        \li \c string
+        \li string
         \li The URL of the application's icon.
 
     \row
         \li \c isRunning
-        \li \c bool
+        \li bool
         \li A boolean value representing the run-state of the application.
     \row
         \li \c isStartingUp
-        \li \c bool
+        \li bool
         \li A boolean value telling if the application was started, but is not fully operational yet.
     \row
         \li \c isShutingDown
-        \li \c bool
+        \li bool
         \li A boolean value describing if the application is currently shuting down.
     \row
         \li \c isBlocked
-        \li \c bool
+        \li bool
         \li A boolean value that only gets set if the application manager needs to block the application
         from running: this is normally only the case while an update is applied.
     \row
         \li \c isUpdating
-        \li \c bool
+        \li bool
         \li A boolean value telling if the application is currently being installed or updated. If this
             is the case, then \c updateProgress can be used to track the actual progress.
     \row
         \li \c isRemovable
-        \li \c bool
+        \li bool
         \li A boolean value telling if this application is user-removable. This will be \c true for all
             dynamically installed 3rd-party applications and \c false for all system applications.
 
     \row
         \li \c updateProgress
-        \li \c real
+        \li real
         \li In case IsUpdating is \c true, querying this role will give the actual progress as a floating-point
             value in the \c 0.0 to \c 1.0 range.
 
     \row
         \li \c codeFilePath
-        \li \c string
+        \li string
         \li The filesystem path to the main "executable". The format of this file is dependent on the
         actual runtime though: for QML applications the "executable" is the \c main.qml file.
 
     \row
         \li \c categories
-        \li \c list<string>
+        \li list<string>
         \li The categories this application is registered for via its meta-dat file (this currently work in progress).
 
     \row
         \li \c version
-        \li \c string
+        \li string
         \li The currently installed version of this application.
     \endtable
 
     Please note, that the index-based API is currently not available via DBus. The same functionality
     is however provided by the id-based API.
-
-    The QML import for this singleton is
-
-    \c{import QtApplicationManager 1.0}
 
     After importing, you can just use the ApplicationManager singleton like so:
 

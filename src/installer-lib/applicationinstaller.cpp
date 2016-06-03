@@ -119,10 +119,6 @@
     \c executing \unicode{0x2192} \c awaitingAcknowledge (this state may be skipped if
     acknowledgePackageInstallation() was called already) \unicode{0x2192} \c installing
     \unicode{0x2192} \c cleanup \unicode{0x2192} \c finished. Again, the task can fail at any point.
-
-    The QML import for this singleton is
-
-    \c{import QtApplicationManager 1.0}
 */
 
 // THIS IS MISSING AN EXAMPLE!

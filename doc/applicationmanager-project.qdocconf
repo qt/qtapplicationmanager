@@ -1,0 +1,47 @@
+project = ApplicationManager
+description = Public API of the application manager: QML and DBus
+url = https://doc.qt.io/QtApplicationManager
+
+sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
+headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
+
+headerdirs = \
+    ../src/manager \
+    ../src/manager-lib \
+    ../src/installer-lib \
+    ../src/notification-lib \
+    ../src/launchers/qml
+
+sourcedirs = \
+    . \
+    ../src/manager \
+    ../src/manager-lib \
+    ../src/installer-lib \
+    ../src/notification-lib \
+    ../src/launchers/qml \
+    ../src/tools/packager \
+    ../src/tools/deployer \
+    ../src/tools/controller
+
+imagedirs = images
+
+outputdir = $OUTDIR
+
+qhp.projects                               = ApplicationManager
+qhp.ApplicationManager.file                = applicationmanager.qhp
+qhp.ApplicationManager.namespace           = io.qt.applicationmanager.$APPMAN_VERSION_TAG
+qhp.ApplicationManager.virtualFolder       = applicationmanager
+qhp.ApplicationManager.indexTitle          = Public API of the application manager: QML and DBus
+qhp.ApplicationManager.indexRoot           =
+
+qhp.ApplicationManager.filterAttributes = ApplicationManager $APPMAN_VERSION
+qhp.ApplicationManager.customFilters.ApplicationManager.name = Application Manager $APPMAN_VERSION
+qhp.ApplicationManager.customFilters.ApplicationManager.filterAttributes = ApplicationManager $APPMAN_VERSION
+
+qhp.ApplicationManager.subprojects = manual
+qhp.ApplicationManager.subprojects.manual.title = Pelagicore Application Manager
+qhp.ApplicationManager.subprojects.manual.indexTitle = Pelagicore Application Manager
+qhp.ApplicationManager.subprojects.manual.type = manual
+
+navigation.landingpage = "Pelagicore Application Manager"
+buildversion = "Pelagicore Application Manager $APPMAN_VERSION"

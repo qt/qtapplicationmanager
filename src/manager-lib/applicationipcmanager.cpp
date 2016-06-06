@@ -58,7 +58,7 @@
 
     This singleton class is the central manager for app-to-system-ui IPC interfaces within the application-manager.
 
-    It only exports a single function towards the QML system-ui: registerInterface.
+    It only exports a single function towards the QML System-UI: registerInterface.
 
     Please see the ApplicationInterfaceExtension type for how to access these registered IPC interfaces from
     the client (application) side.
@@ -106,7 +106,7 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
 
     Registers an IPC \a interface object to extend the communication API between applications and
     the Application Manager itself. The \a interface object is an ApplicationIPCInterface item, that needs
-    to stay valid during the whole lifetime of the system-UI. The \a name of the interface has to
+    to stay valid during the whole lifetime of the System-UI. The \a name of the interface has to
     adhere to D-Bus standards, so it needs to at least contain one \c . character (e.g. \c{io.qt.test}).
     The interface is available to all applications matching the \a filter criteria (see below)
     on the private Peer-To-Peer D-Bus as a standard, typed D-Bus interface.

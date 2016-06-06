@@ -42,7 +42,7 @@ of exactly two YAML documents: the file-type header and the actual application m
 \endquotation
 
 Dynamically installed applications are described by a single manifest file in their root directory,
-called \c info.yaml. Built-in applications, that are shipped as part of the system-UI are allowed
+called \c info.yaml. Built-in applications, that are shipped as part of the System-UI are allowed
 to optionally have multiple aliases: these are comparable to a Microsoft Windows shortcut, in that they
 allow to start the same program using a different icon, name and commandline arguments. These files
 have to be in the same folder as the application's main \c info.yaml file and need to named \c

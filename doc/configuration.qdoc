@@ -128,7 +128,7 @@ command-line options.
     \li \b --no-fullscreen
     \br \e -
     \li bool
-    \li Override full-screen setting in the system-ui's config file. Useful for development on the
+    \li Override full-screen setting in the System-UI's config file. Useful for development on the
         desktop. (default: false)
 \row
     \li \b -
@@ -148,7 +148,7 @@ command-line options.
     \br \e ui/additionalConfiguration
     \li object
     \li Exports the YAML object as the ApplicationManager property ApplicationManager::additionalConfiguration
-        to the system-UI and as the ApplicationInterface::additionalConfiguration to all QML
+        to the System-UI and as the ApplicationInterface::additionalConfiguration to all QML
         applications. The object will just be converted to a QVariantMap, but the application-manager
         will not interpret it in any way.
         Non-QML applications can access this data via the environment variable \c $AM_RUNTIME_ADDITIONAL_CONFIGURATION

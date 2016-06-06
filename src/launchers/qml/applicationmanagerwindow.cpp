@@ -184,7 +184,7 @@ float ApplicationManagerWindow::fps() const
 
     Sets this application window's shared property identified by \a name to the given \a value.
 
-    These properties are shared between the system-ui and the client applications: in single-process
+    These properties are shared between the System-UI and the client applications: in single-process
     mode simply via a QVariantMap; in multi-process mode via Qt's extended surface Wayland extension.
     Changes from the client side are signalled via windowPropertyChanged.
 

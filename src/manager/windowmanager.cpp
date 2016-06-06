@@ -245,7 +245,7 @@
     The actual surface can still be used for animations, since it will not be deleted right
     after this signal is emitted.
 
-    The system-ui is required to answer this signal by calling releaseWindow as soon as the QML
+    The System-UI is required to answer this signal by calling releaseWindow as soon as the QML
     animations on this window surface are finished. Neglecting to do so will result in resource leaks!
 
     More information about this window (e.g. the corresponding application) can be retrieved via the
@@ -740,7 +740,7 @@ void WindowManager::handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *sur
 
     Sets an application \a window's shared property identified by \a name to the given \a value.
 
-    These properties are shared between the system-ui and the client application: in single-process
+    These properties are shared between the System-UI and the client application: in single-process
     mode simply via a QVariantMap; in multi-process mode via Qt's extended surface Wayland extension.
     Changes from the client side are via windowPropertyChanged.
 

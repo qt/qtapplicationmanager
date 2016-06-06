@@ -45,7 +45,7 @@
 /*!
     \qmltype Notification
     \inqmlmodule QtApplicationManager 1.0
-    \brief An abstraction layer to enable QML applications to issue notifications to the system-ui.
+    \brief An abstraction layer to enable QML applications to issue notifications to the System-UI.
 
     This item is available for QML applications by either creating a Notification item
     statically or by dynamically calling ApplicationInterface::createNotification.
@@ -57,7 +57,7 @@
           \l{https://developer.gnome.org/notification-spec/} {org.freedesktop.Notifications specification}
           because it is not possible to directly link to the documentation of a specific property.
 
-    The server/system-ui side of the notification infrastructure is implemented by NotificationManager.
+    The server/System-UI side of the notification infrastructure is implemented by NotificationManager.
 */
 
 

@@ -410,7 +410,7 @@ QVariantMap NotificationManager::get(int index) const
 /*!
     \qmlmethod NotificationManager::acknowledgeNotification(int id)
 
-    This function needs to be called by the system-ui, when the user acknowledged the notification
+    This function needs to be called by the System-ui, when the user acknowledged the notification
     identified by \a id (most likely by clicking on it).
 */
 void NotificationManager::acknowledgeNotification(int id)
@@ -421,7 +421,7 @@ void NotificationManager::acknowledgeNotification(int id)
 /*!
     \qmlmethod NotificationManager::triggerNotificationAction(int id, string actionId)
 
-    This function needs to be called by the system-ui, when the user triggered a notification action.
+    This function needs to be called by the System-ui, when the user triggered a notification action.
 
     The notification is identified by \a id and the action by \a actionId.
     \note You should only use action-ids that have been set for the the given notification (see the
@@ -445,7 +445,7 @@ void NotificationManager::triggerNotificationAction(int id, const QString &actio
 /*!
     \qmlmethod NotificationManager::dismissNotification(int id)
 
-    This function needs to be called by the system-ui, when the notification identified by \a id is
+    This function needs to be called by the System-ui, when the notification identified by \a id is
     not needed anymore.
 
     The creator of the notification will be notified about this dismissal.

@@ -65,6 +65,7 @@ SOURCES += \
     applicationdatabase.cpp \
     applicationmanager.cpp \
     runtimefactory.cpp \
+    applicationinterface.cpp \
     abstractruntime.cpp \
     yamlapplicationscanner.cpp \
     installationlocation.cpp \

@@ -46,6 +46,25 @@
 #include "global.h"
 
 
+/*!
+    \class ApplicationIPCManager
+    \internal
+*/
+
+/*!
+    \qmltype ApplicationIPCManager
+    \inqmlmodule QtApplicationManager 1.0
+    \brief The ApplicationIPCManager singleton
+
+    This singleton class is the central manager for app-to-system-ui IPC interfaces within the application-manager.
+
+    It only exports a single function towards the QML system-ui: registerInterface.
+
+    Please see the ApplicationInterfaceExtension type for how to access these registered IPC interfaces from
+    the client (application) side.
+*/
+
+
 ApplicationIPCManager *ApplicationIPCManager::s_instance = 0;
 
 ApplicationIPCManager::~ApplicationIPCManager()
@@ -86,7 +105,7 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
     \qmlmethod bool ApplicationIPCManager::registerInterface(ApplicationIPCInterface interface, string name, var filter)
 
     Registers an IPC \a interface object to extend the communication API between applications and
-    the Application Manager itself. The \a interface object is a normal QtObject item, that needs
+    the Application Manager itself. The \a interface object is an ApplicationIPCInterface item, that needs
     to stay valid during the whole lifetime of the system-UI. The \a name of the interface has to
     adhere to D-Bus standards, so it needs to at least contain one \c . character (e.g. \c{io.qt.test}).
     The interface is available to all applications matching the \a filter criteria (see below)
@@ -185,17 +204,13 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
         function testFunction(foo, bar) {
             console.log("testFunction was called: " + foo + " " + bar)
         }
+
+        Component.onCompleted: {
+            ApplicationIPCManager.registerInterface(extension, "io.qt.test.interface",
+                                                    { "capabilities": [ "media", "camera" ] })
+        }
     }
     \endqml
-    \code
-    ...
-
-    ApplicationIPCManager.registerInterface(extension, "io.qt.test.interface",
-                                            { "capabilities": [ "media", "camera" ] })
-
-    \endcode
-
-    \note Currently only implemented for multi-process setups.
 
     Will return \c true if the registration was successful or \c false otherwise.
 */

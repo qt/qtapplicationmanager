@@ -142,7 +142,47 @@ uint QmlInProcessNotification::libnotifyShow()
                                                    timeout());
 }
 
+/*!
+    \qmltype ApplicationInterfaceExtension
+    \inqmlmodule QtApplicationManager 1.0
+    \brief Client side access to IPC interface extensions in the system-ui.
 
+    This is the client side type used to access IPC interfaces, registered via the ApplicationIPCManager
+    on the system-ui side.
+
+    \qml
+    ApplicationInterfaceExtension {
+        id: testInterface
+        name: "io.qt.test.interface"
+
+        onReadyChanged: {
+            if (ready)
+                var v = object.testFunction(42, "string")
+        }
+    }
+    \endqml
+*/
+
+/*!
+    \qmlproperty string ApplicationInterfaceExtension::name
+
+    The name of the interface, as it was registered by ApplicationIPCManager::registerInterface.
+*/
+
+/*!
+    \qmlproperty bool ApplicationInterfaceExtension::ready
+
+    This property will change to \c true, as soon as the connection to the remote interface has
+    succeeded. In single-process setups, this will always be \c true, whereas in multi-process
+    setups, it takes a few milli-seconds to setup the D-Bus connection first.
+*/
+
+/*!
+    \qmlproperty QtObject ApplicationInterfaceExtension::object
+
+    The actual IPC object, which has all the signals, slots and properties exported from the server
+    side. Will be null, until ready becomes \c true.
+*/
 
 QmlInProcessApplicationInterfaceExtension::QmlInProcessApplicationInterfaceExtension(QObject *parent)
     : QObject(parent)

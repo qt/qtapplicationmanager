@@ -47,7 +47,40 @@
     This item is available for QML applications using the root context property
     named \c applicationInterface. For other native applications, the same interface
     - minus the notification functionality - is available on a private peer-to-peer
-    D-Bus interface. ##TODO: add documentation for this P2P Bus
+    D-Bus interface.
+
+    For every application that is started in multi-process mode, the application-manager creates
+    a private P2P D-Bus connection and communicates the connection address to the application's
+    process via the environment variable \c AM_DBUS_PEER_ADDRESS.
+
+    Using this connection, you will have access to different interfaces (please note that due to
+    this not being a bus, the service name is always an empty string):
+
+    \table
+    \header
+        \li Path \br Name
+        \li Description
+    \row
+        \li \b /ApplicationInterface \br \e io.qt.ApplicationManager.ApplicationInterface
+        \li Exactly this interface in D-Bus form. The definition is in the source distribution at
+            \c{src/dbus/io.qt.applicationmanager.applicationinterface.xml}
+    \row
+        \li \b /RuntimeInterface \br \e io.qt.ApplicationManager.RuntimeInterface
+        \li The direct interface between the application-manager and the launcher process, used to
+            implement custom launchers: the definition is in the source distribution at
+            \c{src/dbus/io.qt.applicationmanager.runtimeinterface.xml}
+    \row
+        \li \b /ExtensionInterfaces/<ext_name> \br \e <ext.name>
+        \li Any IPC interface registered via the ApplicationIPCManager (and matching the corresponding
+            filter), will be exported on this P2P connection. The path name is constructed from the
+            interface name by replacing every character that is not alpha-numeric with an underscore
+            (\c{_}).
+    \endtable
+
+    If you are re-implementing the client side, please note that the remote interfaces are not
+    available immediately after connecting: they are registered server side only after the client
+    connects. This is a limitation of the D-Bus design - the default implementation will try to
+    connect for 100 msec until it throws an error.
 */
 
 /*!

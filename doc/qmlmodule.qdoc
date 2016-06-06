@@ -27,29 +27,7 @@
 
 /*!
 
-\page qml-elements-apps.html
-\title QML elements Applications
-\brief A listing of standard QML elements used in applications.
-
-These are the functionally grouped lists of QML elements as part of \c
-QtApplicationManager.
-
-QML Singletons need not to be declared, but can be referenced by just their element name.
-
-Basic QML Elements are declared with the their name and two curly braces. Elements may be nested in
-elements, thereby creating a parent-child relationship between the two elements.
-
-\section1 QML Singletons
-\list
-  \li ApplicationInterface -  The application interface represents the private IPC between the app
-      and the application-manager.
-\endlist
-
-\section1 Basic QML Elements
-\list
-  \li ApplicationManagerWindow - The window element that is required in a multi-process environment.
-  \li \l Notification - Abstraction for freedesktop.org Notifications on the client side.
-  \li ApplicationInterfaceExtension - Client side access to IPC interface extensions.
-\endlist
-
+    \qmlmodule QtApplicationManager 1.0
+    \title Qt Application Manager types
+    \ingroup qmlmodules
 */

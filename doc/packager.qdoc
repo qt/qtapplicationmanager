@@ -30,12 +30,14 @@
 \page appman-packager.html
 \title Packager
 
-The \c{application-packager} is a command-line utility that is used by the developer to manage installation
+The \c{appman-packager} is a command-line utility that is used by the developer to manage installation
 packages. It could also be used as a signing and verification tool on a app-store backend server.
+This tool is meant for usage on the developer's desktop machine or packaging server, but not on the
+target device.
 
 At the moment the application-manager supports unsigned packages, packages that are signed by the
 developer only (development mode) and packages that are signed by a trusted app-store. The
-\c{application-packager} can create all these variations with the following commands:
+\c{appman-packager} can create all these variations with the following commands:
 
 \table
 \header
@@ -79,6 +81,6 @@ developer only (development mode) and packages that are signed by a trusted app-
 
 \endtable
 
-The application-packager naturally supports the standard Unix \c{--help} command-line option.
+The \{appman-packager} naturally supports the standard Unix \c{--help} command-line option.
 
 */

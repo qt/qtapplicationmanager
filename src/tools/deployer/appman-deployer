@@ -4,8 +4,7 @@ USER="$1"
 TARGET="$2"
 PKGURL="$3"
 
-DEVTOOL=/usr/bin/appman-dev-tool
-#DEVTOOL=`dirname $0`/appman-dev-tool
+CONTROLLER=/usr/bin/appman-controller
 
 
 if [ -z "$USER" ] || [ -z "$TARGET" ] || [ -z "$PKGURL" ]; then
@@ -13,4 +12,4 @@ if [ -z "$USER" ] || [ -z "$TARGET" ] || [ -z "$PKGURL" ]; then
     exit 1
 fi
 
-cat "$3" | ssh "${USER}@${TARGET}" "$DEVTOOL" -
+cat "$3" | ssh "${USER}@${TARGET}" "$CONTROLLER" -

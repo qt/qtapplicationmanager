@@ -26,4 +26,16 @@
 ****************************************************************************/
 
 /*!
+\page appman-controller.html
+\title Controller
+
+The \c{appman-controller} is a command-line utility that can be used by other tools on the target
+device to trigger a package installation without directly talking to the application-manager's D-Bus
+interface.
+
+Usage: \tt{appman-controller <package file>}
+
+If the package file is specified as \c{-}, the tool will try to read the package from \c stdin.
+
+The \c{appman-controller} naturally supports the standard Unix \c{--help} command-line option.
 */

@@ -96,9 +96,13 @@ signals:
 class AbstractContainer : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QString controlGroup READ controlGroup WRITE setControlGroup)
 
 public:
     virtual ~AbstractContainer();
+
+    virtual QString controlGroup() const;
+    virtual bool setControlGroup(const QString &groupName);
 
     bool setProgram(const QString &program);
     void setBaseDirectory(const QString &baseDirectory);
@@ -109,6 +113,8 @@ public:
     virtual QString mapHostPathToContainer(const QString &hostPath) const;
 
     virtual AbstractContainerProcess *start(const QStringList &arguments, const QProcessEnvironment &env) = 0;
+
+    AbstractContainerProcess *process() const;
 
 signals:
     void ready();
@@ -121,4 +127,7 @@ protected:
     QString m_program;
     QString m_baseDirectory;
     AbstractContainerManager *m_manager;
+    AbstractContainerProcess *m_process = nullptr;
 };
+
+Q_DECLARE_METATYPE(AbstractContainer *)

@@ -94,7 +94,13 @@ public:
     explicit ProcessContainer(ProcessContainerManager *manager);
     ~ProcessContainer();
 
+    QString controlGroup() const override;
+    bool setControlGroup(const QString &groupName) override;
+
     bool isReady() override;
 
     AbstractContainerProcess *start(const QStringList &arguments, const QProcessEnvironment &environment) override;
+
+private:
+    QString m_currentControlGroup;
 };

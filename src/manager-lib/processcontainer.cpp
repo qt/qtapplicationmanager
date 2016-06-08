@@ -103,6 +103,45 @@ ProcessContainer::ProcessContainer(ProcessContainerManager *manager)
 ProcessContainer::~ProcessContainer()
 { }
 
+QString ProcessContainer::controlGroup() const
+{
+    return m_currentControlGroup;
+}
+
+bool ProcessContainer::setControlGroup(const QString &groupName)
+{
+    if (groupName == m_currentControlGroup)
+        return true;
+
+    QVariantMap map = m_manager->configuration().value("controlGroups").toMap();
+    auto git = map.constFind(groupName);
+    if (git != map.constEnd()) {
+        QVariantMap mapping = (*git).toMap();
+        QByteArray pidString = QByteArray::number(m_process->processId());
+        pidString.append('\n');
+
+        for (auto it = mapping.cbegin(); it != mapping.cend(); ++it) {
+            const QString &resource = it.key();
+            const QString &userclass = it.value().toString();
+
+            //qWarning() << "Setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << resource << "->" << userclass;
+
+            QString file = QString(qSL("/sys/fs/cgroup/%1/%2/cgroup.procs")).arg(resource).arg(userclass);
+            QFile f(file);
+            bool ok = f.open(QFile::WriteOnly);
+            ok = ok && (f.write(pidString) == pidString.size());
+
+            if (!ok) {
+                qWarning() << "Failed setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << resource << "->" << userclass;
+                return false;
+            }
+        }
+        m_currentControlGroup = groupName;
+        return true;
+    }
+    return false;
+}
+
 bool ProcessContainer::isReady()
 {
     return true;
@@ -110,6 +149,10 @@ bool ProcessContainer::isReady()
 
 AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, const QProcessEnvironment &environment)
 {
+    if (m_process) {
+        qWarning() << "Process" << m_program << "is already started and cannot be started again";
+        return nullptr;
+    }
     if (!QFile::exists(m_program))
         return nullptr;
 
@@ -123,6 +166,9 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
     process->setProcessEnvironment(completeEnv);
     process->setStopBeforeExec(configuration().value(qSL("stopBeforeExec")).toBool());
     process->start(m_program, arguments);
+    m_process = process;
+
+    setControlGroup(configuration().value(qSL("defaultControlGroup")).toString());
     return process;
 }
 

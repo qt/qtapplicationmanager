@@ -157,6 +157,12 @@
         \li \c version
         \li string
         \li The currently installed version of this application.
+
+    \row
+        \li \c application
+        \li Application
+        \li The underlying application object for quick access to the properties outside of a
+            model delegate.
     \endtable
 
     Please note, that the index-based API is currently not available via DBus. The same functionality
@@ -198,6 +204,32 @@
     The window manager should take care of raising the application's window in this case.
 */
 
+enum Roles
+{
+    Id = Qt::UserRole,
+    Name,
+    Icon,
+
+    IsRunning,
+    IsStartingUp,
+    IsShutingDown,
+    IsBlocked,
+    IsUpdating,
+    IsRemovable,
+
+    UpdateProgress,
+
+    CodeFilePath,
+    RuntimeName,
+    RuntimeParameters,
+    BackgroundMode,
+    Capabilities,
+    Categories,
+    Importance,
+    Preload,
+    Version,
+    ApplicationItem
+};
 
 class ApplicationManagerPrivate
 {
@@ -221,25 +253,26 @@ public:
     {
         currentLocale = QLocale::system().name(); //TODO: language changes
 
-        roleNames.insert(ApplicationManager::Id, "applicationId");
-        roleNames.insert(ApplicationManager::Name, "name");
-        roleNames.insert(ApplicationManager::Icon, "icon");
-        roleNames.insert(ApplicationManager::IsRunning, "isRunning");
-        roleNames.insert(ApplicationManager::IsStartingUp, "isStartingUp");
-        roleNames.insert(ApplicationManager::IsShutingDown, "isShutingDown");
-        roleNames.insert(ApplicationManager::IsBlocked, "isLocked");
-        roleNames.insert(ApplicationManager::IsUpdating, "isUpdating");
-        roleNames.insert(ApplicationManager::IsRemovable, "isRemovable");
-        roleNames.insert(ApplicationManager::UpdateProgress, "updateProgress");
-        roleNames.insert(ApplicationManager::CodeFilePath, "codeFilePath");
-        roleNames.insert(ApplicationManager::RuntimeName, "runtimeName");
-        roleNames.insert(ApplicationManager::RuntimeParameters, "runtimeParameters");
-        roleNames.insert(ApplicationManager::BackgroundMode, "backgroundMode");
-        roleNames.insert(ApplicationManager::Capabilities, "capabilities");
-        roleNames.insert(ApplicationManager::Categories, "categories");
-        roleNames.insert(ApplicationManager::Importance, "importance");
-        roleNames.insert(ApplicationManager::Preload, "preload");
-        roleNames.insert(ApplicationManager::Version, "version");
+        roleNames.insert(Id, "applicationId");
+        roleNames.insert(Name, "name");
+        roleNames.insert(Icon, "icon");
+        roleNames.insert(IsRunning, "isRunning");
+        roleNames.insert(IsStartingUp, "isStartingUp");
+        roleNames.insert(IsShutingDown, "isShutingDown");
+        roleNames.insert(IsBlocked, "isLocked");
+        roleNames.insert(IsUpdating, "isUpdating");
+        roleNames.insert(IsRemovable, "isRemovable");
+        roleNames.insert(UpdateProgress, "updateProgress");
+        roleNames.insert(CodeFilePath, "codeFilePath");
+        roleNames.insert(RuntimeName, "runtimeName");
+        roleNames.insert(RuntimeParameters, "runtimeParameters");
+        roleNames.insert(BackgroundMode, "backgroundMode");
+        roleNames.insert(Capabilities, "capabilities");
+        roleNames.insert(Categories, "categories");
+        roleNames.insert(Importance, "importance");
+        roleNames.insert(Preload, "preload");
+        roleNames.insert(Version, "version");
+        roleNames.insert(ApplicationItem, "application");
     }
 
     ~ApplicationManagerPrivate()
@@ -269,6 +302,12 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
 
     qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager", 1, 0, "ApplicationManager",
                                                  &ApplicationManager::instanceForQml);
+    qmlRegisterUncreatableType<const Application>("QtApplicationManager", 1, 0, "Application",
+                                                  qL1S("Cannot create objects of type Application"));
+    qmlRegisterUncreatableType<AbstractRuntime>("QtApplicationManager", 1, 0, "Runtime",
+                                                qL1S("Cannot create objects of type Runtime"));
+    qmlRegisterUncreatableType<AbstractContainer>("QtApplicationManager", 1, 0, "Container",
+                                                  qL1S("Cannot create objects of type Container"));
     return s_instance = am.take();
 }
 
@@ -649,7 +688,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
     Returns a list of all capabilities granted by the user to the application identified by \a id.
     Will return an empty list, if the application \a id is not valid.
 */
-QStringList ApplicationManager::capabilities(const QString &id)
+QStringList ApplicationManager::capabilities(const QString &id) const
 {
     AM_AUTHENTICATE_DBUS(QStringList)
 
@@ -668,7 +707,7 @@ QStringList ApplicationManager::capabilities(const QString &id)
     was indeed started by the application manager.
     Will return the application's \c id on success or an empty string otherwise.
 */
-QString ApplicationManager::identifyApplication(qint64 pid)
+QString ApplicationManager::identifyApplication(qint64 pid) const
 {
     AM_AUTHENTICATE_DBUS(QString)
 
@@ -947,6 +986,8 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
         return app->isPreloaded();
     case Version:
         return app->version();
+    case ApplicationItem:
+        return QVariant::fromValue(app);
     }
     return QVariant();
 }
@@ -962,12 +1003,15 @@ int ApplicationManager::count() const
 }
 
 /*!
-    \qmlmethod object ApplicationManager::get(int row) const
+    \qmlmethod object ApplicationManager::get(int row)
 
     Retrieves the model data at \a row as a JavaScript object. Please see the
     \l {ApplicationManager Roles}{role names} for the expected object fields.
 
     Will return an empty object, if the specified \a row is invalid.
+
+    \note This is very inefficient if you only want to access a single property from QML; use
+          application instead to access the Application object's properties directly.
 */
 QVariantMap ApplicationManager::get(int row) const
 {
@@ -984,13 +1028,39 @@ QVariantMap ApplicationManager::get(int row) const
 }
 
 /*!
-    \qmlmethod int ApplicationManager::indexFromId(string id) const
+    \qmlmethod Application ApplicationManager::application(int index)
+
+    Returns the Application object corresponding to the given \a index in the model, or null if
+    the index is invalid.
+*/
+const Application *ApplicationManager::application(int index) const
+{
+    if (index < 0 || index >= count()) {
+        qCWarning(LogSystem) << "invalid index:" << index;
+        return nullptr;
+    }
+    return d->apps.at(index);
+}
+
+/*!
+    \qmlmethod Application ApplicationManager::application(string id)
+
+    Returns the Application object corresponding to the given application \a id or null if the
+    id does not exist.
+*/
+const Application *ApplicationManager::application(const QString &id) const
+{
+    return application(indexOfApplication(id));
+}
+
+/*!
+    \qmlmethod int ApplicationManager::indexOfApplication(string id)
 
     Maps the application \a id to its position within the model.
 
     Will return \c -1, if the specified \a id is invalid.
 */
-int ApplicationManager::indexFromId(const QString &id) const
+int ApplicationManager::indexOfApplication(const QString &id) const
 {
     for (int i = 0; i < d->apps.size(); ++i) {
         if (d->apps.at(i)->id() == id)
@@ -1028,7 +1098,7 @@ QVariantMap ApplicationManager::get(const QString &id) const
 {
     AM_AUTHENTICATE_DBUS(QVariantMap)
 
-    int index = indexFromId(id);
+    int index = indexOfApplication(id);
     if (index >= 0)
         return get(index);
     return QVariantMap();
@@ -1038,7 +1108,7 @@ ApplicationManager::RunState ApplicationManager::applicationRunState(const QStri
 {
     AM_AUTHENTICATE_DBUS(ApplicationManager::RunState)
 
-    int index = indexFromId(id);
+    int index = indexOfApplication(id);
     if (index < 0)
         return NotRunning;
     const Application *app = d->apps.at(index);

@@ -56,8 +56,24 @@ class ApplicationManager;
 class JsonApplicationScanner;
 class InstallationReport;
 
-class AM_EXPORT Application
+class AM_EXPORT Application : public QObject
 {
+    Q_OBJECT
+
+    Q_PROPERTY(QString id READ id)
+    Q_PROPERTY(QString runtimeName READ runtimeName)
+    Q_PROPERTY(QVariantMap runtimeParameters READ runtimeParameters)
+    Q_PROPERTY(QString icon READ icon)
+    Q_PROPERTY(QString documentUrl READ documentUrl)
+    Q_PROPERTY(qreal importance READ importance)
+    Q_PROPERTY(bool builtIn READ isBuiltIn)
+    Q_PROPERTY(bool alias READ isAlias)
+    Q_PROPERTY(const Application *nonAliased READ nonAliased)
+    Q_PROPERTY(QStringList capabilities READ capabilities)
+    Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes)
+    Q_PROPERTY(QStringList categories READ categories)
+    Q_PROPERTY(AbstractRuntime *runtime READ currentRuntime)
+
 public:
     enum Type { Gui, Headless };
 
@@ -67,7 +83,7 @@ public:
     QString runtimeName() const;
     QVariantMap runtimeParameters() const;
     QMap<QString, QString> names() const;
-    QString name(const QString &language) const;
+    Q_INVOKABLE QString name(const QString &language) const;
     QString icon() const;
     QString documentUrl() const;
 
@@ -173,5 +189,7 @@ private:
 
     Q_DISABLE_COPY(Application)
 };
+
+Q_DECLARE_METATYPE(const Application *)
 
 QDebug operator<<(QDebug debug, const Application *app);

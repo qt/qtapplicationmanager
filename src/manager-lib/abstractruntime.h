@@ -86,6 +86,8 @@ private:
 class AM_EXPORT AbstractRuntime : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(AbstractContainer *container READ container)
+
 public:
     virtual ~AbstractRuntime();
 
@@ -146,3 +148,5 @@ protected:
 
     friend class AbstractRuntimeManager;
 };
+
+Q_DECLARE_METATYPE(AbstractRuntime *)

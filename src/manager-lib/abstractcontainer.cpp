@@ -46,6 +46,17 @@
 AbstractContainer::~AbstractContainer()
 { }
 
+QString AbstractContainer::controlGroup() const
+{
+    return QString();
+}
+
+bool AbstractContainer::setControlGroup(const QString &groupName)
+{
+    Q_UNUSED(groupName)
+    return false;
+}
+
 bool AbstractContainer::setProgram(const QString &program)
 {
     if (!m_program.isEmpty())
@@ -67,6 +78,11 @@ QString AbstractContainer::mapContainerPathToHost(const QString &containerPath) 
 QString AbstractContainer::mapHostPathToContainer(const QString &hostPath) const
 {
     return hostPath;
+}
+
+AbstractContainerProcess *AbstractContainer::process() const
+{
+    return m_process;
 }
 
 AbstractContainer::AbstractContainer(AbstractContainerManager *manager)

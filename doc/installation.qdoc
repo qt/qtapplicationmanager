@@ -94,18 +94,51 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li \c{-config install-prefix=<path>}
   \li Uses \c path as the base directory for \c{make install}. Defaults to \c{/usr/local}.
 \row
-  \li \c{-config hardware-id=<id>}
-  \li Compiles in \c id as a hard-coded hardware-id (used for store-signed packages, defaults to
-      the MAC address of the first ethernet device).
-\row
-  \li \c{-config hardware-id-from-file=<file>}
-  \li The hardware-id will be read from the specified \c file at runtime (used for store-signed
-      packages, defaults to the MAC address of the first ethernet device).
-\row
   \li \c{-config systemd-workaround}
   \li Paramount if you are running systemd and plan on supporting SD-Card installations. Works
       around systemd interfering with loopback mounts.
+\row
+  \li \c{-config hardware-id=<id>}
+  \li Compiles in \c id as a hard-coded hardware-id (see below for more information)
+\row
+  \li \c{-config hardware-id-from-file=<file>}
+  \li The hardware-id will be read from the specified \c file at runtime (see below for more information)
 \endtable
+
+\section2 The hardware-id
+
+The installer part of the application-manager needs an unique device id for two purposes:
+\list 1
+\li If you want to deliver application packages that are bound to a specific device unit from your
+    app-store. The use case is that you don't want customers buying apps and then sharing them
+    with others for free.
+
+\li When installing application packages onto a SD-card that can be removed by the user. The use
+    case here is that we need to be able to detect which SD-card "belongs" to which device, in case
+    the user is swapping a card between devices.
+\endlist
+
+Since the application-manager doesn't know at build time how a potential app-store will be
+configured, and if installations on removable SD-cards are enabled, it tries to create an unique id
+based on the MAC address of the first configured ethernet device. If the ethernet device is not
+configured at all (or configured after the start of the application-manager), this will obviously
+not work.
+
+All in all, there are 3 different methods to specify an id:
+
+\list 1
+\li No configure option: use the MAC of the first ethernet device. Works in 90% of all cases out of
+    the box.
+
+\li \c{qmake --config hardware-id=foo} hardcodes the id to \c foo. This is ideal, if you do not use
+    any application-manager features that require this id to be unique and if you cannot (or do not
+    want to) guarantee that an ethernet device is up when starting the application-manager.
+
+\li \c{qmake --config hardware-id-from-file=bar} makes the application-manager read the contents of
+    the file \c bar at startup and use its content as the id instead of the ethernet MAC. Useful if
+    your device has a unique device id available via \c /proc or \c /sys and you want to use
+    features requiring such an id.
+\endlist
 
 All executables (including the unit-tests) can be found in the build folder's \c bin directory after
 compiling.

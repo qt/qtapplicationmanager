@@ -39,10 +39,12 @@
 **
 ****************************************************************************/
 
-#include <QDBusVariant>
-#include <QDBusMessage>
-#include <QDBusConnection>
-#include <QDBusArgument>
+#if defined(QT_DBUS_LIB)
+#  include <QDBusVariant>
+#  include <QDBusMessage>
+#  include <QDBusConnection>
+#  include <QDBusArgument>
+#endif
 
 #include <QMetaObject>
 #include <QMetaMethod>
@@ -77,6 +79,7 @@ bool ApplicationIPCInterface::isValidForApplication(const Application *app) cons
     return m_ipcProxy ? m_ipcProxy->isValidForApplication(app) : false;
 }
 
+#if defined(QT_DBUS_LIB)
 bool ApplicationIPCInterface::dbusRegister(const Application *app, QDBusConnection connection, const QString &debugPathPrefix)
 {
     return m_ipcProxy ? m_ipcProxy->dbusRegister(app, connection, debugPathPrefix) : false;
@@ -86,7 +89,7 @@ bool ApplicationIPCInterface::dbusUnregister(QDBusConnection connection)
 {
     return m_ipcProxy ? m_ipcProxy->dbusUnregister(connection) : false;
 }
-
+#endif
 
 #define TYPE_ANNOTATION_PREFIX "_decltype_"
 

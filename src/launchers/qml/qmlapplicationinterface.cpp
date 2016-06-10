@@ -88,11 +88,11 @@ bool QmlApplicationInterface::initialize()
 
 
     if (!m_applicationIf) {
-        qCritical("ERROR: Couldn't create the ApplicationInterface on D-Bus");
+        qCritical("ERROR: could not create the ApplicationInterface on D-Bus");
         return false;
     }
     if (!m_runtimeIf) {
-        qCritical("ERROR: Couldn't create the RuntimeInterface on D-Bus");
+        qCritical("ERROR: could not create the RuntimeInterface on D-Bus");
         return false;
     }
     if (!m_applicationIf->isValid()) {
@@ -126,7 +126,7 @@ bool QmlApplicationInterface::initialize()
         if (!ok)
             qCritical("ERROR: could not connect the org.freedesktop.Notifications interface via D-Bus: %s", qPrintable(m_notifyIf->lastError().name()));
     } else {
-        qCritical("ERROR: Couldn't create the org.freedesktop.Notifications interface on D-Bus");
+        qCritical("ERROR: could not create the org.freedesktop.Notifications interface on D-Bus");
     }
 
     QmlApplicationInterfaceExtension::initialize(m_connection);

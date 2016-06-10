@@ -12,6 +12,14 @@ disable-installer:DEFINES *= AM_DISABLE_INSTALLER
 systemd-workaround:DEFINES *= AM_SYSTEMD_WORKAROUND
 headless:DEFINES *= AM_HEADLESS
 
+!force-single-process {
+    linux:if(qtHaveModule(compositor)|qtHaveModule(waylandcompositor)|headless):config_libdbus:CONFIG *= auto-multi-process
+    if(force-multi-process|auto-multi-process) {
+        CONFIG *= multi-process
+        DEFINES *= AM_MULTI_PROCESS
+    }
+}
+
 DEFINES *= AM_VERSION=\\\"$$VERSION\\\"
 
 defineTest(CONFIG_VALUE) {

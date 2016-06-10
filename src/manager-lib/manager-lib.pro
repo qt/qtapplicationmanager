@@ -8,13 +8,10 @@ CONFIG += static create_prl
 
 QT = core network qml qml-private
 !headless:QT *= gui quick
+qtHaveModule(dbus):QT *= dbus
 
-qtHaveModule(dbus) {
-    packagesExist(dbus-1) {
-        PKGCONFIG *= dbus-1
-        DEFINES *= AM_LIBDBUS_AVAILABLE
-    }
-    QT *= dbus
+multi-process {
+    PKGCONFIG += "'dbus-1 >= 1.8'"
 }
 
 DEFINES *= AM_BUILD_APPMAN
@@ -56,7 +53,7 @@ HEADERS += \
 linux:HEADERS += systemmonitor_linux.h
 else:HEADERS += systemmonitor_dummy.h
 
-qtHaveModule(dbus):HEADERS += \
+multi-process:HEADERS += \
     nativeruntime.h \
     nativeruntime_p.h \
 
@@ -89,5 +86,5 @@ SOURCES += \
 
 linux:SOURCES += systemmonitor_linux.cpp
 
-qtHaveModule(dbus):SOURCES += \
+multi-process:SOURCES += \
     nativeruntime.cpp \

@@ -184,12 +184,16 @@ int main(int argc, char *argv[])
     qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
     QByteArray dbusAddress = qgetenv("AM_DBUS_PEER_ADDRESS");
-    if (dbusAddress.isEmpty())
-        qCCritical(LogQmlRuntime) << "ERROR: $AM_DBUS_PEER_ADDRESS is empty - continuing anyway"; // should be qFatal()
+    if (dbusAddress.isEmpty()) {
+        qCCritical(LogQmlRuntime) << "ERROR: $AM_DBUS_PEER_ADDRESS is empty";
+        return 2;
+    }
     QDBusConnection dbusConnection = QDBusConnection::connectToPeer(QString::fromUtf8(dbusAddress), qSL("am"));
 
-    if (!dbusConnection.isConnected())
-        qCCritical(LogQmlRuntime) << "ERROR: could not connect to the application manager's peer D-Bus at" << dbusAddress; // should be qFatal()
+    if (!dbusConnection.isConnected()) {
+        qCCritical(LogQmlRuntime) << "ERROR: could not connect to the application manager's peer D-Bus at" << dbusAddress;
+        return 3;
+    }
 
     Controller controller;
     return a.exec();
@@ -215,8 +219,10 @@ Controller::Controller()
     m_applicationInterface = new QmlApplicationInterface(config, qSL("am"), this);
     connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
             this, &Controller::startApplication);
-    if (!m_applicationInterface->initialize())
-        qCritical("ERROR: could not connect to the application manager's interface on peer D-Bus"); // should be qFatal()
+    if (!m_applicationInterface->initialize()) {
+        qCritical("ERROR: could not connect to the application manager's interface on the peer D-Bus");
+        qApp->exit(4);
+    }
 }
 
 void Controller::startApplication(const QString &qmlFile, const QString &argument, const QVariantMap &runtimeParameters)

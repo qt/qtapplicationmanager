@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#ifndef AM_SINGLE_PROCESS_MODE
+#if defined(AM_MULTI_PROCESS)
 
 #include "waylandwindow.h"
 #include "applicationmanager.h"
@@ -134,4 +134,4 @@ QVariantMap WaylandWindow::windowProperties() const
     return QVariantMap();
 }
 
-#endif // AM_SINGLE_PROCESS_MODE
+#endif // AM_MULTI_PROCESS

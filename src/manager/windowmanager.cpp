@@ -47,7 +47,7 @@
 #include <QQmlEngine>
 #include <QVariant>
 
-#ifndef AM_SINGLE_PROCESS_MODE
+#if defined(AM_MULTI_PROCESS)
 #  if defined(QT_WAYLANDCOMPOSITOR_LIB)
 #    include "waylandcompositor.h"
 #  elif defined(QT_COMPOSITOR_LIB)
@@ -330,7 +330,7 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, con
     : QAbstractListModel(qmlEngine)
     , d(new WindowManagerPrivate())
 {
-#if !defined(AM_SINGLE_PROCESS_MODE)
+#if defined(AM_MULTI_PROCESS)
     d->forceSingleProcess = forceSingleProcess;
     d->waylandSocketName = waylandSocketName;
 #else
@@ -358,7 +358,7 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, con
 
 WindowManager::~WindowManager()
 {
-#if !defined(AM_SINGLE_PROCESS_MODE)
+#if defined(AM_MULTI_PROCESS)
     delete d->waylandCompositor;
 #endif
     delete d;
@@ -414,7 +414,7 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
         if (win->isInProcess()) {
             return true;
         } else {
-#ifndef AM_SINGLE_PROCESS_MODE
+#if defined(AM_MULTI_PROCESS)
             auto ww = qobject_cast<const WaylandWindow*>(win);
             if (ww && ww->surface() && ww->surface()->surface())
                 return ww->surface()->surface()->isMapped();
@@ -522,7 +522,7 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 {
     d->views << view;
 
-#if !defined(AM_SINGLE_PROCESS_MODE)
+#if defined(AM_MULTI_PROCESS)
     if (!d->forceSingleProcess) {
         if (!d->waylandCompositor) {
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName, this);
@@ -622,7 +622,7 @@ void WindowManager::surfaceItemAboutToClose(QQuickItem *item)
 }
 
 
-#if !defined(AM_SINGLE_PROCESS_MODE)
+#if defined(AM_MULTI_PROCESS)
 
 void WindowManager::resize()
 {
@@ -732,7 +732,7 @@ void WindowManager::handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *sur
     }
 }
 
-#endif // !defined(AM_SINGLE_PROCESS_MODE)
+#endif // defined(AM_MULTI_PROCESS)
 
 
 /*!
@@ -922,7 +922,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                             if (w->isInProcess()) {
                                 onScreen = (w->windowItem()->window() == view);
                             }
-#ifndef AM_SINGLE_PROCESS_MODE
+#if defined(AM_MULTI_PROCESS)
                             else if (const WaylandWindow *wlw = qobject_cast<const WaylandWindow *>(w)) {
 #  if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
                                 Q_UNUSED(wlw)
@@ -1013,7 +1013,7 @@ int WindowManagerPrivate::findWindowBySurfaceItem(QQuickItem *quickItem) const
     return -1;
 }
 
-#if !defined(AM_SINGLE_PROCESS_MODE)
+#if defined(AM_MULTI_PROCESS)
 
 int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const
 {
@@ -1024,5 +1024,5 @@ int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSur
     return -1;
 }
 
-#endif // !defined(AM_SINGLE_PROCESS_MODE)
+#endif // defined(AM_MULTI_PROCESS)
 

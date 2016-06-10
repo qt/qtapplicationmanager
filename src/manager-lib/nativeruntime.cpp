@@ -62,7 +62,7 @@
 // #define EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS 1
 
 
-#if defined(AM_LIBDBUS_AVAILABLE)
+#if defined(AM_MULTI_PROCESS)
 #  include <dbus/dbus.h>
 #  include <sys/socket.h>
 
@@ -93,10 +93,7 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, const Application *ap
     : AbstractRuntime(container, app, manager)
     , m_isQuickLauncher(app == nullptr)
     , m_needsLauncher(manager->identifier() != qL1S("native"))
-{
-    connect(manager->applicationInterfaceServer(), &QDBusServer::newConnection,
-            this, &NativeRuntime::onDBusPeerConnection);
-}
+{ }
 
 NativeRuntime::~NativeRuntime()
 {
@@ -253,17 +250,10 @@ void NativeRuntime::onProcessFinished(int exitCode, QProcess::ExitStatus status)
 
 void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 {
+    // We have a valid connection - ignore all further connection attempts
     if (m_dbusConnection)
         return;
 
-    // If multiple apps are starting in parallel, there will be multiple NativeRuntime objects
-    // listening to the newConnection signal from the one and only DBusServer.
-    // We have to make sure that we are only reacting on "our" client's connection attempt.
-    qint64 pid = getDBusPeerPid(connection);
-    if (pid != applicationProcessId())
-        return;
-
-    // We have a valid connection - ignore all further connection attempts
     m_dbusConnection = true;
     m_dbusConnectionName = connection.name();
     QDBusConnection conn = connection;
@@ -273,7 +263,8 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
         qCWarning(LogSystem) << "ERROR: could not register the /ApplicationInterface object on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
 
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-    QDBusConnection::sessionBus().registerObject(qSL("/Application%1/ApplicationInterface").arg(pid), m_applicationInterface, QDBusConnection::ExportScriptableContents);
+    QDBusConnection::sessionBus().registerObject(qSL("/Application%1/ApplicationInterface").arg(applicationProcessId()),
+                                                 m_applicationInterface, QDBusConnection::ExportScriptableContents);
 #endif
 
     if (m_needsLauncher && m_launchWhenReady && !m_launched) {
@@ -282,7 +273,8 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
             qCWarning(LogSystem) << "ERROR: could not register the /RuntimeInterface object on the peer DBus.";
 
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-        QDBusConnection::sessionBus().registerObject(qSL("/Application%1/RuntimeInterface").arg(pid), m_runtimeInterface, QDBusConnection::ExportScriptableContents);
+        QDBusConnection::sessionBus().registerObject(qSL("/Application%1/RuntimeInterface").arg(applicationProcessId()),
+                                                     m_runtimeInterface, QDBusConnection::ExportScriptableContents);
 #endif
         // we need to delay the actual start call, until the launcher side is ready to
         // listen to the interface
@@ -306,7 +298,7 @@ void NativeRuntime::onLauncherFinishedInitialization()
                                      << "at" << iface->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
             }
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-            iface->dbusRegister(QDBusConnection::sessionBus(), qSL("/Application%1").arg(pid));
+            iface->dbusRegister(QDBusConnection::sessionBus(), qSL("/Application%1").arg(applicationProcessId()));
 #endif
         }
 
@@ -380,7 +372,30 @@ void NativeRuntimeInterface::finishedInitialization()
 NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
     : AbstractRuntimeManager(id, parent)
     , m_applicationInterfaceServer(new QDBusServer(qSL("unix:tmpdir=/tmp")))
-{ }
+{
+    connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
+            this, [this](const QDBusConnection &connection) {
+        // If multiple apps are starting in parallel, there will be multiple NativeRuntime objects
+        // listening to the newConnection signal from the one and only DBusServer.
+        // We have to make sure to forward to the correct runtime object while also handling
+        // error conditions.
+
+        qint64 pid = getDBusPeerPid(connection);
+        if (pid <= 0) {
+            QDBusConnection::disconnectFromPeer(connection.name());
+            qCWarning(LogSystem) << "Could not retrieve peer pid on D-Bus connection attempt.";
+            return;
+        }
+        for (NativeRuntime *rt : m_nativeRuntimes) {
+            if (rt->applicationProcessId() == pid) {
+                rt->onDBusPeerConnection(connection);
+                return;
+            }
+        }
+        QDBusConnection::disconnectFromPeer(connection.name());
+        qCWarning(LogSystem) << "Connection attempt on peer D-Bus from unknown pid:" << pid;
+    });
+}
 
 QString NativeRuntimeManager::defaultIdentifier()
 {
@@ -399,6 +414,10 @@ AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, cons
     QScopedPointer<NativeRuntime> nrt(new NativeRuntime(container, app, this));
     if (!nrt || !nrt->initialize())
         return nullptr;
+    connect(nrt.data(), &QObject::destroyed, this, [this](QObject *o) {
+        m_nativeRuntimes.removeOne(static_cast<NativeRuntime *>(o));
+    });
+    m_nativeRuntimes.append(nrt.data());
     return nrt.take();
 }
 

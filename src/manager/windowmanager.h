@@ -50,7 +50,7 @@
 #  include <QDBusConnectionInterface>
 #endif
 
-#ifndef AM_SINGLE_PROCESS_MODE
+#if defined(AM_MULTI_PROCESS)
 QT_FORWARD_DECLARE_CLASS(QWaylandSurface)
 #endif
 
@@ -66,7 +66,7 @@ class Application;
 class AbstractRuntime;
 class WaylandCompositor;
 
-#ifndef AM_SINGLE_PROCESS_MODE
+#if defined(AM_MULTI_PROCESS)
 
 class WindowSurface
 {
@@ -162,7 +162,7 @@ public slots:
 private slots:
     void reportFps();
 
-#ifndef AM_SINGLE_PROCESS_MODE
+#if defined(AM_MULTI_PROCESS)
 private slots:
     void waylandSurfaceCreated(WindowSurface *surface);
     void waylandSurfaceMapped(WindowSurface *surface);

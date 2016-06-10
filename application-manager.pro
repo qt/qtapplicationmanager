@@ -3,6 +3,11 @@ requires(linux*:!android|win32-msvc2013|win32-msvc2015|osx)
 load(configure)
 qtCompileTest(libarchive)
 qtCompileTest(libyaml)
+qtCompileTest(libdbus)
+
+force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
+force-multi-process:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcompositor):error("You forced multi-process mode, but the QtCompositor module is not available")
+force-multi-process:!config_libdbus:error("You forced multi-process mode, but libdbus-1 (>= 1.8) is not available")
 
 MIN_MINOR=4
 headless:MIN_MINOR=2
@@ -17,11 +22,10 @@ load(am-config)
 !config_libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 !config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 
-force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
-qtHaveModule(compositor)|qtHaveModule(waylandcompositor)|headless { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
+auto-multi-process { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
 force-single-process { check_multi = "no (force-single-process)" }
 force-multi-process  { check_multi = "yes (force-multi-process)" }
-force-multi-process:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcompositor):error("You forced multi-process mode, but the QtCompositor module is not available")
+
 CONFIG(debug, debug|release) { check_debug = "debug" } else { check_debug = "release" }
 
 !isEmpty(AM_HARDWARE_ID_FF):check_hwid = "(from file) $$AM_HARDWARE_ID_FF"

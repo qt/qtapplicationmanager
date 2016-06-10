@@ -31,19 +31,16 @@ unix:!osx:!android:LIBS += -Wl,--dynamic-list=$$PWD/syms.txt  # sub set
 
 win32:LIBS += -luser32
 
-qtHaveModule(compositor):compositor = "old"
-else:qtHaveModule(waylandcompositor):compositor = "new"
-
-force-single-process|isEmpty(compositor) {
-    DEFINES *= AM_SINGLE_PROCESS_MODE
-} else:equals(compositor, "new") {
-    QT *= waylandcompositor waylandcompositor-private
-    !headless:HEADERS += waylandcompositor.h
-    !headless:SOURCES += waylandcompositor.cpp
-} else:equals(compositor, "old") {
-    QT *= compositor
-    !headless:HEADERS += waylandcompositor-old.h
-    !headless:SOURCES += waylandcompositor-old.cpp
+multi-process {
+    qtHaveModule(waylandcompositor) {
+        QT *= waylandcompositor waylandcompositor-private
+        !headless:HEADERS += waylandcompositor.h
+        !headless:SOURCES += waylandcompositor.cpp
+    } else:qtHaveModule(compositor) {
+        QT *= compositor
+        !headless:HEADERS += waylandcompositor-old.h
+        !headless:SOURCES += waylandcompositor-old.cpp
+    }
 }
 
 target.path = $$INSTALL_PREFIX/bin/

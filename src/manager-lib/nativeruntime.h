@@ -43,7 +43,7 @@
 
 #include <qglobal.h>
 
-#if defined(QT_DBUS_LIB)
+#if defined(AM_MULTI_PROCESS)
 
 #include <QtPlugin>
 #include <QProcess>
@@ -54,6 +54,7 @@
 #define AM_NATIVE_RUNTIME_AVAILABLE
 
 class Notification;
+class NativeRuntime;
 class NativeRuntimeInterface;
 class NativeRuntimeApplicationInterface;
 
@@ -76,7 +77,7 @@ public:
 
 private:
     QDBusServer *m_applicationInterfaceServer;
-
+    QVector<NativeRuntime *> m_nativeRuntimes;
 };
 
 class NativeRuntime : public AbstractRuntime
@@ -84,7 +85,6 @@ class NativeRuntime : public AbstractRuntime
     Q_OBJECT
 
 public:
-    explicit NativeRuntime(AbstractContainer *container, const Application *app, NativeRuntimeManager *parent);
     ~NativeRuntime();
 
     bool isQuickLauncher() const override;
@@ -109,6 +109,9 @@ private slots:
     void onProcessError(QProcess::ProcessError error);
     void onDBusPeerConnection(const QDBusConnection &connection);
     void onLauncherFinishedInitialization();
+
+protected:
+    explicit NativeRuntime(AbstractContainer *container, const Application *app, NativeRuntimeManager *parent);
 
 private:
     bool initialize();

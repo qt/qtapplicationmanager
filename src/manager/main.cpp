@@ -196,6 +196,41 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *servic
     }
 }
 
+static void dbusInitialization()
+{
+    try {
+        auto am = ApplicationManager::instance();
+        registerDBusObject(new ApplicationManagerAdaptor(am), "io.qt.ApplicationManager", "/ApplicationManager");
+        if (!am->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(am))))
+            throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");
+
+#  if !defined(AM_DISABLE_INSTALLER)
+        auto ai = ApplicationInstaller::instance();
+        registerDBusObject(new ApplicationInstallerAdaptor(ai), "io.qt.ApplicationManager", "/ApplicationInstaller");
+        if (!ai->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(ai))))
+            throw Exception(Error::DBus, "could not set DBus policy for ApplicationInstaller");
+#  endif
+
+#  if !defined(AM_HEADLESS)
+        try {
+            auto nm = NotificationManager::instance();
+            registerDBusObject(new NotificationsAdaptor(nm), "org.freedesktop.Notifications", "/org/freedesktop/Notifications");
+        } catch (const Exception &e) {
+            //TODO: what should we do here? on the desktop this will obviously always fail
+            qCCritical(LogSystem) << "WARNING:" << e.what();
+        }
+        auto wm = WindowManager::instance();
+        registerDBusObject(new WindowManagerAdaptor(wm), "io.qt.ApplicationManager", "/WindowManager");
+        if (!wm->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(wm))))
+            throw Exception(Error::DBus, "could not set DBus policy for WindowManager");
+#endif
+    } catch (const std::exception &e) {
+        qCCritical(LogSystem) << "ERROR:" << e.what();
+        qApp->exit(2);
+    }
+};
+
+
 QT_BEGIN_NAMESPACE
 
 QDBusArgument &operator<<(QDBusArgument &argument, const QUrl &url)
@@ -597,29 +632,15 @@ int main(int argc, char *argv[])
         }
 
 #if defined(QT_DBUS_LIB)
-        registerDBusObject(new ApplicationManagerAdaptor(am), "io.qt.ApplicationManager", "/ApplicationManager");
-        if (!am->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(am))))
-            throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");
-
-#  if !defined(AM_DISABLE_INSTALLER)
-        registerDBusObject(new ApplicationInstallerAdaptor(ai), "io.qt.ApplicationManager", "/ApplicationInstaller");
-        if (!ai->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(ai))))
-            throw Exception(Error::DBus, "could not set DBus policy for ApplicationInstaller");
-#  endif
-
-#  if !defined(AM_HEADLESS)
-        try {
-            registerDBusObject(new NotificationsAdaptor(nm), "org.freedesktop.Notifications", "/org/freedesktop/Notifications");
-        } catch (const Exception &e) {
-            //TODO: what should we do here? on the desktop this will obviously always fail
-            qCCritical(LogSystem) << "WARNING:" << e.what();
+        // can we delay the D-Bus initialization? it is asynchronous anyway...
+        int dbusDelay = configuration->dbusRegistrationDelay();
+        if (dbusDelay < 0) {
+            dbusInitialization();
+            startupTimer.checkpoint("after D-Bus registrations");
+        } else {
+            QTimer::singleShot(dbusDelay, qApp, dbusInitialization);
         }
-        registerDBusObject(new WindowManagerAdaptor(wm), "io.qt.ApplicationManager", "/WindowManager");
-        if (!wm->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(wm))))
-            throw Exception(Error::DBus, "could not set DBus policy for WindowManager");
 #endif
-        startupTimer.checkpoint("after D-Bus registrations");
-#endif // QT_DBUS_LIB
 
         engine->load(configuration->mainQmlFile());
         if (engine->rootObjects().isEmpty())

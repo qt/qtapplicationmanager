@@ -79,6 +79,7 @@ public:
 
     QVariantMap dbusPolicy(const QString &interfaceName) const;
     QString dbusRegistration(const QString &interfaceName) const;
+    int dbusRegistrationDelay() const;
 
     QVariantMap additionalUiConfiguration() const;
 

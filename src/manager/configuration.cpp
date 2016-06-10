@@ -428,6 +428,13 @@ QString Configuration::dbusRegistration(const QString &interfaceName) const
     return dbus;
 }
 
+int Configuration::dbusRegistrationDelay() const
+{
+    bool found = false;
+    int delay = d->findInConfigFile({ qSL("dbus"), qSL("registrationDelay") }, &found).toInt();
+    return found ? delay : -1;
+}
+
 QVariantMap Configuration::additionalUiConfiguration() const
 {
     return d->findInConfigFile({ qSL("ui"), qSL("additionalConfiguration") }).toMap();

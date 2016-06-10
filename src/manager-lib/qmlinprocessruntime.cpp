@@ -223,16 +223,18 @@ void QmlInProcessRuntime::onDisableFullscreen()
 
 void QmlInProcessRuntime::addWindow(QQuickItem *window)
 {
-    m_windows.append(window);
+    if (m_windows.indexOf(window) == -1) {
+        m_windows.append(window);
 
-    if (auto pcw = qobject_cast<FakeApplicationManagerWindow *>(window)) {
-        connect(pcw, &FakeApplicationManagerWindow::fakeFullScreenSignal, this, &QmlInProcessRuntime::onEnableFullscreen);
-        connect(pcw, &FakeApplicationManagerWindow::fakeNoFullScreenSignal, this, &QmlInProcessRuntime::onDisableFullscreen);
-        connect(pcw, &FakeApplicationManagerWindow::fakeCloseSignal, this, &QmlInProcessRuntime::onWindowClose);
-        connect(pcw, &QObject::destroyed, this, &QmlInProcessRuntime::onWindowDestroyed);
-
-        emit inProcessSurfaceItemReady(window);
+        if (auto pcw = qobject_cast<FakeApplicationManagerWindow *>(window)) {
+            connect(pcw, &FakeApplicationManagerWindow::fakeFullScreenSignal, this, &QmlInProcessRuntime::onEnableFullscreen);
+            connect(pcw, &FakeApplicationManagerWindow::fakeNoFullScreenSignal, this, &QmlInProcessRuntime::onDisableFullscreen);
+            connect(pcw, &FakeApplicationManagerWindow::fakeCloseSignal, this, &QmlInProcessRuntime::onWindowClose);
+            connect(pcw, &QObject::destroyed, this, &QmlInProcessRuntime::onWindowDestroyed);
+        }
     }
+
+    emit inProcessSurfaceItemReady(window);
 }
 
 #endif // !AM_HEADLESS

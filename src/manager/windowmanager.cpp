@@ -569,7 +569,13 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
         return;
     }
 
-    setupWindow(new InProcessWindow(app, surfaceItem));
+    //Only create a new Window if we don't have it already in the window list, as the user controls whether windows are removed or not
+    int index = d->findWindowBySurfaceItem(surfaceItem);
+    if (index == -1) {
+        setupWindow(new InProcessWindow(app, surfaceItem));
+    } else {
+        emit windowReady(index, d->windows.at(index)->windowItem());
+    }
 }
 
 

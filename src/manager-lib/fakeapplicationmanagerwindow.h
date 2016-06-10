@@ -113,6 +113,7 @@ private:
     void dummySetter(bool) { }
     QString dummyGetterString() const { return QString(); }
     void dummySetterString(const QString&) {}
+    void onVisibleChanged();
 
     QmlInProcessRuntime *m_runtime;
 

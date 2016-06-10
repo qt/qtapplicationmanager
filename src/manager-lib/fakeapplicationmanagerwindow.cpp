@@ -47,7 +47,7 @@ FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
     , m_runtime(0)
 {
     qCDebug(LogSystem) << "FakeApplicationManagerWindow ctor! this:" << this;
-
+    connect(this, &QQuickItem::visibleChanged, this, &FakeApplicationManagerWindow::onVisibleChanged);
 }
 
 FakeApplicationManagerWindow::~FakeApplicationManagerWindow()
@@ -158,6 +158,12 @@ void FakeApplicationManagerWindow::componentComplete()
         parent = parent->parentItem();
     }
 
-    if (m_runtime)
+    if (m_runtime && isVisible())
+        m_runtime->addWindow(this);
+}
+
+void FakeApplicationManagerWindow::onVisibleChanged()
+{
+    if (m_runtime && isVisible() && this->parent())
         m_runtime->addWindow(this);
 }

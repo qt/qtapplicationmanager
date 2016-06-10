@@ -130,7 +130,7 @@ public:
     Q_SCRIPTABLE RunState applicationRunState(const QString &id) const;
 
 signals:
-    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, RunState runstate);
+    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, RunState runState);
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
     Q_SCRIPTABLE void countChanged();
 

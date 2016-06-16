@@ -1,5 +1,6 @@
 TARGET = libdbus
 CONFIG -= qt
+CONFIG += console
 
 SOURCES += main.cpp
 

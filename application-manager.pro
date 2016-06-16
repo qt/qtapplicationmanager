@@ -1,13 +1,16 @@
-requires(linux*:!android|win32-msvc2013|win32-msvc2015|osx)
+requires(linux:!android|win32-msvc2013|win32-msvc2015|osx)
 
 load(configure)
 qtCompileTest(libarchive)
 qtCompileTest(libyaml)
 qtCompileTest(libdbus)
+qtCompileTest(libcrypto)
 
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 force-multi-process:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcompositor):error("You forced multi-process mode, but the QtCompositor module is not available")
 force-multi-process:!config_libdbus:error("You forced multi-process mode, but libdbus-1 (>= 1.8) is not available")
+
+if(linux:!android|force-libcrypto):!config_libcrypto:error("Could not find libcrypto (OpenSSL)")
 
 MIN_MINOR=4
 headless:MIN_MINOR=2
@@ -22,6 +25,10 @@ load(am-config)
 !config_libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 !config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 
+if(linux|force-libcrypto):check_crypto = "libcrypto / OpenSSL"
+else:win32:check_crypto = "WinCrypt"
+else:osx:check_crypto = "SecurityFramework"
+
 auto-multi-process { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
 force-single-process { check_multi = "no (force-single-process)" }
 force-multi-process  { check_multi = "yes (force-multi-process)" }
@@ -31,9 +38,6 @@ CONFIG(debug, debug|release) { check_debug = "debug" } else { check_debug = "rel
 !isEmpty(AM_HARDWARE_ID_FF):check_hwid = "(from file) $$AM_HARDWARE_ID_FF"
 else:!isEmpty(AM_HARDWARE_ID):check_hwid = "$$AM_HARDWARE_ID"
 else:check_hwid = "auto (derived from network MAC address)"
-
-isEmpty(AM_LIBCRYPTO_DEFINES) { check_libcrypto_defines = "(none)" } else { check_libcrypto_defines = $$AM_LIBCRYPTO_DEFINES }
-isEmpty(AM_LIBCRYPTO_INCLUDES) { check_libcrypto_includes = "(system)" } else { check_libcrypto_includes = $$AM_LIBCRYPTO_INCLUDES }
 
 load(config-output)
 
@@ -50,8 +54,7 @@ printConfigLine("QtCompositor support", $$yesNo(qtHaveModule(compositor)|qtHaveM
 printConfigLine("Multi-process mode", $$check_multi, auto)
 printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)
 printConfigLine("Tests enabled", $$yesNo(CONFIG(enable-tests)), auto)
-printConfigLine("libcrypto defines", $$check_libcrypto_defines, auto)
-printConfigLine("libcrypto includes", $$check_libcrypto_includes, auto)
+printConfigLine("Crypto backend", $$check_crypto, auto)
 printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)
 printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto)
 printConfigLine("Genivi support", $$yesNo(qtHaveModule(geniviextras)), auto)

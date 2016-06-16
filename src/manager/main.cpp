@@ -306,8 +306,37 @@ private:
 
 #endif // QT_PSHELLSERVER_LIB
 
+static QVector<const Application *> scanForApplication(const QString &singleAppInfoYaml)
+{
+    QVector<const Application *> result;
+    YamlApplicationScanner yas;
+
+    QDir appDir = QFileInfo(singleAppInfoYaml).dir();
+
+    QScopedPointer<Application> a(yas.scan(singleAppInfoYaml));
+    Q_ASSERT(a);
+
+    QStringList aliasPaths = appDir.entryList(QStringList(qSL("info-*.yaml")));
+    std::vector<std::unique_ptr<Application>> aliases;
+
+    for (int i = 0; i < aliasPaths.size(); ++i) {
+        std::unique_ptr<Application> alias(yas.scanAlias(appDir.absoluteFilePath(aliasPaths.at(i)), a.data()));
+
+        Q_ASSERT(alias);
+        Q_ASSERT(alias->isAlias());
+        Q_ASSERT(alias->nonAliased() == a.data());
+
+        aliases.push_back(std::move(alias));
+    }
+    result << a.take();
+    for (auto &&alias : aliases)
+        result << alias.release();
+
+    return result;
+}
+
 static QVector<const Application *> scanForApplications(const QDir &builtinAppsDir, const QDir &installedAppsDir,
-                                                      const QVector<InstallationLocation> &installationLocations)
+                                                        const QVector<InstallationLocation> &installationLocations)
 {
     QVector<const Application *> result;
     YamlApplicationScanner yas;
@@ -504,11 +533,9 @@ int main(int argc, char *argv[])
 
         if (!adb->isValid() || configuration->recreateDatabase()) {
             QVector<const Application *> apps;
-            YamlApplicationScanner yas;
 
             if (!configuration->singleApp().isEmpty()) {
-                if (const Application *app = yas.scan(configuration->singleApp()))
-                    apps.append(app);
+                apps = scanForApplication(configuration->singleApp());
             } else {
                 apps = scanForApplications(configuration->builtinAppsManifestDir(),
                                            configuration->installedAppsManifestDir(),

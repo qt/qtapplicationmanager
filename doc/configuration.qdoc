@@ -197,6 +197,8 @@ command-line options.
     \li string
     \li Runs the application-manager with a single application only (ignoring the database).
         In this mode, the application-manager can act as a \c qmlscene replacement.
+        The argument is the path to \c info.yaml. Aliases (\c{info-*.yaml}) will also be
+        loaded from the given path.
 \row
     \li \b --logging-rule
     \br \e logging/rules

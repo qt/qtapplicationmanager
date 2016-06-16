@@ -31,15 +31,15 @@ unix:!osx:!android:LIBS += -Wl,--dynamic-list=$$PWD/syms.txt  # sub set
 
 win32:LIBS += -luser32
 
-multi-process {
+multi-process:!headless {
     qtHaveModule(waylandcompositor) {
         QT *= waylandcompositor waylandcompositor-private
-        !headless:HEADERS += waylandcompositor.h
-        !headless:SOURCES += waylandcompositor.cpp
+        HEADERS += waylandcompositor.h
+        SOURCES += waylandcompositor.cpp
     } else:qtHaveModule(compositor) {
         QT *= compositor
-        !headless:HEADERS += waylandcompositor-old.h
-        !headless:SOURCES += waylandcompositor-old.cpp
+        HEADERS += waylandcompositor-old.h
+        SOURCES += waylandcompositor-old.cpp
     }
 }
 

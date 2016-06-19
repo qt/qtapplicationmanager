@@ -39,7 +39,7 @@ load(config-output)
 
 printConfigLine()
 printConfigLine("-- Application Manager configuration", , orange)
-printConfigLine("Version", "$$VERSION (git: $$GIT_VERSION)", white)
+printConfigLine("Version", "$$VERSION", white)
 printConfigLine("Hardware Id", $$check_hwid, auto)
 printConfigLine("Qt version", $$[QT_VERSION], white)
 printConfigLine("Qt installation", $$[QT_HOST_BINS])

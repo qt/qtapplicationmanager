@@ -183,7 +183,7 @@ StartupTimer::~StartupTimer()
 
 void StartupTimer::checkpoint(const char *name)
 {
-    if (m_initialized) {
+    if (Q_UNLIKELY(m_initialized)) {
         qint64 delta = m_timer.nsecsElapsed();
         m_checkpoints << qMakePair(delta / 1000 + m_processCreation, name);
     }

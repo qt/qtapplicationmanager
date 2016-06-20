@@ -285,7 +285,7 @@ ApplicationManager *ApplicationManager::s_instance = 0;
 
 ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb, QString *error)
 {
-    if (s_instance)
+    if (Q_UNLIKELY(s_instance))
         qFatal("ApplicationManager::createInstance() was called a second time.");
 
     QScopedPointer<ApplicationManager> am(new ApplicationManager(adb, QCoreApplication::instance()));

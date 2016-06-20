@@ -72,7 +72,7 @@ ApplicationIPCManager::~ApplicationIPCManager()
 
 ApplicationIPCManager *ApplicationIPCManager::createInstance()
 {
-    if (s_instance)
+    if (Q_UNLIKELY(s_instance))
         qFatal("ApplicationIPCManager::createInstance() was called a second time.");
 
     qmlRegisterType<ApplicationIPCInterfaceAttached>();

@@ -212,17 +212,17 @@ ApplicationInstaller::~ApplicationInstaller()
 ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<InstallationLocation> &installationLocations,
                                                            const QDir &manifestDir, const QDir &imageMountDir, QString *error)
 {
-    if (s_instance)
+    if (Q_UNLIKELY(s_instance))
         qFatal("ApplicationInstaller::createInstance() was called a second time.");
 
     qRegisterMetaType<AsynchronousTask *>();
 
-    if (!manifestDir.exists()) {
+    if (Q_UNLIKELY(!manifestDir.exists())) {
         if (error)
             *error = qL1S("ApplicationInstaller::createInstance() could not access the manifest directory ") + manifestDir.absolutePath();
         return 0;
     }
-    if (!imageMountDir.exists()) {
+    if (Q_UNLIKELY(!imageMountDir.exists())) {
         if (error)
             *error = qL1S("ApplicationInstaller::createInstance() could not access the image-mount directory ") + imageMountDir.absolutePath();
         return 0;

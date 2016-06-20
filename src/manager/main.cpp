@@ -429,7 +429,7 @@ int main(int argc, char *argv[])
 
 #if !defined(AM_DISABLE_INSTALLER)
     {
-        if (!forkSudoServer(DropPrivilegesPermanently, &error)) {
+        if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
             qCCritical(LogSystem) << "WARNING:" << qPrintable(error);
 
             // do not quit, but rather contine with reduced functionality
@@ -459,7 +459,7 @@ int main(int argc, char *argv[])
     startupTimer.checkpoint("after command line parse");
 
     try {
-        if (!QFile::exists(configuration->mainQmlFile()))
+        if (Q_UNLIKELY(!QFile::exists(configuration->mainQmlFile())))
             throw Exception(Error::System, "no/invalid main QML file specified: %1").arg(configuration->mainQmlFile());
 
         QStringList loggingRules = configuration->loggingRules();
@@ -480,15 +480,15 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after logging setup");
 
 #if !defined(AM_DISABLE_INSTALLER)
-        if (hardwareId().isEmpty())
+        if (Q_UNLIKELY(hardwareId().isEmpty()))
             throw Exception(Error::System, "the installer is enabled, but the device-id is empty");
 
         QVector<InstallationLocation> installationLocations = InstallationLocation::parseInstallationLocations(configuration->installationLocations());
 
-        if (!QDir::root().mkpath(configuration->installedAppsManifestDir()))
+        if (Q_UNLIKELY(!QDir::root().mkpath(configuration->installedAppsManifestDir())))
             throw Exception(Error::System, "could not create manifest directory %1").arg(configuration->installedAppsManifestDir());
 
-        if (!QDir::root().mkpath(configuration->appImageMountDir()))
+        if (Q_UNLIKELY(!QDir::root().mkpath(configuration->appImageMountDir())))
             throw Exception(Error::System, "could not create the image-mount directory %1").arg(configuration->appImageMountDir());
 
         startupTimer.checkpoint("after installer setup checks");
@@ -528,7 +528,7 @@ int main(int argc, char *argv[])
                                                 ? new ApplicationDatabase(configuration->database())
                                                 : new ApplicationDatabase());
 
-        if (!adb->isValid() && !configuration->recreateDatabase())
+        if (Q_UNLIKELY(!adb->isValid() && !configuration->recreateDatabase()))
             throw Exception(Error::System, "database file %1 is not a valid application database: %2").arg(adb->name(), adb->errorString());
 
         if (!adb->isValid() || configuration->recreateDatabase()) {
@@ -553,7 +553,7 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after application database loading");
 
         ApplicationManager *am = ApplicationManager::createInstance(adb.take(), &error);
-        if (!am)
+        if (Q_UNLIKELY(!am))
             throw Exception(Error::System, error);
         if (configuration->noSecurity())
             am->setSecurityChecksEnabled(false);
@@ -574,7 +574,7 @@ int main(int argc, char *argv[])
                                                                         configuration->installedAppsManifestDir(),
                                                                         configuration->appImageMountDir(),
                                                                         &error);
-        if (!ai)
+        if (Q_UNLIKELY(!ai))
             throw Exception(Error::System, error);
         if (configuration->noSecurity()) {
             ai->setDevelopmentMode(true);
@@ -585,10 +585,10 @@ int main(int argc, char *argv[])
             const auto caFiles = configuration->caCertificates();
             for (const auto &caFile : caFiles) {
                 QFile f(caFile);
-                if (!f.open(QFile::ReadOnly))
+                if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
                     throw Exception(f, "could not open CA-certificate file");
                 QByteArray cert = f.readAll();
-                if (cert.isEmpty())
+                if (Q_UNLIKELY(cert.isEmpty()))
                     throw Exception(f, "CA-certificate file is empty");
                 caCertificateList << cert;
             }
@@ -605,6 +605,7 @@ int main(int argc, char *argv[])
 #  endif // Q_OS_LINUX
         }
 
+        //TODO: this could be delayed, but needs to have a lock on the app-db in this case
         ai->cleanupBrokenInstallations();
 
         startupTimer.checkpoint("after ApplicationInstaller instantiation");
@@ -637,7 +638,7 @@ int main(int argc, char *argv[])
 #  else
                 true;
 #  endif
-        if (setIcon) {
+        if (Q_UNLIKELY(setIcon)) {
             QString icon = configuration->windowIcon();
             if (!icon.isEmpty())
                 QGuiApplication::setWindowIcon(QIcon(icon));
@@ -654,7 +655,7 @@ int main(int argc, char *argv[])
                          wm, &WindowManager::raiseApplicationWindow);
 #endif
 
-        if (configuration->loadDummyData()) {
+        if (Q_UNLIKELY(configuration->loadDummyData())) {
             loadDummyDataFiles(*engine, QFileInfo(configuration->mainQmlFile()).path());
             startupTimer.checkpoint("after loading dummy-data");
         }
@@ -671,7 +672,7 @@ int main(int argc, char *argv[])
 #endif
 
         engine->load(configuration->mainQmlFile());
-        if (engine->rootObjects().isEmpty())
+        if (Q_UNLIKELY(engine->rootObjects().isEmpty()))
             throw Exception(Error::System, "Qml scene does not have a root object");
         QObject *rootObject = engine->rootObjects().at(0);
 
@@ -708,7 +709,7 @@ int main(int argc, char *argv[])
         wm->registerCompositorView(window);
 
         // --no-fullscreen on the command line trumps the fullscreen setting in the config file
-        if (configuration->fullscreen() && !configuration->noFullscreen())
+        if (Q_LIKELY(configuration->fullscreen() && !configuration->noFullscreen()))
             window->showFullScreen();
         else
             window->show();

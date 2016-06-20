@@ -43,7 +43,12 @@
 #include <QWaylandOutput>
 #include <QWaylandWlShell>
 #include <QWaylandQuickOutput>
-#include <QWaylandWindowManagerExtension>
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
+#  include <QWaylandWindowManagerExtension>
+typedef QWaylandWindowManagerExtension QWaylandQtWindowManager;
+#else
+#  include <QWaylandQtWindowManager>
+#endif
 #include <private/qwlextendedsurface_p.h>
 #include <QWaylandTextInputManager>
 #include <QQuickView>
@@ -157,8 +162,8 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     connect(m_shell, &QWaylandWlShell::createShellSurface, this, &WaylandCompositor::createShellSurface);
     connect(m_surfExt, &QtWayland::SurfaceExtensionGlobal::extendedSurfaceReady, this, &WaylandCompositor::extendedSurfaceReady);
 
-    auto wmext = new QWaylandWindowManagerExtension(this);
-    connect(wmext, &QWaylandWindowManagerExtension::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
+    auto wmext = new QWaylandQtWindowManager(this);
+    connect(wmext, &QWaylandQtWindowManager::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
         if (ApplicationManager::instance()->fromProcessId(client->processId()))
             ApplicationManager::instance()->openUrl(url.toString());
     });

@@ -582,7 +582,8 @@ int main(int argc, char *argv[])
         } else {
             QList<QByteArray> caCertificateList;
 
-            for (const auto &caFile : configuration->caCertificates()) {
+            const auto caFiles = configuration->caCertificates();
+            for (const auto &caFile : caFiles) {
                 QFile f(caFile);
                 if (!f.open(QFile::ReadOnly))
                     throw Exception(f, "could not open CA-certificate file");
@@ -691,7 +692,10 @@ int main(int argc, char *argv[])
         }
 
         Q_ASSERT(window);
-        QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, qApp, [&startupTimer, &conn]() {
+        QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, qApp, [&startupTimer, &conn]() { // clazy:exclude=lambda-in-connect
+            // startupTimer and conn are local vars captured by reference: this is a bad thing in
+            // general, but in this case it is perfectly fine, since both HAVE to be alive, when
+            // the frameSwapped signal is emitted.
             static bool once = true;
             if (once) {
                 QObject::disconnect(conn);

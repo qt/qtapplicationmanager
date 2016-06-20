@@ -65,6 +65,7 @@
 
 Q_GLOBAL_STATIC(QMutex, initMutex)
 
+// clazy:excludeall=non-pod-global-static
 static AM_LIBCRYPTO_FUNCTION(ERR_error_string_n);
 
 #endif

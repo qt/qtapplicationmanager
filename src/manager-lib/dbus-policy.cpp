@@ -51,8 +51,8 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
     QMap<QByteArray, DBusPolicy> result;
 
 #if defined(QT_DBUS_LIB)
-    foreach (const QString &f, yamlFragment.keys()) {
-        QVariantMap policy = yamlFragment.value(f).toMap();
+    for (auto it = yamlFragment.cbegin(); it != yamlFragment.cend(); ++it) {
+        const QVariantMap &policy = it->toMap();
         DBusPolicy dbp;
 
         bool ok;
@@ -68,7 +68,7 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
         dbp.m_capabilities = policy.value(qSL("capabilities")).toStringList();
         dbp.m_capabilities.sort();
 
-        result.insert(f.toLocal8Bit(), dbp);
+        result.insert(it.key().toLocal8Bit(), dbp);
     }
 #else
     Q_UNUSED(yamlFragment)

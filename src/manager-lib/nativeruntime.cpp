@@ -386,7 +386,7 @@ NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
             qCWarning(LogSystem) << "Could not retrieve peer pid on D-Bus connection attempt.";
             return;
         }
-        for (NativeRuntime *rt : m_nativeRuntimes) {
+        for (NativeRuntime *rt : qAsConst(m_nativeRuntimes)) {
             if (rt->applicationProcessId() == pid) {
                 rt->onDBusPeerConnection(connection);
                 return;

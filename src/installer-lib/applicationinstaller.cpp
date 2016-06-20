@@ -333,8 +333,8 @@ bool ApplicationInstaller::setDBusPolicy(const QVariantMap &yamlFragment)
 
     d->dbusPolicy = parseDBusPolicy(yamlFragment);
 
-    foreach (const QByteArray &f, d->dbusPolicy.keys()) {
-       if (!functions.contains(f))
+    for (auto it = d->dbusPolicy.cbegin(); it != d->dbusPolicy.cend(); ++it) {
+       if (!functions.contains(it.key()))
            return false;
     }
     return true;
@@ -711,7 +711,10 @@ void ApplicationInstaller::acknowledgePackageInstallation(const QString &taskId)
     AM_TRACE(LogInstaller, taskId)
     AM_AUTHENTICATE_DBUS(void)
 
-    foreach (AsynchronousTask *task, d->taskQueue.toVector() += d->activeTask) {
+    auto allTasks = d->taskQueue;
+    allTasks.append(d->activeTask);
+
+    for (AsynchronousTask *task : qAsConst(allTasks)) {
         if (qobject_cast<InstallationTask *>(task) && (task->id() == taskId)) {
             static_cast<InstallationTask *>(task)->acknowledge();
             break;
@@ -765,7 +768,10 @@ QString ApplicationInstaller::taskState(const QString &taskId)
 {
     AM_AUTHENTICATE_DBUS(QString)
 
-    foreach (AsynchronousTask *task, d->taskQueue.toVector() += d->activeTask) {
+    auto allTasks = d->taskQueue;
+    allTasks.append(d->activeTask);
+
+    for (const AsynchronousTask *task : qAsConst(allTasks)) {
         if (task && (task->id() == taskId))
             return AsynchronousTask::stateToString(task->state());
     }

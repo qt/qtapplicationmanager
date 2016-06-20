@@ -47,6 +47,8 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+// clazy:excludeall=non-pod-global-static
+
 // EVP
 static AM_LIBCRYPTO_FUNCTION(EVP_sha512, nullptr);
 static AM_LIBCRYPTO_FUNCTION(EVP_sha256, nullptr);

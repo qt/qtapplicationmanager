@@ -141,7 +141,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
     *errorString = QString();
 
     gid_t realGid = getgid();
-    uid_t sudoUid = qgetenv("SUDO_UID").toInt();
+    uid_t sudoUid = qgetenv("SUDO_UID").toInt(); // clazy:exclude=qgetenv
 
     // run as normal user (e.g. 1000): uid == 1000  euid == 1000
     // run with binary suid-root:      uid == 1000  euid == 0
@@ -150,7 +150,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
     // treat sudo as special variant of a SUID executable
     if (realUid == 0 && effectiveUid == 0 && sudoUid != 0) {
         realUid = sudoUid;
-        realGid = qgetenv("SUDO_GID").toInt();
+        realGid = qgetenv("SUDO_GID").toInt(); // clazy:exclude=qgetenv
 
         setresgid(realGid, 0, 0);
         setresuid(realUid, 0, 0);

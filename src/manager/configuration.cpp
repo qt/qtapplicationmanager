@@ -508,5 +508,5 @@ quint16 Configuration::telnetPort() const
 
 QStringList Configuration::caCertificates() const
 {
-    return d->findInConfigFile({ qSL("installer"), qSL("caCertificates") }).value<QStringList>();
+    return d->findInConfigFile({ qSL("installer"), qSL("caCertificates") }).toStringList();
 }

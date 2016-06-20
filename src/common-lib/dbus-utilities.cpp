@@ -57,12 +57,11 @@ QVariant convertFromJSVariant(const QVariant &variant)
     return variant;
 #else
     int type = variant.userType();
-    QVariant result;
 
     if (type == qMetaTypeId<QJSValue>()) {
         return convertFromJSVariant(variant.value<QJSValue>().toVariant());
     } else if (type == QMetaType::QUrl) {
-        return QVariant(variant.value<QUrl>().toString());
+        return QVariant(variant.toUrl().toString());
     } else if (type == QMetaType::QVariant) {
         // got a matryoshka variant
         return convertFromJSVariant(variant.value<QVariant>());

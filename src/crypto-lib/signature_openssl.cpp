@@ -50,6 +50,8 @@
 #include <openssl/pkcs12.h>
 #include <openssl/bio.h>
 
+// clazy:excludeall=non-pod-global-static
+
 // deleter
 static AM_LIBCRYPTO_FUNCTION(X509_free);
 static AM_LIBCRYPTO_FUNCTION(BIO_free, 0);

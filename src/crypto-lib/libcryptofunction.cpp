@@ -55,6 +55,7 @@
 #  error "Your OpenSSL version is too old - the minimum supported version is 1.0.1"
 #endif
 
+// clazy:excludeall=non-pod-global-static
 static AM_LIBCRYPTO_FUNCTION(SSLeay, 0);
 static AM_LIBCRYPTO_FUNCTION(OPENSSL_add_all_algorithms_noconf);
 static AM_LIBCRYPTO_FUNCTION(ERR_load_crypto_strings);

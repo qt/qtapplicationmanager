@@ -126,7 +126,7 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
 
             //qWarning() << "Setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << resource << "->" << userclass;
 
-            QString file = QString(qSL("/sys/fs/cgroup/%1/%2/cgroup.procs")).arg(resource).arg(userclass);
+            QString file = QString(qSL("/sys/fs/cgroup/%1/%2/cgroup.procs")).arg(resource, userclass);
             QFile f(file);
             bool ok = f.open(QFile::WriteOnly);
             ok = ok && (f.write(pidString) == pidString.size());

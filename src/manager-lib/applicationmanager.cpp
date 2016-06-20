@@ -378,8 +378,8 @@ bool ApplicationManager::setDBusPolicy(const QVariantMap &yamlFragment)
 
     d->dbusPolicy = parseDBusPolicy(yamlFragment);
 
-    foreach (const QByteArray &f, d->dbusPolicy.keys()) {
-       if (!functions.contains(f))
+    for (auto it = d->dbusPolicy.cbegin(); it != d->dbusPolicy.cend(); ++it) {
+       if (!functions.contains(it.key()))
            return false;
     }
     return true;

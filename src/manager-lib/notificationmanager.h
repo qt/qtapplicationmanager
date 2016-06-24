@@ -87,6 +87,7 @@ signals:
 
 signals:
     void countChanged();
+    void notificationUpdate(int notificationIndex);
 
 private:
     NotificationManager(QObject *parent = 0);

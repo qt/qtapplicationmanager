@@ -547,9 +547,11 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
     if (replaces_id) {
         QModelIndex idx = index(d->notifications.indexOf(n), 0);
         emit dataChanged(idx, idx);
+        emit notificationUpdate(idx.row());
     } else {
         d->notifications << n;
         endInsertRows();
+        emit notificationUpdate(rowCount()-1);
     }
 
     if (timeout >= 0) {

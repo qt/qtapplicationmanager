@@ -190,7 +190,7 @@ enum Roles
     IsShowingProgress,
     Progress, // 0..1 or -1 == busy
 
-    IsSticky, // no timeout == sticky
+    IsSticky, // if timeout == 0
     Timeout, // in msec
 
     Extended // QVariantMap
@@ -500,11 +500,13 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
     if (replaces_id) {
        int i = d->findNotificationById(replaces_id);
 
-       if (i < 0)
+       if (i < 0) {
+           qCDebug(LogNotifications) << "  -> failed to update existing notification";
            return 0;
-
+       }
        id = replaces_id;
        n = d->notifications.at(i);
+       qCDebug(LogNotifications) << "  -> updating existing notification";
     } else {
         id = ++idCounter;
 
@@ -512,12 +514,14 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
         n->id = id;
 
         beginInsertRows(QModelIndex(), rowCount(), rowCount());
+        qCDebug(LogNotifications) << "  -> adding new notification with id" << id;
     }
 
     const Application *app = ApplicationManager::instance()->fromId(app_name);
 
     if (replaces_id && app != n->application) {
         // no hijacking allowed
+        qCDebug(LogNotifications) << "  -> failed to update notification, due to hijacking attempt";
         return 0;
     }
     n->application = app;
@@ -541,7 +545,7 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
     n->isSystemNotification = hints.value(qSL("x-pelagicore-system-notification")).toBool();
     n->isShowingProgress = hints.value(qSL("x-pelagicore-show-progress")).toBool();
     n->progress = hints.value(qSL("x-pelagicore-progress")).toReal();
-    n->timeout = timeout;
+    n->timeout = qMax(0, timeout);
     n->extended = hints.value(qSL("x-pelagicore-extended")).toMap();
 
     if (replaces_id) {
@@ -554,7 +558,7 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
         emit notificationUpdate(rowCount()-1);
     }
 
-    if (timeout >= 0) {
+    if (timeout > 0) {
         delete n->timer;
         QTimer *t = new QTimer(this);
         connect(t, &QTimer::timeout, [this,id,t]() { d->closeNotification(id, TimeoutExpired); t->deleteLater(); });
@@ -562,6 +566,7 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
         n->timer = t;
     }
 
+    qWarning() << "  -> returning id" << id;
     return id;
 }
 

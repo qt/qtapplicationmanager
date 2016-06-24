@@ -185,6 +185,7 @@ QString Notification::category() const
         \li Critical
         \li \c 2
     \endtable
+    The default value is \c Normal.
 */
 int Notification::priority() const
 {
@@ -197,6 +198,7 @@ int Notification::priority() const
     Request that the notification can be acknowledged by the user - most likely by clicking on it.
 
     This will be reported via the \l acknowledged signal.
+    The default value is \c false.
 */
 bool Notification::isAcknowledgeable() const
 {
@@ -208,6 +210,7 @@ bool Notification::isAcknowledgeable() const
 
     In case of non-sticky notifications, this value specifies after how many milliseconds the
     notification should be removed from the screen.
+    The default value is \c 2000.
 
     \sa sticky
 */
@@ -222,6 +225,7 @@ int Notification::timeout() const
     If this property is set to \c false, then the notification should be removed after \l timeout
     milliseconds. Otherwise the notification is sticky and should stay visible until the user
     acknowledges it.
+    The default value is \c false, due to the timeout properties default value.
 */
 bool Notification::isSticky() const
 {
@@ -233,6 +237,7 @@ bool Notification::isSticky() const
 
     A boolean value describing whether a progress-bar/busy-indicator should be shown as part of the
     notification.
+    The default value is \c false.
 
     \note This is an application-manager specific extension to the protocol: it uses the
           \c{x-pelagicore-show-progress} hint to communicate this value.
@@ -247,6 +252,7 @@ bool Notification::isShowingProgress() const
 
     A floating-point value between \c{[0.0 ... 1.0]} which can be used to show a progress-bar on
     the notification. The special value \c -1 can be used to request a busy indicator.
+    The default value is \c -1.
 
     \note This is an application-manager specific extension to the protocol: it uses the
           \c{x-pelagicore-progress} hint to communicate this value.
@@ -277,6 +283,7 @@ QVariantList Notification::actions() const
     taken as an icon name conforming to the \c freedesktop.org icon naming specification (in a
     closed system, these could also be any icon specification string that the notification server
     understands).
+    The default value is \c false.
 */
 bool Notification::showActionsAsIcons() const
 {
@@ -285,6 +292,14 @@ bool Notification::showActionsAsIcons() const
 
 /*!
     \qmlproperty bool Notification::visible
+
+    Tell the system's notification manager to show/hide this notification. You only have to call
+    show once for a notification, even if you change properties afterwards - these are communicated
+    to the server automatically. This is just a hint to the notification manager though - how and
+    when notifications actually apppear on the screen is up to the server side implementation.
+    The default value is \c false.
+
+    \sa show, hide
 */
 bool Notification::isVisible() const
 {
@@ -296,6 +311,7 @@ bool Notification::isVisible() const
 
     Tells the notification manager, whether clicking one of the supplied action texts or images
     will dismiss the notification.
+    The default value is \c false.
 */
 bool Notification::dismissOnAction() const
 {
@@ -410,7 +426,7 @@ void Notification::setTimeout(int timeout)
 void Notification::setSticky(bool sticky)
 {
     if ((m_timeout == 0) != sticky) {
-        m_timeout = sticky? 0 : defaultTimeout;
+        m_timeout = sticky ? 0 : defaultTimeout;
         emit stickyChanged(sticky);
         emit timeoutChanged(m_timeout);
     }

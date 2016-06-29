@@ -41,6 +41,9 @@
 
 #pragma once
 
+#include <QVector>
+#include <QPointer>
+
 #include "applicationinterface.h"
 #include "notification.h"
 
@@ -53,6 +56,8 @@ public:
 
     void componentComplete() override;
 
+    static void initialize();
+
 protected:
     uint libnotifyShow() override;
     void libnotifyClose() override;
@@ -60,6 +65,8 @@ protected:
 private:
     ConstructionMode m_mode;
     QString m_appId;
+
+    static QVector<QPointer<QmlInProcessNotification> > s_allNotifications;
 
     friend class QmlInProcessApplicationInterface;
 };
@@ -79,8 +86,6 @@ public:
 
 private:
     QmlInProcessRuntime *m_runtime;
-    //QList<QPointer<QmlInProcessNotification> > m_allNotifications;
-
     friend class QmlInProcessRuntime;
 };
 

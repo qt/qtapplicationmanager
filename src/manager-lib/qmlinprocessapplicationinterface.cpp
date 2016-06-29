@@ -60,6 +60,8 @@ QmlInProcessApplicationInterface::QmlInProcessApplicationInterface(QmlInProcessR
             this, &ApplicationInterface::memoryLowWarning);
     connect(runtime, &QmlInProcessRuntime::aboutToStop,
             this, &ApplicationInterface::quit);
+
+    QmlInProcessNotification::initialize();
 }
 
 QString QmlInProcessApplicationInterface::applicationId() const
@@ -84,29 +86,7 @@ Notification *QmlInProcessApplicationInterface::createNotification()
 }
 
 
-//void QmlInProcessApplicationInterface::notificationClosed(uint notificationId, uint reason)
-//{
-//    qDebug("Notification was closed signal: %u", notificationId);
-//    foreach (const QPointer<QmlInProcessNotification> &n, m_allNotifications) {
-//        if (n->notificationId() == notificationId) {
-//            n->libnotifyClosed(reason);
-//            m_allNotifications.removeAll(n);
-//            break;
-//        }
-//    }
-//}
-
-//void QmlInProcessApplicationInterface::notificationActivated(uint notificationId, const QString &actionId)
-//{
-//    qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
-//    foreach (const QPointer<QmlInProcessNotification> &n, m_allNotifications) {
-//        if (n->notificationId() == notificationId) {
-//            n->libnotifyActivated(actionId);
-//            break;
-//        }
-//    }
-//}
-
+QVector<QPointer<QmlInProcessNotification>> QmlInProcessNotification::s_allNotifications;
 
 QmlInProcessNotification::QmlInProcessNotification(QObject *parent, ConstructionMode mode)
     : Notification(parent, mode)
@@ -129,6 +109,40 @@ void QmlInProcessNotification::componentComplete()
     }
 }
 
+void QmlInProcessNotification::initialize()
+{
+    static bool once = false;
+
+    if (once)
+        return;
+    once = true;
+
+    auto nm = NotificationManager::instance();
+
+    connect(nm, &NotificationManager::ActionInvoked,
+            nm, [](uint notificationId, const QString &actionId) {
+        qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
+        foreach (const QPointer<QmlInProcessNotification> &n, s_allNotifications) {
+            if (n->notificationId() == notificationId) {
+                n->libnotifyActionInvoked(actionId);
+                break;
+            }
+        }
+    });
+
+    connect(nm, &NotificationManager::NotificationClosed,
+            nm, [](uint notificationId, uint reason) {
+        qDebug("Notification was closed signal: %u", notificationId);
+        foreach (const QPointer<QmlInProcessNotification> &n, s_allNotifications) {
+            if (n->notificationId() == notificationId) {
+                n->libnotifyNotificationClosed(reason);
+                s_allNotifications.removeAll(n);
+                break;
+            }
+        }
+    });
+}
+
 void QmlInProcessNotification::libnotifyClose()
 {
     NotificationManager::instance()->CloseNotification(notificationId());
@@ -136,6 +150,7 @@ void QmlInProcessNotification::libnotifyClose()
 
 uint QmlInProcessNotification::libnotifyShow()
 {
+    s_allNotifications << this;
     return NotificationManager::instance()->Notify(m_appId, notificationId(),
                                                    icon().toString(), summary(), body(),
                                                    libnotifyActionList(), libnotifyHints(),

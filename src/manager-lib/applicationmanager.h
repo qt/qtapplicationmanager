@@ -134,6 +134,10 @@ signals:
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
     Q_SCRIPTABLE void countChanged();
 
+    Q_SCRIPTABLE void applicationAdded(const QString &id);
+    Q_SCRIPTABLE void applicationAboutToBeRemoved(const QString &id);
+    Q_SCRIPTABLE void applicationChanged(const QString &id, const QStringList &changedRoles);
+
     void inProcessRuntimeCreated(AbstractRuntime *runtime); // evil hook to support in-process runtimes
 
     void memoryLowWarning();
@@ -159,7 +163,7 @@ private slots:
     friend class DeinstallationTask;
 
 private:
-    void emitDataChanged(const Application *app);
+    void emitDataChanged(const Application *app, const QVector<int> &roles = QVector<int>());
     void registerMimeTypes();
 
     ApplicationManager(ApplicationDatabase *adb, QObject *parent);

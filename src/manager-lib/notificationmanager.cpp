@@ -408,6 +408,31 @@ QVariantMap NotificationManager::get(int index) const
 }
 
 /*!
+    \qmlmethod object NotificationManager::notification(int id)
+
+    Retrieves the model data for the notification identified by \a id as a JavaScript object.
+    Please see the \l {NotificationManager Roles}{role names} for the expected object fields.
+
+    Will return an empty object, if the specified \a id is invalid.
+*/
+QVariantMap NotificationManager::notification(int id) const
+{
+    return get(indexOfNotification(id));
+}
+
+/*!
+    \qmlmethod int NotificationManager::indexOfNotification(int id)
+
+    Maps the notification \a id to its position within the model.
+
+    Will return \c -1, if the specified \a id is invalid.
+*/
+int NotificationManager::indexOfNotification(int id) const
+{
+    return d->findNotificationById(id);
+}
+
+/*!
     \qmlmethod NotificationManager::acknowledgeNotification(int id)
 
     This function needs to be called by the System-ui, when the user acknowledged the notification
@@ -551,11 +576,19 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
     if (replaces_id) {
         QModelIndex idx = index(d->notifications.indexOf(n), 0);
         emit dataChanged(idx, idx);
-        emit notificationUpdate(idx.row());
+        static const auto nChanged = QMetaMethod::fromSignal(&NotificationManager::notificationChanged);
+        if (isSignalConnected(nChanged)) {
+            // we could do better here and actually find out which fields changed...
+            emit notificationChanged(n->id, QStringList());
+        }
+
+        emit notificationUpdate(idx.row()); // deprecated
     } else {
         d->notifications << n;
         endInsertRows();
-        emit notificationUpdate(rowCount()-1);
+        emit notificationAdded(n->id);
+
+        emit notificationUpdate(rowCount()-1); // deprecated
     }
 
     if (timeout > 0) {
@@ -585,6 +618,8 @@ void NotificationManagerPrivate::closeNotification(uint id, CloseReason reason)
     int i = findNotificationById(id);
 
     if (i >= 0) {
+        emit q->notificationAboutToBeRemoved(id);
+
         q->beginRemoveRows(QModelIndex(), i, i);
         notifications.removeAt(i);
         q->endRemoveRows();

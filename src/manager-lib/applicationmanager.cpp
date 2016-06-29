@@ -726,9 +726,9 @@ bool ApplicationManager::lockApplication(const QString &id)
         return false;
     if (!app->lock())
         return false;
-    emitDataChanged(app);
+    emitDataChanged(app, QVector<int> { IsBlocked });
     stopApplication(app, true);
-    emitDataChanged(app);
+    emitDataChanged(app, QVector<int> { IsRunning });
     return true;
 }
 
@@ -739,7 +739,7 @@ bool ApplicationManager::unlockApplication(const QString &id)
         return false;
     if (!app->unlock())
         return false;
-    emitDataChanged(app);
+    emitDataChanged(app, QVector<int> { IsBlocked });
     return true;
 }
 
@@ -755,7 +755,7 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
         installApp->mergeInto(const_cast<Application *>(app));
         app->m_state = Application::BeingUpdated;
         app->m_progress = 0;
-        emitDataChanged(app);
+        emitDataChanged(app, QVector<int> { IsUpdating });
     } else { // installation
         installApp->m_locked.ref();
         installApp->m_state = Application::BeingInstalled;
@@ -763,10 +763,12 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
         d->apps << installApp;
         endInsertRows();
+        emit applicationAdded(installApp->id());
         try {
             if (d->database)
                 d->database->write(d->apps);
         } catch (const Exception &) {
+            emit applicationAboutToBeRemoved(installApp->id());
             beginRemoveRows(QModelIndex(), d->apps.count() - 1, d->apps.count() - 1);
             d->apps.removeLast();
             endRemoveRows();
@@ -792,7 +794,7 @@ bool ApplicationManager::startingApplicationRemoval(const QString &id)
 
     app->m_state = Application::BeingRemoved;
     app->m_progress = 0;
-    emitDataChanged(app);
+    emitDataChanged(app, QVector<int> { IsUpdating });
     return true;
 }
 
@@ -802,7 +804,7 @@ void ApplicationManager::progressingApplicationInstall(const QString &id, qreal 
     if (!app || app->m_state == Application::Installed)
         return;
     app->m_progress = progress;
-    emitDataChanged(app);
+    emitDataChanged(app, QVector<int> { UpdateProgress });
 }
 
 bool ApplicationManager::finishedApplicationInstall(const QString &id)
@@ -819,7 +821,7 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
     case Application::BeingUpdated:
         app->m_state = Application::Installed;
         app->m_progress = 0;
-        emitDataChanged(app);
+        emitDataChanged(app, QVector<int> { IsUpdating });
 
         unlockApplication(id);
         break;
@@ -827,6 +829,7 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
     case Application::BeingRemoved: {
         int row = d->apps.indexOf(app);
         if (row >= 0) {
+            emit applicationAboutToBeRemoved(app->id());
             beginRemoveRows(QModelIndex(), row, row);
             d->apps.removeAt(row);
             endRemoveRows();
@@ -859,6 +862,7 @@ bool ApplicationManager::canceledApplicationInstall(const QString &id)
     case Application::BeingInstalled: {
         int row = d->apps.indexOf(app);
         if (row >= 0) {
+            emit applicationAboutToBeRemoved(app->id());
             beginRemoveRows(QModelIndex(), row, row);
             d->apps.removeAt(row);
             endRemoveRows();
@@ -870,7 +874,7 @@ bool ApplicationManager::canceledApplicationInstall(const QString &id)
     case Application::BeingRemoved:
         app->m_state = Application::Installed;
         app->m_progress = 0;
-        emitDataChanged(app);
+        emitDataChanged(app, QVector<int> { IsUpdating });
 
         unlockApplication(id);
         break;
@@ -896,11 +900,20 @@ void ApplicationManager::openUrlRelay(const QUrl &url)
     openUrl(url.toString());
 }
 
-void ApplicationManager::emitDataChanged(const Application *app)
+void ApplicationManager::emitDataChanged(const Application *app, const QVector<int> &roles)
 {
     int row = d->apps.indexOf(app);
-    if (row >= 0)
-        emit dataChanged(index(row), index(row));
+    if (row >= 0) {
+        emit dataChanged(index(row), index(row), roles);
+
+        static const auto appChanged = QMetaMethod::fromSignal(&ApplicationManager::applicationChanged);
+        if (isSignalConnected(appChanged)) {
+            QStringList stringRoles;
+            foreach (const auto &role, roles)
+                stringRoles << d->roleNames[role];
+            emit applicationChanged(app->id(), stringRoles);
+        }
+    }
 }
 
 // item model part

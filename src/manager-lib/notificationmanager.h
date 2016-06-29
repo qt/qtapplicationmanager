@@ -69,6 +69,8 @@ public:
 
     Q_INVOKABLE int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
+    Q_INVOKABLE QVariantMap notification(int id) const;
+    Q_INVOKABLE int indexOfNotification(int id) const;
 
     Q_INVOKABLE void acknowledgeNotification(int id);
     Q_INVOKABLE void triggerNotificationAction(int id, const QString &actionId);
@@ -87,7 +89,11 @@ signals:
 
 signals:
     void countChanged();
-    void notificationUpdate(int notificationIndex);
+    void notificationAdded(int id);
+    void notificationAboutToBeRemoved(int id);
+    void notificationChanged(int id, const QStringList &rolesChanged);
+
+    QT_DEPRECATED void notificationUpdate(int notificationIndex);
 
 private:
     NotificationManager(QObject *parent = 0);

@@ -127,7 +127,7 @@ public:
     Controller();
 
 public slots:
-    void startApplication(const QString &qmlFile, const QString &argument, const QVariantMap &runtimeParameters);
+    void startApplication(const QString &qmlFile, const QString &document, const QVariantMap &runtimeParameters);
 
 private:
     QQmlApplicationEngine m_engine;
@@ -225,13 +225,13 @@ Controller::Controller()
     }
 }
 
-void Controller::startApplication(const QString &qmlFile, const QString &argument, const QVariantMap &runtimeParameters)
+void Controller::startApplication(const QString &qmlFile, const QString &document, const QVariantMap &runtimeParameters)
 {
     if (m_launched)
         return;
     m_launched = true;
 
-    qCDebug(LogQmlRuntime) << "loading" << qmlFile << "- start argument:" << argument;
+    qCDebug(LogQmlRuntime) << "loading" << qmlFile << "- document:" << document;
 
     if (!QFile::exists(qmlFile)) {
         qCCritical(LogQmlRuntime) << "could not load" << qmlFile << ": file does not exist";
@@ -294,14 +294,11 @@ void Controller::startApplication(const QString &qmlFile, const QString &argumen
     Q_ASSERT(m_window);
     QObject::connect(&m_engine, &QQmlEngine::quit, m_window, &QObject::deleteLater); // not sure if this is needed .. or even the best thing to do ... see connects above, they seem to work better
 
-    qWarning() << m_configuration;
-
     if (m_configuration.contains(qSL("backgroundColor"))) {
         QSurfaceFormat surfaceFormat = m_window->format();
         surfaceFormat.setAlphaBufferSize(8);
         m_window->setFormat(surfaceFormat);
         m_window->setClearBeforeRendering(true);
-        qWarning() << "Setting bg color" << m_configuration.value(qSL("backgroundColor")).toString();
         m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
     }
     m_window->show();
@@ -311,6 +308,8 @@ void Controller::startApplication(const QString &qmlFile, const QString &argumen
 #endif
     qCDebug(LogQmlRuntime) << "component loading and creating complete.";
 
+    if (!document.isEmpty())
+        m_applicationInterface->openDocument(document);
 }
 
 #include "main.moc"

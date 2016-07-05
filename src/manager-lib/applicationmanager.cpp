@@ -95,7 +95,7 @@
         \li Type
         \li Description
     \row
-        \li \c id
+        \li \c applicationId
         \li string
         \li The unique of an application represented as a string in reverse-dns form (e.g.
             \c com.pelagicore.foo)

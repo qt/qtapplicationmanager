@@ -41,6 +41,7 @@
 
 #include <QLibrary>
 #include <QString>
+#include <QSslSocket>
 
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -75,6 +76,11 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
             "crypto";
 #endif
 
+    // Loading libcrypto is a mess, since distros are not creating links for libcrypto.so.1
+    // anymore. In order to not duplicate a lot of bad hacks, we simply let QtNetwork do the
+    // dirty work.
+    QSslSocket::supportsSsl();
+
     s_library = new QLibrary(libname, 1);
     bool ok = s_library->load();
     if (!ok) {
@@ -92,8 +98,12 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
                 qCritical("Loaded libcrypto (%s), but the version is too old: 0x%08lx (minimum supported version is: 0x%08lx)",
                           qPrintable(s_library->fileName()), version, AM_MINIMUM_OPENSSL_VERSION);
             }
+        } else {
+            qCritical("Could not get version information from libcrypto: symbol 'SSLeay' was not found");
         }
         s_library->unload();
+    } else {
+        qCritical("Could not find a suitable libcrypto: %s", qPrintable(s_library->errorString()));
     }
     delete s_library;
     s_library = 0;

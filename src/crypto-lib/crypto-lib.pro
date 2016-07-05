@@ -52,4 +52,5 @@ win32:!force-libcrypto {
     HEADERS += \
         libcryptofunction.h \
 
+    QT *= network
 }

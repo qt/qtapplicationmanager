@@ -316,6 +316,11 @@ static QVector<const Application *> scanForApplication(const QString &singleAppI
     QScopedPointer<Application> a(yas.scan(singleAppInfoYaml));
     Q_ASSERT(a);
 
+    if (!RuntimeFactory::instance()->manager(a->runtimeName())) {
+        qCDebug(LogSystem) << "Ignoring application" << a->id() << ", because it uses an unknown runtime:" << a->runtimeName();
+        return result;
+    }
+
     QStringList aliasPaths = appDir.entryList(QStringList(qSL("info-*.yaml")));
     std::vector<std::unique_ptr<Application>> aliases;
 
@@ -346,7 +351,7 @@ static QVector<const Application *> scanForApplications(const QDir &builtinAppsD
             if (appDirName.endsWith('+') || appDirName.endsWith('-'))
                 continue;
             if (!isValidDnsName(appDirName)) {
-                qCDebug(LogSystem) << "Ignoring Application Directory" << appDirName << ", as it's not following the rdns convention";
+                qCDebug(LogSystem) << "Ignoring application directory" << appDirName << ", as it's not following the rdns convention";
                 continue;
             }
             QDir appDir = baseDir.absoluteFilePath(appDirName);
@@ -362,6 +367,10 @@ static QVector<const Application *> scanForApplications(const QDir &builtinAppsD
             QScopedPointer<Application> a(yas.scan(appDir.absoluteFilePath(qSL("info.yaml"))));
             Q_ASSERT(a);
 
+            if (!RuntimeFactory::instance()->manager(a->runtimeName())) {
+                qCDebug(LogSystem) << "Ignoring application" << a->id() << ", because it uses an unknown runtime:" << a->runtimeName();
+                continue;
+            }
             if (a->id() != appDirName) {
                 throw Exception(Error::Parse, "an info.yaml for built-in applications must be in directory "
                                               "that has the same name as the application's id: found %1 in %2")

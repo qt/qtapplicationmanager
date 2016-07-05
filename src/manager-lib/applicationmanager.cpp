@@ -500,7 +500,13 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         }
     }
 
-    bool inProcess = RuntimeFactory::instance()->manager(app->runtimeName())->inProcess();
+    auto runtimeManager = RuntimeFactory::instance()->manager(app->runtimeName());
+    if (!runtimeManager) {
+        qCWarning(LogSystem) << "No RuntimeManager found for runtime:" << app->runtimeName();
+        return false;
+    }
+
+    bool inProcess = runtimeManager->inProcess();
     AbstractContainer *container = nullptr;
     QString containerId = qSL("process"); //TODO: ask SystemUI or use config file
     bool attachRuntime = false;
@@ -748,6 +754,9 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
     if (!installApp || installApp->id().isEmpty())
         return false;
     const Application *app = fromId(installApp->id());
+
+    if (!RuntimeFactory::instance()->manager(installApp->runtimeName()))
+        return false;
 
     if (app) { // update
         if (!lockApplication(app->id()))

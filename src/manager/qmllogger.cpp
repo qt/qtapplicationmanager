@@ -52,6 +52,9 @@ QmlLogger::QmlLogger(QQmlEngine *engine)
 
 void QmlLogger::warnings(const QList<QQmlError> &list)
 {
+    if (!LogQml().isWarningEnabled())
+        return;
+
     foreach (const QQmlError &err, list) {
         QByteArray func;
         if (err.object())

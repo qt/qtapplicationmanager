@@ -46,6 +46,7 @@ HEADERS += \
     applicationipcmanager.h \
     applicationipcinterface.h \
     applicationipcinterface_p.h \
+    plugincontainer.h \
     processmonitor.h \
     memorymonitor.h \
     fpsmonitor.h \
@@ -84,6 +85,7 @@ SOURCES += \
     systemmonitor_p.cpp \
     applicationipcmanager.cpp \
     applicationipcinterface.cpp \
+    plugincontainer.cpp \
     processmonitor.cpp \
     memorymonitor.cpp \
     fpsmonitor.cpp \
@@ -97,3 +99,7 @@ multi-process:SOURCES += \
 
 linux:SOURCES += \
     sysfsreader.cpp \
+
+# we have an external plugin interface with signals, so we need to
+# compile the moc-data into the exporting binary (appman itself)
+HEADERS += ../plugin-interfaces/containerinterface.h

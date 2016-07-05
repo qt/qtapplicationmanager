@@ -65,7 +65,7 @@ public:
     virtual AbstractContainer *create(const QStringList &debugWrapperCommand = QStringList()) = 0;
 
     QVariantMap configuration() const;
-    void setConfiguration(const QVariantMap &configuration);
+    virtual void setConfiguration(const QVariantMap &configuration);
 
 private:
     QString m_id;
@@ -88,7 +88,7 @@ public slots:
 
 signals:
     void started();
-    void error(QProcess::ProcessError error);
+    void errorOccured(QProcess::ProcessError error);
     void finished(int exitCode, QProcess::ExitStatus status);
     void stateChanged(QProcess::ProcessState newState);
 };
@@ -104,8 +104,8 @@ public:
     virtual QString controlGroup() const;
     virtual bool setControlGroup(const QString &groupName);
 
-    bool setProgram(const QString &program);
-    void setBaseDirectory(const QString &baseDirectory);
+    virtual bool setProgram(const QString &program);
+    virtual void setBaseDirectory(const QString &baseDirectory);
 
     virtual bool isReady() = 0;
 

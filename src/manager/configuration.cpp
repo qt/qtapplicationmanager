@@ -526,3 +526,8 @@ QStringList Configuration::caCertificates() const
 {
     return d->findInConfigFile({ qSL("installer"), qSL("caCertificates") }).toStringList();
 }
+
+QStringList Configuration::pluginFilePaths(const char *type) const
+{
+    return d->findInConfigFile({ qSL("plugins"), qL1S(type) }).toStringList();
+}

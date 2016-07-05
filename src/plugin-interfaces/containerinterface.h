@@ -41,64 +41,61 @@
 
 #pragma once
 
-#include "abstractruntime.h"
+#include <functional>
 
-class FakeApplicationManagerWindow;
-class QmlInProcessApplicationInterface;
+#include <QProcess>
 
-class QmlInProcessRuntimeManager : public AbstractRuntimeManager
-{
-    Q_OBJECT
-public:
-    explicit QmlInProcessRuntimeManager(QObject *parent = 0);
-    explicit QmlInProcessRuntimeManager(const QString &id, QObject *parent = 0);
-
-    static QString defaultIdentifier();
-    bool inProcess() const override;
-
-    AbstractRuntime *create(AbstractContainer *container, const Application *app) override;
-};
-
-
-class QmlInProcessRuntime : public AbstractRuntime
+class ContainerInterface : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager);
-    ~QmlInProcessRuntime();
+    virtual ~ContainerInterface() { }
 
-    State state() const override;
-    void openDocument(const QString &document) override;
-    qint64 applicationProcessId() const override;
+    virtual QString controlGroup() const = 0;
+    virtual bool setControlGroup(const QString &groupName) = 0;
 
-public slots:
-    bool start() override;
-    void stop(bool forceKill = false) override;
+    virtual bool setProgram(const QString &program) = 0;
+    virtual void setBaseDirectory(const QString &baseDirectory) = 0;
 
-signals:
-    void aboutToStop(); // used for the ApplicationInterface
+    virtual bool isReady() = 0;
 
-private slots:
-#if !defined(AM_HEADLESS)
-    void onWindowClose();
-    void onWindowDestroyed();
+    virtual QString mapContainerPathToHost(const QString &containerPath) const = 0;
+    virtual QString mapHostPathToContainer(const QString &hostPath) const = 0;
 
-    void onEnableFullscreen();
-    void onDisableFullscreen();
-#endif
+    virtual bool start(const QStringList &arguments, const QProcessEnvironment &env) = 0;
+    virtual bool isStarted() = 0;
 
-private:
-    QString m_document;
-    QmlInProcessApplicationInterface *m_applicationIf = 0;
+    virtual qint64 processId() const = 0;
+    virtual QProcess::ProcessState state() const = 0;
+    virtual void setWorkingDirectory(const QString &dir) = 0;
+    virtual void setProcessEnvironment(const QProcessEnvironment &environment) = 0;
 
-#if !defined(AM_HEADLESS)
-    // used by FakeApplicationManagerWindow to register windows
-    void addWindow(QQuickItem *window);
+    virtual void kill() = 0;
+    virtual void terminate() = 0;
 
-    FakeApplicationManagerWindow *m_mainWindow = 0;
-    QList<QQuickItem *> m_windows;
-
-    friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
-#endif
+Q_SIGNALS:
+    void ready();
+    void started();
+    void errorOccured(QProcess::ProcessError processError);
+    void finished(int exitCode, QProcess::ExitStatus exitStatus);
+    void stateChanged(QProcess::ProcessState state);
 };
+
+class ContainerManagerInterface
+{
+public:
+    virtual ~ContainerManagerInterface() { }
+
+    virtual QString identifier() = 0;
+    virtual bool supportsQuickLaunch() const = 0;
+    virtual void setConfiguration(const QVariantMap &configuration) = 0;
+
+    virtual ContainerInterface *create(const QStringList &debugWrapper = QStringList()) = 0;
+};
+
+#define AM_ContainerManagerInterface_iid "io.qt.ApplicationManager.ContainerManagerInterface"
+
+QT_BEGIN_NAMESPACE
+Q_DECLARE_INTERFACE(ContainerManagerInterface, AM_ContainerManagerInterface_iid)
+QT_END_NAMESPACE

@@ -68,19 +68,10 @@ public:
     void setConfiguration(const QVariantMap &configuration);
     void setAdditionalConfiguration(const QVariantMap &additionalConfiguration);
 
-    template<typename T> bool registerRuntime()
-    {
-        return registerRuntimeInternal(T::defaultIdentifier(), new T(T::defaultIdentifier(), this));
-    }
-
-    template<typename T> bool registerRuntime(const QString &id)
-    {
-        return registerRuntimeInternal(id, new T(id, this));
-    }
+    bool registerRuntime(AbstractRuntimeManager *manager);
+    bool registerRuntime(AbstractRuntimeManager *manager, const QString &identifier);
 
 private:
-    bool registerRuntimeInternal(const QString &identifier, AbstractRuntimeManager *manager);
-
     RuntimeFactory(QObject *parent = 0);
     RuntimeFactory(const RuntimeFactory &);
     RuntimeFactory &operator=(const RuntimeFactory &);

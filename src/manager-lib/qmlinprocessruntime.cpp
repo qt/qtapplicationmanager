@@ -261,6 +261,10 @@ qint64 QmlInProcessRuntime::applicationProcessId() const
 }
 
 
+QmlInProcessRuntimeManager::QmlInProcessRuntimeManager(QObject *parent)
+    : AbstractRuntimeManager(defaultIdentifier(), parent)
+{ }
+
 QmlInProcessRuntimeManager::QmlInProcessRuntimeManager(const QString &id, QObject *parent)
     : AbstractRuntimeManager(id, parent)
 { }

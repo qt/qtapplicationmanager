@@ -207,7 +207,7 @@ bool NativeRuntime::start()
 
     QObject::connect(m_process, &AbstractContainerProcess::started,
                      this, &NativeRuntime::onProcessStarted);
-    QObject::connect(m_process, &AbstractContainerProcess::error,
+    QObject::connect(m_process, &AbstractContainerProcess::errorOccured,
                      this, &NativeRuntime::onProcessError);
     QObject::connect(m_process, &AbstractContainerProcess::finished,
                      this, &NativeRuntime::onProcessFinished);
@@ -371,6 +371,10 @@ void NativeRuntimeInterface::finishedInitialization()
     emit launcherFinishedInitialization();
 }
 
+
+NativeRuntimeManager::NativeRuntimeManager(QObject *parent)
+    : NativeRuntimeManager(defaultIdentifier(), parent)
+{ }
 
 NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
     : AbstractRuntimeManager(id, parent)

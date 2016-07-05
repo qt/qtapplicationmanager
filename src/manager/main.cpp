@@ -102,6 +102,7 @@
 #include "quicklauncher.h"
 #include "nativeruntime.h"
 #include "processcontainer.h"
+#include "plugincontainer.h"
 #include "notificationmanager.h"
 #include "qmlinprocessruntime.h"
 #include "qmlinprocessapplicationinterface.h"
@@ -121,6 +122,8 @@
 #include "startuptimer.h"
 #include "systemmonitor.h"
 #include "applicationipcmanager.h"
+
+#include "../plugin-interfaces/startupinterface.h"
 
 
 static Configuration *configuration = 0;
@@ -224,7 +227,7 @@ static void dbusInitialization()
         qCCritical(LogSystem) << "ERROR:" << e.what();
         qApp->exit(2);
     }
-};
+}
 
 
 QT_BEGIN_NAMESPACE
@@ -419,6 +422,30 @@ static QVector<const Application *> scanForApplications(const QStringList &built
     return result;
 }
 
+template <typename T>
+static QVector<T *> loadPlugins(const char *type) throw (Exception)
+{
+    QVector<T *> interfaces;
+    const char *iid = qobject_interface_iid<T>();
+
+    foreach (const QString &pluginFilePath, configuration->pluginFilePaths(type)) {
+        QPluginLoader pluginLoader(pluginFilePath);
+        if (Q_UNLIKELY(!pluginLoader.load())) {
+            throw Exception(Error::System, "could not load %1 plugin %2: %3")
+                    .arg(type).arg(pluginFilePath, pluginLoader.errorString());
+        }
+        QScopedPointer<T >iface(qobject_cast<T *>(pluginLoader.instance()));
+
+        if (Q_UNLIKELY(!iface)) {
+            throw Exception(Error::System, "could not get an instance of '%1' from the %2 plugin %3")
+                    .arg(iid).arg(type).arg(pluginFilePath);
+        }
+        interfaces << iface.take();
+    }
+    return interfaces;
+}
+
+
 int main(int argc, char *argv[])
 {
     StartupTimer startupTimer;
@@ -483,6 +510,13 @@ int main(int argc, char *argv[])
         qputenv("AM_LOGGING_RULES", loggingRules.join(qL1C('\n')).toUtf8());
 
         startupTimer.checkpoint("after logging setup");
+
+        auto startupPlugins = loadPlugins<StartupInterface>("startup");
+        const auto &uiConfig = configuration->additionalUiConfiguration();
+        foreach (StartupInterface *iface, startupPlugins)
+            iface->initialize(uiConfig);
+
+        startupTimer.checkpoint("after startup-plugin load");
 
 #if defined(QT_DBUS_LIB)
         if (Q_UNLIKELY(configuration->dbusStartSessionBus())) {
@@ -550,19 +584,25 @@ int main(int argc, char *argv[])
         qApp->setProperty("singleProcessMode", forceSingleProcess);
 
         if (forceSingleProcess) {
-            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>();
-            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>(qSL("qml"));
+            RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager());
+            RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager(qSL("qml")));
         } else {
-            RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>();
+            RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager());
 #if defined(AM_NATIVE_RUNTIME_AVAILABLE)
-            RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>();
-            RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>(qSL("qml"));
-            //RuntimeFactory::instance()->registerRuntime<NativeRuntimeManager>(qSL("html"));
+            RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager());
+            RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(qSL("qml")));
+            //RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(qSL("html")));
 #endif
 #if defined(AM_HOST_CONTAINER_AVAILABLE)
-            ContainerFactory::instance()->registerContainer<ProcessContainerManager>();
+            ContainerFactory::instance()->registerContainer(new ProcessContainerManager());
 #endif
+            auto containerPlugins = loadPlugins<ContainerManagerInterface>("container");
+            foreach (ContainerManagerInterface *iface, containerPlugins)
+                ContainerFactory::instance()->registerContainer(new PluginContainerManager(iface));
         }
+        foreach (StartupInterface *iface, startupPlugins)
+            iface->afterRuntimeRegistration();
+
         ContainerFactory::instance()->setConfiguration(configuration->containerConfigurations());
         RuntimeFactory::instance()->setConfiguration(configuration->runtimeConfigurations());
         RuntimeFactory::instance()->setAdditionalConfiguration(configuration->additionalUiConfiguration());
@@ -720,11 +760,16 @@ int main(int argc, char *argv[])
             QTimer::singleShot(dbusDelay, qApp, dbusInitialization);
         }
 #endif
+        foreach (StartupInterface *iface, startupPlugins)
+            iface->beforeQmlEngineLoad(engine);
 
         engine->load(configuration->mainQmlFile());
         if (Q_UNLIKELY(engine->rootObjects().isEmpty()))
             throw Exception(Error::System, "Qml scene does not have a root object");
         QObject *rootObject = engine->rootObjects().at(0);
+
+        foreach (StartupInterface *iface, startupPlugins)
+            iface->afterQmlEngineLoad(engine);
 
         startupTimer.checkpoint("after loading main QML file");
 
@@ -758,11 +803,17 @@ int main(int argc, char *argv[])
 
         wm->registerCompositorView(window);
 
+        foreach (StartupInterface *iface, startupPlugins)
+            iface->beforeWindowShow(window);
+
         // --no-fullscreen on the command line trumps the fullscreen setting in the config file
         if (Q_LIKELY(configuration->fullscreen() && !configuration->noFullscreen()))
             window->showFullScreen();
         else
             window->show();
+
+        foreach (StartupInterface *iface, startupPlugins)
+            iface->afterWindowShow(window);
 
         startupTimer.checkpoint("after window show");
 #endif
@@ -838,7 +889,7 @@ int main(int argc, char *argv[])
 
         return res;
 
-    } catch (const Exception &e) {
+    } catch (const std::exception &e) {
         qCCritical(LogSystem) << "ERROR:" << e.what();
         return 2;
     }

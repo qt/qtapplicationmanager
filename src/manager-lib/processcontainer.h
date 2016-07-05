@@ -49,7 +49,8 @@ class ProcessContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
 public:
-    ProcessContainerManager(const QString &id, QObject *parent = 0);
+    explicit ProcessContainerManager(QObject *parent = 0);
+    explicit ProcessContainerManager(const QString &id, QObject *parent = 0);
 
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;

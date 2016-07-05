@@ -57,7 +57,7 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
 
     connect(&m_process, &QProcess::started, this, &HostProcess::started);
     connect(&m_process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
-            this, &HostProcess::error);
+            this, &HostProcess::errorOccured);
     connect(&m_process, static_cast<void (QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),
             this, &HostProcess::finished);
     connect(&m_process, &QProcess::stateChanged, this, &HostProcess::stateChanged);
@@ -198,6 +198,10 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
     setControlGroup(configuration().value(qSL("defaultControlGroup")).toString());
     return process;
 }
+
+ProcessContainerManager::ProcessContainerManager(QObject *parent)
+    : AbstractContainerManager(defaultIdentifier(), parent)
+{ }
 
 ProcessContainerManager::ProcessContainerManager(const QString &id, QObject *parent)
     : AbstractContainerManager(id, parent)

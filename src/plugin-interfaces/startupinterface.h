@@ -41,64 +41,29 @@
 
 #pragma once
 
-#include "abstractruntime.h"
+#include <exception>
+#include <QObject>
 
-class FakeApplicationManagerWindow;
-class QmlInProcessApplicationInterface;
+QT_FORWARD_DECLARE_CLASS(QQmlEngine)
+QT_FORWARD_DECLARE_CLASS(QWindow)
 
-class QmlInProcessRuntimeManager : public AbstractRuntimeManager
+class StartupInterface
 {
-    Q_OBJECT
 public:
-    explicit QmlInProcessRuntimeManager(QObject *parent = 0);
-    explicit QmlInProcessRuntimeManager(const QString &id, QObject *parent = 0);
+    virtual ~StartupInterface() { }
 
-    static QString defaultIdentifier();
-    bool inProcess() const override;
+    virtual void initialize(const QVariantMap &additionalConfiguration) throw(std::exception) = 0;
 
-    AbstractRuntime *create(AbstractContainer *container, const Application *app) override;
+    virtual void afterRuntimeRegistration() throw(std::exception) = 0;
+    virtual void beforeQmlEngineLoad(QQmlEngine *engine) throw(std::exception) = 0;
+    virtual void afterQmlEngineLoad(QQmlEngine *engine) throw(std::exception) = 0;
+
+    virtual void beforeWindowShow(QWindow *window) throw(std::exception) = 0;
+    virtual void afterWindowShow(QWindow *window) throw(std::exception) = 0;
 };
 
+#define AM_StartupInterface_iid "io.qt.ApplicationManager.StartupInterface"
 
-class QmlInProcessRuntime : public AbstractRuntime
-{
-    Q_OBJECT
-
-public:
-    explicit QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager);
-    ~QmlInProcessRuntime();
-
-    State state() const override;
-    void openDocument(const QString &document) override;
-    qint64 applicationProcessId() const override;
-
-public slots:
-    bool start() override;
-    void stop(bool forceKill = false) override;
-
-signals:
-    void aboutToStop(); // used for the ApplicationInterface
-
-private slots:
-#if !defined(AM_HEADLESS)
-    void onWindowClose();
-    void onWindowDestroyed();
-
-    void onEnableFullscreen();
-    void onDisableFullscreen();
-#endif
-
-private:
-    QString m_document;
-    QmlInProcessApplicationInterface *m_applicationIf = 0;
-
-#if !defined(AM_HEADLESS)
-    // used by FakeApplicationManagerWindow to register windows
-    void addWindow(QQuickItem *window);
-
-    FakeApplicationManagerWindow *m_mainWindow = 0;
-    QList<QQuickItem *> m_windows;
-
-    friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
-#endif
-};
+QT_BEGIN_NAMESPACE
+Q_DECLARE_INTERFACE(StartupInterface, AM_StartupInterface_iid)
+QT_END_NAMESPACE

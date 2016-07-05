@@ -41,11 +41,6 @@
 
 #pragma once
 
-//#include <functional>
-//#include <QVector>
-//#include <QMutex>
-//#include <QThread>
-
 #include <QMap>
 #include <QObject>
 
@@ -55,71 +50,6 @@ class Application;
 class AbstractContainer;
 class AbstractContainerManager;
 
-//typedef std::function<ExecutionContainer*()> ContainerFactoryFunction;
-
-//class ObjectPool : public QThread {
-
-//    Q_OBJECT
-
-//    typedef std::function<ExecutionContainer*()> FactoryFunction;
-
-//public:
-//    ObjectPool()
-//    { }
-
-//    void setFactoryFunction(FactoryFunction factoryFunction)
-//    {
-//        m_factoryFunction = factoryFunction;
-//    }
-
-//    Q_INVOKABLE void createInstances()
-//    {
-//        bool bCreateInstance = true;
-//        do {
-//            {
-//                QMutexLocker locker(&m_mutex);
-//                if (m_instances.size() >= m_size)
-//                    bCreateInstance = false;
-//            }
-
-//            if (bCreateInstance) {
-//                auto instance = m_factoryFunction();
-//                QMutexLocker locker(&m_mutex);
-//                m_instances.push_back(instance);
-//            }
-
-//        } while (bCreateInstance);
-//    }
-
-//    void triggerInstancesCreation()
-//    {
-//        if (!QThread::isRunning()) {
-//            this->start();
-//            moveToThread(this);
-//        }
-
-//        QMetaObject::invokeMethod(this, "createInstances", Qt::QueuedConnection);
-//    }
-
-//    ExecutionContainer* getInstance()
-//    {
-//        QMutexLocker locker(&m_mutex);
-//        ExecutionContainer* instance = nullptr;
-//        if (m_instances.size() > 0) {
-//            instance = m_instances[m_instances.size()-1];
-//            m_instances.pop_back();
-//        } else {
-//            instance = m_factoryFunction();
-//        }
-//        triggerInstancesCreation();
-//        return instance;
-//    }
-
-//    size_t m_size = 3;
-//    std::vector<ExecutionContainer*> m_instances;
-//    FactoryFunction m_factoryFunction;
-//    QMutex m_mutex;
-//};
 
 class ContainerFactory : public QObject
 {
@@ -136,19 +66,10 @@ public:
 
     void setConfiguration(const QVariantMap &configuration);
 
-    template<typename T> bool registerContainer()
-    {
-        return registerContainerInternal(T::defaultIdentifier(), new T(T::defaultIdentifier(), this));
-    }
-
-    template<typename T> bool registerContainer(const QString &id)
-    {
-        return registerContainerInternal(id, new T(id, this));
-    }
+    bool registerContainer(AbstractContainerManager *manager);
+    bool registerContainer(AbstractContainerManager *manager, const QString &identifier);
 
 private:
-    bool registerContainerInternal(const QString &identifier, AbstractContainerManager *manager);
-
     ContainerFactory(QObject *parent = 0);
     ContainerFactory(const ContainerFactory &);
     ContainerFactory &operator=(const ContainerFactory &);

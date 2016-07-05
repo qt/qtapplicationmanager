@@ -66,7 +66,8 @@ class NativeRuntimeManager : public AbstractRuntimeManager
 {
     Q_OBJECT
 public:
-    NativeRuntimeManager(const QString &id, QObject *parent = 0);
+    explicit NativeRuntimeManager(QObject *parent = 0);
+    explicit NativeRuntimeManager(const QString &id, QObject *parent = 0);
 
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;

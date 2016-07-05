@@ -122,11 +122,17 @@ void RuntimeFactory::setAdditionalConfiguration(const QVariantMap &additionalCon
     }
 }
 
-bool RuntimeFactory::registerRuntimeInternal(const QString &identifier, AbstractRuntimeManager *manager)
+bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager)
+{
+    return registerRuntime(manager, manager->identifier());
+}
+
+bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager, const QString &identifier)
 {
     if (!manager || identifier.isEmpty() || m_runtimes.contains(identifier))
         return false;
     m_runtimes.insert(identifier, manager);
+    manager->setParent(this);
     return true;
 }
 

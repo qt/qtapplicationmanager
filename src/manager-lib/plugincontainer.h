@@ -41,64 +41,74 @@
 
 #pragma once
 
-#include "abstractruntime.h"
+#include "abstractcontainer.h"
+#include "../plugin-interfaces/containerinterface.h"
 
-class FakeApplicationManagerWindow;
-class QmlInProcessApplicationInterface;
-
-class QmlInProcessRuntimeManager : public AbstractRuntimeManager
+class PluginContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
 public:
-    explicit QmlInProcessRuntimeManager(QObject *parent = 0);
-    explicit QmlInProcessRuntimeManager(const QString &id, QObject *parent = 0);
+    PluginContainerManager(ContainerManagerInterface *managerInterface, QObject *parent = nullptr);
 
     static QString defaultIdentifier();
-    bool inProcess() const override;
+    bool supportsQuickLaunch() const override;
 
-    AbstractRuntime *create(AbstractContainer *container, const Application *app) override;
+    AbstractContainer *create(const QStringList &debugWrapperCommand = QStringList()) override;
+
+    void setConfiguration(const QVariantMap &configuration) override;
+
+private:
+    ContainerManagerInterface *m_interface;
 };
 
+class PluginContainer;
 
-class QmlInProcessRuntime : public AbstractRuntime
+class PluginContainerProcess : public AbstractContainerProcess
 {
     Q_OBJECT
 
 public:
-    explicit QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager);
-    ~QmlInProcessRuntime();
+    PluginContainerProcess(PluginContainer *container);
 
-    State state() const override;
-    void openDocument(const QString &document) override;
-    qint64 applicationProcessId() const override;
+    qint64 processId() const override;
+    QProcess::ProcessState state() const override;
+    void setWorkingDirectory(const QString &dir) override;
+    void setProcessEnvironment(const QProcessEnvironment &environment) override;
 
 public slots:
-    bool start() override;
-    void stop(bool forceKill = false) override;
-
-signals:
-    void aboutToStop(); // used for the ApplicationInterface
-
-private slots:
-#if !defined(AM_HEADLESS)
-    void onWindowClose();
-    void onWindowDestroyed();
-
-    void onEnableFullscreen();
-    void onDisableFullscreen();
-#endif
+    void kill() override;
+    void terminate() override;
 
 private:
-    QString m_document;
-    QmlInProcessApplicationInterface *m_applicationIf = 0;
+    PluginContainer *m_container;
+};
 
-#if !defined(AM_HEADLESS)
-    // used by FakeApplicationManagerWindow to register windows
-    void addWindow(QQuickItem *window);
+class PluginContainer : public AbstractContainer
+{
+    Q_OBJECT
 
-    FakeApplicationManagerWindow *m_mainWindow = 0;
-    QList<QQuickItem *> m_windows;
+public:
+    virtual ~PluginContainer();
 
-    friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
-#endif
+    QString controlGroup() const override;
+    bool setControlGroup(const QString &groupName) override;
+
+    bool setProgram(const QString &program) override;
+    void setBaseDirectory(const QString &baseDirectory) override;
+
+    bool isReady() override;
+
+    QString mapContainerPathToHost(const QString &containerPath) const override;
+    QString mapHostPathToContainer(const QString &hostPath) const override;
+
+    AbstractContainerProcess *start(const QStringList &arguments, const QProcessEnvironment &env) override;
+
+protected:
+    explicit PluginContainer(ContainerInterface *containerInterface, AbstractContainerManager *manager);
+    ContainerInterface *m_interface;
+    PluginContainerProcess *m_process;
+    bool m_startCalled = false;
+
+    friend class PluginContainerProcess;
+    friend class PluginContainerManager;
 };

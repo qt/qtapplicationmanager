@@ -92,11 +92,17 @@ void ContainerFactory::setConfiguration(const QVariantMap &configuration)
     }
 }
 
-bool ContainerFactory::registerContainerInternal(const QString &identifier, AbstractContainerManager *manager)
+bool ContainerFactory::registerContainer(AbstractContainerManager *manager)
+{
+    return registerContainer(manager, manager->identifier());
+}
+
+bool ContainerFactory::registerContainer(AbstractContainerManager *manager, const QString &identifier)
 {
     if (!manager || identifier.isEmpty() || m_containers.contains(identifier))
         return false;
     m_containers.insert(identifier, manager);
+    manager->setParent(this);
     return true;
 }
 

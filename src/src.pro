@@ -12,6 +12,7 @@ SUBDIRS = \
     launchers \
     manager \
     tools \
+    plugin-interfaces \
 
 crypto-lib.depends = common-lib
 manager-lib.depends = common-lib crypto-lib

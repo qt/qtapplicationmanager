@@ -100,6 +100,8 @@ public:
 
     QStringList caCertificates() const;
 
+    QStringList pluginFilePaths(const char *type) const;
+
 private:
     void initialize();
 

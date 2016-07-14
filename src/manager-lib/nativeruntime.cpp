@@ -171,6 +171,7 @@ bool NativeRuntime::start()
 
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(qSL("QT_QPA_PLATFORM"), qSL("wayland"));
+    env.remove(qSL("QT_IM_MODULE"));     // Applications should use wayland text input
     //env.insert(qSL("QT_WAYLAND_DISABLE_WINDOWDECORATION"), "1");
     env.insert(qSL("AM_SECURITY_TOKEN"), qL1S(securityToken().toHex()));
     env.insert(qSL("AM_DBUS_PEER_ADDRESS"), static_cast<NativeRuntimeManager *>(manager())->applicationInterfaceServer()->address());

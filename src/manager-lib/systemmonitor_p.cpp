@@ -41,8 +41,17 @@
 
 #include <qglobal.h>
 
-#include "systemmonitor_linux.h"
+#include "systemmonitor_p.h"
 #include "global.h"
+
+
+quint64 MemoryReader::s_totalValue = 0;
+
+quint64 MemoryReader::totalValue() const
+{
+    return s_totalValue;
+}
+
 
 #if defined(Q_OS_LINUX)
 #  include <qplatformdefs.h>
@@ -70,56 +79,76 @@ static inline int qt_safe_open(const char *pathname, int flags, mode_t mode = 07
 #  undef QT_OPEN
 #  define QT_OPEN         qt_safe_open
 
-
-SysFsReader::SysFsReader(const char *path, int maxRead)
-    : m_path(path)
-    , m_maxRead(maxRead)
-{ }
-
-SysFsReader::~SysFsReader()
+class SysFsReader
 {
-    if (m_fd >= 0)
-        QT_CLOSE(m_fd);
-}
-
-bool SysFsReader::open()
-{
-    if (m_fd < 0)
+public:
+    SysFsReader(const char *path, int maxRead = 2048)
+        : m_path(path)
+    {
+        m_buffer.resize(maxRead);
         m_fd = QT_OPEN(m_path, QT_OPEN_RDONLY);
-    return m_fd >= 0;
-}
+    }
 
-int SysFsReader::handle() const
-{
-    return m_fd;
-}
+    ~SysFsReader()
+    {
+        if (m_fd >= 0)
+            QT_CLOSE(m_fd);
+    }
 
-QByteArray SysFsReader::readValue() const
-{
-    if (m_fd < 0)
-        return QByteArray();
-    if (EINTR_LOOP(QT_LSEEK(m_fd, 0, SEEK_SET)) != QT_OFF_T(0))
-        return QByteArray();
+    bool isOpen() const
+    {
+        return m_fd >= 0;
+    }
 
-    char buffer[m_maxRead];
-    int read = EINTR_LOOP(QT_READ(m_fd, buffer, m_maxRead));
-    if (read < 0)
-        return QByteArray();
-    return QByteArray(buffer, read);
-}
+    QByteArray fileName() const
+    {
+        return m_path;
+    }
 
+    QByteArray readValue() const
+    {
+        if (m_fd < 0)
+            return QByteArray();
+        if (EINTR_LOOP(QT_LSEEK(m_fd, 0, SEEK_SET)) != QT_OFF_T(0))
+            return QByteArray();
+
+        int read = EINTR_LOOP(QT_READ(m_fd, m_buffer.data(), m_buffer.size()));
+        if (read < 0)
+            return QByteArray();
+        else if (read < m_buffer.size())
+            m_buffer[read] = 0;
+        return m_buffer;
+    }
+
+private:
+    int m_fd = -1;
+    QByteArray m_path;
+    mutable QByteArray m_buffer;
+
+    Q_DISABLE_COPY(SysFsReader)
+};
+
+
+QScopedPointer<SysFsReader> CpuReader::s_sysFs;
 
 CpuReader::CpuReader()
-    : SysFsReader("/proc/stat", 256)
-{ }
+{
+    if (!s_sysFs) {
+        s_sysFs.reset(new SysFsReader("/proc/stat", 256));
+        if (!s_sysFs->isOpen()) {
+            qCCritical(LogSystem) << "ERROR: could not read CPU statistics from" << s_sysFs->fileName();
+            exit(42);
+        }
+    }
+}
 
 QPair<int, qreal> CpuReader::readLoadValue()
 {
-    QByteArray str = readValue();
+    QByteArray str = s_sysFs->readValue();
 
     int pos = 0;
     qint64 total = 0;
-    QList<qint64> values;
+    QVector<qint64> values;
 
     while (pos < str.size() && values.size() < 4) {
         if (!isdigit(str.at(pos))) {
@@ -148,42 +177,52 @@ QPair<int, qreal> CpuReader::readLoadValue()
 }
 
 
+QScopedPointer<SysFsReader> MemoryReader::s_sysFs;
+
 MemoryReader::MemoryReader()
-    : SysFsReader("/sys/fs/cgroup/memory/memory.usage_in_bytes", 256)
 {
-    long pageSize = ::sysconf(_SC_PAGESIZE);
-    long physPages = ::sysconf(_SC_PHYS_PAGES);
+    if (!s_sysFs) {
+        s_sysFs.reset(new SysFsReader("/sys/fs/cgroup/memory/memory.usage_in_bytes", 256));
+        if (!s_sysFs->isOpen()) {
+            qCCritical(LogSystem) << "ERROR: could not read memory statistics from" << s_sysFs->fileName();
+            exit(42);
+        }
 
-    if (pageSize < 0 || physPages < 0) {
-        qCCritical(LogSystem) << "Cannot determine the amount of physical RAM in this machine.";
-        exit(42);
+        long pageSize = ::sysconf(_SC_PAGESIZE);
+        long physPages = ::sysconf(_SC_PHYS_PAGES);
+
+        if (pageSize < 0 || physPages < 0) {
+            qCCritical(LogSystem) << "ERROR: Cannot determine the amount of physical RAM in this machine.";
+            exit(42);
+        }
+
+        s_totalValue = quint64(physPages) * quint64(pageSize);
     }
-
-    m_totalValue = quint64(physPages) * quint64(pageSize);
-}
-
-quint64 MemoryReader::totalValue() const
-{
-    return m_totalValue;
 }
 
 quint64 MemoryReader::readUsedValue() const
 {
-    return ::strtoull(readValue().constData(), 0, 10);
+    return ::strtoull(s_sysFs->readValue().constData(), 0, 10);
 }
 
 
 IoReader::IoReader(const char *device)
-    : SysFsReader(QByteArray("/sys/block/") + device + "/stat", 256)
+    : m_sysFs(new SysFsReader(QByteArray("/sys/block/") + device + "/stat", 256))
+{
+    if (!m_sysFs->isOpen())
+        qCWarning(LogSystem) << "WARNING: could not read I/O statistics from" << m_sysFs->fileName();
+}
+
+IoReader::~IoReader()
 { }
 
 QPair<int, qreal> IoReader::readLoadValue()
 {
-    QByteArray str = readValue();
+    QByteArray str = m_sysFs->readValue();
 
     int pos = 0;
     int total = 0;
-    QList<qint64> values;
+    QVector<qint64> values;
 
     while (pos < str.size() && values.size() < 11) {
         if (!isdigit(str.at(pos))) {
@@ -210,6 +249,7 @@ QPair<int, qreal> IoReader::readLoadValue()
     }
     return qMakePair(elapsed, m_load);
 }
+
 
 MemoryThreshold::MemoryThreshold(const QList<qreal> &thresholds)
     : m_thresholds(thresholds)
@@ -317,4 +357,186 @@ void MemoryThreshold::readEventFd()
     }
 }
 
-#endif // Q_OS_LINUX
+#elif defined(Q_OS_WIN)
+
+#include <windows.h>
+
+CpuReader::CpuReader()
+{ }
+
+QPair<int, qreal> CpuReader::readLoadValue()
+{
+    auto winFileTimeToInt64 = [](const FILETIME &filetime) {
+        return ((quint64(filetime.dwHighDateTime) << 32) | quint64(filetime.dwLowDateTime));
+    };
+
+    FILETIME winIdle, winKernel, winUser;
+    if (GetSystemTimes(&winIdle, &winKernel, &winUser)) {
+        qint64 idle = winFileTimeToInt64(winIdle);
+        qint64 total = winFileTimeToInt64(winKernel) + winFileTimeToInt64(winUser);
+
+        m_load = qreal(1) - (qreal(idle - m_lastIdle) / qreal(total - m_lastTotal));
+
+        m_lastIdle = idle;
+        m_lastTotal = total;
+    } else {
+        m_load = qreal(1);
+    }
+    return qMakePair(m_lastCheck.restart(), m_load);
+}
+
+MemoryReader::MemoryReader()
+{
+    if (!s_totalValue) {
+        MEMORYSTATUSEX mem { sizeof(MEMORYSTATUSEX) };
+        if (!GlobalMemoryStatusEx(&mem)) {
+            qCCritical(LogSystem) << "Cannot determine the amount of physical RAM in this machine.";
+            exit(42);
+        }
+        s_totalValue = mem.ullTotalPhys;
+    }
+}
+
+quint64 MemoryReader::readUsedValue() const
+{
+    MEMORYSTATUSEX mem { sizeof(MEMORYSTATUSEX) };
+    if (!GlobalMemoryStatusEx(&mem))
+        return 0;
+    return mem.ullTotalPhys - mem.ullAvailPhys;
+}
+
+#elif defined(Q_OS_OSX)
+
+#include <mach/mach.h>
+#include <sys/sysctl.h>
+
+CpuReader::CpuReader()
+{ }
+
+QPair<int, qreal> CpuReader::readLoadValue()
+{
+    natural_t cpuCount = 0;
+    processor_cpu_load_info_t cpuLoadInfo;
+    mach_msg_type_number_t cpuLoadInfoCount = 0;
+
+    if (host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &cpuCount,
+                            (processor_info_array_t *) &cpuLoadInfo, &cpuLoadInfoCount) == KERN_SUCCESS) {
+        uint64_t idle = 0, total = 0;
+
+        for (natural_t i = 0; i < cpuCount; ++i) {
+            idle += cpuLoadInfo[i].cpu_ticks[CPU_STATE_IDLE];
+            total += cpuLoadInfo[i].cpu_ticks[CPU_STATE_USER] \
+                    + cpuLoadInfo[i].cpu_ticks[CPU_STATE_SYSTEM] \
+                    + cpuLoadInfo[i].cpu_ticks[CPU_STATE_IDLE] \
+                    + cpuLoadInfo[i].cpu_ticks[CPU_STATE_NICE];
+        }
+        vm_deallocate(mach_task_self(), (vm_address_t) cpuLoadInfo, cpuLoadInfoCount);
+
+        m_load = qreal(1) - (qreal(idle - m_lastIdle) / qreal(total - m_lastTotal));
+
+        m_lastIdle = idle;
+        m_lastTotal = total;
+    } else {
+        m_load = qreal(1);
+    }
+    return qMakePair(m_lastCheck.restart(), m_load);
+}
+
+
+int MemoryReader::s_pageSize = 0;
+
+MemoryReader::MemoryReader()
+{
+    if (!s_totalValue) {
+        int mib[2] = { CTL_HW, HW_MEMSIZE };
+        int64_t hwMem;
+        size_t hwMemSize = sizeof(hwMem);
+
+        if (sysctl(mib, sizeof(mib) / sizeof(*mib), &hwMem, &hwMemSize, nullptr, 0) == KERN_SUCCESS)
+            s_totalValue = hwMem;
+
+        mib[1] = HW_PAGESIZE;
+        int hwPageSize;
+        size_t hwPageSizeSize = sizeof(hwPageSize);
+
+        if (sysctl(mib, sizeof(mib) / sizeof(*mib), &hwPageSize, &hwPageSizeSize, nullptr, 0) == KERN_SUCCESS)
+            s_pageSize = hwPageSize;
+    }
+}
+
+quint64 MemoryReader::readUsedValue() const
+{
+    vm_statistics64_data_t vmStat;
+    mach_msg_type_number_t vmStatCount = HOST_VM_INFO64_COUNT;
+
+    if (host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t) &vmStat, &vmStatCount) == KERN_SUCCESS) {
+        quint64 app = vmStat.internal_page_count;
+        quint64 compressed = vmStat.compressor_page_count;
+        quint64 wired = vmStat.wire_count;
+
+        return (app + compressed + wired) * s_pageSize;
+    } else {
+        return 0;
+    }
+}
+
+#else // Q_OS_...
+
+CpuReader::CpuReader()
+{ }
+
+QPair<int, qreal> CpuReader::readLoadValue()
+{
+    return qMakePair(0, 1);
+}
+
+MemoryReader::MemoryReader()
+{ }
+
+quint64 MemoryReader::readUsedValue() const
+{
+    return 0;
+}
+
+#endif  // defined(Q_OS_...)
+
+#if !defined(Q_OS_LINUX)
+
+IoReader::IoReader(const char *device)
+{
+    Q_UNUSED(device)
+}
+
+IoReader::~IoReader()
+{ }
+
+QPair<int, qreal> IoReader::readLoadValue()
+{
+    return qMakePair(0, 1);
+}
+
+MemoryThreshold::MemoryThreshold(const QList<qreal> &thresholds)
+{
+    Q_UNUSED(thresholds)
+}
+
+MemoryThreshold::~MemoryThreshold()
+{ }
+
+QList<qreal> MemoryThreshold::thresholdPercentages() const
+{
+    return QList<qreal>();
+}
+
+bool MemoryThreshold::isEnabled() const
+{
+    return false;
+}
+
+bool MemoryThreshold::setEnabled(bool enabled)
+{
+    Q_UNUSED(enabled)
+    return false;
+}
+
+#endif // !defined(Q_OS_LINUX)

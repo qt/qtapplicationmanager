@@ -48,11 +48,7 @@
 #include <vector>
 
 #include "systemmonitor.h"
-#if defined(Q_OS_LINUX)
-#  include "systemmonitor_linux.h"
-#else
-#  include "systemmonitor_dummy.h"
-#endif
+#include "systemmonitor_p.h"
 
 #include "global.h"
 
@@ -328,11 +324,8 @@ SystemMonitor::SystemMonitor()
     Q_D(SystemMonitor);
 
     d->idleCpu = new CpuReader;
-    d->idleCpu->open();
     d->cpu = new CpuReader;
-    d->cpu->open();
     d->memory = new MemoryReader;
-    d->memory->open();
 
     d->idleTimerId = d->startTimer(1000);
 
@@ -552,7 +545,6 @@ bool SystemMonitor::addIoLoadReporting(const QString &deviceName)
         return false;
 
     IoReader *ior = new IoReader(deviceName.toLocal8Bit().constData());
-    ior->open();
     d->ioHash.insert(deviceName, ior);
     d->setupTimer();
     return true;

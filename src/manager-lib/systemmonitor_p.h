@@ -46,32 +46,16 @@
 #include <QElapsedTimer>
 #include <QObject>
 
+#if defined(Q_OS_LINUX)
+#include <QScopedPointer>
 QT_FORWARD_DECLARE_CLASS(QSocketNotifier)
+class SysFsReader;
+#endif
 
-class SysFsReader
-{
-public:
-    SysFsReader(const char *path, int maxRead = 2048);
-    ~SysFsReader();
-
-    bool open();
-    int handle() const;
-    QByteArray readValue() const;
-
-private:
-    int m_fd = -1;
-    QByteArray m_path;
-    int m_maxRead;
-
-    Q_DISABLE_COPY(SysFsReader)
-};
-
-
-class CpuReader : public SysFsReader
+class CpuReader
 {
 public:
     CpuReader();
-
     QPair<int, qreal> readLoadValue();
 
 private:
@@ -79,31 +63,44 @@ private:
     qint64 m_lastIdle = 0;
     qint64 m_lastTotal = 0;
     qreal m_load = 1;
+#if defined(Q_OS_LINUX)
+    static QScopedPointer<SysFsReader> s_sysFs;
+#endif
+    Q_DISABLE_COPY(CpuReader)
 };
 
-class MemoryReader : public SysFsReader
+class MemoryReader
 {
 public:
     MemoryReader();
-
     quint64 totalValue() const;
     quint64 readUsedValue() const;
 
 private:
-    quint64 m_totalValue;
+    static quint64 s_totalValue;
+#if defined(Q_OS_LINUX)
+    static QScopedPointer<SysFsReader> s_sysFs;
+#elif defined(Q_OS_OSX)
+    static int s_pageSize;
+#endif
+    Q_DISABLE_COPY(MemoryReader)
 };
 
-class IoReader : public SysFsReader
+class IoReader
 {
 public:
     IoReader(const char *device);
-
+    ~IoReader();
     QPair<int, qreal> readLoadValue();
 
 private:
+#if defined(Q_OS_LINUX)
     QElapsedTimer m_lastCheck;
     qint64 m_lastIoTime = 0;
     qreal m_load = 1;
+    QScopedPointer<SysFsReader> m_sysFs;
+#endif
+    Q_DISABLE_COPY(IoReader)
 };
 
 class MemoryThreshold : public QObject
@@ -121,15 +118,19 @@ public:
 signals:
     void thresholdTriggered();
 
-private slots:
-    void readEventFd();
-
 private:
     bool m_initialized = false;
     bool m_enabled = false;
     QList<qreal> m_thresholds;
+
+#if defined(Q_OS_LINUX)
+private slots:
+    void readEventFd();
+
+private:
     int m_eventFd = -1;
     int m_controlFd = -1;
     int m_usageFd = -1;
     QSocketNotifier *m_notifier = 0;
+#endif
 };

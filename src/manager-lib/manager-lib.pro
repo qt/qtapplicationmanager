@@ -42,16 +42,14 @@ HEADERS += \
     containerfactory.h \
     quicklauncher.h \
     systemmonitor.h \
+    systemmonitor_p.h \
     applicationipcmanager.h \
     applicationipcinterface.h \
-    applicationipcinterface_p.h
+    applicationipcinterface_p.h \
 
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \
     window.h \
-
-linux:HEADERS += systemmonitor_linux.h
-else:HEADERS += systemmonitor_dummy.h
 
 multi-process:HEADERS += \
     nativeruntime.h \
@@ -77,14 +75,13 @@ SOURCES += \
     containerfactory.cpp \
     quicklauncher.cpp \
     systemmonitor.cpp \
+    systemmonitor_p.cpp \
     applicationipcmanager.cpp \
     applicationipcinterface.cpp
 
 !headless:SOURCES += \
     fakeapplicationmanagerwindow.cpp \
     window.cpp \
-
-linux:SOURCES += systemmonitor_linux.cpp
 
 multi-process:SOURCES += \
     nativeruntime.cpp \

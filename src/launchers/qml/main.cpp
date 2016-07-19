@@ -54,6 +54,7 @@
 
 #include <QDBusConnection>
 #include <QDBusInterface>
+#include <QDBusArgument>
 #include <QLoggingCategory>
 
 #include <qplatformdefs.h>
@@ -231,7 +232,7 @@ void Controller::startApplication(const QString &qmlFile, const QString &documen
         return;
     m_launched = true;
 
-    qCDebug(LogQmlRuntime) << "loading" << qmlFile << "- document:" << document;
+    qCDebug(LogQmlRuntime) << "loading" << qmlFile << "- document:" << document << "- parameters:" << runtimeParameters;
 
     if (!QFile::exists(qmlFile)) {
         qCCritical(LogQmlRuntime) << "could not load" << qmlFile << ": file does not exist";
@@ -250,7 +251,10 @@ void Controller::startApplication(const QString &qmlFile, const QString &documen
     QStringList importPaths = m_configuration.value(qSL("importPaths")).toStringList();
     importPaths.replaceInStrings(QRegularExpression(qSL("^(.*)$")),
                                  QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/\\1"));
-    importPaths += runtimeParameters.value(qSL("importPaths")).toStringList();
+
+    auto vl = qdbus_cast<QVariantList>(runtimeParameters.value(qSL("importPaths")));
+    for (const QVariant &v : vl)
+        importPaths.append(v.toString());
 
     for (int i = 0; i < importPaths.size(); ++i)
         importPaths[i] = QDir().absoluteFilePath(importPaths[i]);

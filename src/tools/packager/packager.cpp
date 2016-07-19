@@ -131,6 +131,8 @@ void Packager::execute() throw(Exception)
         if (!destination.open(QIODevice::WriteOnly | QIODevice::Truncate))
             throw Exception(destination, "could not create package file");
 
+        QString canonicalDestination = QFileInfo(destination).canonicalFilePath();
+
         QDir source(m_sourceDir);
         if (!source.exists())
             throw Exception(Error::Package, "source %1 is not a directory").arg(m_sourceDir);
@@ -162,6 +164,10 @@ void Packager::execute() throw(Exception)
             it.next();
             QFileInfo entryInfo = it.fileInfo();
             QString entryPath = entryInfo.canonicalFilePath();
+
+            // do not package the package itself, in case someone builds the package within the source dir
+            if (canonicalDestination == entryPath)
+                continue;
 
             if (!entryPath.startsWith(canonicalSourcePath))
                 throw Exception(Error::Package, "file %1 is not inside the source directory %2").arg(entryPath).arg(canonicalSourcePath);

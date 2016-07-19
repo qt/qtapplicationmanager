@@ -288,7 +288,7 @@ bool PackageCreatorPrivate::create()
                 }
 
                 if (fileSize != fi.size())
-                    throw Exception(Error::Archive, "size mismatch for '%1' between stating (%1) and reading (%3)").arg(fi.filePath()).arg(fi.size()).arg(fileSize);
+                    throw Exception(Error::Archive, "size mismatch for '%1' between stating (%2) and reading (%3)").arg(fi.filePath()).arg(fi.size()).arg(fileSize);
 
                 packagedSize += fileSize;
             }

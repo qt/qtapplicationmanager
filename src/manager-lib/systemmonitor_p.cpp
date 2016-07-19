@@ -135,10 +135,8 @@ CpuReader::CpuReader()
 {
     if (!s_sysFs) {
         s_sysFs.reset(new SysFsReader("/proc/stat", 256));
-        if (!s_sysFs->isOpen()) {
-            qCCritical(LogSystem) << "ERROR: could not read CPU statistics from" << s_sysFs->fileName();
-            exit(42);
-        }
+        if (!s_sysFs->isOpen())
+            qCWarning(LogSystem) << "WARNING: could not read CPU statistics from" << s_sysFs->fileName();
     }
 }
 
@@ -183,20 +181,18 @@ MemoryReader::MemoryReader()
 {
     if (!s_sysFs) {
         s_sysFs.reset(new SysFsReader("/sys/fs/cgroup/memory/memory.usage_in_bytes", 256));
-        if (!s_sysFs->isOpen()) {
-            qCCritical(LogSystem) << "ERROR: could not read memory statistics from" << s_sysFs->fileName();
-            exit(42);
-        }
+        if (!s_sysFs->isOpen())
+            qCWarning(LogSystem) << "WARNING: could not read memory statistics from" << s_sysFs->fileName() << "(make sure that the memory cgroup is mounted)";
 
         long pageSize = ::sysconf(_SC_PAGESIZE);
         long physPages = ::sysconf(_SC_PHYS_PAGES);
 
         if (pageSize < 0 || physPages < 0) {
-            qCCritical(LogSystem) << "ERROR: Cannot determine the amount of physical RAM in this machine.";
-            exit(42);
+            qCWarning(LogSystem) << "WARNING: Cannot determine the amount of physical RAM in this machine.";
+            s_totalValue = 0;
+        } else {
+            s_totalValue = quint64(physPages) * quint64(pageSize);
         }
-
-        s_totalValue = quint64(physPages) * quint64(pageSize);
     }
 }
 

@@ -320,9 +320,9 @@ bool Configuration::recreateDatabase() const
     return d->clp.isSet(qSL("recreate-database"));
 }
 
-QString Configuration::builtinAppsManifestDir() const
+QStringList Configuration::builtinAppsManifestDirs() const
 {
-    return d->config<QString>("builtin-apps-manifest-dir", { qSL("applications"), qSL("builtinAppsManifestDir") });
+    return d->config<QStringList>("builtin-apps-manifest-dir", { qSL("applications"), qSL("builtinAppsManifestDir") });
 }
 
 QString Configuration::installedAppsManifestDir() const

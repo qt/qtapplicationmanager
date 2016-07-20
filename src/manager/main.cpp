@@ -340,7 +340,7 @@ static QVector<const Application *> scanForApplication(const QString &singleAppI
     return result;
 }
 
-static QVector<const Application *> scanForApplications(const QDir &builtinAppsDir, const QDir &installedAppsDir,
+static QVector<const Application *> scanForApplications(const QStringList &builtinAppsDirs, const QString &installedAppsDir,
                                                         const QVector<InstallationLocation> &installationLocations)
 {
     QVector<const Application *> result;
@@ -417,7 +417,8 @@ static QVector<const Application *> scanForApplications(const QDir &builtinAppsD
         }
     };
 
-    scan(builtinAppsDir, true);
+    foreach (const QString &dir, builtinAppsDirs)
+        scan(dir, true);
     scan(installedAppsDir, false);
     return result;
 }
@@ -546,7 +547,7 @@ int main(int argc, char *argv[])
             if (!configuration->singleApp().isEmpty()) {
                 apps = scanForApplication(configuration->singleApp());
             } else {
-                apps = scanForApplications(configuration->builtinAppsManifestDir(),
+                apps = scanForApplications(configuration->builtinAppsManifestDirs(),
                                            configuration->installedAppsManifestDir(),
                                            installationLocations);
             }

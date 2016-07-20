@@ -55,7 +55,7 @@ public:
     QString database() const;
     bool recreateDatabase() const;
 
-    QString builtinAppsManifestDir() const;
+    QStringList builtinAppsManifestDirs() const;
     QString installedAppsManifestDir() const;
     QString appImageMountDir() const;
 

@@ -87,7 +87,8 @@ command-line options.
     \li \b --builtin-apps-manifest-dir
     \br \e applications/builtinAppsManifestDir
     \li string
-    \li The base directory for built-in application manifests.
+    \li The base directory for built-in application manifests. You can also specify multiple
+        directories as a list.
 \row
     \li \b --installed-apps-manifest-dir
     \br \e applications/installedAppsManifestDir

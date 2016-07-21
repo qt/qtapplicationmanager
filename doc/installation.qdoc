@@ -41,6 +41,7 @@ components:
     \li \b openssl 1.0 or higher \e{- Linux only}. At compile time only the headers need to be
            available. The needed libraries will be dynamically loaded at runtime.
     \li \b libarchive 3.0 or higher \e{- only if you need the installer functionality}.
+    \li \b libdwarf \e{- Linux only}. This is a compile-time only dependency for libbacktrace.
 \endlist
 
 On a Debian based systems, this command should install all the required packages:
@@ -103,6 +104,10 @@ There are various options that can be given to \c qmake to tailor the build to y
 \row
   \li \c{-config hardware-id-from-file=<file>}
   \li The hardware-id will be read from the specified \c file at runtime (see below for more information)
+\row
+  \li \c{-config enable-libbacktrace}
+  \li Enables building and linking against \c libbacktrace in the 3rdparty folder. This will give
+      you readable backtraces on crash. You need the \c libdwarf header files during compilation.
 \endtable
 
 \section2 The hardware-id

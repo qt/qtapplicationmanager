@@ -93,6 +93,8 @@ public:
     QString telnetAddress() const;
     quint16 telnetPort() const;
 
+    QVariantMap managerCrashAction() const;
+
     QStringList caCertificates() const;
 
 private:

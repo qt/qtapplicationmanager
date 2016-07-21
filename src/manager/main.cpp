@@ -468,6 +468,8 @@ int main(int argc, char *argv[])
 
     startupTimer.checkpoint("after command line parse");
 
+    setCrashActionConfiguration(configuration->managerCrashAction());
+
     try {
         if (Q_UNLIKELY(!QFile::exists(configuration->mainQmlFile())))
             throw Exception(Error::System, "no/invalid main QML file specified: %1").arg(configuration->mainQmlFile());
@@ -804,7 +806,7 @@ int main(int argc, char *argv[])
 
         return res;
 
-    } catch (const std::exception &e) {
+    } catch (const Exception &e) {
         qCCritical(LogSystem) << "ERROR:" << e.what();
         return 2;
     }

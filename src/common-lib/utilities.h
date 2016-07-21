@@ -157,3 +157,5 @@ private:
 #if defined(Q_OS_ANDROID)
 QString findOnSDCard(const QString &file);
 #endif
+
+void setCrashActionConfiguration(const QVariantMap &config);

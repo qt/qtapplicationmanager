@@ -5,6 +5,7 @@ qtCompileTest(libarchive)
 qtCompileTest(libyaml)
 qtCompileTest(libdbus)
 qtCompileTest(libcrypto)
+qtCompileTest(libdwarf)
 
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 force-multi-process:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcompositor):error("You forced multi-process mode, but the QtCompositor module is not available")
@@ -24,6 +25,13 @@ load(am-config)
 
 !config_libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 !config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
+
+enable-libbacktrace|CONFIG(debug, debug|release)  {
+  config_libdwarf {
+    check_libbacktrace = "yes"
+    SUBDIRS += 3rdparty/libbacktrace/libbacktrace.pro
+  } else:check_libbacktrace = "no (libdwarf headers not found)"
+} else:check_libbacktrace = "no"
 
 if(linux|force-libcrypto):check_crypto = "libcrypto / OpenSSL"
 else:win32:check_crypto = "WinCrypt"
@@ -58,6 +66,7 @@ printConfigLine("Crypto backend", $$check_crypto, auto)
 printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)
 printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto)
 printConfigLine("Genivi support", $$yesNo(qtHaveModule(geniviextras)), auto)
+printConfigLine("libbacktrace support", $$check_libbacktrace, auto)
 printConfigLine("Systemd workaround", $$yesNo(CONFIG(systemd-workaround)), auto)
 printConfigLine("System libarchive", $$yesNo(config_libarchive), auto)
 printConfigLine("System libyaml", $$yesNo(config_libyaml), auto)

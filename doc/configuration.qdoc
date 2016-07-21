@@ -259,6 +259,12 @@ command-line options.
     \li list<string>
     \li A list of file-paths to CA-certifcates that are used to verify packages. For more details,
         see the \l {Public Key Infrastructure} {Installer documentation}.
+\row
+    \li \b -
+    \br \e crashAction
+    \li object
+    \li Specifies which actions to take, if the application-manager is crashing. See
+        \l{Crash action specification} {below} for more information.
 
 \omit
 telnetPort and telnetAddress: these are configuring the Pelagicore proprietary telnet component
@@ -389,6 +395,50 @@ an additional column specifying which runtime a configuration option applies to:
     \li string
     \li If set, the main window of the app will get this color set as the default clear color. This
         will also give the surface an 8-bit alpha buffer.
+\row
+    \li \c crashAction
+    \li qml
+    \li object
+    \li Specifies which actions to take, if a QML client application is crashing. See
+        \l{Crash action specification} {below} for more information.
+\endtable
+
+\chapter Crash action specification
+
+These sub-objects specify which actions to take, if the application-manager or QML runtimes are
+crashing. Please note that all of these actions only work on Linux!
+
+The following conditions will be handled:
+
+\list
+\li Uncaught exceptions (\c{std::exception} derived ones will also show the \c{what()} information.
+\li \c SIGSEGV
+\li \c SIGBUS
+\li \c SIGILL
+\li \c SIGFPE
+\li \c SIGPIPE
+\endlist
+
+\table
+\header
+    \li Name
+    \li Type
+    \li Description
+\row
+    \li \c printBacktrace
+    \li bool
+    \li Try to print a readable backtrace. Will use the primitve backtrace functionality from glibc,
+        unless libbacktrace was enabled at configure time (default: true)
+\row
+    \li \c dumpCore
+    \li bool
+    \li Will end the process via \c abort instead of \c _Exit. This will dump a \c core file,
+        depending on your kernel configuration (default: true)
+\row
+    \li \c waitForGdbAttach
+    \li int
+    \li Specifies a timeout in seconds while the crashed program is being held in the stopped state,
+        waiting for a debugger to attach. Any value \c{<= 0} will skip this step. (default: 0)
 \endtable
 
 */

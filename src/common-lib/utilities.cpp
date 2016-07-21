@@ -339,4 +339,243 @@ QString findOnSDCard(const QString &file)
 
 #endif
 
+#if defined(Q_OS_LINUX)
 
+#include <cxxabi.h>
+#include <execinfo.h>
+#include <setjmp.h>
+#include <signal.h>
+
+#if defined(AM_USE_LIBBACKTRACE)
+#  include <libbacktrace/backtrace.h>
+#  include <libbacktrace/backtrace-supported.h>
+#endif
+
+static bool printBacktrace = true;
+static bool dumpCore = true;
+static int waitForGdbAttach = 0;
+
+static char *demangleBuffer = nullptr;
+static size_t demangleBufferSize = 512;
+
+
+static void crashHandler(const char *why) __attribute__((noreturn));
+
+static void crashHandler(const char *why)
+{
+    pid_t pid = getpid();
+    fprintf(stderr, "\n*** appman-launcher-qml (%d) crashed ***\n\n > why: %s\n", pid, why);
+
+    if (printBacktrace) {
+#if defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
+        struct btData {
+            backtrace_state *state;
+            int level;
+        };
+
+        static auto errorCallback = [](void *data, const char *msg, int errnum) {
+            fprintf(stderr, " %3d: ERROR: %s (%d)\n", static_cast<btData *>(data)->level, msg, errnum);
+        };
+
+        static auto syminfoCallback = [](void *data, uintptr_t pc, const char *symname, uintptr_t symval, uintptr_t symsize) {
+            Q_UNUSED(symval)
+            Q_UNUSED(symsize)
+
+            int level = static_cast<btData *>(data)->level;
+            if (symname) {
+                int status;
+                abi::__cxa_demangle(symname, demangleBuffer, &demangleBufferSize, &status);
+
+                if (status == 0 && *demangleBuffer) {
+                    fprintf(stderr, " %3d: %s [%lx]\n", level, demangleBuffer, pc);
+                } else {
+                    fprintf(stderr, " %3d: %s [%lx]\n", level, symname, pc);
+                }
+            } else {
+                fprintf(stderr, " %3d: [%lx]\n", level, pc);
+            }
+        };
+
+        static auto fullCallback = [](void *data, uintptr_t pc, const char *filename, int lineno, const char *function) -> int {
+            if (function) {
+                int status;
+                abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
+
+                fprintf(stderr, " %3d: %s [%lx] in %s:%d\n", static_cast<btData *>(data)->level,
+                        (status == 0 && *demangleBuffer) ? demangleBuffer : function,
+                        pc, filename ? filename : "<unknown>", lineno);
+            } else {
+                backtrace_syminfo (static_cast<btData *>(data)->state, pc, syminfoCallback, errorCallback, data);
+            }
+            return 0;
+        };
+
+        static auto simpleCallback = [](void *data, uintptr_t pc) -> int {
+            backtrace_pcinfo(static_cast<btData *>(data)->state, pc, fullCallback, errorCallback, data);
+            static_cast<btData *>(data)->level++;
+            return 0;
+        };
+
+        struct backtrace_state *state = backtrace_create_state(nullptr, BACKTRACE_SUPPORTS_THREADS,
+                                                               errorCallback, nullptr);
+
+        fprintf(stderr, "\n > backtrace:\n");
+        // 4 means to remove 4 stack frames: this way the backtrace starts at std::terminate
+        //backtrace_print(state, 4, stderr);
+        btData data = { state, 0 };
+        backtrace_simple(state, 4, simpleCallback, errorCallback, &data);
+#else
+        void *addrArray[1024];
+        int addrCount = backtrace(addrArray, sizeof(addrArray) / sizeof(*addrArray));
+
+        if (!addrCount) {
+            fprintf(stderr, " > no backtrace available\n");
+        } else {
+            char **symbols = backtrace_symbols(addrArray, addrCount);
+            //backtrace_symbols_fd(addrArray, addrCount, 2);
+
+            if (!symbols) {
+                fprintf(stderr, " > no symbol names available\n");
+            } else {
+                fprintf(stderr, " > backtrace:\n");
+                for (int i = 1; i < addrCount; ++i) {
+                    char *function = nullptr;
+                    char *offset = nullptr;
+                    char *end = nullptr;
+
+                    for (char *ptr = symbols[i]; ptr && *ptr; ++ptr) {
+                        if (!function && *ptr == '(')
+                            function = ptr + 1;
+                        else if (function && !offset && *ptr == '+')
+                            offset = ptr;
+                        else if (function && !end && *ptr == ')')
+                            end = ptr;
+                    }
+
+                    if (function && offset && end && (function != offset)) {
+                        *offset = 0;
+                        *end = 0;
+
+                        int status;
+                        abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
+
+                        if (status == 0 && *demangleBuffer) {
+                            fprintf(stderr, " %3d: %s [+%s]\n", i, demangleBuffer, offset + 1);
+                        } else {
+                            fprintf(stderr, " %3d: %s [+%s]\n", i, function, offset + 1);
+                        }
+                    } else  {
+                        fprintf(stderr, " %3d: %s\n", i, symbols[i]);
+                    }
+                }
+                fprintf(stderr, "\n");
+            }
+        }
+#endif
+    }
+    if (waitForGdbAttach > 0) {
+        fprintf(stderr, "\n > the process will be suspended for %d seconds and you can attach a debugger to it via\n\n   gdb -p %d\n",
+                waitForGdbAttach, pid);
+        static jmp_buf jmpenv;
+        signal(SIGALRM, [](int) {
+            longjmp(jmpenv, 1);
+        });
+        if (!setjmp(jmpenv)) {
+            alarm(waitForGdbAttach);
+
+            sigset_t mask;
+            sigemptyset(&mask);
+            sigaddset(&mask, SIGALRM);
+            sigsuspend(&mask);
+        } else {
+            fprintf(stderr, "\n > no gdb attached\n");
+        }
+    }
+    if (dumpCore) {
+        fprintf(stderr, "\n > the process will be aborted (core dump)\n\n");
+        abort();
+    }
+    _Exit(-1);
+}
+
+void setCrashActionConfiguration(const QVariantMap &config)
+{
+    // This can catch and pretty-print all of the following:
+
+    // SIGFPE
+    // volatile int i = 2;
+    // int zero = 0;
+    // i /= zero;
+
+    // SIGSEGV
+    // *((int *)1) = 1;
+
+    // uncaught arbitrary exception
+    // throw 42;
+
+    // uncaught std::exception derived exception (prints what())
+    // throw std::logic_error("test output");
+
+    printBacktrace = config.value(qSL("printBacktrace"), printBacktrace).toBool();
+    waitForGdbAttach = config.value(qSL("waitForGdbAttach"), waitForGdbAttach).toInt();
+    dumpCore = config.value(qSL("dumpCore"), dumpCore).toBool();
+
+    static bool once = false;
+    if (once)
+        return;
+    once = true;
+
+    demangleBuffer = (char *) malloc(demangleBufferSize);
+
+    struct sigaction sigact;
+    sigact.sa_flags = 0;
+    sigact.sa_handler = [](int sig) {
+        signal(sig, SIG_DFL);
+        static char buffer[256];
+        snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, sys_siglist[sig]);
+        crashHandler(buffer);
+    };
+    sigemptyset(&sigact.sa_mask);
+    sigset_t unblockSet;
+    sigemptyset(&unblockSet);
+
+    for (int sig : { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE }) {
+        sigaddset(&unblockSet, sig);
+        sigaction(sig, &sigact, nullptr);
+    }
+    sigprocmask(SIG_UNBLOCK, &unblockSet, nullptr);
+
+    std::set_terminate([]() {
+        static char buffer [1024];
+
+        auto type = abi::__cxa_current_exception_type();
+        if (!type)
+            crashHandler("terminate was called although no exception was thrown");
+
+        const char *typeName = type->name();
+        if (typeName) {
+            int status;
+            abi::__cxa_demangle(typeName, demangleBuffer, &demangleBufferSize, &status);
+            if (status == 0 && *demangleBuffer) {
+                typeName = demangleBuffer;
+            }
+        }
+        try {
+            throw;
+        } catch (const std::exception &exc) {
+            snprintf(buffer, sizeof(buffer), "uncaught exception of type %s (%s)", typeName, exc.what());
+        } catch (...) {
+            snprintf(buffer, sizeof(buffer), "uncaught exception of type %s", typeName);
+        }
+
+        crashHandler(buffer);
+    });
+}
+#else // Q_OS_LINUX
+
+void setCrashActionConfiguration(const QVariantMap &config)
+{
+    Q_UNUSED(config)
+}
+
+#endif // !Q_OS_LINUX

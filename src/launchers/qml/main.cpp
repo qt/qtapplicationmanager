@@ -74,6 +74,7 @@
 #include "notification.h"
 #include "qtyaml.h"
 #include "global.h"
+#include "utilities.h"
 
 
 // maybe make this configurable for specific workloads?
@@ -112,7 +113,6 @@ static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
         }
 
         if (dummyData) {
-            qWarning() << "Loaded dummy data:" << dir.filePath(qml);
             qml.truncate(qml.length()-4);
             engine.rootContext()->setContextProperty(qml, dummyData);
             dummyData->setParent(&engine);
@@ -141,30 +141,10 @@ private:
 #endif
 };
 
-static void noGdbHandler()
-{
-    fprintf(stderr, "\n*** qml-launcher (%d) aborting, since no gdb attached ***\n\n", getpid());
-    abort();
-}
 
-static void crashHandler()
-{
-    pid_t pid = getpid();
-    fprintf(stderr, "\n*** appman-launcher-qml (%d) crashed ***\nthe process will be suspended for 60 seconds and you can attach a debugger to it via\n\n   gdb -p %d\n\n", pid, pid);
-    signal(SIGALRM, (sighandler_t) noGdbHandler);
-    alarm(60);
-
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGALRM);
-    sigsuspend(&mask);
-}
 
 int main(int argc, char *argv[])
 {
-    QSegfaultHandler::initialize(argv, argc);
-    QSegfaultHandler::installCrashHandler(crashHandler);
-
     qInstallMessageHandler(colorLogToStderr);
     QLoggingCategory::setFilterRules(QString::fromUtf8(qgetenv("AM_LOGGING_RULES")));
 
@@ -209,6 +189,8 @@ Controller::Controller()
     auto docs = QtYaml::variantDocumentsFromYaml(qgetenv("AM_RUNTIME_CONFIGURATION"));
     if (docs.size() == 1)
         m_configuration = docs.first().toMap();
+
+    setCrashActionConfiguration(m_configuration.value("crashAction").toMap());
 
     QVariantMap config;
     auto additionalConfigurations = QtYaml::variantDocumentsFromYaml(qgetenv("AM_RUNTIME_ADDITIONAL_CONFIGURATION"));

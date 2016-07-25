@@ -147,7 +147,7 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
         FOREGROUND_INTENSITY                // bright
     };
 #else
-    if (::isatty(2)) {
+    if (::isatty(STDERR_FILENO)) {
         struct ::winsize ws;
         if (::ioctl(0, TIOCGWINSZ, &ws) == 0)
             windowWidth = ws.ws_col;

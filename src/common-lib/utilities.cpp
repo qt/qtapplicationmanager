@@ -351,20 +351,25 @@ QString findOnSDCard(const QString &file)
 #  include <libbacktrace/backtrace-supported.h>
 #endif
 
-static bool printBacktrace = true;
-static bool dumpCore = true;
-static int waitForGdbAttach = 0;
+static bool printBacktrace;
+static bool dumpCore;
+static int waitForGdbAttach;
 
-static char *demangleBuffer = nullptr;
-static size_t demangleBufferSize = 512;
+static char *demangleBuffer;
+static size_t demangleBufferSize;
 
+#include <inttypes.h>
 
 static void crashHandler(const char *why) __attribute__((noreturn));
 
 static void crashHandler(const char *why)
 {
     pid_t pid = getpid();
-    fprintf(stderr, "\n*** appman-launcher-qml (%d) crashed ***\n\n > why: %s\n", pid, why);
+    char who[256];
+    int whoLen = readlink("/proc/self/exe", who, sizeof(who) -1);
+    who[qMax(0, whoLen)] = '\0';
+
+    fprintf(stderr, "\n*** process %s (%d) crashed ***\n\n > why: %s\n", who, pid, why);
 
     if (printBacktrace) {
 #if defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
@@ -373,8 +378,25 @@ static void crashHandler(const char *why)
             int level;
         };
 
+        static auto printBacktraceLine = [](int level, const char *symbol, uintptr_t offset, const char *file = nullptr, int line = -1)
+        {
+            if (isatty(STDERR_FILENO)) {
+                fprintf(stderr, " %3d: \x1b[1m%s\x1b[0m [\x1b[36m%" PRIxPTR "\x1b[0m]", level, symbol, offset);
+                if (file)
+                    fprintf(stderr, " in \x1b[35m%s\x1b[0m:\x1b[35;1m%d\x1b[0m", file, line);
+            } else {
+                 fprintf(stderr, " %3d: %s [%" PRIxPTR "]", level, symbol, offset);
+                 if (file)
+                     fprintf(stderr, " in %s:%d", file, line);
+            }
+            fputs("\n", stderr);
+        };
+
         static auto errorCallback = [](void *data, const char *msg, int errnum) {
-            fprintf(stderr, " %3d: ERROR: %s (%d)\n", static_cast<btData *>(data)->level, msg, errnum);
+            if (isatty(STDERR_FILENO))
+                fprintf(stderr, " %3d: \x1b[31;1mERROR: \x1b[0;1m%s (%d)\x1b[0m\n", static_cast<btData *>(data)->level, msg, errnum);
+            else
+                fprintf(stderr, " %3d: ERROR: %s (%d)\n", static_cast<btData *>(data)->level, msg, errnum);
         };
 
         static auto syminfoCallback = [](void *data, uintptr_t pc, const char *symname, uintptr_t symval, uintptr_t symsize) {
@@ -386,13 +408,12 @@ static void crashHandler(const char *why)
                 int status;
                 abi::__cxa_demangle(symname, demangleBuffer, &demangleBufferSize, &status);
 
-                if (status == 0 && *demangleBuffer) {
-                    fprintf(stderr, " %3d: %s [%lx]\n", level, demangleBuffer, pc);
-                } else {
-                    fprintf(stderr, " %3d: %s [%lx]\n", level, symname, pc);
-                }
+                if (status == 0 && *demangleBuffer)
+                    printBacktraceLine(level, demangleBuffer, pc);
+                else
+                    printBacktraceLine(level, symname, pc);
             } else {
-                fprintf(stderr, " %3d: [%lx]\n", level, pc);
+                printBacktraceLine(level, nullptr, pc);
             }
         };
 
@@ -401,9 +422,9 @@ static void crashHandler(const char *why)
                 int status;
                 abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
 
-                fprintf(stderr, " %3d: %s [%lx] in %s:%d\n", static_cast<btData *>(data)->level,
-                        (status == 0 && *demangleBuffer) ? demangleBuffer : function,
-                        pc, filename ? filename : "<unknown>", lineno);
+                printBacktraceLine(static_cast<btData *>(data)->level,
+                                   (status == 0 && *demangleBuffer) ? demangleBuffer : function,
+                                   pc, filename ? filename : "<unknown>", lineno);
             } else {
                 backtrace_syminfo (static_cast<btData *>(data)->state, pc, syminfoCallback, errorCallback, data);
             }
@@ -498,7 +519,10 @@ static void crashHandler(const char *why)
     _Exit(-1);
 }
 
-void setCrashActionConfiguration(const QVariantMap &config)
+// this will make it run before all other static constructor functions
+static void initBacktrace() __attribute__((constructor(1000)));
+
+static void initBacktrace()
 {
     // This can catch and pretty-print all of the following:
 
@@ -516,15 +540,11 @@ void setCrashActionConfiguration(const QVariantMap &config)
     // uncaught std::exception derived exception (prints what())
     // throw std::logic_error("test output");
 
-    printBacktrace = config.value(qSL("printBacktrace"), printBacktrace).toBool();
-    waitForGdbAttach = config.value(qSL("waitForGdbAttach"), waitForGdbAttach).toInt();
-    dumpCore = config.value(qSL("dumpCore"), dumpCore).toBool();
+    printBacktrace = true;
+    dumpCore = true;
+    waitForGdbAttach = false;
 
-    static bool once = false;
-    if (once)
-        return;
-    once = true;
-
+    demangleBufferSize = 512;
     demangleBuffer = (char *) malloc(demangleBufferSize);
 
     struct sigaction sigact;
@@ -571,6 +591,14 @@ void setCrashActionConfiguration(const QVariantMap &config)
         crashHandler(buffer);
     });
 }
+
+void setCrashActionConfiguration(const QVariantMap &config)
+{
+    printBacktrace = config.value(qSL("printBacktrace"), printBacktrace).toBool();
+    waitForGdbAttach = config.value(qSL("waitForGdbAttach"), waitForGdbAttach).toInt();
+    dumpCore = config.value(qSL("dumpCore"), dumpCore).toBool();
+}
+
 #else // Q_OS_LINUX
 
 void setCrashActionConfiguration(const QVariantMap &config)

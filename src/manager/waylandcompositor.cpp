@@ -154,6 +154,9 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     connect(this, &QWaylandCompositor::createSurface, this, &WaylandCompositor::doCreateSurface);
     connect(this, &QWaylandCompositor::surfaceCreated, [this](QWaylandSurface *s) {
+        connect(s, &QWaylandSurface::surfaceDestroyed, this, [this, s]() {
+            m_manager->waylandSurfaceDestroyed(static_cast<Surface *>(s));
+        });
         m_manager->waylandSurfaceCreated(static_cast<Surface *>(s));
     });
 
@@ -191,23 +194,18 @@ void WaylandCompositor::createShellSurface(QWaylandSurface *surface, const QWayl
     QWaylandWlShellSurface *ss = new QWaylandWlShellSurface(m_shell, s, resource);
     s->setShellSurface(ss);
 
-    connect(s, &QWaylandSurface::mappedChanged, this, &WaylandCompositor::waylandSurfaceMappedChanged);
+    connect(s, &QWaylandSurface::mappedChanged, this, [this, s]() {
+        if (s->isMapped())
+            m_manager->waylandSurfaceMapped(s);
+        else
+            m_manager->waylandSurfaceUnmapped(s);
+    });
 }
 
 void WaylandCompositor::extendedSurfaceReady(QtWayland::ExtendedSurface *ext, QWaylandSurface *surface)
 {
     Surface *surf = static_cast<Surface *>(surface);
     surf->setExtendedSurface(ext);
-}
-
-void WaylandCompositor::waylandSurfaceMappedChanged()
-{
-    Surface *surface = static_cast<Surface *>(sender());
-    if (surface->isMapped()) {
-        m_manager->waylandSurfaceMapped(surface);
-    } else {
-        m_manager->waylandSurfaceUnmapped(surface);
-    }
 }
 
 QWaylandSurface *WaylandCompositor::waylandSurfaceFromItem(QQuickItem *surfaceItem) const

@@ -142,6 +142,8 @@ void WaylandCompositor::surfaceCreated(QWaylandSurface *surface)
         m_manager->waylandSurfaceMapped(s);
     });
     QObject::connect(surface, &QWaylandSurface::unmapped, [s, this]() { m_manager->waylandSurfaceUnmapped(s); });
+    QObject::connect(surface, &QWaylandSurface::surfaceDestroyed, [s, this]() { m_manager->waylandSurfaceDestroyed(s); });
+
 }
 
 #if QT_VERSION < QT_VERSION_CHECK(5,5,0)

@@ -116,7 +116,6 @@ public:
     void doCreateSurface(QWaylandClient *client, uint id, int version);
     void createShellSurface(QWaylandSurface *surface, const QWaylandResource &resource);
     void extendedSurfaceReady(QtWayland::ExtendedSurface *ext, QWaylandSurface *surface);
-    void waylandSurfaceMappedChanged();
     QWaylandSurface *waylandSurfaceFromItem(QQuickItem *surfaceItem) const;
 
 private:

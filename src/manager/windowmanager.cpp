@@ -245,9 +245,6 @@
     The actual surface can still be used for animations, since it will not be deleted right
     after this signal is emitted.
 
-    The System-UI is required to answer this signal by calling releaseWindow as soon as the QML
-    animations on this window surface are finished. Neglecting to do so will result in resource leaks!
-
     More information about this window (e.g. the corresponding application) can be retrieved via the
     model \a index.
 
@@ -257,8 +254,14 @@
 /*!
     \qmlsignal WindowManager::windowLost(int index, Item window)
 
-    After this signal has been fired, the \a window surface is not usable anymore. This should only
-    happen after releaseWindow has been called.
+    This signal is emitted when \a window surface has been destroyed on the client side.
+
+    If the surface was mapped, you will receive an implicit windowClosing signal before windowLost.
+
+    \note It is mandatory to call releaseWindow after the windowLost signal has been received: all the
+          resources associated with the window surface will not be released automatically. The
+          timing is up to the system-ui which might want to play a shutdown animation, but never
+          calling releaseWindow will result in resource leaks!
 
     More information about this window (e.g. the corresponding application) can be retrieved via the
     model \a index.
@@ -486,25 +489,41 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
                 this, &WindowManager::surfaceFullscreenChanged, Qt::QueuedConnection);
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemReady,
                 this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemCreated), Qt::QueuedConnection);
-        connect(runtime, &AbstractRuntime::inProcessSurfaceItemClosing,
-                this, &WindowManager::surfaceItemAboutToClose, Qt::QueuedConnection);
+        connect(runtime, &AbstractRuntime::inProcessSurfaceItemClosing, this, [this](QQuickItem *window) {
+            emit windowClosing(indexOfWindow(window), window);
+        }, Qt::QueuedConnection);
     }
 }
 
 /*!
     \qmlmethod WindowManager::releaseWindow(Item window)
 
-    Releases all resources of the \a window surface.
+    Releases all resources of the \a window surface and removes the window from the model.
 
-    After cleanup is complete, the signal windowLost will be fired.
+    \note It is mandatory to call this function after the windowLost signal has been fired: all the
+          resources associated with the window surface will not be released automatically. The
+          timing is up to the system-ui which might want to play a shutdown animation, but never
+          calling this function will result in resource leaks!
+
+    \sa windowLost
 */
 
 void WindowManager::releaseWindow(QQuickItem *window)
 {
-    if (!window)
+    int index = d->findWindowBySurfaceItem(window);
+    if (index == -1) {
+        qCWarning(LogWayland) << "releaseWindow was called with an invalid window pointer" << window;
         return;
-    window->deleteLater();
-    surfaceItemDestroyed(window);
+    }
+    Window *win = d->windows.at(index);
+    if (!win)
+        return;
+
+    beginRemoveRows(QModelIndex(), index, index);
+    d->windows.removeAt(index);
+    endRemoveRows();
+
+    win->deleteLater();
 }
 
 /*!
@@ -601,32 +620,6 @@ void WindowManager::setupWindow(Window *window)
     emit windowReady(d->windows.count() - 1, window->windowItem());
 }
 
-void WindowManager::surfaceItemDestroyed(QQuickItem* item)
-{
-    // item may already be deleted at this point!
-
-    int index = d->findWindowBySurfaceItem(item);
-
-    if (index > -1) {
-        emit windowLost(index, item);
-
-        beginRemoveRows(QModelIndex(), index, index);
-        d->windows.removeAt(index);
-        endRemoveRows();
-    } else {
-        qCCritical(LogSystem) << "ERROR: check why this code path has been entered! If that's ok, remove/change this debug output";
-    }
-}
-
-void WindowManager::surfaceItemAboutToClose(QQuickItem *item)
-{
-    int index = d->findWindowBySurfaceItem(item);
-
-    if (index == -1)
-        qCWarning(LogSystem) << "could not find application for surfaceItem";
-    emit windowClosing(index, item);  // is it really better to emit the signal with index==-1 then doing nothing...?
-}
-
 
 #if defined(AM_MULTI_PROCESS)
 
@@ -640,8 +633,6 @@ void WindowManager::resize()
 void WindowManager::waylandSurfaceCreated(WindowSurface *surface)
 {
     qCDebug(LogWayland) << "waylandSurfaceCreate" << surface->surface() << "(PID:" << surface->processId() << ")" << surface->windowProperties();
-
-    connect(surface->surface(), &QWaylandSurface::surfaceDestroyed, this, &WindowManager::waylandSurfaceDestroyed);
 }
 
 void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
@@ -689,27 +680,10 @@ void WindowManager::waylandSurfaceUnmapped(WindowSurface *surface)
     qCDebug(LogWayland) << "waylandSurfaceUnmapped" << surface->surface();
 
     int index = d->findWindowByWaylandSurface(surface->surface());
-
     if (index == -1) {
-        qCWarning(LogWayland) << "could not find an application window for surfaceItem";
+        qCWarning(LogWayland) << "waylandSurfaceUnmapped: could not find an application window for surface" << surface;
         return;
     }
-
-    QModelIndex modelIndex = QAbstractListModel::index(index);
-    qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: false";
-    emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
-
-    handleWaylandSurfaceDestroyedOrUnmapped(surface->surface());
-}
-
-void WindowManager::waylandSurfaceDestroyed()
-{
-    QWaylandSurface *surface = qobject_cast<QWaylandSurface *>(sender());
-
-    qCDebug(LogWayland) << "waylandSurfaceDestroyed" << surface;
-    int index = d->findWindowByWaylandSurface(surface);
-    if (index < 0)
-        return;
     WaylandWindow *win = qobject_cast<WaylandWindow *>(d->windows.at(index));
     if (!win)
         return;
@@ -718,24 +692,26 @@ void WindowManager::waylandSurfaceDestroyed()
     if (d->watchdogEnabled)
         win->enablePing(false);
 
-    handleWaylandSurfaceDestroyedOrUnmapped(surface);
+    QModelIndex modelIndex = QAbstractListModel::index(index);
+    qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: false";
+    emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
 
-    d->windows.removeAt(index);
-    win->deleteLater();
+    emit windowClosing(index, win->windowItem()); //TODO: rename to windowUnmapped
 }
 
-void WindowManager::handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *surface)
+void WindowManager::waylandSurfaceDestroyed(WindowSurface *surface)
 {
-    int index = d->findWindowByWaylandSurface(surface);
-    if (index < 0)
+    qCDebug(LogWayland) << "waylandSurfaceDestroyed" << surface;
+    int index = d->findWindowByWaylandSurface(surface->surface());
+    if (index == -1) {
+        qCWarning(LogWayland) << "waylandSurfaceDestroyed: could not find an application window for surface" << surface;
+        return;
+    }
+    WaylandWindow *win = qobject_cast<WaylandWindow *>(d->windows.at(index));
+    if (!win)
         return;
 
-    Window *win = d->windows.at(index);
-
-    if (win->windowItem() && !win->isClosing()) {
-        win->setClosing();
-        surfaceItemAboutToClose(win->windowItem());
-    }
+    emit windowLost(index, win->windowItem()); //TODO: rename to windowDestroyed
 }
 
 #endif // defined(AM_MULTI_PROCESS)

@@ -144,8 +144,6 @@ private slots:
 
     void inProcessSurfaceItemCreated(QQuickItem *surfaceItem);
     void setupWindow(Window *window);
-    void surfaceItemAboutToClose(QQuickItem *item);
-    void surfaceItemDestroyed(QQuickItem *item);
 
 public:
     Q_INVOKABLE bool setWindowProperty(QQuickItem *window, const QString &name, const QVariant &value);
@@ -167,7 +165,7 @@ private slots:
     void waylandSurfaceCreated(WindowSurface *surface);
     void waylandSurfaceMapped(WindowSurface *surface);
     void waylandSurfaceUnmapped(WindowSurface *surface);
-    void waylandSurfaceDestroyed();
+    void waylandSurfaceDestroyed(WindowSurface *surface);
 
     void resize();
 

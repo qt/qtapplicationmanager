@@ -109,16 +109,6 @@ QMAKE_EXTRA_TARGETS += \
 OTHER_FILES = \
     syms.txt \
 
-maliit {
-    packagesExist(maliit-server maliit-connection) {
-        DEFINES += MALIIT_INTEGRATION
-        CONFIG *= link_pkgconfig
-        PKGCONFIG *= maliit-server
-    } else {
-        error("You required Maliit, though it does not seem to be installed")
-    }
-}
-
 android {
     QT *= androidextras
 

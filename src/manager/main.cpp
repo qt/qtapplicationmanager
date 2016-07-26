@@ -118,14 +118,6 @@
 #include "systemmonitor.h"
 #include "applicationipcmanager.h"
 
-#if defined(MALIIT_INTEGRATION)
-#include "minputcontextconnection.h"
-#include "abstractplatform.h"
-#include "mimserver.h"
-#include "connectionfactory.h"
-#include "unknownplatform.h"
-#endif
-
 
 static Configuration *configuration = 0;
 
@@ -727,17 +719,6 @@ int main(int argc, char *argv[])
             window->show();
 
         startupTimer.checkpoint("after window show");
-#endif
-
-#if defined(MALIIT_INTEGRATION)
-        // Input Context Connection
-        QSharedPointer<MInputContextConnection> icConnection(Maliit::DBus::createInputContextConnectionWithDynamicAddress());
-
-        QSharedPointer<Maliit::AbstractPlatform> platform(new Maliit::UnknownPlatform);
-
-        // The actual server
-        MImServer::configureSettings(MImServer::PersistentSettings);
-        MImServer imServer(icConnection, platform);
 #endif
 
 #if defined(QT_PSHELLSERVER_LIB)

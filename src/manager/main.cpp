@@ -547,6 +547,7 @@ int main(int argc, char *argv[])
 #if defined(AM_MULTI_PROCESS)
         forceSingleProcess = configuration->forceSingleProcess();
 #endif
+        qApp->setProperty("singleProcessMode", forceSingleProcess);
 
         if (forceSingleProcess) {
             RuntimeFactory::instance()->registerRuntime<QmlInProcessRuntimeManager>();

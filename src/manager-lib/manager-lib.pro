@@ -46,6 +46,9 @@ HEADERS += \
     applicationipcmanager.h \
     applicationipcinterface.h \
     applicationipcinterface_p.h \
+    processmonitor.h \
+    memorymonitor.h \
+    fpsmonitor.h \
 
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \
@@ -54,6 +57,9 @@ HEADERS += \
 multi-process:HEADERS += \
     nativeruntime.h \
     nativeruntime_p.h \
+
+linux:HEADERS += \
+    sysfsreader.h \
 
 SOURCES += \
     application.cpp \
@@ -77,7 +83,10 @@ SOURCES += \
     systemmonitor.cpp \
     systemmonitor_p.cpp \
     applicationipcmanager.cpp \
-    applicationipcinterface.cpp
+    applicationipcinterface.cpp \
+    processmonitor.cpp \
+    memorymonitor.cpp \
+    fpsmonitor.cpp \
 
 !headless:SOURCES += \
     fakeapplicationmanagerwindow.cpp \
@@ -85,3 +94,6 @@ SOURCES += \
 
 multi-process:SOURCES += \
     nativeruntime.cpp \
+
+linux:SOURCES += \
+    sysfsreader.cpp \

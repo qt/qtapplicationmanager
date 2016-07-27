@@ -54,6 +54,7 @@ quint64 MemoryReader::totalValue() const
 
 
 #if defined(Q_OS_LINUX)
+#  include "sysfsreader.h"
 #  include <qplatformdefs.h>
 #  include <QElapsedTimer>
 #  include <QSocketNotifier>
@@ -63,70 +64,6 @@ quint64 MemoryReader::totalValue() const
 #  include <unistd.h>
 #  include <sys/ioctl.h>
 #  include <errno.h>
-
-#  define EINTR_LOOP(cmd) __extension__ ({int res = 0; do { res = cmd; } while (res == -1 && errno == EINTR); res; })
-
-static inline int qt_safe_open(const char *pathname, int flags, mode_t mode = 0777)
-{
-    flags |= O_CLOEXEC;
-    int fd = EINTR_LOOP(QT_OPEN(pathname, flags, mode));
-    // unknown flags are ignored, so we have no way of verifying if
-    // O_CLOEXEC was accepted
-    if (fd != -1)
-        ::fcntl(fd, F_SETFD, FD_CLOEXEC);
-    return fd;
-}
-#  undef QT_OPEN
-#  define QT_OPEN         qt_safe_open
-
-class SysFsReader
-{
-public:
-    SysFsReader(const char *path, int maxRead = 2048)
-        : m_path(path)
-    {
-        m_buffer.resize(maxRead);
-        m_fd = QT_OPEN(m_path, QT_OPEN_RDONLY);
-    }
-
-    ~SysFsReader()
-    {
-        if (m_fd >= 0)
-            QT_CLOSE(m_fd);
-    }
-
-    bool isOpen() const
-    {
-        return m_fd >= 0;
-    }
-
-    QByteArray fileName() const
-    {
-        return m_path;
-    }
-
-    QByteArray readValue() const
-    {
-        if (m_fd < 0)
-            return QByteArray();
-        if (EINTR_LOOP(QT_LSEEK(m_fd, 0, SEEK_SET)) != QT_OFF_T(0))
-            return QByteArray();
-
-        int read = EINTR_LOOP(QT_READ(m_fd, m_buffer.data(), m_buffer.size()));
-        if (read < 0)
-            return QByteArray();
-        else if (read < m_buffer.size())
-            m_buffer[read] = 0;
-        return m_buffer;
-    }
-
-private:
-    int m_fd = -1;
-    QByteArray m_path;
-    mutable QByteArray m_buffer;
-
-    Q_DISABLE_COPY(SysFsReader)
-};
 
 
 QScopedPointer<SysFsReader> CpuReader::s_sysFs;

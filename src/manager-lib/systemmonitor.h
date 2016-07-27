@@ -47,6 +47,7 @@ QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 class SystemMonitorPrivate;
+class ProcessMonitor;
 
 class SystemMonitor : public QAbstractListModel
 {
@@ -109,6 +110,8 @@ public:
 
     // semi-public API: used for the WindowManager to report FPS
     void reportFrameSwap(QObject *item);
+
+    Q_INVOKABLE QObject *getProcessMonitor(const QString &appId);
 
 signals:
     void countChanged();

@@ -46,9 +46,11 @@
 #include <QTimerEvent>
 #include <QElapsedTimer>
 #include <vector>
+#include <QGuiApplication>
 
 #include "systemmonitor.h"
 #include "systemmonitor_p.h"
+#include "processmonitor.h"
 
 #include "global.h"
 
@@ -152,6 +154,8 @@ public:
     // fps
     QHash<QObject *, FrameTimer *> frameTimer;
 
+    QList<ProcessMonitor*> processMonitors;
+
     // reporting
     MemoryReader *memory = 0;
     CpuReader *cpu = 0;
@@ -178,6 +182,32 @@ public:
 
     // model
     QHash<int, QByteArray> roleNames;
+
+    ProcessMonitor *getProcess(const QString &appId)
+    {
+        Q_Q(SystemMonitor);
+
+        bool singleProcess = qApp->property("singleProcessMode").toBool();
+        QString usedAppId;
+
+        if (singleProcess)
+            usedAppId = "";
+        else {
+            usedAppId = appId;
+            // Avoid creating multiple objects for aliases
+            QStringList aliasBreak = appId.split('@');
+            usedAppId = aliasBreak[0];
+        }
+
+        for (int i = 0; i < processMonitors.size(); i++) {
+            if (processMonitors.at(i)->getAppId() == usedAppId)
+                return processMonitors.at(i);
+        }
+
+        ProcessMonitor *p = new ProcessMonitor(usedAppId, q);
+        processMonitors.append(p);
+        return processMonitors.last();
+    }
 
     void setupTimer(int newInterval = -1)
     {
@@ -211,6 +241,9 @@ public:
         if (te && te->timerId() == reportingTimerId) {
             Report r;
             QVector<int> roles;
+            for (int i = 0; i < processMonitors.size(); i++)
+                processMonitors.at(i)->readData();
+
             if (reportCpu) {
                 QPair<int, qreal> cpuVal = cpu->readLoadValue();
                 emit q->cpuLoadReportingChanged(cpuVal.first, cpuVal.second);
@@ -286,6 +319,7 @@ public:
         q->beginResetModel();
         // we need at least 2 items, otherwise we cannot move rows
         reports.resize(qMax(2, reportingRange / reportingInterval));
+        reportPos = 0;
         q->endResetModel();
     }
 };
@@ -636,4 +670,10 @@ void SystemMonitor::reportFrameSwap(QObject *item)
     }
 
     frameTimer->newFrame();
+}
+
+QObject *SystemMonitor::getProcessMonitor(const QString &appId)
+{
+    Q_D(SystemMonitor);
+    return d->getProcess(appId);
 }

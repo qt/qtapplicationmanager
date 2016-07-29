@@ -55,7 +55,7 @@ class SystemMonitor : public QAbstractListModel
     Q_PROPERTY(int reportingInterval READ reportingInterval WRITE setReportingInterval)
     Q_PROPERTY(int reportingRange READ reportingRange WRITE setReportingRange)
     Q_PROPERTY(qreal idleLoadAverage READ idleLoadAverage WRITE setIdleLoadAverage)
-    Q_PROPERTY(int totalMemory READ totalMemory CONSTANT)
+    Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
     Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
     Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled NOTIFY memoryReportingEnabledChanged)
     Q_PROPERTY(bool cpuLoadReportingEnabled READ isCpuLoadReportingEnabled WRITE setCpuLoadReportingEnabled NOTIFY cpuLoadReportingEnabledChanged)

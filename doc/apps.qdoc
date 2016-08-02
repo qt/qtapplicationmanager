@@ -36,7 +36,7 @@ additional tasks:
 
 \list 1
 
-    \li If you write a QML application, make the root element of your QML scene a
+    \li If you write a QML application, make the root element of your QML scene an
     ApplicationManagerWindow (or derive your own custom root item from it).
 
     \li Provide a valid \l{Manifest definition}{info.yaml} file.
@@ -50,7 +50,7 @@ additional tasks:
 
 Making the root element of your QML application an ApplicationManagerWindow is only mandatory if you
 ever want to run in single-process mode (without Wayland). Please see the ApplicationManagerWindow
-documentaton for more information.
+documentation for more information.
 
 \section2 The manifest and updating the database
 

@@ -114,7 +114,7 @@
     \qmlsignal ApplicationInterface::memoryLowWarning()
 
     This signal will be sent out whenver a system dependent free-memory threshold has
-    been crossed. Your application is excepted to free up as many resources as
+    been crossed. Your application is expected to free up as many resources as
     possible in this case: this will most likely involve clearing internal caches.
 */
 

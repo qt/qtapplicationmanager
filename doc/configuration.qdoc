@@ -69,7 +69,7 @@ command-line options.
     \li \b --config-file or \c -c
     \br \e -
     \li array<string>
-    \li Loads configuration settings from a set of file. Using more than one config file could be
+    \li Loads configuration settings from a set of files. Using more than one config file could be
         used to cleanly split the configuration into a device specific and a UI specific part.
         (default: \c /opt/am/config.yaml)
 \row
@@ -124,7 +124,7 @@ command-line options.
     \br \e dbus/registrationDelay
     \li int
     \li The non-interface key \c registrationDelay within the \c dbus object is an integer value,
-        which delays the registration of the global D-Bus interfaces by the fields value in
+        which delays the registration of the global D-Bus interfaces by the field's value in
         milli-seconds: the default value of \c -1 will register them synchronously, while \c 0 will
         register them on the first run of the event loop.
 \row
@@ -329,7 +329,7 @@ ApplicationInstaller::getInstallationLocation
 \row
     \li \c id
     \li string
-    \li The installation location id that is used as the handle all other ApplicationInstaller
+    \li The installation location id that is used as the handle for all other ApplicationInstaller
         function calls. The \c id consists of the \c type and \c index field, concatenated by
         a single dash (e.g. \c removable-0).
 

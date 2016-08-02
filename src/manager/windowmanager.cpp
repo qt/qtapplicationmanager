@@ -91,7 +91,7 @@
     To make QML programmers lifes easier, the class is derived from \c QAbstractListModel,
     so you can directly use this singleton as a model in your window views.
 
-    Each item in this model corresponds to an actual window surface. Please not that a single
+    Each item in this model corresponds to an actual window surface. Please note that a single
     application can have multiple surfaces: the \c applicationId role is not unique within this model!
 
     \target WindowManager Roles
@@ -254,7 +254,7 @@
 /*!
     \qmlsignal WindowManager::windowLost(int index, Item window)
 
-    This signal is emitted when \a window surface has been destroyed on the client side.
+    This signal is emitted when the \a window surface has been destroyed on the client side.
 
     If the surface was mapped, you will receive an implicit windowClosing signal before windowLost.
 

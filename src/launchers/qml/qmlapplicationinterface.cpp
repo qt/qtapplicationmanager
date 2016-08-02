@@ -88,20 +88,20 @@ bool QmlApplicationInterface::initialize()
 
 
     if (!m_applicationIf) {
-        qCritical("ERROR: could not create the ApplicationInterface on D-Bus");
+        qCritical("ERROR: could not connect to the ApplicationInterface on the P2P D-Bus");
         return false;
     }
     if (!m_runtimeIf) {
-        qCritical("ERROR: could not create the RuntimeInterface on D-Bus");
+        qCritical("ERROR: could not connect to the RuntimeInterface on the P2P D-Bus");
         return false;
     }
     if (!m_applicationIf->isValid()) {
-        qCritical("ERROR: ApplicationInterface on D-Bus is not valid: %s",
+        qCritical("ERROR: ApplicationInterface on the P2P D-Bus is not valid: %s",
                   qPrintable(m_applicationIf->lastError().message()));
         return false;
     }
     if (!m_runtimeIf->isValid()) {
-        qCritical("ERROR: RuntimeInterface on D-Bus is not valid: %s",
+        qCritical("ERROR: RuntimeInterface on the P2P D-Bus is not valid: %s",
                   qPrintable(m_runtimeIf->lastError().message()));
         return false;
     }

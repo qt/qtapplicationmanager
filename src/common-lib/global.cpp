@@ -86,18 +86,23 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
 
     enum ConsoleColor { Off, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, BrightIndex, Bright = 0x80 };
     QMap<int, int> colors; // %<n> -> ConsoleColor
+    const char *msgTypeStr[] = { "DBG ", "WARN", "CRIT", "FATL", "INFO" };
+    ConsoleColor msgTypeColor[] = { Green, Yellow, Red, Magenta, Blue };
+
+    if (msgType < QtDebugMsg || msgType > QtInfoMsg)
+        msgType = QtCriticalMsg;
 
     QByteArray fmt("[%1 | %2] %3 %6[%4:%5]\n");
 
     QStringList args = QStringList()
-        << qL1S(msgType >= QtCriticalMsg ? "CRIT" : (msgType >= QtWarningMsg ? "WARN" : "DBG "))
+        << qL1S(msgTypeStr[msgType])
         << qL1S(context.category)
         << message
         << file
         << QString::number(context.line)
         << QString();
 
-    colors[1] = Bright | (msgType >= QtCriticalMsg ? Red : (msgType == QtWarningMsg) ? Yellow : Green);
+    colors[1] = Bright | msgTypeColor[msgType];
     colors[2] = (Red + qHash(QByteArray(context.category)) % 7);
     colors[4] = Magenta;
     colors[5] = Magenta | Bright;

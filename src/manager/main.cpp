@@ -45,6 +45,9 @@
 // include as eary as possible, since the <windows.h> header will re-#define "interface"
 #if defined(QT_DBUS_LIB)
 #  include <QDBusConnection>
+#  if defined(Q_OS_LINUX)
+#    include <sys/prctl.h>
+#  endif
 #endif
 
 #include <QFile>
@@ -463,9 +466,6 @@ int main(int argc, char *argv[])
     setCrashActionConfiguration(configuration->managerCrashAction());
 
     try {
-        if (Q_UNLIKELY(!QFile::exists(configuration->mainQmlFile())))
-            throw Exception(Error::System, "no/invalid main QML file specified: %1").arg(configuration->mainQmlFile());
-
         QStringList loggingRules = configuration->loggingRules();
         if (loggingRules.isEmpty())
             loggingRules << qSL("*.warning=true");
@@ -482,6 +482,50 @@ int main(int argc, char *argv[])
         qputenv("AM_LOGGING_RULES", loggingRules.join(qL1C('\n')).toUtf8());
 
         startupTimer.checkpoint("after logging setup");
+
+#if defined(QT_DBUS_LIB)
+        if (Q_UNLIKELY(configuration->dbusStartSessionBus())) {
+            class DBusDaemonProcess : public QProcess
+            {
+            public:
+                DBusDaemonProcess(QObject *parent = 0)
+                    : QProcess(parent)
+                {
+                    setProgram(qSL("dbus-daemon"));
+                    setArguments({ qSL("--nofork"), qSL("--print-address"), qSL("--session")});
+                }
+                ~DBusDaemonProcess() override
+                {
+                    kill();
+                    waitForFinished();
+                }
+
+            protected:
+                void setupChildProcess() override
+                {
+#  if defined(Q_OS_LINUX)
+                    // at least on Linux we can make sure that those dbus-daemons are always killed
+                    prctl(PR_SET_PDEATHSIG, SIGKILL);
+#  endif
+                    QProcess::setupChildProcess();
+                }
+            };
+
+            auto dbusDaemon = new DBusDaemonProcess(&a);
+            dbusDaemon->start(QIODevice::ReadOnly);
+            if (!dbusDaemon->waitForStarted() || !dbusDaemon->waitForReadyRead())
+                throw Exception(Error::System, "could not start a dbus-launch process: %1").arg(dbusDaemon->errorString());
+
+            QByteArray busAddress = dbusDaemon->readAllStandardOutput().trimmed();
+            qputenv("DBUS_SESSION_BUS_ADDRESS", busAddress);
+            qCInfo(LogSystem) << "NOTICE: running on private D-Bus session bus to avoid conflicts:";
+            qCInfo(LogSystem, "        DBUS_SESSION_BUS_ADDRESS=%s", busAddress.constData());
+
+            startupTimer.checkpoint("after starting session D-Bus");
+        }
+#endif
+        if (Q_UNLIKELY(!QFile::exists(configuration->mainQmlFile())))
+            throw Exception(Error::System, "no/invalid main QML file specified: %1").arg(configuration->mainQmlFile());
 
 #if !defined(AM_DISABLE_INSTALLER)
         if (Q_UNLIKELY(hardwareId().isEmpty()))

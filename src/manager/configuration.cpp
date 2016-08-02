@@ -167,6 +167,7 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("app-image-mount-dir"),  qSL("base directory where application images are mounted to."), qSL("dir"), qSL("/opt/am/image-mounts") });
 #if defined(QT_DBUS_LIB)
     d->clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none"), qSL("session") });
+    d->clp.addOption({ qSL("start-session-dbus"),   qSL("start a private session bus instead of using an existing one.") });
 #endif
     d->clp.addOption({ qSL("fullscreen"),           qSL("display in full-screen.") });
     d->clp.addOption({ qSL("no-fullscreen"),        qSL("do not display in full-screen.") });
@@ -433,6 +434,11 @@ int Configuration::dbusRegistrationDelay() const
     bool found = false;
     int delay = d->findInConfigFile({ qSL("dbus"), qSL("registrationDelay") }, &found).toInt();
     return found ? delay : -1;
+}
+
+bool Configuration::dbusStartSessionBus() const
+{
+    return d->config<bool>("start-session-dbus", { qSL("dbus"), qSL("startSessionBus") });
 }
 
 QVariantMap Configuration::additionalUiConfiguration() const

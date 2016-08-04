@@ -109,7 +109,7 @@ public:
     little dummy import to your application.
 
     \list 1
-    \li Pick a base dir and create a directory hierarchy like \c{io/qt/ApplicationManager}
+    \li Pick a base dir and create a \c{QtApplicationManager} directory in it
     \li Add a file named \c qmldir there, consisting of the single line \c{ApplicationManagerWindow 1.0 ApplicationManagerWindow.qml}
     \li Add a second file named \c ApplicationManagerWindow.qml, with the following content
 

@@ -97,8 +97,9 @@ QProcess::ProcessState HostProcess::state() const
 
 
 
-ProcessContainer::ProcessContainer(ProcessContainerManager *manager)
+ProcessContainer::ProcessContainer(const QStringList &debugWrapperCommand, ProcessContainerManager *manager)
     : AbstractContainer(manager)
+    , m_debugWrapper(debugWrapperCommand)
 { }
 
 ProcessContainer::~ProcessContainer()
@@ -165,7 +166,33 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
     process->setWorkingDirectory(m_baseDirectory);
     process->setProcessEnvironment(completeEnv);
     process->setStopBeforeExec(configuration().value(qSL("stopBeforeExec")).toBool());
-    process->start(m_program, arguments);
+
+
+    QString command = m_program;
+    QStringList args = arguments;
+
+    if (!m_debugWrapper.isEmpty()) {
+        // command could be: [ "gdbserver", ":5555", "%program%", "%arguments%" ]
+        bool foundArgumentMarker = false;
+        for (int i = m_debugWrapper.count() - 1; i >= 0; --i) {
+            QString str = m_debugWrapper.at(i);
+            if (str == qL1S("%arguments%")) {
+                foundArgumentMarker = true;
+                continue;
+            }
+            str.replace(qL1S("%program%"), m_program);
+
+            if (i == 0)
+                command = str;
+            else if (foundArgumentMarker)
+                args.prepend(str);
+            else
+                args.append(str);
+        }
+    }
+    qCDebug(LogSystem) << "Running command:" << command << args;
+
+    process->start(command, args);
     m_process = process;
 
     setControlGroup(configuration().value(qSL("defaultControlGroup")).toString());
@@ -186,9 +213,9 @@ bool ProcessContainerManager::supportsQuickLaunch() const
     return true;
 }
 
-AbstractContainer *ProcessContainerManager::create()
+AbstractContainer *ProcessContainerManager::create(const QStringList &debugWrapperCommand)
 {
-    return new ProcessContainer(this);
+    return new ProcessContainer(debugWrapperCommand, this);
 }
 
 void HostProcess::setStopBeforeExec(bool stopBeforeExec)

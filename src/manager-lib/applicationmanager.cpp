@@ -60,6 +60,7 @@
 #include "abstractcontainer.h"
 #include "dbus-policy.h"
 #include "qml-utilities.h"
+#include "qtyaml.h"
 
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
@@ -231,12 +232,13 @@ enum Roles
     ApplicationItem
 };
 
+
 class ApplicationManagerPrivate
 {
 public:
-    bool securityChecksEnabled;
+    bool securityChecksEnabled = true;
     QVariantMap additionalConfiguration;
-    ApplicationDatabase *database;
+    ApplicationDatabase *database = nullptr;
 
     QMap<QByteArray, DBusPolicy> dbusPolicy;
 
@@ -247,39 +249,53 @@ public:
 
     QVector<IpcProxyObject *> interfaceExtensions;
 
-    ApplicationManagerPrivate()
-        : securityChecksEnabled(true)
-        , database(0)
+    struct DebugWrapper
     {
-        currentLocale = QLocale::system().name(); //TODO: language changes
+        QString name;
+        QStringList command;
+        QVariantMap parameters;
+        QStringList supportedRuntimes;
+        QStringList supportedContainers;
+    };
+    QVector<DebugWrapper> debugWrappers;
 
-        roleNames.insert(Id, "applicationId");
-        roleNames.insert(Name, "name");
-        roleNames.insert(Icon, "icon");
-        roleNames.insert(IsRunning, "isRunning");
-        roleNames.insert(IsStartingUp, "isStartingUp");
-        roleNames.insert(IsShutingDown, "isShutingDown");
-        roleNames.insert(IsBlocked, "isLocked");
-        roleNames.insert(IsUpdating, "isUpdating");
-        roleNames.insert(IsRemovable, "isRemovable");
-        roleNames.insert(UpdateProgress, "updateProgress");
-        roleNames.insert(CodeFilePath, "codeFilePath");
-        roleNames.insert(RuntimeName, "runtimeName");
-        roleNames.insert(RuntimeParameters, "runtimeParameters");
-        roleNames.insert(BackgroundMode, "backgroundMode");
-        roleNames.insert(Capabilities, "capabilities");
-        roleNames.insert(Categories, "categories");
-        roleNames.insert(Importance, "importance");
-        roleNames.insert(Preload, "preload");
-        roleNames.insert(Version, "version");
-        roleNames.insert(ApplicationItem, "application");
-    }
+    bool parseDebugWrapperSpecification(const QString &spec, DebugWrapper *outdw);
 
-    ~ApplicationManagerPrivate()
-    {
-        delete database;
-    }
+    ApplicationManagerPrivate();
+    ~ApplicationManagerPrivate();
 };
+
+
+ApplicationManagerPrivate::ApplicationManagerPrivate()
+{
+    currentLocale = QLocale::system().name(); //TODO: language changes
+
+    roleNames.insert(Id, "applicationId");
+    roleNames.insert(Name, "name");
+    roleNames.insert(Icon, "icon");
+    roleNames.insert(IsRunning, "isRunning");
+    roleNames.insert(IsStartingUp, "isStartingUp");
+    roleNames.insert(IsShutingDown, "isShutingDown");
+    roleNames.insert(IsBlocked, "isLocked");
+    roleNames.insert(IsUpdating, "isUpdating");
+    roleNames.insert(IsRemovable, "isRemovable");
+    roleNames.insert(UpdateProgress, "updateProgress");
+    roleNames.insert(CodeFilePath, "codeFilePath");
+    roleNames.insert(RuntimeName, "runtimeName");
+    roleNames.insert(RuntimeParameters, "runtimeParameters");
+    roleNames.insert(BackgroundMode, "backgroundMode");
+    roleNames.insert(Capabilities, "capabilities");
+    roleNames.insert(Categories, "categories");
+    roleNames.insert(Importance, "importance");
+    roleNames.insert(Preload, "preload");
+    roleNames.insert(Version, "version");
+    roleNames.insert(ApplicationItem, "application");
+}
+
+ApplicationManagerPrivate::~ApplicationManagerPrivate()
+{
+    delete database;
+}
 
 ApplicationManager *ApplicationManager::s_instance = 0;
 
@@ -363,12 +379,103 @@ void ApplicationManager::setAdditionalConfiguration(const QVariantMap &map)
     d->additionalConfiguration = map;
 }
 
+void ApplicationManager::setDebugWrapperConfiguration(const QVariantList &debugWrappers)
+{
+    // Example:
+    //    debugWrappers:
+    //    - name: gdbserver
+    //      # %program% and %arguments% are internal variables
+    //      command: [ /usr/bin/gdbserver, :%port%, %program%, --, %arguments% ]
+    //      parameters:  # <name>: <default value>
+    //        port: 5555
+    //      supportedRuntimes: [ native, qml ]
+    //      supportedContainers: [ process ]
+
+    foreach (const QVariant &v, debugWrappers) {
+        const QVariantMap &map = v.toMap();
+
+        ApplicationManagerPrivate::DebugWrapper dw;
+        dw.name = map.value("name").toString();
+        dw.command = map.value("command").toStringList();
+        dw.parameters = map.value("parameters").toMap();
+        dw.supportedContainers = map.value("supportedContainers").toStringList();
+        dw.supportedRuntimes = map.value("supportedRuntimes").toStringList();
+
+        if (dw.name.isEmpty() || dw.command.isEmpty())
+            continue;
+        d->debugWrappers.append(dw);
+    }
+}
+
+bool ApplicationManagerPrivate::parseDebugWrapperSpecification(const QString &spec, DebugWrapper *outdw)
+{
+    // Example:
+    //    "gdbserver"
+    //    "gdbserver: {port: 5555}"
+
+    if (spec.isEmpty() || !outdw)
+        return false;
+
+    auto docs = QtYaml::variantDocumentsFromYaml(spec.toUtf8());
+    if (docs.size() != 1)
+        return false;
+    const QVariant v = docs.at(0);
+
+    QString name;
+    QVariantMap userParams;
+
+    switch (v.type()) {
+    case QVariant::String:
+        name = v.toString();
+        break;
+    case QVariant::Map: {
+        const QVariantMap map = v.toMap();
+        name = map.firstKey();
+        userParams = map.first().toMap();
+        break;
+    }
+    default:
+        return false;
+    }
+    const DebugWrapper *basedw = nullptr;
+    for (const DebugWrapper &dw : debugWrappers) {
+        if (dw.name == name) {
+            basedw = &dw;
+            break;
+        }
+    }
+
+    if (!basedw)
+        return false;
+    *outdw = *basedw;
+
+    for (auto it = userParams.cbegin(); it != userParams.cend(); ++it) {
+        QString key = it.key();
+
+        auto keyit = outdw->parameters.find(key);
+        if (keyit == outdw->parameters.end())
+            return false;
+
+        QString value = it.value().toString();
+        *keyit = value;
+
+        //commandLine
+        key.prepend(qL1C('%'));
+        key.append(qL1C('%'));
+        std::for_each(outdw->command.begin(), outdw->command.end(), [key, value](QString &str) {
+            str.replace(key, value);
+        });
+    }
+    return true;
+}
+
 bool ApplicationManager::setDBusPolicy(const QVariantMap &yamlFragment)
 {
     static const QVector<QByteArray> functions {
         QT_STRINGIFY(applicationIds),
         QT_STRINGIFY(get),
         QT_STRINGIFY(startApplication),
+        QT_STRINGIFY(debugApplication),
         QT_STRINGIFY(stopApplication),
         QT_STRINGIFY(openUrl),
         QT_STRINGIFY(capabilities),
@@ -468,22 +575,37 @@ void ApplicationManager::registerMimeTypes()
         QDesktopServices::setUrlHandler(scheme, this, "openUrlRelay");
 }
 
-bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl)
+bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl, const QString &debugWrapperSpecification)
 {
     if (!app) {
-        qCWarning(LogSystem) << "Application *app is NULL";
+        qCWarning(LogSystem) << "Cannot start an invalid application";
         return false;
     }
     if (app->isLocked()) {
-        qCWarning(LogSystem) << "Application *app (" << app->id() << ") is blocked";
+        qCWarning(LogSystem) << "Application" << app->id() << "is blocked - cannot start";
         return false;
     }
     AbstractRuntime *runtime = app->currentRuntime();
+
+    ApplicationManagerPrivate::DebugWrapper debugWrapper;
+    bool useDebugWrapper = false;
+    if (!debugWrapperSpecification.isEmpty()) {
+        useDebugWrapper = d->parseDebugWrapperSpecification(debugWrapperSpecification, &debugWrapper);
+        if (!useDebugWrapper) {
+            qCWarning(LogSystem) << "Application" << app->id() << "cannot be started by this debug wrapper specification:" << debugWrapperSpecification;
+            return false;
+        }
+    }
 
     if (runtime) {
         switch (runtime->state()) {
         case AbstractRuntime::Startup:
         case AbstractRuntime::Active:
+            if (useDebugWrapper) {
+                qCDebug(LogSystem) << "Application" << app->id() << "is already running - cannot start with debug-wrapper" << debugWrapper.name;
+                return false;
+            }
+
             if (!documentUrl.isNull())
                 runtime->openDocument(documentUrl);
             else if (!app->documentUrl().isNull())
@@ -511,25 +633,46 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     QString containerId = qSL("process"); //TODO: ask SystemUI or use config file
     bool attachRuntime = false;
 
+    if (useDebugWrapper) {
+        if (!debugWrapper.supportedRuntimes.contains(app->runtimeName())) {
+            qCDebug(LogSystem) << "Application" << app->id() << "is using the" << app->runtimeName()
+                               << "runtime, which is not compatible with the requested debug-wrapper"
+                               << debugWrapper.name;
+            return false;
+        }
+        if (!debugWrapper.supportedContainers.contains(containerId)) {
+            qCDebug(LogSystem) << "Application" << app->id() << "is using the" << containerId
+                               << "container, which is not compatible with the requested debug-wrapper"
+                               << debugWrapper.name;
+            return false;
+        }
+    }
+
     if (!runtime) {
         if (!inProcess) {
-            // check quicklaunch pool
-            QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
-                    QuickLauncher::instance()->take(containerId, app->m_runtimeName);
-            container = quickLaunch.first;
-            runtime = quickLaunch.second;
+            if (!useDebugWrapper) {
+                // check quicklaunch pool
+                QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
+                        QuickLauncher::instance()->take(containerId, app->m_runtimeName);
+                container = quickLaunch.first;
+                runtime = quickLaunch.second;
 
-            qCDebug(LogSystem) << "Found a quick-launch entry for container" << containerId
-                               << "and runtime" << app->m_runtimeName << "->" << container << runtime;
+                qCDebug(LogSystem) << "Found a quick-launch entry for container" << containerId
+                                   << "and runtime" << app->m_runtimeName << "->" << container << runtime;
 
-            if (!container && runtime) {
-                runtime->deleteLater();
-                qCCritical(LogSystem) << "ERROR: QuickLauncher provided a runtime without a container.";
-                return false;
+                if (!container && runtime) {
+                    runtime->deleteLater();
+                    qCCritical(LogSystem) << "ERROR: QuickLauncher provided a runtime without a container.";
+                    return false;
+                }
             }
 
-            if (!container)
-                container = ContainerFactory::instance()->create(containerId);
+            if (!container) {
+                if (useDebugWrapper)
+                    container = ContainerFactory::instance()->create(containerId, debugWrapper.command);
+                else
+                    container = ContainerFactory::instance()->create(containerId);
+            }
             if (!container) {
                 qCCritical(LogSystem) << "ERROR: Couldn't create Container for Application (" << app->id() <<")!";
                 return false;
@@ -620,6 +763,13 @@ bool ApplicationManager::startApplication(const QString &id, const QString &docu
     AM_AUTHENTICATE_DBUS(bool)
 
     return startApplication(fromId(id), documentUrl);
+}
+
+bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl)
+{
+    AM_AUTHENTICATE_DBUS(bool)
+
+    return startApplication(fromId(id), documentUrl, debugWrapper);
 }
 
 /*!

@@ -77,12 +77,12 @@ AbstractContainerManager *ContainerFactory::manager(const QString &id)
     return m_containers.value(id);
 }
 
-AbstractContainer *ContainerFactory::create(const QString &id)
+AbstractContainer *ContainerFactory::create(const QString &id, const QStringList &debugWrapperCommand)
 {
     AbstractContainerManager *acm = manager(id);
     if (!acm)
         return nullptr;
-    return acm->create();
+    return acm->create(debugWrapperCommand);
 }
 
 void ContainerFactory::setConfiguration(const QVariantMap &configuration)

@@ -91,6 +91,8 @@ public:
     QVariantMap additionalConfiguration() const;
     void setAdditionalConfiguration(const QVariantMap &map);
 
+    void setDebugWrapperConfiguration(const QVariantList &debugWrappers);
+
     QVector<const Application *> applications() const;
 
     const Application *fromId(const QString &id) const;
@@ -99,7 +101,7 @@ public:
     const Application *schemeHandler(const QString &scheme) const;
     const Application *mimeTypeHandler(const QString &mimeType) const;
 
-    bool startApplication(const Application *app, const QString &documentUrl = QString());
+    bool startApplication(const Application *app, const QString &documentUrl = QString(), const QString &debugWrapperSpecification = QString());
     void stopApplication(const Application *app, bool forceKill = false);
 
     // only use these two functions for development!
@@ -123,6 +125,7 @@ public:
     Q_SCRIPTABLE QStringList applicationIds() const;
     Q_SCRIPTABLE QVariantMap get(const QString &id) const;
     Q_SCRIPTABLE bool startApplication(const QString &id, const QString &documentUrl = QString());
+    Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl = QString());
     Q_SCRIPTABLE void stopApplication(const QString &id, bool forceKill = false);
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;

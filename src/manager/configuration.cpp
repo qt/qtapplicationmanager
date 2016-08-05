@@ -512,6 +512,11 @@ quint16 Configuration::telnetPort() const
     return d->findInConfigFile({ qSL("debug"), qSL("telnetPort") }, nullptr).value<quint16>();
 }
 
+QVariantList Configuration::debugWrappers() const
+{
+    return d->findInConfigFile({ qSL("debugWrappers") }).toList();
+}
+
 QVariantMap Configuration::managerCrashAction() const
 {
     return d->findInConfigFile({ qSL("crashAction")} ).toMap();

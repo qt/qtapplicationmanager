@@ -55,6 +55,7 @@
 #include "applicationinterface.h"
 #include "applicationipcmanager.h"
 #include "applicationipcinterface.h"
+#include "utilities.h"
 
 // You can enable this define to get all P2P-bus objects onto the session bus
 // within io.qt.ApplicationManager, /Application<pid>/...
@@ -387,12 +388,31 @@ NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
             qCWarning(LogSystem) << "Could not retrieve peer pid on D-Bus connection attempt.";
             return;
         }
+
+        // try direct PID mapping first
         for (NativeRuntime *rt : qAsConst(m_nativeRuntimes)) {
             if (rt->applicationProcessId() == pid) {
                 rt->onDBusPeerConnection(connection);
                 return;
             }
         }
+
+        // check for sub-processes ... this happens when running the app via gdbserver
+        qint64 appmanPid = getpid();
+
+        for (NativeRuntime *rt : qAsConst(m_nativeRuntimes)) {
+            qint64 ppid = pid;
+
+            while (ppid > 1 && ppid != appmanPid) {
+                ppid = getParentPid(ppid);
+
+                if (rt->applicationProcessId() == ppid) {
+                    rt->onDBusPeerConnection(connection);
+                    return;
+                }
+            }
+        }
+
         QDBusConnection::disconnectFromPeer(connection.name());
         qCWarning(LogSystem) << "Connection attempt on peer D-Bus from unknown pid:" << pid;
     });

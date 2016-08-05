@@ -62,7 +62,7 @@ public:
     QString identifier() const;
     virtual bool supportsQuickLaunch() const;
 
-    virtual AbstractContainer *create() = 0;
+    virtual AbstractContainer *create(const QStringList &debugWrapperCommand = QStringList()) = 0;
 
     QVariantMap configuration() const;
     void setConfiguration(const QVariantMap &configuration);

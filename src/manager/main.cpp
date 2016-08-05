@@ -765,6 +765,11 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after window show");
 #endif
 
+        // delay debug-wrapper setup
+        QTimer::singleShot(1500, qApp, []() {
+            ApplicationManager::instance()->setDebugWrapperConfiguration(configuration->debugWrappers());
+        });
+
 #if defined(QT_PSHELLSERVER_LIB)
         // have a JavaScript shell reachable via telnet protocol
         PTelnetServer telnetServer;

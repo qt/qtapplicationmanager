@@ -54,7 +54,7 @@ public:
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
 
-    AbstractContainer *create() override;
+    AbstractContainer *create(const QStringList &debugWrapperCommand = QStringList()) override;
 };
 
 class HostProcess : public AbstractContainerProcess
@@ -91,7 +91,7 @@ class ProcessContainer : public AbstractContainer
     Q_OBJECT
 
 public:
-    explicit ProcessContainer(ProcessContainerManager *manager);
+    explicit ProcessContainer(const QStringList &debugWrapperCommand, ProcessContainerManager *manager);
     ~ProcessContainer();
 
     QString controlGroup() const override;
@@ -103,4 +103,5 @@ public:
 
 private:
     QString m_currentControlGroup;
+    QStringList m_debugWrapper;
 };

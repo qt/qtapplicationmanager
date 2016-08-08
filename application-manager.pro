@@ -25,7 +25,7 @@ load(am-config)
 !config_libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 !config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 
-enable-libbacktrace|CONFIG(debug, debug|release)  {
+linux:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
   check_libbacktrace = "yes"
   SUBDIRS += 3rdparty/libbacktrace/libbacktrace.pro
 } else {

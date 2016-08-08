@@ -378,10 +378,9 @@ bool WindowManager::isWatchdogEnabled() const
     return d->watchdogEnabled;
 }
 
-QVector<const Window *> WindowManager::windows() const
+QVector<Window *> WindowManager::windows() const
 {
-    // ugly cast to cheaply convert the pointer in the list to const
-    return *(reinterpret_cast<QVector<const Window *> *>(&d->windows));
+    return d->windows;
 }
 
 int WindowManager::rowCount(const QModelIndex &parent) const

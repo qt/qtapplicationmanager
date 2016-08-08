@@ -113,7 +113,7 @@ public:
     void enableWatchdog(bool enable);
     bool isWatchdogEnabled() const;
 
-    QVector<const Window *> windows() const;
+    QVector<Window *> windows() const;
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;

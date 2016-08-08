@@ -64,6 +64,7 @@
 #  else
 #    include <sys/statvfs.h>
 #  endif
+#  include <qplatformdefs.h>
 #endif
 
 bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree)
@@ -378,9 +379,11 @@ static void crashHandler(const char *why)
             int level;
         };
 
+        static bool useAnsiColor = canOutputAnsiColors(STDERR_FILENO);
+
         static auto printBacktraceLine = [](int level, const char *symbol, uintptr_t offset, const char *file = nullptr, int line = -1)
         {
-            if (isatty(STDERR_FILENO)) {
+            if (useAnsiColor) {
                 fprintf(stderr, " %3d: \x1b[1m%s\x1b[0m [\x1b[36m%" PRIxPTR "\x1b[0m]", level, symbol, offset);
                 if (file)
                     fprintf(stderr, " in \x1b[35m%s\x1b[0m:\x1b[35;1m%d\x1b[0m", file, line);
@@ -393,7 +396,7 @@ static void crashHandler(const char *why)
         };
 
         static auto errorCallback = [](void *data, const char *msg, int errnum) {
-            if (isatty(STDERR_FILENO))
+            if (useAnsiColor)
                 fprintf(stderr, " %3d: \x1b[31;1mERROR: \x1b[0;1m%s (%d)\x1b[0m\n", static_cast<btData *>(data)->level, msg, errnum);
             else
                 fprintf(stderr, " %3d: ERROR: %s (%d)\n", static_cast<btData *>(data)->level, msg, errnum);
@@ -607,3 +610,53 @@ void setCrashActionConfiguration(const QVariantMap &config)
 }
 
 #endif // !Q_OS_LINUX
+
+bool canOutputAnsiColors(int fd)
+{
+#if defined(Q_OS_UNIX)
+    if (::isatty(fd)) {
+        return true;
+    }
+#  if defined(Q_OS_LINUX)
+    else {
+        static int isCreator = -1;
+        if (isCreator < 0) {
+            isCreator = 0;
+            static QString checkCreator = qSL("/proc/%1/exe");
+            qint64 pid = getppid();
+            while (pid > 1) {
+                QFileInfo fi(checkCreator.arg(pid));
+                if (fi.readLink().contains(qSL("qtcreator"))) {
+                    isCreator = 1;
+                    break;
+                }
+                pid = getParentPid(pid);
+            }
+        }
+        if (isCreator > 0)
+            return true;
+    }
+#  endif
+#endif
+    return false;
+}
+
+
+qint64 getParentPid(qint64 pid)
+{
+#if defined(Q_OS_LINUX)
+    static QString proc = qSL("/proc/%1/stat");
+    QFile f(proc.arg(pid));
+    if (f.open(QIODevice::ReadOnly)) {
+        // we need just the 4th field, but the 2nd is the binary name, which could be long
+        QByteArray ba = f.read(512);
+        // the binary name could contain ')' and/or ' ' and the kernel escapes neither...
+        int pos = ba.lastIndexOf(')');
+        if (pos > 0 && ba.length() > (pos + 5)) {
+            qint64 ppid = strtoll(ba.constData() + pos + 4, nullptr, 10);
+            return ppid;
+        }
+    }
+#endif
+    return 0;
+}

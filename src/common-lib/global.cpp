@@ -44,6 +44,7 @@
 #include <QNetworkInterface>
 
 #include "global.h"
+#include "utilities.h"
 
 #if defined(Q_OS_WIN)
 Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
@@ -152,10 +153,16 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
         FOREGROUND_INTENSITY                // bright
     };
 #else
-    if (::isatty(STDERR_FILENO)) {
-        struct ::winsize ws;
-        if (::ioctl(0, TIOCGWINSZ, &ws) == 0)
-            windowWidth = ws.ws_col;
+    static bool useAnsiColors = canOutputAnsiColors(STDERR_FILENO);
+
+    if (useAnsiColors) {
+        if (::isatty(STDERR_FILENO)) {
+            struct ::winsize ws;
+            if (::ioctl(0, TIOCGWINSZ, &ws) == 0)
+                windowWidth = ws.ws_col;
+        } else {
+            windowWidth = 120;
+        }
     }
 
     static const char *ansiColors[] = {

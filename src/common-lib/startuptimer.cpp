@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "startuptimer.h"
+#include "utilities.h"
 
 #if defined(Q_OS_WIN)
 #  include <windows.h>
@@ -192,7 +193,7 @@ void StartupTimer::checkpoint(const char *name)
 void StartupTimer::createReport() const
 {
     if (m_output) {
-        bool colorSupport = isatty(fileno(m_output));
+        bool colorSupport = canOutputAnsiColors(fileno(m_output));
 
         if (colorSupport) {
             fprintf(m_output, "\n\033[33m== STARTUP TIMING REPORT ==\033[0m\n");

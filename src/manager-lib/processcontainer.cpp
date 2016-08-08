@@ -53,6 +53,7 @@
 void HostProcess::start(const QString &program, const QStringList &arguments)
 {
     m_process.setProcessChannelMode(QProcess::ForwardedChannels);
+    m_process.setInputChannelMode(QProcess::ForwardedInputChannel);
 
     connect(&m_process, &QProcess::started, this, &HostProcess::started);
     connect(&m_process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),

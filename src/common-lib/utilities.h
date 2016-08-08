@@ -159,3 +159,7 @@ QString findOnSDCard(const QString &file);
 #endif
 
 void setCrashActionConfiguration(const QVariantMap &config);
+
+bool canOutputAnsiColors(int fd);
+
+qint64 getParentPid(qint64 pid);

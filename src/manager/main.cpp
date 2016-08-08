@@ -107,6 +107,7 @@
 #include "qmlinprocessruntime.h"
 #include "qmlinprocessapplicationinterface.h"
 #include "qml-utilities.h"
+#include "dbus-utilities.h"
 
 #if !defined(AM_HEADLESS)
 #  include "windowmanager.h"
@@ -191,7 +192,7 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *servic
     static bool once = false;
     if (!once) {
         once = true;
-        qDBusRegisterMetaType<QUrl>();
+        registerDBusTypes();
     }
 }
 
@@ -228,29 +229,6 @@ static void dbusInitialization()
         qApp->exit(2);
     }
 }
-
-
-QT_BEGIN_NAMESPACE
-
-QDBusArgument &operator<<(QDBusArgument &argument, const QUrl &url)
-{
-    argument.beginStructure();
-    argument << QString::fromLatin1(url.toEncoded());
-    argument.endStructure();
-    return argument;
-}
-
-const QDBusArgument &operator>>(const QDBusArgument &argument, QUrl &url)
-{
-    QString s;
-    argument.beginStructure();
-    argument >> s;
-    argument.endStructure();
-    url = QUrl::fromEncoded(s.toLatin1());
-    return argument;
-}
-
-QT_END_NAMESPACE
 
 #endif // QT_DBUS_LIB
 

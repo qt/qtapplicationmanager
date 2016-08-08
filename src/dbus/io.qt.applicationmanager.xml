@@ -44,6 +44,14 @@
       <arg type="b" direction="out"/>
       <arg name="id" type="s" direction="in"/>
       <arg name="debugWrapper" type="s" direction="in"/>
+      <arg name="redirections" type="a{sh}" direction="in"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="UnixFdMap"/>
+      <arg name="documentUrl" type="s" direction="in"/>
+    </method>
+    <method name="debugApplication">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+      <arg name="debugWrapper" type="s" direction="in"/>
       <arg name="documentUrl" type="s" direction="in"/>
     </method>
     <method name="debugApplication">

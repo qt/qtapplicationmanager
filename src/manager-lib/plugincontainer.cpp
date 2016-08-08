@@ -58,12 +58,21 @@ bool PluginContainerManager::supportsQuickLaunch() const
     return m_interface->supportsQuickLaunch();
 }
 
-AbstractContainer *PluginContainerManager::create(const QStringList &debugWrapperCommand)
+AbstractContainer *PluginContainerManager::create()
 {
-    auto containerInterface = m_interface->create(debugWrapperCommand);
+    auto containerInterface = m_interface->create();
     if (!containerInterface)
         return nullptr;
     return new PluginContainer(containerInterface, this);
+}
+
+AbstractContainer *PluginContainerManager::create(const ContainerDebugWrapper &debugWrapper)
+{
+    if (debugWrapper.isValid()) {
+        qCWarning(LogSystem()) << "Debug wrappers are currently not supported on external container plugins.";
+        return nullptr;
+    }
+    return create();
 }
 
 void PluginContainerManager::setConfiguration(const QVariantMap &configuration)

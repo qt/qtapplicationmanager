@@ -48,6 +48,7 @@
 #if defined(QT_DBUS_LIB)
 #  include <QDBusContext>
 #  include <QDBusConnectionInterface>
+#  include "dbus-utilities.h"
 #endif
 
 QT_FORWARD_DECLARE_CLASS(QDir)
@@ -101,7 +102,7 @@ public:
     const Application *schemeHandler(const QString &scheme) const;
     const Application *mimeTypeHandler(const QString &mimeType) const;
 
-    bool startApplication(const Application *app, const QString &documentUrl = QString(), const QString &debugWrapperSpecification = QString());
+    bool startApplication(const Application *app, const QString &documentUrl = QString(), const QString &debugWrapperSpecification = QString(), const QVector<int> &stdRedirections = QVector<int>());
     void stopApplication(const Application *app, bool forceKill = false);
     void killAll();
 
@@ -127,6 +128,9 @@ public:
     Q_SCRIPTABLE QVariantMap get(const QString &id) const;
     Q_SCRIPTABLE bool startApplication(const QString &id, const QString &documentUrl = QString());
     Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl = QString());
+#if defined(QT_DBUS_LIB)
+    Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const UnixFdMap &redirections, const QString &documentUrl = QString());
+#endif
     Q_SCRIPTABLE void stopApplication(const QString &id, bool forceKill = false);
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;

@@ -62,6 +62,9 @@
 #include "qml-utilities.h"
 #include "qtyaml.h"
 
+#if defined(Q_OS_UNIX)
+#  include <unistd.h>
+#endif
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
     do { \
@@ -249,17 +252,9 @@ public:
 
     QVector<IpcProxyObject *> interfaceExtensions;
 
-    struct DebugWrapper
-    {
-        QString name;
-        QStringList command;
-        QVariantMap parameters;
-        QStringList supportedRuntimes;
-        QStringList supportedContainers;
-    };
-    QVector<DebugWrapper> debugWrappers;
+    QVector<ContainerDebugWrapper> debugWrappers;
 
-    bool parseDebugWrapperSpecification(const QString &spec, DebugWrapper *outdw);
+    ContainerDebugWrapper parseDebugWrapperSpecification(const QString &spec);
 
     ApplicationManagerPrivate();
     ~ApplicationManagerPrivate();
@@ -386,40 +381,39 @@ void ApplicationManager::setDebugWrapperConfiguration(const QVariantList &debugW
     //    debugWrappers:
     //    - name: gdbserver
     //      # %program% and %arguments% are internal variables
-    //      command: [ /usr/bin/gdbserver, :%port%, %program%, --, %arguments% ]
+    //      command: [ /usr/bin/gdbserver, ':%port%', '%program%', '%arguments%' ]
     //      parameters:  # <name>: <default value>
     //        port: 5555
     //      supportedRuntimes: [ native, qml ]
     //      supportedContainers: [ process ]
+    //    - name: valgrind
+    //      command: [ /usr/bin/valgrind, '--', '%program%', '%arguments%' ]
+    //      parameters:  # <name>: <default value>
 
     foreach (const QVariant &v, debugWrappers) {
         const QVariantMap &map = v.toMap();
 
-        ApplicationManagerPrivate::DebugWrapper dw;
-        dw.name = map.value("name").toString();
-        dw.command = map.value("command").toStringList();
-        dw.parameters = map.value("parameters").toMap();
-        dw.supportedContainers = map.value("supportedContainers").toStringList();
-        dw.supportedRuntimes = map.value("supportedRuntimes").toStringList();
-
-        if (dw.name.isEmpty() || dw.command.isEmpty())
+        ContainerDebugWrapper dw(map);
+        if (dw.name().isEmpty() || dw.command().isEmpty())
             continue;
         d->debugWrappers.append(dw);
     }
 }
 
-bool ApplicationManagerPrivate::parseDebugWrapperSpecification(const QString &spec, DebugWrapper *outdw)
+ContainerDebugWrapper ApplicationManagerPrivate::parseDebugWrapperSpecification(const QString &spec)
 {
     // Example:
     //    "gdbserver"
     //    "gdbserver: {port: 5555}"
 
-    if (spec.isEmpty() || !outdw)
-        return false;
+    static ContainerDebugWrapper fail;
+
+    if (spec.isEmpty())
+        return fail;
 
     auto docs = QtYaml::variantDocumentsFromYaml(spec.toUtf8());
     if (docs.size() != 1)
-        return false;
+        return fail;
     const QVariant v = docs.at(0);
 
     QString name;
@@ -436,38 +430,25 @@ bool ApplicationManagerPrivate::parseDebugWrapperSpecification(const QString &sp
         break;
     }
     default:
-        return false;
+        return fail;
     }
-    const DebugWrapper *basedw = nullptr;
-    for (const DebugWrapper &dw : debugWrappers) {
-        if (dw.name == name) {
-            basedw = &dw;
+
+    ContainerDebugWrapper dw;
+    for (auto it : qAsConst(debugWrappers)) {
+        if (it.name() == name) {
+            dw = it;
             break;
         }
     }
 
-    if (!basedw)
-        return false;
-    *outdw = *basedw;
+    if (!dw.isValid())
+        return fail;
 
     for (auto it = userParams.cbegin(); it != userParams.cend(); ++it) {
-        QString key = it.key();
-
-        auto keyit = outdw->parameters.find(key);
-        if (keyit == outdw->parameters.end())
-            return false;
-
-        QString value = it.value().toString();
-        *keyit = value;
-
-        //commandLine
-        key.prepend(qL1C('%'));
-        key.append(qL1C('%'));
-        std::for_each(outdw->command.begin(), outdw->command.end(), [key, value](QString &str) {
-            str.replace(key, value);
-        });
+        if (!dw.setParameter(it.key(), it.value()))
+            return fail;
     }
-    return true;
+    return dw;
 }
 
 bool ApplicationManager::setDBusPolicy(const QVariantMap &yamlFragment)
@@ -576,7 +557,9 @@ void ApplicationManager::registerMimeTypes()
         QDesktopServices::setUrlHandler(scheme, this, "openUrlRelay");
 }
 
-bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl, const QString &debugWrapperSpecification)
+bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl,
+                                          const QString &debugWrapperSpecification,
+                                          const QVector<int> &stdRedirections)
 {
     if (!app) {
         qCWarning(LogSystem) << "Cannot start an invalid application";
@@ -588,22 +571,22 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     }
     AbstractRuntime *runtime = app->currentRuntime();
 
-    ApplicationManagerPrivate::DebugWrapper debugWrapper;
-    bool useDebugWrapper = false;
+    ContainerDebugWrapper debugWrapper;
     if (!debugWrapperSpecification.isEmpty()) {
-        useDebugWrapper = d->parseDebugWrapperSpecification(debugWrapperSpecification, &debugWrapper);
-        if (!useDebugWrapper) {
+        debugWrapper = d->parseDebugWrapperSpecification(debugWrapperSpecification);
+        if (!debugWrapper.isValid()) {
             qCWarning(LogSystem) << "Application" << app->id() << "cannot be started by this debug wrapper specification:" << debugWrapperSpecification;
             return false;
         }
+        debugWrapper.setStdRedirections(stdRedirections);
     }
 
     if (runtime) {
         switch (runtime->state()) {
         case AbstractRuntime::Startup:
         case AbstractRuntime::Active:
-            if (useDebugWrapper) {
-                qCDebug(LogSystem) << "Application" << app->id() << "is already running - cannot start with debug-wrapper" << debugWrapper.name;
+            if (debugWrapper.isValid()) {
+                qCDebug(LogSystem) << "Application" << app->id() << "is already running - cannot start with debug-wrapper" << debugWrapper.name();
                 return false;
             }
 
@@ -634,24 +617,24 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     QString containerId = qSL("process"); //TODO: ask SystemUI or use config file
     bool attachRuntime = false;
 
-    if (useDebugWrapper) {
-        if (!debugWrapper.supportedRuntimes.contains(app->runtimeName())) {
+    if (debugWrapper.isValid()) {
+        if (!debugWrapper.supportsRuntime(app->runtimeName())) {
             qCDebug(LogSystem) << "Application" << app->id() << "is using the" << app->runtimeName()
                                << "runtime, which is not compatible with the requested debug-wrapper"
-                               << debugWrapper.name;
+                               << debugWrapper.name();
             return false;
         }
-        if (!debugWrapper.supportedContainers.contains(containerId)) {
+        if (!debugWrapper.supportsContainer(containerId)) {
             qCDebug(LogSystem) << "Application" << app->id() << "is using the" << containerId
                                << "container, which is not compatible with the requested debug-wrapper"
-                               << debugWrapper.name;
+                               << debugWrapper.name();
             return false;
         }
     }
 
     if (!runtime) {
         if (!inProcess) {
-            if (!useDebugWrapper) {
+            if (!debugWrapper.isValid()) {
                 // check quicklaunch pool
                 QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
                         QuickLauncher::instance()->take(containerId, app->m_runtimeName);
@@ -669,8 +652,8 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             }
 
             if (!container) {
-                if (useDebugWrapper)
-                    container = ContainerFactory::instance()->create(containerId, debugWrapper.command);
+                if (debugWrapper.isValid())
+                    container = ContainerFactory::instance()->create(containerId, debugWrapper);
                 else
                     container = ContainerFactory::instance()->create(containerId);
             }
@@ -783,6 +766,31 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 
     return startApplication(fromId(id), documentUrl, debugWrapper);
 }
+
+#if defined(QT_DBUS_LIB)
+bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const UnixFdMap &redirections, const QString &documentUrl)
+{
+    AM_AUTHENTICATE_DBUS(bool)
+
+    QVector<int> redirectStd = { -1, -1, -1 };
+
+#if defined(Q_OS_UNIX)
+    for (auto it = redirections.cbegin(); it != redirections.cend(); ++it) {
+        QDBusUnixFileDescriptor dfd = it.value();
+        int fd = dfd.fileDescriptor();
+
+        const QString &which = it.key();
+        if (which == qL1S("in"))
+            redirectStd[0] = dup(fd);
+        else if (which == qL1S("out"))
+            redirectStd[1] = dup(fd);
+        else if (which == qL1S("err"))
+            redirectStd[2] = dup(fd);
+    }
+#endif
+    return startApplication(fromId(id), documentUrl, debugWrapper, redirectStd);
+}
+#endif
 
 /*!
     \qmlmethod ApplicationManager::stopApplication(string id, bool forceKill)

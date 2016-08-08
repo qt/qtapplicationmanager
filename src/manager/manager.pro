@@ -66,9 +66,7 @@ SOURCES += \
     waylandwindow.cpp \
     windowmanager.cpp \
 
-
 DBUS_ADAPTORS += \
-    ../dbus/io.qt.applicationmanager.xml \
     ../dbus/io.qt.applicationinstaller.xml \
 
 !headless:DBUS_ADAPTORS += \
@@ -81,30 +79,14 @@ dbus-notifications.files = ../dbus/org.freedesktop.notifications.xml
 dbus-notifications.source_flags = -l NotificationManager
 dbus-notifications.header_flags = -l NotificationManager -i notificationmanager.h
 
-DBUS_ADAPTORS += dbus-notifications
+dbus-appman.files = ../dbus/io.qt.applicationmanager.xml
+dbus-appman.header_flags = -i dbus-utilities.h
+
+DBUS_ADAPTORS += dbus-notifications dbus-appman
 
 dbusif.path = $$INSTALL_PREFIX/share/dbus-1/interfaces/
-dbusif.files = $$DBUS_ADAPTORS
+dbusif.files = ../dbus/*.xml
 INSTALLS += dbusif
-
-qtPrepareTool(QDBUSCPP2XML, qdbuscpp2xml)
-
-recreate-applicationmanager-dbus-xml.CONFIG = phony
-recreate-applicationmanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager-lib/applicationmanager.h -o $$PWD/../dbus/io.qt.applicationmanager.xml
-
-recreate-applicationinstaller-dbus-xml.CONFIG = phony
-recreate-applicationinstaller-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../installer-lib/applicationinstaller.h -o $$PWD/../dbus/io.qt.applicationinstaller.xml
-
-recreate-windowmanager-dbus-xml.CONFIG = phony
-recreate-windowmanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/windowmanager.h -o $$PWD/../dbus/io.qt.windowmanager.xml
-
-recreate-dbus-xml.depends = recreate-applicationmanager-dbus-xml recreate-applicationinstaller-dbus-xml
-
-QMAKE_EXTRA_TARGETS += \
-    recreate-dbus-xml \
-    recreate-applicationmanager-dbus-xml \
-    recreate-applicationinstaller-dbus-xml \
-    recreate-windowmanager-dbus-xml \
 
 OTHER_FILES = \
     syms.txt \

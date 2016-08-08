@@ -42,11 +42,15 @@
 #include "applicationmanager_interface.h"
 #include "applicationinstaller_interface.h"
 #include "qtyaml.h"
+#include "dbus-utilities.h"
+
 
 class DBus : public QObject {
 public:
     DBus()
-    { }
+    {
+        registerDBusTypes();
+    }
 
     void connectToManager() throw(Exception)
     {
@@ -150,7 +154,7 @@ static Command command(QCommandLineParser &clp)
 
 static void installPackage(const QString &package) throw(Exception);
 static void startApplication(const QString &appId, const QString &documentUrl);
-static void debugApplication(const QString &debugWrapper, const QString &appId, const QString &documentUrl);
+static void debugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl);
 static void stopApplication(const QString &appId);
 static void listApplications();
 static void showApplication(const QString &appId);
@@ -213,10 +217,14 @@ int main(int argc, char *argv[])
 
     clp.addPositionalArgument(qSL("command"), qSL("The command to execute."));
 
+    // ignore unknown options for now -- the sub-commands may need them later
+    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
+
     if (!clp.parse(QCoreApplication::arguments())) {
         fprintf(stderr, "%s\n", qPrintable(clp.errorText()));
         exit(1);
     }
+    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
 
     try {
         switch (command(clp)) {
@@ -258,6 +266,9 @@ int main(int argc, char *argv[])
             break;
         }
         case DebugApplication: {
+            clp.addOption({ { qSL("i"), qSL("attach-stdin") }, qSL("Attach the app's stdin to the controller's stdin") });
+            clp.addOption({ { qSL("o"), qSL("attach-stdout") }, qSL("Attach the app's stdout to the controller's stdout") });
+            clp.addOption({ { qSL("e"), qSL("attach-stderr") }, qSL("Attach the app's stderr to the controller's stderr") });
             clp.addPositionalArgument(qSL("debug-wrapper"),  qSL("The name of a configured debug-wrapper."));
             clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
             clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
@@ -267,8 +278,16 @@ int main(int argc, char *argv[])
             if (args < 3 || args > 4)
                 clp.showHelp(1);
 
+            QMap<QString, int> stdRedirections;
+            if (clp.isSet(qSL("attach-stdin")))
+                stdRedirections["in"] = 0;
+            if (clp.isSet(qSL("attach-stdout")))
+                stdRedirections["out"] = 1;
+            if (clp.isSet(qSL("attach-stderr")))
+                stdRedirections["err"] = 2;
+
             debugApplication(clp.positionalArguments().at(1), clp.positionalArguments().at(2),
-                             args == 3 ? clp.positionalArguments().at(2) : QString());
+                             stdRedirections, args == 3 ? clp.positionalArguments().at(2) : QString());
             break;
         }
         case StopApplication:
@@ -282,6 +301,7 @@ int main(int argc, char *argv[])
             break;
 
         case ListApplications:
+            clp.process(a);
             listApplications();
             break;
 
@@ -308,7 +328,7 @@ int main(int argc, char *argv[])
     }
 }
 
-static void startApplication(const QString &appId, const QString &documentUrl = QString())
+void startApplication(const QString &appId, const QString &documentUrl = QString())
 {
     dbus.connectToManager();
 
@@ -323,22 +343,37 @@ static void startApplication(const QString &appId, const QString &documentUrl = 
     });
 }
 
-static void debugApplication(const QString &debugWrapper, const QString &appId, const QString &documentUrl = QString())
+void debugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl = QString())
 {
     dbus.connectToManager();
 
-    QTimer::singleShot(0, [debugWrapper, appId, documentUrl]() {
-        auto reply = dbus.manager()->debugApplication(appId, debugWrapper, documentUrl);
+    QTimer::singleShot(0, [debugWrapper, appId, stdRedirections, documentUrl]() {
+        QDBusPendingReply<bool> reply;
+        if (stdRedirections.isEmpty()) {
+            reply = dbus.manager()->debugApplication(appId, debugWrapper, documentUrl);
+        } else {
+            UnixFdMap fdMap;
+            for (auto it = stdRedirections.cbegin(); it != stdRedirections.cend(); ++it)
+                fdMap.insert(it.key(), QDBusUnixFileDescriptor(it.value()));
+
+            reply = dbus.manager()->debugApplication(appId, debugWrapper, fdMap, documentUrl);
+        }
+
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call debugApplication via DBus: %1").arg(reply.error().message());
 
         bool ok = reply.value();
-        qApp->exit(ok ? 0 : 2);
+        if (stdRedirections.isEmpty()) {
+            qApp->exit(ok ? 0 : 2);
+        } else {
+            if (!ok)
+                qApp->exit(2);
+        }
     });
 }
 
-static void stopApplication(const QString &appId)
+void stopApplication(const QString &appId)
 {
     dbus.connectToManager();
 
@@ -352,7 +387,7 @@ static void stopApplication(const QString &appId)
 
 }
 
-static void listApplications()
+void listApplications()
 {
     dbus.connectToManager();
 
@@ -367,7 +402,7 @@ static void listApplications()
     });
 }
 
-static void showApplication(const QString &appId)
+void showApplication(const QString &appId)
 {
     dbus.connectToManager();
 
@@ -383,7 +418,7 @@ static void showApplication(const QString &appId)
     });
 }
 
-static void installPackage(const QString &package) throw(Exception)
+void installPackage(const QString &package) throw(Exception)
 {
     QString packageFile = package;
 

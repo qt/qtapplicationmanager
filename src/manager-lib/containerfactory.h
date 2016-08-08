@@ -49,6 +49,8 @@
 class Application;
 class AbstractContainer;
 class AbstractContainerManager;
+class ContainerDebugWrapper;
+
 
 
 class ContainerFactory : public QObject
@@ -62,7 +64,8 @@ public:
     QStringList containerIds() const;
 
     AbstractContainerManager *manager(const QString &id);
-    AbstractContainer *create(const QString &id, const QStringList &debugWrapperCommand = QStringList());
+    AbstractContainer *create(const QString &id);
+    AbstractContainer *create(const QString &id, const ContainerDebugWrapper &debugWrapper);
 
     void setConfiguration(const QVariantMap &configuration);
 

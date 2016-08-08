@@ -91,7 +91,7 @@ public:
     virtual bool supportsQuickLaunch() const = 0;
     virtual void setConfiguration(const QVariantMap &configuration) = 0;
 
-    virtual ContainerInterface *create(const QStringList &debugWrapper = QStringList()) = 0;
+    virtual ContainerInterface *create() = 0;
 };
 
 #define AM_ContainerManagerInterface_iid "io.qt.ApplicationManager.ContainerManagerInterface"

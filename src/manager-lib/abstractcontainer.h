@@ -51,6 +51,36 @@
 class Application;
 class AbstractContainer;
 
+class ContainerDebugWrapper
+{
+public:
+    ContainerDebugWrapper();
+    ContainerDebugWrapper(const QVariantMap &map);
+
+    QString name() const;
+    bool isValid() const;
+    QStringList command() const;
+
+    bool supportsContainer(const QString &containerId) const;
+    bool supportsRuntime(const QString &runtimeId) const;
+
+    void setStdRedirections(const QVector<int> &stdRedirections);
+    QVector<int> stdRedirections() const;
+
+    bool setParameter(const QString &key, const QVariant &value);
+    void resolveParameters(const QString &program, const QStringList &arguments);
+
+private:
+    QString m_name;
+    QStringList m_command;
+    QVariantMap m_parameters;
+    QStringList m_supportedRuntimes;
+    QStringList m_supportedContainers;
+    QVector<int> m_stdRedirections;
+    bool m_valid = false;
+};
+
+
 class AbstractContainerManager : public QObject
 {
     Q_OBJECT
@@ -62,7 +92,8 @@ public:
     QString identifier() const;
     virtual bool supportsQuickLaunch() const;
 
-    virtual AbstractContainer *create(const QStringList &debugWrapperCommand = QStringList()) = 0;
+    virtual AbstractContainer *create() = 0;
+    virtual AbstractContainer *create(const ContainerDebugWrapper &debugWrapper) = 0;
 
     QVariantMap configuration() const;
     virtual void setConfiguration(const QVariantMap &configuration);

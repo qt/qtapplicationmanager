@@ -19,9 +19,14 @@ INSTALLS += target
 SOURCES +=  \
     main.cpp \
 
+appmanif.files =  ../../dbus/io.qt.applicationmanager.xml
+appmanif.header_flags = -i dbus-utilities.h
+
 DBUS_INTERFACES += \
     ../../dbus/io.qt.applicationinstaller.xml \
-    ../../dbus/io.qt.applicationmanager.xml
+    appmanif
+
+
 
 OTHER_FILES += \
     controller.qdoc \

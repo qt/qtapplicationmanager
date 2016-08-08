@@ -46,6 +46,8 @@
 #if defined(QT_DBUS_LIB)
 #  include <QDBusVariant>
 #  include <QDBusArgument>
+#  include <QDBusMetaType>
+#  include <QDBusUnixFileDescriptor>
 #endif
 
 #include "dbus-utilities.h"
@@ -127,3 +129,65 @@ QVariant convertFromDBusVariant(const QVariant &variant)
     }
 #endif
 }
+
+void registerDBusTypes()
+{
+#if defined(QT_DBUS_LIB)
+    qDBusRegisterMetaType<QUrl>();
+    qDBusRegisterMetaType<QMap<QString, QDBusUnixFileDescriptor>>();
+    qDBusRegisterMetaType<UnixFdMap>();
+#endif
+}
+
+#if defined(QT_DBUS_LIB)
+QT_BEGIN_NAMESPACE
+
+QDBusArgument &operator<<(QDBusArgument &argument, const QUrl &url)
+{
+    argument.beginStructure();
+    argument << QString::fromLatin1(url.toEncoded());
+    argument.endStructure();
+    return argument;
+}
+
+const QDBusArgument &operator>>(const QDBusArgument &argument, QUrl &url)
+{
+    QString s;
+    argument.beginStructure();
+    argument >> s;
+    argument.endStructure();
+    url = QUrl::fromEncoded(s.toLatin1());
+    return argument;
+}
+
+QDBusArgument &operator<<(QDBusArgument &argument, const UnixFdMap &fdMap)
+{
+    argument.beginMap(qMetaTypeId<QString>(), qMetaTypeId<QDBusUnixFileDescriptor>());
+    for (auto it = fdMap.cbegin(); it != fdMap.cend(); ++it) {
+        argument.beginMapEntry();
+        argument << it.key();
+        argument << it.value();
+        argument.endMapEntry();
+    }
+    argument.endMap();
+    return argument;
+}
+
+const QDBusArgument &operator>>(const QDBusArgument &argument, UnixFdMap &fdMap)
+{
+    argument.beginMap();
+    fdMap.clear();
+    while (!argument.atEnd()) {
+        QString key;
+        QDBusUnixFileDescriptor value;
+        argument.beginMapEntry();
+        argument >> key >> value;
+        argument.endMapEntry();
+        fdMap.insert(key, value);
+    }
+    argument.endMap();
+    return argument;
+}
+
+QT_END_NAMESPACE
+#endif

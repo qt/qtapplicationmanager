@@ -47,14 +47,18 @@
 #if defined(Q_OS_UNIX)
 #  include <csignal>
 #  include <unistd.h>
+#  include <fcntl.h>
 #endif
 
 
-void HostProcess::start(const QString &program, const QStringList &arguments)
+HostProcess::HostProcess()
 {
     m_process.setProcessChannelMode(QProcess::ForwardedChannels);
     m_process.setInputChannelMode(QProcess::ForwardedInputChannel);
+}
 
+void HostProcess::start(const QString &program, const QStringList &arguments)
+{
     connect(&m_process, &QProcess::started, this, &HostProcess::started);
     connect(&m_process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
             this, &HostProcess::errorOccured);
@@ -95,11 +99,36 @@ QProcess::ProcessState HostProcess::state() const
     return m_process.state();
 }
 
+void HostProcess::setRedirections(const QVector<int> &stdRedirections)
+{
+    m_process.m_stdRedirections = stdRedirections;
+
+#if defined(Q_OS_UNIX)
+    for (int fd : qAsConst(m_process.m_stdRedirections)) {
+        if (fd < 0)
+            continue;
+        int flags = fcntl(fd, F_GETFD);
+        if (flags & FD_CLOEXEC)
+            fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC);
+    }
+#endif
+}
+
+void HostProcess::setStopBeforeExec(bool stopBeforeExec)
+{
+    m_process.m_stopBeforeExec = stopBeforeExec;
+}
 
 
-ProcessContainer::ProcessContainer(const QStringList &debugWrapperCommand, ProcessContainerManager *manager)
+
+ProcessContainer::ProcessContainer(ProcessContainerManager *manager)
     : AbstractContainer(manager)
-    , m_debugWrapper(debugWrapperCommand)
+{ }
+
+ProcessContainer::ProcessContainer(const ContainerDebugWrapper &debugWrapper, ProcessContainerManager *manager)
+    : AbstractContainer(manager)
+    , m_useDebugWrapper(true)
+    , m_debugWrapper(debugWrapper)
 { }
 
 ProcessContainer::~ProcessContainer()
@@ -167,28 +196,15 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
     process->setProcessEnvironment(completeEnv);
     process->setStopBeforeExec(configuration().value(qSL("stopBeforeExec")).toBool());
 
-
     QString command = m_program;
     QStringList args = arguments;
 
-    if (!m_debugWrapper.isEmpty()) {
-        // command could be: [ "gdbserver", ":5555", "%program%", "%arguments%" ]
-        bool foundArgumentMarker = false;
-        for (int i = m_debugWrapper.count() - 1; i >= 0; --i) {
-            QString str = m_debugWrapper.at(i);
-            if (str == qL1S("%arguments%")) {
-                foundArgumentMarker = true;
-                continue;
-            }
-            str.replace(qL1S("%program%"), m_program);
+    if (m_useDebugWrapper) {
+        m_debugWrapper.resolveParameters(m_program, arguments);
+        process->setRedirections(m_debugWrapper.stdRedirections());
 
-            if (i == 0)
-                command = str;
-            else if (foundArgumentMarker)
-                args.prepend(str);
-            else
-                args.append(str);
-        }
+        command = m_debugWrapper.command().at(0);
+        args = m_debugWrapper.command().mid(1);
     }
     qCDebug(LogSystem) << "Running command:" << command << args;
 
@@ -217,22 +233,27 @@ bool ProcessContainerManager::supportsQuickLaunch() const
     return true;
 }
 
-AbstractContainer *ProcessContainerManager::create(const QStringList &debugWrapperCommand)
+AbstractContainer *ProcessContainerManager::create()
 {
-    return new ProcessContainer(debugWrapperCommand, this);
+    return new ProcessContainer(this);
 }
 
-void HostProcess::setStopBeforeExec(bool stopBeforeExec)
+AbstractContainer *ProcessContainerManager::create(const ContainerDebugWrapper &debugWrapper)
 {
-    m_process.m_stopBeforeExec = stopBeforeExec;
+    return new ProcessContainer(debugWrapper, this);
 }
 
 void HostProcess::MyQProcess::setupChildProcess()
 {
-    if (m_stopBeforeExec) {
 #if defined(Q_OS_UNIX)
+    if (m_stopBeforeExec) {
         fprintf(stderr, "\n*** a 'process' container was started in stopped state ***\nthe process is suspended via SIGSTOP and you can attach a debugger to it via\n\n   gdb -p %d\n\n", getpid());
         raise(SIGSTOP);
-#endif
     }
+    for (int i = 0; i < 3; ++i) {
+        int fd = m_stdRedirections.value(i, -1);
+        if (fd >= 0)
+            dup2(fd, i);
+    }
+#endif
 }

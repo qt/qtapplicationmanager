@@ -304,7 +304,7 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
     if (Q_UNLIKELY(s_instance))
         qFatal("ApplicationManager::createInstance() was called a second time.");
 
-    QScopedPointer<ApplicationManager> am(new ApplicationManager(adb, QCoreApplication::instance()));
+    QScopedPointer<ApplicationManager> am(new ApplicationManager(adb));
 
     try {
         if (adb)
@@ -357,6 +357,7 @@ ApplicationManager::ApplicationManager(ApplicationDatabase *adb, QObject *parent
 ApplicationManager::~ApplicationManager()
 {
     delete d;
+    s_instance = nullptr;
 }
 
 bool ApplicationManager::securityChecksEnabled() const
@@ -744,6 +745,17 @@ void ApplicationManager::stopApplication(const Application *app, bool forceKill)
     if (rt) {
         rt->stop(forceKill);
         rt->deleteLater(); // ~Runtime() will clean app->m_runtime
+    }
+}
+
+void ApplicationManager::killAll()
+{
+    for (const Application *app : d->apps) {
+        AbstractRuntime *rt = app->currentRuntime();
+        if (rt) {
+            rt->stop(true);
+            delete rt;
+        }
     }
 }
 

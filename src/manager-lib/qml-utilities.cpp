@@ -44,7 +44,7 @@
 
 #include "qml-utilities.h"
 
-void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton)
+void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton, bool immediately)
 {
     // QQmlEngine is taking ownership of singletons after the first call to instanceForQml() and
     // there is nothing to prevent this. This means that the singleton will be destroyed once the
@@ -52,10 +52,15 @@ void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singl
     // The workaround (until Qt has an API for that) is to remove the singleton QObject from QML's
     // internal singleton registry *after* the instanceForQml() function has finished.
 
-    QTimer::singleShot(0, qmlEngine, [qmlEngine, singleton]() {
+    auto retake = [qmlEngine, singleton]() {
         foreach (const QQmlType *singletonType, QQmlMetaType::qmlSingletonTypes()) {
             if (singletonType->singletonInstanceInfo()->qobjectApi(qmlEngine) == singleton)
                 singletonType->singletonInstanceInfo()->qobjectApis.remove(qmlEngine);
         }
-    });
+    };
+
+    if (immediately)
+        retake();
+    else
+        QTimer::singleShot(0, qmlEngine, retake);
 }

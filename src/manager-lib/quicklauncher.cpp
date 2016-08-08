@@ -55,7 +55,7 @@ QuickLauncher *QuickLauncher::s_instance = nullptr;
 QuickLauncher *QuickLauncher::instance()
 {
     if (!s_instance)
-        s_instance = new QuickLauncher(QCoreApplication::instance());
+        s_instance = new QuickLauncher();
     return s_instance;
 }
 

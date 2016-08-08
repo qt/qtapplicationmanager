@@ -105,6 +105,7 @@
 #include "notificationmanager.h"
 #include "qmlinprocessruntime.h"
 #include "qmlinprocessapplicationinterface.h"
+#include "qml-utilities.h"
 
 #if !defined(AM_HEADLESS)
 #  include "windowmanager.h"
@@ -811,11 +812,14 @@ int main(int argc, char *argv[])
         engine->rootContext()->setContextProperty("ssdp", &ssdp);
 #endif // QT_PSSDP_LIB
 
+        QObject::connect(qApp, &QCoreApplication::aboutToQuit,
+                         ApplicationManager::instance(), &ApplicationManager::killAll);
+
         int res = a.exec();
 
-        // Normally we would delete view here (which would in turn delete am and wm). This will
-        // however dead-lock the process in Qt 5.2.1 with the main thread and the scene-graph
-        // thread both waiting for each other.
+        // the eventloop stopped, so any pending "retakes" would not be executed
+        retakeSingletonOwnershipFromQmlEngine(engine, am, true);
+        delete engine;
 
         delete nm;
 #if !defined(AM_HEADLESS)
@@ -825,9 +829,6 @@ int main(int argc, char *argv[])
         delete ql;
         delete sysmon;
         delete aipcm;
-
-        delete engine;
-
 
 #if defined(QT_PSSDP_LIB)
         if (ssdpOk)

@@ -330,7 +330,7 @@ bool WindowManager::isRunningOnDesktop() const
 }
 
 WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName)
-    : QAbstractListModel(qmlEngine)
+    : QAbstractListModel()
     , d(new WindowManagerPrivate())
 {
 #if defined(AM_MULTI_PROCESS)
@@ -347,6 +347,7 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, con
     d->roleNames.insert(IsMapped, "isMapped");
 
     d->watchdogEnabled = true;
+    d->qmlEngine = qmlEngine;
 
     connect(SystemMonitor::instance(), &SystemMonitor::fpsReportingEnabledChanged, this, [this]() {
         if (SystemMonitor::instance()->isFpsReportingEnabled()) {
@@ -481,9 +482,7 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 {
     // special hacks to get in-process mode working transparently
     if (runtime->manager()->inProcess()) {
-        QQmlEngine *e = qobject_cast<QQmlEngine*>(QObject::parent());
-
-        runtime->setInProcessQmlEngine(e);
+        runtime->setInProcessQmlEngine(d->qmlEngine);
 
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemFullscreenChanging,
                 this, &WindowManager::surfaceFullscreenChanged, Qt::QueuedConnection);

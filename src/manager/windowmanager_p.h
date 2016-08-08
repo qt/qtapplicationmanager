@@ -47,6 +47,8 @@
 
 #include "dbus-policy.h"
 
+QT_FORWARD_DECLARE_CLASS(QQmlEngine)
+
 class WindowManagerPrivate
 {
 public:
@@ -68,4 +70,5 @@ public:
     QList<QQuickWindow *> views;
     bool forceSingleProcess = false;
     QString waylandSocketName;
+    QQmlEngine *qmlEngine;
 };

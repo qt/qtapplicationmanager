@@ -103,6 +103,7 @@ public:
 
     bool startApplication(const Application *app, const QString &documentUrl = QString(), const QString &debugWrapperSpecification = QString());
     void stopApplication(const Application *app, bool forceKill = false);
+    void killAll();
 
     // only use these two functions for development!
     bool securityChecksEnabled() const;
@@ -169,7 +170,7 @@ private:
     void emitDataChanged(const Application *app, const QVector<int> &roles = QVector<int>());
     void registerMimeTypes();
 
-    ApplicationManager(ApplicationDatabase *adb, QObject *parent);
+    ApplicationManager(ApplicationDatabase *adb, QObject *parent = nullptr);
     ApplicationManager(const ApplicationManager &);
     ApplicationManager &operator=(const ApplicationManager &);
     static ApplicationManager *s_instance;

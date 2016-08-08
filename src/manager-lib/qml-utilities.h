@@ -44,4 +44,4 @@
 #include <QQmlEngine>
 #include <qqml.h>
 
-void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton);
+void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton, bool immediately = false);

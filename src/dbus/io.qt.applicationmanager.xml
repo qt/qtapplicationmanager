@@ -7,10 +7,21 @@
     <property name="additionalConfiguration" type="a{sv}" access="read">
       <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
     </property>
-    <signal name="applicationStateChanged">
+    <signal name="applicationWasActivated">
       <arg name="id" type="s" direction="out"/>
-      <arg name="changedState" type="a{sv}" direction="out"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+      <arg name="aliasId" type="s" direction="out"/>
+    </signal>
+    <signal name="countChanged">
+    </signal>
+    <signal name="applicationAdded">
+      <arg name="id" type="s" direction="out"/>
+    </signal>
+    <signal name="applicationAboutToBeRemoved">
+      <arg name="id" type="s" direction="out"/>
+    </signal>
+    <signal name="applicationChanged">
+      <arg name="id" type="s" direction="out"/>
+      <arg name="changedRoles" type="as" direction="out"/>
     </signal>
     <method name="applicationIds">
       <arg type="as" direction="out"/>
@@ -23,11 +34,22 @@
     <method name="startApplication">
       <arg type="b" direction="out"/>
       <arg name="id" type="s" direction="in"/>
-      <arg name="document" type="s" direction="in"/>
+      <arg name="documentUrl" type="s" direction="in"/>
     </method>
     <method name="startApplication">
       <arg type="b" direction="out"/>
       <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="debugApplication">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+      <arg name="debugWrapper" type="s" direction="in"/>
+      <arg name="documentUrl" type="s" direction="in"/>
+    </method>
+    <method name="debugApplication">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+      <arg name="debugWrapper" type="s" direction="in"/>
     </method>
     <method name="stopApplication">
       <arg name="id" type="s" direction="in"/>
@@ -47,11 +69,6 @@
     <method name="identifyApplication">
       <arg type="s" direction="out"/>
       <arg name="pid" type="x" direction="in"/>
-    </method>
-    <method name="applicationState">
-      <arg type="a{sv}" direction="out"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
-      <arg name="id" type="s" direction="in"/>
     </method>
   </interface>
 </node>

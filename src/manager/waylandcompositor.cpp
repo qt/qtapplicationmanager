@@ -152,7 +152,11 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     registerOutputWindow(window);
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
     connect(this, &QWaylandCompositor::createSurface, this, &WaylandCompositor::doCreateSurface);
+#else
+    connect(this, &QWaylandCompositor::surfaceRequested, this, &WaylandCompositor::doCreateSurface);
+#endif
     connect(this, &QWaylandCompositor::surfaceCreated, [this](QWaylandSurface *s) {
         connect(s, &QWaylandSurface::surfaceDestroyed, this, [this, s]() {
             m_manager->waylandSurfaceDestroyed(static_cast<Surface *>(s));
@@ -162,7 +166,11 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     setenv("WAYLAND_DISPLAY", qPrintable(waylandSocketName), 1);
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
     connect(m_shell, &QWaylandWlShell::createShellSurface, this, &WaylandCompositor::createShellSurface);
+#else
+    connect(m_shell, &QWaylandWlShell::wlShellSurfaceRequested, this, &WaylandCompositor::createShellSurface);
+#endif
     connect(m_surfExt, &QtWayland::SurfaceExtensionGlobal::extendedSurfaceReady, this, &WaylandCompositor::extendedSurfaceReady);
 
     auto wmext = new QWaylandQtWindowManager(this);

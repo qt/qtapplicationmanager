@@ -79,7 +79,7 @@ QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC")
 
 void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
-#if defined(QT_GENIVI_EXTRAS_LIB)
+#if defined(QT_GENIVIEXTRAS_LIB)
     QDltRegistration::messageHandler(msgType, context, message);
 #endif
 

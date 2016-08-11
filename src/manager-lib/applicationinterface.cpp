@@ -45,7 +45,7 @@
     \brief The main interface between apps and the application-manager.
 
     This item is available for QML applications using the root context property
-    named \c applicationInterface. For other native applications, the same interface
+    named \c ApplicationInterface. For other native applications, the same interface
     - minus the notification functionality - is available on a private peer-to-peer
     D-Bus interface.
 

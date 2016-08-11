@@ -111,7 +111,6 @@ bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value
 
         if (oldValue != value) {
             m_surface->setWindowProperty(name, value);
-            emit windowPropertyChanged(name, value);
         }
         return true;
     }

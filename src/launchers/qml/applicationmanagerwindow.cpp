@@ -57,8 +57,6 @@ public:
         , platformWindow(0)
     { }
 
-    QString startArgument;
-
     QTime time;
     int frameCount;
     float currentFPS;
@@ -96,10 +94,8 @@ public:
     import QtApplicationManager 1.0
 
     ApplicationManagerWindow {
-        id: root
-
         Text {
-            text: "Started with argument: " + root.startArgument
+            text: ApplicationInterface.applicationId
         }
     }
     \endqml

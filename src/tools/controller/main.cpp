@@ -37,8 +37,150 @@
 #include <QDBusError>
 
 #include "global.h"
+#include "error.h"
+#include "exception.h"
 #include "applicationmanager_interface.h"
 #include "applicationinstaller_interface.h"
+#include "qtyaml.h"
+
+class DBus : public QObject {
+public:
+    DBus()
+    { }
+
+    void connectToManager() throw(Exception)
+    {
+        if (m_manager)
+            return;
+
+        auto conn = connectTo(qSL("io.qt.ApplicationManager"));
+        m_manager = new IoQtApplicationManagerInterface(qSL("io.qt.ApplicationManager"), qSL("/ApplicationManager"), conn, this);
+    }
+
+    void connectToInstaller() throw(Exception)
+    {
+        if (m_installer)
+            return;
+
+        auto conn = connectTo(qSL("io.qt.ApplicationInstaller"));
+        m_installer = new IoQtApplicationInstallerInterface(qSL("io.qt.ApplicationManager"), qSL("/ApplicationInstaller"), conn, this);
+    }
+
+private:
+    QDBusConnection connectTo(const QString &iface) throw(Exception)
+    {
+        QDBusConnection conn(iface);
+
+        QFile f(QDir::temp().absoluteFilePath(QString(qSL("%1.dbus")).arg(iface)));
+        QString dbus;
+        if (f.open(QFile::ReadOnly)) {
+            dbus = QString::fromUtf8(f.readAll());
+            if (dbus == qL1S("system"))
+                conn = QDBusConnection::systemBus();
+            else if (dbus.isEmpty())
+                conn = QDBusConnection::sessionBus();
+            else
+                conn = QDBusConnection::connectToBus(dbus, qSL("custom"));
+        }
+
+        if (!conn.isConnected()) {
+            throw Exception(Error::IO, "Could not connect to the D-Bus %1 for %2: (%3)")
+                .arg(dbus, iface, conn.lastError().message());
+        }
+        return conn;
+    }
+
+public:
+    IoQtApplicationInstallerInterface *installer() const
+    {
+        return m_installer;
+    }
+
+    IoQtApplicationManagerInterface *manager() const
+    {
+        return m_manager;
+    }
+
+private:
+    IoQtApplicationInstallerInterface *m_installer = nullptr;
+    IoQtApplicationManagerInterface *m_manager = nullptr;
+};
+
+static class DBus dbus;
+
+
+enum Command {
+    NoCommand,
+    InstallPackage,
+    StartApplication,
+    DebugApplication,
+    StopApplication,
+    ListApplications,
+    ShowApplication
+};
+
+static struct {
+    Command command;
+    const char *name;
+    const char *description;
+} commandTable[] = {
+    { InstallPackage,   "install-package",   "Install a package." },
+    { StartApplication, "start-application", "Start an application." },
+    { DebugApplication, "debug-application", "Debug an application." },
+    { StopApplication,  "stop-application",  "Stop an application." },
+    { ListApplications, "list-applications", "List all installed applications." },
+    { ShowApplication,  "show-application",  "Show application meta-data." }
+};
+
+static Command command(QCommandLineParser &clp)
+{
+    if (!clp.positionalArguments().isEmpty()) {
+        QByteArray cmd = clp.positionalArguments().at(0).toLatin1();
+
+        for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
+            if (cmd == commandTable[i].name) {
+                clp.clearPositionalArguments();
+                clp.addPositionalArgument(cmd, commandTable[i].description, cmd);
+                return commandTable[i].command;
+            }
+        }
+    }
+    return NoCommand;
+}
+
+static void installPackage(const QString &package) throw(Exception);
+static void startApplication(const QString &appId, const QString &documentUrl);
+static void debugApplication(const QString &debugWrapper, const QString &appId, const QString &documentUrl);
+static void stopApplication(const QString &appId);
+static void listApplications();
+static void showApplication(const QString &appId);
+
+class ThrowingApplication : public QCoreApplication
+{
+public:
+    ThrowingApplication(int &argc, char **argv)
+        : QCoreApplication(argc, argv)
+    { }
+
+    Exception *exception() const
+    {
+        return m_exception;
+    }
+
+protected:
+    bool notify(QObject *o, QEvent *e)
+    {
+        try {
+            return QCoreApplication::notify(o, e);
+        } catch (const Exception &e) {
+            m_exception = new Exception(e);
+            exit(3);
+            return true;
+        }
+    }
+private:
+    Exception *m_exception = nullptr;
+};
 
 
 int main(int argc, char *argv[])
@@ -48,20 +190,202 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
-    QCoreApplication a(argc, argv);
+    ThrowingApplication a(argc, argv);
+
+    QString desc = qSL("\nPelagicore ApplicationManager controller tool\n\nAvailable commands are:\n");
+    uint longestName = 0;
+    for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i)
+        longestName = qMax(longestName, qstrlen(commandTable[i].name));
+    for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
+        desc += qSL("  %1%2  %3\n")
+                .arg(qL1S(commandTable[i].name),
+                     QString(longestName - qstrlen(commandTable[i].name), qL1C(' ')),
+                     qL1S(commandTable[i].description));
+    }
+
+    desc += qSL("\nMore information about each command can be obtained by running\n  application-controller <command> --help");
+
     QCommandLineParser clp;
+    clp.setApplicationDescription(desc);
 
     clp.addHelpOption();
     clp.addVersionOption();
-    clp.addPositionalArgument(qSL("package"), qSL("path to the package that should be installed"));
 
-    clp.process(QCoreApplication::arguments());
-    if (clp.positionalArguments().size() != 1)
-        clp.showHelp(1);
+    clp.addPositionalArgument(qSL("command"), qSL("The command to execute."));
 
-    QString package = clp.positionalArguments().at(0);
-    if (package.isEmpty())
-        clp.showHelp(1);
+    if (!clp.parse(QCoreApplication::arguments())) {
+        fprintf(stderr, "%s\n", qPrintable(clp.errorText()));
+        exit(1);
+    }
+
+    try {
+        switch (command(clp)) {
+        default:
+        case NoCommand:
+            if (clp.isSet(qSL("version"))) {
+#if QT_VERSION < QT_VERSION_CHECK(5,4,0)
+                fprintf(stdout, "%s %s\n", qPrintable(QCoreApplication::applicationName()), qPrintable(QCoreApplication::applicationVersion()));
+                exit(0);
+#else
+                clp.showVersion();
+#endif
+            }
+            if (clp.isSet(qSL("help")))
+                clp.showHelp();
+            clp.showHelp(1);
+            break;
+
+        case InstallPackage:
+            clp.addPositionalArgument(qSL("package"), qSL("The file name of the package; can be - for stdin."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() != 2)
+                clp.showHelp(1);
+
+            installPackage(clp.positionalArguments().at(1));
+            break;
+
+        case StartApplication: {
+            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
+            clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
+            clp.process(a);
+
+            int args = clp.positionalArguments().size();
+            if (args < 2 || args > 3)
+                clp.showHelp(1);
+
+            startApplication(clp.positionalArguments().at(1), args == 3 ? clp.positionalArguments().at(2) : QString());
+            break;
+        }
+        case DebugApplication: {
+            clp.addPositionalArgument(qSL("debug-wrapper"),  qSL("The name of a configured debug-wrapper."));
+            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
+            clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
+            clp.process(a);
+
+            int args = clp.positionalArguments().size();
+            if (args < 3 || args > 4)
+                clp.showHelp(1);
+
+            debugApplication(clp.positionalArguments().at(1), clp.positionalArguments().at(2),
+                             args == 3 ? clp.positionalArguments().at(2) : QString());
+            break;
+        }
+        case StopApplication:
+            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() != 2)
+                clp.showHelp(1);
+
+            stopApplication(clp.positionalArguments().at(1));
+            break;
+
+        case ListApplications:
+            listApplications();
+            break;
+
+        case ShowApplication:
+            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() != 2)
+                clp.showHelp(1);
+
+            showApplication(clp.positionalArguments().at(1));
+            break;
+
+        }
+
+        int result = a.exec();
+        if (a.exception())
+            throw *a.exception();
+        return result;
+
+    } catch (const Exception &e) {
+        fprintf(stderr, "ERROR: %s\n", qPrintable(e.errorString()));
+        return 1;
+    }
+}
+
+static void startApplication(const QString &appId, const QString &documentUrl = QString())
+{
+    dbus.connectToManager();
+
+    QTimer::singleShot(0, [appId, documentUrl]() {
+        auto reply = dbus.manager()->startApplication(appId, documentUrl);
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call startApplication via DBus: %1").arg(reply.error().message());
+
+        bool ok = reply.value();
+        qApp->exit(ok ? 0 : 2);
+    });
+}
+
+static void debugApplication(const QString &debugWrapper, const QString &appId, const QString &documentUrl = QString())
+{
+    dbus.connectToManager();
+
+    QTimer::singleShot(0, [debugWrapper, appId, documentUrl]() {
+        auto reply = dbus.manager()->debugApplication(appId, debugWrapper, documentUrl);
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call debugApplication via DBus: %1").arg(reply.error().message());
+
+        bool ok = reply.value();
+        qApp->exit(ok ? 0 : 2);
+    });
+}
+
+static void stopApplication(const QString &appId)
+{
+    dbus.connectToManager();
+
+    QTimer::singleShot(0, [appId]() {
+        auto reply = dbus.manager()->stopApplication(appId);
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call stopApplication via DBus: %1").arg(reply.error().message());
+        qApp->quit();
+    });
+
+}
+
+static void listApplications()
+{
+    dbus.connectToManager();
+
+    QTimer::singleShot(0, []() {
+        auto reply = dbus.manager()->applicationIds();
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call applicationIds via DBus: %1").arg(reply.error().message());
+
+        fprintf(stdout, "%s\n", qPrintable(reply.value().join(qL1C('\n'))));
+        qApp->quit();
+    });
+}
+
+static void showApplication(const QString &appId)
+{
+    dbus.connectToManager();
+
+    QTimer::singleShot(0, [appId]() {
+        auto reply = dbus.manager()->get(appId);
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to get application via DBus: %1").arg(reply.error().message());
+
+        QVariant app = reply.value();
+        fprintf(stdout, "%s\n", QtYaml::yamlFromVariantDocuments({ app }).constData());
+        qApp->quit();
+    });
+}
+
+static void installPackage(const QString &package) throw(Exception)
+{
+    QString packageFile = package;
 
     if (package == qL1S("-")) { // sent via stdin
         bool success = false;
@@ -70,7 +394,7 @@ int main(int argc, char *argv[])
         QFile in;
 
         if (tf->open() && in.open(stdin, QIODevice::ReadOnly)) {
-            package = tf->fileName();
+            packageFile = tf->fileName();
 
             while (!in.atEnd() && !tf->error())
                 tf->write(in.read(1024 * 1024 * 8));
@@ -79,106 +403,71 @@ int main(int argc, char *argv[])
             tf->flush();
         }
 
-        if (!success) {
-            fprintf(stderr, "ERROR: Could not copy from stdin to temporary file %s\n", qPrintable(package));
-            return 2;
-        }
+        if (!success)
+            throw Exception(Error::IO, "Could not copy from stdin to temporary file %1").arg(package);
     }
 
     QFileInfo fi(package);
-    if (!fi.exists() || !fi.isReadable() || !fi.isFile()) {
-        fprintf(stderr, "ERROR: Package file is not readable: %s\n", qPrintable(package));
-        return 3;
-    }
+    if (!fi.exists() || !fi.isReadable() || !fi.isFile())
+        throw Exception(Error::IO, "Package file is not readable: %1").arg(packageFile);
 
-    QDBusConnection conn = QDBusConnection(QString());
+    fprintf(stdout, "Starting installation of package %s...\n", qPrintable(packageFile));
 
-    QFile f(QDir::temp().absoluteFilePath(qSL("application-manager.dbus")));
-    if (f.open(QFile::ReadOnly)) {
-        QString dbus = QString::fromUtf8(f.readAll());
-        if (dbus == qL1S("system"))
-            conn = QDBusConnection::systemBus();
-        else if (dbus.isEmpty())
-            conn = QDBusConnection::sessionBus();
-        else
-            conn = QDBusConnection::connectToBus(dbus, qSL("custom"));
-    }
+    dbus.connectToManager();
+    dbus.connectToInstaller();
 
-    if (!conn.isConnected()) {
-        fprintf(stderr, "ERROR: Could not connect to the session D-Bus: %s (%s)\n",
-                qPrintable(conn.lastError().message()), qPrintable(conn.lastError().name()));
-        return 5;
-    }
-
-    IoQtApplicationManagerInterface manager(qSL("io.qt.ApplicationManager"), qSL("/Manager"), conn);
-    IoQtApplicationInstallerInterface installer(qSL("io.qt.ApplicationManager"), qSL("/Installer"), conn);
-
-    fprintf(stdout, "Starting installation of package %s...\n", qPrintable(package));
-
-    QString installationId;
-    QString applicationId;
+    // all the async snippets below need to share these variables
+    static QString installationId;
+    static QString applicationId;
 
     // start the package installation
 
-    QTimer::singleShot(0, [&installer, &package, &installationId]() {
-        auto reply = installer.startPackageInstallation(qSL("internal-0"), package);
+    QTimer::singleShot(0, [packageFile]() {
+        auto reply = dbus.installer()->startPackageInstallation(qSL("internal-0"), packageFile);
         reply.waitForFinished();
-        if (reply.isError()) {
-            fprintf(stderr, "ERROR: failed to call startPackageInstallation via DBus: %s\n", qPrintable(reply.error().message()));
-            qApp->exit(6);
-        }
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());
 
         installationId = reply.value();
-        if (installationId.isEmpty()) {
-            fprintf(stderr, "ERROR: startPackageInstallation returned an empty taskId\n");
-            qApp->exit(7);
-        }
+        if (installationId.isEmpty())
+            throw Exception(Error::IO, "startPackageInstallation returned an empty taskId");
     });
 
     // as soon as we have the manifest available: get the app id and acknowledge the installation
 
-    QObject::connect(&installer, &IoQtApplicationInstallerInterface::taskRequestingInstallationAcknowledge,
-                     [&installer, &installationId, &applicationId](const QString &taskId, const QVariantMap &metadata) {
+    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskRequestingInstallationAcknowledge,
+                     [](const QString &taskId, const QVariantMap &metadata) {
         if (taskId != installationId)
             return;
         applicationId = metadata.value(qSL("id")).toString();
-        if (applicationId.isEmpty()) {
-            fprintf(stderr, "ERROR: Could not find a valid application id in the package - got: %s\n", qPrintable(applicationId));
-            qApp->exit(8);
-        }
+        if (applicationId.isEmpty())
+            throw Exception(Error::IO, "could not find a valid application id in the package - got: %1").arg(applicationId);
         fprintf(stdout, "Acknowledging package installation...\n");
-        installer.acknowledgePackageInstallation(taskId);
+        dbus.installer()->acknowledgePackageInstallation(taskId);
     });
 
     // on failure: quit
 
-    QObject::connect(&installer, &IoQtApplicationInstallerInterface::taskFailed,
-                     [&installationId](const QString &taskId, int errorCode, const QString &errorString) {
+    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFailed,
+                     [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
-        fprintf(stderr, "ERROR: Failed to install package: %s (code: %d)\n", qPrintable(errorString), errorCode);
-        qApp->exit(9);
+        throw Exception(Error::IO, "failed to install package: %1 (code: %2)").arg(errorString, errorCode);
     });
 
     // when the installation finished successfully: launch the application
 
-    QObject::connect(&installer, &IoQtApplicationInstallerInterface::taskFinished,
-                     [&manager, &applicationId, &installationId](const QString &taskId) {
+    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFinished,
+                     [](const QString &taskId) {
         if (taskId != installationId)
             return;
         fprintf(stdout, "Installation finished - launching application...\n");
-        auto reply = manager.startApplication(applicationId);
+        auto reply = dbus.manager()->startApplication(applicationId);
         reply.waitForFinished();
-        if (reply.isError()) {
-            fprintf(stderr, "ERROR: failed to call startApplication via DBus: %s\n", qPrintable(reply.error().message()));
-            qApp->exit(10);
-        }
-        if (!reply.value()) {
-            fprintf(stderr, "ERROR: startApplication failed\n");
-            qApp->exit(11);
-        }
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call startApplication via DBus: %1").arg(reply.error().message());
+        if (!reply.value())
+            throw Exception(Error::IO, "startApplication failed");
         qApp->quit();
     });
-
-    return a.exec();
 }

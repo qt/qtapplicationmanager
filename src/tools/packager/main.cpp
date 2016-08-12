@@ -74,14 +74,14 @@ static Command command(QCommandLineParser &clp)
     return NoCommand;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
     QCoreApplication::setApplicationName(qSL("ApplicationManager Packager"));
     QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
-    QCoreApplication app(argc, argv);
+    QCoreApplication a(argc, argv);
 
     QString desc = qSL("\nPelagicore ApplicationManager packaging tool\n\nAvailable commands are:\n");
     uint longestName = 0;
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
     case CreatePackage:
         clp.addPositionalArgument(qSL("package"),          qSL("The file name of the created package."));
         clp.addPositionalArgument(qSL("source-directory"), qSL("The package's content root directory."));
-        clp.process(app);
+        clp.process(a);
 
         if (clp.positionalArguments().size() != 3)
             clp.showHelp(1);
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
         clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
         clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
         clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
-        clp.process(app);
+        clp.process(a);
 
         if (clp.positionalArguments().size() != 5)
             clp.showHelp(1);
@@ -158,9 +158,9 @@ int main(int argc, char **argv)
     case DevVerifyPackage:
         clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
         clp.addPositionalArgument(qSL("certificates"), qSL("The developer's CA certificate file(s)."), qSL("certificates..."));
-        clp.process(app);
+        clp.process(a);
 
-        if (clp.positionalArguments().size() != 3)
+        if (clp.positionalArguments().size() < 3)
             clp.showHelp(1);
 
         p = Packager::developerVerify(clp.positionalArguments().at(1),
@@ -173,7 +173,7 @@ int main(int argc, char **argv)
         clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
         clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
         clp.addPositionalArgument(qSL("hardware-id"),    qSL("Unique hardware id to which this package gets bound."));
-        clp.process(app);
+        clp.process(a);
 
         if (clp.positionalArguments().size() != 6)
             clp.showHelp(1);
@@ -186,12 +186,12 @@ int main(int argc, char **argv)
         break;
 
     case StoreVerifyPackage:
-        clp.addPositionalArgument(qSL("package"),     qSL("File name of the signed package (input)."));
-        clp.addPositionalArgument(qSL("certificate"), qSL("Store CA certificate file(s)."), qSL("certificates..."));
-        clp.addPositionalArgument(qSL("hardware-id"), qSL("Unique hardware id to which this package was bound."));
-        clp.process(app);
+        clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
+        clp.addPositionalArgument(qSL("certificates"), qSL("Store CA certificate file(s)."), qSL("certificates..."));
+        clp.addPositionalArgument(qSL("hardware-id"),  qSL("Unique hardware id to which this package was bound."));
+        clp.process(a);
 
-        if (clp.positionalArguments().size() != 4)
+        if (clp.positionalArguments().size() < 4)
             clp.showHelp(1);
 
         p = Packager::storeVerify(clp.positionalArguments().at(1),

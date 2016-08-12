@@ -1283,8 +1283,11 @@ QVariantMap ApplicationManager::get(const QString &id) const
     AM_AUTHENTICATE_DBUS(QVariantMap)
 
     int index = indexOfApplication(id);
-    if (index >= 0)
-        return get(index);
+    if (index >= 0) {
+        auto map = get(index);
+        map.remove("application"); // cannot marshall QObject *
+        return map;
+    }
     return QVariantMap();
 }
 

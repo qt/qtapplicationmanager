@@ -29,13 +29,42 @@
 \page appman-controller.html
 \title Controller
 
-The \c{appman-controller} is a command-line utility that can be used by other tools on the target
-device to trigger a package installation without directly talking to the application-manager's D-Bus
-interface.
+The \c{appman-controller} is a command-line utility that can be used by the developer (or indirectly
+by other tools) on the target device to control the application-manager without directly talking to
+its D-Bus interface.
 
-Usage: \tt{appman-controller <package file>}
+The following commands are available:
 
-If the package file is specified as \c{-}, the tool will try to read the package from \c stdin.
+\table
+\header
+    \li Action
+    \li Options
+    \li Description
+\row
+    \li \span {style="white-space: nowrap"} {\c install-package}
+    \li \c{<package>}
+    \li Installs the package given on the command-line. If the package file is specified as \c{-},
+        the tool will try to read the package from \c stdin.
+\row
+    \li \span {style="white-space: nowrap"} {\c start-application}
+    \li \c{<application-id> [document-url]}
+    \li Starts the application identified by \c application-id within the application-manager. The
+        \c document-url parameter is optional.
+\row
+    \li \span {style="white-space: nowrap"} {\c debug-application}
+    \li \c{<debug-wrapper-name> <application-id> [document-url]}
+    \li Starts the application identified by \c application-id within the application-manager using
+        a debug-wrapper. The given \c debug-wrapper-name must exist in the application-manager's
+        configuration. The \c document-url parameter is optional.
+\row
+    \li \span {style="white-space: nowrap"} {\c list-applications}
+    \li (none)
+    \li Outputs all available application ids on the console (one per line).
+\row
+    \li \span {style="white-space: nowrap"} {\c show-application}
+    \li \c{<application-id>}
+    \li Shows the current meta-data of the given application in YAML format.
+\endtable
 
 The \c{appman-controller} naturally supports the standard Unix \c{--help} command-line option.
 */

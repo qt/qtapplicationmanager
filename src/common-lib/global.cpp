@@ -62,10 +62,10 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 
 #if defined(QT_GENIVIEXTRAS_LIB)
 #  include <QtGeniviExtras/QtDlt>
-QDLT_REGISTER_APPLICATION("PCAM", "Pelagicore Application-Manager")
-QDLT_FALLBACK_CATEGORY(LogSystem)
 #else
 #  define QDLT_LOGGING_CATEGORY(a,b,c,d) Q_LOGGING_CATEGORY(a,b)
+#  define QDLT_FALLBACK_CATEGORY(a)
+#  define QDLT_REGISTER_APPLICATION(a,b)
 #endif
 
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General messages")
@@ -75,6 +75,8 @@ QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "QML messages")
 QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notification sub-system")
 QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime")
 QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC")
+QDLT_FALLBACK_CATEGORY(LogSystem)
+QDLT_REGISTER_APPLICATION("PCAM", "Pelagicore Application-Manager")
 
 
 void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)

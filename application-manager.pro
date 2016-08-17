@@ -10,7 +10,10 @@ force-single-process:force-multi-process:error("You cannot both specify force-si
 force-multi-process:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcompositor):error("You forced multi-process mode, but the QtCompositor module is not available")
 force-multi-process:!config_libdbus:error("You forced multi-process mode, but libdbus-1 (>= 1.8) is not available")
 
-if(linux:!android|force-libcrypto):!config_libcrypto:error("Could not find libcrypto (OpenSSL)")
+if(linux:!android|force-libcrypto) {
+    !config_libcrypto:error("Could not find libcrypto (OpenSSL)")
+    !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")):error("Found libcrypto (OpenSSL), but Qt was built without OpenSSL support.")
+}
 
 MIN_MINOR=4
 headless:MIN_MINOR=2

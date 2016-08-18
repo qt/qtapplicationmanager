@@ -304,8 +304,9 @@ void NativeRuntime::onLauncherFinishedInitialization()
 #endif
         }
 
+        QString baseDir = m_container->mapHostPathToContainer(m_app->baseDir().absolutePath());
         QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
-        m_runtimeInterface->startApplication(pathInContainer, m_document, m_app->runtimeParameters());
+        m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_app->runtimeParameters());
         m_launched = true;
     }
 }

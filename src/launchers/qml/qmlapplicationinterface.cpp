@@ -107,7 +107,7 @@ bool QmlApplicationInterface::initialize()
     }
 
     bool ok = true;
-    ok = ok && connect(m_runtimeIf, SIGNAL(startApplication(QString,QString,QVariantMap)), this, SIGNAL(startApplication(QString,QString,QVariantMap)));
+    ok = ok && connect(m_runtimeIf, SIGNAL(startApplication(QString,QString,QString,QVariantMap)), this, SIGNAL(startApplication(QString,QString,QString,QVariantMap)));
 
     if (!ok)
         qCritical("ERROR: could not connect the RuntimeInterface via D-Bus: %s", qPrintable(m_runtimeIf->lastError().name()));

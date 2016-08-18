@@ -128,7 +128,7 @@ public:
     Controller();
 
 public slots:
-    void startApplication(const QString &qmlFile, const QString &document, const QVariantMap &runtimeParameters);
+    void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &runtimeParameters);
 
 private:
     QQmlApplicationEngine m_engine;
@@ -208,13 +208,20 @@ Controller::Controller()
     }
 }
 
-void Controller::startApplication(const QString &qmlFile, const QString &document, const QVariantMap &runtimeParameters)
+void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &runtimeParameters)
 {
     if (m_launched)
         return;
     m_launched = true;
 
-    qCDebug(LogQmlRuntime) << "loading" << qmlFile << "- document:" << document << "- parameters:" << runtimeParameters;
+    qCDebug(LogQmlRuntime) << "loading" << qmlFile << "- document:" << document << "- parameters:"
+                           << runtimeParameters << "- baseDir:" << baseDir;
+
+    if (!QDir::setCurrent(baseDir)) {
+        qCCritical(LogQmlRuntime) << "could not set the current directory to" << baseDir;
+        QCoreApplication::exit(2);
+        return;
+    }
 
     if (!QFile::exists(qmlFile)) {
         qCCritical(LogQmlRuntime) << "could not load" << qmlFile << ": file does not exist";

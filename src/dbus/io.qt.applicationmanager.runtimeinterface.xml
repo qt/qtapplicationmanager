@@ -2,6 +2,7 @@
 <node>
   <interface name="io.qt.ApplicationManager.RuntimeInterface">
     <signal name="startApplication">
+      <arg name="baseDir" type="s" direction="out"/>
       <arg name="app" type="s" direction="out"/>
       <arg name="document" type="s" direction="out"/>
       <arg name="runtimeParameters" type="a{sv}" direction="out"/>

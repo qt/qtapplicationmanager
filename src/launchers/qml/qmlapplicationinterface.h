@@ -80,7 +80,7 @@ private slots:
     void notificationClosed(uint notificationId, uint reason);
     void notificationActionTriggered(uint notificationId, const QString &actionId);
 private:
-    Q_SIGNAL void startApplication(const QString &qmlFile, const QString &document, const QVariantMap &runtimeParams);
+    Q_SIGNAL void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &runtimeParams);
 
     uint notificationShow(QmlNotification *n);
     void notificationClose(QmlNotification *n);

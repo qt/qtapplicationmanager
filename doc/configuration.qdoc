@@ -104,7 +104,7 @@ command-line options.
     \br \e -
     \li string
     \li Register the ApplicationManager, ApplicationInstaller, NotificationManager and
-        WindowManger on the specified D-Bus: can be either \c session, \c system, \c none (for no
+        WindowManager on the specified D-Bus: can be either \c session, \c system, \c none (for no
         registration at all) or a full D-Bus bus specification string. (default: session)
         \note On production systems, you most likely want to put the application-manager on the
               \c system bus, where you can set detailed security policies using standard D-Bus
@@ -272,7 +272,7 @@ applicationUserIdSeparation: this should be factored out into a container plugin
 \endomit
 \endtable
 
-\chapter D-Bus specification
+\chapter D-Bus Specification
 
 These YAML objects describe both which D-Bus interfaces are registered on as well as access
 policies.
@@ -302,7 +302,7 @@ A simple example, that would only allow applications with the capability \c apps
 user-id \c 1000 to call the installer's \c startPackageInstallation function, while preventing anyone
 to remotely call \c acknowledgePackageInstallation:
 
-\code
+\badcode
 ...
 dbus:
   io.qt.ApplicationInstaller:
@@ -331,13 +331,13 @@ ApplicationInstaller::getInstallationLocation
     \li string
     \li The installation location id that is used as the handle for all other ApplicationInstaller
         function calls. The \c id consists of the \c type and \c index field, concatenated by
-        a single dash (e.g. \c removable-0).
+        a single dash (for example, \c removable-0).
 
         Valid values for \c type are \c internal and \c removable.
 
         In case there is more than one installation location for the same type of device, this
-        \c 0 based index is used for disambiguation. (e.g. two SD-Card slots will result in the
-        ids \c removable-0 and \c removable-1). Otherwise it should always be \c 0.
+        zero-based index is used for disambiguation. For example, two SD card slots will result in the
+        ids \c removable-0 and \c removable-1. Otherwise, the index is always \c 0.
 \row
     \li \c isDefault
     \li bool
@@ -352,7 +352,7 @@ ApplicationInstaller::getInstallationLocation
     \li \c documentPath
     \li string
     \li The absolute file-system path to the base directory under which per-user document
-        directories are created. This entry can either be located on this device or it can be the
+        directories are created. This entry can either be located on this device, or it can be the
         same as the \c documentPath of the master installation location.
 \row
     \li \c mountPoint
@@ -361,7 +361,7 @@ ApplicationInstaller::getInstallationLocation
         mount-point of the device where \c installationPath is located.
 \endtable
 
-\chapter Runtime configuration
+\chapter Runtime Configuration
 
 The runtime configuration sub-objects are specific to the actual runtimes, so the table below has
 an additional column specifying which runtime a configuration option applies to:
@@ -376,7 +376,7 @@ an additional column specifying which runtime a configuration option applies to:
     \li \c environmentVariables
     \li native, qml
     \li map<string>
-    \li A simple string to string map, describing the environment variables that should be set when
+    \li A simple string-to-string map, describing the environment variables that should be set when
         spawning the runtime process. You can remove a variable from the default environment by
         giving it an empty or null value.
 \row
@@ -400,18 +400,21 @@ an additional column specifying which runtime a configuration option applies to:
     \li qml
     \li object
     \li Specifies which actions to take, if a QML client application is crashing. See
-        \l{Crash action specification} {below} for more information.
+        \l{Crash Action Specification} {below} for more information.
 \endtable
 
-\chapter Crash action specification
+\chapter Crash Action Specification
 
 These sub-objects specify which actions to take, if the application-manager or QML runtimes are
-crashing. Please note that all of these actions only work on Linux!
+crashing.
+
+\note All of these actions only work on Linux.
 
 The following conditions will be handled:
 
 \list
-\li Uncaught exceptions (\c{std::exception} derived ones will also show the \c{what()} information.
+\li Uncaught exceptions. Exceptions derived from \c std::exception will also show the \c {what()}
+    information.
 \li \c SIGSEGV
 \li \c SIGBUS
 \li \c SIGILL
@@ -427,18 +430,18 @@ The following conditions will be handled:
 \row
     \li \c printBacktrace
     \li bool
-    \li Try to print a readable backtrace. Will use the primitve backtrace functionality from glibc,
-        unless libbacktrace was enabled at configure time (default: true)
+    \li Try to print a readable backtrace. Will use the primitive backtrace functionality from glibc,
+        unless libbacktrace was enabled at configure time (default: true).
 \row
     \li \c dumpCore
     \li bool
     \li Will end the process via \c abort instead of \c _Exit. This will dump a \c core file,
-        depending on your kernel configuration (default: true)
+        depending on your kernel configuration (default: true).
 \row
     \li \c waitForGdbAttach
     \li int
     \li Specifies a timeout in seconds while the crashed program is being held in the stopped state,
-        waiting for a debugger to attach. Any value \c{<= 0} will skip this step. (default: 0)
+        waiting for a debugger to attach. Any value \c{<= 0} will skip this step (default: 0).
 \endtable
 
 */

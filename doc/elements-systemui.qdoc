@@ -27,17 +27,17 @@
 
 /*!
 
-\page qml-elements-sysui.html
-\title QML elements System-UI
-\brief A listing of standard QML elements used in the System-UI.
+\page qml-sysui.html
+\title System-UI QML Types
+\brief A listing of standard QML types used in the System-UI.
 
-These are the functionally grouped lists of QML elements as part of \c
+These are the functionally grouped lists of QML types as part of \c
 QtApplicationManager.
 
-QML Singletons need not to be declared, but can be referenced by just their element name.
+Singleton QML types need not be declared, they are referenced by just their type name.
 
-Basic QML Elements are declared with the their name and two curly braces. Elements may be nested in
-elements, thereby creating a parent-child relationship between the two elements.
+Instantiable QML types are declared with the their name followed by curly braces. These
+declarations may be nested, creating parent-child relationships between the items.
 
 \section1 QML Singletons
 \list
@@ -53,13 +53,13 @@ elements, thereby creating a parent-child relationship between the two elements.
   \li ApplicationIPCManager - Central registry for interfaces for system-UI-to-app communication.
 \endlist
 
-\section1 Basic QML Elements
+\section1 Instantiable QML Types
 
-All these elements work the same way within the System-UI, as they would within a single-process
+All these types work the same way within the System-UI, as they would within a single-process
 application. Depending on your System-UI design, this can be very helpful at times.
 
 \list
-  \li ApplicationManagerWindow - The window element that is required in a multi-process environment.
+  \li ApplicationManagerWindow - The window root item required in a multi-process environment.
   \li \l Notification - Abstraction for freedesktop.org Notifications on the client side.
   \li ApplicationInterfaceExtension - Client side access to IPC interface extensions.
 \endlist

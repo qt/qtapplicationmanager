@@ -28,7 +28,7 @@
 /*!
 
 \page howto-apps.html
-\title How to write applications
+\title Writing Applications
 
 Writing an application that can be run as a client within the application-manager is not that
 much different from writing a stand-alone QML application. It basically boils down to three
@@ -46,22 +46,22 @@ additional tasks:
 
 \endlist
 
-\section2 The root element
+\section2 The Root Item
 
-Making the root element of your QML application an ApplicationManagerWindow is only mandatory if you
-ever want to run in single-process mode (without Wayland). Please see the ApplicationManagerWindow
-documentation for more information.
+Making the root item of your QML application an ApplicationManagerWindow is only mandatory if you
+ever want to run in single-process mode (without Wayland). See ApplicationManagerWindow for more
+information.
 
-\section2 The manifest and updating the database
+\section2 The Manifest and Updating the Database
 
-The \l{Manifest definition} documentation has all the information to produce a minimal \c info.yaml
+The \l{Manifest Definition} documentation has all the information to produce a minimal \c info.yaml
 file that should get you going.
 
-Since recursively finding and parsing \c info.yaml files for potentially hundredes of apps can
-become a very time consuming task that would severly slow down the application-manager's startup,
-all manifest files are cached in a binary database. In order to make changes to an \c info.yaml
-file known to the application-manager, you have to force a rebuild of this database by calling
-\c{appman --recreate-database}.
+Recursively finding and parsing \c info.yaml files for potentially hundreds of applications can
+be a very time consuming task and would severely slow down application-manager's
+startup. Therefore, all manifest files are cached in a binary database. In order to make changes
+to an \c info.yaml file known to the application-manager, you have to force a rebuild of this
+database by calling \c{appman --recreate-database}.
 
 \note Dynamically adding/updating/removing single applications is supported via the
 ApplicationInstaller interface.

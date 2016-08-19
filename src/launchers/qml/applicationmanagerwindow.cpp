@@ -73,7 +73,7 @@ public:
 
 /*!
     \qmltype ApplicationManagerWindow
-    \inqmlmodule QtApplicationManager 1.0
+    \inqmlmodule QtApplicationManager
     \brief The ApplicationManagerWindow item
 
     This QML item should be used as the root item in your QML application. In doing so, you enable

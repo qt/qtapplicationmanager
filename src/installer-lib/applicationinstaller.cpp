@@ -70,11 +70,12 @@
 
 /*!
     \qmltype ApplicationInstaller
-    \inqmlmodule QtApplicationManager 1.0
-    \brief The ApplicationInstaller singleton
+    \inqmlmodule QtApplicationManager
+    \brief The ApplicationInstaller singleton.
 
-    This singleton class handles the package installation part of the application manager. It provides
-    both a DBus and a QML API for all of its functionality.
+    The ApplicationInstaller singleton type handles the package installation
+    part of the application manager. It provides both a DBus and QML APIs for
+    all of its functionality.
 
     \target TaskStates
 
@@ -104,11 +105,11 @@
     \row
         \li \c installing
         \li \e{Installation tasks only!} The installation was acknowledged via acknowledgePackageInstallation()
-            and the final installation phase is running now.
+            and the final installation phase is now running.
     \row
         \li \c cleaningUp
-        \li \e{Installation tasks only!} The installation has finished and previous installations as
-            well as temporary files are cleanup up now.
+        \li \e{Installation tasks only!} The installation has finished, and previous installations as
+            well as temporary files are being cleaned up.
     \endtable
 
     The normal workflow for tasks is: \c queued \unicode{0x2192} \c active \unicode{0x2192} \c
@@ -126,7 +127,7 @@
 /*!
     \qmlsignal ApplicationInstaller::taskStateChanged(string taskId, string newState)
 
-    This signal is emitted whenever the state of task identified by \a taskId changes. The
+    This signal is emitted when the state of the task identified by \a taskId changes. The
     new state is supplied in the parameter \a newState.
 
     \sa taskState()
@@ -137,7 +138,7 @@
 
     This signal is emitted when the task identified by \a taskId enters the \c active state.
 
-    \sa taskStateChanged
+    \sa taskStateChanged()
 */
 
 /*!
@@ -145,7 +146,7 @@
 
     This signal is emitted when the task identified by \a taskId enters the \c finished state.
 
-    \sa taskStateChanged
+    \sa taskStateChanged()
 */
 
 /*!
@@ -153,32 +154,32 @@
 
     This signal is emitted when the task identified by \a taskId enters the \c failed state.
 
-    \sa taskStateChanged
+    \sa taskStateChanged()
 */
 
 /*!
     \qmlsignal ApplicationInstaller::taskRequestingInstallationAcknowledge(string taskId, object application)
 
     This signal is emitted when the installation task identified by \a taskId has received enough
-    meta-data to be able to emit this signal. The task maybe in either \c executing or \c
+    meta-data to be able to emit this signal. The task may be in either \c executing or \c
     awaitingAcknowledge state.
 
-    The contents of package's manifest file are supplied via \a application as a JavaScript object.
+    The contents of the package's manifest file are supplied via \a application as a JavaScript object.
     Please see the \l {ApplicationManager Roles}{role names} for the expected object fields.
 
-    Following this signal, either cancelTask() or acknowledgePackageInstallation() have to be called
-    for this \a taskId for the installer to either cancel the installation or try to complete it.
+    Following this signal, either cancelTask() or acknowledgePackageInstallation() has to be called
+    for this \a taskId, to either cancel the installation or try to complete it.
 
-    \sa taskStateChanged, startPackageInstallation
+    \sa taskStateChanged(), startPackageInstallation()
 */
 
 /*!
     \qmlsignal ApplicationInstaller::taskBlockingUntilInstallationAcknowledge(string taskId)
 
     This signal is emitted when the installation task identified by \a taskId cannot continue
-    anymore due to a missing acknowledgePackageInstallation() call for the task.
+    due to a missing acknowledgePackageInstallation() call for the task.
 
-    \sa taskStateChanged, acknowledgePackageInstallation
+    \sa taskStateChanged(), acknowledgePackageInstallation()
 */
 
 /*!
@@ -187,7 +188,7 @@
     This signal is emitted whenever the task identified by \a taskId makes progress towards its
     completion. The \a progress is reported as a floating-point number ranging from \c 0.0 to \c 1.0.
 
-    \sa taskStateChanged
+    \sa taskStateChanged()
 */
 
 
@@ -540,7 +541,7 @@ QStringList ApplicationInstaller::installationLocationIds() const
 /*!
    \qmlmethod string ApplicationInstaller::installationLocationIdFromApplication(string id)
 
-   Returns the installation location id for the application identified by \a id. Will return
+   Returns the installation location id for the application identified by \a id. Returns
    an empty string in case the application is not installed.
 
    \sa installationLocationIds()
@@ -568,30 +569,31 @@ QString ApplicationInstaller::installationLocationIdFromApplication(const QStrin
         \li \c string
         \li The installation location id that is used as the handle all other ApplicationInstaller
             function calls. The \c id consists of the \c type and \c index field, concatenated by
-            a single dash (e.g. \c internal-0).
+            a single dash (for example, \c internal-0).
     \row
         \li \c type
         \li \c string
         \li The type of device this installation location is connected to. Valid values are \c
             internal (for any kind of built-in storage, e.g. flash), \c removable (for any kind of
-            storage that is removable by the user, e.g. an SD-Card) and \c invalid.
+            storage that is removable by the user, e.g. an SD card) and \c invalid.
     \row
         \li \c index
         \li \c int
         \li In case there is more than one installation location for the same type of device, this
-            \c 0 based index is used for disambiguation. (e.g. two SD-Card slots will result in the
-            ids \c removable-0 and \c removable-1). Otherwise it defaults to \c 0.
+            \c zero-based index is used for disambiguation. For example, two SD card slots will
+            result in the ids \c removable-0 and \c removable-1. Otherwise, the index is always \c 0.
     \row
         \li \c isDefault
         \li \c bool
 
         \li Exactly one installation location is the default location which must be mounted and
             accessible at all times. This can be used by an UI application to get a sensible
-            default for the installation location that it needs to pass to startPackageInstallation()
+            default for the installation location that it needs to pass to startPackageInstallation().
     \row
         \li \c isRemovable
         \li \c bool
-        \li Describes if this installation location is a removable media (e.g. SD-Card)
+        \li Indicates whether this installation location is on a removable media (for example, an SD
+            card).
     \row
         \li \c isMounted
         \li \c bool
@@ -604,13 +606,13 @@ QString ApplicationInstaller::installationLocationIdFromApplication(const QStrin
     \row
         \li \c installationDeviceSize
         \li \c int
-        \li The size of the device holding \c installationPath in bytes. This field is only present, if the
+        \li The size of the device holding \c installationPath in bytes. This field is only present if
             \c isMounted is \c true.
     \row
         \li \c installationDeviceFree
         \li \c int
         \li The amount of bytes available on the device holding \c installationPath. This field is only
-            present, if the \c isMounted is \c true.
+            present if \c isMounted is \c true.
     \row
         \li \c documentPath
         \li \c string
@@ -619,16 +621,16 @@ QString ApplicationInstaller::installationLocationIdFromApplication(const QStrin
     \row
         \li \c documentDeviceSize
         \li \c int
-        \li The size of the device holding \c documentPath in bytes. This field is only present, if the
+        \li The size of the device holding \c documentPath in bytes. This field is only present if
             \c isMounted is \c true.
     \row
         \li \c documentDeviceFree
         \li \c int
         \li The amount of bytes available on the device holding \c documentPath. This field is only
-            present, if the \c isMounted is \c true.
+            present if \c isMounted is \c true.
     \endtable
 
-    Will return an empty object in case the \a installationLocationId is not valid.
+    Returns an empty object in case the \a installationLocationId is not valid.
 */
 QVariantMap ApplicationInstaller::getInstallationLocation(const QString &installationLocationId) const
 {
@@ -642,7 +644,7 @@ QVariantMap ApplicationInstaller::getInstallationLocation(const QString &install
    Returns the size in bytes that the application identified by \a id is occupying on the storage
    device.
 
-   Will return \c -1 in case the application \a id is not valid or the application is not installed.
+   Returns \c -1 in case the application \a id is not valid, or the application is not installed.
 */
 qint64 ApplicationInstaller::installedApplicationSize(const QString &id) const
 {
@@ -670,24 +672,24 @@ QString ApplicationInstaller::startPackageInstallation(const QString &installati
 /*!
     \qmlmethod string ApplicationInstaller::startPackageInstallation(string installationLocationId, string sourceUrl)
 
-    Download an application package from \a sourceUrl and install it to the installation location
+    Downloads an application package from \a sourceUrl and installs it to the installation location
     described by \a installationLocationId.
 
     The actual download and installation will happen asynchronously in the background. The
-    ApplicationInstaller will emit the signals \l taskStarted, \l taskProgressChanged, \l
+    ApplicationInstaller emits the signals \l taskStarted, \l taskProgressChanged, \l
     taskRequestingInstallationAcknowledge, \l taskFinished, \l taskFailed, and \l taskStateChanged
     for the returned taskId when applicable.
 
-    \note Just calling this function is not enough to complete a package installation! The
-    \l taskRequestingInstallationAcknowledge signal needs to be connected to a slot where the
+    \note Simply calling this function is not enough to complete a package installation: The
+    taskRequestingInstallationAcknowledge() signal needs to be connected to a slot where the
     supplied application meta-data can be validated (either programmatically or by asking the user).
     If the validation is successful, the installation can be completed by calling
     acknowledgePackageInstallation() or, if the validation was unsuccessful, the installation should
     be canceled by calling cancelTask().
     Failing to do one or the other will leave an unfinished "zombie" installation.
 
-    The return value is an unique \c taskId. This can also be empty, if the task could not be
-    created in the first place (no signals will be emitted in this case).
+    Returns a unique \c taskId. This can also be an empty string, if the task could not be
+    created (in this case, no signals will be emitted).
 */
 QString ApplicationInstaller::startPackageInstallation(const QString &installationLocationId, const QString &sourceUrl)
 {
@@ -701,8 +703,8 @@ QString ApplicationInstaller::startPackageInstallation(const QString &installati
     \qmlmethod void ApplicationInstaller::acknowledgePackageInstallation(string taskId)
 
     Calling this function enables the installer to complete the installation task identified by \a
-    taskId. Normally this function will be called after the signal requestingInstallationAcknowledge
-    was received and the user and/or the program logic decided to go ahead with this installation.
+    taskId. Normally, this function is called after receiving the requestingInstallationAcknowledge()
+    signal, and the user and/or the program logic decided to proceed with the installation.
 
     \sa startPackageInstallation()
  */
@@ -725,19 +727,19 @@ void ApplicationInstaller::acknowledgePackageInstallation(const QString &taskId)
 /*!
     \qmlmethod string ApplicationInstaller::removePackage(string id, bool keepDocuments, bool force)
 
-    Deinstall the application identified by \a id. Normally, the documents directory of the
+    Uninstalls the application identified by \a id. Normally, the documents directory of the
     application is deleted on removal, but this can be prevented by setting \a keepDocuments to \c true.
 
     The actual removal will happen asynchronously in the background. The ApplicationInstaller will
     emit the signals \l taskStarted, \l taskProgressChanged, \l taskFinished, \l taskFailed and \l
     taskStateChanged for the returned \c taskId when applicable.
 
-    Normally \a force should only be set to \c true, if a call to removePackage() failed in the first
-    place. This may become necessary if the installation process was interrupted, or if a SD-Card
-    got lost or is having file-system problems.
+    Normally, \a force should only be set to \c true if a previous call to removePackage() failed.
+    This may be necessary if the installation process was interrupted, or if an SD card got lost
+    or has file-system issues.
 
-    The return value is an unique \c taskId. This can also be empty, if the task could not be created
-    in the first place (no signals will be emitted in this case).
+    Returns a unique \c taskId. This can also be an empty string, if the task could not be created
+    (in this case, no signals will be emitted).
 */
 QString ApplicationInstaller::removePackage(const QString &id, bool keepDocuments, bool force)
 {
@@ -762,7 +764,7 @@ QString ApplicationInstaller::removePackage(const QString &id, bool keepDocument
     Returns a string describing the current state of the installation task identified by \a taskId.
     \l {TaskStates}{See here} for a list of valid task states.
 
-    Will return an empty string, if the \a taskId is invalid.
+    Returns an empty string if the \a taskId is invalid.
 */
 QString ApplicationInstaller::taskState(const QString &taskId)
 {
@@ -783,7 +785,7 @@ QString ApplicationInstaller::taskState(const QString &taskId)
 
     Tries to cancel the installation task identified by \a taskId.
 
-    Returns \c true if the task was canceled or \c false otherwise.
+    Returns \c true if the task was canceled, \c false otherwise.
 */
 bool ApplicationInstaller::cancelTask(const QString &taskId)
 {
@@ -811,10 +813,10 @@ bool ApplicationInstaller::cancelTask(const QString &taskId)
 /*!
   \qmlmethod int ApplicationInstaller::compareVersions(string version1, string version2)
 
-  Convenience method for app-store implementation to compare version numbers, since the actual
-  version compare algorithm is not trivial.
+  Convenience method for app-store implementation for comparing version numbers, as the actual
+  version comparison algorithm is not trivial.
 
-  Returns \c -1, \c 0 or \c 1 if \a version1 is smaller than, equal to or greater than \a version2
+  Returns \c -1, \c 0 or \c 1 if \a version1 is smaller than, equal to, or greater than \a version2
   (similar to how \c strcmp() works).
 */
 int ApplicationInstaller::compareVersions(const QString &version1, const QString &version2)

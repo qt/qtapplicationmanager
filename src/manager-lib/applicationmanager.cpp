@@ -80,14 +80,14 @@
 
 /*!
     \qmltype ApplicationManager
-    \inqmlmodule QtApplicationManager 1.0
-    \brief The ApplicationManager singleton
+    \inqmlmodule QtApplicationManager
+    \brief The ApplicationManager singleton.
 
-    This singleton class is the core of the application manager. It provides both
-    a DBus and a QML API for all of its functionality.
+    The ApplicationManager singleton type is the core of the application manager.
+    It provides both a DBus and a QML API for all of its functionality.
 
-    To make QML programmers lifes easier, the class is derived from \c QAbstractListModel,
-    so you can directly use this singleton as a model in your app-grid views.
+    The type is derived from \c QAbstractListModel, so it can be used directly
+    as a model in app-grid views.
 
     \target ApplicationManager Roles
 
@@ -101,12 +101,12 @@
     \row
         \li \c applicationId
         \li string
-        \li The unique Id of an application represented as a string in reverse-dns form (e.g.
+        \li The unique Id of an application, represented as a string in reverse-dns form (e.g.
             \c com.pelagicore.foo)
     \row
         \li \c name
         \li string
-        \li The name of the application. If possible already translated to the current locale.
+        \li The name of the application. If possible, already translated to the current locale.
     \row
         \li \c icon
         \li string
@@ -119,31 +119,31 @@
     \row
         \li \c isStartingUp
         \li bool
-        \li A boolean value telling if the application was started, but is not fully operational yet.
+        \li A boolean value indicating whether the application is starting up and not fully operational yet.
     \row
         \li \c isShutingDown
         \li bool
-        \li A boolean value describing if the application is currently shuting down.
+        \li A boolean value indicating whether the application is currently shutting down.
     \row
         \li \c isBlocked
         \li bool
-        \li A boolean value that only gets set if the application manager needs to block the application
+        \li A boolean value that gets set when the application manager needs to block the application
         from running: this is normally only the case while an update is applied.
     \row
         \li \c isUpdating
         \li bool
-        \li A boolean value telling if the application is currently being installed or updated. If this
-            is the case, then \c updateProgress can be used to track the actual progress.
+        \li A boolean value indicating whether the application is currently being installed or updated.
+            If \c true, the \c updateProgress can be used to track the actual progress.
     \row
         \li \c isRemovable
         \li bool
-        \li A boolean value telling if this application is user-removable. This will be \c true for all
-            dynamically installed 3rd-party applications and \c false for all system applications.
+        \li A boolean value indicating whether this application is user-removable; \c true for all
+            dynamically installed third party applications and \c false for all system applications.
 
     \row
         \li \c updateProgress
         \li real
-        \li In case IsUpdating is \c true, querying this role will give the actual progress as a floating-point
+        \li While \c isUpdating is \c true, querying this role returns the actual progress as a floating-point
             value in the \c 0.0 to \c 1.0 range.
 
     \row
@@ -155,7 +155,7 @@
     \row
         \li \c categories
         \li list<string>
-        \li The categories this application is registered for via its meta-dat file (this currently work in progress).
+        \li The categories this application is registered for via its meta-data file (currently work in progress).
 
     \row
         \li \c version
@@ -169,10 +169,10 @@
             model delegate.
     \endtable
 
-    Please note, that the index-based API is currently not available via DBus. The same functionality
-    is however provided by the id-based API.
+    \note The index-based API is currently not available via DBus. However, the same functionality
+    is provided by the id-based API.
 
-    After importing, you can just use the ApplicationManager singleton like so:
+    After importing, you can just use the ApplicationManager singleton as follows:
 
     \qml
     import QtQuick 2.0
@@ -203,8 +203,9 @@
 /*!
     \qmlsignal ApplicationManager::applicationWasReactivated(string id)
 
-    This signal is emitted when an application is already running (in the background) and is
-    started via the ApplicationManager API again.
+    This signal is emitted when an application identified by \a id is already running
+    (in the background) and is started via the ApplicationManager API again.
+
     The window manager should take care of raising the application's window in this case.
 */
 
@@ -745,13 +746,13 @@ void ApplicationManager::killAll()
 /*!
     \qmlmethod bool ApplicationManager::startApplication(string id, string document)
 
-    Tells the application manager to start the application identified by its unique \a id. The
-    optional argument \a documentUrl will be supplied to the application as is - most commonly this
+    Instructs the application manager to start the application identified by its unique \a id. The
+    optional argument \a document will be supplied to the application as is - most commonly this
     is used to refer to a document to display.
-    Returns \c true if the application id is valid and the application manager was able to start
-    the runtime plugin. Returns \c false otherwise. Please note, that even though this call may
-    indicate success, the application may still later fail to start correctly, since the actual
-    startup within the runtime plugin may be asynchronous.
+    Returns \c true if the application \a id is valid and the application manager was able to start
+    the runtime plugin. Returns \c false otherwise. Note that even though this call may
+    indicate success, the application may still later fail to start correctly as the actual
+    startup process within the runtime plugin may be asynchronous.
 */
 bool ApplicationManager::startApplication(const QString &id, const QString &documentUrl)
 {
@@ -798,7 +799,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
     Tells the application manager to stop an application identified by its unique \a id. The
     meaning of the \a forceKill parameter is runtime dependent, but in general you should always try
     to stop an application with \a forceKill set to \c false first in order to allow a clean
-    shutdown. Use \a forceKill set to \c true only as last resort to kill hanging applications.
+    shutdown. Use \a forceKill set to \c true only as a last resort to kill hanging applications.
 */
 void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 {
@@ -811,11 +812,11 @@ void ApplicationManager::stopApplication(const QString &id, bool forceKill)
     \qmlmethod bool ApplicationManager::openUrl(string url)
 
     Tries to match the supplied \a url against the internal MIME database. If a match is found,
-    the corresponding application is started via startApplication() and \a url is supplied as a
-    document to open.
+    the corresponding application is started via startApplication() and \a url is supplied to
+    it as a document to open.
 
-    The function will return the result of startApplication() or \c false if no application was
-    registered for the type and/or scheme of \a url.
+    Returns the result of startApplication(), or \c false if no application was registered for
+    the type and/or scheme of \a url.
 */
 bool ApplicationManager::openUrl(const QString &urlStr)
 {
@@ -862,7 +863,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
     \qmlmethod list<string> ApplicationManager::capabilities(string id)
 
     Returns a list of all capabilities granted by the user to the application identified by \a id.
-    Will return an empty list, if the application \a id is not valid.
+    Returns an empty list if the application \a id is not valid.
 */
 QStringList ApplicationManager::capabilities(const QString &id) const
 {
@@ -879,9 +880,10 @@ QStringList ApplicationManager::capabilities(const QString &id) const
 /*!
     \qmlmethod string ApplicationManager::identifyApplication(int pid, string securityToken)
 
-    Calling this function will validate that the process running with process-identifier \a pid
-    was indeed started by the application manager.
-    Will return the application's \c id on success or an empty string otherwise.
+    Validates the process running with process-identifier \a pid as a process started by the
+    application manager.
+
+    Returns the application's \c id on success, or an empty string on failure.
 */
 QString ApplicationManager::identifyApplication(qint64 pid) const
 {
@@ -1197,13 +1199,13 @@ int ApplicationManager::count() const
 /*!
     \qmlmethod object ApplicationManager::get(int row)
 
-    Retrieves the model data at \a row as a JavaScript object. Please see the
+    Retrieves the model data at \a row as a JavaScript object. See the
     \l {ApplicationManager Roles}{role names} for the expected object fields.
 
-    Will return an empty object, if the specified \a row is invalid.
+    Returns an empty object if the specified \a row is invalid.
 
     \note This is very inefficient if you only want to access a single property from QML; use
-          application instead to access the Application object's properties directly.
+          application() instead to access the Application object's properties directly.
 */
 QVariantMap ApplicationManager::get(int row) const
 {
@@ -1222,8 +1224,8 @@ QVariantMap ApplicationManager::get(int row) const
 /*!
     \qmlmethod Application ApplicationManager::application(int index)
 
-    Returns the Application object corresponding to the given \a index in the model, or null if
-    the index is invalid.
+    Returns the Application object corresponding to the given \a index in the model,
+    or \c null if the index is invalid.
 */
 const Application *ApplicationManager::application(int index) const
 {
@@ -1237,8 +1239,8 @@ const Application *ApplicationManager::application(int index) const
 /*!
     \qmlmethod Application ApplicationManager::application(string id)
 
-    Returns the Application object corresponding to the given application \a id or null if the
-    id does not exist.
+    Returns the Application object corresponding to the given application \a id,
+    or \c null if the id does not exist.
 */
 const Application *ApplicationManager::application(const QString &id) const
 {
@@ -1250,7 +1252,7 @@ const Application *ApplicationManager::application(const QString &id) const
 
     Maps the application \a id to its position within the model.
 
-    Will return \c -1, if the specified \a id is invalid.
+    Returns \c -1 if the specified \a id is invalid.
 */
 int ApplicationManager::indexOfApplication(const QString &id) const
 {
@@ -1281,10 +1283,10 @@ QStringList ApplicationManager::applicationIds() const
 /*!
     \qmlmethod object ApplicationManager::get(string id)
 
-    Retrieves the model data for the application identified by \a id as a JavaScript object. Please
-    see the \l {ApplicationManager Roles}{role names} for the expected object fields.
+    Retrieves the model data for the application identified by \a id as a JavaScript object.
+    See the \l {ApplicationManager Roles}{role names} for the expected object fields.
 
-    Will return an empty object, if the specified \a id is invalid.
+    Returns an empty object if the specified \a id is invalid.
 */
 QVariantMap ApplicationManager::get(const QString &id) const
 {

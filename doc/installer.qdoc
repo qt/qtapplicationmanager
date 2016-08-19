@@ -31,21 +31,21 @@
 \title The Application Installer
 \keyword Installer
 
-\chapter Dynamically installing, removing and updating applications
+\chapter Dynamically Installing, Removing and Updating Applications
 
 After applications have been packaged by the \c application-packager, they can be installed by the
 application-manager at runtime. There are two interfaces for this functionality:
 
 \list
-    \li a Qml interface which can be used within the application-manager process and
+    \li a QML interface which can be used within the application-manager process, and
     \li a D-Bus interface which can be used by any process which is allowed to talk to the
         application-manager's \c ApplicationInstaller interface.
 \endlist
 
 Both interfaces are very similar and both are documented in the ApplicationInstaller.
 
-\note A prerequisite for dynamically installed application packages is a valid \l {Installation Locations}{installation location}
-configuration for the application-manager.
+\note A prerequisite for dynamically installed application packages is a valid
+\l {Installation Locations}{installation location} configuration for the application-manager.
 
 \chapter Packages
 
@@ -54,7 +54,7 @@ appman-packager} command-line tool, which lets you create and verify those packa
 
 \chapter Installation Sources
 
-When triggering a package installation, you have to provide an URL to the application-manager as
+When triggering a package installation, you have to provide a URL to the application-manager as
 the source of the package. Out of the box, the application-manager accepts the following schemes:
 
 \table
@@ -74,21 +74,21 @@ the source of the package. Out of the box, the application-manager accepts the f
       wrapped inside another customer specific distribution file format.
 \endtable
 
-All of those methods work asynchronously and also support streaming: this means that the actual
-installation is done while the package is being downloaded. If the package verified correctly after
-the download, it only needs a quick finalization step. On the other hand, if an error occurred, the
+All of the above methods work asynchronously and also support streaming: this means that the actual
+installation is done while the package is being downloaded. If the package is successfully verified
+after the download, it only needs a quick finalization step. Otherwise, if an error occurred, the
 installation process is simply cancelled and rolled back.
 
 \chapter Public Key Infrastructure
 
 If you want to make use of signed packages, you need to setup a public key infrastructure (PKI) to
-support this:
+support this. You need:
 
 \list
-  \li You need a \e {Developer CA} which is responsible for creating certicates that are distributed
+  \li A \e {Developer CA} which is responsible for creating certicates that are distributed
       to developers in P12 format. The developers use these certificates to developer-sign their
       packages (using the Packager tool), before submitting to an app-store.
-  \li You also need an \e {App-Store CA} which is responsible for creating certificates that are used
+  \li An \e {App-Store CA} which is responsible for creating certificates that are used
       by app-store server backends to store-sign packages, before they are downloaded and installed
       onto devices.
 \endlist

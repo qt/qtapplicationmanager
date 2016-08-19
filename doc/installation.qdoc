@@ -32,26 +32,26 @@
 
 \chapter Prerequisites
 
-In order to build the application-manager with all its features, you need to provide the following
-components:
+In order to build the application-manager with all its features, the following
+components are required:
 
 \list
-    \li \b Qt 5.5 or higher
+    \li \b Qt 5.5 or higher.
     \li \b libyaml 1.6 or higher.
-    \li \b openssl 1.0 or higher \e{- Linux only}. At compile time only the headers need to be
+    \li \b openssl 1.0 or higher \e{- Linux only}. At compile time, only the headers need to be
            available. The needed libraries will be dynamically loaded at runtime.
     \li \b libarchive 3.0 or higher \e{- only if you need the installer functionality}.
 \endlist
 
-On a Debian based systems, this command should install all the required packages:
-\code
+On Debian-based systems, this command installs the three required packages:
+\badcode
 apt-get install libyaml-dev libarchive-dev libssl-dev
 \endcode
 
-\note On platforms without \c pkg-config (e.g. Windows and Mac OS X) as well as on platforms lacking
+\note On platforms without \c pkg-config (for example, Windows and macOS) as well as on platforms lacking
 one of the dependencies, the bundled versions of these libraries from the \c 3rdparty folder will
 automatically be used instead. Make sure you are aware of the licensing implications, since these bundled
-3rdparty libs will be linked in as static libraries! This option is not meant for production, but for
+3rdparty libs will be linked in as static libraries. This option is not meant for production, but for
 development and testing environments only.
 
 
@@ -109,7 +109,7 @@ There are various options that can be given to \c qmake to tailor the build to y
       you readable backtraces on crash, but will also increase the binary size slightly.
 \endtable
 
-\section2 The hardware-id
+\section2 The Hardware ID
 
 The installer part of the application-manager needs an unique device id for two purposes:
 \list 1
@@ -117,8 +117,8 @@ The installer part of the application-manager needs an unique device id for two 
     app-store. The use case is that you don't want customers buying apps and then sharing them
     with others for free.
 
-\li When installing application packages onto a SD-card that can be removed by the user. The use
-    case here is that we need to be able to detect which SD-card "belongs" to which device, in case
+\li When installing application packages onto an SD card that can be removed by the user. The use
+    case here is that we need to be able to detect which SD card "belongs" to which device, in case
     the user is swapping a card between devices.
 \endlist
 
@@ -147,45 +147,47 @@ All in all, there are 3 different methods to specify an id:
 All executables (including the unit-tests) can be found in the build folder's \c bin directory after
 compiling.
 
-\chapter Generating Code-Coverage data
+\chapter Generating Code-Coverage Data
 
 Instead of doing a normal build, you can also create a coverage build by running \c{make coverage}.
 Using a build like this enables you to generate HTML coverage reports simply by executing:
 
-\code
+\badcode
 make check-coverage
 \endcode
+
 or
-\code
+
+\badcode
 make check-branch-coverage
 \endcode
 
 in the build directory. The command-line output will tell you the url to the generated report.
 
-\chapter System setup
+\chapter System Setup
 
 The runtime configuration of the application-manager is done through command-line switches and
 one or more configuration files.
 
-Normally the basic configuration is done via two separate config files:
+Normally, the basic configuration is done via two separate config files:
 one for target system specific setup and one for System-UI specific settings. The
 default location for the system specific part is \c{/opt/am}. A standard
 setup is shipped with the application-manager in the \c{template-opt} directory.
 You can either stick with the default:
 
-\code
+\badcode
 sudo cp -r template-opt/am /opt
 sudo chown $(whoami) /opt/am -R
 \endcode
 
 or you could copy the contents of \c{template-opt} somewhere else; be sure to
-edit the contained \c{config.yaml} file though, to reflect the changed paths.
+edit the contained \c{config.yaml} file to reflect the changed paths.
 
-Once this is setup, you should add a file called \c{am-config.yaml} to your System-UI
-with UI specific settings (e.g. QML import path, path to built-in apps)
+Once this is done, add a file called \c{am-config.yaml} to your System-UI
+with UI specific settings (for example, QML import path, path to built-in apps).
 
-When everything is in place, you can start the application-manager:
-\code
+With everything in place, you can start the application-manager:
+\badcode
 cd /path/to/system-ui
 appman -c /opt/am/config.yaml -c am-config.yaml -r --verbose main.qml
 \endcode

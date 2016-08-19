@@ -56,21 +56,27 @@
 */
 
 /*!
+    \externalpage https://developer.gnome.org/notification-spec/
+    \title freedesktop.org specification
+*/
+/*!
     \qmltype NotificationManager
-    \inqmlmodule QtApplicationManager 1.0
-    \brief The NotificationManager singleton
+    \inqmlmodule QtApplicationManager
+    \brief The NotificationManager singleton.
 
-    This singleton class is the window managing part of the application manager. It provides a QML
-    API only.
+    The NotificationManager singleton type is the window managing part of the
+    application manager. It provides a QML API only.
 
-    To make QML programmers lifes easier, the class is derived from \c QAbstractListModel,
-    so you can directly use this singleton as a model in your notification views.
+    The type is derived from QAbstractListModel and can be directly used as
+    a model in notification views.
 
     Each item in this model corresponds to an active notification.
 
     \target NotificationManager Roles
 
-    The following roles are available in this model - please also take a look at the freedesktop.org specification for an in-depth explanation of these fields and how clients should populate them:
+    The following roles are available in this model - also take a look at the
+    \l {freedesktop.org specification} for an in-depth explanation of these fields
+    and how clients should populate them:
 
     \table
     \header
@@ -87,8 +93,8 @@
         \li The id of the application that created this notification. This can be used to look up
             information about the application in the ApplicationManager model.
             \note The \c applicationId role is neither unique within this model, nor is it
-                  guaranteed to be valid at all. On the one hand, a single application can have
-                  multiple active notifications and on the other hand, system-notifications have no
+                  guaranteed to be valid. A single application can have multiple active
+                  notifications, and on the other hand, system-notifications have no
                   application context at all.
     \row
         \li \c priority
@@ -133,8 +139,8 @@
     \row
         \li \c isSytemNotification
         \li url
-        \li Set to \c true for notifications not originating from an application, but some system
-            service. Always set to \c false for notifications coming from UI applications.
+        \li Holds \c true for notifications originating not from an application, but some system
+            service. Always holds \c false for notifications coming from UI applications.
     \row
         \li \c isShowingProgress
         \li bool
@@ -154,14 +160,15 @@
     \row
         \li \c extended
         \li object
-        \li See the client side documentation of Notification::extended.
+        \li See the client side documentation of Notification::extended
 
     \endtable
 
     The actual backend implementation that is receiving the notifications from other process is
-    fully compliant to the D-Bus interface of the freedesktop.org notification specification
-    (https://developer.gnome.org/notification-spec/).
-    For testing purposes, the notify-send tool from the \c libnotify package can be used to create
+    fully compliant to the D-Bus interface of the \l {freedesktop.org specification} for
+    notifications.
+
+    For testing purposes, the \e notify-send tool from the \e libnotify package can be used to create
     notifications.
 */
 
@@ -388,10 +395,10 @@ int NotificationManager::count() const
 /*!
     \qmlmethod object NotificationManager::get(int index) const
 
-    Retrieves the model data at \a index as a JavaScript object. Please see the \l {NotificationManager
+    Retrieves the model data at \a index as a JavaScript object. See the \l {NotificationManager
     Roles}{role names} for the expected object fields.
 
-    Will return an empty object, if the specified \a index is invalid.
+    Returns an empty object if the specified \a index is invalid.
 */
 QVariantMap NotificationManager::get(int index) const
 {
@@ -411,9 +418,9 @@ QVariantMap NotificationManager::get(int index) const
     \qmlmethod object NotificationManager::notification(int id)
 
     Retrieves the model data for the notification identified by \a id as a JavaScript object.
-    Please see the \l {NotificationManager Roles}{role names} for the expected object fields.
+    See the \l {NotificationManager Roles}{role names} for the expected object fields.
 
-    Will return an empty object, if the specified \a id is invalid.
+    Returns an empty object if the specified \a id is invalid.
 */
 QVariantMap NotificationManager::notification(int id) const
 {
@@ -425,7 +432,7 @@ QVariantMap NotificationManager::notification(int id) const
 
     Maps the notification \a id to its position within the model.
 
-    Will return \c -1, if the specified \a id is invalid.
+    Returns \c -1 if the specified \a id is invalid.
 */
 int NotificationManager::indexOfNotification(int id) const
 {
@@ -435,7 +442,7 @@ int NotificationManager::indexOfNotification(int id) const
 /*!
     \qmlmethod NotificationManager::acknowledgeNotification(int id)
 
-    This function needs to be called by the System-ui, when the user acknowledged the notification
+    This function needs to be called by the System-UI when the user acknowledged the notification
     identified by \a id (most likely by clicking on it).
 */
 void NotificationManager::acknowledgeNotification(int id)
@@ -446,12 +453,14 @@ void NotificationManager::acknowledgeNotification(int id)
 /*!
     \qmlmethod NotificationManager::triggerNotificationAction(int id, string actionId)
 
-    This function needs to be called by the System-ui, when the user triggered a notification action.
+    This function needs to be called by the System-UI when the user triggered a notification action.
 
     The notification is identified by \a id and the action by \a actionId.
+
     \note You should only use action-ids that have been set for the the given notification (see the
-          \c actions role), but the application-manager will even accept and forward an arbitray string.
-          Be aware that this string is broadcast on the session D-Bus when running in multi-process mode.
+    \l {Notification::}{actions} role). However, the application-manager will accept and forward any
+    arbitrary string. Be aware that this string is broadcast on the session D-Bus when running in
+    multi-process mode.
 */
 void NotificationManager::triggerNotificationAction(int id, const QString &actionId)
 {
@@ -470,8 +479,8 @@ void NotificationManager::triggerNotificationAction(int id, const QString &actio
 /*!
     \qmlmethod NotificationManager::dismissNotification(int id)
 
-    This function needs to be called by the System-ui, when the notification identified by \a id is
-    not needed anymore.
+    This function needs to be called by the System-UI when the notification identified by \a id is
+    no longer needed.
 
     The creator of the notification will be notified about this dismissal.
 */

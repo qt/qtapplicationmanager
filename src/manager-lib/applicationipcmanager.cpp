@@ -53,14 +53,14 @@
 
 /*!
     \qmltype ApplicationIPCManager
-    \inqmlmodule QtApplicationManager 1.0
-    \brief The ApplicationIPCManager singleton
+    \inqmlmodule QtApplicationManager
+    \brief The ApplicationIPCManager singleton.
 
-    This singleton class is the central manager for app-to-system-ui IPC interfaces within the application-manager.
+    This singleton type is the central manager for app-to-system-ui IPC interfaces within the application-manager.
 
-    It only exports a single function towards the QML System-UI: registerInterface.
+    It only exports a single function towards the QML System-UI: registerInterface().
 
-    Please see the ApplicationInterfaceExtension type for how to access these registered IPC interfaces from
+    See ApplicationInterfaceExtension for information on how to access these registered IPC interfaces from
     the client (application) side.
 */
 
@@ -107,11 +107,12 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
     Registers an IPC \a interface object to extend the communication API between applications and
     the Application Manager itself. The \a interface object is an ApplicationIPCInterface item, that needs
     to stay valid during the whole lifetime of the System-UI. The \a name of the interface has to
-    adhere to D-Bus standards, so it needs to at least contain one \c . character (e.g. \c{io.qt.test}).
+    adhere to D-Bus standards, so it needs to contain at least one period ('.') character
+    (for example, \c{io.qt.test}).
     The interface is available to all applications matching the \a filter criteria (see below)
     on the private Peer-To-Peer D-Bus as a standard, typed D-Bus interface.
 
-    Since there is no way to add type information to the parameters of JavaScript functions, the
+    Because there is no way to add type information to the parameters of JavaScript functions, the
     \a interface is scanned for special annotation properties that are only used to deduce type
     information, but are not exported to the applications:
 
@@ -151,7 +152,7 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
 
     \endtable
 
-    This is a simple example showing how to add these annotations to a function definition:
+    A simple example showing how to add these annotations to a function definition:
 
     \code
     readonly property var _decltype_testFunction: { "var": [ "int", "string" ] }
@@ -212,7 +213,7 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
     }
     \endqml
 
-    Will return \c true if the registration was successful or \c false otherwise.
+    Returns \c true if the registration was successful, \c false otherwise.
 */
 bool ApplicationIPCManager::registerInterface(ApplicationIPCInterface *interface, const QString &name,
                                               const QVariantMap &filter)

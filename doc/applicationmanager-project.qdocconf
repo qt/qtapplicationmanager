@@ -30,17 +30,22 @@ qhp.projects                               = ApplicationManager
 qhp.ApplicationManager.file                = applicationmanager.qhp
 qhp.ApplicationManager.namespace           = io.qt.applicationmanager.$QT_VERSION_TAG
 qhp.ApplicationManager.virtualFolder       = applicationmanager
-qhp.ApplicationManager.indexTitle          = Public API of the application manager: QML and DBus
+qhp.ApplicationManager.indexTitle          = Qt Application Manager
 qhp.ApplicationManager.indexRoot           =
 
 qhp.ApplicationManager.filterAttributes = ApplicationManager $QT_VERSION
 qhp.ApplicationManager.customFilters.ApplicationManager.name = Application Manager $QT_VERSION
 qhp.ApplicationManager.customFilters.ApplicationManager.filterAttributes = ApplicationManager $QT_VERSION
 
-qhp.ApplicationManager.subprojects = manual
+qhp.ApplicationManager.subprojects = manual qmltypes
 qhp.ApplicationManager.subprojects.manual.title = Qt Application Manager
 qhp.ApplicationManager.subprojects.manual.indexTitle = Qt Application Manager
 qhp.ApplicationManager.subprojects.manual.type = manual
+
+qhp.ApplicationManager.subprojects.qmltypes.title = QML Types
+qhp.ApplicationManager.subprojects.qmltypes.indexTitle = Qt Application Manager QML Types
+qhp.ApplicationManager.subprojects.qmltypes.selectors = qmltype
+qhp.ApplicationManager.subprojects.qmltypes.sortPages = true
 
 navigation.landingpage = "Qt Application Manager"
 buildversion = "Qt Application Manager $QT_VERSION"

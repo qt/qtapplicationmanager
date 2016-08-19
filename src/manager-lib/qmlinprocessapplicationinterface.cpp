@@ -159,7 +159,7 @@ uint QmlInProcessNotification::libnotifyShow()
 
 /*!
     \qmltype ApplicationInterfaceExtension
-    \inqmlmodule QtApplicationManager 1.0
+    \inqmlmodule QtApplicationManager
     \brief Client side access to IPC interface extensions in the System-UI.
 
     This is the client side type used to access IPC interfaces, registered via the ApplicationIPCManager

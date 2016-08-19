@@ -82,17 +82,17 @@
 
 /*!
     \qmltype WindowManager
-    \inqmlmodule QtApplicationManager 1.0
-    \brief The WindowManager singleton
+    \inqmlmodule QtApplicationManager
+    \brief The WindowManager singleton.
 
-    This singleton class is the window managing part of the application manager. It provides a QML
-    API only.
+    The WindowManager singleton type is the window managing part of the application manager.
+    It provides a QML API only.
 
-    To make QML programmers lifes easier, the class is derived from \c QAbstractListModel,
-    so you can directly use this singleton as a model in your window views.
+    The type is derived from QAbstractListModel, and can be directly used as a model in window views.
 
-    Each item in this model corresponds to an actual window surface. Please note that a single
-    application can have multiple surfaces: the \c applicationId role is not unique within this model!
+    Each item in this model corresponds to an actual window surface. Note that a single
+    application can have multiple surfaces; therefore, the \c applicationId role is not unique
+    within this model.
 
     \target WindowManager Roles
 
@@ -106,7 +106,7 @@
     \row
         \li \c applicationId
         \li string
-        \li The unique id of an application represented as a string in reverse-dns form (e.g.
+        \li The unique id of an application represented as a string in reverse-dns form (for example,
             \c com.pelagicore.foo). This can be used to look up information about the application
             in the ApplicationManager model.
     \row
@@ -117,27 +117,27 @@
     \row
         \li \c isFullscreen
         \li bool
-        \li A boolean value telling if the app's surface is being displayed in fullscreen mode.
+        \li A boolean value indicating whether the surface is being displayed in fullscreen mode.
     \row
         \li \c isMapped
         \li bool
-        \li A boolean value telling if the app's surface is mapped (visible).
+        \li A boolean value indicating whether the surface is mapped (visible).
     \endtable
 
-    After importing, you can just use the WindowManager singleton as shown in the example below.
-    It shows how to implement a basic fullscreen window compositor that already supports window
-    show and hide animations:
+    After importing, the WindowManager singleton can be used as in the example below.
+    It demonstrates how to implement a basic, fullscreen window compositor with support
+    for window show and hide animations:
 
     \qml
     import QtQuick 2.0
     import QtApplicationManager 1.0
 
-    // simple solution for a full-screen setup
+    // Simple solution for a full-screen setup
     Item {
         id: fullscreenView
 
         MouseArea {
-            // without this area, clicks would go "through" the surfaces
+            // Without this area, mouse events would propagate "through" the surfaces
             id: filterMouseEventsForWindowContainer
             anchors.fill: parent
             enabled: false
@@ -155,10 +155,10 @@
             }
             function windowClosingHandler(index, window) {
                 if (window === windowContainer.windowItem) {
-                    // start close animation
+                    // Start close animation
                     windowContainer.state = "closed"
                 } else {
-                    // immediately close anything which is not handled by this container
+                    // Immediately close anything not handled by this container
                     WindowManager.releasewindow(index, window)
                 }
             }
@@ -175,14 +175,14 @@
 
             property Item windowItem: placeHolder
             onWindowItemChanged: {
-                windowItem.parent = windowContainer  // reset parent in any case
+                windowItem.parent = windowContainer  // Always reset parent
             }
 
             Item {
                 id: placeHolder;
             }
 
-            // a different syntax for 'anchors.fill: parent' due to the volatile nature of windowItem
+            // Use a different syntax for 'anchors.fill: parent' due to the volatile nature of windowItem
             Binding { target: windowContainer.windowItem; property: "x"; value: windowContainer.x }
             Binding { target: windowContainer.windowItem; property: "y"; value: windowContainer.y }
             Binding { target: windowContainer.windowItem; property: "width"; value: windowContainer.width }
@@ -194,7 +194,7 @@
                     SequentialAnimation {
                         alwaysRunToEnd: true
 
-                        // your closing animation goes here
+                        // Closing animation declared here
                         // ...
 
                         ScriptAction {
@@ -211,7 +211,7 @@
                     SequentialAnimation {
                         alwaysRunToEnd: true
 
-                        // your opening animation goes here
+                        // Opening animation declared here
                         // ...
                     }
                 }
@@ -228,7 +228,7 @@
     This signal is emitted after a new \a window surface has been created. Most likely due
     to an application launch.
 
-    More information about this window (e.g. the corresponding application) can be retrieved via the
+    More information about this window (for example, the corresponding application) can be retrieved via the
     model \a index.
 */
 
@@ -239,16 +239,16 @@
 
     Either the client application closed the window, or it exited and all its Wayland surfaces got
     implicitly unmapped.
-    When using the \c qml-inprocess runtime this signal will also be emitted when the \c close
+    When using the \c qml-inprocess runtime, this signal is also emitted when the \c close
     signal of the fake surface is triggered.
 
-    The actual surface can still be used for animations, since it will not be deleted right
+    The actual surface can still be used for animations as it is not deleted immediately
     after this signal is emitted.
 
-    More information about this window (e.g. the corresponding application) can be retrieved via the
+    More information about this window (for example, the corresponding application) can be retrieved via the
     model \a index.
 
-    \sa windowLost
+    \sa windowLost()
 */
 
 /*!
@@ -258,12 +258,12 @@
 
     If the surface was mapped, you will receive an implicit windowClosing signal before windowLost.
 
-    \note It is mandatory to call releaseWindow after the windowLost signal has been received: all the
+    \note It is mandatory to call releaseWindow() after the windowLost() signal has been received: all
           resources associated with the window surface will not be released automatically. The
-          timing is up to the system-ui which might want to play a shutdown animation, but never
-          calling releaseWindow will result in resource leaks!
+          timing is up to the system-ui; calling releaseWindow() can be delayed in order to play a
+          shutdown animation, but failing to call it will result in resource leaks.
 
-    More information about this window (e.g. the corresponding application) can be retrieved via the
+    More information about this window (for example, the corresponding application) can be retrieved via the
     model \a index.
 */
 
@@ -317,7 +317,7 @@ QObject *WindowManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
 /*!
     \qmlproperty bool WindowManager::runningOnDesktop
 
-    \c true if running on a classic desktop window manager (Windows, Mac OS X or X11) and
+    Holds \c true if running on a classic desktop window manager (Windows, X11, or macOS),
     \c false otherwise.
 */
 bool WindowManager::isRunningOnDesktop() const
@@ -447,10 +447,10 @@ int WindowManager::count() const
 /*!
     \qmlmethod object WindowManager::get(int index) const
 
-    Retrieves the model data at \a index as a JavaScript object. Please see the \l {WindowManager
+    Retrieves the model data at \a index as a JavaScript object. See the \l {WindowManager
     Roles}{role names} for the expected object fields.
 
-    Will return an empty object, if the specified \a index is invalid.
+    Returns an empty object if the specified \a index is invalid.
 */
 QVariantMap WindowManager::get(int index) const
 {
@@ -469,7 +469,7 @@ QVariantMap WindowManager::get(int index) const
 /*!
     \qmlmethod int WindowManager::indexOfWindow(Item window)
 
-    Returns the index of the \a window within the WindowManager model or \c -1 if the window item is
+    Returns the index of the \a window within the WindowManager model, or \c -1 if the window item is
     not a managed window.
  */
 int WindowManager::indexOfWindow(QQuickItem *window)
@@ -497,10 +497,10 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 
     Releases all resources of the \a window surface and removes the window from the model.
 
-    \note It is mandatory to call this function after the windowLost signal has been fired: all the
+    \note It is mandatory to call this function after the windowLost() signal has been received: all
           resources associated with the window surface will not be released automatically. The
-          timing is up to the system-ui which might want to play a shutdown animation, but never
-          calling this function will result in resource leaks!
+          timing is up to the system-ui; calling releaseWindow() can be delayed in order to play a
+          shutdown animation, but failing to call it will result in resource leaks.
 
     \sa windowLost
 */
@@ -526,9 +526,9 @@ void WindowManager::releaseWindow(QQuickItem *window)
 /*!
     \qmlmethod WindowManager::registerCompositorView(QQuickWindow *view)
 
-    Register the given \a view as a possible destination for Wayland window composition.
+    Registers the given \a view as a possible destination for Wayland window composition.
 
-    Wayland window items can only be rendered within top-level windows, that have been registered
+    Wayland window items can only be rendered within top-level windows that have been registered
     via this function.
 
     \note The \a view parameter is an actual top-level window on the server side - not a client
@@ -750,12 +750,13 @@ void WindowManager::waylandSurfaceDestroyed(WindowSurface *surface)
     Sets an application \a window's shared property identified by \a name to the given \a value.
 
     These properties are shared between the System-UI and the client application: in single-process
-    mode simply via a QVariantMap; in multi-process mode via Qt's extended surface Wayland extension.
-    Changes from the client side are via windowPropertyChanged.
+    mode simply via a QVariantMap; in multi-process mode the sharing is done via Qt's extended
+    surface Wayland extension. Changes from the client side are notified by the
+    windowPropertyChanged() signal.
 
     See ApplicationManagerWindow for the client side API.
 
-    \sa windowProperty, windowProperties, windowPropertyChanged
+    \sa windowProperty(), windowProperties(), windowPropertyChanged()
 */
 bool WindowManager::setWindowProperty(QQuickItem *window, const QString &name, const QVariant &value)
 {
@@ -769,11 +770,11 @@ bool WindowManager::setWindowProperty(QQuickItem *window, const QString &name, c
 }
 
 /*!
-    \qmlmethod var WindowManager::windowProperty(Item window, string name) const
+    \qmlmethod var WindowManager::windowProperty(Item window, string name)
 
     Returns the value of an application \a window's shared property identified by \a name.
 
-    \sa setWindowProperty
+    \sa setWindowProperty()
 */
 QVariant WindowManager::windowProperty(QQuickItem *window, const QString &name) const
 {
@@ -787,11 +788,11 @@ QVariant WindowManager::windowProperty(QQuickItem *window, const QString &name) 
 }
 
 /*!
-    \qmlmethod var WindowManager::windowProperties(Item window) const
+    \qmlmethod var WindowManager::windowProperties(Item window)
 
     Returns an object containing all shared properties of an application \a window.
 
-    \sa setWindowProperty
+    \sa setWindowProperty()
 */
 QVariantMap WindowManager::windowProperties(QQuickItem *window) const
 {
@@ -810,7 +811,7 @@ QVariantMap WindowManager::windowProperties(QQuickItem *window) const
     Reports a change of an application \a window's property identified by \a name to the given
     \a value.
 
-    \sa ApplicationManagerWindow::setWindowProperty
+    \sa ApplicationManagerWindow::setWindowProperty()
 */
 
 void WindowManager::reportFps()
@@ -836,7 +837,7 @@ bool WindowManager::setDBusPolicy(const QVariantMap &yamlFragment)
 /*!
     \qmlmethod bool WindowManager::makeScreenshot(string filename, string selector)
 
-    TODO
+    \TODO
 */
 bool WindowManager::makeScreenshot(const QString &filename, const QString &selector)
 {

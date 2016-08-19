@@ -44,12 +44,12 @@
 
 /*!
     \qmltype Notification
-    \inqmlmodule QtApplicationManager 1.0
+    \inqmlmodule QtApplicationManager
     \brief An abstraction layer to enable QML applications to issue notifications to the System-UI.
 
-    This item is available for QML applications by either creating a Notification item
+    The Notification type is available for QML applications by either creating a Notification item
     statically or by dynamically calling ApplicationInterface::createNotification.
-    For all other applications and/or services, the notification service of the application-manager
+    For all other applications and services, the notification service of the application-manager
     is available via a freedesktop.org compliant \l{https://developer.gnome.org/notification-spec/}
     {org.freedesktop.Notifications} D-Bus interface.
 
@@ -71,10 +71,11 @@
 /*!
     \qmlsignal Notification::actionTriggered(string actionId)
 
-    This signal is emitted when action identified by \a actionId of this notification was triggered
+    This signal is emitted when an action identified by \a actionId of this notification was triggered
     on the server side.
-    \note For maximum flexibility, the \a actionId can be an arbitrary string: you have to check
-          yourself if it represents one of the registered \l actions.
+
+    \note The \a actionId can be an arbitrary string: It may or may not represent one of the
+          registered \l actions, and needs to be explicitly checked.
 */
 
 Notification::Notification(QObject *parent, Notification::ConstructionMode mode)
@@ -86,11 +87,12 @@ Notification::Notification(QObject *parent, Notification::ConstructionMode mode)
 
 /*!
     \qmlproperty int Notification::notificationId
+    \readonly
 
-    The system-wide unique \c id of this notification.
+    Holds the system-wide unique \c id of this notification.
 
-    This is \c 0 until this notification is made \l visible (and thus published to the server). The
-    id is read-only, since it will be allocated by the server.
+    The id is \c 0 until this notification is made \l visible (and thus published to the server). This
+    property is read-only as the id is allocated by the server.
 */
 uint Notification::notificationId() const
 {
@@ -100,11 +102,11 @@ uint Notification::notificationId() const
 /*!
     \qmlproperty string Notification::summary
 
-    This is a single line overview of the notification.
+    Holds a single line overview of the notification.
 
-    For instance, "You have mail" or "A friend has come online". It should generally not be longer
-    than 40 characters, though this is not a requirement, and server implementations should word
-    wrap if necessary.
+    For instance, "You have mail" or "A friend has come online". Generally, it should not exceed
+    40 characters, though this is not a requirement (server implementations should word
+    wrap it if necessary).
 */
 QString Notification::summary() const
 {
@@ -114,8 +116,8 @@ QString Notification::summary() const
 /*!
     \qmlproperty string Notification::body
 
-    This is a multi-line body of text. Each line is a paragraph, server implementations are free to
-    word wrap them as they see fit.
+    Holds a multi-line body of text. Each line is a paragraph, and server implementations are free to
+    word wrap dthem as they see fit.
 
     The body may contain simple HTML markup. If the body is omitted, just the \l summary is displayed.
 */
@@ -127,9 +129,11 @@ QString Notification::body() const
 /*!
     \qmlproperty url Notification::icon
 
-    Notifications can optionally have an associated icon.
+    Holds a URL to an icon associated with this notification (optional).
 
-    This icon should identify the application which created this notification.
+    The icon should identify the application which created this notification.
+
+    \sa image
 */
 QUrl Notification::icon() const
 {
@@ -139,11 +143,13 @@ QUrl Notification::icon() const
 /*!
     \qmlproperty url Notification::image
 
-    A notification can optionally have an associated image.
+    Holds a URL to an image associated with this notification (optional).
 
-    This image should not be used to identify the applicaton (see \l icon for this), but rather if
-    the nature of the notification is image based (e.g. showing an album cover in a "now playing"
-    notification).
+    The image should not be used to identify the application (see \l icon for this), but rather when
+    the notification itself can be assigned an image (for example, showing an album cover in a
+    "Now Playing" notification).
+
+    \sa icon
 */
 QUrl Notification::image() const
 {
@@ -153,12 +159,12 @@ QUrl Notification::image() const
 /*!
     \qmlproperty string Notification::category
 
-    The type of notification this is.
+    Holds the type of this notification (optional).
 
-    Notifications can optionally have a category indicator. Although neither client or server must
-    support this, some may choose to. Those servers implementing categories may use them to
-    intelligently display the notification in a certain way, or group notifications of similar
-    types.
+    Notifications can optionally have a category indicator. Although neither the client or the server
+    must support this, some may choose to. Servers that implement categories may use them to
+    intelligently display the notification in a specific way, or group notifications of similar
+    types together.
 */
 QString Notification::category() const
 {
@@ -168,7 +174,7 @@ QString Notification::category() const
 /*!
     \qmlproperty int Notification::priority
 
-    The priority of this notification. The actual value is implementation specific, but ideally any
+    Holds the priority of this notification. The actual value is implementation specific, but ideally any
     implementation should use the defined values from the \c freedesktop.org specification,
     available via the Priority enum:
     \table
@@ -195,9 +201,9 @@ int Notification::priority() const
 /*!
     \qmlproperty bool Notification::acknowledgeable
 
-    Request that the notification can be acknowledged by the user - most likely by clicking on it.
+    Holds whether the notification can be acknowledged by the user - typically, by clicking on it.
+    This action is reported via the acknowledged() signal.
 
-    This will be reported via the \l acknowledged signal.
     The default value is \c false.
 */
 bool Notification::isAcknowledgeable() const
@@ -210,6 +216,7 @@ bool Notification::isAcknowledgeable() const
 
     In case of non-sticky notifications, this value specifies after how many milliseconds the
     notification should be removed from the screen.
+
     The default value is \c 2000.
 
     \sa sticky
@@ -222,10 +229,11 @@ int Notification::timeout() const
 /*!
     \qmlproperty bool Notification::sticky
 
-    If this property is set to \c false, then the notification should be removed after \l timeout
-    milliseconds. Otherwise the notification is sticky and should stay visible until the user
-    acknowledges it.
-    The default value is \c false, due to the timeout properties default value.
+    If this property is set to \c false, the notification should be removed after \l timeout
+    milliseconds. Otherwise, the notification is "sticky" and should stay visible until the
+    user acknowledges it.
+
+    The default value is \c false.
 */
 bool Notification::isSticky() const
 {
@@ -237,6 +245,7 @@ bool Notification::isSticky() const
 
     A boolean value describing whether a progress-bar/busy-indicator should be shown as part of the
     notification.
+
     The default value is \c false.
 
     \note This is an application-manager specific extension to the protocol: it uses the
@@ -250,7 +259,7 @@ bool Notification::isShowingProgress() const
 /*!
     \qmlproperty qreal Notification::progress
 
-    A floating-point value between \c{[0.0 ... 1.0]} which can be used to show a progress-bar on
+    Holds a floating-point value between \c{[0.0 ... 1.0]} which can be used to show a progress-bar on
     the notification. The special value \c -1 can be used to request a busy indicator.
     The default value is \c -1.
 
@@ -265,10 +274,12 @@ qreal Notification::progress() const
 /*!
     \qmlproperty list<object> Notification::actions
 
-    This is an object describing the possible actions that the user can choose from. Every key in
+    Holds a list of the possible actions the user can choose from. Every key in
     this map is an \c actionId and its corresponding value is an \c actionText. The
     notification-manager should eiher display the \c actionText or an icon, depending on the
     showActionsAsIcons property.
+
+    \sa actionTriggered()
 */
 QVariantList Notification::actions() const
 {
@@ -278,12 +289,15 @@ QVariantList Notification::actions() const
 /*!
     \qmlproperty bool Notification::showActionsAsIcons
 
-    A hint supplied by the client on how to present the \c actions. If this property is \c false,
-    the notification actions should be shown in text form. Otherwise the \c actionText should be
+    Holds a hint supplied by the client on how to present the \c actions. If this property is \c false,
+    the notification actions should be shown in text form. Otherwise, the \c actionText should be
     taken as an icon name conforming to the \c freedesktop.org icon naming specification (in a
     closed system, these could also be any icon specification string that the notification server
     understands).
+
     The default value is \c false.
+
+    \sa icon
 */
 bool Notification::showActionsAsIcons() const
 {
@@ -293,13 +307,16 @@ bool Notification::showActionsAsIcons() const
 /*!
     \qmlproperty bool Notification::visible
 
-    Tell the system's notification manager to show/hide this notification. You only have to call
-    show once for a notification, even if you change properties afterwards - these are communicated
-    to the server automatically. This is just a hint to the notification manager though - how and
-    when notifications actually apppear on the screen is up to the server side implementation.
+    Instructs the system's notification manager to either show or hide this notification. A notification
+    needs to be set visible only once, even if its properties are changed afterwards - these changes
+    are communicated to the server automatically.
+
+    \note This property is just a hint to the notification manager; how and
+    when a notifications actually appears on the screen is up to the server-side implementation.
+
     The default value is \c false.
 
-    \sa show, hide
+    \sa show(), hide()
 */
 bool Notification::isVisible() const
 {
@@ -309,8 +326,9 @@ bool Notification::isVisible() const
 /*!
     \qmlproperty bool Notification::dismissOnAction
 
-    Tells the notification manager, whether clicking one of the supplied action texts or images
-    will dismiss the notification.
+    Holds whether the notification manager should dismiss the notification after user action (for
+    example, clicking one of the supplied action texts or images).
+
     The default value is \c false.
 */
 bool Notification::dismissOnAction() const
@@ -321,7 +339,7 @@ bool Notification::dismissOnAction() const
 /*!
     \qmlproperty object Notification::extended
 
-    A custom variant property that lets the user attach an arbitrary meta-data to this notification.
+    Holds a custom variant property that lets the user attach arbitrary meta-data to this notification.
 
     \note This is an application-manager specific extension to the protocol: it uses the
           \c{x-pelagicore-extended} hint to communicate this value.
@@ -334,7 +352,7 @@ QVariantMap Notification::extended() const
 /*!
     \qmlmethod Notification::show()
 
-    An alias for \c{visible = true}
+    An alias for \c{visible = true}.
 
     \sa visible
 */
@@ -346,7 +364,7 @@ void Notification::show()
 /*!
     \qmlmethod Notification::hide()
 
-    An alias for \c{visible = false}
+    An alias for \c{visible = false}.
 
     \sa visible
 */

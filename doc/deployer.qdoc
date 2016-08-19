@@ -28,14 +28,19 @@
 /*!
 \page appman-deployer.html
 \title Deployer
+\brief A command-line utility for remotely installing a package on a target device
+       via SSH.
+\ingroup qtappman-tools
 
 The \c{appman-deployer} is a command-line utility that is used by the developer on his desktop
 machine to remotely install a package on a target device via SSH. It is a simple shell script that
 automates sending the package to the device and triggering the \c{appman-controller} on the target
 to install the package.
 
-Usage: \tt{appman-deployer <user> <target name/ip> <package file>}
-
+\b Usage
+\badcode
+appman-deployer <user> <target name/ip> <package file>
+\endcode
 
 The \c{appman-deployer} naturally supports the standard Unix \c{--help} command-line option.
 

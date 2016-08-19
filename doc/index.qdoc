@@ -45,22 +45,18 @@ compositing window manager using the APIs that are exported from the C++ side.
     \omit
     \li \l{How to write a System-UI}
     \endomit
-    \li \l{How to write applications}
+    \li \l{Writing Applications}
     \li \l{The Application Installer}
 \endlist
 
 \chapter Tools
-\list
-    \li \l{Packager}
-    \li \l{Controller}
-    \li \l{Deployer}
-\endlist
+\annotatedlist qtappman-tools
 
 \chapter Reference
 \list
-    \li \l{Manifest definition}{info.yaml}
-    \li \l{QML elements System-UI}
-    \li \l{QML elements Applications}
+    \li \l{Manifest Definition}{Manifest Definition (info.yaml)}
+    \li \l{System-UI QML Types}
+    \li \l{Applications QML Types}
 \endlist
 
 

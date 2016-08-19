@@ -28,6 +28,9 @@
 /*!
 \page appman-controller.html
 \title Controller
+\brief A command-line utility for triggering the installation of a specified
+       package on the target device.
+\ingroup qtappman-tools
 
 The \c{appman-controller} is a command-line utility that can be used by the developer (or indirectly
 by other tools) on the target device to control the application-manager without directly talking to

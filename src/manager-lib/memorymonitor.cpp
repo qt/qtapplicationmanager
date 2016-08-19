@@ -105,6 +105,7 @@ public:
     quint64 m_pid = -1;
 
     int m_reportPos = 0;
+    int modelSize = 50;
 
 #if defined(Q_OS_LINUX)
     QScopedPointer<SysFsReader> s_smapsFs;
@@ -148,7 +149,7 @@ public:
 
         q->beginResetModel();
         // we need at least 2 items, otherwise we cannot move rows
-        smapSizes.resize(50);
+        smapSizes.resize(modelSize);
         q->endResetModel();
     }
 
@@ -170,28 +171,30 @@ public:
             lastHeader = header;
             int listIndex = i*range;
 
-            // Avoid \x00
-            if (lines.at(listIndex).size() < 10)
+            // First line - header
+            header = lines.at(listIndex).split(' ');
+
+            // Avoid \x00 or reading data error
+            // Header line should have memory address, flags
+            // and library name
+            if (header.size() < 5)
                 break;
 
-            // First line - header
-            header = lines.at(i*range).split(' ');
-            //qDebug() << header;
             if (i == 0)
                 lastHeader = header;
 
             // Second line virtual size
-            QList<QByteArray> vmSize = lines.at(i*range + 1).split(' ');
+            QList<QByteArray> vmSize = lines.at(listIndex + 1).split(' ');
             int v = vmSize.at(vmSize.size() - 2).toInt() * 1000;
             t.vmSize = t.vmSize + v;
 
             // Third line resident size
-            QList<QByteArray> rss = lines.at(i*range + 2).split(' ');
+            QList<QByteArray> rss = lines.at(listIndex + 2).split(' ');
             int r = rss.at(rss.size() - 2).toInt() * 1000;
             t.rss = t.rss + r;
 
             // Fourth line proportional size
-            QList<QByteArray> pss = lines.at(i*range + 3).split(' ');
+            QList<QByteArray> pss = lines.at(listIndex + 3).split(' ');
             int p = pss.at(pss.size() - 2).toInt() * 1000;
             t.pss = t.pss + p;
 
@@ -273,15 +276,18 @@ public:
         roles.append(StackP);
 
         int size = smapSizes.size();
-        int sentIndex = size - m_reportPos;
-        if (sentIndex < 0)
-            sentIndex = 0;
         q->beginMoveRows(QModelIndex(), 0, 0, QModelIndex(), size);
         smapSizes[m_reportPos++] = t;
         if (m_reportPos >= smapSizes.size())
             m_reportPos = 0;
         q->endMoveRows();
         q->dataChanged(q->index(size - 1), q->index(size - 1), roles);
+
+        int sentIndex = size - m_reportPos;
+        if (sentIndex < 0)
+            sentIndex = 0;
+        else if (sentIndex > (modelSize - 1))
+            sentIndex = modelSize - 1;
 
         emit q->memoryReportingChanged(sentIndex);
 
@@ -312,15 +318,18 @@ public:
         t.vmSize = t_info.virtual_size;
 
         int size = smapSizes.size();
-        int sentIndex = size - m_reportPos;
-        if (sentIndex < 0)
-            sentIndex = 0;
         q->beginMoveRows(QModelIndex(), 0, 0, QModelIndex(), size);
         smapSizes[m_reportPos++] = t;
         if (m_reportPos >= smapSizes.size())
             m_reportPos = 0;
         q->endMoveRows();
         q->dataChanged(q->index(size - 1), q->index(size - 1), roles);
+
+        int sentIndex = size - m_reportPos;
+        if (sentIndex < 0)
+            sentIndex = 0;
+        else if (sentIndex > (modelSize - 1))
+            sentIndex = modelSize - 1;
 
         emit q->memoryReportingChanged(sentIndex);
 

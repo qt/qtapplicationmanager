@@ -8,7 +8,7 @@ qtCompileTest(libcrypto)
 
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 force-multi-process:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcompositor):error("You forced multi-process mode, but the QtCompositor module is not available")
-force-multi-process:!config_libdbus:error("You forced multi-process mode, but libdbus-1 (>= 1.8) is not available")
+force-multi-process:!config_libdbus:error("You forced multi-process mode, but libdbus-1 (>= 1.6) is not available")
 
 if(linux:!android|force-libcrypto) {
     !config_libcrypto:error("Could not find libcrypto (OpenSSL)")

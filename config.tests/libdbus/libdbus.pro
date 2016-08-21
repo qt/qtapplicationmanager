@@ -4,5 +4,5 @@ CONFIG += console
 
 SOURCES += main.cpp
 
-PKGCONFIG += "'dbus-1 >= 1.8'"
+PKGCONFIG += "'dbus-1 >= 1.6'"
 CONFIG += link_pkgconfig

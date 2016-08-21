@@ -11,7 +11,7 @@ QT = core network qml qml-private
 qtHaveModule(dbus):QT *= dbus
 
 multi-process {
-    PKGCONFIG += "'dbus-1 >= 1.8'"
+    PKGCONFIG += "'dbus-1 >= 1.6'"
 }
 
 DEFINES *= AM_BUILD_APPMAN

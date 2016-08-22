@@ -238,15 +238,25 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     }
 
     QStringList importPaths = m_configuration.value(qSL("importPaths")).toStringList();
-    importPaths.replaceInStrings(QRegularExpression(qSL("^(.*)$")),
-                                 QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/\\1"));
+    const QString prefix = QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/");
+    for (QString &path : importPaths) {
+        if (QFileInfo(path).isRelative()) {
+            path.prepend(prefix);
+        } else {
+            qCWarning(LogQmlRuntime) << "Absolute import path in config file might lead to problems inside containers:"
+                                     << path;
+        }
+    }
 
     auto vl = qdbus_cast<QVariantList>(runtimeParameters.value(qSL("importPaths")));
-    for (const QVariant &v : vl)
-        importPaths.append(v.toString());
+    for (const QVariant &v : qAsConst(vl)) {
+        const QString path = v.toString();
+        if (QFileInfo(path).isRelative())
+            importPaths.append(QDir().absoluteFilePath(path));
+        else
+            qCWarning(LogQmlRuntime) << "Omitting absolute import path in info file for safety reasons:" << path;
+    }
 
-    for (int i = 0; i < importPaths.size(); ++i)
-        importPaths[i] = QDir().absoluteFilePath(importPaths[i]);
     if (!importPaths.isEmpty())
         qCDebug(LogQmlRuntime) << "setting QML2_IMPORT_PATH to" << importPaths;
 

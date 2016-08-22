@@ -6,7 +6,7 @@ DESTDIR  = $$BUILD_DIR/bin
 load(am-config)
 
 QT = qml dbus core-private
-!headless:QT += quick gui gui-private
+!headless:QT += quick gui gui-private quick-private
 
 SOURCES += \
     main.cpp \

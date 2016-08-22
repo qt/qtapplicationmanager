@@ -41,7 +41,7 @@
 
 #pragma once
 
-#include <QQuickWindow>
+#include <private/qquickwindowmodule_p.h>
 #include <QTime>
 
 QT_FORWARD_DECLARE_CLASS(QPlatformWindow)
@@ -49,7 +49,7 @@ QT_FORWARD_DECLARE_CLASS(QPlatformWindow)
 
 class ApplicationManagerWindowPrivate;
 
-class ApplicationManagerWindow : public QQuickWindow
+class ApplicationManagerWindow : public QQuickWindowQmlImpl
 {
     Q_OBJECT
     Q_PROPERTY(float fps READ fps NOTIFY fpsChanged)

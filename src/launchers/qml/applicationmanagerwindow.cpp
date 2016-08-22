@@ -138,7 +138,7 @@ public:
 
 
 ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
-    : QQuickWindow(parent)
+    : QQuickWindowQmlImpl(parent)
     , d(new ApplicationManagerWindowPrivate())
 {
     setFlags(flags() | Qt::FramelessWindowHint);

@@ -255,6 +255,18 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
 
+    // This is a bit of a hack to make ApplicationManagerWindow known as a sub-class
+    // of QWindow. Without this, assigning an ApplicationManagerWindow to a QWindow*
+    // property will fail with [unknown property type]. First seen when trying to
+    // write a nested Wayland-compositor where assigning to WaylandOutput.window failed.
+    {
+        static const char registerWindowQml[] = "import QtQuick 2.0\nimport QtQuick.Window 2.2\nQtObject { }\n";
+        QQmlComponent registerWindowComp(&m_engine);
+        registerWindowComp.setData(QByteArray::fromRawData(registerWindowQml, sizeof(registerWindowQml) - 1), QUrl());
+        QScopedPointer<QObject> dummy(registerWindowComp.create());
+        registerWindowComp.completeCreate();
+    }
+
     QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
     m_engine.load(qmlFileUrl);
 

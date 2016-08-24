@@ -215,7 +215,7 @@ private:
     TemporaryDir m_workDir;
     QString m_hardwareId;
     QString m_loopbackForSDCard[2];
-    QList<InstallationLocation> m_installationLocations;
+    QVector<InstallationLocation> m_installationLocations;
     ApplicationInstaller *m_ai = 0;
     QSignalSpy *m_startedSpy = 0;
     QSignalSpy *m_requestingInstallationAcknowledgeSpy = 0;
@@ -409,7 +409,7 @@ void tst_ApplicationInstaller::installationLocations()
         QVERIFY(InstallationLocation::typeFromString(s) == i);
     }
 
-    QList<InstallationLocation> loclist = m_ai->installationLocations();
+    QVector<InstallationLocation> loclist = m_ai->installationLocations();
 
     QCOMPARE(loclist.size(), m_installationLocations.size());
     foreach (const InstallationLocation &loc, loclist) {
@@ -418,7 +418,7 @@ void tst_ApplicationInstaller::installationLocations()
         QCOMPARE(loc.id(), InstallationLocation::typeToString(loc.type()) + "-" + QString::number(loc.index()));
     }
 
-    QList<InstallationLocation> locationList = InstallationLocation::parseInstallationLocations(QVariantList {
+    QVector<InstallationLocation> locationList = InstallationLocation::parseInstallationLocations(QVariantList {
         QVariantMap {
             { "id", "internal-0" },
             { "installationPath", QDir::tempPath() },

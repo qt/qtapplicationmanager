@@ -415,7 +415,7 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
     }
     case IsMapped: {
         if (win->isInProcess()) {
-            return true;
+            return !win->isClosing();
         } else {
 #if defined(AM_MULTI_PROCESS)
             auto ww = qobject_cast<const WaylandWindow*>(win);
@@ -487,9 +487,8 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
                 this, &WindowManager::surfaceFullscreenChanged, Qt::QueuedConnection);
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemReady,
                 this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemCreated), Qt::QueuedConnection);
-        connect(runtime, &AbstractRuntime::inProcessSurfaceItemClosing, this, [this](QQuickItem *window) {
-            emit windowClosing(indexOfWindow(window), window);
-        }, Qt::QueuedConnection);
+        connect(runtime, &AbstractRuntime::inProcessSurfaceItemClosing,
+                this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemClosing), Qt::QueuedConnection);
     }
 }
 
@@ -591,8 +590,38 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
     if (index == -1) {
         setupWindow(new InProcessWindow(app, surfaceItem));
     } else {
+        QModelIndex modelIndex = QAbstractListModel::index(index);
+        qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: true";
+        emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
         emit windowReady(index, d->windows.at(index)->windowItem());
     }
+}
+
+void WindowManager::inProcessSurfaceItemClosing(QQuickItem *surfaceItem)
+{
+    qCDebug(LogWayland) << "inProcessSurfaceItemClosing" << surfaceItem;
+
+    int index = d->findWindowBySurfaceItem(surfaceItem);
+    if (index == -1) {
+        qCWarning(LogWayland) << "inProcessSurfaceItemClosing: could not find an application window for item" << surfaceItem;
+        return;
+    }
+    InProcessWindow *win = qobject_cast<InProcessWindow *>(d->windows.at(index));
+    if (!win) {
+        qCCritical(LogWayland) << "inProcessSurfaceItemClosing: expected surfaceItem to be a InProcessWindow, got" << d->windows.at(index);
+        return;
+    }
+
+    win->setClosing();
+
+    QModelIndex modelIndex = QAbstractListModel::index(index);
+    qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: false";
+    emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
+
+    emit windowClosing(index, win->windowItem()); //TODO: rename to windowUnmapped
+
+    //emit destroyed as well, so the compositor knows that the closing transition can be played now and the window be freed
+    emit windowLost(index, win->windowItem());
 }
 
 

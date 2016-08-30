@@ -45,10 +45,13 @@ Window::Window(const Application *app, QQuickItem *surfaceItem)
     : QObject(0)
     , m_application(app)
     , m_windowItem(surfaceItem)
-{ }
+{
+}
 
 Window::~Window()
-{ }
+{
+    delete m_windowItem.data();
+}
 
 bool Window::isClosing() const
 {

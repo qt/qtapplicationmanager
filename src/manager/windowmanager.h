@@ -143,6 +143,7 @@ private slots:
     void surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen);
 
     void inProcessSurfaceItemCreated(QQuickItem *surfaceItem);
+    void inProcessSurfaceItemClosing(QQuickItem *surfaceItem);
     void setupWindow(Window *window);
 
 public:

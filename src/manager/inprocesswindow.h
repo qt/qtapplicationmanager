@@ -48,6 +48,8 @@
 
 class InProcessWindow : public Window
 {
+    Q_OBJECT
+
 public:
     InProcessWindow(const Application *app, QQuickItem *windowItem);
 

@@ -122,8 +122,19 @@ bool QmlInProcessRuntime::start()
 
     QStringList importPaths = m_app->runtimeParameters().value(qSL("importPaths")).toStringList();
     if (!importPaths.isEmpty()) {
-        qCDebug(LogSystem) << "qml-in-process-runtime: Setting QML2_IMPORT_PATH to" << importPaths;
-        m_inProcessQmlEngine->setImportPathList(m_inProcessQmlEngine->importPathList() + importPaths);
+
+        QStringList absoluteImportPaths;
+
+        for (int i = 0; i < importPaths.size(); i++) {
+            QString importPath = importPaths[i];
+            if (QFileInfo(importPath).isRelative())
+                importPath = m_app->baseDir().absolutePath() + "/" + importPath;
+
+            absoluteImportPaths.append(importPath);
+        }
+
+        qCDebug(LogSystem) << "qml-in-process-runtime: Setting QML2_IMPORT_PATH to" << absoluteImportPaths;
+        m_inProcessQmlEngine->setImportPathList(m_inProcessQmlEngine->importPathList() + absoluteImportPaths);
     }
 
     QQmlComponent component(m_inProcessQmlEngine, m_app->absoluteCodeFilePath());

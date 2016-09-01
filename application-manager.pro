@@ -15,8 +15,8 @@ if(linux:!android|force-libcrypto) {
     !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")):error("Found libcrypto (OpenSSL), but Qt was built without OpenSSL support.")
 }
 
-MIN_MINOR=4
-headless:MIN_MINOR=2
+MIN_MINOR=6
+headless:MIN_MINOR=6
 
 !equals(QT_MAJOR_VERSION, 5)|lessThan(QT_MINOR_VERSION, $$MIN_MINOR):error("This application needs to be built against Qt 5.$${MIN_MINOR}+")
 

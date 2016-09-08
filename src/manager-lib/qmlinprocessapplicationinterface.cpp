@@ -92,6 +92,7 @@ QmlInProcessNotification::QmlInProcessNotification(QObject *parent, Construction
     : Notification(parent, mode)
     , m_mode(mode)
 {
+    initialize();
 }
 
 void QmlInProcessNotification::componentComplete()

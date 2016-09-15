@@ -1,6 +1,7 @@
 project = ApplicationManager
 description = Public API of the application manager: QML and DBus
 url = https://doc.qt.io/QtApplicationManager
+version = $QT_VERSION
 
 sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
 headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
@@ -25,18 +26,16 @@ sourcedirs = \
 
 imagedirs = images
 
-outputdir = $OUTDIR
-
 qhp.projects                               = ApplicationManager
 qhp.ApplicationManager.file                = applicationmanager.qhp
-qhp.ApplicationManager.namespace           = io.qt.applicationmanager.$APPMAN_VERSION_TAG
+qhp.ApplicationManager.namespace           = io.qt.applicationmanager.$QT_VERSION_TAG
 qhp.ApplicationManager.virtualFolder       = applicationmanager
 qhp.ApplicationManager.indexTitle          = Public API of the application manager: QML and DBus
 qhp.ApplicationManager.indexRoot           =
 
-qhp.ApplicationManager.filterAttributes = ApplicationManager $APPMAN_VERSION
-qhp.ApplicationManager.customFilters.ApplicationManager.name = Application Manager $APPMAN_VERSION
-qhp.ApplicationManager.customFilters.ApplicationManager.filterAttributes = ApplicationManager $APPMAN_VERSION
+qhp.ApplicationManager.filterAttributes = ApplicationManager $QT_VERSION
+qhp.ApplicationManager.customFilters.ApplicationManager.name = Application Manager $QT_VERSION
+qhp.ApplicationManager.customFilters.ApplicationManager.filterAttributes = ApplicationManager $QT_VERSION
 
 qhp.ApplicationManager.subprojects = manual
 qhp.ApplicationManager.subprojects.manual.title = Qt Application Manager
@@ -44,4 +43,4 @@ qhp.ApplicationManager.subprojects.manual.indexTitle = Qt Application Manager
 qhp.ApplicationManager.subprojects.manual.type = manual
 
 navigation.landingpage = "Qt Application Manager"
-buildversion = "Qt Application Manager $APPMAN_VERSION"
+buildversion = "Qt Application Manager $QT_VERSION"

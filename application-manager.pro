@@ -20,6 +20,8 @@ headless:MIN_MINOR=6
 
 !equals(QT_MAJOR_VERSION, 5)|lessThan(QT_MINOR_VERSION, $$MIN_MINOR):error("This application needs to be built against Qt 5.$${MIN_MINOR}+")
 
+include(doc/doc.pri)
+
 TEMPLATE = subdirs
 CONFIG += ordered
 
@@ -72,9 +74,6 @@ printConfigLine("libbacktrace support", $$check_libbacktrace, auto)
 printConfigLine("Systemd workaround", $$yesNo(CONFIG(systemd-workaround)), auto)
 printConfigLine("System libarchive", $$yesNo(config_libarchive), auto)
 printConfigLine("System libyaml", $$yesNo(config_libyaml), auto)
-
-include(doc/doc.pri)
-
 printConfigLine()
 
 SUBDIRS += src

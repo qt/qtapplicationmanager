@@ -68,7 +68,6 @@ public:
 
     QMap<QByteArray, DBusPolicy> dbusPolicy;
     QList<QQuickWindow *> views;
-    bool forceSingleProcess = false;
     QString waylandSocketName;
     QQmlEngine *qmlEngine;
 };

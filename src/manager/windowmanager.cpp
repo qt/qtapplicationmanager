@@ -289,7 +289,7 @@ enum Roles
 WindowManager *WindowManager::s_instance = 0;
 
 
-WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName)
+WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QString &waylandSocketName)
 {
     if (s_instance)
         qFatal("WindowManager::createInstance() was called a second time.");
@@ -297,7 +297,7 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, bool forceSi
     qmlRegisterSingletonType<WindowManager>("QtApplicationManager", 1, 0, "WindowManager",
                                             &WindowManager::instanceForQml);
 
-    return s_instance = new WindowManager(qmlEngine, forceSingleProcess, waylandSocketName);
+    return s_instance = new WindowManager(qmlEngine, waylandSocketName);
 }
 
 WindowManager *WindowManager::instance()
@@ -329,15 +329,13 @@ bool WindowManager::isRunningOnDesktop() const
 #endif
 }
 
-WindowManager::WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName)
+WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocketName)
     : QAbstractListModel()
     , d(new WindowManagerPrivate())
 {
 #if defined(AM_MULTI_PROCESS)
-    d->forceSingleProcess = forceSingleProcess;
     d->waylandSocketName = waylandSocketName;
 #else
-    Q_UNUSED(forceSingleProcess)
     Q_UNUSED(waylandSocketName)
 #endif
 
@@ -539,7 +537,7 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
     d->views << view;
 
 #if defined(AM_MULTI_PROCESS)
-    if (!d->forceSingleProcess) {
+    if (!ApplicationManager::instance()->isSingleProcess()) {
         if (!d->waylandCompositor) {
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName, this);
             connect(view, &QWindow::heightChanged, this, &WindowManager::resize);

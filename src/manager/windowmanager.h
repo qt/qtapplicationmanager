@@ -104,7 +104,7 @@ class WindowManager : public QAbstractListModel
     Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT)
 public:
     ~WindowManager();
-    static WindowManager *createInstance(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName = QString());
+    static WindowManager *createInstance(QQmlEngine *qmlEngine, const QString &waylandSocketName = QString());
     static WindowManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
@@ -175,7 +175,7 @@ private:
 #endif
 
 private:
-    WindowManager(QQmlEngine *qmlEngine, bool forceSingleProcess, const QString &waylandSocketName);
+    WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocketName);
     WindowManager(const WindowManager &);
     WindowManager &operator=(const WindowManager &);
     static WindowManager *s_instance;

@@ -183,11 +183,11 @@
         model: ApplicationManager
 
         delegate: Text {
-            text: name + "(" + id + ")"
+            text: name + "(" + applicationId + ")"
 
             MouseArea {
                 anchors.fill: parent
-                onClick: ApplicationManager.startApplication(id)
+                onClick: ApplicationManager.startApplication(applicationId)
             }
         }
     }
@@ -198,6 +198,29 @@
     \qmlproperty int ApplicationManager::count
 
     This property holds the number of applications available.
+*/
+
+/*!
+    \qmlproperty bool ApplicationManager::singleProcess
+    \readonly
+
+    This property indicates whether the application-manager runs in single- or multi-process mode.
+*/
+
+/*!
+    \qmlproperty bool ApplicationManager::securityChecksEnabled
+    \readonly
+
+    This property holds whether security related checks are enabled.
+
+    \sa no-security
+*/
+
+/*!
+    \qmlproperty var ApplicationManager::additionalConfiguration
+    \readonly
+
+    Returns the project specific \l{additional configuration} that was set via the config file.
 */
 
 /*!
@@ -241,6 +264,7 @@ class ApplicationManagerPrivate
 {
 public:
     bool securityChecksEnabled = true;
+    bool singleProcess;
     QVariantMap additionalConfiguration;
     ApplicationDatabase *database = nullptr;
 
@@ -295,12 +319,12 @@ ApplicationManagerPrivate::~ApplicationManagerPrivate()
 
 ApplicationManager *ApplicationManager::s_instance = 0;
 
-ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb, QString *error)
+ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb, bool singleProcess, QString *error)
 {
     if (Q_UNLIKELY(s_instance))
         qFatal("ApplicationManager::createInstance() was called a second time.");
 
-    QScopedPointer<ApplicationManager> am(new ApplicationManager(adb));
+    QScopedPointer<ApplicationManager> am(new ApplicationManager(adb, singleProcess));
 
     try {
         if (adb)
@@ -337,10 +361,11 @@ QObject *ApplicationManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
     return instance();
 }
 
-ApplicationManager::ApplicationManager(ApplicationDatabase *adb, QObject *parent)
+ApplicationManager::ApplicationManager(ApplicationDatabase *adb, bool singleProcess, QObject *parent)
     : QAbstractListModel(parent)
     , d(new ApplicationManagerPrivate())
 {
+    d->singleProcess = singleProcess;
     d->database = adb;
     connect(this, &QAbstractItemModel::rowsInserted, this, &ApplicationManager::countChanged);
     connect(this, &QAbstractItemModel::rowsRemoved, this, &ApplicationManager::countChanged);
@@ -354,6 +379,11 @@ ApplicationManager::~ApplicationManager()
 {
     delete d;
     s_instance = nullptr;
+}
+
+bool ApplicationManager::isSingleProcess() const
+{
+    return d->singleProcess;
 }
 
 bool ApplicationManager::securityChecksEnabled() const

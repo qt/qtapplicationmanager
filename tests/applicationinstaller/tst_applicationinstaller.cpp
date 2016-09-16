@@ -266,7 +266,7 @@ void tst_ApplicationInstaller::initTestCase()
     // we need a (dummy) ApplicationManager for the installer, since the installer will
     // notify the manager during installations
     QString errorString;
-    QVERIFY2(ApplicationManager::createInstance(0, &errorString), qPrintable(errorString));
+    QVERIFY2(ApplicationManager::createInstance(0, true, &errorString), qPrintable(errorString));
 
     // create a temporary dir (plus sub-dirs) for everything created by this test run
 

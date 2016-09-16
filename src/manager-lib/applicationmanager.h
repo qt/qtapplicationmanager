@@ -70,6 +70,7 @@ class ApplicationManager : public QAbstractListModel
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
     Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT)
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
     Q_PROPERTY(QVariantMap additionalConfiguration READ additionalConfiguration CONSTANT)
@@ -84,10 +85,11 @@ public:
     };
 
     ~ApplicationManager();
-    static ApplicationManager *createInstance(ApplicationDatabase *adb, QString *error);
+    static ApplicationManager *createInstance(ApplicationDatabase *adb, bool singleProcess, QString *error);
     static ApplicationManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
+    bool isSingleProcess() const;
     bool isDummy() const { return false; }
     QVariantMap additionalConfiguration() const;
     void setAdditionalConfiguration(const QVariantMap &map);
@@ -174,7 +176,7 @@ private:
     void emitDataChanged(const Application *app, const QVector<int> &roles = QVector<int>());
     void registerMimeTypes();
 
-    ApplicationManager(ApplicationDatabase *adb, QObject *parent = nullptr);
+    ApplicationManager(ApplicationDatabase *adb, bool singleProcess, QObject *parent = nullptr);
     ApplicationManager(const ApplicationManager &);
     ApplicationManager &operator=(const ApplicationManager &);
     static ApplicationManager *s_instance;

@@ -179,6 +179,7 @@ command-line options.
     \li Loads QML dummy-data into the system UI (just like \c qmlscene would).
 \row
     \li \b --no-security
+    \target no-security
     \br \e flags/noSecurity
     \li bool
     \li Disables all security related checks. Use this in a development setup only! (default: false)

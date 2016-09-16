@@ -620,7 +620,7 @@ int main(int argc, char *argv[])
 
         startupTimer.checkpoint("after application database loading");
 
-        ApplicationManager *am = ApplicationManager::createInstance(adb.take(), &error);
+        ApplicationManager *am = ApplicationManager::createInstance(adb.take(), forceSingleProcess, &error);
         if (Q_UNLIKELY(!am))
             throw Exception(Error::System, error);
         if (configuration->noSecurity())
@@ -714,7 +714,7 @@ int main(int argc, char *argv[])
 
         QUnifiedTimer::instance()->setSlowModeEnabled(configuration->slowAnimations());
 
-        WindowManager *wm = WindowManager::createInstance(engine, forceSingleProcess, configuration->waylandSocketName());
+        WindowManager *wm = WindowManager::createInstance(engine, configuration->waylandSocketName());
         wm->enableWatchdog(!configuration->noUiWatchdog());
 
         QObject::connect(am, &ApplicationManager::inProcessRuntimeCreated,

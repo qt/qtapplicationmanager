@@ -86,7 +86,7 @@ Notification *QmlInProcessApplicationInterface::createNotification()
 }
 
 
-QVector<QPointer<QmlInProcessNotification>> QmlInProcessNotification::s_allNotifications;
+QVector<QPointer<QmlInProcessNotification> > QmlInProcessNotification::s_allNotifications;
 
 QmlInProcessNotification::QmlInProcessNotification(QObject *parent, ConstructionMode mode)
     : Notification(parent, mode)

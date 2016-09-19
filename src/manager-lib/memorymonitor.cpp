@@ -105,7 +105,9 @@ public:
     quint64 m_pid = -1;
 
     int m_reportPos = 0;
-    int modelSize = 50;
+    int modelSize = 25;
+    QList<QVariant> libraries;
+    bool readLibraryList = false;
 
 #if defined(Q_OS_LINUX)
     QScopedPointer<SysFsReader> s_smapsFs;
@@ -174,29 +176,43 @@ public:
             // First line - header
             header = lines.at(listIndex).split(' ');
 
-            // Avoid \x00 or reading data error
-            // Header line should have memory address, flags
-            // and library name
-            if (header.size() < 5)
-                break;
-
             if (i == 0)
                 lastHeader = header;
 
             // Second line virtual size
             QList<QByteArray> vmSize = lines.at(listIndex + 1).split(' ');
+            // Third line resident size
+            QList<QByteArray> rss = lines.at(listIndex + 2).split(' ');
+            // Fourth line proportional size
+            QList<QByteArray> pss = lines.at(listIndex + 3).split(' ');
+
+            //Avoid \x00 or reading data error
+            // Header line should have memory address, flags
+            // and library name
+            if ((vmSize.size() < 3) || (pss.size() < 3) || (rss.size() < 3) || (header.size() < 5))
+                break;
+
             int v = vmSize.at(vmSize.size() - 2).toInt() * 1000;
             t.vmSize = t.vmSize + v;
 
-            // Third line resident size
-            QList<QByteArray> rss = lines.at(listIndex + 2).split(' ');
             int r = rss.at(rss.size() - 2).toInt() * 1000;
             t.rss = t.rss + r;
 
-            // Fourth line proportional size
-            QList<QByteArray> pss = lines.at(listIndex + 3).split(' ');
             int p = pss.at(pss.size() - 2).toInt() * 1000;
             t.pss = t.pss + p;
+
+            QString libName = header.at(header.size()-1);
+
+            if (readLibraryList) {
+                if (!libName.isEmpty()) {
+                    QVariantMap map;
+                    map[qSL("lib")] = libName;
+                    map[qSL("vSize")] = v;
+                    map[qSL("rSize")] = r;
+                    map[qSL("pSize")] = p;
+                    libraries.append(QVariant::fromValue(map));
+                }
+            }
 
             QByteArray type = header.at(header.size() - 1);
             QByteArray flags = header.at(1);
@@ -443,6 +459,16 @@ void MemoryMonitor::setPid(quint64 pid)
 {
     Q_D(MemoryMonitor);
     d->updatePid(pid);
+}
+
+QList<QVariant> MemoryMonitor::getLibraryList()
+{
+    Q_D(MemoryMonitor);
+    d->libraries.clear();
+    d->readLibraryList = true;
+    d->readData();
+    d->readLibraryList = false;
+    return d->libraries;
 }
 
 

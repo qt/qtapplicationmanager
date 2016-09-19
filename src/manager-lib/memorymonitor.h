@@ -65,7 +65,7 @@ public:
 
     int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-
+    Q_INVOKABLE QList<QVariant> getLibraryList();
 
 signals:
     void countChanged();

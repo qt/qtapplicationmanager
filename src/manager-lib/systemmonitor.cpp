@@ -166,6 +166,8 @@ public:
     bool reportCpu = false;
     bool reportMem = false;
     bool reportFps = false;
+    // Report process only on half interval to decrease overload
+    bool reportProcess = false;
 
     struct Report
     {
@@ -241,8 +243,12 @@ public:
         if (te && te->timerId() == reportingTimerId) {
             Report r;
             QVector<int> roles;
-            for (int i = 0; i < processMonitors.size(); i++)
-                processMonitors.at(i)->readData();
+            if (reportProcess) {
+                for (int i = 0; i < processMonitors.size(); i++)
+                    processMonitors.at(i)->readData();
+            }
+
+            reportProcess = !reportProcess;
 
             if (reportCpu) {
                 QPair<int, qreal> cpuVal = cpu->readLoadValue();

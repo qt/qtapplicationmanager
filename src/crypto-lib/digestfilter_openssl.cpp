@@ -47,6 +47,8 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+AM_BEGIN_NAMESPACE
+
 // clazy:excludeall=non-pod-global-static
 
 // EVP
@@ -150,3 +152,4 @@ qint64 DigestFilterPrivate::finish(char *result, unsigned int *size)
     }
 }
 
+AM_END_NAMESPACE

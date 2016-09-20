@@ -41,7 +41,9 @@
 
 #include "fpsmonitor.h"
 
-FpsMonitor::FpsMonitor()
-{
+AM_BEGIN_NAMESPACE
 
-}
+FpsMonitor::FpsMonitor()
+{ }
+
+AM_END_NAMESPACE

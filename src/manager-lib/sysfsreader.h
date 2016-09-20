@@ -39,11 +39,12 @@
 **
 ****************************************************************************/
 
-#ifndef SYSFSREADER_H
-#define SYSFSREADER_H
+#pragma once
 
 #include <QByteArray>
+#include "global.h"
 
+AM_BEGIN_NAMESPACE
 
 class SysFsReader
 {
@@ -62,4 +63,4 @@ private:
     Q_DISABLE_COPY(SysFsReader)
 };
 
-#endif // SYSFSREADER_H
+AM_END_NAMESPACE

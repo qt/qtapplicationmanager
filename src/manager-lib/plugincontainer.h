@@ -44,6 +44,8 @@
 #include "abstractcontainer.h"
 #include "../plugin-interfaces/containerinterface.h"
 
+AM_BEGIN_NAMESPACE
+
 class PluginContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
@@ -113,3 +115,5 @@ protected:
     friend class PluginContainerProcess;
     friend class PluginContainerManager;
 };
+
+AM_END_NAMESPACE

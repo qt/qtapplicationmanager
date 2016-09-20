@@ -48,6 +48,8 @@
 #include <QWaylandSurface>
 #include <QTimer>
 
+AM_BEGIN_NAMESPACE
+
 class WindowSurface;
 
 class WaylandWindow : public Window
@@ -78,5 +80,7 @@ private:
     QTimer *m_pongTimer;
     WindowSurface *m_surface;
 };
+
+AM_END_NAMESPACE
 
 #endif // AM_MULTI_PROCESS

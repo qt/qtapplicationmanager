@@ -44,6 +44,7 @@
 #include "qtyaml.h"
 #include "dbus-utilities.h"
 
+AM_USE_NAMESPACE
 
 class DBus : public QObject {
 public:

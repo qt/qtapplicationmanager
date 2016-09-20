@@ -43,6 +43,9 @@
 
 #include <QObject>
 #include <QQmlEngine>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class QmlLogger : public QObject
 {
@@ -54,3 +57,5 @@ public:
 private slots:
     void warnings(const QList<QQmlError> &list);
 };
+
+AM_END_NAMESPACE

@@ -43,6 +43,7 @@
 #include "signature_p.h"
 #include "cryptography.h"
 
+AM_BEGIN_NAMESPACE
 
 Signature::Signature(const QByteArray &hash)
     : d(new SignaturePrivate)
@@ -88,3 +89,5 @@ bool Signature::verify(const QByteArray &signaturePkcs7, const QList<QByteArray>
         return false;
     }
 }
+
+AM_END_NAMESPACE

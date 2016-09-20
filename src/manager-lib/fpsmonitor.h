@@ -39,10 +39,12 @@
 **
 ****************************************************************************/
 
-#ifndef FPSMONITOR_H
-#define FPSMONITOR_H
+#pragma once
 
 #include <QAbstractListModel>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class FpsMonitor : public QAbstractListModel
 {
@@ -51,4 +53,4 @@ public:
     FpsMonitor();
 };
 
-#endif // FPSMONITOR_H
+AM_END_NAMESPACE

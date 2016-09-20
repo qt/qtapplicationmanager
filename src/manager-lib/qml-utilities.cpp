@@ -44,6 +44,8 @@
 
 #include "qml-utilities.h"
 
+AM_BEGIN_NAMESPACE
+
 void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton, bool immediately)
 {
     // QQmlEngine is taking ownership of singletons after the first call to instanceForQml() and
@@ -64,3 +66,5 @@ void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singl
     else
         QTimer::singleShot(0, qmlEngine, retake);
 }
+
+AM_END_NAMESPACE

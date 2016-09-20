@@ -59,8 +59,9 @@ class SurfaceExtensionGlobal;
 }
 QT_END_NAMESPACE
 
-class SurfaceQuickItem;
+AM_BEGIN_NAMESPACE
 
+class SurfaceQuickItem;
 
 class Surface : public QWaylandQuickSurface, public WindowSurface
 {
@@ -125,3 +126,5 @@ private:
     QtWayland::SurfaceExtensionGlobal *m_surfExt;
     QWaylandTextInputManager *m_textInputManager;
 };
+
+AM_END_NAMESPACE

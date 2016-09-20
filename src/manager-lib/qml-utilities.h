@@ -43,5 +43,10 @@
 
 #include <QQmlEngine>
 #include <qqml.h>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton, bool immediately = false);
+
+AM_END_NAMESPACE

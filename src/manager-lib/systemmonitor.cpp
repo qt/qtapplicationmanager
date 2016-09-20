@@ -56,6 +56,8 @@
 
 #include "qml-utilities.h"
 
+AM_BEGIN_NAMESPACE
+
 namespace {
 enum Roles
 {
@@ -69,7 +71,7 @@ enum Roles
     MaximumFps,
     FpsJitter
 };
-}
+
 class FrameTimer
 {
 public:
@@ -126,7 +128,7 @@ private:
 
     static const int IdealFrameTime = 16666; // usec - could be made configurable via an env variable
 };
-
+}
 
 class SystemMonitorPrivate : public QObject
 {
@@ -683,3 +685,5 @@ QObject *SystemMonitor::getProcessMonitor(const QString &appId)
     Q_D(SystemMonitor);
     return d->getProcess(appId);
 }
+
+AM_END_NAMESPACE

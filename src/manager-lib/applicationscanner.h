@@ -45,6 +45,8 @@
 
 #include "exception.h"
 
+AM_BEGIN_NAMESPACE
+
 class Application;
 
 class ApplicationScanner
@@ -64,3 +66,5 @@ protected:
 private:
     Q_DISABLE_COPY(ApplicationScanner)
 };
+
+AM_END_NAMESPACE

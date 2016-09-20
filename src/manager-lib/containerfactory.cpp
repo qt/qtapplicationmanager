@@ -48,6 +48,7 @@
 #include "abstractcontainer.h"
 #include "containerfactory.h"
 
+AM_BEGIN_NAMESPACE
 
 ContainerFactory *ContainerFactory::s_instance = nullptr;
 
@@ -114,3 +115,5 @@ bool ContainerFactory::registerContainer(AbstractContainerManager *manager, cons
     return true;
 }
 
+
+AM_END_NAMESPACE

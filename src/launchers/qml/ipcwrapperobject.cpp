@@ -168,7 +168,7 @@ static QString stringify(const QVariant &value, int level, bool indentFirstLine)
 #endif // debug only
 
 
-
+AM_BEGIN_NAMESPACE
 
 IpcWrapperObject::IpcWrapperObject(const QString &service, const QString &path, const QString &interface, const QDBusConnection &connection, QObject *parent)
     : QObject(parent)
@@ -358,3 +358,5 @@ void IpcWrapperSignalRelay::onPropertiesChanged(const QString &interfaceName, co
 {
     m_wrapperObject->onPropertiesChanged(interfaceName, changed, invalidated);
 }
+
+AM_END_NAMESPACE

@@ -42,6 +42,7 @@
 #include <functional>
 #include "plugincontainer.h"
 
+AM_BEGIN_NAMESPACE
 
 PluginContainerManager::PluginContainerManager(ContainerManagerInterface *managerInterface, QObject *parent)
     : AbstractContainerManager(managerInterface->identifier(), parent)
@@ -183,3 +184,5 @@ void PluginContainerProcess::terminate()
 {
     m_container->m_interface->terminate();
 }
+
+AM_END_NAMESPACE

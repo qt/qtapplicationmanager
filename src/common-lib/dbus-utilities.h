@@ -42,16 +42,23 @@
 #pragma once
 
 #include <QVariant>
+#include "global.h"
 #if defined(QT_DBUS_LIB)
 #  include <QDBusUnixFileDescriptor>
+AM_BEGIN_NAMESPACE
 typedef QMap<QString, QDBusUnixFileDescriptor> UnixFdMap;
-Q_DECLARE_METATYPE(UnixFdMap)
+AM_END_NAMESPACE
+Q_DECLARE_METATYPE(AM_PREPEND_NAMESPACE(UnixFdMap))
 #endif
 
 QT_FORWARD_DECLARE_CLASS(QDBusUnixFileDescriptor)
+
+AM_BEGIN_NAMESPACE
 
 QVariant convertFromJSVariant(const QVariant &variant);
 
 QVariant convertFromDBusVariant(const QVariant &variant);
 
 void registerDBusTypes();
+
+AM_END_NAMESPACE

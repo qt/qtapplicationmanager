@@ -43,6 +43,8 @@
 
 #include "applicationscanner.h"
 
+AM_BEGIN_NAMESPACE
+
 class YamlApplicationScanner : public ApplicationScanner
 {
 public:
@@ -56,3 +58,5 @@ public:
 private:
     Application *scanInternal(const QString &filePath, bool scanAlias, const Application *application) throw (Exception);
 };
+
+AM_END_NAMESPACE

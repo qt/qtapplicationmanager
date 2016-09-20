@@ -44,10 +44,12 @@
 #include <QObject>
 #include <QPair>
 #include <QVector>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class AbstractContainer;
 class AbstractRuntime;
-
 
 class QuickLauncher : public QObject
 {
@@ -84,3 +86,5 @@ private:
     QVector<QuickLaunchEntry> m_quickLaunchPool;
     bool m_onlyRebuildWhenIdle = false;
 };
+
+AM_END_NAMESPACE

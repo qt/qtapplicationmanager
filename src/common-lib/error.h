@@ -42,6 +42,9 @@
 #pragma once
 
 #include <QDebug>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 enum class Error {
     None = 0,
@@ -68,9 +71,11 @@ enum class Error {
     WrongMedium = 51,
 };
 
-Q_DECLARE_METATYPE(Error)
+AM_END_NAMESPACE
 
-inline QDebug &operator<<(QDebug &debug, Error error)
+Q_DECLARE_METATYPE(AM_PREPEND_NAMESPACE(Error))
+
+inline QDebug &operator<<(QDebug &debug, AM_PREPEND_NAMESPACE(Error) error)
 {
     return debug << int(error);
 }

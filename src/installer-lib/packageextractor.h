@@ -50,6 +50,8 @@
 QT_FORWARD_DECLARE_CLASS(QUrl)
 QT_FORWARD_DECLARE_CLASS(QDir)
 
+AM_BEGIN_NAMESPACE
+
 class PackageExtractorPrivate;
 class InstallationReport;
 
@@ -87,3 +89,5 @@ private:
 
     friend class PackageExtractorPrivate;
 };
+
+AM_END_NAMESPACE

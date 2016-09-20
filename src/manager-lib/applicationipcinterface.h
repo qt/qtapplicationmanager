@@ -46,11 +46,13 @@
 #if defined(QT_DBUS_LIB)
 #  include <QDBusConnection>
 #endif
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class Application;
 class ApplicationIPCInterfaceAttached;
 class IpcProxyObject;
-
 
 class ApplicationIPCInterface : public QObject
 {
@@ -76,4 +78,6 @@ private:
     friend class ApplicationIPCManager;
 };
 
-QML_DECLARE_TYPEINFO(ApplicationIPCInterface, QML_HAS_ATTACHED_PROPERTIES)
+AM_END_NAMESPACE
+
+QML_DECLARE_TYPEINFO(AM_PREPEND_NAMESPACE(ApplicationIPCInterface), QML_HAS_ATTACHED_PROPERTIES)

@@ -43,6 +43,8 @@
 
 #include "abstractruntime.h"
 
+AM_BEGIN_NAMESPACE
+
 class FakeApplicationManagerWindow;
 class QmlInProcessApplicationInterface;
 
@@ -102,3 +104,5 @@ private:
     friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
 #endif
 };
+
+AM_END_NAMESPACE

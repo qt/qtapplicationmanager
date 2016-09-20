@@ -46,12 +46,12 @@
 
 #include "global.h"
 
+AM_BEGIN_NAMESPACE
+
 class Application;
 class AbstractContainer;
 class AbstractContainerManager;
 class ContainerDebugWrapper;
-
-
 
 class ContainerFactory : public QObject
 {
@@ -81,3 +81,4 @@ private:
     QMap<QString, AbstractContainerManager *> m_containers;
 };
 
+AM_END_NAMESPACE

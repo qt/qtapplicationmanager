@@ -50,6 +50,7 @@
 #  include <fcntl.h>
 #endif
 
+AM_BEGIN_NAMESPACE
 
 HostProcess::HostProcess()
 {
@@ -257,3 +258,6 @@ void HostProcess::MyQProcess::setupChildProcess()
     }
 #endif
 }
+
+AM_END_NAMESPACE
+

@@ -44,6 +44,8 @@
 #include "signature.h"
 #include "exception.h"
 
+AM_BEGIN_NAMESPACE
+
 class SignaturePrivate
 {
 public:
@@ -55,3 +57,5 @@ public:
     bool verify(const QByteArray &signaturePkcs7,
                 const QList<QByteArray> &chainOfTrust) throw(Exception);
 };
+
+AM_END_NAMESPACE

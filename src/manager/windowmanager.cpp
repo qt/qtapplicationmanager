@@ -274,6 +274,7 @@
     identified by \a applicationId via the ApplicationManager.
 */
 
+AM_BEGIN_NAMESPACE
 
 namespace {
 enum Roles
@@ -285,9 +286,7 @@ enum Roles
 };
 }
 
-
 WindowManager *WindowManager::s_instance = 0;
-
 
 WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QString &waylandSocketName)
 {
@@ -1034,3 +1033,4 @@ int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSur
 
 #endif // defined(AM_MULTI_PROCESS)
 
+AM_END_NAMESPACE

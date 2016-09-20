@@ -41,6 +41,7 @@
 
 #pragma once
 #include <qglobal.h>
+#include <QLoggingCategory>
 
 #if defined(AM_BUILD_APPMAN)
 #  define AM_EXPORT Q_DECL_EXPORT
@@ -48,7 +49,12 @@
 #  define AM_EXPORT Q_DECL_IMPORT
 #endif
 
-#include <QLoggingCategory>
+#define AM_BEGIN_NAMESPACE  namespace QtAM {
+#define AM_END_NAMESPACE    }
+#define AM_USE_NAMESPACE    using namespace ::QtAM;
+#define AM_PREPEND_NAMESPACE(name) ::QtAM::name
+
+AM_BEGIN_NAMESPACE
 
 AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogSystem)
 AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogInstaller)
@@ -66,9 +72,11 @@ void am_trace(QDebug);
 template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest... trest)
 { dbg << t; am_trace(dbg, trest...); }
 
+AM_END_NAMESPACE
+
 #define AM_TRACE(category, ...) \
     for (bool qt_category_enabled = category().isDebugEnabled(); qt_category_enabled; qt_category_enabled = false) { \
-        am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__); \
+        AM_PREPEND_NAMESPACE(am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__)); \
     }
 
 // make the source a lot less ugly and more readable (until we can finally use user defined literals)

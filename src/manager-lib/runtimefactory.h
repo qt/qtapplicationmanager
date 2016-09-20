@@ -46,6 +46,8 @@
 
 #include "global.h"
 
+AM_BEGIN_NAMESPACE
+
 class Application;
 class AbstractRuntime;
 class AbstractRuntimeManager;
@@ -80,3 +82,4 @@ private:
     QHash<QString, AbstractRuntimeManager *> m_runtimes;
 };
 
+AM_END_NAMESPACE

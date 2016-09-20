@@ -52,6 +52,8 @@
 
 QT_FORWARD_DECLARE_CLASS(QFile)
 
+AM_BEGIN_NAMESPACE
+
 class AM_EXPORT Exception : public std::exception
 {
 public:
@@ -97,3 +99,4 @@ private:
     mutable QByteArray *m_whatBuffer = 0;
 };
 
+AM_END_NAMESPACE

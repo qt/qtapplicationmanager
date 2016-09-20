@@ -52,6 +52,8 @@
 #include "scopeutilities.h"
 #include "exception.h"
 
+AM_BEGIN_NAMESPACE
+
 class Application;
 class PackageExtractor;
 
@@ -107,3 +109,5 @@ private:
     ScopedLoopbackCreator m_loopbackCreator;
     ScopedMounter m_imageMounter;
 };
+
+AM_END_NAMESPACE

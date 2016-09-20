@@ -48,6 +48,7 @@
 #include "package_p.h"
 #include "digestfilter.h"
 
+AM_BEGIN_NAMESPACE
 
 ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString)
     : Exception(Error::Archive, qSL("[libarchive] ") + qL1S(errorString) + qSL(": ") + QString::fromLocal8Bit(::archive_error_string(ar)))
@@ -83,3 +84,5 @@ void PackageUtilities::addImportantHeaderDataToDigest(const QVariantMap &header,
         }
     }
 }
+
+AM_END_NAMESPACE

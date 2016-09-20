@@ -43,6 +43,8 @@
 
 #include "asynchronoustask.h"
 
+AM_BEGIN_NAMESPACE
+
 class Application;
 class InstallationLocation;
 
@@ -63,4 +65,4 @@ private:
     bool m_keepDocuments;
 };
 
-
+AM_END_NAMESPACE

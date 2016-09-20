@@ -45,7 +45,9 @@
 #include <QUrl>
 #include <QVariantMap>
 #include <QQmlParserStatus>
+#include "global.h"
 
+AM_BEGIN_NAMESPACE
 
 class Notification : public QObject, public QQmlParserStatus
 {
@@ -182,3 +184,5 @@ private:
 private:
     Q_DISABLE_COPY(Notification)
 };
+
+AM_END_NAMESPACE

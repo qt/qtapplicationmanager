@@ -43,6 +43,7 @@
 
 #include <qglobal.h>
 #include <utility>
+#include "global.h"
 
 QT_FORWARD_DECLARE_CLASS(QLibrary)
 
@@ -52,6 +53,7 @@ namespace std {
 }
 #endif
 
+AM_BEGIN_NAMESPACE
 
 namespace Cryptography {
 
@@ -129,3 +131,5 @@ public:
 #define AM_LIBCRYPTO_FUNCTION(f, ...) Cryptography::LibCryptoFunction<decltype(&f)> am_ ## f(#f, ##__VA_ARGS__)
 
 }
+
+AM_END_NAMESPACE

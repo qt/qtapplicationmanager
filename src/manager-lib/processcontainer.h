@@ -45,6 +45,8 @@
 
 #define AM_HOST_CONTAINER_AVAILABLE
 
+AM_BEGIN_NAMESPACE
+
 class ProcessContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
@@ -114,3 +116,5 @@ private:
     bool m_useDebugWrapper = false;
     ContainerDebugWrapper m_debugWrapper;
 };
+
+AM_END_NAMESPACE

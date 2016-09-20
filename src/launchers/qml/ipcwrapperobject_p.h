@@ -43,8 +43,11 @@
 
 #include <QObject>
 
-class IpcWrapperObject;
+#include "global.h"
 
+AM_BEGIN_NAMESPACE
+
+class IpcWrapperObject;
 
 class IpcWrapperSignalRelay : public QObject
 {
@@ -59,3 +62,5 @@ public slots:
 private:
     IpcWrapperObject *m_wrapperObject;
 };
+
+AM_END_NAMESPACE

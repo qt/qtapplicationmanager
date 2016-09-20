@@ -52,6 +52,8 @@
 
 QT_FORWARD_DECLARE_CLASS(QDBusInterface)
 
+AM_BEGIN_NAMESPACE
+
 class QmlNotification : public Notification
 {
 public:
@@ -136,3 +138,5 @@ private:
     QObject *m_object = nullptr;
     bool m_complete = false;
 };
+
+AM_END_NAMESPACE

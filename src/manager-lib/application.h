@@ -51,6 +51,8 @@
 #include "installationreport.h"
 #include "exception.h"
 
+AM_BEGIN_NAMESPACE
+
 class AbstractRuntime;
 class ApplicationManager;
 class JsonApplicationScanner;
@@ -68,11 +70,11 @@ class AM_EXPORT Application : public QObject
     Q_PROPERTY(qreal importance READ importance)
     Q_PROPERTY(bool builtIn READ isBuiltIn)
     Q_PROPERTY(bool alias READ isAlias)
-    Q_PROPERTY(const Application *nonAliased READ nonAliased)
+    Q_PROPERTY(const AM_PREPEND_NAMESPACE(Application) *nonAliased READ nonAliased)
     Q_PROPERTY(QStringList capabilities READ capabilities)
     Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes)
     Q_PROPERTY(QStringList categories READ categories)
-    Q_PROPERTY(AbstractRuntime *runtime READ currentRuntime)
+    Q_PROPERTY(AM_PREPEND_NAMESPACE(AbstractRuntime) *runtime READ currentRuntime)
 
 public:
     enum Type { Gui, Headless };
@@ -190,6 +192,8 @@ private:
     Q_DISABLE_COPY(Application)
 };
 
-Q_DECLARE_METATYPE(const Application *)
+AM_END_NAMESPACE
 
-QDebug operator<<(QDebug debug, const Application *app);
+Q_DECLARE_METATYPE(const AM_PREPEND_NAMESPACE(Application *))
+
+QDebug operator<<(QDebug debug, const AM_PREPEND_NAMESPACE(Application) *app);

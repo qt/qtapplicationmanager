@@ -76,6 +76,7 @@
 #include "global.h"
 #include "utilities.h"
 
+AM_BEGIN_NAMESPACE
 
 // maybe make this configurable for specific workloads?
 class HeadlessIncubationController : public QObject, public QQmlIncubationController
@@ -141,7 +142,9 @@ private:
 #endif
 };
 
+AM_END_NAMESPACE
 
+AM_USE_NAMESPACE
 
 int main(int argc, char *argv[])
 {

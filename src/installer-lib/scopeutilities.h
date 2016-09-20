@@ -45,6 +45,9 @@
 #include <QDir>
 #include <QFile>
 
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class ScopedDirectoryCreator
 {
@@ -153,4 +156,6 @@ private:
     bool m_taken = false;
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(ScopedRenamer::Modes)
+AM_END_NAMESPACE
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(AM_PREPEND_NAMESPACE(ScopedRenamer::Modes))

@@ -46,6 +46,7 @@
 #include "cryptography.h"
 #include "exception.h"
 
+AM_BEGIN_NAMESPACE
 
 AbstractRuntime::AbstractRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager)
     : QObject(manager)
@@ -171,3 +172,5 @@ void AbstractRuntimeManager::setAdditionalConfiguration(const QVariantMap &addit
 {
     m_additionalConfiguration = additionalConfiguration;
 }
+
+AM_END_NAMESPACE

@@ -47,6 +47,8 @@
 #include "global.h"
 #include "windowmanager.h"
 
+AM_BEGIN_NAMESPACE
+
 WaylandWindow::WaylandWindow(const Application *app, WindowSurface *surf)
     : Window(app, surf->item())
     , m_pingTimer(new QTimer(this))
@@ -132,5 +134,7 @@ QVariantMap WaylandWindow::windowProperties() const
     }
     return QVariantMap();
 }
+
+AM_END_NAMESPACE
 
 #endif // AM_MULTI_PROCESS

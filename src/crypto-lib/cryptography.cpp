@@ -63,13 +63,18 @@
 #  include "libcryptofunction.h"
 #  include <openssl/err.h>
 
+AM_BEGIN_NAMESPACE
+
 Q_GLOBAL_STATIC(QMutex, initMutex)
 
 // clazy:excludeall=non-pod-global-static
 static AM_LIBCRYPTO_FUNCTION(ERR_error_string_n);
 
+AM_END_NAMESPACE
+
 #endif
 
+AM_BEGIN_NAMESPACE
 
 QByteArray Cryptography::generateRandomBytes(int size)
 {
@@ -141,3 +146,5 @@ QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescrip
 
     return result;
 }
+
+AM_END_NAMESPACE

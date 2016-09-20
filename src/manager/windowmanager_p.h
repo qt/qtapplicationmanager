@@ -49,6 +49,8 @@
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 
+AM_BEGIN_NAMESPACE
+
 class WindowManagerPrivate
 {
 public:
@@ -71,3 +73,5 @@ public:
     QString waylandSocketName;
     QQmlEngine *qmlEngine;
 };
+
+AM_END_NAMESPACE

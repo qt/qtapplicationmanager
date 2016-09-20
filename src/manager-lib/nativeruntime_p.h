@@ -43,6 +43,8 @@
 
 #include "applicationinterface.h"
 
+AM_BEGIN_NAMESPACE
+
 class NativeRuntime;
 
 class NativeRuntimeApplicationInterface : public ApplicationInterface
@@ -79,4 +81,4 @@ private:
     NativeRuntime *m_runtime;
 };
 
-
+AM_END_NAMESPACE

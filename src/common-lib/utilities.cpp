@@ -67,6 +67,8 @@
 #  include <qplatformdefs.h>
 #endif
 
+AM_BEGIN_NAMESPACE
+
 bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree)
 {
     QString cpath = QFileInfo(path).canonicalPath();
@@ -315,7 +317,9 @@ bool SetOwnerAndPermissions::operator()(const QString &path, RecursiveOperationT
 
 #if defined(Q_OS_ANDROID)
 
+AM_END_NAMESPACE
 #include <QtAndroidExtras>
+AM_BEGIN_NAMESPACE
 
 QString findOnSDCard(const QString &file)
 {
@@ -342,15 +346,18 @@ QString findOnSDCard(const QString &file)
 
 #if defined(Q_OS_LINUX)
 
+AM_END_NAMESPACE
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <inttypes.h>
 
 #if defined(AM_USE_LIBBACKTRACE)
 #  include <libbacktrace/backtrace.h>
 #  include <libbacktrace/backtrace-supported.h>
 #endif
+AM_BEGIN_NAMESPACE
 
 static bool printBacktrace;
 static bool dumpCore;
@@ -359,7 +366,6 @@ static int waitForGdbAttach;
 static char *demangleBuffer;
 static size_t demangleBufferSize;
 
-#include <inttypes.h>
 
 static void crashHandler(const char *why) __attribute__((noreturn));
 
@@ -660,3 +666,5 @@ qint64 getParentPid(qint64 pid)
 #endif
     return 0;
 }
+
+AM_END_NAMESPACE

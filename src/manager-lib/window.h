@@ -45,6 +45,9 @@
 #include <QVariantMap>
 #include <QPointer>
 #include <QQuickItem>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class Application;
 class WindowPrivate;
@@ -81,3 +84,4 @@ protected:
     bool m_isClosing = false;
 };
 
+AM_END_NAMESPACE

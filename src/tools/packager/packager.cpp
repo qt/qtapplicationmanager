@@ -46,6 +46,7 @@
 #include "utilities.h"
 #include "packager.h"
 
+AM_USE_NAMESPACE
 
 // this corresponds to the -b parameter for mkfs.ext2 in sudo.cpp
 static const int Ext2BlockSize = 1024;

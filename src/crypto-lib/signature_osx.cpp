@@ -53,6 +53,7 @@
 #  undef verify
 #endif
 
+AM_BEGIN_NAMESPACE
 
 class SecurityException : public Exception
 {
@@ -197,3 +198,4 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7, const QList<QByt
     return true;
 }
 
+AM_END_NAMESPACE

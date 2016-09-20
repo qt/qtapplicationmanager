@@ -44,6 +44,9 @@
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class ApplicationInterface : public QObject
 {
@@ -74,3 +77,5 @@ protected:
 private:
     Q_DISABLE_COPY(ApplicationInterface)
 };
+
+AM_END_NAMESPACE

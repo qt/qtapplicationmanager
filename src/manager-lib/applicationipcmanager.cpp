@@ -64,6 +64,7 @@
     the client (application) side.
 */
 
+AM_BEGIN_NAMESPACE
 
 ApplicationIPCManager *ApplicationIPCManager::s_instance = 0;
 
@@ -257,4 +258,4 @@ QVector<ApplicationIPCInterface *> ApplicationIPCManager::interfaces() const
     return m_interfaces;
 }
 
-
+AM_END_NAMESPACE

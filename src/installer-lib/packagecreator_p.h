@@ -45,6 +45,7 @@
 
 #include <archive.h>
 
+AM_BEGIN_NAMESPACE
 
 class PackageCreatorPrivate
 {
@@ -72,3 +73,5 @@ private:
 
     friend class PackageCreator;
 };
+
+AM_END_NAMESPACE

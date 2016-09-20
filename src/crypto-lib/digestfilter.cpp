@@ -44,6 +44,7 @@
 #include "digestfilter_p.h"
 #include "cryptography.h"
 
+AM_BEGIN_NAMESPACE
 
 HMACFilter::HMACFilter(Type t, const QByteArray &key)
     : DigestFilter(t, key)
@@ -182,3 +183,5 @@ int DigestFilter::size() const
         default                  : return 0;
     }
 }
+
+AM_END_NAMESPACE

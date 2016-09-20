@@ -41,6 +41,16 @@
 
 #pragma once
 
+#include "global.h"
+
+#if defined(QT_DBUS_LIB)
+QT_FORWARD_DECLARE_CLASS(QDBusContext)
+#else
+typedef QObject QDBusContext; // evil hack :)
+#endif
+
+AM_BEGIN_NAMESPACE
+
 struct DBusPolicy
 {
     QList<uint> m_uids;
@@ -50,10 +60,7 @@ struct DBusPolicy
 
 QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment);
 
-#if defined(QT_DBUS_LIB)
-QT_FORWARD_DECLARE_CLASS(QDBusContext)
-#else
-typedef QObject QDBusContext; // evil hack :)
-#endif
-
 bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy, const QByteArray &function);
+
+AM_END_NAMESPACE
+

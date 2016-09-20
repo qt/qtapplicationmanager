@@ -52,6 +52,7 @@
 #include <windows.h>
 #include <wincrypt.h>
 
+AM_BEGIN_NAMESPACE
 
 class WinCryptException : public Exception
 {
@@ -237,3 +238,5 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7, const QList<QByt
         throw;
     }
 }
+
+AM_END_NAMESPACE

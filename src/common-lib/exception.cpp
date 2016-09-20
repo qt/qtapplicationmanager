@@ -44,6 +44,7 @@
 
 #include "exception.h"
 
+AM_BEGIN_NAMESPACE
 
 Exception::Exception(Error errorCode, const char *errorString)
     : m_errorCode(errorCode)
@@ -97,3 +98,5 @@ const char *Exception::what() const throw()
         m_whatBuffer = new QByteArray(m_errorString.toLocal8Bit());
     return *m_whatBuffer;
 }
+
+AM_END_NAMESPACE

@@ -42,6 +42,9 @@
 
 #include <QString>
 #include <QByteArray>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class SignaturePrivate;
 
@@ -60,3 +63,5 @@ private:
     SignaturePrivate *d;
     Q_DISABLE_COPY(Signature)
 };
+
+AM_END_NAMESPACE

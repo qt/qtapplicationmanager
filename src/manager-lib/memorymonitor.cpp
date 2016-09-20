@@ -46,10 +46,12 @@
 #include "memorymonitor.h"
 
 #if defined(Q_OS_OSX)
-#include <mach/mach.h>
+#  include <mach/mach.h>
 #elif defined(Q_OS_LINUX)
-#include "sysfsreader.h"
+#  include "sysfsreader.h"
 #endif
+
+AM_BEGIN_NAMESPACE
 
 namespace {
 // Sizes are in bytes
@@ -471,4 +473,4 @@ QList<QVariant> MemoryMonitor::getLibraryList()
     return d->libraries;
 }
 
-
+AM_END_NAMESPACE

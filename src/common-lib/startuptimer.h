@@ -45,6 +45,9 @@
 #include <QPair>
 #include <QByteArray>
 #include <QElapsedTimer>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class StartupTimer
 {
@@ -65,3 +68,5 @@ private:
 
     Q_DISABLE_COPY(StartupTimer)
 };
+
+AM_END_NAMESPACE

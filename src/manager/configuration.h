@@ -43,6 +43,9 @@
 
 #include <QStringList>
 #include <QVariantMap>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class ConfigurationPrivate;
 
@@ -107,4 +110,6 @@ private:
 
     ConfigurationPrivate *d;
 };
+
+AM_END_NAMESPACE
 

@@ -50,6 +50,8 @@
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QQuickItem)
 
+AM_BEGIN_NAMESPACE
+
 class Application;
 class AbstractContainer;
 class AbstractRuntime;
@@ -124,7 +126,7 @@ public slots:
     virtual void stop(bool forceKill = false) = 0;
 
 signals:
-    void stateChanged(State newState);
+    void stateChanged(AM_PREPEND_NAMESPACE(AbstractRuntime::State) newState);
     void finished(int exitCode, QProcess::ExitStatus status);
 
 #if !defined(AM_HEADLESS)
@@ -149,4 +151,6 @@ protected:
     friend class AbstractRuntimeManager;
 };
 
-Q_DECLARE_METATYPE(AbstractRuntime *)
+AM_END_NAMESPACE
+
+Q_DECLARE_METATYPE(AM_PREPEND_NAMESPACE(AbstractRuntime *))

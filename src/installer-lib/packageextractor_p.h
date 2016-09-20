@@ -45,14 +45,15 @@
 #include <QNetworkReply>
 #include <QEventLoop>
 
+#include <archive.h>
+
 #include "packageextractor.h"
 #include "installationreport.h"
 #include "exception.h"
 
-#include <archive.h>
+AM_BEGIN_NAMESPACE
 
 class DigestFilter;
-
 
 class PackageExtractorPrivate : public QObject
 {
@@ -99,4 +100,6 @@ private:
 
     friend class PackageExtractor;
 };
+
+AM_END_NAMESPACE
 

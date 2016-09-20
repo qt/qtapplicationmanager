@@ -54,6 +54,9 @@ typedef uint gid_t;
 //typedef uint mode_t; // already typedef'ed in qplatformdefs.h
 #endif
 
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 enum SudoDropPrivileges {
     DropPrivilegesPermanently,
@@ -156,3 +159,4 @@ private:
     static SudoServer *s_instance;
 };
 
+AM_END_NAMESPACE

@@ -50,6 +50,8 @@
 #include <openssl/pkcs12.h>
 #include <openssl/bio.h>
 
+AM_BEGIN_NAMESPACE
+
 // clazy:excludeall=non-pod-global-static
 
 // deleter
@@ -222,3 +224,5 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7, const QList<QByt
         return true;
     }
 }
+
+AM_END_NAMESPACE

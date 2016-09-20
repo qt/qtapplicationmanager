@@ -38,10 +38,12 @@
 ** SPDX-License-Identifier: LGPL-3.0
 **
 ****************************************************************************/
+
 #include "fakeapplicationmanagerwindow.h"
 #include "qmlinprocessruntime.h"
 #include <QSGSimpleRectNode>
 
+AM_BEGIN_NAMESPACE
 
 FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
     : QQuickItem(parent)
@@ -192,3 +194,5 @@ void FakeApplicationManagerWindow::onVisibleChanged()
     if (m_runtime && isVisible() && this->parent())
         m_runtime->addWindow(this);
 }
+
+AM_END_NAMESPACE

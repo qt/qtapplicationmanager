@@ -49,8 +49,16 @@
 #include <QByteArray>
 #include <QMultiMap>
 
-#include <stdlib.h>
+#include "global.h"
 
+#include <stdlib.h>
+#if defined(Q_OS_UNIX)
+#  include <unistd.h>
+#  include <sys/stat.h>
+#endif
+
+
+AM_BEGIN_NAMESPACE
 
 bool isValidDnsName(const QString &rnds, bool isAliasName = false, QString *errorString = 0);
 int versionCompare(const QString &version1, const QString &version2);
@@ -138,8 +146,6 @@ public:
 
 // changes owner and permissions (Unix only)
 #if defined(Q_OS_UNIX)
-#  include <unistd.h>
-#  include <sys/stat.h>
 
 class SetOwnerAndPermissions
 {
@@ -163,3 +169,5 @@ void setCrashActionConfiguration(const QVariantMap &config);
 bool canOutputAnsiColors(int fd);
 
 qint64 getParentPid(qint64 pid);
+
+AM_END_NAMESPACE

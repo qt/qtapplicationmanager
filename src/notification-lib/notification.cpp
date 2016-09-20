@@ -78,6 +78,8 @@
           registered \l actions, and needs to be explicitly checked.
 */
 
+AM_BEGIN_NAMESPACE
+
 Notification::Notification(QObject *parent, Notification::ConstructionMode mode)
     : QObject(parent)
 {
@@ -609,3 +611,4 @@ void Notification::libnotifyNotificationClosed(uint reason)
     setId(0);
 }
 
+AM_END_NAMESPACE

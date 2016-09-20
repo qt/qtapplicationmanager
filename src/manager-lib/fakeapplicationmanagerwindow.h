@@ -45,8 +45,9 @@
 #include <QQuickItem>
 #include "global.h"
 
-class QmlInProcessRuntime;
+AM_BEGIN_NAMESPACE
 
+class QmlInProcessRuntime;
 
 class FakeApplicationManagerWindow : public QQuickItem
 {
@@ -123,3 +124,4 @@ private:
     friend class QmlInProcessRuntime; // for setting the m_runtime member
 };
 
+AM_END_NAMESPACE

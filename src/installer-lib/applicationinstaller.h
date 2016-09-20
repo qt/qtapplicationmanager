@@ -57,6 +57,8 @@
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
+AM_BEGIN_NAMESPACE
+
 class ApplicationManager;
 class ApplicationInstallerPrivate;
 class AsynchronousTask;
@@ -176,3 +178,5 @@ private:
     friend class InstallationTask;
     friend class DeinstallationTask;
 };
+
+AM_END_NAMESPACE

@@ -48,6 +48,9 @@
 #if defined(QT_DBUS_LIB)
 #  include <QDBusVirtualObject>
 #endif
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class Application;
 class IpcProxySignalRelay;
@@ -147,3 +150,5 @@ private:
     QObject *m_object;
     mutable IpcProxyObject *m_proxy = nullptr;
 };
+
+AM_END_NAMESPACE

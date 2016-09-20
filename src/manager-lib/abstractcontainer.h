@@ -48,6 +48,8 @@
 
 #include "global.h"
 
+AM_BEGIN_NAMESPACE
+
 class Application;
 class AbstractContainer;
 
@@ -161,4 +163,6 @@ protected:
     AbstractContainerProcess *m_process = nullptr;
 };
 
-Q_DECLARE_METATYPE(AbstractContainer *)
+AM_END_NAMESPACE
+
+Q_DECLARE_METATYPE(AM_PREPEND_NAMESPACE(AbstractContainer *))

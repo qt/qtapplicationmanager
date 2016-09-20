@@ -70,6 +70,7 @@
 #  define S_IEXEC S_IXUSR
 #endif
 
+AM_BEGIN_NAMESPACE
 
 PackageExtractor::PackageExtractor(const QUrl &downloadUrl, const QDir &destinationDir, QObject *parent)
     : QObject(parent)
@@ -554,3 +555,4 @@ void PackageExtractorPrivate::downloadProgressChanged(qint64 downloaded, qint64 
     m_downloadTotal = total;
 }
 
+AM_END_NAMESPACE

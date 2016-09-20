@@ -42,9 +42,12 @@
 #pragma once
 
 #include <QAbstractListModel>
+#include "global.h"
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
+
+AM_BEGIN_NAMESPACE
 
 class SystemMonitorPrivate;
 class ProcessMonitor;
@@ -136,3 +139,5 @@ private:
     SystemMonitorPrivate *d_ptr;
     Q_DECLARE_PRIVATE(SystemMonitor)
 };
+
+AM_END_NAMESPACE

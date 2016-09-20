@@ -39,13 +39,14 @@
 **
 ****************************************************************************/
 
-#ifndef MEMORYMONITOR_H
-#define MEMORYMONITOR_H
+#pragma once
 
 #include <QAbstractListModel>
 #include <QObject>
 #include <QFile>
 #include "processmonitor.h"
+
+AM_BEGIN_NAMESPACE
 
 class MemoryMonitorPrivate;
 
@@ -81,4 +82,4 @@ private:
 
 };
 
-#endif // MEMORYMONITOR_H
+AM_END_NAMESPACE

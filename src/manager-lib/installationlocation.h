@@ -46,6 +46,7 @@
 
 #include "exception.h"
 
+AM_BEGIN_NAMESPACE
 
 class InstallationLocation
 {
@@ -90,3 +91,5 @@ private:
     QString m_documentPath;
     QString m_mountPoint;
 };
+
+AM_END_NAMESPACE

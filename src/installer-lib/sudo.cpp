@@ -56,19 +56,18 @@
 
 #include <errno.h>
 
-#ifdef Q_OS_LINUX
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/errno.h>
-#include <sys/mount.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <mntent.h>
-#include <linux/loop.h>
-#include <sys/prctl.h>
-#include <linux/capability.h>
+#if defined(Q_OS_LINUX)
+#  include <fcntl.h>
+#  include <unistd.h>
+#  include <sys/socket.h>
+#  include <sys/errno.h>
+#  include <sys/mount.h>
+#  include <sys/ioctl.h>
+#  include <sys/stat.h>
+#  include <mntent.h>
+#  include <linux/loop.h>
+#  include <sys/prctl.h>
+#  include <linux/capability.h>
 
 // These two functions are implemented in glibc, but the header file is
 // in the separate libcap-dev package. Since we want to avoid unnecessary
@@ -77,24 +76,26 @@ extern "C" int capset(cap_user_header_t header, cap_user_data_t data);
 extern "C" int capget(cap_user_header_t header, const cap_user_data_t data);
 
 // Support for old/broken C libraries
-#if defined(_LINUX_CAPABILITY_VERSION) && !defined(_LINUX_CAPABILITY_VERSION_1)
-#  define _LINUX_CAPABILITY_VERSION_1 _LINUX_CAPABILITY_VERSION
-#endif
+#  if defined(_LINUX_CAPABILITY_VERSION) && !defined(_LINUX_CAPABILITY_VERSION_1)
+#    define _LINUX_CAPABILITY_VERSION_1 _LINUX_CAPABILITY_VERSION
+#  endif
 
 // Missing support for dynamic loop device management
-#if !defined(LOOP_CTL_REMOVE)
-#  define LOOP_CTL_REMOVE 0x4C81
-#endif
-#if !defined(LOOP_CTL_GET_FREE)
-#  define LOOP_CTL_GET_FREE 0x4C82
-#endif
+#  if !defined(LOOP_CTL_REMOVE)
+#    define LOOP_CTL_REMOVE 0x4C81
+#  endif
+#  if !defined(LOOP_CTL_GET_FREE)
+#    define LOOP_CTL_GET_FREE 0x4C82
+#  endif
 
 // Convenient way to ignore EINTR on any system call
-#define EINTR_LOOP(cmd) __extension__ ({auto res = 0; do { res = cmd; } while (res == -1 && errno == EINTR); res; })
+#  define EINTR_LOOP(cmd) __extension__ ({auto res = 0; do { res = cmd; } while (res == -1 && errno == EINTR); res; })
 
 // Declared as weak symbol here, so we can check at runtime if we were compiled against libgcov
 extern "C" void __gcov_init() __attribute__((weak));
 
+
+AM_BEGIN_NAMESPACE
 
 static void sigHupHandler(int sig)
 {
@@ -102,8 +103,12 @@ static void sigHupHandler(int sig)
         abort();
 }
 
+AM_END_NAMESPACE
+
 #endif // Q_OS_LINUX
 
+
+AM_BEGIN_NAMESPACE
 
 bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
 {
@@ -771,3 +776,5 @@ bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t
 #endif // Q_OS_LINUX
     return false;
 }
+
+AM_END_NAMESPACE

@@ -46,6 +46,8 @@
 #include "application.h"
 #include "applicationdatabase.h"
 
+AM_BEGIN_NAMESPACE
+
 class ApplicationDatabasePrivate
 {
 public:
@@ -134,3 +136,5 @@ void ApplicationDatabase::write(const QVector<const Application *> &apps) throw 
     if (ds.status() != QDataStream::Ok)
         throw Exception(*d->file, "could not write to application database");
 }
+
+AM_END_NAMESPACE

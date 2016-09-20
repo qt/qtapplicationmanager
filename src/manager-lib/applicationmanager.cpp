@@ -259,6 +259,7 @@ enum Roles
     ApplicationItem
 };
 
+AM_BEGIN_NAMESPACE
 
 class ApplicationManagerPrivate
 {
@@ -1348,3 +1349,5 @@ ApplicationManager::RunState ApplicationManager::applicationRunState(const QStri
     default: return NotRunning;
     }
 }
+
+AM_END_NAMESPACE

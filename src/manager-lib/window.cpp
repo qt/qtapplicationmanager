@@ -41,6 +41,8 @@
 
 #include "window.h"
 
+AM_BEGIN_NAMESPACE
+
 Window::Window(const Application *app, QQuickItem *surfaceItem)
     : QObject(0)
     , m_application(app)
@@ -72,3 +74,5 @@ QQuickItem *Window::windowItem() const
 {
     return m_windowItem.data();
 }
+
+AM_END_NAMESPACE

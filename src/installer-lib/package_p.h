@@ -47,6 +47,9 @@
 
 struct archive;
 QT_FORWARD_DECLARE_CLASS(QFileInfo)
+
+AM_BEGIN_NAMESPACE
+
 class DigestFilter;
 
 class PackageUtilities
@@ -72,3 +75,4 @@ public:
     ArchiveException(struct ::archive *ar, const char *errorString);
 };
 
+AM_END_NAMESPACE

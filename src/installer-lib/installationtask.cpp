@@ -52,7 +52,6 @@
 #include "sudo.h"
 #include "installationtask.h"
 
-
 /*
   Overview of what happens on an installation of an app with <id> to <location>:
 
@@ -124,6 +123,7 @@
      rename <location>/<id>+ to <location>/<id>
 */
 
+AM_BEGIN_NAMESPACE
 
 InstallationTask::InstallationTask(const InstallationLocation &installationLocation, const QUrl &sourceUrl, QObject *parent)
     : AsynchronousTask(parent)
@@ -329,7 +329,7 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
                                   "startingApplicationInstallation",
                                   Qt::BlockingQueuedConnection,
                                   Q_RETURN_ARG(bool, m_managerApproval),
-                                  Q_ARG(Application *, m_app));
+                                  Q_ARG(AM_PREPEND_NAMESPACE(Application) *, m_app));
         if (!m_managerApproval)
             throw Exception(Error::System, "Application Manager declined the installation of %1").arg(m_app->id());
 
@@ -553,3 +553,5 @@ void InstallationTask::finishInstallation() throw (Exception)
 
     m_errorString.clear();
 }
+
+AM_END_NAMESPACE

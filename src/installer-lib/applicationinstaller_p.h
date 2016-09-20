@@ -52,9 +52,9 @@
 #include "dbus-policy.h"
 #include "global.h"
 
+AM_BEGIN_NAMESPACE
 
 bool removeRecursiveHelper(const QString &path);
-
 
 class ApplicationInstallerPrivate
 {
@@ -83,3 +83,5 @@ public:
 
     QMap<QByteArray, DBusPolicy> dbusPolicy;
 };
+
+AM_END_NAMESPACE

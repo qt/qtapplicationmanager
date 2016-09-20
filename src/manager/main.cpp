@@ -126,6 +126,7 @@
 
 #include "../plugin-interfaces/startupinterface.h"
 
+AM_BEGIN_NAMESPACE
 
 static Configuration *configuration = 0;
 
@@ -423,6 +424,9 @@ static QVector<T *> loadPlugins(const char *type) throw (Exception)
     return interfaces;
 }
 
+AM_END_NAMESPACE
+
+AM_USE_NAMESPACE
 
 int main(int argc, char *argv[])
 {

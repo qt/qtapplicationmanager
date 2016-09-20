@@ -45,6 +45,9 @@
 #include <QVariantMap>
 #include <QVector>
 #include <qqml.h>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class ApplicationIPCManagerAttached;
 class ApplicationIPCInterface;
@@ -59,7 +62,7 @@ public:
     static ApplicationIPCManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
-    Q_INVOKABLE bool registerInterface(ApplicationIPCInterface *interface, const QString &name, const QVariantMap &filter);
+    Q_INVOKABLE bool registerInterface(AM_PREPEND_NAMESPACE(ApplicationIPCInterface) *interface, const QString &name, const QVariantMap &filter);
     QVector<ApplicationIPCInterface *> interfaces() const;
 
 private:
@@ -70,3 +73,5 @@ private:
     QVector<ApplicationIPCInterface *> m_interfaces;
     static ApplicationIPCManager *s_instance;
 };
+
+AM_END_NAMESPACE

@@ -44,6 +44,8 @@
 #include "global.h"
 #include "asynchronoustask.h"
 
+AM_BEGIN_NAMESPACE
+
 AsynchronousTask::AsynchronousTask(QObject *parent)
     : QThread(parent)
     , m_id(QUuid::createUuid().toString())
@@ -130,3 +132,5 @@ void AsynchronousTask::run()
 {
     execute();
 }
+
+AM_END_NAMESPACE

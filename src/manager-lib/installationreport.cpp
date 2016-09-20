@@ -52,6 +52,8 @@
 #include "digestfilter.h"
 #include "installationreport.h"
 
+AM_BEGIN_NAMESPACE
+
 // you can generate a new set with
 //   xxd -i <(dd if=/dev/urandom bs=64 count=1)
 static const unsigned char privateHmacKeyData[64] = {
@@ -256,3 +258,5 @@ bool InstallationReport::serialize(QIODevice *to) const
 
     return (to->write(out) == out.size());
 }
+
+AM_END_NAMESPACE

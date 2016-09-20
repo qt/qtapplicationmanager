@@ -50,10 +50,13 @@
 #  include <QDBusConnectionInterface>
 #  include "dbus-utilities.h"
 #endif
+#include "global.h"
 
 QT_FORWARD_DECLARE_CLASS(QDir)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
+
+AM_BEGIN_NAMESPACE
 
 class Application;
 class ApplicationDatabase;
@@ -131,7 +134,7 @@ public:
     Q_SCRIPTABLE bool startApplication(const QString &id, const QString &documentUrl = QString());
     Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl = QString());
 #if defined(QT_DBUS_LIB)
-    Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const UnixFdMap &redirections, const QString &documentUrl = QString());
+    Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const AM_PREPEND_NAMESPACE(UnixFdMap) &redirections, const QString &documentUrl = QString());
 #endif
     Q_SCRIPTABLE void stopApplication(const QString &id, bool forceKill = false);
     Q_SCRIPTABLE bool openUrl(const QString &url);
@@ -140,7 +143,7 @@ public:
     Q_SCRIPTABLE RunState applicationRunState(const QString &id) const;
 
 signals:
-    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, RunState runState);
+    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, AM_PREPEND_NAMESPACE(ApplicationManager::RunState) runState);
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
     Q_SCRIPTABLE void countChanged();
 
@@ -148,7 +151,7 @@ signals:
     Q_SCRIPTABLE void applicationAboutToBeRemoved(const QString &id);
     Q_SCRIPTABLE void applicationChanged(const QString &id, const QStringList &changedRoles);
 
-    void inProcessRuntimeCreated(AbstractRuntime *runtime); // evil hook to support in-process runtimes
+    void inProcessRuntimeCreated(AM_PREPEND_NAMESPACE(AbstractRuntime) *runtime); // evil hook to support in-process runtimes
 
     void memoryLowWarning();
 
@@ -162,7 +165,7 @@ private slots:
     //      need to use BlockingQueuedConnections
     bool lockApplication(const QString &id);
     bool unlockApplication(const QString &id);
-    bool startingApplicationInstallation(Application *installApp);
+    bool startingApplicationInstallation(AM_PREPEND_NAMESPACE(Application) *installApp);
     bool startingApplicationRemoval(const QString &id);
     void progressingApplicationInstall(const QString &id, qreal progress);
     bool finishedApplicationInstall(const QString &id);
@@ -183,3 +186,5 @@ private:
 
     ApplicationManagerPrivate *d;
 };
+
+AM_END_NAMESPACE

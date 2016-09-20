@@ -173,6 +173,8 @@
 */
 
 
+AM_BEGIN_NAMESPACE
+
 namespace {
 enum Roles
 {
@@ -202,6 +204,7 @@ enum Roles
 
     Extended // QVariantMap
 };
+}
 
 struct NotificationData
 {
@@ -234,7 +237,6 @@ enum CloseReason
     CloseNotificationCalled = 3
 };
 
-}
 
 class NotificationManagerPrivate
 {
@@ -636,3 +638,5 @@ void NotificationManagerPrivate::closeNotification(uint id, CloseReason reason)
         emit q->NotificationClosed(id, int(reason));
     }
 }
+
+AM_END_NAMESPACE

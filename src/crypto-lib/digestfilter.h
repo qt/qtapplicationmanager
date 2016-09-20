@@ -43,6 +43,9 @@
 
 #include <QString>
 #include <QByteArray>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 class DigestFilterPrivate;
 
@@ -86,3 +89,5 @@ private:
     using DigestFilter::digest;
     Q_DISABLE_COPY(HMACFilter)
 };
+
+AM_END_NAMESPACE

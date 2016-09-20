@@ -51,6 +51,7 @@
 #include "applicationipcmanager.h"
 #include "applicationipcinterface.h"
 
+AM_BEGIN_NAMESPACE
 
 QmlInProcessApplicationInterface::QmlInProcessApplicationInterface(QmlInProcessRuntime *runtime)
     : ApplicationInterface(runtime)
@@ -261,3 +262,4 @@ void QmlInProcessApplicationInterfaceExtension::setName(const QString &name)
         qWarning("Cannot change the name property of an ApplicationInterfaceExtension after creation.");
 }
 
+AM_END_NAMESPACE

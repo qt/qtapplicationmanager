@@ -48,6 +48,8 @@
 QT_FORWARD_DECLARE_CLASS(QIODevice)
 QT_FORWARD_DECLARE_CLASS(QDir)
 
+AM_BEGIN_NAMESPACE
+
 class PackageCreatorPrivate;
 class InstallationReport;
 
@@ -83,3 +85,5 @@ private:
 
     friend class PackageCreatorPrivate;
 };
+
+AM_END_NAMESPACE

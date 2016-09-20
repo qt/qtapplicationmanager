@@ -43,11 +43,14 @@
 
 #include <QObject>
 #include <QDBusError>
+#include "global.h"
 
 QT_FORWARD_DECLARE_CLASS(QDBusInterface)
 QT_FORWARD_DECLARE_CLASS(QDBusConnection)
-class IpcWrapperSignalRelay;
 
+AM_BEGIN_NAMESPACE
+
+class IpcWrapperSignalRelay;
 
 class IpcWrapperObject : public QObject
 {
@@ -73,3 +76,5 @@ private:
     IpcWrapperSignalRelay *m_wrapperHelper;
     QDBusInterface *m_dbusInterface;
 };
+
+AM_END_NAMESPACE

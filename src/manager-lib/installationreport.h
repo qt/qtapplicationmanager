@@ -44,8 +44,11 @@
 #include <QString>
 #include <QStringList>
 #include <QByteArray>
+#include "global.h"
 
 QT_FORWARD_DECLARE_CLASS(QIODevice)
+
+AM_BEGIN_NAMESPACE
 
 class InstallationReport
 {
@@ -88,3 +91,5 @@ private:
     QByteArray m_developerSignature;
     QByteArray m_storeSignature;
 };
+
+AM_END_NAMESPACE

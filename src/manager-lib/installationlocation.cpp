@@ -46,6 +46,7 @@
 #include "utilities.h"
 #include "exception.h"
 
+AM_BEGIN_NAMESPACE
 
 static QString fixPath(const QString &path)
 {
@@ -225,3 +226,5 @@ QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(c
 
     return locations;
 }
+
+AM_END_NAMESPACE

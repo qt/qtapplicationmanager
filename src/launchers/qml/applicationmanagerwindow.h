@@ -43,9 +43,11 @@
 
 #include <private/qquickwindowmodule_p.h>
 #include <QTime>
+#include "global.h"
 
 QT_FORWARD_DECLARE_CLASS(QPlatformWindow)
 
+AM_BEGIN_NAMESPACE
 
 class ApplicationManagerWindowPrivate;
 
@@ -74,3 +76,5 @@ private slots:
 private:
     ApplicationManagerWindowPrivate *d;
 };
+
+AM_END_NAMESPACE

@@ -45,12 +45,17 @@
 #include <QPair>
 #include <QElapsedTimer>
 #include <QObject>
+#include "global.h"
 
 #if defined(Q_OS_LINUX)
-#include <QScopedPointer>
+#  include <QScopedPointer>
 QT_FORWARD_DECLARE_CLASS(QSocketNotifier)
+AM_BEGIN_NAMESPACE
 class SysFsReader;
+AM_END_NAMESPACE
 #endif
+
+AM_BEGIN_NAMESPACE
 
 class CpuReader
 {
@@ -134,3 +139,5 @@ private:
     QSocketNotifier *m_notifier = 0;
 #endif
 };
+
+AM_END_NAMESPACE

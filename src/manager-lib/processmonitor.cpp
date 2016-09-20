@@ -48,8 +48,10 @@
 #include "abstractruntime.h"
 
 #if defined(Q_OS_UNIX)
-#include <unistd.h>
+#  include <unistd.h>
 #endif
+
+AM_BEGIN_NAMESPACE
 
 ProcessMonitor::ProcessMonitor(const QString &appId, QObject *parent)
     : QObject(parent)
@@ -159,3 +161,5 @@ void ProcessMonitor::obtainPid()
             m_pid = 0;
     }
 }
+
+AM_END_NAMESPACE

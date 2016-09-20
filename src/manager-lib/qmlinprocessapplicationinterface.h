@@ -47,6 +47,8 @@
 #include "applicationinterface.h"
 #include "notification.h"
 
+AM_BEGIN_NAMESPACE
+
 class QmlInProcessRuntime;
 
 class QmlInProcessNotification : public Notification
@@ -121,3 +123,5 @@ private:
     QObject *m_object = nullptr;
     bool m_complete = false;
 };
+
+AM_END_NAMESPACE

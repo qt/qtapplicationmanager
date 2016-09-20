@@ -64,6 +64,7 @@ typedef ULONG_PTR HCRYPTKEY;
 #  error "No DigestFilter backend available for this platform"
 #endif
 
+AM_BEGIN_NAMESPACE
 
 class DigestFilterPrivate
 {
@@ -107,3 +108,5 @@ private:
     };
 #endif
 };
+
+AM_END_NAMESPACE

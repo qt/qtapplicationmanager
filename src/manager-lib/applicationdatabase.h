@@ -46,6 +46,8 @@
 
 #include "exception.h"
 
+AM_BEGIN_NAMESPACE
+
 class Application;
 class ApplicationDatabasePrivate;
 
@@ -68,3 +70,5 @@ private:
     ApplicationDatabasePrivate *d;
     Q_DISABLE_COPY(ApplicationDatabase)
 };
+
+AM_END_NAMESPACE

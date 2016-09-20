@@ -43,6 +43,7 @@
 #include "applicationinstaller_p.h"
 #include "utilities.h"
 
+AM_BEGIN_NAMESPACE
 
 ScopedDirectoryCreator::ScopedDirectoryCreator()
 { }
@@ -341,4 +342,4 @@ QString ScopedRenamer::baseName() const
     return m_basePath.absoluteFilePath(m_name);
 }
 
-
+AM_END_NAMESPACE

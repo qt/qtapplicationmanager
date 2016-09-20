@@ -55,6 +55,7 @@
 #  include <sys/sysctl.h>
 #endif
 
+AM_BEGIN_NAMESPACE
 
 StartupTimer::StartupTimer()
 {
@@ -234,3 +235,4 @@ void StartupTimer::createReport() const
     }
 }
 
+AM_END_NAMESPACE

@@ -49,6 +49,7 @@
 #include "quicklauncher.h"
 #include "systemmonitor.h"
 
+AM_BEGIN_NAMESPACE
 
 QuickLauncher *QuickLauncher::s_instance = nullptr;
 
@@ -199,3 +200,5 @@ QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString 
 
     return result;
 }
+
+AM_END_NAMESPACE

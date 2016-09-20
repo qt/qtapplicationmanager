@@ -43,6 +43,9 @@
 
 #include <QByteArray>
 #include <QString>
+#include "global.h"
+
+AM_BEGIN_NAMESPACE
 
 namespace Cryptography {
 
@@ -53,3 +56,5 @@ void initialize();
 QString errorString(qint64 osCryptoError, const char *errorDescription = nullptr);
 
 }
+
+AM_END_NAMESPACE

@@ -36,6 +36,7 @@
 #include "utilities.h"
 #include "packager.h"
 
+AM_USE_NAMESPACE
 
 enum Command {
     NoCommand,

@@ -39,13 +39,14 @@
 **
 ****************************************************************************/
 
-#ifndef PROCESSMONITOR_H
-#define PROCESSMONITOR_H
+#pragma once
 
 #include <QAbstractListModel>
 #include <QObject>
 #include "fpsmonitor.h"
 #include "systemmonitor.h"
+
+AM_BEGIN_NAMESPACE
 
 class MemoryMonitor;
 
@@ -95,4 +96,5 @@ private:
     quint64 m_pid;
 };
 
-#endif // PROCESSMONITOR_H
+AM_END_NAMESPACE
+

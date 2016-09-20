@@ -47,6 +47,8 @@
 #include <CommonCrypto/CommonHMAC.h>
 
 
+AM_BEGIN_NAMESPACE
+
 bool DigestFilterPrivate::init()
 {
     if (isHmac) {
@@ -143,3 +145,5 @@ qint64 DigestFilterPrivate::finish(char *result, unsigned int *size)
     }
     return 0;
 }
+
+AM_END_NAMESPACE

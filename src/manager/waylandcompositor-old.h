@@ -48,6 +48,7 @@
 
 QT_FORWARD_DECLARE_CLASS(QWaylandSurfaceItem)
 
+AM_BEGIN_NAMESPACE
 
 class SurfaceQuickItem;
 
@@ -95,3 +96,5 @@ public:
 private:
     WindowManager *m_manager;
 };
+
+AM_END_NAMESPACE

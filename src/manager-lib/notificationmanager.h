@@ -43,10 +43,12 @@
 
 #include <QObject>
 #include <QAbstractListModel>
+#include "global.h"
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
+AM_BEGIN_NAMESPACE
 
 class NotificationManagerPrivate;
 
@@ -104,3 +106,5 @@ private:
     NotificationManagerPrivate *d;
     friend class NotificationManagerPrivate;
 };
+
+AM_END_NAMESPACE

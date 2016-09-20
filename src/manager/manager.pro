@@ -76,11 +76,12 @@ DBUS_ADAPTORS += \
 # cope with more than 1 out value out of the box
 # http://lists.qt-project.org/pipermail/interest/2013-July/008011.html
 dbus-notifications.files = ../dbus/org.freedesktop.notifications.xml
-dbus-notifications.source_flags = -l NotificationManager
-dbus-notifications.header_flags = -l NotificationManager -i notificationmanager.h
+dbus-notifications.source_flags = -l QtAM::NotificationManager
+dbus-notifications.header_flags = -l QtAM::NotificationManager -i notificationmanager.h
 
 dbus-appman.files = ../dbus/io.qt.applicationmanager.xml
-dbus-appman.header_flags = -i dbus-utilities.h
+dbus-appman.source_flags = -l QtAM::ApplicationManager
+dbus-appman.header_flags = -l QtAM::ApplicationManager -i applicationmanager.h
 
 DBUS_ADAPTORS += dbus-notifications dbus-appman
 

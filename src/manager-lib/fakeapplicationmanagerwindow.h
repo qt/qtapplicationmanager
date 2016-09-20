@@ -51,7 +51,7 @@ class QmlInProcessRuntime;
 class FakeApplicationManagerWindow : public QQuickItem
 {
     Q_OBJECT
-    Q_PROPERTY(QColor color READ color WRITE setColor) // dummy to mimick Window's API
+    Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
     Q_PROPERTY(QString title READ dummyGetterString WRITE dummySetterString)
 
     // for API compatibility with QWaylandQuickItem - we cannot really simulate these,
@@ -65,8 +65,8 @@ public:
     explicit FakeApplicationManagerWindow(QQuickItem *parent = 0);
     ~FakeApplicationManagerWindow();
 
-    QColor color() const { return QColor(); }
-    void setColor(const QColor &) { }
+    QColor color() const;
+    void setColor(const QColor &c);
 
     Q_INVOKABLE bool setWindowProperty(const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;
@@ -104,9 +104,11 @@ signals:
     void fakeFullScreenSignal();
     void fakeNoFullScreenSignal(); // TODO this should be replaced by 'normal' and 'maximized' as soon as needed
     void windowPropertyChanged(const QString &name, const QVariant &value);
+    void colorChanged();
 
 protected:
     bool event(QEvent *e) override;
+    QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
 
 private:
     bool dummyGetter() const { return false; }
@@ -116,6 +118,7 @@ private:
     void onVisibleChanged();
 
     QmlInProcessRuntime *m_runtime;
+    QColor m_color;
 
     friend class QmlInProcessRuntime; // for setting the m_runtime member
 };

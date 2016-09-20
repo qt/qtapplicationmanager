@@ -40,6 +40,7 @@
 ****************************************************************************/
 #include "fakeapplicationmanagerwindow.h"
 #include "qmlinprocessruntime.h"
+#include <QSGSimpleRectNode>
 
 
 FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
@@ -47,12 +48,26 @@ FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
     , m_runtime(0)
 {
     qCDebug(LogSystem) << "FakeApplicationManagerWindow ctor! this:" << this;
+    setFlag(ItemHasContents);
     connect(this, &QQuickItem::visibleChanged, this, &FakeApplicationManagerWindow::onVisibleChanged);
 }
 
 FakeApplicationManagerWindow::~FakeApplicationManagerWindow()
 {
     qCDebug(LogSystem) << "FakeApplicationManagerWindow dtor! this: " << this;
+}
+
+QColor FakeApplicationManagerWindow::color() const
+{
+    return m_color;
+}
+
+void FakeApplicationManagerWindow::setColor(const QColor &c)
+{
+    if (m_color != c) {
+        m_color = c;
+        emit colorChanged();
+    }
 }
 
 void FakeApplicationManagerWindow::close()
@@ -141,6 +156,16 @@ bool FakeApplicationManagerWindow::event(QEvent *e)
     }
 
     return QQuickItem::event(e);
+}
+
+QSGNode *FakeApplicationManagerWindow::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
+{
+    QSGSimpleRectNode *node = static_cast<QSGSimpleRectNode *>(oldNode);
+    if (!node)
+        node = new QSGSimpleRectNode(clipRect(), color());
+    else
+        node->setRect(clipRect());
+    return node;
 }
 
 void FakeApplicationManagerWindow::componentComplete()

@@ -134,6 +134,8 @@ void QmlInProcessNotification::initialize()
     connect(nm, &NotificationManager::NotificationClosed,
             nm, [](uint notificationId, uint reason) {
         qDebug("Notification was closed signal: %u", notificationId);
+        // quick fix: in case apps have been closed items are null (see AUTOSUITE-14)
+        s_allNotifications.removeAll(nullptr);
         foreach (const QPointer<QmlInProcessNotification> &n, s_allNotifications) {
             if (n->notificationId() == notificationId) {
                 n->libnotifyNotificationClosed(reason);

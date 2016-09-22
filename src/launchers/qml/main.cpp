@@ -47,8 +47,10 @@
 
 #include <QSocketNotifier>
 #include <QFile>
+#include <QFileInfo>
 #include <QDir>
 #include <QtEndian>
+#include <QTimer>
 #include <private/qcrashhandler_p.h>
 #include <QRegularExpression>
 
@@ -126,19 +128,18 @@ class Controller : public QObject
     Q_OBJECT
 
 public:
-    Controller();
+    Controller(QObject *parent, const QString &directLoad = QString());
 
 public slots:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &runtimeParameters);
 
 private:
     QQmlApplicationEngine m_engine;
-    QQmlComponent *m_component;
-    QmlApplicationInterface *m_applicationInterface = 0;
+    QmlApplicationInterface *m_applicationInterface = nullptr;
     QVariantMap m_configuration;
     bool m_launched = false;
 #if !defined(AM_HEADLESS)
-    QQuickWindow *m_window = 0;
+    QQuickWindow *m_window = nullptr;
 #endif
 };
 
@@ -167,24 +168,35 @@ int main(int argc, char *argv[])
     qmlRegisterType<QmlNotification>("QtApplicationManager", 1, 0, "Notification");
     qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
-    QByteArray dbusAddress = qgetenv("AM_DBUS_PEER_ADDRESS");
-    if (dbusAddress.isEmpty()) {
-        qCCritical(LogQmlRuntime) << "ERROR: $AM_DBUS_PEER_ADDRESS is empty";
-        return 2;
-    }
-    QDBusConnection dbusConnection = QDBusConnection::connectToPeer(QString::fromUtf8(dbusAddress), qSL("am"));
+    if (a.arguments().size() >= 3 && a.arguments().at(1) == "--directload") {
+        QFileInfo fi = a.arguments().at(2);
 
-    if (!dbusConnection.isConnected()) {
-        qCCritical(LogQmlRuntime) << "ERROR: could not connect to the application manager's peer D-Bus at" << dbusAddress;
-        return 3;
-    }
+        if (!fi.exists()) {
+            qCCritical(LogQmlRuntime) << "ERROR: --directload needs a valid QML file as parameter";
+            return 2;
+        }
 
-    Controller controller;
+        new Controller(&a, fi.absoluteFilePath());
+    } else {
+        QByteArray dbusAddress = qgetenv("AM_DBUS_PEER_ADDRESS");
+        if (dbusAddress.isEmpty()) {
+            qCCritical(LogQmlRuntime) << "ERROR: $AM_DBUS_PEER_ADDRESS is empty";
+            return 2;
+        }
+        QDBusConnection dbusConnection = QDBusConnection::connectToPeer(QString::fromUtf8(dbusAddress), qSL("am"));
+
+        if (!dbusConnection.isConnected()) {
+            qCCritical(LogQmlRuntime) << "ERROR: could not connect to the application manager's peer D-Bus at" << dbusAddress;
+            return 3;
+        }
+
+        new Controller(&a);
+    }
     return a.exec();
 }
 
-Controller::Controller()
-    : m_component(new QQmlComponent(&m_engine))
+Controller::Controller(QObject *parent, const QString &directLoad)
+    : QObject(parent)
 {
     connect(&m_engine, &QObject::destroyed, &QCoreApplication::quit);
     connect(&m_engine, &QQmlEngine::quit, &QCoreApplication::quit);
@@ -202,12 +214,19 @@ Controller::Controller()
 
     //qCDebug(LogQmlRuntime, 1) << " qml-runtime started with pid ==" << QCoreApplication::applicationPid () << ", waiting for qmlFile on stdin...";
 
-    m_applicationInterface = new QmlApplicationInterface(config, qSL("am"), this);
-    connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
-            this, &Controller::startApplication);
-    if (!m_applicationInterface->initialize()) {
-        qCritical("ERROR: could not connect to the application manager's interface on the peer D-Bus");
-        qApp->exit(4);
+    if (directLoad.isEmpty()) {
+        m_applicationInterface = new QmlApplicationInterface(config, qSL("am"), this);
+        connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
+                this, &Controller::startApplication);
+        if (!m_applicationInterface->initialize()) {
+            qCritical("ERROR: could not connect to the application manager's interface on the peer D-Bus");
+            qApp->exit(4);
+        }
+    } else {
+        QTimer::singleShot(0, [this, directLoad]() {
+            QFileInfo fi(directLoad);
+            startApplication(fi.absolutePath(), fi.fileName(), QString(), QVariantMap());
+        });
     }
 }
 
@@ -266,7 +285,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     m_engine.setImportPathList(m_engine.importPathList() + importPaths);
     //qWarning() << m_engine.importPathList();
 
-    m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
+    if (m_applicationInterface)
+        m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
 
     // This is a bit of a hack to make ApplicationManagerWindow known as a sub-class
     // of QWindow. Without this, assigning an ApplicationManagerWindow to a QWindow*
@@ -326,7 +346,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 #endif
     qCDebug(LogQmlRuntime) << "component loading and creating complete.";
 
-    if (!document.isEmpty())
+    if (!document.isEmpty() && m_applicationInterface)
         m_applicationInterface->openDocument(document);
 }
 

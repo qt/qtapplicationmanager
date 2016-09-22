@@ -89,9 +89,9 @@ private:
 
     mutable QString m_appId; // cached
     QDBusConnection m_connection;
-    QDBusInterface *m_applicationIf;
-    QDBusInterface *m_runtimeIf;
-    QDBusInterface *m_notifyIf;
+    QDBusInterface *m_applicationIf = nullptr;
+    QDBusInterface *m_runtimeIf = nullptr;
+    QDBusInterface *m_notifyIf = nullptr;
     QVariantMap m_additionalConfiguration;
     QVector<QPointer<QmlNotification> > m_allNotifications;
 

@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'tld.minidesk.app2'
+icon:    'icon.png'
+code:    'app2.qml'
+runtime: 'qml'
+name:
+  en: 'App2'

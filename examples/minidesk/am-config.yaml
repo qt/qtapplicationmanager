@@ -1,0 +1,24 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "apps"
+
+logging:
+  rules:
+    - "*=false"
+    - "qt.*=false"
+    - "am.*=false"
+    - "qml*=true"
+    - "*.critical=true"
+
+ui:
+  fullscreen: no
+  mainQml: "system-ui/main.qml"
+  additionalConfiguration:
+    light: on
+
+# development setup:
+flags:
+  noSecurity: yes
+  noUiWatchdog: yes

@@ -59,5 +59,7 @@ compositing window manager using the APIs that are exported from the C++ side.
     \li \l{Applications QML Types}
 \endlist
 
+\chapter Examples
+\annotatedlist applicationmanager-examples
 
 */

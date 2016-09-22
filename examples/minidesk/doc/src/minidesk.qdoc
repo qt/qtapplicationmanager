@@ -1,0 +1,255 @@
+/****************************************************************************
+**
+** Copyright (C) 2016 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:LGPL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Lesser General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 3 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL3 included in the
+** packaging of this file. Please review the following information to
+** ensure the GNU Lesser General Public License version 3 requirements
+** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
+**
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 2.0 or (at your option) the GNU General
+** Public license version 3 or any later version approved by the KDE Free
+** Qt Foundation. The licenses are as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
+** included in the packaging of this file. Please review the following
+** information to ensure the GNU General Public License requirements will
+** be met: https://www.gnu.org/licenses/gpl-2.0.html and
+** https://www.gnu.org/licenses/gpl-3.0.html.
+**
+** $QT_END_LICENSE$
+**
+** SPDX-License-Identifier: LGPL-3.0
+**
+****************************************************************************/
+
+/*!
+
+\example minidesk
+\title Desktop System UI Example
+\image minidesk.png Screenshot
+\brief Minimal Desktop System UI in pure QML
+\ingroup applicationmanager-examples
+
+\section1 Introduction
+
+The \e {Desktop System UI Example} showcases the application-manager API in a simple fashion. The
+focus is on the concepts, less on elegance or completeness, for instance no error checking is done.
+Some features will only print debug messages without further functionality. A classic desktop with
+server-side window decorations is emulated.
+
+The following features are supported:
+\list
+\li Start applications by clicking an icon on the top left
+\li Stop applications by clicking on the top/left window decoration rectangle
+\li Raise applications by clicking on the decoration
+\li Drag windows by pressing on the window decoration and moving
+\li System UI sends 'propA' change when an app is started
+\li System UI and App2 react on window property changes with a debug message
+\li App1 animation can be stopped and restarted by a click
+\li App1 sends 'rotation' property to system UI on stop
+\li App1 shows a pop-up on the system UI while it is paused
+\li App2 will make use of an IPC extension when it is started
+\li App2 logs the document URL it has been started with
+\li App2 triggers a notification in the system UI when the bulb icon is clicked
+\li A separate (\"wayland\") process started outside of appman will be shown as App1
+\endlist
+
+\note The example can be run in single- and multi-process mode. In the following, multi-process is
+assumed and corresponding terminology is used. The terms \e client and \e application, respectively
+\e server and \e {system UI} are used interchangeably. The system UI comprises compositing and
+generic inter-process communication (IPC).
+
+\section2 Invocation
+Assuming that there is an application-manager \c config.yaml in \c /opt/am, the example can be
+started with:
+\badcode
+path/to/bin/appman -c config.yaml -c am-config.yaml -r
+\endcode
+The template \c config.yaml from \c template-opt/am/ can be used (which is deployed to
+\c /opt/am by default). The \c am-config.yaml is the one from this example.
+
+\note The application-manager attempts to register a \c freedesktop.org compliant notification
+server. DBus errors might occur if it conflicts with the server running on the host desktop
+environment. In this case, a private session bus needs to be started by adding the
+\c --start-session-dbus option:
+\badcode
+path/to/bin/appman -c config.yaml -c am-config.yaml -r --start-session-dbus
+\endcode
+
+\section1 Walkthrough
+
+\section2 System UI Window
+
+\quotefromfile minidesk/system-ui/main.qml
+\skipto import Qt
+\printuntil text:
+\printline }
+\dots
+
+The \l{QtApplicationManager} module has to be imported to be able to access the application-manager
+APIs. The system UI window has a fixed size and linen background color. Instead of a \l{Rectangle},
+the root element could as well be a \l{Window}. On top of the background the
+\l{minidesk/system-ui/Readme.qml}{Readme} element is shown that displays a usage how-to. At the
+bottom left there is a textual indication for whether the application-manager runs in single- or
+multi-process mode.
+
+\section2 Launcher
+
+\printto System UI chrome for applications
+
+A \l{Repeater} provides the application icons arranged in a \l{Column} on the top-left corner of
+the system UI. This is achieved by using the \l{ApplicationManager} element as the model. Amongst
+others, it provides the \c icon role which is used as the \l{Image} source URL. The \c icon URL is
+defined in the \l{Manifest Definition}{info.yaml} file of the application.
+
+Application icons handle mouse clicks: the appropriate application is started and the icon opacity
+is decreased to indicate that the application is already launched. The
+\l {ApplicationManager::startApplication()}{ApplicationManager.startApplication()} method is called
+to start an application. The first argument, \c applicationId, is provided by the
+ApplicationManager model (e.g. "tld.minidesk.app1" for the first application). Both applications
+will be started with the (optional) document URL "documentUrl". Subsequent clicks on an already
+launched icon will still call \l{ApplicationManager::}{startApplication()}, but will be silently
+ignored. The content of the \c appContainter will be set below in the \c onWindowReady handler.
+The content is provided by the two applications in an \l{ApplicationManagerWindow} root element.
+
+\section2 Application Windows in the System UI
+
+\printto System UI for a pop-up and notification
+
+This second \l{Repeater} provides the window chrome for the actual applications in its delegate.
+The model is the same as for the first \l{Repeater}, essentially the \l{ApplicationManager}
+element. The chrome consists of:
+\list
+\li A fixed size window \l{Rectangle} with a "tan" color. The default location depends on the
+    \c model.index, hence each application has a different location.
+\li The name of the application, prefixed with "Decoration" on the top horizontal center. The name
+    is also provided by the \l{ApplicationManager} model and read from the application's
+    \l{Manifest Definition}{info.yaml} file.
+\li A \l{MouseArea} for dragging the window and setting the z-order. The \l{MouseArea} fills the
+    entire window, though the application container is placed on top of it and hence it will not
+    handle dragging. Simply increasing the z-order on each click is only done to keep the code to
+    a minimum.
+\li A small chocolate-colored \l Rectangle on the top left corner for closing the window chrome and
+    stopping the actual application (see
+    \l{ApplicationManager::stopApplication()}{stopApplication()}).
+\li A container \l{Item} where the actual application will be placed in. The \c appContainer is
+    exposed, so it can later be referenced to place the actual application window in it.
+\endlist
+
+\section2 Pop-ups
+
+Two approaches are implemented to display pop-ups in the system UI:
+\list
+\li Through a window rendered by the client application
+\li Through the notification API provided by the application-manager
+\endlist
+This is the corresponding system UI code:
+\printto Handler for WindowManager signals
+
+\section3 Client Application Rendering
+The \c popUpContainer \l{Item} provides a system UI recipient for the pop-up rendered
+by App1. App1 instantiates another \l{ApplicationManagerWindow} for the pop-up within its
+\l{ApplicationManagerWindow} root element, as shown here:
+\quotefromfile minidesk/apps/tld.minidesk.app1/app1.qml
+\skipto Rectangle
+\skipto ApplicationManagerWindow
+\printuntil Component.onCompleted
+\printline }
+The \l{ApplicationManagerWindow::setWindowProperty}{ApplicationManagerWindow.setWindowProperty()}
+method is used to set a freely selectable shared property. Here we choose \c{type: "pop-up"} to
+indicate that the window is supposed to be shown as a pop-up. In the \c onWindowReady handler below
+the system UI checks for this property and handles the window appropriately as a pop-up.
+
+\section3 Notification API Usage
+
+An alternative to the above approach is to use the application-manager's \l{Notification} API on
+the application (client) side and the \l{NotificationManager} API on the system UI (server) side.
+The following code is invoked when the \e bulb icon of App2 is clicked:
+
+\quotefromfile minidesk/apps/tld.minidesk.app2/app2.qml
+\skipto var notification
+\printuntil notification.show();
+
+App2 creates a new \l{Notification} element, sets its \l{Notification::summary}{summary} property
+and calls \l{Notification::show()}{show()} on it. This call will increase the
+\l{NotificationManager::count}{NotificationManager.count} on the system UI side, and subsequently
+the \l{Text} element's text property will be set to the \c summary string of the first
+notification. Presenting the first notification only is a simplification to keep the code short.
+
+\section2 WindowManager Signal Handler
+
+\quotefromfile minidesk/system-ui/main.qml
+\skipto Handler for WindowManager signals
+\printto IPC extension
+This is the vital part of the system UI, where the window surfaces of the applications are mapped
+to items in the system UI. The \l {WindowManager::windowReady}{onWindowReady} handler is invoked
+when a new application window is shown (visibility set to true). The \c index parameter references
+into the \l{WindowManager} model, which holds the window surfaces. The first line translates this
+index to the application index of the \l{ApplicationManager} model and assigns it to \c appIndex.
+
+Only the "pop-up" ApplicationManagerWindow of App1 has the user-defined \c type property set. All
+other windows don't have the \c type property. In the latter case, the application's \c window
+passed to \c onWindowReady is re-parented to the system UI's \c winChrome. Also the size of the
+window is set to fill the entire \c appContainer.
+
+There is a special treatment for an invalid \c appIndex for demonstration purposes: it is assumed
+that the window surface is from an external application that follows the Wayland protocol. For
+example a Qt application could be started on the command line as follows:
+
+\badcode
+QT_WAYLAND_DISABLE_WINDOWDECORATION=1 ./qtapp -platform wayland
+\endcode
+
+This application will then be shown inside the App1 container.
+\c QT_WAYLAND_DISABLE_WINDOWDECORATION is set to disable client side window decorations, since they
+are provided by the system UI.
+
+Pop-ups are re-parented to their respective \c popUpContainer.
+
+All other handlers only print debug messages. Additionally, the \c onWindowLost handler calls
+\l{WindowManager::releaseWindow()}{WindowManager.releaseWindow()} to free all resources associated
+with the \c window.
+
+
+\section2 IPC Extension
+The following snippet demonstrates how the \l{ApplicationIPCInterface} can be used to define an IPC
+extension. The IPC interface has to be defined in the system UI, for instance:
+\printuntil Component.onCompleted
+\printline }
+
+Here, a property \c pi is defined, as well as a signal \c computed and a function \c circumference.
+After registering this interface with
+\l{ApplicationIPCManager::registerInterface()}{ApplicationIPCManager.registerInterface()}, it can
+be used from the application processes.
+
+On the application side, the \l{ApplicationInterfaceExtension} type has to be used. Here is how
+App2 makes use of this interface extension:
+
+\quotefromfile minidesk/apps/tld.minidesk.app2/app2.qml
+\skipto ApplicationInterfaceExtension
+\printuntil onPiChanged
+\printline }
+
+The interface is used here immediately when it becomes ready. It can, of course, be accessed from
+elsewhere, too. The \l{ApplicationInterfaceExtension::name}{ApplicationInterfaceExtension.name} has
+to match the name it was registered with in
+\l{ApplicationIPCManager::registerInterface()}{ApplicationIPCManager.registerInterface()}.
+
+*/

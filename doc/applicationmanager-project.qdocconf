@@ -5,6 +5,7 @@ version = $QT_VERSION
 
 sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
 headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
+examples.fileextensions = "*.qml *.yaml"
 
 headerdirs = \
     ../src/manager \
@@ -24,7 +25,13 @@ sourcedirs = \
     ../src/tools/deployer \
     ../src/tools/controller
 
-imagedirs = images
+exampledirs = ../examples
+
+imagedirs = \
+     images \
+     ../examples/minidesk/doc/images
+
+depends += qtquick qtqml
 
 qhp.projects                               = ApplicationManager
 qhp.ApplicationManager.file                = applicationmanager.qhp

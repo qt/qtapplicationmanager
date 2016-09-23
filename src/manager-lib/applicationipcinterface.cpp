@@ -98,21 +98,21 @@ QVector<IpcProxyObject *> IpcProxyObject::s_proxies;
 
 static int qmlTypeId(const QString &qmlType)
 {
-    if (qmlType == "var" || qmlType == "variant")
+    if (qmlType == qL1S("var") || qmlType == qL1S("variant"))
         return QMetaType::QVariant;
-    else if (qmlType == "string")
+    else if (qmlType == qL1S("string"))
         return QMetaType::QString;
-    else if (qmlType == "int")
+    else if (qmlType == qL1S("int"))
         return QMetaType::Int;
-    else if (qmlType == "bool")
+    else if (qmlType == qL1S("bool"))
         return QMetaType::Bool;
-    else if (qmlType == "double")
+    else if (qmlType == qL1S("double"))
         return QMetaType::Double;
-    else if (qmlType == "real")
+    else if (qmlType == qL1S("real"))
         return QMetaType::QReal;
-    else if (qmlType == "url")
+    else if (qmlType == qL1S("url"))
         return QMetaType::QUrl;
-    else if (qmlType == "void")
+    else if (qmlType == qL1S("void"))
         return QMetaType::Void;
     else
         return QMetaType::UnknownType;
@@ -524,13 +524,13 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
             }
         }
 
-    } else if (interface == "org.freedesktop.DBus.Properties") {
+    } else if (interface == qL1S("org.freedesktop.DBus.Properties")) {
         if (message.arguments().at(0) != m_interfaceName)
             return false;
 
         const QMetaObject *mo = m_object->metaObject();
 
-        if (function == "Get") {
+        if (function == qL1S("Get")) {
             QString name = message.arguments().at(1).toString();
             QVariant result;
 
@@ -549,9 +549,9 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
             connection.call(message.createErrorReply(QDBusError::UnknownProperty, qL1S("unknown property")));
             return true;
 
-        } else if (function == "GetAll") {
+        } else if (function == qL1S("GetAll")) {
             //TODO
-        } else if (function == "Set") {
+        } else if (function == qL1S("Set")) {
             QString name = message.arguments().at(1).toString();
 
             foreach (int pi, m_properties) {
@@ -697,7 +697,7 @@ QVariant ApplicationIPCInterfaceAttached::inProcessReceiversOnly() const
 bool ApplicationIPCInterfaceAttached::resolveProxy() const
 {
     if (!m_proxy) {
-        for (auto &proxy : IpcProxyObject::s_proxies) {
+        for (auto &proxy : qAsConst(IpcProxyObject::s_proxies)) {
             if (proxy->object() == m_object) {
                 m_proxy = proxy;
                 break;

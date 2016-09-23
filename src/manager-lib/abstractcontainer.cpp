@@ -140,11 +140,11 @@ ContainerDebugWrapper::ContainerDebugWrapper()
 ContainerDebugWrapper::ContainerDebugWrapper(const QVariantMap &map)
     : m_stdRedirections(3, -1)
 {
-    m_name = map.value("name").toString();
-    m_command = map.value("command").toStringList();
-    m_parameters = map.value("parameters").toMap();
-    m_supportedContainers = map.value("supportedContainers").toStringList();
-    m_supportedRuntimes = map.value("supportedRuntimes").toStringList();
+    m_name = map.value(qSL("name")).toString();
+    m_command = map.value(qSL("command")).toStringList();
+    m_parameters = map.value(qSL("parameters")).toMap();
+    m_supportedContainers = map.value(qSL("supportedContainers")).toStringList();
+    m_supportedRuntimes = map.value(qSL("supportedRuntimes")).toStringList();
 
     m_valid = !m_name.isEmpty() && !m_command.isEmpty();
 }

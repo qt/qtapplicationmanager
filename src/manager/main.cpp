@@ -706,7 +706,7 @@ int main(int argc, char *argv[])
         // For development only: set an icon, so you know which window is the AM
         bool setIcon =
 #  if defined(Q_OS_LINUX)
-                (a.platformName() == "xcb");
+                (a.platformName() == qL1S("xcb"));
 #  else
                 true;
 #  endif

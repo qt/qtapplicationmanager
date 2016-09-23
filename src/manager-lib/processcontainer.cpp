@@ -145,7 +145,7 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
     if (groupName == m_currentControlGroup)
         return true;
 
-    QVariantMap map = m_manager->configuration().value("controlGroups").toMap();
+    QVariantMap map = m_manager->configuration().value(qSL("controlGroups")).toMap();
     auto git = map.constFind(groupName);
     if (git != map.constEnd()) {
         QVariantMap mapping = (*git).toMap();

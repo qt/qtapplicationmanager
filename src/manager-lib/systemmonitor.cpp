@@ -195,7 +195,7 @@ public:
         QString usedAppId;
 
         if (singleProcess)
-            usedAppId = "";
+            usedAppId = qSL("");
         else {
             usedAppId = appId;
             // Avoid creating multiple objects for aliases

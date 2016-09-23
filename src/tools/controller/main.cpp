@@ -281,11 +281,11 @@ int main(int argc, char *argv[])
 
             QMap<QString, int> stdRedirections;
             if (clp.isSet(qSL("attach-stdin")))
-                stdRedirections["in"] = 0;
+                stdRedirections[qSL("in")] = 0;
             if (clp.isSet(qSL("attach-stdout")))
-                stdRedirections["out"] = 1;
+                stdRedirections[qSL("out")] = 1;
             if (clp.isSet(qSL("attach-stderr")))
-                stdRedirections["err"] = 2;
+                stdRedirections[qSL("err")] = 2;
 
             debugApplication(clp.positionalArguments().at(1), clp.positionalArguments().at(2),
                              stdRedirections, args == 3 ? clp.positionalArguments().at(2) : QString());

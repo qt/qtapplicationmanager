@@ -205,7 +205,7 @@ Controller::Controller(QObject *parent, const QString &directLoad)
     if (docs.size() == 1)
         m_configuration = docs.first().toMap();
 
-    setCrashActionConfiguration(m_configuration.value("crashAction").toMap());
+    setCrashActionConfiguration(m_configuration.value(qSL("crashAction")).toMap());
 
     QVariantMap config;
     auto additionalConfigurations = QtYaml::variantDocumentsFromYaml(qgetenv("AM_RUNTIME_ADDITIONAL_CONFIGURATION"));
@@ -259,7 +259,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         loadDummyDataFiles(m_engine, QFileInfo(qmlFile).path());
     }
 
-    QStringList importPaths = m_configuration.value(qSL("importPaths")).toStringList();
+    QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
     const QString prefix = QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/");
     for (QString &path : importPaths) {
         if (QFileInfo(path).isRelative()) {

@@ -340,11 +340,11 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
     qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager", 1, 0, "ApplicationManager",
                                                  &ApplicationManager::instanceForQml);
     qmlRegisterUncreatableType<const Application>("QtApplicationManager", 1, 0, "Application",
-                                                  qL1S("Cannot create objects of type Application"));
+                                                  qSL("Cannot create objects of type Application"));
     qmlRegisterUncreatableType<AbstractRuntime>("QtApplicationManager", 1, 0, "Runtime",
-                                                qL1S("Cannot create objects of type Runtime"));
+                                                qSL("Cannot create objects of type Runtime"));
     qmlRegisterUncreatableType<AbstractContainer>("QtApplicationManager", 1, 0, "Container",
-                                                  qL1S("Cannot create objects of type Container"));
+                                                  qSL("Cannot create objects of type Container"));
     return s_instance = am.take();
 }
 
@@ -466,7 +466,7 @@ ContainerDebugWrapper ApplicationManagerPrivate::parseDebugWrapperSpecification(
     }
 
     ContainerDebugWrapper dw;
-    for (auto it : qAsConst(debugWrappers)) {
+    for (const auto &it : qAsConst(debugWrappers)) {
         if (it.name() == name) {
             dw = it;
             break;
@@ -765,7 +765,7 @@ void ApplicationManager::stopApplication(const Application *app, bool forceKill)
 
 void ApplicationManager::killAll()
 {
-    for (const Application *app : d->apps) {
+    for (const Application *app : qAsConst(d->apps)) {
         AbstractRuntime *rt = app->currentRuntime();
         if (rt) {
             rt->stop(true);
@@ -1121,7 +1121,7 @@ void ApplicationManager::emitDataChanged(const Application *app, const QVector<i
         static const auto appChanged = QMetaMethod::fromSignal(&ApplicationManager::applicationChanged);
         if (isSignalConnected(appChanged)) {
             QStringList stringRoles;
-            foreach (const auto &role, roles)
+            for (auto role : roles)
                 stringRoles << d->roleNames[role];
             emit applicationChanged(app->id(), stringRoles);
         }
@@ -1326,7 +1326,7 @@ QVariantMap ApplicationManager::get(const QString &id) const
     int index = indexOfApplication(id);
     if (index >= 0) {
         auto map = get(index);
-        map.remove("application"); // cannot marshall QObject *
+        map.remove(qSL("application")); // cannot marshall QObject *
         return map;
     }
     return QVariantMap();

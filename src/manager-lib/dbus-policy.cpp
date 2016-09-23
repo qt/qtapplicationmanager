@@ -43,6 +43,7 @@
 
 #include "applicationmanager.h"
 #include "application.h"
+#include "utilities.h"
 #include "dbus-policy.h"
 
 AM_BEGIN_NAMESPACE
@@ -64,9 +65,9 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
                 dbp.m_uids << uid;
         }
         qSort(dbp.m_uids);
-        dbp.m_executables = policy.value(qSL("executables")).toStringList();
+        dbp.m_executables = variantToStringList(policy.value(qSL("executables")));
         dbp.m_executables.sort();
-        dbp.m_capabilities = policy.value(qSL("capabilities")).toStringList();
+        dbp.m_capabilities = variantToStringList(policy.value(qSL("capabilities")));
         dbp.m_capabilities.sort();
 
         result.insert(it.key().toLocal8Bit(), dbp);

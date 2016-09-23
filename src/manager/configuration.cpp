@@ -48,6 +48,7 @@
 
 #include "global.h"
 #include "qtyaml.h"
+#include "utilities.h"
 #include "configuration.h"
 
 #if !defined(AM_CONFIG_FILE)
@@ -90,7 +91,7 @@ template<> QString ConfigurationPrivate::config(const char *clname, const QStrin
 
 template<> QStringList ConfigurationPrivate::config(const char *clname, const QStringList &cfname)
 {
-    return clp.values(qL1S(clname)) + findInConfigFile(cfname).toStringList();
+    return clp.values(qL1S(clname)) + variantToStringList(findInConfigFile(cfname));
 }
 
 QVariant ConfigurationPrivate::findInConfigFile(const QStringList &path, bool *found)
@@ -525,12 +526,12 @@ QVariantMap Configuration::managerCrashAction() const
 
 QStringList Configuration::caCertificates() const
 {
-    return d->findInConfigFile({ qSL("installer"), qSL("caCertificates") }).toStringList();
+    return variantToStringList(d->findInConfigFile({ qSL("installer"), qSL("caCertificates") }));
 }
 
 QStringList Configuration::pluginFilePaths(const char *type) const
 {
-    return d->findInConfigFile({ qSL("plugins"), qL1S(type) }).toStringList();
+    return variantToStringList(d->findInConfigFile({ qSL("plugins"), qL1S(type) }));
 }
 
 AM_END_NAMESPACE

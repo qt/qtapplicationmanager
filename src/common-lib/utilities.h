@@ -63,6 +63,16 @@ AM_BEGIN_NAMESPACE
 bool isValidDnsName(const QString &rnds, bool isAliasName = false, QString *errorString = 0);
 int versionCompare(const QString &version1, const QString &version2);
 
+/*! \internal
+    Convenience function that makes it easy to accept a plain string where
+    a stringlist is required - this is useful when parsing YAML config files
+*/
+inline QStringList variantToStringList(const QVariant &v)
+{
+    return (v.type() == QVariant::String) ? QStringList(v.toString())
+                                          : v.toStringList();
+}
+
 bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree);
 QMultiMap<QString, QString> mountedDirectories();
 

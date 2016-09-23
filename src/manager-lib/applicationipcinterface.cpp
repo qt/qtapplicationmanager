@@ -55,6 +55,7 @@
 #include <QDebug>
 
 #include "application.h"
+#include "utilities.h"
 #include "dbus-utilities.h"
 #include "applicationipcinterface.h"
 #include "applicationipcinterface_p.h"
@@ -149,9 +150,9 @@ IpcProxyObject::IpcProxyObject(QObject *object, const QString &serviceName, cons
 {
     s_proxies.append(this);
 
-    m_appIdFilter = filter.value("applicationIds").toStringList();
-    m_categoryFilter = filter.value("categories").toStringList();
-    m_capabilityFilter = filter.value("capabilities").toStringList();
+    m_appIdFilter = variantToStringList(filter.value(qSL("applicationIds")));
+    m_categoryFilter = variantToStringList(filter.value(qSL("categories")));
+    m_capabilityFilter = variantToStringList(filter.value(qSL("capabilities")));
 
     const QMetaObject *mo = object->metaObject();
     for (int i = mo->methodOffset(); i < mo->methodCount(); ++i) {
@@ -686,7 +687,7 @@ QVariant ApplicationIPCInterfaceAttached::receivers() const
 void ApplicationIPCInterfaceAttached::setReceivers(const QVariant &receivers)
 {
     if (resolveProxy())
-        m_proxy->m_receivers = receivers.toStringList();
+        m_proxy->m_receivers = variantToStringList(receivers);
 }
 
 QVariant ApplicationIPCInterfaceAttached::inProcessReceiversOnly() const

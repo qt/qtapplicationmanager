@@ -55,6 +55,7 @@
 #include "qmlinprocessapplicationinterface.h"
 #include "abstractcontainer.h"
 #include "global.h"
+#include "utilities.h"
 #include "runtimefactory.h"
 
 AM_BEGIN_NAMESPACE
@@ -123,7 +124,7 @@ bool QmlInProcessRuntime::start()
         loadDummyDataFiles(*m_inProcessQmlEngine, QFileInfo(m_app->absoluteCodeFilePath()).path());
     }
 
-    QStringList importPaths = m_app->runtimeParameters().value(qSL("importPaths")).toStringList();
+    QStringList importPaths = variantToStringList(m_app->runtimeParameters().value(qSL("importPaths")));
     if (!importPaths.isEmpty()) {
 
         QStringList absoluteImportPaths;

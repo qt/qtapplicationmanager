@@ -52,6 +52,7 @@
 #include "exception.h"
 #include "application.h"
 #include "yamlapplicationscanner.h"
+#include "utilities.h"
 
 AM_BEGIN_NAMESPACE
 
@@ -149,13 +150,13 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                 } else if (field == "type") {
                     app->m_type = (v.toString() == qL1S("headless") ? Application::Headless : Application::Gui);
                 } else if (field == "capabilities") {
-                    app->m_capabilities = v.toStringList();
+                    app->m_capabilities = variantToStringList(v);
                     app->m_capabilities.sort();
                 } else if (field == "categories") {
-                    app->m_categories = v.toStringList();
+                    app->m_categories = variantToStringList(v);
                     app->m_categories.sort();
                 } else if (field == "mimeTypes") {
-                    app->m_mimeTypes = v.toStringList();
+                    app->m_mimeTypes = variantToStringList(v);
                     app->m_mimeTypes.sort();
                 } else if (field == "version") {
                     app->m_version = v.toString();

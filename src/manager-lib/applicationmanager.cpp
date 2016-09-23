@@ -881,7 +881,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
             QMimeType mt = mdb.mimeTypeForUrl(url);
 
             app = mimeTypeHandler(mt.name());
-            if (app->isAlias())
+            if (app && app->isAlias())
                 app = app->nonAliased();
         }
     }

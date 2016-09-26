@@ -1,9 +1,7 @@
-
 TARGET = tst_utilities
 
-include(../tests.pri)
+include($$PWD/../tests.pri)
 
-load(add-static-library)
-addStaticLibrary(../../src/common-lib)
+QT *= appman_common-private
 
 SOURCES += tst_utilities.cpp

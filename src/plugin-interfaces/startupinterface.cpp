@@ -39,51 +39,6 @@
 **
 ****************************************************************************/
 
-#pragma once
+#include "startupinterface.h"
 
-#include <QObject>
-
-#include "error.h"
-
-QT_FORWARD_DECLARE_CLASS(QIODevice)
-QT_FORWARD_DECLARE_CLASS(QDir)
-
-AM_BEGIN_NAMESPACE
-
-class PackageCreatorPrivate;
-class InstallationReport;
-
-
-class PackageCreator : public QObject
-{
-    Q_OBJECT
-
-public:
-    PackageCreator(const QDir &sourceDir, QIODevice *output, const InstallationReport &report, QObject *parent = 0);
-
-    QDir sourceDirectory() const;
-    void setSourceDirectory(const QDir &sourceDir);
-
-    bool create();
-
-    QByteArray createdDigest() const;
-
-    bool hasFailed() const;
-    bool wasCanceled() const;
-
-    Error errorCode() const;
-    QString errorString() const;
-
-public slots:
-    void cancel();
-
-signals:
-    void progress(qreal progress);
-
-private:
-    PackageCreatorPrivate *d;
-
-    friend class PackageCreatorPrivate;
-};
-
-AM_END_NAMESPACE
+StartupInterface::~StartupInterface() { }

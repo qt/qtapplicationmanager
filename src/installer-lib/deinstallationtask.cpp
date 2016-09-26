@@ -97,7 +97,7 @@ void DeinstallationTask::execute()
         }
 
         if (m_installationLocation.isRemovable()) {
-            QString imageFile = QDir(m_installationLocation.installationPath()).absoluteFilePath(m_app->id() + ".appimg");
+            QString imageFile = QDir(m_installationLocation.installationPath()).absoluteFilePath(m_app->id() + qSL(".appimg"));
 
             if (m_installationLocation.isMounted() && QFile::exists(imageFile)) {
                 // the correct medium is currently mounted
@@ -131,8 +131,8 @@ void DeinstallationTask::execute()
 
         for (ScopedRenamer *toDelete : { &manifestRename, &docDirRename, &appDirRename, &appImageRename}) {
             if (toDelete->isRenamed()) {
-                if (!removeRecursiveHelper(toDelete->baseName() + '-'))
-                    qCCritical(LogInstaller) << "ERROR: could not remove" << (toDelete->baseName() + '-');
+                if (!removeRecursiveHelper(toDelete->baseName() + qL1C('-')))
+                    qCCritical(LogInstaller) << "ERROR: could not remove" << (toDelete->baseName() + qL1C('-'));
             }
         }
 

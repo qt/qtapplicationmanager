@@ -60,7 +60,7 @@ static inline int qt_safe_open(const char *pathname, int flags, mode_t mode = 07
 
 AM_BEGIN_NAMESPACE
 
-SysFsReader::SysFsReader(const char *path, int maxRead)
+SysFsReader::SysFsReader(const QByteArray &path, int maxRead)
     : m_path(path)
 {
     m_buffer.resize(maxRead);

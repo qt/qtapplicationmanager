@@ -5,6 +5,6 @@ LIBBACKTRACE_PATH = $$PWD/libbacktrace
 LIBBACKTRACE_BUILD_PATH = $$shadowed($$LIBBACKTRACE_PATH)
 
 INCLUDEPATH += $$LIBBACKTRACE_PATH
-LIBS += $$fixLibraryPath(-L$$LIBBACKTRACE_BUILD_PATH) -lbacktrace
+LIBS_PRIVATE += $$fixLibraryPath(-L$$LIBBACKTRACE_BUILD_PATH) -lqtbacktrace$$qtPlatformTargetSuffix()
 
 CONFIG *= link_prl

@@ -43,7 +43,7 @@
 
 #include <QObject>
 #include <QAbstractListModel>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
@@ -94,8 +94,6 @@ signals:
     void notificationAdded(int id);
     void notificationAboutToBeRemoved(int id);
     void notificationChanged(int id, const QStringList &rolesChanged);
-
-    QT_DEPRECATED void notificationUpdate(int notificationIndex);
 
 private:
     uint notifyHelper(const QString &app_name, uint id, bool replaces, const QString &app_icon, const QString &summary, const QString &body, const QStringList &actions, const QVariantMap &hints, int timeout);

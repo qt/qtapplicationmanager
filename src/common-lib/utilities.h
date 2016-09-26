@@ -49,7 +49,7 @@
 #include <QByteArray>
 #include <QMultiMap>
 
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 #include <stdlib.h>
 #if defined(Q_OS_UNIX)
@@ -59,6 +59,9 @@
 
 
 AM_BEGIN_NAMESPACE
+
+bool ensureCorrectLocale();
+bool checkCorrectLocale();
 
 bool isValidDnsName(const QString &rnds, bool isAliasName = false, QString *errorString = 0);
 int versionCompare(const QString &version1, const QString &version2);

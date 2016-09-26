@@ -1,52 +1,40 @@
-
-TEMPLATE = lib
-TARGET = manager-lib
+TARGET = QtAppManManager
+MODULE = appman_manager
 
 load(am-config)
 
-CONFIG += static create_prl
-
-QT = core network qml qml-private
+QT = core network qml
 !headless:QT *= gui quick
 qtHaveModule(dbus):QT *= dbus
+QT_FOR_PRIVATE *= \
+    appman_common-private \
+    appman_crypto-private \
+    appman_application-private \
+    appman_notification-private \
+
+CONFIG *= static internal_module
 
 multi-process {
     PKGCONFIG += "'dbus-1 >= 1.6'"
 }
 
-DEFINES *= AM_BUILD_APPMAN
-
-load(add-static-library)
-addStaticLibrary(../common-lib)
-addStaticLibrary(../crypto-lib)
-addStaticLibrary(../notification-lib)
-
 HEADERS += \
-    application.h \
-    applicationdatabase.h \
     applicationmanager.h \
-    applicationscanner.h \
-    runtimefactory.h \
     applicationinterface.h \
-    abstractruntime.h \
-    yamlapplicationscanner.h \
-    installationlocation.h \
-    installationreport.h \
-    dbus-policy.h \
+    applicationdatabase.h \
     notificationmanager.h \
-    qmlinprocessruntime.h \
-    qmlinprocessapplicationinterface.h \
-    qml-utilities.h \
-    processcontainer.h \
     abstractcontainer.h \
     containerfactory.h \
+    plugincontainer.h \
+    processcontainer.h \
+    abstractruntime.h \
+    runtimefactory.h \
     quicklauncher.h \
-    systemmonitor.h \
-    systemmonitor_p.h \
     applicationipcmanager.h \
     applicationipcinterface.h \
     applicationipcinterface_p.h \
-    plugincontainer.h \
+    systemmonitor.h \
+    systemmonitor_p.h \
     processmonitor.h \
     memorymonitor.h \
     fpsmonitor.h \
@@ -62,30 +50,26 @@ multi-process:HEADERS += \
 linux:HEADERS += \
     sysfsreader.h \
 
+qtHaveModule(qml):HEADERS += \
+    qmlinprocessruntime.h \
+    qmlinprocessapplicationinterface.h \
+
 SOURCES += \
-    application.cpp \
-    applicationdatabase.cpp \
     applicationmanager.cpp \
-    runtimefactory.cpp \
     applicationinterface.cpp \
-    abstractruntime.cpp \
-    yamlapplicationscanner.cpp \
-    installationlocation.cpp \
-    installationreport.cpp \
-    dbus-policy.cpp \
+    applicationdatabase.cpp \
     notificationmanager.cpp \
-    qmlinprocessruntime.cpp \
-    qmlinprocessapplicationinterface.cpp \
-    qml-utilities.cpp \
-    processcontainer.cpp \
     abstractcontainer.cpp \
     containerfactory.cpp \
+    plugincontainer.cpp \
+    processcontainer.cpp \
+    abstractruntime.cpp \
+    runtimefactory.cpp \
     quicklauncher.cpp \
-    systemmonitor.cpp \
-    systemmonitor_p.cpp \
     applicationipcmanager.cpp \
     applicationipcinterface.cpp \
-    plugincontainer.cpp \
+    systemmonitor.cpp \
+    systemmonitor_p.cpp \
     processmonitor.cpp \
     memorymonitor.cpp \
     fpsmonitor.cpp \
@@ -100,6 +84,12 @@ multi-process:SOURCES += \
 linux:SOURCES += \
     sysfsreader.cpp \
 
+qtHaveModule(qml):SOURCES += \
+    qmlinprocessruntime.cpp \
+    qmlinprocessapplicationinterface.cpp \
+
 # we have an external plugin interface with signals, so we need to
 # compile the moc-data into the exporting binary (appman itself)
 HEADERS += ../plugin-interfaces/containerinterface.h
+
+load(qt_module)

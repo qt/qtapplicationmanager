@@ -89,7 +89,7 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
 
             m_quickLaunchPool << entry;
 
-            qCDebug(LogSystem) << "Created quick-launch slot for" << containerId + "/" + runtimeId;
+            qCDebug(LogSystem) << "Created quick-launch slot for" << containerId + qSL("/") + runtimeId;
         }
     }
     if (idleLoad > 0) {

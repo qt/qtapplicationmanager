@@ -41,7 +41,7 @@
 
 #pragma once
 
-#include "abstractcontainer.h"
+#include <QtAppManManager/abstractcontainer.h>
 
 #define AM_HOST_CONTAINER_AVAILABLE
 

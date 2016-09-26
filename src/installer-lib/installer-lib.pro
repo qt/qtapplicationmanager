@@ -1,30 +1,24 @@
-
-TEMPLATE = lib
-TARGET = installer-lib
+TARGET = QtAppManInstaller
+MODULE = appman_installer
 
 load(am-config)
 
-CONFIG += static create_prl
-
 QT = core network qml
 qtHaveModule(dbus):QT *= dbus
+QT_FOR_PRIVATE *= \
+    appman_common-private \
+    appman_crypto-private \
+    appman_application-private \
+    appman_package-private \
+    appman_manager-private
 
-DEFINES *= AM_BUILD_APPMAN
-
-load(add-static-library)
-addStaticLibrary(../common-lib)
-addStaticLibrary(../crypto-lib)
-addStaticLibrary(../manager-lib)
+CONFIG *= static internal_module
 
 include($$SOURCE_DIR/3rdparty/libarchive.pri)
 include($$SOURCE_DIR/3rdparty/libz.pri)
 
 HEADERS += \
-    package_p.h \
-    packageextractor_p.h \
-    packageextractor.h \
-    packagecreator_p.h \
-    packagecreator.h \
+    installationlocation.h \
     asynchronoustask.h \
     deinstallationtask.h \
     installationtask.h \
@@ -34,12 +28,12 @@ HEADERS += \
     sudo.h \
 
 SOURCES += \
-    package_p.cpp \
-    packagecreator.cpp \
-    packageextractor.cpp \
+    installationlocation.cpp \
     asynchronoustask.cpp \
     installationtask.cpp \
     deinstallationtask.cpp \
     scopeutilities.cpp \
     applicationinstaller.cpp \
     sudo.cpp \
+
+load(qt_module)

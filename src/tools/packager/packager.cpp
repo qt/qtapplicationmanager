@@ -35,15 +35,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "yamlapplicationscanner.h"
-#include "application.h"
-#include "installationreport.h"
-#include "digestfilter.h"
-#include "packageextractor.h"
-#include "packagecreator.h"
-#include "signature.h"
 #include "exception.h"
 #include "utilities.h"
+
+#include "digestfilter.h"
+#include "signature.h"
+
+#include "application.h"
+#include "installationreport.h"
+#include "yamlapplicationscanner.h"
+#include "packageextractor.h"
+#include "packagecreator.h"
+
 #include "packager.h"
 
 AM_USE_NAMESPACE

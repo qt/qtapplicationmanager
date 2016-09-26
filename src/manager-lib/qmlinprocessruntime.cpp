@@ -132,7 +132,7 @@ bool QmlInProcessRuntime::start()
         for (int i = 0; i < importPaths.size(); i++) {
             QString importPath = importPaths[i];
             if (QFileInfo(importPath).isRelative())
-                importPath = m_app->baseDir().absolutePath() + "/" + importPath;
+                importPath = m_app->baseDir().absolutePath() + qSL("/") + importPath;
 
             absoluteImportPaths.append(importPath);
         }

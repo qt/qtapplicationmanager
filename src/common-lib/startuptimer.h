@@ -46,7 +46,7 @@
 #include <QPair>
 #include <QByteArray>
 #include <QElapsedTimer>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 

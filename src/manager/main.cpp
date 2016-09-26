@@ -47,6 +47,7 @@
 #  include <QDBusConnection>
 #  if defined(Q_OS_LINUX)
 #    include <sys/prctl.h>
+#    include <sys/signal.h>
 #  endif
 #endif
 
@@ -318,9 +319,16 @@ static QVector<const Application *> scanForApplication(const QString &singleAppI
     return result;
 }
 
+#if !defined(AM_DISABLE_INSTALLER)
 static QVector<const Application *> scanForApplications(const QStringList &builtinAppsDirs, const QString &installedAppsDir,
                                                         const QVector<InstallationLocation> &installationLocations)
 {
+#else
+static QVector<const Application *> scanForApplications(const QStringList &builtinAppsDirs)
+{
+    int installationLocations; // dummy variable to get rid of #ifdef within lambda below
+#endif
+
     QVector<const Application *> result;
     YamlApplicationScanner yas;
 
@@ -397,7 +405,9 @@ static QVector<const Application *> scanForApplications(const QStringList &built
 
     foreach (const QString &dir, builtinAppsDirs)
         scan(dir, true);
+#if !defined(AM_DISABLE_INSTALLER)
     scan(installedAppsDir, false);
+#endif
     return result;
 }
 
@@ -443,13 +453,13 @@ int main(int argc, char *argv[])
     startupTimer.checkpoint("after basic initialization");
 
 #if !defined(AM_DISABLE_INSTALLER)
-    {
-        if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
-            qCCritical(LogSystem) << "WARNING:" << qPrintable(error);
+    ensureCorrectLocale();
 
-            // do not quit, but rather contine with reduced functionality
-            SudoClient::initialize(-1);
-        }
+    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
+        qCCritical(LogSystem) << "WARNING:" << qPrintable(error);
+
+        // do not quit, but rather contine with reduced functionality
+        SudoClient::initialize(-1);
     }
 #endif
 
@@ -545,6 +555,12 @@ int main(int argc, char *argv[])
             throw Exception(Error::System, "no/invalid main QML file specified: %1").arg(configuration->mainQmlFile());
 
 #if !defined(AM_DISABLE_INSTALLER)
+        if (!checkCorrectLocale()) {
+            // we should really throw here, but so many embedded systems are badly set up
+            qCCritical(LogSystem) << "WARNING: the appman installer needs a UTF-8 locale to work correctly:\n"
+                                     "         even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
+        }
+
         if (Q_UNLIKELY(hardwareId().isEmpty()))
             throw Exception(Error::System, "the installer is enabled, but the device-id is empty");
 
@@ -609,9 +625,11 @@ int main(int argc, char *argv[])
             if (!configuration->singleApp().isEmpty()) {
                 apps = scanForApplication(configuration->singleApp());
             } else {
-                apps = scanForApplications(configuration->builtinAppsManifestDirs(),
-                                           configuration->installedAppsManifestDir(),
-                                           installationLocations);
+                apps = scanForApplications(configuration->builtinAppsManifestDirs()
+#if !defined(AM_DISABLE_INSTALLER)
+                                           , configuration->installedAppsManifestDir(), installationLocations
+#endif
+                                           );
             }
 
             qCDebug(LogSystem) << "Found Applications: [";

@@ -43,7 +43,7 @@
 
 #include <QVariantMap>
 
-#include "exception.h"
+#include <QtAppManCommon/exception.h>
 
 struct archive;
 QT_FORWARD_DECLARE_CLASS(QFileInfo)

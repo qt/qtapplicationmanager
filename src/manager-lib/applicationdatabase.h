@@ -44,7 +44,7 @@
 #include <QList>
 #include <QString>
 
-#include "exception.h"
+#include <QtAppManCommon/exception.h>
 
 AM_BEGIN_NAMESPACE
 

@@ -71,7 +71,7 @@
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
     do { \
-        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__)) \
+        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__, [](qint64 pid) -> QStringList { return ApplicationManager::instance()->capabilities(ApplicationManager::instance()->identifyApplication(pid)); })) \
             return RETURN_TYPE(); \
     } while (false);
 
@@ -992,6 +992,8 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 #if defined(QT_DBUS_LIB)
                                     if (dbusDelayedReply)
                                         dbusDelayedReply->ok &= ok;
+#else
+                                    Q_UNUSED(ok)
 #endif
                                     if (grabbers->isEmpty()) {
                                         delete grabbers;

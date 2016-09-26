@@ -44,8 +44,8 @@
 #include <QVector>
 #include <QPointer>
 
-#include "applicationinterface.h"
-#include "notification.h"
+#include <QtAppManManager/applicationinterface.h>
+#include <QtAppManNotification/notification.h>
 
 AM_BEGIN_NAMESPACE
 

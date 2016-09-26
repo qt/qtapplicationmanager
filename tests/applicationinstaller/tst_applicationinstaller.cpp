@@ -37,7 +37,9 @@
 #include "sudo.h"
 #include "utilities.h"
 #include "error.h"
-#include "package_p.h"
+#include "private/package_p.h"
+#include "runtimefactory.h"
+#include "qmlinprocessruntime.h"
 
 #ifdef Q_OS_LINUX
 #  include <signal.h>
@@ -48,6 +50,7 @@
 #include "../sudo-cleanup.h"
 #include "../error-checking.h"
 
+AM_USE_NAMESPACE
 
 static bool startedSudoServer = false;
 static QString sudoServerError;
@@ -259,6 +262,7 @@ void tst_ApplicationInstaller::initTestCase()
     if (!qgetenv("VERBOSE_TEST").toInt())
         QLoggingCategory::setFilterRules("am.installer.debug=false");
 
+    QVERIFY(checkCorrectLocale());
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
     m_root = SudoClient::instance();
     QVERIFY(m_root);
@@ -369,6 +373,10 @@ void tst_ApplicationInstaller::initTestCase()
     // we do not require valid store signatures for this test run
 
     m_ai->setDevelopmentMode(true);
+
+    // make sure we have a valid runtime available. The important part is
+    // that we have a runtime called "native" - the functionality does not matter.
+    RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager(qSL("native")));
 }
 
 void tst_ApplicationInstaller::cleanupTestCase()
@@ -550,10 +558,10 @@ void tst_ApplicationInstaller::packageInstallation_data()
             << false << false << false << "metadata has an invalid applicationId field (invalid)";
     QTest::newRow("invalid-info.yaml") \
             << "test-invalid-info.appkg" << "internal-0" << "" << ""
-            << false << false << false << "~YAML parse error at line \\d+, column \\d+: did not find expected key";
+            << false << false << false << "~.*YAML parse error at line \\d+, column \\d+: did not find expected key";
     QTest::newRow("invalid-info.yaml-id") \
             << "test-invalid-info-id.appkg" << "internal-0" << "" << ""
-            << false << false << false << "the identifier (invalid) is not a valid reverse-DNS name: the minimum amount of parts (subdomains) is 3 (found 1)";
+            << false << false << false << "~.*the identifier \\(invalid\\) is not a valid reverse-DNS name: the minimum amount of parts \\(subdomains\\) is 3 \\(found 1\\)";
     QTest::newRow("invalid-footer-signature") \
             << "test-invalid-footer-signature.appkg" << "internal-0" << "" << ""
             << false << false << false << "could not verify the package's developer signature";
@@ -910,6 +918,8 @@ static tst_ApplicationInstaller *tstApplicationInstaller = 0;
 
 int main(int argc, char **argv)
 {
+    ensureCorrectLocale();
+
     startedSudoServer = forkSudoServer(DropPrivilegesPermanently, &sudoServerError);
 
     QCoreApplication a(argc, argv);

@@ -76,7 +76,7 @@ AbstractRuntimeManager *RuntimeFactory::manager(const QString &id)
         return nullptr;
     AbstractRuntimeManager *arm = m_runtimes.value(id);
     if (!arm)
-        arm = m_runtimes.value(id + "-inprocess");
+        arm = m_runtimes.value(id + qSL("-inprocess"));
     return arm;
 }
 

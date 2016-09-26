@@ -41,47 +41,55 @@
 
 #pragma once
 
-#include <QMutex>
-#include <QQueue>
-#include <QSet>
-#include <QThread>
+#include <QString>
+#include <QVariantMap>
 
-#include "applicationinstaller.h"
-#include "sudo.h"
 #include <QtAppManCommon/exception.h>
-#include "dbus-policy.h"
-#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 
-bool removeRecursiveHelper(const QString &path);
-
-class ApplicationInstallerPrivate
+class InstallationLocation
 {
 public:
-    bool developmentMode = false;
-    bool allowInstallationOfUnsignedPackages = false;
-    bool userIdSeparation = false;
-    uint minUserId = uint(-1);
-    uint maxUserId = uint(-1);
-    uint commonGroupId = uint(-1);
+    enum Type {
+        Invalid  = -1,
+        Internal,
+        Removable,
+    };
 
-    QDir manifestDir;
-    QDir imageMountDir;
-    QVector<InstallationLocation> installationLocations;
-    InstallationLocation invalidInstallationLocation;
+    static const InstallationLocation invalid;
 
-    QString error;
+    bool operator==(const InstallationLocation &other) const;
+    inline bool operator!=(const InstallationLocation &other) const { return !((*this) == other); }
 
-    QList<QByteArray> chainOfTrust;
+    QString id() const;
+    Type type() const;
+    int index() const;
 
-    QQueue<AsynchronousTask *> taskQueue;
-    AsynchronousTask *activeTask = nullptr;
+    QString installationPath() const;
+    QString documentPath() const;
 
-    QMutex activationLock;
-    QMap<QString, QString> activatedPackages; // id -> installationPath
+    bool isValid() const;
+    bool isDefault() const;
+    bool isRemovable() const;
+    bool isMounted() const;
 
-    QMap<QByteArray, DBusPolicy> dbusPolicy;
+    QVariantMap toVariantMap() const;
+
+    QString mountPoint() const; // debug only / not exported to QVariantMap
+
+    static Type typeFromString(const QString &str);
+    static QString typeToString(Type type);
+
+    static QVector<InstallationLocation> parseInstallationLocations(const QVariantList &list) throw (Exception);
+
+private:
+    Type m_type = Invalid;
+    int m_index = 0;
+    bool m_isDefault = false;
+    QString m_installationPath;
+    QString m_documentPath;
+    QString m_mountPoint;
 };
 
 AM_END_NAMESPACE

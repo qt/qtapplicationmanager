@@ -44,13 +44,17 @@
 #include <exception>
 #include <QObject>
 
+#if defined(Q_CC_MSVC)
+#  pragma warning(disable: 4290)
+#endif
+
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QWindow)
 
 class StartupInterface
 {
 public:
-    virtual ~StartupInterface() { }
+    virtual ~StartupInterface();
 
     virtual void initialize(const QVariantMap &additionalConfiguration) throw(std::exception) = 0;
 

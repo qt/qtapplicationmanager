@@ -32,6 +32,8 @@
 #include "global.h"
 #include "digestfilter.h"
 
+AM_USE_NAMESPACE
+
 /*
  # create 512 bytes of random data
  $ dd if=/dev/urandom bs=512 count=1 >message.bin

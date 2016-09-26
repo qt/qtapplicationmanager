@@ -44,7 +44,7 @@
 #include <QObject>
 #include <QPair>
 #include <QVector>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 

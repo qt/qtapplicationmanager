@@ -145,11 +145,11 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
         }
 
         static QRegExp numberRegExps[] = {
-            QRegExp("[-+]?0b[0-1_]+"),        // binary
-            QRegExp("[-+]?0x[0-9a-fA-F_]+"),  // hexadecimal
-            QRegExp("[-+]?0[0-7_]+"),         // octal
-            QRegExp("[-+]?(0|[1-9][0-9_]*)"), // decimal
-            QRegExp("[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?"), // float
+            QRegExp(qSL("[-+]?0b[0-1_]+")),        // binary
+            QRegExp(qSL("[-+]?0x[0-9a-fA-F_]+")),  // hexadecimal
+            QRegExp(qSL("[-+]?0[0-7_]+")),         // octal
+            QRegExp(qSL("[-+]?(0|[1-9][0-9_]*)")), // decimal
+            QRegExp(qSL("[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?")), // float
             QRegExp()
         };
 
@@ -253,11 +253,11 @@ QVector<QVariant> variantDocumentsFromYaml(const QByteArray &yaml, ParseError *e
                 if (error) {
                     switch (p.error) {
                     case YAML_READER_ERROR:
-                        *error = ParseError(p.problem, -1, -1, int(p.problem_offset));
+                        *error = ParseError(QString::fromLocal8Bit(p.problem), -1, -1, int(p.problem_offset));
                         break;
                     case YAML_SCANNER_ERROR:
                     case YAML_PARSER_ERROR:
-                        *error = ParseError(p.problem, int(p.problem_mark.line), int(p.problem_mark.column), int(p.problem_mark.index));
+                        *error = ParseError(QString::fromLocal8Bit(p.problem), int(p.problem_mark.line), int(p.problem_mark.column), int(p.problem_mark.index));
                         break;
                     default:
                         break;

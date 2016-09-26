@@ -35,6 +35,7 @@
 
 #include "../error-checking.h"
 
+AM_USE_NAMESPACE
 
 class tst_PackageCreator : public QObject
 {
@@ -61,12 +62,13 @@ tst_PackageCreator::tst_PackageCreator()
 void tst_PackageCreator::initTestCase()
 {
     // check if tar command is available at all
-
     QProcess tar;
     tar.start(qSL("tar"), { qSL("--version") });
     m_tarAvailable = tar.waitForStarted(3000)
             && tar.waitForFinished(3000)
             && (tar.exitStatus() == QProcess::NormalExit);
+
+    QVERIFY(checkCorrectLocale());
 }
 
 void tst_PackageCreator::createAndVerify_data()
@@ -111,7 +113,7 @@ void tst_PackageCreator::createAndVerify()
         QSKIP("No tar command found in PATH - skipping the verification part of the test!");
 
     QProcess tar;
-    tar.start(qSL("tar"), { qSL("-taf"), output.fileName() });
+    tar.start(qSL("tar"), { qSL("-tzf"), output.fileName() });
     QVERIFY2(tar.waitForStarted(3000) &&
              tar.waitForFinished(3000) &&
              (tar.exitStatus() == QProcess::NormalExit) &&
@@ -130,7 +132,7 @@ void tst_PackageCreator::createAndVerify()
         QVERIFY2(src.open(QFile::ReadOnly), qPrintable(src.errorString()));
         QByteArray data = src.readAll();
 
-        tar.start(qSL("tar"), { qSL("-xaOf"), output.fileName(), file });
+        tar.start(qSL("tar"), { qSL("-xzOf"), output.fileName(), file });
         QVERIFY2(tar.waitForStarted(3000) &&
                  tar.waitForFinished(3000) &&
                  (tar.exitStatus() == QProcess::NormalExit) &&
@@ -140,6 +142,14 @@ void tst_PackageCreator::createAndVerify()
     }
 }
 
-QTEST_GUILESS_MAIN(tst_PackageCreator)
+int main(int argc, char *argv[])
+{
+    ensureCorrectLocale();
+    QCoreApplication app(argc, argv);
+    app.setAttribute(Qt::AA_Use96Dpi, true);
+    tst_PackageCreator tc;
+    QTEST_SET_MAIN_SOURCE_PATH
+    return QTest::qExec(&tc, argc, argv);
+}
 
 #include "tst_packagecreator.moc"

@@ -42,64 +42,48 @@
 #pragma once
 
 #include <QObject>
-#include <QNetworkReply>
-#include <QEventLoop>
 
-#include <archive.h>
+#include <QtAppManCommon/error.h>
 
-#include "packageextractor.h"
-#include "installationreport.h"
-#include "exception.h"
+QT_FORWARD_DECLARE_CLASS(QIODevice)
+QT_FORWARD_DECLARE_CLASS(QDir)
 
 AM_BEGIN_NAMESPACE
 
-class DigestFilter;
+class PackageCreatorPrivate;
+class InstallationReport;
 
-class PackageExtractorPrivate : public QObject
+
+class PackageCreator : public QObject
 {
     Q_OBJECT
 
 public:
-    PackageExtractorPrivate(PackageExtractor *extractor, const QUrl &downloadUrl);
+    PackageCreator(const QDir &sourceDir, QIODevice *output, const InstallationReport &report, QObject *parent = 0);
 
-    Q_INVOKABLE void extract();
+    QDir sourceDirectory() const;
+    void setSourceDirectory(const QDir &sourceDir);
 
-    void download(const QUrl &url);
+    bool create();
 
-private slots:
-    void networkError(QNetworkReply::NetworkError);
-    void handleRedirect();
-    void downloadProgressChanged(qint64 downloaded, qint64 total);
+    QByteArray createdDigest() const;
+
+    bool hasFailed() const;
+    bool wasCanceled() const;
+
+    Error errorCode() const;
+    QString errorString() const;
+
+public slots:
+    void cancel();
+
+signals:
+    void progress(qreal progress);
 
 private:
-    void setError(Error errorCode, const QString &errorString);
-    qint64 readTar(struct archive *ar, const void **archiveBuffer);
-    void processMetaData(const QByteArray &metadata, DigestFilter &digest, bool isHeader) throw(Exception);
+    PackageCreatorPrivate *d;
 
-private:
-    PackageExtractor *q;
-
-    QUrl m_url;
-    QString m_destinationPath;
-    std::function<void(const QString &)> m_fileExtractedCallback;
-    bool m_failed = false;
-    QAtomicInt m_canceled;
-    Error m_errorCode = Error::None;
-    QString m_errorString;
-
-    QEventLoop m_loop;
-    QNetworkAccessManager *m_nam;
-    QNetworkReply *m_reply = 0;
-    bool m_downloadingFromFIFO = false;
-    QByteArray m_buffer;
-    InstallationReport m_report;
-
-    qint64 m_downloadTotal = 0;
-    qint64 m_bytesReadTotal = 0;
-    qint64 m_lastProgress = 0;
-
-    friend class PackageExtractor;
+    friend class PackageCreatorPrivate;
 };
 
 AM_END_NAMESPACE
-

@@ -1,12 +1,14 @@
-
 TEMPLATE = app
 TARGET   = appman-launcher-qml
-DESTDIR  = $$BUILD_DIR/bin
 
 load(am-config)
 
 QT = qml dbus core-private
 !headless:QT += quick gui gui-private quick-private
+QT *= \
+    appman_common-private \
+    appman_application-private \
+    appman_notification-private \
 
 SOURCES += \
     main.cpp \
@@ -25,10 +27,4 @@ HEADERS += \
 !headless:HEADERS += \
     applicationmanagerwindow.h \
 
-load(add-static-library)
-addStaticLibrary(../../common-lib)
-addStaticLibrary(../../manager-lib)
-addStaticLibrary(../../notification-lib)
-
-target.path = $$INSTALL_PREFIX/bin/
-INSTALLS += target
+load(qt_tool)

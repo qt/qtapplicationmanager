@@ -31,6 +31,10 @@
 [ "${LANG%%.UTF-8}" = "$LANG" ] && ( echo "The application-packager needs to be run with UTF-8 locale variant"; exit 1; )
 [ ! -d certificates ] && ( echo "Please cd to the tests/data directory before running this script"; exit 1; )
 
+# having $LC_ALL set to "C" will screw us big time - especially since QtCreator sets this
+# unconditionally in the build environment, overriding a potentially valid $LANG setting.
+[ "$LC_ALL" = "C" ] && { echo "WARNING: unsetting \$LC_ALL, since it is set to \"C\" (most likely by a wrapper script or QtCreator)"; unset LC_ALL; }
+
 . utilities.sh
 
 usage()

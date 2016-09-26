@@ -39,32 +39,8 @@
 **
 ****************************************************************************/
 
-#pragma once
+#include "containerinterface.h"
 
-#include <QStringList>
+ContainerInterface::~ContainerInterface() { }
 
-#include "exception.h"
-
-AM_BEGIN_NAMESPACE
-
-class Application;
-
-class ApplicationScanner
-{
-public:
-    virtual ~ApplicationScanner() = default;
-
-    virtual Application *scan(const QString &filePath) throw (Exception) = 0;
-    virtual Application *scanAlias(const QString &filePath, const Application *application) throw (Exception) = 0;
-
-    virtual QString metaDataFileName() const = 0;
-
-protected:
-    ApplicationScanner() = default;
-    static bool validate(const Application *app, QString *error = 0);
-
-private:
-    Q_DISABLE_COPY(ApplicationScanner)
-};
-
-AM_END_NAMESPACE
+ContainerManagerInterface::~ContainerManagerInterface() { }

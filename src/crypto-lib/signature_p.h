@@ -42,7 +42,7 @@
 #pragma once
 
 #include "signature.h"
-#include "exception.h"
+#include <QtAppManCommon/exception.h>
 
 AM_BEGIN_NAMESPACE
 

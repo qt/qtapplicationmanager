@@ -44,7 +44,7 @@
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 

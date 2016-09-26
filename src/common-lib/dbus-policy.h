@@ -41,53 +41,30 @@
 
 #pragma once
 
-#include <QObject>
-
+#include <QtAppManCommon/global.h>
 #include <functional>
 
-#include "error.h"
-
-QT_FORWARD_DECLARE_CLASS(QUrl)
-QT_FORWARD_DECLARE_CLASS(QDir)
+#if defined(QT_DBUS_LIB)
+QT_FORWARD_DECLARE_CLASS(QDBusContext)
+#else
+typedef QObject QDBusContext; // evil hack :)
+#endif
 
 AM_BEGIN_NAMESPACE
 
-class PackageExtractorPrivate;
-class InstallationReport;
-
-
-class PackageExtractor : public QObject
+struct DBusPolicy
 {
-    Q_OBJECT
-
-public:
-    PackageExtractor(const QUrl &downloadUrl, const QDir &destinationDir, QObject *parent = 0);
-
-    QDir destinationDirectory() const;
-    void setDestinationDirectory(const QDir &destinationDir);
-
-    void setFileExtractedCallback(const std::function<void(const QString &)> &callback);
-
-    bool extract();
-
-    const InstallationReport &installationReport() const;
-
-    bool hasFailed() const;
-    bool wasCanceled() const;
-
-    Error errorCode() const;
-    QString errorString() const;
-
-public slots:
-    void cancel();
-
-signals:
-    void progress(qreal progress);
-
-private:
-    PackageExtractorPrivate *d;
-
-    friend class PackageExtractorPrivate;
+    QList<uint> m_uids;
+    QStringList m_executables;
+    QStringList m_capabilities;
 };
 
+class Application;
+
+QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment);
+
+bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy,
+                     const QByteArray &function, const std::function<QStringList(qint64)> &pidToCapabilities);
+
 AM_END_NAMESPACE
+

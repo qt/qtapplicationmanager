@@ -31,6 +31,8 @@
 
 #include "cryptography.h"
 
+AM_USE_NAMESPACE
+
 class tst_Cryptography : public QObject
 {
     Q_OBJECT

@@ -1,11 +1,8 @@
-
 TARGET = tst_signature
 
-include(../tests.pri)
+include($$PWD/../tests.pri)
 
-load(add-static-library)
-addStaticLibrary(../../src/common-lib)
-addStaticLibrary(../../src/crypto-lib)
+QT *= appman_common-private appman_crypto-private
 
 SOURCES += tst_signature.cpp
 

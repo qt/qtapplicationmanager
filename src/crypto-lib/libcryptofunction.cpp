@@ -83,10 +83,10 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
     // dirty work.
     QSslSocket::supportsSsl();
 
-    s_library = new QLibrary(libname, 1);
+    s_library = new QLibrary(QString::fromLatin1(libname), 1);
     bool ok = s_library->load();
     if (!ok) {
-        s_library->setFileNameAndVersion(libname, QString());
+        s_library->setFileNameAndVersion(QString::fromLatin1(libname), QString());
         ok = s_library->load();
     }
     if (ok) {

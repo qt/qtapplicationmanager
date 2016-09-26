@@ -456,7 +456,7 @@ QVariantMap SystemMonitor::get(int row) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.cbegin(); it != roles.cend(); ++it)
-        map.insert(it.value(), data(index(row), it.key()));
+        map.insert(qL1S(it.value()), data(index(row), it.key()));
     return map;
 }
 

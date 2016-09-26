@@ -43,7 +43,7 @@
 
 #include <qglobal.h>
 #include <utility>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QLibrary)
 

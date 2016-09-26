@@ -413,7 +413,7 @@ QVariantMap NotificationManager::get(int index) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(it.value(), data(QAbstractListModel::index(index), it.key()));
+        map.insert(qL1S(it.value()), data(QAbstractListModel::index(index), it.key()));
     return map;
 }
 
@@ -607,14 +607,10 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
             // we could do better here and actually find out which fields changed...
             emit notificationChanged(n->id, QStringList());
         }
-
-        emit notificationUpdate(idx.row()); // deprecated
     } else {
         d->notifications << n;
         endInsertRows();
         emit notificationAdded(n->id);
-
-        emit notificationUpdate(rowCount()-1); // deprecated
     }
 
     if (timeout > 0) {

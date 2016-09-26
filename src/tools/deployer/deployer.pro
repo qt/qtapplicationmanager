@@ -1,10 +1,7 @@
-
-TEMPLATE = subdirs
-
-load(am-config)
+TEMPLATE = aux
 
 deployer.files = appman-deployer
-deployer.path = $$INSTALL_PREFIX/bin/
+deployer.path = $$[QT_HOST_BINS]
 
 INSTALLS = deployer
 

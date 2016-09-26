@@ -41,22 +41,53 @@
 
 #pragma once
 
-#include "applicationscanner.h"
+#include <QObject>
+
+#include <functional>
+
+#include <QtAppManCommon/error.h>
+
+QT_FORWARD_DECLARE_CLASS(QUrl)
+QT_FORWARD_DECLARE_CLASS(QDir)
 
 AM_BEGIN_NAMESPACE
 
-class YamlApplicationScanner : public ApplicationScanner
+class PackageExtractorPrivate;
+class InstallationReport;
+
+
+class PackageExtractor : public QObject
 {
+    Q_OBJECT
+
 public:
-    YamlApplicationScanner();
+    PackageExtractor(const QUrl &downloadUrl, const QDir &destinationDir, QObject *parent = 0);
 
-    Application *scan(const QString &filePath) throw (Exception) override;
-    Application *scanAlias(const QString &filePath, const Application *application) throw (Exception) override;
+    QDir destinationDirectory() const;
+    void setDestinationDirectory(const QDir &destinationDir);
 
-    QString metaDataFileName() const override;
+    void setFileExtractedCallback(const std::function<void(const QString &)> &callback);
+
+    bool extract();
+
+    const InstallationReport &installationReport() const;
+
+    bool hasFailed() const;
+    bool wasCanceled() const;
+
+    Error errorCode() const;
+    QString errorString() const;
+
+public slots:
+    void cancel();
+
+signals:
+    void progress(qreal progress);
 
 private:
-    Application *scanInternal(const QString &filePath, bool scanAlias, const Application *application) throw (Exception);
+    PackageExtractorPrivate *d;
+
+    friend class PackageExtractorPrivate;
 };
 
 AM_END_NAMESPACE

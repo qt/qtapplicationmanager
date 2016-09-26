@@ -37,7 +37,12 @@
 #include "utilities.h"
 #include "packager.h"
 #include "applicationinstaller.h"
+#include "qmlinprocessruntime.h"
+#include "runtimefactory.h"
 
+#include "../error-checking.h"
+
+AM_USE_NAMESPACE
 
 class tst_PackagerTool : public QObject
 {
@@ -113,6 +118,8 @@ void tst_PackagerTool::initTestCase()
     m_devCertificate = qL1S(AM_TESTDATA_DIR "certificates/dev1.p12");
     m_storePassword = qSL("password");
     m_storeCertificate = qL1S(AM_TESTDATA_DIR "certificates/store.p12");
+
+    RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager(qSL("qml")));
 }
 
 
@@ -257,10 +264,10 @@ void tst_PackagerTool::brokenMetadata_data()
     QTest::addColumn<QVariant>("yamlValue");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("missing-name")       << "name"    << QVariant("") << "the 'name' field must not be empty";
-    QTest::newRow("missing-runtime")    << "runtime" << QVariant("") << "the 'runtimeName' field must not be empty";
-    QTest::newRow("missing-identifier") << "id"      << QVariant("") << "the identifier () is not a valid reverse-DNS name: the minimum amount of parts (subdomains) is 3 (found 1)";
-    QTest::newRow("missing-code")       << "code"    << QVariant("") << "the 'code' field must not be empty";
+    QTest::newRow("missing-name")       << "name"    << QVariant("") << "~.*the 'name' field must not be empty";
+    QTest::newRow("missing-runtime")    << "runtime" << QVariant("") << "~.*the 'runtimeName' field must not be empty";
+    QTest::newRow("missing-identifier") << "id"      << QVariant("") << "~.*the identifier \\(\\) is not a valid reverse-DNS name: the minimum amount of parts \\(subdomains\\) is 3 \\(found 1\\)";
+    QTest::newRow("missing-code")       << "code"    << QVariant("") << "~.*the 'code' field must not be empty";
 }
 
 void tst_PackagerTool::brokenMetadata()
@@ -279,7 +286,7 @@ void tst_PackagerTool::brokenMetadata()
 
     QString error;
     QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), error));
-    QCOMPARE(error, errorString);
+    AM_CHECK_ERRORSTRING(error, errorString);
 }
 
 bool tst_PackagerTool::createInfoYaml(TemporaryDir &tmp, const QString &changeField, const QVariant &toValue)

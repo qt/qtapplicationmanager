@@ -45,7 +45,7 @@
 #include <QUrl>
 #include <QVariantMap>
 #include <QQmlParserStatus>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 

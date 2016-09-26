@@ -46,10 +46,11 @@
 #include <QVariant>
 #include <QStringList>
 #include <QDir>
+#include <QObject>
 
-#include "global.h"
-#include "installationreport.h"
-#include "exception.h"
+#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/exception.h>
+#include <QtAppManApplication/installationreport.h>
 
 AM_BEGIN_NAMESPACE
 
@@ -58,7 +59,7 @@ class ApplicationManager;
 class JsonApplicationScanner;
 class InstallationReport;
 
-class AM_EXPORT Application : public QObject
+class Application : public QObject
 {
     Q_OBJECT
 

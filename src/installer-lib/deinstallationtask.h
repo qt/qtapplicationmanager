@@ -41,7 +41,7 @@
 
 #pragma once
 
-#include "asynchronoustask.h"
+#include <QtAppManInstaller/asynchronoustask.h>
 
 AM_BEGIN_NAMESPACE
 

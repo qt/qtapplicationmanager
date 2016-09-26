@@ -163,7 +163,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
 
     int socketFds[2];
     if (EINTR_LOOP(socketpair(AF_UNIX, SOCK_DGRAM, 0, socketFds)) != 0) {
-        *errorString = QString::fromLatin1("could not create a pair of sockets: %1").arg(qPrintable(strerror(errno)));
+        *errorString = QString::fromLatin1("could not create a pair of sockets: %1").arg(QString::fromLocal8Bit(strerror(errno)));
         return false;
     }
 
@@ -253,7 +253,9 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
     ::atexit([]() { SudoClient::instance()->stopServer(); });
 
     return true;
-#endif // Q_OS_LINUX
+#else // Q_OS_LINUX
+    return false;
+#endif
 }
 
 SudoInterface::SudoInterface()
@@ -521,7 +523,7 @@ QString SudoServer::attachLoopback(const QString &imagePath, bool readonly)
                 if (errno == EACCES)
                     continue; // race condition - retry
                 else
-                    throw Exception(Error::IO, "could not open loop device %1: %2").arg(loopDev).arg(strerror(errno));
+                    throw Exception(Error::IO, "could not open loop device %1: %2").arg(loopDev).arg(QString::fromLocal8Bit(strerror(errno)));
             }
 
             struct loop_info64 loopInfo;
@@ -534,7 +536,7 @@ QString SudoServer::attachLoopback(const QString &imagePath, bool readonly)
                 break; // found a free one
             } else {
                 throw Exception(Error::IO, "could not call LOOP_GET_STATUS64 on loop device: %1")
-                        .arg(strerror(errno));
+                        .arg(QString::fromLocal8Bit(strerror(errno)));
             }
         }
 
@@ -543,10 +545,10 @@ QString SudoServer::attachLoopback(const QString &imagePath, bool readonly)
 
         imageFd = EINTR_LOOP(open(imagePath.toLocal8Bit(), readonly ? O_RDONLY : O_RDWR));
         if (imageFd < 0)
-            throw Exception(Error::IO, "could not open image file %1: %2").arg(imagePath).arg(strerror(errno));
+            throw Exception(Error::IO, "could not open image file %1: %2").arg(imagePath).arg(QString::fromLocal8Bit(strerror(errno)));
 
         if (EINTR_LOOP(ioctl(loopFd, LOOP_SET_FD, imageFd)) < 0)
-            throw Exception(Error::IO, "could not attach the image %1 to the loop device %2: %3").arg(imagePath).arg(loopDev).arg(strerror(errno));
+            throw Exception(Error::IO, "could not attach the image %1 to the loop device %2: %3").arg(imagePath).arg(loopDev).arg(QString::fromLocal8Bit(strerror(errno)));
 
     } catch (const Exception &e) {
         m_errorString = e.errorString();
@@ -580,7 +582,7 @@ bool SudoServer::detachLoopback(const QString &loopDev)
         }
 
         if ((loopFd = EINTR_LOOP(open(loopDev.toLocal8Bit(), O_RDWR))) < 0)
-            throw Exception(Error::IO, "could not open loop device %1: %2").arg(loopDev).arg(strerror(errno));
+            throw Exception(Error::IO, "could not open loop device %1: %2").arg(loopDev).arg(QString::fromLocal8Bit(strerror(errno)));
 
         int clearErrno = 0;
         for (int tries = 0; tries < 100; ++tries) {
@@ -598,7 +600,7 @@ bool SudoServer::detachLoopback(const QString &loopDev)
         EINTR_LOOP(ioctl(m_loopControl, LOOP_CTL_REMOVE, loopId));
 #endif
         if (clearErrno)
-            throw Exception(Error::IO, "could not clear loop device %1: %2").arg(loopDev).arg(strerror(clearErrno));
+            throw Exception(Error::IO, "could not clear loop device %1: %2").arg(loopDev).arg(QString::fromLocal8Bit(strerror(clearErrno)));
 
         result = true;
     } catch (const Exception &e) {
@@ -630,7 +632,7 @@ bool SudoServer::mount(const QString &device, const QString &mountPoint, bool re
                     mountPoint.toLocal8Bit(),
                     fstype.toLocal8Bit(),
                     options, nullptr) < 0) {
-            throw Exception(Error::IO, "could not mount device %1 to %2: %3").arg(device).arg(mountPoint).arg(strerror(errno));
+            throw Exception(Error::IO, "could not mount device %1 to %2: %3").arg(device).arg(mountPoint).arg(QString::fromLocal8Bit(strerror(errno)));
         }
         return true;
 
@@ -656,7 +658,7 @@ bool SudoServer::unmount(const QString &mountPoint, bool force)
             throw Exception(Error::IO, "mount point %1 does not exist").arg(mountPoint);
 
         if (umount2(mountPoint.toLocal8Bit(), options) < 0)
-            throw Exception(Error::IO, "could not un-mount %1: %2").arg(mountPoint).arg(strerror(errno));
+            throw Exception(Error::IO, "could not un-mount %1: %2").arg(mountPoint).arg(QString::fromLocal8Bit(strerror(errno)));
 
         return true;
     } catch (const Exception &e) {

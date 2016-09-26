@@ -41,26 +41,55 @@
 
 #pragma once
 
-#include "global.h"
+#include <QString>
+#include <QStringList>
+#include <QByteArray>
+#include <QtAppManCommon/global.h>
 
-#if defined(QT_DBUS_LIB)
-QT_FORWARD_DECLARE_CLASS(QDBusContext)
-#else
-typedef QObject QDBusContext; // evil hack :)
-#endif
+QT_FORWARD_DECLARE_CLASS(QIODevice)
 
 AM_BEGIN_NAMESPACE
 
-struct DBusPolicy
+class InstallationReport
 {
-    QList<uint> m_uids;
-    QStringList m_executables;
-    QStringList m_capabilities;
+public:
+    InstallationReport(const QString &applicationId = QString());
+
+    QString applicationId() const;
+    void setApplicationId(const QString &applicationId);
+
+    QString installationLocationId() const;
+    void setInstallationLocationId(const QString &installationLocationId);
+
+    QByteArray digest() const;
+    void setDigest(const QByteArray &sha1);
+
+    quint64 diskSpaceUsed() const;
+    void setDiskSpaceUsed(quint64 diskSpaceUsed);
+
+    QByteArray developerSignature() const;
+    void setDeveloperSignature(const QByteArray &developerSignature);
+
+    QByteArray storeSignature() const;
+    void setStoreSignature(const QByteArray &storeSignature);
+
+    QStringList files() const;
+    void addFile(const QString &file);
+    void addFiles(const QStringList &files);
+
+    bool isValid() const;
+
+    bool deserialize(QIODevice *from);
+    bool serialize(QIODevice *to) const;
+
+private:
+    QString m_applicationId;
+    QString m_installationLocationId;
+    QByteArray m_digest;
+    quint64 m_diskSpaceUsed = 0;
+    QStringList m_files;
+    QByteArray m_developerSignature;
+    QByteArray m_storeSignature;
 };
 
-QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment);
-
-bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy, const QByteArray &function);
-
 AM_END_NAMESPACE
-

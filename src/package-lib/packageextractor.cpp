@@ -86,7 +86,7 @@ QDir PackageExtractor::destinationDirectory() const
 
 void PackageExtractor::setDestinationDirectory(const QDir &destinationDir)
 {
-    d->m_destinationPath = destinationDir.absolutePath() + QLatin1Char('/');
+    d->m_destinationPath = destinationDir.absolutePath() + qL1C('/');
 }
 
 void PackageExtractor::setFileExtractedCallback(const std::function<void(const QString &)> &callback)
@@ -305,25 +305,25 @@ void PackageExtractorPrivate::extract()
 
             switch (packageEntryType) {
             case PackageEntry_Dir:
-                if (!entryPath.endsWith('/'))
+                if (!entryPath.endsWith(qL1C('/')))
                     throw Exception(Error::Package, "invalid archive entry '%1': directory name is missing '/' at the end").arg(entryPath);
                 entryPath.chop(1);
                 // no break;
             case PackageEntry_File: {
                 // get the directory, where the new entry will be created
-                QDir entryDir(QString(m_destinationPath + entryPath).section('/', 0, -2));
+                QDir entryDir(QString(m_destinationPath + entryPath).section(qL1C('/'), 0, -2));
                 if (!entryDir.exists())
                     throw Exception(Error::Package, "invalid archive entry '%1': parent directory is missing").arg(entryPath);
 
-                QString entryCanonicalPath = entryDir.canonicalPath() + '/';
-                QString baseCanonicalPath = QDir(m_destinationPath).canonicalPath() + '/';
+                QString entryCanonicalPath = entryDir.canonicalPath() + qL1C('/');
+                QString baseCanonicalPath = QDir(m_destinationPath).canonicalPath() + qL1C('/');
 
                 // security check: make sure that entryCanonicalPath is NOT outside of baseCanonicalPath
                 if (!entryCanonicalPath.startsWith(baseCanonicalPath))
                     throw Exception(Error::Package, "invalid archive entry '%1': pointing outside of extraction directory").arg(entryPath);
 
                 if (packageEntryType == PackageEntry_Dir) {
-                    QString entryName = entryPath.section('/', -1, -1);
+                    QString entryName = entryPath.section(qL1C('/'), -1, -1);
 
                     if ((entryName != qL1S(".")) && !entryDir.mkdir(entryName))
                         throw Exception(Error::IO, "could not create directory '%1'").arg(entryDir.filePath(entryName));

@@ -42,14 +42,14 @@
 #pragma once
 
 #include <QByteArray>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 
 class SysFsReader
 {
 public:
-    SysFsReader(const char *path, int maxRead = 2048);
+    SysFsReader(const QByteArray &path, int maxRead = 2048);
     ~SysFsReader();
     bool isOpen() const;
     QByteArray fileName() const;

@@ -1,17 +1,12 @@
-
-TEMPLATE = lib
-TARGET = crypto-lib
+TARGET = QtAppManCrypto
+MODULE = appman_crypto
 
 load(am-config)
 
-CONFIG *= static create_prl
-
 QT = core
+QT_FOR_PRIVATE *= appman_common-private
 
-DEFINES *= AM_BUILD_APPMAN
-
-load(add-static-library)
-addStaticLibrary(../common-lib)
+CONFIG *= static internal_module
 
 SOURCES += \
     cryptography.cpp \
@@ -54,3 +49,5 @@ win32:!force-libcrypto {
 
     QT *= network
 }
+
+load(qt_module)

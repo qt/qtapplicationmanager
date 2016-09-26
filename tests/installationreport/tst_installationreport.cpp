@@ -33,6 +33,7 @@
 #include "digestfilter.h"
 #include "installationreport.h"
 
+AM_USE_NAMESPACE
 
 class tst_InstallationReport : public QObject
 {

@@ -49,10 +49,13 @@
 
 #if defined(Q_OS_WIN)
 #  include <windows.h>
+#  include <io.h>
 #elif defined(Q_OS_OSX)
 #  include <unistd.h>
 #  include <sys/mount.h>
 #  include <sys/statvfs.h>
+#  include <sys/sysctl.h>
+#  include <libproc.h>
 #else
 #  include <unistd.h>
 #  include <stdio.h>
@@ -65,9 +68,81 @@
 #    include <sys/statvfs.h>
 #  endif
 #  include <qplatformdefs.h>
+
+// the process environment from the C library
+extern char **environ;
 #endif
 
 AM_BEGIN_NAMESPACE
+
+bool ensureCorrectLocale()
+{
+    // We need to make sure we are running in a Unicode locale, since we are
+    // running into problems when unpacking packages with libarchive that
+    // contain non-ASCII characters.
+    // This has to be done *before* the QApplication constructor to avoid
+    // the initialization of the text codecs.
+
+#if defined(Q_OS_WIN) || defined(Q_OS_OSX)
+    // Windows is UTF16
+    // Mac is UTF8
+    return true;
+#else
+
+    // check if umlaut-a converts correctly
+    auto checkUtf = []() -> bool {
+        const wchar_t umlaut_w[2] = { 0x00e4, 0x0000 };
+        char umlaut_mb[2];
+        int umlaut_mb_len = wcstombs(umlaut_mb, umlaut_w, sizeof(umlaut_mb));
+
+        return (umlaut_mb_len == 2 && umlaut_mb[0] == '\xc3' && umlaut_mb[1] == '\xa4');
+    };
+
+    // init locales from env variables
+    setlocale(LC_ALL, "");
+
+    // check if this is enough to have an UTF-8 locale
+    if (checkUtf())
+        return true;
+
+    // LC_ALL trumps all the rest, so if this is not specifying an UTF-8 locale, we need to unset it
+    QByteArray lc_all = qgetenv("LC_ALL");
+    if (!lc_all.isEmpty() && !(lc_all.endsWith(".UTF-8") || lc_all.endsWith(".UTF_8"))) {
+        unsetenv("LC_ALL");
+        setlocale(LC_ALL, "");
+    }
+
+    // check again
+    if (checkUtf())
+        return true;
+
+    // now the time-consuming part: trying to switch to a well-known UTF-8 locale
+    const char *locales[] = { "C.UTF-8", "en_US.UTF-8" };
+    for (const char **loc = locales; *loc; ++loc) {
+        if (const char *old = setlocale(LC_CTYPE, *loc)) {
+            if (checkUtf()) {
+                if (setenv("LC_CTYPE", *loc, 1) == 0)
+                    return true;
+            }
+            setlocale(LC_CTYPE, old);
+        }
+    }
+
+    return false;
+#endif
+}
+
+bool checkCorrectLocale()
+{
+    // see ensureCorrectLocale() above. Call this after the QApplication
+    // constructor as a sanity check.
+#if defined(Q_OS_WIN) || defined(Q_OS_OSX)
+    return true;
+#else
+    // check if umlaut-a converts correctly
+    return QString::fromUtf8("\xc3\xa4").toLocal8Bit() == "\xc3\xa4";
+#endif
+}
 
 bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree)
 {
@@ -126,11 +201,11 @@ QMultiMap<QString, QString> mountedDirectories()
                            QString::fromLocal8Bit(mntPtr->mnt_fsname));
     }
 #  else
-    int pathMax = pathconf("/", _PC_PATH_MAX);
-    char strBuf[1024 + 2 * pathMax]; // quite big, but better be safe than sorry
+    int pathMax = pathconf("/", _PC_PATH_MAX) * 2 + 1024;  // quite big, but better be safe than sorry
+    QScopedArrayPointer<char> strBuf(new char[pathMax]);
     struct mntent mntBuf;
 
-    while (getmntent_r(pm, &mntBuf, strBuf, sizeof(strBuf))) {
+    while (getmntent_r(pm, &mntBuf, strBuf.data(), pathMax - 1)) {
         result.insertMulti(QString::fromLocal8Bit(mntBuf.mnt_dir),
                            QString::fromLocal8Bit(mntBuf.mnt_fsname));
     }
@@ -623,19 +698,29 @@ bool canOutputAnsiColors(int fd)
     if (::isatty(fd)) {
         return true;
     }
-#  if defined(Q_OS_LINUX)
+#  if defined(Q_OS_LINUX) || defined(Q_OS_OSX)
     else {
         static int isCreator = -1;
         if (isCreator < 0) {
             isCreator = 0;
-            static QString checkCreator = qSL("/proc/%1/exe");
             qint64 pid = getppid();
+
             while (pid > 1) {
+#if defined(Q_OS_LINUX)
+                static QString checkCreator = qSL("/proc/%1/exe");
                 QFileInfo fi(checkCreator.arg(pid));
                 if (fi.readLink().contains(qSL("qtcreator"))) {
                     isCreator = 1;
                     break;
                 }
+#else
+                static char buffer[PROC_PIDPATHINFO_MAXSIZE + 1];
+                int len = proc_pidpath(pid, buffer, sizeof(buffer) - 1);
+                if ((len > 0) && QByteArray::fromRawData(buffer, len).contains("Qt Creator")) {
+                    isCreator = 1;
+                    break;
+                }
+#endif
                 pid = getParentPid(pid);
             }
         }
@@ -643,6 +728,19 @@ bool canOutputAnsiColors(int fd)
             return true;
     }
 #  endif
+#elif defined(Q_OS_WIN)
+    if (QSysInfo::windowsVersion() >= QSysInfo::WV_10_0) {
+        // enable ANSI mode on Windows 10
+        HANDLE h = (HANDLE) _get_osfhandle(fd);
+        if (h != INVALID_HANDLE_VALUE) {
+            DWORD mode = 0;
+            if (GetConsoleMode(h, &mode)) {
+                mode |= 0x04;
+                if (SetConsoleMode(h, mode))
+                    return true;
+            }
+        }
+    }
 #endif
     return false;
 }
@@ -650,6 +748,8 @@ bool canOutputAnsiColors(int fd)
 
 qint64 getParentPid(qint64 pid)
 {
+    qint64 ppid = 0;
+
 #if defined(Q_OS_LINUX)
     static QString proc = qSL("/proc/%1/stat");
     QFile f(proc.arg(pid));
@@ -658,13 +758,26 @@ qint64 getParentPid(qint64 pid)
         QByteArray ba = f.read(512);
         // the binary name could contain ')' and/or ' ' and the kernel escapes neither...
         int pos = ba.lastIndexOf(')');
-        if (pos > 0 && ba.length() > (pos + 5)) {
-            qint64 ppid = strtoll(ba.constData() + pos + 4, nullptr, 10);
-            return ppid;
-        }
+        if (pos > 0 && ba.length() > (pos + 5))
+            ppid = strtoll(ba.constData() + pos + 4, nullptr, 10);
     }
+
+#elif defined(Q_OS_OSX)
+    int mibNames[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, (pid_t) pid };
+    size_t procInfoSize;
+
+    if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), 0, &procInfoSize, 0, 0) == 0) {
+        kinfo_proc *procInfo = (kinfo_proc *) malloc(procInfoSize);
+
+        if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), procInfo, &procInfoSize, 0, 0) == 0)
+            ppid = procInfo->kp_eproc.e_ppid;
+        free(procInfo);
+    }
+
+#else
+    Q_UNUSED(pid)
 #endif
-    return 0;
+    return ppid;
 }
 
 AM_END_NAMESPACE

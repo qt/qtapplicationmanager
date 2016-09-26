@@ -1,12 +1,16 @@
 requires(linux)
 
-TEMPLATE = lib
-TARGET = backtrace
+TARGET = qtbacktrace
 
 load(am-config)
 
-CONFIG -= qt
-CONFIG += staticlib create_prl
+CONFIG += \
+    static \
+    hide_symbols \
+    exceptions_off rtti_off warn_off \
+    installed
+
+load(qt_helper_lib)
 
 win32-msvc* {
     QMAKE_CFLAGS += /D_CRT_SECURE_NO_WARNINGS

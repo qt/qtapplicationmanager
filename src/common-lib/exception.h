@@ -47,14 +47,14 @@
 #include <QScopedPointer>
 
 #include <exception>
-#include "error.h"
-#include "global.h"
+#include <QtAppManCommon/error.h>
+#include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QFile)
 
 AM_BEGIN_NAMESPACE
 
-class AM_EXPORT Exception : public std::exception
+class Exception : public std::exception
 {
 public:
     explicit Exception(Error errorCode, const char *errorString = 0);

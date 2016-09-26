@@ -203,7 +203,7 @@ public:
             int p = pss.at(pss.size() - 2).toInt() * 1000;
             t.pss = t.pss + p;
 
-            QString libName = header.at(header.size()-1);
+            QString libName = QString::fromLocal8Bit(header.at(header.size()-1));
 
             if (readLibraryList) {
                 if (!libName.isEmpty()) {
@@ -445,7 +445,7 @@ QVariantMap MemoryMonitor::get(int row) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.cbegin(); it != roles.cend(); ++it) {
-        map.insert(it.value(), data(index(row), it.key()));
+        map.insert(qL1S(it.value()), data(index(row), it.key()));
     }
 
     return map;

@@ -41,55 +41,30 @@
 
 #pragma once
 
-#include <QString>
-#include <QVariantMap>
+#include <QStringList>
 
-#include "exception.h"
+#include <QtAppManCommon/exception.h>
 
 AM_BEGIN_NAMESPACE
 
-class InstallationLocation
+class Application;
+
+class ApplicationScanner
 {
 public:
-    enum Type {
-        Invalid  = -1,
-        Internal,
-        Removable,
-    };
+    virtual ~ApplicationScanner() = default;
 
-    static const InstallationLocation invalid;
+    virtual Application *scan(const QString &filePath) throw (Exception) = 0;
+    virtual Application *scanAlias(const QString &filePath, const Application *application) throw (Exception) = 0;
 
-    bool operator==(const InstallationLocation &other) const;
-    inline bool operator!=(const InstallationLocation &other) const { return !((*this) == other); }
+    virtual QString metaDataFileName() const = 0;
 
-    QString id() const;
-    Type type() const;
-    int index() const;
-
-    QString installationPath() const;
-    QString documentPath() const;
-
-    bool isValid() const;
-    bool isDefault() const;
-    bool isRemovable() const;
-    bool isMounted() const;
-
-    QVariantMap toVariantMap() const;
-
-    QString mountPoint() const; // debug only / not exported to QVariantMap
-
-    static Type typeFromString(const QString &str);
-    static QString typeToString(Type type);
-
-    static QVector<InstallationLocation> parseInstallationLocations(const QVariantList &list) throw (Exception);
+protected:
+    ApplicationScanner() = default;
+    static bool validate(const Application *app, QString *error = 0);
 
 private:
-    Type m_type = Invalid;
-    int m_index = 0;
-    bool m_isDefault = false;
-    QString m_installationPath;
-    QString m_documentPath;
-    QString m_mountPoint;
+    Q_DISABLE_COPY(ApplicationScanner)
 };
 
 AM_END_NAMESPACE

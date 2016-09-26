@@ -43,7 +43,7 @@
 
 #include <QByteArray>
 #include <QString>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 

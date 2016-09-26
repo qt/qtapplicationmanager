@@ -1,7 +1,22 @@
 %modules = ( # path to module name map
+    "QtAppManCommon" => "$basedir/src/common-lib",
+    "QtAppManCrypto" => "$basedir/src/crypto-lib",
+    "QtAppManApplication" => "$basedir/src/application-lib",
+    "QtAppManPackage" => "$basedir/src/package-lib",
+    "QtAppManNotification" => "$basedir/src/notification-lib",
+    "QtAppManManager" => "$basedir/src/manager-lib",
+    "QtAppManInstaller" => "$basedir/src/installer-lib",
+    "QtAppManPluginInterfaces" => "$basedir/src/plugin-interfaces",
 );
 %moduleheaders = ( # restrict the module headers to those found in relative path
 );
+@allmoduleheadersprivate = ();
+#    "QtAppManCommon",
+#    "QtAppManCrypto",
+#    "QtAppManNotification",
+#    "QtAppManManager",
+#    "QtAppManInstaller",
+#);
 %classnames = (
 );
 %deprecatedheaders = (

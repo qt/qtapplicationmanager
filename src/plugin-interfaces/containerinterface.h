@@ -50,7 +50,7 @@ class ContainerInterface : public QObject
     Q_OBJECT
 
 public:
-    virtual ~ContainerInterface() { }
+    virtual ~ContainerInterface();
 
     virtual QString controlGroup() const = 0;
     virtual bool setControlGroup(const QString &groupName) = 0;
@@ -85,7 +85,7 @@ Q_SIGNALS:
 class ContainerManagerInterface
 {
 public:
-    virtual ~ContainerManagerInterface() { }
+    virtual ~ContainerManagerInterface();
 
     virtual QString identifier() = 0;
     virtual bool supportsQuickLaunch() const = 0;

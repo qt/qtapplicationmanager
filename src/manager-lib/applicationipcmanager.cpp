@@ -97,7 +97,6 @@ QObject *ApplicationIPCManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine 
     return instance();
 }
 
-
 ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
     : QObject(parent)
 { }

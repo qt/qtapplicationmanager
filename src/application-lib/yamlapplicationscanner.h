@@ -41,47 +41,22 @@
 
 #pragma once
 
-#include <QMutex>
-#include <QQueue>
-#include <QSet>
-#include <QThread>
-
-#include "applicationinstaller.h"
-#include "sudo.h"
-#include <QtAppManCommon/exception.h>
-#include "dbus-policy.h"
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplication/applicationscanner.h>
 
 AM_BEGIN_NAMESPACE
 
-bool removeRecursiveHelper(const QString &path);
-
-class ApplicationInstallerPrivate
+class YamlApplicationScanner : public ApplicationScanner
 {
 public:
-    bool developmentMode = false;
-    bool allowInstallationOfUnsignedPackages = false;
-    bool userIdSeparation = false;
-    uint minUserId = uint(-1);
-    uint maxUserId = uint(-1);
-    uint commonGroupId = uint(-1);
+    YamlApplicationScanner();
 
-    QDir manifestDir;
-    QDir imageMountDir;
-    QVector<InstallationLocation> installationLocations;
-    InstallationLocation invalidInstallationLocation;
+    Application *scan(const QString &filePath) throw (Exception) override;
+    Application *scanAlias(const QString &filePath, const Application *application) throw (Exception) override;
 
-    QString error;
+    QString metaDataFileName() const override;
 
-    QList<QByteArray> chainOfTrust;
-
-    QQueue<AsynchronousTask *> taskQueue;
-    AsynchronousTask *activeTask = nullptr;
-
-    QMutex activationLock;
-    QMap<QString, QString> activatedPackages; // id -> installationPath
-
-    QMap<QByteArray, DBusPolicy> dbusPolicy;
+private:
+    Application *scanInternal(const QString &filePath, bool scanAlias, const Application *application) throw (Exception);
 };
 
 AM_END_NAMESPACE

@@ -42,7 +42,7 @@
 #pragma once
 
 #include <QAbstractListModel>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)

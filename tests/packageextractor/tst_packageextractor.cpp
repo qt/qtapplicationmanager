@@ -33,6 +33,7 @@
 #if defined(Q_OS_UNIX)
 #  include <unistd.h>
 #  include <fcntl.h>
+#  include <errno.h>
 #endif
 
 #include "global.h"
@@ -42,6 +43,7 @@
 
 #include "../error-checking.h"
 
+AM_USE_NAMESPACE
 
 class tst_PackageExtractor : public QObject
 {
@@ -51,6 +53,7 @@ public:
     tst_PackageExtractor();
 
 private slots:
+    void initTestCase();
     void init();
     void cleanup();
 
@@ -66,10 +69,14 @@ private:
     QScopedPointer<TemporaryDir> m_extractDir;
 };
 
-
 tst_PackageExtractor::tst_PackageExtractor()
     : m_taest(QString::fromUtf8("t\xc3\xa4st"))
 { }
+
+void tst_PackageExtractor::initTestCase()
+{
+    QVERIFY(checkCorrectLocale());
+}
 
 void tst_PackageExtractor::init()
 {
@@ -286,6 +293,14 @@ void tst_PackageExtractor::extractFromFifo()
     QTRY_VERIFY(fifo.isFinished());
 }
 
-QTEST_GUILESS_MAIN(tst_PackageExtractor)
+int main(int argc, char *argv[])
+{
+    ensureCorrectLocale();
+    QCoreApplication app(argc, argv);
+    app.setAttribute(Qt::AA_Use96Dpi, true);
+    tst_PackageExtractor tc;
+    QTEST_SET_MAIN_SOURCE_PATH
+    return QTest::qExec(&tc, argc, argv);
+}
 
 #include "tst_packageextractor.moc"

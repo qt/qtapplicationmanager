@@ -46,11 +46,11 @@
 #include <QWaitCondition>
 #include <QMutex>
 
-#include "applicationinstaller.h"
-#include "installationreport.h"
-#include "asynchronoustask.h"
-#include "scopeutilities.h"
-#include "exception.h"
+#include <QtAppManInstaller/applicationinstaller.h>
+#include <QtAppManApplication/installationreport.h>
+#include <QtAppManInstaller/asynchronoustask.h>
+#include <QtAppManInstaller/scopeutilities.h>
+#include <QtAppManCommon/exception.h>
 
 AM_BEGIN_NAMESPACE
 

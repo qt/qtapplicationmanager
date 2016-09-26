@@ -40,9 +40,14 @@
 ****************************************************************************/
 
 #include <QDebug>
+#include <algorithm>
+#if defined(QT_DBUS_LIB)
+#  include <QDBusContext>
+#  include <QDBusConnection>
+#  include <QDBusConnectionInterface>
+#  include <QDBusMessage>
+#endif
 
-#include "applicationmanager.h"
-#include "application.h"
 #include "utilities.h"
 #include "dbus-policy.h"
 
@@ -64,7 +69,7 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
             if (ok)
                 dbp.m_uids << uid;
         }
-        qSort(dbp.m_uids);
+        std::sort(dbp.m_uids.begin(), dbp.m_uids.end());
         dbp.m_executables = variantToStringList(policy.value(qSL("executables")));
         dbp.m_executables.sort();
         dbp.m_capabilities = variantToStringList(policy.value(qSL("capabilities")));
@@ -79,12 +84,14 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
 }
 
 
-bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy, const QByteArray &function)
+bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy,
+                     const QByteArray &function, const std::function<QStringList(qint64)> &pidToCapabilities)
 {
 #if !defined(QT_DBUS_LIB) || defined(Q_OS_WIN)
     Q_UNUSED(dbusContext)
     Q_UNUSED(dbusPolicy)
     Q_UNUSED(function)
+    Q_UNUSED(pidToCapabilities)
     return true;
 #else
     if (!dbusContext->calledFromDBus())
@@ -97,17 +104,12 @@ bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBu
     try {
         uint pid = uint(-1);
 
-        if (!ip->m_capabilities.isEmpty()) {
+        if (!ip->m_capabilities.isEmpty() && pidToCapabilities) {
             pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
-            const Application *app = ApplicationManager::instance()->fromProcessId(pid);
-            if (!app)
-                throw "not an app with capabilities";
-            QStringList appCaps = app->capabilities();
+            QStringList appCaps = pidToCapabilities(pid);
             bool match = false;
-            foreach (const QString &cap, ip->m_capabilities) {
-                if (qBinaryFind(appCaps, cap) != appCaps.cend())
-                    match = true;
-            }
+            foreach (const QString &cap, ip->m_capabilities)
+                match = match && std::binary_search(appCaps.cbegin(), appCaps.cend(), cap);
             if (!match)
                 throw "insufficient capabilities";
         }
@@ -115,10 +117,10 @@ bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBu
 #  ifdef Q_OS_LINUX
             if (pid == uint(-1))
                 pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
-            QString executable = QFileInfo("/proc/" + QByteArray::number(pid) + "/exe").symLinkTarget();
+            QString executable = QFileInfo(qSL("/proc/") + QString::number(pid) + qSL("/exe")).symLinkTarget();
             if (executable.isEmpty())
                 throw "cannot get executable";
-            if (qBinaryFind(ip->m_executables, executable) == ip->m_executables.cend())
+            if (std::binary_search(ip->m_executables.cbegin(), ip->m_executables.cend(), executable))
                 throw "executable blocked";
 #  else
             throw false;
@@ -126,14 +128,14 @@ bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBu
         }
         if (!ip->m_uids.isEmpty()) {
             uint uid = dbusContext->connection().interface()->serviceUid(dbusContext->message().service());
-            if (qBinaryFind(ip->m_uids, uid) == ip->m_uids.cend())
+            if (std::binary_search(ip->m_uids.cbegin(), ip->m_uids.cend(), uid))
                 throw "uid blocked";
         }
 
         return true;
 
     } catch (const char *msg) {
-        dbusContext->sendErrorReply(QDBusError::AccessDenied, QString::fromLatin1("Protected function call (%1)").arg(msg));
+        dbusContext->sendErrorReply(QDBusError::AccessDenied, QString::fromLatin1("Protected function call (%1)").arg(qL1S(msg)));
         return false;
     }
 #endif

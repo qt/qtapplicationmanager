@@ -45,7 +45,7 @@
 #include <QPair>
 #include <QElapsedTimer>
 #include <QObject>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 #if defined(Q_OS_LINUX)
 #  include <QScopedPointer>

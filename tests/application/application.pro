@@ -1,10 +1,10 @@
-
 TARGET = tst_application
 
-include(../tests.pri)
+include($$PWD/../tests.pri)
 
-load(add-static-library)
-addStaticLibrary(../../src/common-lib)
-addStaticLibrary(../../src/manager-lib)
+QT *= \
+    appman_common-private \
+    appman_application-private \
+    appman_manager-private \
 
 SOURCES += tst_application.cpp

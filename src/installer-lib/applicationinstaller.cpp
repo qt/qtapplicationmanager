@@ -44,7 +44,6 @@
 #include <QUuid>
 
 #include "application.h"
-#include "applicationmanager.h"
 #include "applicationinstaller.h"
 #include "applicationinstaller_p.h"
 #include "installationtask.h"
@@ -53,13 +52,13 @@
 #include "utilities.h"
 #include "exception.h"
 #include "global.h"
-#include "applicationmanager.h"
 #include "qml-utilities.h"
+#include "applicationmanager.h"
 
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
     do { \
-        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__)) \
+        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__, [](qint64 pid) -> QStringList { return ApplicationManager::instance()->capabilities(ApplicationManager::instance()->identifyApplication(pid)); })) \
             return RETURN_TYPE(); \
     } while (false);
 
@@ -408,12 +407,12 @@ void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
                 QStringList checkFiles;
 
                 checkDirs << manifestDirectory().absoluteFilePath(app->id());
-                checkFiles << manifestDirectory().absoluteFilePath(app->id()) + "/info.yaml";
-                checkFiles << manifestDirectory().absoluteFilePath(app->id()) + "/installation-report.yaml";
+                checkFiles << manifestDirectory().absoluteFilePath(app->id()) + qSL("/info.yaml");
+                checkFiles << manifestDirectory().absoluteFilePath(app->id()) + qSL("/installation-report.yaml");
                 checkDirs << il.documentPath() + app->id();
 
                 if (il.isRemovable())
-                    checkFiles << il.installationPath() + app->id() + ".appimg";
+                    checkFiles << il.installationPath() + app->id() + qSL(".appimg");
                 else
                     checkDirs << il.installationPath() + app->id();
 
@@ -434,11 +433,11 @@ void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
 
                 if (valid) {
                     if (il.isRemovable())
-                        validPaths.insertMulti(il.installationPath(), app->id() + ".appimg");
+                        validPaths.insertMulti(il.installationPath(), app->id() + qSL(".appimg"));
                     else
-                        validPaths.insertMulti(il.installationPath(), app->id() + "/");
-                    validPaths.insertMulti(il.documentPath(), app->id() + "/");
-                    validPaths.insertMulti(manifestDirectory().absolutePath(), app->id() + "/");
+                        validPaths.insertMulti(il.installationPath(), app->id() + qL1C('/'));
+                    validPaths.insertMulti(il.documentPath(), app->id() + qL1C('/'));
+                    validPaths.insertMulti(manifestDirectory().absolutePath(), app->id() + qL1C('/'));
                 }
             }
             if (!valid) {
@@ -450,7 +449,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
             }
         } else {
             // built-in, so make sure we do not kill the document directory
-            validPaths.insertMulti(defaultInstallationLocation().documentPath(), app->id() + "/");
+            validPaths.insertMulti(defaultInstallationLocation().documentPath(), app->id() + qL1C('/'));
         }
     }
 
@@ -461,7 +460,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
             QString name = fi.fileName();
             QStringList validNames = validPaths.values(dir);
 
-            if ((fi.isDir() && validNames.contains(name + "/"))
+            if ((fi.isDir() && validNames.contains(name + qL1C('/')))
                     || (fi.isFile() && validNames.contains(name))) {
                 continue;
             }
@@ -847,7 +846,7 @@ public:
         if (!il.isValid() || !il.isRemovable())
             return false;
 
-        QString imageName = il.installationPath() + id + ".appimg";
+        QString imageName = il.installationPath() + id + qSL(".appimg");
         if (!QFile::exists(imageName))
             return false;
 

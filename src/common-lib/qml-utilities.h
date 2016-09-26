@@ -41,9 +41,9 @@
 
 #pragma once
 
+#include <QtAppManCommon/global.h>
 #include <QQmlEngine>
 #include <qqml.h>
-#include "global.h"
 
 AM_BEGIN_NAMESPACE
 

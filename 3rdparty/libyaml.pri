@@ -7,9 +7,10 @@
 
     DEFINES *= YAML_DECLARE_STATIC
     INCLUDEPATH += $$LIBYAML_PATH/include
-    LIBS += $$fixLibraryPath(-L$$LIBYAML_BUILD_PATH) -lyaml
+    LIBS_PRIVATE += $$fixLibraryPath(-L$$LIBYAML_BUILD_PATH) -lqtyaml$$qtPlatformTargetSuffix()
 
     CONFIG *= link_prl
 } else {
-    PKGCONFIG += "'yaml-0.1 >= 0.1.6'"
+    PKGCONFIG_PRIVATE += "'yaml-0.1 >= 0.1.6'"
+    CONFIG *= link_pkgconfig
 }

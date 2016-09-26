@@ -147,20 +147,21 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
         LeaveCriticalSection(&cs);
         return;
     } else {
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        if (GetConsoleScreenBufferInfo(h, &csbi))
-            windowWidth = csbi.dwSize.X;
+        if (canOutputAnsiColors(2)) {
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            if (GetConsoleScreenBufferInfo(h, &csbi))
+                windowWidth = csbi.dwSize.X;
+        }
     }
 #else
     static bool useAnsiColors = canOutputAnsiColors(STDERR_FILENO);
 
     if (useAnsiColors) {
+        windowWidth = 120;
         if (::isatty(STDERR_FILENO)) {
             struct ::winsize ws;
-            if (::ioctl(0, TIOCGWINSZ, &ws) == 0)
+            if ((::ioctl(0, TIOCGWINSZ, &ws) == 0) && (ws.ws_col > 0))
                 windowWidth = ws.ws_col;
-        } else {
-            windowWidth = 120;
         }
     }
 

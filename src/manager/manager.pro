@@ -1,33 +1,21 @@
-
 TEMPLATE = app
 TARGET   = appman
-DESTDIR  = $$BUILD_DIR/bin
 
 load(am-config)
 
-CONFIG *= console
 QT = core network qml core-private
 !headless:QT *= gui quick
-
 qtHaveModule(dbus):QT *= dbus
 qtHaveModule(pssdp):QT *= pssdp
 qtHaveModule(pshellserver):QT *= pshellserver
+QT *= \
+    appman_common-private \
+    appman_application-private \
+    appman_manager-private \
+    appman_installer-private \
+    appman_notification-private \
 
-DEFINES *= AM_BUILD_APPMAN
-
-load(add-static-library)
-addStaticLibrary(../common-lib)
-addStaticLibrary(../manager-lib)
-addStaticLibrary(../installer-lib)
-addStaticLibrary(../notification-lib)
-
-# We need to export some symbols for the plugins, but by default none are exported
-# for executables. We can either export all symbols, or specify a list.
-# On Windows __declspec also works for executables, but __attribute__((visibility))
-# has no effect on Unix, so we are either stuck with exporting all symbols, or
-# maintaining a list of exported symbol names:
-#LIBS += -Wl,-E  # all
-unix:!osx:!android:LIBS += -Wl,--dynamic-list=$$PWD/syms.txt  # sub set
+CONFIG *= console
 
 win32:LIBS += -luser32
 
@@ -43,9 +31,6 @@ multi-process:!headless {
         SOURCES += waylandcompositor-old.cpp
     }
 }
-
-target.path = $$INSTALL_PREFIX/bin/
-INSTALLS += target
 
 HEADERS += \
     qmllogger.h \
@@ -121,3 +106,5 @@ isEmpty(GIT_VERSION):GIT_VERSION="unknown"
 
 createBuildConfig(_DATE_, VERSION, GIT_VERSION, SOURCE_DIR, BUILD_DIR, INSTALL_PREFIX, \
                   QT_ARCH, QT_VERSION, QT, CONFIG, DEFINES, INCLUDEPATH, LIBS)
+
+load(qt_tool)

@@ -1,5 +1,13 @@
 requires(linux:!android|win32-msvc2013|win32-msvc2015|osx)
 
+!tools-only:!qtHaveModule(qml):error("The QtQml library is required for a non 'tools-only' build")
+
+TEMPLATE = subdirs
+CONFIG += ordered
+
+enable-tests:QT_BUILD_PARTS *= tests
+enable-examples:QT_BUILD_PARTS *= examples
+
 load(configure)
 qtCompileTest(libarchive)
 qtCompileTest(libyaml)
@@ -16,14 +24,8 @@ if(linux:!android|force-libcrypto) {
 }
 
 MIN_MINOR=6
-headless:MIN_MINOR=6
 
 !equals(QT_MAJOR_VERSION, 5)|lessThan(QT_MINOR_VERSION, $$MIN_MINOR):error("This application needs to be built against Qt 5.$${MIN_MINOR}+")
-
-include(doc/doc.pri)
-
-TEMPLATE = subdirs
-CONFIG += ordered
 
 load(am-config)
 
@@ -35,6 +37,14 @@ linux:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
   SUBDIRS += 3rdparty/libbacktrace/libbacktrace.pro
 } else {
   check_libbacktrace = "no"
+}
+
+load(qt_parts)
+
+tools-only {
+    # removing them from QT_BUILD_PARTS doesn't help
+    SUBDIRS -= sub_tests
+    SUBDIRS -= sub_examples
 }
 
 if(linux|force-libcrypto):check_crypto = "libcrypto / OpenSSL"
@@ -55,17 +65,19 @@ load(config-output)
 
 printConfigLine()
 printConfigLine("-- Application Manager configuration", , orange)
-printConfigLine("Version", "$$VERSION", white)
+printConfigLine("Version", "$$MODULE_VERSION", white)
 printConfigLine("Hardware Id", $$check_hwid, auto)
 printConfigLine("Qt version", $$[QT_VERSION], white)
 printConfigLine("Qt installation", $$[QT_HOST_BINS])
 printConfigLine("Debug or release", $$check_debug, white)
 printConfigLine("Installation prefix", $$INSTALL_PREFIX, auto)
+printConfigLine("Tools only build", $$yesNo(CONFIG(tools-only)), no)
 printConfigLine("Headless", $$yesNo(CONFIG(headless)), auto)
 printConfigLine("QtCompositor support", $$yesNo(qtHaveModule(compositor)|qtHaveModule(waylandcompositor)), auto)
 printConfigLine("Multi-process mode", $$check_multi, auto)
 printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)
 printConfigLine("Tests enabled", $$yesNo(CONFIG(enable-tests)), auto)
+printConfigLine("Examples enabled", $$yesNo(CONFIG(enable-examples)), auto)
 printConfigLine("Crypto backend", $$check_crypto, auto)
 printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)
 printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto)
@@ -76,17 +88,13 @@ printConfigLine("System libarchive", $$yesNo(config_libarchive), auto)
 printConfigLine("System libyaml", $$yesNo(config_libyaml), auto)
 printConfigLine()
 
-SUBDIRS += src
-enable-tests:SUBDIRS += tests
-
-CONFIG += ordered
-
 OTHER_FILES += \
     INSTALL.md \
     .qmake.conf \
     application-manager.conf \
     template-opt/am/*.yaml \
-    qmake-features/*.prf
+    qmake-features/*.prf \
+    sync.profile
 
 global-check-coverage.target = check-coverage
 global-check-coverage.depends = coverage

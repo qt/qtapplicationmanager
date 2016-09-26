@@ -1,8 +1,6 @@
 
 TEMPLATE = subdirs
 
-load(am-config)
-
 !android:SUBDIRS += \
     packager \
     deployer \

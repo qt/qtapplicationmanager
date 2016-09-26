@@ -1,11 +1,12 @@
-
 TARGET = tst_packagecreator
 
-include(../tests.pri)
+cross_compile:CONFIG += insignificant_test # no test-data available in the CI
 
-load(add-static-library)
-addStaticLibrary(../../src/common-lib)
-addStaticLibrary(../../src/manager-lib)
-addStaticLibrary(../../src/installer-lib)
+include($$PWD/../tests.pri)
+
+QT *= \
+    appman_common-private \
+    appman_application-private \
+    appman_package-private
 
 SOURCES += tst_packagecreator.cpp

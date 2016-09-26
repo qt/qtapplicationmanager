@@ -41,55 +41,65 @@
 
 #pragma once
 
-#include <QString>
-#include <QStringList>
-#include <QByteArray>
-#include "global.h"
+#include <QObject>
+#include <QNetworkReply>
+#include <QEventLoop>
 
-QT_FORWARD_DECLARE_CLASS(QIODevice)
+#include <archive.h>
+
+#include "packageextractor.h"
+#include <QtAppManApplication/installationreport.h>
+#include <QtAppManCommon/exception.h>
 
 AM_BEGIN_NAMESPACE
 
-class InstallationReport
+class DigestFilter;
+
+class PackageExtractorPrivate : public QObject
 {
+    Q_OBJECT
+
 public:
-    InstallationReport(const QString &applicationId = QString());
+    PackageExtractorPrivate(PackageExtractor *extractor, const QUrl &downloadUrl);
 
-    QString applicationId() const;
-    void setApplicationId(const QString &applicationId);
+    Q_INVOKABLE void extract();
 
-    QString installationLocationId() const;
-    void setInstallationLocationId(const QString &installationLocationId);
+    void download(const QUrl &url);
 
-    QByteArray digest() const;
-    void setDigest(const QByteArray &sha1);
-
-    quint64 diskSpaceUsed() const;
-    void setDiskSpaceUsed(quint64 diskSpaceUsed);
-
-    QByteArray developerSignature() const;
-    void setDeveloperSignature(const QByteArray &developerSignature);
-
-    QByteArray storeSignature() const;
-    void setStoreSignature(const QByteArray &storeSignature);
-
-    QStringList files() const;
-    void addFile(const QString &file);
-    void addFiles(const QStringList &files);
-
-    bool isValid() const;
-
-    bool deserialize(QIODevice *from);
-    bool serialize(QIODevice *to) const;
+private slots:
+    void networkError(QNetworkReply::NetworkError);
+    void handleRedirect();
+    void downloadProgressChanged(qint64 downloaded, qint64 total);
 
 private:
-    QString m_applicationId;
-    QString m_installationLocationId;
-    QByteArray m_digest;
-    quint64 m_diskSpaceUsed = 0;
-    QStringList m_files;
-    QByteArray m_developerSignature;
-    QByteArray m_storeSignature;
+    void setError(Error errorCode, const QString &errorString);
+    qint64 readTar(struct archive *ar, const void **archiveBuffer);
+    void processMetaData(const QByteArray &metadata, DigestFilter &digest, bool isHeader) throw(Exception);
+
+private:
+    PackageExtractor *q;
+
+    QUrl m_url;
+    QString m_destinationPath;
+    std::function<void(const QString &)> m_fileExtractedCallback;
+    bool m_failed = false;
+    QAtomicInt m_canceled;
+    Error m_errorCode = Error::None;
+    QString m_errorString;
+
+    QEventLoop m_loop;
+    QNetworkAccessManager *m_nam;
+    QNetworkReply *m_reply = 0;
+    bool m_downloadingFromFIFO = false;
+    QByteArray m_buffer;
+    InstallationReport m_report;
+
+    qint64 m_downloadTotal = 0;
+    qint64 m_bytesReadTotal = 0;
+    qint64 m_lastProgress = 0;
+
+    friend class PackageExtractor;
 };
 
 AM_END_NAMESPACE
+

@@ -31,6 +31,7 @@
 
 #include "utilities.h"
 
+AM_USE_NAMESPACE
 
 class tst_Utilities : public QObject
 {

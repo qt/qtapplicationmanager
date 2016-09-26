@@ -44,7 +44,7 @@
 #include <QHash>
 #include <QObject>
 
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 
@@ -54,7 +54,7 @@ class AbstractRuntimeManager;
 class AbstractContainer;
 
 
-class AM_EXPORT RuntimeFactory : public QObject
+class RuntimeFactory : public QObject
 {
     Q_OBJECT
 public:

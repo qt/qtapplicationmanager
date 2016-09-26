@@ -46,7 +46,9 @@
 #include <QDir>
 #include <QTimer>
 #include <QMimeDatabase>
-#include <QDesktopServices>
+#if defined(QT_GUI_LIB)
+#  include <QDesktopServices>
+#endif
 
 #include "global.h"
 
@@ -68,7 +70,7 @@
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
     do { \
-        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__)) \
+        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__, [](qint64 pid) -> QStringList { return ApplicationManager::instance()->capabilities(ApplicationManager::instance()->identifyApplication(pid)); })) \
             return RETURN_TYPE(); \
     } while (false);
 
@@ -335,7 +337,7 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
         am->registerMimeTypes();
     } catch (const Exception &e) {
         if (error)
-            *error = e.what();
+            *error = e.errorString();
         return 0;
     }
 
@@ -595,8 +597,10 @@ void ApplicationManager::registerMimeTypes()
                 schemes << mime.mid(pos + 1);
         }
     }
+#if defined(QT_GUI_LIB)
     foreach (const QString &scheme, schemes)
         QDesktopServices::setUrlHandler(scheme, this, "openUrlRelay");
+#endif
 }
 
 bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl,
@@ -830,6 +834,8 @@ bool ApplicationManager::startApplication(const QString &id, const AM_PREPEND_NA
         else if (which == qL1S("err"))
             redirectStd[2] = dup(fd);
     }
+#else
+    Q_UNUSED(redirections)
 #endif
     return startApplication(fromId(id), documentUrl, qSL("--internal-redirect-only--"), redirectStd);
 }
@@ -853,6 +859,8 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
         else if (which == qL1S("err"))
             redirectStd[2] = dup(fd);
     }
+#else
+    Q_UNUSED(redirections)
 #endif
     return startApplication(fromId(id), documentUrl, debugWrapper, redirectStd);
 }
@@ -935,11 +943,7 @@ QStringList ApplicationManager::capabilities(const QString &id) const
     AM_AUTHENTICATE_DBUS(QStringList)
 
     const Application *app = fromId(id);
-
-    if (!app)
-        return QStringList();
-
-    return app->capabilities();
+    return app ? app->capabilities() : QStringList();
 }
 
 /*!
@@ -954,12 +958,8 @@ QString ApplicationManager::identifyApplication(qint64 pid) const
 {
     AM_AUTHENTICATE_DBUS(QString)
 
-    const Application *app1 = fromProcessId(pid);
-
-    if (app1)
-        return app1->id();
-    else
-        return QString();
+    const Application *app = fromProcessId(pid);
+    return app ? app->id() : QString();
 }
 
 bool ApplicationManager::lockApplication(const QString &id)
@@ -991,7 +991,6 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
     if (!installApp || installApp->id().isEmpty())
         return false;
     const Application *app = fromId(installApp->id());
-
     if (!RuntimeFactory::instance()->manager(installApp->runtimeName()))
         return false;
 
@@ -1156,7 +1155,7 @@ void ApplicationManager::emitDataChanged(const Application *app, const QVector<i
         if (isSignalConnected(appChanged)) {
             QStringList stringRoles;
             for (auto role : roles)
-                stringRoles << d->roleNames[role];
+                stringRoles << qL1S(d->roleNames[role]);
             emit applicationChanged(app->id(), stringRoles);
         }
     }
@@ -1282,7 +1281,7 @@ QVariantMap ApplicationManager::get(int row) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(it.value(), data(index(row), it.key()));
+        map.insert(qL1S(it.value()), data(index(row), it.key()));
     return map;
 }
 

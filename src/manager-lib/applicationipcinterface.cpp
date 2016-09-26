@@ -232,7 +232,7 @@ IpcProxyObject::IpcProxyObject(QObject *object, const QString &serviceName, cons
 
         // handle our annotation mechanism to add types to method parameters
         if (propName.startsWith(TYPE_ANNOTATION_PREFIX)) {
-            QString slotName = propName.mid(qstrlen(TYPE_ANNOTATION_PREFIX));
+            QByteArray slotName = propName.mid(qstrlen(TYPE_ANNOTATION_PREFIX));
             bool found = false;
             foreach (int slotIndex,  m_slots) {
                 QMetaMethod mm = mo->method(slotIndex);
@@ -475,7 +475,7 @@ QString IpcProxyObject::introspect(const QString &path) const
 bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConnection &connection)
 {
     QString interface = message.interface();
-    QString function = message.member();
+    QByteArray function = message.member().toLatin1();
     const QMetaObject *mo = m_object->metaObject();
 
     m_sender = m_connectionNamesToApplicationIds.value(connection.name());
@@ -549,8 +549,8 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
 
         const QMetaObject *mo = m_object->metaObject();
 
-        if (function == qL1S("Get")) {
-            QString name = message.arguments().at(1).toString();
+        if (function == "Get") {
+            QByteArray name = message.arguments().at(1).toString().toLatin1();
             QVariant result;
 
             foreach (int pi, m_properties) {
@@ -568,10 +568,10 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
             connection.call(message.createErrorReply(QDBusError::UnknownProperty, qL1S("unknown property")));
             return true;
 
-        } else if (function == qL1S("GetAll")) {
+        } else if (function == "GetAll") {
             //TODO
-        } else if (function == qL1S("Set")) {
-            QString name = message.arguments().at(1).toString();
+        } else if (function == "Set") {
+            QByteArray name = message.arguments().at(1).toString().toLatin1();
 
             foreach (int pi, m_properties) {
                 QMetaProperty mp = mo->property(pi);
@@ -637,7 +637,7 @@ void IpcProxyObject::relaySignal(int signalIndex, void **argv)
                     args << convertFromJSVariant(QVariant(mm.parameterType(i), argv[i + 1]));
                 }
 
-                QDBusMessage message = QDBusMessage::createSignal(pathName, m_interfaceName, mm.name());
+                QDBusMessage message = QDBusMessage::createSignal(pathName, m_interfaceName, qL1S(mm.name()));
                 message.setArguments(args);
 
                 connection.send(message);

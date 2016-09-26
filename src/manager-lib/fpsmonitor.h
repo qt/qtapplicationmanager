@@ -42,7 +42,7 @@
 #pragma once
 
 #include <QAbstractListModel>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 

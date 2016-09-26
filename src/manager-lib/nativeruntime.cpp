@@ -183,8 +183,8 @@ bool NativeRuntime::start()
     //env.insert(qSL("QT_WAYLAND_DISABLE_WINDOWDECORATION"), "1");
     env.insert(qSL("AM_SECURITY_TOKEN"), qL1S(securityToken().toHex()));
     env.insert(qSL("AM_DBUS_PEER_ADDRESS"), static_cast<NativeRuntimeManager *>(manager())->applicationInterfaceServer()->address());
-    env.insert(qSL("AM_RUNTIME_CONFIGURATION"), QtYaml::yamlFromVariantDocuments({ configuration() }));
-    env.insert(qSL("AM_RUNTIME_ADDITIONAL_CONFIGURATION"), QtYaml::yamlFromVariantDocuments({ additionalConfiguration() }));
+    env.insert(qSL("AM_RUNTIME_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ configuration() })));
+    env.insert(qSL("AM_RUNTIME_ADDITIONAL_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ additionalConfiguration() })));
     env.insert(qSL("AM_BASE_DIR"), QDir::currentPath());
 
     for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {

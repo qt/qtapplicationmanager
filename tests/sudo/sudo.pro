@@ -1,12 +1,13 @@
-
 TARGET    = tst_sudo
+
+CONFIG += insignificant_test # the CI cannot run this test via sudo
 
 COVERAGE_RUNTIME = sudo
 
-include(../tests.pri)
+include($$PWD/../tests.pri)
 
-load(add-static-library)
-addStaticLibrary(../../src/common-lib)
-addStaticLibrary(../../src/installer-lib)
+QT *= \
+    appman_common-private \
+    appman_installer-private \
 
 SOURCES += tst_sudo.cpp

@@ -45,7 +45,7 @@
 #include <QString>
 #include <QProcess>
 
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QQuickItem)
@@ -85,7 +85,7 @@ private:
 };
 
 
-class AM_EXPORT AbstractRuntime : public QObject
+class AbstractRuntime : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(AbstractContainer *container READ container)

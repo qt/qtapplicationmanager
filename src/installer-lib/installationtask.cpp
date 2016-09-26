@@ -39,13 +39,12 @@
 **
 ****************************************************************************/
 
-#include "applicationmanager.h"
 #include "applicationinstaller_p.h"
 #include "application.h"
-#include "package_p.h"
 #include "packageextractor.h"
 #include "yamlapplicationscanner.h"
 #include "exception.h"
+#include "applicationmanager.h"
 #include "sudo.h"
 #include "utilities.h"
 #include "signature.h"
@@ -329,7 +328,8 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
                                   "startingApplicationInstallation",
                                   Qt::BlockingQueuedConnection,
                                   Q_RETURN_ARG(bool, m_managerApproval),
-                                  Q_ARG(QtAM::Application *, m_app));
+                                  // ugly, but Q_ARG chokes on AM_PREPEND_NAMESPACE...
+                                  QArgument<AM_PREPEND_NAMESPACE(Application *)>(QT_STRINGIFY(AM_PREPEND_NAMESPACE(Application *)), m_app));
         if (!m_managerApproval)
             throw Exception(Error::System, "Application Manager declined the installation of %1").arg(m_app->id());
 
@@ -345,15 +345,15 @@ void InstallationTask::startInstallation() throw (Exception)
 {
     // 1. delete $manifestDir+ and $manifestDir-
     m_manifestDir = m_ai->manifestDirectory().absoluteFilePath(m_applicationId);
-    removeRecursiveHelper(m_manifestDir.absolutePath() + '+');
-    removeRecursiveHelper(m_manifestDir.absolutePath() + '-');
+    removeRecursiveHelper(m_manifestDir.absolutePath() + qL1C('+'));
+    removeRecursiveHelper(m_manifestDir.absolutePath() + qL1C('-'));
 
     // 2. delete old, partial installation
 
-    QDir installationDir = m_installationLocation.installationPath() + '/';
+    QDir installationDir = QString(m_installationLocation.installationPath() + qL1C('/'));
     QString installationTarget;
     if (m_installationLocation.isRemovable()) {
-        installationTarget = m_applicationId + ".appimg+";
+        installationTarget = m_applicationId + qSL(".appimg+");
 
         if (!m_installationLocation.isMounted()) // make sure the device is mounted
             throw Exception(Error::MediumNotAvailable, "installation medium %1 is not mounted").arg(m_installationLocation.id());
@@ -361,7 +361,7 @@ void InstallationTask::startInstallation() throw (Exception)
         if (m_ai->isPackageActivated(m_applicationId))
             throw Exception(Error::System, "existing application image %1 is still mounted").arg(installationTarget);
     } else {
-        installationTarget = m_applicationId + "+";
+        installationTarget = m_applicationId + qL1C('+');
     }
     if (installationDir.exists(installationTarget)) {
         if (!removeRecursiveHelper(installationDir.absoluteFilePath(installationTarget)))
@@ -369,7 +369,7 @@ void InstallationTask::startInstallation() throw (Exception)
     }
 
     // 3. create $manifestDir+
-    if (!m_manifestDirPlusCreator.create(m_manifestDir.absolutePath() + '+'))
+    if (!m_manifestDirPlusCreator.create(m_manifestDir.absolutePath() + qL1C('+')))
         throw Exception(Error::System, "could not create manifest sub-directory %1+").arg(m_manifestDir);
 
     // 4. create new installation
@@ -388,7 +388,7 @@ void InstallationTask::startInstallation() throw (Exception)
         }
 
         m_extractionImageFile = installationDir.absoluteFilePath(installationTarget);
-        m_applicationImageFile = installationDir.absoluteFilePath(m_applicationId + ".appimg");
+        m_applicationImageFile = installationDir.absoluteFilePath(m_applicationId + qSL(".appimg"));
 
         QFile image(m_extractionImageFile);
         if (image.exists())
@@ -402,7 +402,7 @@ void InstallationTask::startInstallation() throw (Exception)
         m_imageCreator.create(m_extractionImageFile, false /*do not remove existing*/);
 
         QDir tmpMountPoint(m_ai->applicationImageMountDirectory());
-        tmpMountPoint = tmpMountPoint.absoluteFilePath(m_applicationId + "+");
+        tmpMountPoint = tmpMountPoint.absoluteFilePath(m_applicationId + qL1C('+'));
         if (!m_tmpMountPointCreator.create(tmpMountPoint.absolutePath()))
             throw Exception(Error::System, "could not create temporary mountpoint %1").arg(tmpMountPoint);
 
@@ -494,7 +494,7 @@ void InstallationTask::finishInstallation() throw (Exception)
 #endif
 
     // copy meta-data to manifest directory
-    for (const QString &file : { "info.yaml", "icon.png" })
+    for (const QString &file : { qSL("info.yaml"), qSL("icon.png") })
         if (!QFile::copy(m_extractionDir.absoluteFilePath(file), m_manifestDirPlusCreator.dir().absoluteFilePath(file))) {
             throw Exception(Error::IO, "could not copy %1 from the application directory to the manifest directory").arg(file);
     }
@@ -549,7 +549,7 @@ void InstallationTask::finishInstallation() throw (Exception)
 
     // this should not be necessary, but it also won't hurt
     if (mode == Update)
-        removeRecursiveHelper(m_applicationDir.absolutePath() + '-');
+        removeRecursiveHelper(m_applicationDir.absolutePath() + qL1C('-'));
 
 #ifdef Q_OS_UNIX
     // write files to the filesystem

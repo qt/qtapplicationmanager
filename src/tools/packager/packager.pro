@@ -1,23 +1,16 @@
-
 TEMPLATE = app
 TARGET   = appman-packager
-DESTDIR  = $$BUILD_DIR/bin
 
 load(am-config)
 
-CONFIG *= console
 QT = core network
+QT *= \
+    appman_common-private \
+    appman_crypto-private \
+    appman_application-private \
+    appman_package-private \
 
-DEFINES *= AM_BUILD_APPMAN
-
-load(add-static-library)
-addStaticLibrary(../../common-lib)
-addStaticLibrary(../../crypto-lib)
-addStaticLibrary(../../manager-lib)
-addStaticLibrary(../../installer-lib)
-
-target.path = $$INSTALL_PREFIX/bin/
-INSTALLS += target
+CONFIG *= console
 
 SOURCES += \
     main.cpp \
@@ -30,3 +23,4 @@ OTHER_FILES += \
     README \
     packager.qdoc \
 
+load(qt_tool)

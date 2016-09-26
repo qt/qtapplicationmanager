@@ -34,6 +34,8 @@
 #include "abstractruntime.h"
 #include "runtimefactory.h"
 
+AM_USE_NAMESPACE
+
 class tst_Runtime : public QObject
 {
     Q_OBJECT

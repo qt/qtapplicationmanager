@@ -1,27 +1,35 @@
 
 TEMPLATE = subdirs
 
+load(qfeatures)
+
 load(am-config)
 
 SUBDIRS = \
     common-lib \
     crypto-lib \
-    manager-lib \
-    notification-lib \
-    installer-lib \
-    launchers \
-    manager \
+    application-lib \
+    package-lib \
     tools \
     plugin-interfaces \
 
+qtHaveModule(qml):SUBDIRS += \
+    notification-lib \
+    manager-lib \
+    installer-lib \
+    manager \
+    launchers \
+
 crypto-lib.depends = common-lib
-manager-lib.depends = common-lib crypto-lib
-manager-lib.depends += notification-lib
+application-lib.depends = crypto-lib
+package-lib.depends = crypto-lib application-lib
 notification-lib.depends = common-lib
-installer-lib.depends = common-lib crypto-lib manager-lib
+manager-lib.depends = application-lib notification-lib
+installer-lib.depends = package-lib manager-lib
 manager.depends = manager-lib installer-lib
 launchers.depends = manager
-tools.depends = installer-lib
+
+tools.depends = package-lib
 
 OTHER_FILES = \
     dbus/*

@@ -77,12 +77,20 @@ static Command command(QCommandLineParser &clp)
 
 int main(int argc, char *argv[])
 {
+    ensureCorrectLocale();
+
     QCoreApplication::setApplicationName(qSL("ApplicationManager Packager"));
     QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     QCoreApplication a(argc, argv);
+
+    if (!checkCorrectLocale()) {
+        fprintf(stderr, "ERROR: the packager needs a UTF-8 locale to work correctly:\n"
+                        "       even automatically switching to C.UTF-8 or en_US.UTF-8 failed.\n");
+        exit(2);
+    }
 
     QString desc = qSL("\nPelagicore ApplicationManager packaging tool\n\nAvailable commands are:\n");
     uint longestName = 0;

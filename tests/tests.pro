@@ -1,39 +1,39 @@
-
 TEMPLATE = subdirs
 
-load(am-config)
-
-SUBDIRS = \
+enable-tests:SUBDIRS = \
     application \
     runtime \
     cryptography \
     digestfilter \
     signature \
     utilities \
+    installationreport \
     packagecreator \
     packageextractor \
     packager-tool \
-    installationreport
+    applicationinstaller \
 
-## disabled temporarily until we can get them to work in the CI
-# applicationinstaller
-#
-#linux*:SUBDIRS += \
-#    sudo \
+enable-tests:linux*:SUBDIRS += \
+    sudo \
 
 OTHER_FILES += \
     tests.pri \
     data/create-test-packages.sh \
     data/certificates/create-test-certificates.sh \
 
-# create test data on the fly - this is needed for the CI server
-testdata.target = testdata
-testdata.depends = $$PWD/data/create-test-packages.sh $$BUILD_DIR/bin/appman-packager
-testdata.commands = (cd $$PWD/data ; ./create-test-packages.sh $$BUILD_DIR/bin/appman-packager)
-QMAKE_EXTRA_TARGETS += testdata
+# sadly, the appman-packager is too complex to build as a host tool
+!cross_compile {
+    qtPrepareTool(APPMAN_PACKAGER, appman-packager)
 
-# qmake would create a default check target implicitly, but since we need 'testdata' as an
-# dependency, we have to set it up explicitly
-prepareRecursiveTarget(check)
-check.depends = testdata $$check.depends
-QMAKE_EXTRA_TARGETS *= check
+    # create test data on the fly - this is needed for the CI server
+    testdata.target = testdata
+    testdata.depends = $$PWD/data/create-test-packages.sh $$APPMAN_PACKAGER_EXE
+    testdata.commands = (cd $$PWD/data ; ./create-test-packages.sh $$APPMAN_PACKAGER)
+    QMAKE_EXTRA_TARGETS += testdata
+
+    # qmake would create a default check target implicitly, but since we need 'testdata' as an
+    # dependency, we have to set it up explicitly
+    prepareRecursiveTarget(check)
+    check.depends = testdata $$check.depends
+    QMAKE_EXTRA_TARGETS *= check
+}

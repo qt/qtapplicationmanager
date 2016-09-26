@@ -44,7 +44,7 @@
 #include <QThread>
 #include <QMutex>
 
-#include "error.h"
+#include <QtAppManCommon/error.h>
 
 AM_BEGIN_NAMESPACE
 

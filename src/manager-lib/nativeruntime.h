@@ -48,8 +48,8 @@
 #include <QtPlugin>
 #include <QProcess>
 
-#include "abstractruntime.h"
-#include "abstractcontainer.h"
+#include <QtAppManManager/abstractruntime.h>
+#include <QtAppManManager/abstractcontainer.h>
 
 #define AM_NATIVE_RUNTIME_AVAILABLE
 

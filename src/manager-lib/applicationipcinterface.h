@@ -46,7 +46,7 @@
 #if defined(QT_DBUS_LIB)
 #  include <QDBusConnection>
 #endif
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 

@@ -1,12 +1,11 @@
-
 TARGET = tst_runtime
 
-include(../tests.pri)
+include($$PWD/../tests.pri)
 
 QT *= qml
-
-load(add-static-library)
-addStaticLibrary(../../src/common-lib)
-addStaticLibrary(../../src/manager-lib)
+QT *= \
+    appman_common-private \
+    appman_application-private \
+    appman_manager-private \
 
 SOURCES += tst_runtime.cpp

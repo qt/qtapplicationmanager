@@ -41,7 +41,7 @@
 
 #pragma once
 
-#include "abstractruntime.h"
+#include <QtAppManManager/abstractruntime.h>
 
 AM_BEGIN_NAMESPACE
 

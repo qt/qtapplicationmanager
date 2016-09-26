@@ -8,12 +8,14 @@ include(libz.pri)
     LIBARCHIVE_BUILD_PATH = $$shadowed($$LIBARCHIVE_PATH)
 
     INCLUDEPATH += $$LIBARCHIVE_PATH/libarchive
-    osx:LIBS += $$join(LIBARCHIVE_BUILD_PATH,,,/libarchive.a) -framework CoreServices -liconv
-    else:LIBS += $$fixLibraryPath(-L$$LIBARCHIVE_BUILD_PATH) -larchive
-    win32:LIBS += -lcrypt32
+    LIBS_PRIVATE += $$fixLibraryPath(-L$$LIBARCHIVE_BUILD_PATH) -lqtarchive$$qtPlatformTargetSuffix()
+
+    osx:LIBS_PRIVATE += -framework CoreServices -liconv
+    win32:LIBS_PRIVATE += -lcrypt32
     win32:DEFINES += LIBARCHIVE_STATIC
 
     CONFIG *= link_prl
 } else {
-    PKGCONFIG += "'libarchive >= 3.1.2'"
+    PKGCONFIG_PRIVATE += "'libarchive >= 3.1.2'"
+    CONFIG *= link_pkgconfig
 }

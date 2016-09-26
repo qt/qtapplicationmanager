@@ -1,11 +1,10 @@
-
 TARGET = tst_installationreport
 
-include(../tests.pri)
+include($$PWD/../tests.pri)
 
-load(add-static-library)
-addStaticLibrary(../../src/common-lib)
-addStaticLibrary(../../src/crypto-lib)
-addStaticLibrary(../../src/manager-lib)
+QT *= \
+    appman_common-private \
+    appman_crypto-private \
+    appman_application-private \
 
 SOURCES += tst_installationreport.cpp

@@ -45,7 +45,7 @@
 #include <QVariantMap>
 #include <QVector>
 #include <qqml.h>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 AM_BEGIN_NAMESPACE
 

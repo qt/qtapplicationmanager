@@ -48,9 +48,9 @@
 #if defined(QT_DBUS_LIB)
 #  include <QDBusContext>
 #  include <QDBusConnectionInterface>
-#  include "dbus-utilities.h"
+#  include <QtAppManCommon/dbus-utilities.h>
 #endif
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QDir)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -166,7 +166,7 @@ private slots:
     //      need to use BlockingQueuedConnections
     bool lockApplication(const QString &id);
     bool unlockApplication(const QString &id);
-    bool startingApplicationInstallation(AM_PREPEND_NAMESPACE(Application) *installApp);
+    bool startingApplicationInstallation(AM_PREPEND_NAMESPACE(Application*) installApp);
     bool startingApplicationRemoval(const QString &id);
     void progressingApplicationInstall(const QString &id, qreal progress);
     bool finishedApplicationInstall(const QString &id);

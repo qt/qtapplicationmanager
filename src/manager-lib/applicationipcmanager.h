@@ -62,7 +62,7 @@ public:
     static ApplicationIPCManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
-    Q_INVOKABLE bool registerInterface(AM_PREPEND_NAMESPACE(ApplicationIPCInterface) *interface, const QString &name, const QVariantMap &filter);
+    Q_INVOKABLE bool registerInterface(AM_PREPEND_NAMESPACE(ApplicationIPCInterface*) interface, const QString &name, const QVariantMap &filter);
     QVector<ApplicationIPCInterface *> interfaces() const;
 
 private:

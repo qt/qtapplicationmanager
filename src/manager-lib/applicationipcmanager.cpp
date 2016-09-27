@@ -216,8 +216,8 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
 
     Returns \c true if the registration was successful, \c false otherwise.
 */
-bool ApplicationIPCManager::registerInterface(ApplicationIPCInterface *interface, const QString &name,
-                                              const QVariantMap &filter)
+bool ApplicationIPCManager::registerInterface(AM_PREPEND_NAMESPACE(ApplicationIPCInterface*) interface,
+                                              const QString &name, const QVariantMap &filter)
 {
     if (!interface || name.isEmpty()) {
         qCWarning(LogQmlIpc) << "Application IPC interfaces need a valid object as well as interface name";

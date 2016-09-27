@@ -84,7 +84,7 @@ public:
     QString applicationId() const override;
     QVariantMap additionalConfiguration() const override;
 
-    Q_INVOKABLE Notification *createNotification();
+    Q_INVOKABLE AM_PREPEND_NAMESPACE(Notification *) createNotification();
 
 private:
     QmlInProcessRuntime *m_runtime;

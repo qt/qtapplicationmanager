@@ -417,7 +417,11 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
 #if defined(AM_MULTI_PROCESS)
             auto ww = qobject_cast<const WaylandWindow*>(win);
             if (ww && ww->surface() && ww->surface()->surface())
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
                 return ww->surface()->surface()->isMapped();
+#else
+                return ww->surface()->surface()->hasContent();
+#endif
 #endif
             return false;
         }

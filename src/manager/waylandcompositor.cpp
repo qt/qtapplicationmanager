@@ -203,8 +203,13 @@ void WaylandCompositor::createShellSurface(QWaylandSurface *surface, const QWayl
     QWaylandWlShellSurface *ss = new QWaylandWlShellSurface(m_shell, s, resource);
     s->setShellSurface(ss);
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
     connect(s, &QWaylandSurface::mappedChanged, this, [this, s]() {
         if (s->isMapped())
+#else
+    connect(s, &QWaylandSurface::hasContentChanged, this, [this, s]() {
+        if (s->hasContent())
+#endif
             m_manager->waylandSurfaceMapped(s);
         else
             m_manager->waylandSurfaceUnmapped(s);

@@ -698,6 +698,7 @@ int main(int argc, char *argv[])
         new QmlLogger(engine);
         engine->setOutputWarningsToStandardError(false);
         engine->setImportPathList(engine->importPathList() + configuration->importPaths());
+        engine->rootContext()->setContextProperty("StartupTimer", &startupTimer);
 
         startupTimer.checkpoint("after QML engine instantiation");
 

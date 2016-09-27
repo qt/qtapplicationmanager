@@ -41,6 +41,7 @@
 
 #pragma once
 
+#include <QObject>
 #include <QVector>
 #include <QPair>
 #include <QByteArray>
@@ -49,19 +50,23 @@
 
 AM_BEGIN_NAMESPACE
 
-class StartupTimer
+class StartupTimer : public QObject
 {
+    Q_OBJECT
+
 public:
     // this should be the first instruction in main()
     StartupTimer();
     ~StartupTimer();
 
     void checkpoint(const char *name);
-    void createReport() const;
+    Q_INVOKABLE void checkpoint(const QString &name);
+    Q_INVOKABLE void createReport();
 
 private:
     FILE *m_output = 0;
     bool m_initialized = false;
+    bool m_reportCreated = false;
     quint64 m_processCreation = 0;
     QElapsedTimer m_timer;
     QVector<QPair<quint64, QByteArray>> m_checkpoints;

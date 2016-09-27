@@ -179,27 +179,37 @@ StartupTimer::StartupTimer()
 
 StartupTimer::~StartupTimer()
 {
+    createReport();
+
     if (m_output && m_output != stderr)
         fclose(m_output);
 }
 
 void StartupTimer::checkpoint(const char *name)
 {
-    if (Q_UNLIKELY(m_initialized)) {
+    if (Q_LIKELY(m_initialized)) {
         qint64 delta = m_timer.nsecsElapsed();
         m_checkpoints << qMakePair(delta / 1000 + m_processCreation, name);
     }
 }
 
-void StartupTimer::createReport() const
+void StartupTimer::checkpoint(const QString &name)
+{
+    QByteArray ba = name.toLocal8Bit();
+    checkpoint(ba.constData());
+}
+
+void StartupTimer::createReport()
 {
     if (m_output) {
         bool colorSupport = canOutputAnsiColors(fileno(m_output));
 
-        if (colorSupport) {
-            fprintf(m_output, "\n\033[33m== STARTUP TIMING REPORT ==\033[0m\n");
-        } else {
-            fprintf(m_output, "\n== STARTUP TIMING REPORT ==\n");
+        if (!m_reportCreated) {
+            if (colorSupport) {
+                fprintf(m_output, "\n\033[33m== STARTUP TIMING REPORT ==\033[0m\n");
+            } else {
+                fprintf(m_output, "\n== STARTUP TIMING REPORT ==\n");
+            }
         }
 
         static const int cols = 120;
@@ -230,8 +240,10 @@ void StartupTimer::createReport() const
                 fprintf(m_output, "%d'%03d.%03d %s %s#%s\n", sec, msec, int(usec), text.constData(), spacing.constData(), bar.constData());
             }
         }
-        fprintf(m_output, "\n");
         fflush(m_output);
+
+        m_checkpoints.clear();
+        m_reportCreated = true;
     }
 }
 

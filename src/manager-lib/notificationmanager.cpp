@@ -530,22 +530,35 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
 
     qCDebug(LogNotifications) << "Notify" << app_name << replaces_id << app_icon << summary << body << actions << hints << timeout;
 
-    NotificationData *n = 0;
-    uint id;
+    if (replaces_id == 0) { // new notification
+        int id = ++idCounter;
+        // we need to delay the model update until the client has a valid id
+        QTimer::singleShot(0, this, [this, app_name, id, app_icon, summary, body, actions, hints, timeout]() {
+            notifyHelper(app_name, id, false, app_icon, summary, body, actions, hints, timeout);
+        });
+        return id;
+    } else {
+        return notifyHelper(app_name, replaces_id, true, app_icon, summary, body, actions, hints, timeout);
+    }
+}
 
-    if (replaces_id) {
-       int i = d->findNotificationById(replaces_id);
+uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool replaces, const QString &app_icon,
+                                       const QString &summary, const QString &body, const QStringList &actions,
+                                       const QVariantMap &hints, int timeout)
+{
+    Q_ASSERT(id);
+    NotificationData *n = 0;
+
+    if (replaces) {
+       int i = d->findNotificationById(id);
 
        if (i < 0) {
            qCDebug(LogNotifications) << "  -> failed to update existing notification";
            return 0;
        }
-       id = replaces_id;
        n = d->notifications.at(i);
        qCDebug(LogNotifications) << "  -> updating existing notification";
     } else {
-        id = ++idCounter;
-
         n = new NotificationData;
         n->id = id;
 
@@ -555,7 +568,7 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
 
     const Application *app = ApplicationManager::instance()->fromId(app_name);
 
-    if (replaces_id && app != n->application) {
+    if (replaces && app != n->application) {
         // no hijacking allowed
         qCDebug(LogNotifications) << "  -> failed to update notification, due to hijacking attempt";
         return 0;
@@ -584,7 +597,7 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
     n->timeout = qMax(0, timeout);
     n->extended = hints.value(qSL("x-pelagicore-extended")).toMap();
 
-    if (replaces_id) {
+    if (replaces) {
         QModelIndex idx = index(d->notifications.indexOf(n), 0);
         emit dataChanged(idx, idx);
         static const auto nChanged = QMetaMethod::fromSignal(&NotificationManager::notificationChanged);
@@ -610,7 +623,7 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
         n->timer = t;
     }
 
-    qWarning() << "  -> returning id" << id;
+    qCDebug(LogNotifications) << "  -> returning id" << id;
     return id;
 }
 

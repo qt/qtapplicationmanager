@@ -364,6 +364,18 @@ void Notification::show()
 }
 
 /*!
+    \qmlmethod Notification::update()
+
+    Updates notification, which was already shown.
+
+    \sa show
+*/
+void Notification::update()
+{
+    updateNotification();
+}
+
+/*!
     \qmlmethod Notification::hide()
 
     An alias for \c{visible = false}.

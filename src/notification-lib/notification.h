@@ -100,6 +100,7 @@ public:
     bool isVisible() const;
 
     Q_INVOKABLE void show();
+    Q_INVOKABLE void update();
     Q_INVOKABLE void hide();
 
 public slots:

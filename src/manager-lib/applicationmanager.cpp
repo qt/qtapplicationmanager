@@ -430,6 +430,14 @@ void ApplicationManager::setDebugWrapperConfiguration(const QVariantList &debugW
             continue;
         d->debugWrappers.append(dw);
     }
+
+    ContainerDebugWrapper internalDw({
+        { qSL("name"), qSL("--internal-redirect-only--") },
+        { qSL("command"), QStringList { qSL("%program%"), qSL("%arguments%") } },
+        { qSL("supportedRuntimes"), QStringList { qSL("native"), qSL("qml") } },
+        { qSL("supportedContainers"), QStringList { qSL("process") } }
+    });
+    d->debugWrappers.append(internalDw);
 }
 
 ContainerDebugWrapper ApplicationManagerPrivate::parseDebugWrapperSpecification(const QString &spec)
@@ -800,6 +808,29 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 }
 
 #if defined(QT_DBUS_LIB)
+bool ApplicationManager::startApplication(const QString &id, const UnixFdMap &redirections, const QString &documentUrl)
+{
+    AM_AUTHENTICATE_DBUS(bool)
+
+    QVector<int> redirectStd = { -1, -1, -1 };
+
+#if defined(Q_OS_UNIX)
+    for (auto it = redirections.cbegin(); it != redirections.cend(); ++it) {
+        QDBusUnixFileDescriptor dfd = it.value();
+        int fd = dfd.fileDescriptor();
+
+        const QString &which = it.key();
+        if (which == qL1S("in"))
+            redirectStd[0] = dup(fd);
+        else if (which == qL1S("out"))
+            redirectStd[1] = dup(fd);
+        else if (which == qL1S("err"))
+            redirectStd[2] = dup(fd);
+    }
+#endif
+    return startApplication(fromId(id), documentUrl, qSL("--internal-redirect-only--"), redirectStd);
+}
+
 bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const UnixFdMap &redirections, const QString &documentUrl)
 {
     AM_AUTHENTICATE_DBUS(bool)

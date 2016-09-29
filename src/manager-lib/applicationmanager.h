@@ -134,6 +134,7 @@ public:
     Q_SCRIPTABLE bool startApplication(const QString &id, const QString &documentUrl = QString());
     Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl = QString());
 #if defined(QT_DBUS_LIB)
+    Q_SCRIPTABLE bool startApplication(const QString &id, const AM_PREPEND_NAMESPACE(UnixFdMap) &redirections, const QString &documentUrl = QString());
     Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const AM_PREPEND_NAMESPACE(UnixFdMap) &redirections, const QString &documentUrl = QString());
 #endif
     Q_SCRIPTABLE void stopApplication(const QString &id, bool forceKill = false);

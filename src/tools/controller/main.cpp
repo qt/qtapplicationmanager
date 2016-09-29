@@ -154,7 +154,7 @@ static Command command(QCommandLineParser &clp)
 }
 
 static void installPackage(const QString &package) throw(Exception);
-static void startApplication(const QString &appId, const QString &documentUrl);
+static void startApplication(const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl);
 static void debugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl);
 static void stopApplication(const QString &appId);
 static void listApplications();
@@ -255,6 +255,9 @@ int main(int argc, char *argv[])
             break;
 
         case StartApplication: {
+            clp.addOption({ { qSL("i"), qSL("attach-stdin") }, qSL("Attach the app's stdin to the controller's stdin") });
+            clp.addOption({ { qSL("o"), qSL("attach-stdout") }, qSL("Attach the app's stdout to the controller's stdout") });
+            clp.addOption({ { qSL("e"), qSL("attach-stderr") }, qSL("Attach the app's stderr to the controller's stderr") });
             clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
             clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
             clp.process(a);
@@ -263,7 +266,15 @@ int main(int argc, char *argv[])
             if (args < 2 || args > 3)
                 clp.showHelp(1);
 
-            startApplication(clp.positionalArguments().at(1), args == 3 ? clp.positionalArguments().at(2) : QString());
+            QMap<QString, int> stdRedirections;
+            if (clp.isSet(qSL("attach-stdin")))
+                stdRedirections[qSL("in")] = 0;
+            if (clp.isSet(qSL("attach-stdout")))
+                stdRedirections[qSL("out")] = 1;
+            if (clp.isSet(qSL("attach-stderr")))
+                stdRedirections[qSL("err")] = 2;
+
+            startApplication(clp.positionalArguments().at(1), stdRedirections, args == 3 ? clp.positionalArguments().at(2) : QString());
             break;
         }
         case DebugApplication: {
@@ -329,18 +340,33 @@ int main(int argc, char *argv[])
     }
 }
 
-void startApplication(const QString &appId, const QString &documentUrl = QString())
+void startApplication(const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl = QString())
 {
     dbus.connectToManager();
 
-    QTimer::singleShot(0, [appId, documentUrl]() {
-        auto reply = dbus.manager()->startApplication(appId, documentUrl);
+    QTimer::singleShot(0, [appId, stdRedirections, documentUrl]() {
+        QDBusPendingReply<bool> reply;
+        if (stdRedirections.isEmpty()) {
+            reply = dbus.manager()->startApplication(appId, documentUrl);
+        } else {
+            UnixFdMap fdMap;
+            for (auto it = stdRedirections.cbegin(); it != stdRedirections.cend(); ++it)
+                fdMap.insert(it.key(), QDBusUnixFileDescriptor(it.value()));
+
+            reply = dbus.manager()->startApplication(appId, fdMap, documentUrl);
+        }
+
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call startApplication via DBus: %1").arg(reply.error().message());
 
         bool ok = reply.value();
-        qApp->exit(ok ? 0 : 2);
+        if (stdRedirections.isEmpty()) {
+            qApp->exit(ok ? 0 : 2);
+        } else {
+            if (!ok)
+                qApp->exit(2);
+        }
     });
 }
 
@@ -488,7 +514,7 @@ void installPackage(const QString &package) throw(Exception)
                      [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
-        throw Exception(Error::IO, "failed to install package: %1 (code: %2)").arg(errorString, errorCode);
+        throw Exception(Error::IO, "failed to install package: %1 (code: %2)").arg(errorString).arg(errorCode);
     });
 
     // when the installation finished successfully: launch the application
@@ -497,13 +523,7 @@ void installPackage(const QString &package) throw(Exception)
                      [](const QString &taskId) {
         if (taskId != installationId)
             return;
-        fprintf(stdout, "Installation finished - launching application...\n");
-        auto reply = dbus.manager()->startApplication(applicationId);
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call startApplication via DBus: %1").arg(reply.error().message());
-        if (!reply.value())
-            throw Exception(Error::IO, "startApplication failed");
+        fprintf(stdout, "Installation finished.\n");
         qApp->quit();
     });
 }

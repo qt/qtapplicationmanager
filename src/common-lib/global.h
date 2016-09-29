@@ -51,12 +51,8 @@
 
 #define AM_BEGIN_NAMESPACE  namespace QtAM {
 #define AM_END_NAMESPACE    }
-#define AM_USE_NAMESPACE    using namespace ::QtAM;
-#ifdef Q_MOC_RUN
-#  define AM_PREPEND_NAMESPACE(name) QtAM::name
-#else
-#  define AM_PREPEND_NAMESPACE(name) ::QtAM::name
-#endif
+#define AM_USE_NAMESPACE    using namespace QtAM;
+#define AM_PREPEND_NAMESPACE(name) QtAM::name
 
 AM_BEGIN_NAMESPACE
 

@@ -35,7 +35,7 @@
       <arg type="b" direction="out"/>
       <arg name="id" type="s" direction="in"/>
       <arg name="redirections" type="a{sh}" direction="in"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="UnixFdMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QtAM::UnixFdMap"/>
       <arg name="documentUrl" type="s" direction="in"/>
     </method>
     <method name="startApplication">

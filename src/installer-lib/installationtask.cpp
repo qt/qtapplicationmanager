@@ -329,7 +329,7 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
                                   "startingApplicationInstallation",
                                   Qt::BlockingQueuedConnection,
                                   Q_RETURN_ARG(bool, m_managerApproval),
-                                  Q_ARG(AM_PREPEND_NAMESPACE(Application) *, m_app));
+                                  Q_ARG(QtAM::Application *, m_app));
         if (!m_managerApproval)
             throw Exception(Error::System, "Application Manager declined the installation of %1").arg(m_app->id());
 

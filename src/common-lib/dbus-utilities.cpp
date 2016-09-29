@@ -136,7 +136,7 @@ void registerDBusTypes()
 #if defined(QT_DBUS_LIB)
     qDBusRegisterMetaType<QUrl>();
     qDBusRegisterMetaType<QMap<QString, QDBusUnixFileDescriptor>>();
-    qDBusRegisterMetaType<UnixFdMap>();
+    qDBusRegisterMetaType<AM_PREPEND_NAMESPACE(UnixFdMap)>();
 #endif
 }
 

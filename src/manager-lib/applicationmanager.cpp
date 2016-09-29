@@ -808,7 +808,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 }
 
 #if defined(QT_DBUS_LIB)
-bool ApplicationManager::startApplication(const QString &id, const UnixFdMap &redirections, const QString &documentUrl)
+bool ApplicationManager::startApplication(const QString &id, const AM_PREPEND_NAMESPACE(UnixFdMap) &redirections, const QString &documentUrl)
 {
     AM_AUTHENTICATE_DBUS(bool)
 
@@ -831,7 +831,7 @@ bool ApplicationManager::startApplication(const QString &id, const UnixFdMap &re
     return startApplication(fromId(id), documentUrl, qSL("--internal-redirect-only--"), redirectStd);
 }
 
-bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const UnixFdMap &redirections, const QString &documentUrl)
+bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const AM_PREPEND_NAMESPACE(UnixFdMap) &redirections, const QString &documentUrl)
 {
     AM_AUTHENTICATE_DBUS(bool)
 

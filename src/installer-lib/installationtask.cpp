@@ -551,6 +551,11 @@ void InstallationTask::finishInstallation() throw (Exception)
     if (mode == Update)
         removeRecursiveHelper(m_applicationDir.absolutePath() + '-');
 
+#ifdef Q_OS_UNIX;
+    // write files to the filesystem
+    sync();
+#endif
+
     m_errorString.clear();
 }
 

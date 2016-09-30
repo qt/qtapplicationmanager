@@ -587,6 +587,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
     }
 
     n->showActionIcons = hints.value(qSL("action-icons")).toBool();
+    n->actions.clear();
     for (int ai = 0; ai != (actions.size() & ~1); ai += 2)
         n->actions.insert(actions.at(ai), actions.at(ai + 1));
     n->dismissOnAction = !hints.value(qSL("resident")).toBool();

@@ -70,6 +70,7 @@ class AM_EXPORT Application : public QObject
     Q_PROPERTY(qreal importance READ importance)
     Q_PROPERTY(bool builtIn READ isBuiltIn)
     Q_PROPERTY(bool alias READ isAlias)
+    Q_PROPERTY(bool preload READ isPreloaded)
     Q_PROPERTY(const AM_PREPEND_NAMESPACE(Application) *nonAliased READ nonAliased)
     Q_PROPERTY(QStringList capabilities READ capabilities)
     Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes)

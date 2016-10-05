@@ -303,13 +303,15 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
     m_engine.load(qmlFileUrl);
 
-    QObject *topLevel = m_engine.rootObjects().at(0);
+    auto topLevels = m_engine.rootObjects();
 
-    if (!topLevel) {
+    if (Q_UNLIKELY(topLevels.isEmpty() || !topLevels.at(0))) {
         qCCritical(LogSystem) << "could not load" << qmlFile << ": no root object";
         QCoreApplication::exit(3);
         return;
     }
+
+    QObject *topLevel = topLevels.at(0);
 
 #if !defined(AM_HEADLESS)
     m_window = qobject_cast<QQuickWindow *>(topLevel);

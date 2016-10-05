@@ -73,6 +73,12 @@ bool WaylandWindow::isPingEnabled() const
     return m_pingTimer->isActive() || m_pongTimer->isActive();
 }
 
+void WaylandWindow::setClosing()
+{
+    Window::setClosing();
+    m_surface = nullptr;
+}
+
 void WaylandWindow::enablePing(bool b)
 {
     m_pingTimer->stop();

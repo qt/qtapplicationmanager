@@ -70,6 +70,8 @@ public:
     void enablePing(bool b);
     bool isPingEnabled() const;
 
+    void setClosing() override;
+
 private slots:
     void pongReceived();
     void pongTimeout();

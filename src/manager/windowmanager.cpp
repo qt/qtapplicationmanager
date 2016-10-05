@@ -122,6 +122,12 @@
         \li \c isMapped
         \li bool
         \li A boolean value indicating whether the surface is mapped (visible).
+    \row
+        \li \c isClosing
+        \li bool
+        \li A boolean value indicating whether the surface is currently closing.
+            A surface is closing when the wayland surface is already destroyed, but the window is still
+            available for showing an animation until releaseWindow() is called.
     \endtable
 
     After importing, the WindowManager singleton can be used as in the example below.
@@ -282,7 +288,8 @@ enum Roles
     Id = Qt::UserRole + 1000,
     WindowItem,
     IsFullscreen,
-    IsMapped
+    IsMapped,
+    IsClosing
 };
 }
 
@@ -342,6 +349,7 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
     d->roleNames.insert(WindowItem, "windowItem");
     d->roleNames.insert(IsFullscreen, "isFullscreen");
     d->roleNames.insert(IsMapped, "isMapped");
+    d->roleNames.insert(IsClosing, "isClosing");
 
     d->watchdogEnabled = true;
     d->qmlEngine = qmlEngine;
@@ -426,6 +434,7 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
             return false;
         }
     }
+    case IsClosing: return win->isClosing();
     }
     return QVariant();
 }
@@ -738,6 +747,8 @@ void WindowManager::waylandSurfaceDestroyed(WindowSurface *surface)
     WaylandWindow *win = qobject_cast<WaylandWindow *>(d->windows.at(index));
     if (!win)
         return;
+
+    win->setClosing();
 
     emit windowLost(index, win->windowItem()); //TODO: rename to windowDestroyed
 }

@@ -190,6 +190,7 @@ uint QmlInProcessNotification::libnotifyShow()
 
 /*!
     \qmlproperty bool ApplicationInterfaceExtension::ready
+    \readonly
 
     This property will change to \c true, as soon as the connection to the remote interface has
     succeeded. In single-process setups, this will always be \c true, whereas in multi-process
@@ -198,6 +199,7 @@ uint QmlInProcessNotification::libnotifyShow()
 
 /*!
     \qmlproperty QtObject ApplicationInterfaceExtension::object
+    \readonly
 
     The actual IPC object, which has all the signals, slots and properties exported from the server
     side. Will be null, until ready becomes \c true.

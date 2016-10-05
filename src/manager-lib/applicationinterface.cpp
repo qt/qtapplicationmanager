@@ -85,12 +85,14 @@
 
 /*!
     \qmlproperty string ApplicationInterface::applicationId
+    \readonly
 
     The application id of your application.
 */
 
 /*!
     \qmlproperty var ApplicationInterface::additionalConfiguration
+    \readonly
 
     Returns the project specific \l{additional configuration} that was set via the config file.
 */

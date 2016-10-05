@@ -322,6 +322,7 @@ QObject *WindowManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
 
 /*!
     \qmlproperty bool WindowManager::runningOnDesktop
+    \readonly
 
     Holds \c true if running on a classic desktop window manager (Windows, X11, or macOS),
     \c false otherwise.
@@ -446,6 +447,7 @@ QHash<int, QByteArray> WindowManager::roleNames() const
 
 /*!
     \qmlproperty int WindowManager::count
+    \readonly
 
     This property holds the number of applications available.
 */

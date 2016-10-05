@@ -386,6 +386,7 @@ QHash<int, QByteArray> NotificationManager::roleNames() const
 
 /*!
     \qmlproperty int NotificationManager::count
+    \readonly
 
     This property holds the number of active notifications in the model.
 */

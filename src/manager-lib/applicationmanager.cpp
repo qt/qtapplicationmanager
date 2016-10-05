@@ -196,6 +196,7 @@
 
 /*!
     \qmlproperty int ApplicationManager::count
+    \readonly
 
     This property holds the number of applications available.
 */
@@ -224,10 +225,11 @@
 */
 
 /*!
-    \qmlsignal ApplicationManager::applicationWasReactivated(string id)
+    \qmlsignal ApplicationManager::applicationWasActivated(string id, string aliasId)
 
     This signal is emitted when an application identified by \a id is already running
-    (in the background) and is started via the ApplicationManager API again.
+    (in the background) and is started via the ApplicationManager API again, possibly
+    through an alias, provided in \a aliasId.
 
     The window manager should take care of raising the application's window in this case.
 */

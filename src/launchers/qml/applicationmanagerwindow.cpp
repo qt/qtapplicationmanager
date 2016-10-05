@@ -132,6 +132,7 @@ public:
 
 /*!
     \qmlproperty real ApplicationManagerWindow::fps
+    \readonly
 
     This property holds the current frames-per-second value: in ideal cases the value should be
     exactly \c 60 when animations are running and \c 0 when the application is idle.

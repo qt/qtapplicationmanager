@@ -81,6 +81,8 @@ QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC")
 QDLT_FALLBACK_CATEGORY(LogSystem)
 
 
+QByteArray colorLogApplicationId = QByteArray();
+
 void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
 #if defined(QT_GENIVIEXTRAS_LIB)
@@ -97,7 +99,7 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
     if (msgType < QtDebugMsg || msgType > QtInfoMsg)
         msgType = QtCriticalMsg;
 
-    QByteArray fmt("[%1 | %2] %3 %6[%4:%5]\n");
+    QByteArray fmt = "[%1 | %2] %3 %6[%4:%5]\n";
 
     QStringList args = QStringList()
         << qL1S(msgTypeStr[msgType])
@@ -111,6 +113,12 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
     colors[2] = (Red + qHash(QByteArray(context.category)) % 7);
     colors[4] = Magenta;
     colors[5] = Magenta | Bright;
+
+    if (!colorLogApplicationId.isEmpty()) {
+        fmt = "[%1 | %2 | %7] %3 %6[%4:%5]\n";
+        args << QString::fromLocal8Bit(colorLogApplicationId);
+        colors[7] = (Red + qHash(colorLogApplicationId) % 7);
+    }
 
     QString str = QString::fromLatin1(fmt);
     for (int i = 0; i < args.size(); ++i)
@@ -143,19 +151,6 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
         if (GetConsoleScreenBufferInfo(h, &csbi))
             windowWidth = csbi.dwSize.X;
     }
-
-    static const WORD winColors[] = {
-        FOREGROUND_INTENSITY,               // off
-        0,                                  // black
-        FOREGROUND_RED,                     // red
-        FOREGROUND_GREEN,                   // green
-        FOREGROUND_GREEN | FOREGROUND_RED,  // yellow
-        FOREGROUND_BLUE,                    // blue
-        FOREGROUND_BLUE | FOREGROUND_RED,   // magenta
-        FOREGROUND_BLUE | FOREGROUND_GREEN, // cyan
-        FOREGROUND_INTENSITY,               // gray
-        FOREGROUND_INTENSITY                // bright
-    };
 #else
     static bool useAnsiColors = canOutputAnsiColors(STDERR_FILENO);
 
@@ -169,18 +164,6 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
         }
     }
 
-    static const char *ansiColors[] = {
-        "\x1b[0m",  // off
-        "\x1b[30m", // black
-        "\x1b[31m", // red
-        "\x1b[32m", // green
-        "\x1b[33m", // yellow
-        "\x1b[34m", // blue
-        "\x1b[35m", // magenta
-        "\x1b[36m", // cyan
-        "\x1b[37m", // gray
-        "\x1b[1m"   // bright
-    };
 #endif
     if (windowWidth <= 0) {
 #if defined(Q_OS_ANDROID)
@@ -202,12 +185,25 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
 #endif
         return;
     }
+    static const char *ansiColors[] = {
+        "\x1b[0m",  // off
+        "\x1b[30m", // black
+        "\x1b[31m", // red
+        "\x1b[32m", // green
+        "\x1b[33m", // yellow
+        "\x1b[34m", // blue
+        "\x1b[35m", // magenta
+        "\x1b[36m", // cyan
+        "\x1b[37m", // gray
+        "\x1b[1m"   // bright
+    };
+
     if (lastlineLength < windowWidth)
         spacing = windowWidth - lastlineLength - 1;
     if (lastlineLength > windowWidth)
         spacing = ((lastlineLength / windowWidth) + 1) * windowWidth - lastlineLength - 1;
 
-    args.last() = QString(spacing, QLatin1Char(' ')); // right align spacing
+    args[5] = QString(spacing, QLatin1Char(' ')); // right align spacing
 
     QByteArray out;
     for (int i = 0; i < fmt.size(); ++i) {
@@ -219,21 +215,11 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
             } else if (c2 >= '1' && c2 <= '9') {
                 if (colors.contains(c2 - '0')) {
                     int color = colors.value(c2 - '0');
-                    fputs(out.constData(), stderr);
-                    out.clear();
-#if defined(Q_OS_WIN)
-                    SetConsoleTextAttribute(h, (color & Bright ? winColors[BrightIndex] : 0) | winColors[color & ~Bright]);
-#else
                     if (color & Bright)
-                        fputs(ansiColors[BrightIndex], stderr);
-                    fputs(ansiColors[color & ~Bright], stderr);
-#endif
-                    fputs(args.at(c2 - '0' - 1).toLocal8Bit().constData(), stderr);
-#if defined(Q_OS_WIN)
-                    SetConsoleTextAttribute(h, winColors[Off]);
-#else
-                    fputs(ansiColors[Off], stderr);
-#endif
+                        out += ansiColors[BrightIndex];
+                    out += ansiColors[color & ~Bright];
+                    out += args.at(c2 - '0' - 1).toLocal8Bit();
+                    out += ansiColors[Off];
                     continue;
                 } else {
                     out += args.at(c2 - '0' - 1).toLocal8Bit();

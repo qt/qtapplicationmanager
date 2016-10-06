@@ -73,7 +73,7 @@ public:
     Q_SCRIPTABLE void finishedInitialization();
 
 signals:
-    Q_SCRIPTABLE void startApplication(const QString &baseDir, const QString &app, const QString &document, const QVariantMap &runtimeParameters);
+    Q_SCRIPTABLE void startApplication(const QString &baseDir, const QString &app, const QString &document, const QVariantMap &application);
 
     void launcherFinishedInitialization();
 

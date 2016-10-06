@@ -66,6 +66,8 @@ AM_EXPORT Q_DECLARE_LOGGING_CATEGORY(LogQmlIpc)
 
 void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
 
+extern QByteArray colorLogApplicationId;
+
 QString hardwareId();
 
 void am_trace(QDebug);

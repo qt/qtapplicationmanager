@@ -77,6 +77,8 @@
 #include "qtyaml.h"
 #include "global.h"
 #include "utilities.h"
+#include "yamlapplicationscanner.h"
+#include "application.h"
 
 AM_BEGIN_NAMESPACE
 
@@ -131,7 +133,7 @@ public:
     Controller(QObject *parent, const QString &directLoad = QString());
 
 public slots:
-    void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &runtimeParameters);
+    void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &application);
 
 private:
     QQmlApplicationEngine m_engine;
@@ -147,8 +149,11 @@ AM_END_NAMESPACE
 
 AM_USE_NAMESPACE
 
+
 int main(int argc, char *argv[])
 {
+    colorLogApplicationId = "qml-launcher";
+
     qInstallMessageHandler(colorLogToStderr);
     QLoggingCategory::setFilterRules(QString::fromUtf8(qgetenv("AM_LOGGING_RULES")));
 
@@ -171,8 +176,8 @@ int main(int argc, char *argv[])
     if (a.arguments().size() >= 3 && a.arguments().at(1) == "--directload") {
         QFileInfo fi = a.arguments().at(2);
 
-        if (!fi.exists()) {
-            qCCritical(LogQmlRuntime) << "ERROR: --directload needs a valid QML file as parameter";
+        if (!fi.exists() || fi.fileName() != "info.yaml") {
+            qCCritical(LogQmlRuntime) << "ERROR: --directload needs a valid info.yaml file as parameter";
             return 2;
         }
 
@@ -225,22 +230,49 @@ Controller::Controller(QObject *parent, const QString &directLoad)
     } else {
         QTimer::singleShot(0, [this, directLoad]() {
             QFileInfo fi(directLoad);
-            startApplication(fi.absolutePath(), fi.fileName(), QString(), QVariantMap());
+            YamlApplicationScanner yas;
+            try {
+                const Application *a = yas.scan(directLoad);
+                startApplication(fi.absolutePath(), a->codeFilePath(), QString(), a->toVariantMap());
+            } catch (const Exception &e) {
+                qCritical("ERROR: could not parse info.yaml file: %s", e.what());
+                qApp->exit(5);
+            }
         });
     }
 }
 
-void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &runtimeParameters)
+void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &application)
 {
     if (m_launched)
         return;
     m_launched = true;
 
-    qCDebug(LogQmlRuntime) << "loading" << qmlFile << "- document:" << document << "- parameters:"
+    QString applicationId = application.value("id").toString();
+    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value("runtimeParameters"));
+
+    qCDebug(LogQmlRuntime) << "loading" << applicationId << "- main:" << qmlFile << "- document:" << document << "- parameters:"
                            << runtimeParameters << "- baseDir:" << baseDir;
 
     if (!QDir::setCurrent(baseDir)) {
         qCCritical(LogQmlRuntime) << "could not set the current directory to" << baseDir;
+        QCoreApplication::exit(2);
+        return;
+    }
+
+    if (!applicationId.isEmpty()) {
+        // shorten application id to make the debug output more readable
+
+        auto sl = applicationId.split(qL1C('.'));
+        applicationId.clear();
+        for (int i = 0; i < sl.size() - 1; ++i) {
+            applicationId.append(sl.at(i).at(0));
+            applicationId.append(qL1C('.'));
+        }
+        applicationId.append(sl.last());
+        colorLogApplicationId = applicationId.toLocal8Bit();
+    } else {
+        qCCritical(LogQmlRuntime) << "did not receive an application id";
         QCoreApplication::exit(2);
         return;
     }

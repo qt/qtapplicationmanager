@@ -27,6 +27,7 @@ HEADERS += \
 
 load(add-static-library)
 addStaticLibrary(../../common-lib)
+addStaticLibrary(../../manager-lib)
 addStaticLibrary(../../notification-lib)
 
 target.path = $$INSTALL_PREFIX/bin/

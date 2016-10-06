@@ -81,6 +81,24 @@ bool ApplicationIPCInterface::isValidForApplication(const Application *app) cons
     return m_ipcProxy ? m_ipcProxy->isValidForApplication(app) : false;
 }
 
+/*!
+    \qmlproperty QtObject ApplicationIPCInterface::serviceObject
+
+    This property holds the pointer to the object which is exposed on the IPC
+*/
+QObject *ApplicationIPCInterface::serviceObject() const
+{
+    return m_serviceObject;
+}
+
+void ApplicationIPCInterface::setServiceObject(QObject *serviceObject)
+{
+    if (m_serviceObject != serviceObject) {
+        m_serviceObject = serviceObject;
+        emit serviceObjectChanged();
+    }
+}
+
 #if defined(QT_DBUS_LIB)
 bool ApplicationIPCInterface::dbusRegister(const Application *app, QDBusConnection connection, const QString &debugPathPrefix)
 {

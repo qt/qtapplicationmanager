@@ -243,7 +243,7 @@ void QmlInProcessApplicationInterfaceExtension::componentComplete()
         const auto ifaces = ApplicationIPCManager::instance()->interfaces();
         for (ApplicationIPCInterface *iface : ifaces) {
             if ((iface->interfaceName() == m_name)) {
-                m_object = iface;
+                m_object = iface->serviceObject();
                 emit objectChanged();
                 emit readyChanged();
                 break;

@@ -57,22 +57,30 @@ class IpcProxyObject;
 class ApplicationIPCInterface : public QObject
 {
     Q_OBJECT
+
+    Q_PROPERTY(QObject *serviceObject READ serviceObject WRITE setServiceObject NOTIFY serviceObjectChanged)
+
 public:
     explicit ApplicationIPCInterface(QObject *parent = nullptr);
 
     QString interfaceName() const;
     QString pathName() const;
     bool isValidForApplication(const Application *app) const;
+    QObject *serviceObject() const;
+    void setServiceObject(QObject *serviceObject);
 
 #if defined(QT_DBUS_LIB)
     bool dbusRegister(const Application *app, QDBusConnection connection, const QString &debugPathPrefix = QString());
     bool dbusUnregister(QDBusConnection connection);
 #endif
 
+    Q_SIGNAL void serviceObjectChanged();
+
 public:
     static ApplicationIPCInterfaceAttached *qmlAttachedProperties(QObject *object);
 
 private:
+    QObject *m_serviceObject = this;
     IpcProxyObject *m_ipcProxy = nullptr;
 
     friend class ApplicationIPCManager;

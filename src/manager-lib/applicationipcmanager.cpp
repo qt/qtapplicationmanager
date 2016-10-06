@@ -248,7 +248,7 @@ bool ApplicationIPCManager::registerInterface(AM_PREPEND_NAMESPACE(ApplicationIP
         return qSL("/ExtensionInterfaces/") + path;
     };
 
-    interface->m_ipcProxy = new IpcProxyObject(interface, QString(), createPathFromName(name), name, filter);
+    interface->m_ipcProxy = new IpcProxyObject(interface->serviceObject(), QString(), createPathFromName(name), name, filter);
     m_interfaces.append(interface);
     return true;
 }

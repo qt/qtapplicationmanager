@@ -9,6 +9,7 @@ QT *= \
     appman_common-private \
     appman_application-private \
     appman_notification-private \
+    appman_plugininterfaces-private \
 
 SOURCES += \
     main.cpp \

@@ -59,7 +59,6 @@
 #include <QQmlContext>
 #include <QQmlComponent>
 #include <QQmlApplicationEngine>
-#include <QPluginLoader>
 #include <QUrl>
 #include <QLibrary>
 #include <QFunctionPointer>
@@ -411,29 +410,6 @@ static QVector<const Application *> scanForApplications(const QStringList &built
     return result;
 }
 
-template <typename T>
-static QVector<T *> loadPlugins(const char *type) throw (Exception)
-{
-    QVector<T *> interfaces;
-    const char *iid = qobject_interface_iid<T>();
-
-    foreach (const QString &pluginFilePath, configuration->pluginFilePaths(type)) {
-        QPluginLoader pluginLoader(pluginFilePath);
-        if (Q_UNLIKELY(!pluginLoader.load())) {
-            throw Exception(Error::System, "could not load %1 plugin %2: %3")
-                    .arg(type).arg(pluginFilePath, pluginLoader.errorString());
-        }
-        QScopedPointer<T >iface(qobject_cast<T *>(pluginLoader.instance()));
-
-        if (Q_UNLIKELY(!iface)) {
-            throw Exception(Error::System, "could not get an instance of '%1' from the %2 plugin %3")
-                    .arg(iid).arg(type).arg(pluginFilePath);
-        }
-        interfaces << iface.take();
-    }
-    return interfaces;
-}
-
 AM_END_NAMESPACE
 
 AM_USE_NAMESPACE
@@ -503,7 +479,7 @@ int main(int argc, char *argv[])
 
         startupTimer.checkpoint("after logging setup");
 
-        auto startupPlugins = loadPlugins<StartupInterface>("startup");
+        auto startupPlugins = loadPlugins<StartupInterface>("startup", configuration->pluginFilePaths("startup"));
         const auto &uiConfig = configuration->additionalUiConfiguration();
         foreach (StartupInterface *iface, startupPlugins)
             iface->initialize(uiConfig);
@@ -594,7 +570,7 @@ int main(int argc, char *argv[])
 #if defined(AM_HOST_CONTAINER_AVAILABLE)
             ContainerFactory::instance()->registerContainer(new ProcessContainerManager());
 #endif
-            auto containerPlugins = loadPlugins<ContainerManagerInterface>("container");
+            auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", configuration->pluginFilePaths("container"));
             foreach (ContainerManagerInterface *iface, containerPlugins)
                 ContainerFactory::instance()->registerContainer(new PluginContainerManager(iface));
         }

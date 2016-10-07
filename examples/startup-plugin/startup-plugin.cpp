@@ -50,52 +50,36 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
-import QtApplicationManager 1.0
+#include "startup-plugin.h"
 
-ApplicationManagerWindow {
-    id: root
-    color: "peachpuff"
+Q_LOGGING_CATEGORY(LogMe, "am.start")
 
-    Rectangle {
-        anchors.centerIn: parent
-        width: 180; height: 180; radius: width/4
-        color: "peru"
+void TestStartupInterface::initialize(const QVariantMap &additionalConfiguration)
+{
+    qCWarning(LogMe) << "Startup initialize - additionalConfig:" << additionalConfiguration;
+}
 
-        Image {
-            source: "icon.png"
-            anchors.centerIn: parent
-        }
+void TestStartupInterface::afterRuntimeRegistration()
+{
+    qCWarning(LogMe) << "Startup afterRuntimeRegistration";
+}
 
-        RotationAnimation on rotation {
-            id: rotation
-            from: 0; to: 360; loops: Animation.Infinite; duration: 4000
-        }
+void TestStartupInterface::beforeQmlEngineLoad(QQmlEngine *engine)
+{
+    qCWarning(LogMe) << "Startup beforeQmlEngineLoad - engine:" << engine;
+}
 
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                if (rotation.paused) {
-                    rotation.resume();
-                } else {
-                    rotation.pause();
-                    root.setWindowProperty("rotation", parent.rotation);
-                }
-                popUp.visible = !popUp.visible;
-            }
-        }
-    }
+void TestStartupInterface::afterQmlEngineLoad(QQmlEngine *engine)
+{
+    qCWarning(LogMe) << "Startup afterQmlEngineLoad - engine:" << engine;
+}
 
-    ApplicationManagerWindow {
-        id: popUp
-        visible: false
-        color: "lightcoral"
+void TestStartupInterface::beforeWindowShow(QWindow *window)
+{
+    qCWarning(LogMe) << "Startup beforeWindowShow - window:" << window;
+}
 
-        Text {
-            anchors.centerIn: parent
-            text: "App1 paused!"
-        }
-
-        Component.onCompleted: setWindowProperty("type", "pop-up");
-    }
+void TestStartupInterface::afterWindowShow(QWindow *window)
+{
+    qCWarning(LogMe) << "Startup afterWindowShow - window:" << window;
 }

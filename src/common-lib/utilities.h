@@ -48,8 +48,10 @@
 #include <QDirIterator>
 #include <QByteArray>
 #include <QMultiMap>
+#include <QPluginLoader>
 
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/exception.h>
 
 #include <stdlib.h>
 #if defined(Q_OS_UNIX)
@@ -182,5 +184,28 @@ void setCrashActionConfiguration(const QVariantMap &config);
 bool canOutputAnsiColors(int fd);
 
 qint64 getParentPid(qint64 pid);
+
+template <typename T>
+QVector<T *> loadPlugins(const char *type, const QStringList &files) throw (Exception)
+{
+    QVector<T *> interfaces;
+    const char *iid = qobject_interface_iid<T>();
+
+    foreach (const QString &pluginFilePath, files) {
+        QPluginLoader pluginLoader(pluginFilePath);
+        if (Q_UNLIKELY(!pluginLoader.load())) {
+            throw Exception(Error::System, "could not load %1 plugin %2: %3")
+                    .arg(type).arg(pluginFilePath, pluginLoader.errorString());
+        }
+        QScopedPointer<T >iface(qobject_cast<T *>(pluginLoader.instance()));
+
+        if (Q_UNLIKELY(!iface)) {
+            throw Exception(Error::System, "could not get an instance of '%1' from the %2 plugin %3")
+                    .arg(iid).arg(type).arg(pluginFilePath);
+        }
+        interfaces << iface.take();
+    }
+    return interfaces;
+}
 
 AM_END_NAMESPACE

@@ -50,52 +50,26 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
-import QtApplicationManager 1.0
+#include <QLoggingCategory>
+#include <QtAppManPluginInterfaces>
+#include <QtAppManCommon/global.h>
 
-ApplicationManagerWindow {
-    id: root
-    color: "peachpuff"
+Q_DECLARE_LOGGING_CATEGORY(LogMe)
 
-    Rectangle {
-        anchors.centerIn: parent
-        width: 180; height: 180; radius: width/4
-        color: "peru"
+class TestStartupInterface : public QObject, public StartupInterface
+{
+    Q_OBJECT
+    Q_PLUGIN_METADATA(IID AM_StartupInterface_iid)
+    Q_INTERFACES(StartupInterface)
 
-        Image {
-            source: "icon.png"
-            anchors.centerIn: parent
-        }
+public:
+    // StartupInterface
+    void initialize(const QVariantMap &additionalConfiguration) throw(std::exception) override;
+    void afterRuntimeRegistration() throw(std::exception) override;
 
-        RotationAnimation on rotation {
-            id: rotation
-            from: 0; to: 360; loops: Animation.Infinite; duration: 4000
-        }
+    void beforeQmlEngineLoad(QQmlEngine *engine) throw(std::exception) override;
+    void afterQmlEngineLoad(QQmlEngine *engine) throw(std::exception) override;
 
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                if (rotation.paused) {
-                    rotation.resume();
-                } else {
-                    rotation.pause();
-                    root.setWindowProperty("rotation", parent.rotation);
-                }
-                popUp.visible = !popUp.visible;
-            }
-        }
-    }
-
-    ApplicationManagerWindow {
-        id: popUp
-        visible: false
-        color: "lightcoral"
-
-        Text {
-            anchors.centerIn: parent
-            text: "App1 paused!"
-        }
-
-        Component.onCompleted: setWindowProperty("type", "pop-up");
-    }
-}
+    void beforeWindowShow(QWindow *window) throw(std::exception) override;
+    void afterWindowShow(QWindow *window) throw(std::exception) override;
+};

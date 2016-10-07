@@ -79,6 +79,7 @@
 #include "utilities.h"
 #include "yamlapplicationscanner.h"
 #include "application.h"
+#include "startupinterface.h"
 
 AM_BEGIN_NAMESPACE
 
@@ -322,6 +323,11 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     }
 
+    QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
+    auto startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
+    foreach (StartupInterface *iface, startupPlugins)
+        iface->initialize(m_applicationInterface->additionalConfiguration());
+
     bool loadDummyData = runtimeParameters.value(qSL("loadDummyData")).toBool()
             || m_configuration.value(qSL("loadDummydata")).toBool();
 
@@ -346,6 +352,9 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     if (m_applicationInterface)
         m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
 
+    foreach (StartupInterface *iface, startupPlugins)
+        iface->beforeQmlEngineLoad(&m_engine);
+
     QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
     m_engine.load(qmlFileUrl);
 
@@ -356,6 +365,9 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         QCoreApplication::exit(3);
         return;
     }
+
+    foreach (StartupInterface *iface, startupPlugins)
+        iface->afterQmlEngineLoad(&m_engine);
 
     QObject *topLevel = topLevels.at(0);
 
@@ -387,7 +399,14 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         m_window->setClearBeforeRendering(true);
         m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
     }
+
+    foreach (StartupInterface *iface, startupPlugins)
+        iface->beforeWindowShow(m_window);
+
     m_window->show();
+
+    foreach (StartupInterface *iface, startupPlugins)
+        iface->afterWindowShow(m_window);
 
 #else
     m_engine.setIncubationController(new HeadlessIncubationController(&m_engine));

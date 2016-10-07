@@ -63,6 +63,8 @@ public:
 
     QPair<AbstractContainer *, AbstractRuntime *> take(const QString &containerId, const QString &runtimeId);
 
+    void killAll();
+
 public slots:
     void rebuild();
 

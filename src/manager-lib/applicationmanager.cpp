@@ -782,6 +782,7 @@ void ApplicationManager::killAll()
             delete rt;
         }
     }
+    QuickLauncher::instance()->killAll();
 }
 
 /*!

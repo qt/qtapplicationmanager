@@ -201,4 +201,18 @@ QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString 
     return result;
 }
 
+void QuickLauncher::killAll()
+{
+    for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
+        for (const auto &car : entry->m_containersAndRuntimes) {
+            if (car.second) {
+                car.second->stop(true);
+                delete car.second;
+            }
+        }
+        entry->m_containersAndRuntimes.clear();
+    }
+    m_quickLaunchPool.clear();
+}
+
 AM_END_NAMESPACE

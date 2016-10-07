@@ -215,7 +215,7 @@ void StartupTimer::createReport()
         static const int cols = 120;
         static const int barCols = 60;
 
-        int delta = m_checkpoints.last().first;
+        int delta = m_checkpoints.isEmpty() ? 0 : m_checkpoints.last().first;
         qreal usecPerCell = delta / barCols;
         int secondsLength = QByteArray::number(delta / 1000000).length();
 

@@ -117,8 +117,13 @@ bool NativeRuntime::attachApplicationToQuickLauncher(const Application *app)
     m_app = app;
     m_app->setCurrentRuntime(this);
 
-    onLauncherFinishedInitialization();
-    return m_launched;
+    if (!m_dbusConnection) {
+        // we have no D-Bus connection yet, so hope for the best
+        return true;
+    } else {
+        onLauncherFinishedInitialization();
+        return m_launched;
+    }
 }
 
 bool NativeRuntime::initialize()

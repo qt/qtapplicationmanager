@@ -36,6 +36,7 @@ multi-process:!headless {
         QT *= waylandcompositor waylandcompositor-private
         HEADERS += waylandcompositor.h
         SOURCES += waylandcompositor.cpp
+        PKGCONFIG += wayland-server
     } else:qtHaveModule(compositor) {
         QT *= compositor
         HEADERS += waylandcompositor-old.h

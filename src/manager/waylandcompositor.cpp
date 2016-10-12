@@ -86,7 +86,11 @@ qint64 Surface::processId() const { return m_surface->client()->processId(); }
 
 QWindow *Surface::outputWindow() const
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
     if (QWaylandView *v = m_surface->throttlingView())
+#else
+    if (QWaylandView *v = m_surface->primaryView())
+#endif
         return v->output()->window();
     return 0;
 }

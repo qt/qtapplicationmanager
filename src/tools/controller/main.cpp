@@ -80,17 +80,22 @@ private:
         QString dbus;
         if (f.open(QFile::ReadOnly)) {
             dbus = QString::fromUtf8(f.readAll());
-            if (dbus == qL1S("system"))
+            if (dbus == qL1S("system")) {
                 conn = QDBusConnection::systemBus();
-            else if (dbus.isEmpty())
+                dbus = qSL("[system-bus]");
+            } else if (dbus.isEmpty()) {
                 conn = QDBusConnection::sessionBus();
-            else
+                dbus = qSL("[session-bus]");
+            } else {
                 conn = QDBusConnection::connectToBus(dbus, qSL("custom"));
+            }
+        } else {
+            throw Exception(Error::IO, "Could not find the D-Bus interface of a running Application-Manager instance.\n(did you start the appman with '--dbus none'?");
         }
 
         if (!conn.isConnected()) {
-            throw Exception(Error::IO, "Could not connect to the D-Bus %1 for %2: (%3)")
-                .arg(dbus, iface, conn.lastError().message());
+            throw Exception(Error::IO, "Could not connect to the Application-Manager D-Bus interface %1 at %2: %3")
+                .arg(iface, dbus, conn.lastError().message());
         }
         return conn;
     }

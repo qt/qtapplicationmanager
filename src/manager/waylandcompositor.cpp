@@ -131,8 +131,10 @@ SurfaceQuickItem::SurfaceQuickItem(Surface *s)
 
 void SurfaceQuickItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
-    qCDebug(LogWayland) << "sendConfigure" << m_surface << newGeometry.size() << "(PID:" << m_surface->client()->processId() << ")";
-    m_surface->shellSurface()->sendConfigure(newGeometry.size().toSize(), QWaylandWlShellSurface::NoneEdge);
+    if (newGeometry.isValid()) {
+        qCDebug(LogWayland) << "sendConfigure" << m_surface << newGeometry.size() << "(PID:" << m_surface->client()->processId() << ")";
+        m_surface->shellSurface()->sendConfigure(newGeometry.size().toSize(), QWaylandWlShellSurface::NoneEdge);
+    }
 
     QWaylandQuickItem::geometryChanged(newGeometry, oldGeometry);
 }

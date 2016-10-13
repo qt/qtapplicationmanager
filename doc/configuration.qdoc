@@ -391,6 +391,18 @@ an additional column specifying which runtime a configuration option applies to:
     \li array<string>
     \li Add an additional QML import path for apps started via this runtime.
 \row
+    \li \c quicklaunchQml
+    \li qml
+    \li string
+    \li A QML source file that is loaded when a quick-launcher is started. It will not be loaded
+        when an application is started directly. Providing this file is only useful, if
+        \e quicklaunch/runtimesPerContainer > 0. It can be used to improve subsequent start-up
+        performance of the actual application, e.g. by importing and hence preloading common
+        application plugins and instantiating costly singletons. Creating other objects is
+        generally useless as the created component will immediately be deleted again. For the same
+        reason visual items should not be created. Always keep in mind that everything included in
+        this file will be loaded into \b all applicictions that use the QML runtime.
+\row
     \li \c loadDummyData
     \li qml
     \li bool

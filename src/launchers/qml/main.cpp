@@ -130,7 +130,7 @@ class Controller : public QObject
     Q_OBJECT
 
 public:
-    Controller(QObject *parent, const QString &directLoad = QString());
+    Controller(QCoreApplication *a, const QString &directLoad = QString());
 
 public slots:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &application);
@@ -200,8 +200,8 @@ int main(int argc, char *argv[])
     return a.exec();
 }
 
-Controller::Controller(QObject *parent, const QString &directLoad)
-    : QObject(parent)
+Controller::Controller(QCoreApplication *a, const QString &directLoad)
+    : QObject(a)
 {
     connect(&m_engine, &QObject::destroyed, &QCoreApplication::quit);
     connect(&m_engine, &QQmlEngine::quit, &QCoreApplication::quit);
@@ -217,7 +217,46 @@ Controller::Controller(QObject *parent, const QString &directLoad)
     if (additionalConfigurations.size() == 1)
         config = additionalConfigurations.first().toMap();
 
-    //qCDebug(LogQmlRuntime, 1) << " qml-runtime started with pid ==" << QCoreApplication::applicationPid () << ", waiting for qmlFile on stdin...";
+    const QString baseDir = QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/");
+
+    QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
+    for (QString &path : importPaths) {
+        if (QFileInfo(path).isRelative()) {
+            path.prepend(baseDir);
+        } else {
+            qCWarning(LogQmlRuntime) << "Absolute import path in config file can lead to problems inside containers:"
+                                     << path;
+        }
+        m_engine.addImportPath(path);
+    }
+
+    // This is a bit of a hack to make ApplicationManagerWindow known as a sub-class
+    // of QWindow. Without this, assigning an ApplicationManagerWindow to a QWindow*
+    // property will fail with [unknown property type]. First seen when trying to
+    // write a nested Wayland-compositor where assigning to WaylandOutput.window failed.
+    {
+        static const char registerWindowQml[] = "import QtQuick 2.0\nimport QtQuick.Window 2.2\nQtObject { }\n";
+        QQmlComponent registerWindowComp(&m_engine);
+        registerWindowComp.setData(QByteArray::fromRawData(registerWindowQml, sizeof(registerWindowQml) - 1), QUrl());
+        QScopedPointer<QObject> dummy(registerWindowComp.create());
+        registerWindowComp.completeCreate();
+    }
+
+    QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
+    if (!quicklaunchQml.isEmpty() && a->arguments().contains(qSL("--quicklaunch"))) {
+        if (QFileInfo(quicklaunchQml).isRelative())
+            quicklaunchQml.prepend(baseDir);
+
+        QQmlComponent quicklaunchComp(&m_engine, quicklaunchQml);
+        if (!quicklaunchComp.isError()) {
+            QScopedPointer<QObject> quicklaunchInstance(quicklaunchComp.create());
+            quicklaunchComp.completeCreate();
+        } else {
+            const QList<QQmlError> errors = quicklaunchComp.errors();
+            for (const QQmlError &error : errors)
+                qCCritical(LogQmlRuntime) << error;
+        }
+    }
 
     if (directLoad.isEmpty()) {
         m_applicationInterface = new QmlApplicationInterface(config, qSL("am"), this);
@@ -291,46 +330,21 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         loadDummyDataFiles(m_engine, QFileInfo(qmlFile).path());
     }
 
-    QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
-    const QString prefix = QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/");
-    for (QString &path : importPaths) {
-        if (QFileInfo(path).isRelative()) {
-            path.prepend(prefix);
-        } else {
-            qCWarning(LogQmlRuntime) << "Absolute import path in config file might lead to problems inside containers:"
-                                     << path;
-        }
-    }
-
-    auto vl = qdbus_cast<QVariantList>(runtimeParameters.value(qSL("importPaths")));
-    for (const QVariant &v : qAsConst(vl)) {
-        const QString path = v.toString();
+    QVariant imports = runtimeParameters.value(qSL("importPaths"));
+    const QVariantList vl = (imports.type() == QVariant::String) ? QVariantList{imports}
+                                                                 : qdbus_cast<QVariantList>(imports);
+    for (const QVariant &v : vl) {
+        QString path = v.toString();
         if (QFileInfo(path).isRelative())
-            importPaths.append(QDir().absoluteFilePath(path));
+            path = QDir().absoluteFilePath(path);
         else
             qCWarning(LogQmlRuntime) << "Omitting absolute import path in info file for safety reasons:" << path;
+        m_engine.addImportPath(path);
     }
-
-    if (!importPaths.isEmpty())
-        qCDebug(LogQmlRuntime) << "setting QML2_IMPORT_PATH to" << importPaths;
-
-    m_engine.setImportPathList(m_engine.importPathList() + importPaths);
-    //qWarning() << m_engine.importPathList();
+    qCDebug(LogQmlRuntime) << "Qml import paths:" << m_engine.importPathList();
 
     if (m_applicationInterface)
         m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
-
-    // This is a bit of a hack to make ApplicationManagerWindow known as a sub-class
-    // of QWindow. Without this, assigning an ApplicationManagerWindow to a QWindow*
-    // property will fail with [unknown property type]. First seen when trying to
-    // write a nested Wayland-compositor where assigning to WaylandOutput.window failed.
-    {
-        static const char registerWindowQml[] = "import QtQuick 2.0\nimport QtQuick.Window 2.2\nQtObject { }\n";
-        QQmlComponent registerWindowComp(&m_engine);
-        registerWindowComp.setData(QByteArray::fromRawData(registerWindowQml, sizeof(registerWindowQml) - 1), QUrl());
-        QScopedPointer<QObject> dummy(registerWindowComp.create());
-        registerWindowComp.completeCreate();
-    }
 
     QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
     m_engine.load(qmlFileUrl);

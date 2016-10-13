@@ -207,6 +207,10 @@ bool NativeRuntime::start()
         if (!m_document.isNull())
             args << qSL("--start-argument") << m_document;
     }
+
+    if (m_isQuickLauncher)
+        args << qSL("--quicklaunch");
+
     m_process = m_container->start(args, env);
 
     if (!m_process)

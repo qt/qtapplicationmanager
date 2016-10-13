@@ -121,12 +121,15 @@ static class DBus dbus;
 
 enum Command {
     NoCommand,
-    InstallPackage,
     StartApplication,
     DebugApplication,
     StopApplication,
     ListApplications,
-    ShowApplication
+    ShowApplication,
+    InstallPackage,
+    RemovePackage,
+    ListInstallationLocations,
+    ShowInstallationLocation
 };
 
 static struct {
@@ -134,12 +137,15 @@ static struct {
     const char *name;
     const char *description;
 } commandTable[] = {
-    { InstallPackage,   "install-package",   "Install a package." },
     { StartApplication, "start-application", "Start an application." },
     { DebugApplication, "debug-application", "Debug an application." },
     { StopApplication,  "stop-application",  "Stop an application." },
     { ListApplications, "list-applications", "List all installed applications." },
-    { ShowApplication,  "show-application",  "Show application meta-data." }
+    { ShowApplication,  "show-application",  "Show application meta-data." },
+    { InstallPackage,   "install-package",   "Install a package." },
+    { RemovePackage,    "remove-package",    "Remove a package." },
+    { ListInstallationLocations, "list-installation-locations", "List all installaton locations." },
+    { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." }
 };
 
 static Command command(QCommandLineParser &clp)
@@ -158,12 +164,15 @@ static Command command(QCommandLineParser &clp)
     return NoCommand;
 }
 
-static void installPackage(const QString &package) throw(Exception);
 static void startApplication(const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl);
 static void debugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl);
 static void stopApplication(const QString &appId);
 static void listApplications();
 static void showApplication(const QString &appId);
+static void installPackage(const QString &package, const QString &location) throw(Exception);
+static void removePackage(const QString &package, bool keepDocuments, bool force) throw(Exception);
+static void listInstallationLocations();
+static void showInstallationLocation(const QString &location);
 
 class ThrowingApplication : public QCoreApplication
 {
@@ -249,16 +258,6 @@ int main(int argc, char *argv[])
             clp.showHelp(1);
             break;
 
-        case InstallPackage:
-            clp.addPositionalArgument(qSL("package"), qSL("The file name of the package; can be - for stdin."));
-            clp.process(a);
-
-            if (clp.positionalArguments().size() != 2)
-                clp.showHelp(1);
-
-            installPackage(clp.positionalArguments().at(1));
-            break;
-
         case StartApplication: {
             clp.addOption({ { qSL("i"), qSL("attach-stdin") }, qSL("Attach the app's stdin to the controller's stdin") });
             clp.addOption({ { qSL("o"), qSL("attach-stdout") }, qSL("Attach the app's stdout to the controller's stdout") });
@@ -332,6 +331,43 @@ int main(int argc, char *argv[])
             showApplication(clp.positionalArguments().at(1));
             break;
 
+        case InstallPackage:
+            clp.addOption({ { qSL("l"), qSL("location") }, qSL("Set a custom installation location."), qSL("installation-location"), qSL("internal-0") });
+            clp.addPositionalArgument(qSL("package"), qSL("The file name of the package; can be - for stdin."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() != 2)
+                clp.showHelp(1);
+
+            installPackage(clp.positionalArguments().at(1), clp.value(qSL("l")));
+            break;
+
+        case RemovePackage:
+            clp.addOption({ { qSL("f"), qSL("force") }, qSL("Force removal of package.") });
+            clp.addOption({ { qSL("k"), qSL("keep-documents") }, qSL("Keep the document folder of the application.") });
+            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() != 2)
+                clp.showHelp(1);
+
+            removePackage(clp.positionalArguments().at(1), clp.isSet(qSL("k")), clp.isSet(qSL("f")));
+            break;
+
+        case ListInstallationLocations:
+            clp.process(a);
+            listInstallationLocations();
+            break;
+
+        case ShowInstallationLocation:
+            clp.addPositionalArgument(qSL("installation-location"), qSL("The id of an installation location."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() != 2)
+                clp.showHelp(1);
+
+            showInstallationLocation(clp.positionalArguments().at(1));
+            break;
         }
 
         int result = a.exec();
@@ -450,7 +486,7 @@ void showApplication(const QString &appId)
     });
 }
 
-void installPackage(const QString &package) throw(Exception)
+void installPackage(const QString &package, const QString &location) throw(Exception)
 {
     QString packageFile = package;
 
@@ -478,7 +514,7 @@ void installPackage(const QString &package) throw(Exception)
     if (!fi.exists() || !fi.isReadable() || !fi.isFile())
         throw Exception(Error::IO, "Package file is not readable: %1").arg(packageFile);
 
-    fprintf(stdout, "Starting installation of package %s...\n", qPrintable(packageFile));
+    fprintf(stdout, "Starting installation of package %s to %s...\n", qPrintable(packageFile), qPrintable(location));
 
     dbus.connectToManager();
     dbus.connectToInstaller();
@@ -489,8 +525,8 @@ void installPackage(const QString &package) throw(Exception)
 
     // start the package installation
 
-    QTimer::singleShot(0, [packageFile]() {
-        auto reply = dbus.installer()->startPackageInstallation(qSL("internal-0"), packageFile);
+    QTimer::singleShot(0, [location, packageFile]() {
+        auto reply = dbus.installer()->startPackageInstallation(location, packageFile);
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());
@@ -522,13 +558,87 @@ void installPackage(const QString &package) throw(Exception)
         throw Exception(Error::IO, "failed to install package: %1 (code: %2)").arg(errorString).arg(errorCode);
     });
 
-    // when the installation finished successfully: launch the application
+    // on success
 
     QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFinished,
                      [](const QString &taskId) {
         if (taskId != installationId)
             return;
-        fprintf(stdout, "Installation finished.\n");
+        fprintf(stdout, "Package installation finished successfully.\n");
+        qApp->quit();
+    });
+}
+
+void removePackage(const QString &applicationId, bool keepDocuments, bool force) throw(Exception)
+{
+    fprintf(stdout, "Starting removal of package %s...\n", qPrintable(applicationId));
+
+    dbus.connectToManager();
+    dbus.connectToInstaller();
+
+    // all the async snippets below need to share these variables
+    static QString installationId;
+
+    // start the package installation
+
+    QTimer::singleShot(0, [applicationId, keepDocuments, force]() {
+        auto reply = dbus.installer()->removePackage(applicationId, keepDocuments, force);
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call removePackage via DBus: %1").arg(reply.error().message());
+
+        installationId = reply.value();
+        if (installationId.isEmpty())
+            throw Exception(Error::IO, "removePackage returned an empty taskId");
+    });
+
+    // on failure: quit
+
+    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFailed,
+                     [](const QString &taskId, int errorCode, const QString &errorString) {
+        if (taskId != installationId)
+            return;
+        throw Exception(Error::IO, "failed to remove package: %1 (code: %2)").arg(errorString).arg(errorCode);
+    });
+
+    // on success
+
+    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFinished,
+                     [](const QString &taskId) {
+        if (taskId != installationId)
+            return;
+        fprintf(stdout, "Package removal finished successfully.\n");
+        qApp->quit();
+    });
+}
+
+void listInstallationLocations()
+{
+    dbus.connectToInstaller();
+
+    QTimer::singleShot(0, []() {
+        auto reply = dbus.installer()->installationLocationIds();
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call installationLocationIds via DBus: %1").arg(reply.error().message());
+
+        fprintf(stdout, "%s\n", qPrintable(reply.value().join(qL1C('\n'))));
+        qApp->quit();
+    });
+}
+
+void showInstallationLocation(const QString &location)
+{
+    dbus.connectToInstaller();
+
+    QTimer::singleShot(0, [location]() {
+        auto reply = dbus.installer()->getInstallationLocation(location);
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call getInstallationLocation via DBus: %1").arg(reply.error().message());
+
+        QVariant app = reply.value();
+        fprintf(stdout, "%s\n", QtYaml::yamlFromVariantDocuments({ app }).constData());
         qApp->quit();
     });
 }

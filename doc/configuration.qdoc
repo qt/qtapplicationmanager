@@ -266,6 +266,11 @@ command-line options.
     \li object
     \li Specifies which actions to take, if the application-manager is crashing. See
         \l{Crash action specification} {below} for more information.
+\row
+    \li \b -
+    \br \e debugWrappers
+    \li object
+    \li Defines all available debug wrappers. See \l{Debugging} for more details.
 
 \omit
 telnetPort and telnetAddress: these are configuring the Pelagicore proprietary telnet component

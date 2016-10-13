@@ -1,0 +1,147 @@
+/****************************************************************************
+**
+** Copyright (C) 2016 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\page debugging.html
+\title Debugging
+
+\chapter Introduction
+
+Debugging the application-manager, the System-UI and applications is dependent on the mode the
+application-manager is running in:
+
+\list
+\li In \b single-process mode, you can just start the \c appman binary using your debugging tool of
+    choice directly (e.g. \c{gdb --args appman -c config.yaml}). Since everything is running in a
+    single process, you cannot debug applications independently though.
+
+\li In \b multi-process mode, you have to distinguish between debugging the application-manager itself
+    or the System-UI and debugging individual applications: The application-manager and System-UI
+    can be debugged in the same way as described for a single-process setup above. Debugging
+    applications is a bit more tricky though, since they have to be started by the application-manager:
+    this is accomplished by defining so called \l DebugWrappers which describe how to start an
+    application using your favorite debugging tool.
+\endlist
+
+Please note that although the concept is called "debug" wrappers, these wrappers are not limited to
+actual debugging tasks. They are also useful for various other tasks that involve running the
+program under test through a wrapper, e.g. profiling tools.
+
+\chapter Defining Debug Wrappers
+\target DebugWrappers
+
+Debug wrappers for applications in multi-process mode are defined in a \c config.yaml file provided
+on the command line, as a list under the \c debugWrappers key. A typical example would be the
+definition of a \c gdbserver wrapper:
+
+\badcode
+debugWrappers:
+- name: gdbserver
+  parameters:  # <name>: <default value>
+    port: 5555
+  # %program% and %arguments% are internal variables
+  command: [ '/usr/bin/gdbserver', ':%port%', '%program%', '%arguments%' ]
+  supportedRuntimes: [ native, qml ]
+  supportedContainers: [ process ]
+\endcode
+
+Each debug wrapper is a YAML map, which supports the following fields:
+
+\table
+\header
+    \li Name
+    \li Type
+    \li Description
+\row
+    \li \c name
+    \li string
+    \li A short unique identifier string, given to the application-manager to tell it which debug
+        wrapper to use when starting an application in debug mode.
+\row
+    \li \c parameters
+    \li object
+    \li A standard YAML map defining possible runtime parameters and their default values. The key
+        is the unique identifier that can be referenced in the \c command definition. The value is
+        the default value if the parameter is not explicitly specified at runtime (can also be just
+        \c ~ - the YAML null value).
+\row
+    \li \c command
+    \li list<string>
+    \li The heart of the debug wrapper, where you define the exact command line to execute: this is
+        a string list and each item of this list will be converted to a single command-line parameter.
+        No automatic splitting at white-space will be done! Any text between \b % characters will be
+        replaced if this text can be resolved as a parameter name. There are two internal parameters:
+        \b %program% and \b %arguments%: \b %program% will resolve to the file-path of the binary that
+        is being debugged and \b %arguments% will be replaced with the command-line parameters that
+        have been specified internally by the respective runtime and container implementations.
+\row
+    \li \c supportedRuntimes
+    \li list<string>
+    \li A list of runtime ids which are compatible with this debug wrapper (e.g. \c native, \c qml).
+\row
+    \li \c supportedContainers
+    \li list<string>
+    \li A list of container ids which are compatible with this debug wrapper (e.g. \c process).
+\endtable
+
+\chapter Using Debug Wrappers
+
+After defining the debug wrappers, you can start applications using those wrappers. There are three
+ways to do this - all of them rely on a common way to specify which debug wrapper to use and optional
+parameter values:
+
+\list
+\li Within your system-UI, do not use \c startApplication to start an app, but debugApplication:
+    \badcode
+    ApplicationManager.debugApplication("io.qt.app", "gdbserver: { port: 5556 }")
+    \endcode
+\li Via D-Bus, you can call the debugApplication method:
+    \badcode
+    qdbus io.qt.ApplicationManager /ApplicationManager debugApplication io.qt.app "gdbserver: { port: 5557 }"
+    \endcode
+\li Using the \c appman-controller which uses D-Bus internally, but is able to find the correct
+    bus automatically and supports standard-IO redirection:
+    \badcode
+    appman-controller debug-application -ioe io.qt.app "gdbserver"
+    \endcode
+    The optional \c -i, \c -o and \c -e parameters will redirect the respective IO streams (\c stdin,
+    \c stdout and \c stderr) to the calling terminal.
+\endlist
+
+\note In order to use the D-Bus options, the application-manager has to be connected to either
+a session- or system-bus - make sure to not run it with \c{--dbus none}.
+
+The debug wrapper argument is always interpreted as a standard YAML document consisting of either
+\list
+\li a single string denoting the debug wrapper name (no parameters supplied) or
+\li a map with a single key denoting the debug wrapper name and its value being a map describing
+    all of the parameters:
+    \badcode
+    name: { param1: "value1", param2: "value2" }
+    \endcode
+*/

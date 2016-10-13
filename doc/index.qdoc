@@ -47,6 +47,7 @@ compositing window manager using the APIs that are exported from the C++ side.
     \endomit
     \li \l{Writing Applications}
     \li \l{The Application Installer}
+    \li \l{Debugging}
 \endlist
 
 \chapter Tools

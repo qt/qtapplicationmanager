@@ -807,6 +807,14 @@ bool ApplicationManager::startApplication(const QString &id, const QString &docu
     return startApplication(fromId(id), documentUrl);
 }
 
+/*!
+    \qmlmethod bool ApplicationManager::debugApplication(string id, string debugWrapper, string document)
+
+    Instructs the application manager to start the application just like startApplication. The
+    application is started via the given \a debugWrapper though. Please see the \l{Debugging} page
+    for more information on how to setup and use these debug-wrappers.
+*/
+
 bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl)
 {
     AM_AUTHENTICATE_DBUS(bool)

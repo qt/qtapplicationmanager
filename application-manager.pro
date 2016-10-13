@@ -45,6 +45,8 @@ tools-only {
     # removing them from QT_BUILD_PARTS doesn't help
     SUBDIRS -= sub_tests
     SUBDIRS -= sub_examples
+} else {
+    SUBDIRS += doc
 }
 
 if(linux|force-libcrypto):check_crypto = "libcrypto / OpenSSL"

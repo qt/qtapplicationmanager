@@ -133,6 +133,8 @@ signals:
     void objectChanged();
 
 private:
+    void tryInit();
+
     static QmlApplicationInterfaceExtensionPrivate *d;
     QString m_name;
     QObject *m_object = nullptr;

@@ -266,12 +266,13 @@ void QmlApplicationInterfaceExtension::classBegin()
 
 void QmlApplicationInterfaceExtension::componentComplete()
 {
-    m_complete = true;
+    tryInit();
+}
 
-    if (m_name.isEmpty()) {
-        qCWarning(LogQmlIpc) << "ApplicationInterfaceExension.name is not set.";
+void QmlApplicationInterfaceExtension::tryInit()
+{
+    if (m_name.isEmpty())
         return;
-    }
 
     IpcWrapperObject *ext = nullptr;
 
@@ -305,14 +306,18 @@ void QmlApplicationInterfaceExtension::componentComplete()
         d->m_interfaces.insert(m_name, ext);
     }
     m_object = ext;
+    m_complete = true;
+
     emit objectChanged();
     emit readyChanged();
 }
 
 void QmlApplicationInterfaceExtension::setName(const QString &name)
 {
-    if (!m_complete)
+    if (!m_complete) {
         m_name = name;
+        tryInit();
+    }
     else
         qWarning("Cannot change the name property of an ApplicationInterfaceExtension after creation.");
 }

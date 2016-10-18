@@ -22,3 +22,5 @@ coverage
 branch-coverage
 *.so
 *.pc
+*.qmlc
+*.jsc

@@ -73,7 +73,7 @@
 extern char **environ;
 #endif
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 bool ensureCorrectLocale()
 {
@@ -392,9 +392,9 @@ bool SetOwnerAndPermissions::operator()(const QString &path, RecursiveOperationT
 
 #if defined(Q_OS_ANDROID)
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 #include <QtAndroidExtras>
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 QString findOnSDCard(const QString &file)
 {
@@ -421,7 +421,7 @@ QString findOnSDCard(const QString &file)
 
 #if defined(Q_OS_LINUX)
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <setjmp.h>
@@ -432,7 +432,7 @@ AM_END_NAMESPACE
 #  include <libbacktrace/backtrace.h>
 #  include <libbacktrace/backtrace-supported.h>
 #endif
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 static bool printBacktrace;
 static bool dumpCore;
@@ -780,4 +780,4 @@ qint64 getParentPid(qint64 pid)
     return ppid;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

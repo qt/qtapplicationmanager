@@ -56,7 +56,7 @@
 QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 QT_FORWARD_DECLARE_CLASS(QDBusServer)
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class Notification;
 class NativeRuntime;
@@ -137,6 +137,6 @@ private:
     friend class NativeRuntimeManager;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #endif //defined(QT_DBUS_LIB)

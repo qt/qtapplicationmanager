@@ -52,7 +52,7 @@
 
 #include "dbus-utilities.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 QVariant convertFromJSVariant(const QVariant &variant)
 {
@@ -136,11 +136,11 @@ void registerDBusTypes()
 #if defined(QT_DBUS_LIB)
     qDBusRegisterMetaType<QUrl>();
     qDBusRegisterMetaType<QMap<QString, QDBusUnixFileDescriptor>>();
-    qDBusRegisterMetaType<AM_PREPEND_NAMESPACE(UnixFdMap)>();
+    qDBusRegisterMetaType<QT_PREPEND_NAMESPACE_AM(UnixFdMap)>();
 #endif
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #if defined(QT_DBUS_LIB)
 QT_BEGIN_NAMESPACE
@@ -163,7 +163,7 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, QUrl &url)
     return argument;
 }
 
-QDBusArgument &operator<<(QDBusArgument &argument, const AM_PREPEND_NAMESPACE(UnixFdMap) &fdMap)
+QDBusArgument &operator<<(QDBusArgument &argument, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &fdMap)
 {
     argument.beginMap(qMetaTypeId<QString>(), qMetaTypeId<QDBusUnixFileDescriptor>());
     for (auto it = fdMap.cbegin(); it != fdMap.cend(); ++it) {
@@ -176,7 +176,7 @@ QDBusArgument &operator<<(QDBusArgument &argument, const AM_PREPEND_NAMESPACE(Un
     return argument;
 }
 
-const QDBusArgument &operator>>(const QDBusArgument &argument, AM_PREPEND_NAMESPACE(UnixFdMap) &fdMap)
+const QDBusArgument &operator>>(const QDBusArgument &argument, QT_PREPEND_NAMESPACE_AM(UnixFdMap) &fdMap)
 {
     argument.beginMap();
     fdMap.clear();

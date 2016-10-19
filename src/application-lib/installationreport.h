@@ -48,7 +48,7 @@
 
 QT_FORWARD_DECLARE_CLASS(QIODevice)
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class InstallationReport
 {
@@ -92,4 +92,4 @@ private:
     QByteArray m_storeSignature;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

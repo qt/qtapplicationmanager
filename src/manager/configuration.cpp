@@ -55,7 +55,7 @@
 #  define AM_CONFIG_FILE "/opt/am/config.yaml"
 #endif
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ConfigurationPrivate
 {
@@ -534,4 +534,4 @@ QStringList Configuration::pluginFilePaths(const char *type) const
     return variantToStringList(d->findInConfigFile({ qSL("plugins"), qL1S(type) }));
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

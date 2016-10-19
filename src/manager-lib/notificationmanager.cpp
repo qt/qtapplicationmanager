@@ -173,7 +173,7 @@
 */
 
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 namespace {
 enum Roles
@@ -650,4 +650,4 @@ void NotificationManagerPrivate::closeNotification(uint id, CloseReason reason)
     }
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

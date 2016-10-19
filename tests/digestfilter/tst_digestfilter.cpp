@@ -32,7 +32,7 @@
 #include "global.h"
 #include "digestfilter.h"
 
-AM_USE_NAMESPACE
+QT_USE_NAMESPACE_AM
 
 /*
  # create 512 bytes of random data

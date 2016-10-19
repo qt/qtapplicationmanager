@@ -52,7 +52,7 @@
 #include <QtAppManInstaller/scopeutilities.h>
 #include <QtAppManCommon/exception.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class Application;
 class PackageExtractor;
@@ -110,4 +110,4 @@ private:
     ScopedMounter m_imageMounter;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

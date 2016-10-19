@@ -49,6 +49,7 @@
 #include "global.h"
 #include "qtyaml.h"
 
+QT_BEGIN_NAMESPACE
 
 namespace QtYaml {
 
@@ -399,4 +400,6 @@ QByteArray yamlFromVariantDocuments(const QVector<QVariant> &documents, YamlStyl
     return out;
 }
 
-}
+} // namespace QtYaml
+
+QT_END_NAMESPACE

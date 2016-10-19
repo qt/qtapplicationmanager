@@ -47,7 +47,7 @@
 
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ScopedDirectoryCreator
 {
@@ -156,6 +156,6 @@ private:
     bool m_taken = false;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(AM_PREPEND_NAMESPACE(ScopedRenamer::Modes))
+Q_DECLARE_OPERATORS_FOR_FLAGS(QT_PREPEND_NAMESPACE_AM(ScopedRenamer::Modes))

@@ -122,7 +122,7 @@
      rename <location>/<id>+ to <location>/<id>
 */
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 InstallationTask::InstallationTask(const InstallationLocation &installationLocation, const QUrl &sourceUrl, QObject *parent)
     : AsynchronousTask(parent)
@@ -328,8 +328,8 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
                                   "startingApplicationInstallation",
                                   Qt::BlockingQueuedConnection,
                                   Q_RETURN_ARG(bool, m_managerApproval),
-                                  // ugly, but Q_ARG chokes on AM_PREPEND_NAMESPACE...
-                                  QArgument<AM_PREPEND_NAMESPACE(Application *)>(QT_STRINGIFY(AM_PREPEND_NAMESPACE(Application *)), m_app));
+                                  // ugly, but Q_ARG chokes on QT_PREPEND_NAMESPACE_AM...
+                                  QArgument<QT_PREPEND_NAMESPACE_AM(Application *)>(QT_STRINGIFY(QT_PREPEND_NAMESPACE_AM(Application *)), m_app));
         if (!m_managerApproval)
             throw Exception(Error::System, "Application Manager declined the installation of %1").arg(m_app->id());
 
@@ -559,4 +559,4 @@ void InstallationTask::finishInstallation() throw (Exception)
     m_errorString.clear();
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

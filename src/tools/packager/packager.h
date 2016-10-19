@@ -48,7 +48,7 @@ public:
     static Packager *storeVerify(const QString &sourceName, const QStringList &certificateFiles,
                                  const QString &hardwareId);
 
-    void execute() throw (AM_PREPEND_NAMESPACE(Exception));
+    void execute() throw (QT_PREPEND_NAMESPACE_AM(Exception));
 
     QByteArray packageDigest() const;
     QString output() const;

@@ -44,7 +44,7 @@
 
 #include "exception.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 Exception::Exception(Error errorCode, const char *errorString)
     : m_errorCode(errorCode)
@@ -99,4 +99,4 @@ const char *Exception::what() const throw()
     return *m_whatBuffer;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

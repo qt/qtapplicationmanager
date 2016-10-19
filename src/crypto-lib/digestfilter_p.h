@@ -64,7 +64,7 @@ typedef ULONG_PTR HCRYPTKEY;
 #  error "No DigestFilter backend available for this platform"
 #endif
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class DigestFilterPrivate
 {
@@ -109,4 +109,5 @@ private:
 #endif
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
+// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

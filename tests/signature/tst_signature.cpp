@@ -32,7 +32,7 @@
 #include "global.h"
 #include "signature.h"
 
-AM_USE_NAMESPACE
+QT_USE_NAMESPACE_AM
 
 class tst_Signature : public QObject
 {

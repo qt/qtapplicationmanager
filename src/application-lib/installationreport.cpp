@@ -52,7 +52,7 @@
 #include "digestfilter.h"
 #include "installationreport.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 // you can generate a new set with
 //   xxd -i <(dd if=/dev/urandom bs=64 count=1)
@@ -259,4 +259,4 @@ bool InstallationReport::serialize(QIODevice *to) const
     return (to->write(out) == out.size());
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

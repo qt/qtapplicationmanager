@@ -53,7 +53,7 @@
 #include "applicationmanager.h"
 #include "waylandcompositor-old.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 Surface::Surface(QWaylandSurface *s)
     : m_item(0)
@@ -188,4 +188,4 @@ void WaylandCompositor::sendCallbacks()
     }
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

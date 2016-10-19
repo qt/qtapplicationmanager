@@ -53,7 +53,7 @@
 #include "notification.h"
 #include "ipcwrapperobject.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 QmlApplicationInterface *QmlApplicationInterface::s_instance = 0;
 
@@ -322,4 +322,4 @@ void QmlApplicationInterfaceExtension::setName(const QString &name)
         qWarning("Cannot change the name property of an ApplicationInterfaceExtension after creation.");
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

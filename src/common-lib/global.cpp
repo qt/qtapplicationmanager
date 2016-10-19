@@ -68,7 +68,7 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 #  define QDLT_REGISTER_APPLICATION(a,b)
 #endif
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 QDLT_REGISTER_APPLICATION("PCAM", "Pelagicore Application-Manager")
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General messages")
@@ -258,4 +258,4 @@ QString hardwareId()
 void am_trace(QDebug)
 { }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

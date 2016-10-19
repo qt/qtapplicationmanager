@@ -49,7 +49,7 @@
 #include "quicklauncher.h"
 #include "systemmonitor.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 QuickLauncher *QuickLauncher::s_instance = nullptr;
 
@@ -215,4 +215,4 @@ void QuickLauncher::killAll()
     m_quickLaunchPool.clear();
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

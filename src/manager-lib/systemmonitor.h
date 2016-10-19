@@ -47,7 +47,7 @@
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class SystemMonitorPrivate;
 class ProcessMonitor;
@@ -140,4 +140,4 @@ private:
     Q_DECLARE_PRIVATE(SystemMonitor)
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

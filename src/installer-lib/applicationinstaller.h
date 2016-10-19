@@ -52,12 +52,12 @@
 #endif
 
 #include <QtAppManCommon/error.h>
-#include "installationlocation.h"
+#include <QtAppManInstaller/installationlocation.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ApplicationManager;
 class ApplicationInstallerPrivate;
@@ -179,4 +179,4 @@ private:
     friend class DeinstallationTask;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

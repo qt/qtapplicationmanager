@@ -51,7 +51,7 @@
 #include "utilities.h"
 #include "dbus-policy.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
 {
@@ -141,4 +141,4 @@ bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBu
 #endif
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

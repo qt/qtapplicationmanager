@@ -56,7 +56,7 @@
 #  error "Your OpenSSL version is too old - the minimum supported version is 1.0.1"
 #endif
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 // clazy:excludeall=non-pod-global-static
 static AM_LIBCRYPTO_FUNCTION(SSLeay, 0);
@@ -130,4 +130,4 @@ void Cryptography::LibCryptoFunctionBase::resolve()
     }
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

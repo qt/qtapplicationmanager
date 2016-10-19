@@ -190,7 +190,7 @@
     \sa taskStateChanged()
 */
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 ApplicationInstaller *ApplicationInstaller::s_instance = 0;
 
@@ -1099,4 +1099,4 @@ bool removeRecursiveHelper(const QString &path)
         return recursiveOperation(path, SafeRemove());
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

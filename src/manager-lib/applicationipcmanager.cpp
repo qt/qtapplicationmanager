@@ -64,7 +64,7 @@
     the client (application) side.
 */
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 ApplicationIPCManager *ApplicationIPCManager::s_instance = 0;
 
@@ -215,7 +215,7 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
 
     Returns \c true if the registration was successful, \c false otherwise.
 */
-bool ApplicationIPCManager::registerInterface(AM_PREPEND_NAMESPACE(ApplicationIPCInterface*) interface,
+bool ApplicationIPCManager::registerInterface(QT_PREPEND_NAMESPACE_AM(ApplicationIPCInterface*) interface,
                                               const QString &name, const QVariantMap &filter)
 {
     if (!interface || name.isEmpty()) {
@@ -257,4 +257,4 @@ QVector<ApplicationIPCInterface *> ApplicationIPCManager::interfaces() const
     return m_interfaces;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

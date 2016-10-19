@@ -47,7 +47,7 @@
 #include <qqml.h>
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ApplicationIPCManagerAttached;
 class ApplicationIPCInterface;
@@ -62,7 +62,7 @@ public:
     static ApplicationIPCManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
-    Q_INVOKABLE bool registerInterface(AM_PREPEND_NAMESPACE(ApplicationIPCInterface*) interface, const QString &name, const QVariantMap &filter);
+    Q_INVOKABLE bool registerInterface(QT_PREPEND_NAMESPACE_AM(ApplicationIPCInterface*) interface, const QString &name, const QVariantMap &filter);
     QVector<ApplicationIPCInterface *> interfaces() const;
 
 private:
@@ -74,4 +74,4 @@ private:
     static ApplicationIPCManager *s_instance;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

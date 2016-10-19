@@ -46,7 +46,7 @@
 
 #include "applicationmanagerwindow.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ApplicationManagerWindowPrivate
 {
@@ -248,4 +248,4 @@ void ApplicationManagerWindow::onFrameSwapped()
     d->frameCount++;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

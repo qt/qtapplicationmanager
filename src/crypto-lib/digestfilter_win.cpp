@@ -47,7 +47,7 @@
 #include <windows.h>
 #include <wincrypt.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 bool DigestFilterPrivate::init()
 {
@@ -135,4 +135,4 @@ qint64 DigestFilterPrivate::finish(char *result, unsigned int *size)
     return ok ? 0 : GetLastError();
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

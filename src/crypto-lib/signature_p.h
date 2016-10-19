@@ -44,7 +44,7 @@
 #include "signature.h"
 #include <QtAppManCommon/exception.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class SignaturePrivate
 {
@@ -58,4 +58,5 @@ public:
                 const QList<QByteArray> &chainOfTrust) throw(Exception);
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
+// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

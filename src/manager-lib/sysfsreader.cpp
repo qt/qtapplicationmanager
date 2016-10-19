@@ -58,7 +58,7 @@ static inline int qt_safe_open(const char *pathname, int flags, mode_t mode = 07
 #  undef QT_OPEN
 #  define QT_OPEN         qt_safe_open
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 SysFsReader::SysFsReader(const QByteArray &path, int maxRead)
     : m_path(path)
@@ -103,4 +103,4 @@ QByteArray SysFsReader::readValue() const
     return m_buffer;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

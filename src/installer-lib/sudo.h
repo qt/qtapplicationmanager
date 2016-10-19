@@ -56,7 +56,7 @@ typedef uint gid_t;
 
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 enum SudoDropPrivileges {
     DropPrivilegesPermanently,
@@ -159,4 +159,4 @@ private:
     static SudoServer *s_instance;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

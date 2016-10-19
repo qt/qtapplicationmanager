@@ -49,7 +49,7 @@
 #include "installationreport.h"
 #include "yamlapplicationscanner.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 Application::Application()
 { }
@@ -405,9 +405,9 @@ void Application::writeToDataStream(QDataStream &ds, const QVector<const Applica
        << serializedReport;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
-QDebug operator<<(QDebug debug, const AM_PREPEND_NAMESPACE(Application) *app)
+QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(Application) *app)
 {
     debug << "App Object:";
     if (app)

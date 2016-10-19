@@ -44,7 +44,7 @@
 #include "global.h"
 #include "asynchronoustask.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 AsynchronousTask::AsynchronousTask(QObject *parent)
     : QThread(parent)
@@ -133,4 +133,4 @@ void AsynchronousTask::run()
     execute();
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

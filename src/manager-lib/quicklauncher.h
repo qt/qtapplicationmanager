@@ -46,7 +46,7 @@
 #include <QVector>
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class AbstractContainer;
 class AbstractRuntime;
@@ -89,4 +89,4 @@ private:
     bool m_onlyRebuildWhenIdle = false;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

@@ -48,7 +48,7 @@
 QT_FORWARD_DECLARE_CLASS(QDBusInterface)
 QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class IpcWrapperSignalRelay;
 
@@ -77,4 +77,4 @@ private:
     QDBusInterface *m_dbusInterface;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

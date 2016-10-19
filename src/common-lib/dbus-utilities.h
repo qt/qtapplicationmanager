@@ -47,14 +47,14 @@
 #if defined(QT_DBUS_LIB)
 #  include <QDBusUnixFileDescriptor>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 typedef QMap<QString, QDBusUnixFileDescriptor> UnixFdMap;
-AM_END_NAMESPACE
-Q_DECLARE_METATYPE(AM_PREPEND_NAMESPACE(UnixFdMap))
+QT_END_NAMESPACE_AM
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(UnixFdMap))
 #endif
 
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 QVariant convertFromJSVariant(const QVariant &variant);
 
@@ -62,4 +62,4 @@ QVariant convertFromDBusVariant(const QVariant &variant);
 
 void registerDBusTypes();
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

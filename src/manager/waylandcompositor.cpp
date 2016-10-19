@@ -58,7 +58,7 @@ typedef QWaylandWindowManagerExtension QWaylandQtWindowManager;
 #include "global.h"
 #include "waylandcompositor.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 void Surface::setShellSurface(QWaylandWlShellSurface *ss)
 {
@@ -239,4 +239,4 @@ QWaylandSurface *WaylandCompositor::waylandSurfaceFromItem(QQuickItem *surfaceIt
     return nullptr;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

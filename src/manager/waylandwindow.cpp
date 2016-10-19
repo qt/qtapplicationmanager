@@ -47,7 +47,7 @@
 #include "global.h"
 #include "windowmanager.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 WaylandWindow::WaylandWindow(const Application *app, WindowSurface *surf)
     : Window(app, surf->item())
@@ -141,6 +141,6 @@ QVariantMap WaylandWindow::windowProperties() const
     return QVariantMap();
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #endif // AM_MULTI_PROCESS

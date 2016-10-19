@@ -46,7 +46,7 @@
 #include "application.h"
 #include "applicationdatabase.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ApplicationDatabasePrivate
 {
@@ -137,4 +137,4 @@ void ApplicationDatabase::write(const QVector<const Application *> &apps) throw 
         throw Exception(*d->file, "could not write to application database");
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

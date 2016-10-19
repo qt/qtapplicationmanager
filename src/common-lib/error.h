@@ -44,7 +44,7 @@
 #include <QDebug>
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 enum class Error {
     None = 0,
@@ -71,11 +71,11 @@ enum class Error {
     WrongMedium = 51,
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(AM_PREPEND_NAMESPACE(Error))
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Error))
 
-inline QDebug &operator<<(QDebug &debug, AM_PREPEND_NAMESPACE(Error) error)
+inline QDebug &operator<<(QDebug &debug, QT_PREPEND_NAMESPACE_AM(Error) error)
 {
     return debug << int(error);
 }

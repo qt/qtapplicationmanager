@@ -60,7 +60,7 @@
 #include "applicationipcinterface.h"
 #include "applicationipcinterface_p.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 ApplicationIPCInterface::ApplicationIPCInterface(QObject *parent)
     : QObject(parent)
@@ -726,4 +726,4 @@ bool ApplicationIPCInterfaceAttached::resolveProxy() const
     return (m_proxy);
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

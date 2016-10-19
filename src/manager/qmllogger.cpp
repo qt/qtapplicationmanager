@@ -44,7 +44,7 @@
 #include "qmllogger.h"
 #include "global.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 QmlLogger::QmlLogger(QQmlEngine *engine)
     : QObject(engine)
@@ -72,4 +72,4 @@ void QmlLogger::warnings(const QList<QQmlError> &list)
     }
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

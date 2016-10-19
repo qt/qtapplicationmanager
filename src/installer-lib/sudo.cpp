@@ -95,7 +95,7 @@ extern "C" int capget(cap_user_header_t header, const cap_user_data_t data);
 extern "C" void __gcov_init() __attribute__((weak));
 
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 static void sigHupHandler(int sig)
 {
@@ -103,12 +103,12 @@ static void sigHupHandler(int sig)
         abort();
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #endif // Q_OS_LINUX
 
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
 {
@@ -779,4 +779,4 @@ bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t
     return false;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

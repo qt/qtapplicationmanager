@@ -43,7 +43,7 @@
 
 #include "applicationinterface.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class NativeRuntime;
 
@@ -81,4 +81,6 @@ private:
     NativeRuntime *m_runtime;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
+// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.
+

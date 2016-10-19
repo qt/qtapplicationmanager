@@ -30,7 +30,7 @@
 
 #include <QTest>
 
-AM_USE_NAMESPACE
+QT_USE_NAMESPACE_AM
 
 static void detachLoopbacksAndUnmount(SudoClient *root, const QString &baseDir)
 {

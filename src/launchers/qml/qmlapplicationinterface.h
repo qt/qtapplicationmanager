@@ -52,7 +52,7 @@
 
 QT_FORWARD_DECLARE_CLASS(QDBusInterface)
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class QmlNotification : public Notification
 {
@@ -76,7 +76,7 @@ public:
 
     QString applicationId() const override;
     QVariantMap additionalConfiguration() const override;
-    Q_INVOKABLE AM_PREPEND_NAMESPACE(Notification *) createNotification();
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
 
 private slots:
     void notificationClosed(uint notificationId, uint reason);
@@ -141,4 +141,4 @@ private:
     bool m_complete = false;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

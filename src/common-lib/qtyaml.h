@@ -47,6 +47,7 @@
 #include <QString>
 #include <QVariant>
 
+QT_BEGIN_NAMESPACE
 
 namespace QtYaml {
 
@@ -84,3 +85,5 @@ enum YamlStyle { FlowStyle, BlockStyle };
 QByteArray yamlFromVariantDocuments(const QVector<QVariant> &maps, YamlStyle style = BlockStyle);
 
 } // namespace QtYaml
+
+QT_END_NAMESPACE

@@ -44,7 +44,7 @@
 #include "application.h"
 #include "abstractcontainer.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 AbstractContainer::~AbstractContainer()
 { }
@@ -225,4 +225,4 @@ void ContainerDebugWrapper::resolveParameters(const QString &program, const QStr
     m_command = args;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

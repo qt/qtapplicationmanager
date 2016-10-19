@@ -49,7 +49,7 @@
 #include "scopeutilities.h"
 #include "deinstallationtask.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 DeinstallationTask::DeinstallationTask(const Application *app, const InstallationLocation &installationLocation,
                                        bool forceDeinstallation, bool keepDocuments, QObject *parent)
@@ -163,4 +163,4 @@ void DeinstallationTask::execute()
     }
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

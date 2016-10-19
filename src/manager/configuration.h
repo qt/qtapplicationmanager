@@ -45,7 +45,7 @@
 #include <QVariantMap>
 #include "global.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ConfigurationPrivate;
 
@@ -111,5 +111,5 @@ private:
     ConfigurationPrivate *d;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 

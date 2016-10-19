@@ -47,7 +47,7 @@
 
 QT_FORWARD_DECLARE_CLASS(QPlatformWindow)
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ApplicationManagerWindowPrivate;
 
@@ -77,4 +77,4 @@ private:
     ApplicationManagerWindowPrivate *d;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

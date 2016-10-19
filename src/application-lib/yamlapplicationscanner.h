@@ -43,7 +43,7 @@
 
 #include <QtAppManApplication/applicationscanner.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class YamlApplicationScanner : public ApplicationScanner
 {
@@ -59,4 +59,4 @@ private:
     Application *scanInternal(const QString &filePath, bool scanAlias, const Application *application) throw (Exception);
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

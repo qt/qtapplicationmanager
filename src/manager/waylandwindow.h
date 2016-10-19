@@ -48,7 +48,7 @@
 #include <QWaylandSurface>
 #include <QTimer>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class WindowSurface;
 
@@ -83,6 +83,6 @@ private:
     WindowSurface *m_surface;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #endif // AM_MULTI_PROCESS

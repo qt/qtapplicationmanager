@@ -44,7 +44,7 @@
 #include <QAbstractListModel>
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class FpsMonitor : public QAbstractListModel
 {
@@ -53,4 +53,4 @@ public:
     FpsMonitor();
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

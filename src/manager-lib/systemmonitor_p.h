@@ -50,12 +50,12 @@
 #if defined(Q_OS_LINUX)
 #  include <QScopedPointer>
 QT_FORWARD_DECLARE_CLASS(QSocketNotifier)
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 class SysFsReader;
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 #endif
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class CpuReader
 {
@@ -140,4 +140,5 @@ private:
 #endif
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
+// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

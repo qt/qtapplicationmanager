@@ -66,7 +66,7 @@
 #  define S_IEXEC S_IXUSR
 #endif
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 /*! \internal
   This is a workaround for the stupid filename encoding handling in libarchive:
@@ -389,4 +389,4 @@ void PackageCreatorPrivate::setError(Error errorCode, const QString &errorString
     }
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

@@ -44,7 +44,7 @@
 #include "systemmonitor_p.h"
 #include "global.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 quint64 MemoryReader::s_totalValue = 0;
 
@@ -53,7 +53,7 @@ quint64 MemoryReader::totalValue() const
     return s_totalValue;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #if defined(Q_OS_LINUX)
 #  include "sysfsreader.h"
@@ -67,7 +67,7 @@ AM_END_NAMESPACE
 #  include <sys/ioctl.h>
 #  include <errno.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 QScopedPointer<SysFsReader> CpuReader::s_sysFs;
 
@@ -293,13 +293,13 @@ void MemoryThreshold::readEventFd()
     }
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #elif defined(Q_OS_WIN)
 
 #include <windows.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 CpuReader::CpuReader()
 { }
@@ -345,14 +345,14 @@ quint64 MemoryReader::readUsedValue() const
     return mem.ullTotalPhys - mem.ullAvailPhys;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #elif defined(Q_OS_OSX)
 
 #include <mach/mach.h>
 #include <sys/sysctl.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 CpuReader::CpuReader()
 { }
@@ -425,11 +425,11 @@ quint64 MemoryReader::readUsedValue() const
 }
 
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #else // Q_OS_...
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 CpuReader::CpuReader()
 { }
@@ -447,13 +447,13 @@ quint64 MemoryReader::readUsedValue() const
     return 0;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #endif  // defined(Q_OS_...)
 
 #if !defined(Q_OS_LINUX)
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 IoReader::IoReader(const char *device)
 {
@@ -492,6 +492,6 @@ bool MemoryThreshold::setEnabled(bool enabled)
     return false;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #endif // !defined(Q_OS_LINUX)

@@ -31,7 +31,7 @@
 
 #include "cryptography.h"
 
-AM_USE_NAMESPACE
+QT_USE_NAMESPACE_AM
 
 class tst_Cryptography : public QObject
 {

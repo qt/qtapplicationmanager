@@ -45,7 +45,7 @@
 #include <QQuickItem>
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class QmlInProcessRuntime;
 
@@ -124,4 +124,4 @@ private:
     friend class QmlInProcessRuntime; // for setting the m_runtime member
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

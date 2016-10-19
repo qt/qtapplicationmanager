@@ -46,7 +46,7 @@
 
 #include <QtAppManCommon/error.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class AsynchronousTask : public QThread
 {
@@ -84,7 +84,7 @@ public:
     QString applicationId() const; // convenience
 
 signals:
-    void stateChanged(AM_PREPEND_NAMESPACE(AsynchronousTask::State) newState);
+    void stateChanged(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::State) newState);
     void progress(qreal p);
 
 protected:
@@ -102,6 +102,6 @@ protected:
     QString m_errorString;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(AM_PREPEND_NAMESPACE(AsynchronousTask::State))
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::State))

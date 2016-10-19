@@ -56,7 +56,7 @@
 
 #include "qml-utilities.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 namespace {
 enum Roles
@@ -686,4 +686,4 @@ QObject *SystemMonitor::getProcessMonitor(const QString &appId)
     return d->getProcess(appId);
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

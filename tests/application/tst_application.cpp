@@ -34,7 +34,7 @@
 #include "applicationdatabase.h"
 #include "yamlapplicationscanner.h"
 
-AM_USE_NAMESPACE
+QT_USE_NAMESPACE_AM
 
 class tst_Application : public QObject
 {

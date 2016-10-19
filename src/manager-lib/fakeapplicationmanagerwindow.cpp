@@ -43,7 +43,7 @@
 #include "qmlinprocessruntime.h"
 #include <QSGSimpleRectNode>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
     : QQuickItem(parent)
@@ -195,4 +195,4 @@ void FakeApplicationManagerWindow::onVisibleChanged()
         m_runtime->addWindow(this);
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

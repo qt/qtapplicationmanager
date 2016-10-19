@@ -43,7 +43,7 @@
 
 #include <QtAppManManager/abstractruntime.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class FakeApplicationManagerWindow;
 class QmlInProcessApplicationInterface;
@@ -105,4 +105,4 @@ private:
 #endif
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

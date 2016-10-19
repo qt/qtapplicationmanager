@@ -263,7 +263,7 @@ enum Roles
     ApplicationItem
 };
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ApplicationManagerPrivate
 {
@@ -823,7 +823,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 }
 
 #if defined(QT_DBUS_LIB)
-bool ApplicationManager::startApplication(const QString &id, const AM_PREPEND_NAMESPACE(UnixFdMap) &redirections, const QString &documentUrl)
+bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &redirections, const QString &documentUrl)
 {
     AM_AUTHENTICATE_DBUS(bool)
 
@@ -848,7 +848,7 @@ bool ApplicationManager::startApplication(const QString &id, const AM_PREPEND_NA
     return startApplication(fromId(id), documentUrl, qSL("--internal-redirect-only--"), redirectStd);
 }
 
-bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const AM_PREPEND_NAMESPACE(UnixFdMap) &redirections, const QString &documentUrl)
+bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &redirections, const QString &documentUrl)
 {
     AM_AUTHENTICATE_DBUS(bool)
 
@@ -1391,4 +1391,4 @@ ApplicationManager::RunState ApplicationManager::applicationRunState(const QStri
     }
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

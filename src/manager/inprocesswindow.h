@@ -46,7 +46,7 @@
 #include <QObject>
 #include <QPointer>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class InProcessWindow : public Window
 {
@@ -70,4 +70,4 @@ private:
     QVariantMap m_windowProperties;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

@@ -126,7 +126,7 @@
 
 #include "../plugin-interfaces/startupinterface.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 static Configuration *configuration = 0;
 
@@ -410,9 +410,9 @@ static QVector<const Application *> scanForApplications(const QStringList &built
     return result;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
-AM_USE_NAMESPACE
+QT_USE_NAMESPACE_AM
 
 int main(int argc, char *argv[])
 {

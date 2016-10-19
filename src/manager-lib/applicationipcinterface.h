@@ -48,7 +48,7 @@
 #endif
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class Application;
 class ApplicationIPCInterfaceAttached;
@@ -86,6 +86,6 @@ private:
     friend class ApplicationIPCManager;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
-QML_DECLARE_TYPEINFO(AM_PREPEND_NAMESPACE(ApplicationIPCInterface), QML_HAS_ATTACHED_PROPERTIES)
+QML_DECLARE_TYPEINFO(QT_PREPEND_NAMESPACE_AM(ApplicationIPCInterface), QML_HAS_ATTACHED_PROPERTIES)

@@ -47,7 +47,7 @@
 #include <CommonCrypto/CommonHMAC.h>
 
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 bool DigestFilterPrivate::init()
 {
@@ -146,4 +146,4 @@ qint64 DigestFilterPrivate::finish(char *result, unsigned int *size)
     return 0;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

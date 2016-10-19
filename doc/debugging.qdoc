@@ -144,4 +144,5 @@ The debug wrapper argument is always interpreted as a standard YAML document con
     \badcode
     name: { param1: "value1", param2: "value2" }
     \endcode
+\endlist
 */

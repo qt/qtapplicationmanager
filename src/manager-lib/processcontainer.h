@@ -45,7 +45,7 @@
 
 #define AM_HOST_CONTAINER_AVAILABLE
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ProcessContainerManager : public AbstractContainerManager
 {
@@ -117,4 +117,4 @@ private:
     ContainerDebugWrapper m_debugWrapper;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

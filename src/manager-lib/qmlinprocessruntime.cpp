@@ -58,7 +58,7 @@
 #include "utilities.h"
 #include "runtimefactory.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 // copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
 static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
@@ -303,4 +303,4 @@ AbstractRuntime *QmlInProcessRuntimeManager::create(AbstractContainer *container
     return new QmlInProcessRuntime(app, this);
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

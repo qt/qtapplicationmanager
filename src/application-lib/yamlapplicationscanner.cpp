@@ -54,7 +54,7 @@
 #include "yamlapplicationscanner.h"
 #include "utilities.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 YamlApplicationScanner::YamlApplicationScanner()
 {
@@ -206,4 +206,4 @@ QString YamlApplicationScanner::metaDataFileName() const
     return qSL("info.yaml");
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

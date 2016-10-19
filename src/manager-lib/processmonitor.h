@@ -46,7 +46,7 @@
 #include <QtAppManManager/fpsmonitor.h>
 #include <QtAppManManager/systemmonitor.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class MemoryMonitor;
 
@@ -96,5 +96,5 @@ private:
     quint64 m_pid;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 

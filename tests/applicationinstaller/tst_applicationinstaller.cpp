@@ -50,7 +50,7 @@
 #include "../sudo-cleanup.h"
 #include "../error-checking.h"
 
-AM_USE_NAMESPACE
+QT_USE_NAMESPACE_AM
 
 static bool startedSudoServer = false;
 static QString sudoServerError;

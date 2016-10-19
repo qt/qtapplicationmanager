@@ -57,7 +57,7 @@
 #include "applicationipcinterface.h"
 #include "utilities.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 // You can enable this define to get all P2P-bus objects onto the session bus
 // within io.qt.ApplicationManager, /Application<pid>/...
@@ -65,10 +65,10 @@ AM_BEGIN_NAMESPACE
 // #define EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS 1
 
 #if defined(AM_MULTI_PROCESS)
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 #  include <dbus/dbus.h>
 #  include <sys/socket.h>
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 static qint64 getDBusPeerPid(const QDBusConnection &conn)
 {
@@ -463,4 +463,4 @@ QDBusServer *NativeRuntimeManager::applicationInterfaceServer() const
     return m_applicationInterfaceServer;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

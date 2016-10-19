@@ -43,12 +43,12 @@
 #include <qglobal.h>
 #include <QLoggingCategory>
 
-#define AM_BEGIN_NAMESPACE  namespace QtAM {
-#define AM_END_NAMESPACE    }
-#define AM_USE_NAMESPACE    using namespace QtAM;
-#define AM_PREPEND_NAMESPACE(name) QtAM::name
+#define QT_BEGIN_NAMESPACE_AM  namespace QtAM {
+#define QT_END_NAMESPACE_AM    }
+#define QT_USE_NAMESPACE_AM    using namespace QtAM;
+#define QT_PREPEND_NAMESPACE_AM(name) QtAM::name
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 Q_DECLARE_LOGGING_CATEGORY(LogSystem)
 Q_DECLARE_LOGGING_CATEGORY(LogInstaller)
@@ -68,11 +68,11 @@ void am_trace(QDebug);
 template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest... trest)
 { dbg << t; am_trace(dbg, trest...); }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #define AM_TRACE(category, ...) \
     for (bool qt_category_enabled = category().isDebugEnabled(); qt_category_enabled; qt_category_enabled = false) { \
-        AM_PREPEND_NAMESPACE(am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__)); \
+        QT_PREPEND_NAMESPACE_AM(am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__)); \
     }
 
 // make the source a lot less ugly and more readable (until we can finally use user defined literals)

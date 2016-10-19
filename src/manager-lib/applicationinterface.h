@@ -46,7 +46,7 @@
 #include <QVariantMap>
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class ApplicationInterface : public QObject
 {
@@ -78,4 +78,4 @@ private:
     Q_DISABLE_COPY(ApplicationInterface)
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

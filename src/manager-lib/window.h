@@ -47,7 +47,7 @@
 #include <QQuickItem>
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class Application;
 class WindowPrivate;
@@ -84,4 +84,4 @@ protected:
     bool m_isClosing = false;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

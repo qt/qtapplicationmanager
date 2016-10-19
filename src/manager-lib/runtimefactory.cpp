@@ -47,7 +47,7 @@
 #include "abstractcontainer.h"
 #include "runtimefactory.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 RuntimeFactory *RuntimeFactory::s_instance = nullptr;
 
@@ -137,4 +137,4 @@ bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager, const QStr
     return true;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

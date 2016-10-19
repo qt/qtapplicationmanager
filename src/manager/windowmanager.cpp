@@ -280,7 +280,7 @@
     identified by \a applicationId via the ApplicationManager.
 */
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 namespace {
 enum Roles
@@ -1052,4 +1052,4 @@ int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSur
 
 #endif // defined(AM_MULTI_PROCESS)
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

@@ -50,7 +50,7 @@ QT_FORWARD_DECLARE_CLASS(QDBusContext)
 typedef QObject QDBusContext; // evil hack :)
 #endif
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 struct DBusPolicy
 {
@@ -66,5 +66,5 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment);
 bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy,
                      const QByteArray &function, const std::function<QStringList(qint64)> &pidToCapabilities);
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM
 

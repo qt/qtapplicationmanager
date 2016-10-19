@@ -45,7 +45,7 @@
 #include <QString>
 #include <QtAppManCommon/global.h>
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 namespace Cryptography {
 
@@ -57,4 +57,4 @@ QString errorString(qint64 osCryptoError, const char *errorDescription = nullptr
 
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

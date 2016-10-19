@@ -44,7 +44,7 @@
 #include <QtAppManManager/abstractcontainer.h>
 #include "../plugin-interfaces/containerinterface.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class PluginContainerManager : public AbstractContainerManager
 {
@@ -116,4 +116,4 @@ protected:
     friend class PluginContainerManager;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

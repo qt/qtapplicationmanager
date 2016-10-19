@@ -60,7 +60,7 @@
 #endif
 
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 bool ensureCorrectLocale();
 bool checkCorrectLocale();
@@ -208,4 +208,4 @@ QVector<T *> loadPlugins(const char *type, const QStringList &files) throw (Exce
     return interfaces;
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

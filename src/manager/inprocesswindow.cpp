@@ -41,7 +41,7 @@
 
 #include "inprocesswindow.h"
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 static QByteArray nameToKey(const QString &name)
 {
@@ -116,4 +116,4 @@ bool InProcessWindow::eventFilter(QObject *o, QEvent *e)
     return Window::eventFilter(o, e);
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

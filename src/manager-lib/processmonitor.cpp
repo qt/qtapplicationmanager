@@ -51,7 +51,7 @@
 #  include <unistd.h>
 #endif
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 ProcessMonitor::ProcessMonitor(const QString &appId, QObject *parent)
     : QObject(parent)
@@ -162,4 +162,4 @@ void ProcessMonitor::obtainPid()
     }
 }
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

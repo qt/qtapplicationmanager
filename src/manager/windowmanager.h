@@ -60,7 +60,7 @@ QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
 QT_FORWARD_DECLARE_CLASS(QWindow)
 
-AM_BEGIN_NAMESPACE
+QT_BEGIN_NAMESPACE_AM
 
 class Window;
 class WindowManagerPrivate;
@@ -146,7 +146,7 @@ private slots:
 
     void inProcessSurfaceItemCreated(QQuickItem *surfaceItem);
     void inProcessSurfaceItemClosing(QQuickItem *surfaceItem);
-    void setupWindow(AM_PREPEND_NAMESPACE(Window) *window);
+    void setupWindow(QT_PREPEND_NAMESPACE_AM(Window) *window);
 
 public:
     Q_INVOKABLE bool setWindowProperty(QQuickItem *window, const QString &name, const QVariant &value);
@@ -158,17 +158,17 @@ public:
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 
 public slots:
-    void setupInProcessRuntime(AM_PREPEND_NAMESPACE(AbstractRuntime) *runtime); // evil hook to support in-process runtimes
+    void setupInProcessRuntime(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime); // evil hook to support in-process runtimes
 
 private slots:
     void reportFps();
 
 #if defined(AM_MULTI_PROCESS)
 private slots:
-    void waylandSurfaceCreated(AM_PREPEND_NAMESPACE(WindowSurface) *surface);
-    void waylandSurfaceMapped(AM_PREPEND_NAMESPACE(WindowSurface) *surface);
-    void waylandSurfaceUnmapped(AM_PREPEND_NAMESPACE(WindowSurface) *surface);
-    void waylandSurfaceDestroyed(AM_PREPEND_NAMESPACE(WindowSurface) *surface);
+    void waylandSurfaceCreated(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
+    void waylandSurfaceMapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
+    void waylandSurfaceUnmapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
+    void waylandSurfaceDestroyed(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
 
     void resize();
 
@@ -187,4 +187,4 @@ private:
     friend class WaylandCompositor;
 };
 
-AM_END_NAMESPACE
+QT_END_NAMESPACE_AM

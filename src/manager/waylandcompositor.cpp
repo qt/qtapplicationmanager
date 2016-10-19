@@ -191,7 +191,9 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
 void WaylandCompositor::registerOutputWindow(QQuickWindow* window)
 {
-    m_outputs.append(new QWaylandQuickOutput(this, window));
+    auto output = new QWaylandQuickOutput(this, window);
+    output->setSizeFollowsWindow(true);
+    m_outputs.append(output);
 
     window->winId();
 }

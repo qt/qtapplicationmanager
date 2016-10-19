@@ -311,7 +311,7 @@ void NativeRuntime::onLauncherFinishedInitialization()
                                      << "at" << iface->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
             }
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-            iface->dbusRegister(QDBusConnection::sessionBus(), qSL("/Application%1").arg(applicationProcessId()));
+            iface->dbusRegister(application(), QDBusConnection::sessionBus());
 #endif
         }
 

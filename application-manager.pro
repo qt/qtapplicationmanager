@@ -39,14 +39,14 @@ linux:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
   check_libbacktrace = "no"
 }
 
+!tools-only: SUBDIRS += doc
+
 load(qt_parts)
 
 tools-only {
     # removing them from QT_BUILD_PARTS doesn't help
     SUBDIRS -= sub_tests
     SUBDIRS -= sub_examples
-} else {
-    SUBDIRS += doc
 }
 
 if(linux|force-libcrypto):check_crypto = "libcrypto / OpenSSL"

@@ -551,10 +551,17 @@ int main(int argc, char *argv[])
         startupTimer.checkpoint("after installer setup checks");
 #endif
 
-        bool forceSingleProcess = true;
-#if defined(AM_MULTI_PROCESS)
-        forceSingleProcess = configuration->forceSingleProcess();
+        bool forceSingleProcess = configuration->forceSingleProcess();
+        bool forceMultiProcess = configuration->forceMultiProcess();
+
+        if (forceMultiProcess == forceSingleProcess && forceSingleProcess)
+            throw Exception(Error::System, "You cannot enforce multi- and single-process mode at the same time.");
+
+#if !defined(AM_MULTI_PROCESS)
+        if (forceMultiProcess)
+            throw Exception(Error::System, "This application manager build is not multi-process capable.");
 #endif
+
         qApp->setProperty("singleProcessMode", forceSingleProcess);
 
         if (forceSingleProcess) {

@@ -72,6 +72,7 @@ public:
     bool noSecurity() const;
     bool noUiWatchdog() const;
     bool forceSingleProcess() const;
+    bool forceMultiProcess() const;
     QString singleApp() const;
     QStringList loggingRules() const;
 

@@ -180,6 +180,7 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("no-security"),          qSL("disables all security related checks (dev only!)") });
     d->clp.addOption({ qSL("no-ui-watchdog"),       qSL("disables detecting hung UI applications (e.g. via Wayland's ping/pong).") });
     d->clp.addOption({ qSL("force-single-process"), qSL("forces single-process mode even on a wayland enabled build.") });
+    d->clp.addOption({ qSL("force-multi-process"),  qSL("forces multi-process mode. Will exit immediately if this is not possible.") });
     d->clp.addOption({ qSL("wayland-socket-name"),  qSL("use this file name to create the wayland socket."), qSL("socket"), qSL("wayland-0") });
     d->clp.addOption({ qSL("single-app"),           qSL("runs a single application only (ignores the database)"), qSL("info.yaml file") });
     d->clp.addOption({ qSL("logging-rule"),         qSL("adds a standard Qt logging rule."), qSL("rule") });
@@ -391,6 +392,11 @@ bool Configuration::noUiWatchdog() const
 bool Configuration::forceSingleProcess() const
 {
     return d->config<bool>("force-single-process", { qSL("flags"), qSL("forceSingleProcess") });
+}
+
+bool Configuration::forceMultiProcess() const
+{
+    return d->config<bool>("force-multi-process", { qSL("flags"), qSL("forceMultiProcess") });
 }
 
 QString Configuration::singleApp() const

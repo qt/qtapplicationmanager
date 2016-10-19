@@ -194,6 +194,11 @@ command-line options.
     \li bool
     \li Forces single-process mode even on a Wayland enabled build. (default: false)
 \row
+    \li \b --force-multi-process
+    \br \e flags/forceMultiProcess
+    \li bool
+    \li Forces multi-process mode. Will exit immediately if this is not possible. (default: false)
+\row
     \li \b --single-app
     \br \e -
     \li string

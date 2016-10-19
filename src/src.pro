@@ -1,8 +1,6 @@
 
 TEMPLATE = subdirs
 
-load(qfeatures)
-
 load(am-config)
 
 SUBDIRS = \

@@ -13,7 +13,10 @@ defineTest(printConfigLine) {
 
     isEmpty(width):width = 30
 
-    unix:system("tty -s") { # check if we are on unix and stdout is a tty
+    unix:system("test -t 2") { # check if we are on unix and stderr is a tty
+        osx:echo="echo"
+        else:echo="/bin/echo -e"
+
         equals(color, "auto") {
             yesmatch = $$find(val, "^yes")
             nomatch = $$find(val, "^no")
@@ -23,12 +26,12 @@ defineTest(printConfigLine) {
             else:!isEmpty(nomatch):color = "red"
             else:!isEmpty(automatch):color = "yellow"
         }
-        equals(color, "red"):         prolog=$$system(echo "\\\\033")[31;1m
-        else:equals(color, "green"):  prolog=$$system(echo "\\\\033")[32;1m
-        else:equals(color, "yellow"): prolog=$$system(echo "\\\\033")[33;1m
-        else:equals(color, "orange"): prolog=$$system(echo "\\\\033")[33m
-        else:equals(color, "white"):  prolog=$$system(echo "\\\\033")[37;1m
-        epilog = $$system(echo "\\\\033")[0m
+        equals(color, "red"):         prolog=$$system($$echo "\\\\033")[31;1m
+        else:equals(color, "green"):  prolog=$$system($$echo "\\\\033")[32;1m
+        else:equals(color, "yellow"): prolog=$$system($$echo "\\\\033")[33;1m
+        else:equals(color, "orange"): prolog=$$system($$echo "\\\\033")[33m
+        else:equals(color, "white"):  prolog=$$system($$echo "\\\\033")[37;1m
+        epilog = $$system($$echo "\\\\033")[0m
     }
 
     isEmpty(msg)|contains(msg, "^-- .*") {

@@ -598,6 +598,7 @@ static void crashHandler(const char *why)
     }
     if (dumpCore) {
         fprintf(stderr, "\n > the process will be aborted (core dump)\n\n");
+        signal(SIGABRT, SIG_DFL);
         abort();
     }
     _Exit(-1);
@@ -631,8 +632,15 @@ static void initBacktrace()
     demangleBufferSize = 512;
     demangleBuffer = (char *) malloc(demangleBufferSize);
 
+    // Use alternate signal stack to get backtrace for stack overflow
+    stack_t sigstack;
+    sigstack.ss_sp = malloc(SIGSTKSZ);
+    sigstack.ss_size = SIGSTKSZ;
+    sigstack.ss_flags = 0;
+    sigaltstack(&sigstack, nullptr);
+
     struct sigaction sigact;
-    sigact.sa_flags = 0;
+    sigact.sa_flags = SA_ONSTACK;
     sigact.sa_handler = [](int sig) {
         signal(sig, SIG_DFL);
         static char buffer[256];
@@ -643,7 +651,7 @@ static void initBacktrace()
     sigset_t unblockSet;
     sigemptyset(&unblockSet);
 
-    for (int sig : { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE }) {
+    for (int sig : { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT }) {
         sigaddset(&unblockSet, sig);
         sigaction(sig, &sigact, nullptr);
     }

@@ -439,6 +439,7 @@ The following conditions will be handled:
 \li Uncaught exceptions. Exceptions derived from \c std::exception will also show the \c {what()}
     information.
 \li \c SIGSEGV
+\li \c SIGABRT
 \li \c SIGBUS
 \li \c SIGILL
 \li \c SIGFPE

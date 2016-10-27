@@ -124,21 +124,14 @@ bool QmlInProcessRuntime::start()
         loadDummyDataFiles(*m_inProcessQmlEngine, QFileInfo(m_app->absoluteCodeFilePath()).path());
     }
 
-    QStringList importPaths = variantToStringList(m_app->runtimeParameters().value(qSL("importPaths")));
+    const QStringList importPaths = variantToStringList(configuration().value(qSL("importPaths")))
+                                  + variantToStringList(m_app->runtimeParameters().value(qSL("importPaths")));
     if (!importPaths.isEmpty()) {
+        const QString baseDir = m_app->baseDir().absolutePath() + QDir::separator();
+        for (const QString &path : importPaths)
+            m_inProcessQmlEngine->addImportPath(QFileInfo(path).isRelative() ? baseDir + path : path);
 
-        QStringList absoluteImportPaths;
-
-        for (int i = 0; i < importPaths.size(); i++) {
-            QString importPath = importPaths[i];
-            if (QFileInfo(importPath).isRelative())
-                importPath = m_app->baseDir().absolutePath() + qSL("/") + importPath;
-
-            absoluteImportPaths.append(importPath);
-        }
-
-        qCDebug(LogSystem) << "qml-in-process-runtime: Setting QML2_IMPORT_PATH to" << absoluteImportPaths;
-        m_inProcessQmlEngine->setImportPathList(m_inProcessQmlEngine->importPathList() + absoluteImportPaths);
+        qCDebug(LogSystem) << "Updated Qml import paths:" << m_inProcessQmlEngine->importPathList();
     }
 
     QQmlComponent component(m_inProcessQmlEngine, m_app->absoluteCodeFilePath());

@@ -345,10 +345,14 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
                                                  &ApplicationManager::instanceForQml);
     qmlRegisterUncreatableType<const Application>("QtApplicationManager", 1, 0, "Application",
                                                   qSL("Cannot create objects of type Application"));
+    qRegisterMetaType<const Application*>("const Application*");
     qmlRegisterUncreatableType<AbstractRuntime>("QtApplicationManager", 1, 0, "Runtime",
                                                 qSL("Cannot create objects of type Runtime"));
+    qRegisterMetaType<AbstractRuntime*>("AbstractRuntime*");
     qmlRegisterUncreatableType<AbstractContainer>("QtApplicationManager", 1, 0, "Container",
                                                   qSL("Cannot create objects of type Container"));
+    qRegisterMetaType<AbstractContainer*>("AbstractContainer*");
+
     return s_instance = am.take();
 }
 

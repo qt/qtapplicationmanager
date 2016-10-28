@@ -8,6 +8,10 @@ qtHaveModule(geniviextras):QT *= geniviextras
 qtHaveModule(dbus):QT *= dbus
 qtHaveModule(qml):QT *= qml qml-private
 
+!lessThan(QT.geniviextras.MAJOR_VERSION, 1) : !lessThan(QT.geniviextras.MINOR_VERSION, 1) {
+    DEFINES += AM_GENIVIEXTRAS_LAZY_INIT
+}
+
 CONFIG *= static internal_module
 
 include($$SOURCE_DIR/3rdparty/libyaml.pri)

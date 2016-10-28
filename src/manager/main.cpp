@@ -477,6 +477,8 @@ int main(int argc, char *argv[])
         // setting this for child processes //TODO: use a more generic IPC approach
         qputenv("AM_LOGGING_RULES", loggingRules.join(qL1C('\n')).toUtf8());
 
+        registerUnregisteredDLTContexts();
+
         startupTimer.checkpoint("after logging setup");
 
         auto startupPlugins = loadPlugins<StartupInterface>("startup", configuration->pluginFilePaths("startup"));

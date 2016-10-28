@@ -62,14 +62,20 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 
 #if defined(QT_GENIVIEXTRAS_LIB)
 #  include <QtGeniviExtras/QtDlt>
+#  include <QtGeniviExtras/QDltRegistration>
 #else
 #  define QDLT_LOGGING_CATEGORY(a,b,c,d) Q_LOGGING_CATEGORY(a,b)
 #  define QDLT_FALLBACK_CATEGORY(a)
 #  define QDLT_REGISTER_APPLICATION(a,b)
 #endif
 
+#ifndef QDLT_REGISTER_CONTEXT_ON_FIRST_USE
+#  define QDLT_REGISTER_CONTEXT_ON_FIRST_USE(a)
+#endif
+
 QT_BEGIN_NAMESPACE_AM
 
+QDLT_REGISTER_CONTEXT_ON_FIRST_USE(true)
 QDLT_REGISTER_APPLICATION("PCAM", "Pelagicore Application-Manager")
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General messages")
 QDLT_LOGGING_CATEGORY(LogInstaller, "am.installer", "INST", "Installer sub-system")
@@ -257,5 +263,12 @@ QString hardwareId()
 
 void am_trace(QDebug)
 { }
+
+void registerUnregisteredDLTContexts()
+{
+#ifdef AM_GENIVIEXTRAS_LAZY_INIT
+    globalDltRegistration()->registerUnregisteredContexts();
+#endif
+}
 
 QT_END_NAMESPACE_AM

@@ -157,11 +157,12 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
         iface->dbusUnregister(QDBusConnection(m_dbusConnectionName));
     }
 
+    if (m_app)
+        m_app->setCurrentRuntime(0);
+
     emit finished(exitCode, status);
     emit stateChanged(state());
 
-    if (m_app)
-        m_app->setCurrentRuntime(0);
     deleteLater();
 }
 

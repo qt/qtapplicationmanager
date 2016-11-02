@@ -77,9 +77,15 @@ class Application : public QObject
     Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes)
     Q_PROPERTY(QStringList categories READ categories)
     Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime READ currentRuntime)
+    Q_PROPERTY(int lastExitCode READ lastExitCode)
+    Q_PROPERTY(ExitStatus lastExitStatus READ lastExitStatus)
 
 public:
     enum Type { Gui, Headless };
+    Q_ENUM(Type)
+
+    enum ExitStatus { NormalExit, CrashExit, ForcedExit };
+    Q_ENUM(ExitStatus)
 
     QString id() const;
     QString absoluteCodeFilePath() const;
@@ -142,6 +148,9 @@ public:
 
     void setBaseDir(const QString &path); //TODO: replace baseDir handling with something that works :)
 
+    int lastExitCode() const;
+    ExitStatus lastExitStatus() const;
+
 private:
     Application();
 
@@ -182,6 +191,9 @@ private:
 
     mutable State m_state = Installed;
     mutable qreal m_progress = 0;
+
+    mutable int m_lastExitCode = 0;
+    mutable ExitStatus m_lastExitStatus = NormalExit;
 
     friend class YamlApplicationScanner;
     friend class ApplicationManager; // needed to update installation status

@@ -137,6 +137,16 @@ QString Application::documentUrl() const
     return m_documentUrl;
 }
 
+int Application::lastExitCode() const
+{
+    return m_lastExitCode;
+}
+
+Application::ExitStatus Application::lastExitStatus() const
+{
+    return m_lastExitStatus;
+}
+
 bool Application::isPreloaded() const
 {
     return m_nonAliased ? m_nonAliased->m_preload : m_preload;

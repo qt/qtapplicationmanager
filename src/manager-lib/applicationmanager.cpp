@@ -67,6 +67,7 @@
 
 #if defined(Q_OS_UNIX)
 #  include <unistd.h>
+#  include <signal.h>
 #endif
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
@@ -230,11 +231,39 @@
 /*!
     \qmlsignal ApplicationManager::applicationWasActivated(string id, string aliasId)
 
-    This signal is emitted when an application identified by \a id is already running
-    (in the background) and is started via the ApplicationManager API again, possibly
-    through an alias, provided in \a aliasId.
+    This signal is emitted when an application identified by \a id is (re-)started via
+    the ApplicationManager API, possibly through an alias, provided in \a aliasId.
 
     The window manager should take care of raising the application's window in this case.
+*/
+
+/*!
+    \qmlsignal ApplicationManager::applicationRunStateChanged(string id, enumeration runState)
+
+    This signal is emitted when the \a runState of the application identified by \a id changed.
+    The \a runState can be one of:
+
+    \list
+    \li ApplicationManager.NotRunning - the application has not been started yet
+    \li ApplicationManager.StartingUp - the application has been started and is initializing
+    \li ApplicationManager.Running - the application is running
+    \li ApplicationManager.ShutingDown - the application has been stopped and is cleaning up
+    \endlist
+
+    For example this signal can be used to restart an application in multi-process mode when
+    it has crashed:
+
+    \qml
+    Connections {
+        target: ApplicationManager
+        onApplicationRunStateChanged: {
+            if (runState === ApplicationManager.NotRunning
+                && ApplicationManager.application(id).lastExitStatus === Application.CrashExit) {
+                ApplicationManager.startApplication(id);
+            }
+        }
+    }
+    \endqml
 */
 
 enum Roles
@@ -750,6 +779,21 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     connect(runtime, &AbstractRuntime::stateChanged, this, [this, app]() {
         emit applicationRunStateChanged(app->isAlias() ? app->nonAliased()->id() : app->id(),
                                         applicationRunState(app->id()));
+    });
+
+    connect(runtime, static_cast<void(AbstractRuntime::*)(int, QProcess::ExitStatus)>
+            (&AbstractRuntime::finished), this, [app](int code, QProcess::ExitStatus status) {
+        app->m_lastExitCode = code;
+        if (status == QProcess::CrashExit) {
+#if defined(Q_OS_UNIX)
+            app->m_lastExitStatus = (code == SIGTERM || code == SIGKILL) ? Application::ForcedExit
+                                                                         : Application::CrashExit;
+#else
+            app->m_lastExitStatus = Application::CrashExit;
+#endif
+        } else {
+            app->m_lastExitStatus = Application::NormalExit;
+        }
     });
 
     if (!documentUrl.isNull())

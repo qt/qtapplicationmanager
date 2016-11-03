@@ -77,6 +77,7 @@ public:
     QString applicationId() const override;
     QVariantMap additionalConfiguration() const override;
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
+    Q_INVOKABLE void acknowledgeQuit() const;
 
 private slots:
     void notificationClosed(uint notificationId, uint reason);

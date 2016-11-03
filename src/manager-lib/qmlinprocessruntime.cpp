@@ -96,10 +96,12 @@ QmlInProcessRuntime::QmlInProcessRuntime(const Application *app, QmlInProcessRun
 
 QmlInProcessRuntime::~QmlInProcessRuntime()
 {
+#if !defined(AM_HEADLESS)
     // if there is still a window present at this point, fire the 'closing' signal (probably) again,
     // because it's still the duty of WindowManager together with qml-ui to free and delete this item!!
-
-    stop(false);
+    for (int i = m_windows.size(); i; --i)
+        emit inProcessSurfaceItemClosing(m_windows.at(i-1));
+#endif
 }
 
 bool QmlInProcessRuntime::start()
@@ -195,6 +197,8 @@ void QmlInProcessRuntime::stop(bool forceKill)
     m_mainWindow = 0;
 #endif
     emit stateChanged(state());
+
+    deleteLater();
 }
 
 #if !defined(AM_HEADLESS)

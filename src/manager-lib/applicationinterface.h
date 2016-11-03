@@ -61,6 +61,7 @@ public:
 
 #ifdef Q_QDOC
     Q_INVOKABLE Notification *createNotification();
+    Q_INVOKABLE virtual void acknowledgeQuit() const;
 #endif
 
 signals:

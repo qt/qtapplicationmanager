@@ -85,6 +85,7 @@ public:
     QVariantMap additionalConfiguration() const override;
 
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
+    Q_INVOKABLE void acknowledgeQuit() const;
 
 private:
     QmlInProcessRuntime *m_runtime;

@@ -104,12 +104,27 @@
 */
 
 /*!
+    \qmlmethod ApplicationInterface::acknowledgeQuit()
+
+    This method should be called in response to the \l quit() signal, once the application
+    is ready to be terminated (e.g. persistent data has been written).
+
+    \note This method should be called instead of \c Qt.quit() to obtain the same
+    behavior in single- and multi-process mode (it does nothing in single process mode).
+
+    \sa quit()
+*/
+
+
+/*!
     \qmlsignal ApplicationInterface::quit()
 
     The application-manager will send out this signal to an application to request a
-    controlled shutdown. If you fail to react to this signal in a timely fashion
-    (the exact behavior is defined by application-manager's configuration), your
-    application will simply be killed.
+    controlled shutdown. The application is given a certain amount of time defined in
+    the configuration (\c quitTime). If the time elapses before acknowledgeQuit() is
+    called, the application will simply be killed.
+
+    \sa acknowledgeQuit()
 */
 
 /*!

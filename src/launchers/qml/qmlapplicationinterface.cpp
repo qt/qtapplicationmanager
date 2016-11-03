@@ -47,6 +47,7 @@
 #include <QDBusReply>
 #include <QDebug>
 #include <QPointer>
+#include <QCoreApplication>
 
 #include "global.h"
 #include "qmlapplicationinterface.h"
@@ -149,6 +150,11 @@ Notification *QmlApplicationInterface::createNotification()
 {
     QmlNotification *n = new QmlNotification(this, Notification::Dynamic);
     return n;
+}
+
+void QmlApplicationInterface::acknowledgeQuit() const
+{
+    QCoreApplication::instance()->quit();
 }
 
 QVariantMap QmlApplicationInterface::additionalConfiguration() const

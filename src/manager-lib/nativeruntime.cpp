@@ -44,6 +44,7 @@
 #include <QDBusServer>
 #include <QDBusConnection>
 #include <QDBusError>
+#include <QTimer>
 
 #include "global.h"
 #include "application.h"
@@ -238,10 +239,19 @@ void NativeRuntime::stop(bool forceKill)
     emit aboutToStop();
     emit stateChanged(state());
 
-    if (forceKill)
+    if (forceKill) {
         m_process->kill();
-    else
-        m_process->terminate();
+        deleteLater();
+    } else {
+        bool ok;
+        int qt = configuration().value(qSL("quitTime")).toInt(&ok);
+        if (!ok || qt < 0)
+            qt = 250;
+        QTimer::singleShot(qt, this, [this]() {
+            m_process->terminate();
+            deleteLater();
+        });
+    }
 }
 
 void NativeRuntime::onProcessStarted()

@@ -406,7 +406,7 @@ an additional column specifying which runtime a configuration option applies to:
         application plugins and instantiating costly singletons. Creating other objects is
         generally useless as the created component will immediately be deleted again. For the same
         reason visual items should not be created. Always keep in mind that everything included in
-        this file will be loaded into \b all applicictions that use the QML runtime.
+        this file will be loaded into \b all applications that use the QML runtime.
 \row
     \li \c loadDummyData
     \li qml
@@ -418,6 +418,13 @@ an additional column specifying which runtime a configuration option applies to:
     \li string
     \li If set, the main window of the app will get this color set as the default clear color. This
         will also give the surface an 8-bit alpha buffer.
+\row
+    \li \c quitTime
+    \li qml
+    \li int
+    \li Defines the grace period in milliseconds an application is given for shutting down. This is
+        the time limit between receiving the \c quit() signal and responding with
+        \c acknowledgeQuit(). (default: 250).
 \row
     \li \c crashAction
     \li qml

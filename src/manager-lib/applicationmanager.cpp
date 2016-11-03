@@ -838,20 +838,16 @@ void ApplicationManager::stopApplication(const Application *app, bool forceKill)
     if (!app)
         return;
     AbstractRuntime *rt = app->currentRuntime();
-    if (rt) {
+    if (rt)
         rt->stop(forceKill);
-        rt->deleteLater(); // ~Runtime() will clean app->m_runtime
-    }
 }
 
 void ApplicationManager::killAll()
 {
     for (const Application *app : qAsConst(d->apps)) {
         AbstractRuntime *rt = app->currentRuntime();
-        if (rt) {
+        if (rt)
             rt->stop(true);
-            delete rt;
-        }
     }
     QuickLauncher::instance()->killAll();
 }

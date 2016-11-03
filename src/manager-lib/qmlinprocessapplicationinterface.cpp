@@ -79,6 +79,11 @@ QVariantMap QmlInProcessApplicationInterface::additionalConfiguration() const
     return QVariantMap();
 }
 
+void QmlInProcessApplicationInterface::acknowledgeQuit() const
+{
+    // Nothing to do
+}
+
 Notification *QmlInProcessApplicationInterface::createNotification()
 {
     QmlInProcessNotification *n = new QmlInProcessNotification(this, Notification::Dynamic);

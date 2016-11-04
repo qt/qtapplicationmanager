@@ -8,15 +8,19 @@ SUBDIRS = \
     crypto-lib \
     application-lib \
     package-lib \
-    tools \
-    plugin-interfaces \
+    tools
 
-qtHaveModule(qml):SUBDIRS += \
-    notification-lib \
-    manager-lib \
-    installer-lib \
-    manager \
-    launchers \
+!tools-only: {
+    SUBDIRS += \
+        plugin-interfaces \
+
+    qtHaveModule(qml):SUBDIRS += \
+        notification-lib \
+        manager-lib \
+        installer-lib \
+        manager \
+        launchers
+}
 
 crypto-lib.depends = common-lib
 application-lib.depends = crypto-lib

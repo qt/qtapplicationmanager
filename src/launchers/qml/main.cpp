@@ -51,7 +51,6 @@
 #include <QDir>
 #include <QtEndian>
 #include <QTimer>
-#include <private/qcrashhandler_p.h>
 #include <QRegularExpression>
 
 #include <QDBusConnection>

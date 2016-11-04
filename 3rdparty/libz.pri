@@ -1,8 +1,5 @@
 # zlib dependency satisfied by bundled 3rd party zlib or system zlib
-contains(QT_CONFIG, system-zlib) {
-    unix|mingw: LIBS_PRIVATE += -lz
-    else:       LIBS += zdll.lib
-} else {
+contains(QT_CONFIG, zlib) {
     CONFIG *= qt
     QT *= core
 
@@ -11,4 +8,7 @@ contains(QT_CONFIG, system-zlib) {
         INCLUDEPATH += $$[QT_INSTALL_HEADERS/get]/QtZlib
     else: \
         INCLUDEPATH += $$[QT_INSTALL_HEADERS/src]/QtZlib
+} else {
+    unix|mingw: LIBS_PRIVATE += -lz
+    else:       LIBS += zdll.lib
 }

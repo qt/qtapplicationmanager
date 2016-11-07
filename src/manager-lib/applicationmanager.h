@@ -120,7 +120,7 @@ public:
     QVariant data(const QModelIndex &index, int role) const;
     QHash<int, QByteArray> roleNames() const;
 
-    Q_INVOKABLE int count() const;
+    int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
     Q_INVOKABLE const Application *application(int index) const;
     Q_INVOKABLE const Application *application(const QString &id) const;

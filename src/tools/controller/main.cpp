@@ -525,8 +525,8 @@ void installPackage(const QString &package, const QString &location) throw(Excep
 
     // start the package installation
 
-    QTimer::singleShot(0, [location, packageFile]() {
-        auto reply = dbus.installer()->startPackageInstallation(location, packageFile);
+    QTimer::singleShot(0, [location, fi]() {
+        auto reply = dbus.installer()->startPackageInstallation(location, fi.absoluteFilePath());
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());

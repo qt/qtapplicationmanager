@@ -62,6 +62,7 @@
 #include "abstractcontainer.h"
 #include "dbus-policy.h"
 #include "qml-utilities.h"
+#include "utilities.h"
 #include "qtyaml.h"
 
 #if defined(Q_OS_UNIX)
@@ -544,6 +545,24 @@ const Application *ApplicationManager::fromProcessId(qint64 pid) const
     foreach (const Application *app, d->apps) {
         if (app->currentRuntime() && (app->currentRuntime()->applicationProcessId() == pid))
             return app;
+    }
+
+    // pid is not a direct child - try indirect children (e.g. when started via gdbserver)
+    //TODO: optimize this by pre-computing a list of parent pids first (do the same in nativeruntime)
+    qint64 appmanPid = qApp->applicationPid();
+
+    foreach (const Application *app, d->apps) {
+        if (app->currentRuntime()) {
+            qint64 rtpid = app->currentRuntime()->applicationProcessId();
+            qint64 ppid = pid;
+
+            while (ppid > 1 && ppid != appmanPid) {
+                ppid = getParentPid(ppid);
+
+                if (rtpid == ppid)
+                    return app;
+            }
+        }
     }
     return 0;
 }

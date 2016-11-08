@@ -11,6 +11,7 @@ QT_FOR_PRIVATE *= \
     appman_crypto-private \
     appman_application-private \
     appman_notification-private \
+    appman_plugininterfaces-private \
 
 CONFIG *= static internal_module
 

@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
                      qL1S(commandTable[i].description));
     }
 
-    desc += qSL("\nMore information about each command can be obtained by running\n  application-controller <command> --help");
+    desc += qSL("\nMore information about each command can be obtained by running\n  appman-controller <command> --help");
 
     QCommandLineParser clp;
     clp.setApplicationDescription(desc);

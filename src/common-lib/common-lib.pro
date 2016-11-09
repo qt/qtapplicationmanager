@@ -28,7 +28,7 @@ SOURCES += \
 qtHaveModule(qml):SOURCES += \
     qml-utilities.cpp \
 
-qtHaveModule(dbus):qtHaveModule(qml):SOURCES += \
+qtHaveModule(dbus):SOURCES += \
     dbus-utilities.cpp \
 
 HEADERS += \
@@ -43,7 +43,7 @@ HEADERS += \
 qtHaveModule(qml):HEADERS += \
     qml-utilities.h \
 
-qtHaveModule(dbus):qtHaveModule(qml):HEADERS += \
+qtHaveModule(dbus):HEADERS += \
     dbus-utilities.h \
 
 load(qt_module)

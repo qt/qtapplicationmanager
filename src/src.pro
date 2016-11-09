@@ -13,6 +13,7 @@ SUBDIRS = \
 !tools-only: {
     SUBDIRS += \
         plugin-interfaces \
+        dbus \
 
     qtHaveModule(qml):SUBDIRS += \
         notification-lib \
@@ -32,6 +33,3 @@ manager.depends = manager-lib installer-lib
 launchers.depends = manager
 
 tools.depends = package-lib
-
-OTHER_FILES = \
-    dbus/*

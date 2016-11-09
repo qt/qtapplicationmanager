@@ -24,3 +24,5 @@ OTHER_FILES += \
     packager.qdoc \
 
 load(qt_tool)
+
+load(install-prefix)

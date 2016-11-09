@@ -29,3 +29,5 @@ HEADERS += \
     applicationmanagerwindow.h \
 
 load(qt_tool)
+
+load(install-prefix)

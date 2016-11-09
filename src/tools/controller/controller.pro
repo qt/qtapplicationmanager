@@ -22,3 +22,5 @@ OTHER_FILES += \
     controller.qdoc \
 
 load(qt_tool)
+
+load(install-prefix)

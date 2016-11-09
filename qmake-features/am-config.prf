@@ -33,7 +33,7 @@ defineTest(CONFIG_VALUE) {
     return(true)
 }
 
-!CONFIG_VALUE(install-prefix, INSTALL_PREFIX):INSTALL_PREFIX = /usr/local
+CONFIG_VALUE(install-prefix, INSTALL_PREFIX)
 
 CONFIG_VALUE(hardware-id, AM_HARDWARE_ID):DEFINES *= AM_HARDWARE_ID=\\\"$$AM_HARDWARE_ID\\\"
 else:CONFIG_VALUE(hardware-id-from-file, AM_HARDWARE_ID_FF):DEFINES *= AM_HARDWARE_ID_FROM_FILE=\\\"$$AM_HARDWARE_ID_FF\\\"

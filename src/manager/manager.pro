@@ -71,9 +71,9 @@ dbus-appman.header_flags = -l QtAM::ApplicationManager -i applicationmanager.h
 
 DBUS_ADAPTORS += dbus-notifications dbus-appman
 
-dbusif.path = $$INSTALL_PREFIX/share/dbus-1/interfaces/
-dbusif.files = ../dbus/*.xml
-INSTALLS += dbusif
+load(qt_tool)
+
+load(install-prefix)
 
 OTHER_FILES = \
     syms.txt \
@@ -106,5 +106,3 @@ isEmpty(GIT_VERSION):GIT_VERSION="unknown"
 
 createBuildConfig(_DATE_, VERSION, GIT_VERSION, SOURCE_DIR, BUILD_DIR, INSTALL_PREFIX, \
                   QT_ARCH, QT_VERSION, QT, CONFIG, DEFINES, INCLUDEPATH, LIBS)
-
-load(qt_tool)

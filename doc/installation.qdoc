@@ -92,7 +92,28 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li Disable the installer part.
 \row
   \li \c{-config install-prefix=<path>}
-  \li Uses \c path as the base directory for \c{make install}. Defaults to \c{/usr/local}.
+  \li Uses \c path as the base directory for \c{make install}.
+      If you are not specifying an \c install-prefix when running qmake, then the application-manager
+      will behave like a standard Qt module:
+      \list
+      \li in developer builds, the binaries will be compiled directly to \c ${qtbase}/bin
+      \li in prefix builds, the binaries will be compiled to \c ${builddir}/bin
+      \endlist
+
+      If you specify an \c install-prefix, this will change:
+      \list
+      \li in developer builds, the binaries will be compiled directly to \c ${install-prefix}/bin
+      \li in prefix builds, the binaries will be compiled to \c ${builddir}/bin
+      \endlist
+
+      In addition, all binaries on Linux will get an absolute \c RPATH / \c RUNPATH when configured
+      with an \c install-prefix. This will allow you to run the binaries from the build directory
+      directly without weird side-effects (Linux will just pull in the system-Qt, if it cannot find
+      the necessary libs in \c RUNPATH.
+
+      In any case, the application-manager is a Qt module. This means that all libraries and headers
+      are always installed into \c ${qtbase} to make them accessible via standard Qt mechanisms.
+
 \row
   \li \c{-config systemd-workaround}
   \li Paramount if you are running systemd and plan on supporting SD-Card installations. Works

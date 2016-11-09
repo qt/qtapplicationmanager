@@ -332,7 +332,10 @@ static QVector<const Application *> scanForApplications(const QStringList &built
     YamlApplicationScanner yas;
 
     auto scan = [&result, &yas, &installationLocations](const QDir &baseDir, bool scanningBuiltinApps) {
-        foreach (const QString &appDirName, baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
+        auto flags = scanningBuiltinApps ? QDir::Dirs | QDir::NoDotAndDotDot
+                                         : QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks;
+
+        foreach (const QString &appDirName, baseDir.entryList(flags)) {
             if (appDirName.endsWith('+') || appDirName.endsWith('-'))
                 continue;
             if (!isValidDnsName(appDirName)) {

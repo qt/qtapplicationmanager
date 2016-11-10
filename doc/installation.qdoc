@@ -30,15 +30,29 @@
 \page installation.html
 \title Installation
 
+\chapter Platforms
+
+The application-manager is tested regularly on these platforms:
+\list
+\li Windows (single-process)
+\li macOS (single-process)
+\li Linux desktop (single-process)
+\li Linux desktop (multi-process)
+    \note Due to the wildly varying stability of Wayland drivers, only the \b Intel and \b VMWare
+          drivers are supported. Other drivers may work, but may also need either special QtWayland
+          versions or specific firmware blobs for the GPU driver.
+\endlist
+
+
 \chapter Prerequisites
 
 In order to build the application-manager with all its features, the following
 components are required:
 
 \list
-    \li \b Qt 5.5 or higher.
+    \li \b Qt 5.6 or higher.
     \li \b libyaml 1.6 or higher.
-    \li \b openssl 1.0 or higher \e{- Linux only}. At compile time, only the headers need to be
+    \li \b openssl 1.0.1 or higher \e{- Linux only}. At compile time, only the headers need to be
            available. The needed libraries will be dynamically loaded at runtime.
     \li \b libarchive 3.0 or higher \e{- only if you need the installer functionality}.
 \endlist
@@ -53,6 +67,19 @@ one of the dependencies, the bundled versions of these libraries from the \c 3rd
 automatically be used instead. Make sure you are aware of the licensing implications, since these bundled
 3rdparty libs will be linked in as static libraries. This option is not meant for production, but for
 development and testing environments only.
+
+\chapter Multi- vs. Single-process
+
+By default, the application-manager always tries to build in multi-process mode, but will fallback
+to single-process mode, if certain dependencies are not available:
+\list
+\li You are building for \b Linux.
+\li The \b QtWayland module is available.
+\li \b libdbus 1.6 or higher is available.
+\endlist
+
+You can force the build mode though via the respective \c -config options \c force-multi-process and
+\c force-single-process (see below).
 
 
 \chapter Building

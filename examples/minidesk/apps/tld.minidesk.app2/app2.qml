@@ -75,6 +75,7 @@ ApplicationManagerWindow {
     Connections {
         target: ApplicationInterface
         onOpenDocument: console.log("App2: onOpenDocument - " + documentUrl);
+        onQuit: target.acknowledgeQuit();
     }
 
     ApplicationInterfaceExtension {

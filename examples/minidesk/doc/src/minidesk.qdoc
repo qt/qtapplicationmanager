@@ -238,4 +238,18 @@ elsewhere, too. The \l{ApplicationInterfaceExtension::name}{ApplicationInterface
 to match the name it was registered with in
 \l{ApplicationIPCManager::registerInterface()}{ApplicationIPCManager.registerInterface()}.
 
+\section2 Application Termination
+When an application is stopped from the system UI through
+\l{ApplicationManager::stopApplication()}{ApplicationManager.stopApplication()}, it will be sent
+the \l{ApplicationInterface::quit()}{ApplicationInterface.quit()} signal. The application can do
+some clean-up and must subsequently confirm with
+\l{ApplicationInterface::acknowledgeQuit()}{ApplicationInterface.acknowledgeQuit()}, like App2 does:
+\quotefromfile minidesk/apps/tld.minidesk.app2/app2.qml
+\skipto Connections
+\printuntil onQuit
+\printline }
+
+Note that App1 is not well-behaved: it does not acknowledge the \c quit signal and will hence simply
+be terminated by the application-manager.
+
 */

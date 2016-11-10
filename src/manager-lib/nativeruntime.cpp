@@ -305,26 +305,17 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
         connect(m_runtimeInterface, &NativeRuntimeInterface::launcherFinishedInitialization,
                 this, &NativeRuntime::onLauncherFinishedInitialization);
     }
+
+    // interface availability is dependent on the actual app and we don't
+    // have one when quick-launching a runtime
+    if (m_app)
+        registerExtensionInterfaces();
 }
 
 void NativeRuntime::onLauncherFinishedInitialization()
 {
     if (m_needsLauncher && m_launchWhenReady && !m_launched && m_app && m_runtimeInterface) {
-        // register all extension interfaces
-        QDBusConnection conn(m_dbusConnectionName);
-
-        foreach (ApplicationIPCInterface *iface, ApplicationIPCManager::instance()->interfaces()) {
-            if (!iface->isValidForApplication(application()))
-                continue;
-
-            if (!iface->dbusRegister(application(), conn)) {
-                qCWarning(LogSystem) << "ERROR: could not register the application IPC interface" << iface->interfaceName()
-                                     << "at" << iface->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
-            }
-#ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-            iface->dbusRegister(application(), QDBusConnection::sessionBus());
-#endif
-        }
+        registerExtensionInterfaces();
 
         QString baseDir = m_container->mapHostPathToContainer(m_app->baseDir().absolutePath());
         QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
@@ -333,6 +324,32 @@ void NativeRuntime::onLauncherFinishedInitialization()
     }
 }
 
+void NativeRuntime::registerExtensionInterfaces()
+{
+    if (!m_dbusConnection)
+        return;
+    if (m_registeredExtensionInterfaces)
+        return;
+    if (!application())
+        return;
+
+    QDBusConnection conn(m_dbusConnectionName);
+
+    // register all extension interfaces
+    foreach (ApplicationIPCInterface *iface, ApplicationIPCManager::instance()->interfaces()) {
+        if (!iface->isValidForApplication(application()))
+            continue;
+
+        if (!iface->dbusRegister(application(), conn)) {
+            qCWarning(LogSystem) << "ERROR: could not register the application IPC interface" << iface->interfaceName()
+                                 << "at" << iface->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
+        }
+#ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
+        iface->dbusRegister(application(), QDBusConnection::sessionBus());
+#endif
+    }
+    m_registeredExtensionInterfaces = true;
+}
 
 AbstractRuntime::State NativeRuntime::state() const
 {

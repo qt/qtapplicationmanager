@@ -118,6 +118,7 @@ protected:
 private:
     bool initialize();
     void shutdown(int exitCode, QProcess::ExitStatus status);
+    void registerExtensionInterfaces();
 
     bool m_isQuickLauncher;
     bool m_needsLauncher;
@@ -128,6 +129,7 @@ private:
     bool m_launchWhenReady = false;
     bool m_launched = false;
     bool m_dbusConnection = false;
+    bool m_registeredExtensionInterfaces = false;
     QString m_dbusConnectionName;
 
     NativeRuntimeApplicationInterface *m_applicationInterface = 0;

@@ -362,8 +362,14 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
     QScopedPointer<ApplicationManager> am(new ApplicationManager(adb, singleProcess));
 
     try {
-        if (adb)
+        if (adb) {
             am->d->apps = adb->read();
+
+            // we need to set a valid parent on QObjects that get exposed to QML via
+            // Q_INVOKABLE return values -- otherwise QML will take over ownership
+            for (auto &app : am->d->apps)
+                const_cast<Application *>(app)->setParent(am.data());
+        }
         am->registerMimeTypes();
     } catch (const Exception &e) {
         if (error)
@@ -1073,6 +1079,7 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
         app->m_progress = 0;
         emitDataChanged(app, QVector<int> { IsUpdating });
     } else { // installation
+        installApp->setParent(this);
         installApp->m_locked.ref();
         installApp->m_state = Application::BeingInstalled;
         installApp->m_progress = 0;

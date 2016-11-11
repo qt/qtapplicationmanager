@@ -126,6 +126,10 @@
 
 #include "../plugin-interfaces/startupinterface.h"
 
+#ifdef AM_TESTRUNNER
+#include "testrunner.h"
+#endif
+
 QT_BEGIN_NAMESPACE_AM
 
 static Configuration *configuration = 0;
@@ -484,6 +488,10 @@ int main(int argc, char *argv[])
         registerUnregisteredDLTContexts();
 
         startupTimer.checkpoint("after logging setup");
+
+#ifdef AM_TESTRUNNER
+        TestRunner::initialize(argv[0], configuration->positionalArguments());
+#endif
 
         auto startupPlugins = loadPlugins<StartupInterface>("startup", configuration->pluginFilePaths("startup"));
         const auto &uiConfig = configuration->additionalUiConfiguration();
@@ -857,7 +865,11 @@ int main(int argc, char *argv[])
         QObject::connect(qApp, &QCoreApplication::aboutToQuit,
                          ApplicationManager::instance(), &ApplicationManager::killAll);
 
+#ifdef AM_TESTRUNNER
+        int res =  TestRunner::exec(engine);
+#else
         int res = a.exec();
+#endif
 
         // the eventloop stopped, so any pending "retakes" would not be executed
         retakeSingletonOwnershipFromQmlEngine(engine, am, true);

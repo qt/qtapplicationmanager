@@ -41,78 +41,17 @@
 
 #pragma once
 
-#include <QStringList>
-#include <QVariantMap>
-#include "global.h"
+#include <QtAppManCommon/global.h>
+
+QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
-class ConfigurationPrivate;
-
-class Configuration
+class TestRunner
 {
 public:
-    Configuration();
-
-    QString mainQmlFile() const;
-    QString database() const;
-    bool recreateDatabase() const;
-
-    QStringList builtinAppsManifestDirs() const;
-    QString installedAppsManifestDir() const;
-    QString appImageMountDir() const;
-
-    bool fullscreen() const;
-    bool noFullscreen() const;
-    QString windowIcon() const;
-    QStringList importPaths() const;
-    bool verbose() const;
-    bool slowAnimations() const;
-    bool loadDummyData() const;
-    bool noSecurity() const;
-    bool noUiWatchdog() const;
-    bool forceSingleProcess() const;
-    bool forceMultiProcess() const;
-    QString singleApp() const;
-    QStringList loggingRules() const;
-
-    QVariantList installationLocations() const;
-
-    QVariantMap containerConfigurations() const;
-    QVariantMap runtimeConfigurations() const;
-
-    QVariantMap dbusPolicy(const QString &interfaceName) const;
-    QString dbusRegistration(const QString &interfaceName) const;
-    int dbusRegistrationDelay() const;
-    bool dbusStartSessionBus() const;
-
-    QVariantMap additionalUiConfiguration() const;
-
-    bool applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const;
-
-    qreal quickLaunchIdleLoad() const;
-    int quickLaunchRuntimesPerContainer() const;
-
-    QString waylandSocketName() const;
-
-    QString telnetAddress() const;
-    quint16 telnetPort() const;
-
-    QVariantList debugWrappers() const;
-
-    QVariantMap managerCrashAction() const;
-
-    QStringList caCertificates() const;
-
-    QStringList pluginFilePaths(const char *type) const;
-
-    QStringList positionalArguments() const;
-
-private:
-    void initialize();
-
-    ConfigurationPrivate *d;
+    static void initialize(char *name, const QStringList &positionalArguments);
+    static int exec(QQmlEngine *engine);
 };
 
 QT_END_NAMESPACE_AM
-

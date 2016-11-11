@@ -148,14 +148,23 @@ Configuration::Configuration()
     // using QStringLiteral for all strings here adds a few KB of ro-data, but will also improve
     // startup times slightly: less allocations and copies. MSVC cannot cope with multi-line though
 
-    d->clp.setApplicationDescription(qL1S("Pelagicore ApplicationManager"
-                                          "\n\n"
-                                          "In addition to the commandline options below, the following environment\n"
-                                          "variables can be set:\n\n"
-                                          "  AM_FAKE_SUDO      if set to 1, no root privileges will be acquired\n"
-                                          "  AM_STARTUP_TIMER  if set to 1, a startup performance analysis will be printed\n"
-                                          "                    on the console. Anything other than 1 will interpreted\n"
-                                          "                    as the name of a file that is used instead of the console\n"));
+    const char *description =
+#ifdef AM_TESTRUNNER
+        "Pelagicore ApplicationManager QML Test Runner"
+        "\n\n"
+        "Additional testrunner commandline options can be set after the -- argument\n"
+        "Use -- -help to show all available testrunner commandline options"
+#else
+        "Pelagicore ApplicationManager"
+#endif
+        "\n\n"
+        "In addition to the commandline options below, the following environment\n"
+        "variables can be set:\n\n"
+        "  AM_FAKE_SUDO      if set to 1, no root privileges will be acquired\n"
+        "  AM_STARTUP_TIMER  if set to 1, a startup performance analysis will be printed\n"
+        "                    on the console. Anything other than 1 will interpreted\n"
+        "                    as the name of a file that is used instead of the console\n";
+    d->clp.setApplicationDescription(description);
     d->clp.addHelpOption();
     d->clp.addVersionOption();
 
@@ -257,10 +266,12 @@ void Configuration::initialize()
         }
     }
 
+#ifndef AM_TESTRUNNER
     if (d->clp.positionalArguments().size() > 1) {
         showParserMessage(qL1S("Only one main qml file can be specified.\n"), ErrorMessage);
         exit(1);
     }
+#endif
 
     QStringList configFilePaths = d->clp.values(qSL("config-file"));
 #if defined(Q_OS_ANDROID)
@@ -307,8 +318,8 @@ void Configuration::initialize()
 
 QString Configuration::mainQmlFile() const
 {
-    if (!d->clp.positionalArguments().isEmpty())
-        return *--d->clp.positionalArguments().cend();
+    if (!d->clp.positionalArguments().isEmpty() && d->clp.positionalArguments().at(0).endsWith(qL1S(".qml")))
+        return d->clp.positionalArguments().at(0);
     else
         return d->findInConfigFile({ qSL("ui"), qSL("mainQml") }).toString();
 }
@@ -538,6 +549,11 @@ QStringList Configuration::caCertificates() const
 QStringList Configuration::pluginFilePaths(const char *type) const
 {
     return variantToStringList(d->findInConfigFile({ qSL("plugins"), qL1S(type) }));
+}
+
+QStringList Configuration::positionalArguments() const
+{
+    return d->clp.positionalArguments();
 }
 
 QT_END_NAMESPACE_AM

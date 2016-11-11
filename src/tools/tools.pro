@@ -1,6 +1,9 @@
 
 TEMPLATE = subdirs
 
+SUBDIRS += \
+    testrunner
+
 !android:SUBDIRS += \
     packager \
     deployer \

@@ -44,6 +44,7 @@
 #include <QDir>
 #include <QFile>
 #include <QDebug>
+#include <QCryptographicHash>
 #include <qplatformdefs.h>
 
 #include <archive.h>
@@ -54,7 +55,6 @@
 #include "packagecreator_p.h"
 #include "exception.h"
 #include "error.h"
-#include "digestfilter.h"
 #include "installationreport.h"
 #include "utilities.h"
 #include "qtyaml.h"
@@ -161,8 +161,7 @@ bool PackageCreatorPrivate::create()
         if (m_report.applicationId().isNull())
             throw Exception(Error::System, "package identifier is null");
 
-        DigestFilter digest(DigestFilter::Sha256);
-        digest.start();
+        QCryptographicHash digest(QCryptographicHash::Sha256);
 
         QVariantMap headerFormat {
             { qSL("formatType"), qSL("am-package-header") },
@@ -174,7 +173,7 @@ bool PackageCreatorPrivate::create()
             { qSL("diskSpaceUsed"), m_report.diskSpaceUsed() }
         };
 
-        PackageUtilities::addImportantHeaderDataToDigest(headerData, &digest);
+        PackageUtilities::addImportantHeaderDataToDigest(headerData, digest);
 
         emit q->progress(0);
 
@@ -285,7 +284,7 @@ bool PackageCreatorPrivate::create()
                     if (archive_write_data(ar, buffer, bytesRead) == -1)
                         throw ArchiveException(ar, "could not write to archive");
 
-                    digest.processData(buffer, bytesRead);
+                    digest.addData(buffer, bytesRead);
                 }
 
                 if (fileSize != fi.size())
@@ -295,7 +294,7 @@ bool PackageCreatorPrivate::create()
             }
 
             // Just to be on the safe side, we also add the file's meta-data to the digest
-            PackageUtilities::addFileMetadataToDigest(file, fi, &digest);
+            PackageUtilities::addFileMetadataToDigest(file, fi, digest);
 
             qint64 progress = allFilesSize ? (100 * packagedSize / allFilesSize) : 0;
             if (progress != lastProgress ) {
@@ -304,7 +303,7 @@ bool PackageCreatorPrivate::create()
             }
         }
 
-        digest.finish(m_digest);
+        m_digest = digest.result();
         if (!m_report.digest().isEmpty()) {
             if (m_digest != m_report.digest())
                 throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2").arg(m_digest.toHex()).arg(m_report.digest().toHex());

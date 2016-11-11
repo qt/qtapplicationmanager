@@ -48,6 +48,7 @@
 #include <QDataStream>
 #include <QUrl>
 #include <QDebug>
+#include <QCryptographicHash>
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -57,7 +58,6 @@
 #include "packageextractor_p.h"
 #include "exception.h"
 #include "error.h"
-#include "digestfilter.h"
 #include "installationreport.h"
 #include "utilities.h"
 #include "qtyaml.h"
@@ -248,8 +248,7 @@ void PackageExtractorPrivate::extract()
         QByteArray header;
         QByteArray footer;
 
-        DigestFilter digest(DigestFilter::Sha256);
-        digest.start();
+        QCryptographicHash digest(QCryptographicHash::Sha256);
 
         // Iterate over all entries in the archive
         for (bool finished = false; !finished; ) {
@@ -380,7 +379,7 @@ void PackageExtractorPrivate::extract()
 
                     switch (packageEntryType) {
                     case PackageEntry_File:
-                        digest.processData(buffer, int(bytesRead));
+                        digest.addData(buffer, int(bytesRead));
 
                         if (!f.write(buffer, bytesRead))
                             throw Exception(f, "could not write to file");
@@ -409,7 +408,7 @@ void PackageExtractorPrivate::extract()
                 // no break
             case PackageEntry_Dir: {
                 // Just to be on the safe side, we also add the file's meta-data to the digest
-                PackageUtilities::addFileMetadataToDigest(entryPath, QFileInfo(m_destinationPath + entryPath), &digest);
+                PackageUtilities::addFileMetadataToDigest(entryPath, QFileInfo(m_destinationPath + entryPath), digest);
 
                 // Finally call the user's code to post-process whatever was extracted right now
                 if (m_fileExtractedCallback)
@@ -442,7 +441,7 @@ void PackageExtractorPrivate::extract()
     m_loop.quit();
 }
 
-void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, DigestFilter &digest, bool isHeader) throw(Exception)
+void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCryptographicHash &digest, bool isHeader) throw(Exception)
 {
     QtYaml::ParseError error;
     QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(metadata, &error);
@@ -470,7 +469,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, Digest
             throw Exception(Error::Package, "metadata has an invalid diskSpaceUsed field (%1)").arg(diskSpaceUsed);
         m_report.setDiskSpaceUsed(diskSpaceUsed);
 
-        PackageUtilities::addImportantHeaderDataToDigest(map, &digest);
+        PackageUtilities::addImportantHeaderDataToDigest(map, digest);
 
     } else { // footer(s)
         for (int i = 2; i < docs.size(); ++i)
@@ -482,8 +481,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, Digest
             throw Exception(Error::Package, "metadata is missing the digest field");
         m_report.setDigest(packageDigest);
 
-        QByteArray calculatedDigest;
-        digest.finish(calculatedDigest);
+        QByteArray calculatedDigest = digest.result();
         if (calculatedDigest != packageDigest)
             throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2").arg(calculatedDigest.toHex()).arg(packageDigest.toHex());
 

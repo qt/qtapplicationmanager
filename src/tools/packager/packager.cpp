@@ -31,6 +31,7 @@
 #include <QUrl>
 #include <QRegExp>
 #include <QDirIterator>
+#include <QMessageAuthenticationCode>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +39,6 @@
 #include "exception.h"
 #include "utilities.h"
 
-#include "digestfilter.h"
 #include "signature.h"
 
 #include "application.h"
@@ -251,7 +251,7 @@ void Packager::execute() throw(Exception)
                 m_output = qSL("no store signature");
                 m_resultCode = 1;
             } else {
-                QByteArray digestPlusId = HMACFilter::hmac(HMACFilter::Sha256, m_hardwareId.toUtf8(), report.digest());
+                QByteArray digestPlusId = QMessageAuthenticationCode::hash(report.digest(), m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
                 Signature sig(digestPlusId);
                 if (!sig.verify(report.storeSignature(), certificates)) {
                     m_output = qSL("invalid store signature (") + sig.errorString() + qSL(")");
@@ -285,7 +285,7 @@ void Packager::execute() throw(Exception)
                 throw Exception(Error::Package, "could not create signature: %1").arg(sig.errorString());
             report.setDeveloperSignature(signature);
         } else if (m_mode == StoreSign) {
-            QByteArray digestPlusId = HMACFilter::hmac(HMACFilter::Sha256, m_hardwareId.toUtf8(), report.digest());
+            QByteArray digestPlusId = QMessageAuthenticationCode::hash(report.digest(), m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
             Signature sig(digestPlusId);
             QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
 

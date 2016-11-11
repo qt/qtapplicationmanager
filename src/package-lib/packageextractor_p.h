@@ -51,9 +51,10 @@
 #include <QtAppManApplication/installationreport.h>
 #include <QtAppManCommon/exception.h>
 
+QT_FORWARD_DECLARE_CLASS(QCryptographicHash)
+
 QT_BEGIN_NAMESPACE_AM
 
-class DigestFilter;
 
 class PackageExtractorPrivate : public QObject
 {
@@ -74,7 +75,7 @@ private slots:
 private:
     void setError(Error errorCode, const QString &errorString);
     qint64 readTar(struct archive *ar, const void **archiveBuffer);
-    void processMetaData(const QByteArray &metadata, DigestFilter &digest, bool isHeader) throw(Exception);
+    void processMetaData(const QByteArray &metadata, QCryptographicHash &digest, bool isHeader) throw(Exception);
 
 private:
     PackageExtractor *q;

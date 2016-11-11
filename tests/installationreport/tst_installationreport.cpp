@@ -30,7 +30,6 @@
 #include <QtTest>
 
 #include "global.h"
-#include "digestfilter.h"
 #include "installationreport.h"
 
 QT_USE_NAMESPACE_AM
@@ -99,7 +98,7 @@ void tst_InstallationReport::test()
     int pos = yaml.lastIndexOf("\n---\nhmac: '");
     QVERIFY(pos > 0);
     pos += 12;
-    QByteArray hmac = HMACFilter::hmac(HMACFilter::Sha256, "key", "data").toHex();
+    QByteArray hmac = QMessageAuthenticationCode::hash("data", "key", QCryptographicHash::Sha256).toHex();
     yaml.replace(pos, hmac.size(), hmac);
     QCOMPARE(yaml.mid(pos + hmac.size(), 2).constData(), "'\n");
 

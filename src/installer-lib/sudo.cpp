@@ -49,7 +49,6 @@
 #include <QDataStream>
 
 #include "sudo.h"
-#include "digestfilter.h"
 #include "utilities.h"
 #include "exception.h"
 #include "global.h"

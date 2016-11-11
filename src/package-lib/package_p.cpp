@@ -42,11 +42,11 @@
 
 #include <QFileInfo>
 #include <QDataStream>
+#include <QCryptographicHash>
 
 #include <archive.h>
 
 #include "package_p.h"
-#include "digestfilter.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -58,16 +58,16 @@ ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString
 QVariantMap PackageUtilities::importantHeaderData = QVariantMap {
 };
 
-void PackageUtilities::addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, DigestFilter *digest)
+void PackageUtilities::addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest)
 {
     // (using QDataStream would be more readable, but it would make the algorithm Qt dependent)
     QByteArray addToDigest = ((fi.isDir()) ? "D/" : "F/")
             + QByteArray::number(fi.isDir() ? 0 : fi.size())
             + '/' + entryFilePath.toUtf8();
-    digest->processData(addToDigest);
+    digest.addData(addToDigest);
 }
 
-void PackageUtilities::addImportantHeaderDataToDigest(const QVariantMap &header, DigestFilter *digest) throw (Exception)
+void PackageUtilities::addImportantHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) throw (Exception)
 {
     for (auto it = importantHeaderData.constBegin(); it != importantHeaderData.constEnd(); ++it) {
         if (header.contains(it.key())) {
@@ -80,7 +80,7 @@ void PackageUtilities::addImportantHeaderDataToDigest(const QVariantMap &header,
                     .arg(it.key()).arg(header.value(it.key()).type()).arg(it.value().type());
             ds << v;
 
-            digest->processData(ba);
+            digest.addData(ba);
         }
     }
 }

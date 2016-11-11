@@ -47,16 +47,15 @@
 
 struct archive;
 QT_FORWARD_DECLARE_CLASS(QFileInfo)
+QT_FORWARD_DECLARE_CLASS(QCryptographicHash)
 
 QT_BEGIN_NAMESPACE_AM
-
-class DigestFilter;
 
 class PackageUtilities
 {
 public:
-    static void addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, DigestFilter *digest);
-    static void addImportantHeaderDataToDigest(const QVariantMap &header, DigestFilter *digest) throw (Exception);
+    static void addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest);
+    static void addImportantHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) throw (Exception);
 
     // key == field name, value == type to choose correct hashing algorithm
     static QVariantMap importantHeaderData;

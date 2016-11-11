@@ -43,13 +43,13 @@
 #include <QVariant>
 #include <QDataStream>
 #include <QDebug>
+#include <QMessageAuthenticationCode>
 
 #include <exception>
 
 #include "global.h"
 #include "qtyaml.h"
 #include "utilities.h"
-#include "digestfilter.h"
 #include "installationreport.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -206,7 +206,9 @@ bool InstallationReport::deserialize(QIODevice *from)
         // see if the file has been tampered with by checking the hmac
         QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(qSL("hmac")).toString().toLatin1());
         QByteArray hmacKey = QByteArray::fromRawData((const char *) privateHmacKeyData, sizeof(privateHmacKeyData));
-        QByteArray hmacCalc= HMACFilter::hmac(HMACFilter::Sha256, hmacKey, QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle));
+        QByteArray hmacCalc= QMessageAuthenticationCode::hash(QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle),
+                                                              hmacKey,
+                                                              QCryptographicHash::Sha256);
 
         if (hmacFile != hmacCalc)
             throw false;
@@ -249,7 +251,9 @@ bool InstallationReport::serialize(QIODevice *to) const
 
     // generate hmac to prevent tampering
     QByteArray hmacKey = QByteArray::fromRawData((const char *) privateHmacKeyData, sizeof(privateHmacKeyData));
-    QByteArray hmacCalc= HMACFilter::hmac(HMACFilter::Sha256, hmacKey, QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle));
+    QByteArray hmacCalc= QMessageAuthenticationCode::hash(QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle),
+                                                          hmacKey,
+                                                          QCryptographicHash::Sha256);
 
     QVariantMap footer { { qSL("hmac"), QString::fromLatin1(hmacCalc.toHex()) } };
     docs << footer;

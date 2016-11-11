@@ -4,7 +4,6 @@ enable-tests:SUBDIRS = \
     application \
     runtime \
     cryptography \
-    digestfilter \
     signature \
     utilities \
     installationreport \

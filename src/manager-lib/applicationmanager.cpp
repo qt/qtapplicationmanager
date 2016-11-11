@@ -125,7 +125,7 @@
         \li bool
         \li A boolean value indicating whether the application is starting up and not fully operational yet.
     \row
-        \li \c isShutingDown
+        \li \c isShuttingDown
         \li bool
         \li A boolean value indicating whether the application is currently shutting down.
     \row
@@ -247,7 +247,7 @@
     \li ApplicationManager.NotRunning - the application has not been started yet
     \li ApplicationManager.StartingUp - the application has been started and is initializing
     \li ApplicationManager.Running - the application is running
-    \li ApplicationManager.ShutingDown - the application has been stopped and is cleaning up
+    \li ApplicationManager.ShuttingDown - the application has been stopped and is cleaning up
     \endlist
 
     For example this signal can be used to restart an application in multi-process mode when
@@ -274,7 +274,7 @@ enum Roles
 
     IsRunning,
     IsStartingUp,
-    IsShutingDown,
+    IsShuttingDown,
     IsBlocked,
     IsUpdating,
     IsRemovable,
@@ -330,7 +330,7 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
     roleNames.insert(Icon, "icon");
     roleNames.insert(IsRunning, "isRunning");
     roleNames.insert(IsStartingUp, "isStartingUp");
-    roleNames.insert(IsShutingDown, "isShutingDown");
+    roleNames.insert(IsShuttingDown, "isShuttingDown");
     roleNames.insert(IsBlocked, "isLocked");
     roleNames.insert(IsUpdating, "isUpdating");
     roleNames.insert(IsRemovable, "isRemovable");
@@ -1280,7 +1280,7 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
         return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Active) : false;
     case IsStartingUp:
         return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Startup) : false;
-    case IsShutingDown:
+    case IsShuttingDown:
         return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Shutdown) : false;
     case IsBlocked:
         return app->isLocked();
@@ -1456,7 +1456,7 @@ ApplicationManager::RunState ApplicationManager::applicationRunState(const QStri
     switch (app->currentRuntime()->state()) {
     case AbstractRuntime::Startup: return StartingUp;
     case AbstractRuntime::Active: return Running;
-    case AbstractRuntime::Shutdown: return ShutingDown;
+    case AbstractRuntime::Shutdown: return ShuttingDown;
     default: return NotRunning;
     }
 }

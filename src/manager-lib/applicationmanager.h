@@ -84,7 +84,7 @@ public:
         NotRunning,
         StartingUp,
         Running,
-        ShutingDown
+        ShuttingDown,
     };
 
     ~ApplicationManager();

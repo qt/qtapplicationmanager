@@ -566,6 +566,7 @@ QStringList Notification::libnotifyActionList() const
 QVariantMap Notification::libnotifyHints() const
 {
     QVariantMap hints;
+    hints.insert(qSL("action-icons"), showActionsAsIcons());
     hints.insert(qSL("urgency"), int(priority()));
     if (!category().isEmpty())
         hints.insert(qSL("category"), category());

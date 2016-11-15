@@ -287,6 +287,11 @@ void Application::setBaseDir(const QString &path)
     m_baseDir = path;
 }
 
+void Application::setBuiltIn(bool builtIn)
+{
+    m_builtIn = builtIn;
+}
+
 AbstractRuntime *Application::currentRuntime() const
 {
     return m_nonAliased ? m_nonAliased->m_runtime : m_runtime;

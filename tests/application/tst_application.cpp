@@ -179,7 +179,7 @@ void tst_Application::application()
     QCOMPARE(app->runtimeName(), qSL("qml"));
     QCOMPARE(app->runtimeParameters().size(), 1);
     QCOMPARE(app->runtimeParameters().value(qSL("loadDummyData")).toBool(), true);
-    QCOMPARE(app->isBuiltIn(), true);
+    QCOMPARE(app->isBuiltIn(), false);
     QCOMPARE(app->isPreloaded(), true);
     QCOMPARE(app->importance(), 0.5);
     QVERIFY(app->backgroundMode() == Application::TracksLocation);

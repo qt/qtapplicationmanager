@@ -147,6 +147,7 @@ public:
     qreal progress() const;
 
     void setBaseDir(const QString &path); //TODO: replace baseDir handling with something that works :)
+    void setBuiltIn(bool builtIn);
 
     int lastExitCode() const;
     ExitStatus lastExitStatus() const;

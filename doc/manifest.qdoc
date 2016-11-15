@@ -70,7 +70,6 @@ runtime: qml
 runtimeParameters: { loadDummyData: true }
 documentUrl: "fm"
 
-builtIn: yes
 preload: yes
 importance: 0.5
 backgroundMode: 'location'
@@ -162,11 +161,6 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
     \li An optional default document that is used, if the application is started without specifying
         a document (see ApplicationManager::startApplication).
 \row
-    \li \c builtIn
-    \li bool
-    \li Specifies, if this app should be user-removable (this defaults to \c true for built-in
-        applications and to \c false for dynamically installed ones).
-\row
     \li \c preload
     \li bool
     \li Try to start the application immediately after boot, but keep it in the background. By
@@ -225,8 +219,9 @@ that can be started using two different entries (with different text and icons) 
 launcher. Starting an alias while the application is already running will not start another instance.
 Only if a \c documentUrl is set, the already running instance will receive the
 \l{ApplicationInterface::openDocument} signal containing the respective strings set via the
-\c documentUrl parameter and can then change its UI accordingly.
-
+\c documentUrl parameter and can then change its UI accordingly. The alias manifests have to be in
+the same folder as the application's main \c info.yaml file and need to be named
+\c info-<descriptive name>.yaml.
 \badcode
 %YAML 1.1
 ---

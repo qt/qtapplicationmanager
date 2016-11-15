@@ -365,6 +365,7 @@ static QVector<const Application *> scanForApplications(const QStringList &built
                     .arg(a->id(), appDirName);
             }
             if (scanningBuiltinApps) {
+                a->setBuiltIn(true);
                 QStringList aliasPaths = appDir.entryList(QStringList(qSL("info-*.yaml")));
                 std::vector<std::unique_ptr<Application>> aliases;
 

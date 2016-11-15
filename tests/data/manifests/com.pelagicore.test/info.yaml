@@ -10,7 +10,6 @@ runtimeParameters:
 name:
   en: 'english'
   de: 'deutsch'
-builtIn: true
 preload: true
 importance: 0.5
 backgroundMode: 'location'

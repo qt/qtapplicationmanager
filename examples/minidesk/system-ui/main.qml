@@ -79,10 +79,7 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: {
-                        ApplicationManager.startApplication(applicationId, "documentUrl");
-                        parent.opacity = 0.3;
-                    }
+                    onClicked: ApplicationManager.startApplication(applicationId, "documentUrl");
                 }
             }
         }
@@ -120,11 +117,7 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: {
-                        winChrome.visible = false;
-                        menuItems.itemAt(model.index).opacity = 1.0;
-                        ApplicationManager.stopApplication(applicationId, false);
-                    }
+                    onClicked: ApplicationManager.stopApplication(applicationId, false);
                 }
             }
 
@@ -166,6 +159,7 @@ Rectangle {
                     console.log("Allowing a single app started outside of appman instead of App1 ...");
                     appIndex = 0;
                 }
+                menuItems.itemAt(appIndex).opacity = 0.3;
                 var chrome = windows.itemAt(appIndex);
                 window.parent = chrome.appContainer;
                 window.anchors.fill = chrome.appContainer;
@@ -180,7 +174,16 @@ Rectangle {
         onWindowPropertyChanged: console.log("SystemUI: OnWindowPropertyChanged [" + window + "] - "
                                                + name + ": " + value);
 
-        onWindowClosing: console.log("SystemUI: onWindowClosing [" + window + "] - index: " + index);
+        onWindowClosing: {
+            console.log("SystemUI: onWindowClosing [" + window + "] - index: " + index);
+            if (WindowManager.windowProperty(window, "type") !== "pop-up") {
+                var appIndex = ApplicationManager.indexOfApplication(WindowManager.get(index).applicationId);
+                if (appIndex === -1)
+                    appIndex = 0;
+                windows.itemAt(appIndex).visible = false;
+                menuItems.itemAt(appIndex).opacity = 1.0;
+            }
+        }
 
         onWindowLost: {
             console.log("SystemUI: onWindowLost [" + window + "] - index: " + index);

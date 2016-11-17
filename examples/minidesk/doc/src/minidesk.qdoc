@@ -105,15 +105,14 @@ the system UI. This is achieved by using the \l{ApplicationManager} element as t
 others, it provides the \c icon role which is used as the \l{Image} source URL. The \c icon URL is
 defined in the \l{Manifest Definition}{info.yaml} file of the application.
 
-Application icons handle mouse clicks: the appropriate application is started and the icon opacity
-is decreased to indicate that the application is already launched. The
-\l {ApplicationManager::startApplication()}{ApplicationManager.startApplication()} method is called
-to start an application. The first argument, \c applicationId, is provided by the
-ApplicationManager model (e.g. "tld.minidesk.app1" for the first application). Both applications
-will be started with the (optional) document URL "documentUrl". Subsequent clicks on an already
-launched icon will still call \l{ApplicationManager::}{startApplication()}, but will be silently
-ignored. The content of the \c appContainter will be set below in the \c onWindowReady handler.
-The content is provided by the two applications in an \l{ApplicationManagerWindow} root element.
+Clicking on an application icon will launch the corresponding application through a call to
+\l {ApplicationManager::startApplication()}{ApplicationManager.startApplication()}. The first
+argument, \c applicationId, is provided by the ApplicationManager model (e.g. "tld.minidesk.app1"
+for the first application). Both applications will be started with the (optional) document URL
+"documentUrl". Subsequent clicks on an already launched icon will still call
+\l{ApplicationManager::}{startApplication()}, but will be silently ignored. The content of the
+\c appContainter will be set below in the \c onWindowReady handler. The content is provided by the
+two applications in an \l{ApplicationManagerWindow} root element.
 
 \section2 Application Windows in the System UI
 
@@ -193,7 +192,8 @@ index to the application index of the \l{ApplicationManager} model and assigns i
 Only the "pop-up" ApplicationManagerWindow of App1 has the user-defined \c type property set. All
 other windows don't have the \c type property. In the latter case, the application's \c window
 passed to \c onWindowReady is re-parented to the system UI's \c winChrome. Also the size of the
-window is set to fill the entire \c appContainer.
+window is set to fill the entire \c appContainer. To indicate that the application has been
+launched the corrsponding application icon's opacity is decreased.
 
 There is a special treatment for an invalid \c appIndex for demonstration purposes: it is assumed
 that the window surface is from an external application that follows the Wayland protocol. For
@@ -205,11 +205,14 @@ QT_WAYLAND_DISABLE_WINDOWDECORATION=1 ./qtapp -platform wayland
 
 This application will then be shown inside the App1 container.
 \c QT_WAYLAND_DISABLE_WINDOWDECORATION is set to disable client side window decorations, since they
-are provided by the system UI.
+are provided by the system UI. Note, that an application started in this way, can just as well be
+closed only from the command line.
 
-Pop-ups are re-parented to their respective \c popUpContainer.
+Pop-ups (windows with type "pop-up") are re-parented to their respective \c popUpContainer.
 
-All other handlers only print debug messages. Additionally, the \c onWindowLost handler calls
+The \c onWindowClosing handler determines if the window is a top-level application window. If so,
+the applications's \c winChrome is set to invisible and the corresponding application icon is set
+to fully opaque to indicate that the application is not running. The \c onWindowLost handler calls
 \l{WindowManager::releaseWindow()}{WindowManager.releaseWindow()} to free all resources associated
 with the \c window.
 

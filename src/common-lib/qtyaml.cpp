@@ -53,26 +53,26 @@ QT_BEGIN_NAMESPACE
 
 namespace QtYaml {
 
-static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node = 0)
+static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node)
 {
     QVariant result;
 
     if (!doc)
         return result;
     if (!node)
-        node = yaml_document_get_root_node(doc);
-    if (!node)
         return result;
 
     switch (node->type) {
     case YAML_SCALAR_NODE: {
-        QByteArray ba(reinterpret_cast<const char *>(node->data.scalar.value), int(node->data.scalar.length));
+        const QByteArray ba = QByteArray::fromRawData(reinterpret_cast<const char *>(node->data.scalar.value),
+                                                int(node->data.scalar.length));
 
         if (node->data.scalar.style == YAML_SINGLE_QUOTED_SCALAR_STYLE
                 || node->data.scalar.style == YAML_DOUBLE_QUOTED_SCALAR_STYLE) {
             result = QString::fromUtf8(ba);
             break;
         }
+
         enum ValueIndex {
             ValueNull,
             ValueTrue,
@@ -95,7 +95,7 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
             QVariant(qInf()),  // ValueInf
         };
 
-        static StaticMapping staticMappings[] = { // keep this sorted for bsearch !!
+        static const StaticMapping staticMappings[] = { // keep this sorted for bsearch !!
             { "",      ValueNull },
             { ".INF",  ValueInf },
             { ".Inf",  ValueInf },
@@ -131,70 +131,81 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
             { "~",     ValueNull }
         };
 
-        StaticMapping key { ba.constData(), ValueNull };
-        auto found = bsearch(&key,
-                             staticMappings,
-                             sizeof(staticMappings)/sizeof(staticMappings[0]),
-                             sizeof(staticMappings[0]),
-                             [](const void *m1, const void *m2) {
-                                 return strcmp(static_cast<const StaticMapping *>(m1)->text,
-                                               static_cast<const StaticMapping *>(m2)->text); });
+        static const char *firstCharStaticMappings = ".FNOTYfnoty~";
+        char firstChar = ba.isEmpty() ? 0 : ba.at(0);
 
-        if (found) {
-            result = staticValues[static_cast<StaticMapping *>(found)->index];
-            break;
-        }
+        if (strchr(firstCharStaticMappings, firstChar)) { // cheap check to avoid expensive bsearch
+            StaticMapping key { ba.constData(), ValueNull };
+            auto found = bsearch(&key,
+                                 staticMappings,
+                                 sizeof(staticMappings)/sizeof(staticMappings[0]),
+                    sizeof(staticMappings[0]),
+                    [](const void *m1, const void *m2) {
+                return strcmp(static_cast<const StaticMapping *>(m1)->text,
+                              static_cast<const StaticMapping *>(m2)->text); });
 
-        static QRegExp numberRegExps[] = {
-            QRegExp(qSL("[-+]?0b[0-1_]+")),        // binary
-            QRegExp(qSL("[-+]?0x[0-9a-fA-F_]+")),  // hexadecimal
-            QRegExp(qSL("[-+]?0[0-7_]+")),         // octal
-            QRegExp(qSL("[-+]?(0|[1-9][0-9_]*)")), // decimal
-            QRegExp(qSL("[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?")), // float
-            QRegExp()
-        };
-
-        QString str = QString::fromUtf8(ba);
-        for (int numberIndex = 0; !numberRegExps[numberIndex].isEmpty(); ++numberIndex) {
-            if (numberRegExps[numberIndex].exactMatch(str)) {
-                bool ok = false;
-                QVariant val;
-
-                if (numberIndex == 4) {
-                    val = ba.replace('_', "").toDouble(&ok);
-                } else {
-                    int base = 10;
-
-                    switch (numberIndex) {
-                    case 0: base = 2; ba.replace("0b", ""); break;
-                    case 1: base = 16; break;
-                    case 2: base = 8; break;
-                    case 3: base = 10; break;
-                    }
-
-                    qint64 s64 = ba.replace('_', "").toLongLong(&ok, base);
-                    if (ok && (s64 <= std::numeric_limits<qint32>::max())) {
-                        val = qint32(s64);
-                    } else if (ok) {
-                        val = s64;
-                    } else {
-                        quint64 u64 = ba.replace('_', "").toULongLong(&ok, base);
-
-                        if (ok && (u64 <= std::numeric_limits<quint32>::max()))
-                            val = quint32(u64);
-                        else if (ok)
-                            val = u64;
-                    }
-                }
-                if (ok) {
-                    result = val;
-                    break;
-                }
+            if (found) {
+                result = staticValues[static_cast<StaticMapping *>(found)->index];
+                break;
             }
         }
 
-        if (result.isNull())
-            result = QString::fromUtf8(ba);
+        QString str = QString::fromUtf8(ba);
+        result = str;
+
+        if ((firstChar >= '0' && firstChar <= '9')   // cheap check to avoid expensive regexps
+                || firstChar == '+' || firstChar == '-' || firstChar == '.') {
+            static const QRegExp numberRegExps[] = {
+                QRegExp(qSL("[-+]?0b[0-1_]+")),        // binary
+                QRegExp(qSL("[-+]?0x[0-9a-fA-F_]+")),  // hexadecimal
+                QRegExp(qSL("[-+]?0[0-7_]+")),         // octal
+                QRegExp(qSL("[-+]?(0|[1-9][0-9_]*)")), // decimal
+                QRegExp(qSL("[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?")), // float
+                QRegExp()
+            };
+
+            for (int numberIndex = 0; !numberRegExps[numberIndex].isEmpty(); ++numberIndex) {
+                if (numberRegExps[numberIndex].exactMatch(str)) {
+                    bool ok = false;
+                    QVariant val;
+
+                    // YAML allows _ as a grouping separator
+                    if (str.contains(qL1C('_')))
+                        str = str.replace(qL1C('_'), qSL(""));
+
+                    if (numberIndex == 4) {
+                        val = str.toDouble(&ok);
+                    } else {
+                        int base = 10;
+
+                        switch (numberIndex) {
+                        case 0: base = 2; str.replace(qSL("0b"), qSL("")); break; // Qt chokes on 0b
+                        case 1: base = 16; break;
+                        case 2: base = 8; break;
+                        case 3: base = 10; break;
+                        }
+
+                        qint64 s64 = str.toLongLong(&ok, base);
+                        if (ok && (s64 <= std::numeric_limits<qint32>::max())) {
+                            val = qint32(s64);
+                        } else if (ok) {
+                            val = s64;
+                        } else {
+                            quint64 u64 = str.toULongLong(&ok, base);
+
+                            if (ok && (u64 <= std::numeric_limits<quint32>::max()))
+                                val = quint32(u64);
+                            else if (ok)
+                                val = u64;
+                        }
+                    }
+                    if (ok) {
+                        result = val;
+                        break;
+                    }
+                }
+            }
+        }
         break;
     }
     case YAML_SEQUENCE_NODE: {
@@ -232,6 +243,7 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
     default:
         break;
     }
+
     return result;
 }
 
@@ -258,7 +270,7 @@ QVector<QVariant> variantDocumentsFromYaml(const QByteArray &yaml, ParseError *e
                         break;
                     case YAML_SCANNER_ERROR:
                     case YAML_PARSER_ERROR:
-                        *error = ParseError(QString::fromLocal8Bit(p.problem), int(p.problem_mark.line), int(p.problem_mark.column), int(p.problem_mark.index));
+                        *error = ParseError(QString::fromLocal8Bit(p.problem), int(p.problem_mark.line + 1), int(p.problem_mark.column), int(p.problem_mark.index));
                         break;
                     default:
                         break;
@@ -271,7 +283,7 @@ QVector<QVariant> variantDocumentsFromYaml(const QByteArray &yaml, ParseError *e
                 if (!root)
                     break;
 
-                result << convertYamlNodeToVariant(&doc);
+                result << convertYamlNodeToVariant(&doc, root);
             }
             yaml_document_delete(&doc);
         }

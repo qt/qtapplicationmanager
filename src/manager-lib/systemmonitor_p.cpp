@@ -55,7 +55,9 @@ quint64 MemoryReader::totalValue() const
 
 QT_END_NAMESPACE_AM
 
+
 #if defined(Q_OS_LINUX)
+
 #  include "sysfsreader.h"
 #  include <qplatformdefs.h>
 #  include <QElapsedTimer>
@@ -116,30 +118,46 @@ qreal CpuReader::readLoadValue()
 }
 
 
-QScopedPointer<SysFsReader> MemoryReader::s_sysFs;
+// TODO: can we always expect cgroup FS to be mounted on /sys/fs/cgroup?
+static const QString cGroupsMemoryBaseDir = qSL("/sys/fs/cgroup/memory/");
 
-MemoryReader::MemoryReader()
+MemoryReader::MemoryReader() : MemoryReader(QString())
+{ }
+
+MemoryReader::MemoryReader(const QString &groupPath)
+    : m_groupPath(groupPath)
 {
-    if (!s_sysFs) {
-        s_sysFs.reset(new SysFsReader("/sys/fs/cgroup/memory/memory.usage_in_bytes", 256));
-        if (!s_sysFs->isOpen())
-            qCWarning(LogSystem) << "WARNING: could not read memory statistics from" << s_sysFs->fileName() << "(make sure that the memory cgroup is mounted)";
+    const QString path = cGroupsMemoryBaseDir + m_groupPath + qSL("/memory.usage_in_bytes");
+    m_sysFs.reset(new SysFsReader(path.toLocal8Bit(), 41));
+    if (!m_sysFs->isOpen()) {
+        qCWarning(LogSystem) << "WARNING: could not read memory statistics from" << m_sysFs->fileName()
+                             << "(make sure that the memory cgroup is mounted)";
+    }
 
+    // initialize s_totalValue first time a MemoryReader is instantiated
+    static int dummy = []() {
         long pageSize = ::sysconf(_SC_PAGESIZE);
         long physPages = ::sysconf(_SC_PHYS_PAGES);
 
-        if (pageSize < 0 || physPages < 0) {
+        if (pageSize < 0 || physPages < 0)
             qCWarning(LogSystem) << "WARNING: Cannot determine the amount of physical RAM in this machine.";
-            s_totalValue = 0;
-        } else {
+        else
             s_totalValue = quint64(physPages) * quint64(pageSize);
-        }
-    }
+        return 0;
+    }();
+    Q_UNUSED(dummy)
+}
+
+quint64 MemoryReader::groupLimit()
+{
+    QString path = cGroupsMemoryBaseDir + m_groupPath + qSL("/memory.limit_in_bytes");
+    QByteArray ba = SysFsReader(path.toLocal8Bit(), 41).readValue();
+    return ::strtoull(ba, nullptr, 10);
 }
 
 quint64 MemoryReader::readUsedValue() const
 {
-    return ::strtoull(s_sysFs->readValue().constData(), 0, 10);
+    return ::strtoull(m_sysFs->readValue().constData(), 0, 10);
 }
 
 
@@ -221,24 +239,34 @@ bool MemoryThreshold::isEnabled() const
 
 bool MemoryThreshold::setEnabled(bool enabled)
 {
+    MemoryReader reader;
+    return setEnabled(enabled, QString(), &reader);
+}
+
+bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryReader *reader)
+{
     if (m_enabled == enabled)
         return true;
+
     if (enabled && !m_initialized) {
-        qint64 totalMem = MemoryReader().totalValue();
+        quint64 limit = groupPath.isEmpty() ? reader->totalValue() : reader->groupLimit();
+        const QString cGroup = cGroupsMemoryBaseDir + groupPath;
 
         m_eventFd = ::eventfd(0, EFD_CLOEXEC);
 
         if (m_eventFd >= 0) {
-            m_usageFd = QT_OPEN("/sys/fs/cgroup/memory/memory.usage_in_bytes", QT_OPEN_RDONLY);
+            const QString usagePath = cGroup + qL1S("/memory.usage_in_bytes");
+            m_usageFd = QT_OPEN(usagePath.toLocal8Bit().constData(), QT_OPEN_RDONLY);
 
             if (m_usageFd >= 0) {
-                m_controlFd = QT_OPEN("/sys/fs/cgroup/memory/cgroup.event_control", QT_OPEN_WRONLY);
+                const QString eventControlPath = cGroup + qSL("/cgroup.event_control");
+                m_controlFd = QT_OPEN(eventControlPath.toLocal8Bit().constData(), QT_OPEN_WRONLY);
 
                 if (m_controlFd >= 0) {
                     bool registerOk = true;
 
                     foreach (qreal percent, m_thresholds) {
-                        qint64 mem = totalMem * percent / 100;
+                        qint64 mem = limit * percent / 100;
                         registerOk = registerOk && (::dprintf(m_controlFd, "%d %d %lld", m_eventFd, m_usageFd, mem) > 0);
                     }
 
@@ -246,7 +274,6 @@ bool MemoryThreshold::setEnabled(bool enabled)
                         m_notifier = new QSocketNotifier(m_eventFd, QSocketNotifier::Read, this);
                         connect(m_notifier, &QSocketNotifier::activated, this, &MemoryThreshold::readEventFd);
                         return m_initialized = m_enabled = true;
-
                     } else {
                         qWarning() << "Could not register memory limit event handlers";
                     }
@@ -254,13 +281,13 @@ bool MemoryThreshold::setEnabled(bool enabled)
                     QT_CLOSE(m_controlFd);
                     m_controlFd = -1;
                 } else {
-                    qWarning() << "Cannot open /sys/fs/cgroup/memory/cgroup.event_control";
+                    qWarning() << "Cannot open" << eventControlPath;
                 }
 
                 QT_CLOSE(m_usageFd);
                 m_usageFd = -1;
             } else {
-                qWarning() << "Cannot open /sys/fs/cgroup/memory/memory.usage_in_bytes";
+                qWarning() << "Cannot open" << usagePath;
             }
 
             QT_CLOSE(m_eventFd);
@@ -299,6 +326,47 @@ void MemoryThreshold::readEventFd()
 
         emit thresholdTriggered();
     }
+}
+
+MemoryWatcher::MemoryWatcher(QObject *parent)
+    : QObject(parent)
+{ }
+
+void MemoryWatcher::setThresholds(qreal warning, qreal critical)
+{
+    m_warning = warning;
+    m_critical = critical;
+}
+
+bool MemoryWatcher::startWatching(const QString &groupPath)
+{
+    if (m_warning < 0.0 || m_warning > 100.0 || m_critical < 0.0 || m_critical > 100.0) {
+        qCWarning(LogSystem) << "Memory threshold out of range [0..100]" << m_warning << m_critical;
+        return false;
+    }
+
+    hasMemoryLowWarning = false;
+    hasMemoryCriticalWarning = false;
+
+    m_reader.reset(new MemoryReader(groupPath));
+    m_memLimit = m_reader->groupLimit();
+
+    m_threshold.reset(new MemoryThreshold({m_warning, m_critical}));
+    connect(m_threshold.data(), &MemoryThreshold::thresholdTriggered, this, &MemoryWatcher::checkMemoryConsumption);
+    return m_threshold->setEnabled(true, groupPath, m_reader.data());
+}
+
+void MemoryWatcher::checkMemoryConsumption()
+{
+    qreal percentUsed = m_reader->readUsedValue() / m_memLimit * 100.0;
+    bool nowMemoryCritical = (percentUsed >= m_critical);
+    bool nowMemoryLow = (percentUsed >= m_warning);
+    if (nowMemoryCritical  && !hasMemoryCriticalWarning)
+        emit memoryCritical();
+    if (nowMemoryLow && !hasMemoryLowWarning)
+        emit memoryLow();
+    hasMemoryCriticalWarning = nowMemoryCritical;
+    hasMemoryLowWarning = nowMemoryLow;
 }
 
 QT_END_NAMESPACE_AM
@@ -499,6 +567,25 @@ bool MemoryThreshold::setEnabled(bool enabled)
     Q_UNUSED(enabled)
     return false;
 }
+
+MemoryWatcher::MemoryWatcher(QObject *parent)
+    : QObject(parent)
+{ }
+
+void MemoryWatcher::setThresholds(qreal warning, qreal critical)
+{
+    m_warning = warning;
+    m_critical = critical;
+}
+
+bool MemoryWatcher::startWatching(const QString &groupPath)
+{
+    Q_UNUSED(groupPath)
+    return false;
+}
+
+void MemoryWatcher::checkMemoryConsumption()
+{ }
 
 QT_END_NAMESPACE_AM
 

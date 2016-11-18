@@ -48,6 +48,7 @@
 #include <vector>
 #include <QGuiApplication>
 
+#include "applicationmanager.h"
 #include "systemmonitor.h"
 #include "systemmonitor_p.h"
 #include "processmonitor.h"
@@ -372,9 +373,7 @@ public:
     // memory thresholds
     qreal memoryLowWarning = -1;
     qreal memoryCriticalWarning = -1;
-    bool hasMemoryLowWarning = false;
-    bool hasMemoryCriticalWarning = false;
-    MemoryThreshold *memoryThreshold = 0;
+    MemoryWatcher *memoryWatcher = nullptr;
 
     // fps
     QHash<QObject *, FrameTimer *> frameTimer;
@@ -619,7 +618,6 @@ SystemMonitor::~SystemMonitor()
     delete d->memory;
     delete d->cpu;
     qDeleteAll(d->ioHash);
-    delete d->memoryThreshold;
     delete d;
 }
 
@@ -724,28 +722,17 @@ bool SystemMonitor::setMemoryWarningThresholds(qreal lowWarning, qreal criticalW
     Q_D(SystemMonitor);
 
     if (lowWarning != d->memoryLowWarning || criticalWarning != d->memoryCriticalWarning) {
-        delete d->memoryThreshold;
         d->memoryLowWarning = lowWarning;
         d->memoryCriticalWarning = criticalWarning;
-        QList<qreal> thresholds { lowWarning, criticalWarning };
-        d->memoryThreshold = new MemoryThreshold(thresholds);
-
-        connect(d->memoryThreshold, &MemoryThreshold::thresholdTriggered, this, [this, d]() {
-            quint64 memTotal = d->memory->totalValue();
-            quint64 memUsed = d->memory->readUsedValue();
-
-            qreal factor = memUsed / memTotal;
-            bool nowMemoryCritical = (factor > d->memoryCriticalWarning);
-            bool nowMemoryLow = (factor > d->memoryLowWarning);
-            if (nowMemoryCritical && !d->hasMemoryCriticalWarning)
-                emit memoryCriticalWarning();
-            if (nowMemoryLow && !d->hasMemoryLowWarning)
-                emit memoryLowWarning();
-            d->hasMemoryCriticalWarning = nowMemoryCritical;
-            d->hasMemoryLowWarning = nowMemoryLow;
-        });
-
-        return d->memoryThreshold->setEnabled(true);
+        if (!d->memoryWatcher) {
+            d->memoryWatcher = new MemoryWatcher(this);
+            connect(d->memoryWatcher, &MemoryWatcher::memoryLow,
+                    ApplicationManager::instance(), &ApplicationManager::memoryLowWarning);
+            connect(d->memoryWatcher, &MemoryWatcher::memoryCritical,
+                    ApplicationManager::instance(), &ApplicationManager::memoryCriticalWarning);
+        }
+        d->memoryWatcher->setThresholds(lowWarning, criticalWarning);
+        return d->memoryWatcher->startWatching();
     }
     return true;
 }

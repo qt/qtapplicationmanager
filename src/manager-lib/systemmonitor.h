@@ -120,8 +120,6 @@ public:
 signals:
     void countChanged();
     void idleChanged(bool idle);
-    void memoryLowWarning();
-    void memoryCriticalWarning();
 
     void memoryReportingChanged(quint64 total, quint64 used);
     void cpuLoadReportingChanged(qreal load);

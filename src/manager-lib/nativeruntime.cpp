@@ -381,6 +381,12 @@ NativeRuntimeApplicationInterface::NativeRuntimeApplicationInterface(NativeRunti
 {
     connect(ApplicationManager::instance(), &ApplicationManager::memoryLowWarning,
             this, &ApplicationInterface::memoryLowWarning);
+    connect(ApplicationManager::instance(), &ApplicationManager::memoryCriticalWarning,
+            this, &ApplicationInterface::memoryCriticalWarning);
+    connect(runtime->container(), &AbstractContainer::memoryLowWarning,
+            this, &ApplicationInterface::memoryLowWarning);
+    connect(runtime->container(), &AbstractContainer::memoryCriticalWarning,
+            this, &ApplicationInterface::memoryCriticalWarning);
     connect(runtime, &NativeRuntime::aboutToStop,
             this, &ApplicationInterface::quit);
 }

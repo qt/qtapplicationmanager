@@ -49,10 +49,8 @@
 
 #if defined(Q_OS_LINUX)
 #  include <QScopedPointer>
+#  include "sysfsreader.h"
 QT_FORWARD_DECLARE_CLASS(QSocketNotifier)
-QT_BEGIN_NAMESPACE_AM
-class SysFsReader;
-QT_END_NAMESPACE_AM
 #endif
 
 QT_BEGIN_NAMESPACE_AM
@@ -77,13 +75,18 @@ class MemoryReader
 {
 public:
     MemoryReader();
+#if defined(Q_OS_LINUX)
+    explicit MemoryReader(const QString &groupPath);
+    quint64 groupLimit();
+#endif
     quint64 totalValue() const;
     quint64 readUsedValue() const;
 
 private:
     static quint64 s_totalValue;
 #if defined(Q_OS_LINUX)
-    static QScopedPointer<SysFsReader> s_sysFs;
+    QScopedPointer<SysFsReader> m_sysFs;
+    const QString m_groupPath;
 #elif defined(Q_OS_OSX)
     static int s_pageSize;
 #endif
@@ -118,6 +121,9 @@ public:
 
     bool isEnabled() const;
     bool setEnabled(bool enabled);
+#if defined(Q_OS_LINUX)
+    bool setEnabled(bool enabled, const QString &groupPath, MemoryReader *reader);
+#endif
 
 signals:
     void thresholdTriggered();
@@ -137,6 +143,30 @@ private:
     int m_usageFd = -1;
     QSocketNotifier *m_notifier = 0;
 #endif
+};
+
+class MemoryWatcher : public QObject
+{
+    Q_OBJECT
+public:
+    MemoryWatcher(QObject *parent);
+
+    void setThresholds(qreal warning, qreal critical);
+    bool startWatching(const QString &groupPath = QString());
+    void checkMemoryConsumption();
+
+signals:
+    void memoryLow();
+    void memoryCritical();
+
+private:
+    qreal m_warning = 75.0;
+    qreal m_critical = 90.0;
+    qreal m_memLimit;
+    bool hasMemoryLowWarning = false;
+    bool hasMemoryCriticalWarning = false;
+    QScopedPointer<MemoryThreshold> m_threshold;
+    QScopedPointer<MemoryReader> m_reader;
 };
 
 QT_END_NAMESPACE_AM

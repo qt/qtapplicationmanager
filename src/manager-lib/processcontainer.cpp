@@ -43,6 +43,7 @@
 #include "containerfactory.h"
 #include "application.h"
 #include "processcontainer.h"
+#include "systemmonitor_p.h"
 
 #if defined(Q_OS_UNIX)
 #  include <csignal>
@@ -166,6 +167,17 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
             if (!ok) {
                 qWarning() << "Failed setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << resource << "->" << userclass;
                 return false;
+            }
+
+            if (resource == qSL("memory")) {
+                if (!m_memWatcher) {
+                    m_memWatcher = new MemoryWatcher(this);
+                    connect(m_memWatcher, &MemoryWatcher::memoryLow,
+                            this, &ProcessContainer::memoryLowWarning);
+                    connect(m_memWatcher, &MemoryWatcher::memoryCritical,
+                            this, &ProcessContainer::memoryCriticalWarning);
+                }
+                m_memWatcher->startWatching(userclass);
             }
         }
         m_currentControlGroup = groupName;

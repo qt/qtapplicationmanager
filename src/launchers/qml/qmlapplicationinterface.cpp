@@ -117,6 +117,7 @@ bool QmlApplicationInterface::initialize()
 
     ok = ok && connect(m_applicationIf, SIGNAL(quit()), this, SIGNAL(quit()));
     ok = ok && connect(m_applicationIf, SIGNAL(memoryLowWarning()), this, SIGNAL(memoryLowWarning()));
+    ok = ok && connect(m_applicationIf, SIGNAL(memoryCriticalWarning()), this, SIGNAL(memoryCriticalWarning()));
     ok = ok && connect(m_applicationIf, SIGNAL(openDocument(QString)), this, SIGNAL(openDocument(QString)));
 
     if (!ok)

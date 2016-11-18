@@ -151,6 +151,8 @@ public:
 
 signals:
     void ready();
+    void memoryLowWarning();
+    void memoryCriticalWarning();
 
 protected:
     explicit AbstractContainer(AbstractContainerManager *manager);

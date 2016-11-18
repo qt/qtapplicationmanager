@@ -67,6 +67,7 @@ public:
 signals:
     Q_SCRIPTABLE void quit();
     Q_SCRIPTABLE void memoryLowWarning();
+    Q_SCRIPTABLE void memoryCriticalWarning();
 
     Q_SCRIPTABLE void openDocument(const QString &documentUrl);
 

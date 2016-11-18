@@ -47,6 +47,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+class MemoryWatcher;
+
 class ProcessContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
@@ -115,6 +117,7 @@ private:
     QString m_currentControlGroup;
     bool m_useDebugWrapper = false;
     ContainerDebugWrapper m_debugWrapper;
+    MemoryWatcher *m_memWatcher = nullptr;
 };
 
 QT_END_NAMESPACE_AM

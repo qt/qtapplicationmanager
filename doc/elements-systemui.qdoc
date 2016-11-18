@@ -46,10 +46,8 @@ declarations may be nested, creating parent-child relationships between the item
   \li WindowManager - The window model and controller.
   \li NotificationManager - The notification model, which handles freedesktop.org compliant
       notification requests.
-\omit
   \li SystemMonitor - The system monitoring model, giving access to a range of measurements, e.g.
-      cpu-load, frames-per-second, etc.
-\endomit
+      CPU load, frame rate, etc.
   \li ApplicationIPCManager - Central registry for interfaces for system-UI-to-app communication.
 \endlist
 

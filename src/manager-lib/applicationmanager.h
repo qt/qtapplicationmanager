@@ -155,6 +155,7 @@ signals:
     void inProcessRuntimeCreated(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime); // evil hook to support in-process runtimes
 
     void memoryLowWarning();
+    void memoryCriticalWarning();
 
 private slots:
     void preload();

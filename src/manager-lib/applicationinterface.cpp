@@ -133,6 +133,19 @@
     This signal will be sent out whenever a system dependent free-memory threshold has
     been crossed. Your application is expected to free up as many resources as
     possible in this case: this will most likely involve clearing internal caches.
+
+    \sa memoryCriticalWarning()
+*/
+
+/*!
+    \qmlsignal ApplicationInterface::memoryCriticalWarning()
+
+    This signal will be sent out whenever a system dependent free-memory threshold has
+    been crossed. It is usually sent after a \c memoryLowWarninig and should
+    be perceived as a last notice to urgently free as many resources as possible to
+    keep the system stable.
+
+    \sa memoryLowWarning()
 */
 
 /*!

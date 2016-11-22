@@ -165,7 +165,7 @@
                     windowContainer.state = "closed"
                 } else {
                     // Immediately close anything not handled by this container
-                    WindowManager.releasewindow(index, window)
+                    WindowManager.releasewindow(window)
                 }
             }
             function windowLostHandler(index, window) {

@@ -171,8 +171,6 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
         m_manager->waylandSurfaceCreated(static_cast<Surface *>(s));
     });
 
-    setenv("WAYLAND_DISPLAY", qPrintable(waylandSocketName), 1);
-
 #if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
     connect(m_shell, &QWaylandWlShell::createShellSurface, this, &WaylandCompositor::createShellSurface);
 #else

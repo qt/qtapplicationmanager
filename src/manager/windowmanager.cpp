@@ -556,6 +556,9 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName, this);
             connect(view, &QWindow::heightChanged, this, &WindowManager::resize);
             connect(view, &QWindow::widthChanged, this, &WindowManager::resize);
+
+            // export the actual socket name for our child processes.
+            qputenv("WAYLAND_DISPLAY", d->waylandCompositor->socketName());
         } else {
             d->waylandCompositor->registerOutputWindow(view);
         }

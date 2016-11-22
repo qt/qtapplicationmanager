@@ -253,7 +253,7 @@ command-line options.
     \br \e -
     \li  string
     \li A filesystem name for the Wayland socket that should be used when creating the compositor
-        component. (default: \c wayland-0)
+        component. (default: auto-detected by \c libwayland-server, most likely \c wayland-0)
         \note You can only specify the name here, but not a path: Wayland will always create this
               socket in \c{$XDG_RUNTIME_DIR} and will fail to start the compositor, if this
               directory is not writable or if the environment variable is not even set in the first

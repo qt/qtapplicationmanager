@@ -112,8 +112,6 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 {
     registerOutputWindow(window);
 
-    setenv("WAYLAND_DISPLAY", qPrintable(waylandSocketName), 1);
-
     window->winId();
     addDefaultShell();
 

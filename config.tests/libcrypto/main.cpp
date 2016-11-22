@@ -44,6 +44,9 @@
 #if OPENSSL_VERSION_NUMBER-0 < 0x1000100fL
 #  error "OpenSSL < 1.0.1 is binary incompatible"
 #endif
+#if OPENSSL_VERSION_NUMBER-0 >= 0x1010000fL
+#  error "OpenSSL >= 1.1.0 is binary incompatible"
+#endif
 
 int main()
 {

@@ -51,10 +51,17 @@
 
 // we want at least openssl 1.0.1
 #define AM_MINIMUM_OPENSSL_VERSION 0x1000100fL
+// we want at most openssl 1.0.255
+#define AM_MAXIMUM_OPENSSL_VERSION 0x100ff00fL
 
 #if OPENSSL_VERSION_NUMBER < AM_MINIMUM_OPENSSL_VERSION
 #  error "Your OpenSSL version is too old - the minimum supported version is 1.0.1"
 #endif
+
+#if OPENSSL_VERSION_NUMBER > AM_MAXIMUM_OPENSSL_VERSION
+#  error "Your OpenSSL version is too new - 1.1.x headers are incompatible with 1.0.1"
+#endif
+
 
 QT_BEGIN_NAMESPACE_AM
 

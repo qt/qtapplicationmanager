@@ -19,7 +19,7 @@ force-multi-process:!headless:!qtHaveModule(compositor):!qtHaveModule(waylandcom
 force-multi-process:!config_libdbus:error("You forced multi-process mode, but libdbus-1 (>= 1.6) is not available")
 
 if(linux:!android|force-libcrypto) {
-    !config_libcrypto:error("Could not find libcrypto (OpenSSL)")
+    !config_libcrypto:error("Could not find a suitable libcrypto (needs OpenSSL >= 1.0.1 and < 1.1.0)")
     !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")):error("Found libcrypto (OpenSSL), but Qt was built without OpenSSL support.")
 }
 

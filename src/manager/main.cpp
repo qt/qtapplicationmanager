@@ -604,11 +604,6 @@ int main(int argc, char *argv[])
 
         startupTimer.checkpoint("after runtime registration");
 
-        QuickLauncher *ql = QuickLauncher::instance();
-        ql->initialize(configuration->quickLaunchRuntimesPerContainer(), configuration->quickLaunchIdleLoad());
-
-        startupTimer.checkpoint("after quick-launcher setup");
-
         QScopedPointer<ApplicationDatabase> adb(configuration->singleApp().isEmpty()
                                                 ? new ApplicationDatabase(configuration->database())
                                                 : new ApplicationDatabase());
@@ -655,6 +650,11 @@ int main(int argc, char *argv[])
         SystemMonitor *sysmon = SystemMonitor::createInstance();
 
         startupTimer.checkpoint("after SystemMonitor instantiation");
+
+        QuickLauncher *ql = QuickLauncher::instance();
+        ql->initialize(configuration->quickLaunchRuntimesPerContainer(), configuration->quickLaunchIdleLoad());
+
+        startupTimer.checkpoint("after quick-launcher setup");
 
 #if !defined(AM_DISABLE_INSTALLER)
         ApplicationInstaller *ai = ApplicationInstaller::createInstance(installationLocations,

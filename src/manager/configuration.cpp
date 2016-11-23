@@ -162,7 +162,7 @@ Configuration::Configuration()
         "variables can be set:\n\n"
         "  AM_FAKE_SUDO      if set to 1, no root privileges will be acquired\n"
         "  AM_STARTUP_TIMER  if set to 1, a startup performance analysis will be printed\n"
-        "                    on the console. Anything other than 1 will interpreted\n"
+        "                    on the console. Anything other than 1 will be interpreted\n"
         "                    as the name of a file that is used instead of the console\n";
     d->clp.setApplicationDescription(description);
     d->clp.addHelpOption();

@@ -550,6 +550,9 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 {
     d->views << view;
 
+    if (SystemMonitor::instance()->isFpsReportingEnabled())
+        connect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
+
 #if defined(AM_MULTI_PROCESS)
     if (!ApplicationManager::instance()->isSingleProcess()) {
         if (!d->waylandCompositor) {

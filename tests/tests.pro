@@ -11,6 +11,7 @@ enable-tests:SUBDIRS = \
     packageextractor \
     packager-tool \
     applicationinstaller \
+    qml \
 
 enable-tests:linux*:SUBDIRS += \
     sudo \

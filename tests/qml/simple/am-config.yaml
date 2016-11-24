@@ -1,0 +1,34 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "apps"
+
+installationLocations:
+- id: "internal-0"
+  installationPath: "/tmp/am/apps"
+  documentPath: "/tmp/am/docs"
+  mountPoint: "/tmp"
+  isDefault: true
+
+ui:
+  fullscreen: no
+  additionalConfiguration:
+    booleanTest: on
+    stringTest: "pelagicore"
+    nullTest: ~
+    intTest: -1
+    floatTest: .5
+    arrayTest: [
+        "value1",
+        "value2"
+    ]
+    mapTest: {
+        "key1" : "1",
+        "key2" : "2"
+    }
+
+# development setup:
+flags:
+  noSecurity: yes
+  noUiWatchdog: yes

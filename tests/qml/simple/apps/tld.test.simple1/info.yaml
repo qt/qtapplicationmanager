@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'tld.test.simple1'
+icon:    'icon.png'
+code:    'app1.qml'
+runtime: 'qml'
+version: '1.0'
+name:
+  en: 'Simple1'

@@ -106,10 +106,10 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li \c{-config libcrypto-defines}
   \li Additional OpenSSL defines, if not building against a packaged version.
 \row
-  \li \c{-config force-singleprocess}
+  \li \c{-config force-single-process}
   \li Force a single-process build, even if Qt's Wayland \c compositor module is available.
 \row
-  \li \c{-config force-multiprocess}
+  \li \c{-config force-multi-process}
   \li Force a multi-process build - this will break if Qt's Wayland \c compositor module is not available.
 \row
   \li \c{-config enable-tests}

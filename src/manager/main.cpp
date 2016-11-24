@@ -568,12 +568,13 @@ int main(int argc, char *argv[])
         bool forceSingleProcess = configuration->forceSingleProcess();
         bool forceMultiProcess = configuration->forceMultiProcess();
 
-        if (forceMultiProcess == forceSingleProcess && forceSingleProcess)
+        if (forceMultiProcess && forceSingleProcess)
             throw Exception(Error::System, "You cannot enforce multi- and single-process mode at the same time.");
 
 #if !defined(AM_MULTI_PROCESS)
         if (forceMultiProcess)
             throw Exception(Error::System, "This application manager build is not multi-process capable.");
+        forceSingleProcess = true;
 #endif
 
         qApp->setProperty("singleProcessMode", forceSingleProcess);

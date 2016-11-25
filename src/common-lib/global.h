@@ -59,6 +59,7 @@ Q_DECLARE_LOGGING_CATEGORY(LogQmlRuntime)
 Q_DECLARE_LOGGING_CATEGORY(LogQmlIpc)
 
 void registerUnregisteredDLTContexts();
+void changeDLTApplication(const char *dltAppID, const char *dltAppDescription);
 
 void installMessageHandlers();
 

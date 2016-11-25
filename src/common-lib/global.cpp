@@ -308,4 +308,14 @@ void registerUnregisteredDLTContexts()
 #endif
 }
 
+void changeDLTApplication(const char *dltAppID, const char *dltAppDescription)
+{
+#if defined(QT_GENIVIEXTRAS_LIB)
+    globalDltRegistration()->registerApplication(dltAppID, dltAppDescription);
+#else
+    Q_UNUSED(dltAppID)
+    Q_UNUSED(dltAppDescription)
+#endif
+}
+
 QT_END_NAMESPACE_AM

@@ -152,6 +152,14 @@ QT_USE_NAMESPACE_AM
 
 int main(int argc, char *argv[])
 {
+    // The common-lib is already registering the DLT Application for the application manager.
+    // As the appID needs to be unique within the system, we cannot use the same appID and
+    // need to change it as early as possible.
+
+    // As we don't know the app-id yet, we are registering a place holder so we are able to see
+    // something in the dlt logs if general errors occur.
+    changeDLTApplication("PCLQ", "Pelagicore Application-Manager Launcher QML");
+
     colorLogApplicationId = "qml-launcher";
     installMessageHandlers();
     QLoggingCategory::setFilterRules(QString::fromUtf8(qgetenv("AM_LOGGING_RULES")));
@@ -288,6 +296,12 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     QString applicationId = application.value("id").toString();
     QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value("runtimeParameters"));
+
+    //Change the DLT Application description, to easily identify the application on the DLT logs.
+    char dltAppId[5];
+    qsnprintf(dltAppId, 5, "A%03d", application.value("uniqueNumber").toInt());
+    changeDLTApplication(dltAppId, QString("Application-Manager App: %1").arg(applicationId).toLocal8Bit());
+    registerUnregisteredDLTContexts();
 
     qCDebug(LogQmlRuntime) << "loading" << applicationId << "- main:" << qmlFile << "- document:" << document << "- parameters:"
                            << runtimeParameters << "- baseDir:" << baseDir;

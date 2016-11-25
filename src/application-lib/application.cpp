@@ -51,7 +51,18 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+//TODO Make this really unique
+static int uniqueCounter = 0;
+static int nextUniqueNumber() {
+    uniqueCounter++;
+    if (uniqueCounter > 999)
+        uniqueCounter = 0;
+
+    return uniqueCounter;
+}
+
 Application::Application()
+    : m_uniqueNumber(nextUniqueNumber())
 { }
 
 QVariantMap Application::toVariantMap() const
@@ -61,6 +72,7 @@ QVariantMap Application::toVariantMap() const
 
     QVariantMap map;
     map[qSL("id")] = m_id;
+    map[qSL("uniqueNumber")] = m_uniqueNumber;
     map[qSL("codeFilePath")] = m_codeFilePath;
     map[qSL("runtimeName")] = m_runtimeName;
     map[qSL("runtimeParameters")] = m_runtimeParameters;
@@ -94,6 +106,11 @@ QVariantMap Application::toVariantMap() const
 QString Application::id() const
 {
     return m_id;
+}
+
+int Application::uniqueNumber() const
+{
+    return m_uniqueNumber;
 }
 
 QString Application::absoluteCodeFilePath() const
@@ -339,6 +356,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
     QByteArray installationReport;
 
     ds >> app->m_id
+       >> app->m_uniqueNumber
        >> app->m_codeFilePath
        >> app->m_runtimeName
        >> app->m_runtimeParameters
@@ -357,6 +375,8 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
        >> baseDir
        >> app->m_uid
        >> installationReport;
+
+    uniqueCounter = qMax(uniqueCounter, app->m_uniqueNumber);
 
     app->m_capabilities.sort();
     app->m_categories.sort();
@@ -400,6 +420,7 @@ void Application::writeToDataStream(QDataStream &ds, const QVector<const Applica
     }
 
     ds << m_id
+       << m_uniqueNumber
        << m_codeFilePath
        << m_runtimeName
        << m_runtimeParameters

@@ -88,6 +88,7 @@ public:
     Q_ENUM(ExitStatus)
 
     QString id() const;
+    int uniqueNumber() const;
     QString absoluteCodeFilePath() const;
     QString codeFilePath() const;
     QString runtimeName() const;
@@ -157,6 +158,7 @@ private:
 
     // static part from info.json
     QString m_id;
+    int m_uniqueNumber;
 
     QString m_codeFilePath; // relative to info.json location
     QString m_runtimeName;

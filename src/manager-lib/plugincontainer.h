@@ -42,7 +42,7 @@
 #pragma once
 
 #include <QtAppManManager/abstractcontainer.h>
-#include "../plugin-interfaces/containerinterface.h"
+#include <QtAppManPluginInterfaces/containerinterface.h>
 
 QT_BEGIN_NAMESPACE_AM
 

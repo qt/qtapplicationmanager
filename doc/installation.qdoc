@@ -198,16 +198,12 @@ compiling.
 \chapter Generating Code-Coverage Data
 
 Instead of doing a normal build, you can also create a coverage build by running \c{make coverage}.
+As every compile step needs to be instrumented with special compiler flags, you need to make sure
+to run \c{make clean} before.
 Using a build like this enables you to generate HTML coverage reports simply by executing:
 
 \badcode
 make check-coverage
-\endcode
-
-or
-
-\badcode
-make check-branch-coverage
 \endcode
 
 in the build directory. The command-line output will tell you the url to the generated report.

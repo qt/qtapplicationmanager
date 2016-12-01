@@ -58,7 +58,8 @@ class SystemMonitor : public QAbstractListModel
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(int reportingInterval READ reportingInterval WRITE setReportingInterval)
     Q_PROPERTY(int reportingRange READ reportingRange WRITE setReportingRange)
-    Q_PROPERTY(qreal idleLoadAverage READ idleLoadAverage WRITE setIdleLoadAverage)
+    Q_PROPERTY(qreal idleLoadThreshold READ idleLoadThreshold WRITE setIdleLoadThreshold)
+    Q_PROPERTY(qreal idleLoadAverage READ idleLoadThreshold WRITE setIdleLoadThreshold)  // deprecated
     Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
     Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
     Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled NOTIFY memoryReportingEnabledChanged)
@@ -83,8 +84,8 @@ public:
     quint64 totalMemory() const;
     int cpuCores() const;
 
-    void setIdleLoadAverage(qreal loadAverage);
-    qreal idleLoadAverage() const;
+    void setIdleLoadThreshold(qreal loadThreshold);
+    qreal idleLoadThreshold() const;
 
     bool isIdle() const;
 
@@ -123,8 +124,8 @@ signals:
     void memoryCriticalWarning();
 
     void memoryReportingChanged(quint64 total, quint64 used);
-    void cpuLoadReportingChanged(int interval, qreal load);
-    void ioLoadReportingChanged(const QString &device, int interval, qreal load);
+    void cpuLoadReportingChanged(qreal load);
+    void ioLoadReportingChanged(const QString &device, qreal load);
     void fpsReportingChanged(qreal average, qreal minimum, qreal maximum, qreal jitter);
 
     void memoryReportingEnabledChanged();

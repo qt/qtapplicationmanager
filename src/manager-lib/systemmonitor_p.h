@@ -61,10 +61,9 @@ class CpuReader
 {
 public:
     CpuReader();
-    QPair<int, qreal> readLoadValue();
+    qreal readLoadValue();
 
 private:
-    QElapsedTimer m_lastCheck;
     qint64 m_lastIdle = 0;
     qint64 m_lastTotal = 0;
     qreal m_load = 1;
@@ -96,7 +95,7 @@ class IoReader
 public:
     IoReader(const char *device);
     ~IoReader();
-    QPair<int, qreal> readLoadValue();
+    qreal readLoadValue();
 
 private:
 #if defined(Q_OS_LINUX)

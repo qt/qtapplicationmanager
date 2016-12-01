@@ -567,7 +567,7 @@ QString ApplicationInstaller::installationLocationIdFromApplication(const QStrin
     \row
         \li \c id
         \li \c string
-        \li The installation location id that is used as the handle all other ApplicationInstaller
+        \li The installation location id that is used as the handle for all other ApplicationInstaller
             function calls. The \c id consists of the \c type and \c index field, concatenated by
             a single dash (for example, \c internal-0).
     \row

@@ -93,7 +93,7 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
         }
     }
     if (idleLoad > 0) {
-        SystemMonitor::instance()->setIdleLoadAverage(idleLoad);
+        SystemMonitor::instance()->setIdleLoadThreshold(idleLoad);
         m_onlyRebuildWhenIdle = true;
         connect(SystemMonitor::instance(), &SystemMonitor::idleChanged, this, &QuickLauncher::rebuild);
     }

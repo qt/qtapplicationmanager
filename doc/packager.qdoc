@@ -83,6 +83,6 @@ developer only (development mode), and packages that are signed by a trusted app
 
 \endtable
 
-The \{appman-packager} naturally supports the standard Unix \c{--help} command-line option.
+The \c{appman-packager} naturally supports the standard Unix \c{--help} command-line option.
 
 */

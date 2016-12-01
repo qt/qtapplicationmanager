@@ -56,6 +56,226 @@
 
 #include "qml-utilities.h"
 
+
+/*!
+    \class SystemMonitor
+    \internal
+*/
+
+/*!
+    \qmltype SystemMonitor
+    \inqmlmodule QtApplicationManager
+    \brief The SystemMonitor singleton.
+
+    The SystemMonitor singleton type provides information about system resources and performance,
+    like CPU and memory usage, I/O load and frame rate.
+
+    The type is derived from \c QAbstractListModel, so it can be used directly as a model in an
+    appropriate view.
+
+    \target role names
+
+    The following roles are available in this model:
+
+    \table
+    \header
+        \li Role name
+        \li Type
+        \li Description
+    \row
+        \li \c cpuLoad
+        \li real
+        \li The current CPU utilization in the range 0 (completely idle) to 1 (fully busy).
+    \row
+        \li \c memoryUsed
+        \li int
+        \li The amount of physical system memory used in bytes.
+    \row
+        \li \c memoryTotal
+        \li int
+        \li The total amount of physical memory (RAM) installed on the system in bytes.
+
+    \row
+        \li \c ioLoad
+        \li var
+        \li A map of devices registered with \l addIoLoadReporting() and their I/O load in the
+            range [0, 1]. For instance the load of a registered device "sda" can be accessed
+            through \c ioLoad.sda.
+    \row
+        \li \c averageFps
+        \li real
+        \li The average frame rate during the last \l reportingInterval in frames per second.
+    \row
+        \li \c minimumFps
+        \li real
+        \li The minimum frame rate during the last \l reportingInterval in frames per second.
+    \row
+        \li \c maximumFps
+        \li real
+        \li The maximum frame rate during the last \l reportingInterval in frames per second.
+    \row
+        \li \c fpsJitter
+        \li real
+        \li A measure for the average deviation from the ideal frame rate of 60 fps during the last
+            \l reportingInterval.
+    \endtable
+
+    \note The model will be updated each \l reportingInterval milliseconds. The roles will only
+          be populated, if the corresponding reporting parts (memory, CPU, etc.) have been enabled.
+
+    After importing \c QtApplicationManager you could use the SystemMonitor singleton as follows:
+
+    \qml
+    import QtQuick 2.4
+    import QtApplicationManager 1.0
+
+    ListView {
+        width: 200; height: 200
+
+        model: SystemMonitor
+        delegate: Text { text: averageFps }
+
+        Component.onCompleted: {
+            SystemMonitor.reportingInterval = 1000;
+            SystemMonitor.fpsReportingEnabled = true;
+        }
+    }
+    \endqml
+*/
+
+/*!
+    \qmlproperty int SystemMonitor::count
+    \readonly
+
+    This property holds the number of reading points in the model. The \c count is determined by
+    \l reportingRange divided by \l reportingInterval.
+*/
+
+/*!
+    \qmlproperty int SystemMonitor::reportingInterval
+
+    This property holds the interval in milliseconds between reporting updates. Note, that
+    reporting will only start once this property is set. Valid values must be greater than zero.
+
+    At least one of the reporting parts (memory, CPU load etc.) must be enabled, respectively
+    registered to start the reporting.
+*/
+
+/*!
+    \qmlproperty int SystemMonitor::reportingRange
+
+    The time frame in milliseconds for which the model holds data, i.e. how far back in the past
+    model data is available.
+
+    The default value is 10000 (10 seconds).
+*/
+
+
+/*!
+    \qmlproperty real SystemMonitor::idleLoadThreshold
+
+    A value in the range [0, 1]. If the CPU load is greater than this threshold the \l idle
+    property will be \c false, otherwise \c true. This property also influences when the
+    application manager quick-launches application processes.
+
+    The default value is read from the \l {Configuration}{configuration YAML file}
+    (\c quicklaunch/idleLoad), respectively 0.1, if this configuration option is not provided.
+
+    \sa idle
+*/
+
+
+/*!
+    \qmlproperty int SystemMonitor::totalMemory
+    \readonly
+
+    This property holds the total amount of physical memory (RAM) installed on the system in bytes.
+*/
+
+/*!
+    \qmlproperty int SystemMonitor::cpuCores
+    \readonly
+
+    This property holds the number of physical CPU cores that are installed on the system.
+*/
+
+/*!
+    \qmlproperty bool SystemMonitor::memoryReportingEnabled
+
+    A boolean value that determines whether periodic memory reporting is enabled.
+*/
+
+/*!
+    \qmlproperty bool SystemMonitor::cpuLoadReportingEnabled
+
+    A boolean value that determines whether periodic CPU load reporting is enabled.
+*/
+
+/*!
+    \qmlproperty bool SystemMonitor::fpsReportingEnabled
+
+    A boolean value that determines whether periodic frame rate reporting is enabled.
+*/
+
+/*!
+    \qmlproperty bool SystemMonitor::idle
+    \readonly
+
+    A boolean value that defines, whether the system is idle. If the CPU load is greater than
+    \l idleLoadThreshold, this property will be set to \c false, otherwise to \c true. The value is
+    evaluated every second and reflects whether the average load during the last second was below
+    or above the threshold.
+
+    \sa idleLoadThreshold
+*/
+
+
+/*!
+    \qmlsignal SystemMonitor::memoryReportingChanged(int total, int used);
+
+    This signal is emitted periodically when memory reporting is enabled. The frequency is defined
+    by \l reportingInterval. The \a total and \a used physical system memory in bytes are provided
+    as arguments.
+
+    \sa memoryReportingEnabled
+    \sa reportingInterval
+*/
+
+/*!
+    \qmlsignal SystemMonitor::cpuLoadReportingChanged(real load)
+
+    This signal is emitted periodically when CPU load reporting is enabled. The frequency is
+    defined by \l reportingInterval. The \a load parameter indicates the CPU utilization in the
+    range 0 (completely idle) to 1 (fully busy).
+
+    \sa cpuLoadReportingEnabled
+    \sa reportingInterval
+*/
+
+/*!
+    \qmlsignal SystemMonitor::ioLoadReportingChanged(string device, real load);
+
+    This signal is emitted periodically for each I/O device that has been registered with
+    \l addIoLoadReporting. The frequency is defined by \l reportingInterval. The string \a device
+    holds the name of the device that is monitored. The \a load parameter indicates the
+    utilization of the \a device in the range 0 (completely idle) to 1 (fully busy).
+
+    \sa addIoLoadReporting
+    \sa removeIoLoadReporting
+    \sa ioLoadReportingDevices
+    \sa reportingInterval
+*/
+
+/*!
+    \qmlsignal SystemMonitor::fpsReportingChanged(real average, real minimum, real maximum, real jitter);
+
+    This signal is emitted periodically when frame rate reporting is enabled. The update frequency
+    is defined by \l reportingInterval. The arguments denote the \a average, \a minimum and
+    \a maximum frame rate during the last \l reportingInterval in frames per second. Additionally,
+    \a jitter is a measure for the average deviation from the ideal frame rate of 60 fps.
+*/
+
+
 QT_BEGIN_NAMESPACE_AM
 
 namespace {
@@ -87,7 +307,7 @@ public:
         m_sum += frameTime;
         m_min = qMin(m_min, frameTime);
         m_max = qMax(m_max, frameTime);
-        m_jitter += qAbs(frameTime - IdealFrameTime);
+        m_jitter += qAbs(MicrosInSec / IdealFrameTime - MicrosInSec / frameTime);
     }
 
     inline void reset()
@@ -98,23 +318,22 @@ public:
 
     inline qreal averageFps() const
     {
-        return m_sum ? qreal(1000000) * m_count / m_sum : qreal(0);
+        return m_sum ? MicrosInSec * m_count / m_sum : qreal(0);
     }
 
     inline qreal minimumFps() const
     {
-        return m_max ? qreal(1000000) / m_max : qreal(0);
+        return m_max ? MicrosInSec / m_max : qreal(0);
     }
 
     inline qreal maximumFps() const
     {
-        return m_min ? qreal(1000000) / m_min : qreal(0);
+        return m_min ? MicrosInSec / m_min : qreal(0);
     }
 
     inline qreal jitterFps() const
     {
-        return m_jitter ? qreal(1000000) * m_count / m_jitter : qreal(0);
-
+        return m_count ? m_jitter / m_count :  qreal(0);
     }
 
 private:
@@ -122,12 +341,16 @@ private:
     int m_sum = 0;
     int m_min = INT_MAX;
     int m_max = 0;
-    int m_jitter = 0;
+    qreal m_jitter = 0.0;
 
     QElapsedTimer m_timer;
 
-    static const int IdealFrameTime = 16666; // usec - could be made configurable via an env variable
+    static const int IdealFrameTime = 16667; // usec - could be made configurable via an env variable
+    static const qreal MicrosInSec;
 };
+
+const qreal FrameTimer::MicrosInSec = qreal(1000 * 1000);
+
 }
 
 class SystemMonitorPrivate : public QObject
@@ -141,7 +364,7 @@ public:
     Q_DECLARE_PUBLIC(SystemMonitor)
 
     // idle
-    qreal idleAverage = 0.1;
+    qreal idleThreshold = 0.1;
     CpuReader *idleCpu = 0;
     int idleTimerId = 0;
     bool isIdle = false;
@@ -253,9 +476,9 @@ public:
             reportProcess = !reportProcess;
 
             if (reportCpu) {
-                QPair<int, qreal> cpuVal = cpu->readLoadValue();
-                emit q->cpuLoadReportingChanged(cpuVal.first, cpuVal.second);
-                r.cpuLoad = cpuVal.second;
+                qreal cpuVal = cpu->readLoadValue();
+                emit q->cpuLoadReportingChanged(cpuVal);
+                r.cpuLoad = cpuVal;
                 roles.append(CpuLoad);
             }
             if (reportMem) {
@@ -266,11 +489,11 @@ public:
                 roles.append(MemoryTotal);
             }
             for (auto it = ioHash.cbegin(); it != ioHash.cend(); ++it) {
-                QPair<int, qreal> ioVal = it.value()->readLoadValue();
-                emit q->ioLoadReportingChanged(it.key(), ioVal.first, ioVal.second);
-                r.ioLoad.insert(it.key(), ioVal.second);
+                qreal ioVal = it.value()->readLoadValue();
+                emit q->ioLoadReportingChanged(it.key(), ioVal);
+                r.ioLoad.insert(it.key(), ioVal);
             }
-            if (!ioHash.isEmpty())
+            if (!r.ioLoad.isEmpty())
                 roles.append(IoLoad);
 
             if (reportFps) {
@@ -299,8 +522,8 @@ public:
             q->endMoveRows();
             q->dataChanged(q->index(size - 1), q->index(size - 1), roles);
         } else if (te && te->timerId() == idleTimerId) {
-            QPair<int, qreal> idleVal = idleCpu->readLoadValue();
-            bool nowIdle = (idleVal.second <= idleAverage);
+            qreal idleVal = idleCpu->readLoadValue();
+            bool nowIdle = (idleVal <= idleThreshold);
             if (nowIdle != isIdle)
                 emit q->idleChanged(nowIdle);
             isIdle = nowIdle;
@@ -446,6 +669,13 @@ QHash<int, QByteArray> SystemMonitor::roleNames() const
     return d->roleNames;
 }
 
+/*!
+    \qmlmethod object SystemMonitor::get(int index)
+
+    Returns the model data for the reading point identified by \a index as a JavaScript object.
+    See the \l {role names} for the expected object elements. The \a index must be in the range
+    [0, \l count), returns an empty object if it is invalid.
+*/
 QVariantMap SystemMonitor::get(int row) const
 {
     if (row < 0 || row >= count()) {
@@ -473,6 +703,22 @@ int SystemMonitor::cpuCores() const
     return QThread::idealThreadCount();
 }
 
+/*!
+    \qmlmethod bool SystemMonitor::setMemoryWarningThresholds(real lowWarning, real criticalWarning);
+
+    Activates monitoring of available system memory. The arguments must define percent values (in
+    the range [0, 100]) of the \l totalMemory available. The \a lowWarning argument defines the
+    threshold in percent, when applications get the \l ApplicationInterface::memoryLowWarning()
+    signal. The \a criticalWarning argument defines the threshold, when applications get the
+    \l ApplicationInterface::memoryCriticalWarning() signal.
+
+    Returns true, if monitoring could be started, otherwise false (e.g. if arguments are out of
+    range).
+
+    \sa totalMemory
+    \sa ApplicationInterface::memoryLowWarning()
+    \sa ApplicationInterface::memoryCriticalWarning()
+*/
 bool SystemMonitor::setMemoryWarningThresholds(qreal lowWarning, qreal criticalWarning)
 {
     Q_D(SystemMonitor);
@@ -504,6 +750,14 @@ bool SystemMonitor::setMemoryWarningThresholds(qreal lowWarning, qreal criticalW
     return true;
 }
 
+/*!
+    \qmlmethod real SystemMonitor::memoryLowWarningThreshold()
+
+    Returns the current threshold in percent, when a low memory warning will be sent to
+    applications.
+
+    \sa setMemoryWarningThresholds()
+*/
 qreal SystemMonitor::memoryLowWarningThreshold() const
 {
     Q_D(const SystemMonitor);
@@ -511,6 +765,14 @@ qreal SystemMonitor::memoryLowWarningThreshold() const
     return d->memoryLowWarning;
 }
 
+/*!
+    \qmlmethod real SystemMonitor::memoryCriticalWarningThreshold()
+
+    Returns the current threshold in percent, when a critical memory warning will be sent to
+    applications.
+
+    \sa setMemoryWarningThresholds()
+*/
 qreal SystemMonitor::memoryCriticalWarningThreshold() const
 {
     Q_D(const SystemMonitor);
@@ -518,20 +780,20 @@ qreal SystemMonitor::memoryCriticalWarningThreshold() const
     return d->memoryCriticalWarning;
 }
 
-void SystemMonitor::setIdleLoadAverage(qreal loadAverage)
+void SystemMonitor::setIdleLoadThreshold(qreal loadThreshold)
 {
     Q_D(SystemMonitor);
 
-    if (loadAverage != d->idleAverage) {
-        d->idleAverage = loadAverage;
+    if (loadThreshold != d->idleThreshold) {
+        d->idleThreshold = loadThreshold;
     }
 }
 
-qreal SystemMonitor::idleLoadAverage() const
+qreal SystemMonitor::idleLoadThreshold() const
 {
     Q_D(const SystemMonitor);
 
-    return d->idleAverage;
+    return d->idleThreshold;
 }
 
 bool SystemMonitor::isIdle() const
@@ -577,6 +839,16 @@ bool SystemMonitor::isCpuLoadReportingEnabled() const
     return d->reportCpu;
 }
 
+/*!
+    \qmlmethod bool SystemMonitor::addIoLoadReporting(string deviceName);
+
+    Registers the device with the name \a deviceName for periodically reporting its I/O load.
+
+    \note Currently this is only supported on Linux: the \a deviceName has to match one of the
+    devices in the \c /sys/block directory.
+
+    Returns true, if the device could be added, otherwise false (e.g. if it does not exist).
+*/
 bool SystemMonitor::addIoLoadReporting(const QString &deviceName)
 {
     Q_D(SystemMonitor);
@@ -588,10 +860,17 @@ bool SystemMonitor::addIoLoadReporting(const QString &deviceName)
 
     IoReader *ior = new IoReader(deviceName.toLocal8Bit().constData());
     d->ioHash.insert(deviceName, ior);
+    if (d->reportingInterval >= 0)
+        ior->readLoadValue();   // for initialization only
     d->setupTimer();
     return true;
 }
 
+/*!
+    \qmlmethod SystemMonitor::removeIoLoadReporting(string deviceName);
+
+    Remove the device with the name \a deviceName from the list of monitored devices.
+*/
 void SystemMonitor::removeIoLoadReporting(const QString &deviceName)
 {
     Q_D(SystemMonitor);
@@ -600,6 +879,11 @@ void SystemMonitor::removeIoLoadReporting(const QString &deviceName)
     d->setupTimer();
 }
 
+/*!
+    \qmlmethod list<string> SystemMonitor::ioLoadReportingDevices()
+
+    Returns a list of registered device names, that will report their I/O load.
+*/
 QStringList SystemMonitor::ioLoadReportingDevices() const
 {
     Q_D(const SystemMonitor);
@@ -630,6 +914,8 @@ void SystemMonitor::setReportingInterval(int intervalInMSec)
     Q_D(SystemMonitor);
 
     if (d->reportingInterval != intervalInMSec && intervalInMSec > 0) {
+        for (auto it = d->ioHash.cbegin(); it != d->ioHash.cend(); ++it)
+            it.value()->readLoadValue();   // for initialization only
         d->setupTimer(intervalInMSec);
         d->updateModel();
     }
@@ -680,6 +966,12 @@ void SystemMonitor::reportFrameSwap(QObject *item)
     frameTimer->newFrame();
 }
 
+/*!
+    \qmlmethod object SystemMonitor::getProcessMonitor(string appId);
+
+    Returns a reference to the \c ProcessMonitor type for the specific application identified by
+    \a appId.
+*/
 QObject *SystemMonitor::getProcessMonitor(const QString &appId)
 {
     Q_D(SystemMonitor);

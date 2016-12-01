@@ -80,7 +80,7 @@ CpuReader::CpuReader()
     }
 }
 
-QPair<int, qreal> CpuReader::readLoadValue()
+qreal CpuReader::readLoadValue()
 {
     QByteArray str = s_sysFs->readValue();
 
@@ -111,7 +111,8 @@ QPair<int, qreal> CpuReader::readLoadValue()
     } else {
         m_load = qreal(1);
     }
-    return qMakePair(m_lastCheck.restart(), m_load);
+
+    return m_load;
 }
 
 
@@ -152,7 +153,7 @@ IoReader::IoReader(const char *device)
 IoReader::~IoReader()
 { }
 
-QPair<int, qreal> IoReader::readLoadValue()
+qreal IoReader::readLoadValue()
 {
     QByteArray str = m_sysFs->readValue();
 
@@ -173,7 +174,13 @@ QPair<int, qreal> IoReader::readLoadValue()
         pos = endPtr - str.constData() + 1;
     }
 
-    int elapsed = m_lastCheck.restart();
+    qint64 elapsed;
+    if (m_lastCheck.isValid()) {
+        elapsed = m_lastCheck.restart();
+    } else {
+        elapsed = -1;
+        m_lastCheck.start();
+    }
 
     if (values.size() >= 11) {
         qint64 ioTime = values.at(9);
@@ -183,7 +190,8 @@ QPair<int, qreal> IoReader::readLoadValue()
     } else {
         m_load = qreal(1);
     }
-    return qMakePair(elapsed, m_load);
+
+    return m_load;
 }
 
 
@@ -304,7 +312,7 @@ QT_BEGIN_NAMESPACE_AM
 CpuReader::CpuReader()
 { }
 
-QPair<int, qreal> CpuReader::readLoadValue()
+qreal CpuReader::readLoadValue()
 {
     auto winFileTimeToInt64 = [](const FILETIME &filetime) {
         return ((quint64(filetime.dwHighDateTime) << 32) | quint64(filetime.dwLowDateTime));
@@ -322,7 +330,7 @@ QPair<int, qreal> CpuReader::readLoadValue()
     } else {
         m_load = qreal(1);
     }
-    return qMakePair(m_lastCheck.restart(), m_load);
+    return m_load;
 }
 
 MemoryReader::MemoryReader()
@@ -357,7 +365,7 @@ QT_BEGIN_NAMESPACE_AM
 CpuReader::CpuReader()
 { }
 
-QPair<int, qreal> CpuReader::readLoadValue()
+qreal CpuReader::readLoadValue()
 {
     natural_t cpuCount = 0;
     processor_cpu_load_info_t cpuLoadInfo;
@@ -383,7 +391,7 @@ QPair<int, qreal> CpuReader::readLoadValue()
     } else {
         m_load = qreal(1);
     }
-    return qMakePair(m_lastCheck.restart(), m_load);
+    return m_load;
 }
 
 
@@ -434,9 +442,9 @@ QT_BEGIN_NAMESPACE_AM
 CpuReader::CpuReader()
 { }
 
-QPair<int, qreal> CpuReader::readLoadValue()
+qreal CpuReader::readLoadValue()
 {
-    return qMakePair(0, 1);
+    return qreal(1);
 }
 
 MemoryReader::MemoryReader()
@@ -463,9 +471,9 @@ IoReader::IoReader(const char *device)
 IoReader::~IoReader()
 { }
 
-QPair<int, qreal> IoReader::readLoadValue()
+qreal IoReader::readLoadValue()
 {
-    return qMakePair(0, 1);
+    return qreal(1);
 }
 
 MemoryThreshold::MemoryThreshold(const QList<qreal> &thresholds)

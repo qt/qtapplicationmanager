@@ -27,8 +27,10 @@
 ##
 #############################################################################
 
+#set -x
+
 # check basic requirement
-[ "${LANG%%.UTF-8}" = "$LANG" ] && ( echo "The application-packager needs to be run with UTF-8 locale variant"; exit 1; )
+[ "$(uname)" != "Darwin" ] && [ "${LANG%%.UTF-8}" = "$LANG" ] && ( echo "The application-packager needs to be run with UTF-8 locale variant"; exit 1; )
 [ ! -d certificates ] && ( echo "Please cd to the tests/data directory before running this script"; exit 1; )
 
 # having $LC_ALL set to "C" will screw us big time - especially since QtCreator sets this
@@ -43,9 +45,10 @@ usage()
      exit 1
 }
 
-PACKAGER="$1"
+PACKAGER="${@: -1}"
 
 [ ! -x "$PACKAGER" ] && usage
+eval ${@:1:$# - 1}
 "$PACKAGER" --version 2>/dev/null | grep -qsi "Packager" || usage
 
 ( cd certificates && ./create-test-certificates.sh )

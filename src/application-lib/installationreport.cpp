@@ -137,7 +137,7 @@ QStringList InstallationReport::files() const
 
 void InstallationReport::addFile(const QString &file)
 {
-    m_files << file;
+    m_files << file.normalized(QString::NormalizationForm_C);
 }
 
 void InstallationReport::addFiles(const QStringList &files)

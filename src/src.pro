@@ -8,7 +8,6 @@ SUBDIRS = \
     crypto-lib \
     application-lib \
     package-lib \
-    tools
 
 crypto-lib.depends = common-lib
 application-lib.depends = crypto-lib
@@ -20,7 +19,7 @@ manager.depends = manager-lib installer-lib
 launchers.depends = manager
 tools.depends = package-lib
 
-!tools-only: {
+!tools-only {
     SUBDIRS += \
         plugin-interfaces \
         dbus \
@@ -35,3 +34,4 @@ tools.depends = package-lib
     tools.depends = manager-lib installer-lib
 }
 
+SUBDIRS += tools

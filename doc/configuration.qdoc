@@ -210,8 +210,9 @@ command-line options.
     \li \b --logging-rule
     \br \e logging/rules
     \li array<string>
-    \li Adds a standard Qt logging rules - please see the Qt documentation for the required
-        format.
+    \li Adds standard Qt logging rules - see the QLoggingCategory documentation for the required
+        format. Application-manager specific logging categories are listed in
+        \l {Logging and Debugging}.
 \row
     \li \b -
     \br \e installationLocation

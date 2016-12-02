@@ -60,7 +60,7 @@ Q_DECLARE_LOGGING_CATEGORY(LogQmlIpc)
 
 void registerUnregisteredDLTContexts();
 
-void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
+void installMessageHandlers();
 
 extern QByteArray colorLogApplicationId;
 

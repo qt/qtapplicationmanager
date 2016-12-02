@@ -28,9 +28,42 @@
 /*!
 
 \page debugging.html
-\title Debugging
+\title Logging and Debugging
 
-\chapter Introduction
+\chapter Logging
+
+The application-manager installs its own message handler that neatly formats logging output.
+It will also pass the output to GENIVI DLT (Diagnostic Log and Trace), if the QtGeniviExtras module
+is available.
+
+\section1 Categories
+
+The following logging categories are defined by the application manager:
+\include global.cpp am-logging-categories
+
+\section1 Environment Variables
+
+This is a (incomplete) list of environment variables that influence the logging output at runtime:
+
+\table
+\header
+    \li Variable
+    \li Description
+\row
+    \li AM_STARTUP_TIMER
+    \li If set to 1, a startup performance analysis will be printed on the console. Anything other
+        than 1 will be interpreted as the name of a file that is used instead of the console.
+\row
+    \li QT_MESSAGE_PATTERN
+    \li Setting this variable has the same effect as described on the
+        \l{Warning and Debugging Messages}{Debugging Techniques} page and will overwrite the
+        default application-manager message handler. Parallel DLT logging will still be supported,
+        if available.
+\endtable
+
+\chapter Debugging
+
+\section1 Introduction
 
 Debugging the application-manager, the System-UI and applications is dependent on the mode the
 application-manager is running in:
@@ -52,7 +85,7 @@ Please note that although the concept is called "debug" wrappers, these wrappers
 actual debugging tasks. They are also useful for various other tasks that involve running the
 program under test through a wrapper, e.g. profiling tools.
 
-\chapter Defining Debug Wrappers
+\section1 Defining Debug Wrappers
 \target DebugWrappers
 
 Debug wrappers for applications in multi-process mode are defined in a \c config.yaml file provided
@@ -109,7 +142,7 @@ Each debug wrapper is a YAML map, which supports the following fields:
     \li A list of container ids which are compatible with this debug wrapper (e.g. \c process).
 \endtable
 
-\chapter Using Debug Wrappers
+\section1 Using Debug Wrappers
 
 After defining the debug wrappers, you can start applications using those wrappers. There are three
 ways to do this - all of them rely on a common way to specify which debug wrapper to use and optional

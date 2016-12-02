@@ -153,8 +153,7 @@ QT_USE_NAMESPACE_AM
 int main(int argc, char *argv[])
 {
     colorLogApplicationId = "qml-launcher";
-
-    qInstallMessageHandler(colorLogToStderr);
+    installMessageHandlers();
     QLoggingCategory::setFilterRules(QString::fromUtf8(qgetenv("AM_LOGGING_RULES")));
 
 #if defined(AM_HEADLESS)

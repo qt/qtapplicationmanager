@@ -431,7 +431,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
-    qInstallMessageHandler(colorLogToStderr);
+    installMessageHandlers();
+
     QString error;
 
     startupTimer.checkpoint("after basic initialization");

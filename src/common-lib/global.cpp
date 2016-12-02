@@ -75,6 +75,20 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 
 QT_BEGIN_NAMESPACE_AM
 
+/*
+//! [am-logging-categories]
+\list
+\li \c am.installer - Installer sub-system
+\li \c am.notify - Notification sub-system
+\li \c am.qml - QML messages
+\li \c am.qml.ipc - QML IPC
+\li \c am.runtime.qml - QML runtime
+\li \c am.system - General system messages
+\li \c am.wayland - Wayland sub-system
+\li \c general - General messages not part of any ApplicationManager sub-system
+\endlist
+//! [am-logging-categories]
+*/
 QDLT_REGISTER_CONTEXT_ON_FIRST_USE(true)
 QDLT_REGISTER_APPLICATION("PCAM", "Pelagicore Application-Manager")
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General system messages")
@@ -90,7 +104,7 @@ QDLT_FALLBACK_CATEGORY(LogGeneral)
 
 QByteArray colorLogApplicationId = QByteArray();
 
-void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
+static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
 #if defined(QT_GENIVIEXTRAS_LIB)
     QDltRegistration::messageHandler(msgType, context, message);
@@ -240,6 +254,28 @@ void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, cons
     fputs(out.constData(), stderr);
     fflush(stderr);
     return;
+}
+
+#if defined(QT_GENIVIEXTRAS_LIB)
+
+static QtMessageHandler defaultQtMsgHandler;
+
+static void compositeMsgHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
+{
+    QDltRegistration::messageHandler(msgType, context, message);
+    defaultQtMsgHandler(msgType, context, message);
+}
+
+#endif
+
+void installMessageHandlers()
+{
+    if (Q_LIKELY(qgetenv("QT_MESSAGE_PATTERN").isNull()))
+        qInstallMessageHandler(colorLogToStderr);
+#if defined(QT_GENIVIEXTRAS_LIB)
+    else
+        defaultQtMsgHandler = qInstallMessageHandler(compositeMsgHandler);
+#endif
 }
 
 QString hardwareId()

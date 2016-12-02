@@ -23,7 +23,8 @@ sourcedirs = \
     ../src/launchers/qml \
     ../src/tools/packager \
     ../src/tools/deployer \
-    ../src/tools/controller
+    ../src/tools/controller \
+    ../src/common-lib
 
 exampledirs = ../examples
 
@@ -31,7 +32,7 @@ imagedirs = \
      images \
      ../examples/minidesk/doc/images
 
-depends += qtquick qtqml
+depends += qtcore qtquick qtqml qtdoc
 
 qhp.projects                               = ApplicationManager
 qhp.ApplicationManager.file                = applicationmanager.qhp

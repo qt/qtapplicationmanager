@@ -51,8 +51,12 @@ private slots:
     void createAndVerify();
 
 private:
+    QString escapeFilename(const QString &name);
+
+private:
     QDir m_baseDir;
     bool m_tarAvailable = false;
+    bool m_isCygwin = false;
 };
 
 tst_PackageCreator::tst_PackageCreator()
@@ -67,6 +71,8 @@ void tst_PackageCreator::initTestCase()
     m_tarAvailable = tar.waitForStarted(3000)
             && tar.waitForFinished(3000)
             && (tar.exitStatus() == QProcess::NormalExit);
+
+    m_isCygwin = tar.readAllStandardOutput().contains("Cygwin");
 
     QVERIFY(checkCorrectLocale());
 }
@@ -113,7 +119,7 @@ void tst_PackageCreator::createAndVerify()
         QSKIP("No tar command found in PATH - skipping the verification part of the test!");
 
     QProcess tar;
-    tar.start(qSL("tar"), { qSL("-tzf"), output.fileName() });
+    tar.start(qSL("tar"), { qSL("-tzf"), escapeFilename(output.fileName()) });
     QVERIFY2(tar.waitForStarted(3000) &&
              tar.waitForFinished(3000) &&
              (tar.exitStatus() == QProcess::NormalExit) &&
@@ -123,7 +129,9 @@ void tst_PackageCreator::createAndVerify()
     expectedContents.sort();
     expectedContents.prepend(qSL("--PACKAGE-HEADER--"));
     expectedContents.append(qSL("--PACKAGE-FOOTER--"));
-    QCOMPARE(expectedContents, QString::fromLocal8Bit(tar.readAllStandardOutput()).split(qL1C('\n'), QString::SkipEmptyParts));
+
+    QStringList actualContents = QString::fromLocal8Bit(tar.readAllStandardOutput()).split(qL1C('\n'), QString::SkipEmptyParts);
+    QCOMPARE(actualContents, expectedContents);
 
     // check the contents of the files
 
@@ -132,13 +140,25 @@ void tst_PackageCreator::createAndVerify()
         QVERIFY2(src.open(QFile::ReadOnly), qPrintable(src.errorString()));
         QByteArray data = src.readAll();
 
-        tar.start(qSL("tar"), { qSL("-xzOf"), output.fileName(), file });
+        tar.start(qSL("tar"), { qSL("-xzOf"), escapeFilename(output.fileName()), file });
         QVERIFY2(tar.waitForStarted(3000) &&
                  tar.waitForFinished(3000) &&
                  (tar.exitStatus() == QProcess::NormalExit) &&
                  (tar.exitCode() == 0), qPrintable(tar.errorString()));
 
         QCOMPARE(tar.readAllStandardOutput(), data);
+    }
+}
+
+QString tst_PackageCreator::escapeFilename(const QString &name)
+{
+    if (!m_isCygwin) {
+        return name;
+    } else {
+        QString s = QFileInfo(name).absoluteFilePath();
+        QString t = qSL("/cygdrive/");
+        t.append(s.at(0));
+        return t + s.mid(2);
     }
 }
 

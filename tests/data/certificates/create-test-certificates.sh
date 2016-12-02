@@ -36,6 +36,10 @@ rm -f store.csr store.crt store-priv.key store.p12
 rm -f devca.csr devca.crt devca-priv.key
 rm -f dev1.csr dev1.crt dev1-priv.key dev1.p12
 rm -f dev2.csr dev2.crt dev2-priv.key dev2.p12
+rm -f 01.pem 02.pem
+rm -f other-index.txt* other-serial.txt*
+rm -f other-ca-priv.key other-ca.crt
+rm -f other.csr other.crt other-priv.key other.p12
 
 runSSL()
 {
@@ -89,8 +93,12 @@ info "Generating the \"other\" CA"
 # generate self-signed CA cert
 # the -days parameter is needed due to an openssl bug: having -x509 on the
 # command-line makes it ignore the the default_days option in the config
-runSSL req -config openssl-other.cnf -x509 -days 3650 -new -newkey rsa:2048 -nodes -keyout other-priv.key -out other.crt
-runSSL pkcs12 -export -password pass:password -out other.p12 -inkey other-priv.key -nodes -in other.crt -name "Other Company"
+runSSL req -config openssl-other-ca.cnf -x509 -days 3650 -new -newkey rsa:2048 -nodes -keyout other-ca-priv.key -out other-ca.crt
+touch other-index.txt
+echo '01' > other-serial.txt
+runSSL req -batch -subj '/C=DE/ST=Foo/L=Bar/CN=www.other.com' -newkey rsa:2048 -nodes -keyout other-priv.key -out other.csr
+runSSL ca -batch -config openssl-other-ca.cnf -policy signing_policy -extensions signing_req -out other.crt -infiles other.csr
+runSSL pkcs12 -export -out other.p12 -password pass:password -inkey other-priv.key -nodes -certfile other-ca.crt -in other.crt -name "Other Certificate"
 
 echo -e "$G All test certificated have been created successfully$W"
 echo

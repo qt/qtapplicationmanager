@@ -212,12 +212,17 @@ void StartupTimer::createReport()
             }
         }
 
-        static const int cols = 120;
         static const int barCols = 60;
 
         int delta = m_checkpoints.isEmpty() ? 0 : m_checkpoints.last().first;
         qreal usecPerCell = delta / barCols;
-        int secondsLength = QByteArray::number(delta / 1000000).length();
+
+        int maxTextLen = 0;
+        for (int i = 0; i < m_checkpoints.size(); ++i) {
+            int textLen = m_checkpoints.at(i).second.length();
+            if (textLen > maxTextLen)
+                maxTextLen = textLen;
+        }
 
         for (int i = 0; i < m_checkpoints.size(); ++i) {
             quint64 usec = m_checkpoints.at(i).first;
@@ -225,7 +230,7 @@ void StartupTimer::createReport()
             int sec = 0;
             int cells = usec / usecPerCell;
             QByteArray bar(cells, colorSupport ? ' ' : '#');
-            QByteArray spacing(cols - cells - 2 - secondsLength - 8 - text.length(), ' ');
+            QByteArray spacing(maxTextLen - text.length(), ' ');
 
             if (usec > 1000*1000) {
                 sec = usec / (1000*1000);

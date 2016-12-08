@@ -35,10 +35,12 @@
 #include <QFileInfo>
 #include <QDBusConnection>
 #include <QDBusError>
+#include <QTimer>
 
 #include "global.h"
 #include "error.h"
 #include "exception.h"
+#include "unixsignalhandler.h"
 #include "applicationmanager_interface.h"
 #include "applicationinstaller_interface.h"
 #include "qtyaml.h"
@@ -164,8 +166,7 @@ static Command command(QCommandLineParser &clp)
     return NoCommand;
 }
 
-static void startApplication(const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl);
-static void debugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl);
+static void startOrDebugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl);
 static void stopApplication(const QString &appId);
 static void listApplications();
 static void showApplication(const QString &appId);
@@ -278,7 +279,8 @@ int main(int argc, char *argv[])
             if (clp.isSet(qSL("attach-stderr")))
                 stdRedirections[qSL("err")] = 2;
 
-            startApplication(clp.positionalArguments().at(1), stdRedirections, args == 3 ? clp.positionalArguments().at(2) : QString());
+            startOrDebugApplication(QString(), clp.positionalArguments().at(1), stdRedirections,
+                                    args == 3 ? clp.positionalArguments().at(2) : QString());
             break;
         }
         case DebugApplication: {
@@ -302,8 +304,8 @@ int main(int argc, char *argv[])
             if (clp.isSet(qSL("attach-stderr")))
                 stdRedirections[qSL("err")] = 2;
 
-            debugApplication(clp.positionalArguments().at(1), clp.positionalArguments().at(2),
-                             stdRedirections, args == 3 ? clp.positionalArguments().at(2) : QString());
+            startOrDebugApplication(clp.positionalArguments().at(1), clp.positionalArguments().at(2),
+                                    stdRedirections, args == 3 ? clp.positionalArguments().at(2) : QString());
             break;
         }
         case StopApplication:
@@ -381,62 +383,61 @@ int main(int argc, char *argv[])
     }
 }
 
-void startApplication(const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl = QString())
-{
-    dbus.connectToManager();
-
-    QTimer::singleShot(0, [appId, stdRedirections, documentUrl]() {
-        QDBusPendingReply<bool> reply;
-        if (stdRedirections.isEmpty()) {
-            reply = dbus.manager()->startApplication(appId, documentUrl);
-        } else {
-            UnixFdMap fdMap;
-            for (auto it = stdRedirections.cbegin(); it != stdRedirections.cend(); ++it)
-                fdMap.insert(it.key(), QDBusUnixFileDescriptor(it.value()));
-
-            reply = dbus.manager()->startApplication(appId, fdMap, documentUrl);
-        }
-
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call startApplication via DBus: %1").arg(reply.error().message());
-
-        bool ok = reply.value();
-        if (stdRedirections.isEmpty()) {
-            qApp->exit(ok ? 0 : 2);
-        } else {
-            if (!ok)
-                qApp->exit(2);
-        }
-    });
-}
-
-void debugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl = QString())
+void startOrDebugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl = QString())
 {
     dbus.connectToManager();
 
     QTimer::singleShot(0, [debugWrapper, appId, stdRedirections, documentUrl]() {
+        bool isDebug = !debugWrapper.isEmpty();
         QDBusPendingReply<bool> reply;
         if (stdRedirections.isEmpty()) {
-            reply = dbus.manager()->debugApplication(appId, debugWrapper, documentUrl);
+            reply = isDebug ? dbus.manager()->debugApplication(appId, debugWrapper, documentUrl)
+                            : dbus.manager()->startApplication(appId, documentUrl);
         } else {
             UnixFdMap fdMap;
             for (auto it = stdRedirections.cbegin(); it != stdRedirections.cend(); ++it)
                 fdMap.insert(it.key(), QDBusUnixFileDescriptor(it.value()));
 
-            reply = dbus.manager()->debugApplication(appId, debugWrapper, fdMap, documentUrl);
+            reply = isDebug ? dbus.manager()->debugApplication(appId, debugWrapper, fdMap, documentUrl)
+                            : dbus.manager()->startApplication(appId, fdMap, documentUrl);
         }
 
         reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call debugApplication via DBus: %1").arg(reply.error().message());
+        if (reply.isError()) {
+            throw Exception(Error::IO, "failed to call %2Application via DBus: %1")
+                .arg(reply.error().message()).arg(isDebug ? "debug" : "start");
+        }
 
         bool ok = reply.value();
         if (stdRedirections.isEmpty()) {
             qApp->exit(ok ? 0 : 2);
         } else {
-            if (!ok)
+            if (!ok) {
                 qApp->exit(2);
+            } else {
+                // on Ctrl+C or SIGTERM -> stop the application
+                UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
+                                                       { SIGTERM, SIGINT },
+                                                       [appId](int /*sig*/) {
+                    auto reply = dbus.manager()->stopApplication(appId, true);
+                    reply.waitForFinished();
+                    qApp->exit(1);
+                });
+
+                // in case application quits -> quit the controller
+                QObject::connect(dbus.manager(), &IoQtApplicationManagerInterface::applicationRunStateChanged,
+                            qApp, [appId](const QString &id, uint runState) {
+                    if (id == appId && runState == 0 /* NotRunning */) {
+                        auto getReply = dbus.manager()->get(id);
+                        getReply.waitForFinished();
+                        if (getReply.isError())
+                            throw Exception(Error::IO, "failed to get exit code from application-manager: %1").arg(getReply.error().message());
+                        fprintf(stdout, "\n --- application has quit ---\n\n");
+                        auto app = getReply.value();
+                        qApp->exit(app.value(qSL("lastExitCode"), 1).toInt());
+                    }
+                });
+            }
         }
     });
 }

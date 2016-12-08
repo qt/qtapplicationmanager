@@ -292,7 +292,9 @@ enum Roles
     Importance,
     Preload,
     Version,
-    ApplicationItem
+    ApplicationItem,
+    LastExitCode,
+    LastExitStatus
 };
 
 QT_BEGIN_NAMESPACE_AM
@@ -357,6 +359,8 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
     roleNames.insert(Preload, "preload");
     roleNames.insert(Version, "version");
     roleNames.insert(ApplicationItem, "application");
+    roleNames.insert(LastExitCode, "lastExitCode");
+    roleNames.insert(LastExitStatus, "lastExitStatus");
 }
 
 ApplicationManagerPrivate::~ApplicationManagerPrivate()
@@ -1336,6 +1340,10 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
         return app->version();
     case ApplicationItem:
         return QVariant::fromValue(app);
+    case LastExitCode:
+        return app->lastExitCode();
+    case LastExitStatus:
+        return app->lastExitStatus();
     }
     return QVariant();
 }

@@ -8,7 +8,7 @@
     <signal name="taskStarted">
       <arg name="taskId" type="s" direction="out"/>
     </signal>
-    <signal name="taskProgress">
+    <signal name="taskProgressChanged">
       <arg name="taskId" type="s" direction="out"/>
       <arg name="progress" type="d" direction="out"/>
     </signal>

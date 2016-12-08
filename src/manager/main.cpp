@@ -123,6 +123,7 @@
 #include "startuptimer.h"
 #include "systemmonitor.h"
 #include "applicationipcmanager.h"
+#include "unixsignalhandler.h"
 
 #include "../plugin-interfaces/startupinterface.h"
 
@@ -205,7 +206,13 @@ static void dbusInitialization()
 {
     try {
         auto am = ApplicationManager::instance();
-        registerDBusObject(new ApplicationManagerAdaptor(am), "io.qt.ApplicationManager", "/ApplicationManager");
+        auto ama = new ApplicationManagerAdaptor(am);
+
+        // connect this signal manually, since it needs a type conversion
+        // (the automatic signal relay fails in this case)
+        QObject::connect(am, &ApplicationManager::applicationRunStateChanged,
+                         ama, &ApplicationManagerAdaptor::applicationRunStateChanged);
+        registerDBusObject(ama, "io.qt.ApplicationManager", "/ApplicationManager");
         if (!am->setDBusPolicy(configuration->dbusPolicy(dbusInterfaceName(am))))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");
 
@@ -430,7 +437,6 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
-
     installMessageHandlers();
 
     QString error;
@@ -457,8 +463,19 @@ int main(int argc, char *argv[])
     // this is needed for both WebEngine and Wayland Multi-screen rendering
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 #  endif
-
+    QGuiApplication::setFallbackSessionManagementEnabled(false);
     QGuiApplication a(argc, argv);
+
+    UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler, SIGINT,
+                                           [](int /*sig*/) {
+        UnixSignalHandler::instance()->resetToDefault(SIGINT);
+
+        qCritical(" > RECEIVED CTRL+C ... EXITING\n");
+
+        auto windows = qApp->allWindows();
+        for (QWindow *w : windows)
+            w->metaObject()->invokeMethod(w, "close");
+    });
 #endif
 
     startupTimer.checkpoint("after application constructor");

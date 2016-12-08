@@ -422,6 +422,8 @@ QString findOnSDCard(const QString &file)
 #if defined(Q_OS_LINUX)
 
 QT_END_NAMESPACE_AM
+
+#include <unixsignalhandler.h>
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <setjmp.h>
@@ -442,9 +444,9 @@ static char *demangleBuffer;
 static size_t demangleBufferSize;
 
 
-static void crashHandler(const char *why) __attribute__((noreturn));
+static void crashHandler(const char *why, int stackFramesToIgnore) __attribute__((noreturn));
 
-static void crashHandler(const char *why)
+static void crashHandler(const char *why, int stackFramesToIgnore)
 {
     pid_t pid = getpid();
     char who[256];
@@ -525,10 +527,9 @@ static void crashHandler(const char *why)
                                                                errorCallback, nullptr);
 
         fprintf(stderr, "\n > backtrace:\n");
-        // 4 means to remove 4 stack frames: this way the backtrace starts at std::terminate
-        //backtrace_print(state, 4, stderr);
         btData data = { state, 0 };
-        backtrace_simple(state, 4, simpleCallback, errorCallback, &data);
+        //backtrace_print(state, stackFramesToIgnore, stderr);
+        backtrace_simple(state, stackFramesToIgnore, simpleCallback, errorCallback, &data);
 #else
         void *addrArray[1024];
         int addrCount = backtrace(addrArray, sizeof(addrArray) / sizeof(*addrArray));
@@ -598,7 +599,7 @@ static void crashHandler(const char *why)
     }
     if (dumpCore) {
         fprintf(stderr, "\n > the process will be aborted (core dump)\n\n");
-        signal(SIGABRT, SIG_DFL);
+        UnixSignalHandler::instance()->resetToDefault(SIGABRT);
         abort();
     }
     _Exit(-1);
@@ -632,37 +633,25 @@ static void initBacktrace()
     demangleBufferSize = 512;
     demangleBuffer = (char *) malloc(demangleBufferSize);
 
-    // Use alternate signal stack to get backtrace for stack overflow
-    stack_t sigstack;
-    sigstack.ss_sp = malloc(SIGSTKSZ);
-    sigstack.ss_size = SIGSTKSZ;
-    sigstack.ss_flags = 0;
-    sigaltstack(&sigstack, nullptr);
-
-    struct sigaction sigact;
-    sigact.sa_flags = SA_ONSTACK;
-    sigact.sa_handler = [](int sig) {
-        signal(sig, SIG_DFL);
+    UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler,
+                                           { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT },
+                                           [](int sig) {
+        UnixSignalHandler::instance()->resetToDefault(sig);
         static char buffer[256];
-        snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, sys_siglist[sig]);
-        crashHandler(buffer);
-    };
-    sigemptyset(&sigact.sa_mask);
-    sigset_t unblockSet;
-    sigemptyset(&unblockSet);
-
-    for (int sig : { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT }) {
-        sigaddset(&unblockSet, sig);
-        sigaction(sig, &sigact, nullptr);
-    }
-    sigprocmask(SIG_UNBLOCK, &unblockSet, nullptr);
+        snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, UnixSignalHandler::signalName(sig));
+        // 6 means to remove 6 stack frames: this way the backtrace starts at the point where
+        // the signal reception interrupted the normal program flow
+        crashHandler(buffer, 6);
+    });
 
     std::set_terminate([]() {
         static char buffer [1024];
 
         auto type = abi::__cxa_current_exception_type();
-        if (!type)
-            crashHandler("terminate was called although no exception was thrown");
+        if (!type) {
+            // 3 means to remove 3 stack frames: this way the backtrace starts at std::terminate
+            crashHandler("terminate was called although no exception was thrown", 3);
+        }
 
         const char *typeName = type->name();
         if (typeName) {
@@ -680,7 +669,8 @@ static void initBacktrace()
             snprintf(buffer, sizeof(buffer), "uncaught exception of type %s", typeName);
         }
 
-        crashHandler(buffer);
+        // 4 means to remove 4 stack frames: this way the backtrace starts at std::terminate
+        crashHandler(buffer, 4);
     });
 }
 

@@ -107,8 +107,6 @@ public:
 
     void cleanupBrokenInstallations() const throw(Exception);
 
-    Q_SCRIPTABLE bool checkCleanup();
-
     // InstallationLocation handling
     QVector<InstallationLocation> installationLocations() const;
     const InstallationLocation &defaultInstallationLocation() const;

@@ -470,17 +470,6 @@ void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
     }
 }
 
-bool ApplicationInstaller::checkCleanup()
-{
-    try {
-        cleanupBrokenInstallations();
-        return true;
-    } catch (const Exception &e) {
-        qCDebug(LogInstaller) << "CLEANUP: " << e.errorString();
-        return false;
-    }
-}
-
 QVector<InstallationLocation> ApplicationInstaller::installationLocations() const
 {
     return d->installationLocations;

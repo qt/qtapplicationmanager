@@ -2,6 +2,7 @@
 <node>
   <interface name="io.qt.ApplicationManager">
     <property name="count" type="i" access="read"/>
+    <property name="singleProcess" type="b" access="read"/>
     <property name="securityChecksEnabled" type="b" access="read"/>
     <property name="dummy" type="b" access="read"/>
     <property name="additionalConfiguration" type="a{sv}" access="read">
@@ -22,6 +23,10 @@
     <signal name="applicationChanged">
       <arg name="id" type="s" direction="out"/>
       <arg name="changedRoles" type="as" direction="out"/>
+    </signal>
+    <signal name="applicationRunStateChanged">
+      <arg name="id" type="s" direction="out"/>
+      <arg name="runState" type="u" direction="out"/>
     </signal>
     <method name="applicationIds">
       <arg type="as" direction="out"/>
@@ -84,6 +89,10 @@
     <method name="identifyApplication">
       <arg type="s" direction="out"/>
       <arg name="pid" type="x" direction="in"/>
+    </method>
+    <method name="applicationRunState">
+      <arg type="u" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
     </method>
   </interface>
 </node>

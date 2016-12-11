@@ -100,6 +100,7 @@ private:
 
     friend class QmlNotification;
     friend class Controller;
+    friend class QmlApplicationInterfaceExtension;
 };
 
 
@@ -128,6 +129,9 @@ protected:
 
 public slots:
     void setName(const QString &name);
+
+private slots:
+    void onInterfaceCreated(const QString &interfaceName);
 
 signals:
     void readyChanged();

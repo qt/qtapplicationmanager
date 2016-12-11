@@ -65,6 +65,9 @@ public:
     Q_INVOKABLE bool registerInterface(QT_PREPEND_NAMESPACE_AM(ApplicationIPCInterface*) interface, const QString &name, const QVariantMap &filter);
     QVector<ApplicationIPCInterface *> interfaces() const;
 
+signals:
+    void interfaceCreated();
+
 private:
     ApplicationIPCManager(QObject *parent = nullptr);
     ApplicationIPCManager(const ApplicationIPCManager &);

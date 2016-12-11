@@ -70,6 +70,7 @@ signals:
     Q_SCRIPTABLE void memoryCriticalWarning();
 
     Q_SCRIPTABLE void openDocument(const QString &documentUrl);
+    Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
 
 protected:
     ApplicationInterface(QObject *parent)

@@ -250,6 +250,13 @@ QmlApplicationInterfaceExtension::QmlApplicationInterfaceExtension(QObject *pare
     : QObject(parent)
 {
     Q_ASSERT(d);
+
+    if (QmlApplicationInterface::s_instance->m_applicationIf) {
+        connect(QmlApplicationInterface::s_instance->m_applicationIf, SIGNAL(interfaceCreated(QString)),
+                     this, SLOT(onInterfaceCreated(QString)));
+    } else {
+        qCritical("ERROR: ApplicationInterface not initialized!");
+    }
 }
 
 QString QmlApplicationInterfaceExtension::name() const
@@ -324,9 +331,15 @@ void QmlApplicationInterfaceExtension::setName(const QString &name)
     if (!m_complete) {
         m_name = name;
         tryInit();
-    }
-    else
+    } else {
         qWarning("Cannot change the name property of an ApplicationInterfaceExtension after creation.");
+    }
+}
+
+void QmlApplicationInterfaceExtension::onInterfaceCreated(const QString &interfaceName)
+{
+    if (m_name == interfaceName)
+        tryInit();
 }
 
 QT_END_NAMESPACE_AM

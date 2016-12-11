@@ -252,6 +252,8 @@ bool NativeRuntime::start()
                      this, &NativeRuntime::onProcessError);
     QObject::connect(m_process, &AbstractContainerProcess::finished,
                      this, &NativeRuntime::onProcessFinished);
+    QObject::connect(ApplicationIPCManager::instance(), &ApplicationIPCManager::interfaceCreated,
+                     this, &NativeRuntime::registerExtensionInterfaces);
 
     setState(Startup);
     return true;
@@ -353,8 +355,7 @@ void NativeRuntime::registerExtensionInterfaces()
 {
     if (!m_dbusConnection)
         return;
-    if (m_registeredExtensionInterfaces)
-        return;
+
     if (!application())
         return;
 
@@ -362,18 +363,20 @@ void NativeRuntime::registerExtensionInterfaces()
 
     // register all extension interfaces
     foreach (ApplicationIPCInterface *iface, ApplicationIPCManager::instance()->interfaces()) {
-        if (!iface->isValidForApplication(application()))
+        if (!iface->isValidForApplication(application()) || m_applicationIPCInterfaces.contains(iface))
             continue;
 
         if (!iface->dbusRegister(application(), conn)) {
             qCWarning(LogSystem) << "ERROR: could not register the application IPC interface" << iface->interfaceName()
                                  << "at" << iface->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
+        } else {
+            m_applicationIPCInterfaces.append(iface);
+            emit interfaceCreated(iface->interfaceName());
         }
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
         iface->dbusRegister(application(), QDBusConnection::sessionBus());
 #endif
     }
-    m_registeredExtensionInterfaces = true;
 }
 
 qint64 NativeRuntime::applicationProcessId() const
@@ -403,6 +406,8 @@ NativeRuntimeApplicationInterface::NativeRuntimeApplicationInterface(NativeRunti
             this, &ApplicationInterface::memoryCriticalWarning);
     connect(runtime, &NativeRuntime::aboutToStop,
             this, &ApplicationInterface::quit);
+    connect(runtime, &NativeRuntime::interfaceCreated,
+                     this, &ApplicationInterface::interfaceCreated);
 }
 
 

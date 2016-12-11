@@ -111,6 +111,7 @@ public:
 protected:
     void classBegin() override;
     void componentComplete() override;
+    void resolveObject();
 
 public slots:
     void setName(const QString &name);

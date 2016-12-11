@@ -62,6 +62,7 @@ class Notification;
 class NativeRuntime;
 class NativeRuntimeInterface;
 class NativeRuntimeApplicationInterface;
+class ApplicationIPCInterface;
 
 class NativeRuntimeManager : public AbstractRuntimeManager
 {
@@ -103,6 +104,7 @@ public slots:
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface
+    void interfaceCreated(const QString &interfaceName);
 
 private slots:
     void onProcessStarted();
@@ -126,9 +128,9 @@ private:
     bool m_launchWhenReady = false;
     bool m_launched = false;
     bool m_dbusConnection = false;
-    bool m_registeredExtensionInterfaces = false;
     QString m_dbusConnectionName;
 
+    QList<ApplicationIPCInterface *> m_applicationIPCInterfaces;
     NativeRuntimeApplicationInterface *m_applicationInterface = 0;
     NativeRuntimeInterface *m_runtimeInterface = 0;
     AbstractContainerProcess *m_process = 0;

@@ -249,6 +249,7 @@ bool ApplicationIPCManager::registerInterface(QT_PREPEND_NAMESPACE_AM(Applicatio
 
     interface->m_ipcProxy = new IpcProxyObject(interface->serviceObject(), QString(), createPathFromName(name), name, filter);
     m_interfaces.append(interface);
+    emit interfaceCreated();
     return true;
 }
 

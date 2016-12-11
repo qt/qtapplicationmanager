@@ -41,7 +41,6 @@
 
 #include <QQmlEngine>
 #include <QQmlExpression>
-#include <QTimer>
 
 #include "qmlinprocessapplicationinterface.h"
 #include "qmlinprocessruntime.h"
@@ -241,32 +240,31 @@ void QmlInProcessApplicationInterfaceExtension::componentComplete()
         return;
     }
 
-    auto resolveObject = [this]() -> void {
-        if (m_object)
-            return;
+    connect(ApplicationIPCManager::instance(), &ApplicationIPCManager::interfaceCreated,
+            this, &QmlInProcessApplicationInterfaceExtension::resolveObject);
+}
 
-        const auto ifaces = ApplicationIPCManager::instance()->interfaces();
-        for (ApplicationIPCInterface *iface : ifaces) {
-            if ((iface->interfaceName() == m_name)) {
-                m_object = iface->serviceObject();
-                emit objectChanged();
-                emit readyChanged();
-                break;
-            }
+void QmlInProcessApplicationInterfaceExtension::resolveObject()
+{
+    const auto ifaces = ApplicationIPCManager::instance()->interfaces();
+    for (ApplicationIPCInterface *iface : ifaces) {
+        if ((iface->interfaceName() == m_name)) {
+            m_object = iface->serviceObject();
+            emit objectChanged();
+            emit readyChanged();
+            break;
         }
-    };
-
-    resolveObject();
-    if (!m_object)
-        QTimer::singleShot(0, this, resolveObject);
+    }
 }
 
 void QmlInProcessApplicationInterfaceExtension::setName(const QString &name)
 {
-    if (!m_complete)
+    if (!m_complete) {
         m_name = name;
-    else
+        resolveObject();
+    } else {
         qWarning("Cannot change the name property of an ApplicationInterfaceExtension after creation.");
+    }
 }
 
 QT_END_NAMESPACE_AM

@@ -28,6 +28,9 @@ branch-coverage
 config.tests/*/*
 !config.tests/*/*[.]*
 config.tests/*/*[.]app
+*_wrapper.sh
+tst_*
+!tst_*.*
 
 src/**/*.sh
 doc/**/*.sh

@@ -92,7 +92,6 @@ public:
     bool isQuickLauncher() const override;
     bool attachApplicationToQuickLauncher(const Application *app) override;
 
-    State state() const override;
     qint64 applicationProcessId() const override;
     virtual void openDocument(const QString &document) override;
 
@@ -124,8 +123,6 @@ private:
     bool m_needsLauncher;
 
     QString m_document;
-    bool m_shutingDown = false;
-    bool m_started = false;
     bool m_launchWhenReady = false;
     bool m_launched = false;
     bool m_dbusConnection = false;

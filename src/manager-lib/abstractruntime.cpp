@@ -113,6 +113,19 @@ bool AbstractRuntime::attachApplicationToQuickLauncher(const Application *app)
     return false;
 }
 
+AbstractRuntime::State AbstractRuntime::state() const
+{
+    return m_state;
+}
+
+void AbstractRuntime::setState(AbstractRuntime::State newState)
+{
+    if (m_state != newState) {
+        m_state = newState;
+        emit stateChanged(newState);
+    }
+}
+
 void AbstractRuntime::setInProcessQmlEngine(QQmlEngine *engine)
 {
     m_inProcessQmlEngine = engine;

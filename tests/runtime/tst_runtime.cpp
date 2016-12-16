@@ -56,35 +56,25 @@ class TestRuntime : public AbstractRuntime
 public:
     explicit TestRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager)
         : AbstractRuntime(container, app, manager)
-        , m_running(false)
     { }
-
-    State state() const
-    {
-        return m_running ? Active : Inactive;
-    }
 
     qint64 applicationProcessId() const
     {
-        return m_running ? 1 : 0;
+        return m_state == AbstractRuntime::Active ? 1 : 0;
     }
 
 public slots:
     bool start()
     {
-        m_running = true;
+        m_state = AbstractRuntime::Active;
         return true;
     }
 
     void stop(bool forceKill)
     {
         Q_UNUSED(forceKill);
-        m_running = false;
+        m_state = AbstractRuntime::Inactive;
     }
-
-private:
-    bool m_running;
-
 };
 
 class TestRuntimeManager : public AbstractRuntimeManager

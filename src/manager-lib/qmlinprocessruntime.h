@@ -70,7 +70,6 @@ public:
     explicit QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager);
     ~QmlInProcessRuntime();
 
-    State state() const override;
     void openDocument(const QString &document) override;
     qint64 applicationProcessId() const override;
 

@@ -107,7 +107,7 @@ public:
     virtual bool isQuickLauncher() const;
     virtual bool attachApplicationToQuickLauncher(const Application *app);
 
-    virtual State state() const = 0;
+    State state() const;
 
     enum { SecurityTokenSize = 16 };
     QByteArray securityToken() const;
@@ -138,6 +138,7 @@ signals:
 
 protected:
     explicit AbstractRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager);
+    void setState(State newState);
 
     QVariantMap configuration() const;
 
@@ -147,6 +148,7 @@ protected:
 
     QByteArray m_securityToken;
     QQmlEngine *m_inProcessQmlEngine = nullptr;
+    State m_state = Inactive;
 
     friend class AbstractRuntimeManager;
 };

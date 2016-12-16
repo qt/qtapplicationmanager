@@ -106,6 +106,7 @@ QmlInProcessRuntime::~QmlInProcessRuntime()
 
 bool QmlInProcessRuntime::start()
 {
+    setState(Startup);
 #if !defined(AM_HEADLESS)
     if (m_mainWindow) {                                 // if there is already a window present, just emit ready signal and return true (=="start successful")
         emit inProcessSurfaceItemReady(m_mainWindow);
@@ -179,15 +180,15 @@ bool QmlInProcessRuntime::start()
     if (!m_document.isEmpty())
         emit openDocument(m_document);
 
-    emit stateChanged(state());
+    setState(Active);
     return true;
 }
 
 void QmlInProcessRuntime::stop(bool forceKill)
 {
-    Q_UNUSED(forceKill)// ignore forceKill
-                //... for in-process there is nothing to 'kill'
-                //... all this function does for in-process is firing the 'closing' signal (aka: "application/window want's to close")
+    Q_UNUSED(forceKill)   // ignore forceKill: for in-process there is nothing to 'kill'
+
+    emit stateChanged(Shutdown);
     emit aboutToStop();
 
 #if !defined(AM_HEADLESS)
@@ -196,7 +197,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
     m_windows.clear();
     m_mainWindow = 0;
 #endif
-    emit stateChanged(state());
+    setState(Inactive);
 
     deleteLater();
 }
@@ -250,15 +251,6 @@ void QmlInProcessRuntime::addWindow(QQuickItem *window)
 }
 
 #endif // !AM_HEADLESS
-
-AbstractRuntime::State QmlInProcessRuntime::state() const
-{
-#if !defined(AM_HEADLESS)
-    return m_mainWindow ? Active : Inactive;
-#else
-    return m_applicationIf ? Active : Inactive;
-#endif
-}
 
 void QmlInProcessRuntime::openDocument(const QString &document)
 {

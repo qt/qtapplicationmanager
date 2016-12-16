@@ -247,7 +247,9 @@
     \li ApplicationManager.NotRunning - the application has not been started yet
     \li ApplicationManager.StartingUp - the application has been started and is initializing
     \li ApplicationManager.Running - the application is running
-    \li ApplicationManager.ShuttingDown - the application has been stopped and is cleaning up
+    \li ApplicationManager.ShuttingDown - the application has been stopped and is cleaning up (in
+                                          multi-process mode this signal is only emitted if the
+                                          application terminates gracefully)
     \endlist
 
     For example this signal can be used to restart an application in multi-process mode when
@@ -294,6 +296,16 @@ enum Roles
 };
 
 QT_BEGIN_NAMESPACE_AM
+
+static ApplicationManager::RunState runtimeToManagerState(AbstractRuntime::State rtState)
+{
+    switch (rtState) {
+    case AbstractRuntime::Startup: return ApplicationManager::StartingUp;
+    case AbstractRuntime::Active: return ApplicationManager::Running;
+    case AbstractRuntime::Shutdown: return ApplicationManager::ShuttingDown;
+    default: return ApplicationManager::NotRunning;
+    }
+}
 
 class ApplicationManagerPrivate
 {
@@ -782,9 +794,9 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         return false;
     }
 
-    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app]() {
+    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app](AbstractRuntime::State newState) {
         emit applicationRunStateChanged(app->isAlias() ? app->nonAliased()->id() : app->id(),
-                                        applicationRunState(app->id()));
+                                        runtimeToManagerState(newState));
     });
 
     connect(runtime, static_cast<void(AbstractRuntime::*)(int, QProcess::ExitStatus)>
@@ -1453,12 +1465,7 @@ ApplicationManager::RunState ApplicationManager::applicationRunState(const QStri
     const Application *app = d->apps.at(index);
     if (!app->currentRuntime())
         return NotRunning;
-    switch (app->currentRuntime()->state()) {
-    case AbstractRuntime::Startup: return StartingUp;
-    case AbstractRuntime::Active: return Running;
-    case AbstractRuntime::Shutdown: return ShuttingDown;
-    default: return NotRunning;
-    }
+    return runtimeToManagerState(app->currentRuntime()->state());
 }
 
 QT_END_NAMESPACE_AM

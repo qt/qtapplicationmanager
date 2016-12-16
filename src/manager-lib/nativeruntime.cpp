@@ -118,13 +118,21 @@ bool NativeRuntime::attachApplicationToQuickLauncher(const Application *app)
     m_app = app;
     m_app->setCurrentRuntime(this);
 
+    setState(Startup);
+
+    bool ret;
     if (!m_dbusConnection) {
         // we have no D-Bus connection yet, so hope for the best
-        return true;
+        ret = true;
     } else {
         onLauncherFinishedInitialization();
-        return m_launched;
+        ret = m_launched;
     }
+
+    if (ret)
+        setState(Active);
+
+    return ret;
 }
 
 bool NativeRuntime::initialize()
@@ -151,7 +159,7 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
                        << "pid:" << m_process->processId() << ") exited with code:" << exitCode
                        << "status:" << status;
 
-    m_shutingDown = m_launched = m_launchWhenReady = m_started = m_dbusConnection = false;
+    m_launched = m_launchWhenReady = m_dbusConnection = false;
 
     // unregister all extension interfaces
     foreach (ApplicationIPCInterface *iface, ApplicationIPCManager::instance()->interfaces()) {
@@ -162,7 +170,7 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
         m_app->setCurrentRuntime(0);
 
     emit finished(exitCode, status);
-    emit stateChanged(state());
+    setState(Inactive);
 
     deleteLater();
 }
@@ -225,7 +233,7 @@ bool NativeRuntime::start()
     QObject::connect(m_process, &AbstractContainerProcess::finished,
                      this, &NativeRuntime::onProcessFinished);
 
-    emit stateChanged(state());
+    setState(Startup);
     return true;
 }
 
@@ -234,10 +242,8 @@ void NativeRuntime::stop(bool forceKill)
     if (!m_process)
         return;
 
-    m_shutingDown = true;
-
+    setState(Shutdown);
     emit aboutToStop();
-    emit stateChanged(state());
 
     if (forceKill) {
         m_process->kill();
@@ -256,14 +262,13 @@ void NativeRuntime::stop(bool forceKill)
 
 void NativeRuntime::onProcessStarted()
 {
-    m_started = true;
-    emit stateChanged(state());
+    setState(Active);
 }
 
 void NativeRuntime::onProcessError(QProcess::ProcessError error)
 {
     Q_UNUSED(error)
-    if (!m_started)
+    if (m_state != Active && m_state != Shutdown)
         shutdown(-1, QProcess::CrashExit);
 }
 
@@ -349,17 +354,6 @@ void NativeRuntime::registerExtensionInterfaces()
 #endif
     }
     m_registeredExtensionInterfaces = true;
-}
-
-AbstractRuntime::State NativeRuntime::state() const
-{
-    if (m_process) {
-        if (m_process->state() == QProcess::Starting)
-            return Startup;
-        if (m_process->state() == QProcess::Running)
-            return m_shutingDown ? Shutdown : Active;
-    }
-    return Inactive;
 }
 
 qint64 NativeRuntime::applicationProcessId() const

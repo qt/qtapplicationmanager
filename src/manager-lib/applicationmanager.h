@@ -45,6 +45,7 @@
 #include <QStringList>
 #include <QVariantList>
 #include <QProcess>
+#include <QJSValue>
 #if defined(QT_DBUS_LIB)
 #  include <QDBusContext>
 #  include <QDBusConnectionInterface>
@@ -77,6 +78,7 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
     Q_PROPERTY(QVariantMap additionalConfiguration READ additionalConfiguration CONSTANT)
+    Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
 
 public:
     enum RunState {
@@ -114,6 +116,11 @@ public:
     // only use these two functions for development!
     bool securityChecksEnabled() const;
     void setSecurityChecksEnabled(bool enabled);
+
+    // container selection
+    void setContainerSelectionConfiguration(const QList<QPair<QString, QString> > &containerSelectionConfig);
+    QJSValue containerSelectionFunction() const;
+    void setContainerSelectionFunction(const QJSValue &callback);
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
@@ -156,6 +163,8 @@ signals:
 
     void memoryLowWarning();
     void memoryCriticalWarning();
+
+    void containerSelectionFunctionChanged();
 
 private slots:
     void preload();

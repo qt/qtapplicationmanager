@@ -430,9 +430,43 @@ QVariantList Configuration::installationLocations() const
     return d->findInConfigFile({ qSL("installationLocations") }).toList();
 }
 
+QList<QPair<QString, QString>> Configuration::containerSelectionConfiguration() const
+{
+    QList<QPair<QString, QString>> config;
+    QVariant containerSelection = d->findInConfigFile({ qSL("containers"), qSL("selection") });
+
+    // this is easy to get wrong in the config file, so we do not just ignore a map here
+    // (this will in turn trigger the warning below)
+    if (containerSelection.type() == QVariant::Map)
+        containerSelection = QVariantList { containerSelection };
+
+    if (containerSelection.type() == QVariant::String) {
+        config.append(qMakePair(qSL("*"), containerSelection.toString()));
+    } else if (containerSelection.type() == QVariant::List) {
+        QVariantList list = containerSelection.toList();
+        for (const QVariant &v : list) {
+            if (v.type() == QVariant::Map) {
+                QVariantMap map = v.toMap();
+
+                if (map.size() != 1) {
+                    qCWarning(LogSystem) << "The container selection configuration needs to be a list of "
+                                            "single mappings, in order to preserve the evaluation "
+                                            "order: found a mapping with" << map.size() << "entries.";
+                }
+
+                for (auto it = map.cbegin(); it != map.cend(); ++it)
+                    config.append(qMakePair(it.key(), it.value().toString()));
+            }
+        }
+    }
+    return config;
+}
+
 QVariantMap Configuration::containerConfigurations() const
 {
-    return d->findInConfigFile({ qSL("containers") }).toMap();
+    QVariantMap map = d->findInConfigFile({ qSL("containers") }).toMap();
+    map.remove(qSL("selection"));
+    return map;
 }
 
 QVariantMap Configuration::runtimeConfigurations() const

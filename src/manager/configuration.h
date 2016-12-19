@@ -79,6 +79,7 @@ public:
 
     QVariantList installationLocations() const;
 
+    QList<QPair<QString, QString>> containerSelectionConfiguration() const;
     QVariantMap containerConfigurations() const;
     QVariantMap runtimeConfigurations() const;
 

@@ -1,0 +1,196 @@
+/****************************************************************************
+**
+** Copyright (C) 2016 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\page containers.html
+\title Containers
+
+A \b container in the application-manager world describes an execution environment for an
+executable (either an app's binary or its runtime binary) in multi-process mode. This does not have
+to be something sophisticated like a Docker container, but can be as simple as an Unix process.
+
+\chapter Predefined Containers
+
+The application-manager comes with a single type of container built-in: the \c process container,
+which simply spawns a new Unix process to execute the requested binary.
+
+In addition, a very basic integration of Pelagicore's
+\l{software-containers}{https://github.com/Pelagicore/softwarecontainer} is provided in \c
+examples/softwarecontainers. This can be used as a blueprint to either create a customer-specific
+production version of a softwarecontainers plugin, or to integrate another container solution.
+
+\chapter Extending with Container Plugins
+
+Custom container solution can easily be added via plugins.
+These plugins need not to be built as part of the application-manager, but
+they need to be built against a private Qt module to get the interface
+definition:
+
+\badcode
+TEMPLATE = lib
+CONFIG += plugin
+TARGET = mycontainer-plugin
+
+QT = appman_plugininterfaces-private
+\endcode
+
+The only thing you have to then implement are two classes that derive from \c ContainerInterface
+and from ContainerManagerInterface respectively, e.g.:
+
+\code
+#include <QtAppManPluginInterfaces/containerinterface.h>
+
+class SoftwareContainer : public ContainerInterface
+{
+    // ...
+};
+
+class SoftwareContainerManager : public QObject, public ContainerManagerInterface
+{
+    Q_OBJECT
+    Q_PLUGIN_METADATA(IID AM_ContainerManagerInterface_iid)
+    Q_INTERFACES(ContainerManagerInterface)
+
+    // ....
+};
+\endcode
+
+\chapter Configuration
+
+There are three parts to the container configuration:
+\list 1
+\li Configure which containers are available at all.
+\li Add specific settings for each available container integration.
+\li Configure which container solution is selected to run a specific application.
+\endlist
+
+\section1 Load Container Plugins
+
+In order to activate an existing container plugin for use in the application-manager, you need to
+add its full path to the list of plugins to load in the application-manager's config file:
+
+\badcode
+plugins:
+  container: [ "/full/path/to/softwarecontainers.so", "/another/plugin.so" ]
+\endcode
+
+Please note that the application-manager does \b not load plugins automatically if they are placed
+in a specific directory, since container plugins control the central security mechanism for
+separating applications.
+
+\section1 Container Integration Configuration
+
+Each container integration has an unique id, which can be used to add settings to the
+application-manager's config file, e.g.
+
+\badcode
+containers:
+  process:
+    defaultControlGroup: "foo"
+  softwarecontainers:
+    bar: [ 1, 2, 3 ]
+\endcode
+
+The \c process container accepts the following configuration settings:
+
+\table
+\header
+  \li Name
+  \li Type
+  \li Description
+\row
+  \li \c controlGroups
+  \li object
+  \li A two-stage mapping object to allow for more readable code when dealing with cgroups from the
+      system-ui via AbstractContainer::setControlGroup. The top-level keys are readable group names
+      that are used to interface AbstractContainer::setControlGroup and
+      AbstractContainer::controlGroup, while the values are themselves maps between multiple
+      low-level cgroup sub-system names and the actual cgroup names within those sub-systems, e.g.:
+
+\badcode
+controlGroups:
+  foreGround:
+    memory: mem1
+    cpu: cpu_full
+  backGround:
+    memory: mem2
+    cpu: cpu_minimal
+\endcode
+
+\row
+  \li \c defaultControlGroup
+  \li string
+  \li The default control group for an application when it is first launched.
+\endtable
+
+For other container plugins, please consult the respective documentation.
+
+
+\section1 Container Selection Configuration
+
+There are multiple ways to control which container integration is used when
+starting an application from within the application-manager:
+
+\list 1
+\li If the config file does not contain the key \c containers/selection, the container integration
+    id will default to \c process
+
+\li If the aforementioned key exists, its contents will be parsed as a list of maps, where each map
+    only has a single mapping (this is a bit awkward, but needed to preserve the order of the
+    mappings). Each key is interpreted as a standard Unix wildcard expression that will be matched
+    against the application id.
+    The first match will stop this algorithm and the mapping's value will be used as the container
+    integration id. If no matches are found, the resulting containter integration id will be the
+    empty string.
+
+\badcode
+containers:
+  selection:
+  - com.pelagicore.*: "process"
+  - com.navigation: "special-container"
+  - *: "softwarecontainers"
+\endcode
+
+
+\li Afterwards, if the system-ui did set the ApplicationManager::containerSelectionFunction property
+    to a valid JavaScript function, this function will be called with the first parameter set to the
+    application's id and the second parameter set to the container integration id that resulted from
+    step 1 and 2.
+
+\badcode
+ApplicationManager.containerSelectionFunction = function(appId, containerId) {
+    var app = ApplicationManager.application(appId)
+    if (app.capabilities.indexOf("non-secure") != -1)
+        return "process"
+    else
+        return containerId
+}
+\endcode
+\endlist
+
+*/

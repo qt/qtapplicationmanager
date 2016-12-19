@@ -685,6 +685,7 @@ int main(int argc, char *argv[])
         if (configuration->noSecurity())
             am->setSecurityChecksEnabled(false);
         am->setAdditionalConfiguration(configuration->additionalUiConfiguration());
+        am->setContainerSelectionConfiguration(configuration->containerSelectionConfiguration());
 
         startupTimer.checkpoint("after ApplicationManager instantiation");
 

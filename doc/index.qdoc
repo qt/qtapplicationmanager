@@ -48,6 +48,7 @@ compositing window manager using the APIs that are exported from the C++ side.
     \li \l{Writing Applications}
     \li \l{The Application Installer}
     \li \l{Logging and Debugging}
+    \li \l{Containers}
 \endlist
 
 \chapter Tools

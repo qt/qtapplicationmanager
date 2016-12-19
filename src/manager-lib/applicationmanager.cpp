@@ -330,6 +330,9 @@ public:
 
     ContainerDebugWrapper parseDebugWrapperSpecification(const QString &spec);
 
+    QList<QPair<QString, QString>> containerSelectionConfig;
+    QJSValue containerSelectionFunction;
+
     ApplicationManagerPrivate();
     ~ApplicationManagerPrivate();
 };
@@ -465,6 +468,24 @@ QVariantMap ApplicationManager::additionalConfiguration() const
 void ApplicationManager::setAdditionalConfiguration(const QVariantMap &map)
 {
     d->additionalConfiguration = map;
+}
+
+void ApplicationManager::setContainerSelectionConfiguration(const QList<QPair<QString, QString>> &containerSelectionConfig)
+{
+    d->containerSelectionConfig = containerSelectionConfig;
+}
+
+QJSValue ApplicationManager::containerSelectionFunction() const
+{
+    return d->containerSelectionFunction;
+}
+
+void ApplicationManager::setContainerSelectionFunction(const QJSValue &callback)
+{
+    if (callback.isCallable() && !callback.equals(d->containerSelectionFunction)) {
+        d->containerSelectionFunction = callback;
+        emit containerSelectionFunctionChanged();
+    }
 }
 
 void ApplicationManager::setDebugWrapperConfiguration(const QVariantList &debugWrappers)
@@ -734,7 +755,37 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
     bool inProcess = runtimeManager->inProcess();
     AbstractContainer *container = nullptr;
-    QString containerId = qSL("process"); //TODO: ask SystemUI or use config file
+
+    QString containerId;
+
+    if (d->containerSelectionConfig.isEmpty()) {
+        containerId = qSL("process");
+    } else {
+        // check config file
+        for (const auto &it : qAsConst(d->containerSelectionConfig)) {
+            const QString &key = it.first;
+            const QString &value = it.second;
+            bool hasAsterisk = key.contains(qL1C('*'));
+
+            if ((hasAsterisk && key.length() == 1)
+                    || (!hasAsterisk && key == app->id())
+                    || QRegExp(key, Qt::CaseSensitive, QRegExp::Wildcard).exactMatch(app->id())) {
+                containerId = value;
+                break;
+            }
+        }
+    }
+
+    if (d->containerSelectionFunction.isCallable()) {
+        QJSValueList args = { QJSValue(app->id()), QJSValue(containerId) };
+        containerId = d->containerSelectionFunction.call(args).toString();
+    }
+
+    if (!ContainerFactory::instance()->manager(containerId)) {
+        qCWarning(LogSystem) << "No ContainerManager found for container:" << containerId;
+        return false;
+    }
+
     bool attachRuntime = false;
 
     if (debugWrapper.isValid()) {

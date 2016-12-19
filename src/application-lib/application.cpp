@@ -134,6 +134,11 @@ QVariantMap Application::runtimeParameters() const
     return m_nonAliased ? m_nonAliased->m_runtimeParameters : m_runtimeParameters;
 }
 
+QVariantMap Application::environmentVariables() const
+{
+    return m_environmentVariables;
+}
+
 QMap<QString, QString> Application::names() const
 {
     return m_name;

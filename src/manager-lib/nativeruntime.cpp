@@ -203,10 +203,29 @@ bool NativeRuntime::start()
         QString name = it.key();
         if (!name.isEmpty()) {
             QString value = it.value().toString();
-            if (value.isEmpty())
+            if (value.isNull())
                 env.remove(it.key());
             else
                 env.insert(name, value);
+        }
+    }
+
+    if (m_app && !m_app->environmentVariables().isEmpty()) {
+        if (ApplicationManager::instance()->securityChecksEnabled()) {
+            qCWarning(LogSystem) << "Due to enabled security checks, the environmentVariables for"
+                                 << m_app->id() << "(given in info.yaml) will be ignored";
+        } else {
+            for (QMapIterator<QString, QVariant> it(m_app->environmentVariables()); it.hasNext(); ) {
+                it.next();
+                QString name = it.key();
+                if (!name.isEmpty()) {
+                    QString value = it.value().toString();
+                    if (value.isNull())
+                        env.remove(it.key());
+                    else
+                        env.insert(name, value);
+                }
+            }
         }
     }
 

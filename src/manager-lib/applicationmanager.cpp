@@ -754,7 +754,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
     if (!runtime) {
         if (!inProcess) {
-            if (!debugWrapper.isValid()) {
+            if (!debugWrapper.isValid() && app->environmentVariables().isEmpty()) {
                 // check quicklaunch pool
                 QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
                         QuickLauncher::instance()->take(containerId, app->m_runtimeName);

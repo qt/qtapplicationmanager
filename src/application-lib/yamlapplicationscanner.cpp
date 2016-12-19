@@ -141,6 +141,8 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                     app->m_runtimeName = v.toString();
                 } else if (field == "runtimeParameters") {
                     app->m_runtimeParameters = v.toMap();
+                } else if (field == "environmentVariables") {
+                    app->m_environmentVariables = v.toMap();
                 } else if (field == "preload") {
                     app->m_preload = v .toBool();
                 } else if (field == "importance") {

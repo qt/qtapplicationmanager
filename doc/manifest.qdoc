@@ -156,6 +156,22 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
 
         See below for a list of those parameters.
 \row
+    \li \c environmentVariables
+    \li object
+    \li A simple string-to-string map, describing the environment variables that should be set when
+        spawning the runtime process. You can remove a variable from the default environment by
+        giving it a null value.
+
+        Please note, that this is intended to be a feature mostly for development and demos: you
+        will have the following limitations/side-effects:
+        \list
+        \li these variables are completely ignored, if you are running the application-manager
+            with security checks enabled.
+        \li setting these will disable the use of the quick-launch mechanism for this application.
+        \li of course it is also dependent on the actual runtime of the application: in case of
+            \c qml-in-process, environment variables cannot be supported at all.
+        \endlist
+\row
     \li \c documentUrl
     \li string
     \li An optional default document that is used, if the application is started without specifying

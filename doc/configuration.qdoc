@@ -390,7 +390,7 @@ an additional column specifying which runtime a configuration option applies to:
     \li map<string>
     \li A simple string-to-string map, describing the environment variables that should be set when
         spawning the runtime process. You can remove a variable from the default environment by
-        giving it an empty or null value.
+        giving it a null value.
 \row
     \li \c importPaths
     \li qml

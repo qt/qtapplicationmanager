@@ -93,6 +93,7 @@ public:
     QString codeFilePath() const;
     QString runtimeName() const;
     QVariantMap runtimeParameters() const;
+    QVariantMap environmentVariables() const;
     QMap<QString, QString> names() const;
     Q_INVOKABLE QString name(const QString &language) const;
     QString icon() const;
@@ -163,6 +164,7 @@ private:
     QString m_codeFilePath; // relative to info.json location
     QString m_runtimeName;
     QVariantMap m_runtimeParameters;
+    QVariantMap m_environmentVariables;
     QMap<QString, QString> m_name; // language -> name
     QString m_icon; // relative to info.json location
     QString m_documentUrl;

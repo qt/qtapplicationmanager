@@ -59,8 +59,8 @@ public:
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
 
-    AbstractContainer *create() override;
-    AbstractContainer *create(const ContainerDebugWrapper &debugWrapper) override;
+    AbstractContainer *create(const Application *app) override;
+    AbstractContainer *create(const Application *app, const ContainerDebugWrapper &debugWrapper) override;
 };
 
 class HostProcess : public AbstractContainerProcess
@@ -74,14 +74,14 @@ public:
     virtual QProcess::ProcessState state() const override;
 
     void setRedirections(const QVector<int> &stdRedirections);
+    void setWorkingDirectory(const QString &dir);
+    void setProcessEnvironment(const QProcessEnvironment &environment);
 
 public slots:
     void kill() override;
     void terminate() override;
 
     void start(const QString &program, const QStringList &arguments);
-    void setWorkingDirectory(const QString &dir) override;
-    void setProcessEnvironment(const QProcessEnvironment &environment) override;
     void setStopBeforeExec(bool stopBeforeExec);
 
 private:
@@ -102,8 +102,8 @@ class ProcessContainer : public AbstractContainer
     Q_OBJECT
 
 public:
-    explicit ProcessContainer(ProcessContainerManager *manager);
-    explicit ProcessContainer(const ContainerDebugWrapper &debugWrapper, ProcessContainerManager *manager);
+    explicit ProcessContainer(ProcessContainerManager *manager, const Application *app);
+    explicit ProcessContainer(ProcessContainerManager *manager, const Application *app, const ContainerDebugWrapper &debugWrapper);
     ~ProcessContainer();
 
     QString controlGroup() const override;

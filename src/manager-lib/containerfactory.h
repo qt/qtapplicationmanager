@@ -64,8 +64,8 @@ public:
     QStringList containerIds() const;
 
     AbstractContainerManager *manager(const QString &id);
-    AbstractContainer *create(const QString &id);
-    AbstractContainer *create(const QString &id, const ContainerDebugWrapper &debugWrapper);
+    AbstractContainer *create(const QString &id, const Application *app);
+    AbstractContainer *create(const QString &id, const Application *app, const ContainerDebugWrapper &debugWrapper);
 
     void setConfiguration(const QVariantMap &configuration);
 

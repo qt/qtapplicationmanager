@@ -52,6 +52,8 @@ class ContainerInterface : public QObject
 public:
     virtual ~ContainerInterface();
 
+    virtual bool attachApplication(const QVariantMap &application) = 0;
+
     virtual QString controlGroup() const = 0;
     virtual bool setControlGroup(const QString &groupName) = 0;
 
@@ -68,8 +70,6 @@ public:
 
     virtual qint64 processId() const = 0;
     virtual QProcess::ProcessState state() const = 0;
-    virtual void setWorkingDirectory(const QString &dir) = 0;
-    virtual void setProcessEnvironment(const QProcessEnvironment &environment) = 0;
 
     virtual void kill() = 0;
     virtual void terminate() = 0;

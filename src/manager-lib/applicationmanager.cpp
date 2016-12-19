@@ -773,9 +773,11 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
             if (!container) {
                 if (debugWrapper.isValid())
-                    container = ContainerFactory::instance()->create(containerId, debugWrapper);
+                    container = ContainerFactory::instance()->create(containerId, app, debugWrapper);
                 else
-                    container = ContainerFactory::instance()->create(containerId);
+                    container = ContainerFactory::instance()->create(containerId, app);
+            } else {
+                container->setApplication(app);
             }
             if (!container) {
                 qCCritical(LogSystem) << "ERROR: Couldn't create Container for Application (" << app->id() <<")!";

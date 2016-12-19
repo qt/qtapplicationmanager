@@ -55,8 +55,8 @@ public:
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
 
-    AbstractContainer *create() override;
-    AbstractContainer *create(const ContainerDebugWrapper &debugWrapper) override;
+    AbstractContainer *create(const Application *app) override;
+    AbstractContainer *create(const Application *app, const ContainerDebugWrapper &debugWrapper) override;
 
     void setConfiguration(const QVariantMap &configuration) override;
 
@@ -75,8 +75,6 @@ public:
 
     qint64 processId() const override;
     QProcess::ProcessState state() const override;
-    void setWorkingDirectory(const QString &dir) override;
-    void setProcessEnvironment(const QProcessEnvironment &environment) override;
 
 public slots:
     void kill() override;
@@ -107,7 +105,7 @@ public:
     AbstractContainerProcess *start(const QStringList &arguments, const QProcessEnvironment &env) override;
 
 protected:
-    explicit PluginContainer(ContainerInterface *containerInterface, AbstractContainerManager *manager);
+    explicit PluginContainer(AbstractContainerManager *manager, const Application *app, ContainerInterface *containerInterface);
     ContainerInterface *m_interface;
     PluginContainerProcess *m_process;
     bool m_startCalled = false;

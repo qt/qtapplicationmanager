@@ -116,7 +116,7 @@ void QuickLauncher::rebuild()
             if (done >= 1)
                 continue;
 
-            QScopedPointer<AbstractContainer> ac(ContainerFactory::instance()->create(entry->m_containerId));
+            QScopedPointer<AbstractContainer> ac(ContainerFactory::instance()->create(entry->m_containerId, nullptr));
             if (!ac) {
                 qCWarning(LogSystem) << "ERROR: Could not create quick-launch container with id"
                                      << entry->m_containerId;

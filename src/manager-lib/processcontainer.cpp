@@ -123,12 +123,13 @@ void HostProcess::setStopBeforeExec(bool stopBeforeExec)
 
 
 
-ProcessContainer::ProcessContainer(ProcessContainerManager *manager)
-    : AbstractContainer(manager)
+ProcessContainer::ProcessContainer(ProcessContainerManager *manager, const Application *app)
+    : AbstractContainer(manager, app)
 { }
 
-ProcessContainer::ProcessContainer(const ContainerDebugWrapper &debugWrapper, ProcessContainerManager *manager)
-    : AbstractContainer(manager)
+ProcessContainer::ProcessContainer(ProcessContainerManager *manager, const Application *app,
+                                   const ContainerDebugWrapper &debugWrapper)
+    : AbstractContainer(manager, app)
     , m_useDebugWrapper(true)
     , m_debugWrapper(debugWrapper)
 { }
@@ -246,14 +247,14 @@ bool ProcessContainerManager::supportsQuickLaunch() const
     return true;
 }
 
-AbstractContainer *ProcessContainerManager::create()
+AbstractContainer *ProcessContainerManager::create(const Application *app)
 {
-    return new ProcessContainer(this);
+    return new ProcessContainer(this, app);
 }
 
-AbstractContainer *ProcessContainerManager::create(const ContainerDebugWrapper &debugWrapper)
+AbstractContainer *ProcessContainerManager::create(const Application *app, const ContainerDebugWrapper &debugWrapper)
 {
-    return new ProcessContainer(debugWrapper, this);
+    return new ProcessContainer(this, app, debugWrapper);
 }
 
 void HostProcess::MyQProcess::setupChildProcess()

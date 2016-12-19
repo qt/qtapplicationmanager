@@ -88,9 +88,23 @@ AbstractContainerProcess *AbstractContainer::process() const
     return m_process;
 }
 
-AbstractContainer::AbstractContainer(AbstractContainerManager *manager)
+void AbstractContainer::setApplication(const Application *app)
+{
+    if (app != m_app) {
+        m_app = app;
+        emit applicationChanged(app);
+    }
+}
+
+const Application *AbstractContainer::application() const
+{
+    return m_app;
+}
+
+AbstractContainer::AbstractContainer(AbstractContainerManager *manager, const Application *app)
     : QObject(manager)
     , m_manager(manager)
+    , m_app(app)
 { }
 
 QVariantMap AbstractContainer::configuration() const

@@ -45,6 +45,7 @@
 #include <QDBusConnection>
 #include <QDBusError>
 #include <QTimer>
+#include <QUuid>
 
 #include "global.h"
 #include "application.h"
@@ -417,8 +418,10 @@ NativeRuntimeManager::NativeRuntimeManager(QObject *parent)
 
 NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
     : AbstractRuntimeManager(id, parent)
-    , m_applicationInterfaceServer(new QDBusServer(qSL("unix:tmpdir=/tmp")))
 {
+    QString dbusAddress = QUuid::createUuid().toString().mid(1,36);
+    m_applicationInterfaceServer = new QDBusServer(qSL("unix:path=/tmp/dbus-qtam-") + dbusAddress);
+
     connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
             this, [this](const QDBusConnection &connection) {
         // If multiple apps are starting in parallel, there will be multiple NativeRuntime objects

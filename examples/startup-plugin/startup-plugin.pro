@@ -1,6 +1,6 @@
 
 TEMPLATE = lib
-CONFIG += plugin
+CONFIG += plugin c++11
 TARGET = startup-plugin
 
 QT = core appman_plugininterfaces-private

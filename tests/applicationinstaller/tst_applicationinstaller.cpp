@@ -259,7 +259,7 @@ tst_ApplicationInstaller::~tst_ApplicationInstaller()
 
 void tst_ApplicationInstaller::initTestCase()
 {
-    if (!qgetenv("VERBOSE_TEST").toInt())
+    if (!qEnvironmentVariableIsSet("VERBOSE_TEST"))
         QLoggingCategory::setFilterRules("am.installer.debug=false");
 
     QVERIFY(checkCorrectLocale());

@@ -131,7 +131,6 @@ void tst_Runtime::factory()
     QCOMPARE(temp.write(yaml), yaml.size());
     temp.close();
 
-    QString error;
     Application *a = nullptr;
     try {
         a = YamlApplicationScanner().scan(temp.fileName());

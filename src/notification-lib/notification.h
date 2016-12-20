@@ -53,7 +53,6 @@ class Notification : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
-    Q_ENUMS(Priority)
 
     Q_PROPERTY(uint notificationId READ notificationId NOTIFY notificationIdChanged)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
@@ -76,6 +75,7 @@ class Notification : public QObject, public QQmlParserStatus
 
 public:
     enum Priority { Low, Normal, Critical };
+    Q_ENUM(Priority)
 
     enum ConstructionMode { Declarative, Dynamic };
 

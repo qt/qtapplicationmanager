@@ -77,7 +77,6 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
     Q_PROPERTY(QVariantMap additionalConfiguration READ additionalConfiguration CONSTANT)
-    Q_ENUMS(RunState)
 
 public:
     enum RunState {
@@ -86,6 +85,7 @@ public:
         Running,
         ShuttingDown,
     };
+    Q_ENUM(RunState)
 
     ~ApplicationManager();
     static ApplicationManager *createInstance(ApplicationDatabase *adb, bool singleProcess, QString *error);

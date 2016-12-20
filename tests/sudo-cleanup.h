@@ -41,7 +41,8 @@ static void detachLoopbacksAndUnmount(SudoClient *root, const QString &baseDir)
     }
 
     QMap<QString, QString> mounts = mountedDirectories();
-    foreach (const QString &mountPoint, mounts.keys()) {
+    for (auto it = mounts.cbegin(); it != mounts.cend(); ++it) {
+        const QString &mountPoint = it.key();
         if (mountPoint.startsWith(baseDir)) {
             bool success;
             if (root) {

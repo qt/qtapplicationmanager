@@ -270,7 +270,7 @@ static void compositeMsgHandler(QtMsgType msgType, const QMessageLogContext &con
 
 void installMessageHandlers()
 {
-    if (Q_LIKELY(qgetenv("QT_MESSAGE_PATTERN").isNull()))
+    if (Q_LIKELY(!qEnvironmentVariableIsSet("QT_MESSAGE_PATTERN")))
         qInstallMessageHandler(colorLogToStderr);
 #if defined(QT_GENIVIEXTRAS_LIB)
     else

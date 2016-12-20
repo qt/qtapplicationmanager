@@ -63,7 +63,6 @@ void tst_Application::initTestCase()
     QDir baseDir(qL1S(AM_TESTDATA_DIR "manifests"));
     foreach (const QString &appDirName, baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
         QDir dir = baseDir.absoluteFilePath(appDirName);
-        QString error;
         try {
             const Application *a = scanner.scan(dir.absoluteFilePath(qSL("info.yaml")));
             QVERIFY(a);
@@ -184,14 +183,14 @@ void tst_Application::application()
     QCOMPARE(app->importance(), 0.5);
     QVERIFY(app->backgroundMode() == Application::TracksLocation);
     QCOMPARE(app->supportedMimeTypes().size(), 2);
-    QCOMPARE(app->supportedMimeTypes().first(), qSL("text/plain"));
-    QCOMPARE(app->supportedMimeTypes().last(), qSL("x-scheme-handler/mailto"));
+    QVERIFY(app->supportedMimeTypes().startsWith(qSL("text/plain")));
+    QVERIFY(app->supportedMimeTypes().endsWith(qSL("x-scheme-handler/mailto")));
     QCOMPARE(app->capabilities().size(), 2);
-    QCOMPARE(app->capabilities().first(), qSL("cameraAccess"));
-    QCOMPARE(app->capabilities().last(), qSL("locationAccess"));
+    QVERIFY(app->capabilities().startsWith(qSL("cameraAccess")));
+    QVERIFY(app->capabilities().endsWith(qSL("locationAccess")));
     QCOMPARE(app->categories().size(), 2);
-    QCOMPARE(app->categories().first(), qSL("bar"));
-    QCOMPARE(app->categories().last(), qSL("foo"));
+    QVERIFY(app->categories().startsWith(qSL("bar")));
+    QVERIFY(app->categories().endsWith(qSL("foo")));
 
     QVERIFY(!app->currentRuntime());
     QVERIFY(!app->isLocked());

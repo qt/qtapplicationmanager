@@ -325,7 +325,7 @@ void NativeRuntime::onLauncherFinishedInitialization()
 
         QString baseDir = m_container->mapHostPathToContainer(m_app->baseDir().absolutePath());
         QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
-        m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_app->toVariantMap());
+        emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_app->toVariantMap());
         m_launched = true;
     }
 }
@@ -366,7 +366,7 @@ void NativeRuntime::openDocument(const QString &document)
 {
    m_document = document;
    if (m_applicationInterface)
-       m_applicationInterface->openDocument(document);
+       emit m_applicationInterface->openDocument(document);
 }
 
 

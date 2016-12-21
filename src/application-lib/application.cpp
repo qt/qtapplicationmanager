@@ -275,6 +275,7 @@ void Application::mergeInto(Application *app) const
     app->m_backgroundMode = m_backgroundMode;
     app->m_version = m_version;
     app->m_environmentVariables = m_environmentVariables;
+    emit app->bulkChange();
 }
 
 const InstallationReport *Application::installationReport() const
@@ -327,6 +328,7 @@ void Application::setCurrentRuntime(AbstractRuntime *rt) const
         m_nonAliased->m_runtime = rt;
     else
         m_runtime = rt;
+    emit runtimeChanged();
 }
 
 bool Application::isLocked() const

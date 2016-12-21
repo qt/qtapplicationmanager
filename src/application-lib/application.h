@@ -63,22 +63,22 @@ class Application : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString id READ id)
-    Q_PROPERTY(QString runtimeName READ runtimeName)
-    Q_PROPERTY(QVariantMap runtimeParameters READ runtimeParameters)
-    Q_PROPERTY(QString icon READ icon)
-    Q_PROPERTY(QString documentUrl READ documentUrl)
-    Q_PROPERTY(qreal importance READ importance)
-    Q_PROPERTY(bool builtIn READ isBuiltIn)
-    Q_PROPERTY(bool alias READ isAlias)
-    Q_PROPERTY(bool preload READ isPreloaded)
-    Q_PROPERTY(const QT_PREPEND_NAMESPACE_AM(Application) *nonAliased READ nonAliased)
-    Q_PROPERTY(QStringList capabilities READ capabilities)
-    Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes)
-    Q_PROPERTY(QStringList categories READ categories)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime READ currentRuntime)
-    Q_PROPERTY(int lastExitCode READ lastExitCode)
-    Q_PROPERTY(ExitStatus lastExitStatus READ lastExitStatus)
+    Q_PROPERTY(QString id READ id CONSTANT)
+    Q_PROPERTY(QString runtimeName READ runtimeName NOTIFY bulkChange)
+    Q_PROPERTY(QVariantMap runtimeParameters READ runtimeParameters NOTIFY bulkChange)
+    Q_PROPERTY(QString icon READ icon NOTIFY bulkChange)
+    Q_PROPERTY(QString documentUrl READ documentUrl NOTIFY bulkChange)
+    Q_PROPERTY(qreal importance READ importance NOTIFY bulkChange)
+    Q_PROPERTY(bool builtIn READ isBuiltIn CONSTANT)
+    Q_PROPERTY(bool alias READ isAlias CONSTANT)
+    Q_PROPERTY(bool preload READ isPreloaded NOTIFY bulkChange)
+    Q_PROPERTY(const QT_PREPEND_NAMESPACE_AM(Application) *nonAliased READ nonAliased CONSTANT)
+    Q_PROPERTY(QStringList capabilities READ capabilities NOTIFY bulkChange)
+    Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes NOTIFY bulkChange)
+    Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
+    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime READ currentRuntime NOTIFY runtimeChanged)
+    Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged)
+    Q_PROPERTY(ExitStatus lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged)
 
 public:
     enum Type { Gui, Headless };
@@ -153,6 +153,12 @@ public:
 
     int lastExitCode() const;
     ExitStatus lastExitStatus() const;
+
+signals:
+    void bulkChange() const;
+    void runtimeChanged() const;
+    void lastExitCodeChanged() const;
+    void lastExitStatusChanged() const;
 
 private:
     Application();

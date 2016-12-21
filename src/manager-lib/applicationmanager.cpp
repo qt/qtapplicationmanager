@@ -807,16 +807,24 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
     connect(runtime, static_cast<void(AbstractRuntime::*)(int, QProcess::ExitStatus)>
             (&AbstractRuntime::finished), this, [app](int code, QProcess::ExitStatus status) {
-        app->m_lastExitCode = code;
+        if (code != app->m_lastExitCode) {
+            app->m_lastExitCode = code;
+            emit app->lastExitCodeChanged();
+        }
+
+        Application::ExitStatus newStatus;
         if (status == QProcess::CrashExit) {
 #if defined(Q_OS_UNIX)
-            app->m_lastExitStatus = (code == SIGTERM || code == SIGKILL) ? Application::ForcedExit
-                                                                         : Application::CrashExit;
+            newStatus = (code == SIGTERM || code == SIGKILL) ? Application::ForcedExit : Application::CrashExit;
 #else
-            app->m_lastExitStatus = Application::CrashExit;
+            newStatus = Application::CrashExit;
 #endif
         } else {
-            app->m_lastExitStatus = Application::NormalExit;
+            newStatus = Application::NormalExit;
+        }
+        if (newStatus != app->m_lastExitStatus) {
+            app->m_lastExitStatus = newStatus;
+            emit app->lastExitStatusChanged();
         }
     });
 

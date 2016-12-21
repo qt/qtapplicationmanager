@@ -98,6 +98,7 @@ QVariantMap Application::toVariantMap() const
     map[qSL("backgroundMode")] = backgroundMode;
     map[qSL("version")] = m_version;
     map[qSL("baseDir")] = m_baseDir.absolutePath();
+    map[qSL("environmentVariables")] = m_environmentVariables;
     map[qSL("installationLocationId")] = m_installationReport ? m_installationReport->installationLocationId() : QString();
     return map;
 }
@@ -273,6 +274,7 @@ void Application::mergeInto(Application *app) const
     app->m_categories = m_categories;
     app->m_backgroundMode = m_backgroundMode;
     app->m_version = m_version;
+    app->m_environmentVariables = m_environmentVariables;
 }
 
 const InstallationReport *Application::installationReport() const
@@ -379,6 +381,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
        >> app->m_version
        >> baseDir
        >> app->m_uid
+       >> app->m_environmentVariables
        >> installationReport;
 
     uniqueCounter = qMax(uniqueCounter, app->m_uniqueNumber);
@@ -443,6 +446,7 @@ void Application::writeToDataStream(QDataStream &ds, const QVector<const Applica
        << m_version
        << m_baseDir.absolutePath()
        << m_uid
+       << m_environmentVariables
        << serializedReport;
 }
 

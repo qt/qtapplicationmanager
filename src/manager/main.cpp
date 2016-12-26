@@ -151,33 +151,46 @@ static QString dbusInterfaceName(QObject *o) throw (Exception)
 static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *serviceName, const char *path) throw (Exception)
 {
     QString interfaceName = dbusInterfaceName(adaptor);
-    QString dbus = configuration->dbusRegistration(interfaceName);
+    QString dbusName = configuration->dbusRegistration(interfaceName);
+    QString dbusAddress;
     QDBusConnection conn((QString()));
 
-    if (dbus.isEmpty()) {
+    if (dbusName.isEmpty()) {
         return;
-    } else if (dbus == qL1S("system")) {
+    } else if (dbusName == qL1S("system")) {
+        dbusAddress = qgetenv("DBUS_SYSTEM_BUS_ADDRESS");
+#if defined(Q_OS_LINUX)
+        if (dbusAddress.isEmpty())
+            dbusAddress = qL1S("unix:path=/var/run/dbus/system_bus_socket");
+#endif
         conn = QDBusConnection::systemBus();
-    } else if (dbus == qL1S("session")) {
-        dbus = qgetenv("DBUS_SESSION_BUS_ADDRESS");
+    } else if (dbusName == qL1S("session")) {
+        dbusAddress = qgetenv("DBUS_SESSION_BUS_ADDRESS");
         conn = QDBusConnection::sessionBus();
     } else {
-        conn = QDBusConnection::connectToBus(dbus, qSL("custom"));
+        dbusAddress = dbusName;
+        conn = QDBusConnection::connectToBus(dbusAddress, qSL("custom"));
     }
 
     if (!conn.isConnected()) {
         throw Exception(Error::System, "could not connect to D-Bus (%1): %2")
-                .arg(dbus).arg(conn.lastError().message());
+                .arg(dbusAddress.isEmpty() ? dbusName : dbusAddress).arg(conn.lastError().message());
+    }
+
+    if (adaptor->parent()) {
+        // we need this information later on to tell apps where services are listening
+        adaptor->parent()->setProperty("_am_dbus_name", dbusName);
+        adaptor->parent()->setProperty("_am_dbus_address", dbusAddress);
     }
 
     if (!conn.registerObject(qL1S(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
         throw Exception(Error::System, "could not register object %1 on D-Bus (%2): %3")
-                .arg(path).arg(dbus).arg(conn.lastError().message());
+                .arg(path).arg(dbusName).arg(conn.lastError().message());
     }
 
     if (!conn.registerService(qL1S(serviceName))) {
         throw Exception(Error::System, "could not register service %1 on D-Bus (%2): %3")
-                .arg(serviceName).arg(dbus).arg(conn.lastError().message());
+                .arg(serviceName).arg(dbusName).arg(conn.lastError().message());
     }
 
     if (interfaceName.startsWith(qL1S("io.qt."))) {
@@ -185,7 +198,7 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *servic
         // controller tool, which does not even have a session bus, when started via ssh.
 
         QFile f(QDir::temp().absoluteFilePath(interfaceName + qSL(".dbus")));
-        QByteArray dbusUtf8 = dbus.toUtf8();
+        QByteArray dbusUtf8 = dbusAddress.isEmpty() ? dbusName.toUtf8() : dbusAddress.toUtf8();
         if (!f.open(QFile::WriteOnly | QFile::Truncate) || (f.write(dbusUtf8) != dbusUtf8.size()))
             throw Exception(f, "Could not write D-Bus address of interface %1").arg(interfaceName);
 

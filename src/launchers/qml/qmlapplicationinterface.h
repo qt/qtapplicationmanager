@@ -71,7 +71,8 @@ class QmlApplicationInterface : public ApplicationInterface
     Q_OBJECT
 
 public:
-    explicit QmlApplicationInterface(const QVariantMap &additionalConfiguration, const QString &dbusConnectionName, QObject *parent = 0);
+    explicit QmlApplicationInterface(const QVariantMap &additionalConfiguration, const QString &dbusConnectionName,
+                                     const QString &dbusNotificationBusName, QObject *parent = nullptr);
     bool initialize();
 
     QString applicationId() const override;
@@ -90,6 +91,7 @@ private:
 
     mutable QString m_appId; // cached
     QDBusConnection m_connection;
+    QDBusConnection m_notificationConnection;
     QDBusInterface *m_applicationIf = nullptr;
     QDBusInterface *m_runtimeIf = nullptr;
     QDBusInterface *m_notifyIf = nullptr;

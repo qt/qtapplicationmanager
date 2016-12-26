@@ -58,9 +58,10 @@ QT_BEGIN_NAMESPACE_AM
 
 QmlApplicationInterface *QmlApplicationInterface::s_instance = 0;
 
-QmlApplicationInterface::QmlApplicationInterface(const QVariantMap &additionalConfiguration, const QString &dbusConnectionName, QObject *parent)
+QmlApplicationInterface::QmlApplicationInterface(const QVariantMap &additionalConfiguration, const QString &dbusConnectionName, const QString &dbusNotificationBusName, QObject *parent)
     : ApplicationInterface(parent)
     , m_connection(dbusConnectionName)
+    , m_notificationConnection(dbusNotificationBusName)
     , m_additionalConfiguration(additionalConfiguration)
 {
     if (QmlApplicationInterface::s_instance)
@@ -83,11 +84,11 @@ bool QmlApplicationInterface::initialize()
     };
 
     m_runtimeIf = tryConnect(qSL(""), qSL("/RuntimeInterface"), qSL("io.qt.ApplicationManager.RuntimeInterface"),
-                                     m_connection, this);
+                             m_connection, this);
     m_applicationIf = tryConnect(qSL(""), qSL("/ApplicationInterface"), qSL("io.qt.ApplicationManager.ApplicationInterface"),
-                                         m_connection, this);
+                                 m_connection, this);
     m_notifyIf = tryConnect(qSL("org.freedesktop.Notifications"), qSL("/org/freedesktop/Notifications"), qSL("org.freedesktop.Notifications"),
-                                    QDBusConnection::sessionBus(), this);
+                            m_notificationConnection, this);
 
 
     if (!m_applicationIf) {

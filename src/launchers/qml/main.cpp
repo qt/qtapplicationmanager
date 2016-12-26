@@ -145,6 +145,9 @@ private:
 #endif
 };
 
+static QString p2pBusName = qSL("am");
+static QString notificationBusName = qSL("am_notification_bus");
+
 QT_END_NAMESPACE_AM
 
 QT_USE_NAMESPACE_AM
@@ -198,12 +201,30 @@ int main(int argc, char *argv[])
             qCCritical(LogQmlRuntime) << "ERROR: $AM_DBUS_PEER_ADDRESS is empty";
             return 2;
         }
-        QDBusConnection dbusConnection = QDBusConnection::connectToPeer(QString::fromUtf8(dbusAddress), qSL("am"));
+        QDBusConnection dbusConnection = QDBusConnection::connectToPeer(QString::fromUtf8(dbusAddress), p2pBusName);
 
         if (!dbusConnection.isConnected()) {
-            qCCritical(LogQmlRuntime) << "ERROR: could not connect to the application manager's peer D-Bus at" << dbusAddress;
+            qCCritical(LogQmlRuntime) << "ERROR: could not connect to the P2P D-Bus via:" << dbusAddress;
             return 3;
         }
+        qCDebug(LogQmlRuntime) << "Connected to the P2P D-Bus via:" << dbusAddress;
+
+        dbusAddress = qgetenv("AM_DBUS_NOTIFICATION_BUS_ADDRESS");
+        if (dbusAddress.isEmpty())
+            dbusAddress = "session";
+
+        if (dbusAddress == "system")
+            dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SystemBus, notificationBusName);
+        else if (dbusAddress == "session")
+            dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SessionBus, notificationBusName);
+        else
+            dbusConnection = QDBusConnection::connectToBus(QString::fromUtf8(dbusAddress), notificationBusName);
+
+        if (!dbusConnection.isConnected()) {
+            qCCritical(LogQmlRuntime) << "ERROR: could not connect to the Notification D-Bus via:" << dbusAddress;
+            return 3;
+        }
+        qCDebug(LogQmlRuntime) << "Connected to the Notification D-Bus via:" << dbusAddress;
 
         new Controller(&a);
     }
@@ -269,7 +290,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
     }
 
     if (directLoad.isEmpty()) {
-        m_applicationInterface = new QmlApplicationInterface(config, qSL("am"), this);
+        m_applicationInterface = new QmlApplicationInterface(config, p2pBusName, notificationBusName, this);
         connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
                 this, &Controller::startApplication);
         if (!m_applicationInterface->initialize()) {

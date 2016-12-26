@@ -72,6 +72,13 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
     ContainerFactory *cf = ContainerFactory::instance();
     RuntimeFactory *rf = RuntimeFactory::instance();
 
+    if (runtimesPerContainer <= 0) {
+        qCDebug(LogSystem) << "Not setting up the quick-launch pool (runtimesPerContainer is 0)";
+        return;
+    }
+
+    qCDebug(LogSystem) << "Setting up the quick-launch pool:";
+
     foreach (const QString &containerId, cf->containerIds()) {
         if (!cf->manager(containerId)->supportsQuickLaunch())
             continue;
@@ -89,9 +96,12 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
 
             m_quickLaunchPool << entry;
 
-            qCDebug(LogSystem) << "Created quick-launch slot for" << containerId + qSL("/") + runtimeId;
+            qCDebug(LogSystem).nospace().noquote() << " * " << entry.m_containerId << " / "
+                                                   << (entry.m_runtimeId.isEmpty() ? qSL("(no runtime)") : entry.m_runtimeId)
+                                                   << " [at max: " << runtimesPerContainer << "]";
         }
     }
+
     if (idleLoad > 0) {
         SystemMonitor::instance()->setIdleLoadThreshold(idleLoad);
         m_onlyRebuildWhenIdle = true;
@@ -146,10 +156,12 @@ void QuickLauncher::rebuild()
             if (runtime)
                 connect(runtime, &AbstractRuntime::destroyed, this, [this, runtime]() { removeEntry(nullptr, runtime); });
 
-            qCDebug(LogSystem) << "Added" << entry->m_containerId << "/" << entry->m_runtimeId <<
-                                  "to the quick-launch pool ->" << container << runtime;
             entry->m_containersAndRuntimes << qMakePair(container, runtime);
             ++done;
+
+            qCDebug(LogSystem).noquote() << "Added a new entry to the quick-launch pool:"
+                                         << entry->m_containerId << "/"
+                                         << (entry->m_runtimeId.isEmpty() ? qSL("(no runtime)") : entry->m_runtimeId);
         }
     }
     if (todo > done)

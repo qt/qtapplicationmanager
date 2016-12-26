@@ -112,6 +112,12 @@ bool ContainerFactory::registerContainer(AbstractContainerManager *manager, cons
         return false;
     m_containers.insert(identifier, manager);
     manager->setParent(this);
+    static bool once = false;
+    if (!once) {
+        qCDebug(LogSystem) << "Registering containers:";
+        once = true;
+    }
+    qCDebug(LogSystem).noquote() << " *" << identifier << (manager->supportsQuickLaunch() ? "[quicklaunch supported]" : "");
     return true;
 }
 

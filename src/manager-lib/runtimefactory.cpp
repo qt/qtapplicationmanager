@@ -134,6 +134,12 @@ bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager, const QStr
         return false;
     m_runtimes.insert(identifier, manager);
     manager->setParent(this);
+    static bool once = false;
+    if (!once) {
+        qCDebug(LogSystem) << "Registering runtimes:";
+        once = true;
+    }
+    qCDebug(LogSystem).noquote() << " *" << identifier << (manager->supportsQuickLaunch() ? "[quicklaunch supported]" : "");
     return true;
 }
 

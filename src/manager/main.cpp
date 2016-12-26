@@ -193,6 +193,8 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *servic
                 .arg(serviceName).arg(dbusName).arg(conn.lastError().message());
     }
 
+    qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
+
     if (interfaceName.startsWith(qL1S("io.qt."))) {
         // Write the bus address of the interface to a file in /tmp. This is needed for the
         // controller tool, which does not even have a session bus, when started via ssh.
@@ -218,6 +220,8 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *servic
 static void dbusInitialization()
 {
     try {
+        qCDebug(LogSystem) << "Registering D-Bus services:";
+
         auto am = ApplicationManager::instance();
         auto ama = new ApplicationManagerAdaptor(am);
 
@@ -666,10 +670,9 @@ int main(int argc, char *argv[])
                                            );
             }
 
-            qCDebug(LogSystem) << "Found Applications: [";
+            qCDebug(LogSystem) << "Registering applications:";
             foreach (const Application *app, apps)
-                qCDebug(LogSystem) << " * APP:" << app->id() << "(" << app->baseDir().absolutePath() << ")";
-            qCDebug(LogSystem) << "]";
+                qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: " << app->baseDir().path() << "]";
 
             adb->write(apps);
         }

@@ -562,10 +562,16 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 
             // export the actual socket name for our child processes.
             qputenv("WAYLAND_DISPLAY", d->waylandCompositor->socketName());
+            qCDebug(LogWayland).nospace() << "WindowManager: running in Wayland mode [socket: "
+                                          << d->waylandCompositor->socketName() << "]";
         } else {
             d->waylandCompositor->registerOutputWindow(view);
         }
+    } else {
+        qCDebug(LogWayland) << "WindowManager: running in single-process mode [forced at run-time]";
     }
+#else
+    qCDebug(LogWayland) << "WindowManager: running in single-process mode [forced at compile-time]";
 #endif
 }
 

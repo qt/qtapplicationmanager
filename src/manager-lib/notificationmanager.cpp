@@ -584,7 +584,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
     if (hints.contains(qSL("image-data"))) {
         //TODO: how can we parse this - the dbus sig of value is "(iiibiiay)"
     } else if (hints.contains(qSL("image-path"))) {
-        n->imageUrl = hints.value(qSL("image-data")).toString();
+        n->imageUrl = hints.value(qSL("image-path")).toString();
     }
 
     n->showActionIcons = hints.value(qSL("action-icons")).toBool();

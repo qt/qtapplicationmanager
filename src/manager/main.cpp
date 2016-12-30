@@ -463,7 +463,9 @@ int main(int argc, char *argv[])
     // this is needed for both WebEngine and Wayland Multi-screen rendering
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 #  endif
+#  if !defined(QT_NO_SESSIONMANAGER)
     QGuiApplication::setFallbackSessionManagementEnabled(false);
+#endif
     QGuiApplication a(argc, argv);
 
     UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler, SIGINT,

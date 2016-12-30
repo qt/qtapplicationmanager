@@ -498,6 +498,8 @@ int main(int argc, char *argv[])
             loggingRules << qSL("qt.scenegraph.*.debug=false");
             loggingRules << qSL("qt.quick.*.debug=false");
             loggingRules << qSL("qt.qpa.*.debug=false");
+        } else {
+            loggingRules << qSL("*.debug=false");
         }
 
         QLoggingCategory::setFilterRules(loggingRules.join(qL1C('\n')));

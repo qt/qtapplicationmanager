@@ -1,0 +1,59 @@
+TEMPLATE = aux
+
+# Add environment for non-installed builds. Do this first, so the
+# 'make' variable expansions don't end up in a batch file/script.
+QT_TOOL_NAME = appman-qmltestrunner
+!isEmpty(TEST_FILES): qtAddTargetEnv(COMMAND, QT)
+
+# If the test ends up in a different directory, we should cd to that directory.
+TESTRUN_CWD = $$_PRO_FILE_PWD_
+
+debug_and_release:debug_and_release_target {
+    # But in debug-and-release-target mode we don't want to cd into the debug/release
+    # directory (e.g. if the test goes to foo/release/tst_thing.exe, we want to do
+    # 'cd foo && release/tst_thing.exe', not 'cd foo/release && tst_thing.exe').
+
+    TESTRUN_CWD ~= s/(release|debug)$//
+    TEST_TARGET_DIR = $$relative_path($$absolute_path($$DESTDIR, $$OUT_PWD), $$absolute_path($$TESTRUN_CWD, $$OUT_PWD))
+}
+
+# Allow for a custom test runner script
+COMMAND += $(TESTRUNNER)
+
+# Determine the location of the testrunner
+prefix_build {
+    AM_TESTRUNNER_DIR = $$BUILD_DIR/bin
+} else {
+    !isEmpty(INSTALL_PREFIX) {
+        AM_TESTRUNNER_DIR = $${INSTALL_PREFIX}/bin
+    } else {
+        AM_TESTRUNNER_DIR = $$[QT_INSTALL_BINS]
+    }
+}
+
+# The check command
+COMMAND += $$AM_TESTRUNNER_DIR/appman-qmltestrunner -r
+mac: COMMAND += --dbus=none
+
+# Add import dirs
+for(import, IMPORTS_DIR) {
+    COMMAND += -I $$import
+}
+OTHER_FILES += $$IMPORTS_DIR
+
+# Read a config file
+for(config, AM_CONFIG) {
+    COMMAND += -c $$config
+}
+OTHER_FILES += $$AM_CONFIG
+
+!isEmpty(TESTRUN_CWD):!contains(TESTRUN_CWD, ^\\./?): \
+    COMMAND = cd $$shell_path($$TESTRUN_CWD) && $$eval(COMMAND)
+
+QMAKE_EXTRA_TARGETS *= check
+
+# Execute a testrunner for every file
+for(file, TEST_FILES) {
+    check.commands += $$COMMAND $$file $(TESTARGS)
+}
+OTHER_FILES += $$TEST_FILES

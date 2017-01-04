@@ -443,6 +443,34 @@ static QVector<const Application *> scanForApplications(const QStringList &built
     return result;
 }
 
+struct SystemProperties
+{
+    enum {
+        ThirdParty,
+        BuiltIn,
+        SystemUi
+    };
+
+    static QVector<QVariantMap> partition(const QVariantMap &rawMap)
+    {
+        QVector<QVariantMap> props(SystemUi + 1);
+
+        props[ThirdParty] = rawMap.value(qSL("public")).toMap();
+
+        props[BuiltIn] = props.at(ThirdParty);
+        const QVariantMap pro = rawMap.value(qSL("protected")).toMap();
+        for (QVariantMap::const_iterator iter = pro.cbegin(); iter != pro.cend(); ++iter)
+            props[BuiltIn].insert(iter.key(), iter.value());
+
+        props[SystemUi] = props.at(BuiltIn);
+        const QVariantMap pri = rawMap.value(qSL("private")).toMap();
+        for (QVariantMap::const_iterator iter = pri.cbegin(); iter != pri.cend(); ++iter)
+            props[SystemUi].insert(iter.key(), iter.value());
+
+        return props;
+    }
+};
+
 QT_END_NAMESPACE_AM
 
 QT_USE_NAMESPACE_AM
@@ -544,9 +572,9 @@ int main(int argc, char *argv[])
 #endif
 
         auto startupPlugins = loadPlugins<StartupInterface>("startup", configuration->pluginFilePaths("startup"));
-        const auto &uiConfig = configuration->additionalUiConfiguration();
+        const auto &uiProperties = configuration->systemUiProperties();
         foreach (StartupInterface *iface, startupPlugins)
-            iface->initialize(uiConfig);
+            iface->initialize(uiProperties);
 
         startupTimer.checkpoint("after startup-plugin load");
 
@@ -651,7 +679,10 @@ int main(int argc, char *argv[])
 
         ContainerFactory::instance()->setConfiguration(configuration->containerConfigurations());
         RuntimeFactory::instance()->setConfiguration(configuration->runtimeConfigurations());
-        RuntimeFactory::instance()->setAdditionalConfiguration(configuration->additionalUiConfiguration());
+
+        const QVector<QVariantMap> sysProps = SystemProperties::partition(uiProperties);
+        RuntimeFactory::instance()->setSystemProperties(sysProps.at(SystemProperties::ThirdParty),
+                                                        sysProps.at(SystemProperties::BuiltIn));
 
         startupTimer.checkpoint("after runtime registration");
 
@@ -689,7 +720,8 @@ int main(int argc, char *argv[])
             throw Exception(Error::System, error);
         if (configuration->noSecurity())
             am->setSecurityChecksEnabled(false);
-        am->setAdditionalConfiguration(configuration->additionalUiConfiguration());
+
+        am->setSystemProperties(sysProps.at(SystemProperties::SystemUi));
         am->setContainerSelectionConfiguration(configuration->containerSelectionConfiguration());
 
         startupTimer.checkpoint("after ApplicationManager instantiation");

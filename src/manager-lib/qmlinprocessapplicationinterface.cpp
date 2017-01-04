@@ -73,8 +73,13 @@ QString QmlInProcessApplicationInterface::applicationId() const
 
 QVariantMap QmlInProcessApplicationInterface::additionalConfiguration() const
 {
+    return systemProperties();
+}
+
+QVariantMap QmlInProcessApplicationInterface::systemProperties() const
+{
     if (m_runtime)
-        return m_runtime->additionalConfiguration();
+        return m_runtime->systemProperties();
     return QVariantMap();
 }
 

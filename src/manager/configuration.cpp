@@ -519,9 +519,14 @@ bool Configuration::dbusStartSessionBus() const
     return d->config<bool>("start-session-dbus", { qSL("dbus"), qSL("startSessionBus") });
 }
 
-QVariantMap Configuration::additionalUiConfiguration() const
+QVariantMap Configuration::systemUiProperties() const
 {
-    return d->findInConfigFile({ qSL("ui"), qSL("additionalConfiguration") }).toMap();
+    QVariantMap vm = d->findInConfigFile({ qSL("systemProperties") }).toMap();
+    if (vm.isEmpty()) {  // for temporary backwards compatibility:
+        QVariant ac = d->findInConfigFile({ qSL("ui"), qSL("additionalConfiguration") });
+        vm = { std::pair<QString, QVariant>(QStringLiteral("public"), ac) };
+    }
+    return vm;
 }
 
 bool Configuration::applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const

@@ -223,10 +223,10 @@
 */
 
 /*!
-    \qmlproperty var ApplicationManager::additionalConfiguration
+    \qmlproperty var ApplicationManager::systemProperties
     \readonly
 
-    Returns the project specific \l{additional configuration} that was set via the config file.
+    Returns the project specific \l{system properties} that were set via the config file.
 */
 
 /*!
@@ -315,7 +315,7 @@ class ApplicationManagerPrivate
 public:
     bool securityChecksEnabled = true;
     bool singleProcess;
-    QVariantMap additionalConfiguration;
+    QVariantMap systemProperties;
     ApplicationDatabase *database = nullptr;
 
     QMap<QByteArray, DBusPolicy> dbusPolicy;
@@ -463,12 +463,22 @@ void ApplicationManager::setSecurityChecksEnabled(bool enabled)
 
 QVariantMap ApplicationManager::additionalConfiguration() const
 {
-    return d->additionalConfiguration;
+    return d->systemProperties;
 }
 
 void ApplicationManager::setAdditionalConfiguration(const QVariantMap &map)
 {
-    d->additionalConfiguration = map;
+    d->systemProperties = map;
+}
+
+QVariantMap ApplicationManager::systemProperties() const
+{
+    return d->systemProperties;
+}
+
+void ApplicationManager::setSystemProperties(const QVariantMap &map)
+{
+    d->systemProperties = map;
 }
 
 void ApplicationManager::setContainerSelectionConfiguration(const QList<QPair<QString, QString>> &containerSelectionConfig)

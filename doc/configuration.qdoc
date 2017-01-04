@@ -156,15 +156,25 @@ all your imports paths and file references relative to your main config file.
     \li Add an additional QML import path to the system UI.
 \row
     \li \b -
-        \target additional configuration
-    \br \e ui/additionalConfiguration
+        \target system properties
+    \br \e systemProperties
     \li object
-    \li Exports the YAML object as the ApplicationManager property ApplicationManager::additionalConfiguration
-        to the System-UI and as the ApplicationInterface::additionalConfiguration to all QML
-        applications. The object will just be converted to a QVariantMap, but the application-manager
-        will not interpret it in any way.
-        Non-QML applications can access this data via the environment variable \c $AM_RUNTIME_ADDITIONAL_CONFIGURATION
-        as a YAML snippet.
+    \li Exports user-defined properties (key/value pairs) to the System-UI and applications. This
+        field can only have the following children, that control access to the actual properties:
+        \c private, \c protected and \c public (other children will be ignored). Properties under
+        one of the access tags can be freely chosen and can also be nested. The properties
+        are exposed as ApplicationManager::systemProperties to the System-UI and as
+        ApplicationInterface::systemProperties to all QML applications:
+        \list
+        \li The System-UI has access to public, protected and private properties.
+        \li Built-in applilcations have access to public and protected properties.
+        \li Installed (third party) applications have access to public properties only.
+        \endlist
+        Private keys will overwrite identical protected and public ones and protected keys will
+        overwrite identical public ones. The properties will just be converted to QVariantMaps, but
+        the application-manager will not interpret them in any way.
+        Non-QML applications can access this data via the environment variable
+        \c $AM_RUNTIME_SYSTEM_PROPERTIES as a YAML snippet.
 \row
     \li \b --verbose
     \br \e -

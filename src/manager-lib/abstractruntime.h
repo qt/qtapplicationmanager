@@ -75,13 +75,15 @@ public:
     QVariantMap configuration() const;
     void setConfiguration(const QVariantMap &configuration);
 
-    QVariantMap additionalConfiguration() const;
-    void setAdditionalConfiguration(const QVariantMap &additionalConfiguration);
+    QVariantMap systemPropertiesBuiltIn() const;
+    QVariantMap systemProperties3rdParty() const;
+    void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
 
 private:
     QString m_id;
     QVariantMap m_configuration;
-    QVariantMap m_additionalConfiguration;
+    QVariantMap m_systemPropertiesBuiltIn;
+    QVariantMap m_systemProperties3rdParty;
 };
 
 
@@ -119,7 +121,7 @@ public:
 
     virtual qint64 applicationProcessId() const = 0;
 
-    QVariantMap additionalConfiguration() const;
+    QVariantMap systemProperties() const;
 
 public slots:
     virtual bool start() = 0;

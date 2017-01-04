@@ -16,7 +16,24 @@ installationLocations:
 
 ui:
   fullscreen: no
-  additionalConfiguration:
+
+systemProperties:
+  ignored: 42
+  public:
+    pub1: 'pub1'
+    pubandpro: 'pub2'
+    pubandpri: 'pub3'
+    inall: 'public'
+  protected:
+    pro1: 'pro1'
+    pubandpro: 'pro2'
+    proandpri: 'pro4'
+    inall: 'protected'
+    nested:
+      level2:
+        level31: 'overwritten'
+        level32: 'hidden'
+  private:
     booleanTest: on
     stringTest: "pelagicore"
     nullTest: ~
@@ -30,6 +47,14 @@ ui:
         "key1" : "1",
         "key2" : "2"
     }
+    nested:
+      level2:
+        level31: 31
+      level21: 21
+      level22: 22
+    pubandpri: 'pri3'
+    proandpri: 'pri4'
+    inall: 'private'
 
 # development setup:
 flags:

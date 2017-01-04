@@ -58,11 +58,11 @@ QT_BEGIN_NAMESPACE_AM
 
 QmlApplicationInterface *QmlApplicationInterface::s_instance = 0;
 
-QmlApplicationInterface::QmlApplicationInterface(const QVariantMap &additionalConfiguration, const QString &dbusConnectionName, const QString &dbusNotificationBusName, QObject *parent)
+QmlApplicationInterface::QmlApplicationInterface(const QVariantMap &systemProperties, const QString &dbusConnectionName, const QString &dbusNotificationBusName, QObject *parent)
     : ApplicationInterface(parent)
     , m_connection(dbusConnectionName)
     , m_notificationConnection(dbusNotificationBusName)
-    , m_additionalConfiguration(additionalConfiguration)
+    , m_systemProperties(systemProperties)
 {
     if (QmlApplicationInterface::s_instance)
         qCritical("ERROR: only one instance of QmlApplicationInterface is allowed");
@@ -159,9 +159,14 @@ void QmlApplicationInterface::acknowledgeQuit() const
     QCoreApplication::instance()->quit();
 }
 
+QVariantMap QmlApplicationInterface::systemProperties() const
+{
+    return m_systemProperties;
+}
+
 QVariantMap QmlApplicationInterface::additionalConfiguration() const
 {
-    return m_additionalConfiguration;
+    return m_systemProperties;
 }
 
 uint QmlApplicationInterface::notificationShow(QmlNotification *n)

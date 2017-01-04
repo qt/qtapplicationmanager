@@ -89,7 +89,7 @@ public:
     int dbusRegistrationDelay() const;
     bool dbusStartSessionBus() const;
 
-    QVariantMap additionalUiConfiguration() const;
+    QVariantMap systemUiProperties() const;
 
     bool applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const;
 

@@ -56,6 +56,7 @@ public:
     NativeRuntimeApplicationInterface(NativeRuntime *runtime);
 
     QString applicationId() const override;
+    QVariantMap systemProperties() const override;
     QVariantMap additionalConfiguration() const override;
 
 private:

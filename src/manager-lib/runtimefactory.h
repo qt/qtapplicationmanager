@@ -68,7 +68,7 @@ public:
     AbstractRuntime *createQuickLauncher(AbstractContainer *container, const QString &id);
 
     void setConfiguration(const QVariantMap &configuration);
-    void setAdditionalConfiguration(const QVariantMap &additionalConfiguration);
+    void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
 
     bool registerRuntime(AbstractRuntimeManager *manager);
     bool registerRuntime(AbstractRuntimeManager *manager, const QString &identifier);

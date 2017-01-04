@@ -5,7 +5,7 @@
     <property name="singleProcess" type="b" access="read"/>
     <property name="securityChecksEnabled" type="b" access="read"/>
     <property name="dummy" type="b" access="read"/>
-    <property name="additionalConfiguration" type="a{sv}" access="read">
+    <property name="systemProperties" type="a{sv}" access="read">
       <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
     </property>
     <signal name="applicationWasActivated">

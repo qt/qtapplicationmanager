@@ -2,7 +2,7 @@
 <node>
   <interface name="io.qt.ApplicationManager.ApplicationInterface">
     <property name="applicationId" type="s" access="read"/>
-    <property name="additionalConfiguration" type="a{sv}" access="read">
+    <property name="systemProperties" type="a{sv}" access="read">
       <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
     </property>
     <signal name="quit">

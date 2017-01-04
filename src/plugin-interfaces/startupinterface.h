@@ -56,7 +56,7 @@ class StartupInterface
 public:
     virtual ~StartupInterface();
 
-    virtual void initialize(const QVariantMap &additionalConfiguration) throw(std::exception) = 0;
+    virtual void initialize(const QVariantMap &systemProperties) throw(std::exception) = 0;
 
     virtual void afterRuntimeRegistration() throw(std::exception) = 0;
     virtual void beforeQmlEngineLoad(QQmlEngine *engine) throw(std::exception) = 0;

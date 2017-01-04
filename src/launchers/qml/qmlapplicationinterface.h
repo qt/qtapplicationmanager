@@ -71,11 +71,12 @@ class QmlApplicationInterface : public ApplicationInterface
     Q_OBJECT
 
 public:
-    explicit QmlApplicationInterface(const QVariantMap &additionalConfiguration, const QString &dbusConnectionName,
+    explicit QmlApplicationInterface(const QVariantMap &systemProperties, const QString &dbusConnectionName,
                                      const QString &dbusNotificationBusName, QObject *parent = nullptr);
     bool initialize();
 
     QString applicationId() const override;
+    QVariantMap systemProperties() const override;
     QVariantMap additionalConfiguration() const override;
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
     Q_INVOKABLE void acknowledgeQuit() const;
@@ -95,7 +96,7 @@ private:
     QDBusInterface *m_applicationIf = nullptr;
     QDBusInterface *m_runtimeIf = nullptr;
     QDBusInterface *m_notifyIf = nullptr;
-    QVariantMap m_additionalConfiguration;
+    QVariantMap m_systemProperties;
     QVector<QPointer<QmlNotification> > m_allNotifications;
 
     static QmlApplicationInterface *s_instance;

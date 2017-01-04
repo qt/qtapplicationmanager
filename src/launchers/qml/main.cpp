@@ -248,10 +248,10 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
 
     setCrashActionConfiguration(m_configuration.value(qSL("crashAction")).toMap());
 
-    QVariantMap config;
-    auto additionalConfigurations = QtYaml::variantDocumentsFromYaml(qgetenv("AM_RUNTIME_ADDITIONAL_CONFIGURATION"));
-    if (additionalConfigurations.size() == 1)
-        config = additionalConfigurations.first().toMap();
+    QVariantMap properties;
+    auto systemProperties = QtYaml::variantDocumentsFromYaml(qgetenv("AM_RUNTIME_SYSTEM_PROPERTIES"));
+    if (systemProperties.size() == 1)
+        properties = systemProperties.first().toMap();
 
     const QString baseDir = QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/");
 
@@ -295,7 +295,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
     }
 
     if (directLoad.isEmpty()) {
-        m_applicationInterface = new QmlApplicationInterface(config, p2pBusName, notificationBusName, this);
+        m_applicationInterface = new QmlApplicationInterface(properties, p2pBusName, notificationBusName, this);
         connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
                 this, &Controller::startApplication);
         if (!m_applicationInterface->initialize()) {
@@ -367,7 +367,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
     auto startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
     foreach (StartupInterface *iface, startupPlugins)
-        iface->initialize(m_applicationInterface->additionalConfiguration());
+        iface->initialize(m_applicationInterface->systemProperties());
 
     bool loadDummyData = runtimeParameters.value(qSL("loadDummyData")).toBool()
             || m_configuration.value(qSL("loadDummydata")).toBool();

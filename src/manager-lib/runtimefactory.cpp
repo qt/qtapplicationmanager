@@ -116,10 +116,10 @@ void RuntimeFactory::setConfiguration(const QVariantMap &configuration)
     }
 }
 
-void RuntimeFactory::setAdditionalConfiguration(const QVariantMap &additionalConfiguration)
+void RuntimeFactory::setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn)
 {
     for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it) {
-        it.value()->setAdditionalConfiguration(additionalConfiguration);
+        it.value()->setSystemProperties(thirdParty, builtIn);
     }
 }
 

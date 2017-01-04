@@ -197,7 +197,7 @@ bool NativeRuntime::start()
     env.insert(qSL("AM_DBUS_PEER_ADDRESS"), static_cast<NativeRuntimeManager *>(manager())->applicationInterfaceServer()->address());
     env.insert(qSL("AM_DBUS_NOTIFICATION_BUS_ADDRESS"), NotificationManager::instance()->property("_am_dbus_name").toString());
     env.insert(qSL("AM_RUNTIME_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ configuration() })));
-    env.insert(qSL("AM_RUNTIME_ADDITIONAL_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ additionalConfiguration() })));
+    env.insert(qSL("AM_RUNTIME_SYSTEM_PROPERTIES"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ systemProperties() })));
     env.insert(qSL("AM_BASE_DIR"), QDir::currentPath());
     if (!dltLoggingEnabled)
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
@@ -424,8 +424,13 @@ QString NativeRuntimeApplicationInterface::applicationId() const
 
 QVariantMap NativeRuntimeApplicationInterface::additionalConfiguration() const
 {
+    return systemProperties();
+}
+
+QVariantMap NativeRuntimeApplicationInterface::systemProperties() const
+{
     if (m_runtime)
-        return m_runtime->additionalConfiguration();
+        return m_runtime->systemProperties();
     return QVariantMap();
 }
 

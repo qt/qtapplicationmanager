@@ -91,10 +91,10 @@
 */
 
 /*!
-    \qmlproperty var ApplicationInterface::additionalConfiguration
+    \qmlproperty var ApplicationInterface::systemProperties
     \readonly
 
-    Returns the project specific \l{additional configuration} that was set via the config file.
+    Returns the project specific \l{system properties} that were set via the config file.
 */
 
 /*!

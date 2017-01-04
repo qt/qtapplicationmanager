@@ -64,7 +64,7 @@ class TestStartupInterface : public QObject, public StartupInterface
 
 public:
     // StartupInterface
-    void initialize(const QVariantMap &additionalConfiguration) throw(std::exception) override;
+    void initialize(const QVariantMap &systemProperties) throw(std::exception) override;
     void afterRuntimeRegistration() throw(std::exception) override;
 
     void beforeQmlEngineLoad(QQmlEngine *engine) throw(std::exception) override;

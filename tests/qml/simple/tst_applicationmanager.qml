@@ -66,17 +66,34 @@ TestCase {
         capsApplication = ApplicationManager.application(2);
     }
 
-    function test_additionalConfiguration() {
-        compare(ApplicationManager.additionalConfiguration.booleanTest, true)
-        compare(ApplicationManager.additionalConfiguration.stringTest, "pelagicore")
-        expectFail("", "~ should report a null variant, but undefined is reported")
-        compare(ApplicationManager.additionalConfiguration.nullTest, null)
-        compare(ApplicationManager.additionalConfiguration.intTest, -1)
-        compare(ApplicationManager.additionalConfiguration.floatTest, .5)
-        compare(ApplicationManager.additionalConfiguration.arrayTest[0], "value1")
-        compare(ApplicationManager.additionalConfiguration.arrayTest[1], "value2")
-        compare(ApplicationManager.additionalConfiguration.mapTest["key1"], "1")
-        compare(ApplicationManager.additionalConfiguration.mapTest["key2"], "2")
+    function test_systemProperties() {
+        function sub(obj) {
+            compare(obj.ignored, undefined)
+            compare(obj.booleanTest, true)
+            compare(obj.stringTest, "pelagicore")
+            compare(obj.intTest, -1)
+            compare(obj.floatTest, .5)
+            compare(obj.arrayTest[0], "value1")
+            compare(obj.arrayTest[1], "value2")
+            compare(obj.mapTest["key1"], "1")
+            compare(obj.mapTest["key2"], "2")
+            compare(obj.nested.level21, 21)
+            compare(obj.nested.level2.level31, 31)
+            compare(obj.nested.level2.level32, undefined)
+            compare(obj.nested.level21, 21)
+            compare(obj.nested.level22, 22)
+            compare(obj.pub1, 'pub1')
+            compare(obj.pro1, 'pro1')
+            compare(obj.pubandpro, 'pro2')
+            compare(obj.pubandpri, 'pri3')
+            compare(obj.proandpri, 'pri4')
+            compare(obj.inall, 'private')
+
+            expectFailContinue("", "~ should report a null variant, but undefined is reported")
+            compare(ApplicationManager.systemProperties.nullTest, null)
+        }
+        sub(ApplicationManager.systemProperties);
+        sub(ApplicationManager.additionalConfiguration);
     }
 
     function test_application() {

@@ -77,7 +77,8 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT)
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
-    Q_PROPERTY(QVariantMap additionalConfiguration READ additionalConfiguration CONSTANT)
+    Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT)
+    Q_PROPERTY(QVariantMap additionalConfiguration READ additionalConfiguration CONSTANT)  // deprecated
     Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
 
 public:
@@ -96,6 +97,8 @@ public:
 
     bool isSingleProcess() const;
     bool isDummy() const { return false; }
+    QVariantMap systemProperties() const;
+    void setSystemProperties(const QVariantMap &map);
     QVariantMap additionalConfiguration() const;
     void setAdditionalConfiguration(const QVariantMap &map);
 

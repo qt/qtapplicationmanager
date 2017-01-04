@@ -68,10 +68,10 @@ QVariantMap AbstractRuntime::configuration() const
     return QVariantMap();
 }
 
-QVariantMap AbstractRuntime::additionalConfiguration() const
+QVariantMap AbstractRuntime::systemProperties() const
 {
-    if (m_manager)
-        return m_manager->additionalConfiguration();
+    if (m_manager && m_app)
+        return m_app->isBuiltIn() ? m_manager->systemPropertiesBuiltIn() : m_manager->systemProperties3rdParty();
     return QVariantMap();
 }
 
@@ -176,14 +176,20 @@ void AbstractRuntimeManager::setConfiguration(const QVariantMap &configuration)
     m_configuration = configuration;
 }
 
-QVariantMap AbstractRuntimeManager::additionalConfiguration() const
+QVariantMap AbstractRuntimeManager::systemPropertiesBuiltIn() const
 {
-    return m_additionalConfiguration;
+    return m_systemPropertiesBuiltIn;
 }
 
-void AbstractRuntimeManager::setAdditionalConfiguration(const QVariantMap &additionalConfiguration)
+QVariantMap AbstractRuntimeManager::systemProperties3rdParty() const
 {
-    m_additionalConfiguration = additionalConfiguration;
+    return m_systemProperties3rdParty;
+}
+
+void AbstractRuntimeManager::setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn)
+{
+    m_systemProperties3rdParty = thirdParty;
+    m_systemPropertiesBuiltIn = builtIn;
 }
 
 QT_END_NAMESPACE_AM

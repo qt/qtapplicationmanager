@@ -15,7 +15,9 @@ logging:
 ui:
   fullscreen: no
   mainQml: "system-ui/main.qml"
-  additionalConfiguration:
+
+systemProperties:
+  protected:
     light: on
 
 # development setup:

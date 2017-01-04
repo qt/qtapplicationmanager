@@ -54,9 +54,9 @@
 
 Q_LOGGING_CATEGORY(LogMe, "am.start")
 
-void TestStartupInterface::initialize(const QVariantMap &additionalConfiguration)
+void TestStartupInterface::initialize(const QVariantMap &systemProperties)
 {
-    qCWarning(LogMe) << "Startup initialize - additionalConfig:" << additionalConfiguration;
+    qCWarning(LogMe) << "Startup initialize - systemProperties:" << systemProperties;
 }
 
 void TestStartupInterface::afterRuntimeRegistration()

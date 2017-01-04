@@ -100,6 +100,8 @@ QVariantMap Application::toVariantMap() const
     map[qSL("baseDir")] = m_baseDir.absolutePath();
     map[qSL("environmentVariables")] = m_environmentVariables;
     map[qSL("installationLocationId")] = m_installationReport ? m_installationReport->installationLocationId() : QString();
+    map[qSL("applicationProperties")] = m_allAppProperties;
+
     return map;
 }
 
@@ -215,6 +217,16 @@ QStringList Application::categories() const
     return m_nonAliased ? m_nonAliased->m_categories : m_categories;
 }
 
+QVariantMap Application::applicationProperties() const
+{
+    return m_sysAppProperties;
+}
+
+QVariantMap Application::allAppProperties() const
+{
+    return m_allAppProperties;
+}
+
 Application::Type Application::type() const
 {
     return m_nonAliased ? m_nonAliased->m_type : m_type;
@@ -280,6 +292,8 @@ void Application::mergeInto(Application *app) const
     app->m_backgroundMode = m_backgroundMode;
     app->m_version = m_version;
     app->m_environmentVariables = m_environmentVariables;
+    app->m_allAppProperties = m_allAppProperties;
+    app->m_sysAppProperties = m_sysAppProperties;
     emit app->bulkChange();
 }
 
@@ -377,6 +391,8 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
        >> app->m_name
        >> app->m_icon
        >> app->m_documentUrl
+       >> app->m_allAppProperties
+       >> app->m_sysAppProperties
        >> app->m_preload
        >> app->m_importance
        >> app->m_builtIn
@@ -442,6 +458,8 @@ void Application::writeToDataStream(QDataStream &ds, const QVector<const Applica
        << m_name
        << m_icon
        << m_documentUrl
+       << m_allAppProperties
+       << m_sysAppProperties
        << m_preload
        << m_importance
        << m_builtIn

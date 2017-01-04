@@ -206,6 +206,21 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
     \li \c version
     \li string
     \li The version of the application in string form.
+\row
+    \li \c applicationProperties
+    \li object
+    \li Exports user-defined properties (key/value pairs) to the application and the System-UI. The
+        actual properties must be listed under either the \c private or \c protected access control
+        tag (other properties will be ignored). The properties are exposed as
+        ApplicationManager::application()::applicationProperties to the System-UI and as the
+        ApplicationInterface::applicationProperties to the QML application:
+        \list
+        \li The application has access to public and protected properties. Private keys will
+            overwrite identical protected ones.
+        \li The System-UI has access to protected properties only.
+        \endlist
+        The properties will just be converted to QVariantMaps, but the application-manager will not
+        interpret them in any way.
 \endtable
 
 

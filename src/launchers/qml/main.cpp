@@ -80,6 +80,7 @@
 #include "yamlapplicationscanner.h"
 #include "application.h"
 #include "startupinterface.h"
+#include "dbus-utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -390,8 +391,13 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     }
     qCDebug(LogQmlRuntime) << "Qml import paths:" << m_engine.importPathList();
 
-    if (m_applicationInterface)
+    if (m_applicationInterface) {
         m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
+        QVariantMap &vm = m_applicationInterface->m_applicationProperties;
+        vm = qdbus_cast<QVariantMap>(application.value(qSL("applicationProperties")));
+        for (auto it = vm.begin(); it != vm.end(); ++it)
+            it.value() = convertFromDBusVariant(it.value());
+    }
 
     foreach (StartupInterface *iface, startupPlugins)
         iface->beforeQmlEngineLoad(&m_engine);

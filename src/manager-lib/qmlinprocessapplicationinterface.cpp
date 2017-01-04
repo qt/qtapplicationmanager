@@ -83,6 +83,14 @@ QVariantMap QmlInProcessApplicationInterface::systemProperties() const
     return QVariantMap();
 }
 
+QVariantMap QmlInProcessApplicationInterface::applicationProperties() const
+{
+    if (m_runtime && m_runtime->application()) {
+        return m_runtime->application()->allAppProperties();
+    }
+    return QVariantMap();
+}
+
 void QmlInProcessApplicationInterface::acknowledgeQuit() const
 {
     // Nothing to do

@@ -169,6 +169,11 @@ QVariantMap QmlApplicationInterface::additionalConfiguration() const
     return m_systemProperties;
 }
 
+QVariantMap QmlApplicationInterface::applicationProperties() const
+{
+    return m_applicationProperties;
+}
+
 uint QmlApplicationInterface::notificationShow(QmlNotification *n)
 {
     if (n && m_notifyIf && m_notifyIf->isValid()) {

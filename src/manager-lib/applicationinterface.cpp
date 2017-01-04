@@ -98,6 +98,14 @@
 */
 
 /*!
+    \qmlproperty var ApplicationInterface::applicationProperties
+    \readonly
+
+    Returns an object with properties that have been listed under the \c applicationProperties field in the
+    \l{Manifest Definition}{manifest} file (info.yaml) of the application.
+*/
+
+/*!
     \qmlmethod Notification ApplicationInterface::createNotification()
 
     Calling this function lets you create a \l Notification object dynamically at runtime.

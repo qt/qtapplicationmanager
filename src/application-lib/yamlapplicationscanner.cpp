@@ -160,6 +160,13 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                 } else if (field == "mimeTypes") {
                     app->m_mimeTypes = variantToStringList(v);
                     app->m_mimeTypes.sort();
+                } else if (field == "applicationProperties") {
+                    const QVariantMap rawMap = v.toMap();
+                    app->m_sysAppProperties = rawMap.value(qSL("protected")).toMap();
+                    app->m_allAppProperties = app->m_sysAppProperties;
+                    const QVariantMap pri = rawMap.value(qSL("private")).toMap();
+                    for (auto it = pri.cbegin(); it != pri.cend(); ++it)
+                        app->m_allAppProperties.insert(it.key(), it.value());
                 } else if (field == "version") {
                     app->m_version = v.toString();
                 } else if (field == "backgroundMode") {

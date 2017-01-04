@@ -5,9 +5,14 @@
     <property name="systemProperties" type="a{sv}" access="read">
       <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
     </property>
+    <property name="applicationProperties" type="a{sv}" access="read">
+      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
+    </property>
     <signal name="quit">
     </signal>
     <signal name="memoryLowWarning">
+    </signal>
+    <signal name="memoryCriticalWarning">
     </signal>
     <signal name="openDocument">
       <arg name="documentUrl" type="s" direction="out"/>

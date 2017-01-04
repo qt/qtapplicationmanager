@@ -55,11 +55,13 @@ class ApplicationInterface : public QObject
     Q_PROPERTY(QString applicationId READ applicationId CONSTANT SCRIPTABLE true)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true)
     Q_PROPERTY(QVariantMap additionalConfiguration READ additionalConfiguration CONSTANT SCRIPTABLE true)  // deprecated
+    Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true)
 
 public:
     virtual QString applicationId() const = 0;
     virtual QVariantMap additionalConfiguration() const = 0;
     virtual QVariantMap systemProperties() const = 0;
+    virtual QVariantMap applicationProperties() const = 0;
 
 #ifdef Q_QDOC
     Q_INVOKABLE Notification *createNotification();

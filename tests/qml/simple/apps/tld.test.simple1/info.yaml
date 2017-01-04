@@ -8,3 +8,11 @@ runtime: 'qml'
 version: '1.0'
 name:
   en: 'Simple1'
+applicationProperties:
+  ignored: 42
+  protected:
+    pro1: 'pro1'
+    proandpri: 'pro2'
+  private:
+    pri1: 'pri1'
+    proandpri: 'pri2'

@@ -77,6 +77,7 @@ class Application : public QObject
     Q_PROPERTY(QStringList capabilities READ capabilities NOTIFY bulkChange)
     Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes NOTIFY bulkChange)
     Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
+    Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties NOTIFY bulkChange)
     Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime READ currentRuntime NOTIFY runtimeChanged)
     Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged)
     Q_PROPERTY(ExitStatus lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged)
@@ -113,6 +114,8 @@ public:
     QStringList capabilities() const;
     QStringList supportedMimeTypes() const;
     QStringList categories() const;
+    QVariantMap applicationProperties() const;
+    QVariantMap allAppProperties() const;
     Type type() const;
 
     enum BackgroundMode
@@ -181,6 +184,8 @@ private:
     QMap<QString, QString> m_name; // language -> name
     QString m_icon; // relative to info.json location
     QString m_documentUrl;
+    QVariantMap m_allAppProperties;
+    QVariantMap m_sysAppProperties;
 
     bool m_preload = false;
     qreal m_importance = 0; // relative to all others, with 0 being "normal"

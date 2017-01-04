@@ -434,6 +434,13 @@ QVariantMap NativeRuntimeApplicationInterface::systemProperties() const
     return QVariantMap();
 }
 
+QVariantMap NativeRuntimeApplicationInterface::applicationProperties() const
+{
+    if (m_runtime && m_runtime->application())
+        return m_runtime->application()->allAppProperties();
+    return QVariantMap();
+}
+
 NativeRuntimeInterface::NativeRuntimeInterface(NativeRuntime *runtime)
     : QObject(runtime)
     , m_runtime(runtime)

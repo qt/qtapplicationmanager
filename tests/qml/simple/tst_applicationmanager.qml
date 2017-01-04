@@ -122,6 +122,13 @@ TestCase {
         compare(simpleApplication, ApplicationManager.application(id))
     }
 
+    function test_applicationProperties() {
+        compare(simpleApplication.applicationProperties.ignored, undefined)
+        compare(simpleApplication.applicationProperties.pro1, "pro1")
+        compare(simpleApplication.applicationProperties.proandpri, "pro2")
+        compare(simpleApplication.applicationProperties.pri1, undefined)
+    }
+
     function test_aliasApplication() {
         // Test that the alias has the same info, be indentified as an alias and points to the original app
         compare(applicationAlias.id, "tld.test.simple1@alias")

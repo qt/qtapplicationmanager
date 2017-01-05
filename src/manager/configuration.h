@@ -71,6 +71,7 @@ public:
     bool loadDummyData() const;
     bool noSecurity() const;
     bool noUiWatchdog() const;
+    bool noDltLogging() const;
     bool forceSingleProcess() const;
     bool forceMultiProcess() const;
     QString singleApp() const;

@@ -152,6 +152,9 @@ QT_USE_NAMESPACE_AM
 
 int main(int argc, char *argv[])
 {
+    if (qEnvironmentVariableIsSet("AM_NO_DLT_LOGGING"))
+        dltLoggingEnabled = false;
+
     // The common-lib is already registering the DLT Application for the application manager.
     // As the appID needs to be unique within the system, we cannot use the same appID and
     // need to change it as early as possible.

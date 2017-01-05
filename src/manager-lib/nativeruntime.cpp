@@ -197,6 +197,8 @@ bool NativeRuntime::start()
     env.insert(qSL("AM_RUNTIME_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ configuration() })));
     env.insert(qSL("AM_RUNTIME_ADDITIONAL_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ additionalConfiguration() })));
     env.insert(qSL("AM_BASE_DIR"), QDir::currentPath());
+    if (!dltLoggingEnabled)
+        env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
 
     for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {
         it.next();

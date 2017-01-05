@@ -437,6 +437,12 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp("--no-dlt-logging", argv[i]) == 0) {
+            dltLoggingEnabled = false;
+            break;
+        }
+    }
     installMessageHandlers();
 
     QString error;

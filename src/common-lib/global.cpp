@@ -103,11 +103,13 @@ QDLT_FALLBACK_CATEGORY(LogGeneral)
 
 
 QByteArray colorLogApplicationId = QByteArray();
+bool dltLoggingEnabled = true;
 
 static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
 #if defined(QT_GENIVIEXTRAS_LIB)
-    QDltRegistration::messageHandler(msgType, context, message);
+    if (dltLoggingEnabled)
+        QDltRegistration::messageHandler(msgType, context, message);
 #endif
 
     QString file = QFileInfo(QFile::decodeName(context.file)).fileName();
@@ -262,7 +264,8 @@ static QtMessageHandler defaultQtMsgHandler;
 
 static void compositeMsgHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
-    QDltRegistration::messageHandler(msgType, context, message);
+    if (dltLoggingEnabled)
+        QDltRegistration::messageHandler(msgType, context, message);
     defaultQtMsgHandler(msgType, context, message);
 }
 
@@ -303,6 +306,8 @@ void am_trace(QDebug)
 
 void registerUnregisteredDLTContexts()
 {
+    if (!dltLoggingEnabled)
+        return;
 #ifdef AM_GENIVIEXTRAS_LAZY_INIT
     globalDltRegistration()->registerUnregisteredContexts();
 #endif
@@ -310,6 +315,8 @@ void registerUnregisteredDLTContexts()
 
 void changeDLTApplication(const char *dltAppID, const char *dltAppDescription)
 {
+    if (!dltLoggingEnabled)
+        return;
 #if defined(QT_GENIVIEXTRAS_LIB)
     globalDltRegistration()->registerApplication(dltAppID, dltAppDescription);
 #else

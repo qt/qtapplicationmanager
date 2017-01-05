@@ -187,6 +187,7 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("load-dummydata"),       qSL("loads QML dummy-data.") });
     d->clp.addOption({ qSL("no-security"),          qSL("disables all security related checks (dev only!)") });
     d->clp.addOption({ qSL("no-ui-watchdog"),       qSL("disables detecting hung UI applications (e.g. via Wayland's ping/pong).") });
+    d->clp.addOption({ qSL("no-dlt-logging"),       qSL("disables logging using automotive DLT.") });
     d->clp.addOption({ qSL("force-single-process"), qSL("forces single-process mode even on a wayland enabled build.") });
     d->clp.addOption({ qSL("force-multi-process"),  qSL("forces multi-process mode. Will exit immediately if this is not possible.") });
     d->clp.addOption({ qSL("wayland-socket-name"),  qSL("use this file name to create the wayland socket."), qSL("socket") });
@@ -397,6 +398,11 @@ bool Configuration::noSecurity() const
 bool Configuration::noUiWatchdog() const
 {
     return d->config<bool>("no-ui-watchdog", { qSL("flags"), qSL("noUiWatchdog") });
+}
+
+bool Configuration::noDltLogging() const
+{
+    return d->clp.isSet(qSL("no-dlt-logging"));
 }
 
 bool Configuration::forceSingleProcess() const

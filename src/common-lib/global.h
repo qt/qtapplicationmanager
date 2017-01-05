@@ -64,6 +64,7 @@ void changeDLTApplication(const char *dltAppID, const char *dltAppDescription);
 void installMessageHandlers();
 
 extern QByteArray colorLogApplicationId;
+extern bool dltLoggingEnabled;
 
 QString hardwareId();
 

@@ -68,9 +68,21 @@ QVariant convertFromJSVariant(const QVariant &variant)
     } else if (type == QMetaType::QVariant) {
         // got a matryoshka variant
         return convertFromJSVariant(variant.value<QVariant>());
-    } else if (type == QMetaType::UnknownType){
+    } else if (type == QMetaType::UnknownType) {
         // we cannot send QVariant::Invalid via DBus, so we abuse BYTE(0) for this purpose
         return QVariant::fromValue<uchar>(0);
+    } else if (type == QMetaType::QVariantList) {
+        QVariantList outList;
+        QVariantList inList = variant.toList();
+        for (auto it = inList.cbegin(); it != inList.cend(); ++it)
+            outList.append(convertFromJSVariant(*it));
+        return outList;
+    } else if (type == QMetaType::QVariantMap) {
+        QVariantMap outMap;
+        QVariantMap inMap = variant.toMap();
+        for (auto it = inMap.cbegin(); it != inMap.cend(); ++it)
+            outMap.insert(it.key(), convertFromJSVariant(it.value()));
+        return outMap;
     } else {
         return variant;
     }

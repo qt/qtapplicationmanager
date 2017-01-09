@@ -156,8 +156,10 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
         realUid = sudoUid;
         realGid = qEnvironmentVariableIntValue("SUDO_GID");
 
-        setresgid(realGid, 0, 0);
-        setresuid(realUid, 0, 0);
+        if (setresgid(realGid, 0, 0) || setresuid(realUid, 0, 0)) {
+            *errorString = QString::fromLatin1("could not set real user or group ID : %1").arg(QString::fromLocal8Bit(strerror(errno)));
+            return false;
+        }
     }
 
     int socketFds[2];
@@ -241,12 +243,18 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
     if (realUid != effectiveUid) {
         // drop all root privileges
         if (dropPrivileges == DropPrivilegesPermanently) {
-            setresgid(realGid, realGid, realGid);
-            setresuid(realUid, realUid, realUid);
+            if (setresgid(realGid, realGid, realGid) || setresuid(realUid, realUid, realUid)) {
+                *errorString = QString::fromLatin1("could not set real user or group ID : %1").arg(QString::fromLocal8Bit(strerror(errno)));
+                kill(pid, 9);
+                return false;
+            }
         } else {
             qCCritical(LogSystem) << "\nSudo was instructed to NOT drop root privileges permanently.\nThis is dangerous and should only be used in auto-tests!\n";
-            setresgid(realGid, realGid, 0);
-            setresuid(realUid, realUid, 0);
+            if (setresgid(realGid, realGid, 0) || setresuid(realUid, realUid, 0)) {
+                *errorString = QString::fromLatin1("could not set real user or group ID : %1").arg(QString::fromLocal8Bit(strerror(errno)));
+                kill(pid, 9);
+                return false;
+            }
         }
     }
     ::atexit([]() { SudoClient::instance()->stopServer(); });

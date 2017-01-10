@@ -40,6 +40,10 @@ command-line with the \c{--config-file <filename>} option.
 The config file is a YAML file, consisting of exactly one object and it supports a subset of the
 command-line options.
 
+Any value that starts with the magic string \c ${CONFIG_PWD} will have this magic string replaced
+with the absolute path to the config file where it appears in - this makes it very easy to have
+all your imports paths and file references relative to your main config file.
+
 \table
 \header
     \li Command Line \br \e {Config key}

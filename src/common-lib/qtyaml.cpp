@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 
 namespace QtYaml {
 
-static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node)
+static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node, std::function<QVariant (const QVariant &)> &filter)
 {
     QVariant result;
 
@@ -213,7 +213,7 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
         for (auto seq = node->data.sequence.items.start; seq < node->data.sequence.items.top; ++seq) {
             yaml_node_t *seqNode = yaml_document_get_node(doc, *seq);
             if (seqNode)
-                array.append(convertYamlNodeToVariant(doc, seqNode));
+                array.append(convertYamlNodeToVariant(doc, seqNode, filter));
             else
                 array.append(QVariant());
         }
@@ -226,7 +226,7 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
             yaml_node_t *keyNode = yaml_document_get_node(doc, map->key);
             yaml_node_t *valueNode = yaml_document_get_node(doc, map->value);
             if (keyNode && valueNode) {
-                QVariant key = convertYamlNodeToVariant(doc, keyNode);
+                QVariant key = convertYamlNodeToVariant(doc, keyNode, filter);
                 QString keyStr = key.toString();
 
                 if (key.type() != QVariant::String)
@@ -234,7 +234,7 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
                 if (object.contains(keyStr))
                     qWarning() << "YAML Parser: duplicate key" << keyStr << "found in mapping";
 
-                object.insert(keyStr, convertYamlNodeToVariant(doc, valueNode));
+                object.insert(keyStr, convertYamlNodeToVariant(doc, valueNode, filter));
             }
         }
         result = object;
@@ -244,12 +244,18 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
         break;
     }
 
-    return result;
+    return filter(result);
 }
 
 
 
 QVector<QVariant> variantDocumentsFromYaml(const QByteArray &yaml, ParseError *error)
+{
+    auto noFilter = [](const QVariant &v) { return v; };
+    return variantDocumentsFromYamlFiltered(yaml, noFilter, error);
+}
+
+QVector<QVariant> variantDocumentsFromYamlFiltered(const QByteArray &yaml, std::function<QVariant(const QVariant &)> filter, ParseError *error)
 {
     QVector<QVariant> result;
 
@@ -283,7 +289,7 @@ QVector<QVariant> variantDocumentsFromYaml(const QByteArray &yaml, ParseError *e
                 if (!root)
                     break;
 
-                result << convertYamlNodeToVariant(&doc, root);
+                result << convertYamlNodeToVariant(&doc, root, filter);
             }
             yaml_document_delete(&doc);
         }

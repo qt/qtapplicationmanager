@@ -294,7 +294,21 @@ void Configuration::initialize()
         }
 
         QtYaml::ParseError parseError;
-        QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(cf.readAll(), &parseError);
+
+        QString absConfigFilePath = QFileInfo(cf).absolutePath();
+
+        // we want to replace ${CONFIG_PWD} (when at the start of a value) with the abs. path
+        // to the config file it appears in, similar to qmake's $$_PRO_FILE_PWD
+        auto replaceConfigPwd = [absConfigFilePath](const QVariant &value) -> QVariant {
+            if (value.type() == QVariant::String) {
+                QString str = value.toString();
+                if (str.startsWith(qSL("${CONFIG_PWD}")))
+                    return QVariant(absConfigFilePath + str.midRef(13));
+            }
+            return value;
+        };
+
+        QVector<QVariant> docs = QtYaml::variantDocumentsFromYamlFiltered(cf.readAll(), replaceConfigPwd, &parseError);
 
         if (parseError.error != QJsonParseError::NoError) {
             showParserMessage(QString::fromLatin1("Could not parse config file '%1', line %2, column %3: %4.\n")

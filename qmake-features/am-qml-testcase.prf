@@ -6,7 +6,7 @@ QT_TOOL_NAME = appman-qmltestrunner
 !isEmpty(TEST_FILES): qtAddTargetEnv(COMMAND, QT)
 
 # If the test ends up in a different directory, we should cd to that directory.
-TESTRUN_CWD = $$_PRO_FILE_PWD_
+TESTRUN_CWD = $$DESTDIR
 
 debug_and_release:debug_and_release_target {
     # But in debug-and-release-target mode we don't want to cd into the debug/release
@@ -37,13 +37,13 @@ mac: COMMAND += --dbus=none
 
 # Add import dirs
 for(import, IMPORTS_DIR) {
-    COMMAND += -I $$import
+    COMMAND += -I $$absolute_path($$import, $$_PRO_FILE_PWD_)
 }
 OTHER_FILES += $$IMPORTS_DIR
 
 # Read a config file
 for(config, AM_CONFIG) {
-    COMMAND += -c $$config
+    COMMAND += -c $$absolute_path($$config, $$_PRO_FILE_PWD_)
 }
 OTHER_FILES += $$AM_CONFIG
 
@@ -54,6 +54,6 @@ QMAKE_EXTRA_TARGETS *= check
 
 # Execute a testrunner for every file
 for(file, TEST_FILES) {
-    check.commands += $$COMMAND $$file $(TESTARGS)
+    check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) -- $(TESTARGS)
 }
 OTHER_FILES += $$TEST_FILES

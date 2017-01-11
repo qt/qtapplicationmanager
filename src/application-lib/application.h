@@ -42,6 +42,7 @@
 #pragma once
 
 #include <QString>
+#include <QUrl>
 #include <QMap>
 #include <QVariant>
 #include <QStringList>
@@ -66,7 +67,7 @@ class Application : public QObject
     Q_PROPERTY(QString id READ id CONSTANT)
     Q_PROPERTY(QString runtimeName READ runtimeName NOTIFY bulkChange)
     Q_PROPERTY(QVariantMap runtimeParameters READ runtimeParameters NOTIFY bulkChange)
-    Q_PROPERTY(QString icon READ icon NOTIFY bulkChange)
+    Q_PROPERTY(QUrl icon READ iconUrl NOTIFY bulkChange)
     Q_PROPERTY(QString documentUrl READ documentUrl NOTIFY bulkChange)
     Q_PROPERTY(qreal importance READ importance NOTIFY bulkChange)
     Q_PROPERTY(bool builtIn READ isBuiltIn CONSTANT)
@@ -79,6 +80,9 @@ class Application : public QObject
     Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime READ currentRuntime NOTIFY runtimeChanged)
     Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged)
     Q_PROPERTY(ExitStatus lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged)
+    Q_PROPERTY(QString version READ version NOTIFY bulkChange)
+    Q_PROPERTY(BackgroundMode backgroundMode READ backgroundMode NOTIFY bulkChange)
+    Q_PROPERTY(Type type READ type NOTIFY bulkChange)
 
 public:
     enum Type { Gui, Headless };
@@ -97,6 +101,7 @@ public:
     QMap<QString, QString> names() const;
     Q_INVOKABLE QString name(const QString &language) const;
     QString icon() const;
+    QUrl iconUrl() const;
     QString documentUrl() const;
 
     bool isPreloaded() const;
@@ -118,6 +123,8 @@ public:
         PlaysAudio,
         TracksLocation
     };
+    Q_ENUM(BackgroundMode)
+
     BackgroundMode backgroundMode() const;
 
     QString version() const;

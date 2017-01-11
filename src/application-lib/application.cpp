@@ -155,6 +155,11 @@ QString Application::icon() const
     return m_icon.isEmpty() ? QString() : baseDir().absoluteFilePath(m_icon);
 }
 
+QUrl Application::iconUrl() const
+{
+    return QUrl::fromLocalFile(icon());
+}
+
 QString Application::documentUrl() const
 {
     return m_documentUrl;

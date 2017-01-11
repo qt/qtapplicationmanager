@@ -3,6 +3,9 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installedAppsManifestDir: "/tmp/am/manifests"
+  appImageMountDir: "/tmp/am/image-mounts"
+  database: "/tmp/am/apps.db"
 
 installationLocations:
 - id: "internal-0"

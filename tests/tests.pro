@@ -24,10 +24,9 @@ OTHER_FILES += \
 # sadly, the appman-packager is too complex to build as a host tool
 !cross_compile {
     prepareRecursiveTarget(check)
+    qtPrepareTool(APPMAN_PACKAGER, appman-packager)
 
     unix {
-        qtPrepareTool(APPMAN_PACKAGER, appman-packager)
-
         # create test data on the fly - this is needed for the CI server
         testdata.target = testdata
         testdata.depends = $$PWD/data/create-test-packages.sh $$APPMAN_PACKAGER_EXE

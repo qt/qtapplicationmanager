@@ -68,7 +68,29 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
             this, &HostProcess::finished);
     connect(&m_process, &QProcess::stateChanged, this, &HostProcess::stateChanged);
 
+#if defined(Q_OS_UNIX)
+    // make sure that the redirection fds do not have a close-on-exec flag, since we need them
+    // in the child process.
+    for (int fd : qAsConst(m_process.m_stdRedirections)) {
+        if (fd < 0)
+            continue;
+        int flags = fcntl(fd, F_GETFD);
+        if (flags & FD_CLOEXEC)
+            fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC);
+    }
+#endif
+
     m_process.start(program, arguments);
+
+#if defined(Q_OS_UNIX)
+    // we are forked now and the child process has received a copy of all redirected fds
+    // now it's time to close our fds, since we don't need them anymore (plus we would block
+    // the tty where they originated from)
+    for (int fd : qAsConst(m_process.m_stdRedirections)) {
+        if (fd >= 0)
+            ::close(fd);
+    }
+#endif
 }
 
 void HostProcess::setWorkingDirectory(const QString &dir)
@@ -104,16 +126,6 @@ QProcess::ProcessState HostProcess::state() const
 void HostProcess::setRedirections(const QVector<int> &stdRedirections)
 {
     m_process.m_stdRedirections = stdRedirections;
-
-#if defined(Q_OS_UNIX)
-    for (int fd : qAsConst(m_process.m_stdRedirections)) {
-        if (fd < 0)
-            continue;
-        int flags = fcntl(fd, F_GETFD);
-        if (flags & FD_CLOEXEC)
-            fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC);
-    }
-#endif
 }
 
 void HostProcess::setStopBeforeExec(bool stopBeforeExec)
@@ -264,10 +276,14 @@ void HostProcess::MyQProcess::setupChildProcess()
         fprintf(stderr, "\n*** a 'process' container was started in stopped state ***\nthe process is suspended via SIGSTOP and you can attach a debugger to it via\n\n   gdb -p %d\n\n", getpid());
         raise(SIGSTOP);
     }
+    // duplicate any requested redirections to the respective stdin/out/err fd. Also make sure to
+    // close the original fd: otherwise we would block the tty where the fds originated from.
     for (int i = 0; i < 3; ++i) {
         int fd = m_stdRedirections.value(i, -1);
-        if (fd >= 0)
+        if (fd >= 0) {
             dup2(fd, i);
+            ::close(fd);
+        }
     }
 #endif
 }

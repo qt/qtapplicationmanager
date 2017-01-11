@@ -49,6 +49,7 @@
 #if defined(QT_GUI_LIB)
 #  include <QDesktopServices>
 #endif
+#include <qplatformdefs.h>
 
 #include "global.h"
 
@@ -991,7 +992,19 @@ bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NA
 #else
     Q_UNUSED(redirections)
 #endif
-    return startApplication(fromId(id), documentUrl, qSL("--internal-redirect-only--"), redirectStd);
+    int result = startApplication(fromId(id), documentUrl, qSL("--internal-redirect-only--"), redirectStd);
+
+    if (!result) {
+        // we have to close the fds in this case, otherwise we block the tty where the fds are
+        // originating from.
+        //TODO: this really needs to fixed centrally (e.g. via the DebugWrapper), but this is the most
+        //      common error case for now.
+        for (int fd : qAsConst(redirectStd)) {
+            if (fd >= 0)
+                QT_CLOSE(fd);
+        }
+    }
+    return result;
 }
 
 bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &redirections, const QString &documentUrl)
@@ -1016,7 +1029,19 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 #else
     Q_UNUSED(redirections)
 #endif
-    return startApplication(fromId(id), documentUrl, debugWrapper, redirectStd);
+    int result = startApplication(fromId(id), documentUrl, debugWrapper, redirectStd);
+
+    if (!result) {
+        // we have to close the fds in this case, otherwise we block the tty where the fds are
+        // originating from.
+        //TODO: this really needs to fixed centrally (e.g. via the DebugWrapper), but this is the most
+        //      common error case for now.
+        for (int fd : qAsConst(redirectStd)) {
+            if (fd >= 0)
+                QT_CLOSE(fd);
+        }
+    }
+    return result;
 }
 #endif
 

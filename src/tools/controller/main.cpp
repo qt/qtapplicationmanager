@@ -36,6 +36,11 @@
 #include <QDBusConnection>
 #include <QDBusError>
 #include <QTimer>
+#include <QThread>
+
+#if defined(Q_OS_UNIX)
+#  include <sys/poll.h>
+#endif
 
 #include "global.h"
 #include "error.h"
@@ -417,12 +422,47 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId, 
             } else {
                 // on Ctrl+C or SIGTERM -> stop the application
                 UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
-                                                       { SIGTERM, SIGINT },
+                                                       { SIGTERM, SIGINT
+#if defined(Q_OS_UNIX)
+                                                                        , SIGPIPE, SIGHUP
+#endif
+                                                       },
                                                        [appId](int /*sig*/) {
                     auto reply = dbus.manager()->stopApplication(appId, true);
                     reply.waitForFinished();
                     qApp->exit(1);
                 });
+
+#if defined(POLLRDHUP)
+                // ssh does not forward Ctrl+C, but we can detect a hangup condition on stdin
+                class HupThread : public QThread
+                {
+                public:
+                    HupThread(QCoreApplication *parent)
+                        : QThread(parent)
+                    {
+                        connect(parent, &QCoreApplication::aboutToQuit, this, [this]() {
+                            if (isRunning()) {
+                                terminate();
+                                wait();
+                            }
+                        });
+                    }
+
+                    void run() override
+                    {
+                        while (true) {
+                            struct pollfd pfd = { 0, POLLRDHUP, 0 };
+                            int res = poll(&pfd, 1, -1);
+                            if (res == 1 && pfd.revents & POLLHUP) {
+                                kill(getpid(), SIGHUP);
+                                return;
+                            }
+                        }
+                    }
+                };
+                (new HupThread(qApp))->start();
+#endif // defined(POLLRDHUP)
 
                 // in case application quits -> quit the controller
                 QObject::connect(dbus.manager(), &IoQtApplicationManagerInterface::applicationRunStateChanged,

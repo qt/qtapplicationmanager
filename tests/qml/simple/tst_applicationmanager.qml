@@ -79,11 +79,6 @@ TestCase {
         compare(ApplicationManager.additionalConfiguration.mapTest["key2"], "2")
     }
 
-    function test_simple() {
-        verify(!ApplicationManager.securityChecksEnabled)
-        verify(!ApplicationManager.singleProcess)
-    }
-
     function test_application() {
         var id = simpleApplication.id;
         compare(simpleApplication.id, "tld.test.simple1")
@@ -103,7 +98,7 @@ TestCase {
         compare(simpleApplication.lastExitCode, 0)
         compare(simpleApplication.lastExitStatus, AppMan.Application.NormalExit)
         compare(simpleApplication.type, AppMan.Application.Gui)
-        compare(simpleApplication.bakgroundMode, AppMan.Application.Auto)
+        compare(simpleApplication.backgroundMode, AppMan.Application.Auto)
         compare(simpleApplication.version, "1.0")
 
         // Test the name getter and verify that it's returning the same object
@@ -157,7 +152,7 @@ TestCase {
         compare(listView.currentItem.modelData.runtimeName, "qml")
         compare(listView.currentItem.modelData.isRunning, false)
         compare(listView.currentItem.modelData.isStartingUp, false)
-        compare(listView.currentItem.modelData.isShutingDown, false)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
         compare(listView.currentItem.modelData.isLocked, false)
         compare(listView.currentItem.modelData.isUpdating, false)
         compare(listView.currentItem.modelData.isRemovable, false)
@@ -168,7 +163,7 @@ TestCase {
         compare(listView.currentItem.modelData.capabilities, simpleApplication.capabilities)
         compare(listView.currentItem.modelData.importance, simpleApplication.importance)
         compare(listView.currentItem.modelData.preload, simpleApplication.preload)
-        compare(listView.currentItem.modelData.version, "")
+        compare(listView.currentItem.modelData.version, "1.0")
     }
 
     function test_application_object_ownership() {

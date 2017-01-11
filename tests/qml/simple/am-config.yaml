@@ -2,7 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "apps"
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
 
 installationLocations:
 - id: "internal-0"

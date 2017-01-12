@@ -21,3 +21,22 @@ installationLocations:
   installationPath: "/media/sdcard/apps"
   documentPath: "/media/sdcard/docs"
   mountPoint: "/media/sdcard"
+
+# useful debug wrappers - mainly for Unix
+# %program% and %arguments% are internal variables
+
+debugWrappers:
+- name: gdbserver
+  command: [ '/usr/bin/gdbserver', ':%port%', '%program%', '%arguments%' ]
+  parameters:  # <name>: <default value>
+    port: 5555
+  supportedRuntimes: [ native, qml ]
+  supportedContainers: [ process ]
+- name: valgrind
+  command: [ '/usr/bin/valgrind', '%program%', '%arguments%' ]
+  supportedRuntimes: [ native, qml ]
+  supportedContainers: [ process ]
+- name: strace
+  command: [ '/usr/bin/strace', '%program%', '%arguments%' ]
+  supportedRuntimes: [ native, qml ]
+  supportedContainers: [ process ]

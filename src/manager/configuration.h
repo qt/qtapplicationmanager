@@ -74,6 +74,7 @@ public:
     bool noDltLogging() const;
     bool forceSingleProcess() const;
     bool forceMultiProcess() const;
+    bool qmlDebugging() const;
     QString singleApp() const;
     QStringList loggingRules() const;
 

@@ -194,6 +194,7 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("single-app"),           qSL("runs a single application only (ignores the database)"), qSL("info.yaml file") });
     d->clp.addOption({ qSL("logging-rule"),         qSL("adds a standard Qt logging rule."), qSL("rule") });
     d->clp.addOption({ qSL("build-config"),         qSL("dumps the build configuration and exits.") });
+    d->clp.addOption({ qSL("qml-debug"),            qSL("enables QML debugging and profiling.") });
 
     initialize();
 }
@@ -427,6 +428,11 @@ bool Configuration::forceSingleProcess() const
 bool Configuration::forceMultiProcess() const
 {
     return d->config<bool>("force-multi-process", { qSL("flags"), qSL("forceMultiProcess") });
+}
+
+bool Configuration::qmlDebugging() const
+{
+    return d->clp.isSet(qSL("qml-debug"));
 }
 
 QString Configuration::singleApp() const

@@ -81,6 +81,9 @@ application-manager is running in:
     application using your favorite debugging tool.
 \endlist
 
+To enable QML Debugging/Profiling in the application-manager or an application it needs to be started
+with the \c --qml-debug argument. See \l{QML Debugging Infrastructure} for more information.
+
 Please note that although the concept is called "debug" wrappers, these wrappers are not limited to
 actual debugging tasks. They are also useful for various other tasks that involve running the
 program under test through a wrapper, e.g. profiling tools.

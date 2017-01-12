@@ -63,6 +63,7 @@
 #include <QLibrary>
 #include <QFunctionPointer>
 #include <QProcess>
+#include <QQmlDebuggingEnabler>
 #include <private/qabstractanimation_p.h>
 
 #if !defined(AM_HEADLESS)
@@ -512,6 +513,10 @@ int main(int argc, char *argv[])
 
     setCrashActionConfiguration(configuration->managerCrashAction());
 
+    QQmlDebuggingEnabler *debuggingEnabler = nullptr;
+    if (configuration->qmlDebugging())
+        debuggingEnabler = new QQmlDebuggingEnabler(true);
+
     try {
         QStringList loggingRules = configuration->loggingRules();
         if (loggingRules.isEmpty())
@@ -929,6 +934,7 @@ int main(int argc, char *argv[])
         delete ql;
         delete sysmon;
         delete aipcm;
+        delete debuggingEnabler;
 
 #if defined(QT_PSSDP_LIB)
         if (ssdpOk)

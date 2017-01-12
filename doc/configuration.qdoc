@@ -223,6 +223,12 @@ all your imports paths and file references relative to your main config file.
     \li bool
     \li Enables QML Debugging/Profiling. See \l {Logging and Debugging} for more information.
 \row
+    \li \b --no-dlt-logging
+    \br \b -
+    \li bool
+    \li Disables logging using automotive DLT. This is especially useful when currently no dlt-daemon
+        is running as otherwise the processes will hang at exit for some time to send the logs.
+\row
     \li \b -
     \br \e installationLocation
     \li array<object>

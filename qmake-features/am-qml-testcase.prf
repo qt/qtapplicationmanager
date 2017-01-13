@@ -32,7 +32,7 @@ prefix_build {
 }
 
 # The check command
-COMMAND += $$AM_TESTRUNNER_DIR/appman-qmltestrunner -r
+COMMAND += $$AM_TESTRUNNER_DIR/appman-qmltestrunner -r --no-dlt-logging
 mac: COMMAND += --dbus=none
 
 # Add import dirs

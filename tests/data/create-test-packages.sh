@@ -45,8 +45,8 @@ usage()
      exit 1
 }
 
+[ "$#" -lt 1 ] && usage
 PACKAGER="${@: -1}"
-
 [ ! -x "$PACKAGER" ] && usage
 eval ${@:1:$# - 1}
 "$PACKAGER" --version 2>/dev/null | grep -qsi "Packager" || usage

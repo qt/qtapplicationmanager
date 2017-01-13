@@ -49,6 +49,7 @@
 #include "applicationmanager.h"
 #include "notificationmanager.h"
 #include "qml-utilities.h"
+#include "dbus-utilities.h"
 
 /*!
     \class NotificationManager
@@ -597,7 +598,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
     n->isShowingProgress = hints.value(qSL("x-pelagicore-show-progress")).toBool();
     n->progress = hints.value(qSL("x-pelagicore-progress")).toReal();
     n->timeout = qMax(0, timeout);
-    n->extended = hints.value(qSL("x-pelagicore-extended")).toMap();
+    n->extended = convertFromDBusVariant(hints.value(qSL("x-pelagicore-extended"))).toMap();
 
     if (replaces) {
         QModelIndex idx = index(d->notifications.indexOf(n), 0);

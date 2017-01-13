@@ -49,6 +49,8 @@ tools-only {
     SUBDIRS -= sub_examples
 }
 
+SUBDIRS += dummyimports
+
 if(linux|force-libcrypto):check_crypto = "libcrypto / OpenSSL"
 else:win32:check_crypto = "WinCrypt"
 else:osx:check_crypto = "SecurityFramework"
@@ -96,7 +98,13 @@ OTHER_FILES += \
     application-manager.conf \
     template-opt/am/*.yaml \
     qmake-features/*.prf \
-    sync.profile
+    sync.profile \
+    header.*[^~] \
+    LICENSE.*[^~] \
+    config.tests/libarchive/* \
+    config.tests/libcrypto/* \
+    config.tests/libdbus/* \
+    config.tests/libyaml/* \
 
 GCOV_EXCLUDE = /usr/* \
                $$[QT_INSTALL_PREFIX]/* \

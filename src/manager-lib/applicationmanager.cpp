@@ -769,34 +769,35 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
     QString containerId;
 
-    if (d->containerSelectionConfig.isEmpty()) {
-        containerId = qSL("process");
-    } else {
-        // check config file
-        for (const auto &it : qAsConst(d->containerSelectionConfig)) {
-            const QString &key = it.first;
-            const QString &value = it.second;
-            bool hasAsterisk = key.contains(qL1C('*'));
+    if (!inProcess) {
+        if (d->containerSelectionConfig.isEmpty()) {
+            containerId = qSL("process");
+        } else {
+            // check config file
+            for (const auto &it : qAsConst(d->containerSelectionConfig)) {
+                const QString &key = it.first;
+                const QString &value = it.second;
+                bool hasAsterisk = key.contains(qL1C('*'));
 
-            if ((hasAsterisk && key.length() == 1)
-                    || (!hasAsterisk && key == app->id())
-                    || QRegExp(key, Qt::CaseSensitive, QRegExp::Wildcard).exactMatch(app->id())) {
-                containerId = value;
-                break;
+                if ((hasAsterisk && key.length() == 1)
+                        || (!hasAsterisk && key == app->id())
+                        || QRegExp(key, Qt::CaseSensitive, QRegExp::Wildcard).exactMatch(app->id())) {
+                    containerId = value;
+                    break;
+                }
             }
         }
-    }
 
-    if (d->containerSelectionFunction.isCallable()) {
-        QJSValueList args = { QJSValue(app->id()), QJSValue(containerId) };
-        containerId = d->containerSelectionFunction.call(args).toString();
-    }
+        if (d->containerSelectionFunction.isCallable()) {
+            QJSValueList args = { QJSValue(app->id()), QJSValue(containerId) };
+            containerId = d->containerSelectionFunction.call(args).toString();
+        }
 
-    if (!ContainerFactory::instance()->manager(containerId)) {
-        qCWarning(LogSystem) << "No ContainerManager found for container:" << containerId;
-        return false;
+        if (!ContainerFactory::instance()->manager(containerId)) {
+            qCWarning(LogSystem) << "No ContainerManager found for container:" << containerId;
+            return false;
+        }
     }
-
     bool attachRuntime = false;
 
     if (debugWrapper.isValid()) {

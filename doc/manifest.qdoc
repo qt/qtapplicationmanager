@@ -182,6 +182,14 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
     \li Try to start the application immediately after boot, but keep it in the background. By
         default, applications are not preloaded.
 \row
+    \li \c supportsApplicationInterface
+    \li bool
+    \li If set to \c true the application must implement the \l ApplicationInterface API.
+        In this case the ApplicationManager will wait until the application is connected to the
+        ApplicationInterface on the P2P D-Bus until it marks it as 'running'. For runtimes that
+        support quick launching (like the \c qml runtime) this is not required as it defaults to
+        \c true. Otherwise the default is \c false.
+\row
     \li \c importance
     \li real
     \li A value between \c 0.0 and \c 1.0 specifying the inverse probability of being terminated in

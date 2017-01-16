@@ -111,7 +111,7 @@ private slots:
     void onProcessFinished(int exitCode, QProcess::ExitStatus status);
     void onProcessError(QProcess::ProcessError error);
     void onDBusPeerConnection(const QDBusConnection &connection);
-    void onLauncherFinishedInitialization();
+    void onApplicationFinishedInitialization();
 
 protected:
     explicit NativeRuntime(AbstractContainer *container, const Application *app, NativeRuntimeManager *parent);
@@ -126,7 +126,7 @@ private:
 
     QString m_document;
     bool m_launchWhenReady = false;
-    bool m_launched = false;
+    bool m_applicationInterfaceConnected = false;
     bool m_dbusConnection = false;
     QString m_dbusConnectionName;
 

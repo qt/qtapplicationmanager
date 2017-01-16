@@ -384,9 +384,16 @@ static QVector<const Application *> scanForApplications(const QStringList &built
             QScopedPointer<Application> a(yas.scan(appDir.absoluteFilePath(qSL("info.yaml"))));
             Q_ASSERT(a);
 
-            if (!RuntimeFactory::instance()->manager(a->runtimeName())) {
+            AbstractRuntimeManager *runtimeManager = RuntimeFactory::instance()->manager(a->runtimeName());
+            if (!runtimeManager) {
                 qCDebug(LogSystem) << "Ignoring application" << a->id() << ", because it uses an unknown runtime:" << a->runtimeName();
                 continue;
+            }
+            if (runtimeManager->supportsQuickLaunch()) {
+                if (a->supportsApplicationInterface())
+                    qCDebug(LogSystem) << "Ignoring supportsApplicationInterface for application" << a->id() <<
+                                          "as the runtime launcher supports it by default";
+                a->setSupportsApplicationInterface(true);
             }
             if (a->id() != appDirName) {
                 throw Exception(Error::Parse, "an info.yaml for built-in applications must be in directory "

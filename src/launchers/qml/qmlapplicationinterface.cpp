@@ -137,7 +137,7 @@ bool QmlApplicationInterface::initialize()
     QmlApplicationInterfaceExtension::initialize(m_connection);
 
     if (ok)
-        m_runtimeIf->asyncCall(qSL("finishedInitialization"));
+        finishedInitialization();
     return ok;
 }
 
@@ -157,6 +157,12 @@ Notification *QmlApplicationInterface::createNotification()
 void QmlApplicationInterface::acknowledgeQuit() const
 {
     QCoreApplication::instance()->quit();
+}
+
+void QmlApplicationInterface::finishedInitialization()
+{
+    if (m_applicationIf->isValid())
+        m_applicationIf->asyncCall(qSL("finishedInitialization"));
 }
 
 QVariantMap QmlApplicationInterface::systemProperties() const

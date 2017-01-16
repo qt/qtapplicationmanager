@@ -96,6 +96,10 @@ void QmlInProcessApplicationInterface::acknowledgeQuit()
     emit quitAcknowledged();
 }
 
+void QmlInProcessApplicationInterface::finishedInitialization()
+{
+}
+
 Notification *QmlInProcessApplicationInterface::createNotification()
 {
     QmlInProcessNotification *n = new QmlInProcessNotification(this, Notification::Dynamic);

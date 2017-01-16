@@ -17,5 +17,7 @@
     <signal name="openDocument">
       <arg name="documentUrl" type="s" direction="out"/>
     </signal>
+    <method name="finishedInitialization">
+    </method>
   </interface>
 </node>

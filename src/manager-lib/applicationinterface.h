@@ -67,6 +67,7 @@ public:
     Q_INVOKABLE Notification *createNotification();
     Q_INVOKABLE virtual void acknowledgeQuit() const;
 #endif
+    Q_SCRIPTABLE virtual void finishedInitialization() = 0;
 
 signals:
     Q_SCRIPTABLE void quit();

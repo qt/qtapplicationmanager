@@ -101,6 +101,7 @@ QVariantMap Application::toVariantMap() const
     map[qSL("environmentVariables")] = m_environmentVariables;
     map[qSL("installationLocationId")] = m_installationReport ? m_installationReport->installationLocationId() : QString();
     map[qSL("applicationProperties")] = m_allAppProperties;
+    map[qSL("supportsApplicationInterface")] = m_supportsApplicationInterface;
 
     return map;
 }
@@ -165,6 +166,11 @@ QUrl Application::iconUrl() const
 QString Application::documentUrl() const
 {
     return m_documentUrl;
+}
+
+bool Application::supportsApplicationInterface() const
+{
+    return m_supportsApplicationInterface;
 }
 
 int Application::lastExitCode() const
@@ -294,6 +300,7 @@ void Application::mergeInto(Application *app) const
     app->m_environmentVariables = m_environmentVariables;
     app->m_allAppProperties = m_allAppProperties;
     app->m_sysAppProperties = m_sysAppProperties;
+    app->m_supportsApplicationInterface = m_supportsApplicationInterface;
     emit app->bulkChange();
 }
 
@@ -334,6 +341,11 @@ void Application::setBaseDir(const QString &path)
 void Application::setBuiltIn(bool builtIn)
 {
     m_builtIn = builtIn;
+}
+
+void Application::setSupportsApplicationInterface(bool supportsAppInterface)
+{
+    m_supportsApplicationInterface = supportsAppInterface;
 }
 
 AbstractRuntime *Application::currentRuntime() const
@@ -393,6 +405,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
        >> app->m_documentUrl
        >> app->m_allAppProperties
        >> app->m_sysAppProperties
+       >> app->m_supportsApplicationInterface
        >> app->m_preload
        >> app->m_importance
        >> app->m_builtIn
@@ -460,6 +473,7 @@ void Application::writeToDataStream(QDataStream &ds, const QVector<const Applica
        << m_documentUrl
        << m_allAppProperties
        << m_sysAppProperties
+       << m_supportsApplicationInterface
        << m_preload
        << m_importance
        << m_builtIn

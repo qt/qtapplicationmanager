@@ -127,8 +127,8 @@ bool NativeRuntime::attachApplicationToQuickLauncher(const Application *app)
         // we have no D-Bus connection yet, so hope for the best
         ret = true;
     } else {
-        onLauncherFinishedInitialization();
-        ret = m_launched;
+        onApplicationFinishedInitialization();
+        ret = m_applicationInterfaceConnected;
     }
 
     if (ret)
@@ -161,7 +161,7 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
                        << "pid:" << m_process->processId() << ") exited with code:" << exitCode
                        << "status:" << status;
 
-    m_launched = m_launchWhenReady = m_dbusConnection = false;
+    m_applicationInterfaceConnected = m_launchWhenReady = m_dbusConnection = false;
 
     // unregister all extension interfaces
     foreach (ApplicationIPCInterface *iface, ApplicationIPCManager::instance()->interfaces()) {
@@ -271,7 +271,11 @@ void NativeRuntime::stop(bool forceKill)
     setState(Shutdown);
     emit aboutToStop();
 
-    if (forceKill) {
+    if (!m_applicationInterfaceConnected) {
+        //The launcher didn't connected to the RuntimeInterface yet, so we it won't get the quit signal
+        m_process->terminate();
+        deleteLater();
+    } else if (forceKill) {
         m_process->kill();
         deleteLater();
     } else {
@@ -288,7 +292,8 @@ void NativeRuntime::stop(bool forceKill)
 
 void NativeRuntime::onProcessStarted()
 {
-    setState(Active);
+    if (!m_needsLauncher && !application()->supportsApplicationInterface())
+        setState(Active);
 }
 
 void NativeRuntime::onProcessError(QProcess::ProcessError error)
@@ -321,8 +326,12 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
     QDBusConnection::sessionBus().registerObject(qSL("/Application%1/ApplicationInterface").arg(applicationProcessId()),
                                                  m_applicationInterface, QDBusConnection::ExportScriptableContents);
 #endif
+    // we need to delay the actual start call, until the launcher side is ready to
+    // listen to the interface
+    connect(m_applicationInterface, &NativeRuntimeApplicationInterface::applicationFinishedInitialization,
+            this, &NativeRuntime::onApplicationFinishedInitialization);
 
-    if (m_needsLauncher && m_launchWhenReady && !m_launched) {
+    if (m_needsLauncher && m_launchWhenReady && !m_applicationInterfaceConnected) {
         m_runtimeInterface = new NativeRuntimeInterface(this);
         if (!conn.registerObject(qSL("/RuntimeInterface"), m_runtimeInterface, QDBusConnection::ExportScriptableContents))
             qCWarning(LogSystem) << "ERROR: could not register the /RuntimeInterface object on the peer DBus.";
@@ -331,10 +340,6 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
         QDBusConnection::sessionBus().registerObject(qSL("/Application%1/RuntimeInterface").arg(applicationProcessId()),
                                                      m_runtimeInterface, QDBusConnection::ExportScriptableContents);
 #endif
-        // we need to delay the actual start call, until the launcher side is ready to
-        // listen to the interface
-        connect(m_runtimeInterface, &NativeRuntimeInterface::launcherFinishedInitialization,
-                this, &NativeRuntime::onLauncherFinishedInitialization);
     }
 
     // interface availability is dependent on the actual app and we don't
@@ -343,16 +348,19 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
         registerExtensionInterfaces();
 }
 
-void NativeRuntime::onLauncherFinishedInitialization()
+void NativeRuntime::onApplicationFinishedInitialization()
 {
-    if (m_needsLauncher && m_launchWhenReady && !m_launched && m_app && m_runtimeInterface) {
+    if (m_needsLauncher && m_launchWhenReady && !m_applicationInterfaceConnected && m_app && m_runtimeInterface) {
         registerExtensionInterfaces();
 
         QString baseDir = m_container->mapHostPathToContainer(m_app->baseDir().absolutePath());
         QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
         emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_app->toVariantMap());
-        m_launched = true;
+        m_applicationInterfaceConnected = true;
+
     }
+
+    setState(Active);
 }
 
 void NativeRuntime::registerExtensionInterfaces()
@@ -414,7 +422,6 @@ NativeRuntimeApplicationInterface::NativeRuntimeApplicationInterface(NativeRunti
                      this, &ApplicationInterface::interfaceCreated);
 }
 
-
 QString NativeRuntimeApplicationInterface::applicationId() const
 {
     if (m_runtime->application())
@@ -441,15 +448,15 @@ QVariantMap NativeRuntimeApplicationInterface::applicationProperties() const
     return QVariantMap();
 }
 
+void NativeRuntimeApplicationInterface::finishedInitialization()
+{
+    emit applicationFinishedInitialization();
+}
+
 NativeRuntimeInterface::NativeRuntimeInterface(NativeRuntime *runtime)
     : QObject(runtime)
     , m_runtime(runtime)
 { }
-
-void NativeRuntimeInterface::finishedInitialization()
-{
-    emit launcherFinishedInitialization();
-}
 
 
 NativeRuntimeManager::NativeRuntimeManager(QObject *parent)

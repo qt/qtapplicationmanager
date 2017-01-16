@@ -60,6 +60,11 @@ public:
     QVariantMap additionalConfiguration() const override;
     QVariantMap applicationProperties() const override;
 
+    virtual void finishedInitialization() override;
+
+signals:
+    void applicationFinishedInitialization();
+
 private:
     NativeRuntime *m_runtime;
 };
@@ -72,12 +77,8 @@ class NativeRuntimeInterface : public QObject
 public:
     NativeRuntimeInterface(NativeRuntime *runtime);
 
-    Q_SCRIPTABLE void finishedInitialization();
-
 signals:
     Q_SCRIPTABLE void startApplication(const QString &baseDir, const QString &app, const QString &document, const QVariantMap &application);
-
-    void launcherFinishedInitialization();
 
 private:
     NativeRuntime *m_runtime;

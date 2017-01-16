@@ -145,6 +145,8 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                     app->m_environmentVariables = v.toMap();
                 } else if (field == "preload") {
                     app->m_preload = v .toBool();
+                }  else if (field == "supportsApplicationInterface") {
+                    app->m_supportsApplicationInterface = v.toBool();
                 } else if (field == "importance") {
                     app->m_importance = v.toReal();
                 } else if (field == "builtIn" || field == "built-in") {

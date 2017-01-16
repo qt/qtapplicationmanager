@@ -84,6 +84,7 @@ class Application : public QObject
     Q_PROPERTY(QString version READ version NOTIFY bulkChange)
     Q_PROPERTY(BackgroundMode backgroundMode READ backgroundMode NOTIFY bulkChange)
     Q_PROPERTY(Type type READ type NOTIFY bulkChange)
+    Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface NOTIFY bulkChange)
 
 public:
     enum Type { Gui, Headless };
@@ -105,6 +106,7 @@ public:
     QUrl iconUrl() const;
     QString documentUrl() const;
 
+    bool supportsApplicationInterface() const;
     bool isPreloaded() const;
     qreal importance() const;
     bool isBuiltIn() const;
@@ -158,6 +160,7 @@ public:
     State state() const;
     qreal progress() const;
 
+    void setSupportsApplicationInterface(bool supportsAppInterface);
     void setBaseDir(const QString &path); //TODO: replace baseDir handling with something that works :)
     void setBuiltIn(bool builtIn);
 
@@ -186,6 +189,7 @@ private:
     QString m_documentUrl;
     QVariantMap m_allAppProperties;
     QVariantMap m_sysAppProperties;
+    bool m_supportsApplicationInterface = false;
 
     bool m_preload = false;
     qreal m_importance = 0; // relative to all others, with 0 being "normal"

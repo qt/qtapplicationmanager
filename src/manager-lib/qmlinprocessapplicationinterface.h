@@ -89,6 +89,7 @@ public:
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
     Q_INVOKABLE void acknowledgeQuit();
 
+    void finishedInitialization();
 
 signals:
     void quitAcknowledged();

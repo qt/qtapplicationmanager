@@ -91,9 +91,9 @@ QVariantMap QmlInProcessApplicationInterface::applicationProperties() const
     return QVariantMap();
 }
 
-void QmlInProcessApplicationInterface::acknowledgeQuit() const
+void QmlInProcessApplicationInterface::acknowledgeQuit()
 {
-    // Nothing to do
+    emit quitAcknowledged();
 }
 
 Notification *QmlInProcessApplicationInterface::createNotification()

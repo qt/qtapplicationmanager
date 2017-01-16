@@ -88,6 +88,7 @@ private slots:
     void onEnableFullscreen();
     void onDisableFullscreen();
 #endif
+    void finish(int exitCode, QProcess::ExitStatus status);
 
 private:
     QString m_document;

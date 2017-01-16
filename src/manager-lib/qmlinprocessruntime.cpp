@@ -43,6 +43,7 @@
 #include <QQmlContext>
 #include <QQmlComponent>
 #include <QCoreApplication>
+#include <QTimer>
 
 #if !defined(AM_HEADLESS)
 #  include <QQuickView>
@@ -57,6 +58,10 @@
 #include "global.h"
 #include "utilities.h"
 #include "runtimefactory.h"
+
+#if defined(Q_OS_UNIX)
+#  include <signal.h>
+#endif
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -137,10 +142,10 @@ bool QmlInProcessRuntime::start()
         qCDebug(LogSystem) << "Updated Qml import paths:" << m_inProcessQmlEngine->importPathList();
     }
 
-    QQmlComponent component(m_inProcessQmlEngine, m_app->absoluteCodeFilePath());
+    QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, m_app->absoluteCodeFilePath());
 
-    if (!component.isReady()) {
-        qCDebug(LogSystem) << "qml-file (" << m_app->absoluteCodeFilePath() << "): component not ready:\n" << component.errorString();
+    if (!component->isReady()) {
+        qCDebug(LogSystem) << "qml-file (" << m_app->absoluteCodeFilePath() << "): component not ready:\n" << component->errorString();
         return false;
     }
 
@@ -149,8 +154,10 @@ bool QmlInProcessRuntime::start()
     QQmlContext *appContext = new QQmlContext(m_inProcessQmlEngine->rootContext());
     m_applicationIf = new QmlInProcessApplicationInterface(this);
     appContext->setContextProperty(qSL("ApplicationInterface"), m_applicationIf);
+    connect(m_applicationIf, &QmlInProcessApplicationInterface::quitAcknowledged,
+            this, [=]() { finish(0, QProcess::NormalExit); });
 
-    QObject *obj = component.beginCreate(appContext);
+    QObject *obj = component->beginCreate(appContext);
 
     if (!obj) {
         qCCritical(LogSystem) << "could not load" << m_app->absoluteCodeFilePath() << ": no root object";
@@ -176,19 +183,19 @@ bool QmlInProcessRuntime::start()
     m_mainWindow = window;
 #endif
 
-    component.completeCreate();
-    if (!m_document.isEmpty())
-        emit openDocument(m_document);
-
-    setState(Active);
+    QTimer::singleShot(0, this, [component, this]() {
+        component->completeCreate();
+        if (!m_document.isEmpty())
+            emit openDocument(m_document);
+        setState(Active);
+        delete component;
+    });
     return true;
 }
 
 void QmlInProcessRuntime::stop(bool forceKill)
 {
-    Q_UNUSED(forceKill)   // ignore forceKill: for in-process there is nothing to 'kill'
-
-    emit stateChanged(Shutdown);
+    setState(Shutdown);
     emit aboutToStop();
 
 #if !defined(AM_HEADLESS)
@@ -197,9 +204,38 @@ void QmlInProcessRuntime::stop(bool forceKill)
     m_windows.clear();
     m_mainWindow = 0;
 #endif
-    setState(Inactive);
 
-    deleteLater();
+    if (forceKill) {
+#if defined(Q_OS_UNIX)
+        int exitCode = SIGKILL;
+#else
+        int exitCode = 0;
+#endif
+        finish(exitCode, QProcess::CrashExit);
+        return;
+    }
+
+    bool ok;
+    int qt = configuration().value(qSL("quitTime")).toInt(&ok);
+    if (!ok || qt < 0)
+        qt = 250;
+    QTimer::singleShot(qt, this, [this]() {
+#if defined(Q_OS_UNIX)
+        int exitCode = SIGTERM;
+#else
+        int exitCode = 0;
+#endif
+        finish(exitCode, QProcess::CrashExit);
+    });
+}
+
+void QmlInProcessRuntime::finish(int exitCode, QProcess::ExitStatus status)
+{
+    QTimer::singleShot(0, this, [this, exitCode, status]() {
+        emit finished(exitCode, status);
+        setState(Inactive);
+        deleteLater();
+    });
 }
 
 #if !defined(AM_HEADLESS)

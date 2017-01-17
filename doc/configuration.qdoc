@@ -380,7 +380,7 @@ ApplicationInstaller::getInstallationLocation
     \li bool
     \li Exactly one installation location can be the default location which must be mounted and
         accessible at all times. This can be used by an UI application to get a sensible
-        default for the installation location that it needs to pass to startPackageInstallation().
+        default for the installation location that it needs to pass to \l{ApplicationInstaller::startPackageInstallation()}{startPackageInstallation()}.
 \row
     \li \c installationPath
     \li string
@@ -449,8 +449,8 @@ an additional column specifying which runtime a configuration option applies to:
     \li qml
     \li int
     \li Defines the grace period in milliseconds an application is given for shutting down. This is
-        the time limit between receiving the \c quit() signal and responding with
-        \c acknowledgeQuit(). (default: 250).
+        the time limit between receiving the \l{ApplicationInterface::quit()}{quit()} signal and responding with
+        \l{ApplicationInterface::acknowledgeQuit()}{acknowledgeQuit()}. (default: 250).
 \row
     \li \c crashAction
     \li qml

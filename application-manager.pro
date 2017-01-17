@@ -125,11 +125,11 @@ global-check-coverage.target = check-coverage
 global-check-coverage.depends = coverage
 global-check-coverage.commands = ( \
     find . -name \"*.gcov-info\" -print0 | xargs -0 rm -f && \
-    lcov -c -i -d . --rc lcov_branch_coverage=1 --rc geninfo_auto_base=1 -o base.gcov-info && \
+    lcov -c -i -d . --rc lcov_branch_coverage=1 --rc geninfo_auto_base=1 -o $$OUT_PWD/base.gcov-info && \
     cd tests && make check && cd .. && \
-    lcov -c -d . --rc lcov_branch_coverage=1 --rc geninfo_auto_base=1 -o test.gcov-info && \
-    lcov --rc lcov_branch_coverage=1 -o temp.gcov-info `find . -name \"*.gcov-info\" | xargs -n1 echo -a` && \
-    lcov --rc lcov_branch_coverage=1 -o application-manager.gcov-info -r temp.gcov-info $$GCOV_EXCLUDE_STR && \
+    lcov -c -d . --rc lcov_branch_coverage=1 --rc geninfo_auto_base=1 -o $$OUT_PWD/test.gcov-info && \
+    lcov --rc lcov_branch_coverage=1 -o $$OUT_PWD/temp.gcov-info `find . -name \"*.gcov-info\" | xargs -n1 echo -a` && \
+    lcov --rc lcov_branch_coverage=1 -o $$OUT_PWD/application-manager.gcov-info -r temp.gcov-info $$GCOV_EXCLUDE_STR && \
     rm -f base.gcov-info test.gcov-info temp.gcov-info && \
     genhtml -o branch-coverage -s -f --legend --branch-coverage --rc lcov_branch_coverage=1 --demangle-cpp application-manager.gcov-info && echo \"\\n\\nCoverage info is available at file://`pwd`/branch-coverage/index.html\" \
 )

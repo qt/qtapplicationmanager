@@ -55,6 +55,68 @@
 #  include <sys/sysctl.h>
 #endif
 
+/*!
+    \class StartupTimer
+*/
+
+/*!
+    \qmltype StartupTimer
+    \inqmlmodule QtApplicationManager
+    \brief The StartupTimer logger.
+
+    The StartupTimer is the class for measuring startup time of the system UI
+    and applciations started by QtApplicationManager.
+
+    It logs the time from launching the process until it is running, also showing
+    various intermediate steps. In order to obtain startup timing \c $AM_STARTUP_TIMER
+    environment variable should be used. If set to \c 1, a startup performance analysis
+    will be printed on the console. Anything other than \c 1 will be interpreted as
+    the name of a file that is used instead of the console.
+
+    An example output:
+
+    \badcode
+    ==  STARTUP TIMING REPORT ==
+    0'070.000 StartupTimer main
+    0'070.011 after basic initialization
+    0'070.212 after sudo server fork
+    0'090.526 after application constructor
+    0'091.402 after command line parse
+    0'091.458 after logging setup
+    0'091.466 after startup-plugin load
+    0'091.985 after installer setup checks
+    0'092.807 after runtime registration
+    0'100.099 after application database loading
+    0'100.871 after ApplicationManager instantiation
+    0'100.898 after NotificationManager instantiation
+    0'100.963 after SystemMonitor instantiation
+    0'100.998 after quick-launcher setup
+    0'101.511 after ApplicationInstaller instantiation
+    0'101.578 after QML registrations
+    0'105.156 after QML engine instantiation
+    0'110.963 after D-Bus registrations
+    0'797.810 after loading main QML file
+    0'797.969 after WindowManager/QuickView instantiation
+    0'804.235 after window show
+    0'858.870 after first frame drawn
+    \endcode
+
+*/
+
+/*!
+    \qmlmethod StartupTimer::checkpoint(string name)
+
+    Adds a new checkpoint with the given \a name, using the current system time.
+    Each checkpoint corresponds to a single item in the output created by createReport.
+*/
+
+/*!
+    \qmlmethod StartupTimer::createReport(string title)
+
+    Outputs a reports using all checkpoints reported via the checkpoint function.
+    The \a title will be appended to the header of the report.
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 StartupTimer::StartupTimer()
@@ -199,16 +261,16 @@ void StartupTimer::checkpoint(const QString &name)
     checkpoint(ba.constData());
 }
 
-void StartupTimer::createReport()
+void StartupTimer::createReport(const QString &title)
 {
     if (m_output) {
         bool colorSupport = canOutputAnsiColors(fileno(m_output));
 
         if (!m_reportCreated) {
             if (colorSupport) {
-                fprintf(m_output, "\n\033[33m== STARTUP TIMING REPORT ==\033[0m\n");
+                fprintf(m_output, "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n", title.toLocal8Bit().data());
             } else {
-                fprintf(m_output, "\n== STARTUP TIMING REPORT ==\n");
+                fprintf(m_output, "\n== STARTUP TIMING REPORT: %s ==\n", title.toLocal8Bit().data());
             }
         }
 

@@ -61,7 +61,7 @@ public:
 
     void checkpoint(const char *name);
     Q_INVOKABLE void checkpoint(const QString &name);
-    Q_INVOKABLE void createReport();
+    Q_INVOKABLE void createReport(const QString &title = QString());
 
 private:
     FILE *m_output = 0;

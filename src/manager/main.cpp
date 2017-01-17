@@ -878,7 +878,7 @@ int main(int argc, char *argv[])
                 QObject::disconnect(conn);
                 once = false;
                 startupTimer.checkpoint("after first frame drawn");
-                startupTimer.createReport();
+                startupTimer.createReport(qSL("System UI"));
             }
         });
 

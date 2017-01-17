@@ -466,11 +466,6 @@ QVariantMap ApplicationManager::additionalConfiguration() const
     return d->systemProperties;
 }
 
-void ApplicationManager::setAdditionalConfiguration(const QVariantMap &map)
-{
-    d->systemProperties = map;
-}
-
 QVariantMap ApplicationManager::systemProperties() const
 {
     return d->systemProperties;
@@ -1137,7 +1132,7 @@ QStringList ApplicationManager::capabilities(const QString &id) const
 }
 
 /*!
-    \qmlmethod string ApplicationManager::identifyApplication(int pid, string securityToken)
+    \qmlmethod string ApplicationManager::identifyApplication(int pid)
 
     Validates the process running with process-identifier \a pid as a process started by the
     application manager.
@@ -1551,13 +1546,17 @@ QVariantMap ApplicationManager::get(const QString &id) const
 {
     AM_AUTHENTICATE_DBUS(QVariantMap)
 
-    int index = indexOfApplication(id);
-    if (index >= 0) {
-        auto map = get(index);
+    bool dbusCall =
+#if defined(QT_DBUS_LIB)
+                    calledFromDBus();
+#else
+                    false;
+#endif
+
+    auto map = get(indexOfApplication(id));
+    if (dbusCall)
         map.remove(qSL("application")); // cannot marshall QObject *
-        return map;
-    }
-    return QVariantMap();
+    return map;
 }
 
 ApplicationManager::RunState ApplicationManager::applicationRunState(const QString &id) const
@@ -1565,8 +1564,10 @@ ApplicationManager::RunState ApplicationManager::applicationRunState(const QStri
     AM_AUTHENTICATE_DBUS(ApplicationManager::RunState)
 
     int index = indexOfApplication(id);
-    if (index < 0)
+    if (index < 0) {
+        qCWarning(LogSystem) << "invalid index:" << index;
         return NotRunning;
+    }
     const Application *app = d->apps.at(index);
     if (!app->currentRuntime())
         return NotRunning;

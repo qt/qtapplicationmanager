@@ -513,8 +513,10 @@ void ApplicationManager::setDebugWrapperConfiguration(const QVariantList &debugW
         const QVariantMap &map = v.toMap();
 
         ContainerDebugWrapper dw(map);
-        if (dw.name().isEmpty() || dw.command().isEmpty())
+        if (!dw.isValid()) {
+            qCWarning(LogSystem) << "Ignoring invalid debug wrapper: " << dw.name();
             continue;
+        }
         d->debugWrappers.append(dw);
     }
 
@@ -568,8 +570,10 @@ ContainerDebugWrapper ApplicationManagerPrivate::parseDebugWrapperSpecification(
         }
     }
 
-    if (!dw.isValid())
+    if (!dw.isValid()) {
+        qCWarning(LogSystem) << "Couldn't find debug wrapper with name:" << name;
         return fail;
+    }
 
     for (auto it = userParams.cbegin(); it != userParams.cend(); ++it) {
         if (!dw.setParameter(it.key(), it.value()))

@@ -152,7 +152,7 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                 } else if (field == "builtIn" || field == "built-in") {
                     qWarning("The 'builtIn' field is deprecated. This line will not have any effect.");
                 } else if (field == "type") {
-                    app->m_type = (v.toString() == qL1S("headless") ? Application::Headless : Application::Gui);
+                    // ignored for backward compatibility
                 } else if (field == "capabilities") {
                     app->m_capabilities = variantToStringList(v);
                     app->m_capabilities.sort();

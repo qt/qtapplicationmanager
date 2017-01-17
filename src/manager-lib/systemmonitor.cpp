@@ -59,11 +59,6 @@
 
 
 /*!
-    \class SystemMonitor
-    \internal
-*/
-
-/*!
     \qmltype SystemMonitor
     \inqmlmodule QtApplicationManager
     \brief The SystemMonitor singleton.
@@ -937,7 +932,7 @@ int SystemMonitor::reportingRange() const
 }
 
 /*! \internal
-    report a frame swap for any window. \a item is \c 0 for the system-ui
+    report a frame swap for any window. \a item is \c 0 for the System-UI
 */
 void SystemMonitor::reportFrameSwap(QObject *item)
 {

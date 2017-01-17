@@ -266,7 +266,7 @@ all your imports paths and file references relative to your main config file.
     \li map<object>
     \li This can be used to specify options for containers - the key in this map is the
         container's name and the value is interpreted by the respective container implementation.
-        \l {Container configuration}{See below} for specific information.
+        \l {Containers} for specific information.
 \row
     \li \b -
     \br \e quicklaunch/idleLoad
@@ -305,7 +305,7 @@ all your imports paths and file references relative to your main config file.
     \br \e crashAction
     \li object
     \li Specifies which actions to take, if the application-manager is crashing. See
-        \l{Crash action specification} {below} for more information.
+        \l{Crash Action Specification} {below} for more information.
 \row
     \li \b -
     \br \e debugWrappers

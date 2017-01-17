@@ -46,6 +46,25 @@
 #include "cryptography.h"
 #include "exception.h"
 
+/*!
+    \qmltype Runtime
+    \inqmlmodule QtApplicationManager
+    \brief The handle for a runtime that is executing an \l Application.
+
+    While an \l Application is running, the associated Runtime object will be valid and yield access
+    to runtime related information.
+
+    Right now, only the accessor property for the \l Container object is exposed to the QML side.
+*/
+/*!
+    \qmlproperty Container Runtime::container
+    \readonly
+
+    This property returns the \l Container object of a running application. Please see the \l{Containers}
+    {general Container} and the \l Container class documentation for more information on containers
+    within the application-manager.
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 AbstractRuntime::AbstractRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager)

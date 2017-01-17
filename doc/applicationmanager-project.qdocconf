@@ -10,6 +10,8 @@ examples.fileextensions = "*.qml *.yaml"
 headerdirs = \
     ../src/manager \
     ../src/manager-lib \
+    ../src/application-lib \
+    ../src/package-lib \
     ../src/installer-lib \
     ../src/notification-lib \
     ../src/launchers/qml
@@ -18,6 +20,8 @@ sourcedirs = \
     . \
     ../src/manager \
     ../src/manager-lib \
+    ../src/application-lib \
+    ../src/package-lib \
     ../src/installer-lib \
     ../src/notification-lib \
     ../src/launchers/qml \

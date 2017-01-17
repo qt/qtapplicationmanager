@@ -44,6 +44,34 @@
 #include "application.h"
 #include "abstractcontainer.h"
 
+
+/*!
+    \qmltype Container
+    \inqmlmodule QtApplicationManager
+    \brief The handle for a container, that an application's \l Runtime is using.
+
+    Instances of this class are available to the System-UI via an application's \l Runtime object,
+    while an application is running. Please see the \l{Containers}{Container documentation} for
+    an in-depth description of containers within the application-manager.
+
+    \note Applications running in single-process mode (even ones using the \c qml-inprocess runtime
+          while the application-manager is running in multi-process mode) will have no Container
+          object associated.
+*/
+/*!
+    \qmlproperty string Container::controlGroup
+
+    This property lets you get and set which control group the application's container will be in.
+    The control group name handled by this property is not the low-level name used by the operating
+    system, but an abstraction. See the \l{control group mapping}{container documentation} for more
+    details on how to setup this mapping.
+
+    \note Control groups are only supported on Linux through the kernel's \c cgroup system in the
+          built-in \c process container. Custom container plugins might not implement the necessary
+          interface.
+*/
+
+
 QT_BEGIN_NAMESPACE_AM
 
 AbstractContainer::~AbstractContainer()

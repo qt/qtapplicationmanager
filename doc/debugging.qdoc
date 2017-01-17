@@ -156,7 +156,7 @@ ways to do this - all of them rely on a common way to specify which debug wrappe
 parameter values:
 
 \list
-\li Within your system-UI, do not use \c startApplication to start an app, but debugApplication:
+\li Within your System-UI, do not use \c startApplication to start an app, but debugApplication:
     \badcode
     ApplicationManager.debugApplication("io.qt.app", "gdbserver: { port: 5556 }")
     \endcode

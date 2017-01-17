@@ -134,7 +134,8 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
     \li \c categories
     \li array<string>
     \li The list of category names the application should be associated with. This is mainly for
-        the automated app-store upload and currently work in progress.
+        the automated app-store uploads as well as displaying the application within a fixed set
+        of categories in the System-UI.
 \row
     \li \c runtime
     \li string
@@ -174,8 +175,8 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
 \row
     \li \c documentUrl
     \li string
-    \li An optional default document that is used, if the application is started without specifying
-        a document (see ApplicationManager::startApplication).
+    \li An optional default document URL that is used, if the application is started without
+        specifying a document URL (see ApplicationManager::startApplication).
 \row
     \li \c preload
     \li bool
@@ -199,8 +200,9 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
     \li string
     \li Specifies if and why the application needs to be kept running in the background - can be
         one of: \c auto, \c never, \c voip, \c audio or \c location.
-        By default, the background mode is \c auto, which means it is up to the applicaton-manager
-        to decide.
+        By default, the background mode is \c auto.
+        This is just a hint for the System-UI - the application-manager itself will not enforce this
+        policy.
 \row
     \li \c mimeTypes
     \li array<string>
@@ -209,7 +211,7 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
     \li \c capabilities
     \li array<string>
     \li An optional, platform specific list of special access rights for the application - these
-        capabilities can later be queried and verified by the middleware via the application manager.
+        capabilities can later be queried and verified by the middleware via the application-manager.
 \row
     \li \c version
     \li string
@@ -218,7 +220,7 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
     \li \c applicationProperties
     \li object
     \li Exports user-defined properties (key/value pairs) to the application and the System-UI. The
-        actual properties must be listed under either the \c private or \c protected access control
+        actual properties must be listed under the \c private and \c protected access control
         tag (other properties will be ignored). The properties are exposed as
         ApplicationManager::application()::applicationProperties to the System-UI and as the
         ApplicationInterface::applicationProperties to the QML application:
@@ -273,7 +275,7 @@ name:
   en: "AM Radio"
   de: "Langwellenrundfunk"
 
-documentUrl: "am"
+documentUrl: "x-radio://am"
 
 \endcode
 

@@ -47,16 +47,11 @@
 
 
 /*!
-    \class ApplicationIPCManager
-    \internal
-*/
-
-/*!
     \qmltype ApplicationIPCManager
     \inqmlmodule QtApplicationManager
     \brief The ApplicationIPCManager singleton.
 
-    This singleton type is the central manager for app-to-system-ui IPC interfaces within the application-manager.
+    This singleton type is the central manager for app-to-System-UI IPC interfaces within the application-manager.
 
     It only exports a single function towards the QML System-UI: registerInterface().
 

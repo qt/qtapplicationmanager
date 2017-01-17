@@ -52,11 +52,6 @@
 #include "dbus-utilities.h"
 
 /*!
-    \class NotificationManager
-    \internal
-*/
-
-/*!
     \externalpage https://developer.gnome.org/notification-spec/
     \title freedesktop.org specification
 */

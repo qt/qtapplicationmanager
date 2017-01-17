@@ -124,7 +124,6 @@ public:
 
     QVariantMap systemProperties() const;
 
-public slots:
     virtual bool start() = 0;
     virtual void stop(bool forceKill = false) = 0;
 

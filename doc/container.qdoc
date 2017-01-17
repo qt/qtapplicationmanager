@@ -40,7 +40,7 @@ The application-manager comes with a single type of container built-in: the \c p
 which simply spawns a new Unix process to execute the requested binary.
 
 In addition, a very basic integration of Pelagicore's
-\l{software-containers}{https://github.com/Pelagicore/softwarecontainer} is provided in \c
+\l{https://github.com/Pelagicore/softwarecontainer}{software-containers} is provided in \c
 examples/softwarecontainers. This can be used as a blueprint to either create a customer-specific
 production version of a softwarecontainers plugin, or to integrate another container solution.
 
@@ -124,13 +124,14 @@ The \c process container accepts the following configuration settings:
   \li Type
   \li Description
 \row
+  \target control group mapping
   \li \c controlGroups
   \li object
   \li A two-stage mapping object to allow for more readable code when dealing with cgroups from the
-      system-ui via AbstractContainer::setControlGroup. The top-level keys are readable group names
-      that are used to interface AbstractContainer::setControlGroup and
-      AbstractContainer::controlGroup, while the values are themselves maps between multiple
-      low-level cgroup sub-system names and the actual cgroup names within those sub-systems, e.g.:
+      System-UI via Container::controlGroup. The top-level keys are readable group names
+      that are used to interface Container::controlGroup, while the values are themselves
+      maps between multiple low-level cgroup sub-system names and the actual cgroup names within
+      those sub-systems, e.g.:
 
 \badcode
 controlGroups:
@@ -177,7 +178,7 @@ containers:
 \endcode
 
 
-\li Afterwards, if the system-ui did set the ApplicationManager::containerSelectionFunction property
+\li Afterwards, if the System-UI did set the ApplicationManager::containerSelectionFunction property
     to a valid JavaScript function, this function will be called with the first parameter set to the
     application's id and the second parameter set to the container integration id that resulted from
     step 1 and 2.

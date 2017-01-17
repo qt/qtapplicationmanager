@@ -63,11 +63,6 @@
     } while (false);
 
 /*!
-    \class ApplicationInstaller
-    \internal
-*/
-
-/*!
     \qmltype ApplicationInstaller
     \inqmlmodule QtApplicationManager
     \brief The ApplicationInstaller singleton.

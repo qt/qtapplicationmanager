@@ -68,11 +68,6 @@ public:
 
 
 /*!
-    \class ApplicationManagerWindow
-    \internal
-*/
-
-/*!
     \qmltype ApplicationManagerWindow
     \inqmlmodule QtApplicationManager
     \brief The ApplicationManagerWindow item

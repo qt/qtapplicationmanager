@@ -73,23 +73,19 @@ class Application : public QObject
     Q_PROPERTY(bool builtIn READ isBuiltIn CONSTANT)
     Q_PROPERTY(bool alias READ isAlias CONSTANT)
     Q_PROPERTY(bool preload READ isPreloaded NOTIFY bulkChange)
-    Q_PROPERTY(const QT_PREPEND_NAMESPACE_AM(Application) *nonAliased READ nonAliased CONSTANT)
+    Q_PROPERTY(const Application *nonAliased READ nonAliased CONSTANT)
     Q_PROPERTY(QStringList capabilities READ capabilities NOTIFY bulkChange)
     Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes NOTIFY bulkChange)
     Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties NOTIFY bulkChange)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime READ currentRuntime NOTIFY runtimeChanged)
+    Q_PROPERTY(AbstractRuntime *runtime READ currentRuntime NOTIFY runtimeChanged)
     Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged)
     Q_PROPERTY(ExitStatus lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged)
     Q_PROPERTY(QString version READ version NOTIFY bulkChange)
     Q_PROPERTY(BackgroundMode backgroundMode READ backgroundMode NOTIFY bulkChange)
-    Q_PROPERTY(Type type READ type NOTIFY bulkChange)
     Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface NOTIFY bulkChange)
 
 public:
-    enum Type { Gui, Headless };
-    Q_ENUM(Type)
-
     enum ExitStatus { NormalExit, CrashExit, ForcedExit };
     Q_ENUM(ExitStatus)
 
@@ -118,7 +114,6 @@ public:
     QStringList categories() const;
     QVariantMap applicationProperties() const;
     QVariantMap allAppProperties() const;
-    Type type() const;
 
     enum BackgroundMode
     {
@@ -208,8 +203,6 @@ private:
     QScopedPointer<InstallationReport> m_installationReport;
     QDir m_baseDir;
     uint m_uid = uint(-1); // unix user id - move to installationReport
-
-    Type m_type = Gui;
 
     // dynamic part
     mutable AbstractRuntime *m_runtime = 0;

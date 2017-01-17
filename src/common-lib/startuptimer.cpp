@@ -56,10 +56,6 @@
 #endif
 
 /*!
-    \class StartupTimer
-*/
-
-/*!
     \qmltype StartupTimer
     \inqmlmodule QtApplicationManager
     \brief The StartupTimer logger.

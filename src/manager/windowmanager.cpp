@@ -76,11 +76,6 @@
     } while (false);
 
 /*!
-    \class WindowManager
-    \internal
-*/
-
-/*!
     \qmltype WindowManager
     \inqmlmodule QtApplicationManager
     \brief The WindowManager singleton.
@@ -266,7 +261,7 @@
 
     \note It is mandatory to call releaseWindow() after the windowLost() signal has been received: all
           resources associated with the window surface will not be released automatically. The
-          timing is up to the system-ui; calling releaseWindow() can be delayed in order to play a
+          timing is up to the System-UI; calling releaseWindow() can be delayed in order to play a
           shutdown animation, but failing to call it will result in resource leaks.
 
     More information about this window (for example, the corresponding application) can be retrieved via the
@@ -511,7 +506,7 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 
     \note It is mandatory to call this function after the windowLost() signal has been received: all
           resources associated with the window surface will not be released automatically. The
-          timing is up to the system-ui; calling releaseWindow() can be delayed in order to play a
+          timing is up to the System-UI; calling releaseWindow() can be delayed in order to play a
           shutdown animation, but failing to call it will result in resource leaks.
 
     \sa windowLost
@@ -863,7 +858,53 @@ bool WindowManager::setDBusPolicy(const QVariantMap &yamlFragment)
 /*!
     \qmlmethod bool WindowManager::makeScreenshot(string filename, string selector)
 
-    \TODO
+    Creates one or several screenshots depending on the \a selector, saving them to the files
+    specified by \a filename.
+
+    The \a filename argument can either be a plain file name for single screenshots, or it can
+    contain format sequences that will be replaced accordingly, if multiple screenshots are
+    requested:
+
+    \table
+    \header
+        \li Format
+        \li Description
+    \row
+        \li \c{%s}
+        \li Will be replaced with the screen-id of this particular screenshot.
+    \row
+        \li \c{%i}
+        \li Will be replaced with the application id, when making screenshots of application
+            windows.
+    \row
+        \li \c{%%}
+        \li Will be replaced by a single \c{%} character.
+    \endtable
+
+    The \a selector argument is a string which is parsed according to this pattern:
+    \badcode
+    <application-id>[window-property=value]:<screen-id>
+    \endcode
+
+    All parts are optional, so if you specify an empty string, the call will create a screenshot
+    of every screen.
+    If you specify an \c application-id (which can also contain wildcards for matching multiple
+    applications), a screenshot will be made for each window of this (these) application(s).
+    If only specific windows of one or more applications should be used to create screenshots, you
+    can specify a \c window-property selector, which will only select windows that have a matching
+    WindowManager::windowProperty.
+    Adding a \c screen-id will restrict the creation of screenshots to the the specified screen.
+
+    Here is an example, creating screenshots of all windows on the second screen, that have the
+    window-property \c type set to \c cluster and written by Pelagicore:
+    \badcode
+    com.pelagicore.*[type=cluster]:1
+    \endcode
+
+    Returns \c true on success and \c false otherwise.
+
+    \note This call will be handled asynchronously and might exceed expected D-Bus timeouts when
+          called synchronously.
 */
 bool WindowManager::makeScreenshot(const QString &filename, const QString &selector)
 {
@@ -935,7 +976,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
             }
         }
     } else {
-        // app without system-UI
+        // app without System-UI
 
         QVector<const Application *> apps;
         foreach (const Application *app, ApplicationManager::instance()->applications()) {

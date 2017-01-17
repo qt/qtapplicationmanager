@@ -49,6 +49,181 @@
 #include "installationreport.h"
 #include "yamlapplicationscanner.h"
 
+/*!
+    \qmltype Application
+    \inqmlmodule QtApplicationManager
+    \brief The handle for an application known to the ApplicationManager.
+
+    Most of the read-only properties map directly to values read from the application's
+    \c info.yaml file - these are documented in the \l{Manifest Definition}.
+
+    \note There is an unfortunate naming conflict with the (undocumented) \c Application object
+          returned from \l{QtQml::Qt::application}{Qt.application}. If you want to use the enums
+          defined in the application-manager's \c Application class, you need to use an alias import:
+
+    \badcode
+    import QtApplicationManager 1.0 as AppMan
+
+    ...
+
+    if (app.lastExitStatus == AppMan.Application.NormalExit)
+        ...
+    \endcode
+*/
+
+/*!
+    \qmlproperty string Application::id
+    \readonly
+
+    This property returns the unique id of the application.
+*/
+/*!
+    \qmlproperty string Application::runtimeName
+    \readonly
+
+    This property holds the name of the runtime, necessary to run the application's code.
+*/
+/*!
+    \qmlproperty object Application::runtimeParameters
+    \readonly
+
+    This property holds a QVariantMap that is passed onto, and interpreted by the application's
+    runtime.
+*/
+/*!
+    \qmlproperty url Application::icon
+    \readonly
+
+    The URL of the application's icon - can be used as the source property of an \l Image.
+*/
+/*!
+    \qmlproperty string Application::documentUrl
+    \readonly
+
+    This property always returns the default \c documentUrl specified in the manifest file, even if
+    a different URL was used to start the application.
+*/
+/*!
+    \qmlproperty real Application::importance
+    \readonly
+
+    A value between \c 0.0 and \c 1.0 specifying the inverse probability of being terminated in
+    out-of-memory situations (the default is \c 0.0 - unimportant).
+*/
+/*!
+    \qmlproperty bool Application::builtIn
+    \readonly
+
+    This property describes, if this application is part of the built-in set of applications of the
+    current System-UI.
+*/
+/*!
+    \qmlproperty bool Application::alias
+    \readonly
+
+    Will return \c true if this Application object is an alias to another one.
+*/
+/*!
+    \qmlproperty bool Application::preload
+    \readonly
+
+    When set to true, the application-manager tries to start the application immediately after boot,
+    but keeps it in the background.
+*/
+/*!
+    \qmlproperty Application Application::nonAliased
+    \readonly
+
+    If this Application object is an alias, then you can access the non-alias, base Application
+    object via this property.
+*/
+/*!
+    \qmlproperty list<string> Application::capabilities
+    \readonly
+
+    A list of special access rights for the application - these capabilities can later be queried
+    and verified by the middleware via the application-manager.
+*/
+/*!
+    \qmlproperty list<string> Application::supportedMimeTypes
+    \readonly
+
+    An array of MIME types the application can handle.
+*/
+/*!
+    \qmlproperty list<string> Application::categories
+    \readonly
+
+    A list of category names the application should be associated with. This is mainly for the
+    automated app-store uploads as well as displaying the application within a fixed set of
+    categories in the System-UI.
+*/
+/*!
+    \qmlproperty object Application::applicationProperties
+    \readonly
+
+    All user-defined properties of this application as listed in the private and protected sections
+    of the \c applicationProperties field in the manifest file.
+*/
+/*!
+    \qmlproperty Runtime Application::runtime
+    \readonly
+
+    Will return a valid \l Runtime object, if the application is currently starting, running or
+    shutting down. May return a \c null object, if the application was not yet started.
+*/
+/*!
+    \qmlproperty int Application::lastExitCode
+    \readonly
+
+    This property holds the last exit-code of the application's process in multi-process mode.
+    On successful application shutdown, this value should normally be \c 0, but can be whatever
+    the application returns from its \c main() function.
+*/
+/*!
+    \qmlproperty enumeration Application::lastExitStatus
+    \readonly
+
+    This property returns the last exit-status of the application's process in multi-process mode.
+
+    \list
+    \li Application.NormalExit - The application exited normally.
+    \li Application.CrashExit - The application crashed.
+    \li Application.ForcedExit - The application was killed by the application-manager, since it
+                                 ignored the quit request originating from a call to
+                                 ApplicationManager::stopApplication.
+    \endlist
+
+    \sa ApplicationInterface::quit, ApplicationInterface::acknowledgeQuit
+*/
+/*!
+    \qmlproperty string Application::version
+    \readonly
+
+    Holds the version of the application as a string.
+*/
+/*!
+    \qmlproperty enumeration Application::backgroundMode
+    \readonly
+
+    Specifies if and why the application needs to be kept running in the background - can be
+    one of:
+
+    \list
+    \li Application.Auto - The application does not care.
+    \li Application.Never - The application should not be kept running in the background.
+    \li Application.ProvidesVoIP - The application provides VoIP services while in the background.
+    \li Application.PlaysAudio - The application plays audio while in the background.
+    \li Application.TracksLocation - The application tracks the current location while in the
+                                     background.
+    \endlist
+
+    By default, the background mode is \c Auto.
+    This is just a hint for the System-UI - the application-manager itself will not enforce this
+    policy.
+*/
+
+
 QT_BEGIN_NAMESPACE_AM
 
 //TODO Make this really unique
@@ -233,11 +408,6 @@ QVariantMap Application::allAppProperties() const
     return m_allAppProperties;
 }
 
-Application::Type Application::type() const
-{
-    return m_nonAliased ? m_nonAliased->m_type : m_type;
-}
-
 Application::BackgroundMode Application::backgroundMode() const
 {
     return m_nonAliased ? m_nonAliased->m_backgroundMode : m_backgroundMode;
@@ -265,13 +435,11 @@ void Application::validate() const throw(Exception)
     if (runtimeName().isEmpty())
         throw Exception(Error::Parse, "the 'runtimeName' field must not be empty");
 
-    if (type() == Gui) {
-        if (icon().isEmpty())
-            throw Exception(Error::Parse, "the 'icon' field must not be empty");
+    if (icon().isEmpty())
+        throw Exception(Error::Parse, "the 'icon' field must not be empty");
 
-        if (names().isEmpty())
-            throw Exception(Error::Parse, "the 'name' field must not be empty");
-    }
+    if (names().isEmpty())
+        throw Exception(Error::Parse, "the 'name' field must not be empty");
 
     // This check won't work during installations, since icon.png is extracted after info.json
     //        if (!QFile::exists(displayIcon()))

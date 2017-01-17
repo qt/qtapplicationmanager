@@ -79,11 +79,6 @@
 
 
 /*!
-    \class ApplicationManager
-    \internal
-*/
-
-/*!
     \qmltype ApplicationManager
     \inqmlmodule QtApplicationManager
     \brief The ApplicationManager singleton.
@@ -227,6 +222,14 @@
     \readonly
 
     Returns the project specific \l{system properties} that were set via the config file.
+*/
+
+/*!
+    \qmlproperty var ApplicationManager::containerSelectionFunction
+
+    A JavaScript function callback that will be called whenever the application-manager needs to
+    instantiate a container for running an application. See \l {Container Selection Configuration}
+    for more information.
 */
 
 /*!

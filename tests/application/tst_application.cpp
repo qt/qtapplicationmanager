@@ -193,13 +193,13 @@ void tst_Application::application()
     QVERIFY(app->categories().endsWith(qSL("foo")));
 
     QVERIFY(!app->currentRuntime());
-    QVERIFY(!app->isLocked());
-    QVERIFY(app->lock());
-    QVERIFY(!app->lock());
-    QVERIFY(app->isLocked());
-    QVERIFY(app->unlock());
-    QVERIFY(!app->unlock());
-    QVERIFY(!app->isLocked());
+    QVERIFY(!app->isBlocked());
+    QVERIFY(app->block());
+    QVERIFY(!app->block());
+    QVERIFY(app->isBlocked());
+    QVERIFY(app->unblock());
+    QVERIFY(!app->unblock());
+    QVERIFY(!app->isBlocked());
     QVERIFY(app->state() == Application::Installed);
     QCOMPARE(app->progress(), qreal(0));
 

@@ -177,8 +177,8 @@ private slots:
     //TODO: Find something nicer than private slots with 3 friend classes.
     //      This is hard though, since the senders live in different threads and
     //      need to use BlockingQueuedConnections
-    bool lockApplication(const QString &id);
-    bool unlockApplication(const QString &id);
+    bool blockApplication(const QString &id);
+    bool unblockApplication(const QString &id);
     bool startingApplicationInstallation(QT_PREPEND_NAMESPACE_AM(Application*) installApp);
     bool startingApplicationRemoval(const QString &id);
     void progressingApplicationInstall(const QString &id, qreal progress);

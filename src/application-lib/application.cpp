@@ -362,19 +362,19 @@ void Application::setCurrentRuntime(AbstractRuntime *rt) const
     emit runtimeChanged();
 }
 
-bool Application::isLocked() const
+bool Application::isBlocked() const
 {
-    return (m_nonAliased ? m_nonAliased->m_locked : m_locked).load() == 1;
+    return (m_nonAliased ? m_nonAliased->m_blocked : m_blocked).load() == 1;
 }
 
-bool Application::lock() const
+bool Application::block() const
 {
-    return (m_nonAliased ? m_nonAliased->m_locked : m_locked).testAndSetOrdered(0, 1);
+    return (m_nonAliased ? m_nonAliased->m_blocked : m_blocked).testAndSetOrdered(0, 1);
 }
 
-bool Application::unlock() const
+bool Application::unblock() const
 {
-    return (m_nonAliased ? m_nonAliased->m_locked : m_locked).testAndSetOrdered(1, 0);
+    return (m_nonAliased ? m_nonAliased->m_blocked : m_blocked).testAndSetOrdered(1, 0);
 }
 
 Application::State Application::state() const

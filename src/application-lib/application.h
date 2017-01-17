@@ -147,9 +147,9 @@ public:
     // dynamic part
     AbstractRuntime *currentRuntime() const;
     void setCurrentRuntime(AbstractRuntime *rt) const;
-    bool isLocked() const;
-    bool lock() const;
-    bool unlock() const;
+    bool isBlocked() const;
+    bool block() const;
+    bool unblock() const;
 
     enum State {
         Installed,
@@ -213,7 +213,7 @@ private:
 
     // dynamic part
     mutable AbstractRuntime *m_runtime = 0;
-    mutable QAtomicInt m_locked;
+    mutable QAtomicInt m_blocked;
     mutable QAtomicInt m_mounted;
 
     mutable State m_state = Installed;

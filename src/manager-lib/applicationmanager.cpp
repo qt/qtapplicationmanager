@@ -717,7 +717,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         qCWarning(LogSystem) << "Cannot start an invalid application";
         return false;
     }
-    if (app->isLocked()) {
+    if (app->isBlocked()) {
         qCWarning(LogSystem) << "Application" << app->id() << "is blocked - cannot start";
         return false;
     }
@@ -1152,12 +1152,12 @@ QString ApplicationManager::identifyApplication(qint64 pid) const
     return app ? app->id() : QString();
 }
 
-bool ApplicationManager::lockApplication(const QString &id)
+bool ApplicationManager::blockApplication(const QString &id)
 {
     const Application *app = fromId(id);
     if (!app)
         return false;
-    if (!app->lock())
+    if (!app->block())
         return false;
     emitDataChanged(app, QVector<int> { IsBlocked });
     stopApplication(app, true);
@@ -1165,12 +1165,12 @@ bool ApplicationManager::lockApplication(const QString &id)
     return true;
 }
 
-bool ApplicationManager::unlockApplication(const QString &id)
+bool ApplicationManager::unblockApplication(const QString &id)
 {
     const Application *app = fromId(id);
     if (!app)
         return false;
-    if (!app->unlock())
+    if (!app->unblock())
         return false;
     emitDataChanged(app, QVector<int> { IsBlocked });
     return true;
@@ -1185,7 +1185,7 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
         return false;
 
     if (app) { // update
-        if (!lockApplication(app->id()))
+        if (!blockApplication(app->id()))
             return false;
         installApp->mergeInto(const_cast<Application *>(app));
         app->m_state = Application::BeingUpdated;
@@ -1193,7 +1193,7 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
         emitDataChanged(app, QVector<int> { IsUpdating });
     } else { // installation
         installApp->setParent(this);
-        installApp->m_locked.ref();
+        installApp->block();
         installApp->m_state = Application::BeingInstalled;
         installApp->m_progress = 0;
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
@@ -1219,13 +1219,13 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
 bool ApplicationManager::startingApplicationRemoval(const QString &id)
 {
     const Application *app = fromId(id);
-    if (!app || app->m_locked.load() || (app->m_state != Application::Installed))
+    if (!app || app->isBlocked() || (app->m_state != Application::Installed))
         return false;
 
     if (app->isBuiltIn())
         return false;
 
-    if (!lockApplication(id))
+    if (!blockApplication(id))
         return false;
 
     app->m_state = Application::BeingRemoved;
@@ -1259,7 +1259,7 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
         app->m_progress = 0;
         emitDataChanged(app, QVector<int> { IsUpdating });
 
-        unlockApplication(id);
+        unblockApplication(id);
         break;
 
     case Application::BeingRemoved: {
@@ -1312,7 +1312,7 @@ bool ApplicationManager::canceledApplicationInstall(const QString &id)
         app->m_progress = 0;
         emitDataChanged(app, QVector<int> { IsUpdating });
 
-        unlockApplication(id);
+        unblockApplication(id);
         break;
     }
     return true;
@@ -1396,7 +1396,7 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
     case IsShuttingDown:
         return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Shutdown) : false;
     case IsBlocked:
-        return app->isLocked();
+        return app->isBlocked();
     case IsUpdating:
         return app->state() != Application::Installed;
     case UpdateProgress:

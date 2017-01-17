@@ -1,5 +1,7 @@
 TEMPLATE = aux
 
+load(am-config)
+
 # Add environment for non-installed builds. Do this first, so the
 # 'make' variable expansions don't end up in a batch file/script.
 QT_TOOL_NAME = appman-qmltestrunner
@@ -34,6 +36,7 @@ prefix_build {
 # The check command
 COMMAND += $$AM_TESTRUNNER_DIR/appman-qmltestrunner -r --no-dlt-logging
 mac: COMMAND += --dbus=none
+multi-process: COMMAND += --start-session-dbus
 
 # Add import dirs
 for(import, IMPORTS_DIR) {

@@ -130,6 +130,7 @@
 
 #ifdef AM_TESTRUNNER
 #include "testrunner.h"
+#include "qtyaml.h"
 #endif
 
 QT_BEGIN_NAMESPACE_AM
@@ -807,6 +808,16 @@ int main(int argc, char *argv[])
 
         startupTimer.checkpoint("after QML engine instantiation");
 
+#ifdef AM_TESTRUNNER
+        QFile f(qSL(":/build-config.yaml"));
+        QVector<QVariant> docs;
+        if (f.open(QFile::ReadOnly))
+            docs = QtYaml::variantDocumentsFromYaml(f.readAll());
+        f.close();
+
+        engine->rootContext()->setContextProperty("buildConfig", docs.toList());
+#endif
+
 #if !defined(AM_HEADLESS)
 
         // For development only: set an icon, so you know which window is the AM
@@ -954,12 +965,16 @@ int main(int argc, char *argv[])
 
         QObject::connect(qApp, &QCoreApplication::aboutToQuit,
                          ApplicationManager::instance(), &ApplicationManager::killAll);
-
 #ifdef AM_TESTRUNNER
+        Q_UNUSED(nm);
+        Q_UNUSED(sysmon);
+        Q_UNUSED(aipcm);
+        Q_UNUSED(debuggingEnabler);
+
         int res =  TestRunner::exec(engine);
+        delete engine;
 #else
         int res = a.exec();
-#endif
 
         // the eventloop stopped, so any pending "retakes" would not be executed
         retakeSingletonOwnershipFromQmlEngine(engine, am, true);
@@ -974,6 +989,7 @@ int main(int argc, char *argv[])
         delete sysmon;
         delete aipcm;
         delete debuggingEnabler;
+#endif
 
 #if defined(QT_PSSDP_LIB)
         if (ssdpOk)

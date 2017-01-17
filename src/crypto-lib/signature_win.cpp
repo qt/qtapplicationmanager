@@ -86,7 +86,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12, 
 
         certStore = PFXImportCertStore(&pkcs12Blob,
                                        reinterpret_cast<const wchar_t *>(password.utf16()),
-                                       CRYPT_EXPORTABLE);
+                                       PKCS12_NO_PERSIST_KEY);
         if (!certStore)
             throw WinCryptException("could not read or not parse PKCS#12 certificate");
 

@@ -77,6 +77,15 @@ all your imports paths and file references relative to your main config file.
         used to cleanly split the configuration into a device specific and a UI specific part.
         (default: \c /opt/am/config.yaml)
 \row
+    \li \b --option or \c -o
+    \br \e -
+    \li YAML
+    \li Use this option to set or override parts of your config files from the command-line. This
+        option can be given multiple times and its values are evaluated the same way as the content
+        of configuration files specified via \c -c. The evaluation order is after the configuration
+        files, but before more specific, direct options like e.g. \c --fullscreen (which could be
+        rewritten as \c{ -o 'ui: { fullscreen: no }'}).
+\row
     \li \b --database
     \br \e applications/database
     \li string

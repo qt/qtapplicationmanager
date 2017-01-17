@@ -199,6 +199,7 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("logging-rule"),         qSL("adds a standard Qt logging rule."), qSL("rule") });
     d->clp.addOption({ qSL("build-config"),         qSL("dumps the build configuration and exits.") });
     d->clp.addOption({ qSL("qml-debug"),            qSL("enables QML debugging and profiling.") });
+    d->clp.addOption({ { qSL("o"), qSL("option") }, qSL("override a specific config option."), qSL("yaml-snippet") });
 
     initialize();
 }
@@ -333,6 +334,77 @@ void Configuration::initialize()
 
         d->mergeConfig(docs.at(1).toMap());
     }
+
+    QStringList options = d->clp.values(qSL("o"));
+    for (const QString &option : options) {
+        QtYaml::ParseError parseError;
+        QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(option.toUtf8(), &parseError);
+        if (parseError.error != QJsonParseError::NoError) {
+            showParserMessage(QString::fromLatin1("Could not parse --option value, column %1: %2.\n")
+                              .arg(parseError.column).arg(parseError.errorString()),
+                              ErrorMessage);
+            exit(1);
+        }
+        if (docs.size() != 1) {
+            showParserMessage(QString::fromLatin1("Could not parse --option value: Invalid document format.\n"),
+                              ErrorMessage);
+            exit(1);
+        }
+        d->mergeConfig(docs.at(0).toMap());
+    }
+#ifdef AM_OPTION_CLASSIC_PARSER
+    // This parser is for the more classic style '-o key/path=value' type assignment. It's a lot
+    // less powerful than the YAML one and breaks with general AM conventions of "everything is
+    // YAML", but users might find this classic approach more convenient.
+    // Remove this code once everybody is happy with the YAML parser.
+
+    // no auto allowed, since this is a recursive lambda
+    std::function<void(QVariantMap &, const QStringList &, const QString &, const QString &)> addConfig =
+            [&addConfig](QVariantMap &to, const QStringList &path, const QString &fullKey, const QString &value) {
+        const QString &key = path.constFirst();
+        if (path.size() == 1) {
+            to[key] = value;
+        } else {
+            auto it = to.find(key);
+
+            if (it == to.end()) {
+                // this is the reason why this needs to recurse -- you cannot change a field in a
+                // QVariantMap sub-map without rebuilding the "map-tree" from the leafs back to the
+                // root.
+                QVariantMap tmpMap;
+                addConfig(tmpMap, path.mid(1), fullKey, value);
+                to.insert(key, tmpMap);
+            } else {
+                QVariant &v = it.value();
+                if (v.type() != QVariant::Map) {
+                    qCWarning(LogSystem) << "Cannot set option" << fullKey << "from the command-line, "
+                                            "since it conflicts with at least one config file.";
+                } else {
+                    // this is the reason why this needs to recurse -- you cannot change a field in
+                    // a QVariantMap sub-map without rebuilding the "map-tree" from the leafs back
+                    // to the root.
+                    auto tmpMap = v.toMap();
+                    addConfig(tmpMap, path.mid(1), fullKey, value);
+                    it.value() = tmpMap;
+                }
+            }
+        }
+    };
+
+    QStringList options = d->clp.values(qSL("o"));
+    for (const QString &option : options) {
+        int pos = option.indexOf(qL1C('='));
+        if (pos > 0) {
+            QString key = option.left(pos);
+            QString value = option.mid(pos + 1);
+
+            QStringList keyParts = key.split(qL1C('/'));
+
+            if (!keyParts.isEmpty())
+                addConfig(d->configFile, keyParts, key, value);
+        }
+    }
+#endif
 }
 
 QString Configuration::mainQmlFile() const

@@ -40,16 +40,37 @@
 ****************************************************************************/
 
 import QtQuick 2.3
+import QtQuick.Window 2.0
 import QtTest 1.0
 import QtApplicationManager 1.0
 import QtApplicationManager 1.0 as AppMan
 
 TestCase {
+    id: testCase
+    when: windowShown
     name: "ApplicationManager"
 
     property var simpleApplication
     property var applicationAlias
     property var capsApplication
+    // Either appman is build in single-process mode or it was started with --force-single-process
+    property bool singleProcess : Qt.application.arguments.indexOf("--force-single-process") !== -1 || buildConfig[0].CONFIG.indexOf("multi-process") === -1
+    property QtObject windowHandler: QtObject {
+        function windowReadyHandler(index, window) {
+            console.info("window " + index + " ready")
+            window.parent = testCase
+            window.height = 200
+            window.width = 200
+        }
+
+        function windowClosingHandler(index, window) {
+            console.info("window " + index + " closing")
+        }
+
+        function windowLostHandler(index, window) {
+            console.info("window " + index + " lost")
+        }
+    }
 
     ListView {
         id: listView
@@ -60,10 +81,25 @@ TestCase {
     }
 
     function initTestCase() {
+        //Wait for the debugging wrappers to be setup.
+        wait(2000);
+        WindowManager.windowReady.connect(windowHandler.windowReadyHandler)
+        WindowManager.windowClosing.connect(windowHandler.windowClosingHandler)
+        WindowManager.windowLost.connect(windowHandler.windowLostHandler)
+
         compare(ApplicationManager.count, 3)
         simpleApplication = ApplicationManager.application(0);
         applicationAlias = ApplicationManager.application(1);
         capsApplication = ApplicationManager.application(2);
+    }
+
+    function test_properties() {
+        // Only true for the dummyimports
+        compare(ApplicationManager.dummy, false)
+        // Disabled in the am-config.yaml
+        compare(ApplicationManager.securityChecksEnabled, false)
+
+        compare(ApplicationManager.singleProcess, singleProcess)
     }
 
     function test_systemProperties() {
@@ -203,7 +239,71 @@ TestCase {
         compare(id, ApplicationManager.application(0).id)
     }
 
+    SignalSpy {
+        id: runStateChangedSpy
+        target: ApplicationManager
+        signalName: "applicationRunStateChanged"
+    }
+
+    function checkApplicationState(id, state) {
+        if (runStateChangedSpy.count < 1)
+            runStateChangedSpy.wait(10000);
+        verify(runStateChangedSpy.count)
+        compare(runStateChangedSpy.signalArguments[0][0], id)
+        compare(runStateChangedSpy.signalArguments[0][1],  state)
+        compare(ApplicationManager.applicationRunState(id), state);
+        runStateChangedSpy.clear();
+    }
+
+    function test_startAndStopApplication_data() {
+        return [
+                    {tag: "StartStop", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
+                    {tag: "Debug", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
+                    {tag: "ForceKill", appId: "tld.test.simple2", index: 2, forceKill: true, exitCode: 9, exitStatus: AppMan.Application.ForcedExit },
+                    {tag: "AutoTerminate", appId: "tld.test.simple2", index: 2, forceKill: false, exitCode: 15, exitStatus: AppMan.Application.ForcedExit }
+                ];
+    }
+
+    function test_startAndStopApplication(data) {
+        compare(ApplicationManager.applicationRunState(data.appId), ApplicationManager.NotRunning);
+
+        var started = false;
+        if (data.tag === "Debug") {
+            started = ApplicationManager.debugApplication(data.appId, "fakedebugger");
+            if (singleProcess) {
+                verify(!started);
+                return;
+            }
+        } else {
+            started = ApplicationManager.startApplication(data.appId);
+        }
+        verify(started);
+
+        checkApplicationState(data.appId, ApplicationManager.StartingUp);
+        listView.currentIndex = data.index;
+        compare(listView.currentItem.modelData.isStartingUp, true)
+        compare(listView.currentItem.modelData.isRunning, false)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
+        checkApplicationState(data.appId, ApplicationManager.Running);
+        compare(listView.currentItem.modelData.isStartingUp, false)
+        compare(listView.currentItem.modelData.isRunning, true)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
+
+        ApplicationManager.stopApplication(data.appId, data.forceKill);
+
+        checkApplicationState(data.appId, ApplicationManager.ShuttingDown);
+        compare(listView.currentItem.modelData.isStartingUp, false)
+        compare(listView.currentItem.modelData.isRunning, false)
+        compare(listView.currentItem.modelData.isShuttingDown, true)
+        checkApplicationState(data.appId, ApplicationManager.NotRunning);
+        compare(listView.currentItem.modelData.isStartingUp, false)
+        compare(listView.currentItem.modelData.isRunning, false)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
+        compare(listView.currentItem.modelData.application.lastExitCode, data.exitCode)
+        compare(listView.currentItem.modelData.application.lastExitStatus, data.exitStatus)
+    }
+
     //TODO add tests for:
-    //Start/stop/debug application, identify, openUrl
+    //identify, openUrl
     //Test activated
 }

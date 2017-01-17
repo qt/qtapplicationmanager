@@ -61,4 +61,11 @@ ApplicationManagerWindow {
         width: 180; height: 180; radius: width/4
         color: "red"
     }
+
+    Connections {
+        target: ApplicationInterface
+        onQuit: {
+           //Do nothing, to we get killed by appman
+        }
+    }
 }

@@ -80,9 +80,10 @@ QByteArray AbstractRuntime::securityToken() const
     return m_securityToken;
 }
 
-void AbstractRuntime::openDocument(const QString &document)
+void AbstractRuntime::openDocument(const QString &document, const QString &mimeType)
 {
     Q_UNUSED(document)
+    Q_UNUSED(mimeType)
 }
 
 const Application *AbstractRuntime::application() const

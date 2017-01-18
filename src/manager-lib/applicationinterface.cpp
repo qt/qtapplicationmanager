@@ -157,7 +157,7 @@
 */
 
 /*!
-    \qmlsignal ApplicationInterface::openDocument(string documentUrl)
+    \qmlsignal ApplicationInterface::openDocument(string documentUrl, string mimeType)
 
     Whenever an already running application is started again with an argument, the
     already running instance will just receive this signal, instead of starting a
@@ -167,5 +167,6 @@
     field of the \l{Manifest definition}{info.yaml} manifest when calling
     ApplicationManager::startApplication without a \c documentUrl argument or
     the \c target argument of Qt::openUrlExternally, when your application matches
-    a MIME-type request.
+    a MIME-type request. In the latter case \a mimeType contains the MIME-type detected
+    by the ApplicationManager.
 */

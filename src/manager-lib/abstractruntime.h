@@ -115,7 +115,7 @@ public:
     enum { SecurityTokenSize = 16 };
     QByteArray securityToken() const;
 
-    virtual void openDocument(const QString &document);
+    virtual void openDocument(const QString &document, const QString &mimeType);
 
     void setInProcessQmlEngine(QQmlEngine *view);
     QQmlEngine* inProcessQmlEngine() const;

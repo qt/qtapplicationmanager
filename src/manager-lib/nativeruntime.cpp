@@ -355,7 +355,7 @@ void NativeRuntime::onApplicationFinishedInitialization()
 
         QString baseDir = m_container->mapHostPathToContainer(m_app->baseDir().absolutePath());
         QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
-        emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_app->toVariantMap());
+        emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType, m_app->toVariantMap());
         m_applicationInterfaceConnected = true;
 
     }
@@ -396,11 +396,12 @@ qint64 NativeRuntime::applicationProcessId() const
     return m_process ? m_process->processId() : 0;
 }
 
-void NativeRuntime::openDocument(const QString &document)
+void NativeRuntime::openDocument(const QString &document, const QString &mimeType)
 {
    m_document = document;
+   m_mimeType = mimeType;
    if (m_applicationInterface)
-       emit m_applicationInterface->openDocument(document);
+       emit m_applicationInterface->openDocument(document, mimeType);
 }
 
 

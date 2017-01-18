@@ -709,6 +709,7 @@ void ApplicationManager::registerMimeTypes()
 }
 
 bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl,
+                                          const QString &documentMimeType,
                                           const QString &debugWrapperSpecification,
                                           const QVector<int> &stdRedirections)
 {
@@ -742,9 +743,9 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             }
 
             if (!documentUrl.isNull())
-                runtime->openDocument(documentUrl);
+                runtime->openDocument(documentUrl, documentMimeType);
             else if (!app->documentUrl().isNull())
-                runtime->openDocument(app->documentUrl());
+                runtime->openDocument(app->documentUrl(), documentMimeType);
 
             emit applicationWasActivated(app->isAlias() ? app->nonAliased()->id() : app->id(), app->id());
             return true;
@@ -891,9 +892,9 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     });
 
     if (!documentUrl.isNull())
-        runtime->openDocument(documentUrl);
+        runtime->openDocument(documentUrl, documentMimeType);
     else if (!app->documentUrl().isNull())
-        runtime->openDocument(app->documentUrl());
+        runtime->openDocument(app->documentUrl(), documentMimeType);
 
     emit applicationWasActivated(app->isAlias() ? app->nonAliased()->id() : app->id(), app->id());
 
@@ -979,7 +980,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 {
     AM_AUTHENTICATE_DBUS(bool)
 
-    return startApplication(fromId(id), documentUrl, debugWrapper);
+    return startApplication(fromId(id), documentUrl, QString(), debugWrapper);
 }
 
 #if defined(QT_DBUS_LIB)
@@ -1005,7 +1006,7 @@ bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NA
 #else
     Q_UNUSED(redirections)
 #endif
-    int result = startApplication(fromId(id), documentUrl, qSL("--internal-redirect-only--"), redirectStd);
+    int result = startApplication(fromId(id), documentUrl, QString(), qSL("--internal-redirect-only--"), redirectStd);
 
     if (!result) {
         // we have to close the fds in this case, otherwise we block the tty where the fds are
@@ -1042,7 +1043,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 #else
     Q_UNUSED(redirections)
 #endif
-    int result = startApplication(fromId(id), documentUrl, debugWrapper, redirectStd);
+    int result = startApplication(fromId(id), documentUrl, QString(), debugWrapper, redirectStd);
 
     if (!result) {
         // we have to close the fds in this case, otherwise we block the tty where the fds are
@@ -1089,6 +1090,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
 
     QUrl url(urlStr);
     const Application *app = 0;
+    QString mimeTypeName;
     if (url.isValid()) {
         QString scheme = url.scheme();
         if (scheme != qL1S("file")) {
@@ -1101,7 +1103,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
                 // try to find a better matching alias, if available
                 foreach (const Application *alias, d->apps) {
                     if (alias->isAlias() && alias->nonAliased() == app) {
-                        if (url.toString(QUrl::PrettyDecoded | QUrl::RemoveScheme) == alias->documentUrl()) {
+                        if (url.toString(QUrl::PrettyDecoded) == alias->documentUrl()) {
                             app = alias;
                             break;
                         }
@@ -1113,14 +1115,15 @@ bool ApplicationManager::openUrl(const QString &urlStr)
         if (!app) {
             QMimeDatabase mdb;
             QMimeType mt = mdb.mimeTypeForUrl(url);
+            mimeTypeName = mt.name();
 
-            app = mimeTypeHandler(mt.name());
+            app = mimeTypeHandler(mimeTypeName);
             if (app && app->isAlias())
                 app = app->nonAliased();
         }
     }
     if (app)
-        return startApplication(app, urlStr);
+        return startApplication(app, urlStr, mimeTypeName);
     return false;
 }
 

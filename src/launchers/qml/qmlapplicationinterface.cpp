@@ -111,7 +111,8 @@ bool QmlApplicationInterface::initialize()
     }
 
     bool ok = true;
-    ok = ok && connect(m_runtimeIf, SIGNAL(startApplication(QString,QString,QString,QVariantMap)), this, SIGNAL(startApplication(QString,QString,QString,QVariantMap)));
+    ok = ok && connect(m_runtimeIf, SIGNAL(startApplication(QString,QString,QString,QString,QVariantMap)),
+                       this, SIGNAL(startApplication(QString,QString,QString,QString,QVariantMap)));
 
     if (!ok)
         qCritical("ERROR: could not connect the RuntimeInterface via D-Bus: %s", qPrintable(m_runtimeIf->lastError().name()));
@@ -119,7 +120,7 @@ bool QmlApplicationInterface::initialize()
     ok = ok && connect(m_applicationIf, SIGNAL(quit()), this, SIGNAL(quit()));
     ok = ok && connect(m_applicationIf, SIGNAL(memoryLowWarning()), this, SIGNAL(memoryLowWarning()));
     ok = ok && connect(m_applicationIf, SIGNAL(memoryCriticalWarning()), this, SIGNAL(memoryCriticalWarning()));
-    ok = ok && connect(m_applicationIf, SIGNAL(openDocument(QString)), this, SIGNAL(openDocument(QString)));
+    ok = ok && connect(m_applicationIf, SIGNAL(openDocument(QString,QString)), this, SIGNAL(openDocument(QString,QString)));
 
     if (!ok)
         qCritical("ERROR: could not connect the ApplicationInterface via D-Bus: %s", qPrintable(m_applicationIf->lastError().name()));

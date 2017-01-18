@@ -94,7 +94,7 @@ public:
     bool attachApplicationToQuickLauncher(const Application *app) override;
 
     qint64 applicationProcessId() const override;
-    virtual void openDocument(const QString &document) override;
+    virtual void openDocument(const QString &document, const QString &mimeType) override;
 
     bool sendNotificationUpdate(Notification *n);
 
@@ -125,6 +125,7 @@ private:
     bool m_needsLauncher;
 
     QString m_document;
+    QString m_mimeType;
     bool m_launchWhenReady = false;
     bool m_applicationInterfaceConnected = false;
     bool m_dbusConnection = false;

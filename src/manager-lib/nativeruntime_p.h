@@ -78,7 +78,7 @@ public:
     NativeRuntimeInterface(NativeRuntime *runtime);
 
 signals:
-    Q_SCRIPTABLE void startApplication(const QString &baseDir, const QString &app, const QString &document, const QVariantMap &application);
+    Q_SCRIPTABLE void startApplication(const QString &baseDir, const QString &app, const QString &document, const QString &mimeType, const QVariantMap &application);
 
 private:
     NativeRuntime *m_runtime;

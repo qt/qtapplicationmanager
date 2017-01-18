@@ -136,7 +136,7 @@ public:
     Controller(QCoreApplication *a, const QString &directLoad = QString());
 
 public slots:
-    void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &application);
+    void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QString &mimeType, const QVariantMap &application);
 
 private:
     QQmlApplicationEngine m_engine;
@@ -326,7 +326,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
             YamlApplicationScanner yas;
             try {
                 const Application *a = yas.scan(directLoad);
-                startApplication(fi.absolutePath(), a->codeFilePath(), QString(), a->toVariantMap());
+                startApplication(fi.absolutePath(), a->codeFilePath(), QString(), QString(), a->toVariantMap());
             } catch (const Exception &e) {
                 qCritical("ERROR: could not parse info.yaml file: %s", e.what());
                 qApp->exit(5);
@@ -337,7 +337,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
     startupTimer.checkpoint("after application interface initialization");
 }
 
-void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QVariantMap &application)
+void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QString &mimeType, const QVariantMap &application)
 {
     if (m_launched)
         return;
@@ -354,8 +354,9 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     changeDLTApplication(dltAppId, QString("Application-Manager App: %1").arg(applicationId).toLocal8Bit());
     registerUnregisteredDLTContexts();
 
-    qCDebug(LogQmlRuntime) << "loading" << applicationId << "- main:" << qmlFile << "- document:" << document << "- parameters:"
-                           << runtimeParameters << "- baseDir:" << baseDir;
+    qCDebug(LogQmlRuntime) << "loading" << applicationId << "- main:" << qmlFile << "- document:" << document
+                           << "- mimeType:" << mimeType << "- parameters:" << runtimeParameters
+                           << "- baseDir:" << baseDir;
 
     if (!QDir::setCurrent(baseDir)) {
         qCCritical(LogQmlRuntime) << "could not set the current directory to" << baseDir;
@@ -494,7 +495,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     startupTimer.createReport(application.value("id").toString());
 
     if (!document.isEmpty() && m_applicationInterface)
-        m_applicationInterface->openDocument(document);
+        m_applicationInterface->openDocument(document, mimeType);
 }
 
 #include "main.moc"

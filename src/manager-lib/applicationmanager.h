@@ -112,7 +112,10 @@ public:
     const Application *schemeHandler(const QString &scheme) const;
     const Application *mimeTypeHandler(const QString &mimeType) const;
 
-    bool startApplication(const Application *app, const QString &documentUrl = QString(), const QString &debugWrapperSpecification = QString(), const QVector<int> &stdRedirections = QVector<int>());
+    bool startApplication(const Application *app, const QString &documentUrl = QString(),
+                          const QString &documentMimeType = QString(),
+                          const QString &debugWrapperSpecification = QString(),
+                          const QVector<int> &stdRedirections = QVector<int>());
     void stopApplication(const Application *app, bool forceKill = false);
     void killAll();
 

@@ -186,7 +186,7 @@ bool QmlInProcessRuntime::start()
     QTimer::singleShot(0, this, [component, this]() {
         component->completeCreate();
         if (!m_document.isEmpty())
-            emit openDocument(m_document);
+            emit openDocument(m_document, QString());
         setState(Active);
         delete component;
     });
@@ -288,11 +288,11 @@ void QmlInProcessRuntime::addWindow(QQuickItem *window)
 
 #endif // !AM_HEADLESS
 
-void QmlInProcessRuntime::openDocument(const QString &document)
+void QmlInProcessRuntime::openDocument(const QString &document, const QString &mimeType)
 {
     m_document = document;
     if (m_applicationIf)
-        m_applicationIf->openDocument(document);
+        m_applicationIf->openDocument(document, mimeType);
 }
 
 qint64 QmlInProcessRuntime::applicationProcessId() const

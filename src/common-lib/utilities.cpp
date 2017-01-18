@@ -692,6 +692,19 @@ void setCrashActionConfiguration(const QVariantMap &config)
 
 bool canOutputAnsiColors(int fd)
 {
+    static bool once = true;
+    static enum { ColorAuto, ColorOff, ColorOn } forceColor = ColorAuto;
+    if (once) {
+        QByteArray forceColorOutput = qgetenv("AM_FORCE_COLOR_OUTPUT");
+        if (forceColorOutput == "off")
+            forceColor = ColorOff;
+        else if (forceColorOutput == "on")
+            forceColor = ColorOn;
+        once = false;
+    }
+    if (forceColor != ColorAuto)
+        return (forceColor == ColorOn);
+
 #if defined(Q_OS_UNIX)
     if (::isatty(fd)) {
         return true;

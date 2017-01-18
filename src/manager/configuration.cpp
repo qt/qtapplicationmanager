@@ -162,7 +162,11 @@ Configuration::Configuration()
         "variables can be set:\n\n"
         "  AM_STARTUP_TIMER  if set to 1, a startup performance analysis will be printed\n"
         "                    on the console. Anything other than 1 will be interpreted\n"
-        "                    as the name of a file that is used instead of the console\n";
+        "                    as the name of a file that is used instead of the console\n"
+        "\n"
+        "  AM_FORCE_COLOR_OUTPUT  can be set to 'on' to force color output to the console\n"
+        "                         and to 'off' to disable it. Any other value will result\n"
+        "                         in the default, auto-detection behavior.\n";
     d->clp.setApplicationDescription(description);
     d->clp.addHelpOption();
     d->clp.addVersionOption();

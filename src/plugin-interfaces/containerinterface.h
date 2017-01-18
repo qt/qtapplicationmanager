@@ -60,13 +60,13 @@ public:
     virtual bool setProgram(const QString &program) = 0;
     virtual void setBaseDirectory(const QString &baseDirectory) = 0;
 
-    virtual bool isReady() = 0;
+    virtual bool isReady() const = 0;
 
     virtual QString mapContainerPathToHost(const QString &containerPath) const = 0;
     virtual QString mapHostPathToContainer(const QString &hostPath) const = 0;
 
     virtual bool start(const QStringList &arguments, const QProcessEnvironment &env) = 0;
-    virtual bool isStarted() = 0;
+    virtual bool isStarted() const = 0;
 
     virtual qint64 processId() const = 0;
     virtual QProcess::ProcessState state() const = 0;
@@ -87,7 +87,7 @@ class ContainerManagerInterface
 public:
     virtual ~ContainerManagerInterface();
 
-    virtual QString identifier() = 0;
+    virtual QString identifier() const = 0;
     virtual bool supportsQuickLaunch() const = 0;
     virtual void setConfiguration(const QVariantMap &configuration) = 0;
 

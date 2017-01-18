@@ -173,7 +173,7 @@ containers:
   selection:
   - com.pelagicore.*: "process"
   - com.navigation: "special-container"
-  - *: "softwarecontainers"
+  - '*': "softwarecontainers"  # a single asterisk needs to be quoted
 \endcode
 
 

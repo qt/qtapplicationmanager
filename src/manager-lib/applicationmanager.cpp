@@ -893,7 +893,10 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
     emit applicationWasActivated(app->isAlias() ? app->nonAliased()->id() : app->id(), app->id());
 
-    qCDebug(LogSystem) << "app:" << app->id() << "; document:" << documentUrl << "; runtime: " << runtime;
+    qCDebug(LogSystem) << "Starting application" << app->id() << "in container" << containerId
+                       << "using runtime" << runtimeManager->identifier();
+    if (!documentUrl.isEmpty())
+        qCDebug(LogSystem) << "  documentUrl:" << documentUrl;
 
     if (inProcess) {
         bool ok = runtime->start();

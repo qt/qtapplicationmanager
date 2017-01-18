@@ -6,4 +6,4 @@ icon:    'icon2.png'
 name:
   en: 'Simple1 Alias'
 
-documentUrl: "alias"
+documentUrl: "x-test:alias"

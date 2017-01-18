@@ -16,3 +16,8 @@ applicationProperties:
   private:
     pri1: 'pri1'
     proandpri: 'pri2'
+
+mimeTypes: [
+             "x-scheme-handler/x-test",
+             "text/plain"
+           ]

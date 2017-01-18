@@ -69,6 +69,7 @@ TestCase {
 
         function windowLostHandler(index, window) {
             console.info("window " + index + " lost")
+            WindowManager.releaseWindow(window);
         }
     }
 
@@ -144,7 +145,7 @@ TestCase {
         compare(simpleApplication.preload, false)
         compare(simpleApplication.nonAliased, null)
         compare(simpleApplication.capabilities.length, 0)
-        compare(simpleApplication.supportedMimeTypes.length, 0)
+        compare(simpleApplication.supportedMimeTypes.length, 2)
         compare(simpleApplication.categories.length, 0)
         //Why is runtime null ? we should document this, as this is not really clear
         compare(simpleApplication.runtime, null)
@@ -172,7 +173,7 @@ TestCase {
         compare(applicationAlias.nonAliased, simpleApplication)
         //TODO this should be a Url instead, as this is what's used in QML usually
         compare(applicationAlias.icon, Qt.resolvedUrl("apps/tld.test.simple1/icon2.png"))
-        compare(applicationAlias.documentUrl, "alias")
+        compare(applicationAlias.documentUrl, "x-test:alias")
         compare(applicationAlias.runtimeName, simpleApplication.runtimeName)
         compare(applicationAlias.importance, simpleApplication.importance)
         compare(applicationAlias.preload, simpleApplication.preload)
@@ -226,6 +227,37 @@ TestCase {
         compare(listView.currentItem.modelData.version, "1.0")
     }
 
+    function test_get_data() {
+        return [
+                    {tag: "get(row)", argument: 0 },
+                    {tag: "get(id)", argument: simpleApplication.id },
+                ];
+    }
+
+    function test_get(data) {
+        var appData = ApplicationManager.get(data.argument);
+
+        compare(appData.application, simpleApplication)
+        compare(appData.applicationId, simpleApplication.id)
+        compare(appData.name, "Simple1")
+        compare(appData.icon, Qt.resolvedUrl(simpleApplication.icon))
+        compare(appData.runtimeName, "qml")
+        compare(appData.isRunning, false)
+        compare(appData.isStartingUp, false)
+        compare(appData.isShuttingDown, false)
+        compare(appData.isLocked, false)
+        compare(appData.isUpdating, false)
+        compare(appData.isRemovable, false)
+        compare(appData.updateProgress, 0.0)
+        //TODO return URL
+        compare(Qt.resolvedUrl(appData.codeFilePath), Qt.resolvedUrl("apps/tld.test.simple1/app1.qml"))
+        compare(appData.backgroundMode, "Auto")
+        compare(appData.capabilities, simpleApplication.capabilities)
+        compare(appData.importance, simpleApplication.importance)
+        compare(appData.preload, simpleApplication.preload)
+        compare(appData.version, "1.0")
+    }
+
     function test_application_object_ownership() {
         // Check that the returned Application is not owned by javascript and deleted
         // by the garbage collector
@@ -258,6 +290,7 @@ TestCase {
     function test_startAndStopApplication_data() {
         return [
                     {tag: "StartStop", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
+                    {tag: "StartStopAlias", appId: "tld.test.simple1@alias", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
                     {tag: "Debug", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
                     {tag: "ForceKill", appId: "tld.test.simple2", index: 2, forceKill: true, exitCode: 9, exitStatus: AppMan.Application.ForcedExit },
                     {tag: "AutoTerminate", appId: "tld.test.simple2", index: 2, forceKill: false, exitCode: 15, exitStatus: AppMan.Application.ForcedExit }
@@ -303,7 +336,88 @@ TestCase {
         compare(listView.currentItem.modelData.application.lastExitStatus, data.exitStatus)
     }
 
-    //TODO add tests for:
-    //identify, openUrl
-    //Test activated
+    function test_errors() {
+        ignoreWarning("invalid index: -1");
+        verify(!ApplicationManager.application(-1));
+
+        ignoreWarning("invalid index: -1");
+        verify(!ApplicationManager.application("invalidApplication"));
+
+        ignoreWarning("invalid index: -1");
+        compare(ApplicationManager.get(-1), {});
+
+        ignoreWarning("invalid index: -1");
+        compare(ApplicationManager.get("invalidApplication"), {});
+
+        ignoreWarning("invalid index: -1");
+        compare(ApplicationManager.applicationRunState("invalidApplication"), ApplicationManager.NotRunning);
+
+        ignoreWarning("Cannot start an invalid application");
+        verify(!ApplicationManager.startApplication("invalidApplication"))
+
+        ignoreWarning("Couldn't find debug wrapper with name: \"invalidDebugWrapper\"");
+        ignoreWarning("Application \"tld.test.simple1\" cannot be started by this debug wrapper specification: \"invalidDebugWrapper\"");
+        verify(!ApplicationManager.debugApplication(simpleApplication.id, "invalidDebugWrapper"))
+
+        verify(ApplicationManager.startApplication(simpleApplication.id));
+        checkApplicationState(simpleApplication.id, ApplicationManager.StartingUp);
+        checkApplicationState(simpleApplication.id, ApplicationManager.Running);
+        ignoreWarning("Application \"tld.test.simple1\" is already running - cannot start with debug-wrapper \"fakedebugger\"");
+        verify(!ApplicationManager.debugApplication(simpleApplication.id, "fakedebugger"))
+        ApplicationManager.stopApplication(simpleApplication.id, true);
+        checkApplicationState(simpleApplication.id, ApplicationManager.ShuttingDown);
+        checkApplicationState(simpleApplication.id, ApplicationManager.NotRunning);
+    }
+
+    function test_openUrl_data() {
+        return [
+                    {tag: "customMimeType", url: "x-test://12345", expectedApp: simpleApplication.id },
+                    {tag: "openAlias", url: "x-test:alias", expectedApp: applicationAlias.id },
+                    {tag: "text/plain", url: "file://text-file.txt", expectedApp: simpleApplication.id }
+                ];
+    }
+
+    function test_openUrl(data) {
+        verify(ApplicationManager.openUrl(data.url));
+        checkApplicationState(data.expectedApp, ApplicationManager.StartingUp);
+        checkApplicationState(data.expectedApp, ApplicationManager.Running);
+        ApplicationManager.stopApplication(data.expectedApp, true);
+        checkApplicationState(data.expectedApp, ApplicationManager.ShuttingDown);
+        checkApplicationState(data.expectedApp, ApplicationManager.NotRunning);
+
+        Qt.openUrlExternally(data.url);
+        checkApplicationState(data.expectedApp, ApplicationManager.StartingUp);
+        checkApplicationState(data.expectedApp, ApplicationManager.Running);
+        ApplicationManager.stopApplication(data.expectedApp, true);
+        checkApplicationState(data.expectedApp, ApplicationManager.ShuttingDown);
+        checkApplicationState(data.expectedApp, ApplicationManager.NotRunning);
+    }
+
+    property bool containerSelectionCalled: false
+    property string containerSelectionAppId
+    property string containerSelectionConId
+    function containerSelection(appId, containerId) {
+        containerSelectionCalled = true;
+        containerSelectionAppId = appId;
+        containerSelectionConId = containerId;
+
+        return containerId;
+    }
+
+    function test_containerSelectionFunction() {
+        if (singleProcess)
+            skip("The containerSelectionFunction doesn't work in single-process mode");
+
+        compare(ApplicationManager.containerSelectionFunction, undefined);
+        ApplicationManager.containerSelectionFunction = containerSelection;
+        ApplicationManager.startApplication(simpleApplication.id);
+        checkApplicationState(simpleApplication.id, ApplicationManager.StartingUp);
+        checkApplicationState(simpleApplication.id, ApplicationManager.Running);
+        ApplicationManager.stopApplication(simpleApplication.id, true);
+        checkApplicationState(simpleApplication.id, ApplicationManager.ShuttingDown);
+        checkApplicationState(simpleApplication.id, ApplicationManager.NotRunning);
+        verify(containerSelectionCalled);
+        compare(containerSelectionAppId, simpleApplication.id);
+        compare(containerSelectionConId, "process");
+    }
 }

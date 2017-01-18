@@ -572,9 +572,10 @@ int main(int argc, char *argv[])
 #endif
 
         auto startupPlugins = loadPlugins<StartupInterface>("startup", configuration->pluginFilePaths("startup"));
-        const auto &uiProperties = configuration->systemUiProperties();
+
+        const QVector<QVariantMap> sysProps = SystemProperties::partition(configuration->rawSystemProperties());
         foreach (StartupInterface *iface, startupPlugins)
-            iface->initialize(uiProperties);
+            iface->initialize(sysProps[SystemProperties::SystemUi]);
 
         startupTimer.checkpoint("after startup-plugin load");
 
@@ -680,7 +681,6 @@ int main(int argc, char *argv[])
         ContainerFactory::instance()->setConfiguration(configuration->containerConfigurations());
         RuntimeFactory::instance()->setConfiguration(configuration->runtimeConfigurations());
 
-        const QVector<QVariantMap> sysProps = SystemProperties::partition(uiProperties);
         RuntimeFactory::instance()->setSystemProperties(sysProps.at(SystemProperties::ThirdParty),
                                                         sysProps.at(SystemProperties::BuiltIn));
 

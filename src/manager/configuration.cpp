@@ -519,7 +519,7 @@ bool Configuration::dbusStartSessionBus() const
     return d->config<bool>("start-session-dbus", { qSL("dbus"), qSL("startSessionBus") });
 }
 
-QVariantMap Configuration::systemUiProperties() const
+QVariantMap Configuration::rawSystemProperties() const
 {
     QVariantMap vm = d->findInConfigFile({ qSL("systemProperties") }).toMap();
     if (vm.isEmpty()) {  // for temporary backwards compatibility:

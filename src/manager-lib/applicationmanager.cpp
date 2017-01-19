@@ -738,7 +738,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         case AbstractRuntime::Startup:
         case AbstractRuntime::Active:
             if (debugWrapper.isValid()) {
-                qCDebug(LogSystem) << "Application" << app->id() << "is already running - cannot start with debug-wrapper" << debugWrapper.name();
+                qCWarning(LogSystem) << "Application" << app->id() << "is already running - cannot start with debug-wrapper" << debugWrapper.name();
                 return false;
             }
 
@@ -802,13 +802,13 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
     if (debugWrapper.isValid()) {
         if (!debugWrapper.supportsRuntime(app->runtimeName())) {
-            qCDebug(LogSystem) << "Application" << app->id() << "is using the" << app->runtimeName()
+            qCWarning(LogSystem) << "Application" << app->id() << "is using the" << app->runtimeName()
                                << "runtime, which is not compatible with the requested debug-wrapper"
                                << debugWrapper.name();
             return false;
         }
         if (!debugWrapper.supportsContainer(containerId)) {
-            qCDebug(LogSystem) << "Application" << app->id() << "is using the" << containerId
+            qCWarning(LogSystem) << "Application" << app->id() << "is using the" << containerId
                                << "container, which is not compatible with the requested debug-wrapper"
                                << debugWrapper.name();
             return false;

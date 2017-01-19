@@ -864,8 +864,25 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     }
 
     connect(runtime, &AbstractRuntime::stateChanged, this, [this, app](AbstractRuntime::State newState) {
-        emit applicationRunStateChanged(app->isAlias() ? app->nonAliased()->id() : app->id(),
-                                        runtimeToManagerState(newState));
+        QVector<const Application *> apps;
+        //Always emit the actual starting app/alias first
+        apps.append(app);
+
+        //Add the original app and all aliases
+        const Application *nonAliasedApp = app;
+        if (app->isAlias())
+            nonAliasedApp = app->nonAliased();
+
+        if (!apps.contains(nonAliasedApp))
+            apps.append(nonAliasedApp);
+
+        foreach (const Application *alias, d->apps) {
+            if (!apps.contains(alias) && alias->isAlias() && alias->nonAliased() == nonAliasedApp)
+                apps.append(alias);
+        }
+
+        foreach (const Application *app, apps)
+            emit applicationRunStateChanged(app->id(), runtimeToManagerState(newState));
     });
 
     connect(runtime, static_cast<void(AbstractRuntime::*)(int, QProcess::ExitStatus)>

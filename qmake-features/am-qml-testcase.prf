@@ -22,6 +22,9 @@ debug_and_release:debug_and_release_target {
 # Allow for a custom test runner script
 COMMAND += $(TESTRUNNER)
 
+# Define how the appman should be run, single-process, multi-process, both
+isEmpty(MODE): MODE = both
+
 # Determine the location of the testrunner
 prefix_build {
     AM_TESTRUNNER_DIR = $$BUILD_DIR/bin
@@ -37,6 +40,10 @@ prefix_build {
 COMMAND += $$AM_TESTRUNNER_DIR/appman-qmltestrunner -r --no-dlt-logging
 mac: COMMAND += --dbus=none
 multi-process: COMMAND += --start-session-dbus
+!multi-process: {
+    message("Overriding mode as application-manager is build in single-process mode")
+    MODE = single-process
+}
 
 # Add import dirs
 for(import, IMPORTS_DIR) {
@@ -55,8 +62,11 @@ OTHER_FILES += $$AM_CONFIG
 
 QMAKE_EXTRA_TARGETS *= check
 
+message("$$MODE")
 # Execute a testrunner for every file
 for(file, TEST_FILES) {
-    check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) -- $(TESTARGS)
+    !equals(MODE, "single-process"):check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) --force-multi-process -- $(TESTARGS) &&
+    !equals(MODE, "multi-process"):check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) --force-single-process -- $(TESTARGS) &&
 }
+check.commands += true;
 OTHER_FILES += $$TEST_FILES

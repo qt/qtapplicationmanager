@@ -146,7 +146,9 @@ private:
 #if !defined(AM_HEADLESS)
     QQuickWindow *m_window = nullptr;
 #endif
+#if !defined(QT_NO_QML_DEBUGGER)
     QQmlDebuggingEnabler *debuggingEnabler = nullptr;
+#endif
 };
 
 static QString p2pBusName = qSL("am");
@@ -246,8 +248,13 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
     connect(&m_engine, &QObject::destroyed, &QCoreApplication::quit);
     connect(&m_engine, &QQmlEngine::quit, &QCoreApplication::quit);
 
-    if (qApp->arguments().contains("--qml-debug"))
+    if (qApp->arguments().contains("--qml-debug")) {
+#if !defined(QT_NO_QML_DEBUGGER)
         debuggingEnabler = new QQmlDebuggingEnabler(true);
+#else
+        qCWarning(LogQmlRuntime) << "The --qml-debug option is ignored, because Qt was built without support for QML Debugging!";
+#endif
+    }
 
     auto docs = QtYaml::variantDocumentsFromYaml(qgetenv("AM_RUNTIME_CONFIGURATION"));
     if (docs.size() == 1)

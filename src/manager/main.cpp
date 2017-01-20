@@ -549,9 +549,14 @@ int main(int argc, char *argv[])
 
     setCrashActionConfiguration(configuration->managerCrashAction());
 
+#if !defined(QT_NO_QML_DEBUGGER)
     QQmlDebuggingEnabler *debuggingEnabler = nullptr;
     if (configuration->qmlDebugging())
         debuggingEnabler = new QQmlDebuggingEnabler(true);
+#else
+    if (configuration->qmlDebugging())
+        qCWarning(LogSystem) << "The --qml-debug option is ignored, because Qt was built without support for QML Debugging!";
+#endif
 
     try {
         QStringList loggingRules = configuration->loggingRules();
@@ -969,7 +974,9 @@ int main(int argc, char *argv[])
         Q_UNUSED(nm);
         Q_UNUSED(sysmon);
         Q_UNUSED(aipcm);
+#if !defined(QT_NO_QML_DEBUGGER)
         Q_UNUSED(debuggingEnabler);
+#endif
 
         int res =  TestRunner::exec(engine);
         delete engine;
@@ -988,7 +995,9 @@ int main(int argc, char *argv[])
         delete ql;
         delete sysmon;
         delete aipcm;
+#if !defined(QT_NO_QML_DEBUGGER)
         delete debuggingEnabler;
+#endif
 #endif
 
 #if defined(QT_PSSDP_LIB)

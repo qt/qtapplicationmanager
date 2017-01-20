@@ -39,7 +39,7 @@ linux:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
   check_libbacktrace = "no"
 }
 
-!tools-only: SUBDIRS += doc
+!tools-only: SUBDIRS += doc dummyimports
 
 load(qt_parts)
 
@@ -48,8 +48,6 @@ tools-only {
     SUBDIRS -= sub_tests
     SUBDIRS -= sub_examples
 }
-
-SUBDIRS += dummyimports
 
 if(linux|force-libcrypto):check_crypto = "libcrypto / OpenSSL"
 else:win32:check_crypto = "WinCrypt"

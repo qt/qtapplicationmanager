@@ -219,7 +219,7 @@ TestCase {
         compare(listView.currentItem.modelData.isRemovable, false)
         compare(listView.currentItem.modelData.updateProgress, 0.0)
         //TODO return URL
-        compare(Qt.resolvedUrl(listView.currentItem.modelData.codeFilePath), Qt.resolvedUrl("apps/tld.test.simple1/app1.qml"))
+        verify(listView.currentItem.modelData.codeFilePath.indexOf("apps/tld.test.simple1/app1.qml") !== -1)
         compare(listView.currentItem.modelData.backgroundMode, "Auto")
         compare(listView.currentItem.modelData.capabilities, simpleApplication.capabilities)
         compare(listView.currentItem.modelData.importance, simpleApplication.importance)
@@ -292,8 +292,8 @@ TestCase {
                     {tag: "StartStop", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
                     {tag: "StartStopAlias", appId: "tld.test.simple1@alias", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
                     {tag: "Debug", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
-                    {tag: "ForceKill", appId: "tld.test.simple2", index: 2, forceKill: true, exitCode: 9, exitStatus: AppMan.Application.ForcedExit },
-                    {tag: "AutoTerminate", appId: "tld.test.simple2", index: 2, forceKill: false, exitCode: 15, exitStatus: AppMan.Application.ForcedExit }
+                    {tag: "ForceKill", appId: "tld.test.simple2", index: 2, forceKill: true, exitCode: Qt.platform.os !== 'windows' ? 9 : 0, exitStatus: AppMan.Application.ForcedExit },
+                    {tag: "AutoTerminate", appId: "tld.test.simple2", index: 2, forceKill: false, exitCode: Qt.platform.os !== 'windows' ? 15 : 0, exitStatus: AppMan.Application.ForcedExit }
                 ];
     }
 

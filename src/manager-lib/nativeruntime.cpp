@@ -197,7 +197,8 @@ bool NativeRuntime::start()
     env.insert(qSL("AM_DBUS_PEER_ADDRESS"), static_cast<NativeRuntimeManager *>(manager())->applicationInterfaceServer()->address());
     env.insert(qSL("AM_DBUS_NOTIFICATION_BUS_ADDRESS"), NotificationManager::instance()->property("_am_dbus_name").toString());
     env.insert(qSL("AM_RUNTIME_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ configuration() })));
-    env.insert(qSL("AM_RUNTIME_SYSTEM_PROPERTIES"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ systemProperties() })));
+    if (!m_needsLauncher && !m_isQuickLauncher)
+        env.insert(qSL("AM_RUNTIME_SYSTEM_PROPERTIES"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ systemProperties() })));
     env.insert(qSL("AM_BASE_DIR"), QDir::currentPath());
     if (!dltLoggingEnabled)
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
@@ -355,9 +356,9 @@ void NativeRuntime::onApplicationFinishedInitialization()
 
         QString baseDir = m_container->mapHostPathToContainer(m_app->baseDir().absolutePath());
         QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
-        emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType, m_app->toVariantMap());
+        emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document,
+                                                  m_mimeType, m_app->toVariantMap(), systemProperties());
         m_applicationInterfaceConnected = true;
-
     }
 
     setState(Active);

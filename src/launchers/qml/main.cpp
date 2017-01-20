@@ -136,7 +136,8 @@ public:
     Controller(QCoreApplication *a, const QString &directLoad = QString());
 
 public slots:
-    void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QString &mimeType, const QVariantMap &application);
+    void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
+                          const QString &mimeType, const QVariantMap &application, const QVariantMap systemProperties);
 
 private:
     QQmlApplicationEngine m_engine;
@@ -262,11 +263,6 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
 
     setCrashActionConfiguration(m_configuration.value(qSL("crashAction")).toMap());
 
-    QVariantMap properties;
-    auto systemProperties = QtYaml::variantDocumentsFromYaml(qgetenv("AM_RUNTIME_SYSTEM_PROPERTIES"));
-    if (systemProperties.size() == 1)
-        properties = systemProperties.first().toMap();
-
     const QString baseDir = QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/");
 
     QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
@@ -313,7 +309,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
     startupTimer.checkpoint("after quick launch qml initialization");
 
     if (directLoad.isEmpty()) {
-        m_applicationInterface = new QmlApplicationInterface(properties, p2pBusName, notificationBusName, this);
+        m_applicationInterface = new QmlApplicationInterface(p2pBusName, notificationBusName, this);
         connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
                 this, &Controller::startApplication);
         if (!m_applicationInterface->initialize()) {
@@ -326,7 +322,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
             YamlApplicationScanner yas;
             try {
                 const Application *a = yas.scan(directLoad);
-                startApplication(fi.absolutePath(), a->codeFilePath(), QString(), QString(), a->toVariantMap());
+                startApplication(fi.absolutePath(), a->codeFilePath(), QString(), QString(), a->toVariantMap(), QVariantMap());
             } catch (const Exception &e) {
                 qCritical("ERROR: could not parse info.yaml file: %s", e.what());
                 qApp->exit(5);
@@ -337,7 +333,9 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
     startupTimer.checkpoint("after application interface initialization");
 }
 
-void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QString &mimeType, const QVariantMap &application)
+void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
+                                  const QString &mimeType, const QVariantMap &application,
+                                  const QVariantMap systemProperties)
 {
     if (m_launched)
         return;
@@ -415,9 +413,15 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     if (m_applicationInterface) {
         m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
-        QVariantMap &vm = m_applicationInterface->m_applicationProperties;
-        vm = qdbus_cast<QVariantMap>(application.value(qSL("applicationProperties")));
-        for (auto it = vm.begin(); it != vm.end(); ++it)
+
+        QVariantMap &svm = m_applicationInterface->m_systemProperties;
+        svm = qdbus_cast<QVariantMap>(systemProperties);
+        for (auto it = svm.begin(); it != svm.end(); ++it)
+            it.value() = convertFromDBusVariant(it.value());
+
+        QVariantMap &avm = m_applicationInterface->m_applicationProperties;
+        avm = qdbus_cast<QVariantMap>(application.value(qSL("applicationProperties")));
+        for (auto it = avm.begin(); it != avm.end(); ++it)
             it.value() = convertFromDBusVariant(it.value());
     }
 

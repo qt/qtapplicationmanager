@@ -71,7 +71,7 @@ class QmlApplicationInterface : public ApplicationInterface
     Q_OBJECT
 
 public:
-    explicit QmlApplicationInterface(const QVariantMap &systemProperties, const QString &dbusConnectionName,
+    explicit QmlApplicationInterface(const QString &dbusConnectionName,
                                      const QString &dbusNotificationBusName, QObject *parent = nullptr);
     bool initialize();
 
@@ -87,7 +87,9 @@ private slots:
     void notificationClosed(uint notificationId, uint reason);
     void notificationActionTriggered(uint notificationId, const QString &actionId);
 private:
-    Q_SIGNAL void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document, const QString &mimeType, const QVariantMap &runtimeParams);
+    Q_SIGNAL void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
+                                   const QString &mimeType, const QVariantMap &runtimeParams,
+                                   const QVariantMap systemProperties);
 
     uint notificationShow(QmlNotification *n);
     void notificationClose(QmlNotification *n);

@@ -314,7 +314,7 @@ private:
 
 #endif // QT_PSHELLSERVER_LIB
 
-static QVector<const Application *> scanForApplication(const QString &singleAppInfoYaml)
+static QVector<const Application *> scanForApplication(const QString &singleAppInfoYaml, const QStringList &builtinAppsDirs)
 {
     QVector<const Application *> result;
     YamlApplicationScanner yas;
@@ -341,6 +341,16 @@ static QVector<const Application *> scanForApplication(const QString &singleAppI
 
         aliases.push_back(std::move(alias));
     }
+
+    if (appDir.cdUp()) {
+        for (const QString &dir : builtinAppsDirs) {
+            if (appDir == QDir(dir)) {
+                a->setBuiltIn(true);
+                break;
+            }
+        }
+    }
+
     result << a.take();
     for (auto &&alias : aliases)
         result << alias.release();
@@ -467,13 +477,13 @@ struct SystemProperties
 
         props[BuiltIn] = props.at(ThirdParty);
         const QVariantMap pro = rawMap.value(qSL("protected")).toMap();
-        for (QVariantMap::const_iterator iter = pro.cbegin(); iter != pro.cend(); ++iter)
-            props[BuiltIn].insert(iter.key(), iter.value());
+        for (auto it = pro.cbegin(); it != pro.cend(); ++it)
+            props[BuiltIn].insert(it.key(), it.value());
 
         props[SystemUi] = props.at(BuiltIn);
         const QVariantMap pri = rawMap.value(qSL("private")).toMap();
-        for (QVariantMap::const_iterator iter = pri.cbegin(); iter != pri.cend(); ++iter)
-            props[SystemUi].insert(iter.key(), iter.value());
+        for (auto it = pri.cbegin(); it != pri.cend(); ++it)
+            props[SystemUi].insert(it.key(), it.value());
 
         return props;
     }
@@ -588,7 +598,7 @@ int main(int argc, char *argv[])
 
         const QVector<QVariantMap> sysProps = SystemProperties::partition(configuration->rawSystemProperties());
         foreach (StartupInterface *iface, startupPlugins)
-            iface->initialize(sysProps[SystemProperties::SystemUi]);
+            iface->initialize(sysProps.at(SystemProperties::SystemUi));
 
         startupTimer.checkpoint("after startup-plugin load");
 
@@ -710,7 +720,7 @@ int main(int argc, char *argv[])
             QVector<const Application *> apps;
 
             if (!configuration->singleApp().isEmpty()) {
-                apps = scanForApplication(configuration->singleApp());
+                apps = scanForApplication(configuration->singleApp(), configuration->builtinAppsManifestDirs());
             } else {
                 apps = scanForApplications(configuration->builtinAppsManifestDirs()
 #if !defined(AM_DISABLE_INSTALLER)

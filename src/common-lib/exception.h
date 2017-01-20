@@ -89,7 +89,7 @@ public:
     }
 
     // shouldn't be used, but needed for std::exception compatibility
-    const char *what() const throw();
+    const char *what() const throw() override;
 
 protected:
     Error m_errorCode;

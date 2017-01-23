@@ -44,6 +44,8 @@
 #include <QSocketNotifier>
 #include <QCoreApplication>
 
+#include <errno.h>
+
 QT_BEGIN_NAMESPACE_AM
 
 // sigmask() is not available on Windows
@@ -112,7 +114,7 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
                     h.m_handler(sig);
 #if defined(Q_OS_UNIX)
                 else
-                    write(that->m_pipe[1], &sig, sizeof(int));
+                    (void) write(that->m_pipe[1], &sig, sizeof(int));
 #endif
             }
         }
@@ -134,15 +136,17 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
     if (handlerType == ForwardedToEventLoopHandler) {
 #if defined(Q_OS_UNIX)
         if ((m_pipe[0] == -1) && qApp) {
-            pipe(m_pipe);
+            (void) pipe(m_pipe);
 
             auto sn = new QSocketNotifier(m_pipe[0], QSocketNotifier::Read, this);
             connect(sn, &QSocketNotifier::activated, qApp, [this]() {
                 // this lambda is the "signal handler" multiplexer within the Qt event loop
                 int sig = 0;
 
-                if (read(m_pipe[0], &sig, sizeof(int)) != sizeof(int))
+                if (read(m_pipe[0], &sig, sizeof(int)) != sizeof(int)) {
+                    qCWarning(LogSystem) << "Error writing to signal handler:" << strerror(errno);;
                     return;
+                }
 
                 for (const auto &h : UnixSignalHandler::instance()->m_handlers) {
                     if (h.m_qt && h.m_signal == sig)

@@ -531,6 +531,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
         //backtrace_print(state, stackFramesToIgnore, stderr);
         backtrace_simple(state, stackFramesToIgnore, simpleCallback, errorCallback, &data);
 #else
+        Q_UNUSED(stackFramesToIgnore);
         void *addrArray[1024];
         int addrCount = backtrace(addrArray, sizeof(addrArray) / sizeof(*addrArray));
 

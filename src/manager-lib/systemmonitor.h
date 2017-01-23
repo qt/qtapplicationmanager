@@ -56,10 +56,9 @@ class SystemMonitor : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(int reportingInterval READ reportingInterval WRITE setReportingInterval)
-    Q_PROPERTY(int reportingRange READ reportingRange WRITE setReportingRange)
-    Q_PROPERTY(qreal idleLoadThreshold READ idleLoadThreshold WRITE setIdleLoadThreshold)
-    Q_PROPERTY(qreal idleLoadAverage READ idleLoadThreshold WRITE setIdleLoadThreshold)  // deprecated
+    Q_PROPERTY(int reportingInterval READ reportingInterval WRITE setReportingInterval NOTIFY reportingIntervalChanged)
+    Q_PROPERTY(int reportingRange READ reportingRange WRITE setReportingRange NOTIFY reportingRangeChanged)
+    Q_PROPERTY(qreal idleLoadThreshold READ idleLoadThreshold WRITE setIdleLoadThreshold NOTIFY idleLoadThresholdChanged)
     Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
     Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
     Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled NOTIFY memoryReportingEnabledChanged)
@@ -120,6 +119,9 @@ public:
 signals:
     void countChanged();
     void idleChanged(bool idle);
+    void reportingIntervalChanged(int reportingInterval);
+    void reportingRangeChanged(int reportingRange);
+    void idleLoadThresholdChanged(qreal idleLoadThreshold);
 
     void memoryReportingChanged(quint64 total, quint64 used);
     void cpuLoadReportingChanged(qreal load);

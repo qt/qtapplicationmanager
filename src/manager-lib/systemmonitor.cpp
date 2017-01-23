@@ -523,9 +523,10 @@ public:
         } else if (te && te->timerId() == idleTimerId) {
             qreal idleVal = idleCpu->readLoadValue();
             bool nowIdle = (idleVal <= idleThreshold);
-            if (nowIdle != isIdle)
+            if (nowIdle != isIdle) {
+                isIdle = nowIdle;
                 emit q->idleChanged(nowIdle);
-            isIdle = nowIdle;
+            }
         }
     }
 
@@ -773,6 +774,7 @@ void SystemMonitor::setIdleLoadThreshold(qreal loadThreshold)
 
     if (loadThreshold != d->idleThreshold) {
         d->idleThreshold = loadThreshold;
+        emit idleLoadThresholdChanged(loadThreshold);
     }
 }
 
@@ -905,6 +907,7 @@ void SystemMonitor::setReportingInterval(int intervalInMSec)
             it.value()->readLoadValue();   // for initialization only
         d->setupTimer(intervalInMSec);
         d->updateModel();
+        emit reportingIntervalChanged(intervalInMSec);
     }
 }
 
@@ -922,6 +925,7 @@ void SystemMonitor::setReportingRange(int rangeInMSec)
     if (d->reportingRange != rangeInMSec && rangeInMSec > 0) {
         d->reportingRange = rangeInMSec;
         d->updateModel();
+        emit reportingRangeChanged(rangeInMSec);
     }
 }
 

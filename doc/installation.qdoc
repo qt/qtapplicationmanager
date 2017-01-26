@@ -100,11 +100,11 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li \c{-config force-libcrypto}
   \li Force building against OpenSSL, even on Windows and Mac OS X.
 \row
-  \li \c{-config libcrypto-includes}
-  \li OpenSSL include directory, if not building against a packaged version.
+  \li \c{-config force-system-libarchive}
+  \li Force building against the system libarchive.
 \row
-  \li \c{-config libcrypto-defines}
-  \li Additional OpenSSL defines, if not building against a packaged version.
+  \li \c{-config force-system-libyaml}
+  \li Force building against the system libyaml.
 \row
   \li \c{-config force-single-process}
   \li Force a single-process build, even if Qt's Wayland \c compositor module is available.
@@ -155,6 +155,10 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li \c{-config enable-libbacktrace}
   \li Enables building and linking against \c libbacktrace in the 3rdparty folder. This will give
       you readable backtraces on crash, but will also increase the binary size slightly.
+      This is enabled by default for debug builds.
+\row
+  \li \c{-config disable-libbacktrace}
+  \li Disables building and linking against \c libbacktrace in the 3rdparty folder.
 \endtable
 
 \section2 The Hardware ID

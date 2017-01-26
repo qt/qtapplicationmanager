@@ -1,0 +1,15 @@
+{
+    "Id": "libyaml",
+    "Name": "libyaml",
+    "QDocModule": "applicationmanager",
+    "QtUsage": "Optionally used in Qt ApplicationManager. Configure with -config force-system-libyaml to avoid.",
+
+    "Description": "LibYAML is a YAML 1.1 parser and emitter written in C.",
+    "Homepage": "http://pyyaml.org/wiki/LibYAML/",
+    "Version": "0.1.6",
+
+    "License": "MIT License",
+    "LicenseId": "MIT",
+    "LicenseFile": "LICENSE",
+    "Copyright": "Copyright (c) 2006-2016 Kirill Simonov"
+}

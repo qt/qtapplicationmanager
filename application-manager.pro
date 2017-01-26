@@ -29,10 +29,16 @@ MIN_MINOR=6
 
 load(am-config)
 
-!config_libarchive:SUBDIRS += 3rdparty/libarchive/libarchive.pro
-!config_libyaml:SUBDIRS += 3rdparty/libyaml/libyaml.pro
+!config_libyaml {
+    force-system-libyaml:error("Could not find a system installation for libyaml.")
+    else:SUBDIRS += 3rdparty/libyaml/libyaml.pro
+}
+!config_libarchive {
+    force-system-libarchive:error("Could not find a system installation for libarchive.")
+    else:SUBDIRS += 3rdparty/libarchive/libarchive.pro
+}
 
-linux:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
+linux:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
   check_libbacktrace = "yes"
   SUBDIRS += 3rdparty/libbacktrace/libbacktrace.pro
 } else {

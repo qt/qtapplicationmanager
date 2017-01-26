@@ -24,7 +24,8 @@ sourcedirs = \
     ../src/tools/packager \
     ../src/tools/deployer \
     ../src/tools/controller \
-    ../src/common-lib
+    ../src/common-lib \
+    $$BUILDDIR
 
 exampledirs = ../examples
 

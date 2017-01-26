@@ -1,0 +1,15 @@
+{
+    "Id": "libarchive",
+    "Name": "libarchive",
+    "QDocModule": "applicationmanager",
+    "QtUsage": "Optionally used in Qt ApplicationManager. Configure with -config force-system-libarchive to avoid.",
+
+    "Description": "Multi-format archive and compression library.",
+    "Homepage": "http://www.libarchive.org/",
+    "Version": "3.1.2",
+
+    "License": "BSD 2-clause \"Simplified\" License",
+    "LicenseId": "BSD-2-Clause",
+    "LicenseFile": "COPYING",
+    "Copyright": "(c) 2003-2016 Tim Kientzle et al. - see COPYING and the individual file headers"
+}

@@ -125,9 +125,7 @@ TestCase {
             compare(obj.pubandpri, 'pri3')
             compare(obj.proandpri, 'pri4')
             compare(obj.inall, 'private')
-
-            expectFailContinue("", "~ should report a null variant, but undefined is reported")
-            compare(ApplicationManager.systemProperties.nullTest, null)
+            compare(obj.nullTest, null)
         }
         sub(ApplicationManager.systemProperties);
         sub(ApplicationManager.additionalConfiguration);

@@ -1355,7 +1355,9 @@ void ApplicationManager::preload()
 
 void ApplicationManager::openUrlRelay(const QUrl &url)
 {
-    openUrl(url.toString());
+    QTimer::singleShot(0, [this, url] () {
+        openUrl(url.toString());
+    });
 }
 
 void ApplicationManager::emitDataChanged(const Application *app, const QVector<int> &roles)

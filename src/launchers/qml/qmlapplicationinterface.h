@@ -126,6 +126,7 @@ public:
     static void initialize(const QDBusConnection &connection);
 
     explicit QmlApplicationInterfaceExtension(QObject *parent = nullptr);
+    ~QmlApplicationInterfaceExtension();
 
     QString name() const;
     bool isReady() const;

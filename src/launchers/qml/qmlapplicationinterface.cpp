@@ -276,6 +276,12 @@ QmlApplicationInterfaceExtension::QmlApplicationInterfaceExtension(QObject *pare
     }
 }
 
+QmlApplicationInterfaceExtension::~QmlApplicationInterfaceExtension()
+{
+    d->m_interfaces.remove(m_name);
+
+}
+
 QString QmlApplicationInterfaceExtension::name() const
 {
     return m_name;

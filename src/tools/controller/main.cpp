@@ -171,7 +171,7 @@ static Command command(QCommandLineParser &clp)
     return NoCommand;
 }
 
-static void startOrDebugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl);
+static void startOrDebugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, bool restart, const QString &documentUrl);
 static void stopApplication(const QString &appId);
 static void listApplications();
 static void showApplication(const QString &appId);
@@ -268,6 +268,7 @@ int main(int argc, char *argv[])
             clp.addOption({ { qSL("i"), qSL("attach-stdin") }, qSL("Attach the app's stdin to the controller's stdin") });
             clp.addOption({ { qSL("o"), qSL("attach-stdout") }, qSL("Attach the app's stdout to the controller's stdout") });
             clp.addOption({ { qSL("e"), qSL("attach-stderr") }, qSL("Attach the app's stderr to the controller's stderr") });
+            clp.addOption({ { qSL("r"), qSL("restart") }, qSL("Before starting, stop the application if it is already running") });
             clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
             clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
             clp.process(a);
@@ -283,15 +284,17 @@ int main(int argc, char *argv[])
                 stdRedirections[qSL("out")] = 1;
             if (clp.isSet(qSL("attach-stderr")))
                 stdRedirections[qSL("err")] = 2;
+            bool restart = clp.isSet(qSL("restart"));
 
             startOrDebugApplication(QString(), clp.positionalArguments().at(1), stdRedirections,
-                                    args == 3 ? clp.positionalArguments().at(2) : QString());
+                                    restart, args == 3 ? clp.positionalArguments().at(2) : QString());
             break;
         }
         case DebugApplication: {
             clp.addOption({ { qSL("i"), qSL("attach-stdin") }, qSL("Attach the app's stdin to the controller's stdin") });
             clp.addOption({ { qSL("o"), qSL("attach-stdout") }, qSL("Attach the app's stdout to the controller's stdout") });
             clp.addOption({ { qSL("e"), qSL("attach-stderr") }, qSL("Attach the app's stderr to the controller's stderr") });
+            clp.addOption({ { qSL("r"), qSL("restart") }, qSL("Before starting, stop the application if it is already running") });
             clp.addPositionalArgument(qSL("debug-wrapper"),  qSL("The name of a configured debug-wrapper."));
             clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
             clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
@@ -308,9 +311,11 @@ int main(int argc, char *argv[])
                 stdRedirections[qSL("out")] = 1;
             if (clp.isSet(qSL("attach-stderr")))
                 stdRedirections[qSL("err")] = 2;
+            bool restart = clp.isSet(qSL("restart"));
 
             startOrDebugApplication(clp.positionalArguments().at(1), clp.positionalArguments().at(2),
-                                    stdRedirections, args == 3 ? clp.positionalArguments().at(2) : QString());
+                                    stdRedirections, restart,
+                                    args == 3 ? clp.positionalArguments().at(2) : QString());
             break;
         }
         case StopApplication:
@@ -388,11 +393,16 @@ int main(int argc, char *argv[])
     }
 }
 
-void startOrDebugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, const QString &documentUrl = QString())
+void startOrDebugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, bool restart, const QString &documentUrl = QString())
 {
     dbus.connectToManager();
 
-    QTimer::singleShot(0, [debugWrapper, appId, stdRedirections, documentUrl]() {
+    QTimer::singleShot(0, [debugWrapper, appId, stdRedirections, restart, documentUrl]() {
+        if (restart) {
+            auto stopReply = dbus.manager()->stopApplication(appId, true);
+            stopReply.waitForFinished();
+        }
+
         bool isDebug = !debugWrapper.isEmpty();
         QDBusPendingReply<bool> reply;
         if (stdRedirections.isEmpty()) {

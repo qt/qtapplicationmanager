@@ -45,6 +45,7 @@
 #include <QProcess>
 #include <QDir>
 #include <QTimer>
+#include <QUuid>
 #include <QMimeDatabase>
 #if defined(QT_GUI_LIB)
 #  include <QDesktopServices>
@@ -335,6 +336,15 @@ public:
 
     QList<QPair<QString, QString>> containerSelectionConfig;
     QJSValue containerSelectionFunction;
+
+    struct OpenUrlRequest {
+        QString requestId;
+        QString urlStr;
+        QString mimeTypeName;
+        QStringList possibleAppIds;
+    };
+
+    QVector<OpenUrlRequest> openUrlRequests;
 
     ApplicationManagerPrivate();
     ~ApplicationManagerPrivate();
@@ -663,29 +673,39 @@ const Application *ApplicationManager::fromSecurityToken(const QByteArray &secur
     return 0;
 }
 
-const Application *ApplicationManager::schemeHandler(const QString &scheme) const
+QVector<const Application *> ApplicationManager::schemeHandlers(const QString &scheme) const
 {
+    QVector<const Application *> handlers;
+
     foreach (const Application *app, d->apps) {
+        if (app->isAlias())
+            continue;
+
         foreach (const QString &mime, app->supportedMimeTypes()) {
             int pos = mime.indexOf(QLatin1Char('/'));
 
             if ((pos > 0)
                     && (mime.left(pos) == qL1S("x-scheme-handler"))
                     && (mime.mid(pos + 1) == scheme)) {
-                return app;
+                handlers << app;
             }
         }
     }
-    return 0;
+    return handlers;
 }
 
-const Application *ApplicationManager::mimeTypeHandler(const QString &mimeType) const
+QVector<const Application *> ApplicationManager::mimeTypeHandlers(const QString &mimeType) const
 {
+    QVector<const Application *> handlers;
+
     foreach (const Application *app, d->apps) {
+        if (app->isAlias())
+            continue;
+
         if (app->supportedMimeTypes().contains(mimeType))
-            return app;
+            handlers << app;
     }
-    return 0;
+    return handlers;
 }
 
 void ApplicationManager::registerMimeTypes()
@@ -1115,28 +1135,66 @@ void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 /*!
     \qmlmethod bool ApplicationManager::openUrl(string url)
 
-    Tries to match the supplied \a url against the internal MIME database. If a match is found,
-    the corresponding application is started via startApplication() and \a url is supplied to
-    it as a document to open.
+    Tries start an application that is capable of handling \a url. The application-manager will
+    first look at the URL's scheme:
+    \list
+    \li If it is \c{file:}, the operating system's MIME database will be consulted, which will
+        try to find a MIME type match, based on file endings or file content. In case this is
+        successful, the application-manager will use this MIME type to find all of its applications
+        that claim support for it (see the \l{mimeTypes field} in the application's manifest).
+        A music player application that can handle \c mp3 and \c wav files, could add this to its
+        manifest:
+        \badcode
+        mimeTypes: [ 'audio/mpeg', 'audio/wav' ]
+        \endcode
+    \li If it is something other than \c{file:}, the application-manager will consult its
+        internal database of applications that claim support for a matching \c{x-scheme-handler/...}
+        MIME type. In order to have your web-browser application handle \c{http:} and \c{https:}
+        URLs, you would have to have this in your application's manifest:
+        \badcode
+        mimeTypes: [ 'x-scheme-handler/http', 'x-scheme-handler/https' ]
+        \endcode
+    \endlist
 
-    Returns the result of startApplication(), or \c false if no application was registered for
-    the type and/or scheme of \a url.
+    If there is at least one possible match, it depends on the signal openUrlRequested() being
+    connected within the System-UI:
+    In case the signal is not connected, an arbitrary application from the matching set will be
+    started. Otherwise the application-manager will emit the openUrlRequested signal and
+    return \c true. It is up to the receiver of this signal to choose from one of possible
+    applications via acknowledgeOpenUrlRequest or deny the request entirely via rejectOpenUrlRequest.
+    Not calling one of these two functions will result in memory leaks.
+
+    If an application is started by one of the two mechanisms, the \a url is supplied to
+    the application as a document to open via its ApplicationInterface.
+
+    Returns \c true, if a match was found in the database, or \c false otherwise.
+
+    \sa openUrlRequested, acknowledgeOpenUrlRequest, rejectOpenUrlRequest
 */
 bool ApplicationManager::openUrl(const QString &urlStr)
 {
     AM_AUTHENTICATE_DBUS(bool)
 
+    // QDesktopServices::openUrl has a special behavior when called recursively, which makes sense
+    // on the desktop, but is completely counter-productive for the AM.
+    static bool recursionGuard = false;
+    if (recursionGuard) {
+        QTimer::singleShot(0, this, [urlStr, this]() { openUrl(urlStr); });
+        return true; // this is not correct, but the best we can do in this situation
+    }
+    recursionGuard = true;
+
     QUrl url(urlStr);
-    const Application *app = 0;
     QString mimeTypeName;
+    QVector<const Application *> apps;
+
     if (url.isValid()) {
         QString scheme = url.scheme();
         if (scheme != qL1S("file")) {
-            app = schemeHandler(scheme);
+            apps = schemeHandlers(scheme);
 
-            if (app) {
-                if (app->isAlias())
-                    app = app->nonAliased();
+            for (auto it = apps.begin(); it != apps.end(); ++it) {
+                const Application *&app = *it;
 
                 // try to find a better matching alias, if available
                 foreach (const Application *alias, d->apps) {
@@ -1150,19 +1208,102 @@ bool ApplicationManager::openUrl(const QString &urlStr)
             }
         }
 
-        if (!app) {
+        if (apps.isEmpty()) {
             QMimeDatabase mdb;
             QMimeType mt = mdb.mimeTypeForUrl(url);
             mimeTypeName = mt.name();
 
-            app = mimeTypeHandler(mimeTypeName);
-            if (app && app->isAlias())
-                app = app->nonAliased();
+            apps = mimeTypeHandlers(mimeTypeName);
         }
     }
-    if (app)
-        return startApplication(app, urlStr, mimeTypeName);
-    return false;
+
+    if (!apps.isEmpty()) {
+        if (!isSignalConnected(QMetaMethod::fromSignal(&ApplicationManager::openUrlRequested))) {
+            // If the system-ui does not react to the signal, then just use the first match.
+            startApplication(apps.constFirst(), urlStr, mimeTypeName);
+        } else {
+            ApplicationManagerPrivate::OpenUrlRequest req {
+                QUuid::createUuid().toString(),
+                urlStr,
+                mimeTypeName,
+                QStringList()
+            };
+            for (const auto &app : qAsConst(apps))
+                req.possibleAppIds << app->id();
+            d->openUrlRequests << req;
+
+            emit openUrlRequested(req.requestId, req.urlStr, req.mimeTypeName, req.possibleAppIds);
+        }
+    }
+
+    recursionGuard = false;
+    return !apps.isEmpty();
+}
+
+/*!
+    \qmlsignal ApplicationManager::openUrlRequested(string requestId, string url, string mimeType, list<string> possibleAppIds)
+
+    This signal is emitted when the application-manager is requested to open an URL. This can happen
+    by calling
+    \list
+    \li Qt.openUrlExternally in an application,
+    \li Qt.openUrlExternally in the System-UI,
+    \li ApplicationManager::openUrl in the System-UI or
+    \li \c io.qt.ApplicationManager.openUrl via D-Bus
+    \endlist
+    \note This signal is only emitted, if there is a receiver connected at all - see openUrl for the
+          fallback behavior.
+
+    The receiver of this signal can inspect the requested \a url an its \a mimeType. It can then
+    either call acknowledgeOpenUrlRequest to choose from one of the supplied \a possibleAppIds or
+    rejectOpenUrlRequest to ignore the request. In both cases the unique \a requestId needs to be
+    sent to identify the request.
+    Not calling one of these two functions will result in memory leaks.
+
+    \sa openUrl, acknowledgeOpenUrlRequest, rejectOpenUrlRequest
+*/
+
+/*!
+    \qmlmethod ApplicationManager::acknowledgeOpenUrlRequest(string requestId, string appId)
+
+    Tells the application-manager to go ahead with the request to open an URL, identified by \a
+    requestId. The chosen \a appId needs to be one of the \c possibleAppIds supplied to the
+    receiver of the openUrlRequested signal.
+
+    \sa openUrl, openUrlRequested
+*/
+void ApplicationManager::acknowledgeOpenUrlRequest(const QString &requestId, const QString &appId)
+{
+    for (auto it = d->openUrlRequests.begin(); it != d->openUrlRequests.end(); ++it) {
+        if (it->requestId == requestId) {
+            if (it->possibleAppIds.contains(appId)) {
+                startApplication(application(appId), it->urlStr, it->mimeTypeName);
+            } else {
+                qCWarning(LogSystem) << "acknowledgeOpenUrlRequest for" << it->urlStr << "requested app"
+                                     << appId << "which is not one of the registered possibilities:"
+                                     << it->possibleAppIds;
+            }
+            d->openUrlRequests.erase(it);
+            break;
+        }
+    }
+}
+
+/*!
+    \qmlmethod ApplicationManager::rejectOpenUrlRequest(string requestId)
+
+    Tells the application-manager to ignore the request to open an URL, identified by \a requestId.
+
+    \sa openUrl, openUrlRequested
+*/
+void ApplicationManager::rejectOpenUrlRequest(const QString &requestId)
+{
+    for (auto it = d->openUrlRequests.begin(); it != d->openUrlRequests.end(); ++it) {
+        if (it->requestId == requestId) {
+            d->openUrlRequests.erase(it);
+            break;
+        }
+    }
 }
 
 /*!
@@ -1376,9 +1517,7 @@ void ApplicationManager::preload()
 
 void ApplicationManager::openUrlRelay(const QUrl &url)
 {
-    QTimer::singleShot(0, [this, url] () {
-        openUrl(url.toString());
-    });
+    openUrl(url.toString());
 }
 
 void ApplicationManager::emitDataChanged(const Application *app, const QVector<int> &roles)

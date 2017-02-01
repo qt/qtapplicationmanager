@@ -104,8 +104,8 @@ public:
     const Application *fromId(const QString &id) const;
     const Application *fromProcessId(qint64 pid) const;
     const Application *fromSecurityToken(const QByteArray &securityToken) const;
-    const Application *schemeHandler(const QString &scheme) const;
-    const Application *mimeTypeHandler(const QString &mimeType) const;
+    QVector<const Application *> schemeHandlers(const QString &scheme) const;
+    QVector<const Application *> mimeTypeHandlers(const QString &mimeType) const;
 
     bool startApplication(const Application *app, const QString &documentUrl = QString(),
                           const QString &documentMimeType = QString(),
@@ -136,6 +136,9 @@ public:
 
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 
+    Q_INVOKABLE void acknowledgeOpenUrlRequest(const QString &requestId, const QString &appId);
+    Q_INVOKABLE void rejectOpenUrlRequest(const QString &requestId);
+
     // DBus interface
     Q_SCRIPTABLE QStringList applicationIds() const;
     Q_SCRIPTABLE QVariantMap get(const QString &id) const;
@@ -159,6 +162,8 @@ signals:
     Q_SCRIPTABLE void applicationAdded(const QString &id);
     Q_SCRIPTABLE void applicationAboutToBeRemoved(const QString &id);
     Q_SCRIPTABLE void applicationChanged(const QString &id, const QStringList &changedRoles);
+
+    void openUrlRequested(const QString &requestId, const QString &url, const QString &mimeType, const QStringList &possibleAppIds);
 
     void inProcessRuntimeCreated(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime); // evil hook to support in-process runtimes
 

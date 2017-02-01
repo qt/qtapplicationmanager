@@ -205,8 +205,11 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         policy.
 \row
     \li \c mimeTypes
+    \target mimeTypes field
     \li array<string>
-    \li An optional array of MIME types the application feels responsible for.
+    \li An optional array of MIME types the application can handle. The application-manager supports
+        the classic file name or content to MIME type matching, as well as URL scheme matching:
+        please see ApplicationManager::openUrl for more information.
 \row
     \li \c capabilities
     \li array<string>

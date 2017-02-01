@@ -6,8 +6,9 @@ version = $QT_VERSION
 sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
 headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
 examples.fileextensions = "*.qml *.yaml"
+examples.imageextensions = "*.png *.jpg *.gif"
 
-headerdirs = \
+headerdirs += \
     ../src/manager \
     ../src/manager-lib \
     ../src/application-lib \
@@ -16,7 +17,7 @@ headerdirs = \
     ../src/notification-lib \
     ../src/launchers/qml
 
-sourcedirs = \
+sourcedirs += \
     . \
     ../src/manager \
     ../src/manager-lib \
@@ -32,10 +33,6 @@ sourcedirs = \
     $$BUILDDIR
 
 exampledirs = ../examples
-
-imagedirs = \
-     images \
-     ../examples/minidesk/doc/images
 
 depends += qtcore qtquick qtqml qtdoc
 
@@ -60,5 +57,6 @@ qhp.ApplicationManager.subprojects.qmltypes.indexTitle = Qt Application Manager 
 qhp.ApplicationManager.subprojects.qmltypes.selectors = qmltype
 qhp.ApplicationManager.subprojects.qmltypes.sortPages = true
 
+navigation.homepage    = "Qt Automotive Suite"
 navigation.landingpage = "Qt Application Manager"
 buildversion = "Qt Application Manager $QT_VERSION"

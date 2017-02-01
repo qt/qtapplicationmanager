@@ -1,5 +1,5 @@
-include($QT_INSTALL_DOCS/global/qt-html-templates-offline.qdocconf)
-include(config/applicationmanager-project.qdocconf)
+include($QT_INSTALL_DOCS/global/qt-module-defaults-offline.qdocconf)
+include(applicationmanager-project.qdocconf)
 
 HTML.footer = \
     "        </div>\n" \

@@ -60,6 +60,21 @@
 #include "applicationipcinterface.h"
 #include "applicationipcinterface_p.h"
 
+/*!
+    \qmltype ApplicationIPCInterface
+    \inqmlmodule QtApplicationManager
+    \brief The definition of an IPC interface between the ApplicationManager and applications.
+
+    Using ApplicationIPCInterface items, you can define an IPC interface between your System-UI and
+    your applications. The actual interface will be all the properties, signals and functions
+    defined within this item. It is however also possible to use this item to wrap already existing
+    QtObject or even \l QObject instances by setting the serviceObject property: this will expose
+    all properties, signals and functions of the serviceObject instead of the one's in this item.
+
+    Please see the ApplicationIPCManager::registerInterface for an in-depth explanation on how these
+    IPC interfaces are set up.
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 ApplicationIPCInterface::ApplicationIPCInterface(QObject *parent)
@@ -84,7 +99,9 @@ bool ApplicationIPCInterface::isValidForApplication(const Application *app) cons
 /*!
     \qmlproperty QtObject ApplicationIPCInterface::serviceObject
 
-    This property holds the pointer to the object which is exposed on the IPC
+    This property holds the pointer to the object which is exposed on the IPC. By default this
+    will return the ApplicationIPCInterface object itself, but setting this property can be used
+    to wrap already existing objects in order to expose them as IPC interfaces to applications.
 */
 QObject *ApplicationIPCInterface::serviceObject() const
 {

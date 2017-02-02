@@ -57,7 +57,6 @@ class IpcProxyObject;
 class ApplicationIPCInterface : public QObject
 {
     Q_OBJECT
-
     Q_PROPERTY(QObject *serviceObject READ serviceObject WRITE setServiceObject NOTIFY serviceObjectChanged)
 
 public:

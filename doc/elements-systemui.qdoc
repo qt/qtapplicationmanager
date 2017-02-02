@@ -57,13 +57,19 @@ item models.
 
 \section1 Instantiable QML Types
 
-All these types work the same way within the System-UI, as they would within a single-process
+These types are only available for the System-UI:
+
+\list
+  \li ApplicationIPCInterface - System-UI side definition of interfaces for System-UI-to-app communication.
+\endlist
+
+The following types work the same way within the System-UI, as they would within a single-process
 application. Depending on your System-UI design, this can be very helpful at times.
 
 \list
   \li ApplicationManagerWindow - The window root item required in a multi-process environment.
   \li \l Notification - Abstraction for freedesktop.org Notifications on the client side.
-  \li ApplicationInterfaceExtension - Client side access to IPC interface extensions.
+  \li ApplicationInterfaceExtension - Client side access to System-UI-to-app communication interfaces.
 \endlist
 
 \section1 Non-Instantiable QML Types

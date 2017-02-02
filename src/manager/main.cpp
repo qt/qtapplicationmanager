@@ -570,15 +570,17 @@ int main(int argc, char *argv[])
 
     try {
         QStringList loggingRules = configuration->loggingRules();
-        if (loggingRules.isEmpty())
-            loggingRules << qSL("*.warning=true");
-        if (configuration->verbose()) {
-            loggingRules << qSL("*.debug=true");
-            loggingRules << qSL("qt.scenegraph.*.debug=false");
-            loggingRules << qSL("qt.quick.*.debug=false");
-            loggingRules << qSL("qt.qpa.*.debug=false");
-        } else {
-            loggingRules << qSL("*.debug=false");
+        bool verbose = configuration->verbose();
+
+        if (loggingRules.isEmpty() && !verbose)
+            loggingRules.append(qSL("*.debug=false"));
+
+        if (verbose) {
+            // we are prepending here to allow the user to override these in the config file.
+            loggingRules.prepend(qSL("qt.qpa.*.debug=false"));
+            loggingRules.prepend(qSL("qt.quick.*.debug=false"));
+            loggingRules.prepend(qSL("qt.scenegraph.*.debug=false"));
+            loggingRules.prepend(qSL("*.debug=true"));
         }
 
         QLoggingCategory::setFilterRules(loggingRules.join(qL1C('\n')));

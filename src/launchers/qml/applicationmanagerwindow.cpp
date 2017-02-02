@@ -51,19 +51,8 @@ QT_BEGIN_NAMESPACE_AM
 class ApplicationManagerWindowPrivate
 {
 public:
-    ApplicationManagerWindowPrivate()
-        : frameCount(0)
-        , currentFPS(0)
-        , platformNativeInterface(0)
-        , platformWindow(0)
-    { }
-
-    QTime time;
-    int frameCount;
-    float currentFPS;
-
-    QPlatformNativeInterface *platformNativeInterface;
-    QPlatformWindow *platformWindow;
+    QPlatformNativeInterface *platformNativeInterface = nullptr;
+    QPlatformWindow *platformWindow = nullptr;
 };
 
 
@@ -125,15 +114,6 @@ public:
 
 */
 
-/*!
-    \qmlproperty real ApplicationManagerWindow::fps
-    \readonly
-
-    This property holds the current frames-per-second value: in ideal cases the value should be
-    exactly \c 60 when animations are running and \c 0 when the application is idle.
-*/
-
-
 ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
     : QQuickWindowQmlImpl(parent)
     , d(new ApplicationManagerWindowPrivate())
@@ -142,18 +122,16 @@ ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
     setWidth(1024);
     setHeight(768);
 
-    connect(this, &QQuickWindow::frameSwapped, this, &ApplicationManagerWindow::onFrameSwapped);
-
     (void) winId(); // force allocation of platform resources
 
     d->platformNativeInterface = qApp->platformNativeInterface();
     d->platformWindow = handle();
     if (!d->platformNativeInterface) {
-        qWarning() << "ERROR: ApplicationManagerWindow failed to get a valid QPlatformNativeInterface object";
+        qCCritical(LogQmlRuntime) << "ApplicationManagerWindow failed to get a valid QPlatformNativeInterface object";
         return;
     }
     if (!d->platformWindow) {
-        qWarning() << "ERROR: ApplicationManagerWindow failed to get a QPlatformWindow handle for itself";
+        qCCritical(LogQmlRuntime) << "ApplicationManagerWindow failed to get a QPlatformWindow handle for itself";
         return;
     }
     connect(d->platformNativeInterface, &QPlatformNativeInterface::windowPropertyChanged,
@@ -165,11 +143,6 @@ void ApplicationManagerWindow::onWindowPropertyChangedInternal(QPlatformWindow *
     if (pw == d->platformWindow && d->platformWindow && d->platformNativeInterface) {
         emit windowPropertyChanged(name, d->platformNativeInterface->windowProperty(pw, name));
     }
-}
-
-float ApplicationManagerWindow::fps() const
-{
-    return d->currentFPS;
 }
 
 /*!
@@ -230,17 +203,5 @@ QVariantMap ApplicationManagerWindow::windowProperties() const
     \sa WindowManager::setWindowProperty
 */
 
-void ApplicationManagerWindow::onFrameSwapped()
-{
-    if (d->frameCount == 0) {
-        d->time.start();
-    } else {
-        d->currentFPS =  float(d->frameCount) / d->time.elapsed() * 1000;
-        //qDebug("FPS is %f \n", d->currentFPS);
-        emit fpsChanged(d->currentFPS);
-    }
-
-    d->frameCount++;
-}
 
 QT_END_NAMESPACE_AM

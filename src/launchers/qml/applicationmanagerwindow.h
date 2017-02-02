@@ -54,23 +54,18 @@ class ApplicationManagerWindowPrivate;
 class ApplicationManagerWindow : public QQuickWindowQmlImpl
 {
     Q_OBJECT
-    Q_PROPERTY(float fps READ fps NOTIFY fpsChanged)
 
 public:
     explicit ApplicationManagerWindow(QWindow *parent = 0);
-
-    float fps() const;
 
     Q_INVOKABLE bool setWindowProperty(const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;
     Q_INVOKABLE QVariantMap windowProperties() const;
 
 signals:
-    void fpsChanged(float fps);
     void windowPropertyChanged(const QString &name, const QVariant &value);
 
 private slots:
-    void onFrameSwapped();
     void onWindowPropertyChangedInternal(QPlatformWindow *window, const QString &name);
 
 private:

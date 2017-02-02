@@ -58,59 +58,82 @@
 /*!
     \qmltype StartupTimer
     \inqmlmodule QtApplicationManager
-    \brief The StartupTimer logger.
+    \brief A tool for startup performance analysis.
 
-    The StartupTimer is the class for measuring startup time of the system UI
-    and applciations started by QtApplicationManager.
+    The StartupTimer is a class for measuring the startup performance of the System-UI, as well as
+    applications started by application-manager.
 
-    It logs the time from launching the process until it is running, also showing
-    various intermediate steps. In order to obtain startup timing \c $AM_STARTUP_TIMER
-    environment variable should be used. If set to \c 1, a startup performance analysis
-    will be printed on the console. Anything other than \c 1 will be interpreted as
-    the name of a file that is used instead of the console.
+    Using the checkpoint function, you can log the time it took from forking the process until now.
+    The time is reported using a monotonic clock with nano-second resolution - see QElapsedTimer
+    for more information.
 
-    An example output:
+    \note On Linux, the actual time between the forking of the process and the first checkpoint
+          can only be obtained with 10ms resolution.
 
-    \badcode
-    ==  STARTUP TIMING REPORT ==
-    0'070.000 StartupTimer main
-    0'070.011 after basic initialization
-    0'070.212 after sudo server fork
-    0'090.526 after application constructor
-    0'091.402 after command line parse
-    0'091.458 after logging setup
-    0'091.466 after startup-plugin load
-    0'091.985 after installer setup checks
-    0'092.807 after runtime registration
-    0'100.099 after application database loading
-    0'100.871 after ApplicationManager instantiation
-    0'100.898 after NotificationManager instantiation
-    0'100.963 after SystemMonitor instantiation
-    0'100.998 after quick-launcher setup
-    0'101.511 after ApplicationInstaller instantiation
-    0'101.578 after QML registrations
-    0'105.156 after QML engine instantiation
-    0'110.963 after D-Bus registrations
-    0'797.810 after loading main QML file
-    0'797.969 after WindowManager/QuickView instantiation
-    0'804.235 after window show
-    0'858.870 after first frame drawn
-    \endcode
+    In order to activate startup timing measurement, the \c $AM_STARTUP_TIMER environment variable
+    needs to be set: if set to \c 1, a startup performance analysis will be printed on the console.
+    Anything other than \c 1 will be interpreted as the name of a file that is used instead of the
+    console.
 
+    When activated, this report will always be printed for the System-UI. If the application-manager
+    is running in multi-process mode, additional reports will also be printed for every QML
+    application that is started.
+
+    The application-manager and its QML launcher will already create a lot of checkpoints on their
+    own and will also call createReport themselves after all the C++ side setup has finished. You
+    can however add arbitrary checkpoints yourself using the QML API: access to the StartupTimer
+    object is possible through a the \c StartupTimer root-context property in the QML engine.
+
+    This is an example output, starting the \c Neptune UI on a console with ANSI color support:
+
+    \raw HTML
+    <style type="text/css" id="colorstyles">
+        #color-green  { color: #18b218 }
+        #color-orange { color: #b26818 }
+        #color-blue   { background-color: #5454ff; color: #000000 }
+    </style>
+    <pre>
+<span id="color-orange">== STARTUP TIMING REPORT: System UI ==</span>
+<span id="color-green">0'110.001</span> entered main                                <span id="color-blue">   </span>
+<span id="color-green">0'110.015</span> after basic initialization                  <span id="color-blue">   </span>
+<span id="color-green">0'110.311</span> after sudo server fork                      <span id="color-blue">   </span>
+<span id="color-green">0'148.911</span> after application constructor               <span id="color-blue">    </span>
+<span id="color-green">0'150.086</span> after command line parse                    <span id="color-blue">    </span>
+<span id="color-green">0'150.154</span> after logging setup                         <span id="color-blue">    </span>
+<span id="color-green">0'150.167</span> after startup-plugin load                   <span id="color-blue">    </span>
+<span id="color-green">0'151.714</span> after installer setup checks                <span id="color-blue">    </span>
+<span id="color-green">0'151.847</span> after runtime registration                  <span id="color-blue">    </span>
+<span id="color-green">0'156.278</span> after application database loading          <span id="color-blue">    </span>
+<span id="color-green">0'158.450</span> after ApplicationManager instantiation      <span id="color-blue">     </span>
+<span id="color-green">0'158.477</span> after NotificationManager instantiation     <span id="color-blue">     </span>
+<span id="color-green">0'158.534</span> after SystemMonitor instantiation           <span id="color-blue">     </span>
+<span id="color-green">0'158.572</span> after quick-launcher setup                  <span id="color-blue">     </span>
+<span id="color-green">0'159.130</span> after ApplicationInstaller instantiation    <span id="color-blue">     </span>
+<span id="color-green">0'159.192</span> after QML registrations                     <span id="color-blue">     </span>
+<span id="color-green">0'164.888</span> after QML engine instantiation              <span id="color-blue">     </span>
+<span id="color-green">0'189.619</span> after D-Bus registrations                   <span id="color-blue">     </span>
+<span id="color-green">2'167.233</span> after loading main QML file                 <span id="color-blue">                                                        </span>
+<span id="color-green">2'167.489</span> after WindowManager/QuickView instantiation <span id="color-blue">                                                        </span>
+<span id="color-green">2'170.423</span> after window show                           <span id="color-blue">                                                        </span>
+<span id="color-green">2'359.482</span> after first frame drawn                     <span id="color-blue">                                                             </span></pre>
+\endraw
 */
 
 /*!
     \qmlmethod StartupTimer::checkpoint(string name)
 
-    Adds a new checkpoint with the given \a name, using the current system time.
-    Each checkpoint corresponds to a single item in the output created by createReport.
+    Adds a new checkpoint with the given \a name, using the current system time. Each checkpoint
+    corresponds to a single item in the output created by the next call to createReport.
 */
 
 /*!
     \qmlmethod StartupTimer::createReport(string title)
 
-    Outputs a reports using all checkpoints reported via the checkpoint function.
+    Outputs a report consisting of all checkpoints reported via the checkpoint function.
     The \a title will be appended to the header of the report.
+
+    After outputting the report, all reported checkpoints will be cleared. This means that you can
+    call this function multiple times and only newly reported checkpoints will be printed.
 */
 
 QT_BEGIN_NAMESPACE_AM

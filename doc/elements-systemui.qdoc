@@ -53,6 +53,7 @@ item models.
   \li SystemMonitor - The system monitoring model, giving access to a range of measurements, e.g.
       CPU load, frame rate, etc.
   \li ApplicationIPCManager - Central registry for interfaces for System-UI-to-app communication.
+  \li StartupTimer - A tool for startup performance analysis.
 \endlist
 
 \section1 Instantiable QML Types

@@ -52,7 +52,8 @@ This is a (incomplete) list of environment variables that influence the logging 
 \row
     \li AM_STARTUP_TIMER
     \li If set to 1, a startup performance analysis will be printed on the console. Anything other
-        than 1 will be interpreted as the name of a file that is used instead of the console.
+        than 1 will be interpreted as the name of a file that is used instead of the console. For
+        more in-depth information see StartupTimer.
 \row
     \li AM_FORCE_COLOR_OUTPUT
     \li Can be set to \c on to force color output to the console and to \c off to disable it. Any

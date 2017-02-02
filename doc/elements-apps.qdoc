@@ -43,6 +43,7 @@ declarations may be nested, creating parent-child relationships between the item
 \list
   \li ApplicationInterface - The application interface represents the private IPC between the app
       and the application-manager.
+  \li StartupTimer - A tool for startup performance analysis.
 \endlist
 
 \section1 Instantiable QML Types

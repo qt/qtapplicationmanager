@@ -229,14 +229,25 @@
     This signal is emitted after a new \a window surface has been created. Most likely due
     to an application launch.
 
-    More information about this window (for example, the corresponding application) can be retrieved via the
-    model \a index.
+    For the convenience of the System-UI, this signal will provide you with both the QML \a window
+    Item as well as the \a index of that window within the WindowManager model.
+
+    More information about this window can be retrieved via the model \a index. Most often you
+    need the owning application of the window, which can be achieved by:
+
+    \badcode
+    var appId = WindowManager.get(index).applicationId
+    var app = ApplicationManager.application(appId)
+    \endcode
 */
 
 /*!
     \qmlsignal WindowManager::windowClosing(int index, Item window)
 
     This signal is emitted when a \a window surface is unmapped.
+
+    For the convenience of the System-UI, this signal will provide you with both the QML \a window
+    Item as well as the \a index of that window within the WindowManager model.
 
     Either the client application closed the window, or it exited and all its Wayland surfaces got
     implicitly unmapped.
@@ -246,8 +257,7 @@
     The actual surface can still be used for animations as it is not deleted immediately
     after this signal is emitted.
 
-    More information about this window (for example, the corresponding application) can be retrieved via the
-    model \a index.
+    More information about this window can be retrieved via the model \a index.
 
     \sa windowLost()
 */
@@ -257,6 +267,9 @@
 
     This signal is emitted when the \a window surface has been destroyed on the client side.
 
+    For the convenience of the System-UI, this signal will provide you with both the QML \a window
+    Item as well as the \a index of that window within the WindowManager model.
+
     If the surface was mapped, you will receive an implicit windowClosing signal before windowLost.
 
     \note It is mandatory to call releaseWindow() after the windowLost() signal has been received: all
@@ -264,8 +277,7 @@
           timing is up to the System-UI; calling releaseWindow() can be delayed in order to play a
           shutdown animation, but failing to call it will result in resource leaks.
 
-    More information about this window (for example, the corresponding application) can be retrieved via the
-    model \a index.
+    More information about this window can be retrieved via the model \a index.
 */
 
 /*!

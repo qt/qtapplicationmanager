@@ -50,7 +50,7 @@ QT_FORWARD_DECLARE_CLASS(QJSEngine)
 QT_BEGIN_NAMESPACE_AM
 
 class SystemMonitorPrivate;
-class ProcessMonitor;
+class XProcessMonitor;
 
 class SystemMonitor : public QAbstractListModel
 {

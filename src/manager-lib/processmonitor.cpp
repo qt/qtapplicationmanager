@@ -39,128 +39,190 @@
 **
 ****************************************************************************/
 
-#include <QDebug>
-#include <QCoreApplication>
-#include "logging.h"
 #include "processmonitor.h"
-#include "memorymonitor.h"
-#include "application.h"
-#include "applicationmanager.h"
-#include "abstractruntime.h"
-
-#if defined(Q_OS_UNIX)
-#  include <unistd.h>
-#endif
+#include "processmonitor_p.h"
+#include "logging.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-ProcessMonitor::ProcessMonitor(const QString &appId, QObject *parent)
-    : QObject(parent)
-    , m_memoryMonitor(nullptr)
-    , m_memoryReportingEnabled(false)
-    , m_appId(appId)
-    , m_pid(0)
+ProcessMonitor::ProcessMonitor(QObject *parent)
+    : QAbstractListModel(parent)
+    , d_ptr(new ProcessMonitorPrivate(this))
 {
-    obtainPid();
+    Q_D(ProcessMonitor);
+
+    d->roles.insert(MemVirtual, "memoryVirtual");
+    d->roles.insert(MemRss, "memoryRss");
+    d->roles.insert(MemPss, "memoryPss");
+    d->roles.insert(CpuLoad, "cpuLoad");
+
+    d->resetModel();
 }
 
 ProcessMonitor::~ProcessMonitor()
 {
-    delete m_memoryMonitor;
+    Q_D(ProcessMonitor);
+
+    delete d;
+}
+
+int ProcessMonitor::rowCount(const QModelIndex &parent) const
+{
+    Q_UNUSED(parent)
+    Q_D(const ProcessMonitor);
+
+    return d->modelData.size();
+}
+
+void ProcessMonitor::setCount(int count)
+{
+    Q_D(ProcessMonitor);
+
+    if (count != d->count) {
+        count = qMax(2, count);
+        d->updateModelCount(count);
+        emit d->newCount(count);
+        emit countChanged(count);
+    }
+}
+
+int ProcessMonitor::count() const
+{
+    Q_D(const ProcessMonitor);
+
+    return d->count;
+}
+
+qint64 ProcessMonitor::processId() const
+{
+    Q_D(const ProcessMonitor);
+
+    return d->pid;
+}
+
+
+QString ProcessMonitor::applicationId() const
+{
+    Q_D(const ProcessMonitor);
+
+    return d->appId;
+}
+
+void ProcessMonitor::setApplicationId(const QString &appId)
+{
+    Q_D(ProcessMonitor);
+
+    if (d->appId != appId || d->appId.isNull()) {
+        d->appId = appId;
+        d->resetModel();
+        d->determinePid();
+        if (!appId.isEmpty() && ApplicationManager::instance()->indexOfApplication(appId) < 0)
+            qCWarning(LogSystem) << "ProcessMonitor: invalid application ID:" << appId;
+        emit applicationIdChanged(appId);
+    }
+}
+
+void ProcessMonitor::setReportingInterval(int intervalInMSec)
+{
+    Q_D(ProcessMonitor);
+
+    if (d->reportingInterval != intervalInMSec && intervalInMSec > 0) {
+        d->setupInterval(intervalInMSec);
+        d->resetModel();
+        emit reportingIntervalChanged(intervalInMSec);
+    }
+}
+
+int ProcessMonitor::reportingInterval() const
+{
+    Q_D(const ProcessMonitor);
+
+    return d->reportingInterval;
 }
 
 bool ProcessMonitor::isMemoryReportingEnabled() const
 {
-    return m_memoryReportingEnabled;
+    Q_D(const ProcessMonitor);
+
+    return d->reportMemory;
 }
 
-void ProcessMonitor::setMemoryReportingEnabled(bool memoryReportingEnabled)
+void ProcessMonitor::setMemoryReportingEnabled(bool enabled)
 {
-    if (m_memoryReportingEnabled == memoryReportingEnabled)
-        return;
+    Q_D(ProcessMonitor);
 
-    if (memoryReportingEnabled) {
-        obtainPid();
-        if (m_pid == 0) {
-            qCWarning(LogSystem) << "WARNING: could not get Pid for app:" << m_appId;
-            return;
-        }
-
-        if (!m_memoryMonitor) {
-            m_memoryMonitor = new MemoryMonitor();
-            emit memoryMonitorChanged();
-        }
-
-        m_memoryMonitor->setPid(m_pid);
+    if (enabled != d->reportMemory) {
+        d->reportMemory = enabled;
+        d->memTail = enabled ? 0 : d->count;
+        d->setupInterval();
+        emit d->newReadMem(enabled);
+        emit memoryReportingEnabledChanged();
     }
-
-    m_memoryReportingEnabled = memoryReportingEnabled;
-    emit memoryReportingEnabledChanged();
 }
 
 bool ProcessMonitor::isCpuLoadReportingEnabled() const
 {
-    return false;
+    Q_D(const ProcessMonitor);
+    return d->reportCpu;
 }
 
-void ProcessMonitor::setCpuLoadReportingEnabled(bool cpuReportingEnabled)
+void ProcessMonitor::setCpuLoadReportingEnabled(bool enabled)
 {
-    Q_UNUSED(cpuReportingEnabled)
-}
+    Q_D(ProcessMonitor);
 
-bool ProcessMonitor::isFpsReportingEnabled() const
-{
-    return false;
-}
-
-void ProcessMonitor::setFpsReportingEnabled(bool fpsReportingEnabled)
-{
-    Q_UNUSED(fpsReportingEnabled)
-}
-
-void ProcessMonitor::readData()
-{
-    if (m_memoryReportingEnabled) {
-        m_memoryMonitor->readData();
-    }
-    if (m_cpuReportingEnabled) {
-
-    }
-    if (m_fpsReportingEnabled) {
-
+    if (enabled != d->reportCpu) {
+        d->reportCpu = enabled;
+        d->cpuTail = enabled ? 0: d->count;
+        d->setupInterval();
+        emit d->newReadCpu(enabled);
+        emit cpuLoadReportingEnabledChanged();
     }
 }
 
-QAbstractListModel *ProcessMonitor::memoryMonitor()
+QVariant ProcessMonitor::data(const QModelIndex &index, int role) const
 {
-    if (!m_memoryMonitor)
-        return nullptr;
-    else
-        return m_memoryMonitor;
+    Q_D(const ProcessMonitor);
 
-}
+    if (!index.isValid() || index.row() < 0 || index.row() >= d->modelData.size())
+        return QVariant();
 
-QVariant ProcessMonitor::fpsMonitors() const
-{
-    return QVariant::fromValue(m_fpsMonitors);
-}
+    const ProcessMonitorPrivate::ModelData &reading = d->modelDataForRow(index.row());
 
-QString ProcessMonitor::getAppId() const
-{
-    return m_appId;
-}
-
-void ProcessMonitor::obtainPid()
-{
-    if (m_appId.isEmpty())
-        m_pid = QCoreApplication::applicationPid();
-    else {
-        const Application *app = ApplicationManager::instance()->fromId(m_appId);
-        if (app && app->currentRuntime())
-            m_pid = app->currentRuntime()->applicationProcessId();
-        else
-            m_pid = 0;
+    switch (role) {
+    case MemVirtual:
+        return reading.vm;
+    case MemRss:
+        return reading.rss;
+    case MemPss:
+        return reading.pss;
+    case CpuLoad:
+        return reading.cpuLoad;
+    default:
+        return QVariant();
     }
+}
+
+QHash<int, QByteArray> ProcessMonitor::roleNames() const
+{
+    Q_D(const ProcessMonitor);
+
+    return d->roles;
+}
+
+QVariantMap ProcessMonitor::get(int row) const
+{
+    if (row < 0 || row >= count()) {
+        qCWarning(LogSystem) << "ProcessMonitor: invalid row:" << row;
+        return QVariantMap();
+    }
+
+    QVariantMap map;
+    QHash<int, QByteArray> roles = roleNames();
+    for (auto it = roles.cbegin(); it != roles.cend(); ++it) {
+        map.insert(qL1S(it.value()), data(index(row), it.key()));
+    }
+
+    return map;
 }
 
 QT_END_NAMESPACE_AM

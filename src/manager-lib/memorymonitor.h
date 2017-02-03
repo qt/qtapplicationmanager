@@ -44,7 +44,7 @@
 #include <QAbstractListModel>
 #include <QObject>
 #include <QFile>
-#include <QtAppManManager/processmonitor.h>
+#include <QtAppManManager/xprocessmonitor.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -73,7 +73,7 @@ signals:
     void memoryReportingChanged(int modelIndex);
 
 private:
-    friend class ProcessMonitor;
+    friend class XProcessMonitor;
     void readData();
     void setPid(quint64 pid);
 

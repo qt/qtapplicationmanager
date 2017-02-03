@@ -125,6 +125,7 @@
 #include "qmllogger.h"
 #include "startuptimer.h"
 #include "systemmonitor.h"
+#include "processmonitor.h"
 #include "applicationipcmanager.h"
 #include "unixsignalhandler.h"
 
@@ -612,6 +613,8 @@ void Main::setupQmlEngine()
 #if !defined(AM_HEADLESS)
     qmlRegisterType<FakeApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
+    qmlRegisterType<ProcessMonitor>("QtApplicationManager", 1, 0, "ProcessMonitor");
+
     StartupTimer::instance()->checkpoint("after QML registrations");
 
     m_engine = new QQmlApplicationEngine(this);

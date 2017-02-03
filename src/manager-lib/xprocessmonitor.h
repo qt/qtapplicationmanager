@@ -42,72 +42,59 @@
 #pragma once
 
 #include <QAbstractListModel>
-#include <QString>
-#include <QByteArray>
-#include <QVariant>
-#include <QHash>
-
-#include "application.h"
-#include "applicationmanager.h"
-
+#include <QObject>
+#include <QtAppManManager/fpsmonitor.h>
+#include <QtAppManManager/systemmonitor.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class ProcessMonitorPrivate;
+class MemoryMonitor;
 
-class ProcessMonitor : public QAbstractListModel
+class XProcessMonitor : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count WRITE setCount NOTIFY countChanged)
-    Q_PROPERTY(qint64 processId READ processId NOTIFY processIdChanged)
-    Q_PROPERTY(QString applicationId READ applicationId WRITE setApplicationId NOTIFY applicationIdChanged)
-    Q_PROPERTY(int reportingInterval READ reportingInterval WRITE setReportingInterval NOTIFY reportingIntervalChanged)
+
     Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled NOTIFY memoryReportingEnabledChanged)
     Q_PROPERTY(bool cpuLoadReportingEnabled READ isCpuLoadReportingEnabled WRITE setCpuLoadReportingEnabled NOTIFY cpuLoadReportingEnabledChanged)
+    Q_PROPERTY(bool fpsReportingEnabled READ isFpsReportingEnabled WRITE setFpsReportingEnabled NOTIFY fpsReportingEnabledChanged)
+    Q_PROPERTY(QAbstractListModel *memoryMonitor READ memoryMonitor NOTIFY memoryMonitorChanged)
+    Q_PROPERTY(QVariant fpsMonitors READ fpsMonitors NOTIFY fpsMonitorsChanged)
 
 public:
-    ProcessMonitor(QObject *parent = nullptr);
-    ~ProcessMonitor();
-
-    Q_INVOKABLE QVariantMap get(int index) const;
-
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role) const override;
-    QHash<int, QByteArray> roleNames() const override;
-
-    void setCount(int count);
-    int count() const;
-
-    qint64 processId() const;
-
-    QString applicationId() const;
-    void setApplicationId(const QString &appId);
-
-    void setReportingInterval(int intervalInMSec);
-    int reportingInterval() const;
+    explicit XProcessMonitor(const QString &appId, QObject *parent = nullptr);
+    ~XProcessMonitor();
 
     bool isMemoryReportingEnabled() const;
-    void setMemoryReportingEnabled(bool enabled);
-
+    void setMemoryReportingEnabled(bool memoryReportingEnabled);
     bool isCpuLoadReportingEnabled() const;
-    void setCpuLoadReportingEnabled(bool enabled);
+    void setCpuLoadReportingEnabled(bool cpuReportingEnabled);
+    bool isFpsReportingEnabled() const;
+    void setFpsReportingEnabled(bool fpsReportingEnabled);
+    QAbstractListModel *memoryMonitor();
+    QVariant fpsMonitors() const;
+    QString getAppId() const;
 
 signals:
-    void countChanged(int count);
-    void processIdChanged(qint64 processId);
-    void applicationIdChanged(const QString &applicationId);
-    void reportingIntervalChanged(int reportingInterval);
-
     void memoryReportingEnabledChanged();
     void cpuLoadReportingEnabledChanged();
-
-    void memoryReportingChanged(const QVariantMap &memoryVirtual, const QVariantMap &memoryRss,
-                                                                  const QVariantMap &memoryPss);
-    void cpuLoadReportingChanged(qreal load);
+    void fpsReportingEnabledChanged();
+    void fpsMonitorsChanged();
+    void memoryMonitorChanged();
 
 private:
-    ProcessMonitorPrivate *d_ptr;
-    Q_DECLARE_PRIVATE(ProcessMonitor)
+    void obtainPid();
+    void readData();
+
+    friend class SystemMonitorPrivate;
+
+    QList<FpsMonitor*> m_fpsMonitors;
+    MemoryMonitor *m_memoryMonitor;
+    bool m_memoryReportingEnabled;
+    bool m_cpuReportingEnabled;
+    bool m_fpsReportingEnabled;
+    QString m_appId;
+    quint64 m_pid;
 };
 
 QT_END_NAMESPACE_AM
+

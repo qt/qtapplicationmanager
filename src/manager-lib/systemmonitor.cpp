@@ -54,7 +54,7 @@
 #include "applicationmanager.h"
 #include "systemmonitor.h"
 #include "systemmonitor_p.h"
-#include "processmonitor.h"
+#include "xprocessmonitor.h"
 
 
 /*!
@@ -354,7 +354,7 @@ public:
     // fps
     QHash<QObject *, FrameTimer *> frameTimer;
 
-    QList<ProcessMonitor*> processMonitors;
+    QList<XProcessMonitor*> processMonitors;
 
     // reporting
     MemoryReader *memory = nullptr;
@@ -392,8 +392,7 @@ public:
     // model
     QHash<int, QByteArray> roleNames;
 
-
-    ProcessMonitor *getProcess(const QString &appId)
+    XProcessMonitor *getProcess(const QString &appId)
     {
         Q_Q(SystemMonitor);
 
@@ -414,7 +413,7 @@ public:
                 return processMonitors.at(i);
         }
 
-        ProcessMonitor *p = new ProcessMonitor(usedAppId, q);
+        XProcessMonitor *p = new XProcessMonitor(usedAppId, q);
         processMonitors.append(p);
         return processMonitors.last();
     }

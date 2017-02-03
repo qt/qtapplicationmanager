@@ -37,6 +37,8 @@ HEADERS += \
     systemmonitor.h \
     systemmonitor_p.h \
     processmonitor.h \
+    processmonitor_p.h \
+    xprocessmonitor.h \
     memorymonitor.h \
     fpsmonitor.h \
     applicationmanager_p.h
@@ -71,6 +73,8 @@ SOURCES += \
     systemmonitor.cpp \
     systemmonitor_p.cpp \
     processmonitor.cpp \
+    processmonitor_p.cpp \
+    xprocessmonitor.cpp \
     memorymonitor.cpp \
     fpsmonitor.cpp \
 

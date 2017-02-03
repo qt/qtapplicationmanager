@@ -62,7 +62,6 @@ OTHER_FILES += $$AM_CONFIG
 
 QMAKE_EXTRA_TARGETS *= check
 
-message("$$MODE")
 # Execute a testrunner for every file
 for(file, TEST_FILES) {
     !equals(MODE, "single-process"):check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) --force-multi-process -- $(TESTARGS) &&

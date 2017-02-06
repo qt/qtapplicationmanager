@@ -61,7 +61,6 @@
 #include "quicklauncher.h"
 #include "abstractruntime.h"
 #include "abstractcontainer.h"
-#include "dbus-policy.h"
 #include "qml-utilities.h"
 #include "utilities.h"
 #include "qtyaml.h"
@@ -714,24 +713,21 @@ void ApplicationManager::registerMimeTypes()
 bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl,
                                           const QString &documentMimeType,
                                           const QString &debugWrapperSpecification,
-                                          const QVector<int> &stdRedirections)
+                                          const QVector<int> &stdRedirections) throw(Exception)
 {
-    if (!app) {
-        qCWarning(LogSystem) << "Cannot start an invalid application";
-        return false;
-    }
-    if (app->isBlocked()) {
-        qCWarning(LogSystem) << "Application" << app->id() << "is blocked - cannot start";
-        return false;
-    }
+    if (!app)
+        throw Exception("Cannot start an invalid application");
+    if (app->isBlocked())
+        throw Exception("Application %1 is blocked - cannot start").arg( app->id());
+
     AbstractRuntime *runtime = app->currentRuntime();
 
     ContainerDebugWrapper debugWrapper;
     if (!debugWrapperSpecification.isEmpty()) {
         debugWrapper = d->parseDebugWrapperSpecification(debugWrapperSpecification);
         if (!debugWrapper.isValid()) {
-            qCWarning(LogSystem) << "Application" << app->id() << "cannot be started by this debug wrapper specification:" << debugWrapperSpecification;
-            return false;
+            throw Exception("Application %1 cannot be started by this debug wrapper specification: %2")
+                    .arg(app->id(), debugWrapperSpecification);
         }
         debugWrapper.setStdRedirections(stdRedirections);
     }
@@ -741,8 +737,8 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         case AbstractRuntime::Startup:
         case AbstractRuntime::Active:
             if (debugWrapper.isValid()) {
-                qCWarning(LogSystem) << "Application" << app->id() << "is already running - cannot start with debug-wrapper" << debugWrapper.name();
-                return false;
+                throw Exception("Application %1 is already running - cannot start with debug-wrapper %2")
+                        .arg(app->id(), debugWrapper.name());
             }
 
             if (!documentUrl.isNull())
@@ -762,10 +758,8 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     }
 
     auto runtimeManager = RuntimeFactory::instance()->manager(app->runtimeName());
-    if (!runtimeManager) {
-        qCWarning(LogSystem) << "No RuntimeManager found for runtime:" << app->runtimeName();
-        return false;
-    }
+    if (!runtimeManager)
+        throw Exception("No RuntimeManager found for runtime: %1").arg(app->runtimeName());
 
     bool inProcess = runtimeManager->inProcess();
     AbstractContainer *container = nullptr;
@@ -796,25 +790,19 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             containerId = d->containerSelectionFunction.call(args).toString();
         }
 
-        if (!ContainerFactory::instance()->manager(containerId)) {
-            qCWarning(LogSystem) << "No ContainerManager found for container:" << containerId;
-            return false;
-        }
+        if (!ContainerFactory::instance()->manager(containerId))
+            throw Exception("No ContainerManager found for container: %1").arg(containerId);
     }
     bool attachRuntime = false;
 
     if (debugWrapper.isValid()) {
         if (!debugWrapper.supportsRuntime(app->runtimeName())) {
-            qCWarning(LogSystem) << "Application" << app->id() << "is using the" << app->runtimeName()
-                               << "runtime, which is not compatible with the requested debug-wrapper"
-                               << debugWrapper.name();
-            return false;
+            throw Exception("Application %1 is using the %2 runtime, which is not compatible with the requested debug-wrapper %3")
+                    .arg(app->id(), app->runtimeName(), debugWrapper.name());
         }
         if (!debugWrapper.supportsContainer(containerId)) {
-            qCWarning(LogSystem) << "Application" << app->id() << "is using the" << containerId
-                               << "container, which is not compatible with the requested debug-wrapper"
-                               << debugWrapper.name();
-            return false;
+            throw Exception("Application %1 is using the %2 container, which is not compatible with the requested debug-wrapper %3")
+                    .arg(app->id(), containerId, debugWrapper.name());
         }
     }
 
@@ -985,7 +973,14 @@ bool ApplicationManager::startApplication(const QString &id, const QString &docu
 {
     AM_AUTHENTICATE_DBUS(bool)
 
-    return startApplication(fromId(id), documentUrl);
+    try {
+        return startApplication(fromId(id), documentUrl);
+    } catch (const Exception &e) {
+        qCWarning(LogSystem) << e.what();
+        if (calledFromDBus())
+            sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
+        return false;
+    }
 }
 
 /*!
@@ -1000,7 +995,14 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 {
     AM_AUTHENTICATE_DBUS(bool)
 
-    return startApplication(fromId(id), documentUrl, QString(), debugWrapper);
+    try {
+        return startApplication(fromId(id), documentUrl, QString(), debugWrapper);
+    } catch (const Exception &e) {
+        qCWarning(LogSystem) << e.what();
+        if (calledFromDBus())
+            sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
+        return false;
+    }
 }
 
 #if defined(QT_DBUS_LIB)
@@ -1026,7 +1028,15 @@ bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NA
 #else
     Q_UNUSED(redirections)
 #endif
-    int result = startApplication(fromId(id), documentUrl, QString(), qSL("--internal-redirect-only--"), redirectStd);
+    int result = false;
+    try {
+        result = startApplication(fromId(id), documentUrl, QString(), qSL("--internal-redirect-only--"), redirectStd);
+    } catch (const Exception &e) {
+        qCWarning(LogSystem) << e.what();
+        if (calledFromDBus())
+            sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
+        result = false;
+    }
 
     if (!result) {
         // we have to close the fds in this case, otherwise we block the tty where the fds are
@@ -1063,7 +1073,15 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 #else
     Q_UNUSED(redirections)
 #endif
-    int result = startApplication(fromId(id), documentUrl, QString(), debugWrapper, redirectStd);
+    int result = false;
+    try {
+        result = startApplication(fromId(id), documentUrl, QString(), debugWrapper, redirectStd);
+    } catch (const Exception &e) {
+        qCWarning(LogSystem) << e.what();
+        if (calledFromDBus())
+            sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
+        result = false;
+    }
 
     if (!result) {
         // we have to close the fds in this case, otherwise we block the tty where the fds are
@@ -1578,15 +1596,8 @@ QVariantMap ApplicationManager::get(const QString &id) const
 {
     AM_AUTHENTICATE_DBUS(QVariantMap)
 
-    bool dbusCall =
-#if defined(QT_DBUS_LIB)
-                    calledFromDBus();
-#else
-                    false;
-#endif
-
     auto map = get(indexOfApplication(id));
-    if (dbusCall)
+    if (calledFromDBus())
         map.remove(qSL("application")); // cannot marshall QObject *
     return map;
 }

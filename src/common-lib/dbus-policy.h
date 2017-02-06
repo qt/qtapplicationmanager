@@ -42,15 +42,18 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
+#if defined(QT_DBUS_LIB)
+#  include <QDBusContext>
+#endif
 #include <functional>
 
-#if defined(QT_DBUS_LIB)
-QT_FORWARD_DECLARE_CLASS(QDBusContext)
-#else
-typedef QObject QDBusContext; // evil hack :)
-#endif
-
 QT_BEGIN_NAMESPACE_AM
+
+// this is necessary to avoid a second <QDBusContext> forward include header
+#if 0
+#pragma qt_sync_stop_processing
+QT_END_NAMESPACE_AM
+#endif
 
 struct DBusPolicy
 {
@@ -62,6 +65,19 @@ struct DBusPolicy
 class Application;
 
 QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment);
+
+#if !defined(QT_DBUS_LIB)
+
+// evil hack, but QtDBus only works when directly deriving from QDBusContext
+class QDBusContext
+{
+public:
+    inline bool calledFromDBus() { return false; }
+    inline void setDelayedReply(bool) const { }
+    inline void sendErrorReply(const QString &, const QString & = QString()) const { }
+};
+
+#endif
 
 bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy,
                      const QByteArray &function, const std::function<QStringList(qint64)> &pidToCapabilities);

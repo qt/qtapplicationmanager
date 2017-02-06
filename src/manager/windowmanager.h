@@ -44,11 +44,8 @@
 #include <functional>
 #include <QAbstractListModel>
 
-#if defined(QT_DBUS_LIB)
-#  include <QDBusContext>
-#  include <QDBusConnectionInterface>
-#endif
-#include "global.h"
+#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/dbus-policy.h>
 
 #if defined(AM_MULTI_PROCESS)
 QT_FORWARD_DECLARE_CLASS(QWaylandSurface)
@@ -95,10 +92,7 @@ protected:
 
 #endif
 
-class WindowManager : public QAbstractListModel
-#if defined(QT_DBUS_LIB)
-                                               , protected QDBusContext
-#endif
+class WindowManager : public QAbstractListModel, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.WindowManager")

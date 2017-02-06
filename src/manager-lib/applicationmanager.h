@@ -46,12 +46,10 @@
 #include <QVariantList>
 #include <QProcess>
 #include <QJSValue>
-#if defined(QT_DBUS_LIB)
-#  include <QDBusContext>
-#  include <QDBusConnectionInterface>
-#  include <QtAppManCommon/dbus-utilities.h>
-#endif
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/exception.h>
+#include <QtAppManCommon/dbus-policy.h>
+#include <QtAppManCommon/dbus-utilities.h>
 
 QT_FORWARD_DECLARE_CLASS(QDir)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -66,10 +64,7 @@ class AbstractRuntime;
 class IpcProxyObject;
 
 
-class ApplicationManager : public QAbstractListModel
-#if defined(QT_DBUS_LIB)
-        , protected QDBusContext
-#endif
+class ApplicationManager : public QAbstractListModel, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
@@ -115,7 +110,7 @@ public:
     bool startApplication(const Application *app, const QString &documentUrl = QString(),
                           const QString &documentMimeType = QString(),
                           const QString &debugWrapperSpecification = QString(),
-                          const QVector<int> &stdRedirections = QVector<int>());
+                          const QVector<int> &stdRedirections = QVector<int>()) throw(Exception);
     void stopApplication(const Application *app, bool forceKill = false);
     void killAll();
 

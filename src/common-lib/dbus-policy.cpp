@@ -42,7 +42,6 @@
 #include <QDebug>
 #include <algorithm>
 #if defined(QT_DBUS_LIB)
-#  include <QDBusContext>
 #  include <QDBusConnection>
 #  include <QDBusConnectionInterface>
 #  include <QDBusMessage>
@@ -87,7 +86,7 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
 bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy,
                      const QByteArray &function, const std::function<QStringList(qint64)> &pidToCapabilities)
 {
-#if !defined(QT_DBUS_LIB) || defined(Q_OS_WIN)
+#if !defined(QT_DBUS_LIB) || !defined(Q_OS_UNIX)
     Q_UNUSED(dbusContext)
     Q_UNUSED(dbusPolicy)
     Q_UNUSED(function)
@@ -114,7 +113,7 @@ bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBu
                 throw "insufficient capabilities";
         }
         if (!ip->m_executables.isEmpty()) {
-#  ifdef Q_OS_LINUX
+#  if defined(Q_OS_LINUX)
             if (pid == uint(-1))
                 pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
             QString executable = QFileInfo(qSL("/proc/") + QString::number(pid) + qSL("/exe")).symLinkTarget();
@@ -124,7 +123,7 @@ bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBu
                 throw "executable blocked";
 #  else
             throw false;
-#  endif
+#  endif // defined(Q_OS_LINUX)
         }
         if (!ip->m_uids.isEmpty()) {
             uint uid = dbusContext->connection().interface()->serviceUid(dbusContext->message().service());
@@ -138,7 +137,7 @@ bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBu
         dbusContext->sendErrorReply(QDBusError::AccessDenied, QString::fromLatin1("Protected function call (%1)").arg(qL1S(msg)));
         return false;
     }
-#endif
+#endif // !defined(QT_DBUS_LIB) || !defined(Q_OS_UNIX)
 }
 
 QT_END_NAMESPACE_AM

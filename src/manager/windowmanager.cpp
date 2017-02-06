@@ -47,6 +47,11 @@
 #include <QQmlEngine>
 #include <QVariant>
 
+#if defined(QT_DBUS_LIB)
+#  include <QDBusMessage>
+#  include <QDBusConnection>
+#endif
+
 #if defined(AM_MULTI_PROCESS)
 #  if defined(QT_WAYLANDCOMPOSITOR_LIB)
 #    include "waylandcompositor.h"

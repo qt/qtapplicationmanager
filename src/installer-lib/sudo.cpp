@@ -689,18 +689,18 @@ bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStrin
 
     try {
         if (!QFile::exists(device))
-            throw Exception(Error::System, "device %1 does not exist").arg(device);
+            throw Exception("device %1 does not exist").arg(device);
 
         QString mkfsCmd = mkfsBaseCmd + fstype;
 
         if (!QFileInfo(mkfsCmd).isExecutable())
-            throw Exception(Error::System, "the binary %1 is not available and executable").arg(mkfsCmd);
+            throw Exception("the binary %1 is not available and executable").arg(mkfsCmd);
 
         QStringList mkfsOptions = options;
 
         if (isExt2) {
             if (!QFileInfo(tune2fsCmd).isExecutable())
-                throw Exception(Error::System, "the binary %1 is not available and executable").arg(tune2fsCmd);
+                throw Exception("the binary %1 is not available and executable").arg(tune2fsCmd);
 
             // defaults to create a loop mounted app image
             if (options.isEmpty()) {
@@ -723,7 +723,7 @@ bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStrin
         p.start();
         p.waitForFinished();
         if (p.exitCode() != 0) {
-            throw Exception(Error::System, "could not create an %1 filesystem on %2: %3")
+            throw Exception("could not create an %1 filesystem on %2: %3")
                 .arg(fstype).arg(device).arg(QString::fromLocal8Bit(p.readAllStandardError()));
         }
 
@@ -736,7 +736,7 @@ bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStrin
             p.start();
             p.waitForFinished();
             if (p.exitCode() != 0) {
-                throw Exception(Error::System, "could not disable ext2 filesystem checks on %2: %3")
+                throw Exception("could not disable ext2 filesystem checks on %2: %3")
                         .arg(device).arg(QString::fromLocal8Bit(p.readAllStandardError()));
             }
         }

@@ -112,7 +112,7 @@ QVector<const Application *> ApplicationDatabase::read() throw (Exception)
             if (ds.status() != QDataStream::Ok) {
                 if (ds.status() != QDataStream::ReadPastEnd) {
                     qDeleteAll(apps);
-                    throw Exception(Error::System, "could not read from application database %1").arg(d->file->fileName());
+                    throw Exception("could not read from application database %1").arg(d->file->fileName());
                 }
                 break;
             }

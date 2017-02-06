@@ -74,7 +74,7 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
 {
     try {
         if (scanAlias && !application)
-            throw Exception(Error::System, "cannot scan an alias without a valid base application");
+            throw Exception("cannot scan an alias without a valid base application");
 
         QFile f(filePath);
         if (!f.open(QIODevice::ReadOnly))

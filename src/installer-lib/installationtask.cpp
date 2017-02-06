@@ -164,11 +164,11 @@ void InstallationTask::execute()
 {
     try {
         if (!m_installationLocation.isValid())
-            throw Exception(Error::System, "invalid installation location");
+            throw Exception("invalid installation location");
 
         TemporaryDir extractionDir;
         if (!extractionDir.isValid())
-            throw Exception(Error::System, "could not create a temporary extraction directory");
+            throw Exception("could not create a temporary extraction directory");
 
         // protect m_canceled and changes to m_extractor
         QMutexLocker locker(&m_mutex);
@@ -331,7 +331,7 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
                                   // ugly, but Q_ARG chokes on QT_PREPEND_NAMESPACE_AM...
                                   QArgument<QT_PREPEND_NAMESPACE_AM(Application *)>(QT_STRINGIFY(QT_PREPEND_NAMESPACE_AM(Application *)), m_app));
         if (!m_managerApproval)
-            throw Exception(Error::System, "Application Manager declined the installation of %1").arg(m_app->id());
+            throw Exception("Application Manager declined the installation of %1").arg(m_app->id());
 
         // now that the Manager knows about the app object, we can try to find a free uid
         m_app->m_uid = m_ai->findUnusedUserId();
@@ -359,23 +359,23 @@ void InstallationTask::startInstallation() throw (Exception)
             throw Exception(Error::MediumNotAvailable, "installation medium %1 is not mounted").arg(m_installationLocation.id());
 
         if (m_ai->isPackageActivated(m_applicationId))
-            throw Exception(Error::System, "existing application image %1 is still mounted").arg(installationTarget);
+            throw Exception("existing application image %1 is still mounted").arg(installationTarget);
     } else {
         installationTarget = m_applicationId + qL1C('+');
     }
     if (installationDir.exists(installationTarget)) {
         if (!removeRecursiveHelper(installationDir.absoluteFilePath(installationTarget)))
-            throw Exception(Error::System, "could not remove old, partial installation %1/%2").arg(installationDir).arg(installationTarget);
+            throw Exception("could not remove old, partial installation %1/%2").arg(installationDir).arg(installationTarget);
     }
 
     // 3. create $manifestDir+
     if (!m_manifestDirPlusCreator.create(m_manifestDir.absolutePath() + qL1C('+')))
-        throw Exception(Error::System, "could not create manifest sub-directory %1+").arg(m_manifestDir);
+        throw Exception("could not create manifest sub-directory %1+").arg(m_manifestDir);
 
     // 4. create new installation
     if (m_installationLocation.isRemovable()) {
         if (!m_installationDirCreator.create(installationDir.absolutePath()))
-            throw Exception(Error::System, "could not create application image base directory %1").arg(installationDir);
+            throw Exception("could not create application image base directory %1").arg(installationDir);
 
         quint64 neededSize = qMax(m_extractor->installationReport().diskSpaceUsed(), quint64(70 * 1024));
 
@@ -404,25 +404,25 @@ void InstallationTask::startInstallation() throw (Exception)
         QDir tmpMountPoint(m_ai->applicationImageMountDirectory());
         tmpMountPoint = tmpMountPoint.absoluteFilePath(m_applicationId + qL1C('+'));
         if (!m_tmpMountPointCreator.create(tmpMountPoint.absolutePath()))
-            throw Exception(Error::System, "could not create temporary mountpoint %1").arg(tmpMountPoint);
+            throw Exception("could not create temporary mountpoint %1").arg(tmpMountPoint);
 
         if (!m_loopbackCreator.create(m_extractionImageFile))
-            throw Exception(Error::System, "could not create loopback device for %1: %2").arg(m_extractionImageFile, m_loopbackCreator.errorString());
+            throw Exception("could not create loopback device for %1: %2").arg(m_extractionImageFile, m_loopbackCreator.errorString());
 
         if (!SudoClient::instance()->mkfs(m_loopbackCreator.device()))
-            throw Exception(Error::System, "could not create filesystem on device %1: %2").arg(m_loopbackCreator.device(), SudoClient::instance()->lastError());
+            throw Exception("could not create filesystem on device %1: %2").arg(m_loopbackCreator.device(), SudoClient::instance()->lastError());
 
         if (!m_imageMounter.mount(m_loopbackCreator.device(), tmpMountPoint.absolutePath(), false /*ro*/))
-            throw Exception(Error::System, "could not mount device %1 on %2: %3").arg(m_loopbackCreator.device(), tmpMountPoint.absolutePath(), m_imageMounter.errorString());
+            throw Exception("could not mount device %1 on %2: %3").arg(m_loopbackCreator.device(), tmpMountPoint.absolutePath(), m_imageMounter.errorString());
 
         if (!m_extractionDir.cd(tmpMountPoint.absolutePath()))
-            throw Exception(Error::System, "could not cd into temporary mountpoint %1").arg(tmpMountPoint);
+            throw Exception("could not cd into temporary mountpoint %1").arg(tmpMountPoint);
     } else {
         if (!m_installationDirCreator.create(installationDir.absoluteFilePath(installationTarget)))
-            throw Exception(Error::System, "could not create installation directory %1/%2").arg(installationDir).arg(installationTarget);
+            throw Exception("could not create installation directory %1/%2").arg(installationDir).arg(installationTarget);
         m_extractionDir = installationDir;
         if (!m_extractionDir.cd(installationTarget))
-            throw Exception(Error::System, "could not cd into installation directory %1/%2").arg(installationDir).arg(installationTarget);
+            throw Exception("could not cd into installation directory %1/%2").arg(installationDir).arg(installationTarget);
         m_applicationDir = installationDir.absoluteFilePath(m_applicationId);
     }
 }
@@ -442,7 +442,7 @@ void InstallationTask::finishInstallation() throw (Exception)
             throw Exception(Error::MediumNotAvailable, "removable medium %1 is not mounted").arg(m_installationLocation.id());
 
         if (!QFile::exists(m_extractionImageFile))
-            throw Exception(Error::System, "removable medium %1 was removed during the installation").arg(m_installationLocation.id());
+            throw Exception("removable medium %1 was removed during the installation").arg(m_installationLocation.id());
 
         if ((destination == IntoImage) && QFile::exists(m_applicationImageFile))
             mode = Update;

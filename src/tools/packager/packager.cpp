@@ -299,6 +299,6 @@ void Packager::execute() throw(Exception)
         break;
     }
     default:
-        throw Exception(Error::System, "invalid mode");
+        throw Exception("invalid mode");
     }
 }

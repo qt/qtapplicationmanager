@@ -303,7 +303,7 @@ uint ApplicationInstaller::findUnusedUserId() const throw(Exception)
         if (!match)
             return uid;
     }
-    throw Exception(Error::System, "could not find a free user-id for application separation in the range %1 to %2")
+    throw Exception("could not find a free user-id for application separation in the range %1 to %2")
             .arg(d->minUserId).arg(d->maxUserId);
 }
 
@@ -359,7 +359,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
         if (!device.isEmpty()) {
             if (!SudoClient::instance()->unmount(path)) {
                 if (!SudoClient::instance()->unmount(path, true /*force*/))
-                    throw Exception(Error::System, "failed to un-mount stale mount %1 on %2: %3")
+                    throw Exception("failed to un-mount stale mount %1 on %2: %3")
                         .arg(device, path, SudoClient::instance()->lastError());
             }
             if (device.startsWith(qL1S("/dev/loop"))) {
@@ -901,14 +901,14 @@ public:
         try {
             QFileInfo fi(mountDir);
             if (!fi.isDir() && !QDir(fi.absolutePath()).mkpath(fi.fileName()))
-                throw Exception(Error::System, "could not create mountpoint directory %1").arg(mountDir);
+                throw Exception("could not create mountpoint directory %1").arg(mountDir);
 
             m_mountedDevice = root->attachLoopback(m_imageName, true /*ro*/);
             if (m_mountedDevice.isEmpty())
-                throw Exception(Error::System, "could not create a new loopback device: %1").arg(root->lastError());
+                throw Exception("could not create a new loopback device: %1").arg(root->lastError());
 
             if (!root->mount(m_mountedDevice, mountDir, true /*ro*/))
-                throw Exception(Error::System, "could not mount application image %1 to %2: %3").arg(mountDir, m_mountedDevice, root->lastError());
+                throw Exception("could not mount application image %1 to %2: %3").arg(mountDir, m_mountedDevice, root->lastError());
             m_mountPoint = mountDir;
 
             // better be safe than sorry - make sure this is the exact same version we installed
@@ -921,7 +921,7 @@ public:
                     || !manifest1.open(QFile::ReadOnly)
                     || !manifest2.open(QFile::ReadOnly)
                     || (manifest1.readAll() != manifest2.readAll())) {
-                throw Exception(Error::System, "the info.yaml files in the manifest directory and within the application image do not match");
+                throw Exception("the info.yaml files in the manifest directory and within the application image do not match");
             }
             return true;
         } catch (const Exception &e) {
@@ -939,15 +939,15 @@ public:
 
         try {
             if (!m_mountPoint.isEmpty() && !root->unmount(m_mountPoint))
-                throw Exception(Error::System, "could not unmount the application image at %1: %2").arg(m_mountPoint, root->lastError());
+                throw Exception("could not unmount the application image at %1: %2").arg(m_mountPoint, root->lastError());
 
             if (!m_mountedDevice.isEmpty() && !root->detachLoopback(m_mountedDevice))
-                throw Exception(Error::System, "could not remove loopback device %1: %2").arg(m_mountedDevice, root->lastError());
+                throw Exception("could not remove loopback device %1: %2").arg(m_mountedDevice, root->lastError());
 
             // m_mountPoint is only set, if the image is/was actually mounted
             QString mountDir = m_imageMountDir.filePath(m_applicationId);
             if (QFileInfo(mountDir).isDir() && !m_imageMountDir.rmdir(m_applicationId))
-                throw Exception(Error::System, "could not remove mount-point directory %1").arg(mountDir);
+                throw Exception("could not remove mount-point directory %1").arg(mountDir);
 
             return true;
         } catch (const Exception &e) {

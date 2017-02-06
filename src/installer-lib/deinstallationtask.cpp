@@ -81,7 +81,7 @@ void DeinstallationTask::execute()
                                   Q_RETURN_ARG(bool, managerApproval),
                                   Q_ARG(QString, m_app->id()));
         if (!managerApproval)
-            throw Exception(Error::System, "ApplicationManager rejected the removal of app %1").arg(m_app->id());
+            throw Exception("ApplicationManager rejected the removal of app %1").arg(m_app->id());
 
 
         ScopedRenamer docDirRename;

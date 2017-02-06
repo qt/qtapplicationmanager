@@ -159,7 +159,7 @@ bool PackageCreatorPrivate::create()
 
     try {
         if (m_report.applicationId().isNull())
-            throw Exception(Error::System, "package identifier is null");
+            throw Exception("package identifier is null");
 
         QCryptographicHash digest(QCryptographicHash::Sha256);
 

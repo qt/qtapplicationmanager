@@ -144,7 +144,7 @@ static QString dbusInterfaceName(QObject *o) throw (Exception)
 {
     int idx = o->metaObject()->indexOfClassInfo("D-Bus Interface");
     if (idx < 0) {
-        throw Exception(Error::System, "Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
+        throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
             .arg(o->metaObject()->className());
     }
     return QLatin1String(o->metaObject()->classInfo(idx).value());
@@ -175,7 +175,7 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *servic
     }
 
     if (!conn.isConnected()) {
-        throw Exception(Error::System, "could not connect to D-Bus (%1): %2")
+        throw Exception("could not connect to D-Bus (%1): %2")
                 .arg(dbusAddress.isEmpty() ? dbusName : dbusAddress).arg(conn.lastError().message());
     }
 
@@ -186,12 +186,12 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *servic
     }
 
     if (!conn.registerObject(qL1S(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
-        throw Exception(Error::System, "could not register object %1 on D-Bus (%2): %3")
+        throw Exception("could not register object %1 on D-Bus (%2): %3")
                 .arg(path).arg(dbusName).arg(conn.lastError().message());
     }
 
     if (!conn.registerService(qL1S(serviceName))) {
-        throw Exception(Error::System, "could not register service %1 on D-Bus (%2): %3")
+        throw Exception("could not register service %1 on D-Bus (%2): %3")
                 .arg(serviceName).arg(dbusName).arg(conn.lastError().message());
     }
 
@@ -633,7 +633,7 @@ int main(int argc, char *argv[])
             auto dbusDaemon = new DBusDaemonProcess(&a);
             dbusDaemon->start(QIODevice::ReadOnly);
             if (!dbusDaemon->waitForStarted() || !dbusDaemon->waitForReadyRead())
-                throw Exception(Error::System, "could not start a dbus-launch process: %1").arg(dbusDaemon->errorString());
+                throw Exception("could not start a dbus-launch process: %1").arg(dbusDaemon->errorString());
 
             QByteArray busAddress = dbusDaemon->readAllStandardOutput().trimmed();
             qputenv("DBUS_SESSION_BUS_ADDRESS", busAddress);
@@ -644,7 +644,7 @@ int main(int argc, char *argv[])
         }
 #endif
         if (Q_UNLIKELY(!QFile::exists(configuration->mainQmlFile())))
-            throw Exception(Error::System, "no/invalid main QML file specified: %1").arg(configuration->mainQmlFile());
+            throw Exception("no/invalid main QML file specified: %1").arg(configuration->mainQmlFile());
 
 #if !defined(AM_DISABLE_INSTALLER)
         if (!checkCorrectLocale()) {
@@ -654,15 +654,15 @@ int main(int argc, char *argv[])
         }
 
         if (Q_UNLIKELY(hardwareId().isEmpty()))
-            throw Exception(Error::System, "the installer is enabled, but the device-id is empty");
+            throw Exception("the installer is enabled, but the device-id is empty");
 
         QVector<InstallationLocation> installationLocations = InstallationLocation::parseInstallationLocations(configuration->installationLocations());
 
         if (Q_UNLIKELY(!QDir::root().mkpath(configuration->installedAppsManifestDir())))
-            throw Exception(Error::System, "could not create manifest directory %1").arg(configuration->installedAppsManifestDir());
+            throw Exception("could not create manifest directory %1").arg(configuration->installedAppsManifestDir());
 
         if (Q_UNLIKELY(!QDir::root().mkpath(configuration->appImageMountDir())))
-            throw Exception(Error::System, "could not create the image-mount directory %1").arg(configuration->appImageMountDir());
+            throw Exception("could not create the image-mount directory %1").arg(configuration->appImageMountDir());
 
         startupTimer.checkpoint("after installer setup checks");
 #endif
@@ -671,11 +671,11 @@ int main(int argc, char *argv[])
         bool forceMultiProcess = configuration->forceMultiProcess();
 
         if (forceMultiProcess && forceSingleProcess)
-            throw Exception(Error::System, "You cannot enforce multi- and single-process mode at the same time.");
+            throw Exception("You cannot enforce multi- and single-process mode at the same time.");
 
 #if !defined(AM_MULTI_PROCESS)
         if (forceMultiProcess)
-            throw Exception(Error::System, "This application manager build is not multi-process capable.");
+            throw Exception("This application manager build is not multi-process capable.");
         forceSingleProcess = true;
 #endif
 
@@ -714,7 +714,7 @@ int main(int argc, char *argv[])
                                                 : new ApplicationDatabase());
 
         if (Q_UNLIKELY(!adb->isValid() && !configuration->recreateDatabase()))
-            throw Exception(Error::System, "database file %1 is not a valid application database: %2").arg(adb->name(), adb->errorString());
+            throw Exception("database file %1 is not a valid application database: %2").arg(adb->name(), adb->errorString());
 
         if (!adb->isValid() || configuration->recreateDatabase()) {
             QVector<const Application *> apps;
@@ -792,7 +792,7 @@ int main(int argc, char *argv[])
         if (configuration->applicationUserIdSeparation(&minUserId, &maxUserId, &commonGroupId)) {
 #  if defined(Q_OS_LINUX)
             if (!ai->enableApplicationUserIdSeparation(minUserId, maxUserId, commonGroupId))
-                throw Exception(Error::System, "could not enable application user-id separation in the installer.");
+                throw Exception("could not enable application user-id separation in the installer.");
 #  else
             qCCritical(LogSystem) << "WARNING: application user-id separation requested, but not possible on this platform.";
 #  endif // Q_OS_LINUX
@@ -879,7 +879,7 @@ int main(int argc, char *argv[])
 
         engine->load(configuration->mainQmlFile());
         if (Q_UNLIKELY(engine->rootObjects().isEmpty()))
-            throw Exception(Error::System, "Qml scene does not have a root object");
+            throw Exception("Qml scene does not have a root object");
         QObject *rootObject = engine->rootObjects().at(0);
 
         foreach (StartupInterface *iface, startupPlugins)
@@ -944,7 +944,7 @@ int main(int argc, char *argv[])
         telnetServer.setShellFactory(&shellFactory);
 
         if (!telnetServer.listen(QHostAddress(configuration->telnetAddress()), configuration->telnetPort())) {
-            throw Exception(Error::System, "could not start Telnet server");
+            throw Exception("could not start Telnet server");
         } else {
             qCDebug(LogSystem) << "Telnet server listening on \n " << telnetServer.serverAddress().toString()
                                << "port" << telnetServer.serverPort();

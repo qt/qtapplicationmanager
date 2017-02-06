@@ -46,6 +46,11 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+Exception::Exception(const char *errorString)
+    : m_errorCode(Error::System)
+    , m_errorString(errorString ? qL1S(errorString) : QString())
+{ }
+
 Exception::Exception(Error errorCode, const char *errorString)
     : m_errorCode(errorCode)
     , m_errorString(errorString ? qL1S(errorString) : QString())

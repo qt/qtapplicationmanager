@@ -224,7 +224,7 @@ void PackageExtractorPrivate::extract()
     try {
         ar = archive_read_new();
         if (!ar)
-            throw Exception(Error::System, "[libarchive] could not create a new archive object");
+            throw Exception("[libarchive] could not create a new archive object");
         if (archive_read_support_format_tar(ar) != ARCHIVE_OK)
             throw ArchiveException(ar, "could not enable TAR support");
 // disabled for now -- see libarchive.pro

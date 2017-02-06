@@ -57,6 +57,7 @@ QT_BEGIN_NAMESPACE_AM
 class Exception : public std::exception
 {
 public:
+    explicit Exception(const char *errorString);
     explicit Exception(Error errorCode, const char *errorString = 0);
     explicit Exception(Error errorCode, const QString &errorString);
     explicit Exception(int _errno, const char *errorString);

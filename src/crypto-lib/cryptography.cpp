@@ -134,7 +134,8 @@ QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescrip
         LPWSTR msg = nullptr;
         FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
                        nullptr, osCryptoError, 0, (LPWSTR) &msg, 0, nullptr);
-        result.append(QString::fromWCharArray(msg));
+        // remove potential \r\n at the end
+        result.append(QString::fromWCharArray(msg).trimmed());
         HeapFree(GetProcessHeap(), 0, msg);
     }
 #elif defined(Q_OS_OSX)

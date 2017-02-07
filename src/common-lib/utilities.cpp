@@ -47,15 +47,22 @@
 
 #include <QFileInfo>
 #include <QFile>
+#include <QCoreApplication>
 
 #include "utilities.h"
 #include "exception.h"
 
 #include <errno.h>
 
+#if defined(Q_OS_UNIX)
+#  include <unistd.h>
+#  include <sys/ioctl.h>
+#  include <termios.h>
+#endif
 #if defined(Q_OS_WIN)
 #  include <windows.h>
 #  include <io.h>
+#  include <tlhelp32.h>
 #elif defined(Q_OS_OSX)
 #  include <unistd.h>
 #  include <sys/mount.h>
@@ -63,7 +70,6 @@
 #  include <sys/sysctl.h>
 #  include <libproc.h>
 #else
-#  include <unistd.h>
 #  include <stdio.h>
 #  include <mntent.h>
 #  include <sys/stat.h>
@@ -468,7 +474,8 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
             int level;
         };
 
-        static bool useAnsiColor = canOutputAnsiColors(STDERR_FILENO);
+        static bool useAnsiColor = false;
+        getOutputInformation(&useAnsiColor, nullptr, nullptr);
 
         static auto printBacktraceLine = [](int level, const char *symbol, uintptr_t offset, const char *file = nullptr, int line = -1)
         {
@@ -697,72 +704,106 @@ void setCrashActionConfiguration(const QVariantMap &config)
 
 #endif // !Q_OS_LINUX
 
-bool canOutputAnsiColors(int fd)
+void getOutputInformation(bool *useAnsiColors, bool *runningInCreator, int *windowWidth, int consoleFd)
 {
-    static bool once = true;
     static enum { ColorAuto, ColorOff, ColorOn } forceColor = ColorAuto;
-    if (once) {
+    static bool consoleSupportsAnsiColors = false;
+    static bool detectedRunningInCreator = false;
+    static bool once = false;
+
+    static auto calculateWindowWidth = [](int fd) -> int {
+        int windowWidth = -1;
+#if defined(Q_OS_UNIX)
+        if (::isatty((fd >= 0) ? fd : STDERR_FILENO)) {
+            struct ::winsize ws;
+            if ((::ioctl(fd, TIOCGWINSZ, &ws) == 0) && (ws.ws_col > 0))
+                windowWidth = ws.ws_col;
+        }
+#elif defined(Q_OS_WIN)
+        HANDLE h = (fd >= 0) ? (HANDLE) _get_osfhandle(fd) : GetStdHandle(STD_ERROR_HANDLE);
+        if (h != INVALID_HANDLE_VALUE && h != NULL) {
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            if (GetConsoleScreenBufferInfo(h, &csbi))
+                windowWidth = csbi.dwSize.X;
+        }
+#endif
+        return windowWidth;
+    };
+
+    bool forStderr = (consoleFd < 0) || (consoleFd == 2);
+
+    if (!once) {
         QByteArray forceColorOutput = qgetenv("AM_FORCE_COLOR_OUTPUT");
-        if (forceColorOutput == "off")
+        if (forceColorOutput == "off" || forceColorOutput == "0")
             forceColor = ColorOff;
-        else if (forceColorOutput == "on")
+        else if (forceColorOutput == "on" || forceColorOutput == "1")
             forceColor = ColorOn;
-        once = false;
-    }
-    if (forceColor != ColorAuto)
-        return (forceColor == ColorOn);
 
 #if defined(Q_OS_UNIX)
-    if (::isatty(fd)) {
-        return true;
-    }
-#  if defined(Q_OS_LINUX) || defined(Q_OS_OSX)
-    else {
-        static int isCreator = -1;
-        if (isCreator < 0) {
-            isCreator = 0;
-            qint64 pid = getppid();
+        if (::isatty(STDERR_FILENO))
+            consoleSupportsAnsiColors = true;
 
-            while (pid > 1) {
-#if defined(Q_OS_LINUX)
-                static QString checkCreator = qSL("/proc/%1/exe");
-                QFileInfo fi(checkCreator.arg(pid));
-                if (fi.readLink().contains(qSL("qtcreator"))) {
-                    isCreator = 1;
-                    break;
-                }
-#else
-                static char buffer[PROC_PIDPATHINFO_MAXSIZE + 1];
-                int len = proc_pidpath(pid, buffer, sizeof(buffer) - 1);
-                if ((len > 0) && QByteArray::fromRawData(buffer, len).contains("Qt Creator")) {
-                    isCreator = 1;
-                    break;
-                }
-#endif
-                pid = getParentPid(pid);
-            }
-        }
-        if (isCreator > 0)
-            return true;
-    }
-#  endif
 #elif defined(Q_OS_WIN)
-    if (QSysInfo::windowsVersion() >= QSysInfo::WV_10_0) {
-        // enable ANSI mode on Windows 10
-        HANDLE h = (HANDLE) _get_osfhandle(fd);
+        HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
         if (h != INVALID_HANDLE_VALUE) {
-            DWORD mode = 0;
-            if (GetConsoleMode(h, &mode)) {
-                mode |= 0x04;
-                if (SetConsoleMode(h, mode))
-                    return true;
+            if (QSysInfo::windowsVersion() >= QSysInfo::WV_10_0) {
+                // enable ANSI mode on Windows 10
+                DWORD mode = 0;
+                if (GetConsoleMode(h, &mode)) {
+                    mode |= 0x04;
+                    if (SetConsoleMode(h, mode))
+                        consoleSupportsAnsiColors = true;
+                }
             }
         }
-    }
 #endif
-    return false;
-}
 
+        qint64 pid = QCoreApplication::applicationPid();
+        forever {
+            pid = getParentPid(pid);
+            if (!pid)
+                break;
+
+#if defined(Q_OS_LINUX)
+            static QString checkCreator = qSL("/proc/%1/exe");
+            QFileInfo fi(checkCreator.arg(pid));
+            if (fi.readLink().contains(qSL("qtcreator"))) {
+                detectedRunningInCreator = true;
+                break;
+            }
+#elif defined(Q_OS_OSX)
+            static char buffer[PROC_PIDPATHINFO_MAXSIZE + 1];
+            int len = proc_pidpath(pid, buffer, sizeof(buffer) - 1);
+            if ((len > 0) && QByteArray::fromRawData(buffer, len).contains("Qt Creator")) {
+                detectedRunningInCreator = true;
+                break;
+            }
+#elif defined(Q_OS_WIN)
+            HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, pid);
+            if (hProcess) {
+                wchar_t exeName[1024] = { 0 };
+                DWORD exeNameSize = sizeof(exeName) - 1;
+                if (QueryFullProcessImageNameW(hProcess, 0, exeName, &exeNameSize)) {
+                    if (QString::fromWCharArray(exeName, exeNameSize).contains(qSL("qtcreator.exe")))
+                        detectedRunningInCreator = true;
+                }
+            }
+#endif
+        }
+        once = true;
+    }
+
+    if (useAnsiColors) {
+        if (forceColor == ColorAuto)
+            *useAnsiColors = forStderr && (consoleSupportsAnsiColors || detectedRunningInCreator);
+        else
+            *useAnsiColors = forStderr && (forceColor == ColorOn);
+    }
+    if (runningInCreator)
+        *runningInCreator = detectedRunningInCreator;
+    if (windowWidth)
+        *windowWidth = runningInCreator ? 120 : calculateWindowWidth(consoleFd);
+}
 
 qint64 getParentPid(qint64 pid)
 {
@@ -792,6 +833,19 @@ qint64 getParentPid(qint64 pid)
         free(procInfo);
     }
 
+#elif defined(Q_OS_WIN)
+    PROCESSENTRY32 pe32;
+    pe32.dwSize = sizeof(pe32);
+    HANDLE hProcess = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, pid);
+    if (Process32First(hProcess, &pe32)) {
+        do {
+            if (pe32.th32ProcessID == pid) {
+                ppid = pe32.th32ParentProcessID;
+                break;
+            }
+        } while (Process32Next(hProcess, &pe32));
+    }
+    CloseHandle(hProcess);
 #else
     Q_UNUSED(pid)
 #endif

@@ -283,10 +283,11 @@ void StartupTimer::checkpoint(const QString &name)
 void StartupTimer::createReport(const QString &title)
 {
     if (m_output) {
-        bool colorSupport = canOutputAnsiColors(fileno(m_output));
+        bool useAnsiColors;
+        getOutputInformation(&useAnsiColors, nullptr, nullptr, fileno(m_output));
 
         if (!m_reportCreated) {
-            if (colorSupport) {
+            if (useAnsiColors) {
                 fprintf(m_output, "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n", title.toLocal8Bit().data());
             } else {
                 fprintf(m_output, "\n== STARTUP TIMING REPORT: %s ==\n", title.toLocal8Bit().data());
@@ -310,7 +311,7 @@ void StartupTimer::createReport(const QString &title)
             const QByteArray text = m_checkpoints.at(i).second;
             int sec = 0;
             int cells = usec / usecPerCell;
-            QByteArray bar(cells, colorSupport ? ' ' : '#');
+            QByteArray bar(cells, useAnsiColors ? ' ' : '#');
             QByteArray spacing(maxTextLen - text.length(), ' ');
 
             if (usec > 1000*1000) {
@@ -320,7 +321,7 @@ void StartupTimer::createReport(const QString &title)
             int msec = usec / 1000;
             usec %= 1000;
 
-            if (colorSupport) {
+            if (useAnsiColors) {
                 fprintf(m_output, "\033[32m%d'%03d.%03d\033[0m %s %s\033[44m %s\033[0m\n", sec, msec, int(usec), text.constData(), spacing.constData(), bar.constData());
             } else {
                 fprintf(m_output, "%d'%03d.%03d %s %s#%s\n", sec, msec, int(usec), text.constData(), spacing.constData(), bar.constData());

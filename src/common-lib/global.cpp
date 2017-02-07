@@ -46,14 +46,10 @@
 #include "global.h"
 #include "utilities.h"
 
+#include <stdio.h>
 #if defined(Q_OS_WIN)
 Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 #  include <windows.h>
-#endif
-#if defined(Q_OS_UNIX)
-#  include <unistd.h>
-#  include <sys/ioctl.h>
-#  include <termios.h>
 #endif
 #if defined(Q_OS_ANDROID)
 #  include <QCoreApplication>
@@ -153,12 +149,13 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         lastlineLength = str.size() - nlpos - 2;
     int spacing = 0;
     int windowWidth = -1;
+    bool useAnsiColors;
+    bool runningInCreator;
 
+    getOutputInformation(&useAnsiColors, &runningInCreator, &windowWidth);
+
+    if (windowWidth <= 0) {
 #if defined(Q_OS_WIN)
-    HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
-    if (h == INVALID_HANDLE_VALUE || h == NULL) {
-        str.append(QLatin1Char('\n'));
-
         // do not use QMutex to avoid possible recursions
         static CRITICAL_SECTION cs;
         static bool csInitialized = false;
@@ -168,29 +165,8 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         EnterCriticalSection(&cs);
         OutputDebugStringW(reinterpret_cast<const wchar_t *>(str.utf16()));
         LeaveCriticalSection(&cs);
-        return;
-    } else {
-        if (canOutputAnsiColors(2)) {
-            CONSOLE_SCREEN_BUFFER_INFO csbi;
-            if (GetConsoleScreenBufferInfo(h, &csbi))
-                windowWidth = csbi.dwSize.X;
-        }
-    }
-#else
-    static bool useAnsiColors = canOutputAnsiColors(STDERR_FILENO);
 
-    if (useAnsiColors) {
-        windowWidth = 120;
-        if (::isatty(STDERR_FILENO)) {
-            struct ::winsize ws;
-            if ((::ioctl(0, TIOCGWINSZ, &ws) == 0) && (ws.ws_col > 0))
-                windowWidth = ws.ws_col;
-        }
-    }
-
-#endif
-    if (windowWidth <= 0) {
-#if defined(Q_OS_ANDROID)
+#elif defined(Q_OS_ANDROID)
         android_LogPriority pri = ANDROID_LOG_DEBUG;
         switch (msgType) {
         default:
@@ -203,9 +179,11 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         static QByteArray appName = QCoreApplication::applicationName().toLocal8Bit();
 
         __android_log_print(pri, appName.constData(), "%s\n", str.toLocal8Bit().constData());
+
 #else
         fputs(str.toLocal8Bit().constData(), stderr);
         fflush(stderr);
+
 #endif
         return;
     }

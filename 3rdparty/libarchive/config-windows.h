@@ -1119,7 +1119,9 @@ typedef uint64_t uintmax_t;
 #define id_t short
 
 /* Define to `int' if <sys/types.h> does not define. */
-#define mode_t unsigned short
+#ifndef __MINGW32__
+#  define mode_t unsigned short
+#endif
 
 /* Define to `long long' if <sys/types.h> does not define. */
 /* #undef off_t */

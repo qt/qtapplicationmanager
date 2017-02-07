@@ -404,7 +404,8 @@ qreal CpuReader::readLoadValue()
 MemoryReader::MemoryReader()
 {
     if (!s_totalValue) {
-        MEMORYSTATUSEX mem { sizeof(MEMORYSTATUSEX) };
+        MEMORYSTATUSEX mem;
+        mem.dwLength = sizeof(mem);
         if (!GlobalMemoryStatusEx(&mem)) {
             qCCritical(LogSystem) << "Cannot determine the amount of physical RAM in this machine.";
             exit(42);
@@ -415,7 +416,8 @@ MemoryReader::MemoryReader()
 
 quint64 MemoryReader::readUsedValue() const
 {
-    MEMORYSTATUSEX mem { sizeof(MEMORYSTATUSEX) };
+    MEMORYSTATUSEX mem;
+    mem.dwLength = sizeof(mem);
     if (!GlobalMemoryStatusEx(&mem))
         return 0;
     return mem.ullTotalPhys - mem.ullAvailPhys;

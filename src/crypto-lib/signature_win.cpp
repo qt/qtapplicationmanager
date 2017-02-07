@@ -94,7 +94,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12, 
         QVector<PCCERT_CONTEXT> allCerts;
 
         PCCERT_CONTEXT cert = 0;
-        while (cert = CertEnumCertificatesInStore(certStore, cert)) {
+        while ((cert = CertEnumCertificatesInStore(certStore, cert))) {
             BYTE keyUsage = 0;
             if (!CertGetIntendedKeyUsage(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, cert->pCertInfo,
                                          &keyUsage, sizeof(keyUsage))

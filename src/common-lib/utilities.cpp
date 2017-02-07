@@ -39,6 +39,12 @@
 **
 ****************************************************************************/
 
+#ifdef _WIN32
+// needed for QueryFullProcessImageNameW
+#  define WINVER _WIN32_WINNT_VISTA
+#  define _WIN32_WINNT _WIN32_WINNT_VISTA
+#endif
+
 #include <QFileInfo>
 #include <QFile>
 

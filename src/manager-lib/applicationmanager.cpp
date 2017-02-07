@@ -582,10 +582,8 @@ ContainerDebugWrapper ApplicationManagerPrivate::parseDebugWrapperSpecification(
         }
     }
 
-    if (!dw.isValid()) {
-        qCWarning(LogSystem) << "Couldn't find debug wrapper with name:" << name;
+    if (!dw.isValid())
         return fail;
-    }
 
     for (auto it = userParams.cbegin(); it != userParams.cend(); ++it) {
         if (!dw.setParameter(it.key(), it.value()))
@@ -746,7 +744,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     if (!debugWrapperSpecification.isEmpty()) {
         debugWrapper = d->parseDebugWrapperSpecification(debugWrapperSpecification);
         if (!debugWrapper.isValid()) {
-            throw Exception("Application %1 cannot be started by this debug wrapper specification: %2")
+            throw Exception("Tried to start application %1 using an invalid debug-wrapper specification: %2")
                     .arg(app->id(), debugWrapperSpecification);
         }
         debugWrapper.setStdRedirections(stdRedirections);
@@ -757,7 +755,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         case AbstractRuntime::Startup:
         case AbstractRuntime::Active:
             if (debugWrapper.isValid()) {
-                throw Exception("Application %1 is already running - cannot start with debug-wrapper %2")
+                throw Exception("Application %1 is already running - cannot start with debug-wrapper: %2")
                         .arg(app->id(), debugWrapper.name());
             }
 
@@ -817,11 +815,11 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
     if (debugWrapper.isValid()) {
         if (!debugWrapper.supportsRuntime(app->runtimeName())) {
-            throw Exception("Application %1 is using the %2 runtime, which is not compatible with the requested debug-wrapper %3")
+            throw Exception("Application %1 is using the %2 runtime, which is not compatible with the requested debug-wrapper: %3")
                     .arg(app->id(), app->runtimeName(), debugWrapper.name());
         }
         if (!debugWrapper.supportsContainer(containerId)) {
-            throw Exception("Application %1 is using the %2 container, which is not compatible with the requested debug-wrapper %3")
+            throw Exception("Application %1 is using the %2 container, which is not compatible with the requested debug-wrapper: %3")
                     .arg(app->id(), containerId, debugWrapper.name());
         }
     }

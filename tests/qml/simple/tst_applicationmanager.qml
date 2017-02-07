@@ -351,14 +351,13 @@ TestCase {
         ignoreWarning("Cannot start an invalid application");
         verify(!ApplicationManager.startApplication("invalidApplication"))
 
-        ignoreWarning("Couldn't find debug wrapper with name: \"invalidDebugWrapper\"");
-        ignoreWarning("Application \"tld.test.simple1\" cannot be started by this debug wrapper specification: \"invalidDebugWrapper\"");
+        ignoreWarning("Tried to start application tld.test.simple1 using an invalid debug-wrapper specification: invalidDebugWrapper");
         verify(!ApplicationManager.debugApplication(simpleApplication.id, "invalidDebugWrapper"))
 
         verify(ApplicationManager.startApplication(simpleApplication.id));
         checkApplicationState(simpleApplication.id, ApplicationManager.StartingUp);
         checkApplicationState(simpleApplication.id, ApplicationManager.Running);
-        ignoreWarning("Application \"tld.test.simple1\" is already running - cannot start with debug-wrapper \"fakedebugger\"");
+        ignoreWarning("Application tld.test.simple1 is already running - cannot start with debug-wrapper: fakedebugger");
         verify(!ApplicationManager.debugApplication(simpleApplication.id, "fakedebugger"))
         ApplicationManager.stopApplication(simpleApplication.id, true);
         checkApplicationState(simpleApplication.id, ApplicationManager.ShuttingDown);

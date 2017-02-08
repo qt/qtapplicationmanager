@@ -83,7 +83,75 @@
 #include "dbus-utilities.h"
 #include "startuptimer.h"
 
+#if defined(Q_OS_LINUX)
+#  include <sys/prctl.h>
+#  include <sys/syscall.h>
+#endif
+
 QT_BEGIN_NAMESPACE_AM
+
+/*! \internal
+    Sadly, Linux has no setproctitle() call like the BSDs have...
+    You could just overwrite argv[0], but writing beyond the original length will overwrite the
+    environment. The workaround is to reset argv via the prctl() in the kernel, but we need to pass
+    a lot of things that aren't really changing, but are needed for this specific prctl call.
+*/
+bool setProcessTitle(const QByteArray &title)
+{
+// We need at least kernel 3.18 to support PR_SET_MM_MAP (as of 2017,
+// the Qt CI still has a RHEL 6 node, which is running kernel 2.6.32)
+#if defined(Q_OS_LINUX) && defined(PR_SET_MM_MAP)
+    QFile f(qSL("/proc/self/stat"));
+
+    if (!f.open(QFile::ReadOnly))
+        return false;
+    QByteArray line = f.readLine(4096);
+    if (line.isEmpty())
+        return false;
+
+    // retrieve the following fields:
+    //  [25] start_code
+    //  [26] end_code
+    //  [27] start_stack
+    //  [44] start_data
+    //  [45] end_data
+    //  [46] start_brk
+    //  [49] env_start
+    //  [50] env_end
+
+    QList<QByteArray> fields = line.split(' ');
+    if (fields.size() < 49)
+        return false;
+
+    char *arg_start = strdup(title.constData());
+    char *arg_end = arg_start + title.size() + 1;
+
+    long int brk_start = syscall(__NR_brk, 0);
+
+    prctl_mm_map map;
+    map.start_code  = fields.at(25).toULongLong();
+    map.end_code    = fields.at(26).toULongLong();
+    map.start_stack = fields.at(27).toULongLong();
+    map.start_data  = fields.at(44).toULongLong();
+    map.end_data    = fields.at(45).toULongLong();
+    map.start_brk   = fields.at(46).toULongLong();
+    map.brk         = brk_start;
+    map.arg_start   = (uintptr_t) arg_start;
+    map.arg_end     = (uintptr_t) arg_end;
+    map.env_start   = fields.at(49).toULongLong();
+    map.env_end     = fields.at(50).toULongLong();
+    map.auxv        = nullptr;
+    map.auxv_size   = 0;
+    map.exe_fd      = (uint) -1;
+
+    int result = prctl(PR_SET_MM, PR_SET_MM_MAP, &map, sizeof(map), 0);
+    if (result)
+        qCWarning(LogSystem) << "Cannot set Linux process title:" << strerror(errno);
+    return result;
+#else
+    return false;
+#endif
+}
 
 // maybe make this configurable for specific workloads?
 class HeadlessIncubationController : public QObject, public QQmlIncubationController
@@ -351,6 +419,12 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     qsnprintf(dltAppId, 5, "A%03d", application.value("uniqueNumber").toInt());
     changeDLTApplication(dltAppId, QString("Application-Manager App: %1").arg(applicationId).toLocal8Bit());
     registerUnregisteredDLTContexts();
+
+    // Dress up the ps output to make it easier to correlate all the launcher processes
+    QString newTitle = qApp->arguments().at(0) + qSL(" [") + applicationId + qSL("]");
+    if (qApp->arguments().size() > 1)
+        newTitle.append(qApp->arguments().mid(1).join(qL1C(' ')));
+    setProcessTitle(newTitle.toLocal8Bit());
 
     qCDebug(LogQmlRuntime) << "loading" << applicationId << "- main:" << qmlFile << "- document:" << document
                            << "- mimeType:" << mimeType << "- parameters:" << runtimeParameters

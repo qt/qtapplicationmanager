@@ -264,14 +264,17 @@ tst_Sudo::~tst_Sudo()
 
 void tst_Sudo::initTestCase()
 {
+    QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
+    m_root = SudoClient::instance();
+    QVERIFY(m_root);
+    if (SudoClient::instance()->isFallbackImplementation())
+        QSKIP("Not running with root privileges - neither directly, or SUID-root, or sudo");
+
     QVERIFY(QFile::exists(LOSETUP));
     QVERIFY(QFile::exists(MOUNT));
     QVERIFY(QFile::exists(UMOUNT));
     QVERIFY(QFile::exists(BLKID));
 
-    QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
-    m_root = SudoClient::instance();
-    QVERIFY(m_root);
 
     QVERIFY(m_workDir.isValid());
 

@@ -1,5 +1,6 @@
 requires(linux)
 
+TEMPLATE = lib
 TARGET = qtbacktrace
 
 load(am-config)

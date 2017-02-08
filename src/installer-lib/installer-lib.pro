@@ -1,3 +1,4 @@
+TEMPLATE = lib
 TARGET = QtAppManInstaller
 MODULE = appman_installer
 

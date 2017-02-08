@@ -1,3 +1,4 @@
+TEMPLATE = lib
 TARGET = QtAppManNotification
 MODULE = appman_notification
 

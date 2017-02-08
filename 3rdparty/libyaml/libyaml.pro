@@ -1,3 +1,4 @@
+TEMPLATE = lib
 TARGET = qtyaml
 
 load(am-config)

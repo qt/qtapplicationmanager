@@ -1,3 +1,4 @@
+TEMPLATE = lib
 TARGET = QtAppManCrypto
 MODULE = appman_crypto
 

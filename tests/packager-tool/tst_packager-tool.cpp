@@ -78,6 +78,9 @@ private:
 
 void tst_PackagerTool::initTestCase()
 {
+    if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
+        QSKIP("No test packages available in the data/ directory");
+
     QVERIFY(m_workDir.isValid());
 
     QVERIFY(QDir::root().mkpath(pathTo("manifests")));

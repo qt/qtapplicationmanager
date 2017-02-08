@@ -1,3 +1,4 @@
+TEMPLATE = lib
 TARGET = QtAppManPluginInterfaces
 MODULE = appman_plugininterfaces
 QT.appman_plugininterfaces.name = AppManPluginInterfaces

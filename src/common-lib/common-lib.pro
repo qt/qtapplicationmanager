@@ -1,3 +1,4 @@
+TEMPLATE = lib
 TARGET = QtAppManCommon
 MODULE = appman_common
 
@@ -47,10 +48,5 @@ qtHaveModule(qml):HEADERS += \
 
 qtHaveModule(dbus):HEADERS += \
     dbus-utilities.h \
-
-# MingW does not add a dummy manifest, leading to UAC prompts on binaries containing "bad" words
-# like setup, install, update, patch, ...
-win32-g++*:RC_FILE = resources-win.rc
-OTHER_FILES += resources-win.rc manifest-win.xml
 
 load(qt_module)

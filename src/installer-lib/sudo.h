@@ -61,7 +61,6 @@ QT_BEGIN_NAMESPACE_AM
 enum SudoDropPrivileges {
     DropPrivilegesPermanently,
     DropPrivilegesRegainable, // only use this for auto-tests
-    NoPrivilegeSeparation     // use this on Windows or for debugging
 };
 
 bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString);
@@ -100,6 +99,8 @@ public:
     static bool initialize(int socketFd, SudoServer *shortCircuit = 0);
 
     static SudoClient *instance();
+
+    bool isFallbackImplementation() const;
 
     QString attachLoopback(const QString &imagePath, bool readonly = false) override;
     bool detachLoopback(const QString &loopDev) override;

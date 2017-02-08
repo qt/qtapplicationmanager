@@ -517,10 +517,8 @@ int main(int argc, char *argv[])
     ensureCorrectLocale();
 
     if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
-        qCCritical(LogSystem) << "WARNING:" << qPrintable(error);
-
-        // do not quit, but rather contine with reduced functionality
-        SudoClient::initialize(-1);
+        qCCritical(LogSystem) << "ERROR:" << qPrintable(error);
+        return 2;
     }
 #endif
 

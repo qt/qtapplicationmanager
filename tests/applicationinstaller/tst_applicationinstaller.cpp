@@ -259,6 +259,9 @@ tst_ApplicationInstaller::~tst_ApplicationInstaller()
 
 void tst_ApplicationInstaller::initTestCase()
 {
+    if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
+        QSKIP("No test packages available in the data/ directory");
+
     if (!qEnvironmentVariableIsSet("VERBOSE_TEST"))
         QLoggingCategory::setFilterRules("am.installer.debug=false");
 

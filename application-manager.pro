@@ -6,7 +6,9 @@ TEMPLATE = subdirs
 CONFIG += ordered
 
 enable-tests:QT_BUILD_PARTS *= tests
+else:contains(QT_BUILD_PARTS, "tests"):CONFIG += enable-tests
 enable-examples:QT_BUILD_PARTS *= examples
+else:contains(QT_BUILD_PARTS, "examples"):CONFIG += enable-examples
 
 load(configure)
 qtCompileTest(libarchive)

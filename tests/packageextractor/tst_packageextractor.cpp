@@ -75,6 +75,9 @@ tst_PackageExtractor::tst_PackageExtractor()
 
 void tst_PackageExtractor::initTestCase()
 {
+    if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
+        QSKIP("No test packages available in the data/ directory");
+
     QVERIFY(checkCorrectLocale());
 }
 

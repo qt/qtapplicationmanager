@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
 
-enable-tests:SUBDIRS = \
+SUBDIRS = \
     application \
     runtime \
     cryptography \
@@ -13,7 +13,7 @@ enable-tests:SUBDIRS = \
     applicationinstaller \
     qml \
 
-enable-tests:linux*:SUBDIRS += \
+linux*:SUBDIRS += \
     sudo \
 
 OTHER_FILES += \

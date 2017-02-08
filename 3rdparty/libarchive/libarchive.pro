@@ -1,3 +1,4 @@
+TEMPLATE = lib
 TARGET = qtarchive
 
 load(am-config)

@@ -50,7 +50,7 @@ qtHaveModule(dbus):HEADERS += \
 
 # MingW does not add a dummy manifest, leading to UAC prompts on binaries containing "bad" words
 # like setup, install, update, patch, ...
-win32-g++:RC_FILE = resources-win.rc
+win32-g++*:RC_FILE = resources-win.rc
 OTHER_FILES += resources-win.rc manifest-win.xml
 
 load(qt_module)

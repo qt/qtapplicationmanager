@@ -1,4 +1,4 @@
-requires(linux:!android|win32-msvc2013:!winrt|win32-msvc2015:!winrt|osx|win32-g++)
+requires(linux:!android|win32-msvc2013:!winrt|win32-msvc2015:!winrt|osx|win32-g++*)
 
 !tools-only:!qtHaveModule(qml):error("The QtQml library is required for a non 'tools-only' build")
 

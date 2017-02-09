@@ -103,8 +103,14 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li \c{-config force-system-libarchive}
   \li Force building against the system libarchive.
 \row
+  \li \c{-config no-system-libarchive}
+  \li Do not build against the system libarchive, even if one was detected.
+\row
   \li \c{-config force-system-libyaml}
   \li Force building against the system libyaml.
+\row
+  \li \c{-config no-system-libyaml}
+  \li Do not build against the system libyaml, even if one was detected.
 \row
   \li \c{-config force-single-process}
   \li Force a single-process build, even if Qt's Wayland \c compositor module is available.

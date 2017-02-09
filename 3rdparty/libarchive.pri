@@ -1,7 +1,7 @@
 
 include(libz.pri)
 
-!config_libarchive {
+!config_libarchive|no-system-libarchive {
     load(fix-library-path)
 
     LIBARCHIVE_PATH = $$PWD/libarchive

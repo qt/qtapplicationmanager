@@ -29,20 +29,20 @@ MIN_MINOR=6
 
 load(am-config)
 
-!config_libyaml {
+!config_libyaml|no-system-libyaml {
     force-system-libyaml:error("Could not find a system installation for libyaml.")
     else:SUBDIRS += 3rdparty/libyaml/libyaml.pro
 }
-!config_libarchive {
+!config_libarchive|no-system-libarchive {
     force-system-libarchive:error("Could not find a system installation for libarchive.")
     else:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 }
 
 linux:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
-  check_libbacktrace = "yes"
-  SUBDIRS += 3rdparty/libbacktrace/libbacktrace.pro
+    check_libbacktrace = "yes"
+    SUBDIRS += 3rdparty/libbacktrace/libbacktrace.pro
 } else {
-  check_libbacktrace = "no"
+    check_libbacktrace = "no"
 }
 
 !tools-only: SUBDIRS += doc dummyimports
@@ -92,8 +92,8 @@ printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto
 printConfigLine("Genivi support", $$yesNo(qtHaveModule(geniviextras)), auto)
 printConfigLine("libbacktrace support", $$check_libbacktrace, auto)
 printConfigLine("Systemd workaround", $$yesNo(CONFIG(systemd-workaround)), auto)
-printConfigLine("System libarchive", $$yesNo(config_libarchive), auto)
-printConfigLine("System libyaml", $$yesNo(config_libyaml), auto)
+printConfigLine("System libarchive", $$yesNo(config_libarchive:!no-system-libarchive), auto)
+printConfigLine("System libyaml", $$yesNo(config_libyaml:!no-system-libyaml), auto)
 printConfigLine()
 
 OTHER_FILES += \

@@ -1,5 +1,5 @@
 
-!config_libyaml {
+!config_libyaml|no-system-libyaml {
     load(fix-library-path)
 
     LIBYAML_PATH = $$PWD/libyaml

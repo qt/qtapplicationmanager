@@ -53,6 +53,7 @@
 #include <QtEndian>
 #include <QTimer>
 #include <QRegularExpression>
+#include <QCommandLineParser>
 
 #include <QDBusConnection>
 #include <QDBusInterface>
@@ -223,6 +224,11 @@ private:
 static QString p2pBusName = qSL("am");
 static QString notificationBusName = qSL("am_notification_bus");
 static StartupTimer startupTimer;
+static QCommandLineParser cp;
+static QCommandLineOption qmlDebugOption(qSL("qml-debug"), qSL("Enables QML debugging and profiling."));
+static QCommandLineOption quickLaunchOption(qSL("quicklaunch"), qSL("Starts the launcher in the quicklaunching mode."));
+static QCommandLineOption directLoadOption(qSL("directload") , qSL("The info.yaml to start."), qSL("info.yaml"));
+
 
 QT_END_NAMESPACE_AM
 
@@ -255,6 +261,13 @@ int main(int argc, char *argv[])
 #  endif
 
     QGuiApplication a(argc, argv);
+    a.setApplicationDisplayName(qL1S("appman-launcher-qml"));
+    cp.addHelpOption();
+    cp.addOption(directLoadOption);
+    cp.addOption(qmlDebugOption);
+    cp.addOption(quickLaunchOption);
+
+    cp.process(a);
 
     qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
@@ -264,8 +277,8 @@ int main(int argc, char *argv[])
 
     startupTimer.checkpoint("after logging and qml register initialization");
 
-    if (a.arguments().size() >= 3 && a.arguments().at(1) == "--directload") {
-        QFileInfo fi = a.arguments().at(2);
+    if (cp.isSet(directLoadOption)) {
+        QFileInfo fi = cp.value(directLoadOption);
 
         if (!fi.exists() || fi.fileName() != "info.yaml") {
             qCCritical(LogQmlRuntime) << "ERROR: --directload needs a valid info.yaml file as parameter";
@@ -317,7 +330,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
     connect(&m_engine, &QObject::destroyed, &QCoreApplication::quit);
     connect(&m_engine, &QQmlEngine::quit, &QCoreApplication::quit);
 
-    if (qApp->arguments().contains("--qml-debug")) {
+    if (cp.isSet(qmlDebugOption)) {
 #if !defined(QT_NO_QML_DEBUGGER)
         debuggingEnabler = new QQmlDebuggingEnabler(true);
 #else
@@ -359,7 +372,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
     }
 
     QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
-    if (!quicklaunchQml.isEmpty() && a->arguments().contains(qSL("--quicklaunch"))) {
+    if (!quicklaunchQml.isEmpty() && cp.isSet(quickLaunchOption)) {
         if (QFileInfo(quicklaunchQml).isRelative())
             quicklaunchQml.prepend(baseDir);
 

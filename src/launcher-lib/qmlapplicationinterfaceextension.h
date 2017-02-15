@@ -41,40 +41,57 @@
 
 #pragma once
 
+#include <QQmlParserStatus>
 #include <QObject>
-#include <QDBusError>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
-QT_FORWARD_DECLARE_CLASS(QDBusInterface)
 QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 
 QT_BEGIN_NAMESPACE_AM
 
-class IpcWrapperSignalRelay;
+class QmlApplicationInterfaceExtensionPrivate;
 
-class IpcWrapperObject : public QObject
+class QmlApplicationInterfaceExtension : public QObject, public QQmlParserStatus
 {
+    Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationInterfaceExtension 1.0")
+    Q_INTERFACES(QQmlParserStatus)
+
+    Q_PROPERTY(QString name READ name WRITE setName)
+    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
+    Q_PROPERTY(QObject *object READ object NOTIFY objectChanged)
+
 public:
-    IpcWrapperObject(const QString &service, const QString &path, const QString &interface,
-                     const QDBusConnection &connection, QObject *parent = nullptr);
+    static void initialize(const QDBusConnection &connection);
 
-    ~IpcWrapperObject();
+    explicit QmlApplicationInterfaceExtension(QObject *parent = nullptr);
+    ~QmlApplicationInterfaceExtension();
 
-    bool isDBusValid() const;
-    QDBusError lastDBusError() const;
+    QString name() const;
+    bool isReady() const;
+    QObject *object() const;
 
-    const QMetaObject *metaObject() const override;
-    int qt_metacall(QMetaObject::Call _c, int _id, void **_a) override;
+protected:
+    void classBegin() override;
+    void componentComplete() override;
 
-    // this should be a slot, but we do not want to "pollute" the QML namespace,
-    // so we are relaying the signal via IpcWrapperHelper
-    void onPropertiesChanged(const QString &interfaceName, const QVariantMap &changed,
-                             const QStringList &invalidated);
+public slots:
+    void setName(const QString &name);
+
+private slots:
+    void onInterfaceCreated(const QString &interfaceName);
+
+signals:
+    void readyChanged();
+    void objectChanged();
 
 private:
-    QMetaObject *m_metaObject;
-    IpcWrapperSignalRelay *m_wrapperHelper;
-    QDBusInterface *m_dbusInterface;
+    void tryInit();
+
+    static QmlApplicationInterfaceExtensionPrivate *d;
+    QString m_name;
+    QObject *m_object = nullptr;
+    bool m_complete = false;
 };
 
 QT_END_NAMESPACE_AM

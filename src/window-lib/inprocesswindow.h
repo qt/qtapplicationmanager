@@ -41,95 +41,33 @@
 
 #pragma once
 
-#include <QVector>
+#include <QObject>
 #include <QPointer>
 
-#include <QtAppManApplication/applicationinterface.h>
-#include <QtAppManNotification/notification.h>
+#include <QtAppManWindow/window.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class QmlInProcessRuntime;
-
-class QmlInProcessNotification : public Notification
-{
-public:
-    QmlInProcessNotification(QObject *parent = 0, ConstructionMode mode = Declarative);
-
-    void componentComplete() override;
-
-    static void initialize();
-
-protected:
-    uint libnotifyShow() override;
-    void libnotifyClose() override;
-
-private:
-    ConstructionMode m_mode;
-    QString m_appId;
-
-    static QVector<QPointer<QmlInProcessNotification> > s_allNotifications;
-
-    friend class QmlInProcessApplicationInterface;
-};
-
-
-class QmlInProcessApplicationInterface : public ApplicationInterface
+class InProcessWindow : public Window
 {
     Q_OBJECT
 
 public:
-    explicit QmlInProcessApplicationInterface(QmlInProcessRuntime *runtime = 0);
+    InProcessWindow(const Application *app, QQuickItem *windowItem);
 
-    QString applicationId() const override;
-    QVariantMap systemProperties() const override;
-    QVariantMap additionalConfiguration() const override;
-    QVariantMap applicationProperties() const override;
+    bool isInProcess() const override { return true; }
 
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
-    Q_INVOKABLE void acknowledgeQuit();
+    //bool isClosing() const override;
 
-    void finishedInitialization() override;
-
-signals:
-    void quitAcknowledged();
-private:
-    QmlInProcessRuntime *m_runtime;
-    friend class QmlInProcessRuntime;
-};
-
-
-class QmlInProcessApplicationInterfaceExtension : public QObject, public QQmlParserStatus
-{
-    Q_OBJECT
-    Q_INTERFACES(QQmlParserStatus)
-    Q_PROPERTY(QString name READ name WRITE setName)
-    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
-    Q_PROPERTY(QObject *object READ object NOTIFY objectChanged)
-
-public:
-    explicit QmlInProcessApplicationInterfaceExtension(QObject *parent = nullptr);
-
-    QString name() const;
-    bool isReady() const;
-    QObject *object() const;
+    bool setWindowProperty(const QString &name, const QVariant &value) override;
+    QVariant windowProperty(const QString &name) const override;
+    QVariantMap windowProperties() const override;
 
 protected:
-    void classBegin() override;
-    void componentComplete() override;
-    void resolveObject();
-
-public slots:
-    void setName(const QString &name);
-
-signals:
-    void readyChanged();
-    void objectChanged();
+    bool eventFilter(QObject *o, QEvent *e) override;
 
 private:
-    QString m_name;
-    QObject *m_object = nullptr;
-    bool m_complete = false;
+    QVariantMap m_windowProperties;
 };
 
 QT_END_NAMESPACE_AM

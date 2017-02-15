@@ -68,12 +68,14 @@
 #  include <QQuickView>
 #  include <QQuickWindow>
 
-#  include "applicationmanagerwindow.h"
+#  include <QtAppManLauncher/private/applicationmanagerwindow_p.h>
 #else
 #  include <QCoreApplication>
 #endif
 
 #include "qmlapplicationinterface.h"
+#include "qmlapplicationinterfaceextension.h"
+#include "qmlnotification.h"
 #include "notification.h"
 #include "qtyaml.h"
 #include "global.h"

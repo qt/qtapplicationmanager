@@ -11,43 +11,20 @@ QT *= \
     appman_manager-private \
     appman_installer-private \
     appman_notification-private \
+    appman_window-private \
 
 CONFIG *= console
 
 win32:LIBS += -luser32
 
-multi-process:!headless {
-    qtHaveModule(waylandcompositor) {
-        QT *= waylandcompositor waylandcompositor-private
-        HEADERS += $$PWD/waylandcompositor.h
-        SOURCES += $$PWD/waylandcompositor.cpp
-        PKGCONFIG += wayland-server
-    } else:qtHaveModule(compositor) {
-        QT *= compositor
-        HEADERS += $$PWD/waylandcompositor-old.h
-        SOURCES += $$PWD/waylandcompositor-old.cpp
-    }
-}
-
 HEADERS += \
     $$PWD/qmllogger.h \
     $$PWD/configuration.h \
-
-!headless:HEADERS += \
-    $$PWD/inprocesswindow.h \
-    $$PWD/waylandwindow.h \
-    $$PWD/windowmanager.h \
-    $$PWD/windowmanager_p.h \
 
 SOURCES += \
     $$PWD/main.cpp \
     $$PWD/qmllogger.cpp \
     $$PWD/configuration.cpp \
-
-!headless:SOURCES += \
-    $$PWD/inprocesswindow.cpp \
-    $$PWD/waylandwindow.cpp \
-    $$PWD/windowmanager.cpp \
 
 DBUS_ADAPTORS += \
     $$PWD/../dbus/io.qt.applicationinstaller.xml \

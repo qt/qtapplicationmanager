@@ -22,7 +22,6 @@ multi-process {
 
 HEADERS += \
     applicationmanager.h \
-    applicationinterface.h \
     applicationdatabase.h \
     notificationmanager.h \
     abstractcontainer.h \
@@ -44,7 +43,6 @@ HEADERS += \
 
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \
-    window.h \
 
 multi-process:HEADERS += \
     nativeruntime.h \
@@ -59,7 +57,6 @@ qtHaveModule(qml):HEADERS += \
 
 SOURCES += \
     applicationmanager.cpp \
-    applicationinterface.cpp \
     applicationdatabase.cpp \
     notificationmanager.cpp \
     abstractcontainer.cpp \
@@ -79,7 +76,6 @@ SOURCES += \
 
 !headless:SOURCES += \
     fakeapplicationmanagerwindow.cpp \
-    window.cpp \
 
 multi-process:SOURCES += \
     nativeruntime.cpp \

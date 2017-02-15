@@ -486,7 +486,7 @@ QVariantMap WindowManager::get(int index) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(it.value(), data(QAbstractListModel::index(index), it.key()));
+        map.insert(qL1S(it.value()), data(QAbstractListModel::index(index), it.key()));
     return map;
 }
 

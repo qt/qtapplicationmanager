@@ -41,34 +41,28 @@
 
 #pragma once
 
-#include <QQmlParserStatus>
 #include <QPointer>
-#include <QHash>
 #include <QVector>
 #include <QDBusConnection>
 
-#include "../../manager-lib/applicationinterface.h"
-#include "notification.h"
+#include <QtAppManCommon/global.h>
+#include <QtAppManApplication/applicationinterface.h>
+#include <QtAppManNotification/notification.h>
 
 QT_FORWARD_DECLARE_CLASS(QDBusInterface)
 
 QT_BEGIN_NAMESPACE_AM
 
-class QmlNotification : public Notification
-{
-public:
-    QmlNotification(QObject *parent = 0, Notification::ConstructionMode mode = Notification::Declarative);
+class QmlNotification;
+class Notification;
+class Controller;
+class QmlApplicationInterfaceExtension;
 
-protected:
-    uint libnotifyShow() override;
-    void libnotifyClose() override;
-
-    friend class QmlApplicationInterface;
-};
 
 class QmlApplicationInterface : public ApplicationInterface
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationInterface 1.0")
 
 public:
     explicit QmlApplicationInterface(const QString &dbusConnectionName,
@@ -109,50 +103,6 @@ private:
     friend class QmlNotification;
     friend class Controller;
     friend class QmlApplicationInterfaceExtension;
-};
-
-
-class QmlApplicationInterfaceExtensionPrivate;
-
-class QmlApplicationInterfaceExtension : public QObject, public QQmlParserStatus
-{
-    Q_OBJECT
-    Q_INTERFACES(QQmlParserStatus)
-    Q_PROPERTY(QString name READ name WRITE setName)
-    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
-    Q_PROPERTY(QObject *object READ object NOTIFY objectChanged)
-
-public:
-    static void initialize(const QDBusConnection &connection);
-
-    explicit QmlApplicationInterfaceExtension(QObject *parent = nullptr);
-    ~QmlApplicationInterfaceExtension();
-
-    QString name() const;
-    bool isReady() const;
-    QObject *object() const;
-
-protected:
-    void classBegin() override;
-    void componentComplete() override;
-
-public slots:
-    void setName(const QString &name);
-
-private slots:
-    void onInterfaceCreated(const QString &interfaceName);
-
-signals:
-    void readyChanged();
-    void objectChanged();
-
-private:
-    void tryInit();
-
-    static QmlApplicationInterfaceExtensionPrivate *d;
-    QString m_name;
-    QObject *m_object = nullptr;
-    bool m_complete = false;
 };
 
 QT_END_NAMESPACE_AM

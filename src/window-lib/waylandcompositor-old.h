@@ -42,39 +42,20 @@
 
 #pragma once
 
-#include <QWaylandQuickSurface>
-#include <QWaylandQuickItem>
 #include <QWaylandQuickCompositor>
 
-#include "windowmanager.h"
+#include <QtAppManWindow/windowmanager.h>
 
-QT_FORWARD_DECLARE_CLASS(QWaylandResource)
-QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
-QT_FORWARD_DECLARE_CLASS(QWaylandWlShellSurface)
-QT_FORWARD_DECLARE_CLASS(QWaylandTextInputManager)
-QT_BEGIN_NAMESPACE
-namespace QtWayland {
-class ExtendedSurface;
-class SurfaceExtensionGlobal;
-}
-QT_END_NAMESPACE
+QT_FORWARD_DECLARE_CLASS(QWaylandSurfaceItem)
 
 QT_BEGIN_NAMESPACE_AM
 
 class SurfaceQuickItem;
 
-class Surface : public QWaylandQuickSurface, public WindowSurface
+class Surface : public WindowSurface
 {
-    Q_OBJECT
-
 public:
-    Surface(QWaylandCompositor *comp, QWaylandClient *client, uint id, int version);
-
-    void setShellSurface(QWaylandWlShellSurface *ss);
-    void setExtendedSurface(QtWayland::ExtendedSurface *e);
-
-    QWaylandWlShellSurface *shellSurface() const;
-    QtWayland::ExtendedSurface *extendedSurface() const;
+    Surface(QWaylandSurface *s);
 
     QQuickItem *item() const override;
 
@@ -89,42 +70,31 @@ public:
     void connectPong(const std::function<void ()> &cb) override;
     void connectWindowPropertyChanged(const std::function<void (const QString &, const QVariant &)> &cb) override;
 
-private:
-    SurfaceQuickItem *m_item;
-    QWaylandWlShellSurface *m_shellSurface;
-    QtWayland::ExtendedSurface *m_ext;
-};
-
-class SurfaceQuickItem : public QWaylandQuickItem
-{
-    Q_OBJECT
-
-public:
-    SurfaceQuickItem(Surface *s);
-
-    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
-
-    Surface *m_surface;
+    QWaylandSurfaceItem *m_item;
 };
 
 
 class WaylandCompositor : public QWaylandQuickCompositor
 {
 public:
-    WaylandCompositor(QQuickWindow* window, const QString &waylandSocketName, WindowManager *manager);
+    WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager);
 
     void registerOutputWindow(QQuickWindow *window);
-    void doCreateSurface(QWaylandClient *client, uint id, int version);
-    void createShellSurface(QWaylandSurface *surface, const QWaylandResource &resource);
-    void extendedSurfaceReady(QtWayland::ExtendedSurface *ext, QWaylandSurface *surface);
+
+    void surfaceCreated(QWaylandSurface *surface) override;
+
+#if QT_VERSION < QT_VERSION_CHECK(5,5,0)
+    bool openUrl(WaylandClient *client, const QUrl &url) override;
+#else
+    bool openUrl(QWaylandClient *client, const QUrl &url) override;
+#endif
+
     QWaylandSurface *waylandSurfaceFromItem(QQuickItem *surfaceItem) const;
+
+    void sendCallbacks();
 
 private:
     WindowManager *m_manager;
-    QWaylandWlShell *m_shell;
-    QVector<QWaylandOutput *> m_outputs;
-    QtWayland::SurfaceExtensionGlobal *m_surfExt;
-    QWaylandTextInputManager *m_textInputManager;
 };
 
 QT_END_NAMESPACE_AM

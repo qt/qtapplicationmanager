@@ -1,7 +1,6 @@
 /****************************************************************************
 **
 ** Copyright (C) 2017 Pelagicore AG
-** Copyright (C) 2016 Klarälvdalens Datakonsult AB, a KDAB Group company
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -40,61 +39,26 @@
 **
 ****************************************************************************/
 
-#pragma once
-
-#include <QWaylandQuickCompositor>
-
-#include "windowmanager.h"
-
-QT_FORWARD_DECLARE_CLASS(QWaylandSurfaceItem)
+#include "qmlnotification.h"
+#include "qmlapplicationinterface.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class SurfaceQuickItem;
+QmlNotification::QmlNotification(QObject *parent, ConstructionMode mode)
+    : Notification(parent, mode)
+{ }
 
-class Surface : public WindowSurface
+void QmlNotification::libnotifyClose()
 {
-public:
-    Surface(QWaylandSurface *s);
+    if (QmlApplicationInterface::s_instance)
+        QmlApplicationInterface::s_instance->notificationClose(this);
+}
 
-    QQuickItem *item() const override;
-
-    void takeFocus() override;
-    void ping() override;
-    qint64 processId() const override;
-    QWindow *outputWindow() const override;
-
-    QVariantMap windowProperties() const override;
-    void setWindowProperty(const QString &n, const QVariant &v) override;
-
-    void connectPong(const std::function<void ()> &cb) override;
-    void connectWindowPropertyChanged(const std::function<void (const QString &, const QVariant &)> &cb) override;
-
-    QWaylandSurfaceItem *m_item;
-};
-
-
-class WaylandCompositor : public QWaylandQuickCompositor
+uint QmlNotification::libnotifyShow()
 {
-public:
-    WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager);
-
-    void registerOutputWindow(QQuickWindow *window);
-
-    void surfaceCreated(QWaylandSurface *surface) override;
-
-#if QT_VERSION < QT_VERSION_CHECK(5,5,0)
-    bool openUrl(WaylandClient *client, const QUrl &url) override;
-#else
-    bool openUrl(QWaylandClient *client, const QUrl &url) override;
-#endif
-
-    QWaylandSurface *waylandSurfaceFromItem(QQuickItem *surfaceItem) const;
-
-    void sendCallbacks();
-
-private:
-    WindowManager *m_manager;
-};
+    if (QmlApplicationInterface::s_instance)
+        return QmlApplicationInterface::s_instance->notificationShow(this);
+    return 0;
+}
 
 QT_END_NAMESPACE_AM

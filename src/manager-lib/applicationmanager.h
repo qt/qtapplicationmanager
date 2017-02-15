@@ -68,6 +68,8 @@ class ApplicationManager : public QAbstractListModel, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationManager 1.0")
+
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT)
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)

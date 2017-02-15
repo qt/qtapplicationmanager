@@ -56,6 +56,8 @@ class NotificationManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.freedesktop.Notifications")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/NotificationManager 1.0")
+
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 
 public:

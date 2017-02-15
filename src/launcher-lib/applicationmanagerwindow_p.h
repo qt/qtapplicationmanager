@@ -42,8 +42,7 @@
 #pragma once
 
 #include <private/qquickwindowmodule_p.h>
-#include <QTime>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QPlatformWindow)
 
@@ -54,9 +53,10 @@ class ApplicationManagerWindowPrivate;
 class ApplicationManagerWindow : public QQuickWindowQmlImpl
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationManagerWindow 1.0")
 
 public:
-    explicit ApplicationManagerWindow(QWindow *parent = 0);
+    explicit ApplicationManagerWindow(QWindow *parent = nullptr);
 
     Q_INVOKABLE bool setWindowProperty(const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;

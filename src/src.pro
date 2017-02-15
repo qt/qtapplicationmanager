@@ -15,8 +15,10 @@ package-lib.depends = crypto-lib application-lib
 notification-lib.depends = common-lib
 manager-lib.depends = application-lib notification-lib plugin-interfaces
 installer-lib.depends = package-lib manager-lib
-manager.depends = manager-lib installer-lib
-launchers.depends = manager
+window-lib.depends = manager-lib
+launcher-lib.depends = application-lib notification-lib
+manager.depends = manager-lib installer-lib window-lib
+launchers.depends = launcher-lib
 tools.depends = package-lib
 
 !tools-only {
@@ -28,10 +30,12 @@ tools.depends = package-lib
         notification-lib \
         manager-lib \
         installer-lib \
+        window-lib \
         manager \
+        launcher-lib \
         launchers
 
-    tools.depends = manager-lib installer-lib
+    tools.depends = manager-lib installer-lib launcher-lib window-lib
 }
 
 SUBDIRS += tools

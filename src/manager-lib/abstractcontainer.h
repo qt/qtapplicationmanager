@@ -97,6 +97,8 @@ signals:
 class AbstractContainer : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/Container 1.0")
+
     Q_PROPERTY(QString controlGroup READ controlGroup WRITE setControlGroup)
 
 public:

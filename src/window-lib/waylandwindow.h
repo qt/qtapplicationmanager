@@ -41,41 +41,48 @@
 
 #pragma once
 
-#include <QObject>
-#include <QVariantMap>
-#include <QVector>
-#include <qqml.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManWindow/window.h>
+
+#if defined(AM_MULTI_PROCESS)
+
+#include <QWaylandSurface>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationIPCManagerAttached;
-class ApplicationIPCInterface;
+class WindowSurface;
 
-class ApplicationIPCManager : public QObject
+class WaylandWindow : public Window
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationIPCManager 1.0")
 
 public:
-    ~ApplicationIPCManager();
-    static ApplicationIPCManager *createInstance();
-    static ApplicationIPCManager *instance();
-    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
+    WaylandWindow(const Application *app, WindowSurface *surface);
 
-    Q_INVOKABLE bool registerInterface(QT_PREPEND_NAMESPACE_AM(ApplicationIPCInterface*) interface, const QString &name, const QVariantMap &filter);
-    QVector<ApplicationIPCInterface *> interfaces() const;
+    bool isInProcess() const override { return false; }
 
-signals:
-    void interfaceCreated();
+    bool setWindowProperty(const QString &name, const QVariant &value) override;
+    QVariant windowProperty(const QString &name) const override;
+    QVariantMap windowProperties() const override;
+
+    WindowSurface *surface() const { return m_surface; }
+
+    void enablePing(bool b);
+    bool isPingEnabled() const;
+
+    void setClosing() override;
+
+private slots:
+    void pongReceived();
+    void pongTimeout();
+    void pingTimeout();
 
 private:
-    ApplicationIPCManager(QObject *parent = nullptr);
-    ApplicationIPCManager(const ApplicationIPCManager &);
-    ApplicationIPCManager &operator=(const ApplicationIPCManager &);
-
-    QVector<ApplicationIPCInterface *> m_interfaces;
-    static ApplicationIPCManager *s_instance;
+    QTimer *m_pingTimer;
+    QTimer *m_pongTimer;
+    WindowSurface *m_surface;
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // AM_MULTI_PROCESS

@@ -7,4 +7,5 @@ INSTALLS = deployer
 
 OTHER_FILES += \
     appman-deployer \
-    deployer.qdoc \
+
+load(install-prefix)

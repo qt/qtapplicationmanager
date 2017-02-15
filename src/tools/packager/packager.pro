@@ -19,10 +19,6 @@ SOURCES += \
 HEADERS += \
     packager.h
 
-OTHER_FILES += \
-    README \
-    packager.qdoc \
-
 load(qt_tool)
 
 load(install-prefix)

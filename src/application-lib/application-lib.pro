@@ -16,10 +16,12 @@ HEADERS += \
     applicationscanner.h \
     yamlapplicationscanner.h \
     installationreport.h \
+    applicationinterface.h \
 
 SOURCES += \
     application.cpp \
     yamlapplicationscanner.cpp \
     installationreport.cpp \
+    applicationinterface.cpp \
 
 load(qt_module)

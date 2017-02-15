@@ -90,6 +90,8 @@ private:
 class AbstractRuntime : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/Runtime 1.0")
+
     Q_PROPERTY(AbstractContainer *container READ container)
 
 public:

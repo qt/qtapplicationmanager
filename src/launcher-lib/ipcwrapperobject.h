@@ -41,48 +41,44 @@
 
 #pragma once
 
-#include "window.h"
+#include <QObject>
+#include <QDBusError>
+#include <QtAppManCommon/global.h>
 
-#if defined(AM_MULTI_PROCESS)
+QT_FORWARD_DECLARE_CLASS(QDBusInterface)
+QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 
-#include <QWaylandSurface>
-#include <QTimer>
+#ifdef interface
+#undef interface
+#endif
 
 QT_BEGIN_NAMESPACE_AM
 
-class WindowSurface;
+class IpcWrapperSignalRelay;
 
-class WaylandWindow : public Window
+class IpcWrapperObject : public QObject
 {
-    Q_OBJECT
-
 public:
-    WaylandWindow(const Application *app, WindowSurface *surface);
+    IpcWrapperObject(const QString &service, const QString &path, const QString &interface,
+                     const QDBusConnection &connection, QObject *parent = nullptr);
 
-    bool isInProcess() const override { return false; }
+    ~IpcWrapperObject();
 
-    bool setWindowProperty(const QString &name, const QVariant &value) override;
-    QVariant windowProperty(const QString &name) const override;
-    QVariantMap windowProperties() const override;
+    bool isDBusValid() const;
+    QDBusError lastDBusError() const;
 
-    WindowSurface *surface() const { return m_surface; }
+    const QMetaObject *metaObject() const override;
+    int qt_metacall(QMetaObject::Call _c, int _id, void **_a) override;
 
-    void enablePing(bool b);
-    bool isPingEnabled() const;
-
-    void setClosing() override;
-
-private slots:
-    void pongReceived();
-    void pongTimeout();
-    void pingTimeout();
+    // this should be a slot, but we do not want to "pollute" the QML namespace,
+    // so we are relaying the signal via IpcWrapperHelper
+    void onPropertiesChanged(const QString &interfaceName, const QVariantMap &changed,
+                             const QStringList &invalidated);
 
 private:
-    QTimer *m_pingTimer;
-    QTimer *m_pongTimer;
-    WindowSurface *m_surface;
+    QMetaObject *m_metaObject;
+    IpcWrapperSignalRelay *m_wrapperHelper;
+    QDBusInterface *m_dbusInterface;
 };
 
 QT_END_NAMESPACE_AM
-
-#endif // AM_MULTI_PROCESS

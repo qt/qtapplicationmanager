@@ -96,6 +96,8 @@ class WindowManager : public QAbstractListModel, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.WindowManager")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/WindowManager 1.0")
+
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT)
 public:
@@ -151,8 +153,8 @@ public:
 
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 
-public slots:
-    void setupInProcessRuntime(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime); // evil hook to support in-process runtimes
+    // evil hook to support in-process runtimes
+    void setupInProcessRuntime(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);
 
 private slots:
     void reportFps();

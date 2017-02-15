@@ -66,6 +66,7 @@ class ApplicationInstaller : public QObject, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationInstaller")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationInstaller 1.0")
 
     // both are const on purpose - these should never change in a running system
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT)

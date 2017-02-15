@@ -41,33 +41,23 @@
 
 #pragma once
 
-#include "window.h"
-
-#include <QObject>
-#include <QPointer>
+#include <QtAppManCommon/global.h>
+#include <QtAppManNotification/notification.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class InProcessWindow : public Window
+class QmlApplicationInterface;
+
+class QmlNotification : public Notification
 {
-    Q_OBJECT
-
 public:
-    InProcessWindow(const Application *app, QQuickItem *windowItem);
-
-    bool isInProcess() const override { return true; }
-
-    //bool isClosing() const override;
-
-    bool setWindowProperty(const QString &name, const QVariant &value) override;
-    QVariant windowProperty(const QString &name) const override;
-    QVariantMap windowProperties() const override;
+    QmlNotification(QObject *parent = 0, Notification::ConstructionMode mode = Notification::Declarative);
 
 protected:
-    bool eventFilter(QObject *o, QEvent *e) override;
+    uint libnotifyShow() override;
+    void libnotifyClose() override;
 
-private:
-    QVariantMap m_windowProperties;
+    friend class QmlApplicationInterface;
 };
 
 QT_END_NAMESPACE_AM

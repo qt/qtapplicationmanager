@@ -39,8 +39,6 @@
 **
 ****************************************************************************/
 
-#include <unistd.h>
-
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusMessage>
@@ -48,9 +46,12 @@
 #include <QDebug>
 #include <QPointer>
 #include <QCoreApplication>
+#include <QThread>
 
 #include "global.h"
 #include "qmlapplicationinterface.h"
+#include "qmlapplicationinterfaceextension.h"
+#include "qmlnotification.h"
 #include "notification.h"
 #include "ipcwrapperobject.h"
 
@@ -77,7 +78,7 @@ bool QmlApplicationInterface::initialize()
             if (!iface->lastError().isValid())
                 return iface;
             delete iface;
-            usleep(1000);
+            QThread::msleep(1);
         }
         return nullptr;
     };
@@ -226,143 +227,5 @@ void QmlApplicationInterface::notificationActionTriggered(uint notificationId, c
 }
 
 
-QmlNotification::QmlNotification(QObject *parent, ConstructionMode mode)
-    : Notification(parent, mode)
-{ }
-
-void QmlNotification::libnotifyClose()
-{
-    if (QmlApplicationInterface::s_instance)
-        QmlApplicationInterface::s_instance->notificationClose(this);
-}
-
-uint QmlNotification::libnotifyShow()
-{
-    if (QmlApplicationInterface::s_instance)
-        return QmlApplicationInterface::s_instance->notificationShow(this);
-    return 0;
-}
-
-
-class QmlApplicationInterfaceExtensionPrivate
-{
-public:
-    QmlApplicationInterfaceExtensionPrivate(const QDBusConnection &connection)
-        : m_connection(connection)
-    { }
-
-    QHash<QString, QPointer<IpcWrapperObject>> m_interfaces;
-    QDBusConnection m_connection;
-};
-
-QmlApplicationInterfaceExtensionPrivate *QmlApplicationInterfaceExtension::d = nullptr;
-
-void QmlApplicationInterfaceExtension::initialize(const QDBusConnection &connection)
-{
-    if (!d)
-        d = new QmlApplicationInterfaceExtensionPrivate(connection);
-}
-
-QmlApplicationInterfaceExtension::QmlApplicationInterfaceExtension(QObject *parent)
-    : QObject(parent)
-{
-    Q_ASSERT(d);
-
-    if (QmlApplicationInterface::s_instance->m_applicationIf) {
-        connect(QmlApplicationInterface::s_instance->m_applicationIf, SIGNAL(interfaceCreated(QString)),
-                     this, SLOT(onInterfaceCreated(QString)));
-    } else {
-        qCritical("ERROR: ApplicationInterface not initialized!");
-    }
-}
-
-QmlApplicationInterfaceExtension::~QmlApplicationInterfaceExtension()
-{
-    d->m_interfaces.remove(m_name);
-
-}
-
-QString QmlApplicationInterfaceExtension::name() const
-{
-    return m_name;
-}
-
-bool QmlApplicationInterfaceExtension::isReady() const
-{
-    return m_object;
-}
-
-QObject *QmlApplicationInterfaceExtension::object() const
-{
-    return m_object;
-}
-
-void QmlApplicationInterfaceExtension::classBegin()
-{
-}
-
-void QmlApplicationInterfaceExtension::componentComplete()
-{
-    tryInit();
-}
-
-void QmlApplicationInterfaceExtension::tryInit()
-{
-    if (m_name.isEmpty())
-        return;
-
-    IpcWrapperObject *ext = nullptr;
-
-    auto it = d->m_interfaces.constFind(m_name);
-
-    if (it != d->m_interfaces.constEnd()) {
-        ext = *it;
-    } else {
-        auto createPathFromName = [](const QString &name) -> QString {
-            QString path;
-
-            const QChar *c = name.unicode();
-            for (int i = 0; i < name.length(); ++i) {
-                ushort u = c[i].unicode();
-                path += QLatin1Char(((u >= 'a' && u <= 'z')
-                                     || (u >= 'A' && u <= 'Z')
-                                     || (u >= '0' && u <= '9')
-                                     || (u == '_')) ? u : '_');
-            }
-            return qSL("/ExtensionInterfaces/") + path;
-        };
-
-        ext = new IpcWrapperObject(QString(), createPathFromName(m_name), m_name,
-                                   d->m_connection, this);
-        if (ext->lastDBusError().isValid() || !ext->isDBusValid()) {
-            qCWarning(LogQmlIpc) << "Could not connect to ApplicationInterfaceExtension" << m_name
-                                 << ":" << ext->lastDBusError().message();
-            delete ext;
-            return;
-        }
-        d->m_interfaces.insert(m_name, ext);
-    }
-    m_object = ext;
-    m_complete = true;
-
-    emit objectChanged();
-    emit readyChanged();
-}
-
-void QmlApplicationInterfaceExtension::setName(const QString &name)
-{
-    if (!m_complete) {
-        m_name = name;
-        tryInit();
-    } else {
-        qWarning("Cannot change the name property of an ApplicationInterfaceExtension after creation.");
-    }
-}
-
-void QmlApplicationInterfaceExtension::onInterfaceCreated(const QString &interfaceName)
-{
-    if (m_name == interfaceName)
-        tryInit();
-}
 
 QT_END_NAMESPACE_AM

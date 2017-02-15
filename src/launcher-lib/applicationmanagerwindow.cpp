@@ -44,7 +44,7 @@
 #include <qpa/qplatformnativeinterface.h>
 #include <qpa/qplatformwindow.h>
 
-#include "applicationmanagerwindow.h"
+#include "applicationmanagerwindow_p.h"
 
 QT_BEGIN_NAMESPACE_AM
 

@@ -243,7 +243,7 @@ void tst_PackagerTool::test()
     QString taskId = m_ai->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(pathTo("test.dev-signed.appkg")));
     m_ai->acknowledgePackageInstallation(taskId);
 
-    QVERIFY(finishedSpy.wait());
+    QVERIFY(finishedSpy.wait(10000));
     QCOMPARE(finishedSpy.first()[0].toString(), taskId);
 
     m_ai->setDevelopmentMode(false);

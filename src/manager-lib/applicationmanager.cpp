@@ -56,6 +56,7 @@
 
 #include "applicationdatabase.h"
 #include "applicationmanager.h"
+#include "applicationmanager_p.h"
 #include "application.h"
 #include "runtimefactory.h"
 #include "containerfactory.h"
@@ -313,43 +314,6 @@ static ApplicationManager::RunState runtimeToManagerState(AbstractRuntime::State
     }
 }
 
-class ApplicationManagerPrivate
-{
-public:
-    bool securityChecksEnabled = true;
-    bool singleProcess;
-    QVariantMap systemProperties;
-    ApplicationDatabase *database = nullptr;
-
-    QMap<QByteArray, DBusPolicy> dbusPolicy;
-
-    QVector<const Application *> apps;
-
-    QString currentLocale;
-    QHash<int, QByteArray> roleNames;
-
-    QVector<IpcProxyObject *> interfaceExtensions;
-
-    QVector<ContainerDebugWrapper> debugWrappers;
-
-    ContainerDebugWrapper parseDebugWrapperSpecification(const QString &spec);
-
-    QList<QPair<QString, QString>> containerSelectionConfig;
-    QJSValue containerSelectionFunction;
-
-    struct OpenUrlRequest {
-        QString requestId;
-        QString urlStr;
-        QString mimeTypeName;
-        QStringList possibleAppIds;
-    };
-
-    QVector<OpenUrlRequest> openUrlRequests;
-
-    ApplicationManagerPrivate();
-    ~ApplicationManagerPrivate();
-};
-
 
 ApplicationManagerPrivate::ApplicationManagerPrivate()
 {
@@ -524,30 +488,28 @@ void ApplicationManager::setDebugWrapperConfiguration(const QVariantList &debugW
     foreach (const QVariant &v, debugWrappers) {
         const QVariantMap &map = v.toMap();
 
-        ContainerDebugWrapper dw(map);
-        if (!dw.isValid()) {
-            qCWarning(LogSystem) << "Ignoring invalid debug wrapper: " << dw.name();
+        ApplicationManagerPrivate::DebugWrapper dw;
+        dw.name = map.value(qSL("name")).toString();
+        dw.command = map.value(qSL("command")).toStringList();
+        dw.parameters = map.value(qSL("parameters")).toMap();
+        dw.supportedContainers = map.value(qSL("supportedContainers")).toStringList();
+        dw.supportedRuntimes = map.value(qSL("supportedRuntimes")).toStringList();
+
+        if (dw.name.isEmpty() || dw.command.isEmpty()) {
+            qCWarning(LogSystem) << "Ignoring invalid debug wrapper: " << dw.name << "/" << dw.command;
             continue;
         }
         d->debugWrappers.append(dw);
     }
-
-    ContainerDebugWrapper internalDw({
-        { qSL("name"), qSL("--internal-redirect-only--") },
-        { qSL("command"), QStringList { qSL("%program%"), qSL("%arguments%") } },
-        { qSL("supportedRuntimes"), QStringList { qSL("native"), qSL("qml") } },
-        { qSL("supportedContainers"), QStringList { qSL("process") } }
-    });
-    d->debugWrappers.append(internalDw);
 }
 
-ContainerDebugWrapper ApplicationManagerPrivate::parseDebugWrapperSpecification(const QString &spec)
+ApplicationManagerPrivate::DebugWrapper ApplicationManagerPrivate::parseDebugWrapperSpecification(const QString &spec)
 {
     // Example:
     //    "gdbserver"
     //    "gdbserver: {port: 5555}"
 
-    static ContainerDebugWrapper fail;
+    static ApplicationManagerPrivate::DebugWrapper fail;
 
     if (spec.isEmpty())
         return fail;
@@ -574,22 +536,29 @@ ContainerDebugWrapper ApplicationManagerPrivate::parseDebugWrapperSpecification(
         return fail;
     }
 
-    ContainerDebugWrapper dw;
     for (const auto &it : qAsConst(debugWrappers)) {
-        if (it.name() == name) {
-            dw = it;
-            break;
+        if (it.name == name) {
+            ApplicationManagerPrivate::DebugWrapper dw = it;
+            for (auto it = userParams.cbegin(); it != userParams.cend(); ++it) {
+                auto pit = dw.parameters.find(it.key());
+                if (pit == dw.parameters.end())
+                    return fail;
+                *pit = it.value();
+            }
+
+            for (auto pit = dw.parameters.cbegin(); pit != dw.parameters.cend(); ++pit) {
+                QString key = qL1C('%') + pit.key() + qL1C('%');
+                QString value = pit.value().toString();
+
+                // replace variable name with value in command line
+                std::for_each(dw.command.begin(), dw.command.end(), [key, value](QString &str) {
+                    str.replace(key, value);
+                });
+            }
+            return dw;
         }
     }
-
-    if (!dw.isValid())
-        return fail;
-
-    for (auto it = userParams.cbegin(); it != userParams.cend(); ++it) {
-        if (!dw.setParameter(it.key(), it.value()))
-            return fail;
-    }
-    return dw;
+    return fail;
 }
 
 bool ApplicationManager::setDBusPolicy(const QVariantMap &yamlFragment)
@@ -731,7 +700,7 @@ void ApplicationManager::registerMimeTypes()
 bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl,
                                           const QString &documentMimeType,
                                           const QString &debugWrapperSpecification,
-                                          const QVector<int> &stdRedirections) throw(Exception)
+                                          const QVector<int> &stdioRedirections) throw(Exception)
 {
     if (!app)
         throw Exception("Cannot start an invalid application");
@@ -740,14 +709,29 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
     AbstractRuntime *runtime = app->currentRuntime();
 
-    ContainerDebugWrapper debugWrapper;
+    // validate stdio redirections
+    if (stdioRedirections.size() > 3) {
+        throw Exception("Tried to start application %1 using an invalid standard IO redirection specification")
+                .arg(app->id());
+    }
+    bool hasStdioRedirections = !stdioRedirections.isEmpty();
+    if (hasStdioRedirections) {
+        // we have an array - check if it just consists of -1 fds
+        hasStdioRedirections = false;
+        std::for_each(stdioRedirections.cbegin(), stdioRedirections.cend(), [&hasStdioRedirections](int fd) {
+            if (fd >= 0)
+                hasStdioRedirections = true;
+        });
+    }
+
+    // validate the debug-wrapper
+    ApplicationManagerPrivate::DebugWrapper debugWrapper;
     if (!debugWrapperSpecification.isEmpty()) {
         debugWrapper = d->parseDebugWrapperSpecification(debugWrapperSpecification);
         if (!debugWrapper.isValid()) {
             throw Exception("Tried to start application %1 using an invalid debug-wrapper specification: %2")
                     .arg(app->id(), debugWrapperSpecification);
         }
-        debugWrapper.setStdRedirections(stdRedirections);
     }
 
     if (runtime) {
@@ -756,7 +740,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         case AbstractRuntime::Active:
             if (debugWrapper.isValid()) {
                 throw Exception("Application %1 is already running - cannot start with debug-wrapper: %2")
-                        .arg(app->id(), debugWrapper.name());
+                        .arg(app->id(), debugWrapper.name);
             }
 
             if (!documentUrl.isNull())
@@ -814,19 +798,27 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     bool attachRuntime = false;
 
     if (debugWrapper.isValid()) {
-        if (!debugWrapper.supportsRuntime(app->runtimeName())) {
+        if (!debugWrapper.supportedRuntimes.contains(app->runtimeName())) {
             throw Exception("Application %1 is using the %2 runtime, which is not compatible with the requested debug-wrapper: %3")
-                    .arg(app->id(), app->runtimeName(), debugWrapper.name());
+                    .arg(app->id(), app->runtimeName(), debugWrapper.name);
         }
-        if (!debugWrapper.supportsContainer(containerId)) {
+        if (!debugWrapper.supportedContainers.contains(containerId)) {
             throw Exception("Application %1 is using the %2 container, which is not compatible with the requested debug-wrapper: %3")
-                    .arg(app->id(), containerId, debugWrapper.name());
+                    .arg(app->id(), containerId, debugWrapper.name);
         }
     }
 
     if (!runtime) {
         if (!inProcess) {
-            if (!debugWrapper.isValid() && app->environmentVariables().isEmpty()) {
+            // we cannot use the quicklaunch pool, if
+            //  (a) a debug-wrapper is being used,
+            //  (b) stdio is redirected or
+            //  (c) the app requests special environment variables
+            bool cannotUseQuickLaunch = debugWrapper.isValid()
+                    || hasStdioRedirections
+                    || !app->environmentVariables().isEmpty();
+
+            if (!cannotUseQuickLaunch) {
                 // check quicklaunch pool
                 QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
                         QuickLauncher::instance()->take(containerId, app->m_runtimeName);
@@ -844,10 +836,8 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             }
 
             if (!container) {
-                if (debugWrapper.isValid())
-                    container = ContainerFactory::instance()->create(containerId, app, debugWrapper);
-                else
-                    container = ContainerFactory::instance()->create(containerId, app);
+                container = ContainerFactory::instance()->create(containerId, app, stdioRedirections,
+                                                                 debugWrapper.command);
             } else {
                 container->setApplication(app);
             }
@@ -1028,7 +1018,7 @@ bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NA
 {
     AM_AUTHENTICATE_DBUS(bool)
 
-    QVector<int> redirectStd = { -1, -1, -1 };
+    QVector<int> stdioRedirections = { -1, -1, -1 };
 
 #if defined(Q_OS_UNIX)
     for (auto it = redirections.cbegin(); it != redirections.cend(); ++it) {
@@ -1037,18 +1027,18 @@ bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NA
 
         const QString &which = it.key();
         if (which == qL1S("in"))
-            redirectStd[0] = dup(fd);
+            stdioRedirections[0] = dup(fd);
         else if (which == qL1S("out"))
-            redirectStd[1] = dup(fd);
+            stdioRedirections[1] = dup(fd);
         else if (which == qL1S("err"))
-            redirectStd[2] = dup(fd);
+            stdioRedirections[2] = dup(fd);
     }
 #else
     Q_UNUSED(redirections)
 #endif
     int result = false;
     try {
-        result = startApplication(fromId(id), documentUrl, QString(), qSL("--internal-redirect-only--"), redirectStd);
+        result = startApplication(fromId(id), documentUrl, QString(), QString(), stdioRedirections);
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
         if (calledFromDBus())
@@ -1061,7 +1051,7 @@ bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NA
         // originating from.
         //TODO: this really needs to fixed centrally (e.g. via the DebugWrapper), but this is the most
         //      common error case for now.
-        for (int fd : qAsConst(redirectStd)) {
+        for (int fd : qAsConst(stdioRedirections)) {
             if (fd >= 0)
                 QT_CLOSE(fd);
         }
@@ -1073,7 +1063,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 {
     AM_AUTHENTICATE_DBUS(bool)
 
-    QVector<int> redirectStd = { -1, -1, -1 };
+    QVector<int> stdioRedirections = { -1, -1, -1 };
 
 #if defined(Q_OS_UNIX)
     for (auto it = redirections.cbegin(); it != redirections.cend(); ++it) {
@@ -1082,18 +1072,18 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 
         const QString &which = it.key();
         if (which == qL1S("in"))
-            redirectStd[0] = dup(fd);
+            stdioRedirections[0] = dup(fd);
         else if (which == qL1S("out"))
-            redirectStd[1] = dup(fd);
+            stdioRedirections[1] = dup(fd);
         else if (which == qL1S("err"))
-            redirectStd[2] = dup(fd);
+            stdioRedirections[2] = dup(fd);
     }
 #else
     Q_UNUSED(redirections)
 #endif
     int result = false;
     try {
-        result = startApplication(fromId(id), documentUrl, QString(), debugWrapper, redirectStd);
+        result = startApplication(fromId(id), documentUrl, QString(), debugWrapper, stdioRedirections);
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
         if (calledFromDBus())
@@ -1106,7 +1096,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
         // originating from.
         //TODO: this really needs to fixed centrally (e.g. via the DebugWrapper), but this is the most
         //      common error case for now.
-        for (int fd : qAsConst(redirectStd)) {
+        for (int fd : qAsConst(stdioRedirections)) {
             if (fd >= 0)
                 QT_CLOSE(fd);
         }

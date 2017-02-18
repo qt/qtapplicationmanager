@@ -110,7 +110,7 @@ public:
     bool startApplication(const Application *app, const QString &documentUrl = QString(),
                           const QString &documentMimeType = QString(),
                           const QString &debugWrapperSpecification = QString(),
-                          const QVector<int> &stdRedirections = QVector<int>()) throw(Exception);
+                          const QVector<int> &stdioRedirections = QVector<int>()) throw(Exception);
     void stopApplication(const Application *app, bool forceKill = false);
     void killAll();
 

@@ -53,36 +53,6 @@ QT_BEGIN_NAMESPACE_AM
 class Application;
 class AbstractContainer;
 
-class ContainerDebugWrapper
-{
-public:
-    ContainerDebugWrapper();
-    ContainerDebugWrapper(const QVariantMap &map);
-
-    QString name() const;
-    bool isValid() const;
-    QStringList command() const;
-
-    bool supportsContainer(const QString &containerId) const;
-    bool supportsRuntime(const QString &runtimeId) const;
-
-    void setStdRedirections(const QVector<int> &stdRedirections);
-    QVector<int> stdRedirections() const;
-
-    bool setParameter(const QString &key, const QVariant &value);
-    void resolveParameters(const QString &program, const QStringList &arguments);
-
-private:
-    QString m_name;
-    QStringList m_command;
-    QVariantMap m_parameters;
-    QStringList m_supportedRuntimes;
-    QStringList m_supportedContainers;
-    QVector<int> m_stdRedirections;
-    bool m_valid = false;
-};
-
-
 class AbstractContainerManager : public QObject
 {
     Q_OBJECT
@@ -94,8 +64,8 @@ public:
     QString identifier() const;
     virtual bool supportsQuickLaunch() const;
 
-    virtual AbstractContainer *create(const Application *app) = 0;
-    virtual AbstractContainer *create(const Application *app, const ContainerDebugWrapper &debugWrapper) = 0;
+    virtual AbstractContainer *create(const Application *app, const QVector<int> &stdioRedirections,
+                                      const QStringList &debugWrapperCommand) = 0;
 
     QVariantMap configuration() const;
     virtual void setConfiguration(const QVariantMap &configuration);
@@ -144,6 +114,10 @@ public:
     virtual QString mapHostPathToContainer(const QString &hostPath) const;
 
     virtual AbstractContainerProcess *start(const QStringList &arguments, const QProcessEnvironment &env) = 0;
+
+    static QStringList substituteDebugWrapperCommand(const QStringList &debugWrapperCommand,
+                                                     const QString &program,
+                                                     const QStringList &arguments);
 
     AbstractContainerProcess *process() const;
 

@@ -111,6 +111,29 @@ QString AbstractContainer::mapHostPathToContainer(const QString &hostPath) const
     return hostPath;
 }
 
+QStringList AbstractContainer::substituteDebugWrapperCommand(const QStringList &debugWrapperCommand,
+                                                             const QString &program,
+                                                             const QStringList &arguments)
+{
+    QStringList cmd = arguments;
+
+    bool foundArgumentMarker = false;
+    for (int i = debugWrapperCommand.count() - 1; i >= 0; --i) {
+        QString str = debugWrapperCommand.at(i);
+        if (str == qL1S("%arguments%")) {
+            foundArgumentMarker = true;
+            continue;
+        }
+        str.replace(qL1S("%program%"), program);
+
+        if (i == 0 || foundArgumentMarker)
+            cmd.prepend(str);
+        else
+            cmd.append(str);
+    }
+    return cmd;
+}
+
 AbstractContainerProcess *AbstractContainer::process() const
 {
     return m_process;
@@ -172,99 +195,6 @@ QVariantMap AbstractContainerManager::configuration() const
 void AbstractContainerManager::setConfiguration(const QVariantMap &configuration)
 {
     m_configuration = configuration;
-}
-
-
-ContainerDebugWrapper::ContainerDebugWrapper()
-    : m_stdRedirections(3, -1)
-{ }
-
-ContainerDebugWrapper::ContainerDebugWrapper(const QVariantMap &map)
-    : m_stdRedirections(3, -1)
-{
-    m_name = map.value(qSL("name")).toString();
-    m_command = map.value(qSL("command")).toStringList();
-    m_parameters = map.value(qSL("parameters")).toMap();
-    m_supportedContainers = map.value(qSL("supportedContainers")).toStringList();
-    m_supportedRuntimes = map.value(qSL("supportedRuntimes")).toStringList();
-
-    m_valid = !m_name.isEmpty() && !m_command.isEmpty();
-}
-
-QString ContainerDebugWrapper::name() const
-{
-    return m_name;
-}
-
-bool ContainerDebugWrapper::isValid() const
-{
-    return m_valid;
-}
-
-QStringList ContainerDebugWrapper::command() const
-{
-    return m_command;
-}
-
-bool ContainerDebugWrapper::supportsContainer(const QString &containerId) const
-{
-    return m_supportedContainers.contains(containerId);
-}
-
-bool ContainerDebugWrapper::supportsRuntime(const QString &runtimeId) const
-{
-    return m_supportedRuntimes.contains(runtimeId);
-}
-
-void ContainerDebugWrapper::setStdRedirections(const QVector<int> &stdRedirections)
-{
-    for (int i = 0; i < 3; ++i)
-        m_stdRedirections[i] = stdRedirections.value(i, -1);
-}
-
-QVector<int> ContainerDebugWrapper::stdRedirections() const
-{
-    return m_stdRedirections;
-}
-
-bool ContainerDebugWrapper::setParameter(const QString &key, const QVariant &value)
-{
-    auto it = m_parameters.find(key);
-    if (it == m_parameters.end())
-        return false;
-    *it = value;
-    return true;
-}
-
-void ContainerDebugWrapper::resolveParameters(const QString &program, const QStringList &arguments)
-{
-    for (auto it = m_parameters.cbegin(); it != m_parameters.cend(); ++it) {
-        QString key = qL1C('%') + it.key() + qL1C('%');
-        QString value = it.value().toString();
-
-        // replace variable name with value in command line and redirects
-        std::for_each(m_command.begin(), m_command.end(), [key, value](QString &str) {
-            str.replace(key, value);
-        });
-    }
-
-    QStringList args = arguments;
-
-    bool foundArgumentMarker = false;
-    for (int i = m_command.count() - 1; i >= 0; --i) {
-        QString str = m_command.at(i);
-        if (str == qL1S("%arguments%")) {
-            foundArgumentMarker = true;
-            continue;
-        }
-        str.replace(qL1S("%program%"), program);
-
-        if (i == 0 || foundArgumentMarker)
-            args.prepend(str);
-        else
-            args.append(str);
-    }
-    m_command = args;
 }
 
 QT_END_NAMESPACE_AM

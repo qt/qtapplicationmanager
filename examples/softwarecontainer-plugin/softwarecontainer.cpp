@@ -113,7 +113,8 @@ void SoftwareContainerManager::setConfiguration(const QVariantMap &configuration
     m_configuration = configuration;
 }
 
-ContainerInterface *SoftwareContainerManager::create()
+ContainerInterface *SoftwareContainerManager::create(const QVector<int> &stdioRedirections,
+                                                     const QStringList &debugWrapperCommand)
 {
     if (!m_interface) {
         QString dbus = configuration().value(QStringLiteral("dbus")).toString();
@@ -174,7 +175,14 @@ ContainerInterface *SoftwareContainerManager::create()
         return nullptr;
     }
 
-    SoftwareContainer *container = new SoftwareContainer(this, containerId);
+    // calculate where to dump stdout/stderr
+    int outputFd = stdioRedirections.value(STDERR_FILENO, -1);
+    if (outputFd < 0)
+        outputFd = stdioRedirections.value(STDOUT_FILENO, -1);
+    if ((::fcntl(outputFd, F_GETFD) < 0) && (errno == EBADFD))
+        outputFd = STDOUT_FILENO;
+
+    SoftwareContainer *container = new SoftwareContainer(this, containerId, outputFd, debugWrapperCommand);
     m_containers.insert(containerId, container);
     connect(container, &QObject::destroyed, this, [this, containerId]() { m_containers.remove(containerId); });
     return container;
@@ -206,9 +214,12 @@ void SoftwareContainerManager::processStateChanged(int containerId, uint process
 
 
 
-SoftwareContainer::SoftwareContainer(SoftwareContainerManager *manager, int containerId)
+SoftwareContainer::SoftwareContainer(SoftwareContainerManager *manager, int containerId,
+                                     int outputFd, const QStringList &debugWrapperCommand)
     : m_manager(manager)
     , m_id(containerId)
+    , m_outputFd(outputFd)
+    , m_debugWrapperCommand(debugWrapperCommand)
 { }
 
 SoftwareContainer::~SoftwareContainer()
@@ -217,6 +228,8 @@ SoftwareContainer::~SoftwareContainer()
         QT_CLOSE(m_fifoFd);
     if (!m_fifoPath.isEmpty())
         ::unlink(m_fifoPath);
+    if (m_outputFd > STDERR_FILENO)
+        QT_CLOSE(m_outputFd);
 }
 
 SoftwareContainerManager *SoftwareContainer::manager() const
@@ -358,7 +371,8 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
 
     // read from fifo and dump to message handler
     QSocketNotifier *sn = new QSocketNotifier(m_fifoFd, QSocketNotifier::Read, this);
-    connect(sn, &QSocketNotifier::activated, this, [sn](int fifoFd) {
+    int outputFd = m_outputFd;
+    connect(sn, &QSocketNotifier::activated, this, [sn, outputFd](int fifoFd) {
         int bytesAvailable = 0;
         if (ioctl(fifoFd, FIONREAD, &bytesAvailable) == 0) {
             static const int bufferSize = 4096;
@@ -372,17 +386,46 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
                     sn->setEnabled(false);
                     return;
                 } else if (bytesRead > 0) {
-                    QT_WRITE(STDOUT_FILENO, buffer.constData(), bytesRead);
+                    QT_WRITE(outputFd, buffer.constData(), bytesRead);
                     bytesAvailable -= bytesRead;
                 }
             }
         }
     });
 
+    // Calculate the exact command to run
+    QStringList command;
+    if (!m_debugWrapperCommand.isEmpty()) {
+        // unfortunately, this is a copy of the code from abstractcontainer.cpp
+        command = arguments;
+        bool foundArgumentMarker = false;
+        for (int i = m_debugWrapperCommand.count() - 1; i >= 0; --i) {
+            QString str = m_debugWrapperCommand.at(i);
+            if (str == qL1S("%arguments%")) {
+                foundArgumentMarker = true;
+                continue;
+            }
+            str.replace(qL1S("%program%"), m_program);
+
+            if (i == 0 || foundArgumentMarker)
+                command.prepend(str);
+            else
+                command.append(str);
+        }
+    } else {
+        command = arguments;
+        command.prepend(m_program);
+    }
+
     // SC expects a plain string instead of individual args
-    QString cmdLine = m_program;
-    for (auto &&arg : arguments)
-        cmdLine += QStringLiteral(" \"") + arg + QStringLiteral("\"");
+    QString cmdLine;
+    for (const auto &part : command) {
+        if (!cmdLine.isEmpty())
+            cmdLine.append(QLatin1Char(' '));
+        cmdLine.append(QLatin1Char('\"'));
+        cmdLine.append(part);
+        cmdLine.append(QLatin1Char('\"'));
+    }
     //cmdLine.prepend(QStringLiteral("/usr/bin/strace ")); // useful if things go wrong...
 
     // we start with a copy of the AM's environment, but some variables would overwrite important

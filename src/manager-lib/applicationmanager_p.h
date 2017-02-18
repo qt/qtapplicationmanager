@@ -41,45 +41,62 @@
 
 #pragma once
 
-#include <QMap>
-#include <QObject>
-
+#include <QStringList>
+#include <QVariantMap>
+#include <QJSValue>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
-class AbstractContainer;
-class AbstractContainerManager;
-class ContainerDebugWrapper;
+class ApplicationDatabase;
 
-class ContainerFactory : public QObject
+class ApplicationManagerPrivate
 {
-    Q_OBJECT
-
 public:
-    static ContainerFactory *instance();
-    ~ContainerFactory();
+    bool securityChecksEnabled = true;
+    bool singleProcess;
+    QVariantMap systemProperties;
+    ApplicationDatabase *database = nullptr;
 
-    QStringList containerIds() const;
+    QMap<QByteArray, DBusPolicy> dbusPolicy;
 
-    AbstractContainerManager *manager(const QString &id);
-    AbstractContainer *create(const QString &id, const Application *app,
-                              const QVector<int> &stdioRedirections = QVector<int>(),
-                              const QStringList &debugWrapperCommand = QStringList());
+    QVector<const Application *> apps;
 
-    void setConfiguration(const QVariantMap &configuration);
+    QString currentLocale;
+    QHash<int, QByteArray> roleNames;
 
-    bool registerContainer(AbstractContainerManager *manager);
-    bool registerContainer(AbstractContainerManager *manager, const QString &identifier);
+    QVector<IpcProxyObject *> interfaceExtensions;
 
-private:
-    ContainerFactory(QObject *parent = 0);
-    ContainerFactory(const ContainerFactory &);
-    ContainerFactory &operator=(const ContainerFactory &);
-    static ContainerFactory *s_instance;
+    struct DebugWrapper
+    {
+        bool isValid() const { return !name.isEmpty(); }
 
-    QMap<QString, AbstractContainerManager *> m_containers;
+        QString name;
+        QStringList command;
+        QVariantMap parameters;
+        QStringList supportedRuntimes;
+        QStringList supportedContainers;
+    };
+
+    QVector<DebugWrapper> debugWrappers;
+
+    DebugWrapper parseDebugWrapperSpecification(const QString &spec);
+
+    QList<QPair<QString, QString>> containerSelectionConfig;
+    QJSValue containerSelectionFunction;
+
+    struct OpenUrlRequest
+    {
+        QString requestId;
+        QString urlStr;
+        QString mimeTypeName;
+        QStringList possibleAppIds;
+    };
+
+    QVector<OpenUrlRequest> openUrlRequests;
+
+    ApplicationManagerPrivate();
+    ~ApplicationManagerPrivate();
 };
 
 QT_END_NAMESPACE_AM

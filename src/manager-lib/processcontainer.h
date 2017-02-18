@@ -59,8 +59,8 @@ public:
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
 
-    AbstractContainer *create(const Application *app) override;
-    AbstractContainer *create(const Application *app, const ContainerDebugWrapper &debugWrapper) override;
+    AbstractContainer *create(const Application *app, const QVector<int> &stdioRedirections,
+                                      const QStringList &debugWrapperCommand) override;
 };
 
 class HostProcess : public AbstractContainerProcess
@@ -73,7 +73,7 @@ public:
     virtual qint64 processId() const override;
     virtual QProcess::ProcessState state() const override;
 
-    void setRedirections(const QVector<int> &stdRedirections);
+    void setStdioRedirections(const QVector<int> &stdioRedirections);
     void setWorkingDirectory(const QString &dir);
     void setProcessEnvironment(const QProcessEnvironment &environment);
 
@@ -91,7 +91,7 @@ private:
         void setupChildProcess() override;
     public:
         bool m_stopBeforeExec = false;
-        QVector<int> m_stdRedirections;
+        QVector<int> m_stdioRedirections;
     };
 
     MyQProcess m_process;
@@ -102,8 +102,8 @@ class ProcessContainer : public AbstractContainer
     Q_OBJECT
 
 public:
-    explicit ProcessContainer(ProcessContainerManager *manager, const Application *app);
-    explicit ProcessContainer(ProcessContainerManager *manager, const Application *app, const ContainerDebugWrapper &debugWrapper);
+    explicit ProcessContainer(ProcessContainerManager *manager, const Application *app,
+                              const QVector<int> &stdioRedirections, const QStringList &debugWrapperCommand);
     ~ProcessContainer();
 
     QString controlGroup() const override;
@@ -115,8 +115,8 @@ public:
 
 private:
     QString m_currentControlGroup;
-    bool m_useDebugWrapper = false;
-    ContainerDebugWrapper m_debugWrapper;
+    QVector<int> m_stdioRedirections;
+    QStringList m_debugWrapperCommand;
     MemoryWatcher *m_memWatcher = nullptr;
 };
 

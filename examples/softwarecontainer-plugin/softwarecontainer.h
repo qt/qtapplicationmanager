@@ -54,7 +54,8 @@ class SoftwareContainer : public ContainerInterface
     Q_OBJECT
 
 public:
-    SoftwareContainer(SoftwareContainerManager *manager, int containerId);
+    SoftwareContainer(SoftwareContainerManager *manager, int containerId, int outputFd,
+                      const QStringList &debugWrapperCommand);
     ~SoftwareContainer();
 
     SoftwareContainerManager *manager() const;
@@ -97,6 +98,8 @@ private:
     QString m_containerPath;
     QByteArray m_fifoPath;
     int m_fifoFd = -1;
+    int m_outputFd;
+    QStringList m_debugWrapperCommand;
 };
 
 class SoftwareContainerManager : public QObject, public ContainerManagerInterface
@@ -112,8 +115,8 @@ public:
     bool supportsQuickLaunch() const override;
     void setConfiguration(const QVariantMap &configuration) override;
 
-    ContainerInterface *create() override;
-
+    ContainerInterface *create(const QVector<int> &stdioRedirections,
+                               const QStringList &debugWrapperCommand) override;
 public:
     QDBusInterface *interface() const;
     QVariantMap configuration() const;

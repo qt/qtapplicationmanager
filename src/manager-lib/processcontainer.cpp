@@ -71,7 +71,7 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
 #if defined(Q_OS_UNIX)
     // make sure that the redirection fds do not have a close-on-exec flag, since we need them
     // in the child process.
-    for (int fd : qAsConst(m_process.m_stdRedirections)) {
+    for (int fd : qAsConst(m_process.m_stdioRedirections)) {
         if (fd < 0)
             continue;
         int flags = fcntl(fd, F_GETFD);
@@ -86,7 +86,7 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
     // we are forked now and the child process has received a copy of all redirected fds
     // now it's time to close our fds, since we don't need them anymore (plus we would block
     // the tty where they originated from)
-    for (int fd : qAsConst(m_process.m_stdRedirections)) {
+    for (int fd : qAsConst(m_process.m_stdioRedirections)) {
         if (fd >= 0)
             ::close(fd);
     }
@@ -123,9 +123,9 @@ QProcess::ProcessState HostProcess::state() const
     return m_process.state();
 }
 
-void HostProcess::setRedirections(const QVector<int> &stdRedirections)
+void HostProcess::setStdioRedirections(const QVector<int> &stdioRedirections)
 {
-    m_process.m_stdRedirections = stdRedirections;
+    m_process.m_stdioRedirections = stdioRedirections;
 }
 
 void HostProcess::setStopBeforeExec(bool stopBeforeExec)
@@ -134,16 +134,10 @@ void HostProcess::setStopBeforeExec(bool stopBeforeExec)
 }
 
 
-
-ProcessContainer::ProcessContainer(ProcessContainerManager *manager, const Application *app)
+ProcessContainer::ProcessContainer(ProcessContainerManager *manager, const Application *app, const QVector<int> &stdioRedirections, const QStringList &debugWrapperCommand)
     : AbstractContainer(manager, app)
-{ }
-
-ProcessContainer::ProcessContainer(ProcessContainerManager *manager, const Application *app,
-                                   const ContainerDebugWrapper &debugWrapper)
-    : AbstractContainer(manager, app)
-    , m_useDebugWrapper(true)
-    , m_debugWrapper(debugWrapper)
+    , m_stdioRedirections(stdioRedirections)
+    , m_debugWrapperCommand(debugWrapperCommand)
 { }
 
 ProcessContainer::~ProcessContainer()
@@ -221,16 +215,16 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
     process->setWorkingDirectory(m_baseDirectory);
     process->setProcessEnvironment(completeEnv);
     process->setStopBeforeExec(configuration().value(qSL("stopBeforeExec")).toBool());
+    process->setStdioRedirections(m_stdioRedirections);
 
     QString command = m_program;
     QStringList args = arguments;
 
-    if (m_useDebugWrapper) {
-        m_debugWrapper.resolveParameters(m_program, arguments);
-        process->setRedirections(m_debugWrapper.stdRedirections());
+    if (!m_debugWrapperCommand.isEmpty()) {
+        auto cmd = substituteDebugWrapperCommand(m_debugWrapperCommand, m_program, arguments);
 
-        command = m_debugWrapper.command().at(0);
-        args = m_debugWrapper.command().mid(1);
+        command = cmd.takeFirst();
+        args = cmd;
     }
     qCDebug(LogSystem) << "Running command:" << command << args;
 
@@ -259,14 +253,9 @@ bool ProcessContainerManager::supportsQuickLaunch() const
     return true;
 }
 
-AbstractContainer *ProcessContainerManager::create(const Application *app)
+AbstractContainer *ProcessContainerManager::create(const Application *app, const QVector<int> &stdioRedirections, const QStringList &debugWrapperCommand)
 {
-    return new ProcessContainer(this, app);
-}
-
-AbstractContainer *ProcessContainerManager::create(const Application *app, const ContainerDebugWrapper &debugWrapper)
-{
-    return new ProcessContainer(this, app, debugWrapper);
+    return new ProcessContainer(this, app, stdioRedirections, debugWrapperCommand);
 }
 
 void HostProcess::MyQProcess::setupChildProcess()
@@ -279,7 +268,7 @@ void HostProcess::MyQProcess::setupChildProcess()
     // duplicate any requested redirections to the respective stdin/out/err fd. Also make sure to
     // close the original fd: otherwise we would block the tty where the fds originated from.
     for (int i = 0; i < 3; ++i) {
-        int fd = m_stdRedirections.value(i, -1);
+        int fd = m_stdioRedirections.value(i, -1);
         if (fd >= 0) {
             dup2(fd, i);
             ::close(fd);

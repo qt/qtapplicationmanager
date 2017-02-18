@@ -55,8 +55,8 @@ public:
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
 
-    AbstractContainer *create(const Application *app) override;
-    AbstractContainer *create(const Application *app, const ContainerDebugWrapper &debugWrapper) override;
+    AbstractContainer *create(const Application *app, const QVector<int> &stdioRedirections,
+                                      const QStringList &debugWrapperCommand) override;
 
     void setConfiguration(const QVariantMap &configuration) override;
 

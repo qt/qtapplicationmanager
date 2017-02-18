@@ -40,6 +40,7 @@ HEADERS += \
     processmonitor.h \
     memorymonitor.h \
     fpsmonitor.h \
+    applicationmanager_p.h
 
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \

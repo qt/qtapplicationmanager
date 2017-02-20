@@ -137,7 +137,8 @@ public:
 
     const InstallationReport *installationReport() const;
     void setInstallationReport(InstallationReport *report);
-    QDir baseDir() const;
+    QDir manifestDir() const;
+    QDir codeDir() const;
     uint uid() const;
 
     // dynamic part
@@ -157,7 +158,8 @@ public:
     qreal progress() const;
 
     void setSupportsApplicationInterface(bool supportsAppInterface);
-    void setBaseDir(const QString &path); //TODO: replace baseDir handling with something that works :)
+    void setCodeDir(const QString &path);
+    void setManifestDir(const QString &path);
     void setBuiltIn(bool builtIn);
 
     int lastExitCode() const;
@@ -202,7 +204,8 @@ private:
 
     // added by installer
     QScopedPointer<InstallationReport> m_installationReport;
-    QDir m_baseDir;
+    QDir m_manifestDir;
+    QDir m_codeDir;
     uint m_uid = uint(-1); // unix user id - move to installationReport
 
     // dynamic part

@@ -66,6 +66,8 @@ public:
     QVector<const Application *> read() throw (Exception);
     void write(const QVector<const Application *> &apps) throw (Exception);
 
+    void invalidate();
+
 private:
     ApplicationDatabasePrivate *d;
     Q_DISABLE_COPY(ApplicationDatabase)

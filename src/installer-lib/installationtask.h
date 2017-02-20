@@ -88,7 +88,8 @@ private:
     bool m_locked = false;
     uint m_extractedFileCount = 0;
     bool m_managerApproval = false;
-    Application *m_app = nullptr;
+    QScopedPointer<Application> m_app;
+    uint m_applicationUid = uint(-1);
 
     // changes to these 4 member variables are protected by m_mutex
     PackageExtractor *m_extractor = nullptr;

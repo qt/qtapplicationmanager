@@ -242,8 +242,10 @@ Application::Application()
 
 QVariantMap Application::toVariantMap() const
 {
-    //TODO: only used in the installer -- replace there with code that mimicks
-    // ApplicationManager::get() to get consistent key names in the objects
+    //TODO: check if we can find a better method to keep this as similar as possible to
+    //      ApplicationManager::get().
+    //      This is used for RuntimeInterface::startApplication(), ContainerInterface and
+    //      ApplicationInstaller::taskRequestingInstallationAcknowledge.
 
     QVariantMap map;
     map[qSL("id")] = m_id;
@@ -272,7 +274,8 @@ QVariantMap Application::toVariantMap() const
     }
     map[qSL("backgroundMode")] = backgroundMode;
     map[qSL("version")] = m_version;
-    map[qSL("baseDir")] = m_baseDir.absolutePath();
+    map[qSL("codeDir")] = m_codeDir.absolutePath();
+    map[qSL("manifestDir")] = m_manifestDir.absolutePath();
     map[qSL("environmentVariables")] = m_environmentVariables;
     map[qSL("installationLocationId")] = m_installationReport ? m_installationReport->installationLocationId() : QString();
     map[qSL("applicationProperties")] = m_allAppProperties;
@@ -295,7 +298,7 @@ int Application::uniqueNumber() const
 QString Application::absoluteCodeFilePath() const
 {
     QString code = m_nonAliased ? m_nonAliased->m_codeFilePath : m_codeFilePath;
-    return code.isEmpty() ? QString() : baseDir().absoluteFilePath(code);
+    return code.isEmpty() ? QString() : codeDir().absoluteFilePath(code);
 }
 
 QString Application::codeFilePath() const
@@ -330,7 +333,7 @@ QString Application::name(const QString &language) const
 
 QString Application::icon() const
 {
-    return m_icon.isEmpty() ? QString() : baseDir().absoluteFilePath(m_icon);
+    return m_icon.isEmpty() ? QString() : manifestDir().absoluteFilePath(m_icon);
 }
 
 QUrl Application::iconUrl() const
@@ -482,17 +485,22 @@ void Application::setInstallationReport(InstallationReport *report)
     m_installationReport.reset(report);
 }
 
-QDir Application::baseDir() const
+QDir Application::manifestDir() const
+{
+    return m_manifestDir;
+}
+
+QDir Application::codeDir() const
 {
     switch (m_state) {
     default:
     case Installed:
-        return m_baseDir;
+        return m_codeDir;
     case BeingInstalled:
     case BeingUpdated:
-        return QDir(m_baseDir.absolutePath() + QLatin1Char('+'));
+        return QDir(m_codeDir.absolutePath() + QLatin1Char('+'));
     case BeingRemoved:
-        return QDir(m_baseDir.absolutePath() + QLatin1Char('-'));
+        return QDir(m_codeDir.absolutePath() + QLatin1Char('-'));
     }
 }
 
@@ -501,9 +509,14 @@ uint Application::uid() const
     return m_nonAliased ? m_nonAliased->m_uid : m_uid;
 }
 
-void Application::setBaseDir(const QString &path)
+void Application::setCodeDir(const QString &path)
 {
-    m_baseDir = path;
+    m_codeDir = path;
+}
+
+void Application::setManifestDir(const QString &path)
+{
+    m_manifestDir = path;
 }
 
 void Application::setBuiltIn(bool builtIn)
@@ -560,7 +573,8 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
     QScopedPointer<Application> app(new Application);
     bool isAlias;
     qint32 backgroundMode;
-    QString baseDir;
+    QString codeDir;
+    QString manifestDir;
     QByteArray installationReport;
 
     ds >> app->m_id
@@ -583,7 +597,8 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
        >> app->m_mimeTypes
        >> backgroundMode
        >> app->m_version
-       >> baseDir
+       >> codeDir
+       >> manifestDir
        >> app->m_uid
        >> app->m_environmentVariables
        >> installationReport;
@@ -595,7 +610,8 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
     app->m_mimeTypes.sort();
 
     app->m_backgroundMode = static_cast<Application::BackgroundMode>(backgroundMode);
-    app->m_baseDir.setPath(baseDir);
+    app->m_codeDir.setPath(codeDir);
+    app->m_manifestDir.setPath(manifestDir);
     if (!installationReport.isEmpty()) {
         QBuffer buffer(&installationReport);
         buffer.open(QBuffer::ReadOnly);
@@ -651,7 +667,8 @@ void Application::writeToDataStream(QDataStream &ds, const QVector<const Applica
        << m_mimeTypes
        << qint32(m_backgroundMode)
        << m_version
-       << m_baseDir.absolutePath()
+       << m_codeDir.absolutePath()
+       << m_manifestDir.absolutePath()
        << m_uid
        << m_environmentVariables
        << serializedReport;

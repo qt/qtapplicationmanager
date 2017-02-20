@@ -1020,7 +1020,7 @@ bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NA
 
     QVector<int> stdioRedirections = { -1, -1, -1 };
 
-#if defined(Q_OS_UNIX)
+#  if defined(Q_OS_UNIX)
     for (auto it = redirections.cbegin(); it != redirections.cend(); ++it) {
         QDBusUnixFileDescriptor dfd = it.value();
         int fd = dfd.fileDescriptor();
@@ -1033,9 +1033,9 @@ bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NA
         else if (which == qL1S("err"))
             stdioRedirections[2] = dup(fd);
     }
-#else
+#  else
     Q_UNUSED(redirections)
-#endif
+#  endif // defined(Q_OS_UNIX)
     int result = false;
     try {
         result = startApplication(fromId(id), documentUrl, QString(), QString(), stdioRedirections);
@@ -1065,7 +1065,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 
     QVector<int> stdioRedirections = { -1, -1, -1 };
 
-#if defined(Q_OS_UNIX)
+#  if defined(Q_OS_UNIX)
     for (auto it = redirections.cbegin(); it != redirections.cend(); ++it) {
         QDBusUnixFileDescriptor dfd = it.value();
         int fd = dfd.fileDescriptor();
@@ -1078,9 +1078,9 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
         else if (which == qL1S("err"))
             stdioRedirections[2] = dup(fd);
     }
-#else
+#  else
     Q_UNUSED(redirections)
-#endif
+#  endif // defined(Q_OS_UNIX)
     int result = false;
     try {
         result = startApplication(fromId(id), documentUrl, QString(), debugWrapper, stdioRedirections);
@@ -1103,7 +1103,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
     }
     return result;
 }
-#endif
+#endif // defined(QT_DBUS_LIB)
 
 /*!
     \qmlmethod ApplicationManager::stopApplication(string id, bool forceKill)
@@ -1350,41 +1350,33 @@ bool ApplicationManager::unblockApplication(const QString &id)
 
 bool ApplicationManager::startingApplicationInstallation(Application *installApp)
 {
-    if (!installApp || installApp->id().isEmpty())
+    // ownership of installApp is transferred to ApplicationManager
+    QScopedPointer<Application> newapp(installApp);
+
+    if (!newapp || newapp->id().isEmpty())
         return false;
-    const Application *app = fromId(installApp->id());
-    if (!RuntimeFactory::instance()->manager(installApp->runtimeName()))
+    const Application *app = fromId(newapp->id());
+    if (!RuntimeFactory::instance()->manager(newapp->runtimeName()))
         return false;
 
     if (app) { // update
         if (!blockApplication(app->id()))
             return false;
-        installApp->mergeInto(const_cast<Application *>(app));
+        newapp->mergeInto(const_cast<Application *>(app));
         app->m_state = Application::BeingUpdated;
         app->m_progress = 0;
-        emitDataChanged(app, QVector<int> { IsUpdating });
     } else { // installation
-        installApp->setParent(this);
-        installApp->block();
-        installApp->m_state = Application::BeingInstalled;
-        installApp->m_progress = 0;
+        newapp->setParent(this);
+        newapp->block();
+        newapp->m_state = Application::BeingInstalled;
+        newapp->m_progress = 0;
+        app = newapp.take();
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
-        d->apps << installApp;
+        d->apps << app;
         endInsertRows();
-        emit applicationAdded(installApp->id());
-        try {
-            if (d->database)
-                d->database->write(d->apps);
-        } catch (const Exception &) {
-            emit applicationAboutToBeRemoved(installApp->id());
-            beginRemoveRows(QModelIndex(), d->apps.count() - 1, d->apps.count() - 1);
-            d->apps.removeLast();
-            endRemoveRows();
-            delete installApp;
-            return false;
-        }
-        emitDataChanged(app);
+        emit applicationAdded(app->id());
     }
+    emitDataChanged(app);
     return true;
 }
 
@@ -1426,14 +1418,33 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
         return false;
 
     case Application::BeingInstalled:
-    case Application::BeingUpdated:
+    case Application::BeingUpdated: {
+        // The Application object has been updated right at the start of the installation/update.
+        // Now's the time to update the InstallationReport that was written by the installer.
+        QFile irfile(app->manifestDir().absoluteFilePath(qSL("installation-report.yaml")));
+        QScopedPointer<InstallationReport> ir(new InstallationReport(app->id()));
+        if (!irfile.open(QFile::ReadOnly) || !ir->deserialize(&irfile)) {
+            qCCritical(LogInstaller) << "Could not read the new installation-report for application"
+                                     << app->id() << "at" << irfile.fileName();
+            return false;
+        }
+        const_cast<Application *>(app)->setInstallationReport(ir.take());
         app->m_state = Application::Installed;
         app->m_progress = 0;
+
+        try {
+            if (d->database)
+                d->database->write(d->apps);
+        } catch (const Exception &e) {
+            qCCritical(LogInstaller) << "ERROR: Application" << app->id() << "was installed, but writing the "
+                                        "updated application database to disk failed:" << e.errorString();
+            d->database->invalidate(); // make sure that the next AM start will re-read the DB
+        }
         emitDataChanged(app, QVector<int> { IsUpdating });
 
         unblockApplication(id);
         break;
-
+    }
     case Application::BeingRemoved: {
         int row = d->apps.indexOf(app);
         if (row >= 0) {
@@ -1447,7 +1458,9 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
             if (d->database)
                 d->database->write(d->apps);
         } catch (const Exception &e) {
-            qCCritical(LogSystem) << "ERROR: Application was removed successfully, but we could not save the app database:" << e.what();
+            qCCritical(LogInstaller) << "ERROR: Application" << app->id() << "was removed, but writing the "
+                                        "updated application database to disk failed:" << e.errorString();
+            d->database->invalidate(); // make sure that the next AM start will re-read the DB
             return false;
         }
         break;

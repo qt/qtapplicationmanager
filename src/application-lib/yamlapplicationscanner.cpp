@@ -104,7 +104,8 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
             throw Exception(Error::Parse, "is an not alias, although expected such a manifest");
 
         QScopedPointer<Application> app(new Application);
-        app->m_baseDir = QFileInfo(f).absoluteDir().absolutePath();
+        app->m_manifestDir = QFileInfo(f).absoluteDir();
+        app->m_codeDir = app->m_manifestDir;
 
         QVariantMap yaml = docs.at(1).toMap();
         for (auto it = yaml.constBegin(); it != yaml.constEnd(); ++it) {

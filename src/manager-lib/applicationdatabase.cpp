@@ -101,6 +101,9 @@ QString ApplicationDatabase::name() const
 
 QVector<const Application *> ApplicationDatabase::read() throw (Exception)
 {
+    if (!d->file || !d->file->isOpen() || !d->file->isReadable())
+        throw Exception("application database %1 is not opened for reading").arg(d->file ? d->file->fileName() : qSL("<null>"));
+
     QVector<const Application *> apps;
 
     if (d->file->seek(0)) {
@@ -125,6 +128,8 @@ QVector<const Application *> ApplicationDatabase::read() throw (Exception)
 
 void ApplicationDatabase::write(const QVector<const Application *> &apps) throw (Exception)
 {
+    if (!d->file || !d->file->isOpen() || !d->file->isWritable())
+        throw Exception("application database %1 is not opened for writing").arg(d->file ? d->file->fileName() : qSL("<null>"));
     if (!d->file->seek(0))
         throw Exception(*d->file, "could not not seek to position 0 in the application database");
     if (!d->file->resize(0))
@@ -135,6 +140,16 @@ void ApplicationDatabase::write(const QVector<const Application *> &apps) throw 
         app->writeToDataStream(ds, apps);
     if (ds.status() != QDataStream::Ok)
         throw Exception(*d->file, "could not write to application database");
+}
+
+void ApplicationDatabase::invalidate()
+{
+    if (d->file) {
+        if (d->file->isOpen())
+            d->file->close();
+        d->file->remove();
+        d->file = nullptr;
+    }
 }
 
 QT_END_NAMESPACE_AM

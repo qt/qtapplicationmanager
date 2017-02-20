@@ -407,7 +407,7 @@ static QVector<const Application *> scanForApplications(const QStringList &built
                 a->setSupportsApplicationInterface(true);
             }
             if (a->id() != appDirName) {
-                throw Exception(Error::Parse, "an info.yaml for built-in applications must be in directory "
+                throw Exception(Error::Parse, "an info.yaml for built-in applications must be in a directory "
                                               "that has the same name as the application's id: found %1 in %2")
                     .arg(a->id(), appDirName);
             }
@@ -439,10 +439,9 @@ static QVector<const Application *> scanForApplications(const QStringList &built
 
 #if !defined(AM_DISABLE_INSTALLER)
                 // fix the basedir of the application
-                //TODO: we need to come up with a different way of handling baseDir
                 foreach (const InstallationLocation &il, installationLocations) {
                     if (il.id() == report->installationLocationId()) {
-                        a->setBaseDir(il.installationPath() + a->id());
+                        a->setCodeDir(il.installationPath() + a->id());
                         break;
                     }
                 }
@@ -731,7 +730,7 @@ int main(int argc, char *argv[])
 
             qCDebug(LogSystem) << "Registering applications:";
             foreach (const Application *app, apps)
-                qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: " << app->baseDir().path() << "]";
+                qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: " << app->codeDir().path() << "]";
 
             adb->write(apps);
         }

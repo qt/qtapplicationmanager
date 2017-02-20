@@ -135,7 +135,7 @@ bool QmlInProcessRuntime::start()
     const QStringList importPaths = variantToStringList(configuration().value(qSL("importPaths")))
                                   + variantToStringList(m_app->runtimeParameters().value(qSL("importPaths")));
     if (!importPaths.isEmpty()) {
-        const QString baseDir = m_app->baseDir().absolutePath() + QDir::separator();
+        const QString baseDir = m_app->codeDir().absolutePath() + QDir::separator();
         for (const QString &path : importPaths)
             m_inProcessQmlEngine->addImportPath(QFileInfo(path).isRelative() ? baseDir + path : path);
 

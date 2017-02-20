@@ -150,7 +150,7 @@ bool NativeRuntime::initialize()
             return false;
 
         m_container->setProgram(m_app->absoluteCodeFilePath());
-        m_container->setBaseDirectory(m_app->baseDir().absolutePath());
+        m_container->setBaseDirectory(m_app->codeDir().absolutePath());
     }
     return true;
 }
@@ -354,7 +354,7 @@ void NativeRuntime::onApplicationFinishedInitialization()
     if (m_needsLauncher && m_launchWhenReady && !m_applicationInterfaceConnected && m_app && m_runtimeInterface) {
         registerExtensionInterfaces();
 
-        QString baseDir = m_container->mapHostPathToContainer(m_app->baseDir().absolutePath());
+        QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir().absolutePath());
         QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
         emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document,
                                                   m_mimeType, m_app->toVariantMap(), systemProperties());

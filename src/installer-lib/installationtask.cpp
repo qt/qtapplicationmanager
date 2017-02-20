@@ -276,7 +276,7 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
             throw Exception(Error::Package, "found multiple info.yaml files in the package");
 
         YamlApplicationScanner yas;
-        m_app = yas.scan(m_extractor->destinationDirectory().absoluteFilePath(file));
+        m_app.reset(yas.scan(m_extractor->destinationDirectory().absoluteFilePath(file)));
         if (m_app->id() != m_extractor->installationReport().applicationId())
             throw Exception(Error::Package, "the application identifiers in --PACKAGE-HEADER--' and info.yaml do not match");
 
@@ -319,22 +319,28 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
 
             QString path = m_extractionDir.absolutePath();
             path.chop(1); // remove the '+'
-            m_app->setBaseDir(path); //TODO: this is not correct for Images!!!!
+            m_app->setManifestDir(m_manifestDir.absolutePath());
+            if (m_installationLocation.isRemovable())
+                m_app->setCodeDir(m_app->manifestDir().absolutePath());
+            else
+                m_app->setCodeDir(path);
         }
+        // we need to find a free uid before we call startingApplicationInstallation
+        m_app->m_uid = m_ai->findUnusedUserId();
+        m_applicationUid = m_app->m_uid;
+
         // we need to call those ApplicationManager methods in the correct thread
         // this will also exclusively lock the application for us
         // m_app ownership is transferred to the ApplicationManager
+        m_app->moveToThread(ApplicationManager::instance()->thread());
         QMetaObject::invokeMethod(ApplicationManager::instance(),
                                   "startingApplicationInstallation",
                                   Qt::BlockingQueuedConnection,
                                   Q_RETURN_ARG(bool, m_managerApproval),
                                   // ugly, but Q_ARG chokes on QT_PREPEND_NAMESPACE_AM...
-                                  QArgument<QT_PREPEND_NAMESPACE_AM(Application *)>(QT_STRINGIFY(QT_PREPEND_NAMESPACE_AM(Application *)), m_app));
+                                  QArgument<QT_PREPEND_NAMESPACE_AM(Application *)>(QT_STRINGIFY(QT_PREPEND_NAMESPACE_AM(Application *)), m_app.take()));
         if (!m_managerApproval)
             throw Exception("Application Manager declined the installation of %1").arg(m_app->id());
-
-        // now that the Manager knows about the app object, we can try to find a free uid
-        m_app->m_uid = m_ai->findUnusedUserId();
 
         // we're not interested in any other files from here on...
         m_extractor->setFileExtractedCallback(nullptr);
@@ -457,9 +463,6 @@ void InstallationTask::finishInstallation() throw (Exception)
     InstallationReport report = m_extractor->installationReport();
     report.setInstallationLocationId(m_installationLocation.id());
 
-    //TODO: this is not really thread-safe - find a better way
-    m_app->setInstallationReport(new InstallationReport(report));
-
     QFile reportFile(m_manifestDirPlusCreator.dir().absoluteFilePath(qSL("installation-report.yaml")));
     if (!reportFile.open(QFile::WriteOnly) || !report.serialize(&reportFile))
         throw Exception(reportFile, "could not write the installation report");
@@ -478,7 +481,7 @@ void InstallationTask::finishInstallation() throw (Exception)
     SudoClient *root = SudoClient::instance();
 
     if (m_ai->isApplicationUserIdSeparationEnabled() && root) {
-        uid_t uid = m_app->uid();
+        uid_t uid = m_applicationUid;
         gid_t gid = m_ai->commonApplicationGroupId();
 
         if (!root->setOwnerAndPermissionsRecursive(documentDirectory.filePath(m_applicationId), uid, gid, 02700)) {

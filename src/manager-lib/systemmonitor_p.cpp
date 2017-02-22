@@ -349,7 +349,7 @@ bool MemoryWatcher::startWatching(const QString &groupPath)
     hasMemoryCriticalWarning = false;
 
     m_reader.reset(new MemoryReader(groupPath));
-    m_memLimit = m_reader->groupLimit();
+    m_memLimit = groupPath.isEmpty() ? m_reader->totalValue() : m_reader->groupLimit();
 
     m_threshold.reset(new MemoryThreshold({m_warning, m_critical}));
     connect(m_threshold.data(), &MemoryThreshold::thresholdTriggered, this, &MemoryWatcher::checkMemoryConsumption);

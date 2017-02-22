@@ -346,6 +346,7 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
 ApplicationManagerPrivate::~ApplicationManagerPrivate()
 {
     delete database;
+    qDeleteAll(apps);
 }
 
 ApplicationManager *ApplicationManager::s_instance = 0;

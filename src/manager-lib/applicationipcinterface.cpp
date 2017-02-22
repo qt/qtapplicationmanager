@@ -81,6 +81,11 @@ ApplicationIPCInterface::ApplicationIPCInterface(QObject *parent)
     : QObject(parent)
 { }
 
+ApplicationIPCInterface::~ApplicationIPCInterface()
+{
+    delete m_ipcProxy;
+}
+
 QString ApplicationIPCInterface::interfaceName() const
 {
     return m_ipcProxy ? m_ipcProxy->interfaceName() : QString();

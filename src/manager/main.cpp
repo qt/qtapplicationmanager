@@ -733,6 +733,7 @@ int main(int argc, char *argv[])
                 qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: " << app->codeDir().path() << "]";
 
             adb->write(apps);
+            qDeleteAll(apps);
         }
 
         startupTimer.checkpoint("after application database loading");
@@ -888,9 +889,10 @@ int main(int argc, char *argv[])
 
 #if !defined(AM_HEADLESS)
         QQuickWindow *window = nullptr;
+        QQuickView *view = nullptr; // only set if we allocate the window ourselves
 
         if (!rootObject->isWindowType()) {
-            QQuickView *view = new QQuickView(engine, 0);
+            view = new QQuickView(engine, 0);
             startupTimer.checkpoint("after WindowManager/QuickView instantiation");
             view->setContent(configuration->mainQmlFile(), 0, rootObject);
             window = view;
@@ -999,6 +1001,7 @@ int main(int argc, char *argv[])
         delete nm;
 #if !defined(AM_HEADLESS)
         delete wm;
+        delete view;
 #endif
         delete am;
         delete ql;

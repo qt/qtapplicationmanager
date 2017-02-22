@@ -53,6 +53,7 @@ class Configuration
 {
 public:
     Configuration();
+    ~Configuration();
 
     QString mainQmlFile() const;
     QString database() const;

@@ -61,6 +61,7 @@ class ApplicationIPCInterface : public QObject
 
 public:
     explicit ApplicationIPCInterface(QObject *parent = nullptr);
+    ~ApplicationIPCInterface();
 
     QString interfaceName() const;
     QString pathName() const;

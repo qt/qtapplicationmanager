@@ -204,6 +204,11 @@ Configuration::Configuration()
     initialize();
 }
 
+Configuration::~Configuration()
+{
+    delete d;
+}
+
 // vvvv copied from QCommandLineParser ... why is this not public API?
 
 #if defined(Q_OS_WIN) && !defined(Q_OS_WINCE) && !defined(Q_OS_WINRT)

@@ -449,6 +449,7 @@ QT_END_NAMESPACE_AM
 QT_BEGIN_NAMESPACE_AM
 
 static bool printBacktrace;
+static bool useAnsiColor;
 static bool dumpCore;
 static int waitForGdbAttach;
 
@@ -473,9 +474,6 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
             backtrace_state *state;
             int level;
         };
-
-        static bool useAnsiColor = false;
-        getOutputInformation(&useAnsiColor, nullptr, nullptr);
 
         static auto printBacktraceLine = [](int level, const char *symbol, uintptr_t offset, const char *file = nullptr, int line = -1)
         {
@@ -643,6 +641,8 @@ static void initBacktrace()
     printBacktrace = true;
     dumpCore = true;
     waitForGdbAttach = false;
+
+    getOutputInformation(&useAnsiColor, nullptr, nullptr);
 
     demangleBufferSize = 512;
     demangleBuffer = (char *) malloc(demangleBufferSize);

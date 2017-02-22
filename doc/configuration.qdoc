@@ -249,7 +249,7 @@ all your imports paths and file references relative to your main config file.
         is running as otherwise the processes will hang at exit for some time to send the logs.
 \row
     \li \b -
-    \br \e installationLocation
+    \br \e installationLocations
     \li array<object>
     \li Definition of available installation locations on the system. This is an array of
         \l {Installation Locations} objects.

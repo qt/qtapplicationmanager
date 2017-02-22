@@ -55,9 +55,9 @@ class ProcessMonitor;
 class SystemMonitor : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int count READ count WRITE setCount NOTIFY countChanged)
     Q_PROPERTY(int reportingInterval READ reportingInterval WRITE setReportingInterval NOTIFY reportingIntervalChanged)
-    Q_PROPERTY(int reportingRange READ reportingRange WRITE setReportingRange NOTIFY reportingRangeChanged)
+    Q_PROPERTY(int reportingRange READ reportingRange WRITE setReportingRange NOTIFY reportingRangeChanged)  // deprecated
     Q_PROPERTY(qreal idleLoadThreshold READ idleLoadThreshold WRITE setIdleLoadThreshold NOTIFY idleLoadThresholdChanged)
     Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
     Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
@@ -77,7 +77,9 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    int count() const { return rowCount(); }
+    void setCount(int count);
+    int count() const;
+
     Q_INVOKABLE QVariantMap get(int index) const;
 
     quint64 totalMemory() const;
@@ -114,7 +116,7 @@ public:
     // semi-public API: used for the WindowManager to report FPS
     void reportFrameSwap(QObject *item);
 
-    Q_INVOKABLE QObject *getProcessMonitor(const QString &appId);
+    Q_INVOKABLE QObject *getProcessMonitor(const QString &appId);  // experimental only!
 
 signals:
     void countChanged();
@@ -123,7 +125,7 @@ signals:
     void reportingRangeChanged(int reportingRange);
     void idleLoadThresholdChanged(qreal idleLoadThreshold);
 
-    void memoryReportingChanged(quint64 total, quint64 used);
+    void memoryReportingChanged(quint64 used);
     void cpuLoadReportingChanged(qreal load);
     void ioLoadReportingChanged(const QString &device, qreal load);
     void fpsReportingChanged(qreal average, qreal minimum, qreal maximum, qreal jitter);

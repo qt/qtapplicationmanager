@@ -87,11 +87,6 @@
         \li int
         \li The amount of physical system memory used in bytes.
     \row
-        \li \c memoryTotal
-        \li int
-        \li The total amount of physical memory (RAM) installed on the system in bytes.
-
-    \row
         \li \c ioLoad
         \li var
         \li A map of devices registered with \l addIoLoadReporting() and their I/O load in the
@@ -141,31 +136,21 @@
 
 /*!
     \qmlproperty int SystemMonitor::count
-    \readonly
 
-    This property holds the number of reading points in the model. The \c count is determined by
-    \l reportingRange divided by \l reportingInterval.
+    This property holds the number of reading points that will be kept in the model. The minimum
+    value that can be set is 2 and the default value is 10.
 */
 
 /*!
     \qmlproperty int SystemMonitor::reportingInterval
 
     This property holds the interval in milliseconds between reporting updates. Note, that
-    reporting will only start once this property is set. Valid values must be greater than zero.
+    reporting will only start once this property is set. Setting a new value will reset the model.
+    Valid values must be greater than zero.
 
     At least one of the reporting parts (memory, CPU load etc.) must be enabled, respectively
     registered to start the reporting.
 */
-
-/*!
-    \qmlproperty int SystemMonitor::reportingRange
-
-    The time frame in milliseconds for which the model holds data, i.e. how far back in the past
-    model data is available.
-
-    The default value is 10000 (10 seconds).
-*/
-
 
 /*!
     \qmlproperty real SystemMonitor::idleLoadThreshold
@@ -179,7 +164,6 @@
 
     \sa idle
 */
-
 
 /*!
     \qmlproperty int SystemMonitor::totalMemory
@@ -227,11 +211,10 @@
 
 
 /*!
-    \qmlsignal SystemMonitor::memoryReportingChanged(int total, int used);
+    \qmlsignal SystemMonitor::memoryReportingChanged(int used);
 
     This signal is emitted periodically when memory reporting is enabled. The frequency is defined
-    by \l reportingInterval. The \a total and \a used physical system memory in bytes are provided
-    as arguments.
+    by \l reportingInterval. The \a used physical system memory in bytes is provided as argument.
 
     \sa memoryReportingEnabled
     \sa reportingInterval
@@ -279,7 +262,6 @@ enum Roles
 {
     CpuLoad = Qt::UserRole + 5000,
     MemoryUsed,
-    MemoryTotal,
     IoLoad,
 
     AverageFps = Qt::UserRole + 6000,
@@ -380,13 +362,20 @@ public:
     CpuReader *cpu = 0;
     QHash<QString, IoReader *> ioHash;
     int reportingInterval = -1;
+    int count = 10;
     int reportingRange = 100 * 100;
+    bool reportingRangeSet = false;
     int reportingTimerId = 0;
     bool reportCpu = false;
     bool reportMem = false;
     bool reportFps = false;
     // Report process only on half interval to decrease overload
     bool reportProcess = false;
+
+    int cpuTail = 0;
+    int memTail = 0;
+    int fpsTail = 0;
+    QMap<QString, int> ioTails;
 
     struct Report
     {
@@ -404,11 +393,12 @@ public:
     // model
     QHash<int, QByteArray> roleNames;
 
+
     ProcessMonitor *getProcess(const QString &appId)
     {
         Q_Q(SystemMonitor);
 
-        bool singleProcess = qApp->property("singleProcessMode").toBool();
+        bool singleProcess = ApplicationManager::instance()->isSingleProcess();
         QString usedAppId;
 
         if (singleProcess)
@@ -433,7 +423,8 @@ public:
     void setupTimer(int newInterval = -1)
     {
         bool useNewInterval = (newInterval != -1) && (newInterval != reportingInterval);
-        bool shouldBeOn = reportCpu | reportMem | reportFps | !ioHash.isEmpty();
+        bool shouldBeOn = reportCpu || reportMem || reportFps || !ioHash.isEmpty()
+                          || cpuTail > 0 || memTail > 0 || fpsTail > 0 || !ioTails.isEmpty();
 
         if (useNewInterval)
             reportingInterval = newInterval;
@@ -474,14 +465,21 @@ public:
                 emit q->cpuLoadReportingChanged(cpuVal);
                 r.cpuLoad = cpuVal;
                 roles.append(CpuLoad);
+            } else if (cpuTail > 0) {
+                --cpuTail;
+                roles.append(CpuLoad);
             }
+
             if (reportMem) {
                 quint64 memVal = memory->readUsedValue();
-                emit q->memoryReportingChanged(memory->totalValue(), memVal);
+                emit q->memoryReportingChanged(memVal);
                 r.memoryUsed = memVal;
                 roles.append(MemoryUsed);
-                roles.append(MemoryTotal);
+            } else if (memTail > 0) {
+                --memTail;
+                roles.append(MemoryUsed);
             }
+
             for (auto it = ioHash.cbegin(); it != ioHash.cend(); ++it) {
                 qreal ioVal = it.value()->readLoadValue();
                 emit q->ioLoadReportingChanged(it.key(), ioVal);
@@ -489,6 +487,15 @@ public:
             }
             if (!r.ioLoad.isEmpty())
                 roles.append(IoLoad);
+            if (!ioTails.isEmpty()) {
+                if (r.ioLoad.isEmpty())
+                    roles.append(IoLoad);
+                for (const auto &it : ioTails.keys()) {
+                    r.ioLoad.insert(it, 0.0);
+                    if (--ioTails[it] == 0)
+                        ioTails.remove(it);
+                }
+            }
 
             if (reportFps) {
                 if (FrameTimer *ft = frameTimer.value(nullptr)) {
@@ -503,18 +510,27 @@ public:
                     roles.append(MaximumFps);
                     roles.append(FpsJitter);
                 }
+            } else if (fpsTail > 0){
+                --fpsTail;
+                roles.append(AverageFps);
+                roles.append(MinimumFps);
+                roles.append(MaximumFps);
+                roles.append(FpsJitter);
             }
 
             // ring buffer handling
             // optimization: instead of sending a dataChanged for every item, we always move the
-            // first item to the end and change its data only
-            int size = reports.size();
-            q->beginMoveRows(QModelIndex(), 0, 0, QModelIndex(), size);
+            // last item to the front and change its data only
+            int last = reports.size() - 1;
+            q->beginMoveRows(QModelIndex(), last, last, QModelIndex(), 0);
             reports[reportPos++] = r;
-            if (reportPos >= reports.size())
+            if (reportPos > last)
                 reportPos = 0;
             q->endMoveRows();
-            q->dataChanged(q->index(size - 1), q->index(size - 1), roles);
+            q->dataChanged(q->index(0), q->index(0), roles);
+
+            setupTimer();  // we might be able to stop this timer, when end of tail reached
+
         } else if (te && te->timerId() == idleTimerId) {
             qreal idleVal = idleCpu->readLoadValue();
             bool nowIdle = (idleVal <= idleThreshold);
@@ -528,24 +544,56 @@ public:
     const Report &reportForRow(int row) const
     {
         // convert a visual row position to an index into the internal ringbuffer
-
-        int pos = row + reportPos;
-        if (pos >= reports.size())
-            pos -= reports.size();
-
+        int pos = reportPos - row - 1;
+        if (pos < 0)
+            pos += reports.size();
         if (pos < 0 || pos >= reports.size())
             return reports.first();
         return reports.at(pos);
     }
 
-    void updateModel()
+    void updateModel(bool clear)
     {
         Q_Q(SystemMonitor);
 
         q->beginResetModel();
-        // we need at least 2 items, otherwise we cannot move rows
-        reports.resize(qMax(2, reportingRange / reportingInterval));
-        reportPos = 0;
+
+        if (reportingRangeSet) {
+            // we need at least 2 items, otherwise we cannot move rows
+            count = qMax(2, reportingRange / reportingInterval);
+        }
+
+        if (clear) {
+            reports.clear();
+            reports.resize(count);
+            reportPos = 0;
+            cpuTail = memTail = fpsTail = 0;
+            ioTails.clear();
+        } else {
+            int oldCount = reports.size();
+            int diff = count - oldCount;
+            if (diff > 0)
+                reports.insert(reportPos, diff, Report());
+            else {
+                if (reportPos - diff < oldCount) {
+                    reports.remove(reportPos, -diff);
+                } else {
+                    reports.remove(reportPos, oldCount - reportPos);
+                    int rmFront = reportPos - count;
+                    reports.remove(0, rmFront);
+                    reportPos = rmFront + 1;
+                }
+            }
+
+            if (cpuTail > 0)
+                cpuTail += diff;
+            if (memTail > 0)
+                memTail += diff;
+            if (fpsTail > 0)
+                fpsTail += diff;
+            for (const auto &it : ioTails.keys())
+                ioTails[it] += diff;
+        }
         q->endResetModel();
     }
 };
@@ -589,21 +637,15 @@ SystemMonitor::SystemMonitor()
 
     d->idleTimerId = d->startTimer(1000);
 
-    connect(this, &QAbstractItemModel::rowsInserted, this, &SystemMonitor::countChanged);
-    connect(this, &QAbstractItemModel::rowsRemoved, this, &SystemMonitor::countChanged);
-    connect(this, &QAbstractItemModel::layoutChanged, this, &SystemMonitor::countChanged);
-    connect(this, &QAbstractItemModel::modelReset, this, &SystemMonitor::countChanged);
-
     d->roleNames.insert(CpuLoad, "cpuLoad");
     d->roleNames.insert(MemoryUsed, "memoryUsed");
-    d->roleNames.insert(MemoryTotal, "memoryTotal");
     d->roleNames.insert(IoLoad, "ioLoad");
     d->roleNames.insert(AverageFps, "averageFps");
     d->roleNames.insert(MinimumFps, "minimumFps");
     d->roleNames.insert(MaximumFps, "maximumFps");
     d->roleNames.insert(FpsJitter, "fpsJitter");
 
-    d->updateModel();
+    d->updateModel(true);
 }
 
 SystemMonitor::~SystemMonitor()
@@ -640,8 +682,6 @@ QVariant SystemMonitor::data(const QModelIndex &index, int role) const
         return r.cpuLoad;
     case MemoryUsed:
         return r.memoryUsed;
-    case MemoryTotal:
-        return totalMemory();
     case IoLoad:
         return r.ioLoad;
     case AverageFps:
@@ -708,6 +748,8 @@ int SystemMonitor::cpuCores() const
 
     Returns true, if monitoring could be started, otherwise false (e.g. if arguments are out of
     range).
+
+    \note This is only supported on Linux with the cgroups memory subsystem enabled.
 
     \sa totalMemory
     \sa ApplicationInterface::memoryLowWarning()
@@ -793,7 +835,10 @@ void SystemMonitor::setMemoryReportingEnabled(bool enabled)
 
     if (enabled != d->reportMem) {
         d->reportMem = enabled;
-        d->setupTimer();
+        if (!enabled)
+            d->memTail = d->count;
+        else
+            d->setupTimer();
         emit memoryReportingEnabledChanged();
     }
 }
@@ -811,7 +856,10 @@ void SystemMonitor::setCpuLoadReportingEnabled(bool enabled)
 
     if (enabled != d->reportCpu) {
         d->reportCpu = enabled;
-        d->setupTimer();
+        if (!enabled)
+            d->cpuTail = d->count;
+        else
+            d->setupTimer();
         emit cpuLoadReportingEnabledChanged();
     }
 }
@@ -842,6 +890,8 @@ bool SystemMonitor::addIoLoadReporting(const QString &deviceName)
     if (d->ioHash.contains(deviceName))
         return false;
 
+    d->ioTails.remove(deviceName);
+
     IoReader *ior = new IoReader(deviceName.toLocal8Bit().constData());
     d->ioHash.insert(deviceName, ior);
     if (d->reportingInterval >= 0)
@@ -860,7 +910,7 @@ void SystemMonitor::removeIoLoadReporting(const QString &deviceName)
     Q_D(SystemMonitor);
 
     delete d->ioHash.take(deviceName);
-    d->setupTimer();
+    d->ioTails.insert(deviceName, d->count);
 }
 
 /*!
@@ -881,7 +931,10 @@ void SystemMonitor::setFpsReportingEnabled(bool enabled)
 
     if (enabled != d->reportFps) {
         d->reportFps = enabled;
-        d->setupTimer();
+        if (!enabled)
+            d->fpsTail = d->count;
+        else
+            d->setupTimer();
         emit fpsReportingEnabledChanged();
     }
 }
@@ -900,8 +953,8 @@ void SystemMonitor::setReportingInterval(int intervalInMSec)
     if (d->reportingInterval != intervalInMSec && intervalInMSec > 0) {
         for (auto it = d->ioHash.cbegin(); it != d->ioHash.cend(); ++it)
             it.value()->readLoadValue();   // for initialization only
+        d->updateModel(true);
         d->setupTimer(intervalInMSec);
-        d->updateModel();
         emit reportingIntervalChanged(intervalInMSec);
     }
 }
@@ -913,13 +966,34 @@ int SystemMonitor::reportingInterval() const
     return d->reportingInterval;
 }
 
+void SystemMonitor::setCount(int count)
+{
+    Q_D(SystemMonitor);
+
+    if (count != d->count) {
+        d->count = count > 2 ? count : 2;
+        d->updateModel(false);
+        emit countChanged();
+    }
+}
+
+int SystemMonitor::count() const
+{
+    Q_D(const SystemMonitor);
+
+    return d->count;
+}
+
 void SystemMonitor::setReportingRange(int rangeInMSec)
 {
     Q_D(SystemMonitor);
 
+    qCWarning(LogSystem) << "Property \"reportingRange\" is deprecated, use \"count\" instead.";
+
     if (d->reportingRange != rangeInMSec && rangeInMSec > 0) {
         d->reportingRange = rangeInMSec;
-        d->updateModel();
+        d->reportingRangeSet = true;
+        d->updateModel(false);
         emit reportingRangeChanged(rangeInMSec);
     }
 }
@@ -952,12 +1026,6 @@ void SystemMonitor::reportFrameSwap(QObject *item)
     frameTimer->newFrame();
 }
 
-/*!
-    \qmlmethod object SystemMonitor::getProcessMonitor(string appId);
-
-    Returns a reference to the \c ProcessMonitor type for the specific application identified by
-    \a appId.
-*/
 QObject *SystemMonitor::getProcessMonitor(const QString &appId)
 {
     Q_D(SystemMonitor);

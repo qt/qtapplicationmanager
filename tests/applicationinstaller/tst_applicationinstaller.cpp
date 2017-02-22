@@ -55,6 +55,9 @@ QT_USE_NAMESPACE_AM
 static bool startedSudoServer = false;
 static QString sudoServerError;
 
+static int timeoutFactor = 1; // useful to increase timeouts when running in valgrind
+static int spyTimeout = 5000; // shorthand for specifying QSignalSpy timeouts
+
 // RAII to reset the global attribute
 class AllowUnsignedInstallation
 {
@@ -262,8 +265,14 @@ void tst_ApplicationInstaller::initTestCase()
     if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    if (!qEnvironmentVariableIsSet("VERBOSE_TEST"))
+    bool verbose = qEnvironmentVariableIsSet("VERBOSE_TEST");
+    if (!verbose)
         QLoggingCategory::setFilterRules("am.installer.debug=false");
+    qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(changed by (un)setting $VERBOSE_TEST)";
+
+    timeoutFactor = qMax(1, qEnvironmentVariableIntValue("TIMEOUT_FACTOR"));
+    spyTimeout *= timeoutFactor;
+    qInfo() << "Timeouts are multiplied by" << timeoutFactor << "(changed by (un)setting $TIMEOUT_FACTOR)";
 
     QVERIFY(checkCorrectLocale());
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
@@ -306,7 +315,7 @@ void tst_ApplicationInstaller::initTestCase()
         // those paths have been hidden due to the mount, so recreate them
         QVERIFY(QDir().mkdir(pathTo(i == 0 ? SDCard0Images : SDCard1Images)));
     };
- #endif // Q_OS_LINUX
+#endif // Q_OS_LINUX
 
     // define some installation locations for testing
 
@@ -476,7 +485,7 @@ void tst_ApplicationInstaller::packageActivation()
 
     // check received signals
 
-    QVERIFY(m_finishedSpy->wait());
+    QVERIFY(m_finishedSpy->wait(spyTimeout));
     QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
     clearSignalSpies();
 
@@ -519,7 +528,7 @@ void tst_ApplicationInstaller::packageActivation()
 
     taskId = m_ai->removePackage(name, false);
     QVERIFY(!taskId.isEmpty());
-    QVERIFY(m_finishedSpy->wait());
+    QVERIFY(m_finishedSpy->wait(spyTimeout));
     QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
 }
 
@@ -623,14 +632,14 @@ void tst_ApplicationInstaller::packageInstallation()
         if (pass == 1 ? !expectedSuccess : !updateExpectedSuccess) {
             // ...in case of expected failure
 
-            QVERIFY(m_failedSpy->wait());
+            QVERIFY(m_failedSpy->wait(spyTimeout));
             QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
 
             AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(), errorString);
         } else {
             // ...in case of expected success
 
-            QVERIFY(m_finishedSpy->wait());
+            QVERIFY(m_finishedSpy->wait(spyTimeout));
             QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
             QVERIFY(!m_progressSpy->isEmpty());
             QCOMPARE(m_progressSpy->last()[0].toString(), taskId);
@@ -687,7 +696,7 @@ void tst_ApplicationInstaller::packageInstallation()
 
             // check signals
 
-            QVERIFY(m_finishedSpy->wait());
+            QVERIFY(m_finishedSpy->wait(spyTimeout));
             QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
         }
         clearSignalSpies();
@@ -715,7 +724,7 @@ void tst_ApplicationInstaller::removeAppOnMissingSDCard()
 
     // check received signals
 
-    QVERIFY(m_finishedSpy->wait());
+    QVERIFY(m_finishedSpy->wait(spyTimeout));
     QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
     clearSignalSpies();
 
@@ -733,7 +742,7 @@ void tst_ApplicationInstaller::removeAppOnMissingSDCard()
 
     taskId = m_ai->removePackage("com.pelagicore.test", false);
     QVERIFY(!taskId.isEmpty());
-    QVERIFY(m_failedSpy->wait());
+    QVERIFY(m_failedSpy->wait(spyTimeout));
     QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
     QCOMPARE(m_failedSpy->first()[2].toString(), QString::fromLatin1("cannot delete application com.pelagicore.test without the removable medium it was installed on"));
     clearSignalSpies();
@@ -745,7 +754,7 @@ void tst_ApplicationInstaller::removeAppOnMissingSDCard()
 
     taskId = m_ai->removePackage("com.pelagicore.test", false, true /*force*/);
     QVERIFY(!taskId.isEmpty());
-    QVERIFY(m_finishedSpy->wait());
+    QVERIFY(m_finishedSpy->wait(spyTimeout));
     QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
     clearSignalSpies();
 
@@ -805,8 +814,8 @@ void tst_ApplicationInstaller::simulateErrorConditions_data()
 
      QTest::newRow("sdcard-unmounted-while-installing") \
              << "removable-0" << false << "removable medium removable-0 is not mounted" \
-             << FunctionMap { { "after-start", [this]() { return m_requestingInstallationAcknowledgeSpy->wait()
-                                                                     && m_blockingUntilInstallationAcknowledgeSpy->wait()
+             << FunctionMap { { "after-start", [this]() { return m_requestingInstallationAcknowledgeSpy->wait(spyTimeout)
+                                                                     && m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout)
                                                                      && m_root->unmount(pathTo(SDCard0), true); } },
                               { "after-failed", [this]() { return m_root->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"); } } };
 
@@ -832,7 +841,7 @@ void tst_ApplicationInstaller::simulateErrorConditions()
         taskId = m_ai->startPackageInstallation(installationLocation, QUrl::fromLocalFile(AM_TESTDATA_DIR "packages/test-dev-signed.appkg"));
         QVERIFY(!taskId.isEmpty());
         m_ai->acknowledgePackageInstallation(taskId);
-        QVERIFY(m_finishedSpy->wait());
+        QVERIFY(m_finishedSpy->wait(spyTimeout));
         QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
         clearSignalSpies();
     }
@@ -847,7 +856,7 @@ void tst_ApplicationInstaller::simulateErrorConditions()
 
     m_ai->acknowledgePackageInstallation(taskId);
 
-    QVERIFY(m_failedSpy->wait());
+    QVERIFY(m_failedSpy->wait(spyTimeout));
     QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
     AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(), errorString);
     clearSignalSpies();
@@ -858,7 +867,7 @@ void tst_ApplicationInstaller::simulateErrorConditions()
     if (testUpdate) {
         taskId = m_ai->removePackage("com.pelagicore.test", false);
 
-        QVERIFY(m_finishedSpy->wait());
+        QVERIFY(m_finishedSpy->wait(spyTimeout));
         QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
     }
 }
@@ -886,23 +895,23 @@ void tst_ApplicationInstaller::cancelPackageInstallation()
     if (isDataTag("before-started-signal")) {
         QCOMPARE(m_ai->cancelTask(taskId), expectedResult);
     } else if (isDataTag("after-started-signal")) {
-        QVERIFY(m_startedSpy->wait());
+        QVERIFY(m_startedSpy->wait(spyTimeout));
         QCOMPARE(m_startedSpy->first()[0].toString(), taskId);
         QCOMPARE(m_ai->cancelTask(taskId), expectedResult);
     } else if (isDataTag("after-blocking-until-installation-acknowledge-signal")) {
-        QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait());
+        QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
         QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), taskId);
         QCOMPARE(m_ai->cancelTask(taskId), expectedResult);
     } else if (isDataTag("after-finished-signal")) {
         m_ai->acknowledgePackageInstallation(taskId);
-        QVERIFY(m_finishedSpy->wait());
+        QVERIFY(m_finishedSpy->wait(spyTimeout));
         QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
         QCOMPARE(m_ai->cancelTask(taskId), expectedResult);
     }
 
     if (expectedResult) {
         if (!m_startedSpy->isEmpty()) {
-            QVERIFY(m_failedSpy->wait());
+            QVERIFY(m_failedSpy->wait(spyTimeout));
             QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
             QCOMPARE(m_failedSpy->first()[1].toInt(), int(Error::Canceled));
         }
@@ -911,7 +920,7 @@ void tst_ApplicationInstaller::cancelPackageInstallation()
 
         taskId = m_ai->removePackage("com.pelagicore.test", false);
         QVERIFY(!taskId.isEmpty());
-        QVERIFY(m_finishedSpy->wait());
+        QVERIFY(m_finishedSpy->wait(spyTimeout));
         QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
     }
 }

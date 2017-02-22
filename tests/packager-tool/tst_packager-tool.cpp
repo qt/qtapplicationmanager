@@ -44,6 +44,9 @@
 
 QT_USE_NAMESPACE_AM
 
+static int timeoutFactor = 1; // useful to increase timeouts when running in valgrind
+static int spyTimeout = 5000; // shorthand for specifying QSignalSpy timeouts
+
 class tst_PackagerTool : public QObject
 {
     Q_OBJECT
@@ -80,6 +83,10 @@ void tst_PackagerTool::initTestCase()
 {
     if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
+
+    timeoutFactor = qMax(1, qEnvironmentVariableIntValue("TIMEOUT_FACTOR"));
+    spyTimeout *= timeoutFactor;
+    qInfo() << "Timeouts are multiplied by" << timeoutFactor << "(changed by (un)setting $TIMEOUT_FACTOR)";
 
     QVERIFY(m_workDir.isValid());
 
@@ -243,7 +250,7 @@ void tst_PackagerTool::test()
     QString taskId = m_ai->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(pathTo("test.dev-signed.appkg")));
     m_ai->acknowledgePackageInstallation(taskId);
 
-    QVERIFY(finishedSpy.wait(10000));
+    QVERIFY(finishedSpy.wait(2 * spyTimeout));
     QCOMPARE(finishedSpy.first()[0].toString(), taskId);
 
     m_ai->setDevelopmentMode(false);

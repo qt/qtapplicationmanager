@@ -37,6 +37,9 @@
 
 QT_USE_NAMESPACE_AM
 
+static int timeoutFactor = 1; // useful to increase timeouts when running in valgrind
+static int processTimeout = 3000;
+
 class tst_PackageCreator : public QObject
 {
     Q_OBJECT
@@ -65,11 +68,15 @@ tst_PackageCreator::tst_PackageCreator()
 
 void tst_PackageCreator::initTestCase()
 {
+    timeoutFactor = qMax(1, qEnvironmentVariableIntValue("TIMEOUT_FACTOR"));
+    processTimeout *= timeoutFactor;
+    qInfo() << "Timeouts are multiplied by" << timeoutFactor << "(changed by (un)setting $TIMEOUT_FACTOR)";
+
     // check if tar command is available at all
     QProcess tar;
     tar.start(qSL("tar"), { qSL("--version") });
-    m_tarAvailable = tar.waitForStarted(3000)
-            && tar.waitForFinished(3000)
+    m_tarAvailable = tar.waitForStarted(processTimeout)
+            && tar.waitForFinished(processTimeout)
             && (tar.exitStatus() == QProcess::NormalExit);
 
     m_isCygwin = tar.readAllStandardOutput().contains("Cygwin");
@@ -120,8 +127,8 @@ void tst_PackageCreator::createAndVerify()
 
     QProcess tar;
     tar.start(qSL("tar"), { qSL("-tzf"), escapeFilename(output.fileName()) });
-    QVERIFY2(tar.waitForStarted(3000) &&
-             tar.waitForFinished(3000) &&
+    QVERIFY2(tar.waitForStarted(processTimeout) &&
+             tar.waitForFinished(processTimeout) &&
              (tar.exitStatus() == QProcess::NormalExit) &&
              (tar.exitCode() == 0), qPrintable(tar.errorString()));
 
@@ -141,8 +148,8 @@ void tst_PackageCreator::createAndVerify()
         QByteArray data = src.readAll();
 
         tar.start(qSL("tar"), { qSL("-xzOf"), escapeFilename(output.fileName()), file });
-        QVERIFY2(tar.waitForStarted(3000) &&
-                 tar.waitForFinished(3000) &&
+        QVERIFY2(tar.waitForStarted(processTimeout) &&
+                 tar.waitForFinished(processTimeout) &&
                  (tar.exitStatus() == QProcess::NormalExit) &&
                  (tar.exitCode() == 0), qPrintable(tar.errorString()));
 

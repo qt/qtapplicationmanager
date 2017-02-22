@@ -41,6 +41,10 @@
 
 #include "../sudo-cleanup.h"
 
+QT_USE_NAMESPACE_AM
+
+static int timeoutFactor = 1; // useful to increase timeouts when running in valgrind
+static int processTimeout = 3000;
 
 static bool startedSudoServer = false;
 static QString sudoServerError;
@@ -106,8 +110,8 @@ public:
 
             QProcess p;
             p.start(LOSETUP, { "--show", "-f", argument });
-            SUB_QVERIFY2(p.waitForStarted(3000), qPrintable(p.errorString()));
-            SUB_QVERIFY2(p.waitForFinished(3000), qPrintable(p.errorString()));
+            SUB_QVERIFY2(p.waitForStarted(processTimeout), qPrintable(p.errorString()));
+            SUB_QVERIFY2(p.waitForFinished(processTimeout), qPrintable(p.errorString()));
             SUB_QVERIFY2(p.exitCode() == 0, qPrintable(p.readAllStandardError()));
             m_loopbackDevice = p.readAllStandardOutput().trimmed();
         }
@@ -134,8 +138,8 @@ public:
 
             for (int tries = 2; tries; --tries) {
                 p.start(LOSETUP, { "-d", m_loopbackDevice });
-                QVERIFY2(p.waitForStarted(3000), qPrintable(p.errorString()));
-                QVERIFY2(p.waitForFinished(3000), qPrintable(p.errorString()));
+                QVERIFY2(p.waitForStarted(processTimeout), qPrintable(p.errorString()));
+                QVERIFY2(p.waitForFinished(processTimeout), qPrintable(p.errorString()));
                 if (p.exitCode() == 0)
                     return;
 
@@ -175,8 +179,8 @@ public:
 
             QProcess p;
             p.start(MOUNT, { "-t", "ext2", device, mountPoint});
-            SUB_QVERIFY2(p.waitForStarted(3000), qPrintable(p.errorString()));
-            SUB_QVERIFY2(p.waitForFinished(3000), qPrintable(p.errorString()));
+            SUB_QVERIFY2(p.waitForStarted(processTimeout), qPrintable(p.errorString()));
+            SUB_QVERIFY2(p.waitForFinished(processTimeout), qPrintable(p.errorString()));
             SUB_QVERIFY2(p.exitCode() == 0, qPrintable(p.readAllStandardError()));
         }
         return m_mounted = true;
@@ -195,8 +199,8 @@ public:
             QProcess p;
             for (int tries = 2; tries; --tries) {
                 p.start(UMOUNT, { "-lf", m_mountPoint });
-                QVERIFY2(p.waitForStarted(3000), qPrintable(p.errorString()));
-                QVERIFY2(p.waitForFinished(3000), qPrintable(p.errorString()));
+                QVERIFY2(p.waitForStarted(processTimeout), qPrintable(p.errorString()));
+                QVERIFY2(p.waitForFinished(processTimeout), qPrintable(p.errorString()));
                 if (p.exitCode() == 0)
                     return;
 
@@ -264,6 +268,10 @@ tst_Sudo::~tst_Sudo()
 
 void tst_Sudo::initTestCase()
 {
+    timeoutFactor = qMax(1, qEnvironmentVariableIntValue("TIMEOUT_FACTOR"));
+    processTimeout *= timeoutFactor;
+    qInfo() << "Timeouts are multiplied by" << timeoutFactor << "(changed by (un)setting $TIMEOUT_FACTOR)";
+
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
     m_root = SudoClient::instance();
     QVERIFY(m_root);
@@ -481,8 +489,8 @@ void tst_Sudo::image()
 
         QProcess p;
         p.start(BLKID, { "-s", "TYPE", "-o", "value", slm.loopbackDevice() });
-        QVERIFY2(p.waitForStarted(3000), qPrintable(p.errorString()));
-        QVERIFY2(p.waitForFinished(3000), qPrintable(p.errorString()));
+        QVERIFY2(p.waitForStarted(processTimeout), qPrintable(p.errorString()));
+        QVERIFY2(p.waitForFinished(processTimeout), qPrintable(p.errorString()));
         QVERIFY(p.exitCode() == 0);
         QCOMPARE(p.readAllStandardOutput().trimmed(), QByteArray("ext2"));
     }

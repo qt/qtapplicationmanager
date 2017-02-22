@@ -210,7 +210,7 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7, const QList<QByt
                 throw OpenSslException("Could not load a certificate from the chain of trust");
             if (!am_X509_STORE_add_cert(certChain.data(), cert.data()))
                 throw OpenSslException("Could not add a certificate from the chain of trust to the certificate store");
-            cert.take();
+            // X509 certs are ref-counted, so we need to "free" the one we got via PEM_read_bio
         }
     }
 

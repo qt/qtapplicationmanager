@@ -90,6 +90,11 @@ PackageCreator::PackageCreator(const QDir &sourceDir, QIODevice *output, const I
     setSourceDirectory(sourceDir);
 }
 
+PackageCreator::~PackageCreator()
+{
+    delete d;
+}
+
 QDir PackageCreator::sourceDirectory() const
 {
     return QDir(d->m_sourcePath);

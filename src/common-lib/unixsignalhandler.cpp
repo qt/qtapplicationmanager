@@ -48,6 +48,12 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+// make it clear in the valgrind backtrace that this is a deliberate leak
+static void *malloc_valgrind_ignore(size_t size)
+{
+    return malloc(size);
+}
+
 // sigmask() is not available on Windows
 UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)
 {
@@ -169,7 +175,7 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
 #if defined(Q_OS_UNIX)
     // Use alternate signal stack to get backtrace for stack overflow
     stack_t sigstack;
-    sigstack.ss_sp = malloc(SIGSTKSZ);
+    sigstack.ss_sp = malloc_valgrind_ignore(SIGSTKSZ); // valgrind will report this as leaked: nothing we can do about it
     sigstack.ss_size = SIGSTKSZ;
     sigstack.ss_flags = 0;
     sigaltstack(&sigstack, nullptr);

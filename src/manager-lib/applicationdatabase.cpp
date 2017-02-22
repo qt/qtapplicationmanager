@@ -42,6 +42,7 @@
 #include <QFile>
 #include <QDataStream>
 #include <QTemporaryFile>
+#include <QScopedPointer>
 
 #include "application.h"
 #include "applicationdatabase.h"
@@ -110,7 +111,7 @@ QVector<const Application *> ApplicationDatabase::read() throw (Exception)
         QDataStream ds(d->file);
 
         forever {
-            Application *app = Application::readFromDataStream(ds, apps);
+            QScopedPointer<Application> app(Application::readFromDataStream(ds, apps));
 
             if (ds.status() != QDataStream::Ok) {
                 if (ds.status() != QDataStream::ReadPastEnd) {
@@ -119,7 +120,7 @@ QVector<const Application *> ApplicationDatabase::read() throw (Exception)
                 }
                 break;
             }
-            apps << app;
+            apps << app.take();
         }
     }
 

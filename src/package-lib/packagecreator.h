@@ -60,6 +60,7 @@ class PackageCreator : public QObject
 
 public:
     PackageCreator(const QDir &sourceDir, QIODevice *output, const InstallationReport &report, QObject *parent = 0);
+    ~PackageCreator();
 
     QDir sourceDirectory() const;
     void setSourceDirectory(const QDir &sourceDir);

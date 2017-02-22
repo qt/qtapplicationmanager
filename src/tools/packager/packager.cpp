@@ -144,7 +144,7 @@ void Packager::execute() throw(Exception)
         // check metadata
         YamlApplicationScanner yas;
         QString infoName = yas.metaDataFileName();
-        Application *app = yas.scan(source.absoluteFilePath(infoName));
+        QScopedPointer<Application> app(yas.scan(source.absoluteFilePath(infoName)));
 
         // build report
         InstallationReport report(app->id());

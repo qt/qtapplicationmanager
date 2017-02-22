@@ -161,6 +161,7 @@ void tst_Runtime::factory()
 
     delete r;
     delete rf;
+    delete a;
 }
 
 QTEST_MAIN(tst_Runtime)

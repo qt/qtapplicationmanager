@@ -136,14 +136,16 @@ void tst_PackagerTool::initTestCase()
 // exceptions are nice -- just not for unit testing :)
 static bool packagerCheck(Packager *p, QString &errorString)
 {
+    bool result = false;
     try {
         p->execute();
         errorString.clear();
-        return (p->resultCode() == 0);
+        result = (p->resultCode() == 0);
     } catch (const Exception &e) { \
         errorString = e.errorString();
-        return false;
     }
+    delete p;
+    return result;
 }
 
 void tst_PackagerTool::test()

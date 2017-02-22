@@ -45,6 +45,7 @@ public:
 
 private slots:
     void initTestCase();
+    void cleanupTestCase();
     void database();
     void application_data();
     void application();
@@ -76,6 +77,11 @@ void tst_Application::initTestCase()
     QCOMPARE(apps.size(), 2);
 }
 
+void tst_Application::cleanupTestCase()
+{
+    qDeleteAll(apps);
+}
+
 void tst_Application::database()
 {
     QString tmpDbPath = QDir::temp().absoluteFilePath(qSL("autotest-appdb-%1").arg(qApp->applicationPid()));
@@ -97,6 +103,7 @@ void tst_Application::database()
             QVERIFY(appsInDb.isEmpty());
 
             adb.write(apps);
+            qDeleteAll(appsInDb);
         } catch (const Exception &e) {
             QVERIFY2(false, e.what());
         }
@@ -111,6 +118,7 @@ void tst_Application::database()
         try {
             QVector<const Application *> appsInDb = adb.read();
             QCOMPARE(appsInDb.size(), apps.size());
+            qDeleteAll(appsInDb);
         } catch (Exception &e) {
             QVERIFY2(false, e.what());
         }

@@ -272,8 +272,9 @@ QVector<QVariant> variantDocumentsFromYamlFiltered(const QByteArray &yaml, std::
     if (yaml_parser_initialize(&p)) {
         yaml_parser_set_input_string(&p, (const uchar *) yaml.constData(), yaml.size());
 
-        forever {
-            yaml_document_t doc;
+        yaml_document_t doc;
+        yaml_node_t *root;
+        do {
             if (!yaml_parser_load(&p, &doc)) {
                 if (error) {
                     switch (p.error) {
@@ -288,17 +289,13 @@ QVector<QVariant> variantDocumentsFromYamlFiltered(const QByteArray &yaml, std::
                         break;
                     }
                 }
-                result << QVariant();
-                break;
-            } else {
-                yaml_node_t *root = yaml_document_get_root_node(&doc);
-                if (!root)
-                    break;
-
-                result << convertYamlNodeToVariant(&doc, root, filter);
             }
+            root = yaml_document_get_root_node(&doc);
+            if (root)
+                result.append(convertYamlNodeToVariant(&doc, root, filter));
             yaml_document_delete(&doc);
-        }
+        } while (root);
+
         yaml_parser_delete(&p);
     } else if (error) {
         *error = ParseError(qSL("could not initialize YAML parser"));

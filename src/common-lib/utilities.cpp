@@ -611,7 +611,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     }
     if (dumpCore) {
         fprintf(stderr, "\n > the process will be aborted (core dump)\n\n");
-        UnixSignalHandler::instance()->resetToDefault(SIGABRT);
+        UnixSignalHandler::instance()->resetToDefault({ SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT });
         abort();
     }
     _Exit(-1);

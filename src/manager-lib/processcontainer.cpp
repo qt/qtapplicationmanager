@@ -226,7 +226,7 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
         command = cmd.takeFirst();
         args = cmd;
     }
-    qCDebug(LogSystem) << "Running command:" << command << args;
+    qCDebug(LogSystem) << "Running command:" << command << "arguments:" << args;
 
     process->start(command, args);
     m_process = process;

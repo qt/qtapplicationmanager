@@ -166,8 +166,6 @@ private slots:
     void waylandSurfaceUnmapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
     void waylandSurfaceDestroyed(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
 
-    void resize();
-
 private:
     void handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *surface);
 #endif

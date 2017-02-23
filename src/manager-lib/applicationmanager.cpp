@@ -926,8 +926,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             runtime->deleteLater();
         return ok;
     } else {
-        auto f = [=]() {
-            qCDebug(LogSystem) << "Container ready for app (" << app->id() <<")!";
+        auto startInContainer = [app, attachRuntime, runtime]() {
             bool successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app)
                                                      : runtime->start();
             if (!successfullyStarted)
@@ -938,11 +937,11 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
         if (container->isReady()) {
             // Since the container is already ready, start the app immediately
-            return f();
+            return startInContainer();
         }
         else {
             // We postpone the starting of the application to a later point in time since the container is not ready yet
-            connect(container, &AbstractContainer::ready, f);
+            connect(container, &AbstractContainer::ready, startInContainer);
             return true;       // we return true for now, since we don't know at this point in time whether the container will be able to start the application. TODO : fix
         }
     }

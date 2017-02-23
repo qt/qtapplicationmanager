@@ -61,6 +61,8 @@ public:
     int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
 
     WaylandCompositor *waylandCompositor = nullptr;
+
+    static QString applicationId(const Application *app, WindowSurface *windowSurface);
 #endif
 
     QHash<int, QByteArray> roleNames;

@@ -577,6 +577,7 @@ int main(int argc, char *argv[])
             loggingRules.prepend(qSL("qt.qpa.*.debug=false"));
             loggingRules.prepend(qSL("qt.quick.*.debug=false"));
             loggingRules.prepend(qSL("qt.scenegraph.*.debug=false"));
+            loggingRules.prepend(qSL("qt.compositor.input.*.debug=false"));
             loggingRules.prepend(qSL("*.debug=true"));
         }
 

@@ -53,11 +53,7 @@
 #endif
 
 #if defined(AM_MULTI_PROCESS)
-#  if defined(QT_WAYLANDCOMPOSITOR_LIB)
-#    include "waylandcompositor.h"
-#  elif defined(QT_COMPOSITOR_LIB)
-#    include "waylandcompositor-old.h"
-#  endif
+#  include "waylandcompositor.h"
 #endif
 
 #include "global.h"

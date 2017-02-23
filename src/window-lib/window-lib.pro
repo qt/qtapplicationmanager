@@ -17,13 +17,13 @@ CONFIG *= static internal_module
 multi-process:!headless {
     qtHaveModule(waylandcompositor) {
         QT *= waylandcompositor waylandcompositor-private
-        HEADERS += waylandcompositor.h
+        HEADERS += waylandcompositor.h waylandcompositor_p.h
         SOURCES += waylandcompositor.cpp
         PKGCONFIG += wayland-server
     } else:qtHaveModule(compositor) {
         QT *= compositor
-        HEADERS += waylandcompositor-old.h
-        SOURCES += waylandcompositor-old.cpp
+        HEADERS += waylandcompositor.h
+        SOURCES += waylandcompositor.cpp
     }
 }
 
@@ -41,3 +41,4 @@ multi-process:!headless {
     windowmanager.cpp \
 
 load(qt_module)
+

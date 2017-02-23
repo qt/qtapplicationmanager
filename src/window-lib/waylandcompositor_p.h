@@ -42,59 +42,25 @@
 
 #pragma once
 
-#include <QWaylandQuickCompositor>
+#include "global.h"
 
-#include <QtAppManWindow/windowmanager.h>
-
-QT_FORWARD_DECLARE_CLASS(QWaylandSurfaceItem)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
+#  include <QWaylandQuickItem>
 
 QT_BEGIN_NAMESPACE_AM
 
-class SurfaceQuickItem;
+class WindowSurface;
 
-class Surface : public WindowSurface
+class WindowSurfaceQuickItem : public QWaylandQuickItem
 {
+    Q_OBJECT
+
 public:
-    Surface(QWaylandSurface *s);
-
-    QQuickItem *item() const override;
-
-    void takeFocus() override;
-    void ping() override;
-    qint64 processId() const override;
-    QWindow *outputWindow() const override;
-
-    QVariantMap windowProperties() const override;
-    void setWindowProperty(const QString &n, const QVariant &v) override;
-
-    void connectPong(const std::function<void ()> &cb) override;
-    void connectWindowPropertyChanged(const std::function<void (const QString &, const QVariant &)> &cb) override;
-
-    QWaylandSurfaceItem *m_item;
-};
-
-
-class WaylandCompositor : public QWaylandQuickCompositor
-{
-public:
-    WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager);
-
-    void registerOutputWindow(QQuickWindow *window);
-
-    void surfaceCreated(QWaylandSurface *surface) override;
-
-#if QT_VERSION < QT_VERSION_CHECK(5,5,0)
-    bool openUrl(WaylandClient *client, const QUrl &url) override;
-#else
-    bool openUrl(QWaylandClient *client, const QUrl &url) override;
-#endif
-
-    QWaylandSurface *waylandSurfaceFromItem(QQuickItem *surfaceItem) const;
-
-    void sendCallbacks();
-
-private:
-    WindowManager *m_manager;
+    WindowSurfaceQuickItem(WindowSurface *windowSurface);
+    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+    WindowSurface *m_windowSurface;
 };
 
 QT_END_NAMESPACE_AM
+
+#endif

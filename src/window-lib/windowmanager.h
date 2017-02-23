@@ -60,37 +60,11 @@ QT_FORWARD_DECLARE_CLASS(QWindow)
 QT_BEGIN_NAMESPACE_AM
 
 class Window;
+class WindowSurface;
 class WindowManagerPrivate;
 class Application;
 class AbstractRuntime;
 class WaylandCompositor;
-
-#if defined(AM_MULTI_PROCESS)
-
-class WindowSurface
-{
-public:
-    virtual ~WindowSurface() {}
-    QWaylandSurface *surface() const { return m_surface; }
-
-    virtual QQuickItem *item() const = 0;
-
-    virtual void takeFocus() = 0;
-    virtual void ping() = 0;
-    virtual qint64 processId() const = 0;
-    virtual QWindow *outputWindow() const = 0;
-
-    virtual QVariantMap windowProperties() const = 0;
-    virtual void setWindowProperty(const QString &name, const QVariant &value) = 0;
-
-    virtual void connectPong(const std::function<void ()> &cb) = 0;
-    virtual void connectWindowPropertyChanged(const std::function<void (const QString &name, const QVariant &value)> &cb) = 0;
-
-protected:
-    QWaylandSurface *m_surface;
-};
-
-#endif
 
 class WindowManager : public QAbstractListModel, protected QDBusContext
 {

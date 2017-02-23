@@ -41,11 +41,12 @@
 
 #if defined(AM_MULTI_PROCESS)
 
-#include "waylandwindow.h"
+#include "global.h"
 #include "applicationmanager.h"
 #include "application.h"
-#include "global.h"
 #include "windowmanager.h"
+#include "waylandwindow.h"
+#include "waylandcompositor.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -56,8 +57,10 @@ WaylandWindow::WaylandWindow(const Application *app, WindowSurface *surf)
     , m_surface(surf)
 {
     if (surf && surf->item()) {
-        surf->connectPong([this]() { pongReceived(); });
-        surf->connectWindowPropertyChanged([this](const QString &n, const QVariant &v) { emit windowPropertyChanged(n, v); });
+        connect(surf, &WindowSurface::pong,
+                this, &WaylandWindow::pongReceived);
+        connect(surf, &WindowSurface::windowPropertyChanged,
+                this, &WaylandWindow::windowPropertyChanged);
 
         m_pingTimer->setInterval(1000);
         m_pingTimer->setSingleShot(true);
@@ -107,9 +110,8 @@ void WaylandWindow::pingTimeout()
 {
     m_pingTimer->stop();
     m_pongTimer->start();
-    if (m_surface) {
+    if (m_surface)
         m_surface->ping();
-    }
 }
 
 bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value)
@@ -117,9 +119,8 @@ bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value
     if (m_surface) {
         QVariant oldValue = m_surface->windowProperties().value(name);
 
-        if (oldValue != value) {
+        if (oldValue != value)
             m_surface->setWindowProperty(name, value);
-        }
         return true;
     }
     return false;
@@ -127,17 +128,15 @@ bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value
 
 QVariant WaylandWindow::windowProperty(const QString &name) const
 {
-    if (m_surface) {
+    if (m_surface)
         return m_surface->windowProperties().value(name);
-    }
     return QVariant();
 }
 
 QVariantMap WaylandWindow::windowProperties() const
 {
-    if (m_surface) {
+    if (m_surface)
         return m_surface->windowProperties();
-    }
     return QVariantMap();
 }
 

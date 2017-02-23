@@ -52,6 +52,11 @@ QT_BEGIN_NAMESPACE_AM
 class Application;
 class WindowPrivate;
 
+// A Window object exists for every application window that is managed by the application-manager
+// and has been shown (mapped) at least once.
+// In the Wayland case, every Window is a surface, but not every surface is a Window. That's why
+// there is a separate WindowSurface class in waylandcompositor.h.
+
 class Window : public QObject
 {
     Q_OBJECT
@@ -70,10 +75,6 @@ public:
     virtual bool setWindowProperty(const QString &name, const QVariant &value) = 0;
     virtual QVariant windowProperty(const QString &name) const = 0;
     virtual QVariantMap windowProperties() const = 0;
-
-    // we cannot directly derive from QObject here, so we have to fake connect/disconnect
-    void connectWindowPropertyChanged(QObject *target, const char *member, Qt::ConnectionType type = Qt::AutoConnection);
-    void disconnectWindowPropertyChanged(QObject *target, const char *member = 0);
 
 signals:
     void windowPropertyChanged(const QString &name, const QVariant &value);

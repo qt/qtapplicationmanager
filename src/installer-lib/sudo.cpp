@@ -99,7 +99,7 @@ QT_BEGIN_NAMESPACE_AM
 static void sigHupHandler(int sig)
 {
     if (sig == SIGHUP)
-        abort();
+        _Exit(0);
 }
 
 QT_END_NAMESPACE_AM

@@ -53,7 +53,8 @@
 
 QT_USE_NAMESPACE_AM
 
-class DBus : public QObject {
+class DBus : public QObject // clazy:exclude=missing-qobject-macro
+{
 public:
     DBus()
     {
@@ -180,7 +181,7 @@ static void removePackage(const QString &package, bool keepDocuments, bool force
 static void listInstallationLocations();
 static void showInstallationLocation(const QString &location);
 
-class ThrowingApplication : public QCoreApplication
+class ThrowingApplication : public QCoreApplication // clazy:exclude=missing-qobject-macro
 {
 public:
     ThrowingApplication(int &argc, char **argv)
@@ -445,7 +446,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId, 
 
 #if defined(POLLRDHUP)
                 // ssh does not forward Ctrl+C, but we can detect a hangup condition on stdin
-                class HupThread : public QThread
+                class HupThread : public QThread // clazy:exclude=missing-qobject-macro
                 {
                 public:
                     HupThread(QCoreApplication *parent)

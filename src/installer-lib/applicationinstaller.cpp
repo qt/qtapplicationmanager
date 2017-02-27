@@ -811,7 +811,7 @@ int ApplicationInstaller::compareVersions(const QString &version1, const QString
 
 // this is a simple helper class - we need this to be able to run the filesystem (un)mounting
 // in a separate thread to avoid blocking the UI and D-Bus
-class ActivationHelper : public QObject
+class ActivationHelper : public QObject // clazy:exclude=missing-qobject-macro
 {
 public:
     enum Mode { Activate, Deactivate, IsActivated };

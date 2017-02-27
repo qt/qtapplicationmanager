@@ -1,7 +1,7 @@
 requires(linux:!android)
 
 TEMPLATE = lib
-CONFIG += plugin
+CONFIG += plugin c++11
 TARGET = softwarecontainer-plugin
 
 QT = core dbus appman_common-private appman_plugininterfaces-private

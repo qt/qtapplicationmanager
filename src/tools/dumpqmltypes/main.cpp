@@ -245,7 +245,7 @@ int main(int argc, char **argv)
         << &QmlApplicationInterfaceExtension::staticMetaObject
         << &ApplicationManagerWindow::staticMetaObject;
 
-    for (const auto &mo : all)
+    for (const auto &mo : qAsConst(all))
         out << qmlTypeForMetaObect(mo, 1, true);
 
     out << footer;

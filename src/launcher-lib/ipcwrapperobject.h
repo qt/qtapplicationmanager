@@ -56,7 +56,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class IpcWrapperSignalRelay;
 
-class IpcWrapperObject : public QObject
+class IpcWrapperObject : public QObject // clazy:exclude=missing-qobject-macro
 {
 public:
     IpcWrapperObject(const QString &service, const QString &path, const QString &interface,

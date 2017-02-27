@@ -125,7 +125,7 @@ private:
     friend class WaylandCompositor;
 };
 
-class WaylandCompositor : public QWaylandQuickCompositor
+class WaylandCompositor : public QWaylandQuickCompositor // clazy:exclude=missing-qobject-macro
 {
 public:
     WaylandCompositor(QQuickWindow* window, const QString &waylandSocketName, WindowManager *manager);

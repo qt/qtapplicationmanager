@@ -157,7 +157,7 @@ bool setProcessTitle(const QByteArray &title)
 }
 
 // maybe make this configurable for specific workloads?
-class HeadlessIncubationController : public QObject, public QQmlIncubationController
+class HeadlessIncubationController : public QObject, public QQmlIncubationController // clazy:exclude=missing-qobject-macro
 {
 public:
     HeadlessIncubationController(QObject *parent)
@@ -588,7 +588,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     startupTimer.createReport(application.value("id").toString());
 
     if (!document.isEmpty() && m_applicationInterface)
-        m_applicationInterface->openDocument(document, mimeType);
+        emit m_applicationInterface->openDocument(document, mimeType);
 }
 
 #include "main.moc"

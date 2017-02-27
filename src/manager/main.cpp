@@ -604,7 +604,7 @@ int main(int argc, char *argv[])
 
 #if defined(QT_DBUS_LIB)
         if (Q_UNLIKELY(configuration->dbusStartSessionBus())) {
-            class DBusDaemonProcess : public QProcess
+            class DBusDaemonProcess : public QProcess // clazy:exclude=missing-qobject-macro
             {
             public:
                 DBusDaemonProcess(QObject *parent = 0)

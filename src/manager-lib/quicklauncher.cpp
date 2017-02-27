@@ -216,7 +216,7 @@ QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString 
 void QuickLauncher::killAll()
 {
     for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
-        for (const auto &car : entry->m_containersAndRuntimes) {
+        for (const auto &car : qAsConst(entry->m_containersAndRuntimes)) {
             if (car.second) {
                 car.second->stop(true);
                 delete car.second;

@@ -167,8 +167,8 @@ ContainerInterface *SoftwareContainerManager::create(const QVector<int> &stdioRe
         return nullptr;
     }
 
-    int containerId = reply.arguments().at(0).value<int>();
-    bool success = reply.arguments().at(1).value<bool>();
+    int containerId = reply.arguments().at(0).toInt();
+    bool success = reply.arguments().at(1).toBool();
 
     if (!success) {
         qWarning() << "SoftwareContainer failed to create a new container. (config was:" << config << ")";
@@ -309,7 +309,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
         return false;
     }
 
-    if (!reply.arguments().at(0).value<bool>()) {
+    if (!reply.arguments().at(0).toBool()) {
         qWarning() << "SoftwareContainer failed to set capabilities to" << capabilities;
         return false;
     }
@@ -322,7 +322,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
 
     QFileInfo fontCacheInfo(qSL("/var/cache/fontconfig"));
 
-    QList<std::tuple<QString, QString, bool>> bindMounts; // bool == isReadOnly
+    QVector<std::tuple<QString, QString, bool>> bindMounts; // bool == isReadOnly
     // the private P2P D-Bus
     bindMounts.append(std::make_tuple(dbusP2PInfo.absoluteFilePath(), dbusP2PInfo.absoluteFilePath(), false));
 
@@ -342,7 +342,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
     for (auto it = bindMounts.cbegin(); it != bindMounts.cend(); ++it)
         bindMountResults << iface->asyncCall("BindMount", m_id, std::get<0>(*it), std::get<1>(*it), std::get<2>(*it));
 
-    for (auto pending : qAsConst(bindMountResults))
+    for (const auto &pending : qAsConst(bindMountResults))
         QDBusPendingCallWatcher(pending).waitForFinished();
 
     for (int i = 0; i < bindMounts.size(); ++i) {
@@ -386,7 +386,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
                     sn->setEnabled(false);
                     return;
                 } else if (bytesRead > 0) {
-                    QT_WRITE(outputFd, buffer.constData(), bytesRead);
+                    (void) QT_WRITE(outputFd, buffer.constData(), bytesRead);
                     bytesAvailable -= bytesRead;
                 }
             }
@@ -419,7 +419,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
 
     // SC expects a plain string instead of individual args
     QString cmdLine;
-    for (const auto &part : command) {
+    for (const auto &part : qAsConst(command)) {
         if (!cmdLine.isEmpty())
             cmdLine.append(QLatin1Char(' '));
         cmdLine.append(QLatin1Char('\"'));
@@ -470,7 +470,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
         return false;
     }
 
-    if (!reply.arguments().at(1).value<bool>()) {
+    if (!reply.arguments().at(1).toBool()) {
         qWarning() << "SoftwareContainer failed to execute application" << m_id << "in directory" << m_containerPath << "in the container.";
         return false;
     }
@@ -510,7 +510,7 @@ void SoftwareContainer::kill()
             qWarning() << "SoftwareContainer failed to destroy container" << reply.errorMessage();
         }
 
-        if (!reply.arguments().at(0).value<bool>()) {
+        if (!reply.arguments().at(0).toBool()) {
             qWarning() << "SoftwareContainer failed to destroy container.";
         }
     }

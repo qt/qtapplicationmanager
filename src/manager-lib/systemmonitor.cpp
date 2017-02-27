@@ -349,7 +349,7 @@ const qreal FrameTimer::MicrosInSec = qreal(1000 * 1000);
 
 }
 
-class SystemMonitorPrivate : public QObject
+class SystemMonitorPrivate : public QObject // clazy:exclude=missing-qobject-macro
 {
 public:
     SystemMonitorPrivate(SystemMonitor *q)

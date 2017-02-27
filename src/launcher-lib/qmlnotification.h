@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class QmlApplicationInterface;
 
-class QmlNotification : public Notification
+class QmlNotification : public Notification // clazy:exclude=missing-qobject-macro
 {
 public:
     QmlNotification(QObject *parent = 0, Notification::ConstructionMode mode = Notification::Declarative);

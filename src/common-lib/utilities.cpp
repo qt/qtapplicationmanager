@@ -129,7 +129,7 @@ bool ensureCorrectLocale()
         return true;
 
     // now the time-consuming part: trying to switch to a well-known UTF-8 locale
-    const char *locales[] = { "C.UTF-8", "en_US.UTF-8" };
+    const char *locales[] = { "C.UTF-8", "en_US.UTF-8", nullptr };
     for (const char **loc = locales; *loc; ++loc) {
         if (const char *old = setlocale(LC_CTYPE, *loc)) {
             if (checkUtf()) {

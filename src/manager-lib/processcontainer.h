@@ -85,7 +85,7 @@ public slots:
     void setStopBeforeExec(bool stopBeforeExec);
 
 private:
-    class MyQProcess : public QProcess
+    class MyQProcess : public QProcess // clazy:exclude=missing-qobject-macro
     {
     protected:
         void setupChildProcess() override;

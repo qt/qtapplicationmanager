@@ -231,7 +231,7 @@ void tst_PackageExtractor::cancelExtraction()
     }
 }
 
-class FifoSource : public QThread
+class FifoSource : public QThread // clazy:exclude=missing-qobject-macro
 {
 public:
     FifoSource(const QString &file)

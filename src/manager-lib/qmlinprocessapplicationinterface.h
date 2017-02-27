@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class QmlInProcessRuntime;
 
-class QmlInProcessNotification : public Notification
+class QmlInProcessNotification : public Notification // clazy:exclude=missing-qobject-macro
 {
 public:
     QmlInProcessNotification(QObject *parent = 0, ConstructionMode mode = Declarative);

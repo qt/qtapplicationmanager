@@ -55,7 +55,7 @@ QT_BEGIN_NAMESPACE_AM
 class Application;
 class IpcProxySignalRelay;
 
-class IpcProxyObject
+class IpcProxyObject // clazy:exclude=missing-qobject-macro
 #if defined(QT_DBUS_LIB)
         : protected QDBusVirtualObject
 #else
@@ -116,7 +116,7 @@ private:
     friend class ApplicationIPCInterfaceAttached;
 };
 
-class IpcProxySignalRelay : public QObject
+class IpcProxySignalRelay : public QObject // clazy:exclude=missing-qobject-macro
 {
 public:
     IpcProxySignalRelay(IpcProxyObject *proxyObject);

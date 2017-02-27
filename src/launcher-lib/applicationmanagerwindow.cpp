@@ -160,7 +160,7 @@ void ApplicationManagerWindow::onWindowPropertyChangedInternal(QPlatformWindow *
 */
 bool ApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
-    if (!d->platformNativeInterface && !d->platformWindow)
+    if (!d->platformNativeInterface || !d->platformWindow)
         return false;
     d->platformNativeInterface->setWindowProperty(d->platformWindow, name, value);
     return true;
@@ -175,7 +175,7 @@ bool ApplicationManagerWindow::setWindowProperty(const QString &name, const QVar
 */
 QVariant ApplicationManagerWindow::windowProperty(const QString &name) const
 {
-    if (!d->platformNativeInterface && !d->platformWindow)
+    if (!d->platformNativeInterface || !d->platformWindow)
         return QVariant();
     return d->platformNativeInterface->windowProperty(d->platformWindow, name);
 }
@@ -189,7 +189,7 @@ QVariant ApplicationManagerWindow::windowProperty(const QString &name) const
 */
 QVariantMap ApplicationManagerWindow::windowProperties() const
 {
-    if (!d->platformNativeInterface && !d->platformWindow)
+    if (!d->platformNativeInterface || !d->platformWindow)
         return QVariantMap();
     return d->platformNativeInterface->windowProperties(d->platformWindow);
 }

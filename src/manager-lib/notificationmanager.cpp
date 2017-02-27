@@ -213,7 +213,7 @@ struct NotificationData
     QString iconUrl;
     QString imageUrl;
     bool showActionIcons;
-    QVariantMap actions; // id (as string) --> text (as string)
+    QVariantList actions; // list of single element maps: <id (as string) --> text (as string)>
     bool dismissOnAction;
     bool isSticky;
     bool isClickable;
@@ -351,14 +351,14 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
     case ShowActionsAsIcons:
         return n->showActionIcons;
     case Actions: {
-        QVariantMap actions = n->actions;
-        actions.remove(qSL("default"));
+        QVariantList actions = n->actions;
+        actions.removeAll(QVariantMap { { qSL("default"), QString() } });
         return actions;
     }
     case DismissOnAction:
         return n->dismissOnAction;
     case IsClickable:
-        return n->actions.contains(qSL("default"));
+        return n->actions.contains(QVariantMap { { qSL("default"), QString() } });
     case IsSystemNotification:
         return n->isSystemNotification;
     case IsShowingProgress:
@@ -467,7 +467,16 @@ void NotificationManager::triggerNotificationAction(int id, const QString &actio
 
     if (i >= 0) {
         NotificationData *n = d->notifications.at(i);
-        if (!n->actions.contains(actionId)) {
+        bool found = false;
+        for (auto it = n->actions.cbegin(); it != n->actions.cend(); ++it) {
+            const QVariantMap map = (*it).toMap();
+            Q_ASSERT(map.size() == 1);
+            if (map.constBegin().key() == actionId) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
             qCDebug(LogNotifications) << "Requested to trigger a notification action, but the action is not registered:"
                                       << (actionId.length() > 20 ? (actionId.left(20) + qSL("...")) : actionId);
         }
@@ -586,7 +595,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
     n->showActionIcons = hints.value(qSL("action-icons")).toBool();
     n->actions.clear();
     for (int ai = 0; ai != (actions.size() & ~1); ai += 2)
-        n->actions.insert(actions.at(ai), actions.at(ai + 1));
+        n->actions.append(QVariantMap { { actions.at(ai), actions.at(ai + 1) } });
     n->dismissOnAction = !hints.value(qSL("resident")).toBool();
 
     n->isSystemNotification = hints.value(qSL("x-pelagicore-system-notification")).toBool();

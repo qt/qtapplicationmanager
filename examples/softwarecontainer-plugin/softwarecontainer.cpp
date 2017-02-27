@@ -242,7 +242,7 @@ bool SoftwareContainer::attachApplication(const QVariantMap &application)
     m_state = QProcess::Starting;
     m_application = application;
 
-    m_hostPath = application.value(qSL("baseDir")).toString();
+    m_hostPath = application.value(qSL("codeDir")).toString();
     if (m_hostPath.isEmpty())
         m_hostPath = QDir::currentPath();
 

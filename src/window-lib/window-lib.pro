@@ -15,7 +15,7 @@ QT_FOR_PRIVATE *= \
 CONFIG *= static internal_module
 
 multi-process:!headless {
-    qtHaveModule(waylandcompositor) {
+    qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private) {
         QT *= waylandcompositor waylandcompositor-private
         HEADERS += waylandcompositor.h waylandcompositor_p.h
         SOURCES += waylandcompositor.cpp

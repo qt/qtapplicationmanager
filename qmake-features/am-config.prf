@@ -17,7 +17,11 @@ headless:DEFINES *= AM_HEADLESS
 linux:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release)):DEFINES *= AM_USE_LIBBACKTRACE
 
 !force-single-process {
-    linux:if(qtHaveModule(compositor)|qtHaveModule(waylandcompositor)|headless):config_libdbus:CONFIG *= auto-multi-process
+    linux:config_libdbus {
+        headless|qtHaveModule(compositor)|if(qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private)) {
+            CONFIG *= auto-multi-process
+        }
+    }
     if(force-multi-process|auto-multi-process) {
         CONFIG *= multi-process
         DEFINES *= AM_MULTI_PROCESS

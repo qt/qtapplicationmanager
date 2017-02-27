@@ -9,6 +9,11 @@ CONFIG += \
     exceptions_off rtti_off warn_off \
     installed
 
+osx:LIBS += -framework CoreServices -liconv
+win32:LIBS += -lcrypt32
+win32:MODULE_DEFINES += LIBARCHIVE_STATIC
+MODULE_INCLUDEPATH += $$PWD/libarchive
+
 load(qt_helper_lib)
 
 win32-msvc* {
@@ -33,7 +38,7 @@ OTHER_FILES += \
     config-osx.h \
     config-unix.h \
 
-INCLUDEPATH *= $$PWD
+INCLUDEPATH *= $$PWD/libarchive
 
 include(../libz.pri)
 

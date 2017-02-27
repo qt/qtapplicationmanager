@@ -11,6 +11,8 @@ CONFIG += \
     exceptions_off rtti_off warn_off \
     installed
 
+MODULE_INCLUDEPATH += $$PWD
+
 load(qt_helper_lib)
 
 win32-msvc* {

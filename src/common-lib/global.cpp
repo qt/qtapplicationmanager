@@ -40,11 +40,13 @@
 ****************************************************************************/
 
 #include <QFile>
-#include <QFileInfo>
 #include <QNetworkInterface>
+#include <QThreadStorage>
+#include <QAtomicInteger>
 
 #include "global.h"
 #include "utilities.h"
+#include "unixsignalhandler.h"
 
 #include <stdio.h>
 #if defined(Q_OS_WIN)
@@ -108,51 +110,147 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         QDltRegistration::messageHandler(msgType, context, message);
 #endif
 
-    QString file = QFileInfo(QFile::decodeName(context.file)).fileName();
-
-    enum ConsoleColor { Off, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, BrightIndex, Bright = 0x80 };
-    QMap<int, int> colors; // %<n> -> ConsoleColor
-    const char *msgTypeStr[] = { "DBG ", "WARN", "CRIT", "FATL", "INFO" };
-    ConsoleColor msgTypeColor[] = { Green, Yellow, Red, Magenta, Blue };
-
     if (msgType < QtDebugMsg || msgType > QtInfoMsg)
         msgType = QtCriticalMsg;
 
-    QByteArray fmt = "[%1 | %2] %3 %6[%4:%5]\n";
+    // Try to re-use a 512 byte buffer per thread as much as possible to avoid allocations.
+    static QThreadStorage<QByteArray> outBuffers;
+    QByteArray &out = outBuffers.localData();
+    if (out.capacity() > 512)
+        out.clear();
+    if (!out.capacity())
+        out.reserve(512);
+    out.resize(0);
 
-    QStringList args = QStringList()
-        << qL1S(msgTypeStr[msgType])
-        << qL1S(context.category)
-        << message
-        << file
-        << QString::number(context.line)
-        << QString();
+    static int windowWidth = -1;
+    static bool useAnsiColors = false;
+    static QAtomicInteger<int> windowSizeCached(0);
 
-    colors[1] = Bright | msgTypeColor[msgType];
-    colors[2] = (Red + qHash(QByteArray(context.category)) % 7);
-    colors[4] = Magenta;
-    colors[5] = Magenta | Bright;
-
-    if (!colorLogApplicationId.isEmpty()) {
-        fmt = "[%1 | %2 | %7] %3 %6[%4:%5]\n";
-        args << QString::fromLocal8Bit(colorLogApplicationId);
-        colors[7] = (Red + qHash(colorLogApplicationId) % 7);
+#if defined(Q_OS_UNIX) && defined(SIGWINCH)
+    UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, SIGWINCH, [](int) {
+        windowSizeCached = 0;
+    });
+#endif
+    // This while loop is needed, since SIGWINCH could arrive while getOutputInformation is running.
+    // In reality this should never happen, short of the user resizing his console like a madman.
+    while (!windowSizeCached) {
+        windowSizeCached = 1;
+        getOutputInformation(&useAnsiColors, nullptr, &windowWidth);
     }
 
-    QString str = QString::fromLatin1(fmt);
-    for (int i = 0; i < args.size(); ++i)
-        str = str.arg(args.at(i));
+    // Find out, if we have a valid code location and prepare the output strings
+    const char *filename = nullptr;
+    int filenameLength = 0;
+    char linenumber[8];
+    int linenumberLength = 0;
 
-    int lastlineLength = str.size() - 1;
-    int nlpos = str.lastIndexOf(QLatin1Char('\n'), str.size() - 2);
-    if (nlpos >= 0)
-        lastlineLength = str.size() - nlpos - 2;
-    int spacing = 0;
-    int windowWidth = -1;
-    bool useAnsiColors;
-    bool runningInCreator;
+    if (context.line > 0 && context.file && context.file[0]) {
+        QByteArray ba = QByteArray::fromRawData(context.file, strlen(context.file));
+        int pos = -1;
+#if defined(Q_OS_WIN)
+        pos = ba.lastIndexOf('\\');
+#endif
+        if (pos < 0)
+            pos = ba.lastIndexOf('/');
+        if (pos >= 0) {
+            filename = context.file + pos + 1;
+            filenameLength = ba.size() - pos - 1;
 
-    getOutputInformation(&useAnsiColors, &runningInCreator, &windowWidth);
+            linenumberLength = qsnprintf(linenumber, 8, "%d", qMin(context.line, 9999999));
+            if (linenumberLength < 0 || linenumberLength >= int(sizeof(linenumber)))
+                linenumberLength = 0;
+            linenumber[linenumberLength] = 0;
+        }
+    }
+
+    enum ConsoleColor { Off = 0, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, BrightFlag = 0x80 };
+
+    // helper function to append ANSI color codes to a string
+    static auto color = [](QByteArray &out, int consoleColor) -> void {
+        static const char *ansiColors[] = {
+            "\x1b[1m",  // bright
+            "\x1b[0m",  // off
+            "\x1b[30m", // black
+            "\x1b[31m", // red
+            "\x1b[32m", // green
+            "\x1b[33m", // yellow
+            "\x1b[34m", // blue
+            "\x1b[35m", // magenta
+            "\x1b[36m", // cyan
+            "\x1b[37m" // gray
+        };
+
+        if (!useAnsiColors)
+            return;
+        if (consoleColor & BrightFlag)
+            out.append(ansiColors[0]);
+        out.append(ansiColors[1 + (consoleColor & ~BrightFlag)]);
+    };
+
+    static const char *msgTypeStr[] = { "DBG ", "WARN", "CRIT", "FATL", "INFO" };
+    static const ConsoleColor msgTypeColor[] = { Green, Yellow, Red, Magenta, Blue };
+    int categoryLength = strlen(context.category);
+    QByteArray msg = message.toLocal8Bit(); // sadly this allocates, but there's no other way in Qt
+
+    // the visible character length
+    int outLength = 10 + strlen(context.category) + msg.length(); // 10 = strlen("[XXXX | ] ")
+    out.append('[');
+
+    color(out, BrightFlag | msgTypeColor[msgType]);
+    out.append(msgTypeStr[msgType], 4); // all msgTypeStrs are 4 characters
+    color(out, Off);
+
+    out.append(" | ");
+
+    color(out, Red + qHash(QByteArray::fromRawData(context.category, categoryLength)) % 7);
+    out.append(context.category, categoryLength);
+    color(out, Off);
+
+    if (!colorLogApplicationId.isEmpty()) {
+        out.append(" | ");
+
+        color(out, Red + qHash(colorLogApplicationId) % 7);
+        out.append(colorLogApplicationId);
+        color(out, Off);
+
+        outLength += (3 + colorLogApplicationId.length()); // 3 == strlen(" | ")
+    }
+
+    out.append("] ");
+    out.append(msg);
+
+    if (filenameLength && linenumberLength) {
+        int spacing = 1;
+        if (windowWidth > 0) {
+            // right-align the location mark
+            spacing = windowWidth - outLength - linenumberLength - filenameLength - 4; // 4 == strlen(" [:]")
+
+            // keep the location mark right-aligned, even if the message contains newlines
+            int lastNewline = msg.lastIndexOf('\n');
+            if (lastNewline >= 0)
+                spacing += (outLength - msg.length() + lastNewline + 1);
+
+            // keep the location mark right-aligned, even if the message is longer than the window width
+            while (spacing < 0)
+                spacing += windowWidth;
+        }
+        out.append(spacing, ' ');
+        out.append('[');
+
+        color(out, Magenta);
+        out.append(filename, filenameLength);
+        color(out, Off);
+
+        out.append(':');
+
+        color(out, BrightFlag | Magenta);
+        out.append(linenumber, linenumberLength);
+        color(out, Off);
+
+        out.append("]\n");
+    } else {
+        out.append('\n');
+    }
 
     if (windowWidth <= 0) {
 #if defined(Q_OS_WIN)
@@ -163,7 +261,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
             InitializeCriticalSection(&cs);
 
         EnterCriticalSection(&cs);
-        OutputDebugStringW(reinterpret_cast<const wchar_t *>(str.utf16()));
+        OutputDebugStringA(out.constData());
         LeaveCriticalSection(&cs);
 
 #elif defined(Q_OS_ANDROID)
@@ -178,62 +276,11 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
         static QByteArray appName = QCoreApplication::applicationName().toLocal8Bit();
 
-        __android_log_print(pri, appName.constData(), "%s\n", str.toLocal8Bit().constData());
-
-#else
-        fputs(str.toLocal8Bit().constData(), stderr);
-        fflush(stderr);
-
+        __android_log_print(pri, appName.constData(), out.constData());
 #endif
-        return;
-    }
-    static const char *ansiColors[] = {
-        "\x1b[0m",  // off
-        "\x1b[30m", // black
-        "\x1b[31m", // red
-        "\x1b[32m", // green
-        "\x1b[33m", // yellow
-        "\x1b[34m", // blue
-        "\x1b[35m", // magenta
-        "\x1b[36m", // cyan
-        "\x1b[37m", // gray
-        "\x1b[1m"   // bright
-    };
-
-    if (lastlineLength < windowWidth)
-        spacing = windowWidth - lastlineLength - 1;
-    if (lastlineLength > windowWidth)
-        spacing = ((lastlineLength / windowWidth) + 1) * windowWidth - lastlineLength - 1;
-
-    args[5] = QString(spacing, QLatin1Char(' ')); // right align spacing
-
-    QByteArray out;
-    for (int i = 0; i < fmt.size(); ++i) {
-        char c = fmt[i];
-        if (c == '%' && i < (fmt.size() - 1)) {
-            char c2 = fmt[++i];
-            if (c2 == '%') {
-                out += '%';
-            } else if (c2 >= '1' && c2 <= '9') {
-                if (colors.contains(c2 - '0')) {
-                    int color = colors.value(c2 - '0');
-                    if (color & Bright)
-                        out += ansiColors[BrightIndex];
-                    out += ansiColors[color & ~Bright];
-                    out += args.at(c2 - '0' - 1).toLocal8Bit();
-                    out += ansiColors[Off];
-                    continue;
-                } else {
-                    out += args.at(c2 - '0' - 1).toLocal8Bit();
-                }
-            }
-        } else {
-            out += c;
-        }
     }
     fputs(out.constData(), stderr);
     fflush(stderr);
-    return;
 }
 
 #if defined(QT_GENIVIEXTRAS_LIB)

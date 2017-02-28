@@ -803,8 +803,11 @@ void getOutputInformation(bool *useAnsiColors, bool *runningInCreator, int *wind
     }
     if (runningInCreator)
         *runningInCreator = detectedRunningInCreator;
-    if (windowWidth)
-        *windowWidth = detectedRunningInCreator ? 120 : calculateWindowWidth(consoleFd);
+    if (windowWidth) {
+        *windowWidth = calculateWindowWidth(consoleFd);
+        if ((*windowWidth <= 0) && detectedRunningInCreator)
+            *windowWidth = 120;
+    }
 }
 
 qint64 getParentPid(qint64 pid)

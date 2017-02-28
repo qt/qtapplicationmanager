@@ -168,10 +168,9 @@ ContainerInterface *SoftwareContainerManager::create(const QVector<int> &stdioRe
     }
 
     int containerId = reply.arguments().at(0).toInt();
-    bool success = reply.arguments().at(1).toBool();
 
-    if (!success) {
-        qWarning() << "SoftwareContainer failed to create a new container. (config was:" << config << ")";
+    if (containerId < 0) {
+        qCritical() << "SoftwareContainer failed to create a new container. (config was:" << config << ")";
         return nullptr;
     }
 
@@ -309,11 +308,6 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
         return false;
     }
 
-    if (!reply.arguments().at(0).toBool()) {
-        qWarning() << "SoftwareContainer failed to set capabilities to" << capabilities;
-        return false;
-    }
-
     // parse out the actual socket file name from the DBus specification
     QString dbusP2PSocket = environment.value(QStringLiteral("AM_DBUS_PEER_ADDRESS"));
     dbusP2PSocket = dbusP2PSocket.mid(dbusP2PSocket.indexOf(QLatin1Char('=')) + 1);
@@ -337,7 +331,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
     bindMounts.append(std::make_tuple(QDir::homePath(), QDir::homePath(), true));
 
     // do all the bind-mounts in parallel to waste as little time as possible
-    QList<QDBusPendingReply<bool>> bindMountResults;
+    QList<QDBusPendingReply<>> bindMountResults;
 
     for (auto it = bindMounts.cbegin(); it != bindMounts.cend(); ++it)
         bindMountResults << iface->asyncCall("BindMount", m_id, std::get<0>(*it), std::get<1>(*it), std::get<2>(*it));
@@ -346,7 +340,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
         QDBusPendingCallWatcher(pending).waitForFinished();
 
     for (int i = 0; i < bindMounts.size(); ++i) {
-        if (bindMountResults.at(i).isError() || !bindMountResults.at(i).value()) {
+        if (bindMountResults.at(i).isError()) {
             qWarning() << "SoftwareContainer failed to bind-mount the directory" << std::get<0>(bindMounts.at(i))
                        << "into the container at" << std::get<1>(bindMounts.at(i)) << ":" << bindMountResults.at(i).error().message();
             return false;
@@ -467,11 +461,6 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
     reply = iface->call(QDBus::Block, "Execute", m_id, cmdLine, m_containerPath, QString::fromLocal8Bit(m_fifoPath), venvVars);
     if (reply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "SoftwareContainer failed to execute application" << m_id << "in directory" << m_containerPath << "in the container:" << reply.errorMessage();
-        return false;
-    }
-
-    if (!reply.arguments().at(1).toBool()) {
-        qWarning() << "SoftwareContainer failed to execute application" << m_id << "in directory" << m_containerPath << "in the container.";
         return false;
     }
 

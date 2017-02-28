@@ -714,7 +714,9 @@ void getOutputInformation(bool *useAnsiColors, bool *runningInCreator, int *wind
     static auto calculateWindowWidth = [](int fd) -> int {
         int windowWidth = -1;
 #if defined(Q_OS_UNIX)
-        if (::isatty((fd >= 0) ? fd : STDERR_FILENO)) {
+        if (fd < 0)
+            fd = STDERR_FILENO;
+        if (::isatty(fd)) {
             struct ::winsize ws;
             if ((::ioctl(fd, TIOCGWINSZ, &ws) == 0) && (ws.ws_col > 0))
                 windowWidth = ws.ws_col;
@@ -802,7 +804,7 @@ void getOutputInformation(bool *useAnsiColors, bool *runningInCreator, int *wind
     if (runningInCreator)
         *runningInCreator = detectedRunningInCreator;
     if (windowWidth)
-        *windowWidth = runningInCreator ? 120 : calculateWindowWidth(consoleFd);
+        *windowWidth = detectedRunningInCreator ? 120 : calculateWindowWidth(consoleFd);
 }
 
 qint64 getParentPid(qint64 pid)

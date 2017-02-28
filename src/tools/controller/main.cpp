@@ -562,7 +562,7 @@ void installPackage(const QString &package, const QString &location) throw(Excep
             throw Exception(Error::IO, "Could not copy from stdin to temporary file %1").arg(package);
     }
 
-    QFileInfo fi(package);
+    QFileInfo fi(packageFile);
     if (!fi.exists() || !fi.isReadable() || !fi.isFile())
         throw Exception(Error::IO, "Package file is not readable: %1").arg(packageFile);
 

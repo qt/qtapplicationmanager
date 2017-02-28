@@ -104,31 +104,27 @@ TestCase {
     }
 
     function test_systemProperties() {
-        function sub(obj) {
-            compare(obj.ignored, undefined)
-            compare(obj.booleanTest, true)
-            compare(obj.stringTest, "pelagicore")
-            compare(obj.intTest, -1)
-            compare(obj.floatTest, .5)
-            compare(obj.arrayTest[0], "value1")
-            compare(obj.arrayTest[1], "value2")
-            compare(obj.mapTest["key1"], "1")
-            compare(obj.mapTest["key2"], "2")
-            compare(obj.nested.level21, 21)
-            compare(obj.nested.level2.level31, 31)
-            compare(obj.nested.level2.level32, undefined)
-            compare(obj.nested.level21, 21)
-            compare(obj.nested.level22, 22)
-            compare(obj.pub1, 'pub1')
-            compare(obj.pro1, 'pro1')
-            compare(obj.pubandpro, 'pro2')
-            compare(obj.pubandpri, 'pri3')
-            compare(obj.proandpri, 'pri4')
-            compare(obj.inall, 'private')
-            compare(obj.nullTest, null)
-        }
-        sub(ApplicationManager.systemProperties);
-        sub(ApplicationManager.additionalConfiguration);
+        compare(ApplicationManager.systemProperties.ignored, undefined)
+        compare(ApplicationManager.systemProperties.booleanTest, true)
+        compare(ApplicationManager.systemProperties.stringTest, "pelagicore")
+        compare(ApplicationManager.systemProperties.intTest, -1)
+        compare(ApplicationManager.systemProperties.floatTest, .5)
+        compare(ApplicationManager.systemProperties.arrayTest[0], "value1")
+        compare(ApplicationManager.systemProperties.arrayTest[1], "value2")
+        compare(ApplicationManager.systemProperties.mapTest["key1"], "1")
+        compare(ApplicationManager.systemProperties.mapTest["key2"], "2")
+        compare(ApplicationManager.systemProperties.nested.level21, 21)
+        compare(ApplicationManager.systemProperties.nested.level2.level31, 31)
+        compare(ApplicationManager.systemProperties.nested.level2.level32, undefined)
+        compare(ApplicationManager.systemProperties.nested.level21, 21)
+        compare(ApplicationManager.systemProperties.nested.level22, 22)
+        compare(ApplicationManager.systemProperties.pub1, 'pub1')
+        compare(ApplicationManager.systemProperties.pro1, 'pro1')
+        compare(ApplicationManager.systemProperties.pubandpro, 'pro2')
+        compare(ApplicationManager.systemProperties.pubandpri, 'pri3')
+        compare(ApplicationManager.systemProperties.proandpri, 'pri4')
+        compare(ApplicationManager.systemProperties.inall, 'private')
+        compare(ApplicationManager.systemProperties.nullTest, null)
     }
 
     function test_application() {

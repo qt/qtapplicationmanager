@@ -431,11 +431,6 @@ QString NativeRuntimeApplicationInterface::applicationId() const
     return QString();
 }
 
-QVariantMap NativeRuntimeApplicationInterface::additionalConfiguration() const
-{
-    return systemProperties();
-}
-
 QVariantMap NativeRuntimeApplicationInterface::systemProperties() const
 {
     if (m_runtime)

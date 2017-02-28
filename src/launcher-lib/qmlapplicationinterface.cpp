@@ -171,11 +171,6 @@ QVariantMap QmlApplicationInterface::systemProperties() const
     return m_systemProperties;
 }
 
-QVariantMap QmlApplicationInterface::additionalConfiguration() const
-{
-    return m_systemProperties;
-}
-
 QVariantMap QmlApplicationInterface::applicationProperties() const
 {
     return m_applicationProperties;

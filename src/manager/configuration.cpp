@@ -601,12 +601,7 @@ bool Configuration::dbusStartSessionBus() const
 
 QVariantMap Configuration::rawSystemProperties() const
 {
-    QVariantMap vm = d->findInConfigFile({ qSL("systemProperties") }).toMap();
-    if (vm.isEmpty()) {  // for temporary backwards compatibility:
-        QVariant ac = d->findInConfigFile({ qSL("ui"), qSL("additionalConfiguration") });
-        vm = { std::pair<QString, QVariant>(QStringLiteral("public"), ac) };
-    }
-    return vm;
+    return d->findInConfigFile({ qSL("systemProperties") }).toMap();
 }
 
 bool Configuration::applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const

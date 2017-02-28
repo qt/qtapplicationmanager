@@ -75,7 +75,6 @@ class ApplicationManager : public QAbstractListModel, protected QDBusContext
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT)
-    Q_PROPERTY(QVariantMap additionalConfiguration READ additionalConfiguration CONSTANT)  // deprecated
     Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
 
 public:
@@ -96,8 +95,6 @@ public:
     bool isDummy() const { return false; }
     QVariantMap systemProperties() const;
     void setSystemProperties(const QVariantMap &map);
-    QVariantMap additionalConfiguration() const;
-    void setAdditionalConfiguration(const QVariantMap &map);
 
     void setDebugWrapperConfiguration(const QVariantList &debugWrappers);
 

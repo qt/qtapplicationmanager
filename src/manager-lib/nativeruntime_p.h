@@ -57,7 +57,6 @@ public:
 
     QString applicationId() const override;
     QVariantMap systemProperties() const override;
-    QVariantMap additionalConfiguration() const override;
     QVariantMap applicationProperties() const override;
 
     virtual void finishedInitialization() override;

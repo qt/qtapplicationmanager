@@ -471,11 +471,6 @@ void ApplicationManager::setSecurityChecksEnabled(bool enabled)
     d->securityChecksEnabled = enabled;
 }
 
-QVariantMap ApplicationManager::additionalConfiguration() const
-{
-    return d->systemProperties;
-}
-
 QVariantMap ApplicationManager::systemProperties() const
 {
     return d->systemProperties;

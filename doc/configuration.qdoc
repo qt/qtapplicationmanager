@@ -162,7 +162,16 @@ all your imports paths and file references relative to your main config file.
     \li \b -I
     \br \e ui/importPaths
     \li array<string>
-    \li Add an additional QML import path to the system UI.
+    \li Adds additional QML import paths to the system UI.
+\row
+    \li \b -
+    \br \e plugins
+    \li map<array<string>>
+    \li A string-to-string-list map that defines plugins that the application-manager should load.
+        The value must be a list of plugin library file path names. A single plugin will also be
+        accepted. Currently the only valid key is \c startup. The plugin itself must implement the
+        \c StartupInterface. The application-manager will call the function hooks during startup of
+        the system UI.
 \row
     \li \b -
         \target system properties
@@ -430,6 +439,18 @@ an additional column specifying which runtime a configuration option applies to:
     \li qml
     \li array<string>
     \li Add an additional QML import path for apps started via this runtime.
+\row
+    \li \c plugins
+    \li qml
+    \li map<array<string>>
+    \li A string-to-string-list map that defines plugins that the QML runtime should load. The
+        value must be a list of plugin library file path names. A single plugin will also be
+        accepted. Currently the only valid keys are \c startup and \c container:
+        \list
+        \li \c startup: this plugin must implement the \c StartupInterface. The QML runtime will
+            call the function hooks during startup of an application.
+        \li \c container: this plugin must implement the \c ContainerInterface (see \l Containers).
+        \endlist
 \row
     \li \c quicklaunchQml
     \li qml

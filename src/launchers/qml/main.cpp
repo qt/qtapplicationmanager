@@ -474,10 +474,24 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     }
 
+    if (m_applicationInterface) {
+        m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
+
+        QVariantMap &svm = m_applicationInterface->m_systemProperties;
+        svm = qdbus_cast<QVariantMap>(systemProperties);
+        for (auto it = svm.begin(); it != svm.end(); ++it)
+            it.value() = convertFromDBusVariant(it.value());
+
+        QVariantMap &avm = m_applicationInterface->m_applicationProperties;
+        avm = qdbus_cast<QVariantMap>(application.value(qSL("applicationProperties")));
+        for (auto it = avm.begin(); it != avm.end(); ++it)
+            it.value() = convertFromDBusVariant(it.value());
+    }
+
     QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
     auto startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
     foreach (StartupInterface *iface, startupPlugins)
-        iface->initialize(m_applicationInterface->systemProperties());
+        iface->initialize(m_applicationInterface ? m_applicationInterface->systemProperties() : QVariantMap());
 
     bool loadDummyData = runtimeParameters.value(qSL("loadDummyData")).toBool()
             || m_configuration.value(qSL("loadDummydata")).toBool();
@@ -499,20 +513,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         m_engine.addImportPath(path);
     }
     qCDebug(LogQmlRuntime) << "Qml import paths:" << m_engine.importPathList();
-
-    if (m_applicationInterface) {
-        m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
-
-        QVariantMap &svm = m_applicationInterface->m_systemProperties;
-        svm = qdbus_cast<QVariantMap>(systemProperties);
-        for (auto it = svm.begin(); it != svm.end(); ++it)
-            it.value() = convertFromDBusVariant(it.value());
-
-        QVariantMap &avm = m_applicationInterface->m_applicationProperties;
-        avm = qdbus_cast<QVariantMap>(application.value(qSL("applicationProperties")));
-        for (auto it = avm.begin(); it != avm.end(); ++it)
-            it.value() = convertFromDBusVariant(it.value());
-    }
 
     foreach (StartupInterface *iface, startupPlugins)
         iface->beforeQmlEngineLoad(&m_engine);

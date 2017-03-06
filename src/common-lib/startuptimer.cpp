@@ -283,15 +283,15 @@ void StartupTimer::checkpoint(const QString &name)
 void StartupTimer::createReport(const QString &title)
 {
     if (m_output) {
-        bool useAnsiColors;
-        getOutputInformation(&useAnsiColors, nullptr, nullptr, fileno(m_output));
+        bool ansiColorSupport = false;
+        if (m_output == stderr)
+            getOutputInformation(&ansiColorSupport, nullptr, nullptr);
 
         if (!m_reportCreated) {
-            if (useAnsiColors) {
-                fprintf(m_output, "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n", title.toLocal8Bit().data());
-            } else {
-                fprintf(m_output, "\n== STARTUP TIMING REPORT: %s ==\n", title.toLocal8Bit().data());
-            }
+            const char *format = "\n== STARTUP TIMING REPORT: %s ==\n";
+            if (ansiColorSupport)
+                format = "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n";
+            fprintf(m_output, format, title.toLocal8Bit().data());
         }
 
         static const int barCols = 60;
@@ -311,7 +311,7 @@ void StartupTimer::createReport(const QString &title)
             const QByteArray text = m_checkpoints.at(i).second;
             int sec = 0;
             int cells = usec / usecPerCell;
-            QByteArray bar(cells, useAnsiColors ? ' ' : '#');
+            QByteArray bar(cells, ansiColorSupport ? ' ' : '#');
             QByteArray spacing(maxTextLen - text.length(), ' ');
 
             if (usec > 1000*1000) {
@@ -321,11 +321,11 @@ void StartupTimer::createReport(const QString &title)
             int msec = usec / 1000;
             usec %= 1000;
 
-            if (useAnsiColors) {
-                fprintf(m_output, "\033[32m%d'%03d.%03d\033[0m %s %s\033[44m %s\033[0m\n", sec, msec, int(usec), text.constData(), spacing.constData(), bar.constData());
-            } else {
-                fprintf(m_output, "%d'%03d.%03d %s %s#%s\n", sec, msec, int(usec), text.constData(), spacing.constData(), bar.constData());
-            }
+            const char *format = "%d'%03d.%03d %s %s#%s\n";
+            if (ansiColorSupport)
+                format = "\033[32m%d'%03d.%03d\033[0m %s %s\033[44m %s\033[0m\n";
+
+            fprintf(m_output, format, sec, msec, int(usec), text.constData(), spacing.constData(), bar.constData());
         }
         fflush(m_output);
 

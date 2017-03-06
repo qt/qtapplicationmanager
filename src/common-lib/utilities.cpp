@@ -51,6 +51,7 @@
 
 #include "utilities.h"
 #include "exception.h"
+#include "unixsignalhandler.h"
 
 #include <errno.h>
 
@@ -58,8 +59,10 @@
 #  include <unistd.h>
 #  include <sys/ioctl.h>
 #  include <termios.h>
+#  include <signal.h>
 #endif
 #if defined(Q_OS_WIN)
+#  include <QThread>
 #  include <windows.h>
 #  include <io.h>
 #  include <tlhelp32.h>
@@ -435,7 +438,6 @@ QString findOnSDCard(const QString &file)
 
 QT_END_NAMESPACE_AM
 
-#include <unixsignalhandler.h>
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <setjmp.h>
@@ -704,37 +706,16 @@ void setCrashActionConfiguration(const QVariantMap &config)
 
 #endif // !Q_OS_LINUX
 
-void getOutputInformation(bool *useAnsiColors, bool *runningInCreator, int *windowWidth, int consoleFd)
+void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *consoleWidth)
 {
-    static enum { ColorAuto, ColorOff, ColorOn } forceColor = ColorAuto;
-    static bool consoleSupportsAnsiColors = false;
-    static bool detectedRunningInCreator = false;
+    static bool ansiColorSupportDetected = false;
+    static bool runningInCreatorDetected = false;
+    static QAtomicInteger<int> consoleWidthCached(0);
+    static int consoleWidthCalculated = -1;
     static bool once = false;
 
-    static auto calculateWindowWidth = [](int fd) -> int {
-        int windowWidth = -1;
-#if defined(Q_OS_UNIX)
-        if (fd < 0)
-            fd = STDERR_FILENO;
-        if (::isatty(fd)) {
-            struct ::winsize ws;
-            if ((::ioctl(fd, TIOCGWINSZ, &ws) == 0) && (ws.ws_col > 0))
-                windowWidth = ws.ws_col;
-        }
-#elif defined(Q_OS_WIN)
-        HANDLE h = (fd >= 0) ? (HANDLE) _get_osfhandle(fd) : GetStdHandle(STD_ERROR_HANDLE);
-        if (h != INVALID_HANDLE_VALUE && h != NULL) {
-            CONSOLE_SCREEN_BUFFER_INFO csbi;
-            if (GetConsoleScreenBufferInfo(h, &csbi))
-                windowWidth = csbi.dwSize.X;
-        }
-#endif
-        return windowWidth;
-    };
-
-    bool forStderr = (consoleFd < 0) || (consoleFd == 2);
-
     if (!once) {
+        enum { ColorAuto, ColorOff, ColorOn } forceColor = ColorAuto;
         QByteArray forceColorOutput = qgetenv("AM_FORCE_COLOR_OUTPUT");
         if (forceColorOutput == "off" || forceColorOutput == "0")
             forceColor = ColorOff;
@@ -743,7 +724,7 @@ void getOutputInformation(bool *useAnsiColors, bool *runningInCreator, int *wind
 
 #if defined(Q_OS_UNIX)
         if (::isatty(STDERR_FILENO))
-            consoleSupportsAnsiColors = true;
+            ansiColorSupportDetected = true;
 
 #elif defined(Q_OS_WIN)
         HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
@@ -754,7 +735,7 @@ void getOutputInformation(bool *useAnsiColors, bool *runningInCreator, int *wind
                 if (GetConsoleMode(h, &mode)) {
                     mode |= 0x04;
                     if (SetConsoleMode(h, mode))
-                        consoleSupportsAnsiColors = true;
+                        ansiColorSupportDetected = true;
                 }
             }
         }
@@ -770,14 +751,14 @@ void getOutputInformation(bool *useAnsiColors, bool *runningInCreator, int *wind
             static QString checkCreator = qSL("/proc/%1/exe");
             QFileInfo fi(checkCreator.arg(pid));
             if (fi.readLink().contains(qSL("qtcreator"))) {
-                detectedRunningInCreator = true;
+                runningInCreatorDetected = true;
                 break;
             }
 #elif defined(Q_OS_OSX)
             static char buffer[PROC_PIDPATHINFO_MAXSIZE + 1];
             int len = proc_pidpath(pid, buffer, sizeof(buffer) - 1);
             if ((len > 0) && QByteArray::fromRawData(buffer, len).contains("Qt Creator")) {
-                detectedRunningInCreator = true;
+                runningInCreatorDetected = true;
                 break;
             }
 #elif defined(Q_OS_WIN)
@@ -787,26 +768,78 @@ void getOutputInformation(bool *useAnsiColors, bool *runningInCreator, int *wind
                 DWORD exeNameSize = sizeof(exeName) - 1;
                 if (QueryFullProcessImageNameW(hProcess, 0, exeName, &exeNameSize)) {
                     if (QString::fromWCharArray(exeName, exeNameSize).contains(qSL("qtcreator.exe")))
-                        detectedRunningInCreator = true;
+                        runningInCreatorDetected = true;
                 }
             }
 #endif
         }
+
+        if (forceColor != ColorAuto)
+            ansiColorSupportDetected = (forceColor == ColorOn);
+        else if (!ansiColorSupportDetected)
+            ansiColorSupportDetected = runningInCreatorDetected;
+
+#if defined(Q_OS_UNIX) && defined(SIGWINCH)
+        UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, SIGWINCH, [](int) {
+            consoleWidthCached = 0;
+        });
+#elif defined(Q_OS_WIN)
+        class ConsoleThread : public QThread
+        {
+        public:
+            ConsoleThread(QObject *parent)
+                : QThread(parent)
+            { }
+        protected:
+            void run() override
+            {
+                HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+                DWORD mode = 0;
+                if (!GetConsoleMode(h, &mode))
+                    return;
+                if (!SetConsoleMode(h, mode | ENABLE_WINDOW_INPUT))
+                    return;
+
+                INPUT_RECORD ir;
+                DWORD irRead = 0;
+                while (ReadConsoleInputW(h, &ir, 1, &irRead)) {
+                    if ((irRead == 1) && (ir.EventType == WINDOW_BUFFER_SIZE_EVENT))
+                        consoleWidthCached = 0;
+                }
+            }
+        };
+        (new ConsoleThread(qApp))->start();
+#endif // Q_OS_WIN
         once = true;
     }
 
-    if (useAnsiColors) {
-        if (forceColor == ColorAuto)
-            *useAnsiColors = forStderr && (consoleSupportsAnsiColors || detectedRunningInCreator);
-        else
-            *useAnsiColors = forStderr && (forceColor == ColorOn);
-    }
+    if (ansiColorSupport)
+        *ansiColorSupport = ansiColorSupportDetected;
     if (runningInCreator)
-        *runningInCreator = detectedRunningInCreator;
-    if (windowWidth) {
-        *windowWidth = calculateWindowWidth(consoleFd);
-        if ((*windowWidth <= 0) && detectedRunningInCreator)
-            *windowWidth = 120;
+        *runningInCreator = runningInCreatorDetected;
+    if (consoleWidth) {
+        if (!consoleWidthCached) {
+            consoleWidthCached = 1;
+            consoleWidthCalculated = -1;
+#if defined(Q_OS_UNIX)
+            if (::isatty(STDERR_FILENO)) {
+                struct ::winsize ws;
+                if ((::ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == 0) && (ws.ws_col > 0))
+                    consoleWidthCalculated = ws.ws_col;
+            }
+#elif defined(Q_OS_WIN)
+            HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
+            if (h != INVALID_HANDLE_VALUE && h != NULL) {
+                CONSOLE_SCREEN_BUFFER_INFO csbi;
+                if (GetConsoleScreenBufferInfo(h, &csbi))
+                    consoleWidthCalculated = csbi.dwSize.X;
+            }
+#endif
+        }
+        if ((consoleWidthCalculated <= 0) && runningInCreatorDetected)
+            *consoleWidth = 120;
+        else
+            *consoleWidth = consoleWidthCalculated;
     }
 }
 

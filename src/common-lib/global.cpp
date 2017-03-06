@@ -46,7 +46,6 @@
 
 #include "global.h"
 #include "utilities.h"
-#include "unixsignalhandler.h"
 
 #include <stdio.h>
 #if defined(Q_OS_WIN)
@@ -122,21 +121,10 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         out.reserve(512);
     out.resize(0);
 
-    static int windowWidth = -1;
-    static bool useAnsiColors = false;
-    static QAtomicInteger<int> windowSizeCached(0);
-
-#if defined(Q_OS_UNIX) && defined(SIGWINCH)
-    UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, SIGWINCH, [](int) {
-        windowSizeCached = 0;
-    });
-#endif
-    // This while loop is needed, since SIGWINCH could arrive while getOutputInformation is running.
-    // In reality this should never happen, short of the user resizing his console like a madman.
-    while (!windowSizeCached) {
-        windowSizeCached = 1;
-        getOutputInformation(&useAnsiColors, nullptr, &windowWidth);
-    }
+    int consoleWidth = -1;
+    bool ansiColorSupport = false;
+    bool runningInCreator = false;
+    getOutputInformation(&ansiColorSupport, &runningInCreator, &consoleWidth);
 
     // Find out, if we have a valid code location and prepare the output strings
     const char *filename = nullptr;
@@ -166,7 +154,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
     enum ConsoleColor { Off = 0, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, BrightFlag = 0x80 };
 
     // helper function to append ANSI color codes to a string
-    static auto color = [](QByteArray &out, int consoleColor) -> void {
+    static auto color = [ansiColorSupport](QByteArray &out, int consoleColor) -> void {
         static const char *ansiColors[] = {
             "\x1b[1m",  // bright
             "\x1b[0m",  // off
@@ -180,7 +168,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
             "\x1b[37m" // gray
         };
 
-        if (!useAnsiColors)
+        if (!ansiColorSupport)
             return;
         if (consoleColor & BrightFlag)
             out.append(ansiColors[0]);
@@ -221,9 +209,9 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
     if (filenameLength && linenumberLength) {
         int spacing = 1;
-        if (windowWidth > 0) {
+        if (consoleWidth > 0) {
             // right-align the location mark
-            spacing = windowWidth - outLength - linenumberLength - filenameLength - 4; // 4 == strlen(" [:]")
+            spacing = consoleWidth - outLength - linenumberLength - filenameLength - 4; // 4 == strlen(" [:]")
 
             // keep the location mark right-aligned, even if the message contains newlines
             int lastNewline = msg.lastIndexOf('\n');
@@ -232,7 +220,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
             // keep the location mark right-aligned, even if the message is longer than the window width
             while (spacing < 0)
-                spacing += windowWidth;
+                spacing += consoleWidth;
         }
         out.append(spacing, ' ');
         out.append('[');
@@ -252,7 +240,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         out.append('\n');
     }
 
-    if (windowWidth <= 0) {
+    if (consoleWidth <= 0) {
 #if defined(Q_OS_WIN)
         // do not use QMutex to avoid possible recursions
         static CRITICAL_SECTION cs;
@@ -282,7 +270,6 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 #endif
     }
     fputs(out.constData(), stderr);
-    fflush(stderr);
 }
 
 #if defined(QT_GENIVIEXTRAS_LIB)

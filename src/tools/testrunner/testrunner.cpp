@@ -121,28 +121,20 @@ static QObject *testRootObject(QQmlEngine *engine, QJSEngine *jsEngine)
     return QTestRootObject::instance();
 }
 
-void TestRunner::initialize(char *name, const QStringList &positionalArguments)
+void TestRunner::initialize(const QStringList &testRunnerArguments)
 {
-    QuickTestResult::setCurrentAppname(name);
-    QuickTestResult::setProgramName(name);
+    Q_ASSERT(!testRunnerArguments.isEmpty());
 
-    //Convert all the positional arguments back into a char * array.
-    QScopedArrayPointer<char *> testArgV(new char *[positionalArguments.count() + 1]);
-    testArgV[0] = name;
-    int testArgC = 1;
+    // Convert all the arguments back into a char * array.
+    // These need to be alive as long as the program is running!
+    static QVector<char *> testArgV;
+    for (const auto &arg : testRunnerArguments)
+        testArgV << strdup(arg.toLocal8Bit().constData());
+    atexit([]() { std::for_each(testArgV.constBegin(), testArgV.constEnd(), free); });
 
-    static QList<QByteArray> argList;
-    argList.append("");
-    for (const auto &arg : positionalArguments) {
-        //This is already parsed by appman
-        if (arg.endsWith(qL1S(".qml")))
-            continue;
-        argList.append(arg.toLocal8Bit());
-        testArgV[testArgC] = argList[testArgC].data();
-        testArgC++;
-    }
-
-    QuickTestResult::parseArgs(testArgC, testArgV.data());
+    QuickTestResult::setCurrentAppname(testArgV.constFirst());
+    QuickTestResult::setProgramName(testArgV.constFirst());
+    QuickTestResult::parseArgs(testArgV.size(), testArgV.data());
     qputenv("QT_QTESTLIB_RUNNING", "1");
 
     // Register the test object

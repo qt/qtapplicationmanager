@@ -20,6 +20,7 @@ win32:LIBS += -luser32
 HEADERS += \
     $$PWD/qmllogger.h \
     $$PWD/configuration.h \
+    $$PWD/main.h
 
 SOURCES += \
     $$PWD/main.cpp \

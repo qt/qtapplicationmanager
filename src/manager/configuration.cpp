@@ -42,6 +42,7 @@
 #include <QFile>
 #include <QVariantMap>
 #include <QFileInfo>
+#include <QCoreApplication>
 #include <QDebug>
 
 #include <functional>
@@ -201,8 +202,6 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("build-config"),         qSL("dumps the build configuration and exits.") });
     d->clp.addOption({ qSL("qml-debug"),            qSL("enables QML debugging and profiling.") });
     d->clp.addOption({ { qSL("o"), qSL("option") }, qSL("override a specific config option."), qSL("yaml-snippet") });
-
-    initialize();
 }
 
 Configuration::~Configuration()
@@ -254,7 +253,7 @@ static void showParserMessage(const QString &message, MessageType type)
 // ^^^^ copied from QCommandLineParser ... why is this not public API?
 
 
-void Configuration::initialize()
+void Configuration::parse()
 {
     if (!d->clp.parse(QCoreApplication::arguments())) {
         showParserMessage(d->clp.errorText() + qL1C('\n'), ErrorMessage);
@@ -691,9 +690,13 @@ QStringList Configuration::pluginFilePaths(const char *type) const
     return variantToStringList(d->findInConfigFile({ qSL("plugins"), qL1S(type) }));
 }
 
-QStringList Configuration::positionalArguments() const
+QStringList Configuration::testRunnerArguments() const
 {
-    return d->clp.positionalArguments();
+    QStringList targs = d->clp.positionalArguments();
+    if (!targs.isEmpty() && targs.constFirst().endsWith(qL1S(".qml")))
+        targs.removeFirst();
+    targs.prepend(QCoreApplication::arguments().constFirst());
+    return targs;
 }
 
 QT_END_NAMESPACE_AM

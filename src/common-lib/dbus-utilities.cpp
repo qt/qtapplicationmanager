@@ -146,9 +146,13 @@ QVariant convertFromDBusVariant(const QVariant &variant)
 void registerDBusTypes()
 {
 #if defined(QT_DBUS_LIB)
-    qDBusRegisterMetaType<QUrl>();
-    qDBusRegisterMetaType<QMap<QString, QDBusUnixFileDescriptor>>();
-    qDBusRegisterMetaType<QT_PREPEND_NAMESPACE_AM(UnixFdMap)>();
+    static bool once = false;
+    if (!once) {
+        qDBusRegisterMetaType<QUrl>();
+        qDBusRegisterMetaType<QMap<QString, QDBusUnixFileDescriptor>>();
+        qDBusRegisterMetaType<QT_PREPEND_NAMESPACE_AM(UnixFdMap)>();
+        once = true;
+    }
 #endif
 }
 

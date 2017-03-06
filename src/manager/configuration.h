@@ -55,6 +55,8 @@ public:
     Configuration();
     ~Configuration();
 
+    void parse();
+
     QString mainQmlFile() const;
     QString database() const;
     bool recreateDatabase() const;
@@ -110,11 +112,9 @@ public:
 
     QStringList pluginFilePaths(const char *type) const;
 
-    QStringList positionalArguments() const;
+    QStringList testRunnerArguments() const;
 
 private:
-    void initialize();
-
     ConfigurationPrivate *d;
 };
 

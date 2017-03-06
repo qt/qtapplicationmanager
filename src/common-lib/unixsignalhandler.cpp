@@ -48,11 +48,13 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+#if defined(Q_OS_UNIX)
 // make it clear in the valgrind backtrace that this is a deliberate leak
 static void *malloc_valgrind_ignore(size_t size)
 {
     return malloc(size);
 }
+#endif
 
 // sigmask() is not available on Windows
 UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)

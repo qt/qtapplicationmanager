@@ -263,6 +263,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         EnterCriticalSection(&cs);
         OutputDebugStringA(out.constData());
         LeaveCriticalSection(&cs);
+        return;
 
 #elif defined(Q_OS_ANDROID)
         android_LogPriority pri = ANDROID_LOG_DEBUG;
@@ -277,6 +278,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         static QByteArray appName = QCoreApplication::applicationName().toLocal8Bit();
 
         __android_log_print(pri, appName.constData(), out.constData());
+        return;
 #endif
     }
     fputs(out.constData(), stderr);

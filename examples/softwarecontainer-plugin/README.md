@@ -56,8 +56,16 @@ container selection configuration:
 [https://doc-snapshots.qt.io/qtapplicationmanager/containers.html#container-selection-configuration][]
 
 
-Please be aware that for easier development, the plugin simply mounts your
-$HOME directory into the container in read-only mode: since you normally do
-not install your application-manager into /usr/ after every build, the
-container would not see the appman-launcher-qml binary, which should be
-somewhere in your custom build directory below $HOME.
+Please be aware that for easier development on the desktop, you normally want
+your $HOME directory mounted into the container in read-only mode, so you do
+not have to install your application-manager into /usr/ after every build
+(given that your build directory is somewhere in $HOME, the container would
+not see the appman-launcher-qml binary).
+This is *not* done by default, but you can activate this behavior by adding
+this to one of your config.yaml files:
+
+```
+containers:
+  softwarecontainer:
+    bindMountHome: yes
+```

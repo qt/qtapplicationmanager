@@ -328,7 +328,8 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
 
     // for development only - mount the user's $HOME dir into the container as read-only. Otherwise
     // you would have to `make install` the AM into /usr on every rebuild
-    bindMounts.append(std::make_tuple(QDir::homePath(), QDir::homePath(), true));
+    if (manager()->configuration().value(QStringLiteral("bindMountHome")).toBool())
+        bindMounts.append(std::make_tuple(QDir::homePath(), QDir::homePath(), true));
 
     // do all the bind-mounts in parallel to waste as little time as possible
     QList<QDBusPendingReply<>> bindMountResults;

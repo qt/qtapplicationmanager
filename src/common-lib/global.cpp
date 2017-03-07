@@ -222,7 +222,18 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
             while (spacing < 0)
                 spacing += consoleWidth;
         }
+#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
+        // efficiently appending spaces without allocating is hard in Qt 5.6
+        static const char spacingStr[] = "                                                                               ";
+        Q_STATIC_ASSERT(sizeof(spacingStr) == 80);
+        while (spacing > 0) {
+            int spacingLen = qMin(spacing, int(sizeof(spacingStr)) - 1);
+            out.append(spacingStr, spacingLen);
+            spacing -= spacingLen;
+        }
+#else
         out.append(spacing, ' ');
+#endif
         out.append('[');
 
         color(out, Magenta);

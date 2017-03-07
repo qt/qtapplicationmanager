@@ -414,7 +414,12 @@ void tst_ApplicationInstaller::cleanup()
     // this helps with reducing the amount of cleanup work required
     // at the end of each test
 
-    m_ai->cleanupBrokenInstallations();
+    try {
+        m_ai->cleanupBrokenInstallations();
+    } catch (const Exception &e) {
+        QFAIL(e.what());
+    }
+
     clearSignalSpies();
     recursiveOperation(pathTo(Internal0), SafeRemove());
 }

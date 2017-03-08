@@ -765,6 +765,30 @@ QString ApplicationInstaller::taskState(const QString &taskId)
 }
 
 /*!
+    \qmlmethod string ApplicationInstaller::taskApplicationId(string taskId)
+
+    Returns the application id associated with the task identified by \a taskId. The task may not
+    have a valid application id at all times though and in this case the function will return an
+    empty string (this will be the case for installations before the taskRequestingInstallationAcknowledge
+    signal has been emitted).
+
+    Returns an empty string if the \a taskId is invalid.
+*/
+QString ApplicationInstaller::taskApplicationId(const QString &taskId)
+{
+    AM_AUTHENTICATE_DBUS(QString)
+
+    auto allTasks = d->taskQueue;
+    allTasks.append(d->activeTask);
+
+    for (const AsynchronousTask *task : qAsConst(allTasks)) {
+        if (task && (task->id() == taskId))
+            return task->applicationId();
+    }
+    return QString();
+}
+
+/*!
     \qmlmethod bool ApplicationInstaller::cancelTask(string taskId)
 
     Tries to cancel the installation task identified by \a taskId.

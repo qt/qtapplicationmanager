@@ -120,6 +120,7 @@ public:
     Q_SCRIPTABLE QString removePackage(const QString &id, bool keepDocuments, bool force = false);
 
     Q_SCRIPTABLE QString taskState(const QString &taskId);
+    Q_SCRIPTABLE QString taskApplicationId(const QString &taskId);
     Q_SCRIPTABLE bool cancelTask(const QString &taskId);
 
     // convenience function for app-store implementations

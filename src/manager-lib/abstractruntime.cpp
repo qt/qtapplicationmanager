@@ -107,7 +107,7 @@ void AbstractRuntime::openDocument(const QString &document, const QString &mimeT
 
 const Application *AbstractRuntime::application() const
 {
-    return m_app;
+    return m_app.data();
 }
 
 AbstractRuntime::~AbstractRuntime()

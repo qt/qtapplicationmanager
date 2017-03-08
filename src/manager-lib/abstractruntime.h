@@ -44,6 +44,7 @@
 #include <QObject>
 #include <QString>
 #include <QProcess>
+#include <QPointer>
 
 #include <QtAppManCommon/global.h>
 
@@ -147,7 +148,7 @@ protected:
     QVariantMap configuration() const;
 
     AbstractContainer *m_container;
-    const Application *m_app;
+    QPointer<const Application> m_app;
     AbstractRuntimeManager *m_manager;
 
     QByteArray m_securityToken;

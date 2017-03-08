@@ -459,19 +459,20 @@ void Application::mergeInto(Application *app) const
     app->m_codeFilePath = m_codeFilePath;
     app->m_runtimeName = m_runtimeName;
     app->m_runtimeParameters = m_runtimeParameters;
+    app->m_environmentVariables = m_environmentVariables;
     app->m_name = m_name;
     app->m_icon = m_icon;
-    app->m_preload = m_preload;
-    app->m_importance = m_importance;
-    app->m_capabilities = m_capabilities;
-    app->m_mimeTypes = m_mimeTypes;
-    app->m_categories = m_categories;
-    app->m_backgroundMode = m_backgroundMode;
-    app->m_version = m_version;
-    app->m_environmentVariables = m_environmentVariables;
+    app->m_documentUrl = m_documentUrl;
     app->m_allAppProperties = m_allAppProperties;
     app->m_sysAppProperties = m_sysAppProperties;
     app->m_supportsApplicationInterface = m_supportsApplicationInterface;
+    app->m_preload = m_preload;
+    app->m_importance = m_importance;
+    app->m_capabilities = m_capabilities;
+    app->m_categories = m_categories;
+    app->m_mimeTypes = m_mimeTypes;
+    app->m_backgroundMode = m_backgroundMode;
+    app->m_version = m_version;
     emit app->bulkChange();
 }
 

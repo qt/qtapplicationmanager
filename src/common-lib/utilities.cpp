@@ -159,6 +159,46 @@ bool checkCorrectLocale()
 #endif
 }
 
+/*! \internal
+    Check a YAML document against the "standard" AM header.
+    If \a numberOfDocuments is positive, the number of docs need to match exactly. If it is
+    negative, the \a numberOfDocuments is taken as the required minimum amount of documents.
+
+*/
+void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
+                     const QVector<QByteArray> &formatTypes, int formatVersion)
+{
+    int actualSize = docs.size();
+    QByteArray actualFormatType;
+    int actualFormatVersion = 0;
+
+    if (actualSize >= 1) {
+        const auto map = docs.constFirst().toMap();
+        actualFormatType = map.value(qSL("formatType")).toString().toUtf8();
+        actualFormatVersion = map.value(qSL("formatVersion")).toInt(0);
+    }
+
+    if (numberOfDocuments < 0) {
+        if (actualSize < numberOfDocuments) {
+            throw Exception("wrong number of YAML documents: expected at least %1, got %2")
+                .arg(-numberOfDocuments).arg(actualSize);
+        }
+    } else {
+        if (actualSize != numberOfDocuments) {
+            throw Exception("wrong number of YAML documents: expected %1, got %2")
+                .arg(numberOfDocuments).arg(actualSize);
+        }
+    }
+    if (!formatTypes.contains(actualFormatType)) {
+        throw Exception("wrong formatType header: expected %1, got %2")
+            .arg(QString::fromUtf8(formatTypes.toList().join(", or ")), QString::fromUtf8(actualFormatType));
+    }
+    if (actualFormatVersion != formatVersion) {
+        throw Exception("wrong formatVersion header: expected %1, got %2")
+                .arg(formatVersion).arg(actualFormatVersion);
+    }
+}
+
 bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree)
 {
     QString cpath = QFileInfo(path).canonicalPath();

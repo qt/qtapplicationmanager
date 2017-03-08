@@ -328,12 +328,11 @@ void Configuration::initialize()
             exit(1);
         }
 
-        if ((docs.size() != 2)
-                || (docs.first().toMap().value(qSL("formatType")).toString() != qL1S("am-configuration"))
-                || (docs.first().toMap().value(qSL("formatVersion")).toInt(0) != 1)
-                || (docs.at(1).type() != QVariant::Map)) {
-            showParserMessage(QString::fromLatin1("Could not parse config file '%1': Invalid document format.\n")
-                              .arg(cf.fileName()), ErrorMessage);
+        try {
+            checkYamlFormat(docs, 2 /*number of expected docs*/, { "am-configuration" }, 1);
+        } catch (const Exception &e) {
+            showParserMessage(QString::fromLatin1("Could not parse config file '%1': %2.\n")
+                              .arg(cf.fileName()).arg(e.errorString()), ErrorMessage);
             exit(1);
         }
 

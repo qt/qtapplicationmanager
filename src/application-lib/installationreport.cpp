@@ -164,9 +164,9 @@ bool InstallationReport::deserialize(QIODevice *from)
     if (error.error != QJsonParseError::NoError)
         return false;
 
-    if ((docs.size() != 3)
-            || (docs.first().toMap().value(qSL("formatType")).toString() != qL1S("am-installation-report"))
-            || (docs.first().toMap().value(qSL("formatVersion")).toInt(0) != 1)) {
+    try {
+        checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 1);
+    } catch (const Exception &e) {
         return false;
     }
 

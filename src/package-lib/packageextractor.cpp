@@ -451,10 +451,11 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
         throw Exception(Error::Package, "metadata is not a valid YAML document: %1 (line: %2, column %3)")
             .arg(error.errorString()).arg(error.line).arg(error.column);
 
-    if ((docs.size() < 2)
-        || (docs.first().toMap().value(qSL("formatType")).toString() != qL1S(isHeader ? "am-package-header" : "am-package-footer"))
-        || (docs.first().toMap().value(qSL("formatVersion")).toInt(0) != 1))
-        throw Exception(Error::Package, "metadata has an invalid format specification");
+    try {
+        checkYamlFormat(docs, -2 /*at least 2 docs*/, { isHeader ? "am-package-header" : "am-package-footer" }, 1);
+    } catch (const Exception &e) {
+        throw Exception(Error::Package, "metadata has an invalid format specification: %1").arg(e.errorString());
+    }
 
     QVariantMap map = docs.at(1).toMap();
 

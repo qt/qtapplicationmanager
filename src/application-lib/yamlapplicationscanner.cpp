@@ -88,13 +88,15 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                     .arg(parseError.line).arg(parseError.column).arg(parseError.errorString());
         }
 
-        if ((docs.size() != 2)
-                || (docs.first().toMap().value(qSL("formatVersion")).toInt(0) != 1)) {
-            throw Exception(Error::Parse, "not a valid YAML application meta-data file");
+        try {
+            checkYamlFormat(docs, 2 /*number of expected docs*/, { "am-application", "am-application-alias" }, 1);
+        } catch (const Exception &e) {
+            throw Exception(Error::Parse, "not a valid YAML application meta-data file: %1").arg(e.errorString());
         }
 
-        bool isApp = (docs.first().toMap().value(qSL("formatType")).toString() == qL1S("am-application"));
-        bool isAlias = (docs.first().toMap().value(qSL("formatType")).toString() == qL1S("am-application-alias"));
+        const auto header = docs.constFirst().toMap();
+        bool isApp = (header.value(qSL("formatType")).toString() == qL1S("am-application"));
+        bool isAlias = (header.value(qSL("formatType")).toString() == qL1S("am-application-alias"));
 
         if (!isApp && !isAlias)
             throw Exception(Error::Parse, "not a valid YAML application manifest");

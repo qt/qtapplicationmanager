@@ -273,6 +273,39 @@
     \endqml
 */
 
+/*!
+    \qmlsignal ApplicationManager::applicationAdded(string id)
+
+    This signal is emitted after a new application, identified by \a id, has been installed via the
+    ApplicationInstaller. The model has already been update before this signal is sent out.
+
+    \note In addition to the normal "low-level" QAbstractListModel signals, the application-manager
+          will also emit these "high-level" signals for System-UIs that cannot work directly on the
+          ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
+*/
+
+/*!
+    \qmlsignal ApplicationManager::applicationAboutToBeRemoved(string id)
+
+    This signal is emitted before an existing application, identified by \a id, is removed via the
+    ApplicationInstaller.
+
+    \note In addition to the normal "low-level" QAbstractListModel signals, the application-manager
+          will also emit these "high-level" signals for System-UIs that cannot work directly on the
+          ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
+*/
+
+/*!
+    \qmlsignal ApplicationManager::applicationChanged(string id, list<string> changedRoles)
+
+    Emitted whenever one or more data roles, denoted by \a changedRole, changed on the application
+    identified by \a id.
+
+    \note In addition to the normal "low-level" QAbstractListModel signals, the application-manager
+          will also emit these "high-level" signals for System-UIs that cannot work directly on the
+          ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
+*/
+
 enum Roles
 {
     Id = Qt::UserRole,
@@ -1670,6 +1703,11 @@ QVariantMap ApplicationManager::get(int row) const
 
     Returns the Application object corresponding to the given \a index in the model,
     or \c null if the index is invalid.
+
+    \note The object ownership of the returned Application object stays with the application-manager.
+          If you want to store this pointer, you can use the ApplicationManager's QAbstractListModel
+          signals or the applicationAboutToBeRemoved signal to get notified if the object is about
+          to be deleted on the C++ side.
 */
 const Application *ApplicationManager::application(int index) const
 {
@@ -1685,6 +1723,11 @@ const Application *ApplicationManager::application(int index) const
 
     Returns the Application object corresponding to the given application \a id,
     or \c null if the id does not exist.
+
+    \note The object ownership of the returned Application object stays with the application-manager.
+          If you want to store this pointer, you can use the ApplicationManager's QAbstractListModel
+          signals or the applicationAboutToBeRemoved signal to get notified if the object is about
+          to be deleted on the C++ side.
 */
 const Application *ApplicationManager::application(const QString &id) const
 {

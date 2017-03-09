@@ -48,6 +48,7 @@
 #include <qplatformdefs.h>
 #include <QDataStream>
 
+#include "logging.h"
 #include "sudo.h"
 #include "utilities.h"
 #include "exception.h"

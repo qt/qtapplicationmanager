@@ -40,30 +40,16 @@
 ****************************************************************************/
 
 #pragma once
-#include <qglobal.h>
 
-#define QT_BEGIN_NAMESPACE_AM  namespace QtAM {
-#define QT_END_NAMESPACE_AM    }
-#define QT_USE_NAMESPACE_AM    using namespace QtAM;
-#define QT_PREPEND_NAMESPACE_AM(name) QtAM::name
+#include <QtAppManCommon/global.h>
+#include <QVariantMap>
 
-QT_BEGIN_NAMESPACE_AM // make sure the namespace exists
-QT_END_NAMESPACE_AM
+QT_BEGIN_NAMESPACE_AM
 
-// make the source a lot less ugly and more readable (until we can finally use user defined literals)
-#define qL1S(x) QLatin1String(x)
-#define qL1C(x) QLatin1Char(x)
-#define qSL(x) QStringLiteral(x)
+namespace CrashHandler {
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-namespace QtPrivate {
-template <typename T> struct QAddConst { typedef const T Type; };
+void setCrashActionConfiguration(const QVariantMap &config);
+
 }
 
-// this adds const to non-const objects (like std::as_const)
-template <typename T>
-Q_DECL_CONSTEXPR typename QtPrivate::QAddConst<T>::Type &qAsConst(T &t) Q_DECL_NOTHROW { return t; }
-// prevent rvalue arguments:
-template <typename T>
-void qAsConst(const T &&) Q_DECL_EQ_DELETE;
-#endif
+QT_END_NAMESPACE_AM

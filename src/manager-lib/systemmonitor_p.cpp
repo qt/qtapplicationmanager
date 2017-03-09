@@ -43,6 +43,7 @@
 
 #include "systemmonitor_p.h"
 #include "global.h"
+#include "logging.h"
 
 QT_BEGIN_NAMESPACE_AM
 

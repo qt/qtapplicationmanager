@@ -48,11 +48,11 @@
 #include <QFileInfo>
 #include <QFile>
 #include <QCoreApplication>
+#include <QNetworkInterface>
 
 #include "utilities.h"
 #include "exception.h"
 #include "unixsignalhandler.h"
-#include "processtitle.h"
 
 #include <errno.h>
 
@@ -90,6 +90,26 @@ extern char **environ;
 #endif
 
 QT_BEGIN_NAMESPACE_AM
+
+QString hardwareId()
+{
+#if defined(AM_HARDWARE_ID)
+    return QString::fromLocal8Bit(AM_HARDWARE_ID);
+#elif defined(AM_HARDWARE_ID_FROM_FILE)
+    QFile f(QString::fromLocal8Bit(AM_HARDWARE_ID_FROM_FILE));
+    if (f.open(QFile::ReadOnly))
+        return f.readAll().trimmed();
+#else
+    foreach (const QNetworkInterface &iface, QNetworkInterface::allInterfaces()) {
+        if (iface.isValid() && (iface.flags() & QNetworkInterface::IsUp)
+                && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
+                && !iface.hardwareAddress().isEmpty()) {
+            return iface.hardwareAddress().replace(qL1C(':'), qL1S("-"));
+        }
+    }
+#endif
+    return QString();
+}
 
 bool ensureCorrectLocale()
 {
@@ -474,279 +494,6 @@ QString findOnSDCard(const QString &file)
 }
 
 #endif
-
-#if defined(Q_OS_LINUX)
-
-QT_END_NAMESPACE_AM
-
-#include <cxxabi.h>
-#include <execinfo.h>
-#include <setjmp.h>
-#include <signal.h>
-#include <inttypes.h>
-
-#if defined(AM_USE_LIBBACKTRACE)
-#  include <libbacktrace/backtrace.h>
-#  include <libbacktrace/backtrace-supported.h>
-#endif
-QT_BEGIN_NAMESPACE_AM
-
-static bool printBacktrace;
-static bool useAnsiColor;
-static bool dumpCore;
-static int waitForGdbAttach;
-
-static char *demangleBuffer;
-static size_t demangleBufferSize;
-
-
-static void crashHandler(const char *why, int stackFramesToIgnore) __attribute__((noreturn));
-
-static void crashHandler(const char *why, int stackFramesToIgnore)
-{
-    pid_t pid = getpid();
-    char who[256];
-    int whoLen = readlink("/proc/self/exe", who, sizeof(who) -1);
-    who[qMax(0, whoLen)] = '\0';
-    const char *title = ProcessTitle::title();
-
-    fprintf(stderr, "\n*** process %s (%d) crashed ***\n\n > why: %s\n", title ? title : who, pid, why);
-
-    if (printBacktrace) {
-#if defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
-        struct btData {
-            backtrace_state *state;
-            int level;
-        };
-
-        static auto printBacktraceLine = [](int level, const char *symbol, uintptr_t offset, const char *file = nullptr, int line = -1)
-        {
-            if (useAnsiColor) {
-                fprintf(stderr, " %3d: \x1b[1m%s\x1b[0m [\x1b[36m%" PRIxPTR "\x1b[0m]", level, symbol, offset);
-                if (file)
-                    fprintf(stderr, " in \x1b[35m%s\x1b[0m:\x1b[35;1m%d\x1b[0m", file, line);
-            } else {
-                 fprintf(stderr, " %3d: %s [%" PRIxPTR "]", level, symbol, offset);
-                 if (file)
-                     fprintf(stderr, " in %s:%d", file, line);
-            }
-            fputs("\n", stderr);
-        };
-
-        static auto errorCallback = [](void *data, const char *msg, int errnum) {
-            if (useAnsiColor)
-                fprintf(stderr, " %3d: \x1b[31;1mERROR: \x1b[0;1m%s (%d)\x1b[0m\n", static_cast<btData *>(data)->level, msg, errnum);
-            else
-                fprintf(stderr, " %3d: ERROR: %s (%d)\n", static_cast<btData *>(data)->level, msg, errnum);
-        };
-
-        static auto syminfoCallback = [](void *data, uintptr_t pc, const char *symname, uintptr_t symval, uintptr_t symsize) {
-            Q_UNUSED(symval)
-            Q_UNUSED(symsize)
-
-            int level = static_cast<btData *>(data)->level;
-            if (symname) {
-                int status;
-                abi::__cxa_demangle(symname, demangleBuffer, &demangleBufferSize, &status);
-
-                if (status == 0 && *demangleBuffer)
-                    printBacktraceLine(level, demangleBuffer, pc);
-                else
-                    printBacktraceLine(level, symname, pc);
-            } else {
-                printBacktraceLine(level, nullptr, pc);
-            }
-        };
-
-        static auto fullCallback = [](void *data, uintptr_t pc, const char *filename, int lineno, const char *function) -> int {
-            if (function) {
-                int status;
-                abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
-
-                printBacktraceLine(static_cast<btData *>(data)->level,
-                                   (status == 0 && *demangleBuffer) ? demangleBuffer : function,
-                                   pc, filename ? filename : "<unknown>", lineno);
-            } else {
-                backtrace_syminfo (static_cast<btData *>(data)->state, pc, syminfoCallback, errorCallback, data);
-            }
-            return 0;
-        };
-
-        static auto simpleCallback = [](void *data, uintptr_t pc) -> int {
-            backtrace_pcinfo(static_cast<btData *>(data)->state, pc, fullCallback, errorCallback, data);
-            static_cast<btData *>(data)->level++;
-            return 0;
-        };
-
-        struct backtrace_state *state = backtrace_create_state(nullptr, BACKTRACE_SUPPORTS_THREADS,
-                                                               errorCallback, nullptr);
-
-        fprintf(stderr, "\n > backtrace:\n");
-        btData data = { state, 0 };
-        //backtrace_print(state, stackFramesToIgnore, stderr);
-        backtrace_simple(state, stackFramesToIgnore, simpleCallback, errorCallback, &data);
-#else
-        Q_UNUSED(stackFramesToIgnore);
-        void *addrArray[1024];
-        int addrCount = backtrace(addrArray, sizeof(addrArray) / sizeof(*addrArray));
-
-        if (!addrCount) {
-            fprintf(stderr, " > no backtrace available\n");
-        } else {
-            char **symbols = backtrace_symbols(addrArray, addrCount);
-            //backtrace_symbols_fd(addrArray, addrCount, 2);
-
-            if (!symbols) {
-                fprintf(stderr, " > no symbol names available\n");
-            } else {
-                fprintf(stderr, " > backtrace:\n");
-                for (int i = 1; i < addrCount; ++i) {
-                    char *function = nullptr;
-                    char *offset = nullptr;
-                    char *end = nullptr;
-
-                    for (char *ptr = symbols[i]; ptr && *ptr; ++ptr) {
-                        if (!function && *ptr == '(')
-                            function = ptr + 1;
-                        else if (function && !offset && *ptr == '+')
-                            offset = ptr;
-                        else if (function && !end && *ptr == ')')
-                            end = ptr;
-                    }
-
-                    if (function && offset && end && (function != offset)) {
-                        *offset = 0;
-                        *end = 0;
-
-                        int status;
-                        abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
-
-                        if (status == 0 && *demangleBuffer) {
-                            fprintf(stderr, " %3d: %s [+%s]\n", i, demangleBuffer, offset + 1);
-                        } else {
-                            fprintf(stderr, " %3d: %s [+%s]\n", i, function, offset + 1);
-                        }
-                    } else  {
-                        fprintf(stderr, " %3d: %s\n", i, symbols[i]);
-                    }
-                }
-                fprintf(stderr, "\n");
-            }
-        }
-#endif
-    }
-    if (waitForGdbAttach > 0) {
-        fprintf(stderr, "\n > the process will be suspended for %d seconds and you can attach a debugger to it via\n\n   gdb -p %d\n",
-                waitForGdbAttach, pid);
-        static jmp_buf jmpenv;
-        signal(SIGALRM, [](int) {
-            longjmp(jmpenv, 1);
-        });
-        if (!setjmp(jmpenv)) {
-            alarm(waitForGdbAttach);
-
-            sigset_t mask;
-            sigemptyset(&mask);
-            sigaddset(&mask, SIGALRM);
-            sigsuspend(&mask);
-        } else {
-            fprintf(stderr, "\n > no gdb attached\n");
-        }
-    }
-    if (dumpCore) {
-        fprintf(stderr, "\n > the process will be aborted (core dump)\n\n");
-        UnixSignalHandler::instance()->resetToDefault({ SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT });
-        abort();
-    }
-    _Exit(-1);
-}
-
-// this will make it run before all other static constructor functions
-static void initBacktrace() __attribute__((constructor(1000)));
-
-static void initBacktrace()
-{
-    // This can catch and pretty-print all of the following:
-
-    // SIGFPE
-    // volatile int i = 2;
-    // int zero = 0;
-    // i /= zero;
-
-    // SIGSEGV
-    // *((int *)1) = 1;
-
-    // uncaught arbitrary exception
-    // throw 42;
-
-    // uncaught std::exception derived exception (prints what())
-    // throw std::logic_error("test output");
-
-    printBacktrace = true;
-    dumpCore = true;
-    waitForGdbAttach = false;
-
-    getOutputInformation(&useAnsiColor, nullptr, nullptr);
-
-    demangleBufferSize = 512;
-    demangleBuffer = (char *) malloc(demangleBufferSize);
-
-    UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler,
-                                           { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT },
-                                           [](int sig) {
-        UnixSignalHandler::instance()->resetToDefault(sig);
-        static char buffer[256];
-        snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, UnixSignalHandler::signalName(sig));
-        // 6 means to remove 6 stack frames: this way the backtrace starts at the point where
-        // the signal reception interrupted the normal program flow
-        crashHandler(buffer, 6);
-    });
-
-    std::set_terminate([]() {
-        static char buffer [1024];
-
-        auto type = abi::__cxa_current_exception_type();
-        if (!type) {
-            // 3 means to remove 3 stack frames: this way the backtrace starts at std::terminate
-            crashHandler("terminate was called although no exception was thrown", 3);
-        }
-
-        const char *typeName = type->name();
-        if (typeName) {
-            int status;
-            abi::__cxa_demangle(typeName, demangleBuffer, &demangleBufferSize, &status);
-            if (status == 0 && *demangleBuffer) {
-                typeName = demangleBuffer;
-            }
-        }
-        try {
-            throw;
-        } catch (const std::exception &exc) {
-            snprintf(buffer, sizeof(buffer), "uncaught exception of type %s (%s)", typeName, exc.what());
-        } catch (...) {
-            snprintf(buffer, sizeof(buffer), "uncaught exception of type %s", typeName);
-        }
-
-        // 4 means to remove 4 stack frames: this way the backtrace starts at std::terminate
-        crashHandler(buffer, 4);
-    });
-}
-
-void setCrashActionConfiguration(const QVariantMap &config)
-{
-    printBacktrace = config.value(qSL("printBacktrace"), printBacktrace).toBool();
-    waitForGdbAttach = config.value(qSL("waitForGdbAttach"), waitForGdbAttach).toInt();
-    dumpCore = config.value(qSL("dumpCore"), dumpCore).toBool();
-}
-
-#else // Q_OS_LINUX
-
-void setCrashActionConfiguration(const QVariantMap &config)
-{
-    Q_UNUSED(config)
-}
-
-#endif // !Q_OS_LINUX
 
 void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *consoleWidth)
 {

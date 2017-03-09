@@ -47,6 +47,7 @@
 
 #include <QtPlugin>
 #include <QProcess>
+#include <QVector>
 
 #include <QtAppManManager/abstractruntime.h>
 #include <QtAppManManager/abstractcontainer.h>

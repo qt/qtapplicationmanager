@@ -45,6 +45,7 @@
 #include <QString>
 #include <QProcess>
 #include <QPointer>
+#include <QVariantMap>
 
 #include <QtAppManCommon/global.h>
 

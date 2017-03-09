@@ -42,6 +42,7 @@
 #include <QCoreApplication>
 #include <QTimer>
 
+#include "logging.h"
 #include "abstractcontainer.h"
 #include "abstractruntime.h"
 #include "containerfactory.h"

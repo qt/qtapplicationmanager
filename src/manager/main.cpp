@@ -83,7 +83,7 @@
 #endif
 
 #include "global.h"
-
+#include "logging.h"
 #include "application.h"
 #include "applicationmanager.h"
 #include "applicationdatabase.h"
@@ -120,6 +120,7 @@
 
 #include "configuration.h"
 #include "utilities.h"
+#include "crashhandler.h"
 #include "qmllogger.h"
 #include "startuptimer.h"
 #include "systemmonitor.h"
@@ -502,11 +503,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
     for (int i = 1; i < argc; ++i) {
         if (strcmp("--no-dlt-logging", argv[i]) == 0) {
-            dltLoggingEnabled = false;
+            Logging::setDltEnabled(false);
             break;
         }
     }
-    installMessageHandlers();
+    Logging::initialize();
 
     QString error;
 
@@ -552,7 +553,7 @@ int main(int argc, char *argv[])
 
     StartupTimer::instance()->checkpoint("after command line parse");
 
-    setCrashActionConfiguration(configuration->managerCrashAction());
+    CrashHandler::setCrashActionConfiguration(configuration->managerCrashAction());
 
 #if !defined(QT_NO_QML_DEBUGGER)
     QQmlDebuggingEnabler *debuggingEnabler = nullptr;
@@ -584,7 +585,7 @@ int main(int argc, char *argv[])
         // setting this for child processes //TODO: use a more generic IPC approach
         qputenv("AM_LOGGING_RULES", loggingRules.join(qL1C('\n')).toUtf8());
 
-        registerUnregisteredDLTContexts();
+        Logging::registerUnregisteredDltContexts();
 
         StartupTimer::instance()->checkpoint("after logging setup");
 

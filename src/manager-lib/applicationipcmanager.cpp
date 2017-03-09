@@ -44,6 +44,7 @@
 #include "applicationipcinterface_p.h"
 #include "qml-utilities.h"
 #include "global.h"
+#include "logging.h"
 
 
 /*!

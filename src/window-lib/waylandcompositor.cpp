@@ -44,6 +44,7 @@
 #include <QWaylandOutput>
 
 #include "global.h"
+#include "logging.h"
 #include "windowmanager.h"
 #include "application.h"
 #include "applicationmanager.h"

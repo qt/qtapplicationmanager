@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "unixsignalhandler.h"
+#include "logging.h"
 
 #include <QSocketNotifier>
 #include <QCoreApplication>

@@ -54,6 +54,7 @@
 
 #include <QDebug>
 
+#include "logging.h"
 #include "application.h"
 #include "utilities.h"
 #include "dbus-utilities.h"

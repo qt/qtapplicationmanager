@@ -42,6 +42,7 @@
 #if defined(AM_MULTI_PROCESS)
 
 #include "global.h"
+#include "logging.h"
 #include "applicationmanager.h"
 #include "application.h"
 #include "windowmanager.h"

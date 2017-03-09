@@ -41,6 +41,7 @@
 
 #include <QDebug>
 #include <QCoreApplication>
+#include "logging.h"
 #include "processmonitor.h"
 #include "memorymonitor.h"
 #include "application.h"

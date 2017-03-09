@@ -79,7 +79,9 @@
 #include "notification.h"
 #include "qtyaml.h"
 #include "global.h"
+#include "logging.h"
 #include "utilities.h"
+#include "crashhandler.h"
 #include "yamlapplicationscanner.h"
 #include "application.h"
 #include "startupinterface.h"
@@ -174,7 +176,7 @@ int main(int argc, char *argv[])
     StartupTimer::instance()->checkpoint("entered main");
 
     if (qEnvironmentVariableIsSet("AM_NO_DLT_LOGGING"))
-        dltLoggingEnabled = false;
+        Logging::setDltEnabled(false);
 
     // The common-lib is already registering the DLT Application for the application manager.
     // As the appID needs to be unique within the system, we cannot use the same appID and
@@ -182,10 +184,10 @@ int main(int argc, char *argv[])
 
     // As we don't know the app-id yet, we are registering a place holder so we are able to see
     // something in the dlt logs if general errors occur.
-    changeDLTApplication("PCLQ", "Pelagicore Application-Manager Launcher QML");
+    Logging::setDltApplicationId("PCLQ", "Pelagicore Application-Manager Launcher QML");
+    Logging::setApplicationId("qml-launcher");
+    Logging::initialize();
 
-    colorLogApplicationId = "qml-launcher";
-    installMessageHandlers();
     QLoggingCategory::setFilterRules(QString::fromUtf8(qgetenv("AM_LOGGING_RULES")));
 
 #if defined(AM_HEADLESS)
@@ -276,7 +278,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
     if (docs.size() == 1)
         m_configuration = docs.first().toMap();
 
-    setCrashActionConfiguration(m_configuration.value(qSL("crashAction")).toMap());
+    CrashHandler::setCrashActionConfiguration(m_configuration.value(qSL("crashAction")).toMap());
 
     const QString baseDir = QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/");
 
@@ -364,8 +366,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     //Change the DLT Application description, to easily identify the application on the DLT logs.
     char dltAppId[5];
     qsnprintf(dltAppId, 5, "A%03d", application.value("uniqueNumber").toInt());
-    changeDLTApplication(dltAppId, QString("Application-Manager App: %1").arg(applicationId).toLocal8Bit());
-    registerUnregisteredDLTContexts();
+    Logging::setDltApplicationId(dltAppId, QByteArray("Application-Manager App: ") + applicationId.toLocal8Bit());
+    Logging::registerUnregisteredDltContexts();
 
     // Dress up the ps output to make it easier to correlate all the launcher processes
     {
@@ -396,7 +398,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             applicationId.append(qL1C('.'));
         }
         applicationId.append(sl.last());
-        colorLogApplicationId = applicationId.toLocal8Bit();
+        Logging::setApplicationId(applicationId.toLocal8Bit());
     } else {
         qCCritical(LogQmlRuntime) << "did not receive an application id";
         QCoreApplication::exit(2);

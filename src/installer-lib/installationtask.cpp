@@ -39,6 +39,7 @@
 **
 ****************************************************************************/
 
+#include "logging.h"
 #include "applicationinstaller_p.h"
 #include "application.h"
 #include "packageextractor.h"

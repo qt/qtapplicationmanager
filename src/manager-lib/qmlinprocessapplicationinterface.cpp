@@ -42,6 +42,7 @@
 #include <QQmlEngine>
 #include <QQmlExpression>
 
+#include "logging.h"
 #include "qmlinprocessapplicationinterface.h"
 #include "qmlinprocessruntime.h"
 #include "application.h"

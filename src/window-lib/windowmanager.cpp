@@ -57,6 +57,7 @@
 #endif
 
 #include "global.h"
+#include "logging.h"
 #include "application.h"
 #include "applicationmanager.h"
 #include "abstractruntime.h"

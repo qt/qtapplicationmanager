@@ -43,6 +43,7 @@
 #include <QFile>
 #include <QVector>
 #include "global.h"
+#include "logging.h"
 #include "memorymonitor.h"
 
 #if defined(Q_OS_OSX)

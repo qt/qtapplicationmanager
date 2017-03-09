@@ -48,14 +48,13 @@
 #include <vector>
 #include <QGuiApplication>
 
+#include "global.h"
+#include "logging.h"
+#include "qml-utilities.h"
 #include "applicationmanager.h"
 #include "systemmonitor.h"
 #include "systemmonitor_p.h"
 #include "processmonitor.h"
-
-#include "global.h"
-
-#include "qml-utilities.h"
 
 
 /*!

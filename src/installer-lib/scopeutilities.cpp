@@ -39,6 +39,7 @@
 **
 ****************************************************************************/
 
+#include "logging.h"
 #include "scopeutilities.h"
 #include "applicationinstaller_p.h"
 #include "utilities.h"

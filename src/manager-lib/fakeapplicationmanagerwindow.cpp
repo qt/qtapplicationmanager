@@ -39,6 +39,7 @@
 **
 ****************************************************************************/
 
+#include "logging.h"
 #include "fakeapplicationmanagerwindow.h"
 #include "qmlinprocessruntime.h"
 #include <QSGSimpleRectNode>

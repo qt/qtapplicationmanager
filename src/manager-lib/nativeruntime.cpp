@@ -48,6 +48,7 @@
 #include <QUuid>
 
 #include "global.h"
+#include "logging.h"
 #include "application.h"
 #include "applicationmanager.h"
 #include "nativeruntime.h"
@@ -200,7 +201,7 @@ bool NativeRuntime::start()
     if (!m_needsLauncher && !m_isQuickLauncher)
         env.insert(qSL("AM_RUNTIME_SYSTEM_PROPERTIES"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ systemProperties() })));
     env.insert(qSL("AM_BASE_DIR"), QDir::currentPath());
-    if (!dltLoggingEnabled)
+    if (Logging::isDltEnabled())
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
 
     for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {

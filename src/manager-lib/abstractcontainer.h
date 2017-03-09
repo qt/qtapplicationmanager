@@ -44,7 +44,8 @@
 #include <QObject>
 #include <QString>
 #include <QProcess>
-#include <QDir>
+#include <QVariantMap>
+#include <QVector>
 
 #include <QtAppManCommon/global.h>
 

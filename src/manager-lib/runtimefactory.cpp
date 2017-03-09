@@ -42,6 +42,7 @@
 #include <QScopedPointer>
 #include <QCoreApplication>
 
+#include "logging.h"
 #include "application.h"
 #include "abstractruntime.h"
 #include "abstractcontainer.h"

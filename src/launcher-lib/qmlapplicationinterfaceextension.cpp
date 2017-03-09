@@ -41,6 +41,7 @@
 
 #include <QDBusInterface>
 
+#include "logging.h"
 #include "qmlapplicationinterfaceextension.h"
 #include "qmlapplicationinterface.h"
 #include "ipcwrapperobject.h"

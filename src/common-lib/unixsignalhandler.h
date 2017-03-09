@@ -41,8 +41,9 @@
 
 #pragma once
 
-#include <QAtomicInteger>
 #include <QtAppManCommon/global.h>
+#include <QObject>
+#include <QAtomicInteger>
 #include <initializer_list>
 #include <list>
 #include <vector>

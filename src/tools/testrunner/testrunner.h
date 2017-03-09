@@ -44,6 +44,7 @@
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
+QT_FORWARD_DECLARE_CLASS(QStringList)
 
 QT_BEGIN_NAMESPACE_AM
 

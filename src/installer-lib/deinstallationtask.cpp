@@ -39,6 +39,7 @@
 **
 ****************************************************************************/
 
+#include "logging.h"
 #include "applicationinstaller.h"
 #include "applicationinstaller_p.h"
 #include "applicationmanager.h"

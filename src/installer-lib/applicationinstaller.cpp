@@ -43,6 +43,7 @@
 #include <QDir>
 #include <QUuid>
 
+#include "logging.h"
 #include "application.h"
 #include "applicationinstaller.h"
 #include "applicationinstaller_p.h"

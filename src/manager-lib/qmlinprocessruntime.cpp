@@ -51,6 +51,7 @@
 #  include "fakeapplicationmanagerwindow.h"
 #endif
 
+#include "logging.h"
 #include "application.h"
 #include "qmlinprocessruntime.h"
 #include "qmlinprocessapplicationinterface.h"

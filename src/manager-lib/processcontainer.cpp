@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "global.h"
+#include "logging.h"
 #include "containerfactory.h"
 #include "application.h"
 #include "processcontainer.h"

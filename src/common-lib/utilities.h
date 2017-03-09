@@ -62,6 +62,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+QString hardwareId();
+
 bool ensureCorrectLocale();
 bool checkCorrectLocale();
 
@@ -181,8 +183,6 @@ private:
 #if defined(Q_OS_ANDROID)
 QString findOnSDCard(const QString &file);
 #endif
-
-void setCrashActionConfiguration(const QVariantMap &config);
 
 void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *consoleWidth);
 

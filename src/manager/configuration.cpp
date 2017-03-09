@@ -47,6 +47,7 @@
 #include <functional>
 
 #include "global.h"
+#include "logging.h"
 #include "qtyaml.h"
 #include "utilities.h"
 #include "configuration.h"

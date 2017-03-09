@@ -53,7 +53,7 @@
 #include <qplatformdefs.h>
 
 #include "global.h"
-
+#include "logging.h"
 #include "applicationdatabase.h"
 #include "applicationmanager.h"
 #include "applicationmanager_p.h"

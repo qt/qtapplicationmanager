@@ -48,6 +48,8 @@ const char *ProcessTitle::title() { return nullptr; }
 QT_END_NAMESPACE_AM
 #else
 
+#include "logging.h"
+
 #include <QVarLengthArray>
 #include <QByteArray>
 

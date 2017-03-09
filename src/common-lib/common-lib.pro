@@ -25,7 +25,8 @@ SOURCES += \
     qtyaml.cpp \
     startuptimer.cpp \
     dbus-policy.cpp \
-    unixsignalhandler.cpp
+    unixsignalhandler.cpp \
+    processtitle.cpp
 
 qtHaveModule(qml):SOURCES += \
     qml-utilities.cpp \
@@ -41,7 +42,8 @@ HEADERS += \
     qtyaml.h \
     startuptimer.h \
     dbus-policy.h \
-    unixsignalhandler.h
+    unixsignalhandler.h \
+    processtitle.h
 
 qtHaveModule(qml):HEADERS += \
     qml-utilities.h \

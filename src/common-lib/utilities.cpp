@@ -52,6 +52,7 @@
 #include "utilities.h"
 #include "exception.h"
 #include "unixsignalhandler.h"
+#include "processtitle.h"
 
 #include <errno.h>
 
@@ -507,8 +508,9 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     char who[256];
     int whoLen = readlink("/proc/self/exe", who, sizeof(who) -1);
     who[qMax(0, whoLen)] = '\0';
+    const char *title = ProcessTitle::title();
 
-    fprintf(stderr, "\n*** process %s (%d) crashed ***\n\n > why: %s\n", who, pid, why);
+    fprintf(stderr, "\n*** process %s (%d) crashed ***\n\n > why: %s\n", title ? title : who, pid, why);
 
     if (printBacktrace) {
 #if defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)

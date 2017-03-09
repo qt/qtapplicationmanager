@@ -56,6 +56,8 @@
 #include <errno.h>
 
 #if defined(Q_OS_LINUX)
+# include "processtitle.h"
+
 #  include <fcntl.h>
 #  include <unistd.h>
 #  include <sys/socket.h>
@@ -219,6 +221,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
             qCCritical(LogSystem) << "could not drop privileges in the SudoServer process -- continuing with full root privileges";
 
         if (SudoServer::initialize(socketFds[0], loopControlFd)) {
+            ProcessTitle::setTitle("%s", "sudo helper");
             SudoServer::instance()->run();
         } else {
             qCCritical(LogSystem) << "could not initialize the SudoClient";

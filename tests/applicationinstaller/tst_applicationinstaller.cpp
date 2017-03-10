@@ -566,7 +566,7 @@ void tst_ApplicationInstaller::packageInstallation_data()
             << false << false << false << "could not find info.yaml and icon.png at the beginning of the package";
     QTest::newRow("invalid-header-format") \
             << "test-invalid-header-formatversion.appkg" << "internal-0" << "" << ""
-            << false << false << false << "metadata has an invalid format specification";
+            << false << false << false << "metadata has an invalid format specification: wrong formatVersion header: expected 1, got 2";
     QTest::newRow("invalid-header-diskspaceused") \
             << "test-invalid-header-diskspaceused.appkg" << "internal-0" << "" << ""
             << false << false << false << "metadata has an invalid diskSpaceUsed field (0)";

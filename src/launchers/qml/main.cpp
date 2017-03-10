@@ -258,10 +258,8 @@ int main(int argc, char *argv[])
 #if defined(AM_HEADLESS)
     QCoreApplication a(argc, argv);
 #else
-#  if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     // this is needed for WebEngine
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#  endif
 
     QGuiApplication a(argc, argv);
     a.setApplicationDisplayName(qL1S("appman-launcher-qml"));

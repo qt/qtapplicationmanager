@@ -252,14 +252,8 @@ int main(int argc, char *argv[])
         switch (command(clp)) {
         default:
         case NoCommand:
-            if (clp.isSet(qSL("version"))) {
-#if QT_VERSION < QT_VERSION_CHECK(5,4,0)
-                fprintf(stdout, "%s %s\n", qPrintable(QCoreApplication::applicationName()), qPrintable(QCoreApplication::applicationVersion()));
-                exit(0);
-#else
+            if (clp.isSet(qSL("version")))
                 clp.showVersion();
-#endif
-            }
             if (clp.isSet(qSL("help")))
                 clp.showHelp();
             clp.showHelp(1);

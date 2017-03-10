@@ -526,10 +526,8 @@ int main(int argc, char *argv[])
 #if defined(AM_HEADLESS)
     QCoreApplication a(argc, argv);
 #else
-#  if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     // this is needed for both WebEngine and Wayland Multi-screen rendering
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#  endif
 #  if !defined(QT_NO_SESSIONMANAGER)
     QGuiApplication::setFallbackSessionManagementEnabled(false);
 #endif

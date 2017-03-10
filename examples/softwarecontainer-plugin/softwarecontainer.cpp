@@ -178,7 +178,7 @@ ContainerInterface *SoftwareContainerManager::create(const QVector<int> &stdioRe
     int outputFd = stdioRedirections.value(STDERR_FILENO, -1);
     if (outputFd < 0)
         outputFd = stdioRedirections.value(STDOUT_FILENO, -1);
-    if ((::fcntl(outputFd, F_GETFD) < 0) && (errno == EBADFD))
+    if ((::fcntl(outputFd, F_GETFD) < 0) && (errno == EBADF))
         outputFd = STDOUT_FILENO;
 
     SoftwareContainer *container = new SoftwareContainer(this, containerId, outputFd, debugWrapperCommand);

@@ -225,7 +225,6 @@ private:
 
 static QString p2pBusName = qSL("am");
 static QString notificationBusName = qSL("am_notification_bus");
-static StartupTimer startupTimer;
 static QCommandLineParser cp;
 static QCommandLineOption qmlDebugOption(qSL("qml-debug"), qSL("Enables QML debugging and profiling."));
 static QCommandLineOption quickLaunchOption(qSL("quicklaunch"), qSL("Starts the launcher in the quicklaunching mode."));
@@ -239,6 +238,8 @@ QT_USE_NAMESPACE_AM
 
 int main(int argc, char *argv[])
 {
+    StartupTimer::instance()->checkpoint("entered main");
+
     if (qEnvironmentVariableIsSet("AM_NO_DLT_LOGGING"))
         dltLoggingEnabled = false;
 
@@ -277,7 +278,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<QmlNotification>("QtApplicationManager", 1, 0, "Notification");
     qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
-    startupTimer.checkpoint("after logging and qml register initialization");
+    StartupTimer::instance()->checkpoint("after logging and qml register initialization");
 
     if (cp.isSet(directLoadOption)) {
         QFileInfo fi = cp.value(directLoadOption);
@@ -322,7 +323,7 @@ int main(int argc, char *argv[])
         new Controller(&a);
     }
 
-    startupTimer.checkpoint("after dbus initialization");
+    StartupTimer::instance()->checkpoint("after dbus initialization");
     return a.exec();
 }
 
@@ -359,7 +360,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
         m_engine.addImportPath(path);
     }
 
-    startupTimer.checkpoint("after application config initialization");
+    StartupTimer::instance()->checkpoint("after application config initialization");
 
     // This is a bit of a hack to make ApplicationManagerWindow known as a sub-class
     // of QWindow. Without this, assigning an ApplicationManagerWindow to a QWindow*
@@ -389,7 +390,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
         }
     }
 
-    startupTimer.checkpoint("after quick launch qml initialization");
+    StartupTimer::instance()->checkpoint("after quick launch qml initialization");
 
     if (directLoad.isEmpty()) {
         m_applicationInterface = new QmlApplicationInterface(p2pBusName, notificationBusName, this);
@@ -413,7 +414,7 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
         });
     }
 
-    startupTimer.checkpoint("after application interface initialization");
+    StartupTimer::instance()->checkpoint("after application interface initialization");
 }
 
 void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
@@ -427,7 +428,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     QString applicationId = application.value("id").toString();
     QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value("runtimeParameters"));
 
-    startupTimer.checkpoint("starting application");
+    StartupTimer::instance()->checkpoint("starting application");
 
     //Change the DLT Application description, to easily identify the application on the DLT logs.
     char dltAppId[5];
@@ -517,13 +518,13 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     foreach (StartupInterface *iface, startupPlugins)
         iface->beforeQmlEngineLoad(&m_engine);
 
-    startupTimer.checkpoint("after loading plugins and import paths");
+    StartupTimer::instance()->checkpoint("after loading plugins and import paths");
 
     QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
-    m_engine.rootContext()->setContextProperty("StartupTimer", &startupTimer);
+    m_engine.rootContext()->setContextProperty("StartupTimer", StartupTimer::instance());
     m_engine.load(qmlFileUrl);
 
-    startupTimer.checkpoint("after engine loading main qml file");
+    StartupTimer::instance()->checkpoint("after engine loading main qml file");
 
     auto topLevels = m_engine.rootObjects();
 
@@ -556,7 +557,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             m_engine.setIncubationController(m_window->incubationController());
     }
 
-    startupTimer.checkpoint("after creating and setting application window");
+    StartupTimer::instance()->checkpoint("after creating and setting application window");
 
     Q_ASSERT(m_window);
     QObject::connect(&m_engine, &QQmlEngine::quit, m_window, &QObject::deleteLater); // not sure if this is needed .. or even the best thing to do ... see connects above, they seem to work better
@@ -574,7 +575,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     m_window->show();
 
-    startupTimer.checkpoint("after showing application window");
+    StartupTimer::instance()->checkpoint("after showing application window");
 
     foreach (StartupInterface *iface, startupPlugins)
         iface->afterWindowShow(m_window);
@@ -584,8 +585,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 #endif
     qCDebug(LogQmlRuntime) << "component loading and creating complete.";
 
-    startupTimer.checkpoint("component loading and creating complete.");
-    startupTimer.createReport(application.value("id").toString());
+    StartupTimer::instance()->checkpoint("component loading and creating complete.");
+    StartupTimer::instance()->createReport(application.value("id").toString());
 
     if (!document.isEmpty() && m_applicationInterface)
         emit m_applicationInterface->openDocument(document, mimeType);

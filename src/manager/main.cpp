@@ -494,7 +494,7 @@ QT_USE_NAMESPACE_AM
 
 int main(int argc, char *argv[])
 {
-    StartupTimer startupTimer;
+    StartupTimer::instance()->checkpoint("entered main");
 
     QCoreApplication::setApplicationName(qSL("ApplicationManager"));
     QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
@@ -510,7 +510,7 @@ int main(int argc, char *argv[])
 
     QString error;
 
-    startupTimer.checkpoint("after basic initialization");
+    StartupTimer::instance()->checkpoint("after basic initialization");
 
 #if !defined(AM_DISABLE_INSTALLER)
     ensureCorrectLocale();
@@ -521,7 +521,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    startupTimer.checkpoint("after sudo server fork");
+    StartupTimer::instance()->checkpoint("after sudo server fork");
 
 #if defined(AM_HEADLESS)
     QCoreApplication a(argc, argv);
@@ -547,12 +547,12 @@ int main(int argc, char *argv[])
     });
 #endif
 
-    startupTimer.checkpoint("after application constructor");
+    StartupTimer::instance()->checkpoint("after application constructor");
 
     Configuration config_;
     configuration = &config_;
 
-    startupTimer.checkpoint("after command line parse");
+    StartupTimer::instance()->checkpoint("after command line parse");
 
     setCrashActionConfiguration(configuration->managerCrashAction());
 
@@ -588,7 +588,7 @@ int main(int argc, char *argv[])
 
         registerUnregisteredDLTContexts();
 
-        startupTimer.checkpoint("after logging setup");
+        StartupTimer::instance()->checkpoint("after logging setup");
 
 #ifdef AM_TESTRUNNER
         TestRunner::initialize(argv[0], configuration->positionalArguments());
@@ -600,7 +600,7 @@ int main(int argc, char *argv[])
         foreach (StartupInterface *iface, startupPlugins)
             iface->initialize(sysProps.at(SystemProperties::SystemUi));
 
-        startupTimer.checkpoint("after startup-plugin load");
+        StartupTimer::instance()->checkpoint("after startup-plugin load");
 
 #if defined(QT_DBUS_LIB)
         if (Q_UNLIKELY(configuration->dbusStartSessionBus())) {
@@ -640,7 +640,7 @@ int main(int argc, char *argv[])
             qCInfo(LogSystem) << "NOTICE: running on private D-Bus session bus to avoid conflicts:";
             qCInfo(LogSystem, "        DBUS_SESSION_BUS_ADDRESS=%s", busAddress.constData());
 
-            startupTimer.checkpoint("after starting session D-Bus");
+            StartupTimer::instance()->checkpoint("after starting session D-Bus");
         }
 #endif
         if (Q_UNLIKELY(!QFile::exists(configuration->mainQmlFile())))
@@ -664,7 +664,7 @@ int main(int argc, char *argv[])
         if (Q_UNLIKELY(!QDir::root().mkpath(configuration->appImageMountDir())))
             throw Exception("could not create the image-mount directory %1").arg(configuration->appImageMountDir());
 
-        startupTimer.checkpoint("after installer setup checks");
+        StartupTimer::instance()->checkpoint("after installer setup checks");
 #endif
 
         bool forceSingleProcess = configuration->forceSingleProcess();
@@ -705,7 +705,7 @@ int main(int argc, char *argv[])
         RuntimeFactory::instance()->setSystemProperties(sysProps.at(SystemProperties::ThirdParty),
                                                         sysProps.at(SystemProperties::BuiltIn));
 
-        startupTimer.checkpoint("after runtime registration");
+        StartupTimer::instance()->checkpoint("after runtime registration");
 
         QScopedPointer<ApplicationDatabase> adb(configuration->singleApp().isEmpty()
                                                 ? new ApplicationDatabase(configuration->database())
@@ -735,7 +735,7 @@ int main(int argc, char *argv[])
             qDeleteAll(apps);
         }
 
-        startupTimer.checkpoint("after application database loading");
+        StartupTimer::instance()->checkpoint("after application database loading");
 
         ApplicationManager *am = ApplicationManager::createInstance(adb.take(), forceSingleProcess, &error);
         if (Q_UNLIKELY(!am))
@@ -746,20 +746,20 @@ int main(int argc, char *argv[])
         am->setSystemProperties(sysProps.at(SystemProperties::SystemUi));
         am->setContainerSelectionConfiguration(configuration->containerSelectionConfiguration());
 
-        startupTimer.checkpoint("after ApplicationManager instantiation");
+        StartupTimer::instance()->checkpoint("after ApplicationManager instantiation");
 
         NotificationManager *nm = NotificationManager::createInstance();
 
-        startupTimer.checkpoint("after NotificationManager instantiation");
+        StartupTimer::instance()->checkpoint("after NotificationManager instantiation");
 
         SystemMonitor *sysmon = SystemMonitor::createInstance();
 
-        startupTimer.checkpoint("after SystemMonitor instantiation");
+        StartupTimer::instance()->checkpoint("after SystemMonitor instantiation");
 
         QuickLauncher *ql = QuickLauncher::instance();
         ql->initialize(configuration->quickLaunchRuntimesPerContainer(), configuration->quickLaunchIdleLoad());
 
-        startupTimer.checkpoint("after quick-launcher setup");
+        StartupTimer::instance()->checkpoint("after quick-launcher setup");
 
 #if !defined(AM_DISABLE_INSTALLER)
         ApplicationInstaller *ai = ApplicationInstaller::createInstance(installationLocations,
@@ -800,7 +800,7 @@ int main(int argc, char *argv[])
         //TODO: this could be delayed, but needs to have a lock on the app-db in this case
         ai->cleanupBrokenInstallations();
 
-        startupTimer.checkpoint("after ApplicationInstaller instantiation");
+        StartupTimer::instance()->checkpoint("after ApplicationInstaller instantiation");
 
 #endif // AM_DISABLE_INSTALLER
 
@@ -810,7 +810,7 @@ int main(int argc, char *argv[])
 #if !defined(AM_HEADLESS)
         qmlRegisterType<FakeApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
-        startupTimer.checkpoint("after QML registrations");
+        StartupTimer::instance()->checkpoint("after QML registrations");
 
         ApplicationIPCManager *aipcm = ApplicationIPCManager::createInstance();
 
@@ -818,9 +818,9 @@ int main(int argc, char *argv[])
         new QmlLogger(engine);
         engine->setOutputWarningsToStandardError(false);
         engine->setImportPathList(engine->importPathList() + configuration->importPaths());
-        engine->rootContext()->setContextProperty("StartupTimer", &startupTimer);
+        engine->rootContext()->setContextProperty("StartupTimer", StartupTimer::instance());
 
-        startupTimer.checkpoint("after QML engine instantiation");
+        StartupTimer::instance()->checkpoint("after QML engine instantiation");
 
 #ifdef AM_TESTRUNNER
         QFile f(qSL(":/build-config.yaml"));
@@ -860,7 +860,7 @@ int main(int argc, char *argv[])
 
         if (Q_UNLIKELY(configuration->loadDummyData())) {
             loadDummyDataFiles(*engine, QFileInfo(configuration->mainQmlFile()).path());
-            startupTimer.checkpoint("after loading dummy-data");
+            StartupTimer::instance()->checkpoint("after loading dummy-data");
         }
 
 #if defined(QT_DBUS_LIB)
@@ -868,7 +868,7 @@ int main(int argc, char *argv[])
         int dbusDelay = configuration->dbusRegistrationDelay();
         if (dbusDelay < 0) {
             dbusInitialization();
-            startupTimer.checkpoint("after D-Bus registrations");
+            StartupTimer::instance()->checkpoint("after D-Bus registrations");
         } else {
             QTimer::singleShot(dbusDelay, qApp, dbusInitialization);
         }
@@ -884,7 +884,7 @@ int main(int argc, char *argv[])
         foreach (StartupInterface *iface, startupPlugins)
             iface->afterQmlEngineLoad(engine);
 
-        startupTimer.checkpoint("after loading main QML file");
+        StartupTimer::instance()->checkpoint("after loading main QML file");
 
 #if !defined(AM_HEADLESS)
         QQuickWindow *window = nullptr;
@@ -892,7 +892,7 @@ int main(int argc, char *argv[])
 
         if (!rootObject->isWindowType()) {
             view = new QQuickView(engine, 0);
-            startupTimer.checkpoint("after WindowManager/QuickView instantiation");
+            StartupTimer::instance()->checkpoint("after WindowManager/QuickView instantiation");
             view->setContent(configuration->mainQmlFile(), 0, rootObject);
             window = view;
         } else {
@@ -902,16 +902,12 @@ int main(int argc, char *argv[])
         }
 
         Q_ASSERT(window);
-        QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, qApp, [&startupTimer, &conn]() { // clazy:exclude=lambda-in-connect
-            // startupTimer and conn are local vars captured by reference: this is a bad thing in
-            // general, but in this case it is perfectly fine, since both HAVE to be alive, when
-            // the frameSwapped signal is emitted.
-            static bool once = true;
-            if (once) {
+        static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, qApp, []() { // clazy:exclude=lambda-in-connect
+            // this is a queued signal, so there may be still one in the queue after calling disconnect()
+            if (conn) {
                 QObject::disconnect(conn);
-                once = false;
-                startupTimer.checkpoint("after first frame drawn");
-                startupTimer.createReport(qSL("System UI"));
+                StartupTimer::instance()->checkpoint("after first frame drawn");
+                StartupTimer::instance()->createReport(qSL("System UI"));
             }
         });
 
@@ -929,7 +925,7 @@ int main(int argc, char *argv[])
         foreach (StartupInterface *iface, startupPlugins)
             iface->afterWindowShow(window);
 
-        startupTimer.checkpoint("after window show");
+        StartupTimer::instance()->checkpoint("after window show");
 #endif
 
         // delay debug-wrapper setup

@@ -55,8 +55,7 @@ class StartupTimer : public QObject
     Q_OBJECT
 
 public:
-    // this should be the first instruction in main()
-    StartupTimer();
+    static StartupTimer *instance();
     ~StartupTimer();
 
     void checkpoint(const char *name);
@@ -64,6 +63,9 @@ public:
     Q_INVOKABLE void createReport(const QString &title = QString());
 
 private:
+    StartupTimer();
+    static StartupTimer *s_instance;
+
     FILE *m_output = 0;
     bool m_initialized = false;
     bool m_reportCreated = false;

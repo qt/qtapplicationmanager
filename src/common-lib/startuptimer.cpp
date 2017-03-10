@@ -140,6 +140,8 @@ QT_BEGIN_NAMESPACE_AM
 
 StartupTimer::StartupTimer()
 {
+    ::atexit([]() { delete s_instance; });
+
     QByteArray useTimer = qgetenv("AM_STARTUP_TIMER");
     if (useTimer.isNull())
         return;
@@ -252,10 +254,15 @@ StartupTimer::StartupTimer()
     m_initialized = false;
 #endif
 
-    if (m_initialized) {
+    if (m_initialized)
         m_timer.start();
-        checkpoint("entered main");
-    }
+}
+
+StartupTimer *StartupTimer::s_instance = new StartupTimer();
+
+StartupTimer *StartupTimer::instance()
+{
+    return s_instance;
 }
 
 StartupTimer::~StartupTimer()
@@ -264,6 +271,8 @@ StartupTimer::~StartupTimer()
 
     if (m_output && m_output != stderr)
         fclose(m_output);
+
+    s_instance = nullptr;
 }
 
 void StartupTimer::checkpoint(const char *name)

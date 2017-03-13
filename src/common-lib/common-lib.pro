@@ -19,7 +19,6 @@ include($$SOURCE_DIR/3rdparty/libyaml.pri)
 contains(DEFINES, "AM_USE_LIBBACKTRACE"):include($$SOURCE_DIR/3rdparty/libbacktrace.pri)
 
 SOURCES += \
-    global.cpp \
     exception.cpp \
     utilities.cpp \
     qtyaml.cpp \

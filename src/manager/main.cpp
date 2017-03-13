@@ -694,7 +694,11 @@ void Main::showWindow()
     static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {
         // this is a queued signal, so there may be still one in the queue after calling disconnect()
         if (conn) {
+#if defined(Q_CC_MSVC)
+            qApp->disconnect(conn); // MSVC2013 cannot call static member functions without capturing this
+#else
             QObject::disconnect(conn);
+#endif
             StartupTimer::instance()->checkpoint("after first frame drawn");
             StartupTimer::instance()->createReport(qSL("System UI"));
         }

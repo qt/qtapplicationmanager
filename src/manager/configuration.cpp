@@ -62,7 +62,7 @@ QT_BEGIN_NAMESPACE_AM
 class ConfigurationPrivate
 {
 public:
-    QVariant findInConfigFile(const QStringList &path, bool *found = 0);
+    QVariant findInConfigFile(const QStringList &path, bool *found = nullptr);
 
     template <typename T> T config(const char *clname, const QStringList &cfname)
     {

@@ -63,7 +63,7 @@ class FakeApplicationManagerWindow : public QQuickItem
     Q_PROPERTY(bool focusOnClick READ dummyGetter WRITE dummySetter)
 
 public:
-    explicit FakeApplicationManagerWindow(QQuickItem *parent = 0);
+    explicit FakeApplicationManagerWindow(QQuickItem *parent = nullptr);
     ~FakeApplicationManagerWindow();
 
     QColor color() const;
@@ -118,7 +118,7 @@ private:
     void dummySetterString(const QString&) {}
     void onVisibleChanged();
 
-    QmlInProcessRuntime *m_runtime;
+    QmlInProcessRuntime *m_runtime = nullptr;
     QColor m_color;
 
     friend class QmlInProcessRuntime; // for setting the m_runtime member

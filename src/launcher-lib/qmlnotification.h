@@ -51,7 +51,7 @@ class QmlApplicationInterface;
 class QmlNotification : public Notification // clazy:exclude=missing-qobject-macro
 {
 public:
-    QmlNotification(QObject *parent = 0, Notification::ConstructionMode mode = Notification::Declarative);
+    QmlNotification(QObject *parent = nullptr, Notification::ConstructionMode mode = Notification::Declarative);
 
 protected:
     uint libnotifyShow() override;

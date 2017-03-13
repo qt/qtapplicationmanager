@@ -69,7 +69,7 @@ public slots:
     void rebuild();
 
 private:
-    QuickLauncher(QObject *parent = 0);
+    QuickLauncher(QObject *parent = nullptr);
     QuickLauncher(const QuickLauncher &);
     QuickLauncher &operator=(const QuickLauncher &);
     static QuickLauncher *s_instance;

@@ -74,7 +74,7 @@ public:
     bool registerRuntime(AbstractRuntimeManager *manager, const QString &identifier);
 
 private:
-    RuntimeFactory(QObject *parent = 0);
+    RuntimeFactory(QObject *parent = nullptr);
     RuntimeFactory(const RuntimeFactory &);
     RuntimeFactory &operator=(const RuntimeFactory &);
     static RuntimeFactory *s_instance;

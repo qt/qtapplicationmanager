@@ -305,7 +305,7 @@ QByteArray SudoInterface::receiveMessage(int socket, MessageType type, QString *
 #endif // Q_OS_LINUX
 
 
-SudoClient *SudoClient::s_instance = 0;
+SudoClient *SudoClient::s_instance = nullptr;
 
 SudoClient *SudoClient::instance()
 {
@@ -413,7 +413,7 @@ QByteArray SudoClient::call(const QByteArray &msg)
 
 
 
-SudoServer *SudoServer::s_instance = 0;
+SudoServer *SudoServer::s_instance = nullptr;
 
 SudoServer *SudoServer::instance()
 {

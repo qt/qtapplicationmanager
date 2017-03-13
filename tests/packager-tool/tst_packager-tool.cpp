@@ -69,7 +69,7 @@ private:
     bool createCode(TemporaryDir &tmp);
 
 
-    ApplicationInstaller *m_ai = 0;
+    ApplicationInstaller *m_ai = nullptr;
     TemporaryDir m_workDir;
 
     QString m_devPassword;
@@ -106,7 +106,7 @@ void tst_PackagerTool::initTestCase()
     m_ai = ApplicationInstaller::createInstance(locations, pathTo("manifests"), pathTo("image-mounts"), &errorString);
     QVERIFY2(m_ai, qPrintable(errorString));
 
-    QVERIFY2(ApplicationManager::createInstance(0, true, &errorString), qPrintable(errorString));
+    QVERIFY2(ApplicationManager::createInstance(nullptr, true, &errorString), qPrintable(errorString));
 
 
     // crypto stuff - we need to load the root CA and developer CA certificates

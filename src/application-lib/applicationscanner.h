@@ -61,7 +61,7 @@ public:
 
 protected:
     ApplicationScanner() = default;
-    static bool validate(const Application *app, QString *error = 0);
+    static bool validate(const Application *app, QString *error = nullptr);
 
 private:
     Q_DISABLE_COPY(ApplicationScanner)

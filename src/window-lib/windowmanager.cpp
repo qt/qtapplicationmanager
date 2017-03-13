@@ -302,7 +302,7 @@ enum Roles
 };
 }
 
-WindowManager *WindowManager::s_instance = 0;
+WindowManager *WindowManager::s_instance = nullptr;
 
 WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QString &waylandSocketName)
 {

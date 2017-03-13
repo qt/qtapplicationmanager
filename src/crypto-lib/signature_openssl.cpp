@@ -134,9 +134,9 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12, 
         throw OpenSslException("Could not read PKCS#12 data from BIO buffer");
 
     //int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca);
-    EVP_PKEY *tempSignKey = 0;
-    X509 *tempSignCert = 0;
-    STACK_OF(X509) *tempCaCerts = 0;
+    EVP_PKEY *tempSignKey = nullptr;
+    X509 *tempSignCert = nullptr;
+    STACK_OF(X509) *tempCaCerts = nullptr;
     int parseOk = am_PKCS12_parse(pkcs12.data(), signingCertificatePassword.constData(), &tempSignKey, &tempSignCert, &tempCaCerts);
     OpenSslPointer<EVP_PKEY> signKey(tempSignKey);
     OpenSslPointer<X509> signCert(tempSignCert);
@@ -168,7 +168,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12, 
     if (!am_i2d_PKCS7_bio(bioSignature.data(), signature.data()))
         throw OpenSslException("Could not write the PKCS#7 signature to the BIO buffer");
 
-    char *data = 0;
+    char *data = nullptr;
     // long size = BIO_get_mem_data(bioSignature.data(), &data);
     long size = am_BIO_ctrl(bioSignature.data(), BIO_CTRL_INFO, 0, (char *) &data);
     if (size <= 0 || !data)

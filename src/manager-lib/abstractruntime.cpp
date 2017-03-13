@@ -114,7 +114,7 @@ const Application *AbstractRuntime::application() const
 AbstractRuntime::~AbstractRuntime()
 {
     if (m_app && m_app->currentRuntime() == this)
-        m_app->setCurrentRuntime(0);
+        m_app->setCurrentRuntime(nullptr);
     delete m_container;
 }
 

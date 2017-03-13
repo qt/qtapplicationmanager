@@ -44,7 +44,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 Window::Window(const Application *app, QQuickItem *surfaceItem)
-    : QObject(0)
+    : QObject()
     , m_application(app)
     , m_windowItem(surfaceItem)
 {

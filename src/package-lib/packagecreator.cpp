@@ -159,7 +159,7 @@ PackageCreatorPrivate::PackageCreatorPrivate(PackageCreator *creator, QIODevice 
 
 bool PackageCreatorPrivate::create()
 {
-    struct archive *ar = 0;
+    struct archive *ar = nullptr;
     char buffer[64 * 1024];
 
     try {

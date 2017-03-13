@@ -52,7 +52,7 @@ class QmlLogger : public QObject
     Q_OBJECT
 
 public:
-    explicit QmlLogger(QQmlEngine *engine = 0);
+    explicit QmlLogger(QQmlEngine *engine = nullptr);
 
 private slots:
     void warnings(const QList<QQmlError> &list);

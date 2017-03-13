@@ -90,7 +90,7 @@ private:
 
     QEventLoop m_loop;
     QNetworkAccessManager *m_nam;
-    QNetworkReply *m_reply = 0;
+    QNetworkReply *m_reply = nullptr;
     bool m_downloadingFromFIFO = false;
     QByteArray m_buffer;
     InstallationReport m_report;

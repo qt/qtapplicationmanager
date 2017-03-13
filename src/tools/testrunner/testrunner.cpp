@@ -66,7 +66,7 @@ class QTestRootObject : public QObject
     Q_PROPERTY(bool hasTestCase READ hasTestCase WRITE setHasTestCase NOTIFY hasTestCaseChanged)
     Q_PROPERTY(QObject *defined READ defined)
 public:
-    QTestRootObject(QObject *parent = 0)
+    QTestRootObject(QObject *parent = nullptr)
         : QObject(parent)
         , m_windowShown(false)
         , m_hasTestCase(false)
@@ -159,7 +159,7 @@ int TestRunner::exec(QQmlEngine *engine)
     if (!QTestRootObject::instance()->hasQuit() && QTestRootObject::instance()->hasTestCase())
         eventLoop.exec();
 
-    QuickTestResult::setProgramName(0);
+    QuickTestResult::setProgramName(nullptr);
 
     return QuickTestResult::exitCode();
 }

@@ -253,7 +253,7 @@ public:
     QList<NotificationData *> notifications;
 };
 
-NotificationManager *NotificationManager::s_instance = 0;
+NotificationManager *NotificationManager::s_instance = nullptr;
 
 
 NotificationManager *NotificationManager::createInstance()
@@ -553,7 +553,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
                                        const QVariantMap &hints, int timeout)
 {
     Q_ASSERT(id);
-    NotificationData *n = 0;
+    NotificationData *n = nullptr;
 
     if (replaces) {
        int i = d->findNotificationById(id);

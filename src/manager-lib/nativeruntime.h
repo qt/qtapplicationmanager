@@ -69,8 +69,8 @@ class NativeRuntimeManager : public AbstractRuntimeManager
 {
     Q_OBJECT
 public:
-    explicit NativeRuntimeManager(QObject *parent = 0);
-    explicit NativeRuntimeManager(const QString &id, QObject *parent = 0);
+    explicit NativeRuntimeManager(QObject *parent = nullptr);
+    explicit NativeRuntimeManager(const QString &id, QObject *parent = nullptr);
 
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
@@ -133,9 +133,9 @@ private:
     QString m_dbusConnectionName;
 
     QList<ApplicationIPCInterface *> m_applicationIPCInterfaces;
-    NativeRuntimeApplicationInterface *m_applicationInterface = 0;
-    NativeRuntimeInterface *m_runtimeInterface = 0;
-    AbstractContainerProcess *m_process = 0;
+    NativeRuntimeApplicationInterface *m_applicationInterface = nullptr;
+    NativeRuntimeInterface *m_runtimeInterface = nullptr;
+    AbstractContainerProcess *m_process = nullptr;
 
     friend class NativeRuntimeManager;
 };

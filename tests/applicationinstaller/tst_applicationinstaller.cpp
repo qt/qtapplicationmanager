@@ -80,7 +80,7 @@ class tst_ApplicationInstaller : public QObject
     Q_OBJECT
 
 public:
-    tst_ApplicationInstaller(QObject *parent = 0);
+    tst_ApplicationInstaller(QObject *parent = nullptr);
     ~tst_ApplicationInstaller();
 
 private slots:
@@ -216,21 +216,21 @@ private:
     }
 
 private:
-    SudoClient *m_root = 0;
+    SudoClient *m_root = nullptr;
 
     TemporaryDir m_workDir;
     QString m_hardwareId;
     QString m_loopbackForSDCard[2];
     QVector<InstallationLocation> m_installationLocations;
-    ApplicationInstaller *m_ai = 0;
-    QSignalSpy *m_startedSpy = 0;
-    QSignalSpy *m_requestingInstallationAcknowledgeSpy = 0;
-    QSignalSpy *m_blockingUntilInstallationAcknowledgeSpy = 0;
-    QSignalSpy *m_progressSpy = 0;
-    QSignalSpy *m_finishedSpy = 0;
-    QSignalSpy *m_failedSpy = 0;
-    QSignalSpy *m_packageActivatedSpy = 0;
-    QSignalSpy *m_packageDeactivatedSpy = 0;
+    ApplicationInstaller *m_ai = nullptr;
+    QSignalSpy *m_startedSpy = nullptr;
+    QSignalSpy *m_requestingInstallationAcknowledgeSpy = nullptr;
+    QSignalSpy *m_blockingUntilInstallationAcknowledgeSpy = nullptr;
+    QSignalSpy *m_progressSpy = nullptr;
+    QSignalSpy *m_finishedSpy = nullptr;
+    QSignalSpy *m_failedSpy = nullptr;
+    QSignalSpy *m_packageActivatedSpy = nullptr;
+    QSignalSpy *m_packageDeactivatedSpy = nullptr;
 };
 
 
@@ -282,7 +282,7 @@ void tst_ApplicationInstaller::initTestCase()
     // we need a (dummy) ApplicationManager for the installer, since the installer will
     // notify the manager during installations
     QString errorString;
-    QVERIFY2(ApplicationManager::createInstance(0, true, &errorString), qPrintable(errorString));
+    QVERIFY2(ApplicationManager::createInstance(nullptr, true, &errorString), qPrintable(errorString));
 
     // create a temporary dir (plus sub-dirs) for everything created by this test run
 
@@ -931,7 +931,7 @@ void tst_ApplicationInstaller::cancelPackageInstallation()
 }
 
 
-static tst_ApplicationInstaller *tstApplicationInstaller = 0;
+static tst_ApplicationInstaller *tstApplicationInstaller = nullptr;
 
 int main(int argc, char **argv)
 {

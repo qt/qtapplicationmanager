@@ -170,7 +170,7 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
     }
 
     if (m_app)
-        m_app->setCurrentRuntime(0);
+        m_app->setCurrentRuntime(nullptr);
 
     emit finished(exitCode, status);
     setState(Inactive);

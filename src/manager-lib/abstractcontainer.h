@@ -58,7 +58,7 @@ class AbstractContainerManager : public QObject
 {
     Q_OBJECT
 public:
-    AbstractContainerManager(const QString &id, QObject *parent = 0);
+    AbstractContainerManager(const QString &id, QObject *parent = nullptr);
 
     static QString defaultIdentifier();
 

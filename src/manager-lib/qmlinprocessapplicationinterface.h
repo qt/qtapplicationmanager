@@ -54,7 +54,7 @@ class QmlInProcessRuntime;
 class QmlInProcessNotification : public Notification // clazy:exclude=missing-qobject-macro
 {
 public:
-    QmlInProcessNotification(QObject *parent = 0, ConstructionMode mode = Declarative);
+    QmlInProcessNotification(QObject *parent = nullptr, ConstructionMode mode = Declarative);
 
     void componentComplete() override;
 
@@ -79,7 +79,7 @@ class QmlInProcessApplicationInterface : public ApplicationInterface
     Q_OBJECT
 
 public:
-    explicit QmlInProcessApplicationInterface(QmlInProcessRuntime *runtime = 0);
+    explicit QmlInProcessApplicationInterface(QmlInProcessRuntime *runtime = nullptr);
 
     QString applicationId() const override;
     QVariantMap systemProperties() const override;

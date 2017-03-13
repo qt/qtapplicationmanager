@@ -74,7 +74,7 @@ public:
     bool registerContainer(AbstractContainerManager *manager, const QString &identifier);
 
 private:
-    ContainerFactory(QObject *parent = 0);
+    ContainerFactory(QObject *parent = nullptr);
     ContainerFactory(const ContainerFactory &);
     ContainerFactory &operator=(const ContainerFactory &);
     static ContainerFactory *s_instance;

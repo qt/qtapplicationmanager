@@ -62,7 +62,8 @@ class InstallationTask : public AsynchronousTask
 {
     Q_OBJECT
 public:
-    InstallationTask(const InstallationLocation &installationLocation, const QUrl &sourceUrl, QObject *parent = 0);
+    InstallationTask(const InstallationLocation &installationLocation, const QUrl &sourceUrl,
+                     QObject *parent = nullptr);
     ~InstallationTask();
 
     void acknowledge();

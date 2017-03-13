@@ -52,10 +52,9 @@ QT_BEGIN_NAMESPACE_AM
 class ApplicationDatabasePrivate
 {
 public:
-    QFile *file;
+    QFile *file = nullptr;
 
     ApplicationDatabasePrivate()
-        : file(0)
     { }
     ~ApplicationDatabasePrivate()
     { delete file; }

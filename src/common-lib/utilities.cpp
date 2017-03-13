@@ -225,7 +225,8 @@ bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree)
     QString cpath = QFileInfo(path).canonicalPath();
 
 #if defined(Q_OS_WIN)
-    return GetDiskFreeSpaceExW((LPCWSTR) cpath.utf16(), (ULARGE_INTEGER *) bytesFree, (ULARGE_INTEGER *) bytesTotal, 0);
+    return GetDiskFreeSpaceExW((LPCWSTR) cpath.utf16(), (ULARGE_INTEGER *) bytesFree,
+                               (ULARGE_INTEGER *) bytesTotal, nullptr);
 
 #else // Q_OS_UNIX
     int result;
@@ -255,7 +256,7 @@ QMultiMap<QString, QString> mountedDirectories()
     return result; // no mounts on Windows
 
 #elif defined(Q_OS_OSX)
-    struct statfs *sfs = 0;
+    struct statfs *sfs = nullptr;
     int count = getmntinfo(&sfs, MNT_NOWAIT);
 
     for (int i = 0; i < count; ++i, ++sfs) {
@@ -652,10 +653,10 @@ qint64 getParentPid(qint64 pid)
     int mibNames[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, (pid_t) pid };
     size_t procInfoSize;
 
-    if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), 0, &procInfoSize, 0, 0) == 0) {
+    if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), nullptr, &procInfoSize, nullptr, 0) == 0) {
         kinfo_proc *procInfo = (kinfo_proc *) malloc(procInfoSize);
 
-        if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), procInfo, &procInfoSize, 0, 0) == 0)
+        if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), procInfo, &procInfoSize, nullptr, 0) == 0)
             ppid = procInfo->kp_eproc.e_ppid;
         free(procInfo);
     }

@@ -188,7 +188,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-ApplicationInstaller *ApplicationInstaller::s_instance = 0;
+ApplicationInstaller *ApplicationInstaller::s_instance = nullptr;
 
 ApplicationInstaller::ApplicationInstaller(const QVector<InstallationLocation> &installationLocations,
                                            const QDir &manifestDir, const QDir &imageMountDir,
@@ -1073,7 +1073,7 @@ void ApplicationInstaller::executeNextTask()
         }
 
         if (d->activeTask == task)
-            d->activeTask = 0;
+            d->activeTask = nullptr;
 
         //task->deleteLater();
         delete task;

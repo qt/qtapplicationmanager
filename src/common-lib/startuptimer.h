@@ -66,7 +66,7 @@ private:
     StartupTimer();
     static StartupTimer *s_instance;
 
-    FILE *m_output = 0;
+    FILE *m_output = nullptr;
     bool m_initialized = false;
     bool m_reportCreated = false;
     quint64 m_processCreation = 0;

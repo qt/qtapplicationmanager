@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    Packager *p = 0;
+    Packager *p = nullptr;
 
     switch (command(clp)) {
     default:

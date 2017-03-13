@@ -226,7 +226,7 @@ class tst_Sudo : public QObject
     Q_OBJECT
 
 public:
-    tst_Sudo(QObject *parent = 0);
+    tst_Sudo(QObject *parent = nullptr);
     ~tst_Sudo();
 
 private slots:
@@ -248,7 +248,7 @@ private:
         return QDir(m_workDir.path()).absoluteFilePath(file);
     }
 
-    SudoClient *m_root = 0;
+    SudoClient *m_root = nullptr;
     TemporaryDir m_workDir;
 };
 
@@ -261,7 +261,7 @@ tst_Sudo::~tst_Sudo()
     if (m_workDir.isValid()) {
         ScopedRootPrivileges sudo;
 
-        detachLoopbacksAndUnmount(0, m_workDir.path());
+        detachLoopbacksAndUnmount(nullptr, m_workDir.path());
         recursiveOperation(m_workDir.path(), SafeRemove());
     }
 }
@@ -497,7 +497,7 @@ void tst_Sudo::image()
     QVERIFY(QFile::remove(imageFile));
 }
 
-static tst_Sudo *tstSudo = 0;
+static tst_Sudo *tstSudo = nullptr;
 
 int main(int argc, char **argv)
 {

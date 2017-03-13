@@ -165,7 +165,7 @@ bool QmlInProcessRuntime::start()
         delete obj;
         delete appContext;
         delete m_applicationIf;
-        m_applicationIf = 0;
+        m_applicationIf = nullptr;
         return false;
     }
 
@@ -177,7 +177,7 @@ bool QmlInProcessRuntime::start()
         delete obj;
         delete appContext;
         delete m_applicationIf;
-        m_applicationIf = 0;
+        m_applicationIf = nullptr;
         return false;
     }
     window->m_runtime = this;
@@ -203,7 +203,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
     for (int i = m_windows.size(); i; --i)
         emit inProcessSurfaceItemClosing(m_windows.at(i-1));
     m_windows.clear();
-    m_mainWindow = 0;
+    m_mainWindow = nullptr;
 #endif
 
     if (forceKill) {
@@ -254,7 +254,7 @@ void QmlInProcessRuntime::onWindowDestroyed()
     QQuickItem* window = reinterpret_cast<QQuickItem*>(sender()); // reinterpret_cast because the object might be broken down already!
     m_windows.removeAll(window);
     if (m_mainWindow == window)
-        m_mainWindow = 0;
+        m_mainWindow = nullptr;
 }
 
 void QmlInProcessRuntime::onEnableFullscreen()

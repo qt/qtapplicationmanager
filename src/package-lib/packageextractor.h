@@ -61,7 +61,7 @@ class PackageExtractor : public QObject
     Q_OBJECT
 
 public:
-    PackageExtractor(const QUrl &downloadUrl, const QDir &destinationDir, QObject *parent = 0);
+    PackageExtractor(const QUrl &downloadUrl, const QDir &destinationDir, QObject *parent = nullptr);
 
     QDir destinationDirectory() const;
     void setDestinationDirectory(const QDir &destinationDir);

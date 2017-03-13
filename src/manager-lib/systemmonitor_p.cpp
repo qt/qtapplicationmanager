@@ -97,7 +97,7 @@ qreal CpuReader::readLoadValue()
             continue;
         }
 
-        char *endPtr = 0;
+        char *endPtr = nullptr;
         qint64 val = strtoll(str.constData() + pos, &endPtr, 10); // check missing for over-/underflow
         values << val;
         total += val;
@@ -186,7 +186,7 @@ qreal IoReader::readLoadValue()
             continue;
         }
 
-        char *endPtr = 0;
+        char *endPtr = nullptr;
         qint64 val = strtoll(str.constData() + pos, &endPtr, 10); // check missing for over-/underflow
         values << val;
         total += val;

@@ -618,7 +618,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
         buffer.open(QBuffer::ReadOnly);
         app->m_installationReport.reset(new InstallationReport(app->m_id));
         if (!app->m_installationReport->deserialize(&buffer))
-            app->m_installationReport.reset(0);
+            app->m_installationReport.reset();
     }
 
     if (isAlias) {

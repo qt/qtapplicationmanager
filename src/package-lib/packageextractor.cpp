@@ -110,7 +110,7 @@ bool PackageExtractor::extract()
         d->m_loop.exec();
 
         delete d->m_reply;
-        d->m_reply = 0;
+        d->m_reply = nullptr;
     }
     return !wasCanceled() && !hasFailed();
 }
@@ -219,7 +219,7 @@ qint64 PackageExtractorPrivate::readTar(struct archive *ar, const void **archive
 
 void PackageExtractorPrivate::extract()
 {
-    struct archive *ar = 0;
+    struct archive *ar = nullptr;
 
     try {
         ar = archive_read_new();
@@ -252,7 +252,7 @@ void PackageExtractorPrivate::extract()
 
         // Iterate over all entries in the archive
         for (bool finished = false; !finished; ) {
-            archive_entry *entry = 0;
+            archive_entry *entry = nullptr;
             QFile f;
 
             // Try to read the next entry from the archive

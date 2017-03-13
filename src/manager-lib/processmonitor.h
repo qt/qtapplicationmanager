@@ -61,7 +61,7 @@ class ProcessMonitor : public QObject
     Q_PROPERTY(QVariant fpsMonitors READ fpsMonitors NOTIFY fpsMonitorsChanged)
 
 public:
-    explicit ProcessMonitor(const QString &appId, QObject *parent = 0);
+    explicit ProcessMonitor(const QString &appId, QObject *parent = nullptr);
     ~ProcessMonitor();
 
     bool isMemoryReportingEnabled() const;

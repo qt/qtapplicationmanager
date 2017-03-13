@@ -382,7 +382,7 @@ ApplicationManagerPrivate::~ApplicationManagerPrivate()
     qDeleteAll(apps);
 }
 
-ApplicationManager *ApplicationManager::s_instance = 0;
+ApplicationManager *ApplicationManager::s_instance = nullptr;
 
 ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb, bool singleProcess, QString *error)
 {

@@ -342,7 +342,7 @@ public:
 
     // idle
     qreal idleThreshold = 0.1;
-    CpuReader *idleCpu = 0;
+    CpuReader *idleCpu = nullptr;
     int idleTimerId = 0;
     bool isIdle = false;
 
@@ -357,8 +357,8 @@ public:
     QList<ProcessMonitor*> processMonitors;
 
     // reporting
-    MemoryReader *memory = 0;
-    CpuReader *cpu = 0;
+    MemoryReader *memory = nullptr;
+    CpuReader *cpu = nullptr;
     QHash<QString, IoReader *> ioHash;
     int reportingInterval = -1;
     int count = 10;
@@ -598,7 +598,7 @@ public:
 };
 
 
-SystemMonitor *SystemMonitor::s_instance = 0;
+SystemMonitor *SystemMonitor::s_instance = nullptr;
 
 
 SystemMonitor *SystemMonitor::createInstance()

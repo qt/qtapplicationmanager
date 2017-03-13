@@ -48,7 +48,6 @@ QT_BEGIN_NAMESPACE_AM
 
 FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
     : QQuickItem(parent)
-    , m_runtime(0)
 {
     qCDebug(LogSystem) << "FakeApplicationManagerWindow ctor! this:" << this;
     setFlag(ItemHasContents);

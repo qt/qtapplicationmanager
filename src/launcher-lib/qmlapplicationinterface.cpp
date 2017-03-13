@@ -57,7 +57,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-QmlApplicationInterface *QmlApplicationInterface::s_instance = 0;
+QmlApplicationInterface *QmlApplicationInterface::s_instance = nullptr;
 
 QmlApplicationInterface::QmlApplicationInterface(const QString &dbusConnectionName, const QString &dbusNotificationBusName, QObject *parent)
     : ApplicationInterface(parent)

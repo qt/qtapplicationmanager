@@ -101,7 +101,7 @@ private:
     uint notifyHelper(const QString &app_name, uint id, bool replaces, const QString &app_icon, const QString &summary, const QString &body, const QStringList &actions, const QVariantMap &hints, int timeout);
 
 private:
-    NotificationManager(QObject *parent = 0);
+    NotificationManager(QObject *parent = nullptr);
     NotificationManager(const NotificationManager &);
     NotificationManager &operator=(const NotificationManager &);
     static NotificationManager *s_instance;

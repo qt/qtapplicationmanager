@@ -141,7 +141,7 @@ private:
     int m_eventFd = -1;
     int m_controlFd = -1;
     int m_usageFd = -1;
-    QSocketNotifier *m_notifier = 0;
+    QSocketNotifier *m_notifier = nullptr;
 #endif
 };
 

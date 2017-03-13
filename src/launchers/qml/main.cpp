@@ -480,9 +480,9 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     if (!m_window) {
         QQuickItem *contentItem = qobject_cast<QQuickItem *>(topLevel);
         if (contentItem) {
-            QQuickView* view = new QQuickView(&m_engine, 0);
+            QQuickView* view = new QQuickView(&m_engine, nullptr);
             m_window = view;
-            view->setContent(qmlFileUrl, 0, topLevel);
+            view->setContent(qmlFileUrl, nullptr, topLevel);
         } else {
             qCCritical(LogSystem) << "could not load" << qmlFile << ": root object is not a QQuickItem.";
             QCoreApplication::exit(4);

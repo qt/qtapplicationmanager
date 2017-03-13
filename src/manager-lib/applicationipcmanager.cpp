@@ -62,7 +62,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-ApplicationIPCManager *ApplicationIPCManager::s_instance = 0;
+ApplicationIPCManager *ApplicationIPCManager::s_instance = nullptr;
 
 ApplicationIPCManager::~ApplicationIPCManager()
 { }

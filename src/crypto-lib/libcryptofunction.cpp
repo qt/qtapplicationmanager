@@ -115,7 +115,7 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
         qCritical("Could not find a suitable libcrypto: %s", qPrintable(s_library->errorString()));
     }
     delete s_library;
-    s_library = 0;
+    s_library = nullptr;
     return false;
 }
 

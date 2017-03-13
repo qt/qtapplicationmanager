@@ -66,7 +66,7 @@ public:
         CleaningUp
     };
 
-    AsynchronousTask(QObject *parent = 0);
+    AsynchronousTask(QObject *parent = nullptr);
 
     QString id() const;
 

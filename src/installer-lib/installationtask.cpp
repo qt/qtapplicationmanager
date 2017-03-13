@@ -262,7 +262,7 @@ void InstallationTask::execute()
     {
         QMutexLocker locker(&m_mutex);
         delete m_extractor;
-        m_extractor = 0;
+        m_extractor = nullptr;
     }
 }
 
@@ -387,7 +387,7 @@ void InstallationTask::startInstallation() throw (Exception)
         quint64 neededSize = qMax(m_extractor->installationReport().diskSpaceUsed(), quint64(70 * 1024));
 
         quint64 availableSize = 0;
-        if (!diskUsage(installationDir.absolutePath(), 0, &availableSize) || availableSize < neededSize) {
+        if (!diskUsage(installationDir.absolutePath(), nullptr, &availableSize) || availableSize < neededSize) {
             throw Exception(Error::StorageSpace, "not enough storage space left on %1: %2 MB available, but %3 MB needed")
                     .arg(m_installationLocation.id())
                     .arg(double(availableSize) / (1024 * 1024), 0, 'f', 2)

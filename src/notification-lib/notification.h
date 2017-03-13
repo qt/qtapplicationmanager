@@ -80,7 +80,7 @@ public:
 
     enum ConstructionMode { Declarative, Dynamic };
 
-    Notification(QObject *parent = 0, ConstructionMode mode = Declarative);
+    Notification(QObject *parent = nullptr, ConstructionMode mode = Declarative);
 
     uint notificationId() const;
     QString summary() const;

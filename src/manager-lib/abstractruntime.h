@@ -64,7 +64,7 @@ class AbstractRuntimeManager : public QObject
     Q_OBJECT
 
 public:
-    AbstractRuntimeManager(const QString &id, QObject *parent = 0);
+    AbstractRuntimeManager(const QString &id, QObject *parent = nullptr);
 
     static QString defaultIdentifier();
 

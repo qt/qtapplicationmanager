@@ -364,7 +364,7 @@ void Main::setupDBus()
     class DBusDaemonProcess : public QProcess // clazy:exclude=missing-qobject-macro
     {
     public:
-        DBusDaemonProcess(QObject *parent = 0)
+        DBusDaemonProcess(QObject *parent = nullptr)
             : QProcess(parent)
         {
             setProgram(qSL("dbus-daemon"));
@@ -680,9 +680,9 @@ void Main::showWindow()
     QObject *rootObject = m_engine->rootObjects().constFirst();
 
     if (!rootObject->isWindowType()) {
-        m_view = new QQuickView(m_engine, 0);
+        m_view = new QQuickView(m_engine, nullptr);
         StartupTimer::instance()->checkpoint("after WindowManager/QuickView instantiation");
-        m_view->setContent(m_mainQml, 0, rootObject);
+        m_view->setContent(m_mainQml, nullptr, rootObject);
         window = m_view;
     } else {
         window = qobject_cast<QQuickWindow *>(rootObject);

@@ -52,8 +52,8 @@ class QmlInProcessRuntimeManager : public AbstractRuntimeManager
 {
     Q_OBJECT
 public:
-    explicit QmlInProcessRuntimeManager(QObject *parent = 0);
-    explicit QmlInProcessRuntimeManager(const QString &id, QObject *parent = 0);
+    explicit QmlInProcessRuntimeManager(QObject *parent = nullptr);
+    explicit QmlInProcessRuntimeManager(const QString &id, QObject *parent = nullptr);
 
     static QString defaultIdentifier();
     bool inProcess() const override;
@@ -92,13 +92,13 @@ private slots:
 
 private:
     QString m_document;
-    QmlInProcessApplicationInterface *m_applicationIf = 0;
+    QmlInProcessApplicationInterface *m_applicationIf = nullptr;
 
 #if !defined(AM_HEADLESS)
     // used by FakeApplicationManagerWindow to register windows
     void addWindow(QQuickItem *window);
 
-    FakeApplicationManagerWindow *m_mainWindow = 0;
+    FakeApplicationManagerWindow *m_mainWindow = nullptr;
     QList<QQuickItem *> m_windows;
 
     friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete

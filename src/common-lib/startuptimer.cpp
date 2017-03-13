@@ -177,7 +177,7 @@ StartupTimer::StartupTimer()
 
     // really bool (*)(quint32 *result), but casting the lambda does not work
     auto readJiffiesFromProc = [](void *resultPtr) -> void * {
-        void *result = 0;
+        void *result = nullptr;
 
         QByteArray file = "/proc/self/task/" + QByteArray::number((int) syscall(SYS_gettid)) + "/stat";
         int fd = QT_OPEN(file, O_RDONLY);
@@ -203,10 +203,10 @@ StartupTimer::StartupTimer()
 
     quint32 threadJiffies;
     pthread_t pt;
-    void *threadJiffiesOk = 0;
+    void *threadJiffiesOk = nullptr;
 
     // using clone() with CLONE_VFORK would be more efficient, but it messes up the NPTL internal state
-    if ((pthread_create(&pt, 0, readJiffiesFromProc, &threadJiffies) == 0)
+    if ((pthread_create(&pt, nullptr, readJiffiesFromProc, &threadJiffies) == 0)
             && (pthread_join(pt, &threadJiffiesOk) == 0)
             && threadJiffiesOk) {
 
@@ -230,13 +230,13 @@ StartupTimer::StartupTimer()
     int mibNames[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
     size_t procInfoSize;
 
-    if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), 0, &procInfoSize, 0, 0) == 0) {
+    if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), nullptr, &procInfoSize, nullptr, 0) == 0) {
         kinfo_proc *procInfo = (kinfo_proc *) malloc(procInfoSize);
 
-        if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), procInfo, &procInfoSize, 0, 0) == 0) {
+        if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), procInfo, &procInfoSize, nullptr, 0) == 0) {
             struct timeval now;
 
-            if (gettimeofday(&now, 0) == 0) {
+            if (gettimeofday(&now, nullptr) == 0) {
                 m_processCreation = (quint64(now.tv_sec) * 1000000 + now.tv_usec)
                         - (procInfo->kp_proc.p_un.__p_starttime.tv_sec * 1000000 + procInfo->kp_proc.p_un.__p_starttime.tv_usec);
                 m_initialized = true;

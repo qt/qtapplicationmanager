@@ -114,7 +114,7 @@ void tst_Runtime::factory()
     QVERIFY(rf->registerRuntime(new TestRuntimeManager(qSL("foo"), qApp)));
     QVERIFY(rf->runtimeIds() == QStringList() << qSL("foo"));
 
-    QVERIFY(!rf->create(0, 0));
+    QVERIFY(!rf->create(nullptr, nullptr));
 
     QByteArray yaml =
             "formatVersion: 1\n"
@@ -139,7 +139,7 @@ void tst_Runtime::factory()
     }
     QVERIFY(a);
 
-    AbstractRuntime *r = rf->create(0, a);
+    AbstractRuntime *r = rf->create(nullptr, a);
     QVERIFY(r);
     QVERIFY(r->application() == a);
     QVERIFY(r->manager()->inProcess());
@@ -150,7 +150,7 @@ void tst_Runtime::factory()
         QVERIFY(!r->inProcessQmlEngine());
         r->setInProcessQmlEngine(engine.data());
         QVERIFY(r->inProcessQmlEngine() == engine.data());
-        r->setInProcessQmlEngine(0);
+        r->setInProcessQmlEngine(nullptr);
     }
     QVERIFY(r->start());
     QVERIFY(r->state() == AbstractRuntime::Active);

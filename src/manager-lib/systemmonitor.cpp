@@ -574,13 +574,14 @@ public:
             if (diff > 0)
                 reports.insert(reportPos, diff, Report());
             else {
-                if (reportPos - diff < oldCount) {
+                if (reportPos <= count) {
                     reports.remove(reportPos, -diff);
+                    if (reportPos == count)
+                        reportPos = 0;
                 } else {
                     reports.remove(reportPos, oldCount - reportPos);
-                    int rmFront = reportPos - count;
-                    reports.remove(0, rmFront);
-                    reportPos = rmFront + 1;
+                    reports.remove(0, reportPos - count);
+                    reportPos = 0;
                 }
             }
 

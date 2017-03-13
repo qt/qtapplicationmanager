@@ -27,7 +27,7 @@
     <signal name="taskRequestingInstallationAcknowledge">
       <arg name="taskId" type="s" direction="out"/>
       <arg name="applicationAsVariantMap" type="a{sv}" direction="out"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap"/>
     </signal>
     <signal name="taskBlockingUntilInstallationAcknowledge">
       <arg name="taskId" type="s" direction="out"/>

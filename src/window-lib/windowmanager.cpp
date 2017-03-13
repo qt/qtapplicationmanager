@@ -365,11 +365,10 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
     d->qmlEngine = qmlEngine;
 
     connect(SystemMonitor::instance(), &SystemMonitor::fpsReportingEnabledChanged, this, [this]() {
-        if (SystemMonitor::instance()->isFpsReportingEnabled()) {
-            foreach (const QQuickWindow *view, d->views)
+        for (const QQuickWindow *view : qAsConst(d->views)) {
+            if (SystemMonitor::instance()->isFpsReportingEnabled())
                 connect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
-        } else {
-            foreach (const QQuickWindow *view, d->views)
+            else
                 disconnect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
         }
     });
@@ -989,15 +988,16 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
     } else {
         // app without System-UI
 
-        QVector<const Application *> apps;
-        foreach (const Application *app, ApplicationManager::instance()->applications()) {
-            if (!app->isAlias() && (appId.isEmpty() || (appId == app->id())))
-                apps << app;
-        }
+        // filter out alias and apps not matching appId (if set)
+        QVector<const Application *> apps = ApplicationManager::instance()->applications();
+        auto it = std::remove_if(apps.begin(), apps.end(), [appId](const Application *app) {
+            return app->isAlias() || (!appId.isEmpty() && (appId != app->id()));
+        });
+        apps.erase(it, apps.end());
 
         auto grabbers = new QList<QSharedPointer<QQuickItemGrabResult>>;
 
-        foreach (const Window *w, d->windows) {
+        for (const Window *w : qAsConst(d->windows)) {
             if (apps.contains(w->application())) {
                 if (attributeName.isEmpty()
                         || (w->windowProperty(attributeName).toString() == attributeValue)) {

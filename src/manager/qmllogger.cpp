@@ -58,7 +58,7 @@ void QmlLogger::warnings(const QList<QQmlError> &list)
     if (!LogQml().isWarningEnabled())
         return;
 
-    foreach (const QQmlError &err, list) {
+    for (const QQmlError &err : list) {
         QByteArray func;
         if (err.object())
             func = err.object()->objectName().toLocal8Bit();

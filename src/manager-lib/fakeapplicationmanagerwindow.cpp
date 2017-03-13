@@ -129,10 +129,10 @@ QVariant FakeApplicationManagerWindow::windowProperty(const QString &name) const
 
 QVariantMap FakeApplicationManagerWindow::windowProperties() const
 {
-    QList<QByteArray> keys = dynamicPropertyNames();
+    const QList<QByteArray> keys = dynamicPropertyNames();
     QVariantMap map;
 
-    foreach (const QByteArray &key, keys) {
+    for (const QByteArray &key : keys) {
         if (!isName(key))
             continue;
 

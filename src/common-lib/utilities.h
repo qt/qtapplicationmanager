@@ -194,7 +194,7 @@ QVector<T *> loadPlugins(const char *type, const QStringList &files) Q_DECL_NOEX
     QVector<T *> interfaces;
     const char *iid = qobject_interface_iid<T>();
 
-    foreach (const QString &pluginFilePath, files) {
+    for (const QString &pluginFilePath : files) {
         QPluginLoader pluginLoader(pluginFilePath);
         if (Q_UNLIKELY(!pluginLoader.load())) {
             throw Exception("could not load %1 plugin %2: %3")

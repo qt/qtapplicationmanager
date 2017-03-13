@@ -100,7 +100,8 @@ QString hardwareId()
     if (f.open(QFile::ReadOnly))
         return f.readAll().trimmed();
 #else
-    foreach (const QNetworkInterface &iface, QNetworkInterface::allInterfaces()) {
+    const auto allInterfaces = QNetworkInterface::allInterfaces();
+    for (const QNetworkInterface &iface : allInterfaces) {
         if (iface.isValid() && (iface.flags() & QNetworkInterface::IsUp)
                 && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
                 && !iface.hardwareAddress().isEmpty()) {

@@ -193,7 +193,7 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
         if (!rootCertStore)
             throw WinCryptException("Could not create temporary root certificate store");
 
-        foreach (const QByteArray &trustedCert, chainOfTrust) {
+        for (const QByteArray &trustedCert : chainOfTrust) {
             // convert from PEM to DER
             DWORD derSize = 0;
             if (!CryptStringToBinaryA(trustedCert.constData(), trustedCert.size(), CRYPT_STRING_BASE64HEADER,

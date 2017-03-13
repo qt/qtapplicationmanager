@@ -199,7 +199,7 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
     if (!certChain)
         throw OpenSslException("Could not create a X509 certificate store");
 
-    foreach (const QByteArray &trustedCert, chainOfTrust) {
+    for (const QByteArray &trustedCert : chainOfTrust) {
         OpenSslPointer<BIO> bioCert(am_BIO_new_mem_buf((void *) trustedCert.constData(), trustedCert.size()));
         if (!bioCert)
             throw OpenSslException("Could not create BIO buffer for a certificate");

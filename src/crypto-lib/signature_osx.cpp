@@ -159,7 +159,7 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
         throw SecurityException(err, "Could not set PKCS#7 signature detached content");
 
     QCFType<CFMutableArrayRef> caCerts = CFArrayCreateMutable(nullptr, 0, nullptr);
-    foreach (const QByteArray &trustedCert, chainOfTrust) {
+    for (const QByteArray &trustedCert : chainOfTrust) {
         QCFType<CFArrayRef> certs;
         SecExternalFormat itemFormat = kSecFormatUnknown; // X509Cert;
         SecExternalItemType itemType = kSecItemTypeUnknown; //Certificate;

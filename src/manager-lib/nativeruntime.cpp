@@ -165,9 +165,9 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
     m_applicationInterfaceConnected = m_launchWhenReady = m_dbusConnection = false;
 
     // unregister all extension interfaces
-    foreach (ApplicationIPCInterface *iface, ApplicationIPCManager::instance()->interfaces()) {
+    const auto interfaces = ApplicationIPCManager::instance()->interfaces();
+    for (ApplicationIPCInterface *iface : interfaces)
         iface->dbusUnregister(QDBusConnection(m_dbusConnectionName));
-    }
 
     if (m_app)
         m_app->setCurrentRuntime(nullptr);
@@ -376,7 +376,8 @@ void NativeRuntime::registerExtensionInterfaces()
     QDBusConnection conn(m_dbusConnectionName);
 
     // register all extension interfaces
-    foreach (ApplicationIPCInterface *iface, ApplicationIPCManager::instance()->interfaces()) {
+    const auto interfaces = ApplicationIPCManager::instance()->interfaces();
+    for (ApplicationIPCInterface *iface : interfaces) {
         if (!iface->isValidForApplication(application()) || m_applicationIPCInterfaces.contains(iface))
             continue;
 

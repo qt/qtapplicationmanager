@@ -136,7 +136,7 @@ void ApplicationDatabase::write(const QVector<const Application *> &apps) Q_DECL
         throw Exception(*d->file, "could not truncate the application database");
 
     QDataStream ds(d->file);
-    foreach (const Application *app, apps)
+    for (const Application *app : apps)
         app->writeToDataStream(ds, apps);
     if (ds.status() != QDataStream::Ok)
         throw Exception(*d->file, "could not write to application database");

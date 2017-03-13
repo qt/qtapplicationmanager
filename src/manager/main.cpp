@@ -503,7 +503,7 @@ void Main::loadApplicationDatabase() Q_DECL_NOEXCEPT_EXPR(false)
 
         if (LogSystem().isDebugEnabled()) {
             qCDebug(LogSystem) << "Registering applications:";
-            foreach (const Application *app, apps)
+            for (const Application *app : qAsConst(apps))
                 qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: " << app->codeDir().path() << "]";
         }
 
@@ -870,7 +870,7 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *service
 
         static QStringList filesToDelete;
         if (filesToDelete.isEmpty())
-            atexit([]() { foreach (const QString &ftd, filesToDelete) QFile::remove(ftd); });
+            atexit([]() { for (const QString &ftd : qAsConst(filesToDelete)) QFile::remove(ftd); });
         filesToDelete << f.fileName();
     }
 #endif // QT_DBUS_LIB
@@ -931,8 +931,8 @@ void Main::loadDummyDataFiles()
         QObject *dummyData = comp.create();
 
         if (comp.isError()) {
-            QList<QQmlError> errors = comp.errors();
-            foreach (const QQmlError &error, errors)
+            const QList<QQmlError> errors = comp.errors();
+            for (const QQmlError &error : errors)
                 qWarning() << error;
         }
 
@@ -998,8 +998,9 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
     auto scan = [&result, &yas, &installationLocations](const QDir &baseDir, bool scanningBuiltinApps) {
         auto flags = scanningBuiltinApps ? QDir::Dirs | QDir::NoDotAndDotDot
                                          : QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks;
+        const QStringList appDirNames = baseDir.entryList(flags);
 
-        foreach (const QString &appDirName, baseDir.entryList(flags)) {
+        for (const QString &appDirName : appDirNames) {
             if (appDirName.endsWith('+') || appDirName.endsWith('-'))
                 continue;
             if (!isValidDnsName(appDirName)) {
@@ -1063,7 +1064,7 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
 
 #if !defined(AM_DISABLE_INSTALLER)
                 // fix the basedir of the application
-                foreach (const InstallationLocation &il, installationLocations) {
+                for (const InstallationLocation &il : installationLocations) {
                     if (il.id() == report->installationLocationId()) {
                         a->setCodeDir(il.installationPath() + a->id());
                         break;
@@ -1076,7 +1077,7 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
         }
     };
 
-    foreach (const QString &dir, builtinAppsDirs)
+    for (const QString &dir : builtinAppsDirs)
         scan(dir, true);
 #if !defined(AM_DISABLE_INSTALLER)
     scan(installedAppsDir, false);

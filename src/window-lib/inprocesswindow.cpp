@@ -85,10 +85,10 @@ QVariant InProcessWindow::windowProperty(const QString &name) const
 
 QVariantMap InProcessWindow::windowProperties() const
 {
-    QList<QByteArray> keys = windowItem()->dynamicPropertyNames();
+    const QList<QByteArray> keys = windowItem()->dynamicPropertyNames();
     QVariantMap map;
 
-    foreach (const QByteArray &key, keys) {
+    for (const QByteArray &key : keys) {
         if (!isName(key))
             continue;
 

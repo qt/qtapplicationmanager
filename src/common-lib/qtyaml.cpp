@@ -354,7 +354,8 @@ static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style) 
         yerr(yaml_sequence_start_event_initialize(&event, nullptr, nullptr, 1, style == FlowStyle ? YAML_FLOW_SEQUENCE_STYLE : YAML_BLOCK_SEQUENCE_STYLE));
         yerr(yaml_emitter_emit(e, &event));
 
-        foreach (const QVariant &listValue, value.toList())
+        const QVariantList list = value.toList();
+        for (const QVariant &listValue : list)
             emitYaml(e, listValue, style);
 
         yerr(yaml_sequence_end_event_initialize(&event));
@@ -399,7 +400,7 @@ QByteArray yamlFromVariantDocuments(const QVector<QVariant> &documents, YamlStyl
         bool first = true;
         yaml_version_directive_t yamlVersion { 1, 1 };
 
-        foreach (const QVariant &doc, documents) {
+        for (const QVariant &doc : documents) {
             yerr(yaml_document_start_event_initialize(&event, first ? &yamlVersion : nullptr, nullptr, nullptr, 0));
             yerr(yaml_emitter_emit(&e, &event));
 

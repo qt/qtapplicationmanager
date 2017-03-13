@@ -222,7 +222,7 @@ bool ApplicationIPCManager::registerInterface(QT_PREPEND_NAMESPACE_AM(Applicatio
         qCWarning(LogQmlIpc) << "Application IPC interface name" << name << "is not a valid D-Bus interface name";
         return false;
     }
-    foreach (const auto &ext, m_interfaces) {
+    for (const auto &ext : qAsConst(m_interfaces)) {
         if (ext->interfaceName() == name) {
             qCWarning(LogQmlIpc) << "Application IPC interface name" << name << "was already registered";
             return false;

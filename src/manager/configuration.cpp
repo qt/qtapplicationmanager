@@ -292,7 +292,7 @@ void Configuration::parse()
     }
 #endif
 
-    foreach (const QString &configFilePath, configFilePaths) {
+    for (const QString &configFilePath : qAsConst(configFilePaths)) {
         QFile cf(configFilePath);
         if (!cf.open(QIODevice::ReadOnly)) {
             showParserMessage(QString::fromLatin1("Failed to open config file '%1' for reading.\n").arg(cf.fileName()), ErrorMessage);

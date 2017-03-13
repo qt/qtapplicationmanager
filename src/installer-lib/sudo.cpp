@@ -199,7 +199,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
         signal(SIGHUP, sigHupHandler);
 
         // Drop as many capabilities as possible, just to be on the safe side
-        QList<quint32> neededCapabilities = QList<quint32> {
+        static const std::vector<quint32> neededCapabilities = {
                 CAP_SYS_ADMIN,
                 CAP_CHOWN,
                 CAP_FOWNER,
@@ -211,7 +211,7 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
         __user_cap_data_struct capData;
         if (capget(&capHeader, &capData) == 0) {
             quint32 capNeeded = 0;
-            foreach (quint32 cap, neededCapabilities)
+            for (quint32 cap : neededCapabilities)
                 capNeeded |= (1 << cap);
 
             capData.effective = capData.permitted = capData.inheritable = capNeeded;

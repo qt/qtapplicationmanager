@@ -295,7 +295,7 @@ uint ApplicationInstaller::findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false)
 
     for (uint uid = d->minUserId; uid <= d->maxUserId; ++uid) {
         bool match = false;
-        foreach (const Application *app, apps) {
+        for (const Application *app : qAsConst(apps)) {
             if (app->uid() == uid) {
                 match = true;
                 break;
@@ -353,7 +353,8 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
 
     QMultiMap<QString, QString> mountPoints = mountedDirectories();
 
-    foreach (const QFileInfo &fi, applicationImageMountDirectory().entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot)) {
+    const QFileInfoList mounts = applicationImageMountDirectory().entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+    for (const QFileInfo &fi : mounts) {
         QString path = fi.canonicalFilePath();
         QString device = mountPoints.value(path);
 
@@ -384,14 +385,15 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
     QMultiMap<QString, QString> validPaths {
         { manifestDirectory().absolutePath(), QString() }
     };
-    foreach (const InstallationLocation &il, installationLocations()) {
+    for (const InstallationLocation &il : qAsConst(d->installationLocations)) {
         if (!il.isRemovable() || il.isMounted()) {
             validPaths.insert(il.documentPath(), QString());
             validPaths.insert(il.installationPath(), QString());
         }
     }
 
-    foreach (const Application *app, am->applications()) {
+    const auto allApps = am->applications();
+    for (const Application *app : allApps) {
         const InstallationReport *ir = app->installationReport();
         if (ir) {
             const InstallationLocation &il = installationLocationFromId(ir->installationLocationId());
@@ -412,14 +414,14 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
                 else
                     checkDirs << il.installationPath() + app->id();
 
-                foreach (const QString &checkFile, checkFiles) {
+                for (const QString &checkFile : qAsConst(checkFiles)) {
                     QFileInfo fi(checkFile);
                     if (!fi.exists() || !fi.isFile() || !fi.isReadable()) {
                         valid = false;
                         break;
                     }
                 }
-                foreach (const QString &checkDir, checkDirs) {
+                for (const QString &checkDir : checkDirs) {
                     QFileInfo fi(checkDir);
                     if (!fi.exists() || !fi.isDir() || !fi.isReadable()) {
                         valid = false;
@@ -451,17 +453,26 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
 
     // 3. Remove everything that is not referenced from the app-db
 
-    foreach (const QString &dir, validPaths.uniqueKeys()) {
-        foreach (const QFileInfo &fi, QDir(dir).entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot)) {
-            QString name = fi.fileName();
-            QStringList validNames = validPaths.values(dir);
+    for (auto it = validPaths.cbegin(); it != validPaths.cend(); ) {
+        const QString currentDir = it.key();
 
-            if ((fi.isDir() && validNames.contains(name + qL1C('/')))
-                    || (fi.isFile() && validNames.contains(name))) {
-                continue;
+        // collect all values for the unique key currentDir
+        QVector<QString> validNames;
+        for ( ; it != validPaths.cend() && it.key() == currentDir; ++it)
+            validNames << it.value();
+
+        const QFileInfoList &dirEntries = QDir(currentDir).entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+
+        // check if there is anything in the filesystem that is NOT listed in the validNames
+        for (const QFileInfo &fi : dirEntries) {
+            QString name = fi.fileName();
+            if (fi.isDir())
+                name.append(qL1C('/'));
+
+            if ((!fi.isDir() && !fi.isFile()) || !validNames.contains(name)) {
+                if (!SudoClient::instance()->removeRecursive(fi.absoluteFilePath()))
+                    throw Exception(Error::IO, "could not remove broken installation leftover %1 : %2").arg(fi.absoluteFilePath()).arg(SudoClient::instance()->lastError());
             }
-            if (!SudoClient::instance()->removeRecursive(fi.absoluteFilePath()))
-                throw Exception(Error::IO, "could not remove broken installation leftover %1 : %2").arg(fi.absoluteFilePath()).arg(SudoClient::instance()->lastError());
         }
     }
 }
@@ -491,7 +502,7 @@ const InstallationLocation &ApplicationInstaller::defaultInstallationLocation() 
 
 const InstallationLocation &ApplicationInstaller::installationLocationFromId(const QString &installationLocationId) const
 {
-    foreach (const InstallationLocation &il, d->installationLocations) {
+    for (const InstallationLocation &il : d->installationLocations) {
         if (il.id() == installationLocationId)
             return il;
     }
@@ -518,7 +529,7 @@ QStringList ApplicationInstaller::installationLocationIds() const
 {
     QStringList ids;
     ids.reserve(d->installationLocations.size());
-    foreach (const InstallationLocation &il, d->installationLocations)
+    for (const InstallationLocation &il : d->installationLocations)
         ids << il.id();
     return ids;
 }
@@ -804,7 +815,7 @@ bool ApplicationInstaller::cancelTask(const QString &taskId)
     if (d->activeTask && d->activeTask->id() == taskId)
         return d->activeTask->cancel();
 
-    foreach (AsynchronousTask *task, d->taskQueue) {
+    for (AsynchronousTask *task : qAsConst(d->taskQueue)) {
         if (task->id() == taskId) {
             task->forceCancel();
             task->deleteLater();

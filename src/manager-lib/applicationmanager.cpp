@@ -514,7 +514,7 @@ void ApplicationManager::setDebugWrapperConfiguration(const QVariantList &debugW
     //      command: [ /usr/bin/valgrind, '--', '%program%', '%arguments%' ]
     //      parameters:  # <name>: <default value>
 
-    foreach (const QVariant &v, debugWrappers) {
+    for (const QVariant &v : debugWrappers) {
         const QVariantMap &map = v.toMap();
 
         ApplicationManagerPrivate::DebugWrapper dw;
@@ -620,7 +620,7 @@ QVector<const Application *> ApplicationManager::applications() const
 
 const Application *ApplicationManager::fromId(const QString &id) const
 {
-    foreach (const Application *app, d->apps) {
+    for (const Application *app : d->apps) {
         if (app->id() == id)
             return app;
     }
@@ -632,7 +632,7 @@ const Application *ApplicationManager::fromProcessId(qint64 pid) const
     if (!pid)
         return 0;
 
-    foreach (const Application *app, d->apps) {
+    for (const Application *app : d->apps) {
         if (app->currentRuntime() && (app->currentRuntime()->applicationProcessId() == pid))
             return app;
     }
@@ -641,7 +641,7 @@ const Application *ApplicationManager::fromProcessId(qint64 pid) const
     //TODO: optimize this by pre-computing a list of parent pids first (do the same in nativeruntime)
     qint64 appmanPid = qApp->applicationPid();
 
-    foreach (const Application *app, d->apps) {
+    for (const Application *app : d->apps) {
         if (app->currentRuntime()) {
             qint64 rtpid = app->currentRuntime()->applicationProcessId();
             qint64 ppid = pid;
@@ -662,7 +662,7 @@ const Application *ApplicationManager::fromSecurityToken(const QByteArray &secur
     if (securityToken.size() != AbstractRuntime::SecurityTokenSize)
         return 0;
 
-    foreach (const Application *app, d->apps) {
+    for (const Application *app : d->apps) {
         if (app->currentRuntime() && app->currentRuntime()->securityToken() == securityToken)
             return app;
     }
@@ -673,11 +673,12 @@ QVector<const Application *> ApplicationManager::schemeHandlers(const QString &s
 {
     QVector<const Application *> handlers;
 
-    foreach (const Application *app, d->apps) {
+    for (const Application *app : d->apps) {
         if (app->isAlias())
             continue;
 
-        foreach (const QString &mime, app->supportedMimeTypes()) {
+        const auto mimeTypes = app->supportedMimeTypes();
+        for (const QString &mime : mimeTypes) {
             int pos = mime.indexOf(QLatin1Char('/'));
 
             if ((pos > 0)
@@ -694,7 +695,7 @@ QVector<const Application *> ApplicationManager::mimeTypeHandlers(const QString 
 {
     QVector<const Application *> handlers;
 
-    foreach (const Application *app, d->apps) {
+    for (const Application *app : d->apps) {
         if (app->isAlias())
             continue;
 
@@ -709,11 +710,12 @@ void ApplicationManager::registerMimeTypes()
     QVector<QString> schemes;
     schemes << qSL("file") << qSL("http") << qSL("https");
 
-    foreach (const Application *a, d->apps) {
-        if (a->isAlias())
+    for (const Application *app : qAsConst(d->apps)) {
+        if (app->isAlias())
             continue;
 
-        foreach (const QString &mime, a->supportedMimeTypes()) {
+        const auto mimeTypes = app->supportedMimeTypes();
+        for (const QString &mime : mimeTypes) {
             int pos = mime.indexOf(QLatin1Char('/'));
 
             if ((pos > 0) && (mime.left(pos) == qL1S("x-scheme-handler")))
@@ -721,7 +723,7 @@ void ApplicationManager::registerMimeTypes()
         }
     }
 #if defined(QT_GUI_LIB)
-    foreach (const QString &scheme, schemes)
+    for (const QString &scheme : qAsConst(schemes))
         QDesktopServices::setUrlHandler(scheme, this, "openUrlRelay");
 #endif
 }
@@ -904,12 +906,12 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         if (!apps.contains(nonAliasedApp))
             apps.append(nonAliasedApp);
 
-        foreach (const Application *alias, d->apps) {
+        for (const Application *alias : qAsConst(d->apps)) {
             if (!apps.contains(alias) && alias->isAlias() && alias->nonAliased() == nonAliasedApp)
                 apps.append(alias);
         }
 
-        foreach (const Application *app, apps)
+        for (const Application *app : qAsConst(apps))
             emit applicationRunStateChanged(app->id(), runtimeToManagerState(newState));
     });
 
@@ -1213,7 +1215,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
                 const Application *&app = *it;
 
                 // try to find a better matching alias, if available
-                foreach (const Application *alias, d->apps) {
+                for (const Application *alias : d->apps) {
                     if (alias->isAlias() && alias->nonAliased() == app) {
                         if (url.toString(QUrl::PrettyDecoded) == alias->documentUrl()) {
                             app = alias;
@@ -1535,7 +1537,7 @@ void ApplicationManager::preload()
 {
     bool forcePreload = d->database && d->database->isTemporary();
 
-    foreach (const Application *app, d->apps) {
+    for (const Application *app : qAsConst(d->apps)) {
         if (forcePreload || app->isPreloaded()) {
             if (!startApplication(app)) {
                 qCWarning(LogSystem) << "WARNING: unable to start preload-enabled application" << app->id();

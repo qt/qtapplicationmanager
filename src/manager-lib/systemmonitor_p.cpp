@@ -266,7 +266,7 @@ bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryR
                 if (m_controlFd >= 0) {
                     bool registerOk = true;
 
-                    foreach (qreal percent, m_thresholds) {
+                    for (qreal percent : qAsConst(m_thresholds)) {
                         qint64 mem = limit * percent / 100;
                         registerOk = registerOk && (::dprintf(m_controlFd, "%d %d %lld", m_eventFd, m_usageFd, mem) > 0);
                     }

@@ -201,7 +201,7 @@ void QmlApplicationInterface::notificationClose(QmlNotification *n)
 void QmlApplicationInterface::notificationClosed(uint notificationId, uint reason)
 {
     qDebug("Notification was closed signal: %u", notificationId);
-    foreach (const QPointer<QmlNotification> &n, m_allNotifications) {
+    for (const QPointer<QmlNotification> &n : m_allNotifications) {
         if (n->notificationId() == notificationId) {
             n->libnotifyNotificationClosed(reason);
             m_allNotifications.removeAll(n);
@@ -213,7 +213,7 @@ void QmlApplicationInterface::notificationClosed(uint notificationId, uint reaso
 void QmlApplicationInterface::notificationActionTriggered(uint notificationId, const QString &actionId)
 {
     qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
-    foreach (const QPointer<QmlNotification> &n, m_allNotifications) {
+    for (const QPointer<QmlNotification> &n : m_allNotifications) {
         if (n->notificationId() == notificationId) {
             n->libnotifyActionInvoked(actionId);
             break;

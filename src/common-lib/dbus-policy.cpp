@@ -63,7 +63,7 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
 
         bool ok;
         const QVariantList uidList = policy.value(qSL("uids")).toList();
-        foreach (const QVariant &v, uidList) {
+        for (const QVariant &v : uidList) {
             uint uid = v.toUInt(&ok);
             if (ok)
                 dbp.m_uids << uid;
@@ -107,7 +107,7 @@ bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBu
             pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
             QStringList appCaps = pidToCapabilities(pid);
             bool match = false;
-            foreach (const QString &cap, ip->m_capabilities)
+            for (const QString &cap : ip->m_capabilities)
                 match = match && std::binary_search(appCaps.cbegin(), appCaps.cend(), cap);
             if (!match)
                 throw "insufficient capabilities";

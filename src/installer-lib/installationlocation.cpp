@@ -178,7 +178,7 @@ QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(c
     QVector<InstallationLocation> locations;
     bool gotDefault = false;
 
-    foreach (const QVariant &v, list) {
+    for (const QVariant &v : list) {
         QVariantMap map = v.toMap();
 
         QString id = map.value(qSL("id")).toString();

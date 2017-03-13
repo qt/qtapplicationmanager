@@ -257,7 +257,7 @@ IpcProxyObject::IpcProxyObject(QObject *object, const QString &serviceName, cons
         if (propName.startsWith(TYPE_ANNOTATION_PREFIX)) {
             QByteArray slotName = propName.mid(qstrlen(TYPE_ANNOTATION_PREFIX));
             bool found = false;
-            foreach (int slotIndex,  m_slots) {
+            for (int slotIndex : qAsConst(m_slots)) {
                 QMetaMethod mm = mo->method(slotIndex);
                 if (mm.name() == slotName) {
                     found = true;
@@ -341,7 +341,7 @@ QByteArray IpcProxyObject::createIntrospectionXml()
 
     const QMetaObject *mo = m_object->metaObject();
 
-    foreach (int i, m_properties) {
+    for (int i : qAsConst(m_properties)) {
         QMetaProperty mp = mo->property(i);
 
         QByteArray readWrite;
@@ -355,7 +355,7 @@ QByteArray IpcProxyObject::createIntrospectionXml()
                 + "\" access=\"" + readWrite
                 + "\" />\n";
     }
-    foreach (int i, m_signals) {
+    for (int i : qAsConst(m_signals)) {
         QMetaMethod mm = mo->method(i);
 
         xml = xml + "  <signal name=\"" + mm.name() + "\">\n";
@@ -370,7 +370,7 @@ QByteArray IpcProxyObject::createIntrospectionXml()
         }
         xml = xml + "  </signal>\n";
     }
-    foreach (int i, m_slots) {
+    for (int i : qAsConst(m_slots)) {
         QMetaMethod mm = mo->method(i);
         QList<int> types;
         if (m_slotSignatures.contains(i)) {
@@ -435,7 +435,7 @@ bool IpcProxyObject::isValidForApplication(const Application *app) const
         return false;
 
     auto matchStringLists = [](const QStringList &sl1, const QStringList &sl2) -> bool {
-        foreach (const QString &s1, sl1) {
+        for (const QString &s1 : sl1) {
             if (sl2.contains(s1))
                 return true;
         }
@@ -510,7 +510,7 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
 
     if (interface == m_interfaceName) {
         // find in registered slots only - not in all methods
-        foreach (int mi, m_slots) {
+        for (int mi : qAsConst(m_slots)) {
             QMetaMethod mm = mo->method(mi);
             if (mm.name() == function) {
                 if (mm.parameterCount() == message.arguments().count()) {
@@ -576,7 +576,7 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
             QByteArray name = message.arguments().at(1).toString().toLatin1();
             QVariant result;
 
-            foreach (int pi, m_properties) {
+            for (int pi : qAsConst(m_properties)) {
                 QMetaProperty mp = mo->property(pi);
                 if (mp.name() == name) {
                     result = convertFromJSVariant(mp.read(m_object));
@@ -596,7 +596,7 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
         } else if (function == "Set") {
             QByteArray name = message.arguments().at(1).toString().toLatin1();
 
-            foreach (int pi, m_properties) {
+            for (int pi : qAsConst(m_properties)) {
                 QMetaProperty mp = mo->property(pi);
                 if (mp.name() == name) {
                     if (mp.isWritable()) {

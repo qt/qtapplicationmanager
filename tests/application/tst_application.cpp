@@ -62,7 +62,8 @@ void tst_Application::initTestCase()
 {
     YamlApplicationScanner scanner;
     QDir baseDir(qL1S(AM_TESTDATA_DIR "manifests"));
-    foreach (const QString &appDirName, baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
+    const QStringList appDirNames = baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+    for (const QString &appDirName : appDirNames) {
         QDir dir = baseDir.absoluteFilePath(appDirName);
         try {
             const Application *a = scanner.scan(dir.absoluteFilePath(qSL("info.yaml")));

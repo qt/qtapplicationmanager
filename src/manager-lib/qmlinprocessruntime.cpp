@@ -81,8 +81,8 @@ static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
         QObject *dummyData = comp.create();
 
         if (comp.isError()) {
-            QList<QQmlError> errors = comp.errors();
-            foreach (const QQmlError &error, errors)
+            const QList<QQmlError> errors = comp.errors();
+            for (const QQmlError &error : errors)
                 qWarning() << error;
         }
 

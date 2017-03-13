@@ -434,10 +434,10 @@ void tst_ApplicationInstaller::installationLocations()
         QVERIFY(InstallationLocation::typeFromString(s) == i);
     }
 
-    QVector<InstallationLocation> loclist = m_ai->installationLocations();
+    const QVector<InstallationLocation> loclist = m_ai->installationLocations();
 
     QCOMPARE(loclist.size(), m_installationLocations.size());
-    foreach (const InstallationLocation &loc, loclist) {
+    for (const InstallationLocation &loc : loclist) {
         QVERIFY(m_installationLocations.contains(loc));
 
         QCOMPARE(loc.id(), InstallationLocation::typeToString(loc.type()) + "-" + QString::number(loc.index()));

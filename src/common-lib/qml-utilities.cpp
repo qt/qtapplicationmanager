@@ -55,7 +55,8 @@ void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singl
     // internal singleton registry *after* the instanceForQml() function has finished.
 
     auto retake = [qmlEngine, singleton]() {
-        foreach (const QQmlType *singletonType, QQmlMetaType::qmlSingletonTypes()) {
+        const auto types = QQmlMetaType::qmlSingletonTypes();
+        for (const QQmlType *singletonType : types) {
             if (singletonType->singletonInstanceInfo()->qobjectApi(qmlEngine) == singleton)
                 singletonType->singletonInstanceInfo()->qobjectApis.remove(qmlEngine);
         }

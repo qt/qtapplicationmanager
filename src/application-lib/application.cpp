@@ -624,7 +624,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
     if (isAlias) {
         QString baseId = app->m_id.section(qL1C('@'), 0, 0);
         bool found = false;
-        foreach (const Application *otherApp, applicationDatabase) {
+        for (const Application *otherApp : applicationDatabase) {
             if (otherApp->id() == baseId) {
                 app->m_nonAliased = otherApp;
                 found = true;

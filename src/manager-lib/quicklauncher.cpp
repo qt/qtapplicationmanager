@@ -80,11 +80,13 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
 
     qCDebug(LogSystem) << "Setting up the quick-launch pool:";
 
-    foreach (const QString &containerId, cf->containerIds()) {
+    const QStringList allContainerIds = cf->containerIds();
+    for (const QString &containerId : allContainerIds) {
         if (!cf->manager(containerId)->supportsQuickLaunch())
             continue;
 
-        foreach (const QString &runtimeId, rf->runtimeIds()) {
+        const QStringList allRuntimeIds = rf->runtimeIds();
+        for (const QString &runtimeId : allRuntimeIds) {
             if (rf->manager(runtimeId)->inProcess())
                 continue;
 

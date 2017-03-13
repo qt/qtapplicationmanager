@@ -121,8 +121,8 @@ static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
         QObject *dummyData = comp.create();
 
         if (comp.isError()) {
-            QList<QQmlError> errors = comp.errors();
-            foreach (const QQmlError &error, errors)
+            const QList<QQmlError> errors = comp.errors();
+            for (const QQmlError &error : errors)
                 qWarning() << error;
         }
 
@@ -427,7 +427,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
     auto startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
-    foreach (StartupInterface *iface, startupPlugins)
+    for (StartupInterface *iface : qAsConst(startupPlugins))
         iface->initialize(m_applicationInterface ? m_applicationInterface->systemProperties() : QVariantMap());
 
     bool loadDummyData = runtimeParameters.value(qSL("loadDummyData")).toBool()
@@ -451,7 +451,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     }
     qCDebug(LogQmlRuntime) << "Qml import paths:" << m_engine.importPathList();
 
-    foreach (StartupInterface *iface, startupPlugins)
+    for (StartupInterface *iface : qAsConst(startupPlugins))
         iface->beforeQmlEngineLoad(&m_engine);
 
     StartupTimer::instance()->checkpoint("after loading plugins and import paths");
@@ -470,7 +470,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     }
 
-    foreach (StartupInterface *iface, startupPlugins)
+    for (StartupInterface *iface : qAsConst(startupPlugins))
         iface->afterQmlEngineLoad(&m_engine);
 
     QObject *topLevel = topLevels.at(0);
@@ -506,14 +506,14 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
     }
 
-    foreach (StartupInterface *iface, startupPlugins)
+    for (StartupInterface *iface : qAsConst(startupPlugins))
         iface->beforeWindowShow(m_window);
 
     m_window->show();
 
     StartupTimer::instance()->checkpoint("after showing application window");
 
-    foreach (StartupInterface *iface, startupPlugins)
+    for (StartupInterface *iface : qAsConst(startupPlugins))
         iface->afterWindowShow(m_window);
 
 #else

@@ -141,7 +141,7 @@ void QmlInProcessNotification::initialize()
     connect(nm, &NotificationManager::ActionInvoked,
             nm, [](uint notificationId, const QString &actionId) {
         qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
-        foreach (const QPointer<QmlInProcessNotification> &n, s_allNotifications) {
+        for (const QPointer<QmlInProcessNotification> &n : s_allNotifications) {
             if (n->notificationId() == notificationId) {
                 n->libnotifyActionInvoked(actionId);
                 break;
@@ -154,7 +154,7 @@ void QmlInProcessNotification::initialize()
         qDebug("Notification was closed signal: %u", notificationId);
         // quick fix: in case apps have been closed items are null (see AUTOSUITE-14)
         s_allNotifications.removeAll(nullptr);
-        foreach (const QPointer<QmlInProcessNotification> &n, s_allNotifications) {
+        for (const QPointer<QmlInProcessNotification> &n : s_allNotifications) {
             if (n->notificationId() == notificationId) {
                 n->libnotifyNotificationClosed(reason);
                 s_allNotifications.removeAll(n);

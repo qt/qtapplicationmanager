@@ -461,7 +461,7 @@ void tst_Sudo::checkMountPoints()
         QStringList mounts = allMounts.values(mountPoint);
 
         QCOMPARE(mounts.count(), mountPointList[i].size());
-        foreach (int index, mountPointList[i])
+        for (int index : qAsConst(mountPointList[i]))
             QVERIFY(mounts.contains(slm[index].loopbackDevice()));
     }
 }

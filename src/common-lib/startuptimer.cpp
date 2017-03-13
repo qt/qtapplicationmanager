@@ -296,7 +296,7 @@ void StartupTimer::createReport(const QString &title)
         if (m_output == stderr)
             getOutputInformation(&ansiColorSupport, nullptr, nullptr);
 
-        if (!m_reportCreated) {
+        if (!m_reportCreated && !m_checkpoints.isEmpty()) {
             const char *format = "\n== STARTUP TIMING REPORT: %s ==\n";
             if (ansiColorSupport)
                 format = "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n";

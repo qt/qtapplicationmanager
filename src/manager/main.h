@@ -51,8 +51,8 @@ typedef QCoreApplication MainBase;
 typedef QGuiApplication MainBase;
 #endif
 
+#include <QtAppManInstaller/installationlocation.h>
 #include "configuration.h"
-#include "installationlocation.h"
 
 QT_FORWARD_DECLARE_CLASS(QQmlApplicationEngine)
 QT_FORWARD_DECLARE_STRUCT(QQmlDebuggingEnabler)

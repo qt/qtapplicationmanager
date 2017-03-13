@@ -41,9 +41,9 @@
 
 #pragma once
 
+#include <QtAppManCommon/global.h>
 #include <QStringList>
 #include <QVariantMap>
-#include "global.h"
 
 QT_BEGIN_NAMESPACE_AM
 

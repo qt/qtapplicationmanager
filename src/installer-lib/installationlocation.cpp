@@ -173,7 +173,7 @@ QString InstallationLocation::mountPoint() const
     return m_mountPoint;
 }
 
-QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(const QVariantList &list) throw (Exception)
+QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(const QVariantList &list) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QVector<InstallationLocation> locations;
     bool gotDefault = false;

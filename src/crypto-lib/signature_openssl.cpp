@@ -118,7 +118,8 @@ public:
 };
 
 
-QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12, const QByteArray &signingCertificatePassword) throw(Exception)
+QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
+                                    const QByteArray &signingCertificatePassword) Q_DECL_NOEXCEPT_EXPR(false)
 {
     // Although OpenSSL could, the OSX Security Framework cannot process empty detached data
     if (hash.isEmpty())
@@ -177,7 +178,8 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12, 
     return QByteArray(data, size);
 }
 
-bool SignaturePrivate::verify(const QByteArray &signaturePkcs7, const QList<QByteArray> &chainOfTrust) throw(Exception)
+bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
+                              const QList<QByteArray> &chainOfTrust) Q_DECL_NOEXCEPT_EXPR(false)
 {
     OpenSslPointer<BIO> bioSignature(am_BIO_new_mem_buf((void *) signaturePkcs7.constData(), signaturePkcs7.size()));
     if (!bioSignature)

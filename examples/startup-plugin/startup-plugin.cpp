@@ -54,32 +54,32 @@
 
 Q_LOGGING_CATEGORY(LogMe, "am.start")
 
-void TestStartupInterface::initialize(const QVariantMap &systemProperties)
+void TestStartupInterface::initialize(const QVariantMap &systemProperties) Q_DECL_NOEXCEPT_EXPR(false)
 {
     qCWarning(LogMe) << "Startup initialize - systemProperties:" << systemProperties;
 }
 
-void TestStartupInterface::afterRuntimeRegistration()
+void TestStartupInterface::afterRuntimeRegistration() Q_DECL_NOEXCEPT_EXPR(false)
 {
     qCWarning(LogMe) << "Startup afterRuntimeRegistration";
 }
 
-void TestStartupInterface::beforeQmlEngineLoad(QQmlEngine *engine)
+void TestStartupInterface::beforeQmlEngineLoad(QQmlEngine *engine) Q_DECL_NOEXCEPT_EXPR(false)
 {
     qCWarning(LogMe) << "Startup beforeQmlEngineLoad - engine:" << engine;
 }
 
-void TestStartupInterface::afterQmlEngineLoad(QQmlEngine *engine)
+void TestStartupInterface::afterQmlEngineLoad(QQmlEngine *engine) Q_DECL_NOEXCEPT_EXPR(false)
 {
     qCWarning(LogMe) << "Startup afterQmlEngineLoad - engine:" << engine;
 }
 
-void TestStartupInterface::beforeWindowShow(QWindow *window)
+void TestStartupInterface::beforeWindowShow(QWindow *window) Q_DECL_NOEXCEPT_EXPR(false)
 {
     qCWarning(LogMe) << "Startup beforeWindowShow - window:" << window;
 }
 
-void TestStartupInterface::afterWindowShow(QWindow *window)
+void TestStartupInterface::afterWindowShow(QWindow *window) Q_DECL_NOEXCEPT_EXPR(false)
 {
     qCWarning(LogMe) << "Startup afterWindowShow - window:" << window;
 }

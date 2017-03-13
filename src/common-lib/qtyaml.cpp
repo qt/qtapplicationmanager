@@ -303,13 +303,13 @@ QVector<QVariant> variantDocumentsFromYamlFiltered(const QByteArray &yaml, std::
     return result;
 }
 
-static inline void yerr(int result) throw(std::exception)
+static inline void yerr(int result) Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (!result)
         throw std::exception();
 }
 
-static void emitYamlScalar(yaml_emitter_t *e, const QByteArray &ba, bool quoting = false)
+static void emitYamlScalar(yaml_emitter_t *e, const QByteArray &ba, bool quoting = false) Q_DECL_NOEXCEPT_EXPR(false)
 {
     yaml_event_t event;
     yerr(yaml_scalar_event_initialize(&event,
@@ -323,7 +323,7 @@ static void emitYamlScalar(yaml_emitter_t *e, const QByteArray &ba, bool quoting
     yerr(yaml_emitter_emit(e, &event));
 }
 
-static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style)
+static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style) Q_DECL_NOEXCEPT_EXPR(false)
 {
     yaml_event_t event;
 

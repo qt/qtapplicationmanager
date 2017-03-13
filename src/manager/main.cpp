@@ -231,7 +231,7 @@ Main::~Main()
 #endif // defined(AM_TESTRUNNER)
 }
 
-void Main::setup()
+void Main::setup() Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_config.parse();
     StartupTimer::instance()->checkpoint("after command line parse");
@@ -264,7 +264,7 @@ void Main::setup()
     setupSSDPService();
 }
 
-int Main::exec()
+int Main::exec() Q_DECL_NOEXCEPT_EXPR(false)
 {
     int res;
 #if defined(AM_TESTRUNNER)
@@ -324,7 +324,7 @@ void Main::setupLoggingRules()
     StartupTimer::instance()->checkpoint("after logging setup");
 }
 
-void Main::loadStartupPlugins()
+void Main::loadStartupPlugins() Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_startupPlugins = loadPlugins<StartupInterface>("startup", m_config.pluginFilePaths("startup"));
     StartupTimer::instance()->checkpoint("after startup-plugin load");
@@ -351,7 +351,7 @@ void Main::parseSystemProperties()
         iface->initialize(m_systemProperties.at(SP_SystemUi));
 }
 
-void Main::setupDBus()
+void Main::setupDBus() Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if defined(QT_DBUS_LIB)
     // delay the D-Bus registrations: D-Bus is asynchronous anyway
@@ -401,14 +401,14 @@ void Main::setupDBus()
 #endif // QT_DBUS_LIB
 }
 
-void Main::checkMainQmlFile()
+void Main::checkMainQmlFile() Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_mainQml = m_config.mainQmlFile();
     if (Q_UNLIKELY(!QFile::exists(m_mainQml)))
         throw Exception("no/invalid main QML file specified: %1").arg(m_mainQml);
 }
 
-void Main::setupInstaller()
+void Main::setupInstaller() Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if !defined(AM_DISABLE_INSTALLER)
     if (!checkCorrectLocale()) {
@@ -432,7 +432,7 @@ void Main::setupInstaller()
 #endif // AM_DISABLE_INSTALLER
 }
 
-void Main::setupSingleOrMultiProcess()
+void Main::setupSingleOrMultiProcess() Q_DECL_NOEXCEPT_EXPR(false)
 {
     bool forceSingleProcess = m_config.forceSingleProcess();
     bool forceMultiProcess = m_config.forceMultiProcess();
@@ -477,7 +477,7 @@ void Main::setupRuntimesAndContainers()
     StartupTimer::instance()->checkpoint("after runtime registration");
 }
 
-void Main::loadApplicationDatabase()
+void Main::loadApplicationDatabase() Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString singleApp = m_config.singleApp();
     bool recreateDatabase = m_config.recreateDatabase();
@@ -514,7 +514,7 @@ void Main::loadApplicationDatabase()
     StartupTimer::instance()->checkpoint("after application database loading");
 }
 
-void Main::setupSingletons()
+void Main::setupSingletons() Q_DECL_NOEXCEPT_EXPR(false)
 {
     bool noSecurity = m_config.noSecurity();
 
@@ -653,7 +653,7 @@ void Main::setupWindowManager()
 }
 
 
-void Main::loadQml()
+void Main::loadQml() Q_DECL_NOEXCEPT_EXPR(false)
 {
     for (auto iface : qAsConst(m_startupPlugins))
         iface->beforeQmlEngineLoad(m_engine);
@@ -727,7 +727,7 @@ void Main::setupDebugWrappers()
     });
 }
 
-void Main::setupShellServer()
+void Main::setupShellServer() Q_DECL_NOEXCEPT_EXPR(false)
 {
      //TODO: could be delayed as well
 #if defined(QT_PSHELLSERVER_LIB)
@@ -770,7 +770,7 @@ void Main::setupShellServer()
 #endif // QT_PSHELLSERVER_LIB
 }
 
-void Main::setupSSDPService()
+void Main::setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false)
 {
      //TODO: could be delayed as well
 #if defined(QT_PSSDP_LIB)
@@ -797,7 +797,7 @@ void Main::setupSSDPService()
 #endif // QT_PSSDP_LIB
 }
 
-QString Main::dbusInterfaceName(QObject *o)
+QString Main::dbusInterfaceName(QObject *o) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if defined(QT_DBUS_LIB)
     int idx = o->metaObject()->indexOfClassInfo("D-Bus Interface");
@@ -811,7 +811,7 @@ QString Main::dbusInterfaceName(QObject *o)
 #endif
 }
 
-void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *serviceName, const char *path)
+void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *serviceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if defined(QT_DBUS_LIB)
     QString interfaceName = dbusInterfaceName(adaptor);
@@ -876,7 +876,7 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *service
 #endif // QT_DBUS_LIB
 }
 
-void Main::registerDBusInterfaces() Q_DECL_NOEXCEPT
+void Main::registerDBusInterfaces()
 {
 #if defined(QT_DBUS_LIB)
     registerDBusTypes();
@@ -945,7 +945,7 @@ void Main::loadDummyDataFiles()
     }
 }
 
-QVector<const Application *> Main::scanForApplication(const QString &singleAppInfoYaml, const QStringList &builtinAppsDirs)
+QVector<const Application *> Main::scanForApplication(const QString &singleAppInfoYaml, const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QVector<const Application *> result;
     YamlApplicationScanner yas;
@@ -990,7 +990,7 @@ QVector<const Application *> Main::scanForApplication(const QString &singleAppIn
 }
 
 QVector<const Application *> Main::scanForApplications(const QStringList &builtinAppsDirs, const QString &installedAppsDir,
-                                                        const QVector<InstallationLocation> &installationLocations)
+                                                        const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QVector<const Application *> result;
     YamlApplicationScanner yas;

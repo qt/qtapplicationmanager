@@ -130,7 +130,7 @@ public:
 
     QString version() const;
 
-    void validate() const throw (Exception);
+    void validate() const Q_DECL_NOEXCEPT_EXPR(false);
     QVariantMap toVariantMap() const;
     static Application *fromVariantMap(const QVariantMap &map, QString *error = 0);
     void mergeInto(Application *app) const;
@@ -224,8 +224,8 @@ private:
     friend class ApplicationDatabase; // needed to create Application objects
     friend class InstallationTask; // needed to set m_uid and m_builtin during the installation
 
-    static Application *readFromDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) throw(Exception);
-    void writeToDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) const throw(Exception);
+    static Application *readFromDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) Q_DECL_NOEXCEPT_EXPR(false);
+    void writeToDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) const Q_DECL_NOEXCEPT_EXPR(false);
 
     Q_DISABLE_COPY(Application)
 };

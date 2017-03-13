@@ -100,7 +100,7 @@ public:
     bool setDBusPolicy(const QVariantMap &yamlFragment);
     void setCACertificates(const QList<QByteArray> &chainOfTrust);
 
-    void cleanupBrokenInstallations() const throw(Exception);
+    void cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EXPR(false);
 
     // InstallationLocation handling
     QVector<InstallationLocation> installationLocations() const;
@@ -159,7 +159,7 @@ private:
 
     QList<QByteArray> caCertificates() const;
 
-    uint findUnusedUserId() const throw(Exception);
+    uint findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
     ApplicationInstaller(const QVector<InstallationLocation> &installationLocations, const QDir &manifestDir,

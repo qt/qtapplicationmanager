@@ -729,7 +729,7 @@ void ApplicationManager::registerMimeTypes()
 bool ApplicationManager::startApplication(const Application *app, const QString &documentUrl,
                                           const QString &documentMimeType,
                                           const QString &debugWrapperSpecification,
-                                          const QVector<int> &stdioRedirections) throw(Exception)
+                                          const QVector<int> &stdioRedirections)  Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (!app)
         throw Exception("Cannot start an invalid application");

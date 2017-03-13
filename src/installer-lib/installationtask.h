@@ -76,9 +76,9 @@ protected:
     void execute() override;
 
 private:
-    void startInstallation() throw(Exception);
-    void finishInstallation() throw(Exception);
-    void checkExtractedFile(const QString &file) throw(Exception);
+    void startInstallation() Q_DECL_NOEXCEPT_EXPR(false);
+    void finishInstallation() Q_DECL_NOEXCEPT_EXPR(false);
+    void checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
     ApplicationInstaller *m_ai;

@@ -99,7 +99,7 @@ QString ApplicationDatabase::name() const
     return d->file->fileName();
 }
 
-QVector<const Application *> ApplicationDatabase::read() throw (Exception)
+QVector<const Application *> ApplicationDatabase::read() Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (!d->file || !d->file->isOpen() || !d->file->isReadable())
         throw Exception("application database %1 is not opened for reading").arg(d->file ? d->file->fileName() : qSL("<null>"));
@@ -126,7 +126,7 @@ QVector<const Application *> ApplicationDatabase::read() throw (Exception)
     return apps;
 }
 
-void ApplicationDatabase::write(const QVector<const Application *> &apps) throw (Exception)
+void ApplicationDatabase::write(const QVector<const Application *> &apps) Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (!d->file || !d->file->isOpen() || !d->file->isWritable())
         throw Exception("application database %1 is not opened for writing").arg(d->file ? d->file->fileName() : qSL("<null>"));

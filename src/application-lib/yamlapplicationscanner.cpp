@@ -57,20 +57,21 @@
 QT_BEGIN_NAMESPACE_AM
 
 YamlApplicationScanner::YamlApplicationScanner()
-{
-}
+{ }
 
-Application *YamlApplicationScanner::scan(const QString &filePath) throw (Exception)
+Application *YamlApplicationScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false)
 {
     return scanInternal(filePath, false, nullptr);
 }
 
-Application *YamlApplicationScanner::scanAlias(const QString &filePath, const Application *application) throw (Exception)
+Application *YamlApplicationScanner::scanAlias(const QString &filePath,
+                                               const Application *application) Q_DECL_NOEXCEPT_EXPR(false)
 {
     return scanInternal(filePath, true, application);
 }
 
-Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool scanAlias, const Application *application) throw (Exception)
+Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool scanAlias,
+                                                  const Application *application) Q_DECL_NOEXCEPT_EXPR(false)
 {
     try {
         if (scanAlias && !application)
@@ -211,7 +212,6 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse manifest file %1: %2").arg(filePath, e.errorString());
     }
-
 }
 
 

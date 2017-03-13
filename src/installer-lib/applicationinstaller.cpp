@@ -286,7 +286,7 @@ bool ApplicationInstaller::enableApplicationUserIdSeparation(uint minUserId, uin
     return true;
 }
 
-uint ApplicationInstaller::findUnusedUserId() const throw(Exception)
+uint ApplicationInstaller::findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (!isApplicationUserIdSeparationEnabled())
         return uint(-1);
@@ -347,7 +347,7 @@ void ApplicationInstaller::setCACertificates(const QList<QByteArray> &chainOfTru
     d->chainOfTrust = chainOfTrust;
 }
 
-void ApplicationInstaller::cleanupBrokenInstallations() const throw(Exception)
+void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EXPR(false)
 {
     // 1. find mounts and loopbacks left-over from a previous instance and kill them
 

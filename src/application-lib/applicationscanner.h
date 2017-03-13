@@ -54,8 +54,8 @@ class ApplicationScanner
 public:
     virtual ~ApplicationScanner() = default;
 
-    virtual Application *scan(const QString &filePath) throw (Exception) = 0;
-    virtual Application *scanAlias(const QString &filePath, const Application *application) throw (Exception) = 0;
+    virtual Application *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) = 0;
+    virtual Application *scanAlias(const QString &filePath, const Application *application) Q_DECL_NOEXCEPT_EXPR(false) = 0;
 
     virtual QString metaDataFileName() const = 0;
 

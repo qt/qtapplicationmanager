@@ -187,7 +187,7 @@ bool checkCorrectLocale()
 
 */
 void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
-                     const QVector<QByteArray> &formatTypes, int formatVersion)
+                     const QVector<QByteArray> &formatTypes, int formatVersion) Q_DECL_NOEXCEPT_EXPR(false)
 {
     int actualSize = docs.size();
     QByteArray actualFormatType;

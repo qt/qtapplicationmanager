@@ -85,31 +85,31 @@ public:
 
     bool isSingleProcessMode() const;
 
-    void setup();
-    int exec();
+    void setup() Q_DECL_NOEXCEPT_EXPR(false);
+    int exec() Q_DECL_NOEXCEPT_EXPR(false);
 
 protected:
     void setupQmlDebugging();
     void setupLoggingRules();
-    void loadStartupPlugins();
+    void loadStartupPlugins() Q_DECL_NOEXCEPT_EXPR(false);
     void parseSystemProperties();
-    void setupDBus();
-    void checkMainQmlFile();
-    void setupInstaller();
-    void setupSingleOrMultiProcess();
+    void setupDBus() Q_DECL_NOEXCEPT_EXPR(false);
+    void checkMainQmlFile() Q_DECL_NOEXCEPT_EXPR(false);
+    void setupInstaller() Q_DECL_NOEXCEPT_EXPR(false);
+    void setupSingleOrMultiProcess() Q_DECL_NOEXCEPT_EXPR(false);
     void setupRuntimesAndContainers();
-    void loadApplicationDatabase();
-    void setupSingletons();
+    void loadApplicationDatabase() Q_DECL_NOEXCEPT_EXPR(false);
+    void setupSingletons() Q_DECL_NOEXCEPT_EXPR(false);
 
     void setupQmlEngine();
     void setupWindowTitle();
     void setupWindowManager();
 
-    void loadQml();
+    void loadQml() Q_DECL_NOEXCEPT_EXPR(false);
     void showWindow();
     void setupDebugWrappers();
-    void setupShellServer();
-    void setupSSDPService();
+    void setupShellServer() Q_DECL_NOEXCEPT_EXPR(false);
+    void setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false);
 
     enum SystemProperties {
         SP_ThirdParty = 0,
@@ -118,18 +118,18 @@ protected:
     };
 
 private slots:
-    void registerDBusInterfaces() Q_DECL_NOEXCEPT;
+    void registerDBusInterfaces();
 
 private:
     void loadDummyDataFiles();
-    QString dbusInterfaceName(QObject *o);
-    void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *serviceName, const char *path);
+    QString dbusInterfaceName(QObject *o) Q_DECL_NOEXCEPT_EXPR(false);
+    void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *serviceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false);
 
     static QVector<const Application *> scanForApplication(const QString &singleAppInfoYaml,
-                                                           const QStringList &builtinAppsDirs);
+                                                           const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false);
     static QVector<const Application *> scanForApplications(const QStringList &builtinAppsDirs,
                                                             const QString &installedAppsDir,
-                                                            const QVector<InstallationLocation> &installationLocations);
+                                                            const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
     Configuration m_config;

@@ -75,7 +75,7 @@ private slots:
 private:
     void setError(Error errorCode, const QString &errorString);
     qint64 readTar(struct archive *ar, const void **archiveBuffer);
-    void processMetaData(const QByteArray &metadata, QCryptographicHash &digest, bool isHeader) throw(Exception);
+    void processMetaData(const QByteArray &metadata, QCryptographicHash &digest, bool isHeader) Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
     PackageExtractor *q;

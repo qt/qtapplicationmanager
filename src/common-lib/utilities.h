@@ -71,7 +71,7 @@ bool isValidDnsName(const QString &rnds, bool isAliasName = false, QString *erro
 int versionCompare(const QString &version1, const QString &version2);
 
 void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
-                     const QVector<QByteArray> &formatTypes, int formatVersion);
+                     const QVector<QByteArray> &formatTypes, int formatVersion) Q_DECL_NOEXCEPT_EXPR(false);
 
 /*! \internal
     Convenience function that makes it easy to accept a plain string where
@@ -189,7 +189,7 @@ void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *c
 qint64 getParentPid(qint64 pid);
 
 template <typename T>
-QVector<T *> loadPlugins(const char *type, const QStringList &files) throw (Exception)
+QVector<T *> loadPlugins(const char *type, const QStringList &files) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QVector<T *> interfaces;
     const char *iid = qobject_interface_iid<T>();

@@ -61,7 +61,7 @@ public:
         registerDBusTypes();
     }
 
-    void connectToManager() throw(Exception)
+    void connectToManager() Q_DECL_NOEXCEPT_EXPR(false)
     {
         if (m_manager)
             return;
@@ -70,7 +70,7 @@ public:
         m_manager = new IoQtApplicationManagerInterface(qSL("io.qt.ApplicationManager"), qSL("/ApplicationManager"), conn, this);
     }
 
-    void connectToInstaller() throw(Exception)
+    void connectToInstaller() Q_DECL_NOEXCEPT_EXPR(false)
     {
         if (m_installer)
             return;
@@ -80,7 +80,7 @@ public:
     }
 
 private:
-    QDBusConnection connectTo(const QString &iface) throw(Exception)
+    QDBusConnection connectTo(const QString &iface) Q_DECL_NOEXCEPT_EXPR(false)
     {
         QDBusConnection conn(iface);
 
@@ -172,14 +172,16 @@ static Command command(QCommandLineParser &clp)
     return NoCommand;
 }
 
-static void startOrDebugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, bool restart, const QString &documentUrl);
-static void stopApplication(const QString &appId);
-static void listApplications();
-static void showApplication(const QString &appId);
-static void installPackage(const QString &package, const QString &location) throw(Exception);
-static void removePackage(const QString &package, bool keepDocuments, bool force) throw(Exception);
-static void listInstallationLocations();
-static void showInstallationLocation(const QString &location);
+static void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
+                                    const QMap<QString, int> &stdRedirections, bool restart,
+                                    const QString &documentUrl) Q_DECL_NOEXCEPT_EXPR(false);
+static void stopApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false);
+static void listApplications() Q_DECL_NOEXCEPT_EXPR(false);
+static void showApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false);
+static void installPackage(const QString &package, const QString &location) Q_DECL_NOEXCEPT_EXPR(false);
+static void removePackage(const QString &package, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false);
+static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
+static void showInstallationLocation(const QString &location) Q_DECL_NOEXCEPT_EXPR(false);
 
 class ThrowingApplication : public QCoreApplication // clazy:exclude=missing-qobject-macro
 {
@@ -388,7 +390,9 @@ int main(int argc, char *argv[])
     }
 }
 
-void startOrDebugApplication(const QString &debugWrapper, const QString &appId, const QMap<QString, int> &stdRedirections, bool restart, const QString &documentUrl = QString())
+void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
+                             const QMap<QString, int> &stdRedirections, bool restart,
+                             const QString &documentUrl = QString()) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToManager();
 
@@ -487,7 +491,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId, 
     });
 }
 
-void stopApplication(const QString &appId)
+void stopApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToManager();
 
@@ -501,7 +505,7 @@ void stopApplication(const QString &appId)
 
 }
 
-void listApplications()
+void listApplications() Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToManager();
 
@@ -516,7 +520,7 @@ void listApplications()
     });
 }
 
-void showApplication(const QString &appId)
+void showApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToManager();
 
@@ -532,7 +536,7 @@ void showApplication(const QString &appId)
     });
 }
 
-void installPackage(const QString &package, const QString &location) throw(Exception)
+void installPackage(const QString &package, const QString &location) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString packageFile = package;
 
@@ -615,7 +619,7 @@ void installPackage(const QString &package, const QString &location) throw(Excep
     });
 }
 
-void removePackage(const QString &applicationId, bool keepDocuments, bool force) throw(Exception)
+void removePackage(const QString &applicationId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false)
 {
     fprintf(stdout, "Starting removal of package %s...\n", qPrintable(applicationId));
 
@@ -658,7 +662,7 @@ void removePackage(const QString &applicationId, bool keepDocuments, bool force)
     });
 }
 
-void listInstallationLocations()
+void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToInstaller();
 
@@ -673,7 +677,7 @@ void listInstallationLocations()
     });
 }
 
-void showInstallationLocation(const QString &location)
+void showInstallationLocation(const QString &location) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToInstaller();
 

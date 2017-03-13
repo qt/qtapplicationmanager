@@ -53,9 +53,9 @@ public:
     QString error;
 
     QByteArray create(const QByteArray &signingCertificatePkcs12,
-                      const QByteArray &signingCertificatePassword) throw(Exception);
+                      const QByteArray &signingCertificatePassword) Q_DECL_NOEXCEPT_EXPR(false);
     bool verify(const QByteArray &signaturePkcs7,
-                const QList<QByteArray> &chainOfTrust) throw(Exception);
+                const QList<QByteArray> &chainOfTrust) Q_DECL_NOEXCEPT_EXPR(false);
 };
 
 QT_END_NAMESPACE_AM

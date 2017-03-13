@@ -50,13 +50,15 @@ class YamlApplicationScanner : public ApplicationScanner
 public:
     YamlApplicationScanner();
 
-    Application *scan(const QString &filePath) throw (Exception) override;
-    Application *scanAlias(const QString &filePath, const Application *application) throw (Exception) override;
+    Application *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
+    Application *scanAlias(const QString &filePath,
+                           const Application *application) Q_DECL_NOEXCEPT_EXPR(false) override;
 
     QString metaDataFileName() const override;
 
 private:
-    Application *scanInternal(const QString &filePath, bool scanAlias, const Application *application) throw (Exception);
+    Application *scanInternal(const QString &filePath, bool scanAlias,
+                              const Application *application) Q_DECL_NOEXCEPT_EXPR(false);
 };
 
 QT_END_NAMESPACE_AM

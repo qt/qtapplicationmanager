@@ -421,7 +421,7 @@ QString Application::version() const
     return m_nonAliased ? m_nonAliased->m_version : m_version;
 }
 
-void Application::validate() const throw(Exception)
+void Application::validate() const Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (isAlias()) {
         if (!m_id.startsWith(nonAliased()->id()))
@@ -569,7 +569,7 @@ qreal Application::progress() const
     return m_nonAliased ? m_nonAliased->m_progress : m_progress;
 }
 
-Application *Application::readFromDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) throw (Exception)
+Application *Application::readFromDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QScopedPointer<Application> app(new Application);
     bool isAlias;
@@ -638,7 +638,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
     return app.take();
 }
 
-void Application::writeToDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) const throw (Exception)
+void Application::writeToDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) const Q_DECL_NOEXCEPT_EXPR(false)
 {
     QByteArray serializedReport;
 

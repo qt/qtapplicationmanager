@@ -267,7 +267,7 @@ void InstallationTask::execute()
 }
 
 
-void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
+void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (++m_extractedFileCount > 2)
         throw Exception(Error::Package, "could not find info.yaml and icon.png at the beginning of the package");
@@ -348,7 +348,7 @@ void InstallationTask::checkExtractedFile(const QString &file) throw(Exception)
     }
 }
 
-void InstallationTask::startInstallation() throw (Exception)
+void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 {
     // 1. delete $manifestDir+ and $manifestDir-
     m_manifestDir = m_ai->manifestDirectory().absoluteFilePath(m_applicationId);
@@ -434,7 +434,7 @@ void InstallationTask::startInstallation() throw (Exception)
     }
 }
 
-void InstallationTask::finishInstallation() throw (Exception)
+void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 {
     QDir documentDirectory(m_installationLocation.documentPath());
     ScopedDirectoryCreator documentDirCreator;

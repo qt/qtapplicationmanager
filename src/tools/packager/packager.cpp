@@ -124,7 +124,7 @@ int Packager::resultCode() const
 Packager::Packager()
 { }
 
-void Packager::execute() throw(Exception)
+void Packager::execute() Q_DECL_NOEXCEPT_EXPR(false)
 {
     switch (m_mode) {
     case Create: {

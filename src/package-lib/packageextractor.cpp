@@ -442,7 +442,8 @@ void PackageExtractorPrivate::extract()
     m_loop.quit();
 }
 
-void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCryptographicHash &digest, bool isHeader) throw(Exception)
+void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCryptographicHash &digest,
+                                              bool isHeader) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QtYaml::ParseError error;
     QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(metadata, &error);

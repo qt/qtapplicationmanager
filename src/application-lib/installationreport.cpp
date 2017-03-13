@@ -166,7 +166,7 @@ bool InstallationReport::deserialize(QIODevice *from)
 
     try {
         checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 1);
-    } catch (const Exception &e) {
+    } catch (const Exception &) {
         return false;
     }
 

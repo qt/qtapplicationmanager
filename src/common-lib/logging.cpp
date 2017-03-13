@@ -135,7 +135,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
     int linenumberLength = 0;
 
     if (context.line > 0 && context.file && context.file[0]) {
-        QByteArray ba = QByteArray::fromRawData(context.file, strlen(context.file));
+        QByteArray ba = QByteArray::fromRawData(context.file, qstrlen(context.file));
         int pos = -1;
 #if defined(Q_OS_WIN)
         pos = ba.lastIndexOf('\\');
@@ -179,11 +179,11 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
     static const char *msgTypeStr[] = { "DBG ", "WARN", "CRIT", "FATL", "INFO" };
     static const ConsoleColor msgTypeColor[] = { Green, Yellow, Red, Magenta, Blue };
-    int categoryLength = strlen(context.category);
+    int categoryLength = qstrlen(context.category);
     QByteArray msg = message.toLocal8Bit(); // sadly this allocates, but there's no other way in Qt
 
     // the visible character length
-    int outLength = 10 + strlen(context.category) + msg.length(); // 10 = strlen("[XXXX | ] ")
+    int outLength = 10 + qstrlen(context.category) + msg.length(); // 10 = strlen("[XXXX | ] ")
     out.append('[');
 
     color(out, BrightFlag | msgTypeColor[msgType]);

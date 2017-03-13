@@ -23,7 +23,10 @@ debug_and_release:debug_and_release_target {
 COMMAND += $(TESTRUNNER)
 
 # Define how the appman should be run, single-process, multi-process, both
-isEmpty(MODE): MODE = both
+isEmpty(MODE) {
+    MODE = both
+    CONFIG *= qmltest-mode-auto
+}
 
 # Determine the location of the testrunner
 prefix_build {
@@ -41,7 +44,7 @@ COMMAND += $$AM_TESTRUNNER_DIR/appman-qmltestrunner -r --no-dlt-logging
 mac: COMMAND += --dbus=none
 multi-process: COMMAND += --start-session-dbus
 !multi-process: {
-    message("Overriding mode as application-manager is build in single-process mode")
+    !build_pass:!qmltest-mode-auto:message("am-qml-testcase: forcing MODE to single-process, because application-manager is built in single-process mode")
     MODE = single-process
 }
 

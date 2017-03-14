@@ -359,6 +359,8 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
         QString device = mountPoints.value(path);
 
         if (!device.isEmpty()) {
+            qCDebug(LogInstaller) << "cleanup: trying to unmount stale application mount" << path;
+
             if (!SudoClient::instance()->unmount(path)) {
                 if (!SudoClient::instance()->unmount(path, true /*force*/))
                     throw Exception("failed to un-mount stale mount %1 on %2: %3")
@@ -400,6 +402,9 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
 
             bool valid = il.isValid();
 
+            if (!valid)
+                qCDebug(LogInstaller) << "cleanup: uninstalling" << app->id() << "- installationLocation is invalid";
+
             if (valid && (!il.isRemovable() || il.isMounted())) {
                 QStringList checkDirs;
                 QStringList checkFiles;
@@ -418,6 +423,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
                     QFileInfo fi(checkFile);
                     if (!fi.exists() || !fi.isFile() || !fi.isReadable()) {
                         valid = false;
+                        qCDebug(LogInstaller) << "cleanup: uninstalling" << app->id() << "- file missing:" << checkFile;
                         break;
                     }
                 }
@@ -425,6 +431,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
                     QFileInfo fi(checkDir);
                     if (!fi.exists() || !fi.isDir() || !fi.isReadable()) {
                         valid = false;
+                        qCDebug(LogInstaller) << "cleanup: uninstalling" << app->id() << "- directory missing:" << checkDir;
                         break;
                     }
                 }
@@ -470,6 +477,8 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
                 name.append(qL1C('/'));
 
             if ((!fi.isDir() && !fi.isFile()) || !validNames.contains(name)) {
+                qCDebug(LogInstaller) << "cleanup: removing unreferenced inode" << name;
+
                 if (!SudoClient::instance()->removeRecursive(fi.absoluteFilePath()))
                     throw Exception(Error::IO, "could not remove broken installation leftover %1 : %2").arg(fi.absoluteFilePath()).arg(SudoClient::instance()->lastError());
             }

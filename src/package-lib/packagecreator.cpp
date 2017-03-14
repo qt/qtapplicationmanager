@@ -250,6 +250,15 @@ bool PackageCreatorPrivate::create()
             } else if (fi.isFile() && !fi.isSymLink()) {
                 packageEntryType = PackageEntry_File;
                 mode = S_IFREG | S_IREAD | (fi.permission(QFile::ExeOwner) ? S_IEXEC : 0);
+#if defined(Q_OS_WIN)
+                // We do not have x-bits for stuff that has been cross-compiled on Windows,
+                // so this crude hack sets the x-bit in the package for all ELF files.
+                QFile f(fi.absoluteFilePath());
+                if (f.open(QFile::ReadOnly)) {
+                    if (f.read(4) == "\x7f""ELF")
+                        mode |= S_IEXEC;
+                }
+#endif
             } else {
                 throw Exception(Error::Package, "inode '%1' is neither a directory or a file").arg(fi.filePath());
             }

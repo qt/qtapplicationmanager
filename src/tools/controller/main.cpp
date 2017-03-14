@@ -402,6 +402,24 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
             stopReply.waitForFinished();
         }
 
+        static bool isStarted = false;
+
+        if (!stdRedirections.isEmpty()) {
+            // in case application quits -> quit the controller
+            QObject::connect(dbus.manager(), &IoQtApplicationManagerInterface::applicationRunStateChanged,
+                             qApp, [appId](const QString &id, uint runState) {
+                if (isStarted && id == appId && runState == 0 /* NotRunning */) {
+                    auto getReply = dbus.manager()->get(id);
+                    getReply.waitForFinished();
+                    if (getReply.isError())
+                        throw Exception(Error::IO, "failed to get exit code from application-manager: %1").arg(getReply.error().message());
+                    fprintf(stdout, "\n --- application has quit ---\n\n");
+                    auto app = getReply.value();
+                    qApp->exit(app.value(qSL("lastExitCode"), 1).toInt());
+                }
+            });
+        }
+
         bool isDebug = !debugWrapper.isEmpty();
         QDBusPendingReply<bool> reply;
         if (stdRedirections.isEmpty()) {
@@ -422,11 +440,11 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                 .arg(reply.error().message()).arg(isDebug ? "debug" : "start");
         }
 
-        bool ok = reply.value();
+        isStarted = reply.value();
         if (stdRedirections.isEmpty()) {
-            qApp->exit(ok ? 0 : 2);
+            qApp->exit(isStarted ? 0 : 2);
         } else {
-            if (!ok) {
+            if (!isStarted) {
                 qApp->exit(2);
             } else {
                 // on Ctrl+C or SIGTERM -> stop the application
@@ -472,20 +490,6 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                 };
                 (new HupThread(qApp))->start();
 #endif // defined(POLLRDHUP)
-
-                // in case application quits -> quit the controller
-                QObject::connect(dbus.manager(), &IoQtApplicationManagerInterface::applicationRunStateChanged,
-                            qApp, [appId](const QString &id, uint runState) {
-                    if (id == appId && runState == 0 /* NotRunning */) {
-                        auto getReply = dbus.manager()->get(id);
-                        getReply.waitForFinished();
-                        if (getReply.isError())
-                            throw Exception(Error::IO, "failed to get exit code from application-manager: %1").arg(getReply.error().message());
-                        fprintf(stdout, "\n --- application has quit ---\n\n");
-                        auto app = getReply.value();
-                        qApp->exit(app.value(qSL("lastExitCode"), 1).toInt());
-                    }
-                });
             }
         }
     });

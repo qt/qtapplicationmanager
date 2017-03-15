@@ -434,9 +434,9 @@ void Main::setupInstaller() Q_DECL_NOEXCEPT_EXPR(false)
 
 void Main::setupSingleOrMultiProcess() Q_DECL_NOEXCEPT_EXPR(false)
 {
-    bool forceSingleProcess = m_config.forceSingleProcess();
+    m_isSingleProcessMode = m_config.forceSingleProcess();
     bool forceMultiProcess = m_config.forceMultiProcess();
-    if (forceMultiProcess && forceSingleProcess)
+    if (forceMultiProcess && m_isSingleProcessMode)
         throw Exception("You cannot enforce multi- and single-process mode at the same time.");
 
 #if !defined(AM_MULTI_PROCESS)

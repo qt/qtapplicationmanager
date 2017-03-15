@@ -28,10 +28,9 @@
 
 #pragma once
 
+#include <QtAppManCommon/global.h>
 #include <QByteArray>
 #include <QString>
-
-#include "exception.h"
 
 class Packager
 {

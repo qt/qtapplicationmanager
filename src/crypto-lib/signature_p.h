@@ -41,8 +41,7 @@
 
 #pragma once
 
-#include "signature.h"
-#include <QtAppManCommon/exception.h>
+#include <QtAppManCrypto/signature.h>
 
 QT_BEGIN_NAMESPACE_AM
 

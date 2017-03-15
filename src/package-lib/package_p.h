@@ -41,9 +41,9 @@
 
 #pragma once
 
-#include <QVariantMap>
-
+#include <QtAppManCommon/global.h>
 #include <QtAppManCommon/exception.h>
+#include <QVariantMap>
 
 struct archive;
 QT_FORWARD_DECLARE_CLASS(QFileInfo)

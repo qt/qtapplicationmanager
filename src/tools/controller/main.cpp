@@ -42,14 +42,15 @@
 #  include <sys/poll.h>
 #endif
 
-#include "global.h"
-#include "error.h"
-#include "exception.h"
-#include "unixsignalhandler.h"
+#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/error.h>
+#include <QtAppManCommon/exception.h>
+#include <QtAppManCommon/unixsignalhandler.h>
+#include <QtAppManCommon/qtyaml.h>
+#include <QtAppManCommon/dbus-utilities.h>
+
 #include "applicationmanager_interface.h"
 #include "applicationinstaller_interface.h"
-#include "qtyaml.h"
-#include "dbus-utilities.h"
 
 QT_USE_NAMESPACE_AM
 

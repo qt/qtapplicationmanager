@@ -50,7 +50,6 @@
 #include <QtAppManApplication/installationreport.h>
 #include <QtAppManInstaller/asynchronoustask.h>
 #include <QtAppManInstaller/scopeutilities.h>
-#include <QtAppManCommon/exception.h>
 
 QT_BEGIN_NAMESPACE_AM
 

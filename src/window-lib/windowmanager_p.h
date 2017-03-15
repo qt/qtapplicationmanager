@@ -45,7 +45,7 @@
 #include <QMap>
 #include <QHash>
 
-#include "dbus-policy.h"
+#include <QtAppManCommon/dbus-policy.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 

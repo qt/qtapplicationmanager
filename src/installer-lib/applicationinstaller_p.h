@@ -46,10 +46,9 @@
 #include <QSet>
 #include <QThread>
 
-#include "applicationinstaller.h"
-#include "sudo.h"
-#include <QtAppManCommon/exception.h>
-#include "dbus-policy.h"
+#include <QtAppManInstaller/applicationinstaller.h>
+#include <QtAppManInstaller/sudo.h>
+#include <QtAppManCommon/dbus-policy.h>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

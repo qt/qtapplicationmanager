@@ -33,6 +33,7 @@
 #include "yamlapplicationscanner.h"
 #include "abstractruntime.h"
 #include "runtimefactory.h"
+#include "exception.h"
 
 QT_USE_NAMESPACE_AM
 

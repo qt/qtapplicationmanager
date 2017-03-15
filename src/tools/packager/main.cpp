@@ -33,7 +33,7 @@
 
 #include <stdio.h>
 
-#include "utilities.h"
+#include <QtAppManCommon/utilities.h>
 #include "packager.h"
 
 QT_USE_NAMESPACE_AM

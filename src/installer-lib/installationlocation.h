@@ -41,10 +41,9 @@
 
 #pragma once
 
+#include <QtAppManCommon/global.h>
 #include <QString>
 #include <QVariantMap>
-
-#include <QtAppManCommon/exception.h>
 
 QT_BEGIN_NAMESPACE_AM
 

@@ -47,7 +47,6 @@
 #include <QProcess>
 #include <QJSValue>
 #include <QtAppManCommon/global.h>
-#include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/dbus-policy.h>
 #include <QtAppManCommon/dbus-utilities.h>
 

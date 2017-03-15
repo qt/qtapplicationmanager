@@ -41,7 +41,7 @@
 
 #pragma once
 
-#include "applicationinterface.h"
+#include <QtAppManApplication/applicationinterface.h>
 
 QT_BEGIN_NAMESPACE_AM
 

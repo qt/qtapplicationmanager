@@ -41,7 +41,7 @@
 
 #pragma once
 
-#include "packagecreator.h"
+#include <QtAppManPackage/packagecreator.h>
 
 #include <archive.h>
 

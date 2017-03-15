@@ -47,9 +47,8 @@
 
 #include <archive.h>
 
-#include "packageextractor.h"
+#include <QtAppManPackage/packageextractor.h>
 #include <QtAppManApplication/installationreport.h>
-#include <QtAppManCommon/exception.h>
 
 QT_FORWARD_DECLARE_CLASS(QCryptographicHash)
 

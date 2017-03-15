@@ -46,6 +46,7 @@
 
 #include "application.h"
 #include "applicationdatabase.h"
+#include "exception.h"
 
 QT_BEGIN_NAMESPACE_AM
 

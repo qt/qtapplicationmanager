@@ -42,6 +42,7 @@
 #include "signature.h"
 #include "signature_p.h"
 #include "cryptography.h"
+#include "exception.h"
 
 QT_BEGIN_NAMESPACE_AM
 

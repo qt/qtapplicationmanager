@@ -50,7 +50,6 @@
 #include <QObject>
 
 #include <QtAppManCommon/global.h>
-#include <QtAppManCommon/exception.h>
 #include <QtAppManApplication/installationreport.h>
 
 QT_BEGIN_NAMESPACE_AM

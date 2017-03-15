@@ -47,7 +47,8 @@
 #define QT_USE_NAMESPACE_AM    using namespace QtAM;
 #define QT_PREPEND_NAMESPACE_AM(name) QtAM::name
 
-QT_BEGIN_NAMESPACE_AM // make sure the namespace exists
+QT_BEGIN_NAMESPACE_AM
+// make sure the namespace exists
 QT_END_NAMESPACE_AM
 
 // make the source a lot less ugly and more readable (until we can finally use user defined literals)

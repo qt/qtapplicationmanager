@@ -52,6 +52,7 @@ typedef QGuiApplication MainBase;
 #endif
 
 #include <QtAppManInstaller/installationlocation.h>
+#include <QVector>
 #include "configuration.h"
 
 QT_FORWARD_DECLARE_CLASS(QQmlApplicationEngine)

@@ -1470,9 +1470,10 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
                                         "updated application database to disk failed:" << e.errorString();
             d->database->invalidate(); // make sure that the next AM start will re-read the DB
         }
-        emitDataChanged(app, QVector<int> { IsUpdating });
+        emitDataChanged(app);
 
         unblockApplication(id);
+        emit app->bulkChange(); // not ideal, but icon and codeDir have changed
         break;
     }
     case Application::BeingRemoved: {

@@ -333,7 +333,24 @@ QString Application::name(const QString &language) const
 
 QString Application::icon() const
 {
-    return m_icon.isEmpty() ? QString() : manifestDir().absoluteFilePath(m_icon);
+    if (m_icon.isEmpty())
+        return QString();
+
+    QDir dir;
+    switch (m_state) {
+    default:
+    case Installed:
+        dir = manifestDir();
+        break;
+    case BeingInstalled:
+    case BeingUpdated:
+        dir = QDir(m_codeDir.absolutePath() + QLatin1Char('+'));
+        break;
+    case BeingRemoved:
+        dir = QDir(m_codeDir.absolutePath() + QLatin1Char('-'));
+        break;
+    }
+    return dir.absoluteFilePath(m_icon);
 }
 
 QUrl Application::iconUrl() const

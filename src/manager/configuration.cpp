@@ -174,7 +174,6 @@ Configuration::Configuration()
     d->clp.addVersionOption();
 
     d->clp.addPositionalArgument(qSL("qml-file"),   qSL("the main QML file."));
-
     d->clp.addOption({ { qSL("c"), qSL("config-file") }, qSL("load configuration from file (can be given multiple times)."), qSL("files"), qSL(AM_CONFIG_FILE) });
     d->clp.addOption({ qSL("database"),             qSL("application database."), qSL("file"), qSL("/opt/am/apps.db") });
     d->clp.addOption({ { qSL("r"), qSL("recreate-database") },  qSL("recreate the application database.") });
@@ -182,7 +181,12 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("base directory for installed application manifests."), qSL("dir"), qSL("/opt/am/manifests") });
     d->clp.addOption({ qSL("app-image-mount-dir"),  qSL("base directory where application images are mounted to."), qSL("dir"), qSL("/opt/am/image-mounts") });
 #if defined(QT_DBUS_LIB)
-    d->clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none"), qSL("session") });
+#  if defined(Q_OS_LINUX)
+    const QString defaultDBus = qSL("session");
+#  else
+    const QString defaultDBus = qSL("none");
+#  endif
+    d->clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none"), defaultDBus });
     d->clp.addOption({ qSL("start-session-dbus"),   qSL("start a private session bus instead of using an existing one.") });
 #endif
     d->clp.addOption({ qSL("fullscreen"),           qSL("display in full-screen.") });

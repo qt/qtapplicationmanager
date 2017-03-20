@@ -118,7 +118,8 @@ all your imports paths and file references relative to your main config file.
     \li string
     \li Register the ApplicationManager, ApplicationInstaller, NotificationManager and
         WindowManager on the specified D-Bus: can be either \c session, \c system, \c none (for no
-        registration at all) or a full D-Bus bus specification string. (default: session)
+        registration at all) or a full D-Bus bus specification string. (default: \c session on
+        Linux, \c none on all other platforms)
         \note On production systems, you most likely want to put the application-manager on the
               \c system bus, where you can set detailed security policies using standard D-Bus
               mechanisms, while keeping the NotificationManager on the session bus. See the more

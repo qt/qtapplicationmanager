@@ -893,7 +893,9 @@ void Main::registerDBusInterfaces()
         // connect this signal manually, since it needs a type conversion
         // (the automatic signal relay fails in this case)
         QObject::connect(m_applicationManager, &ApplicationManager::applicationRunStateChanged,
-                         ama, &ApplicationManagerAdaptor::applicationRunStateChanged);
+                         ama, [ama](const QString &id, ApplicationManager::RunState runState) {
+            ama->applicationRunStateChanged(id, runState);
+        });
         registerDBusObject(ama, "io.qt.ApplicationManager", "/ApplicationManager");
         if (!m_applicationManager->setDBusPolicy(m_config.dbusPolicy(dbusInterfaceName(m_applicationManager))))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");

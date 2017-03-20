@@ -43,6 +43,174 @@
 #include "processmonitor_p.h"
 #include "logging.h"
 
+
+/*!
+    \qmltype ProcessMonitor
+    \inqmlmodule QtApplicationManager
+    \brief A type for monitoring process resource usage
+
+    The ProcessMonitor type provides statistics about the resource usage for a process known to the
+    application-manager. Currently, CPU load and memory usage can be monitored. This type is
+    available in the system-UI only.
+
+    The ProcessMonitor is dedicated to Linux in particular, since this is currently the only OS
+    that supports multi-process mode. Other OS's are supported only rudimenatary.
+
+    Here is an example, how the ProcessMonitor can be used:
+
+    \qml
+    import QtApplicationManager 1.0
+
+    ProcessMonitor {
+        applicationId: ""
+        reportingInterval: 1000
+        memoryReportingEnabled: true
+
+        onMemoryReportingChanged: {
+            console.log("Total PSS: " + (memoryPss.total / 1e6).toFixed(0) + " MB");
+        }
+    }
+    \endqml
+
+    The type is derived from \c QAbstractListModel, so it can be used directly as a model in an
+    appropriate view.
+
+    \target role-names
+    Here is the list of roles that the model provides:
+
+    \table
+    \header
+        \li Role name
+        \li Type
+        \li Description
+    \row
+        \li \c cpuLoad
+        \target cpuLoad-role
+        \li real
+        \li The process's CPU utilization during the last reporting interval. A value of 0 means
+            that the process was idle, a value of 1 means it fully used the equivalent of one core
+            (which may be split over several ones).
+    \row
+        \li \c memoryVirtual
+        \target memoryVirtual-role
+        \li var
+        \li A map of the process's virtual memory usage. See below for a list of supported keys.
+            The total amount of virtual memory is provided through \c memoryVirtual.total for
+            example.
+    \row
+        \li \c memoryRss
+        \li var
+        \li A map of the process's RSS (Resident Set Size) memory usage. This is the amount of
+            memory that is actually mapped to physical RAM. See below for a list of supported
+            keys.
+    \row
+        \li \c memoryPss
+        \li var
+        \li A map of the process's PSS (Proportional Set Size) memory usage. This is the
+            proportional share of the RSS value above. For instance if two processes share 2 MB
+            the RSS value will be 2 MB for each process and the PSS value 1 MB for each process.
+            As the name implies, the code section of shared libraries is generally shared between
+            processes. Memory may also be shared by other means provided by the OS (e.g. through
+            \c mmap on Linux). See below for a list of supported keys.
+    \endtable
+
+    These are the supported keys in the memory maps:
+
+    \table
+    \header
+        \li Key
+        \li Description
+    \row
+        \li total
+        \li The amount of memory used in total in bytes.
+    \row
+        \li text
+        \li The amount of memory used by the code section in bytes.
+    \row
+        \li heap
+        \li The amount of memory used by the heap in bytes. This is private, dynamically allocated
+            memory (for example through \c malloc or \c mmap on Linux).
+    \endtable
+
+    \note The model will be updated each \l reportingInterval milliseconds. Notet that the roles
+          will only be populated, if the corresponding reporting parts have been enabled.
+*/
+
+/*!
+    \qmlproperty int ProcessMonitor::count
+
+    This property holds the number of reading points that will be kept in the model. The minimum
+    value that can be set is 2 and the default value is 10.
+*/
+
+/*!
+    \qmlproperty int ProcessMonitor::processId
+    \readonly
+
+    This property holds the OS specific process identifier (PID) that is monitored. This can be
+    used by external tools for example. The property is 0, if there is no process associated with
+    the \l applicationId. In particular, if the application-manager runs in single-process mode,
+    only the system-UI (identified by an empty \l applicationId) will have an associated process.
+*/
+
+/*!
+    \qmlproperty string ProcessMonitor::applicationId
+
+    The ID of the application that will be monitored. It must be one of the ID's known to the
+    application-manager (\l ApplicationManager::applicationIds provides a list of valid IDs). There
+    is one exception: if the ID is set to an empty string, the system-UI process will be monitored.
+    Setting a new value will reset the model.
+*/
+
+/*!
+    \qmlproperty int ProcessMonitor::reportingInterval
+
+    This property holds the interval in milliseconds between reporting updates. Note, that
+    reporting will only start once this property is set. Setting a new value will reset the model.
+    Valid values must be greater than zero.
+
+    At least one of the reporting parts must be enabled to start the reporting.
+
+    \sa cpuLoadReportingEnabled
+    \sa memoryReportingEnabled
+*/
+
+/*!
+    \qmlproperty bool ProcessMonitor::cpuLoadReportingEnabled
+
+    A boolean value that determines whether periodic CPU load reporting is enabled.
+*/
+
+/*!
+    \qmlproperty bool ProcessMonitor::memoryReportingEnabled
+
+    A boolean value that determines whether periodic memory reporting is enabled.
+*/
+
+/*!
+    \qmlsignal ProcessMonitor::cpuLoadReportingChanged(real load)
+
+    This signal is emitted periodically when CPU load reporting is enabled. The frequency is
+    defined by \l reportingInterval. The \a load parameter indicates the CPU utilization. Details
+    can be found in the description of the \l {cpuLoad-role} {cpuLoad} model role above.
+
+    \sa cpuLoadReportingEnabled
+    \sa reportingInterval
+*/
+
+/*!
+    \qmlsignal ProcessMonitor::memoryReportingChanged(var memoryVritual, var memoryRss
+                                                                       , var memoryPss);
+
+    This signal is emitted periodically when memory reporting is enabled. The frequency is defined
+    by \l reportingInterval. The parameters provide the same information as the model roles with
+    the same name described \l {memoryVirtual-role}{above}.
+
+    \sa memoryReportingEnabled
+    \sa reportingInterval
+*/
+
+
 QT_BEGIN_NAMESPACE_AM
 
 ProcessMonitor::ProcessMonitor(QObject *parent)
@@ -209,6 +377,13 @@ QHash<int, QByteArray> ProcessMonitor::roleNames() const
     return d->roles;
 }
 
+/*!
+    \qmlmethod object ProcessMonitor::get(int index)
+
+    Returns the model data for the reading point identified by \a index as a JavaScript object.
+    See the \l {role-names} for the expected object elements. The \a index must be in the range
+    [0, \l count), returns an empty object if it is invalid.
+*/
 QVariantMap ProcessMonitor::get(int row) const
 {
     if (row < 0 || row >= count()) {

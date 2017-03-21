@@ -446,9 +446,9 @@ void Application::validate() const Q_DECL_NOEXCEPT_EXPR(false)
                     .arg(m_id, nonAliased()->id());
     }
 
-    QString rdnsError;
-    if (!isValidDnsName(id(), isAlias(), &rdnsError))
-        throw Exception(Error::Parse, "the identifier (%1) is not a valid reverse-DNS name: %2").arg(id()).arg(rdnsError);
+    QString appIdError;
+    if (!isValidApplicationId(id(), isAlias(), &appIdError))
+        throw Exception(Error::Parse, "the identifier (%1) is not a valid application-id: %2").arg(id()).arg(appIdError);
     if (absoluteCodeFilePath().isEmpty())
         throw Exception(Error::Parse, "the 'code' field must not be empty");
 

@@ -141,13 +141,19 @@ mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with an invalid id header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
-sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/applicationId: '[a-z0-9.-]*'/applicationId: 'invalid'/"
+sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/applicationId: '[a-z0-9.-]*'/applicationId: ':invalid'/"
 tar -C "$src" -cf "$dst/test-invalid-header-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+mv "$src"/--PACKAGE-HEADER--{.orig,}
+
+info "Create a package with an non-matching id header field"
+mv "$src"/--PACKAGE-HEADER--{,.orig}
+sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/applicationId: '[a-z0-9.-]*'/applicationId: 'non-matching'/"
+tar -C "$src" -cf "$dst/test-non-matching-header-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with an invalid info.yaml id"
 mv "$src"/info.yaml{,.orig}
-sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/id: "[a-z0-9.-]*"/id: "invalid"/'
+sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/id: "[a-z0-9.-]*"/id: ":invalid"/'
 tar -C "$src" -cf "$dst/test-invalid-info-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/info.yaml{.orig,}
 

@@ -294,31 +294,69 @@ QMultiMap<QString, QString> mountedDirectories()
     return result;
 }
 
-
-bool isValidDnsName(const QString &dnsName, bool isAliasName, QString *errorString)
+bool isValidApplicationId(const QString &appId, bool isAliasName, QString *errorString)
 {
     static const int maxLength = 150;
 
     try {
-        // AM specific checks first
+        if (appId.isEmpty())
+            throw Exception(Error::Parse, "must not be empty");
+
         // we need to make sure that we can use the name as directory on a FAT formatted SD-card,
         // which has a 255 character path length restriction
+        if (appId.length() > maxLength)
+            throw Exception(Error::Parse, "the maximum length is %1 characters (found %2 characters)").arg(maxLength, appId.length());
 
-        if (dnsName.length() > maxLength)
-            throw Exception(Error::Parse, "the maximum length is %1 characters (found %2 characters)").arg(maxLength, dnsName.length());
+        int aliasPos = -1;
 
-        // we require at least 3 parts: tld.company.app
+        // aliases need to have the '@' marker
+        if (isAliasName) {
+            aliasPos = appId.indexOf(qL1C('@'));
+            if (aliasPos < 0 || aliasPos == (appId.size() - 1))
+            throw Exception(Error::Parse, "missing alias-id tag '@'");
+        }
+
+        // all characters need to be ASCII minus '@' and any filesystem special characters:
+        bool spaceOnly = true;
+        static const char forbiddenChars[] = "@<>:\"/\\|?*";
+        for (int pos = 0; pos < appId.length(); ++pos) {
+            if (pos == aliasPos)
+                continue;
+            ushort ch = appId.at(pos).unicode();
+            if ((ch < 0x20) || (ch > 0x7f) || strchr(forbiddenChars, ch & 0xff)) {
+                throw Exception(Error::Parse, "must consist of printable ASCII characters only, except any of \'%1'")
+                    .arg(QString::fromLatin1(forbiddenChars));
+            }
+            if (spaceOnly)
+                spaceOnly = QChar(ch).isSpace();
+        }
+        if (spaceOnly)
+            throw Exception(Error::Parse, "must not consist of only white-space characters");
+
+        return true;
+    } catch (const Exception &e) {
+        if (errorString)
+            *errorString = e.errorString();
+        return false;
+    }
+}
+
+bool isValidDnsName(const QString &dnsName, int minimalPartCount, QString *errorString)
+{
+    try {
+
+        // check if we have enough parts: e.g. "tld.company.app" would have 3 parts
         QStringList parts = dnsName.split('.');
-        if (parts.size() < 3)
+        if (parts.size() < minimalPartCount)
             throw Exception(Error::Parse, "the minimum amount of parts (subdomains) is 3 (found %1)").arg(parts.size());
 
         // standard RFC compliance tests (RFC 1035/1123)
 
-        auto partCheck = [](const QString &part, const char *type) {
+        auto partCheck = [](const QString &part) {
             int len = part.length();
 
             if (len < 1 || len > 63)
-                throw Exception(Error::Parse, "%1 must consist of at least 1 and at most 63 characters (found %2 characters)").arg(qL1S(type)).arg(len);
+                throw Exception(Error::Parse, "domain parts must consist of at least 1 and at most 63 characters (found %2 characters)").arg(len);
 
             for (int pos = 0; pos < len; ++pos) {
                 ushort ch = part.at(pos).unicode();
@@ -329,25 +367,12 @@ bool isValidDnsName(const QString &dnsName, bool isAliasName, QString *errorStri
                 bool isLower = (ch >= 'a' && ch <= 'z');
 
                 if ((isFirst || isLast || !isDash) && !isDigit && !isLower)
-                    throw Exception(Error::Parse, "%1 must consists of only the characters '0-9', 'a-z', and '-' (which cannot be the first or last character)").arg(qL1S(type));
+                    throw Exception(Error::Parse, "domain parts must consist of only the characters '0-9', 'a-z', and '-' (which cannot be the first or last character)");
             }
         };
 
-        if (isAliasName) {
-            QString aliasTag = parts.last();
-            int sepPos = aliasTag.indexOf(qL1C('@'));
-            if (sepPos < 0 || sepPos == (aliasTag.size() - 1))
-                throw Exception(Error::Parse, "missing alias-id tag");
-
-            parts.removeLast();
-            parts << aliasTag.left(sepPos);
-            parts << aliasTag.mid(sepPos + 1);
-        }
-
-        for (int i = 0; i < parts.size(); ++i) {
-            const QString &part = parts.at(i);
-            partCheck(part, isAliasName && (i == (part.size() - 1)) ? "tag name" : "parts (subdomains)");
-        }
+        for (const QString &part : parts)
+            partCheck(part);
 
         return true;
     } catch (const Exception &e) {

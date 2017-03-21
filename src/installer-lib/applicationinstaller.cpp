@@ -165,6 +165,10 @@
     Following this signal, either cancelTask() or acknowledgePackageInstallation() has to be called
     for this \a taskId, to either cancel the installation or try to complete it.
 
+    The ApplicationInstaller has two convenience functions to help the System-UI with verifying the
+    meta-data: versionCompare() and, in case you are using reverse-DNS notation for application-ids,
+    validateDnsName().
+
     \sa taskStateChanged(), startPackageInstallation()
 */
 
@@ -840,17 +844,33 @@ bool ApplicationInstaller::cancelTask(const QString &taskId)
 }
 
 /*!
-  \qmlmethod int ApplicationInstaller::compareVersions(string version1, string version2)
+    \qmlmethod int ApplicationInstaller::compareVersions(string version1, string version2)
 
-  Convenience method for app-store implementation for comparing version numbers, as the actual
-  version comparison algorithm is not trivial.
+    Convenience method for app-store implementations or taskRequestingInstallationAcknowledge()
+    callbacks for comparing version numbers, as the actual version comparison algorithm is not
+    trivial.
 
-  Returns \c -1, \c 0 or \c 1 if \a version1 is smaller than, equal to, or greater than \a version2
-  (similar to how \c strcmp() works).
+    Returns \c -1, \c 0 or \c 1 if \a version1 is smaller than, equal to, or greater than \a
+    version2 (similar to how \c strcmp() works).
 */
 int ApplicationInstaller::compareVersions(const QString &version1, const QString &version2)
 {
     return versionCompare(version1, version2);
+}
+
+/*!
+    \qmlmethod int ApplicationInstaller::validateDnsName(string name, int minimalPartCount)
+
+    Convenience method for app-store implementations or taskRequestingInstallationAcknowledge()
+    callbacks for checking if the given \a name is a valid DNS (or reverse-DNS) name according to
+    RFC 1035/1123. If the optional parameter \a minimalPartCount is specified, this function will
+    also check if \a name contains at least this amount of parts/sub-domains.
+
+    Returns \c true if the name is a valid DNS name or \c false otherwise.
+*/
+bool ApplicationInstaller::validateDnsName(const QString &name, int minimalPartCount)
+{
+    return isValidDnsName(name, minimalPartCount);
 }
 
 

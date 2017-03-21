@@ -278,7 +278,7 @@ void tst_PackagerTool::brokenMetadata_data()
 
     QTest::newRow("missing-name")       << "name"    << QVariant("") << "~.*the 'name' field must not be empty";
     QTest::newRow("missing-runtime")    << "runtime" << QVariant("") << "~.*the 'runtimeName' field must not be empty";
-    QTest::newRow("missing-identifier") << "id"      << QVariant("") << "~.*the identifier \\(\\) is not a valid reverse-DNS name: the minimum amount of parts \\(subdomains\\) is 3 \\(found 1\\)";
+    QTest::newRow("missing-identifier") << "id"      << QVariant("") << "~.*the identifier \\(\\) is not a valid application-id: must not be empty";
     QTest::newRow("missing-code")       << "code"    << QVariant("") << "~.*the 'code' field must not be empty";
 }
 

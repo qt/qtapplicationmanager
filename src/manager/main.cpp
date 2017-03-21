@@ -1009,8 +1009,10 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
         for (const QString &appDirName : appDirNames) {
             if (appDirName.endsWith('+') || appDirName.endsWith('-'))
                 continue;
-            if (!isValidDnsName(appDirName)) {
-                qCDebug(LogSystem) << "Ignoring application directory" << appDirName << ", as it's not following the rdns convention";
+            QString appIdError;
+            if (!isValidApplicationId(appDirName, false, &appIdError)) {
+                qCDebug(LogSystem) << "Ignoring application directory" << appDirName
+                                   << ": not a valid application-id:" << qPrintable(appIdError);
                 continue;
             }
             QDir appDir = baseDir.absoluteFilePath(appDirName);

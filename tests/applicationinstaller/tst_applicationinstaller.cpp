@@ -572,13 +572,16 @@ void tst_ApplicationInstaller::packageInstallation_data()
             << false << false << false << "metadata has an invalid diskSpaceUsed field (0)";
     QTest::newRow("invalid-header-id") \
             << "test-invalid-header-id.appkg" << "internal-0" << "" << ""
-            << false << false << false << "metadata has an invalid applicationId field (invalid)";
+            << false << false << false << "metadata has an invalid applicationId field (:invalid)";
+    QTest::newRow("non-matching-header-id") \
+            << "test-non-matching-header-id.appkg" << "internal-0" << "" << ""
+            << false << false << false << "the application identifiers in --PACKAGE-HEADER--' and info.yaml do not match";
     QTest::newRow("invalid-info.yaml") \
             << "test-invalid-info.appkg" << "internal-0" << "" << ""
             << false << false << false << "~.*YAML parse error at line \\d+, column \\d+: did not find expected key";
     QTest::newRow("invalid-info.yaml-id") \
             << "test-invalid-info-id.appkg" << "internal-0" << "" << ""
-            << false << false << false << "~.*the identifier \\(invalid\\) is not a valid reverse-DNS name: the minimum amount of parts \\(subdomains\\) is 3 \\(found 1\\)";
+            << false << false << false << "~.*the identifier \\(:invalid\\) is not a valid application-id: must consist of printable ASCII characters only, except any of .*";
     QTest::newRow("invalid-footer-signature") \
             << "test-invalid-footer-signature.appkg" << "internal-0" << "" << ""
             << false << false << false << "could not verify the package's developer signature";

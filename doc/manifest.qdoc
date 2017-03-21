@@ -112,8 +112,15 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
 \row
     \li \c id
     \li string
-    \li An unique reverse-DNS id. This id has to comply with RFC 1035/1123, consist of at least 3
-        parts (e.g. \c{tld.company.app}), and not exceed 150 characters in length. \e {(Required)}
+    \li The unique id of an application represented as a string. This can be used to look up
+        information about the application in the ApplicationManager model.
+        Due to its use in the file-system, only a subset of the printable ASCII characters is
+        allowed though: \c{0-9}, \c{a-z}, \c{A-Z} as well as any of \c{!#$%&'`^~_+-=.,;()[]{}}. The
+        maximum length of this id is 150 characters.
+        If you are building a larger system with 3rd-party applications, it is good practice to
+        use reverse-DNS notation for the application ids to help keep an overview in the long
+        run. The helper function ApplicationInstaller::validateDnsName can help you with
+        enforcing such a policy from the System-UI side.
 \row
     \li \c icon
     \li string
@@ -309,9 +316,9 @@ The meaning of the fields within the alias manifest data (second YAML document) 
 \row
     \li \c aliasId
     \li string
-    \li The unique reverse-DNS id of the base application (see \l{Basic Manifest}), followed by the
-        \c{@} sign and an unique tag for this alias. This tag is only allowed to contain the
-        characters \c{[a-z0-9-]}. \e {(Required)}
+    \li The unique id of the base application (see \l{Basic Manifest}), followed by the
+        \c{@} sign and an unique tag for this alias. This tag has the same character restrictions
+        as the main application id. \e {(Required)}
 \row
     \li \c icon
     \li string

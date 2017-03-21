@@ -103,9 +103,8 @@
     \row
         \li \c applicationId
         \li string
-        \li The unique id of an application represented as a string in reverse-dns form (for example,
-            \c com.pelagicore.foo). This can be used to look up information about the application
-            in the ApplicationManager model.
+        \li The unique id of an application represented as a string. This can be used to look up
+            information about the application in the ApplicationManager model.
     \row
         \li \c windowItem
         \li Item

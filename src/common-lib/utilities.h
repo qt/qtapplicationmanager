@@ -67,7 +67,8 @@ QString hardwareId();
 bool ensureCorrectLocale();
 bool checkCorrectLocale();
 
-bool isValidDnsName(const QString &rnds, bool isAliasName = false, QString *errorString = nullptr);
+bool isValidApplicationId(const QString &appId, bool isAliasName = false, QString *errorString = nullptr);
+bool isValidDnsName(const QString &dnsName, int minimalPartCount, QString *errorString = nullptr);
 int versionCompare(const QString &version1, const QString &version2);
 
 void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,

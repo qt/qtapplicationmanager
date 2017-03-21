@@ -125,6 +125,7 @@ public:
 
     // convenience function for app-store implementations
     Q_SCRIPTABLE int compareVersions(const QString &version1, const QString &version2);
+    Q_SCRIPTABLE bool validateDnsName(const QString &name, int minimumParts = 1);
 
     Q_SCRIPTABLE qint64 installedApplicationSize(const QString &id) const;
 

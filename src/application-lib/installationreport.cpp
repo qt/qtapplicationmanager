@@ -147,7 +147,7 @@ void InstallationReport::addFiles(const QStringList &files)
 
 bool InstallationReport::isValid() const
 {
-    return isValidDnsName(m_applicationId) && !m_digest.isEmpty() && !m_files.isEmpty();
+    return isValidApplicationId(m_applicationId) && !m_digest.isEmpty() && !m_files.isEmpty();
 }
 
 bool InstallationReport::deserialize(QIODevice *from)

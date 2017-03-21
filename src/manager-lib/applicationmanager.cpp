@@ -102,8 +102,8 @@
     \row
         \li \c applicationId
         \li string
-        \li The unique Id of an application, represented as a string in reverse-dns form (e.g.
-            \c com.pelagicore.foo)
+        \li The unique Id of an application, represented as a string (e.g. \c Browser or
+            \c com.pelagicore.music)
     \row
         \li \c name
         \li string

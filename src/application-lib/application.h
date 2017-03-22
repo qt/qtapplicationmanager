@@ -84,6 +84,7 @@ class Application : public QObject
     Q_PROPERTY(QString version READ version NOTIFY bulkChange)
     Q_PROPERTY(BackgroundMode backgroundMode READ backgroundMode NOTIFY bulkChange)
     Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface NOTIFY bulkChange)
+    Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange)
 
 public:
     enum ExitStatus { NormalExit, CrashExit, ForcedExit };
@@ -136,8 +137,8 @@ public:
 
     const InstallationReport *installationReport() const;
     void setInstallationReport(InstallationReport *report);
-    QDir manifestDir() const;
-    QDir codeDir() const;
+    QString manifestDir() const;
+    QString codeDir() const;
     uint uid() const;
 
     // dynamic part

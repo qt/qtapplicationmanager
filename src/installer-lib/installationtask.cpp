@@ -322,7 +322,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
             path.chop(1); // remove the '+'
             m_app->setManifestDir(m_manifestDir.absolutePath());
             if (m_installationLocation.isRemovable())
-                m_app->setCodeDir(m_app->manifestDir().absolutePath());
+                m_app->setCodeDir(m_app->manifestDir());
             else
                 m_app->setCodeDir(path);
         }

@@ -1451,7 +1451,7 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
     case Application::BeingUpdated: {
         // The Application object has been updated right at the start of the installation/update.
         // Now's the time to update the InstallationReport that was written by the installer.
-        QFile irfile(app->manifestDir().absoluteFilePath(qSL("installation-report.yaml")));
+        QFile irfile(QDir(app->manifestDir()).absoluteFilePath(qSL("installation-report.yaml")));
         QScopedPointer<InstallationReport> ir(new InstallationReport(app->id()));
         if (!irfile.open(QFile::ReadOnly) || !ir->deserialize(&irfile)) {
             qCCritical(LogInstaller) << "Could not read the new installation-report for application"

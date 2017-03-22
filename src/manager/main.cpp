@@ -504,7 +504,7 @@ void Main::loadApplicationDatabase() Q_DECL_NOEXCEPT_EXPR(false)
         if (LogSystem().isDebugEnabled()) {
             qCDebug(LogSystem) << "Registering applications:";
             for (const Application *app : qAsConst(apps))
-                qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: " << app->codeDir().path() << "]";
+                qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: " << QDir(app->codeDir()).path() << "]";
         }
 
         m_applicationDatabase->write(apps);

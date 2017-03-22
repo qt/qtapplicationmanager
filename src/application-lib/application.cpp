@@ -222,6 +222,15 @@
     This is just a hint for the System-UI - the application-manager itself will not enforce this
     policy.
 */
+/*!
+    \qmlproperty string Application::codeDir
+    \readonly
+
+    The absolute path to the application's installation directory. Please note this directory might
+    not always be available for applications that were installed onto removable media.
+
+    \sa InstallationLocation
+*/
 
 
 QT_BEGIN_NAMESPACE_AM
@@ -298,7 +307,7 @@ int Application::uniqueNumber() const
 QString Application::absoluteCodeFilePath() const
 {
     QString code = m_nonAliased ? m_nonAliased->m_codeFilePath : m_codeFilePath;
-    return code.isEmpty() ? QString() : codeDir().absoluteFilePath(code);
+    return code.isEmpty() ? QString() : QDir(codeDir()).absoluteFilePath(code);
 }
 
 QString Application::codeFilePath() const
@@ -503,22 +512,22 @@ void Application::setInstallationReport(InstallationReport *report)
     m_installationReport.reset(report);
 }
 
-QDir Application::manifestDir() const
+QString Application::manifestDir() const
 {
-    return m_manifestDir;
+    return m_manifestDir.absolutePath();
 }
 
-QDir Application::codeDir() const
+QString Application::codeDir() const
 {
     switch (m_state) {
     default:
     case Installed:
-        return m_codeDir;
+        return m_codeDir.absolutePath();
     case BeingInstalled:
     case BeingUpdated:
-        return QDir(m_codeDir.absolutePath() + QLatin1Char('+'));
+        return m_codeDir.absolutePath() + QLatin1Char('+');
     case BeingRemoved:
-        return QDir(m_codeDir.absolutePath() + QLatin1Char('-'));
+        return m_codeDir.absolutePath() + QLatin1Char('-');
     }
 }
 

@@ -178,11 +178,11 @@ static void startOrDebugApplication(const QString &debugWrapper, const QString &
                                     const QString &documentUrl) Q_DECL_NOEXCEPT_EXPR(false);
 static void stopApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false);
 static void listApplications() Q_DECL_NOEXCEPT_EXPR(false);
-static void showApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false);
+static void showApplication(const QString &appId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
 static void installPackage(const QString &package, const QString &location) Q_DECL_NOEXCEPT_EXPR(false);
 static void removePackage(const QString &package, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
-static void showInstallationLocation(const QString &location) Q_DECL_NOEXCEPT_EXPR(false);
+static void showInstallationLocation(const QString &location, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
 
 class ThrowingApplication : public QCoreApplication // clazy:exclude=missing-qobject-macro
 {
@@ -332,13 +332,14 @@ int main(int argc, char *argv[])
             break;
 
         case ShowApplication:
+            clp.addOption({ qSL("json"), qSL("Output in JSON format instead of YAML.") });
             clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            showApplication(clp.positionalArguments().at(1));
+            showApplication(clp.positionalArguments().at(1), clp.isSet(qSL("json")));
             break;
 
         case InstallPackage:
@@ -371,12 +372,13 @@ int main(int argc, char *argv[])
 
         case ShowInstallationLocation:
             clp.addPositionalArgument(qSL("installation-location"), qSL("The id of an installation location."));
+            clp.addOption({ qSL("json"), qSL("Output in JSON format instead of YAML.") });
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            showInstallationLocation(clp.positionalArguments().at(1));
+            showInstallationLocation(clp.positionalArguments().at(1), clp.isSet(qSL("json")));
             break;
         }
 
@@ -525,18 +527,19 @@ void listApplications() Q_DECL_NOEXCEPT_EXPR(false)
     });
 }
 
-void showApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false)
+void showApplication(const QString &appId, bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToManager();
 
-    QTimer::singleShot(0, [appId]() {
+    QTimer::singleShot(0, [appId, asJson]() {
         auto reply = dbus.manager()->get(appId);
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to get application via DBus: %1").arg(reply.error().message());
 
         QVariant app = reply.value();
-        fprintf(stdout, "%s\n", QtYaml::yamlFromVariantDocuments({ app }).constData());
+        fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(app).toJson().constData()
+                                       : QtYaml::yamlFromVariantDocuments({ app }).constData());
         qApp->quit();
     });
 }
@@ -682,18 +685,19 @@ void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
     });
 }
 
-void showInstallationLocation(const QString &location) Q_DECL_NOEXCEPT_EXPR(false)
+void showInstallationLocation(const QString &location, bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToInstaller();
 
-    QTimer::singleShot(0, [location]() {
+    QTimer::singleShot(0, [location, asJson]() {
         auto reply = dbus.installer()->getInstallationLocation(location);
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call getInstallationLocation via DBus: %1").arg(reply.error().message());
 
         QVariant app = reply.value();
-        fprintf(stdout, "%s\n", QtYaml::yamlFromVariantDocuments({ app }).constData());
+        fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(app).toJson().constData()
+                                       : QtYaml::yamlFromVariantDocuments({ app }).constData());
         qApp->quit();
     });
 }

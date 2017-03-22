@@ -70,6 +70,7 @@ private:
 
     QByteArray m_digest;
     const InstallationReport &m_report;
+    QVariantMap m_metaData;
 
     friend class PackageCreator;
 };

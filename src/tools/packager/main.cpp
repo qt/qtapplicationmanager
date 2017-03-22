@@ -113,10 +113,14 @@ int main(int argc, char *argv[])
 
     clp.addPositionalArgument(qSL("command"), qSL("The command to execute."));
 
+    // ignore unknown options for now -- the sub-commands may need them later
+    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
+
     if (!clp.parse(QCoreApplication::arguments())) {
         fprintf(stderr, "%s\n", qPrintable(clp.errorText()));
         exit(1);
     }
+    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
 
     Packager *p = nullptr;
 
@@ -131,6 +135,8 @@ int main(int argc, char *argv[])
         break;
 
     case CreatePackage:
+        clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
+        clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
         clp.addPositionalArgument(qSL("package"),          qSL("The file name of the created package."));
         clp.addPositionalArgument(qSL("source-directory"), qSL("The package's content root directory."));
         clp.process(a);
@@ -139,10 +145,13 @@ int main(int argc, char *argv[])
             clp.showHelp(1);
 
         p = Packager::create(clp.positionalArguments().at(1),
-                             clp.positionalArguments().at(2));
+                             clp.positionalArguments().at(2),
+                             clp.isSet(qSL("json")));
         break;
 
     case DevSignPackage:
+        clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
+        clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
         clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
         clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
         clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
@@ -155,10 +164,12 @@ int main(int argc, char *argv[])
         p = Packager::developerSign(clp.positionalArguments().at(1),
                                     clp.positionalArguments().at(2),
                                     clp.positionalArguments().at(3),
-                                    clp.positionalArguments().at(4));
+                                    clp.positionalArguments().at(4),
+                                    clp.isSet(qSL("json")));
         break;
 
     case DevVerifyPackage:
+        clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
         clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
         clp.addPositionalArgument(qSL("certificates"), qSL("The developer's CA certificate file(s)."), qSL("certificates..."));
         clp.process(a);
@@ -171,6 +182,8 @@ int main(int argc, char *argv[])
         break;
 
     case StoreSignPackage:
+        clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
+        clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
         clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
         clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
         clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
@@ -185,10 +198,12 @@ int main(int argc, char *argv[])
                                 clp.positionalArguments().at(2),
                                 clp.positionalArguments().at(3),
                                 clp.positionalArguments().at(4),
-                                clp.positionalArguments().at(5));
+                                clp.positionalArguments().at(5),
+                                clp.isSet(qSL("json")));
         break;
 
     case StoreVerifyPackage:
+        clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
         clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
         clp.addPositionalArgument(qSL("certificates"), qSL("Store CA certificate file(s)."), qSL("certificates..."));
         clp.addPositionalArgument(qSL("hardware-id"),  qSL("Unique hardware id to which this package was bound."));
@@ -207,7 +222,7 @@ int main(int argc, char *argv[])
         return 2;
     try {
         p->execute();
-        if (!p->output().isEmpty())
+        if (clp.isSet(qSL("verbose")) && !p->output().isEmpty())
             fprintf(stdout, "%s\n", qPrintable(p->output()));
         return p->resultCode();
     } catch (const Exception &e) {

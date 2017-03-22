@@ -32,6 +32,7 @@
 #include <QRegExp>
 #include <QDirIterator>
 #include <QMessageAuthenticationCode>
+#include <QJsonDocument>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +42,7 @@
 
 #include "signature.h"
 
+#include "qtyaml.h"
 #include "application.h"
 #include "installationreport.h"
 #include "yamlapplicationscanner.h"
@@ -55,19 +57,23 @@ QT_USE_NAMESPACE_AM
 static const int Ext2BlockSize = 1024;
 
 
-Packager *Packager::create(const QString &destinationName, const QString &sourceDir)
+Packager *Packager::create(const QString &destinationName, const QString &sourceDir, bool asJson)
 {
     Packager *p = new Packager();
     p->m_mode = Create;
+    p->m_asJson = asJson;
     p->m_destinationName = destinationName;
     p->m_sourceDir = sourceDir;
     return p;
 }
 
-Packager *Packager::developerSign(const QString &sourceName, const QString &destinationName, const QString &certificateFile, const QString &passPhrase)
+Packager *Packager::developerSign(const QString &sourceName, const QString &destinationName,
+                                  const QString &certificateFile, const QString &passPhrase,
+                                  bool asJson)
 {
     Packager *p = new Packager();
     p->m_mode = DeveloperSign;
+    p->m_asJson = asJson;
     p->m_sourceName = sourceName;
     p->m_destinationName = destinationName;
     p->m_passphrase = passPhrase;
@@ -84,10 +90,13 @@ Packager *Packager::developerVerify(const QString &sourceName, const QStringList
     return p;
 }
 
-Packager *Packager::storeSign(const QString &sourceName, const QString &destinationName, const QString &certificateFile, const QString &passPhrase, const QString &hardwareId)
+Packager *Packager::storeSign(const QString &sourceName, const QString &destinationName,
+                              const QString &certificateFile, const QString &passPhrase,
+                              const QString &hardwareId, bool asJson)
 {
     Packager *p = new Packager();
     p->m_mode = StoreSign;
+    p->m_asJson = asJson;
     p->m_sourceName = sourceName;
     p->m_destinationName = destinationName;
     p->m_passphrase = passPhrase;
@@ -104,11 +113,6 @@ Packager *Packager::storeVerify(const QString &sourceName, const QStringList &ce
     p->m_certificateFiles = certificateFiles;
     p->m_hardwareId = hardwareId;
     return p;
-}
-
-QByteArray Packager::packageDigest() const
-{
-    return m_digest;
 }
 
 QString Packager::output() const
@@ -197,7 +201,9 @@ void Packager::execute() Q_DECL_NOEXCEPT_EXPR(false)
         if (!creator.create())
             throw Exception(Error::Package, "could not create package %1: %2").arg(app->id()).arg(creator.errorString());
 
-        m_digest = creator.createdDigest();
+        QVariantMap md = creator.metaData();
+        m_output = m_asJson ? QJsonDocument::fromVariant(md).toJson().constData()
+                            : QtYaml::yamlFromVariantDocuments({ md }).constData();
         break;
     }
     case DeveloperSign:
@@ -295,7 +301,9 @@ void Packager::execute() Q_DECL_NOEXCEPT_EXPR(false)
         if (!creator.create())
             throw Exception(Error::Package, "could not create package %1: %2").arg(m_destinationName).arg(creator.errorString());
 
-        m_digest = creator.createdDigest();
+        QVariantMap md = creator.metaData();
+        m_output = m_asJson ? QJsonDocument::fromVariant(md).toJson().constData()
+                            : QtYaml::yamlFromVariantDocuments({ md }).constData();
         break;
     }
     default:

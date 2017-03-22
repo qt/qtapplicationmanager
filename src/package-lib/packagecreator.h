@@ -69,6 +69,7 @@ public:
     bool create();
 
     QByteArray createdDigest() const;
+    QVariantMap metaData() const;
 
     bool hasFailed() const;
     bool wasCanceled() const;

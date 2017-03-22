@@ -35,21 +35,21 @@
 class Packager
 {
 public:
-    static Packager *create(const QString &destinationName, const QString &sourceDir);
+    static Packager *create(const QString &destinationName, const QString &sourceDir, bool asJson = false);
 
     static Packager *developerSign(const QString &sourceName, const QString &destinationName,
-                                   const QString &certificateFile, const QString &passPhrase);
+                                   const QString &certificateFile, const QString &passPhrase,
+                                   bool asJson = false);
     static Packager *developerVerify(const QString &sourceName, const QStringList &certificateFiles);
 
     static Packager *storeSign(const QString &sourceName, const QString &destinationName,
                                const QString &certificateFile, const QString &passPhrase,
-                               const QString &hardwareId);
+                               const QString &hardwareId, bool asJson = false);
     static Packager *storeVerify(const QString &sourceName, const QStringList &certificateFiles,
                                  const QString &hardwareId);
 
     void execute() Q_DECL_NOEXCEPT_EXPR(false);
 
-    QByteArray packageDigest() const;
     QString output() const;
     int resultCode() const;
 
@@ -65,10 +65,9 @@ private:
     };
 
     Mode m_mode;
-    QByteArray m_digest;
-    QString m_error;
     QString m_output;
     int m_resultCode = 0;
+    bool m_asJson = false;
 
     QString m_sourceName;
     QString m_destinationName; // create and signing only
@@ -77,4 +76,3 @@ private:
     QString m_passphrase;  // sign only
     QString m_hardwareId; // store sign/verify only
 };
-

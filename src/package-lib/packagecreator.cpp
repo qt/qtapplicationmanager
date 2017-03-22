@@ -118,6 +118,11 @@ QByteArray PackageCreator::createdDigest() const
     return d->m_digest;
 }
 
+QVariantMap PackageCreator::metaData() const
+{
+    return d->m_metaData;
+}
+
 bool PackageCreator::hasFailed() const
 {
     return d->m_failed || wasCanceled();
@@ -211,6 +216,8 @@ bool PackageCreatorPrivate::create()
 
         if (!addVirtualFile(ar, qSL("--PACKAGE-HEADER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { headerFormat, headerData })))
             throw ArchiveException(ar, "could not write '--PACKAGE-HEADER--' to archive");
+
+        m_metaData = headerData;
 
         // Add all regular files
 
@@ -337,12 +344,16 @@ bool PackageCreatorPrivate::create()
         if (!addVirtualFile(ar, qSL("--PACKAGE-FOOTER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerFormat, footerData })))
             throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
 
+        m_metaData.unite(footerData);
+
         if (!m_report.developerSignature().isEmpty()) {
             QVariantMap footerDevSig {
                 { qSL("developerSignature"), QLatin1String(m_report.developerSignature().toBase64()) }
             };
             if (!addVirtualFile(ar, qSL("--PACKAGE-FOOTER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerDevSig })))
                 throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
+
+            m_metaData.unite(footerDevSig);
         }
         if (!m_report.storeSignature().isEmpty()) {
             QVariantMap footerStoreSig {
@@ -350,6 +361,8 @@ bool PackageCreatorPrivate::create()
             };
             if (!addVirtualFile(ar, qSL("--PACKAGE-FOOTER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerStoreSig })))
                 throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
+
+            m_metaData.unite(footerStoreSig);
         }
 
         if (archive_write_free(ar) != ARCHIVE_OK)

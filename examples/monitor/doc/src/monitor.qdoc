@@ -1,0 +1,103 @@
+/****************************************************************************
+**
+** Copyright (C) 2017 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\example monitor
+\title Performance Monitoring Example
+\image monitor.png Screenshot
+\brief A resource and performance monitor
+\ingroup applicationmanager-examples
+
+\section1 Introduction
+
+This example shows the basic usage of system and process monitoring APIs offered by the
+application-manager:
+    \list
+    \li SystemMonitor
+    \li ProcessMonitor
+    \endlist
+
+The example monitors performance (frame rate), as well as rescource usage (memory and CPU).
+
+\section2 Invocation
+The example can be started from within the "monitor" folder with:
+\badcode
+path/to/bin/appman -c am-config.yaml -r
+\endcode
+
+\note The application-manager attempts to register a \c freedesktop.org compliant notification
+server. DBus errors might occur if it conflicts with the server running on the host desktop
+environment. In this case, a private session bus needs to be started by adding the
+\c --start-session-dbus option.
+
+\section1 Walkthrough
+
+We will start from the bottom, because this is the essential part.
+
+\section2 SystemMonitor and ProcessMonitor Usage
+
+\quotefromfile monitor/system-ui/main.qml
+\skipto ProcessMonitor
+\printuntil ApplicationManager
+\printline }
+The ProcessMonitor is an instantiatable type that will monitor the process that is associated with
+its \l {ProcessMonitor::applicationId}{applicationId} property. An empty applicationId string means
+that the system-UI process is monitored. By clicking the \c Switch button, the monitored process
+can be changed to the \c tld.monitor.app application. Measurements will be performed each second
+(1000 ms) and 12 reading points will be kept in the model (the ProcessMonitor is a model). The
+model is used below to display the bar charts.
+
+Memory and CPU load reporting need to be enabled, since we are interested in both. The memory and
+CPU load changed signal handlers will update the current values of the corresponding views.
+
+The Connections type is used to implement signal handlers for the property changes of the
+SystemMonitor. The current values of the corresponding views are updated, as well.
+
+The SystemMonitor is a singleton type. It is set-up in the Component.onCompleted handler. Like
+above, measurements will be performed each second (1000 ms) and 12 reading points will be kept in
+the model (the SystemMonitor is a model, as well).
+
+The very last line will start the only application that is provided by this example. Note that this
+application is merely running in the background without a visual representation in the system-UI.
+Also note that, if the application-manager is running in single-process mode, the application will
+run within the system-UI process and consequently the ProcessMonitor will not report anything and
+the associated ProcessMonitor::processId will be set to 0.
+
+\section2 The User Interface
+
+\quotefromfile monitor/system-ui/main.qml
+\skipto import Qt
+\printto ProcessMonitor
+\dots
+
+We won't go into much detail, because it's rather conventional QML code. The MonitorChart is a
+ListView that uses either an instance of a ProcessMonitor or the SystemMonitor singleton as its
+model. The reading values are represented as bars. Their height is determined by the
+corresponding model role, e.g. for the PSS memory consumption it is \c memoryPss.total.
+
+*/

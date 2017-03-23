@@ -1,0 +1,33 @@
+formatVersion: 1
+formatType: am-configuration
+---
+
+installationLocations:
+- id: "internal-0"
+  installationPath: "/tmp/am/apps"
+  documentPath: "/tmp/am/docs"
+  mountPoint: "/tmp"
+  isDefault: true
+
+applications:
+  builtinAppsManifestDir: "apps"
+  installedAppsManifestDir: "/tmp/am/manifests"
+  appImageMountDir: "/tmp/am/image-mounts"
+  database: "/tmp/am/apps.db"
+
+logging:
+  rules:
+    - "*=false"
+    - "qt.*=false"
+    - "am.*=false"
+    - "qml*=true"
+    - "*.warning=true"
+    - "*.critical=true"
+
+ui:
+  mainQml: "system-ui/main.qml"
+
+# development setup:
+flags:
+  noSecurity: yes
+  noUiWatchdog: yes

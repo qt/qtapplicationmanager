@@ -440,7 +440,7 @@ public:
                     reportingTimerId = 0;
                 }
             }
-            if (!reportingTimerId)
+            if (!reportingTimerId && reportingInterval >= 0)
                 reportingTimerId = startTimer(reportingInterval);
         }
     }

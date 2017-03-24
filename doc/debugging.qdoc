@@ -39,7 +39,7 @@ is available.
 \section1 Categories
 
 The following logging categories are defined by the application manager:
-\include global.cpp am-logging-categories
+\include logging.cpp am-logging-categories
 
 \section1 Environment Variables
 

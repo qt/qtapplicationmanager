@@ -80,6 +80,14 @@ extern "C" int capget(cap_user_header_t header, const cap_user_data_t data);
 // Support for old/broken C libraries
 #  if defined(_LINUX_CAPABILITY_VERSION) && !defined(_LINUX_CAPABILITY_VERSION_1)
 #    define _LINUX_CAPABILITY_VERSION_1 _LINUX_CAPABILITY_VERSION
+#    define _LINUX_CAPABILITY_U32S_1    _LINUX_CAPABILITY_U32S
+#  endif
+#  if defined(_LINUX_CAPABILITY_VERSION_3) // use 64-bit support, if available
+#    define AM_CAP_VERSION _LINUX_CAPABILITY_VERSION_3
+#    define AM_CAP_SIZE    _LINUX_CAPABILITY_U32S_3
+#  else // fallback to 32-bit support
+#    define AM_CAP_VERSION _LINUX_CAPABILITY_VERSION_1
+#    define AM_CAP_SIZE    _LINUX_CAPABILITY_U32S_1
 #  endif
 
 // Missing support for dynamic loop device management
@@ -199,23 +207,27 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
         signal(SIGHUP, sigHupHandler);
 
         // Drop as many capabilities as possible, just to be on the safe side
-        static const std::vector<quint32> neededCapabilities = {
-                CAP_SYS_ADMIN,
-                CAP_CHOWN,
-                CAP_FOWNER,
-                CAP_DAC_OVERRIDE
+        static const quint32 neededCapabilities[] = {
+            CAP_SYS_ADMIN,
+            CAP_CHOWN,
+            CAP_FOWNER,
+            CAP_DAC_OVERRIDE
         };
 
         bool capSetOk = false;
-        __user_cap_header_struct capHeader { _LINUX_CAPABILITY_VERSION_1, getpid() };
-        __user_cap_data_struct capData;
-        if (capget(&capHeader, &capData) == 0) {
-            quint32 capNeeded = 0;
-            for (quint32 cap : neededCapabilities)
-                capNeeded |= (1 << cap);
-
-            capData.effective = capData.permitted = capData.inheritable = capNeeded;
-            if (capset(&capHeader, &capData) == 0)
+        __user_cap_header_struct capHeader { AM_CAP_VERSION, getpid() };
+        __user_cap_data_struct capData[AM_CAP_SIZE];
+        if (capget(&capHeader, capData) == 0) {
+            quint32 capNeeded[AM_CAP_SIZE];
+            memset(&capNeeded, 0, sizeof(capNeeded));
+            for (quint32 cap : neededCapabilities) {
+                int idx = CAP_TO_INDEX(cap);
+                Q_ASSERT(idx < AM_CAP_SIZE);
+                capNeeded[idx] |= CAP_TO_MASK(cap);
+            }
+            for (int i = 0; i < AM_CAP_SIZE; ++i)
+                capData[i].effective = capData[i].permitted = capData[i].inheritable = capNeeded[i];
+            if (capset(&capHeader, capData) == 0)
                 capSetOk = true;
         }
         if (!capSetOk)

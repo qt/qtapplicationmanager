@@ -273,7 +273,16 @@ int Main::exec() Q_DECL_NOEXCEPT_EXPR(false)
     res = MainBase::exec();
 
     // the eventloop stopped, so any pending "retakes" would not be executed
-    retakeSingletonOwnershipFromQmlEngine(m_engine, m_applicationManager, true);
+    QObject *singletons[] = {
+        m_applicationManager,
+        m_applicationInstaller,
+        m_applicationIPCManager,
+        m_notificationManager,
+        m_windowManager,
+        m_systemMonitor
+    };
+    for (const auto &singleton : singletons)
+        retakeSingletonOwnershipFromQmlEngine(m_engine, singleton, true);
 #endif // defined(AM_TESTRUNNER)
 
 #if defined(QT_PSSDP_LIB)

@@ -237,8 +237,8 @@ void Main::setup() Q_DECL_NOEXCEPT_EXPR(false)
     StartupTimer::instance()->checkpoint("after command line parse");
 
     CrashHandler::setCrashActionConfiguration(m_config.managerCrashAction());
-    setupQmlDebugging();
     setupLoggingRules();
+    setupQmlDebugging();
     Logging::registerUnregisteredDltContexts();
 
 #if defined(AM_TESTRUNNER)
@@ -303,6 +303,11 @@ void Main::setupQmlDebugging()
     if (m_config.qmlDebugging()) {
 #if !defined(QT_NO_QML_DEBUGGER)
         m_debuggingEnabler = new QQmlDebuggingEnabler(true);
+        if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
+            qCCritical(LogQmlRuntime) << "The default 'debug' logging category was disabled. "
+                                         "Re-enabling it for the QML Debugger interface to work correctly.";
+            QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
+        }
 #else
         qCWarning(LogSystem) << "The --qml-debug option is ignored, because Qt was built without support for QML Debugging!";
 #endif

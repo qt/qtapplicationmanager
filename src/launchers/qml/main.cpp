@@ -205,6 +205,11 @@ int main(int argc, char *argv[])
     if (cp.isSet(qmlDebugOption)) {
 #if !defined(QT_NO_QML_DEBUGGER)
         new QQmlDebuggingEnabler(true);
+        if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
+            qCCritical(LogQmlRuntime) << "The default 'debug' logging category was disabled. "
+                                         "Re-enabling it for the QML Debugger interface to work correctly.";
+            QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
+        }
 #else
         qCWarning(LogQmlRuntime) << "The --qml-debug option is ignored, because Qt was built without support for QML Debugging!";
 #endif

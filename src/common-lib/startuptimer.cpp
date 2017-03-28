@@ -267,8 +267,6 @@ StartupTimer *StartupTimer::instance()
 
 StartupTimer::~StartupTimer()
 {
-    createReport();
-
     if (m_output && m_output != stderr)
         fclose(m_output);
 

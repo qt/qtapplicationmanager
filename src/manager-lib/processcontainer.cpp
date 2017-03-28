@@ -60,6 +60,11 @@ HostProcess::HostProcess()
     m_process.setInputChannelMode(QProcess::ForwardedInputChannel);
 }
 
+HostProcess::~HostProcess()
+{
+    m_process.disconnect(this);
+}
+
 void HostProcess::start(const QString &program, const QStringList &arguments)
 {
     connect(&m_process, &QProcess::started, this, &HostProcess::started);

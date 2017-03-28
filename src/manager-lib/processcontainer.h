@@ -69,6 +69,7 @@ class HostProcess : public AbstractContainerProcess
 
 public:
     HostProcess();
+    virtual ~HostProcess();
 
     virtual qint64 processId() const override;
     virtual QProcess::ProcessState state() const override;

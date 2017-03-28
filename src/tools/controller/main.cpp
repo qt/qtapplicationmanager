@@ -133,6 +133,7 @@ enum Command {
     StartApplication,
     DebugApplication,
     StopApplication,
+    StopAllApplications,
     ListApplications,
     ShowApplication,
     InstallPackage,
@@ -149,6 +150,7 @@ static struct {
     { StartApplication, "start-application", "Start an application." },
     { DebugApplication, "debug-application", "Debug an application." },
     { StopApplication,  "stop-application",  "Stop an application." },
+    { StopAllApplications,  "stop-all-applications",  "Stop all applications." },
     { ListApplications, "list-applications", "List all installed applications." },
     { ShowApplication,  "show-application",  "Show application meta-data." },
     { InstallPackage,   "install-package",   "Install a package." },
@@ -177,6 +179,7 @@ static void startOrDebugApplication(const QString &debugWrapper, const QString &
                                     const QMap<QString, int> &stdRedirections, bool restart,
                                     const QString &documentUrl) Q_DECL_NOEXCEPT_EXPR(false);
 static void stopApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false);
+static void stopAllApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void listApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void showApplication(const QString &appId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
 static void installPackage(const QString &package, const QString &location) Q_DECL_NOEXCEPT_EXPR(false);
@@ -316,6 +319,14 @@ int main(int argc, char *argv[])
                                     args == 3 ? clp.positionalArguments().at(2) : QString());
             break;
         }
+        case StopAllApplications:
+            clp.process(a);
+            if (clp.positionalArguments().size() != 1)
+                clp.showHelp(1);
+
+            stopAllApplications();
+            break;
+
         case StopApplication:
             clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
             clp.process(a);
@@ -510,6 +521,19 @@ void stopApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false)
         qApp->quit();
     });
 
+}
+
+void stopAllApplications() Q_DECL_NOEXCEPT_EXPR(false)
+{
+    dbus.connectToManager();
+
+    QTimer::singleShot(0, []() {
+        auto reply = dbus.manager()->stopAllApplications();
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call stopAllApplications via DBus: %1").arg(reply.error().message());
+        qApp->quit();
+    });
 }
 
 void listApplications() Q_DECL_NOEXCEPT_EXPR(false)

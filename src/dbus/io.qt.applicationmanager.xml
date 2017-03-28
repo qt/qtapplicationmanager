@@ -78,6 +78,11 @@
     <method name="stopApplication">
       <arg name="id" type="s" direction="in"/>
     </method>
+    <method name="stopAllApplications">
+    </method>
+    <method name="stopAllApplications">
+        <arg name="forceKill" type="b" direction="in"/>
+    </method>
     <method name="openUrl">
       <arg type="b" direction="out"/>
       <arg name="url" type="s" direction="in"/>

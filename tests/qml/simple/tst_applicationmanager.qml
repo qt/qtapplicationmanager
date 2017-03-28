@@ -328,6 +328,71 @@ TestCase {
         compare(listView.currentItem.modelData.application.lastExitStatus, data.exitStatus)
     }
 
+    function test_startAndStopAllApplications_data() {
+        return [
+                    {tag: "StopAllApplications", appId1: "tld.test.simple1", index1: 0, appId2: "tld.test.simple2", index2: 2, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit }
+               ];
+    }
+
+    function test_startAndStopAllApplications(data) {
+        compare(ApplicationManager.applicationRunState(data.appId1), ApplicationManager.NotRunning);
+        compare(ApplicationManager.applicationRunState(data.appId2), ApplicationManager.NotRunning);
+
+        var started = false;
+
+        started = ApplicationManager.startApplication(data.appId1);
+        verify(started);
+
+        started = ApplicationManager.startApplication(data.appId2);
+        verify(started);
+
+        checkApplicationState(data.appId1, ApplicationManager.StartingUp);
+        listView.currentIndex = data.index1;
+        compare(listView.currentItem.modelData.isStartingUp, true)
+        compare(listView.currentItem.modelData.isRunning, false)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
+        checkApplicationState(data.appId1, ApplicationManager.Running);
+        compare(listView.currentItem.modelData.isStartingUp, false)
+        compare(listView.currentItem.modelData.isRunning, true)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
+
+        checkApplicationState(data.appId2, ApplicationManager.StartingUp);
+        listView.currentIndex = data.index2;
+        compare(listView.currentItem.modelData.isStartingUp, true)
+        compare(listView.currentItem.modelData.isRunning, false)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
+        checkApplicationState(data.appId2, ApplicationManager.Running);
+        compare(listView.currentItem.modelData.isStartingUp, false)
+        compare(listView.currentItem.modelData.isRunning, true)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
+
+        ApplicationManager.stopAllApplications(data.forceKill);
+
+        checkApplicationState(data.appId1, ApplicationManager.ShuttingDown);
+        listView.currentIndex = data.index1;
+        compare(listView.currentItem.modelData.isStartingUp, false)
+        compare(listView.currentItem.modelData.isRunning, false)
+        compare(listView.currentItem.modelData.isShuttingDown, true)
+        checkApplicationState(data.appId1, ApplicationManager.NotRunning);
+        compare(listView.currentItem.modelData.isStartingUp, false)
+        compare(listView.currentItem.modelData.isRunning, false)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
+        compare(listView.currentItem.modelData.application.lastExitCode, data.exitCode)
+        compare(listView.currentItem.modelData.application.lastExitStatus, data.exitStatus)
+
+        checkApplicationState(data.appId2, ApplicationManager.ShuttingDown);
+        listView.currentIndex = data.index2;
+        compare(listView.currentItem.modelData.isStartingUp, false)
+        compare(listView.currentItem.modelData.isRunning, false)
+        compare(listView.currentItem.modelData.isShuttingDown, true)
+        checkApplicationState(data.appId2, ApplicationManager.NotRunning);
+        compare(listView.currentItem.modelData.isStartingUp, false)
+        compare(listView.currentItem.modelData.isRunning, false)
+        compare(listView.currentItem.modelData.isShuttingDown, false)
+        compare(listView.currentItem.modelData.application.lastExitCode, data.exitCode)
+        compare(listView.currentItem.modelData.application.lastExitStatus, data.exitStatus)
+    }
+
     function test_errors() {
         ignoreWarning("invalid index: -1");
         verify(!ApplicationManager.application(-1));

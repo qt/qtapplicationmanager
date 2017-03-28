@@ -598,6 +598,7 @@ bool ApplicationManager::setDBusPolicy(const QVariantMap &yamlFragment)
         QT_STRINGIFY(startApplication),
         QT_STRINGIFY(debugApplication),
         QT_STRINGIFY(stopApplication),
+        QT_STRINGIFY(stopAllApplications),
         QT_STRINGIFY(openUrl),
         QT_STRINGIFY(capabilities),
         QT_STRINGIFY(identifyApplication),
@@ -1148,6 +1149,25 @@ void ApplicationManager::stopApplication(const QString &id, bool forceKill)
     AM_AUTHENTICATE_DBUS(void)
 
     return stopApplication(fromId(id), forceKill);
+}
+
+/*!
+    \qmlmethod ApplicationManager::stopAllApplications(bool forceKill)
+
+    Tells the application manager to stop all running applications. The meaning of the \a forceKill
+    parameter is runtime dependent, but in general you should always try to stop an application
+    with \a forceKill set to \c false first in order to allow a clean shutdown.
+    Use \a forceKill set to \c true only as a last resort to kill hanging applications.
+*/
+void ApplicationManager::stopAllApplications(bool forceKill)
+{
+    AM_AUTHENTICATE_DBUS(void)
+
+    for (const Application *app : qAsConst(d->apps)) {
+        AbstractRuntime *rt = app->currentRuntime();
+        if (rt)
+            rt->stop(forceKill);
+    }
 }
 
 /*!

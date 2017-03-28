@@ -147,6 +147,7 @@ public:
     Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &redirections, const QString &documentUrl = QString());
 #endif
     Q_SCRIPTABLE void stopApplication(const QString &id, bool forceKill = false);
+    Q_SCRIPTABLE void stopAllApplications(bool forceKill = false);
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;
     Q_SCRIPTABLE QString identifyApplication(qint64 pid) const;

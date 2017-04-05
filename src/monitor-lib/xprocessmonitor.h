@@ -43,8 +43,8 @@
 
 #include <QAbstractListModel>
 #include <QObject>
-#include <QtAppManManager/fpsmonitor.h>
-#include <QtAppManManager/systemmonitor.h>
+#include "fpsmonitor.h"
+#include "systemmonitor.h"
 
 QT_BEGIN_NAMESPACE_AM
 

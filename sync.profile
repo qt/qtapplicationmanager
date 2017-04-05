@@ -9,6 +9,7 @@
     "QtAppManInstaller" => "$basedir/src/installer-lib",
     "QtAppManLauncher" => "$basedir/src/launcher-lib",
     "QtAppManPluginInterfaces" => "$basedir/src/plugin-interfaces",
+    "QtAppManMonitor" => "$basedir/src/monitor-lib",
 );
 %moduleheaders = ( # restrict the module headers to those found in relative path
 );
@@ -18,6 +19,7 @@
 #    "QtAppManNotification",
 #    "QtAppManManager",
 #    "QtAppManInstaller",
+#    "QtAppManMonitor"
 #);
 %classnames = (
 );

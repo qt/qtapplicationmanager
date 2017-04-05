@@ -44,7 +44,7 @@
 #include <QAbstractListModel>
 #include <QObject>
 #include <QFile>
-#include <QtAppManManager/xprocessmonitor.h>
+#include "xprocessmonitor.h"
 
 QT_BEGIN_NAMESPACE_AM
 

@@ -48,7 +48,7 @@
 #include "containerfactory.h"
 #include "runtimefactory.h"
 #include "quicklauncher.h"
-#include "systemmonitor.h"
+#include "systemreader.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -66,7 +66,11 @@ QuickLauncher::QuickLauncher(QObject *parent)
 { }
 
 QuickLauncher::~QuickLauncher()
-{ }
+{
+    if (m_idleTimerId)
+        killTimer(m_idleTimerId);
+    delete m_idleCpu;
+}
 
 void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
 {
@@ -106,20 +110,28 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
     }
 
     if (idleLoad > 0) {
-        SystemMonitor::instance()->setIdleLoadThreshold(idleLoad);
-        m_onlyRebuildWhenIdle = true;
-        connect(SystemMonitor::instance(), &SystemMonitor::idleChanged, this, &QuickLauncher::rebuild);
+        m_idleThreshold = idleLoad;
+        m_idleCpu = new CpuReader();
+        m_idleTimerId = startTimer(1000);
     }
     triggerRebuild();
 }
 
+void QuickLauncher::timerEvent(QTimerEvent *te)
+{
+    if (te && te->timerId() == m_idleTimerId) {
+        bool nowIdle = (m_idleCpu->readLoadValue() <= m_idleThreshold);
+        if (nowIdle != m_isIdle) {
+            m_isIdle = nowIdle;
+
+            if (m_isIdle)
+                rebuild();
+        }
+    }
+}
+
 void QuickLauncher::rebuild()
 {
-    if (m_onlyRebuildWhenIdle) {
-        if (!SystemMonitor::instance()->isIdle())
-            return;
-    }
-
     int todo = 0;
     int done = 0;
 

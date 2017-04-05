@@ -44,7 +44,7 @@
 #include "containerfactory.h"
 #include "application.h"
 #include "processcontainer.h"
-#include "systemmonitor_p.h"
+#include "systemreader.h"
 
 #if defined(Q_OS_UNIX)
 #  include <csignal>

@@ -114,7 +114,7 @@ public:
     int reportingRange() const;
 
     // semi-public API: used for the WindowManager to report FPS
-    void reportFrameSwap(QObject *item);
+    void reportFrameSwap();
 
     Q_INVOKABLE QObject *getProcessMonitor(const QString &appId);  // experimental only!
 
@@ -136,7 +136,6 @@ signals:
 
 private:
     SystemMonitor();
-
     static SystemMonitor *s_instance;
 
     SystemMonitorPrivate *d_ptr;

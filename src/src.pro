@@ -16,8 +16,9 @@ notification-lib.depends = common-lib
 manager-lib.depends = application-lib notification-lib plugin-interfaces
 installer-lib.depends = package-lib manager-lib
 window-lib.depends = manager-lib
+monitor-lib.depends = manager-lib window-lib
 launcher-lib.depends = application-lib notification-lib
-manager.depends = manager-lib installer-lib window-lib
+manager.depends = manager-lib installer-lib window-lib monitor-lib
 launchers.depends = launcher-lib
 tools.depends = package-lib
 
@@ -32,10 +33,11 @@ tools.depends = package-lib
         installer-lib \
         window-lib \
         manager \
+        monitor-lib \
         launcher-lib \
         launchers
 
-    tools.depends = manager-lib installer-lib launcher-lib window-lib
+    tools.depends = manager-lib installer-lib launcher-lib window-lib monitor-lib
 }
 
 SUBDIRS += tools

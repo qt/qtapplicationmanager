@@ -47,13 +47,16 @@
 #include <QElapsedTimer>
 #include <vector>
 #include <QGuiApplication>
+#include <QQuickView>
 
 #include "global.h"
 #include "logging.h"
 #include "qml-utilities.h"
 #include "applicationmanager.h"
 #include "systemmonitor.h"
-#include "systemmonitor_p.h"
+#include "systemreader.h"
+#include <QtAppManWindow/windowmanager.h>
+
 #include "xprocessmonitor.h"
 
 
@@ -375,6 +378,7 @@ public:
     int memTail = 0;
     int fpsTail = 0;
     QMap<QString, int> ioTails;
+    bool windowManagerConnectionCreated = false;
 
     struct Report
     {
@@ -416,6 +420,29 @@ public:
         XProcessMonitor *p = new XProcessMonitor(usedAppId, q);
         processMonitors.append(p);
         return processMonitors.last();
+    }
+
+    void registerNewView(QQuickWindow *view)
+    {
+        Q_Q(SystemMonitor);
+        if (reportFps)
+            connect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
+    }
+
+    void setupFpsReporting()
+    {
+        Q_Q(SystemMonitor);
+        if (!windowManagerConnectionCreated) {
+            connect(WindowManager::instance(), &WindowManager::compositorViewRegistered, this, &SystemMonitorPrivate::registerNewView);
+            windowManagerConnectionCreated = true;
+        }
+
+        for (const QQuickWindow *view : WindowManager::instance()->compositorViews()) {
+            if (reportFps)
+                connect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
+            else
+                disconnect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
+        }
     }
 
     void setupTimer(int newInterval = -1)
@@ -934,6 +961,7 @@ void SystemMonitor::setFpsReportingEnabled(bool enabled)
             d->fpsTail = d->count;
         else
             d->setupTimer();
+        d->setupFpsReporting();
         emit fpsReportingEnabledChanged();
     }
 }
@@ -1007,19 +1035,17 @@ int SystemMonitor::reportingRange() const
 /*! \internal
     report a frame swap for any window. \a item is \c 0 for the System-UI
 */
-void SystemMonitor::reportFrameSwap(QObject *item)
+void SystemMonitor::reportFrameSwap()
 {
     Q_D(SystemMonitor);
 
     if (!d->reportFps)
         return;
 
-    FrameTimer *frameTimer = d->frameTimer.value(item);
+    FrameTimer *frameTimer = d->frameTimer.value(nullptr);
     if (!frameTimer) {
         frameTimer = new FrameTimer();
-        d->frameTimer.insert(item, frameTimer);
-        if (item)
-            connect(item, &QObject::destroyed, this, [d](QObject *o) { delete d->frameTimer.take(o); });
+        d->frameTimer.insert(nullptr, frameTimer);
     }
 
     frameTimer->newFrame();

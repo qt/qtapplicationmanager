@@ -41,7 +41,7 @@
 
 #include <qglobal.h>
 
-#include "systemmonitor_p.h"
+#include "systemreader.h"
 #include "global.h"
 #include "logging.h"
 

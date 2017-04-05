@@ -68,7 +68,6 @@
 #include "inprocesswindow.h"
 #include "dbus-policy.h"
 #include "qml-utilities.h"
-#include "systemmonitor.h"
 
 
 #define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
@@ -362,15 +361,6 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
 
     d->watchdogEnabled = true;
     d->qmlEngine = qmlEngine;
-
-    connect(SystemMonitor::instance(), &SystemMonitor::fpsReportingEnabledChanged, this, [this]() {
-        for (const QQuickWindow *view : qAsConst(d->views)) {
-            if (SystemMonitor::instance()->isFpsReportingEnabled())
-                connect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
-            else
-                disconnect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
-        }
-    });
 }
 
 WindowManager::~WindowManager()
@@ -557,9 +547,6 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 {
     d->views << view;
 
-    if (SystemMonitor::instance()->isFpsReportingEnabled())
-        connect(view, &QQuickWindow::frameSwapped, this, &WindowManager::reportFps);
-
 #if defined(AM_MULTI_PROCESS)
     if (!ApplicationManager::instance()->isSingleProcess()) {
         if (!d->waylandCompositor) {
@@ -577,6 +564,7 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 #else
     qCDebug(LogWayland) << "WindowManager: running in single-process mode [forced at compile-time]";
 #endif
+    emit compositorViewRegistered(view);
 }
 
 void WindowManager::surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen)
@@ -844,11 +832,6 @@ QVariantMap WindowManager::windowProperties(QQuickItem *window) const
     \sa ApplicationManagerWindow::setWindowProperty()
 */
 
-void WindowManager::reportFps()
-{
-    SystemMonitor::instance()->reportFrameSwap(nullptr);
-}
-
 bool WindowManager::setDBusPolicy(const QVariantMap &yamlFragment)
 {
     static const QVector<QByteArray> functions {
@@ -1095,6 +1078,11 @@ int WindowManagerPrivate::findWindowBySurfaceItem(QQuickItem *quickItem) const
             return i;
     }
     return -1;
+}
+
+QList<QQuickWindow *> WindowManager::compositorViews() const
+{
+    return d->views;
 }
 
 #if defined(AM_MULTI_PROCESS)

@@ -34,14 +34,11 @@ HEADERS += \
     applicationipcmanager.h \
     applicationipcinterface.h \
     applicationipcinterface_p.h \
-    systemmonitor.h \
-    systemmonitor_p.h \
-    processmonitor.h \
-    processmonitor_p.h \
-    xprocessmonitor.h \
-    memorymonitor.h \
-    fpsmonitor.h \
-    applicationmanager_p.h
+    applicationmanager_p.h \
+    systemreader.h \
+
+linux:HEADERS += \
+    sysfsreader.h \
 
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \
@@ -49,9 +46,6 @@ HEADERS += \
 multi-process:HEADERS += \
     nativeruntime.h \
     nativeruntime_p.h \
-
-linux:HEADERS += \
-    sysfsreader.h \
 
 qtHaveModule(qml):HEADERS += \
     qmlinprocessruntime.h \
@@ -70,22 +64,16 @@ SOURCES += \
     quicklauncher.cpp \
     applicationipcmanager.cpp \
     applicationipcinterface.cpp \
-    systemmonitor.cpp \
-    systemmonitor_p.cpp \
-    processmonitor.cpp \
-    processmonitor_p.cpp \
-    xprocessmonitor.cpp \
-    memorymonitor.cpp \
-    fpsmonitor.cpp \
+    systemreader.cpp \
+
+linux:SOURCES += \
+    sysfsreader.cpp \
 
 !headless:SOURCES += \
     fakeapplicationmanagerwindow.cpp \
 
 multi-process:SOURCES += \
     nativeruntime.cpp \
-
-linux:SOURCES += \
-    sysfsreader.cpp \
 
 qtHaveModule(qml):SOURCES += \
     qmlinprocessruntime.cpp \

@@ -111,6 +111,8 @@ signals:
 
     void windowPropertyChanged(QQuickItem *window, const QString &name, const QVariant &value);
 
+    void compositorViewRegistered(QQuickWindow *view);
+
 private slots:
     void surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen);
 
@@ -127,11 +129,10 @@ public:
 
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 
+    QList<QQuickWindow *> compositorViews() const;
+
     // evil hook to support in-process runtimes
     void setupInProcessRuntime(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);
-
-private slots:
-    void reportFps();
 
 #if defined(AM_MULTI_PROCESS)
 private slots:

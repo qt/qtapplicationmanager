@@ -50,6 +50,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class AbstractContainer;
 class AbstractRuntime;
+class CpuReader;
 
 class QuickLauncher : public QObject
 {
@@ -67,6 +68,9 @@ public:
 
 public slots:
     void rebuild();
+
+protected:
+    void timerEvent(QTimerEvent *te) override;
 
 private:
     QuickLauncher(QObject *parent = nullptr);
@@ -86,7 +90,10 @@ private:
     };
 
     QVector<QuickLaunchEntry> m_quickLaunchPool;
-    bool m_onlyRebuildWhenIdle = false;
+    int m_idleTimerId = 0;
+    CpuReader *m_idleCpu = nullptr;
+    bool m_isIdle = false;
+    qreal m_idleThreshold;
 };
 
 QT_END_NAMESPACE_AM

@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include <QCoreApplication>
+#include <QtAppManWindow/windowmanager.h>
 #include "logging.h"
 #include "applicationmanager.h"
 #include "abstractruntime.h"
@@ -409,7 +410,7 @@ void ProcessMonitorPrivate::appRuntimeChanged(const QString &id, ApplicationMana
 
 void ProcessMonitorPrivate::setupInterval(int interval)
 {
-    bool shouldBeOn = pid && (reportCpu || reportMemory || cpuTail || memTail);
+    bool shouldBeOn = pid && (reportCpu || reportMemory || reportFps || cpuTail || memTail || fpsTail);
     emit setupTimer(shouldBeOn, interval);
 }
 
@@ -458,7 +459,7 @@ void ProcessMonitorPrivate::resetModel()
     reportPos = 0;
     q->endResetModel();
 
-    cpuTail = memTail = 0;
+    cpuTail = memTail = fpsTail = 0;
 
     emit reset(++sync);
 }
@@ -489,6 +490,8 @@ void ProcessMonitorPrivate::updateModelCount(int newCount)
         cpuTail += diff;
     if (memTail > 0)
         memTail += diff;
+    if (fpsTail > 0)
+        fpsTail += diff;
 }
 
 void ProcessMonitorPrivate::readingUpdate()
@@ -511,9 +514,9 @@ void ProcessMonitorPrivate::readingUpdate()
             setupInterval();
         roles.append(CpuLoad);
     } else if (results.cpu.read) {
-         data.cpuLoad = results.cpu.load;
-         emit q->cpuLoadReportingChanged(data.cpuLoad);
-         roles.append(CpuLoad);
+        data.cpuLoad = results.cpu.load;
+        emit q->cpuLoadReportingChanged(data.cpuLoad);
+        roles.append(CpuLoad);
     }
 
     if (results.memory.read || memTail > 0) {
@@ -539,6 +542,26 @@ void ProcessMonitorPrivate::readingUpdate()
         roles.append({ MemVirtual, MemRss, MemPss });
     }
 
+    if (reportFps || fpsTail > 0) {
+        if (fpsTail > 0 && --fpsTail == 0)
+            setupInterval();
+
+        for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
+            QVariantMap frameMap;
+            FrameTimer *frameTimer = frameCounters.value(it.key());
+            frameMap.insert(qSL("average"), frameTimer->averageFps());
+            frameMap.insert(qSL("maximum"), frameTimer->maximumFps());
+            frameMap.insert(qSL("minimum"), frameTimer->minimumFps());
+            frameMap.insert(qSL("jitter"), frameTimer->jitterFps());
+            frameTimer->reset();
+            data.frameRate.append(frameMap);
+        }
+
+        emit q->frameRateReportingChanged(data.frameRate);
+
+        roles.append(FrameRate);
+    }
+
     int last = modelData.size() - 1;
     q->beginMoveRows(QModelIndex(), last, last, QModelIndex(), 0);
     modelData[reportPos++] = data;
@@ -546,6 +569,156 @@ void ProcessMonitorPrivate::readingUpdate()
         reportPos = 0;
     q->endMoveRows();
     q->dataChanged(q->index(0), q->index(0), roles);
+}
+
+void ProcessMonitorPrivate::setupFrameRateMonitoring()
+{
+    resetFrameRateMonitoring();
+    if (reportFps) {
+        if (ApplicationManager::instance()->isSingleProcess() || appId.isEmpty()) {
+
+            for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
+                QQuickWindow *win = qobject_cast<QQuickWindow *>(it.key());
+                if (win) {
+                    connections << connect(win, &QQuickWindow::frameSwapped,
+                                           this, &ProcessMonitorPrivate::frameUpdated);
+                }
+            }
+        } else {
+#if defined(AM_MULTI_PROCESS)
+
+            for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
+                WaylandWindow *win = qobject_cast<WaylandWindow *>(it.key());
+                if (win) {
+                    // Check if this is valid window for this application
+                    if (win->application() && win->application()->id() == appId) {
+                        connections << connect(win, &WaylandWindow::frameUpdated,
+                                           this, &ProcessMonitorPrivate::frameUpdated);
+                    } else {
+                        qCWarning(LogSystem) << "Windows do not belong to this app";
+                        return;
+                    }
+                }
+            }
+
+            connect(WindowManager::instance(), &WindowManager::windowClosing,
+                                   this, &ProcessMonitorPrivate::applicationWindowClosing);
+#endif
+        }
+    } else {
+#if defined(AM_MULTI_PROCESS)
+        disconnect(WindowManager::instance(), &WindowManager::windowClosing,
+                               this, &ProcessMonitorPrivate::applicationWindowClosing);
+#endif
+    }
+}
+
+void ProcessMonitorPrivate::updateMonitoredWindows(const QList<QObject *> &windows)
+{
+    Q_Q(ProcessMonitor);
+
+    clearMonitoredWindows();
+
+    QVector<Window *> applicationWindows = WindowManager::instance()->applicationWindows(appId);
+    if (applicationWindows.isEmpty() && !appId.isEmpty()) {
+        qCWarning(LogSystem) << appId << "does not have mapped windows";
+        return;
+    }
+
+    for (auto window : windows) {
+        if (ApplicationManager::instance()->isSingleProcess() || appId.isEmpty()) {
+            QQuickWindow *view = qobject_cast<QQuickWindow *>(window);
+            if (view) {
+                FrameTimer *frameTimer = new FrameTimer();
+                frameCounters.insert(view, frameTimer);
+            } else
+                qCWarning(LogSystem) << "In single process only QQuickWindow can be monitored";
+        } else {
+#if defined(AM_MULTI_PROCESS)
+
+            for (int i = 0; i < applicationWindows.size(); i++) {
+                WaylandWindow *win = qobject_cast<WaylandWindow *>(applicationWindows.at(i));
+                if (win && win->windowItem() == window) {
+                    FrameTimer *frameTimer = new FrameTimer();
+                    frameCounters.insert(win, frameTimer);
+                    break;
+                }
+            }
+#endif
+        }
+    }
+
+    emit q->monitoredWindowsChanged();
+    setupFrameRateMonitoring();
+}
+
+QList<QObject *> ProcessMonitorPrivate::monitoredWindows() const
+{
+    QList<QObject *> list;
+
+    if (ApplicationManager::instance()->isSingleProcess() || appId.isEmpty()) {
+        for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
+            list.append(it.key());
+        }
+
+        return list;
+    }
+
+#if defined(AM_MULTI_PROCESS)
+    // Return window items
+    for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
+        WaylandWindow *win = qobject_cast<WaylandWindow *>(it.key());
+        if (win)
+            list.append(win->windowItem());
+    }
+#endif
+
+    return list;
+}
+
+#if defined(AM_MULTI_PROCESS)
+
+void ProcessMonitorPrivate::applicationWindowClosing(int index, QQuickItem *window)
+{
+    Q_UNUSED(index)
+
+
+    for (auto it = frameCounters.cbegin(); it != frameCounters.cend(); ++it) {
+        WaylandWindow *win = qobject_cast<WaylandWindow *>(it.key());
+
+        if (win && win->windowItem() == window) {
+            frameCounters.remove(win);
+            break;
+        }
+    }
+}
+
+#endif
+
+void ProcessMonitorPrivate::frameUpdated()
+{
+    FrameTimer *frameTimer = frameCounters.value(sender());
+    if (!frameTimer) {
+        frameTimer = new FrameTimer();
+        frameCounters.insert(sender(), frameTimer);
+    }
+
+    frameTimer->newFrame();
+}
+
+void ProcessMonitorPrivate::resetFrameRateMonitoring()
+{
+    for (auto connection : connections) {
+        QObject::disconnect(connection);
+    }
+
+    connections.clear();
+}
+
+void ProcessMonitorPrivate::clearMonitoredWindows()
+{
+    qDeleteAll(frameCounters);
+    frameCounters.clear();
 }
 
 QT_END_NAMESPACE_AM

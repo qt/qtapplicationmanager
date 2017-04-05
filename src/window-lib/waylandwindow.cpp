@@ -62,6 +62,8 @@ WaylandWindow::WaylandWindow(const Application *app, WindowSurface *surf)
                 this, &WaylandWindow::pongReceived);
         connect(surf, &WindowSurface::windowPropertyChanged,
                 this, &WaylandWindow::windowPropertyChanged);
+        connect(m_surface, &WindowSurface::redraw,
+                this, &WaylandWindow::frameUpdated);
 
         m_pingTimer->setInterval(1000);
         m_pingTimer->setSingleShot(true);

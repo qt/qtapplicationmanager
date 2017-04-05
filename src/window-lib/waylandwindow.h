@@ -72,6 +72,9 @@ public:
 
     void setClosing() override;
 
+signals:
+    void frameUpdated();
+
 private slots:
     void pongReceived();
     void pongTimeout();

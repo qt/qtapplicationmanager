@@ -20,7 +20,7 @@ HEADERS += \
     processmonitor_p.h \
     xprocessmonitor.h \
     memorymonitor.h \
-    fpsmonitor.h \
+    frametimer.h
 
 SOURCES += \
     systemmonitor.cpp \
@@ -28,6 +28,6 @@ SOURCES += \
     processmonitor_p.cpp \
     xprocessmonitor.cpp \
     memorymonitor.cpp \
-    fpsmonitor.cpp \
+    frametimer.cpp
 
 load(qt_module)

@@ -142,7 +142,7 @@ QAbstractListModel *XProcessMonitor::memoryMonitor()
 
 QVariant XProcessMonitor::fpsMonitors() const
 {
-    return QVariant::fromValue(m_fpsMonitors);
+    return QVariant();
 }
 
 QString XProcessMonitor::getAppId() const

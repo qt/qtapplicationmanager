@@ -223,6 +223,7 @@ ProcessMonitor::ProcessMonitor(QObject *parent)
     d->roles.insert(MemRss, "memoryRss");
     d->roles.insert(MemPss, "memoryPss");
     d->roles.insert(CpuLoad, "cpuLoad");
+    d->roles.insert(FrameRate, "frameRate");
 
     d->resetModel();
 }
@@ -284,6 +285,7 @@ void ProcessMonitor::setApplicationId(const QString &appId)
         d->appId = appId;
         d->resetModel();
         d->determinePid();
+        d->setupFrameRateMonitoring();
         if (!appId.isEmpty() && ApplicationManager::instance()->indexOfApplication(appId) < 0)
             qCWarning(LogSystem) << "ProcessMonitor: invalid application ID:" << appId;
         emit applicationIdChanged(appId);
@@ -347,6 +349,24 @@ void ProcessMonitor::setCpuLoadReportingEnabled(bool enabled)
     }
 }
 
+bool ProcessMonitor::isFrameRateReportingEnabled() const
+{
+    Q_D(const ProcessMonitor);
+    return d->reportFps;
+}
+
+void ProcessMonitor::setFrameRateReportingEnabled(bool enabled)
+{
+    Q_D(ProcessMonitor);
+
+    if (enabled != d->reportFps) {
+        d->reportFps = enabled;
+        d->fpsTail = enabled ? 0 : d->count;
+        d->setupFrameRateMonitoring();
+        emit frameRateReportingEnabledChanged();
+    }
+}
+
 QVariant ProcessMonitor::data(const QModelIndex &index, int role) const
 {
     Q_D(const ProcessMonitor);
@@ -365,6 +385,8 @@ QVariant ProcessMonitor::data(const QModelIndex &index, int role) const
         return reading.pss;
     case CpuLoad:
         return reading.cpuLoad;
+    case FrameRate:
+        return reading.frameRate;
     default:
         return QVariant();
     }
@@ -399,5 +421,21 @@ QVariantMap ProcessMonitor::get(int row) const
 
     return map;
 }
+
+QList<QObject *> ProcessMonitor::monitoredWindows() const
+{
+    Q_D(const ProcessMonitor);
+
+    return d->monitoredWindows();
+}
+
+void ProcessMonitor::setMonitoredWindows(QList<QObject *> windows)
+{
+    Q_D(ProcessMonitor);
+
+    d->updateMonitoredWindows(windows);
+}
+
+
 
 QT_END_NAMESPACE_AM

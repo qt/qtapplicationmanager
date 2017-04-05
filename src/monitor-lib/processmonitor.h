@@ -64,6 +64,8 @@ class ProcessMonitor : public QAbstractListModel
     Q_PROPERTY(int reportingInterval READ reportingInterval WRITE setReportingInterval NOTIFY reportingIntervalChanged)
     Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled NOTIFY memoryReportingEnabledChanged)
     Q_PROPERTY(bool cpuLoadReportingEnabled READ isCpuLoadReportingEnabled WRITE setCpuLoadReportingEnabled NOTIFY cpuLoadReportingEnabledChanged)
+    Q_PROPERTY(bool frameRateReportingEnabled READ isFrameRateReportingEnabled WRITE setFrameRateReportingEnabled NOTIFY frameRateReportingEnabledChanged)
+    Q_PROPERTY(QList<QObject *> monitoredWindows READ monitoredWindows WRITE setMonitoredWindows NOTIFY monitoredWindowsChanged)
 
 public:
     ProcessMonitor(QObject *parent = nullptr);
@@ -92,6 +94,12 @@ public:
     bool isCpuLoadReportingEnabled() const;
     void setCpuLoadReportingEnabled(bool enabled);
 
+    bool isFrameRateReportingEnabled() const;
+    void setFrameRateReportingEnabled(bool enabled);
+
+    QList<QObject *> monitoredWindows() const;
+    void setMonitoredWindows(QList<QObject *> windows);
+
 signals:
     void countChanged(int count);
     void processIdChanged(qint64 processId);
@@ -100,10 +108,13 @@ signals:
 
     void memoryReportingEnabledChanged();
     void cpuLoadReportingEnabledChanged();
+    void frameRateReportingEnabledChanged();
 
     void memoryReportingChanged(const QVariantMap &memoryVirtual, const QVariantMap &memoryRss,
                                                                   const QVariantMap &memoryPss);
     void cpuLoadReportingChanged(qreal load);
+    void frameRateReportingChanged(QVariantList frameRate);
+    void monitoredWindowsChanged();
 
 private:
     ProcessMonitorPrivate *d_ptr;

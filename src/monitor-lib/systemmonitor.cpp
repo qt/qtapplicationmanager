@@ -58,6 +58,7 @@
 #include <QtAppManWindow/windowmanager.h>
 
 #include "xprocessmonitor.h"
+#include "frametimer.h"
 
 
 /*!
@@ -271,66 +272,6 @@ enum Roles
     MaximumFps,
     FpsJitter
 };
-
-class FrameTimer
-{
-public:
-    FrameTimer()
-    { }
-
-    void newFrame()
-    {
-        int frameTime = m_timer.isValid() ? qMax(1, int(m_timer.nsecsElapsed() / 1000)) : IdealFrameTime;
-        m_timer.restart();
-
-        m_count++;
-        m_sum += frameTime;
-        m_min = qMin(m_min, frameTime);
-        m_max = qMax(m_max, frameTime);
-        m_jitter += qAbs(MicrosInSec / IdealFrameTime - MicrosInSec / frameTime);
-    }
-
-    inline void reset()
-    {
-        m_count = m_sum = m_max = m_jitter = 0;
-        m_min = INT_MAX;
-    }
-
-    inline qreal averageFps() const
-    {
-        return m_sum ? MicrosInSec * m_count / m_sum : qreal(0);
-    }
-
-    inline qreal minimumFps() const
-    {
-        return m_max ? MicrosInSec / m_max : qreal(0);
-    }
-
-    inline qreal maximumFps() const
-    {
-        return m_min ? MicrosInSec / m_min : qreal(0);
-    }
-
-    inline qreal jitterFps() const
-    {
-        return m_count ? m_jitter / m_count :  qreal(0);
-    }
-
-private:
-    int m_count = 0;
-    int m_sum = 0;
-    int m_min = INT_MAX;
-    int m_max = 0;
-    qreal m_jitter = 0.0;
-
-    QElapsedTimer m_timer;
-
-    static const int IdealFrameTime = 16667; // usec - could be made configurable via an env variable
-    static const qreal MicrosInSec;
-};
-
-const qreal FrameTimer::MicrosInSec = qreal(1000 * 1000);
-
 }
 
 class SystemMonitorPrivate : public QObject // clazy:exclude=missing-qobject-macro

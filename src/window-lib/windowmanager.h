@@ -138,6 +138,7 @@ public:
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 
     QList<QQuickWindow *> compositorViews() const;
+    QVector<Window *> applicationWindows(const QString &appId) const;
 
     // evil hook to support in-process runtimes
     void setupInProcessRuntime(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);

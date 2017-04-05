@@ -41,16 +41,38 @@
 
 #pragma once
 
-#include <QAbstractListModel>
-#include <QtAppManCommon/global.h>
+#include <QElapsedTimer>
+#include "global.h"
+#include <limits>
 
 QT_BEGIN_NAMESPACE_AM
 
-class FpsMonitor : public QAbstractListModel
+class FrameTimer
 {
-    Q_OBJECT
+
 public:
-    FpsMonitor();
+    FrameTimer();
+
+    void newFrame();
+
+    void reset();
+
+    qreal averageFps() const;
+    qreal minimumFps() const;
+    qreal maximumFps() const;
+    qreal jitterFps() const;
+
+private:
+    int m_count = 0;
+    int m_sum = 0;
+    int m_min = std::numeric_limits<int>::max();
+    int m_max = 0;
+    qreal m_jitter = 0.0;
+
+    QElapsedTimer m_timer;
+
+    static const int IdealFrameTime = 16667; // usec - could be made configurable via an env variable
+    static const qreal MicrosInSec;
 };
 
 QT_END_NAMESPACE_AM

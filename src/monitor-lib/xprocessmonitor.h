@@ -43,7 +43,7 @@
 
 #include <QAbstractListModel>
 #include <QObject>
-#include "fpsmonitor.h"
+#include "frametimer.h"
 #include "systemmonitor.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -87,7 +87,7 @@ private:
 
     friend class SystemMonitorPrivate;
 
-    QList<FpsMonitor*> m_fpsMonitors;
+    QList<FrameTimer*> m_fpsMonitors;
     MemoryMonitor *m_memoryMonitor;
     bool m_memoryReportingEnabled;
     bool m_cpuReportingEnabled;

@@ -59,15 +59,21 @@
 #include <QString>
 #include <QHash>
 #include <QVector>
+#include <QQuickWindow>
 #if defined(Q_OS_LINUX)
-#  include <QScopedPointer>
-#  include "sysfsreader.h"
+#    include <QScopedPointer>
+#    include "sysfsreader.h"
+#endif
+#if defined(AM_MULTI_PROCESS)
+#    include <QtAppManWindow/waylandwindow.h>
 #endif
 #include "processmonitor.h"
+#include "frametimer.h"
 #include "applicationmanager.h"
 
 QT_BEGIN_NAMESPACE_AM
 
+class Window;
 
 class ReadingTask : public QObject
 {
@@ -144,7 +150,8 @@ enum Roles {
     MemVirtual = Qt::UserRole,
     MemRss,
     MemPss,
-    CpuLoad
+    CpuLoad,
+    FrameRate
 };
 }
 
@@ -160,6 +167,7 @@ public:
         QVariantMap rss;
         QVariantMap pss;
         qreal cpuLoad = 0;
+        QVariantList frameRate;
     };
 
     QString appId;
@@ -172,17 +180,24 @@ public:
 
     bool reportMemory = false;
     bool reportCpu = false;
+    bool reportFps = false;
     int cpuTail = 0;
     int memTail = 0;
+    int fpsTail = 0;
 
     QHash<int, QByteArray> roles;
     QVector<ModelData> modelData;
+
+    // fps
+    QMap<QObject *, FrameTimer *> frameCounters;
 
     ReadingTask readingTask;
     ReadingTask::Results readResults;
     QThread thread;
     QMutex mutex;
     int sync = 0;
+
+    QList<QMetaObject::Connection> connections;
 
     ProcessMonitorPrivate(ProcessMonitor *q);
     ~ProcessMonitorPrivate();
@@ -192,6 +207,11 @@ public:
     const ModelData &modelDataForRow(int row) const;
     void resetModel();
     void updateModelCount(int newCount);
+    void setupFrameRateMonitoring();
+    void updateMonitoredWindows(const QList<QObject *> &windows);
+    QList<QObject *> monitoredWindows() const;
+    void resetFrameRateMonitoring();
+    void clearMonitoredWindows();
 
 signals:
     void setupTimer(bool enabled, int interval);
@@ -204,6 +224,10 @@ signals:
 public slots:
     void readingUpdate();
     void appRuntimeChanged(const QString &id, ApplicationManager::RunState state);
+#if defined(AM_MULTI_PROCESS)
+    void applicationWindowClosing(int index, QQuickItem *window);
+#endif
+    void frameUpdated();
 };
 
 

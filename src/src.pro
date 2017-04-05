@@ -35,6 +35,7 @@ tools.depends = package-lib
         manager \
         monitor-lib \
         launcher-lib \
+        monitor-lib \
         launchers
 
     tools.depends = manager-lib installer-lib launcher-lib window-lib monitor-lib

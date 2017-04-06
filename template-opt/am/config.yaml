@@ -32,6 +32,19 @@ debugWrappers:
     port: 5555
   supportedRuntimes: [ native, qml ]
   supportedContainers: [ process ]
+- name: qmldebugger # can also be used for the qmlprofiler
+  command: ['%program%', '-qmljsdebugger=port:%port%,block', '--qml-debug', '%arguments%' ]
+  parameters:  # <name>: <default value>
+    port: 3456
+  supportedRuntimes: [ qml ]
+  supportedContainers: [ process ]
+- name: cppqmldebugger
+  command: [ '/usr/bin/gdbserver', ':%gdbport%', '%program%', '-qmljsdebugger=port:%qmlport%,block', '--qml-debug', '%arguments%' ]
+  parameters:  # <name>: <default value>
+    gdbport: 5555
+    qmlport: 3456
+  supportedRuntimes: [ native, qml ]
+  supportedContainers: [ process ]
 - name: valgrind
   command: [ '/usr/bin/valgrind', '%program%', '%arguments%' ]
   supportedRuntimes: [ native, qml ]

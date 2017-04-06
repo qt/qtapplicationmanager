@@ -60,6 +60,7 @@
 #include <QDBusArgument>
 #include <QLoggingCategory>
 
+#include <QtCore/private/qcoreapplication_p.h>
 #include <qplatformdefs.h>
 
 #if !defined(AM_HEADLESS)
@@ -202,16 +203,17 @@ int main(int argc, char *argv[])
 
     cp.process(a);
 
-    if (cp.isSet(qmlDebugOption)) {
+    if (!static_cast<QCoreApplicationPrivate *>(QObjectPrivate::get(&a))->qmljsDebugArgumentsString().isEmpty()
+            || cp.isSet(qmlDebugOption)) {
 #if !defined(QT_NO_QML_DEBUGGER)
-        new QQmlDebuggingEnabler(true);
+        (void) new QQmlDebuggingEnabler(true);
         if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
             qCCritical(LogQmlRuntime) << "The default 'debug' logging category was disabled. "
                                          "Re-enabling it for the QML Debugger interface to work correctly.";
             QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
         }
 #else
-        qCWarning(LogQmlRuntime) << "The --qml-debug option is ignored, because Qt was built without support for QML Debugging!";
+        qCWarning(LogQmlRuntime) << "The --qml-debug/-qmljsdebugger options are ignored, because Qt was built without support for QML Debugging!";
 #endif
     }
 

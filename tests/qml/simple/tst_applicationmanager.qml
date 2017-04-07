@@ -341,8 +341,6 @@ TestCase {
         started = ApplicationManager.startApplication(data.appId1);
         verify(started);
 
-        started = ApplicationManager.startApplication(data.appId2);
-        verify(started);
 
         checkApplicationState(data.appId1, ApplicationManager.StartingUp);
         listView.currentIndex = data.index1;
@@ -353,6 +351,9 @@ TestCase {
         compare(listView.currentItem.modelData.isStartingUp, false)
         compare(listView.currentItem.modelData.isRunning, true)
         compare(listView.currentItem.modelData.isShuttingDown, false)
+
+        started = ApplicationManager.startApplication(data.appId2);
+        verify(started);
 
         checkApplicationState(data.appId2, ApplicationManager.StartingUp);
         listView.currentIndex = data.index2;
@@ -366,29 +367,24 @@ TestCase {
 
         ApplicationManager.stopAllApplications(data.forceKill);
 
-        checkApplicationState(data.appId1, ApplicationManager.ShuttingDown);
-        listView.currentIndex = data.index1;
-        compare(listView.currentItem.modelData.isStartingUp, false)
-        compare(listView.currentItem.modelData.isRunning, false)
-        compare(listView.currentItem.modelData.isShuttingDown, true)
-        checkApplicationState(data.appId1, ApplicationManager.NotRunning);
-        compare(listView.currentItem.modelData.isStartingUp, false)
-        compare(listView.currentItem.modelData.isRunning, false)
-        compare(listView.currentItem.modelData.isShuttingDown, false)
-        compare(listView.currentItem.modelData.application.lastExitCode, data.exitCode)
-        compare(listView.currentItem.modelData.application.lastExitStatus, data.exitStatus)
+        while (runStateChangedSpy.count < 6)
+            runStateChangedSpy.wait(10000);
 
-        checkApplicationState(data.appId2, ApplicationManager.ShuttingDown);
-        listView.currentIndex = data.index2;
-        compare(listView.currentItem.modelData.isStartingUp, false)
-        compare(listView.currentItem.modelData.isRunning, false)
-        compare(listView.currentItem.modelData.isShuttingDown, true)
-        checkApplicationState(data.appId2, ApplicationManager.NotRunning);
-        compare(listView.currentItem.modelData.isStartingUp, false)
-        compare(listView.currentItem.modelData.isRunning, false)
-        compare(listView.currentItem.modelData.isShuttingDown, false)
-        compare(listView.currentItem.modelData.application.lastExitCode, data.exitCode)
-        compare(listView.currentItem.modelData.application.lastExitStatus, data.exitStatus)
+        var args = runStateChangedSpy.signalArguments
+
+        for (var i = 0; i < 6; ++i) {
+            var id = args[i][0]
+            var state = args[i][1]
+
+            var atPos = id.indexOf('@')
+            if (atPos >= 0)
+                id = id.substring(0, atPos - 1)
+
+            // not perfect, but the basic signal sequence is already tested in test_startAndStopApplication
+            verify(id === data.appId1 || id === data.appId2, "id = " + id)
+            verify(state === ApplicationManager.ShuttingDown || state === ApplicationManager.NotRunning)
+        }
+        runStateChangedSpy.clear()
     }
 
     function test_errors() {

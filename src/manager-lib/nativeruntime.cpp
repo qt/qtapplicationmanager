@@ -201,7 +201,7 @@ bool NativeRuntime::start()
     if (!m_needsLauncher && !m_isQuickLauncher)
         env.insert(qSL("AM_RUNTIME_SYSTEM_PROPERTIES"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ systemProperties() })));
     env.insert(qSL("AM_BASE_DIR"), QDir::currentPath());
-    if (Logging::isDltEnabled())
+    if (!Logging::isDltEnabled())
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
 
     for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {

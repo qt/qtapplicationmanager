@@ -88,13 +88,7 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
         };
 
         static QVariant staticValues[] = {
-#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
-            // QML < 5.8 expects null values in this format
-            QVariant(QMetaType::VoidStar, (void *) 0),  // ValueNull
-#else
-            // QML >= 5.8 expects null values in this format
-            QVariant::fromValue(nullptr),  // ValueNull
-#endif
+            QVariant(),                    // ValueNull
             QVariant(true),                // ValueTrue
             QVariant(false),               // ValueFalse
             QVariant(qQNaN()),             // ValueNaN

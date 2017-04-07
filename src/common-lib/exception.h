@@ -45,6 +45,7 @@
 #include <QDir>
 #include <QByteArray>
 #include <QScopedPointer>
+#include <QException>
 
 #include <exception>
 #include <QtAppManCommon/error.h>
@@ -54,7 +55,7 @@ QT_FORWARD_DECLARE_CLASS(QFile)
 
 QT_BEGIN_NAMESPACE_AM
 
-class Exception : public std::exception
+class Exception : public QException
 {
 public:
     explicit Exception(const char *errorString) Q_DECL_NOEXCEPT;
@@ -70,6 +71,9 @@ public:
 
     Error errorCode() const Q_DECL_NOEXCEPT;
     QString errorString() const Q_DECL_NOEXCEPT;
+
+    void raise() const override;
+    Exception *clone() const Q_DECL_NOEXCEPT override;
 
     // convenience
     Exception &arg(const QByteArray &fileName) Q_DECL_NOEXCEPT

@@ -97,6 +97,16 @@ QString Exception::errorString() const Q_DECL_NOEXCEPT
     return m_errorString;
 }
 
+void Exception::raise() const
+{
+    throw *this;
+}
+
+Exception *Exception::clone() const Q_DECL_NOEXCEPT
+{
+    return new Exception(*this);
+}
+
 const char *Exception::what() const Q_DECL_NOEXCEPT
 {
     if (!m_whatBuffer)

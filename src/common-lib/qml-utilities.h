@@ -47,6 +47,10 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+void fixNullValuesForQml(QVariant &v);
+void fixNullValuesForQml(QVariantList &list);
+void fixNullValuesForQml(QVariantMap &map);
+
 void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton, bool immediately = false);
 
 QT_END_NAMESPACE_AM

@@ -75,7 +75,32 @@ all your imports paths and file references relative to your main config file.
     \li array<string>
     \li Loads configuration settings from a set of files. Using more than one config file could be
         used to cleanly split the configuration into a device specific and a UI specific part.
+        All the config files' content will be merged in the order they appear on the command line:
+        keys that did not appear in an earlier config value are taken as is; duplicate keys are
+        merged according to the following algorithm:
+        \list 1
+        \li scalar values simply overwrite earlier config values.
+        \li lists get appended to earlier lists' content.
+        \li maps will be merged with earlier maps recursively on a key-by-key basis, according to
+            rules 1 and 2.
+        \endlist
+        The application-manager will save the result of parsing and evaluating all the
+        configuration files into a cache. This cache is loaded on subsequent starts if the exact
+        same set of config files is used unchanged.
+
         (default: \c /opt/am/config.yaml)
+\row
+    \li \b --no-config-cache
+    \br \e -
+    \li bool
+    \li Disables the caching functionality for the configuration files: the cache is neither read
+        from or written to.
+\row
+    \li \b --clear-config-cache
+    \br \e -
+    \li bool
+    \li Although the application-manager should detect if the configuration file cache is out of
+        sync, you can force-clear the cache on startup with this option.
 \row
     \li \b --option or \c -o
     \br \e -

@@ -4,10 +4,10 @@ MODULE = appman_common
 
 load(am-config)
 
-QT = core network
+QT = core network concurrent
 qtHaveModule(geniviextras):QT *= geniviextras
 qtHaveModule(dbus):QT *= dbus
-qtHaveModule(qml):QT *= qml qml-private
+qtHaveModule(qml):QT *= core-private qml qml-private
 
 !lessThan(QT.geniviextras.MAJOR_VERSION, 1) : !lessThan(QT.geniviextras.MINOR_VERSION, 1) {
     DEFINES += AM_GENIVIEXTRAS_LAZY_INIT

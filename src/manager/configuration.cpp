@@ -44,6 +44,12 @@
 #include <QFileInfo>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QStandardPaths>
+#include <QDataStream>
+#include <QCryptographicHash>
+#include <QElapsedTimer>
+#include <QtConcurrent/QtConcurrent>
+#include <private/qvariant_p.h>
 
 #include <functional>
 
@@ -51,11 +57,18 @@
 #include "logging.h"
 #include "qtyaml.h"
 #include "utilities.h"
+#include "qml-utilities.h"
 #include "configuration.h"
 
 #if !defined(AM_CONFIG_FILE)
 #  define AM_CONFIG_FILE "/opt/am/config.yaml"
 #endif
+
+// enable this to benchmark the config cache
+//#define AM_TIME_CONFIG_PARSING
+
+// use QtConcurrent to parse the config files, if there are more than x config files
+#define AM_PARALLEL_THRESHOLD  1
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -121,26 +134,24 @@ QVariant ConfigurationPrivate::findInConfigFile(const QStringList &path, bool *f
 void ConfigurationPrivate::mergeConfig(const QVariantMap &other)
 {
     // no auto allowed, since this is a recursive lambda
-    std::function<void(QVariantMap &, const QVariantMap &)> recursiveMergeMap =
-            [&recursiveMergeMap](QVariantMap &to, const QVariantMap &from) {
+    std::function<void(QVariantMap *, const QVariantMap &)> recursiveMergeMap =
+            [&recursiveMergeMap](QVariantMap *to, const QVariantMap &from) {
         for (auto it = from.constBegin(); it != from.constEnd(); ++it) {
             QVariant fromValue = it.value();
-            QVariant toValue = to.value(it.key());
+            QVariant &toValue = (*to)[it.key()];
 
             bool needsMerge = (toValue.type() == fromValue.type());
 
-            if (needsMerge && (toValue.type() == QVariant::Map)) {
-                QVariantMap tmpMap = toValue.toMap();
-                recursiveMergeMap(tmpMap, fromValue.toMap());
-                to.insert(it.key(), tmpMap);
-            } else if (needsMerge && (toValue.type() == QVariant::List)) {
-                to.insert(it.key(), toValue.toList() + fromValue.toList());
-            } else {
-                to.insert(it.key(), fromValue);
-            }
+            // we're trying not to detach, so we're using v_cast to avoid copies
+            if (needsMerge && (toValue.type() == QVariant::Map))
+                recursiveMergeMap(v_cast<QVariantMap>(&toValue.data_ptr()), fromValue.toMap());
+            else if (needsMerge && (toValue.type() == QVariant::List))
+                to->insert(it.key(), toValue.toList() + fromValue.toList());
+            else
+                to->insert(it.key(), fromValue);
         }
     };
-    recursiveMergeMap(configFile, other);
+    recursiveMergeMap(&configFile, other);
 }
 
 
@@ -204,6 +215,8 @@ Configuration::Configuration()
     d->clp.addOption({ qSL("single-app"),           qSL("runs a single application only (ignores the database)"), qSL("info.yaml file") });
     d->clp.addOption({ qSL("logging-rule"),         qSL("adds a standard Qt logging rule."), qSL("rule") });
     d->clp.addOption({ qSL("build-config"),         qSL("dumps the build configuration and exits.") });
+    d->clp.addOption({ qSL("no-config-cache"),      qSL("disable the use of the config file cache.") });
+    d->clp.addOption({ qSL("clear-config-cache"),   qSL("ignore an existing config file cache.") });
     d->clp.addOption({ qSL("qml-debug"),            qSL("enables QML debugging and profiling.") });
     d->clp.addOption({ { qSL("o"), qSL("option") }, qSL("override a specific config option."), qSL("yaml-snippet") });
 }
@@ -288,62 +301,187 @@ void Configuration::parse()
     }
 #endif
 
+#if defined(AM_TIME_CONFIG_PARSING)
+    QElapsedTimer timer;
+    timer.start();
+#endif
+
     QStringList configFilePaths = d->clp.values(qSL("config-file"));
+
 #if defined(Q_OS_ANDROID)
     if (!d->clp.isSet(qSL("config-file"))) {
-        if (!(QString sdFilePath = findOnSDCard(qSL("application-manager.conf"))).isEmpty())
+        const QString sdFilePath = findOnSDCard(qSL("application-manager.conf"));
+        if (!sdFilePath.isEmpty())
             configFilePaths = QStringList(sdFilePath);
     }
 #endif
 
-    for (const QString &configFilePath : qAsConst(configFilePaths)) {
-        QFile cf(configFilePath);
-        if (!cf.open(QIODevice::ReadOnly)) {
-            showParserMessage(QString::fromLatin1("Failed to open config file '%1' for reading.\n").arg(cf.fileName()), ErrorMessage);
-            exit(1);
-        }
+    struct ConfigFile
+    {
+        QString filePath;    // abs. file path
+        QByteArray checksum; // sha1 (fast and sufficient for this use-case)
+        QByteArray content;
+        QVariantMap config;
+    };
+    QVarLengthArray<ConfigFile> configFiles(configFilePaths.size());
 
-        if (cf.size() > 1024*1024) {
-            showParserMessage(QString::fromLatin1("Config file '%1' is too big (> 1MB).\n").arg(cf.fileName()), ErrorMessage);
-            exit(1);
-        }
+    for (int i = 0; i < configFiles.size(); ++i)
+        configFiles[i].filePath = QFileInfo(configFilePaths.at(i)).absoluteFilePath();
 
-        QtYaml::ParseError parseError;
+    bool noConfigCache = d->clp.isSet(qSL("no-config-cache"));
+    bool clearConfigCache = d->clp.isSet(qSL("clear-config-cache"));
 
-        QString absConfigFilePath = QFileInfo(cf).absolutePath();
+    const QString cacheFilePath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+            + qSL("/appman-config.cache");
 
-        // we want to replace ${CONFIG_PWD} (when at the start of a value) with the abs. path
-        // to the config file it appears in, similar to qmake's $$_PRO_FILE_PWD
-        auto replaceConfigPwd = [absConfigFilePath](const QVariant &value) -> QVariant {
-            if (value.type() == QVariant::String) {
-                QString str = value.toString();
-                if (str.startsWith(qSL("${CONFIG_PWD}")))
-                    return QVariant(absConfigFilePath + str.midRef(13));
+    QFile cacheFile(cacheFilePath);
+    QAtomicInt useCache = false;
+    QVariantMap cache;
+
+    if (!noConfigCache && !clearConfigCache) {
+        if (cacheFile.open(QFile::ReadOnly)) {
+            try {
+                QDataStream ds(&cacheFile);
+                QVector<QPair<QString, QByteArray>> configChecksums; // abs. file path -> sha1
+                ds >> configChecksums >> cache;
+
+                if (ds.status() != QDataStream::Ok)
+                    throw Exception("failed to read config cache content");
+
+                if (configFiles.count() != configChecksums.count())
+                    throw Exception("the number of cached config files does not match the current set");
+
+                for (int i = 0; i < configFiles.count(); ++i) {
+                    ConfigFile &cf = configFiles[i];
+                    if (cf.filePath != configChecksums.at(i).first)
+                        throw Exception("the cached config file names do not match the current set (or their order changed)");
+                    cf.checksum = configChecksums.at(i).second;
+                }
+                useCache = true;
+
+#if defined(AM_TIME_CONFIG_PARSING)
+                qCDebug(LogSystem) << "Config parsing: cache loaded after" << (timer.nsecsElapsed() / 1000) << "usec";
+#endif
+            } catch (const Exception &e) {
+                qCWarning(LogSystem) << "Failed to read config cache:" << e.what();
             }
-            return value;
-        };
-
-        QVector<QVariant> docs = QtYaml::variantDocumentsFromYamlFiltered(cf.readAll(), replaceConfigPwd, &parseError);
-
-        if (parseError.error != QJsonParseError::NoError) {
-            showParserMessage(QString::fromLatin1("Could not parse config file '%1', line %2, column %3: %4.\n")
-                              .arg(cf.fileName()).arg(parseError.line).arg(parseError.column).arg(parseError.errorString()),
-                              ErrorMessage);
-            exit(1);
         }
-
-        try {
-            checkYamlFormat(docs, 2 /*number of expected docs*/, { "am-configuration" }, 1);
-        } catch (const Exception &e) {
-            showParserMessage(QString::fromLatin1("Could not parse config file '%1': %2.\n")
-                              .arg(cf.fileName()).arg(e.errorString()), ErrorMessage);
-            exit(1);
-        }
-
-        d->mergeConfig(docs.at(1).toMap());
     }
 
-    QStringList options = d->clp.values(qSL("o"));
+    // reads a single config file and calculates its hash - defined as lambda to be usable
+    // both via QtConcurrent and via std:for_each
+    auto readConfigFile = [&useCache](ConfigFile &cf) {
+        QFile file(cf.filePath);
+        if (!file.open(QIODevice::ReadOnly))
+            throw Exception("Failed to open config file '%1' for reading.\n").arg(file.fileName());
+
+        if (file.size() > 1024*1024)
+            throw Exception("Config file '%1' is too big (> 1MB).\n").arg(file.fileName());
+
+        cf.content = file.readAll();
+
+        QByteArray checksum = QCryptographicHash::hash(cf.content, QCryptographicHash::Sha1);
+        if (useCache && (checksum != cf.checksum)) {
+            qCWarning(LogSystem) << "Failed to read config cache: cached config file checksums do not match current set";
+            useCache = false;
+        }
+        cf.checksum = checksum;
+    };
+
+    try {
+        if (configFiles.size() > AM_PARALLEL_THRESHOLD)
+            QtConcurrent::blockingMap(configFiles, readConfigFile);
+        else
+            std::for_each(configFiles.begin(), configFiles.end(), readConfigFile);
+    } catch (const Exception &e) {
+        showParserMessage(e.errorString(), ErrorMessage);
+        exit(1);
+    }
+
+#if defined(AM_TIME_CONFIG_PARSING)
+    qCDebug(LogSystem) << "Config parsing" << configFiles.size() << "files: loading finished after"
+                       << (timer.nsecsElapsed() / 1000) << "usec";
+#endif
+
+    if (useCache) {
+        qCDebug(LogSystem) << "Using existing config cache:" << cacheFilePath;
+
+        d->configFile = cache;
+    } else if (!configFilePaths.isEmpty()) {
+        auto parseConfigFile = [](ConfigFile &cf) {
+            // we want to replace ${CONFIG_PWD} (when at the start of a value) with the abs. path
+            // to the config file it appears in, similar to qmake's $$_PRO_FILE_PWD
+            QString configFilePath = QFileInfo(cf.filePath).absolutePath();
+
+            auto replaceConfigPwd = [configFilePath](const QVariant &value) -> QVariant {
+                if (value.type() == QVariant::String) {
+                    QString str = value.toString();
+                    if (str.startsWith(qSL("${CONFIG_PWD}")))
+                        return QVariant(configFilePath + str.midRef(13));
+                }
+                return value;
+            };
+
+            QtYaml::ParseError parseError;
+            QVector<QVariant> docs = QtYaml::variantDocumentsFromYamlFiltered(cf.content, replaceConfigPwd, &parseError);
+
+            if (parseError.error != QJsonParseError::NoError) {
+                throw Exception("Could not parse config file '%1', line %2, column %3: %4.\n")
+                        .arg(cf.filePath).arg(parseError.line).arg(parseError.column)
+                        .arg(parseError.errorString());
+            }
+
+            try {
+                checkYamlFormat(docs, 2 /*number of expected docs*/, { "am-configuration" }, 1);
+            } catch (const Exception &e) {
+                throw Exception("Could not parse config file '%1': %2.\n")
+                        .arg(cf.filePath).arg(e.errorString());
+            }
+            cf.config = docs.at(1).toMap();
+        };
+
+        try {
+            if (configFiles.size() > AM_PARALLEL_THRESHOLD)
+                QtConcurrent::blockingMap(configFiles, parseConfigFile);
+            else
+                std::for_each(configFiles.begin(), configFiles.end(), parseConfigFile);
+        } catch (const Exception &e) {
+            showParserMessage(e.errorString(), ErrorMessage);
+            exit(1);
+        }
+
+        // we cannot parallelize this step, since subsequent config files can overwrite
+        // or append to values
+        d->configFile = configFiles.at(0).config;
+        for (int i = 1; i < configFiles.size(); ++i)
+            d->mergeConfig(configFiles.at(i).config);
+
+        if (!noConfigCache) {
+            try {
+                QFile cacheFile(cacheFilePath);
+                if (!cacheFile.open(QFile::WriteOnly | QFile::Truncate))
+                    throw Exception(cacheFile, "failed to open file for writing");
+
+                QDataStream ds(&cacheFile);
+                QVector<QPair<QString, QByteArray>> configChecksums;
+                for (const ConfigFile &cf : qAsConst(configFiles))
+                    configChecksums.append(qMakePair(cf.filePath, cf.checksum));
+
+                ds << configChecksums << d->configFile;
+
+                if (ds.status() != QDataStream::Ok)
+                    throw Exception("error writing config cache content");
+            } catch (const Exception &e) {
+                qCWarning(LogSystem) << "Failed to write config cache:" << e.what();
+            }
+        }
+#if defined(AM_TIME_CONFIG_PARSING)
+        qCDebug(LogSystem) << "Config parsing" << configFiles.size() << "files: parsing finished after"
+                           << (timer.nsecsElapsed() / 1000) << "usec";
+#endif
+    }
+
+    const QStringList options = d->clp.values(qSL("o"));
     for (const QString &option : options) {
         QtYaml::ParseError parseError;
         QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(option.toUtf8(), &parseError);
@@ -360,59 +498,16 @@ void Configuration::parse()
         }
         d->mergeConfig(docs.at(0).toMap());
     }
-#ifdef AM_OPTION_CLASSIC_PARSER
-    // This parser is for the more classic style '-o key/path=value' type assignment. It's a lot
-    // less powerful than the YAML one and breaks with general AM conventions of "everything is
-    // YAML", but users might find this classic approach more convenient.
-    // Remove this code once everybody is happy with the YAML parser.
 
-    // no auto allowed, since this is a recursive lambda
-    std::function<void(QVariantMap &, const QStringList &, const QString &, const QString &)> addConfig =
-            [&addConfig](QVariantMap &to, const QStringList &path, const QString &fullKey, const QString &value) {
-        const QString &key = path.constFirst();
-        if (path.size() == 1) {
-            to[key] = value;
-        } else {
-            auto it = to.find(key);
-
-            if (it == to.end()) {
-                // this is the reason why this needs to recurse -- you cannot change a field in a
-                // QVariantMap sub-map without rebuilding the "map-tree" from the leafs back to the
-                // root.
-                QVariantMap tmpMap;
-                addConfig(tmpMap, path.mid(1), fullKey, value);
-                to.insert(key, tmpMap);
-            } else {
-                QVariant &v = it.value();
-                if (v.type() != QVariant::Map) {
-                    qCWarning(LogSystem) << "Cannot set option" << fullKey << "from the command-line, "
-                                            "since it conflicts with at least one config file.";
-                } else {
-                    // this is the reason why this needs to recurse -- you cannot change a field in
-                    // a QVariantMap sub-map without rebuilding the "map-tree" from the leafs back
-                    // to the root.
-                    auto tmpMap = v.toMap();
-                    addConfig(tmpMap, path.mid(1), fullKey, value);
-                    it.value() = tmpMap;
-                }
-            }
-        }
-    };
-
-    QStringList options = d->clp.values(qSL("o"));
-    for (const QString &option : options) {
-        int pos = option.indexOf(qL1C('='));
-        if (pos > 0) {
-            QString key = option.left(pos);
-            QString value = option.mid(pos + 1);
-
-            QStringList keyParts = key.split(qL1C('/'));
-
-            if (!keyParts.isEmpty())
-                addConfig(d->configFile, keyParts, key, value);
-        }
-    }
+#if defined(AM_TIME_CONFIG_PARSING)
+    qCDebug(LogSystem) << "Config parsing" << options.size() << "-o options: parsing finished after"
+                       << (timer.nsecsElapsed() / 1000) << "usec";
 #endif
+
+    // QML cannot cope with invalid QVariants and QDataStream cannot cope with nullptr inside a
+    // QVariant ... the workaround is to save invalid variants to the cache and fix them up
+    // afterwards:
+    fixNullValuesForQml(d->configFile);
 }
 
 QString Configuration::mainQmlFile() const

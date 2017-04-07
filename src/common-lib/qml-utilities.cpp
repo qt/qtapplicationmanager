@@ -41,10 +41,57 @@
 
 #include <QTimer>
 #include <private/qqmlmetatype_p.h>
+#include <private/qvariant_p.h>
 
 #include "qml-utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
+
+/*! \internal
+    Traverse an arbitrarily deep QVariantMap and replace all invalid QVariants with null values
+    that QML is able to understand. We're doing some nasty trickery with v_cast to prevent
+    copies due to detaching.
+*/
+
+void fixNullValuesForQml(QVariantList &list)
+{
+    for (auto it = list.cbegin(); it != list.cend(); ++it)
+        fixNullValuesForQml(const_cast<QVariant &>(*it));
+}
+
+void fixNullValuesForQml(QVariantMap &map)
+{
+    for (auto it = map.cbegin(); it != map.cend(); ++it)
+        fixNullValuesForQml(const_cast<QVariant &>(it.value()));
+}
+
+void fixNullValuesForQml(QVariant &v)
+{
+    switch ((int) v.type()) {
+    case QVariant::List: {
+        QVariantList *list = v_cast<QVariantList>(&v.data_ptr());
+        fixNullValuesForQml(*list);
+        break;
+    }
+    case QVariant::Map: {
+        QVariantMap *map = v_cast<QVariantMap>(&v.data_ptr());
+        fixNullValuesForQml(*map);
+        break;
+    }
+    case QVariant::Invalid: {
+        QVariant v2 =
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
+            // QML < 5.8 expects null values in this format
+            QVariant(QMetaType::VoidStar, (void *) 0);
+#else
+            // QML >= 5.8 expects null values in this format
+            QVariant::fromValue(nullptr);
+#endif
+        qSwap(v.data_ptr(), v2.data_ptr());
+        break;
+    }
+    }
+}
 
 void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton, bool immediately)
 {

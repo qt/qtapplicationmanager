@@ -59,8 +59,6 @@ TestCase {
         function windowReadyHandler(index, window) {
             console.info("window " + index + " ready")
             window.parent = testCase
-            window.height = 200
-            window.width = 200
         }
 
         function windowClosingHandler(index, window) {

@@ -276,10 +276,8 @@ void NativeRuntime::stop(bool forceKill)
     if (!m_applicationInterfaceConnected) {
         //The launcher didn't connected to the RuntimeInterface yet, so we it won't get the quit signal
         m_process->terminate();
-        deleteLater();
     } else if (forceKill) {
         m_process->kill();
-        deleteLater();
     } else {
         bool ok;
         int qt = configuration().value(qSL("quitTime")).toInt(&ok);
@@ -287,7 +285,6 @@ void NativeRuntime::stop(bool forceKill)
             qt = 250;
         QTimer::singleShot(qt, this, [this]() {
             m_process->terminate();
-            deleteLater();
         });
     }
 }

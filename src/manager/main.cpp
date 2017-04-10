@@ -194,16 +194,8 @@ Main::Main(int &argc, char **argv)
     UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler, SIGINT,
                                            [](int /*sig*/) {
         UnixSignalHandler::instance()->resetToDefault(SIGINT);
-
-        qCritical(" > RECEIVED CTRL+C ... EXITING\n");
-
-#if defined(AM_HEADLESS)
-        auto windows = qApp->allWindows();
-        for (QWindow *w : windows)
-            w->metaObject()->invokeMethod(w, "close");
-#else
+        fputs("\n*** received SIGINT / Ctrl+C ... exiting ***\n\n", stderr);
         qApp->exit(1);
-#endif
     });
     StartupTimer::instance()->checkpoint("after application constructor");
 }

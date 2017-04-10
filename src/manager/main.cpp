@@ -317,25 +317,15 @@ void Main::setupQmlDebugging()
 
 void Main::setupLoggingRules()
 {
-    QStringList loggingRules = m_config.loggingRules();
-    bool verbose = m_config.verbose();
+    const QString loggingRules = m_config.verbose()
+                               ? qSL("*=true\nqt.*.debug=false")
+                               : m_config.loggingRules().isEmpty() ? qSL("*.debug=false")
+                                                                   : m_config.loggingRules().join(qL1C('\n'));
 
-    if (loggingRules.isEmpty() && !verbose)
-        loggingRules.append(qSL("*.debug=false"));
-
-    if (verbose) {
-        // we are prepending here to allow the user to override these in the config file.
-        loggingRules.prepend(qSL("qt.qpa.*.debug=false"));
-        loggingRules.prepend(qSL("qt.quick.*.debug=false"));
-        loggingRules.prepend(qSL("qt.scenegraph.*.debug=false"));
-        loggingRules.prepend(qSL("qt.compositor.input.*.debug=false"));
-        loggingRules.prepend(qSL("*.debug=true"));
-    }
-
-    QLoggingCategory::setFilterRules(loggingRules.join(qL1C('\n')));
+    QLoggingCategory::setFilterRules(loggingRules);
 
     // setting this for child processes //TODO: use a more generic IPC approach
-    qputenv("AM_LOGGING_RULES", loggingRules.join(qL1C('\n')).toUtf8());
+    qputenv("AM_LOGGING_RULES", loggingRules.toUtf8());
     StartupTimer::instance()->checkpoint("after logging setup");
 }
 

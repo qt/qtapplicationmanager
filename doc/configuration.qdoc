@@ -198,8 +198,10 @@ all your imports paths and file references relative to your main config file.
     \li \b --verbose
     \br \e -
     \li bool
-    \li Enable verbose output. For more control over the logging output, see \c logging-rules
-        below. (default: false)
+    \li Enable verbose output. All logging categories and message types will be enabled with the
+        exception of some Qt internal debug messages (\c logging-rules will be ignored). Note that
+        logging rules provided via the QT_LOGGING_RULES environment variable will still prevail.
+        For more control over the logging output, see \c logging-rules below.
 \row
     \li \b --slow-animations
     \br \e -

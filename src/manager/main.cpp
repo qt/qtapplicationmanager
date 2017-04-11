@@ -589,6 +589,10 @@ void Main::setupSingletons() Q_DECL_NOEXCEPT_EXPR(false)
 
 void Main::setupQmlEngine()
 {
+    const QString style = m_config.style();
+    if (!style.isEmpty())
+        qputenv("QT_QUICK_CONTROLS_STYLE", style.toLocal8Bit());
+
     qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 1, 0, "Notification");
     qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 

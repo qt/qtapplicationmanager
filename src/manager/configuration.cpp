@@ -529,6 +529,11 @@ QStringList Configuration::loggingRules() const
     return d->config<QStringList>("logging-rule", { qSL("logging"), qSL("rules") });
 }
 
+QString Configuration::style() const
+{
+    return d->findInConfigFile({ qSL("ui"), qSL("style") }).toString();
+}
+
 QVariantList Configuration::installationLocations() const
 {
     return d->findInConfigFile({ qSL("installationLocations") }).toList();

@@ -80,6 +80,7 @@ public:
     bool qmlDebugging() const;
     QString singleApp() const;
     QStringList loggingRules() const;
+    QString style() const;
 
     QVariantList installationLocations() const;
 

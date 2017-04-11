@@ -166,6 +166,11 @@ all your imports paths and file references relative to your main config file.
     \li Adds additional QML import paths to the system UI.
 \row
     \li \b -
+    \br \e ui/style
+    \li string
+    \li If set, the given style will be used by QtQuickControls 2.
+\row
+    \li \b -
     \br \e plugins
     \li map<array<string>>
     \li A string-to-string-list map that defines plugins that the application-manager should load.

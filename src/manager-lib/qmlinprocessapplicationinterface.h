@@ -82,6 +82,9 @@ public:
     explicit QmlInProcessApplicationInterface(QmlInProcessRuntime *runtime = nullptr);
 
     QString applicationId() const override;
+    QVariantMap name() const override;
+    QUrl icon() const override;
+    QString version() const override;
     QVariantMap systemProperties() const override;
     QVariantMap applicationProperties() const override;
 

@@ -53,11 +53,17 @@ class ApplicationInterface : public QObject
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")
     Q_PROPERTY(QString applicationId READ applicationId CONSTANT SCRIPTABLE true)
+    Q_PROPERTY(QVariantMap name READ name CONSTANT)
+    Q_PROPERTY(QUrl icon READ icon CONSTANT)
+    Q_PROPERTY(QString version READ version CONSTANT)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true)
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true)
 
 public:
     virtual QString applicationId() const = 0;
+    virtual QVariantMap name() const = 0;
+    virtual QUrl icon() const = 0;
+    virtual QString version() const = 0;
     virtual QVariantMap systemProperties() const = 0;
     virtual QVariantMap applicationProperties() const = 0;
 

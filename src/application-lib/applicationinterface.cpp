@@ -91,6 +91,29 @@
 */
 
 /*!
+    \qmlproperty var ApplicationInterface::name
+    \readonly
+
+    An object containing language (\c string) to application name (\c string) mapppings. See
+    \l{application-name-map}{name} in the manifest (info.yaml) definition.
+*/
+
+/*!
+    \qmlproperty url ApplicationInterface::icon
+    \readonly
+
+    The URL of the application's icon as given in the manifest. This can be used as the source
+    property of an Image.
+*/
+
+/*!
+    \qmlproperty string ApplicationInterface::version
+    \readonly
+
+    The version of the application as specified in the manifest.
+*/
+
+/*!
     \qmlproperty var ApplicationInterface::systemProperties
     \readonly
 

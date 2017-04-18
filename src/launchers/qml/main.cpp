@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
     if (cp.isSet(directLoadOption)) {
         QFileInfo fi = cp.value(directLoadOption);
 
-        if (!fi.exists() || fi.fileName() != "info.yaml") {
+        if (!fi.exists() || fi.fileName() != qSL("info.yaml")) {
             qCCritical(LogQmlRuntime) << "ERROR: --directload needs a valid info.yaml file as parameter";
             return 2;
         }
@@ -362,14 +362,14 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     m_launched = true;
 
-    QString applicationId = application.value("id").toString();
-    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value("runtimeParameters"));
+    QString applicationId = application.value(qSL("id")).toString();
+    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(qSL("runtimeParameters")));
 
     StartupTimer::instance()->checkpoint("starting application");
 
     //Change the DLT Application description, to easily identify the application on the DLT logs.
     char dltAppId[5];
-    qsnprintf(dltAppId, 5, "A%03d", application.value("uniqueNumber").toInt());
+    qsnprintf(dltAppId, 5, "A%03d", application.value(qSL("uniqueNumber")).toInt());
     Logging::setDltApplicationId(dltAppId, QByteArray("Application-Manager App: ") + applicationId.toLocal8Bit());
     Logging::registerUnregisteredDltContexts();
 
@@ -418,6 +418,10 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     if (m_applicationInterface) {
         m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
 
+        m_applicationInterface->m_name = qdbus_cast<QVariantMap>(application.value(qSL("displayName")));
+        m_applicationInterface->m_icon = application.value(qSL("displayIcon")).toString();
+        m_applicationInterface->m_version = application.value(qSL("version")).toString();
+
         QVariantMap &svm = m_applicationInterface->m_systemProperties;
         svm = qdbus_cast<QVariantMap>(systemProperties);
         for (auto it = svm.begin(); it != svm.end(); ++it)
@@ -461,7 +465,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     StartupTimer::instance()->checkpoint("after loading plugins and import paths");
 
     QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
-    m_engine.rootContext()->setContextProperty("StartupTimer", StartupTimer::instance());
+    m_engine.rootContext()->setContextProperty(qSL("StartupTimer"), StartupTimer::instance());
     m_engine.load(qmlFileUrl);
 
     StartupTimer::instance()->checkpoint("after engine loading main qml file");
@@ -526,7 +530,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     qCDebug(LogQmlRuntime) << "component loading and creating complete.";
 
     StartupTimer::instance()->checkpoint("component loading and creating complete.");
-    StartupTimer::instance()->createReport(application.value("id").toString());
+    StartupTimer::instance()->createReport(application.value(qSL("id")).toString());
 
     if (!document.isEmpty() && m_applicationInterface)
         emit m_applicationInterface->openDocument(document, mimeType);

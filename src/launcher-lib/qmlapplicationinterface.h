@@ -70,6 +70,9 @@ public:
     bool initialize();
 
     QString applicationId() const override;
+    QVariantMap name() const override;
+    QUrl icon() const override;
+    QString version() const override;
     QVariantMap systemProperties() const override;
     QVariantMap applicationProperties() const override;
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
@@ -87,12 +90,15 @@ private:
     uint notificationShow(QmlNotification *n);
     void notificationClose(QmlNotification *n);
 
-    mutable QString m_appId; // cached
     QDBusConnection m_connection;
     QDBusConnection m_notificationConnection;
     QDBusInterface *m_applicationIf = nullptr;
     QDBusInterface *m_runtimeIf = nullptr;
     QDBusInterface *m_notifyIf = nullptr;
+    mutable QString m_appId; // cached
+    QVariantMap m_name;
+    QString m_icon;
+    QString m_version;
     QVariantMap m_systemProperties;
     QVariantMap m_applicationProperties;
     QVector<QPointer<QmlNotification> > m_allNotifications;

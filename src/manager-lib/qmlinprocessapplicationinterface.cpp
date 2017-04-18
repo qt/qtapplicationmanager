@@ -72,6 +72,31 @@ QString QmlInProcessApplicationInterface::applicationId() const
     return QString();
 }
 
+QVariantMap QmlInProcessApplicationInterface::name() const
+{
+    QVariantMap names;
+    if (m_runtime && m_runtime->application()) {
+        const QMap<QString, QString> &sm = m_runtime->application()->names();
+        for (auto it = sm.cbegin(); it != sm.cend(); ++it)
+            names.insert(it.key(), it.value());
+    }
+    return names;
+}
+
+QUrl QmlInProcessApplicationInterface::icon() const
+{
+    if (m_runtime && m_runtime->application())
+        return m_runtime->application()->iconUrl();
+    return QUrl();
+}
+
+QString QmlInProcessApplicationInterface::version() const
+{
+    if (m_runtime && m_runtime->application())
+        return m_runtime->application()->version();
+    return QString();
+}
+
 QVariantMap QmlInProcessApplicationInterface::systemProperties() const
 {
     if (m_runtime)

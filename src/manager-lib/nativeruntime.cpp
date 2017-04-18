@@ -430,6 +430,21 @@ QString NativeRuntimeApplicationInterface::applicationId() const
     return QString();
 }
 
+QVariantMap NativeRuntimeApplicationInterface::name() const
+{
+    return QVariantMap();    // only provided to QML apps currently
+}
+
+QUrl NativeRuntimeApplicationInterface::icon() const
+{
+    return QUrl();    // only provided to QML apps currently
+}
+
+QString NativeRuntimeApplicationInterface::version() const
+{
+    return QString();    // only provided to QML apps currently
+}
+
 QVariantMap NativeRuntimeApplicationInterface::systemProperties() const
 {
     if (m_runtime)

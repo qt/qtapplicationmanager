@@ -149,6 +149,21 @@ QString QmlApplicationInterface::applicationId() const
     return m_appId;
 }
 
+QVariantMap QmlApplicationInterface::name() const
+{
+    return m_name;
+}
+
+QUrl QmlApplicationInterface::icon() const
+{
+    return QUrl::fromLocalFile(m_icon);
+}
+
+QString QmlApplicationInterface::version() const
+{
+    return m_version;
+}
+
 Notification *QmlApplicationInterface::createNotification()
 {
     QmlNotification *n = new QmlNotification(this, Notification::Dynamic);

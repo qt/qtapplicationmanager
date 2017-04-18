@@ -79,6 +79,8 @@ private:
     QMetaObject *m_metaObject;
     IpcWrapperSignalRelay *m_wrapperHelper;
     QDBusInterface *m_dbusInterface;
+
+    static QVector<QMetaObject *> s_allMetaObjects;
 };
 
 QT_END_NAMESPACE_AM

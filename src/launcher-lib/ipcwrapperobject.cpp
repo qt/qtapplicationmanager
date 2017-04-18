@@ -170,6 +170,8 @@ static QString stringify(const QVariant &value, int level, bool indentFirstLine)
 
 QT_BEGIN_NAMESPACE_AM
 
+QVector<QMetaObject *> IpcWrapperObject::s_allMetaObjects;
+
 IpcWrapperObject::IpcWrapperObject(const QString &service, const QString &path, const QString &interface, const QDBusConnection &connection, QObject *parent)
     : QObject(parent)
     , m_wrapperHelper(new IpcWrapperSignalRelay(this))
@@ -237,12 +239,17 @@ IpcWrapperObject::IpcWrapperObject(const QString &service, const QString &path, 
     }
 
     m_metaObject = mob.toMetaObject();
+
+    if (s_allMetaObjects.isEmpty()) {
+        // we cannot simply delete the meta-objects in the destructor, since the QML engine
+        // might hold a pointer to it for caching purposes.
+        atexit([]() { std::for_each(s_allMetaObjects.cbegin(), s_allMetaObjects.cend(), free); });
+    }
+    s_allMetaObjects << m_metaObject;
 }
 
 IpcWrapperObject::~IpcWrapperObject()
-{
-    free(m_metaObject);
-}
+{ }
 
 bool IpcWrapperObject::isDBusValid() const
 {

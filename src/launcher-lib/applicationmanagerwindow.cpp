@@ -139,6 +139,11 @@ ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
             this, &ApplicationManagerWindow::onWindowPropertyChangedInternal);
 }
 
+ApplicationManagerWindow::~ApplicationManagerWindow()
+{
+    delete d;
+}
+
 void ApplicationManagerWindow::onWindowPropertyChangedInternal(QPlatformWindow *pw, const QString &name)
 {
     if (pw == d->platformWindow && d->platformWindow && d->platformNativeInterface) {

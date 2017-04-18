@@ -57,6 +57,7 @@ class ApplicationManagerWindow : public QQuickWindowQmlImpl
 
 public:
     explicit ApplicationManagerWindow(QWindow *parent = nullptr);
+    ~ApplicationManagerWindow();
 
     Q_INVOKABLE bool setWindowProperty(const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;

@@ -58,9 +58,11 @@ public:
     static StartupTimer *instance();
     ~StartupTimer();
 
-    void checkpoint(const char *name);
     Q_INVOKABLE void checkpoint(const QString &name);
     Q_INVOKABLE void createReport(const QString &title = QString());
+
+    void checkpoint(const char *name);
+    void reset();
 
 private:
     StartupTimer();
@@ -68,7 +70,6 @@ private:
 
     FILE *m_output = nullptr;
     bool m_initialized = false;
-    bool m_reportCreated = false;
     quint64 m_processCreation = 0;
     QElapsedTimer m_timer;
     QVector<QPair<quint64, QByteArray>> m_checkpoints;

@@ -140,7 +140,7 @@ class Controller : public QObject
     Q_OBJECT
 
 public:
-    Controller(QCoreApplication *a, const QString &directLoad = QString());
+    Controller(QCoreApplication *a, bool quickLaunched, const QString &directLoad = QString());
 
 public slots:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
@@ -151,6 +151,7 @@ private:
     QmlApplicationInterface *m_applicationInterface = nullptr;
     QVariantMap m_configuration;
     bool m_launched = false;
+    bool m_quickLaunched;
 #if !defined(AM_HEADLESS)
     QQuickWindow *m_window = nullptr;
 #endif
@@ -233,7 +234,7 @@ int main(int argc, char *argv[])
             return 2;
         }
 
-        new Controller(&a, fi.absoluteFilePath());
+        new Controller(&a, cp.isSet(quickLaunchOption), fi.absoluteFilePath());
     } else {
         QByteArray dbusAddress = qgetenv("AM_DBUS_PEER_ADDRESS");
         if (dbusAddress.isEmpty()) {
@@ -265,15 +266,17 @@ int main(int argc, char *argv[])
         }
         qCDebug(LogQmlRuntime) << "Connected to the Notification D-Bus via:" << dbusAddress;
 
-        new Controller(&a);
+        StartupTimer::instance()->checkpoint("after dbus initialization");
+
+        new Controller(&a, cp.isSet(quickLaunchOption));
     }
 
-    StartupTimer::instance()->checkpoint("after dbus initialization");
     return a.exec();
 }
 
-Controller::Controller(QCoreApplication *a, const QString &directLoad)
+Controller::Controller(QCoreApplication *a, bool quickLaunched, const QString &directLoad)
     : QObject(a)
+    , m_quickLaunched(quickLaunched)
 {
     connect(&m_engine, &QObject::destroyed, &QCoreApplication::quit);
     connect(&m_engine, &QQmlEngine::quit, &QCoreApplication::quit);
@@ -311,6 +314,8 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
         registerWindowComp.completeCreate();
     }
 
+    StartupTimer::instance()->checkpoint("after window registration");
+
     QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
     if (!quicklaunchQml.isEmpty() && cp.isSet(quickLaunchOption)) {
         if (QFileInfo(quicklaunchQml).isRelative())
@@ -326,8 +331,6 @@ Controller::Controller(QCoreApplication *a, const QString &directLoad)
                 qCCritical(LogQmlRuntime) << error;
         }
     }
-
-    StartupTimer::instance()->checkpoint("after quick launch qml initialization");
 
     if (directLoad.isEmpty()) {
         m_applicationInterface = new QmlApplicationInterface(p2pBusName, notificationBusName, this);
@@ -363,9 +366,15 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     m_launched = true;
 
     QString applicationId = application.value(qSL("id")).toString();
-    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(qSL("runtimeParameters")));
 
-    StartupTimer::instance()->checkpoint("starting application");
+    if (m_quickLaunched) {
+        //StartupTimer::instance()->createReport(applicationId  + qSL(" [process launch]"));
+        StartupTimer::instance()->reset();
+    } else {
+        StartupTimer::instance()->checkpoint("starting application");
+    }
+
+    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(qSL("runtimeParameters")));
 
     //Change the DLT Application description, to easily identify the application on the DLT logs.
     char dltAppId[5];

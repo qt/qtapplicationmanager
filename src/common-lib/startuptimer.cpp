@@ -63,9 +63,12 @@
     The StartupTimer is a class for measuring the startup performance of the System-UI, as well as
     applications started by application-manager.
 
-    Using the checkpoint function, you can log the time it took from forking the process until now.
-    The time is reported using a monotonic clock with nano-second resolution - see QElapsedTimer
-    for more information.
+    Using the checkpoint function, you can log the time that elapsed since the executable was
+    started. In case of the System-UI, this is the time since the process was forked. This is also
+    true for applications that are not quick-launched. Quick-launched applications attach to a
+    process that has been pre-forked before the application has been started. In this case the
+    timer will be reset to the actual application start. The time is reported using a monotonic
+    clock with nano-second resolution - see QElapsedTimer for more information.
 
     \note On Linux, the actual time between the forking of the process and the first checkpoint
           can only be obtained with 10ms resolution.
@@ -77,7 +80,7 @@
 
     When activated, this report will always be printed for the System-UI. If the application-manager
     is running in multi-process mode, additional reports will also be printed for every QML
-    application that is started.
+    application that is started. Note that the bar widths can only be compared within a report.
 
     The application-manager and its QML launcher will already create a lot of checkpoints on their
     own and will also call createReport themselves after all the C++ side setup has finished. You
@@ -122,8 +125,8 @@
 /*!
     \qmlmethod StartupTimer::checkpoint(string name)
 
-    Adds a new checkpoint with the given \a name, using the current system time. Each checkpoint
-    corresponds to a single item in the output created by the next call to createReport.
+    Adds a new checkpoint with the elapsed time and the given \a name. Each checkpoint corresponds
+    to a single item in the output created by the next call to createReport.
 */
 
 /*!
@@ -137,6 +140,28 @@
 */
 
 QT_BEGIN_NAMESPACE_AM
+
+struct SplitSeconds
+{
+    int sec;
+    int msec;
+    int usec;
+};
+
+static SplitSeconds splitMicroSecs(quint64 micros)
+{
+    SplitSeconds ss;
+
+    ss.sec = 0;
+    if (micros > 1000 * 1000) {
+        ss.sec = micros / (1000 * 1000);
+        micros %= (1000 * 1000);
+    }
+    ss.msec = micros / 1000;
+    ss.usec = micros % 1000;
+
+    return ss;
+}
 
 StartupTimer::StartupTimer()
 {
@@ -275,7 +300,7 @@ StartupTimer::~StartupTimer()
 
 void StartupTimer::checkpoint(const char *name)
 {
-    if (Q_LIKELY(m_initialized)) {
+    if (Q_UNLIKELY(m_initialized)) {
         qint64 delta = m_timer.nsecsElapsed();
         m_checkpoints << qMakePair(delta / 1000 + m_processCreation, name);
     }
@@ -283,23 +308,37 @@ void StartupTimer::checkpoint(const char *name)
 
 void StartupTimer::checkpoint(const QString &name)
 {
-    QByteArray ba = name.toLocal8Bit();
-    checkpoint(ba.constData());
+    if (Q_UNLIKELY(m_initialized)) {
+        QByteArray ba = name.toLocal8Bit();
+        checkpoint(ba.constData());
+    }
+}
+
+void StartupTimer::reset()
+{
+    if (m_initialized) {
+        SplitSeconds delta = splitMicroSecs(m_timer.nsecsElapsed() / 1000 + m_processCreation);
+        m_timer.restart();
+        m_checkpoints.clear();
+        m_processCreation = 0;
+
+        const QString text = QString::asprintf("started %d'%03d.%03d after process launch",
+                                                         delta.sec, delta.msec, delta.usec);
+        m_checkpoints << qMakePair(0, text.toLocal8Bit().constData());
+    }
 }
 
 void StartupTimer::createReport(const QString &title)
 {
-    if (m_output) {
+    if (m_output && !m_checkpoints.isEmpty()) {
         bool ansiColorSupport = false;
         if (m_output == stderr)
             getOutputInformation(&ansiColorSupport, nullptr, nullptr);
 
-        if (!m_reportCreated && !m_checkpoints.isEmpty()) {
-            const char *format = "\n== STARTUP TIMING REPORT: %s ==\n";
-            if (ansiColorSupport)
-                format = "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n";
-            fprintf(m_output, format, title.toLocal8Bit().data());
-        }
+        const char *format = "\n== STARTUP TIMING REPORT: %s ==\n";
+        if (ansiColorSupport)
+            format = "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n";
+        fprintf(m_output, format, title.toLocal8Bit().data());
 
         static const int barCols = 60;
 
@@ -316,28 +355,21 @@ void StartupTimer::createReport(const QString &title)
         for (int i = 0; i < m_checkpoints.size(); ++i) {
             quint64 usec = m_checkpoints.at(i).first;
             const QByteArray text = m_checkpoints.at(i).second;
-            int sec = 0;
             int cells = usec / usecPerCell;
             QByteArray bar(cells, ansiColorSupport ? ' ' : '#');
             QByteArray spacing(maxTextLen - text.length(), ' ');
-
-            if (usec > 1000*1000) {
-                sec = usec / (1000*1000);
-                usec %= (1000*1000);
-            }
-            int msec = usec / 1000;
-            usec %= 1000;
+            SplitSeconds ss = splitMicroSecs(usec);
 
             const char *format = "%d'%03d.%03d %s %s#%s\n";
             if (ansiColorSupport)
                 format = "\033[32m%d'%03d.%03d\033[0m %s %s\033[44m %s\033[0m\n";
 
-            fprintf(m_output, format, sec, msec, int(usec), text.constData(), spacing.constData(), bar.constData());
+            fprintf(m_output, format, ss.sec, ss.msec, ss.usec,
+                    text.constData(), spacing.constData(), bar.constData());
         }
-        fflush(m_output);
 
+        fflush(m_output);
         m_checkpoints.clear();
-        m_reportCreated = true;
     }
 }
 

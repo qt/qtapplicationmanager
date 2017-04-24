@@ -456,9 +456,6 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
                 }
                 throw Exception(Error::Package, "could not remove broken installation of app %1 from database").arg(app->id());
             }
-        } else {
-            // built-in, so make sure we do not kill the document directory
-            validPaths.insertMulti(defaultInstallationLocation().documentPath(), app->id() + qL1C('/'));
         }
     }
 

@@ -30,7 +30,7 @@
 \page configuration.html
 \title Configuration
 
-\chapter Main Configuration
+\section1 Main Configuration
 
 The application-manager can be configured through config files and the command line.
 The currently supported command-line options can always be displayed by running \c{appman --help}.
@@ -335,7 +335,7 @@ applicationUserIdSeparation: this should be factored out into a container plugin
 \endomit
 \endtable
 
-\chapter D-Bus Specification
+\section1 D-Bus Specification
 
 These YAML objects describe both which D-Bus interfaces are registered on as well as access
 policies.
@@ -379,7 +379,7 @@ dbus:
 \endcode
 
 
-\chapter Installation Locations
+\section1 Installation Locations
 
 The \c installationLocations YAML field is a list of YAML objects, very similar to
 ApplicationInstaller::getInstallationLocation
@@ -424,7 +424,7 @@ ApplicationInstaller::getInstallationLocation
         mount-point of the device where \c installationPath is located.
 \endtable
 
-\chapter Runtime Configuration
+\section1 Runtime Configuration
 
 The runtime configuration sub-objects are specific to the actual runtimes, so the table below has
 an additional column specifying which runtime a configuration option applies to:
@@ -497,7 +497,7 @@ an additional column specifying which runtime a configuration option applies to:
         \l{Crash Action Specification} {below} for more information.
 \endtable
 
-\chapter Crash Action Specification
+\section1 Crash Action Specification
 
 These sub-objects specify which actions to take, if the application-manager or QML runtimes are
 crashing.

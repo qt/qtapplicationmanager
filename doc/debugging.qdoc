@@ -30,18 +30,18 @@
 \page debugging.html
 \title Logging and Debugging
 
-\chapter Logging
+\section1 Logging
 
 The application-manager installs its own message handler that neatly formats logging output.
 It will also pass the output to GENIVI DLT (Diagnostic Log and Trace), if the QtGeniviExtras module
 is available.
 
-\section1 Categories
+\section2 Categories
 
 The following logging categories are defined by the application manager:
 \include logging.cpp am-logging-categories
 
-\section1 Environment Variables
+\section2 Environment Variables
 
 This is a (incomplete) list of environment variables that influence the logging output at runtime:
 
@@ -66,9 +66,9 @@ This is a (incomplete) list of environment variables that influence the logging 
         if available.
 \endtable
 
-\chapter Debugging
+\section1 Debugging
 
-\section1 Introduction
+\section2 Introduction
 
 Debugging the application-manager, the System-UI and applications is dependent on the mode the
 application-manager is running in:
@@ -93,7 +93,7 @@ Please note that although the concept is called "debug" wrappers, these wrappers
 actual debugging tasks. They are also useful for various other tasks that involve running the
 program under test through a wrapper, e.g. profiling tools.
 
-\section1 Defining Debug Wrappers
+\section2 Defining Debug Wrappers
 \target DebugWrappers
 
 Debug wrappers for applications in multi-process mode are defined in a \c config.yaml file provided
@@ -150,7 +150,7 @@ Each debug wrapper is a YAML map, which supports the following fields:
     \li A list of container ids which are compatible with this debug wrapper (e.g. \c process).
 \endtable
 
-\section1 Using Debug Wrappers
+\section2 Using Debug Wrappers
 
 After defining the debug wrappers, you can start applications using those wrappers. There are three
 ways to do this - all of them rely on a common way to specify which debug wrapper to use and optional
@@ -168,7 +168,7 @@ parameter values:
 \li Using the \c appman-controller which uses D-Bus internally, but is able to find the correct
     bus automatically and supports standard-IO redirection:
     \badcode
-    appman-controller debug-application -ioe io.qt.app "gdbserver"
+    appman-controller debug-application -ioe "gdbserver" io.qt.app
     \endcode
     The optional \c -i, \c -o and \c -e parameters will redirect the respective IO streams (\c stdin,
     \c stdout and \c stderr) to the calling terminal.

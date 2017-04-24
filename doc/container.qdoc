@@ -34,7 +34,7 @@ A \b container in the application-manager world describes an execution environme
 executable (either an app's binary or its runtime binary) in multi-process mode. This does not have
 to be something sophisticated like a Docker container, but can be as simple as an Unix process.
 
-\chapter Predefined Containers
+\section1 Predefined Containers
 
 The application-manager comes with a single type of container built-in: the \c process container,
 which simply spawns a new Unix process to execute the requested binary.
@@ -44,7 +44,7 @@ In addition, a very basic integration of Pelagicore's
 examples/softwarecontainers. This can be used as a blueprint to either create a customer-specific
 production version of a softwarecontainers plugin, or to integrate another container solution.
 
-\chapter Extending with Container Plugins
+\section1 Extending with Container Plugins
 
 Custom container solution can easily be added via plugins.
 These plugins need not to be built as part of the application-manager, but
@@ -80,7 +80,7 @@ class SoftwareContainerManager : public QObject, public ContainerManagerInterfac
 };
 \endcode
 
-\chapter Configuration
+\section1 Configuration
 
 There are three parts to the container configuration:
 \list 1

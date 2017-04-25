@@ -80,7 +80,13 @@ extern "C" int capget(cap_user_header_t header, const cap_user_data_t data);
 // Support for old/broken C libraries
 #  if defined(_LINUX_CAPABILITY_VERSION) && !defined(_LINUX_CAPABILITY_VERSION_1)
 #    define _LINUX_CAPABILITY_VERSION_1 _LINUX_CAPABILITY_VERSION
-#    define _LINUX_CAPABILITY_U32S_1    _LINUX_CAPABILITY_U32S
+#    define _LINUX_CAPABILITY_U32S_1    1
+#    if !defined(CAP_TO_INDEX)
+#      define CAP_TO_INDEX(x) ((x) >> 5)
+#    endif
+#    if !defined(CAP_TO_MASK)
+#      define CAP_TO_MASK(x)  (1 << ((x) & 31))
+#    endif
 #  endif
 #  if defined(_LINUX_CAPABILITY_VERSION_3) // use 64-bit support, if available
 #    define AM_CAP_VERSION _LINUX_CAPABILITY_VERSION_3
@@ -110,7 +116,7 @@ QT_BEGIN_NAMESPACE_AM
 static void sigHupHandler(int sig)
 {
     if (sig == SIGHUP)
-        _Exit(0);
+        _exit(0);
 }
 
 QT_END_NAMESPACE_AM

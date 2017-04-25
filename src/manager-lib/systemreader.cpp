@@ -69,8 +69,30 @@ QT_END_NAMESPACE_AM
 #  include <unistd.h>
 #  include <sys/ioctl.h>
 #  include <errno.h>
+#  include <stdio.h>
 
 QT_BEGIN_NAMESPACE_AM
+
+#if defined(Q_OS_ANDROID) && (_POSIX_C_SOURCE < 200809L)
+
+#  include <stdarg.h>
+
+int dprintf(int fd, const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    char **buffer = nullptr;
+    int len = vasprintf(buffer, format, ap);
+    va_end(ap);
+
+    if (*buffer && (len > 0))
+        len = QT_WRITE(fd, *buffer, len);
+    if (*buffer)
+        free(*buffer);
+    return len;
+}
+
+#endif
 
 QScopedPointer<SysFsReader> CpuReader::s_sysFs;
 
@@ -268,7 +290,7 @@ bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryR
 
                     for (qreal percent : qAsConst(m_thresholds)) {
                         qint64 mem = limit * percent / 100;
-                        registerOk = registerOk && (::dprintf(m_controlFd, "%d %d %lld", m_eventFd, m_usageFd, mem) > 0);
+                        registerOk = registerOk && (dprintf(m_controlFd, "%d %d %lld", m_eventFd, m_usageFd, mem) > 0);
                     }
 
                     if (registerOk) {

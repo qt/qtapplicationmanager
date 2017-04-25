@@ -555,7 +555,7 @@ The following conditions will be handled:
 \row
     \li \c dumpCore
     \li bool
-    \li Will end the process via \c abort instead of \c _Exit. This will dump a \c core file,
+    \li Will end the process via \c abort instead of \c _exit. This will dump a \c core file,
         depending on your kernel configuration (default: true).
 \row
     \li \c waitForGdbAttach

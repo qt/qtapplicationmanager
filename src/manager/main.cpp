@@ -142,7 +142,7 @@
 
 QT_USE_NAMESPACE_AM
 
-int main(int argc, char *argv[])
+Q_DECL_EXPORT int main(int argc, char *argv[])
 {
 #if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
     // set a reasonable default for OSes/distros that do not set this by default
@@ -877,6 +877,7 @@ QString Main::dbusInterfaceName(QObject *o) Q_DECL_NOEXCEPT_EXPR(false)
     }
     return QLatin1String(o->metaObject()->classInfo(idx).value());
 #else
+    Q_UNUSED(o)
     return QString();
 #endif
 }
@@ -943,6 +944,10 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *service
             atexit([]() { for (const QString &ftd : qAsConst(filesToDelete)) QFile::remove(ftd); });
         filesToDelete << f.fileName();
     }
+#else
+    Q_UNUSED(adaptor)
+    Q_UNUSED(serviceName)
+    Q_UNUSED(path)
 #endif // QT_DBUS_LIB
 }
 

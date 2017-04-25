@@ -1,4 +1,4 @@
-requires(linux:!android|win32-msvc2013:!winrt|win32-msvc2015:!winrt|osx|win32-g++*)
+requires(linux|win32-msvc2013:!winrt|win32-msvc2015:!winrt|osx|win32-g++*)
 
 !tools-only:!qtHaveModule(qml):error("The QtQml library is required for a non 'tools-only' build")
 
@@ -40,7 +40,7 @@ load(am-config)
     else:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 }
 
-linux:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
+linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
     check_libbacktrace = "yes"
     SUBDIRS += 3rdparty/libbacktrace/libbacktrace.pro
 } else {
@@ -51,7 +51,7 @@ linux:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release))
 
 load(qt_parts)
 
-tools-only {
+android|tools-only {
     # removing them from QT_BUILD_PARTS doesn't help
     SUBDIRS -= sub_tests
     SUBDIRS -= sub_examples

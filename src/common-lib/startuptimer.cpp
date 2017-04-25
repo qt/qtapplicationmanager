@@ -50,6 +50,9 @@
 #  include <time.h>
 #  include <qplatformdefs.h>
 #  include <sys/syscall.h>
+#  if !defined(SYS_gettid)
+#    define SYS_gettid __NR_gettid
+#  endif
 #elif defined(Q_OS_OSX)
 #  include <unistd.h>
 #  include <sys/sysctl.h>

@@ -6,6 +6,7 @@ load(am-config)
 
 QT = core network concurrent
 qtHaveModule(geniviextras):QT *= geniviextras
+android:QT *= androidextras
 qtHaveModule(dbus):QT *= dbus
 qtHaveModule(qml):QT *= core-private qml qml-private
 
@@ -27,13 +28,11 @@ SOURCES += \
     unixsignalhandler.cpp \
     processtitle.cpp \
     crashhandler.cpp \
-    logging.cpp
+    logging.cpp \
+    dbus-utilities.cpp \
 
 qtHaveModule(qml):SOURCES += \
     qml-utilities.cpp \
-
-qtHaveModule(dbus):SOURCES += \
-    dbus-utilities.cpp \
 
 HEADERS += \
     global.h \

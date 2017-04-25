@@ -45,6 +45,7 @@
 #include <QVector>
 #include <QMap>
 #include <QPointer>
+#include <QVariant>
 #if defined(QT_DBUS_LIB)
 #  include <QDBusVirtualObject>
 #endif

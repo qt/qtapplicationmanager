@@ -34,11 +34,15 @@ tools.depends = package-lib
         window-lib \
         manager \
         monitor-lib \
+
+    qtHaveModule(qml):qtHaveModule(dbus):SUBDIRS += \
         launcher-lib \
         monitor-lib \
         launchers
 
-    tools.depends *= manager-lib installer-lib launcher-lib window-lib monitor-lib
+    tools.depends *= manager-lib installer-lib window-lib monitor-lib
+
+    qtHaveModule(qml):qtHaveModule(dbus):tools.depends *= launcher-lib
 }
 
 SUBDIRS += tools

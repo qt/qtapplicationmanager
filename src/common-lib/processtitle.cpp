@@ -56,6 +56,8 @@ QT_END_NAMESPACE_AM
 #include <unistd.h>
 #include <string.h>
 #include <stdarg.h>
+#include <errno.h>
+#include <stdlib.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -122,7 +124,7 @@ static void ProcessTitleInitialize(int argc, char *argv[], char *envp[])
         *value++ = 0;
         if (setenv(name, value, 1) != 0) {
             fprintf(stderr, "ERROR: could not copy the environment: %s\n", strerror(errno));
-            _Exit(1);
+            _exit(1);
         }
     }
 

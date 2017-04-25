@@ -7,7 +7,7 @@ TEMPLATE = subdirs
     SUBDIRS += testrunner
 
     # This tool links against everything to extract the Qml type information
-    SUBDIRS += dumpqmltypes
+    qtHaveModule(qml):qtHaveModule(dbus):SUBDIRS += dumpqmltypes
 }
 
 !android:SUBDIRS += \

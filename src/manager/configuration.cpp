@@ -234,7 +234,9 @@ Configuration::~Configuration()
 // vvvv copied from QCommandLineParser ... why is this not public API?
 
 #if defined(Q_OS_WIN) && !defined(Q_OS_WINCE) && !defined(Q_OS_WINRT)
-# include <windows.h>
+#  include <windows.h>
+#elif defined(Q_OS_ANDROID)
+#  include <android/log.h>
 #endif
 
 enum MessageType { UsageMessage, ErrorMessage };
@@ -268,6 +270,13 @@ static void showParserMessage(const QString &message, MessageType type)
                     reinterpret_cast<const wchar_t *>(title.utf16()), flags);
         return;
     }
+#elif defined(Q_OS_ANDROID)
+    static QByteArray appName = QCoreApplication::applicationName().toLocal8Bit();
+
+    __android_log_print(type == UsageMessage ? ANDROID_LOG_WARN : ANDROID_LOG_ERROR,
+                        appName.constData(), qPrintable(message));
+    return;
+
 #endif // Q_OS_WIN && !QT_BOOTSTRAPPED && !Q_OS_WIN && !Q_OS_WINRT
     fputs(qPrintable(message), type == UsageMessage ? stdout : stderr);
 }
@@ -312,14 +321,6 @@ void Configuration::parse()
 #endif
 
     QStringList configFilePaths = d->clp.values(qSL("config-file"));
-
-#if defined(Q_OS_ANDROID)
-    if (!d->clp.isSet(qSL("config-file"))) {
-        const QString sdFilePath = findOnSDCard(qSL("application-manager.conf"));
-        if (!sdFilePath.isEmpty())
-            configFilePaths = QStringList(sdFilePath);
-    }
-#endif
 
     struct ConfigFile
     {

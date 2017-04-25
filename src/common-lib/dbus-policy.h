@@ -75,7 +75,7 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment);
 class QDBusContext
 {
 public:
-    inline bool calledFromDBus() { return false; }
+    inline bool calledFromDBus() const { return false; }
     inline void setDelayedReply(bool) const { }
     inline void sendErrorReply(const QString &, const QString & = QString()) const { }
 };

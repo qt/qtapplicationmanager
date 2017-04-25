@@ -50,6 +50,8 @@ import QtQuick.Window 2.1
 import QtWebKit 3.0
 import QtQuick.LocalStorage 2.0
 import com.pelagicore.datasource 0.1
+import com.pelagicore.ScreenManager 0.1
+import com.theqtcompany.comtqci18ndemo 0.1
 
 Rectangle {
     width: 100

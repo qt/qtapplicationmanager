@@ -42,7 +42,7 @@
 #include "crashhandler.h"
 #include "global.h"
 
-#if !defined(Q_OS_LINUX)
+#if !defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -319,7 +319,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
         UnixSignalHandler::instance()->resetToDefault({ SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT });
         abort();
     }
-    _Exit(-1);
+    _exit(-1);
 }
 
 QT_END_NAMESPACE_AM

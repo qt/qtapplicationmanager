@@ -44,48 +44,56 @@
 #include "libcryptofunction.h"
 #include "signature_p.h"
 
-#include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/pkcs7.h>
-#include <openssl/pkcs12.h>
-#include <openssl/bio.h>
-
 QT_BEGIN_NAMESPACE_AM
 
 // clazy:excludeall=non-pod-global-static
 
+// dummy structures
+struct BIO;
+struct BIO_METHOD;
+struct PKCS7;
+struct PKCS12;
+struct EVP_PKEY;
+struct EVP_CIPHER;
+struct X509;
+struct X509_STORE;
+struct STACK_OF_X509;
+struct i2d_of_void;
+struct d2i_of_void;
+typedef int pem_password_cb (char *, int, int, void *);
+
 // deleter
-static AM_LIBCRYPTO_FUNCTION(X509_free);
-static AM_LIBCRYPTO_FUNCTION(BIO_free, 0);
-static AM_LIBCRYPTO_FUNCTION(PKCS7_free);
-static AM_LIBCRYPTO_FUNCTION(EVP_PKEY_free);
-static AM_LIBCRYPTO_FUNCTION(PKCS12_free);
-static AM_LIBCRYPTO_FUNCTION(X509_STORE_free);
-static AM_LIBCRYPTO_FUNCTION(sk_pop_free);
+static AM_LIBCRYPTO_FUNCTION(X509_free, void(*)(X509 *));
+static AM_LIBCRYPTO_FUNCTION(BIO_free, int(*)(BIO *), 0);
+static AM_LIBCRYPTO_FUNCTION(PKCS7_free, void(*)(PKCS7 *));
+static AM_LIBCRYPTO_FUNCTION(EVP_PKEY_free, void(*)(EVP_PKEY *));
+static AM_LIBCRYPTO_FUNCTION(PKCS12_free, void(*)(PKCS12 *));
+static AM_LIBCRYPTO_FUNCTION(X509_STORE_free, void(*)(X509_STORE *));
+static AM_LIBCRYPTO_FUNCTION(sk_pop_free, void(*)(STACK_OF_X509 *, void(*)(void *)));
 
 // error handling
-static AM_LIBCRYPTO_FUNCTION(ERR_get_error, ERR_R_INTERNAL_ERROR);
+static AM_LIBCRYPTO_FUNCTION(ERR_get_error, unsigned long(*)(), 4|64 /*ERR_R_INTERNAL_ERROR*/);
 
 // create
-static AM_LIBCRYPTO_FUNCTION(BIO_ctrl, 0);
-static AM_LIBCRYPTO_FUNCTION(d2i_PKCS12_bio, nullptr);
-static AM_LIBCRYPTO_FUNCTION(PKCS12_parse, 0);
-static AM_LIBCRYPTO_FUNCTION(PKCS7_sign, nullptr);
-static AM_LIBCRYPTO_FUNCTION(BIO_new, nullptr);
-static AM_LIBCRYPTO_FUNCTION(BIO_s_mem, nullptr);
-static AM_LIBCRYPTO_FUNCTION(i2d_PKCS7, 0);
-static AM_LIBCRYPTO_FUNCTION(PEM_ASN1_write_bio, 0);
-static AM_LIBCRYPTO_FUNCTION(i2d_PKCS7_bio, 0);
-static AM_LIBCRYPTO_FUNCTION(d2i_PKCS7_bio, nullptr);
+static AM_LIBCRYPTO_FUNCTION(BIO_ctrl, long(*)(BIO *, int, long, void *), 0);
+static AM_LIBCRYPTO_FUNCTION(d2i_PKCS12_bio, PKCS12 *(*)(BIO *, PKCS12 **), nullptr);
+static AM_LIBCRYPTO_FUNCTION(PKCS12_parse, int (*)(PKCS12 *, const char *, EVP_PKEY **, X509 **, STACK_OF_X509 **ca), 0);
+static AM_LIBCRYPTO_FUNCTION(PKCS7_sign, PKCS7 *(*)(X509 *, EVP_PKEY *, STACK_OF_X509 *, BIO *, int), nullptr);
+static AM_LIBCRYPTO_FUNCTION(BIO_new, BIO *(*)(BIO_METHOD *), nullptr);
+static AM_LIBCRYPTO_FUNCTION(BIO_s_mem, BIO_METHOD *(*)(), nullptr);
+static AM_LIBCRYPTO_FUNCTION(i2d_PKCS7, int(*)(PKCS7 *, unsigned char **out), 0);
+static AM_LIBCRYPTO_FUNCTION(PEM_ASN1_write_bio, int (*)(i2d_of_void *, const char *, BIO *, void *, const EVP_CIPHER *, unsigned char *, int, pem_password_cb *, void *), 0);
+static AM_LIBCRYPTO_FUNCTION(i2d_PKCS7_bio, int (*)(BIO *, PKCS7 *), 0);
+static AM_LIBCRYPTO_FUNCTION(d2i_PKCS7_bio, PKCS7 *(*)(BIO *, PKCS7 **), nullptr);
 
 // verify
-static AM_LIBCRYPTO_FUNCTION(BIO_new_mem_buf, nullptr);
-static AM_LIBCRYPTO_FUNCTION(PEM_ASN1_read_bio, nullptr);
-static AM_LIBCRYPTO_FUNCTION(d2i_PKCS7, nullptr);
-static AM_LIBCRYPTO_FUNCTION(d2i_X509, nullptr);
-static AM_LIBCRYPTO_FUNCTION(X509_STORE_new, nullptr);
-static AM_LIBCRYPTO_FUNCTION(X509_STORE_add_cert, 0);
-static AM_LIBCRYPTO_FUNCTION(PKCS7_verify, 0);
+static AM_LIBCRYPTO_FUNCTION(BIO_new_mem_buf, BIO *(*)(const void *, int), nullptr);
+static AM_LIBCRYPTO_FUNCTION(PEM_ASN1_read_bio, void *(*)(d2i_of_void *, const char *, BIO *, void **, pem_password_cb *, void *), nullptr);
+static AM_LIBCRYPTO_FUNCTION(d2i_PKCS7, PKCS7 *(*)(PKCS7 **, const unsigned char **, long), nullptr);
+static AM_LIBCRYPTO_FUNCTION(d2i_X509, X509 *(*)(X509 **, const unsigned char **, long), nullptr);
+static AM_LIBCRYPTO_FUNCTION(X509_STORE_new, X509_STORE *(*)(), nullptr);
+static AM_LIBCRYPTO_FUNCTION(X509_STORE_add_cert, int (*)(X509_STORE *, X509 *), 0);
+static AM_LIBCRYPTO_FUNCTION(PKCS7_verify, int (*)(PKCS7 *, STACK_OF_X509 *, X509_STORE *, BIO *, BIO *, int), 0);
 
 struct OpenSslDeleter {
     static inline void cleanup(X509 *x509)
@@ -100,8 +108,8 @@ struct OpenSslDeleter {
     { am_PKCS12_free(pkcs12); }
     static inline void cleanup(X509_STORE *x509Store)
     { am_X509_STORE_free(x509Store); }
-    static inline void cleanup(STACK_OF(X509) *stackOfX509)
-    { am_sk_pop_free(CHECKED_STACK_OF(X509, stackOfX509), CHECKED_SK_FREE_FUNC(X509, am_X509_free.functionPointer())); }
+    static inline void cleanup(STACK_OF_X509 *stackOfX509)
+    { am_sk_pop_free(stackOfX509, (void(*)(void *)) am_X509_free.functionPointer()); }
 };
 
 template <typename T> using OpenSslPointer = QScopedPointer<T, OpenSslDeleter>;
@@ -137,11 +145,11 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
     //int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca);
     EVP_PKEY *tempSignKey = nullptr;
     X509 *tempSignCert = nullptr;
-    STACK_OF(X509) *tempCaCerts = nullptr;
+    STACK_OF_X509 *tempCaCerts = nullptr;
     int parseOk = am_PKCS12_parse(pkcs12.data(), signingCertificatePassword.constData(), &tempSignKey, &tempSignCert, &tempCaCerts);
     OpenSslPointer<EVP_PKEY> signKey(tempSignKey);
     OpenSslPointer<X509> signCert(tempSignCert);
-    OpenSslPointer<STACK_OF(X509)> caCerts(tempCaCerts);
+    OpenSslPointer<STACK_OF_X509> caCerts(tempCaCerts);
 
     if (!parseOk)
         throw OpenSslException("Could not parse PKCS#12 data");
@@ -156,7 +164,8 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
         throw OpenSslException("Could not create a BIO buffer for the hash");
 
     //PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs, BIO *data, int flags);
-    OpenSslPointer<PKCS7> signature(am_PKCS7_sign(signCert.data(), signKey.data(), caCerts.data(), bioHash.data(), PKCS7_DETACHED /*| PKCS7_BINARY*/));
+    OpenSslPointer<PKCS7> signature(am_PKCS7_sign(signCert.data(), signKey.data(), caCerts.data(),
+                                                  bioHash.data(), 0x40 /*PKCS7_DETACHED*/));
     if (!signature)
         throw OpenSslException("Could not create the PKCS#7 signature");
 
@@ -171,7 +180,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
 
     char *data = nullptr;
     // long size = BIO_get_mem_data(bioSignature.data(), &data);
-    long size = am_BIO_ctrl(bioSignature.data(), BIO_CTRL_INFO, 0, (char *) &data);
+    long size = am_BIO_ctrl(bioSignature.data(), 3 /*BIO_CTRL_INFO*/, 0, (char *) &data);
     if (size <= 0 || !data)
         throw OpenSslException("The BIO buffer for the PKCS#7 signature is invalid");
 
@@ -205,9 +214,11 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
             throw OpenSslException("Could not create BIO buffer for a certificate");
 
         // BIO_eof(b) == (int)BIO_ctrl(b,BIO_CTRL_EOF,0,NULL)
-        while (!am_BIO_ctrl(bioCert.data(), BIO_CTRL_EOF, 0, nullptr)) {
+        while (!am_BIO_ctrl(bioCert.data(), 2 /*BIO_CTRL_EOF*/, 0, nullptr)) {
             //OpenSslPointer<X509> cert(PEM_read_bio_X509(bioCert.data(), 0, 0, 0));
-            OpenSslPointer<X509> cert((X509 *) am_PEM_ASN1_read_bio((d2i_of_void *) am_d2i_X509.functionPointer(), PEM_STRING_X509, bioCert.data(), nullptr, nullptr, nullptr));
+            OpenSslPointer<X509> cert((X509 *) am_PEM_ASN1_read_bio((d2i_of_void *) am_d2i_X509.functionPointer(),
+                                                                    "CERTIFICATE" /*PEM_STRING_X509*/, bioCert.data(),
+                                                                    nullptr, nullptr, nullptr));
             if (!cert)
                 throw OpenSslException("Could not load a certificate from the chain of trust");
             if (!am_X509_STORE_add_cert(certChain.data(), cert.data()))
@@ -217,7 +228,7 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
     }
 
     // int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata, BIO *out, int flags);
-    if (am_PKCS7_verify(signature.data(), nullptr, certChain.data(), bioHash.data(), nullptr, PKCS7_NOCHAIN) != 1) {
+    if (am_PKCS7_verify(signature.data(), nullptr, certChain.data(), bioHash.data(), nullptr, 0x8 /*PKCS7_NOCHAIN*/) != 1) {
         bool failed = (am_ERR_get_error() != 0);
         if (failed)
             throw OpenSslException("Failed to verify signature");

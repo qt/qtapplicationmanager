@@ -43,10 +43,6 @@
 #include <QString>
 #include <QSslSocket>
 
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-
 #include "libcryptofunction.h"
 
 // we want at least openssl 1.0.1
@@ -54,21 +50,13 @@
 // we want at most openssl 1.0.255
 #define AM_MAXIMUM_OPENSSL_VERSION 0x100ff00fL
 
-#if OPENSSL_VERSION_NUMBER < AM_MINIMUM_OPENSSL_VERSION
-#  error "Your OpenSSL version is too old - the minimum supported version is 1.0.1"
-#endif
-
-#if OPENSSL_VERSION_NUMBER > AM_MAXIMUM_OPENSSL_VERSION
-#  error "Your OpenSSL version is too new - 1.1.x headers are incompatible with 1.0.1"
-#endif
-
 
 QT_BEGIN_NAMESPACE_AM
 
 // clazy:excludeall=non-pod-global-static
-static AM_LIBCRYPTO_FUNCTION(SSLeay, 0);
-static AM_LIBCRYPTO_FUNCTION(OPENSSL_add_all_algorithms_noconf);
-static AM_LIBCRYPTO_FUNCTION(ERR_load_crypto_strings);
+static AM_LIBCRYPTO_FUNCTION(SSLeay, unsigned long(*)(), 0);
+static AM_LIBCRYPTO_FUNCTION(OPENSSL_add_all_algorithms_noconf, void(*)());
+static AM_LIBCRYPTO_FUNCTION(ERR_load_crypto_strings, void(*)());
 
 
 QLibrary *Cryptography::LibCryptoFunctionBase::s_library = nullptr;
@@ -100,9 +88,14 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
         if (am_SSLeay.functionPointer()) {
             auto version = am_SSLeay();
             if (version >= AM_MINIMUM_OPENSSL_VERSION) {
-                am_OPENSSL_add_all_algorithms_noconf();
-                am_ERR_load_crypto_strings();
-                return true;
+                if (version <= AM_MAXIMUM_OPENSSL_VERSION) {
+                    am_OPENSSL_add_all_algorithms_noconf();
+                    am_ERR_load_crypto_strings();
+                    return true;
+                } else {
+                    qCritical("Loaded libcrypto (%s), but the version is too new: 0x%08lx (maximum supported version is: 0x%08lx)",
+                              qPrintable(s_library->fileName()), version, AM_MAXIMUM_OPENSSL_VERSION);
+                }
             } else {
                 qCritical("Loaded libcrypto (%s), but the version is too old: 0x%08lx (minimum supported version is: 0x%08lx)",
                           qPrintable(s_library->fileName()), version, AM_MINIMUM_OPENSSL_VERSION);

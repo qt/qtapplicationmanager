@@ -31,8 +31,6 @@ win32:!force-libcrypto {
     LIBS += -framework CoreFoundation -framework Security
     QT *= core-private
 } else {
-    include($$SOURCE_DIR/3rdparty/libcrypto.pri)
-
     SOURCES += \
         libcryptofunction.cpp \
         signature_openssl.cpp \

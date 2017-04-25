@@ -61,14 +61,13 @@
 
 #if defined(AM_USE_LIBCRYPTO)
 #  include "libcryptofunction.h"
-#  include <openssl/err.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 Q_GLOBAL_STATIC(QMutex, initMutex)
 
 // clazy:excludeall=non-pod-global-static
-static AM_LIBCRYPTO_FUNCTION(ERR_error_string_n);
+static AM_LIBCRYPTO_FUNCTION(ERR_error_string_n, void(*)(unsigned long, char *, size_t));
 
 QT_END_NAMESPACE_AM
 

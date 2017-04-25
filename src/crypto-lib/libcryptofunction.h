@@ -128,7 +128,7 @@ public:
     }
 };
 
-#define AM_LIBCRYPTO_FUNCTION(f, ...) Cryptography::LibCryptoFunction<decltype(&f)> am_ ## f(#f, ##__VA_ARGS__)
+#define AM_LIBCRYPTO_FUNCTION(f, typeof_f, ...) Cryptography::LibCryptoFunction<typeof_f> am_ ## f(#f, ##__VA_ARGS__)
 
 }
 

@@ -14,8 +14,6 @@ load(configure)
 qtCompileTest(libarchive)
 qtCompileTest(libyaml)
 qtCompileTest(libdbus)
-qtCompileTest(libcrypto)
-
 
 qtHaveModule(compositor)|if(qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private)) {
     CONFIG += am_compatible_compositor
@@ -25,9 +23,8 @@ force-single-process:force-multi-process:error("You cannot both specify force-si
 force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")
 force-multi-process:!config_libdbus:error("You forced multi-process mode, but libdbus-1 (>= 1.6) is not available")
 
-if(linux:!android|force-libcrypto) {
-    !config_libcrypto:error("Could not find a suitable libcrypto (needs OpenSSL >= 1.0.1 and < 1.1.0)")
-    !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")):error("Found libcrypto (OpenSSL), but Qt was built without OpenSSL support.")
+if(linux|force-libcrypto) {
+    !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")):error("Qt was built without OpenSSL support.")
 }
 
 MIN_MINOR=6
@@ -113,7 +110,6 @@ OTHER_FILES += \
     header.*[^~] \
     LICENSE.*[^~] \
     config.tests/libarchive/* \
-    config.tests/libcrypto/* \
     config.tests/libdbus/* \
     config.tests/libyaml/* \
 

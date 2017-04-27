@@ -50,48 +50,31 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.6
+import QtQuick 2.4
+import QtApplicationManager 1.0
 
-Rectangle {
+ApplicationManagerWindow {
+    id: root
+
     property alias title: title.text
-    property alias reading: reading.text
-    property alias model: listview.model
-    property alias delegate: listview.delegate
+    property alias idle: pause.duration
+    property string windowType
 
-    width: 185
-    height: 250
-    color: "black"
-    border { width: 1; color: "white" }
+    color: "darkgreen"
 
-    Rectangle {
-        width: parent.width
-        height: 30
-        color: "black"
-        border { width: 1; color: "white" }
-
-        MonitorText {
-            id: title
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        MonitorText {
-            id: reading
-            anchors.right: parent.right
-            anchors.rightMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-        }
+    Text{
+        id: title
+        color: "white"
+        anchors.centerIn: parent
     }
 
-    ListView {
-        id: listview
-        anchors.fill: parent
-        anchors.margins: 10
-        anchors.topMargin: 40
-        orientation: ListView.Horizontal
-        layoutDirection: Qt.RightToLeft
-        spacing: 3
-        clip: true
+    SequentialAnimation on color {
+        loops: Animation.Infinite
+        ColorAnimation { to: "darkolivegreen"; duration: 500 }
+        PauseAnimation { id: pause; duration: 0 }
+        ColorAnimation { to: "darkgreen"; duration: 500 }
+        PauseAnimation { duration: pause.duration }
     }
+
+    onWindowTypeChanged: root.setWindowProperty("windowType", windowType)
 }

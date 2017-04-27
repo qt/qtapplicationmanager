@@ -49,8 +49,8 @@
     \inqmlmodule QtApplicationManager
     \brief A type for monitoring process resource usage
 
-    The ProcessMonitor type provides statistics about the resource usage for a process known to the
-    application-manager. Currently, CPU load and memory usage can be monitored. This type is
+    The ProcessMonitor type provides statistics about the resource usage and performance for a process known to the
+    application-manager. Currently, CPU load, memory usage and frame rate can be monitored. This type is
     available in the system-UI only.
 
     The ProcessMonitor is dedicated to Linux in particular, since this is currently the only OS
@@ -112,6 +112,16 @@
             As the name implies, the code section of shared libraries is generally shared between
             processes. Memory may also be shared by other means provided by the OS (e.g. through
             \c mmap on Linux). See below for a list of supported keys.
+
+    \row
+        \li \c frameRate
+        \target frameRate-role
+        \li var
+        \li A list of frame rate measurements where each entry corresponds to a window
+            and is a map with the following keys: average, maximum, minimum and jitter.
+            See below for a list of supported keys.
+
+            \sa monitoredWindows
     \endtable
 
     These are the supported keys in the memory maps:
@@ -132,7 +142,27 @@
             memory (for example through \c malloc or \c mmap on Linux).
     \endtable
 
-    \note The model will be updated each \l reportingInterval milliseconds. Notet that the roles
+    These are the supported keys in each entry of the frameRate list:
+
+    \table
+    \header
+        \li Key
+        \li Description
+    \row
+        \li average
+        \li The average frame rate within the reporting interval.
+    \row
+        \li maximum
+        \li The maximum frame rate within the reporting interval.
+    \row
+        \li minimum
+        \li The minimum frame rate within the reporting interval.
+    \row
+        \li jitter
+        \li The jitter within the reporting interval.
+    \endtable
+
+    \note The model will be updated each \l reportingInterval milliseconds. Note that the roles
           will only be populated, if the corresponding reporting parts have been enabled.
 */
 
@@ -188,6 +218,34 @@
 */
 
 /*!
+    \qmlproperty bool ProcessMonitor::frameRateReportingEnabled
+
+    A boolean value that determines whether periodic frame rate reporting is enabled.
+
+    \note In order to receive measurements, the \l {monitoredWindows} property needs to
+    be set to windows which are going to be monitored.
+
+    \sa monitoredWindows
+*/
+
+/*!
+    \qmlproperty var ProcessMonitor::monitoredWindows
+
+    This property holds a list of windows for which frame rate monitoring will be performed.
+    Mapped windows are advertised through the \l {WindowManager::windowReady()}
+    signal and the WindowManager type is itself a model which holds all windows of all
+    application processes.
+
+    \note It is possible to monitor server side (system-UI) views, as well,
+    if the \l applicationId is empty (hence the system-UI process will be monitored).
+    Those windows are available from QML since they need to be registered with
+    \l {WindowManager::registerCompositorView(QQuickWindow *view)} {WindowManager}
+    and can be assigned to \l monitoredWindows.
+
+    \sa frameRateReportingEnabled
+*/
+
+/*!
     \qmlsignal ProcessMonitor::cpuLoadReportingChanged(real load)
 
     This signal is emitted periodically when CPU load reporting is enabled. The frequency is
@@ -207,6 +265,17 @@
     the same name described \l {memoryVirtual-role}{above}.
 
     \sa memoryReportingEnabled
+    \sa reportingInterval
+*/
+
+/*!
+    \qmlsignal ProcessMonitor::frameRateReportingChanged(var frameRate);
+
+    This signal is emitted periodically when frame rate reporting is enabled and \l monitoredWindows
+    is set. The frequency is defined by \l reportingInterval. The \a frameRate parameter provides
+    the same information as described \l {frameRate-role}{above}.
+
+    \sa frameRateReportingEnabled
     \sa reportingInterval
 */
 

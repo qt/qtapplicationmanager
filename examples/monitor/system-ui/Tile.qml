@@ -50,28 +50,9 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
+import QtQuick 2.6
 
 Item {
-    width: 30; height: 60
-
-    Rectangle {
-        width: 20; height:20; radius: 4
-        anchors.centerIn: parent
-        color: "green"
-
-        RotationAnimation on rotation {
-            id: rotation
-            from: 0; to: 360; loops: Animation.Infinite; duration: 4000
-        }
-
-        Timer {
-            running: true
-            onTriggered: {
-                rotation.paused = !rotation.paused;
-                interval = 100 + Math.random() * 600;
-                start();
-            }
-        }
-    }
+    width: 225
+    height: 300
 }

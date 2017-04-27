@@ -50,22 +50,27 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
+import QtQuick 2.6
 import QtQuick.Window 2.0
 import QtApplicationManager 1.0
 
+
 Window {
-    width: 652
-    height: 592
+    id: root
+
+    property var primaryWindow
+    property var secondaryWindow
+    property var monitoredAppWindow
+
+    width: 720
+    height: 600
     color: "black"
 
     Column {
-        x: 30; y: 30
-        spacing: 30
+        x: 10
+        padding: 20
 
-        Row {
-            spacing: 30
-
+        Tile {
             Column {
                 id: systemOverview
                 spacing: 10
@@ -76,50 +81,88 @@ Window {
                 MonitorText { id: systemMem; text: "Used Memory:"  }
                 MonitorText { text: "Idle Threshold: " + SystemMonitor.idleLoadThreshold * 100 + " %" }
                 MonitorText { text: "Idle: " + SystemMonitor.idle }
-
-                Spin {}
             }
+        }
 
-            MonitorChart {
-                id: systemFps
-                title: "Frame Rate"
-                model: SystemMonitor
-                delegate: Rectangle {
-                    id: fpsdel
-                    width: 11
-                    height: averageFps * 3
-                    anchors.bottom: parent.bottom
-                    color.r: averageFps >= 60 ? 0 : 1 - averageFps / 60
-                    color.g: averageFps >= 60 ? 1 : averageFps / 60
-                    color.b: 0
-                }
-            }
-
+        Tile {
             MonitorChart {
                 id: systemLoad
                 title: "CPU Load"
                 model: SystemMonitor
-                delegate: cpuDelegate
+                delegate: Rectangle {
+                    width: 11
+                    height: parent.height
+                    gradient: Gradient {
+                        GradientStop { position: 0.5; color: "#FF0000" }
+                        GradientStop { position: 1.0; color: "#00FF00" }
+                    }
+                    Rectangle {
+                        width: parent.width
+                        height: parent.height - cpuLoad * parent.height
+                        color: "black"
+                    }
+                }
             }
         }
+    }
 
-        Row {
-            spacing: 30
+    Rectangle {
+        x: 246; y: 25
+        width: 1; height: root.height - 50
+        color: "white"
+    }
 
+    Grid {
+        columns: 2
+        padding: 20
+        x: 260
+
+        Tile {
             Column {
-                spacing: 10
+                spacing: 20
 
-                MonitorText { text: "Process"; font.pixelSize: 26 }
-                MonitorText { text: processMon.applicationId === "" ? "System-UI" : processMon.applicationId }
+                MonitorText {
+                    text: "Process: " + (processMon.applicationId === "" ? "System-UI" : processMon.applicationId)
+                    font.pixelSize: 26
+                }
                 MonitorText { text: "Process ID: " + processMon.processId }
 
                 Switch {
-                    width: systemOverview.width
                     onToggle: processMon.applicationId = processMon.applicationId === ""
                                                          ? ApplicationManager.application(0).id : ""
                 }
             }
+        }
 
+        Tile {
+            Column {
+                visible: processMon.applicationId !== ""
+                spacing: 20
+                Item {
+                    width: 200; height: 65
+                    MonitorText { anchors.bottom: parent.bottom; text: "Application Windows:" }
+                }
+
+                WindowContainer {
+                    id: primary
+                    active: true
+                    onActivated: {
+                        root.monitoredAppWindow = [primaryWindow];
+                        secondary.active = false;
+                    }
+                }
+
+                WindowContainer {
+                    id: secondary
+                    onActivated: {
+                        root.monitoredAppWindow = [secondaryWindow];
+                        primary.active = false;
+                    }
+                }
+            }
+        }
+
+        Tile {
             MonitorChart {
                 id: processPss
                 title: "Memory PSS"
@@ -131,30 +174,44 @@ Window {
                     color: "lightsteelblue"
                 }
             }
+        }
 
+        Tile {
             MonitorChart {
-                id: processLoad
-                title: "CPU Usage"
+                id: frameChart
+                title: "Frame rate"
                 model: processMon
-                delegate: cpuDelegate
+                delegate: Rectangle {
+                    width: 11
+                    height: frameRate[0] ? frameRate[0].average * 3 : 0
+                    anchors.bottom: parent.bottom
+                    color.r: frameRate[0] ? (frameRate[0].average >= 60 ? 0 : 1 - frameRate[0].average / 60) : 0
+                    color.g: frameRate[0] ? (frameRate[0].average >= 60 ? 1 : frameRate[0].average / 60) : 0
+                    color.b: 0
+
+                }
             }
         }
     }
 
-    Component {
-        id: cpuDelegate
-        Rectangle {
-            width: 11
-            height: parent.height
-            gradient: Gradient {
-                GradientStop { position: 0.5; color: "#FF0000" }
-                GradientStop { position: 1.0; color: "#00FF00" }
+    Connections {
+        target: WindowManager
+        onWindowReady:  {
+            if (WindowManager.windowProperty(window, "windowType") === "primary") {
+                primaryWindow = window
+                window.parent = primary.container
+                window.anchors.fill = primary.container
+                root.monitoredAppWindow = [primaryWindow];
+            } else {
+                secondaryWindow = window
+                window.parent = secondary.container
+                window.anchors.fill = secondary.container
             }
-            Rectangle {
-                width: parent.width
-                height: parent.height - cpuLoad * parent.height
-                color: "black"
-            }
+        }
+
+        onWindowLost: {
+            root.monitoredAppWindow = []
+            WindowManager.releaseWindow(window);
         }
     }
 
@@ -165,18 +222,19 @@ Window {
         count: 12
 
         memoryReportingEnabled: true
-        cpuLoadReportingEnabled: true
+        frameRateReportingEnabled: true
+        monitoredWindows: (applicationId === "" || ApplicationManager.singleProcess) ? [ root ] : root.monitoredAppWindow
 
         onMemoryReportingChanged: processPss.reading = (memoryPss.total / 1e6).toFixed(0) + " MB";
-        onCpuLoadReportingChanged: processLoad.reading = (load * 100).toFixed(1) + " %";
+        onFrameRateReportingChanged: frameChart.reading = frameRate[0].average.toFixed(0) + " fps";
     }
 
     Connections {
         target: SystemMonitor
         onCpuLoadReportingChanged: systemLoad.reading = (load * 100).toFixed(1) + " %";
         onMemoryReportingChanged: systemMem.text = "Used Memory: " + (used / 1e9).toFixed(1) + " GB"
-        onFpsReportingChanged: systemFps.reading = average.toFixed(1) + " fps";
     }
+
 
     Component.onCompleted: {
         SystemMonitor.reportingInterval = 1000;
@@ -184,7 +242,6 @@ Window {
 
         SystemMonitor.idleLoadThreshold = 0.05;
         SystemMonitor.cpuLoadReportingEnabled = true;
-        SystemMonitor.fpsReportingEnabled = true;
         SystemMonitor.memoryReportingEnabled = true;
 
         ApplicationManager.startApplication(ApplicationManager.application(0).id);

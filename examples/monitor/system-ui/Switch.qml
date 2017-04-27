@@ -50,18 +50,17 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
+import QtQuick 2.6
 
 Rectangle {
-    signal toggle();
+    signal toggle()
 
-    height: 30;
-    radius: 4
+    width: 180; height: 30; radius: 4
     color: 'white'
 
     MonitorText {
         anchors.centerIn: parent
-        text: 'Switch'
+        text: 'Switch Process'
         font.bold: true
         color: 'black'
     }

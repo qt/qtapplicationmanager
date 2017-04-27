@@ -50,24 +50,35 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
+import QtQuick 2.6
 import QtApplicationManager 1.0
 
-ApplicationManagerWindow {
+ApplicationWindow {
+    title: "Primary Window"
+    windowType: "primary"
+
+    ApplicationWindow {
+        title: "Secondary Window"
+        windowType: "secondary"
+        visible: true
+        idle: 500
+    }
+
     Timer {
         property int count: 0
         running: true
+        repeat: true
         onTriggered: {
-            count++
-            var arr = new Array(5001);
-            var busy = Math.random() * 5000;
-            while (busy > 0) {
-                if (count < 500)
-                    arr[busy] = busy;
-                busy--;
+            if (count < 500) {
+                var arr = [];
+                var busy = Math.random() * 5000;
+                while (busy > 0)
+                    arr[busy] = busy--;
+                interval = 20 + Math.random() * 80;
+                count++;
+            } else {
+                repeat = false;
             }
-            interval = 20 + Math.random() * 80;
-            start();
         }
     }
 }

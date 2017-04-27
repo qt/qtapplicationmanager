@@ -53,45 +53,25 @@
 import QtQuick 2.6
 
 Rectangle {
-    property alias title: title.text
-    property alias reading: reading.text
-    property alias model: listview.model
-    property alias delegate: listview.delegate
+    property bool active: false
+    property alias container: container
+    signal activated()
 
-    width: 185
-    height: 250
-    color: "black"
-    border { width: 1; color: "white" }
+    width: 180; height: 65
 
-    Rectangle {
-        width: parent.width
-        height: 30
-        color: "black"
-        border { width: 1; color: "white" }
+    color: active ? "white" : "transparent"
 
-        MonitorText {
-            id: title
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        MonitorText {
-            id: reading
-            anchors.right: parent.right
-            anchors.rightMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-        }
+    Item {
+        id: container
+        anchors.margins: 2
+        anchors.fill: parent
     }
 
-    ListView {
-        id: listview
+    MouseArea {
         anchors.fill: parent
-        anchors.margins: 10
-        anchors.topMargin: 40
-        orientation: ListView.Horizontal
-        layoutDirection: Qt.RightToLeft
-        spacing: 3
-        clip: true
+        onClicked: {
+            active = true;
+            activated();
+        }
     }
 }

@@ -6,6 +6,6 @@ OTHER_FILES += \
     doc/src/*.qdoc \
     doc/images/*.png \
     system-ui/*.qml \
-    apps/tld.sysmon.app/*.yaml \
-    apps/tld.sysmon.app/*.qml
+    apps/tld.monitor.app/*.yaml \
+    apps/tld.monitor.app/*.qml
 

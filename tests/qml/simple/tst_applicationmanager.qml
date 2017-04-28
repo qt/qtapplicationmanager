@@ -378,7 +378,7 @@ TestCase {
 
             var atPos = id.indexOf('@')
             if (atPos >= 0)
-                id = id.substring(0, atPos - 1)
+                id = id.substring(0, atPos)
 
             // not perfect, but the basic signal sequence is already tested in test_startAndStopApplication
             verify(id === data.appId1 || id === data.appId2, "id = " + id)

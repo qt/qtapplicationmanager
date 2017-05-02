@@ -132,6 +132,9 @@ void QuickLauncher::timerEvent(QTimerEvent *te)
 
 void QuickLauncher::rebuild()
 {
+    if (m_shuttingDown)
+        return;
+
     int todo = 0;
     int done = 0;
 
@@ -190,6 +193,9 @@ void QuickLauncher::triggerRebuild(int delay)
 
 void QuickLauncher::removeEntry(AbstractContainer *container, AbstractRuntime *runtime)
 {
+    int carCount = 0;
+    int carRemoved = 0;
+
     for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
         for (int i = 0; i < entry->m_containersAndRuntimes.size(); ++i) {
             auto car = entry->m_containersAndRuntimes.at(i);
@@ -198,9 +204,16 @@ void QuickLauncher::removeEntry(AbstractContainer *container, AbstractRuntime *r
                 qCDebug(LogSystem) << "Removed quicklaunch entry for container/runtime" << container << runtime;
 
                 entry->m_containersAndRuntimes.removeAt(i--);
+                carRemoved++;
             }
+            carCount += entry->m_containersAndRuntimes.count();
         }
     }
+    // make sure to only emit shutDownFinished once: when the list gets empty for the first time.
+    // (removeEntry could be called again afterwards and it wouldn't actually remove anything, but
+    // without this guard, it would emit the signal multiple times)
+    if (m_shuttingDown && (carRemoved > 0) && (carCount == 0))
+        emit shutDownFinished();
 }
 
 QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString &containerId, const QString &runtimeId)
@@ -216,7 +229,11 @@ QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString 
                         || ((pass == 2) && (entry->m_runtimeId.isEmpty()))) {
                     if (!entry->m_containersAndRuntimes.isEmpty()) {
                         result = entry->m_containersAndRuntimes.takeFirst();
+                        result.first->disconnect(this);
+                        if (result.second)
+                            result.second->disconnect(this);
                         triggerRebuild();
+
                         pass = 2;
                         break;
                     }
@@ -228,18 +245,24 @@ QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString 
     return result;
 }
 
-void QuickLauncher::killAll()
+void QuickLauncher::shutDown()
 {
+    m_shuttingDown = true;
+    bool waitForRemove = false;
+
     for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
         for (const auto &car : qAsConst(entry->m_containersAndRuntimes)) {
-            if (car.second) {
-                car.second->stop(true);
-                delete car.second;
-            }
+            if (car.second)
+                car.second->stop();
+            else if (car.first)
+                car.first->deleteLater();
+
+            if (car.first || car.second)
+                waitForRemove = true;
         }
-        entry->m_containersAndRuntimes.clear();
     }
-    m_quickLaunchPool.clear();
+    if (!waitForRemove)
+        QTimer::singleShot(0, this, &QuickLauncher::shutDownFinished);
 }
 
 QT_END_NAMESPACE_AM

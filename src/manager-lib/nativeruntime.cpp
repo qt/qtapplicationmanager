@@ -158,10 +158,11 @@ bool NativeRuntime::initialize()
 
 void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
 {
-    qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
-                       << "pid:" << m_process->processId() << ") exited with code:" << exitCode
-                       << "status:" << status;
-
+    if (!m_isQuickLauncher || m_applicationInterfaceConnected) {
+        qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
+                           << "pid:" << m_process->processId() << ") exited with code:" << exitCode
+                           << "status:" << status;
+    }
     m_applicationInterfaceConnected = m_launchWhenReady = m_dbusConnection = false;
 
     // unregister all extension interfaces
@@ -354,8 +355,10 @@ void NativeRuntime::onApplicationFinishedInitialization()
 
         QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
         QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
-        emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document,
-                                                  m_mimeType, m_app->toVariantMap(), systemProperties());
+
+        emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
+                                                  convertFromJSVariant(QVariant(m_app->toVariantMap())).toMap(),
+                                                  convertFromJSVariant(QVariant(systemProperties())).toMap());
         m_applicationInterfaceConnected = true;
     }
 

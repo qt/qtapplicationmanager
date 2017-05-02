@@ -210,6 +210,15 @@
 */
 
 /*!
+    \qmlproperty bool ApplicationManager::shuttingDown
+    \readonly
+
+    This property is there to inform the System-UI, when the application-manager has entered its
+    shutdown phase. New application starts are already prevented, but the System-UI might want
+    to impose additional restrictions in this state.
+*/
+
+/*!
     \qmlproperty bool ApplicationManager::securityChecksEnabled
     \readonly
 
@@ -459,6 +468,11 @@ ApplicationManager::~ApplicationManager()
 bool ApplicationManager::isSingleProcess() const
 {
     return d->singleProcess;
+}
+
+bool ApplicationManager::isShuttingDown() const
+{
+    return d->shuttingDown;
 }
 
 bool ApplicationManager::securityChecksEnabled() const
@@ -734,6 +748,8 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
                                           const QString &debugWrapperSpecification,
                                           const QVector<int> &stdioRedirections)  Q_DECL_NOEXCEPT_EXPR(false)
 {
+    if (d->shuttingDown)
+        throw Exception("Cannot start applications during shutdown");
     if (!app)
         throw Exception("Cannot start an invalid application");
     if (app->isBlocked())
@@ -985,16 +1001,6 @@ void ApplicationManager::stopApplication(const Application *app, bool forceKill)
     AbstractRuntime *rt = app->currentRuntime();
     if (rt)
         rt->stop(forceKill);
-}
-
-void ApplicationManager::killAll()
-{
-    for (const Application *app : qAsConst(d->apps)) {
-        AbstractRuntime *rt = app->currentRuntime();
-        if (rt)
-            rt->stop(true);
-    }
-    QuickLauncher::instance()->killAll();
 }
 
 /*!
@@ -1565,6 +1571,35 @@ void ApplicationManager::preload()
             }
         }
     }
+}
+
+void ApplicationManager::shutDown()
+{
+    d->shuttingDown = true;
+    emit shuttingDownChanged();
+
+    auto shutdownHelper = [this]() {
+        bool activeRuntime = false;
+        for (const Application *app : qAsConst(d->apps)) {
+            AbstractRuntime *rt = app->currentRuntime();
+            if (rt) {
+                activeRuntime = true;
+                break;
+            }
+        }
+        if (!activeRuntime)
+            emit shutDownFinished();
+    };
+
+    for (const Application *app : qAsConst(d->apps)) {
+        AbstractRuntime *rt = app->currentRuntime();
+        if (rt) {
+            connect(rt, &AbstractRuntime::destroyed,
+                    this, shutdownHelper);
+            rt->stop();
+        }
+    }
+    shutdownHelper();
 }
 
 void ApplicationManager::openUrlRelay(const QUrl &url)

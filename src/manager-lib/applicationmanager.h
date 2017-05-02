@@ -71,6 +71,7 @@ class ApplicationManager : public QAbstractListModel, protected QDBusContext
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT)
+    Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged)
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT)
@@ -92,6 +93,7 @@ public:
 
     bool isSingleProcess() const;
     bool isDummy() const { return false; }
+    bool isShuttingDown() const;
     QVariantMap systemProperties() const;
     void setSystemProperties(const QVariantMap &map);
 
@@ -110,7 +112,6 @@ public:
                           const QString &debugWrapperSpecification = QString(),
                           const QVector<int> &stdioRedirections = QVector<int>()) Q_DECL_NOEXCEPT_EXPR(false);
     void stopApplication(const Application *app, bool forceKill = false);
-    void killAll();
 
     // only use these two functions for development!
     bool securityChecksEnabled() const;
@@ -153,6 +154,9 @@ public:
     Q_SCRIPTABLE QString identifyApplication(qint64 pid) const;
     Q_SCRIPTABLE RunState applicationRunState(const QString &id) const;
 
+public slots:
+    void shutDown();
+
 signals:
     Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(ApplicationManager::RunState) runState);
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
@@ -170,6 +174,8 @@ signals:
     void memoryCriticalWarning();
 
     void containerSelectionFunctionChanged();
+    void shuttingDownChanged();
+    void shutDownFinished();
 
 private slots:
     void preload();

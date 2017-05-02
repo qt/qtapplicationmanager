@@ -195,7 +195,7 @@ Main::Main(int &argc, char **argv)
                                            [](int /*sig*/) {
         UnixSignalHandler::instance()->resetToDefault(SIGINT);
         fputs("\n*** received SIGINT / Ctrl+C ... exiting ***\n\n", stderr);
-        qApp->exit(1);
+        static_cast<Main *>(qApp)->shutDown();
     });
     StartupTimer::instance()->checkpoint("after application constructor");
 }
@@ -289,6 +289,41 @@ int Main::exec() Q_DECL_NOEXCEPT_EXPR(false)
 bool Main::isSingleProcessMode() const
 {
     return m_isSingleProcessMode;
+}
+
+void Main::shutDown()
+{
+    enum {
+        ApplicationManagerDown = 0x01,
+        QuickLauncherDown = 0x02,
+        WindowManagerDown = 0x04
+    };
+
+    static int down = 0;
+
+    static auto checkShutDownFinished = [](int nextDown) {
+        down |= nextDown;
+        if (down == (ApplicationManagerDown | QuickLauncherDown | WindowManagerDown)) {
+            down = 0;
+            QCoreApplication::quit();
+        }
+    };
+
+    if (m_applicationManager) {
+        connect(m_applicationManager, &ApplicationManager::shutDownFinished,
+                this, []() { checkShutDownFinished(ApplicationManagerDown); });
+        m_applicationManager->shutDown();
+    }
+    if (m_quickLauncher) {
+        connect(m_quickLauncher, &QuickLauncher::shutDownFinished,
+                this, []() { checkShutDownFinished(QuickLauncherDown); });
+        m_quickLauncher->shutDown();
+    }
+    if (m_windowManager) {
+        connect(m_windowManager, &WindowManager::shutDownFinished,
+                this, []() { checkShutDownFinished(WindowManagerDown); });
+        m_windowManager->shutDown();
+    }
 }
 
 void Main::setupQmlDebugging()
@@ -526,9 +561,6 @@ void Main::setupSingletons() Q_DECL_NOEXCEPT_EXPR(false)
     m_applicationManager->setSystemProperties(m_systemProperties.at(SP_SystemUi));
     m_applicationManager->setContainerSelectionConfiguration(m_config.containerSelectionConfiguration());
 
-    QObject::connect(this, &QCoreApplication::aboutToQuit,
-                     m_applicationManager, &ApplicationManager::killAll);
-
     StartupTimer::instance()->checkpoint("after ApplicationManager instantiation");
 
     m_notificationManager = NotificationManager::createInstance();
@@ -604,6 +636,7 @@ void Main::setupQmlEngine()
     StartupTimer::instance()->checkpoint("after QML registrations");
 
     m_engine = new QQmlApplicationEngine(this);
+    connect(m_engine, &QQmlEngine::quit, this, &Main::shutDown);
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
     m_engine->setImportPathList(m_engine->importPathList() + m_config.importPaths());
@@ -643,9 +676,11 @@ void Main::setupWindowTitle()
 void Main::setupWindowManager()
 {
 #if !defined(AM_HEADLESS)
-    QUnifiedTimer::instance()->setSlowModeEnabled(m_config.slowAnimations());
+    bool slowAnimations = m_config.slowAnimations();
+    QUnifiedTimer::instance()->setSlowModeEnabled(slowAnimations);
 
     m_windowManager = WindowManager::createInstance(m_engine, m_config.waylandSocketName());
+    m_windowManager->setSlowAnimations(slowAnimations);
     m_windowManager->enableWatchdog(!m_config.noUiWatchdog());
 
     QObject::connect(m_applicationManager, &ApplicationManager::inProcessRuntimeCreated,
@@ -679,6 +714,9 @@ void Main::loadQml() Q_DECL_NOEXCEPT_EXPR(false)
 void Main::showWindow()
 {
 #if !defined(AM_HEADLESS)
+    setQuitOnLastWindowClosed(false);
+    connect(this, &QGuiApplication::lastWindowClosed, this, &Main::shutDown);
+
     QQuickWindow *window = nullptr;
     QObject *rootObject = m_engine->rootObjects().constFirst();
 

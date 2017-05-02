@@ -64,10 +64,13 @@ public:
 
     QPair<AbstractContainer *, AbstractRuntime *> take(const QString &containerId, const QString &runtimeId);
 
-    void killAll();
+    void shutDown();
 
 public slots:
     void rebuild();
+
+signals:
+    void shutDownFinished();
 
 protected:
     void timerEvent(QTimerEvent *te) override;
@@ -94,6 +97,7 @@ private:
     CpuReader *m_idleCpu = nullptr;
     bool m_isIdle = false;
     qreal m_idleThreshold;
+    bool m_shuttingDown = false;
 };
 
 QT_END_NAMESPACE_AM

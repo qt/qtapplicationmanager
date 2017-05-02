@@ -89,6 +89,8 @@ public:
     void setup() Q_DECL_NOEXCEPT_EXPR(false);
     int exec() Q_DECL_NOEXCEPT_EXPR(false);
 
+    void shutDown();
+
 protected:
     void setupQmlDebugging();
     void setupLoggingRules();

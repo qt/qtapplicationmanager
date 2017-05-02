@@ -46,6 +46,7 @@
 #include <QQuickItemGrabResult>
 #include <QQmlEngine>
 #include <QVariant>
+#include <QTimer>
 
 #if defined(QT_DBUS_LIB)
 #  include <QDBusMessage>
@@ -277,6 +278,10 @@
           timing is up to the System-UI; calling releaseWindow() can be delayed in order to play a
           shutdown animation, but failing to call it will result in resource leaks.
 
+    \note If the System-UI fails to call releaseWindow() within 2 seconds afer receiving the
+          windowLost() signal, the application-manager will automatically call it to prevent
+          resource leaks and deadlocks on shutdown.
+
     More information about this window can be retrieved via the model \a index.
 */
 
@@ -327,6 +332,14 @@ QObject *WindowManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
     return instance();
 }
 
+void WindowManager::shutDown()
+{
+    d->shuttingDown = true;
+
+    if (d->windows.isEmpty())
+        QTimer::singleShot(0, this, &WindowManager::shutDownFinished);
+}
+
 /*!
     \qmlproperty bool WindowManager::runningOnDesktop
     \readonly
@@ -341,6 +354,23 @@ bool WindowManager::isRunningOnDesktop() const
 #else
     return qApp->platformName() == qSL("xcb");
 #endif
+}
+
+/*!
+    \qmlproperty bool WindowManager::slowAnimations
+    \readonly
+
+    This property reflects the state of the command line option \c --slow-animations. Useful
+    if you need to adjust timings for the slow animation mode.
+*/
+bool WindowManager::slowAnimations() const
+{
+    return d->slowAnimations;
+}
+
+void WindowManager::setSlowAnimations(bool slowAnimations)
+{
+    d->slowAnimations = slowAnimations;
 }
 
 WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocketName)
@@ -511,6 +541,9 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
           timing is up to the System-UI; calling releaseWindow() can be delayed in order to play a
           shutdown animation, but failing to call it will result in resource leaks.
 
+    \note If the System-UI fails to call releaseWindow() within 2 seconds afer receiving the
+          windowLost() signal, the application-manager will automatically call it to prevent
+          resource leaks and deadlocks on shutdown.
     \sa windowLost
 */
 
@@ -530,6 +563,9 @@ void WindowManager::releaseWindow(QQuickItem *window)
     endRemoveRows();
 
     win->deleteLater();
+
+    if (d->shuttingDown && (count() == 0))
+        QTimer::singleShot(0, this, &WindowManager::shutDownFinished);
 }
 
 /*!
@@ -757,6 +793,13 @@ void WindowManager::waylandSurfaceDestroyed(WindowSurface *surface)
     win->setClosing();
 
     emit windowLost(index, win->windowItem()); //TODO: rename to windowDestroyed
+
+    // Just to safe-guard against the system-ui not releasing windows. This could lead to severe
+    // leaks in the graphics stack and it will also prevent clean shutdowns of the appman process.
+    int timeout = 2000;
+    if (slowAnimations())
+        timeout *= 5; // QUnifiedTimer has no getter for this...
+    QTimer::singleShot(timeout, win, [this, win]() { releaseWindow(win->windowItem()); });
 }
 
 #endif // defined(AM_MULTI_PROCESS)

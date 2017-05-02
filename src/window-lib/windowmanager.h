@@ -74,13 +74,19 @@ class WindowManager : public QAbstractListModel, protected QDBusContext
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT)
+    Q_PROPERTY(bool slowAnimations READ slowAnimations CONSTANT)
+
 public:
     ~WindowManager();
     static WindowManager *createInstance(QQmlEngine *qmlEngine, const QString &waylandSocketName = QString());
     static WindowManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
+    void shutDown();
+
     bool isRunningOnDesktop() const;
+    bool slowAnimations() const;
+    void setSlowAnimations(bool slowAnimations);
 
     void enableWatchdog(bool enable);
     bool isWatchdogEnabled() const;
@@ -112,6 +118,8 @@ signals:
     void windowPropertyChanged(QQuickItem *window, const QString &name, const QVariant &value);
 
     void compositorViewRegistered(QQuickWindow *view);
+
+    void shutDownFinished();
 
 private slots:
     void surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen);

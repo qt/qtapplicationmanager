@@ -75,7 +75,7 @@ to single-process mode, if certain dependencies are not available:
 \list
 \li You are building for \b Linux.
 \li The \b QtWayland module is available.
-\li \b libdbus 1.6 or higher is available.
+\li The \b QtDBus module is available.
 \endlist
 
 You can force the build mode though via the respective \c -config options \c force-multi-process and

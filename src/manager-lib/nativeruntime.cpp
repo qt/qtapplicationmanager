@@ -70,14 +70,23 @@ QT_BEGIN_NAMESPACE_AM
 
 #if defined(AM_MULTI_PROCESS)
 QT_END_NAMESPACE_AM
-#  include <dbus/dbus.h>
+#  include <dlfcn.h>
 #  include <sys/socket.h>
 QT_BEGIN_NAMESPACE_AM
 
 static qint64 getDBusPeerPid(const QDBusConnection &conn)
 {
+    typedef bool (*am_dbus_connection_get_socket_t)(void *, int *);
+    static am_dbus_connection_get_socket_t am_dbus_connection_get_socket = nullptr;
+
+    if (!am_dbus_connection_get_socket)
+        am_dbus_connection_get_socket = (am_dbus_connection_get_socket_t) dlsym(RTLD_DEFAULT, "dbus_connection_get_socket");
+
+    if (!am_dbus_connection_get_socket)
+        qFatal("ERROR: could not resolve 'dbus_connection_get_socket' from libdbus-1");
+
     int socketFd = -1;
-    if (dbus_connection_get_socket(static_cast<DBusConnection *>(conn.internalPointer()), &socketFd)) {
+    if (am_dbus_connection_get_socket(conn.internalPointer(), &socketFd)) {
         struct ucred ucred;
         socklen_t ucredSize = sizeof(struct ucred);
         if (getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0)

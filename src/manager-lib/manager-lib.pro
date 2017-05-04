@@ -17,7 +17,7 @@ QT_FOR_PRIVATE *= \
 CONFIG *= static internal_module
 
 multi-process {
-    PKGCONFIG += "'dbus-1 >= 1.6'"
+    LIBS += -ldl
 }
 
 HEADERS += \

@@ -13,7 +13,6 @@ else:contains(QT_BUILD_PARTS, "examples"):CONFIG += enable-examples
 load(configure)
 qtCompileTest(libarchive)
 qtCompileTest(libyaml)
-qtCompileTest(libdbus)
 
 qtHaveModule(compositor)|if(qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private)) {
     CONFIG += am_compatible_compositor
@@ -21,7 +20,6 @@ qtHaveModule(compositor)|if(qtHaveModule(waylandcompositor):qtHaveModule(wayland
 
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")
-force-multi-process:!config_libdbus:error("You forced multi-process mode, but libdbus-1 (>= 1.6) is not available")
 
 if(linux|force-libcrypto) {
     !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")):error("Qt was built without OpenSSL support.")
@@ -110,7 +108,6 @@ OTHER_FILES += \
     header.*[^~] \
     LICENSE.*[^~] \
     config.tests/libarchive/* \
-    config.tests/libdbus/* \
     config.tests/libyaml/* \
 
 GCOV_EXCLUDE = /usr/* \

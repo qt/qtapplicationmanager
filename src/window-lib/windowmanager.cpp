@@ -47,6 +47,8 @@
 #include <QQmlEngine>
 #include <QVariant>
 #include <QTimer>
+#include <QThread>
+#include <private/qabstractanimation_p.h>
 
 #if defined(QT_DBUS_LIB)
 #  include <QDBusMessage>
@@ -583,6 +585,23 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 {
     d->views << view;
 
+    if (slowAnimations()) {
+        // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
+        // we need to enable the slow mode in this timer as well.
+        static QHash<QQuickWindow *, QMetaObject::Connection> conns;
+        conns.insert(view, connect(view, &QQuickWindow::beforeRendering, this, [view] {
+            QMetaObject::Connection con = conns[view];
+            if (con) {
+#if defined(Q_CC_MSVC)
+                qApp->disconnect(con); // MSVC2013 cannot call static member functions without capturing this
+#else
+                QObject::disconnect(con);
+#endif
+                QUnifiedTimer::instance()->setSlowModeEnabled(true);
+            }
+        }, Qt::DirectConnection));
+    }
+
 #if defined(AM_MULTI_PROCESS)
     if (!ApplicationManager::instance()->isSingleProcess()) {
         if (!d->waylandCompositor) {
@@ -675,7 +694,6 @@ void WindowManager::inProcessSurfaceItemClosing(QQuickItem *surfaceItem)
     //emit destroyed as well, so the compositor knows that the closing transition can be played now and the window be freed
     emit windowLost(index, win->windowItem());
 }
-
 
 /*! \internal
     Used to create the Window objects for a surface

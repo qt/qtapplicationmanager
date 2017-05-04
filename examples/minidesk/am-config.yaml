@@ -9,7 +9,7 @@ installationLocations:
   isDefault: true
 
 applications:
-  builtinAppsManifestDir: "apps"
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
   installedAppsManifestDir: "/tmp/am/manifests"
   appImageMountDir: "/tmp/am/image-mounts"
   database: "/tmp/am/apps.db"
@@ -24,7 +24,7 @@ logging:
 
 ui:
   fullscreen: no
-  mainQml: "system-ui/main.qml"
+  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
 
 systemProperties:
   protected:

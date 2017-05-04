@@ -113,7 +113,7 @@ void SoftwareContainerManager::setConfiguration(const QVariantMap &configuration
     m_configuration = configuration;
 }
 
-ContainerInterface *SoftwareContainerManager::create(const QVector<int> &stdioRedirections,
+ContainerInterface *SoftwareContainerManager::create(bool isQuickLaunch, const QVector<int> &stdioRedirections,
                                                      const QStringList &debugWrapperCommand)
 {
     if (!m_interface) {
@@ -181,7 +181,8 @@ ContainerInterface *SoftwareContainerManager::create(const QVector<int> &stdioRe
     if ((::fcntl(outputFd, F_GETFD) < 0) && (errno == EBADF))
         outputFd = STDOUT_FILENO;
 
-    SoftwareContainer *container = new SoftwareContainer(this, containerId, outputFd, debugWrapperCommand);
+    SoftwareContainer *container = new SoftwareContainer(this, isQuickLaunch, containerId,
+                                                         outputFd, debugWrapperCommand);
     m_containers.insert(containerId, container);
     connect(container, &QObject::destroyed, this, [this, containerId]() { m_containers.remove(containerId); });
     return container;
@@ -213,9 +214,10 @@ void SoftwareContainerManager::processStateChanged(int containerId, uint process
 
 
 
-SoftwareContainer::SoftwareContainer(SoftwareContainerManager *manager, int containerId,
+SoftwareContainer::SoftwareContainer(SoftwareContainerManager *manager, bool isQuickLaunch, int containerId,
                                      int outputFd, const QStringList &debugWrapperCommand)
     : m_manager(manager)
+    , m_isQuickLaunch(isQuickLaunch)
     , m_id(containerId)
     , m_outputFd(outputFd)
     , m_debugWrapperCommand(debugWrapperCommand)

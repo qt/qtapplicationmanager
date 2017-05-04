@@ -91,7 +91,8 @@ public:
     virtual bool supportsQuickLaunch() const = 0;
     virtual void setConfiguration(const QVariantMap &configuration) = 0;
 
-    virtual ContainerInterface *create(const QVector<int> &stdioRedirections,
+    virtual ContainerInterface *create(bool isQuickLaunch,
+                                       const QVector<int> &stdioRedirections,
                                        const QStringList &debugWrapperCommand) = 0;
 };
 

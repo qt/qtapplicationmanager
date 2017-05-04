@@ -54,8 +54,8 @@ class SoftwareContainer : public ContainerInterface
     Q_OBJECT
 
 public:
-    SoftwareContainer(SoftwareContainerManager *manager, int containerId, int outputFd,
-                      const QStringList &debugWrapperCommand);
+    SoftwareContainer(SoftwareContainerManager *manager, bool isQuickLaunch, int containerId,
+                      int outputFd, const QStringList &debugWrapperCommand);
     ~SoftwareContainer();
 
     SoftwareContainerManager *manager() const;
@@ -86,6 +86,7 @@ public:
 
 private:
     SoftwareContainerManager *m_manager;
+    bool m_isQuickLaunch;
     int m_id;
     QString m_program;
     QString m_baseDir;
@@ -115,7 +116,8 @@ public:
     bool supportsQuickLaunch() const override;
     void setConfiguration(const QVariantMap &configuration) override;
 
-    ContainerInterface *create(const QVector<int> &stdioRedirections,
+    ContainerInterface *create(bool isQuickLaunch,
+                               const QVector<int> &stdioRedirections,
                                const QStringList &debugWrapperCommand) override;
 public:
     QDBusInterface *interface() const;

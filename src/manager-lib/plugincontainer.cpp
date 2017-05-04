@@ -63,7 +63,7 @@ bool PluginContainerManager::supportsQuickLaunch() const
 AbstractContainer *PluginContainerManager::create(const Application *app, const QVector<int> &stdioRedirections,
                                                   const QStringList &debugWrapperCommand)
 {
-    auto containerInterface = m_interface->create(stdioRedirections, debugWrapperCommand);
+    auto containerInterface = m_interface->create(app == nullptr, stdioRedirections, debugWrapperCommand);
     if (!containerInterface)
         return nullptr;
     return new PluginContainer(this, app, containerInterface);

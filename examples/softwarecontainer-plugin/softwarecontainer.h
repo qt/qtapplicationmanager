@@ -42,6 +42,7 @@
 #pragma once
 
 #include <QVariantMap>
+#include <QFileInfo>
 
 #include <QtAppManPluginInterfaces/containerinterface.h>
 
@@ -85,6 +86,9 @@ public:
     void containerExited(uint exitCode);
 
 private:
+    bool sendCapabilities();
+    bool sendBindMounts();
+
     SoftwareContainerManager *m_manager;
     bool m_isQuickLaunch;
     int m_id;
@@ -101,6 +105,7 @@ private:
     int m_fifoFd = -1;
     int m_outputFd;
     QStringList m_debugWrapperCommand;
+    QFileInfo m_dbusP2PInfo;
 };
 
 class SoftwareContainerManager : public QObject, public ContainerManagerInterface

@@ -240,6 +240,12 @@ SoftwareContainerManager *SoftwareContainer::manager() const
 
 bool SoftwareContainer::attachApplication(const QVariantMap &application)
 {
+
+    // In normal launch attachApplication is called first, then the start()
+    // method is called. During quicklaunch start() is called first and then
+    // attachApplication. In this case we need to configure the container
+    // with any extra capabilities etc.
+
     m_state = QProcess::Starting;
     m_application = application;
 
@@ -249,6 +255,16 @@ bool SoftwareContainer::attachApplication(const QVariantMap &application)
 
     m_appRelativeCodePath = application.value(qSL("codeFilePath")).toString();
     m_containerPath = qSL("/app");
+
+    // If this is a quick launch instance, we need to renew the capabilities
+    // and send the bindmounts.
+    if (m_isQuickLaunch) {
+        if (!sendCapabilities())
+            return false;
+
+        if (!sendBindMounts())
+            return false;
+    }
 
     m_ready = true;
     emit ready();
@@ -292,13 +308,10 @@ QString SoftwareContainer::mapHostPathToContainer(const QString &hostPath) const
     return hostPath;
 }
 
-bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnvironment &environment)
+bool SoftwareContainer::sendCapabilities()
 {
     auto iface = manager()->interface();
     if (!iface)
-        return false;
-
-    if (!QFile::exists(m_program))
         return false;
 
     // this is the one and only capability in io.qt.ApplicationManager.Application.json
@@ -309,18 +322,20 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
         qWarning() << "SoftwareContainer failed to set capabilities to" << capabilities << ":" << reply.errorMessage();
         return false;
     }
+    return true;
+}
 
-    // parse out the actual socket file name from the DBus specification
-    QString dbusP2PSocket = environment.value(QStringLiteral("AM_DBUS_PEER_ADDRESS"));
-    dbusP2PSocket = dbusP2PSocket.mid(dbusP2PSocket.indexOf(QLatin1Char('=')) + 1);
-    dbusP2PSocket = dbusP2PSocket.left(dbusP2PSocket.indexOf(QLatin1Char(',')));
-    QFileInfo dbusP2PInfo(dbusP2PSocket);
+bool SoftwareContainer::sendBindMounts()
+{
+    auto iface = manager()->interface();
+    if (!iface)
+        return false;
 
     QFileInfo fontCacheInfo(qSL("/var/cache/fontconfig"));
 
     QVector<std::tuple<QString, QString, bool>> bindMounts; // bool == isReadOnly
     // the private P2P D-Bus
-    bindMounts.append(std::make_tuple(dbusP2PInfo.absoluteFilePath(), dbusP2PInfo.absoluteFilePath(), false));
+    bindMounts.append(std::make_tuple(m_dbusP2PInfo.absoluteFilePath(), m_dbusP2PInfo.absoluteFilePath(), false));
 
     // we need to share the fontconfig cache - otherwise the container startup might take a long time
     bindMounts.append(std::make_tuple(fontCacheInfo.absoluteFilePath(), fontCacheInfo.absoluteFilePath(), false));
@@ -349,6 +364,34 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
             return false;
         }
     }
+
+    return true;
+
+}
+
+bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnvironment &environment)
+{
+    auto iface = manager()->interface();
+    if (!iface)
+        return false;
+
+    if (!QFile::exists(m_program))
+        return false;
+
+    // Send initial capabilities even if this is a quick-launch instance
+    if (!sendCapabilities())
+        return false;
+
+    // parse out the actual socket file name from the DBus specification
+    QString dbusP2PSocket = environment.value(QStringLiteral("AM_DBUS_PEER_ADDRESS"));
+    dbusP2PSocket = dbusP2PSocket.mid(dbusP2PSocket.indexOf(QLatin1Char('=')) + 1);
+    dbusP2PSocket = dbusP2PSocket.left(dbusP2PSocket.indexOf(QLatin1Char(',')));
+    QFileInfo dbusP2PInfo(dbusP2PSocket);
+    m_dbusP2PInfo = dbusP2PInfo;
+
+    // Only send the bindmounts if this is not a quick-launch instance.
+    if (!m_isQuickLaunch && !sendBindMounts())
+        return false;
 
     // create an unique fifo name in /tmp
     m_fifoPath = QDir::tempPath().toLocal8Bit() + "/sc-" + QUuid::createUuid().toByteArray().mid(1,36) + ".fifo";
@@ -461,7 +504,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
     sleep(10000000);
 #endif
 
-    reply = iface->call(QDBus::Block, "Execute", m_id, cmdLine, m_containerPath, QString::fromLocal8Bit(m_fifoPath), venvVars);
+    auto reply = iface->call(QDBus::Block, "Execute", m_id, cmdLine, m_containerPath, QString::fromLocal8Bit(m_fifoPath), venvVars);
     if (reply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "SoftwareContainer failed to execute application" << m_id << "in directory" << m_containerPath << "in the container:" << reply.errorMessage();
         return false;

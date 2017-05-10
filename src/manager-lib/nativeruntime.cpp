@@ -68,7 +68,7 @@ QT_BEGIN_NAMESPACE_AM
 
 // #define EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS 1
 
-#if defined(AM_MULTI_PROCESS)
+#if defined(AM_MULTI_PROCESS) && defined(Q_OS_LINUX)
 QT_END_NAMESPACE_AM
 #  include <dlfcn.h>
 #  include <sys/socket.h>
@@ -109,7 +109,53 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, const Application *ap
     : AbstractRuntime(container, app, manager)
     , m_isQuickLauncher(app == nullptr)
     , m_needsLauncher(manager->identifier() != qL1S("native"))
-{ }
+{
+    QString dbusAddress = QUuid::createUuid().toString().mid(1,36);
+    m_applicationInterfaceServer = new QDBusServer(qSL("unix:path=/tmp/dbus-qtam-") + dbusAddress);
+
+    connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
+            this, [this](const QDBusConnection &connection) {
+#if defined(Q_OS_OSX)
+        // getting the pid is not supported on macOS. Accepting everything is not secure
+        // but it at least works
+        onDBusPeerConnection(connection);
+#else
+        qint64 pid = getDBusPeerPid(connection);
+        if (pid <= 0) {
+            QDBusConnection::disconnectFromPeer(connection.name());
+            qCWarning(LogSystem) << "Could not retrieve peer pid on D-Bus connection attempt.";
+            return;
+        }
+
+        // try direct PID mapping first
+        if (applicationProcessId() == pid) {
+            onDBusPeerConnection(connection);
+            return;
+        }
+
+        // check for sub-processes ... this happens when running the app via gdbserver
+        qint64 appmanPid = getpid();
+        qint64 ppid = pid;
+
+        while (ppid > 1 && ppid != appmanPid) {
+            ppid = getParentPid(ppid);
+
+            if (applicationProcessId() == ppid) {
+                onDBusPeerConnection(connection);
+                return;
+            }
+        }
+
+        QDBusConnection::disconnectFromPeer(connection.name());
+        qCWarning(LogSystem) << "Connection attempt on peer D-Bus from unknown pid:" << pid;
+#endif
+    });
+}
+
+QDBusServer *NativeRuntime::applicationInterfaceServer() const
+{
+    return m_applicationInterfaceServer;
+}
 
 NativeRuntime::~NativeRuntime()
 {
@@ -205,7 +251,7 @@ bool NativeRuntime::start()
     env.remove(qSL("QT_IM_MODULE"));     // Applications should use wayland text input
     //env.insert(qSL("QT_WAYLAND_DISABLE_WINDOWDECORATION"), "1");
     env.insert(qSL("AM_SECURITY_TOKEN"), qL1S(securityToken().toHex()));
-    env.insert(qSL("AM_DBUS_PEER_ADDRESS"), static_cast<NativeRuntimeManager *>(manager())->applicationInterfaceServer()->address());
+    env.insert(qSL("AM_DBUS_PEER_ADDRESS"), applicationInterfaceServer()->address());
     env.insert(qSL("AM_DBUS_NOTIFICATION_BUS_ADDRESS"), NotificationManager::instance()->property("_am_dbus_name").toString());
     env.insert(qSL("AM_RUNTIME_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ configuration() })));
     if (!m_needsLauncher && !m_isQuickLauncher)
@@ -488,52 +534,7 @@ NativeRuntimeManager::NativeRuntimeManager(QObject *parent)
 
 NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
     : AbstractRuntimeManager(id, parent)
-{
-    QString dbusAddress = QUuid::createUuid().toString().mid(1,36);
-    m_applicationInterfaceServer = new QDBusServer(qSL("unix:path=/tmp/dbus-qtam-") + dbusAddress);
-
-    connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
-            this, [this](const QDBusConnection &connection) {
-        // If multiple apps are starting in parallel, there will be multiple NativeRuntime objects
-        // listening to the newConnection signal from the one and only DBusServer.
-        // We have to make sure to forward to the correct runtime object while also handling
-        // error conditions.
-
-        qint64 pid = getDBusPeerPid(connection);
-        if (pid <= 0) {
-            QDBusConnection::disconnectFromPeer(connection.name());
-            qCWarning(LogSystem) << "Could not retrieve peer pid on D-Bus connection attempt.";
-            return;
-        }
-
-        // try direct PID mapping first
-        for (NativeRuntime *rt : qAsConst(m_nativeRuntimes)) {
-            if (rt->applicationProcessId() == pid) {
-                rt->onDBusPeerConnection(connection);
-                return;
-            }
-        }
-
-        // check for sub-processes ... this happens when running the app via gdbserver
-        qint64 appmanPid = getpid();
-
-        for (NativeRuntime *rt : qAsConst(m_nativeRuntimes)) {
-            qint64 ppid = pid;
-
-            while (ppid > 1 && ppid != appmanPid) {
-                ppid = getParentPid(ppid);
-
-                if (rt->applicationProcessId() == ppid) {
-                    rt->onDBusPeerConnection(connection);
-                    return;
-                }
-            }
-        }
-
-        QDBusConnection::disconnectFromPeer(connection.name());
-        qCWarning(LogSystem) << "Connection attempt on peer D-Bus from unknown pid:" << pid;
-    });
-}
+{ }
 
 QString NativeRuntimeManager::defaultIdentifier()
 {
@@ -552,16 +553,7 @@ AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, cons
     QScopedPointer<NativeRuntime> nrt(new NativeRuntime(container, app, this));
     if (!nrt || !nrt->initialize())
         return nullptr;
-    connect(nrt.data(), &QObject::destroyed, this, [this](QObject *o) {
-        m_nativeRuntimes.removeOne(static_cast<NativeRuntime *>(o));
-    });
-    m_nativeRuntimes.append(nrt.data());
     return nrt.take();
-}
-
-QDBusServer *NativeRuntimeManager::applicationInterfaceServer() const
-{
-    return m_applicationInterfaceServer;
 }
 
 QT_END_NAMESPACE_AM

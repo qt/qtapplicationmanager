@@ -76,12 +76,6 @@ public:
     bool supportsQuickLaunch() const override;
 
     AbstractRuntime *create(AbstractContainer *container, const Application *app) override;
-
-    QDBusServer *applicationInterfaceServer() const;
-
-private:
-    QDBusServer *m_applicationInterfaceServer;
-    QVector<NativeRuntime *> m_nativeRuntimes;
 };
 
 class NativeRuntime : public AbstractRuntime
@@ -121,6 +115,7 @@ private:
     bool initialize();
     void shutdown(int exitCode, QProcess::ExitStatus status);
     void registerExtensionInterfaces();
+    QDBusServer *applicationInterfaceServer() const;
 
     bool m_isQuickLauncher;
     bool m_needsLauncher;
@@ -136,6 +131,7 @@ private:
     NativeRuntimeApplicationInterface *m_applicationInterface = nullptr;
     NativeRuntimeInterface *m_runtimeInterface = nullptr;
     AbstractContainerProcess *m_process = nullptr;
+    QDBusServer *m_applicationInterfaceServer;
 
     friend class NativeRuntimeManager;
 };

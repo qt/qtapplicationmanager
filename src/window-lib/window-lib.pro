@@ -25,7 +25,7 @@ multi-process:!headless {
 
     qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private) {
         QT *= waylandcompositor waylandcompositor-private
-        PKGCONFIG += wayland-server
+        !osx:PKGCONFIG += wayland-server
 
         HEADERS += waylandcompositor_p.h
     } else:qtHaveModule(compositor) {

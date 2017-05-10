@@ -17,7 +17,7 @@ headless:DEFINES *= AM_HEADLESS
 linux:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release)):DEFINES *= AM_USE_LIBBACKTRACE
 
 !force-single-process {
-    linux {
+    linux|osx {
         headless|qtHaveModule(compositor)|if(qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private)) {
             CONFIG *= auto-multi-process
         }

@@ -141,6 +141,11 @@ QT_USE_NAMESPACE_AM
 
 int main(int argc, char *argv[])
 {
+#if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
+    // set a reasonable default for OSes/distros that do not set this by default
+    setenv("XDG_RUNTIME_DIR", "/tmp", 0);
+#endif
+
     StartupTimer::instance()->checkpoint("entered main");
 
     QCoreApplication::setApplicationName(qSL("ApplicationManager"));
@@ -399,8 +404,21 @@ void Main::setupDBus() Q_DECL_NOEXCEPT_EXPR(false)
         DBusDaemonProcess(QObject *parent = nullptr)
             : QProcess(parent)
         {
-            setProgram(qSL("dbus-daemon"));
-            setArguments({ qSL("--nofork"), qSL("--print-address"), qSL("--session")});
+            QString program = qSL("dbus-daemon");
+            QStringList arguments = { qSL("--nofork"), qSL("--print-address"), qSL("--session") };
+
+#if defined(Q_OS_OSX)
+            // there's no native dbus support on macOS, so we try to use brew's dbus support
+            program = qSL("/usr/local/bin/dbus-daemon");
+            // brew's dbus-daemon needs an address, because it will otherwise assume that it was
+            // started via launchd and expects its address in $DBUS_LAUNCHD_SESSION_BUS_SOCKET
+            QString address = qSL("--address=unix:path=") + QDir::tempPath() + qSL("am-")
+                    + QString::number(QCoreApplication::applicationPid()) + qSL("-session.bus");
+
+            arguments << address;
+#endif
+            setProgram(program);
+            setArguments(arguments);
         }
         ~DBusDaemonProcess() override
         {
@@ -421,9 +439,10 @@ void Main::setupDBus() Q_DECL_NOEXCEPT_EXPR(false)
 
     auto dbusDaemon = new DBusDaemonProcess(this);
     dbusDaemon->start(QIODevice::ReadOnly);
-    if (!dbusDaemon->waitForStarted() || !dbusDaemon->waitForReadyRead())
-        throw Exception("could not start a dbus-launch process: %1").arg(dbusDaemon->errorString());
-
+    if (!dbusDaemon->waitForStarted() || !dbusDaemon->waitForReadyRead()) {
+        throw Exception("could not start a dbus-daemon process (%1): %2")
+                .arg(dbusDaemon->program(), dbusDaemon->errorString());
+    }
     QByteArray busAddress = dbusDaemon->readAllStandardOutput().trimmed();
     qputenv("DBUS_SESSION_BUS_ADDRESS", busAddress);
     qCInfo(LogSystem, "NOTICE: running on private D-Bus session bus to avoid conflicts:");

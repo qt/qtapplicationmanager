@@ -730,9 +730,6 @@ void WindowManager::waylandSurfaceCreated(WindowSurface *surface)
 void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 {
     qint64 processId = surface->processId();
-    if (processId == 0)
-        return; //TODO: find out what those surfaces are and what I should do with them ;)
-
     const Application *app = ApplicationManager::instance()->fromProcessId(processId);
 
     if (!app && ApplicationManager::instance()->securityChecksEnabled()) {

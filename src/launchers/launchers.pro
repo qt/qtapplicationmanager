@@ -1,4 +1,5 @@
-
 TEMPLATE = subdirs
 
-!android:!windows:!osx:qtHaveModule(dbus):SUBDIRS = qml
+load(am-config)
+
+multi-process:qtHaveModule(dbus):SUBDIRS = qml

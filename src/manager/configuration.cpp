@@ -331,8 +331,12 @@ void Configuration::parse()
     bool noConfigCache = d->clp.isSet(qSL("no-config-cache"));
     bool clearConfigCache = d->clp.isSet(qSL("clear-config-cache"));
 
-    const QString cacheFilePath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
-            + qSL("/appman-config.cache");
+    const QDir cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+
+    if (!cacheLocation.exists())
+        cacheLocation.mkpath(qSL("."));
+
+    const QString cacheFilePath = cacheLocation.absoluteFilePath(qSL("appman-config.cache"));
 
     QFile cacheFile(cacheFilePath);
     QAtomicInt useCache = false;

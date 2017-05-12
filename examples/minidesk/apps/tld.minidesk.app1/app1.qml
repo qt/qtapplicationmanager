@@ -74,7 +74,7 @@ ApplicationManagerWindow {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: {
+            onPressed: {    // onClicked: see QTBUG-60725
                 if (rotation.paused) {
                     rotation.resume();
                 } else {

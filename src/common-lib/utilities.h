@@ -62,6 +62,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+int timeoutFactor();
+
 QString hardwareId();
 
 bool ensureCorrectLocale();

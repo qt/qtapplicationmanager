@@ -54,6 +54,7 @@
 #include "qmlnotification.h"
 #include "notification.h"
 #include "ipcwrapperobject.h"
+#include "utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -71,6 +72,11 @@ QmlApplicationInterface::QmlApplicationInterface(const QString &dbusConnectionNa
 
 bool QmlApplicationInterface::initialize()
 {
+    // we are working with very small delays in the milli-second range here, so a linear factor
+    // to support valgrind would have to be very large and probably conflict with usage elsewhere
+    // in the codebase, where the ranges are normally in the seconds.
+    static const int timeout = timeoutFactor() * timeoutFactor();
+
     auto tryConnect = [](const QString &service, const QString &path, const QString &interfaceName,
                          const QDBusConnection &conn, QObject *parent) -> QDBusInterface * {
         for (int i = 0; i < 100; ++i) {
@@ -78,7 +84,7 @@ bool QmlApplicationInterface::initialize()
             if (!iface->lastError().isValid())
                 return iface;
             delete iface;
-            QThread::msleep(1);
+            QThread::msleep(timeout);
         }
         return nullptr;
     };

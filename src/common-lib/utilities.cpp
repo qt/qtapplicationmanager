@@ -706,4 +706,15 @@ qint64 getParentPid(qint64 pid)
     return ppid;
 }
 
+int timeoutFactor()
+{
+    static int tf = 0;
+    if (!tf) {
+        tf = qMax(1, qEnvironmentVariableIntValue("AM_TIMEOUT_FACTOR"));
+        if (tf > 1)
+            qInfo() << "All timeouts are multiplied by" << tf << "(changed by (un)setting $AM_TIMEOUT_FACTOR)";
+    }
+    return tf;
+}
+
 QT_END_NAMESPACE_AM

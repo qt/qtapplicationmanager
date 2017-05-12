@@ -37,7 +37,6 @@
 
 QT_USE_NAMESPACE_AM
 
-static int timeoutFactor = 1; // useful to increase timeouts when running in valgrind
 static int processTimeout = 3000;
 
 class tst_PackageCreator : public QObject
@@ -68,9 +67,7 @@ tst_PackageCreator::tst_PackageCreator()
 
 void tst_PackageCreator::initTestCase()
 {
-    timeoutFactor = qMax(1, qEnvironmentVariableIntValue("TIMEOUT_FACTOR"));
-    processTimeout *= timeoutFactor;
-    qInfo() << "Timeouts are multiplied by" << timeoutFactor << "(changed by (un)setting $TIMEOUT_FACTOR)";
+    processTimeout *= timeoutFactor();
 
     // check if tar command is available at all
     QProcess tar;

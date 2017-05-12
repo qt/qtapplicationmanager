@@ -610,13 +610,18 @@ bool SudoServer::detachLoopback(const QString &loopDev)
         if ((loopFd = EINTR_LOOP(open(loopDev.toLocal8Bit(), O_RDWR))) < 0)
             throw Exception(Error::IO, "could not open loop device %1: %2").arg(loopDev).arg(QString::fromLocal8Bit(strerror(errno)));
 
+        // we are working with very small delays in the micro-second range here, so a linear factor
+        // to support valgrind would have to be very large and probably conflict with usage elsewhere
+        // in the codebase, where the ranges are normally in the seconds.
+        static const int timeout = timeoutFactor() * timeoutFactor() * 50;
+
         int clearErrno = 0;
         for (int tries = 0; tries < 100; ++tries) {
             if (EINTR_LOOP(ioctl(loopFd, LOOP_CLR_FD, 0)) == 0)
                 break;
 
             clearErrno = errno;
-            usleep(50); // might still be busy after lazy umount
+            usleep(timeout); // might still be busy after lazy umount
         }
 
         EINTR_LOOP(close(loopFd));
@@ -735,12 +740,14 @@ bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStrin
 
         mkfsOptions << device;
 
+        static const int timeout = 20000 * timeoutFactor();
+
         QProcess p;
         p.setProgram(mkfsCmd);
         p.setArguments(mkfsOptions);
 
         p.start();
-        p.waitForFinished();
+        p.waitForFinished(timeout);
         if (p.exitCode() != 0) {
             throw Exception("could not create an %1 filesystem on %2: %3")
                 .arg(fstype).arg(device).arg(QString::fromLocal8Bit(p.readAllStandardError()));
@@ -753,7 +760,7 @@ bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStrin
                                          << qSL("-i") << qSL("0")
                                          << device);
             p.start();
-            p.waitForFinished();
+            p.waitForFinished(timeout);
             if (p.exitCode() != 0) {
                 throw Exception("could not disable ext2 filesystem checks on %2: %3")
                         .arg(device).arg(QString::fromLocal8Bit(p.readAllStandardError()));

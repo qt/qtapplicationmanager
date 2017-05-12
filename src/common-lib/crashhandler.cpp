@@ -88,7 +88,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore) __attribute__
 void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
 {
     printBacktrace = config.value(qSL("printBacktrace"), printBacktrace).toBool();
-    waitForGdbAttach = config.value(qSL("waitForGdbAttach"), waitForGdbAttach).toInt();
+    waitForGdbAttach = config.value(qSL("waitForGdbAttach"), waitForGdbAttach).toInt() * timeoutFactor();
     dumpCore = config.value(qSL("dumpCore"), dumpCore).toBool();
 }
 

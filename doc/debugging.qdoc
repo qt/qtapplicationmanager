@@ -59,6 +59,10 @@ This is a (incomplete) list of environment variables that influence the logging 
     \li Can be set to \c on to force color output to the console and to \c off to disable it. Any
         other value will result in the default, auto-detection behavior.
 \row
+    \li AM_TIMEOUT_FACTOR
+    \li All timed wait statements within the application-manager will be slowed down by this
+        (integer) factor. Useful if executing in slow wrappers, like e.g. valgrind. Defaults to \c 1.
+\row
     \li QT_MESSAGE_PATTERN
     \li Setting this variable has the same effect as described on the
         \l{Warning and Debugging Messages}{Debugging Techniques} page and will overwrite the

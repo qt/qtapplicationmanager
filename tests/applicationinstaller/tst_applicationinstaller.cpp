@@ -55,7 +55,6 @@ QT_USE_NAMESPACE_AM
 static bool startedSudoServer = false;
 static QString sudoServerError;
 
-static int timeoutFactor = 1; // useful to increase timeouts when running in valgrind
 static int spyTimeout = 5000; // shorthand for specifying QSignalSpy timeouts
 
 // RAII to reset the global attribute
@@ -270,9 +269,7 @@ void tst_ApplicationInstaller::initTestCase()
         QLoggingCategory::setFilterRules("am.installer.debug=false");
     qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(changed by (un)setting $VERBOSE_TEST)";
 
-    timeoutFactor = qMax(1, qEnvironmentVariableIntValue("TIMEOUT_FACTOR"));
-    spyTimeout *= timeoutFactor;
-    qInfo() << "Timeouts are multiplied by" << timeoutFactor << "(changed by (un)setting $TIMEOUT_FACTOR)";
+    spyTimeout *= timeoutFactor();
 
     QVERIFY(checkCorrectLocale());
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));

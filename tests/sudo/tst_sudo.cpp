@@ -43,7 +43,6 @@
 
 QT_USE_NAMESPACE_AM
 
-static int timeoutFactor = 1; // useful to increase timeouts when running in valgrind
 static int processTimeout = 3000;
 
 static bool startedSudoServer = false;
@@ -268,9 +267,7 @@ tst_Sudo::~tst_Sudo()
 
 void tst_Sudo::initTestCase()
 {
-    timeoutFactor = qMax(1, qEnvironmentVariableIntValue("TIMEOUT_FACTOR"));
-    processTimeout *= timeoutFactor;
-    qInfo() << "Timeouts are multiplied by" << timeoutFactor << "(changed by (un)setting $TIMEOUT_FACTOR)";
+    processTimeout *= timeoutFactor();
 
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
     m_root = SudoClient::instance();

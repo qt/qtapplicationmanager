@@ -437,9 +437,11 @@ void Main::setupDBus() Q_DECL_NOEXCEPT_EXPR(false)
         }
     };
 
+    static const int timeout = 10000 * timeoutFactor();
+
     auto dbusDaemon = new DBusDaemonProcess(this);
     dbusDaemon->start(QIODevice::ReadOnly);
-    if (!dbusDaemon->waitForStarted() || !dbusDaemon->waitForReadyRead()) {
+    if (!dbusDaemon->waitForStarted(timeout) || !dbusDaemon->waitForReadyRead(timeout)) {
         throw Exception("could not start a dbus-daemon process (%1): %2")
                 .arg(dbusDaemon->program(), dbusDaemon->errorString());
     }

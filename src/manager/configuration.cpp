@@ -179,7 +179,11 @@ Configuration::Configuration()
         "\n"
         "  AM_FORCE_COLOR_OUTPUT  can be set to 'on' to force color output to the console\n"
         "                         and to 'off' to disable it. Any other value will result\n"
-        "                         in the default, auto-detection behavior.\n";
+        "                         in the default, auto-detection behavior.\n"
+        "\n"
+        "  AM_TIMEOUT_FACTOR  all timed wait statements within the application-manager will\n"
+        "                     be slowed down by this (integer) factor. Useful if executing\n"
+        "                     in slow wrappers, like e.g. valgrind. Defaults to 1.\n";
     d->clp.setApplicationDescription(description);
     d->clp.addHelpOption();
     d->clp.addVersionOption();

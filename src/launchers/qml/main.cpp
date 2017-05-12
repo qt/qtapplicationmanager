@@ -459,12 +459,11 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     const QVariantList vl = (imports.type() == QVariant::String) ? QVariantList{imports}
                                                                  : qdbus_cast<QVariantList>(imports);
     for (const QVariant &v : vl) {
-        QString path = v.toString();
+        const QString path = v.toString();
         if (QFileInfo(path).isRelative())
-            path = QDir().absoluteFilePath(path);
+            m_engine.addImportPath(QDir().absoluteFilePath(path));
         else
             qCWarning(LogQmlRuntime) << "Omitting absolute import path in info file for safety reasons:" << path;
-        m_engine.addImportPath(path);
     }
     qCDebug(LogQmlRuntime) << "Qml import paths:" << m_engine.importPathList();
 

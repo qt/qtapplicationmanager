@@ -165,6 +165,8 @@ public:
     int lastExitCode() const;
     ExitStatus lastExitStatus() const;
 
+    static bool isValidApplicationId(const QString &appId, bool isAliasName = false, QString *errorString = nullptr);
+
 signals:
     void bulkChange() const;
     void runtimeChanged() const;

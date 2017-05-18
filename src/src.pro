@@ -10,9 +10,9 @@ SUBDIRS = \
     package-lib \
 
 crypto-lib.depends = common-lib
-application-lib.depends = crypto-lib
-package-lib.depends = crypto-lib application-lib
+application-lib.depends = common-lib
 notification-lib.depends = common-lib
+package-lib.depends = crypto-lib application-lib
 manager-lib.depends = application-lib notification-lib plugin-interfaces
 installer-lib.depends = package-lib manager-lib
 window-lib.depends = manager-lib
@@ -38,7 +38,7 @@ tools.depends = package-lib
         monitor-lib \
         launchers
 
-    tools.depends = manager-lib installer-lib launcher-lib window-lib monitor-lib
+    tools.depends *= manager-lib installer-lib launcher-lib window-lib monitor-lib
 }
 
 SUBDIRS += tools

@@ -39,6 +39,8 @@
 **
 ****************************************************************************/
 
+#include <QTemporaryDir>
+
 #include "logging.h"
 #include "applicationinstaller_p.h"
 #include "application.h"
@@ -124,6 +126,28 @@
 */
 
 QT_BEGIN_NAMESPACE_AM
+
+
+/*! \internal
+
+    The standard QTemporaryDir destructor cannot cope with read-only sub-directories.
+ */
+class TemporaryDir : public QTemporaryDir
+{
+public:
+    TemporaryDir()
+        : QTemporaryDir()
+    { }
+    explicit TemporaryDir(const QString &templateName)
+        : QTemporaryDir(templateName)
+    { }
+    ~TemporaryDir()
+    {
+        recursiveOperation(path(), SafeRemove());
+    }
+private:
+    Q_DISABLE_COPY(TemporaryDir)
+};
 
 InstallationTask::InstallationTask(const InstallationLocation &installationLocation, const QUrl &sourceUrl, QObject *parent)
     : AsynchronousTask(parent)

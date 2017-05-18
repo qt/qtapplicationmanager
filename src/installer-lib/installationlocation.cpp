@@ -48,10 +48,10 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-static QString fixPath(const QString &path)
+static QString fixPath(const QString &path, const QString &hardwareId)
 {
     QString realPath = path;
-    realPath.replace(qL1S("@HARDWARE-ID@"), hardwareId());
+    realPath.replace(qL1S("@HARDWARE-ID@"), hardwareId);
     QDir dir(realPath);
     return (dir.exists() ? dir.canonicalPath() : dir.absolutePath()) + qL1C('/');
 }
@@ -173,7 +173,8 @@ QString InstallationLocation::mountPoint() const
     return m_mountPoint;
 }
 
-QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(const QVariantList &list) Q_DECL_NOEXCEPT_EXPR(false)
+QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(const QVariantList &list,
+                                                                               const QString &hardwareId) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QVector<InstallationLocation> locations;
     bool gotDefault = false;
@@ -202,8 +203,8 @@ QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(c
             InstallationLocation il;
             il.m_type = type;
             il.m_index = index;
-            il.m_installationPath = fixPath(instPath);
-            il.m_documentPath = fixPath(documentPath);
+            il.m_installationPath = fixPath(instPath, hardwareId);
+            il.m_documentPath = fixPath(documentPath, hardwareId);
             il.m_mountPoint = mountPoint;
             il.m_isDefault = isDefault;
 

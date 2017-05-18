@@ -64,15 +64,6 @@ QT_BEGIN_NAMESPACE_AM
 
 int timeoutFactor();
 
-QString hardwareId();
-
-bool ensureCorrectLocale();
-bool checkCorrectLocale();
-
-bool isValidApplicationId(const QString &appId, bool isAliasName = false, QString *errorString = nullptr);
-bool isValidDnsName(const QString &dnsName, int minimalPartCount, QString *errorString = nullptr);
-int versionCompare(const QString &version1, const QString &version2);
-
 void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
                      const QVector<QByteArray> &formatTypes, int formatVersion) Q_DECL_NOEXCEPT_EXPR(false);
 
@@ -89,21 +80,6 @@ inline QStringList variantToStringList(const QVariant &v)
 bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree);
 QMultiMap<QString, QString> mountedDirectories();
 
-/*! \internal
-
-    The standard QTemporaryDir destructor cannot cope with read-only sub-directories.
- */
-class TemporaryDir : public QTemporaryDir
-{
-public:
-    TemporaryDir();
-    explicit TemporaryDir(const QString &templateName);
-    ~TemporaryDir();
-
-private:
-    Q_DISABLE_COPY(TemporaryDir)
-};
-
 enum class RecursiveOperationType
 {
     EnterDirectory,
@@ -114,7 +90,7 @@ enum class RecursiveOperationType
 /*! \internal
 
     Recursively iterates over the file-system tree at \a path and calls the
-    functor \a operation for each each entry as
+    functor \a operation for each entry as
     \c{operator(const QString &path, RecursiveOperationType type)}
 
     \c path is always the file-path to the current entry. For files, \a
@@ -181,10 +157,6 @@ private:
     gid_t m_group;
     mode_t m_permissions;
 };
-#endif
-
-#if defined(Q_OS_ANDROID)
-QString findOnSDCard(const QString &file);
 #endif
 
 void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *consoleWidth);

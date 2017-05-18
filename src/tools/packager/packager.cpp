@@ -33,15 +33,13 @@
 #include <QDirIterator>
 #include <QMessageAuthenticationCode>
 #include <QJsonDocument>
+#include <QTemporaryDir>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "exception.h"
-#include "utilities.h"
-
 #include "signature.h"
-
 #include "qtyaml.h"
 #include "application.h"
 #include "installationreport.h"
@@ -223,7 +221,7 @@ void Packager::execute() Q_DECL_NOEXCEPT_EXPR(false)
         }
 
         // create temporary dir for extraction
-        TemporaryDir tmp;
+        QTemporaryDir tmp;
         if (!tmp.isValid())
             throw Exception(Error::Package, "could not create temporary directory %1").arg(tmp.path());
 

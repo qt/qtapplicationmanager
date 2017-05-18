@@ -27,6 +27,7 @@
 ****************************************************************************/
 
 #include <QtTest>
+#include <QTemporaryDir>
 #include <qplatformdefs.h>
 
 #if !defined(Q_OS_LINUX)
@@ -248,7 +249,7 @@ private:
     }
 
     SudoClient *m_root = nullptr;
-    TemporaryDir m_workDir;
+    QTemporaryDir m_workDir;
 };
 
 tst_Sudo::tst_Sudo(QObject *parent)

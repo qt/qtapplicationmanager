@@ -120,6 +120,8 @@ protected:
         SP_SystemUi
     };
 
+    QString hardwareId();
+
 private slots:
     void registerDBusInterfaces();
 

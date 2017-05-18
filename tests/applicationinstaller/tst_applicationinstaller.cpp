@@ -40,6 +40,7 @@
 #include "private/package_p.h"
 #include "runtimefactory.h"
 #include "qmlinprocessruntime.h"
+#include "package.h"
 
 #ifdef Q_OS_LINUX
 #  include <signal.h>
@@ -105,6 +106,12 @@ private slots:
 
     void cancelPackageInstallation_data();
     void cancelPackageInstallation();
+
+    void validateDnsName_data();
+    void validateDnsName();
+
+    void compareVersions_data();
+    void compareVersions();
 
 public:
     enum PathLocation {
@@ -217,7 +224,7 @@ private:
 private:
     SudoClient *m_root = nullptr;
 
-    TemporaryDir m_workDir;
+    QTemporaryDir m_workDir;
     QString m_hardwareId;
     QString m_loopbackForSDCard[2];
     QVector<InstallationLocation> m_installationLocations;
@@ -271,7 +278,7 @@ void tst_ApplicationInstaller::initTestCase()
 
     spyTimeout *= timeoutFactor();
 
-    QVERIFY(checkCorrectLocale());
+    QVERIFY(Package::checkCorrectLocale());
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
     m_root = SudoClient::instance();
     QVERIFY(m_root);
@@ -286,9 +293,7 @@ void tst_ApplicationInstaller::initTestCase()
     QVERIFY(m_workDir.isValid());
 
     // make sure we have a valid hardware-id
-
-    m_hardwareId = hardwareId();
-    QVERIFY(!m_hardwareId.isEmpty());
+    m_hardwareId = "foobar";
 
     for (int i = 0; i < PathLocationCount; ++i)
         QVERIFY(QDir().mkdir(pathTo(PathLocation(i))));
@@ -342,7 +347,7 @@ void tst_ApplicationInstaller::initTestCase()
             { "documentPath", pathTo(Documents1) },
         }
 #endif // Q_OS_LINUX
-    });
+    }, m_hardwareId);
 
 #ifdef Q_OS_LINUX
     QCOMPARE(m_installationLocations.size(), 4);
@@ -447,7 +452,7 @@ void tst_ApplicationInstaller::installationLocations()
             { "documentPath", QDir::tempPath() },
             { "isDefault", true }
         },
-    });
+    }, m_hardwareId);
     QCOMPARE(locationList.size(), 1);
     InstallationLocation &tmp = locationList.first();
     QVariantMap map = tmp.toVariantMap();
@@ -935,7 +940,7 @@ static tst_ApplicationInstaller *tstApplicationInstaller = nullptr;
 
 int main(int argc, char **argv)
 {
-    ensureCorrectLocale();
+    Package::ensureCorrectLocale();
 
     startedSudoServer = forkSudoServer(DropPrivilegesPermanently, &sudoServerError);
 
@@ -962,5 +967,93 @@ int main(int argc, char **argv)
     return QTest::qExec(tstApplicationInstaller, argc, argv);
 }
 
+void tst_ApplicationInstaller::validateDnsName_data()
+{
+    QTest::addColumn<QString>("dnsName");
+    QTest::addColumn<int>("minParts");
+    QTest::addColumn<bool>("valid");
+
+    // passes
+    QTest::newRow("normal") << "com.pelagicore.test" << 3 << true;
+    QTest::newRow("shortest") << "c.p.t" << 3 << true;
+    QTest::newRow("valid-chars") << "1-2.c-d.3.z" << 3 << true;
+    QTest::newRow("longest-part") << "com.012345678901234567890123456789012345678901234567890123456789012.test" << 3 << true;
+    QTest::newRow("longest-name") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012.test" << 3 << true;
+    QTest::newRow("max-part-cnt") << "a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.0.12" << 3 << true;
+    QTest::newRow("one-part-only") << "c" << 1 << true;
+
+    // failures
+    QTest::newRow("too-few-parts") << "com.pelagicore" << 3 << false;
+    QTest::newRow("empty-part") << "com..test" << 3 << false;
+    QTest::newRow("empty") << "" << 3 << false;
+    QTest::newRow("dot-only") << "." << 3 << false;
+    QTest::newRow("invalid-char1") << "com.pelagi_core.test" << 3 << false;
+    QTest::newRow("invalid-char2") << "com.pelagi#core.test" << 3 << false;
+    QTest::newRow("invalid-char3") << "com.pelagi$core.test" << 3 << false;
+    QTest::newRow("invalid-char3") << "com.pelagi@core.test" << 3 << false;
+    QTest::newRow("unicode-char") << QString::fromUtf8("c\xc3\xb6m.pelagicore.test") << 3 << false;
+    QTest::newRow("upper-case") << "com.Pelagicore.test" << 3 << false;
+    QTest::newRow("dash-at-start") << "com.-pelagicore.test" << 3 << false;
+    QTest::newRow("dash-at-end") << "com.pelagicore-.test" << 3 << false;
+    QTest::newRow("part-too-long") << "com.x012345678901234567890123456789012345678901234567890123456789012.test" << 3 << false;
+}
+
+void tst_ApplicationInstaller::validateDnsName()
+{
+    QFETCH(QString, dnsName);
+    QFETCH(int, minParts);
+    QFETCH(bool, valid);
+
+    QString errorString;
+    bool result = m_ai->validateDnsName(dnsName, minParts);
+
+    QVERIFY2(valid == result, qPrintable(errorString));
+}
+
+void tst_ApplicationInstaller::compareVersions_data()
+{
+    QTest::addColumn<QString>("version1");
+    QTest::addColumn<QString>("version2");
+    QTest::addColumn<int>("result");
+
+
+    QTest::newRow("1") << "" << "" << 0;
+    QTest::newRow("2") << "0" << "0" << 0;
+    QTest::newRow("3") << "foo" << "foo" << 0;
+    QTest::newRow("4") << "1foo" << "1foo" << 0;
+    QTest::newRow("5") << "foo1" << "foo1" << 0;
+    QTest::newRow("6") << "13.403.51-alpha2+git" << "13.403.51-alpha2+git" << 0;
+    QTest::newRow("7") << "1" << "2" << -1;
+    QTest::newRow("8") << "2" << "1" << 1;
+    QTest::newRow("9") << "1.0" << "2.0" << -1;
+    QTest::newRow("10") << "1.99" << "2.0" << -1;
+    QTest::newRow("11") << "1.9" << "11" << -1;
+    QTest::newRow("12") << "9" << "10" << -1;
+    QTest::newRow("12") << "9a" << "10" << -1;
+    QTest::newRow("13") << "9-a" << "10" << -1;
+    QTest::newRow("14") << "13.403.51-alpha2+gi" << "13.403.51-alpha2+git" << -1;
+    QTest::newRow("15") << "13.403.51-alpha1+git" << "13.403.51-alpha2+git" << -1;
+    QTest::newRow("16") << "13.403.51-alpha2+git" << "13.403.51-beta1+git" << -1;
+    QTest::newRow("17") << "13.403.51-alpha2+git" << "13.403.52" << -1;
+    QTest::newRow("18") << "13.403.51-alpha2+git" << "13.403.52-alpha2+git" << -1;
+    QTest::newRow("19") << "13.403.51-alpha2+git" << "13.404" << -1;
+    QTest::newRow("20") << "13.402" << "13.403.51-alpha2+git" << -1;
+    QTest::newRow("21") << "12.403.51-alpha2+git" << "13.403.51-alpha2+git" << -1;
+}
+
+void tst_ApplicationInstaller::compareVersions()
+{
+    QFETCH(QString, version1);
+    QFETCH(QString, version2);
+    QFETCH(int, result);
+
+    int cmp = m_ai->compareVersions(version1, version2);
+    QCOMPARE(cmp, result);
+
+    if (result) {
+        cmp = m_ai->compareVersions(version2, version1);
+        QCOMPARE(cmp, -result);
+    }
+}
 
 #include "tst_applicationinstaller.moc"

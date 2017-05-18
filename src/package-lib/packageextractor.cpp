@@ -60,6 +60,7 @@
 #include "error.h"
 #include "installationreport.h"
 #include "utilities.h"
+#include "application.h"
 #include "qtyaml.h"
 
 // these are not defined on all platforms
@@ -464,7 +465,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
         QString applicationId = map.value(qSL("applicationId")).toString();
         quint64 diskSpaceUsed = map.value(qSL("diskSpaceUsed")).toULongLong();
 
-        if (applicationId.isNull() || !isValidApplicationId(applicationId))
+        if (applicationId.isNull() || !Application::isValidApplicationId(applicationId))
             throw Exception(Error::Package, "metadata has an invalid applicationId field (%1)").arg(applicationId);
         m_report.setApplicationId(applicationId);
 

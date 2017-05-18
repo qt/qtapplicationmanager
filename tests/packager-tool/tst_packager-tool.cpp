@@ -34,7 +34,7 @@
 #include "applicationmanager.h"
 #include "application.h"
 #include "qtyaml.h"
-#include "utilities.h"
+#include "exception.h"
 #include "packager.h"
 #include "applicationinstaller.h"
 #include "qmlinprocessruntime.h"
@@ -63,19 +63,20 @@ private:
         return QDir(m_workDir.path()).absoluteFilePath(QLatin1String(file));
     }
 
-    bool createInfoYaml(TemporaryDir &tmp, const QString &changeField = QString(), const QVariant &toValue = QVariant());
-    bool createIconPng(TemporaryDir &tmp);
-    bool createCode(TemporaryDir &tmp);
+    bool createInfoYaml(QTemporaryDir &tmp, const QString &changeField = QString(), const QVariant &toValue = QVariant());
+    bool createIconPng(QTemporaryDir &tmp);
+    bool createCode(QTemporaryDir &tmp);
 
 
     ApplicationInstaller *m_ai = nullptr;
-    TemporaryDir m_workDir;
+    QTemporaryDir m_workDir;
 
     QString m_devPassword;
     QString m_devCertificate;
     QString m_storePassword;
     QString m_storeCertificate;
     QStringList m_caFiles;
+    QString m_hardwareId;
 };
 
 void tst_PackagerTool::initTestCase()
@@ -92,12 +93,14 @@ void tst_PackagerTool::initTestCase()
     QVERIFY(QDir::root().mkpath(pathTo("internal-0")));
     QVERIFY(QDir::root().mkpath(pathTo("documents-0")));
 
+    m_hardwareId = "foobar";
+
     QVariantMap internalLocation {
         { "id", "internal-0" },
         { "installationPath", pathTo("internal-0") },
         { "documentPath", pathTo("documents-0") },
     };
-    QVector<InstallationLocation> locations = InstallationLocation::parseInstallationLocations({ internalLocation });
+    QVector<InstallationLocation> locations = InstallationLocation::parseInstallationLocations({ internalLocation }, m_hardwareId);
 
     QString errorString;
     m_ai = ApplicationInstaller::createInstance(locations, pathTo("manifests"), pathTo("image-mounts"), &errorString);
@@ -147,8 +150,9 @@ static bool packagerCheck(Packager *p, QString &errorString)
 
 void tst_PackagerTool::test()
 {
-    TemporaryDir tmp;
+    QTemporaryDir tmp;
     QString errorString;
+    QString hardwareId = "foobar";
 
     // no valid destination
     QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), pathTo("test.appkg")), errorString));
@@ -213,7 +217,7 @@ void tst_PackagerTool::test()
                                pathTo("test.store-signed.appkg"),
                                m_storeCertificate,
                                qSL("wrong-password"),
-                               hardwareId()), errorString));
+                               hardwareId), errorString));
     QVERIFY2(errorString.contains(qL1S("could not create signature")), qPrintable(errorString));
 
     // sign
@@ -228,7 +232,7 @@ void tst_PackagerTool::test()
                                pathTo("test.store-signed.appkg"),
                                m_storeCertificate,
                                m_storePassword,
-                               hardwareId()), errorString), qPrintable(errorString));
+                               hardwareId), errorString), qPrintable(errorString));
 
     // verify
     QVERIFY2(packagerCheck(Packager::developerVerify(
@@ -238,7 +242,7 @@ void tst_PackagerTool::test()
     QVERIFY2(packagerCheck(Packager::storeVerify(
                                pathTo("test.store-signed.appkg"),
                                m_caFiles,
-                               hardwareId()), errorString), qPrintable(errorString));
+                               hardwareId), errorString), qPrintable(errorString));
 
     // now that we have it, see if the package actually installs correctly
 
@@ -285,7 +289,7 @@ void tst_PackagerTool::brokenMetadata()
     QFETCH(QVariant, yamlValue);
     QFETCH(QString, errorString);
 
-    TemporaryDir tmp;
+    QTemporaryDir tmp;
 
     createCode(tmp);
     createIconPng(tmp);
@@ -298,7 +302,7 @@ void tst_PackagerTool::brokenMetadata()
     AM_CHECK_ERRORSTRING(error, errorString);
 }
 
-bool tst_PackagerTool::createInfoYaml(TemporaryDir &tmp, const QString &changeField, const QVariant &toValue)
+bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const QString &changeField, const QVariant &toValue)
 {
     QByteArray yaml =
             "formatVersion: 1\n"
@@ -321,13 +325,13 @@ bool tst_PackagerTool::createInfoYaml(TemporaryDir &tmp, const QString &changeFi
     return infoYaml.open(QFile::WriteOnly) && infoYaml.write(yaml) == yaml.size();
 }
 
-bool tst_PackagerTool::createIconPng(TemporaryDir &tmp)
+bool tst_PackagerTool::createIconPng(QTemporaryDir &tmp)
 {
     QFile iconPng(QDir(tmp.path()).absoluteFilePath(qSL("icon.png")));
     return iconPng.open(QFile::WriteOnly) && iconPng.write("\x89PNG") == 4;
 }
 
-bool tst_PackagerTool::createCode(TemporaryDir &tmp)
+bool tst_PackagerTool::createCode(QTemporaryDir &tmp)
 {
     QFile code(QDir(tmp.path()).absoluteFilePath(qSL("test.qml")));
     return code.open(QFile::WriteOnly) && code.write("// test") == 7LL;

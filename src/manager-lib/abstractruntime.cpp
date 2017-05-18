@@ -39,12 +39,13 @@
 **
 ****************************************************************************/
 
+#include <QUuid>
+
 #include "global.h"
 #include "logging.h"
 #include "application.h"
 #include "abstractruntime.h"
 #include "abstractcontainer.h"
-#include "cryptography.h"
 #include "exception.h"
 
 /*!
@@ -74,11 +75,8 @@ AbstractRuntime::AbstractRuntime(AbstractContainer *container, const Application
     , m_app(app)
     , m_manager(manager)
 {
-    m_securityToken = Cryptography::generateRandomBytes(SecurityTokenSize);
-    if (m_securityToken.size() != SecurityTokenSize) {
-        qCCritical(LogSystem) << "ERROR: Not enough entropy left to generate a security token - shuting down";
-        abort();
-    }
+    Q_STATIC_ASSERT(SecurityTokenSize == sizeof(QUuid));
+    m_securityToken = QUuid::createUuid().toRfc4122();
 }
 
 QVariantMap AbstractRuntime::configuration() const

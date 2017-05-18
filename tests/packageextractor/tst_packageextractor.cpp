@@ -28,6 +28,7 @@
 
 #include <QtTest>
 #include <QtNetwork>
+#include <QTemporaryDir>
 #include <qplatformdefs.h>
 
 #if defined(Q_OS_UNIX)
@@ -39,7 +40,7 @@
 #include "global.h"
 #include "packageextractor.h"
 #include "installationreport.h"
-#include "utilities.h"
+#include "package.h"
 
 #include "../error-checking.h"
 
@@ -66,7 +67,7 @@ private slots:
 
 private:
     QString m_taest;
-    QScopedPointer<TemporaryDir> m_extractDir;
+    QScopedPointer<QTemporaryDir> m_extractDir;
 };
 
 tst_PackageExtractor::tst_PackageExtractor()
@@ -78,12 +79,12 @@ void tst_PackageExtractor::initTestCase()
     if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    QVERIFY(checkCorrectLocale());
+    QVERIFY(Package::checkCorrectLocale());
 }
 
 void tst_PackageExtractor::init()
 {
-    m_extractDir.reset(new TemporaryDir());
+    m_extractDir.reset(new QTemporaryDir());
     QVERIFY(m_extractDir->isValid());
 }
 
@@ -298,7 +299,7 @@ void tst_PackageExtractor::extractFromFifo()
 
 int main(int argc, char *argv[])
 {
-    ensureCorrectLocale();
+    Package::ensureCorrectLocale();
     QCoreApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
     tst_PackageExtractor tc;

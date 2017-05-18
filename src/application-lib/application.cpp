@@ -387,6 +387,53 @@ Application::ExitStatus Application::lastExitStatus() const
     return m_lastExitStatus;
 }
 
+bool Application::isValidApplicationId(const QString &appId, bool isAliasName, QString *errorString)
+{
+    static const int maxLength = 150;
+
+    try {
+        if (appId.isEmpty())
+            throw Exception(Error::Parse, "must not be empty");
+
+        // we need to make sure that we can use the name as directory on a FAT formatted SD-card,
+        // which has a 255 character path length restriction
+        if (appId.length() > maxLength)
+            throw Exception(Error::Parse, "the maximum length is %1 characters (found %2 characters)").arg(maxLength, appId.length());
+
+        int aliasPos = -1;
+
+        // aliases need to have the '@' marker
+        if (isAliasName) {
+            aliasPos = appId.indexOf(qL1C('@'));
+            if (aliasPos < 0 || aliasPos == (appId.size() - 1))
+                throw Exception(Error::Parse, "missing alias-id tag '@'");
+        }
+
+        // all characters need to be ASCII minus '@' and any filesystem special characters:
+        bool spaceOnly = true;
+        static const char forbiddenChars[] = "@<>:\"/\\|?*";
+        for (int pos = 0; pos < appId.length(); ++pos) {
+            if (pos == aliasPos)
+                continue;
+            ushort ch = appId.at(pos).unicode();
+            if ((ch < 0x20) || (ch > 0x7f) || strchr(forbiddenChars, ch & 0xff)) {
+                throw Exception(Error::Parse, "must consist of printable ASCII characters only, except any of \'%1'")
+                        .arg(QString::fromLatin1(forbiddenChars));
+            }
+            if (spaceOnly)
+                spaceOnly = QChar(ch).isSpace();
+        }
+        if (spaceOnly)
+            throw Exception(Error::Parse, "must not consist of only white-space characters");
+
+        return true;
+    } catch (const Exception &e) {
+        if (errorString)
+            *errorString = e.errorString();
+        return false;
+    }
+}
+
 bool Application::isPreloaded() const
 {
     return m_nonAliased ? m_nonAliased->m_preload : m_preload;

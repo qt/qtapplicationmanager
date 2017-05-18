@@ -50,6 +50,8 @@ private slots:
     void database();
     void application_data();
     void application();
+    void validApplicationId_data();
+    void validApplicationId();
 
 private:
     QVector<const Application *> apps;
@@ -216,6 +218,57 @@ void tst_Application::application()
     delete app;
 }
 
+void tst_Application::validApplicationId_data()
+{
+    QTest::addColumn<QString>("appId");
+    QTest::addColumn<bool>("isAlias");
+    QTest::addColumn<bool>("valid");
+
+    // passes
+    QTest::newRow("normal") << "Test" << false << true;
+    QTest::newRow("shortest") << "t" << false << true;
+    QTest::newRow("valid-chars") << "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ,.';[]{}!#$%^&()-_=+" << false << true;
+    QTest::newRow("longest-name") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012.test" << false << true;
+    QTest::newRow("alias-normal") << "Test@alias" << true << true;
+    QTest::newRow("alias-shortest") << "t@a" << true << true;
+    QTest::newRow("alias-valid-chars") << "1-2@1-a" << true << true;
+    QTest::newRow("alias-longest-part") << "com.012345678901234567890123456789012345678901234567890123456789012.test@012345678901234567890123456789012345678901234567890123456789012" << true << true;
+    QTest::newRow("alias-longest-name") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012@test" << true << true;
+    QTest::newRow("alias-max-part-cnt") << "a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9.a.0@12" << true << true;
+
+    // failures
+    QTest::newRow("empty") << "" << false << false;
+    QTest::newRow("space-only") << " " << false << false;
+    QTest::newRow("space-only2") << "  " << false << false;
+    QTest::newRow("name-too-long") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012.xtest" << false << false;
+    QTest::newRow("empty-alias") << "test@" << true << false;
+    QTest::newRow("invalid-char@") << "t@" << false << false;
+    QTest::newRow("invalid-char<") << "t<" << false << false;
+    QTest::newRow("invalid-char>") << "t>" << false << false;
+    QTest::newRow("invalid-char:") << "t:" << false << false;
+    QTest::newRow("invalid-char-quote") << "t\"" << false << false;
+    QTest::newRow("invalid-char/") << "t/" << false << false;
+    QTest::newRow("invalid-char\\") << "t\\" << false << false;
+    QTest::newRow("invalid-char|") << "t|" << false << false;
+    QTest::newRow("invalid-char?") << "t?" << false << false;
+    QTest::newRow("invalid-char*") << "t*" << false << false;
+    QTest::newRow("control-char") << "t\t" << false << false;
+    QTest::newRow("unicode-char") << QString::fromUtf8("c.p.t@c\xc3\xb6m") << true << false;
+    QTest::newRow("no-alias") << "t" << true << false;
+    QTest::newRow("alias-name-too-long") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012@xtest" << true << false;
+}
+
+void tst_Application::validApplicationId()
+{
+    QFETCH(QString, appId);
+    QFETCH(bool, isAlias);
+    QFETCH(bool, valid);
+
+    QString errorString;
+    bool result = Application::isValidApplicationId(appId, isAlias, &errorString);
+
+    QVERIFY2(valid == result, qPrintable(errorString));
+}
 
 QTEST_APPLESS_MAIN(tst_Application)
 

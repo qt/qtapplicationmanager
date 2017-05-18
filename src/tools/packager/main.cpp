@@ -33,7 +33,8 @@
 
 #include <stdio.h>
 
-#include <QtAppManCommon/utilities.h>
+#include <QtAppManCommon/exception.h>
+#include <QtAppManPackage/package.h>
 #include "packager.h"
 
 QT_USE_NAMESPACE_AM
@@ -77,7 +78,7 @@ static Command command(QCommandLineParser &clp)
 
 int main(int argc, char *argv[])
 {
-    ensureCorrectLocale();
+    Package::ensureCorrectLocale();
 
     QCoreApplication::setApplicationName(qSL("ApplicationManager Packager"));
     QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
@@ -86,7 +87,7 @@ int main(int argc, char *argv[])
 
     QCoreApplication a(argc, argv);
 
-    if (!checkCorrectLocale()) {
+    if (!Package::checkCorrectLocale()) {
         fprintf(stderr, "ERROR: the packager needs a UTF-8 locale to work correctly:\n"
                         "       even automatically switching to C.UTF-8 or en_US.UTF-8 failed.\n");
         exit(2);

@@ -852,7 +852,42 @@ bool ApplicationInstaller::cancelTask(const QString &taskId)
 */
 int ApplicationInstaller::compareVersions(const QString &version1, const QString &version2)
 {
-    return versionCompare(version1, version2);
+    int pos1 = 0;
+    int pos2 = 0;
+    int len1 = version1.length();
+    int len2 = version2.length();
+
+    forever {
+        if (pos1 == len1 && pos2 == len2)
+            return 0;
+       else if (pos1 >= len1)
+            return -1;
+        else if (pos2 >= len2)
+            return +1;
+
+        QString part1 = version1.mid(pos1++, 1);
+        QString part2 = version2.mid(pos2++, 1);
+
+        bool isDigit1 = part1.at(0).isDigit();
+        bool isDigit2 = part2.at(0).isDigit();
+
+        if (!isDigit1 || !isDigit2) {
+            int cmp = part1.compare(part2);
+            if (cmp)
+                return (cmp > 0) ? 1 : -1;
+        } else {
+            while ((pos1 < len1) && version1.at(pos1).isDigit())
+                part1.append(version1.at(pos1++));
+            while ((pos2 < len2) && version2.at(pos2).isDigit())
+                part2.append(version2.at(pos2++));
+
+            int num1 = part1.toInt();
+            int num2 = part2.toInt();
+
+            if (num1 != num2)
+                return (num1 > num2) ? 1 : -1;
+        }
+    }
 }
 
 /*!
@@ -867,7 +902,41 @@ int ApplicationInstaller::compareVersions(const QString &version1, const QString
 */
 bool ApplicationInstaller::validateDnsName(const QString &name, int minimalPartCount)
 {
-    return isValidDnsName(name, minimalPartCount);
+    try {
+        // check if we have enough parts: e.g. "tld.company.app" would have 3 parts
+        QStringList parts = name.split('.');
+        if (parts.size() < minimalPartCount)
+            throw Exception(Error::Parse, "the minimum amount of parts (subdomains) is 3 (found %1)").arg(parts.size());
+
+        // standard RFC compliance tests (RFC 1035/1123)
+
+        auto partCheck = [](const QString &part) {
+            int len = part.length();
+
+            if (len < 1 || len > 63)
+                throw Exception(Error::Parse, "domain parts must consist of at least 1 and at most 63 characters (found %2 characters)").arg(len);
+
+            for (int pos = 0; pos < len; ++pos) {
+                ushort ch = part.at(pos).unicode();
+                bool isFirst = (pos == 0);
+                bool isLast  = (pos == (len - 1));
+                bool isDash  = (ch == '-');
+                bool isDigit = (ch >= '0' && ch <= '9');
+                bool isLower = (ch >= 'a' && ch <= 'z');
+
+                if ((isFirst || isLast || !isDash) && !isDigit && !isLower)
+                    throw Exception(Error::Parse, "domain parts must consist of only the characters '0-9', 'a-z', and '-' (which cannot be the first or last character)");
+            }
+        };
+
+        for (const QString &part : parts)
+            partCheck(part);
+
+        return true;
+    } catch (const Exception &e) {
+        qCDebug(LogInstaller).noquote() << "validateDnsName failed:" << e.errorString();
+        return false;
+    }
 }
 
 

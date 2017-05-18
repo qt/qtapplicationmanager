@@ -21,10 +21,12 @@ HEADERS += \
     packageextractor.h \
     packagecreator_p.h \
     packagecreator.h \
+    package.h
 
 SOURCES += \
     package_p.cpp \
     packagecreator.cpp \
     packageextractor.cpp \
+    package.cpp
 
 load(qt_module)

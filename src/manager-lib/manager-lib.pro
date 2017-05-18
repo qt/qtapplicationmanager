@@ -9,7 +9,6 @@ QT = core network qml
 qtHaveModule(dbus):QT *= dbus
 QT_FOR_PRIVATE *= \
     appman_common-private \
-    appman_crypto-private \
     appman_application-private \
     appman_notification-private \
     appman_plugininterfaces-private \

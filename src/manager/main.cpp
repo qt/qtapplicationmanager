@@ -64,6 +64,7 @@
 #include <QFunctionPointer>
 #include <QProcess>
 #include <QQmlDebuggingEnabler>
+#include <QNetworkInterface>
 #include <private/qabstractanimation_p.h>
 
 #if !defined(AM_HEADLESS)
@@ -110,6 +111,7 @@
 #include "qmlinprocessapplicationinterface.h"
 #include "qml-utilities.h"
 #include "dbus-utilities.h"
+#include "package.h"
 
 #if !defined(AM_HEADLESS)
 #  include "windowmanager.h"
@@ -162,7 +164,7 @@ int main(int argc, char *argv[])
     StartupTimer::instance()->checkpoint("after basic initialization");
 
 #if !defined(AM_DISABLE_INSTALLER)
-    ensureCorrectLocale();
+    Package::ensureCorrectLocale();
 
     QString error;
     if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
@@ -464,7 +466,7 @@ void Main::checkMainQmlFile() Q_DECL_NOEXCEPT_EXPR(false)
 void Main::setupInstaller() Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if !defined(AM_DISABLE_INSTALLER)
-    if (!checkCorrectLocale()) {
+    if (!Package::checkCorrectLocale()) {
         // we should really throw here, but so many embedded systems are badly set up
         qCCritical(LogSystem) << "WARNING: the appman installer needs a UTF-8 locale to work correctly:\n"
                                  "         even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
@@ -473,7 +475,8 @@ void Main::setupInstaller() Q_DECL_NOEXCEPT_EXPR(false)
     if (Q_UNLIKELY(hardwareId().isEmpty()))
         throw Exception("the installer is enabled, but the device-id is empty");
 
-    m_installationLocations = InstallationLocation::parseInstallationLocations(m_config.installationLocations());
+    m_installationLocations = InstallationLocation::parseInstallationLocations(m_config.installationLocations(),
+                                                                               hardwareId());
 
     if (Q_UNLIKELY(!QDir::root().mkpath(m_config.installedAppsManifestDir())))
         throw Exception("could not create manifest directory %1").arg(m_config.installedAppsManifestDir());
@@ -1072,7 +1075,7 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
             if (appDirName.endsWith('+') || appDirName.endsWith('-'))
                 continue;
             QString appIdError;
-            if (!isValidApplicationId(appDirName, false, &appIdError)) {
+            if (!Application::isValidApplicationId(appDirName, false, &appIdError)) {
                 qCDebug(LogSystem) << "Ignoring application directory" << appDirName
                                    << ": not a valid application-id:" << qPrintable(appIdError);
                 continue;
@@ -1153,6 +1156,27 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
     scan(installedAppsDir, false);
 #endif
     return result;
+}
+
+QString Main::hardwareId()
+{
+#if defined(AM_HARDWARE_ID)
+    return QString::fromLocal8Bit(AM_HARDWARE_ID);
+#elif defined(AM_HARDWARE_ID_FROM_FILE)
+    QFile f(QString::fromLocal8Bit(AM_HARDWARE_ID_FROM_FILE));
+    if (f.open(QFile::ReadOnly))
+        return QString::fromLocal8Bit(f.readAll().trimmed());
+#else
+    const auto allInterfaces = QNetworkInterface::allInterfaces();
+    for (const QNetworkInterface &iface : allInterfaces) {
+        if (iface.isValid() && (iface.flags() & QNetworkInterface::IsUp)
+                && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
+                && !iface.hardwareAddress().isEmpty()) {
+            return iface.hardwareAddress().replace(qL1C(':'), qL1S("-"));
+        }
+    }
+#endif
+    return QString();
 }
 
 QT_END_NAMESPACE_AM

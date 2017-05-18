@@ -127,23 +127,16 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, const Application *ap
             return;
         }
 
-        // try direct PID mapping first
-        if (applicationProcessId() == pid) {
-            onDBusPeerConnection(connection);
-            return;
-        }
+        // try direct PID mapping first, then check for sub-processes ... this happens when
+        // for example running the app via gdbserver
+        qint64 appmanPid = QCoreApplication::applicationPid();
 
-        // check for sub-processes ... this happens when running the app via gdbserver
-        qint64 appmanPid = getpid();
-        qint64 ppid = pid;
-
-        while (ppid > 1 && ppid != appmanPid) {
-            ppid = getParentPid(ppid);
-
-            if (applicationProcessId() == ppid) {
+        while ((pid > 1) && (pid != appmanPid)) {
+            if (applicationProcessId() == pid) {
                 onDBusPeerConnection(connection);
                 return;
             }
+            pid = getParentPid(pid);
         }
 
         QDBusConnection::disconnectFromPeer(connection.name());

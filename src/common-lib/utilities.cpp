@@ -299,7 +299,7 @@ void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *c
         qint64 pid = QCoreApplication::applicationPid();
         forever {
             pid = getParentPid(pid);
-            if (!pid)
+            if (pid <= 1)
                 break;
 
 #if defined(Q_OS_LINUX)

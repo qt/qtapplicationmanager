@@ -644,32 +644,17 @@ const Application *ApplicationManager::fromId(const QString &id) const
 
 const Application *ApplicationManager::fromProcessId(qint64 pid) const
 {
-    if (!pid)
-        return 0;
+    // pid could be an indirect child (e.g. when started via gdbserver)
+    qint64 appmanPid = QCoreApplication::applicationPid();
 
-    for (const Application *app : d->apps) {
-        if (app->currentRuntime() && (app->currentRuntime()->applicationProcessId() == pid))
-            return app;
-    }
-
-    // pid is not a direct child - try indirect children (e.g. when started via gdbserver)
-    //TODO: optimize this by pre-computing a list of parent pids first (do the same in nativeruntime)
-    qint64 appmanPid = qApp->applicationPid();
-
-    for (const Application *app : d->apps) {
-        if (app->currentRuntime()) {
-            qint64 rtpid = app->currentRuntime()->applicationProcessId();
-            qint64 ppid = pid;
-
-            while (ppid > 1 && ppid != appmanPid) {
-                ppid = getParentPid(ppid);
-
-                if (rtpid == ppid)
-                    return app;
-            }
+    while ((pid > 1) && (pid != appmanPid)) {
+        for (const Application *app : d->apps) {
+            if (app->currentRuntime() && (app->currentRuntime()->applicationProcessId() == pid))
+                return app;
         }
+        pid = getParentPid(pid);
     }
-    return 0;
+    return nullptr;
 }
 
 const Application *ApplicationManager::fromSecurityToken(const QByteArray &securityToken) const

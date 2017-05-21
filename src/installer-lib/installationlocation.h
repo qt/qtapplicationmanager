@@ -68,6 +68,9 @@ public:
     QString installationPath() const;
     QString documentPath() const;
 
+    bool installationDeviceFreeSpace(quint64 *bytesTotal, quint64 *bytesFree) const;
+    bool documentDeviceFreeSpace(quint64 *bytesTotal, quint64 *bytesFree) const;
+
     bool isValid() const;
     bool isDefault() const;
     bool isRemovable() const;

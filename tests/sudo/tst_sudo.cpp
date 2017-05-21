@@ -262,7 +262,7 @@ tst_Sudo::~tst_Sudo()
         ScopedRootPrivileges sudo;
 
         detachLoopbacksAndUnmount(nullptr, m_workDir.path());
-        recursiveOperation(m_workDir.path(), SafeRemove());
+        recursiveOperation(m_workDir.path(), safeRemove);
     }
 }
 

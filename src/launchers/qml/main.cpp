@@ -82,6 +82,7 @@
 #include "global.h"
 #include "logging.h"
 #include "utilities.h"
+#include "exception.h"
 #include "crashhandler.h"
 #include "yamlapplicationscanner.h"
 #include "application.h"

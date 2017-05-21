@@ -56,7 +56,6 @@
 #include "exception.h"
 #include "error.h"
 #include "installationreport.h"
-#include "utilities.h"
 #include "qtyaml.h"
 
 #ifndef S_IREAD

@@ -1211,7 +1211,7 @@ bool removeRecursiveHelper(const QString &path)
     if (ApplicationInstaller::instance()->isApplicationUserIdSeparationEnabled() && SudoClient::instance())
         return SudoClient::instance()->removeRecursive(path);
     else
-        return recursiveOperation(path, SafeRemove());
+        return recursiveOperation(path, safeRemove);
 }
 
 QT_END_NAMESPACE_AM

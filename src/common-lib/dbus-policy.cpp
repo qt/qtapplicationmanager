@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include <QDebug>
+#include <QFileInfo>
 #include <algorithm>
 #if defined(QT_DBUS_LIB)
 #  include <QDBusConnection>

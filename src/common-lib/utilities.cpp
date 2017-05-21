@@ -45,10 +45,13 @@
 #  define _WIN32_WINNT _WIN32_WINNT_VISTA
 #endif
 
-#include <QFileInfo>
 #include <QFile>
+#include <QFileInfo>
+#include <QDir>
+#include <QDirIterator>
 #include <QCoreApplication>
 #include <QNetworkInterface>
+#include <QPluginLoader>
 
 #include "utilities.h"
 #include "exception.h"
@@ -131,34 +134,6 @@ void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
     }
 }
 
-bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree)
-{
-    QString cpath = QFileInfo(path).canonicalPath();
-
-#if defined(Q_OS_WIN)
-    return GetDiskFreeSpaceExW((LPCWSTR) cpath.utf16(), (ULARGE_INTEGER *) bytesFree,
-                               (ULARGE_INTEGER *) bytesTotal, nullptr);
-
-#else // Q_OS_UNIX
-    int result;
-    struct ::statvfs svfs;
-
-    do {
-        result = ::statvfs(cpath.toLocal8Bit(), &svfs);
-        if (result == -1 && errno == EINTR)
-            continue;
-    } while (false);
-
-    if (result == 0) {
-        if (bytesTotal)
-            *bytesTotal = quint64(svfs.f_frsize) * svfs.f_blocks;
-        if (bytesFree)
-            *bytesFree = quint64(svfs.f_frsize) * svfs.f_bavail;
-        return true;
-    }
-    return false;
-#endif // Q_OS_WIN
-}
 
 QMultiMap<QString, QString> mountedDirectories()
 {
@@ -204,7 +179,7 @@ QMultiMap<QString, QString> mountedDirectories()
     return result;
 }
 
-bool SafeRemove::operator()(const QString &path, RecursiveOperationType type)
+bool safeRemove(const QString &path, RecursiveOperationType type)
 {
    static const QFileDevice::Permissions fullAccess =
            QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner |
@@ -227,39 +202,6 @@ bool SafeRemove::operator()(const QString &path, RecursiveOperationType type)
    }
    return false;
 }
-
-#if defined(Q_OS_UNIX)
-
-SetOwnerAndPermissions::SetOwnerAndPermissions(uid_t user, gid_t group, mode_t permissions)
-    : m_user(user)
-    , m_group(group)
-    , m_permissions(permissions)
-{ }
-
-
-bool SetOwnerAndPermissions::operator()(const QString &path, RecursiveOperationType type)
-{
-    if (type == RecursiveOperationType::EnterDirectory)
-        return true;
-
-    const QByteArray localPath = path.toLocal8Bit();
-    mode_t mode = m_permissions;
-
-    if (type == RecursiveOperationType::LeaveDirectory) {
-        // set the x bit for directories, but only where it makes sense
-        if (mode & 06)
-            mode |= 01;
-        if (mode & 060)
-            mode |= 010;
-        if (mode & 0600)
-            mode |= 0100;
-    }
-
-    return ((chmod(localPath, mode) == 0) && (chown(localPath, m_user, m_group) == 0));
-}
-
-#endif // Q_OS_UNIX
-
 
 void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *consoleWidth)
 {
@@ -454,6 +396,68 @@ int timeoutFactor()
             qInfo() << "All timeouts are multiplied by" << tf << "(changed by (un)setting $AM_TIMEOUT_FACTOR)";
     }
     return tf;
+}
+
+bool recursiveOperation(const QString &path, const std::function<bool (const QString &, RecursiveOperationType)> &operation)
+{
+    QFileInfo pathInfo(path);
+
+    if (pathInfo.isDir()) {
+        if (!operation(path, RecursiveOperationType::EnterDirectory))
+            return false;
+
+        QDirIterator dit(path, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
+        while (dit.hasNext()) {
+            dit.next();
+            QFileInfo ditInfo = dit.fileInfo();
+
+            if (ditInfo.isDir()) {
+                if (!recursiveOperation(ditInfo.filePath(), operation))
+                    return false;
+            } else {
+                if (!operation(ditInfo.filePath(), RecursiveOperationType::File))
+                    return false;
+            }
+        }
+        return operation(path, RecursiveOperationType::LeaveDirectory);
+    } else {
+        return operation(path, RecursiveOperationType::File);
+    }
+}
+
+bool recursiveOperation(const QByteArray &path, const std::function<bool (const QString &, RecursiveOperationType)> &operation)
+{
+    return recursiveOperation(QString::fromLocal8Bit(path), operation);
+}
+
+bool recursiveOperation(const QDir &path, const std::function<bool (const QString &, RecursiveOperationType)> &operation)
+{
+    return recursiveOperation(path.absolutePath(), operation);
+}
+
+QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) Q_DECL_NOEXCEPT_EXPR(false)
+{
+    QVector<QObject *> interfaces;
+
+    try {
+        for (const QString &pluginFilePath : files) {
+            QPluginLoader pluginLoader(pluginFilePath);
+            if (Q_UNLIKELY(!pluginLoader.load())) {
+                throw Exception("could not load %1 plugin %2: %3")
+                        .arg(qL1S(type)).arg(pluginFilePath, pluginLoader.errorString());
+            }
+            QScopedPointer<QObject> iface(pluginLoader.instance());
+            if (Q_UNLIKELY(!iface || !iface->qt_metacast(iid))) {
+                throw Exception("could not get an instance of '%1' from the %2 plugin %3")
+                        .arg(qL1S(iid)).arg(qL1S(type)).arg(pluginFilePath);
+            }
+            interfaces << iface.take();
+        }
+    } catch (const Exception &) {
+        qDeleteAll(interfaces);
+        throw;
+    }
+    return interfaces;
 }
 
 QT_END_NAMESPACE_AM

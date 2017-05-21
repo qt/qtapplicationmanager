@@ -51,6 +51,7 @@
 #include "qtyaml.h"
 #include "application.h"
 #include "utilities.h"
+#include "exception.h"
 #include "installationreport.h"
 
 QT_BEGIN_NAMESPACE_AM

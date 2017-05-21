@@ -143,7 +143,7 @@ public:
     { }
     ~TemporaryDir()
     {
-        recursiveOperation(path(), SafeRemove());
+        recursiveOperation(path(), safeRemove);
     }
 private:
     Q_DISABLE_COPY(TemporaryDir)
@@ -411,7 +411,7 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
         quint64 neededSize = qMax(m_extractor->installationReport().diskSpaceUsed(), quint64(70 * 1024));
 
         quint64 availableSize = 0;
-        if (!diskUsage(installationDir.absolutePath(), nullptr, &availableSize) || availableSize < neededSize) {
+        if (!m_installationLocation.installationDeviceFreeSpace(nullptr, &availableSize) || availableSize < neededSize) {
             throw Exception(Error::StorageSpace, "not enough storage space left on %1: %2 MB available, but %3 MB needed")
                     .arg(m_installationLocation.id())
                     .arg(double(availableSize) / (1024 * 1024), 0, 'f', 2)

@@ -46,6 +46,19 @@
 #include "utilities.h"
 #include "exception.h"
 
+#if defined(Q_OS_WIN)
+#  include <windows.h>
+#else
+#  include <sys/stat.h>
+#  include <errno.h>
+#  if defined(Q_OS_ANDROID)
+#    include <sys/vfs.h>
+#    define statvfs statfs
+#  else
+#    include <sys/statvfs.h>
+#  endif
+#endif
+
 QT_BEGIN_NAMESPACE_AM
 
 static QString fixPath(const QString &path, const QString &hardwareId)
@@ -55,6 +68,36 @@ static QString fixPath(const QString &path, const QString &hardwareId)
     QDir dir(realPath);
     return (dir.exists() ? dir.canonicalPath() : dir.absolutePath()) + qL1C('/');
 }
+
+static bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree)
+{
+    QString cpath = QFileInfo(path).canonicalPath();
+
+#if defined(Q_OS_WIN)
+    return GetDiskFreeSpaceExW((LPCWSTR) cpath.utf16(), (ULARGE_INTEGER *) bytesFree,
+                               (ULARGE_INTEGER *) bytesTotal, nullptr);
+
+#else // Q_OS_UNIX
+    int result;
+    struct ::statvfs svfs;
+
+    do {
+        result = ::statvfs(cpath.toLocal8Bit(), &svfs);
+        if (result == -1 && errno == EINTR)
+            continue;
+    } while (false);
+
+    if (result == 0) {
+        if (bytesTotal)
+            *bytesTotal = quint64(svfs.f_frsize) * svfs.f_blocks;
+        if (bytesFree)
+            *bytesFree = quint64(svfs.f_frsize) * svfs.f_bavail;
+        return true;
+    }
+    return false;
+#endif // Q_OS_WIN
+}
+
 
 bool InstallationLocation::operator==(const InstallationLocation &other) const
 {
@@ -137,6 +180,16 @@ QString InstallationLocation::documentPath() const
     return m_documentPath;
 }
 
+bool InstallationLocation::installationDeviceFreeSpace(quint64 *bytesTotal, quint64 *bytesFree) const
+{
+    return diskUsage(installationPath(), bytesTotal, bytesFree);
+}
+
+bool InstallationLocation::documentDeviceFreeSpace(quint64 *bytesTotal, quint64 *bytesFree) const
+{
+    return diskUsage(documentPath(), bytesTotal, bytesFree);
+}
+
 QVariantMap InstallationLocation::toVariantMap() const
 {
     QVariantMap map;
@@ -152,7 +205,7 @@ QVariantMap InstallationLocation::toVariantMap() const
 
     quint64 total = 0, free = 0;
     if (mounted)
-        diskUsage(installationPath(), &total, &free);
+        installationDeviceFreeSpace(&total, &free);
 
     map[qSL("isMounted")] = mounted;
     map[qSL("installationDeviceSize")] = total;
@@ -160,7 +213,7 @@ QVariantMap InstallationLocation::toVariantMap() const
 
     total = free = 0;
     if (mounted)
-        diskUsage(documentPath(), &total, &free);
+        documentDeviceFreeSpace(&total, &free);
 
     map[qSL("documentDeviceSize")] = total;
     map[qSL("documentDeviceFree")] = free;

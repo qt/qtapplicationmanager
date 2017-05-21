@@ -44,7 +44,6 @@
 #include <QBuffer>
 
 #include "application.h"
-#include "utilities.h"
 #include "exception.h"
 #include "installationreport.h"
 #include "yamlapplicationscanner.h"

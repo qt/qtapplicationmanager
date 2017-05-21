@@ -42,6 +42,9 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
+#include <QVariantMap>
+#include <QStringList>
+#include <QByteArray>
 #if defined(QT_DBUS_LIB)
 #  include <QDBusContext>
 #endif

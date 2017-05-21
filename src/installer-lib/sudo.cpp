@@ -782,7 +782,7 @@ bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStrin
 bool SudoServer::removeRecursive(const QString &fileOrDir)
 {
     try {
-        if (!recursiveOperation(fileOrDir, SafeRemove()))
+        if (!recursiveOperation(fileOrDir, safeRemove))
             throw Exception(errno, "could not recursively remove %1").arg(fileOrDir);
         return true;
     } catch (const Exception &e) {
@@ -794,8 +794,29 @@ bool SudoServer::removeRecursive(const QString &fileOrDir)
 bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions)
 {
 #if defined(Q_OS_LINUX)
+    static auto setOwnerAndPermissions =
+            [user, group, permissions](const QString &path, RecursiveOperationType type) -> bool {
+        if (type == RecursiveOperationType::EnterDirectory)
+            return true;
+
+        const QByteArray localPath = path.toLocal8Bit();
+        mode_t mode = permissions;
+
+        if (type == RecursiveOperationType::LeaveDirectory) {
+            // set the x bit for directories, but only where it makes sense
+            if (mode & 06)
+                mode |= 01;
+            if (mode & 060)
+                mode |= 010;
+            if (mode & 0600)
+                mode |= 0100;
+        }
+
+        return ((chmod(localPath, mode) == 0) && (chown(localPath, user, group) == 0));
+    };
+
     try {
-        if (!recursiveOperation(fileOrDir, SetOwnerAndPermissions(user, group, permissions))) {
+        if (!recursiveOperation(fileOrDir, setOwnerAndPermissions)) {
             throw Exception(errno, "could not recursively set owner and permission on %1 to %2:%3 / %4")
                 .arg(fileOrDir).arg(user).arg(group).arg(permissions, 4, 8, QLatin1Char('0'));
         }

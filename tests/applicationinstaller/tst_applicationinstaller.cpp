@@ -251,7 +251,7 @@ tst_ApplicationInstaller::~tst_ApplicationInstaller()
         if (m_root)
             m_root->removeRecursive(m_workDir.path());
         else
-            recursiveOperation(m_workDir.path(), SafeRemove());
+            recursiveOperation(m_workDir.path(), safeRemove);
     }
 
     delete m_packageDeactivatedSpy;
@@ -423,7 +423,7 @@ void tst_ApplicationInstaller::cleanup()
     }
 
     clearSignalSpies();
-    recursiveOperation(pathTo(Internal0), SafeRemove());
+    recursiveOperation(pathTo(Internal0), safeRemove);
 }
 
 void tst_ApplicationInstaller::installationLocations()

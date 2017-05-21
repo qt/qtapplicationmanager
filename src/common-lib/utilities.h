@@ -41,24 +41,16 @@
 
 #pragma once
 
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#include <QTemporaryDir>
-#include <QDirIterator>
+#include <QVector>
 #include <QByteArray>
 #include <QMultiMap>
-#include <QPluginLoader>
+#include <QVariant>
 
 #include <QtAppManCommon/global.h>
-#include <QtAppManCommon/exception.h>
 
-#include <stdlib.h>
-#if defined(Q_OS_UNIX)
-#  include <unistd.h>
-#  include <sys/stat.h>
-#endif
+#include <functional>
 
+QT_FORWARD_DECLARE_CLASS(QDir)
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -77,7 +69,6 @@ inline QStringList variantToStringList(const QVariant &v)
                                           : v.toStringList();
 }
 
-bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFree);
 QMultiMap<QString, QString> mountedDirectories();
 
 enum class RecursiveOperationType
@@ -90,8 +81,7 @@ enum class RecursiveOperationType
 /*! \internal
 
     Recursively iterates over the file-system tree at \a path and calls the
-    functor \a operation for each entry as
-    \c{operator(const QString &path, RecursiveOperationType type)}
+    functor \a operation for each entry.
 
     \c path is always the file-path to the current entry. For files, \a
     operation will only be called once (\c{type == File}), whereas for
@@ -99,91 +89,29 @@ enum class RecursiveOperationType
     directory (\c{type == EnterDirectory}) and once when all sub-directories
     and files have been processed (\c{type == LeaveDirectory}).
  */
-template <typename OP> static bool recursiveOperation(const QString &path, OP operation)
-{
-    QFileInfo pathInfo(path);
+bool recursiveOperation(const QString &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
 
-    if (pathInfo.isDir()) {
-        if (!operation(path, RecursiveOperationType::EnterDirectory))
-            return false;
-
-        QDirIterator dit(path, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
-        while (dit.hasNext()) {
-            dit.next();
-            QFileInfo ditInfo = dit.fileInfo();
-
-            if (ditInfo.isDir()) {
-                if (!recursiveOperation(ditInfo.filePath(), operation))
-                    return false;
-            } else {
-                if (!operation(ditInfo.filePath(), RecursiveOperationType::File))
-                    return false;
-            }
-        }
-        return operation(path, RecursiveOperationType::LeaveDirectory);
-    } else {
-        return operation(path, RecursiveOperationType::File);
-    }
-}
-
-template <typename OP> static bool recursiveOperation(const QByteArray &path, OP operation)
-{
-    return recursiveOperation(QString::fromLocal8Bit(path), operation);
-}
-
-template <typename OP> static bool recursiveOperation(const QDir &path, OP operation)
-{
-    return recursiveOperation(path.absolutePath(), operation);
-}
+// convenience
+bool recursiveOperation(const QByteArray &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
+bool recursiveOperation(const QDir &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
 
 // makes files and directories writable, then deletes them
-class SafeRemove
-{
-public:
-    bool operator()(const QString &path, RecursiveOperationType type);
-};
-
-// changes owner and permissions (Unix only)
-#if defined(Q_OS_UNIX)
-
-class SetOwnerAndPermissions
-{
-public:
-    SetOwnerAndPermissions(uid_t user, gid_t group, mode_t permissions);
-    bool operator()(const QString &path, RecursiveOperationType type);
-
-private:
-    uid_t m_user;
-    gid_t m_group;
-    mode_t m_permissions;
-};
-#endif
+bool safeRemove(const QString &path, RecursiveOperationType type);
 
 void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *consoleWidth);
 
 qint64 getParentPid(qint64 pid);
 
+QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) Q_DECL_NOEXCEPT_EXPR(false);
+
 template <typename T>
 QVector<T *> loadPlugins(const char *type, const QStringList &files) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QVector<T *> interfaces;
-    const char *iid = qobject_interface_iid<T>();
-
-    for (const QString &pluginFilePath : files) {
-        QPluginLoader pluginLoader(pluginFilePath);
-        if (Q_UNLIKELY(!pluginLoader.load())) {
-            throw Exception("could not load %1 plugin %2: %3")
-                    .arg(type).arg(pluginFilePath, pluginLoader.errorString());
-        }
-        QScopedPointer<T >iface(qobject_cast<T *>(pluginLoader.instance()));
-
-        if (Q_UNLIKELY(!iface)) {
-            throw Exception("could not get an instance of '%1' from the %2 plugin %3")
-                    .arg(iid).arg(type).arg(pluginFilePath);
-        }
-        interfaces << iface.take();
-    }
-    return interfaces;
+    QVector<T *> result;
+    auto plugins = loadPlugins_helper(type, files, qobject_interface_iid<T *>());
+    for (auto p : plugins)
+        result << qobject_cast<T *>(p);
+    return result;
 }
 
 QT_END_NAMESPACE_AM

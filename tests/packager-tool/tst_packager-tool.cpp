@@ -39,6 +39,7 @@
 #include "applicationinstaller.h"
 #include "qmlinprocessruntime.h"
 #include "runtimefactory.h"
+#include "utilities.h"
 
 #include "../error-checking.h"
 

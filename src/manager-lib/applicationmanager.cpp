@@ -54,6 +54,7 @@
 
 #include "global.h"
 #include "logging.h"
+#include "exception.h"
 #include "applicationdatabase.h"
 #include "applicationmanager.h"
 #include "applicationmanager_p.h"
@@ -413,7 +414,7 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
     } catch (const Exception &e) {
         if (error)
             *error = e.errorString();
-        return 0;
+        return nullptr;
     }
 
     qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager", 1, 0, "ApplicationManager",

@@ -32,6 +32,7 @@
 #include "installationreport.h"
 #include "package.h"
 #include "packagecreator.h"
+#include "utilities.h"
 
 #include "../error-checking.h"
 

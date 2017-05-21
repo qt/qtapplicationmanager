@@ -41,12 +41,7 @@
 
 #pragma once
 
-#include <exception>
 #include <QObject>
-
-#if defined(Q_CC_MSVC)
-#  pragma warning(disable: 4290)
-#endif
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QWindow)

@@ -57,6 +57,7 @@
 #include "logging.h"
 #include "qtyaml.h"
 #include "utilities.h"
+#include "exception.h"
 #include "qml-utilities.h"
 #include "configuration.h"
 

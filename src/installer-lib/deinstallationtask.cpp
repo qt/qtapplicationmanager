@@ -46,7 +46,6 @@
 #include "installationreport.h"
 #include "application.h"
 #include "exception.h"
-#include "utilities.h"
 #include "scopeutilities.h"
 #include "deinstallationtask.h"
 

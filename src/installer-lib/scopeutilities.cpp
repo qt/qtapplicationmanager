@@ -241,7 +241,7 @@ bool ScopedRenamer::internalRename(const QDir &dir, const QString &from, const Q
 
     if (true) {
 #endif
-        if (toInfo.exists() && !recursiveOperation(toInfo.absoluteFilePath(), SafeRemove()))
+        if (toInfo.exists() && !recursiveOperation(toInfo.absoluteFilePath(), safeRemove))
             return false;
     }
 #ifdef Q_OS_UNIX

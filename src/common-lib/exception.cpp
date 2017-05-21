@@ -79,8 +79,9 @@ Exception::Exception(const Exception &copy) Q_DECL_NOEXCEPT
 Exception::Exception(Exception &&move) Q_DECL_NOEXCEPT
     : m_errorCode(move.m_errorCode)
     , m_errorString(move.m_errorString)
-    , m_whatBuffer(move.m_whatBuffer)
-{ }
+{
+    qSwap(m_whatBuffer, move.m_whatBuffer);
+}
 
 Exception::~Exception() Q_DECL_NOEXCEPT
 {
@@ -110,8 +111,9 @@ Exception *Exception::clone() const Q_DECL_NOEXCEPT
 const char *Exception::what() const Q_DECL_NOEXCEPT
 {
     if (!m_whatBuffer)
-        m_whatBuffer = new QByteArray(m_errorString.toLocal8Bit());
-    return *m_whatBuffer;
+        m_whatBuffer = new QByteArray;
+    *m_whatBuffer = m_errorString.toLocal8Bit();
+    return m_whatBuffer->constData();
 }
 
 QT_END_NAMESPACE_AM

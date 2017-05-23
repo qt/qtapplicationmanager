@@ -1,3 +1,7 @@
+TEMPLATE = lib
+TARGET = QtAppManMain
+MODULE = appman_main
+
 load(am-config)
 
 QT = core network qml core-private
@@ -15,7 +19,7 @@ QT *= \
     appman_window-private \
     appman_monitor-private \
 
-CONFIG *= console
+CONFIG *= static internal_module
 
 win32:LIBS += -luser32
 
@@ -50,17 +54,4 @@ dbus-appman.header_flags = -l QtAM::ApplicationManager -i applicationmanager.h
 
 DBUS_ADAPTORS += dbus-notifications dbus-appman
 
-load(qt_tool)
-
-load(install-prefix)
-
-OTHER_FILES = \
-    syms.txt \
-
-load(build-config)
-
-unix:exists($$SOURCE_DIR/.git):GIT_VERSION=$$system(cd "$$SOURCE_DIR" && git describe --tags --always --dirty 2>/dev/null)
-isEmpty(GIT_VERSION):GIT_VERSION="unknown"
-
-createBuildConfig(_DATE_, VERSION, GIT_VERSION, SOURCE_DIR, BUILD_DIR, INSTALL_PREFIX, \
-                  QT_ARCH, QT_VERSION, QT, CONFIG, DEFINES, INCLUDEPATH, LIBS)
+load(qt_module)

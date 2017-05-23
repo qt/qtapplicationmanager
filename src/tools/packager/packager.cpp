@@ -26,285 +26,208 @@
 **
 ****************************************************************************/
 
-#include <QFile>
-#include <QFileInfo>
-#include <QUrl>
-#include <QRegExp>
-#include <QDirIterator>
-#include <QMessageAuthenticationCode>
-#include <QJsonDocument>
-#include <QTemporaryDir>
+#include <QCoreApplication>
+#include <QCommandLineParser>
+#include <QStringList>
+#include <QDebug>
 
 #include <stdio.h>
-#include <stdlib.h>
 
-#include "exception.h"
-#include "signature.h"
-#include "qtyaml.h"
-#include "application.h"
-#include "installationreport.h"
-#include "yamlapplicationscanner.h"
-#include "packageextractor.h"
-#include "packagecreator.h"
-
-#include "packager.h"
+#include <QtAppManCommon/exception.h>
+#include <QtAppManPackage/package.h>
+#include "packagingjob.h"
 
 QT_USE_NAMESPACE_AM
 
-// this corresponds to the -b parameter for mkfs.ext2 in sudo.cpp
-static const int Ext2BlockSize = 1024;
+enum Command {
+    NoCommand,
+    CreatePackage,
+    DevSignPackage,
+    DevVerifyPackage,
+    StoreSignPackage,
+    StoreVerifyPackage,
+};
 
+static struct {
+    Command command;
+    const char *name;
+    const char *description;
+} commandTable[] = {
+    { CreatePackage,      "create-package",       "Create a new package." },
+    { DevSignPackage,     "dev-sign-package",     "Add developer signature to package." },
+    { DevVerifyPackage,   "dev-verify-package",   "Verify developer signature on package." },
+    { StoreSignPackage,   "store-sign-package",   "Add store signature to package." },
+    { StoreVerifyPackage, "store-verify-package", "Verify store signature on package." }
+};
 
-Packager *Packager::create(const QString &destinationName, const QString &sourceDir, bool asJson)
+static Command command(QCommandLineParser &clp)
 {
-    Packager *p = new Packager();
-    p->m_mode = Create;
-    p->m_asJson = asJson;
-    p->m_destinationName = destinationName;
-    p->m_sourceDir = sourceDir;
-    return p;
-}
+    if (!clp.positionalArguments().isEmpty()) {
+        QByteArray cmd = clp.positionalArguments().at(0).toLatin1();
 
-Packager *Packager::developerSign(const QString &sourceName, const QString &destinationName,
-                                  const QString &certificateFile, const QString &passPhrase,
-                                  bool asJson)
-{
-    Packager *p = new Packager();
-    p->m_mode = DeveloperSign;
-    p->m_asJson = asJson;
-    p->m_sourceName = sourceName;
-    p->m_destinationName = destinationName;
-    p->m_passphrase = passPhrase;
-    p->m_certificateFiles = QStringList { certificateFile };
-    return p;
-}
-
-Packager *Packager::developerVerify(const QString &sourceName, const QStringList &certificateFiles)
-{
-    Packager *p = new Packager();
-    p->m_mode = DeveloperVerify;
-    p->m_sourceName = sourceName;
-    p->m_certificateFiles = certificateFiles;
-    return p;
-}
-
-Packager *Packager::storeSign(const QString &sourceName, const QString &destinationName,
-                              const QString &certificateFile, const QString &passPhrase,
-                              const QString &hardwareId, bool asJson)
-{
-    Packager *p = new Packager();
-    p->m_mode = StoreSign;
-    p->m_asJson = asJson;
-    p->m_sourceName = sourceName;
-    p->m_destinationName = destinationName;
-    p->m_passphrase = passPhrase;
-    p->m_certificateFiles = QStringList { certificateFile };
-    p->m_hardwareId = hardwareId;
-    return p;
-}
-
-Packager *Packager::storeVerify(const QString &sourceName, const QStringList &certificateFiles, const QString &hardwareId)
-{
-    Packager *p = new Packager();
-    p->m_mode = StoreVerify;
-    p->m_sourceName = sourceName;
-    p->m_certificateFiles = certificateFiles;
-    p->m_hardwareId = hardwareId;
-    return p;
-}
-
-QString Packager::output() const
-{
-    return m_output;
-}
-
-int Packager::resultCode() const
-{
-    return m_resultCode;
-}
-
-Packager::Packager()
-{ }
-
-void Packager::execute() Q_DECL_NOEXCEPT_EXPR(false)
-{
-    switch (m_mode) {
-    case Create: {
-        if (m_destinationName.isEmpty())
-            throw Exception(Error::Package, "no destination package name given");
-
-        QFile destination(m_destinationName);
-        if (!destination.open(QIODevice::WriteOnly | QIODevice::Truncate))
-            throw Exception(destination, "could not create package file");
-
-        QString canonicalDestination = QFileInfo(destination).canonicalFilePath();
-
-        QDir source(m_sourceDir);
-        if (!source.exists())
-            throw Exception(Error::Package, "source %1 is not a directory").arg(m_sourceDir);
-
-        // check metadata
-        YamlApplicationScanner yas;
-        QString infoName = yas.metaDataFileName();
-        QScopedPointer<Application> app(yas.scan(source.absoluteFilePath(infoName)));
-
-        // build report
-        InstallationReport report(app->id());
-        report.addFile(infoName);
-
-        if (!QFile::exists(source.absoluteFilePath(app->icon())))
-            throw Exception(Error::Package, "missing the 'icon.png' file");
-        report.addFile(qSL("icon.png"));
-
-        // check executable
-        if (!QFile::exists(source.absoluteFilePath(app->codeFilePath())))
-            throw Exception(Error::Package, "missing the file referenced by the 'code' field");
-
-        quint64 estimatedImageSize = 0;
-        QString canonicalSourcePath = source.canonicalPath();
-        QDirIterator it(source.absolutePath(), QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
-
-        while (it.hasNext()) {
-            it.next();
-            QFileInfo entryInfo = it.fileInfo();
-            QString entryPath = entryInfo.canonicalFilePath();
-
-            // do not package the package itself, in case someone builds the package within the source dir
-            if (canonicalDestination == entryPath)
-                continue;
-
-            if (!entryPath.startsWith(canonicalSourcePath))
-                throw Exception(Error::Package, "file %1 is not inside the source directory %2").arg(entryPath).arg(canonicalSourcePath);
-
-            // QDirIterator::filePath() returns absolute paths, although the naming suggests otherwise
-            entryPath = entryPath.mid(canonicalSourcePath.size() + 1);
-
-            if (entryInfo.fileName().startsWith(qL1S("--PACKAGE-")))
-                throw Exception(Error::Package, "file names starting with --PACKAGE- are reserved by the packager (found: %1)").arg(entryPath);
-
-            estimatedImageSize += (entryInfo.size() + Ext2BlockSize - 1) / Ext2BlockSize;
-
-            if (entryPath != infoName && entryPath != qL1S("icon.png"))
-                report.addFile(entryPath);
-        }
-
-        // we have the estimatedImageSize for the raw content now, but we need to add the inode
-        // overhead still. This algorithm comes from buildroot:
-        // http://git.buildroot.net/buildroot/tree/package/mke2img/mke2img
-        estimatedImageSize = (500 + (estimatedImageSize + report.files().count() + 400 / 8) * 11 / 10) * Ext2BlockSize;
-        report.setDiskSpaceUsed(estimatedImageSize);
-
-        // finally create the package
-        PackageCreator creator(source, &destination, report);
-        if (!creator.create())
-            throw Exception(Error::Package, "could not create package %1: %2").arg(app->id()).arg(creator.errorString());
-
-        QVariantMap md = creator.metaData();
-        m_output = m_asJson ? QJsonDocument::fromVariant(md).toJson().constData()
-                            : QtYaml::yamlFromVariantDocuments({ md }).constData();
-        break;
-    }
-    case DeveloperSign:
-    case DeveloperVerify:
-    case StoreSign:
-    case StoreVerify: {
-        if (!QFile::exists(m_sourceName))
-            throw Exception(Error::Package, "package file %1 does not exist").arg(m_sourceName);
-
-        // read certificates
-        QList<QByteArray> certificates;
-        for (const QString &cert : qAsConst(m_certificateFiles)) {
-            QFile cf(cert);
-            if (!cf.open(QIODevice::ReadOnly))
-                throw Exception(cf, "could not open certificate file");
-            certificates << cf.readAll();
-        }
-
-        // create temporary dir for extraction
-        QTemporaryDir tmp;
-        if (!tmp.isValid())
-            throw Exception(Error::Package, "could not create temporary directory %1").arg(tmp.path());
-
-        // extract source
-        PackageExtractor extractor(QUrl::fromLocalFile(m_sourceName), tmp.path());
-        if (!extractor.extract())
-            throw Exception(Error::Package, "could not extract package %1: %2").arg(m_sourceName).arg(extractor.errorString());
-
-        InstallationReport report = extractor.installationReport();
-
-        // check signatures
-        if (m_mode == DeveloperVerify) {
-            if (report.developerSignature().isEmpty()) {
-                m_output = qSL("no developer signature");
-                m_resultCode = 1;
-            } else {
-                Signature sig(report.digest());
-                if (!sig.verify(report.developerSignature(), certificates)) {
-                    m_output = qSL("invalid developer signature (") + sig.errorString() + qSL(")");
-                    m_resultCode = 2;
-                } else {
-                    m_output = qSL("valid developer signature");
-                }
+        for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
+            if (cmd == commandTable[i].name) {
+                clp.clearPositionalArguments();
+                clp.addPositionalArgument(cmd, commandTable[i].description, cmd);
+                return commandTable[i].command;
             }
-            break; // done with DeveloperVerify
-
-        } else if (m_mode == StoreVerify) {
-            if (report.storeSignature().isEmpty()) {
-                m_output = qSL("no store signature");
-                m_resultCode = 1;
-            } else {
-                QByteArray digestPlusId = QMessageAuthenticationCode::hash(report.digest(), m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
-                Signature sig(digestPlusId);
-                if (!sig.verify(report.storeSignature(), certificates)) {
-                    m_output = qSL("invalid store signature (") + sig.errorString() + qSL(")");
-                    m_resultCode = 2;
-                } else {
-                    m_output = qSL("valid store signature");
-                }
-
-            }
-            break; // done with StoreVerify
         }
-
-        // create a signed package
-        if (m_destinationName.isEmpty())
-            throw Exception(Error::Package, "no destination package name given");
-
-        QFile destination(m_destinationName);
-        if (!destination.open(QIODevice::WriteOnly | QIODevice::Truncate))
-            throw Exception(destination, "could not create package file");
-
-        PackageCreator creator(tmp.path(), &destination, report);
-
-        if (certificates.size() != 1)
-            throw Exception(Error::Package, "cannot sign packages with more than one certificate");
-
-        if (m_mode == DeveloperSign) {
-            Signature sig(report.digest());
-            QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
-
-            if (signature.isEmpty())
-                throw Exception(Error::Package, "could not create signature: %1").arg(sig.errorString());
-            report.setDeveloperSignature(signature);
-        } else if (m_mode == StoreSign) {
-            QByteArray digestPlusId = QMessageAuthenticationCode::hash(report.digest(), m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
-            Signature sig(digestPlusId);
-            QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
-
-            if (signature.isEmpty())
-                throw Exception(Error::Package, "could not create signature: %1").arg(sig.errorString());
-            report.setStoreSignature(signature);
-        }
-
-        if (!creator.create())
-            throw Exception(Error::Package, "could not create package %1: %2").arg(m_destinationName).arg(creator.errorString());
-
-        QVariantMap md = creator.metaData();
-        m_output = m_asJson ? QJsonDocument::fromVariant(md).toJson().constData()
-                            : QtYaml::yamlFromVariantDocuments({ md }).constData();
-        break;
     }
+    return NoCommand;
+}
+
+int main(int argc, char *argv[])
+{
+    Package::ensureCorrectLocale();
+
+    QCoreApplication::setApplicationName(qSL("ApplicationManager Packager"));
+    QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
+    QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
+    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
+
+    QCoreApplication a(argc, argv);
+
+    if (!Package::checkCorrectLocale()) {
+        fprintf(stderr, "ERROR: the packager needs a UTF-8 locale to work correctly:\n"
+                        "       even automatically switching to C.UTF-8 or en_US.UTF-8 failed.\n");
+        exit(2);
+    }
+
+    QString desc = qSL("\nPelagicore ApplicationManager packaging tool\n\nAvailable commands are:\n");
+    uint longestName = 0;
+    for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i)
+        longestName = qMax(longestName, qstrlen(commandTable[i].name));
+    for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
+        desc += qSL("  %1%2  %3\n")
+                .arg(qL1S(commandTable[i].name),
+                     QString(longestName - qstrlen(commandTable[i].name), qL1C(' ')),
+                     qL1S(commandTable[i].description));
+    }
+
+    desc += qSL("\nMore information about each command can be obtained by running\n  appman-packager <command> --help");
+
+    QCommandLineParser clp;
+    clp.setApplicationDescription(desc);
+
+    clp.addHelpOption();
+    clp.addVersionOption();
+
+    clp.addPositionalArgument(qSL("command"), qSL("The command to execute."));
+
+    // ignore unknown options for now -- the sub-commands may need them later
+    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
+
+    if (!clp.parse(QCoreApplication::arguments())) {
+        fprintf(stderr, "%s\n", qPrintable(clp.errorText()));
+        exit(1);
+    }
+    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
+
+    PackagingJob *p = nullptr;
+
+    switch (command(clp)) {
     default:
-        throw Exception("invalid mode");
+    case NoCommand:
+        if (clp.isSet(qSL("version")))
+            clp.showVersion();
+        if (clp.isSet(qSL("help")))
+            clp.showHelp();
+        clp.showHelp(1);
+        break;
+
+    case CreatePackage:
+        clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
+        clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
+        clp.addPositionalArgument(qSL("package"),          qSL("The file name of the created package."));
+        clp.addPositionalArgument(qSL("source-directory"), qSL("The package's content root directory."));
+        clp.process(a);
+
+        if (clp.positionalArguments().size() != 3)
+            clp.showHelp(1);
+
+        p = PackagingJob::create(clp.positionalArguments().at(1),
+                                 clp.positionalArguments().at(2),
+                                 clp.isSet(qSL("json")));
+        break;
+
+    case DevSignPackage:
+        clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
+        clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
+        clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
+        clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
+        clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
+        clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
+        clp.process(a);
+
+        if (clp.positionalArguments().size() != 5)
+            clp.showHelp(1);
+
+        p = PackagingJob::developerSign(clp.positionalArguments().at(1),
+                                        clp.positionalArguments().at(2),
+                                        clp.positionalArguments().at(3),
+                                        clp.positionalArguments().at(4),
+                                        clp.isSet(qSL("json")));
+        break;
+
+    case DevVerifyPackage:
+        clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
+        clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
+        clp.addPositionalArgument(qSL("certificates"), qSL("The developer's CA certificate file(s)."), qSL("certificates..."));
+        clp.process(a);
+
+        if (clp.positionalArguments().size() < 3)
+            clp.showHelp(1);
+
+        p = PackagingJob::developerVerify(clp.positionalArguments().at(1),
+                                          clp.positionalArguments().mid(2));
+        break;
+
+    case StoreSignPackage:
+        clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
+        clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
+        clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
+        clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
+        clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
+        clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
+        clp.addPositionalArgument(qSL("hardware-id"),    qSL("Unique hardware id to which this package gets bound."));
+        clp.process(a);
+
+        if (clp.positionalArguments().size() != 6)
+            clp.showHelp(1);
+
+        p = PackagingJob::storeSign(clp.positionalArguments().at(1),
+                                    clp.positionalArguments().at(2),
+                                    clp.positionalArguments().at(3),
+                                    clp.positionalArguments().at(4),
+                                    clp.positionalArguments().at(5),
+                                    clp.isSet(qSL("json")));
+        break;
+
+    case StoreVerifyPackage:
+        clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
+        clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
+        clp.addPositionalArgument(qSL("certificates"), qSL("Store CA certificate file(s)."), qSL("certificates..."));
+        clp.addPositionalArgument(qSL("hardware-id"),  qSL("Unique hardware id to which this package was bound."));
+        clp.process(a);
+
+        if (clp.positionalArguments().size() < 4)
+            clp.showHelp(1);
+
+        p = PackagingJob::storeVerify(clp.positionalArguments().at(1),
+                                      clp.positionalArguments().mid(2, clp.positionalArguments().size() - 2),
+                                      *--clp.positionalArguments().cend());
+        break;
+    }
+
+    if (!p)
+        return 2;
+    try {
+        p->execute();
+        if (clp.isSet(qSL("verbose")) && !p->output().isEmpty())
+            fprintf(stdout, "%s\n", qPrintable(p->output()));
+        return p->resultCode();
+    } catch (const Exception &e) {
+        fprintf(stderr, "ERROR: %s\n", qPrintable(e.errorString()));
+        return 1;
     }
 }

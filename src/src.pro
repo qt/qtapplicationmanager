@@ -3,45 +3,95 @@ TEMPLATE = subdirs
 
 load(am-config)
 
-SUBDIRS = \
-    common-lib \
-    crypto-lib \
-    application-lib \
-    package-lib \
+common_lib.subdir = common-lib
 
-crypto-lib.depends = common-lib
-application-lib.depends = common-lib
-notification-lib.depends = common-lib
-package-lib.depends = crypto-lib application-lib
-manager-lib.depends = application-lib notification-lib plugin-interfaces
-installer-lib.depends = package-lib manager-lib
-window-lib.depends = manager-lib
-monitor-lib.depends = manager-lib window-lib
-launcher-lib.depends = application-lib notification-lib
-manager.depends = manager-lib installer-lib window-lib monitor-lib
-launchers.depends = launcher-lib
-tools.depends = package-lib
+plugin_interfaces.subdir = plugin-interfaces
+
+crypto_lib.subdir = crypto-lib
+crypto_lib.depends = common_lib
+
+application_lib.subdir = application-lib
+application_lib.depends = common_lib
+
+notification_lib.subdir = notification-lib
+notification_lib.depends = common_lib
+
+package_lib.subdir = package-lib
+package_lib.depends = crypto_lib application_lib
+
+manager_lib.subdir = manager-lib
+manager_lib.depends = application_lib notification_lib plugin_interfaces
+
+installer_lib.subdir = installer-lib
+installer_lib.depends = package_lib manager_lib
+
+window_lib.subdir = window-lib
+window_lib.depends = manager_lib
+
+monitor_lib.subdir = monitor-lib
+monitor_lib.depends = manager_lib window_lib
+
+launcher_lib.subdir = launcher-lib
+launcher_lib.depends = application_lib notification_lib
+
+main_lib.subdir = main-lib
+main_lib.depends = manager_lib installer_lib window_lib monitor_lib
+
+launchers_qml.subdir = launchers/qml
+launchers_qml.depends = launcher_lib plugin_interfaces
+
+tools_appman.subdir = tools/appman
+tools_appman.depends = main_lib
+
+tools_testrunner.subdir = tools/testrunner
+tools_testrunner.depends = main_lib
+
+tools_dumpqmltypes.subdir = tools/dumpqmltypes
+tools_dumpqmltypes.depends = manager_lib installer_lib window_lib monitor_lib launcher_lib
+
+tools_packager.subdir = tools/packager
+tools_packager.depends = package_lib
+
+tools_deployer.subdir = tools/deployer
+
+tools_controller.subdir = tools/controller
+tools_controller.depends = common_lib
+
+SUBDIRS = \
+    common_lib \
+    crypto_lib \
+    application_lib \
+    package_lib \
 
 !tools-only {
     SUBDIRS += \
-        plugin-interfaces \
+        plugin_interfaces \
         dbus \
 
     qtHaveModule(qml):SUBDIRS += \
-        notification-lib \
-        manager-lib \
-        installer-lib \
-        window-lib \
-        monitor-lib \
-        manager \
+        notification_lib \
+        manager_lib \
+        installer_lib \
+        window_lib \
+        main_lib \
+        monitor_lib \
+        tools_appman \
+        # Although the testrunner is in tools we don't want to build it with tools-only
+        # because it is based on the manager binary
+        tools_testrunner \
 
     qtHaveModule(qml):qtHaveModule(dbus):SUBDIRS += \
-        launcher-lib \
-        launchers
+        launcher_lib \
+        # This tool links against everything to extract the Qml type information
+        tools_dumpqmltypes \
 
-    tools.depends *= manager-lib installer-lib window-lib monitor-lib
-
-    qtHaveModule(qml):qtHaveModule(dbus):tools.depends *= launcher-lib
+    multi-process:qtHaveModule(qml):qtHaveModule(dbus):SUBDIRS += \
+        launchers_qml \
 }
 
-SUBDIRS += tools
+!android:SUBDIRS += \
+    tools_packager \
+    tools_deployer \
+
+qtHaveModule(dbus):SUBDIRS += \
+    tools_controller \

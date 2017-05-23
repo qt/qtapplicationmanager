@@ -15,7 +15,8 @@ QT *= \
 
 CONFIG *= console
 
-SOURCES += main.cpp
+SOURCES += \
+    dumpqmltypes.cpp
 
 load(qt_tool)
 

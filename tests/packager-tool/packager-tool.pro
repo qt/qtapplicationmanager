@@ -13,6 +13,6 @@ QT *= \
     appman_installer-private \
 
 INCLUDEPATH += ../../src/tools/packager
-SOURCES += ../../src/tools/packager/packager.cpp
+SOURCES += ../../src/tools/packager/packagingjob.cpp
 
 SOURCES += tst_packager-tool.cpp

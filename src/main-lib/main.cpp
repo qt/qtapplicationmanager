@@ -135,69 +135,6 @@
 
 #include "../plugin-interfaces/startupinterface.h"
 
-#if defined(AM_TESTRUNNER)
-#  include "testrunner.h"
-#  include "qtyaml.h"
-#endif
-
-
-QT_USE_NAMESPACE_AM
-
-Q_DECL_EXPORT int main(int argc, char *argv[])
-{
-#if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
-    // set a reasonable default for OSes/distros that do not set this by default
-    setenv("XDG_RUNTIME_DIR", "/tmp", 0);
-#endif
-
-    StartupTimer::instance()->checkpoint("entered main");
-
-    QCoreApplication::setApplicationName(qSL("ApplicationManager"));
-    QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
-    QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
-    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
-    for (int i = 1; i < argc; ++i) {
-        if (strcmp("--no-dlt-logging", argv[i]) == 0) {
-            Logging::setDltEnabled(false);
-            break;
-        }
-    }
-    Logging::initialize();
-    StartupTimer::instance()->checkpoint("after basic initialization");
-
-#if !defined(AM_DISABLE_INSTALLER)
-    Package::ensureCorrectLocale();
-
-    QString error;
-    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
-        qCCritical(LogSystem) << "ERROR:" << qPrintable(error);
-        return 2;
-    }
-    StartupTimer::instance()->checkpoint("after sudo server fork");
-#endif
-
-    DefaultConfiguration cfg;
-    cfg.parse();
-    StartupTimer::instance()->checkpoint("after command line parse");
-
-    try {
-#if !defined(AM_HEADLESS)
-        // this is needed for both WebEngine and Wayland Multi-screen rendering
-        QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#  if !defined(QT_NO_SESSIONMANAGER)
-        QGuiApplication::setFallbackSessionManagementEnabled(false);
-#  endif
-#endif
-        Main a(argc, argv);
-
-        a.setup(&cfg);
-        return a.exec();
-
-    } catch (const std::exception &e) {
-        qCCritical(LogSystem) << "ERROR:" << e.what();
-        return 2;
-    }
-}
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -215,13 +152,23 @@ Main::Main(int &argc, char **argv)
 
 Main::~Main()
 {
-#if defined(AM_TESTRUNNER)
-    Q_UNUSED(m_notificationManager);
-    Q_UNUSED(m_systemMonitor);
-    Q_UNUSED(m_applicationIPCManager);
-    Q_UNUSED(m_debuggingEnabler);
-    delete m_engine;
-#else
+    // the eventloop stopped, so any pending "retakes" would not be executed
+    QObject *singletons[] = {
+        m_applicationManager,
+        m_applicationInstaller,
+        m_applicationIPCManager,
+        m_notificationManager,
+        m_windowManager,
+        m_systemMonitor
+    };
+    for (const auto &singleton : singletons)
+        retakeSingletonOwnershipFromQmlEngine(m_engine, singleton, true);
+
+#if defined(QT_PSSDP_LIB)
+    if (m_ssdpOk)
+        m_ssdp.setActive(false);
+#endif // QT_PSSDP_LIB
+
     delete m_engine;
 
     delete m_notificationManager;
@@ -234,7 +181,6 @@ Main::~Main()
     delete m_systemMonitor;
     delete m_applicationIPCManager;
     delete m_debuggingEnabler;
-#endif // defined(AM_TESTRUNNER)
 }
 
 /*! \internal
@@ -252,10 +198,6 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupLoggingRules(cfg->verbose(), cfg->loggingRules());
     setupQmlDebugging(cfg->qmlDebugging());
     Logging::registerUnregisteredDltContexts();
-
-#if defined(AM_TESTRUNNER)
-    TestRunner::initialize(cfg->testRunnerArguments());
-#endif
 
     loadStartupPlugins(cfg->pluginFilePaths("startup"));
     parseSystemProperties(cfg->rawSystemProperties());
@@ -287,35 +229,6 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupDebugWrappers(cfg->debugWrappers());
     setupShellServer(cfg->telnetAddress(), cfg->telnetPort());
     setupSSDPService();
-}
-
-int Main::exec() Q_DECL_NOEXCEPT_EXPR(false)
-{
-    int res;
-#if defined(AM_TESTRUNNER)
-    res = TestRunner::exec(m_engine);
-#else
-    res = MainBase::exec();
-
-    // the eventloop stopped, so any pending "retakes" would not be executed
-    QObject *singletons[] = {
-        m_applicationManager,
-        m_applicationInstaller,
-        m_applicationIPCManager,
-        m_notificationManager,
-        m_windowManager,
-        m_systemMonitor
-    };
-    for (const auto &singleton : singletons)
-        retakeSingletonOwnershipFromQmlEngine(m_engine, singleton, true);
-#endif // defined(AM_TESTRUNNER)
-
-#if defined(QT_PSSDP_LIB)
-    if (m_ssdpOk)
-        m_ssdp.setActive(false);
-#endif // QT_PSSDP_LIB
-
-    return res;
 }
 
 bool Main::isSingleProcessMode() const
@@ -356,6 +269,11 @@ void Main::shutDown()
                 this, []() { checkShutDownFinished(WindowManagerDown); });
         m_windowManager->shutDown();
     }
+}
+
+QQmlApplicationEngine *Main::qmlEngine() const
+{
+    return m_engine;
 }
 
 void Main::setupQmlDebugging(bool qmlDebugging)
@@ -605,6 +523,11 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
     }
 
     if (!m_applicationDatabase->isValid() || recreateDatabase) {
+        const QString dbDir = QFileInfo(databasePath).absolutePath();
+
+        if (Q_UNLIKELY(!QDir(dbDir).exists()) && Q_UNLIKELY(!QDir::root().mkpath(dbDir)))
+            throw Exception("could not create application database directory %1").arg(dbDir);
+
         QVector<const Application *> apps;
 
         if (!singleApp.isEmpty()) {
@@ -678,18 +601,9 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
     m_engine->setImportPathList(m_engine->importPathList() + importPaths);
-    m_engine->rootContext()->setContextProperty("StartupTimer", StartupTimer::instance());
+    m_engine->rootContext()->setContextProperty(qSL("StartupTimer"), StartupTimer::instance());
 
     StartupTimer::instance()->checkpoint("after QML engine instantiation");
-
-#if defined(AM_TESTRUNNER)
-    QFile f(qSL(":/build-config.yaml"));
-    QVector<QVariant> docs;
-    if (f.open(QFile::ReadOnly))
-        docs = QtYaml::variantDocumentsFromYaml(f.readAll());
-    f.close();
-    m_engine->rootContext()->setContextProperty("buildConfig", docs.toList());
-#endif
 }
 
 void Main::setupWindowTitle(const QString &title, const QString &iconPath)
@@ -887,7 +801,7 @@ const char *Main::dbusInterfaceName(QObject *o) const Q_DECL_NOEXCEPT_EXPR(false
     int idx = o->metaObject()->indexOfClassInfo("D-Bus Interface");
     if (idx < 0) {
         throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
-            .arg(o->metaObject()->className());
+            .arg(qL1S(o->metaObject()->className()));
     }
     return o->metaObject()->classInfo(idx).value();
 #else
@@ -905,14 +819,14 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
     if (dbusName.isEmpty()) {
         return;
     } else if (dbusName == qL1S("system")) {
-        dbusAddress = qgetenv("DBUS_SYSTEM_BUS_ADDRESS");
+        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SYSTEM_BUS_ADDRESS"));
 #  if defined(Q_OS_LINUX)
         if (dbusAddress.isEmpty())
             dbusAddress = qL1S("unix:path=/var/run/dbus/system_bus_socket");
 #  endif
         conn = QDBusConnection::systemBus();
     } else if (dbusName == qL1S("session")) {
-        dbusAddress = qgetenv("DBUS_SESSION_BUS_ADDRESS");
+        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
         conn = QDBusConnection::sessionBus();
     } else {
         dbusAddress = dbusName;
@@ -932,12 +846,12 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
 
     if (!conn.registerObject(qL1S(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
         throw Exception("could not register object %1 on D-Bus (%2): %3")
-                .arg(path).arg(dbusName).arg(conn.lastError().message());
+                .arg(qL1S(path)).arg(dbusName).arg(conn.lastError().message());
     }
 
     if (!conn.registerService(qL1S(serviceName))) {
         throw Exception("could not register service %1 on D-Bus (%2): %3")
-                .arg(serviceName).arg(dbusName).arg(conn.lastError().message());
+                .arg(qL1S(serviceName)).arg(dbusName).arg(conn.lastError().message());
     }
 
     qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
@@ -949,7 +863,7 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
         QFile f(QDir::temp().absoluteFilePath(qL1S(interfaceName) + qSL(".dbus")));
         QByteArray dbusUtf8 = dbusAddress.isEmpty() ? dbusName.toUtf8() : dbusAddress.toUtf8();
         if (!f.open(QFile::WriteOnly | QFile::Truncate) || (f.write(dbusUtf8) != dbusUtf8.size()))
-            throw Exception(f, "Could not write D-Bus address of interface %1").arg(interfaceName);
+            throw Exception(f, "Could not write D-Bus address of interface %1").arg(qL1S(interfaceName));
 
         static QStringList filesToDelete;
         if (filesToDelete.isEmpty())
@@ -963,8 +877,8 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
 #endif // QT_DBUS_LIB
 }
 
-void Main::registerDBusInterfaces(const std::function<QString(const QString &)> &busForInterface,
-                                  const std::function<QVariantMap(const QString &)> &policyForInterface)
+void Main::registerDBusInterfaces(const std::function<QString(const char *)> &busForInterface,
+                                  const std::function<QVariantMap(const char *)> &policyForInterface)
 {
 #if defined(QT_DBUS_LIB)
     registerDBusTypes();

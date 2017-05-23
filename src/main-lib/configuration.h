@@ -54,6 +54,7 @@ class Configuration
 public:
     virtual ~Configuration();
     virtual void parse();
+    QVariant buildConfig() const;
 
 protected:
     Configuration(const QString &defaultConfigFilePath, const QString &buildConfigFilePath);

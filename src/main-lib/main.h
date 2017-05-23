@@ -88,9 +88,10 @@ public:
     bool isSingleProcessMode() const;
 
     void setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false);
-    int exec() Q_DECL_NOEXCEPT_EXPR(false);
 
     void shutDown();
+
+    QQmlApplicationEngine *qmlEngine() const;
 
 protected:
     void setupQmlDebugging(bool qmlDebugging);
@@ -98,8 +99,8 @@ protected:
     void loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false);
     void parseSystemProperties(const QVariantMap &rawSystemProperties);
     void setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false);
-    void registerDBusInterfaces(const std::function<QString(const QString &)> &busForInterface,
-                                const std::function<QVariantMap(const QString &)> &policyForInterface);
+    void registerDBusInterfaces(const std::function<QString(const char *)> &busForInterface,
+                                const std::function<QVariantMap(const char *)> &policyForInterface);
     void setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false);
     void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &containerConfigurations,

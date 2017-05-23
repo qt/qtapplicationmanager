@@ -42,6 +42,10 @@
 
 #pragma once
 
+#include <QtAppManCommon/global.h>
+
+#if defined(AM_MULTI_PROCESS)
+
 #include <QWaylandQuickCompositor>
 #include <QtAppManWindow/windowmanager.h>
 
@@ -155,3 +159,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // AM_MULTIPROCESS

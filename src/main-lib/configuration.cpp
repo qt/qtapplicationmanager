@@ -71,25 +71,34 @@ QT_BEGIN_NAMESPACE_AM
 
 template<> bool Configuration::value(const char *clname, const QVector<const char *> &cfname) const
 {
-    return m_clp.isSet(qL1S(clname)) || findInConfigFile(cfname).toBool();
+    return (clname && m_clp.isSet(qL1S(clname))) || findInConfigFile(cfname).toBool();
 }
 
 template<> QString Configuration::value(const char *clname, const QVector<const char *> &cfname) const
 {
-    QString clval = m_clp.value(qL1S(clname));
+    QString clval;
+    if (clname)
+        clval = m_clp.value(qL1S(clname));
     bool cffound;
     QString cfval = findInConfigFile(cfname, &cffound).toString();
-    return (m_clp.isSet(qL1S(clname)) || !cffound) ? clval : cfval;
+    return ((clname && m_clp.isSet(qL1S(clname))) || !cffound) ? clval : cfval;
 }
 
 template<> QStringList Configuration::value(const char *clname, const QVector<const char *> &cfname) const
 {
-    return m_clp.values(qL1S(clname)) + variantToStringList(findInConfigFile(cfname));
+    QStringList result;
+    if (clname)
+        result = m_clp.values(qL1S(clname));
+    if (!cfname.isEmpty())
+        result += variantToStringList(findInConfigFile(cfname));
+    return result;
 }
 
 template<> QVariant Configuration::value(const char *clname, const QVector<const char *> &cfname) const
 {
-    QString yaml = m_clp.value(qL1S(clname));
+    QString yaml;
+    if (clname)
+        yaml = m_clp.value(qL1S(clname));
     if (!yaml.isEmpty()) {
         auto docs = QtYaml::variantDocumentsFromYaml(yaml.toUtf8());
         return docs.isEmpty() ? QVariant() : docs.constFirst();
@@ -156,6 +165,15 @@ Configuration::Configuration(const QString &defaultConfigFilePath, const QString
     m_clp.addOption({ qSL("clear-config-cache"),   qSL("ignore an existing config file cache.") });
     if (!buildConfigFilePath.isEmpty())
         m_clp.addOption({ qSL("build-config"),         qSL("dumps the build configuration and exits.") });
+}
+
+QVariant Configuration::buildConfig() const
+{
+    QFile f(m_buildConfigFilePath);
+    if (f.open(QFile::ReadOnly))
+        return QtYaml::variantDocumentsFromYaml(f.readAll()).toList();
+    else
+        return QVariant();
 }
 
 Configuration::~Configuration()

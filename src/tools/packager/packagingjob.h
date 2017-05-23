@@ -32,21 +32,21 @@
 #include <QByteArray>
 #include <QString>
 
-class Packager
+class PackagingJob
 {
 public:
-    static Packager *create(const QString &destinationName, const QString &sourceDir, bool asJson = false);
+    static PackagingJob *create(const QString &destinationName, const QString &sourceDir, bool asJson = false);
 
-    static Packager *developerSign(const QString &sourceName, const QString &destinationName,
+    static PackagingJob *developerSign(const QString &sourceName, const QString &destinationName,
+                                       const QString &certificateFile, const QString &passPhrase,
+                                       bool asJson = false);
+    static PackagingJob *developerVerify(const QString &sourceName, const QStringList &certificateFiles);
+
+    static PackagingJob *storeSign(const QString &sourceName, const QString &destinationName,
                                    const QString &certificateFile, const QString &passPhrase,
-                                   bool asJson = false);
-    static Packager *developerVerify(const QString &sourceName, const QStringList &certificateFiles);
-
-    static Packager *storeSign(const QString &sourceName, const QString &destinationName,
-                               const QString &certificateFile, const QString &passPhrase,
-                               const QString &hardwareId, bool asJson = false);
-    static Packager *storeVerify(const QString &sourceName, const QStringList &certificateFiles,
-                                 const QString &hardwareId);
+                                   const QString &hardwareId, bool asJson = false);
+    static PackagingJob *storeVerify(const QString &sourceName, const QStringList &certificateFiles,
+                                     const QString &hardwareId);
 
     void execute() Q_DECL_NOEXCEPT_EXPR(false);
 
@@ -54,7 +54,7 @@ public:
     int resultCode() const;
 
 private:
-    Packager();
+    PackagingJob();
 
     enum Mode {
         Create,

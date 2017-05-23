@@ -53,33 +53,28 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-DefaultConfiguration::DefaultConfiguration()
+DefaultConfiguration::DefaultConfiguration(const char *additionalDescription, bool onlyOnePositionalArgument)
     : Configuration(qSL(AM_CONFIG_FILE), qSL(":/build-config.yaml"))
+    , m_onlyOnePositionalArgument(onlyOnePositionalArgument)
 {
     // using QStringLiteral for all strings here adds a few KB of ro-data, but will also improve
     // startup times slightly: less allocations and copies. MSVC cannot cope with multi-line though
 
     const char *description =
-#ifdef AM_TESTRUNNER
-        "Pelagicore ApplicationManager QML Test Runner"
-        "\n\n"
-        "Additional testrunner commandline options can be set after the -- argument\n"
-        "Use -- -help to show all available testrunner commandline options"
-#else
-        "Pelagicore ApplicationManager"
-#endif
-        "\n\n"
         "In addition to the commandline options below, the following environment\n"
         "variables can be set:\n\n"
         "  AM_STARTUP_TIMER  if set to 1, a startup performance analysis will be printed\n"
         "                    on the console. Anything other than 1 will be interpreted\n"
-        "                    as the name of a file that is used instead of the console\n"
+        "                    as the name of a file that is used instead of the console.\n"
         "\n"
         "  AM_FORCE_COLOR_OUTPUT  can be set to 'on' to force color output to the console\n"
         "                         and to 'off' to disable it. Any other value will result\n"
         "                         in the default, auto-detection behavior.\n";
-    m_clp.setApplicationDescription(description);
 
+    m_clp.setApplicationDescription(QCoreApplication::organizationName() + qL1C(' ')
+                                    + QCoreApplication::applicationName() + qSL("\n\n")
+                                    + (additionalDescription ? (qL1S(additionalDescription) + qSL("\n\n")) : QString())
+                                    + qL1S(description));
 
     m_clp.addPositionalArgument(qSL("qml-file"),   qSL("the main QML file."));
     m_clp.addOption({ qSL("database"),             qSL("application database."), qSL("file"), qSL("/opt/am/apps.db") });
@@ -122,12 +117,10 @@ void DefaultConfiguration::parse()
 {
     Configuration::parse();
 
-#ifndef AM_TESTRUNNER
-    if (m_clp.positionalArguments().size() > 1) {
+    if (m_onlyOnePositionalArgument && (m_clp.positionalArguments().size() > 1)) {
         showParserMessage(qL1S("Only one main qml file can be specified.\n"), ErrorMessage);
         exit(1);
     }
-#endif
 }
 
 QString DefaultConfiguration::mainQmlFile() const
@@ -146,7 +139,7 @@ QString DefaultConfiguration::database() const
 
 bool DefaultConfiguration::recreateDatabase() const
 {
-    return m_clp.isSet("recreate-database");
+    return value<bool>("recreate-database");
 }
 
 QStringList DefaultConfiguration::builtinAppsManifestDirs() const
@@ -171,7 +164,7 @@ bool DefaultConfiguration::fullscreen() const
 
 bool DefaultConfiguration::noFullscreen() const
 {
-    return m_clp.isSet("no-fullscreen");
+    return value<bool>("no-fullscreen");
 }
 
 QString DefaultConfiguration::windowIcon() const
@@ -298,16 +291,14 @@ QVariantMap DefaultConfiguration::runtimeConfigurations() const
     return value<QVariant>(nullptr, { "runtimes" }).toMap();
 }
 
-QVariantMap DefaultConfiguration::dbusPolicy(const QString &interfaceName) const
+QVariantMap DefaultConfiguration::dbusPolicy(const char *interfaceName) const
 {
-    QByteArray name = interfaceName.toLocal8Bit();
-    return value<QVariant>(nullptr, { "dbus", name.constData(), "policy" }).toMap();
+    return value<QVariant>(nullptr, { "dbus", interfaceName, "policy" }).toMap();
 }
 
-QString DefaultConfiguration::dbusRegistration(const QString &interfaceName) const
+QString DefaultConfiguration::dbusRegistration(const char *interfaceName) const
 {
-    QByteArray name = interfaceName.toLocal8Bit();
-    QString dbus = value<QString>("dbus", { "dbus", name.constData(), "register" });
+    QString dbus = value<QString>("dbus", { "dbus", interfaceName, "register" });
     if (dbus == qL1S("none"))
         dbus.clear();
     return dbus;

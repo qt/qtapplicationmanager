@@ -42,14 +42,14 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include "configuration.h"
+#include <QtAppManMain/configuration.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class DefaultConfiguration : public Configuration
 {
 public:
-    DefaultConfiguration();
+    DefaultConfiguration(const char *additionalDescription, bool onlyOnePositionalArgument);
     ~DefaultConfiguration();
 
     void parse();
@@ -85,8 +85,8 @@ public:
     QVariantMap containerConfigurations() const;
     QVariantMap runtimeConfigurations() const;
 
-    QVariantMap dbusPolicy(const QString &interfaceName) const;
-    QString dbusRegistration(const QString &interfaceName) const;
+    QVariantMap dbusPolicy(const char *interfaceName) const;
+    QString dbusRegistration(const char *interfaceName) const;
     int dbusRegistrationDelay() const;
     bool dbusStartSessionBus() const;
 
@@ -114,6 +114,7 @@ public:
 
 private:
     QString m_mainQmlFile;
+    bool m_onlyOnePositionalArgument = false;
 };
 
 QT_END_NAMESPACE_AM

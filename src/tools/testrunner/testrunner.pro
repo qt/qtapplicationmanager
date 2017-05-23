@@ -1,9 +1,10 @@
-TEMPLATE = app
+include(../appman/appman.pro)
+
 TARGET   = appman-qmltestrunner
 
 DEFINES += AM_TESTRUNNER
 
-include($$PWD/../../manager/manager.pri)
+CONFIG *= console
 
 QT += qmltest qmltest-private
 

@@ -35,7 +35,7 @@
 #include "application.h"
 #include "qtyaml.h"
 #include "exception.h"
-#include "packager.h"
+#include "packagingjob.h"
 #include "applicationinstaller.h"
 #include "qmlinprocessruntime.h"
 #include "runtimefactory.h"
@@ -135,7 +135,7 @@ void tst_PackagerTool::initTestCase()
 
 
 // exceptions are nice -- just not for unit testing :)
-static bool packagerCheck(Packager *p, QString &errorString)
+static bool packagerCheck(PackagingJob *p, QString &errorString)
 {
     bool result = false;
     try {
@@ -156,39 +156,39 @@ void tst_PackagerTool::test()
     QString hardwareId = "foobar";
 
     // no valid destination
-    QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), pathTo("test.appkg")), errorString));
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), pathTo("test.appkg")), errorString));
     QVERIFY2(errorString.contains(qL1S("not a directory")), qPrintable(errorString));
 
     // no valid info.yaml
-    QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), errorString));
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString));
     QVERIFY2(errorString.contains(qL1S("could not open file for reading")), qPrintable(errorString));
 
     // add an info.yaml file
     createInfoYaml(tmp);
 
     // no icon
-    QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), errorString));
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString));
     QVERIFY2(errorString.contains(qL1S("missing the 'icon.png' file")), qPrintable(errorString));
 
     // add an icon
     createIconPng(tmp);
 
     // no valid code
-    QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), errorString));
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString));
     QVERIFY2(errorString.contains(qL1S("missing the file referenced by the 'code' field")), qPrintable(errorString));
 
     // add a code file
     createCode(tmp);
 
     // invalid destination
-    QVERIFY(!packagerCheck(Packager::create(tmp.path(), tmp.path()), errorString));
+    QVERIFY(!packagerCheck(PackagingJob::create(tmp.path(), tmp.path()), errorString));
     QVERIFY2(errorString.contains(qL1S("could not create package file")), qPrintable(errorString));
 
     // now everything is correct - try again
-    QVERIFY2(packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), errorString), qPrintable(errorString));
+    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString), qPrintable(errorString));
 
     // invalid source package
-    QVERIFY(!packagerCheck(Packager::developerSign(
+    QVERIFY(!packagerCheck(PackagingJob::developerSign(
                                pathTo("no-such-file"),
                                pathTo("test.dev-signed.appkg"),
                                m_devCertificate,
@@ -196,7 +196,7 @@ void tst_PackagerTool::test()
     QVERIFY2(errorString.contains(qL1S("does not exist")), qPrintable(errorString));
 
     // invalid destination package
-    QVERIFY(!packagerCheck(Packager::developerSign(
+    QVERIFY(!packagerCheck(PackagingJob::developerSign(
                                pathTo("test.appkg"),
                                pathTo("."),
                                m_devCertificate,
@@ -205,7 +205,7 @@ void tst_PackagerTool::test()
 
 
     // invalid dev key
-    QVERIFY(!packagerCheck(Packager::developerSign(
+    QVERIFY(!packagerCheck(PackagingJob::developerSign(
                                pathTo("test.appkg"),
                                pathTo("test.dev-signed.appkg"),
                                m_devCertificate,
@@ -213,7 +213,7 @@ void tst_PackagerTool::test()
     QVERIFY2(errorString.contains(qL1S("could not create signature")), qPrintable(errorString));
 
     // invalid store key
-    QVERIFY(!packagerCheck(Packager::storeSign(
+    QVERIFY(!packagerCheck(PackagingJob::storeSign(
                                pathTo("test.appkg"),
                                pathTo("test.store-signed.appkg"),
                                m_storeCertificate,
@@ -222,13 +222,13 @@ void tst_PackagerTool::test()
     QVERIFY2(errorString.contains(qL1S("could not create signature")), qPrintable(errorString));
 
     // sign
-    QVERIFY2(packagerCheck(Packager::developerSign(
+    QVERIFY2(packagerCheck(PackagingJob::developerSign(
                                pathTo("test.appkg"),
                                pathTo("test.dev-signed.appkg"),
                                m_devCertificate,
                                m_devPassword), errorString), qPrintable(errorString));
 
-    QVERIFY2(packagerCheck(Packager::storeSign(
+    QVERIFY2(packagerCheck(PackagingJob::storeSign(
                                pathTo("test.appkg"),
                                pathTo("test.store-signed.appkg"),
                                m_storeCertificate,
@@ -236,11 +236,11 @@ void tst_PackagerTool::test()
                                hardwareId), errorString), qPrintable(errorString));
 
     // verify
-    QVERIFY2(packagerCheck(Packager::developerVerify(
+    QVERIFY2(packagerCheck(PackagingJob::developerVerify(
                                pathTo("test.dev-signed.appkg"),
                                m_caFiles), errorString), qPrintable(errorString));
 
-    QVERIFY2(packagerCheck(Packager::storeVerify(
+    QVERIFY2(packagerCheck(PackagingJob::storeVerify(
                                pathTo("test.store-signed.appkg"),
                                m_caFiles,
                                hardwareId), errorString), qPrintable(errorString));
@@ -299,7 +299,7 @@ void tst_PackagerTool::brokenMetadata()
     // check if packaging actually fails with the expected error
 
     QString error;
-    QVERIFY(!packagerCheck(Packager::create(pathTo("test.appkg"), tmp.path()), error));
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), error));
     AM_CHECK_ERRORSTRING(error, errorString);
 }
 

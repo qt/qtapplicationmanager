@@ -176,6 +176,13 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
 
     try {
+#if !defined(AM_HEADLESS)
+        // this is needed for both WebEngine and Wayland Multi-screen rendering
+        QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#  if !defined(QT_NO_SESSIONMANAGER)
+        QGuiApplication::setFallbackSessionManagementEnabled(false);
+#  endif
+#endif
         Main a(argc, argv);
 
         a.setup();
@@ -192,13 +199,6 @@ QT_BEGIN_NAMESPACE_AM
 Main::Main(int &argc, char **argv)
     : MainBase(argc, argv)
 {
-#if !defined(AM_HEADLESS)
-    // this is needed for both WebEngine and Wayland Multi-screen rendering
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#  if !defined(QT_NO_SESSIONMANAGER)
-    QGuiApplication::setFallbackSessionManagementEnabled(false);
-#  endif
-#endif
     UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler, SIGINT,
                                            [](int /*sig*/) {
         UnixSignalHandler::instance()->resetToDefault(SIGINT);

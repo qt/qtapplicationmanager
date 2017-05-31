@@ -22,12 +22,14 @@ win32:LIBS += -luser32
 HEADERS += \
     $$PWD/qmllogger.h \
     $$PWD/configuration.h \
-    $$PWD/main.h
+    $$PWD/main.h \
+    $$PWD/defaultconfiguration.h
 
 SOURCES += \
     $$PWD/main.cpp \
     $$PWD/qmllogger.cpp \
     $$PWD/configuration.cpp \
+    $$PWD/defaultconfiguration.cpp
 
 DBUS_ADAPTORS += \
     $$PWD/../dbus/io.qt.applicationinstaller.xml \

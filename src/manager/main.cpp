@@ -86,6 +86,7 @@
 #include "global.h"
 #include "logging.h"
 #include "main.h"
+#include "defaultconfiguration.h"
 #include "application.h"
 #include "applicationmanager.h"
 #include "applicationdatabase.h"
@@ -175,6 +176,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     StartupTimer::instance()->checkpoint("after sudo server fork");
 #endif
 
+    DefaultConfiguration cfg;
+    cfg.parse();
+    StartupTimer::instance()->checkpoint("after command line parse");
+
     try {
 #if !defined(AM_HEADLESS)
         // this is needed for both WebEngine and Wayland Multi-screen rendering
@@ -185,7 +190,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
         Main a(argc, argv);
 
-        a.setup();
+        a.setup(&cfg);
         return a.exec();
 
     } catch (const std::exception &e) {
@@ -232,36 +237,55 @@ Main::~Main()
 #endif // defined(AM_TESTRUNNER)
 }
 
-void Main::setup() Q_DECL_NOEXCEPT_EXPR(false)
+/*! \internal
+    The caller has to make sure that cfg will be available even after this function returns:
+    we will access the cfg object from delayed init functions via lambdas!
+*/
+void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_config.parse();
-    StartupTimer::instance()->checkpoint("after command line parse");
+    // basics that are needed in multiple setup functions below
+    m_noSecurity = cfg->noSecurity();
+    m_builtinAppsManifestDirs = cfg->builtinAppsManifestDirs();
+    m_installedAppsManifestDir = cfg->installedAppsManifestDir();
 
-    CrashHandler::setCrashActionConfiguration(m_config.managerCrashAction());
-    setupLoggingRules();
-    setupQmlDebugging();
+    CrashHandler::setCrashActionConfiguration(cfg->managerCrashAction());
+    setupLoggingRules(cfg->verbose(), cfg->loggingRules());
+    setupQmlDebugging(cfg->qmlDebugging());
     Logging::registerUnregisteredDltContexts();
 
 #if defined(AM_TESTRUNNER)
-    TestRunner::initialize(m_config.testRunnerArguments());
+    TestRunner::initialize(cfg->testRunnerArguments());
 #endif
 
-    loadStartupPlugins();
-    parseSystemProperties();
-    setupDBus();
-    checkMainQmlFile();
-    setupInstaller();
-    setupSingleOrMultiProcess();
-    setupRuntimesAndContainers();
-    loadApplicationDatabase();
-    setupSingletons();
-    setupQmlEngine();
-    setupWindowTitle();
-    setupWindowManager();
-    loadQml();
-    showWindow();
-    setupDebugWrappers();
-    setupShellServer();
+    loadStartupPlugins(cfg->pluginFilePaths("startup"));
+    parseSystemProperties(cfg->rawSystemProperties());
+
+    setupDBus(cfg->dbusStartSessionBus());
+    QTimer::singleShot(cfg->dbusRegistrationDelay(), this, [this, cfg] {
+        registerDBusInterfaces(std::bind(&DefaultConfiguration::dbusRegistration, cfg, std::placeholders::_1),
+                std::bind(&DefaultConfiguration::dbusPolicy, cfg, std::placeholders::_1));
+    });
+
+    setMainQmlFile(cfg->mainQmlFile());
+    setupSingleOrMultiProcess(cfg->forceSingleProcess(), cfg->forceMultiProcess());
+    setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->containerConfigurations(),
+                               cfg->pluginFilePaths("container"));
+    loadApplicationDatabase(cfg->database(), cfg->recreateDatabase(), cfg->singleApp());
+    setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
+                    cfg->quickLaunchIdleLoad());
+
+    setupInstaller(cfg->installationLocations(), cfg->appImageMountDir(), cfg->caCertificates(),
+                   std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
+                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
+    setupQmlEngine(cfg->importPaths(), cfg->style());
+    setupWindowTitle(QString(), cfg->windowIcon());
+    setupWindowManager(cfg->waylandSocketName(), cfg->slowAnimations(), cfg->noUiWatchdog());
+    loadQml(cfg->loadDummyData());
+    // --no-fullscreen on the command line trumps the fullscreen setting in the config file
+    showWindow(cfg->fullscreen() && !cfg->noFullscreen());
+    setupDebugWrappers(cfg->debugWrappers());
+    setupShellServer(cfg->telnetAddress(), cfg->telnetPort());
     setupSSDPService();
 }
 
@@ -334,9 +358,9 @@ void Main::shutDown()
     }
 }
 
-void Main::setupQmlDebugging()
+void Main::setupQmlDebugging(bool qmlDebugging)
 {
-    if (m_config.qmlDebugging()) {
+    if (qmlDebugging) {
 #if !defined(QT_NO_QML_DEBUGGER)
         m_debuggingEnabler = new QQmlDebuggingEnabler(true);
         if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
@@ -350,30 +374,29 @@ void Main::setupQmlDebugging()
     }
 }
 
-void Main::setupLoggingRules()
+void Main::setupLoggingRules(bool verbose, const QStringList &loggingRules)
 {
-    const QString loggingRules = m_config.verbose()
-                               ? qSL("*=true\nqt.*.debug=false")
-                               : m_config.loggingRules().isEmpty() ? qSL("*.debug=false")
-                                                                   : m_config.loggingRules().join(qL1C('\n'));
+    const QString rules = verbose ? qSL("*=true\nqt.*.debug=false")
+                                  : loggingRules.isEmpty() ? qSL("*.debug=false")
+                                                           : loggingRules.join(qL1C('\n'));
 
-    QLoggingCategory::setFilterRules(loggingRules);
+    QLoggingCategory::setFilterRules(rules);
 
     // setting this for child processes //TODO: use a more generic IPC approach
-    qputenv("AM_LOGGING_RULES", loggingRules.toUtf8());
+    qputenv("AM_LOGGING_RULES", rules.toUtf8());
     StartupTimer::instance()->checkpoint("after logging setup");
 }
 
-void Main::loadStartupPlugins() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_startupPlugins = loadPlugins<StartupInterface>("startup", m_config.pluginFilePaths("startup"));
+    m_startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginPaths);
     StartupTimer::instance()->checkpoint("after startup-plugin load");
 }
 
-void Main::parseSystemProperties()
+void Main::parseSystemProperties(const QVariantMap &rawSystemProperties)
 {
     m_systemProperties.resize(SP_SystemUi + 1);
-    QVariantMap rawMap = m_config.rawSystemProperties();
+    QVariantMap rawMap = rawSystemProperties;
 
     m_systemProperties[SP_ThirdParty] = rawMap.value(qSL("public")).toMap();
 
@@ -391,14 +414,10 @@ void Main::parseSystemProperties()
         iface->initialize(m_systemProperties.at(SP_SystemUi));
 }
 
-void Main::setupDBus() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if defined(QT_DBUS_LIB)
-    // delay the D-Bus registrations: D-Bus is asynchronous anyway
-    int dbusDelay = qMax(0, m_config.dbusRegistrationDelay());
-    QTimer::singleShot(dbusDelay, this, &Main::registerDBusInterfaces);
-
-    if (Q_LIKELY(!m_config.dbusStartSessionBus()))
+    if (Q_LIKELY(!startSessionBus))
         return;
 
     class DBusDaemonProcess : public QProcess // clazy:exclude=missing-qobject-macro
@@ -457,14 +476,15 @@ void Main::setupDBus() Q_DECL_NOEXCEPT_EXPR(false)
 #endif // QT_DBUS_LIB
 }
 
-void Main::checkMainQmlFile() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_mainQml = m_config.mainQmlFile();
+    m_mainQml = mainQml;
     if (Q_UNLIKELY(!QFile::exists(m_mainQml)))
         throw Exception("no/invalid main QML file specified: %1").arg(m_mainQml);
 }
 
-void Main::setupInstaller() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupInstaller(const QVariantList &installationLocations, const QString &appImageMountDir,
+                          const QStringList &caCertificatePaths, const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if !defined(AM_DISABLE_INSTALLER)
     if (!Package::checkCorrectLocale()) {
@@ -476,23 +496,62 @@ void Main::setupInstaller() Q_DECL_NOEXCEPT_EXPR(false)
     if (Q_UNLIKELY(hardwareId().isEmpty()))
         throw Exception("the installer is enabled, but the device-id is empty");
 
-    m_installationLocations = InstallationLocation::parseInstallationLocations(m_config.installationLocations(),
+    m_installationLocations = InstallationLocation::parseInstallationLocations(installationLocations,
                                                                                hardwareId());
 
-    if (Q_UNLIKELY(!QDir::root().mkpath(m_config.installedAppsManifestDir())))
-        throw Exception("could not create manifest directory %1").arg(m_config.installedAppsManifestDir());
+    if (Q_UNLIKELY(!QDir::root().mkpath(m_installedAppsManifestDir)))
+        throw Exception("could not create manifest directory %1").arg(m_installedAppsManifestDir);
 
-    if (Q_UNLIKELY(!QDir::root().mkpath(m_config.appImageMountDir())))
-        throw Exception("could not create the image-mount directory %1").arg(m_config.appImageMountDir());
+    if (Q_UNLIKELY(!QDir::root().mkpath(appImageMountDir)))
+        throw Exception("could not create the image-mount directory %1").arg(appImageMountDir);
 
     StartupTimer::instance()->checkpoint("after installer setup checks");
+
+    QString error;
+    m_applicationInstaller = ApplicationInstaller::createInstance(m_installationLocations,
+                                                                  m_installedAppsManifestDir,
+                                                                  appImageMountDir,
+                                                                  &error);
+    if (Q_UNLIKELY(!m_applicationInstaller))
+        throw Exception(Error::System, error);
+    if (m_noSecurity) {
+        m_applicationInstaller->setDevelopmentMode(true);
+        m_applicationInstaller->setAllowInstallationOfUnsignedPackages(true);
+    } else {
+        QList<QByteArray> caCertificateList;
+
+        for (const auto &caFile : caCertificatePaths) {
+            QFile f(caFile);
+            if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
+                throw Exception(f, "could not open CA-certificate file");
+            QByteArray cert = f.readAll();
+            if (Q_UNLIKELY(cert.isEmpty()))
+                throw Exception(f, "CA-certificate file is empty");
+            caCertificateList << cert;
+        }
+        m_applicationInstaller->setCACertificates(caCertificateList);
+    }
+
+    uint minUserId, maxUserId, commonGroupId;
+    if (userIdSeparation && userIdSeparation(&minUserId, &maxUserId, &commonGroupId)) {
+#  if defined(Q_OS_LINUX)
+        if (!m_applicationInstaller->enableApplicationUserIdSeparation(minUserId, maxUserId, commonGroupId))
+            throw Exception("could not enable application user-id separation in the installer.");
+#  else
+        qCCritical(LogSystem) << "WARNING: application user-id separation requested, but not possible on this platform.";
+#  endif // Q_OS_LINUX
+    }
+
+    //TODO: this could be delayed, but needs to have a lock on the app-db in this case
+    m_applicationInstaller->cleanupBrokenInstallations();
+
+    StartupTimer::instance()->checkpoint("after ApplicationInstaller instantiation");
 #endif // AM_DISABLE_INSTALLER
 }
 
-void Main::setupSingleOrMultiProcess() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_isSingleProcessMode = m_config.forceSingleProcess();
-    bool forceMultiProcess = m_config.forceMultiProcess();
+    m_isSingleProcessMode = forceSingleProcess;
     if (forceMultiProcess && m_isSingleProcessMode)
         throw Exception("You cannot enforce multi- and single-process mode at the same time.");
 
@@ -503,7 +562,7 @@ void Main::setupSingleOrMultiProcess() Q_DECL_NOEXCEPT_EXPR(false)
 #endif
 }
 
-void Main::setupRuntimesAndContainers()
+void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths)
 {
     if (m_isSingleProcessMode) {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager());
@@ -518,15 +577,15 @@ void Main::setupRuntimesAndContainers()
 #if defined(AM_HOST_CONTAINER_AVAILABLE)
         ContainerFactory::instance()->registerContainer(new ProcessContainerManager());
 #endif
-        auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", m_config.pluginFilePaths("container"));
+        auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", containerPluginPaths);
         for (auto iface : qAsConst(containerPlugins))
             ContainerFactory::instance()->registerContainer(new PluginContainerManager(iface));
     }
     for (auto iface : qAsConst(m_startupPlugins))
         iface->afterRuntimeRegistration();
 
-    ContainerFactory::instance()->setConfiguration(m_config.containerConfigurations());
-    RuntimeFactory::instance()->setConfiguration(m_config.runtimeConfigurations());
+    ContainerFactory::instance()->setConfiguration(containerConfigurations);
+    RuntimeFactory::instance()->setConfiguration(runtimeConfigurations);
 
     RuntimeFactory::instance()->setSystemProperties(m_systemProperties.at(SP_ThirdParty),
                                                     m_systemProperties.at(SP_BuiltIn));
@@ -534,12 +593,10 @@ void Main::setupRuntimesAndContainers()
     StartupTimer::instance()->checkpoint("after runtime registration");
 }
 
-void Main::loadApplicationDatabase() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
+                                   const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QString singleApp = m_config.singleApp();
-    bool recreateDatabase = m_config.recreateDatabase();
-
-    m_applicationDatabase.reset(singleApp.isEmpty() ? new ApplicationDatabase(m_config.database())
+    m_applicationDatabase.reset(singleApp.isEmpty() ? new ApplicationDatabase(databasePath)
                                                     : new ApplicationDatabase());
 
     if (Q_UNLIKELY(!m_applicationDatabase->isValid() && !recreateDatabase)) {
@@ -551,10 +608,10 @@ void Main::loadApplicationDatabase() Q_DECL_NOEXCEPT_EXPR(false)
         QVector<const Application *> apps;
 
         if (!singleApp.isEmpty()) {
-            apps = scanForApplication(singleApp, m_config.builtinAppsManifestDirs());
+            apps = scanForApplication(singleApp, m_builtinAppsManifestDirs);
         } else {
-            apps = scanForApplications(m_config.builtinAppsManifestDirs(),
-                                       m_config.installedAppsManifestDir(),
+            apps = scanForApplications(m_builtinAppsManifestDirs,
+                                       m_installedAppsManifestDir,
                                        m_installationLocations);
         }
 
@@ -571,20 +628,19 @@ void Main::loadApplicationDatabase() Q_DECL_NOEXCEPT_EXPR(false)
     StartupTimer::instance()->checkpoint("after application database loading");
 }
 
-void Main::setupSingletons() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
+                           qreal quickLaunchRuntimesPerContainer, int quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    bool noSecurity = m_config.noSecurity();
-
     QString error;
     m_applicationManager = ApplicationManager::createInstance(m_applicationDatabase.take(),
                                                               m_isSingleProcessMode, &error);
     if (Q_UNLIKELY(!m_applicationManager))
         throw Exception(Error::System, error);
-    if (noSecurity)
+    if (m_noSecurity)
         m_applicationManager->setSecurityChecksEnabled(false);
 
     m_applicationManager->setSystemProperties(m_systemProperties.at(SP_SystemUi));
-    m_applicationManager->setContainerSelectionConfiguration(m_config.containerSelectionConfiguration());
+    m_applicationManager->setContainerSelectionConfiguration(containerSelectionConfiguration);
 
     StartupTimer::instance()->checkpoint("after ApplicationManager instantiation");
 
@@ -598,57 +654,14 @@ void Main::setupSingletons() Q_DECL_NOEXCEPT_EXPR(false)
     StartupTimer::instance()->checkpoint("after SystemMonitor instantiation");
 
     m_quickLauncher = QuickLauncher::instance();
-    m_quickLauncher->initialize(m_config.quickLaunchRuntimesPerContainer(), m_config.quickLaunchIdleLoad());
+    m_quickLauncher->initialize(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad);
     StartupTimer::instance()->checkpoint("after quick-launcher setup");
-
-#if !defined(AM_DISABLE_INSTALLER)
-    m_applicationInstaller = ApplicationInstaller::createInstance(m_installationLocations,
-                                                                  m_config.installedAppsManifestDir(),
-                                                                  m_config.appImageMountDir(),
-                                                                  &error);
-    if (Q_UNLIKELY(!m_applicationInstaller))
-        throw Exception(Error::System, error);
-    if (noSecurity) {
-        m_applicationInstaller->setDevelopmentMode(true);
-        m_applicationInstaller->setAllowInstallationOfUnsignedPackages(true);
-    } else {
-        QList<QByteArray> caCertificateList;
-
-        const auto caFiles = m_config.caCertificates();
-        for (const auto &caFile : caFiles) {
-            QFile f(caFile);
-            if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
-                throw Exception(f, "could not open CA-certificate file");
-            QByteArray cert = f.readAll();
-            if (Q_UNLIKELY(cert.isEmpty()))
-                throw Exception(f, "CA-certificate file is empty");
-            caCertificateList << cert;
-        }
-        m_applicationInstaller->setCACertificates(caCertificateList);
-    }
-
-    uint minUserId, maxUserId, commonGroupId;
-    if (m_config.applicationUserIdSeparation(&minUserId, &maxUserId, &commonGroupId)) {
-#  if defined(Q_OS_LINUX)
-        if (!m_applicationInstaller->enableApplicationUserIdSeparation(minUserId, maxUserId, commonGroupId))
-            throw Exception("could not enable application user-id separation in the installer.");
-#  else
-        qCCritical(LogSystem) << "WARNING: application user-id separation requested, but not possible on this platform.";
-#  endif // Q_OS_LINUX
-    }
-
-    //TODO: this could be delayed, but needs to have a lock on the app-db in this case
-    m_applicationInstaller->cleanupBrokenInstallations();
-
-    StartupTimer::instance()->checkpoint("after ApplicationInstaller instantiation");
-#endif // AM_DISABLE_INSTALLER
 }
 
-void Main::setupQmlEngine()
+void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle)
 {
-    const QString style = m_config.style();
-    if (!style.isEmpty())
-        qputenv("QT_QUICK_CONTROLS_STYLE", style.toLocal8Bit());
+    if (!quickControlsStyle.isEmpty())
+        qputenv("QT_QUICK_CONTROLS_STYLE", quickControlsStyle.toLocal8Bit());
 
     qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 1, 0, "Notification");
     qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
@@ -664,7 +677,7 @@ void Main::setupQmlEngine()
     connect(m_engine, &QQmlEngine::quit, this, &Main::shutDown);
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
-    m_engine->setImportPathList(m_engine->importPathList() + m_config.importPaths());
+    m_engine->setImportPathList(m_engine->importPathList() + importPaths);
     m_engine->rootContext()->setContextProperty("StartupTimer", StartupTimer::instance());
 
     StartupTimer::instance()->checkpoint("after QML engine instantiation");
@@ -679,34 +692,33 @@ void Main::setupQmlEngine()
 #endif
 }
 
-void Main::setupWindowTitle()
+void Main::setupWindowTitle(const QString &title, const QString &iconPath)
 {
 #if !defined(AM_HEADLESS)
     // For development only: set an icon, so you know which window is the AM
-    bool setIcon =
+    bool setTitle =
 #  if defined(Q_OS_LINUX)
             (platformName() == qL1S("xcb"));
 #  else
             true;
 #  endif
-    if (Q_UNLIKELY(setIcon)) {
-        QString icon = m_config.windowIcon();
-        if (!icon.isEmpty())
-            QGuiApplication::setWindowIcon(QIcon(icon));
+    if (Q_UNLIKELY(setTitle)) {
+        if (!iconPath.isEmpty())
+            QGuiApplication::setWindowIcon(QIcon(iconPath));
+        if (!title.isEmpty())
+            QGuiApplication::setApplicationDisplayName(title);
     }
-    //TODO: set window title via QGuiApplication::setApplicationDisplayName()
 #endif // AM_HEADLESS
 }
 
-void Main::setupWindowManager()
+void Main::setupWindowManager(const QString &waylandSocketName, bool slowAnimations, bool uiWatchdog)
 {
 #if !defined(AM_HEADLESS)
-    bool slowAnimations = m_config.slowAnimations();
     QUnifiedTimer::instance()->setSlowModeEnabled(slowAnimations);
 
-    m_windowManager = WindowManager::createInstance(m_engine, m_config.waylandSocketName());
+    m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName);
     m_windowManager->setSlowAnimations(slowAnimations);
-    m_windowManager->enableWatchdog(!m_config.noUiWatchdog());
+    m_windowManager->enableWatchdog(!uiWatchdog);
 
     QObject::connect(m_applicationManager, &ApplicationManager::inProcessRuntimeCreated,
                      m_windowManager, &WindowManager::setupInProcessRuntime);
@@ -716,12 +728,12 @@ void Main::setupWindowManager()
 }
 
 
-void Main::loadQml() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
 {
     for (auto iface : qAsConst(m_startupPlugins))
         iface->beforeQmlEngineLoad(m_engine);
 
-    if (Q_UNLIKELY(m_config.loadDummyData())) {
+    if (Q_UNLIKELY(loadDummyData)) {
         loadDummyDataFiles();
         StartupTimer::instance()->checkpoint("after loading dummy-data");
     }
@@ -736,7 +748,7 @@ void Main::loadQml() Q_DECL_NOEXCEPT_EXPR(false)
     StartupTimer::instance()->checkpoint("after loading main QML file");
 }
 
-void Main::showWindow()
+void Main::showWindow(bool showFullscreen)
 {
 #if !defined(AM_HEADLESS)
     setQuitOnLastWindowClosed(false);
@@ -775,8 +787,7 @@ void Main::showWindow()
     for (auto iface : qAsConst(m_startupPlugins))
         iface->beforeWindowShow(window);
 
-    // --no-fullscreen on the command line trumps the fullscreen setting in the config file
-    if (Q_LIKELY(m_config.fullscreen() && !m_config.noFullscreen()))
+    if (Q_LIKELY(showFullscreen))
         window->showFullScreen();
     else
         window->show();
@@ -788,16 +799,16 @@ void Main::showWindow()
 #endif
 }
 
-void Main::setupDebugWrappers()
+void Main::setupDebugWrappers(const QVariantList &debugWrappers)
 {
     // delay debug-wrapper setup
     //TODO: find a better solution than hardcoding an 1.5 sec delay
-    QTimer::singleShot(1500, this, [this]() {
-        m_applicationManager->setDebugWrapperConfiguration(m_config.debugWrappers());
+    QTimer::singleShot(1500, this, [this, debugWrappers]() {
+        m_applicationManager->setDebugWrapperConfiguration(debugWrappers);
     });
 }
 
-void Main::setupShellServer() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false)
 {
      //TODO: could be delayed as well
 #if defined(QT_PSHELLSERVER_LIB)
@@ -827,7 +838,7 @@ void Main::setupShellServer() Q_DECL_NOEXCEPT_EXPR(false)
     AMShellFactory shellFactory(m_engine, m_engine->rootObjects().constFirst());
     telnetServer.setShellFactory(&shellFactory);
 
-    if (!telnetServer.listen(QHostAddress(m_config.telnetAddress()), m_config.telnetPort())) {
+    if (!telnetServer.listen(QHostAddress(telnetAddress), telnetPort)) {
         throw Exception("could not start Telnet server");
     } else {
         qCDebug(LogSystem) << "Telnet server listening on \n " << telnetServer.serverAddress().toString()
@@ -837,6 +848,9 @@ void Main::setupShellServer() Q_DECL_NOEXCEPT_EXPR(false)
     // register all objects that should be reachable from the telnet shell
     m_engine->rootContext()->setContextProperty("_ApplicationManager", m_am);
     m_engine->rootContext()->setContextProperty("_WindowManager", m_wm);
+#else
+    Q_UNUSED(telnetAddress)
+    Q_UNUSED(telnetPort)
 #endif // QT_PSHELLSERVER_LIB
 }
 
@@ -867,7 +881,7 @@ void Main::setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false)
 #endif // QT_PSSDP_LIB
 }
 
-QString Main::dbusInterfaceName(QObject *o) Q_DECL_NOEXCEPT_EXPR(false)
+const char *Main::dbusInterfaceName(QObject *o) const Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if defined(QT_DBUS_LIB)
     int idx = o->metaObject()->indexOfClassInfo("D-Bus Interface");
@@ -875,18 +889,16 @@ QString Main::dbusInterfaceName(QObject *o) Q_DECL_NOEXCEPT_EXPR(false)
         throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
             .arg(o->metaObject()->className());
     }
-    return QLatin1String(o->metaObject()->classInfo(idx).value());
+    return o->metaObject()->classInfo(idx).value();
 #else
     Q_UNUSED(o)
-    return QString();
+    return nullptr;
 #endif
 }
 
-void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *serviceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName, const char *serviceName, const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if defined(QT_DBUS_LIB)
-    QString interfaceName = dbusInterfaceName(adaptor);
-    QString dbusName = m_config.dbusRegistration(interfaceName);
     QString dbusAddress;
     QDBusConnection conn((QString()));
 
@@ -930,11 +942,11 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *service
 
     qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
 
-    if (interfaceName.startsWith(qL1S("io.qt."))) {
+    if (QByteArray::fromRawData(interfaceName, qstrlen(interfaceName)).startsWith("io.qt.")) {
         // Write the bus address of the interface to a file in /tmp. This is needed for the
         // controller tool, which does not even have a session bus, when started via ssh.
 
-        QFile f(QDir::temp().absoluteFilePath(interfaceName + qSL(".dbus")));
+        QFile f(QDir::temp().absoluteFilePath(qL1S(interfaceName) + qSL(".dbus")));
         QByteArray dbusUtf8 = dbusAddress.isEmpty() ? dbusName.toUtf8() : dbusAddress.toUtf8();
         if (!f.open(QFile::WriteOnly | QFile::Truncate) || (f.write(dbusUtf8) != dbusUtf8.size()))
             throw Exception(f, "Could not write D-Bus address of interface %1").arg(interfaceName);
@@ -951,7 +963,8 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *service
 #endif // QT_DBUS_LIB
 }
 
-void Main::registerDBusInterfaces()
+void Main::registerDBusInterfaces(const std::function<QString(const QString &)> &busForInterface,
+                                  const std::function<QVariantMap(const QString &)> &policyForInterface)
 {
 #if defined(QT_DBUS_LIB)
     registerDBusTypes();
@@ -967,25 +980,35 @@ void Main::registerDBusInterfaces()
                          ama, [ama](const QString &id, ApplicationManager::RunState runState) {
             ama->applicationRunStateChanged(id, runState);
         });
-        registerDBusObject(ama, "io.qt.ApplicationManager", "/ApplicationManager");
-        if (!m_applicationManager->setDBusPolicy(m_config.dbusPolicy(dbusInterfaceName(m_applicationManager))))
+        const char *amInterfaceName = dbusInterfaceName(m_applicationManager);
+        registerDBusObject(ama, busForInterface(amInterfaceName), "io.qt.ApplicationManager",
+                           amInterfaceName, "/ApplicationManager");
+        if (!m_applicationManager->setDBusPolicy(policyForInterface(amInterfaceName)))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");
 
 #  if !defined(AM_DISABLE_INSTALLER)
-        registerDBusObject(new ApplicationInstallerAdaptor(m_applicationInstaller), "io.qt.ApplicationManager", "/ApplicationInstaller");
-        if (!m_applicationInstaller->setDBusPolicy(m_config.dbusPolicy(dbusInterfaceName(m_applicationInstaller))))
+        const char *aiInterfaceName = dbusInterfaceName(m_applicationInstaller);
+        registerDBusObject(new ApplicationInstallerAdaptor(m_applicationInstaller),
+                           busForInterface(aiInterfaceName), "io.qt.ApplicationManager",
+                           aiInterfaceName, "/ApplicationInstaller");
+        if (!m_applicationInstaller->setDBusPolicy(policyForInterface(aiInterfaceName)))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationInstaller");
 #  endif
 
 #  if !defined(AM_HEADLESS)
         try {
-            registerDBusObject(new NotificationsAdaptor(m_notificationManager), "org.freedesktop.Notifications", "/org/freedesktop/Notifications");
+            const char *nmInterfaceName = dbusInterfaceName(m_notificationManager);
+            registerDBusObject(new NotificationsAdaptor(m_notificationManager),
+                               busForInterface(nmInterfaceName), "org.freedesktop.Notifications",
+                               nmInterfaceName, "/org/freedesktop/Notifications");
         } catch (const Exception &e) {
             //TODO: what should we do here? on the desktop this will obviously always fail
             qCCritical(LogSystem) << "WARNING:" << e.what();
         }
-        registerDBusObject(new WindowManagerAdaptor(m_windowManager), "io.qt.ApplicationManager", "/WindowManager");
-        if (!m_windowManager->setDBusPolicy(m_config.dbusPolicy(dbusInterfaceName(m_windowManager))))
+        const char *wmInterfaceName = dbusInterfaceName(m_windowManager);
+        registerDBusObject(new WindowManagerAdaptor(m_windowManager), busForInterface(wmInterfaceName),
+                           "io.qt.ApplicationManager", wmInterfaceName, "/WindowManager");
+        if (!m_windowManager->setDBusPolicy(policyForInterface(wmInterfaceName)))
             throw Exception(Error::DBus, "could not set DBus policy for WindowManager");
 #endif
     } catch (const std::exception &e) {
@@ -1164,7 +1187,7 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
     return result;
 }
 
-QString Main::hardwareId()
+QString Main::hardwareId() const
 {
 #if defined(AM_HARDWARE_ID)
     return QString::fromLocal8Bit(AM_HARDWARE_ID);

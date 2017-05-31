@@ -42,6 +42,7 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
+#include <functional>
 
 #if defined(AM_HEADLESS)
 #  include <QCoreApplication>
@@ -53,7 +54,6 @@ typedef QGuiApplication MainBase;
 
 #include <QtAppManInstaller/installationlocation.h>
 #include <QVector>
-#include "configuration.h"
 
 QT_FORWARD_DECLARE_CLASS(QQmlApplicationEngine)
 QT_FORWARD_DECLARE_STRUCT(QQmlDebuggingEnabler)
@@ -74,6 +74,7 @@ class NotificationManager;
 class WindowManager;
 class QuickLauncher;
 class SystemMonitor;
+class DefaultConfiguration;
 
 class Main : public MainBase
 {
@@ -86,32 +87,39 @@ public:
 
     bool isSingleProcessMode() const;
 
-    void setup() Q_DECL_NOEXCEPT_EXPR(false);
+    void setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false);
     int exec() Q_DECL_NOEXCEPT_EXPR(false);
 
     void shutDown();
 
 protected:
-    void setupQmlDebugging();
-    void setupLoggingRules();
-    void loadStartupPlugins() Q_DECL_NOEXCEPT_EXPR(false);
-    void parseSystemProperties();
-    void setupDBus() Q_DECL_NOEXCEPT_EXPR(false);
-    void checkMainQmlFile() Q_DECL_NOEXCEPT_EXPR(false);
-    void setupInstaller() Q_DECL_NOEXCEPT_EXPR(false);
-    void setupSingleOrMultiProcess() Q_DECL_NOEXCEPT_EXPR(false);
-    void setupRuntimesAndContainers();
-    void loadApplicationDatabase() Q_DECL_NOEXCEPT_EXPR(false);
-    void setupSingletons() Q_DECL_NOEXCEPT_EXPR(false);
+    void setupQmlDebugging(bool qmlDebugging);
+    void setupLoggingRules(bool verbose, const QStringList &loggingRules);
+    void loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false);
+    void parseSystemProperties(const QVariantMap &rawSystemProperties);
+    void setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false);
+    void registerDBusInterfaces(const std::function<QString(const QString &)> &busForInterface,
+                                const std::function<QVariantMap(const QString &)> &policyForInterface);
+    void setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &containerConfigurations,
+                                    const QStringList &containerPluginPaths);
+    void setupManifestPaths(const QStringList &builtinAppManifestPaths, const QString &installedAppsManifestDir);
+    void loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
+                                 const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
+                         qreal quickLaunchRuntimesPerContainer, int quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupInstaller(const QVariantList &installationLocations, const QString &appImageMountDir,
+                        const QStringList &caCertificatePaths, const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
 
-    void setupQmlEngine();
-    void setupWindowTitle();
-    void setupWindowManager();
+    void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());
+    void setupWindowTitle(const QString &title, const QString &iconPath);
+    void setupWindowManager(const QString &waylandSocketName, bool slowAnimations, bool uiWatchdog);
 
-    void loadQml() Q_DECL_NOEXCEPT_EXPR(false);
-    void showWindow();
-    void setupDebugWrappers();
-    void setupShellServer() Q_DECL_NOEXCEPT_EXPR(false);
+    void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
+    void showWindow(bool showFullscreen);
+    void setupDebugWrappers(const QVariantList &debugWrappers);
+    void setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false);
 
     enum SystemProperties {
@@ -120,15 +128,13 @@ protected:
         SP_SystemUi
     };
 
-    QString hardwareId();
-
-private slots:
-    void registerDBusInterfaces();
+    QString hardwareId() const;
 
 private:
     void loadDummyDataFiles();
-    QString dbusInterfaceName(QObject *o) Q_DECL_NOEXCEPT_EXPR(false);
-    void registerDBusObject(QDBusAbstractAdaptor *adaptor, const char *serviceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false);
+    const char *dbusInterfaceName(QObject *o) const Q_DECL_NOEXCEPT_EXPR(false);
+    void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName, const char *serviceName,
+                            const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false);
 
     static QVector<const Application *> scanForApplication(const QString &singleAppInfoYaml,
                                                            const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false);
@@ -137,7 +143,6 @@ private:
                                                             const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
-    Configuration m_config;
     QVector<InstallationLocation> m_installationLocations;
     bool m_isSingleProcessMode = false;
     QString m_mainQml;
@@ -156,6 +161,10 @@ private:
     SystemMonitor *m_systemMonitor = nullptr;
     QVector<StartupInterface *> m_startupPlugins;
     QVector<QVariantMap> m_systemProperties;
+
+    bool m_noSecurity = false;
+    QStringList m_builtinAppsManifestDirs;
+    QString m_installedAppsManifestDir;
 };
 
 QT_END_NAMESPACE_AM

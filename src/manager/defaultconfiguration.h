@@ -42,48 +42,78 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QStringList>
-#include <QVariantMap>
-#include <QVector>
-#include <QCommandLineParser>
+#include "configuration.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class Configuration
+class DefaultConfiguration : public Configuration
 {
 public:
-    virtual ~Configuration();
-    virtual void parse();
+    DefaultConfiguration();
+    ~DefaultConfiguration();
 
-protected:
-    Configuration(const QString &defaultConfigFilePath, const QString &buildConfigFilePath);
+    void parse();
 
-    enum MessageType { UsageMessage, ErrorMessage };
+    QString mainQmlFile() const;
+    QString database() const;
+    bool recreateDatabase() const;
 
-    void showParserMessage(const QString &message, MessageType type);
+    QStringList builtinAppsManifestDirs() const;
+    QString installedAppsManifestDir() const;
+    QString appImageMountDir() const;
 
-    template <typename T> T value(const char *clname, const QVector<const char *> &cfname = QVector<const char *>()) const
-    {
-        Q_UNUSED(clname)
-        Q_UNUSED(cfname)
-        return T();
-    }
+    bool fullscreen() const;
+    bool noFullscreen() const;
+    QString windowIcon() const;
+    QStringList importPaths() const;
+    bool verbose() const;
+    bool slowAnimations() const;
+    bool loadDummyData() const;
+    bool noSecurity() const;
+    bool noUiWatchdog() const;
+    bool noDltLogging() const;
+    bool forceSingleProcess() const;
+    bool forceMultiProcess() const;
+    bool qmlDebugging() const;
+    QString singleApp() const;
+    QStringList loggingRules() const;
+    QString style() const;
+
+    QVariantList installationLocations() const;
+
+    QList<QPair<QString, QString>> containerSelectionConfiguration() const;
+    QVariantMap containerConfigurations() const;
+    QVariantMap runtimeConfigurations() const;
+
+    QVariantMap dbusPolicy(const QString &interfaceName) const;
+    QString dbusRegistration(const QString &interfaceName) const;
+    int dbusRegistrationDelay() const;
+    bool dbusStartSessionBus() const;
+
+    QVariantMap rawSystemProperties() const;
+
+    bool applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const;
+
+    qreal quickLaunchIdleLoad() const;
+    int quickLaunchRuntimesPerContainer() const;
+
+    QString waylandSocketName() const;
+
+    QString telnetAddress() const;
+    quint16 telnetPort() const;
+
+    QVariantList debugWrappers() const;
+
+    QVariantMap managerCrashAction() const;
+
+    QStringList caCertificates() const;
+
+    QStringList pluginFilePaths(const char *type) const;
+
+    QStringList testRunnerArguments() const;
 
 private:
-    QVariant findInConfigFile(const QVector<const char *> &path, bool *found = nullptr) const;
-    void mergeConfig(const QVariantMap &other);
-
-protected:
-    QString m_defaultConfigFilePath;
-    QString m_buildConfigFilePath;
-    QCommandLineParser m_clp;
-    QVariantMap m_config;
+    QString m_mainQmlFile;
 };
 
-template<> bool Configuration::value(const char *clname, const QVector<const char *> &cfname) const;
-template<> QString Configuration::value(const char *clname, const QVector<const char *> &cfname) const;
-template<> QStringList Configuration::value(const char *clname, const QVector<const char *> &cfname) const;
-template<> QVariant Configuration::value(const char *clname, const QVector<const char *> &cfname) const;
-
 QT_END_NAMESPACE_AM
-

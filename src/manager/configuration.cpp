@@ -38,9 +38,8 @@
 ** SPDX-License-Identifier: LGPL-3.0
 **
 ****************************************************************************/
-#include <QCommandLineParser>
+
 #include <QFile>
-#include <QVariantMap>
 #include <QFileInfo>
 #include <QCoreApplication>
 #include <QDebug>
@@ -61,10 +60,6 @@
 #include "qml-utilities.h"
 #include "configuration.h"
 
-#if !defined(AM_CONFIG_FILE)
-#  define AM_CONFIG_FILE "/opt/am/config.yaml"
-#endif
-
 // enable this to benchmark the config cache
 //#define AM_TIME_CONFIG_PARSING
 
@@ -73,44 +68,37 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class ConfigurationPrivate
+
+template<> bool Configuration::value(const char *clname, const QVector<const char *> &cfname) const
 {
-public:
-    QVariant findInConfigFile(const QStringList &path, bool *found = nullptr);
-
-    template <typename T> T config(const char *clname, const QStringList &cfname)
-    {
-        Q_UNUSED(clname)
-        Q_UNUSED(cfname)
-        return T();
-    }
-
-    void mergeConfig(const QVariantMap &other);
-
-    QCommandLineParser clp;
-    QString mainQmlFile;
-    QVariantMap configFile;
-};
-
-template<> bool ConfigurationPrivate::config(const char *clname, const QStringList &cfname)
-{
-    return clp.isSet(qL1S(clname)) || findInConfigFile(cfname).toBool();
+    return m_clp.isSet(qL1S(clname)) || findInConfigFile(cfname).toBool();
 }
 
-template<> QString ConfigurationPrivate::config(const char *clname, const QStringList &cfname)
+template<> QString Configuration::value(const char *clname, const QVector<const char *> &cfname) const
 {
-    QString clval = clp.value(qL1S(clname));
+    QString clval = m_clp.value(qL1S(clname));
     bool cffound;
     QString cfval = findInConfigFile(cfname, &cffound).toString();
-    return (clp.isSet(qL1S(clname)) || !cffound) ? clval : cfval;
+    return (m_clp.isSet(qL1S(clname)) || !cffound) ? clval : cfval;
 }
 
-template<> QStringList ConfigurationPrivate::config(const char *clname, const QStringList &cfname)
+template<> QStringList Configuration::value(const char *clname, const QVector<const char *> &cfname) const
 {
-    return clp.values(qL1S(clname)) + variantToStringList(findInConfigFile(cfname));
+    return m_clp.values(qL1S(clname)) + variantToStringList(findInConfigFile(cfname));
 }
 
-QVariant ConfigurationPrivate::findInConfigFile(const QStringList &path, bool *found)
+template<> QVariant Configuration::value(const char *clname, const QVector<const char *> &cfname) const
+{
+    QString yaml = m_clp.value(qL1S(clname));
+    if (!yaml.isEmpty()) {
+        auto docs = QtYaml::variantDocumentsFromYaml(yaml.toUtf8());
+        return docs.isEmpty() ? QVariant() : docs.constFirst();
+    } else {
+        return findInConfigFile(cfname);
+    }
+}
+
+QVariant Configuration::findInConfigFile(const QVector<const char *> &path, bool *found) const
 {
     if (found)
         *found = false;
@@ -118,21 +106,21 @@ QVariant ConfigurationPrivate::findInConfigFile(const QStringList &path, bool *f
     if (path.isEmpty())
         return QVariant();
 
-    QVariantMap var = configFile;
+    QVariantMap var = m_config;
 
     for (int i = 0; i < (path.size() - 1); ++i) {
-        QVariant subvar = var.value(path.at(i));
+        QVariant subvar = var.value(qL1S(path.at(i)));
         if (subvar.type() == QVariant::Map)
             var = subvar.toMap();
         else
             return QVariant();
     }
     if (found)
-        *found = var.contains(path.last());
-    return var.value(path.last());
+        *found = var.contains(qL1S(path.last()));
+    return var.value(qL1S(path.last()));
 }
 
-void ConfigurationPrivate::mergeConfig(const QVariantMap &other)
+void Configuration::mergeConfig(const QVariantMap &other)
 {
     // no auto allowed, since this is a recursive lambda
     std::function<void(QVariantMap *, const QVariantMap &)> recursiveMergeMap =
@@ -152,96 +140,36 @@ void ConfigurationPrivate::mergeConfig(const QVariantMap &other)
                 to->insert(it.key(), fromValue);
         }
     };
-    recursiveMergeMap(&configFile, other);
+    recursiveMergeMap(&m_config, other);
 }
 
 
-Configuration::Configuration()
-    : d(new ConfigurationPrivate())
+Configuration::Configuration(const QString &defaultConfigFilePath, const QString &buildConfigFilePath)
+    : m_defaultConfigFilePath(defaultConfigFilePath)
+    , m_buildConfigFilePath(buildConfigFilePath)
 {
-    // using QStringLiteral for all strings here adds a few KB of ro-data, but will also improve
-    // startup times slightly: less allocations and copies. MSVC cannot cope with multi-line though
-
-    const char *description =
-#ifdef AM_TESTRUNNER
-        "Pelagicore ApplicationManager QML Test Runner"
-        "\n\n"
-        "Additional testrunner commandline options can be set after the -- argument\n"
-        "Use -- -help to show all available testrunner commandline options"
-#else
-        "Pelagicore ApplicationManager"
-#endif
-        "\n\n"
-        "In addition to the commandline options below, the following environment\n"
-        "variables can be set:\n\n"
-        "  AM_STARTUP_TIMER  if set to 1, a startup performance analysis will be printed\n"
-        "                    on the console. Anything other than 1 will be interpreted\n"
-        "                    as the name of a file that is used instead of the console\n"
-        "\n"
-        "  AM_FORCE_COLOR_OUTPUT  can be set to 'on' to force color output to the console\n"
-        "                         and to 'off' to disable it. Any other value will result\n"
-        "                         in the default, auto-detection behavior.\n"
-        "\n"
-        "  AM_TIMEOUT_FACTOR  all timed wait statements within the application-manager will\n"
-        "                     be slowed down by this (integer) factor. Useful if executing\n"
-        "                     in slow wrappers, like e.g. valgrind. Defaults to 1.\n";
-    d->clp.setApplicationDescription(description);
-    d->clp.addHelpOption();
-    d->clp.addVersionOption();
-
-    d->clp.addPositionalArgument(qSL("qml-file"),   qSL("the main QML file."));
-    d->clp.addOption({ { qSL("c"), qSL("config-file") }, qSL("load configuration from file (can be given multiple times)."), qSL("files"), qSL(AM_CONFIG_FILE) });
-    d->clp.addOption({ qSL("database"),             qSL("application database."), qSL("file"), qSL("/opt/am/apps.db") });
-    d->clp.addOption({ { qSL("r"), qSL("recreate-database") },  qSL("recreate the application database.") });
-    d->clp.addOption({ qSL("builtin-apps-manifest-dir"),   qSL("base directory for built-in application manifests."), qSL("dir") });
-    d->clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("base directory for installed application manifests."), qSL("dir"), qSL("/opt/am/manifests") });
-    d->clp.addOption({ qSL("app-image-mount-dir"),  qSL("base directory where application images are mounted to."), qSL("dir"), qSL("/opt/am/image-mounts") });
-#if defined(QT_DBUS_LIB)
-#  if defined(Q_OS_LINUX)
-    const QString defaultDBus = qSL("session");
-#  else
-    const QString defaultDBus = qSL("none");
-#  endif
-    d->clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none"), defaultDBus });
-    d->clp.addOption({ qSL("start-session-dbus"),   qSL("start a private session bus instead of using an existing one.") });
-#endif
-    d->clp.addOption({ qSL("fullscreen"),           qSL("display in full-screen.") });
-    d->clp.addOption({ qSL("no-fullscreen"),        qSL("do not display in full-screen.") });
-    d->clp.addOption({ qSL("I"),                    qSL("additional QML import path."), qSL("dir") });
-    d->clp.addOption({ qSL("verbose"),              qSL("verbose output.") });
-    d->clp.addOption({ qSL("slow-animations"),      qSL("run all animations in slow motion.") });
-    d->clp.addOption({ qSL("load-dummydata"),       qSL("loads QML dummy-data.") });
-    d->clp.addOption({ qSL("no-security"),          qSL("disables all security related checks (dev only!)") });
-    d->clp.addOption({ qSL("no-ui-watchdog"),       qSL("disables detecting hung UI applications (e.g. via Wayland's ping/pong).") });
-    d->clp.addOption({ qSL("no-dlt-logging"),       qSL("disables logging using automotive DLT.") });
-    d->clp.addOption({ qSL("force-single-process"), qSL("forces single-process mode even on a wayland enabled build.") });
-    d->clp.addOption({ qSL("force-multi-process"),  qSL("forces multi-process mode. Will exit immediately if this is not possible.") });
-    d->clp.addOption({ qSL("wayland-socket-name"),  qSL("use this file name to create the wayland socket."), qSL("socket") });
-    d->clp.addOption({ qSL("single-app"),           qSL("runs a single application only (ignores the database)"), qSL("info.yaml file") });
-    d->clp.addOption({ qSL("logging-rule"),         qSL("adds a standard Qt logging rule."), qSL("rule") });
-    d->clp.addOption({ qSL("build-config"),         qSL("dumps the build configuration and exits.") });
-    d->clp.addOption({ qSL("no-config-cache"),      qSL("disable the use of the config file cache.") });
-    d->clp.addOption({ qSL("clear-config-cache"),   qSL("ignore an existing config file cache.") });
-    d->clp.addOption({ qSL("qml-debug"),            qSL("enables QML debugging and profiling.") });
-    d->clp.addOption({ { qSL("o"), qSL("option") }, qSL("override a specific config option."), qSL("yaml-snippet") });
+    m_clp.addHelpOption();
+    m_clp.addVersionOption();
+    m_clp.addOption({ { qSL("c"), qSL("config-file") }, qSL("load configuration from file (can be given multiple times)."), qSL("files"), defaultConfigFilePath });
+    m_clp.addOption({ { qSL("o"), qSL("option") }, qSL("override a specific config option."), qSL("yaml-snippet") });
+    m_clp.addOption({ qSL("no-config-cache"),      qSL("disable the use of the config file cache.") });
+    m_clp.addOption({ qSL("clear-config-cache"),   qSL("ignore an existing config file cache.") });
+    if (!buildConfigFilePath.isEmpty())
+        m_clp.addOption({ qSL("build-config"),         qSL("dumps the build configuration and exits.") });
 }
 
 Configuration::~Configuration()
 {
-    delete d;
+
 }
 
 // vvvv copied from QCommandLineParser ... why is this not public API?
 
-#if defined(Q_OS_WIN) && !defined(Q_OS_WINCE) && !defined(Q_OS_WINRT)
-#  include <windows.h>
-#elif defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID)
 #  include <android/log.h>
-#endif
+#elif defined(Q_OS_WIN) && !defined(Q_OS_WINCE) && !defined(Q_OS_WINRT)
+#  include <windows.h>
 
-enum MessageType { UsageMessage, ErrorMessage };
-
-#if defined(Q_OS_WIN) && !defined(Q_OS_WINCE) && !defined(Q_OS_WINRT)
 // Return whether to use a message box. Use handles if a console can be obtained
 // or we are run with redirected handles (for example, by QProcess).
 static inline bool displayMessageBox()
@@ -255,7 +183,7 @@ static inline bool displayMessageBox()
 }
 #endif // Q_OS_WIN && !QT_BOOTSTRAPPED && !Q_OS_WIN && !Q_OS_WINRT
 
-static void showParserMessage(const QString &message, MessageType type)
+void Configuration::showParserMessage(const QString &message, MessageType type)
 {
 #if defined(Q_OS_WIN) && !defined(Q_OS_WINCE) && !defined(Q_OS_WINRT)
     if (displayMessageBox()) {
@@ -283,22 +211,21 @@ static void showParserMessage(const QString &message, MessageType type)
 
 // ^^^^ copied from QCommandLineParser ... why is this not public API?
 
-
 void Configuration::parse()
 {
-    if (!d->clp.parse(QCoreApplication::arguments())) {
-        showParserMessage(d->clp.errorText() + qL1C('\n'), ErrorMessage);
+    if (!m_clp.parse(QCoreApplication::arguments())) {
+        showParserMessage(m_clp.errorText() + qL1C('\n'), ErrorMessage);
         exit(1);
     }
 
-    if (d->clp.isSet(qSL("version")))
-        d->clp.showVersion();
+    if (m_clp.isSet(qSL("version")))
+        m_clp.showVersion();
 
-    if (d->clp.isSet(qSL("help")))
-        d->clp.showHelp();
+    if (m_clp.isSet(qSL("help")))
+        m_clp.showHelp();
 
-    if (d->clp.isSet(qSL("build-config"))) {
-        QFile f(qSL(":/build-config.yaml"));
+    if (m_clp.isSet(qSL("build-config"))) {
+        QFile f(m_buildConfigFilePath);
         if (f.open(QFile::ReadOnly)) {
             showParserMessage(QString::fromLocal8Bit(f.readAll()), UsageMessage);
             exit(0);
@@ -307,20 +234,12 @@ void Configuration::parse()
             exit(1);
         }
     }
-
-#ifndef AM_TESTRUNNER
-    if (d->clp.positionalArguments().size() > 1) {
-        showParserMessage(qL1S("Only one main qml file can be specified.\n"), ErrorMessage);
-        exit(1);
-    }
-#endif
-
 #if defined(AM_TIME_CONFIG_PARSING)
     QElapsedTimer timer;
     timer.start();
 #endif
 
-    QStringList configFilePaths = d->clp.values(qSL("config-file"));
+    QStringList configFilePaths = m_clp.values(qSL("config-file"));
 
     struct ConfigFile
     {
@@ -334,8 +253,8 @@ void Configuration::parse()
     for (int i = 0; i < configFiles.size(); ++i)
         configFiles[i].filePath = QFileInfo(configFilePaths.at(i)).absoluteFilePath();
 
-    bool noConfigCache = d->clp.isSet(qSL("no-config-cache"));
-    bool clearConfigCache = d->clp.isSet(qSL("clear-config-cache"));
+    bool noConfigCache = m_clp.isSet(qSL("no-config-cache"));
+    bool clearConfigCache = m_clp.isSet(qSL("clear-config-cache"));
 
     const QDir cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 
@@ -416,7 +335,7 @@ void Configuration::parse()
     if (useCache) {
         qCDebug(LogSystem) << "Using existing config cache:" << cacheFilePath;
 
-        d->configFile = cache;
+        m_config = cache;
     } else if (!configFilePaths.isEmpty()) {
         auto parseConfigFile = [](ConfigFile &cf) {
             // we want to replace ${CONFIG_PWD} (when at the start of a value) with the abs. path
@@ -462,9 +381,9 @@ void Configuration::parse()
 
         // we cannot parallelize this step, since subsequent config files can overwrite
         // or append to values
-        d->configFile = configFiles.at(0).config;
+        m_config = configFiles.at(0).config;
         for (int i = 1; i < configFiles.size(); ++i)
-            d->mergeConfig(configFiles.at(i).config);
+            mergeConfig(configFiles.at(i).config);
 
         if (!noConfigCache) {
             try {
@@ -477,7 +396,7 @@ void Configuration::parse()
                 for (const ConfigFile &cf : qAsConst(configFiles))
                     configChecksums.append(qMakePair(cf.filePath, cf.checksum));
 
-                ds << configChecksums << d->configFile;
+                ds << configChecksums << m_config;
 
                 if (ds.status() != QDataStream::Ok)
                     throw Exception("error writing config cache content");
@@ -491,7 +410,7 @@ void Configuration::parse()
 #endif
     }
 
-    const QStringList options = d->clp.values(qSL("o"));
+    const QStringList options = m_clp.values(qSL("o"));
     for (const QString &option : options) {
         QtYaml::ParseError parseError;
         QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(option.toUtf8(), &parseError);
@@ -506,7 +425,7 @@ void Configuration::parse()
                               ErrorMessage);
             exit(1);
         }
-        d->mergeConfig(docs.at(0).toMap());
+        mergeConfig(docs.at(0).toMap());
     }
 
 #if defined(AM_TIME_CONFIG_PARSING)
@@ -517,300 +436,8 @@ void Configuration::parse()
     // QML cannot cope with invalid QVariants and QDataStream cannot cope with nullptr inside a
     // QVariant ... the workaround is to save invalid variants to the cache and fix them up
     // afterwards:
-    fixNullValuesForQml(d->configFile);
-}
+    fixNullValuesForQml(m_config);
 
-QString Configuration::mainQmlFile() const
-{
-    if (!d->clp.positionalArguments().isEmpty() && d->clp.positionalArguments().at(0).endsWith(qL1S(".qml")))
-        return d->clp.positionalArguments().at(0);
-    else
-        return d->findInConfigFile({ qSL("ui"), qSL("mainQml") }).toString();
-}
-
-
-QString Configuration::database() const
-{
-    return d->config<QString>("database", { qSL("applications"), qSL("database") });
-}
-
-bool Configuration::recreateDatabase() const
-{
-    return d->clp.isSet(qSL("recreate-database"));
-}
-
-QStringList Configuration::builtinAppsManifestDirs() const
-{
-    return d->config<QStringList>("builtin-apps-manifest-dir", { qSL("applications"), qSL("builtinAppsManifestDir") });
-}
-
-QString Configuration::installedAppsManifestDir() const
-{
-    return d->config<QString>("installed-apps-manifest-dir", { qSL("applications"), qSL("installedAppsManifestDir") });
-}
-
-QString Configuration::appImageMountDir() const
-{
-    return d->config<QString>("app-image-mount-dir", { qSL("applications"), qSL("appImageMountDir") });
-}
-
-bool Configuration::fullscreen() const
-{
-    return d->config<bool>("fullscreen", { qSL("ui"), qSL("fullscreen") });
-}
-
-bool Configuration::noFullscreen() const
-{
-    return d->clp.isSet(qSL("no-fullscreen"));
-}
-
-QString Configuration::windowIcon() const
-{
-    return d->findInConfigFile({ qSL("ui"), qSL("windowIcon") }).toString();
-}
-
-QStringList Configuration::importPaths() const
-{
-    QStringList importPaths = d->config<QStringList>("I", { qSL("ui"), qSL("importPaths") });
-
-    for (int i = 0; i < importPaths.size(); ++i)
-        importPaths[i] = QFileInfo(importPaths.at(i)).absoluteFilePath();
-
-    return importPaths;
-}
-
-bool Configuration::verbose() const
-{
-    return d->clp.isSet(qSL("verbose"));
-}
-
-bool Configuration::slowAnimations() const
-{
-    return d->clp.isSet(qSL("slow-animations"));
-}
-
-bool Configuration::loadDummyData() const
-{
-    return d->config<bool>("load-dummydata", { qSL("ui"), qSL("loadDummyData") });
-}
-
-bool Configuration::noSecurity() const
-{
-    return d->config<bool>("no-security", { qSL("flags"), qSL("noSecurity") });
-}
-
-bool Configuration::noUiWatchdog() const
-{
-    return d->config<bool>("no-ui-watchdog", { qSL("flags"), qSL("noUiWatchdog") });
-}
-
-bool Configuration::noDltLogging() const
-{
-    return d->clp.isSet(qSL("no-dlt-logging"));
-}
-
-bool Configuration::forceSingleProcess() const
-{
-    return d->config<bool>("force-single-process", { qSL("flags"), qSL("forceSingleProcess") });
-}
-
-bool Configuration::forceMultiProcess() const
-{
-    return d->config<bool>("force-multi-process", { qSL("flags"), qSL("forceMultiProcess") });
-}
-
-bool Configuration::qmlDebugging() const
-{
-    return d->clp.isSet(qSL("qml-debug"));
-}
-
-QString Configuration::singleApp() const
-{
-    return d->clp.value(qSL("single-app"));
-}
-
-QStringList Configuration::loggingRules() const
-{
-    return d->config<QStringList>("logging-rule", { qSL("logging"), qSL("rules") });
-}
-
-QString Configuration::style() const
-{
-    return d->findInConfigFile({ qSL("ui"), qSL("style") }).toString();
-}
-
-QVariantList Configuration::installationLocations() const
-{
-    return d->findInConfigFile({ qSL("installationLocations") }).toList();
-}
-
-QList<QPair<QString, QString>> Configuration::containerSelectionConfiguration() const
-{
-    QList<QPair<QString, QString>> config;
-    QVariant containerSelection = d->findInConfigFile({ qSL("containers"), qSL("selection") });
-
-    // this is easy to get wrong in the config file, so we do not just ignore a map here
-    // (this will in turn trigger the warning below)
-    if (containerSelection.type() == QVariant::Map)
-        containerSelection = QVariantList { containerSelection };
-
-    if (containerSelection.type() == QVariant::String) {
-        config.append(qMakePair(qSL("*"), containerSelection.toString()));
-    } else if (containerSelection.type() == QVariant::List) {
-        QVariantList list = containerSelection.toList();
-        for (const QVariant &v : list) {
-            if (v.type() == QVariant::Map) {
-                QVariantMap map = v.toMap();
-
-                if (map.size() != 1) {
-                    qCWarning(LogSystem) << "The container selection configuration needs to be a list of "
-                                            "single mappings, in order to preserve the evaluation "
-                                            "order: found a mapping with" << map.size() << "entries.";
-                }
-
-                for (auto it = map.cbegin(); it != map.cend(); ++it)
-                    config.append(qMakePair(it.key(), it.value().toString()));
-            }
-        }
-    }
-    return config;
-}
-
-QVariantMap Configuration::containerConfigurations() const
-{
-    QVariantMap map = d->findInConfigFile({ qSL("containers") }).toMap();
-    map.remove(qSL("selection"));
-    return map;
-}
-
-QVariantMap Configuration::runtimeConfigurations() const
-{
-    return d->findInConfigFile({ qSL("runtimes") }).toMap();
-}
-
-QVariantMap Configuration::dbusPolicy(const QString &interfaceName) const
-{
-    return d->findInConfigFile({ qSL("dbus"), interfaceName, qSL("policy") }).toMap();
-}
-
-QString Configuration::dbusRegistration(const QString &interfaceName) const
-{
-    QString dbus = d->config<QString>("dbus", { qSL("dbus"), interfaceName, qSL("register") });
-    if (dbus == qL1S("none"))
-        dbus.clear();
-    return dbus;
-}
-
-int Configuration::dbusRegistrationDelay() const
-{
-    bool found = false;
-    int delay = d->findInConfigFile({ qSL("dbus"), qSL("registrationDelay") }, &found).toInt();
-    return found ? delay : -1;
-}
-
-bool Configuration::dbusStartSessionBus() const
-{
-    return d->config<bool>("start-session-dbus", { qSL("dbus"), qSL("startSessionBus") });
-}
-
-QVariantMap Configuration::rawSystemProperties() const
-{
-    return d->findInConfigFile({ qSL("systemProperties") }).toMap();
-}
-
-bool Configuration::applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const
-{
-    bool found = false;
-    QVariantMap map = d->findInConfigFile({ qSL("installer"), qSL("applicationUserIdSeparation") }, &found).toMap();
-
-    if (found) {
-        auto idFromMap = [&map](const char *key) -> uint {
-            bool ok;
-            uint value = map.value(qL1S(key)).toUInt(&ok);
-            return ok ? value : uint(-1);
-        };
-
-        uint undef = uint(-1);
-        uint minUser = idFromMap("minUserId");
-        uint maxUser = idFromMap("maxUserId");
-        uint commonGroup = idFromMap("commonGroupId");
-
-        if (minUser != undef && maxUser != undef && commonGroup != undef && minUser < maxUser) {
-            if (minUserId)
-                *minUserId = minUser;
-            if (maxUserId)
-                *maxUserId = maxUser;
-            if (commonGroupId)
-                *commonGroupId = commonGroup;
-            return true;
-        }
-    }
-    return false;
-}
-
-qreal Configuration::quickLaunchIdleLoad() const
-{
-    bool found, conversionOk;
-    qreal idleLoad = d->findInConfigFile({ qSL("quicklaunch"), qSL("idleLoad") }, &found).toReal(&conversionOk);
-    return (found && conversionOk) ? idleLoad : qreal(0);
-}
-
-int Configuration::quickLaunchRuntimesPerContainer() const
-{
-    bool found, conversionOk;
-    int rpc = d->findInConfigFile({ qSL("quicklaunch"), qSL("runtimesPerContainer") }, &found).toInt(&conversionOk);
-
-    // if you need more than 10 quicklaunchers per runtime, you're probably doing something wrong
-    // or you have a typo in your YAML, which could potentially freeze your target (container
-    // construction can be expensive)
-    return (found && conversionOk && rpc >= 0 && rpc < 10) ? rpc : 0;
-}
-
-QString Configuration::waylandSocketName() const
-{
-    return d->clp.value(qSL("wayland-socket-name"));
-}
-
-QString Configuration::telnetAddress() const
-{
-    QString s = d->findInConfigFile({ qSL("debug"), qSL("telnetAddress") }, nullptr).toString();
-    if (s.isEmpty())
-        s = qSL("0.0.0.0");
-    return s;
-}
-
-quint16 Configuration::telnetPort() const
-{
-    return d->findInConfigFile({ qSL("debug"), qSL("telnetPort") }, nullptr).value<quint16>();
-}
-
-QVariantList Configuration::debugWrappers() const
-{
-    return d->findInConfigFile({ qSL("debugWrappers") }).toList();
-}
-
-QVariantMap Configuration::managerCrashAction() const
-{
-    return d->findInConfigFile({ qSL("crashAction")} ).toMap();
-}
-
-QStringList Configuration::caCertificates() const
-{
-    return variantToStringList(d->findInConfigFile({ qSL("installer"), qSL("caCertificates") }));
-}
-
-QStringList Configuration::pluginFilePaths(const char *type) const
-{
-    return variantToStringList(d->findInConfigFile({ qSL("plugins"), qL1S(type) }));
-}
-
-QStringList Configuration::testRunnerArguments() const
-{
-    QStringList targs = d->clp.positionalArguments();
-    if (!targs.isEmpty() && targs.constFirst().endsWith(qL1S(".qml")))
-        targs.removeFirst();
-    targs.prepend(QCoreApplication::arguments().constFirst());
-    return targs;
 }
 
 QT_END_NAMESPACE_AM

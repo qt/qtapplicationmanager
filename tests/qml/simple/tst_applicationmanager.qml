@@ -79,6 +79,11 @@ TestCase {
         }
     }
 
+    ApplicationModel {
+        id: appModel
+        sortFunction: function(la, ra) { return la.id > ra.id }
+    }
+
     function initTestCase() {
         //Wait for the debugging wrappers to be setup.
         wait(2000);
@@ -216,6 +221,59 @@ TestCase {
         compare(listView.currentItem.modelData.importance, simpleApplication.importance)
         compare(listView.currentItem.modelData.preload, simpleApplication.preload)
         compare(listView.currentItem.modelData.version, "1.0")
+    }
+
+    SignalSpy {
+        id: appModelCountSpy
+        target: appModel
+        signalName: "countChanged"
+    }
+
+    function test_applicationModel() {
+        compare(appModel.count, 3);
+        compare(appModel.indexOfApplication(capsApplication.id), 0);
+        compare(appModel.indexOfApplication(applicationAlias.id), 1);
+        compare(appModel.indexOfApplication(simpleApplication.id), 2);
+        compare(appModel.mapToSource(0), ApplicationManager.indexOfApplication(capsApplication.id));
+        compare(appModel.mapFromSource(ApplicationManager.indexOfApplication(simpleApplication.id)), 2);
+
+        appModel.sortFunction = undefined;
+        compare(appModel.indexOfApplication(simpleApplication.id),
+                ApplicationManager.indexOfApplication(simpleApplication.id));
+        compare(appModel.indexOfApplication(applicationAlias.id),
+                ApplicationManager.indexOfApplication(applicationAlias.id));
+        compare(appModel.indexOfApplication(capsApplication.id),
+                ApplicationManager.indexOfApplication(capsApplication.id));
+
+        appModelCountSpy.clear();
+        appModel.filterFunction = function(app) { return app.capabilities.indexOf("cameraAccess") >= 0; };
+        appModelCountSpy.wait(1000);
+        compare(appModelCountSpy.count, 1);
+        compare(appModel.count, 1);
+        compare(appModel.indexOfApplication(capsApplication.id), 0);
+        compare(appModel.indexOfApplication(applicationAlias.id), -1);
+        compare(appModel.indexOfApplication(simpleApplication.id), -1);
+
+        listView.model = appModel;
+        listView.currentIndex = 0;
+        compare(listView.currentItem.modelData.name, "Caps");
+        listView.model = ApplicationManager;
+
+        var criteria = false;
+        appModel.filterFunction = function(app) { return app.alias === criteria; };
+        appModelCountSpy.wait(1000);
+        compare(appModelCountSpy.count, 2);
+        compare(appModel.count, 2);
+        compare(appModel.indexOfApplication(applicationAlias.id), -1);
+        criteria = true;
+        appModel.invalidate();
+        compare(appModel.count, 1);
+
+        appModel.filterFunction = function() {};
+        compare(appModel.count, 0);
+
+        appModel.filterFunction = undefined;
+        compare(appModel.count, 3);
     }
 
     function test_get_data() {

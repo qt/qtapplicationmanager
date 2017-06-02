@@ -57,6 +57,7 @@
 #include "exception.h"
 #include "applicationdatabase.h"
 #include "applicationmanager.h"
+#include "applicationmodel.h"
 #include "applicationmanager_p.h"
 #include "application.h"
 #include "runtimefactory.h"
@@ -419,6 +420,7 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
 
     qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager", 1, 0, "ApplicationManager",
                                                  &ApplicationManager::instanceForQml);
+    qmlRegisterType<ApplicationModel>("QtApplicationManager", 1, 0, "ApplicationModel");
     qmlRegisterUncreatableType<const Application>("QtApplicationManager", 1, 0, "Application",
                                                   qSL("Cannot create objects of type Application"));
     qRegisterMetaType<const Application*>("const Application*");

@@ -21,6 +21,7 @@ multi-process {
 
 HEADERS += \
     applicationmanager.h \
+    applicationmodel.h \
     applicationdatabase.h \
     notificationmanager.h \
     abstractcontainer.h \
@@ -52,6 +53,7 @@ qtHaveModule(qml):HEADERS += \
 
 SOURCES += \
     applicationmanager.cpp \
+    applicationmodel.cpp \
     applicationdatabase.cpp \
     notificationmanager.cpp \
     abstractcontainer.cpp \

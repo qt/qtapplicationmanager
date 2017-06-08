@@ -63,17 +63,20 @@ We will start from the bottom, because this is the essential part.
 
 \quotefromfile monitor/system-ui/main.qml
 \skipto ProcessMonitor
-\printuntil ApplicationManager
+\printuntil ApplicationManager.startApplication
 \printline }
 The ProcessMonitor is an instantiatable type that will monitor the process that is associated with
 its \l {ProcessMonitor::applicationId}{applicationId} property. An empty applicationId string means
-that the system-UI process is monitored. By clicking the \c Switch button, the monitored process
-can be changed to the \c tld.monitor.app application. Measurements will be performed each second
-(1000 ms) and 12 reading points will be kept in the model (the ProcessMonitor is a model). The
-model is used below to display the bar charts.
+that the system-UI process is monitored. By clicking the "Switch Process" button, the monitored
+process can be changed to the \c tld.monitor.app application. Measurements will be performed each
+second (1000 ms) and 12 reading points will be kept in the model (the ProcessMonitor is a model).
+The model is used below to display the bar charts.
 
-Memory and CPU load reporting need to be enabled, since we are interested in both. The memory and
-CPU load changed signal handlers will update the current values of the corresponding views.
+Memory and frame rate reporting need to be enabled, since we are interested in both. For frame rate
+measurements the list of \c monitoredWindows has to be filled with windows that we are interested
+in. For the system-UI this is the single root window itself and for the tld.monitor.app process it
+is the currently selected window. Hence the list will always include just one element. The memory
+and frame rate changed signal handlers will update the current values of the corresponding views.
 
 The Connections type is used to implement signal handlers for the property changes of the
 SystemMonitor. The current values of the corresponding views are updated, as well.
@@ -82,11 +85,10 @@ The SystemMonitor is a singleton type. It is set-up in the Component.onCompleted
 above, measurements will be performed each second (1000 ms) and 12 reading points will be kept in
 the model (the SystemMonitor is a model, as well).
 
-The very last line will start the only application that is provided by this example. Note that this
-application is merely running in the background without a visual representation in the system-UI.
-Also note that, if the application-manager is running in single-process mode, the application will
-run within the system-UI process and consequently the ProcessMonitor will not report anything and
-the associated ProcessMonitor::processId will be set to 0.
+The very last line will start the only application that is provided by this example. Note that, if
+the application-manager is running in single-process mode, the application will run within the
+system-UI process and consequently the ProcessMonitor will not report anything and the associated
+ProcessMonitor::processId will be set to 0.
 
 \section2 The User Interface
 
@@ -99,5 +101,9 @@ We won't go into much detail, because it's rather conventional QML code. The Mon
 ListView that uses either an instance of a ProcessMonitor or the SystemMonitor singleton as its
 model. The reading values are represented as bars. Their height is determined by the
 corresponding model role, e.g. for the PSS memory consumption it is \c memoryPss.total.
+
+When the tld.monitor.app process is monitored, its two windows will be shown (primary and
+secondary). The window that is monitored in terms of frame rate can be selected and is highlighted
+with a white border.
 
 */

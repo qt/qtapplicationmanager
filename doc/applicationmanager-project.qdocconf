@@ -17,7 +17,8 @@ headerdirs += \
     ../src/notification-lib \
     ../src/window-lib \
     ../src/launcher-lib \
-    ../src/launchers/qml
+    ../src/launchers/qml \
+    ../src/monitor-lib
 
 sourcedirs += \
     . \
@@ -30,6 +31,7 @@ sourcedirs += \
     ../src/window-lib \
     ../src/launcher-lib \
     ../src/launchers/qml \
+    ../src/monitor-lib \
     ../src/tools/packager \
     ../src/tools/deployer \
     ../src/tools/controller \

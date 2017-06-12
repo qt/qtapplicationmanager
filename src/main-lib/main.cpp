@@ -514,8 +514,16 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
 void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
                                    const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_applicationDatabase.reset(singleApp.isEmpty() ? new ApplicationDatabase(databasePath)
-                                                    : new ApplicationDatabase());
+    if (singleApp.isEmpty()) {
+        if (recreateDatabase) {
+            const QString dbDir = QFileInfo(databasePath).absolutePath();
+            if (Q_UNLIKELY(!QDir(dbDir).exists()) && Q_UNLIKELY(!QDir::root().mkpath(dbDir)))
+                throw Exception("could not create application database directory %1").arg(dbDir);
+        }
+        m_applicationDatabase.reset(new ApplicationDatabase(databasePath));
+    } else {
+        m_applicationDatabase.reset(new ApplicationDatabase());
+    }
 
     if (Q_UNLIKELY(!m_applicationDatabase->isValid() && !recreateDatabase)) {
         throw Exception("database file %1 is not a valid application database: %2")
@@ -523,11 +531,6 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
     }
 
     if (!m_applicationDatabase->isValid() || recreateDatabase) {
-        const QString dbDir = QFileInfo(databasePath).absolutePath();
-
-        if (Q_UNLIKELY(!QDir(dbDir).exists()) && Q_UNLIKELY(!QDir::root().mkpath(dbDir)))
-            throw Exception("could not create application database directory %1").arg(dbDir);
-
         QVector<const Application *> apps;
 
         if (!singleApp.isEmpty()) {

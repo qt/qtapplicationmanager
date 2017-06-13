@@ -237,6 +237,12 @@ enum CloseReason
 class NotificationManagerPrivate
 {
 public:
+    ~NotificationManagerPrivate()
+    {
+        qDeleteAll(notifications);
+        notifications.clear();
+    }
+
     int findNotificationById(uint id) const
     {
         for (int i = 0; i < notifications.count(); ++i) {
@@ -648,10 +654,13 @@ void NotificationManagerPrivate::closeNotification(uint id, CloseReason reason)
         emit q->notificationAboutToBeRemoved(id);
 
         q->beginRemoveRows(QModelIndex(), i, i);
-        notifications.removeAt(i);
+        auto n = notifications.takeAt(i);
         q->endRemoveRows();
 
         emit q->NotificationClosed(id, int(reason));
+
+        qCDebug(LogNotifications) << "Deleting notification with id:" << id;
+        delete n;
     }
 }
 

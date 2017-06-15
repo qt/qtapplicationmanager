@@ -114,8 +114,6 @@ public slots:
     void setNewReadCpu(bool enabled);
     void reset(int sync);
 
-    void aboutToQuit();
-
 signals:
     void newReadingAvailable();
 
@@ -191,7 +189,7 @@ public:
     // fps
     QMap<QObject *, FrameTimer *> frameCounters;
 
-    ReadingTask readingTask;
+    ReadingTask *readingTask;
     ReadingTask::Results readResults;
     QThread thread;
     QMutex mutex;

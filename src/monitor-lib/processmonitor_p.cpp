@@ -59,14 +59,7 @@ QT_BEGIN_NAMESPACE_AM
 ReadingTask::ReadingTask(QMutex &mutex, ReadingTask::Results &res)
     : m_mutex(mutex)
     , m_results(res)
-{
-    connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, this, &ReadingTask::aboutToQuit);
-}
-
-void ReadingTask::aboutToQuit()
-{
-    cancelTimer();
-}
+{}
 
 void ReadingTask::cancelTimer()
 {
@@ -381,18 +374,19 @@ bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
 
 ProcessMonitorPrivate::ProcessMonitorPrivate(ProcessMonitor *q)
         : q_ptr(q)
-        , readingTask(mutex, readResults)
 {
     connect(ApplicationManager::instance(), &ApplicationManager::applicationRunStateChanged,
             this, &ProcessMonitorPrivate::appRuntimeChanged);
 
-    readingTask.moveToThread(&thread);
-    connect(this, &ProcessMonitorPrivate::newPid, &readingTask, &ReadingTask::setNewPid);
-    connect(this, &ProcessMonitorPrivate::setupTimer, &readingTask, &ReadingTask::setupTimer);
-    connect(this, &ProcessMonitorPrivate::newReadCpu, &readingTask, &ReadingTask::setNewReadCpu);
-    connect(this, &ProcessMonitorPrivate::newReadMem, &readingTask, &ReadingTask::setNewReadMem);
-    connect(this, &ProcessMonitorPrivate::reset, &readingTask, &ReadingTask::reset);
-    connect(&readingTask, &ReadingTask::newReadingAvailable, this, &ProcessMonitorPrivate::readingUpdate);
+    readingTask = new ReadingTask(mutex, readResults);
+    readingTask->moveToThread(&thread);
+    connect(this, &ProcessMonitorPrivate::newPid, readingTask, &ReadingTask::setNewPid);
+    connect(this, &ProcessMonitorPrivate::setupTimer, readingTask, &ReadingTask::setupTimer);
+    connect(this, &ProcessMonitorPrivate::newReadCpu, readingTask, &ReadingTask::setNewReadCpu);
+    connect(this, &ProcessMonitorPrivate::newReadMem, readingTask, &ReadingTask::setNewReadMem);
+    connect(this, &ProcessMonitorPrivate::reset, readingTask, &ReadingTask::reset);
+    connect(readingTask, &ReadingTask::newReadingAvailable, this, &ProcessMonitorPrivate::readingUpdate);
+    connect(&thread, &QThread::finished, readingTask, &ReadingTask::deleteLater);
     thread.start();
 }
 

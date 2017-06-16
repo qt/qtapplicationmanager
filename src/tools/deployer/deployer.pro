@@ -1,5 +1,7 @@
 TEMPLATE = aux
 
+CONFIG += nostrip
+
 deployer.files = appman-deployer
 deployer.path = $$[QT_HOST_BINS]
 

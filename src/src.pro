@@ -73,8 +73,8 @@ SUBDIRS = \
         manager_lib \
         installer_lib \
         window_lib \
-        main_lib \
         monitor_lib \
+        main_lib \
         tools_appman \
         # Although the testrunner is in tools we don't want to build it with tools-only
         # because it is based on the manager binary

@@ -75,6 +75,9 @@ public:
     Q_INVOKABLE int mapFromSource(int sourceIndex) const;
 
 protected:
+    using QSortFilterProxyModel::mapToSource;
+    using QSortFilterProxyModel::mapFromSource;
+
     bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override;
     bool lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const override;
 

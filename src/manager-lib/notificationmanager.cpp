@@ -349,9 +349,9 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
     case Category:
         return n->category;
     case Icon:
-         if (n->application && !n->application->icon().isEmpty())
-             return n->application->icon();
-         return n->iconUrl;
+         if (!n->iconUrl.isEmpty())
+             return n->iconUrl;
+         return n->application ? n->application->icon() : QString();
     case Image:
         return n->imageUrl;
     case ShowActionsAsIcons:

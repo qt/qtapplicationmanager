@@ -44,6 +44,7 @@ public:
 private slots:
     void initTestCase();
     void check();
+    void crossPlatform();
 
 private:
     QByteArray m_signingP12;
@@ -114,6 +115,52 @@ void tst_Signature::check()
 
     QVERIFY(s.create(m_signingNoKeyP12, m_signingPassword).isEmpty());
     QVERIFY2(s.errorString().contains(qSL("private key")), qPrintable(s.errorString()));
+}
+
+void tst_Signature::crossPlatform()
+{
+    QByteArray hash = "hello\nworld!";
+
+    QFile fileOpenSsl(qSL(":/signature-openssl.p7"));
+    QFile fileWinCrypt(qSL(":/signature-wincrypt.p7"));
+    QFile fileSecurityFramework(qSL(":/signature-securityframework.p7"));
+
+    if (qEnvironmentVariableIsSet("AM_CREATE_SIGNATURE_FILE")) {
+        QFile *nativeFile = nullptr;
+#if defined(AM_USE_LIBCRYPTO)
+        nativeFile = &fileOpenSsl;
+#elif defined(Q_OS_WIN)
+        nativeFile = &fileWinCrypt;
+#elif defined(Q_OS_OSX)
+        nativeFile = &fileSecurityFramework;
+#endif
+        QVERIFY(nativeFile);
+        QFile f(qL1S(AM_TESTDATA_DIR "/../signature") + nativeFile->fileName().mid(1));
+        QVERIFY2(f.open(QFile::WriteOnly | QFile::Truncate), qPrintable(f.errorString()));
+
+        Signature s(hash);
+        QByteArray signature = s.create(m_signingP12, m_signingPassword);
+        QVERIFY2(!signature.isEmpty(), qPrintable(s.errorString()));
+        QCOMPARE(f.write(signature), signature.size());
+
+        qInfo() << "Only creating signature file" << f.fileName() << "because $AM_CREATE_SIGNATURE_FILE is set.";
+        return;
+    }
+
+    QVERIFY(fileOpenSsl.open(QIODevice::ReadOnly));
+    QByteArray sigOpenSsl = fileOpenSsl.readAll();
+    QVERIFY(!sigOpenSsl.isEmpty());
+    QVERIFY(fileWinCrypt.open(QIODevice::ReadOnly));
+    QByteArray sigWinCrypt = fileWinCrypt.readAll();
+    QVERIFY(!sigWinCrypt.isEmpty());
+    QVERIFY(fileSecurityFramework.open(QIODevice::ReadOnly));
+    QByteArray sigSecurityFramework = fileSecurityFramework.readAll();
+    QVERIFY(!sigSecurityFramework.isEmpty());
+
+    Signature s(hash);
+    QVERIFY2(s.verify(sigOpenSsl, m_verifyingPEM), qPrintable(s.errorString()));
+    QVERIFY2(s.verify(sigWinCrypt, m_verifyingPEM), qPrintable(s.errorString()));
+    QVERIFY2(s.verify(sigSecurityFramework, m_verifyingPEM), qPrintable(s.errorString()));
 }
 
 QTEST_APPLESS_MAIN(tst_Signature)

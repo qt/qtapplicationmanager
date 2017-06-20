@@ -3,5 +3,8 @@
     <file>signing.p12</file>
     <file>signing-no-key.p12</file>
     <file>verifying.crt</file>
+    <file>signature-openssl.p7</file>
+    <file>signature-wincrypt.p7</file>
+    <file>signature-securityframework.p7</file>
 </qresource>
 </RCC>

@@ -49,7 +49,10 @@ QT_BEGIN_NAMESPACE_AM
 Signature::Signature(const QByteArray &hash)
     : d(new SignaturePrivate)
 {
-    d->hash = hash;
+    // We have to use ASCII here since the default S/MIME content is text/plain.
+    // This is what can be supported easily cross-platform without diving
+    // deeply into low-level PKCS7 APIs.
+    d->hash = hash.toBase64();
     Cryptography::initialize();
 }
 

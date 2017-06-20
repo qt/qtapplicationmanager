@@ -142,6 +142,8 @@ static bool packagerCheck(PackagingJob *p, QString &errorString)
         p->execute();
         errorString.clear();
         result = (p->resultCode() == 0);
+        if (!result)
+            errorString = p->output();
     } catch (const Exception &e) { \
         errorString = e.errorString();
     }
@@ -153,7 +155,6 @@ void tst_PackagerTool::test()
 {
     QTemporaryDir tmp;
     QString errorString;
-    QString hardwareId = "foobar";
 
     // no valid destination
     QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), pathTo("test.appkg")), errorString));
@@ -218,7 +219,7 @@ void tst_PackagerTool::test()
                                pathTo("test.store-signed.appkg"),
                                m_storeCertificate,
                                qSL("wrong-password"),
-                               hardwareId), errorString));
+                               m_hardwareId), errorString));
     QVERIFY2(errorString.contains(qL1S("could not create signature")), qPrintable(errorString));
 
     // sign
@@ -233,7 +234,7 @@ void tst_PackagerTool::test()
                                pathTo("test.store-signed.appkg"),
                                m_storeCertificate,
                                m_storePassword,
-                               hardwareId), errorString), qPrintable(errorString));
+                               m_hardwareId), errorString), qPrintable(errorString));
 
     // verify
     QVERIFY2(packagerCheck(PackagingJob::developerVerify(
@@ -243,7 +244,7 @@ void tst_PackagerTool::test()
     QVERIFY2(packagerCheck(PackagingJob::storeVerify(
                                pathTo("test.store-signed.appkg"),
                                m_caFiles,
-                               hardwareId), errorString), qPrintable(errorString));
+                               m_hardwareId), errorString), qPrintable(errorString));
 
     // now that we have it, see if the package actually installs correctly
 

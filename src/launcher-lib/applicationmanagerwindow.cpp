@@ -162,6 +162,10 @@ void ApplicationManagerWindow::onWindowPropertyChangedInternal(QPlatformWindow *
 
     See WindowManager for the server side API.
 
+    \note When listening to property changes of Wayland clients on the System-UI side, be aware of
+          the \l{Multi-process Wayland caveats}{asynchronous nature} of the underlying Wayland
+          protocol.
+
     \sa windowProperty, windowProperties, windowPropertyChanged
 */
 bool ApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)

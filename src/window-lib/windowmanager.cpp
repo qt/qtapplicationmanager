@@ -128,6 +128,18 @@
             available for showing an animation until releaseWindow() is called.
     \endtable
 
+    \target Multi-process Wayland caveats
+
+    \note Please be aware that Wayland is essentially an asynchronous IPC protocol, resulting in
+    different local states in the client and server processes during state changes. A prime example
+    for this is window property changes on the client side: in addition to being changed
+    asynchronously on the server side, the windowPropertyChanged signal will not be emitted while
+    the window object is not yet made available on the server side via the windowReady signal. All
+    those changes are not lost however, but the last change before emitting the windowReady signal
+    will be the initial state of the window object on the System-UI side.
+
+    \target Minimal compositor
+
     After importing, the WindowManager singleton can be used as in the example below.
     It demonstrates how to implement a basic, fullscreen window compositor with support
     for window show and hide animations:
@@ -242,6 +254,10 @@
     var appId = WindowManager.get(index).applicationId
     var app = ApplicationManager.application(appId)
     \endcode
+
+    \note Please be aware that the windowReady signal is not emitted immediately when the client
+          sets a window to visible. This is due to the \l
+          {Multi-process Wayland caveats}{asynchronous nature} of the underlying Wayland protocol.
 */
 
 /*!
@@ -899,6 +915,9 @@ QVariantMap WindowManager::windowProperties(QQuickItem *window) const
 
     Reports a change of an application \a window's property identified by \a name to the given
     \a value.
+
+    \note When listening to property changes of Wayland clients, be aware of the \l
+          {Multi-process Wayland caveats}{asynchronous nature} of the underlying Wayland protocol.
 
     \sa ApplicationManagerWindow::setWindowProperty()
 */

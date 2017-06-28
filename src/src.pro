@@ -37,6 +37,13 @@ launcher_lib.depends = application_lib notification_lib
 main_lib.subdir = main-lib
 main_lib.depends = manager_lib installer_lib window_lib monitor_lib
 
+!disable-external-dbus-interfaces:qtHaveModule(dbus) {
+    dbus_lib.subdir = dbus-lib
+    dbus_lib.depends = manager_lib installer_lib window_lib
+
+    main_lib.depends += dbus_lib
+}
+
 launchers_qml.subdir = launchers/qml
 launchers_qml.depends = launcher_lib plugin_interfaces
 
@@ -66,7 +73,9 @@ SUBDIRS = \
 !tools-only {
     SUBDIRS += \
         plugin_interfaces \
-        dbus \
+
+    !disable-external-dbus-interfaces:qtHaveModule(dbus):SUBDIRS += \
+        dbus_lib \
 
     qtHaveModule(qml):SUBDIRS += \
         notification_lib \

@@ -11,11 +11,11 @@ CONFIG *= console
 SOURCES +=  \
     controller.cpp \
 
-appmanif.files =  ../../dbus/io.qt.applicationmanager.xml
+appmanif.files =  ../../dbus-lib/io.qt.applicationmanager.xml
 appmanif.header_flags = -i dbus-utilities.h
 
 DBUS_INTERFACES += \
-    ../../dbus/io.qt.applicationinstaller.xml \
+    ../../dbus-lib/io.qt.applicationinstaller.xml \
     appmanif
 
 load(qt_tool)

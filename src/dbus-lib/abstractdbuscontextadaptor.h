@@ -42,48 +42,31 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QVariantMap>
-#include <QStringList>
-#include <QByteArray>
-#if defined(QT_DBUS_LIB)
-#  include <QDBusContext>
-#endif
-#include <functional>
+#include <QObject>
+#include <QDBusContext>
+
+QT_FORWARD_DECLARE_CLASS(QDBusAbstractAdaptor)
 
 QT_BEGIN_NAMESPACE_AM
 
-// this is necessary to avoid a second <QDBusContext> forward include header
-#if 0
-#pragma qt_sync_stop_processing
-QT_END_NAMESPACE_AM
-#endif
-
-struct DBusPolicy
+class AbstractDBusContextAdaptor : public QObject, public QDBusContext
 {
-    QList<uint> m_uids;
-    QStringList m_executables;
-    QStringList m_capabilities;
-};
+    Q_OBJECT
 
-class Application;
-
-QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment);
-
-#if !defined(QT_DBUS_LIB)
-
-// evil hack, but QtDBus only works when directly deriving from QDBusContext
-class QDBusContext
-{
 public:
-    inline bool calledFromDBus() const { return false; }
-    inline void setDelayedReply(bool) const { }
-    inline void sendErrorReply(const QString &, const QString & = QString()) const { }
+    QDBusAbstractAdaptor *generatedAdaptor();
+    static QDBusContext *dbusContextFor(QDBusAbstractAdaptor *adaptor);
+
+protected:
+    explicit AbstractDBusContextAdaptor(QObject *realObject);
+    QDBusAbstractAdaptor *m_adaptor = nullptr;
 };
 
-#endif
+#define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
+    do { \
+        if (!DBusPolicy::check(this, __FUNCTION__)) \
+            return RETURN_TYPE(); \
+    } while (false);
 
-bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy,
-                     const QByteArray &function, const std::function<QStringList(qint64)> &pidToCapabilities);
 
 QT_END_NAMESPACE_AM
-

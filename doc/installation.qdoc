@@ -124,6 +124,10 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li \c{-config disable-installer}
   \li Disable the installer part.
 \row
+  \li \c{-config disable-external-dbus-interfaces}
+  \li Completely disable the external D-Bus interfaces. The internal communication channel between the
+      applications and the application-manager will still be based on a peer-to-peer D-Bus though.
+\row
   \li \c{-config install-prefix=<path>}
   \li Uses \c path as the base directory for \c{make install}.
       If you are not specifying an \c install-prefix when running qmake, then the application-manager

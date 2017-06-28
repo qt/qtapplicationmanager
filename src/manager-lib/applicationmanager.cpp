@@ -50,7 +50,9 @@
 #if defined(QT_GUI_LIB)
 #  include <QDesktopServices>
 #endif
-#include <qplatformdefs.h>
+#if defined(Q_OS_UNIX)
+#  include <signal.h>
+#endif
 
 #include "global.h"
 #include "logging.h"
@@ -68,18 +70,6 @@
 #include "qml-utilities.h"
 #include "utilities.h"
 #include "qtyaml.h"
-
-#if defined(Q_OS_UNIX)
-#  include <unistd.h>
-#  include <signal.h>
-#endif
-
-#define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
-    do { \
-        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__, [](qint64 pid) -> QStringList { return ApplicationManager::instance()->capabilities(ApplicationManager::instance()->identifyApplication(pid)); })) \
-            return RETURN_TYPE(); \
-    } while (false);
-
 
 /*!
     \qmltype ApplicationManager
@@ -607,30 +597,6 @@ ApplicationManagerPrivate::DebugWrapper ApplicationManagerPrivate::parseDebugWra
     return fail;
 }
 
-bool ApplicationManager::setDBusPolicy(const QVariantMap &yamlFragment)
-{
-    static const QVector<QByteArray> functions {
-        QT_STRINGIFY(applicationIds),
-        QT_STRINGIFY(get),
-        QT_STRINGIFY(startApplication),
-        QT_STRINGIFY(debugApplication),
-        QT_STRINGIFY(stopApplication),
-        QT_STRINGIFY(stopAllApplications),
-        QT_STRINGIFY(openUrl),
-        QT_STRINGIFY(capabilities),
-        QT_STRINGIFY(identifyApplication),
-        QT_STRINGIFY(applicationState)
-    };
-
-    d->dbusPolicy = parseDBusPolicy(yamlFragment);
-
-    for (auto it = d->dbusPolicy.cbegin(); it != d->dbusPolicy.cend(); ++it) {
-       if (!functions.contains(it.key()))
-           return false;
-    }
-    return true;
-}
-
 QVector<const Application *> ApplicationManager::applications() const
 {
     return d->apps;
@@ -1006,14 +972,10 @@ void ApplicationManager::stopApplication(const Application *app, bool forceKill)
 */
 bool ApplicationManager::startApplication(const QString &id, const QString &documentUrl)
 {
-    AM_AUTHENTICATE_DBUS(bool)
-
     try {
         return startApplication(fromId(id), documentUrl);
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
-        if (calledFromDBus())
-            sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
         return false;
     }
 }
@@ -1028,109 +990,13 @@ bool ApplicationManager::startApplication(const QString &id, const QString &docu
 
 bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl)
 {
-    AM_AUTHENTICATE_DBUS(bool)
-
     try {
         return startApplication(fromId(id), documentUrl, QString(), debugWrapper);
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
-        if (calledFromDBus())
-            sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
         return false;
     }
 }
-
-#if defined(QT_DBUS_LIB)
-bool ApplicationManager::startApplication(const QString &id, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &redirections, const QString &documentUrl)
-{
-    AM_AUTHENTICATE_DBUS(bool)
-
-    QVector<int> stdioRedirections = { -1, -1, -1 };
-
-#  if defined(Q_OS_UNIX)
-    for (auto it = redirections.cbegin(); it != redirections.cend(); ++it) {
-        QDBusUnixFileDescriptor dfd = it.value();
-        int fd = dfd.fileDescriptor();
-
-        const QString &which = it.key();
-        if (which == qL1S("in"))
-            stdioRedirections[0] = dup(fd);
-        else if (which == qL1S("out"))
-            stdioRedirections[1] = dup(fd);
-        else if (which == qL1S("err"))
-            stdioRedirections[2] = dup(fd);
-    }
-#  else
-    Q_UNUSED(redirections)
-#  endif // defined(Q_OS_UNIX)
-    int result = false;
-    try {
-        result = startApplication(fromId(id), documentUrl, QString(), QString(), stdioRedirections);
-    } catch (const Exception &e) {
-        qCWarning(LogSystem) << e.what();
-        if (calledFromDBus())
-            sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
-        result = false;
-    }
-
-    if (!result) {
-        // we have to close the fds in this case, otherwise we block the tty where the fds are
-        // originating from.
-        //TODO: this really needs to fixed centrally (e.g. via the DebugWrapper), but this is the most
-        //      common error case for now.
-        for (int fd : qAsConst(stdioRedirections)) {
-            if (fd >= 0)
-                QT_CLOSE(fd);
-        }
-    }
-    return result;
-}
-
-bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &redirections, const QString &documentUrl)
-{
-    AM_AUTHENTICATE_DBUS(bool)
-
-    QVector<int> stdioRedirections = { -1, -1, -1 };
-
-#  if defined(Q_OS_UNIX)
-    for (auto it = redirections.cbegin(); it != redirections.cend(); ++it) {
-        QDBusUnixFileDescriptor dfd = it.value();
-        int fd = dfd.fileDescriptor();
-
-        const QString &which = it.key();
-        if (which == qL1S("in"))
-            stdioRedirections[0] = dup(fd);
-        else if (which == qL1S("out"))
-            stdioRedirections[1] = dup(fd);
-        else if (which == qL1S("err"))
-            stdioRedirections[2] = dup(fd);
-    }
-#  else
-    Q_UNUSED(redirections)
-#  endif // defined(Q_OS_UNIX)
-    int result = false;
-    try {
-        result = startApplication(fromId(id), documentUrl, QString(), debugWrapper, stdioRedirections);
-    } catch (const Exception &e) {
-        qCWarning(LogSystem) << e.what();
-        if (calledFromDBus())
-            sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
-        result = false;
-    }
-
-    if (!result) {
-        // we have to close the fds in this case, otherwise we block the tty where the fds are
-        // originating from.
-        //TODO: this really needs to fixed centrally (e.g. via the DebugWrapper), but this is the most
-        //      common error case for now.
-        for (int fd : qAsConst(stdioRedirections)) {
-            if (fd >= 0)
-                QT_CLOSE(fd);
-        }
-    }
-    return result;
-}
-#endif // defined(QT_DBUS_LIB)
 
 /*!
     \qmlmethod ApplicationManager::stopApplication(string id, bool forceKill)
@@ -1142,8 +1008,6 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 */
 void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 {
-    AM_AUTHENTICATE_DBUS(void)
-
     return stopApplication(fromId(id), forceKill);
 }
 
@@ -1157,8 +1021,6 @@ void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 */
 void ApplicationManager::stopAllApplications(bool forceKill)
 {
-    AM_AUTHENTICATE_DBUS(void)
-
     for (const Application *app : qAsConst(d->apps)) {
         AbstractRuntime *rt = app->currentRuntime();
         if (rt)
@@ -1207,8 +1069,6 @@ void ApplicationManager::stopAllApplications(bool forceKill)
 */
 bool ApplicationManager::openUrl(const QString &urlStr)
 {
-    AM_AUTHENTICATE_DBUS(bool)
-
     // QDesktopServices::openUrl has a special behavior when called recursively, which makes sense
     // on the desktop, but is completely counter-productive for the AM.
     static bool recursionGuard = false;
@@ -1348,8 +1208,6 @@ void ApplicationManager::rejectOpenUrlRequest(const QString &requestId)
 */
 QStringList ApplicationManager::capabilities(const QString &id) const
 {
-    AM_AUTHENTICATE_DBUS(QStringList)
-
     const Application *app = fromId(id);
     return app ? app->capabilities() : QStringList();
 }
@@ -1364,8 +1222,6 @@ QStringList ApplicationManager::capabilities(const QString &id) const
 */
 QString ApplicationManager::identifyApplication(qint64 pid) const
 {
-    AM_AUTHENTICATE_DBUS(QString)
-
     const Application *app = fromProcessId(pid);
     return app ? app->id() : QString();
 }
@@ -1801,8 +1657,6 @@ int ApplicationManager::indexOfApplication(const QString &id) const
 */
 QStringList ApplicationManager::applicationIds() const
 {
-    AM_AUTHENTICATE_DBUS(QStringList)
-
     QStringList ids;
     ids.reserve(d->apps.size());
     for (int i = 0; i < d->apps.size(); ++i)
@@ -1820,18 +1674,12 @@ QStringList ApplicationManager::applicationIds() const
 */
 QVariantMap ApplicationManager::get(const QString &id) const
 {
-    AM_AUTHENTICATE_DBUS(QVariantMap)
-
     auto map = get(indexOfApplication(id));
-    if (calledFromDBus())
-        map.remove(qSL("application")); // cannot marshall QObject *
     return map;
 }
 
 ApplicationManager::RunState ApplicationManager::applicationRunState(const QString &id) const
 {
-    AM_AUTHENTICATE_DBUS(ApplicationManager::RunState)
-
     int index = indexOfApplication(id);
     if (index < 0) {
         qCWarning(LogSystem) << "invalid index:" << index;

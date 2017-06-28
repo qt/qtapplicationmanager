@@ -57,12 +57,6 @@
 #include "applicationmanager.h"
 
 
-#define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
-    do { \
-        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__, [](qint64 pid) -> QStringList { return ApplicationManager::instance()->capabilities(ApplicationManager::instance()->identifyApplication(pid)); })) \
-            return RETURN_TYPE(); \
-    } while (false);
-
 /*!
     \qmltype ApplicationInstaller
     \inqmlmodule QtApplicationManager
@@ -320,25 +314,6 @@ QDir ApplicationInstaller::manifestDirectory() const
 QDir ApplicationInstaller::applicationImageMountDirectory() const
 {
     return d->imageMountDir;
-}
-
-bool ApplicationInstaller::setDBusPolicy(const QVariantMap &yamlFragment)
-{
-    static const QVector<QByteArray> functions {
-        QT_STRINGIFY(startPackageInstallation),
-        QT_STRINGIFY(acknowledgePackageInstallation),
-        QT_STRINGIFY(removePackage),
-        QT_STRINGIFY(taskState),
-        QT_STRINGIFY(cancelTask)
-    };
-
-    d->dbusPolicy = parseDBusPolicy(yamlFragment);
-
-    for (auto it = d->dbusPolicy.cbegin(); it != d->dbusPolicy.cend(); ++it) {
-       if (!functions.contains(it.key()))
-           return false;
-    }
-    return true;
 }
 
 QList<QByteArray> ApplicationInstaller::caCertificates() const
@@ -668,7 +643,6 @@ qint64 ApplicationInstaller::installedApplicationSize(const QString &id) const
 QString ApplicationInstaller::startPackageInstallation(const QString &installationLocationId, const QUrl &sourceUrl)
 {
     AM_TRACE(LogInstaller, installationLocationId, sourceUrl);
-    AM_AUTHENTICATE_DBUS(QString)
 
     const InstallationLocation &il = installationLocationFromId(installationLocationId);
 
@@ -717,7 +691,6 @@ QString ApplicationInstaller::startPackageInstallation(const QString &installati
 void ApplicationInstaller::acknowledgePackageInstallation(const QString &taskId)
 {
     AM_TRACE(LogInstaller, taskId)
-    AM_AUTHENTICATE_DBUS(void)
 
     auto allTasks = d->taskQueue;
     allTasks.append(d->activeTask);
@@ -750,7 +723,6 @@ void ApplicationInstaller::acknowledgePackageInstallation(const QString &taskId)
 QString ApplicationInstaller::removePackage(const QString &id, bool keepDocuments, bool force)
 {
     AM_TRACE(LogInstaller, id, keepDocuments)
-    AM_AUTHENTICATE_DBUS(QString)
 
     if (const Application *a = ApplicationManager::instance()->fromId(id)) {
         if (const InstallationReport *report = a->installationReport()) {
@@ -774,8 +746,6 @@ QString ApplicationInstaller::removePackage(const QString &id, bool keepDocument
 */
 QString ApplicationInstaller::taskState(const QString &taskId)
 {
-    AM_AUTHENTICATE_DBUS(QString)
-
     auto allTasks = d->taskQueue;
     allTasks.append(d->activeTask);
 
@@ -798,8 +768,6 @@ QString ApplicationInstaller::taskState(const QString &taskId)
 */
 QString ApplicationInstaller::taskApplicationId(const QString &taskId)
 {
-    AM_AUTHENTICATE_DBUS(QString)
-
     auto allTasks = d->taskQueue;
     allTasks.append(d->activeTask);
 
@@ -820,7 +788,6 @@ QString ApplicationInstaller::taskApplicationId(const QString &taskId)
 bool ApplicationInstaller::cancelTask(const QString &taskId)
 {
     AM_TRACE(LogInstaller, taskId)
-    AM_AUTHENTICATE_DBUS(bool)
 
     if (d->activeTask && d->activeTask->id() == taskId)
         return d->activeTask->cancel();

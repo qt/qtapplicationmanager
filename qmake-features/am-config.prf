@@ -12,6 +12,7 @@ DEFINES += QT_MESSAGELOGCONTEXT
 win32-msvc*:QMAKE_CXXFLAGS += /FS /wd4290 /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS
 
 disable-installer:DEFINES *= AM_DISABLE_INSTALLER
+disable-external-dbus-interfaces:DEFINES *= AM_DISABLE_EXTERNAL_DBUS_INTERFACES
 systemd-workaround:DEFINES *= AM_SYSTEMD_WORKAROUND
 headless:DEFINES *= AM_HEADLESS
 linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release)):DEFINES *= AM_USE_LIBBACKTRACE

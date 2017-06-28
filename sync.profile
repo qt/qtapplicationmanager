@@ -11,17 +11,11 @@
     "QtAppManLauncher" => "$basedir/src/launcher-lib",
     "QtAppManPluginInterfaces" => "$basedir/src/plugin-interfaces",
     "QtAppManMonitor" => "$basedir/src/monitor-lib",
+    "QtAppManDBus" => "$basedir/src/dbus-lib",
 );
 %moduleheaders = ( # restrict the module headers to those found in relative path
 );
 @allmoduleheadersprivate = ();
-#    "QtAppManCommon",
-#    "QtAppManCrypto",
-#    "QtAppManNotification",
-#    "QtAppManManager",
-#    "QtAppManInstaller",
-#    "QtAppManMonitor"
-#);
 %classnames = (
 );
 %deprecatedheaders = (

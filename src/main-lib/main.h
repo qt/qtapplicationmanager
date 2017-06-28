@@ -133,10 +133,12 @@ protected:
 
 private:
     void loadDummyDataFiles();
+
+#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
     const char *dbusInterfaceName(QObject *o) const Q_DECL_NOEXCEPT_EXPR(false);
     void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName, const char *serviceName,
                             const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false);
-
+#endif
     static QVector<const Application *> scanForApplication(const QString &singleAppInfoYaml,
                                                            const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false);
     static QVector<const Application *> scanForApplications(const QStringList &builtinAppsDirs,

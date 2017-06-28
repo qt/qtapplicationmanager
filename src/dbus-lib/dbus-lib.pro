@@ -1,4 +1,47 @@
-TEMPLATE = aux
+TEMPLATE = lib
+TARGET = QtAppManDBus
+MODULE = appman_dbus
+
+load(am-config)
+
+QT = core dbus
+QT_FOR_PRIVATE *= \
+    appman_common-private \
+    appman_manager-private \
+
+CONFIG *= static internal_module dbus-adaptors-xml
+
+HEADERS += \
+    dbuspolicy.h \
+    dbusdaemon.h \
+    abstractdbuscontextadaptor.h \
+    applicationmanagerdbuscontextadaptor.h \
+    notificationmanagerdbuscontextadaptor.h \
+
+SOURCES += \
+    dbuspolicy.cpp \
+    dbusdaemon.cpp \
+    abstractdbuscontextadaptor.cpp \
+    applicationmanagerdbuscontextadaptor.cpp \
+    notificationmanagerdbuscontextadaptor.cpp \
+
+ADAPTORS_XML = \
+    io.qt.applicationmanager.xml \
+    org.freedesktop.notifications.xml \
+
+!disable-installer {
+    QT *= appman_installer-private
+    HEADERS += applicationinstallerdbuscontextadaptor.h
+    SOURCES += applicationinstallerdbuscontextadaptor.cpp
+    ADAPTORS_XML += io.qt.applicationinstaller.xml
+}
+
+!headless{
+    QT *= appman_window-private
+    HEADERS += windowmanagerdbuscontextadaptor.h
+    SOURCES += windowmanagerdbuscontextadaptor.cpp
+    ADAPTORS_XML += io.qt.windowmanager.xml
+}
 
 OTHER_FILES = \
     io.qt.applicationinstaller.xml \
@@ -26,3 +69,5 @@ QMAKE_EXTRA_TARGETS += \
     recreate-applicationmanager-dbus-xml \
     recreate-applicationinstaller-dbus-xml \
     recreate-windowmanager-dbus-xml \
+
+load(qt_module)

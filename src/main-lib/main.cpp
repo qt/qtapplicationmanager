@@ -42,14 +42,17 @@
 #include <memory>
 #include <qglobal.h>
 
-// include as eary as possible, since the <windows.h> header will re-#define "interface"
-#if defined(QT_DBUS_LIB)
+#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 #  include <QDBusConnection>
-#  if defined(Q_OS_LINUX)
-#    include <sys/prctl.h>
-#    include <sys/signal.h>
-#  endif
+#  include <QDBusAbstractAdaptor>
+#  include "dbusdaemon.h"
+#  include "dbuspolicy.h"
+#  include "applicationmanagerdbuscontextadaptor.h"
+#  include "applicationinstallerdbuscontextadaptor.h"
+#  include "notificationmanagerdbuscontextadaptor.h"
 #endif
+
+#include "applicationipcmanager.h"
 
 #include <QFile>
 #include <QDir>
@@ -96,11 +99,6 @@
 #  include "applicationinstaller.h"
 #  include "sudo.h"
 #endif
-#if defined(QT_DBUS_LIB)
-#  include "applicationmanager_adaptor.h"
-#  include "applicationinstaller_adaptor.h"
-#  include "notifications_adaptor.h"
-#endif
 #include "runtimefactory.h"
 #include "containerfactory.h"
 #include "quicklauncher.h"
@@ -117,8 +115,8 @@
 #if !defined(AM_HEADLESS)
 #  include "windowmanager.h"
 #  include "fakeapplicationmanagerwindow.h"
-#  if defined(QT_DBUS_LIB)
-#    include "windowmanager_adaptor.h"
+#  if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+#    include "windowmanagerdbuscontextadaptor.h"
 #  endif
 #endif
 
@@ -334,64 +332,13 @@ void Main::parseSystemProperties(const QVariantMap &rawSystemProperties)
 
 void Main::setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false)
 {
-#if defined(QT_DBUS_LIB)
-    if (Q_LIKELY(!startSessionBus))
-        return;
+#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+    if (Q_LIKELY(startSessionBus)) {
+        DBusDaemonProcess::start();
 
-    class DBusDaemonProcess : public QProcess // clazy:exclude=missing-qobject-macro
-    {
-    public:
-        DBusDaemonProcess(QObject *parent = nullptr)
-            : QProcess(parent)
-        {
-            QString program = qSL("dbus-daemon");
-            QStringList arguments = { qSL("--nofork"), qSL("--print-address"), qSL("--session") };
-
-#if defined(Q_OS_OSX)
-            // there's no native dbus support on macOS, so we try to use brew's dbus support
-            program = qSL("/usr/local/bin/dbus-daemon");
-            // brew's dbus-daemon needs an address, because it will otherwise assume that it was
-            // started via launchd and expects its address in $DBUS_LAUNCHD_SESSION_BUS_SOCKET
-            QString address = qSL("--address=unix:path=") + QDir::tempPath() + qSL("am-")
-                    + QString::number(QCoreApplication::applicationPid()) + qSL("-session.bus");
-
-            arguments << address;
-#endif
-            setProgram(program);
-            setArguments(arguments);
-        }
-        ~DBusDaemonProcess() override
-        {
-            kill();
-            waitForFinished();
-        }
-
-    protected:
-        void setupChildProcess() override
-        {
-#  if defined(Q_OS_LINUX)
-            // at least on Linux we can make sure that those dbus-daemons are always killed
-            prctl(PR_SET_PDEATHSIG, SIGKILL);
-#  endif
-            QProcess::setupChildProcess();
-        }
-    };
-
-    static const int timeout = 10000 * timeoutFactor();
-
-    auto dbusDaemon = new DBusDaemonProcess(this);
-    dbusDaemon->start(QIODevice::ReadOnly);
-    if (!dbusDaemon->waitForStarted(timeout) || !dbusDaemon->waitForReadyRead(timeout)) {
-        throw Exception("could not start a dbus-daemon process (%1): %2")
-                .arg(dbusDaemon->program(), dbusDaemon->errorString());
+        StartupTimer::instance()->checkpoint("after starting session D-Bus");
     }
-    QByteArray busAddress = dbusDaemon->readAllStandardOutput().trimmed();
-    qputenv("DBUS_SESSION_BUS_ADDRESS", busAddress);
-    qCInfo(LogSystem, "NOTICE: running on private D-Bus session bus to avoid conflicts:");
-    qCInfo(LogSystem, "        DBUS_SESSION_BUS_ADDRESS=%s", busAddress.constData());
-
-    StartupTimer::instance()->checkpoint("after starting session D-Bus");
-#endif // QT_DBUS_LIB
+#endif
 }
 
 void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
@@ -798,24 +745,21 @@ void Main::setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false)
 #endif // QT_PSSDP_LIB
 }
 
+
+#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+
 const char *Main::dbusInterfaceName(QObject *o) const Q_DECL_NOEXCEPT_EXPR(false)
 {
-#if defined(QT_DBUS_LIB)
     int idx = o->metaObject()->indexOfClassInfo("D-Bus Interface");
     if (idx < 0) {
         throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
             .arg(qL1S(o->metaObject()->className()));
     }
     return o->metaObject()->classInfo(idx).value();
-#else
-    Q_UNUSED(o)
-    return nullptr;
-#endif
 }
 
 void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName, const char *serviceName, const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false)
 {
-#if defined(QT_DBUS_LIB)
     QString dbusAddress;
     QDBusConnection conn((QString()));
 
@@ -873,66 +817,63 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
             atexit([]() { for (const QString &ftd : qAsConst(filesToDelete)) QFile::remove(ftd); });
         filesToDelete << f.fileName();
     }
-#else
-    Q_UNUSED(adaptor)
-    Q_UNUSED(serviceName)
-    Q_UNUSED(path)
-#endif // QT_DBUS_LIB
 }
+
+#endif // defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+
 
 void Main::registerDBusInterfaces(const std::function<QString(const char *)> &busForInterface,
                                   const std::function<QVariantMap(const char *)> &policyForInterface)
 {
-#if defined(QT_DBUS_LIB)
+#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
     registerDBusTypes();
 
     try {
         qCDebug(LogSystem) << "Registering D-Bus services:";
 
-        auto ama = new ApplicationManagerAdaptor(m_applicationManager);
+        auto ama = new ApplicationManagerDBusContextAdaptor(m_applicationManager);
 
-        // connect this signal manually, since it needs a type conversion
-        // (the automatic signal relay fails in this case)
-        QObject::connect(m_applicationManager, &ApplicationManager::applicationRunStateChanged,
-                         ama, [ama](const QString &id, ApplicationManager::RunState runState) {
-            ama->applicationRunStateChanged(id, runState);
-        });
-        const char *amInterfaceName = dbusInterfaceName(m_applicationManager);
-        registerDBusObject(ama, busForInterface(amInterfaceName), "io.qt.ApplicationManager",
-                           amInterfaceName, "/ApplicationManager");
-        if (!m_applicationManager->setDBusPolicy(policyForInterface(amInterfaceName)))
+        const char *amInterfaceName = dbusInterfaceName(ama->generatedAdaptor());
+        registerDBusObject(ama->generatedAdaptor(), busForInterface(amInterfaceName),
+                           "io.qt.ApplicationManager", amInterfaceName, "/ApplicationManager");
+        if (!DBusPolicy::add(ama->generatedAdaptor(), policyForInterface(amInterfaceName)))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");
 
 #  if !defined(AM_DISABLE_INSTALLER)
+        auto aia = new ApplicationInstallerDBusContextAdaptor(m_applicationInstaller);
         const char *aiInterfaceName = dbusInterfaceName(m_applicationInstaller);
-        registerDBusObject(new ApplicationInstallerAdaptor(m_applicationInstaller),
-                           busForInterface(aiInterfaceName), "io.qt.ApplicationManager",
-                           aiInterfaceName, "/ApplicationInstaller");
-        if (!m_applicationInstaller->setDBusPolicy(policyForInterface(aiInterfaceName)))
+        registerDBusObject(aia->generatedAdaptor(), busForInterface(aiInterfaceName),
+                           "io.qt.ApplicationManager", aiInterfaceName, "/ApplicationInstaller");
+        if (!DBusPolicy::add(aia->generatedAdaptor(), policyForInterface(aiInterfaceName)))
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationInstaller");
 #  endif
 
 #  if !defined(AM_HEADLESS)
         try {
+            auto nma = new NotificationManagerDBusContextAdaptor(m_notificationManager);
             const char *nmInterfaceName = dbusInterfaceName(m_notificationManager);
-            registerDBusObject(new NotificationsAdaptor(m_notificationManager),
-                               busForInterface(nmInterfaceName), "org.freedesktop.Notifications",
-                               nmInterfaceName, "/org/freedesktop/Notifications");
+            registerDBusObject(nma->generatedAdaptor(), busForInterface(nmInterfaceName),
+                               "org.freedesktop.Notifications", nmInterfaceName, "/org/freedesktop/Notifications");
         } catch (const Exception &e) {
             //TODO: what should we do here? on the desktop this will obviously always fail
             qCCritical(LogSystem) << "WARNING:" << e.what();
         }
+
+        auto wma = new WindowManagerDBusContextAdaptor(m_windowManager);
         const char *wmInterfaceName = dbusInterfaceName(m_windowManager);
-        registerDBusObject(new WindowManagerAdaptor(m_windowManager), busForInterface(wmInterfaceName),
+        registerDBusObject(wma->generatedAdaptor(), busForInterface(wmInterfaceName),
                            "io.qt.ApplicationManager", wmInterfaceName, "/WindowManager");
-        if (!m_windowManager->setDBusPolicy(policyForInterface(wmInterfaceName)))
+        if (!DBusPolicy::add(wma->generatedAdaptor(), policyForInterface(wmInterfaceName)))
             throw Exception(Error::DBus, "could not set DBus policy for WindowManager");
-#endif
+#  endif
     } catch (const std::exception &e) {
         qCCritical(LogSystem) << "ERROR:" << e.what();
         qApp->exit(2);
     }
-#endif // QT_DBUS_LIB
+#else
+    Q_UNUSED(busForInterface)
+    Q_UNUSED(policyForInterface)
+#endif // defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 }
 
 // copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised

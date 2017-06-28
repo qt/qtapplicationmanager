@@ -39,45 +39,60 @@
 **
 ****************************************************************************/
 
-#pragma once
+#include <qplatformdefs.h>
+#if defined(Q_OS_UNIX)
+#  include <unistd.h>
+#endif
 
-#include <QObject>
-#include <QVariantMap>
-#include <QVector>
-#include <QtAppManCommon/global.h>
-
-QT_FORWARD_DECLARE_CLASS(QQmlEngine)
-QT_FORWARD_DECLARE_CLASS(QJSEngine)
+#include "notificationmanagerdbuscontextadaptor.h"
+#include "notificationmanager.h"
+#include "org.freedesktop.notifications_adaptor.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationIPCManagerAttached;
-class ApplicationIPCInterface;
-
-class ApplicationIPCManager : public QObject
+NotificationManagerDBusContextAdaptor::NotificationManagerDBusContextAdaptor(NotificationManager *nm)
+    : AbstractDBusContextAdaptor(nm)
 {
-    Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationIPCManager 1.0")
-
-public:
-    ~ApplicationIPCManager();
-    static ApplicationIPCManager *createInstance();
-    static ApplicationIPCManager *instance();
-    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
-
-    Q_INVOKABLE bool registerInterface(QT_PREPEND_NAMESPACE_AM(ApplicationIPCInterface*) interface, const QString &name, const QVariantMap &filter);
-    QVector<ApplicationIPCInterface *> interfaces() const;
-
-signals:
-    void interfaceCreated();
-
-private:
-    ApplicationIPCManager(QObject *parent = nullptr);
-    ApplicationIPCManager(const ApplicationIPCManager &);
-    ApplicationIPCManager &operator=(const ApplicationIPCManager &);
-
-    QVector<ApplicationIPCInterface *> m_interfaces;
-    static ApplicationIPCManager *s_instance;
-};
+    m_adaptor = new NotificationsAdaptor(this);
+}
 
 QT_END_NAMESPACE_AM
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+QT_USE_NAMESPACE_AM
+
+NotificationsAdaptor::NotificationsAdaptor(QObject *parent)
+    : QDBusAbstractAdaptor(parent)
+{
+    auto nm = NotificationManager::instance();
+
+    connect(nm, &NotificationManager::ActionInvoked,
+            this, &NotificationsAdaptor::ActionInvoked);
+    connect(nm, &NotificationManager::NotificationClosed,
+            this, &NotificationsAdaptor::NotificationClosed);
+}
+
+NotificationsAdaptor::~NotificationsAdaptor()
+{ }
+
+void NotificationsAdaptor::CloseNotification(uint id)
+{
+    NotificationManager::instance()->CloseNotification(id);
+}
+
+QStringList NotificationsAdaptor::GetCapabilities()
+{
+    return NotificationManager::instance()->GetCapabilities();
+}
+
+QString NotificationsAdaptor::GetServerInformation(QString &vendor, QString &version, QString &spec_version)
+{
+    return NotificationManager::instance()->GetServerInformation(vendor, version, spec_version);
+}
+
+uint NotificationsAdaptor::Notify(const QString &app_name, uint replaces_id, const QString &app_icon, const QString &summary, const QString &body, const QStringList &actions, const QVariantMap &hints, int timeout)
+{
+    return NotificationManager::instance()->Notify(app_name, replaces_id, app_icon, summary, body, actions, hints, timeout);
+}
+

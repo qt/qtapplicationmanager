@@ -46,9 +46,7 @@
 #include <QUrl>
 #include <QStringList>
 #include <QDir>
-
 #include <QtAppManCommon/error.h>
-#include <QtAppManCommon/dbus-policy.h>
 #include <QtAppManInstaller/installationlocation.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -62,7 +60,7 @@ class AsynchronousTask;
 class SudoClient;
 
 
-class ApplicationInstaller : public QObject, protected QDBusContext
+class ApplicationInstaller : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationInstaller")

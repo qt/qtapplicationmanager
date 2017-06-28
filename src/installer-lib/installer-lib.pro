@@ -5,7 +5,6 @@ MODULE = appman_installer
 load(am-config)
 
 QT = core network qml
-qtHaveModule(dbus):QT *= dbus
 QT_FOR_PRIVATE *= \
     appman_common-private \
     appman_crypto-private \

@@ -47,8 +47,6 @@
 #include <QProcess>
 #include <QJSValue>
 #include <QtAppManCommon/global.h>
-#include <QtAppManCommon/dbus-policy.h>
-#include <QtAppManCommon/dbus-utilities.h>
 
 QT_FORWARD_DECLARE_CLASS(QDir)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -63,7 +61,7 @@ class AbstractRuntime;
 class IpcProxyObject;
 
 
-class ApplicationManager : public QAbstractListModel, protected QDBusContext
+class ApplicationManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
@@ -133,8 +131,6 @@ public:
     Q_INVOKABLE const Application *application(const QString &id) const;
     Q_INVOKABLE int indexOfApplication(const QString &id) const;
 
-    bool setDBusPolicy(const QVariantMap &yamlFragment);
-
     Q_INVOKABLE void acknowledgeOpenUrlRequest(const QString &requestId, const QString &appId);
     Q_INVOKABLE void rejectOpenUrlRequest(const QString &requestId);
 
@@ -143,10 +139,6 @@ public:
     Q_SCRIPTABLE QVariantMap get(const QString &id) const;
     Q_SCRIPTABLE bool startApplication(const QString &id, const QString &documentUrl = QString());
     Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl = QString());
-#if defined(QT_DBUS_LIB)
-    Q_SCRIPTABLE bool startApplication(const QString &id, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &redirections, const QString &documentUrl = QString());
-    Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &redirections, const QString &documentUrl = QString());
-#endif
     Q_SCRIPTABLE void stopApplication(const QString &id, bool forceKill = false);
     Q_SCRIPTABLE void stopAllApplications(bool forceKill = false);
     Q_SCRIPTABLE bool openUrl(const QString &url);

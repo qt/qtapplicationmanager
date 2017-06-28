@@ -59,8 +59,6 @@ public:
     QVariantMap systemProperties;
     ApplicationDatabase *database = nullptr;
 
-    QMap<QByteArray, DBusPolicy> dbusPolicy;
-
     QVector<const Application *> apps;
 
     QString currentLocale;

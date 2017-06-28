@@ -6,7 +6,6 @@ load(am-config)
 
 QT = core network qml core-private
 !headless:QT *= gui quick
-qtHaveModule(dbus):QT *= dbus
 QT_FOR_PRIVATE *= \
     appman_common-private \
     appman_application-private \

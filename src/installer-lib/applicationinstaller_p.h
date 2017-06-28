@@ -48,7 +48,6 @@
 
 #include <QtAppManInstaller/applicationinstaller.h>
 #include <QtAppManInstaller/sudo.h>
-#include <QtAppManCommon/dbus-policy.h>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -79,8 +78,6 @@ public:
 
     QMutex activationLock;
     QMap<QString, QString> activatedPackages; // id -> installationPath
-
-    QMap<QByteArray, DBusPolicy> dbusPolicy;
 };
 
 QT_END_NAMESPACE_AM

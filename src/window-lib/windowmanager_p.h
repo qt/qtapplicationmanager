@@ -45,8 +45,6 @@
 #include <QMap>
 #include <QHash>
 
-#include <QtAppManCommon/dbus-policy.h>
-
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 
 QT_BEGIN_NAMESPACE_AM
@@ -72,7 +70,6 @@ public:
     bool shuttingDown = false;
     bool slowAnimations = false;
 
-    QMap<QByteArray, DBusPolicy> dbusPolicy;
     QList<QQuickWindow *> views;
     QString waylandSocketName;
     QQmlEngine *qmlEngine;

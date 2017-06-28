@@ -43,9 +43,7 @@
 
 #include <functional>
 #include <QAbstractListModel>
-
 #include <QtAppManCommon/global.h>
-#include <QtAppManCommon/dbus-policy.h>
 
 #if defined(AM_MULTI_PROCESS)
 QT_FORWARD_DECLARE_CLASS(QWaylandSurface)
@@ -66,7 +64,7 @@ class Application;
 class AbstractRuntime;
 class WaylandCompositor;
 
-class WindowManager : public QAbstractListModel, protected QDBusContext
+class WindowManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.WindowManager")

@@ -24,7 +24,6 @@ SOURCES += \
     utilities.cpp \
     qtyaml.cpp \
     startuptimer.cpp \
-    dbus-policy.cpp \
     unixsignalhandler.cpp \
     processtitle.cpp \
     crashhandler.cpp \
@@ -41,7 +40,6 @@ HEADERS += \
     utilities.h \
     qtyaml.h \
     startuptimer.h \
-    dbus-policy.h \
     unixsignalhandler.h \
     processtitle.h \
     crashhandler.h \

@@ -39,45 +39,37 @@
 **
 ****************************************************************************/
 
-#pragma once
-
-#include <QObject>
-#include <QVariantMap>
-#include <QVector>
-#include <QtAppManCommon/global.h>
-
-QT_FORWARD_DECLARE_CLASS(QQmlEngine)
-QT_FORWARD_DECLARE_CLASS(QJSEngine)
+#include "windowmanagerdbuscontextadaptor.h"
+#include "windowmanager.h"
+#include "io.qt.windowmanager_adaptor.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationIPCManagerAttached;
-class ApplicationIPCInterface;
-
-class ApplicationIPCManager : public QObject
+WindowManagerDBusContextAdaptor::WindowManagerDBusContextAdaptor(WindowManager *am)
+    : AbstractDBusContextAdaptor(am)
 {
-    Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationIPCManager 1.0")
-
-public:
-    ~ApplicationIPCManager();
-    static ApplicationIPCManager *createInstance();
-    static ApplicationIPCManager *instance();
-    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
-
-    Q_INVOKABLE bool registerInterface(QT_PREPEND_NAMESPACE_AM(ApplicationIPCInterface*) interface, const QString &name, const QVariantMap &filter);
-    QVector<ApplicationIPCInterface *> interfaces() const;
-
-signals:
-    void interfaceCreated();
-
-private:
-    ApplicationIPCManager(QObject *parent = nullptr);
-    ApplicationIPCManager(const ApplicationIPCManager &);
-    ApplicationIPCManager &operator=(const ApplicationIPCManager &);
-
-    QVector<ApplicationIPCInterface *> m_interfaces;
-    static ApplicationIPCManager *s_instance;
-};
+    m_adaptor = new WindowManagerAdaptor(this);
+}
 
 QT_END_NAMESPACE_AM
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+QT_USE_NAMESPACE_AM
+
+WindowManagerAdaptor::WindowManagerAdaptor(QObject *parent)
+    : QDBusAbstractAdaptor(parent)
+{ }
+
+WindowManagerAdaptor::~WindowManagerAdaptor()
+{ }
+
+bool WindowManagerAdaptor::runningOnDesktop() const
+{
+    return WindowManager::instance()->isRunningOnDesktop();
+}
+
+bool WindowManagerAdaptor::makeScreenshot(const QString &filename, const QString &selector)
+{
+    return WindowManager::instance()->makeScreenshot(filename, selector);
+}

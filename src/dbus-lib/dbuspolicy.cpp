@@ -41,26 +41,51 @@
 
 #include <QDebug>
 #include <QFileInfo>
+#include <QPointer>
+#include <QDBusConnection>
+#include <QDBusConnectionInterface>
+#include <QDBusMessage>
+#include <QDBusContext>
+#include <QDBusAbstractAdaptor>
+#include <QMetaMethod>
 #include <algorithm>
-#if defined(QT_DBUS_LIB)
-#  include <QDBusConnection>
-#  include <QDBusConnectionInterface>
-#  include <QDBusMessage>
-#endif
 
 #include "utilities.h"
-#include "dbus-policy.h"
+#include "dbuspolicy.h"
+#include "applicationmanager.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
+struct DBusPolicyEntry
 {
-    QMap<QByteArray, DBusPolicy> result;
+    QList<uint> m_uids;
+    QStringList m_executables;
+    QStringList m_capabilities;
+};
 
-#if defined(QT_DBUS_LIB)
+static QMap<QPointer<QDBusAbstractAdaptor>, QMap<QByteArray, DBusPolicyEntry> > policies;
+
+
+bool DBusPolicy::add(QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlFragment)
+{
+    QMap<QByteArray, DBusPolicyEntry> result;
+    const QMetaObject *mo = dbusAdaptor->metaObject();
+
     for (auto it = yamlFragment.cbegin(); it != yamlFragment.cend(); ++it) {
+        const QByteArray func = it.key().toLocal8Bit();
+
+        bool found = false;
+        for (int mi = mo->methodOffset(); mi < mo->methodCount(); ++mi) {
+            if (mo->method(mi).name() == func) {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            return false;
+
         const QVariantMap &policy = it->toMap();
-        DBusPolicy dbp;
+        DBusPolicyEntry dbp;
 
         bool ok;
         const QVariantList uidList = policy.value(qSL("uids")).toList();
@@ -75,38 +100,46 @@ QMap<QByteArray, DBusPolicy> parseDBusPolicy(const QVariantMap &yamlFragment)
         dbp.m_capabilities = variantToStringList(policy.value(qSL("capabilities")));
         dbp.m_capabilities.sort();
 
-        result.insert(it.key().toLocal8Bit(), dbp);
+        result.insert(func, dbp);
     }
-#else
-    Q_UNUSED(yamlFragment)
-#endif
-    return result;
+
+    policies.insert(QPointer<QDBusAbstractAdaptor>(dbusAdaptor), result);
+    return true;
 }
 
 
-bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBusPolicy> &dbusPolicy,
-                     const QByteArray &function, const std::function<QStringList(qint64)> &pidToCapabilities)
+bool DBusPolicy::check(QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &function)
 {
-#if !defined(QT_DBUS_LIB) || !defined(Q_OS_UNIX)
-    Q_UNUSED(dbusContext)
-    Q_UNUSED(dbusPolicy)
+#if !defined(Q_OS_UNIX)
+    Q_UNUSED(dbusAdaptor)
     Q_UNUSED(function)
-    Q_UNUSED(pidToCapabilities)
     return true;
 #else
+    if (!dbusAdaptor)
+        return false;
+    QObject *realObject = dbusAdaptor->parent();
+    if (!realObject)
+        return false;
+    QDBusContext *dbusContext = reinterpret_cast<QDBusContext *>(realObject->qt_metacast("QDBusContext"));
+    if (!dbusContext)
+        return false;
     if (!dbusContext->calledFromDBus())
-        return true;
+        return false;
 
-    auto ip = dbusPolicy.find(function);
-    if (ip == dbusPolicy.cend())
+    auto ia = policies.constFind(QPointer<QDBusAbstractAdaptor>(dbusAdaptor));
+    if (ia == policies.cend())
+        return false;
+
+    auto ip = (*ia).find(function);
+    if (ip == (*ia).cend())
         return true;
 
     try {
         uint pid = uint(-1);
 
-        if (!ip->m_capabilities.isEmpty() && pidToCapabilities) {
+        if (!ip->m_capabilities.isEmpty()) {
             pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
-            QStringList appCaps = pidToCapabilities(pid);
+            QStringList appCaps = ApplicationManager::instance()->capabilities(ApplicationManager::instance()->identifyApplication(pid));
             bool match = false;
             for (const QString &cap : ip->m_capabilities)
                 match = match && std::binary_search(appCaps.cbegin(), appCaps.cend(), cap);
@@ -138,7 +171,8 @@ bool checkDBusPolicy(const QDBusContext *dbusContext, const QMap<QByteArray, DBu
         dbusContext->sendErrorReply(QDBusError::AccessDenied, QString::fromLatin1("Protected function call (%1)").arg(qL1S(msg)));
         return false;
     }
-#endif // !defined(QT_DBUS_LIB) || !defined(Q_OS_UNIX)
+#endif // !defined(Q_OS_UNIX)
+
 }
 
 QT_END_NAMESPACE_AM

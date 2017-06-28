@@ -50,11 +50,6 @@
 #include <QThread>
 #include <private/qabstractanimation_p.h>
 
-#if defined(QT_DBUS_LIB)
-#  include <QDBusMessage>
-#  include <QDBusConnection>
-#endif
-
 #if defined(AM_MULTI_PROCESS)
 #  include "waylandcompositor.h"
 #endif
@@ -69,15 +64,8 @@
 #include "windowmanager_p.h"
 #include "waylandwindow.h"
 #include "inprocesswindow.h"
-#include "dbus-policy.h"
 #include "qml-utilities.h"
 
-
-#define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
-    do { \
-        if (!checkDBusPolicy(this, d->dbusPolicy, __FUNCTION__, [](qint64 pid) -> QStringList { return ApplicationManager::instance()->capabilities(ApplicationManager::instance()->identifyApplication(pid)); })) \
-            return RETURN_TYPE(); \
-    } while (false);
 
 /*!
     \qmltype WindowManager
@@ -922,21 +910,6 @@ QVariantMap WindowManager::windowProperties(QQuickItem *window) const
     \sa ApplicationManagerWindow::setWindowProperty()
 */
 
-bool WindowManager::setDBusPolicy(const QVariantMap &yamlFragment)
-{
-    static const QVector<QByteArray> functions {
-        QT_STRINGIFY(makeScreenshot)
-    };
-
-    d->dbusPolicy = parseDBusPolicy(yamlFragment);
-
-    for (auto it = d->dbusPolicy.cbegin(); it != d->dbusPolicy.cend(); ++it) {
-       if (!functions.contains(it.key()))
-           return false;
-    }
-    return true;
-}
-
 /*!
     \qmlmethod bool WindowManager::makeScreenshot(string filename, string selector)
 
@@ -985,13 +958,12 @@ bool WindowManager::setDBusPolicy(const QVariantMap &yamlFragment)
 
     Returns \c true on success and \c false otherwise.
 
-    \note This call will be handled asynchronously and might exceed expected D-Bus timeouts when
-          called synchronously.
+    \note This call will be handled asynchronously, so even a positive return value does not mean
+          that all screenshot images have been created already.
 */
+//TODO: either change return value to list of to-be-created filenames or add a 'finished' signal
 bool WindowManager::makeScreenshot(const QString &filename, const QString &selector)
 {
-    AM_AUTHENTICATE_DBUS(bool)
-
     // filename:
     // %s -> screenId
     // %i -> appId
@@ -1097,46 +1069,12 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                                 }
 
                                 QString saveTo = substituteFilename(QString::number(i), w->application()->id());
-#if defined(QT_DBUS_LIB)
-                                struct DBusDelayedReply
-                                {
-                                    DBusDelayedReply(const QString &connectionName)
-                                        : dbusConn(connectionName), ok(true)
-                                    { }
-                                    QDBusMessage dbusReply;
-                                    QDBusConnection dbusConn;
-                                    bool ok;
-                                } *dbusDelayedReply = nullptr;
-                                if (calledFromDBus() && grabbers->isEmpty()) {
-                                    setDelayedReply(true);
-                                    dbusDelayedReply = new DBusDelayedReply(connection().name());
-                                    dbusDelayedReply->dbusReply = message().createReply();
-                                    dbusDelayedReply->ok = true;
-                                }
-#else
-                                void *dbusDelayedReply = nullptr;
-#endif
                                 grabbers->append(grabber);
-                                connect(grabber.data(), &QQuickItemGrabResult::ready, this, [grabbers, grabber, saveTo, dbusDelayedReply]() {
-                                    bool ok = grabber->saveToFile(saveTo);
+                                connect(grabber.data(), &QQuickItemGrabResult::ready, this, [grabbers, grabber, saveTo]() {
+                                    grabber->saveToFile(saveTo);
                                     grabbers->removeOne(grabber);
-#if defined(QT_DBUS_LIB)
-                                    if (dbusDelayedReply)
-                                        dbusDelayedReply->ok &= ok;
-#else
-                                    Q_UNUSED(ok)
-#endif
-                                    if (grabbers->isEmpty()) {
+                                    if (grabbers->isEmpty())
                                         delete grabbers;
-#if defined(QT_DBUS_LIB)
-                                        if (dbusDelayedReply) {
-                                            dbusDelayedReply->dbusReply << QVariant(dbusDelayedReply->ok);
-                                            dbusDelayedReply->dbusConn.send(dbusDelayedReply->dbusReply);
-                                        }
-#else
-                                        Q_UNUSED(dbusDelayedReply)
-#endif
-                                    }
                                 });
 
                             }
@@ -1146,7 +1084,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
             }
         }
     }
-    return foundAtLeastOne & result;
+    return foundAtLeastOne && result;
 }
 
 

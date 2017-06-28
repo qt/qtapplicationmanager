@@ -39,45 +39,24 @@
 **
 ****************************************************************************/
 
-#pragma once
+#include <QDBusAbstractAdaptor>
 
-#include <QObject>
-#include <QVariantMap>
-#include <QVector>
-#include <QtAppManCommon/global.h>
-
-QT_FORWARD_DECLARE_CLASS(QQmlEngine)
-QT_FORWARD_DECLARE_CLASS(QJSEngine)
+#include "abstractdbuscontextadaptor.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationIPCManagerAttached;
-class ApplicationIPCInterface;
+AbstractDBusContextAdaptor::AbstractDBusContextAdaptor(QObject *am)
+    : QObject(am)
+{ }
 
-class ApplicationIPCManager : public QObject
+QDBusAbstractAdaptor *AbstractDBusContextAdaptor::generatedAdaptor()
 {
-    Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationIPCManager 1.0")
+    return m_adaptor;
+}
 
-public:
-    ~ApplicationIPCManager();
-    static ApplicationIPCManager *createInstance();
-    static ApplicationIPCManager *instance();
-    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
-
-    Q_INVOKABLE bool registerInterface(QT_PREPEND_NAMESPACE_AM(ApplicationIPCInterface*) interface, const QString &name, const QVariantMap &filter);
-    QVector<ApplicationIPCInterface *> interfaces() const;
-
-signals:
-    void interfaceCreated();
-
-private:
-    ApplicationIPCManager(QObject *parent = nullptr);
-    ApplicationIPCManager(const ApplicationIPCManager &);
-    ApplicationIPCManager &operator=(const ApplicationIPCManager &);
-
-    QVector<ApplicationIPCInterface *> m_interfaces;
-    static ApplicationIPCManager *s_instance;
-};
+QDBusContext *AbstractDBusContextAdaptor::dbusContextFor(QDBusAbstractAdaptor *adaptor)
+{
+    return adaptor ? qobject_cast<AbstractDBusContextAdaptor *>(adaptor->parent()) : nullptr;
+}
 
 QT_END_NAMESPACE_AM

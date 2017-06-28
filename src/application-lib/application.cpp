@@ -228,7 +228,7 @@
     The absolute path to the application's installation directory. Please note this directory might
     not always be available for applications that were installed onto removable media.
 
-    \sa InstallationLocation
+    \sa {Installation Locations}
 */
 
 

@@ -128,10 +128,8 @@
 QT_BEGIN_NAMESPACE_AM
 
 
-/*! \internal
 
-    The standard QTemporaryDir destructor cannot cope with read-only sub-directories.
- */
+// The standard QTemporaryDir destructor cannot cope with read-only sub-directories.
 class TemporaryDir : public QTemporaryDir
 {
 public:

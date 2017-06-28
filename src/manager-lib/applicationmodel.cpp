@@ -60,7 +60,7 @@
     tailor the ApplicationManager model to your needs (the ApplicationManager singleton is itself
     a model that includes all available applications). It supports filtering and sorting.
     Since this model is based on the ApplicationManager model, the latter will be referred to as
-    the \i source model.
+    the \e source model.
 
     \note If a model with all applications is needed, ApplicationManager should be used directly,
     since it performs slightly better.

@@ -9,7 +9,7 @@ examples.fileextensions = "*.qml *.yaml"
 examples.imageextensions = "*.png *.jpg *.gif"
 
 headerdirs += \
-    ../src/manager \
+    ../src/main-lib \
     ../src/manager-lib \
     ../src/application-lib \
     ../src/package-lib \
@@ -22,7 +22,7 @@ headerdirs += \
 
 sourcedirs += \
     . \
-    ../src/manager \
+    ../src/main-lib \
     ../src/manager-lib \
     ../src/application-lib \
     ../src/package-lib \

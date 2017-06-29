@@ -64,11 +64,3 @@ flags:
 runtimes:
   qml:
     quitTime: 5000
-
-debugWrappers:
-- name: fakedebugger
-  command: [ '%program%', '%arguments%' ]
-  parameters:  # <name>: <default value>
-  supportedRuntimes: [ native, qml ]
-  supportedContainers: [ process ]
-

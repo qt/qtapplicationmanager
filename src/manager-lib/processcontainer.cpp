@@ -45,6 +45,7 @@
 #include "application.h"
 #include "processcontainer.h"
 #include "systemreader.h"
+#include "debugwrapper.h"
 
 #if defined(Q_OS_UNIX)
 #  include <csignal>
@@ -140,9 +141,13 @@ void HostProcess::setStopBeforeExec(bool stopBeforeExec)
 }
 
 
-ProcessContainer::ProcessContainer(ProcessContainerManager *manager, const Application *app, const QVector<int> &stdioRedirections, const QStringList &debugWrapperCommand)
+ProcessContainer::ProcessContainer(ProcessContainerManager *manager, const Application *app,
+                                   const QVector<int> &stdioRedirections,
+                                   const QMap<QString, QString> &debugWrapperEnvironment,
+                                   const QStringList &debugWrapperCommand)
     : AbstractContainer(manager, app)
     , m_stdioRedirections(stdioRedirections)
+    , m_debugWrapperEnvironment(debugWrapperEnvironment)
     , m_debugWrapperCommand(debugWrapperCommand)
 { }
 
@@ -204,7 +209,8 @@ bool ProcessContainer::isReady()
     return true;
 }
 
-AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, const QProcessEnvironment &environment)
+AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
+                                                  const QMap<QString, QString> &runtimeEnvironment)
 {
     if (m_process) {
         qWarning() << "Process" << m_program << "is already started and cannot be started again";
@@ -213,13 +219,24 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
     if (!QFile::exists(m_program))
         return nullptr;
 
-    QProcessEnvironment completeEnv = environment;
-    if (completeEnv.isEmpty())
-        completeEnv = QProcessEnvironment::systemEnvironment();
+    QProcessEnvironment penv = QProcessEnvironment::systemEnvironment();
+
+    for (auto it = runtimeEnvironment.cbegin(); it != runtimeEnvironment.cend(); ++it) {
+        if (it.value().isEmpty())
+            penv.remove(it.key());
+        else
+            penv.insert(it.key(), it.value());
+    }
+    for (auto it = m_debugWrapperEnvironment.cbegin(); it != m_debugWrapperEnvironment.cend(); ++it) {
+        if (it.value().isEmpty())
+            penv.remove(it.key());
+        else
+            penv.insert(it.key(), it.value());
+    }
 
     HostProcess *process = new HostProcess();
     process->setWorkingDirectory(m_baseDirectory);
-    process->setProcessEnvironment(completeEnv);
+    process->setProcessEnvironment(penv);
     process->setStopBeforeExec(configuration().value(qSL("stopBeforeExec")).toBool());
     process->setStdioRedirections(m_stdioRedirections);
 
@@ -227,7 +244,7 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments, 
     QStringList args = arguments;
 
     if (!m_debugWrapperCommand.isEmpty()) {
-        auto cmd = substituteDebugWrapperCommand(m_debugWrapperCommand, m_program, arguments);
+        auto cmd = DebugWrapper::substituteCommand(m_debugWrapperCommand, m_program, arguments);
 
         command = cmd.takeFirst();
         args = cmd;
@@ -259,9 +276,11 @@ bool ProcessContainerManager::supportsQuickLaunch() const
     return true;
 }
 
-AbstractContainer *ProcessContainerManager::create(const Application *app, const QVector<int> &stdioRedirections, const QStringList &debugWrapperCommand)
+AbstractContainer *ProcessContainerManager::create(const Application *app, const QVector<int> &stdioRedirections,
+                                                   const QMap<QString, QString> &debugWrapperEnvironment,
+                                                   const QStringList &debugWrapperCommand)
 {
-    return new ProcessContainer(this, app, stdioRedirections, debugWrapperCommand);
+    return new ProcessContainer(this, app, stdioRedirections, debugWrapperEnvironment, debugWrapperCommand);
 }
 
 void HostProcess::MyQProcess::setupChildProcess()

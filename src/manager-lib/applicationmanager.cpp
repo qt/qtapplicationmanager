@@ -70,6 +70,7 @@
 #include "qml-utilities.h"
 #include "utilities.h"
 #include "qtyaml.h"
+#include "debugwrapper.h"
 
 /*!
     \qmltype ApplicationManager
@@ -348,7 +349,6 @@ static ApplicationManager::RunState runtimeToManagerState(AbstractRuntime::State
     }
 }
 
-
 ApplicationManagerPrivate::ApplicationManagerPrivate()
 {
     currentLocale = QLocale::system().name(); //TODO: language changes
@@ -506,97 +506,6 @@ void ApplicationManager::setContainerSelectionFunction(const QJSValue &callback)
     }
 }
 
-void ApplicationManager::setDebugWrapperConfiguration(const QVariantList &debugWrappers)
-{
-    // Example:
-    //    debugWrappers:
-    //    - name: gdbserver
-    //      # %program% and %arguments% are internal variables
-    //      command: [ /usr/bin/gdbserver, ':%port%', '%program%', '%arguments%' ]
-    //      parameters:  # <name>: <default value>
-    //        port: 5555
-    //      supportedRuntimes: [ native, qml ]
-    //      supportedContainers: [ process ]
-    //    - name: valgrind
-    //      command: [ /usr/bin/valgrind, '--', '%program%', '%arguments%' ]
-    //      parameters:  # <name>: <default value>
-
-    for (const QVariant &v : debugWrappers) {
-        const QVariantMap &map = v.toMap();
-
-        ApplicationManagerPrivate::DebugWrapper dw;
-        dw.name = map.value(qSL("name")).toString();
-        dw.command = map.value(qSL("command")).toStringList();
-        dw.parameters = map.value(qSL("parameters")).toMap();
-        dw.supportedContainers = map.value(qSL("supportedContainers")).toStringList();
-        dw.supportedRuntimes = map.value(qSL("supportedRuntimes")).toStringList();
-
-        if (dw.name.isEmpty() || dw.command.isEmpty()) {
-            qCWarning(LogSystem) << "Ignoring invalid debug wrapper: " << dw.name << "/" << dw.command;
-            continue;
-        }
-        d->debugWrappers.append(dw);
-    }
-}
-
-ApplicationManagerPrivate::DebugWrapper ApplicationManagerPrivate::parseDebugWrapperSpecification(const QString &spec)
-{
-    // Example:
-    //    "gdbserver"
-    //    "gdbserver: {port: 5555}"
-
-    static ApplicationManagerPrivate::DebugWrapper fail;
-
-    if (spec.isEmpty())
-        return fail;
-
-    auto docs = QtYaml::variantDocumentsFromYaml(spec.toUtf8());
-    if (docs.size() != 1)
-        return fail;
-    const QVariant v = docs.at(0);
-
-    QString name;
-    QVariantMap userParams;
-
-    switch (v.type()) {
-    case QVariant::String:
-        name = v.toString();
-        break;
-    case QVariant::Map: {
-        const QVariantMap map = v.toMap();
-        name = map.firstKey();
-        userParams = map.first().toMap();
-        break;
-    }
-    default:
-        return fail;
-    }
-
-    for (const auto &it : qAsConst(debugWrappers)) {
-        if (it.name == name) {
-            ApplicationManagerPrivate::DebugWrapper dw = it;
-            for (auto it = userParams.cbegin(); it != userParams.cend(); ++it) {
-                auto pit = dw.parameters.find(it.key());
-                if (pit == dw.parameters.end())
-                    return fail;
-                *pit = it.value();
-            }
-
-            for (auto pit = dw.parameters.cbegin(); pit != dw.parameters.cend(); ++pit) {
-                QString key = qL1C('%') + pit.key() + qL1C('%');
-                QString value = pit.value().toString();
-
-                // replace variable name with value in command line
-                std::for_each(dw.command.begin(), dw.command.end(), [key, value](QString &str) {
-                    str.replace(key, value);
-                });
-            }
-            return dw;
-        }
-    }
-    return fail;
-}
-
 QVector<const Application *> ApplicationManager::applications() const
 {
     return d->apps;
@@ -727,10 +636,11 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     }
 
     // validate the debug-wrapper
-    ApplicationManagerPrivate::DebugWrapper debugWrapper;
+    QStringList debugWrapperCommand;
+    QMap<QString, QString> debugEnvironmentVariables;
     if (!debugWrapperSpecification.isEmpty()) {
-        debugWrapper = d->parseDebugWrapperSpecification(debugWrapperSpecification);
-        if (!debugWrapper.isValid()) {
+        if (!DebugWrapper::parseSpecification(debugWrapperSpecification, debugWrapperCommand,
+                                              debugEnvironmentVariables)) {
             throw Exception("Tried to start application %1 using an invalid debug-wrapper specification: %2")
                     .arg(app->id(), debugWrapperSpecification);
         }
@@ -740,9 +650,9 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         switch (runtime->state()) {
         case AbstractRuntime::Startup:
         case AbstractRuntime::Active:
-            if (debugWrapper.isValid()) {
+            if (!debugWrapperCommand.isEmpty()) {
                 throw Exception("Application %1 is already running - cannot start with debug-wrapper: %2")
-                        .arg(app->id(), debugWrapper.name);
+                        .arg(app->id(), debugWrapperSpecification);
             }
 
             if (!documentUrl.isNull())
@@ -799,24 +709,13 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     }
     bool attachRuntime = false;
 
-    if (debugWrapper.isValid()) {
-        if (!debugWrapper.supportedRuntimes.contains(app->runtimeName())) {
-            throw Exception("Application %1 is using the %2 runtime, which is not compatible with the requested debug-wrapper: %3")
-                    .arg(app->id(), app->runtimeName(), debugWrapper.name);
-        }
-        if (!debugWrapper.supportedContainers.contains(containerId)) {
-            throw Exception("Application %1 is using the %2 container, which is not compatible with the requested debug-wrapper: %3")
-                    .arg(app->id(), containerId, debugWrapper.name);
-        }
-    }
-
     if (!runtime) {
         if (!inProcess) {
             // we cannot use the quicklaunch pool, if
             //  (a) a debug-wrapper is being used,
             //  (b) stdio is redirected or
             //  (c) the app requests special environment variables
-            bool cannotUseQuickLaunch = debugWrapper.isValid()
+            bool cannotUseQuickLaunch = !debugWrapperCommand.isEmpty()
                     || hasStdioRedirections
                     || !app->environmentVariables().isEmpty();
 
@@ -839,7 +738,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
 
             if (!container) {
                 container = ContainerFactory::instance()->create(containerId, app, stdioRedirections,
-                                                                 debugWrapper.command);
+                                                                 debugEnvironmentVariables, debugWrapperCommand);
             } else {
                 container->setApplication(app);
             }

@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
             clp.addOption({ { qSL("o"), qSL("attach-stdout") }, qSL("Attach the app's stdout to the controller's stdout") });
             clp.addOption({ { qSL("e"), qSL("attach-stderr") }, qSL("Attach the app's stderr to the controller's stderr") });
             clp.addOption({ { qSL("r"), qSL("restart") }, qSL("Before starting, stop the application if it is already running") });
-            clp.addPositionalArgument(qSL("debug-wrapper"),  qSL("The name of a configured debug-wrapper."));
+            clp.addPositionalArgument(qSL("debug-wrapper"),  qSL("The debug-wrapper specification."));
             clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
             clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
             clp.process(a);

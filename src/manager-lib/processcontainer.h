@@ -60,7 +60,8 @@ public:
     bool supportsQuickLaunch() const override;
 
     AbstractContainer *create(const Application *app, const QVector<int> &stdioRedirections,
-                                      const QStringList &debugWrapperCommand) override;
+                              const QMap<QString, QString> &debugWrapperEnvironment,
+                              const QStringList &debugWrapperCommand) override;
 };
 
 class HostProcess : public AbstractContainerProcess
@@ -104,7 +105,9 @@ class ProcessContainer : public AbstractContainer
 
 public:
     explicit ProcessContainer(ProcessContainerManager *manager, const Application *app,
-                              const QVector<int> &stdioRedirections, const QStringList &debugWrapperCommand);
+                              const QVector<int> &stdioRedirections,
+                              const QMap<QString, QString> &debugWrapperEnvironment,
+                              const QStringList &debugWrapperCommand);
     ~ProcessContainer();
 
     QString controlGroup() const override;
@@ -112,11 +115,13 @@ public:
 
     bool isReady() override;
 
-    AbstractContainerProcess *start(const QStringList &arguments, const QProcessEnvironment &environment) override;
+    AbstractContainerProcess *start(const QStringList &arguments,
+                                    const QMap<QString, QString> &runtimeEnvironment) override;
 
 private:
     QString m_currentControlGroup;
     QVector<int> m_stdioRedirections;
+    QMap<QString, QString> m_debugWrapperEnvironment;
     QStringList m_debugWrapperCommand;
     MemoryWatcher *m_memWatcher = nullptr;
 };

@@ -66,6 +66,7 @@ public:
     virtual bool supportsQuickLaunch() const;
 
     virtual AbstractContainer *create(const Application *app, const QVector<int> &stdioRedirections,
+                                      const QMap<QString, QString> &debugWrapperEnvironment,
                                       const QStringList &debugWrapperCommand) = 0;
 
     QVariantMap configuration() const;
@@ -116,11 +117,8 @@ public:
     virtual QString mapContainerPathToHost(const QString &containerPath) const;
     virtual QString mapHostPathToContainer(const QString &hostPath) const;
 
-    virtual AbstractContainerProcess *start(const QStringList &arguments, const QProcessEnvironment &env) = 0;
-
-    static QStringList substituteDebugWrapperCommand(const QStringList &debugWrapperCommand,
-                                                     const QString &program,
-                                                     const QStringList &arguments);
+    virtual AbstractContainerProcess *start(const QStringList &arguments,
+                                            const QMap<QString, QString> &runtimeEnvironment) = 0;
 
     AbstractContainerProcess *process() const;
 

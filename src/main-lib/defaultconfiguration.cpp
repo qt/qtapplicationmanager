@@ -382,11 +382,6 @@ quint16 DefaultConfiguration::telnetPort() const
     return value<QVariant>(nullptr, { "debug", "telnetPort" }).value<quint16>();
 }
 
-QVariantList DefaultConfiguration::debugWrappers() const
-{
-    return value<QVariant>(nullptr, { "debugWrappers" }).toList();
-}
-
 QVariantMap DefaultConfiguration::managerCrashAction() const
 {
     return value<QVariant>(nullptr, { "crashAction"} ).toMap();

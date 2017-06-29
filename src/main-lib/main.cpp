@@ -224,7 +224,6 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     loadQml(cfg->loadDummyData());
     // --no-fullscreen on the command line trumps the fullscreen setting in the config file
     showWindow(cfg->fullscreen() && !cfg->noFullscreen());
-    setupDebugWrappers(cfg->debugWrappers());
     setupShellServer(cfg->telnetAddress(), cfg->telnetPort());
     setupSSDPService();
 }
@@ -661,15 +660,6 @@ void Main::showWindow(bool showFullscreen)
 
     StartupTimer::instance()->checkpoint("after window show");
 #endif
-}
-
-void Main::setupDebugWrappers(const QVariantList &debugWrappers)
-{
-    // delay debug-wrapper setup
-    //TODO: find a better solution than hardcoding an 1.5 sec delay
-    QTimer::singleShot(1500, this, [this, debugWrappers]() {
-        m_applicationManager->setDebugWrapperConfiguration(debugWrappers);
-    });
 }
 
 void Main::setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false)

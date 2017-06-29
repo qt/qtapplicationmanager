@@ -61,9 +61,11 @@ bool PluginContainerManager::supportsQuickLaunch() const
 }
 
 AbstractContainer *PluginContainerManager::create(const Application *app, const QVector<int> &stdioRedirections,
+                                                  const QMap<QString, QString> &debugWrapperEnvironment,
                                                   const QStringList &debugWrapperCommand)
 {
-    auto containerInterface = m_interface->create(app == nullptr, stdioRedirections, debugWrapperCommand);
+    auto containerInterface = m_interface->create(app == nullptr, stdioRedirections,
+                                                  debugWrapperEnvironment, debugWrapperCommand);
     if (!containerInterface)
         return nullptr;
     return new PluginContainer(this, app, containerInterface);
@@ -117,7 +119,7 @@ QString PluginContainer::mapHostPathToContainer(const QString &hostPath) const
     return m_interface->mapHostPathToContainer(hostPath);
 }
 
-AbstractContainerProcess *PluginContainer::start(const QStringList &arguments, const QProcessEnvironment &env)
+AbstractContainerProcess *PluginContainer::start(const QStringList &arguments, const QMap<QString, QString> &env)
 {
     if (m_startCalled)
         return nullptr;

@@ -42,77 +42,20 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QtAppManMain/configuration.h>
+
+#include <QStringList>
+#include <QMap>
 
 QT_BEGIN_NAMESPACE_AM
 
-class DefaultConfiguration : public Configuration
-{
-public:
-    DefaultConfiguration(const char *additionalDescription, bool onlyOnePositionalArgument);
-    ~DefaultConfiguration();
+namespace DebugWrapper {
 
-    void parse();
+bool parseSpecification(const QString &debugWrapperSpecification, QStringList &resultingCommand,
+                        QMap<QString, QString> &resultingEnvironment);
 
-    QString mainQmlFile() const;
-    QString database() const;
-    bool recreateDatabase() const;
+QStringList substituteCommand(const QStringList &debugWrapperCommand, const QString &program,
+                              const QStringList &arguments);
 
-    QStringList builtinAppsManifestDirs() const;
-    QString installedAppsManifestDir() const;
-    QString appImageMountDir() const;
-
-    bool fullscreen() const;
-    bool noFullscreen() const;
-    QString windowIcon() const;
-    QStringList importPaths() const;
-    bool verbose() const;
-    bool slowAnimations() const;
-    bool loadDummyData() const;
-    bool noSecurity() const;
-    bool noUiWatchdog() const;
-    bool noDltLogging() const;
-    bool forceSingleProcess() const;
-    bool forceMultiProcess() const;
-    bool qmlDebugging() const;
-    QString singleApp() const;
-    QStringList loggingRules() const;
-    QString style() const;
-
-    QVariantList installationLocations() const;
-
-    QList<QPair<QString, QString>> containerSelectionConfiguration() const;
-    QVariantMap containerConfigurations() const;
-    QVariantMap runtimeConfigurations() const;
-
-    QVariantMap dbusPolicy(const char *interfaceName) const;
-    QString dbusRegistration(const char *interfaceName) const;
-    int dbusRegistrationDelay() const;
-    bool dbusStartSessionBus() const;
-
-    QVariantMap rawSystemProperties() const;
-
-    bool applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const;
-
-    qreal quickLaunchIdleLoad() const;
-    int quickLaunchRuntimesPerContainer() const;
-
-    QString waylandSocketName() const;
-
-    QString telnetAddress() const;
-    quint16 telnetPort() const;
-
-    QVariantMap managerCrashAction() const;
-
-    QStringList caCertificates() const;
-
-    QStringList pluginFilePaths(const char *type) const;
-
-    QStringList testRunnerArguments() const;
-
-private:
-    QString m_mainQmlFile;
-    bool m_onlyOnePositionalArgument = false;
-};
+}
 
 QT_END_NAMESPACE_AM

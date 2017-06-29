@@ -11,6 +11,7 @@ SUBDIRS = \
     packageextractor \
     packager-tool \
     applicationinstaller \
+    debugwrapper \
     qml \
 
 linux*:SUBDIRS += \

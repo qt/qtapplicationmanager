@@ -111,29 +111,6 @@ QString AbstractContainer::mapHostPathToContainer(const QString &hostPath) const
     return hostPath;
 }
 
-QStringList AbstractContainer::substituteDebugWrapperCommand(const QStringList &debugWrapperCommand,
-                                                             const QString &program,
-                                                             const QStringList &arguments)
-{
-    QStringList cmd = arguments;
-
-    bool foundArgumentMarker = false;
-    for (int i = debugWrapperCommand.count() - 1; i >= 0; --i) {
-        QString str = debugWrapperCommand.at(i);
-        if (str == qL1S("%arguments%")) {
-            foundArgumentMarker = true;
-            continue;
-        }
-        str.replace(qL1S("%program%"), program);
-
-        if (i == 0 || foundArgumentMarker)
-            cmd.prepend(str);
-        else
-            cmd.append(str);
-    }
-    return cmd;
-}
-
 AbstractContainerProcess *AbstractContainer::process() const
 {
     return m_process;

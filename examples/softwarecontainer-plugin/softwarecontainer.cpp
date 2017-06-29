@@ -89,6 +89,26 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE_AM
 
+// unfortunately, this is a copy of the code from debugwrapper.cpp
+static QStringList substituteCommand(const QStringList &debugWrapperCommand, const QString &program,
+                                     const QStringList &arguments)
+{
+    QString stringifiedArguments = arguments.join(qL1C(' '));
+    QStringList result;
+
+    for (const QString &s : debugWrapperCommand) {
+        if (s == qSL("%arguments%")) {
+            result << arguments;
+        } else {
+            QString str(s);
+            str.replace(qL1S("%program%"), program);
+            str.replace(qL1S("%arguments%"), stringifiedArguments);
+            result << str;
+        }
+    }
+    return result;
+}
+
 SoftwareContainerManager::SoftwareContainerManager()
 {
     static bool once = false;
@@ -114,6 +134,7 @@ void SoftwareContainerManager::setConfiguration(const QVariantMap &configuration
 }
 
 ContainerInterface *SoftwareContainerManager::create(bool isQuickLaunch, const QVector<int> &stdioRedirections,
+                                                     const QMap<QString, QString> &debugWrapperEnvironment,
                                                      const QStringList &debugWrapperCommand)
 {
     if (!m_interface) {
@@ -182,7 +203,8 @@ ContainerInterface *SoftwareContainerManager::create(bool isQuickLaunch, const Q
         outputFd = STDOUT_FILENO;
 
     SoftwareContainer *container = new SoftwareContainer(this, isQuickLaunch, containerId,
-                                                         outputFd, debugWrapperCommand);
+                                                         outputFd, debugWrapperEnvironment,
+                                                         debugWrapperCommand);
     m_containers.insert(containerId, container);
     connect(container, &QObject::destroyed, this, [this, containerId]() { m_containers.remove(containerId); });
     return container;
@@ -215,11 +237,13 @@ void SoftwareContainerManager::processStateChanged(int containerId, uint process
 
 
 SoftwareContainer::SoftwareContainer(SoftwareContainerManager *manager, bool isQuickLaunch, int containerId,
-                                     int outputFd, const QStringList &debugWrapperCommand)
+                                     int outputFd, const QMap<QString, QString> &debugWrapperEnvironment,
+                                     const QStringList &debugWrapperCommand)
     : m_manager(manager)
     , m_isQuickLaunch(isQuickLaunch)
     , m_id(containerId)
     , m_outputFd(outputFd)
+    , m_debugWrapperEnvironment(debugWrapperEnvironment)
     , m_debugWrapperCommand(debugWrapperCommand)
 { }
 
@@ -369,7 +393,7 @@ bool SoftwareContainer::sendBindMounts()
 
 }
 
-bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnvironment &environment)
+bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment)
 {
     auto iface = manager()->interface();
     if (!iface)
@@ -383,7 +407,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
         return false;
 
     // parse out the actual socket file name from the DBus specification
-    QString dbusP2PSocket = environment.value(QStringLiteral("AM_DBUS_PEER_ADDRESS"));
+    QString dbusP2PSocket = runtimeEnvironment.value(QStringLiteral("AM_DBUS_PEER_ADDRESS"));
     dbusP2PSocket = dbusP2PSocket.mid(dbusP2PSocket.indexOf(QLatin1Char('=')) + 1);
     dbusP2PSocket = dbusP2PSocket.left(dbusP2PSocket.indexOf(QLatin1Char(',')));
     QFileInfo dbusP2PInfo(dbusP2PSocket);
@@ -436,22 +460,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
     // Calculate the exact command to run
     QStringList command;
     if (!m_debugWrapperCommand.isEmpty()) {
-        // unfortunately, this is a copy of the code from abstractcontainer.cpp
-        command = arguments;
-        bool foundArgumentMarker = false;
-        for (int i = m_debugWrapperCommand.count() - 1; i >= 0; --i) {
-            QString str = m_debugWrapperCommand.at(i);
-            if (str == qL1S("%arguments%")) {
-                foundArgumentMarker = true;
-                continue;
-            }
-            str.replace(qL1S("%program%"), m_program);
-
-            if (i == 0 || foundArgumentMarker)
-                command.prepend(str);
-            else
-                command.append(str);
-        }
+        command = substituteCommand(m_debugWrapperCommand, m_program, arguments);
     } else {
         command = arguments;
         command.prepend(m_program);
@@ -470,26 +479,41 @@ bool SoftwareContainer::start(const QStringList &arguments, const QProcessEnviro
 
     // we start with a copy of the AM's environment, but some variables would overwrite important
     // redirections set by SC gateways.
-    static const char *forbiddenVars[] = {
-        "XDG_RUNTIME_DIR",
-        "DBUS_SESSION_BUS_ADDRESS",
-        "DBUS_SYSTEM_BUS_ADDRESS",
-        "PULSE_SERVER",
-        nullptr
+    static const QStringList forbiddenVars = {
+        qSL("XDG_RUNTIME_DIR"),
+        qSL("DBUS_SESSION_BUS_ADDRESS"),
+        qSL("DBUS_SYSTEM_BUS_ADDRESS"),
+        qSL("PULSE_SERVER")
     };
 
-    QMap<QString, QString> envVars;
-    for (auto &&envVar : environment.keys()) {
-        bool forbidden = false;
-        for (const char **p = forbiddenVars; *p; ++p) {
-            if (envVar == QLatin1String(*p)) {
-                forbidden = true;
-                break;
-            }
+    // since we have to translate between a QProcessEnvironment and a QMap<>, we cache the result
+    static QMap<QString, QString> baseEnvVars;
+    if (baseEnvVars.isEmpty()) {
+        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+        const auto keys = env.keys();
+        for (const auto key : keys) {
+            if (!key.isEmpty() && !forbiddenVars.contains(key))
+                baseEnvVars.insert(key, env.value(key));
         }
-        if (!forbidden)
-            envVars.insert(envVar, environment.value(envVar));
     }
+
+    QMap<QString, QString> envVars = baseEnvVars;
+
+    // set the env. variables coming from the runtime
+    for (auto it = runtimeEnvironment.cbegin(); it != runtimeEnvironment.cend(); ++it) {
+        if (it.value().isEmpty())
+            envVars.remove(it.key());
+        else
+            envVars.insert(it.key(), it.value());
+    }
+    // set the env. variables coming from a debug wrapper
+    for (auto it = m_debugWrapperEnvironment.cbegin(); it != m_debugWrapperEnvironment.cend(); ++it) {
+        if (it.value().isEmpty())
+            envVars.remove(it.key());
+        else
+            envVars.insert(it.key(), it.value());
+    }
+
     QVariant venvVars = QVariant::fromValue(envVars);
 
     qDebug () << "SoftwareContainer is trying to launch application" << m_id

@@ -119,7 +119,6 @@ protected:
 
     void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
     void showWindow(bool showFullscreen);
-    void setupDebugWrappers(const QVariantList &debugWrappers);
     void setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false);
 

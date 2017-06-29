@@ -240,30 +240,25 @@ bool NativeRuntime::start()
         break;
     }
 
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert(qSL("QT_QPA_PLATFORM"), qSL("wayland"));
-    env.remove(qSL("QT_IM_MODULE"));     // Applications should use wayland text input
-    //env.insert(qSL("QT_WAYLAND_DISABLE_WINDOWDECORATION"), "1");
-    env.insert(qSL("AM_SECURITY_TOKEN"), qL1S(securityToken().toHex()));
-    env.insert(qSL("AM_DBUS_PEER_ADDRESS"), applicationInterfaceServer()->address());
-    env.insert(qSL("AM_DBUS_NOTIFICATION_BUS_ADDRESS"), NotificationManager::instance()->property("_am_dbus_name").toString());
-    env.insert(qSL("AM_RUNTIME_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ configuration() })));
+    QMap<QString, QString> env = {
+        { qSL("QT_QPA_PLATFORM"), qSL("wayland") },
+        { qSL("QT_IM_MODULE"), QString() },     // Applications should use wayland text input
+        { qSL("AM_SECURITY_TOKEN"), qL1S(securityToken().toHex()) },
+        { qSL("AM_DBUS_PEER_ADDRESS"), applicationInterfaceServer()->address() },
+        { qSL("AM_DBUS_NOTIFICATION_BUS_ADDRESS"), NotificationManager::instance()->property("_am_dbus_name").toString() },
+        { qSL("AM_RUNTIME_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ configuration() })) },
+        { qSL("AM_BASE_DIR"), QDir::currentPath() }
+    };
+
     if (!m_needsLauncher && !m_isQuickLauncher)
         env.insert(qSL("AM_RUNTIME_SYSTEM_PROPERTIES"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ systemProperties() })));
-    env.insert(qSL("AM_BASE_DIR"), QDir::currentPath());
     if (!Logging::isDltEnabled())
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
 
     for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {
         it.next();
-        QString name = it.key();
-        if (!name.isEmpty()) {
-            QString value = it.value().toString();
-            if (value.isNull())
-                env.remove(it.key());
-            else
-                env.insert(name, value);
-        }
+        if (!it.key().isEmpty())
+            env.insert(it.key(), it.value().toString());
     }
 
     if (m_app && !m_app->environmentVariables().isEmpty()) {
@@ -273,14 +268,8 @@ bool NativeRuntime::start()
         } else {
             for (QMapIterator<QString, QVariant> it(m_app->environmentVariables()); it.hasNext(); ) {
                 it.next();
-                QString name = it.key();
-                if (!name.isEmpty()) {
-                    QString value = it.value().toString();
-                    if (value.isNull())
-                        env.remove(it.key());
-                    else
-                        env.insert(name, value);
-                }
+                if (!it.key().isEmpty())
+                    env.insert(it.key(), it.value().toString());
             }
         }
     }

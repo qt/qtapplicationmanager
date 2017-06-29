@@ -350,7 +350,7 @@ TestCase {
 
         var started = false;
         if (data.tag === "Debug") {
-            started = ApplicationManager.debugApplication(data.appId, "fakedebugger");
+            started = ApplicationManager.debugApplication(data.appId, "%program% %arguments%");
             if (singleProcess) {
                 verify(!started);
                 return;
@@ -464,14 +464,14 @@ TestCase {
         ignoreWarning("Cannot start an invalid application");
         verify(!ApplicationManager.startApplication("invalidApplication"))
 
-        ignoreWarning("Tried to start application tld.test.simple1 using an invalid debug-wrapper specification: invalidDebugWrapper");
-        verify(!ApplicationManager.debugApplication(simpleApplication.id, "invalidDebugWrapper"))
+        ignoreWarning("Tried to start application tld.test.simple1 using an invalid debug-wrapper specification:  ");
+        verify(!ApplicationManager.debugApplication(simpleApplication.id, " "))
 
         verify(ApplicationManager.startApplication(simpleApplication.id));
         checkApplicationState(simpleApplication.id, ApplicationManager.StartingUp);
         checkApplicationState(simpleApplication.id, ApplicationManager.Running);
-        ignoreWarning("Application tld.test.simple1 is already running - cannot start with debug-wrapper: fakedebugger");
-        verify(!ApplicationManager.debugApplication(simpleApplication.id, "fakedebugger"))
+        ignoreWarning("Application tld.test.simple1 is already running - cannot start with debug-wrapper: %program% %arguments%");
+        verify(!ApplicationManager.debugApplication(simpleApplication.id, "%program% %arguments%"))
         ApplicationManager.stopApplication(simpleApplication.id, true);
         checkApplicationState(simpleApplication.id, ApplicationManager.ShuttingDown);
         checkApplicationState(simpleApplication.id, ApplicationManager.NotRunning);

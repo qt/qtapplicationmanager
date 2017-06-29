@@ -86,7 +86,7 @@ application-manager is running in:
     or the System-UI and debugging individual applications: The application-manager and System-UI
     can be debugged in the same way as described for a single-process setup above. Debugging
     applications is a bit more tricky though, since they have to be started by the application-manager:
-    this is accomplished by defining so called \l DebugWrappers which describe how to start an
+    this is accomplished by running the app through a debug wrapper which describe how to start an
     application using your favorite debugging tool.
 \endlist
 
@@ -97,82 +97,25 @@ Please note that although the concept is called "debug" wrappers, these wrappers
 actual debugging tasks. They are also useful for various other tasks that involve running the
 program under test through a wrapper, e.g. profiling tools.
 
-\section2 Defining Debug Wrappers
 \target DebugWrappers
-
-Debug wrappers for applications in multi-process mode are defined in a \c config.yaml file provided
-on the command line, as a list under the \c debugWrappers key. A typical example would be the
-definition of a \c gdbserver wrapper:
-
-\badcode
-debugWrappers:
-- name: gdbserver
-  parameters:  # <name>: <default value>
-    port: 5555
-  # %program% and %arguments% are internal variables
-  command: [ '/usr/bin/gdbserver', ':%port%', '%program%', '%arguments%' ]
-  supportedRuntimes: [ native, qml ]
-  supportedContainers: [ process ]
-\endcode
-
-Each debug wrapper is a YAML map, which supports the following fields:
-
-\table
-\header
-    \li Name
-    \li Type
-    \li Description
-\row
-    \li \c name
-    \li string
-    \li A short unique identifier string, given to the application-manager to tell it which debug
-        wrapper to use when starting an application in debug mode.
-\row
-    \li \c parameters
-    \li object
-    \li A standard YAML map defining possible runtime parameters and their default values. The key
-        is the unique identifier that can be referenced in the \c command definition. The value is
-        the default value if the parameter is not explicitly specified at runtime (can also be just
-        \c ~ - the YAML null value).
-\row
-    \li \c command
-    \li list<string>
-    \li The heart of the debug wrapper, where you define the exact command line to execute: this is
-        a string list and each item of this list will be converted to a single command-line parameter.
-        No automatic splitting at white-space will be done! Any text between \b % characters will be
-        replaced if this text can be resolved as a parameter name. There are two internal parameters:
-        \b %program% and \b %arguments%: \b %program% will resolve to the file-path of the binary that
-        is being debugged and \b %arguments% will be replaced with the command-line parameters that
-        have been specified internally by the respective runtime and container implementations.
-\row
-    \li \c supportedRuntimes
-    \li list<string>
-    \li A list of runtime ids which are compatible with this debug wrapper (e.g. \c native, \c qml).
-\row
-    \li \c supportedContainers
-    \li list<string>
-    \li A list of container ids which are compatible with this debug wrapper (e.g. \c process).
-\endtable
-
 \section2 Using Debug Wrappers
 
-After defining the debug wrappers, you can start applications using those wrappers. There are three
-ways to do this - all of them rely on a common way to specify which debug wrapper to use and optional
-parameter values:
+There are three ways to do start applications using debug wrappers - all of them rely on a common
+way to specify which debug wrapper to use:
 
 \list
 \li Within your System-UI, do not use \c startApplication to start an app, but debugApplication:
     \badcode
-    ApplicationManager.debugApplication("io.qt.app", "gdbserver: { port: 5556 }")
+    ApplicationManager.debugApplication("io.qt.app", "/usr/bin/strace -f")
     \endcode
 \li Via D-Bus, you can call the debugApplication method:
     \badcode
-    qdbus io.qt.ApplicationManager /ApplicationManager debugApplication io.qt.app "gdbserver: { port: 5557 }"
+    qdbus io.qt.ApplicationManager /ApplicationManager debugApplication "gdbserver :5555" io.qt.app
     \endcode
 \li Using the \c appman-controller which uses D-Bus internally, but is able to find the correct
     bus automatically and supports standard-IO redirection:
     \badcode
-    appman-controller debug-application -ioe "gdbserver" io.qt.app
+    appman-controller debug-application -ioe "valgrind --tool=helgrind" io.qt.app
     \endcode
     The optional \c -i, \c -o and \c -e parameters will redirect the respective IO streams (\c stdin,
     \c stdout and \c stderr) to the calling terminal.
@@ -181,13 +124,40 @@ parameter values:
 \note In order to use the D-Bus options, the application-manager has to be connected to either
 a session- or system-bus - make sure to not run it with \c{--dbus none}.
 
-The debug wrapper argument is always interpreted as a standard YAML document consisting of either
-\list
-\li a single string denoting the debug wrapper name (no parameters supplied) or
-\li a map with a single key denoting the debug wrapper name and its value being a map describing
-    all of the parameters:
-    \badcode
-    name: { param1: "value1", param2: "value2" }
-    \endcode
-\endlist
+The debug wrapper specification has to be a single argument string, that is interpreted as a command
+line. If this string contains the sub-string \c{%program%}, it will be replaced with the full path
+to the executable of the application (or the \c appman-launcher-qml binary for QML applications).
+The same thing happens for \c{%arguments%}, which will be replaced with potential command line
+arguments for the application. If you don't specify \c{%program%} or \c{%arguments%}, they will
+simply be appended to the resulting command line.
+
+This means that all of these debug wrappers are essentially the same:
+\badcode
+appman-controller debug-application "gdbserver :5555 %program% %arguments%" io.qt.music
+appman-controller debug-application "gdbserver :5555 %program%" io.qt.music
+appman-controller debug-application "gdbserver :5555" io.qt.music
+\endcode
+
+The explicit \c{%program%} argument is important, if the "wrapper" works differently. An example
+for this would be to start the application with the JavaScript debugger on port 1234 in blocking
+mode:
+\badcode
+appman-controller debug-application "%program% -qmljsdebugger=port:1234,block %arguments%" io.qt.browser
+\endcode
+
+You also have the possibility to specify environment variables for the debug wrapper - just like on
+the command line. This command will run your application through \c strace while also setting the
+\c WAYLAND_DEBUG environment variable to \c 1.
+\badcode
+appman-controller debug-application "WAYLAND_DEBUG=1 strace -f" io.qt.browser
+\endcode
+For added convenience, you can even just only set environment variables without any actual debug
+wrapper, e.g. to debug imports and plugin loading in a QML application:
+\badcode
+appman-controller debug-application "QT_DEBUG_PLUGINS=1 QML_IMPORT_TRACE=1" io.qt.browser
+\endcode
+
+
+It is advisable to create aliases or wrapper scripts when using complex debug wrappers on the
+command line often.
 */

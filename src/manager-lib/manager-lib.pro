@@ -36,6 +36,7 @@ HEADERS += \
     applicationipcinterface_p.h \
     applicationmanager_p.h \
     systemreader.h \
+    debugwrapper.h
 
 linux:HEADERS += \
     sysfsreader.h \
@@ -66,6 +67,7 @@ SOURCES += \
     applicationipcmanager.cpp \
     applicationipcinterface.cpp \
     systemreader.cpp \
+    debugwrapper.cpp
 
 linux:SOURCES += \
     sysfsreader.cpp \

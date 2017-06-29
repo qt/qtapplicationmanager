@@ -66,21 +66,6 @@ public:
 
     QVector<IpcProxyObject *> interfaceExtensions;
 
-    struct DebugWrapper
-    {
-        bool isValid() const { return !name.isEmpty(); }
-
-        QString name;
-        QStringList command;
-        QVariantMap parameters;
-        QStringList supportedRuntimes;
-        QStringList supportedContainers;
-    };
-
-    QVector<DebugWrapper> debugWrappers;
-
-    DebugWrapper parseDebugWrapperSpecification(const QString &spec);
-
     QList<QPair<QString, QString>> containerSelectionConfig;
     QJSValue containerSelectionFunction;
 

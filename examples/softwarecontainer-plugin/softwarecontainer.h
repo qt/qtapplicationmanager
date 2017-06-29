@@ -56,7 +56,8 @@ class SoftwareContainer : public ContainerInterface
 
 public:
     SoftwareContainer(SoftwareContainerManager *manager, bool isQuickLaunch, int containerId,
-                      int outputFd, const QStringList &debugWrapperCommand);
+                      int outputFd, const QMap<QString, QString> &debugWrapperEnvironment,
+                      const QStringList &debugWrapperCommand);
     ~SoftwareContainer();
 
     SoftwareContainerManager *manager() const;
@@ -74,7 +75,7 @@ public:
     QString mapContainerPathToHost(const QString &containerPath) const override;
     QString mapHostPathToContainer(const QString &hostPath) const override;
 
-    bool start(const QStringList &arguments, const QProcessEnvironment &environment) override;
+    bool start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment) override;
     bool isStarted() const override;
 
     qint64 processId() const override;
@@ -104,6 +105,7 @@ private:
     QByteArray m_fifoPath;
     int m_fifoFd = -1;
     int m_outputFd;
+    QMap<QString, QString> m_debugWrapperEnvironment;
     QStringList m_debugWrapperCommand;
     QFileInfo m_dbusP2PInfo;
 };
@@ -123,6 +125,7 @@ public:
 
     ContainerInterface *create(bool isQuickLaunch,
                                const QVector<int> &stdioRedirections,
+                               const QMap<QString, QString> &debugWrapperEnvironment,
                                const QStringList &debugWrapperCommand) override;
 public:
     QDBusInterface *interface() const;

@@ -55,10 +55,10 @@ The following commands are available:
         \c document-url parameter is optional.
 \row
     \li \span {style="white-space: nowrap"} {\c debug-application}
-    \li \c{<debug-wrapper-name> <application-id> [document-url]}
+    \li \c{<debug-wrapper-specification> <application-id> [document-url]}
     \li Starts the application identified by \c application-id within the application-manager using
-        a debug-wrapper. The given \c debug-wrapper-name must exist in the application-manager's
-        configuration. The \c document-url parameter is optional.
+        a debug-wrapper: see \l{DebugWrappers}{the debugging documentation} for more information on
+        this specification string. The \c document-url parameter is optional.
 \row
     \li \span {style="white-space: nowrap"} {\c list-applications}
     \li (none)

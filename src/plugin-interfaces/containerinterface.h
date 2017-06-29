@@ -65,7 +65,7 @@ public:
     virtual QString mapContainerPathToHost(const QString &containerPath) const = 0;
     virtual QString mapHostPathToContainer(const QString &hostPath) const = 0;
 
-    virtual bool start(const QStringList &arguments, const QProcessEnvironment &env) = 0;
+    virtual bool start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment) = 0;
     virtual bool isStarted() const = 0;
 
     virtual qint64 processId() const = 0;
@@ -93,6 +93,7 @@ public:
 
     virtual ContainerInterface *create(bool isQuickLaunch,
                                        const QVector<int> &stdioRedirections,
+                                       const QMap<QString, QString> &debugWrapperEnvironment,
                                        const QStringList &debugWrapperCommand) = 0;
 };
 

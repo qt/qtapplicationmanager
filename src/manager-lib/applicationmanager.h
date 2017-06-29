@@ -95,8 +95,6 @@ public:
     QVariantMap systemProperties() const;
     void setSystemProperties(const QVariantMap &map);
 
-    void setDebugWrapperConfiguration(const QVariantList &debugWrappers);
-
     QVector<const Application *> applications() const;
 
     const Application *fromId(const QString &id) const;

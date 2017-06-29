@@ -56,7 +56,8 @@ public:
     bool supportsQuickLaunch() const override;
 
     AbstractContainer *create(const Application *app, const QVector<int> &stdioRedirections,
-                                      const QStringList &debugWrapperCommand) override;
+                              const QMap<QString, QString> &debugWrapperEnvironment,
+                              const QStringList &debugWrapperCommand) override;
 
     void setConfiguration(const QVariantMap &configuration) override;
 
@@ -102,7 +103,7 @@ public:
     QString mapContainerPathToHost(const QString &containerPath) const override;
     QString mapHostPathToContainer(const QString &hostPath) const override;
 
-    AbstractContainerProcess *start(const QStringList &arguments, const QProcessEnvironment &env) override;
+    AbstractContainerProcess *start(const QStringList &arguments, const QMap<QString, QString> &env) override;
 
 protected:
     explicit PluginContainer(AbstractContainerManager *manager, const Application *app, ContainerInterface *containerInterface);

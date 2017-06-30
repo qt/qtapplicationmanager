@@ -61,6 +61,7 @@ item models.
 These types are only available for the System-UI:
 
 \list
+  \li ApplicationModel - A proxy model for the ApplicationManager singleton.
   \li ApplicationIPCInterface - System-UI side definition of interfaces for System-UI-to-app communication.
 \endlist
 

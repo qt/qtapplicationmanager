@@ -31,13 +31,15 @@ config.tests/*/*[.]app
 *_wrapper.sh
 tst_*
 !tst_*.*
+tst_*.qmlc
 
 src/**/*.sh
 doc/**/*.sh
 src/tools/*/*_interface.*
 src/tools/*/*_adaptor.*
 
-src/manager/build-config.yaml
-src/manager/config.qrc
 src/tools/testrunner/build-config.yaml
 src/tools/testrunner/config.qrc
+src/tools/appman/build-config.yaml
+src/tools/appman/config.qrc
+doc/codeattributions.qdoc

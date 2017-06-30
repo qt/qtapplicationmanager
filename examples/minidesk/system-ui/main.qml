@@ -76,6 +76,7 @@ Rectangle {
 
             Image {
                 source: icon
+                opacity: isRunning ? 0.3 : 1.0
 
                 MouseArea {
                     anchors.fill: parent
@@ -159,7 +160,6 @@ Rectangle {
                     console.log("Allowing a single app started outside of appman instead of App1 ...");
                     appIndex = 0;
                 }
-                menuItems.itemAt(appIndex).opacity = 0.3;
                 var chrome = windows.itemAt(appIndex);
                 window.parent = chrome.appContainer;
                 window.anchors.fill = chrome.appContainer;
@@ -181,7 +181,6 @@ Rectangle {
                 if (appIndex === -1)
                     appIndex = 0;
                 windows.itemAt(appIndex).visible = false;
-                menuItems.itemAt(appIndex).opacity = 1.0;
             }
         }
 

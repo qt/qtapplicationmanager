@@ -274,7 +274,7 @@ void QmlInProcessApplicationInterfaceExtension::componentComplete()
     m_complete = true;
 
     if (m_name.isEmpty()) {
-        qCWarning(LogQmlIpc) << "ApplicationInterfaceExension.name is not set.";
+        qCWarning(LogQmlIpc) << "ApplicationInterfaceExtension.name is not set.";
         return;
     }
 

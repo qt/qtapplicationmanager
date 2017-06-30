@@ -916,8 +916,10 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
                 apps.append(alias);
         }
 
-        for (const Application *app : qAsConst(apps))
+        for (const Application *app : qAsConst(apps)) {
             emit applicationRunStateChanged(app->id(), runtimeToManagerState(newState));
+            emitDataChanged(app, QVector<int> { IsRunning, IsStartingUp, IsShuttingDown });
+        }
     });
 
     connect(runtime, static_cast<void(AbstractRuntime::*)(int, QProcess::ExitStatus)>

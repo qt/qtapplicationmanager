@@ -105,13 +105,13 @@ protected:
     void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false);
     void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &containerConfigurations,
                                     const QStringList &containerPluginPaths);
-    void setupManifestPaths(const QStringList &builtinAppManifestPaths, const QString &installedAppsManifestDir);
+    void setupInstallationLocations(const QVariantList &installationLocations);
     void loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
                                  const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
                          qreal quickLaunchRuntimesPerContainer, int quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupInstaller(const QVariantList &installationLocations, const QString &appImageMountDir,
-                        const QStringList &caCertificatePaths, const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupInstaller(const QString &appImageMountDir, const QStringList &caCertificatePaths,
+                        const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
 
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());
     void setupWindowTitle(const QString &title, const QString &iconPath);

@@ -210,11 +210,12 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupSingleOrMultiProcess(cfg->forceSingleProcess(), cfg->forceMultiProcess());
     setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->containerConfigurations(),
                                cfg->pluginFilePaths("container"));
+    setupInstallationLocations(cfg->installationLocations());
     loadApplicationDatabase(cfg->database(), cfg->recreateDatabase(), cfg->singleApp());
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
                     cfg->quickLaunchIdleLoad());
 
-    setupInstaller(cfg->installationLocations(), cfg->appImageMountDir(), cfg->caCertificates(),
+    setupInstaller(cfg->appImageMountDir(), cfg->caCertificates(),
                    std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
                              std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
@@ -347,72 +348,6 @@ void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
         throw Exception("no/invalid main QML file specified: %1").arg(m_mainQml);
 }
 
-void Main::setupInstaller(const QVariantList &installationLocations, const QString &appImageMountDir,
-                          const QStringList &caCertificatePaths, const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false)
-{
-#if !defined(AM_DISABLE_INSTALLER)
-    if (!Package::checkCorrectLocale()) {
-        // we should really throw here, but so many embedded systems are badly set up
-        qCCritical(LogSystem) << "WARNING: the appman installer needs a UTF-8 locale to work correctly:\n"
-                                 "         even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
-    }
-
-    if (Q_UNLIKELY(hardwareId().isEmpty()))
-        throw Exception("the installer is enabled, but the device-id is empty");
-
-    m_installationLocations = InstallationLocation::parseInstallationLocations(installationLocations,
-                                                                               hardwareId());
-
-    if (Q_UNLIKELY(!QDir::root().mkpath(m_installedAppsManifestDir)))
-        throw Exception("could not create manifest directory %1").arg(m_installedAppsManifestDir);
-
-    if (Q_UNLIKELY(!QDir::root().mkpath(appImageMountDir)))
-        throw Exception("could not create the image-mount directory %1").arg(appImageMountDir);
-
-    StartupTimer::instance()->checkpoint("after installer setup checks");
-
-    QString error;
-    m_applicationInstaller = ApplicationInstaller::createInstance(m_installationLocations,
-                                                                  m_installedAppsManifestDir,
-                                                                  appImageMountDir,
-                                                                  &error);
-    if (Q_UNLIKELY(!m_applicationInstaller))
-        throw Exception(Error::System, error);
-    if (m_noSecurity) {
-        m_applicationInstaller->setDevelopmentMode(true);
-        m_applicationInstaller->setAllowInstallationOfUnsignedPackages(true);
-    } else {
-        QList<QByteArray> caCertificateList;
-
-        for (const auto &caFile : caCertificatePaths) {
-            QFile f(caFile);
-            if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
-                throw Exception(f, "could not open CA-certificate file");
-            QByteArray cert = f.readAll();
-            if (Q_UNLIKELY(cert.isEmpty()))
-                throw Exception(f, "CA-certificate file is empty");
-            caCertificateList << cert;
-        }
-        m_applicationInstaller->setCACertificates(caCertificateList);
-    }
-
-    uint minUserId, maxUserId, commonGroupId;
-    if (userIdSeparation && userIdSeparation(&minUserId, &maxUserId, &commonGroupId)) {
-#  if defined(Q_OS_LINUX)
-        if (!m_applicationInstaller->enableApplicationUserIdSeparation(minUserId, maxUserId, commonGroupId))
-            throw Exception("could not enable application user-id separation in the installer.");
-#  else
-        qCCritical(LogSystem) << "WARNING: application user-id separation requested, but not possible on this platform.";
-#  endif // Q_OS_LINUX
-    }
-
-    //TODO: this could be delayed, but needs to have a lock on the app-db in this case
-    m_applicationInstaller->cleanupBrokenInstallations();
-
-    StartupTimer::instance()->checkpoint("after ApplicationInstaller instantiation");
-#endif // AM_DISABLE_INSTALLER
-}
-
 void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_isSingleProcessMode = forceSingleProcess;
@@ -455,6 +390,12 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
                                                     m_systemProperties.at(SP_BuiltIn));
 
     StartupTimer::instance()->checkpoint("after runtime registration");
+}
+
+void Main::setupInstallationLocations(const QVariantList &installationLocations)
+{
+    m_installationLocations = InstallationLocation::parseInstallationLocations(installationLocations,
+                                                                               hardwareId());
 }
 
 void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
@@ -528,6 +469,69 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     m_quickLauncher = QuickLauncher::instance();
     m_quickLauncher->initialize(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad);
     StartupTimer::instance()->checkpoint("after quick-launcher setup");
+}
+
+void Main::setupInstaller(const QString &appImageMountDir, const QStringList &caCertificatePaths,
+                          const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false)
+{
+#if !defined(AM_DISABLE_INSTALLER)
+    if (!Package::checkCorrectLocale()) {
+        // we should really throw here, but so many embedded systems are badly set up
+        qCCritical(LogSystem) << "WARNING: the appman installer needs a UTF-8 locale to work correctly:\n"
+                                 "         even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
+    }
+
+    if (Q_UNLIKELY(hardwareId().isEmpty()))
+        throw Exception("the installer is enabled, but the device-id is empty");
+
+    if (Q_UNLIKELY(!QDir::root().mkpath(m_installedAppsManifestDir)))
+        throw Exception("could not create manifest directory %1").arg(m_installedAppsManifestDir);
+
+    if (Q_UNLIKELY(!QDir::root().mkpath(appImageMountDir)))
+        throw Exception("could not create the image-mount directory %1").arg(appImageMountDir);
+
+    StartupTimer::instance()->checkpoint("after installer setup checks");
+
+    QString error;
+    m_applicationInstaller = ApplicationInstaller::createInstance(m_installationLocations,
+                                                                  m_installedAppsManifestDir,
+                                                                  appImageMountDir,
+                                                                  &error);
+    if (Q_UNLIKELY(!m_applicationInstaller))
+        throw Exception(Error::System, error);
+    if (m_noSecurity) {
+        m_applicationInstaller->setDevelopmentMode(true);
+        m_applicationInstaller->setAllowInstallationOfUnsignedPackages(true);
+    } else {
+        QList<QByteArray> caCertificateList;
+
+        for (const auto &caFile : caCertificatePaths) {
+            QFile f(caFile);
+            if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
+                throw Exception(f, "could not open CA-certificate file");
+            QByteArray cert = f.readAll();
+            if (Q_UNLIKELY(cert.isEmpty()))
+                throw Exception(f, "CA-certificate file is empty");
+            caCertificateList << cert;
+        }
+        m_applicationInstaller->setCACertificates(caCertificateList);
+    }
+
+    uint minUserId, maxUserId, commonGroupId;
+    if (userIdSeparation && userIdSeparation(&minUserId, &maxUserId, &commonGroupId)) {
+#  if defined(Q_OS_LINUX)
+        if (!m_applicationInstaller->enableApplicationUserIdSeparation(minUserId, maxUserId, commonGroupId))
+            throw Exception("could not enable application user-id separation in the installer.");
+#  else
+        qCCritical(LogSystem) << "WARNING: application user-id separation requested, but not possible on this platform.";
+#  endif // Q_OS_LINUX
+    }
+
+    //TODO: this could be delayed, but needs to have a lock on the app-db in this case
+    m_applicationInstaller->cleanupBrokenInstallations();
+
+    StartupTimer::instance()->checkpoint("after ApplicationInstaller instantiation");
+#endif // AM_DISABLE_INSTALLER
 }
 
 void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle)

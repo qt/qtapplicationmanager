@@ -204,8 +204,8 @@ all your imports paths and file references relative to your main config file.
         \c StartupInterface. The application-manager will call the function hooks during startup of
         the system UI.
 \row
+    \target system properties
     \li \b -
-        \target system properties
     \br \e systemProperties
     \li object
     \li Exports user-defined properties (key/value pairs) to the System-UI and applications. This
@@ -243,8 +243,8 @@ all your imports paths and file references relative to your main config file.
     \li bool
     \li Loads QML dummy-data into the system UI (just like \c qmlscene would).
 \row
-    \li \b --no-security
     \target no-security
+    \li \b --no-security
     \br \e flags/noSecurity
     \li bool
     \li Disables all security related checks. Use this in a development setup only! (default: false)

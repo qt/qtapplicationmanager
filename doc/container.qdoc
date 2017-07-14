@@ -80,6 +80,69 @@ class SoftwareContainerManager : public QObject, public ContainerManagerInterfac
 };
 \endcode
 
+Please be aware that your container plugin has to support a few basic requirements in order to
+support UI clients in multi-process mode:
+\list 1
+\li The plugin has to be able to forward Unix local sockets into the container. This is needed for
+    both the Wayland socket as well as for the private peer-to-peer D-Bus connection. If the plugin
+    is not able to map these sockets to the exact same location within the container, it needs to
+    alter the environment variables for the respective locations before passing them into the
+    container. See below for a list of relevant environment variables.
+\li In order to support hardware OpenGL acceleration, the container needs to have access to the
+    necessary devices: for GPUs following Linux standards (e.g. Intel), you have to make sure to
+    have /c{/dev/dri/*} available within the container.
+\li If you want to make use of the application-manager's security features, you also have to
+    implement PID mapping in your plugin (this is unnecessary if your container solution shares its
+    PID namespace with the rest of the system). Every connection coming into the application-manager
+    via the Wayland or D-Bus Unix local sockets is queried for the PID of the application requesting
+    the connection. The application-manager will verify these PIDs against the PIDs of all running
+    applications via ContainerInterface::processId(). Connections that will not match a PID will
+    not be accepted. This behavior can be disable though by use of the \l{no-security}{\c{--no-security}}
+    command line option.
+\endlist
+
+The application-manager will use these environment variables to communicate various settings to the
+application. A custom container plugin has to make sure to forward these or adjust them accordingly:
+
+\table
+\header
+  \li Name
+  \li Description
+\row
+  \li \c{WAYLAND_DISPLAY}
+  \li The path to the Wayland server socket. If your container uses its own filesystem namespace,
+      you need to make sure that this socket gets forwarded accordingly.
+\row
+  \li \c{QT_QPA_PLATFORM}
+  \li Always set to \c{wayland}.
+\row
+  \li \c{QT_IM_MODULE}
+  \li Not really set, but explicitly unset by the application-manager. Make sure to not set it, if
+      the automatic Wayland input method implementation should be used.
+\row
+  \li \c{DBUS_SESSION_BUS_ADDRESS}
+  \li The standard D-Bus session bus
+\row
+  \li \c{AM_DBUS_PEER_ADDRESS}
+  \li This variable holds the D-Bus socket identifier for the private peer-to-peer bus between the
+      application-manager and the application. If your container uses its own filesystem namespace,
+      you need to make sure that this socket gets forwarded accordingly.
+\row
+  \li \c{AM_DBUS_NOTIFICATION_BUS_ADDRESS}
+  \li Since the \c{org.freedesktop.Notifications} interface could be on a different bus as the rest
+      of the D-Bus interfaces, the application-manager needs to tell the application explicitly
+      where to look for this interface.
+\row
+  \li \c{AM_BASE_DIR}
+  \li The current directory of the application-manager.
+\row
+  \li \c{AM_RUNTIME_SYSTEM_PROPERTIES}
+  \li The public part of the \l{system-properties}{system properties}, encoded as an YAML document.
+\row
+  \li \c{AM_NO_DLT_LOGGING}
+  \li Tells the application to not use DLT for logging.
+\endtable
+
 \section1 Configuration
 
 There are three parts to the container configuration:

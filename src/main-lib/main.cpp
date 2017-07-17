@@ -222,9 +222,6 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
     setupWindowManager(cfg->waylandSocketName(), cfg->slowAnimations(), cfg->noUiWatchdog());
-    loadQml(cfg->loadDummyData());
-    // --no-fullscreen on the command line trumps the fullscreen setting in the config file
-    showWindow(cfg->fullscreen() && !cfg->noFullscreen());
     setupShellServer(cfg->telnetAddress(), cfg->telnetPort());
     setupSSDPService();
 }

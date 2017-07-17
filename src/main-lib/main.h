@@ -88,6 +88,8 @@ public:
     bool isSingleProcessMode() const;
 
     void setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false);
+    void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
+    void showWindow(bool showFullscreen);
 
     void shutDown();
 
@@ -117,8 +119,6 @@ protected:
     void setupWindowTitle(const QString &title, const QString &iconPath);
     void setupWindowManager(const QString &waylandSocketName, bool slowAnimations, bool uiWatchdog);
 
-    void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
-    void showWindow(bool showFullscreen);
     void setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false);
 

@@ -128,6 +128,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #if defined(AM_TESTRUNNER)
         a.qmlEngine()->rootContext()->setContextProperty("buildConfig", cfg.buildConfig());
 #endif
+        a.loadQml(cfg.loadDummyData());
+        a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
 
 #if defined(AM_TESTRUNNER)
         return TestRunner::exec(a.qmlEngine());

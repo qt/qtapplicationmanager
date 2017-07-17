@@ -639,6 +639,9 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     QStringList debugWrapperCommand;
     QMap<QString, QString> debugEnvironmentVariables;
     if (!debugWrapperSpecification.isEmpty()) {
+        if (isSingleProcess())
+            throw Exception("Using debug-wrappers is not supported in the single-process mode.");
+
         if (!DebugWrapper::parseSpecification(debugWrapperSpecification, debugWrapperCommand,
                                               debugEnvironmentVariables)) {
             throw Exception("Tried to start application %1 using an invalid debug-wrapper specification: %2")

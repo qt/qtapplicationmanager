@@ -350,6 +350,8 @@ TestCase {
 
         var started = false;
         if (data.tag === "Debug") {
+            if (singleProcess)
+                ignoreWarning("Using debug-wrappers is not supported in the single-process mode.");
             started = ApplicationManager.debugApplication(data.appId, "%program% %arguments%");
             if (singleProcess) {
                 verify(!started);

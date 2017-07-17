@@ -57,7 +57,7 @@ public:
     QVariant buildConfig() const;
 
 protected:
-    Configuration(const QString &defaultConfigFilePath, const QString &buildConfigFilePath);
+    Configuration(const QStringList &defaultConfigFilePaths, const QString &buildConfigFilePath);
 
     enum MessageType { UsageMessage, ErrorMessage };
 
@@ -75,7 +75,7 @@ private:
     void mergeConfig(const QVariantMap &other);
 
 protected:
-    QString m_defaultConfigFilePath;
+    QStringList m_defaultConfigFilePaths;
     QString m_buildConfigFilePath;
     QCommandLineParser m_clp;
     QVariantMap m_config;

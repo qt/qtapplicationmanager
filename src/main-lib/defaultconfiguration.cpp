@@ -53,8 +53,18 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-DefaultConfiguration::DefaultConfiguration(const char *additionalDescription, bool onlyOnePositionalArgument)
-    : Configuration(qSL(AM_CONFIG_FILE), qSL(":/build-config.yaml"))
+
+DefaultConfiguration::DefaultConfiguration(const char *additionalDescription,
+                                           bool onlyOnePositionalArgument)
+    : DefaultConfiguration(QStringList { qSL(AM_CONFIG_FILE) }, qSL(":/build-config.yaml"),
+                           additionalDescription, onlyOnePositionalArgument)
+{ }
+
+DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFilePaths,
+                                           const QString &buildConfigFilePath,
+                                           const char *additionalDescription,
+                                           bool onlyOnePositionalArgument)
+    : Configuration(defaultConfigFilePaths, buildConfigFilePath)
     , m_onlyOnePositionalArgument(onlyOnePositionalArgument)
 {
     // using QStringLiteral for all strings here adds a few KB of ro-data, but will also improve

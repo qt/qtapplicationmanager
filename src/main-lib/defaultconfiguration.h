@@ -49,7 +49,12 @@ QT_BEGIN_NAMESPACE_AM
 class DefaultConfiguration : public Configuration
 {
 public:
-    DefaultConfiguration(const char *additionalDescription, bool onlyOnePositionalArgument);
+    DefaultConfiguration(const char *additionalDescription = nullptr,
+                         bool onlyOnePositionalArgument = true);
+    DefaultConfiguration(const QStringList &defaultConfigFilePaths,
+                         const QString &buildConfigFilePath,
+                         const char *additionalDescription = nullptr,
+                         bool onlyOnePositionalArgument = true);
     ~DefaultConfiguration();
 
     void parse();

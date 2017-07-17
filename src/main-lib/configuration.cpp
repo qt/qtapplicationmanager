@@ -153,13 +153,15 @@ void Configuration::mergeConfig(const QVariantMap &other)
 }
 
 
-Configuration::Configuration(const QString &defaultConfigFilePath, const QString &buildConfigFilePath)
-    : m_defaultConfigFilePath(defaultConfigFilePath)
+Configuration::Configuration(const QStringList &defaultConfigFilePaths, const QString &buildConfigFilePath)
+    : m_defaultConfigFilePaths(defaultConfigFilePaths)
     , m_buildConfigFilePath(buildConfigFilePath)
 {
     m_clp.addHelpOption();
     m_clp.addVersionOption();
-    m_clp.addOption({ { qSL("c"), qSL("config-file") }, qSL("load configuration from file (can be given multiple times)."), qSL("files"), defaultConfigFilePath });
+    QCommandLineOption cf { { qSL("c"), qSL("config-file") }, qSL("load cnfiguration from file (can be given multiple times)."), qSL("files") };
+    cf.setDefaultValues(m_defaultConfigFilePaths);
+    m_clp.addOption(cf);
     m_clp.addOption({ { qSL("o"), qSL("option") }, qSL("override a specific config option."), qSL("yaml-snippet") });
     m_clp.addOption({ qSL("no-config-cache"),      qSL("disable the use of the config file cache.") });
     m_clp.addOption({ qSL("clear-config-cache"),   qSL("ignore an existing config file cache.") });

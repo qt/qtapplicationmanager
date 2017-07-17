@@ -466,6 +466,10 @@ TestCase {
         ignoreWarning("Cannot start an invalid application");
         verify(!ApplicationManager.startApplication("invalidApplication"))
 
+        //All following tests don't work in single-process mode
+        if (singleProcess)
+            return;
+
         ignoreWarning("Tried to start application tld.test.simple1 using an invalid debug-wrapper specification:  ");
         verify(!ApplicationManager.debugApplication(simpleApplication.id, " "))
 

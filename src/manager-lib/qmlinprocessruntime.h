@@ -98,7 +98,7 @@ private:
     // used by FakeApplicationManagerWindow to register windows
     void addWindow(QQuickItem *window);
 
-    FakeApplicationManagerWindow *m_mainWindow = nullptr;
+    QObject *m_rootObject = nullptr;
     QList<QQuickItem *> m_windows;
 
     friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete

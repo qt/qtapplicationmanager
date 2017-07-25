@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.winmap.rectangle'
+icon:    'icon.png'
+code:    'rectangle.qml'
+runtime: 'qml'
+name:
+  en: 'Rectangle Root'

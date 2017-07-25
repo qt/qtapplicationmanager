@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.winmap.amwin'
+icon:    'icon.png'
+code:    'amwin.qml'
+runtime: 'qml'
+name:
+  en: 'ApplicationManagerWindow Root'

@@ -1,2 +1,4 @@
 TEMPLATE = subdirs
-SUBDIRS = simple
+SUBDIRS = \
+    simple \
+    windowmapping

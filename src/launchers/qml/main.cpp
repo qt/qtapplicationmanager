@@ -500,10 +500,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             QQuickView* view = new QQuickView(&m_engine, nullptr);
             m_window = view;
             view->setContent(qmlFileUrl, nullptr, topLevel);
-        } else {
-            qCCritical(LogSystem) << "could not load" << qmlFile << ": root object is not a QQuickItem.";
-            QCoreApplication::exit(4);
-            return;
         }
     } else {
         if (!m_engine.incubationController())
@@ -512,26 +508,28 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     StartupTimer::instance()->checkpoint("after creating and setting application window");
 
-    Q_ASSERT(m_window);
-    QObject::connect(&m_engine, &QQmlEngine::quit, m_window, &QObject::deleteLater); // not sure if this is needed .. or even the best thing to do ... see connects above, they seem to work better
+    if (m_window) {
+        // not sure if this is needed .. or even the best thing to do ... see connects above, they seem to work better
+        QObject::connect(&m_engine, &QQmlEngine::quit, m_window, &QObject::deleteLater);
 
-    if (m_configuration.contains(qSL("backgroundColor"))) {
-        QSurfaceFormat surfaceFormat = m_window->format();
-        surfaceFormat.setAlphaBufferSize(8);
-        m_window->setFormat(surfaceFormat);
-        m_window->setClearBeforeRendering(true);
-        m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
+        if (m_configuration.contains(qSL("backgroundColor"))) {
+            QSurfaceFormat surfaceFormat = m_window->format();
+            surfaceFormat.setAlphaBufferSize(8);
+            m_window->setFormat(surfaceFormat);
+            m_window->setClearBeforeRendering(true);
+            m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
+        }
+
+        for (StartupInterface *iface : qAsConst(startupPlugins))
+            iface->beforeWindowShow(m_window);
+
+        m_window->show();
+
+        StartupTimer::instance()->checkpoint("after showing application window");
+
+        for (StartupInterface *iface : qAsConst(startupPlugins))
+            iface->afterWindowShow(m_window);
     }
-
-    for (StartupInterface *iface : qAsConst(startupPlugins))
-        iface->beforeWindowShow(m_window);
-
-    m_window->show();
-
-    StartupTimer::instance()->checkpoint("after showing application window");
-
-    for (StartupInterface *iface : qAsConst(startupPlugins))
-        iface->afterWindowShow(m_window);
 
 #else
     m_engine.setIncubationController(new HeadlessIncubationController(&m_engine));

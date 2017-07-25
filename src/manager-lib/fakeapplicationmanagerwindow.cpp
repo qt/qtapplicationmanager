@@ -176,13 +176,10 @@ void FakeApplicationManagerWindow::componentComplete()
 
     QQuickItem::componentComplete();
 
-    QQuickItem *parent = parentItem();
-
-    while (parent && !m_runtime) {
-        if (FakeApplicationManagerWindow *windowParent = qobject_cast<FakeApplicationManagerWindow *>(parent)) {
-            m_runtime = windowParent->m_runtime;
-        }
-        parent = parent->parentItem();
+    QObject *prnt = parent();
+    while (prnt && !m_runtime) {
+        m_runtime = prnt->property("AM-RUNTIME").value<QtAM::QmlInProcessRuntime*>();
+        prnt = prnt->parent();
     }
 
     if (m_runtime && isVisible())

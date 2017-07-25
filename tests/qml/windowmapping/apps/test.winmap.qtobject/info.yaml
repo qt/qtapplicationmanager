@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.winmap.qtobject'
+icon:    'icon.png'
+code:    'qtobject.qml'
+runtime: 'qml'
+name:
+  en: 'QtObject Root'

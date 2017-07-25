@@ -114,8 +114,9 @@ bool QmlInProcessRuntime::start()
 {
     setState(Startup);
 #if !defined(AM_HEADLESS)
-    if (m_mainWindow) {                                 // if there is already a window present, just emit ready signal and return true (=="start successful")
-        emit inProcessSurfaceItemReady(m_mainWindow);
+    QQuickItem *win = qobject_cast<QQuickItem*>(m_rootObject);
+    if (win) { // if there is already a window present, just emit ready signal and return true (=="start successful")
+        emit inProcessSurfaceItemReady(win);
         return true;
     }
 #endif
@@ -170,18 +171,20 @@ bool QmlInProcessRuntime::start()
     }
 
 #if !defined(AM_HEADLESS)
-    FakeApplicationManagerWindow *window = qobject_cast<FakeApplicationManagerWindow*>(obj);
 
-    if (!window) {
-        qCCritical(LogSystem) << "could not load" << m_app->absoluteCodeFilePath() << ": root object is not a ApplicationManagerWindow.";
-        delete obj;
-        delete appContext;
-        delete m_applicationIf;
-        m_applicationIf = nullptr;
-        return false;
+    FakeApplicationManagerWindow *window = qobject_cast<FakeApplicationManagerWindow*>(obj);
+    if (window) {
+        window->m_runtime = this;
+    } else {
+        QQuickItem *item = qobject_cast<QQuickItem*>(obj);
+        if (item)
+            addWindow(item);
     }
-    window->m_runtime = this;
-    m_mainWindow = window;
+    Q_ASSERT(obj->metaObject()->indexOfProperty("AM-RUNTIME") == -1);
+    if (obj->setProperty("AM-RUNTIME", QVariant::fromValue(this)))
+        qCritical() << "ApplicationManagerWindow must not have an AM-RUNTIME property";
+    m_rootObject = obj;
+
 #endif
 
     QTimer::singleShot(0, this, [component, this]() {
@@ -203,7 +206,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
     for (int i = m_windows.size(); i; --i)
         emit inProcessSurfaceItemClosing(m_windows.at(i-1));
     m_windows.clear();
-    m_mainWindow = nullptr;
+    m_rootObject = nullptr;
 #endif
 
     if (forceKill) {
@@ -251,10 +254,10 @@ void QmlInProcessRuntime::onWindowClose()
 
 void QmlInProcessRuntime::onWindowDestroyed()
 {
-    QQuickItem* window = reinterpret_cast<QQuickItem*>(sender()); // reinterpret_cast because the object might be broken down already!
-    m_windows.removeAll(window);
-    if (m_mainWindow == window)
-        m_mainWindow = nullptr;
+    QObject* sndr = sender();
+    m_windows.removeAll(reinterpret_cast<QQuickItem*>(sndr)); // reinterpret_cast because the object might be broken down already!
+    if (m_rootObject == sndr)
+        m_rootObject = nullptr;
 }
 
 void QmlInProcessRuntime::onEnableFullscreen()
@@ -273,18 +276,22 @@ void QmlInProcessRuntime::onDisableFullscreen()
 
 void QmlInProcessRuntime::addWindow(QQuickItem *window)
 {
-    if (m_windows.indexOf(window) == -1) {
-        m_windows.append(window);
+    // Below check is only needed if the root element is a QtObject.
+    // It should be possible to remove this, once proper visible handling is in place.
+    if (state() != Inactive && state() != Shutdown) {
+        if (m_windows.indexOf(window) == -1) {
+            m_windows.append(window);
 
-        if (auto pcw = qobject_cast<FakeApplicationManagerWindow *>(window)) {
-            connect(pcw, &FakeApplicationManagerWindow::fakeFullScreenSignal, this, &QmlInProcessRuntime::onEnableFullscreen);
-            connect(pcw, &FakeApplicationManagerWindow::fakeNoFullScreenSignal, this, &QmlInProcessRuntime::onDisableFullscreen);
-            connect(pcw, &FakeApplicationManagerWindow::fakeCloseSignal, this, &QmlInProcessRuntime::onWindowClose);
-            connect(pcw, &QObject::destroyed, this, &QmlInProcessRuntime::onWindowDestroyed);
+            if (auto pcw = qobject_cast<FakeApplicationManagerWindow *>(window)) {
+                connect(pcw, &FakeApplicationManagerWindow::fakeFullScreenSignal, this, &QmlInProcessRuntime::onEnableFullscreen);
+                connect(pcw, &FakeApplicationManagerWindow::fakeNoFullScreenSignal, this, &QmlInProcessRuntime::onDisableFullscreen);
+                connect(pcw, &FakeApplicationManagerWindow::fakeCloseSignal, this, &QmlInProcessRuntime::onWindowClose);
+                connect(pcw, &QObject::destroyed, this, &QmlInProcessRuntime::onWindowDestroyed);
+            }
         }
-    }
 
-    emit inProcessSurfaceItemReady(window);
+        emit inProcessSurfaceItemReady(window);
+    }
 }
 
 #endif // !AM_HEADLESS

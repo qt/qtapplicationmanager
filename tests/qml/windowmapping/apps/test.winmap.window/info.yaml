@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.winmap.window'
+icon:    'icon.png'
+code:    'window.qml'
+runtime: 'qml'
+name:
+  en: 'Window Root'

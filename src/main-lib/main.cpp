@@ -139,6 +139,9 @@ QT_BEGIN_NAMESPACE_AM
 Main::Main(int &argc, char **argv)
     : MainBase(argc, argv)
 {
+    // this might be needed later on by the native runtime to find a suitable qml runtime launcher
+    setProperty("_am_build_dir", qSL(AM_BUILD_DIR));
+
     UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler, SIGINT,
                                            [](int /*sig*/) {
         UnixSignalHandler::instance()->resetToDefault(SIGINT);

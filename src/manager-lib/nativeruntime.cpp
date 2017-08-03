@@ -46,6 +46,7 @@
 #include <QDBusError>
 #include <QTimer>
 #include <QUuid>
+#include <QLibraryInfo>
 
 #include "global.h"
 #include "logging.h"
@@ -190,19 +191,32 @@ bool NativeRuntime::attachApplicationToQuickLauncher(const Application *app)
 bool NativeRuntime::initialize()
 {
     if (m_needsLauncher) {
-        QFileInfo fi(qSL("%1/appman-launcher-%2").arg(QCoreApplication::applicationDirPath(), manager()->identifier()));
-        if (!fi.exists() || !fi.isExecutable())
-            return false;
-        m_container->setProgram(fi.absoluteFilePath());
-        m_container->setBaseDirectory(fi.absolutePath());
+        static const QVector<QString> possibleLocations = {
+            QCoreApplication::applicationDirPath(),
+            QLibraryInfo::location(QLibraryInfo::BinariesPath),
+            qApp->property("_am_build_dir").toString() + qSL("/bin") // set by main.cpp
+        };
+        const QString launcherName = qSL("/appman-launcher-") + manager()->identifier();
+        for (const QString &possibleLocation : possibleLocations) {
+            QFileInfo fi(possibleLocation + launcherName);
+
+            if (fi.exists() && fi.isExecutable()) {
+                m_container->setProgram(fi.absoluteFilePath());
+                m_container->setBaseDirectory(fi.absolutePath());
+                qCDebug(LogSystem) << "Using runtime launcher"<< fi.absoluteFilePath();
+                return true;
+            }
+        }
+        qCWarning(LogSystem) << "Could not find an" << launcherName.mid(1) << "executable.";
+        return false;
     } else {
         if (!m_app)
             return false;
 
         m_container->setProgram(m_app->absoluteCodeFilePath());
         m_container->setBaseDirectory(m_app->codeDir());
+        return true;
     }
-    return true;
 }
 
 void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)

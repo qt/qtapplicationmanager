@@ -24,6 +24,8 @@ CONFIG *= static internal_module
 
 win32:LIBS += -luser32
 
+DEFINES += AM_BUILD_DIR=\\\"$$BUILD_DIR\\\"
+
 HEADERS += \
     $$PWD/qmllogger.h \
     $$PWD/configuration.h \

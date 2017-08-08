@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include <QByteArray>
+#include <QString>
 
 #include "package.h"
 

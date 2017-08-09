@@ -103,9 +103,14 @@ void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singl
 
     auto retake = [qmlEngine, singleton]() {
         const auto types = QQmlMetaType::qmlSingletonTypes();
-        for (const QQmlType *singletonType : types) {
+        for (const auto singletonType : types) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 2)
+            if (singletonType.singletonInstanceInfo()->qobjectApi(qmlEngine) == singleton)
+                singletonType.singletonInstanceInfo()->qobjectApis.remove(qmlEngine);
+#else
             if (singletonType->singletonInstanceInfo()->qobjectApi(qmlEngine) == singleton)
                 singletonType->singletonInstanceInfo()->qobjectApis.remove(qmlEngine);
+#endif
         }
     };
 

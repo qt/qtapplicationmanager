@@ -22,7 +22,7 @@ force-single-process:force-multi-process:error("You cannot both specify force-si
 force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")
 
 if(linux|force-libcrypto) {
-    !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")):error("Qt was built without OpenSSL support.")
+    !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")|contains(QT_CONFIG,"ssl")):error("Qt was built without OpenSSL support.")
 }
 
 MIN_MINOR=6

@@ -39,6 +39,12 @@
 **
 ****************************************************************************/
 
+#ifdef _WIN32
+// needed for QueryFullProcessImageNameW
+#  define WINVER _WIN32_WINNT_VISTA
+#  define _WIN32_WINNT _WIN32_WINNT_VISTA
+#endif
+
 #include "startuptimer.h"
 #include "utilities.h"
 
@@ -50,6 +56,7 @@
 #  include <time.h>
 #  include <qplatformdefs.h>
 #  include <sys/syscall.h>
+#  include <sys/sysinfo.h>
 #  if !defined(SYS_gettid)
 #    define SYS_gettid __NR_gettid
 #  endif
@@ -126,6 +133,28 @@
 */
 
 /*!
+     \qmlproperty int StartupTimer::timeToFirstFrame
+
+     Provides the time from process start until rendering of the first frame in the HMI in
+     milliseconds.
+
+     \note Rendering of the first frame takes more time than just creating the QML root
+     component. Accessing this property from within the \c Component.onCompleted signal might
+     be too early.
+*/
+
+
+/*!
+     \qmlproperty int StartupTimer::systemUpTime
+
+     Provides the system's \e up time as provided by the underlying OS, measured up until the
+     initialization of the StartupTimer singleton in milliseconds.
+
+     This is helpful in calculating the time from boot to first frame drawn by adding up the
+     values of systemUpTime and timeToFirstFrame.
+*/
+
+/*!
     \qmlmethod StartupTimer::checkpoint(string name)
 
     Adds a new checkpoint with the elapsed time and the given \a name. Each checkpoint corresponds
@@ -192,6 +221,13 @@ StartupTimer::StartupTimer()
     } else {
         qWarning("StartupTimer: could not get process creation time");
     }
+
+    // Get system up time
+    // Resource https://msdn.microsoft.com/en-us/library/windows/desktop/ms724411(v=vs.85).aspx
+    if (m_initialized) {
+        m_systemUpTime = GetTickCount64();
+        emit systemUpTimeChanged(m_systemUpTime);
+    }
 #elif defined(Q_OS_LINUX)
     // Linux is stupid: there's only one way to get your own process' start time with a high
     // resolution: using the async netlink protocol to get a 'taskstat', but this is highly complex
@@ -254,6 +290,21 @@ StartupTimer::StartupTimer()
         qWarning("StartupTimer: could not read thread creation jiffies");
     }
 
+    // Checking the system up time
+    if (m_initialized) {
+        int fd = QT_OPEN("/proc/uptime", O_RDONLY);
+        if (fd >= 0) {
+            char buffer[32];
+            ssize_t bytesRead = QT_READ(fd, buffer, sizeof(buffer) - 1);
+            if (bytesRead > 0) {
+                buffer[bytesRead] = 0;
+                m_systemUpTime = quint64(strtod(buffer, nullptr) * 1000);
+                emit systemUpTimeChanged(m_systemUpTime);
+            }
+            QT_CLOSE(fd);
+        }
+    }
+
 #elif defined(Q_OS_OSX)
     int mibNames[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
     size_t procInfoSize;
@@ -275,6 +326,17 @@ StartupTimer::StartupTimer()
         free(procInfo);
     } else {
         qWarning("StartupTimer: could not get size of kinfo_proc buffer");
+    }
+
+    // Get system up time
+    if (m_initialized) {
+        struct timeval bootTime;
+        size_t bootTimeLen = sizeof(bootTime);
+        int mibNames[2] = { CTL_KERN, KERN_BOOTTIME };
+        if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), &bootTime, &bootTimeLen, nullptr, 0) == 0 ) {
+            m_systemUpTime = (time(nullptr) - bootTime.tv_sec) * 1000; // we don't need more precision on macOS
+            emit systemUpTimeChanged(m_systemUpTime);
+        }
     }
 
 #else
@@ -303,7 +365,7 @@ StartupTimer::~StartupTimer()
 
 void StartupTimer::checkpoint(const char *name)
 {
-    if (Q_UNLIKELY(m_initialized)) {
+    if (Q_LIKELY(m_initialized)) {
         qint64 delta = m_timer.nsecsElapsed();
         m_checkpoints << qMakePair(delta / 1000 + m_processCreation, name);
     }
@@ -311,9 +373,19 @@ void StartupTimer::checkpoint(const char *name)
 
 void StartupTimer::checkpoint(const QString &name)
 {
-    if (Q_UNLIKELY(m_initialized)) {
+    if (Q_LIKELY(m_initialized)) {
         QByteArray ba = name.toLocal8Bit();
         checkpoint(ba.constData());
+    }
+}
+
+void StartupTimer::checkFirstFrame()
+{
+    if (Q_LIKELY(m_initialized)) {
+        QByteArray ba = "after first frame drawn";
+        m_timeToFirstFrame = m_timer.nsecsElapsed()/1000 + m_processCreation;
+        m_checkpoints << qMakePair(m_timeToFirstFrame, ba);
+        emit timeToFirstFrameChanged(m_timeToFirstFrame);
     }
 }
 
@@ -374,6 +446,16 @@ void StartupTimer::createReport(const QString &title)
         fflush(m_output);
         m_checkpoints.clear();
     }
+}
+
+quint64 StartupTimer::timeToFirstFrame() const
+{
+    return m_timeToFirstFrame / 1000;
+}
+
+quint64 StartupTimer::systemUpTime() const
+{
+    return m_systemUpTime;
 }
 
 QT_END_NAMESPACE_AM

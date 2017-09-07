@@ -644,7 +644,7 @@ void Main::showWindow(bool showFullscreen)
 #else
             QObject::disconnect(conn);
 #endif
-            StartupTimer::instance()->checkpoint("after first frame drawn");
+            StartupTimer::instance()->checkFirstFrame();
             StartupTimer::instance()->createReport(qSL("System UI"));
         }
     });

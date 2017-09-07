@@ -366,7 +366,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     m_launched = true;
 
-    QString applicationId = application.value(qSL("id")).toString();
+    static QString applicationId = application.value(qSL("id")).toString();
 
     if (m_quickLaunched) {
         //StartupTimer::instance()->createReport(applicationId  + qSL(" [process launch]"));
@@ -512,6 +512,16 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         // not sure if this is needed .. or even the best thing to do ... see connects above, they seem to work better
         QObject::connect(&m_engine, &QQmlEngine::quit, m_window, &QObject::deleteLater);
 
+        // create the startup report on first frame drawn
+        static QMetaObject::Connection conn = QObject::connect(m_window, &QQuickWindow::frameSwapped, this, []() {
+            // this is a queued signal, so there may be still one in the queue after calling disconnect()
+            if (conn) {
+                QObject::disconnect(conn);
+                StartupTimer::instance()->checkFirstFrame();
+                StartupTimer::instance()->createReport(applicationId);
+            }
+        });
+
         if (m_configuration.contains(qSL("backgroundColor"))) {
             QSurfaceFormat surfaceFormat = m_window->format();
             surfaceFormat.setAlphaBufferSize(8);
@@ -537,7 +547,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     qCDebug(LogQmlRuntime) << "component loading and creating complete.";
 
     StartupTimer::instance()->checkpoint("component loading and creating complete.");
-    StartupTimer::instance()->createReport(application.value(qSL("id")).toString());
+    if (!m_window) // create the startup report now, since we have no window
+        StartupTimer::instance()->createReport(applicationId);
 
     if (!document.isEmpty() && m_applicationInterface)
         emit m_applicationInterface->openDocument(document, mimeType);

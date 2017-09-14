@@ -41,6 +41,7 @@
 
 #pragma once
 
+#include <QUrl>
 #include <QtAppManCommon/global.h>
 #include <functional>
 
@@ -131,7 +132,7 @@ protected:
     QString hardwareId() const;
 
 private:
-    void loadDummyDataFiles();
+    void loadDummyDataFiles(const QString &directory);
 
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
     const char *dbusInterfaceName(QObject *o) const Q_DECL_NOEXCEPT_EXPR(false);
@@ -147,7 +148,8 @@ private:
 private:
     QVector<InstallationLocation> m_installationLocations;
     bool m_isSingleProcessMode = false;
-    QString m_mainQml;
+    QUrl m_mainQml;
+    QString m_mainQmlLocalFile;
 
     QQmlDebuggingEnabler *m_debuggingEnabler = nullptr;
     QQmlApplicationEngine *m_engine = nullptr;

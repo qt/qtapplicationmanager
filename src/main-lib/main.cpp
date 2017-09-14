@@ -343,9 +343,21 @@ void Main::setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false)
 
 void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_mainQml = mainQml;
-    if (Q_UNLIKELY(!QFile::exists(m_mainQml)))
-        throw Exception("no/invalid main QML file specified: %1").arg(m_mainQml);
+    // For some weird reason, QFile cannot cope with "qrc:/" and QUrl cannot cope with ":/" , so
+    // we have to translate ourselves between those two "worlds".
+
+    if (mainQml.startsWith(qSL(":/")))
+        m_mainQml = QUrl(qSL("qrc:") + mainQml.mid(1));
+    else
+        m_mainQml = QUrl::fromUserInput(mainQml);
+
+    if (m_mainQml.isLocalFile())
+        m_mainQmlLocalFile = m_mainQml.toLocalFile();
+    else if (m_mainQml.scheme() == qSL("qrc"))
+        m_mainQmlLocalFile = qL1C(':') + m_mainQml.path();
+
+    if (!m_mainQmlLocalFile.isEmpty() && !QFile::exists(m_mainQmlLocalFile))
+        throw Exception("no/invalid main QML file specified: %1").arg(m_mainQmlLocalFile);
 }
 
 void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false)
@@ -594,15 +606,18 @@ void Main::setupWindowManager(const QString &waylandSocketName, bool slowAnimati
 #endif
 }
 
-
 void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
 {
     for (auto iface : qAsConst(m_startupPlugins))
         iface->beforeQmlEngineLoad(m_engine);
 
     if (Q_UNLIKELY(loadDummyData)) {
-        loadDummyDataFiles();
-        StartupTimer::instance()->checkpoint("after loading dummy-data");
+        if (m_mainQmlLocalFile.isEmpty()) {
+            qCDebug(LogQml) << "Not loading QML dummy data on non-local URL" << m_mainQml;
+        } else {
+            loadDummyDataFiles(QFileInfo(m_mainQmlLocalFile).path());
+            StartupTimer::instance()->checkpoint("after loading dummy-data");
+        }
     }
 
     m_engine->load(m_mainQml);
@@ -871,10 +886,8 @@ void Main::registerDBusInterfaces(const std::function<QString(const char *)> &bu
 }
 
 // copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
-void Main::loadDummyDataFiles()
+void Main::loadDummyDataFiles(const QString &directory)
 {
-    QString directory = QFileInfo(m_mainQml).path();
-
     QDir dir(directory + qSL("/dummydata"), qSL("*.qml"));
     QStringList list = dir.entryList();
     for (int i = 0; i < list.size(); ++i) {

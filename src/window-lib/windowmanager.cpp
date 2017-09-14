@@ -364,10 +364,14 @@ bool WindowManager::isRunningOnDesktop() const
 
 /*!
     \qmlproperty bool WindowManager::slowAnimations
-    \readonly
 
-    This property reflects the state of the command line option \c --slow-animations. Useful
-    if you need to adjust timings for the slow animation mode.
+    Whether animations are in slow mode.
+
+    It's false by default and might be initialized to true using the command line option
+    \c --slow-animations.
+
+    Also useful to check this value if you need to adjust timings for the slow animation
+    mode.
 */
 bool WindowManager::slowAnimations() const
 {
@@ -376,7 +380,35 @@ bool WindowManager::slowAnimations() const
 
 void WindowManager::setSlowAnimations(bool slowAnimations)
 {
-    d->slowAnimations = slowAnimations;
+    if (slowAnimations != d->slowAnimations) {
+        d->slowAnimations = slowAnimations;
+
+        for (auto view : d->views)
+            updateViewSlowMode(view);
+
+        qCDebug(LogSystem) << "WindowManager::slowAnimations =" << d->slowAnimations;
+
+        emit slowAnimationsChanged(d->slowAnimations);
+    }
+}
+
+void WindowManager::updateViewSlowMode(QQuickWindow *view)
+{
+    // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
+    // we need to enable the slow mode in this timer as well.
+    static QHash<QQuickWindow *, QMetaObject::Connection> conns;
+    bool isSlow = d->slowAnimations;
+    conns.insert(view, connect(view, &QQuickWindow::beforeRendering, this, [view, isSlow] {
+        QMetaObject::Connection con = conns[view];
+        if (con) {
+#if defined(Q_CC_MSVC)
+            qApp->disconnect(con); // MSVC2013 cannot call static member functions without capturing this
+#else
+            QObject::disconnect(con);
+#endif
+            QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+        }
+    }, Qt::DirectConnection));
 }
 
 WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocketName)
@@ -602,22 +634,7 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 {
     d->views << view;
 
-    if (slowAnimations()) {
-        // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
-        // we need to enable the slow mode in this timer as well.
-        static QHash<QQuickWindow *, QMetaObject::Connection> conns;
-        conns.insert(view, connect(view, &QQuickWindow::beforeRendering, this, [view] {
-            QMetaObject::Connection con = conns[view];
-            if (con) {
-#if defined(Q_CC_MSVC)
-                qApp->disconnect(con); // MSVC2013 cannot call static member functions without capturing this
-#else
-                QObject::disconnect(con);
-#endif
-                QUnifiedTimer::instance()->setSlowModeEnabled(true);
-            }
-        }, Qt::DirectConnection));
-    }
+    updateViewSlowMode(view);
 
 #if defined(AM_MULTI_PROCESS)
     if (!ApplicationManager::instance()->isSingleProcess()) {

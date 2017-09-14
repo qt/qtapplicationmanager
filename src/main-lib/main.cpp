@@ -414,6 +414,9 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
                                    const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (singleApp.isEmpty()) {
+        if (!QFile::exists(databasePath)) // make sure to create a database on the first run
+            recreateDatabase = true;
+
         if (recreateDatabase) {
             const QString dbDir = QFileInfo(databasePath).absolutePath();
             if (Q_UNLIKELY(!QDir(dbDir).exists()) && Q_UNLIKELY(!QDir::root().mkpath(dbDir)))

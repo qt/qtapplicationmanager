@@ -94,8 +94,10 @@ AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, const Appl
 
     AbstractRuntime *art = arm->create(ac.take(), app);
 
-    if (art)
+    if (art) {
+        art->setSlowAnimations(m_slowAnimations);
         app->setCurrentRuntime(art);
+    }
     return art;
 }
 
@@ -107,7 +109,10 @@ AbstractRuntime *RuntimeFactory::createQuickLauncher(AbstractContainer *containe
     if (!arm)
         return nullptr;
 
-    return arm->create(ac.take(), nullptr);
+    auto runtime = arm->create(ac.take(), nullptr);
+    if (runtime)
+        runtime->setSlowAnimations(m_slowAnimations);
+    return runtime;
 }
 
 void RuntimeFactory::setConfiguration(const QVariantMap &configuration)
@@ -122,6 +127,11 @@ void RuntimeFactory::setSystemProperties(const QVariantMap &thirdParty, const QV
     for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it) {
         it.value()->setSystemProperties(thirdParty, builtIn);
     }
+}
+
+void RuntimeFactory::setSlowAnimations(bool value)
+{
+    m_slowAnimations = value;
 }
 
 bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager)

@@ -61,6 +61,7 @@
 #include <QLoggingCategory>
 
 #include <QtCore/private/qcoreapplication_p.h>
+#include <private/qabstractanimation_p.h> // For QUnifiedTimer
 #include <qplatformdefs.h>
 
 #if !defined(AM_HEADLESS)
@@ -155,6 +156,8 @@ private:
     bool m_quickLaunched;
 #if !defined(AM_HEADLESS)
     QQuickWindow *m_window = nullptr;
+private slots:
+    void updateSlowMode(bool isSlow);
 #endif
 };
 
@@ -533,6 +536,12 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         for (StartupInterface *iface : qAsConst(startupPlugins))
             iface->beforeWindowShow(m_window);
 
+        connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
+                this, &Controller::updateSlowMode);
+
+        if (qEnvironmentVariableIsSet("AM_SLOW_ANIMATIONS"))
+            updateSlowMode(true);
+
         m_window->show();
 
         StartupTimer::instance()->checkpoint("after showing application window");
@@ -553,5 +562,27 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     if (!document.isEmpty() && m_applicationInterface)
         emit m_applicationInterface->openDocument(document, mimeType);
 }
+
+#if !defined(AM_HEADLESS)
+void Controller::updateSlowMode(bool isSlow)
+{
+    QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+
+    // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
+    // we need to enable the slow mode in this timer as well.
+    static QMetaObject::Connection connection;
+
+    connection = connect(m_window, &QQuickWindow::beforeRendering, this, [isSlow] {
+        if (connection) {
+#if defined(Q_CC_MSVC)
+            qApp->disconnect(connection); // MSVC2013 cannot call static member functions without capturing this
+#else
+            QObject::disconnect(connection);
+#endif
+            QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+        }
+    }, Qt::DirectConnection);
+}
+#endif  // !defined(AM_HEADLESS)
 
 #include "main.moc"

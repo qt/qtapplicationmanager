@@ -69,6 +69,7 @@ public:
 
     void setConfiguration(const QVariantMap &configuration);
     void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
+    void setSlowAnimations(bool isSlow);
 
     bool registerRuntime(AbstractRuntimeManager *manager);
     bool registerRuntime(AbstractRuntimeManager *manager, const QString &identifier);
@@ -80,6 +81,9 @@ private:
     static RuntimeFactory *s_instance;
 
     QHash<QString, AbstractRuntimeManager *> m_runtimes;
+
+    // To be passed to newly created runtimes
+    bool m_slowAnimations{false};
 };
 
 QT_END_NAMESPACE_AM

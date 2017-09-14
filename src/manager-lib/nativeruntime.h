@@ -90,6 +90,7 @@ public:
 
     qint64 applicationProcessId() const override;
     virtual void openDocument(const QString &document, const QString &mimeType) override;
+    virtual void setSlowAnimations(bool value) override;
 
     bool sendNotificationUpdate(Notification *n);
 
@@ -132,6 +133,7 @@ private:
     NativeRuntimeInterface *m_runtimeInterface = nullptr;
     AbstractContainerProcess *m_process = nullptr;
     QDBusServer *m_applicationInterfaceServer;
+    bool m_slowAnimations = false;
 
     friend class NativeRuntimeManager;
 };

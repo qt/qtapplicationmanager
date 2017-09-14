@@ -59,6 +59,7 @@
 #include "application.h"
 #include "applicationmanager.h"
 #include "abstractruntime.h"
+#include "runtimefactory.h"
 #include "window.h"
 #include "windowmanager.h"
 #include "windowmanager_p.h"
@@ -385,6 +386,19 @@ void WindowManager::setSlowAnimations(bool slowAnimations)
 
         for (auto view : d->views)
             updateViewSlowMode(view);
+
+        // Update timer of the main, GUI, thread
+        QUnifiedTimer::instance()->setSlowModeEnabled(d->slowAnimations);
+
+        // For new applications to start with the correct value
+        RuntimeFactory::instance()->setSlowAnimations(d->slowAnimations);
+
+        // Update already running applications
+        for (const Application *application : ApplicationManager::instance()->applications()) {
+            auto runtime = application->currentRuntime();
+            if (runtime)
+                runtime->setSlowAnimations(d->slowAnimations);
+        }
 
         qCDebug(LogSystem) << "WindowManager::slowAnimations =" << d->slowAnimations;
 

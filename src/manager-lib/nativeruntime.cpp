@@ -264,6 +264,9 @@ bool NativeRuntime::start()
         { qSL("AM_BASE_DIR"), QDir::currentPath() }
     };
 
+    if (m_slowAnimations)
+        env.insert(qSL("AM_SLOW_ANIMATIONS"), qSL("1"));
+
     if (!m_needsLauncher && !m_isQuickLauncher)
         env.insert(qSL("AM_RUNTIME_SYSTEM_PROPERTIES"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ systemProperties() })));
     if (!Logging::isDltEnabled())
@@ -459,6 +462,14 @@ void NativeRuntime::openDocument(const QString &document, const QString &mimeTyp
        emit m_applicationInterface->openDocument(document, mimeType);
 }
 
+void NativeRuntime::setSlowAnimations(bool value)
+{
+    if (m_slowAnimations != value) {
+        m_slowAnimations = value;
+        if (m_applicationInterface)
+            emit m_applicationInterface->slowAnimationsChanged(value);
+    }
+}
 
 NativeRuntimeApplicationInterface::NativeRuntimeApplicationInterface(NativeRuntime *runtime)
     : ApplicationInterface(runtime)

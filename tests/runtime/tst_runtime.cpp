@@ -59,6 +59,8 @@ public:
         : AbstractRuntime(container, app, manager)
     { }
 
+    void setSlowAnimations(bool) override {}
+
     qint64 applicationProcessId() const
     {
         return m_state == AbstractRuntime::Active ? 1 : 0;

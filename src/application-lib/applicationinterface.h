@@ -81,6 +81,8 @@ signals:
     Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
     Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
 
+    Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
+
 protected:
     ApplicationInterface(QObject *parent)
         : QObject(parent)

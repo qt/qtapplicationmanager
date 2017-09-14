@@ -121,6 +121,8 @@ public:
 
     virtual void openDocument(const QString &document, const QString &mimeType);
 
+    virtual void setSlowAnimations(bool value) = 0;
+
     void setInProcessQmlEngine(QQmlEngine *view);
     QQmlEngine* inProcessQmlEngine() const;
 

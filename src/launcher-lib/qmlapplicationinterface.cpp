@@ -127,6 +127,7 @@ bool QmlApplicationInterface::initialize()
     ok = ok && connect(m_applicationIf, SIGNAL(memoryLowWarning()), this, SIGNAL(memoryLowWarning()));
     ok = ok && connect(m_applicationIf, SIGNAL(memoryCriticalWarning()), this, SIGNAL(memoryCriticalWarning()));
     ok = ok && connect(m_applicationIf, SIGNAL(openDocument(QString,QString)), this, SIGNAL(openDocument(QString,QString)));
+    ok = ok && connect(m_applicationIf, SIGNAL(slowAnimationsChanged(bool)), this, SIGNAL(slowAnimationsChanged(bool)));
 
     if (!ok)
         qCritical("ERROR: could not connect the ApplicationInterface via D-Bus: %s", qPrintable(m_applicationIf->lastError().name()));
@@ -241,7 +242,5 @@ void QmlApplicationInterface::notificationActionTriggered(uint notificationId, c
         }
     }
 }
-
-
 
 QT_END_NAMESPACE_AM

@@ -359,7 +359,7 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
     roleNames.insert(IsRunning, "isRunning");
     roleNames.insert(IsStartingUp, "isStartingUp");
     roleNames.insert(IsShuttingDown, "isShuttingDown");
-    roleNames.insert(IsBlocked, "isLocked");
+    roleNames.insert(IsBlocked, "isBlocked");
     roleNames.insert(IsUpdating, "isUpdating");
     roleNames.insert(IsRemovable, "isRemovable");
     roleNames.insert(UpdateProgress, "updateProgress");

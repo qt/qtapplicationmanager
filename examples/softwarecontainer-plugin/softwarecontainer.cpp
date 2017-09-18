@@ -544,11 +544,6 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
     return true;
 }
 
-bool SoftwareContainer::isStarted() const
-{
-    return (m_pid);
-}
-
 qint64 SoftwareContainer::processId() const
 {
     return m_pid;

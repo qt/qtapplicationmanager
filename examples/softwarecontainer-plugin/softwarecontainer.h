@@ -76,7 +76,6 @@ public:
     QString mapHostPathToContainer(const QString &hostPath) const override;
 
     bool start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment) override;
-    bool isStarted() const override;
 
     qint64 processId() const override;
     QProcess::ProcessState state() const override;

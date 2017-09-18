@@ -44,3 +44,266 @@
 ContainerInterface::~ContainerInterface() { }
 
 ContainerManagerInterface::~ContainerManagerInterface() { }
+
+/*! \class ContainerInterface
+    \inmodule QtApplicationManager
+    \brief An interface for custom container instances.
+
+    A pointer to this interface should be returned from a successful call to
+    ContainerManagerInterface::create()
+
+    Each instance of this class corresponds to a single application or - if supported - a single
+    quick-launcher instance.
+
+    The interface is closely modelled after QProcess and even reuses many of QProcess' enums.
+*/
+
+/*! \fn bool ContainerInterface::attachApplication(const QVariantMap &application)
+
+    The application-manager calls this function, when an \a application has to be attached to this
+    container instance: the \a application map closely corresponds to the application's meta-data
+    returned from the ApplicationManager::get() method:
+
+    These fields are \b not available for this function:
+    \table
+    \header
+      \li Name
+    \row \li isRunning
+    \row \li isStartingUp
+    \row \li isShuttingDown
+    \row \li isLocked
+    \row \li isUpdating
+    \row \li isRemovable
+    \row \li updateProgress
+    \row \li application
+    \row \li lastExitCode
+    \row \li lastExitStatus
+    \endtable
+
+    These fields are \b added on top of what ApplicationManager::get() provides:
+    \table
+    \header
+      \li Name
+      \li Description
+    \row
+      \li \c codeDir
+      \li The directory where the application's code is located.
+    \row
+      \li \c manifestDir
+      \li The directory where the application's manifest (\c info.yaml) is located.
+    \row
+      \li \c applicationProperties
+      \li A map with all application properties as seen in the manifest.
+    \row
+      \li \c installationLocationId
+      \li The installation location id, if this application was installed - empty for built-in
+          applications.
+    \endtable
+*/
+
+/*! \fn QString ContainerInterface::controlGroup() const
+
+    This function needs to return which control group the application's container is in. The control
+    group name returned by this function is not the low-level name used by the operating
+    system, but an abstraction. See the \l{control group mapping}{container documentation} for more
+    details on how to setup this mapping.
+
+    \note If your custom container solution does not support cgroups, then simply return an empty
+          QString here.
+*/
+
+/*! \fn bool ContainerInterface::setControlGroup(const QString &groupName)
+
+    This function is expected to move the application's container into a control group. The
+    \a groupName is not the low-level name used by the operating system, but an abstraction. See
+    the \l{control group mapping}{container documentation} for more  details on how to setup this
+    mapping.
+    Returns \c true if the call was successful or \c false otherwise.
+
+    \note If your custom container solution does not support cgroups, then simply return \c false
+          here.
+*/
+
+/*! \fn bool ContainerInterface::setProgram(const QString &program)
+    This function is called by the application-manager in order to set the \a program to execute
+    when starting the process. This function will be called before start().
+    Needs to return \c true if \a program is valid within this container or \c false otherwise.
+
+    \sa start()
+*/
+
+/*! \fn void ContainerInterface::setBaseDirectory(const QString &baseDirectory)
+    Called by the application-manager to set the initial working directory for the process within
+    the container to \a baseDirectory.
+*/
+
+/*! \fn bool ContainerInterface::isReady() const
+    Needs to return \c true if the container is ready for starting the application's program or
+    \c false otherwise.
+
+    \sa ready()
+*/
+
+/*! \fn QString ContainerInterface::mapContainerPathToHost(const QString &containerPath) const
+    The application-manager will call this function whenever paths have to be mapped between the
+    filesystem namespace of the application's container and the application-manager.
+
+    You can simply return \a containerPath, if both are running in the same namespace.
+*/
+
+/*! \fn QString ContainerInterface::mapHostPathToContainer(const QString &hostPath) const
+    The application-manager will call this function whenever paths have to be mapped between the
+    filesystem namespace of the application-manager and the application's container.
+
+    You can simply return \a hostPath, if both are running in the same namespace.
+*/
+
+/*! \fn bool ContainerInterface::start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment)
+    This function will be called to asynchronously start the application's program (as set by
+    setProgram()), with the additional command line \a arguments and with the additional environment
+    variables from \a runtimeEnvironment.
+
+    The \a runtimeEnvironment is a string map for environment variables and their values. An empty
+    value in this map means, that the environment variable denoted by its key shall be unset.
+
+    The application-manager will only ever call this function once for any given instance.
+
+    This function should return \c true in case it succeeded or \c false otherwise. In case it
+    returns \c true, the implementation needs to either emit the started() or errorOccurred() signal
+    (can be delayed) in response to this call.
+
+    \sa QProcess:start()
+*/
+
+/*! \fn qint64 ContainerInterface::processId() const
+
+    Should return the native process identifier for the running process, if available. If no process
+    is currently running, \c 0 is returned.
+
+    \note The process identifier needs to be translated into the application-manager's PID
+          namespace, if the container solution is managing its own, private namespace.
+    \note This identifier is needed to support security features within the application-manager:
+          Having a valid PID for every container is necessary (a) in order for Wayland windows to
+          only be accepted when coming from known PIDs and (b) for system services to retrieve
+          meta-data on applications via the D-Bus call ApplicationManager::identifyApplication().
+          If you need a quick workaround during development for Wayland to accept windows from any
+          PID, then run the application-manager with \c{--no-security}.
+*/
+
+/*! \fn QProcess::ProcessState ContainerInterface::state() const
+
+    This function needs to return the current state of the process within the container.
+
+    \sa stateChanged(), errorOccured(), QProcess::state()
+*/
+
+/*! \fn void ContainerInterface::kill()
+
+    Called by the application-manager, if it wants to kills the current process within the
+    container, causing it to exit immediately.
+
+    On Unix, the equivalent would be sending a \c SIGKILL signal.
+
+    \sa terminate()
+*/
+
+/*! \fn void ContainerInterface::terminate()
+
+    Called by the application-manager, when attempting to terminate the process within the container.
+
+    The process may not exit as a result of calling this function.
+    On Unix, the equivalent would be sending a \c SIGTERM signal.
+
+    \sa kill()
+*/
+
+
+/*! \fn void ContainerInterface::ready()
+
+    If the container implementation needs to do potentially expensive initialization work in the
+    background, it can tell the application-manager to delay calling start() until it has emitted
+    this signal.
+
+    In case this is not needed, then you never have to emit this signal, but you are expected to
+    always return \c true from isReady().
+
+    \sa isReady()
+*/
+
+/*! \fn void ContainerInterface::started()
+
+    This signal has to be emitted when the process within the container has started and state()
+    returns QProcess::Running.
+
+    \sa QProcess::started()
+*/
+
+/*! \fn void ContainerInterface::errorOccured(QProcess::ProcessError processError)
+
+    This signal needs to be emitted when an error occurs with the process within the container. The
+    specified \a processError describes the type of error that occurred.
+
+    \sa QProcess::errorOccurred()
+*/
+
+/*! \fn void ContainerInterface::finished(int exitCode, QProcess::ExitStatus exitStatus)
+
+    This signal has to be emitted when the process within the container finishes. The \a exitStatus
+    parameter gives an indication why the process exited - in case of a normal exit, the \a exitCode
+    will be the return value of the process' \c main() function.
+
+    \sa QProcess::finished()
+*/
+
+/*! \fn void ContainerInterface::stateChanged(QProcess::ProcessState state)
+
+    This signal needs to be emitted whenever the \a state of the process within the container changes.
+*/
+
+
+/*! \class ContainerManagerInterface
+    \inmodule QtApplicationManager
+    \brief A plugin interface for custom container solutions.
+
+    This is the interface that you have to implement, if you want to get your own custom container
+    solution into the application-manager.
+
+    For an example, please see \c{examples/software-container}. This example shows the integration
+    of Pelagicore's SoftwareContainers (which are essentially nice-to-use LXC wrappers).
+*/
+
+/*! \fn QString ContainerManagerInterface::identifier() const
+    Should return the unique identifier string for this container plugin.
+*/
+
+/*! \fn bool ContainerManagerInterface::supportsQuickLaunch() const
+    Expected to return \c true if the interface has support for quick-launching or \c false otherwise.
+*/
+
+/*! \fn void ContainerManagerInterface::setConfiguration(const QVariantMap &configuration)
+    Called by the application-manager after parsing its configuration files. The \a configuration
+    map corresponds to the (optional) container specific configuration as described in the
+    \l{Container Integration Configuration}{container documentation}.
+*/
+
+/*! \fn ContainerInterface *ContainerManagerInterface::create(bool isQuickLaunch, const QVector<int> &stdioRedirections, const QMap<QString, QString> &debugWrapperEnvironment, const QStringList &debugWrapperCommand)
+    The application-manager will call this function every time it needs to create a specific
+    container for a direct application launch, or a runtime quick-launcher (depending on the value
+    of the \a isQuickLaunch parameter).
+
+    If the \a stdioRedirections vector is not empty, the plugin should - if possible - redirect
+    standard-io streams: the vector can have 3 entries at most, with the index corresponding to the
+    Unix standard-io file number (0: \c stdin, 1: \c stdout and 2: \c stderr). The values in this
+    vector are either open OS file descriptors for redirections or \c -1.
+    \c{[-1, 5, 5]} would mean: ignore \c stdin and redirect both \c stdout and \c stderr to fd \c 5.
+
+    The \a debugWrapperEnvironment is an optional string map for environment variables and their
+    values, if a debug-wrapper is to be used (the \a debugWrapperCommand is not empty - see below).
+    An empty value in this map means, that the environment variable denoted by its key shall be
+    unset.
+
+    In case the \a debugWrapperCommand is not empty, the plugin is requested to execute the binary
+    set by ContainterInterface::setProgram using this debug-wrapper. The plugin is responsible for
+    combining both and by handling the replacement of \c{%program%} and \c{%arguments%}. See the
+    \l{Debug Wrappers} {debug-wrapper documentation} for more information.
+*/

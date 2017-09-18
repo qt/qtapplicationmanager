@@ -9,19 +9,7 @@ examples.fileextensions = "*.qml *.yaml"
 examples.imageextensions = "*.png *.jpg *.gif"
 
 headerdirs += \
-    ../src/main-lib \
-    ../src/manager-lib \
-    ../src/application-lib \
-    ../src/package-lib \
-    ../src/installer-lib \
-    ../src/notification-lib \
-    ../src/window-lib \
-    ../src/launcher-lib \
-    ../src/launchers/qml \
-    ../src/monitor-lib
-
-sourcedirs += \
-    . \
+    ../src/common-lib \
     ../src/main-lib \
     ../src/manager-lib \
     ../src/application-lib \
@@ -32,11 +20,26 @@ sourcedirs += \
     ../src/launcher-lib \
     ../src/launchers/qml \
     ../src/monitor-lib \
+    ../src/plugin-interfaces \
+
+sourcedirs += \
+    . \
+    ../src/common-lib \
+    ../src/main-lib \
+    ../src/manager-lib \
+    ../src/application-lib \
+    ../src/package-lib \
+    ../src/installer-lib \
+    ../src/notification-lib \
+    ../src/window-lib \
+    ../src/launcher-lib \
+    ../src/launchers/qml \
+    ../src/monitor-lib \
+    ../src/plugin-interfaces \
     ../src/tools/packager \
     ../src/tools/deployer \
     ../src/tools/controller \
-    ../src/common-lib \
-    $$BUILDDIR
+    $$BUILDDIR \
 
 exampledirs = ../examples
 

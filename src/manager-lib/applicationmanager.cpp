@@ -300,8 +300,9 @@
 /*!
     \qmlsignal ApplicationManager::applicationChanged(string id, list<string> changedRoles)
 
-    Emitted whenever one or more data roles, denoted by \a changedRole, changed on the application
-    identified by \a id.
+    Emitted whenever one or more data roles, denoted by \a changedRoles, changed on the application
+    identified by \a id. An empty list in the \a changedRoles argument means that all roles should
+    be considered modified.
 
     \note In addition to the normal "low-level" QAbstractListModel signals, the application-manager
           will also emit these "high-level" signals for System-UIs that cannot work directly on the

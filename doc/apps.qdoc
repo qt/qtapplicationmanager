@@ -50,13 +50,16 @@ additional tasks:
 
 It is recommended to use either an ApplicationManagerWindow or a QtObject as the root of your QML
 application. This is especially important, if you expect similar behavior in single- and
-multiprocess mode. Nevertheless other root elements are supported for convenience, as well. Here
-are a few things to consider:
+multi-process mode. If a QtObject is used, visible base elements should still be
+\l{ApplicationManagerWindow}{ApplicationManagerWindows}. Nevertheless other root elements are
+supported for convenience, as well. Here are a few things to consider:
 \list
-    \li In multi-porcess mode \l{Window} root elements will get a decoration (unless
-        QT_WAYLAND_DISABLE_WINDOWDECORATION is set) and QQuick \l{Item}{Items} will be wrapped
-        inside a QWindow representing a Wayland client window.
-    \li In single-process mode \l{Window} root elements will appear parallel to instead of inside
+    \li Only \l{ApplicationManagerWindow}{ApplicationManagerWindows} support window properties
+        that are shared between the System-UI and the client applications.
+    \li In multi-porcess mode \l Window root elements will get a decoration (unless
+        QT_WAYLAND_DISABLE_WINDOWDECORATION is set) and will be invisible by default. QQuick
+        \l{Item}{Items} will be wrapped inside a \l Window representing a Wayland client window.
+    \li In single-process mode \l Window root elements will appear parallel to instead of inside
         the system UI.
 \endlist
 

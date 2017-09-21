@@ -503,6 +503,10 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             QQuickView* view = new QQuickView(&m_engine, nullptr);
             m_window = view;
             view->setContent(qmlFileUrl, nullptr, topLevel);
+            view->setVisible(contentItem->isVisible());
+            connect(contentItem, &QQuickItem::visibleChanged, this, [view, contentItem]() {
+                view->setVisible(contentItem->isVisible());
+            });
         }
     } else {
         if (!m_engine.incubationController())
@@ -516,12 +520,15 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         QObject::connect(&m_engine, &QQmlEngine::quit, m_window, &QObject::deleteLater);
 
         // create the startup report on first frame drawn
-        static QMetaObject::Connection conn = QObject::connect(m_window, &QQuickWindow::frameSwapped, this, []() {
+        static QMetaObject::Connection conn = QObject::connect(m_window, &QQuickWindow::frameSwapped,
+                                                               this, [this, startupPlugins]() {
             // this is a queued signal, so there may be still one in the queue after calling disconnect()
             if (conn) {
                 QObject::disconnect(conn);
                 StartupTimer::instance()->checkFirstFrame();
                 StartupTimer::instance()->createReport(applicationId);
+                for (StartupInterface *iface : qAsConst(startupPlugins))
+                    iface->afterWindowShow(m_window);
             }
         });
 
@@ -533,22 +540,16 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
         }
 
-        for (StartupInterface *iface : qAsConst(startupPlugins))
-            iface->beforeWindowShow(m_window);
-
         connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
                 this, &Controller::updateSlowMode);
 
         if (qEnvironmentVariableIsSet("AM_SLOW_ANIMATIONS"))
             updateSlowMode(true);
-
-        m_window->show();
-
-        StartupTimer::instance()->checkpoint("after showing application window");
-
-        for (StartupInterface *iface : qAsConst(startupPlugins))
-            iface->afterWindowShow(m_window);
     }
+
+    // needed, even though we do not explicitly show() the window any more
+    for (StartupInterface *iface : qAsConst(startupPlugins))
+        iface->beforeWindowShow(m_window);
 
 #else
     m_engine.setIncubationController(new HeadlessIncubationController(&m_engine));

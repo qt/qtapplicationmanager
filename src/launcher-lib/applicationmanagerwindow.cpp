@@ -62,12 +62,11 @@ public:
     \inqmlmodule QtApplicationManager
     \brief The ApplicationManagerWindow item
 
-    This QML item should be used as the root item in your QML application. In doing so, you enable
+    This QML item can be used as the root item in your QML application. In doing so, you enable
     your application to be usable in both single-process (EGL fullscreen, desktop) and
-    multi-process (Wayland) mode.
-
-    If you are not using ApplicationManagerWindow as the QML root item, your application will only
-    work in multi-process (Wayland) mode.
+    multi-process (Wayland) mode. It inherits from \l Window in multi-process and from \l Item in
+    single-process mode. In contrast to a \l Window it is visible by default. Additional details can
+    be found in the section about \l {The Root Element}{the root element}.
 
     The QML import for this item is
 
@@ -122,6 +121,7 @@ ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
     setFlags(flags() | Qt::FramelessWindowHint);
     setWidth(1024);
     setHeight(768);
+    setVisible(true);
 
     (void) winId(); // force allocation of platform resources
 

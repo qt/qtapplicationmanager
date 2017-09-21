@@ -65,10 +65,12 @@ Rectangle {
     Connections {
         target: ApplicationInterface
         onOpenDocument: {
-            if (documentUrl === "show-sub")
-                sub.visible = true;
-            else if (documentUrl === "hide-sub")
-                sub.visible = false;
+            switch (documentUrl) {
+            case "show-main": root.visible = true; break;
+            case "hide-main": root.visible = false; break;
+            case "show-sub": sub.visible = true; break;
+            case "hide-sub": sub.visible = false; break;
+            }
         }
     }
 }

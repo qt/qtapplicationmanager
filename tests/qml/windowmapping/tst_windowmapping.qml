@@ -65,6 +65,7 @@ TestCase {
         onWindowLost: WindowManager.releaseWindow(window);
     }
 
+
     SignalSpy {
         id: windowReadySpy
         target: WindowManager
@@ -77,19 +78,56 @@ TestCase {
         signalName: "windowLost"
     }
 
+    SignalSpy {
+        id: runStateChangedSpy
+        target: ApplicationManager
+        signalName: "applicationRunStateChanged"
+    }
+
+    function ensureAppTerminated(id) {
+        runStateChangedSpy.clear();
+        while (ApplicationManager.applicationRunState(id) !== ApplicationManager.NotRunning) {
+            runStateChangedSpy.wait(3000);
+            verify(runStateChangedSpy.count)
+        }
+    }
+
+    function test_default_data() {
+        return [ { tag: "ApplicationManagerWindow", appId: "test.winmap.amwin" },
+                 // skipping QtObject, as it doesn't show anything
+                 { tag: "Rectangle", appId: "test.winmap.rectangle" },
+                 { tag: "Window", appId: "test.winmap.window" } ];
+    }
+
+    function test_default(data) {
+        if (ApplicationManager.singleProcess && data.tag === "Window")
+            skip("Window root element is not properly supported in single process mode.");
+
+        var appId = data.appId;
+        compare(chrome.children.length, 1);
+        ApplicationManager.startApplication(appId);
+        windowReadySpy.wait(2000);
+        compare(windowReadySpy.count, 1);
+        windowReadySpy.clear();
+        compare(chrome.children.length, 2);
+
+        ApplicationManager.stopApplication(appId);
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+        windowLostSpy.clear();
+        ensureAppTerminated(appId);
+    }
+
     function test_mapping_data() {
         return [ { tag: "ApplicationManagerWindow", appId: "test.winmap.amwin" },
-                 { tag: "Window", appId: "test.winmap.window" },
+                 { tag: "QtObject", appId: "test.winmap.qtobject" },
                  { tag: "Rectangle", appId: "test.winmap.rectangle" },
-                 { tag: "QtObject", appId: "test.winmap.qtobject" } ];
+                 { tag: "Window", appId: "test.winmap.window" } ];
     }
 
     function test_mapping(data) {
-        if (ApplicationManager.singleProcess && data.tag === "Window") {
-            //skip() would skip subsequent data tests (Rectangle and QtObject), as well.
-            console.info("Window root element is not properly supported in single process mode.");
-            return;
-        }
+        if (ApplicationManager.singleProcess && data.tag === "Window")
+            skip("Window root element is not properly supported in single process mode.");
 
         var appId = data.appId;
         compare(chrome.children.length, 1);
@@ -107,7 +145,7 @@ TestCase {
         compare(subChrome.children.length, 1);
 
         var openWindows = 2;
-        // visible handling needs to be fixed for single process mode:
+        // visible handling needs to be fixed for single process mode (AUTOSUITE-131):
         if (!ApplicationManager.singleProcess) {
             ApplicationManager.startApplication(appId, "hide-sub");
             windowLostSpy.wait(2000);
@@ -121,5 +159,6 @@ TestCase {
         windowLostSpy.wait(2000);
         compare(windowLostSpy.count, openWindows);
         windowLostSpy.clear();
+        ensureAppTerminated(appId);
     }
 }

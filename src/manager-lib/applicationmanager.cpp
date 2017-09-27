@@ -620,6 +620,10 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         throw Exception("Application %1 is blocked - cannot start").arg( app->id());
 
     AbstractRuntime *runtime = app->currentRuntime();
+    auto runtimeManager = runtime ? runtime->manager() : RuntimeFactory::instance()->manager(app->runtimeName());
+    if (!runtimeManager)
+        throw Exception("No RuntimeManager found for runtime: %1").arg(app->runtimeName());
+    bool inProcess = runtimeManager->inProcess();
 
     // validate stdio redirections
     if (stdioRedirections.size() > 3) {
@@ -641,7 +645,11 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     QMap<QString, QString> debugEnvironmentVariables;
     if (!debugWrapperSpecification.isEmpty()) {
         if (isSingleProcess())
-            throw Exception("Using debug-wrappers is not supported in the single-process mode.");
+            throw Exception("Using debug-wrappers is not supported when the application-manager is running in single-process mode.");
+        if (inProcess) {
+            throw Exception("Using debug-wrappers is not supported when starting an app using an in-process runtime (%1).")
+                .arg(runtimeManager->identifier());
+        }
 
         if (!DebugWrapper::parseSpecification(debugWrapperSpecification, debugWrapperCommand,
                                               debugEnvironmentVariables)) {
@@ -675,13 +683,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         }
     }
 
-    auto runtimeManager = RuntimeFactory::instance()->manager(app->runtimeName());
-    if (!runtimeManager)
-        throw Exception("No RuntimeManager found for runtime: %1").arg(app->runtimeName());
-
-    bool inProcess = runtimeManager->inProcess();
     AbstractContainer *container = nullptr;
-
     QString containerId;
 
     if (!inProcess) {

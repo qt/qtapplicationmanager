@@ -188,7 +188,7 @@ void FakeApplicationManagerWindow::componentComplete()
 
 void FakeApplicationManagerWindow::onVisibleChanged()
 {
-    if (m_runtime && isVisible() && this->parent())
+    if (m_runtime && isVisible())
         m_runtime->addWindow(this);
 }
 

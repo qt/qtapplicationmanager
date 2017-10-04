@@ -305,5 +305,5 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     In case the \a debugWrapperCommand is not empty, the plugin is requested to execute the binary
     set by ContainterInterface::setProgram using this debug-wrapper. The plugin is responsible for
     combining both and by handling the replacement of \c{%program%} and \c{%arguments%}. See the
-    \l{Debug Wrappers} {debug-wrapper documentation} for more information.
+    \l{DebugWrappers} {debug-wrapper documentation} for more information.
 */

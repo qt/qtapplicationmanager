@@ -146,7 +146,7 @@ Main::Main(int &argc, char **argv)
                                            [](int /*sig*/) {
         UnixSignalHandler::instance()->resetToDefault(SIGINT);
         fputs("\n*** received SIGINT / Ctrl+C ... exiting ***\n\n", stderr);
-        static_cast<Main *>(qApp)->shutDown();
+        static_cast<Main *>(qApp)->shutDown(1);
     });
     StartupTimer::instance()->checkpoint("after application constructor");
 }
@@ -234,7 +234,7 @@ bool Main::isSingleProcessMode() const
     return m_isSingleProcessMode;
 }
 
-void Main::shutDown()
+void Main::shutDown(int exitCode)
 {
     enum {
         ApplicationManagerDown = 0x01,
@@ -244,11 +244,11 @@ void Main::shutDown()
 
     static int down = 0;
 
-    static auto checkShutDownFinished = [](int nextDown) {
+    static auto checkShutDownFinished = [exitCode](int nextDown) {
         down |= nextDown;
         if (down == (ApplicationManagerDown | QuickLauncherDown | WindowManagerDown)) {
             down = 0;
-            QCoreApplication::quit();
+            QCoreApplication::exit(exitCode);
         }
     };
 
@@ -425,6 +425,7 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
         m_applicationDatabase.reset(new ApplicationDatabase(databasePath));
     } else {
         m_applicationDatabase.reset(new ApplicationDatabase());
+        recreateDatabase = true;
     }
 
     if (Q_UNLIKELY(!m_applicationDatabase->isValid() && !recreateDatabase)) {
@@ -565,7 +566,7 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     StartupTimer::instance()->checkpoint("after QML registrations");
 
     m_engine = new QQmlApplicationEngine(this);
-    connect(m_engine, &QQmlEngine::quit, this, &Main::shutDown);
+    connect(m_engine, &QQmlEngine::quit, this, [this]() { shutDown(); });
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
     m_engine->setImportPathList(m_engine->importPathList() + importPaths);
@@ -637,7 +638,7 @@ void Main::showWindow(bool showFullscreen)
 {
 #if !defined(AM_HEADLESS)
     setQuitOnLastWindowClosed(false);
-    connect(this, &QGuiApplication::lastWindowClosed, this, &Main::shutDown);
+    connect(this, &QGuiApplication::lastWindowClosed, this, [this]() { shutDown(); });
 
     QQuickWindow *window = nullptr;
     QObject *rootObject = m_engine->rootObjects().constFirst();

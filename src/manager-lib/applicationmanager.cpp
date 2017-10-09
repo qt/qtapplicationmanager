@@ -1313,12 +1313,22 @@ bool ApplicationManager::canceledApplicationInstall(const QString &id)
 
 void ApplicationManager::preload()
 {
-    bool forcePreload = d->database && d->database->isTemporary();
+    bool singleAppMode = d->database && d->database->isTemporary();
 
     for (const Application *app : qAsConst(d->apps)) {
-        if (forcePreload || app->isPreloaded()) {
+        if (singleAppMode || app->isPreloaded()) {
             if (!startApplication(app)) {
-                qCWarning(LogSystem) << "WARNING: unable to start preload-enabled application" << app->id();
+                if (!singleAppMode)
+                    qCWarning(LogSystem) << "WARNING: unable to start preload-enabled application" << app->id();
+                else
+                    QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection, Q_ARG(int, 1));
+            } else if (singleAppMode) {
+                connect(this, &ApplicationManager::applicationRunStateChanged, [app](const QString &id, ApplicationManager::RunState runState) {
+                    if ((id == app->id()) && (runState == NotRunning)) {
+                        QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection,
+                                                  Q_ARG(int, app->lastExitCode()));
+                    }
+                });
             }
         }
     }

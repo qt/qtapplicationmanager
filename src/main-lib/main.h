@@ -92,7 +92,7 @@ public:
     void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
     void showWindow(bool showFullscreen);
 
-    void shutDown();
+    Q_INVOKABLE void shutDown(int exitCode = 0);
 
     QQmlApplicationEngine *qmlEngine() const;
 

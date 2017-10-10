@@ -230,6 +230,12 @@
 
     \sa {Installation Locations}
 */
+/*!
+    \qmlsignal Application::activated()
+
+    This signal is emitted when the application is started or when it's already running but has
+    been requested to be brought to foreground or raised.
+*/
 
 
 QT_BEGIN_NAMESPACE_AM

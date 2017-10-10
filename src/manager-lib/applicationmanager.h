@@ -189,6 +189,7 @@ private slots:
 
 private:
     void emitDataChanged(const Application *app, const QVector<int> &roles = QVector<int>());
+    void emitActivated(const Application *app);
     void registerMimeTypes();
 
     ApplicationManager(ApplicationDatabase *adb, bool singleProcess, QObject *parent = nullptr);

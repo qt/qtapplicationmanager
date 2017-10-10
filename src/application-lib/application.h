@@ -172,6 +172,7 @@ signals:
     void runtimeChanged() const;
     void lastExitCodeChanged() const;
     void lastExitStatusChanged() const;
+    void activated() const;
 
 private:
     Application();

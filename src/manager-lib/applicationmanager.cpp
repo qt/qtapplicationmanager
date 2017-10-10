@@ -672,7 +672,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             else if (!app->documentUrl().isNull())
                 runtime->openDocument(app->documentUrl(), documentMimeType);
 
-            emit applicationWasActivated(app->isAlias() ? app->nonAliased()->id() : app->id(), app->id());
+            emitActivated(app);
             return true;
 
         case AbstractRuntime::Shutdown:
@@ -821,7 +821,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
     else if (!app->documentUrl().isNull())
         runtime->openDocument(app->documentUrl(), documentMimeType);
 
-    emit applicationWasActivated(app->isAlias() ? app->nonAliased()->id() : app->id(), app->id());
+    emitActivated(app);
 
     qCDebug(LogSystem) << "Starting application" << app->id() << "in container" << containerId
                        << "using runtime" << runtimeManager->identifier();
@@ -1382,6 +1382,12 @@ void ApplicationManager::emitDataChanged(const Application *app, const QVector<i
             emit applicationChanged(app->id(), stringRoles);
         }
     }
+}
+
+void ApplicationManager::emitActivated(const Application *app)
+{
+    emit applicationWasActivated(app->isAlias() ? app->nonAliased()->id() : app->id(), app->id());
+    emit app->activated();
 }
 
 // item model part

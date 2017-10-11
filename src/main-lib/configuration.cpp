@@ -244,7 +244,7 @@ void Configuration::parse()
     if (m_clp.isSet(qSL("help")))
         m_clp.showHelp();
 
-    if (m_clp.isSet(qSL("build-config"))) {
+    if (!m_buildConfigFilePath.isEmpty() && m_clp.isSet(qSL("build-config"))) {
         QFile f(m_buildConfigFilePath);
         if (f.open(QFile::ReadOnly)) {
             showParserMessage(QString::fromLocal8Bit(f.readAll()), UsageMessage);

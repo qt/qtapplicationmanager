@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.winmap.loader'
+icon:    'icon.png'
+code:    'loader.qml'
+runtime: 'qml'
+name:
+  en: 'Dynamic loading'

@@ -593,6 +593,8 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
                 this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemCreated), Qt::QueuedConnection);
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemClosing,
                 this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemClosing), Qt::QueuedConnection);
+        connect(this, &WindowManager::windowReleased, runtime,
+                &AbstractRuntime::inProcessSurfaceItemReleased, Qt::QueuedConnection);
     }
 }
 
@@ -619,9 +621,12 @@ void WindowManager::releaseWindow(QQuickItem *window)
         qCWarning(LogGraphics) << "releaseWindow was called with an invalid window pointer" << window;
         return;
     }
+
     Window *win = d->windows.at(index);
     if (!win)
         return;
+
+    emit windowReleased(window);
 
     beginRemoveRows(QModelIndex(), index, index);
     d->windows.removeAt(index);

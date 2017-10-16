@@ -51,12 +51,15 @@ QT_FORWARD_DECLARE_CLASS(QQmlComponentAttached)
 QT_BEGIN_NAMESPACE_AM
 
 class QmlInProcessRuntime;
+class InProcessSurfaceItem;
 
 class FakeApplicationManagerWindow : public QQuickItem
 {
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
     Q_PROPERTY(QString title READ dummyGetterString WRITE dummySetterString)
+
+    Q_PROPERTY(bool visible READ isFakeVisible WRITE setFakeVisible NOTIFY visibleChanged FINAL)
 
     // for API compatibility with QWaylandQuickItem - we cannot really simulate these,
     // but at least the QML code will not throw errors due to missing properties.
@@ -65,12 +68,17 @@ class FakeApplicationManagerWindow : public QQuickItem
     Q_PROPERTY(bool inputEventsEnabled READ dummyGetter WRITE dummySetter)
     Q_PROPERTY(bool focusOnClick READ dummyGetter WRITE dummySetter)
 
+    Q_PROPERTY(QJSValue parent READ getUndefined CONSTANT)
+
 public:
     explicit FakeApplicationManagerWindow(QQuickItem *parent = nullptr);
     ~FakeApplicationManagerWindow();
 
     QColor color() const;
     void setColor(const QColor &c);
+
+    bool isFakeVisible() const;
+    void setFakeVisible(bool visible);
 
     Q_INVOKABLE bool setWindowProperty(const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;
@@ -109,24 +117,32 @@ signals:
     void fakeNoFullScreenSignal(); // TODO this should be replaced by 'normal' and 'maximized' as soon as needed
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void colorChanged();
+    void visibleChanged();
 
 protected:
-    bool event(QEvent *e) override;
+    bool eventFilter(QObject *o, QEvent *e) override;
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
+    void connectNotify(const QMetaMethod &signal) override;
 
 private:
     bool dummyGetter() const { return false; }
     void dummySetter(bool) { }
     QString dummyGetterString() const { return QString(); }
     void dummySetterString(const QString&) {}
-    void onVisibleChanged();
 
+    void determineRuntime();
+    void onVisibleChanged();
+    QJSValue getUndefined() const;
+
+    InProcessSurfaceItem *m_surfaceItem = nullptr;
+    QSharedPointer<QObject> m_windowProperties;
     QmlInProcessRuntime *m_runtime = nullptr;
     QColor m_color;
-
+    bool m_fakeVisible = true;
     QVector<QQmlComponentAttached *> m_attachedCompleteHandlers;
 
     friend class QmlInProcessRuntime; // for setting the m_runtime member
+    friend class InProcessSurfaceItem;
 };
 
 QT_END_NAMESPACE_AM

@@ -133,6 +133,10 @@ public:
     virtual bool start() = 0;
     virtual void stop(bool forceKill = false) = 0;
 
+#if !defined(AM_HEADLESS)
+    virtual void inProcessSurfaceItemReleased(QQuickItem *);
+#endif
+
 signals:
     void stateChanged(QT_PREPEND_NAMESPACE_AM(AbstractRuntime::State) newState);
     void finished(int exitCode, QProcess::ExitStatus status);

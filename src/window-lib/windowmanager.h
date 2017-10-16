@@ -113,6 +113,8 @@ signals:
     void windowClosing(int index, QQuickItem *window);
     void windowLost(int index, QQuickItem *window);
 
+    void windowReleased(QQuickItem *window);
+
     void windowPropertyChanged(QQuickItem *window, const QString &name, const QVariant &value);
 
     void compositorViewRegistered(QQuickWindow *view);

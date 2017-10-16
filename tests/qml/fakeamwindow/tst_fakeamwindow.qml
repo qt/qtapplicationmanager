@@ -39,33 +39,41 @@
 **
 ****************************************************************************/
 
-#pragma once
+import QtQuick 2.3
+import QtTest 1.0
+import QtApplicationManager 1.0
 
-#include <QObject>
-#include <QPointer>
+Item {
+    TestCase {
+        name: "Dummy"   // workaround to make actual test below optional
+        when: windowShown
 
-#include <QtAppManWindow/window.h>
+        function test_dummy() {}
+    }
 
-QT_BEGIN_NAMESPACE_AM
+    TestCase {
+        name: "FakeApplicationManagerWindow"
+        when: ApplicationManager.singleProcess
+        optional: true
 
-class InProcessWindow : public Window
-{
-    Q_OBJECT
+        function test_parent1() {
+            ignoreWarning('QML ApplicationManagerWindow: Cannot assign to non-existent property "onParentChanged"');
+            ApplicationManager.startApplication("test.famw.parent1");
+        }
 
-public:
-    InProcessWindow(const Application *app, QQuickItem *windowItem);
+        function test_parent2() {
+            ignoreWarning('The parent is: undefined');
+            ApplicationManager.startApplication("test.famw.parent2");
+            wait(0);
+            ignoreWarning('TypeError: Cannot assign to read-only property "parent"');
+            ApplicationManager.startApplication("test.famw.parent2", "set");
+        }
 
-    bool isInProcess() const override { return true; }
-
-    bool setWindowProperty(const QString &name, const QVariant &value) override;
-    QVariant windowProperty(const QString &name) const override;
-    QVariantMap windowProperties() const override;
-
-protected:
-    bool eventFilter(QObject *o, QEvent *e) override;
-
-private:
-    QSharedPointer<QObject> m_windowProperties;
-};
-
-QT_END_NAMESPACE_AM
+        function test_parent3() {
+            ApplicationManager.startApplication("test.famw.parent3");
+            wait(0);
+            ignoreWarning('QML ApplicationManagerWindow: Cannot assign to non-existent property "onParentChanged"');
+            ApplicationManager.startApplication("test.famw.parent3", "load");
+        }
+    }
+}

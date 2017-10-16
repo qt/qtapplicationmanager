@@ -39,33 +39,21 @@
 **
 ****************************************************************************/
 
-#pragma once
+import QtQuick 2.4
+import QtApplicationManager 1.0
 
-#include <QObject>
-#include <QPointer>
+ApplicationManagerWindow {
+    id: root
 
-#include <QtAppManWindow/window.h>
+    Loader {
+        id: ldr
+    }
 
-QT_BEGIN_NAMESPACE_AM
-
-class InProcessWindow : public Window
-{
-    Q_OBJECT
-
-public:
-    InProcessWindow(const Application *app, QQuickItem *windowItem);
-
-    bool isInProcess() const override { return true; }
-
-    bool setWindowProperty(const QString &name, const QVariant &value) override;
-    QVariant windowProperty(const QString &name) const override;
-    QVariantMap windowProperties() const override;
-
-protected:
-    bool eventFilter(QObject *o, QEvent *e) override;
-
-private:
-    QSharedPointer<QObject> m_windowProperties;
-};
-
-QT_END_NAMESPACE_AM
+    Connections {
+        target: ApplicationInterface
+        onOpenDocument: {
+            if (documentUrl === "load")
+                ldr.source = "Test.qml";
+        }
+    }
+}

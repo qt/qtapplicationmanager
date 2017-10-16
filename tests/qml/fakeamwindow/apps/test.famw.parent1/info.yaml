@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.famw.parent1'
+icon:    'icon.png'
+code:    'parent1.qml'
+runtime: 'qml'
+name:
+  en: 'FakeApplicationManagerWindow onParentChanged'

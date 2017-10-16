@@ -93,6 +93,13 @@ QVariantMap AbstractRuntime::systemProperties() const
     return QVariantMap();
 }
 
+#if !defined(AM_HEADLESS)
+void AbstractRuntime::inProcessSurfaceItemReleased(QQuickItem *)
+{
+    // generally there is nothing to do
+}
+#endif
+
 QByteArray AbstractRuntime::securityToken() const
 {
     return m_securityToken;

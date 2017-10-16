@@ -41,25 +41,65 @@
 
 #include "logging.h"
 #include "fakeapplicationmanagerwindow.h"
+#include "inprocesssurfaceitem.h"
 #include "qmlinprocessruntime.h"
 #include <QSGSimpleRectNode>
 #include <QQmlComponent>
+#include <QQmlEngine>
+#include <QQmlContext>
+#include <QQmlInfo>
 #include <private/qqmlcomponentattached_p.h>
 
 
 QT_BEGIN_NAMESPACE_AM
 
+static QByteArray nameToKey(const QString &name)
+{
+    return QByteArray("_am_") + name.toUtf8();
+}
+
+static QString keyToName(const QByteArray &key)
+{
+    return QString::fromUtf8(key.mid(4));
+}
+
+static bool isName(const QByteArray &key)
+{
+    return key.startsWith("_am_");
+}
+
+
 FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
     : QQuickItem(parent)
+    , m_windowProperties(new QObject)
 {
-    qCDebug(LogSystem) << "FakeApplicationManagerWindow ctor! this:" << this;
     setFlag(ItemHasContents);
     connect(this, &QQuickItem::visibleChanged, this, &FakeApplicationManagerWindow::onVisibleChanged);
+
+    m_windowProperties.data()->installEventFilter(this);
 }
 
 FakeApplicationManagerWindow::~FakeApplicationManagerWindow()
 {
-    qCDebug(LogSystem) << "FakeApplicationManagerWindow dtor! this: " << this;
+    if (m_surfaceItem) {
+        m_runtime->removeWindow(this);
+        m_surfaceItem->m_contentItem = nullptr;
+    }
+}
+
+bool FakeApplicationManagerWindow::isFakeVisible() const
+{
+    return m_fakeVisible;
+}
+
+void FakeApplicationManagerWindow::setFakeVisible(bool visible)
+{
+    if (visible != m_fakeVisible) {
+        m_fakeVisible = visible;
+        setVisible(visible);
+        if (m_surfaceItem)
+            m_surfaceItem->setVisible(visible);
+    }
 }
 
 QColor FakeApplicationManagerWindow::color() const
@@ -94,45 +134,27 @@ void FakeApplicationManagerWindow::showNormal()
     // doesn't work in wayland right now, so do nothing... revisit later (after andies resize-redesign)
 }
 
-
-
-static QByteArray nameToKey(const QString &name)
-{
-    return QByteArray("_am_") + name.toUtf8();
-}
-
-static QString keyToName(const QByteArray &key)
-{
-    return QString::fromUtf8(key.mid(4));
-}
-
-static bool isName(const QByteArray &key)
-{
-    return key.startsWith("_am_");
-}
-
-
 bool FakeApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
     QByteArray key = nameToKey(name);
-    QVariant oldValue = property(key);
+    QVariant oldValue = m_windowProperties->property(key);
     bool changed = !oldValue.isValid() || (oldValue != value);
 
-    if (changed) {
-        setProperty(key, value);
-    }
+    if (changed)
+        m_windowProperties->setProperty(key, value);
+
     return true;
 }
 
 QVariant FakeApplicationManagerWindow::windowProperty(const QString &name) const
 {
     QByteArray key = nameToKey(name);
-    return property(key);
+    return m_windowProperties->property(key);
 }
 
 QVariantMap FakeApplicationManagerWindow::windowProperties() const
 {
-    const QList<QByteArray> keys = dynamicPropertyNames();
+    const QList<QByteArray> keys = m_windowProperties->dynamicPropertyNames();
     QVariantMap map;
 
     for (const QByteArray &key : keys) {
@@ -140,27 +162,25 @@ QVariantMap FakeApplicationManagerWindow::windowProperties() const
             continue;
 
         QString name = keyToName(key);
-        map[name] = property(key);
+        map[name] = m_windowProperties->property(key);
     }
 
     return map;
 }
 
-bool FakeApplicationManagerWindow::event(QEvent *e)
+bool FakeApplicationManagerWindow::eventFilter(QObject *o, QEvent *e)
 {
-    if (e->type() == QEvent::DynamicPropertyChange) {
+    if ((o == m_windowProperties) && (e->type() == QEvent::DynamicPropertyChange)) {
         QDynamicPropertyChangeEvent *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
         QByteArray key = dpce->propertyName();
 
         if (isName(key)) {
             QString name = keyToName(dpce->propertyName());
-            emit windowPropertyChanged(name, property(key));
-
-            //qWarning() << "FPW: got change" << name << " --> " << property(key).toString();
+            emit windowPropertyChanged(name, m_windowProperties->property(key));
         }
     }
 
-    return QQuickItem::event(e);
+    return QQuickItem::eventFilter(o, e);
 }
 
 QSGNode *FakeApplicationManagerWindow::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
@@ -173,17 +193,24 @@ QSGNode *FakeApplicationManagerWindow::updatePaintNode(QSGNode *oldNode, QQuickI
     return node;
 }
 
+void FakeApplicationManagerWindow::determineRuntime()
+{
+    if (!m_runtime) {
+        QQmlContext *ctx = QQmlEngine::contextForObject(this);
+        while (ctx && !m_runtime) {
+            if (ctx->property(QmlInProcessRuntime::s_runtimeKey).isValid())
+                m_runtime = ctx->property(QmlInProcessRuntime::s_runtimeKey).value<QmlInProcessRuntime*>();
+            ctx = ctx->parentContext();
+        }
+    }
+}
+
 void FakeApplicationManagerWindow::componentComplete()
 {
     qCDebug(LogSystem) << "FakeApplicationManagerWindow componentComplete() this:" << this;
 
     QQuickItem::componentComplete();
-
-    QObject *prnt = parent();
-    while (prnt && !m_runtime) {
-        m_runtime = prnt->property("AM-RUNTIME").value<QtAM::QmlInProcessRuntime*>();
-        prnt = prnt->parent();
-    }
+    determineRuntime();
 
     // This part is scary, but we need to make sure that all Component.onComplete: handlers on
     // the QML side have been run, before we hand this window over to the WindowManager for the
@@ -221,6 +248,28 @@ void FakeApplicationManagerWindow::onVisibleChanged()
 {
     if (m_runtime && isVisible())
         m_runtime->addWindow(this);
+}
+
+QJSValue FakeApplicationManagerWindow::getUndefined() const
+{
+    return QJSValue();
+}
+
+void FakeApplicationManagerWindow::connectNotify(const QMetaMethod &signal)
+{
+    static int parentMetaIdx = FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("parentChanged(QQuickItem*)");
+
+    if (signal.methodIndex() == parentMetaIdx) {
+        determineRuntime();
+        if (m_runtime)
+            m_runtime->m_componentError = true;
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
+        qWarning() << "QML ApplicationManagerWindow: Cannot assign to non-existent property \"onParentChanged\"";
+#else
+        qmlWarning(this) << "Cannot assign to non-existent property \"onParentChanged\"";
+#endif
+    }
 }
 
 QT_END_NAMESPACE_AM

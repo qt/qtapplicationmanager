@@ -39,86 +39,38 @@
 **
 ****************************************************************************/
 
-#include "inprocesswindow.h"
 #include "inprocesssurfaceitem.h"
+#include "fakeapplicationmanagerwindow.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-static QByteArray nameToKey(const QString &name)
+InProcessSurfaceItem::InProcessSurfaceItem(FakeApplicationManagerWindow *content)
+    : m_contentItem(content)
 {
-    return QByteArray("_am_") + name.toUtf8();
+    content->m_surfaceItem = this;
+    m_windowProperties = content->m_windowProperties;
+    setParentItem(content->parentItem());
+    content->setParentItem(this);
 }
 
-static QString keyToName(const QByteArray &key)
+InProcessSurfaceItem::~InProcessSurfaceItem()
 {
-    return QString::fromUtf8(key.mid(4));
+    if (m_contentItem)
+        m_contentItem->m_surfaceItem = nullptr;
 }
 
-static bool isName(const QByteArray &key)
+QSharedPointer<QObject> InProcessSurfaceItem::windowProperties()
 {
-    return key.startsWith("_am_");
+    return m_windowProperties;
 }
 
-
-InProcessWindow::InProcessWindow(const Application *app, QQuickItem *surfaceItem)
-    : Window(app, surfaceItem)
+void InProcessSurfaceItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
-    auto ipsi = qobject_cast<InProcessSurfaceItem *>(surfaceItem);
-    if (ipsi)
-        m_windowProperties = ipsi->windowProperties();
-    else
-        m_windowProperties.reset(new QObject());
-
-    m_windowProperties->installEventFilter(this);
-}
-
-bool InProcessWindow::setWindowProperty(const QString &name, const QVariant &value)
-{
-    QByteArray key = nameToKey(name);
-    QVariant oldValue = m_windowProperties->property(key);
-    bool changed = !oldValue.isValid() || (oldValue != value);
-
-    if (changed)
-        m_windowProperties->setProperty(key, value);
-
-    return true;
-}
-
-QVariant InProcessWindow::windowProperty(const QString &name) const
-{
-    QByteArray key = nameToKey(name);
-    return m_windowProperties->property(key);
-}
-
-QVariantMap InProcessWindow::windowProperties() const
-{
-    const QList<QByteArray> keys = m_windowProperties->dynamicPropertyNames();
-    QVariantMap map;
-
-    for (const QByteArray &key : keys) {
-        if (!isName(key))
-            continue;
-
-        QString name = keyToName(key);
-        map[name] = m_windowProperties->property(key);
+    QQuickItem::geometryChanged(newGeometry, oldGeometry);
+    if (m_contentItem) {
+        m_contentItem->setWidth(newGeometry.width());
+        m_contentItem->setHeight(newGeometry.height());
     }
-
-    return map;
-}
-
-bool InProcessWindow::eventFilter(QObject *o, QEvent *e)
-{
-    if ((o == m_windowProperties) && (e->type() == QEvent::DynamicPropertyChange)) {
-        QDynamicPropertyChangeEvent *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
-        QByteArray key = dpce->propertyName();
-
-        if (isName(key)) {
-            QString name = keyToName(dpce->propertyName());
-            emit windowPropertyChanged(name, m_windowProperties->property(key));
-        }
-    }
-
-    return Window::eventFilter(o, e);
 }
 
 QT_END_NAMESPACE_AM

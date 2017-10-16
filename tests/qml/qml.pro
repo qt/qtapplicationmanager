@@ -1,4 +1,5 @@
 TEMPLATE = subdirs
 SUBDIRS = \
     simple \
-    windowmapping
+    windowmapping \
+    fakeamwindow

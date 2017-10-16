@@ -92,6 +92,102 @@ TestCase {
         }
     }
 
+    function test_amwin_advanced() {
+        var appId = "test.winmap.amwin2";
+        ApplicationManager.startApplication(appId, "show-sub");
+        wait(2000);
+        compare(windowReadySpy.count, 0);
+
+        ApplicationManager.startApplication(appId, "show-main");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 2);
+        windowReadySpy.clear();
+
+        ApplicationManager.stopApplication(appId);
+        ensureAppTerminated(appId);
+        windowLostSpy.clear();
+    }
+
+    function test_amwin_loader() {
+        if (!ApplicationManager.singleProcess)
+            skip("Sporadically crashes in QtWaylandClient::QWaylandDisplay::flushRequests()");
+
+        var appId = "test.winmap.loader";
+        ApplicationManager.startApplication(appId, "show-sub");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 2);
+        windowReadySpy.clear();
+
+        ApplicationManager.startApplication(appId, "hide-sub");
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+        windowLostSpy.clear();
+
+        ApplicationManager.startApplication(appId, "show-sub");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 1);
+        windowReadySpy.clear();
+
+        ApplicationManager.stopApplication(appId);
+        ensureAppTerminated(appId);
+        windowLostSpy.clear();
+    }
+
+    function test_amwin_mp_only() {
+        if (ApplicationManager.singleProcess)
+            skip("Test shows differences in single-process mode (and hence would fail)");
+
+        var appId = "test.winmap.amwin2";
+        ApplicationManager.startApplication(appId, "show-main");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 1);
+        windowReadySpy.clear();
+
+        ApplicationManager.startApplication(appId, "show-sub");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 1);
+        windowReadySpy.clear();
+
+        // This part would fail, because sub-window 2 has an invisible Rectangle as parent and
+        // hence the effective visible state is false in the current implementation of
+        // FakeApplicationManagerWindow. Consequently no windowReady signal will be emitted.
+        ApplicationManager.startApplication(appId, "show-sub2");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 1);
+        windowReadySpy.clear();
+
+        // This part would fail, because FakeApplicationManagerWindow will not send
+        // windowClosing/windowLost signals when the window is set to invisible.
+        ApplicationManager.startApplication(appId, "hide-sub");
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+        windowLostSpy.clear();
+
+        // Make child (sub) window visible again, parent (main) window is still visible
+        ApplicationManager.startApplication(appId, "show-sub");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 1);
+        windowReadySpy.clear();
+
+        // This is weird Window behavior: a child window becomes only visible, when the parent
+        // window is visible, but when you change the parent window back to invisible, the child
+        // will NOT become invisible.
+        ApplicationManager.startApplication(appId, "hide-main");
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+        windowLostSpy.clear();
+
+        // This is even more weird Window behavior: when the parent window is invisible, it is
+        // not possible any more to explicitly set the child window to invisible.
+        ApplicationManager.startApplication(appId, "hide-sub");
+        wait(2000);
+        compare(windowLostSpy.count, 0);
+
+        ApplicationManager.stopApplication(appId);
+        ensureAppTerminated(appId);
+        windowLostSpy.clear();
+    }
+
     function test_default_data() {
         return [ { tag: "ApplicationManagerWindow", appId: "test.winmap.amwin" },
                  // skipping QtObject, as it doesn't show anything
@@ -160,76 +256,5 @@ TestCase {
         compare(windowLostSpy.count, openWindows);
         windowLostSpy.clear();
         ensureAppTerminated(appId);
-    }
-
-    function test_amwin_advanced() {
-        var appId = "test.winmap.amwin2";
-        ApplicationManager.startApplication(appId, "show-sub");
-        wait(2000);
-        compare(windowReadySpy.count, 0);
-
-        ApplicationManager.startApplication(appId, "show-main");
-        windowReadySpy.wait(3000);
-        compare(windowReadySpy.count, 2);
-        windowReadySpy.clear();
-
-        ApplicationManager.stopApplication(appId);
-        ensureAppTerminated(appId);
-        windowLostSpy.clear();
-    }
-
-    function test_amwin_mp_only() {
-        if (ApplicationManager.singleProcess)
-            skip("Test shows differences in single-process mode (and hence would fail)");
-
-        var appId = "test.winmap.amwin2";
-        ApplicationManager.startApplication(appId, "show-main");
-        windowReadySpy.wait(3000);
-        compare(windowReadySpy.count, 1);
-        windowReadySpy.clear();
-
-        ApplicationManager.startApplication(appId, "show-sub");
-        windowReadySpy.wait(3000);
-        compare(windowReadySpy.count, 1);
-        windowReadySpy.clear();
-
-        // This part would fail, because sub-window 2 has an invisible Rectangle as parent and
-        // hence the effective visible state is false in the current implementation of
-        // FakeApplicationManagerWindow. Consequently no windowReady signal will be emitted.
-        ApplicationManager.startApplication(appId, "show-sub2");
-        windowReadySpy.wait(3000);
-        compare(windowReadySpy.count, 1);
-        windowReadySpy.clear();
-
-        // This part would fail, because FakeApplicationManagerWindow will not send
-        // windowClosing/windowLost signals when the window is set to invisible.
-        ApplicationManager.startApplication(appId, "hide-sub");
-        windowLostSpy.wait(2000);
-        compare(windowLostSpy.count, 1);
-        windowLostSpy.clear();
-
-        // Make child (sub) window visible again, parent (main) window is still visible
-        ApplicationManager.startApplication(appId, "show-sub");
-        windowReadySpy.wait(3000);
-        compare(windowReadySpy.count, 1);
-        windowReadySpy.clear();
-
-        // This is weird Window behavior: a child window becomes only visible, when the parent
-        // window is visible, but when you change the parent window back to invisible, the child
-        // will NOT become invisible.
-        ApplicationManager.startApplication(appId, "hide-main");
-        windowLostSpy.wait(2000);
-        compare(windowLostSpy.count, 1);
-        windowLostSpy.clear();
-
-        // This is even more weird Window behavior: when the parent window is invisible, it is
-        // not possible any more to explicitly set the child window to invisible.
-        ApplicationManager.startApplication(appId, "hide-sub");
-        wait(2000);
-        compare(windowLostSpy.count, 0);
-
-        ApplicationManager.stopApplication(appId);
-        ensureAppTerminated(appId);
-        windowLostSpy.clear();
     }
 }

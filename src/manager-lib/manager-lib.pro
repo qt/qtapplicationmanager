@@ -43,6 +43,7 @@ linux:HEADERS += \
 
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \
+    inprocesssurfaceitem.h
 
 multi-process:HEADERS += \
     nativeruntime.h \
@@ -74,6 +75,7 @@ linux:SOURCES += \
 
 !headless:SOURCES += \
     fakeapplicationmanagerwindow.cpp \
+    inprocesssurfaceitem.cpp
 
 multi-process:SOURCES += \
     nativeruntime.cpp \

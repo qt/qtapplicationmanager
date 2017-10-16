@@ -41,78 +41,38 @@
 
 #pragma once
 
-#include <QtAppManManager/abstractruntime.h>
+#if !defined(AM_HEADLESS)
+
+#include <QQuickItem>
+#include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class FakeApplicationManagerWindow;
-class QmlInProcessApplicationInterface;
 
-class QmlInProcessRuntimeManager : public AbstractRuntimeManager
+/*
+ *  Item exposed to the system UI, FakeApplicationManagerWindows will be wrapped inside those.
+ */
+class InProcessSurfaceItem : public QQuickItem
 {
     Q_OBJECT
 public:
-    explicit QmlInProcessRuntimeManager(QObject *parent = nullptr);
-    explicit QmlInProcessRuntimeManager(const QString &id, QObject *parent = nullptr);
+    InProcessSurfaceItem(FakeApplicationManagerWindow *famw);
+    ~InProcessSurfaceItem();
 
-    static QString defaultIdentifier();
-    bool inProcess() const override;
+    QSharedPointer<QObject> windowProperties();
 
-    AbstractRuntime *create(AbstractContainer *container, const Application *app) override;
-};
-
-
-class QmlInProcessRuntime : public AbstractRuntime
-{
-    Q_OBJECT
-
-public:
-    explicit QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager);
-    ~QmlInProcessRuntime();
-
-    void openDocument(const QString &document, const QString &mimeType) override;
-    qint64 applicationProcessId() const override;
-
-    // No need to do anything as, being inprocess, it will use QUnified timers from appman itself
-    void setSlowAnimations(bool) override {}
-
-public slots:
-    bool start() override;
-    void stop(bool forceKill = false) override;
-#if !defined(AM_HEADLESS)
-    void inProcessSurfaceItemReleased(QQuickItem *window) override;
-#endif
-
-signals:
-    void aboutToStop(); // used for the ApplicationInterface
-
-private slots:
-#if !defined(AM_HEADLESS)
-    void onWindowClose();
-    void onWindowDestroyed();
-
-    void onEnableFullscreen();
-    void onDisableFullscreen();
-#endif
-    void finish(int exitCode, QProcess::ExitStatus status);
+protected:
+    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 
 private:
-    static const char *s_runtimeKey;
+    FakeApplicationManagerWindow *m_contentItem = nullptr;
+    QSharedPointer<QObject> m_windowProperties;
 
-    QString m_document;
-    QmlInProcessApplicationInterface *m_applicationIf = nullptr;
-    bool m_componentError;
-
-#if !defined(AM_HEADLESS)
-    // used by FakeApplicationManagerWindow to register windows
-    void addWindow(QQuickItem *window);
-    void removeWindow(QQuickItem *window);
-
-    QObject *m_rootObject = nullptr;
-    QList<QQuickItem *> m_surfaces;
-
-    friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
-#endif
+    friend class QmlInProcessRuntime;
+    friend class FakeApplicationManagerWindow;
 };
 
 QT_END_NAMESPACE_AM
+
+#endif  // !AM_HEADLESS

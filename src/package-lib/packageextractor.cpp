@@ -309,7 +309,8 @@ void PackageExtractorPrivate::extract()
                 if (!entryPath.endsWith(qL1C('/')))
                     throw Exception(Error::Package, "invalid archive entry '%1': directory name is missing '/' at the end").arg(entryPath);
                 entryPath.chop(1);
-                // no break;
+                Q_FALLTHROUGH();
+
             case PackageEntry_File: {
                 // get the directory, where the new entry will be created
                 QDir entryDir(QString(m_destinationPath + entryPath).section(qL1C('/'), 0, -2));
@@ -405,9 +406,11 @@ void PackageExtractorPrivate::extract()
             case PackageEntry_Header:
                 processMetaData(header, digest, true /*header*/);
                 break;
+
             case PackageEntry_File:
                 f.close();
-                // no break
+                Q_FALLTHROUGH();
+
             case PackageEntry_Dir: {
                 // Just to be on the safe side, we also add the file's meta-data to the digest
                 PackageUtilities::addFileMetadataToDigest(entryPath, QFileInfo(m_destinationPath + entryPath), digest);

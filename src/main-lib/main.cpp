@@ -146,7 +146,7 @@ Main::Main(int &argc, char **argv)
                                            [](int /*sig*/) {
         UnixSignalHandler::instance()->resetToDefault(SIGINT);
         fputs("\n*** received SIGINT / Ctrl+C ... exiting ***\n\n", stderr);
-        static_cast<Main *>(qApp)->shutDown(1);
+        static_cast<Main *>(QCoreApplication::instance())->shutDown();
     });
     StartupTimer::instance()->checkpoint("after application constructor");
 }

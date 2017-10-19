@@ -5,6 +5,7 @@ MODULE = appman_main
 load(am-config)
 
 QT = core network qml core-private
+enable-widgets:QT *= widgets
 !headless:QT *= gui quick
 qtHaveModule(pssdp):QT *= pssdp
 qtHaveModule(pshellserver):QT *= pshellserver

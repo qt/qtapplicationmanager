@@ -156,6 +156,10 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li Paramount if you are running systemd and plan on supporting SD-Card installations. Works
       around systemd interfering with loopback mounts.
 \row
+  \li \c{-config enable-widgets}
+  \li Enables support for Qt widgets. Enabling this option can be useful to enable the use of some
+      development graphical tools using Qt widgets.
+\row
   \li \c{-config hardware-id=<id>}
   \li Compiles in \c id as a hard-coded hardware-id (see below for more information)
 \row

@@ -68,3 +68,11 @@ Q_DECL_CONSTEXPR typename QtPrivate::QAddConst<T>::Type &qAsConst(T &t) Q_DECL_N
 template <typename T>
 void qAsConst(const T &&) Q_DECL_EQ_DELETE;
 #endif
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
+#  if (defined(Q_CC_GNU) && Q_CC_GNU >= 700) && !defined(Q_CC_INTEL)
+#    define Q_FALLTHROUGH() __attribute__((fallthrough))
+#  else
+#    define Q_FALLTHROUGH() (void)0
+#  endif
+#endif

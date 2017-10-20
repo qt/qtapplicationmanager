@@ -59,8 +59,6 @@ tools_dumpqmltypes.depends = manager_lib installer_lib window_lib monitor_lib la
 tools_packager.subdir = tools/packager
 tools_packager.depends = package_lib
 
-tools_deployer.subdir = tools/deployer
-
 tools_controller.subdir = tools/controller
 tools_controller.depends = common_lib
 
@@ -100,7 +98,6 @@ SUBDIRS = \
 
 !android:SUBDIRS += \
     tools_packager \
-    tools_deployer \
 
 qtHaveModule(dbus):SUBDIRS += \
     tools_controller \

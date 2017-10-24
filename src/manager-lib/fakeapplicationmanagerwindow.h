@@ -45,6 +45,8 @@
 #include <QQuickItem>
 #include <QtAppManCommon/global.h>
 
+QT_FORWARD_DECLARE_CLASS(QQmlComponentAttached)
+
 QT_BEGIN_NAMESPACE_AM
 
 class QmlInProcessRuntime;
@@ -120,6 +122,8 @@ private:
 
     QmlInProcessRuntime *m_runtime = nullptr;
     QColor m_color;
+
+    QVector<QQmlComponentAttached *> m_attachedCompleteHandlers;
 
     friend class QmlInProcessRuntime; // for setting the m_runtime member
 };

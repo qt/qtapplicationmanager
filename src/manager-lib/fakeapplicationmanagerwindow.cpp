@@ -43,6 +43,9 @@
 #include "fakeapplicationmanagerwindow.h"
 #include "qmlinprocessruntime.h"
 #include <QSGSimpleRectNode>
+#include <QQmlComponent>
+#include <private/qqmlcomponentattached_p.h>
+
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -182,8 +185,36 @@ void FakeApplicationManagerWindow::componentComplete()
         prnt = prnt->parent();
     }
 
-    if (m_runtime && isVisible())
-        m_runtime->addWindow(this);
+    // This part is scary, but we need to make sure that all Component.onComplete: handlers on
+    // the QML side have been run, before we hand this window over to the WindowManager for the
+    // onWindowReady signal. The problem here is that the C++ componentComplete() handler (this
+    // function) is called *before* the QML side, plus, to make matters worse, the QML incubator
+    // could switch back to the event loop a couple of times before finally calling the QML
+    // onCompleted handler(s).
+    // The workaround is to setup watchers for all Component.onCompleted handlers for this object
+    // and wait until the last of them has been dealt with, to finally call our addWindow
+    // function (we are also relying on the signal emission order, so that our lambda is called
+    // after the actual QML handler).
+
+    for (auto a = QQmlComponent::qmlAttachedProperties(this); a; a = a->next) {
+        auto famw = qobject_cast<FakeApplicationManagerWindow *>(a->parent());
+        if (!famw || famw != this)
+            continue;
+
+        m_attachedCompleteHandlers << a;
+
+        connect(a, &QQmlComponentAttached::completed, this, [this, a]() {
+            m_attachedCompleteHandlers.removeAll(a);
+
+            if (m_attachedCompleteHandlers.isEmpty())
+                onVisibleChanged();
+        });
+    }
+
+    // If we do not even have a single Component.onCompleted handler on the QML side, we need to
+    // show the window immediately.
+    if (m_attachedCompleteHandlers.isEmpty())
+        onVisibleChanged();
 }
 
 void FakeApplicationManagerWindow::onVisibleChanged()

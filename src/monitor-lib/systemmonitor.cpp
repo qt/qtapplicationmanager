@@ -46,8 +46,10 @@
 #include <QTimerEvent>
 #include <QElapsedTimer>
 #include <vector>
-#include <QGuiApplication>
-#include <QQuickView>
+#if !defined(AM_HEADLESS)
+#  include <QGuiApplication>
+#  include <QQuickView>
+#endif
 
 #include "global.h"
 #include "logging.h"
@@ -363,15 +365,18 @@ public:
         return processMonitors.last();
     }
 
+#if !defined(AM_HEADLESS)
     void registerNewView(QQuickWindow *view)
     {
         Q_Q(SystemMonitor);
         if (reportFps)
             connect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
     }
+#endif
 
     void setupFpsReporting()
     {
+#if !defined(AM_HEADLESS)
         Q_Q(SystemMonitor);
         if (!windowManagerConnectionCreated) {
             connect(WindowManager::instance(), &WindowManager::compositorViewRegistered, this, &SystemMonitorPrivate::registerNewView);
@@ -384,6 +389,7 @@ public:
             else
                 disconnect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
         }
+#endif
     }
 
     void setupTimer(int newInterval = -1)

@@ -49,7 +49,7 @@
 #  include <QCoreApplication>
 typedef QCoreApplication MainBase;
 #elif defined(AM_ENABLE_WIDGETS)
-#include <QApplication>
+#  include <QApplication>
 typedef QApplication MainBase;
 #else
 #  include <QGuiApplication>

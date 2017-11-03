@@ -159,7 +159,9 @@ Main::~Main()
         m_applicationInstaller,
         m_applicationIPCManager,
         m_notificationManager,
+#if !defined(AM_HEADLESS)
         m_windowManager,
+#endif
         m_systemMonitor
     };
     for (const auto &singleton : singletons)
@@ -262,11 +264,13 @@ void Main::shutDown(int exitCode)
                 this, []() { checkShutDownFinished(QuickLauncherDown); });
         m_quickLauncher->shutDown();
     }
+#if !defined(AM_HEADLESS)
     if (m_windowManager) {
         connect(m_windowManager, &WindowManager::shutDownFinished,
                 this, []() { checkShutDownFinished(WindowManagerDown); });
         m_windowManager->shutDown();
     }
+#endif
 }
 
 QQmlApplicationEngine *Main::qmlEngine() const
@@ -577,7 +581,10 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
 
 void Main::setupWindowTitle(const QString &title, const QString &iconPath)
 {
-#if !defined(AM_HEADLESS)
+#if defined(AM_HEADLESS)
+    Q_UNUSED(title)
+    Q_UNUSED(iconPath)
+#else
     // For development only: set an icon, so you know which window is the AM
     bool setTitle =
 #  if defined(Q_OS_LINUX)
@@ -596,7 +603,11 @@ void Main::setupWindowTitle(const QString &title, const QString &iconPath)
 
 void Main::setupWindowManager(const QString &waylandSocketName, bool slowAnimations, bool uiWatchdog)
 {
-#if !defined(AM_HEADLESS)
+#if defined(AM_HEADLESS)
+    Q_UNUSED(waylandSocketName)
+    Q_UNUSED(slowAnimations)
+    Q_UNUSED(uiWatchdog)
+#else
     QUnifiedTimer::instance()->setSlowModeEnabled(slowAnimations);
 
     m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName);
@@ -636,7 +647,9 @@ void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
 
 void Main::showWindow(bool showFullscreen)
 {
-#if !defined(AM_HEADLESS)
+#if defined(AM_HEADLESS)
+    Q_UNUSED(showFullscreen)
+#else
     setQuitOnLastWindowClosed(false);
     connect(this, &QGuiApplication::lastWindowClosed, this, [this]() { shutDown(); });
 
@@ -658,11 +671,11 @@ void Main::showWindow(bool showFullscreen)
     static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {
         // this is a queued signal, so there may be still one in the queue after calling disconnect()
         if (conn) {
-#if defined(Q_CC_MSVC)
+#  if defined(Q_CC_MSVC)
             qApp->disconnect(conn); // MSVC2013 cannot call static member functions without capturing this
-#else
+#  else
             QObject::disconnect(conn);
-#endif
+#  endif
             StartupTimer::instance()->checkFirstFrame();
             StartupTimer::instance()->createReport(qSL("System UI"));
         }

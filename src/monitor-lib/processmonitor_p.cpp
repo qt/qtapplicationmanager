@@ -568,6 +568,7 @@ void ProcessMonitorPrivate::readingUpdate()
 void ProcessMonitorPrivate::setupFrameRateMonitoring()
 {
     resetFrameRateMonitoring();
+#if !defined(AM_HEADLESS)
     if (reportFps) {
         if (ApplicationManager::instance()->isSingleProcess() || appId.isEmpty()) {
 
@@ -579,7 +580,7 @@ void ProcessMonitorPrivate::setupFrameRateMonitoring()
                 }
             }
         } else {
-#if defined(AM_MULTI_PROCESS)
+#  if defined(AM_MULTI_PROCESS)
 
             for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
                 WaylandWindow *win = qobject_cast<WaylandWindow *>(it.key());
@@ -597,18 +598,20 @@ void ProcessMonitorPrivate::setupFrameRateMonitoring()
 
             connect(WindowManager::instance(), &WindowManager::windowClosing,
                                    this, &ProcessMonitorPrivate::applicationWindowClosing);
-#endif
+#  endif
         }
     } else {
-#if defined(AM_MULTI_PROCESS)
+#  if defined(AM_MULTI_PROCESS)
         disconnect(WindowManager::instance(), &WindowManager::windowClosing,
                                this, &ProcessMonitorPrivate::applicationWindowClosing);
-#endif
+#  endif
     }
+#endif // !AM_HEADLESS
 }
 
 void ProcessMonitorPrivate::updateMonitoredWindows(const QList<QObject *> &windows)
 {
+#if !defined(AM_HEADLESS)
     Q_Q(ProcessMonitor);
 
     clearMonitoredWindows();
@@ -628,7 +631,7 @@ void ProcessMonitorPrivate::updateMonitoredWindows(const QList<QObject *> &windo
             } else
                 qCWarning(LogSystem) << "In single process only QQuickWindow can be monitored";
         } else {
-#if defined(AM_MULTI_PROCESS)
+#  if defined(AM_MULTI_PROCESS)
 
             for (int i = 0; i < applicationWindows.size(); i++) {
                 WaylandWindow *win = qobject_cast<WaylandWindow *>(applicationWindows.at(i));
@@ -638,18 +641,22 @@ void ProcessMonitorPrivate::updateMonitoredWindows(const QList<QObject *> &windo
                     break;
                 }
             }
-#endif
+#  endif
         }
     }
 
     emit q->monitoredWindowsChanged();
     setupFrameRateMonitoring();
+#else
+    Q_UNUSED(windows)
+#endif
 }
 
 QList<QObject *> ProcessMonitorPrivate::monitoredWindows() const
 {
     QList<QObject *> list;
 
+#if !defined(AM_HEADLESS)
     if (ApplicationManager::instance()->isSingleProcess() || appId.isEmpty()) {
         for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
             list.append(it.key());
@@ -658,24 +665,23 @@ QList<QObject *> ProcessMonitorPrivate::monitoredWindows() const
         return list;
     }
 
-#if defined(AM_MULTI_PROCESS)
+#  if defined(AM_MULTI_PROCESS)
     // Return window items
     for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
         WaylandWindow *win = qobject_cast<WaylandWindow *>(it.key());
         if (win)
             list.append(win->windowItem());
     }
+#  endif
 #endif
-
     return list;
 }
 
-#if defined(AM_MULTI_PROCESS)
+#if defined(AM_MULTI_PROCESS) && !defined(AM_HEADLESS)
 
 void ProcessMonitorPrivate::applicationWindowClosing(int index, QQuickItem *window)
 {
     Q_UNUSED(index)
-
 
     for (auto it = frameCounters.cbegin(); it != frameCounters.cend(); ++it) {
         WaylandWindow *win = qobject_cast<WaylandWindow *>(it.key());

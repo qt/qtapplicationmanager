@@ -493,9 +493,10 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     for (StartupInterface *iface : qAsConst(startupPlugins))
         iface->afterQmlEngineLoad(&m_engine);
 
-    QObject *topLevel = topLevels.at(0);
+    bool createStartupReportNow = true;
 
 #if !defined(AM_HEADLESS)
+    QObject *topLevel = topLevels.at(0);
     m_window = qobject_cast<QQuickWindow *>(topLevel);
     if (!m_window) {
         QQuickItem *contentItem = qobject_cast<QQuickItem *>(topLevel);
@@ -511,6 +512,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     } else {
         if (!m_engine.incubationController())
             m_engine.setIncubationController(m_window->incubationController());
+        createStartupReportNow = false; // create the startup report later, since we have a window
     }
 
     StartupTimer::instance()->checkpoint("after creating and setting application window");
@@ -557,7 +559,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     qCDebug(LogQmlRuntime) << "component loading and creating complete.";
 
     StartupTimer::instance()->checkpoint("component loading and creating complete.");
-    if (!m_window) // create the startup report now, since we have no window
+    if (createStartupReportNow)
         StartupTimer::instance()->createReport(applicationId);
 
     if (!document.isEmpty() && m_applicationInterface)

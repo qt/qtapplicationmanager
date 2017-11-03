@@ -59,13 +59,15 @@
 #include <QString>
 #include <QHash>
 #include <QVector>
-#include <QQuickWindow>
 #if defined(Q_OS_LINUX)
-#    include <QScopedPointer>
-#    include "sysfsreader.h"
+#  include <QScopedPointer>
+#  include "sysfsreader.h"
 #endif
-#if defined(AM_MULTI_PROCESS)
+#if !defined(AM_HEADLESS)
+#  include <QQuickWindow>
+#  if defined(AM_MULTI_PROCESS)
 #    include <QtAppManWindow/waylandwindow.h>
+#  endif
 #endif
 #include "processmonitor.h"
 #include "frametimer.h"
@@ -222,7 +224,7 @@ signals:
 public slots:
     void readingUpdate();
     void appRuntimeChanged(const QString &id, ApplicationManager::RunState state);
-#if defined(AM_MULTI_PROCESS)
+#if defined(AM_MULTI_PROCESS) && !defined(AM_HEADLESS)
     void applicationWindowClosing(int index, QQuickItem *window);
 #endif
     void frameUpdated();

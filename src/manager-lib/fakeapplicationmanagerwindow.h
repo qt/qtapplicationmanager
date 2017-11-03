@@ -41,9 +41,10 @@
 
 #pragma once
 
-#include <QColor>
-#include <QQuickItem>
-#include <QtAppManCommon/global.h>
+#if !defined(AM_HEADLESS)
+#  include <QColor>
+#  include <QQuickItem>
+#  include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlComponentAttached)
 
@@ -129,3 +130,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // !AM_HEADLESS

@@ -16,9 +16,9 @@ QT *= \
     appman_package-private \
     appman_installer-private \
     appman_notification-private \
-    appman_window-private \
     appman_monitor-private \
 
+!headless:QT *= appman_window-private
 !disable-external-dbus-interfaces:qtHaveModule(dbus):QT *= dbus appman_dbus-private
 
 CONFIG *= static internal_module

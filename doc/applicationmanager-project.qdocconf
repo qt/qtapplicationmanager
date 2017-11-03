@@ -37,7 +37,6 @@ sourcedirs += \
     ../src/monitor-lib \
     ../src/plugin-interfaces \
     ../src/tools/packager \
-    ../src/tools/deployer \
     ../src/tools/controller \
     $$BUILDDIR \
 

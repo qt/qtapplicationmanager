@@ -172,7 +172,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     returns \c true, the implementation needs to either emit the started() or errorOccurred() signal
     (can be delayed) in response to this call.
 
-    \sa QProcess:start()
+    \sa QProcess::start()
 */
 
 /*! \fn qint64 ContainerInterface::processId() const

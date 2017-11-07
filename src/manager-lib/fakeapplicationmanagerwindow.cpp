@@ -74,6 +74,7 @@ FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
     , m_windowProperties(new QObject)
 {
     setFlag(ItemHasContents);
+    setClip(true);
     connect(this, &QQuickItem::visibleChanged, this, &FakeApplicationManagerWindow::onVisibleChanged);
 
     m_windowProperties.data()->installEventFilter(this);
@@ -97,8 +98,13 @@ void FakeApplicationManagerWindow::setFakeVisible(bool visible)
     if (visible != m_fakeVisible) {
         m_fakeVisible = visible;
         setVisible(visible);
-        if (m_surfaceItem)
+        if (m_surfaceItem) {
             m_surfaceItem->setVisible(visible);
+            if (m_runtime && !visible)
+                m_runtime->removeWindow(m_surfaceItem);
+        } else {
+            visibleChanged();
+        }
     }
 }
 
@@ -246,7 +252,7 @@ void FakeApplicationManagerWindow::componentComplete()
 
 void FakeApplicationManagerWindow::onVisibleChanged()
 {
-    if (m_runtime && isVisible())
+    if (m_runtime && isVisible() && !m_surfaceItem)
         m_runtime->addWindow(this);
 }
 

@@ -133,10 +133,7 @@ TestCase {
         windowLostSpy.clear();
     }
 
-    function test_amwin_mp_only() {
-        if (ApplicationManager.singleProcess)
-            skip("Test shows differences in single-process mode (and hence would fail)");
-
+    function test_amwin_peculiarities() {
         var appId = "test.winmap.amwin2";
         ApplicationManager.startApplication(appId, "show-main");
         windowReadySpy.wait(3000);
@@ -148,16 +145,20 @@ TestCase {
         compare(windowReadySpy.count, 1);
         windowReadySpy.clear();
 
-        // This part would fail, because sub-window 2 has an invisible Rectangle as parent and
-        // hence the effective visible state is false in the current implementation of
-        // FakeApplicationManagerWindow. Consequently no windowReady signal will be emitted.
+        // Single- vs. multiprocess difference:
         ApplicationManager.startApplication(appId, "show-sub2");
-        windowReadySpy.wait(3000);
-        compare(windowReadySpy.count, 1);
-        windowReadySpy.clear();
+        if (ApplicationManager.singleProcess) {
+            // Sub-window 2 has an invisible Rectangle as parent and hence the effective
+            // visible state is false. Consequently no windowReady signal will be emitted.
+            wait(2000);
+            compare(windowLostSpy.count, 0);
+        } else {
+            // A Window's effective visible state solely depends on Window hierarchy.
+            windowReadySpy.wait(3000);
+            compare(windowReadySpy.count, 1);
+            windowReadySpy.clear();
+        }
 
-        // This part would fail, because FakeApplicationManagerWindow will not send
-        // windowClosing/windowLost signals when the window is set to invisible.
         ApplicationManager.startApplication(appId, "hide-sub");
         windowLostSpy.wait(2000);
         compare(windowLostSpy.count, 1);
@@ -177,11 +178,18 @@ TestCase {
         compare(windowLostSpy.count, 1);
         windowLostSpy.clear();
 
-        // This is even more weird Window behavior: when the parent window is invisible, it is
-        // not possible any more to explicitly set the child window to invisible.
+        // Single- vs. multiprocess difference:
         ApplicationManager.startApplication(appId, "hide-sub");
-        wait(2000);
-        compare(windowLostSpy.count, 0);
+        if (ApplicationManager.singleProcess) {
+            windowLostSpy.wait(2000);
+            compare(windowLostSpy.count, 1);
+            windowLostSpy.clear();
+        } else {
+            // This is even more weird Window behavior: when the parent window is invisible, it is
+            // not possible any more to explicitly set the child window to invisible.
+            wait(2000);
+            compare(windowLostSpy.count, 0);
+        }
 
         ApplicationManager.stopApplication(appId);
         ensureAppTerminated(appId);
@@ -240,20 +248,15 @@ TestCase {
         windowReadySpy.clear();
         compare(subChrome.children.length, 1);
 
-        var openWindows = 2;
-        // visible handling needs to be fixed for single process mode (AUTOSUITE-131):
-        if (!ApplicationManager.singleProcess) {
-            ApplicationManager.startApplication(appId, "hide-sub");
-            windowLostSpy.wait(2000);
-            compare(windowLostSpy.count, 1);
-            windowLostSpy.clear();
-            openWindows = 1;
-            compare(subChrome.children.length, 0);
-        }
+        ApplicationManager.startApplication(appId, "hide-sub");
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+        windowLostSpy.clear();
+        compare(subChrome.children.length, 0);
 
         ApplicationManager.stopApplication(appId);
         windowLostSpy.wait(2000);
-        compare(windowLostSpy.count, openWindows);
+        compare(windowLostSpy.count, 1);
         windowLostSpy.clear();
         ensureAppTerminated(appId);
     }

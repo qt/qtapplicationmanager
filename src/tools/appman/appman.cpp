@@ -61,11 +61,6 @@ QT_USE_NAMESPACE_AM
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
-#if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
-    // set a reasonable default for OSes/distros that do not set this by default
-    setenv("XDG_RUNTIME_DIR", "/tmp", 0);
-#endif
-
     StartupTimer::instance()->checkpoint("entered main");
 
 #if defined(AM_TESTRUNNER)
@@ -97,14 +92,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
 
     try {
-#if !defined(AM_HEADLESS)
-        // this is needed for both WebEngine and Wayland Multi-screen rendering
-        QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#  if !defined(QT_NO_SESSIONMANAGER)
-        QGuiApplication::setFallbackSessionManagementEnabled(false);
-#  endif
-#endif
-
         Main a(argc, argv);
 
 #if defined(AM_TESTRUNNER)

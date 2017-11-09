@@ -52,6 +52,7 @@ typedef QCoreApplication MainBase;
 #  include <QApplication>
 typedef QApplication MainBase;
 #else
+#  include <QSurfaceFormat>
 #  include <QGuiApplication>
 typedef QGuiApplication MainBase;
 #endif
@@ -122,6 +123,7 @@ protected:
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());
     void setupWindowTitle(const QString &title, const QString &iconPath);
     void setupWindowManager(const QString &waylandSocketName, bool slowAnimations, bool uiWatchdog);
+    void setupOpenGL(const QString &profileName, int majorVersion, int minorVersion);
 
     void setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false);
@@ -135,6 +137,7 @@ protected:
     QString hardwareId() const;
 
 private:
+    static int &preConstructor(int &argc);
     void loadDummyDataFiles(const QString &directory);
 
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
@@ -172,6 +175,14 @@ private:
     bool m_noSecurity = false;
     QStringList m_builtinAppsManifestDirs;
     QString m_installedAppsManifestDir;
+
+#if !defined(AM_HEADLESS)
+    QSurfaceFormat::OpenGLContextProfile m_requestedOpenGLProfile = QSurfaceFormat::NoProfile;
+    int m_requestedOpenGLMajorVersion = -1;
+    int m_requestedOpenGLMinorVersion = -1;
+
+    void checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const;
+#endif
 };
 
 QT_END_NAMESPACE_AM

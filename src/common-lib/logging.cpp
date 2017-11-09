@@ -80,7 +80,7 @@ QT_BEGIN_NAMESPACE_AM
 \li \c am.qml.ipc - QML IPC
 \li \c am.runtime.qml - QML runtime
 \li \c am.system - General system messages
-\li \c am.wayland - Wayland sub-system
+\li \c am.graphics - OpenGL/Wayland related messages
 \li \c general - General messages not part of any ApplicationManager sub-system
 \endlist
 //! [am-logging-categories]
@@ -89,7 +89,7 @@ QDLT_REGISTER_CONTEXT_ON_FIRST_USE(true)
 QDLT_REGISTER_APPLICATION("PCAM", "Pelagicore Application-Manager")
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General system messages")
 QDLT_LOGGING_CATEGORY(LogInstaller, "am.installer", "INST", "Installer sub-system")
-QDLT_LOGGING_CATEGORY(LogWayland, "am.wayland", "WAYL", "Wayland sub-system")
+QDLT_LOGGING_CATEGORY(LogGraphics, "am.graphics", "GRPH", "OpenGL/Wayland related messages")
 QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "QML messages")
 QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notification sub-system")
 QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime")

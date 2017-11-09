@@ -84,6 +84,10 @@ public:
     QStringList loggingRules() const;
     QString style() const;
 
+    QString openGLESProfile() const;
+    int openGLESVersionMajor() const;
+    int openGLESVersionMinor() const;
+
     QVariantList installationLocations() const;
 
     QList<QPair<QString, QString>> containerSelectionConfiguration() const;

@@ -559,7 +559,7 @@ int WindowManager::count() const
 QVariantMap WindowManager::get(int index) const
 {
     if (index < 0 || index >= count()) {
-        qCWarning(LogWayland) << "invalid index:" << index;
+        qCWarning(LogGraphics) << "invalid index:" << index;
         return QVariantMap();
     }
 
@@ -616,7 +616,7 @@ void WindowManager::releaseWindow(QQuickItem *window)
 {
     int index = d->findWindowBySurfaceItem(window);
     if (index == -1) {
-        qCWarning(LogWayland) << "releaseWindow was called with an invalid window pointer" << window;
+        qCWarning(LogGraphics) << "releaseWindow was called with an invalid window pointer" << window;
         return;
     }
     Window *win = d->windows.at(index);
@@ -646,6 +646,8 @@ void WindowManager::releaseWindow(QQuickItem *window)
 */
 void WindowManager::registerCompositorView(QQuickWindow *view)
 {
+    static bool once = false;
+
     d->views << view;
 
     updateViewSlowMode(view);
@@ -656,18 +658,23 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName, this);
             // export the actual socket name for our child processes.
             qputenv("WAYLAND_DISPLAY", d->waylandCompositor->socketName());
-            qCDebug(LogWayland).nospace() << "WindowManager: running in Wayland mode [socket: "
+            qCDebug(LogGraphics).nospace() << "WindowManager: running in Wayland mode [socket: "
                                           << d->waylandCompositor->socketName() << "]";
         } else {
             d->waylandCompositor->registerOutputWindow(view);
         }
     } else {
-        qCDebug(LogWayland) << "WindowManager: running in single-process mode [forced at run-time]";
+        if (!once)
+            qCDebug(LogGraphics) << "WindowManager: running in single-process mode [forced at run-time]";
     }
 #else
-    qCDebug(LogWayland) << "WindowManager: running in single-process mode [forced at compile-time]";
+    if (!once)
+        qCDebug(LogGraphics) << "WindowManager: running in single-process mode [forced at compile-time]";
 #endif
     emit compositorViewRegistered(view);
+
+    if (!once)
+        once = true;
 }
 
 void WindowManager::surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen)
@@ -677,12 +684,12 @@ void WindowManager::surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFul
     int index = d->findWindowBySurfaceItem(surfaceItem);
 
     if (index == -1) {
-        qCWarning(LogWayland) << "could not find an application window for surfaceItem";
+        qCWarning(LogGraphics) << "could not find an application window for surfaceItem";
         return;
     }
 
     QModelIndex modelIndex = QAbstractListModel::index(index);
-    qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isFullScreen: " << isFullscreen;
+    qCDebug(LogGraphics) << "emitting dataChanged, index: " << modelIndex.row() << ", isFullScreen: " << isFullscreen;
     emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsFullscreen);
 }
 
@@ -710,7 +717,7 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
         setupWindow(new InProcessWindow(app, surfaceItem));
     } else {
         QModelIndex modelIndex = QAbstractListModel::index(index);
-        qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: true";
+        qCDebug(LogGraphics) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: true";
         emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
         emit windowReady(index, d->windows.at(index)->windowItem());
     }
@@ -718,23 +725,23 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
 
 void WindowManager::inProcessSurfaceItemClosing(QQuickItem *surfaceItem)
 {
-    qCDebug(LogWayland) << "inProcessSurfaceItemClosing" << surfaceItem;
+    qCDebug(LogGraphics) << "inProcessSurfaceItemClosing" << surfaceItem;
 
     int index = d->findWindowBySurfaceItem(surfaceItem);
     if (index == -1) {
-        qCWarning(LogWayland) << "inProcessSurfaceItemClosing: could not find an application window for item" << surfaceItem;
+        qCWarning(LogGraphics) << "inProcessSurfaceItemClosing: could not find an application window for item" << surfaceItem;
         return;
     }
     InProcessWindow *win = qobject_cast<InProcessWindow *>(d->windows.at(index));
     if (!win) {
-        qCCritical(LogWayland) << "inProcessSurfaceItemClosing: expected surfaceItem to be a InProcessWindow, got" << d->windows.at(index);
+        qCCritical(LogGraphics) << "inProcessSurfaceItemClosing: expected surfaceItem to be a InProcessWindow, got" << d->windows.at(index);
         return;
     }
 
     win->setClosing();
 
     QModelIndex modelIndex = QAbstractListModel::index(index);
-    qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: false";
+    qCDebug(LogGraphics) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: false";
     emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
 
     emit windowClosing(index, win->windowItem()); //TODO: rename to windowUnmapped
@@ -772,7 +779,7 @@ void WindowManager::waylandSurfaceCreated(WindowSurface *surface)
 {
     Q_UNUSED(surface)
     // this function is still useful for Wayland debugging
-    //qCDebug(LogWayland) << "New Wayland surface:" << surface->surface() << "pid:" << surface->processId();
+    //qCDebug(LogGraphics) << "New Wayland surface:" << surface->surface() << "pid:" << surface->processId();
 }
 
 void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
@@ -781,7 +788,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     const Application *app = ApplicationManager::instance()->fromProcessId(processId);
 
     if (!app && ApplicationManager::instance()->securityChecksEnabled()) {
-        qCCritical(LogWayland) << "SECURITY ALERT: an unknown application with pid" << processId
+        qCCritical(LogGraphics) << "SECURITY ALERT: an unknown application with pid" << processId
                                << "tried to map a Wayland surface!";
         return;
     }
@@ -789,7 +796,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     Q_ASSERT(surface);
     Q_ASSERT(surface->item());
 
-    qCDebug(LogWayland) << "Mapping Wayland surface" << surface->item() << "of" << d->applicationId(app, surface);
+    qCDebug(LogGraphics) << "Mapping Wayland surface" << surface->item() << "of" << d->applicationId(app, surface);
 
     // Only create a new Window if we don't have it already in the window list, as the user controls
     // whether windows are removed or not
@@ -818,7 +825,7 @@ void WindowManager::waylandSurfaceUnmapped(WindowSurface *surface)
     int index = d->findWindowByWaylandSurface(surface->surface());
 
     if (index == -1) {
-        qCWarning(LogWayland) << "Unmapping a surface failed, because no application window is "
+        qCWarning(LogGraphics) << "Unmapping a surface failed, because no application window is "
                                  "registered for Wayland surface" << surface->item();
         return;
     }
@@ -826,7 +833,7 @@ void WindowManager::waylandSurfaceUnmapped(WindowSurface *surface)
     if (!win)
         return;
 
-    qCDebug(LogWayland) << "Unmapping Wayland surface" << surface->item() << "of"
+    qCDebug(LogGraphics) << "Unmapping Wayland surface" << surface->item() << "of"
                         << d->applicationId(win->application(), surface);
 
     // switch off Wayland ping/pong
@@ -850,7 +857,7 @@ void WindowManager::waylandSurfaceDestroyed(WindowSurface *surface)
     if (!win)
         return;
 
-    qCDebug(LogWayland) << "Destroying Wayland surface" << (surface ? surface->item() : nullptr)
+    qCDebug(LogGraphics) << "Destroying Wayland surface" << (surface ? surface->item() : nullptr)
                         << "of" << d->applicationId(win->application(), surface);
 
     win->setClosing();

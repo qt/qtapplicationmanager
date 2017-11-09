@@ -76,12 +76,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     }
 
     try {
-        // this is needed for both WebEngine and Wayland Multi-screen rendering
-        QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#if !defined(QT_NO_SESSIONMANAGER)
-        QGuiApplication::setFallbackSessionManagementEnabled(false);
-#endif
-
         Main a(argc, argv);
 
         DefaultConfiguration cfg;

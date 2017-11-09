@@ -252,6 +252,23 @@ QString DefaultConfiguration::style() const
     return value<QString>(nullptr, { "ui", "style" });
 }
 
+QString DefaultConfiguration::openGLESProfile() const
+{
+    return value<QString>(nullptr, { "ui", "opengl", "desktopProfile" });
+}
+
+int DefaultConfiguration::openGLESVersionMajor() const
+{
+    auto v = value<QVariant>(nullptr, { "ui", "opengl", "esMajorVersion" });
+    return v.isValid() ? v.toInt() : -1;
+}
+
+int DefaultConfiguration::openGLESVersionMinor() const
+{
+    auto v = value<QVariant>(nullptr, { "ui", "opengl", "esMinorVersion" });
+    return v.isValid() ? v.toInt() : -1;
+}
+
 QVariantList DefaultConfiguration::installationLocations() const
 {
     return value<QVariant>(nullptr, { "installationLocations" }).toList();

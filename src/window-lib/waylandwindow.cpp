@@ -105,7 +105,7 @@ void WaylandWindow::pongTimeout()
     if (!application())
         return;
 
-    qCCritical(LogWayland) << "Stopping application" << application()->id() << "because we did not receive a Wayland-Pong for" << m_pongTimer->interval() << "msec";
+    qCCritical(LogGraphics) << "Stopping application" << application()->id() << "because we did not receive a Wayland-Pong for" << m_pongTimer->interval() << "msec";
     ApplicationManager::instance()->stopApplication(application(), true);
 }
 

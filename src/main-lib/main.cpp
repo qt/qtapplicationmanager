@@ -74,6 +74,7 @@
 #  include <QGuiApplication>
 #  include <QQuickView>
 #  include <QQuickItem>
+#  include <private/qopenglcontext_p.h>
 #endif
 
 #if defined(QT_PSHELLSERVER_LIB)
@@ -136,8 +137,44 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+#if !defined(AM_HEADLESS)
+static QMap<int, QString> openGLProfileNames = {
+    { QSurfaceFormat::NoProfile,            qSL("default") },
+    { QSurfaceFormat::CoreProfile,          qSL("core") },
+    { QSurfaceFormat::CompatibilityProfile, qSL("compatibility") }
+};
+#endif
+
+// We need to do some things BEFORE the Q*Application constructor runs, so we're using this
+// old trick to do this hooking transparently for the user of the class.
+int &Main::preConstructor(int &argc)
+{
+#if !defined(AM_HEADLESS)
+#  if !defined(QT_NO_SESSIONMANAGER)
+        QGuiApplication::setFallbackSessionManagementEnabled(false);
+#  endif
+
+    // this is needed for both WebEngine and Wayland Multi-screen rendering
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
+    // Calling this semi-private function before the QGuiApplication constructor is the only way to
+    // set a custom global shared GL context. We are NOT creating it right now, since we still need
+    // to parse the requested format from the config files - the creation is completed later
+    // in setupOpenGL().
+    qt_gl_set_global_share_context(new QOpenGLContext());
+
+#  if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
+    // set a reasonable default for OSes/distros that do not set this by default
+    setenv("XDG_RUNTIME_DIR", "/tmp", 0);
+#  endif
+#endif
+    return argc;
+}
+
+// The QGuiApplication constructor
+
 Main::Main(int &argc, char **argv)
-    : MainBase(argc, argv)
+    : MainBase(preConstructor(argc), argv)
 {
     // this might be needed later on by the native runtime to find a suitable qml runtime launcher
     setProperty("_am_build_dir", qSL(AM_BUILD_DIR));
@@ -201,6 +238,7 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupLoggingRules(cfg->verbose(), cfg->loggingRules());
     setupQmlDebugging(cfg->qmlDebugging());
     Logging::registerUnregisteredDltContexts();
+    setupOpenGL(cfg->openGLESProfile(), cfg->openGLESVersionMajor(), cfg->openGLESVersionMinor());
 
     loadStartupPlugins(cfg->pluginFilePaths("startup"));
     parseSystemProperties(cfg->rawSystemProperties());
@@ -306,6 +344,104 @@ void Main::setupLoggingRules(bool verbose, const QStringList &loggingRules)
     qputenv("AM_LOGGING_RULES", rules.toUtf8());
     StartupTimer::instance()->checkpoint("after logging setup");
 }
+
+void Main::setupOpenGL(const QString &profileName, int majorVersion, int minorVersion)
+{
+#if !defined(AM_HEADLESS)
+    QOpenGLContext *globalContext = qt_gl_global_share_context();
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+    bool isES = (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES);
+
+    // either both are set or none is set
+    if ((majorVersion > -1) != (minorVersion > -1)) {
+        qCWarning(LogGraphics) << "Requesting only the major or minor OpenGL version number is not "
+                                  "supported - always specify both or none.";
+    } else if (majorVersion > -1) {
+        bool valid = isES;
+
+        if (!isES) {
+            // we need to map the ES version to the corresponding desktop versions:
+            static int mapping[] = {
+                2, 0,   2, 1,
+                3, 0,   4, 3,
+                3, 1,   4, 5,
+                3, 2,   4, 6,
+                -1
+            };
+            for (int i = 0; mapping[i] != -1; i += 4) {
+                if ((majorVersion == mapping[i]) && (minorVersion == mapping[i + 1])) {
+                    majorVersion = mapping[i + 2];
+                    minorVersion = mapping[i + 3];
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid) {
+                qCWarning(LogGraphics).nospace() << "Requested OpenGLES version " << majorVersion
+                                                 << "." << minorVersion
+                                                 << ", but there is no mapping available to a corresponding desktop GL version.";
+            }
+        }
+
+        if (valid) {
+            format.setMajorVersion(majorVersion);
+            format.setMinorVersion(minorVersion);
+            m_requestedOpenGLMajorVersion = majorVersion;
+            m_requestedOpenGLMinorVersion = minorVersion;
+            qCDebug(LogGraphics).nospace() << "Requested OpenGL" << (isES ? "ES" : "") << " version "
+                                           << majorVersion << "." << minorVersion;
+        }
+    }
+    if (!profileName.isEmpty()) {
+        int profile = openGLProfileNames.key(profileName, -1);
+
+        if (profile == -1) {
+            qCWarning(LogGraphics) << "Requested an invalid OpenGL profile:" << profileName;
+        } else if (profile != QSurfaceFormat::NoProfile) {
+            m_requestedOpenGLProfile = (QSurfaceFormat::OpenGLContextProfile) profile;
+            format.setProfile(m_requestedOpenGLProfile);
+            qCDebug(LogGraphics) << "Requested OpenGL profile" << profileName;
+        }
+    }
+    if ((m_requestedOpenGLProfile != QSurfaceFormat::NoProfile) || (m_requestedOpenGLMajorVersion > -1))
+        QSurfaceFormat::setDefaultFormat(format);
+
+    // Setting the screen is normally done by the QOpenGLContext constructor, but our constructor
+    // ran before the QGuiApplication constructor, so the screen was not initialized yet. So we have
+    // to tell the context about the screen again now:
+    globalContext->setScreen(QGuiApplication::primaryScreen());
+
+    if (!globalContext->create())
+        throw Exception("Failed to create the global shared OpenGL context.");
+
+    // check if we got what we requested on the OpenGL side
+    checkOpenGLFormat("global shared context", globalContext->format());
+#endif
+}
+
+#if !defined(AM_HEADLESS)
+void Main::checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const
+{
+    if ((m_requestedOpenGLProfile != QSurfaceFormat::NoProfile)
+            && (format.profile() != m_requestedOpenGLProfile)) {
+        qCWarning(LogGraphics) << "Failed to get the requested OpenGL profile"
+                               << openGLProfileNames.value(m_requestedOpenGLProfile) << "for the"
+                               << what << "- got"
+                               << openGLProfileNames.value(format.profile()) << "instead.";
+    }
+    if (m_requestedOpenGLMajorVersion > -1) {
+        if ((format.majorVersion() != m_requestedOpenGLMajorVersion )
+                || (format.minorVersion() != m_requestedOpenGLMinorVersion)) {
+            qCWarning(LogGraphics).nospace() << "Failed to get the requested OpenGL version "
+                                             << m_requestedOpenGLMajorVersion << "."
+                                             << m_requestedOpenGLMinorVersion << " for "
+                                             << what << " - got "
+                                             << format.majorVersion() << "."
+                                             << format.minorVersion() << " instead";
+        }
+    }
+}
+#endif
 
 void Main::loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false)
 {
@@ -690,6 +826,9 @@ void Main::showWindow(bool showFullscreen)
         window->showFullScreen();
     else
         window->show();
+
+    // now check the surface format, in case we had requested a specific GL version/profile
+    checkOpenGLFormat("main window", window->format());
 
     for (auto iface : qAsConst(m_startupPlugins))
         iface->afterWindowShow(window);

@@ -927,9 +927,11 @@ void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 void ApplicationManager::stopAllApplications(bool forceKill)
 {
     for (const Application *app : qAsConst(d->apps)) {
-        AbstractRuntime *rt = app->currentRuntime();
-        if (rt)
-            rt->stop(forceKill);
+        if (!app->isAlias()) {
+            AbstractRuntime *rt = app->currentRuntime();
+            if (rt)
+                rt->stop(forceKill);
+        }
     }
 }
 

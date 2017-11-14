@@ -116,6 +116,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ qSL("single-app"),           qSL("runs a single application only (ignores the database)"), qSL("info.yaml file") });
     m_clp.addOption({ qSL("logging-rule"),         qSL("adds a standard Qt logging rule."), qSL("rule") });
     m_clp.addOption({ qSL("qml-debug"),            qSL("enables QML debugging and profiling.") });
+    m_clp.addOption({ qSL("enable-touch-emulation"), qSL("enables the touch emulation, converting mouse to touch events.") });
 }
 
 DefaultConfiguration::~DefaultConfiguration()
@@ -250,6 +251,11 @@ QStringList DefaultConfiguration::loggingRules() const
 QString DefaultConfiguration::style() const
 {
     return value<QString>(nullptr, { "ui", "style" });
+}
+
+bool DefaultConfiguration::enableTouchEmulation() const
+{
+    return value<bool>("enable-touch-emulation", { "ui", "enableTouchEmulation" });
 }
 
 QString DefaultConfiguration::openGLESProfile() const

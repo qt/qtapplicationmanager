@@ -37,11 +37,21 @@ multi-process:!headless {
     inprocesswindow.h \
     windowmanager.h \
     windowmanager_p.h \
+    touchemulation.h \
+
 
 !headless:SOURCES += \
     window.cpp \
     inprocesswindow.cpp \
     windowmanager.cpp \
+    touchemulation.cpp \
+
+# build the touch emulation only on X11 setups
+!headless:config_touchemulation {
+    PKGCONFIG *= xcb x11 xi
+    QT *= gui-private testlib
+    HEADERS += touchemulation_x11.h
+    SOURCES += touchemulation_x11.cpp
+}
 
 load(qt_module)
-

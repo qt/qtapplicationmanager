@@ -13,6 +13,7 @@ else:contains(QT_BUILD_PARTS, "examples"):CONFIG += enable-examples
 load(configure)
 qtCompileTest(libarchive)
 qtCompileTest(libyaml)
+!headless:qtCompileTest(touchemulation)
 
 qtHaveModule(compositor)|if(qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private)) {
     CONFIG += am_compatible_compositor
@@ -84,6 +85,7 @@ printConfigLine("Installation prefix", $$INSTALL_PREFIX, auto)
 printConfigLine("Tools only build", $$yesNo(CONFIG(tools-only)), no)
 printConfigLine("Enable support for QtWidgets", $$yesNo(CONFIG(enable-widgets)), auto)
 printConfigLine("Headless", $$yesNo(CONFIG(headless)), auto)
+printConfigLine("Touch emulation", $$yesNo(CONFIG(config_touchemulation)), auto)
 printConfigLine("QtCompositor support", $$yesNo(CONFIG(am_compatible_compositor)), auto)
 printConfigLine("Multi-process mode", $$check_multi, auto)
 printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)

@@ -123,6 +123,7 @@ protected:
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());
     void setupWindowTitle(const QString &title, const QString &iconPath);
     void setupWindowManager(const QString &waylandSocketName, bool slowAnimations, bool uiWatchdog);
+    void setupTouchEmulation(bool enableTouchEmulation);
     void setupOpenGL(const QString &profileName, int majorVersion, int minorVersion);
 
     void setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false);

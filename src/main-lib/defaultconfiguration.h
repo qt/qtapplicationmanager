@@ -83,6 +83,7 @@ public:
     QString singleApp() const;
     QStringList loggingRules() const;
     QString style() const;
+    bool enableTouchEmulation() const;
 
     QString openGLESProfile() const;
     int openGLESVersionMajor() const;

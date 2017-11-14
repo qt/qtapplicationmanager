@@ -16,6 +16,7 @@ disable-external-dbus-interfaces:DEFINES *= AM_DISABLE_EXTERNAL_DBUS_INTERFACES
 systemd-workaround:DEFINES *= AM_SYSTEMD_WORKAROUND
 headless:DEFINES *= AM_HEADLESS
 enable-widgets:DEFINES *= AM_ENABLE_WIDGETS
+config_touchemulation:DEFINES += AM_ENABLE_TOUCH_EMULATION
 linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release)):DEFINES *= AM_USE_LIBBACKTRACE
 
 !force-single-process {

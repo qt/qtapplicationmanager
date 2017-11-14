@@ -119,6 +119,7 @@
 #  if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 #    include "windowmanagerdbuscontextadaptor.h"
 #  endif
+#  include "touchemulation.h"
 #endif
 
 #include "configuration.h"
@@ -265,6 +266,7 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
     setupWindowManager(cfg->waylandSocketName(), cfg->slowAnimations(), cfg->noUiWatchdog());
+    setupTouchEmulation(cfg->enableTouchEmulation());
     setupShellServer(cfg->telnetAddress(), cfg->telnetPort());
     setupSSDPService();
 }
@@ -755,6 +757,20 @@ void Main::setupWindowManager(const QString &waylandSocketName, bool slowAnimati
     QObject::connect(m_applicationManager, &ApplicationManager::applicationWasActivated,
                      m_windowManager, &WindowManager::raiseApplicationWindow);
 #endif
+}
+
+void Main::setupTouchEmulation(bool enableTouchEmulation)
+{
+    if (enableTouchEmulation) {
+        if (TouchEmulation::isSupported()) {
+            TouchEmulation::createInstance();
+            qCDebug(LogGraphics) << "Touch emulation is enabled: all mouse events will be converted "
+                                    "to touch events.";
+        } else {
+            qCWarning(LogGraphics) << "Touch emulation cannot be enabled. Either it was disabled at "
+                                      "build time or the platform does not support it.";
+        }
+    }
 }
 
 void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)

@@ -76,6 +76,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 class Window;
+class tst_ProcessMonitor;
 
 class ReadingTask : public QObject
 {
@@ -108,6 +109,7 @@ public:
 
 protected:
     void timerEvent(QTimerEvent *event) override;
+    bool readMemory(const QByteArray &smapsFile, Results::Memory &results);
 
 public slots:
     void setupTimer(bool enabled, int interval);
@@ -123,7 +125,6 @@ private:
     void cancelTimer();
     void openLoad();
     qreal readLoad();
-    bool readMemory(Results::Memory &results);
 
     QMutex &m_mutex;
     Results &m_results;

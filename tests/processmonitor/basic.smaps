@@ -1,0 +1,352 @@
+00400000-00413000 r-xp 00000000 b3:01 266877                             application
+Size:                 76 kB
+Rss:                  76 kB
+Pss:                  38 kB
+Shared_Clean:         76 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:           76 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd ex mr mw me dw 
+00422000-00423000 rw-p 00012000 b3:01 266877                             application
+Size:                  4 kB
+Rss:                   4 kB
+Pss:                   4 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         4 kB
+Referenced:            4 kB
+Anonymous:             4 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me dw ac 
+00423000-004ec000 rw-p 00000000 00:00 0                                  [heap]
+Size:                804 kB
+Rss:                 796 kB
+Pss:                 796 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:       796 kB
+Referenced:          796 kB
+Anonymous:           796 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me ac 
+004ed000-00bc9000 rw-p 00000000 00:00 0                                  [heap]
+Size:               7024 kB
+Rss:                6700 kB
+Pss:                6700 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:      6700 kB
+Referenced:         6700 kB
+Anonymous:          6700 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me ac 
+7f54000000-7f54021000 rw-p 00000000 00:00 0 
+Size:                132 kB
+Rss:                   4 kB
+Pss:                   4 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         4 kB
+Referenced:            4 kB
+Anonymous:             4 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me nr 
+7f54021000-7f58000000 ---p 00000000 00:00 0 
+Size:              65404 kB
+Rss:                   0 kB
+Pss:                   0 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:            0 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: mr mw me nr 
+7f5c000000-7f5c00a000 rw-p 00000000 00:00 0 
+Size:                 40 kB
+Rss:                  40 kB
+Pss:                  40 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:        40 kB
+Referenced:           40 kB
+Anonymous:            40 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me nr 
+7f600d1000-7f604d1000 rw-s 00000000 00:09 12516                          anon_inode:dmabuf
+Size:               4096 kB
+Rss:                1656 kB
+Pss:                 828 kB
+Shared_Clean:          0 kB
+Shared_Dirty:       1656 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:         1656 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr sh mr mw me ms dc de dd 
+7f604d1000-7f608d1000 rw-s 00000000 00:09 12516                          anon_inode:dmabuf
+Size:               4096 kB
+Rss:                4084 kB
+Pss:                2042 kB
+Shared_Clean:          0 kB
+Shared_Dirty:       4084 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:         4084 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr sh mr mw me ms dc de dd 
+7f614d2000-7f6168a000 r-xp 00000000 b3:01 12487                          /verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/lib.so
+Size:               1760 kB
+Rss:                1448 kB
+Pss:                 726 kB
+Shared_Clean:       1444 kB
+Shared_Dirty:          0 kB
+Private_Clean:         4 kB
+Private_Dirty:         0 kB
+Referenced:         1448 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd ex mr mw me 
+7f6168a000-7f61699000 ---p 001b8000 b3:01 12487                          /verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/lib.so
+Size:                 60 kB
+Rss:                   0 kB
+Pss:                   0 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:            0 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: mr mw me 
+7f61699000-7f616a0000 rw-p 001b7000 b3:01 12487                          /verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/verylonglibrarypathname/lib.so
+Size:                 28 kB
+Rss:                  28 kB
+Pss:                  28 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:        28 kB
+Referenced:           28 kB
+Anonymous:            28 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me ac 
+7f61925000-7f61ef7000 r-xp 00000000 b3:01 13766                          /linelength98/linelen.so
+Size:               5960 kB
+Rss:                4356 kB
+Pss:                1554 kB
+Shared_Clean:       4264 kB
+Shared_Dirty:          0 kB
+Private_Clean:        92 kB
+Private_Dirty:         0 kB
+Referenced:         4356 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd ex mr mw me 
+7f61ef7000-7f61f07000 ---p 005d2000 b3:01 13766                          /linelength99/lineleng.so
+Size:                 64 kB
+Rss:                   0 kB
+Pss:                   0 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:            0 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: mr mw me 
+7f61f07000-7f6204c000 rw-p 005d2000 b3:01 13766                          /linelength100/lineleng.so
+Size:               1300 kB
+Rss:                1084 kB
+Pss:                 986 kB
+Shared_Clean:        156 kB
+Shared_Dirty:          0 kB
+Private_Clean:        24 kB
+Private_Dirty:       904 kB
+Referenced:         1084 kB
+Anonymous:           904 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me ac 
+7f74146000-7f74945000 rw-p 00000000 00:00 0                              [stack:3396]
+Size:               8188 kB
+Rss:                   8 kB
+Pss:                   8 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         8 kB
+Referenced:            8 kB
+Anonymous:             8 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me ac 
+7f74946000-7f75145000 rw-p 00000000 00:00 0                              [stack:3116]
+Size:               8188 kB
+Rss:                   8 kB
+Pss:                   8 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         8 kB
+Referenced:            8 kB
+Anonymous:             8 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me ac 
+7f78fff000-7f79001000 rw-s 00000000 00:16 37047                          /tmp/.gl3LHuLJ (deleted)
+Size:                  8 kB
+Rss:                   8 kB
+Pss:                   8 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         8 kB
+Referenced:            8 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr sh mr mw me ms 
+7f79001000-7f79003000 r-xs 00000000 00:16 37047                          /tmp/.gl3LHuLJ (deleted)
+Size:                  8 kB
+Rss:                   0 kB
+Pss:                   0 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:            0 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd ex sh mr mw me ms 
+7f79005000-7f79006000 r--p 00000000 00:00 0                              [vvar]
+Size:                  4 kB
+Rss:                   4 kB
+Pss:                   0 kB
+Shared_Clean:          4 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:            4 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd mr de 
+7f79006000-7f79007000 r-xp 00000000 00:00 0                              [vdso]
+Size:                  4 kB
+Rss:                   4 kB
+Pss:                   0 kB
+Shared_Clean:          4 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:            4 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd ex mr mw me de 
+7ffc8f6000-7ffc917000 rw-p 00000000 00:00 0                              [stack]
+Size:                136 kB
+Rss:                  44 kB
+Pss:                  44 kB
+Shared_Clean:          0 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:        44 kB
+Referenced:           44 kB
+Anonymous:            44 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+VmFlags: rd wr mr mw me gd ac

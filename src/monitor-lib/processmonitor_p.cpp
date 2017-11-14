@@ -117,7 +117,8 @@ void ReadingTask::timerEvent(QTimerEvent *event)
         ReadingTask::Results results;
 
         if (m_readMem) {
-            if (!readMemory(results.memory))
+            const QByteArray file = "/proc/" + QByteArray::number(m_pid) + "/smaps";
+            if (!readMemory(file, results.memory))
                 results.memory = ReadingTask::Results::Memory();
             results.memory.read =  true;
         }
@@ -182,17 +183,15 @@ qreal ReadingTask::readLoad()
     return load;
 }
 
-bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
+bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::Memory &results)
 {
     struct ScopedFile {
         ~ScopedFile() { if (file) fclose(file); }
         FILE *file = nullptr;
     };
 
-    const QByteArray fileName = "/proc/" + QByteArray::number(m_pid) + "/smaps";
-
     ScopedFile sf;
-    sf.file = fopen(fileName.constData(), "r");
+    sf.file = fopen(smapsFile.constData(), "r");
 
     if (sf.file == nullptr)
         return false;
@@ -336,8 +335,9 @@ qreal ReadingTask::readLoad()
     return 0.0;
 }
 
-bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
+bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::Memory &results)
 {
+    Q_UNUSED(smapsFile)
     struct task_basic_info t_info;
     mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
 
@@ -363,8 +363,9 @@ qreal ReadingTask::readLoad()
     return 0.0;
 }
 
-bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
+bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::Memory &results)
 {
+    Q_UNUSED(smapsFile)
     Q_UNUSED(results)
     return false;
 }

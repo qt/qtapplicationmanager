@@ -3,4 +3,5 @@ SUBDIRS = \
     simple \
     windowmapping \
     fakeamwindow \
-    installer
+    installer \
+    monitoring

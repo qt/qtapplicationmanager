@@ -191,11 +191,20 @@ bool NativeRuntime::attachApplicationToQuickLauncher(const Application *app)
 bool NativeRuntime::initialize()
 {
     if (m_needsLauncher) {
-        static const QVector<QString> possibleLocations = {
-            QCoreApplication::applicationDirPath(),
-            QLibraryInfo::location(QLibraryInfo::BinariesPath),
-            qApp->property("_am_build_dir").toString() + qSL("/bin") // set by main.cpp
-        };
+        static QVector<QString> possibleLocations;
+        if (possibleLocations.isEmpty()) {
+            // try the main binaries directory
+            possibleLocations.append(QCoreApplication::applicationDirPath());
+            // try Qt's bin folder
+            possibleLocations.append(QLibraryInfo::location(QLibraryInfo::BinariesPath));
+            // try the AM's build directory
+            possibleLocations.append(qApp->property("_am_build_dir").toString() + qSL("/bin")); // set by main.cpp
+            // if everything fails, try to locate it in $PATH
+            const auto paths = qgetenv("PATH").split(QDir::listSeparator().toLatin1());
+            for (auto path : paths)
+                possibleLocations.append(QString::fromLocal8Bit(path));
+        }
+
         const QString launcherName = qSL("/appman-launcher-") + manager()->identifier();
         for (const QString &possibleLocation : possibleLocations) {
             QFileInfo fi(possibleLocation + launcherName);
@@ -207,7 +216,8 @@ bool NativeRuntime::initialize()
                 return true;
             }
         }
-        qCWarning(LogSystem) << "Could not find an" << launcherName.mid(1) << "executable.";
+        qCWarning(LogSystem) << "Could not find an" << launcherName.mid(1) << "executable in any of:\n"
+                             << possibleLocations;
         return false;
     } else {
         if (!m_app)

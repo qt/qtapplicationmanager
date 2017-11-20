@@ -52,6 +52,7 @@ high-level overview of the package.
     \li \l{The Application Installer}
     \li \l{Logging and Debugging}
     \li \l{Containers}
+    \li \l{Single- vs. Multi-Process Mode}
 \endlist
 
 \section1 Tools

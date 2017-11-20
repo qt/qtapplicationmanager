@@ -1,0 +1,210 @@
+/****************************************************************************
+**
+** Copyright (C) 2017 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\page singlevsmultiprocess.html
+\title Single- vs. Multi-Process Mode
+
+Single-process mode is only supported by QML applications: applications that use the \c qml or
+\c qml-inprocess runtime. Consequently the comparison between single- and multi-process mode only
+applies to this kind of applications. In multi-process mode the system UI (compositor) and the
+applications each run in their own dedicated process. In single-process mode, as the name implies,
+there is only one process: the system UI process and all applications run within this process.
+
+For a better understanding of the two modes, here is how QML works internally: in every process
+(aka. address-space), you can only have one Qt platform (QPA) plugin. The QPA plugin decides how
+many top-level windows you can open. If you are using a low-level plugin that does not talk to a
+windowing system (e.g. EGL full-screen on an embedded device), you can only open one full-screen
+window - the system UI. Now every top-level window can only have one scene-graph and every tree of
+QtQuick items needs to be tied to exactly one scene-graph. This means that you will always have
+exactly one window, one scene-graph and one QML engine in your system UI, no matter whether
+applications run within the system UI process or in separate processes.
+
+
+\section1 Single-process Mode
+
+The single-process mode exists for a reason, and that is to allow:
+\list
+\li Specific system applications to run with maximum performance (no compositing)
+\li Scaling down your system to target hardware that has not enough RAM/GPU resources to run
+    multi-process
+\li Do development on platforms that do not (yet) support multi-process mode (read: Windows, macOS,
+    Android, QNX, any targets with broken Wayland drivers)
+\endlist
+
+All of the above of course comes at the cost of (a) stability and (b) testability (you cannot test
+your components isolated, which makes diagnosing errors or crashes very hard).
+
+There is one caveat here: you have to be aware that whatever the application-manager may be able to
+do, in single-process mode you are still within a single address-space, so you will always be able
+to hack your way around any "barrier". The only definite, enforceable barrier is process isolation,
+also known as multi-process mode.
+
+
+\section1 Build- and Runtime Options
+
+The application-manager is built with multi-process support, if Qt's Wayland compositor module is
+available - that is if no special option is provided to qmake: multi-process support can always be
+disabled explicitly by adding the option \c {-config force-single-process}. On the other hand if
+\c {-config force-multi-process} is provided and the compositor is not available, the configuration
+step will fail.
+
+In case the application-manager supports only single-process, QML applications that use the \c qml
+runtime will always run in-process, i.e. in the same process as the system UI. Native applications
+will be omitted in this case, since they can only run in a dedicated process (of course, native
+applications can also use QML code). The difference is basically the entry point: \c native
+runtimes have an executable and \c qml runtimes a main QML file. For the latter the
+application-manager provides the executable (\c appman-launcher) in multi-process mode.
+
+If the application-manager is built with multi-process support, it can still be forced to run in
+single-process-mode by passing \c --force-single-process on the command line. This will result in
+the same runtime behavior as described above. Even when running the application-manager in
+multi-process mode it does not necessarily mean that QML applications get a dedicated process: if
+they use the \c qml-inprocess runtime they will execute in-process within the system UI.
+
+
+\section1 Configuration
+
+Since there is only one QML engine in single-process mode shared by the system UI and all
+applications, any QML import paths provided (e.g. through am-config.yaml) will be considered when
+resolving import statements. Import statements provided by an application manifest file (info.yaml)
+will only be considered once the application has been started, but will outlive its "termination".
+In multi-process mode only import paths specific to an application are considered. Besides,
+absolute import paths cannot be used in info.yaml files in multi-process mode, because of potential
+restrictions imposed by containers and for security reasons.
+
+In general paths defined in the configuration might be provided to QML as absolute paths in
+single-process mode, but relative in multi-process mode.
+
+Also note that some configuration options are meaningless in single-process mode, e.g.
+\c quicklaunch, \c quicklaunchQml, \c crashAction, etc.
+
+
+\section1 Lifetime
+
+The most obvious difference is that a crashing application in single-process mode will terminate
+the entire program, whereas in multi-process mode the system UI and other applications keep on
+running. In multi-process mode the system UI even gets notified when an application crashed and
+can react on it, e.g. by restarting the application.
+
+The usage of QML singletons in an application has some implications. In the QML world, singletons
+live in their own private, but also absolutely global context - they are even shared between
+multiple QML engine instances. Singletons are instantiated on first usage once and for all, as long
+as the process exists. This means that if an application is "terminated" in single-process mode,
+any singleton that had already been instantiated will persist and keep its current state.
+Consequently, when the application is restarted again, the state might be different from the
+multi-process case, where the singleton is instantiated anew.
+
+
+\section1 ApplicationManagerWindow
+
+A major difference between single- and multi-process mode is how windows are represented. Windows
+are exposed from the application to the system UI through WindowManager::windowReady. For
+convenience and to serve as a replacement for qmlscene, it is possible to use plain QML Windows in
+applications or even an Item as the root element. However, if close resemblance between single-
+and multi-process mode is the goal, there is no way around using an ApplicationManagerWindow. There
+are other benefits when using an ApplicationManagerWindow, as well (e.g. window properties).
+
+In multi-process mode an ApplicationManagerWindow derives from Window and in single-process mode
+from Item. Consequently, there is a multitude of different properties, methods and signals in an
+ApplicationManagerWindow depending on whether it is used in single- or multi-process mode. For
+instance an Item has a parent property, which a Window does not have. Hence, if you bind an Item to
+the (non-existent) parent property in multi-process mode a warning will be shown and the
+application will not start.
+
+In order to have a similar behavior in single-process mode, the parent property has been overwritten
+in the single-process version of ApplicationManagerWindow, so it will also log a message and abort.
+The same approach has been applied to all other properties, methods and signals that are only
+available in an Item. Note however, that the message type and text might be different and even
+misleading. Only the termination behavior will be the same. For instance binding a non-existent
+property causes an abort, whereas assignment doesn't. There are more subtle differences caused by
+the different base classes:
+
+\list
+\li If an ApplicationManagerWindow is placed in an object hierarchy including other Items, those
+    Items will influence the effective visibility of it in single-process mode, whereas in
+    multi-process mode only the Window hierarchy is considered (Items are ignored). This behavior
+    is not application-manager specific, it is inherent in QtQuick already.
+\li An ApplicationManagerWindow is exposed to the system UI in two different ways: in multi-process
+    mode a handle to the window's content surface is sent over the process boundary via the Wayland
+    protocol. The system UI gets this as a surface Item, which is hierarchically independent from
+    the application's window. In single-process mode the ApplicationManagerWindow is simply an Item
+    which is provided (through another proxy Item) to the system UI. Consequently, it would be
+    possible to gain access from the system UI to the ApplicationManagerWindow and vice versa.
+\li Many properties, functions and signals defined in a Window are not reimplemented (yet) in the
+    single-process version of ApplicationManagerWindow.
+\li An error encountered in a code block due to properties or methods described above will cause
+    subsequent statements not to be evaluated in multi-process mode, whereas in single-process mode
+    they are.
+\li In single-process mode, if the ApplicationManagerWindow is loaded dynamically via a Loader,
+    setting the loader to inactive will destruct the ApplicationManagerWindow immediately and hence
+    there is no possibility to play a window closing animation. In multi-process mode there is
+    still the surface Item available on the system UI side, which can be animated.
+\endlist
+
+
+\section1 Resource Consumption
+
+CPU usage on a multi-core system might be more efficient in multi-process mode, since the OS can
+schedule more processes and potentially better utilize the cores.
+
+The memory consumption per application in multi-process mode is higher compared to single-process
+mode. There is more memory needed by the GPU due to additional window surface buffers that need to
+be allocated and also textures that hold application assets are not shared. If two applications
+render the same image (file), two textures are created in multi-process mode, in single-process
+mode only one.
+
+The CPU memory consumption per application is higher due to additional data structures, for
+instance if one application is running there are two instances of the QML engine in multi-process
+mode: one for the system UI and one for the application. In single-process mode there is only one
+instance since everything is running within the system UI. Also assets might be duplicated in
+multi-process mode. This can be mitigated though, by using shared image providers or by removing
+images from CPU memory once they are uploaded to GPU memory (through environment variable
+QSG_TRANSIENT_IMAGES).
+
+On the other hand, multi-process mode comes with the big advantage, that applications which are not
+needed any more can be terminated and hence will free their allocated resources again. In
+single-process mode applications are never really terminated, so their memory is not freed and the
+total consumption grows steadily with each started application, no matter, whether they have been
+stopped again. The QML engine simply doesn't allow to unload parts of the object hierarchy.
+
+
+\section1 Recommended Way to Support Mixed Setups
+
+Define a set of inter-process communication (IPC) interfaces between the application and system UI
+and stick to them - make this a review policy. You could use any IPC mechanism you see fit, but to
+make your lives easier, the application manager comes with an IPC mechanism that already fully
+abstracts the single- vs. multi-process difference, plus it makes it easy to create new interfaces
+for QML developers.
+
+Please be aware that the application-manager IPC is not suitable to interface your complete
+middle-ware! Its sole purpose is to avoid a whole zoo of little one-off daemons that would be
+needed to keep track of different pieces of state information that need to be shared between the
+system UI and all (or best case, only specific) applications.
+
+*/

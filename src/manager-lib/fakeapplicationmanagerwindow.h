@@ -68,7 +68,40 @@ class FakeApplicationManagerWindow : public QQuickItem
     Q_PROPERTY(bool inputEventsEnabled READ dummyGetter WRITE dummySetter)
     Q_PROPERTY(bool focusOnClick READ dummyGetter WRITE dummySetter)
 
+    // Hide the following properties (from QQuickIem),
+    // since they are not available in multi-process mode (QWindow):
     Q_PROPERTY(QJSValue parent READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue children READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue resources READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue z READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue enabled READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue visibleChildren READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue states READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue transitions READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue state READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue childrenRect READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue anchors READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue left READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue right READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue horizontalCenter READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue top READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue bottom READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue verticalCenter READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue baseline READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue clip READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue focus READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue activeFocus READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue activeFocusOnTab READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue rotation READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue scale READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue transformOrigin READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue transformOriginPoint READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue transform READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue smooth READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue antialiasing READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue implicitWidth READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue implicitHeight READ getUndefined CONSTANT)
+    Q_PROPERTY(QJSValue layer READ getUndefined CONSTANT)
 
 public:
     explicit FakeApplicationManagerWindow(QQuickItem *parent = nullptr);
@@ -111,6 +144,18 @@ public slots:
     //    void show()
     //    void showMinimized()
 
+    // Hide the following functions (from QQuickIem),
+    // since they are not available in multi-process mode (QWindow):
+    Q_INVOKABLE void grabToImage() const;
+    Q_INVOKABLE void contains() const;
+    Q_INVOKABLE void mapFromItem() const;
+    Q_INVOKABLE void mapToItem() const;
+    Q_INVOKABLE void mapFromGlobal() const;
+    Q_INVOKABLE void mapToGlobal() const;
+    Q_INVOKABLE void forceActiveFocus() const;
+    Q_INVOKABLE void nextItemInFocusChain() const;
+    Q_INVOKABLE void childAt() const;
+
 signals:
     void fakeCloseSignal();
     void fakeFullScreenSignal();
@@ -133,6 +178,7 @@ private:
     void determineRuntime();
     void onVisibleChanged();
     QJSValue getUndefined() const;
+    void referenceError(const char *symbol) const;
 
     InProcessSurfaceItem *m_surfaceItem = nullptr;
     QSharedPointer<QObject> m_windowProperties;

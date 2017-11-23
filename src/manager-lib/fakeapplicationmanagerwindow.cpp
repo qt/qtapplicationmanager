@@ -256,24 +256,68 @@ void FakeApplicationManagerWindow::onVisibleChanged()
         m_runtime->addWindow(this);
 }
 
+/* The rest of the code is merely to hide properties and functions that
+ * are derived from QQuickItem, but are not available in real QWindows. */
+
 QJSValue FakeApplicationManagerWindow::getUndefined() const
 {
     return QJSValue();
 }
 
+void FakeApplicationManagerWindow::referenceError(const char *symbol) const
+{
+#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
+        qWarning().noquote() << "ReferenceError:" << symbol << "is not defined";
+#else
+        qmlWarning(this) << "ReferenceError: " << symbol << " is not defined";
+#endif
+}
+
+void FakeApplicationManagerWindow::grabToImage() const          { referenceError("grabToImage"); }
+void FakeApplicationManagerWindow::contains() const             { referenceError("contains"); }
+void FakeApplicationManagerWindow::mapFromItem() const          { referenceError("mapFromItem"); }
+void FakeApplicationManagerWindow::mapToItem() const            { referenceError("mapToItem"); }
+void FakeApplicationManagerWindow::mapFromGlobal() const        { referenceError("mapFromGlobal"); }
+void FakeApplicationManagerWindow::mapToGlobal() const          { referenceError("mapToGlobal"); }
+void FakeApplicationManagerWindow::forceActiveFocus() const     { referenceError("forceActiveFocus"); }
+void FakeApplicationManagerWindow::nextItemInFocusChain() const { referenceError("nextItemInFocusChain"); }
+void FakeApplicationManagerWindow::childAt() const              { referenceError("childAt"); }
+
 void FakeApplicationManagerWindow::connectNotify(const QMetaMethod &signal)
 {
-    static int parentMetaIdx = FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("parentChanged(QQuickItem*)");
+    // array of signal indices that should not be connected to
+    static const QVector<int> metaIndices = {
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("parentChanged(QQuickItem*)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("childrenChanged()"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("childrenRectChanged(QRectF)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("zChanged()"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("enabledChanged()"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("visibleChildrenChanged()"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("stateChanged(QString)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("clipChanged(bool)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("focusChanged(bool)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("activeFocusChanged(bool)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("activeFocusOnTabChanged(bool)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("rotationChanged()"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("scaleChanged()"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("transformOriginChanged(TransformOrigin)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("smoothChanged(bool)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("antialiasingChanged(bool)"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("implicitWidthChanged()"),
+        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("implicitHeightChanged()")
+    };
 
-    if (signal.methodIndex() == parentMetaIdx) {
+    if (metaIndices.contains(signal.methodIndex())) {
         determineRuntime();
         if (m_runtime)
             m_runtime->m_componentError = true;
 
+        QString name = qSL("on") + QString::fromUtf8(signal.name());
+        name[2] = name[2].toUpper();
 #if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
-        qWarning() << "QML ApplicationManagerWindow: Cannot assign to non-existent property \"onParentChanged\"";
+        qWarning() << "QML ApplicationManagerWindow: Cannot assign to non-existent property" << name;
 #else
-        qmlWarning(this) << "Cannot assign to non-existent property \"onParentChanged\"";
+        qmlWarning(this) << "Cannot assign to non-existent property \"" << name << "\"";
 #endif
     }
 }

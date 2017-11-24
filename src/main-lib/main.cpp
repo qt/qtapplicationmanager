@@ -489,7 +489,7 @@ void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
     if (mainQml.startsWith(qSL(":/")))
         m_mainQml = QUrl(qSL("qrc:") + mainQml.mid(1));
     else
-        m_mainQml = QUrl::fromUserInput(mainQml);
+        m_mainQml = QUrl::fromUserInput(mainQml, QDir::currentPath());
 
     if (m_mainQml.isLocalFile())
         m_mainQmlLocalFile = m_mainQml.toLocalFile();

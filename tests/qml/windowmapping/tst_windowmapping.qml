@@ -49,6 +49,9 @@ TestCase {
     name: "WindowMapping"
     visible: true
 
+    property string appId;
+    property Item lastWindowReady;
+
     Item {
         id: chrome
         anchors.fill: parent
@@ -61,7 +64,10 @@ TestCase {
 
     Connections {
         target: WindowManager
-        onWindowReady: window.parent = WindowManager.windowProperty(window, "type") === "sub" ? subChrome : chrome;
+        onWindowReady: {
+            window.parent = WindowManager.windowProperty(window, "type") === "sub" ? subChrome : chrome;
+            lastWindowReady = window;
+        }
         onWindowLost: WindowManager.releaseWindow(window);
     }
 
@@ -73,9 +79,21 @@ TestCase {
     }
 
     SignalSpy {
+        id: windowClosingSpy
+        target: WindowManager
+        signalName: "windowClosing"
+    }
+
+    SignalSpy {
         id: windowLostSpy
         target: WindowManager
         signalName: "windowLost"
+    }
+
+    SignalSpy {
+        id: windowPropertyChangedSpy
+        target: WindowManager
+        signalName: "windowPropertyChanged"
     }
 
     SignalSpy {
@@ -84,16 +102,19 @@ TestCase {
         signalName: "applicationRunStateChanged"
     }
 
-    function ensureAppTerminated(id) {
+    function cleanup() {
         runStateChangedSpy.clear();
-        while (ApplicationManager.applicationRunState(id) !== ApplicationManager.NotRunning) {
+        ApplicationManager.stopApplication(appId);
+        while (ApplicationManager.applicationRunState(appId) !== ApplicationManager.NotRunning)
             runStateChangedSpy.wait(3000);
-            verify(runStateChangedSpy.count)
-        }
+        windowReadySpy.clear();
+        windowClosingSpy.clear();
+        windowLostSpy.clear();
     }
 
+
     function test_amwin_advanced() {
-        var appId = "test.winmap.amwin2";
+        appId = "test.winmap.amwin2";
         ApplicationManager.startApplication(appId, "show-sub");
         wait(2000);
         compare(windowReadySpy.count, 0);
@@ -101,18 +122,13 @@ TestCase {
         ApplicationManager.startApplication(appId, "show-main");
         windowReadySpy.wait(3000);
         compare(windowReadySpy.count, 2);
-        windowReadySpy.clear();
-
-        ApplicationManager.stopApplication(appId);
-        ensureAppTerminated(appId);
-        windowLostSpy.clear();
     }
 
     function test_amwin_loader() {
         if (!ApplicationManager.singleProcess)
             skip("Sporadically crashes in QtWaylandClient::QWaylandDisplay::flushRequests()");
 
-        var appId = "test.winmap.loader";
+        appId = "test.winmap.loader";
         ApplicationManager.startApplication(appId, "show-sub");
         windowReadySpy.wait(3000);
         compare(windowReadySpy.count, 2);
@@ -121,20 +137,14 @@ TestCase {
         ApplicationManager.startApplication(appId, "hide-sub");
         windowLostSpy.wait(2000);
         compare(windowLostSpy.count, 1);
-        windowLostSpy.clear();
 
         ApplicationManager.startApplication(appId, "show-sub");
         windowReadySpy.wait(3000);
         compare(windowReadySpy.count, 1);
-        windowReadySpy.clear();
-
-        ApplicationManager.stopApplication(appId);
-        ensureAppTerminated(appId);
-        windowLostSpy.clear();
     }
 
     function test_amwin_peculiarities() {
-        var appId = "test.winmap.amwin2";
+        appId = "test.winmap.amwin2";
         ApplicationManager.startApplication(appId, "show-main");
         windowReadySpy.wait(3000);
         compare(windowReadySpy.count, 1);
@@ -151,7 +161,7 @@ TestCase {
             // Sub-window 2 has an invisible Rectangle as parent and hence the effective
             // visible state is false. Consequently no windowReady signal will be emitted.
             wait(2000);
-            compare(windowLostSpy.count, 0);
+            compare(windowReadySpy.count, 0);
         } else {
             // A Window's effective visible state solely depends on Window hierarchy.
             windowReadySpy.wait(3000);
@@ -168,7 +178,6 @@ TestCase {
         ApplicationManager.startApplication(appId, "show-sub");
         windowReadySpy.wait(3000);
         compare(windowReadySpy.count, 1);
-        windowReadySpy.clear();
 
         // This is weird Window behavior: a child window becomes only visible, when the parent
         // window is visible, but when you change the parent window back to invisible, the child
@@ -183,17 +192,12 @@ TestCase {
         if (ApplicationManager.singleProcess) {
             windowLostSpy.wait(2000);
             compare(windowLostSpy.count, 1);
-            windowLostSpy.clear();
         } else {
             // This is even more weird Window behavior: when the parent window is invisible, it is
             // not possible any more to explicitly set the child window to invisible.
             wait(2000);
             compare(windowLostSpy.count, 0);
         }
-
-        ApplicationManager.stopApplication(appId);
-        ensureAppTerminated(appId);
-        windowLostSpy.clear();
     }
 
     function test_default_data() {
@@ -207,19 +211,16 @@ TestCase {
         if (ApplicationManager.singleProcess && data.tag === "Window")
             skip("Window root element is not properly supported in single process mode.");
 
-        var appId = data.appId;
+        appId = data.appId;
         compare(chrome.children.length, 1);
         ApplicationManager.startApplication(appId);
         windowReadySpy.wait(2000);
         compare(windowReadySpy.count, 1);
-        windowReadySpy.clear();
         compare(chrome.children.length, 2);
 
         ApplicationManager.stopApplication(appId);
         windowLostSpy.wait(2000);
         compare(windowLostSpy.count, 1);
-        windowLostSpy.clear();
-        ensureAppTerminated(appId);
     }
 
     function test_mapping_data() {
@@ -233,7 +234,7 @@ TestCase {
         if (ApplicationManager.singleProcess && data.tag === "Window")
             skip("Window root element is not properly supported in single process mode.");
 
-        var appId = data.appId;
+        appId = data.appId;
         compare(chrome.children.length, 1);
         ApplicationManager.startApplication(appId, "show-main");
         windowReadySpy.wait(2000);
@@ -249,15 +250,42 @@ TestCase {
         compare(subChrome.children.length, 1);
 
         ApplicationManager.startApplication(appId, "hide-sub");
+        windowClosingSpy.wait(2000);
+        compare(windowClosingSpy.count, 1);
+        windowClosingSpy.clear();
         windowLostSpy.wait(2000);
         compare(windowLostSpy.count, 1);
         windowLostSpy.clear();
         compare(subChrome.children.length, 0);
 
         ApplicationManager.stopApplication(appId);
+        windowClosingSpy.wait(2000);
+        compare(windowClosingSpy.count, 1);
         windowLostSpy.wait(2000);
         compare(windowLostSpy.count, 1);
-        windowLostSpy.clear();
-        ensureAppTerminated(appId);
+    }
+
+    function test_window_properties() {
+        appId = "test.winmap.amwin";
+        ApplicationManager.startApplication(appId);
+        windowReadySpy.wait(2000);
+        compare(windowReadySpy.count, 1);
+
+        ApplicationManager.startApplication(appId, "show-main");
+        windowPropertyChangedSpy.wait(2000);
+        compare(windowPropertyChangedSpy.count, 1);
+
+        compare(WindowManager.windowProperty(lastWindowReady, "key1"), "val1");
+        compare(WindowManager.windowProperty(lastWindowReady, "objectName"), 42);
+
+        WindowManager.setWindowProperty(lastWindowReady, "key2", "val2");
+        windowPropertyChangedSpy.wait(2000);
+        compare(windowPropertyChangedSpy.count, 2);
+
+        var allProps = WindowManager.windowProperties(lastWindowReady)
+        compare(Object.keys(allProps).length, 3);
+        compare(allProps.key1, "val1");
+        compare(allProps.key2, "val2");
+        compare(allProps.objectName, 42);
     }
 }

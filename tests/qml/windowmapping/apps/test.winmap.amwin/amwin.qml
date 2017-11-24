@@ -55,11 +55,13 @@ ApplicationManagerWindow {
         target: ApplicationInterface
         onOpenDocument: {
             switch (documentUrl) {
-            case "show-main": root.visible = true; break;
+            case "show-main": root.visible = true; root.setWindowProperty("key1", "val1"); break;
             case "hide-main": root.visible = false; break;
             case "show-sub": sub.visible = true; break;
             case "hide-sub": sub.visible = false; break;
             }
         }
     }
+
+    Component.onCompleted: setWindowProperty("objectName", 42);
 }

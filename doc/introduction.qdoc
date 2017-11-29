@@ -95,6 +95,32 @@ the \e freedesktop.org notification protocol.
 Both sides also come with Qt-like APIs to extend any notification request with additional meta-data
 using standard compliant mechanism.
 
+\section1 Application Installation
+
+In addition to applications that are part of the system-ui or the base installation (\e built-in), the
+application-manager also supports applications that can be dynamically installed, updated and
+deinstalled (\e third-party).
+
+Developing such a built-in application versus a third-party application is not much different: only
+the third-party ones need an additional packaging step: the application-manager comes with a very
+simple package format and a tool that can create and also digitally sign those packages.
+
+The application-manager's installer component is able to install and update these packages in a
+background thread using either plain HTTP(S) transfers or by receiving data from a customer
+specific local socket connection. In order to support devices with little disk-space to spare,
+all package installations and updates are not completely downloaded for later installation, but they
+are installed while being streamed to the device.
+
+Using a custom package format was a deliberate decision: all standard Unix package formats are far
+too "heavy-weight" in that they either use libraries supporting legacy formats or come with hooks
+for arbitrary shell scripts, that could be used to circumvent existing security measures.
+The application-manager basically uses a TAR archive with further restrictions on the type of content
+and some named, application-manager specific, YAML meta-data files. Parsing these packages is done via
+the BSD standard \c libarchive library, which is the basis for the actual \c tar command.
+
+The packages can be cryptographically signed by both the developer and - in production setups - by
+the app-store server. Devices can of course be put into a "developer mode" during the development
+phase to either require only a developer signature or even no signature at all.
 
 \section1 Advantages
 

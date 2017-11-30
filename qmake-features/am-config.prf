@@ -42,6 +42,30 @@ defineTest(CONFIG_VALUE) {
     return(true)
 }
 
+!defined(versionAtLeast, test): {
+    defineTest(versionAtLeast) {
+        LEFT_VERSION = $$eval($$1)
+        LEFT_VERSION_MAJOR = $$section(LEFT_VERSION, ., 0, 0)
+        LEFT_VERSION_MINOR = $$section(LEFT_VERSION, ., 1, 1)
+        LEFT_VERSION_PATCH = $$section(LEFT_VERSION, ., 2, 2)
+
+        RIGHT_VERSION = $$2
+        RIGHT_VERSION_MAJOR = $$section(RIGHT_VERSION, ., 0, 0)
+        RIGHT_VERSION_MINOR = $$section(RIGHT_VERSION, ., 1, 1)
+        RIGHT_VERSION_PATCH = $$section(RIGHT_VERSION, ., 2, 2)
+
+        greaterThan(LEFT_VERSION_MAJOR, $$RIGHT_VERSION_MAJOR) {
+            return(true)
+        } else:equals(LEFT_VERSION_MAJOR, $$RIGHT_VERSION_MAJOR):greaterThan(LEFT_VERSION_MINOR, $$RIGHT_VERSION_MINOR) {
+            return(true)
+        } else:equals(LEFT_VERSION_MAJOR, $$RIGHT_VERSION_MAJOR):equals(LEFT_VERSION_MINOR, $$RIGHT_VERSION_MINOR):!lessThan(LEFT_VERSION_PATCH, $$RIGHT_VERSION_PATCH) {
+            return(true)
+        }
+
+        return(false)
+    }
+}
+
 CONFIG_VALUE(install-prefix, INSTALL_PREFIX)
 
 CONFIG_VALUE(hardware-id, AM_HARDWARE_ID):DEFINES *= AM_HARDWARE_ID=\\\"$$AM_HARDWARE_ID\\\"

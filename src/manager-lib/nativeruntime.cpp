@@ -264,23 +264,49 @@ bool NativeRuntime::start()
         break;
     }
 
+    QVariantMap dbusConfig = {
+        { qSL("p2p"), applicationInterfaceServer()->address() },
+        { qSL("org.freedesktop.Notifications"), NotificationManager::instance()->property("_am_dbus_name").toString()}
+    };
+
+    QVariantMap loggingConfig = {
+        { qSL("dlt"), Logging::isDltEnabled() },
+        { qSL("rules"), Logging::filterRules() }
+    };
+
+    QVariantMap uiConfig;
+    if (m_slowAnimations)
+        uiConfig.insert(qSL("slowAnimations"), true);
+    QVariantMap openGLConfig = m_app->openGLConfiguration();
+    if (openGLConfig.isEmpty())
+        openGLConfig = manager()->systemOpenGLConfiguration();
+    if (!openGLConfig.isEmpty())
+        uiConfig.insert(qSL("opengl"), openGLConfig);
+
+    QVariantMap config = {
+        { qSL("logging"), loggingConfig },
+        { qSL("baseDir"), QDir::currentPath() },
+        { qSL("runtimeConfiguration"), configuration() },
+        { qSL("securityToken"), qL1S(securityToken().toHex()) },
+        { qSL("dbus"), dbusConfig }
+    };
+
+    if (!m_needsLauncher && !m_isQuickLauncher)
+        config.insert(qSL("systemProperties"), systemProperties());
+    if (!uiConfig.isEmpty())
+        config.insert(qSL("ui"), uiConfig);
+
     QMap<QString, QString> env = {
         { qSL("QT_QPA_PLATFORM"), qSL("wayland") },
         { qSL("QT_IM_MODULE"), QString() },     // Applications should use wayland text input
-        { qSL("AM_SECURITY_TOKEN"), qL1S(securityToken().toHex()) },
-        { qSL("AM_DBUS_PEER_ADDRESS"), applicationInterfaceServer()->address() },
-        { qSL("AM_DBUS_NOTIFICATION_BUS_ADDRESS"), NotificationManager::instance()->property("_am_dbus_name").toString() },
-        { qSL("AM_RUNTIME_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ configuration() })) },
-        { qSL("AM_BASE_DIR"), QDir::currentPath() }
+        { qSL("QT_SCALE_FACTOR"), QString() },  // do not scale wayland clients
+        { qSL("AM_CONFIG"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ config })) },
     };
 
-    if (m_slowAnimations)
-        env.insert(qSL("AM_SLOW_ANIMATIONS"), qSL("1"));
-
-    if (!m_needsLauncher && !m_isQuickLauncher)
-        env.insert(qSL("AM_RUNTIME_SYSTEM_PROPERTIES"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ systemProperties() })));
-    if (!Logging::isDltEnabled())
+    if (Logging::isDltEnabled()) {
+        // sadly we still need this, since we need to disable DLT as soon as possible
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
+    }
 
     for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {
         it.next();
@@ -472,12 +498,12 @@ void NativeRuntime::openDocument(const QString &document, const QString &mimeTyp
        emit m_applicationInterface->openDocument(document, mimeType);
 }
 
-void NativeRuntime::setSlowAnimations(bool value)
+void NativeRuntime::setSlowAnimations(bool slow)
 {
-    if (m_slowAnimations != value) {
-        m_slowAnimations = value;
+    if (m_slowAnimations != slow) {
+        m_slowAnimations = slow;
         if (m_applicationInterface)
-            emit m_applicationInterface->slowAnimationsChanged(value);
+            emit m_applicationInterface->slowAnimationsChanged(slow);
     }
 }
 

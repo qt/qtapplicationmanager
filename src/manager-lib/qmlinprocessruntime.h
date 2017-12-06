@@ -73,9 +73,6 @@ public:
     void openDocument(const QString &document, const QString &mimeType) override;
     qint64 applicationProcessId() const override;
 
-    // No need to do anything as, being inprocess, it will use QUnified timers from appman itself
-    void setSlowAnimations(bool) override {}
-
 public slots:
     bool start() override;
     void stop(bool forceKill = false) override;

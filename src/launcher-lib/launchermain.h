@@ -42,51 +42,52 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QLoggingCategory>
+#include <QtAppManSharedMain/sharedmain.h>
+
+#if defined(AM_HEADLESS)
+#  include <QCoreApplication>
+typedef QCoreApplication LauncherMainBase;
+#else
+#  include <QGuiApplication>
+typedef QGuiApplication LauncherMainBase;
+#endif
+
 
 QT_BEGIN_NAMESPACE_AM
 
-Q_DECLARE_LOGGING_CATEGORY(LogSystem)
-Q_DECLARE_LOGGING_CATEGORY(LogInstaller)
-Q_DECLARE_LOGGING_CATEGORY(LogGraphics)
-Q_DECLARE_LOGGING_CATEGORY(LogQml)
-Q_DECLARE_LOGGING_CATEGORY(LogNotifications)
-Q_DECLARE_LOGGING_CATEGORY(LogQmlRuntime)
-Q_DECLARE_LOGGING_CATEGORY(LogQmlIpc)
-
-class Logging
+class LauncherMain : public LauncherMainBase, public SharedMain
 {
+    Q_OBJECT
 public:
-    static void initialize();
-    static QStringList filterRules();
-    static void setFilterRules(const QStringList &rules);
+    LauncherMain(int &argc, char **argv, const QByteArray &configYaml = QByteArray()) Q_DECL_NOEXCEPT_EXPR(false);
+    ~LauncherMain();
 
-    static QByteArray applicationId();
-    static void setApplicationId(const QByteArray &appId);
+public:
+    void setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false);
 
-    // DLT functionality
-    static bool isDltEnabled();
-    static void setDltEnabled(bool enabled);
+    QString baseDir() const;
+    QVariantMap runtimeConfiguration() const;
+    QByteArray securityToken() const;
+    bool slowAnimations() const;
+    QVariantMap systemProperties() const;
+    QStringList loggingRules() const;
 
-    static void registerUnregisteredDltContexts();
-    static void setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription);
+    QString p2pDBusName() const;
+    QString notificationDBusName() const;
+
+    QVariantMap openGLConfiguration() const;
 
 private:
-    static bool s_dltEnabled;
-    static bool s_useDefaultQtHandler;
-    static QStringList s_rules;
-    static QtMessageHandler s_defaultQtHandler;
-    static QByteArray s_applicationId;
+    QVariantMap m_configuration;
+    QString m_baseDir;
+    QVariantMap m_runtimeConfiguration;
+    QByteArray m_securityToken;
+    bool m_slowAnimations = false;
+    QVariantMap m_systemProperties;
+    QStringList m_loggingRules;
+    QString m_dbusAddressP2P;
+    QString m_dbusAddressNotifications;
+    QVariantMap m_openGLConfiguration;
 };
-
-
-void am_trace(QDebug);
-template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest... trest)
-{ dbg << t; am_trace(dbg, trest...); }
-
-#define AM_TRACE(category, ...) \
-    for (bool qt_category_enabled = category().isDebugEnabled(); qt_category_enabled; qt_category_enabled = false) { \
-        QT_PREPEND_NAMESPACE_AM(am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__)); \
-    }
 
 QT_END_NAMESPACE_AM

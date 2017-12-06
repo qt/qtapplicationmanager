@@ -53,4 +53,6 @@ void fixNullValuesForQml(QVariantMap &map);
 
 void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton, bool immediately = false);
 
+void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory);
+
 QT_END_NAMESPACE_AM

@@ -720,12 +720,23 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             // we cannot use the quicklaunch pool, if
             //  (a) a debug-wrapper is being used,
             //  (b) stdio is redirected or
-            //  (c) the app requests special environment variables
-            bool cannotUseQuickLaunch = !debugWrapperCommand.isEmpty()
-                    || hasStdioRedirections
-                    || !app->environmentVariables().isEmpty();
+            //  (c) the app requests special environment variables or
+            //  (d) the app requests a different OpenGL config from the AM
+            const char *cannotUseQuickLaunch = nullptr;
 
-            if (!cannotUseQuickLaunch) {
+            if (!debugWrapperCommand.isEmpty())
+                cannotUseQuickLaunch = "the app is started using a debug-wrapper";
+            else if (hasStdioRedirections)
+                cannotUseQuickLaunch = "standard I/O is redirected";
+            else if (!app->environmentVariables().isEmpty())
+                cannotUseQuickLaunch = "the app requests customs environment variables";
+            else if (app->openGLConfiguration() != runtimeManager->systemOpenGLConfiguration())
+                cannotUseQuickLaunch = "the app requests a custom OpenGL configuration";
+
+            if (cannotUseQuickLaunch) {
+                qCDebug(LogSystem) << "Cannot use quick-launch for application" << app->id()
+                                   << "because" << cannotUseQuickLaunch;
+            } else {
                 // check quicklaunch pool
                 QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
                         QuickLauncher::instance()->take(containerId, app->m_runtimeName);

@@ -117,21 +117,25 @@ AbstractRuntime *RuntimeFactory::createQuickLauncher(AbstractContainer *containe
 
 void RuntimeFactory::setConfiguration(const QVariantMap &configuration)
 {
-    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it) {
+    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
         it.value()->setConfiguration(configuration.value(it.key()).toMap());
-    }
 }
 
 void RuntimeFactory::setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn)
 {
-    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it) {
+    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
         it.value()->setSystemProperties(thirdParty, builtIn);
-    }
 }
 
 void RuntimeFactory::setSlowAnimations(bool value)
 {
     m_slowAnimations = value;
+}
+
+void RuntimeFactory::setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration)
+{
+    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
+        it.value()->setSystemOpenGLConfiguration(openGLConfiguration);
 }
 
 bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager)

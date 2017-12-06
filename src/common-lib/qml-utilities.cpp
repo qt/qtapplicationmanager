@@ -40,9 +40,13 @@
 ****************************************************************************/
 
 #include <QTimer>
+#include <QDir>
+#include <QQmlComponent>
+#include <QQmlContext>
 #include <private/qqmlmetatype_p.h>
 #include <private/qvariant_p.h>
 
+#include "logging.h"
 #include "qml-utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -118,6 +122,30 @@ void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singl
         retake();
     else
         QTimer::singleShot(0, qmlEngine, retake);
+}
+
+// copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
+void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory)
+{
+    QDir dir(directory + qSL("/dummydata"), qSL("*.qml"));
+    QStringList list = dir.entryList();
+    for (int i = 0; i < list.size(); ++i) {
+        QString qml = list.at(i);
+        QQmlComponent comp(engine, dir.filePath(qml));
+        QObject *dummyData = comp.create();
+
+        if (comp.isError()) {
+            const QList<QQmlError> errors = comp.errors();
+            for (const QQmlError &error : errors)
+                qCWarning(LogQml) << "Loading dummy data:" << error;
+        }
+
+        if (dummyData) {
+            qml.truncate(qml.length() - 4);
+            engine->rootContext()->setContextProperty(qml, dummyData);
+            dummyData->setParent(engine);
+        }
+    }
 }
 
 QT_END_NAMESPACE_AM

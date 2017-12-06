@@ -89,8 +89,8 @@ public:
     bool attachApplicationToQuickLauncher(const Application *app) override;
 
     qint64 applicationProcessId() const override;
-    virtual void openDocument(const QString &document, const QString &mimeType) override;
-    virtual void setSlowAnimations(bool value) override;
+    void openDocument(const QString &document, const QString &mimeType) override;
+    void setSlowAnimations(bool slow) override;
 
     bool sendNotificationUpdate(Notification *n);
 
@@ -134,6 +134,7 @@ private:
     AbstractContainerProcess *m_process = nullptr;
     QDBusServer *m_applicationInterfaceServer;
     bool m_slowAnimations = false;
+    QVariantMap m_openGLConfiguration;
 
     friend class NativeRuntimeManager;
 };

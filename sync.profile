@@ -5,6 +5,7 @@
     "QtAppManPackage" => "$basedir/src/package-lib",
     "QtAppManNotification" => "$basedir/src/notification-lib",
     "QtAppManManager" => "$basedir/src/manager-lib",
+    "QtAppManSharedMain" => "$basedir/src/shared-main-lib",
     "QtAppManMain" => "$basedir/src/main-lib",
     "QtAppManWindow" => "$basedir/src/window-lib",
     "QtAppManInstaller" => "$basedir/src/installer-lib",

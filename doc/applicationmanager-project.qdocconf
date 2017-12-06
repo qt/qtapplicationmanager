@@ -10,6 +10,7 @@ examples.imageextensions = "*.png *.jpg *.gif"
 
 headerdirs += \
     ../src/common-lib \
+    ../src/shared-main-lib \
     ../src/main-lib \
     ../src/manager-lib \
     ../src/application-lib \
@@ -25,6 +26,7 @@ headerdirs += \
 sourcedirs += \
     . \
     ../src/common-lib \
+    ../src/shared-main-lib \
     ../src/main-lib \
     ../src/manager-lib \
     ../src/application-lib \

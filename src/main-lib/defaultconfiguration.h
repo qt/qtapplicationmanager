@@ -85,9 +85,7 @@ public:
     QString style() const;
     bool enableTouchEmulation() const;
 
-    QString openGLESProfile() const;
-    int openGLESVersionMajor() const;
-    int openGLESVersionMinor() const;
+    QVariantMap openGLConfiguration() const;
 
     QVariantList installationLocations() const;
 

@@ -105,10 +105,23 @@ QByteArray AbstractRuntime::securityToken() const
     return m_securityToken;
 }
 
+
+void setOpenGLConfiguration(const QVariantMap &openGLConfiguration)
+{
+    // not every runtime needs this information
+    Q_UNUSED(openGLConfiguration)
+}
+
 void AbstractRuntime::openDocument(const QString &document, const QString &mimeType)
 {
     Q_UNUSED(document)
     Q_UNUSED(mimeType)
+}
+
+void AbstractRuntime::setSlowAnimations(bool slow)
+{
+    // not every runtime needs this information
+    Q_UNUSED(slow)
 }
 
 const Application *AbstractRuntime::application() const
@@ -221,6 +234,16 @@ void AbstractRuntimeManager::setSystemProperties(const QVariantMap &thirdParty, 
 {
     m_systemProperties3rdParty = thirdParty;
     m_systemPropertiesBuiltIn = builtIn;
+}
+
+QVariantMap AbstractRuntimeManager::systemOpenGLConfiguration() const
+{
+    return m_systemOpenGLConfiguration;
+}
+
+void AbstractRuntimeManager::setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration)
+{
+    m_systemOpenGLConfiguration = openGLConfiguration;
 }
 
 QT_END_NAMESPACE_AM

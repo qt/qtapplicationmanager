@@ -512,6 +512,11 @@ QString Application::version() const
     return m_nonAliased ? m_nonAliased->m_version : m_version;
 }
 
+QVariantMap Application::openGLConfiguration() const
+{
+    return m_nonAliased ? m_nonAliased->m_openGLConfiguration : m_openGLConfiguration;
+}
+
 void Application::validate() const Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (isAlias()) {
@@ -564,6 +569,7 @@ void Application::mergeInto(Application *app) const
     app->m_mimeTypes = m_mimeTypes;
     app->m_backgroundMode = m_backgroundMode;
     app->m_version = m_version;
+    app->m_openGLConfiguration = m_openGLConfiguration;
     emit app->bulkChange();
 }
 
@@ -689,6 +695,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
        >> app->m_mimeTypes
        >> backgroundMode
        >> app->m_version
+       >> app->m_openGLConfiguration
        >> codeDir
        >> manifestDir
        >> app->m_uid
@@ -759,6 +766,7 @@ void Application::writeToDataStream(QDataStream &ds, const QVector<const Applica
        << m_mimeTypes
        << qint32(m_backgroundMode)
        << m_version
+       << m_openGLConfiguration
        << m_codeDir.absolutePath()
        << m_manifestDir.absolutePath()
        << m_uid

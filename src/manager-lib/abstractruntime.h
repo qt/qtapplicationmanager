@@ -81,11 +81,15 @@ public:
     QVariantMap systemProperties3rdParty() const;
     void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
 
+    QVariantMap systemOpenGLConfiguration() const;
+    void setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration);
+
 private:
     QString m_id;
     QVariantMap m_configuration;
     QVariantMap m_systemPropertiesBuiltIn;
     QVariantMap m_systemProperties3rdParty;
+    QVariantMap m_systemOpenGLConfiguration;
 };
 
 
@@ -121,7 +125,7 @@ public:
 
     virtual void openDocument(const QString &document, const QString &mimeType);
 
-    virtual void setSlowAnimations(bool value) = 0;
+    virtual void setSlowAnimations(bool slow);
 
     void setInProcessQmlEngine(QQmlEngine *view);
     QQmlEngine* inProcessQmlEngine() const;

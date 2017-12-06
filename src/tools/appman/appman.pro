@@ -1,13 +1,11 @@
 TEMPLATE = app
-TARGET   = appman
+TARGET = appman
 
 load(am-config)
 
 QT = appman_main-private
 
 CONFIG *= console
-
-#win32:LIBS += -luser32
 
 SOURCES += \
     $$PWD/appman.cpp

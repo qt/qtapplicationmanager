@@ -70,6 +70,7 @@ public:
     void setConfiguration(const QVariantMap &configuration);
     void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
     void setSlowAnimations(bool isSlow);
+    void setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration);
 
     bool registerRuntime(AbstractRuntimeManager *manager);
     bool registerRuntime(AbstractRuntimeManager *manager, const QString &identifier);

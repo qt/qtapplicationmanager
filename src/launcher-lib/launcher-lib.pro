@@ -8,6 +8,7 @@ QT = qml dbus core-private
 !headless:QT += quick gui gui-private quick-private
 QT_FOR_PRIVATE *= \
     appman_common-private \
+    appman_shared_main-private \
     appman_application-private \
     appman_notification-private \
 
@@ -17,7 +18,8 @@ SOURCES += \
     qmlapplicationinterface.cpp \
     ipcwrapperobject.cpp \
     qmlapplicationinterfaceextension.cpp \
-    qmlnotification.cpp
+    qmlnotification.cpp \
+    launchermain.cpp
 
 !headless:SOURCES += \
     applicationmanagerwindow.cpp \
@@ -27,7 +29,8 @@ HEADERS += \
     ipcwrapperobject.h \
     ipcwrapperobject_p.h \
     qmlapplicationinterfaceextension.h \
-    qmlnotification.h
+    qmlnotification.h \
+    launchermain.h
 
 !headless:HEADERS += \
     applicationmanagerwindow_p.h

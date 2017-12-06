@@ -64,6 +64,8 @@
 #include <private/qabstractanimation_p.h> // For QUnifiedTimer
 #include <qplatformdefs.h>
 
+#include <QtAppManLauncher/launchermain.h>
+
 #if !defined(AM_HEADLESS)
 #  include <QGuiApplication>
 #  include <QQuickItem>
@@ -91,6 +93,7 @@
 #include "dbus-utilities.h"
 #include "startuptimer.h"
 #include "processtitle.h"
+#include "qml-utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -113,36 +116,12 @@ protected:
 
 
 
-// copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
-static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
-{
-    QDir dir(directory + qSL("/dummydata"), qSL("*.qml"));
-    QStringList list = dir.entryList();
-    for (int i = 0; i < list.size(); ++i) {
-        QString qml = list.at(i);
-        QQmlComponent comp(&engine, dir.filePath(qml));
-        QObject *dummyData = comp.create();
-
-        if (comp.isError()) {
-            const QList<QQmlError> errors = comp.errors();
-            for (const QQmlError &error : errors)
-                qWarning() << error;
-        }
-
-        if (dummyData) {
-            qml.truncate(qml.length()-4);
-            engine.rootContext()->setContextProperty(qml, dummyData);
-            dummyData->setParent(&engine);
-        }
-    }
-}
-
 class Controller : public QObject
 {
     Q_OBJECT
 
 public:
-    Controller(QCoreApplication *a, bool quickLaunched, const QString &directLoad = QString());
+    Controller(LauncherMain *a, bool quickLaunched, const QString &directLoad = QString());
 
 public slots:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
@@ -161,13 +140,6 @@ private slots:
 #endif
 };
 
-static QString p2pBusName = qSL("am");
-static QString notificationBusName = qSL("am_notification_bus");
-static QCommandLineParser cp;
-static QCommandLineOption qmlDebugOption(qSL("qml-debug"), qSL("Enables QML debugging and profiling."));
-static QCommandLineOption quickLaunchOption(qSL("quicklaunch"), qSL("Starts the launcher in the quicklaunching mode."));
-static QCommandLineOption directLoadOption(qSL("directload") , qSL("The info.yaml to start."), qSL("info.yaml"));
-
 
 QT_END_NAMESPACE_AM
 
@@ -177,6 +149,11 @@ QT_USE_NAMESPACE_AM
 int main(int argc, char *argv[])
 {
     StartupTimer::instance()->checkpoint("entered main");
+
+    QCoreApplication::setApplicationName(qSL("ApplicationManager QML Launcher"));
+    QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
+    QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
+    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     if (qEnvironmentVariableIsSet("AM_NO_DLT_LOGGING"))
         Logging::setDltEnabled(false);
@@ -191,114 +168,68 @@ int main(int argc, char *argv[])
     Logging::setApplicationId("qml-launcher");
     Logging::initialize();
 
-    QLoggingCategory::setFilterRules(QString::fromUtf8(qgetenv("AM_LOGGING_RULES")));
+    try {
+        LauncherMain a(argc, argv);
 
-#if defined(AM_HEADLESS)
-    QCoreApplication a(argc, argv);
-#else
-    // this is needed for WebEngine
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+        QCommandLineParser clp;
+        clp.addHelpOption();
+        clp.addOption({ qSL("qml-debug"),   qSL("Enables QML debugging and profiling.") });
+        clp.addOption({ qSL("quicklaunch"), qSL("Starts the launcher in the quicklaunching mode.") });
+        clp.addOption({ qSL("directload") , qSL("The info.yaml to start."), qSL("info.yaml") });
+        clp.process(a);
 
-    QGuiApplication a(argc, argv);
-    a.setApplicationDisplayName(qL1S("appman-launcher-qml"));
-    cp.addHelpOption();
-    cp.addOption(directLoadOption);
-    cp.addOption(qmlDebugOption);
-    cp.addOption(quickLaunchOption);
+        CrashHandler::setCrashActionConfiguration(a.runtimeConfiguration().value(qSL("crashAction")).toMap());
+        a.setupLoggingRules(false, a.loggingRules()); // the verbose flag has already been factored into the rules
+        bool hasJSDebugArg = !static_cast<QCoreApplicationPrivate *>(QObjectPrivate::get(&a))->qmljsDebugArgumentsString().isEmpty();
+        a.setupQmlDebugging(hasJSDebugArg || clp.isSet(qSL("qml-debug")));
+        a.setupOpenGL(a.openGLConfiguration());
 
-    cp.process(a);
+        StartupTimer::instance()->checkpoint("after basic initialization");
 
-    if (!static_cast<QCoreApplicationPrivate *>(QObjectPrivate::get(&a))->qmljsDebugArgumentsString().isEmpty()
-            || cp.isSet(qmlDebugOption)) {
-#if !defined(QT_NO_QML_DEBUGGER)
-        (void) new QQmlDebuggingEnabler(true);
-        if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
-            qCCritical(LogQmlRuntime) << "The default 'debug' logging category was disabled. "
-                                         "Re-enabling it for the QML Debugger interface to work correctly.";
-            QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
+        bool quicklaunched = clp.isSet(qSL("quicklaunch"));
+        QString directLoad = clp.value(qSL("directload"));
+        if (!directLoad.isEmpty()) {
+            QFileInfo fi(directLoad);
+            if (!fi.exists() || fi.fileName() != qSL("info.yaml")) {
+                throw Exception("--directload needs a valid info.yaml file as parameter");
+                return 2;
+            }
+            directLoad = fi.absoluteFilePath();
+        } else {
+            a.setupDBusConnections();
+            StartupTimer::instance()->checkpoint("after dbus initialization");
         }
-#else
-        qCWarning(LogQmlRuntime) << "The --qml-debug/-qmljsdebugger options are ignored, because Qt was built without support for QML Debugging!";
-#endif
+
+        new Controller(&a, quicklaunched, directLoad);
+        return a.exec();
+
+    } catch (const std::exception &e) {
+        qCCritical(LogQmlRuntime) << "ERROR:" << e.what();
+        return 2;
     }
-
-    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
-#endif
-
-    qmlRegisterType<QmlNotification>("QtApplicationManager", 1, 0, "Notification");
-    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
-
-    StartupTimer::instance()->checkpoint("after logging and qml register initialization");
-
-    if (cp.isSet(directLoadOption)) {
-        QFileInfo fi = cp.value(directLoadOption);
-
-        if (!fi.exists() || fi.fileName() != qSL("info.yaml")) {
-            qCCritical(LogQmlRuntime) << "ERROR: --directload needs a valid info.yaml file as parameter";
-            return 2;
-        }
-
-        new Controller(&a, cp.isSet(quickLaunchOption), fi.absoluteFilePath());
-    } else {
-        QByteArray dbusAddress = qgetenv("AM_DBUS_PEER_ADDRESS");
-        if (dbusAddress.isEmpty()) {
-            qCCritical(LogQmlRuntime) << "ERROR: $AM_DBUS_PEER_ADDRESS is empty";
-            return 2;
-        }
-        QDBusConnection dbusConnection = QDBusConnection::connectToPeer(QString::fromUtf8(dbusAddress), p2pBusName);
-
-        if (!dbusConnection.isConnected()) {
-            qCCritical(LogQmlRuntime) << "ERROR: could not connect to the P2P D-Bus via:" << dbusAddress;
-            return 3;
-        }
-        qCDebug(LogQmlRuntime) << "Connected to the P2P D-Bus via:" << dbusAddress;
-
-        dbusAddress = qgetenv("AM_DBUS_NOTIFICATION_BUS_ADDRESS");
-        if (dbusAddress.isEmpty())
-            dbusAddress = "session";
-
-        if (dbusAddress == "system")
-            dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SystemBus, notificationBusName);
-        else if (dbusAddress == "session")
-            dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SessionBus, notificationBusName);
-        else
-            dbusConnection = QDBusConnection::connectToBus(QString::fromUtf8(dbusAddress), notificationBusName);
-
-        if (!dbusConnection.isConnected()) {
-            qCCritical(LogQmlRuntime) << "ERROR: could not connect to the Notification D-Bus via:" << dbusAddress;
-            return 3;
-        }
-        qCDebug(LogQmlRuntime) << "Connected to the Notification D-Bus via:" << dbusAddress;
-
-        StartupTimer::instance()->checkpoint("after dbus initialization");
-
-        new Controller(&a, cp.isSet(quickLaunchOption));
-    }
-
-    return a.exec();
 }
 
-Controller::Controller(QCoreApplication *a, bool quickLaunched, const QString &directLoad)
+Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &directLoad)
     : QObject(a)
     , m_quickLaunched(quickLaunched)
 {
-    connect(&m_engine, &QObject::destroyed, &QCoreApplication::quit);
-    connect(&m_engine, &QQmlEngine::quit, &QCoreApplication::quit);
+    connect(&m_engine, &QObject::destroyed, a, &QCoreApplication::quit);
+    connect(&m_engine, &QQmlEngine::quit, a, &QCoreApplication::quit);
 
-    auto docs = QtYaml::variantDocumentsFromYaml(qgetenv("AM_RUNTIME_CONFIGURATION"));
-    if (docs.size() == 1)
-        m_configuration = docs.first().toMap();
+#if !defined(AM_HEADLESS)
+    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
+#endif
+    qmlRegisterType<QmlNotification>("QtApplicationManager", 1, 0, "Notification");
+    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
-    CrashHandler::setCrashActionConfiguration(m_configuration.value(qSL("crashAction")).toMap());
-
-    const QString baseDir = QString::fromLocal8Bit(qgetenv("AM_BASE_DIR") + "/");
+    m_configuration = a->runtimeConfiguration();
 
     QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
     for (QString &path : importPaths) {
         if (QFileInfo(path).isRelative()) {
-            path.prepend(baseDir);
+            path.prepend(a->baseDir());
         } else {
-            qCWarning(LogQmlRuntime) << "Absolute import path in config file can lead to problems inside containers:"
+            qCWarning(LogQmlRuntime) << "Absolute import paths in the runtime configuration can lead to problems inside containers:"
                                      << path;
         }
         m_engine.addImportPath(path);
@@ -321,9 +252,9 @@ Controller::Controller(QCoreApplication *a, bool quickLaunched, const QString &d
     StartupTimer::instance()->checkpoint("after window registration");
 
     QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
-    if (!quicklaunchQml.isEmpty() && cp.isSet(quickLaunchOption)) {
+    if (!quicklaunchQml.isEmpty() && quickLaunched) {
         if (QFileInfo(quicklaunchQml).isRelative())
-            quicklaunchQml.prepend(baseDir);
+            quicklaunchQml.prepend(a->baseDir());
 
         QQmlComponent quicklaunchComp(&m_engine, quicklaunchQml);
         if (!quicklaunchComp.isError()) {
@@ -337,13 +268,11 @@ Controller::Controller(QCoreApplication *a, bool quickLaunched, const QString &d
     }
 
     if (directLoad.isEmpty()) {
-        m_applicationInterface = new QmlApplicationInterface(p2pBusName, notificationBusName, this);
+        m_applicationInterface = new QmlApplicationInterface(a->p2pDBusName(), a->notificationDBusName(), this);
         connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
                 this, &Controller::startApplication);
-        if (!m_applicationInterface->initialize()) {
-            qCritical("ERROR: could not connect to the application manager's interface on the peer D-Bus");
-            qApp->exit(4);
-        }
+        if (!m_applicationInterface->initialize())
+            throw Exception("Could not connect to the application manager's interface on the peer D-Bus");
     } else {
         QTimer::singleShot(0, [this, directLoad]() {
             QFileInfo fi(directLoad);
@@ -352,8 +281,7 @@ Controller::Controller(QCoreApplication *a, bool quickLaunched, const QString &d
                 const Application *a = yas.scan(directLoad);
                 startApplication(fi.absolutePath(), a->codeFilePath(), QString(), QString(), a->toVariantMap(), QVariantMap());
             } catch (const Exception &e) {
-                qCritical("ERROR: could not parse info.yaml file: %s", e.what());
-                qApp->exit(5);
+                throw Exception("Could not parse info.yaml file: %1").arg(e.what());
             }
         });
     }
@@ -456,7 +384,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     if (loadDummyData) {
         qCDebug(LogQmlRuntime) << "loading dummy-data";
-        loadDummyDataFiles(m_engine, QFileInfo(qmlFile).path());
+        loadQmlDummyDataFiles(&m_engine, QFileInfo(qmlFile).path());
     }
 
     QVariant imports = runtimeParameters.value(qSL("importPaths"));

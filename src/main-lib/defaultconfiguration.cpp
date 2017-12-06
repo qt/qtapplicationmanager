@@ -258,21 +258,9 @@ bool DefaultConfiguration::enableTouchEmulation() const
     return value<bool>("enable-touch-emulation", { "ui", "enableTouchEmulation" });
 }
 
-QString DefaultConfiguration::openGLESProfile() const
+QVariantMap DefaultConfiguration::openGLConfiguration() const
 {
-    return value<QString>(nullptr, { "ui", "opengl", "desktopProfile" });
-}
-
-int DefaultConfiguration::openGLESVersionMajor() const
-{
-    auto v = value<QVariant>(nullptr, { "ui", "opengl", "esMajorVersion" });
-    return v.isValid() ? v.toInt() : -1;
-}
-
-int DefaultConfiguration::openGLESVersionMinor() const
-{
-    auto v = value<QVariant>(nullptr, { "ui", "opengl", "esMinorVersion" });
-    return v.isValid() ? v.toInt() : -1;
+    return value<QVariant>(nullptr, { "ui", "opengl" }).toMap();
 }
 
 QVariantList DefaultConfiguration::installationLocations() const

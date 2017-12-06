@@ -34,8 +34,11 @@ monitor_lib.depends = manager_lib window_lib
 launcher_lib.subdir = launcher-lib
 launcher_lib.depends = application_lib notification_lib
 
+shared_main_lib.subdir = shared-main-lib
+shared_main_lib.depends = common_lib
+
 main_lib.subdir = main-lib
-main_lib.depends = manager_lib installer_lib window_lib monitor_lib
+main_lib.depends = shared_main_lib manager_lib installer_lib window_lib monitor_lib
 
 !disable-external-dbus-interfaces:qtHaveModule(dbus) {
     dbus_lib.subdir = dbus-lib
@@ -45,7 +48,7 @@ main_lib.depends = manager_lib installer_lib window_lib monitor_lib
 }
 
 launchers_qml.subdir = launchers/qml
-launchers_qml.depends = launcher_lib plugin_interfaces
+launchers_qml.depends = shared_main_lib launcher_lib plugin_interfaces
 
 tools_appman.subdir = tools/appman
 tools_appman.depends = main_lib
@@ -81,6 +84,7 @@ SUBDIRS = \
         installer_lib \
         window_lib \
         monitor_lib \
+        shared_main_lib \
         main_lib \
         tools_appman \
         # Although the testrunner is in tools we don't want to build it with tools-only

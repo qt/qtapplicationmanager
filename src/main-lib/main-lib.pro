@@ -6,7 +6,7 @@ load(am-config)
 
 QT = core network qml core-private
 enable-widgets:QT *= widgets
-!headless:QT *= gui gui-private quick
+!headless:QT *= gui quick
 qtHaveModule(pssdp):QT *= pssdp
 qtHaveModule(pshellserver):QT *= pshellserver
 QT *= \
@@ -17,6 +17,7 @@ QT *= \
     appman_installer-private \
     appman_notification-private \
     appman_monitor-private \
+    appman_shared_main-private \
 
 !headless:QT *= appman_window-private
 !disable-external-dbus-interfaces:qtHaveModule(dbus):QT *= dbus appman_dbus-private
@@ -28,14 +29,12 @@ win32:LIBS += -luser32
 DEFINES += AM_BUILD_DIR=\\\"$$BUILD_DIR\\\"
 
 HEADERS += \
-    $$PWD/qmllogger.h \
     $$PWD/configuration.h \
     $$PWD/main.h \
     $$PWD/defaultconfiguration.h
 
 SOURCES += \
     $$PWD/main.cpp \
-    $$PWD/qmllogger.cpp \
     $$PWD/configuration.cpp \
     $$PWD/defaultconfiguration.cpp
 

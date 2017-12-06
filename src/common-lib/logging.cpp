@@ -105,6 +105,7 @@ bool Logging::s_dltEnabled =
         false;
 #endif
 bool Logging::s_useDefaultQtHandler = false;
+QStringList Logging::s_rules;
 QtMessageHandler Logging::s_defaultQtHandler = nullptr;
 QByteArray Logging::s_applicationId = QByteArray();
 
@@ -301,6 +302,17 @@ void Logging::initialize()
 
     s_useDefaultQtHandler = qEnvironmentVariableIsSet("QT_MESSAGE_PATTERN");
     s_defaultQtHandler = qInstallMessageHandler(messageHandler);
+}
+
+QStringList Logging::filterRules()
+{
+    return s_rules;
+}
+
+void Logging::setFilterRules(const QStringList &rules)
+{
+    s_rules = rules;
+    QLoggingCategory::setFilterRules(rules.join(qL1C('\n')));
 }
 
 QByteArray Logging::applicationId()

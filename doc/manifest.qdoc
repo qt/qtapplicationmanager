@@ -242,6 +242,14 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         \endlist
         The properties will just be converted to QVariantMaps, but the application-manager will not
         interpret them in any way.
+\row
+    \li \c opengl
+    \li object
+    \li Gives you the possibility to specify the required OpenGL version and/or profile. See
+        \l{OpenGL Specification} {the main configuration} for more information on this subject.
+        Please note that specifying an OpenGL configuration that is different from the default
+        OpenGL configuration in the main application-manager configuration will disable the use of
+        the quick-launch mechanism for this application.
 \endtable
 
 

@@ -182,12 +182,12 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                         { "audio",    Application::PlaysAudio },
                         { "location", Application::TracksLocation },
                         { "auto",     Application::Auto },
-                        { 0,          Application::Auto }
+                        { nullptr,    Application::Auto }
                     };
                     QByteArray enumValue = v.toString().toLatin1();
 
                     bool found = false;
-                    for (auto it = backgroundMap; backgroundMap->first; ++it) {
+                    for (auto it = backgroundMap; it->first; ++it) {
                         if (enumValue == it->first) {
                             app->m_backgroundMode = it->second;
                             found = true;
@@ -196,6 +196,19 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                     }
                     if (!found)
                         throw Exception(Error::Parse, "the 'backgroundMode' value '%1' is not valid").arg(enumValue);
+                } else if (field == "opengl") {
+                    app->m_openGLConfiguration = v.toMap();
+
+                    // sanity check
+                    static QStringList validKeys = {
+                        qSL("desktopProfile"),
+                        qSL("esMajorVersion"),
+                        qSL("esMinorVersion")
+                    };
+                    for (auto it = app->m_openGLConfiguration.cbegin(); it != app->m_openGLConfiguration.cend(); ++it) {
+                        if (!validKeys.contains(it.key()))
+                            throw Exception(Error::Parse, "the 'opengl' object contains the unsupported key '%1'").arg(it.key());
+                    }
                 } else {
                     unknownField = true;
                 }

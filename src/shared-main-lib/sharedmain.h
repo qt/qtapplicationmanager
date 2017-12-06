@@ -42,51 +42,40 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QLoggingCategory>
+#include <QVariantMap>
+#include <QStringList>
+#if !defined(AM_HEADLESS)
+#  include <QSurfaceFormat>
+#endif
+
+QT_FORWARD_DECLARE_STRUCT(QQmlDebuggingEnabler)
+QT_FORWARD_DECLARE_STRUCT(QQmlEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
-Q_DECLARE_LOGGING_CATEGORY(LogSystem)
-Q_DECLARE_LOGGING_CATEGORY(LogInstaller)
-Q_DECLARE_LOGGING_CATEGORY(LogGraphics)
-Q_DECLARE_LOGGING_CATEGORY(LogQml)
-Q_DECLARE_LOGGING_CATEGORY(LogNotifications)
-Q_DECLARE_LOGGING_CATEGORY(LogQmlRuntime)
-Q_DECLARE_LOGGING_CATEGORY(LogQmlIpc)
-
-class Logging
+class SharedMain
 {
 public:
-    static void initialize();
-    static QStringList filterRules();
-    static void setFilterRules(const QStringList &rules);
+    SharedMain();
+    ~SharedMain();
 
-    static QByteArray applicationId();
-    static void setApplicationId(const QByteArray &appId);
+    static int &preConstructor(int &argc);
+    void setupQmlDebugging(bool qmlDebugging);
+    void setupLoggingRules(bool verbose, const QStringList &loggingRules);
+    void setupOpenGL(const QVariantMap &openGLConfiguration);
 
-    // DLT functionality
-    static bool isDltEnabled();
-    static void setDltEnabled(bool enabled);
-
-    static void registerUnregisteredDltContexts();
-    static void setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription);
+#if !defined(AM_HEADLESS)
+    void checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const;
+#endif
 
 private:
-    static bool s_dltEnabled;
-    static bool s_useDefaultQtHandler;
-    static QStringList s_rules;
-    static QtMessageHandler s_defaultQtHandler;
-    static QByteArray s_applicationId;
+    QQmlDebuggingEnabler *m_debuggingEnabler = nullptr;
+
+#if !defined(AM_HEADLESS)
+    QSurfaceFormat::OpenGLContextProfile m_requestedOpenGLProfile = QSurfaceFormat::NoProfile;
+    int m_requestedOpenGLMajorVersion = -1;
+    int m_requestedOpenGLMinorVersion = -1;
+#endif
 };
-
-
-void am_trace(QDebug);
-template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest... trest)
-{ dbg << t; am_trace(dbg, trest...); }
-
-#define AM_TRACE(category, ...) \
-    for (bool qt_category_enabled = category().isDebugEnabled(); qt_category_enabled; qt_category_enabled = false) { \
-        QT_PREPEND_NAMESPACE_AM(am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__)); \
-    }
 
 QT_END_NAMESPACE_AM

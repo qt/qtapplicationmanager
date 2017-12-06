@@ -131,6 +131,8 @@ public:
 
     QString version() const;
 
+    QVariantMap openGLConfiguration() const;
+
     void validate() const Q_DECL_NOEXCEPT_EXPR(false);
     QVariantMap toVariantMap() const;
     static Application *fromVariantMap(const QVariantMap &map, QString *error = 0);
@@ -207,6 +209,8 @@ private:
     BackgroundMode m_backgroundMode = Auto;
 
     QString m_version;
+
+    QVariantMap m_openGLConfiguration;
 
     // added by installer
     QScopedPointer<InstallationReport> m_installationReport;

@@ -60,41 +60,13 @@
 #include "global.h"
 #include "utilities.h"
 #include "runtimefactory.h"
+#include "qml-utilities.h"
 
 #if defined(Q_OS_UNIX)
 #  include <signal.h>
 #endif
 
 QT_BEGIN_NAMESPACE_AM
-
-// copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
-static void loadDummyDataFiles(QQmlEngine &engine, const QString& directory)
-{
-    QDir dir(directory + qSL("/dummydata"), qSL("*.qml"));
-    QStringList list = dir.entryList();
-    for (int i = 0; i < list.size(); ++i) {
-        QString qml = list.at(i);
-        QFile f(dir.filePath(qml));
-        f.open(QIODevice::ReadOnly);
-        QByteArray data = f.readAll();
-        QQmlComponent comp(&engine);
-        comp.setData(data, QUrl());
-        QObject *dummyData = comp.create();
-
-        if (comp.isError()) {
-            const QList<QQmlError> errors = comp.errors();
-            for (const QQmlError &error : errors)
-                qWarning() << error;
-        }
-
-        if (dummyData) {
-            qWarning() << "Loaded dummy data:" << dir.filePath(qml);
-            qml.truncate(qml.length()-4);
-            engine.rootContext()->setContextProperty(qml, dummyData);
-            dummyData->setParent(&engine);
-        }
-    }
-}
 
 
 const char *QmlInProcessRuntime::s_runtimeKey = "_am_runtime";
@@ -131,7 +103,7 @@ bool QmlInProcessRuntime::start()
 
     if (m_app->runtimeParameters().value(qSL("loadDummyData")).toBool()) {
         qCDebug(LogSystem) << "Loading dummy-data";
-        loadDummyDataFiles(*m_inProcessQmlEngine, QFileInfo(m_app->absoluteCodeFilePath()).path());
+        loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->absoluteCodeFilePath()).path());
     }
 
     const QStringList importPaths = variantToStringList(configuration().value(qSL("importPaths")))

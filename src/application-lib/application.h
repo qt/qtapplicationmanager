@@ -85,6 +85,7 @@ class Application : public QObject
     Q_PROPERTY(BackgroundMode backgroundMode READ backgroundMode NOTIFY bulkChange)
     Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface NOTIFY bulkChange)
     Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange)
+    Q_PROPERTY(State state READ state NOTIFY stateChanged)
 
 public:
     enum ExitStatus { NormalExit, CrashExit, ForcedExit };
@@ -155,6 +156,7 @@ public:
         BeingRemoved
     };
     State state() const;
+    Q_ENUM(State)
     qreal progress() const;
 
     void setSupportsApplicationInterface(bool supportsAppInterface);
@@ -173,6 +175,7 @@ signals:
     void lastExitCodeChanged() const;
     void lastExitStatusChanged() const;
     void activated() const;
+    void stateChanged() const;
 
 private:
     Application();

@@ -231,6 +231,19 @@
     \sa {Installation Locations}
 */
 /*!
+    \qmlproperty enumeration Application::state
+    \readonly
+
+    This property holds the current installation state of the application. It can be one of:
+
+    \list
+    \li Application.Installed - The application is completely installed and ready to be used.
+    \li Application.BeingInstalled - The application is currently in the process of being installed.
+    \li Application.BeingUpdated - The application is currently in the process of being updated.
+    \li Application.BeingRemoved - The application is currently in the process of being removed.
+    \endlist
+*/
+/*!
     \qmlsignal Application::activated()
 
     This signal is emitted when the application is started or when it's already running but has

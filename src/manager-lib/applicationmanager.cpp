@@ -1173,11 +1173,13 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
             return false;
         newapp->mergeInto(const_cast<Application *>(app));
         app->m_state = Application::BeingUpdated;
+        emit app->stateChanged();
         app->m_progress = 0;
     } else { // installation
         newapp->setParent(this);
         newapp->block();
         newapp->m_state = Application::BeingInstalled;
+        emit newapp->stateChanged();
         newapp->m_progress = 0;
         app = newapp.take();
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
@@ -1202,6 +1204,7 @@ bool ApplicationManager::startingApplicationRemoval(const QString &id)
         return false;
 
     app->m_state = Application::BeingRemoved;
+    emit app->stateChanged();
     app->m_progress = 0;
     emitDataChanged(app, QVector<int> { IsUpdating });
     return true;
@@ -1239,6 +1242,7 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
         }
         const_cast<Application *>(app)->setInstallationReport(ir.take());
         app->m_state = Application::Installed;
+        emit app->stateChanged();
         app->m_progress = 0;
 
         try {
@@ -1304,6 +1308,7 @@ bool ApplicationManager::canceledApplicationInstall(const QString &id)
     case Application::BeingUpdated:
     case Application::BeingRemoved:
         app->m_state = Application::Installed;
+        emit app->stateChanged();
         app->m_progress = 0;
         emitDataChanged(app, QVector<int> { IsUpdating });
 

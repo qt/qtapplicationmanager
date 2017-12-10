@@ -177,7 +177,7 @@ signals:
     void lastExitCodeChanged() const;
     void lastExitStatusChanged() const;
     void activated() const;
-    void stateChanged() const;
+    void stateChanged(State state) const;
 
 private:
     Application();

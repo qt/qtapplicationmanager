@@ -1,0 +1,18 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installedAppsManifestDir: "/tmp/am-installer-test/manifests"
+  appImageMountDir: "/tmp/am-installer-test/image-mounts"
+  database: "/tmp/am-installer-test/apps.db"
+
+installationLocations:
+- id: "internal-0"
+  installationPath: "/tmp/am-installer-test/apps"
+  documentPath: "/tmp/am-installer-test/docs"
+  mountPoint: "/tmp"
+  isDefault: true
+
+flags:
+  noSecurity: yes

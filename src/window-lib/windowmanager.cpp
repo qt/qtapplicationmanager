@@ -869,7 +869,7 @@ void WindowManager::waylandSurfaceDestroyed(WindowSurface *surface)
 
     emit windowLost(index, win->windowItem()); //TODO: rename to windowDestroyed
 
-    // Just to safe-guard against the system-ui not releasing windows. This could lead to severe
+    // Just to safe-guard against the System-UI not releasing windows. This could lead to severe
     // leaks in the graphics stack and it will also prevent clean shutdowns of the appman process.
     int timeout = 2000;
     if (slowAnimations())

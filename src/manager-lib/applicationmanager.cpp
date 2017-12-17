@@ -1031,7 +1031,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
 
     if (!apps.isEmpty()) {
         if (!isSignalConnected(QMetaMethod::fromSignal(&ApplicationManager::openUrlRequested))) {
-            // If the system-ui does not react to the signal, then just use the first match.
+            // If the System-UI does not react to the signal, then just use the first match.
             startApplication(apps.constFirst(), urlStr, mimeTypeName);
         } else {
             ApplicationManagerPrivate::OpenUrlRequest req {

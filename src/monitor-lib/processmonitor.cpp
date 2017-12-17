@@ -51,7 +51,7 @@
 
     The ProcessMonitor type provides statistics about the resource usage and performance for a process known to the
     application-manager. Currently, CPU load, memory usage and frame rate can be monitored. This type is
-    available in the system-UI only.
+    available in the System-UI only.
 
     The ProcessMonitor is dedicated to Linux in particular, since this is currently the only OS
     that supports multi-process mode. Other OS's are supported only rudimenatary.
@@ -180,7 +180,7 @@
     This property holds the OS specific process identifier (PID) that is monitored. This can be
     used by external tools for example. The property is 0, if there is no process associated with
     the \l applicationId. In particular, if the application-manager runs in single-process mode,
-    only the system-UI (identified by an empty \l applicationId) will have an associated process.
+    only the System-UI (identified by an empty \l applicationId) will have an associated process.
 */
 
 /*!
@@ -188,7 +188,7 @@
 
     The ID of the application that will be monitored. It must be one of the ID's known to the
     application-manager (\l ApplicationManager::applicationIds provides a list of valid IDs). There
-    is one exception: if the ID is set to an empty string, the system-UI process will be monitored.
+    is one exception: if the ID is set to an empty string, the System-UI process will be monitored.
     Setting a new value will reset the model.
 */
 
@@ -236,8 +236,8 @@
     signal and the WindowManager type is itself a model which holds all windows of all
     application processes.
 
-    \note It is possible to monitor server side (system-UI) views, as well,
-    if the \l applicationId is empty (hence the system-UI process will be monitored).
+    \note It is possible to monitor server side (System-UI) views, as well,
+    if the \l applicationId is empty (hence the System-UI process will be monitored).
     Those windows are available from QML since they need to be registered with
     \l {WindowManager::registerCompositorView(QQuickWindow *view)} {WindowManager}
     and can be assigned to \l monitoredWindows.

@@ -669,7 +669,7 @@ void Main::showWindow(bool showFullscreen)
             QObject::disconnect(conn);
 #  endif
             StartupTimer::instance()->checkFirstFrame();
-            StartupTimer::instance()->createReport(qSL("System UI"));
+            StartupTimer::instance()->createReport(qSL("System-UI"));
         }
     });
 

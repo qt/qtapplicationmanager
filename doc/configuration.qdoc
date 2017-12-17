@@ -188,7 +188,7 @@ all your imports paths and file references relative to your main config file.
     \li \b -I
     \br \e ui/importPaths
     \li array<string>
-    \li Adds additional QML import paths to the system UI.
+    \li Adds additional QML import paths to the System-UI.
 \row
     \li \b -
     \br \e ui/style
@@ -202,7 +202,7 @@ all your imports paths and file references relative to your main config file.
         The value must be a list of plugin library file path names. A single plugin will also be
         accepted. Currently the only valid key is \c startup. The plugin itself must implement the
         \c StartupInterface. The application-manager will call the function hooks during startup of
-        the system UI.
+        the System-UI.
 \row
     \target system properties
     \li \b -
@@ -241,7 +241,7 @@ all your imports paths and file references relative to your main config file.
     \li \b --load-dummydata
     \br \e ui/loadDummyData
     \li bool
-    \li Loads QML dummy-data into the system UI (just like \c qmlscene would).
+    \li Loads QML dummy-data into the System-UI (just like \c qmlscene would).
 \row
     \target no-security
     \li \b --no-security

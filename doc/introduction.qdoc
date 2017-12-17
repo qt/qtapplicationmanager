@@ -97,7 +97,7 @@ using standard compliant mechanism.
 
 \section1 Application Installation
 
-In addition to applications that are part of the system-ui or the base installation (\e built-in), the
+In addition to applications that are part of the System-UI or the base installation (\e built-in), the
 application-manager also supports applications that can be dynamically installed, updated and
 deinstalled (\e third-party).
 

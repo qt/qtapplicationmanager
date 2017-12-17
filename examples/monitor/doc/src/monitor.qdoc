@@ -67,14 +67,14 @@ We will start from the bottom, because this is the essential part.
 \printline }
 The ProcessMonitor is an instantiatable type that will monitor the process that is associated with
 its \l {ProcessMonitor::applicationId}{applicationId} property. An empty applicationId string means
-that the system-UI process is monitored. By clicking the "Switch Process" button, the monitored
+that the System-UI process is monitored. By clicking the "Switch Process" button, the monitored
 process can be changed to the \c tld.monitor.app application. Measurements will be performed each
 second (1000 ms) and 12 reading points will be kept in the model (the ProcessMonitor is a model).
 The model is used below to display the bar charts.
 
 Memory and frame rate reporting need to be enabled, since we are interested in both. For frame rate
 measurements the list of \c monitoredWindows has to be filled with windows that we are interested
-in. For the system-UI this is the single root window itself and for the tld.monitor.app process it
+in. For the System-UI this is the single root window itself and for the tld.monitor.app process it
 is the currently selected window. Hence the list will always include just one element. The memory
 and frame rate changed signal handlers will update the current values of the corresponding views.
 
@@ -87,7 +87,7 @@ the model (the SystemMonitor is a model, as well).
 
 The very last line will start the only application that is provided by this example. Note that, if
 the application-manager is running in single-process mode, the application will run within the
-system-UI process and consequently the ProcessMonitor will not report anything and the associated
+System-UI process and consequently the ProcessMonitor will not report anything and the associated
 ProcessMonitor::processId will be set to 0.
 
 \section2 The User Interface

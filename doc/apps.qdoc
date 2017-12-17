@@ -60,7 +60,7 @@ supported for convenience, as well. Here are a few things to consider:
         QT_WAYLAND_DISABLE_WINDOWDECORATION is set) and will be invisible by default. QQuick
         \l{Item}{Items} will be wrapped inside a \l Window representing a Wayland client window.
     \li In single-process mode \l Window root elements will appear parallel to instead of inside
-        the system UI.
+        the System-UI.
 \endlist
 
 \section2 The Manifest and Updating the Database

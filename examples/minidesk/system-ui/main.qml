@@ -86,7 +86,7 @@ Rectangle {
         }
     }
 
-    // System UI chrome for applications
+    // System-UI chrome for applications
     Repeater {
         id: windows
         model: menuItems.model
@@ -131,7 +131,7 @@ Rectangle {
         }
     }
 
-    // System UI for a pop-up and notification
+    // System-UI for a pop-up and notification
     Item {
         id: popUpContainer
         z: 30000

@@ -106,7 +106,7 @@
         #color-blue   { background-color: #5454ff; color: #000000 }
     </style>
     <pre>
-<span id="color-orange">== STARTUP TIMING REPORT: System UI ==</span>
+<span id="color-orange">== STARTUP TIMING REPORT: System-UI ==</span>
 <span id="color-green">0'110.001</span> entered main                                <span id="color-blue">   </span>
 <span id="color-green">0'110.015</span> after basic initialization                  <span id="color-blue">   </span>
 <span id="color-green">0'110.311</span> after sudo server fork                      <span id="color-blue">   </span>

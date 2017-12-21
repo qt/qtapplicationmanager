@@ -809,15 +809,14 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     if (index == -1) {
         WaylandWindow *w = new WaylandWindow(app, surface);
         setupWindow(w);
+        // switch on Wayland ping/pong
+        if (d->watchdogEnabled)
+            w->enablePing(true);
     } else {
         QModelIndex modelIndex = QAbstractListModel::index(index);
         emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
         emit windowReady(index, d->windows.at(index)->windowItem());
     }
-
-    // switch on Wayland ping/pong -- currently disabled, since it is a bit unstable
-    //if (d->watchdogEnabled)
-    //    w->enablePing(true);
 
     if (app) {
         //We only take focus for applications.

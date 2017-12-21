@@ -265,6 +265,21 @@ TestCase {
         compare(windowLostSpy.count, 1);
     }
 
+    function test_wayland_ping_pong() {
+        appId = "test.winmap.ping";
+        if (ApplicationManager.singleProcess)
+            skip("Wayland ping-pong is only supported in multi-process mode");
+        ApplicationManager.startApplication(appId);
+        windowReadySpy.wait(2000);
+        compare(ApplicationManager.applicationRunState(appId), ApplicationManager.Running)
+        runStateChangedSpy.clear();
+        wait(2200);
+        runStateChangedSpy.wait(2000);
+        compare(runStateChangedSpy.signalArguments[0][1], ApplicationManager.ShuttingDown)
+        runStateChangedSpy.wait(2000);
+        compare(runStateChangedSpy.signalArguments[1][1], ApplicationManager.NotRunning)
+    }
+
     function test_window_properties() {
         appId = "test.winmap.amwin";
         ApplicationManager.startApplication(appId);

@@ -236,7 +236,7 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         ApplicationManager::application()::applicationProperties to the System-UI and as the
         ApplicationInterface::applicationProperties to the QML application:
         \list
-        \li The application has access to public and protected properties. Private keys will
+        \li The application has access to private and protected properties. Private keys will
             overwrite identical protected ones.
         \li The System-UI has access to protected properties only.
         \endlist

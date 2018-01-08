@@ -40,25 +40,34 @@ The following commands are available:
 
 \table
 \header
-    \li Action
-    \li Options
+    \li Command
+    \li Arguments
     \li Description
 \row
-    \li \span {style="white-space: nowrap"} {\c install-package}
-    \li \c{<package>}
-    \li Installs the package given on the command-line. If the package file is specified as \c{-},
-        the tool will try to read the package from \c stdin.
-\row
     \li \span {style="white-space: nowrap"} {\c start-application}
-    \li \c{<application-id> [document-url]}
+    \li \c{<application-id>}
+
+        \c{[document-url]}
     \li Starts the application identified by \c application-id within the application-manager. The
         \c document-url parameter is optional.
 \row
     \li \span {style="white-space: nowrap"} {\c debug-application}
-    \li \c{<debug-wrapper-specification> <application-id> [document-url]}
+    \li \c{<debug-wrapper-specification>}
+
+        \c{<application-id>}
+
+        \c{[document-url]}
     \li Starts the application identified by \c application-id within the application-manager using
         a debug-wrapper: see \l{DebugWrappers}{the debugging documentation} for more information on
         this specification string. The \c document-url parameter is optional.
+\row
+    \li \span {style="white-space: nowrap"} {\c stop-application}
+    \li \c{<application-id>}
+    \li Stops the application identified by \c application-id.
+\row
+    \li \span {style="white-space: nowrap"} {\c stop-all-applications}
+    \li (none)
+    \li Stops all applications that are running within the application-manager.
 \row
     \li \span {style="white-space: nowrap"} {\c list-applications}
     \li (none)
@@ -66,7 +75,35 @@ The following commands are available:
 \row
     \li \span {style="white-space: nowrap"} {\c show-application}
     \li \c{<application-id>}
-    \li Shows the current meta-data of the given application in YAML format.
+    \li Shows the current meta-data of the given application in YAML format. The following options
+        are supported:
+
+        \c{--json}: Output in JSON format instead of YAML.
+\row
+    \li \span {style="white-space: nowrap"} {\c install-package}
+    \li \c{<package>}
+    \li Installs the package given on the command-line. If the package file is specified as \c{-},
+        the tool will try to read the package from \c stdin.
+\row
+    \li \span {style="white-space: nowrap"} {\c remove-package}
+    \li \c{<application-id>}
+    \li Removes the package that previously installed the application specified with
+        \c application-id. The following options are supported:
+
+        \c{-f, --force}: Force removal of package.
+
+        \c{-k, --keep-documents}: Keep the document folder of the application.
+\row
+    \li \span {style="white-space: nowrap"} {\c list-installation-locations}
+    \li (none)
+    \li Lists all installaton locations.
+\row
+    \li \span {style="white-space: nowrap"} {\c show-installation-location}
+    \li \c{<installation-location>}
+    \li Shows details for installation location specified with \c installation-location in YAML
+        format. The following options are supported:
+
+        \c{--json}: Output in JSON format instead of YAML.
 \endtable
 
 The \c{appman-controller} naturally supports the standard Unix \c{--help} command-line option.

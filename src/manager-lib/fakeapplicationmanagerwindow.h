@@ -147,7 +147,7 @@ public slots:
     // Hide the following functions (from QQuickIem),
     // since they are not available in multi-process mode (QWindow):
     Q_INVOKABLE void grabToImage() const;
-    Q_INVOKABLE void contains() const;
+    Q_INVOKABLE bool contains(const QPointF &) const override; // needs the correct parameter because it's virtual
     Q_INVOKABLE void mapFromItem() const;
     Q_INVOKABLE void mapToItem() const;
     Q_INVOKABLE void mapFromGlobal() const;

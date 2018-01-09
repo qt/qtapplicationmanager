@@ -87,7 +87,7 @@ LauncherMain::LauncherMain(int &argc, char **argv, const QByteArray &configYaml)
     //qWarning() << "### GL  " << m_openGLConfiguration;
 
     // sanity checks
-    if (m_baseDir == qL1C('/'))
+    if (m_baseDir == qL1S("/"))
         throw Exception("Runtime launcher received an empty baseDir");
     if (loggingConfig.isEmpty())
         throw Exception("Runtime launcher received no logging configuration");

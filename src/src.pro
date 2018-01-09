@@ -31,11 +31,11 @@ window_lib.depends = manager_lib
 monitor_lib.subdir = monitor-lib
 monitor_lib.depends = manager_lib window_lib
 
-launcher_lib.subdir = launcher-lib
-launcher_lib.depends = application_lib notification_lib
-
 shared_main_lib.subdir = shared-main-lib
 shared_main_lib.depends = common_lib
+
+launcher_lib.subdir = launcher-lib
+launcher_lib.depends = application_lib notification_lib shared_main_lib
 
 main_lib.subdir = main-lib
 main_lib.depends = shared_main_lib manager_lib installer_lib window_lib monitor_lib
@@ -48,7 +48,7 @@ main_lib.depends = shared_main_lib manager_lib installer_lib window_lib monitor_
 }
 
 launchers_qml.subdir = launchers/qml
-launchers_qml.depends = shared_main_lib launcher_lib plugin_interfaces
+launchers_qml.depends = launcher_lib plugin_interfaces
 
 tools_appman.subdir = tools/appman
 tools_appman.depends = main_lib

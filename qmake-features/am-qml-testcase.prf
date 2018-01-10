@@ -7,8 +7,8 @@ load(am-config)
 QT_TOOL_NAME = appman-qmltestrunner
 !isEmpty(TEST_FILES): qtAddTargetEnv(COMMAND, QT)
 
-# If the test ends up in a different directory, we should cd to that directory.
-TESTRUN_CWD = $$DESTDIR
+# Execute test in source folder in order to find any assets.
+TESTRUN_CWD = $$_PRO_FILE_PWD_
 
 debug_and_release:debug_and_release_target {
     # But in debug-and-release-target mode we don't want to cd into the debug/release

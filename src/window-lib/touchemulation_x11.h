@@ -68,9 +68,14 @@ private:
     bool handleMotionNotify(WId windowId, uint32_t modifiers, int x, int y);
     QWindow *findQWindowWithXWindowID(WId windowId);
 
+    void backupEventData(void *event);
+    void restoreEventData(void *event);
+
     QTouchDevice *m_touchDevice = nullptr;
     bool m_haveXInput2 = false;
     bool m_leftButtonIsPressed = false;
+
+    quint8 m_xiEventBackupData[4];
 };
 
 QT_END_NAMESPACE_AM

@@ -80,6 +80,7 @@ static Qt::MouseButton xcbButtonToQtMouseButton(xcb_button_t detail)
     }
 }
 
+// Function copied from the XCB QPA
 static void xi2PrepareXIGenericDeviceEvent(xcb_ge_event_t *event)
 {
     // xcb event structs contain stuff that wasn't on the wire, the full_sequence field
@@ -149,6 +150,10 @@ bool TouchEmulationX11::nativeEventFilter(const QByteArray &eventType, void *mes
             return false;
 
         auto xcbGeneric = reinterpret_cast<xcb_ge_event_t *>(xcbEvent);
+
+        // Because xi2PrepareXIGenericDeviceEvent modifies data inplace
+        backupEventData(xcbGeneric);
+
         xi2PrepareXIGenericDeviceEvent(xcbGeneric);
         auto xiEvent = reinterpret_cast<xXIGenericDeviceEvent *>(xcbGeneric);
         xXIDeviceEvent *xiDeviceEvent = nullptr;
@@ -163,34 +168,42 @@ bool TouchEmulationX11::nativeEventFilter(const QByteArray &eventType, void *mes
             break;
         }
 
-        if (!xiDeviceEvent)
-            return false;
+        bool result = false;
 
-        switch (xiDeviceEvent->evtype) {
-        case XI_ButtonPress:
-            return handleButtonPress(
-                        static_cast<WId>(xiDeviceEvent->event),
-                        xiDeviceEvent->detail,
-                        xiDeviceEvent->mods.base_mods,
-                        fixed1616ToReal(xiDeviceEvent->event_x),
-                        fixed1616ToReal(xiDeviceEvent->event_y));
-        case XI_ButtonRelease:
-            return handleButtonRelease(
-                        static_cast<WId>(xiDeviceEvent->event),
-                        xiDeviceEvent->detail,
-                        xiDeviceEvent->mods.base_mods,
-                        fixed1616ToReal(xiDeviceEvent->event_x),
-                        fixed1616ToReal(xiDeviceEvent->event_y));
-        case XI_Motion:
-            return handleMotionNotify(
-                        static_cast<WId>(xiDeviceEvent->event),
-                        xiDeviceEvent->mods.base_mods,
-                        fixed1616ToReal(xiDeviceEvent->event_x),
-                        fixed1616ToReal(xiDeviceEvent->event_y));
-            return true;
-        default:
-            return false;
+        if (xiDeviceEvent) {
+            switch (xiDeviceEvent->evtype) {
+            case XI_ButtonPress:
+                result = handleButtonPress(
+                            static_cast<WId>(xiDeviceEvent->event),
+                            xiDeviceEvent->detail,
+                            xiDeviceEvent->mods.base_mods,
+                            fixed1616ToReal(xiDeviceEvent->event_x),
+                            fixed1616ToReal(xiDeviceEvent->event_y));
+                break;
+            case XI_ButtonRelease:
+                result = handleButtonRelease(
+                            static_cast<WId>(xiDeviceEvent->event),
+                            xiDeviceEvent->detail,
+                            xiDeviceEvent->mods.base_mods,
+                            fixed1616ToReal(xiDeviceEvent->event_x),
+                            fixed1616ToReal(xiDeviceEvent->event_y));
+                break;
+            case XI_Motion:
+                result = handleMotionNotify(
+                            static_cast<WId>(xiDeviceEvent->event),
+                            xiDeviceEvent->mods.base_mods,
+                            fixed1616ToReal(xiDeviceEvent->event_x),
+                            fixed1616ToReal(xiDeviceEvent->event_y));
+                result = true;
+                break;
+            default:
+                break;
+            }
         }
+
+        // Put the event back in its original state so that the XCB QPA can process it normally
+        restoreEventData(xcbGeneric);
+        return result;
     }
     default:
         return false;
@@ -269,6 +282,22 @@ QWindow *TouchEmulationX11::findQWindowWithXWindowID(WId windowId)
 
     Q_ASSERT(foundWindow);
     return foundWindow;
+}
+
+
+// backup event data before a xi2PrepareXIGenericDeviceEvent() call
+void TouchEmulationX11::backupEventData(void *event)
+{
+    memcpy((char*)&(m_xiEventBackupData[0]), (char*) event + 32, 4);
+}
+
+// restore event data after a xi2PrepareXIGenericDeviceEvent() call
+void TouchEmulationX11::restoreEventData(void *ev)
+{
+    auto *event = (xcb_ge_event_t *)ev;
+
+    memmove((char*) event + 36, (char*) event + 32, event->length * 4);
+    memcpy((char*) event + 32, (char*)&(m_xiEventBackupData[0]), 4);
 }
 
 QT_END_NAMESPACE_AM

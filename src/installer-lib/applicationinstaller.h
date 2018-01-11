@@ -48,6 +48,7 @@
 #include <QDir>
 #include <QtAppManCommon/error.h>
 #include <QtAppManInstaller/installationlocation.h>
+#include <QtAppManInstaller/asynchronoustask.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
@@ -56,7 +57,6 @@ QT_BEGIN_NAMESPACE_AM
 
 class ApplicationManager;
 class ApplicationInstallerPrivate;
-class AsynchronousTask;
 class SudoClient;
 
 
@@ -75,6 +75,8 @@ class ApplicationInstaller : public QObject
 
 
 public:
+    Q_ENUMS(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState))
+
     ~ApplicationInstaller();
     static ApplicationInstaller *createInstance(const QVector<InstallationLocation> &installationLocations,
                                                 const QDir &manifestDir, const QDir &imageMountDir,
@@ -117,7 +119,7 @@ public:
     Q_SCRIPTABLE void acknowledgePackageInstallation(const QString &taskId);
     Q_SCRIPTABLE QString removePackage(const QString &id, bool keepDocuments, bool force = false);
 
-    Q_SCRIPTABLE QString taskState(const QString &taskId);
+    Q_SCRIPTABLE AsynchronousTask::TaskState taskState(const QString &taskId);
     Q_SCRIPTABLE QString taskApplicationId(const QString &taskId);
     Q_SCRIPTABLE bool cancelTask(const QString &taskId);
 
@@ -139,7 +141,8 @@ signals:
     Q_SCRIPTABLE void taskProgressChanged(const QString &taskId, qreal progress);
     Q_SCRIPTABLE void taskFinished(const QString &taskId);
     Q_SCRIPTABLE void taskFailed(const QString &taskId, int errorCode, const QString &errorString);
-    Q_SCRIPTABLE void taskStateChanged(const QString &taskId, const QString &newState);
+    Q_SCRIPTABLE void taskStateChanged(const QString &taskId,
+                                       QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) newState);
 
     // installation only
     Q_SCRIPTABLE void taskRequestingInstallationAcknowledge(const QString &taskId, const QVariantMap &applicationAsVariantMap);
@@ -173,3 +176,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState))

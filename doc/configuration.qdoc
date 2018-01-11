@@ -164,8 +164,8 @@ all your imports paths and file references relative to your main config file.
     \li int
     \li The non-interface key \c registrationDelay within the \c dbus object is an integer value,
         which delays the registration of the global D-Bus interfaces by the field's value in
-        milli-seconds: the default value of \c -1 will register them synchronously, while \c 0 will
-        register them on the first run of the event loop.
+        milli-seconds. Values must be greater than or equal to 0, which is also the default value
+        (in this case registration will be done immediately after the event loop is executing).
 \row
     \li \b --fullscreen
     \br \e ui/fullscreen

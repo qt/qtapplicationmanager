@@ -54,6 +54,12 @@ TestCase {
     }
 
     SignalSpy {
+        id: taskStateChangedSpy
+        target: AM.ApplicationInstaller
+        signalName: "taskStateChanged"
+    }
+
+    SignalSpy {
         id: taskRequestingInstallationAcknowledgeSpy
         target: AM.ApplicationInstaller
         signalName: "taskRequestingInstallationAcknowledge"
@@ -70,7 +76,7 @@ TestCase {
         signalName: "stateChanged"
     }
 
-    function test_application_state() {
+    function test_states() {
         // App could potentially be installed already. Remove it.
         if (AM.ApplicationInstaller.removePackage("test.install.app", false, true)) {
             taskFinishedSpy.wait(2000);
@@ -111,5 +117,20 @@ TestCase {
         stateChangedSpy.wait(2000);
         compare(stateChangedSpy.signalArguments[3][0], AM.Application.BeingRemoved)
         // Cannot compare app.state any more, since app might already be dead
+
+        verify(taskStateChangedSpy.count > 10);
+        var taskStates = [ AM.ApplicationInstaller.Executing,
+                           AM.ApplicationInstaller.AwaitingAcknowledge,
+                           AM.ApplicationInstaller.Installing,
+                           AM.ApplicationInstaller.CleaningUp,
+                           AM.ApplicationInstaller.Finished,
+                           AM.ApplicationInstaller.Executing,
+                           AM.ApplicationInstaller.AwaitingAcknowledge,
+                           AM.ApplicationInstaller.Installing,
+                           AM.ApplicationInstaller.CleaningUp,
+                           AM.ApplicationInstaller.Finished,
+                           AM.ApplicationInstaller.Executing ]
+        for (var i = 0; i < taskStates.length; i++)
+            compare(taskStateChangedSpy.signalArguments[i][1], taskStates[i]);
     }
 }

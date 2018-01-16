@@ -147,7 +147,6 @@ public slots:
     // Hide the following functions (from QQuickIem),
     // since they are not available in multi-process mode (QWindow):
     Q_INVOKABLE void grabToImage() const;
-    Q_INVOKABLE bool contains(const QPointF &) const override; // needs the correct parameter because it's virtual
     Q_INVOKABLE void mapFromItem() const;
     Q_INVOKABLE void mapToItem() const;
     Q_INVOKABLE void mapFromGlobal() const;
@@ -155,6 +154,16 @@ public slots:
     Q_INVOKABLE void forceActiveFocus() const;
     Q_INVOKABLE void nextItemInFocusChain() const;
     Q_INVOKABLE void childAt() const;
+#if defined(Q_CC_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-virtual"
+#endif
+    // Although "contains" is virtual in QQuickItem with a different signature, from QML
+    // the following, intentionally overloaded version without parameters will be called:
+    Q_INVOKABLE void contains() const;
+#if defined(Q_CC_CLANG)
+#pragma clang diagnostic pop
+#endif
 
 signals:
     void fakeCloseSignal();

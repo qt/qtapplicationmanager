@@ -274,7 +274,7 @@ void FakeApplicationManagerWindow::referenceError(const char *symbol) const
 }
 
 void FakeApplicationManagerWindow::grabToImage() const          { referenceError("grabToImage"); }
-bool FakeApplicationManagerWindow::contains(const QPointF &) const { referenceError("contains"); return false; }
+void FakeApplicationManagerWindow::contains() const             { referenceError("contains"); }
 void FakeApplicationManagerWindow::mapFromItem() const          { referenceError("mapFromItem"); }
 void FakeApplicationManagerWindow::mapToItem() const            { referenceError("mapToItem"); }
 void FakeApplicationManagerWindow::mapFromGlobal() const        { referenceError("mapFromGlobal"); }

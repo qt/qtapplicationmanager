@@ -142,6 +142,7 @@ enum Command {
     ShowInstallationLocation
 };
 
+// REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
 static struct {
     Command command;
     const char *name;
@@ -254,6 +255,7 @@ int main(int argc, char *argv[])
     }
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
 
+    // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     try {
         switch (command(clp)) {
         default:

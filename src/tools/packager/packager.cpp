@@ -48,6 +48,7 @@ enum Command {
     StoreVerifyPackage,
 };
 
+// REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
 static struct {
     Command command;
     const char *name;
@@ -125,6 +126,7 @@ int main(int argc, char *argv[])
 
     PackagingJob *p = nullptr;
 
+    // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     switch (command(clp)) {
     default:
     case NoCommand:

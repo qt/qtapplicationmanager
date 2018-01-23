@@ -45,6 +45,7 @@ high-level overview of the package.
 \list
     \li \l{Installation}
     \li \l{Configuration}
+    \li \l{Troubleshooting}
     \omit
     \li \l{How to write a System-UI}
     \endomit

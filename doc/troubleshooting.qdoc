@@ -1,0 +1,113 @@
+/****************************************************************************
+**
+** Copyright (C) 2018 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\page troubleshooting.html
+\title Troubleshooting
+
+This page contains frequently asked questions/problems and how to fix them.
+
+\table
+\header \li \b {Issues}
+\row \li \l{ts-01}{How do I check whether I run appman in multi-process mode ?}
+\row \li \l{ts-02}{How do I check why my appman doesn't support multi-process mode ?}
+\row \li \l{ts-03}{My applications are running slow within appman. What can I do ?}
+\row \li \l{ts-04}{How do I check whether my applications use hardware-acceleration ?}
+\row \li \l{ts-05}{How do I turn on hardware-accerlation ?}
+\endtable
+
+\target ts-01
+\b {How do I check whether I run appman in multi-process mode ?}
+
+Either start the application-manager with \c --verbose and look for the
+output \c{WindowManager: running in Wayland mode}, or simply start an
+application and make sure you can see at least one appman-launcher-qml
+process running.
+
+\target ts-02
+\b {How do I check why my appman doesn't support multi-process mode ?}
+
+Check the configure output of appman (Most likely you are missing the qtwayland module).
+
+\target ts-03
+\b {My applications are running slow within appman. What can I do ?}
+
+Check whether your applications run with hardware acceleration.
+
+\target ts-04
+\b {How do I check whether my applications use hardware-acceleration ?}
+
+Run appman with the environment variable \b QSG_INFO=1. You should see output looking similar
+this, when starting an application:
+
+\badcode
+[DBG  | qt.scenegraph.general | c.p.music] Using sg animation driver
+[DBG  | qt.scenegraph.general | c.p.music] Animation Driver: using vsync: 16.95 ms
+[DBG  | qt.scenegraph.general | c.p.music] texture atlas dimensions: 1024x1024
+[DBG  | qt.scenegraph.general | c.p.music] R/G/B/A Buffers:    8 8 8 8
+[DBG  | qt.scenegraph.general | c.p.music] Depth Buffer:       24
+[DBG  | qt.scenegraph.general | c.p.music] Stencil Buffer:     8
+[DBG  | qt.scenegraph.general | c.p.music] Samples:            0
+[DBG  | qt.scenegraph.general | c.p.music] GL_VENDOR:          VMware, Inc.
+[DBG  | qt.scenegraph.general | c.p.music] GL_RENDERER:        llvmpipe (LLVM 5.0, 256 bits)
+[DBG  | qt.scenegraph.general | c.p.music] GL_VERSION:         3.0 Mesa 17.3.0
+\endcode
+
+If \e GL_RENDERER is \e "llvmpipe" you are using software-rendering for your wayland clients.
+
+\note You will also get this information output for the system-ui itself -
+make sure to look at the information table that has the application's id in
+the prefix (in the example above, \c com.pelagicore.music)
+
+\target ts-05
+\b {How do I turn on hardware-accerlation ?}
+
+This depends on your hardware and the operating system:
+
+In general you need to make sure you have the correct drivers installed:
+\list
+    \li NVIDIA on ubuntu/debian you need: \e nvidia-egl-wayland-icd
+    \li Intel on ubuntu/debian you need: \e libwayland-egl1-mesa
+\endlist
+
+On desktop systems make sure your Qt is configured to use at least OpenGL
+ES2/ES3 and \b NOT Desktop OpenGL. Check for the following configure summary line
+in Qt itself:
+\badcode
+    OpenGL ES 2.0 ........................ yes
+\endcode
+
+You can force Qt to use Opengl ES2 by using the \e "--opengl es2" configure option.
+
+Make sure the wayland-egl integration plugin is built:
+Check for the following file: \e <QT_DIR>/plugins/wayland-graphics-integration-client/libwayland-egl.so
+
+If that is not available, check the QtWayland configure summary and make sure it
+does get built.
+
+*/

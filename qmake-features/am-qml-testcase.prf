@@ -7,8 +7,8 @@ load(am-config)
 QT_TOOL_NAME = appman-qmltestrunner
 !isEmpty(TEST_FILES): qtAddTargetEnv(COMMAND, QT)
 
-# Execute test in source folder in order to find any assets.
-TESTRUN_CWD = $$_PRO_FILE_PWD_
+# If the test ends up in a different directory, we should cd to that directory.
+TESTRUN_CWD = $$DESTDIR
 
 debug_and_release:debug_and_release_target {
     # But in debug-and-release-target mode we don't want to cd into the debug/release
@@ -72,3 +72,17 @@ for(file, TEST_FILES) {
 }
 check.commands += true;
 OTHER_FILES += $$TEST_FILES
+
+# Copy assets to build folder
+for (d , DIRECTORIES) {
+    win32: do_copydata.commands += $(COPY_DIR) $$shell_path($$_PRO_FILE_PWD_/$${d}) $$shell_path($$OUT_PWD/$${d}) $$escape_expand(\n\t)
+    else: do_copydata.commands += $(COPY_DIR) $$shell_path($$_PRO_FILE_PWD_/$${d}) $$shell_path($$OUT_PWD) $$escape_expand(\n\t)
+}
+for (f , FILES) {
+    do_copydata.commands += $(COPY) $$shell_path($$_PRO_FILE_PWD_/$${f}) $$shell_path($$OUT_PWD/$${f}) $$escape_expand(\n\t)
+}
+
+!equals(_PRO_FILE_PWD_, $$OUT_PWD) {
+    check.depends = do_copydata
+    QMAKE_EXTRA_TARGETS += do_copydata
+}

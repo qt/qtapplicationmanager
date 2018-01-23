@@ -269,6 +269,7 @@ TestCase {
         appId = "test.winmap.ping";
         if (ApplicationManager.singleProcess)
             skip("Wayland ping-pong is only supported in multi-process mode");
+        AmTest.ignoreMessage(AmTest.CriticalMsg, /Stopping application.*because we did not receive a Wayland-Pong/);
         ApplicationManager.startApplication(appId);
         windowReadySpy.wait(2000);
         compare(ApplicationManager.applicationRunState(appId), ApplicationManager.Running)

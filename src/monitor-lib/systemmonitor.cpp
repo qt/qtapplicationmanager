@@ -178,10 +178,25 @@
 */
 
 /*!
+    \qmlproperty int SystemMonitor::memoryUsed
+    \readonly
+
+    This property holds the amount of physical memory (RAM) used in bytes.
+*/
+
+/*!
     \qmlproperty int SystemMonitor::cpuCores
     \readonly
 
     This property holds the number of physical CPU cores that are installed on the system.
+*/
+
+/*!
+    \qmlproperty int SystemMonitor::cpuLoad
+    \readonly
+
+    This property holds the current CPU utilization as a value ranging from 0 (inclusive, completely
+    idle) to 1 (inclusive, fully busy).
 */
 
 /*!
@@ -339,6 +354,14 @@ public:
     // model
     QHash<int, QByteArray> roleNames;
 
+    int latestReportPos() const
+    {
+        if (reportPos == 0)
+            return reports.size() - 1;
+        else
+            return reportPos - 1;
+    }
+
     XProcessMonitor *getProcess(const QString &appId)
     {
         Q_Q(SystemMonitor);
@@ -433,9 +456,7 @@ public:
             reportProcess = !reportProcess;
 
             if (reportCpu) {
-                qreal cpuVal = cpu->readLoadValue();
-                emit q->cpuLoadReportingChanged(cpuVal);
-                r.cpuLoad = cpuVal;
+                r.cpuLoad = cpu->readLoadValue();
                 roles.append(CpuLoad);
             } else if (cpuTail > 0) {
                 --cpuTail;
@@ -443,9 +464,7 @@ public:
             }
 
             if (reportMem) {
-                quint64 memVal = memory->readUsedValue();
-                emit q->memoryReportingChanged(memVal);
-                r.memoryUsed = memVal;
+                r.memoryUsed = memory->readUsedValue();
                 roles.append(MemoryUsed);
             } else if (memTail > 0) {
                 --memTail;
@@ -500,6 +519,11 @@ public:
                 reportPos = 0;
             q->endMoveRows();
             q->dataChanged(q->index(0), q->index(0), roles);
+
+            if (reportMem)
+                emit q->memoryReportingChanged(r.memoryUsed);
+            if (reportCpu)
+                emit q->cpuLoadReportingChanged(r.cpuLoad);
 
             setupTimer();  // we might be able to stop this timer, when end of tail reached
 
@@ -705,9 +729,21 @@ quint64 SystemMonitor::totalMemory() const
     return d->memory->totalValue();
 }
 
+quint64 SystemMonitor::memoryUsed() const
+{
+    Q_D(const SystemMonitor);
+    return d->reports[d->latestReportPos()].memoryUsed;
+}
+
 int SystemMonitor::cpuCores() const
 {
     return QThread::idealThreadCount();
+}
+
+qreal SystemMonitor::cpuLoad() const
+{
+    Q_D(const SystemMonitor);
+    return d->reports[d->latestReportPos()].cpuLoad;
 }
 
 /*!

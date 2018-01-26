@@ -60,7 +60,9 @@ class SystemMonitor : public QAbstractListModel
     Q_PROPERTY(int reportingRange READ reportingRange WRITE setReportingRange NOTIFY reportingRangeChanged)  // deprecated
     Q_PROPERTY(qreal idleLoadThreshold READ idleLoadThreshold WRITE setIdleLoadThreshold NOTIFY idleLoadThresholdChanged)
     Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
+    Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryReportingChanged)
     Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
+    Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadReportingChanged)
     Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled NOTIFY memoryReportingEnabledChanged)
     Q_PROPERTY(bool cpuLoadReportingEnabled READ isCpuLoadReportingEnabled WRITE setCpuLoadReportingEnabled NOTIFY cpuLoadReportingEnabledChanged)
     Q_PROPERTY(bool fpsReportingEnabled READ isFpsReportingEnabled WRITE setFpsReportingEnabled NOTIFY fpsReportingEnabledChanged)
@@ -83,7 +85,9 @@ public:
     Q_INVOKABLE QVariantMap get(int index) const;
 
     quint64 totalMemory() const;
+    quint64 memoryUsed() const;
     int cpuCores() const;
+    qreal cpuLoad() const;
 
     void setIdleLoadThreshold(qreal loadThreshold);
     qreal idleLoadThreshold() const;

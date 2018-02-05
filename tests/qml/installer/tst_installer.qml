@@ -131,6 +131,6 @@ TestCase {
                            AM.ApplicationInstaller.Finished,
                            AM.ApplicationInstaller.Executing ]
         for (var i = 0; i < taskStates.length; i++)
-            compare(taskStateChangedSpy.signalArguments[i][1], taskStates[i]);
+            compare(taskStateChangedSpy.signalArguments[i][1], taskStates[i], "- index: " + i);
     }
 }

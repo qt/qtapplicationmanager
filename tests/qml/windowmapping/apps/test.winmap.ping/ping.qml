@@ -45,7 +45,7 @@ import QtApplicationManager 1.0
 ApplicationManagerWindow {
     Timer {
         id: tim
-        interval: 0
+        interval: 100
         running: true
         onTriggered: {
             while (true); // application hangs

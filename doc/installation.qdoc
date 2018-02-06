@@ -50,7 +50,7 @@ In order to build the application-manager with all its features, the following
 components are required:
 
 \list
-    \li \b Qt 5.6 or higher.
+    \li \b Qt 5.9.0 or higher.
     \li \b libyaml 1.6 or higher.
     \li \b openssl 1.0.1 or higher \e{- Linux only}. At compile time, only the headers need to be
            available. The needed libraries will be dynamically loaded at runtime.

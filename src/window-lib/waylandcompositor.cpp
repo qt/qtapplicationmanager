@@ -50,38 +50,14 @@
 #include "applicationmanager.h"
 #include "waylandcompositor.h"
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-#  include <QWaylandQuickSurface>
-#  include <QWaylandSurfaceItem>
-#  include <QWaylandClient>
-
-#  include "window.h"
-#else
-#  include <QWaylandWlShell>
-#  include <QWaylandQuickOutput>
-#  include <QWaylandTextInputManager>
-#  include <private/qwlextendedsurface_p.h>
-#  if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
-#    include <QWaylandWindowManagerExtension>
-typedef QWaylandWindowManagerExtension QWaylandQtWindowManager;
-#  else
-#    include <QWaylandQtWindowManager>
-#  endif
-#  include "waylandcompositor_p.h"
-#endif
+#include <QWaylandWlShell>
+#include <QWaylandQuickOutput>
+#include <QWaylandTextInputManager>
+#include <private/qwlextendedsurface_p.h>
+#include <QWaylandQtWindowManager>
+#include "waylandcompositor_p.h"
 
 QT_BEGIN_NAMESPACE_AM
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-WindowSurface::WindowSurface(QWaylandSurface *surface)
-    : m_item(nullptr)
-    , m_surface(surface)
-{
-    connect(m_surface, &QObject::destroyed, [this]() { delete this; });
-    connect(m_surface, &QWaylandSurface::pong, this, &WindowSurface::pong);
-    connect(m_surface, &QWaylandSurface::windowPropertyChanged, this, &WindowSurface::windowPropertyChanged);
-}
-#else
 
 WindowSurface::WindowSurface(QWaylandCompositor *comp, QWaylandClient *client, uint id, int version)
     : QWaylandQuickSurface(comp, client, id, version)
@@ -110,8 +86,6 @@ QWaylandWlShellSurface *WindowSurface::shellSurface() const
     return m_shellSurface;
 }
 
-#endif
-
 
 QWaylandSurface *WindowSurface::surface() const
 {
@@ -130,16 +104,8 @@ qint64 WindowSurface::processId() const
 
 QWindow *WindowSurface::outputWindow() const
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    if (QWaylandOutput *o = m_surface->mainOutput())
-        return o->window();
-#elif QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
-    if (QWaylandView *v = m_surface->throttlingView())
-        return v->output()->window();
-#else
     if (QWaylandView *v = m_surface->primaryView())
         return v->output()->window();
-#endif
     return nullptr;
 }
 
@@ -150,33 +116,20 @@ void WindowSurface::takeFocus()
 
 void WindowSurface::ping()
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    m_surface->ping();
-#else
     m_shellSurface->ping();
-#endif
 }
 
 QVariantMap WindowSurface::windowProperties() const
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    return m_surface->windowProperties();
-#else
     return m_extendedSurface ? m_extendedSurface->windowProperties() : QVariantMap();
-#endif
 }
 
 void WindowSurface::setWindowProperty(const QString &name, const QVariant &value)
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    m_surface->setWindowProperty(name, value);
-#else
     if (m_extendedSurface)
         m_extendedSurface->setWindowProperty(name, value);
-#endif
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 
 WindowSurfaceQuickItem::WindowSurfaceQuickItem(WindowSurface *windowSurface)
     : QWaylandQuickItem()
@@ -202,22 +155,8 @@ void WindowSurfaceQuickItem::geometryChanged(const QRectF &newGeometry, const QR
     QWaylandQuickItem::geometryChanged(newGeometry, oldGeometry);
 }
 
-#endif // QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-
 
 WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager)
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    : QWaylandQuickCompositor(qPrintable(waylandSocketName), DefaultExtensions | SubSurfaceExtension)
-    , m_manager(manager)
-{
-    registerOutputWindow(window);
-    window->winId();
-    addDefaultShell();
-    QObject::connect(window, &QQuickWindow::beforeSynchronizing, [this]() { frameStarted(); });
-    QObject::connect(window, &QQuickWindow::afterRendering, [this]() { sendCallbacks(); });
-    setOutputGeometry(window->geometry());
-
-#else // QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
     : QWaylandQuickCompositor()
     , m_shell(new QWaylandWlShell(this))
     , m_surfExt(new QtWayland::SurfaceExtensionGlobal(this))
@@ -227,11 +166,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     setSocketName(waylandSocketName.toUtf8());
     registerOutputWindow(window);
 
-#  if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
-    connect(this, &QWaylandCompositor::createSurface, this, &WaylandCompositor::doCreateSurface);
-#  else
     connect(this, &QWaylandCompositor::surfaceRequested, this, &WaylandCompositor::doCreateSurface);
-#  endif
     connect(this, &QWaylandCompositor::surfaceCreated, [this](QWaylandSurface *s) {
         connect(s, &QWaylandSurface::surfaceDestroyed, this, [this, s]() {
             m_manager->waylandSurfaceDestroyed(static_cast<WindowSurface *>(s));
@@ -239,11 +174,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
         m_manager->waylandSurfaceCreated(static_cast<WindowSurface *>(s));
     });
 
-#  if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
-    connect(m_shell, &QWaylandWlShell::createShellSurface, this, &WaylandCompositor::createShellSurface);
-#  else
     connect(m_shell, &QWaylandWlShell::wlShellSurfaceRequested, this, &WaylandCompositor::createShellSurface);
-#  endif
     connect(m_surfExt, &QtWayland::SurfaceExtensionGlobal::extendedSurfaceReady, this, &WaylandCompositor::extendedSurfaceReady);
 
     auto wmext = new QWaylandQtWindowManager(this);
@@ -253,18 +184,13 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     });
 
     create();
-#endif // QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
 }
 
 void WaylandCompositor::registerOutputWindow(QQuickWindow* window)
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    createOutput(window, QString(), QString());
-#else
     auto output = new QWaylandQuickOutput(this, window);
     output->setSizeFollowsWindow(true);
     m_outputs.append(output);
-#endif
     window->winId();
 }
 
@@ -272,17 +198,11 @@ QWaylandSurface *WaylandCompositor::waylandSurfaceFromItem(QQuickItem *surfaceIt
 {
     // QWaylandQuickItem::surface() will return a nullptr to WindowManager::waylandSurfaceDestroyed,
     // if the app crashed. We return our internal copy of that surface pointer instead.
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    if (QWaylandSurfaceItem *item = qobject_cast<QWaylandSurfaceItem *>(surfaceItem))
-          return item->surface();
-#else
     if (WindowSurfaceQuickItem *item = qobject_cast<WindowSurfaceQuickItem *>(surfaceItem))
         return item->m_windowSurface->surface();
-#endif
     return nullptr;
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 
 void WaylandCompositor::doCreateSurface(QWaylandClient *client, uint id, int version)
 {
@@ -295,13 +215,8 @@ void WaylandCompositor::createShellSurface(QWaylandSurface *surface, const QWayl
     QWaylandWlShellSurface *ss = new QWaylandWlShellSurface(m_shell, windowSurface, resource);
     windowSurface->setShellSurface(ss);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
-    connect(windowSurface, &QWaylandSurface::mappedChanged, this, [this, windowSurface]() {
-        if (windowSurface->isMapped())
-#else
     connect(windowSurface, &QWaylandSurface::hasContentChanged, this, [this, windowSurface]() {
         if (windowSurface->hasContent())
-#endif
             m_manager->waylandSurfaceMapped(windowSurface);
         else
             m_manager->waylandSurfaceUnmapped(windowSurface);
@@ -313,67 +228,5 @@ void WaylandCompositor::extendedSurfaceReady(QtWayland::ExtendedSurface *ext, QW
     WindowSurface *windowSurface = static_cast<WindowSurface *>(surface);
     windowSurface->setExtendedSurface(ext);
 }
-
-#else // if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-
-void WaylandCompositor::surfaceCreated(QWaylandSurface *surface)
-{
-    WindowSurface *windowSurface = new WindowSurface(surface);
-    m_manager->waylandSurfaceCreated(windowSurface);
-    QObject::connect(surface, &QWaylandSurface::mapped, [windowSurface, surface, this]() {
-        windowSurface->m_item = static_cast<QWaylandSurfaceItem *>(surface->views().at(0));
-        windowSurface->m_item->setResizeSurfaceToItem(true);
-        windowSurface->m_item->setTouchEventsEnabled(true);
-        m_manager->waylandSurfaceMapped(windowSurface);
-    });
-    QObject::connect(surface, &QWaylandSurface::unmapped, [windowSurface, this]() {
-        m_manager->waylandSurfaceUnmapped(windowSurface);
-    });
-    QObject::connect(surface, &QWaylandSurface::surfaceDestroyed, [windowSurface, this]() {
-        m_manager->waylandSurfaceDestroyed(windowSurface);
-    });
-
-}
-
-bool WaylandCompositor::openUrl(QWaylandClient *client, const QUrl &url)
-{
-    if (ApplicationManager::instance()->fromProcessId(client->processId()))
-        return ApplicationManager::instance()->openUrl(url.toString());
-    return false;
-}
-
-void WaylandCompositor::sendCallbacks()
-{
-    QList<QWaylandSurface *> listToSend;
-
-    // TODO: optimize! no need to send this to hidden/minimized/offscreen/etc. surfaces
-    const auto windows = m_manager->windows();
-    for (const Window *win : windows) {
-        if (!win->isClosing() && !win->isInProcess()) {
-            if (QWaylandSurface *surface = waylandSurfaceFromItem(win->windowItem())) {
-                listToSend << surface;
-            }
-        }
-    }
-
-    if (!listToSend.isEmpty())
-        sendFrameCallbacks(listToSend);
-}
-
-const char *WaylandCompositor::socketName() const
-{
-    static QByteArray sn;
-    if (sn.isEmpty()) {
-        sn = QWaylandCompositor::socketName();
-        if (sn.isEmpty()) {
-            sn = qgetenv("WAYLAND_DISPLAY");
-            if (sn.isEmpty())
-                sn = "wayland-0";
-        }
-    }
-    return sn.constData();
-}
-
-#endif // if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 
 QT_END_NAMESPACE_AM

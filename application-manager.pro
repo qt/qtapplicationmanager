@@ -26,7 +26,7 @@ if(linux|force-libcrypto) {
     !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")|contains(QT_CONFIG,"ssl")):error("Qt was built without OpenSSL support.")
 }
 
-MIN_MINOR=6
+MIN_MINOR=9
 
 !equals(QT_MAJOR_VERSION, 5)|lessThan(QT_MINOR_VERSION, $$MIN_MINOR):error("This application needs to be built against Qt 5.$${MIN_MINOR}+")
 

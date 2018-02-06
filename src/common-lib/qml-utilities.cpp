@@ -83,14 +83,7 @@ void fixNullValuesForQml(QVariant &v)
         break;
     }
     case QVariant::Invalid: {
-        QVariant v2 =
-#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
-            // QML < 5.8 expects null values in this format
-            QVariant(QMetaType::VoidStar, (void *) 0);
-#else
-            // QML >= 5.8 expects null values in this format
-            QVariant::fromValue(nullptr);
-#endif
+        QVariant v2 = QVariant::fromValue(nullptr);
         qSwap(v.data_ptr(), v2.data_ptr());
         break;
     }

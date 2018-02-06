@@ -49,9 +49,8 @@
 #include <QWaylandQuickCompositor>
 #include <QtAppManWindow/windowmanager.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-#  include <QWaylandQuickSurface>
-#  include <QWaylandQuickItem>
+#include <QWaylandQuickSurface>
+#include <QWaylandQuickItem>
 
 QT_FORWARD_DECLARE_CLASS(QWaylandResource)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
@@ -64,13 +63,6 @@ class SurfaceExtensionGlobal;
 }
 QT_END_NAMESPACE
 
-#else // QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-#  include <QtAppManWindow/windowmanager.h>
-
-QT_FORWARD_DECLARE_CLASS(QWaylandSurfaceItem)
-
-#endif // QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-
 QT_BEGIN_NAMESPACE_AM
 
 class WindowSurfaceQuickItem;
@@ -79,17 +71,6 @@ class WindowSurfaceQuickItem;
 // Not every WindowSurface maybe an application's Window though - those that are, are available
 // through the WindowManager model.
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-class WindowSurface : public QObject
-{
-    Q_OBJECT
-public:
-    WindowSurface(QWaylandSurface *surface);
-
-private:
-    QWaylandSurfaceItem *m_item;
-
-#else
 class WindowSurface : public QWaylandQuickSurface
 {
     Q_OBJECT
@@ -105,7 +86,6 @@ private:
     WindowSurfaceQuickItem *m_item = nullptr;
     QWaylandWlShellSurface *m_shellSurface = nullptr;
     QtWayland::ExtendedSurface *m_extendedSurface = nullptr;
-#endif
 
 public:
     QWaylandSurface *surface() const;
@@ -137,7 +117,6 @@ public:
     QWaylandSurface *waylandSurfaceFromItem(QQuickItem *surfaceItem) const;
 
 protected:
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
     void doCreateSurface(QWaylandClient *client, uint id, int version);
     void createShellSurface(QWaylandSurface *surface, const QWaylandResource &resource);
     void extendedSurfaceReady(QtWayland::ExtendedSurface *ext, QWaylandSurface *surface);
@@ -146,13 +125,6 @@ protected:
     QVector<QWaylandOutput *> m_outputs;
     QtWayland::SurfaceExtensionGlobal *m_surfExt;
     QWaylandTextInputManager *m_textInputManager;
-#else
-    void surfaceCreated(QWaylandSurface *surface) override;
-    bool openUrl(QWaylandClient *client, const QUrl &url) override;
-    void sendCallbacks();
-public:
-    const char *socketName() const; // we need to shadow the base class' version, since it is broken
-#endif // QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 
 private:
     WindowManager *m_manager;

@@ -266,11 +266,7 @@ QJSValue FakeApplicationManagerWindow::getUndefined() const
 
 void FakeApplicationManagerWindow::referenceError(const char *symbol) const
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
-        qWarning().noquote() << "ReferenceError:" << symbol << "is not defined";
-#else
-        qmlWarning(this) << "ReferenceError: " << symbol << " is not defined";
-#endif
+    qmlWarning(this) << "ReferenceError: " << symbol << " is not defined";
 }
 
 void FakeApplicationManagerWindow::grabToImage() const          { referenceError("grabToImage"); }
@@ -314,11 +310,7 @@ void FakeApplicationManagerWindow::connectNotify(const QMetaMethod &signal)
 
         QString name = qSL("on") + QString::fromUtf8(signal.name());
         name[2] = name[2].toUpper();
-#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
-        qWarning() << "QML ApplicationManagerWindow: Cannot assign to non-existent property" << name;
-#else
         qmlWarning(this) << "Cannot assign to non-existent property \"" << name << "\"";
-#endif
     }
 }
 

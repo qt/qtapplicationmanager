@@ -6,10 +6,10 @@
 
     "Description": "LibYAML is a YAML 1.1 parser and emitter written in C.",
     "Homepage": "http://pyyaml.org/wiki/LibYAML/",
-    "Version": "0.1.6",
+    "Version": "0.1.7",
 
     "License": "MIT License",
     "LicenseId": "MIT",
     "LicenseFile": "LICENSE",
-    "Copyright": "Copyright (c) 2006-2016 Kirill Simonov"
+    "Copyright": "Copyright (c) 2006 Kirill Simonov"
 }

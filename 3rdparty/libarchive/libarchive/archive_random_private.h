@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2007 Tim Kientzle
+ * Copyright (c) 2014 Michihiro NAKAJIMA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -22,24 +21,16 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: head/lib/libarchive/archive_write_disk_private.h 201086 2009-12-28 02:17:53Z kientzle $
  */
 
 #ifndef __LIBARCHIVE_BUILD
 #error This header is only to be used internally to libarchive.
 #endif
 
-#ifndef ARCHIVE_WRITE_DISK_PRIVATE_H_INCLUDED
-#define ARCHIVE_WRITE_DISK_PRIVATE_H_INCLUDED
+#ifndef ARCHIVE_RANDOM_PRIVATE_H_INCLUDED
+#define ARCHIVE_RANDOM_PRIVATE_H_INCLUDED
 
-#include "archive_platform_acl.h"
-#include "archive_acl_private.h"
-#include "archive_entry.h"
+/* Random number generator. */
+int archive_random(void *buf, size_t nbytes);
 
-struct archive_write_disk;
-
-int archive_write_disk_set_acls(struct archive *, int, const char *,
-    struct archive_acl *, __LA_MODE_T);
-
-#endif
+#endif /* ARCHIVE_RANDOM_PRIVATE_H_INCLUDED */

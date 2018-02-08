@@ -120,7 +120,9 @@ TestCase {
         compare(windowReadySpy.count, 0);
 
         ApplicationManager.startApplication(appId, "show-main");
-        windowReadySpy.wait(3000);
+        windowReadySpy.wait(2000);
+        if (windowReadySpy.count === 1)
+            windowReadySpy.wait(2000);
         compare(windowReadySpy.count, 2);
     }
 
@@ -130,7 +132,9 @@ TestCase {
 
         appId = "test.winmap.loader";
         ApplicationManager.startApplication(appId, "show-sub");
-        windowReadySpy.wait(3000);
+        windowReadySpy.wait(2000);
+        if (windowReadySpy.count === 1)
+            windowReadySpy.wait(2000);
         compare(windowReadySpy.count, 2);
         windowReadySpy.clear();
 

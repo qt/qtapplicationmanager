@@ -94,13 +94,14 @@ TestCase {
         applicationAddedSpy.wait(2000);
         var appId = applicationAddedSpy.signalArguments[0][0];
         var app = AM.ApplicationManager.application(appId);
-        compare(app.state, AM.Application.BeingInstalled)
         stateChangedSpy.target = app;
-        stateChangedSpy.wait(2000);
-        compare(stateChangedSpy.signalArguments[0][0], AM.Application.Installed)
+        if (app.state === AM.Application.BeingInstalled) {
+            stateChangedSpy.wait(2000);
+            compare(stateChangedSpy.signalArguments[0][0], AM.Application.Installed)
+        }
         compare(app.state, AM.Application.Installed)
 
-        var id = AM.ApplicationInstaller.startPackageInstallation("internal-0", "appv2.pkg")
+        id = AM.ApplicationInstaller.startPackageInstallation("internal-0", "appv2.pkg")
         taskRequestingInstallationAcknowledgeSpy.wait(2000);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);

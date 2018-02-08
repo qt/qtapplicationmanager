@@ -58,7 +58,7 @@ ApplicationManagerWindow {
 
     Image {
         anchors.centerIn: parent
-        source: "icon.png"
+        source: ApplicationInterface.icon
 
         MouseArea {
             anchors.fill: parent

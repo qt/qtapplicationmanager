@@ -60,7 +60,6 @@ Window {
 
     property var primaryWindow
     property var secondaryWindow
-    property var monitoredAppWindow
 
     width: 720
     height: 600
@@ -122,14 +121,29 @@ Window {
                 spacing: 20
 
                 MonitorText {
-                    text: "Process: " + (processMon.applicationId === "" ? "System-UI" : processMon.applicationId)
+                    text: processMon.applicationId === "" ? "System-UI" : processMon.applicationId
                     font.pixelSize: 26
                 }
                 MonitorText { text: "Process ID: " + processMon.processId }
 
                 Switch {
-                    onToggle: processMon.applicationId = processMon.applicationId === ""
+                    onToggle: {
+                        processMon.applicationId = processMon.applicationId === ""
                                                          ? ApplicationManager.application(0).id : ""
+                        if (processMon.applicationId !== "") {
+                            if (ApplicationManager.singleProcess)
+                                console.warn("There is no dedicated application process in single-process mode");
+
+                            if (primaryWindow && secondaryWindow) {
+                                processMon.monitoredWindows = primary.active ? [primaryWindow] : [secondaryWindow]
+                            } else {
+                                processMon.monitoredWindows = []
+                                console.warn("No application window available. Please check your QtWayland configuration.");
+                            }
+                        } else {
+                            processMon.monitoredWindows = [root]
+                        }
+                    }
                 }
             }
         }
@@ -147,7 +161,7 @@ Window {
                     id: primary
                     active: true
                     onActivated: {
-                        root.monitoredAppWindow = [primaryWindow];
+                        processMon.monitoredWindows = [primaryWindow];
                         secondary.active = false;
                     }
                 }
@@ -155,7 +169,7 @@ Window {
                 WindowContainer {
                     id: secondary
                     onActivated: {
-                        root.monitoredAppWindow = [secondaryWindow];
+                        processMon.monitoredWindows = [secondaryWindow];
                         primary.active = false;
                     }
                 }
@@ -201,7 +215,6 @@ Window {
                 primaryWindow = window
                 window.parent = primary.container
                 window.anchors.fill = primary.container
-                root.monitoredAppWindow = [primaryWindow];
             } else {
                 secondaryWindow = window
                 window.parent = secondary.container
@@ -210,7 +223,7 @@ Window {
         }
 
         onWindowLost: {
-            root.monitoredAppWindow = []
+            processMon.monitoredWindows = []
             WindowManager.releaseWindow(window);
         }
     }
@@ -223,10 +236,13 @@ Window {
 
         memoryReportingEnabled: true
         frameRateReportingEnabled: true
-        monitoredWindows: (applicationId === "" || ApplicationManager.singleProcess) ? [ root ] : root.monitoredAppWindow
+        monitoredWindows: [root]
 
         onMemoryReportingChanged: processPss.reading = (memoryPss.total / 1e6).toFixed(0) + " MB";
-        onFrameRateReportingChanged: frameChart.reading = frameRate[0].average.toFixed(0) + " fps";
+        onFrameRateReportingChanged: {
+            if (frameRate[0])
+                frameChart.reading = frameRate[0].average.toFixed(0) + " fps";
+        }
     }
 
     Connections {

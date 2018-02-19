@@ -118,6 +118,7 @@ void FakeApplicationManagerWindow::setColor(const QColor &c)
     if (m_color != c) {
         m_color = c;
         emit colorChanged();
+        update();
     }
 }
 
@@ -192,10 +193,12 @@ bool FakeApplicationManagerWindow::eventFilter(QObject *o, QEvent *e)
 QSGNode *FakeApplicationManagerWindow::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
 {
     QSGSimpleRectNode *node = static_cast<QSGSimpleRectNode *>(oldNode);
-    if (!node)
-        node = new QSGSimpleRectNode(clipRect(), color());
-    else
+    if (!node) {
+        node = new QSGSimpleRectNode(clipRect(), m_color);
+    } else {
         node->setRect(clipRect());
+        node->setColor(m_color);
+    }
     return node;
 }
 

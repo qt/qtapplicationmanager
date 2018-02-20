@@ -97,6 +97,7 @@ private:
     };
 
     MyQProcess m_process;
+    qint64 m_pid = 0;
 };
 
 class ProcessContainer : public AbstractContainer

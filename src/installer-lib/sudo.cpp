@@ -126,7 +126,7 @@ QT_END_NAMESPACE_AM
 
 QT_BEGIN_NAMESPACE_AM
 
-bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
+bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString, QStringList *warnings)
 {
     bool canSudo = false;
     int loopControlFd = -1;
@@ -138,8 +138,8 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
 
     // check for new style loopback device control
     loopControlFd = EINTR_LOOP(open("/dev/loop-control", O_RDWR));
-    if (canSudo && (loopControlFd < 0))
-        qCCritical(LogSystem) << "WARNING: could not open /dev/loop-control, which is needed by the installer for SD-Card installations";
+    if (warnings && canSudo && (loopControlFd < 0))
+        *warnings << qSL("Could not open /dev/loop-control, which is needed by the installer for SD-Card installations");
 #else
     Q_UNUSED(errorString)
     Q_UNUSED(dropPrivileges)
@@ -148,8 +148,10 @@ bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString)
     if (!canSudo) {
         SudoServer::initialize(-1, loopControlFd);
         SudoClient::initialize(-1, SudoServer::instance());
-        qCCritical(LogSystem) << "WARNING: for the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred)";
-        qCCritical(LogSystem) << "         (using fallback implementation - you might experience permission errors on installer operations)";
+        if (warnings) {
+            *warnings << qSL("For the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred)");
+            *warnings << qSL("(using fallback implementation - you might experience permission errors on installer operations)");
+        }
         return true;
     }
 

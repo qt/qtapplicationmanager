@@ -84,7 +84,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     Package::ensureCorrectLocale();
 
     QString error;
-    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
+    QStringList warnings;
+    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error, &warnings))) {
         qCCritical(LogSystem) << "ERROR:" << qPrintable(error);
         return 2;
     }
@@ -111,7 +112,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #if defined(AM_TESTRUNNER)
         TestRunner::initialize(cfg.testRunnerArguments());
 #endif
-        a.setup(&cfg);
+        a.setup(&cfg, &warnings);
 #if defined(AM_TESTRUNNER)
         a.qmlEngine()->rootContext()->setContextProperty("buildConfig", cfg.buildConfig());
 #endif

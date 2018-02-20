@@ -194,7 +194,7 @@ Main::~Main()
     The caller has to make sure that cfg will be available even after this function returns:
     we will access the cfg object from delayed init functions via lambdas!
 */
-void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setup(const DefaultConfiguration *cfg, QStringList *deploymentWarnings) Q_DECL_NOEXCEPT_EXPR(false)
 {
     // basics that are needed in multiple setup functions below
     m_noSecurity = cfg->noSecurity();
@@ -205,6 +205,14 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupLoggingRules(cfg->verbose(), cfg->loggingRules());
     setupQmlDebugging(cfg->qmlDebugging());
     Logging::registerUnregisteredDltContexts();
+
+    // dump accumulated warnings, now that logging rules are set
+    if (deploymentWarnings) {
+        for (const QString &warning : *deploymentWarnings)
+            qCWarning(LogDeployment).noquote() << warning;
+        deploymentWarnings->clear();
+    }
+
     setupOpenGL(cfg->openGLConfiguration());
 
     loadStartupPlugins(cfg->pluginFilePaths("startup"));
@@ -475,8 +483,8 @@ void Main::setupInstaller(const QString &appImageMountDir, const QStringList &ca
 #if !defined(AM_DISABLE_INSTALLER)
     if (!Package::checkCorrectLocale()) {
         // we should really throw here, but so many embedded systems are badly set up
-        qCCritical(LogSystem) << "WARNING: the appman installer needs a UTF-8 locale to work correctly:\n"
-                                 "         even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
+        qCWarning(LogDeployment) << "The appman installer needs a UTF-8 locale to work correctly:\n"
+                                    "even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
     }
 
     if (Q_UNLIKELY(hardwareId().isEmpty()))

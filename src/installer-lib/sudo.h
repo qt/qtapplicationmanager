@@ -63,7 +63,7 @@ enum SudoDropPrivileges {
     DropPrivilegesRegainable, // only use this for auto-tests
 };
 
-bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString);
+bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString, QStringList *warnings = nullptr);
 
 class SudoInterface
 {

@@ -93,7 +93,7 @@ public:
 
     bool isSingleProcessMode() const;
 
-    void setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false);
+    void setup(const DefaultConfiguration *cfg, QStringList *deploymentWarnings = nullptr) Q_DECL_NOEXCEPT_EXPR(false);
     void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
     void showWindow(bool showFullscreen);
 

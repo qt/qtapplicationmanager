@@ -74,13 +74,14 @@ QT_BEGIN_NAMESPACE_AM
 /*
 //! [am-logging-categories]
 \list
+\li \c am.system - General system messages
+\li \c am.runtime.qml - QML runtime
+\li \c am.graphics - OpenGL/Wayland related messages
+\li \c am.deployment - Deployment hints"
 \li \c am.installer - Installer sub-system
 \li \c am.notify - Notification sub-system
 \li \c am.qml - QML messages
 \li \c am.qml.ipc - QML IPC
-\li \c am.runtime.qml - QML runtime
-\li \c am.system - General system messages
-\li \c am.graphics - OpenGL/Wayland related messages
 \li \c general - General messages not part of any ApplicationManager sub-system
 \endlist
 //! [am-logging-categories]
@@ -94,6 +95,7 @@ QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "QML messages")
 QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notification sub-system")
 QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime")
 QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC")
+QDLT_LOGGING_CATEGORY(LogDeployment, "am.deployment", "DPLM", "Deployment hints")
 QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "General messages not part of any ApplicationManager sub-system")
 QDLT_FALLBACK_CATEGORY(LogGeneral)
 

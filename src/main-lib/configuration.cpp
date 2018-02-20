@@ -312,7 +312,7 @@ void Configuration::parse()
                 qCDebug(LogSystem) << "Config parsing: cache loaded after" << (timer.nsecsElapsed() / 1000) << "usec";
 #endif
             } catch (const Exception &e) {
-                qCWarning(LogSystem) << "Failed to read config cache:" << e.what();
+                qCDebug(LogSystem) << "Failed to read config cache:" << e.what();
             }
         }
     }
@@ -331,7 +331,7 @@ void Configuration::parse()
 
         QByteArray checksum = QCryptographicHash::hash(cf.content, QCryptographicHash::Sha1);
         if (useCache && (checksum != cf.checksum)) {
-            qCWarning(LogSystem) << "Failed to read config cache: cached config file checksums do not match current set";
+            qCDebug(LogSystem) << "Failed to read config cache: cached config file checksums do not match current set";
             useCache = false;
         }
         cf.checksum = checksum;

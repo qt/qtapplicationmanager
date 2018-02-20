@@ -224,15 +224,20 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
 
     m_configuration = a->runtimeConfiguration();
 
+    QString absolutePath;
     QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
     for (QString &path : importPaths) {
-        if (QFileInfo(path).isRelative()) {
+        if (QFileInfo(path).isRelative())
             path.prepend(a->baseDir());
-        } else {
-            qCWarning(LogQmlRuntime) << "Absolute import paths in the runtime configuration can lead to problems inside containers:"
-                                     << path;
-        }
+        else if (absolutePath.isEmpty())
+            absolutePath = path;
+
         m_engine.addImportPath(path);
+    }
+
+    if (!absolutePath.isEmpty()) {
+        qCWarning(LogDeployment).nospace() << "Absolute import path in the runtime configuration "
+                            "can lead to problems inside containers (e.g. " << absolutePath << ")";
     }
 
     StartupTimer::instance()->checkpoint("after application config initialization");

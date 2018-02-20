@@ -70,7 +70,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     Package::ensureCorrectLocale();
 
     QString error;
-    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
+    QStringList warnings;
+    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error, &warnings))) {
         qCCritical(LogSystem) << "ERROR:" << qPrintable(error);
         return 2;
     }
@@ -81,7 +82,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         DefaultConfiguration cfg;
         cfg.parse();
 
-        a.setup(&cfg);
+        a.setup(&cfg, &warnings);
         a.loadQml(cfg.loadDummyData());
         a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
 

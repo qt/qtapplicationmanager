@@ -10,5 +10,9 @@ QT = appman_main-private
 
 SOURCES = custom-appman.cpp
 
+OTHER_FILES += \
+    doc/src/*.qdoc \
+    doc/images/*.png \
+
 target.path = $$[QT_INSTALL_EXAMPLES]/custom-appman
 INSTALLS += target

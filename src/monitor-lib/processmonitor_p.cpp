@@ -183,6 +183,13 @@ qreal ReadingTask::readLoad()
     return load;
 }
 
+static int parseValue(const char *pl)
+{
+    while (*pl && (*pl < '0' || *pl > '9'))
+        pl++;
+    return strtol(pl, 0, 10);
+}
+
 bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::Memory &results)
 {
     struct ScopedFile {
@@ -227,10 +234,8 @@ bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::
             ok = true;
         ++blockLen;
     }
-    if (!ok || blockLen < 12 || blockLen > 24)
+    if (!ok || blockLen < 12 || blockLen > 32)
         return false;
-
-    blockLen -= 3; // skip those number of lines below
 
     fseek(sf.file, 0, SEEK_SET);
     bool wasPrivateOnly = false;
@@ -273,26 +278,49 @@ bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::
                 break;
         }
 
-        if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
-            break;
-        pl = line;
-        while (*pl && (*pl < '0' || *pl > '9'))
-            pl++;
-        int vm = strtol(pl, 0, 10);
+        int skipLen = blockLen;
+        int vm = 0;
+        int rss = 0;
+        int pss = 0;
+        const int sizeTag = 0x01;
+        const int rssTag  = 0x02;
+        const int pssTag  = 0x04;
+        const int allTags = sizeTag | rssTag | pssTag;
+        int foundTags = 0;
 
-        if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
-            break;
-        pl = line;
-        while (*pl && (*pl < '0' || *pl > '9'))
-            pl++;
-        int rss = strtol(pl, 0, 10);
+        while (foundTags < allTags && skipLen > 0) {
+            skipLen--;
+            if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
+                break;
+            pl = line;
 
-        if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
+            static const char strSize[] = "ize:";
+            static const char strXss[] = "ss:";
+
+            switch (*pl) {
+            case 'S':
+                if (!qstrncmp(pl + 1, strSize, sizeof(strSize) - 1)) {
+                    foundTags |= sizeTag;
+                    vm = parseValue(pl + sizeof(strSize));
+                }
+                break;
+            case 'R':
+                if (!qstrncmp(pl + 1, strXss, sizeof(strXss) - 1)) {
+                    foundTags |= rssTag;
+                    rss = parseValue(pl + sizeof(strXss));
+                }
+                break;
+            case 'P':
+                if (!qstrncmp(pl + 1, strXss, sizeof(strXss) - 1)) {
+                    foundTags |= pssTag;
+                    pss = parseValue(pl + sizeof(strXss));
+                }
+                break;
+            }
+        }
+
+        if (foundTags < allTags)
             break;
-        pl = line;
-        while (*pl && (*pl < '0' || *pl > '9'))
-            pl++;
-        int pss = strtol(pl, 0, 10);
 
         results.totalVm += vm;
         results.totalRss += rss;
@@ -315,7 +343,7 @@ bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::
         static const char permP[] = { '-', '-', '-', 'p' };
         wasPrivateOnly = !memcmp(permissions, permP, sizeof(permissions));
 
-        for (int skip = blockLen; skip; --skip) {
+        for (int skip = skipLen; skip; --skip) {
             if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
                 break;
         }

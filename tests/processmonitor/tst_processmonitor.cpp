@@ -50,6 +50,7 @@ private slots:
     void memInvalid();
     void memTestProcess();
     void memBasic();
+    void memAdvanced();
 
 private:
     void printMem(const ReadingTask::Results::Memory &memres);
@@ -116,6 +117,22 @@ void tst_ProcessMonitor::memBasic()
     QCOMPARE(memres.heapVm, 24376u);
     QCOMPARE(memres.heapRss, 7556u);
     QCOMPARE(memres.heapPss, 7556u);
+}
+
+void tst_ProcessMonitor::memAdvanced()
+{
+    ReadingTask::Results::Memory memres;
+    QVERIFY(static_cast<ReadingTaskTester*>(&task)->readMemory(QFINDTESTDATA("advanced.smaps").toLocal8Bit(), memres));
+    //printMem(memres);
+    QCOMPARE(memres.totalVm, 77728u);
+    QCOMPARE(memres.totalRss, 17612u);
+    QCOMPARE(memres.totalPss, 17547u);
+    QCOMPARE(memres.textVm, 2104u);
+    QCOMPARE(memres.textRss, 1772u);
+    QCOMPARE(memres.textPss, 1707u);
+    QCOMPARE(memres.heapVm, 16032u);
+    QCOMPARE(memres.heapRss, 15740u);
+    QCOMPARE(memres.heapPss, 15740u);
 }
 
 void tst_ProcessMonitor::printMem(const ReadingTask::Results::Memory &memres)

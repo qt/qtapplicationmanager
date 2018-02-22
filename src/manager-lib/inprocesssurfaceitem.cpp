@@ -51,6 +51,8 @@ InProcessSurfaceItem::InProcessSurfaceItem(FakeApplicationManagerWindow *content
     m_windowProperties = content->m_windowProperties;
     setParentItem(content->parentItem());
     content->setParentItem(this);
+    setWidth(content->width());
+    setHeight(content->height());
 }
 
 InProcessSurfaceItem::~InProcessSurfaceItem()

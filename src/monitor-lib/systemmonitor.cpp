@@ -58,8 +58,6 @@
 #include "systemmonitor.h"
 #include "systemreader.h"
 #include <QtAppManWindow/windowmanager.h>
-
-#include "xprocessmonitor.h"
 #include "frametimer.h"
 
 
@@ -315,8 +313,6 @@ public:
     // fps
     QHash<QObject *, FrameTimer *> frameTimer;
 
-    QList<XProcessMonitor*> processMonitors;
-
     // reporting
     MemoryReader *memory = nullptr;
     CpuReader *cpu = nullptr;
@@ -329,9 +325,6 @@ public:
     bool reportCpu = false;
     bool reportMem = false;
     bool reportFps = false;
-    // Report process only on half interval to decrease overload
-    bool reportProcess = false;
-
     int cpuTail = 0;
     int memTail = 0;
     int fpsTail = 0;
@@ -360,32 +353,6 @@ public:
             return reports.size() - 1;
         else
             return reportPos - 1;
-    }
-
-    XProcessMonitor *getProcess(const QString &appId)
-    {
-        Q_Q(SystemMonitor);
-
-        bool singleProcess = ApplicationManager::instance()->isSingleProcess();
-        QString usedAppId;
-
-        if (singleProcess)
-            usedAppId = qSL("");
-        else {
-            usedAppId = appId;
-            // Avoid creating multiple objects for aliases
-            QStringList aliasBreak = appId.split('@');
-            usedAppId = aliasBreak[0];
-        }
-
-        for (int i = 0; i < processMonitors.size(); i++) {
-            if (processMonitors.at(i)->getAppId() == usedAppId)
-                return processMonitors.at(i);
-        }
-
-        XProcessMonitor *p = new XProcessMonitor(usedAppId, q);
-        processMonitors.append(p);
-        return processMonitors.last();
     }
 
 #if !defined(AM_HEADLESS)
@@ -448,12 +415,6 @@ public:
         if (te && te->timerId() == reportingTimerId) {
             Report r;
             QVector<int> roles;
-            if (reportProcess) {
-                for (int i = 0; i < processMonitors.size(); i++)
-                    processMonitors.at(i)->readData();
-            }
-
-            reportProcess = !reportProcess;
 
             if (reportCpu) {
                 r.cpuLoad = cpu->readLoadValue();
@@ -1032,12 +993,6 @@ void SystemMonitor::reportFrameSwap()
     }
 
     frameTimer->newFrame();
-}
-
-QObject *SystemMonitor::getProcessMonitor(const QString &appId)
-{
-    Q_D(SystemMonitor);
-    return d->getProcess(appId);
 }
 
 QT_END_NAMESPACE_AM

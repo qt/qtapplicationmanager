@@ -120,8 +120,6 @@ public:
     // semi-public API: used for the WindowManager to report FPS
     void reportFrameSwap();
 
-    Q_INVOKABLE QObject *getProcessMonitor(const QString &appId);  // experimental only!
-
 signals:
     void countChanged();
     void idleChanged(bool idle);

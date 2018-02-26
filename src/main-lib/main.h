@@ -48,13 +48,15 @@
 #if defined(AM_HEADLESS)
 #  include <QCoreApplication>
 typedef QCoreApplication MainBase;
-#elif defined(AM_ENABLE_WIDGETS)
-#  include <QApplication>
-typedef QApplication MainBase;
 #else
-#  include <QSurfaceFormat>
-#  include <QGuiApplication>
+#  if defined(AM_ENABLE_WIDGETS)
+#    include <QApplication>
+typedef QApplication MainBase;
+#  else
+#    include <QGuiApplication>
 typedef QGuiApplication MainBase;
+#  endif
+#  include <QSurfaceFormat>
 #endif
 
 #include <QtAppManInstaller/installationlocation.h>

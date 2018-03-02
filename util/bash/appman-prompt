@@ -26,12 +26,32 @@
 ##
 #############################################################################
 
+_appman()
+{
+    local cur opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts="--app-image-mount-dir --build-config --builtin-apps-manifest-dir -c --clear-config-cache --config-file \
+--database --dbus --force-multi-process --force-single-process --fullscreen --help -I \
+--installed-apps-manifest-dir --load-dummydata --logging-rule --no-config-cache --no-dlt-logging \
+--no-fullscreen --no-security --no-ui-watchdog -o --option --qml-debug --recreate-database -r --single-app \
+--slow-animations --start-session-dbus --verbose --version --wayland-socket-name"
+
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    else
+        COMPREPLY=( $( compgen -f -- ${cur}) )
+    fi
+}
+complete -o filenames -F _appman appman
+
 _appman-controller()
 {
     local cur commands opts pos args
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    commands="start-application debug-application stop-application stop-all-applications list-applications show-application install-package remove-package list-installation-locations show-installation-location"
+    commands="start-application debug-application stop-application stop-all-applications list-applications \
+show-application install-package remove-package list-installation-locations show-installation-location"
     opts="-h -v --help --version"
 
     if [ ${COMP_CWORD} -eq 1 ] && [[ ${cur} == -* ]] ; then

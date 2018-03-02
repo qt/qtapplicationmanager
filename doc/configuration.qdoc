@@ -167,6 +167,11 @@ all your imports paths and file references relative to your main config file.
         milli-seconds. Values must be greater than or equal to 0, which is also the default value
         (in this case registration will be done immediately after the event loop is executing).
 \row
+    \li \b --start-session-dbus
+    \br \e -
+    \li bool
+    \li Start a private session bus instead of using an existing one.
+\row
     \li \b --fullscreen
     \br \e ui/fullscreen
     \li bool

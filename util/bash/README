@@ -1,7 +1,7 @@
 Abstract
 ========
 The appman-prompt script provides command completion inside a bash shell for
-the appman-controller and appman-packager commands.
+the appman executable, appman-controller and appman-packager commands.
 
 Installation
 ============
@@ -17,8 +17,8 @@ Afterwards completion will be available in new shells.
 
 Notes
 =====
-(Sub-)Command options are currently not supported, only the general ones (help
-and version).
+(Sub-)Command options for the appman-controller and appman-packager are
+currently not supported, only the general ones (help and version).
 
 Users of the zsh shell might want to run the following commands to get going:
 autoload bashcompinit

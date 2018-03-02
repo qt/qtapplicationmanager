@@ -277,7 +277,10 @@ bool NativeRuntime::start()
     QVariantMap uiConfig;
     if (m_slowAnimations)
         uiConfig.insert(qSL("slowAnimations"), true);
-    QVariantMap openGLConfig = m_app->openGLConfiguration();
+
+    QVariantMap openGLConfig;
+    if (m_app)
+        openGLConfig = m_app->openGLConfiguration();
     if (openGLConfig.isEmpty())
         openGLConfig = manager()->systemOpenGLConfiguration();
     if (!openGLConfig.isEmpty())

@@ -86,10 +86,19 @@ class Application : public QObject
     Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface NOTIFY bulkChange)
     Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
+    Q_PROPERTY(RunState runState READ runState NOTIFY runStateChanged)
 
 public:
     enum ExitStatus { NormalExit, CrashExit, ForcedExit };
     Q_ENUM(ExitStatus)
+
+    enum RunState {
+        NotRunning,
+        StartingUp,
+        Running,
+        ShuttingDown,
+    };
+    Q_ENUM(RunState)
 
     QString id() const;
     int uniqueNumber() const;
@@ -161,6 +170,8 @@ public:
     Q_ENUM(State)
     qreal progress() const;
 
+    RunState runState() const;
+
     void setSupportsApplicationInterface(bool supportsAppInterface);
     void setCodeDir(const QString &path);
     void setManifestDir(const QString &path);
@@ -178,9 +189,12 @@ signals:
     void lastExitStatusChanged() const;
     void activated() const;
     void stateChanged(State state) const;
+    void runStateChanged(RunState state) const;
 
 private:
     Application();
+    void setRunState(Application::RunState) const;
+    void setNonAliased(const Application *);
 
     // static part from info.json
     QString m_id;
@@ -224,6 +238,7 @@ private:
     mutable QAtomicInt m_mounted;
 
     mutable State m_state = Installed;
+    mutable RunState m_runState = NotRunning;
     mutable qreal m_progress = 0;
 
     mutable int m_lastExitCode = 0;
@@ -243,5 +258,6 @@ private:
 QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(const QT_PREPEND_NAMESPACE_AM(Application *))
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Application::RunState))
 
 QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(Application) *app);

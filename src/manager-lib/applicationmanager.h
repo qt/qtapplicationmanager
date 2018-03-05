@@ -47,6 +47,7 @@
 #include <QProcess>
 #include <QJSValue>
 #include <QtAppManCommon/global.h>
+#include <QtAppManApplication/application.h>
 
 QT_FORWARD_DECLARE_CLASS(QDir)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -54,7 +55,6 @@ QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
 class ApplicationDatabase;
 class ApplicationManagerPrivate;
 class AbstractRuntime;
@@ -77,14 +77,6 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
 
 public:
-    enum RunState {
-        NotRunning,
-        StartingUp,
-        Running,
-        ShuttingDown,
-    };
-    Q_ENUM(RunState)
-
     ~ApplicationManager();
     static ApplicationManager *createInstance(ApplicationDatabase *adb, bool singleProcess, QString *error);
     static ApplicationManager *instance();
@@ -147,13 +139,13 @@ public:
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;
     Q_SCRIPTABLE QString identifyApplication(qint64 pid) const;
-    Q_SCRIPTABLE RunState applicationRunState(const QString &id) const;
+    Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(Application::RunState) applicationRunState(const QString &id) const;
 
 public slots:
     void shutDown();
 
 signals:
-    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(ApplicationManager::RunState) runState);
+    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(Application::RunState) runState);
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
     Q_SCRIPTABLE void countChanged();
 
@@ -207,5 +199,3 @@ private:
 };
 
 QT_END_NAMESPACE_AM
-
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(ApplicationManager::RunState))

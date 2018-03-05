@@ -224,7 +224,7 @@ signals:
 
 public slots:
     void readingUpdate();
-    void appRuntimeChanged(const QString &id, ApplicationManager::RunState state);
+    void appRuntimeChanged(const QString &id, Application::RunState state);
 #if defined(AM_MULTI_PROCESS) && !defined(AM_HEADLESS)
     void applicationWindowClosing(int index, QQuickItem *window);
 #endif

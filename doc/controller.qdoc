@@ -83,7 +83,12 @@ The following commands are available:
     \li \span {style="white-space: nowrap"} {\c install-package}
     \li \c{<package>}
     \li Installs the package given on the command-line. If the package file is specified as \c{-},
-        the tool will try to read the package from \c stdin.
+        the tool will try to read the package from \c stdin. The following options are supported:
+
+        \c{-l, --location}: Install to a specific installation location (see \c show-installation-location).
+
+        \c{-a, --acknowledge}: Automatically acknowledge the installation, instead of relying on the System-UI's logic.
+
 \row
     \li \span {style="white-space: nowrap"} {\c remove-package}
     \li \c{<application-id>}

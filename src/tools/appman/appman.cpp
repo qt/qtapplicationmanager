@@ -77,17 +77,15 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
 #if !defined(AM_DISABLE_INSTALLER)
     Package::ensureCorrectLocale();
-
-    QString error;
-    QStringList warnings;
-    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error, &warnings))) {
-        qCCritical(LogSystem) << "ERROR:" << qPrintable(error);
-        return 2;
-    }
-    StartupTimer::instance()->checkpoint("after sudo server fork");
 #endif
 
     try {
+        QStringList deploymentWarnings;
+#if !defined(AM_DISABLE_INSTALLER)
+        Sudo::forkServer(Sudo::DropPrivilegesPermanently, &deploymentWarnings);
+        StartupTimer::instance()->checkpoint("after sudo server fork");
+#endif
+
         Main a(argc, argv);
 
 #if defined(AM_TESTRUNNER)
@@ -107,7 +105,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #if defined(AM_TESTRUNNER)
         TestRunner::initialize(cfg.testRunnerArguments());
 #endif
-        a.setup(&cfg, &warnings);
+        a.setup(&cfg, deploymentWarnings);
 #if defined(AM_TESTRUNNER)
         a.qmlEngine()->rootContext()->setContextProperty("buildConfig", cfg.buildConfig());
 #endif

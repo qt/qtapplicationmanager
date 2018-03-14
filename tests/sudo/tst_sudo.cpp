@@ -499,7 +499,10 @@ static tst_Sudo *tstSudo = nullptr;
 
 int main(int argc, char **argv)
 {
-    startedSudoServer = forkSudoServer(DropPrivilegesRegainable, &sudoServerError);
+    try {
+        Sudo::forkServer(Sudo::DropPrivilegesRegainable);
+        startedSudoServer = true;
+    } catch (...) { }
 
     QCoreApplication a(argc, argv);
     tstSudo = new tst_Sudo(&a);

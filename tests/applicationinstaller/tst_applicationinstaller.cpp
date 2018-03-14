@@ -942,7 +942,10 @@ int main(int argc, char **argv)
 {
     Package::ensureCorrectLocale();
 
-    startedSudoServer = forkSudoServer(DropPrivilegesPermanently, &sudoServerError);
+    try {
+        Sudo::forkServer(Sudo::DropPrivilegesPermanently);
+        startedSudoServer = true;
+    } catch (...) { }
 
     QCoreApplication a(argc, argv);
     tstApplicationInstaller = new tst_ApplicationInstaller(&a);

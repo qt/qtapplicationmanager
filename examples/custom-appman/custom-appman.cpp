@@ -69,20 +69,16 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     Package::ensureCorrectLocale();
 
-    QString error;
-    QStringList warnings;
-    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error, &warnings))) {
-        qCCritical(LogSystem) << "ERROR:" << qPrintable(error);
-        return 2;
-    }
-
     try {
+        QStringList deploymentWarnings;
+        Sudo::forkServer(Sudo::DropPrivilegesPermanently, &deploymentWarnings);
+
         Main a(argc, argv);
 
         DefaultConfiguration cfg;
         cfg.parse();
 
-        a.setup(&cfg, &warnings);
+        a.setup(&cfg, deploymentWarnings);
         a.loadQml(cfg.loadDummyData());
         a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
 

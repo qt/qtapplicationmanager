@@ -444,18 +444,20 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 
 void NativeRuntime::onApplicationFinishedInitialization()
 {
-    if (m_needsLauncher && m_launchWhenReady && !m_applicationInterfaceConnected && m_app && m_runtimeInterface) {
+    if (!m_applicationInterfaceConnected) {
         registerExtensionInterfaces();
 
-        QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
-        QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
+        if (m_needsLauncher && m_launchWhenReady &&  m_app && m_runtimeInterface) {
 
-        emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
-                                                  convertFromJSVariant(QVariant(m_app->toVariantMap())).toMap(),
-                                                  convertFromJSVariant(QVariant(systemProperties())).toMap());
+            QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
+            QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
+
+            emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
+                                                      convertFromJSVariant(QVariant(m_app->toVariantMap())).toMap(),
+                                                      convertFromJSVariant(QVariant(systemProperties())).toMap());
+        }
         m_applicationInterfaceConnected = true;
     }
-
     setState(Active);
 }
 

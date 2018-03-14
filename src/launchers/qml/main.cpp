@@ -60,7 +60,6 @@
 #include <QDBusArgument>
 #include <QLoggingCategory>
 
-#include <QtCore/private/qcoreapplication_p.h>
 #include <private/qabstractanimation_p.h> // For QUnifiedTimer
 #include <qplatformdefs.h>
 
@@ -180,8 +179,7 @@ int main(int argc, char *argv[])
 
         CrashHandler::setCrashActionConfiguration(a.runtimeConfiguration().value(qSL("crashAction")).toMap());
         a.setupLoggingRules(false, a.loggingRules()); // the verbose flag has already been factored into the rules
-        bool hasJSDebugArg = !static_cast<QCoreApplicationPrivate *>(QObjectPrivate::get(&a))->qmljsDebugArgumentsString().isEmpty();
-        a.setupQmlDebugging(hasJSDebugArg || clp.isSet(qSL("qml-debug")));
+        a.setupQmlDebugging(clp.isSet(qSL("qml-debug")));
         a.setupOpenGL(a.openGLConfiguration());
 
         StartupTimer::instance()->checkpoint("after basic initialization");

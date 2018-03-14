@@ -52,6 +52,7 @@
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlEngine>
+#include <QtCore/private/qcoreapplication_p.h>
 
 #if !defined(AM_HEADLESS)
 #  include <QGuiApplication>
@@ -118,7 +119,9 @@ int &SharedMain::preConstructor(int &argc)
 
 void SharedMain::setupQmlDebugging(bool qmlDebugging)
 {
-    if (qmlDebugging) {
+    bool hasJSDebugArg = !static_cast<QCoreApplicationPrivate *>(QObjectPrivate::get(qApp))->qmljsDebugArgumentsString().isEmpty();
+
+    if (hasJSDebugArg || qmlDebugging) {
 #if !defined(QT_NO_QML_DEBUGGER)
         m_debuggingEnabler = new QQmlDebuggingEnabler(true);
         if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
@@ -127,7 +130,7 @@ void SharedMain::setupQmlDebugging(bool qmlDebugging)
             QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
         }
 #else
-        qCWarning(LogSystem) << "The --qml-debug option is ignored, because Qt was built without support for QML Debugging!";
+        qCWarning(LogSystem) << "The --qml-debug/-qmljsdebugger options are ignored, because Qt was built without support for QML Debugging!";
 #endif
     }
 }

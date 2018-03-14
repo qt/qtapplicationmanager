@@ -649,6 +649,8 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 {
     static bool once = false;
 
+    if (d->views.contains(view))
+        return;
     d->views << view;
 
     updateViewSlowMode(view);
@@ -660,7 +662,8 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             // export the actual socket name for our child processes.
             qputenv("WAYLAND_DISPLAY", d->waylandCompositor->socketName());
             qCDebug(LogGraphics).nospace() << "WindowManager: running in Wayland mode [socket: "
-                                          << d->waylandCompositor->socketName() << "]";
+                                           << d->waylandCompositor->socketName() << "]";
+            ApplicationManager::instance()->setWindowManagerCompositorReady(true);
         } else {
             d->waylandCompositor->registerOutputWindow(view);
         }

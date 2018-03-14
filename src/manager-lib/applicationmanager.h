@@ -72,6 +72,7 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged)
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
+    Q_PROPERTY(bool windowManagerCompositorReady READ isWindowManagerCompositorReady NOTIFY windowManagerCompositorReadyChanged)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT)
     Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
 
@@ -117,6 +118,10 @@ public:
     void setContainerSelectionConfiguration(const QList<QPair<QString, QString> > &containerSelectionConfig);
     QJSValue containerSelectionFunction() const;
     void setContainerSelectionFunction(const QJSValue &callback);
+
+    // window manager interface
+    bool isWindowManagerCompositorReady() const;
+    void setWindowManagerCompositorReady(bool ready);
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -166,6 +171,7 @@ signals:
     void containerSelectionFunctionChanged();
     void shuttingDownChanged();
     void shutDownFinished();
+    void windowManagerCompositorReadyChanged(bool ready);
 
 private slots:
     void preload();

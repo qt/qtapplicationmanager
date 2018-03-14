@@ -309,6 +309,17 @@
           ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
 */
 
+/*!
+    \qmlproperty bool ApplicationManager::windowManagerCompositorReady
+    \readonly
+
+    This property starts with the value \c false and will change to \c true once the Wayland
+    compositor is ready to accept connections from other processes. Please be aware that this
+    will only happen either implicitly after the System-UI's main QML has been loaded or explicitly
+    when calling WindowManager::registerCompositorView() from QML before the loading stage has
+    completed.
+*/
+
 enum Roles
 {
     Id = Qt::UserRole,
@@ -504,6 +515,19 @@ void ApplicationManager::setContainerSelectionFunction(const QJSValue &callback)
     if (callback.isCallable() && !callback.equals(d->containerSelectionFunction)) {
         d->containerSelectionFunction = callback;
         emit containerSelectionFunctionChanged();
+    }
+}
+
+bool ApplicationManager::isWindowManagerCompositorReady() const
+{
+    return d->windowManagerCompositorReady;
+}
+
+void ApplicationManager::setWindowManagerCompositorReady(bool ready)
+{
+    if (d->windowManagerCompositorReady != ready) {
+        d->windowManagerCompositorReady = ready;
+        emit windowManagerCompositorReadyChanged(ready);
     }
 }
 
@@ -845,7 +869,11 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             runtime->deleteLater();
         return ok;
     } else {
-        auto startInContainer = [app, attachRuntime, runtime]() {
+        // We can only start the app when both the container and the windowmanager are ready.
+        // Using a state-machine would be one option, but then we would need that state-machine
+        // object plus the per-app state. Relying on 2 lambdas is the easier choice for now.
+
+        auto doStartInContainer = [app, attachRuntime, runtime]() -> bool {
             bool successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app)
                                                      : runtime->start();
             if (!successfullyStarted)
@@ -854,14 +882,29 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
             return successfullyStarted;
         };
 
-        if (container->isReady()) {
-            // Since the container is already ready, start the app immediately
-            return startInContainer();
-        }
-        else {
-            // We postpone the starting of the application to a later point in time since the container is not ready yet
-            connect(container, &AbstractContainer::ready, startInContainer);
-            return true;       // we return true for now, since we don't know at this point in time whether the container will be able to start the application. TODO : fix
+        auto tryStartInContainer = [container, doStartInContainer]() -> bool {
+            if (container->isReady()) {
+                // Since the container is already ready, start the app immediately
+                return doStartInContainer();
+            } else {
+                // We postpone the starting of the application to a later point in time,
+                // since the container is not ready yet
+                connect(container, &AbstractContainer::ready, doStartInContainer);
+                return true;
+            }
+        };
+
+#if defined(AM_HEADLESS)
+        bool tryStartNow = true;
+#else
+        bool tryStartNow = isWindowManagerCompositorReady();
+#endif
+
+        if (tryStartNow) {
+            return tryStartInContainer();
+        } else {
+            connect(this, &ApplicationManager::windowManagerCompositorReadyChanged, tryStartInContainer);
+            return true;
         }
     }
 }

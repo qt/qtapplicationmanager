@@ -56,6 +56,7 @@ public:
     bool securityChecksEnabled = true;
     bool singleProcess;
     bool shuttingDown = false;
+    bool windowManagerCompositorReady = false;
     QVariantMap systemProperties;
     ApplicationDatabase *database = nullptr;
 

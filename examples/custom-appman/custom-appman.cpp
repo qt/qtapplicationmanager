@@ -65,7 +65,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(qSL("Custom ApplicationManager"));
     QCoreApplication::setApplicationVersion("0.1");
 
-    Logging::initialize();
+    Logging::initialize(argc, argv);
 
     Package::ensureCorrectLocale();
 

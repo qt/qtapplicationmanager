@@ -280,6 +280,20 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
 void Logging::initialize()
 {
+    initialize(0, nullptr);
+}
+
+void Logging::initialize(int argc, const char * const *argv)
+{
+    if (argc > 0 && argv) {
+        for (int i = 1; i < argc; ++i) {
+            if (strcmp("--no-dlt-logging", argv[i]) == 0) {
+                Logging::setDltEnabled(false);
+                break;
+            }
+        }
+    }
+
     auto messageHandler = [](QtMsgType msgType, const QMessageLogContext &context, const QString &message) {
 #if defined(QT_GENIVIEXTRAS_LIB)
         if (s_dltEnabled)

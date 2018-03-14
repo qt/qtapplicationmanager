@@ -59,6 +59,7 @@ class Logging
 {
 public:
     static void initialize();
+    static void initialize(int argc, const char * const *argv);
     static QStringList filterRules();
     static void setFilterRules(const QStringList &rules);
 

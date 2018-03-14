@@ -71,13 +71,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
-    for (int i = 1; i < argc; ++i) {
-        if (strcmp("--no-dlt-logging", argv[i]) == 0) {
-            Logging::setDltEnabled(false);
-            break;
-        }
-    }
-    Logging::initialize();
+
+    Logging::initialize(argc, argv);
     StartupTimer::instance()->checkpoint("after basic initialization");
 
 #if !defined(AM_DISABLE_INSTALLER)

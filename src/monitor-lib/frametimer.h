@@ -42,7 +42,7 @@
 #pragma once
 
 #include <QElapsedTimer>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 #include <limits>
 
 QT_BEGIN_NAMESPACE_AM

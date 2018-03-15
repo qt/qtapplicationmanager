@@ -42,7 +42,7 @@
 #include <QtAppManCommon/global.h>
 #include "touchemulation.h"
 #if defined(AM_ENABLE_TOUCH_EMULATION)
-#  include "touchemulation_x11.h"
+#  include "touchemulation_x11_p.h"
 #endif
 
 QT_BEGIN_NAMESPACE_AM

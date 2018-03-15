@@ -50,7 +50,7 @@ multi-process:!headless {
 !headless:config_touchemulation {
     PKGCONFIG *= xcb x11 xi
     QT *= gui-private testlib
-    HEADERS += touchemulation_x11.h
+    HEADERS += touchemulation_x11_p.h
     SOURCES += touchemulation_x11.cpp
 }
 

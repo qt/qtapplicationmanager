@@ -41,7 +41,7 @@
 
 #include <QtAppManCommon/global.h>
 
-#include "touchemulation_x11.h"
+#include "touchemulation_x11_p.h"
 
 #include <QGuiApplication>
 #include <QMouseEvent>

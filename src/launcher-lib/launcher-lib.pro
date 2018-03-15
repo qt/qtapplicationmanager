@@ -5,6 +5,7 @@ MODULE = appman_launcher
 load(am-config)
 
 QT = qml dbus core-private
+enable-widgets:QT *= widgets
 !headless:QT += quick gui gui-private quick-private
 QT_FOR_PRIVATE *= \
     appman_common-private \

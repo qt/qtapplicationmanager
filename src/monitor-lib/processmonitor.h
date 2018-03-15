@@ -47,8 +47,8 @@
 #include <QVariant>
 #include <QHash>
 
-#include "application.h"
-#include "applicationmanager.h"
+#include <QtAppManApplication/application.h>
+#include <QtAppManManager/applicationmanager.h>
 
 
 QT_BEGIN_NAMESPACE_AM

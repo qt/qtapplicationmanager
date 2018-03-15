@@ -47,8 +47,13 @@
 #if defined(AM_HEADLESS)
 #  include <QCoreApplication>
 typedef QCoreApplication LauncherMainBase;
+#elif defined(AM_ENABLE_WIDGETS)
+#  include <QApplication>
+#  include <QSurfaceFormat>
+typedef QApplication LauncherMainBase;
 #else
 #  include <QGuiApplication>
+#  include <QSurfaceFormat>
 typedef QGuiApplication LauncherMainBase;
 #endif
 

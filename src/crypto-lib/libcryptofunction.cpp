@@ -45,11 +45,9 @@
 
 #include "libcryptofunction.h"
 
-// we want at least openssl 1.0.1
-#define AM_MINIMUM_OPENSSL_VERSION 0x1000100fL
-// we want at most openssl 1.0.255
-#define AM_MAXIMUM_OPENSSL_VERSION 0x100ff00fL
-
+// we want at least openssl 1.0.1 or 1.1.0
+#define AM_MINIMUM_OPENSSL10_VERSION 0x1000100fL
+#define AM_MINIMUM_OPENSSL11_VERSION 0x1010000fL
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -58,8 +56,11 @@ static AM_LIBCRYPTO_FUNCTION(SSLeay, unsigned long(*)(), 0);
 static AM_LIBCRYPTO_FUNCTION(OPENSSL_add_all_algorithms_noconf, void(*)());
 static AM_LIBCRYPTO_FUNCTION(ERR_load_crypto_strings, void(*)());
 
+static AM_LIBCRYPTO_FUNCTION(OpenSSL_version_num, unsigned long(*)(), 0);
+static AM_LIBCRYPTO_FUNCTION(OPENSSL_init_crypto, int(*)(uint64_t, void *), 0);
 
 QLibrary *Cryptography::LibCryptoFunctionBase::s_library = nullptr;
+bool Cryptography::LibCryptoFunctionBase::s_isOpenSSL11 = false;
 
 bool Cryptography::LibCryptoFunctionBase::initialize()
 {
@@ -76,7 +77,8 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
     // Loading libcrypto is a mess, since distros are not creating links for libcrypto.so.1
     // anymore. In order to not duplicate a lot of bad hacks, we simply let QtNetwork do the
     // dirty work.
-    QSslSocket::supportsSsl();
+    if (!QSslSocket::supportsSsl())
+        return false;
 
     s_library = new QLibrary(QString::fromLatin1(libname), 1);
     bool ok = s_library->load();
@@ -85,23 +87,30 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
         ok = s_library->load();
     }
     if (ok) {
-        if (am_SSLeay.functionPointer()) {
-            auto version = am_SSLeay();
-            if (version >= AM_MINIMUM_OPENSSL_VERSION) {
-                if (version <= AM_MAXIMUM_OPENSSL_VERSION) {
-                    am_OPENSSL_add_all_algorithms_noconf();
-                    am_ERR_load_crypto_strings();
-                    return true;
-                } else {
-                    qCritical("Loaded libcrypto (%s), but the version is too new: 0x%08lx (maximum supported version is: 0x%08lx)",
-                              qPrintable(s_library->fileName()), version, AM_MAXIMUM_OPENSSL_VERSION);
-                }
+        unsigned long version = 0;
+
+        if (am_OpenSSL_version_num.functionPointer())
+            version = am_OpenSSL_version_num();  // 1.1
+        else if (am_SSLeay.functionPointer())
+            version = am_SSLeay(); // 1.0
+
+        if (version > 0) {
+            if (version >= AM_MINIMUM_OPENSSL11_VERSION) {
+                s_isOpenSSL11 = true;
+                return (am_OPENSSL_init_crypto(4 /*OPENSSL_INIT_ADD_ALL_CIPHERS*/
+                                               | 8 /*OPENSSL_INIT_ADD_ALL_DIGESTS*/
+                                               | 2 /*OPENSSL_INIT_LOAD_CRYPTO_STRINGS*/,
+                                               nullptr) == 1);
+            } else if (version >= AM_MINIMUM_OPENSSL10_VERSION) {
+                am_OPENSSL_add_all_algorithms_noconf();
+                am_ERR_load_crypto_strings();
+                return true;
             } else {
                 qCritical("Loaded libcrypto (%s), but the version is too old: 0x%08lx (minimum supported version is: 0x%08lx)",
-                          qPrintable(s_library->fileName()), version, AM_MINIMUM_OPENSSL_VERSION);
+                          qPrintable(s_library->fileName()), version, AM_MINIMUM_OPENSSL10_VERSION);
             }
         } else {
-            qCritical("Could not get version information from libcrypto: symbol 'SSLeay' was not found");
+            qCritical("Could not get version information from libcrypto: neither of the symbols 'SSLeay' or 'OpenSSL_version_num' were found");
         }
         s_library->unload();
     } else {

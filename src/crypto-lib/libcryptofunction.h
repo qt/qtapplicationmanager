@@ -80,6 +80,7 @@ class LibCryptoFunctionBase
 {
 public:
     static bool initialize();
+    static inline bool isOpenSSL11() { return s_isOpenSSL11; }
 
 protected:
     LibCryptoFunctionBase(const char *symbol);
@@ -91,6 +92,7 @@ protected:
 
 private:
     static QLibrary *s_library;
+    static bool s_isOpenSSL11;
     bool m_tried = false;
 };
 

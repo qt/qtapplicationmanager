@@ -128,7 +128,7 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                         throw Exception(Error::Parse, "aliasId '%1' does not match base application id '%2'")
                                 .arg(app->m_id, application->id());
                     }
-                    app->setNonAliased(application);
+                    app->m_nonAliased = application;
                 }
             } else if (field == "icon") {
                 app->m_icon = v.toString();

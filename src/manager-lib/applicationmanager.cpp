@@ -250,6 +250,15 @@
     This signal is emitted when the \a runState of the application identified by \a id changed.
     The \a runState can be one of:
 
+    \list
+    \li ApplicationManager.NotRunning - the application has not been started yet
+    \li ApplicationManager.StartingUp - the application has been started and is initializing
+    \li ApplicationManager.Running - the application is running
+    \li ApplicationManager.ShuttingDown - the application has been stopped and is cleaning up (in
+                                          multi-process mode this signal is only emitted if the
+                                          application terminates gracefully)
+    \endlist
+
     For example this signal can be used to restart an application in multi-process mode when
     it has crashed:
 
@@ -264,8 +273,6 @@
         }
     }
     \endqml
-
-    See also Application::runState
 */
 
 /*!
@@ -333,13 +340,13 @@ enum Roles
 
 QT_BEGIN_NAMESPACE_AM
 
-static Application::RunState runtimeToApplicationRunState(AbstractRuntime::State rtState)
+static ApplicationManager::RunState runtimeToManagerState(AbstractRuntime::State rtState)
 {
     switch (rtState) {
-    case AbstractRuntime::Startup: return Application::StartingUp;
-    case AbstractRuntime::Active: return Application::Running;
-    case AbstractRuntime::Shutdown: return Application::ShuttingDown;
-    default: return Application::NotRunning;
+    case AbstractRuntime::Startup: return ApplicationManager::StartingUp;
+    case AbstractRuntime::Active: return ApplicationManager::Running;
+    case AbstractRuntime::Shutdown: return ApplicationManager::ShuttingDown;
+    default: return ApplicationManager::NotRunning;
     }
 }
 
@@ -414,7 +421,6 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
     qmlRegisterUncreatableType<AbstractContainer>("QtApplicationManager", 1, 0, "Container",
                                                   qSL("Cannot create objects of type Container"));
     qRegisterMetaType<AbstractContainer*>("AbstractContainer*");
-    qRegisterMetaType<Application::RunState>("Application::RunState");
 
     return s_instance = am.take();
 }
@@ -774,7 +780,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
         return false;
     }
 
-    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app](AbstractRuntime::State newRuntimeState) {
+    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app](AbstractRuntime::State newState) {
         QVector<const Application *> apps;
         //Always emit the actual starting app/alias first
         apps.append(app);
@@ -792,12 +798,8 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
                 apps.append(alias);
         }
 
-        Application::RunState newRunState = runtimeToApplicationRunState(newRuntimeState);
-
-        nonAliasedApp->setRunState(newRunState);
-
         for (const Application *app : qAsConst(apps)) {
-            emit applicationRunStateChanged(app->id(), newRunState);
+            emit applicationRunStateChanged(app->id(), runtimeToManagerState(newState));
             emitDataChanged(app, QVector<int> { IsRunning, IsStartingUp, IsShuttingDown });
         }
     });
@@ -1339,8 +1341,8 @@ void ApplicationManager::preload()
                 else
                     QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection, Q_ARG(int, 1));
             } else if (singleAppMode) {
-                connect(this, &ApplicationManager::applicationRunStateChanged, [app](const QString &id, Application::RunState runState) {
-                    if ((id == app->id()) && (runState == Application::NotRunning)) {
+                connect(this, &ApplicationManager::applicationRunStateChanged, [app](const QString &id, ApplicationManager::RunState runState) {
+                    if ((id == app->id()) && (runState == NotRunning)) {
                         QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection,
                                                   Q_ARG(int, app->lastExitCode()));
                     }
@@ -1615,14 +1617,17 @@ QVariantMap ApplicationManager::get(const QString &id) const
     return map;
 }
 
-Application::RunState ApplicationManager::applicationRunState(const QString &id) const
+ApplicationManager::RunState ApplicationManager::applicationRunState(const QString &id) const
 {
     int index = indexOfApplication(id);
     if (index < 0) {
         qCWarning(LogSystem) << "invalid index:" << index;
-        return Application::NotRunning;
+        return NotRunning;
     }
-    return d->apps.at(index)->runState();
+    const Application *app = d->apps.at(index);
+    if (!app->currentRuntime())
+        return NotRunning;
+    return runtimeToManagerState(app->currentRuntime()->state());
 }
 
 QT_END_NAMESPACE_AM

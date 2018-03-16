@@ -42,7 +42,6 @@
 import QtQuick 2.3
 import QtTest 1.0
 import QtApplicationManager 1.0
-import QtApplicationManager 1.0 as AppMan // Because there's already an Application object in the global namespace
 
 TestCase {
     id: testCase
@@ -106,8 +105,7 @@ TestCase {
     function cleanup() {
         runStateChangedSpy.clear();
         ApplicationManager.stopApplication(appId);
-        var app = ApplicationManager.application(appId);
-        while (app.runState !== AppMan.Application.NotRunning)
+        while (ApplicationManager.applicationRunState(appId) !== ApplicationManager.NotRunning)
             runStateChangedSpy.wait(3000);
         windowReadySpy.clear();
         windowClosingSpy.clear();
@@ -278,14 +276,13 @@ TestCase {
         AmTest.ignoreMessage(AmTest.CriticalMsg, /Stopping application.*because we did not receive a Wayland-Pong/);
         ApplicationManager.startApplication(appId);
         windowReadySpy.wait(2000);
-        var app = ApplicationManager.application(appId);
-        compare(app.runState, AppMan.Application.Running);
+        compare(ApplicationManager.applicationRunState(appId), ApplicationManager.Running)
         runStateChangedSpy.clear();
         wait(2200);
         runStateChangedSpy.wait(2000);
-        compare(runStateChangedSpy.signalArguments[0][1], AppMan.Application.ShuttingDown);
+        compare(runStateChangedSpy.signalArguments[0][1], ApplicationManager.ShuttingDown)
         runStateChangedSpy.wait(2000);
-        compare(runStateChangedSpy.signalArguments[1][1], AppMan.Application.NotRunning);
+        compare(runStateChangedSpy.signalArguments[1][1], ApplicationManager.NotRunning)
     }
 
     function test_window_properties() {

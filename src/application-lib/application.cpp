@@ -244,21 +244,6 @@
     \endlist
 */
 /*!
-    \qmlproperty enumeration Application::runState
-    \readonly
-
-    This property holds the current run state of the application. It can be one of:
-
-    \list
-    \li Application.NotRunning - the application has not been started yet
-    \li Application.StartingUp - the application has been started and is initializing
-    \li Application.Running - the application is running
-    \li Application.ShuttingDown - the application has been stopped and is cleaning up (in
-                                   multi-process mode this signal is only emitted if the
-                                   application terminates gracefully)
-    \endlist
-*/
-/*!
     \qmlsignal Application::activated()
 
     This signal is emitted when the application is started or when it's already running but has
@@ -654,9 +639,6 @@ void Application::setCurrentRuntime(AbstractRuntime *rt) const
     else
         m_runtime = rt;
     emit runtimeChanged();
-
-    if (!rt)
-        setRunState(Application::NotRunning);
 }
 
 bool Application::isBlocked() const
@@ -679,36 +661,9 @@ Application::State Application::state() const
     return m_nonAliased ? m_nonAliased->m_state : m_state;
 }
 
-Application::RunState Application::runState() const
-{
-    return m_nonAliased ? m_nonAliased->m_runState : m_runState;
-}
-
-void Application::setRunState(Application::RunState runState) const
-{
-    if (m_nonAliased)
-        m_nonAliased->setRunState(runState);
-    else
-        if (runState != m_runState) {
-            m_runState = runState;
-            emit runStateChanged(m_runState);
-        }
-}
-
 qreal Application::progress() const
 {
     return m_nonAliased ? m_nonAliased->m_progress : m_progress;
-}
-
-void Application::setNonAliased(const Application *otherApp)
-{
-    if (m_nonAliased)
-        disconnect(m_nonAliased, 0, this, 0);
-
-    m_nonAliased = otherApp;
-
-    if (m_nonAliased)
-        connect(m_nonAliased, &Application::runStateChanged, this, &Application::runStateChanged);
 }
 
 Application *Application::readFromDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) Q_DECL_NOEXCEPT_EXPR(false)
@@ -769,7 +724,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
         bool found = false;
         for (const Application *otherApp : applicationDatabase) {
             if (otherApp->id() == baseId) {
-                app->setNonAliased(otherApp);
+                app->m_nonAliased = otherApp;
                 found = true;
                 break;
             }

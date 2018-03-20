@@ -80,6 +80,7 @@ Window {
                 MonitorText { id: systemMem; text: "Used Memory:"  }
                 MonitorText { text: "Idle Threshold: " + SystemMonitor.idleLoadThreshold * 100 + " %" }
                 MonitorText { text: "Idle: " + SystemMonitor.idle }
+                MonitorText { text: "GPU Load: " + SystemMonitor.gpuLoad * 100 + " %" }
             }
         }
 
@@ -258,6 +259,7 @@ Window {
 
         SystemMonitor.idleLoadThreshold = 0.05;
         SystemMonitor.cpuLoadReportingEnabled = true;
+        SystemMonitor.gpuLoadReportingEnabled = true;
         SystemMonitor.memoryReportingEnabled = true;
 
         ApplicationManager.startApplication(ApplicationManager.application(0).id);

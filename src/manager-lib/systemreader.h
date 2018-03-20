@@ -71,6 +71,24 @@ private:
     Q_DISABLE_COPY(CpuReader)
 };
 
+class GpuTool;
+
+class GpuReader
+{
+public:
+    GpuReader();
+    void setActive(bool enabled);
+    bool isActive() const;
+    qreal readLoadValue();
+
+private:
+#if defined(Q_OS_LINUX)
+    static GpuTool *s_gpuToolProcess;
+#endif
+    Q_DISABLE_COPY(GpuReader)
+};
+
+
 class MemoryReader
 {
 public:

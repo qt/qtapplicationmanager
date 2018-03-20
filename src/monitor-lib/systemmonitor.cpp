@@ -86,6 +86,12 @@
         \li real
         \li The current CPU utilization in the range 0 (completely idle) to 1 (fully busy).
     \row
+        \li \c gpuLoad
+        \li real
+        \li The current GPU utilization in the range 0 (completely idle) to 1 (fully busy).
+            This is dependent on tools from the graphics hardware vendor and might not work on
+            every system.
+    \row
         \li \c memoryUsed
         \li int
         \li The amount of physical system memory used in bytes.
@@ -198,6 +204,37 @@
 */
 
 /*!
+    \qmlproperty int SystemMonitor::gpuLoad
+    \readonly
+
+    This property holds the current GPU utilization as a value ranging from 0 (inclusive, completely
+    idle) to 1 (inclusive, fully busy).
+
+    \note This is dependent on tools from the graphics hardware vendor and might not work on
+          every system.
+
+    Currently, this only works on \e Linux with either \e Intel or \e NVIDIA chipsets, plus the
+    tools from the respective vendors have to be installed:
+
+    \table
+    \header
+        \li Hardware
+        \li Tool
+        \li Notes
+    \row
+        \li NVIDIA
+        \li \c nvidia-smi
+        \li The utilization will only be shown for the first GPU of the system, in case multiple GPUs
+            are installed.
+    \row
+        \li Intel
+        \li \c intel_gpu_top
+        \li The binary has to be made set-UID root, e.g. via \c{sudo chmod +s $(which intel_gpu_top)},
+            or the application-manager has to be run as the \c root user.
+    \endtable
+*/
+
+/*!
     \qmlproperty bool SystemMonitor::memoryReportingEnabled
 
     A boolean value that determines whether periodic memory reporting is enabled.
@@ -207,6 +244,15 @@
     \qmlproperty bool SystemMonitor::cpuLoadReportingEnabled
 
     A boolean value that determines whether periodic CPU load reporting is enabled.
+*/
+
+/*!
+    \qmlproperty bool SystemMonitor::gpuLoadReportingEnabled
+
+    A boolean value that determines whether periodic GPU load reporting is enabled.
+
+    GPU load reporting is only supported on selected hardware: please see gpuLoad for more
+    information.
 */
 
 /*!
@@ -250,6 +296,17 @@
 */
 
 /*!
+    \qmlsignal SystemMonitor::gpuLoadReportingChanged(real load)
+
+    This signal is emitted periodically when GPU load reporting is enabled. The frequency is
+    defined by \l reportingInterval. The \a load parameter indicates the GPU utilization in the
+    range 0 (completely idle) to 1 (fully busy).
+
+    \sa gpuLoadReportingEnabled
+    \sa reportingInterval
+*/
+
+/*!
     \qmlsignal SystemMonitor::ioLoadReportingChanged(string device, real load);
 
     This signal is emitted periodically for each I/O device that has been registered with
@@ -281,6 +338,7 @@ enum Roles
     CpuLoad = Qt::UserRole + 5000,
     MemoryUsed,
     IoLoad,
+    GpuLoad,
 
     AverageFps = Qt::UserRole + 6000,
     MinimumFps,
@@ -316,6 +374,7 @@ public:
     // reporting
     MemoryReader *memory = nullptr;
     CpuReader *cpu = nullptr;
+    GpuReader *gpu = nullptr;
     QHash<QString, IoReader *> ioHash;
     int reportingInterval = -1;
     int count = 10;
@@ -323,9 +382,11 @@ public:
     bool reportingRangeSet = false;
     int reportingTimerId = 0;
     bool reportCpu = false;
+    bool reportGpu = false;
     bool reportMem = false;
     bool reportFps = false;
     int cpuTail = 0;
+    int gpuTail = 0;
     int memTail = 0;
     int fpsTail = 0;
     QMap<QString, int> ioTails;
@@ -334,6 +395,7 @@ public:
     struct Report
     {
         qreal cpuLoad = 0;
+        qreal gpuLoad = 0;
         qreal fpsAvg = 0;
         qreal fpsMin = 0;
         qreal fpsMax = 0;
@@ -385,7 +447,7 @@ public:
     void setupTimer(int newInterval = -1)
     {
         bool useNewInterval = (newInterval != -1) && (newInterval != reportingInterval);
-        bool shouldBeOn = reportCpu || reportMem || reportFps || !ioHash.isEmpty()
+        bool shouldBeOn = reportCpu || reportGpu || reportMem || reportFps || !ioHash.isEmpty()
                           || cpuTail > 0 || memTail > 0 || fpsTail > 0 || !ioTails.isEmpty();
 
         if (useNewInterval)
@@ -422,6 +484,14 @@ public:
             } else if (cpuTail > 0) {
                 --cpuTail;
                 roles.append(CpuLoad);
+            }
+
+            if (reportGpu) {
+                r.gpuLoad = gpu->readLoadValue();
+                roles.append(GpuLoad);
+            } else if (gpuTail > 0) {
+                --gpuTail;
+                roles.append(GpuLoad);
             }
 
             if (reportMem) {
@@ -485,6 +555,8 @@ public:
                 emit q->memoryReportingChanged(r.memoryUsed);
             if (reportCpu)
                 emit q->cpuLoadReportingChanged(r.cpuLoad);
+            if (reportGpu)
+                emit q->gpuLoadReportingChanged(r.gpuLoad);
 
             setupTimer();  // we might be able to stop this timer, when end of tail reached
 
@@ -591,6 +663,7 @@ SystemMonitor::SystemMonitor()
 
     d->idleCpu = new CpuReader;
     d->cpu = new CpuReader;
+    d->gpu = new GpuReader;
     d->memory = new MemoryReader;
 
     d->idleTimerId = d->startTimer(1000);
@@ -613,6 +686,7 @@ SystemMonitor::~SystemMonitor()
     delete d->idleCpu;
     delete d->memory;
     delete d->cpu;
+    delete d->gpu;
     qDeleteAll(d->ioHash);
     delete d;
 }
@@ -705,6 +779,12 @@ qreal SystemMonitor::cpuLoad() const
 {
     Q_D(const SystemMonitor);
     return d->reports[d->latestReportPos()].cpuLoad;
+}
+
+qreal SystemMonitor::gpuLoad() const
+{
+    Q_D(const SystemMonitor);
+    return d->reports[d->latestReportPos()].gpuLoad;
 }
 
 /*!
@@ -839,6 +919,28 @@ bool SystemMonitor::isCpuLoadReportingEnabled() const
     Q_D(const SystemMonitor);
 
     return d->reportCpu;
+}
+
+void SystemMonitor::setGpuLoadReportingEnabled(bool enabled)
+{
+    Q_D(SystemMonitor);
+
+    if (enabled != d->reportGpu) {
+        d->reportGpu = enabled;
+        if (!enabled)
+            d->gpuTail = d->count;
+        else
+            d->setupTimer();
+        d->gpu->setActive(enabled);
+        emit gpuLoadReportingEnabledChanged();
+    }
+}
+
+bool SystemMonitor::isGpuLoadReportingEnabled() const
+{
+    Q_D(const SystemMonitor);
+
+    return d->reportGpu;
 }
 
 /*!

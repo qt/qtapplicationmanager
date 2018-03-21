@@ -53,47 +53,10 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-LauncherMain::LauncherMain(int &argc, char **argv, const QByteArray &configYaml) Q_DECL_NOEXCEPT_EXPR(false)
+LauncherMain::LauncherMain(int &argc, char **argv) Q_DECL_NOEXCEPT
     : LauncherMainBase(SharedMain::preConstructor(argc), argv)
     , SharedMain()
-{
-    auto docs = QtYaml::variantDocumentsFromYaml(configYaml.isEmpty() ? qgetenv("AM_CONFIG")
-                                                                      : configYaml);
-    if (docs.size() == 1)
-        m_configuration = docs.first().toMap();
-
-    m_baseDir = m_configuration.value(qSL("baseDir")).toString() + qL1C('/');
-    m_runtimeConfiguration = m_configuration.value(qSL("runtimeConfiguration")).toMap();
-    m_securityToken = QByteArray::fromHex(m_configuration.value(qSL("")).toString().toLatin1());
-    m_systemProperties = m_configuration.value(qSL("systemProperties")).toMap();
-
-    QVariantMap loggingConfig = m_configuration.value(qSL("logging")).toMap();
-    m_loggingRules = variantToStringList(loggingConfig.value(qSL("rules")));
-
-    QVariantMap dbusConfig = m_configuration.value(qSL("dbus")).toMap();
-    m_dbusAddressP2P = dbusConfig.value(qSL("p2p")).toString();
-    m_dbusAddressNotifications = dbusConfig.value(qSL("org.freedesktop.Notifications")).toString();
-
-    QVariantMap uiConfig = m_configuration.value(qSL("ui")).toMap();
-    m_slowAnimations = uiConfig.value(qSL("slowAnimations")).toBool();
-    m_openGLConfiguration = uiConfig.value(qSL("opengl")).toMap();
-
-    // un-comment this if things go south:
-    //qWarning() << "### LOG " << m_loggingRules;
-    //qWarning() << "### DBUS" << dbusConfig;
-    //qWarning() << "### UI  " << uiConfig;
-    //qWarning() << "### RT  " << m_runtimeConfiguration;
-    //qWarning() << "### SYSP" << m_systemProperties;
-    //qWarning() << "### GL  " << m_openGLConfiguration;
-
-    // sanity checks
-    if (m_baseDir == qL1S("/"))
-        throw Exception("Runtime launcher received an empty baseDir");
-    if (loggingConfig.isEmpty())
-        throw Exception("Runtime launcher received no logging configuration");
-    if (dbusConfig.isEmpty())
-        throw Exception("Runtime launcher received no D-Bus configuration");
-}
+{ }
 
 LauncherMain::~LauncherMain()
 { }
@@ -141,6 +104,46 @@ QString LauncherMain::notificationDBusName() const
 QVariantMap LauncherMain::openGLConfiguration() const
 {
     return m_openGLConfiguration;
+}
+
+void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCEPT_EXPR(false)
+{
+    auto docs = QtYaml::variantDocumentsFromYaml(configYaml.isEmpty() ? qgetenv("AM_CONFIG")
+                                                                      : configYaml);
+    if (docs.size() == 1)
+        m_configuration = docs.first().toMap();
+
+    m_baseDir = m_configuration.value(qSL("baseDir")).toString() + qL1C('/');
+    m_runtimeConfiguration = m_configuration.value(qSL("runtimeConfiguration")).toMap();
+    m_securityToken = QByteArray::fromHex(m_configuration.value(qSL("")).toString().toLatin1());
+    m_systemProperties = m_configuration.value(qSL("systemProperties")).toMap();
+
+    QVariantMap loggingConfig = m_configuration.value(qSL("logging")).toMap();
+    m_loggingRules = variantToStringList(loggingConfig.value(qSL("rules")));
+
+    QVariantMap dbusConfig = m_configuration.value(qSL("dbus")).toMap();
+    m_dbusAddressP2P = dbusConfig.value(qSL("p2p")).toString();
+    m_dbusAddressNotifications = dbusConfig.value(qSL("org.freedesktop.Notifications")).toString();
+
+    QVariantMap uiConfig = m_configuration.value(qSL("ui")).toMap();
+    m_slowAnimations = uiConfig.value(qSL("slowAnimations")).toBool();
+    m_openGLConfiguration = uiConfig.value(qSL("opengl")).toMap();
+
+    // un-comment this if things go south:
+    //qWarning() << "### LOG " << m_loggingRules;
+    //qWarning() << "### DBUS" << dbusConfig;
+    //qWarning() << "### UI  " << uiConfig;
+    //qWarning() << "### RT  " << m_runtimeConfiguration;
+    //qWarning() << "### SYSP" << m_systemProperties;
+    //qWarning() << "### GL  " << m_openGLConfiguration;
+
+    // sanity checks
+    if (m_baseDir == qL1S("/"))
+        throw Exception("Runtime launcher received an empty baseDir");
+    if (loggingConfig.isEmpty())
+        throw Exception("Runtime launcher received no logging configuration");
+    if (dbusConfig.isEmpty())
+        throw Exception("Runtime launcher received no D-Bus configuration");
 }
 
 void LauncherMain::setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false)

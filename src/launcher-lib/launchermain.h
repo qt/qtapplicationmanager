@@ -64,10 +64,11 @@ class LauncherMain : public LauncherMainBase, public SharedMain
 {
     Q_OBJECT
 public:
-    LauncherMain(int &argc, char **argv, const QByteArray &configYaml = QByteArray()) Q_DECL_NOEXCEPT_EXPR(false);
+    LauncherMain(int &argc, char **argv) Q_DECL_NOEXCEPT;
     ~LauncherMain();
 
 public:
+    void loadConfiguration(const QByteArray &configYaml = QByteArray()) Q_DECL_NOEXCEPT_EXPR(false);
     void setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false);
 
     QString baseDir() const;

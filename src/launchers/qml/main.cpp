@@ -194,6 +194,7 @@ int main(int argc, char *argv[])
             }
             directLoad = fi.absoluteFilePath();
         } else {
+            a.loadConfiguration();
             a.setupDBusConnections();
             StartupTimer::instance()->checkpoint("after dbus initialization");
         }

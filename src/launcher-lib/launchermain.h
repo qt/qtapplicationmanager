@@ -47,6 +47,7 @@
 #if defined(AM_HEADLESS)
 #  include <QCoreApplication>
 typedef QCoreApplication LauncherMainBase;
+QT_FORWARD_DECLARE_CLASS(QWindow)
 #elif defined(AM_ENABLE_WIDGETS)
 #  include <QApplication>
 #  include <QSurfaceFormat>
@@ -60,6 +61,8 @@ typedef QGuiApplication LauncherMainBase;
 
 QT_BEGIN_NAMESPACE_AM
 
+class WaylandQtAMClientExtension;
+
 class LauncherMain : public LauncherMainBase, public SharedMain
 {
     Q_OBJECT
@@ -67,9 +70,12 @@ public:
     LauncherMain(int &argc, char **argv) Q_DECL_NOEXCEPT;
     ~LauncherMain();
 
+    static LauncherMain *instance();
+
 public:
     void loadConfiguration(const QByteArray &configYaml = QByteArray()) Q_DECL_NOEXCEPT_EXPR(false);
     void setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false);
+    void registerWaylandExtensions() Q_DECL_NOEXCEPT;
 
     QString baseDir() const;
     QVariantMap runtimeConfiguration() const;
@@ -83,6 +89,12 @@ public:
 
     QVariantMap openGLConfiguration() const;
 
+    QVariantMap windowProperties(QWindow *window) const;
+    void setWindowProperty(QWindow *window, const QString &name, const QVariant &value);
+
+signals:
+    void windowPropertyChanged(QWindow *window, const QString &name, const QVariant &value);
+
 private:
     QVariantMap m_configuration;
     QString m_baseDir;
@@ -94,6 +106,7 @@ private:
     QString m_dbusAddressP2P;
     QString m_dbusAddressNotifications;
     QVariantMap m_openGLConfiguration;
+    WaylandQtAMClientExtension *m_waylandExtension = nullptr;
 };
 
 QT_END_NAMESPACE_AM

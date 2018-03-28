@@ -53,15 +53,16 @@
 #include <QWaylandWlShell>
 #include <QWaylandQuickOutput>
 #include <QWaylandTextInputManager>
-#include <private/qwlextendedsurface_p.h>
 #include <QWaylandQtWindowManager>
+#include "waylandqtamserverextension_p.h"
 #include "waylandcompositor_p.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-WindowSurface::WindowSurface(QWaylandCompositor *comp, QWaylandClient *client, uint id, int version)
+WindowSurface::WindowSurface(WaylandCompositor *comp, QWaylandClient *client, uint id, int version)
     : QWaylandQuickSurface(comp, client, id, version)
     , m_surface(this)
+    , m_compositor(comp)
 { }
 
 void WindowSurface::setShellSurface(QWaylandWlShellSurface *shellSurface)
@@ -72,20 +73,15 @@ void WindowSurface::setShellSurface(QWaylandWlShellSurface *shellSurface)
     m_item = new WindowSurfaceQuickItem(this);
 }
 
-void WindowSurface::setExtendedSurface(QtWayland::ExtendedSurface *extendedSurface)
-{
-    m_extendedSurface = extendedSurface;
-    if (m_extendedSurface) {
-        connect(m_extendedSurface, &QtWayland::ExtendedSurface::windowPropertyChanged,
-                this, &WindowSurface::windowPropertyChanged);
-    }
-}
-
 QWaylandWlShellSurface *WindowSurface::shellSurface() const
 {
     return m_shellSurface;
 }
 
+WaylandCompositor *WindowSurface::compositor() const
+{
+    return m_compositor;
+}
 
 QWaylandSurface *WindowSurface::surface() const
 {
@@ -119,17 +115,6 @@ void WindowSurface::ping()
     m_shellSurface->ping();
 }
 
-QVariantMap WindowSurface::windowProperties() const
-{
-    return m_extendedSurface ? m_extendedSurface->windowProperties() : QVariantMap();
-}
-
-void WindowSurface::setWindowProperty(const QString &name, const QVariant &value)
-{
-    if (m_extendedSurface)
-        m_extendedSurface->setWindowProperty(name, value);
-}
-
 
 WindowSurfaceQuickItem::WindowSurfaceQuickItem(WindowSurface *windowSurface)
     : QWaylandQuickItem()
@@ -159,7 +144,7 @@ void WindowSurfaceQuickItem::geometryChanged(const QRectF &newGeometry, const QR
 WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager)
     : QWaylandQuickCompositor()
     , m_shell(new QWaylandWlShell(this))
-    , m_surfExt(new QtWayland::SurfaceExtensionGlobal(this))
+    , m_amExtension(new WaylandQtAMServerExtension(this))
     , m_textInputManager(new QWaylandTextInputManager(this))
     , m_manager(manager)
 {
@@ -175,7 +160,6 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     });
 
     connect(m_shell, &QWaylandWlShell::wlShellSurfaceRequested, this, &WaylandCompositor::createShellSurface);
-    connect(m_surfExt, &QtWayland::SurfaceExtensionGlobal::extendedSurfaceReady, this, &WaylandCompositor::extendedSurfaceReady);
 
     auto wmext = new QWaylandQtWindowManager(this);
     connect(wmext, &QWaylandQtWindowManager::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
@@ -203,6 +187,10 @@ QWaylandSurface *WaylandCompositor::waylandSurfaceFromItem(QQuickItem *surfaceIt
     return nullptr;
 }
 
+WaylandQtAMServerExtension *WaylandCompositor::amExtension()
+{
+    return m_amExtension;
+}
 
 void WaylandCompositor::doCreateSurface(QWaylandClient *client, uint id, int version)
 {
@@ -221,12 +209,6 @@ void WaylandCompositor::createShellSurface(QWaylandSurface *surface, const QWayl
         else
             m_manager->waylandSurfaceUnmapped(windowSurface);
     });
-}
-
-void WaylandCompositor::extendedSurfaceReady(QtWayland::ExtendedSurface *ext, QWaylandSurface *surface)
-{
-    WindowSurface *windowSurface = static_cast<WindowSurface *>(surface);
-    windowSurface->setExtendedSurface(ext);
 }
 
 QT_END_NAMESPACE_AM

@@ -20,10 +20,18 @@ SOURCES += \
     ipcwrapperobject.cpp \
     qmlapplicationinterfaceextension.cpp \
     qmlnotification.cpp \
-    launchermain.cpp
+    launchermain.cpp \
 
 !headless:SOURCES += \
     applicationmanagerwindow.cpp \
+
+!headless:qtHaveModule(waylandclient) {
+    QT *= waylandclient waylandclient-private
+    CONFIG *= wayland-scanner
+    WAYLANDCLIENTSOURCES += ../wayland-extensions/qtam-extension.xml
+    HEADERS += waylandqtamclientextension_p.h
+    SOURCES += waylandqtamclientextension.cpp
+}
 
 HEADERS += \
     qmlapplicationinterface.h \
@@ -31,7 +39,7 @@ HEADERS += \
     ipcwrapperobject_p.h \
     qmlapplicationinterfaceextension.h \
     qmlnotification.h \
-    launchermain.h
+    launchermain.h \
 
 !headless:HEADERS += \
     applicationmanagerwindow_p.h

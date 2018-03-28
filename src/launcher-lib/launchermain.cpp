@@ -49,6 +49,9 @@
 
 #include <QtAppManCommon/qtyaml.h>
 
+#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+#  include "waylandqtamclientextension_p.h"
+#endif
 #include "launchermain.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -60,6 +63,20 @@ LauncherMain::LauncherMain(int &argc, char **argv) Q_DECL_NOEXCEPT
 
 LauncherMain::~LauncherMain()
 { }
+
+LauncherMain *LauncherMain::instance()
+{
+    return qobject_cast<LauncherMain *>(qApp);
+}
+
+void LauncherMain::registerWaylandExtensions() Q_DECL_NOEXCEPT
+{
+#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+     m_waylandExtension = new WaylandQtAMClientExtension();
+     connect(m_waylandExtension, &WaylandQtAMClientExtension::windowPropertyChanged,
+             this, &LauncherMain::windowPropertyChanged);
+#endif
+}
 
 QString LauncherMain::baseDir() const
 {
@@ -104,6 +121,24 @@ QString LauncherMain::notificationDBusName() const
 QVariantMap LauncherMain::openGLConfiguration() const
 {
     return m_openGLConfiguration;
+}
+
+
+QVariantMap LauncherMain::windowProperties(QWindow *window) const
+{
+#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+    if (m_waylandExtension && window)
+        return m_waylandExtension->windowProperties(window);
+#endif
+    return QVariantMap();
+}
+
+void LauncherMain::setWindowProperty(QWindow *window, const QString &name, const QVariant &value)
+{
+#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+    if (m_waylandExtension && window)
+        m_waylandExtension->setWindowProperty(window, name, value);
+#endif
 }
 
 void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCEPT_EXPR(false)

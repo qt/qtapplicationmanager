@@ -48,6 +48,7 @@
 #include "windowmanager.h"
 #include "waylandwindow.h"
 #include "waylandcompositor.h"
+#include "waylandqtamserverextension_p.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -71,6 +72,12 @@ WaylandWindow::WaylandWindow(const Application *app, WindowSurface *surf)
         m_pongTimer->setInterval(2000);
         m_pongTimer->setSingleShot(true);
         connect(m_pongTimer, &QTimer::timeout, this, &WaylandWindow::pongTimeout);
+
+        connect(surf->compositor()->amExtension(), &WaylandQtAMServerExtension::windowPropertyChanged,
+                this, [this](QWaylandSurface *surface, const QString &name, const QVariant &value) {
+            if (surface == m_surface)
+                emit windowPropertyChanged(name, value);
+        });
     }
 }
 
@@ -119,28 +126,19 @@ void WaylandWindow::pingTimeout()
 
 bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
-    if (m_surface) {
-        QVariant oldValue = m_surface->windowProperties().value(name);
-
-        if (oldValue != value)
-            m_surface->setWindowProperty(name, value);
-        return true;
-    }
-    return false;
+    if (m_surface)
+        m_surface->compositor()->amExtension()->setWindowProperty(m_surface, name, value);
+    return (m_surface);
 }
 
 QVariant WaylandWindow::windowProperty(const QString &name) const
 {
-    if (m_surface)
-        return m_surface->windowProperties().value(name);
-    return QVariant();
+    return windowProperties().value(name);
 }
 
 QVariantMap WaylandWindow::windowProperties() const
 {
-    if (m_surface)
-        return m_surface->windowProperties();
-    return QVariantMap();
+    return m_surface ? m_surface->compositor()->amExtension()->windowProperties(m_surface) : QVariantMap();
 }
 
 QT_END_NAMESPACE_AM

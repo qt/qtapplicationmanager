@@ -16,20 +16,24 @@ CONFIG *= static internal_module
 multi-process:!headless {
     HEADERS += \
         waylandcompositor.h \
-        waylandwindow.h
+        waylandwindow.h \
+        waylandqtamserverextension_p.h
 
     SOURCES += \
         waylandcompositor.cpp \
-        waylandwindow.cpp
+        waylandwindow.cpp \
+        waylandqtamserverextension.cpp
 
     qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private) {
         QT *= waylandcompositor waylandcompositor-private
         !osx:PKGCONFIG += wayland-server
 
         HEADERS += waylandcompositor_p.h
-    } else:qtHaveModule(compositor) {
-        QT *= compositor
     }
+    WAYLANDSERVERSOURCES += \
+        ../wayland-extensions/qtam-extension.xml
+
+    CONFIG *= wayland-scanner
 }
 
 !headless:HEADERS += \

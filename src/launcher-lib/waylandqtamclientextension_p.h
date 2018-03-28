@@ -41,34 +41,54 @@
 
 #pragma once
 
-#include <private/qquickwindowmodule_p.h>
+#include <QVariantMap>
+#include <QtWaylandClient/QWaylandClientExtensionTemplate>
+#include "private/qwayland-qtam-extension.h"
+
 #include <QtAppManCommon/global.h>
 
-QT_FORWARD_DECLARE_CLASS(QPlatformWindow)
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
+QT_FORWARD_DECLARE_CLASS(QWaylandCompositor)
+QT_FORWARD_DECLARE_CLASS(QWaylandSurface)
+QT_FORWARD_DECLARE_CLASS(QWindow)
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationManagerWindowPrivate;
-
-class ApplicationManagerWindow : public QQuickWindowQmlImpl
+class WaylandQtAMClientExtension : public QWaylandClientExtensionTemplate<WaylandQtAMClientExtension>,
+        public ::QtWayland::qtam_extension
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationManagerWindow 1.0")
 
 public:
-    explicit ApplicationManagerWindow(QWindow *parent = nullptr);
-    ~ApplicationManagerWindow();
+    WaylandQtAMClientExtension();
+    ~WaylandQtAMClientExtension();
 
-    Q_INVOKABLE void setWindowProperty(const QString &name, const QVariant &value);
-    Q_INVOKABLE QVariant windowProperty(const QString &name) const;
-    Q_INVOKABLE QVariantMap windowProperties() const;
+    QVariantMap windowProperties(QWindow *window) const;
+    void setWindowProperty(QWindow *window, const QString &name, const QVariant &value);
 
 signals:
-    void windowPropertyChanged(const QString &name, const QVariant &value);
+    void windowPropertyChanged(QWindow *window, const QString &name, const QVariant &value);
+
+protected:
+    bool eventFilter(QObject *o, QEvent *e);
 
 private:
-    ApplicationManagerWindowPrivate *d;
+    bool setWindowPropertyHelper(QWindow *window, const QString &name, const QVariant &value);
+    void sendPropertyToServer(::wl_surface *surface, const QString &name, const QVariant &value);
+    void qtam_extension_window_property_changed(wl_surface *surface, const QString &name, wl_array *value) override;
+
+    QMap<QWindow *, QVariantMap> m_windowProperties;
+    QMap<::wl_surface *, QWindow *> m_windows;
 };
 
 QT_END_NAMESPACE_AM
-// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

@@ -56,15 +56,10 @@ QT_FORWARD_DECLARE_CLASS(QWaylandResource)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShellSurface)
 QT_FORWARD_DECLARE_CLASS(QWaylandTextInputManager)
-QT_BEGIN_NAMESPACE
-namespace QtWayland {
-class ExtendedSurface;
-class SurfaceExtensionGlobal;
-}
-QT_END_NAMESPACE
 
 QT_BEGIN_NAMESPACE_AM
 
+class WaylandQtAMServerExtension;
 class WindowSurfaceQuickItem;
 
 // A WindowSurface object exists for every Wayland surface created in the Wayland server.
@@ -75,17 +70,16 @@ class WindowSurface : public QWaylandQuickSurface
 {
     Q_OBJECT
 public:
-    WindowSurface(QWaylandCompositor *comp, QWaylandClient *client, uint id, int version);
+    WindowSurface(WaylandCompositor *comp, QWaylandClient *client, uint id, int version);
     QWaylandWlShellSurface *shellSurface() const;
+    WaylandCompositor *compositor() const;
 
 private:
     void setShellSurface(QWaylandWlShellSurface *ss);
-    void setExtendedSurface(QtWayland::ExtendedSurface *e);
 
 private:
     WindowSurfaceQuickItem *m_item = nullptr;
     QWaylandWlShellSurface *m_shellSurface = nullptr;
-    QtWayland::ExtendedSurface *m_extendedSurface = nullptr;
 
 public:
     QWaylandSurface *surface() const;
@@ -105,6 +99,7 @@ signals:
 
 private:
     QWaylandSurface *m_surface;
+    WaylandCompositor *m_compositor;
 
     friend class WaylandCompositor;
 };
@@ -116,14 +111,15 @@ public:
     void registerOutputWindow(QQuickWindow *window);
     QWaylandSurface *waylandSurfaceFromItem(QQuickItem *surfaceItem) const;
 
+    WaylandQtAMServerExtension *amExtension();
+
 protected:
     void doCreateSurface(QWaylandClient *client, uint id, int version);
     void createShellSurface(QWaylandSurface *surface, const QWaylandResource &resource);
-    void extendedSurfaceReady(QtWayland::ExtendedSurface *ext, QWaylandSurface *surface);
 
     QWaylandWlShell *m_shell;
     QVector<QWaylandOutput *> m_outputs;
-    QtWayland::SurfaceExtensionGlobal *m_surfExt;
+    WaylandQtAMServerExtension *m_amExtension;
     QWaylandTextInputManager *m_textInputManager;
 
 private:

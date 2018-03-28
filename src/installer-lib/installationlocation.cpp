@@ -274,10 +274,6 @@ QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(c
             throw Exception(Error::Parse, "could not parse the installation location with id %1").arg(id);
         }
     }
-
-    if (locations.isEmpty())
-        throw Exception(Error::Parse, "no installation locations defined in config file");
-
     return locations;
 }
 

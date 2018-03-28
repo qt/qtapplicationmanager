@@ -395,6 +395,8 @@ void Main::setupInstallationLocations(const QVariantList &installationLocations)
 {
     m_installationLocations = InstallationLocation::parseInstallationLocations(installationLocations,
                                                                                hardwareId());
+    if (m_installationLocations.isEmpty())
+        qCWarning(LogDeployment) << "No installation locations defined in config file";
 }
 
 void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,

@@ -57,7 +57,7 @@ public:
                          bool onlyOnePositionalArgument = true);
     ~DefaultConfiguration();
 
-    void parse();
+    void parse(QStringList *deploymentWarnings = nullptr) override;
 
     QString mainQmlFile() const;
     QString database() const;

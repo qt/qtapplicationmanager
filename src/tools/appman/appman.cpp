@@ -99,7 +99,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
 
         DefaultConfiguration cfg(additionalDescription, onlyOnePositionalArgument);
-        cfg.parse();
+        cfg.parse(&deploymentWarnings);
 
         StartupTimer::instance()->checkpoint("after command line parse");
 #if defined(AM_TESTRUNNER)

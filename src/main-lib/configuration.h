@@ -53,7 +53,7 @@ class Configuration
 {
 public:
     virtual ~Configuration();
-    virtual void parse();
+    virtual void parse(QStringList *deploymentWarnings = nullptr);
     QVariant buildConfig() const;
 
 protected:

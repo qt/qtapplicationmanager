@@ -46,6 +46,7 @@
 #include <QDir>
 #include <QTimer>
 #include <QUuid>
+#include <QThread>
 #include <QMimeDatabase>
 #if defined(QT_GUI_LIB)
 #  include <QDesktopServices>
@@ -1424,6 +1425,10 @@ void ApplicationManager::shutDown()
 
 void ApplicationManager::openUrlRelay(const QUrl &url)
 {
+    if (QThread::currentThread() != thread()) {
+        staticMetaObject.invokeMethod(this, "openUrlRelay", Qt::QueuedConnection, Q_ARG(QUrl, url));
+        return;
+    }
     openUrl(url.toString());
 }
 

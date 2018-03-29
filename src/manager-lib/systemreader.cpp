@@ -166,12 +166,14 @@ public:
             readVendor(QOpenGLContext::currentContext());
         } else {
             QOpenGLContext c;
-            c.create();
-            QOffscreenSurface s;
-            s.create();
-            c.makeCurrent(&s);
-
-            readVendor(&c);
+            if (c.create()) {
+                QOffscreenSurface s;
+                s.setFormat(c.format());
+                s.create();
+                c.makeCurrent(&s);
+                readVendor(&c);
+                c.doneCurrent();
+            }
         }
 #  endif
         if (vendor.contains("intel")) {

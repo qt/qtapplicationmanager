@@ -555,7 +555,10 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     StartupTimer::instance()->checkpoint("after QML registrations");
 
     m_engine = new QQmlApplicationEngine(this);
+    disconnect(m_engine, &QQmlEngine::quit, qApp, nullptr);
+    disconnect(m_engine, &QQmlEngine::exit, qApp, nullptr);
     connect(m_engine, &QQmlEngine::quit, this, [this]() { shutDown(); });
+    connect(m_engine, &QQmlEngine::exit, this, [this](int retCode) { shutDown(retCode); });
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
     m_engine->setImportPathList(m_engine->importPathList() + importPaths);

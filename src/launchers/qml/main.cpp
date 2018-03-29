@@ -214,7 +214,6 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
     , m_quickLaunched(quickLaunched)
 {
     connect(&m_engine, &QObject::destroyed, a, &QCoreApplication::quit);
-    connect(&m_engine, &QQmlEngine::quit, a, &QCoreApplication::quit);
 
 #if !defined(AM_HEADLESS)
     qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");

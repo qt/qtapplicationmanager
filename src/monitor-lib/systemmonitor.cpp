@@ -669,6 +669,7 @@ SystemMonitor::SystemMonitor()
     d->idleTimerId = d->startTimer(1000);
 
     d->roleNames.insert(CpuLoad, "cpuLoad");
+    d->roleNames.insert(GpuLoad, "gpuLoad");
     d->roleNames.insert(MemoryUsed, "memoryUsed");
     d->roleNames.insert(IoLoad, "ioLoad");
     d->roleNames.insert(AverageFps, "averageFps");
@@ -712,6 +713,8 @@ QVariant SystemMonitor::data(const QModelIndex &index, int role) const
     switch (role) {
     case CpuLoad:
         return r.cpuLoad;
+    case GpuLoad:
+        return r.gpuLoad;
     case MemoryUsed:
         return r.memoryUsed;
     case IoLoad:

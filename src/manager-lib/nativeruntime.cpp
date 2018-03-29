@@ -306,7 +306,7 @@ bool NativeRuntime::start()
         { qSL("AM_CONFIG"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ config })) },
     };
 
-    if (Logging::isDltEnabled()) {
+    if (!Logging::isDltEnabled()) {
         // sadly we still need this, since we need to disable DLT as soon as possible
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
     }

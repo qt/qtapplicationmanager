@@ -659,47 +659,76 @@ void Main::showWindow(bool showFullscreen)
     QObject *rootObject = m_engine->rootObjects().constFirst();
 
     if (!rootObject->isWindowType()) {
-        m_view = new QQuickView(m_engine, nullptr);
-        StartupTimer::instance()->checkpoint("after WindowManager/QuickView instantiation");
-        m_view->setContent(m_mainQml, nullptr, rootObject);
-        window = m_view;
+        QQuickItem *contentItem = qobject_cast<QQuickItem *>(rootObject);
+        if (contentItem) {
+            m_view = new QQuickView(m_engine, nullptr);
+            m_view->setContent(m_mainQml, nullptr, rootObject);
+            m_view->setVisible(contentItem->isVisible());
+            connect(contentItem, &QQuickItem::visibleChanged, this, [this, contentItem]() {
+                m_view->setVisible(contentItem->isVisible());
+            });
+            window = m_view;
+        }
     } else {
         window = qobject_cast<QQuickWindow *>(rootObject);
         if (!m_engine->incubationController())
             m_engine->setIncubationController(window->incubationController());
     }
-    Q_ASSERT(window);
-
-    static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {
-        // this is a queued signal, so there may be still one in the queue after calling disconnect()
-        if (conn) {
-#  if defined(Q_CC_MSVC)
-            qApp->disconnect(conn); // MSVC2013 cannot call static member functions without capturing this
-#  else
-            QObject::disconnect(conn);
-#  endif
-            StartupTimer::instance()->checkFirstFrame();
-            StartupTimer::instance()->createReport(qSL("System-UI"));
-        }
-    });
-
-    m_windowManager->registerCompositorView(window);
 
     for (auto iface : qAsConst(m_startupPlugins))
         iface->beforeWindowShow(window);
 
-    if (Q_LIKELY(showFullscreen))
-        window->showFullScreen();
-    else
-        window->show();
+    if (!window) {
+        const QWindowList windowList = allWindows();
+        for (QWindow *w : windowList) {
+            if (w->isVisible()) {
+                window = qobject_cast<QQuickWindow*>(w);
+                break;
+            }
+        }
+    } else {
+        m_windowManager->registerCompositorView(window);
+    }
 
-    // now check the surface format, in case we had requested a specific GL version/profile
-    checkOpenGLFormat("main window", window->format());
+    if (window) {
+        StartupTimer::instance()->checkpoint("after Window instantiation/setup");
 
-    for (auto iface : qAsConst(m_startupPlugins))
-        iface->afterWindowShow(window);
+        static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {
+            // this is a queued signal, so there may be still one in the queue after calling disconnect()
+            if (conn) {
+    #  if defined(Q_CC_MSVC)
+                qApp->disconnect(conn); // MSVC2013 cannot call static member functions without capturing this
+    #  else
+                QObject::disconnect(conn);
+    #  endif
+                StartupTimer::instance()->checkFirstFrame();
+                StartupTimer::instance()->createReport(qSL("System-UI"));
+            }
+        });
 
-    StartupTimer::instance()->checkpoint("after window show");
+        // Main window will always be shown, neglecting visible property for backwards compatibility
+        if (Q_LIKELY(showFullscreen))
+            window->showFullScreen();
+        else
+            window->show();
+
+        // now check the surface format, in case we had requested a specific GL version/profile
+        checkOpenGLFormat("main window", window->format());
+
+        for (auto iface : qAsConst(m_startupPlugins))
+            iface->afterWindowShow(window);
+
+        StartupTimer::instance()->checkpoint("after window show");
+    } else {
+        static QMetaObject::Connection conn =
+            connect(this, &QGuiApplication::focusWindowChanged, this, [this] (QWindow *win) {
+            if (conn) {
+                QObject::disconnect(conn);
+                checkOpenGLFormat("first window", win->format());
+            }
+        });
+        StartupTimer::instance()->createReport(qSL("System-UI"));
+    }
 #endif
 }
 

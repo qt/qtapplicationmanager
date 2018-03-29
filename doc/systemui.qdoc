@@ -25,6 +25,18 @@
 **
 ****************************************************************************/
 
+/*
+    We should mention some peculiarities, once this is documented:
+
+    If the root element of the System-UI is an Item, the application-manager will create a
+    QQuickWindow for it and set the Item as its root Item.
+
+    If the root element of the System-UI is a Window (or an Item, which will be wrapped in a
+    Window, see above), the window will be shown initially, regardless of its visible property.
+    Also, it will be registered as a compositor view. All other windows have to be registered
+    manually.
+*/
+
 /*!
 
 \page howto-sysui.html

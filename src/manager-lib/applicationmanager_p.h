@@ -70,6 +70,7 @@ public:
     QList<QPair<QString, QString>> containerSelectionConfig;
     QJSValue containerSelectionFunction;
 
+    QSet<QString> registeredMimeSchemes;
     struct OpenUrlRequest
     {
         QString requestId;

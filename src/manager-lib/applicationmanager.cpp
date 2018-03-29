@@ -605,7 +605,8 @@ QVector<const Application *> ApplicationManager::mimeTypeHandlers(const QString 
 
 void ApplicationManager::registerMimeTypes()
 {
-    QVector<QString> schemes;
+#if defined(QT_GUI_LIB)
+    QSet<QString> schemes;
     schemes << qSL("file") << qSL("http") << qSL("https");
 
     for (const Application *app : qAsConst(d->apps)) {
@@ -620,9 +621,17 @@ void ApplicationManager::registerMimeTypes()
                 schemes << mime.mid(pos + 1);
         }
     }
-#if defined(QT_GUI_LIB)
-    for (const QString &scheme : qAsConst(schemes))
+    QSet<QString> registerSchemes = schemes;
+    registerSchemes.subtract(d->registeredMimeSchemes);
+    QSet<QString> unregisterSchemes = d->registeredMimeSchemes;
+    unregisterSchemes.subtract(schemes);
+
+    for (const QString &scheme : qAsConst(unregisterSchemes))
+        QDesktopServices::unsetUrlHandler(scheme);
+    for (const QString &scheme : qAsConst(registerSchemes))
         QDesktopServices::setUrlHandler(scheme, this, "openUrlRelay");
+
+    d->registeredMimeSchemes = schemes;
 #endif
 }
 
@@ -1294,6 +1303,7 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
             return false;
         }
         const_cast<Application *>(app)->setInstallationReport(ir.take());
+        registerMimeTypes();
         app->m_state = Application::Installed;
         emit app->stateChanged(app->m_state);
         app->m_progress = 0;
@@ -1321,6 +1331,7 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
             endRemoveRows();
         }
         delete app;
+        registerMimeTypes();
         try {
             if (d->database)
                 d->database->write(d->apps);

@@ -50,9 +50,11 @@ item models.
   \li WindowManager - The window model and controller.
   \li NotificationManager - The notification model, which handles freedesktop.org compliant
       notification requests.
+  \li ApplicationIPCManager - Central registry for interfaces for System-UI-to-app communication.
   \li SystemMonitor - The system monitoring model, giving access to a range of measurements, e.g.
       CPU load, frame rate, etc.
-  \li ApplicationIPCManager - Central registry for interfaces for System-UI-to-app communication.
+  \li ProcessMonitor - The process monitoring model, providing measurements like memory usage and
+      frame rate, etc.
   \li StartupTimer - A tool for startup performance analysis.
 \endlist
 

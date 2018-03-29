@@ -206,7 +206,7 @@ all your imports paths and file references relative to your main config file.
     \li A string-to-string-list map that defines plugins that the application-manager should load.
         The value must be a list of plugin library file path names. A single plugin will also be
         accepted. Currently the only valid key is \c startup. The plugin itself must implement the
-        \c StartupInterface. The application-manager will call the function hooks during startup of
+        StartupInterface. The application-manager will call the function hooks during startup of
         the System-UI.
 \row
     \target system properties
@@ -487,9 +487,9 @@ an additional column specifying which runtime a configuration option applies to:
         value must be a list of plugin library file path names. A single plugin will also be
         accepted. Currently the only valid keys are \c startup and \c container:
         \list
-        \li \c startup: this plugin must implement the \c StartupInterface. The QML runtime will
+        \li \c startup: this plugin must implement the StartupInterface. The QML runtime will
             call the function hooks during startup of an application.
-        \li \c container: this plugin must implement the \c ContainerInterface (see \l Containers).
+        \li \c container: this plugin must implement the ContainerInterface (see \l Containers).
         \endlist
 \row
     \li \c quicklaunchQml

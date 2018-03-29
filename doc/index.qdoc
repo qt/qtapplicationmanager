@@ -61,7 +61,7 @@ high-level overview of the package.
 
 \section1 Reference
 \list
-    \li \l{Manifest Definition}{Manifest Definition (info.yaml)}
+    \li \l{Manifest Definition}{Applications Manifest Definition (info.yaml)}
     \li \l{System-UI QML Types}
     \li \l{Applications QML Types}
 \endlist

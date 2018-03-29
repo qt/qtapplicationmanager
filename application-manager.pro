@@ -5,6 +5,8 @@ requires(linux|win32-msvc2013:!winrt|win32-msvc2015:!winrt|osx|win32-g++*)
 TEMPLATE = subdirs
 CONFIG += ordered
 
+SUBDIRS += benchmarks
+
 enable-tests:QT_BUILD_PARTS *= tests
 else:contains(QT_BUILD_PARTS, "tests"):CONFIG += enable-tests
 enable-examples:QT_BUILD_PARTS *= examples

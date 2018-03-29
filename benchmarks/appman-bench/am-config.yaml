@@ -1,0 +1,27 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installedAppsManifestDir: "${CONFIG_PWD}/manifests"
+  appImageMountDir: "${CONFIG_PWD}/image-mounts"
+  database: "${CONFIG_PWD}/apps.db"
+
+runtimes:
+  qml:
+    quitTime: 2000
+
+logging:
+  rules:
+    - "*=false"
+    - "*.critical=true"
+    - "am.bench*=true"
+
+ui:
+  fullscreen: no
+  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
+
+# development setup:
+flags:
+  noSecurity: yes
+  noUiWatchdog: yes

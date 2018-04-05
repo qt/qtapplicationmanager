@@ -43,6 +43,7 @@
 
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandResource>
+#include <QtWaylandCompositor/QWaylandSurface>
 
 #include <QtAppManCommon/logging.h>
 

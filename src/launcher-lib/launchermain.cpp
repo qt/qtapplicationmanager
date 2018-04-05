@@ -50,6 +50,7 @@
 #include <QtAppManCommon/qtyaml.h>
 
 #if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+#  include <QWindow>
 #  include "waylandqtamclientextension_p.h"
 #endif
 #include "launchermain.h"

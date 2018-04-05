@@ -335,6 +335,8 @@ bool NativeRuntime::start()
     if (m_needsLauncher) {
         m_launchWhenReady = true;
     } else {
+        args.append(variantToStringList(m_app->runtimeParameters().value(qSL("arguments"))));
+
         if (!m_document.isNull())
             args << qSL("--start-argument") << m_document;
     }

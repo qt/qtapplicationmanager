@@ -253,22 +253,32 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
 \endtable
 
 
-These \c runtimeParameters are currently defined by both the \c qml and \c qml-inprocess runtimes:
+The \c runtimeParameters are specific to the actual runtimes, so the table below has
+an additional column specifying which runtime a configuration option applies to:
+
 \table
 \header
-    \li Field name
+    \li Name
+    \li Runtimes
     \li Type
     \li Description
 \row
     \li \c loadDummyData
+    \li qml, qml-in-process
     \li bool
     \li Automatically load dummy-data for the application, using the same algorithm as
            Qt's \c qmlscene tool. By default no dummy-data is loaded.
 \row
     \li \c importPaths
+    \li qml, qml-in-process
     \li array<string>
     \li A list of paths that should be added to the QML-engine's import paths - this is the same
         as setting \c QML2_IMPORT_PATH for a program started from the command line.
+\row
+    \li \c arguments
+    \li native
+    \li array<string>
+    \li A list of command line parameters that are used when starting the application's executable.
 \endtable
 
 \section1 Alias Manifests

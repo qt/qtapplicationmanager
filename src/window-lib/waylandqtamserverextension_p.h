@@ -42,6 +42,7 @@
 #pragma once
 
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
+#include <QtCore/QVariant>
 #include "private/qwayland-server-qtam-extension.h"
 
 #include <QtAppManCommon/global.h>

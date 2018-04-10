@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -50,7 +50,7 @@ AsynchronousTask::AsynchronousTask(QObject *parent)
     : QThread(parent)
     , m_id(QUuid::createUuid().toString())
 {
-    static int once = qRegisterMetaType<AsynchronousTask::State>();
+    static int once = qRegisterMetaType<AsynchronousTask::TaskState>();
     Q_UNUSED(once)
 }
 
@@ -59,30 +59,16 @@ QString AsynchronousTask::id() const
     return m_id;
 }
 
-AsynchronousTask::State AsynchronousTask::state() const
+AsynchronousTask::TaskState AsynchronousTask::state() const
 {
     return m_state;
 }
 
-void AsynchronousTask::setState(AsynchronousTask::State state)
+void AsynchronousTask::setState(AsynchronousTask::TaskState state)
 {
     if (m_state != state) {
         m_state = state;
         emit stateChanged(m_state);
-    }
-}
-
-QString AsynchronousTask::stateToString(State state)
-{
-    switch (state) {
-    case Queued: return qSL("queued");
-    case Executing: return qSL("executing");
-    case Failed: return qSL("failed");
-    case Finished: return qSL("finished");
-    case AwaitingAcknowledge: return qSL("awaitingAcknowledge");
-    case Installing: return qSL("installing");
-    case CleaningUp: return qSL("cleaningUp");
-    default: return QString();
     }
 }
 

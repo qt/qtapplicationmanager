@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -53,8 +53,9 @@ class AsynchronousTask : public QThread
     Q_OBJECT
 
 public:
-    enum State
+    enum TaskState
     {
+        Invalid,
         Queued,
         Executing,
         Failed,
@@ -65,14 +66,14 @@ public:
         Installing,
         CleaningUp
     };
+    Q_ENUM(TaskState)
 
     AsynchronousTask(QObject *parent = nullptr);
 
     QString id() const;
 
-    State state() const;
-    void setState(State state);
-    static QString stateToString(State state);
+    TaskState state() const;
+    void setState(TaskState state);
 
     bool hasFailed() const;
     Error errorCode() const;
@@ -84,7 +85,7 @@ public:
     QString applicationId() const; // convenience
 
 signals:
-    void stateChanged(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::State) newState);
+    void stateChanged(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) newState);
     void progress(qreal p);
 
 protected:
@@ -97,11 +98,9 @@ protected:
 
     QString m_id;
     QString m_applicationId;
-    State m_state = Queued;
+    TaskState m_state = Queued;
     Error m_errorCode = Error::None;
     QString m_errorString;
 };
 
 QT_END_NAMESPACE_AM
-
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::State))

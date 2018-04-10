@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Copyright (C) 2016 Klarälvdalens Datakonsult AB, a KDAB Group company
 ** Contact: https://www.qt.io/licensing/
 **
@@ -43,9 +43,7 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-#  include <QWaylandQuickItem>
+#include <QWaylandQuickItem>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -63,5 +61,4 @@ public:
 
 QT_END_NAMESPACE_AM
 
-#endif
 // We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

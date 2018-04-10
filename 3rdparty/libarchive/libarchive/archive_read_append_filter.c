@@ -43,7 +43,7 @@ archive_read_append_filter(struct archive *_a, int code)
   struct archive_read_filter *filter;
   struct archive_read *a = (struct archive_read *)_a;
 
-  r1 = r2 = (ARCHIVE_OK);
+  r2 = (ARCHIVE_OK);
   switch (code)
   {
     case ARCHIVE_FILTER_NONE:
@@ -84,6 +84,10 @@ archive_read_append_filter(struct archive *_a, int code)
     case ARCHIVE_FILTER_RPM:
       strcpy(str, "rpm");
       r1 = archive_read_support_filter_rpm(_a);
+      break;
+    case ARCHIVE_FILTER_LZ4:
+      strcpy(str, "lz4");
+      r1 = archive_read_support_filter_lz4(_a);
       break;
     case ARCHIVE_FILTER_LZIP:
       strcpy(str, "lzip");
@@ -129,7 +133,6 @@ archive_read_append_filter(struct archive *_a, int code)
     a->filter = filter;
     r2 = (bidder->init)(a->filter);
     if (r2 != ARCHIVE_OK) {
-      __archive_read_close_filters(a);
       __archive_read_free_filters(a);
       return (ARCHIVE_FATAL);
     }
@@ -187,7 +190,6 @@ archive_read_append_filter_program_signature(struct archive *_a,
   a->filter = filter;
   r = (bidder->init)(a->filter);
   if (r != ARCHIVE_OK) {
-    __archive_read_close_filters(a);
     __archive_read_free_filters(a);
     return (ARCHIVE_FATAL);
   }

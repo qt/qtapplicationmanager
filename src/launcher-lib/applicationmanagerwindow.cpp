@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -45,6 +45,7 @@
 #include <qpa/qplatformwindow.h>
 
 #include "logging.h"
+#include "launchermain.h"
 #include "applicationmanagerwindow_p.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -52,8 +53,7 @@ QT_BEGIN_NAMESPACE_AM
 class ApplicationManagerWindowPrivate
 {
 public:
-    QPlatformNativeInterface *platformNativeInterface = nullptr;
-    QPlatformWindow *platformWindow = nullptr;
+    LauncherMain *launcherMain = nullptr;
 };
 
 
@@ -62,12 +62,11 @@ public:
     \inqmlmodule QtApplicationManager
     \brief The ApplicationManagerWindow item
 
-    This QML item should be used as the root item in your QML application. In doing so, you enable
+    This QML item can be used as the root item in your QML application. In doing so, you enable
     your application to be usable in both single-process (EGL fullscreen, desktop) and
-    multi-process (Wayland) mode.
-
-    If you are not using ApplicationManagerWindow as the QML root item, your application will only
-    work in multi-process (Wayland) mode.
+    multi-process (Wayland) mode. It inherits from \l Window in multi-process and from \l Item in
+    single-process mode. In contrast to a \l Window it is visible by default. Additional details can
+    be found in the section about \l {The Root Element}{the root element}.
 
     The QML import for this item is
 
@@ -122,21 +121,16 @@ ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
     setFlags(flags() | Qt::FramelessWindowHint);
     setWidth(1024);
     setHeight(768);
+    setVisible(true);
 
     (void) winId(); // force allocation of platform resources
 
-    d->platformNativeInterface = qApp->platformNativeInterface();
-    d->platformWindow = handle();
-    if (!d->platformNativeInterface) {
-        qCCritical(LogQmlRuntime) << "ApplicationManagerWindow failed to get a valid QPlatformNativeInterface object";
-        return;
-    }
-    if (!d->platformWindow) {
-        qCCritical(LogQmlRuntime) << "ApplicationManagerWindow failed to get a QPlatformWindow handle for itself";
-        return;
-    }
-    connect(d->platformNativeInterface, &QPlatformNativeInterface::windowPropertyChanged,
-            this, &ApplicationManagerWindow::onWindowPropertyChangedInternal);
+    d->launcherMain = LauncherMain::instance();
+    connect(d->launcherMain, &LauncherMain::windowPropertyChanged,
+            this, [this](QWindow *window, const QString &name, const QVariant &value) {
+        if (window == this)
+            emit windowPropertyChanged(name, value);
+    });
 }
 
 ApplicationManagerWindow::~ApplicationManagerWindow()
@@ -144,16 +138,9 @@ ApplicationManagerWindow::~ApplicationManagerWindow()
     delete d;
 }
 
-void ApplicationManagerWindow::onWindowPropertyChangedInternal(QPlatformWindow *pw, const QString &name)
-{
-    if (pw == d->platformWindow && d->platformWindow && d->platformNativeInterface) {
-        emit windowPropertyChanged(name, d->platformNativeInterface->windowProperty(pw, name));
-    }
-}
 
 /*!
-    \qmlmethod bool ApplicationManagerWindow::setWindowProperty(string name, var &value)
-
+    \qmlmethod void ApplicationManagerWindow::setWindowProperty(string name, var &value)
     Sets this application window's shared property identified by \a name to the given \a value.
 
     These properties are shared between the System-UI and the client applications: in single-process
@@ -168,12 +155,9 @@ void ApplicationManagerWindow::onWindowPropertyChangedInternal(QPlatformWindow *
 
     \sa windowProperty, windowProperties, windowPropertyChanged
 */
-bool ApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
+void ApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
-    if (!d->platformNativeInterface || !d->platformWindow)
-        return false;
-    d->platformNativeInterface->setWindowProperty(d->platformWindow, name, value);
-    return true;
+    d->launcherMain->setWindowProperty(this, name, value);
 }
 
 /*!
@@ -185,9 +169,7 @@ bool ApplicationManagerWindow::setWindowProperty(const QString &name, const QVar
 */
 QVariant ApplicationManagerWindow::windowProperty(const QString &name) const
 {
-    if (!d->platformNativeInterface || !d->platformWindow)
-        return QVariant();
-    return d->platformNativeInterface->windowProperty(d->platformWindow, name);
+    return windowProperties().value(name);
 }
 
 /*!
@@ -199,9 +181,7 @@ QVariant ApplicationManagerWindow::windowProperty(const QString &name) const
 */
 QVariantMap ApplicationManagerWindow::windowProperties() const
 {
-    if (!d->platformNativeInterface || !d->platformWindow)
-        return QVariantMap();
-    return d->platformNativeInterface->windowProperties(d->platformWindow);
+    return d->launcherMain->windowProperties(const_cast<ApplicationManagerWindow *>(this));
 }
 
 /*!

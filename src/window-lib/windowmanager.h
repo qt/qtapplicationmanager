@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -72,7 +72,7 @@ class WindowManager : public QAbstractListModel
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT)
-    Q_PROPERTY(bool slowAnimations READ slowAnimations CONSTANT)
+    Q_PROPERTY(bool slowAnimations READ slowAnimations WRITE setSlowAnimations NOTIFY slowAnimationsChanged)
 
 public:
     ~WindowManager();
@@ -113,11 +113,15 @@ signals:
     void windowClosing(int index, QQuickItem *window);
     void windowLost(int index, QQuickItem *window);
 
+    void windowReleased(QQuickItem *window);
+
     void windowPropertyChanged(QQuickItem *window, const QString &name, const QVariant &value);
 
     void compositorViewRegistered(QQuickWindow *view);
 
     void shutDownFinished();
+
+    void slowAnimationsChanged(bool);
 
 private slots:
     void surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen);
@@ -153,6 +157,7 @@ private:
 #endif
 
 private:
+    void updateViewSlowMode(QQuickWindow *view);
     WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocketName);
     WindowManager(const WindowManager &);
     WindowManager &operator=(const WindowManager &);

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -81,11 +81,15 @@ public:
     QVariantMap systemProperties3rdParty() const;
     void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
 
+    QVariantMap systemOpenGLConfiguration() const;
+    void setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration);
+
 private:
     QString m_id;
     QVariantMap m_configuration;
     QVariantMap m_systemPropertiesBuiltIn;
     QVariantMap m_systemProperties3rdParty;
+    QVariantMap m_systemOpenGLConfiguration;
 };
 
 
@@ -121,6 +125,8 @@ public:
 
     virtual void openDocument(const QString &document, const QString &mimeType);
 
+    virtual void setSlowAnimations(bool slow);
+
     void setInProcessQmlEngine(QQmlEngine *view);
     QQmlEngine* inProcessQmlEngine() const;
 
@@ -130,6 +136,10 @@ public:
 
     virtual bool start() = 0;
     virtual void stop(bool forceKill = false) = 0;
+
+#if !defined(AM_HEADLESS)
+    virtual void inProcessSurfaceItemReleased(QQuickItem *);
+#endif
 
 signals:
     void stateChanged(QT_PREPEND_NAMESPACE_AM(AbstractRuntime::State) newState);

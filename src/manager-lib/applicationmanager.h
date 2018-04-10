@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -47,6 +47,7 @@
 #include <QProcess>
 #include <QJSValue>
 #include <QtAppManCommon/global.h>
+#include <QtAppManApplication/application.h>
 
 QT_FORWARD_DECLARE_CLASS(QDir)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -54,7 +55,6 @@ QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
 class ApplicationDatabase;
 class ApplicationManagerPrivate;
 class AbstractRuntime;
@@ -72,18 +72,11 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged)
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
+    Q_PROPERTY(bool windowManagerCompositorReady READ isWindowManagerCompositorReady NOTIFY windowManagerCompositorReadyChanged)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT)
     Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
 
 public:
-    enum RunState {
-        NotRunning,
-        StartingUp,
-        Running,
-        ShuttingDown,
-    };
-    Q_ENUM(RunState)
-
     ~ApplicationManager();
     static ApplicationManager *createInstance(ApplicationDatabase *adb, bool singleProcess, QString *error);
     static ApplicationManager *instance();
@@ -118,6 +111,10 @@ public:
     QJSValue containerSelectionFunction() const;
     void setContainerSelectionFunction(const QJSValue &callback);
 
+    // window manager interface
+    bool isWindowManagerCompositorReady() const;
+    void setWindowManagerCompositorReady(bool ready);
+
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role) const override;
@@ -142,13 +139,13 @@ public:
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;
     Q_SCRIPTABLE QString identifyApplication(qint64 pid) const;
-    Q_SCRIPTABLE RunState applicationRunState(const QString &id) const;
+    Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(Application::RunState) applicationRunState(const QString &id) const;
 
 public slots:
     void shutDown();
 
 signals:
-    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(ApplicationManager::RunState) runState);
+    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(Application::RunState) runState);
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
     Q_SCRIPTABLE void countChanged();
 
@@ -166,6 +163,7 @@ signals:
     void containerSelectionFunctionChanged();
     void shuttingDownChanged();
     void shutDownFinished();
+    void windowManagerCompositorReadyChanged(bool ready);
 
 private slots:
     void preload();
@@ -189,6 +187,7 @@ private slots:
 
 private:
     void emitDataChanged(const Application *app, const QVector<int> &roles = QVector<int>());
+    void emitActivated(const Application *app);
     void registerMimeTypes();
 
     ApplicationManager(ApplicationDatabase *adb, bool singleProcess, QObject *parent = nullptr);
@@ -200,5 +199,3 @@ private:
 };
 
 QT_END_NAMESPACE_AM
-
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(ApplicationManager::RunState))

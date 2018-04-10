@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -41,22 +41,28 @@
 
 #pragma once
 
+#include <QUrl>
 #include <QtAppManCommon/global.h>
 #include <functional>
 
 #if defined(AM_HEADLESS)
 #  include <QCoreApplication>
 typedef QCoreApplication MainBase;
+#elif defined(AM_ENABLE_WIDGETS)
+#  include <QApplication>
+#  include <QSurfaceFormat>
+typedef QApplication MainBase;
 #else
 #  include <QGuiApplication>
+#  include <QSurfaceFormat>
 typedef QGuiApplication MainBase;
 #endif
 
 #include <QtAppManInstaller/installationlocation.h>
+#include <QtAppManSharedMain/sharedmain.h>
 #include <QVector>
 
 QT_FORWARD_DECLARE_CLASS(QQmlApplicationEngine)
-QT_FORWARD_DECLARE_STRUCT(QQmlDebuggingEnabler)
 QT_FORWARD_DECLARE_CLASS(QQuickView)
 QT_FORWARD_DECLARE_CLASS(QDBusAbstractAdaptor)
 
@@ -76,7 +82,8 @@ class QuickLauncher;
 class SystemMonitor;
 class DefaultConfiguration;
 
-class Main : public MainBase
+
+class Main : public MainBase, protected SharedMain
 {
     Q_OBJECT
     Q_PROPERTY(bool singleProcessMode READ isSingleProcessMode)
@@ -87,17 +94,15 @@ public:
 
     bool isSingleProcessMode() const;
 
-    void setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false);
+    void setup(const DefaultConfiguration *cfg, const QStringList &deploymentWarnings = QStringList()) Q_DECL_NOEXCEPT_EXPR(false);
     void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
     void showWindow(bool showFullscreen);
 
-    void shutDown();
+    Q_INVOKABLE void shutDown(int exitCode = 0);
 
     QQmlApplicationEngine *qmlEngine() const;
 
 protected:
-    void setupQmlDebugging(bool qmlDebugging);
-    void setupLoggingRules(bool verbose, const QStringList &loggingRules);
     void loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false);
     void parseSystemProperties(const QVariantMap &rawSystemProperties);
     void setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false);
@@ -105,8 +110,8 @@ protected:
                                 const std::function<QVariantMap(const char *)> &policyForInterface);
     void setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &containerConfigurations,
-                                    const QStringList &containerPluginPaths);
+    void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &openGLConfiguration,
+                                    const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths);
     void setupInstallationLocations(const QVariantList &installationLocations);
     void loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
                                  const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
@@ -118,6 +123,7 @@ protected:
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());
     void setupWindowTitle(const QString &title, const QString &iconPath);
     void setupWindowManager(const QString &waylandSocketName, bool slowAnimations, bool uiWatchdog);
+    void setupTouchEmulation(bool enableTouchEmulation);
 
     void setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false);
@@ -131,8 +137,6 @@ protected:
     QString hardwareId() const;
 
 private:
-    void loadDummyDataFiles();
-
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
     const char *dbusInterfaceName(QObject *o) const Q_DECL_NOEXCEPT_EXPR(false);
     void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName, const char *serviceName,
@@ -147,9 +151,9 @@ private:
 private:
     QVector<InstallationLocation> m_installationLocations;
     bool m_isSingleProcessMode = false;
-    QString m_mainQml;
+    QUrl m_mainQml;
+    QString m_mainQmlLocalFile;
 
-    QQmlDebuggingEnabler *m_debuggingEnabler = nullptr;
     QQmlApplicationEngine *m_engine = nullptr;
     QQuickView *m_view = nullptr; // only set if we allocate the window ourselves
 

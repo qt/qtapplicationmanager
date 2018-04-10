@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -75,40 +75,40 @@
         \li Task State
         \li Description
     \row
-        \li \c queued
+        \li \c Queued
         \li The task was created and is now queued up for execution.
     \row
-        \li \c executing
+        \li \c Executing
         \li The task is being executed.
     \row
-        \li \c finished
+        \li \c Finished
         \li The task was executed successfully.
     \row
-        \li \c failed
+        \li \c Failed
         \li The task failed to execute successfully.
     \row
-        \li \c awaitingAcknowledge
+        \li \c AwaitingAcknowledge
         \li \e{Installation tasks only!} The task is currently halted, waiting for either
             acknowledgePackageInstallation() or cancelTask() to continue. See startPackageInstallation()
             for more information on the installation workflow.
     \row
-        \li \c installing
+        \li \c Installing
         \li \e{Installation tasks only!} The installation was acknowledged via acknowledgePackageInstallation()
             and the final installation phase is now running.
     \row
-        \li \c cleaningUp
+        \li \c CleaningUp
         \li \e{Installation tasks only!} The installation has finished, and previous installations as
             well as temporary files are being cleaned up.
     \endtable
 
-    The normal workflow for tasks is: \c queued \unicode{0x2192} \c active \unicode{0x2192} \c
-    finished. The task can enter the \c failed state at any point though - either by being canceled via
+    The normal workflow for tasks is: \c Queued \unicode{0x2192} \c Executing \unicode{0x2192} \c
+    Finished. The task can enter the \c Failed state at any point though - either by being canceled via
     cancelTask() or simply by failing due to an error.
 
-    Installation tasks are a bit more complex due to the acknowledgment: \c queued \unicode{0x2192}
-    \c executing \unicode{0x2192} \c awaitingAcknowledge (this state may be skipped if
-    acknowledgePackageInstallation() was called already) \unicode{0x2192} \c installing
-    \unicode{0x2192} \c cleanup \unicode{0x2192} \c finished. Again, the task can fail at any point.
+    Installation tasks are a bit more complex due to the acknowledgment: \c Queued \unicode{0x2192}
+    \c Executing \unicode{0x2192} \c AwaitingAcknowledge (this state may be skipped if
+    acknowledgePackageInstallation() was called already) \unicode{0x2192} \c Installing
+    \unicode{0x2192} \c Cleanup \unicode{0x2192} \c Finished. Again, the task can fail at any point.
 */
 
 // THIS IS MISSING AN EXAMPLE!
@@ -125,7 +125,7 @@
 /*!
     \qmlsignal ApplicationInstaller::taskStarted(string taskId)
 
-    This signal is emitted when the task identified by \a taskId enters the \c active state.
+    This signal is emitted when the task identified by \a taskId enters the \c Executing state.
 
     \sa taskStateChanged()
 */
@@ -133,7 +133,7 @@
 /*!
     \qmlsignal ApplicationInstaller::taskFinished(string taskId)
 
-    This signal is emitted when the task identified by \a taskId enters the \c finished state.
+    This signal is emitted when the task identified by \a taskId enters the \c Finished state.
 
     \sa taskStateChanged()
 */
@@ -141,7 +141,7 @@
 /*!
     \qmlsignal ApplicationInstaller::taskFailed(string taskId)
 
-    This signal is emitted when the task identified by \a taskId enters the \c failed state.
+    This signal is emitted when the task identified by \a taskId enters the \c Failed state.
 
     \sa taskStateChanged()
 */
@@ -150,8 +150,8 @@
     \qmlsignal ApplicationInstaller::taskRequestingInstallationAcknowledge(string taskId, object application)
 
     This signal is emitted when the installation task identified by \a taskId has received enough
-    meta-data to be able to emit this signal. The task may be in either \c executing or \c
-    awaitingAcknowledge state.
+    meta-data to be able to emit this signal. The task may be in either \c Executing or \c
+    AwaitingAcknowledge state.
 
     The contents of the package's manifest file are supplied via \a application as a JavaScript object.
     Please see the \l {ApplicationManager Roles}{role names} for the expected object fields.
@@ -211,6 +211,7 @@ ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<Install
         qFatal("ApplicationInstaller::createInstance() was called a second time.");
 
     qRegisterMetaType<AsynchronousTask *>();
+    qRegisterMetaType<AsynchronousTask::TaskState>();
 
     if (Q_UNLIKELY(!manifestDir.exists())) {
         if (error)
@@ -737,23 +738,23 @@ QString ApplicationInstaller::removePackage(const QString &id, bool keepDocument
 
 
 /*!
-    \qmlmethod string ApplicationInstaller::taskState(string taskId)
+    \qmlmethod enumeration ApplicationInstaller::taskState(string taskId)
 
-    Returns a string describing the current state of the installation task identified by \a taskId.
+    Returns the current state of the installation task identified by \a taskId.
     \l {TaskStates}{See here} for a list of valid task states.
 
-    Returns an empty string if the \a taskId is invalid.
+    Returns \c ApplicationInstaller.Invalid if the \a taskId is invalid.
 */
-QString ApplicationInstaller::taskState(const QString &taskId)
+AsynchronousTask::TaskState ApplicationInstaller::taskState(const QString &taskId)
 {
     auto allTasks = d->taskQueue;
     allTasks.append(d->activeTask);
 
     for (const AsynchronousTask *task : qAsConst(allTasks)) {
         if (task && (task->id() == taskId))
-            return AsynchronousTask::stateToString(task->state());
+            return task->state();
     }
-    return QString();
+    return AsynchronousTask::Invalid;
 }
 
 /*!
@@ -1122,8 +1123,8 @@ void ApplicationInstaller::executeNextTask()
         emit taskStarted(task->id());
     });
 
-    connect(task, &AsynchronousTask::stateChanged, this, [this, task](AsynchronousTask::State newState) {
-        emit taskStateChanged(task->id(), AsynchronousTask::stateToString(newState));
+    connect(task, &AsynchronousTask::stateChanged, this, [this, task](AsynchronousTask::TaskState newState) {
+        emit taskStateChanged(task->id(), newState);
     });
 
     connect(task, &AsynchronousTask::progress, this, [this, task](qreal p) {

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -53,7 +53,7 @@ class Configuration
 {
 public:
     virtual ~Configuration();
-    virtual void parse();
+    virtual void parse(QStringList *deploymentWarnings = nullptr);
     QVariant buildConfig() const;
 
 protected:

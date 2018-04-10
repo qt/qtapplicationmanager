@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "inprocesswindow.h"
+#include "inprocesssurfaceitem.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -62,38 +63,44 @@ static bool isName(const QByteArray &key)
 InProcessWindow::InProcessWindow(const Application *app, QQuickItem *surfaceItem)
     : Window(app, surfaceItem)
 {
-    surfaceItem->installEventFilter(this);
+    auto ipsi = qobject_cast<InProcessSurfaceItem *>(surfaceItem);
+    if (ipsi)
+        m_windowProperties = ipsi->windowProperties();
+    else
+        m_windowProperties.reset(new QObject());
+
+    m_windowProperties->installEventFilter(this);
 }
 
 bool InProcessWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
     QByteArray key = nameToKey(name);
-    QVariant oldValue = windowItem()->property(key);
+    QVariant oldValue = m_windowProperties->property(key);
     bool changed = !oldValue.isValid() || (oldValue != value);
 
-    if (changed) {
-        windowItem()->setProperty(key, value);
-    }
+    if (changed)
+        m_windowProperties->setProperty(key, value);
+
     return true;
 }
 
 QVariant InProcessWindow::windowProperty(const QString &name) const
 {
     QByteArray key = nameToKey(name);
-    return windowItem()->property(key);
+    return m_windowProperties->property(key);
 }
 
 QVariantMap InProcessWindow::windowProperties() const
 {
-    const QList<QByteArray> keys = windowItem()->dynamicPropertyNames();
+    const QList<QByteArray> keys = m_windowProperties->dynamicPropertyNames();
     QVariantMap map;
 
     for (const QByteArray &key : keys) {
         if (!isName(key))
             continue;
 
-        QString name = QString::fromUtf8(key.mid(4));
-        map[name] = windowItem()->property(key);
+        QString name = keyToName(key);
+        map[name] = m_windowProperties->property(key);
     }
 
     return map;
@@ -101,15 +108,13 @@ QVariantMap InProcessWindow::windowProperties() const
 
 bool InProcessWindow::eventFilter(QObject *o, QEvent *e)
 {
-    if ((o == windowItem()) && (e->type() == QEvent::DynamicPropertyChange)) {
+    if ((o == m_windowProperties) && (e->type() == QEvent::DynamicPropertyChange)) {
         QDynamicPropertyChangeEvent *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
         QByteArray key = dpce->propertyName();
 
         if (isName(key)) {
             QString name = keyToName(dpce->propertyName());
-            emit windowPropertyChanged(name, windowItem()->property(key));
-
-            //qWarning() << "IPW: got change" << name << " --> " << surfaceItem()->property(key).toString();
+            emit windowPropertyChanged(name, m_windowProperties->property(key));
         }
     }
 

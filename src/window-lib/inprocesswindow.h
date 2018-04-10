@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -57,8 +57,6 @@ public:
 
     bool isInProcess() const override { return true; }
 
-    //bool isClosing() const override;
-
     bool setWindowProperty(const QString &name, const QVariant &value) override;
     QVariant windowProperty(const QString &name) const override;
     QVariantMap windowProperties() const override;
@@ -67,7 +65,7 @@ protected:
     bool eventFilter(QObject *o, QEvent *e) override;
 
 private:
-    QVariantMap m_windowProperties;
+    QSharedPointer<QObject> m_windowProperties;
 };
 
 QT_END_NAMESPACE_AM

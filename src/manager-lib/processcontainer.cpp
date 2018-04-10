@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -68,7 +68,11 @@ HostProcess::~HostProcess()
 
 void HostProcess::start(const QString &program, const QStringList &arguments)
 {
-    connect(&m_process, &QProcess::started, this, &HostProcess::started);
+    connect(&m_process, &QProcess::started, this, [this]() {
+         // we to cache the pid in order to have it available after the process crashed
+        m_pid = m_process.processId();
+        emit started();
+    });
     connect(&m_process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
             this, &HostProcess::errorOccured);
     connect(&m_process, static_cast<void (QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),
@@ -122,7 +126,7 @@ void HostProcess::terminate()
 
 qint64 HostProcess::processId() const
 {
-    return m_process.processId();
+    return m_pid;
 }
 
 QProcess::ProcessState HostProcess::state() const

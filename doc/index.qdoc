@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the documentation of the Pelagicore Application Manager.
@@ -38,10 +38,14 @@ The application-manager binary (\c appman) is a headless daemon by itself. A sui
 needs to be supplied on the command-line or via a config file at startup, which will act as a
 compositing window manager using the APIs that are exported from the C++ side.
 
+Please read the \l{The Qt Application Manager}{Introduction to the Qt Application Manager} for a
+high-level overview of the package.
+
 \section1 Important topics
 \list
     \li \l{Installation}
     \li \l{Configuration}
+    \li \l{Troubleshooting}
     \omit
     \li \l{How to write a System-UI}
     \endomit
@@ -49,6 +53,7 @@ compositing window manager using the APIs that are exported from the C++ side.
     \li \l{The Application Installer}
     \li \l{Logging and Debugging}
     \li \l{Containers}
+    \li \l{Single- vs. Multi-Process Mode}
 \endlist
 
 \section1 Tools

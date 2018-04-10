@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -59,6 +59,7 @@
 #include "application.h"
 #include "applicationmanager.h"
 #include "abstractruntime.h"
+#include "runtimefactory.h"
 #include "window.h"
 #include "windowmanager.h"
 #include "windowmanager_p.h"
@@ -364,10 +365,14 @@ bool WindowManager::isRunningOnDesktop() const
 
 /*!
     \qmlproperty bool WindowManager::slowAnimations
-    \readonly
 
-    This property reflects the state of the command line option \c --slow-animations. Useful
-    if you need to adjust timings for the slow animation mode.
+    Whether animations are in slow mode.
+
+    It's false by default and might be initialized to true using the command line option
+    \c --slow-animations.
+
+    Also useful to check this value if you need to adjust timings for the slow animation
+    mode.
 */
 bool WindowManager::slowAnimations() const
 {
@@ -376,7 +381,48 @@ bool WindowManager::slowAnimations() const
 
 void WindowManager::setSlowAnimations(bool slowAnimations)
 {
-    d->slowAnimations = slowAnimations;
+    if (slowAnimations != d->slowAnimations) {
+        d->slowAnimations = slowAnimations;
+
+        for (auto view : d->views)
+            updateViewSlowMode(view);
+
+        // Update timer of the main, GUI, thread
+        QUnifiedTimer::instance()->setSlowModeEnabled(d->slowAnimations);
+
+        // For new applications to start with the correct value
+        RuntimeFactory::instance()->setSlowAnimations(d->slowAnimations);
+
+        // Update already running applications
+        for (const Application *application : ApplicationManager::instance()->applications()) {
+            auto runtime = application->currentRuntime();
+            if (runtime)
+                runtime->setSlowAnimations(d->slowAnimations);
+        }
+
+        qCDebug(LogSystem) << "WindowManager::slowAnimations =" << d->slowAnimations;
+
+        emit slowAnimationsChanged(d->slowAnimations);
+    }
+}
+
+void WindowManager::updateViewSlowMode(QQuickWindow *view)
+{
+    // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
+    // we need to enable the slow mode in this timer as well.
+    static QHash<QQuickWindow *, QMetaObject::Connection> conns;
+    bool isSlow = d->slowAnimations;
+    conns.insert(view, connect(view, &QQuickWindow::beforeRendering, this, [view, isSlow] {
+        QMetaObject::Connection con = conns[view];
+        if (con) {
+#if defined(Q_CC_MSVC)
+            qApp->disconnect(con); // MSVC2013 cannot call static member functions without capturing this
+#else
+            QObject::disconnect(con);
+#endif
+            QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+        }
+    }, Qt::DirectConnection));
 }
 
 WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocketName)
@@ -472,11 +518,7 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
 #if defined(AM_MULTI_PROCESS)
             auto ww = qobject_cast<const WaylandWindow*>(win);
             if (ww && ww->surface() && ww->surface()->surface())
-#  if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
-                return ww->surface()->surface()->isMapped();
-#  else
                 return ww->surface()->surface()->hasContent();
-#  endif
 #endif
             return false;
         }
@@ -513,7 +555,7 @@ int WindowManager::count() const
 QVariantMap WindowManager::get(int index) const
 {
     if (index < 0 || index >= count()) {
-        qCWarning(LogWayland) << "invalid index:" << index;
+        qCWarning(LogGraphics) << "invalid index:" << index;
         return QVariantMap();
     }
 
@@ -547,6 +589,8 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
                 this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemCreated), Qt::QueuedConnection);
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemClosing,
                 this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemClosing), Qt::QueuedConnection);
+        connect(this, &WindowManager::windowReleased, runtime,
+                &AbstractRuntime::inProcessSurfaceItemReleased, Qt::QueuedConnection);
     }
 }
 
@@ -570,12 +614,15 @@ void WindowManager::releaseWindow(QQuickItem *window)
 {
     int index = d->findWindowBySurfaceItem(window);
     if (index == -1) {
-        qCWarning(LogWayland) << "releaseWindow was called with an invalid window pointer" << window;
+        qCWarning(LogGraphics) << "releaseWindow was called with an invalid window pointer" << window;
         return;
     }
+
     Window *win = d->windows.at(index);
     if (!win)
         return;
+
+    emit windowReleased(window);
 
     beginRemoveRows(QModelIndex(), index, index);
     d->windows.removeAt(index);
@@ -600,24 +647,13 @@ void WindowManager::releaseWindow(QQuickItem *window)
 */
 void WindowManager::registerCompositorView(QQuickWindow *view)
 {
+    static bool once = false;
+
+    if (d->views.contains(view))
+        return;
     d->views << view;
 
-    if (slowAnimations()) {
-        // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
-        // we need to enable the slow mode in this timer as well.
-        static QHash<QQuickWindow *, QMetaObject::Connection> conns;
-        conns.insert(view, connect(view, &QQuickWindow::beforeRendering, this, [view] {
-            QMetaObject::Connection con = conns[view];
-            if (con) {
-#if defined(Q_CC_MSVC)
-                qApp->disconnect(con); // MSVC2013 cannot call static member functions without capturing this
-#else
-                QObject::disconnect(con);
-#endif
-                QUnifiedTimer::instance()->setSlowModeEnabled(true);
-            }
-        }, Qt::DirectConnection));
-    }
+    updateViewSlowMode(view);
 
 #if defined(AM_MULTI_PROCESS)
     if (!ApplicationManager::instance()->isSingleProcess()) {
@@ -625,18 +661,24 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName, this);
             // export the actual socket name for our child processes.
             qputenv("WAYLAND_DISPLAY", d->waylandCompositor->socketName());
-            qCDebug(LogWayland).nospace() << "WindowManager: running in Wayland mode [socket: "
-                                          << d->waylandCompositor->socketName() << "]";
+            qCDebug(LogGraphics).nospace() << "WindowManager: running in Wayland mode [socket: "
+                                           << d->waylandCompositor->socketName() << "]";
+            ApplicationManager::instance()->setWindowManagerCompositorReady(true);
         } else {
             d->waylandCompositor->registerOutputWindow(view);
         }
     } else {
-        qCDebug(LogWayland) << "WindowManager: running in single-process mode [forced at run-time]";
+        if (!once)
+            qCDebug(LogGraphics) << "WindowManager: running in single-process mode [forced at run-time]";
     }
 #else
-    qCDebug(LogWayland) << "WindowManager: running in single-process mode [forced at compile-time]";
+    if (!once)
+        qCDebug(LogGraphics) << "WindowManager: running in single-process mode [forced at compile-time]";
 #endif
     emit compositorViewRegistered(view);
+
+    if (!once)
+        once = true;
 }
 
 void WindowManager::surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen)
@@ -646,12 +688,12 @@ void WindowManager::surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFul
     int index = d->findWindowBySurfaceItem(surfaceItem);
 
     if (index == -1) {
-        qCWarning(LogWayland) << "could not find an application window for surfaceItem";
+        qCWarning(LogGraphics) << "could not find an application window for surfaceItem";
         return;
     }
 
     QModelIndex modelIndex = QAbstractListModel::index(index);
-    qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isFullScreen: " << isFullscreen;
+    qCDebug(LogGraphics) << "emitting dataChanged, index: " << modelIndex.row() << ", isFullScreen: " << isFullscreen;
     emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsFullscreen);
 }
 
@@ -679,7 +721,7 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
         setupWindow(new InProcessWindow(app, surfaceItem));
     } else {
         QModelIndex modelIndex = QAbstractListModel::index(index);
-        qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: true";
+        qCDebug(LogGraphics) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: true";
         emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
         emit windowReady(index, d->windows.at(index)->windowItem());
     }
@@ -687,23 +729,23 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
 
 void WindowManager::inProcessSurfaceItemClosing(QQuickItem *surfaceItem)
 {
-    qCDebug(LogWayland) << "inProcessSurfaceItemClosing" << surfaceItem;
+    qCDebug(LogGraphics) << "inProcessSurfaceItemClosing" << surfaceItem;
 
     int index = d->findWindowBySurfaceItem(surfaceItem);
     if (index == -1) {
-        qCWarning(LogWayland) << "inProcessSurfaceItemClosing: could not find an application window for item" << surfaceItem;
+        qCWarning(LogGraphics) << "inProcessSurfaceItemClosing: could not find an application window for item" << surfaceItem;
         return;
     }
     InProcessWindow *win = qobject_cast<InProcessWindow *>(d->windows.at(index));
     if (!win) {
-        qCCritical(LogWayland) << "inProcessSurfaceItemClosing: expected surfaceItem to be a InProcessWindow, got" << d->windows.at(index);
+        qCCritical(LogGraphics) << "inProcessSurfaceItemClosing: expected surfaceItem to be a InProcessWindow, got" << d->windows.at(index);
         return;
     }
 
     win->setClosing();
 
     QModelIndex modelIndex = QAbstractListModel::index(index);
-    qCDebug(LogWayland) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: false";
+    qCDebug(LogGraphics) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: false";
     emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
 
     emit windowClosing(index, win->windowItem()); //TODO: rename to windowUnmapped
@@ -741,7 +783,7 @@ void WindowManager::waylandSurfaceCreated(WindowSurface *surface)
 {
     Q_UNUSED(surface)
     // this function is still useful for Wayland debugging
-    //qCDebug(LogWayland) << "New Wayland surface:" << surface->surface() << "pid:" << surface->processId();
+    //qCDebug(LogGraphics) << "New Wayland surface:" << surface->surface() << "pid:" << surface->processId();
 }
 
 void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
@@ -750,7 +792,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     const Application *app = ApplicationManager::instance()->fromProcessId(processId);
 
     if (!app && ApplicationManager::instance()->securityChecksEnabled()) {
-        qCCritical(LogWayland) << "SECURITY ALERT: an unknown application with pid" << processId
+        qCCritical(LogGraphics) << "SECURITY ALERT: an unknown application with pid" << processId
                                << "tried to map a Wayland surface!";
         return;
     }
@@ -758,7 +800,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     Q_ASSERT(surface);
     Q_ASSERT(surface->item());
 
-    qCDebug(LogWayland) << "Mapping Wayland surface" << surface->item() << "of" << d->applicationId(app, surface);
+    qCDebug(LogGraphics) << "Mapping Wayland surface" << surface->item() << "of" << d->applicationId(app, surface);
 
     // Only create a new Window if we don't have it already in the window list, as the user controls
     // whether windows are removed or not
@@ -766,15 +808,14 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     if (index == -1) {
         WaylandWindow *w = new WaylandWindow(app, surface);
         setupWindow(w);
+        // switch on Wayland ping/pong
+        if (d->watchdogEnabled)
+            w->enablePing(true);
     } else {
         QModelIndex modelIndex = QAbstractListModel::index(index);
         emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
         emit windowReady(index, d->windows.at(index)->windowItem());
     }
-
-    // switch on Wayland ping/pong -- currently disabled, since it is a bit unstable
-    //if (d->watchdogEnabled)
-    //    w->enablePing(true);
 
     if (app) {
         //We only take focus for applications.
@@ -787,7 +828,7 @@ void WindowManager::waylandSurfaceUnmapped(WindowSurface *surface)
     int index = d->findWindowByWaylandSurface(surface->surface());
 
     if (index == -1) {
-        qCWarning(LogWayland) << "Unmapping a surface failed, because no application window is "
+        qCWarning(LogGraphics) << "Unmapping a surface failed, because no application window is "
                                  "registered for Wayland surface" << surface->item();
         return;
     }
@@ -795,7 +836,7 @@ void WindowManager::waylandSurfaceUnmapped(WindowSurface *surface)
     if (!win)
         return;
 
-    qCDebug(LogWayland) << "Unmapping Wayland surface" << surface->item() << "of"
+    qCDebug(LogGraphics) << "Unmapping Wayland surface" << surface->item() << "of"
                         << d->applicationId(win->application(), surface);
 
     // switch off Wayland ping/pong
@@ -819,14 +860,14 @@ void WindowManager::waylandSurfaceDestroyed(WindowSurface *surface)
     if (!win)
         return;
 
-    qCDebug(LogWayland) << "Destroying Wayland surface" << (surface ? surface->item() : nullptr)
+    qCDebug(LogGraphics) << "Destroying Wayland surface" << (surface ? surface->item() : nullptr)
                         << "of" << d->applicationId(win->application(), surface);
 
     win->setClosing();
 
     emit windowLost(index, win->windowItem()); //TODO: rename to windowDestroyed
 
-    // Just to safe-guard against the system-ui not releasing windows. This could lead to severe
+    // Just to safe-guard against the System-UI not releasing windows. This could lead to severe
     // leaks in the graphics stack and it will also prevent clean shutdowns of the appman process.
     int timeout = 2000;
     if (slowAnimations())

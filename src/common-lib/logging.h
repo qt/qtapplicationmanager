@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -48,16 +48,21 @@ QT_BEGIN_NAMESPACE_AM
 
 Q_DECLARE_LOGGING_CATEGORY(LogSystem)
 Q_DECLARE_LOGGING_CATEGORY(LogInstaller)
-Q_DECLARE_LOGGING_CATEGORY(LogWayland)
+Q_DECLARE_LOGGING_CATEGORY(LogGraphics)
+Q_DECLARE_LOGGING_CATEGORY(LogWaylandDebug)
 Q_DECLARE_LOGGING_CATEGORY(LogQml)
 Q_DECLARE_LOGGING_CATEGORY(LogNotifications)
 Q_DECLARE_LOGGING_CATEGORY(LogQmlRuntime)
 Q_DECLARE_LOGGING_CATEGORY(LogQmlIpc)
+Q_DECLARE_LOGGING_CATEGORY(LogDeployment)
 
 class Logging
 {
 public:
     static void initialize();
+    static void initialize(int argc, const char * const *argv);
+    static QStringList filterRules();
+    static void setFilterRules(const QStringList &rules);
 
     static QByteArray applicationId();
     static void setApplicationId(const QByteArray &appId);
@@ -72,6 +77,7 @@ public:
 private:
     static bool s_dltEnabled;
     static bool s_useDefaultQtHandler;
+    static QStringList s_rules;
     static QtMessageHandler s_defaultQtHandler;
     static QByteArray s_applicationId;
 };

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -61,11 +61,6 @@ QT_USE_NAMESPACE_AM
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
-#if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
-    // set a reasonable default for OSes/distros that do not set this by default
-    setenv("XDG_RUNTIME_DIR", "/tmp", 0);
-#endif
-
     StartupTimer::instance()->checkpoint("entered main");
 
 #if defined(AM_TESTRUNNER)
@@ -76,33 +71,19 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
     QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
-    for (int i = 1; i < argc; ++i) {
-        if (strcmp("--no-dlt-logging", argv[i]) == 0) {
-            Logging::setDltEnabled(false);
-            break;
-        }
-    }
-    Logging::initialize();
+
+    Logging::initialize(argc, argv);
     StartupTimer::instance()->checkpoint("after basic initialization");
 
 #if !defined(AM_DISABLE_INSTALLER)
     Package::ensureCorrectLocale();
-
-    QString error;
-    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
-        qCCritical(LogSystem) << "ERROR:" << qPrintable(error);
-        return 2;
-    }
-    StartupTimer::instance()->checkpoint("after sudo server fork");
 #endif
 
     try {
-#if !defined(AM_HEADLESS)
-        // this is needed for both WebEngine and Wayland Multi-screen rendering
-        QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#  if !defined(QT_NO_SESSIONMANAGER)
-        QGuiApplication::setFallbackSessionManagementEnabled(false);
-#  endif
+        QStringList deploymentWarnings;
+#if !defined(AM_DISABLE_INSTALLER)
+        Sudo::forkServer(Sudo::DropPrivilegesPermanently, &deploymentWarnings);
+        StartupTimer::instance()->checkpoint("after sudo server fork");
 #endif
 
         Main a(argc, argv);
@@ -118,13 +99,13 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
 
         DefaultConfiguration cfg(additionalDescription, onlyOnePositionalArgument);
-        cfg.parse();
+        cfg.parse(&deploymentWarnings);
 
         StartupTimer::instance()->checkpoint("after command line parse");
 #if defined(AM_TESTRUNNER)
         TestRunner::initialize(cfg.testRunnerArguments());
 #endif
-        a.setup(&cfg);
+        a.setup(&cfg, deploymentWarnings);
 #if defined(AM_TESTRUNNER)
         a.qmlEngine()->rootContext()->setContextProperty("buildConfig", cfg.buildConfig());
 #endif

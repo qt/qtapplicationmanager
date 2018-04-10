@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -116,6 +116,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ qSL("single-app"),           qSL("runs a single application only (ignores the database)"), qSL("info.yaml file") });
     m_clp.addOption({ qSL("logging-rule"),         qSL("adds a standard Qt logging rule."), qSL("rule") });
     m_clp.addOption({ qSL("qml-debug"),            qSL("enables QML debugging and profiling.") });
+    m_clp.addOption({ qSL("enable-touch-emulation"), qSL("enables the touch emulation, converting mouse to touch events.") });
 }
 
 DefaultConfiguration::~DefaultConfiguration()
@@ -123,9 +124,9 @@ DefaultConfiguration::~DefaultConfiguration()
 }
 
 
-void DefaultConfiguration::parse()
+void DefaultConfiguration::parse(QStringList *deploymentWarnings)
 {
-    Configuration::parse();
+    Configuration::parse(deploymentWarnings);
 
     if (m_onlyOnePositionalArgument && (m_clp.positionalArguments().size() > 1)) {
         showParserMessage(qL1S("Only one main qml file can be specified.\n"), ErrorMessage);
@@ -250,6 +251,16 @@ QStringList DefaultConfiguration::loggingRules() const
 QString DefaultConfiguration::style() const
 {
     return value<QString>(nullptr, { "ui", "style" });
+}
+
+bool DefaultConfiguration::enableTouchEmulation() const
+{
+    return value<bool>("enable-touch-emulation", { "ui", "enableTouchEmulation" });
+}
+
+QVariantMap DefaultConfiguration::openGLConfiguration() const
+{
+    return value<QVariant>(nullptr, { "ui", "opengl" }).toMap();
 }
 
 QVariantList DefaultConfiguration::installationLocations() const

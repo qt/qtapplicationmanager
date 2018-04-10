@@ -1,0 +1,26 @@
+Abstract
+========
+The appman-prompt script provides command completion inside a bash shell for
+the appman executable, appman-controller and appman-packager commands.
+
+Installation
+============
+As a prerequisite the bash-completion package needs not be installed. The
+appman-prompt script itself can be installed in one of the following ways:
+
+1. Copy appman-prompt into the /etc/bash_completion.d folder
+   (or whatever "pkg-config --variable=compatdir bash-completion" yields)
+
+2. Copy the contents of appman-prompt into the ~/.bash_completion file
+
+Afterwards completion will be available in new shells.
+
+Notes
+=====
+(Sub-)Command options for the appman-controller and appman-packager are
+currently not supported, only the general ones (help and version).
+
+Users of the zsh shell might want to run the following commands to get going:
+autoload bashcompinit
+bashcompinit
+source /etc/bash_completion.d/appman-prompt

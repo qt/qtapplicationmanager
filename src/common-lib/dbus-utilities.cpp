@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -68,12 +68,7 @@ QVariant convertFromJSVariant(const QVariant &variant)
     } else if (type == QMetaType::QVariant) {
         // got a matryoshka variant
         return convertFromJSVariant(variant.value<QVariant>());
-    } else if ((type == QMetaType::UnknownType)
-#  if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
-               || ((type == QMetaType::VoidStar) && (qvariant_cast<void *>(variant) == nullptr))) {
-#  else
-               || (type == QMetaType::Nullptr)) {
-#endif
+    } else if ((type == QMetaType::UnknownType) || (type == QMetaType::Nullptr)) {
         // we cannot send QVariant::Invalid and null values via DBus, so we abuse BYTE(0) for this purpose
         return QVariant::fromValue<uchar>(0);
     } else if (type == QMetaType::QVariantList) {

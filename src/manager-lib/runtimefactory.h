@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -69,6 +69,8 @@ public:
 
     void setConfiguration(const QVariantMap &configuration);
     void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
+    void setSlowAnimations(bool isSlow);
+    void setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration);
 
     bool registerRuntime(AbstractRuntimeManager *manager);
     bool registerRuntime(AbstractRuntimeManager *manager, const QString &identifier);
@@ -80,6 +82,9 @@ private:
     static RuntimeFactory *s_instance;
 
     QHash<QString, AbstractRuntimeManager *> m_runtimes;
+
+    // To be passed to newly created runtimes
+    bool m_slowAnimations{false};
 };
 
 QT_END_NAMESPACE_AM

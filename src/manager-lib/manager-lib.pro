@@ -5,7 +5,7 @@ MODULE = appman_manager
 load(am-config)
 
 QT = core network qml
-!headless:QT *= gui quick
+!headless:QT *= gui gui-private quick qml-private
 qtHaveModule(dbus):QT *= dbus
 QT_FOR_PRIVATE *= \
     appman_common-private \
@@ -36,13 +36,14 @@ HEADERS += \
     applicationipcinterface_p.h \
     applicationmanager_p.h \
     systemreader.h \
-    debugwrapper.h
+    debugwrapper.h \
 
 linux:HEADERS += \
     sysfsreader.h \
 
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \
+    inprocesssurfaceitem.h
 
 multi-process:HEADERS += \
     nativeruntime.h \
@@ -67,13 +68,14 @@ SOURCES += \
     applicationipcmanager.cpp \
     applicationipcinterface.cpp \
     systemreader.cpp \
-    debugwrapper.cpp
+    debugwrapper.cpp \
 
 linux:SOURCES += \
     sysfsreader.cpp \
 
 !headless:SOURCES += \
     fakeapplicationmanagerwindow.cpp \
+    inprocesssurfaceitem.cpp
 
 multi-process:SOURCES += \
     nativeruntime.cpp \

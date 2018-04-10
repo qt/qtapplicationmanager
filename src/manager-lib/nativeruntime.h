@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -89,7 +89,8 @@ public:
     bool attachApplicationToQuickLauncher(const Application *app) override;
 
     qint64 applicationProcessId() const override;
-    virtual void openDocument(const QString &document, const QString &mimeType) override;
+    void openDocument(const QString &document, const QString &mimeType) override;
+    void setSlowAnimations(bool slow) override;
 
     bool sendNotificationUpdate(Notification *n);
 
@@ -132,6 +133,8 @@ private:
     NativeRuntimeInterface *m_runtimeInterface = nullptr;
     AbstractContainerProcess *m_process = nullptr;
     QDBusServer *m_applicationInterfaceServer;
+    bool m_slowAnimations = false;
+    QVariantMap m_openGLConfiguration;
 
     friend class NativeRuntimeManager;
 };

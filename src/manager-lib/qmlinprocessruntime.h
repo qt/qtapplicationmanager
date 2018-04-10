@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -76,6 +76,9 @@ public:
 public slots:
     bool start() override;
     void stop(bool forceKill = false) override;
+#if !defined(AM_HEADLESS)
+    void inProcessSurfaceItemReleased(QQuickItem *window) override;
+#endif
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface
@@ -91,15 +94,19 @@ private slots:
     void finish(int exitCode, QProcess::ExitStatus status);
 
 private:
+    static const char *s_runtimeKey;
+
     QString m_document;
     QmlInProcessApplicationInterface *m_applicationIf = nullptr;
+    bool m_componentError;
 
 #if !defined(AM_HEADLESS)
     // used by FakeApplicationManagerWindow to register windows
     void addWindow(QQuickItem *window);
+    void removeWindow(QQuickItem *window);
 
     QObject *m_rootObject = nullptr;
-    QList<QQuickItem *> m_windows;
+    QList<QQuickItem *> m_surfaces;
 
     friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
 #endif

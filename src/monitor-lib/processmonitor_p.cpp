@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -117,7 +117,8 @@ void ReadingTask::timerEvent(QTimerEvent *event)
         ReadingTask::Results results;
 
         if (m_readMem) {
-            if (!readMemory(results.memory))
+            const QByteArray file = "/proc/" + QByteArray::number(m_pid) + "/smaps";
+            if (!readMemory(file, results.memory))
                 results.memory = ReadingTask::Results::Memory();
             results.memory.read =  true;
         }
@@ -182,17 +183,22 @@ qreal ReadingTask::readLoad()
     return load;
 }
 
-bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
+static int parseValue(const char *pl)
+{
+    while (*pl && (*pl < '0' || *pl > '9'))
+        pl++;
+    return strtol(pl, 0, 10);
+}
+
+bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::Memory &results)
 {
     struct ScopedFile {
         ~ScopedFile() { if (file) fclose(file); }
         FILE *file = nullptr;
     };
 
-    const QByteArray fileName = "/proc/" + QByteArray::number(m_pid) + "/smaps";
-
     ScopedFile sf;
-    sf.file = fopen(fileName.constData(), "r");
+    sf.file = fopen(smapsFile.constData(), "r");
 
     if (sf.file == nullptr)
         return false;
@@ -228,10 +234,8 @@ bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
             ok = true;
         ++blockLen;
     }
-    if (!ok || blockLen < 12 || blockLen > 24)
+    if (!ok || blockLen < 12 || blockLen > 32)
         return false;
-
-    blockLen -= 3; // skip those number of lines below
 
     fseek(sf.file, 0, SEEK_SET);
     bool wasPrivateOnly = false;
@@ -274,26 +278,49 @@ bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
                 break;
         }
 
-        if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
-            break;
-        pl = line;
-        while (*pl && (*pl < '0' || *pl > '9'))
-            pl++;
-        int vm = strtol(pl, 0, 10);
+        int skipLen = blockLen;
+        int vm = 0;
+        int rss = 0;
+        int pss = 0;
+        const int sizeTag = 0x01;
+        const int rssTag  = 0x02;
+        const int pssTag  = 0x04;
+        const int allTags = sizeTag | rssTag | pssTag;
+        int foundTags = 0;
 
-        if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
-            break;
-        pl = line;
-        while (*pl && (*pl < '0' || *pl > '9'))
-            pl++;
-        int rss = strtol(pl, 0, 10);
+        while (foundTags < allTags && skipLen > 0) {
+            skipLen--;
+            if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
+                break;
+            pl = line;
 
-        if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
+            static const char strSize[] = "ize:";
+            static const char strXss[] = "ss:";
+
+            switch (*pl) {
+            case 'S':
+                if (!qstrncmp(pl + 1, strSize, sizeof(strSize) - 1)) {
+                    foundTags |= sizeTag;
+                    vm = parseValue(pl + sizeof(strSize));
+                }
+                break;
+            case 'R':
+                if (!qstrncmp(pl + 1, strXss, sizeof(strXss) - 1)) {
+                    foundTags |= rssTag;
+                    rss = parseValue(pl + sizeof(strXss));
+                }
+                break;
+            case 'P':
+                if (!qstrncmp(pl + 1, strXss, sizeof(strXss) - 1)) {
+                    foundTags |= pssTag;
+                    pss = parseValue(pl + sizeof(strXss));
+                }
+                break;
+            }
+        }
+
+        if (foundTags < allTags)
             break;
-        pl = line;
-        while (*pl && (*pl < '0' || *pl > '9'))
-            pl++;
-        int pss = strtol(pl, 0, 10);
 
         results.totalVm += vm;
         results.totalRss += rss;
@@ -316,7 +343,7 @@ bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
         static const char permP[] = { '-', '-', '-', 'p' };
         wasPrivateOnly = !memcmp(permissions, permP, sizeof(permissions));
 
-        for (int skip = blockLen; skip; --skip) {
+        for (int skip = skipLen; skip; --skip) {
             if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
                 break;
         }
@@ -336,8 +363,9 @@ qreal ReadingTask::readLoad()
     return 0.0;
 }
 
-bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
+bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::Memory &results)
 {
+    Q_UNUSED(smapsFile)
     struct task_basic_info t_info;
     mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
 
@@ -363,8 +391,9 @@ qreal ReadingTask::readLoad()
     return 0.0;
 }
 
-bool ReadingTask::readMemory(ReadingTask::Results::Memory &results)
+bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::Memory &results)
 {
+    Q_UNUSED(smapsFile)
     Q_UNUSED(results)
     return false;
 }
@@ -396,9 +425,9 @@ ProcessMonitorPrivate::~ProcessMonitorPrivate()
     thread.wait();
 }
 
-void ProcessMonitorPrivate::appRuntimeChanged(const QString &id, ApplicationManager::RunState state)
+void ProcessMonitorPrivate::appRuntimeChanged(const QString &id, Application::RunState state)
 {
-    if (id == appId && (state == ApplicationManager::Running || state == ApplicationManager::NotRunning))
+    if (id == appId && (state == Application::Running || state == Application::NotRunning))
         determinePid();
 }
 
@@ -568,6 +597,7 @@ void ProcessMonitorPrivate::readingUpdate()
 void ProcessMonitorPrivate::setupFrameRateMonitoring()
 {
     resetFrameRateMonitoring();
+#if !defined(AM_HEADLESS)
     if (reportFps) {
         if (ApplicationManager::instance()->isSingleProcess() || appId.isEmpty()) {
 
@@ -579,7 +609,7 @@ void ProcessMonitorPrivate::setupFrameRateMonitoring()
                 }
             }
         } else {
-#if defined(AM_MULTI_PROCESS)
+#  if defined(AM_MULTI_PROCESS)
 
             for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
                 WaylandWindow *win = qobject_cast<WaylandWindow *>(it.key());
@@ -597,18 +627,20 @@ void ProcessMonitorPrivate::setupFrameRateMonitoring()
 
             connect(WindowManager::instance(), &WindowManager::windowClosing,
                                    this, &ProcessMonitorPrivate::applicationWindowClosing);
-#endif
+#  endif
         }
     } else {
-#if defined(AM_MULTI_PROCESS)
+#  if defined(AM_MULTI_PROCESS)
         disconnect(WindowManager::instance(), &WindowManager::windowClosing,
                                this, &ProcessMonitorPrivate::applicationWindowClosing);
-#endif
+#  endif
     }
+#endif // !AM_HEADLESS
 }
 
 void ProcessMonitorPrivate::updateMonitoredWindows(const QList<QObject *> &windows)
 {
+#if !defined(AM_HEADLESS)
     Q_Q(ProcessMonitor);
 
     clearMonitoredWindows();
@@ -628,7 +660,7 @@ void ProcessMonitorPrivate::updateMonitoredWindows(const QList<QObject *> &windo
             } else
                 qCWarning(LogSystem) << "In single process only QQuickWindow can be monitored";
         } else {
-#if defined(AM_MULTI_PROCESS)
+#  if defined(AM_MULTI_PROCESS)
 
             for (int i = 0; i < applicationWindows.size(); i++) {
                 WaylandWindow *win = qobject_cast<WaylandWindow *>(applicationWindows.at(i));
@@ -638,18 +670,22 @@ void ProcessMonitorPrivate::updateMonitoredWindows(const QList<QObject *> &windo
                     break;
                 }
             }
-#endif
+#  endif
         }
     }
 
     emit q->monitoredWindowsChanged();
     setupFrameRateMonitoring();
+#else
+    Q_UNUSED(windows)
+#endif
 }
 
 QList<QObject *> ProcessMonitorPrivate::monitoredWindows() const
 {
     QList<QObject *> list;
 
+#if !defined(AM_HEADLESS)
     if (ApplicationManager::instance()->isSingleProcess() || appId.isEmpty()) {
         for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
             list.append(it.key());
@@ -658,24 +694,23 @@ QList<QObject *> ProcessMonitorPrivate::monitoredWindows() const
         return list;
     }
 
-#if defined(AM_MULTI_PROCESS)
+#  if defined(AM_MULTI_PROCESS)
     // Return window items
     for (auto it = frameCounters.begin(); it != frameCounters.end(); ++it) {
         WaylandWindow *win = qobject_cast<WaylandWindow *>(it.key());
         if (win)
             list.append(win->windowItem());
     }
+#  endif
 #endif
-
     return list;
 }
 
-#if defined(AM_MULTI_PROCESS)
+#if defined(AM_MULTI_PROCESS) && !defined(AM_HEADLESS)
 
 void ProcessMonitorPrivate::applicationWindowClosing(int index, QQuickItem *window)
 {
     Q_UNUSED(index)
-
 
     for (auto it = frameCounters.cbegin(); it != frameCounters.cend(); ++it) {
         WaylandWindow *win = qobject_cast<WaylandWindow *>(it.key());

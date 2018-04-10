@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -47,8 +47,8 @@
 #include <QVariant>
 #include <QHash>
 
-#include "application.h"
-#include "applicationmanager.h"
+#include <QtAppManApplication/application.h>
+#include <QtAppManManager/applicationmanager.h>
 
 
 QT_BEGIN_NAMESPACE_AM

@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.winmap.ping'
+icon:    'icon.png'
+code:    'ping.qml'
+runtime: 'qml'
+name:
+  en: 'Wayland ping-pong'

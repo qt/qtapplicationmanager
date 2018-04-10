@@ -10,7 +10,7 @@ android:QT *= androidextras
 qtHaveModule(dbus):QT *= dbus
 qtHaveModule(qml):QT *= core-private qml qml-private
 
-!lessThan(QT.geniviextras.MAJOR_VERSION, 1) : !lessThan(QT.geniviextras.MINOR_VERSION, 1) {
+versionAtLeast(QT.geniviextras.VERSION, 1.1.0) {
     DEFINES += AM_GENIVIEXTRAS_LAZY_INIT
 }
 

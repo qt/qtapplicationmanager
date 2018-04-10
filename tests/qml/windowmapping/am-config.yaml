@@ -13,3 +13,9 @@ installationLocations:
   documentPath: "/tmp/am/docs"
   mountPoint: "/tmp"
   isDefault: true
+
+# Workaround for a crash in the mesa software renderer (llvmpipe)
+runtimes:
+  qml:
+    environmentVariables:
+      QT_QUICK_BACKEND: "software"

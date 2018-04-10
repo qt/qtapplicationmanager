@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -94,8 +94,10 @@ AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, const Appl
 
     AbstractRuntime *art = arm->create(ac.take(), app);
 
-    if (art)
+    if (art) {
+        art->setSlowAnimations(m_slowAnimations);
         app->setCurrentRuntime(art);
+    }
     return art;
 }
 
@@ -107,21 +109,33 @@ AbstractRuntime *RuntimeFactory::createQuickLauncher(AbstractContainer *containe
     if (!arm)
         return nullptr;
 
-    return arm->create(ac.take(), nullptr);
+    auto runtime = arm->create(ac.take(), nullptr);
+    if (runtime)
+        runtime->setSlowAnimations(m_slowAnimations);
+    return runtime;
 }
 
 void RuntimeFactory::setConfiguration(const QVariantMap &configuration)
 {
-    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it) {
+    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
         it.value()->setConfiguration(configuration.value(it.key()).toMap());
-    }
 }
 
 void RuntimeFactory::setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn)
 {
-    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it) {
+    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
         it.value()->setSystemProperties(thirdParty, builtIn);
-    }
+}
+
+void RuntimeFactory::setSlowAnimations(bool value)
+{
+    m_slowAnimations = value;
+}
+
+void RuntimeFactory::setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration)
+{
+    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
+        it.value()->setSystemOpenGLConfiguration(openGLConfiguration);
 }
 
 bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager)

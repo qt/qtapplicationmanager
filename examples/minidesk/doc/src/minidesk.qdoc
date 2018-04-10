@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the documentation of the Pelagicore Application Manager.
@@ -28,14 +28,14 @@
 /*!
 
 \example minidesk
-\title Desktop System UI Example
+\title Desktop System-UI Example
 \image minidesk.png Screenshot
-\brief Minimal Desktop System UI in pure QML
+\brief Minimal Desktop System-UI in pure QML
 \ingroup applicationmanager-examples
 
 \section1 Introduction
 
-The \e {Desktop System UI Example} showcases the application-manager API in a simple fashion. The
+The \e {Desktop System-UI Example} showcases the application-manager API in a simple fashion. The
 focus is on the concepts, less on elegance or completeness, for instance no error checking is done.
 Some features will only print debug messages without further functionality. A classic desktop with
 server-side window decorations is emulated.
@@ -46,20 +46,20 @@ The following features are supported:
 \li Stop applications by clicking on the top/left window decoration rectangle
 \li Raise applications by clicking on the decoration
 \li Drag windows by pressing on the window decoration and moving
-\li System UI sends 'propA' change when an app is started
-\li System UI and App2 react on window property changes with a debug message
+\li System-UI sends 'propA' change when an app is started
+\li System-UI and App2 react on window property changes with a debug message
 \li App1 animation can be stopped and restarted by a click
-\li App1 sends 'rotation' property to system UI on stop
-\li App1 shows a pop-up on the system UI while it is paused
+\li App1 sends 'rotation' property to System-UI on stop
+\li App1 shows a pop-up on the System-UI while it is paused
 \li App2 will make use of an IPC extension when it is started
 \li App2 logs the document URL it has been started with
-\li App2 triggers a notification in the system UI when the bulb icon is clicked
+\li App2 triggers a notification in the System-UI when the bulb icon is clicked
 \li A separate (\"wayland\") process started outside of appman will be shown as App1
 \endlist
 
 \note The example can be run in single- and multi-process mode. In the following, multi-process is
 assumed and corresponding terminology is used. The terms \e client and \e application, respectively
-\e server and \e {system UI} are used interchangeably. The system UI comprises compositing and
+\e server and \e {System-UI} are used interchangeably. The System-UI comprises compositing and
 generic inter-process communication (IPC).
 
 \section2 Invocation
@@ -78,7 +78,7 @@ path/to/bin/appman -c am-config.yaml -r --start-session-dbus
 
 \section1 Walkthrough
 
-\section2 System UI Window
+\section2 System-UI Window
 
 \quotefromfile minidesk/system-ui/main.qml
 \skipto import Qt
@@ -87,7 +87,7 @@ path/to/bin/appman -c am-config.yaml -r --start-session-dbus
 \dots
 
 The \l{QtApplicationManager} module has to be imported to be able to access the application-manager
-APIs. The system UI window has a fixed size and linen background color. Instead of a \l{Rectangle},
+APIs. The System-UI window has a fixed size and linen background color. Instead of a \l{Rectangle},
 the root element could as well be a \l{Window}. On top of the background the
 \l{minidesk/system-ui/Readme.qml}{Readme} element is shown that displays a usage how-to. At the
 bottom left there is a textual indication for whether the application-manager runs in single- or
@@ -95,10 +95,10 @@ multi-process mode.
 
 \section2 Launcher
 
-\printto System UI chrome for applications
+\printto System-UI chrome for applications
 
 A \l{Repeater} provides the application icons arranged in a \l{Column} on the top-left corner of
-the system UI. This is achieved by using the \l{ApplicationManager} element as the model. Amongst
+the System-UI. This is achieved by using the \l{ApplicationManager} element as the model. Amongst
 others, it provides the \c icon role which is used as the \l{Image} source URL. The \c icon URL is
 defined in the \l{Manifest Definition}{info.yaml} file of the application. To indicate that an
 application has been launched, the opacity of the corresponding application's icon is decreased
@@ -113,9 +113,9 @@ for the first application). Both applications will be started with the (optional
 \c appContainter will be set below in the \c onWindowReady handler. The content is provided by the
 two applications in an \l{ApplicationManagerWindow} root element.
 
-\section2 Application Windows in the System UI
+\section2 Application Windows in the System-UI
 
-\printto System UI for a pop-up and notification
+\printto System-UI for a pop-up and notification
 
 This second \l{Repeater} provides the window chrome for the actual applications in its delegate.
 The model is the same as for the first \l{Repeater}, essentially the \l{ApplicationManager}
@@ -139,16 +139,16 @@ element. The chrome consists of:
 
 \section2 Pop-ups
 
-Two approaches are implemented to display pop-ups in the system UI:
+Two approaches are implemented to display pop-ups in the System-UI:
 \list
 \li Through a window rendered by the client application
 \li Through the notification API provided by the application-manager
 \endlist
-This is the corresponding system UI code:
+This is the corresponding System-UI code:
 \printto Handler for WindowManager signals
 
 \section3 Client Application Rendering
-The \c popUpContainer \l{Item} provides a system UI recipient for the pop-up rendered
+The \c popUpContainer \l{Item} provides a System-UI recipient for the pop-up rendered
 by App1. App1 instantiates another \l{ApplicationManagerWindow} for the pop-up within its
 \l{ApplicationManagerWindow} root element, as shown here:
 \quotefromfile minidesk/apps/tld.minidesk.app1/app1.qml
@@ -159,12 +159,12 @@ by App1. App1 instantiates another \l{ApplicationManagerWindow} for the pop-up w
 The \l{ApplicationManagerWindow::setWindowProperty}{ApplicationManagerWindow.setWindowProperty()}
 method is used to set a freely selectable shared property. Here we choose \c{type: "pop-up"} to
 indicate that the window is supposed to be shown as a pop-up. In the \c onWindowReady handler below
-the system UI checks for this property and handles the window appropriately as a pop-up.
+the System-UI checks for this property and handles the window appropriately as a pop-up.
 
 \section3 Notification API Usage
 
 An alternative to the above approach is to use the application-manager's \l{Notification} API on
-the application (client) side and the \l{NotificationManager} API on the system UI (server) side.
+the application (client) side and the \l{NotificationManager} API on the System-UI (server) side.
 The following code is invoked when the \e bulb icon of App2 is clicked:
 
 \quotefromfile minidesk/apps/tld.minidesk.app2/app2.qml
@@ -173,7 +173,7 @@ The following code is invoked when the \e bulb icon of App2 is clicked:
 
 App2 creates a new \l{Notification} element, sets its \l{Notification::summary}{summary} property
 and calls \l{Notification::show()}{show()} on it. This call will increase the
-\l{NotificationManager::count}{NotificationManager.count} on the system UI side, and subsequently
+\l{NotificationManager::count}{NotificationManager.count} on the System-UI side, and subsequently
 the \l{Text} element's text property will be set to the \c summary string of the first
 notification. Presenting the first notification only is a simplification to keep the code short.
 
@@ -182,15 +182,15 @@ notification. Presenting the first notification only is a simplification to keep
 \quotefromfile minidesk/system-ui/main.qml
 \skipto Handler for WindowManager signals
 \printto IPC extension
-This is the vital part of the system UI, where the window surfaces of the applications are mapped
-to items in the system UI. The \l {WindowManager::windowReady}{onWindowReady} handler is invoked
+This is the vital part of the System-UI, where the window surfaces of the applications are mapped
+to items in the System-UI. The \l {WindowManager::windowReady}{onWindowReady} handler is invoked
 when a new application window is shown (visibility set to true). The \c index parameter references
 into the \l{WindowManager} model, which holds the window surfaces. The first line translates this
 index to the application index of the \l{ApplicationManager} model and assigns it to \c appIndex.
 
 Only the "pop-up" ApplicationManagerWindow of App1 has the user-defined \c type property set. All
 other windows don't have the \c type property. In the latter case, the application's \c window
-passed to \c onWindowReady is re-parented to the system UI's \c winChrome. Also the size of the
+passed to \c onWindowReady is re-parented to the System-UI's \c winChrome. Also the size of the
 window is set to fill the entire \c appContainer.
 
 There is a special treatment for an invalid \c appIndex for demonstration purposes: it is assumed
@@ -203,7 +203,7 @@ QT_WAYLAND_DISABLE_WINDOWDECORATION=1 ./qtapp -platform wayland
 
 This application will then be shown inside the App1 container.
 \c QT_WAYLAND_DISABLE_WINDOWDECORATION is set to disable client side window decorations, since they
-are provided by the system UI. Note, that an application started in this way, can just as well be
+are provided by the System-UI. Note, that an application started in this way, can just as well be
 closed only from the command line.
 
 Pop-ups (windows with type "pop-up") are re-parented to their respective \c popUpContainer.
@@ -217,7 +217,7 @@ with the \c window.
 
 \section2 IPC Extension
 The following snippet demonstrates how the \l{ApplicationIPCInterface} can be used to define an IPC
-extension. The IPC interface has to be defined in the system UI, for instance:
+extension. The IPC interface has to be defined in the System-UI, for instance:
 \printuntil Component.onCompleted
 \printline }
 
@@ -240,7 +240,7 @@ to match the name it was registered with in
 \l{ApplicationIPCManager::registerInterface()}{ApplicationIPCManager.registerInterface()}.
 
 \section2 Application Termination
-When an application is stopped from the system UI through
+When an application is stopped from the System-UI through
 \l{ApplicationManager::stopApplication()}{ApplicationManager.stopApplication()}, it will be sent
 the \l{ApplicationInterface::quit()}{ApplicationInterface.quit()} signal. The application can do
 some clean-up and must subsequently confirm with

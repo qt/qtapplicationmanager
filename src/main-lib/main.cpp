@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -74,6 +74,7 @@
 #  include <QGuiApplication>
 #  include <QQuickView>
 #  include <QQuickItem>
+#  include <private/qopenglcontext_p.h>
 #endif
 
 #if defined(QT_PSHELLSERVER_LIB)
@@ -118,6 +119,7 @@
 #  if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 #    include "windowmanagerdbuscontextadaptor.h"
 #  endif
+#  include "touchemulation.h"
 #endif
 
 #include "configuration.h"
@@ -136,8 +138,11 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+// The QGuiApplication constructor
+
 Main::Main(int &argc, char **argv)
-    : MainBase(argc, argv)
+    : MainBase(SharedMain::preConstructor(argc), argv)
+    , SharedMain()
 {
     // this might be needed later on by the native runtime to find a suitable qml runtime launcher
     setProperty("_am_build_dir", qSL(AM_BUILD_DIR));
@@ -146,7 +151,7 @@ Main::Main(int &argc, char **argv)
                                            [](int /*sig*/) {
         UnixSignalHandler::instance()->resetToDefault(SIGINT);
         fputs("\n*** received SIGINT / Ctrl+C ... exiting ***\n\n", stderr);
-        static_cast<Main *>(qApp)->shutDown();
+        static_cast<Main *>(QCoreApplication::instance())->shutDown();
     });
     StartupTimer::instance()->checkpoint("after application constructor");
 }
@@ -159,7 +164,9 @@ Main::~Main()
         m_applicationInstaller,
         m_applicationIPCManager,
         m_notificationManager,
+#if !defined(AM_HEADLESS)
         m_windowManager,
+#endif
         m_systemMonitor
     };
     for (const auto &singleton : singletons)
@@ -181,14 +188,13 @@ Main::~Main()
     delete m_quickLauncher;
     delete m_systemMonitor;
     delete m_applicationIPCManager;
-    delete m_debuggingEnabler;
 }
 
 /*! \internal
     The caller has to make sure that cfg will be available even after this function returns:
     we will access the cfg object from delayed init functions via lambdas!
 */
-void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentWarnings) Q_DECL_NOEXCEPT_EXPR(false)
 {
     // basics that are needed in multiple setup functions below
     m_noSecurity = cfg->noSecurity();
@@ -199,6 +205,12 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupLoggingRules(cfg->verbose(), cfg->loggingRules());
     setupQmlDebugging(cfg->qmlDebugging());
     Logging::registerUnregisteredDltContexts();
+
+    // dump accumulated warnings, now that logging rules are set
+    for (const QString &warning : deploymentWarnings)
+        qCWarning(LogDeployment).noquote() << warning;
+
+    setupOpenGL(cfg->openGLConfiguration());
 
     loadStartupPlugins(cfg->pluginFilePaths("startup"));
     parseSystemProperties(cfg->rawSystemProperties());
@@ -211,8 +223,8 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 
     setMainQmlFile(cfg->mainQmlFile());
     setupSingleOrMultiProcess(cfg->forceSingleProcess(), cfg->forceMultiProcess());
-    setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->containerConfigurations(),
-                               cfg->pluginFilePaths("container"));
+    setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->openGLConfiguration(),
+                               cfg->containerConfigurations(), cfg->pluginFilePaths("container"));
     setupInstallationLocations(cfg->installationLocations());
     loadApplicationDatabase(cfg->database(), cfg->recreateDatabase(), cfg->singleApp());
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
@@ -225,6 +237,7 @@ void Main::setup(const DefaultConfiguration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
     setupWindowManager(cfg->waylandSocketName(), cfg->slowAnimations(), cfg->noUiWatchdog());
+    setupTouchEmulation(cfg->enableTouchEmulation());
     setupShellServer(cfg->telnetAddress(), cfg->telnetPort());
     setupSSDPService();
 }
@@ -234,7 +247,7 @@ bool Main::isSingleProcessMode() const
     return m_isSingleProcessMode;
 }
 
-void Main::shutDown()
+void Main::shutDown(int exitCode)
 {
     enum {
         ApplicationManagerDown = 0x01,
@@ -244,11 +257,11 @@ void Main::shutDown()
 
     static int down = 0;
 
-    static auto checkShutDownFinished = [](int nextDown) {
+    static auto checkShutDownFinished = [exitCode](int nextDown) {
         down |= nextDown;
         if (down == (ApplicationManagerDown | QuickLauncherDown | WindowManagerDown)) {
             down = 0;
-            QCoreApplication::quit();
+            QCoreApplication::exit(exitCode);
         }
     };
 
@@ -262,45 +275,18 @@ void Main::shutDown()
                 this, []() { checkShutDownFinished(QuickLauncherDown); });
         m_quickLauncher->shutDown();
     }
+#if !defined(AM_HEADLESS)
     if (m_windowManager) {
         connect(m_windowManager, &WindowManager::shutDownFinished,
                 this, []() { checkShutDownFinished(WindowManagerDown); });
         m_windowManager->shutDown();
     }
+#endif
 }
 
 QQmlApplicationEngine *Main::qmlEngine() const
 {
     return m_engine;
-}
-
-void Main::setupQmlDebugging(bool qmlDebugging)
-{
-    if (qmlDebugging) {
-#if !defined(QT_NO_QML_DEBUGGER)
-        m_debuggingEnabler = new QQmlDebuggingEnabler(true);
-        if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
-            qCCritical(LogQmlRuntime) << "The default 'debug' logging category was disabled. "
-                                         "Re-enabling it for the QML Debugger interface to work correctly.";
-            QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
-        }
-#else
-        qCWarning(LogSystem) << "The --qml-debug option is ignored, because Qt was built without support for QML Debugging!";
-#endif
-    }
-}
-
-void Main::setupLoggingRules(bool verbose, const QStringList &loggingRules)
-{
-    const QString rules = verbose ? qSL("*=true\nqt.*.debug=false")
-                                  : loggingRules.isEmpty() ? qSL("*.debug=false")
-                                                           : loggingRules.join(qL1C('\n'));
-
-    QLoggingCategory::setFilterRules(rules);
-
-    // setting this for child processes //TODO: use a more generic IPC approach
-    qputenv("AM_LOGGING_RULES", rules.toUtf8());
-    StartupTimer::instance()->checkpoint("after logging setup");
 }
 
 void Main::loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false)
@@ -343,9 +329,21 @@ void Main::setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false)
 
 void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_mainQml = mainQml;
-    if (Q_UNLIKELY(!QFile::exists(m_mainQml)))
-        throw Exception("no/invalid main QML file specified: %1").arg(m_mainQml);
+    // For some weird reason, QFile cannot cope with "qrc:/" and QUrl cannot cope with ":/" , so
+    // we have to translate ourselves between those two "worlds".
+
+    if (mainQml.startsWith(qSL(":/")))
+        m_mainQml = QUrl(qSL("qrc:") + mainQml.mid(1));
+    else
+        m_mainQml = QUrl::fromUserInput(mainQml, QDir::currentPath());
+
+    if (m_mainQml.isLocalFile())
+        m_mainQmlLocalFile = m_mainQml.toLocalFile();
+    else if (m_mainQml.scheme() == qSL("qrc"))
+        m_mainQmlLocalFile = qL1C(':') + m_mainQml.path();
+
+    if (!m_mainQmlLocalFile.isEmpty() && !QFile::exists(m_mainQmlLocalFile))
+        throw Exception("no/invalid main QML file specified: %1").arg(m_mainQmlLocalFile);
 }
 
 void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false)
@@ -361,7 +359,8 @@ void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiPro
 #endif
 }
 
-void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths)
+void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &openGLConfiguration,
+                                      const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths)
 {
     if (m_isSingleProcessMode) {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager());
@@ -385,7 +384,7 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
 
     ContainerFactory::instance()->setConfiguration(containerConfigurations);
     RuntimeFactory::instance()->setConfiguration(runtimeConfigurations);
-
+    RuntimeFactory::instance()->setSystemOpenGLConfiguration(openGLConfiguration);
     RuntimeFactory::instance()->setSystemProperties(m_systemProperties.at(SP_ThirdParty),
                                                     m_systemProperties.at(SP_BuiltIn));
 
@@ -396,12 +395,17 @@ void Main::setupInstallationLocations(const QVariantList &installationLocations)
 {
     m_installationLocations = InstallationLocation::parseInstallationLocations(installationLocations,
                                                                                hardwareId());
+    if (m_installationLocations.isEmpty())
+        qCWarning(LogDeployment) << "No installation locations defined in config file";
 }
 
 void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
                                    const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (singleApp.isEmpty()) {
+        if (!QFile::exists(databasePath)) // make sure to create a database on the first run
+            recreateDatabase = true;
+
         if (recreateDatabase) {
             const QString dbDir = QFileInfo(databasePath).absolutePath();
             if (Q_UNLIKELY(!QDir(dbDir).exists()) && Q_UNLIKELY(!QDir::root().mkpath(dbDir)))
@@ -410,6 +414,7 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
         m_applicationDatabase.reset(new ApplicationDatabase(databasePath));
     } else {
         m_applicationDatabase.reset(new ApplicationDatabase());
+        recreateDatabase = true;
     }
 
     if (Q_UNLIKELY(!m_applicationDatabase->isValid() && !recreateDatabase)) {
@@ -477,8 +482,8 @@ void Main::setupInstaller(const QString &appImageMountDir, const QStringList &ca
 #if !defined(AM_DISABLE_INSTALLER)
     if (!Package::checkCorrectLocale()) {
         // we should really throw here, but so many embedded systems are badly set up
-        qCCritical(LogSystem) << "WARNING: the appman installer needs a UTF-8 locale to work correctly:\n"
-                                 "         even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
+        qCWarning(LogDeployment) << "The appman installer needs a UTF-8 locale to work correctly:\n"
+                                    "even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
     }
 
     if (Q_UNLIKELY(hardwareId().isEmpty()))
@@ -550,7 +555,10 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     StartupTimer::instance()->checkpoint("after QML registrations");
 
     m_engine = new QQmlApplicationEngine(this);
-    connect(m_engine, &QQmlEngine::quit, this, &Main::shutDown);
+    disconnect(m_engine, &QQmlEngine::quit, qApp, nullptr);
+    disconnect(m_engine, &QQmlEngine::exit, qApp, nullptr);
+    connect(m_engine, &QQmlEngine::quit, this, [this]() { shutDown(); });
+    connect(m_engine, &QQmlEngine::exit, this, [this](int retCode) { shutDown(retCode); });
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
     m_engine->setImportPathList(m_engine->importPathList() + importPaths);
@@ -561,7 +569,10 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
 
 void Main::setupWindowTitle(const QString &title, const QString &iconPath)
 {
-#if !defined(AM_HEADLESS)
+#if defined(AM_HEADLESS)
+    Q_UNUSED(title)
+    Q_UNUSED(iconPath)
+#else
     // For development only: set an icon, so you know which window is the AM
     bool setTitle =
 #  if defined(Q_OS_LINUX)
@@ -580,7 +591,11 @@ void Main::setupWindowTitle(const QString &title, const QString &iconPath)
 
 void Main::setupWindowManager(const QString &waylandSocketName, bool slowAnimations, bool uiWatchdog)
 {
-#if !defined(AM_HEADLESS)
+#if defined(AM_HEADLESS)
+    Q_UNUSED(waylandSocketName)
+    Q_UNUSED(slowAnimations)
+    Q_UNUSED(uiWatchdog)
+#else
     QUnifiedTimer::instance()->setSlowModeEnabled(slowAnimations);
 
     m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName);
@@ -594,6 +609,19 @@ void Main::setupWindowManager(const QString &waylandSocketName, bool slowAnimati
 #endif
 }
 
+void Main::setupTouchEmulation(bool enableTouchEmulation)
+{
+    if (enableTouchEmulation) {
+        if (TouchEmulation::isSupported()) {
+            TouchEmulation::createInstance();
+            qCDebug(LogGraphics) << "Touch emulation is enabled: all mouse events will be converted "
+                                    "to touch events.";
+        } else {
+            qCWarning(LogGraphics) << "Touch emulation cannot be enabled. Either it was disabled at "
+                                      "build time or the platform does not support it.";
+        }
+    }
+}
 
 void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
 {
@@ -601,8 +629,12 @@ void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
         iface->beforeQmlEngineLoad(m_engine);
 
     if (Q_UNLIKELY(loadDummyData)) {
-        loadDummyDataFiles();
-        StartupTimer::instance()->checkpoint("after loading dummy-data");
+        if (m_mainQmlLocalFile.isEmpty()) {
+            qCDebug(LogQml) << "Not loading QML dummy data on non-local URL" << m_mainQml;
+        } else {
+            loadQmlDummyDataFiles(m_engine, QFileInfo(m_mainQmlLocalFile).path());
+            StartupTimer::instance()->checkpoint("after loading dummy-data");
+        }
     }
 
     m_engine->load(m_mainQml);
@@ -617,9 +649,11 @@ void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
 
 void Main::showWindow(bool showFullscreen)
 {
-#if !defined(AM_HEADLESS)
+#if defined(AM_HEADLESS)
+    Q_UNUSED(showFullscreen)
+#else
     setQuitOnLastWindowClosed(false);
-    connect(this, &QGuiApplication::lastWindowClosed, this, &Main::shutDown);
+    connect(this, &QGuiApplication::lastWindowClosed, this, [this]() { shutDown(); });
 
     QQuickWindow *window = nullptr;
     QObject *rootObject = m_engine->rootObjects().constFirst();
@@ -639,13 +673,13 @@ void Main::showWindow(bool showFullscreen)
     static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {
         // this is a queued signal, so there may be still one in the queue after calling disconnect()
         if (conn) {
-#if defined(Q_CC_MSVC)
+#  if defined(Q_CC_MSVC)
             qApp->disconnect(conn); // MSVC2013 cannot call static member functions without capturing this
-#else
+#  else
             QObject::disconnect(conn);
-#endif
+#  endif
             StartupTimer::instance()->checkFirstFrame();
-            StartupTimer::instance()->createReport(qSL("System UI"));
+            StartupTimer::instance()->createReport(qSL("System-UI"));
         }
     });
 
@@ -658,6 +692,9 @@ void Main::showWindow(bool showFullscreen)
         window->showFullScreen();
     else
         window->show();
+
+    // now check the surface format, in case we had requested a specific GL version/profile
+    checkOpenGLFormat("main window", window->format());
 
     for (auto iface : qAsConst(m_startupPlugins))
         iface->afterWindowShow(window);
@@ -870,32 +907,6 @@ void Main::registerDBusInterfaces(const std::function<QString(const char *)> &bu
 #endif // defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 }
 
-// copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
-void Main::loadDummyDataFiles()
-{
-    QString directory = QFileInfo(m_mainQml).path();
-
-    QDir dir(directory + qSL("/dummydata"), qSL("*.qml"));
-    QStringList list = dir.entryList();
-    for (int i = 0; i < list.size(); ++i) {
-        QString qml = list.at(i);
-        QQmlComponent comp(m_engine, dir.filePath(qml));
-        QObject *dummyData = comp.create();
-
-        if (comp.isError()) {
-            const QList<QQmlError> errors = comp.errors();
-            for (const QQmlError &error : errors)
-                qWarning() << error;
-        }
-
-        if (dummyData) {
-            qWarning() << "Loaded dummy data:" << dir.filePath(qml);
-            qml.truncate(qml.length()-4);
-            m_engine->rootContext()->setContextProperty(qml, dummyData);
-            dummyData->setParent(m_engine);
-        }
-    }
-}
 
 QVector<const Application *> Main::scanForApplication(const QString &singleAppInfoYaml, const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false)
 {

@@ -1,0 +1,125 @@
+#############################################################################
+##
+## Copyright (C) 2018 Pelagicore AG
+## Contact: https://www.qt.io/licensing/
+##
+## This file is part of the Pelagicore Application Manager.
+##
+## $QT_BEGIN_LICENSE:GPL-EXCEPT-QTAS$
+## Commercial License Usage
+## Licensees holding valid commercial Qt Automotive Suite licenses may use
+## this file in accordance with the commercial license agreement provided
+## with the Software or, alternatively, in accordance with the terms
+## contained in a written agreement between you and The Qt Company.  For
+## licensing terms and conditions see https://www.qt.io/terms-conditions.
+## For further information use the contact form at https://www.qt.io/contact-us.
+##
+## GNU General Public License Usage
+## Alternatively, this file may be used under the terms of the GNU
+## General Public License version 3 as published by the Free Software
+## Foundation with exceptions as appearing in the file LICENSE.GPL3-EXCEPT
+## included in the packaging of this file. Please review the following
+## information to ensure the GNU General Public License requirements will
+## be met: https://www.gnu.org/licenses/gpl-3.0.html.
+##
+## $QT_END_LICENSE$
+##
+#############################################################################
+
+_appman()
+{
+    local cur opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts="--app-image-mount-dir --build-config --builtin-apps-manifest-dir -c --clear-config-cache --config-file \
+--database --dbus --force-multi-process --force-single-process --fullscreen --help -I \
+--installed-apps-manifest-dir --load-dummydata --logging-rule --no-config-cache --no-dlt-logging \
+--no-fullscreen --no-security --no-ui-watchdog -o --option --qml-debug --recreate-database -r --single-app \
+--slow-animations --start-session-dbus --verbose --version --wayland-socket-name"
+
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    else
+        COMPREPLY=( $( compgen -f -- ${cur}) )
+    fi
+}
+complete -o filenames -F _appman appman
+
+_appman-controller()
+{
+    local cur commands opts pos args
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    commands="start-application debug-application stop-application stop-all-applications list-applications \
+show-application install-package remove-package list-installation-locations show-installation-location"
+    opts="-h -v --help --version"
+
+    if [ ${COMP_CWORD} -eq 1 ] && [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    else
+        pos=0
+        args=()
+        for i in "${COMP_WORDS[@]:1:${COMP_CWORD}}" ; do
+            [[ ${i} != -* ]] && ((++pos)) && args+=(${i})
+        done
+
+        if [ ${pos} -eq 1 ]; then
+            COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+        elif [ ${pos} -eq 2 ]; then
+            case "${args[0]}" in
+            start-application|debug-application|stop-application|show-application|remove-package)
+                eval cmd="${COMP_WORDS[0]}"
+                apps="$(${cmd} list-applications 2> /dev/null)"
+                COMPREPLY=( $(compgen -W "${apps}" -- ${cur}) )
+                ;;
+            install-package)
+                COMPREPLY=( $( compgen -f -- ${cur}) )
+                ;;
+            show-installation-location)
+                eval cmd="${COMP_WORDS[0]}"
+                apps="$(${cmd} list-applications 2> /dev/null)"
+                COMPREPLY=( $(compgen -W "${apps}" -- ${cur}) )
+                ;;
+            esac
+        fi
+    fi
+}
+complete -o filenames -F _appman-controller appman-controller
+
+_appman-packager()
+{
+    local cur commands opts pos args
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    commands="create-package dev-sign-package dev-verify-package store-sign-package store-verify-package"
+    opts="-h -v --help --version"
+
+    if [ ${COMP_CWORD} -eq 1 ] && [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    else
+        pos=0
+        args=()
+        for i in "${COMP_WORDS[@]:1:${COMP_CWORD}}" ; do
+            [[ ${i} != -* ]] && ((++pos)) && args+=(${i})
+        done
+
+        if [ ${pos} -eq 1 ]; then
+            COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+        else
+            file=0
+            case "${args[0]}" in
+            create-package)
+                [ ${pos} -eq 3 ] && file=1
+                ;;
+            dev-sign-package|store-sign-package)
+                [ ${pos} -lt 5 ] && file=1
+                ;;
+            dev-verify-package|store-verify-package)
+                file=1
+                ;;
+            esac
+            [ ${file} -eq 1 ] && COMPREPLY=( $( compgen -f -- ${cur}) )
+        fi
+    fi
+}
+complete -o filenames -F _appman-packager appman-packager

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -542,11 +542,6 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
         emit started();
     });
     return true;
-}
-
-bool SoftwareContainer::isStarted() const
-{
-    return (m_pid);
 }
 
 qint64 SoftwareContainer::processId() const

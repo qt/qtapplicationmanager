@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -48,6 +48,7 @@ enum Command {
     StoreVerifyPackage,
 };
 
+// REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
 static struct {
     Command command;
     const char *name;
@@ -125,6 +126,7 @@ int main(int argc, char *argv[])
 
     PackagingJob *p = nullptr;
 
+    // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     switch (command(clp)) {
     default:
     case NoCommand:

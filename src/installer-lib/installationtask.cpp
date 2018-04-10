@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -326,7 +326,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
     }
 
     if (m_foundIcon && m_foundInfo) {
-        qCDebug(LogInstaller) << "emit requestingInstallationAcknowledge" << id() << "<app>";
+        qCDebug(LogInstaller) << "emit requestingInstallationAcknowledge" << id() << "for app" << m_app->id();
         emit m_ai->taskRequestingInstallationAcknowledge(id(), m_app->toVariantMap());
 
         QDir oldDestinationDirectory = m_extractor->destinationDirectory();
@@ -356,6 +356,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         // this will also exclusively lock the application for us
         // m_app ownership is transferred to the ApplicationManager
         m_app->moveToThread(ApplicationManager::instance()->thread());
+        QString appId = m_app->id(); // m_app is gone after the invoke
         QMetaObject::invokeMethod(ApplicationManager::instance(),
                                   "startingApplicationInstallation",
                                   Qt::BlockingQueuedConnection,
@@ -363,7 +364,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
                                   // ugly, but Q_ARG chokes on QT_PREPEND_NAMESPACE_AM...
                                   QArgument<QT_PREPEND_NAMESPACE_AM(Application *)>(QT_STRINGIFY(QT_PREPEND_NAMESPACE_AM(Application *)), m_app.take()));
         if (!m_managerApproval)
-            throw Exception("Application Manager declined the installation of %1").arg(m_app->id());
+            throw Exception("Application Manager declined the installation of %1").arg(appId);
 
         // we're not interested in any other files from here on...
         m_extractor->setFileExtractedCallback(nullptr);

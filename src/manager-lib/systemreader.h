@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -70,6 +70,24 @@ private:
 #endif
     Q_DISABLE_COPY(CpuReader)
 };
+
+class GpuTool;
+
+class GpuReader
+{
+public:
+    GpuReader();
+    void setActive(bool enabled);
+    bool isActive() const;
+    qreal readLoadValue();
+
+private:
+#if defined(Q_OS_LINUX)
+    static GpuTool *s_gpuToolProcess;
+#endif
+    Q_DISABLE_COPY(GpuReader)
+};
+
 
 class MemoryReader
 {

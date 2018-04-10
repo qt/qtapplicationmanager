@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -57,7 +57,7 @@ public:
                          bool onlyOnePositionalArgument = true);
     ~DefaultConfiguration();
 
-    void parse();
+    void parse(QStringList *deploymentWarnings = nullptr) override;
 
     QString mainQmlFile() const;
     QString database() const;
@@ -83,6 +83,9 @@ public:
     QString singleApp() const;
     QStringList loggingRules() const;
     QString style() const;
+    bool enableTouchEmulation() const;
+
+    QVariantMap openGLConfiguration() const;
 
     QVariantList installationLocations() const;
 

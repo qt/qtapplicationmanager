@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -65,29 +65,20 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(qSL("Custom ApplicationManager"));
     QCoreApplication::setApplicationVersion("0.1");
 
-    Logging::initialize();
+    Logging::initialize(argc, argv);
 
     Package::ensureCorrectLocale();
 
-    QString error;
-    if (Q_UNLIKELY(!forkSudoServer(DropPrivilegesPermanently, &error))) {
-        qCCritical(LogSystem) << "ERROR:" << qPrintable(error);
-        return 2;
-    }
-
     try {
-        // this is needed for both WebEngine and Wayland Multi-screen rendering
-        QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#if !defined(QT_NO_SESSIONMANAGER)
-        QGuiApplication::setFallbackSessionManagementEnabled(false);
-#endif
+        QStringList deploymentWarnings;
+        Sudo::forkServer(Sudo::DropPrivilegesPermanently, &deploymentWarnings);
 
         Main a(argc, argv);
 
         DefaultConfiguration cfg;
         cfg.parse();
 
-        a.setup(&cfg);
+        a.setup(&cfg, deploymentWarnings);
         a.loadQml(cfg.loadDummyData());
         a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
 

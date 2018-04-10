@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -58,7 +58,7 @@ ApplicationManagerWindow {
 
     Image {
         anchors.centerIn: parent
-        source: "icon.png"
+        source: ApplicationInterface.icon
 
         MouseArea {
             anchors.fill: parent

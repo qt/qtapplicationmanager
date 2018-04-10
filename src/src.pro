@@ -31,11 +31,14 @@ window_lib.depends = manager_lib
 monitor_lib.subdir = monitor-lib
 monitor_lib.depends = manager_lib window_lib
 
+shared_main_lib.subdir = shared-main-lib
+shared_main_lib.depends = common_lib
+
 launcher_lib.subdir = launcher-lib
-launcher_lib.depends = application_lib notification_lib
+launcher_lib.depends = application_lib notification_lib shared_main_lib
 
 main_lib.subdir = main-lib
-main_lib.depends = manager_lib installer_lib window_lib monitor_lib
+main_lib.depends = shared_main_lib manager_lib installer_lib window_lib monitor_lib
 
 !disable-external-dbus-interfaces:qtHaveModule(dbus) {
     dbus_lib.subdir = dbus-lib
@@ -59,8 +62,6 @@ tools_dumpqmltypes.depends = manager_lib installer_lib window_lib monitor_lib la
 tools_packager.subdir = tools/packager
 tools_packager.depends = package_lib
 
-tools_deployer.subdir = tools/deployer
-
 tools_controller.subdir = tools/controller
 tools_controller.depends = common_lib
 
@@ -83,6 +84,7 @@ SUBDIRS = \
         installer_lib \
         window_lib \
         monitor_lib \
+        shared_main_lib \
         main_lib \
         tools_appman \
         # Although the testrunner is in tools we don't want to build it with tools-only
@@ -100,7 +102,6 @@ SUBDIRS = \
 
 !android:SUBDIRS += \
     tools_packager \
-    tools_deployer \
 
 qtHaveModule(dbus):SUBDIRS += \
     tools_controller \

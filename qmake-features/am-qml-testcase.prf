@@ -72,3 +72,17 @@ for(file, TEST_FILES) {
 }
 check.commands += true;
 OTHER_FILES += $$TEST_FILES
+
+# Copy assets to build folder
+for (d , DIRECTORIES) {
+    win32: do_copydata.commands += $(COPY_DIR) $$shell_path($$_PRO_FILE_PWD_/$${d}) $$shell_path($$OUT_PWD/$${d}) $$escape_expand(\n\t)
+    else: do_copydata.commands += $(COPY_DIR) $$shell_path($$_PRO_FILE_PWD_/$${d}) $$shell_path($$OUT_PWD) $$escape_expand(\n\t)
+}
+for (f , FILES) {
+    do_copydata.commands += $(COPY) $$shell_path($$_PRO_FILE_PWD_/$${f}) $$shell_path($$OUT_PWD/$${f}) $$escape_expand(\n\t)
+}
+
+!equals(_PRO_FILE_PWD_, $$OUT_PWD) {
+    check.depends = do_copydata
+    QMAKE_EXTRA_TARGETS += do_copydata
+}

@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.famw.parent3'
+icon:    'icon.png'
+code:    'parent3.qml'
+runtime: 'qml'
+name:
+  en: 'Dynamically loaded FakeApplicationManagerWindow'

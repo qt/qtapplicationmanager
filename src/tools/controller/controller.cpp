@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -142,6 +142,7 @@ enum Command {
     ShowInstallationLocation
 };
 
+// REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
 static struct {
     Command command;
     const char *name;
@@ -182,7 +183,7 @@ static void stopApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false);
 static void stopAllApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void listApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void showApplication(const QString &appId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
-static void installPackage(const QString &package, const QString &location) Q_DECL_NOEXCEPT_EXPR(false);
+static void installPackage(const QString &package, const QString &location, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false);
 static void removePackage(const QString &package, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
 static void showInstallationLocation(const QString &location, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
@@ -254,6 +255,7 @@ int main(int argc, char *argv[])
     }
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
 
+    // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     try {
         switch (command(clp)) {
         default:
@@ -355,13 +357,14 @@ int main(int argc, char *argv[])
 
         case InstallPackage:
             clp.addOption({ { qSL("l"), qSL("location") }, qSL("Set a custom installation location."), qSL("installation-location"), qSL("internal-0") });
+            clp.addOption({ { qSL("a"), qSL("acknowledge") }, qSL("Automatically acknowledge the installation (unattended mode).") });
             clp.addPositionalArgument(qSL("package"), qSL("The file name of the package; can be - for stdin."));
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            installPackage(clp.positionalArguments().at(1), clp.value(qSL("l")));
+            installPackage(clp.positionalArguments().at(1), clp.value(qSL("l")), clp.isSet(qSL("a")));
             break;
 
         case RemovePackage:
@@ -568,7 +571,7 @@ void showApplication(const QString &appId, bool asJson) Q_DECL_NOEXCEPT_EXPR(fal
     });
 }
 
-void installPackage(const QString &package, const QString &location) Q_DECL_NOEXCEPT_EXPR(false)
+void installPackage(const QString &package, const QString &location, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString packageFile = package;
 
@@ -620,16 +623,18 @@ void installPackage(const QString &package, const QString &location) Q_DECL_NOEX
 
     // as soon as we have the manifest available: get the app id and acknowledge the installation
 
-    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskRequestingInstallationAcknowledge,
-                     [](const QString &taskId, const QVariantMap &metadata) {
-        if (taskId != installationId)
-            return;
-        applicationId = metadata.value(qSL("id")).toString();
-        if (applicationId.isEmpty())
-            throw Exception(Error::IO, "could not find a valid application id in the package - got: %1").arg(applicationId);
-        fprintf(stdout, "Acknowledging package installation...\n");
-        dbus.installer()->acknowledgePackageInstallation(taskId);
-    });
+    if (acknowledge) {
+        QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskRequestingInstallationAcknowledge,
+                         [](const QString &taskId, const QVariantMap &metadata) {
+            if (taskId != installationId)
+                return;
+            applicationId = metadata.value(qSL("id")).toString();
+            if (applicationId.isEmpty())
+                throw Exception(Error::IO, "could not find a valid application id in the package - got: %1").arg(applicationId);
+            fprintf(stdout, "Acknowledging package installation...\n");
+            dbus.installer()->acknowledgePackageInstallation(taskId);
+        });
+    }
 
     // on failure: quit
 

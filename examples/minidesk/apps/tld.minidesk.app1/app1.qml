@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -63,7 +63,7 @@ ApplicationManagerWindow {
         color: "peru"
 
         Image {
-            source: "icon.png"
+            source: ApplicationInterface.icon
             anchors.centerIn: parent
         }
 
@@ -74,7 +74,7 @@ ApplicationManagerWindow {
 
         MouseArea {
             anchors.fill: parent
-            onPressed: {    // onClicked: see QTBUG-60725
+            onClicked: {
                 if (rotation.paused) {
                     rotation.resume();
                 } else {

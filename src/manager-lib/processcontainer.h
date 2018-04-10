@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -97,6 +97,7 @@ private:
     };
 
     MyQProcess m_process;
+    qint64 m_pid = 0;
 };
 
 class ProcessContainer : public AbstractContainer

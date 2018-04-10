@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -86,7 +86,7 @@ Rectangle {
         }
     }
 
-    // System UI chrome for applications
+    // System-UI chrome for applications
     Repeater {
         id: windows
         model: menuItems.model
@@ -131,7 +131,7 @@ Rectangle {
         }
     }
 
-    // System UI for a pop-up and notification
+    // System-UI for a pop-up and notification
     Item {
         id: popUpContainer
         z: 30000

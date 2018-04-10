@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -80,6 +80,8 @@ signals:
 
     Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
     Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
+
+    Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
 
 protected:
     ApplicationInterface(QObject *parent)

@@ -1,0 +1,15 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installedAppsManifestDir: "/tmp/am-famw-test/manifests"
+  appImageMountDir: "/tmp/am-famw-test/image-mounts"
+  database: "/tmp/am-famw-test/apps.db"
+
+installationLocations:
+- id: "internal-0"
+  installationPath: "/tmp/am-famw-test/apps"
+  documentPath: "/tmp/am-famw-test/docs"
+  mountPoint: "/tmp"
+  isDefault: true

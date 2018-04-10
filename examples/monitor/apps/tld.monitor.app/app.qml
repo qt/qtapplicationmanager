@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -69,12 +69,11 @@ ApplicationWindow {
         running: true
         repeat: true
         onTriggered: {
-            if (count < 500) {
+            if (count < 100) {
                 var arr = [];
-                var busy = Math.random() * 5000;
-                while (busy > 0)
-                    arr[busy] = busy--;
-                interval = 20 + Math.random() * 80;
+                var idx = 200000;
+                while (idx > 0)
+                    arr[idx] = idx--;
                 count++;
             } else {
                 repeat = false;

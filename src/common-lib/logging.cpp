@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -74,13 +74,15 @@ QT_BEGIN_NAMESPACE_AM
 /*
 //! [am-logging-categories]
 \list
-\li \c am.installer - Installer sub-system
-\li \c am.notify - Notification sub-system
-\li \c am.qml - QML messages
-\li \c am.qml.ipc - QML IPC
-\li \c am.runtime.qml - QML runtime
 \li \c am.system - General system messages
-\li \c am.wayland - Wayland sub-system
+\li \c am.installer - Installer sub-system
+\li \c am.graphics - OpenGL/UI related messages
+\li \c am.wayland.debug - Wayland protocol related messages
+\li \c am.qml - QML messages
+\li \c am.runtime.qml - QML runtime
+\li \c am.qml.ipc - QML IPC
+\li \c am.notify - Notification sub-system
+\li \c am.deployment - Deployment hints
 \li \c general - General messages not part of any ApplicationManager sub-system
 \endlist
 //! [am-logging-categories]
@@ -89,11 +91,13 @@ QDLT_REGISTER_CONTEXT_ON_FIRST_USE(true)
 QDLT_REGISTER_APPLICATION("PCAM", "Pelagicore Application-Manager")
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General system messages")
 QDLT_LOGGING_CATEGORY(LogInstaller, "am.installer", "INST", "Installer sub-system")
-QDLT_LOGGING_CATEGORY(LogWayland, "am.wayland", "WAYL", "Wayland sub-system")
+QDLT_LOGGING_CATEGORY(LogGraphics, "am.graphics", "GRPH", "OpenGL/UI related messages")
+QDLT_LOGGING_CATEGORY(LogWaylandDebug, "am.wayland.debug", "WAYL", "Wayland protocol related messages")
 QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "QML messages")
-QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notification sub-system")
 QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime")
 QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC")
+QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notification sub-system")
+QDLT_LOGGING_CATEGORY(LogDeployment, "am.deployment", "DPLM", "Deployment hints")
 QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "General messages not part of any ApplicationManager sub-system")
 QDLT_FALLBACK_CATEGORY(LogGeneral)
 
@@ -105,6 +109,7 @@ bool Logging::s_dltEnabled =
         false;
 #endif
 bool Logging::s_useDefaultQtHandler = false;
+QStringList Logging::s_rules;
 QtMessageHandler Logging::s_defaultQtHandler = nullptr;
 QByteArray Logging::s_applicationId = QByteArray();
 
@@ -225,18 +230,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
             while (spacing < 0)
                 spacing += consoleWidth;
         }
-#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
-        // efficiently appending spaces without allocating is hard in Qt 5.6
-        static const char spacingStr[] = "                                                                               ";
-        Q_STATIC_ASSERT(sizeof(spacingStr) == 80);
-        while (spacing > 0) {
-            int spacingLen = qMin(spacing, int(sizeof(spacingStr)) - 1);
-            out.append(spacingStr, spacingLen);
-            spacing -= spacingLen;
-        }
-#else
         out.append(spacing, ' ');
-#endif
         out.append('[');
 
         color(out, Magenta);
@@ -288,6 +282,20 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
 void Logging::initialize()
 {
+    initialize(0, nullptr);
+}
+
+void Logging::initialize(int argc, const char * const *argv)
+{
+    if (argc > 0 && argv) {
+        for (int i = 1; i < argc; ++i) {
+            if (strcmp("--no-dlt-logging", argv[i]) == 0) {
+                Logging::setDltEnabled(false);
+                break;
+            }
+        }
+    }
+
     auto messageHandler = [](QtMsgType msgType, const QMessageLogContext &context, const QString &message) {
 #if defined(QT_GENIVIEXTRAS_LIB)
         if (s_dltEnabled)
@@ -301,6 +309,17 @@ void Logging::initialize()
 
     s_useDefaultQtHandler = qEnvironmentVariableIsSet("QT_MESSAGE_PATTERN");
     s_defaultQtHandler = qInstallMessageHandler(messageHandler);
+}
+
+QStringList Logging::filterRules()
+{
+    return s_rules;
+}
+
+void Logging::setFilterRules(const QStringList &rules)
+{
+    s_rules = rules;
+    QLoggingCategory::setFilterRules(rules.join(qL1C('\n')));
 }
 
 QByteArray Logging::applicationId()

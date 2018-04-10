@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -46,10 +46,14 @@
 #include <QObject>
 #include <QPointer>
 #include <QQmlEngine>
+#include <QRegExp>
+#include <QRegularExpression>
 
+#include <qlogging.h>
 #include <QtQml/qqmlpropertymap.h>
 #include <QtTest/qtestsystem.h>
 #include <private/quicktestresult_p.h>
+#include <private/qtestlog_p.h>
 
 QT_BEGIN_NAMESPACE
 namespace QTest {
@@ -65,6 +69,7 @@ class QTestRootObject : public QObject
     Q_PROPERTY(bool windowShown READ windowShown NOTIFY windowShownChanged)
     Q_PROPERTY(bool hasTestCase READ hasTestCase WRITE setHasTestCase NOTIFY hasTestCaseChanged)
     Q_PROPERTY(QObject *defined READ defined)
+
 public:
     QTestRootObject(QObject *parent = nullptr)
         : QObject(parent)
@@ -114,11 +119,77 @@ private:
     friend class TestRunner;
 };
 
+class AmTest : public QObject
+{
+    Q_OBJECT
+
+    AmTest() {}
+
+public:
+    enum MsgType { DebugMsg, WarningMsg, CriticalMsg, FatalMsg, InfoMsg, SystemMsg = CriticalMsg };
+    Q_ENUM(MsgType)
+
+    static AmTest *instance();
+
+    Q_INVOKABLE void ignoreMessage(MsgType type, const char* msg);
+    Q_INVOKABLE void ignoreMessage(MsgType type, const QRegExp &expression);
+};
+
+AmTest *AmTest::instance()
+{
+    static QPointer<AmTest> object = new AmTest;
+    if (!object) {
+        qWarning("A new appman test object has been created, the behavior may be compromised");
+        object = new AmTest;
+    }
+    return object;
+}
+
+static QtMsgType convertMsgType(AmTest::MsgType type)
+{
+    QtMsgType ret;
+
+    switch (type) {
+    case AmTest::WarningMsg: ret = QtWarningMsg; break;
+    case AmTest::CriticalMsg: ret = QtCriticalMsg; break;
+    case AmTest::FatalMsg: ret = QtFatalMsg; break;
+    case AmTest::InfoMsg: ret = QtInfoMsg; break;
+    default: ret = QtDebugMsg;
+    }
+    return ret;
+}
+
+void AmTest::ignoreMessage(MsgType type, const char *msg)
+{
+    QTestLog::ignoreMessage(convertMsgType(type), msg);
+}
+
+void AmTest::ignoreMessage(MsgType type, const QRegExp &expression)
+{
+#ifndef QT_NO_REGULAREXPRESSION
+    QRegularExpression re(expression.pattern());
+    if (expression.caseSensitivity() == Qt::CaseInsensitive)
+        re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
+    QTestLog::ignoreMessage(convertMsgType(type), re);
+#else
+    Q_UNUSED(type);
+    Q_UNUSED(expression);
+    qWarning() << "Cannot ignore message: regular expressions are not supported";
+#endif
+}
+
 static QObject *testRootObject(QQmlEngine *engine, QJSEngine *jsEngine)
 {
     Q_UNUSED(engine);
     Q_UNUSED(jsEngine);
     return QTestRootObject::instance();
+}
+
+static QObject *amTest(QQmlEngine *engine, QJSEngine *jsEngine)
+{
+    Q_UNUSED(engine);
+    Q_UNUSED(jsEngine);
+    return AmTest::instance();
 }
 
 void TestRunner::initialize(const QStringList &testRunnerArguments)
@@ -137,8 +208,9 @@ void TestRunner::initialize(const QStringList &testRunnerArguments)
     QuickTestResult::parseArgs(testArgV.size(), testArgV.data());
     qputenv("QT_QTESTLIB_RUNNING", "1");
 
-    // Register the test object
+    // Register the test object and application-manager test add-on
     qmlRegisterSingletonType<QTestRootObject>("Qt.test.qtestroot", 1, 0, "QTestRootObject", testRootObject);
+    qmlRegisterSingletonType<AmTest>("QtApplicationManager", 1, 0, "AmTest", amTest);
 
     QTestRootObject::instance()->init();
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the documentation of the Pelagicore Application Manager.
@@ -43,44 +43,81 @@ developer only (development mode), and packages that are signed by a trusted app
 
 \table
 \header
-    \li Action
-    \li Options
+    \li Command
+    \li Arguments
     \li Description
 \row
     \li \span {style="white-space: nowrap"} {\c create-package}
-    \li \c{<package> <source directory>}
-    \li Create a new package named \a package from the application in \a{source directory}. The
+    \li \c{<package>}
+
+        \c{<source directory>}
+    \li Creates a new package named \a package from the application in \a{source directory}. The
         directory needs to at least contain an \l{Manifest definition}{\c info.yaml} as well as an
         \c{icon.png} file.
         The tool will do a sanity-check on the \c info.yaml file before actually creating the
         package.
         All normal files and directories in the source directory will be copied into package. The
         only meta-data that is copied from the filesystem is the filename, and the user's
-        eXecutable-bit.
+        eXecutable-bit. The following options are supported:
+
+        \c{--verbose}: Dump the package's meta-data header and footer information to stdout.
+
+        \c{--json}: Output in JSON format instead of YAML.
 \row
     \li \span {style="white-space: nowrap"} {\c dev-sign-package}
-    \li \c{<package> <signed-package> <certificate> <password>}
+    \li \c{<package>}
+
+        \c{<signed-package>}
+
+        \c{<certificate>}
+
+        \c{<password>}
     \li Takes the input \c package, adds a developer signature and writes the output to \c signed-package.
         You need to supply a \c certificate in P12 format together with a \c password matching the
-        certificate.
+        certificate. The following options are supported:
+
+        \c{--verbose}: Dump the package's meta-data header and footer information to stdout.
+
+        \c{--json}: Output in JSON format instead of YAML.
 \row
     \li \span {style="white-space: nowrap"} {\c dev-verify-package}
-    \li \c{<package> <ca-certificates...>}
+    \li \c{<package>}
+
+        \c{<ca-certificates...>}
     \li Reads the input \c package and tries to verify the developer signature using the given \c
-        ca-certificates.
+        ca-certificates. The following options are supported:
+
+        \c{--verbose}: Print details regarding the verification to stdout.
 \row
     \li \span {style="white-space: nowrap"} {\c store-sign-package}
-    \li \c{<package> <signed-package> <certificate> <password> [device-id]}
+    \li \c{<package>}
+
+        \c{<signed-package>}
+
+        \c{<certificate>}
+
+        \c{<password>}
+
+        \c{[device-id]}
     \li Takes the input \c package, adds a store signature and writes the output to \c signed-package.
         You need to supply a \c certificate in P12 format together with a \c password matching the
         certificate. If you specify the optional \c device-id, the resulting package can only be
-        installed on this specific device.
+        installed on this specific device. The following options are supported:
+
+        \c{--verbose}: Dump the package's meta-data header and footer information to stdout.
+
+        \c{--json}: Output in JSON format instead of YAML.
 \row
     \li \span {style="white-space: nowrap"} {\c store-verify-package}
-    \li \c{<package> <ca-certificates...> <device-id>}
-    \li Reads the input \c package and tries to verify the store signature using the given \c
-        ca-certificates.
+    \li \c{<package>}
 
+        \c{<ca-certificates...>}
+
+        \c{<device-id>}
+    \li Reads the input \c package and tries to verify the store signature using the given \c
+        ca-certificates. The following options are supported:
+
+        \c{--json}: Output in JSON format instead of YAML.
 \endtable
 
 The \c{appman-packager} naturally supports the standard Unix \c{--help} command-line option.

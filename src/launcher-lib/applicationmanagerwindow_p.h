@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -59,15 +59,12 @@ public:
     explicit ApplicationManagerWindow(QWindow *parent = nullptr);
     ~ApplicationManagerWindow();
 
-    Q_INVOKABLE bool setWindowProperty(const QString &name, const QVariant &value);
+    Q_INVOKABLE void setWindowProperty(const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;
     Q_INVOKABLE QVariantMap windowProperties() const;
 
 signals:
     void windowPropertyChanged(const QString &name, const QVariant &value);
-
-private slots:
-    void onWindowPropertyChangedInternal(QPlatformWindow *window, const QString &name);
 
 private:
     ApplicationManagerWindowPrivate *d;

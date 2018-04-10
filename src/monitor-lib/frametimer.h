@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -42,7 +42,7 @@
 #pragma once
 
 #include <QElapsedTimer>
-#include "global.h"
+#include <QtAppManCommon/global.h>
 #include <limits>
 
 QT_BEGIN_NAMESPACE_AM

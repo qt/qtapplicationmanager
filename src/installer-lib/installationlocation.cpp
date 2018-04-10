@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -274,10 +274,6 @@ QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(c
             throw Exception(Error::Parse, "could not parse the installation location with id %1").arg(id);
         }
     }
-
-    if (locations.isEmpty())
-        throw Exception(Error::Parse, "no installation locations defined in config file");
-
     return locations;
 }
 

@@ -1,0 +1,104 @@
+/****************************************************************************
+**
+** Copyright (C) 2018 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\example custom-appman
+\title Implementing a Custom Application-Manager Example
+\image custom-appman.png Screenshot
+\brief Basic structure and starting point for a custom application-manager executable.
+\ingroup applicationmanager-examples
+
+\section1 Introduction
+
+The application-manager is compiled as a self-contained executable that can be configured
+in large parts through the YAML based config file system and startup plugins. However it may still
+be necessary to implement a custom application-manager executable to have more influence over the
+startup behavior.
+
+\note Please note however, that all C++ classes in the application-manager modules are considered private
+API at the moment, so there are no compatibility guarantees at all.
+
+If you still desire to go down that road however, this example will provide you with an starting
+point to build your custom implementation upon.
+
+Keep in mind though, that this custom application-manager executable will need a System-UI to
+display something on the screen, just as the standard \c appman executable.
+
+\section1 Walkthrough
+
+Following is a breakdown of the minimal code needed for such a custom implementation:
+
+\quotefromfile custom-appman/custom-appman.cpp
+\skipto #include
+\printuntil QT_USE_NAMESPACE_AM
+
+The application-manager is split into functional building blocks/libraries. These includes will
+pull in the basic set of classes needed.
+In order to avoid possible clashes with QML plugins, all of the application-manager's symbols are
+namespaced - \c QT_USE_NAMESPACE_AM will expand to the matching \c using statement.
+
+\skipto QCoreApplication::setApplicationName
+\printuntil QCoreApplication::setApplicationVersion
+
+Not application-manager specific, but having an application name and version set is generally
+a good idea.
+
+\printline Logging::init
+
+We want the logging part of the application-manager initialized as early as possible, especially
+when dealing with DLT logging.
+
+\printline Package::ensure
+
+If you are using the installer part of the application-manager, this function needs to be called
+\e before the QApplication constructor to make sure your C locale is an UTF-8 variant (this is a
+requirement in order to get deterministic results when using \c libarchive with non-ASCII filenames).
+
+\printto try
+
+Again, for the installer part only, an additional setup step is necessary before running the
+QApplication constructor: if the executable is setuid-root, this call will \c fork of a child
+process which keeps the root privileges while the main process permanently drop them.
+
+\printuntil return 2
+\printline }
+
+This \c try block is the heart of the custom application-manager. You need to create a \c Main
+(which is a class derived from QGuiApplication) object plus a suitable configuration object: in
+this simple case we just use the application-manager's default YAML parsing, so we instantiate
+a \c DefaultConfiguration object.
+The rest of the function consists of parsing the configuration and then calling the relevant
+setup routines on the \c Main object.
+Since \c Main can be derived differently depending on your application-manager configuration
+(headless, with widgets or standard), you would need to know the correct base-class for the exec()
+call - the \c MainBase typedef will circumvent that problem though.
+
+Keep in mind that most functions in the application-manager will throw exceptions that are
+derived from \c std::exception, so a \c catch handler is a must.
+
+*/

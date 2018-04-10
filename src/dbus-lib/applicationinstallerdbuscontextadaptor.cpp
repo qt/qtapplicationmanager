@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -46,7 +46,14 @@
 #include "exception.h"
 #include "logging.h"
 
+
 QT_BEGIN_NAMESPACE_AM
+
+static QString taskStateToString(AsynchronousTask::TaskState state)
+{
+    const char *cstr = QMetaEnum::fromType<AsynchronousTask::TaskState>().valueToKey(state);
+    return QString::fromUtf8(cstr);
+}
 
 ApplicationInstallerDBusContextAdaptor::ApplicationInstallerDBusContextAdaptor(ApplicationInstaller *ai)
     : AbstractDBusContextAdaptor(ai)
@@ -82,7 +89,9 @@ ApplicationInstallerAdaptor::ApplicationInstallerAdaptor(QObject *parent)
     connect(ai, &ApplicationInstaller::taskStarted,
             this, &ApplicationInstallerAdaptor::taskStarted);
     connect(ai, &ApplicationInstaller::taskStateChanged,
-            this, &ApplicationInstallerAdaptor::taskStateChanged);
+            [this](const QString &taskId, AsynchronousTask::TaskState newState) {
+                emit taskStateChanged(taskId, taskStateToString(newState));
+            });
 }
 
 ApplicationInstallerAdaptor::~ApplicationInstallerAdaptor()
@@ -194,6 +203,5 @@ QString ApplicationInstallerAdaptor::startPackageInstallation(const QString &ins
 QString ApplicationInstallerAdaptor::taskState(const QString &taskId)
 {
     AM_AUTHENTICATE_DBUS(QString)
-    return ApplicationInstaller::instance()->taskState(taskId);
+    return taskStateToString(ApplicationInstaller::instance()->taskState(taskId));
 }
-

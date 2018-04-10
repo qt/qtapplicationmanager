@@ -13,6 +13,7 @@ else:contains(QT_BUILD_PARTS, "examples"):CONFIG += enable-examples
 load(configure)
 qtCompileTest(libarchive)
 qtCompileTest(libyaml)
+!headless:qtCompileTest(touchemulation)
 
 qtHaveModule(compositor)|if(qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private)) {
     CONFIG += am_compatible_compositor
@@ -25,7 +26,7 @@ if(linux|force-libcrypto) {
     !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")|contains(QT_CONFIG,"ssl")):error("Qt was built without OpenSSL support.")
 }
 
-MIN_MINOR=6
+MIN_MINOR=9
 
 !equals(QT_MAJOR_VERSION, 5)|lessThan(QT_MINOR_VERSION, $$MIN_MINOR):error("This application needs to be built against Qt 5.$${MIN_MINOR}+")
 
@@ -82,7 +83,9 @@ printConfigLine("Qt installation", $$[QT_HOST_BINS])
 printConfigLine("Debug or release", $$check_debug, white)
 printConfigLine("Installation prefix", $$INSTALL_PREFIX, auto)
 printConfigLine("Tools only build", $$yesNo(CONFIG(tools-only)), no)
+printConfigLine("Enable support for QtWidgets", $$yesNo(CONFIG(enable-widgets)), auto)
 printConfigLine("Headless", $$yesNo(CONFIG(headless)), auto)
+printConfigLine("Touch emulation", $$yesNo(CONFIG(config_touchemulation)), auto)
 printConfigLine("QtCompositor support", $$yesNo(CONFIG(am_compatible_compositor)), auto)
 printConfigLine("Multi-process mode", $$check_multi, auto)
 printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)

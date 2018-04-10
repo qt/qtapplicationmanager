@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -942,7 +942,10 @@ int main(int argc, char **argv)
 {
     Package::ensureCorrectLocale();
 
-    startedSudoServer = forkSudoServer(DropPrivilegesPermanently, &sudoServerError);
+    try {
+        Sudo::forkServer(Sudo::DropPrivilegesPermanently);
+        startedSudoServer = true;
+    } catch (...) { }
 
     QCoreApplication a(argc, argv);
     tstApplicationInstaller = new tst_ApplicationInstaller(&a);

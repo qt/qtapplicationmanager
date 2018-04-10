@@ -20,5 +20,8 @@
     </signal>
     <method name="finishedInitialization">
     </method>
+    <signal name="slowAnimationsChanged">
+      <arg name="isSlow" type="b" direction="out"/>
+    </signal>
   </interface>
 </node>

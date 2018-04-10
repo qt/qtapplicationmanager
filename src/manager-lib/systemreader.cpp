@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -63,6 +63,14 @@ QT_END_NAMESPACE_AM
 #  include <qplatformdefs.h>
 #  include <QElapsedTimer>
 #  include <QSocketNotifier>
+#  include <QProcess>
+#  include <QCoreApplication>
+#  if !defined(AM_HEADLESS)
+#    include <QOffscreenSurface>
+#    include <QOpenGLContext>
+#    include <QOpenGLFunctions>
+#    include <QAtomicInteger>
+#  endif
 
 #  include <sys/eventfd.h>
 #  include <fcntl.h>
@@ -140,6 +148,176 @@ qreal CpuReader::readLoadValue()
     return m_load;
 }
 
+class GpuTool : protected QProcess
+{
+public:
+    GpuTool()
+        : QProcess(qApp)
+    {
+        QByteArray vendor;
+#  if !defined(AM_HEADLESS)
+        auto readVendor = [&vendor](QOpenGLContext *c) {
+            const GLubyte *p = c->functions()->glGetString(GL_VENDOR);
+            if (p)
+                vendor = QByteArray(reinterpret_cast<const char *>(p)).toLower();
+        };
+
+        if (QOpenGLContext::currentContext()) {
+            readVendor(QOpenGLContext::currentContext());
+        } else {
+            QOpenGLContext c;
+            if (c.create()) {
+                QOffscreenSurface s;
+                s.setFormat(c.format());
+                s.create();
+                c.makeCurrent(&s);
+                readVendor(&c);
+                c.doneCurrent();
+            }
+        }
+#  endif
+        if (vendor.contains("intel")) {
+            setProgram(qSL("intel_gpu_top"));
+            setArguments({ qSL("-o-"), qSL("-s 1000") });
+            m_vendor = Intel;
+        } else if (vendor.contains("nvidia")) {
+            setProgram(qSL("nvidia-smi"));
+            setArguments({ qSL("dmon"), qSL("--select"), qSL("u") });
+            m_vendor = Nvidia;
+        }
+
+        QObject::connect(this, static_cast<void(QProcess::*)(int)>(&QProcess::finished), this, [this](int exitCode) {
+            if (m_refCount) {
+                qCWarning(LogSystem) << "Failed to run GPU monitoring tool:"
+                                     << program() << arguments().join(qSL(" ")) << " - "
+                                     << "exited with code:" << exitCode;
+            }
+        });
+
+        QObject::connect(this, &QProcess::readyReadStandardOutput, this, [this]() {
+            while (canReadLine()) {
+                const QByteArray str = readLine();
+                if (str.isEmpty() || (str.at(0) == '#'))
+                    continue;
+
+                int pos = 0;
+                QVector<qreal> values;
+
+                while (pos < str.size() && values.size() < 2) {
+                    if (isspace(str.at(pos))) {
+                        ++pos;
+                        continue;
+                    }
+                    char *endPtr = nullptr;
+#if defined(Q_OS_ANDROID)
+                    qreal val = strtod(str.constData() + pos, &endPtr); // check missing for over-/underflow
+#else
+                    static locale_t cLocale = newlocale(LC_ALL_MASK, "C", NULL);
+                    qreal val = strtod_l(str.constData() + pos, &endPtr, cLocale); // check missing for over-/underflow
+#endif
+                    values << val;
+                    pos = endPtr - str.constData() + 1;
+                }
+
+                switch (m_vendor) {
+                case Intel:
+                    if (values.size() >= 2)
+                        m_lastValue = values.at(1) / 100;
+                    break;
+                case Nvidia:
+                    if (values.size() >= 2) {
+                        if (values.at(0) == 0)  // hardcoded to first gfx card
+                            m_lastValue = values.at(1) / 100;
+                    }
+                    break;
+                default:
+                    m_lastValue = -1;
+                    break;
+                }
+            }
+        });
+    }
+
+    void ref()
+    {
+        if (m_refCount.ref()) {
+            if (!isRunning()) {
+                start(QIODevice::ReadOnly);
+                if (!waitForStarted(2000)) {
+                    qCWarning(LogSystem) << "Could not start GPU monitoring tool:"
+                                         << program() << arguments().join(qSL(" ")) << " - "
+                                         << errorString();
+                }
+            }
+        }
+    }
+
+    void deref()
+    {
+        if (!m_refCount.deref()) {
+            if (isRunning()) {
+                kill();
+                waitForFinished();
+            }
+        }
+    }
+
+    bool isRunning() const
+    {
+        return (state() == QProcess::Running);
+    }
+
+    bool isSupported() const
+    {
+        return m_vendor != Unsupported;
+    }
+
+    qreal loadValue() const
+    {
+        return m_lastValue;
+    }
+
+private:
+    QAtomicInteger<int> m_refCount;
+    qreal m_lastValue = 0;
+
+    enum Vendor {
+        Unsupported = 0,
+        Intel,
+        Nvidia
+    };
+    Vendor m_vendor = Unsupported;
+};
+
+GpuTool *GpuReader::s_gpuToolProcess = nullptr;
+
+GpuReader::GpuReader()
+{ }
+
+void GpuReader::setActive(bool enabled)
+{
+    if (!s_gpuToolProcess)
+        s_gpuToolProcess = new GpuTool();
+
+    if (!s_gpuToolProcess->isSupported()) {
+        qCWarning(LogSystem) << "GPU monitoring is not supported on this platform.";
+    } else {
+        if (enabled)
+            s_gpuToolProcess->ref();
+        else
+            s_gpuToolProcess->deref();
+    }
+}
+
+bool GpuReader::isActive() const
+{
+    return s_gpuToolProcess ? s_gpuToolProcess->isRunning() : false;
+}
+
+qreal GpuReader::readLoadValue()
+{
+    return s_gpuToolProcess ? s_gpuToolProcess->loadValue() : -1;
+}
 
 // TODO: can we always expect cgroup FS to be mounted on /sys/fs/cgroup?
 static const QString cGroupsMemoryBaseDir = qSL("/sys/fs/cgroup/memory/");
@@ -555,6 +733,22 @@ QT_END_NAMESPACE_AM
 #if !defined(Q_OS_LINUX)
 
 QT_BEGIN_NAMESPACE_AM
+
+GpuReader::GpuReader()
+{ }
+
+void GpuReader::setActive(bool /*enable*/)
+{ }
+
+bool GpuReader::isActive() const
+{
+    return false;
+}
+
+qreal GpuReader::readLoadValue()
+{
+    return 0;
+}
 
 IoReader::IoReader(const char *device)
 {

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -85,7 +85,7 @@ ApplicationManagerAdaptor::ApplicationManagerAdaptor(QObject *parent)
 
     // connect this signal via a lambda, since it needs a type conversion
     connect(am, &ApplicationManager::applicationRunStateChanged,
-            this, [this](const QString &id, ApplicationManager::RunState runState) {
+            this, [this](const QString &id, Application::RunState runState) {
         emit applicationRunStateChanged(id, runState);
     });
 }

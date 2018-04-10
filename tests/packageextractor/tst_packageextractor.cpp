@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -137,7 +137,7 @@ void tst_PackageExtractor::extractAndVerify_data()
                                 {  m_taest, 17 } };
 
     QTest::newRow("invalid-url")    << "packages/no-such-file.appkg"
-                                    << false << "~Error opening .*: No such file or directory"
+                                    << false << "~Error opening .*: (No such file or directory|The system cannot find the file specified\\.)"
                                     << noEntries << noContent << noSizes;
     QTest::newRow("invalid-format") << "packages/test-invalid-format.appkg"
                                     << false << "~.* could not open archive: Unrecognized archive format"

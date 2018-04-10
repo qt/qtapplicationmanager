@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -178,8 +178,8 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
     \row
         \li \c capabilities
         \li list<string>
-        \li A list of applications capabilities (see info.yaml). Any application that has on of these
-            capabilities is allowed to use this interface.
+        \li A list of applications capabilities (see info.yaml). Any application that has one of
+            these capabilities is allowed to use this interface.
     \endtable
 
     All of the filter fields have to match, but only fields that are actually set are taken into

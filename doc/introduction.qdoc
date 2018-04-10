@@ -1,0 +1,174 @@
+/****************************************************************************
+**
+** Copyright (C) 2018 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\page introduction.html
+\title The Qt Application Manager
+
+The Qt Application Manager is a daemon, that helps you with creating embedded Linux systems that
+have a highly complex UI setup: these can optionally be split into a multi-process setup to increase
+flexibility and stability. The main building blocks of the application-manager are as follows:
+
+\section1 Wayland window compositor
+
+In order to support multiple UI processes on an embedded Linux system, you need a central window
+compositor: the state-of-the-art solution for this is a Wayland compositor, so the
+application-manager incorporates a fully Wayland protocol compliant compositor, based on the
+QtWayland module.
+
+The actual window compositing part is project specific and can be written using QtQuick elements,
+giving you all the possibilities of QML to easily implement rich and fluid animations in your
+compositor.
+
+On top of an already existing Qt extension to the Wayland protocol, the application-manager also
+provides an easy to use interface to attach arbitrary meta-data to any Wayland window. This is
+especially useful on custom embedded UI systems, since the top-level UI elements might not follow
+the classic desktop centric \e{Application Window}, \e{Modal Dialog} and \e{Popup Menu} window
+classification approach.
+
+\section1 Application Launcher
+
+The launcher part is the central component for application life-cycle management: it will start and
+stop applications (internal or 3rd-party) either on explicit request or as automatic reaction to
+external triggers (e.g. in low-memory situations, you want to gracefully terminate applications that
+the user hasn't interacted with in a while).
+
+Since UI applications typically have to be stopped and restarted multiple times during the up-time
+of an embedded system and given the fact that most customers will put tight constraints on the
+startup times of UI applications, the application-manager implements some tricks to improve the
+application starting performance: any application type relying on a \e runtime component (e.g. QML,
+HTML) can be \b quick-launched.
+
+The actual implementation heavily depends on the type of runtime; the application-manager ships
+with a QML quick-launcher that can be configured to keep at least one process with a fully initialized
+QML engine available in the background (dependent on actual CPU load), so that starting an
+application only requires loading the application's actual QML files into the existing engine.
+
+Support for other runtimes can be easily added via an external, independent runtime launcher binary.
+
+In addition to the runtime abstraction, the application-manager is also able to run any application
+inside a \e container instead of just an external Unix process. Support for these container
+solutions has to be provided by the customer and could range from full container solutions like
+KVM, XEN to LXC and even down to mandatory access control frameworks like AppArmor and SELinux.
+The application-manager comes with an example integration of Pelagicore's SoftwareContainers, which
+are based on LXC (Linux Containers).
+
+\section1 User input management
+
+Since most embedded UI applications rely on a virtual keyboard, the Qt Virtual Keyboard module can
+be easily integrated into the System-UI and the compositor. Through the Wayland protocol this
+virtual keyboard component can then be transparently used from any Qt/QML application without any
+special provisions on the application side for full internationalized text input. Non-Qt
+applications will have to provide support for the required, open Wayland text-input protocol.
+
+\section1 Notifications
+
+The application-manager acts as a \e freedesktop.org standards compliant notification server on the
+D-Bus. For QtQuick applications, a QML component is provided which encapsulates the client side of
+the \e freedesktop.org notification protocol.
+
+Both sides also come with Qt-like APIs to extend any notification request with additional meta-data
+using standard compliant mechanism.
+
+\section1 Application Installation
+
+In addition to applications that are part of the System-UI or the base installation (\e built-in), the
+application-manager also supports applications that can be dynamically installed, updated and
+deinstalled (\e third-party).
+
+Developing such a built-in application versus a third-party application is not much different: only
+the third-party ones need an additional packaging step: the application-manager comes with a very
+simple package format and a tool that can create and also digitally sign those packages.
+
+The application-manager's installer component is able to install and update these packages in a
+background thread using either plain HTTP(S) transfers or by receiving data from a customer
+specific local socket connection. In order to support devices with little disk-space to spare,
+all package installations and updates are not completely downloaded for later installation, but they
+are installed while being streamed to the device.
+
+Using a custom package format was a deliberate decision: all standard Unix package formats are far
+too "heavy-weight" in that they either use libraries supporting legacy formats or come with hooks
+for arbitrary shell scripts, that could be used to circumvent existing security measures.
+The application-manager basically uses a TAR archive with further restrictions on the type of content
+and some named, application-manager specific, YAML meta-data files. Parsing these packages is done via
+the BSD standard \c libarchive library, which is the basis for the actual \c tar command.
+
+The packages can be cryptographically signed by both the developer and - in production setups - by
+the app-store server. Devices can of course be put into a "developer mode" during the development
+phase to either require only a developer signature or even no signature at all.
+
+\section1 Advantages
+
+Aggregating all these components into a single daemon enables them to work together much more
+efficiently:
+
+\list
+\li The compositor has access to the process ids of all applications started by the application-manager,
+    so it can perform security checks when an application requests to show a window. By default,
+    windows from unknown process will not be shown on the screen.
+\li Based on application capabilities (stored in digitally signed manifests) and its knowledge of
+    application-to-PID mappings, the application-manager (a) will enforce policies on the usage of
+    its internal IPC mechanism and (b) does provide a D-Bus interface to the system's middleware to
+    allow other process and libraries to authenticate resource usage of applications started by
+    the application-manager.
+\endlist
+
+The application-manager's ability to run the same System-UI and QML applications in both single- and
+multi-process mode (usually without requiring any changes to either the System-UI or the QML
+applications themselves) also has quite some advantages - both during the development phase as well
+as for product scaling:
+
+\list
+\li As a developer you can freely to choose which desktop OS you want to develop on: for
+    single-process testing you can choose from Windows, macOS and Linux without requiring Wayland.
+    Multi-process is available on Linux (via nested Wayland either on a X11 or Wayland desktop).
+    Experimental support for multi-process mode and Wayland is available for macOS.
+
+\li Both modes can be mixed: 3rd–party applications could be run in separate processes (or even in
+    a secure container), while built-in QML applications are loaded in-process. e.g. for quicker
+    startup times.
+
+\li The UI code that runs on the target system is the same code that is run on the developer's
+    desktop machines.
+
+\li Given a complex product with many multi-process applications that runs on high-end hardware,
+    the application-manager gives you the possibility to scale down this product to lower-end
+    hardware by moving either all or just a few critical applications from multi- to single-process
+    mode, thereby saving on system and graphics memory as well as on startup times.
+\endlist
+
+Please be aware that any non-QML application (e.g. a native C++ compiled executable) will break this
+setup for developers on machines without Wayland support.
+
+Still there are projects, where applications using multiple UI technologies (e.g. QML, HTML or
+native OpenGL rendering) are a requirement. In this scenario, the application-manager's ability to
+support various runtimes makes it possible to composite all these applications seamlessly into a
+consistent user experience.
+
+
+*/

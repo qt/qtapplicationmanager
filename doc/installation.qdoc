@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the documentation of the Pelagicore Application Manager.
@@ -50,7 +50,7 @@ In order to build the application-manager with all its features, the following
 components are required:
 
 \list
-    \li \b Qt 5.6 or higher.
+    \li \b Qt 5.9.0 or higher.
     \li \b libyaml 1.6 or higher.
     \li \b openssl 1.0.1 or higher \e{- Linux only}. At compile time, only the headers need to be
            available. The needed libraries will be dynamically loaded at runtime.
@@ -155,6 +155,10 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li \c{-config systemd-workaround}
   \li Paramount if you are running systemd and plan on supporting SD-Card installations. Works
       around systemd interfering with loopback mounts.
+\row
+  \li \c{-config enable-widgets}
+  \li Enables support for Qt widgets. Enabling this option can be useful to enable the use of some
+      development graphical tools using Qt widgets.
 \row
   \li \c{-config hardware-id=<id>}
   \li Compiles in \c id as a hard-coded hardware-id (see below for more information)

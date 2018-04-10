@@ -15,6 +15,8 @@ disable-installer:DEFINES *= AM_DISABLE_INSTALLER
 disable-external-dbus-interfaces:DEFINES *= AM_DISABLE_EXTERNAL_DBUS_INTERFACES
 systemd-workaround:DEFINES *= AM_SYSTEMD_WORKAROUND
 headless:DEFINES *= AM_HEADLESS
+enable-widgets:DEFINES *= AM_ENABLE_WIDGETS
+config_touchemulation:DEFINES += AM_ENABLE_TOUCH_EMULATION
 linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release)):DEFINES *= AM_USE_LIBBACKTRACE
 
 !force-single-process {
@@ -38,6 +40,30 @@ defineTest(CONFIG_VALUE) {
     $$2 = $$value
     export($$2)
     return(true)
+}
+
+!defined(versionAtLeast, test): {
+    defineTest(versionAtLeast) {
+        LEFT_VERSION = $$eval($$1)
+        LEFT_VERSION_MAJOR = $$section(LEFT_VERSION, ., 0, 0)
+        LEFT_VERSION_MINOR = $$section(LEFT_VERSION, ., 1, 1)
+        LEFT_VERSION_PATCH = $$section(LEFT_VERSION, ., 2, 2)
+
+        RIGHT_VERSION = $$2
+        RIGHT_VERSION_MAJOR = $$section(RIGHT_VERSION, ., 0, 0)
+        RIGHT_VERSION_MINOR = $$section(RIGHT_VERSION, ., 1, 1)
+        RIGHT_VERSION_PATCH = $$section(RIGHT_VERSION, ., 2, 2)
+
+        greaterThan(LEFT_VERSION_MAJOR, $$RIGHT_VERSION_MAJOR) {
+            return(true)
+        } else:equals(LEFT_VERSION_MAJOR, $$RIGHT_VERSION_MAJOR):greaterThan(LEFT_VERSION_MINOR, $$RIGHT_VERSION_MINOR) {
+            return(true)
+        } else:equals(LEFT_VERSION_MAJOR, $$RIGHT_VERSION_MAJOR):equals(LEFT_VERSION_MINOR, $$RIGHT_VERSION_MINOR):!lessThan(LEFT_VERSION_PATCH, $$RIGHT_VERSION_PATCH) {
+            return(true)
+        }
+
+        return(false)
+    }
 }
 
 CONFIG_VALUE(install-prefix, INSTALL_PREFIX)

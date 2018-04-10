@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -229,6 +229,40 @@
     not always be available for applications that were installed onto removable media.
 
     \sa {Installation Locations}
+*/
+/*!
+    \qmlproperty enumeration Application::state
+    \readonly
+
+    This property holds the current installation state of the application. It can be one of:
+
+    \list
+    \li Application.Installed - The application is completely installed and ready to be used.
+    \li Application.BeingInstalled - The application is currently in the process of being installed.
+    \li Application.BeingUpdated - The application is currently in the process of being updated.
+    \li Application.BeingRemoved - The application is currently in the process of being removed.
+    \endlist
+*/
+/*!
+    \qmlproperty enumeration Application::runState
+    \readonly
+
+    This property holds the current run state of the application. It can be one of:
+
+    \list
+    \li Application.NotRunning - the application has not been started yet
+    \li Application.StartingUp - the application has been started and is initializing
+    \li Application.Running - the application is running
+    \li Application.ShuttingDown - the application has been stopped and is cleaning up (in
+                                   multi-process mode this signal is only emitted if the
+                                   application terminates gracefully)
+    \endlist
+*/
+/*!
+    \qmlsignal Application::activated()
+
+    This signal is emitted when the application is started or when it's already running but has
+    been requested to be brought to foreground or raised.
 */
 
 
@@ -493,6 +527,11 @@ QString Application::version() const
     return m_nonAliased ? m_nonAliased->m_version : m_version;
 }
 
+QVariantMap Application::openGLConfiguration() const
+{
+    return m_nonAliased ? m_nonAliased->m_openGLConfiguration : m_openGLConfiguration;
+}
+
 void Application::validate() const Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (isAlias()) {
@@ -545,6 +584,7 @@ void Application::mergeInto(Application *app) const
     app->m_mimeTypes = m_mimeTypes;
     app->m_backgroundMode = m_backgroundMode;
     app->m_version = m_version;
+    app->m_openGLConfiguration = m_openGLConfiguration;
     emit app->bulkChange();
 }
 
@@ -614,6 +654,9 @@ void Application::setCurrentRuntime(AbstractRuntime *rt) const
     else
         m_runtime = rt;
     emit runtimeChanged();
+
+    if (!rt)
+        setRunState(Application::NotRunning);
 }
 
 bool Application::isBlocked() const
@@ -636,9 +679,36 @@ Application::State Application::state() const
     return m_nonAliased ? m_nonAliased->m_state : m_state;
 }
 
+Application::RunState Application::runState() const
+{
+    return m_nonAliased ? m_nonAliased->m_runState : m_runState;
+}
+
+void Application::setRunState(Application::RunState runState) const
+{
+    if (m_nonAliased)
+        m_nonAliased->setRunState(runState);
+    else
+        if (runState != m_runState) {
+            m_runState = runState;
+            emit runStateChanged(m_runState);
+        }
+}
+
 qreal Application::progress() const
 {
     return m_nonAliased ? m_nonAliased->m_progress : m_progress;
+}
+
+void Application::setNonAliased(const Application *otherApp)
+{
+    if (m_nonAliased)
+        disconnect(m_nonAliased, 0, this, 0);
+
+    m_nonAliased = otherApp;
+
+    if (m_nonAliased)
+        connect(m_nonAliased, &Application::runStateChanged, this, &Application::runStateChanged);
 }
 
 Application *Application::readFromDataStream(QDataStream &ds, const QVector<const Application *> &applicationDatabase) Q_DECL_NOEXCEPT_EXPR(false)
@@ -670,6 +740,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
        >> app->m_mimeTypes
        >> backgroundMode
        >> app->m_version
+       >> app->m_openGLConfiguration
        >> codeDir
        >> manifestDir
        >> app->m_uid
@@ -698,7 +769,7 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
         bool found = false;
         for (const Application *otherApp : applicationDatabase) {
             if (otherApp->id() == baseId) {
-                app->m_nonAliased = otherApp;
+                app->setNonAliased(otherApp);
                 found = true;
                 break;
             }
@@ -740,6 +811,7 @@ void Application::writeToDataStream(QDataStream &ds, const QVector<const Applica
        << m_mimeTypes
        << qint32(m_backgroundMode)
        << m_version
+       << m_openGLConfiguration
        << m_codeDir.absolutePath()
        << m_manifestDir.absolutePath()
        << m_uid

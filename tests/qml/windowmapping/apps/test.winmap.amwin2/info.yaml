@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.winmap.amwin2'
+icon:    'icon.png'
+code:    'amwin2.qml'
+runtime: 'qml'
+name:
+  en: 'ApplicationManagerWindow Advanced'

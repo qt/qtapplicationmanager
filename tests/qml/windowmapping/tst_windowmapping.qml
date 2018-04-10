@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -42,12 +42,16 @@
 import QtQuick 2.3
 import QtTest 1.0
 import QtApplicationManager 1.0
+import QtApplicationManager 1.0 as AppMan // Because there's already an Application object in the global namespace
 
 TestCase {
     id: testCase
     when: windowShown
     name: "WindowMapping"
     visible: true
+
+    property string appId;
+    property Item lastWindowReady;
 
     Item {
         id: chrome
@@ -61,9 +65,13 @@ TestCase {
 
     Connections {
         target: WindowManager
-        onWindowReady: window.parent = WindowManager.windowProperty(window, "type") === "sub" ? subChrome : chrome;
+        onWindowReady: {
+            window.parent = WindowManager.windowProperty(window, "type") === "sub" ? subChrome : chrome;
+            lastWindowReady = window;
+        }
         onWindowLost: WindowManager.releaseWindow(window);
     }
+
 
     SignalSpy {
         id: windowReadySpy
@@ -72,26 +80,167 @@ TestCase {
     }
 
     SignalSpy {
+        id: windowClosingSpy
+        target: WindowManager
+        signalName: "windowClosing"
+    }
+
+    SignalSpy {
         id: windowLostSpy
         target: WindowManager
         signalName: "windowLost"
     }
 
+    SignalSpy {
+        id: windowPropertyChangedSpy
+        target: WindowManager
+        signalName: "windowPropertyChanged"
+    }
+
+    SignalSpy {
+        id: runStateChangedSpy
+        target: ApplicationManager
+        signalName: "applicationRunStateChanged"
+    }
+
+    function cleanup() {
+        runStateChangedSpy.clear();
+        ApplicationManager.stopApplication(appId);
+        var app = ApplicationManager.application(appId);
+        while (app.runState !== AppMan.Application.NotRunning)
+            runStateChangedSpy.wait(3000);
+        windowReadySpy.clear();
+        windowClosingSpy.clear();
+        windowLostSpy.clear();
+    }
+
+
+    function test_amwin_advanced() {
+        appId = "test.winmap.amwin2";
+        ApplicationManager.startApplication(appId, "show-sub");
+        wait(2000);
+        compare(windowReadySpy.count, 0);
+
+        ApplicationManager.startApplication(appId, "show-main");
+        windowReadySpy.wait(2000);
+        if (windowReadySpy.count === 1)
+            windowReadySpy.wait(2000);
+        compare(windowReadySpy.count, 2);
+    }
+
+    function test_amwin_loader() {
+        if (!ApplicationManager.singleProcess)
+            skip("Sporadically crashes in QtWaylandClient::QWaylandDisplay::flushRequests()");
+
+        appId = "test.winmap.loader";
+        ApplicationManager.startApplication(appId, "show-sub");
+        windowReadySpy.wait(2000);
+        if (windowReadySpy.count === 1)
+            windowReadySpy.wait(2000);
+        compare(windowReadySpy.count, 2);
+        windowReadySpy.clear();
+
+        ApplicationManager.startApplication(appId, "hide-sub");
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+
+        ApplicationManager.startApplication(appId, "show-sub");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 1);
+    }
+
+    function test_amwin_peculiarities() {
+        appId = "test.winmap.amwin2";
+        ApplicationManager.startApplication(appId, "show-main");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 1);
+        windowReadySpy.clear();
+
+        ApplicationManager.startApplication(appId, "show-sub");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 1);
+        windowReadySpy.clear();
+
+        // Single- vs. multiprocess difference:
+        ApplicationManager.startApplication(appId, "show-sub2");
+        if (ApplicationManager.singleProcess) {
+            // Sub-window 2 has an invisible Rectangle as parent and hence the effective
+            // visible state is false. Consequently no windowReady signal will be emitted.
+            wait(2000);
+            compare(windowReadySpy.count, 0);
+        } else {
+            // A Window's effective visible state solely depends on Window hierarchy.
+            windowReadySpy.wait(3000);
+            compare(windowReadySpy.count, 1);
+            windowReadySpy.clear();
+        }
+
+        ApplicationManager.startApplication(appId, "hide-sub");
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+        windowLostSpy.clear();
+
+        // Make child (sub) window visible again, parent (main) window is still visible
+        ApplicationManager.startApplication(appId, "show-sub");
+        windowReadySpy.wait(3000);
+        compare(windowReadySpy.count, 1);
+
+        // This is weird Window behavior: a child window becomes only visible, when the parent
+        // window is visible, but when you change the parent window back to invisible, the child
+        // will NOT become invisible.
+        ApplicationManager.startApplication(appId, "hide-main");
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+        windowLostSpy.clear();
+
+        // Single- vs. multiprocess difference:
+        ApplicationManager.startApplication(appId, "hide-sub");
+        if (ApplicationManager.singleProcess) {
+            windowLostSpy.wait(2000);
+            compare(windowLostSpy.count, 1);
+        } else {
+            // This is even more weird Window behavior: when the parent window is invisible, it is
+            // not possible any more to explicitly set the child window to invisible.
+            wait(2000);
+            compare(windowLostSpy.count, 0);
+        }
+    }
+
+    function test_default_data() {
+        return [ { tag: "ApplicationManagerWindow", appId: "test.winmap.amwin" },
+                 // skipping QtObject, as it doesn't show anything
+                 { tag: "Rectangle", appId: "test.winmap.rectangle" },
+                 { tag: "Window", appId: "test.winmap.window" } ];
+    }
+
+    function test_default(data) {
+        if (ApplicationManager.singleProcess && data.tag === "Window")
+            skip("Window root element is not properly supported in single process mode.");
+
+        appId = data.appId;
+        compare(chrome.children.length, 1);
+        ApplicationManager.startApplication(appId);
+        windowReadySpy.wait(2000);
+        compare(windowReadySpy.count, 1);
+        compare(chrome.children.length, 2);
+
+        ApplicationManager.stopApplication(appId);
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+    }
+
     function test_mapping_data() {
         return [ { tag: "ApplicationManagerWindow", appId: "test.winmap.amwin" },
-                 { tag: "Window", appId: "test.winmap.window" },
+                 { tag: "QtObject", appId: "test.winmap.qtobject" },
                  { tag: "Rectangle", appId: "test.winmap.rectangle" },
-                 { tag: "QtObject", appId: "test.winmap.qtobject" } ];
+                 { tag: "Window", appId: "test.winmap.window" } ];
     }
 
     function test_mapping(data) {
-        if (ApplicationManager.singleProcess && data.tag === "Window") {
-            //skip() would skip subsequent data tests (Rectangle and QtObject), as well.
-            console.info("Window root element is not properly supported in single process mode.");
-            return;
-        }
+        if (ApplicationManager.singleProcess && data.tag === "Window")
+            skip("Window root element is not properly supported in single process mode.");
 
-        var appId = data.appId;
+        appId = data.appId;
         compare(chrome.children.length, 1);
         ApplicationManager.startApplication(appId, "show-main");
         windowReadySpy.wait(2000);
@@ -106,20 +255,60 @@ TestCase {
         windowReadySpy.clear();
         compare(subChrome.children.length, 1);
 
-        var openWindows = 2;
-        // visible handling needs to be fixed for single process mode:
-        if (!ApplicationManager.singleProcess) {
-            ApplicationManager.startApplication(appId, "hide-sub");
-            windowLostSpy.wait(2000);
-            compare(windowLostSpy.count, 1);
-            windowLostSpy.clear();
-            openWindows = 1;
-            compare(subChrome.children.length, 0);
-        }
+        ApplicationManager.startApplication(appId, "hide-sub");
+        windowClosingSpy.wait(2000);
+        compare(windowClosingSpy.count, 1);
+        windowClosingSpy.clear();
+        windowLostSpy.wait(2000);
+        compare(windowLostSpy.count, 1);
+        windowLostSpy.clear();
+        compare(subChrome.children.length, 0);
 
         ApplicationManager.stopApplication(appId);
+        windowClosingSpy.wait(2000);
+        compare(windowClosingSpy.count, 1);
         windowLostSpy.wait(2000);
-        compare(windowLostSpy.count, openWindows);
-        windowLostSpy.clear();
+        compare(windowLostSpy.count, 1);
+    }
+
+    function test_wayland_ping_pong() {
+        appId = "test.winmap.ping";
+        if (ApplicationManager.singleProcess)
+            skip("Wayland ping-pong is only supported in multi-process mode");
+        AmTest.ignoreMessage(AmTest.CriticalMsg, /Stopping application.*because we did not receive a Wayland-Pong/);
+        ApplicationManager.startApplication(appId);
+        windowReadySpy.wait(2000);
+        var app = ApplicationManager.application(appId);
+        compare(app.runState, AppMan.Application.Running);
+        runStateChangedSpy.clear();
+        wait(2200);
+        runStateChangedSpy.wait(2000);
+        compare(runStateChangedSpy.signalArguments[0][1], AppMan.Application.ShuttingDown);
+        runStateChangedSpy.wait(2000);
+        compare(runStateChangedSpy.signalArguments[1][1], AppMan.Application.NotRunning);
+    }
+
+    function test_window_properties() {
+        appId = "test.winmap.amwin";
+        ApplicationManager.startApplication(appId);
+        windowReadySpy.wait(2000);
+        compare(windowReadySpy.count, 1);
+
+        ApplicationManager.startApplication(appId, "show-main");
+        windowPropertyChangedSpy.wait(2000);
+        compare(windowPropertyChangedSpy.count, 1);
+
+        compare(WindowManager.windowProperty(lastWindowReady, "key1"), "val1");
+        compare(WindowManager.windowProperty(lastWindowReady, "objectName"), 42);
+
+        WindowManager.setWindowProperty(lastWindowReady, "key2", "val2");
+        windowPropertyChangedSpy.wait(2000);
+        compare(windowPropertyChangedSpy.count, 2);
+
+        var allProps = WindowManager.windowProperties(lastWindowReady)
+        compare(Object.keys(allProps).length, 3);
+        compare(allProps.key1, "val1");
+        compare(allProps.key2, "val2");
+        compare(allProps.objectName, 42);
     }
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -58,12 +58,16 @@ typedef uint gid_t;
 
 QT_BEGIN_NAMESPACE_AM
 
-enum SudoDropPrivileges {
-    DropPrivilegesPermanently,
-    DropPrivilegesRegainable, // only use this for auto-tests
-};
+class Sudo
+{
+public:
+    enum DropPrivileges {
+        DropPrivilegesPermanently,
+        DropPrivilegesRegainable, // only use this for auto-tests
+    };
 
-bool forkSudoServer(SudoDropPrivileges dropPrivileges, QString *errorString);
+    static void forkServer(DropPrivileges dropPrivileges, QStringList *warnings = nullptr) Q_DECL_NOEXCEPT_EXPR(false);
+};
 
 class SudoInterface
 {
@@ -96,7 +100,7 @@ class SudoServer;
 class SudoClient : public SudoInterface
 {
 public:
-    static bool initialize(int socketFd, SudoServer *shortCircuit = 0);
+    static SudoClient *createInstance(int socketFd, SudoServer *shortCircuit = 0);
 
     static SudoClient *instance();
 
@@ -130,7 +134,7 @@ private:
 class SudoServer : public SudoInterface
 {
 public:
-    static bool initialize(int socketFd, int loopControlFd);
+    static SudoServer *createInstance(int socketFd, int loopControlFd);
 
     static SudoServer *instance();
 

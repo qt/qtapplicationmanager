@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -191,11 +191,20 @@ bool NativeRuntime::attachApplicationToQuickLauncher(const Application *app)
 bool NativeRuntime::initialize()
 {
     if (m_needsLauncher) {
-        static const QVector<QString> possibleLocations = {
-            QCoreApplication::applicationDirPath(),
-            QLibraryInfo::location(QLibraryInfo::BinariesPath),
-            qApp->property("_am_build_dir").toString() + qSL("/bin") // set by main.cpp
-        };
+        static QVector<QString> possibleLocations;
+        if (possibleLocations.isEmpty()) {
+            // try the main binaries directory
+            possibleLocations.append(QCoreApplication::applicationDirPath());
+            // try Qt's bin folder
+            possibleLocations.append(QLibraryInfo::location(QLibraryInfo::BinariesPath));
+            // try the AM's build directory
+            possibleLocations.append(qApp->property("_am_build_dir").toString() + qSL("/bin")); // set by main.cpp
+            // if everything fails, try to locate it in $PATH
+            const auto paths = qgetenv("PATH").split(QDir::listSeparator().toLatin1());
+            for (auto path : paths)
+                possibleLocations.append(QString::fromLocal8Bit(path));
+        }
+
         const QString launcherName = qSL("/appman-launcher-") + manager()->identifier();
         for (const QString &possibleLocation : possibleLocations) {
             QFileInfo fi(possibleLocation + launcherName);
@@ -207,7 +216,8 @@ bool NativeRuntime::initialize()
                 return true;
             }
         }
-        qCWarning(LogSystem) << "Could not find an" << launcherName.mid(1) << "executable.";
+        qCWarning(LogSystem) << "Could not find an" << launcherName.mid(1) << "executable in any of:\n"
+                             << possibleLocations;
         return false;
     } else {
         if (!m_app)
@@ -254,20 +264,52 @@ bool NativeRuntime::start()
         break;
     }
 
-    QMap<QString, QString> env = {
-        { qSL("QT_QPA_PLATFORM"), qSL("wayland") },
-        { qSL("QT_IM_MODULE"), QString() },     // Applications should use wayland text input
-        { qSL("AM_SECURITY_TOKEN"), qL1S(securityToken().toHex()) },
-        { qSL("AM_DBUS_PEER_ADDRESS"), applicationInterfaceServer()->address() },
-        { qSL("AM_DBUS_NOTIFICATION_BUS_ADDRESS"), NotificationManager::instance()->property("_am_dbus_name").toString() },
-        { qSL("AM_RUNTIME_CONFIGURATION"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ configuration() })) },
-        { qSL("AM_BASE_DIR"), QDir::currentPath() }
+    QVariantMap dbusConfig = {
+        { qSL("p2p"), applicationInterfaceServer()->address() },
+        { qSL("org.freedesktop.Notifications"), NotificationManager::instance()->property("_am_dbus_name").toString()}
+    };
+
+    QVariantMap loggingConfig = {
+        { qSL("dlt"), Logging::isDltEnabled() },
+        { qSL("rules"), Logging::filterRules() }
+    };
+
+    QVariantMap uiConfig;
+    if (m_slowAnimations)
+        uiConfig.insert(qSL("slowAnimations"), true);
+
+    QVariantMap openGLConfig;
+    if (m_app)
+        openGLConfig = m_app->openGLConfiguration();
+    if (openGLConfig.isEmpty())
+        openGLConfig = manager()->systemOpenGLConfiguration();
+    if (!openGLConfig.isEmpty())
+        uiConfig.insert(qSL("opengl"), openGLConfig);
+
+    QVariantMap config = {
+        { qSL("logging"), loggingConfig },
+        { qSL("baseDir"), QDir::currentPath() },
+        { qSL("runtimeConfiguration"), configuration() },
+        { qSL("securityToken"), qL1S(securityToken().toHex()) },
+        { qSL("dbus"), dbusConfig }
     };
 
     if (!m_needsLauncher && !m_isQuickLauncher)
-        env.insert(qSL("AM_RUNTIME_SYSTEM_PROPERTIES"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ systemProperties() })));
-    if (!Logging::isDltEnabled())
+        config.insert(qSL("systemProperties"), systemProperties());
+    if (!uiConfig.isEmpty())
+        config.insert(qSL("ui"), uiConfig);
+
+    QMap<QString, QString> env = {
+        { qSL("QT_QPA_PLATFORM"), qSL("wayland") },
+        { qSL("QT_IM_MODULE"), QString() },     // Applications should use wayland text input
+        { qSL("QT_SCALE_FACTOR"), QString() },  // do not scale wayland clients
+        { qSL("AM_CONFIG"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ config })) },
+    };
+
+    if (!Logging::isDltEnabled()) {
+        // sadly we still need this, since we need to disable DLT as soon as possible
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
+    }
 
     for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {
         it.next();
@@ -293,6 +335,8 @@ bool NativeRuntime::start()
     if (m_needsLauncher) {
         m_launchWhenReady = true;
     } else {
+        args.append(variantToStringList(m_app->runtimeParameters().value(qSL("arguments"))));
+
         if (!m_document.isNull())
             args << qSL("--start-argument") << m_document;
     }
@@ -402,18 +446,20 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 
 void NativeRuntime::onApplicationFinishedInitialization()
 {
-    if (m_needsLauncher && m_launchWhenReady && !m_applicationInterfaceConnected && m_app && m_runtimeInterface) {
+    if (!m_applicationInterfaceConnected) {
         registerExtensionInterfaces();
 
-        QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
-        QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
+        if (m_needsLauncher && m_launchWhenReady &&  m_app && m_runtimeInterface) {
 
-        emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
-                                                  convertFromJSVariant(QVariant(m_app->toVariantMap())).toMap(),
-                                                  convertFromJSVariant(QVariant(systemProperties())).toMap());
+            QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
+            QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
+
+            emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
+                                                      convertFromJSVariant(QVariant(m_app->toVariantMap())).toMap(),
+                                                      convertFromJSVariant(QVariant(systemProperties())).toMap());
+        }
         m_applicationInterfaceConnected = true;
     }
-
     setState(Active);
 }
 
@@ -459,6 +505,14 @@ void NativeRuntime::openDocument(const QString &document, const QString &mimeTyp
        emit m_applicationInterface->openDocument(document, mimeType);
 }
 
+void NativeRuntime::setSlowAnimations(bool slow)
+{
+    if (m_slowAnimations != slow) {
+        m_slowAnimations = slow;
+        if (m_applicationInterface)
+            emit m_applicationInterface->slowAnimationsChanged(slow);
+    }
+}
 
 NativeRuntimeApplicationInterface::NativeRuntimeApplicationInterface(NativeRuntime *runtime)
     : ApplicationInterface(runtime)

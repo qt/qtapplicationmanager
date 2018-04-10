@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -229,8 +229,11 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
             throw WinCryptException("Could not verify certificate chain");
         }
 
-        if (chainContext->TrustStatus.dwErrorStatus != CERT_TRUST_NO_ERROR)
-            throw WinCryptException("Failed to verify signature");
+        if (chainContext->TrustStatus.dwErrorStatus != CERT_TRUST_NO_ERROR) {
+            throw Exception("Failed to verify signature (error: 0x%1, info: 0x%2")
+                .arg(chainContext->TrustStatus.dwErrorStatus, 8, 16, qL1C('0'))
+                .arg(chainContext->TrustStatus.dwInfoStatus, 8, 16, qL1C('0'));
+        }
 
         cleanup();
         return true;

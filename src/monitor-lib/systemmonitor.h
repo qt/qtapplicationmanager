@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -60,9 +60,13 @@ class SystemMonitor : public QAbstractListModel
     Q_PROPERTY(int reportingRange READ reportingRange WRITE setReportingRange NOTIFY reportingRangeChanged)  // deprecated
     Q_PROPERTY(qreal idleLoadThreshold READ idleLoadThreshold WRITE setIdleLoadThreshold NOTIFY idleLoadThresholdChanged)
     Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
+    Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryReportingChanged)
     Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
+    Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadReportingChanged)
+    Q_PROPERTY(qreal gpuLoad READ gpuLoad NOTIFY gpuLoadReportingChanged)
     Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled NOTIFY memoryReportingEnabledChanged)
     Q_PROPERTY(bool cpuLoadReportingEnabled READ isCpuLoadReportingEnabled WRITE setCpuLoadReportingEnabled NOTIFY cpuLoadReportingEnabledChanged)
+    Q_PROPERTY(bool gpuLoadReportingEnabled READ isGpuLoadReportingEnabled WRITE setGpuLoadReportingEnabled NOTIFY gpuLoadReportingEnabledChanged)
     Q_PROPERTY(bool fpsReportingEnabled READ isFpsReportingEnabled WRITE setFpsReportingEnabled NOTIFY fpsReportingEnabledChanged)
     Q_PROPERTY(bool idle READ isIdle NOTIFY idleChanged)
 
@@ -83,7 +87,10 @@ public:
     Q_INVOKABLE QVariantMap get(int index) const;
 
     quint64 totalMemory() const;
+    quint64 memoryUsed() const;
     int cpuCores() const;
+    qreal cpuLoad() const;
+    qreal gpuLoad() const;
 
     void setIdleLoadThreshold(qreal loadThreshold);
     qreal idleLoadThreshold() const;
@@ -99,6 +106,9 @@ public:
 
     void setCpuLoadReportingEnabled(bool enabled);
     bool isCpuLoadReportingEnabled() const;
+
+    void setGpuLoadReportingEnabled(bool enabled);
+    bool isGpuLoadReportingEnabled() const;
 
     Q_INVOKABLE bool addIoLoadReporting(const QString &deviceName);
     Q_INVOKABLE void removeIoLoadReporting(const QString &deviceName);
@@ -116,8 +126,6 @@ public:
     // semi-public API: used for the WindowManager to report FPS
     void reportFrameSwap();
 
-    Q_INVOKABLE QObject *getProcessMonitor(const QString &appId);  // experimental only!
-
 signals:
     void countChanged();
     void idleChanged(bool idle);
@@ -127,11 +135,13 @@ signals:
 
     void memoryReportingChanged(quint64 used);
     void cpuLoadReportingChanged(qreal load);
+    void gpuLoadReportingChanged(qreal load);
     void ioLoadReportingChanged(const QString &device, qreal load);
     void fpsReportingChanged(qreal average, qreal minimum, qreal maximum, qreal jitter);
 
     void memoryReportingEnabledChanged();
     void cpuLoadReportingEnabledChanged();
+    void gpuLoadReportingEnabledChanged();
     void fpsReportingEnabledChanged();
 
 private:

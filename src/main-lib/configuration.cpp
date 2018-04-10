@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -231,7 +231,7 @@ void Configuration::showParserMessage(const QString &message, MessageType type)
 
 // ^^^^ copied from QCommandLineParser ... why is this not public API?
 
-void Configuration::parse()
+void Configuration::parse(QStringList *deploymentWarnings)
 {
     if (!m_clp.parse(QCoreApplication::arguments())) {
         showParserMessage(m_clp.errorText() + qL1C('\n'), ErrorMessage);
@@ -244,7 +244,7 @@ void Configuration::parse()
     if (m_clp.isSet(qSL("help")))
         m_clp.showHelp();
 
-    if (m_clp.isSet(qSL("build-config"))) {
+    if (!m_buildConfigFilePath.isEmpty() && m_clp.isSet(qSL("build-config"))) {
         QFile f(m_buildConfigFilePath);
         if (f.open(QFile::ReadOnly)) {
             showParserMessage(QString::fromLocal8Bit(f.readAll()), UsageMessage);
@@ -312,14 +312,15 @@ void Configuration::parse()
                 qCDebug(LogSystem) << "Config parsing: cache loaded after" << (timer.nsecsElapsed() / 1000) << "usec";
 #endif
             } catch (const Exception &e) {
-                qCWarning(LogSystem) << "Failed to read config cache:" << e.what();
+                if (deploymentWarnings)
+                    *deploymentWarnings << qL1S("Failed to read config cache:") + qL1S(e.what());
             }
         }
     }
 
     // reads a single config file and calculates its hash - defined as lambda to be usable
     // both via QtConcurrent and via std:for_each
-    auto readConfigFile = [&useCache](ConfigFile &cf) {
+    auto readConfigFile = [&useCache, &deploymentWarnings](ConfigFile &cf) {
         QFile file(cf.filePath);
         if (!file.open(QIODevice::ReadOnly))
             throw Exception("Failed to open config file '%1' for reading.\n").arg(file.fileName());
@@ -331,7 +332,8 @@ void Configuration::parse()
 
         QByteArray checksum = QCryptographicHash::hash(cf.content, QCryptographicHash::Sha1);
         if (useCache && (checksum != cf.checksum)) {
-            qCWarning(LogSystem) << "Failed to read config cache: cached config file checksums do not match current set";
+            if (deploymentWarnings)
+                *deploymentWarnings << qL1S("Failed to read config cache: cached config file checksums do not match current set");
             useCache = false;
         }
         cf.checksum = checksum;
@@ -353,8 +355,6 @@ void Configuration::parse()
 #endif
 
     if (useCache) {
-        qCDebug(LogSystem) << "Using existing config cache:" << cacheFilePath;
-
         m_config = cache;
     } else if (!configFilePaths.isEmpty()) {
         auto parseConfigFile = [](ConfigFile &cf) {
@@ -421,7 +421,8 @@ void Configuration::parse()
                 if (ds.status() != QDataStream::Ok)
                     throw Exception("error writing config cache content");
             } catch (const Exception &e) {
-                qCWarning(LogSystem) << "Failed to write config cache:" << e.what();
+                if (deploymentWarnings)
+                    *deploymentWarnings << qL1S("Failed to write config cache: ") + qL1S(e.what());
             }
         }
 #if defined(AM_TIME_CONFIG_PARSING)
@@ -457,7 +458,6 @@ void Configuration::parse()
     // QVariant ... the workaround is to save invalid variants to the cache and fix them up
     // afterwards:
     fixNullValuesForQml(m_config);
-
 }
 
 QT_END_NAMESPACE_AM

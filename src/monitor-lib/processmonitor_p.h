@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Pelagicore AG
+** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -59,13 +59,15 @@
 #include <QString>
 #include <QHash>
 #include <QVector>
-#include <QQuickWindow>
 #if defined(Q_OS_LINUX)
-#    include <QScopedPointer>
-#    include "sysfsreader.h"
+#  include <QScopedPointer>
+#  include "sysfsreader.h"
 #endif
-#if defined(AM_MULTI_PROCESS)
+#if !defined(AM_HEADLESS)
+#  include <QQuickWindow>
+#  if defined(AM_MULTI_PROCESS)
 #    include <QtAppManWindow/waylandwindow.h>
+#  endif
 #endif
 #include "processmonitor.h"
 #include "frametimer.h"
@@ -74,6 +76,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 class Window;
+class tst_ProcessMonitor;
 
 class ReadingTask : public QObject
 {
@@ -106,6 +109,7 @@ public:
 
 protected:
     void timerEvent(QTimerEvent *event) override;
+    bool readMemory(const QByteArray &smapsFile, Results::Memory &results);
 
 public slots:
     void setupTimer(bool enabled, int interval);
@@ -121,7 +125,6 @@ private:
     void cancelTimer();
     void openLoad();
     qreal readLoad();
-    bool readMemory(Results::Memory &results);
 
     QMutex &m_mutex;
     Results &m_results;
@@ -221,8 +224,8 @@ signals:
 
 public slots:
     void readingUpdate();
-    void appRuntimeChanged(const QString &id, ApplicationManager::RunState state);
-#if defined(AM_MULTI_PROCESS)
+    void appRuntimeChanged(const QString &id, Application::RunState state);
+#if defined(AM_MULTI_PROCESS) && !defined(AM_HEADLESS)
     void applicationWindowClosing(int index, QQuickItem *window);
 #endif
     void frameUpdated();

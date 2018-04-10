@@ -48,7 +48,7 @@
 #  include <QSurfaceFormat>
 #endif
 
-QT_FORWARD_DECLARE_CLASS(QQmlDebuggingEnabler)
+QT_FORWARD_DECLARE_STRUCT(QQmlDebuggingEnabler)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 
 QT_BEGIN_NAMESPACE_AM

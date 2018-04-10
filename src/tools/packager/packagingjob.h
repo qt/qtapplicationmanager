@@ -31,11 +31,15 @@
 #include <QtAppManCommon/global.h>
 #include <QByteArray>
 #include <QString>
+#include <QVariantMap>
 
 class PackagingJob
 {
 public:
-    static PackagingJob *create(const QString &destinationName, const QString &sourceDir, bool asJson = false);
+    static PackagingJob *create(const QString &destinationName, const QString &sourceDir,
+                                const QVariantMap &extraMetaData = QVariantMap(),
+                                const QVariantMap &extraSignedMetaData = QVariantMap(),
+                                bool asJson = false);
 
     static PackagingJob *developerSign(const QString &sourceName, const QString &destinationName,
                                        const QString &certificateFile, const QString &passPhrase,
@@ -75,4 +79,6 @@ private:
     QStringList m_certificateFiles;
     QString m_passphrase;  // sign only
     QString m_hardwareId; // store sign/verify only
+    QVariantMap m_extraMetaData;
+    QVariantMap m_extraSignedMetaData;
 };

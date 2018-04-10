@@ -28,6 +28,10 @@
       <arg name="taskId" type="s" direction="out"/>
       <arg name="applicationAsVariantMap" type="a{sv}" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap"/>
+      <arg name="packageExtraMetaData" type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="QVariantMap"/>
+      <arg name="packageExtraSignedMetaData" type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="QVariantMap"/>
     </signal>
     <signal name="taskBlockingUntilInstallationAcknowledge">
       <arg name="taskId" type="s" direction="out"/>
@@ -86,6 +90,16 @@
     </method>
     <method name="installedApplicationSize">
       <arg type="x" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="installedApplicationExtraMetaData">
+      <arg type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="installedApplicationExtraSignedMetaData">
+      <arg type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
       <arg name="id" type="s" direction="in"/>
     </method>
     <method name="doesPackageNeedActivation">

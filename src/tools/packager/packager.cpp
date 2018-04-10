@@ -34,6 +34,8 @@
 #include <stdio.h>
 
 #include <QtAppManCommon/exception.h>
+#include <QtAppManCommon/qtyaml.h>
+#include <QtAppManCommon/utilities.h>
 #include <QtAppManPackage/package.h>
 #include "packagingjob.h"
 
@@ -137,9 +139,13 @@ int main(int argc, char *argv[])
         clp.showHelp(1);
         break;
 
-    case CreatePackage:
+    case CreatePackage: {
         clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
         clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
+        clp.addOption({{ qSL("extra-metadata"),      qSL("m") }, qSL("Add extra meta-data to the package, supplied on the commandline."), qSL("yaml-snippet") });
+        clp.addOption({{ qSL("extra-metadata-file"), qSL("M") }, qSL("Add extra meta-data to the package, read from file."), qSL("yaml-file") });
+        clp.addOption({{ qSL("extra-signed-metadata"),      qSL("s") }, qSL("Add extra, digitally signed, meta-data to the package, supplied on the commandline."), qSL("yaml-snippet") });
+        clp.addOption({{ qSL("extra-signed-metadata-file"), qSL("S") }, qSL("Add extra, digitally signed, meta-data to the package, read from file."), qSL("yaml-file") });
         clp.addPositionalArgument(qSL("package"),          qSL("The file name of the created package."));
         clp.addPositionalArgument(qSL("source-directory"), qSL("The package's content root directory."));
         clp.process(a);
@@ -147,11 +153,53 @@ int main(int argc, char *argv[])
         if (clp.positionalArguments().size() != 3)
             clp.showHelp(1);
 
+        auto parseYamlMetada = [](const QStringList &metadataSnippets, const QStringList &metadataFiles, bool isSigned) -> QVariantMap {
+            QVariantMap result;
+            QVector<QPair<QByteArray, QString>> metadata;
+
+            for (const QString &file : metadataFiles) {
+                QFile f(file);
+                if (!f.open(QIODevice::ReadOnly))
+                    throw Exception(f, "Could not open metadata file for reading");
+                metadata.append(qMakePair(f.readAll(), file));
+            }
+            for (const QString &snippet : metadataSnippets)
+                metadata.append(qMakePair(snippet.toUtf8(), QString()));
+
+            for (const auto &md : metadata) {
+                QtYaml::ParseError parseError;
+                const QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(md.first, &parseError);
+                if (parseError.error != QJsonParseError::NoError) {
+                    throw Exception(Error::IO, "YAML parse error in --extra-%4metadata%5 %6 at line %1, column %2: %3")
+                            .arg(parseError.line).arg(parseError.column).arg(parseError.errorString())
+                            .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
+                            .arg(md.second.isEmpty() ? qSL("option") : md.second);
+                }
+                if (docs.size() < 1) {
+                    throw Exception("Could not parse --extra-%1metadata%2 %3: Invalid document format")
+                            .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
+                            .arg(md.second.isEmpty() ? qSL("option") : md.second);
+                }
+                for (auto doc : docs)
+                    recursiveMergeVariantMap(result, doc.toMap());
+            }
+            return result;
+        };
+
+        QVariantMap extraMetaDataMap = parseYamlMetada(clp.values(qSL("extra-metadata")),
+                                                       clp.values(qSL("extra-metadata-file")),
+                                                       false);
+        QVariantMap extraSignedMetaDataMap = parseYamlMetada(clp.values(qSL("extra-signed-metadata")),
+                                                             clp.values(qSL("extra-signed-metadata-file")),
+                                                             true);
+
         p = PackagingJob::create(clp.positionalArguments().at(1),
                                  clp.positionalArguments().at(2),
+                                 extraMetaDataMap,
+                                 extraSignedMetaDataMap,
                                  clp.isSet(qSL("json")));
         break;
-
+    }
     case DevSignPackage:
         clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
         clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });

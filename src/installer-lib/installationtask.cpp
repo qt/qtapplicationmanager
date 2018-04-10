@@ -327,7 +327,9 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
 
     if (m_foundIcon && m_foundInfo) {
         qCDebug(LogInstaller) << "emit requestingInstallationAcknowledge" << id() << "for app" << m_app->id();
-        emit m_ai->taskRequestingInstallationAcknowledge(id(), m_app->toVariantMap());
+        emit m_ai->taskRequestingInstallationAcknowledge(id(), m_app->toVariantMap(),
+                                                         m_extractor->installationReport().extraMetaData(),
+                                                         m_extractor->installationReport().extraSignedMetaData());
 
         QDir oldDestinationDirectory = m_extractor->destinationDirectory();
 

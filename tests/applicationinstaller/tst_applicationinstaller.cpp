@@ -549,54 +549,79 @@ void tst_ApplicationInstaller::packageInstallation_data()
     QTest::addColumn<bool>("devSigned");
     QTest::addColumn<bool>("expectedSuccess");
     QTest::addColumn<bool>("updateExpectedSuccess");
+    QTest::addColumn<QVariantMap>("extraMetaData");
     QTest::addColumn<QString>("errorString"); // start with ~ to create a RegExp
+
+    QVariantMap nomd { }; // no meta-data
+    QVariantMap extramd = QVariantMap {
+        { "extra", QVariantMap {
+            { "array", QVariantList { 1, 2 } },
+            { "foo", "bar" },
+            { "foo2","bar2" },
+            { "key", "value" } } },
+        { "extraSigned", QVariantMap {
+            { "sfoo", "sbar" },
+            { "sfoo2", "sbar2" },
+            { "signed-key", "signed-value" },
+            { "signed-object", QVariantMap { { "k1", "v1" }, { "k2", "v2" } } }
+        } }
+    };
 
     QTest::newRow("normal") \
             << "test.appkg" << "internal-0" << "test-update.appkg" << "internal-0"
-            << false << true << true << "";
+            << false << true << true << nomd<< "";
     QTest::newRow("dev-signed") \
             << "test-dev-signed.appkg" << "internal-0" << "test-update-dev-signed.appkg" << "internal-0"
-            << true << true << true << "";
+            << true << true << true << nomd << "";
+    QTest::newRow("extra-metadata") \
+            << "test-extra.appkg" << "internal-0" << "" << ""
+            << false << true << false << extramd << "";
+    QTest::newRow("extra-metadata-dev-signed") \
+            << "test-extra-dev-signed.appkg" << "internal-0" << "" << ""
+            << true << true << false << extramd << "";
     QTest::newRow("update-to-different-location") \
             << "test.appkg" << "internal-0" << "test-update.appkg" << "internal-1"
-            << false << true << false << "the application com.pelagicore.test cannot be installed to internal-1, since it is already installed to internal-0";
+            << false << true << false << nomd << "the application com.pelagicore.test cannot be installed to internal-1, since it is already installed to internal-0";
     QTest::newRow("invalid-location") \
             << "test.appkg" << "internal-42" << "" << ""
-            << false << false << false << "invalid installation location";
+            << false << false << false << nomd << "invalid installation location";
     QTest::newRow("invalid-file-order") \
             << "test-invalid-file-order.appkg" << "internal-0" << "" << ""
-            << false << false << false << "could not find info.yaml and icon.png at the beginning of the package";
+            << false << false << false << nomd << "could not find info.yaml and icon.png at the beginning of the package";
     QTest::newRow("invalid-header-format") \
             << "test-invalid-header-formatversion.appkg" << "internal-0" << "" << ""
-            << false << false << false << "metadata has an invalid format specification: wrong formatVersion header: expected 1, got 2";
+            << false << false << false << nomd << "metadata has an invalid format specification: wrong formatVersion header: expected 1, got 2";
     QTest::newRow("invalid-header-diskspaceused") \
             << "test-invalid-header-diskspaceused.appkg" << "internal-0" << "" << ""
-            << false << false << false << "metadata has an invalid diskSpaceUsed field (0)";
+            << false << false << false << nomd << "metadata has an invalid diskSpaceUsed field (0)";
     QTest::newRow("invalid-header-id") \
             << "test-invalid-header-id.appkg" << "internal-0" << "" << ""
-            << false << false << false << "metadata has an invalid applicationId field (:invalid)";
+            << false << false << false << nomd << "metadata has an invalid applicationId field (:invalid)";
     QTest::newRow("non-matching-header-id") \
             << "test-non-matching-header-id.appkg" << "internal-0" << "" << ""
-            << false << false << false << "the application identifiers in --PACKAGE-HEADER--' and info.yaml do not match";
+            << false << false << false << nomd << "the application identifiers in --PACKAGE-HEADER--' and info.yaml do not match";
+    QTest::newRow("tampered-extra-signed-header") \
+            << "test-tampered-extra-signed-header.appkg" << "internal-0" << "" << ""
+            << false << false << false << nomd << "~package digest mismatch.*";
     QTest::newRow("invalid-info.yaml") \
             << "test-invalid-info.appkg" << "internal-0" << "" << ""
-            << false << false << false << "~.*YAML parse error at line \\d+, column \\d+: did not find expected key";
+            << false << false << false << nomd << "~.*YAML parse error at line \\d+, column \\d+: did not find expected key";
     QTest::newRow("invalid-info.yaml-id") \
             << "test-invalid-info-id.appkg" << "internal-0" << "" << ""
-            << false << false << false << "~.*the identifier \\(:invalid\\) is not a valid application-id: must consist of printable ASCII characters only, except any of .*";
+            << false << false << false << nomd << "~.*the identifier \\(:invalid\\) is not a valid application-id: must consist of printable ASCII characters only, except any of .*";
     QTest::newRow("invalid-footer-signature") \
             << "test-invalid-footer-signature.appkg" << "internal-0" << "" << ""
-            << false << false << false << "could not verify the package's developer signature";
+            << false << false << false << nomd << "could not verify the package's developer signature";
 #ifdef Q_OS_LINUX
     QTest::newRow("sdcard") \
             << "test.appkg" << "removable-0" << "test-update.appkg" << "removable-0"
-            << false << true << true << "";
+            << false << true << true << nomd << "";
     QTest::newRow("sdcard-dev-signed") \
             << "test-dev-signed.appkg" << "removable-0" << "test-update-dev-signed.appkg" << "removable-0"
-            << true << true << true << "";
+            << true << true << true << nomd << "";
     QTest::newRow("sdcard-no-space") \
             << "bigtest-dev-signed.appkg" << "removable-0" << "" << ""
-            << true << false << false << "~not enough storage space left on removable-0: [0-9.]+ MB available, but [0-9.]+ MB needed";
+            << true << false << false << nomd << "~not enough storage space left on removable-0: [0-9.]+ MB available, but [0-9.]+ MB needed";
 #endif
 }
 
@@ -612,6 +637,7 @@ void tst_ApplicationInstaller::packageInstallation()
     QFETCH(bool, devSigned);
     QFETCH(bool, expectedSuccess);
     QFETCH(bool, updateExpectedSuccess);
+    QFETCH(QVariantMap, extraMetaData);
     QFETCH(QString, errorString);
 
 #if !defined(Q_OS_LINUX)
@@ -696,6 +722,27 @@ void tst_ApplicationInstaller::packageInstallation()
                 QVERIFY2(m_root->unmount(pathTo(TemporaryMount)), qPrintable(m_root->lastError()));
                 QVERIFY2(m_root->detachLoopback(loopbackDevice), qPrintable(m_root->lastError()));
             }
+
+            // check metadata
+            QCOMPARE(m_requestingInstallationAcknowledgeSpy->count(), 1);
+            QVariantMap extra = m_requestingInstallationAcknowledgeSpy->first()[2].toMap();
+            QVariantMap extraSigned = m_requestingInstallationAcknowledgeSpy->first()[3].toMap();
+            if (extraMetaData.value("extra").toMap() != extra) {
+                qDebug() << "Actual: " << extra;
+                qDebug() << "Expected: " << extraMetaData.value("extra").toMap();
+                QVERIFY(extraMetaData == extra);
+            }
+            if (extraMetaData.value("extraSigned").toMap() != extraSigned) {
+                qDebug() << "Actual: " << extraSigned;
+                qDebug() << "Expected: " << extraMetaData.value("extraSigned").toMap();
+                QVERIFY(extraMetaData == extraSigned);
+            }
+
+            // check if the meta-data was saved to the installation report correctly
+            QVERIFY2(m_ai->installedApplicationExtraMetaData("com.pelagicore.test") == extra,
+                     "Extra meta-data was not correctly saved to installation report");
+            QVERIFY2(m_ai->installedApplicationExtraSignedMetaData("com.pelagicore.test") == extraSigned,
+                     "Extra signed meta-data was not correctly saved to installation report");
         }
         if (pass == lastPass && expectedSuccess) {
             // remove package again

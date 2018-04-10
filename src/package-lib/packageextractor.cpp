@@ -476,7 +476,10 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
             throw Exception(Error::Package, "metadata has an invalid diskSpaceUsed field (%1)").arg(diskSpaceUsed);
         m_report.setDiskSpaceUsed(diskSpaceUsed);
 
-        PackageUtilities::addImportantHeaderDataToDigest(map, digest);
+        m_report.setExtraMetaData(map.value(qSL("extra")).toMap());
+        m_report.setExtraSignedMetaData(map.value(qSL("extraSigned")).toMap());
+
+        PackageUtilities::addHeaderDataToDigest(map, digest);
 
     } else { // footer(s)
         for (int i = 2; i < docs.size(); ++i)

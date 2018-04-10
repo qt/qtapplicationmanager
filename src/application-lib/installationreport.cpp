@@ -92,6 +92,26 @@ void InstallationReport::setInstallationLocationId(const QString &installationLo
     m_installationLocationId = installationLocationId;
 }
 
+QVariantMap InstallationReport::extraMetaData() const
+{
+    return m_extraMetaData;
+}
+
+void InstallationReport::setExtraMetaData(const QVariantMap &extraMetaData)
+{
+    m_extraMetaData = extraMetaData;
+}
+
+QVariantMap InstallationReport::extraSignedMetaData() const
+{
+    return m_extraSignedMetaData;
+}
+
+void InstallationReport::setExtraSignedMetaData(const QVariantMap &extraSignedMetaData)
+{
+    m_extraSignedMetaData = extraSignedMetaData;
+}
+
 QByteArray InstallationReport::digest() const
 {
     return m_digest;
@@ -201,6 +221,18 @@ bool InstallationReport::deserialize(QIODevice *from)
             if (m_storeSignature.isEmpty())
                 throw false;
         }
+        auto extra = root.find(qSL("extra"));
+        if (extra != root.end()) {
+            m_extraMetaData = extra.value().toMap();
+            if (m_extraMetaData.isEmpty())
+                throw false;
+        }
+        auto extraSigned = root.find(qSL("extraSigned"));
+        if (extraSigned != root.end()) {
+            m_extraSignedMetaData = extraSigned.value().toMap();
+            if (m_extraSignedMetaData.isEmpty())
+                throw false;
+        }
         m_files = root[qSL("files")].toStringList();
         if (m_files.isEmpty())
             throw false;
@@ -244,6 +276,10 @@ bool InstallationReport::serialize(QIODevice *to) const
         root[qSL("developerSignature")] = QLatin1String(m_developerSignature.toBase64());
     if (!m_storeSignature.isEmpty())
         root[qSL("storeSignature")] = QLatin1String(m_storeSignature.toBase64());
+    if (!m_extraMetaData.isEmpty())
+        root[qSL("extra")] = m_extraMetaData;
+    if (!m_extraSignedMetaData.isEmpty())
+        root[qSL("extraSigned")] = m_extraSignedMetaData;
 
     root[qSL("files")] = files();
 

@@ -55,10 +55,10 @@ class PackageUtilities
 {
 public:
     static void addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest);
-    static void addImportantHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) Q_DECL_NOEXCEPT_EXPR(false);
+    static void addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) Q_DECL_NOEXCEPT_EXPR(false);
 
     // key == field name, value == type to choose correct hashing algorithm
-    static QVariantMap importantHeaderData;
+    static QVariantMap headerDataForDigest;
 };
 
 enum PackageEntryType {

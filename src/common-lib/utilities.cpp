@@ -52,6 +52,7 @@
 #include <QCoreApplication>
 #include <QNetworkInterface>
 #include <QPluginLoader>
+#include <private/qvariant_p.h>
 
 #include "utilities.h"
 #include "exception.h"
@@ -453,6 +454,29 @@ QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files
         throw;
     }
     return interfaces;
+}
+
+void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from)
+{
+    // no auto allowed, since this is a recursive lambda
+    std::function<void(QVariantMap *, const QVariantMap &)> recursiveMergeMap =
+            [&recursiveMergeMap](QVariantMap *into, const QVariantMap &from) {
+        for (auto it = from.constBegin(); it != from.constEnd(); ++it) {
+            QVariant fromValue = it.value();
+            QVariant &toValue = (*into)[it.key()];
+
+            bool needsMerge = (toValue.type() == fromValue.type());
+
+            // we're trying not to detach, so we're using v_cast to avoid copies
+            if (needsMerge && (toValue.type() == QVariant::Map))
+                recursiveMergeMap(v_cast<QVariantMap>(&toValue.data_ptr()), fromValue.toMap());
+            else if (needsMerge && (toValue.type() == QVariant::List))
+                into->insert(it.key(), toValue.toList() + fromValue.toList());
+            else
+                into->insert(it.key(), fromValue);
+        }
+    };
+    recursiveMergeMap(&into, from);
 }
 
 QT_END_NAMESPACE_AM

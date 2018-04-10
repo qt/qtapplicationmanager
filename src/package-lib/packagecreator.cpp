@@ -155,7 +155,8 @@ void PackageCreator::cancel()
  *  vvv PackageCreatorPrivate vvv  *
  * * * * * * * * * * * * * * * * * */
 
-PackageCreatorPrivate::PackageCreatorPrivate(PackageCreator *creator, QIODevice *output, const InstallationReport &report)
+PackageCreatorPrivate::PackageCreatorPrivate(PackageCreator *creator, QIODevice *output,
+                                             const InstallationReport &report)
     : q(creator)
     , m_output(output)
     , m_report(report)
@@ -177,12 +178,16 @@ bool PackageCreatorPrivate::create()
             { qSL("formatVersion"), 1 }
         };
 
-        QVariantMap headerData {
+        m_metaData = QVariantMap {
             { qSL("applicationId"), m_report.applicationId() },
             { qSL("diskSpaceUsed"), m_report.diskSpaceUsed() }
         };
+        if (!m_report.extraMetaData().isEmpty())
+            m_metaData[qSL("extra")] = m_report.extraMetaData();
+        if (!m_report.extraSignedMetaData().isEmpty())
+            m_metaData[qSL("extraSigned")] = m_report.extraSignedMetaData();
 
-        PackageUtilities::addImportantHeaderDataToDigest(headerData, digest);
+        PackageUtilities::addHeaderDataToDigest(m_metaData, digest);
 
         emit q->progress(0);
 
@@ -213,10 +218,8 @@ bool PackageCreatorPrivate::create()
 
         // Add the metadata header
 
-        if (!addVirtualFile(ar, qSL("--PACKAGE-HEADER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { headerFormat, headerData })))
+        if (!addVirtualFile(ar, qSL("--PACKAGE-HEADER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { headerFormat, m_metaData })))
             throw ArchiveException(ar, "could not write '--PACKAGE-HEADER--' to archive");
-
-        m_metaData = headerData;
 
         // Add all regular files
 
@@ -326,7 +329,7 @@ bool PackageCreatorPrivate::create()
         m_digest = digest.result();
         if (!m_report.digest().isEmpty()) {
             if (m_digest != m_report.digest())
-                throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2").arg(m_digest.toHex()).arg(m_report.digest().toHex());
+                throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2)").arg(m_digest.toHex()).arg(m_report.digest().toHex());
         }
 
         // Add the metadata footer

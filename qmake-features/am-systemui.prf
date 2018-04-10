@@ -1,0 +1,28 @@
+win32: {
+    TEMPLATE = aux
+    warning("Couldn't generate a appman wrapper. Please start the example as mentioned in the documentation instead.")
+} else {
+    WRAPPER_EXT=.sh
+    ORIG_TARGET=$$TARGET
+    TARGET=$${TARGET}_wrapper$${WRAPPER_EXT}
+    CONFIG-=app_bundle
+    APPMAN=$$[QT_INSTALL_BINS]/appman $$AM_DEFAULT_ARGS
+
+    QT_TOOL_NAME = $$ORIG_TARGET
+    qtAddTargetEnv(APPMAN, QT)
+
+    # Copy assets to build folder
+    for (d , AM_COPY_DIRECTORIES) {
+        win32: do_copydata.commands += $(COPY_DIR) $$shell_path($$_PRO_FILE_PWD_/$${d}) $$shell_path($$OUT_PWD/$${d}) $$escape_expand(\n\t)
+        else: do_copydata.commands += $(COPY_DIR) $$shell_path($$_PRO_FILE_PWD_/$${d}) $$shell_path($$OUT_PWD) $$escape_expand(\n\t)
+    }
+    for (f , AM_COPY_FILES) {
+        do_copydata.commands += $(COPY) $$shell_path($$_PRO_FILE_PWD_/$${f}) $$shell_path($$OUT_PWD/$${f}) $$escape_expand(\n\t)
+    }
+
+    !equals(_PRO_FILE_PWD_, $$OUT_PWD) {
+        first.depends = do_copydata
+        QMAKE_EXTRA_TARGETS += do_copydata
+        QMAKE_EXTRA_TARGETS += first
+    }
+}

@@ -50,7 +50,8 @@
 /*!
     \qmltype ApplicationIPCManager
     \inqmlmodule QtApplicationManager
-    \brief The ApplicationIPCManager singleton.
+    \ingroup system-ui-singletons
+    \brief Central registry for interfaces for System-UI-to-app communication.
 
     This singleton type is the central manager for app-to-System-UI IPC interfaces within the application-manager.
 

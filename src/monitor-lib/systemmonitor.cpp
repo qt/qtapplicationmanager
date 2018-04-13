@@ -64,7 +64,9 @@
 /*!
     \qmltype SystemMonitor
     \inqmlmodule QtApplicationManager
-    \brief The SystemMonitor singleton.
+    \ingroup system-ui-singletons
+    \brief The system monitoring model, giving access to a range of measurements, e.g. CPU load,
+    frame rate, etc.
 
     The SystemMonitor singleton type provides information about system resources and performance,
     like CPU and memory usage, I/O load and frame rate.

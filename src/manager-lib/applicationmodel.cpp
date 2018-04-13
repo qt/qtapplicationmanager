@@ -53,6 +53,7 @@
 /*!
     \qmltype ApplicationModel
     \inherits QSortFilterProxyModel
+    \ingroup system-ui
     \inqmlmodule QtApplicationManager
     \brief A proxy model for the ApplicationManager singleton.
 

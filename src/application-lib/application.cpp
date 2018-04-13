@@ -51,6 +51,7 @@
 /*!
     \qmltype Application
     \inqmlmodule QtApplicationManager
+    \ingroup system-ui-non-instantiable
     \brief The handle for an application known to the ApplicationManager.
 
     Most of the read-only properties map directly to values read from the application's

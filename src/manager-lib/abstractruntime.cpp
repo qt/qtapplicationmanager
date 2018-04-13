@@ -51,6 +51,7 @@
 /*!
     \qmltype Runtime
     \inqmlmodule QtApplicationManager
+    \ingroup system-ui-non-instantiable
     \brief The handle for a runtime that is executing an \l Application.
 
     While an \l Application is running, the associated Runtime object will be valid and yield access

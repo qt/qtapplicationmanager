@@ -71,7 +71,8 @@
 /*!
     \qmltype WindowManager
     \inqmlmodule QtApplicationManager
-    \brief The WindowManager singleton.
+    \ingroup system-ui-singletons
+    \brief The window model and controller.
 
     The WindowManager singleton type is the window managing part of the application manager.
     It provides a QML API only.

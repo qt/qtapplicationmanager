@@ -60,7 +60,8 @@
 /*!
     \qmltype ApplicationInstaller
     \inqmlmodule QtApplicationManager
-    \brief The ApplicationInstaller singleton.
+    \ingroup system-ui-singletons
+    \brief The package installation/removal/update part of the application-manager.
 
     The ApplicationInstaller singleton type handles the package installation
     part of the application manager. It provides both a DBus and QML APIs for

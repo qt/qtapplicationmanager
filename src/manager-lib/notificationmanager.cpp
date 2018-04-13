@@ -58,7 +58,8 @@
 /*!
     \qmltype NotificationManager
     \inqmlmodule QtApplicationManager
-    \brief The NotificationManager singleton.
+    \ingroup system-ui-singletons
+    \brief The notification model, which handles freedesktop.org compliant notification requests.
 
     The NotificationManager singleton type is the window managing part of the
     application manager. It provides a QML API only.

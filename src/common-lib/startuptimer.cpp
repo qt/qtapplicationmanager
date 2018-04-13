@@ -68,6 +68,8 @@
 /*!
     \qmltype StartupTimer
     \inqmlmodule QtApplicationManager
+    \ingroup system-ui-singletons
+    \ingroup app-singletons
     \brief A tool for startup performance analysis.
 
     The StartupTimer is a class for measuring the startup performance of the System-UI, as well as

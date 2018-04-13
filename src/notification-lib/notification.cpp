@@ -45,6 +45,8 @@
 /*!
     \qmltype Notification
     \inqmlmodule QtApplicationManager
+    \ingroup system-ui-and-app
+    \ingroup app
     \brief An abstraction layer to enable QML applications to issue notifications to the System-UI.
 
     The Notification type is available for QML applications by either creating a Notification item

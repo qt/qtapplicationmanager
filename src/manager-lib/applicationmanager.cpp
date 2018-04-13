@@ -76,7 +76,8 @@
 /*!
     \qmltype ApplicationManager
     \inqmlmodule QtApplicationManager
-    \brief The ApplicationManager singleton.
+    \ingroup system-ui-singletons
+    \brief The application model and controller.
 
     The ApplicationManager singleton type is the core of the application manager.
     It provides both a DBus and a QML API for all of its functionality.

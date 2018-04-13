@@ -238,8 +238,9 @@ void PackageExtractorPrivate::extract()
             throw ArchiveException(ar, "could not set the HDRCHARSET option");
 #endif
 
-        auto dummyCallback = [](archive *, void *){ return ARCHIVE_OK; };
-        auto readCallback = [](archive *ar, void *user, const void **buffer) { return (__LA_SSIZE_T) reinterpret_cast<PackageExtractorPrivate *>(user)->readTar(ar, buffer); };
+        auto dummyCallback = [](archive *, void *) { return ARCHIVE_OK; };
+        auto readCallback = [](archive *ar, void *user, const void **buffer)
+        { return static_cast<__LA_SSIZE_T>(static_cast<PackageExtractorPrivate *>(user)->readTar(ar, buffer)); };
 
         if (archive_read_open(ar, this, dummyCallback, readCallback, dummyCallback) != ARCHIVE_OK)
             throw ArchiveException(ar, "could not open archive");

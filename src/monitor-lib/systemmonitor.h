@@ -71,7 +71,7 @@ class SystemMonitor : public QAbstractListModel
     Q_PROPERTY(bool idle READ isIdle NOTIFY idleChanged)
 
 public:
-    ~SystemMonitor();
+    ~SystemMonitor() override;
     static SystemMonitor *createInstance();
     static SystemMonitor *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);

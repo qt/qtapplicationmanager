@@ -62,7 +62,8 @@ void FrameTimer::newFrame()
 
 void FrameTimer::reset()
 {
-    m_count = m_sum = m_max = m_jitter = 0;
+    m_count = m_sum = m_max = 0;
+    m_jitter = 0;
     m_min = std::numeric_limits<int>::max();
 }
 

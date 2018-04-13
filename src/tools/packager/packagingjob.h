@@ -31,6 +31,7 @@
 #include <QtAppManCommon/global.h>
 #include <QByteArray>
 #include <QString>
+#include <QStringList>
 #include <QVariantMap>
 
 class PackagingJob

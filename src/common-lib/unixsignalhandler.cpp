@@ -60,7 +60,7 @@ static void *malloc_valgrind_ignore(size_t size)
 // sigmask() is not available on Windows
 UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)
 {
-    return (((am_sigmask_t) 1) << (((sig) - 1) % (8 * sizeof(am_sigmask_t))));
+    return ((am_sigmask_t(1)) << (((sig) - 1) % int(8 * sizeof(am_sigmask_t))));
 }
 
 UnixSignalHandler *UnixSignalHandler::s_instance = nullptr;

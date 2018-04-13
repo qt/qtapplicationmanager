@@ -84,7 +84,7 @@ bool QmlApplicationInterface::initialize()
             if (!iface->lastError().isValid())
                 return iface;
             delete iface;
-            QThread::msleep(timeout);
+            QThread::msleep(static_cast<unsigned long>(timeout));
         }
         return nullptr;
     };

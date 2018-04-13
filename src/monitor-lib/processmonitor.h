@@ -69,7 +69,7 @@ class ProcessMonitor : public QAbstractListModel
 
 public:
     ProcessMonitor(QObject *parent = nullptr);
-    ~ProcessMonitor();
+    ~ProcessMonitor() override;
 
     Q_INVOKABLE QVariantMap get(int index) const;
 

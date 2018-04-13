@@ -201,7 +201,7 @@ void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
         if (profile == -1) {
             qCWarning(LogGraphics) << "Requested an invalid OpenGL profile:" << profileName;
         } else if (profile != QSurfaceFormat::NoProfile) {
-            m_requestedOpenGLProfile = (QSurfaceFormat::OpenGLContextProfile) profile;
+            m_requestedOpenGLProfile = static_cast<QSurfaceFormat::OpenGLContextProfile>(profile);
             format.setProfile(m_requestedOpenGLProfile);
             qCDebug(LogGraphics) << "Requested OpenGL profile" << profileName;
         }

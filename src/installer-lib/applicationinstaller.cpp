@@ -223,12 +223,12 @@ ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<Install
     if (Q_UNLIKELY(!manifestDir.exists())) {
         if (error)
             *error = qL1S("ApplicationInstaller::createInstance() could not access the manifest directory ") + manifestDir.absolutePath();
-        return 0;
+        return nullptr;
     }
     if (Q_UNLIKELY(!imageMountDir.exists())) {
         if (error)
             *error = qL1S("ApplicationInstaller::createInstance() could not access the image-mount directory ") + imageMountDir.absolutePath();
-        return 0;
+        return nullptr;
     }
 
     qmlRegisterSingletonType<ApplicationInstaller>("QtApplicationManager", 1, 0, "ApplicationInstaller",
@@ -639,7 +639,7 @@ qint64 ApplicationInstaller::installedApplicationSize(const QString &id) const
 {
     if (const Application *a = ApplicationManager::instance()->fromId(id)) {
         if (const InstallationReport *report = a->installationReport())
-            return report->diskSpaceUsed();
+            return static_cast<qint64>(report->diskSpaceUsed());
     }
     return -1;
 }
@@ -991,8 +991,6 @@ public:
             break;
         case IsActivated:
             return isMounted;
-        default:
-            return false;
         }
 
         ActivationHelper *a = new ActivationHelper(id, imageName, imageMountDir, mountPoint, mountedDevice);

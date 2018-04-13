@@ -62,6 +62,7 @@
 #include <QQmlContext>
 #include <QQmlComponent>
 #include <QQmlApplicationEngine>
+#include <QTimer>
 #include <QUrl>
 #include <QLibrary>
 #include <QFunctionPointer>
@@ -447,7 +448,7 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
 }
 
 void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
-                           qreal quickLaunchRuntimesPerContainer, int quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
+                           int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString error;
     m_applicationManager = ApplicationManager::createInstance(m_applicationDatabase.take(),
@@ -865,7 +866,7 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
 
     qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
 
-    if (QByteArray::fromRawData(interfaceName, qstrlen(interfaceName)).startsWith("io.qt.")) {
+    if (QByteArray::fromRawData(interfaceName, int(qstrlen(interfaceName))).startsWith("io.qt.")) {
         // Write the bus address of the interface to a file in /tmp. This is needed for the
         // controller tool, which does not even have a session bus, when started via ssh.
 

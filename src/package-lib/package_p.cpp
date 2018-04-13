@@ -76,7 +76,7 @@ void PackageUtilities::addHeaderDataToDigest(const QVariantMap &header, QCryptog
             QDataStream ds(&ba, QIODevice::WriteOnly);
 
             QVariant v = header.value(it.key());
-            if (!v.convert(it.value().type()))
+            if (!v.convert(int(it.value().type())))
                 throw Exception(Error::Package, "metadata field %1 has invalid type for digest calculation (cannot convert %2 to %3)")
                     .arg(it.key()).arg(header.value(it.key()).type()).arg(it.value().type());
             ds << v;

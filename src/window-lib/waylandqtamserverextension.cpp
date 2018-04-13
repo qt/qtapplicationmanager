@@ -92,7 +92,7 @@ void WaylandQtAMServerExtension::qtam_extension_set_window_property(QtWaylandSer
 {
     Q_UNUSED(resource);
     QWaylandSurface *surface = QWaylandSurface::fromResource(surface_resource);
-    const QByteArray byteValue((const char *) value->data, value->size);
+    const QByteArray byteValue(static_cast<const char *>(value->data), static_cast<int>(value->size));
     QDataStream ds(byteValue);
     QVariant variantValue;
     ds >> variantValue;

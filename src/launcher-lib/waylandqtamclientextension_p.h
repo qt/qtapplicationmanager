@@ -71,7 +71,7 @@ class WaylandQtAMClientExtension : public QWaylandClientExtensionTemplate<Waylan
 
 public:
     WaylandQtAMClientExtension();
-    ~WaylandQtAMClientExtension();
+    ~WaylandQtAMClientExtension() override;
 
     QVariantMap windowProperties(QWindow *window) const;
     void setWindowProperty(QWindow *window, const QString &name, const QVariant &value);
@@ -80,7 +80,7 @@ signals:
     void windowPropertyChanged(QWindow *window, const QString &name, const QVariant &value);
 
 protected:
-    bool eventFilter(QObject *o, QEvent *e);
+    bool eventFilter(QObject *o, QEvent *e) override;
 
 private:
     bool setWindowPropertyHelper(QWindow *window, const QString &name, const QVariant &value);

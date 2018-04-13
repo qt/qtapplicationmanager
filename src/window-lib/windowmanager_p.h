@@ -45,6 +45,8 @@
 #include <QMap>
 #include <QHash>
 
+#include <QtAppManWindow/windowmanager.h>
+
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 
 QT_BEGIN_NAMESPACE_AM

@@ -44,7 +44,9 @@
 #include <QStringList>
 #include <QVariantMap>
 #include <QJSValue>
+#include <QSet>
 #include <QtAppManCommon/global.h>
+#include <QtAppManManager/applicationmanager.h>
 
 QT_BEGIN_NAMESPACE_AM
 

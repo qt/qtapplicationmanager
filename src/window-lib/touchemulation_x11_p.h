@@ -63,9 +63,9 @@ public:
 
 private:
     void queryForXInput2();
-    bool handleButtonPress(WId windowId, uint32_t detail, uint32_t modifiers, int x, int y);
-    bool handleButtonRelease(WId windowId, uint32_t detail, uint32_t, int x, int y);
-    bool handleMotionNotify(WId windowId, uint32_t modifiers, int x, int y);
+    bool handleButtonPress(WId windowId, uint32_t detail, uint32_t modifiers, qreal x, qreal y);
+    bool handleButtonRelease(WId windowId, uint32_t detail, uint32_t, qreal x, qreal y);
+    bool handleMotionNotify(WId windowId, uint32_t modifiers, qreal x, qreal y);
     QWindow *findQWindowWithXWindowID(WId windowId);
 
     void backupEventData(void *event);

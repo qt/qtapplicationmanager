@@ -427,7 +427,7 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
             throw Exception(Error::IO, "image file %1 already exists").arg(m_extractionImageFile);
         if (!image.open(QFile::WriteOnly | QFile::Truncate))
             throw Exception(image, "could not open image file for writing");
-        if (!image.resize(neededSize)) {
+        if (!image.resize(static_cast<qint64>(neededSize))) {
             image.remove();
             throw Exception(image, "could not resize image file to %1 bytes").arg(neededSize);
         }

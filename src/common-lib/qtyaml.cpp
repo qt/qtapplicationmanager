@@ -264,7 +264,8 @@ QVector<QVariant> variantDocumentsFromYamlFiltered(const QByteArray &yaml, std::
 
     yaml_parser_t p;
     if (yaml_parser_initialize(&p)) {
-        yaml_parser_set_input_string(&p, (const uchar *) yaml.constData(), yaml.size());
+        yaml_parser_set_input_string(&p, reinterpret_cast<const uchar *>(yaml.constData()),
+                                     static_cast<size_t>(yaml.size()));
 
         yaml_document_t doc;
         yaml_node_t *root;

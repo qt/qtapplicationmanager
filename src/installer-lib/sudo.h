@@ -72,6 +72,8 @@ public:
 class SudoInterface
 {
 public:
+    virtual ~SudoInterface() = default;
+
     virtual QString attachLoopback(const QString &imagePath, bool readonly) = 0;
     virtual bool detachLoopback(const QString &loopDev) = 0;
     virtual bool mount(const QString &device, const QString &mountPoint, bool readonly, const QString &fstype) = 0;
@@ -148,7 +150,7 @@ public:
 
     QString lastError() const { return m_errorString; }
 
-    void run();
+    Q_NORETURN void run();
 
 private:
     SudoServer(int socketFd, int loopControlFd);

@@ -189,10 +189,8 @@ int main(int argc, char *argv[])
         QString directLoad = clp.value(qSL("directload"));
         if (!directLoad.isEmpty()) {
             QFileInfo fi(directLoad);
-            if (!fi.exists() || fi.fileName() != qSL("info.yaml")) {
+            if (!fi.exists() || fi.fileName() != qSL("info.yaml"))
                 throw Exception("--directload needs a valid info.yaml file as parameter");
-                return 2;
-            }
             directLoad = fi.absoluteFilePath();
         } else {
             a.loadConfiguration();

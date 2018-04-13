@@ -34,6 +34,7 @@
 #include <QTemporaryFile>
 #include <QFileInfo>
 #include <QDBusConnection>
+#include <QDBusPendingReply>
 #include <QDBusError>
 #include <QTimer>
 #include <QThread>
@@ -168,7 +169,7 @@ static Command command(QCommandLineParser &clp)
         for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
             if (cmd == commandTable[i].name) {
                 clp.clearPositionalArguments();
-                clp.addPositionalArgument(cmd, commandTable[i].description, cmd);
+                clp.addPositionalArgument(qL1S(cmd), qL1S(commandTable[i].description), qL1S(cmd));
                 return commandTable[i].command;
             }
         }
@@ -232,7 +233,7 @@ int main(int argc, char *argv[])
     for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
         desc += qSL("  %1%2  %3\n")
                 .arg(qL1S(commandTable[i].name),
-                     QString(longestName - qstrlen(commandTable[i].name), qL1C(' ')),
+                     QString(int(longestName - qstrlen(commandTable[i].name)), qL1C(' ')),
                      qL1S(commandTable[i].description));
     }
 
@@ -258,7 +259,6 @@ int main(int argc, char *argv[])
     // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     try {
         switch (command(clp)) {
-        default:
         case NoCommand:
             if (clp.isSet(qSL("version")))
                 clp.showVersion();

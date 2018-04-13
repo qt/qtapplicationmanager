@@ -67,7 +67,7 @@ public:
     Exception(const Exception &copy) Q_DECL_NOEXCEPT;
     Exception(Exception &&move) Q_DECL_NOEXCEPT;
 
-    ~Exception() Q_DECL_NOEXCEPT;
+    ~Exception() Q_DECL_NOEXCEPT override;
 
     Error errorCode() const Q_DECL_NOEXCEPT;
     QString errorString() const Q_DECL_NOEXCEPT;

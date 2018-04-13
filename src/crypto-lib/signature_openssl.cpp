@@ -111,7 +111,7 @@ struct OpenSslDeleter {
     static inline void cleanup(STACK_OF_X509 *stackOfX509)
     { (Cryptography::LibCryptoFunctionBase::isOpenSSL11() ? am_OPENSSL_sk_pop_free
                                                           : am_sk_pop_free)
-                (stackOfX509, (void(*)(void *)) am_X509_free.functionPointer()); }
+                (stackOfX509, reinterpret_cast<void(*)(void *)>(am_X509_free.functionPointer())); }
 };
 
 template <typename T> using OpenSslPointer = QScopedPointer<T, OpenSslDeleter>;
@@ -123,7 +123,7 @@ public:
     OpenSslException(const char *errorString)
         : Exception(Error::Cryptography)
     {
-        m_errorString = Cryptography::errorString(am_ERR_get_error(), errorString);
+        m_errorString = Cryptography::errorString(static_cast<qint64>(am_ERR_get_error()), errorString);
     }
 };
 
@@ -135,7 +135,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
     if (hash.isEmpty())
         throw OpenSslException("cannot sign an empty hash value");
 
-    OpenSslPointer<BIO> bioPkcs12(am_BIO_new_mem_buf((void *) signingCertificatePkcs12.constData(), signingCertificatePkcs12.size()));
+    OpenSslPointer<BIO> bioPkcs12(am_BIO_new_mem_buf(signingCertificatePkcs12.constData(), signingCertificatePkcs12.size()));
     if (!bioPkcs12)
         throw OpenSslException("Could not create BIO buffer for PKCS#12 data");
 
@@ -161,7 +161,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
     if (!signCert)
         throw OpenSslException("Could not find the certificate within the PKCS#12 data");
 
-    OpenSslPointer<BIO> bioHash(am_BIO_new_mem_buf((void *) hash.constData(), hash.size()));
+    OpenSslPointer<BIO> bioHash(am_BIO_new_mem_buf(hash.constData(), hash.size()));
     if (!bioHash)
         throw OpenSslException("Could not create a BIO buffer for the hash");
 
@@ -182,7 +182,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
 
     char *data = nullptr;
     // long size = BIO_get_mem_data(bioSignature.data(), &data);
-    long size = am_BIO_ctrl(bioSignature.data(), 3 /*BIO_CTRL_INFO*/, 0, (char *) &data);
+    int size = static_cast<int>(am_BIO_ctrl(bioSignature.data(), 3 /*BIO_CTRL_INFO*/, 0, reinterpret_cast<char *>(&data)));
     if (size <= 0 || !data)
         throw OpenSslException("The BIO buffer for the PKCS#7 signature is invalid");
 
@@ -192,17 +192,17 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
 bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
                               const QList<QByteArray> &chainOfTrust) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    OpenSslPointer<BIO> bioSignature(am_BIO_new_mem_buf((void *) signaturePkcs7.constData(), signaturePkcs7.size()));
+    OpenSslPointer<BIO> bioSignature(am_BIO_new_mem_buf(signaturePkcs7.constData(), signaturePkcs7.size()));
     if (!bioSignature)
         throw OpenSslException("Could not create BIO buffer for PKCS#7 data");
 
     // PKCS7 *PEM_read_bio_PKCS7(BIO *bp, PKCS7 **x, pem_password_cb *cb, void *u);
     //OpenSslPointer<PKCS7> signature((PKCS7 *) am_PEM_ASN1_read_bio((d2i_of_void *) am_d2i_PKCS7.functionPointer(), PEM_STRING_PKCS7, bioSignature.data(), nullptr, nullptr, nullptr));
-    OpenSslPointer<PKCS7> signature((PKCS7 *) am_d2i_PKCS7_bio(bioSignature.data(), nullptr));
+    OpenSslPointer<PKCS7> signature(am_d2i_PKCS7_bio(bioSignature.data(), nullptr));
     if (!signature)
         throw OpenSslException("Could not read PKCS#7 data from BIO buffer");
 
-    OpenSslPointer<BIO> bioHash(am_BIO_new_mem_buf((void *) hash.constData(), hash.size()));
+    OpenSslPointer<BIO> bioHash(am_BIO_new_mem_buf(hash.constData(), hash.size()));
     if (!bioHash)
         throw OpenSslException("Could not create BIO buffer for the hash");
 
@@ -211,16 +211,16 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
         throw OpenSslException("Could not create a X509 certificate store");
 
     for (const QByteArray &trustedCert : chainOfTrust) {
-        OpenSslPointer<BIO> bioCert(am_BIO_new_mem_buf((void *) trustedCert.constData(), trustedCert.size()));
+        OpenSslPointer<BIO> bioCert(am_BIO_new_mem_buf(trustedCert.constData(), trustedCert.size()));
         if (!bioCert)
             throw OpenSslException("Could not create BIO buffer for a certificate");
 
         // BIO_eof(b) == (int)BIO_ctrl(b,BIO_CTRL_EOF,0,NULL)
         while (!am_BIO_ctrl(bioCert.data(), 2 /*BIO_CTRL_EOF*/, 0, nullptr)) {
             //OpenSslPointer<X509> cert(PEM_read_bio_X509(bioCert.data(), 0, 0, 0));
-            OpenSslPointer<X509> cert((X509 *) am_PEM_ASN1_read_bio((d2i_of_void *) (Cryptography::LibCryptoFunctionBase::isOpenSSL11() ? am_d2i_X509_AUX : am_d2i_X509).functionPointer(),
-                                                                    "CERTIFICATE" /*PEM_STRING_X509*/, bioCert.data(),
-                                                                    nullptr, nullptr, nullptr));
+            OpenSslPointer<X509> cert(static_cast<X509 *>(am_PEM_ASN1_read_bio(reinterpret_cast<d2i_of_void *>((Cryptography::LibCryptoFunctionBase::isOpenSSL11() ? am_d2i_X509_AUX : am_d2i_X509).functionPointer()),
+                                                                               "CERTIFICATE" /*PEM_STRING_X509*/, bioCert.data(),
+                                                                               nullptr, nullptr, nullptr)));
             if (!cert)
                 throw OpenSslException("Could not load a certificate from the chain of trust");
             if (!am_X509_STORE_add_cert(certChain.data(), cert.data()))

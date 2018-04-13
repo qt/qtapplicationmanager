@@ -428,7 +428,7 @@ QVariantMap NotificationManager::get(int index) const
 
     Returns an empty object if the specified \a id is invalid.
 */
-QVariantMap NotificationManager::notification(int id) const
+QVariantMap NotificationManager::notification(uint id) const
 {
     return get(indexOfNotification(id));
 }
@@ -440,7 +440,7 @@ QVariantMap NotificationManager::notification(int id) const
 
     Returns \c -1 if the specified \a id is invalid.
 */
-int NotificationManager::indexOfNotification(int id) const
+int NotificationManager::indexOfNotification(uint id) const
 {
     return d->findNotificationById(id);
 }
@@ -451,7 +451,7 @@ int NotificationManager::indexOfNotification(int id) const
     This function needs to be called by the System-UI when the user acknowledged the notification
     identified by \a id (most likely by clicking on it).
 */
-void NotificationManager::acknowledgeNotification(int id)
+void NotificationManager::acknowledgeNotification(uint id)
 {
     triggerNotificationAction(id, qSL("default"));
 }
@@ -468,7 +468,7 @@ void NotificationManager::acknowledgeNotification(int id)
     arbitrary string. Be aware that this string is broadcast on the session D-Bus when running in
     multi-process mode.
 */
-void NotificationManager::triggerNotificationAction(int id, const QString &actionId)
+void NotificationManager::triggerNotificationAction(uint id, const QString &actionId)
 {
     int i = d->findNotificationById(id);
 
@@ -499,7 +499,7 @@ void NotificationManager::triggerNotificationAction(int id, const QString &actio
 
     The creator of the notification will be notified about this dismissal.
 */
-void NotificationManager::dismissNotification(int id)
+void NotificationManager::dismissNotification(uint id)
 {
     d->closeNotification(id, UserDismissed);
 }
@@ -544,7 +544,7 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
     qCDebug(LogNotifications) << "Notify" << app_name << replaces_id << app_icon << summary << body << actions << hints << timeout;
 
     if (replaces_id == 0) { // new notification
-        int id = ++idCounter;
+        uint id = ++idCounter;
         // we need to delay the model update until the client has a valid id
         QTimer::singleShot(0, this, [this, app_name, id, app_icon, summary, body, actions, hints, timeout]() {
             notifyHelper(app_name, id, false, app_icon, summary, body, actions, hints, timeout);
@@ -587,7 +587,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
         return 0;
     }
     n->application = app;
-    n->priority = hints.value(qSL("urgency"), QVariant(0)).toInt();
+    n->priority = hints.value(qSL("urgency"), QVariant(0)).toUInt();
     n->summary = summary;
     n->body = body;
     n->category = hints.value(qSL("category")).toString();
@@ -658,7 +658,7 @@ void NotificationManagerPrivate::closeNotification(uint id, CloseReason reason)
         auto n = notifications.takeAt(i);
         q->endRemoveRows();
 
-        emit q->NotificationClosed(id, int(reason));
+        emit q->NotificationClosed(id, uint(reason));
 
         qCDebug(LogNotifications) << "Deleting notification with id:" << id;
         delete n;

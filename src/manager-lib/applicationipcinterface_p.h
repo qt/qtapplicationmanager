@@ -66,7 +66,7 @@ class IpcProxyObject // clazy:exclude=missing-qobject-macro
 public:
     IpcProxyObject(QObject *object, const QString &serviceName, const QString &pathName,
                    const QString &interfaceName, const QVariantMap &filter);
-    ~IpcProxyObject();
+    ~IpcProxyObject() override;
 
     QObject *object() const;
     QString serviceName() const;

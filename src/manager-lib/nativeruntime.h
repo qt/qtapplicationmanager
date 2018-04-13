@@ -83,7 +83,7 @@ class NativeRuntime : public AbstractRuntime
     Q_OBJECT
 
 public:
-    ~NativeRuntime();
+    ~NativeRuntime() override;
 
     bool isQuickLauncher() const override;
     bool attachApplicationToQuickLauncher(const Application *app) override;

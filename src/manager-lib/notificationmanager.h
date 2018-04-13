@@ -61,7 +61,7 @@ class NotificationManager : public QAbstractListModel
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 
 public:
-    ~NotificationManager();
+    ~NotificationManager() override;
     static NotificationManager *createInstance();
     static NotificationManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
@@ -73,12 +73,12 @@ public:
 
     Q_INVOKABLE int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-    Q_INVOKABLE QVariantMap notification(int id) const;
-    Q_INVOKABLE int indexOfNotification(int id) const;
+    Q_INVOKABLE QVariantMap notification(uint id) const;
+    Q_INVOKABLE int indexOfNotification(uint id) const;
 
-    Q_INVOKABLE void acknowledgeNotification(int id);
-    Q_INVOKABLE void triggerNotificationAction(int id, const QString &actionId);
-    Q_INVOKABLE void dismissNotification(int id);
+    Q_INVOKABLE void acknowledgeNotification(uint id);
+    Q_INVOKABLE void triggerNotificationAction(uint id, const QString &actionId);
+    Q_INVOKABLE void dismissNotification(uint id);
 
     // vv libnotify DBus interface
     Q_SCRIPTABLE QString GetServerInformation(QString &vendor, QString &version, QString &spec_version);
@@ -93,9 +93,9 @@ signals:
 
 signals:
     void countChanged();
-    void notificationAdded(int id);
-    void notificationAboutToBeRemoved(int id);
-    void notificationChanged(int id, const QStringList &rolesChanged);
+    void notificationAdded(uint id);
+    void notificationAboutToBeRemoved(uint id);
+    void notificationChanged(uint id, const QStringList &rolesChanged);
 
 private:
     uint notifyHelper(const QString &app_name, uint id, bool replaces, const QString &app_icon, const QString &summary, const QString &body, const QStringList &actions, const QVariantMap &hints, int timeout);

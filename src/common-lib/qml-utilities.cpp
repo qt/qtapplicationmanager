@@ -71,7 +71,7 @@ void fixNullValuesForQml(QVariantMap &map)
 
 void fixNullValuesForQml(QVariant &v)
 {
-    switch ((int) v.type()) {
+    switch (static_cast<int>(v.type())) {
     case QVariant::List: {
         QVariantList *list = v_cast<QVariantList>(&v.data_ptr());
         fixNullValuesForQml(*list);
@@ -100,7 +100,7 @@ void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singl
 
     auto retake = [qmlEngine, singleton]() {
         const auto types = QQmlMetaType::qmlSingletonTypes();
-        for (const auto singletonType : types) {
+        for (const auto &singletonType : types) {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 9, 2)
             if (singletonType.singletonInstanceInfo()->qobjectApi(qmlEngine) == singleton)
                 singletonType.singletonInstanceInfo()->qobjectApis.remove(qmlEngine);

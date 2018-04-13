@@ -71,7 +71,7 @@ static Command command(QCommandLineParser &clp)
         for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
             if (cmd == commandTable[i].name) {
                 clp.clearPositionalArguments();
-                clp.addPositionalArgument(cmd, commandTable[i].description, cmd);
+                clp.addPositionalArgument(qL1S(cmd), qL1S(commandTable[i].description), qL1S(cmd));
                 return commandTable[i].command;
             }
         }
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
         desc += qSL("  %1%2  %3\n")
                 .arg(qL1S(commandTable[i].name),
-                     QString(longestName - qstrlen(commandTable[i].name), qL1C(' ')),
+                     QString(int(longestName - qstrlen(commandTable[i].name)), qL1C(' ')),
                      qL1S(commandTable[i].description));
     }
 

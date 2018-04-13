@@ -476,7 +476,7 @@ void Notification::setShowProgress(bool showProgress)
 
 void Notification::setProgress(qreal progress)
 {
-    if (m_progress != progress) {
+    if (!qFuzzyCompare(m_progress, progress)) {
         m_progress = progress;
         emit progressChanged(progress);
     }

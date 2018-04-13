@@ -814,7 +814,7 @@ bool SystemMonitor::setMemoryWarningThresholds(qreal lowWarning, qreal criticalW
 {
     Q_D(SystemMonitor);
 
-    if (lowWarning != d->memoryLowWarning || criticalWarning != d->memoryCriticalWarning) {
+    if (!qFuzzyCompare(lowWarning, d->memoryLowWarning) || !qFuzzyCompare(criticalWarning, d->memoryCriticalWarning)) {
         d->memoryLowWarning = lowWarning;
         d->memoryCriticalWarning = criticalWarning;
         if (!d->memoryWatcher) {
@@ -864,7 +864,7 @@ void SystemMonitor::setIdleLoadThreshold(qreal loadThreshold)
 {
     Q_D(SystemMonitor);
 
-    if (loadThreshold != d->idleThreshold) {
+    if (!qFuzzyCompare(loadThreshold, d->idleThreshold)) {
         d->idleThreshold = loadThreshold;
         emit idleLoadThresholdChanged(loadThreshold);
     }

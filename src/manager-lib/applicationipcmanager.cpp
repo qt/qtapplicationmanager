@@ -236,10 +236,10 @@ bool ApplicationIPCManager::registerInterface(QT_PREPEND_NAMESPACE_AM(Applicatio
         const QChar *c = name.unicode();
         for (int i = 0; i < name.length(); ++i) {
             ushort u = c[i].unicode();
-            path += QLatin1Char(((u >= 'a' && u <= 'z')
-                                 || (u >= 'A' && u <= 'Z')
-                                 || (u >= '0' && u <= '9')
-                                 || (u == '_')) ? u : '_');
+            path += QChar(((u >= 'a' && u <= 'z')
+                           || (u >= 'A' && u <= 'Z')
+                           || (u >= '0' && u <= '9')
+                           || (u == '_')) ? u : '_');
         }
         return qSL("/ExtensionInterfaces/") + path;
     };

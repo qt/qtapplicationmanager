@@ -538,7 +538,7 @@ const Application *ApplicationManager::fromId(const QString &id) const
         if (app->id() == id)
             return app;
     }
-    return 0;
+    return nullptr;
 }
 
 const Application *ApplicationManager::fromProcessId(qint64 pid) const
@@ -559,13 +559,13 @@ const Application *ApplicationManager::fromProcessId(qint64 pid) const
 const Application *ApplicationManager::fromSecurityToken(const QByteArray &securityToken) const
 {
     if (securityToken.size() != AbstractRuntime::SecurityTokenSize)
-        return 0;
+        return nullptr;
 
     for (const Application *app : d->apps) {
         if (app->currentRuntime() && app->currentRuntime()->securityToken() == securityToken)
             return app;
     }
-    return 0;
+    return nullptr;
 }
 
 QVector<const Application *> ApplicationManager::schemeHandlers(const QString &scheme) const

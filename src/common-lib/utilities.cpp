@@ -111,7 +111,7 @@ void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
     if (actualSize >= 1) {
         const auto map = docs.constFirst().toMap();
         actualFormatType = map.value(qSL("formatType")).toString().toUtf8();
-        actualFormatVersion = map.value(qSL("formatVersion")).toInt(0);
+        actualFormatVersion = map.value(qSL("formatVersion")).toInt();
     }
 
     if (numberOfDocuments < 0) {
@@ -160,7 +160,7 @@ QMultiMap<QString, QString> mountedDirectories()
                            QString::fromLocal8Bit(mntPtr->mnt_fsname));
     }
 #  else
-    int pathMax = pathconf("/", _PC_PATH_MAX) * 2 + 1024;  // quite big, but better be safe than sorry
+    int pathMax = static_cast<int>(pathconf("/", _PC_PATH_MAX)) * 2 + 1024;  // quite big, but better be safe than sorry
     QScopedArrayPointer<char> strBuf(new char[pathMax]);
     struct mntent mntBuf;
 

@@ -75,7 +75,7 @@ class WindowManager : public QAbstractListModel
     Q_PROPERTY(bool slowAnimations READ slowAnimations WRITE setSlowAnimations NOTIFY slowAnimationsChanged)
 
 public:
-    ~WindowManager();
+    ~WindowManager() override;
     static WindowManager *createInstance(QQmlEngine *qmlEngine, const QString &waylandSocketName = QString());
     static WindowManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);

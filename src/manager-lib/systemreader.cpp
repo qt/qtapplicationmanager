@@ -131,7 +131,7 @@ qreal CpuReader::readLoadValue()
         qint64 val = strtoll(str.constData() + pos, &endPtr, 10); // check missing for over-/underflow
         values << val;
         total += val;
-        pos = endPtr - str.constData() + 1;
+        pos = int(endPtr - str.constData() + 1);
     }
 
     if (values.size() >= 4) {
@@ -212,11 +212,11 @@ public:
 #if defined(Q_OS_ANDROID)
                     qreal val = strtod(str.constData() + pos, &endPtr); // check missing for over-/underflow
 #else
-                    static locale_t cLocale = newlocale(LC_ALL_MASK, "C", NULL);
+                    static locale_t cLocale = newlocale(LC_ALL_MASK, "C", nullptr);
                     qreal val = strtod_l(str.constData() + pos, &endPtr, cLocale); // check missing for over-/underflow
 #endif
                     values << val;
-                    pos = endPtr - str.constData() + 1;
+                    pos = int(endPtr - str.constData() + 1);
                 }
 
                 switch (m_vendor) {
@@ -226,7 +226,7 @@ public:
                     break;
                 case Nvidia:
                     if (values.size() >= 2) {
-                        if (values.at(0) == 0)  // hardcoded to first gfx card
+                        if (qFuzzyIsNull(values.at(0)))  // hardcoded to first gfx card
                             m_lastValue = values.at(1) / 100;
                     }
                     break;
@@ -358,7 +358,7 @@ quint64 MemoryReader::groupLimit()
 
 quint64 MemoryReader::readUsedValue() const
 {
-    return ::strtoull(m_sysFs->readValue().constData(), 0, 10);
+    return ::strtoull(m_sysFs->readValue().constData(), nullptr, 10);
 }
 
 
@@ -390,7 +390,7 @@ qreal IoReader::readLoadValue()
         qint64 val = strtoll(str.constData() + pos, &endPtr, 10); // check missing for over-/underflow
         values << val;
         total += val;
-        pos = endPtr - str.constData() + 1;
+        pos = int(endPtr - str.constData() + 1);
     }
 
     qint64 elapsed;
@@ -467,8 +467,8 @@ bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryR
                     bool registerOk = true;
 
                     for (qreal percent : qAsConst(m_thresholds)) {
-                        qint64 mem = limit * percent / 100;
-                        registerOk = registerOk && (dprintf(m_controlFd, "%d %d %lld", m_eventFd, m_usageFd, mem) > 0);
+                        quint64 mem = quint64(limit * percent) / 100;
+                        registerOk = registerOk && (dprintf(m_controlFd, "%d %d %llu", m_eventFd, m_usageFd, mem) > 0);
                     }
 
                     if (registerOk) {
@@ -512,7 +512,7 @@ void MemoryThreshold::readEventFd()
         int handled = 0;
         quint64 counter;
 
-        int r = QT_READ(m_eventFd, &counter, sizeof(counter));
+        ssize_t r = QT_READ(m_eventFd, &counter, sizeof(counter));
         if (r == sizeof(counter)) {
             handled++;
         } else if (r < 0) {

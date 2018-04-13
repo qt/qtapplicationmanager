@@ -82,7 +82,7 @@ static qint64 getDBusPeerPid(const QDBusConnection &conn)
     static am_dbus_connection_get_socket_t am_dbus_connection_get_socket = nullptr;
 
     if (!am_dbus_connection_get_socket)
-        am_dbus_connection_get_socket = (am_dbus_connection_get_socket_t) dlsym(RTLD_DEFAULT, "dbus_connection_get_socket");
+        am_dbus_connection_get_socket = reinterpret_cast<am_dbus_connection_get_socket_t>(dlsym(RTLD_DEFAULT, "dbus_connection_get_socket"));
 
     if (!am_dbus_connection_get_socket)
         qFatal("ERROR: could not resolve 'dbus_connection_get_socket' from libdbus-1");

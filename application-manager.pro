@@ -15,9 +15,7 @@ qtCompileTest(libarchive)
 qtCompileTest(libyaml)
 !headless:qtCompileTest(touchemulation)
 
-qtHaveModule(compositor)|if(qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private)) {
-    CONFIG += am_compatible_compositor
-}
+qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private):CONFIG += am_compatible_compositor
 
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")

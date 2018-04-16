@@ -156,6 +156,23 @@
      values of systemUpTime and timeToFirstFrame.
 */
 
+
+/*!
+     \qmlproperty bool StartupTimer::automaticReporting
+
+     You can set this property to \c false, if you want to prevent the automatic report generation
+     that is done by the application-manager. This can be useful, if you are using some form of
+     staged loading in the System-UI and want to create the report at a later time.
+
+     \note Please note that you need to set this property to \c false before the load operation of
+           the main qml file is finished: ideally in the root elements \c Component.onCompleted
+           handler.
+
+    The default value is \c true.
+
+    \sa createReport
+*/
+
 /*!
     \qmlmethod StartupTimer::checkpoint(string name)
 
@@ -402,6 +419,19 @@ void StartupTimer::reset()
         const QString text = QString::asprintf("started %d'%03d.%03d after process launch",
                                                          delta.sec, delta.msec, delta.usec);
         m_checkpoints << qMakePair(0, text.toLocal8Bit().constData());
+    }
+}
+
+bool StartupTimer::automaticReporting() const
+{
+    return m_automaticReporting;
+}
+
+void StartupTimer::setAutomaticReporting(bool enableAutomaticReporting)
+{
+    if (m_automaticReporting != enableAutomaticReporting) {
+        m_automaticReporting = enableAutomaticReporting;
+        emit automaticReportingChanged(enableAutomaticReporting);
     }
 }
 

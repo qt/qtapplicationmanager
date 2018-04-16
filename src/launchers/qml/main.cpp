@@ -459,8 +459,12 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             // this is a queued signal, so there may be still one in the queue after calling disconnect()
             if (conn) {
                 QObject::disconnect(conn);
-                StartupTimer::instance()->checkFirstFrame();
-                StartupTimer::instance()->createReport(applicationId);
+
+                auto st = StartupTimer::instance();
+                st->checkFirstFrame();
+                if (!st->automaticReporting())
+                    st->createReport(applicationId);
+
                 for (StartupInterface *iface : qAsConst(startupPlugins))
                     iface->afterWindowShow(m_window);
             }

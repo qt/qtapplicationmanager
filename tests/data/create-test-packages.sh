@@ -29,8 +29,13 @@
 
 #set -x
 
+isWin=0
+isMac=0
+[ "$OS" == "Windows_NT" ] && isWin=1
+[ "$(uname)" != "Darwin" ] && isMac=1
+
 # check basic requirement
-[ "$(uname)" != "Darwin" ] && [ "${LANG%%.UTF-8}" = "$LANG" ] && { echo "The application-packager needs to be run with UTF-8 locale variant"; exit 1; }
+[ "$isMac" != "1" ] && [ "$isWin" != "1" ] && [ "${LANG%%.UTF-8}" = "$LANG" ] && { echo "The application-packager needs to be run with UTF-8 locale variant"; exit 1; }
 [ ! -d certificates ] && { echo "Please cd to the tests/data directory before running this script"; exit 1; }
 
 # having $LC_ALL set to "C" will screw us big time - especially since QtCreator sets this
@@ -62,6 +67,7 @@ trap removeTmp INT QUIT 0
 
 mkdir -p "$dst"
 mkdir -p "$src"
+[ "$isWin" = "1" ] && src=$(cygpath -m "$src")
 
 packager()
 {

@@ -61,8 +61,7 @@
     \ingroup system-ui-singletons
     \brief The notification model, which handles freedesktop.org compliant notification requests.
 
-    The NotificationManager singleton type is the window managing part of the
-    application manager. It provides a QML API only.
+    The NotificationManager singleton type provides a QML API only.
 
     The type is derived from QAbstractListModel and can be directly used as
     a model in notification views.

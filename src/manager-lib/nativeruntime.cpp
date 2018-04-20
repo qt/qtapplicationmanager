@@ -317,15 +317,19 @@ bool NativeRuntime::start()
             env.insert(it.key(), it.value().toString());
     }
 
-    if (m_app && !m_app->environmentVariables().isEmpty()) {
-        if (ApplicationManager::instance()->securityChecksEnabled()) {
-            qCWarning(LogSystem) << "Due to enabled security checks, the environmentVariables for"
-                                 << m_app->id() << "(given in info.yaml) will be ignored";
-        } else {
-            for (QMapIterator<QString, QVariant> it(m_app->environmentVariables()); it.hasNext(); ) {
-                it.next();
-                if (!it.key().isEmpty())
-                    env.insert(it.key(), it.value().toString());
+    if (m_app) {
+        const auto envVars = m_app->runtimeParameters().value(qSL("environmentVariables")).toMap();
+
+        if (!envVars.isEmpty()) {
+            if (ApplicationManager::instance()->securityChecksEnabled()) {
+                qCWarning(LogSystem) << "Due to enabled security checks, the environmentVariables for"
+                                     << m_app->id() << "(given in info.yaml) will be ignored";
+            } else {
+                for (QMapIterator<QString, QVariant> it(envVars); it.hasNext(); ) {
+                    it.next();
+                    if (!it.key().isEmpty())
+                        env.insert(it.key(), it.value().toString());
+                }
             }
         }
     }

@@ -70,10 +70,6 @@ runtime: qml
 runtimeParameters: { loadDummyData: true }
 documentUrl: "fm"
 
-preload: yes
-importance: 0.5
-backgroundMode: 'location'
-
 mimeTypes: [ "x-scheme-handler/x-radio" ]
 
 capabilities:
@@ -167,29 +163,12 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
 \row
     \li \c environmentVariables
     \li object
-    \li A simple string-to-string map, describing the environment variables that should be set when
-        spawning the runtime process. You can remove a variable from the default environment by
-        giving it a null value.
-
-        Please note, that this is intended to be a feature mostly for development and demos: you
-        will have the following limitations/side-effects:
-        \list
-        \li these variables are completely ignored, if you are running the application-manager
-            with security checks enabled.
-        \li setting these will disable the use of the quick-launch mechanism for this application.
-        \li of course it is also dependent on the actual runtime of the application: in case of
-            \c qml-in-process, environment variables cannot be supported at all.
-        \endlist
+    \li \e Deprecated. Moved to \c runtimeParameters - see below.
 \row
     \li \c documentUrl
     \li string
     \li An optional default document URL that is used, if the application is started without
         specifying a document URL (see ApplicationManager::startApplication).
-\row
-    \li \c preload
-    \li bool
-    \li Try to start the application immediately after boot, but keep it in the background. By
-        default, applications are not preloaded.
 \row
     \li \c supportsApplicationInterface
     \li bool
@@ -198,19 +177,6 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         ApplicationInterface on the P2P D-Bus until it marks it as 'running'. For runtimes that
         support quick launching (like the \c qml runtime) this is not required as it defaults to
         \c true. Otherwise the default is \c false.
-\row
-    \li \c importance
-    \li real
-    \li A value between \c 0.0 and \c 1.0 specifying the inverse probability of being terminated in
-        out-of-memory situations (the default is \c 0.0 - unimportant).
-\row
-    \li \c backgroundMode
-    \li string
-    \li Specifies if and why the application needs to be kept running in the background - can be
-        one of: \c auto, \c never, \c voip, \c audio or \c location.
-        By default, the background mode is \c auto.
-        This is just a hint for the System-UI - the application-manager itself will not enforce this
-        policy.
 \row
     \li \c mimeTypes
     \target mimeTypes field
@@ -228,6 +194,14 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
     \li string
     \li The version of the application in string form.
 \row
+    \li \c opengl
+    \li object
+    \li Gives you the possibility to specify the required OpenGL version and/or profile. See
+        \l{OpenGL Specification} {the main configuration} for more information on this subject.
+        Please note that specifying an OpenGL configuration that is different from the default
+        OpenGL configuration in the main application-manager configuration will disable the use of
+        the quick-launch mechanism for this application.
+\row
     \li \c applicationProperties
     \li object
     \li Exports user-defined properties (key/value pairs) to the application and the System-UI. The
@@ -243,13 +217,18 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         The properties will just be converted to QVariantMaps, but the application-manager will not
         interpret them in any way.
 \row
-    \li \c opengl
-    \li object
-    \li Gives you the possibility to specify the required OpenGL version and/or profile. See
-        \l{OpenGL Specification} {the main configuration} for more information on this subject.
-        Please note that specifying an OpenGL configuration that is different from the default
-        OpenGL configuration in the main application-manager configuration will disable the use of
-        the quick-launch mechanism for this application.
+    \li \c preload
+    \li bool
+    \li \e Deprecated. If needed, use \c applicationProperties and implement custom logic in your
+        System-UI to load specific applications on startup.
+\row
+    \li \c importance
+    \li real
+    \li \e Deprecated. Use \c applicationProperties if needed.
+\row
+    \li \c backgroundMode
+    \li string
+    \li \e Deprecated. Use \c applicationProperties if needed.
 \endtable
 
 
@@ -279,6 +258,21 @@ an additional column specifying which runtime a configuration option applies to:
     \li native
     \li array<string>
     \li A list of command line parameters that are used when starting the application's executable.
+\row
+    \li \c environmentVariables
+    \li native, qml
+    \li object
+    \li A simple string-to-string map, describing the environment variables that should be set when
+        spawning the runtime process. You can remove a variable from the default environment by
+        giving it a \c null value.
+
+        Please note, that this is intended to be a feature mostly for development and demos: you
+        will have the following limitations/side-effects:
+        \list
+        \li these variables are completely ignored, if you are running the application-manager
+            with security checks enabled.
+        \li setting these will disable the use of the quick-launch mechanism for this application.
+        \endlist
 \endtable
 
 \section1 Alias Manifests

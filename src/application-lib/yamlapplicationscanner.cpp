@@ -110,10 +110,13 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
         app->m_manifestDir = QFileInfo(f).absoluteDir();
         app->m_codeDir = app->m_manifestDir;
 
+        QVariantMap legacyEnvVars; //TODO: remove in 5.12
+
         QVariantMap yaml = docs.at(1).toMap();
         for (auto it = yaml.constBegin(); it != yaml.constEnd(); ++it) {
             QByteArray field = it.key().toLatin1();
             bool unknownField = false;
+            bool deprecatedField = false;
             const QVariant &v = it.value();
 
             if ((!isAlias && (field == "id"))
@@ -145,18 +148,17 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                     app->m_runtimeName = v.toString();
                 } else if (field == "runtimeParameters") {
                     app->m_runtimeParameters = v.toMap();
-                } else if (field == "environmentVariables") {
-                    app->m_environmentVariables = v.toMap();
-                } else if (field == "preload") {
-                    app->m_preload = v .toBool();
+                } else if (field == "environmentVariables") { //TODO: remove in 5.12
+                    legacyEnvVars = v.toMap();
+                    deprecatedField = true;
+                } else if (field == "preload") { //TODO: remove in 5.12
+                    app->m_preload = v.toBool();
+                    deprecatedField = true;
                 }  else if (field == "supportsApplicationInterface") {
                     app->m_supportsApplicationInterface = v.toBool();
-                } else if (field == "importance") {
+                } else if (field == "importance") { //TODO: remove in 5.12
                     app->m_importance = v.toReal();
-                } else if (field == "builtIn" || field == "built-in") {
-                    qWarning("The 'builtIn' field is deprecated. This line will not have any effect.");
-                } else if (field == "type") {
-                    // ignored for backward compatibility
+                    deprecatedField = true;
                 } else if (field == "capabilities") {
                     app->m_capabilities = variantToStringList(v);
                     app->m_capabilities.sort();
@@ -175,8 +177,9 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                         app->m_allAppProperties.insert(it.key(), it.value());
                 } else if (field == "version") {
                     app->m_version = v.toString();
-                } else if (field == "backgroundMode") {
-                    static const QPair<const char *, Application::BackgroundMode> backgroundMap[] = {
+                } else if (field == "backgroundMode") { //TODO: remove in 5.12
+                    static const QPair<const char *, Application::BackgroundMode> backgroundMap[] =
+                    {
                         { "never",    Application::Never },
                         { "voip",     Application::ProvidesVoIP },
                         { "audio",    Application::PlaysAudio },
@@ -196,6 +199,7 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                     }
                     if (!found)
                         throw Exception(Error::Parse, "the 'backgroundMode' value '%1' is not valid").arg(enumValue);
+                    deprecatedField = true;
                 } else if (field == "opengl") {
                     app->m_openGLConfiguration = v.toMap();
 
@@ -215,10 +219,15 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
             } else {
                 unknownField = true;
             }
-
+            if (deprecatedField) {
+                qWarning("Warning: While parsing %s: the '%s' field is deprecated and will be removed in the next release.",
+                         qPrintable(filePath), field.constData());
+            }
             if (unknownField)
                 throw Exception(Error::Parse, "contains unsupported field: '%1'").arg(field);
         }
+        if (!legacyEnvVars.isEmpty()) //TODO: remove in 5.12
+             app->m_runtimeParameters[qL1S("environmentVariables")] = legacyEnvVars;
 
         app->validate();
         return app.take();

@@ -39,8 +39,10 @@
 **
 ****************************************************************************/
 
-#ifdef _WIN32
+#if defined(_WIN32) && (_WIN32_WINNT-0 < _WIN32_WINNT_VISTA)
 // needed for QueryFullProcessImageNameW
+#  undef WINVER
+#  undef _WIN32_WINNT
 #  define WINVER _WIN32_WINNT_VISTA
 #  define _WIN32_WINNT _WIN32_WINNT_VISTA
 #endif

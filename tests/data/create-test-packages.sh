@@ -120,8 +120,8 @@ signed-key: signed-value
 EOT
 
 packager create-package "$dst/test-extra.appkg" "$src" \
-  -m '{ "foo": "bar" }' -m '{ "foo2": "bar2" }' -M "$tmp/exmd" -M "$tmp/exmd2" \
-  -s '{ "sfoo": "sbar" }' -s '{ "sfoo2": "sbar2" }' -S "$tmp/exmds" -S "$tmp/exmds2"
+  -m '{ "foo": "bar" }' -m '{ "foo2": "bar2" }' -M "$src/../exmd"  -M "$src/../exmd2" \
+  -s '{ "sfoo": "sbar" }' -s '{ "sfoo2": "sbar2" }' -S "$src/../exmds" -S "$src/../exmds2"
 
 info "Dev-sign package with extra meta-data"
 packager dev-sign-package "$dst/test-extra.appkg" "$dst/test-extra-dev-signed.appkg" certificates/dev1.p12 password
@@ -197,7 +197,7 @@ mv "$src"/info.yaml{.orig,}
 
 info "Create a package with an invalid info.yaml file"
 mv "$src"/info.yaml{,.orig}
-sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/code: "test"$/: "test"/'
+sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/code: "test"/: "test"/'
 tar -C "$src" -cf "$dst/test-invalid-info.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/info.yaml{.orig,}
 

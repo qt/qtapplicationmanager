@@ -126,152 +126,153 @@ int main(int argc, char *argv[])
     }
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
 
-    PackagingJob *p = nullptr;
+    try {
+        PackagingJob *p = nullptr;
 
-    // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
-    switch (command(clp)) {
-    default:
-    case NoCommand:
-        if (clp.isSet(qSL("version")))
-            clp.showVersion();
-        if (clp.isSet(qSL("help")))
-            clp.showHelp();
-        clp.showHelp(1);
-        break;
-
-    case CreatePackage: {
-        clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
-        clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
-        clp.addOption({{ qSL("extra-metadata"),      qSL("m") }, qSL("Add extra meta-data to the package, supplied on the commandline."), qSL("yaml-snippet") });
-        clp.addOption({{ qSL("extra-metadata-file"), qSL("M") }, qSL("Add extra meta-data to the package, read from file."), qSL("yaml-file") });
-        clp.addOption({{ qSL("extra-signed-metadata"),      qSL("s") }, qSL("Add extra, digitally signed, meta-data to the package, supplied on the commandline."), qSL("yaml-snippet") });
-        clp.addOption({{ qSL("extra-signed-metadata-file"), qSL("S") }, qSL("Add extra, digitally signed, meta-data to the package, read from file."), qSL("yaml-file") });
-        clp.addPositionalArgument(qSL("package"),          qSL("The file name of the created package."));
-        clp.addPositionalArgument(qSL("source-directory"), qSL("The package's content root directory."));
-        clp.process(a);
-
-        if (clp.positionalArguments().size() != 3)
+        // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
+        switch (command(clp)) {
+        default:
+        case NoCommand:
+            if (clp.isSet(qSL("version")))
+                clp.showVersion();
+            if (clp.isSet(qSL("help")))
+                clp.showHelp();
             clp.showHelp(1);
+            break;
 
-        auto parseYamlMetada = [](const QStringList &metadataSnippets, const QStringList &metadataFiles, bool isSigned) -> QVariantMap {
-            QVariantMap result;
-            QVector<QPair<QByteArray, QString>> metadata;
+        case CreatePackage: {
+            clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
+            clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
+            clp.addOption({{ qSL("extra-metadata"),      qSL("m") }, qSL("Add extra meta-data to the package, supplied on the commandline."), qSL("yaml-snippet") });
+            clp.addOption({{ qSL("extra-metadata-file"), qSL("M") }, qSL("Add extra meta-data to the package, read from file."), qSL("yaml-file") });
+            clp.addOption({{ qSL("extra-signed-metadata"),      qSL("s") }, qSL("Add extra, digitally signed, meta-data to the package, supplied on the commandline."), qSL("yaml-snippet") });
+            clp.addOption({{ qSL("extra-signed-metadata-file"), qSL("S") }, qSL("Add extra, digitally signed, meta-data to the package, read from file."), qSL("yaml-file") });
+            clp.addPositionalArgument(qSL("package"),          qSL("The file name of the created package."));
+            clp.addPositionalArgument(qSL("source-directory"), qSL("The package's content root directory."));
+            clp.process(a);
 
-            for (const QString &file : metadataFiles) {
-                QFile f(file);
-                if (!f.open(QIODevice::ReadOnly))
-                    throw Exception(f, "Could not open metadata file for reading");
-                metadata.append(qMakePair(f.readAll(), file));
-            }
-            for (const QString &snippet : metadataSnippets)
-                metadata.append(qMakePair(snippet.toUtf8(), QString()));
+            if (clp.positionalArguments().size() != 3)
+                clp.showHelp(1);
 
-            for (const auto &md : metadata) {
-                QtYaml::ParseError parseError;
-                const QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(md.first, &parseError);
-                if (parseError.error != QJsonParseError::NoError) {
-                    throw Exception(Error::IO, "YAML parse error in --extra-%4metadata%5 %6 at line %1, column %2: %3")
-                            .arg(parseError.line).arg(parseError.column).arg(parseError.errorString())
-                            .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
-                            .arg(md.second.isEmpty() ? qSL("option") : md.second);
+            auto parseYamlMetada = [](const QStringList &metadataSnippets, const QStringList &metadataFiles, bool isSigned) -> QVariantMap {
+                QVariantMap result;
+                QVector<QPair<QByteArray, QString>> metadata;
+
+                for (const QString &file : metadataFiles) {
+                    QFile f(file);
+                    if (!f.open(QIODevice::ReadOnly))
+                        throw Exception(f, "Could not open metadata file for reading");
+                    metadata.append(qMakePair(f.readAll(), file));
                 }
-                if (docs.size() < 1) {
-                    throw Exception("Could not parse --extra-%1metadata%2 %3: Invalid document format")
-                            .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
-                            .arg(md.second.isEmpty() ? qSL("option") : md.second);
+                for (const QString &snippet : metadataSnippets)
+                    metadata.append(qMakePair(snippet.toUtf8(), QString()));
+
+                for (const auto &md : metadata) {
+                    QtYaml::ParseError parseError;
+                    const QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(md.first, &parseError);
+                    if (parseError.error != QJsonParseError::NoError) {
+                        throw Exception(Error::IO, "YAML parse error in --extra-%4metadata%5 %6 at line %1, column %2: %3")
+                                .arg(parseError.line).arg(parseError.column).arg(parseError.errorString())
+                                .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
+                                .arg(md.second.isEmpty() ? qSL("option") : md.second);
+                    }
+                    if (docs.size() < 1) {
+                        throw Exception("Could not parse --extra-%1metadata%2 %3: Invalid document format")
+                                .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
+                                .arg(md.second.isEmpty() ? qSL("option") : md.second);
+                    }
+                    for (auto doc : docs)
+                        recursiveMergeVariantMap(result, doc.toMap());
                 }
-                for (auto doc : docs)
-                    recursiveMergeVariantMap(result, doc.toMap());
-            }
-            return result;
-        };
+                return result;
+            };
 
-        QVariantMap extraMetaDataMap = parseYamlMetada(clp.values(qSL("extra-metadata")),
-                                                       clp.values(qSL("extra-metadata-file")),
-                                                       false);
-        QVariantMap extraSignedMetaDataMap = parseYamlMetada(clp.values(qSL("extra-signed-metadata")),
-                                                             clp.values(qSL("extra-signed-metadata-file")),
-                                                             true);
+            QVariantMap extraMetaDataMap = parseYamlMetada(clp.values(qSL("extra-metadata")),
+                                                           clp.values(qSL("extra-metadata-file")),
+                                                           false);
+            QVariantMap extraSignedMetaDataMap = parseYamlMetada(clp.values(qSL("extra-signed-metadata")),
+                                                                 clp.values(qSL("extra-signed-metadata-file")),
+                                                                 true);
 
-        p = PackagingJob::create(clp.positionalArguments().at(1),
-                                 clp.positionalArguments().at(2),
-                                 extraMetaDataMap,
-                                 extraSignedMetaDataMap,
-                                 clp.isSet(qSL("json")));
-        break;
-    }
-    case DevSignPackage:
-        clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
-        clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
-        clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
-        clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
-        clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
-        clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
-        clp.process(a);
+            p = PackagingJob::create(clp.positionalArguments().at(1),
+                                     clp.positionalArguments().at(2),
+                                     extraMetaDataMap,
+                                     extraSignedMetaDataMap,
+                                     clp.isSet(qSL("json")));
+            break;
+        }
+        case DevSignPackage:
+            clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
+            clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
+            clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
+            clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
+            clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
+            clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
+            clp.process(a);
 
-        if (clp.positionalArguments().size() != 5)
-            clp.showHelp(1);
+            if (clp.positionalArguments().size() != 5)
+                clp.showHelp(1);
 
-        p = PackagingJob::developerSign(clp.positionalArguments().at(1),
+            p = PackagingJob::developerSign(clp.positionalArguments().at(1),
+                                            clp.positionalArguments().at(2),
+                                            clp.positionalArguments().at(3),
+                                            clp.positionalArguments().at(4),
+                                            clp.isSet(qSL("json")));
+            break;
+
+        case DevVerifyPackage:
+            clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
+            clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
+            clp.addPositionalArgument(qSL("certificates"), qSL("The developer's CA certificate file(s)."), qSL("certificates..."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() < 3)
+                clp.showHelp(1);
+
+            p = PackagingJob::developerVerify(clp.positionalArguments().at(1),
+                                              clp.positionalArguments().mid(2));
+            break;
+
+        case StoreSignPackage:
+            clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
+            clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
+            clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
+            clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
+            clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
+            clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
+            clp.addPositionalArgument(qSL("hardware-id"),    qSL("Unique hardware id to which this package gets bound."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() != 6)
+                clp.showHelp(1);
+
+            p = PackagingJob::storeSign(clp.positionalArguments().at(1),
                                         clp.positionalArguments().at(2),
                                         clp.positionalArguments().at(3),
                                         clp.positionalArguments().at(4),
+                                        clp.positionalArguments().at(5),
                                         clp.isSet(qSL("json")));
-        break;
+            break;
 
-    case DevVerifyPackage:
-        clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
-        clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
-        clp.addPositionalArgument(qSL("certificates"), qSL("The developer's CA certificate file(s)."), qSL("certificates..."));
-        clp.process(a);
+        case StoreVerifyPackage:
+            clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
+            clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
+            clp.addPositionalArgument(qSL("certificates"), qSL("Store CA certificate file(s)."), qSL("certificates..."));
+            clp.addPositionalArgument(qSL("hardware-id"),  qSL("Unique hardware id to which this package was bound."));
+            clp.process(a);
 
-        if (clp.positionalArguments().size() < 3)
-            clp.showHelp(1);
+            if (clp.positionalArguments().size() < 4)
+                clp.showHelp(1);
 
-        p = PackagingJob::developerVerify(clp.positionalArguments().at(1),
-                                          clp.positionalArguments().mid(2));
-        break;
+            p = PackagingJob::storeVerify(clp.positionalArguments().at(1),
+                                          clp.positionalArguments().mid(2, clp.positionalArguments().size() - 2),
+                                          *--clp.positionalArguments().cend());
+            break;
+        }
 
-    case StoreSignPackage:
-        clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
-        clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
-        clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
-        clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
-        clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
-        clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
-        clp.addPositionalArgument(qSL("hardware-id"),    qSL("Unique hardware id to which this package gets bound."));
-        clp.process(a);
+        if (!p)
+            return 2;
 
-        if (clp.positionalArguments().size() != 6)
-            clp.showHelp(1);
-
-        p = PackagingJob::storeSign(clp.positionalArguments().at(1),
-                                    clp.positionalArguments().at(2),
-                                    clp.positionalArguments().at(3),
-                                    clp.positionalArguments().at(4),
-                                    clp.positionalArguments().at(5),
-                                    clp.isSet(qSL("json")));
-        break;
-
-    case StoreVerifyPackage:
-        clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
-        clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
-        clp.addPositionalArgument(qSL("certificates"), qSL("Store CA certificate file(s)."), qSL("certificates..."));
-        clp.addPositionalArgument(qSL("hardware-id"),  qSL("Unique hardware id to which this package was bound."));
-        clp.process(a);
-
-        if (clp.positionalArguments().size() < 4)
-            clp.showHelp(1);
-
-        p = PackagingJob::storeVerify(clp.positionalArguments().at(1),
-                                      clp.positionalArguments().mid(2, clp.positionalArguments().size() - 2),
-                                      *--clp.positionalArguments().cend());
-        break;
-    }
-
-    if (!p)
-        return 2;
-    try {
         p->execute();
         if (clp.isSet(qSL("verbose")) && !p->output().isEmpty())
             fprintf(stdout, "%s\n", qPrintable(p->output()));

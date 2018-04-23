@@ -107,7 +107,7 @@ static qint64 getDBusPeerPid(const QDBusConnection &conn)
 
 #endif
 
-NativeRuntime::NativeRuntime(AbstractContainer *container, const Application *app, NativeRuntimeManager *manager)
+NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, NativeRuntimeManager *manager)
     : AbstractRuntime(container, app, manager)
     , m_isQuickLauncher(app == nullptr)
     , m_needsLauncher(manager->identifier() != qL1S("native"))
@@ -162,7 +162,7 @@ bool NativeRuntime::isQuickLauncher() const
     return m_isQuickLauncher;
 }
 
-bool NativeRuntime::attachApplicationToQuickLauncher(const Application *app)
+bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
 {
     if (!app || !isQuickLauncher() || !m_needsLauncher)
         return false;
@@ -223,7 +223,7 @@ bool NativeRuntime::initialize()
         if (!m_app)
             return false;
 
-        m_container->setProgram(m_app->absoluteCodeFilePath());
+        m_container->setProgram(m_app->nonAliasedInfo()->absoluteCodeFilePath());
         m_container->setBaseDirectory(m_app->codeDir());
         return true;
     }
@@ -243,11 +243,11 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
     for (ApplicationIPCInterface *iface : interfaces)
         iface->dbusUnregister(QDBusConnection(m_dbusConnectionName));
 
-    if (m_app)
-        m_app->setCurrentRuntime(nullptr);
-
     emit finished(exitCode, status);
     setState(Inactive);
+
+    if (m_app)
+        m_app->setCurrentRuntime(nullptr);
 
     deleteLater();
 }
@@ -280,7 +280,7 @@ bool NativeRuntime::start()
 
     QVariantMap openGLConfig;
     if (m_app)
-        openGLConfig = m_app->openGLConfiguration();
+        openGLConfig = m_app->nonAliasedInfo()->openGLConfiguration();
     if (openGLConfig.isEmpty())
         openGLConfig = manager()->systemOpenGLConfiguration();
     if (!openGLConfig.isEmpty())
@@ -392,7 +392,7 @@ void NativeRuntime::stop(bool forceKill)
 
 void NativeRuntime::onProcessStarted()
 {
-    if (!m_needsLauncher && !application()->supportsApplicationInterface())
+    if (!m_needsLauncher && !application()->nonAliasedInfo()->supportsApplicationInterface())
         setState(Active);
 }
 
@@ -456,10 +456,10 @@ void NativeRuntime::onApplicationFinishedInitialization()
         if (m_needsLauncher && m_launchWhenReady &&  m_app && m_runtimeInterface) {
 
             QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
-            QString pathInContainer = m_container->mapHostPathToContainer(m_app->absoluteCodeFilePath());
+            QString pathInContainer = m_container->mapHostPathToContainer(m_app->nonAliasedInfo()->absoluteCodeFilePath());
 
             emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
-                                                      convertFromJSVariant(QVariant(m_app->toVariantMap())).toMap(),
+                                                      convertFromJSVariant(QVariant(m_app->info()->toVariantMap())).toMap(),
                                                       convertFromJSVariant(QVariant(systemProperties())).toMap());
         }
         m_applicationInterfaceConnected = true;
@@ -568,7 +568,7 @@ QVariantMap NativeRuntimeApplicationInterface::systemProperties() const
 QVariantMap NativeRuntimeApplicationInterface::applicationProperties() const
 {
     if (m_runtime && m_runtime->application())
-        return m_runtime->application()->allAppProperties();
+        return m_runtime->application()->info()->allAppProperties();
     return QVariantMap();
 }
 
@@ -601,7 +601,7 @@ bool NativeRuntimeManager::supportsQuickLaunch() const
     return identifier() != qL1S("native");
 }
 
-AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, const Application *app)
+AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, Application *app)
 {
     if (!container)
         return nullptr;

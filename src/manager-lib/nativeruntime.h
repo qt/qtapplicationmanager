@@ -75,7 +75,7 @@ public:
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
 
-    AbstractRuntime *create(AbstractContainer *container, const Application *app) override;
+    AbstractRuntime *create(AbstractContainer *container, Application *app) override;
 };
 
 class NativeRuntime : public AbstractRuntime
@@ -86,7 +86,7 @@ public:
     ~NativeRuntime() override;
 
     bool isQuickLauncher() const override;
-    bool attachApplicationToQuickLauncher(const Application *app) override;
+    bool attachApplicationToQuickLauncher(Application *app) override;
 
     qint64 applicationProcessId() const override;
     void openDocument(const QString &document, const QString &mimeType) override;
@@ -110,7 +110,7 @@ private slots:
     void onApplicationFinishedInitialization();
 
 protected:
-    explicit NativeRuntime(AbstractContainer *container, const Application *app, NativeRuntimeManager *parent);
+    explicit NativeRuntime(AbstractContainer *container, Application *app, NativeRuntimeManager *parent);
 
 private:
     bool initialize();

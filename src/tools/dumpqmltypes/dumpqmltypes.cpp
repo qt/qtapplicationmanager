@@ -30,7 +30,7 @@
 #include <QtAppManManager/applicationmanager.h>
 #include <QtAppManManager/applicationipcmanager.h>
 #include <QtAppManManager/applicationipcinterface.h>
-#include <QtAppManApplication/application.h>
+#include <QtAppManManager/application.h>
 #include <QtAppManManager/abstractruntime.h>
 #include <QtAppManManager/abstractcontainer.h>
 #include <QtAppManManager/notificationmanager.h>
@@ -237,7 +237,7 @@ int main(int argc, char **argv)
         << &WindowManager::staticMetaObject
         << &NotificationManager::staticMetaObject
         << &ApplicationIPCManager::staticMetaObject
-        << &Application::staticMetaObject
+        << &AbstractApplication::staticMetaObject
         << &AbstractRuntime::staticMetaObject
         << &AbstractContainer::staticMetaObject
         << &Notification::staticMetaObject

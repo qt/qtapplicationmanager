@@ -48,7 +48,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
+class AbstractApplication;
 class AbstractContainer;
 class AbstractContainerManager;
 
@@ -63,7 +63,7 @@ public:
     QStringList containerIds() const;
 
     AbstractContainerManager *manager(const QString &id);
-    AbstractContainer *create(const QString &id, const Application *app,
+    AbstractContainer *create(const QString &id, AbstractApplication *app,
                               const QVector<int> &stdioRedirections = QVector<int>(),
                               const QMap<QString, QString> &debugWrapperEnvironment = QMap<QString, QString>(),
                               const QStringList &debugWrapperCommand = QStringList());

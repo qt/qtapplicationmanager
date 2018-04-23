@@ -31,18 +31,19 @@
 
 #include "global.h"
 #include "application.h"
+#include "applicationinfo.h"
 #include "applicationdatabase.h"
 #include "yamlapplicationscanner.h"
 #include "exception.h"
 
 QT_USE_NAMESPACE_AM
 
-class tst_Application : public QObject
+class tst_ApplicationInfo : public QObject
 {
     Q_OBJECT
 
 public:
-    tst_Application();
+    tst_ApplicationInfo();
 
 private slots:
     void initTestCase();
@@ -54,14 +55,14 @@ private slots:
     void validApplicationId();
 
 private:
-    QVector<const Application *> apps;
+    QVector<const AbstractApplicationInfo *> apps;
 };
 
-tst_Application::tst_Application()
+tst_ApplicationInfo::tst_ApplicationInfo()
 { }
 
 
-void tst_Application::initTestCase()
+void tst_ApplicationInfo::initTestCase()
 {
     YamlApplicationScanner scanner;
     QDir baseDir(qL1S(AM_TESTDATA_DIR "manifests"));
@@ -69,7 +70,7 @@ void tst_Application::initTestCase()
     for (const QString &appDirName : appDirNames) {
         QDir dir = baseDir.absoluteFilePath(appDirName);
         try {
-            const Application *a = scanner.scan(dir.absoluteFilePath(qSL("info.yaml")));
+            ApplicationInfo *a = scanner.scan(dir.absoluteFilePath(qSL("info.yaml")));
             QVERIFY(a);
             QCOMPARE(appDirName, a->id());
             apps << a;
@@ -81,12 +82,12 @@ void tst_Application::initTestCase()
     QCOMPARE(apps.size(), 2);
 }
 
-void tst_Application::cleanupTestCase()
+void tst_ApplicationInfo::cleanupTestCase()
 {
     qDeleteAll(apps);
 }
 
-void tst_Application::database()
+void tst_ApplicationInfo::database()
 {
     QString tmpDbPath = QDir::temp().absoluteFilePath(qSL("autotest-appdb-%1").arg(qApp->applicationPid()));
 
@@ -103,7 +104,7 @@ void tst_Application::database()
         QVERIFY(adb.isValid());
 
         try {
-            QVector<const Application *> appsInDb = adb.read();
+            QVector<AbstractApplication *> appsInDb = adb.read();
             QVERIFY(appsInDb.isEmpty());
 
             adb.write(apps);
@@ -120,7 +121,7 @@ void tst_Application::database()
         QVERIFY(adb.isValid());
 
         try {
-            QVector<const Application *> appsInDb = adb.read();
+            QVector<AbstractApplication *> appsInDb = adb.read();
             QCOMPARE(appsInDb.size(), apps.size());
             qDeleteAll(appsInDb);
         } catch (Exception &e) {
@@ -157,7 +158,7 @@ void tst_Application::database()
     }*/
 
 }
-void tst_Application::application_data()
+void tst_ApplicationInfo::application_data()
 {
     QTest::addColumn<QString>("id");
 
@@ -165,14 +166,14 @@ void tst_Application::application_data()
     QTest::newRow("json") << "com.pelagicore.json-legacy";
 }
 
-void tst_Application::application()
+void tst_ApplicationInfo::application()
 {
     QFETCH(QString, id);
 
     QString name = QString::fromLatin1(AM_TESTDATA_DIR "manifests/%1/info.yaml").arg(id);
 
     YamlApplicationScanner scanner;
-    Application *app;
+    ApplicationInfo *app;
     try {
         app = scanner.scan(name);
         QVERIFY(app);
@@ -201,21 +202,10 @@ void tst_Application::application()
     QVERIFY(app->categories().startsWith(qSL("bar")));
     QVERIFY(app->categories().endsWith(qSL("foo")));
 
-    QVERIFY(!app->currentRuntime());
-    QVERIFY(!app->isBlocked());
-    QVERIFY(app->block());
-    QVERIFY(!app->block());
-    QVERIFY(app->isBlocked());
-    QVERIFY(app->unblock());
-    QVERIFY(!app->unblock());
-    QVERIFY(!app->isBlocked());
-    QVERIFY(app->state() == Application::Installed);
-    QCOMPARE(app->progress(), qreal(0));
-
     delete app;
 }
 
-void tst_Application::validApplicationId_data()
+void tst_ApplicationInfo::validApplicationId_data()
 {
     QTest::addColumn<QString>("appId");
     QTest::addColumn<bool>("isAlias");
@@ -255,19 +245,19 @@ void tst_Application::validApplicationId_data()
     QTest::newRow("alias-name-too-long") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012@xtest" << true << false;
 }
 
-void tst_Application::validApplicationId()
+void tst_ApplicationInfo::validApplicationId()
 {
     QFETCH(QString, appId);
     QFETCH(bool, isAlias);
     QFETCH(bool, valid);
 
     QString errorString;
-    bool result = Application::isValidApplicationId(appId, isAlias, &errorString);
+    bool result = AbstractApplicationInfo::isValidApplicationId(appId, isAlias, &errorString);
 
     QVERIFY2(valid == result, qPrintable(errorString));
 }
 
-QTEST_APPLESS_MAIN(tst_Application)
+QTEST_APPLESS_MAIN(tst_ApplicationInfo)
 
-#include "tst_application.moc"
+#include "tst_applicationinfo.moc"
 

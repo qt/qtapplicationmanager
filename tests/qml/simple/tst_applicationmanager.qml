@@ -136,11 +136,9 @@ TestCase {
         compare(simpleApplication.runtimeName, "qml")
         compare(simpleApplication.icon, Qt.resolvedUrl("apps/tld.test.simple1/icon.png"))
         compare(simpleApplication.documentUrl, "")
-        compare(simpleApplication.importance, 0)
         compare(simpleApplication.builtIn, true)
         compare(simpleApplication.alias, false)
-        compare(simpleApplication.preload, false)
-        compare(simpleApplication.nonAliased, null)
+        compare(simpleApplication.nonAliased, simpleApplication)
         compare(simpleApplication.capabilities.length, 0)
         compare(simpleApplication.supportedMimeTypes.length, 2)
         compare(simpleApplication.categories.length, 0)
@@ -149,7 +147,6 @@ TestCase {
         compare(simpleApplication.lastExitCode, 0)
         compare(simpleApplication.lastExitStatus, AppMan.Application.NormalExit)
         compare(simpleApplication.type, AppMan.Application.Gui)
-        compare(simpleApplication.backgroundMode, AppMan.Application.Auto)
         compare(simpleApplication.version, "1.0")
 
         // Test the name getter and verify that it's returning the same object
@@ -172,8 +169,6 @@ TestCase {
         compare(applicationAlias.icon, Qt.resolvedUrl("apps/tld.test.simple1/icon2.png"))
         compare(applicationAlias.documentUrl, "x-test:alias")
         compare(applicationAlias.runtimeName, simpleApplication.runtimeName)
-        compare(applicationAlias.importance, simpleApplication.importance)
-        compare(applicationAlias.preload, simpleApplication.preload)
         compare(applicationAlias.capabilities, simpleApplication.capabilities)
         compare(applicationAlias.supportedMimeTypes, simpleApplication.supportedMimeTypes)
     }
@@ -216,10 +211,7 @@ TestCase {
         compare(listView.currentItem.modelData.isRemovable, false)
         compare(listView.currentItem.modelData.updateProgress, 0.0)
         verify(listView.currentItem.modelData.codeFilePath.indexOf("apps/tld.test.simple1/app1.qml") !== -1)
-        compare(listView.currentItem.modelData.backgroundMode, "Auto")
         compare(listView.currentItem.modelData.capabilities, simpleApplication.capabilities)
-        compare(listView.currentItem.modelData.importance, simpleApplication.importance)
-        compare(listView.currentItem.modelData.preload, simpleApplication.preload)
         compare(listView.currentItem.modelData.version, "1.0")
     }
 
@@ -299,10 +291,7 @@ TestCase {
         compare(appData.isRemovable, false)
         compare(appData.updateProgress, 0.0)
         verify(appData.codeFilePath.indexOf("apps/tld.test.simple1/app1.qml") !== -1)
-        compare(appData.backgroundMode, "Auto")
         compare(appData.capabilities, simpleApplication.capabilities)
-        compare(appData.importance, simpleApplication.importance)
-        compare(appData.preload, simpleApplication.preload)
         compare(appData.version, "1.0")
     }
 

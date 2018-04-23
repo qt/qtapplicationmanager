@@ -41,7 +41,7 @@
 #include "exception.h"
 #include "signature.h"
 #include "qtyaml.h"
-#include "application.h"
+#include "applicationinfo.h"
 #include "installationreport.h"
 #include "yamlapplicationscanner.h"
 #include "packageextractor.h"
@@ -150,7 +150,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         // check metadata
         YamlApplicationScanner yas;
         QString infoName = yas.metaDataFileName();
-        QScopedPointer<Application> app(yas.scan(source.absoluteFilePath(infoName)));
+        QScopedPointer<ApplicationInfo> app(yas.scan(source.absoluteFilePath(infoName)));
 
         // build report
         InstallationReport report(app->id());

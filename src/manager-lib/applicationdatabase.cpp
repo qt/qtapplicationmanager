@@ -53,6 +53,28 @@ QT_BEGIN_NAMESPACE_AM
 class ApplicationDatabasePrivate
 {
 public:
+    Application *findAppWithId(const QString &id, const QVector<AbstractApplication *> &apps)
+    {
+        QString baseId = id.section(qL1C('@'), 0, 0);
+        for (auto *otherApp : apps) {
+            if (otherApp->id() == baseId) {
+                Q_ASSERT(!otherApp->isAlias());
+                return static_cast<Application*>(otherApp);
+            }
+        }
+        return nullptr;
+    }
+
+    void validateWritableFile()
+    {
+        if (!file || !file->isOpen() || !file->isWritable())
+            throw Exception("application database %1 is not opened for writing").arg(file ? file->fileName() : qSL("<null>"));
+        if (!file->seek(0))
+            throw Exception(*file, "could not not seek to position 0 in the application database");
+        if (!file->resize(0))
+            throw Exception(*file, "could not truncate the application database");
+    }
+
     QFile *file = nullptr;
 
     ApplicationDatabasePrivate()
@@ -100,18 +122,27 @@ QString ApplicationDatabase::name() const
     return d->file->fileName();
 }
 
-QVector<const Application *> ApplicationDatabase::read() Q_DECL_NOEXCEPT_EXPR(false)
+QVector<AbstractApplication *> ApplicationDatabase::read() Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (!d->file || !d->file->isOpen() || !d->file->isReadable())
         throw Exception("application database %1 is not opened for reading").arg(d->file ? d->file->fileName() : qSL("<null>"));
 
-    QVector<const Application *> apps;
+    QVector<AbstractApplication *> apps;
 
     if (d->file->seek(0)) {
         QDataStream ds(d->file);
 
         forever {
-            QScopedPointer<Application> app(Application::readFromDataStream(ds, apps));
+            QScopedPointer<AbstractApplicationInfo> appInfo(AbstractApplicationInfo::readFromDataStream(ds));
+
+            QScopedPointer<AbstractApplication> app;
+            if (appInfo->isAlias()) {
+                Application *originalApp = d->findAppWithId(appInfo->id(), apps);
+                if (!originalApp)
+                    throw Exception(Error::Parse, "Could not find base app for alias id %2").arg(appInfo->id());
+                app.reset(new ApplicationAlias(originalApp, static_cast<ApplicationAliasInfo*>(appInfo.take())));
+            } else
+                app.reset(new Application(static_cast<ApplicationInfo*>(appInfo.take())));
 
             if (ds.status() != QDataStream::Ok) {
                 if (ds.status() != QDataStream::ReadPastEnd) {
@@ -127,18 +158,26 @@ QVector<const Application *> ApplicationDatabase::read() Q_DECL_NOEXCEPT_EXPR(fa
     return apps;
 }
 
-void ApplicationDatabase::write(const QVector<const Application *> &apps) Q_DECL_NOEXCEPT_EXPR(false)
+void ApplicationDatabase::write(const QVector<const AbstractApplicationInfo *> &apps) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    if (!d->file || !d->file->isOpen() || !d->file->isWritable())
-        throw Exception("application database %1 is not opened for writing").arg(d->file ? d->file->fileName() : qSL("<null>"));
-    if (!d->file->seek(0))
-        throw Exception(*d->file, "could not not seek to position 0 in the application database");
-    if (!d->file->resize(0))
-        throw Exception(*d->file, "could not truncate the application database");
+    d->validateWritableFile();
 
     QDataStream ds(d->file);
-    for (const Application *app : apps)
-        app->writeToDataStream(ds, apps);
+    for (auto *app : apps)
+        app->writeToDataStream(ds);
+
+    if (ds.status() != QDataStream::Ok)
+        throw Exception(*d->file, "could not write to application database");
+}
+
+void ApplicationDatabase::write(const QVector<AbstractApplication *> &apps) Q_DECL_NOEXCEPT_EXPR(false)
+{
+    d->validateWritableFile();
+
+    QDataStream ds(d->file);
+    for (auto *app : apps)
+        app->info()->writeToDataStream(ds);
+
     if (ds.status() != QDataStream::Ok)
         throw Exception(*d->file, "could not write to application database");
 }

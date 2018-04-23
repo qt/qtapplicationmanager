@@ -448,7 +448,7 @@ void ProcessMonitorPrivate::determinePid()
         if (ApplicationManager::instance()->isSingleProcess()) {
             newId = 0;
         } else {
-            const Application *app = ApplicationManager::instance()->fromId(appId);
+            AbstractApplication *app = ApplicationManager::instance()->fromId(appId);
             newId = (app && app->currentRuntime()) ? app->currentRuntime()->applicationProcessId() : 0;
         }
     }

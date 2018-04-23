@@ -54,7 +54,7 @@ QT_BEGIN_NAMESPACE_AM
 class WindowManagerPrivate
 {
 public:
-    int findWindowByApplication(const Application *app) const;
+    int findWindowByApplication(AbstractApplication *app) const;
     int findWindowBySurfaceItem(QQuickItem *quickItem) const;
 
 #if defined(AM_MULTI_PROCESS)
@@ -62,7 +62,7 @@ public:
 
     WaylandCompositor *waylandCompositor = nullptr;
 
-    static QString applicationId(const Application *app, WindowSurface *windowSurface);
+    static QString applicationId(AbstractApplication *app, WindowSurface *windowSurface);
 #endif
 
     QHash<int, QByteArray> roleNames;

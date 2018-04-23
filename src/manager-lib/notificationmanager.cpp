@@ -205,7 +205,7 @@ enum Roles
 struct NotificationData
 {
     uint id;
-    const Application *application;
+    AbstractApplication *application;
     uint priority;
     QString summary;
     QString body;
@@ -577,7 +577,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
         qCDebug(LogNotifications) << "  -> adding new notification with id" << id;
     }
 
-    const Application *app = ApplicationManager::instance()->fromId(app_name);
+    AbstractApplication *app = ApplicationManager::instance()->fromId(app_name);
 
     if (replaces && app != n->application) {
         // no hijacking allowed

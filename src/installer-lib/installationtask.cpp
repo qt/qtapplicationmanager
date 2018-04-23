@@ -43,7 +43,7 @@
 
 #include "logging.h"
 #include "applicationinstaller_p.h"
-#include "application.h"
+#include "applicationinfo.h"
 #include "packageextractor.h"
 #include "yamlapplicationscanner.h"
 #include "exception.h"
@@ -357,14 +357,13 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         // we need to call those ApplicationManager methods in the correct thread
         // this will also exclusively lock the application for us
         // m_app ownership is transferred to the ApplicationManager
-        m_app->moveToThread(ApplicationManager::instance()->thread());
         QString appId = m_app->id(); // m_app is gone after the invoke
         QMetaObject::invokeMethod(ApplicationManager::instance(),
-                                  "startingApplicationInstallation",
-                                  Qt::BlockingQueuedConnection,
-                                  Q_RETURN_ARG(bool, m_managerApproval),
-                                  // ugly, but Q_ARG chokes on QT_PREPEND_NAMESPACE_AM...
-                                  QArgument<QT_PREPEND_NAMESPACE_AM(Application *)>(QT_STRINGIFY(QT_PREPEND_NAMESPACE_AM(Application *)), m_app.take()));
+                "startingApplicationInstallation",
+                Qt::BlockingQueuedConnection,
+                Q_RETURN_ARG(bool, m_managerApproval),
+                // ugly, but Q_ARG chokes on QT_PREPEND_NAMESPACE_AM...
+                QArgument<QT_PREPEND_NAMESPACE_AM(ApplicationInfo *)>(QT_STRINGIFY(QT_PREPEND_NAMESPACE_AM(ApplicationInfo *)), m_app.take()));
         if (!m_managerApproval)
             throw Exception("Application Manager declined the installation of %1").arg(appId);
 

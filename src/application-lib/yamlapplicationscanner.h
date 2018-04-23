@@ -45,20 +45,22 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+class AbstractApplicationInfo;
+
 class YamlApplicationScanner : public ApplicationScanner
 {
 public:
     YamlApplicationScanner();
 
-    Application *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
-    Application *scanAlias(const QString &filePath,
-                           const Application *application) Q_DECL_NOEXCEPT_EXPR(false) override;
+    ApplicationInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
+    ApplicationAliasInfo *scanAlias(const QString &filePath,
+                                    const ApplicationInfo *application) Q_DECL_NOEXCEPT_EXPR(false) override;
 
     QString metaDataFileName() const override;
 
 private:
-    Application *scanInternal(const QString &filePath, bool scanAlias,
-                              const Application *application) Q_DECL_NOEXCEPT_EXPR(false);
+    AbstractApplicationInfo *scanInternal(const QString &filePath, bool scanAlias,
+                                          const ApplicationInfo *application) Q_DECL_NOEXCEPT_EXPR(false);
 };
 
 QT_END_NAMESPACE_AM

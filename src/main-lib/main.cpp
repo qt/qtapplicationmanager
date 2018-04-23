@@ -92,7 +92,7 @@
 #include "logging.h"
 #include "main.h"
 #include "defaultconfiguration.h"
-#include "application.h"
+#include "applicationinfo.h"
 #include "applicationmanager.h"
 #include "applicationdatabase.h"
 #include "installationreport.h"
@@ -410,7 +410,7 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
     }
 
     if (!m_applicationDatabase->isValid() || recreateDatabase) {
-        QVector<const Application *> apps;
+        QVector<const AbstractApplicationInfo *> apps;
 
         if (!singleApp.isEmpty()) {
             apps = scanForApplication(singleApp, m_builtinAppsManifestDirs);
@@ -422,8 +422,13 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
 
         if (LogSystem().isDebugEnabled()) {
             qCDebug(LogSystem) << "Registering applications:";
-            for (const Application *app : qAsConst(apps))
-                qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: " << QDir(app->codeDir()).path() << "]";
+            for (auto *app : qAsConst(apps)) {
+                if (app->isAlias())
+                    qCDebug(LogSystem).nospace().noquote() << " * " << app->id();
+                else
+                    qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: "
+                        << static_cast<const ApplicationInfo*>(app)->codeDir().path() << "]";
+            }
         }
 
         m_applicationDatabase->write(apps);
@@ -926,14 +931,15 @@ void Main::registerDBusInterfaces(const std::function<QString(const char *)> &bu
 }
 
 
-QVector<const Application *> Main::scanForApplication(const QString &singleAppInfoYaml, const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false)
+QVector<const AbstractApplicationInfo *> Main::scanForApplication(const QString &singleAppInfoYaml,
+        const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QVector<const Application *> result;
+    QVector<const AbstractApplicationInfo *> result;
     YamlApplicationScanner yas;
 
     QDir appDir = QFileInfo(singleAppInfoYaml).dir();
 
-    QScopedPointer<Application> a(yas.scan(singleAppInfoYaml));
+    QScopedPointer<ApplicationInfo> a(yas.scan(singleAppInfoYaml));
     Q_ASSERT(a);
 
     if (!RuntimeFactory::instance()->manager(a->runtimeName())) {
@@ -942,14 +948,13 @@ QVector<const Application *> Main::scanForApplication(const QString &singleAppIn
     }
 
     QStringList aliasPaths = appDir.entryList(QStringList(qSL("info-*.yaml")));
-    std::vector<std::unique_ptr<Application>> aliases;
+    std::vector<std::unique_ptr<AbstractApplicationInfo>> aliases;
 
     for (int i = 0; i < aliasPaths.size(); ++i) {
-        std::unique_ptr<Application> alias(yas.scanAlias(appDir.absoluteFilePath(aliasPaths.at(i)), a.data()));
+        std::unique_ptr<AbstractApplicationInfo> alias(yas.scanAlias(appDir.absoluteFilePath(aliasPaths.at(i)), a.data()));
 
         Q_ASSERT(alias);
         Q_ASSERT(alias->isAlias());
-        Q_ASSERT(alias->nonAliased() == a.data());
 
         aliases.push_back(std::move(alias));
     }
@@ -970,10 +975,10 @@ QVector<const Application *> Main::scanForApplication(const QString &singleAppIn
     return result;
 }
 
-QVector<const Application *> Main::scanForApplications(const QStringList &builtinAppsDirs, const QString &installedAppsDir,
-                                                        const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false)
+QVector<const AbstractApplicationInfo *> Main::scanForApplications(const QStringList &builtinAppsDirs, const QString &installedAppsDir,
+        const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QVector<const Application *> result;
+    QVector<const AbstractApplicationInfo *> result;
     YamlApplicationScanner yas;
 
     auto scan = [&result, &yas, &installationLocations](const QDir &baseDir, bool scanningBuiltinApps) {
@@ -985,7 +990,7 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
             if (appDirName.endsWith('+') || appDirName.endsWith('-'))
                 continue;
             QString appIdError;
-            if (!Application::isValidApplicationId(appDirName, false, &appIdError)) {
+            if (!AbstractApplicationInfo::isValidApplicationId(appDirName, false, &appIdError)) {
                 qCDebug(LogSystem) << "Ignoring application directory" << appDirName
                                    << ": not a valid application-id:" << qPrintable(appIdError);
                 continue;
@@ -1000,7 +1005,7 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
             if (!scanningBuiltinApps && !appDir.exists(qSL("installation-report.yaml")))
                 continue;
 
-            QScopedPointer<Application> a(yas.scan(appDir.absoluteFilePath(qSL("info.yaml"))));
+            QScopedPointer<ApplicationInfo> a(yas.scan(appDir.absoluteFilePath(qSL("info.yaml"))));
             Q_ASSERT(a);
 
             AbstractRuntimeManager *runtimeManager = RuntimeFactory::instance()->manager(a->runtimeName());
@@ -1022,14 +1027,13 @@ QVector<const Application *> Main::scanForApplications(const QStringList &builti
             if (scanningBuiltinApps) {
                 a->setBuiltIn(true);
                 QStringList aliasPaths = appDir.entryList(QStringList(qSL("info-*.yaml")));
-                std::vector<std::unique_ptr<Application>> aliases;
+                std::vector<std::unique_ptr<AbstractApplicationInfo>> aliases;
 
                 for (int i = 0; i < aliasPaths.size(); ++i) {
-                    std::unique_ptr<Application> alias(yas.scanAlias(appDir.absoluteFilePath(aliasPaths.at(i)), a.data()));
+                    std::unique_ptr<AbstractApplicationInfo> alias(yas.scanAlias(appDir.absoluteFilePath(aliasPaths.at(i)), a.data()));
 
                     Q_ASSERT(alias);
                     Q_ASSERT(alias->isAlias());
-                    Q_ASSERT(alias->nonAliased() == a.data());
 
                     aliases.push_back(std::move(alias));
                 }

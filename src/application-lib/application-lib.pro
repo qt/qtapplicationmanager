@@ -11,14 +11,14 @@ QT_FOR_PRIVATE *= \
 CONFIG *= static internal_module
 
 HEADERS += \
-    application.h \
+    applicationinfo.h \
     applicationscanner.h \
     yamlapplicationscanner.h \
     installationreport.h \
     applicationinterface.h \
 
 SOURCES += \
-    application.cpp \
+    applicationinfo.cpp \
     yamlapplicationscanner.cpp \
     installationreport.cpp \
     applicationinterface.cpp \

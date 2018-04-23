@@ -72,7 +72,7 @@ QT_BEGIN_NAMESPACE_AM
 const char *QmlInProcessRuntime::s_runtimeKey = "_am_runtime";
 
 
-QmlInProcessRuntime::QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager)
+QmlInProcessRuntime::QmlInProcessRuntime(Application *app, QmlInProcessRuntimeManager *manager)
     : AbstractRuntime(nullptr, app, manager)
 { }
 
@@ -103,7 +103,7 @@ bool QmlInProcessRuntime::start()
 
     if (m_app->runtimeParameters().value(qSL("loadDummyData")).toBool()) {
         qCDebug(LogSystem) << "Loading dummy-data";
-        loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->absoluteCodeFilePath()).path());
+        loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->nonAliasedInfo()->absoluteCodeFilePath()).path());
     }
 
     const QStringList importPaths = variantToStringList(configuration().value(qSL("importPaths")))
@@ -117,10 +117,10 @@ bool QmlInProcessRuntime::start()
     }
 
     m_componentError = false;
-    QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, m_app->absoluteCodeFilePath());
+    QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, m_app->nonAliasedInfo()->absoluteCodeFilePath());
 
     if (!component->isReady()) {
-        qCDebug(LogSystem) << "qml-file (" << m_app->absoluteCodeFilePath() << "): component not ready:\n" << component->errorString();
+        qCDebug(LogSystem) << "qml-file (" << m_app->nonAliasedInfo()->absoluteCodeFilePath() << "): component not ready:\n" << component->errorString();
         return false;
     }
 
@@ -140,7 +140,7 @@ bool QmlInProcessRuntime::start()
     QTimer::singleShot(0, this, [component, appContext, obj, this]() {
         component->completeCreate();
         if (!obj || m_componentError) {
-            qCCritical(LogSystem) << "could not load" << m_app->absoluteCodeFilePath() << ": no root object";
+            qCCritical(LogSystem) << "could not load" << m_app->nonAliasedInfo()->absoluteCodeFilePath() << ": no root object";
             delete obj;
             delete appContext;
             delete m_applicationIf;
@@ -312,7 +312,7 @@ bool QmlInProcessRuntimeManager::inProcess() const
     return true;
 }
 
-AbstractRuntime *QmlInProcessRuntimeManager::create(AbstractContainer *container, const Application *app)
+AbstractRuntime *QmlInProcessRuntimeManager::create(AbstractContainer *container, Application *app)
 {
     if (container) {
         delete container;

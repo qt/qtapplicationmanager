@@ -128,7 +128,7 @@ WindowSurfaceQuickItem::WindowSurfaceQuickItem(WindowSurface *windowSurface)
 void WindowSurfaceQuickItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     if (newGeometry.isValid()) {
-        const Application *app = nullptr; // prevent expensive lookup when not printing qDebugs
+        AbstractApplication *app = nullptr; // prevent expensive lookup when not printing qDebugs
         qCDebug(LogGraphics) << "Sending geometry change request to Wayland client for surface"
                             << m_windowSurface->item() << "old:" << oldGeometry.size() << "new:"
                             << newGeometry.size() << "of"

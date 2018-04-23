@@ -70,7 +70,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-AbstractRuntime::AbstractRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager)
+AbstractRuntime::AbstractRuntime(AbstractContainer *container, Application *app, AbstractRuntimeManager *manager)
     : QObject(manager)
     , m_container(container)
     , m_app(app)
@@ -125,7 +125,7 @@ void AbstractRuntime::setSlowAnimations(bool slow)
     Q_UNUSED(slow)
 }
 
-const Application *AbstractRuntime::application() const
+Application *AbstractRuntime::application() const
 {
     return m_app.data();
 }
@@ -152,7 +152,7 @@ bool AbstractRuntime::isQuickLauncher() const
     return false;
 }
 
-bool AbstractRuntime::attachApplicationToQuickLauncher(const Application *app)
+bool AbstractRuntime::attachApplicationToQuickLauncher(Application *app)
 {
     Q_UNUSED(app)
     return false;

@@ -1,4 +1,4 @@
-TARGET = tst_application
+TARGET = tst_applicationinfo
 
 include($$PWD/../tests.pri)
 
@@ -7,4 +7,4 @@ QT *= \
     appman_application-private \
     appman_manager-private \
 
-SOURCES += tst_application.cpp
+SOURCES += tst_applicationinfo.cpp

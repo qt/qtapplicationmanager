@@ -47,7 +47,7 @@
 #include <QProcess>
 #include <QJSValue>
 #include <QtAppManCommon/global.h>
-#include <QtAppManApplication/application.h>
+#include <QtAppManManager/application.h>
 
 QT_FORWARD_DECLARE_CLASS(QDir)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -88,19 +88,19 @@ public:
     QVariantMap systemProperties() const;
     void setSystemProperties(const QVariantMap &map);
 
-    QVector<const Application *> applications() const;
+    QVector<AbstractApplication *> applications() const;
 
-    const Application *fromId(const QString &id) const;
-    const Application *fromProcessId(qint64 pid) const;
-    const Application *fromSecurityToken(const QByteArray &securityToken) const;
-    QVector<const Application *> schemeHandlers(const QString &scheme) const;
-    QVector<const Application *> mimeTypeHandlers(const QString &mimeType) const;
+    AbstractApplication *fromId(const QString &id) const;
+    AbstractApplication *fromProcessId(qint64 pid) const;
+    AbstractApplication *fromSecurityToken(const QByteArray &securityToken) const;
+    QVector<AbstractApplication *> schemeHandlers(const QString &scheme) const;
+    QVector<AbstractApplication *> mimeTypeHandlers(const QString &mimeType) const;
 
-    bool startApplication(const Application *app, const QString &documentUrl = QString(),
+    bool startApplication(AbstractApplication *app, const QString &documentUrl = QString(),
                           const QString &documentMimeType = QString(),
                           const QString &debugWrapperSpecification = QString(),
                           const QVector<int> &stdioRedirections = QVector<int>()) Q_DECL_NOEXCEPT_EXPR(false);
-    void stopApplication(const Application *app, bool forceKill = false);
+    void stopApplication(AbstractApplication *app, bool forceKill = false);
 
     // only use these two functions for development!
     bool securityChecksEnabled() const;
@@ -122,8 +122,8 @@ public:
 
     int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-    Q_INVOKABLE const Application *application(int index) const;
-    Q_INVOKABLE const Application *application(const QString &id) const;
+    Q_INVOKABLE AbstractApplication *application(int index) const;
+    Q_INVOKABLE AbstractApplication *application(const QString &id) const;
     Q_INVOKABLE int indexOfApplication(const QString &id) const;
 
     Q_INVOKABLE void acknowledgeOpenUrlRequest(const QString &requestId, const QString &appId);
@@ -139,13 +139,13 @@ public:
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;
     Q_SCRIPTABLE QString identifyApplication(qint64 pid) const;
-    Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(Application::RunState) applicationRunState(const QString &id) const;
+    Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(AbstractApplication::RunState) applicationRunState(const QString &id) const;
 
 public slots:
     void shutDown();
 
 signals:
-    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(Application::RunState) runState);
+    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(AbstractApplication::RunState) runState);
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
     Q_SCRIPTABLE void countChanged();
 
@@ -175,7 +175,7 @@ private slots:
     //      need to use BlockingQueuedConnections
     bool blockApplication(const QString &id);
     bool unblockApplication(const QString &id);
-    bool startingApplicationInstallation(QT_PREPEND_NAMESPACE_AM(Application*) installApp);
+    bool startingApplicationInstallation(QT_PREPEND_NAMESPACE_AM(ApplicationInfo*) installApp);
     bool startingApplicationRemoval(const QString &id);
     void progressingApplicationInstall(const QString &id, qreal progress);
     bool finishedApplicationInstall(const QString &id);
@@ -186,8 +186,8 @@ private slots:
     friend class DeinstallationTask;
 
 private:
-    void emitDataChanged(const Application *app, const QVector<int> &roles = QVector<int>());
-    void emitActivated(const Application *app);
+    void emitDataChanged(AbstractApplication *app, const QVector<int> &roles = QVector<int>());
+    void emitActivated(AbstractApplication *app);
     void registerMimeTypes();
 
     ApplicationManager(ApplicationDatabase *adb, bool singleProcess, QObject *parent = nullptr);

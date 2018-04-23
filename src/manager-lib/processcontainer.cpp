@@ -145,7 +145,7 @@ void HostProcess::setStopBeforeExec(bool stopBeforeExec)
 }
 
 
-ProcessContainer::ProcessContainer(ProcessContainerManager *manager, const Application *app,
+ProcessContainer::ProcessContainer(ProcessContainerManager *manager, AbstractApplication *app,
                                    const QVector<int> &stdioRedirections,
                                    const QMap<QString, QString> &debugWrapperEnvironment,
                                    const QStringList &debugWrapperCommand)
@@ -280,7 +280,7 @@ bool ProcessContainerManager::supportsQuickLaunch() const
     return true;
 }
 
-AbstractContainer *ProcessContainerManager::create(const Application *app, const QVector<int> &stdioRedirections,
+AbstractContainer *ProcessContainerManager::create(AbstractApplication *app, const QVector<int> &stdioRedirections,
                                                    const QMap<QString, QString> &debugWrapperEnvironment,
                                                    const QStringList &debugWrapperCommand)
 {

@@ -45,15 +45,16 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
+class ApplicationInfo;
+class ApplicationAliasInfo;
 
 class ApplicationScanner
 {
 public:
     virtual ~ApplicationScanner() = default;
 
-    virtual Application *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) = 0;
-    virtual Application *scanAlias(const QString &filePath, const Application *application) Q_DECL_NOEXCEPT_EXPR(false) = 0;
+    virtual ApplicationInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) = 0;
+    virtual ApplicationAliasInfo *scanAlias(const QString &filePath, const ApplicationInfo *application) Q_DECL_NOEXCEPT_EXPR(false) = 0;
 
     virtual QString metaDataFileName() const = 0;
 

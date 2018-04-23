@@ -60,7 +60,7 @@ bool PluginContainerManager::supportsQuickLaunch() const
     return m_interface->supportsQuickLaunch();
 }
 
-AbstractContainer *PluginContainerManager::create(const Application *app, const QVector<int> &stdioRedirections,
+AbstractContainer *PluginContainerManager::create(AbstractApplication *app, const QVector<int> &stdioRedirections,
                                                   const QMap<QString, QString> &debugWrapperEnvironment,
                                                   const QStringList &debugWrapperCommand)
 {
@@ -131,7 +131,7 @@ AbstractContainerProcess *PluginContainer::start(const QStringList &arguments, c
     return nullptr;
 }
 
-PluginContainer::PluginContainer(AbstractContainerManager *manager, const Application *app, ContainerInterface *containerInterface)
+PluginContainer::PluginContainer(AbstractContainerManager *manager, AbstractApplication *app, ContainerInterface *containerInterface)
     : AbstractContainer(manager, app)
     , m_interface(containerInterface)
     , m_process(new PluginContainerProcess(this))
@@ -145,10 +145,10 @@ PluginContainer::PluginContainer(AbstractContainerManager *manager, const Applic
     connect(containerInterface, &ContainerInterface::stateChanged, m_process, &PluginContainerProcess::stateChanged);
 
     connect(this, &AbstractContainer::applicationChanged, this, [this]() {
-        m_interface->attachApplication(application()->toVariantMap());
+        m_interface->attachApplication(application()->info()->toVariantMap());
     });
     if (application())
-        containerInterface->attachApplication(application()->toVariantMap());
+        containerInterface->attachApplication(application()->info()->toVariantMap());
 }
 
 PluginContainerProcess::PluginContainerProcess(PluginContainer *container)

@@ -49,7 +49,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
+class AbstractApplication;
 class WindowPrivate;
 
 // A Window object exists for every application window that is managed by the application-manager
@@ -62,12 +62,12 @@ class Window : public QObject
     Q_OBJECT
 
 public:
-    Window(const Application *app, QQuickItem *windowItem);
+    Window(AbstractApplication *app, QQuickItem *windowItem);
     virtual ~Window();
 
     virtual bool isInProcess() const = 0;
     virtual QQuickItem *windowItem() const;
-    virtual const Application *application() const;
+    virtual AbstractApplication *application() const;
 
     virtual void setClosing();
     virtual bool isClosing() const;
@@ -80,7 +80,7 @@ signals:
     void windowPropertyChanged(const QString &name, const QVariant &value);
 
 protected:
-    const Application *m_application;
+    AbstractApplication *m_application;
     QPointer<QQuickItem> m_windowItem;
     bool m_isClosing = false;
 };

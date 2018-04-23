@@ -57,7 +57,7 @@ class WaylandWindow : public Window
     Q_OBJECT
 
 public:
-    WaylandWindow(const Application *app, WindowSurface *surface);
+    WaylandWindow(AbstractApplication *app, WindowSurface *surface);
 
     bool isInProcess() const override { return false; }
 

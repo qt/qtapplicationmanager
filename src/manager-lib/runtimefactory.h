@@ -64,7 +64,7 @@ public:
     QStringList runtimeIds() const;
 
     AbstractRuntimeManager *manager(const QString &id);
-    AbstractRuntime *create(AbstractContainer *container, const Application *app);
+    AbstractRuntime *create(AbstractContainer *container, Application *app);
     AbstractRuntime *createQuickLauncher(AbstractContainer *container, const QString &id);
 
     void setConfiguration(const QVariantMap &configuration);

@@ -55,7 +55,7 @@ class TestRuntime : public AbstractRuntime
     Q_OBJECT
 
 public:
-    explicit TestRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager)
+    explicit TestRuntime(AbstractContainer *container, Application *app, AbstractRuntimeManager *manager)
         : AbstractRuntime(container, app, manager)
     { }
 
@@ -96,7 +96,7 @@ public:
         return !AbstractRuntimeManager::inProcess();
     }
 
-    TestRuntime *create(AbstractContainer *container, const Application *app)
+    TestRuntime *create(AbstractContainer *container, Application *app)
     {
         return new TestRuntime(container, app, this);
     }
@@ -136,7 +136,7 @@ void tst_Runtime::factory()
 
     Application *a = nullptr;
     try {
-        a = YamlApplicationScanner().scan(temp.fileName());
+        a = new Application(YamlApplicationScanner().scan(temp.fileName()));
     } catch (const Exception &e) {
         QVERIFY2(false, qPrintable(e.errorString()));
     }

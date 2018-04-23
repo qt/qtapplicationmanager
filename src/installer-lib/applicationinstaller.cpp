@@ -296,12 +296,12 @@ uint ApplicationInstaller::findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false)
     if (!isApplicationUserIdSeparationEnabled())
         return uint(-1);
 
-    QVector<const Application *> apps = ApplicationManager::instance()->applications();
+    QVector<AbstractApplication *> apps = ApplicationManager::instance()->applications();
 
     for (uint uid = d->minUserId; uid <= d->maxUserId; ++uid) {
         bool match = false;
-        for (const Application *app : qAsConst(apps)) {
-            if (app->uid() == uid) {
+        for (AbstractApplication *app : qAsConst(apps)) {
+            if (app->nonAliasedInfo()->uid() == uid) {
                 match = true;
                 break;
             }
@@ -381,8 +381,8 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
     }
 
     const auto allApps = am->applications();
-    for (const Application *app : allApps) {
-        const InstallationReport *ir = app->installationReport();
+    for (AbstractApplication *app : allApps) {
+        const InstallationReport *ir = app->nonAliasedInfo()->installationReport();
         if (ir) {
             const InstallationLocation &il = installationLocationFromId(ir->installationLocationId());
 
@@ -503,8 +503,8 @@ const InstallationLocation &ApplicationInstaller::installationLocationFromId(con
 
 const InstallationLocation &ApplicationInstaller::installationLocationFromApplication(const QString &id) const
 {
-    if (const Application *a = ApplicationManager::instance()->fromId(id)) {
-        if (const InstallationReport *report = a->installationReport())
+    if (AbstractApplication *a = ApplicationManager::instance()->fromId(id)) {
+        if (const InstallationReport *report = a->nonAliasedInfo()->installationReport())
             return installationLocationFromId(report->installationLocationId());
     }
     return d->invalidInstallationLocation;
@@ -636,8 +636,8 @@ QVariantMap ApplicationInstaller::getInstallationLocation(const QString &install
 */
 qint64 ApplicationInstaller::installedApplicationSize(const QString &id) const
 {
-    if (const Application *a = ApplicationManager::instance()->fromId(id)) {
-        if (const InstallationReport *report = a->installationReport())
+    if (AbstractApplication *a = ApplicationManager::instance()->fromId(id)) {
+        if (const InstallationReport *report = a->nonAliasedInfo()->installationReport())
             return static_cast<qint64>(report->diskSpaceUsed());
     }
     return -1;
@@ -652,8 +652,8 @@ qint64 ApplicationInstaller::installedApplicationSize(const QString &id) const
 */
 QVariantMap ApplicationInstaller::installedApplicationExtraMetaData(const QString &id) const
 {
-    if (const Application *a = ApplicationManager::instance()->fromId(id)) {
-        if (const InstallationReport *report = a->installationReport())
+    if (AbstractApplication *a = ApplicationManager::instance()->fromId(id)) {
+        if (const InstallationReport *report = a->nonAliasedInfo()->installationReport())
             return report->extraMetaData();
     }
     return QVariantMap();
@@ -669,8 +669,8 @@ QVariantMap ApplicationInstaller::installedApplicationExtraMetaData(const QStrin
 */
 QVariantMap ApplicationInstaller::installedApplicationExtraSignedMetaData(const QString &id) const
 {
-    if (const Application *a = ApplicationManager::instance()->fromId(id)) {
-        if (const InstallationReport *report = a->installationReport())
+    if (AbstractApplication *a = ApplicationManager::instance()->fromId(id)) {
+        if (const InstallationReport *report = a->nonAliasedInfo()->installationReport())
             return report->extraSignedMetaData();
     }
     return QVariantMap();
@@ -763,12 +763,12 @@ QString ApplicationInstaller::removePackage(const QString &id, bool keepDocument
 {
     AM_TRACE(LogInstaller, id, keepDocuments)
 
-    if (const Application *a = ApplicationManager::instance()->fromId(id)) {
-        if (const InstallationReport *report = a->installationReport()) {
+    if (AbstractApplication *a = ApplicationManager::instance()->fromId(id)) {
+        if (const InstallationReport *report = a->nonAliasedInfo()->installationReport()) {
             const InstallationLocation &il = installationLocationFromId(report->installationLocationId());
 
             if (il.isValid() && (il.id() == report->installationLocationId()))
-                return enqueueTask(new DeinstallationTask(a, il, force, keepDocuments));
+                return enqueueTask(new DeinstallationTask(a->nonAliasedInfo(), il, force, keepDocuments));
         }
     }
     return QString();

@@ -45,7 +45,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
+class ApplicationInfo;
 class InstallationLocation;
 
 class DeinstallationTask : public AsynchronousTask
@@ -53,13 +53,13 @@ class DeinstallationTask : public AsynchronousTask
     Q_OBJECT
 
 public:
-    DeinstallationTask(const Application *app, const InstallationLocation &installationLocation,
+    DeinstallationTask(ApplicationInfo *app, const InstallationLocation &installationLocation,
                        bool forceDeinstallation, bool keepDocuments, QObject *parent = nullptr);
 protected:
     void execute() override;
 
 private:
-    const Application *m_app;
+    ApplicationInfo *m_app;
     const InstallationLocation &m_installationLocation;
     bool m_forceDeinstallation;
     bool m_keepDocuments;

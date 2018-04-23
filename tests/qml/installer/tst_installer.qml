@@ -102,6 +102,7 @@ TestCase {
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
+        compare(stateList.length, 2);
         compare(stateList[0], AM.Application.BeingInstalled)
         compare(stateList[1], AM.Application.Installed)
         stateList = []

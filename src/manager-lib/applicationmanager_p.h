@@ -62,7 +62,7 @@ public:
     QVariantMap systemProperties;
     ApplicationDatabase *database = nullptr;
 
-    QVector<const Application *> apps;
+    QVector<AbstractApplication *> apps;
 
     QString currentLocale;
     QHash<int, QByteArray> roleNames;

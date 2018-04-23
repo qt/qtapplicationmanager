@@ -20,6 +20,7 @@ multi-process {
 }
 
 HEADERS += \
+    application.h \
     applicationmanager.h \
     applicationmodel.h \
     applicationdatabase.h \
@@ -54,6 +55,7 @@ qtHaveModule(qml):HEADERS += \
     qmlinprocessapplicationinterface.h \
 
 SOURCES += \
+    application.cpp \
     applicationmanager.cpp \
     applicationmodel.cpp \
     applicationdatabase.cpp \

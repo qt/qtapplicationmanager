@@ -76,7 +76,7 @@ QVariantMap QmlInProcessApplicationInterface::name() const
 {
     QVariantMap names;
     if (m_runtime && m_runtime->application()) {
-        const QMap<QString, QString> &sm = m_runtime->application()->names();
+        const QMap<QString, QString> &sm = m_runtime->application()->info()->names();
         for (auto it = sm.cbegin(); it != sm.cend(); ++it)
             names.insert(it.key(), it.value());
     }
@@ -86,7 +86,7 @@ QVariantMap QmlInProcessApplicationInterface::name() const
 QUrl QmlInProcessApplicationInterface::icon() const
 {
     if (m_runtime && m_runtime->application())
-        return m_runtime->application()->iconUrl();
+        return m_runtime->application()->icon();
     return QUrl();
 }
 
@@ -107,7 +107,7 @@ QVariantMap QmlInProcessApplicationInterface::systemProperties() const
 QVariantMap QmlInProcessApplicationInterface::applicationProperties() const
 {
     if (m_runtime && m_runtime->application()) {
-        return m_runtime->application()->allAppProperties();
+        return m_runtime->application()->info()->allAppProperties();
     }
     return QVariantMap();
 }

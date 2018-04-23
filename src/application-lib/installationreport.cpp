@@ -49,7 +49,7 @@
 
 #include "global.h"
 #include "qtyaml.h"
-#include "application.h"
+#include "applicationinfo.h"
 #include "utilities.h"
 #include "exception.h"
 #include "installationreport.h"
@@ -169,7 +169,7 @@ void InstallationReport::addFiles(const QStringList &files)
 
 bool InstallationReport::isValid() const
 {
-    return Application::isValidApplicationId(m_applicationId) && !m_digest.isEmpty() && !m_files.isEmpty();
+    return AbstractApplicationInfo::isValidApplicationId(m_applicationId) && !m_digest.isEmpty() && !m_files.isEmpty();
 }
 
 bool InstallationReport::deserialize(QIODevice *from)

@@ -53,7 +53,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
+class AbstractApplication;
 class IpcProxySignalRelay;
 
 class IpcProxyObject // clazy:exclude=missing-qobject-macro
@@ -74,10 +74,10 @@ public:
     QString interfaceName() const;
     QStringList connectionNames() const;
 
-    bool isValidForApplication(const Application *app) const;
+    bool isValidForApplication(AbstractApplication *app) const;
 
 #if defined(QT_DBUS_LIB)
-    bool dbusRegister(const Application *app, QDBusConnection connection, const QString &debugPathPrefix = QString());
+    bool dbusRegister(AbstractApplication *app, QDBusConnection connection, const QString &debugPathPrefix = QString());
     bool dbusUnregister(QDBusConnection connection);
 
     QString introspect(const QString &path) const override;

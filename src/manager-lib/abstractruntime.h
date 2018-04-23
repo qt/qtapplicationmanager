@@ -72,7 +72,7 @@ public:
     virtual bool inProcess() const;
     virtual bool supportsQuickLaunch() const;
 
-    virtual AbstractRuntime *create(AbstractContainer *container, const Application *app) = 0;
+    virtual AbstractRuntime *create(AbstractContainer *container, Application *app) = 0;
 
     QVariantMap configuration() const;
     void setConfiguration(const QVariantMap &configuration);
@@ -111,12 +111,12 @@ public:
     };
 
     AbstractContainer *container() const;
-    const Application *application() const;
+    Application *application() const;
     AbstractRuntimeManager *manager() const;
 
     virtual bool needsLauncher() const;
     virtual bool isQuickLauncher() const;
-    virtual bool attachApplicationToQuickLauncher(const Application *app);
+    virtual bool attachApplicationToQuickLauncher(Application *app);
 
     State state() const;
 
@@ -152,13 +152,13 @@ signals:
 #endif
 
 protected:
-    explicit AbstractRuntime(AbstractContainer *container, const Application *app, AbstractRuntimeManager *manager);
+    explicit AbstractRuntime(AbstractContainer *container, Application *app, AbstractRuntimeManager *manager);
     void setState(State newState);
 
     QVariantMap configuration() const;
 
     AbstractContainer *m_container;
-    QPointer<const Application> m_app;
+    QPointer<Application> m_app;
     AbstractRuntimeManager *m_manager;
 
     QByteArray m_securityToken;

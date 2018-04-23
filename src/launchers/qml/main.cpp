@@ -87,7 +87,7 @@
 #include "exception.h"
 #include "crashhandler.h"
 #include "yamlapplicationscanner.h"
-#include "application.h"
+#include "applicationinfo.h"
 #include "startupinterface.h"
 #include "dbus-utilities.h"
 #include "startuptimer.h"
@@ -283,7 +283,7 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
             QFileInfo fi(directLoad);
             YamlApplicationScanner yas;
             try {
-                const Application *a = yas.scan(directLoad);
+                ApplicationInfo *a = yas.scan(directLoad);
                 startApplication(fi.absolutePath(), a->codeFilePath(), QString(), QString(), a->toVariantMap(), QVariantMap());
             } catch (const Exception &e) {
                 throw Exception("Could not parse info.yaml file: %1").arg(e.what());

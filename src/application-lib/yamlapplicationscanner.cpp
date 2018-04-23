@@ -50,7 +50,7 @@
 #include "global.h"
 #include "qtyaml.h"
 #include "exception.h"
-#include "application.h"
+#include "applicationinfo.h"
 #include "yamlapplicationscanner.h"
 #include "utilities.h"
 
@@ -59,19 +59,19 @@ QT_BEGIN_NAMESPACE_AM
 YamlApplicationScanner::YamlApplicationScanner()
 { }
 
-Application *YamlApplicationScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false)
+ApplicationInfo *YamlApplicationScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    return scanInternal(filePath, false, nullptr);
+    return static_cast<ApplicationInfo*>(scanInternal(filePath, false, nullptr));
 }
 
-Application *YamlApplicationScanner::scanAlias(const QString &filePath,
-                                               const Application *application) Q_DECL_NOEXCEPT_EXPR(false)
+ApplicationAliasInfo *YamlApplicationScanner::scanAlias(const QString &filePath,
+                                                        const ApplicationInfo *application) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    return scanInternal(filePath, true, application);
+    return static_cast<ApplicationAliasInfo*>(scanInternal(filePath, true, application));
 }
 
-Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool scanAlias,
-                                                  const Application *application) Q_DECL_NOEXCEPT_EXPR(false)
+AbstractApplicationInfo *YamlApplicationScanner::scanInternal(const QString &filePath, bool scanAlias,
+        const ApplicationInfo *application) Q_DECL_NOEXCEPT_EXPR(false)
 {
     try {
         if (scanAlias && !application)
@@ -106,17 +106,20 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
         if (!isAlias && scanAlias)
             throw Exception(Error::Parse, "is an not alias, although expected such a manifest");
 
-        QScopedPointer<Application> app(new Application);
-        app->m_manifestDir = QFileInfo(f).absoluteDir();
-        app->m_codeDir = app->m_manifestDir;
-
-        QVariantMap legacyEnvVars; //TODO: remove in 5.12
+        QScopedPointer<AbstractApplicationInfo> app;
+        if (isAlias)
+            app.reset(new ApplicationAliasInfo);
+        else {
+            app.reset(new ApplicationInfo);
+            auto *appInfo = static_cast<ApplicationInfo*>(app.data());
+            appInfo->m_manifestDir = QFileInfo(f).absoluteDir();
+            appInfo->m_codeDir = appInfo->manifestDir();
+        }
 
         QVariantMap yaml = docs.at(1).toMap();
         for (auto it = yaml.constBegin(); it != yaml.constEnd(); ++it) {
             QByteArray field = it.key().toLatin1();
             bool unknownField = false;
-            bool deprecatedField = false;
             const QVariant &v = it.value();
 
             if ((!isAlias && (field == "id"))
@@ -131,7 +134,6 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                         throw Exception(Error::Parse, "aliasId '%1' does not match base application id '%2'")
                                 .arg(app->m_id, application->id());
                     }
-                    app->setNonAliased(application);
                 }
             } else if (field == "icon") {
                 app->m_icon = v.toString();
@@ -142,66 +144,35 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
             } else if (field == "documentUrl") {
                 app->m_documentUrl = v.toString();
             } else if (!isAlias) {
+                auto *appInfo = static_cast<ApplicationInfo*>(app.data());
                 if (field == "code") {
-                    app->m_codeFilePath = v.toString();
+                    appInfo->m_codeFilePath = v.toString();
                 } else if (field == "runtime") {
-                    app->m_runtimeName = v.toString();
+                    appInfo->m_runtimeName = v.toString();
                 } else if (field == "runtimeParameters") {
-                    app->m_runtimeParameters = v.toMap();
-                } else if (field == "environmentVariables") { //TODO: remove in 5.12
-                    legacyEnvVars = v.toMap();
-                    deprecatedField = true;
-                } else if (field == "preload") { //TODO: remove in 5.12
-                    app->m_preload = v.toBool();
-                    deprecatedField = true;
+                    appInfo->m_runtimeParameters = v.toMap();
                 }  else if (field == "supportsApplicationInterface") {
-                    app->m_supportsApplicationInterface = v.toBool();
-                } else if (field == "importance") { //TODO: remove in 5.12
-                    app->m_importance = v.toReal();
-                    deprecatedField = true;
+                    appInfo->m_supportsApplicationInterface = v.toBool();
                 } else if (field == "capabilities") {
-                    app->m_capabilities = variantToStringList(v);
-                    app->m_capabilities.sort();
+                    appInfo->m_capabilities = variantToStringList(v);
+                    appInfo->m_capabilities.sort();
                 } else if (field == "categories") {
-                    app->m_categories = variantToStringList(v);
-                    app->m_categories.sort();
+                    appInfo->m_categories = variantToStringList(v);
+                    appInfo->m_categories.sort();
                 } else if (field == "mimeTypes") {
-                    app->m_mimeTypes = variantToStringList(v);
-                    app->m_mimeTypes.sort();
+                    appInfo->m_mimeTypes = variantToStringList(v);
+                    appInfo->m_mimeTypes.sort();
                 } else if (field == "applicationProperties") {
                     const QVariantMap rawMap = v.toMap();
-                    app->m_sysAppProperties = rawMap.value(qSL("protected")).toMap();
-                    app->m_allAppProperties = app->m_sysAppProperties;
+                    appInfo->m_sysAppProperties = rawMap.value(qSL("protected")).toMap();
+                    appInfo->m_allAppProperties = appInfo->m_sysAppProperties;
                     const QVariantMap pri = rawMap.value(qSL("private")).toMap();
                     for (auto it = pri.cbegin(); it != pri.cend(); ++it)
-                        app->m_allAppProperties.insert(it.key(), it.value());
+                        appInfo->m_allAppProperties.insert(it.key(), it.value());
                 } else if (field == "version") {
-                    app->m_version = v.toString();
-                } else if (field == "backgroundMode") { //TODO: remove in 5.12
-                    static const QPair<const char *, Application::BackgroundMode> backgroundMap[] =
-                    {
-                        { "never",    Application::Never },
-                        { "voip",     Application::ProvidesVoIP },
-                        { "audio",    Application::PlaysAudio },
-                        { "location", Application::TracksLocation },
-                        { "auto",     Application::Auto },
-                        { nullptr,    Application::Auto }
-                    };
-                    QByteArray enumValue = v.toString().toLatin1();
-
-                    bool found = false;
-                    for (auto it = backgroundMap; it->first; ++it) {
-                        if (enumValue == it->first) {
-                            app->m_backgroundMode = it->second;
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found)
-                        throw Exception(Error::Parse, "the 'backgroundMode' value '%1' is not valid").arg(enumValue);
-                    deprecatedField = true;
+                    appInfo->m_version = v.toString();
                 } else if (field == "opengl") {
-                    app->m_openGLConfiguration = v.toMap();
+                    appInfo->m_openGLConfiguration = v.toMap();
 
                     // sanity check
                     static QStringList validKeys = {
@@ -209,7 +180,7 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
                         qSL("esMajorVersion"),
                         qSL("esMinorVersion")
                     };
-                    for (auto it = app->m_openGLConfiguration.cbegin(); it != app->m_openGLConfiguration.cend(); ++it) {
+                    for (auto it = appInfo->m_openGLConfiguration.cbegin(); it != appInfo->m_openGLConfiguration.cend(); ++it) {
                         if (!validKeys.contains(it.key()))
                             throw Exception(Error::Parse, "the 'opengl' object contains the unsupported key '%1'").arg(it.key());
                     }
@@ -219,15 +190,9 @@ Application *YamlApplicationScanner::scanInternal(const QString &filePath, bool 
             } else {
                 unknownField = true;
             }
-            if (deprecatedField) {
-                qWarning("Warning: While parsing %s: the '%s' field is deprecated and will be removed in the next release.",
-                         qPrintable(filePath), field.constData());
-            }
             if (unknownField)
                 throw Exception(Error::Parse, "contains unsupported field: '%1'").arg(field);
         }
-        if (!legacyEnvVars.isEmpty()) //TODO: remove in 5.12
-             app->m_runtimeParameters[qL1S("environmentVariables")] = legacyEnvVars;
 
         app->validate();
         return app.take();

@@ -58,7 +58,7 @@ public:
     static QString defaultIdentifier();
     bool inProcess() const override;
 
-    AbstractRuntime *create(AbstractContainer *container, const Application *app) override;
+    AbstractRuntime *create(AbstractContainer *container, Application *app) override;
 };
 
 
@@ -67,7 +67,7 @@ class QmlInProcessRuntime : public AbstractRuntime
     Q_OBJECT
 
 public:
-    explicit QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager);
+    explicit QmlInProcessRuntime(Application *app, QmlInProcessRuntimeManager *manager);
     ~QmlInProcessRuntime() override;
 
     void openDocument(const QString &document, const QString &mimeType) override;

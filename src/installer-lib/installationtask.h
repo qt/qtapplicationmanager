@@ -53,7 +53,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
+class ApplicationInfo;
 class PackageExtractor;
 
 
@@ -88,7 +88,7 @@ private:
     bool m_locked = false;
     uint m_extractedFileCount = 0;
     bool m_managerApproval = false;
-    QScopedPointer<Application> m_app;
+    QScopedPointer<ApplicationInfo> m_app;
     uint m_applicationUid = uint(-1);
 
     // changes to these 4 member variables are protected by m_mutex

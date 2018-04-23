@@ -52,7 +52,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-WaylandWindow::WaylandWindow(const Application *app, WindowSurface *surf)
+WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
     : Window(app, surf->item())
     , m_pingTimer(new QTimer(this))
     , m_pongTimer(new QTimer(this))

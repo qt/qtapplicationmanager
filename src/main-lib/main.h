@@ -70,7 +70,7 @@ class StartupInterface;
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
+class AbstractApplicationInfo;
 class StartupTimer;
 class ApplicationIPCManager;
 class ApplicationDatabase;
@@ -142,11 +142,11 @@ private:
     void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName, const char *serviceName,
                             const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false);
 #endif
-    static QVector<const Application *> scanForApplication(const QString &singleAppInfoYaml,
-                                                           const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false);
-    static QVector<const Application *> scanForApplications(const QStringList &builtinAppsDirs,
-                                                            const QString &installedAppsDir,
-                                                            const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false);
+    static QVector<const AbstractApplicationInfo *> scanForApplication(const QString &singleAppInfoYaml,
+            const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false);
+    static QVector<const AbstractApplicationInfo *> scanForApplications(const QStringList &builtinAppsDirs,
+            const QString &installedAppsDir,
+            const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
     QVector<InstallationLocation> m_installationLocations;

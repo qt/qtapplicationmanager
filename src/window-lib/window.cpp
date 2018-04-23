@@ -43,7 +43,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-Window::Window(const Application *app, QQuickItem *surfaceItem)
+Window::Window(AbstractApplication *app, QQuickItem *surfaceItem)
     : QObject()
     , m_application(app)
     , m_windowItem(surfaceItem)
@@ -60,7 +60,7 @@ bool Window::isClosing() const
     return m_isClosing;
 }
 
-const Application *Window::application() const
+AbstractApplication *Window::application() const
 {
     return m_application;
 }

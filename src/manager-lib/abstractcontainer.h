@@ -51,7 +51,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
+class AbstractApplication;
 class AbstractContainer;
 
 class AbstractContainerManager : public QObject
@@ -65,7 +65,7 @@ public:
     QString identifier() const;
     virtual bool supportsQuickLaunch() const;
 
-    virtual AbstractContainer *create(const Application *app, const QVector<int> &stdioRedirections,
+    virtual AbstractContainer *create(AbstractApplication *app, const QVector<int> &stdioRedirections,
                                       const QMap<QString, QString> &debugWrapperEnvironment,
                                       const QStringList &debugWrapperCommand) = 0;
 
@@ -122,17 +122,17 @@ public:
 
     AbstractContainerProcess *process() const;
 
-    void setApplication(const Application *app);
-    const Application *application() const;
+    void setApplication(AbstractApplication *app);
+    AbstractApplication *application() const;
 
 signals:
     void ready();
     void memoryLowWarning();
     void memoryCriticalWarning();
-    void applicationChanged(const Application *newApplication);
+    void applicationChanged(AbstractApplication *newApplication);
 
 protected:
-    explicit AbstractContainer(AbstractContainerManager *manager, const Application *app);
+    explicit AbstractContainer(AbstractContainerManager *manager, AbstractApplication *app);
 
     QVariantMap configuration() const;
 
@@ -140,7 +140,7 @@ protected:
     QString m_baseDirectory;
     AbstractContainerManager *m_manager;
     AbstractContainerProcess *m_process = nullptr;
-    const Application *m_app;
+    AbstractApplication *m_app;
 };
 
 QT_END_NAMESPACE_AM

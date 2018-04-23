@@ -44,14 +44,14 @@
 #include "applicationinstaller_p.h"
 #include "applicationmanager.h"
 #include "installationreport.h"
-#include "application.h"
+#include "applicationinfo.h"
 #include "exception.h"
 #include "scopeutilities.h"
 #include "deinstallationtask.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-DeinstallationTask::DeinstallationTask(const Application *app, const InstallationLocation &installationLocation,
+DeinstallationTask::DeinstallationTask(ApplicationInfo *app, const InstallationLocation &installationLocation,
                                        bool forceDeinstallation, bool keepDocuments, QObject *parent)
     : AsynchronousTask(parent)
     , m_app(app)

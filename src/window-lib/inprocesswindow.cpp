@@ -60,7 +60,7 @@ static bool isName(const QByteArray &key)
 }
 
 
-InProcessWindow::InProcessWindow(const Application *app, QQuickItem *surfaceItem)
+InProcessWindow::InProcessWindow(AbstractApplication *app, QQuickItem *surfaceItem)
     : Window(app, surfaceItem)
 {
     auto ipsi = qobject_cast<InProcessSurfaceItem *>(surfaceItem);

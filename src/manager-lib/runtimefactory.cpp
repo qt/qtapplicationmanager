@@ -81,7 +81,7 @@ AbstractRuntimeManager *RuntimeFactory::manager(const QString &id)
     return arm;
 }
 
-AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, const Application *app)
+AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, Application *app)
 {
     QScopedPointer<AbstractContainer> ac(container);
 

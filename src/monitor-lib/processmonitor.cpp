@@ -43,6 +43,8 @@
 #include "processmonitor_p.h"
 #include "logging.h"
 
+#include <QtAppManManager/applicationmanager.h>
+
 
 /*!
     \qmltype ProcessMonitor

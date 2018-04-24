@@ -1242,13 +1242,13 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
         newapp->setParent(this);
         newapp->block();
         newapp->m_state = Application::BeingInstalled;
-        emit newapp->stateChanged(newapp->m_state);
         newapp->m_progress = 0;
         app = newapp.take();
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
         d->apps << app;
         endInsertRows();
         emit applicationAdded(app->id());
+        emit app->stateChanged(app->m_state);
     }
     emitDataChanged(app);
     return true;

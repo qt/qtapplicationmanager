@@ -78,10 +78,14 @@ bool WaylandQtAMServerExtension::setWindowPropertyHelper(QWaylandSurface *surfac
 {
     auto it = m_windowProperties.find(surface);
     if ((it == m_windowProperties.end()) || (it.value().value(name) != value)) {
-        if (it == m_windowProperties.end())
+        if (it == m_windowProperties.end()) {
             m_windowProperties[surface].insert(name, value);
-        else
+            connect(surface, &QWaylandSurface::surfaceDestroyed, this, [this, surface]() {
+                m_windowProperties.remove(surface);
+            });
+        } else {
             it.value().insert(name, value);
+        }
         emit windowPropertyChanged(surface, name, value);
         return true;
     }

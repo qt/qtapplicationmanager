@@ -144,7 +144,6 @@ public:
 
     void validate() const Q_DECL_NOEXCEPT_EXPR(false);
     QVariantMap toVariantMap() const;
-    static Application *fromVariantMap(const QVariantMap &map, QString *error = 0);
     void mergeInto(Application *app) const;
 
     const InstallationReport *installationReport() const;

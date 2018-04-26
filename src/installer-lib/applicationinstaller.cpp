@@ -244,10 +244,9 @@ ApplicationInstaller *ApplicationInstaller::instance()
     return s_instance;
 }
 
-QObject *ApplicationInstaller::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+QObject *ApplicationInstaller::instanceForQml(QQmlEngine *, QJSEngine *)
 {
-    if (qmlEngine)
-        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
 }
 

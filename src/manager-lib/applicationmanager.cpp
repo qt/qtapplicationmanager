@@ -439,10 +439,9 @@ ApplicationManager *ApplicationManager::instance()
     return s_instance;
 }
 
-QObject *ApplicationManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+QObject *ApplicationManager::instanceForQml(QQmlEngine *, QJSEngine *)
 {
-    if (qmlEngine)
-        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
 }
 

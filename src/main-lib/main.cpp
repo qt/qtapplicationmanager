@@ -159,20 +159,6 @@ Main::Main(int &argc, char **argv)
 
 Main::~Main()
 {
-    // the eventloop stopped, so any pending "retakes" would not be executed
-    QObject *singletons[] = {
-        m_applicationManager,
-        m_applicationInstaller,
-        m_applicationIPCManager,
-        m_notificationManager,
-#if !defined(AM_HEADLESS)
-        m_windowManager,
-#endif
-        m_systemMonitor
-    };
-    for (const auto &singleton : singletons)
-        retakeSingletonOwnershipFromQmlEngine(m_engine, singleton, true);
-
 #if defined(QT_PSSDP_LIB)
     if (m_ssdpOk)
         m_ssdp.setActive(false);

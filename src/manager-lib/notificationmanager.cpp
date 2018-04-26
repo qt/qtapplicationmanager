@@ -279,10 +279,9 @@ NotificationManager *NotificationManager::instance()
     return s_instance;
 }
 
-QObject *NotificationManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+QObject *NotificationManager::instanceForQml(QQmlEngine *, QJSEngine *)
 {
-    if (qmlEngine)
-        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
 }
 

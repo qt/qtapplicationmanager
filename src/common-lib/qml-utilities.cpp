@@ -90,33 +90,6 @@ void fixNullValuesForQml(QVariant &v)
     }
 }
 
-void retakeSingletonOwnershipFromQmlEngine(QQmlEngine *qmlEngine, QObject *singleton, bool immediately)
-{
-    // QQmlEngine is taking ownership of singletons after the first call to instanceForQml() and
-    // there is nothing to prevent this. This means that the singleton will be destroyed once the
-    // QQmlEngine is destroyed, which is not what we want.
-    // The workaround (until Qt has an API for that) is to remove the singleton QObject from QML's
-    // internal singleton registry *after* the instanceForQml() function has finished.
-
-    auto retake = [qmlEngine, singleton]() {
-        const auto types = QQmlMetaType::qmlSingletonTypes();
-        for (const auto &singletonType : types) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 2)
-            if (singletonType.singletonInstanceInfo()->qobjectApi(qmlEngine) == singleton)
-                singletonType.singletonInstanceInfo()->qobjectApis.remove(qmlEngine);
-#else
-            if (singletonType->singletonInstanceInfo()->qobjectApi(qmlEngine) == singleton)
-                singletonType->singletonInstanceInfo()->qobjectApis.remove(qmlEngine);
-#endif
-        }
-    };
-
-    if (immediately)
-        retake();
-    else
-        QTimer::singleShot(0, qmlEngine, retake);
-}
-
 // copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
 void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory)
 {

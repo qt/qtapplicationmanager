@@ -87,10 +87,9 @@ ApplicationIPCManager *ApplicationIPCManager::instance()
     return s_instance;
 }
 
-QObject *ApplicationIPCManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+QObject *ApplicationIPCManager::instanceForQml(QQmlEngine *, QJSEngine *)
 {
-    if (qmlEngine)
-        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
 }
 

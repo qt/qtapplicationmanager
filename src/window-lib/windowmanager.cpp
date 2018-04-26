@@ -333,10 +333,9 @@ WindowManager *WindowManager::instance()
     return s_instance;
 }
 
-QObject *WindowManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+QObject *WindowManager::instanceForQml(QQmlEngine *, QJSEngine *)
 {
-    if (qmlEngine)
-        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
 }
 

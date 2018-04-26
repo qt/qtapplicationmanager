@@ -279,7 +279,7 @@ bool PackageCreatorPrivate::create()
                 throw Exception(Error::Archive, "[libarchive] could not create a new archive_entry object");
 
             fixed_archive_entry_set_pathname(entry, file); // please note: this is a special function (see top of file)
-            archive_entry_set_size(entry, static_cast<la_int64_t>(fi.size()));
+            archive_entry_set_size(entry, static_cast<__LA_INT64_T>(fi.size()));
             archive_entry_set_mode(entry, mode);
 
             bool headerOk = (archive_write_header(ar, entry) == ARCHIVE_OK);

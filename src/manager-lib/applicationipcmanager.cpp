@@ -50,7 +50,8 @@
 /*!
     \qmltype ApplicationIPCManager
     \inqmlmodule QtApplicationManager
-    \brief The ApplicationIPCManager singleton.
+    \ingroup system-ui-singletons
+    \brief Central registry for interfaces for System-UI-to-app communication.
 
     This singleton type is the central manager for app-to-System-UI IPC interfaces within the application-manager.
 
@@ -86,10 +87,9 @@ ApplicationIPCManager *ApplicationIPCManager::instance()
     return s_instance;
 }
 
-QObject *ApplicationIPCManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+QObject *ApplicationIPCManager::instanceForQml(QQmlEngine *, QJSEngine *)
 {
-    if (qmlEngine)
-        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
 }
 
@@ -235,10 +235,10 @@ bool ApplicationIPCManager::registerInterface(QT_PREPEND_NAMESPACE_AM(Applicatio
         const QChar *c = name.unicode();
         for (int i = 0; i < name.length(); ++i) {
             ushort u = c[i].unicode();
-            path += QLatin1Char(((u >= 'a' && u <= 'z')
-                                 || (u >= 'A' && u <= 'Z')
-                                 || (u >= '0' && u <= '9')
-                                 || (u == '_')) ? u : '_');
+            path += QChar(((u >= 'a' && u <= 'z')
+                           || (u >= 'A' && u <= 'Z')
+                           || (u >= '0' && u <= '9')
+                           || (u == '_')) ? u : '_');
         }
         return qSL("/ExtensionInterfaces/") + path;
     };

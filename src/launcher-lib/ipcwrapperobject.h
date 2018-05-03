@@ -62,7 +62,7 @@ public:
     IpcWrapperObject(const QString &service, const QString &path, const QString &interface,
                      const QDBusConnection &connection, QObject *parent = nullptr);
 
-    ~IpcWrapperObject();
+    ~IpcWrapperObject() override;
 
     bool isDBusValid() const;
     QDBusError lastDBusError() const;

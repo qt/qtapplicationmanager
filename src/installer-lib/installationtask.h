@@ -63,7 +63,7 @@ class InstallationTask : public AsynchronousTask
 public:
     InstallationTask(const InstallationLocation &installationLocation, const QUrl &sourceUrl,
                      QObject *parent = nullptr);
-    ~InstallationTask();
+    ~InstallationTask() override;
 
     void acknowledge();
     bool cancel() override;

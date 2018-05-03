@@ -83,7 +83,7 @@ static size_t demangleBufferSize;
 // this will make it run before all other static constructor functions
 static void initBacktrace() __attribute__((constructor(101)));
 
-static void crashHandler(const char *why, int stackFramesToIgnore) __attribute__((noreturn));
+static Q_NORETURN void crashHandler(const char *why, int stackFramesToIgnore);
 
 void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
 {
@@ -113,12 +113,12 @@ static void initBacktrace()
 
     printBacktrace = true;
     dumpCore = true;
-    waitForGdbAttach = false;
+    waitForGdbAttach = 0;
 
     getOutputInformation(&useAnsiColor, nullptr, nullptr);
 
     demangleBufferSize = 512;
-    demangleBuffer = (char *) malloc(demangleBufferSize);
+    demangleBuffer = static_cast<char *>(malloc(demangleBufferSize));
 
     UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler,
                                            { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT },
@@ -304,7 +304,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
             longjmp(jmpenv, 1);
         });
         if (!setjmp(jmpenv)) {
-            alarm(waitForGdbAttach);
+            alarm(static_cast<unsigned int>(waitForGdbAttach));
 
             sigset_t mask;
             sigemptyset(&mask);

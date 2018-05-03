@@ -64,7 +64,9 @@
 /*!
     \qmltype SystemMonitor
     \inqmlmodule QtApplicationManager
-    \brief The SystemMonitor singleton.
+    \ingroup system-ui-singletons
+    \brief The system monitoring model, giving access to a range of measurements, e.g. CPU load,
+    frame rate, etc.
 
     The SystemMonitor singleton type provides information about system resources and performance,
     like CPU and memory usage, I/O load and frame rate.
@@ -649,10 +651,9 @@ SystemMonitor *SystemMonitor::instance()
     return s_instance;
 }
 
-QObject *SystemMonitor::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+QObject *SystemMonitor::instanceForQml(QQmlEngine *, QJSEngine *)
 {
-    if (qmlEngine)
-        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
 }
 
@@ -812,7 +813,7 @@ bool SystemMonitor::setMemoryWarningThresholds(qreal lowWarning, qreal criticalW
 {
     Q_D(SystemMonitor);
 
-    if (lowWarning != d->memoryLowWarning || criticalWarning != d->memoryCriticalWarning) {
+    if (!qFuzzyCompare(lowWarning, d->memoryLowWarning) || !qFuzzyCompare(criticalWarning, d->memoryCriticalWarning)) {
         d->memoryLowWarning = lowWarning;
         d->memoryCriticalWarning = criticalWarning;
         if (!d->memoryWatcher) {
@@ -862,7 +863,7 @@ void SystemMonitor::setIdleLoadThreshold(qreal loadThreshold)
 {
     Q_D(SystemMonitor);
 
-    if (loadThreshold != d->idleThreshold) {
+    if (!qFuzzyCompare(loadThreshold, d->idleThreshold)) {
         d->idleThreshold = loadThreshold;
         emit idleLoadThresholdChanged(loadThreshold);
     }

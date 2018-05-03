@@ -60,7 +60,8 @@
 /*!
     \qmltype ApplicationInstaller
     \inqmlmodule QtApplicationManager
-    \brief The ApplicationInstaller singleton.
+    \ingroup system-ui-singletons
+    \brief The package installation/removal/update part of the application-manager.
 
     The ApplicationInstaller singleton type handles the package installation
     part of the application manager. It provides both a DBus and QML APIs for
@@ -147,7 +148,7 @@
 */
 
 /*!
-    \qmlsignal ApplicationInstaller::taskRequestingInstallationAcknowledge(string taskId, object application)
+    \qmlsignal ApplicationInstaller::taskRequestingInstallationAcknowledge(string taskId, object application, object packageExtraMetaData, object packageExtraSignedMetaData)
 
     This signal is emitted when the installation task identified by \a taskId has received enough
     meta-data to be able to emit this signal. The task may be in either \c Executing or \c
@@ -155,6 +156,12 @@
 
     The contents of the package's manifest file are supplied via \a application as a JavaScript object.
     Please see the \l {ApplicationManager Roles}{role names} for the expected object fields.
+
+    In addition, the package's extra meta-data (signed and unsinged) is also supplied via \a
+    packageExtraMetaData and \a packageExtraSignedMetaData respectively as JavaScript objects.
+    Both these objects are optional and need to be explicitly either populated during an
+    application's packaging step or added by an intermediary app-store server.
+    By default, both will just be empty.
 
     Following this signal, either cancelTask() or acknowledgePackageInstallation() has to be called
     for this \a taskId, to either cancel the installation or try to complete it.
@@ -216,12 +223,12 @@ ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<Install
     if (Q_UNLIKELY(!manifestDir.exists())) {
         if (error)
             *error = qL1S("ApplicationInstaller::createInstance() could not access the manifest directory ") + manifestDir.absolutePath();
-        return 0;
+        return nullptr;
     }
     if (Q_UNLIKELY(!imageMountDir.exists())) {
         if (error)
             *error = qL1S("ApplicationInstaller::createInstance() could not access the image-mount directory ") + imageMountDir.absolutePath();
-        return 0;
+        return nullptr;
     }
 
     qmlRegisterSingletonType<ApplicationInstaller>("QtApplicationManager", 1, 0, "ApplicationInstaller",
@@ -237,10 +244,9 @@ ApplicationInstaller *ApplicationInstaller::instance()
     return s_instance;
 }
 
-QObject *ApplicationInstaller::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+QObject *ApplicationInstaller::instanceForQml(QQmlEngine *, QJSEngine *)
 {
-    if (qmlEngine)
-        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
 }
 
@@ -631,11 +637,43 @@ QVariantMap ApplicationInstaller::getInstallationLocation(const QString &install
 qint64 ApplicationInstaller::installedApplicationSize(const QString &id) const
 {
     if (const Application *a = ApplicationManager::instance()->fromId(id)) {
-        if (const InstallationReport *report = a->installationReport()) {
-            return report->diskSpaceUsed();
-        }
+        if (const InstallationReport *report = a->installationReport())
+            return static_cast<qint64>(report->diskSpaceUsed());
     }
     return -1;
+}
+
+/*!
+   \qmlmethod var ApplicationInstaller::installedApplicationExtraMetaData(string id)
+
+   Returns a map of all extra metadata in the package header of the application identified by \a id.
+
+   Returns an empty map in case the application \a id is not valid, or the application is not installed.
+*/
+QVariantMap ApplicationInstaller::installedApplicationExtraMetaData(const QString &id) const
+{
+    if (const Application *a = ApplicationManager::instance()->fromId(id)) {
+        if (const InstallationReport *report = a->installationReport())
+            return report->extraMetaData();
+    }
+    return QVariantMap();
+}
+
+/*!
+   \qmlmethod var ApplicationInstaller::installedApplicationExtraSignedMetaData(string id)
+
+   Returns a map of all signed extra metadata in the package header of the application identified
+   by \a id.
+
+   Returns an empty map in case the application \a id is not valid, or the application is not installed.
+*/
+QVariantMap ApplicationInstaller::installedApplicationExtraSignedMetaData(const QString &id) const
+{
+    if (const Application *a = ApplicationManager::instance()->fromId(id)) {
+        if (const InstallationReport *report = a->installationReport())
+            return report->extraSignedMetaData();
+    }
+    return QVariantMap();
 }
 
 /*! \internal
@@ -952,8 +990,6 @@ public:
             break;
         case IsActivated:
             return isMounted;
-        default:
-            return false;
         }
 
         ActivationHelper *a = new ActivationHelper(id, imageName, imageMountDir, mountPoint, mountedDevice);

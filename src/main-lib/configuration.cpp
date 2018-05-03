@@ -48,7 +48,6 @@
 #include <QCryptographicHash>
 #include <QElapsedTimer>
 #include <QtConcurrent/QtConcurrent>
-#include <private/qvariant_p.h>
 
 #include <functional>
 
@@ -131,25 +130,7 @@ QVariant Configuration::findInConfigFile(const QVector<const char *> &path, bool
 
 void Configuration::mergeConfig(const QVariantMap &other)
 {
-    // no auto allowed, since this is a recursive lambda
-    std::function<void(QVariantMap *, const QVariantMap &)> recursiveMergeMap =
-            [&recursiveMergeMap](QVariantMap *to, const QVariantMap &from) {
-        for (auto it = from.constBegin(); it != from.constEnd(); ++it) {
-            QVariant fromValue = it.value();
-            QVariant &toValue = (*to)[it.key()];
-
-            bool needsMerge = (toValue.type() == fromValue.type());
-
-            // we're trying not to detach, so we're using v_cast to avoid copies
-            if (needsMerge && (toValue.type() == QVariant::Map))
-                recursiveMergeMap(v_cast<QVariantMap>(&toValue.data_ptr()), fromValue.toMap());
-            else if (needsMerge && (toValue.type() == QVariant::List))
-                to->insert(it.key(), toValue.toList() + fromValue.toList());
-            else
-                to->insert(it.key(), fromValue);
-        }
-    };
-    recursiveMergeMap(&m_config, other);
+    recursiveMergeVariantMap(m_config, other);
 }
 
 

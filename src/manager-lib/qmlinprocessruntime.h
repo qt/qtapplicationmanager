@@ -68,7 +68,7 @@ class QmlInProcessRuntime : public AbstractRuntime
 
 public:
     explicit QmlInProcessRuntime(const Application *app, QmlInProcessRuntimeManager *manager);
-    ~QmlInProcessRuntime();
+    ~QmlInProcessRuntime() override;
 
     void openDocument(const QString &document, const QString &mimeType) override;
     qint64 applicationProcessId() const override;

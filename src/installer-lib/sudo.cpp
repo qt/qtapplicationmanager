@@ -105,7 +105,8 @@ extern "C" int capget(cap_user_header_t header, const cap_user_data_t data);
 #  endif
 
 // Convenient way to ignore EINTR on any system call
-#  define EINTR_LOOP(cmd) __extension__ ({auto res = 0; do { res = cmd; } while (res == -1 && errno == EINTR); res; })
+#  define EINTR_LOOP(cmd) __extension__ ({__typeof__(cmd) res = 0; do { res = cmd; } while (res == -1 && errno == EINTR); res; })
+
 
 // Declared as weak symbol here, so we can check at runtime if we were compiled against libgcov
 extern "C" void __gcov_init() __attribute__((weak));
@@ -157,7 +158,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges, QStringList *warnings)
 
 #if defined(Q_OS_LINUX)
     gid_t realGid = getgid();
-    uid_t sudoUid = qEnvironmentVariableIntValue("SUDO_UID");
+    uid_t sudoUid = static_cast<uid_t>(qEnvironmentVariableIntValue("SUDO_UID"));
 
     // run as normal user (e.g. 1000): uid == 1000  euid == 1000
     // run with binary suid-root:      uid == 1000  euid == 0
@@ -166,7 +167,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges, QStringList *warnings)
     // treat sudo as special variant of a SUID executable
     if (realUid == 0 && effectiveUid == 0 && sudoUid != 0) {
         realUid = sudoUid;
-        realGid = qEnvironmentVariableIntValue("SUDO_GID");
+        realGid = static_cast<gid_t>(qEnvironmentVariableIntValue("SUDO_GID"));
 
         if (setresgid(realGid, 0, 0) || setresuid(realUid, 0, 0))
             throw Exception(errno, "Could not set real user or group ID");
@@ -274,8 +275,8 @@ bool SudoInterface::sendMessage(int socket, const QByteArray &msg, MessageType t
     ds << errorString << msg;
     packet.prepend((type == Request) ? "RQST" : "RPLY");
 
-    qint64 bytesWritten = EINTR_LOOP(write(socket, packet.constData(), packet.size()));
-    return  bytesWritten == packet.size();
+    auto bytesWritten = EINTR_LOOP(write(socket, packet.constData(), static_cast<size_t>(packet.size())));
+    return bytesWritten == packet.size();
 }
 
 
@@ -283,7 +284,7 @@ QByteArray SudoInterface::receiveMessage(int socket, MessageType type, QString *
 {
     const int headerSize = 4;
     char recvBuffer[8*1024];
-    qint64 bytesReceived = EINTR_LOOP(recv(socket, recvBuffer, sizeof(recvBuffer), 0));
+    auto bytesReceived = EINTR_LOOP(recv(socket, recvBuffer, sizeof(recvBuffer), 0));
 
     if ((bytesReceived < headerSize) || qstrncmp(recvBuffer, (type == Request ? "RQST" : "RPLY"), 4)) {
         *errorString = qL1S("failed to receive command from the SudoClient process");
@@ -291,7 +292,7 @@ QByteArray SudoInterface::receiveMessage(int socket, MessageType type, QString *
         return QByteArray();
     }
 
-    QByteArray packet(recvBuffer + headerSize, bytesReceived - headerSize);
+    QByteArray packet(recvBuffer + headerSize, int(bytesReceived) - headerSize);
 
     QDataStream ds(&packet, QIODevice::ReadOnly);
     QByteArray msg;
@@ -604,7 +605,7 @@ bool SudoServer::detachLoopback(const QString &loopDev)
                 break;
 
             clearErrno = errno;
-            usleep(timeout); // might still be busy after lazy umount
+            usleep(static_cast<useconds_t>(timeout)); // might still be busy after lazy umount
         }
 
         EINTR_LOOP(close(loopFd));
@@ -665,7 +666,7 @@ bool SudoServer::mount(const QString &device, const QString &mountPoint, bool re
 bool SudoServer::unmount(const QString &mountPoint, bool force)
 {
 #if defined(Q_OS_LINUX)
-    unsigned long options = force ? MNT_FORCE | MNT_DETACH : 0;
+    int options = force ? MNT_FORCE | MNT_DETACH : 0;
 
     try {
         if (!QDir(mountPoint).exists() && !force)

@@ -44,6 +44,7 @@
 #include <QString>
 #include <QStringList>
 #include <QByteArray>
+#include <QVariantMap>
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QIODevice)
@@ -60,6 +61,11 @@ public:
 
     QString installationLocationId() const;
     void setInstallationLocationId(const QString &installationLocationId);
+
+    QVariantMap extraMetaData() const;
+    void setExtraMetaData(const QVariantMap &extraMetaData);
+    QVariantMap extraSignedMetaData() const;
+    void setExtraSignedMetaData(const QVariantMap &extraSignedMetaData);
 
     QByteArray digest() const;
     void setDigest(const QByteArray &sha1);
@@ -90,6 +96,8 @@ private:
     QStringList m_files;
     QByteArray m_developerSignature;
     QByteArray m_storeSignature;
+    QVariantMap m_extraMetaData;
+    QVariantMap m_extraSignedMetaData;
 };
 
 QT_END_NAMESPACE_AM

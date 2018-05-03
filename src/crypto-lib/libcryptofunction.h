@@ -118,7 +118,7 @@ public:
     {
         if (Q_UNLIKELY(!m_functionPtr))
             resolve();
-        return (F) m_functionPtr;
+        return reinterpret_cast<F>(m_functionPtr);
     }
 
     template <typename ...Args>
@@ -126,7 +126,7 @@ public:
     {
         if (Q_UNLIKELY(!functionPointer()))
             return m_defaultResult.result();
-        return std::forward<F>((F) m_functionPtr)(std::forward<Args>(args)...);
+        return std::forward<F>(reinterpret_cast<F>(m_functionPtr))(std::forward<Args>(args)...);
     }
 };
 

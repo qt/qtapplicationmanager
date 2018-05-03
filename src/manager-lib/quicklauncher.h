@@ -58,7 +58,7 @@ class QuickLauncher : public QObject
 
 public:
     static QuickLauncher *instance();
-    ~QuickLauncher();
+    ~QuickLauncher() override;
 
     void initialize(int runtimesPerContainer, qreal idleLoad = 0);
 

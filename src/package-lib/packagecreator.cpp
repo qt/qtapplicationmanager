@@ -155,7 +155,8 @@ void PackageCreator::cancel()
  *  vvv PackageCreatorPrivate vvv  *
  * * * * * * * * * * * * * * * * * */
 
-PackageCreatorPrivate::PackageCreatorPrivate(PackageCreator *creator, QIODevice *output, const InstallationReport &report)
+PackageCreatorPrivate::PackageCreatorPrivate(PackageCreator *creator, QIODevice *output,
+                                             const InstallationReport &report)
     : q(creator)
     , m_output(output)
     , m_report(report)
@@ -177,12 +178,16 @@ bool PackageCreatorPrivate::create()
             { qSL("formatVersion"), 1 }
         };
 
-        QVariantMap headerData {
+        m_metaData = QVariantMap {
             { qSL("applicationId"), m_report.applicationId() },
             { qSL("diskSpaceUsed"), m_report.diskSpaceUsed() }
         };
+        if (!m_report.extraMetaData().isEmpty())
+            m_metaData[qSL("extra")] = m_report.extraMetaData();
+        if (!m_report.extraSignedMetaData().isEmpty())
+            m_metaData[qSL("extraSigned")] = m_report.extraSignedMetaData();
 
-        PackageUtilities::addImportantHeaderDataToDigest(headerData, digest);
+        PackageUtilities::addHeaderDataToDigest(m_metaData, digest);
 
         emit q->progress(0);
 
@@ -205,7 +210,7 @@ bool PackageCreatorPrivate::create()
             QIODevice *output = reinterpret_cast<QIODevice *>(user);
             qint64 written = output->write(static_cast<const char *>(buffer), size);
             output->waitForBytesWritten(-1);
-            return (__LA_SSIZE_T) written;
+            return static_cast<__LA_SSIZE_T>(written);
         };
 
         if (archive_write_open(ar, m_output, dummyCallback, writeCallback, dummyCallback) != ARCHIVE_OK)
@@ -213,10 +218,8 @@ bool PackageCreatorPrivate::create()
 
         // Add the metadata header
 
-        if (!addVirtualFile(ar, qSL("--PACKAGE-HEADER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { headerFormat, headerData })))
+        if (!addVirtualFile(ar, qSL("--PACKAGE-HEADER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { headerFormat, m_metaData })))
             throw ArchiveException(ar, "could not write '--PACKAGE-HEADER--' to archive");
-
-        m_metaData = headerData;
 
         // Add all regular files
 
@@ -276,7 +279,7 @@ bool PackageCreatorPrivate::create()
                 throw Exception(Error::Archive, "[libarchive] could not create a new archive_entry object");
 
             fixed_archive_entry_set_pathname(entry, file); // please note: this is a special function (see top of file)
-            archive_entry_set_size(entry, fi.size());
+            archive_entry_set_size(entry, static_cast<__LA_INT64_T>(fi.size()));
             archive_entry_set_mode(entry, mode);
 
             bool headerOk = (archive_write_header(ar, entry) == ARCHIVE_OK);
@@ -301,10 +304,10 @@ bool PackageCreatorPrivate::create()
                         throw Exception(f, "could not read from file");
                     fileSize += bytesRead;
 
-                    if (archive_write_data(ar, buffer, bytesRead) == -1)
+                    if (archive_write_data(ar, buffer, static_cast<size_t>(bytesRead)) == -1)
                         throw ArchiveException(ar, "could not write to archive");
 
-                    digest.addData(buffer, bytesRead);
+                    digest.addData(buffer, static_cast<int>(bytesRead));
                 }
 
                 if (fileSize != fi.size())
@@ -316,7 +319,7 @@ bool PackageCreatorPrivate::create()
             // Just to be on the safe side, we also add the file's meta-data to the digest
             PackageUtilities::addFileMetadataToDigest(file, fi, digest);
 
-            qint64 progress = allFilesSize ? (100 * packagedSize / allFilesSize) : 0;
+            int progress = allFilesSize ? int(packagedSize * 100 / allFilesSize) : 0;
             if (progress != lastProgress ) {
                 emit q->progress(qreal(progress) / 100);
                 lastProgress = progress;
@@ -326,7 +329,7 @@ bool PackageCreatorPrivate::create()
         m_digest = digest.result();
         if (!m_report.digest().isEmpty()) {
             if (m_digest != m_report.digest())
-                throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2").arg(m_digest.toHex()).arg(m_report.digest().toHex());
+                throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2)").arg(m_digest.toHex()).arg(m_report.digest().toHex());
         }
 
         // Add the metadata footer
@@ -395,7 +398,7 @@ bool PackageCreatorPrivate::addVirtualFile(struct archive *ar, const QString &fi
         archive_entry_set_mtime(entry, time(nullptr), 0);
 
         if (archive_write_header(ar, entry) == ARCHIVE_OK) {
-            if (archive_write_data(ar, data.constData(), data.size()) == data.size())
+            if (archive_write_data(ar, data.constData(), static_cast<size_t>(data.size())) == data.size())
                 result = true;
         }
         archive_entry_free(entry);

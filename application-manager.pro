@@ -1,9 +1,11 @@
-requires(linux|win32-msvc2013:!winrt|win32-msvc2015:!winrt|osx|win32-g++*)
+requires(linux|win32:!winrt|macos)
 
 !tools-only:!qtHaveModule(qml):error("The QtQml library is required for a non 'tools-only' build")
 
 TEMPLATE = subdirs
 CONFIG += ordered
+
+SUBDIRS += benchmarks
 
 enable-tests:QT_BUILD_PARTS *= tests
 else:contains(QT_BUILD_PARTS, "tests"):CONFIG += enable-tests
@@ -15,9 +17,7 @@ qtCompileTest(libarchive)
 qtCompileTest(libyaml)
 !headless:qtCompileTest(touchemulation)
 
-qtHaveModule(compositor)|if(qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private)) {
-    CONFIG += am_compatible_compositor
-}
+qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private):CONFIG += am_compatible_compositor
 
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")

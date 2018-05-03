@@ -177,6 +177,18 @@ qlonglong ApplicationInstallerAdaptor::installedApplicationSize(const QString &i
     return ApplicationInstaller::instance()->installedApplicationSize(id);
 }
 
+QVariantMap ApplicationInstallerAdaptor::installedApplicationExtraMetaData(const QString &id)
+{
+    AM_AUTHENTICATE_DBUS(QVariantMap)
+    return ApplicationInstaller::instance()->installedApplicationExtraMetaData(id);
+}
+
+QVariantMap ApplicationInstallerAdaptor::installedApplicationExtraSignedMetaData(const QString &id)
+{
+    AM_AUTHENTICATE_DBUS(QVariantMap)
+    return ApplicationInstaller::instance()->installedApplicationExtraSignedMetaData(id);
+}
+
 bool ApplicationInstallerAdaptor::isPackageActivated(const QString &id)
 {
     AM_AUTHENTICATE_DBUS(bool)

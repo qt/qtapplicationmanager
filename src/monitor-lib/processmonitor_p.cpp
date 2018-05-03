@@ -173,21 +173,21 @@ qreal ReadingTask::readLoad()
         ++pos;
     }
 
-    char *endPtr = 0;
-    quint64 utime = strtoll(str.constData() + pos, &endPtr, 10); // check missing for overflow
-    pos = endPtr - str.constData() + 1;
-    quint64 stime = strtoll(str.constData() + pos, nullptr, 10); // check missing for overflow
+    char *endPtr = nullptr;
+    quint64 utime = strtoull(str.constData() + pos, &endPtr, 10); // check missing for overflow
+    pos = int(endPtr - str.constData() + 1);
+    quint64 stime = strtoull(str.constData() + pos, nullptr, 10); // check missing for overflow
 
     qreal load = elapsed != 0 ? (utime + stime - m_lastCpuUsage) * 1000.0 / sysconf(_SC_CLK_TCK) / elapsed : 0.0;
     m_lastCpuUsage = utime + stime;
     return load;
 }
 
-static int parseValue(const char *pl)
+static uint parseValue(const char *pl)
 {
     while (*pl && (*pl < '0' || *pl > '9'))
         pl++;
-    return strtol(pl, 0, 10);
+    return static_cast<uint>(strtoul(pl, nullptr, 10));
 }
 
 bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::Memory &results)
@@ -279,9 +279,9 @@ bool ReadingTask::readMemory(const QByteArray &smapsFile, ReadingTask::Results::
         }
 
         int skipLen = blockLen;
-        int vm = 0;
-        int rss = 0;
-        int pss = 0;
+        uint vm = 0;
+        uint rss = 0;
+        uint pss = 0;
         const int sizeTag = 0x01;
         const int rssTag  = 0x02;
         const int pssTag  = 0x04;

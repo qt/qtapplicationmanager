@@ -123,7 +123,7 @@ public slots:
     void setVisible(bool visible);
 
 signals:
-    void notificationIdChanged(int notificationId);
+    void notificationIdChanged(uint notificationId);
     void summaryChanged(const QString &summary);
     void bodyChanged(const QString &body);
     void iconChanged(const QUrl &icon);

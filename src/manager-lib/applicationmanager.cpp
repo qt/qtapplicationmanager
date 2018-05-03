@@ -76,7 +76,8 @@
 /*!
     \qmltype ApplicationManager
     \inqmlmodule QtApplicationManager
-    \brief The ApplicationManager singleton.
+    \ingroup system-ui-singletons
+    \brief The application model and controller.
 
     The ApplicationManager singleton type is the core of the application manager.
     It provides both a DBus and a QML API for all of its functionality.
@@ -438,10 +439,9 @@ ApplicationManager *ApplicationManager::instance()
     return s_instance;
 }
 
-QObject *ApplicationManager::instanceForQml(QQmlEngine *qmlEngine, QJSEngine *)
+QObject *ApplicationManager::instanceForQml(QQmlEngine *, QJSEngine *)
 {
-    if (qmlEngine)
-        retakeSingletonOwnershipFromQmlEngine(qmlEngine, instance());
+    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
 }
 
@@ -537,7 +537,7 @@ const Application *ApplicationManager::fromId(const QString &id) const
         if (app->id() == id)
             return app;
     }
-    return 0;
+    return nullptr;
 }
 
 const Application *ApplicationManager::fromProcessId(qint64 pid) const
@@ -558,13 +558,13 @@ const Application *ApplicationManager::fromProcessId(qint64 pid) const
 const Application *ApplicationManager::fromSecurityToken(const QByteArray &securityToken) const
 {
     if (securityToken.size() != AbstractRuntime::SecurityTokenSize)
-        return 0;
+        return nullptr;
 
     for (const Application *app : d->apps) {
         if (app->currentRuntime() && app->currentRuntime()->securityToken() == securityToken)
             return app;
     }
-    return 0;
+    return nullptr;
 }
 
 QVector<const Application *> ApplicationManager::schemeHandlers(const QString &scheme) const
@@ -1241,13 +1241,13 @@ bool ApplicationManager::startingApplicationInstallation(Application *installApp
         newapp->setParent(this);
         newapp->block();
         newapp->m_state = Application::BeingInstalled;
-        emit newapp->stateChanged(newapp->m_state);
         newapp->m_progress = 0;
         app = newapp.take();
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
         d->apps << app;
         endInsertRows();
         emit applicationAdded(app->id());
+        emit app->stateChanged(app->m_state);
     }
     emitDataChanged(app);
     return true;

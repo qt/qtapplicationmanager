@@ -105,7 +105,7 @@ class FakeApplicationManagerWindow : public QQuickItem
 
 public:
     explicit FakeApplicationManagerWindow(QQuickItem *parent = nullptr);
-    ~FakeApplicationManagerWindow();
+    ~FakeApplicationManagerWindow() override;
 
     QColor color() const;
     void setColor(const QColor &c);

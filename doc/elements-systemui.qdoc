@@ -44,45 +44,24 @@ direct access to data that would otherwise only be available (partially) through
 item models.
 
 \section1 QML Singletons
-\list
-  \li ApplicationManager - The application model and controller.
-  \li ApplicationInstaller - The package installation/removal/update part of the application-manager.
-  \li WindowManager - The window model and controller.
-  \li NotificationManager - The notification model, which handles freedesktop.org compliant
-      notification requests.
-  \li SystemMonitor - The system monitoring model, giving access to a range of measurements, e.g.
-      CPU load, frame rate, etc.
-  \li ApplicationIPCManager - Central registry for interfaces for System-UI-to-app communication.
-  \li StartupTimer - A tool for startup performance analysis.
-\endlist
+\annotatedlist system-ui-singletons
 
 \section1 Instantiable QML Types
 
 These types are only available for the System-UI:
 
-\list
-  \li ApplicationModel - A proxy model for the ApplicationManager singleton.
-  \li ApplicationIPCInterface - System-UI side definition of interfaces for System-UI-to-app communication.
-\endlist
+\annotatedlist system-ui
 
-The following types work the same way within the System-UI, as they would within a single-process
-application. Depending on your System-UI design, this can be very helpful at times.
+The following types are generic and can be used within an application as well as within the System-UI.
+There is no need to use a single-process application when using these types.
 
-\list
-  \li ApplicationManagerWindow - The window root item required in a multi-process environment.
-  \li \l Notification - Abstraction for freedesktop.org Notifications on the client side.
-  \li ApplicationInterfaceExtension - Client side access to System-UI-to-app communication interfaces.
-\endlist
+\annotatedlist system-ui-and-app
 
 \section1 Non-Instantiable QML Types
 
 All these types are return values provided through the ApplicationManager singleton - they are only
 available from within the System-UI.
 
-\list
-  \li \l Application - An application known to the ApplicationManager.
-  \li \l Runtime - A runtime that is executing an application.
-  \li \l Container - A container, that an application's Runtime is using.
-\endlist
+\annotatedlist system-ui-non-instantiable
 
 */

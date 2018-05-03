@@ -42,7 +42,6 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QStringList>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -60,7 +59,6 @@ public:
 
 protected:
     ApplicationScanner() = default;
-    static bool validate(const Application *app, QString *error = nullptr);
 
 private:
     Q_DISABLE_COPY(ApplicationScanner)

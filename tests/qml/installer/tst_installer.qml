@@ -71,10 +71,7 @@ TestCase {
         signalName: "applicationAdded"
     }
 
-    SignalSpy {
-        id: stateChangedSpy
-        signalName: "stateChanged"
-    }
+    property var stateList: []
 
     function test_states() {
         // App could potentially be installed already. Remove it.
@@ -84,22 +81,30 @@ TestCase {
             taskFinishedSpy.clear();
         }
 
+        AM.ApplicationManager.applicationAdded.connect(function(appId) {
+            var app = AM.ApplicationManager.application(appId);
+            app.stateChanged.connect(function(state) {
+                compare(state, app.state)
+                stateList.push(state)
+            })
+        })
+
         var id = AM.ApplicationInstaller.startPackageInstallation("internal-0", "appv1.pkg")
         taskRequestingInstallationAcknowledgeSpy.wait(2000);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
+        var appId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
         taskRequestingInstallationAcknowledgeSpy.clear();
         AM.ApplicationInstaller.acknowledgePackageInstallation(id);
 
-        applicationAddedSpy.wait(2000);
-        var appId = applicationAddedSpy.signalArguments[0][0];
-        var app = AM.ApplicationManager.application(appId);
-        stateChangedSpy.target = app;
-        if (app.state === AM.Application.BeingInstalled) {
-            stateChangedSpy.wait(2000);
-            compare(stateChangedSpy.signalArguments[0][0], AM.Application.Installed)
-        }
-        compare(app.state, AM.Application.Installed)
+        if (!taskFinishedSpy.count)
+            taskFinishedSpy.wait(2000);
+        compare(taskFinishedSpy.count, 1);
+        taskFinishedSpy.clear();
+
+        compare(stateList[0], AM.Application.BeingInstalled)
+        compare(stateList[1], AM.Application.Installed)
+        stateList = []
 
         id = AM.ApplicationInstaller.startPackageInstallation("internal-0", "appv2.pkg")
         taskRequestingInstallationAcknowledgeSpy.wait(2000);
@@ -107,16 +112,22 @@ TestCase {
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
         AM.ApplicationInstaller.acknowledgePackageInstallation(id);
 
-        stateChangedSpy.wait(2000);
-        compare(stateChangedSpy.signalArguments[1][0], AM.Application.BeingUpdated)
-        compare(app.state, AM.Application.BeingUpdated)
-        stateChangedSpy.wait(2000);
-        compare(stateChangedSpy.signalArguments[2][0], AM.Application.Installed)
-        compare(app.state, AM.Application.Installed)
+        taskFinishedSpy.wait(2000);
+        compare(taskFinishedSpy.count, 1);
+        taskFinishedSpy.clear();
+
+        compare(stateList[0], AM.Application.BeingUpdated)
+        compare(stateList[1], AM.Application.Installed)
+        stateList = []
 
         id = AM.ApplicationInstaller.removePackage(appId, false, false);
-        stateChangedSpy.wait(2000);
-        compare(stateChangedSpy.signalArguments[3][0], AM.Application.BeingRemoved)
+
+        taskFinishedSpy.wait(2000);
+        compare(taskFinishedSpy.count, 1);
+        taskFinishedSpy.clear();
+
+        compare(stateList[0], AM.Application.BeingRemoved)
+        stateList = []
         // Cannot compare app.state any more, since app might already be dead
 
         verify(taskStateChangedSpy.count > 10);

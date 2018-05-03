@@ -77,7 +77,7 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
 
 public:
-    ~ApplicationManager();
+    ~ApplicationManager() override;
     static ApplicationManager *createInstance(ApplicationDatabase *adb, bool singleProcess, QString *error);
     static ApplicationManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);

@@ -29,9 +29,14 @@
 
 #set -x
 
+isWin=0
+isMac=0
+[ "$OS" == "Windows_NT" ] && isWin=1
+[ "$(uname)" != "Darwin" ] && isMac=1
+
 # check basic requirement
-[ "$(uname)" != "Darwin" ] && [ "${LANG%%.UTF-8}" = "$LANG" ] && ( echo "The application-packager needs to be run with UTF-8 locale variant"; exit 1; )
-[ ! -d certificates ] && ( echo "Please cd to the tests/data directory before running this script"; exit 1; )
+[ "$isMac" != "1" ] && [ "$isWin" != "1" ] && [ "${LANG%%.UTF-8}" = "$LANG" ] && { echo "The application-packager needs to be run with UTF-8 locale variant"; exit 1; }
+[ ! -d certificates ] && { echo "Please cd to the tests/data directory before running this script"; exit 1; }
 
 # having $LC_ALL set to "C" will screw us big time - especially since QtCreator sets this
 # unconditionally in the build environment, overriding a potentially valid $LANG setting.
@@ -54,12 +59,15 @@ eval ${@:1:$# - 1}
 ( cd certificates && ./create-test-certificates.sh )
 
 dst="packages"
-src="source-tmp.$$"
+tmp=$(mktemp -d "${TMPDIR:-/tmp/}$(basename $0).XXXXXXXXXXXX")
+src="$tmp/source"
 
-removeSrc() { rm -rf "$src"; }
-trap removeSrc INT QUIT 0
-removeSrc
-mkdir "$src"
+removeTmp() { rm -rf "$tmp"; }
+trap removeTmp INT QUIT 0
+
+mkdir -p "$dst"
+mkdir -p "$src"
+[ "$isWin" = "1" ] && src=$(cygpath -m "$src")
 
 packager()
 {
@@ -82,7 +90,6 @@ echo "Generating test packages:"
 
 ### normal packages
 
-mkdir -p "$dst"
 cp info.yaml "$src"
 cp icon.png "$src"
 echo "test" >"$src/test"
@@ -93,6 +100,31 @@ packager create-package "$dst/test.appkg" "$src"
 
 info "Dev-sign package"
 packager dev-sign-package "$dst/test.appkg" "$dst/test-dev-signed.appkg" certificates/dev1.p12 password
+
+info "Create package with extra meta-data"
+cat >"$tmp/exmd" <<EOT
+array:
+- 1
+- 2
+EOT
+cat >"$tmp/exmd2" <<EOT
+key: value
+EOT
+cat >"$tmp/exmds" <<EOT
+signed-object:
+  k1: v1
+  k2: v2
+EOT
+cat >"$tmp/exmds2" <<EOT
+signed-key: signed-value
+EOT
+
+packager create-package "$dst/test-extra.appkg" "$src" \
+  -m '{ "foo": "bar" }' -m '{ "foo2": "bar2" }' -M "$src/../exmd"  -M "$src/../exmd2" \
+  -s '{ "sfoo": "sbar" }' -s '{ "sfoo2": "sbar2" }' -S "$src/../exmds" -S "$src/../exmds2"
+
+info "Dev-sign package with extra meta-data"
+packager dev-sign-package "$dst/test-extra.appkg" "$dst/test-extra-dev-signed.appkg" certificates/dev1.p12 password
 
 ### v2 packages for testing updates
 
@@ -145,10 +177,16 @@ sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/applicationId:
 tar -C "$src" -cf "$dst/test-invalid-header-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
-info "Create a package with an non-matching id header field"
+info "Create a package with a non-matching id header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
 sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/applicationId: '[a-z0-9.-]*'/applicationId: 'non-matching'/"
 tar -C "$src" -cf "$dst/test-non-matching-header-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+mv "$src"/--PACKAGE-HEADER--{.orig,}
+
+info "Create a package with a tampered extraSigned header field"
+mv "$src"/--PACKAGE-HEADER--{,.orig}
+( cat "$src/--PACKAGE-HEADER--.orig" ; echo "extraSigned: { foo: bar }") >"$src/--PACKAGE-HEADER--"
+tar -C "$src" -cf "$dst/test-tampered-extra-signed-header.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with an invalid info.yaml id"
@@ -159,7 +197,7 @@ mv "$src"/info.yaml{.orig,}
 
 info "Create a package with an invalid info.yaml file"
 mv "$src"/info.yaml{,.orig}
-sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/code: "test"$/: "test"/'
+sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/code: "test"/: "test"/'
 tar -C "$src" -cf "$dst/test-invalid-info.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/info.yaml{.orig,}
 
@@ -176,7 +214,8 @@ info "Create a package with an invalid signature"
 packager dev-sign-package "$dst/test.appkg" "$dst/test-invalid-footer-signature.appkg" certificates/other.p12 password
 
 info "Create a package with an invalid entry path"
-tar -C "$src" -P -cf "$dst/test-invalid-path.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png ../create-test-packages.sh test --PACKAGE-FOOTER--
+touch "$src/../invalid-path"
+tar -C "$src" -P -cf "$dst/test-invalid-path.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png ../invalid-path test --PACKAGE-FOOTER--
 
 echo -e "$G All test packages have been created successfully$W"
 echo

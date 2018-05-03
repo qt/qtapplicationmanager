@@ -55,7 +55,8 @@ ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString
 { }
 
 
-QVariantMap PackageUtilities::importantHeaderData = QVariantMap {
+QVariantMap PackageUtilities::headerDataForDigest = QVariantMap {
+    { "extraSigned", QVariantMap() }
 };
 
 void PackageUtilities::addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest)
@@ -67,15 +68,15 @@ void PackageUtilities::addFileMetadataToDigest(const QString &entryFilePath, con
     digest.addData(addToDigest);
 }
 
-void PackageUtilities::addImportantHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) Q_DECL_NOEXCEPT_EXPR(false)
+void PackageUtilities::addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    for (auto it = importantHeaderData.constBegin(); it != importantHeaderData.constEnd(); ++it) {
+    for (auto it = headerDataForDigest.constBegin(); it != headerDataForDigest.constEnd(); ++it) {
         if (header.contains(it.key())) {
             QByteArray ba;
             QDataStream ds(&ba, QIODevice::WriteOnly);
 
             QVariant v = header.value(it.key());
-            if (!v.convert(it.value().type()))
+            if (!v.convert(int(it.value().type())))
                 throw Exception(Error::Package, "metadata field %1 has invalid type for digest calculation (cannot convert %2 to %3)")
                     .arg(it.key()).arg(header.value(it.key()).type()).arg(it.value().type());
             ds << v;

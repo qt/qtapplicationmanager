@@ -43,10 +43,13 @@
 #include "processmonitor_p.h"
 #include "logging.h"
 
+#include <QtAppManManager/applicationmanager.h>
+
 
 /*!
     \qmltype ProcessMonitor
     \inqmlmodule QtApplicationManager
+    \ingroup system-ui
     \brief A type for monitoring process resource usage
 
     The ProcessMonitor type provides statistics about the resource usage and performance for a process known to the

@@ -87,7 +87,7 @@ static void xi2PrepareXIGenericDeviceEvent(xcb_ge_event_t *event)
     // adds an extra 4 bytes and generic events cookie data is on the wire right after the standard 32 bytes.
     // Move this data back to have the same layout in memory as it was on the wire
     // and allow casting, overwriting the full_sequence field.
-    memmove((char*) event + 32, (char*) event + 36, event->length * 4);
+    memmove(reinterpret_cast<char *>(event) + 32, reinterpret_cast<char*>(event) + 36, event->length * 4);
 }
 
 static qreal fixed1616ToReal(FP1616 val)
@@ -210,9 +210,9 @@ bool TouchEmulationX11::nativeEventFilter(const QByteArray &eventType, void *mes
     };
 }
 
-bool TouchEmulationX11::handleButtonPress(WId windowId, uint32_t detail, uint32_t /*modifiers*/, int x, int y)
+bool TouchEmulationX11::handleButtonPress(WId windowId, uint32_t detail, uint32_t /*modifiers*/, qreal x, qreal y)
 {
-    Qt::MouseButton button = xcbButtonToQtMouseButton(detail);
+    Qt::MouseButton button = xcbButtonToQtMouseButton(static_cast<xcb_button_t>(detail));
 
     // Filter out the other mouse buttons
     if (button != Qt::LeftButton)
@@ -220,19 +220,19 @@ bool TouchEmulationX11::handleButtonPress(WId windowId, uint32_t detail, uint32_
 
     QWindow *targetWindow = findQWindowWithXWindowID(windowId);
 
-    QPoint windowPos(x / targetWindow->devicePixelRatio(), y / targetWindow->devicePixelRatio());
+    QPointF windowPos(x / targetWindow->devicePixelRatio(), y / targetWindow->devicePixelRatio());
 
     QTouchEventSequence touchEvent = QTest::touchEvent(targetWindow, m_touchDevice, false /* autoCommit */);
-    touchEvent.press(0 /* touchId */, windowPos);
+    touchEvent.press(0 /* touchId */, windowPos.toPoint(), targetWindow);
     touchEvent.commit(false /* processEvents */);
 
     m_leftButtonIsPressed = true;
     return true;
 }
 
-bool TouchEmulationX11::handleButtonRelease(WId windowId, uint32_t detail, uint32_t, int x, int y)
+bool TouchEmulationX11::handleButtonRelease(WId windowId, uint32_t detail, uint32_t, qreal x, qreal y)
 {
-    Qt::MouseButton button = xcbButtonToQtMouseButton(detail);
+    Qt::MouseButton button = xcbButtonToQtMouseButton(static_cast<xcb_button_t>(detail));
 
     // Don't eat the event if it wasn't a left mouse press
     if (button != Qt::LeftButton)
@@ -240,27 +240,27 @@ bool TouchEmulationX11::handleButtonRelease(WId windowId, uint32_t detail, uint3
 
     QWindow *targetWindow = findQWindowWithXWindowID(windowId);
 
-    QPoint windowPos(x / targetWindow->devicePixelRatio(), y / targetWindow->devicePixelRatio());
+    QPointF windowPos(x / targetWindow->devicePixelRatio(), y / targetWindow->devicePixelRatio());
 
     QTouchEventSequence touchEvent = QTest::touchEvent(targetWindow, m_touchDevice, false /* autoCommit */);
-    touchEvent.release(0 /* touchId */, windowPos);
+    touchEvent.release(0 /* touchId */, windowPos.toPoint(), targetWindow);
     touchEvent.commit(false /* processEvents */);
 
     m_leftButtonIsPressed = false;
     return true;
 }
 
-bool TouchEmulationX11::handleMotionNotify(WId windowId, uint32_t /*modifiers*/, int x, int y)
+bool TouchEmulationX11::handleMotionNotify(WId windowId, uint32_t /*modifiers*/, qreal x, qreal y)
 {
     if (!m_leftButtonIsPressed)
         return true;
 
     QWindow *targetWindow = findQWindowWithXWindowID(windowId);
 
-    QPoint windowPos(x / targetWindow->devicePixelRatio(), y / targetWindow->devicePixelRatio());
+    QPointF windowPos(x / targetWindow->devicePixelRatio(), y / targetWindow->devicePixelRatio());
 
     QTouchEventSequence touchEvent = QTest::touchEvent(targetWindow, m_touchDevice, false /* autoCommit */);
-    touchEvent.move(0 /* touchId */, windowPos);
+    touchEvent.move(0 /* touchId */, windowPos.toPoint(), targetWindow);
     touchEvent.commit(false /* processEvents */);
 
     return true;
@@ -288,16 +288,16 @@ QWindow *TouchEmulationX11::findQWindowWithXWindowID(WId windowId)
 // backup event data before a xi2PrepareXIGenericDeviceEvent() call
 void TouchEmulationX11::backupEventData(void *event)
 {
-    memcpy((char*)&(m_xiEventBackupData[0]), (char*) event + 32, 4);
+    memcpy(reinterpret_cast<char *>(m_xiEventBackupData), reinterpret_cast<char *>(event) + 32, 4);
 }
 
 // restore event data after a xi2PrepareXIGenericDeviceEvent() call
 void TouchEmulationX11::restoreEventData(void *ev)
 {
-    auto *event = (xcb_ge_event_t *)ev;
+    auto *event = static_cast<xcb_ge_event_t *>(ev);
 
-    memmove((char*) event + 36, (char*) event + 32, event->length * 4);
-    memcpy((char*) event + 32, (char*)&(m_xiEventBackupData[0]), 4);
+    memmove(reinterpret_cast<char *>(event) + 36, reinterpret_cast<char *>(event) + 32, event->length * 4);
+    memcpy(reinterpret_cast<char *>(event) + 32, reinterpret_cast<char *>(m_xiEventBackupData), 4);
 }
 
 QT_END_NAMESPACE_AM

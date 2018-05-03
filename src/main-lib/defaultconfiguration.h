@@ -55,7 +55,7 @@ public:
                          const QString &buildConfigFilePath,
                          const char *additionalDescription = nullptr,
                          bool onlyOnePositionalArgument = true);
-    ~DefaultConfiguration();
+    ~DefaultConfiguration() override;
 
     void parse(QStringList *deploymentWarnings = nullptr) override;
 

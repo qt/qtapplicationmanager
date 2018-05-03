@@ -157,7 +157,7 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
     }
 
     str.append(indent1);
-    str.append(QLatin1String("}\n"));
+    str.append("}\n");
     return str;
 }
 
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 
     QFile outFile;
 
-    if (clp.isSet("install")) {
+    if (clp.isSet(qSL("install"))) {
         QDir qmlDir = QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath);
         if (!qmlDir.exists()) {
             fprintf(stderr, "Qt's QML2 imports directory (%s) is missing.\n",

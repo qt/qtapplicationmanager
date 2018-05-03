@@ -39,8 +39,10 @@
 **
 ****************************************************************************/
 
-#ifdef _WIN32
+#if defined(_WIN32) && (_WIN32_WINNT-0 < _WIN32_WINNT_VISTA)
 // needed for QueryFullProcessImageNameW
+#  undef WINVER
+#  undef _WIN32_WINNT
 #  define WINVER _WIN32_WINNT_VISTA
 #  define _WIN32_WINNT _WIN32_WINNT_VISTA
 #endif
@@ -52,6 +54,7 @@
 #include <QCoreApplication>
 #include <QNetworkInterface>
 #include <QPluginLoader>
+#include <private/qvariant_p.h>
 
 #include "utilities.h"
 #include "exception.h"
@@ -110,7 +113,7 @@ void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
     if (actualSize >= 1) {
         const auto map = docs.constFirst().toMap();
         actualFormatType = map.value(qSL("formatType")).toString().toUtf8();
-        actualFormatVersion = map.value(qSL("formatVersion")).toInt(0);
+        actualFormatVersion = map.value(qSL("formatVersion")).toInt();
     }
 
     if (numberOfDocuments < 0) {
@@ -159,7 +162,7 @@ QMultiMap<QString, QString> mountedDirectories()
                            QString::fromLocal8Bit(mntPtr->mnt_fsname));
     }
 #  else
-    int pathMax = pathconf("/", _PC_PATH_MAX) * 2 + 1024;  // quite big, but better be safe than sorry
+    int pathMax = static_cast<int>(pathconf("/", _PC_PATH_MAX)) * 2 + 1024;  // quite big, but better be safe than sorry
     QScopedArrayPointer<char> strBuf(new char[pathMax]);
     struct mntent mntBuf;
 
@@ -453,6 +456,29 @@ QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files
         throw;
     }
     return interfaces;
+}
+
+void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from)
+{
+    // no auto allowed, since this is a recursive lambda
+    std::function<void(QVariantMap *, const QVariantMap &)> recursiveMergeMap =
+            [&recursiveMergeMap](QVariantMap *into, const QVariantMap &from) {
+        for (auto it = from.constBegin(); it != from.constEnd(); ++it) {
+            QVariant fromValue = it.value();
+            QVariant &toValue = (*into)[it.key()];
+
+            bool needsMerge = (toValue.type() == fromValue.type());
+
+            // we're trying not to detach, so we're using v_cast to avoid copies
+            if (needsMerge && (toValue.type() == QVariant::Map))
+                recursiveMergeMap(v_cast<QVariantMap>(&toValue.data_ptr()), fromValue.toMap());
+            else if (needsMerge && (toValue.type() == QVariant::List))
+                into->insert(it.key(), toValue.toList() + fromValue.toList());
+            else
+                into->insert(it.key(), fromValue);
+        }
+    };
+    recursiveMergeMap(&into, from);
 }
 
 QT_END_NAMESPACE_AM

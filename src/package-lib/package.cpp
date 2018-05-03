@@ -64,7 +64,7 @@ bool Package::ensureCorrectLocale()
     auto checkUtf = []() -> bool {
         const wchar_t umlaut_w[2] = { 0x00e4, 0x0000 };
         char umlaut_mb[2];
-        int umlaut_mb_len = wcstombs(umlaut_mb, umlaut_w, sizeof(umlaut_mb));
+        size_t umlaut_mb_len = wcstombs(umlaut_mb, umlaut_w, sizeof(umlaut_mb));
 
         return (umlaut_mb_len == 2 && umlaut_mb[0] == '\xc3' && umlaut_mb[1] == '\xa4');
     };

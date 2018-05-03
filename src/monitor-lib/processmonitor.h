@@ -46,10 +46,7 @@
 #include <QByteArray>
 #include <QVariant>
 #include <QHash>
-
-#include <QtAppManApplication/application.h>
-#include <QtAppManManager/applicationmanager.h>
-
+#include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -69,7 +66,7 @@ class ProcessMonitor : public QAbstractListModel
 
 public:
     ProcessMonitor(QObject *parent = nullptr);
-    ~ProcessMonitor();
+    ~ProcessMonitor() override;
 
     Q_INVOKABLE QVariantMap get(int index) const;
 

@@ -177,6 +177,12 @@ int main(int argc, char *argv[])
         clp.addOption({ qSL("directload") , qSL("The info.yaml to start."), qSL("info.yaml") });
         clp.process(a);
 
+        bool quicklaunched = clp.isSet(qSL("quicklaunch"));
+        QString directLoad = clp.value(qSL("directload"));
+
+        if (directLoad.isEmpty())
+            a.loadConfiguration();
+
         CrashHandler::setCrashActionConfiguration(a.runtimeConfiguration().value(qSL("crashAction")).toMap());
         a.setupLoggingRules(false, a.loggingRules()); // the verbose flag has already been factored into the rules
         a.setupQmlDebugging(clp.isSet(qSL("qml-debug")));
@@ -185,17 +191,12 @@ int main(int argc, char *argv[])
 
         StartupTimer::instance()->checkpoint("after basic initialization");
 
-        bool quicklaunched = clp.isSet(qSL("quicklaunch"));
-        QString directLoad = clp.value(qSL("directload"));
         if (!directLoad.isEmpty()) {
             QFileInfo fi(directLoad);
-            if (!fi.exists() || fi.fileName() != qSL("info.yaml")) {
+            if (!fi.exists() || fi.fileName() != qSL("info.yaml"))
                 throw Exception("--directload needs a valid info.yaml file as parameter");
-                return 2;
-            }
             directLoad = fi.absoluteFilePath();
         } else {
-            a.loadConfiguration();
             a.setupDBusConnections();
             StartupTimer::instance()->checkpoint("after dbus initialization");
         }
@@ -459,8 +460,12 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             // this is a queued signal, so there may be still one in the queue after calling disconnect()
             if (conn) {
                 QObject::disconnect(conn);
-                StartupTimer::instance()->checkFirstFrame();
-                StartupTimer::instance()->createReport(applicationId);
+
+                auto st = StartupTimer::instance();
+                st->checkFirstFrame();
+                if (!st->automaticReporting())
+                    st->createReport(applicationId);
+
                 for (StartupInterface *iface : qAsConst(startupPlugins))
                     iface->afterWindowShow(m_window);
             }

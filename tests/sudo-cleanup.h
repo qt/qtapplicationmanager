@@ -29,6 +29,9 @@
 #pragma once
 
 #include <QTest>
+#include <QProcess>
+#include <QtAppManInstaller/sudo.h>
+#include <QtAppManCommon/utilities.h>
 
 QT_USE_NAMESPACE_AM
 

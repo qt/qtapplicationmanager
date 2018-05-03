@@ -58,7 +58,7 @@ class InProcessSurfaceItem : public QQuickItem
     Q_OBJECT
 public:
     InProcessSurfaceItem(FakeApplicationManagerWindow *famw);
-    ~InProcessSurfaceItem();
+    ~InProcessSurfaceItem() override;
 
     QSharedPointer<QObject> windowProperties();
 

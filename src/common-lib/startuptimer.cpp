@@ -68,6 +68,8 @@
 /*!
     \qmltype StartupTimer
     \inqmlmodule QtApplicationManager
+    \ingroup system-ui-singletons
+    \ingroup app-singletons
     \brief A tool for startup performance analysis.
 
     The StartupTimer is a class for measuring the startup performance of the System-UI, as well as
@@ -154,6 +156,23 @@
      values of systemUpTime and timeToFirstFrame.
 */
 
+
+/*!
+     \qmlproperty bool StartupTimer::automaticReporting
+
+     You can set this property to \c false, if you want to prevent the automatic report generation
+     that is done by the application-manager. This can be useful, if you are using some form of
+     staged loading in the System-UI and want to create the report at a later time.
+
+     \note Please note that you need to set this property to \c false before the load operation of
+           the main qml file is finished: ideally in the root elements \c Component.onCompleted
+           handler.
+
+    The default value is \c true.
+
+    \sa createReport
+*/
+
 /*!
     \qmlmethod StartupTimer::checkpoint(string name)
 
@@ -186,10 +205,10 @@ static SplitSeconds splitMicroSecs(quint64 micros)
 
     ss.sec = 0;
     if (micros > 1000 * 1000) {
-        ss.sec = micros / (1000 * 1000);
+        ss.sec = int(micros / (1000 * 1000));
         micros %= (1000 * 1000);
     }
-    ss.msec = micros / 1000;
+    ss.msec = int(micros / 1000);
     ss.usec = micros % 1000;
 
     return ss;
@@ -243,7 +262,7 @@ StartupTimer::StartupTimer()
     auto readJiffiesFromProc = [](void *resultPtr) -> void * {
         void *result = nullptr;
 
-        QByteArray file = "/proc/self/task/" + QByteArray::number((int) syscall(SYS_gettid)) + "/stat";
+        QByteArray file = "/proc/self/task/" + QByteArray::number(static_cast<int>(syscall(SYS_gettid))) + "/stat";
         int fd = QT_OPEN(file, O_RDONLY);
         if (fd >= 0) {
             char buffer[1024];
@@ -253,7 +272,7 @@ StartupTimer::StartupTimer()
                 for (int field = 0, pos = 0; pos < bytesRead; ) {
                     if (buffer[pos++] == ' ') {
                         if (++field == 21) {
-                            *reinterpret_cast<quint32 *>(resultPtr) = strtoul(buffer + pos, 0, 10);
+                            *reinterpret_cast<quint32 *>(resultPtr) = quint32(strtoul(buffer + pos, nullptr, 10));
                             result = reinterpret_cast<void *>(1);
                             break;
                         }
@@ -276,9 +295,9 @@ StartupTimer::StartupTimer()
 
         quint32 processJiffies = 0;
         if (readJiffiesFromProc(&processJiffies)) {
-            int clkTck = sysconf(_SC_CLK_TCK);
+            long int clkTck = sysconf(_SC_CLK_TCK);
             if (clkTck > 0) {
-                m_processCreation = (threadJiffies - processJiffies) * 1000*1000 / clkTck;
+                m_processCreation = quint64(threadJiffies - processJiffies) * 1000*1000 / quint64(clkTck);
                 m_initialized = true;
             } else {
                 qWarning("StartupTimer: could not get _SC_CLK_TCK");
@@ -367,7 +386,7 @@ void StartupTimer::checkpoint(const char *name)
 {
     if (Q_LIKELY(m_initialized)) {
         qint64 delta = m_timer.nsecsElapsed();
-        m_checkpoints << qMakePair(delta / 1000 + m_processCreation, name);
+        m_checkpoints << qMakePair(quint64(delta / 1000) + m_processCreation, name);
     }
 }
 
@@ -383,7 +402,7 @@ void StartupTimer::checkFirstFrame()
 {
     if (Q_LIKELY(m_initialized)) {
         QByteArray ba = "after first frame drawn";
-        m_timeToFirstFrame = m_timer.nsecsElapsed()/1000 + m_processCreation;
+        m_timeToFirstFrame = quint64(m_timer.nsecsElapsed() / 1000) + m_processCreation;
         m_checkpoints << qMakePair(m_timeToFirstFrame, ba);
         emit timeToFirstFrameChanged(m_timeToFirstFrame);
     }
@@ -392,7 +411,7 @@ void StartupTimer::checkFirstFrame()
 void StartupTimer::reset()
 {
     if (m_initialized) {
-        SplitSeconds delta = splitMicroSecs(m_timer.nsecsElapsed() / 1000 + m_processCreation);
+        SplitSeconds delta = splitMicroSecs(quint64(m_timer.nsecsElapsed() / 1000) + m_processCreation);
         m_timer.restart();
         m_checkpoints.clear();
         m_processCreation = 0;
@@ -400,6 +419,19 @@ void StartupTimer::reset()
         const QString text = QString::asprintf("started %d'%03d.%03d after process launch",
                                                          delta.sec, delta.msec, delta.usec);
         m_checkpoints << qMakePair(0, text.toLocal8Bit().constData());
+    }
+}
+
+bool StartupTimer::automaticReporting() const
+{
+    return m_automaticReporting;
+}
+
+void StartupTimer::setAutomaticReporting(bool enableAutomaticReporting)
+{
+    if (m_automaticReporting != enableAutomaticReporting) {
+        m_automaticReporting = enableAutomaticReporting;
+        emit automaticReportingChanged(enableAutomaticReporting);
     }
 }
 
@@ -417,7 +449,7 @@ void StartupTimer::createReport(const QString &title)
 
         static const int barCols = 60;
 
-        int delta = m_checkpoints.isEmpty() ? 0 : m_checkpoints.last().first;
+        quint64 delta = m_checkpoints.isEmpty() ? 0 : m_checkpoints.last().first;
         qreal usecPerCell = delta / barCols;
 
         int maxTextLen = 0;
@@ -430,7 +462,7 @@ void StartupTimer::createReport(const QString &title)
         for (int i = 0; i < m_checkpoints.size(); ++i) {
             quint64 usec = m_checkpoints.at(i).first;
             const QByteArray text = m_checkpoints.at(i).second;
-            int cells = usec / usecPerCell;
+            int cells = int(usec / usecPerCell);
             QByteArray bar(cells, ansiColorSupport ? ' ' : '#');
             QByteArray spacing(maxTextLen - text.length(), ' ');
             SplitSeconds ss = splitMicroSecs(usec);

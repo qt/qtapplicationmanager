@@ -55,6 +55,7 @@ class StartupTimer : public QObject
     Q_OBJECT
     Q_PROPERTY(quint64 timeToFirstFrame READ timeToFirstFrame NOTIFY timeToFirstFrameChanged)
     Q_PROPERTY(quint64 systemUpTime READ systemUpTime NOTIFY systemUpTimeChanged)
+    Q_PROPERTY(bool automaticReporting READ automaticReporting WRITE setAutomaticReporting NOTIFY automaticReportingChanged)
 
 public:
     static StartupTimer *instance();
@@ -65,14 +66,19 @@ public:
 
     quint64 timeToFirstFrame() const;
     quint64 systemUpTime() const;
+    bool automaticReporting() const;
 
     void checkpoint(const char *name);
     void checkFirstFrame();
     void reset();
 
+public slots:
+    void setAutomaticReporting(bool enableAutomaticReporting);
+
 signals:
     void timeToFirstFrameChanged(quint64 timeToFirstFrame);
     void systemUpTimeChanged(quint64 systemUpTime);
+    void automaticReportingChanged(bool setAutomaticReporting);
 
 private:
     StartupTimer();
@@ -80,6 +86,7 @@ private:
 
     FILE *m_output = nullptr;
     bool m_initialized = false;
+    bool m_automaticReporting = true;
     quint64 m_processCreation = 0;
     quint64 m_timeToFirstFrame = 0;
     quint64 m_systemUpTime = 0;

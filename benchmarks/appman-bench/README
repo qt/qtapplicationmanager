@@ -1,0 +1,21 @@
+The appman-bench is a tool using a known, minimal System-UI
+environment to benchmark the application-manager itself and
+apps started by it.
+
+The benchmark tests the following:
+* cpu load
+* gpu load
+* memory consumption
+* fps
+
+The bench provides a collection of small qml test files.
+These qml test files are loaded in a system-ui, as well
+as in every app which is started.
+The system-ui waits for all apps to be started and starts
+measuring while keeping them running for some time.
+
+The bench provides a way to change what runtime is used
+for testing and enables us to see differences between the
+appman-launcher-qml and qmlscene binaries.
+New tests can be added by writing a qml file and putting it into
+the test folder.

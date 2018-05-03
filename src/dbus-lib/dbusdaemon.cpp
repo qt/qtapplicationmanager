@@ -92,7 +92,7 @@ void DBusDaemonProcess::setupChildProcess()
 
 void DBusDaemonProcess::start() Q_DECL_NOEXCEPT_EXPR(false)
 {
-    static const int timeout = 10000 * timeoutFactor();
+    static const int timeout = 10000 * int(timeoutFactor());
 
     auto dbusDaemon = new DBusDaemonProcess(qApp);
     dbusDaemon->QProcess::start(QIODevice::ReadOnly);

@@ -128,6 +128,8 @@ public:
     Q_SCRIPTABLE bool validateDnsName(const QString &name, int minimumParts = 1);
 
     Q_SCRIPTABLE qint64 installedApplicationSize(const QString &id) const;
+    Q_SCRIPTABLE QVariantMap installedApplicationExtraMetaData(const QString &id) const;
+    Q_SCRIPTABLE QVariantMap installedApplicationExtraSignedMetaData(const QString &id) const;
 
     // these 4 functions are not really for installation/deinstallation, but
     // for correctly (un)mounting a package that was installed on a removable medium.
@@ -145,7 +147,10 @@ signals:
                                        QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) newState);
 
     // installation only
-    Q_SCRIPTABLE void taskRequestingInstallationAcknowledge(const QString &taskId, const QVariantMap &applicationAsVariantMap);
+    Q_SCRIPTABLE void taskRequestingInstallationAcknowledge(const QString &taskId,
+                                                            const QVariantMap &applicationAsVariantMap,
+                                                            const QVariantMap &packageExtraMetaData,
+                                                            const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);
 
     Q_SCRIPTABLE void packageActivated(const QString &id, bool successful);

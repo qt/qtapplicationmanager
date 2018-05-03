@@ -70,7 +70,7 @@ class HostProcess : public AbstractContainerProcess
 
 public:
     HostProcess();
-    virtual ~HostProcess();
+    virtual ~HostProcess() override;
 
     virtual qint64 processId() const override;
     virtual QProcess::ProcessState state() const override;
@@ -109,7 +109,7 @@ public:
                               const QVector<int> &stdioRedirections,
                               const QMap<QString, QString> &debugWrapperEnvironment,
                               const QStringList &debugWrapperCommand);
-    ~ProcessContainer();
+    ~ProcessContainer() override;
 
     QString controlGroup() const override;
     bool setControlGroup(const QString &groupName) override;

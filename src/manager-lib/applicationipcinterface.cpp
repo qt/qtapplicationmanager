@@ -63,6 +63,7 @@
 
 /*!
     \qmltype ApplicationIPCInterface
+    \ingroup system-ui
     \inqmlmodule QtApplicationManager
     \brief The definition of an IPC interface between the ApplicationManager and applications.
 
@@ -255,7 +256,7 @@ IpcProxyObject::IpcProxyObject(QObject *object, const QString &serviceName, cons
 
         // handle our annotation mechanism to add types to method parameters
         if (propName.startsWith(TYPE_ANNOTATION_PREFIX)) {
-            QByteArray slotName = propName.mid(qstrlen(TYPE_ANNOTATION_PREFIX));
+            QByteArray slotName = propName.mid(int(qstrlen(TYPE_ANNOTATION_PREFIX)));
             bool found = false;
             for (int slotIndex : qAsConst(m_slots)) {
                 QMetaMethod mm = mo->method(slotIndex);
@@ -308,7 +309,7 @@ IpcProxyObject::IpcProxyObject(QObject *object, const QString &serviceName, cons
                                      << "but the annotated function" << slotName << "is missing";
             }
         } else {
-            if (dbusType(mp.type())) {
+            if (dbusType(int(mp.type()))) {
                 m_properties << i;
             } else {
                 qCWarning(LogQmlIpc) << "Ignoring property" << mp.name()
@@ -351,7 +352,7 @@ QByteArray IpcProxyObject::createIntrospectionXml()
             readWrite += "write";
 
         xml = xml + "  <property name=\"" + mp.name()
-                + "\" type=\"" + dbusType(mp.type())
+                + "\" type=\"" + dbusType(int(mp.type()))
                 + "\" access=\"" + readWrite
                 + "\" />\n";
     }

@@ -55,13 +55,17 @@ QT_USE_NAMESPACE_AM
 static const int Ext2BlockSize = 1024;
 
 
-PackagingJob *PackagingJob::create(const QString &destinationName, const QString &sourceDir, bool asJson)
+PackagingJob *PackagingJob::create(const QString &destinationName, const QString &sourceDir,
+                                   const QVariantMap &extraMetaData,
+                                   const QVariantMap &extraSignedMetaData, bool asJson)
 {
     PackagingJob *p = new PackagingJob();
     p->m_mode = Create;
     p->m_asJson = asJson;
     p->m_destinationName = destinationName;
     p->m_sourceDir = sourceDir;
+    p->m_extraMetaData = extraMetaData;
+    p->m_extraSignedMetaData = extraSignedMetaData;
     return p;
 }
 
@@ -193,6 +197,10 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         // http://git.buildroot.net/buildroot/tree/package/mke2img/mke2img
         estimatedImageSize = (500 + (estimatedImageSize + report.files().count() + 400 / 8) * 11 / 10) * Ext2BlockSize;
         report.setDiskSpaceUsed(estimatedImageSize);
+
+        // set extra metadata
+        report.setExtraMetaData(m_extraMetaData);
+        report.setExtraSignedMetaData(m_extraSignedMetaData);
 
         // finally create the package
         PackageCreator creator(source, &destination, report);

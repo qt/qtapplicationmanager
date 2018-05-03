@@ -78,10 +78,14 @@ bool WaylandQtAMServerExtension::setWindowPropertyHelper(QWaylandSurface *surfac
 {
     auto it = m_windowProperties.find(surface);
     if ((it == m_windowProperties.end()) || (it.value().value(name) != value)) {
-        if (it == m_windowProperties.end())
+        if (it == m_windowProperties.end()) {
             m_windowProperties[surface].insert(name, value);
-        else
+            connect(surface, &QWaylandSurface::surfaceDestroyed, this, [this, surface]() {
+                m_windowProperties.remove(surface);
+            });
+        } else {
             it.value().insert(name, value);
+        }
         emit windowPropertyChanged(surface, name, value);
         return true;
     }
@@ -92,7 +96,7 @@ void WaylandQtAMServerExtension::qtam_extension_set_window_property(QtWaylandSer
 {
     Q_UNUSED(resource);
     QWaylandSurface *surface = QWaylandSurface::fromResource(surface_resource);
-    const QByteArray byteValue((const char *) value->data, value->size);
+    const QByteArray byteValue(static_cast<const char *>(value->data), static_cast<int>(value->size));
     QDataStream ds(byteValue);
     QVariant variantValue;
     ds >> variantValue;

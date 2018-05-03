@@ -121,7 +121,7 @@ Consequently, when the application is restarted again, the state might be differ
 multi-process case, where the singleton is instantiated anew.
 
 
-\section1 ApplicationManagerWindow
+\section1 Application Windows
 
 A major difference between single- and multi-process mode is how windows are represented. Windows
 are exposed from the application to the System-UI through WindowManager::windowReady. For

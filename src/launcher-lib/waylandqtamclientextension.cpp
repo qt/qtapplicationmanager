@@ -84,9 +84,6 @@ bool WaylandQtAMClientExtension::eventFilter(QObject *o, QEvent *e)
         case QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed:
             m_windowProperties.remove(window);
             break;
-
-        default:
-            break;
         }
     }
     return false;
@@ -132,7 +129,7 @@ bool WaylandQtAMClientExtension::setWindowPropertyHelper(QWindow *window, const 
 
 void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surface *surface, const QString &name, wl_array *value)
 {
-    const QByteArray data = QByteArray::fromRawData(static_cast<char *>(value->data), value->size);
+    const QByteArray data = QByteArray::fromRawData(static_cast<char *>(value->data), int(value->size));
     QDataStream ds(data);
     QVariant variantValue;
     ds >> variantValue;

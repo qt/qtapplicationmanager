@@ -130,6 +130,8 @@ QVariantMap LauncherMain::windowProperties(QWindow *window) const
 #if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
     if (m_waylandExtension && window)
         return m_waylandExtension->windowProperties(window);
+#else
+    Q_UNUSED(window)
 #endif
     return QVariantMap();
 }
@@ -139,6 +141,10 @@ void LauncherMain::setWindowProperty(QWindow *window, const QString &name, const
 #if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
     if (m_waylandExtension && window)
         m_waylandExtension->setWindowProperty(window, name, value);
+#else
+    Q_UNUSED(window)
+    Q_UNUSED(name)
+    Q_UNUSED(value)
 #endif
 }
 

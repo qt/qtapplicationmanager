@@ -95,19 +95,19 @@ static void ProcessTitleInitialize(int argc, char *argv[], char *envp[])
 
     // calculate the size of the available area
     startOfArgv = argv[0];
-    originalArgvSize = envp[0] - argv[0];
-    originalArgv = (char *) malloc(originalArgvSize);
+    originalArgvSize = size_t(envp[0] - argv[0]);
+    originalArgv = static_cast<char *>(malloc(originalArgvSize));
     memcpy(originalArgv, argv[0], originalArgvSize);
     char *envpEnd;
-    int envc = 0;
+    size_t envc = 0;
 
     while (envp[envc])
         ++envc;
     envpEnd = envp[envc - 1] + strlen(envp[envc - 1]) + 1;
-    maxArgvSize = envpEnd - startOfArgv;
+    maxArgvSize = size_t(envpEnd - startOfArgv);
 
     // temporary copy of the list of pointers on the stack
-    QVarLengthArray<char *, 2048> oldenvp(envc);
+    QVarLengthArray<char *, 2048> oldenvp(static_cast<int>(envc));
     memcpy(oldenvp.data(), envp, envc * sizeof(char *));
 
     // this will only free the list of pointers, but not the contents!
@@ -176,7 +176,7 @@ void ProcessTitle::setTitle(const char *fmt, ...)
 
         va_list ap;
         va_start(ap, fmt);
-        size_t result = qvsnprintf(title + len, sizeof(title) - len, fmt, ap);
+        size_t result = static_cast<size_t>(qvsnprintf(title + len, sizeof(title) - len, fmt, ap));
         va_end(ap);
         len += qMin(result, sizeof(title) - len); // clamp to buffer size in case of overflow
         if ((len + 1) > maxArgvSize)

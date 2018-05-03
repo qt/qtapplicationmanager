@@ -65,7 +65,7 @@ public:
     static void initialize(const QDBusConnection &connection);
 
     explicit QmlApplicationInterfaceExtension(QObject *parent = nullptr);
-    ~QmlApplicationInterfaceExtension();
+    ~QmlApplicationInterfaceExtension() override;
 
     QString name() const;
     bool isReady() const;

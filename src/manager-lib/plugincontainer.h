@@ -90,7 +90,7 @@ class PluginContainer : public AbstractContainer
     Q_OBJECT
 
 public:
-    virtual ~PluginContainer();
+    virtual ~PluginContainer() override;
 
     QString controlGroup() const override;
     bool setControlGroup(const QString &groupName) override;

@@ -62,6 +62,7 @@
 #include <QQmlContext>
 #include <QQmlComponent>
 #include <QQmlApplicationEngine>
+#include <QTimer>
 #include <QUrl>
 #include <QLibrary>
 #include <QFunctionPointer>
@@ -158,20 +159,6 @@ Main::Main(int &argc, char **argv)
 
 Main::~Main()
 {
-    // the eventloop stopped, so any pending "retakes" would not be executed
-    QObject *singletons[] = {
-        m_applicationManager,
-        m_applicationInstaller,
-        m_applicationIPCManager,
-        m_notificationManager,
-#if !defined(AM_HEADLESS)
-        m_windowManager,
-#endif
-        m_systemMonitor
-    };
-    for (const auto &singleton : singletons)
-        retakeSingletonOwnershipFromQmlEngine(m_engine, singleton, true);
-
 #if defined(QT_PSSDP_LIB)
     if (m_ssdpOk)
         m_ssdp.setActive(false);
@@ -447,7 +434,7 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
 }
 
 void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
-                           qreal quickLaunchRuntimesPerContainer, int quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
+                           int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString error;
     m_applicationManager = ApplicationManager::createInstance(m_applicationDatabase.take(),
@@ -659,47 +646,78 @@ void Main::showWindow(bool showFullscreen)
     QObject *rootObject = m_engine->rootObjects().constFirst();
 
     if (!rootObject->isWindowType()) {
-        m_view = new QQuickView(m_engine, nullptr);
-        StartupTimer::instance()->checkpoint("after WindowManager/QuickView instantiation");
-        m_view->setContent(m_mainQml, nullptr, rootObject);
-        window = m_view;
+        QQuickItem *contentItem = qobject_cast<QQuickItem *>(rootObject);
+        if (contentItem) {
+            m_view = new QQuickView(m_engine, nullptr);
+            m_view->setContent(m_mainQml, nullptr, rootObject);
+            m_view->setVisible(contentItem->isVisible());
+            connect(contentItem, &QQuickItem::visibleChanged, this, [this, contentItem]() {
+                m_view->setVisible(contentItem->isVisible());
+            });
+            window = m_view;
+        }
     } else {
         window = qobject_cast<QQuickWindow *>(rootObject);
         if (!m_engine->incubationController())
             m_engine->setIncubationController(window->incubationController());
     }
-    Q_ASSERT(window);
-
-    static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {
-        // this is a queued signal, so there may be still one in the queue after calling disconnect()
-        if (conn) {
-#  if defined(Q_CC_MSVC)
-            qApp->disconnect(conn); // MSVC2013 cannot call static member functions without capturing this
-#  else
-            QObject::disconnect(conn);
-#  endif
-            StartupTimer::instance()->checkFirstFrame();
-            StartupTimer::instance()->createReport(qSL("System-UI"));
-        }
-    });
-
-    m_windowManager->registerCompositorView(window);
 
     for (auto iface : qAsConst(m_startupPlugins))
         iface->beforeWindowShow(window);
 
-    if (Q_LIKELY(showFullscreen))
-        window->showFullScreen();
-    else
-        window->show();
+    if (!window) {
+        const QWindowList windowList = allWindows();
+        for (QWindow *w : windowList) {
+            if (w->isVisible()) {
+                window = qobject_cast<QQuickWindow*>(w);
+                break;
+            }
+        }
+    } else {
+        m_windowManager->registerCompositorView(window);
+    }
 
-    // now check the surface format, in case we had requested a specific GL version/profile
-    checkOpenGLFormat("main window", window->format());
+    if (window) {
+        StartupTimer::instance()->checkpoint("after Window instantiation/setup");
 
-    for (auto iface : qAsConst(m_startupPlugins))
-        iface->afterWindowShow(window);
+        static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {
+            // this is a queued signal, so there may be still one in the queue after calling disconnect()
+            if (conn) {
+    #  if defined(Q_CC_MSVC)
+                qApp->disconnect(conn); // MSVC2013 cannot call static member functions without capturing this
+    #  else
+                QObject::disconnect(conn);
+    #  endif
+                auto st = StartupTimer::instance();
+                st->checkFirstFrame();
+                if (!st->automaticReporting())
+                    st->createReport(qSL("System-UI"));
+            }
+        });
 
-    StartupTimer::instance()->checkpoint("after window show");
+        // Main window will always be shown, neglecting visible property for backwards compatibility
+        if (Q_LIKELY(showFullscreen))
+            window->showFullScreen();
+        else
+            window->show();
+
+        // now check the surface format, in case we had requested a specific GL version/profile
+        checkOpenGLFormat("main window", window->format());
+
+        for (auto iface : qAsConst(m_startupPlugins))
+            iface->afterWindowShow(window);
+
+        StartupTimer::instance()->checkpoint("after window show");
+    } else {
+        static QMetaObject::Connection conn =
+            connect(this, &QGuiApplication::focusWindowChanged, this, [this] (QWindow *win) {
+            if (conn) {
+                QObject::disconnect(conn);
+                checkOpenGLFormat("first window", win->format());
+            }
+        });
+        StartupTimer::instance()->createReport(qSL("System-UI"));
+    }
 #endif
 }
 
@@ -834,7 +852,7 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
 
     qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
 
-    if (QByteArray::fromRawData(interfaceName, qstrlen(interfaceName)).startsWith("io.qt.")) {
+    if (QByteArray::fromRawData(interfaceName, int(qstrlen(interfaceName))).startsWith("io.qt.")) {
         // Write the bus address of the interface to a file in /tmp. This is needed for the
         // controller tool, which does not even have a session bus, when started via ssh.
 

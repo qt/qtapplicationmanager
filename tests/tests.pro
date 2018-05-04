@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS = \
+    application \
     applicationinfo \
     runtime \
     cryptography \

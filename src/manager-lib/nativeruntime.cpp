@@ -246,9 +246,6 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
     emit finished(exitCode, status);
     setState(Inactive);
 
-    if (m_app)
-        m_app->setCurrentRuntime(nullptr);
-
     deleteLater();
 }
 

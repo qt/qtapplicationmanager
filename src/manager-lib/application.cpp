@@ -363,9 +363,12 @@ void Application::setCurrentRuntime(AbstractRuntime *rt)
     m_runtime = rt;
     emit runtimeChanged();
 
-    if (m_runtime)
+    if (m_runtime) {
         connect(m_runtime, &AbstractRuntime::finished, this, &Application::setLastExitCodeAndStatus);
-    else
+        connect(m_runtime, &QObject::destroyed, this, [this]() {
+            this->setCurrentRuntime(nullptr);
+        });
+    } else
         setRunState(NotRunning);
 }
 

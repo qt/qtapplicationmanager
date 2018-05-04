@@ -413,8 +413,8 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
     qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager", 1, 0, "ApplicationManager",
                                                  &ApplicationManager::instanceForQml);
     qmlRegisterType<ApplicationModel>("QtApplicationManager", 1, 0, "ApplicationModel");
-    qmlRegisterUncreatableType<AbstractApplication>("QtApplicationManager", 1, 0, "Application",
-                                                  qSL("Cannot create objects of type Application"));
+    qmlRegisterUncreatableType<AbstractApplication>("QtApplicationManager", 1, 0, "ApplicationObject",
+                                                  qSL("Cannot create objects of type ApplicationObject"));
     qRegisterMetaType<AbstractApplication*>("AbstractApplication*");
     qmlRegisterUncreatableType<AbstractRuntime>("QtApplicationManager", 1, 0, "Runtime",
                                                 qSL("Cannot create objects of type Runtime"));

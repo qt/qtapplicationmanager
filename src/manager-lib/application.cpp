@@ -50,102 +50,89 @@
 #endif
 
 /*!
-    \qmltype Application
+    \qmltype ApplicationObject
     \inqmlmodule QtApplicationManager
     \ingroup system-ui-non-instantiable
     \brief The handle for an application known to the ApplicationManager.
 
     Most of the read-only properties map directly to values read from the application's
     \c info.yaml file - these are documented in the \l{Manifest Definition}.
-
-    \note There is an unfortunate naming conflict with the (undocumented) \c Application object
-          returned from \l{QtQml::Qt::application}{Qt.application}. If you want to use the enums
-          defined in the application-manager's \c Application class, you need to use an alias import:
-
-    \badcode
-    import QtApplicationManager 1.0 as AppMan
-
-    ...
-
-    if (app.lastExitStatus == AppMan.Application.NormalExit)
-        ...
-    \endcode
 */
 
 /*!
-    \qmlproperty string Application::id
+    \qmlproperty string ApplicationObject::id
     \readonly
 
     This property returns the unique id of the application.
 */
 /*!
-    \qmlproperty string Application::runtimeName
+    \qmlproperty string ApplicationObject::runtimeName
     \readonly
 
     This property holds the name of the runtime, necessary to run the application's code.
 */
 /*!
-    \qmlproperty object Application::runtimeParameters
+    \qmlproperty object ApplicationObject::runtimeParameters
     \readonly
 
     This property holds a QVariantMap that is passed onto, and interpreted by the application's
     runtime.
 */
 /*!
-    \qmlproperty url Application::icon
+    \qmlproperty url ApplicationObject::icon
     \readonly
 
     The URL of the application's icon - can be used as the source property of an \l Image.
 */
 /*!
-    \qmlproperty string Application::documentUrl
+    \qmlproperty string ApplicationObject::documentUrl
     \readonly
 
     This property always returns the default \c documentUrl specified in the manifest file, even if
     a different URL was used to start the application.
 */
 /*!
-    \qmlproperty bool Application::builtIn
+    \qmlproperty bool ApplicationObject::builtIn
     \readonly
 
     This property describes, if this application is part of the built-in set of applications of the
     current System-UI.
 */
 /*!
-    \qmlproperty bool Application::alias
+    \qmlproperty bool ApplicationObject::alias
     \readonly
 
-    Will return \c true if this Application object is an alias to another one.
+    Will return \c true if this ApplicationObject object is an alias to another one.
 
     \sa Application::nonAliased
 */
 /*!
-    \qmlproperty Application Application::nonAliased
+    \qmlproperty ApplicationObject ApplicationObject::nonAliased
     \readonly
 
-    If this Application object is an alias, then you can access the non-alias, base Application
-    object via this property, otherwise it contains a reference to itself. This means that if
-    you're interested in accessing the base application regardless of whether the object at hand
-    is just an alias, you can always safely refer to this property.
+    If this ApplicationObject is an alias, then you can access the non-alias, base ApplicationObject
+    via this property, otherwise it contains a reference to itself. This means that if you're interested
+    in accessing the base application regardless of whether the object at hand is just an alias, you
+    can always safely refer to this property.
 
-    If you want to know whether this object is an alias or a base application, use
-    Application::alias instead.
+    If you want to know whether this object is an alias or a base ApplicationObject, use
+    ApplicationObject::alias instead.
 */
 /*!
-    \qmlproperty list<string> Application::capabilities
+    \qmlproperty list<string> ApplicationObject::capabilities
     \readonly
 
     A list of special access rights for the application - these capabilities can later be queried
     and verified by the middleware via the application-manager.
 */
 /*!
-    \qmlproperty list<string> Application::supportedMimeTypes
+    \qmlproperty list<string> ApplicationObject::supportedMimeTypes
     \readonly
 
     An array of MIME types the application can handle.
 */
 /*!
-    \qmlproperty list<string> Application::categories
+    \qmlproperty list<string> ApplicationObject::categories
     \readonly
 
     A list of category names the application should be associated with. This is mainly for the
@@ -153,21 +140,21 @@
     categories in the System-UI.
 */
 /*!
-    \qmlproperty object Application::applicationProperties
+    \qmlproperty object ApplicationObject::applicationProperties
     \readonly
 
     All user-defined properties of this application as listed in the private and protected sections
     of the \c applicationProperties field in the manifest file.
 */
 /*!
-    \qmlproperty Runtime Application::runtime
+    \qmlproperty Runtime ApplicationObject::runtime
     \readonly
 
     Will return a valid \l Runtime object, if the application is currently starting, running or
     shutting down. May return a \c null object, if the application was not yet started.
 */
 /*!
-    \qmlproperty int Application::lastExitCode
+    \qmlproperty int ApplicationObject::lastExitCode
     \readonly
 
     This property holds the last exit-code of the application's process in multi-process mode.
@@ -175,15 +162,15 @@
     the application returns from its \c main() function.
 */
 /*!
-    \qmlproperty enumeration Application::lastExitStatus
+    \qmlproperty enumeration ApplicationObject::lastExitStatus
     \readonly
 
     This property returns the last exit-status of the application's process in multi-process mode.
 
     \list
-    \li Application.NormalExit - The application exited normally.
-    \li Application.CrashExit - The application crashed.
-    \li Application.ForcedExit - The application was killed by the application-manager, since it
+    \li ApplicationObject.NormalExit - The application exited normally.
+    \li ApplicationObject.CrashExit - The application crashed.
+    \li ApplicationObject.ForcedExit - The application was killed by the application-manager, since it
                                  ignored the quit request originating from a call to
                                  ApplicationManager::stopApplication.
     \endlist
@@ -191,13 +178,13 @@
     \sa ApplicationInterface::quit, ApplicationInterface::acknowledgeQuit
 */
 /*!
-    \qmlproperty string Application::version
+    \qmlproperty string ApplicationObject::version
     \readonly
 
     Holds the version of the application as a string.
 */
 /*!
-    \qmlproperty string Application::codeDir
+    \qmlproperty string ApplicationObject::codeDir
     \readonly
 
     The absolute path to the application's installation directory. Please note this directory might
@@ -206,35 +193,35 @@
     \sa {Installation Locations}
 */
 /*!
-    \qmlproperty enumeration Application::state
+    \qmlproperty enumeration ApplicationObject::state
     \readonly
 
     This property holds the current installation state of the application. It can be one of:
 
     \list
-    \li Application.Installed - The application is completely installed and ready to be used.
-    \li Application.BeingInstalled - The application is currently in the process of being installed.
-    \li Application.BeingUpdated - The application is currently in the process of being updated.
-    \li Application.BeingRemoved - The application is currently in the process of being removed.
+    \li ApplicationObject.Installed - The application is completely installed and ready to be used.
+    \li ApplicationObject.BeingInstalled - The application is currently in the process of being installed.
+    \li ApplicationObject.BeingUpdated - The application is currently in the process of being updated.
+    \li ApplicationObject.BeingRemoved - The application is currently in the process of being removed.
     \endlist
 */
 /*!
-    \qmlproperty enumeration Application::runState
+    \qmlproperty enumeration ApplicationObject::runState
     \readonly
 
     This property holds the current run state of the application. It can be one of:
 
     \list
-    \li Application.NotRunning - the application has not been started yet
-    \li Application.StartingUp - the application has been started and is initializing
-    \li Application.Running - the application is running
-    \li Application.ShuttingDown - the application has been stopped and is cleaning up (in
+    \li ApplicationObject.NotRunning - the application has not been started yet
+    \li ApplicationObject.StartingUp - the application has been started and is initializing
+    \li ApplicationObject.Running - the application is running
+    \li ApplicationObject.ShuttingDown - the application has been stopped and is cleaning up (in
                                    multi-process mode this signal is only emitted if the
                                    application terminates gracefully)
     \endlist
 */
 /*!
-    \qmlsignal Application::activated()
+    \qmlsignal ApplicationObject::activated()
 
     This signal is emitted when the application is started or when it's already running but has
     been requested to be brought to foreground or raised.

@@ -41,7 +41,7 @@
 
 import QtQuick 2.3
 import QtTest 1.0
-import QtApplicationManager 1.0 as AM
+import QtApplicationManager 1.0
 
 TestCase {
     name: "Installer"
@@ -49,25 +49,25 @@ TestCase {
 
     SignalSpy {
         id: taskFinishedSpy
-        target: AM.ApplicationInstaller
+        target: ApplicationInstaller
         signalName: "taskFinished"
     }
 
     SignalSpy {
         id: taskStateChangedSpy
-        target: AM.ApplicationInstaller
+        target: ApplicationInstaller
         signalName: "taskStateChanged"
     }
 
     SignalSpy {
         id: taskRequestingInstallationAcknowledgeSpy
-        target: AM.ApplicationInstaller
+        target: ApplicationInstaller
         signalName: "taskRequestingInstallationAcknowledge"
     }
 
     SignalSpy {
         id: applicationAddedSpy
-        target: AM.ApplicationManager
+        target: ApplicationManager
         signalName: "applicationAdded"
     }
 
@@ -75,27 +75,27 @@ TestCase {
 
     function test_states() {
         // App could potentially be installed already. Remove it.
-        if (AM.ApplicationInstaller.removePackage("test.install.app", false, true)) {
+        if (ApplicationInstaller.removePackage("test.install.app", false, true)) {
             taskFinishedSpy.wait(2000);
             compare(taskFinishedSpy.count, 1);
             taskFinishedSpy.clear();
         }
 
-        AM.ApplicationManager.applicationAdded.connect(function(appId) {
-            var app = AM.ApplicationManager.application(appId);
+        ApplicationManager.applicationAdded.connect(function(appId) {
+            var app = ApplicationManager.application(appId);
             app.stateChanged.connect(function(state) {
                 compare(state, app.state)
                 stateList.push(state)
             })
         })
 
-        var id = AM.ApplicationInstaller.startPackageInstallation("internal-0", "appv1.pkg")
+        var id = ApplicationInstaller.startPackageInstallation("internal-0", "appv1.pkg")
         taskRequestingInstallationAcknowledgeSpy.wait(2000);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
         var appId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
         taskRequestingInstallationAcknowledgeSpy.clear();
-        AM.ApplicationInstaller.acknowledgePackageInstallation(id);
+        ApplicationInstaller.acknowledgePackageInstallation(id);
 
         if (!taskFinishedSpy.count)
             taskFinishedSpy.wait(2000);
@@ -103,46 +103,46 @@ TestCase {
         taskFinishedSpy.clear();
 
         compare(stateList.length, 2);
-        compare(stateList[0], AM.Application.BeingInstalled)
-        compare(stateList[1], AM.Application.Installed)
+        compare(stateList[0], ApplicationObject.BeingInstalled)
+        compare(stateList[1], ApplicationObject.Installed)
         stateList = []
 
-        id = AM.ApplicationInstaller.startPackageInstallation("internal-0", "appv2.pkg")
+        id = ApplicationInstaller.startPackageInstallation("internal-0", "appv2.pkg")
         taskRequestingInstallationAcknowledgeSpy.wait(2000);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
-        AM.ApplicationInstaller.acknowledgePackageInstallation(id);
+        ApplicationInstaller.acknowledgePackageInstallation(id);
 
         taskFinishedSpy.wait(2000);
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
-        compare(stateList[0], AM.Application.BeingUpdated)
-        compare(stateList[1], AM.Application.Installed)
+        compare(stateList[0], ApplicationObject.BeingUpdated)
+        compare(stateList[1], ApplicationObject.Installed)
         stateList = []
 
-        id = AM.ApplicationInstaller.removePackage(appId, false, false);
+        id = ApplicationInstaller.removePackage(appId, false, false);
 
         taskFinishedSpy.wait(2000);
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
-        compare(stateList[0], AM.Application.BeingRemoved)
+        compare(stateList[0], ApplicationObject.BeingRemoved)
         stateList = []
         // Cannot compare app.state any more, since app might already be dead
 
         verify(taskStateChangedSpy.count > 10);
-        var taskStates = [ AM.ApplicationInstaller.Executing,
-                           AM.ApplicationInstaller.AwaitingAcknowledge,
-                           AM.ApplicationInstaller.Installing,
-                           AM.ApplicationInstaller.CleaningUp,
-                           AM.ApplicationInstaller.Finished,
-                           AM.ApplicationInstaller.Executing,
-                           AM.ApplicationInstaller.AwaitingAcknowledge,
-                           AM.ApplicationInstaller.Installing,
-                           AM.ApplicationInstaller.CleaningUp,
-                           AM.ApplicationInstaller.Finished,
-                           AM.ApplicationInstaller.Executing ]
+        var taskStates = [ ApplicationInstaller.Executing,
+                           ApplicationInstaller.AwaitingAcknowledge,
+                           ApplicationInstaller.Installing,
+                           ApplicationInstaller.CleaningUp,
+                           ApplicationInstaller.Finished,
+                           ApplicationInstaller.Executing,
+                           ApplicationInstaller.AwaitingAcknowledge,
+                           ApplicationInstaller.Installing,
+                           ApplicationInstaller.CleaningUp,
+                           ApplicationInstaller.Finished,
+                           ApplicationInstaller.Executing ]
         for (var i = 0; i < taskStates.length; i++)
             compare(taskStateChangedSpy.signalArguments[i][1], taskStates[i], "- index: " + i);
     }

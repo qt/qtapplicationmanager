@@ -43,7 +43,6 @@ import QtQuick 2.3
 import QtQuick.Window 2.0
 import QtTest 1.0
 import QtApplicationManager 1.0
-import QtApplicationManager 1.0 as AppMan
 
 TestCase {
     id: testCase
@@ -145,8 +144,8 @@ TestCase {
         //Why is runtime null ? we should document this, as this is not really clear
         compare(simpleApplication.runtime, null)
         compare(simpleApplication.lastExitCode, 0)
-        compare(simpleApplication.lastExitStatus, AppMan.Application.NormalExit)
-        compare(simpleApplication.type, AppMan.Application.Gui)
+        compare(simpleApplication.lastExitStatus, ApplicationObject.NormalExit)
+        compare(simpleApplication.type, ApplicationObject.Gui)
         compare(simpleApplication.version, "1.0")
 
         // Test the name getter and verify that it's returning the same object
@@ -326,16 +325,16 @@ TestCase {
 
     function test_startAndStopApplication_data() {
         return [
-                    {tag: "StartStop", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
-                    {tag: "StartStopAlias", appId: "tld.test.simple1@alias", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
-                    {tag: "Debug", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit },
-                    {tag: "ForceKill", appId: "tld.test.simple2", index: 2, forceKill: true, exitCode: Qt.platform.os !== 'windows' ? 9 : 0, exitStatus: Qt.platform.os !== 'windows' ? AppMan.Application.ForcedExit : AppMan.Application.CrashExit },
-                    {tag: "AutoTerminate", appId: "tld.test.simple2", index: 2, forceKill: false, exitCode: Qt.platform.os !== 'windows' ? 15 : 0, exitStatus: Qt.platform.os !== 'windows' ? AppMan.Application.ForcedExit : AppMan.Application.CrashExit }
+                    {tag: "StartStop", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: ApplicationObject.NormalExit },
+                    {tag: "StartStopAlias", appId: "tld.test.simple1@alias", index: 0, forceKill: false, exitCode: 0, exitStatus: ApplicationObject.NormalExit },
+                    {tag: "Debug", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: ApplicationObject.NormalExit },
+                    {tag: "ForceKill", appId: "tld.test.simple2", index: 2, forceKill: true, exitCode: Qt.platform.os !== 'windows' ? 9 : 0, exitStatus: Qt.platform.os !== 'windows' ? ApplicationObject.ForcedExit : ApplicationObject.CrashExit },
+                    {tag: "AutoTerminate", appId: "tld.test.simple2", index: 2, forceKill: false, exitCode: Qt.platform.os !== 'windows' ? 15 : 0, exitStatus: Qt.platform.os !== 'windows' ? ApplicationObject.ForcedExit : ApplicationObject.CrashExit }
                 ];
     }
 
     function test_startAndStopApplication(data) {
-        compare(ApplicationManager.application(data.appId).runState, AppMan.Application.NotRunning);
+        compare(ApplicationManager.application(data.appId).runState, ApplicationObject.NotRunning);
 
         var started = false;
         if (data.tag === "Debug") {
@@ -351,23 +350,23 @@ TestCase {
         }
         verify(started);
 
-        checkApplicationState(data.appId, AppMan.Application.StartingUp);
+        checkApplicationState(data.appId, ApplicationObject.StartingUp);
         listView.currentIndex = data.index;
         compare(listView.currentItem.modelData.isStartingUp, true)
         compare(listView.currentItem.modelData.isRunning, false)
         compare(listView.currentItem.modelData.isShuttingDown, false)
-        checkApplicationState(data.appId, AppMan.Application.Running);
+        checkApplicationState(data.appId, ApplicationObject.Running);
         compare(listView.currentItem.modelData.isStartingUp, false)
         compare(listView.currentItem.modelData.isRunning, true)
         compare(listView.currentItem.modelData.isShuttingDown, false)
 
         ApplicationManager.stopApplication(data.appId, data.forceKill);
 
-        checkApplicationState(data.appId, AppMan.Application.ShuttingDown);
+        checkApplicationState(data.appId, ApplicationObject.ShuttingDown);
         compare(listView.currentItem.modelData.isStartingUp, false)
         compare(listView.currentItem.modelData.isRunning, false)
         compare(listView.currentItem.modelData.isShuttingDown, true)
-        checkApplicationState(data.appId, AppMan.Application.NotRunning);
+        checkApplicationState(data.appId, ApplicationObject.NotRunning);
         compare(listView.currentItem.modelData.isStartingUp, false)
         compare(listView.currentItem.modelData.isRunning, false)
         compare(listView.currentItem.modelData.isShuttingDown, false)
@@ -377,13 +376,13 @@ TestCase {
 
     function test_startAndStopAllApplications_data() {
         return [
-                    {tag: "StopAllApplications", appId1: "tld.test.simple1", index1: 0, appId2: "tld.test.simple2", index2: 2, forceKill: false, exitCode: 0, exitStatus: AppMan.Application.NormalExit }
+                    {tag: "StopAllApplications", appId1: "tld.test.simple1", index1: 0, appId2: "tld.test.simple2", index2: 2, forceKill: false, exitCode: 0, exitStatus: ApplicationObject.NormalExit }
                ];
     }
 
     function test_startAndStopAllApplications(data) {
-        compare(ApplicationManager.application(data.appId1).runState, AppMan.Application.NotRunning);
-        compare(ApplicationManager.application(data.appId2).runState, AppMan.Application.NotRunning);
+        compare(ApplicationManager.application(data.appId1).runState, ApplicationObject.NotRunning);
+        compare(ApplicationManager.application(data.appId2).runState, ApplicationObject.NotRunning);
 
         var started = false;
 
@@ -391,12 +390,12 @@ TestCase {
         verify(started);
 
 
-        checkApplicationState(data.appId1, AppMan.Application.StartingUp);
+        checkApplicationState(data.appId1, ApplicationObject.StartingUp);
         listView.currentIndex = data.index1;
         compare(listView.currentItem.modelData.isStartingUp, true)
         compare(listView.currentItem.modelData.isRunning, false)
         compare(listView.currentItem.modelData.isShuttingDown, false)
-        checkApplicationState(data.appId1, AppMan.Application.Running);
+        checkApplicationState(data.appId1, ApplicationObject.Running);
         compare(listView.currentItem.modelData.isStartingUp, false)
         compare(listView.currentItem.modelData.isRunning, true)
         compare(listView.currentItem.modelData.isShuttingDown, false)
@@ -404,12 +403,12 @@ TestCase {
         started = ApplicationManager.startApplication(data.appId2);
         verify(started);
 
-        checkApplicationState(data.appId2, AppMan.Application.StartingUp);
+        checkApplicationState(data.appId2, ApplicationObject.StartingUp);
         listView.currentIndex = data.index2;
         compare(listView.currentItem.modelData.isStartingUp, true)
         compare(listView.currentItem.modelData.isRunning, false)
         compare(listView.currentItem.modelData.isShuttingDown, false)
-        checkApplicationState(data.appId2, AppMan.Application.Running);
+        checkApplicationState(data.appId2, ApplicationObject.Running);
         compare(listView.currentItem.modelData.isStartingUp, false)
         compare(listView.currentItem.modelData.isRunning, true)
         compare(listView.currentItem.modelData.isShuttingDown, false)
@@ -431,7 +430,7 @@ TestCase {
 
             // not perfect, but the basic signal sequence is already tested in test_startAndStopApplication
             verify(id === data.appId1 || id === data.appId2, "id = " + id)
-            verify(state === AppMan.Application.ShuttingDown || state === AppMan.Application.NotRunning)
+            verify(state === ApplicationObject.ShuttingDown || state === ApplicationObject.NotRunning)
         }
         runStateChangedSpy.clear()
     }
@@ -450,7 +449,7 @@ TestCase {
         compare(ApplicationManager.get("invalidApplication"), {});
 
         ignoreWarning("invalid index: -1");
-        compare(ApplicationManager.applicationRunState("invalidApplication"), AppMan.Application.NotRunning);
+        compare(ApplicationManager.applicationRunState("invalidApplication"), ApplicationObject.NotRunning);
 
         ignoreWarning("Cannot start an invalid application");
         verify(!ApplicationManager.startApplication("invalidApplication"))
@@ -463,13 +462,13 @@ TestCase {
         verify(!ApplicationManager.debugApplication(simpleApplication.id, " "))
 
         verify(ApplicationManager.startApplication(simpleApplication.id));
-        checkApplicationState(simpleApplication.id, AppMan.Application.StartingUp);
-        checkApplicationState(simpleApplication.id, AppMan.Application.Running);
+        checkApplicationState(simpleApplication.id, ApplicationObject.StartingUp);
+        checkApplicationState(simpleApplication.id, ApplicationObject.Running);
         ignoreWarning("Application tld.test.simple1 is already running - cannot start with debug-wrapper: %program% %arguments%");
         verify(!ApplicationManager.debugApplication(simpleApplication.id, "%program% %arguments%"))
         ApplicationManager.stopApplication(simpleApplication.id, true);
-        checkApplicationState(simpleApplication.id, AppMan.Application.ShuttingDown);
-        checkApplicationState(simpleApplication.id, AppMan.Application.NotRunning);
+        checkApplicationState(simpleApplication.id, ApplicationObject.ShuttingDown);
+        checkApplicationState(simpleApplication.id, ApplicationObject.NotRunning);
     }
 
     function test_openUrl_data() {
@@ -482,18 +481,18 @@ TestCase {
 
     function test_openUrl(data) {
         verify(ApplicationManager.openUrl(data.url));
-        checkApplicationState(data.expectedApp, AppMan.Application.StartingUp);
-        checkApplicationState(data.expectedApp, AppMan.Application.Running);
+        checkApplicationState(data.expectedApp, ApplicationObject.StartingUp);
+        checkApplicationState(data.expectedApp, ApplicationObject.Running);
         ApplicationManager.stopApplication(data.expectedApp, true);
-        checkApplicationState(data.expectedApp, AppMan.Application.ShuttingDown);
-        checkApplicationState(data.expectedApp, AppMan.Application.NotRunning);
+        checkApplicationState(data.expectedApp, ApplicationObject.ShuttingDown);
+        checkApplicationState(data.expectedApp, ApplicationObject.NotRunning);
 
         Qt.openUrlExternally(data.url);
-        checkApplicationState(data.expectedApp, AppMan.Application.StartingUp);
-        checkApplicationState(data.expectedApp, AppMan.Application.Running);
+        checkApplicationState(data.expectedApp, ApplicationObject.StartingUp);
+        checkApplicationState(data.expectedApp, ApplicationObject.Running);
         ApplicationManager.stopApplication(data.expectedApp, true);
-        checkApplicationState(data.expectedApp, AppMan.Application.ShuttingDown);
-        checkApplicationState(data.expectedApp, AppMan.Application.NotRunning);
+        checkApplicationState(data.expectedApp, ApplicationObject.ShuttingDown);
+        checkApplicationState(data.expectedApp, ApplicationObject.NotRunning);
     }
 
     property bool containerSelectionCalled: false
@@ -514,11 +513,11 @@ TestCase {
         compare(ApplicationManager.containerSelectionFunction, undefined);
         ApplicationManager.containerSelectionFunction = containerSelection;
         ApplicationManager.startApplication(simpleApplication.id);
-        checkApplicationState(simpleApplication.id, AppMan.Application.StartingUp);
-        checkApplicationState(simpleApplication.id, AppMan.Application.Running);
+        checkApplicationState(simpleApplication.id, ApplicationObject.StartingUp);
+        checkApplicationState(simpleApplication.id, ApplicationObject.Running);
         ApplicationManager.stopApplication(simpleApplication.id, true);
-        checkApplicationState(simpleApplication.id, AppMan.Application.ShuttingDown);
-        checkApplicationState(simpleApplication.id, AppMan.Application.NotRunning);
+        checkApplicationState(simpleApplication.id, ApplicationObject.ShuttingDown);
+        checkApplicationState(simpleApplication.id, ApplicationObject.NotRunning);
         verify(containerSelectionCalled);
         compare(containerSelectionAppId, simpleApplication.id);
         compare(containerSelectionConId, "process");

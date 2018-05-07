@@ -41,38 +41,21 @@
 
 #pragma once
 
-#include <QtAppManCommon/global.h>
-#include <QList>
+#include <QAbstractListModel>
 #include <QString>
+#include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
-class AbstractApplication;
-class AbstractApplicationManager;
-class ApplicationDatabasePrivate;
-
-class ApplicationDatabase
+class AbstractApplicationManager : public QAbstractListModel
 {
+    Q_OBJECT
 public:
-    explicit ApplicationDatabase();
-    explicit ApplicationDatabase(const QString &fileName);
-    ~ApplicationDatabase();
+    AbstractApplicationManager(QObject *parent = nullptr) : QAbstractListModel(parent) {}
 
-    bool isValid() const;
-    bool isTemporary() const;
-    QString errorString() const;
-    QString name() const;
-
-    QVector<AbstractApplication *> read(AbstractApplicationManager*) Q_DECL_NOEXCEPT_EXPR(false);
-    void write(const QVector<AbstractApplication *> &apps) Q_DECL_NOEXCEPT_EXPR(false);
-    void write(const QVector<const AbstractApplicationInfo *> &apps) Q_DECL_NOEXCEPT_EXPR(false);
-
-    void invalidate();
-
-private:
-    ApplicationDatabasePrivate *d;
-    Q_DISABLE_COPY(ApplicationDatabase)
+    Q_SCRIPTABLE virtual bool startApplication(const QString &id, const QString &documentUrl = QString()) = 0;
+    Q_SCRIPTABLE virtual bool debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl = QString()) = 0;
+    Q_SCRIPTABLE virtual void stopApplication(const QString &id, bool forceKill = false) = 0;
 };
 
 QT_END_NAMESPACE_AM

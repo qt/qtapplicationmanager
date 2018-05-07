@@ -396,7 +396,7 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
 
     try {
         if (adb) {
-            am->d->apps = adb->read();
+            am->d->apps = adb->read(am.data());
 
             // we need to set a valid parent on QObjects that get exposed to QML via
             // Q_INVOKABLE return values -- otherwise QML will take over ownership
@@ -441,7 +441,7 @@ QObject *ApplicationManager::instanceForQml(QQmlEngine *, QJSEngine *)
 }
 
 ApplicationManager::ApplicationManager(ApplicationDatabase *adb, bool singleProcess, QObject *parent)
-    : QAbstractListModel(parent)
+    : AbstractApplicationManager(parent)
     , d(new ApplicationManagerPrivate())
 {
     d->singleProcess = singleProcess;
@@ -908,6 +908,8 @@ void ApplicationManager::stopApplication(AbstractApplication *app, bool forceKil
     the runtime plugin. Returns \c false otherwise. Note that even though this call may
     indicate success, the application may still later fail to start correctly as the actual
     startup process within the runtime plugin may be asynchronous.
+
+    \sa ApplicationObject::start
 */
 bool ApplicationManager::startApplication(const QString &id, const QString &documentUrl)
 {
@@ -925,6 +927,8 @@ bool ApplicationManager::startApplication(const QString &id, const QString &docu
     Instructs the application manager to start the application just like startApplication. The
     application is started via the given \a debugWrapper though. Please see the \l{Debugging} page
     for more information on how to setup and use these debug-wrappers.
+
+    \sa ApplicationObject::debug
 */
 
 bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl)
@@ -944,6 +948,8 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
     meaning of the \a forceKill parameter is runtime dependent, but in general you should always try
     to stop an application with \a forceKill set to \c false first in order to allow a clean
     shutdown. Use \a forceKill set to \c true only as a last resort to kill hanging applications.
+
+    \sa ApplicationObject::stop
 */
 void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 {
@@ -1214,7 +1220,7 @@ bool ApplicationManager::startingApplicationInstallation(ApplicationInfo *info)
         app->setProgress(0);
         emitDataChanged(app);
     } else { // installation
-        Application *app = new Application(newInfo.take());
+        Application *app = new Application(newInfo.take(), this);
 
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
         d->apps << app;

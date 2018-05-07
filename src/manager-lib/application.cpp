@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "application.h"
+#include "abstractapplicationmanager.h"
 #include "abstractruntime.h"
 #include "applicationinfo.h"
 
@@ -226,6 +227,32 @@
     This signal is emitted when the application is started or when it's already running but has
     been requested to be brought to foreground or raised.
 */
+/*!
+    \qmlmethod bool ApplicationObject::start(string document)
+
+    Starts the application. The optional argument \a document will be supplied to the application as
+    is - most commonly this is used to refer to a document to display.
+
+    \sa ApplicationManager::startApplication
+*/
+/*!
+    \qmlmethod bool ApplicationObject::debug(string debugWrapper, string document)
+
+    Same as start() with the difference that it is started via the given \a debugWrapper.
+    Please see the \l{Debugging} page for more information on how to setup and use these debug-wrappers.
+
+    \sa ApplicationManager::debugApplication
+*/
+/*!
+    \qmlmethod ApplicationObject::stop(bool forceKill)
+
+    Stops the application. The meaning of the \a forceKill parameter is runtime dependent, but in
+    general you should always try to stop an application with \a forceKill set to \c false first
+    in order to allow a clean shutdown. Use \a forceKill set to \c true only as a last resort to
+    kill hanging applications.
+
+    \sa ApplicationManager::stopApplication
+*/
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -233,8 +260,9 @@ QT_BEGIN_NAMESPACE_AM
 // AbstractApplication
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-AbstractApplication::AbstractApplication(AbstractApplicationInfo *info)
+AbstractApplication::AbstractApplication(AbstractApplicationInfo *info, AbstractApplicationManager *appMan)
     : m_info(info)
+    , m_appMan(appMan)
 {
 }
 
@@ -330,12 +358,30 @@ QString AbstractApplication::name(const QString &language) const
     return m_info->name(language);
 }
 
+bool AbstractApplication::start(const QString &documentUrl)
+{
+    Q_ASSERT(m_appMan);
+    return m_appMan->startApplication(id(), documentUrl);
+}
+
+bool AbstractApplication::debug(const QString &debugWrapper, const QString &documentUrl)
+{
+    Q_ASSERT(m_appMan);
+    return m_appMan->debugApplication(id(), debugWrapper, documentUrl);
+}
+
+void AbstractApplication::stop(bool forceKill)
+{
+    Q_ASSERT(m_appMan);
+    m_appMan->stopApplication(id(), forceKill);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Application
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Application::Application(ApplicationInfo *info)
-    : AbstractApplication(info)
+Application::Application(ApplicationInfo *info, AbstractApplicationManager *appMan)
+    : AbstractApplication(info, appMan)
 {
 }
 
@@ -444,8 +490,8 @@ void Application::setProgress(qreal value)
 // ApplicationAlias
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-ApplicationAlias::ApplicationAlias(Application* app, ApplicationAliasInfo* info)
-    : AbstractApplication(info)
+ApplicationAlias::ApplicationAlias(Application* app, ApplicationAliasInfo* info, AbstractApplicationManager* appMan)
+    : AbstractApplication(info, appMan)
     , m_application(app)
 {
     connect(m_application, &AbstractApplication::runtimeChanged, this, &AbstractApplication::runtimeChanged);

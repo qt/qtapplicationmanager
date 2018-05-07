@@ -122,7 +122,7 @@ QString ApplicationDatabase::name() const
     return d->file->fileName();
 }
 
-QVector<AbstractApplication *> ApplicationDatabase::read() Q_DECL_NOEXCEPT_EXPR(false)
+QVector<AbstractApplication *> ApplicationDatabase::read(AbstractApplicationManager *appMan) Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (!d->file || !d->file->isOpen() || !d->file->isReadable())
         throw Exception("application database %1 is not opened for reading").arg(d->file ? d->file->fileName() : qSL("<null>"));
@@ -140,9 +140,9 @@ QVector<AbstractApplication *> ApplicationDatabase::read() Q_DECL_NOEXCEPT_EXPR(
                 Application *originalApp = d->findAppWithId(appInfo->id(), apps);
                 if (!originalApp)
                     throw Exception(Error::Parse, "Could not find base app for alias id %2").arg(appInfo->id());
-                app.reset(new ApplicationAlias(originalApp, static_cast<ApplicationAliasInfo*>(appInfo.take())));
+                app.reset(new ApplicationAlias(originalApp, static_cast<ApplicationAliasInfo*>(appInfo.take()), appMan));
             } else
-                app.reset(new Application(static_cast<ApplicationInfo*>(appInfo.take())));
+                app.reset(new Application(static_cast<ApplicationInfo*>(appInfo.take()), appMan));
 
             if (ds.status() != QDataStream::Ok) {
                 if (ds.status() != QDataStream::ReadPastEnd) {

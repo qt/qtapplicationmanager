@@ -103,7 +103,7 @@ private slots:
 // the application no longer holds a reference to it
 void tst_Application::runtimeDestroyed()
 {
-    auto app = new Application(new ApplicationInfo);
+    auto app = new Application(new ApplicationInfo, nullptr /*appMan*/);
 
     auto runtimeManager = new TestRuntimeManager(qSL("foo"), qApp);
     auto runtime = runtimeManager->create(nullptr, app);

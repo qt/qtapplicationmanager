@@ -50,6 +50,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+class AbstractApplicationManager;
 class AbstractRuntime;
 class Application;
 
@@ -99,7 +100,11 @@ public:
     };
     Q_ENUM(RunState)
 
-    AbstractApplication(AbstractApplicationInfo *info);
+    AbstractApplication(AbstractApplicationInfo *info, AbstractApplicationManager *);
+
+    Q_INVOKABLE bool start(const QString &documentUrl = QString());
+    Q_INVOKABLE bool debug(const QString &debugWrapper, const QString &documentUrl = QString());
+    Q_INVOKABLE void stop(bool forceKill = false);
 
     virtual Application *nonAliased() = 0;
 
@@ -157,13 +162,14 @@ signals:
 
 protected:
     QScopedPointer<AbstractApplicationInfo> m_info;
+    AbstractApplicationManager *m_appMan{nullptr};
 };
 
 class Application : public AbstractApplication
 {
     Q_OBJECT
 public:
-    Application(ApplicationInfo*);
+    Application(ApplicationInfo*, AbstractApplicationManager*);
     ApplicationInfo *nonAliasedInfo() const override;
 
     void setInfo(ApplicationInfo*);
@@ -204,7 +210,7 @@ class ApplicationAlias : public AbstractApplication
 {
     Q_OBJECT
 public:
-    ApplicationAlias(Application*, ApplicationAliasInfo*);
+    ApplicationAlias(Application*, ApplicationAliasInfo*, AbstractApplicationManager*);
 
     Application *nonAliased() override { return m_application; }
     QString runtimeName() const override;

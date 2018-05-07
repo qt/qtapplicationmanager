@@ -41,12 +41,12 @@
 
 #pragma once
 
-#include <QAbstractListModel>
 #include <QStringList>
 #include <QVariantList>
 #include <QProcess>
 #include <QJSValue>
 #include <QtAppManCommon/global.h>
+#include <QtAppManManager/abstractapplicationmanager.h>
 #include <QtAppManManager/application.h>
 
 QT_FORWARD_DECLARE_CLASS(QDir)
@@ -61,7 +61,7 @@ class AbstractRuntime;
 class IpcProxyObject;
 
 
-class ApplicationManager : public QAbstractListModel
+class ApplicationManager : public AbstractApplicationManager
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
@@ -132,9 +132,9 @@ public:
     // DBus interface
     Q_SCRIPTABLE QStringList applicationIds() const;
     Q_SCRIPTABLE QVariantMap get(const QString &id) const;
-    Q_SCRIPTABLE bool startApplication(const QString &id, const QString &documentUrl = QString());
-    Q_SCRIPTABLE bool debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl = QString());
-    Q_SCRIPTABLE void stopApplication(const QString &id, bool forceKill = false);
+    bool startApplication(const QString &id, const QString &documentUrl = QString()) override;
+    bool debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl = QString()) override;
+    void stopApplication(const QString &id, bool forceKill = false) override;
     Q_SCRIPTABLE void stopAllApplications(bool forceKill = false);
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;

@@ -90,12 +90,8 @@ public:
     void takeFocus();
     void ping();
 
-    QVariantMap windowProperties() const;
-    void setWindowProperty(const QString &name, const QVariant &value);
-
 signals:
     void pong();
-    void windowPropertyChanged(const QString &name, const QVariant &value);
 
 private:
     QWaylandSurface *m_surface;

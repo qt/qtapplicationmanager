@@ -26,7 +26,6 @@ multi-process:!headless {
 
     qtHaveModule(waylandcompositor) {
         QT *= waylandcompositor
-        HEADERS += waylandcompositor_p.h
     }
     WAYLANDSERVERSOURCES += \
         ../wayland-extensions/qtam-extension.xml
@@ -36,6 +35,7 @@ multi-process:!headless {
 
 !headless:HEADERS += \
     window.h \
+    windowitem.h \
     inprocesswindow.h \
     windowmanager.h \
     windowmanager_p.h \
@@ -44,6 +44,7 @@ multi-process:!headless {
 
 !headless:SOURCES += \
     window.cpp \
+    windowitem.cpp \
     inprocesswindow.cpp \
     windowmanager.cpp \
     touchemulation.cpp \

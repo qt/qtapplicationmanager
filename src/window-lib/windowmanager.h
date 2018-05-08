@@ -99,9 +99,8 @@ public:
     Q_INVOKABLE int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
 
-    Q_INVOKABLE int indexOfWindow(QQuickItem *window);
+    Q_INVOKABLE int indexOfWindow(Window *window);
 
-    Q_INVOKABLE void releaseWindow(QQuickItem *window);
 
     Q_INVOKABLE void registerCompositorView(QQuickWindow *view);
 
@@ -109,13 +108,11 @@ signals:
     void countChanged();
     void raiseApplicationWindow(const QString &applicationId, const QString &applicationAliasId);
 
-    void windowReady(int index, QQuickItem *window);
-    void windowClosing(int index, QQuickItem *window);
-    void windowLost(int index, QQuickItem *window);
+    void windowAdded(Window *window);
+    void windowAboutToBeRemoved(Window *window);
+    void windowContentStateChanged(Window *window);
 
-    void windowReleased(QQuickItem *window);
-
-    void windowPropertyChanged(QQuickItem *window, const QString &name, const QVariant &value);
+    void windowPropertyChanged(Window *window, const QString &name, const QVariant &value);
 
     void compositorViewRegistered(QQuickWindow *view);
 
@@ -123,16 +120,14 @@ signals:
 
     void slowAnimationsChanged(bool);
 
+    void _inProcessSurfaceItemReleased(QQuickItem *);
+
 private slots:
     void inProcessSurfaceItemCreated(QQuickItem *surfaceItem);
     void inProcessSurfaceItemClosing(QQuickItem *surfaceItem);
     void setupWindow(QT_PREPEND_NAMESPACE_AM(Window) *window);
 
 public:
-    Q_INVOKABLE bool setWindowProperty(QQuickItem *window, const QString &name, const QVariant &value);
-    Q_INVOKABLE QVariant windowProperty(QQuickItem *window, const QString &name) const;
-    Q_INVOKABLE QVariantMap windowProperties(QQuickItem *window) const;
-
     Q_SCRIPTABLE bool makeScreenshot(const QString &filename, const QString &selector);
 
     bool setDBusPolicy(const QVariantMap &yamlFragment);
@@ -148,13 +143,13 @@ private slots:
     void waylandSurfaceCreated(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
     void waylandSurfaceMapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
     void waylandSurfaceUnmapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
-    void waylandSurfaceDestroyed(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
 
 private:
     void handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *surface);
 #endif
 
 private:
+    void releaseWindow(Window *window);
     void updateViewSlowMode(QQuickWindow *view);
     WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocketName);
     WindowManager(const WindowManager &);

@@ -65,12 +65,12 @@ public:
     QVariant windowProperty(const QString &name) const override;
     QVariantMap windowProperties() const override;
 
+    ContentState contentState() const override;
+
     WindowSurface *surface() const { return m_surface; }
 
     void enablePing(bool b);
     bool isPingEnabled() const;
-
-    void setClosing() override;
 
 signals:
     void frameUpdated();

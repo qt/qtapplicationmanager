@@ -61,6 +61,7 @@
 #include "abstractruntime.h"
 #include "runtimefactory.h"
 #include "window.h"
+#include "windowitem.h"
 #include "windowmanager.h"
 #include "windowmanager_p.h"
 #include "waylandwindow.h"
@@ -98,20 +99,14 @@
         \li The unique id of an application represented as a string. This can be used to look up
             information about the application in the ApplicationManager model.
     \row
-        \li \c windowItem
-        \li Item
-        \li The QtQuick Item representing the window surface of the application - used to actually
-            composite the window on the screen.
+        \li \c window
+        \li WindowObject
+        \li The WindowObject containing the client surface. To display it you have to put it in a
+            WindowItem
     \row
-        \li \c isMapped
-        \li bool
-        \li A boolean value indicating whether the surface is mapped (visible).
-    \row
-        \li \c isClosing
-        \li bool
-        \li A boolean value indicating whether the surface is currently closing.
-            A surface is closing when the wayland surface is already destroyed, but the window is still
-            available for showing an animation until releaseWindow() is called.
+        \li \c contentState
+        \li WindowObject::ContentState
+        \li The content state of the WindowObject. See WindowObject::contentState
     \endtable
 
     \target Multi-process Wayland caveats
@@ -120,8 +115,8 @@
     different local states in the client and server processes during state changes. A prime example
     for this is window property changes on the client side: in addition to being changed
     asynchronously on the server side, the windowPropertyChanged signal will not be emitted while
-    the window object is not yet made available on the server side via the windowReady signal. All
-    those changes are not lost however, but the last change before emitting the windowReady signal
+    the window object is not yet made available on the server side via the windowAdded signal. All
+    those changes are not lost however, but the last change before emitting the windowAdded signal
     will be the initial state of the window object on the System-UI side.
 
     \target Minimal compositor
@@ -131,93 +126,68 @@
     for window show and hide animations:
 
     \qml
-    import QtQuick 2.0
+    import QtQuick 2.10
     import QtApplicationManager 1.0
 
     // Simple solution for a full-screen setup
     Item {
-        id: fullscreenView
+        width: 1024
+        height: 640
 
-        MouseArea {
-            // Without this area, mouse events would propagate "through" the surfaces
-            id: filterMouseEventsForWindowContainer
-            anchors.fill: parent
-            enabled: false
+        Connections {
+            target: WindowManager
+            // Send windows to a separate model so that we have control
+            // over removals and ordering
+            onWindowAdded: windowsModel.append({"window":window});
         }
 
-        Item {
-            id: windowContainer
-            anchors.fill: parent
-            state: "closed"
+        Repeater {
+            model: ListModel { id: windowsModel }
+            delegate: WindowItem {
+                id: windowItem
+                anchors.fill: parent
+                z: model.index
 
-            function windowReadyHandler(index, window) {
-                filterMouseEventsForWindowContainer.enabled = true
-                windowContainer.state = ""
-                windowContainer.windowItem = window
-            }
-            function windowClosingHandler(index, window) {
-                if (window === windowContainer.windowItem) {
-                    // Start close animation
-                    windowContainer.state = "closed"
-                } else {
-                    // Immediately close anything not handled by this container
-                    WindowManager.releasewindow(window)
-                }
-            }
-            function windowLostHandler(index, window) {
-                if (windowContainer.windowItem === window) {
-                    windowContainer.windowItem = placeHolder
-                }
-            }
-            Component.onCompleted: {
-                WindowManager.windowReady.connect(windowReadyHandler)
-                WindowManager.windowClosing.connect(windowClosingHandler)
-                WindowManager.windowLost.connect(windowLostHandler)
-            }
+                window: model.window
 
-            property Item windowItem: placeHolder
-            onWindowItemChanged: {
-                windowItem.parent = windowContainer  // Always reset parent
-            }
+                states: [
+                    State {
+                        name: "open"
+                        when: model.window.contentState === WindowObject.SurfaceWithContent
+                        PropertyChanges { target: windowItem; scale: 1; visible: true }
+                    }
+                ]
 
-            Item {
-                id: placeHolder;
-            }
+                scale: 0.50
+                visible: false
 
-            // Use a different syntax for 'anchors.fill: parent' due to the volatile nature of windowItem
-            Binding { target: windowContainer.windowItem; property: "x"; value: windowContainer.x }
-            Binding { target: windowContainer.windowItem; property: "y"; value: windowContainer.y }
-            Binding { target: windowContainer.windowItem; property: "width"; value: windowContainer.width }
-            Binding { target: windowContainer.windowItem; property: "height"; value: windowContainer.height }
-
-            transitions: [
-                Transition {
-                    to: "closed"
-                    SequentialAnimation {
-                        alwaysRunToEnd: true
-
-                        // Closing animation declared here
-                        // ...
-
-                        ScriptAction {
-                            script: {
-                                windowContainer.windowItem.visible = false;
-                                WindowManager.releaseWindow(windowContainer.windowItem);
-                                filterMouseEventsForWindowContainer.enabled = false;
+                transitions: [
+                    Transition {
+                        to: "open"
+                        NumberAnimation {
+                            target: windowItem; property: "scale"
+                            duration: 500; easing.type: Easing.OutQuad
+                        }
+                    },
+                    Transition {
+                        from: "open"
+                        SequentialAnimation {
+                            // we wanna see the window during the closing animation
+                            PropertyAction { target: windowItem; property: "visible"; value: true }
+                            NumberAnimation {
+                                target: windowItem; property: "scale"
+                                duration: 500; easing.type: Easing.InQuad
                             }
+                            ScriptAction { script: {
+                                // It's important to destroy our WindowItem once it's no longer needed in
+                                // order to free up resources
+                                if (model.window.contentState === WindowObject.NoSurface)
+                                    windowsModel.remove(model.index, 1);
+                            } }
                         }
                     }
-                },
-                Transition {
-                    from: "closed"
-                    SequentialAnimation {
-                        alwaysRunToEnd: true
-
-                        // Opening animation declared here
-                        // ...
-                    }
-                }
-            ]
+                ]
+            }
         }
     }
     \endqml
@@ -225,68 +195,25 @@
 */
 
 /*!
-    \qmlsignal WindowManager::windowReady(int index, Item window)
+    \qmlsignal WindowManager::windowAdded(WindowObject window)
 
-    This signal is emitted after a new \a window surface has been created. Most likely due
-    to an application launch.
+    This signal is emitted when a new WindowObject is added to the model. This happens in response
+    to an application creating a new window surface, which usually occurs during that application's
+    startup.
 
-    For the convenience of the System-UI, this signal will provide you with both the QML \a window
-    Item as well as the \a index of that window within the WindowManager model.
+    To display that \a window on your QML scene you need to assign it to a WindowItem.
 
-    More information about this window can be retrieved via the model \a index. Most often you
-    need the owning application of the window, which can be achieved by:
-
-    \badcode
-    var appId = WindowManager.get(index).applicationId
-    var app = ApplicationManager.application(appId)
-    \endcode
-
-    \note Please be aware that the windowReady signal is not emitted immediately when the client
+    \note Please be aware that the windowAdded signal is not emitted immediately when the client
           sets a window to visible. This is due to the \l
           {Multi-process Wayland caveats}{asynchronous nature} of the underlying Wayland protocol.
 */
 
 /*!
-    \qmlsignal WindowManager::windowClosing(int index, Item window)
+    \qmlsignal WindowManager::windowContentStateChanged(WindowObject window)
 
-    This signal is emitted when a \a window surface is unmapped.
+    This signal is emitted when the WindowObject::contentState of the given \a window changes.
 
-    For the convenience of the System-UI, this signal will provide you with both the QML \a window
-    Item as well as the \a index of that window within the WindowManager model.
-
-    Either the client application closed the window, or it exited and all its Wayland surfaces got
-    implicitly unmapped.
-    When using the \c qml-inprocess runtime, this signal is also emitted when the \c close
-    signal of the fake surface is triggered.
-
-    The actual surface can still be used for animations as it is not deleted immediately
-    after this signal is emitted.
-
-    More information about this window can be retrieved via the model \a index.
-
-    \sa windowLost()
-*/
-
-/*!
-    \qmlsignal WindowManager::windowLost(int index, Item window)
-
-    This signal is emitted when the \a window surface has been destroyed on the client side.
-
-    For the convenience of the System-UI, this signal will provide you with both the QML \a window
-    Item as well as the \a index of that window within the WindowManager model.
-
-    If the surface was mapped, you will receive an implicit windowClosing signal before windowLost.
-
-    \note It is mandatory to call releaseWindow() after the windowLost() signal has been received: all
-          resources associated with the window surface will not be released automatically. The
-          timing is up to the System-UI; calling releaseWindow() can be delayed in order to play a
-          shutdown animation, but failing to call it will result in resource leaks.
-
-    \note If the System-UI fails to call releaseWindow() within 2 seconds afer receiving the
-          windowLost() signal, the application-manager will automatically call it to prevent
-          resource leaks and deadlocks on shutdown.
-
-    More information about this window can be retrieved via the model \a index.
+    \sa WindowObject::contentState
 */
 
 /*!
@@ -302,9 +229,8 @@ namespace {
 enum Roles
 {
     Id = Qt::UserRole + 1000,
-    WindowItem,
-    IsMapped,
-    IsClosing
+    WindowRole,
+    ContentState
 };
 }
 
@@ -317,6 +243,11 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QStrin
 
     qmlRegisterSingletonType<WindowManager>("QtApplicationManager", 1, 0, "WindowManager",
                                             &WindowManager::instanceForQml);
+
+    qmlRegisterUncreatableType<Window>("QtApplicationManager", 1, 0, "WindowObject", qSL("Cannot create objects of type WindowObject"));
+    qRegisterMetaType<Window*>("Window*");
+
+    qmlRegisterType<WindowItem>("QtApplicationManager", 1, 0, "WindowItem");
 
     return s_instance = new WindowManager(qmlEngine, waylandSocketName);
 }
@@ -431,9 +362,8 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
 #endif
 
     d->roleNames.insert(Id, "applicationId");
-    d->roleNames.insert(WindowItem, "windowItem");
-    d->roleNames.insert(IsMapped, "isMapped");
-    d->roleNames.insert(IsClosing, "isClosing");
+    d->roleNames.insert(WindowRole, "window");
+    d->roleNames.insert(ContentState, "contentState");
 
     d->watchdogEnabled = true;
     d->qmlEngine = qmlEngine;
@@ -487,7 +417,7 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
     if (index.parent().isValid() || !index.isValid())
         return QVariant();
 
-    const Window *win = d->windows.at(index.row());
+    Window *win = d->windows.at(index.row());
 
     switch (role) {
     case Id:
@@ -496,21 +426,10 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
         } else {
             return QString();
         }
-    case WindowItem:
-        return QVariant::fromValue<QQuickItem*>(win->windowItem());
-    case IsMapped: {
-        if (win->isInProcess()) {
-            return !win->isClosing();
-        } else {
-#if defined(AM_MULTI_PROCESS)
-            auto ww = qobject_cast<const WaylandWindow*>(win);
-            if (ww && ww->surface() && ww->surface()->surface())
-                return ww->surface()->surface()->hasContent();
-#endif
-            return false;
-        }
-    }
-    case IsClosing: return win->isClosing();
+    case WindowRole:
+        return QVariant::fromValue(win);
+    case ContentState:
+        return win->contentState();
     }
     return QVariant();
 }
@@ -554,14 +473,14 @@ QVariantMap WindowManager::get(int index) const
 }
 
 /*!
-    \qmlmethod int WindowManager::indexOfWindow(Item window)
+    \qmlmethod int WindowManager::indexOfWindow(Window window)
 
     Returns the index of the \a window within the WindowManager model, or \c -1 if the window item is
     not a managed window.
  */
-int WindowManager::indexOfWindow(QQuickItem *window)
+int WindowManager::indexOfWindow(Window *window)
 {
-    return d->findWindowBySurfaceItem(window);
+    return d->windows.indexOf(window);
 }
 
 void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
@@ -574,46 +493,34 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
                 this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemCreated), Qt::QueuedConnection);
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemClosing,
                 this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemClosing), Qt::QueuedConnection);
-        connect(this, &WindowManager::windowReleased, runtime,
+        connect(this, &WindowManager::_inProcessSurfaceItemReleased, runtime,
                 &AbstractRuntime::inProcessSurfaceItemReleased, Qt::QueuedConnection);
     }
 }
 
-/*!
-    \qmlmethod WindowManager::releaseWindow(Item window)
-
-    Releases all resources of the \a window surface and removes the window from the model.
-
-    \note It is mandatory to call this function after the windowLost() signal has been received: all
-          resources associated with the window surface will not be released automatically. The
-          timing is up to the System-UI; calling releaseWindow() can be delayed in order to play a
-          shutdown animation, but failing to call it will result in resource leaks.
-
-    \note If the System-UI fails to call releaseWindow() within 2 seconds afer receiving the
-          windowLost() signal, the application-manager will automatically call it to prevent
-          resource leaks and deadlocks on shutdown.
-    \sa windowLost
+/*
+    Releases all resources of the window surface and removes the window from the model.
 */
-
-void WindowManager::releaseWindow(QQuickItem *window)
+void WindowManager::releaseWindow(Window *window)
 {
-    int index = d->findWindowBySurfaceItem(window);
-    if (index == -1) {
-        qCWarning(LogGraphics) << "releaseWindow was called with an invalid window pointer" << window;
+    int index = d->windows.indexOf(window);
+    if (index == -1)
         return;
+
+    emit windowAboutToBeRemoved(window);
+    if (window->isInProcess()) {
+        QQuickItem *item = static_cast<InProcessWindow*>(window)->rootItem();
+        emit _inProcessSurfaceItemReleased(item);
     }
-
-    Window *win = d->windows.at(index);
-    if (!win)
-        return;
-
-    emit windowReleased(window);
 
     beginRemoveRows(QModelIndex(), index, index);
     d->windows.removeAt(index);
     endRemoveRows();
+    emit countChanged();
 
-    win->deleteLater();
+    disconnect(window, nullptr, this, nullptr);
+
+    window->deleteLater();
 
     if (d->shuttingDown && (count() == 0))
         QTimer::singleShot(0, this, &WindowManager::shutDownFinished);
@@ -687,10 +594,8 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
     if (index == -1) {
         setupWindow(new InProcessWindow(app, surfaceItem));
     } else {
-        QModelIndex modelIndex = QAbstractListModel::index(index);
-        qCDebug(LogGraphics) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: true";
-        emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
-        emit windowReady(index, d->windows.at(index)->windowItem());
+        auto window = qobject_cast<InProcessWindow*>(d->windows.at(index));
+        window->setContentState(Window::SurfaceWithContent);
     }
 }
 
@@ -709,16 +614,8 @@ void WindowManager::inProcessSurfaceItemClosing(QQuickItem *surfaceItem)
         return;
     }
 
-    win->setClosing();
-
-    QModelIndex modelIndex = QAbstractListModel::index(index);
-    qCDebug(LogGraphics) << "emitting dataChanged, index: " << modelIndex.row() << ", isMapped: false";
-    emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
-
-    emit windowClosing(index, win->windowItem()); //TODO: rename to windowUnmapped
-
-    //emit destroyed as well, so the compositor knows that the closing transition can be played now and the window be freed
-    emit windowLost(index, win->windowItem());
+    win->setContentState(Window::SurfaceNoContent);
+    win->setContentState(Window::NoSurface);
 }
 
 /*! \internal
@@ -730,17 +627,41 @@ void WindowManager::setupWindow(Window *window)
     if (!window)
         return;
 
+    QQmlEngine::setObjectOwnership(window, QQmlEngine::CppOwnership);
+
     connect(window, &Window::windowPropertyChanged,
             this, [this](const QString &name, const QVariant &value) {
         if (Window *win = qobject_cast<Window *>(sender()))
-            emit windowPropertyChanged(win->windowItem(), name, value);
+            emit windowPropertyChanged(win, name, value);
+    });
+
+    connect(window, &Window::isBeingDisplayedChanged, this, [this, window]() {
+        if (window->contentState() == Window::NoSurface && !window->isBeingDisplayed())
+            releaseWindow(window);
+    });
+
+    connect(window, &Window::contentStateChanged, this, [this, window]() {
+        auto contentState = window->contentState();
+        auto index = indexOfWindow(window);
+        if (index != -1) {
+            emit windowContentStateChanged(window);
+
+            QModelIndex modelIndex = QAbstractListModel::index(index);
+            qCDebug(LogGraphics).nospace() << "emitting dataChanged, index: " << modelIndex.row()
+                    << ", contentState: " << window->contentState();
+            emit dataChanged(modelIndex, modelIndex, QVector<int>() << ContentState);
+        }
+
+        if (contentState == Window::NoSurface && !window->isBeingDisplayed())
+            releaseWindow(window);
     });
 
     beginInsertRows(QModelIndex(), d->windows.count(), d->windows.count());
     d->windows << window;
     endInsertRows();
+    emit countChanged();
 
-    emit windowReady(d->windows.count() - 1, window->windowItem());
+    emit windowAdded(window);
 }
 
 
@@ -765,9 +686,8 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     }
 
     Q_ASSERT(surface);
-    Q_ASSERT(surface->item());
 
-    qCDebug(LogGraphics) << "Mapping Wayland surface" << surface->item() << "of" << d->applicationId(app, surface);
+    qCDebug(LogGraphics) << "Mapping Wayland surface" << surface << "of" << d->applicationId(app, surface);
 
     // Only create a new Window if we don't have it already in the window list, as the user controls
     // whether windows are removed or not
@@ -778,15 +698,6 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
         // switch on Wayland ping/pong
         if (d->watchdogEnabled)
             w->enablePing(true);
-    } else {
-        QModelIndex modelIndex = QAbstractListModel::index(index);
-        emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
-        emit windowReady(index, d->windows.at(index)->windowItem());
-    }
-
-    if (app) {
-        //We only take focus for applications.
-        surface->takeFocus(); // otherwise we will never get keyboard focus in the client
     }
 }
 
@@ -796,115 +707,22 @@ void WindowManager::waylandSurfaceUnmapped(WindowSurface *surface)
 
     if (index == -1) {
         qCWarning(LogGraphics) << "Unmapping a surface failed, because no application window is "
-                                 "registered for Wayland surface" << surface->item();
+                                 "registered for Wayland surface" << surface;
         return;
     }
     WaylandWindow *win = qobject_cast<WaylandWindow *>(d->windows.at(index));
     if (!win)
         return;
 
-    qCDebug(LogGraphics) << "Unmapping Wayland surface" << surface->item() << "of"
+    qCDebug(LogGraphics) << "Unmapping Wayland surface" << surface << "of"
                         << d->applicationId(win->application(), surface);
 
     // switch off Wayland ping/pong
     if (d->watchdogEnabled)
         win->enablePing(false);
-
-    QModelIndex modelIndex = QAbstractListModel::index(index);
-    emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsMapped);
-
-    emit windowClosing(index, win->windowItem()); //TODO: rename to windowUnmapped
-}
-
-void WindowManager::waylandSurfaceDestroyed(WindowSurface *surface)
-{
-    int index = d->findWindowByWaylandSurface(surface->surface());
-    if (index == -1) {
-        // this is a surface that was only created, but never mapped - just ignore it
-        return;
-    }
-    WaylandWindow *win = qobject_cast<WaylandWindow *>(d->windows.at(index));
-    if (!win)
-        return;
-
-    qCDebug(LogGraphics) << "Destroying Wayland surface" << (surface ? surface->item() : nullptr)
-                        << "of" << d->applicationId(win->application(), surface);
-
-    win->setClosing();
-
-    emit windowLost(index, win->windowItem()); //TODO: rename to windowDestroyed
-
-    // Just to safe-guard against the System-UI not releasing windows. This could lead to severe
-    // leaks in the graphics stack and it will also prevent clean shutdowns of the appman process.
-    int timeout = 2000;
-    if (slowAnimations())
-        timeout *= 5; // QUnifiedTimer has no getter for this...
-    QTimer::singleShot(timeout, win, [this, win]() { releaseWindow(win->windowItem()); });
 }
 
 #endif // defined(AM_MULTI_PROCESS)
-
-
-/*!
-    \qmlmethod bool WindowManager::setWindowProperty(Item window, string name, var value)
-
-    Sets an application \a window's shared property identified by \a name to the given \a value.
-
-    These properties are shared between the System-UI and the client application: in single-process
-    mode simply via a QVariantMap; in multi-process mode the sharing is done via Qt's extended
-    surface Wayland extension. Changes from the client side are notified by the
-    windowPropertyChanged() signal.
-
-    See ApplicationManagerWindow for the client side API.
-
-    \sa windowProperty(), windowProperties(), windowPropertyChanged()
-*/
-bool WindowManager::setWindowProperty(QQuickItem *window, const QString &name, const QVariant &value)
-{
-    int index = d->findWindowBySurfaceItem(window);
-
-    if (index < 0)
-        return false;
-
-    Window *win = d->windows.at(index);
-    return win->setWindowProperty(name, value);
-}
-
-/*!
-    \qmlmethod var WindowManager::windowProperty(Item window, string name)
-
-    Returns the value of an application \a window's shared property identified by \a name.
-
-    \sa setWindowProperty()
-*/
-QVariant WindowManager::windowProperty(QQuickItem *window, const QString &name) const
-{
-    int index = d->findWindowBySurfaceItem(window);
-
-    if (index < 0)
-        return QVariant();
-
-    const Window *win = d->windows.at(index);
-    return win->windowProperty(name);
-}
-
-/*!
-    \qmlmethod var WindowManager::windowProperties(Item window)
-
-    Returns an object containing all shared properties of an application \a window.
-
-    \sa setWindowProperty()
-*/
-QVariantMap WindowManager::windowProperties(QQuickItem *window) const
-{
-    int index = d->findWindowBySurfaceItem(window);
-
-    if (index < 0)
-        return QVariantMap();
-
-    Window *win = d->windows.at(index);
-    return win->windowProperties();
-}
 
 /*!
     \qmlsignal WindowManager::windowPropertyChanged(Item window, string name, var value)
@@ -1059,17 +877,18 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 
                             bool onScreen = false;
 
-                            if (w->isInProcess()) {
-                                onScreen = (w->windowItem()->window() == view);
-                            }
-#if defined(AM_MULTI_PROCESS)
-                            else if (const WaylandWindow *wlw = qobject_cast<const WaylandWindow *>(w)) {
-                                onScreen = wlw->surface() && (wlw->surface()->outputWindow() == view);
-                            }
-#endif
+                            auto itemList = w->items().toList();
+                            if (itemList.count() == 0)
+                                continue;
+
+                            // TODO: Care about multiple views?
+                            WindowItem *windowItem = itemList.first();
+
+                            onScreen = windowItem->QQuickItem::window() == view;
+
                             if (onScreen) {
                                 foundAtLeastOne = true;
-                                QSharedPointer<QQuickItemGrabResult> grabber = w->windowItem()->grabToImage();
+                                QSharedPointer<QQuickItemGrabResult> grabber = windowItem->grabToImage();
 
                                 if (!grabber) {
                                     result = false;
@@ -1109,7 +928,8 @@ int WindowManagerPrivate::findWindowByApplication(AbstractApplication *app) cons
 int WindowManagerPrivate::findWindowBySurfaceItem(QQuickItem *quickItem) const
 {
     for (int i = 0; i < windows.count(); ++i) {
-        if (quickItem == windows.at(i)->windowItem())
+        auto *window = windows.at(i);
+        if (window->isInProcess() && static_cast<InProcessWindow*>(window)->rootItem() == quickItem)
             return i;
     }
     return -1;
@@ -1125,7 +945,13 @@ QList<QQuickWindow *> WindowManager::compositorViews() const
 int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const
 {
     for (int i = 0; i < windows.count(); ++i) {
-        if (!windows.at(i)->isInProcess() && (waylandSurface == waylandCompositor->waylandSurfaceFromItem(windows.at(i)->windowItem())))
+        auto *window = windows.at(i);
+
+        if (window->isInProcess())
+            continue;
+
+        auto windowSurface = static_cast<WaylandWindow*>(window)->surface();
+        if (windowSurface && windowSurface->surface() == waylandSurface)
             return i;
     }
     return -1;

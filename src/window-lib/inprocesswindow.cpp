@@ -59,9 +59,9 @@ static bool isName(const QByteArray &key)
     return key.startsWith("_am_");
 }
 
-
 InProcessWindow::InProcessWindow(AbstractApplication *app, QQuickItem *surfaceItem)
-    : Window(app, surfaceItem)
+    : Window(app)
+    , m_rootItem(surfaceItem)
 {
     auto ipsi = qobject_cast<InProcessSurfaceItem *>(surfaceItem);
     if (ipsi)
@@ -70,6 +70,16 @@ InProcessWindow::InProcessWindow(AbstractApplication *app, QQuickItem *surfaceIt
         m_windowProperties.reset(new QObject());
 
     m_windowProperties->installEventFilter(this);
+}
+
+InProcessWindow::~InProcessWindow()
+{
+    // Ownership of this item is an eye watering mess.
+    // QmlInProcessRuntime may delete it, but if not, we should do it here.
+    // TODO: sort out this mess.
+    auto *item =  m_rootItem.data();
+    m_rootItem.clear();
+    delete item;
 }
 
 bool InProcessWindow::setWindowProperty(const QString &name, const QVariant &value)
@@ -119,6 +129,14 @@ bool InProcessWindow::eventFilter(QObject *o, QEvent *e)
     }
 
     return Window::eventFilter(o, e);
+}
+
+void InProcessWindow::setContentState(ContentState newState)
+{
+    if (m_contentState != newState) {
+        m_contentState = newState;
+        emit contentStateChanged();
+    }
 }
 
 QT_END_NAMESPACE_AM

@@ -42,7 +42,8 @@
 #pragma once
 
 #include <QObject>
-#include <QPointer>
+#include <QSharedPointer>
+#include <QScopedPointer>
 
 #include <QtAppManWindow/window.h>
 
@@ -54,6 +55,7 @@ class InProcessWindow : public Window
 
 public:
     InProcessWindow(AbstractApplication *app, QQuickItem *windowItem);
+    ~InProcessWindow();
 
     bool isInProcess() const override { return true; }
 
@@ -61,11 +63,21 @@ public:
     QVariant windowProperty(const QString &name) const override;
     QVariantMap windowProperties() const override;
 
+    ContentState contentState() const override { return m_contentState; }
+
+    QQuickItem *rootItem() const { return m_rootItem.data(); }
+
+    // The content state is wholly emulated as there's no actual surface behind this window
+    // So we let it be set at will (likely by WindowManager)
+    void setContentState(ContentState);
+
 protected:
     bool eventFilter(QObject *o, QEvent *e) override;
 
 private:
+    ContentState m_contentState = SurfaceWithContent;
     QSharedPointer<QObject> m_windowProperties;
+    QPointer<QQuickItem> m_rootItem;
 };
 
 QT_END_NAMESPACE_AM

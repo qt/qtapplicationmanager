@@ -54,8 +54,6 @@ import QtQuick 2.4
 import QtApplicationManager 1.0
 
 Rectangle {
-    property int zorder: 1
-
     width: 1024
     height: 640
     color: "linen"
@@ -80,7 +78,7 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: ApplicationManager.startApplication(applicationId, "documentUrl");
+                    onClicked: application.start();
                 }
             }
         }
@@ -88,28 +86,26 @@ Rectangle {
 
     // System-UI chrome for applications
     Repeater {
-        id: windows
-        model: menuItems.model
+        model: ListModel { id: topLevelWindowsModel }
 
-        Rectangle {
+        delegate: Rectangle {
             id: winChrome
 
-            property alias appContainer: appContainer
-
             width: 400; height: 320
-            x: 300 + model.index * 50; y: 10 + model.index * 30
+            z: model.index
             color: "tan"
-            visible: false
+
+            property bool manuallyClosed: false
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Decoration: " + name
+                text: "Decoration: " + model.window.application.name("en")
             }
 
             MouseArea {
                 anchors.fill: parent
                 drag.target: parent
-                onPressed: parent.z = zorder++;   // for demo purposes only
+                onPressed: topLevelWindowsModel.move(model.index, topLevelWindowsModel.count-1, 1);
             }
 
             Rectangle {
@@ -118,25 +114,78 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: ApplicationManager.stopApplication(applicationId, false);
+                    onClicked: {
+                        winChrome.manuallyClosed = true;
+                        model.window.application.stop();
+                    }
                 }
             }
 
-            Item {
-                id: appContainer
+            WindowItem {
                 anchors.fill: parent
                 anchors.margins: 3
                 anchors.topMargin: 25
+                window: model.window
             }
+
+            Component.onCompleted: {
+                winChrome.x =  300 + model.index * 50;
+                winChrome.y =  10 + model.index * 30;
+            }
+
+            states: [
+                State {
+                    name: "open"
+                    when: model.window && model.window.contentState === WindowObject.SurfaceWithContent && !manuallyClosed
+                    PropertyChanges {
+                        target:  winChrome
+                        opacity: 1
+                        scale: 1
+                        visible: true
+                    }
+                }
+            ]
+
+            opacity: 0.25
+            scale: 0.50
+            visible: false
+
+            transitions: [
+                Transition {
+                    to: "open"
+                    NumberAnimation { target: winChrome; properties: "opacity,scale"; duration: 500; easing.type: Easing.OutQuad}
+                },
+                Transition {
+                    from: "open"
+                    SequentialAnimation {
+                        PropertyAction { target: winChrome; property: "visible"; value: true } // we wanna see the window during the closing animation
+                        NumberAnimation { target: winChrome; properties: "opacity,scale"; duration: 500; easing.type: Easing.InQuad}
+                        ScriptAction { script: {
+                            if (model.window.contentState === WindowObject.NoSurface)
+                                topLevelWindowsModel.remove(model.index, 1);
+                        } }
+                    }
+                }
+            ]
         }
     }
 
     // System-UI for a pop-up and notification
-    Item {
-        id: popUpContainer
-        z: 30000
-        width: 200; height: 60
-        anchors.centerIn: parent
+    Repeater {
+        model: ListModel { id: popupsModel }
+        delegate: WindowItem {
+            z: 100 + model.index
+            width: 200; height: 60
+            anchors.centerIn: parent
+            window: model.window
+            Connections {
+                target: model.window
+                onContentStateChanged: {
+                    if (model.window.contentState === WindowObject.NoSurface)
+                        popupsModel.remove(model.index, 1);
+                }
+            }
+        }
     }
 
     Text {
@@ -149,44 +198,10 @@ Rectangle {
     // Handler for WindowManager signals
     Connections {
         target: WindowManager
-        onWindowReady:  {
-            var appIndex = ApplicationManager.indexOfApplication(WindowManager.get(index).applicationId);
-            var type = WindowManager.windowProperty(window, "type");
-            console.log("SystemUI: onWindowReady [" + window + "] - index: "
-                         + index + ", appIndex: " + appIndex + ", type: " + type);
-
-            if (type !== "pop-up") {
-                if (appIndex === -1) {
-                    console.log("Allowing a single app started outside of appman instead of App1 ...");
-                    appIndex = 0;
-                }
-                var chrome = windows.itemAt(appIndex);
-                window.parent = chrome.appContainer;
-                window.anchors.fill = chrome.appContainer;
-                chrome.visible = true;
-                WindowManager.setWindowProperty(window, "propA", 42)
-            } else {
-                window.parent = popUpContainer;
-                window.anchors.fill = popUpContainer;
-            }
-        }
-
-        onWindowPropertyChanged: console.log("SystemUI: OnWindowPropertyChanged [" + window + "] - "
-                                               + name + ": " + value);
-
-        onWindowClosing: {
-            console.log("SystemUI: onWindowClosing [" + window + "] - index: " + index);
-            if (WindowManager.windowProperty(window, "type") !== "pop-up") {
-                var appIndex = ApplicationManager.indexOfApplication(WindowManager.get(index).applicationId);
-                if (appIndex === -1)
-                    appIndex = 0;
-                windows.itemAt(appIndex).visible = false;
-            }
-        }
-
-        onWindowLost: {
-            console.log("SystemUI: onWindowLost [" + window + "] - index: " + index);
-            WindowManager.releaseWindow(window);
+        onWindowAdded:  {
+            // separate windows by their type, adding them to their respective model
+            var model = window.windowProperty("type") === "pop-up" ? popupsModel : topLevelWindowsModel;
+            model.append({"window":window});
         }
     }
 

@@ -1,7 +1,6 @@
 /****************************************************************************
 **
 ** Copyright (C) 2018 Pelagicore AG
-** Copyright (C) 2016 Klarälvdalens Datakonsult AB, a KDAB Group company
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Pelagicore Application Manager.
@@ -42,23 +41,80 @@
 
 #pragma once
 
+#include <QQuickItem>
 #include <QtAppManCommon/global.h>
+
+#if defined(AM_MULTI_PROCESS)
 #include <QWaylandQuickItem>
+#endif // AM_MULTI_PROCESS
 
 QT_BEGIN_NAMESPACE_AM
 
-class WindowSurface;
+class Window;
+class InProcessWindow;
+#if defined(AM_MULTI_PROCESS)
+class WaylandWindow;
+#endif // AM_MULTI_PROCESS
 
-class WindowSurfaceQuickItem : public QWaylandQuickItem
+
+class WindowItem : public QQuickItem
 {
     Q_OBJECT
 
+    Q_PROPERTY(Window* window READ window WRITE setWindow NOTIFY windowChanged)
 public:
-    WindowSurfaceQuickItem(WindowSurface *windowSurface);
+    WindowItem(QQuickItem *parent = nullptr) : QQuickItem(parent) {}
+    ~WindowItem();
+
+    Window *window() const;
+    void setWindow(Window *window);
+protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
-    WindowSurface *m_windowSurface;
+signals:
+    void windowChanged();
+private:
+    void createImpl(bool inProcess);
+    void tearDown();
+
+    struct Impl {
+        Impl(WindowItem *windowItem) : q(windowItem) {}
+        virtual ~Impl() {}
+        virtual void setup(Window *window) = 0;
+        virtual void tearDown() = 0;
+        virtual void updateSize(const QSizeF &newSize) = 0;
+        virtual bool isInProcess() const = 0;
+        virtual Window *window() const = 0;
+        WindowItem *q;
+    };
+
+    struct InProcessImpl : public Impl {
+        InProcessImpl(WindowItem *windowItem) : Impl(windowItem) {}
+        void setup(Window *window) override;
+        void tearDown() override;
+        void updateSize(const QSizeF &newSize) override;
+        bool isInProcess() const override { return true; }
+        Window *window() const override;
+
+        InProcessWindow *m_inProcessWindow{nullptr};
+    };
+
+#if defined(AM_MULTI_PROCESS)
+    struct WaylandImpl : public Impl {
+        WaylandImpl(WindowItem *windowItem) : Impl(windowItem) {}
+        ~WaylandImpl();
+        void setup(Window *window) override;
+        void tearDown() override;
+        void updateSize(const QSizeF &newSize) override;
+        bool isInProcess() const override { return false; }
+        Window *window() const override;
+        void createWaylandItem();
+
+        WaylandWindow *m_waylandWindow{nullptr};
+        QWaylandQuickItem *m_waylandItem{nullptr};
+    };
+#endif // AM_MULTI_PROCESS
+
+    Impl *m_impl{nullptr};
 };
 
 QT_END_NAMESPACE_AM
-
-// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

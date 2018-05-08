@@ -45,12 +45,13 @@
 #include <QVariantMap>
 #include <QPointer>
 #include <QQuickItem>
+#include <QSet>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class AbstractApplication;
-class WindowPrivate;
+class WindowItem;
 
 // A Window object exists for every application window that is managed by the application-manager
 // and has been shown (mapped) at least once.
@@ -61,28 +62,48 @@ class Window : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(ContentState contentState READ contentState NOTIFY contentStateChanged)
+    Q_PROPERTY(AbstractApplication* application READ application CONSTANT)
 public:
-    Window(AbstractApplication *app, QQuickItem *windowItem);
+
+    enum ContentState {
+        SurfaceWithContent,
+        SurfaceNoContent,
+        NoSurface
+    };
+    Q_ENUM(ContentState)
+
+    Window(AbstractApplication *app);
     virtual ~Window();
 
     virtual bool isInProcess() const = 0;
-    virtual QQuickItem *windowItem() const;
     virtual AbstractApplication *application() const;
 
-    virtual void setClosing();
-    virtual bool isClosing() const;
+    // Controls how many items (which are views from a model-view perspective) are currently rendering this window
+    void registerItem(WindowItem *item);
+    void unregisterItem(WindowItem *item);
+    const QSet<WindowItem*> &items() const { return m_items; }
 
-    virtual bool setWindowProperty(const QString &name, const QVariant &value) = 0;
-    virtual QVariant windowProperty(const QString &name) const = 0;
-    virtual QVariantMap windowProperties() const = 0;
+    // Whether there's any view (WindowItem) holding a reference to this window
+    bool isBeingDisplayed() const;
+
+    virtual ContentState contentState() const = 0;
+
+    Q_INVOKABLE virtual bool setWindowProperty(const QString &name, const QVariant &value) = 0;
+    Q_INVOKABLE virtual QVariant windowProperty(const QString &name) const = 0;
+    Q_INVOKABLE virtual QVariantMap windowProperties() const = 0;
 
 signals:
     void windowPropertyChanged(const QString &name, const QVariant &value);
+    void isBeingDisplayedChanged();
+    void contentStateChanged();
 
 protected:
     AbstractApplication *m_application;
-    QPointer<QQuickItem> m_windowItem;
-    bool m_isClosing = false;
+
+    QSet<WindowItem*> m_items;
 };
 
 QT_END_NAMESPACE_AM
+
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Window*))

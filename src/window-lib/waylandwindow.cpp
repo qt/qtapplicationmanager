@@ -53,16 +53,17 @@
 QT_BEGIN_NAMESPACE_AM
 
 WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
-    : Window(app, surf->item())
+    : Window(app)
     , m_pingTimer(new QTimer(this))
     , m_pongTimer(new QTimer(this))
     , m_surface(surf)
 {
-    if (surf && surf->item()) {
+    if (surf) {
         connect(surf, &WindowSurface::pong,
                 this, &WaylandWindow::pongReceived);
         connect(m_surface, &WindowSurface::redraw,
                 this, &WaylandWindow::frameUpdated);
+        connect(m_surface, &QWaylandSurface::hasContentChanged, this, &Window::contentStateChanged);
 
         m_pingTimer->setInterval(1000);
         m_pingTimer->setSingleShot(true);
@@ -76,18 +77,17 @@ WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
             if (surface == m_surface)
                 emit windowPropertyChanged(name, value);
         });
+
+        connect(surf, &QWaylandSurface::surfaceDestroyed, this, [this]() {
+            m_surface = nullptr;
+            emit contentStateChanged();
+        });
     }
 }
 
 bool WaylandWindow::isPingEnabled() const
 {
     return m_pingTimer->isActive() || m_pongTimer->isActive();
-}
-
-void WaylandWindow::setClosing()
-{
-    Window::setClosing();
-    m_surface = nullptr;
 }
 
 void WaylandWindow::enablePing(bool b)
@@ -137,6 +137,14 @@ QVariant WaylandWindow::windowProperty(const QString &name) const
 QVariantMap WaylandWindow::windowProperties() const
 {
     return m_surface ? m_surface->compositor()->amExtension()->windowProperties(m_surface) : QVariantMap();
+}
+
+auto WaylandWindow::contentState() const -> ContentState
+{
+    if (m_surface)
+        return m_surface->hasContent() ? SurfaceWithContent : SurfaceNoContent;
+    else
+        return NoSurface;
 }
 
 QT_END_NAMESPACE_AM

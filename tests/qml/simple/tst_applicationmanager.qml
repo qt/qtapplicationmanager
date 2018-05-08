@@ -55,18 +55,12 @@ TestCase {
     // Either appman is build in single-process mode or it was started with --force-single-process
     property bool singleProcess : Qt.application.arguments.indexOf("--force-single-process") !== -1 || buildConfig[0].CONFIG.indexOf("multi-process") === -1
     property QtObject windowHandler: QtObject {
-        function windowReadyHandler(index, window) {
-            console.info("window " + index + " ready")
-            window.parent = testCase
+        function windowAddedHandler(window) {
+            console.info("window " + window + " added");
         }
 
-        function windowClosingHandler(index, window) {
-            console.info("window " + index + " closing")
-        }
-
-        function windowLostHandler(index, window) {
-            console.info("window " + index + " lost")
-            WindowManager.releaseWindow(window);
+        function windowContentStateChangedHandler(window) {
+            console.info("window content state = " + window.contentState);
         }
     }
 
@@ -86,9 +80,8 @@ TestCase {
     function initTestCase() {
         //Wait for the debugging wrappers to be setup.
         wait(2000);
-        WindowManager.windowReady.connect(windowHandler.windowReadyHandler)
-        WindowManager.windowClosing.connect(windowHandler.windowClosingHandler)
-        WindowManager.windowLost.connect(windowHandler.windowLostHandler)
+        WindowManager.windowAdded.connect(windowHandler.windowAddedHandler)
+        WindowManager.windowContentStateChanged.connect(windowHandler.windowContentStateChangedHandler)
 
         compare(ApplicationManager.count, 3)
         simpleApplication = ApplicationManager.application(0);

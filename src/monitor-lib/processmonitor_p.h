@@ -226,7 +226,7 @@ public slots:
     void readingUpdate();
     void appRuntimeChanged(const QString &id, Application::RunState state);
 #if defined(AM_MULTI_PROCESS) && !defined(AM_HEADLESS)
-    void applicationWindowClosing(int index, QQuickItem *window);
+    void onWindowContentStateChanged(Window *window);
 #endif
     void frameUpdated();
 };

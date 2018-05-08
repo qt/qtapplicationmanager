@@ -78,16 +78,13 @@ private:
     void setShellSurface(QWaylandWlShellSurface *ss);
 
 private:
-    WindowSurfaceQuickItem *m_item = nullptr;
     QWaylandWlShellSurface *m_shellSurface = nullptr;
 
 public:
     QWaylandSurface *surface() const;
-    QQuickItem *item() const;
     qint64 processId() const;
     QWindow *outputWindow() const;
 
-    void takeFocus();
     void ping();
 
 signals:
@@ -105,7 +102,6 @@ class WaylandCompositor : public QWaylandQuickCompositor // clazy:exclude=missin
 public:
     WaylandCompositor(QQuickWindow* window, const QString &waylandSocketName, WindowManager *manager);
     void registerOutputWindow(QQuickWindow *window);
-    QWaylandSurface *waylandSurfaceFromItem(QQuickItem *surfaceItem) const;
 
     WaylandQtAMServerExtension *amExtension();
 

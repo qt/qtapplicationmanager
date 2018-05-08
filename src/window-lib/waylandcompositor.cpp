@@ -57,7 +57,6 @@
 #include <QWaylandTextInputManager>
 #include <QWaylandQtWindowManager>
 #include "waylandqtamserverextension_p.h"
-#include "waylandcompositor_p.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -72,7 +71,6 @@ void WindowSurface::setShellSurface(QWaylandWlShellSurface *shellSurface)
     m_shellSurface = shellSurface;
     connect(m_shellSurface, &QWaylandWlShellSurface::pong,
             this, &WindowSurface::pong);
-    m_item = new WindowSurfaceQuickItem(this);
 }
 
 QWaylandWlShellSurface *WindowSurface::shellSurface() const
@@ -90,11 +88,6 @@ QWaylandSurface *WindowSurface::surface() const
     return m_surface;
 }
 
-QQuickItem *WindowSurface::item() const
-{
-    return m_item;
-}
-
 qint64 WindowSurface::processId() const
 {
     return m_surface->client()->processId();
@@ -107,41 +100,10 @@ QWindow *WindowSurface::outputWindow() const
     return nullptr;
 }
 
-void WindowSurface::takeFocus()
-{
-    m_item->takeFocus();
-}
-
 void WindowSurface::ping()
 {
     m_shellSurface->ping();
 }
-
-
-WindowSurfaceQuickItem::WindowSurfaceQuickItem(WindowSurface *windowSurface)
-    : QWaylandQuickItem()
-    , m_windowSurface(windowSurface)
-{
-    setSurface(windowSurface);
-    setTouchEventsEnabled(true);
-    setSizeFollowsSurface(false);
-}
-
-void WindowSurfaceQuickItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
-{
-    if (newGeometry.isValid()) {
-        AbstractApplication *app = nullptr; // prevent expensive lookup when not printing qDebugs
-        qCDebug(LogGraphics) << "Sending geometry change request to Wayland client for surface"
-                            << m_windowSurface->item() << "old:" << oldGeometry.size() << "new:"
-                            << newGeometry.size() << "of"
-                            << ((app = ApplicationManager::instance()->fromProcessId(m_windowSurface->client()->processId()))
-                                ? app->id() : QString::fromLatin1("pid: %1").arg(m_windowSurface->client()->processId()));
-        m_windowSurface->shellSurface()->sendConfigure(newGeometry.size().toSize(), QWaylandWlShellSurface::NoneEdge);
-    }
-
-    QWaylandQuickItem::geometryChanged(newGeometry, oldGeometry);
-}
-
 
 WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager)
     : QWaylandQuickCompositor()
@@ -155,9 +117,6 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     connect(this, &QWaylandCompositor::surfaceRequested, this, &WaylandCompositor::doCreateSurface);
     connect(this, &QWaylandCompositor::surfaceCreated, [this](QWaylandSurface *s) {
-        connect(s, &QWaylandSurface::surfaceDestroyed, this, [this, s]() {
-            m_manager->waylandSurfaceDestroyed(static_cast<WindowSurface *>(s));
-        });
         m_manager->waylandSurfaceCreated(static_cast<WindowSurface *>(s));
     });
 
@@ -181,15 +140,6 @@ void WaylandCompositor::registerOutputWindow(QQuickWindow* window)
     output->setSizeFollowsWindow(true);
     m_outputs.append(output);
     window->winId();
-}
-
-QWaylandSurface *WaylandCompositor::waylandSurfaceFromItem(QQuickItem *surfaceItem) const
-{
-    // QWaylandQuickItem::surface() will return a nullptr to WindowManager::waylandSurfaceDestroyed,
-    // if the app crashed. We return our internal copy of that surface pointer instead.
-    if (WindowSurfaceQuickItem *item = qobject_cast<WindowSurfaceQuickItem *>(surfaceItem))
-        return item->m_windowSurface->surface();
-    return nullptr;
 }
 
 WaylandQtAMServerExtension *WaylandCompositor::amExtension()

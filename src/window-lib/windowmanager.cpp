@@ -103,10 +103,6 @@
         \li The QtQuick Item representing the window surface of the application - used to actually
             composite the window on the screen.
     \row
-        \li \c isFullscreen
-        \li bool
-        \li A boolean value indicating whether the surface is being displayed in fullscreen mode.
-    \row
         \li \c isMapped
         \li bool
         \li A boolean value indicating whether the surface is mapped (visible).
@@ -307,7 +303,6 @@ enum Roles
 {
     Id = Qt::UserRole + 1000,
     WindowItem,
-    IsFullscreen,
     IsMapped,
     IsClosing
 };
@@ -437,7 +432,6 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
 
     d->roleNames.insert(Id, "applicationId");
     d->roleNames.insert(WindowItem, "windowItem");
-    d->roleNames.insert(IsFullscreen, "isFullscreen");
     d->roleNames.insert(IsMapped, "isMapped");
     d->roleNames.insert(IsClosing, "isClosing");
 
@@ -507,10 +501,6 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
         }
     case WindowItem:
         return QVariant::fromValue<QQuickItem*>(win->windowItem());
-    case IsFullscreen: {
-        //TODO: find a way to handle fullscreen transparently for wayland and in-process
-        return false;
-    }
     case IsMapped: {
         if (win->isInProcess()) {
             return !win->isClosing();
@@ -583,8 +573,6 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
     if (runtime->manager()->inProcess()) {
         runtime->setInProcessQmlEngine(d->qmlEngine);
 
-        connect(runtime, &AbstractRuntime::inProcessSurfaceItemFullscreenChanging,
-                this, &WindowManager::surfaceFullscreenChanged, Qt::QueuedConnection);
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemReady,
                 this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemCreated), Qt::QueuedConnection);
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemClosing,
@@ -679,22 +667,6 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 
     if (!once)
         once = true;
-}
-
-void WindowManager::surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen)
-{
-    Q_ASSERT(surfaceItem);
-
-    int index = d->findWindowBySurfaceItem(surfaceItem);
-
-    if (index == -1) {
-        qCWarning(LogGraphics) << "could not find an application window for surfaceItem";
-        return;
-    }
-
-    QModelIndex modelIndex = QAbstractListModel::index(index);
-    qCDebug(LogGraphics) << "emitting dataChanged, index: " << modelIndex.row() << ", isFullScreen: " << isFullscreen;
-    emit dataChanged(modelIndex, modelIndex, QVector<int>() << IsFullscreen);
 }
 
 /*! \internal

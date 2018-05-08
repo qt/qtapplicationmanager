@@ -250,20 +250,6 @@ void QmlInProcessRuntime::onWindowDestroyed()
         m_rootObject = nullptr;
 }
 
-void QmlInProcessRuntime::onEnableFullscreen()
-{
-    FakeApplicationManagerWindow *surface = qobject_cast<FakeApplicationManagerWindow *>(sender());
-
-    emit inProcessSurfaceItemFullscreenChanging(surface, true);
-}
-
-void QmlInProcessRuntime::onDisableFullscreen()
-{
-    FakeApplicationManagerWindow *surface = qobject_cast<FakeApplicationManagerWindow *>(sender());
-
-    emit inProcessSurfaceItemFullscreenChanging(surface, false);
-}
-
 void QmlInProcessRuntime::addWindow(QQuickItem *window)
 {
     // Below check is only needed if the root element is a QtObject.
@@ -275,8 +261,6 @@ void QmlInProcessRuntime::addWindow(QQuickItem *window)
         if (!m_surfaces.contains(surface)) {
             if (famw) {
                 surface = new InProcessSurfaceItem(famw);
-                connect(famw, &FakeApplicationManagerWindow::fakeFullScreenSignal, this, &QmlInProcessRuntime::onEnableFullscreen);
-                connect(famw, &FakeApplicationManagerWindow::fakeNoFullScreenSignal, this, &QmlInProcessRuntime::onDisableFullscreen);
                 connect(famw, &FakeApplicationManagerWindow::fakeCloseSignal, this, &QmlInProcessRuntime::onWindowClose);
                 connect(famw, &QObject::destroyed, this, &QmlInProcessRuntime::onWindowDestroyed);
             }

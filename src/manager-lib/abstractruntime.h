@@ -149,7 +149,6 @@ signals:
     // these signals are for in-process mode runtimes only
     void inProcessSurfaceItemReady(QQuickItem *window);
     void inProcessSurfaceItemClosing(QQuickItem *window);
-    void inProcessSurfaceItemFullscreenChanging(QQuickItem *window, bool fullscreen);
 #endif
 
 protected:

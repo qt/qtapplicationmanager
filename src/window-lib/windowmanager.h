@@ -124,8 +124,6 @@ signals:
     void slowAnimationsChanged(bool);
 
 private slots:
-    void surfaceFullscreenChanged(QQuickItem *surfaceItem, bool isFullscreen);
-
     void inProcessSurfaceItemCreated(QQuickItem *surfaceItem);
     void inProcessSurfaceItemClosing(QQuickItem *surfaceItem);
     void setupWindow(QT_PREPEND_NAMESPACE_AM(Window) *window);

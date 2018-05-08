@@ -87,9 +87,6 @@ private slots:
 #if !defined(AM_HEADLESS)
     void onWindowClose();
     void onWindowDestroyed();
-
-    void onEnableFullscreen();
-    void onDisableFullscreen();
 #endif
     void finish(int exitCode, QProcess::ExitStatus status);
 

@@ -129,11 +129,10 @@ void FakeApplicationManagerWindow::close()
 
 void FakeApplicationManagerWindow::showFullScreen()
 {
-    emit fakeFullScreenSignal();
 }
+
 void FakeApplicationManagerWindow::showMaximized()
 {
-    emit fakeNoFullScreenSignal();
 }
 
 void FakeApplicationManagerWindow::showNormal()

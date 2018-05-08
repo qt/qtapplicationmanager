@@ -167,8 +167,6 @@ public slots:
 
 signals:
     void fakeCloseSignal();
-    void fakeFullScreenSignal();
-    void fakeNoFullScreenSignal(); // TODO this should be replaced by 'normal' and 'maximized' as soon as needed
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void colorChanged();
     void visibleChanged();

@@ -24,10 +24,8 @@ multi-process:!headless {
         waylandwindow.cpp \
         waylandqtamserverextension.cpp
 
-    qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private) {
-        QT *= waylandcompositor waylandcompositor-private
-        !osx:PKGCONFIG += wayland-server
-
+    qtHaveModule(waylandcompositor) {
+        QT *= waylandcompositor
         HEADERS += waylandcompositor_p.h
     }
     WAYLANDSERVERSOURCES += \

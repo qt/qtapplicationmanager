@@ -47,6 +47,7 @@
 #include "exception.h"
 #include "installationreport.h"
 #include "yamlapplicationscanner.h"
+#include "logging.h"
 
 /*!
     \qmltype Application
@@ -106,6 +107,7 @@
 /*!
     \qmlproperty real Application::importance
     \readonly
+    \obsolete
 
     A value between \c 0.0 and \c 1.0 specifying the inverse probability of being terminated in
     out-of-memory situations (the default is \c 0.0 - unimportant).
@@ -126,6 +128,7 @@
 /*!
     \qmlproperty bool Application::preload
     \readonly
+    \obsolete
 
     When set to true, the application-manager tries to start the application immediately after boot,
     but keeps it in the background.
@@ -205,6 +208,7 @@
 /*!
     \qmlproperty enumeration Application::backgroundMode
     \readonly
+    \obsolete
 
     Specifies if and why the application needs to be kept running in the background - can be
     one of:
@@ -319,7 +323,6 @@ QVariantMap Application::toVariantMap() const
     map[qSL("version")] = m_version;
     map[qSL("codeDir")] = m_codeDir.absolutePath();
     map[qSL("manifestDir")] = m_manifestDir.absolutePath();
-    map[qSL("environmentVariables")] = m_environmentVariables;
     map[qSL("installationLocationId")] = m_installationReport ? m_installationReport->installationLocationId() : QString();
     map[qSL("applicationProperties")] = m_allAppProperties;
     map[qSL("supportsApplicationInterface")] = m_supportsApplicationInterface;
@@ -357,11 +360,6 @@ QString Application::runtimeName() const
 QVariantMap Application::runtimeParameters() const
 {
     return m_nonAliased ? m_nonAliased->m_runtimeParameters : m_runtimeParameters;
-}
-
-QVariantMap Application::environmentVariables() const
-{
-    return m_environmentVariables;
 }
 
 QMap<QString, QString> Application::names() const
@@ -470,11 +468,23 @@ bool Application::isValidApplicationId(const QString &appId, bool isAliasName, Q
 
 bool Application::isPreloaded() const
 {
+    static bool once = false;
+    if (!once) {
+        qCDebug(LogSystem) << "The 'preload' Application property and ApplicationModel role are "
+                              "deprecated and will be removed in the next release.";
+        once = true;
+    }
     return m_nonAliased ? m_nonAliased->m_preload : m_preload;
 }
 
 qreal Application::importance() const
 {
+    static bool once = false;
+    if (!once) {
+        qCDebug(LogSystem) << "The 'importance' Application property and ApplicationModel role are "
+                              "deprecated and will be removed in the next release.";
+        once = true;
+    }
     return m_nonAliased ? m_nonAliased->m_importance : m_importance;
 }
 
@@ -520,6 +530,12 @@ QVariantMap Application::allAppProperties() const
 
 Application::BackgroundMode Application::backgroundMode() const
 {
+    static bool once = false;
+    if (!once) {
+        qCDebug(LogSystem) << "The 'backgroundMode' Application property and ApplicationModel role are "
+                              "deprecated and will be removed in the next release.";
+        once = true;
+    }
     return m_nonAliased ? m_nonAliased->m_backgroundMode : m_backgroundMode;
 }
 
@@ -571,7 +587,6 @@ void Application::mergeInto(Application *app) const
     app->m_codeFilePath = m_codeFilePath;
     app->m_runtimeName = m_runtimeName;
     app->m_runtimeParameters = m_runtimeParameters;
-    app->m_environmentVariables = m_environmentVariables;
     app->m_name = m_name;
     app->m_icon = m_icon;
     app->m_documentUrl = m_documentUrl;
@@ -745,7 +760,6 @@ Application *Application::readFromDataStream(QDataStream &ds, const QVector<cons
        >> codeDir
        >> manifestDir
        >> app->m_uid
-       >> app->m_environmentVariables
        >> installationReport;
 
     uniqueCounter = qMax(uniqueCounter, app->m_uniqueNumber);
@@ -816,7 +830,6 @@ void Application::writeToDataStream(QDataStream &ds, const QVector<const Applica
        << m_codeDir.absolutePath()
        << m_manifestDir.absolutePath()
        << m_uid
-       << m_environmentVariables
        << serializedReport;
 }
 

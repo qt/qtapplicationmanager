@@ -191,9 +191,6 @@ void tst_Application::application()
     QCOMPARE(app->runtimeParameters().size(), 1);
     QCOMPARE(app->runtimeParameters().value(qSL("loadDummyData")).toBool(), true);
     QCOMPARE(app->isBuiltIn(), false);
-    QCOMPARE(app->isPreloaded(), true);
-    QCOMPARE(app->importance(), 0.5);
-    QVERIFY(app->backgroundMode() == Application::TracksLocation);
     QCOMPARE(app->supportedMimeTypes().size(), 2);
     QVERIFY(app->supportedMimeTypes().startsWith(qSL("text/plain")));
     QVERIFY(app->supportedMimeTypes().endsWith(qSL("x-scheme-handler/mailto")));

@@ -333,11 +333,11 @@ enum Roles
     CodeFilePath,
     RuntimeName,
     RuntimeParameters,
-    BackgroundMode,
+    BackgroundMode, //TODO: deprecated, remove in 5.12
     Capabilities,
     Categories,
-    Importance,
-    Preload,
+    Importance,     //TODO: deprecated, remove in 5.12
+    Preload,        //TODO: deprecated, remove in 5.12
     Version,
     ApplicationItem,
     LastExitCode,
@@ -373,11 +373,11 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
     roleNames.insert(CodeFilePath, "codeFilePath");
     roleNames.insert(RuntimeName, "runtimeName");
     roleNames.insert(RuntimeParameters, "runtimeParameters");
-    roleNames.insert(BackgroundMode, "backgroundMode");
+    roleNames.insert(BackgroundMode, "backgroundMode"); //TODO: deprecated, remove in 5.12
     roleNames.insert(Capabilities, "capabilities");
     roleNames.insert(Categories, "categories");
-    roleNames.insert(Importance, "importance");
-    roleNames.insert(Preload, "preload");
+    roleNames.insert(Importance, "importance"); //TODO: deprecated, remove in 5.12
+    roleNames.insert(Preload, "preload");       //TODO: deprecated, remove in 5.12
     roleNames.insert(Version, "version");
     roleNames.insert(ApplicationItem, "application");
     roleNames.insert(LastExitCode, "lastExitCode");
@@ -756,7 +756,7 @@ bool ApplicationManager::startApplication(const Application *app, const QString 
                 cannotUseQuickLaunch = "the app is started using a debug-wrapper";
             else if (hasStdioRedirections)
                 cannotUseQuickLaunch = "standard I/O is redirected";
-            else if (!app->environmentVariables().isEmpty())
+            else if (!app->runtimeParameters().value(qSL("environmentVariables")).toMap().isEmpty())
                 cannotUseQuickLaunch = "the app requests customs environment variables";
             else if (app->openGLConfiguration() != runtimeManager->systemOpenGLConfiguration())
                 cannotUseQuickLaunch = "the app requests a custom OpenGL configuration";
@@ -1387,7 +1387,7 @@ void ApplicationManager::preload()
     bool singleAppMode = d->database && d->database->isTemporary();
 
     for (const Application *app : qAsConst(d->apps)) {
-        if (singleAppMode || app->isPreloaded()) {
+        if (singleAppMode || app->m_preload) {
             if (!startApplication(app)) {
                 if (!singleAppMode)
                     qCWarning(LogSystem) << "WARNING: unable to start preload-enabled application" << app->id();

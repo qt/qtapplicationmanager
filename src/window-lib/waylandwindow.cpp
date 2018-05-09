@@ -61,8 +61,6 @@ WaylandWindow::WaylandWindow(const Application *app, WindowSurface *surf)
     if (surf && surf->item()) {
         connect(surf, &WindowSurface::pong,
                 this, &WaylandWindow::pongReceived);
-        connect(surf, &WindowSurface::windowPropertyChanged,
-                this, &WaylandWindow::windowPropertyChanged);
         connect(m_surface, &WindowSurface::redraw,
                 this, &WaylandWindow::frameUpdated);
 

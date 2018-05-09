@@ -65,28 +65,31 @@ class Application : public QObject
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager/Application 1.0")
 
     Q_PROPERTY(QString id READ id CONSTANT)
-    Q_PROPERTY(QString runtimeName READ runtimeName NOTIFY bulkChange)
-    Q_PROPERTY(QVariantMap runtimeParameters READ runtimeParameters NOTIFY bulkChange)
     Q_PROPERTY(QUrl icon READ iconUrl NOTIFY bulkChange)
-    Q_PROPERTY(QString documentUrl READ documentUrl NOTIFY bulkChange)
-    Q_PROPERTY(qreal importance READ importance NOTIFY bulkChange)
     Q_PROPERTY(bool builtIn READ isBuiltIn CONSTANT)
     Q_PROPERTY(bool alias READ isAlias CONSTANT)
-    Q_PROPERTY(bool preload READ isPreloaded NOTIFY bulkChange)
     Q_PROPERTY(const Application *nonAliased READ nonAliased CONSTANT)
+    Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange)
+    Q_PROPERTY(QString runtimeName READ runtimeName NOTIFY bulkChange)
+    Q_PROPERTY(QVariantMap runtimeParameters READ runtimeParameters NOTIFY bulkChange)
+    Q_PROPERTY(QString documentUrl READ documentUrl NOTIFY bulkChange)
+    Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
     Q_PROPERTY(QStringList capabilities READ capabilities NOTIFY bulkChange)
     Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes NOTIFY bulkChange)
-    Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
+    Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface NOTIFY bulkChange)
+    Q_PROPERTY(QString version READ version NOTIFY bulkChange)
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties NOTIFY bulkChange)
+
     Q_PROPERTY(AbstractRuntime *runtime READ currentRuntime NOTIFY runtimeChanged)
     Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged)
     Q_PROPERTY(ExitStatus lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged)
-    Q_PROPERTY(QString version READ version NOTIFY bulkChange)
-    Q_PROPERTY(BackgroundMode backgroundMode READ backgroundMode NOTIFY bulkChange)
-    Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface NOTIFY bulkChange)
-    Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(RunState runState READ runState NOTIFY runStateChanged)
+
+    //TODO: deprecated as of 5.11, remove in 5.12
+    Q_PROPERTY(qreal importance READ importance NOTIFY bulkChange)
+    Q_PROPERTY(bool preload READ isPreloaded NOTIFY bulkChange)
+    Q_PROPERTY(BackgroundMode backgroundMode READ backgroundMode NOTIFY bulkChange)
 
 public:
     enum ExitStatus { NormalExit, CrashExit, ForcedExit };
@@ -106,7 +109,6 @@ public:
     QString codeFilePath() const;
     QString runtimeName() const;
     QVariantMap runtimeParameters() const;
-    QVariantMap environmentVariables() const;
     QMap<QString, QString> names() const;
     Q_INVOKABLE QString name(const QString &language) const;
     QString icon() const;
@@ -202,7 +204,6 @@ private:
     QString m_codeFilePath; // relative to info.json location
     QString m_runtimeName;
     QVariantMap m_runtimeParameters;
-    QVariantMap m_environmentVariables;
     QMap<QString, QString> m_name; // language -> name
     QString m_icon; // relative to info.json location
     QString m_documentUrl;

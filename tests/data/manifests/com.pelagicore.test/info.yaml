@@ -10,9 +10,6 @@ runtimeParameters:
 name:
   en: 'english'
   de: 'deutsch'
-preload: true
-importance: 0.5
-backgroundMode: 'location'
 
 mimeTypes:
 - "x-scheme-handler/mailto"

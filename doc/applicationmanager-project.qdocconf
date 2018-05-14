@@ -3,6 +3,10 @@ description = Public API of the application manager: QML and DBus
 url = https://doc.qt.io/QtApplicationManager
 version = $QT_VERSION
 
+# needed for the new clang based qdoc parser in Qt 5.11
+moduleheader = QtApplicationManagerDoc
+includepaths = -I .
+
 sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
 headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
 examples.fileextensions = "*.qml *.yaml"

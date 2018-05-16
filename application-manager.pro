@@ -5,6 +5,7 @@ requires(linux|win32:!winrt|macos)
 TEMPLATE = subdirs
 CONFIG += ordered
 
+SUBDIRS += qmake-features
 SUBDIRS += benchmarks
 
 enable-tests:QT_BUILD_PARTS *= tests
@@ -107,7 +108,6 @@ OTHER_FILES += \
     .qmake.conf \
     application-manager.conf \
     template-opt/am/*.yaml \
-    qmake-features/*.prf \
     sync.profile \
     header.*[^~] \
     LICENSE.*[^~] \

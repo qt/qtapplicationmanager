@@ -140,6 +140,11 @@ void Window::unregisterItem(WindowItem *item)
         Q_EMIT isBeingDisplayedChanged();
 }
 
+void Window::setPrimaryItem(WindowItem *item)
+{
+    m_primaryItem = item;
+}
+
 bool Window::isBeingDisplayed() const
 {
     return m_items.count() > 0;

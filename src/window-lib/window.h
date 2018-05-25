@@ -84,6 +84,9 @@ public:
     void unregisterItem(WindowItem *item);
     const QSet<WindowItem*> &items() const { return m_items; }
 
+    void setPrimaryItem(WindowItem *item);
+    WindowItem *primaryItem() const { return m_primaryItem; }
+
     // Whether there's any view (WindowItem) holding a reference to this window
     bool isBeingDisplayed() const;
 
@@ -102,6 +105,7 @@ protected:
     AbstractApplication *m_application;
 
     QSet<WindowItem*> m_items;
+    WindowItem *m_primaryItem{nullptr};
 };
 
 QT_END_NAMESPACE_AM

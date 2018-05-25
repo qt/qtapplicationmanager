@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'tld.multi-views.app'
+icon:    'icon.png'
+code:    'app1.qml'
+runtime: 'qml'
+name:
+  en: 'App1'

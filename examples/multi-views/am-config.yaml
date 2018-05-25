@@ -1,0 +1,37 @@
+formatVersion: 1
+formatType: am-configuration
+---
+installationLocations:
+- id: "internal-0"
+  installationPath: "/tmp/multi-views/apps"
+  documentPath: "/tmp/multi-views/docs"
+  mountPoint: "/tmp"
+  isDefault: true
+
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installedAppsManifestDir: "/tmp/multi-views/manifests"
+  appImageMountDir: "/tmp/multi-views/image-mounts"
+  database: "/tmp/multi-views/apps.db"
+
+logging:
+  rules:
+    - "*=false"
+    - "qt.*=false"
+    - "am.*=false"
+    - "qml*=true"
+    - "*.warning=true"
+    - "*.critical=true"
+
+ui:
+  fullscreen: no
+  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
+
+systemProperties:
+  protected:
+    light: on
+
+# development setup:
+flags:
+  noSecurity: yes
+  noUiWatchdog: yes

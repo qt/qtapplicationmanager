@@ -62,16 +62,21 @@ class WindowItem : public QQuickItem
     Q_OBJECT
 
     Q_PROPERTY(Window* window READ window WRITE setWindow NOTIFY windowChanged)
+    Q_PROPERTY(bool primary READ primary NOTIFY primaryChanged)
 public:
     WindowItem(QQuickItem *parent = nullptr) : QQuickItem(parent) {}
     ~WindowItem();
 
     Window *window() const;
     void setWindow(Window *window);
+
+    bool primary() const;
+    Q_INVOKABLE void makePrimary();
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 signals:
     void windowChanged();
+    void primaryChanged();
 private:
     void createImpl(bool inProcess);
     void tearDown();
@@ -84,6 +89,8 @@ private:
         virtual void updateSize(const QSizeF &newSize) = 0;
         virtual bool isInProcess() const = 0;
         virtual Window *window() const = 0;
+        virtual void setupPrimaryView() = 0;
+        virtual void setupSecondaryView() = 0;
         WindowItem *q;
     };
 
@@ -94,8 +101,11 @@ private:
         void updateSize(const QSizeF &newSize) override;
         bool isInProcess() const override { return true; }
         Window *window() const override;
+        void setupPrimaryView() override;
+        void setupSecondaryView() override;
 
         InProcessWindow *m_inProcessWindow{nullptr};
+        QQuickItem *m_shaderEffectSource{nullptr};
     };
 
 #if defined(AM_MULTI_PROCESS)
@@ -107,6 +117,8 @@ private:
         void updateSize(const QSizeF &newSize) override;
         bool isInProcess() const override { return false; }
         Window *window() const override;
+        void setupPrimaryView() override;
+        void setupSecondaryView() override;
         void createWaylandItem();
 
         WaylandWindow *m_waylandWindow{nullptr};

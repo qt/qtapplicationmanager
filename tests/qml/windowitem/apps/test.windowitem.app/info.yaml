@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.windowitem.app'
+icon:    'icon.png'
+code:    'main.qml'
+runtime: 'qml'
+name:
+  en: 'WindowItem Test App'

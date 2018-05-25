@@ -53,6 +53,11 @@
 
 #include <QtAppManCommon/logging.h>
 
+#include <QQmlComponent>
+#include <QQmlContext>
+#include <QQmlEngine>
+#include <QQmlProperty>
+
 /*!
     \qmltype WindowItem
     \inqmlmodule QtApplicationManager
@@ -69,6 +74,9 @@
     The relationship between WindowObjects and WindowItems is similar to the one between image files
     and Image items. The former is the content and the latter defines how it's rendered in a QML scene.
 
+    It's possible to assign the same WindowObject to multiple WindowItems, which will result in it being
+    rendered multiple times.
+
     \sa WindowObject
 */
 
@@ -76,6 +84,28 @@
     \qmlproperty WindowObject WindowItem::window
 
     The window surface to be displayed.
+*/
+
+/*!
+    \qmlproperty bool WindowItem::primary
+
+    Returns whether this is the primary view of the set WindowObject.
+    The primary WindowItem will be the one sending input events and defining the size of the WindowObject.
+
+    A WindowObject can have only one primary WindowItem. If multiple WindowItems are rendering the same
+    WindowObject, making one primary will automatically turn the primary property of all others to false.
+
+    The first WindowItem to display a window is by default the primary one.
+
+    \sa makePrimary
+*/
+
+/*!
+    \qmlmethod void WindowItem::makePrimary
+
+    Make it the primary WindowItem of the window it is displaying.
+
+    \sa primary
 */
 
 QT_BEGIN_NAMESPACE_AM
@@ -100,14 +130,29 @@ void WindowItem::setWindow(Window *window)
         m_impl->tearDown();
         disconnect(currWindow, nullptr, this, nullptr);
         currWindow->unregisterItem(this);
+
+        if (currWindow->primaryItem() == this) {
+            currWindow->setPrimaryItem(nullptr);
+            auto it = currWindow->items().begin();
+            if (it != currWindow->items().end())
+                (*it)->makePrimary();
+        }
     }
 
     if (window) {
         window->registerItem(this);
-        connect(window, &QObject::destroyed, this, [this]() { this->setWindow(nullptr); });
+        connect(window, &QObject::destroyed, this, [this]() { setWindow(nullptr); });
 
         createImpl(window->isInProcess());
         m_impl->setup(window);
+
+        if (window->items().count() == 1) {
+            makePrimary();
+        } else {
+            m_impl->setupSecondaryView();
+            emit primaryChanged();
+        }
+
     } else {
         delete m_impl;
         m_impl = nullptr;
@@ -154,6 +199,32 @@ void WindowItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeo
     QQuickItem::geometryChanged(newGeometry, oldGeometry);
 }
 
+bool WindowItem::primary() const
+{
+    return window() ? window()->primaryItem() == this : true;
+}
+
+void WindowItem::makePrimary()
+{
+    if (!m_impl || !m_impl->window())
+        return;
+
+    auto *oldPrimaryItem = m_impl->window()->primaryItem();
+    if (oldPrimaryItem == this)
+        return;
+
+    m_impl->setupPrimaryView();
+
+    if (oldPrimaryItem && oldPrimaryItem->m_impl)
+        oldPrimaryItem->m_impl->setupSecondaryView();
+
+    window()->setPrimaryItem(this);
+
+    if (oldPrimaryItem)
+        emit oldPrimaryItem->primaryChanged();
+    emit primaryChanged();
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // WindowItem::InProcessImpl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,6 +235,34 @@ void WindowItem::InProcessImpl::setup(Window *window)
     Q_ASSERT(window && window->isInProcess());
 
     m_inProcessWindow = static_cast<InProcessWindow*>(window);
+}
+
+void WindowItem::InProcessImpl::tearDown()
+{
+    if (m_shaderEffectSource) {
+        delete m_shaderEffectSource;
+        m_shaderEffectSource = nullptr;
+    } else {
+        m_inProcessWindow->rootItem()->setParentItem(nullptr);
+    }
+    m_inProcessWindow = nullptr;
+}
+
+void WindowItem::InProcessImpl::updateSize(const QSizeF &newSize)
+{
+    if (!m_shaderEffectSource)
+        m_inProcessWindow->rootItem()->setSize(newSize);
+}
+
+Window *WindowItem::InProcessImpl::window() const
+{
+    return static_cast<Window*>(m_inProcessWindow);
+}
+
+void WindowItem::InProcessImpl::setupPrimaryView()
+{
+    delete m_shaderEffectSource;
+    m_shaderEffectSource = nullptr;
 
     auto rootItem = m_inProcessWindow->rootItem();
     rootItem->setParentItem(q);
@@ -172,20 +271,20 @@ void WindowItem::InProcessImpl::setup(Window *window)
     rootItem->setSize(q->size());
 }
 
-void WindowItem::InProcessImpl::tearDown()
+void WindowItem::InProcessImpl::setupSecondaryView()
 {
-    m_inProcessWindow->rootItem()->setParentItem(nullptr);
-    m_inProcessWindow = nullptr;
-}
+    if (!m_shaderEffectSource) {
+        QQmlEngine *engine = QQmlEngine::contextForObject(q)->engine();
+        QQmlComponent component(engine);
 
-void WindowItem::InProcessImpl::updateSize(const QSizeF &newSize)
-{
-    m_inProcessWindow->rootItem()->setSize(newSize);
-}
+        component.setData("import QtQuick 2.7\nShaderEffectSource { anchors.fill: parent }", QUrl());
+        m_shaderEffectSource = qobject_cast<QQuickItem *>(component.create());
+        m_shaderEffectSource->setParent(q);
+        m_shaderEffectSource->setParentItem(q);
 
-Window *WindowItem::InProcessImpl::window() const
-{
-    return static_cast<Window*>(m_inProcessWindow);
+        QQmlProperty::write(m_shaderEffectSource, QStringLiteral("sourceItem"),
+                QVariant::fromValue(m_inProcessWindow->rootItem()));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,7 +317,7 @@ void WindowItem::WaylandImpl::setup(Window *window)
 void WindowItem::WaylandImpl::createWaylandItem()
 {
     m_waylandItem = new QWaylandQuickItem(q);
-    m_waylandItem->setTouchEventsEnabled(true);
+
     m_waylandItem->setSizeFollowsSurface(false);
 
     connect(m_waylandItem, &QWaylandQuickItem::surfaceDestroyed, q, [this]() {
@@ -236,18 +335,36 @@ void WindowItem::WaylandImpl::updateSize(const QSizeF &newSize)
 {
     m_waylandItem->setSize(newSize);
 
-    AbstractApplication *app = nullptr; // prevent expensive lookup when not printing qDebugs
-    auto *surface = m_waylandWindow->surface();
-    qCDebug(LogGraphics) << "Sending geometry change request to Wayland client for surface"
-                        << surface << "new:" << newSize << "of"
-                        << ((app = ApplicationManager::instance()->fromProcessId(surface->client()->processId()))
-                            ? app->id() : QString::fromLatin1("pid: %1").arg(surface->client()->processId()));
-    surface->shellSurface()->sendConfigure(newSize.toSize(), QWaylandWlShellSurface::NoneEdge);
+    if (q->primary()) {
+        AbstractApplication *app = nullptr; // prevent expensive lookup when not printing qDebugs
+        auto *surface = m_waylandWindow->surface();
+        qCDebug(LogGraphics) << "Sending geometry change request to Wayland client for surface"
+                            << surface << "new:" << newSize << "of"
+                            << ((app = ApplicationManager::instance()->fromProcessId(surface->client()->processId()))
+                                ? app->id() : QString::fromLatin1("pid: %1").arg(surface->client()->processId()));
+        surface->shellSurface()->sendConfigure(newSize.toSize(), QWaylandWlShellSurface::NoneEdge);
+    }
 }
 
 Window *WindowItem::WaylandImpl::window() const
 {
     return static_cast<Window*>(m_waylandWindow);
+}
+
+void WindowItem::WaylandImpl::setupPrimaryView()
+{
+    Q_ASSERT(m_waylandWindow);
+    Q_ASSERT(m_waylandItem);
+
+    m_waylandItem->setPrimary();
+    m_waylandItem->setInputEventsEnabled(true);
+    m_waylandItem->setTouchEventsEnabled(true);
+}
+
+void WindowItem::WaylandImpl::setupSecondaryView()
+{
+    m_waylandItem->setInputEventsEnabled(false);
+    m_waylandItem->setTouchEventsEnabled(false);
 }
 
 #endif // AM_MULTI_PROCESS

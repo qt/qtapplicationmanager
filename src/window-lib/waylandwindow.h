@@ -69,8 +69,7 @@ public:
 
     WindowSurface *surface() const { return m_surface; }
 
-    void enablePing(bool b);
-    bool isPingEnabled() const;
+    static bool m_watchdogEnabled;
 
 signals:
     void frameUpdated();
@@ -79,8 +78,10 @@ private slots:
     void pongReceived();
     void pongTimeout();
     void pingTimeout();
+    void onContentStateChanged();
 
 private:
+    void enableOrDisablePing();
     QTimer *m_pingTimer;
     QTimer *m_pongTimer;
     WindowSurface *m_surface;

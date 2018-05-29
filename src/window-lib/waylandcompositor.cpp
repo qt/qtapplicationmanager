@@ -105,20 +105,16 @@ void WindowSurface::ping()
     m_shellSurface->ping();
 }
 
-WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName, WindowManager *manager)
+WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName)
     : QWaylandQuickCompositor()
     , m_shell(new QWaylandWlShell(this))
     , m_amExtension(new WaylandQtAMServerExtension(this))
     , m_textInputManager(new QWaylandTextInputManager(this))
-    , m_manager(manager)
 {
     setSocketName(waylandSocketName.toUtf8());
     registerOutputWindow(window);
 
     connect(this, &QWaylandCompositor::surfaceRequested, this, &WaylandCompositor::doCreateSurface);
-    connect(this, &QWaylandCompositor::surfaceCreated, [this](QWaylandSurface *s) {
-        m_manager->waylandSurfaceCreated(static_cast<WindowSurface *>(s));
-    });
 
     connect(m_shell, &QWaylandWlShell::wlShellSurfaceRequested, this, &WaylandCompositor::createShellSurface);
 
@@ -160,9 +156,7 @@ void WaylandCompositor::createShellSurface(QWaylandSurface *surface, const QWayl
 
     connect(windowSurface, &QWaylandSurface::hasContentChanged, this, [this, windowSurface]() {
         if (windowSurface->hasContent())
-            m_manager->waylandSurfaceMapped(windowSurface);
-        else
-            m_manager->waylandSurfaceUnmapped(windowSurface);
+            emit this->surfaceMapped(static_cast<WindowSurface*>(windowSurface));
     });
 }
 

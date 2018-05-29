@@ -365,7 +365,6 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
     d->roleNames.insert(WindowRole, "window");
     d->roleNames.insert(ContentState, "contentState");
 
-    d->watchdogEnabled = true;
     d->qmlEngine = qmlEngine;
 }
 
@@ -379,12 +378,11 @@ WindowManager::~WindowManager()
 
 void WindowManager::enableWatchdog(bool enable)
 {
-    d->watchdogEnabled = enable;
-}
-
-bool WindowManager::isWatchdogEnabled() const
-{
-    return d->watchdogEnabled;
+#if defined(AM_MULTI_PROCESS)
+    WaylandWindow::m_watchdogEnabled = enable;
+#else
+    Q_UNUSED(enable);
+#endif
 }
 
 QVector<Window *> WindowManager::windows() const
@@ -550,7 +548,12 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 #if defined(AM_MULTI_PROCESS)
     if (!ApplicationManager::instance()->isSingleProcess()) {
         if (!d->waylandCompositor) {
-            d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName, this);
+            d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName);
+            connect(d->waylandCompositor, &QWaylandCompositor::surfaceCreated,
+                    this, &WindowManager::waylandSurfaceCreated);
+            connect(d->waylandCompositor, &WaylandCompositor::surfaceMapped,
+                    this, &WindowManager::waylandSurfaceMapped);
+
             // export the actual socket name for our child processes.
             qputenv("WAYLAND_DISPLAY", d->waylandCompositor->socketName());
             qCDebug(LogGraphics).nospace() << "WindowManager: running in Wayland mode [socket: "
@@ -667,7 +670,7 @@ void WindowManager::setupWindow(Window *window)
 
 #if defined(AM_MULTI_PROCESS)
 
-void WindowManager::waylandSurfaceCreated(WindowSurface *surface)
+void WindowManager::waylandSurfaceCreated(QWaylandSurface *surface)
 {
     Q_UNUSED(surface)
     // this function is still useful for Wayland debugging
@@ -695,31 +698,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     if (index == -1) {
         WaylandWindow *w = new WaylandWindow(app, surface);
         setupWindow(w);
-        // switch on Wayland ping/pong
-        if (d->watchdogEnabled)
-            w->enablePing(true);
     }
-}
-
-void WindowManager::waylandSurfaceUnmapped(WindowSurface *surface)
-{
-    int index = d->findWindowByWaylandSurface(surface->surface());
-
-    if (index == -1) {
-        qCWarning(LogGraphics) << "Unmapping a surface failed, because no application window is "
-                                 "registered for Wayland surface" << surface;
-        return;
-    }
-    WaylandWindow *win = qobject_cast<WaylandWindow *>(d->windows.at(index));
-    if (!win)
-        return;
-
-    qCDebug(LogGraphics) << "Unmapping Wayland surface" << surface << "of"
-                        << d->applicationId(win->application(), surface);
-
-    // switch off Wayland ping/pong
-    if (d->watchdogEnabled)
-        win->enablePing(false);
 }
 
 #endif // defined(AM_MULTI_PROCESS)

@@ -52,6 +52,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+bool WaylandWindow::m_watchdogEnabled = true;
+
 WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
     : Window(app)
     , m_pingTimer(new QTimer(this))
@@ -63,7 +65,7 @@ WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
                 this, &WaylandWindow::pongReceived);
         connect(m_surface, &WindowSurface::redraw,
                 this, &WaylandWindow::frameUpdated);
-        connect(m_surface, &QWaylandSurface::hasContentChanged, this, &Window::contentStateChanged);
+        connect(m_surface, &QWaylandSurface::hasContentChanged, this, &WaylandWindow::onContentStateChanged);
 
         m_pingTimer->setInterval(1000);
         m_pingTimer->setSingleShot(true);
@@ -80,23 +82,11 @@ WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
 
         connect(surf, &QWaylandSurface::surfaceDestroyed, this, [this]() {
             m_surface = nullptr;
-            emit contentStateChanged();
+            onContentStateChanged();
         });
+
+        enableOrDisablePing();
     }
-}
-
-bool WaylandWindow::isPingEnabled() const
-{
-    return m_pingTimer->isActive() || m_pongTimer->isActive();
-}
-
-void WaylandWindow::enablePing(bool b)
-{
-    m_pingTimer->stop();
-    m_pongTimer->stop();
-
-    if (b)
-        pingTimeout();
 }
 
 void WaylandWindow::pongReceived()
@@ -145,6 +135,25 @@ auto WaylandWindow::contentState() const -> ContentState
         return m_surface->hasContent() ? SurfaceWithContent : SurfaceNoContent;
     else
         return NoSurface;
+}
+
+void WaylandWindow::enableOrDisablePing()
+{
+    if (m_watchdogEnabled) {
+        m_pingTimer->stop();
+        m_pongTimer->stop();
+
+        if (m_surface && m_surface->hasContent())
+            pingTimeout();
+    }
+}
+
+void WaylandWindow::onContentStateChanged()
+{
+    qCDebug(LogGraphics) << this << "of" << application()->id() << "contentState changed to" << contentState();
+
+    enableOrDisablePing();
+    emit contentStateChanged();
 }
 
 QT_END_NAMESPACE_AM

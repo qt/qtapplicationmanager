@@ -87,7 +87,6 @@ public:
     void setSlowAnimations(bool slowAnimations);
 
     void enableWatchdog(bool enable);
-    bool isWatchdogEnabled() const;
 
     QVector<Window *> windows() const;
 
@@ -140,9 +139,8 @@ public:
 
 #if defined(AM_MULTI_PROCESS)
 private slots:
-    void waylandSurfaceCreated(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
+    void waylandSurfaceCreated(QWaylandSurface *surface);
     void waylandSurfaceMapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
-    void waylandSurfaceUnmapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
 
 private:
     void handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *surface);

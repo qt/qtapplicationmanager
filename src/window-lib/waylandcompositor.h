@@ -47,7 +47,6 @@
 #if defined(AM_MULTI_PROCESS)
 
 #include <QWaylandQuickCompositor>
-#include <QtAppManWindow/windowmanager.h>
 
 #include <QWaylandQuickSurface>
 #include <QWaylandQuickItem>
@@ -59,6 +58,7 @@ QT_FORWARD_DECLARE_CLASS(QWaylandTextInputManager)
 
 QT_BEGIN_NAMESPACE_AM
 
+class WaylandCompositor;
 class WaylandQtAMServerExtension;
 class WindowSurfaceQuickItem;
 
@@ -99,11 +99,15 @@ private:
 
 class WaylandCompositor : public QWaylandQuickCompositor // clazy:exclude=missing-qobject-macro
 {
+    Q_OBJECT
 public:
-    WaylandCompositor(QQuickWindow* window, const QString &waylandSocketName, WindowManager *manager);
+    WaylandCompositor(QQuickWindow* window, const QString &waylandSocketName);
     void registerOutputWindow(QQuickWindow *window);
 
     WaylandQtAMServerExtension *amExtension();
+
+signals:
+    void surfaceMapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
 
 protected:
     void doCreateSurface(QWaylandClient *client, uint id, int version);
@@ -113,9 +117,6 @@ protected:
     QVector<QWaylandOutput *> m_outputs;
     WaylandQtAMServerExtension *m_amExtension;
     QWaylandTextInputManager *m_textInputManager;
-
-private:
-    WindowManager *m_manager;
 };
 
 QT_END_NAMESPACE_AM

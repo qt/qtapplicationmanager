@@ -68,7 +68,6 @@ public:
     QHash<int, QByteArray> roleNames;
     QVector<Window *> windows;
 
-    bool watchdogEnabled = false;
     bool shuttingDown = false;
     bool slowAnimations = false;
 

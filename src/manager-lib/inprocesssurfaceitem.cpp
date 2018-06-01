@@ -51,8 +51,27 @@ InProcessSurfaceItem::InProcessSurfaceItem(FakeApplicationManagerWindow *content
     m_windowProperties = content->m_windowProperties;
     setParentItem(content->parentItem());
     content->setParentItem(this);
+
+    connect(m_contentItem, &QQuickItem::widthChanged, this, [this](){
+        if (!m_blockSizePropagation) {
+            m_blockSizePropagation = true;
+            setWidth(m_contentItem->width());
+            m_blockSizePropagation = false;
+        }
+    });
+
+    connect(m_contentItem, &QQuickItem::heightChanged, this, [this](){
+        if (!m_blockSizePropagation) {
+            m_blockSizePropagation = true;
+            setHeight(m_contentItem->height());
+            m_blockSizePropagation = false;
+        }
+    });
+
+    m_blockSizePropagation = true;
     setWidth(content->width());
     setHeight(content->height());
+    m_blockSizePropagation = false;
 }
 
 InProcessSurfaceItem::~InProcessSurfaceItem()
@@ -69,9 +88,10 @@ QSharedPointer<QObject> InProcessSurfaceItem::windowProperties()
 void InProcessSurfaceItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     QQuickItem::geometryChanged(newGeometry, oldGeometry);
-    if (m_contentItem) {
-        m_contentItem->setWidth(newGeometry.width());
-        m_contentItem->setHeight(newGeometry.height());
+    if (!m_blockSizePropagation && m_contentItem) {
+        m_blockSizePropagation = true;
+        m_contentItem->setSize(newGeometry.size().toSize());
+        m_blockSizePropagation = false;
     }
 }
 

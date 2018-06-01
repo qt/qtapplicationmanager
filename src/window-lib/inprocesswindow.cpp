@@ -70,6 +70,9 @@ InProcessWindow::InProcessWindow(AbstractApplication *app, QQuickItem *surfaceIt
         m_windowProperties.reset(new QObject());
 
     m_windowProperties->installEventFilter(this);
+
+    connect(m_rootItem, &QQuickItem::widthChanged, this, &Window::sizeChanged);
+    connect(m_rootItem, &QQuickItem::heightChanged, this, &Window::sizeChanged);
 }
 
 InProcessWindow::~InProcessWindow()
@@ -137,6 +140,11 @@ void InProcessWindow::setContentState(ContentState newState)
         m_contentState = newState;
         emit contentStateChanged();
     }
+}
+
+QSize InProcessWindow::size() const
+{
+    return m_rootItem->size().toSize();
 }
 
 QT_END_NAMESPACE_AM

@@ -68,6 +68,7 @@ protected:
 private:
     FakeApplicationManagerWindow *m_contentItem = nullptr;
     QSharedPointer<QObject> m_windowProperties;
+    bool m_blockSizePropagation = false;
 
     friend class QmlInProcessRuntime;
     friend class FakeApplicationManagerWindow;

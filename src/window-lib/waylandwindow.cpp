@@ -66,6 +66,7 @@ WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
         connect(m_surface, &WindowSurface::redraw,
                 this, &WaylandWindow::frameUpdated);
         connect(m_surface, &QWaylandSurface::hasContentChanged, this, &WaylandWindow::onContentStateChanged);
+        connect(m_surface, &QWaylandSurface::sizeChanged, this, &Window::sizeChanged);
 
         m_pingTimer->setInterval(1000);
         m_pingTimer->setSingleShot(true);
@@ -154,6 +155,11 @@ void WaylandWindow::onContentStateChanged()
 
     enableOrDisablePing();
     emit contentStateChanged();
+}
+
+QSize WaylandWindow::size() const
+{
+    return m_surface->size();
 }
 
 QT_END_NAMESPACE_AM

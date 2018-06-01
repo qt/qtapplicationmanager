@@ -45,8 +45,20 @@ import QtApplicationManager 1.0
 ApplicationManagerWindow {
     id: root
 
+    width: 123
+    height: 321
+
     Rectangle {
         anchors.fill: parent
         color: "red"
+    }
+
+    // A way for test code to trigger ApplicationManagerWindow's size changes from
+    // the client side
+    onWindowPropertyChanged: {
+        if (name === "requestedWidth")
+            root.width = value;
+        else if (name === "requestedHeight")
+            root.height = value;
     }
 }

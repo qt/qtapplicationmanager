@@ -62,6 +62,7 @@ class Window : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
     Q_PROPERTY(ContentState contentState READ contentState NOTIFY contentStateChanged)
     Q_PROPERTY(AbstractApplication* application READ application CONSTANT)
 public:
@@ -96,7 +97,10 @@ public:
     Q_INVOKABLE virtual QVariant windowProperty(const QString &name) const = 0;
     Q_INVOKABLE virtual QVariantMap windowProperties() const = 0;
 
+    virtual QSize size() const = 0;
+
 signals:
+    void sizeChanged();
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void isBeingDisplayedChanged();
     void contentStateChanged();

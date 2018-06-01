@@ -109,6 +109,13 @@
     \endlist
 */
 
+/*!
+    \qmlproperty QSize WindowObject::size
+    \readonly
+
+    The size of the window surface, in pixels
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 Window::Window(AbstractApplication *app)

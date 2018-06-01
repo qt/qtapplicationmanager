@@ -52,7 +52,6 @@ Item {
         id: windowItemsRepeater
         model: ListModel { id: windowItemsModel }
         delegate: WindowItem {
-            anchors.fill: parent
             window: model.window
         }
     }
@@ -230,6 +229,27 @@ Item {
             // Now that there are no WindowItems using that WindowObject anymore, it should
             // eventually be deleted by WindowManager
             tryCompare(WindowManager, "count", 0);
+        }
+
+        /*
+            Checks that the implicit size of a WindowItem matches the explicit size of the client's ApplicationManagerWindow
+         */
+        function test_implicitSize() {
+            var windowItem = windowItemsRepeater.itemAt(0);
+            var window = windowItem.window
+
+            // Must match the ApplicationManagerWindow size defined in apps/test.windowitem.app/mail.qml
+            compare(window.size.width, 123);
+            compare(window.size.height, 321);
+            compare(windowItem.width, 123);
+            compare(windowItem.height, 321);
+
+            window.setWindowProperty("requestedWidth", 200);
+            window.setWindowProperty("requestedHeight", 300);
+
+            tryCompare(window, "size", Qt.size(200,300));
+            tryCompare(windowItem, "width", 200);
+            tryCompare(windowItem, "height", 300);
         }
     }
 

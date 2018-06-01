@@ -77,6 +77,8 @@ protected:
 signals:
     void windowChanged();
     void primaryChanged();
+private slots:
+    void updateImplicitSize();
 private:
     void createImpl(bool inProcess);
     void tearDown();

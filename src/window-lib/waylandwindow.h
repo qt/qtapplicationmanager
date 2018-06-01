@@ -67,6 +67,8 @@ public:
 
     ContentState contentState() const override;
 
+    QSize size() const override;
+
     WindowSurface *surface() const { return m_surface; }
 
     static bool m_watchdogEnabled;

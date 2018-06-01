@@ -64,6 +64,7 @@ public:
     QVariantMap windowProperties() const override;
 
     ContentState contentState() const override { return m_contentState; }
+    QSize size() const override;
 
     QQuickItem *rootItem() const { return m_rootItem.data(); }
 

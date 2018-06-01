@@ -77,6 +77,8 @@
     It's possible to assign the same WindowObject to multiple WindowItems, which will result in it being
     rendered multiple times.
 
+    The implicit size of a WindowItem is the size of the WindowObject it is displaying.
+
     \sa WindowObject
 */
 
@@ -142,9 +144,11 @@ void WindowItem::setWindow(Window *window)
     if (window) {
         window->registerItem(this);
         connect(window, &QObject::destroyed, this, [this]() { setWindow(nullptr); });
+        connect(window, &Window::sizeChanged, this, &WindowItem::updateImplicitSize);
 
         createImpl(window->isInProcess());
         m_impl->setup(window);
+        updateImplicitSize();
 
         if (window->items().count() == 1) {
             makePrimary();
@@ -223,6 +227,16 @@ void WindowItem::makePrimary()
     if (oldPrimaryItem)
         emit oldPrimaryItem->primaryChanged();
     emit primaryChanged();
+}
+
+void WindowItem::updateImplicitSize()
+{
+    if (window()) {
+        QSize size = window()->size();
+        setImplicitSize(size.width(), size.height());
+    } else {
+        setImplicitSize(0, 0);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

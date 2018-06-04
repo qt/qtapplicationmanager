@@ -102,9 +102,8 @@ void FakeApplicationManagerWindow::setFakeVisible(bool visible)
             m_surfaceItem->setVisible(visible);
             if (m_runtime && !visible)
                 m_runtime->removeWindow(m_surfaceItem);
-        } else {
-            visibleChanged();
         }
+        emit visibleChanged();
     }
 }
 

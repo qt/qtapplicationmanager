@@ -124,6 +124,15 @@ QVariantMap LauncherMain::openGLConfiguration() const
     return m_openGLConfiguration;
 }
 
+QString LauncherMain::iconThemeName() const
+{
+    return m_iconThemeName;
+}
+
+QStringList LauncherMain::iconThemeSearchPaths() const
+{
+    return m_iconThemeSearchPaths;
+}
 
 QVariantMap LauncherMain::windowProperties(QWindow *window) const
 {
@@ -170,6 +179,8 @@ void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCE
     QVariantMap uiConfig = m_configuration.value(qSL("ui")).toMap();
     m_slowAnimations = uiConfig.value(qSL("slowAnimations")).toBool();
     m_openGLConfiguration = uiConfig.value(qSL("opengl")).toMap();
+    m_iconThemeName = uiConfig.value(qSL("iconThemeName")).toString();
+    m_iconThemeSearchPaths = uiConfig.value(qSL("iconThemeSearchPaths")).toStringList();
 
     // un-comment this if things go south:
     //qWarning() << "### LOG " << m_loggingRules;

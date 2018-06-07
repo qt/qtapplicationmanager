@@ -89,6 +89,9 @@ public:
 
     QVariantMap openGLConfiguration() const;
 
+    QString iconThemeName() const;
+    QStringList iconThemeSearchPaths() const;
+
     QVariantMap windowProperties(QWindow *window) const;
     void setWindowProperty(QWindow *window, const QString &name, const QVariant &value);
 
@@ -106,6 +109,8 @@ private:
     QString m_dbusAddressP2P;
     QString m_dbusAddressNotifications;
     QVariantMap m_openGLConfiguration;
+    QString m_iconThemeName;
+    QStringList m_iconThemeSearchPaths;
     WaylandQtAMClientExtension *m_waylandExtension = nullptr;
 };
 

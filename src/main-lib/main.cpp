@@ -198,6 +198,7 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
         qCWarning(LogDeployment).noquote() << warning;
 
     setupOpenGL(cfg->openGLConfiguration());
+    setupIconTheme(cfg->iconThemeSearchPaths(), cfg->iconThemeName());
 
     loadStartupPlugins(cfg->pluginFilePaths("startup"));
     parseSystemProperties(cfg->rawSystemProperties());
@@ -211,7 +212,8 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setMainQmlFile(cfg->mainQmlFile());
     setupSingleOrMultiProcess(cfg->forceSingleProcess(), cfg->forceMultiProcess());
     setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->openGLConfiguration(),
-                               cfg->containerConfigurations(), cfg->pluginFilePaths("container"));
+                               cfg->containerConfigurations(), cfg->pluginFilePaths("container"),
+                               cfg->iconThemeSearchPaths(), cfg->iconThemeName());
     setupInstallationLocations(cfg->installationLocations());
     loadApplicationDatabase(cfg->database(), cfg->recreateDatabase(), cfg->singleApp());
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
@@ -347,7 +349,8 @@ void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiPro
 }
 
 void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &openGLConfiguration,
-                                      const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths)
+                                      const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
+                                      const QStringList &iconThemeSearchPaths, const QString &iconThemeName)
 {
     if (m_isSingleProcessMode) {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager());
@@ -372,6 +375,7 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
     ContainerFactory::instance()->setConfiguration(containerConfigurations);
     RuntimeFactory::instance()->setConfiguration(runtimeConfigurations);
     RuntimeFactory::instance()->setSystemOpenGLConfiguration(openGLConfiguration);
+    RuntimeFactory::instance()->setIconTheme(iconThemeSearchPaths, iconThemeName);
     RuntimeFactory::instance()->setSystemProperties(m_systemProperties.at(SP_ThirdParty),
                                                     m_systemProperties.at(SP_BuiltIn));
 

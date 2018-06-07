@@ -253,6 +253,16 @@ QString DefaultConfiguration::style() const
     return value<QString>(nullptr, { "ui", "style" });
 }
 
+QString DefaultConfiguration::iconThemeName() const
+{
+    return value<QString>(nullptr, { "ui", "iconThemeName" });
+}
+
+QStringList DefaultConfiguration::iconThemeSearchPaths() const
+{
+    return value<QStringList>(nullptr, { "ui", "iconThemeSearchPaths" });
+}
+
 bool DefaultConfiguration::enableTouchEmulation() const
 {
     return value<bool>("enable-touch-emulation", { "ui", "enableTouchEmulation" });

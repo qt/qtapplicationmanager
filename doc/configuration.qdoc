@@ -359,6 +359,21 @@ all your imports paths and file references relative to your main config file.
     \li object
     \li Gives you the possibility to specify the required OpenGL version and/or profile. See
         \l{OpenGL Specification} {below} for more information.
+\row
+    \li \b -
+    \br \e ui/iconThemeName
+        \target iconThemeName
+    \li string
+    \li Specifies which icon theme is used. See \l{iconThemeSearchPaths} {ui/iconThemeSearchPaths}
+        for how to add a path to a custom theme.
+\row
+    \li \b -
+    \br \e ui/iconThemeSearchPaths
+        \target iconThemeSearchPaths
+    \li list<string>
+    \li Adds additional icon theme search paths to the System-UI and all apps. This can be used
+        to add a custom icon theme to the search path and load it by specifying
+        \l{iconThemeName} {ui/iconThemeName}.
 
 
 \omit

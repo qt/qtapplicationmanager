@@ -48,6 +48,7 @@
 #include <QVariant>
 #include <QFileInfo>
 #include <QLibrary>
+#include <QIcon>
 #include <QQmlDebuggingEnabler>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -115,6 +116,12 @@ int &SharedMain::preConstructor(int &argc)
 #  endif
 #endif
     return argc;
+}
+
+void SharedMain::setupIconTheme(const QStringList &themeSearchPaths, const QString &themeName)
+{
+    QIcon::setThemeSearchPaths(themeSearchPaths);
+    QIcon::setThemeName(themeName);
 }
 
 void SharedMain::setupQmlDebugging(bool qmlDebugging)

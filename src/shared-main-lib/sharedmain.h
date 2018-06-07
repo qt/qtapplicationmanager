@@ -60,6 +60,7 @@ public:
     ~SharedMain();
 
     static int &preConstructor(int &argc);
+    void setupIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
     void setupQmlDebugging(bool qmlDebugging);
     void setupLoggingRules(bool verbose, const QStringList &loggingRules);
     void setupOpenGL(const QVariantMap &openGLConfiguration);

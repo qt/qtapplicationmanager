@@ -111,7 +111,8 @@ protected:
     void setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false);
     void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &openGLConfiguration,
-                                    const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths);
+                                    const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
+                                    const QStringList &iconThemeSearchPaths, const QString &iconThemeName);
     void setupInstallationLocations(const QVariantList &installationLocations);
     void loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
                                  const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);

@@ -84,12 +84,18 @@ public:
     QVariantMap systemOpenGLConfiguration() const;
     void setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration);
 
+    QStringList iconThemeSearchPaths() const;
+    QString iconThemeName() const;
+    void setIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
+
 private:
     QString m_id;
     QVariantMap m_configuration;
     QVariantMap m_systemPropertiesBuiltIn;
     QVariantMap m_systemProperties3rdParty;
     QVariantMap m_systemOpenGLConfiguration;
+    QString m_iconThemeName;
+    QStringList m_iconThemeSearchPaths;
 };
 
 

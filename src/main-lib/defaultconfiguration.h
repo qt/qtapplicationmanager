@@ -83,6 +83,8 @@ public:
     QString singleApp() const;
     QStringList loggingRules() const;
     QString style() const;
+    QString iconThemeName() const;
+    QStringList iconThemeSearchPaths() const;
     bool enableTouchEmulation() const;
 
     QVariantMap openGLConfiguration() const;

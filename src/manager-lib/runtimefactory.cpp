@@ -138,6 +138,12 @@ void RuntimeFactory::setSystemOpenGLConfiguration(const QVariantMap &openGLConfi
         it.value()->setSystemOpenGLConfiguration(openGLConfiguration);
 }
 
+void RuntimeFactory::setIconTheme(const QStringList &themeSearchPaths, const QString &themeName)
+{
+    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
+        it.value()->setIconTheme(themeSearchPaths, themeName);
+}
+
 bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager)
 {
     return registerRuntime(manager, manager->identifier());

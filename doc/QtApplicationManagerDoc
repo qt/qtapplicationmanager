@@ -1,0 +1,16 @@
+// needed for the new clang based qdoc parser in Qt 5.11
+#include <QtAppManApplication/QtAppManApplication>
+#include <QtAppManCommon/QtAppManCommon>
+#include <QtAppManCrypto/QtAppManCrypto>
+#include <QtAppManDBus/QtAppManDBus>
+#include <QtAppManInstaller/QtAppManInstaller>
+#include <QtAppManIpc/QtAppManIpc>
+#include <QtAppManLauncher/QtAppManLauncher>
+#include <QtAppManMain/QtAppManMain>
+#include <QtAppManManager/QtAppManManager>
+#include <QtAppManMonitor/QtAppManMonitor>
+#include <QtAppManNotification/QtAppManNotification>
+#include <QtAppManPackage/QtAppManPackage>
+#include <QtAppManPluginInterfaces/QtAppManPluginInterfaces>
+#include <QtAppManSharedMain/QtAppManSharedMain>
+#include <QtAppManWindow/QtAppManWindow>

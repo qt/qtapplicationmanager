@@ -71,6 +71,7 @@ public:
     void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
     void setSlowAnimations(bool isSlow);
     void setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration);
+    void setIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
 
     bool registerRuntime(AbstractRuntimeManager *manager);
     bool registerRuntime(AbstractRuntimeManager *manager, const QString &identifier);

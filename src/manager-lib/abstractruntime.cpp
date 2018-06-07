@@ -245,4 +245,20 @@ void AbstractRuntimeManager::setSystemOpenGLConfiguration(const QVariantMap &ope
     m_systemOpenGLConfiguration = openGLConfiguration;
 }
 
+QStringList AbstractRuntimeManager::iconThemeSearchPaths() const
+{
+    return m_iconThemeSearchPaths;
+}
+
+QString AbstractRuntimeManager::iconThemeName() const
+{
+    return m_iconThemeName;
+}
+
+void AbstractRuntimeManager::setIconTheme(const QStringList &themeSearchPaths, const QString &themeName)
+{
+    m_iconThemeSearchPaths = themeSearchPaths;
+    m_iconThemeName = themeName;
+}
+
 QT_END_NAMESPACE_AM

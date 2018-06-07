@@ -43,6 +43,8 @@
 #  include <sys/poll.h>
 #endif
 
+#include <functional>
+
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/error.h>
 #include <QtAppManCommon/exception.h>
@@ -180,7 +182,7 @@ static Command command(QCommandLineParser &clp)
 static void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                                     const QMap<QString, int> &stdRedirections, bool restart,
                                     const QString &documentUrl) Q_DECL_NOEXCEPT_EXPR(false);
-static void stopApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false);
+static void stopApplication(const QString &appId, bool forceKill = false) Q_DECL_NOEXCEPT_EXPR(false);
 static void stopAllApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void listApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void showApplication(const QString &appId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
@@ -199,6 +201,12 @@ public:
     Exception *exception() const
     {
         return m_exception;
+    }
+
+    template <typename T> void runLater(T slot)
+    {
+        // run the specified function as soon as the event loop is up and running
+        QTimer::singleShot(0, this, slot);
     }
 
 protected:
@@ -289,8 +297,12 @@ int main(int argc, char *argv[])
                 stdRedirections[qSL("err")] = 2;
             bool restart = clp.isSet(qSL("restart"));
 
-            startOrDebugApplication(QString(), clp.positionalArguments().at(1), stdRedirections,
-                                    restart, args == 3 ? clp.positionalArguments().at(2) : QString());
+            a.runLater(std::bind(startOrDebugApplication,
+                                 QString(),
+                                 clp.positionalArguments().at(1),
+                                 stdRedirections,
+                                 restart,
+                                 args == 3 ? clp.positionalArguments().at(2) : QString()));
             break;
         }
         case DebugApplication: {
@@ -316,9 +328,12 @@ int main(int argc, char *argv[])
                 stdRedirections[qSL("err")] = 2;
             bool restart = clp.isSet(qSL("restart"));
 
-            startOrDebugApplication(clp.positionalArguments().at(1), clp.positionalArguments().at(2),
-                                    stdRedirections, restart,
-                                    args == 3 ? clp.positionalArguments().at(2) : QString());
+            a.runLater(std::bind(startOrDebugApplication,
+                                 clp.positionalArguments().at(1),
+                                 clp.positionalArguments().at(2),
+                                 stdRedirections,
+                                 restart,
+                                 args == 3 ? clp.positionalArguments().at(2) : QString()));
             break;
         }
         case StopAllApplications:
@@ -326,22 +341,25 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 1)
                 clp.showHelp(1);
 
-            stopAllApplications();
+            a.runLater(stopAllApplications);
             break;
 
         case StopApplication:
+            clp.addOption({ { qSL("f"), qSL("force") }, qSL("Force kill the application.") });
             clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            stopApplication(clp.positionalArguments().at(1));
+            a.runLater(std::bind(stopApplication,
+                                 clp.positionalArguments().at(1),
+                                 clp.isSet(qSL("f"))));
             break;
 
         case ListApplications:
             clp.process(a);
-            listApplications();
+            a.runLater(listApplications);
             break;
 
         case ShowApplication:
@@ -352,7 +370,9 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            showApplication(clp.positionalArguments().at(1), clp.isSet(qSL("json")));
+            a.runLater(std::bind(showApplication,
+                                 clp.positionalArguments().at(1),
+                                 clp.isSet(qSL("json"))));
             break;
 
         case InstallPackage:
@@ -364,7 +384,10 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            installPackage(clp.positionalArguments().at(1), clp.value(qSL("l")), clp.isSet(qSL("a")));
+            a.runLater(std::bind(installPackage,
+                                 clp.positionalArguments().at(1),
+                                 clp.value(qSL("l")),
+                                 clp.isSet(qSL("a"))));
             break;
 
         case RemovePackage:
@@ -376,12 +399,15 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            removePackage(clp.positionalArguments().at(1), clp.isSet(qSL("k")), clp.isSet(qSL("f")));
+            a.runLater(std::bind(removePackage,
+                                 clp.positionalArguments().at(1),
+                                 clp.isSet(qSL("k")),
+                                 clp.isSet(qSL("f"))));
             break;
 
         case ListInstallationLocations:
             clp.process(a);
-            listInstallationLocations();
+            a.runLater(listInstallationLocations);
             break;
 
         case ShowInstallationLocation:
@@ -392,7 +418,9 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            showInstallationLocation(clp.positionalArguments().at(1), clp.isSet(qSL("json")));
+            a.runLater(std::bind(showInstallationLocation,
+                                 clp.positionalArguments().at(1),
+                                 clp.isSet(qSL("json"))));
             break;
         }
 
@@ -413,162 +441,173 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
 {
     dbus.connectToManager();
 
-    QTimer::singleShot(0, [debugWrapper, appId, stdRedirections, restart, documentUrl]() {
-        if (restart) {
-            auto stopReply = dbus.manager()->stopApplication(appId, true);
-            stopReply.waitForFinished();
-        }
+    if (restart) {
+        bool isStopped = false;
 
-        static bool isStarted = false;
+        // pass 0: normal stop / pass 1: force kill
+        for (int pass = 0; !isStopped && (pass < 2); ++pass) {
+            stopApplication(appId, pass == 0 ? false : true);
 
-        if (!stdRedirections.isEmpty()) {
-            // in case application quits -> quit the controller
-            QObject::connect(dbus.manager(), &IoQtApplicationManagerInterface::applicationRunStateChanged,
-                             qApp, [appId](const QString &id, uint runState) {
-                if (isStarted && id == appId && runState == 0 /* NotRunning */) {
-                    auto getReply = dbus.manager()->get(id);
-                    getReply.waitForFinished();
-                    if (getReply.isError())
-                        throw Exception(Error::IO, "failed to get exit code from application-manager: %1").arg(getReply.error().message());
-                    fprintf(stdout, "\n --- application has quit ---\n\n");
-                    auto app = getReply.value();
-                    qApp->exit(app.value(qSL("lastExitCode"), 1).toInt());
-                }
-            });
-        }
+            static const int checksPerSecond = 10;
 
-        bool isDebug = !debugWrapper.isEmpty();
-        QDBusPendingReply<bool> reply;
-        if (stdRedirections.isEmpty()) {
-            reply = isDebug ? dbus.manager()->debugApplication(appId, debugWrapper, documentUrl)
-                            : dbus.manager()->startApplication(appId, documentUrl);
-        } else {
-            UnixFdMap fdMap;
-            for (auto it = stdRedirections.cbegin(); it != stdRedirections.cend(); ++it)
-                fdMap.insert(it.key(), QDBusUnixFileDescriptor(it.value()));
+            // check if application has quit for max. 3sec
+            for (int i = 0; !isStopped && (i < (3 * checksPerSecond)); ++i) {
+                auto stateReply = dbus.manager()->applicationRunState(appId);
+                stateReply.waitForFinished();
+                if (stateReply.isError())
+                    throw Exception(Error::IO, "failed to get the current run-state from application-manager: %1").arg(stateReply.error().message());
 
-            reply = isDebug ? dbus.manager()->debugApplication(appId, debugWrapper, fdMap, documentUrl)
-                            : dbus.manager()->startApplication(appId, fdMap, documentUrl);
-        }
-
-        reply.waitForFinished();
-        if (reply.isError()) {
-            throw Exception(Error::IO, "failed to call %2Application via DBus: %1")
-                .arg(reply.error().message()).arg(isDebug ? "debug" : "start");
-        }
-
-        isStarted = reply.value();
-        if (stdRedirections.isEmpty()) {
-            qApp->exit(isStarted ? 0 : 2);
-        } else {
-            if (!isStarted) {
-                qApp->exit(2);
-            } else {
-                // on Ctrl+C or SIGTERM -> stop the application
-                UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
-                                                       { SIGTERM, SIGINT
-#if defined(Q_OS_UNIX)
-                                                                        , SIGPIPE, SIGHUP
-#endif
-                                                       },
-                                                       [appId](int /*sig*/) {
-                    auto reply = dbus.manager()->stopApplication(appId, true);
-                    reply.waitForFinished();
-                    qApp->exit(1);
-                });
-
-#if defined(POLLRDHUP)
-                // ssh does not forward Ctrl+C, but we can detect a hangup condition on stdin
-                class HupThread : public QThread // clazy:exclude=missing-qobject-macro
-                {
-                public:
-                    HupThread(QCoreApplication *parent)
-                        : QThread(parent)
-                    {
-                        connect(parent, &QCoreApplication::aboutToQuit, this, [this]() {
-                            if (isRunning()) {
-                                terminate();
-                                wait();
-                            }
-                        });
-                    }
-
-                    void run() override
-                    {
-                        while (true) {
-                            struct pollfd pfd = { 0, POLLRDHUP, 0 };
-                            int res = poll(&pfd, 1, -1);
-                            if (res == 1 && pfd.revents & POLLHUP) {
-                                kill(getpid(), SIGHUP);
-                                return;
-                            }
-                        }
-                    }
-                };
-                (new HupThread(qApp))->start();
-#endif // defined(POLLRDHUP)
+                if (stateReply.value() == 0 /* NotRunning */)
+                    isStopped = true;
+                else
+                    QThread::currentThread()->msleep(1000 / checksPerSecond);
             }
         }
-    });
+
+        if (!isStopped)
+            throw Exception("failed to stop application %1 before restarting it").arg(appId);
+    }
+
+    // the async lambda below needs to share this variable
+    static bool isStarted = false;
+
+    if (!stdRedirections.isEmpty()) {
+        // in case application quits -> quit the controller
+        QObject::connect(dbus.manager(), &IoQtApplicationManagerInterface::applicationRunStateChanged,
+                         qApp, [appId](const QString &id, uint runState) {
+            if (isStarted && id == appId && runState == 0 /* NotRunning */) {
+                auto getReply = dbus.manager()->get(id);
+                getReply.waitForFinished();
+                if (getReply.isError())
+                    throw Exception(Error::IO, "failed to get exit code from application-manager: %1").arg(getReply.error().message());
+                fprintf(stdout, "\n --- application has quit ---\n\n");
+                auto app = getReply.value();
+                qApp->exit(app.value(qSL("lastExitCode"), 1).toInt());
+            }
+        });
+    }
+
+    bool isDebug = !debugWrapper.isEmpty();
+    QDBusPendingReply<bool> reply;
+    if (stdRedirections.isEmpty()) {
+        reply = isDebug ? dbus.manager()->debugApplication(appId, debugWrapper, documentUrl)
+                        : dbus.manager()->startApplication(appId, documentUrl);
+    } else {
+        UnixFdMap fdMap;
+        for (auto it = stdRedirections.cbegin(); it != stdRedirections.cend(); ++it)
+            fdMap.insert(it.key(), QDBusUnixFileDescriptor(it.value()));
+
+        reply = isDebug ? dbus.manager()->debugApplication(appId, debugWrapper, fdMap, documentUrl)
+                        : dbus.manager()->startApplication(appId, fdMap, documentUrl);
+    }
+
+    reply.waitForFinished();
+    if (reply.isError()) {
+        throw Exception(Error::IO, "failed to call %2Application via DBus: %1")
+                .arg(reply.error().message()).arg(isDebug ? "debug" : "start");
+    }
+
+    isStarted = reply.value();
+    if (stdRedirections.isEmpty()) {
+        qApp->exit(isStarted ? 0 : 2);
+    } else {
+        if (!isStarted) {
+            qApp->exit(2);
+        } else {
+            // on Ctrl+C or SIGTERM -> stop the application
+            UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
+            { SIGTERM, SIGINT
+#if defined(Q_OS_UNIX)
+                             , SIGPIPE, SIGHUP
+#endif
+            }, [appId](int /*sig*/) {
+                auto reply = dbus.manager()->stopApplication(appId, true);
+                reply.waitForFinished();
+                qApp->exit(1);
+            });
+
+#if defined(POLLRDHUP)
+            // ssh does not forward Ctrl+C, but we can detect a hangup condition on stdin
+            class HupThread : public QThread // clazy:exclude=missing-qobject-macro
+            {
+            public:
+                HupThread(QCoreApplication *parent)
+                    : QThread(parent)
+                {
+                    connect(parent, &QCoreApplication::aboutToQuit, this, [this]() {
+                        if (isRunning()) {
+                            terminate();
+                            wait();
+                        }
+                    });
+                }
+
+                void run() override
+                {
+                    while (true) {
+                        struct pollfd pfd = { 0, POLLRDHUP, 0 };
+                        int res = poll(&pfd, 1, -1);
+                        if (res == 1 && pfd.revents & POLLHUP) {
+                            kill(getpid(), SIGHUP);
+                            return;
+                        }
+                    }
+                }
+            };
+            (new HupThread(qApp))->start();
+#endif // defined(POLLRDHUP)
+        }
+    }
 }
 
-void stopApplication(const QString &appId) Q_DECL_NOEXCEPT_EXPR(false)
+void stopApplication(const QString &appId, bool forceKill) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToManager();
 
-    QTimer::singleShot(0, [appId]() {
-        auto reply = dbus.manager()->stopApplication(appId);
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call stopApplication via DBus: %1").arg(reply.error().message());
-        qApp->quit();
-    });
-
+    auto reply = dbus.manager()->stopApplication(appId, forceKill);
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to call stopApplication via DBus: %1").arg(reply.error().message());
+    qApp->quit();
 }
 
 void stopAllApplications() Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToManager();
 
-    QTimer::singleShot(0, []() {
-        auto reply = dbus.manager()->stopAllApplications();
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call stopAllApplications via DBus: %1").arg(reply.error().message());
-        qApp->quit();
-    });
+    auto reply = dbus.manager()->stopAllApplications();
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to call stopAllApplications via DBus: %1").arg(reply.error().message());
+    qApp->quit();
 }
 
 void listApplications() Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToManager();
 
-    QTimer::singleShot(0, []() {
-        auto reply = dbus.manager()->applicationIds();
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call applicationIds via DBus: %1").arg(reply.error().message());
+    auto reply = dbus.manager()->applicationIds();
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to call applicationIds via DBus: %1").arg(reply.error().message());
 
-        fprintf(stdout, "%s\n", qPrintable(reply.value().join(qL1C('\n'))));
-        qApp->quit();
-    });
+    fprintf(stdout, "%s\n", qPrintable(reply.value().join(qL1C('\n'))));
+    qApp->quit();
 }
 
 void showApplication(const QString &appId, bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToManager();
 
-    QTimer::singleShot(0, [appId, asJson]() {
-        auto reply = dbus.manager()->get(appId);
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to get application via DBus: %1").arg(reply.error().message());
+    auto reply = dbus.manager()->get(appId);
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to get application via DBus: %1").arg(reply.error().message());
 
-        QVariant app = reply.value();
-        fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(app).toJson().constData()
-                                       : QtYaml::yamlFromVariantDocuments({ app }).constData());
-        qApp->quit();
-    });
+    QVariant app = reply.value();
+    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(app).toJson().constData()
+                                   : QtYaml::yamlFromVariantDocuments({ app }).constData());
+    qApp->quit();
 }
 
 void installPackage(const QString &package, const QString &location, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false)
@@ -604,22 +643,8 @@ void installPackage(const QString &package, const QString &location, bool acknow
     dbus.connectToManager();
     dbus.connectToInstaller();
 
-    // all the async snippets below need to share these variables
+    // all the async lambdas below need to share this variable
     static QString installationId;
-    static QString applicationId;
-
-    // start the package installation
-
-    QTimer::singleShot(0, [location, fi]() {
-        auto reply = dbus.installer()->startPackageInstallation(location, fi.absoluteFilePath());
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());
-
-        installationId = reply.value();
-        if (installationId.isEmpty())
-            throw Exception(Error::IO, "startPackageInstallation returned an empty taskId");
-    });
 
     // as soon as we have the manifest available: get the app id and acknowledge the installation
 
@@ -628,9 +653,9 @@ void installPackage(const QString &package, const QString &location, bool acknow
                          [](const QString &taskId, const QVariantMap &metadata) {
             if (taskId != installationId)
                 return;
-            applicationId = metadata.value(qSL("id")).toString();
+            QString applicationId = metadata.value(qSL("id")).toString();
             if (applicationId.isEmpty())
-                throw Exception(Error::IO, "could not find a valid application id in the package - got: %1").arg(applicationId);
+                throw Exception(Error::IO, "could not find a valid application id in the package");
             fprintf(stdout, "Acknowledging package installation...\n");
             dbus.installer()->acknowledgePackageInstallation(taskId);
         });
@@ -654,6 +679,17 @@ void installPackage(const QString &package, const QString &location, bool acknow
         fprintf(stdout, "Package installation finished successfully.\n");
         qApp->quit();
     });
+
+    // start the package installation
+
+    auto reply = dbus.installer()->startPackageInstallation(location, fi.absoluteFilePath());
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());
+
+    installationId = reply.value();
+    if (installationId.isEmpty())
+        throw Exception(Error::IO, "startPackageInstallation returned an empty taskId");
 }
 
 void removePackage(const QString &applicationId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false)
@@ -663,21 +699,8 @@ void removePackage(const QString &applicationId, bool keepDocuments, bool force)
     dbus.connectToManager();
     dbus.connectToInstaller();
 
-    // all the async snippets below need to share these variables
+    // both the async lambdas below need to share this variables
     static QString installationId;
-
-    // start the package installation
-
-    QTimer::singleShot(0, [applicationId, keepDocuments, force]() {
-        auto reply = dbus.installer()->removePackage(applicationId, keepDocuments, force);
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call removePackage via DBus: %1").arg(reply.error().message());
-
-        installationId = reply.value();
-        if (installationId.isEmpty())
-            throw Exception(Error::IO, "removePackage returned an empty taskId");
-    });
 
     // on failure: quit
 
@@ -697,36 +720,43 @@ void removePackage(const QString &applicationId, bool keepDocuments, bool force)
         fprintf(stdout, "Package removal finished successfully.\n");
         qApp->quit();
     });
+
+    // start the package installation
+
+    auto reply = dbus.installer()->removePackage(applicationId, keepDocuments, force);
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to call removePackage via DBus: %1").arg(reply.error().message());
+
+    installationId = reply.value();
+    if (installationId.isEmpty())
+        throw Exception(Error::IO, "removePackage returned an empty taskId");
 }
 
 void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToInstaller();
 
-    QTimer::singleShot(0, []() {
-        auto reply = dbus.installer()->installationLocationIds();
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call installationLocationIds via DBus: %1").arg(reply.error().message());
+    auto reply = dbus.installer()->installationLocationIds();
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to call installationLocationIds via DBus: %1").arg(reply.error().message());
 
-        fprintf(stdout, "%s\n", qPrintable(reply.value().join(qL1C('\n'))));
-        qApp->quit();
-    });
+    fprintf(stdout, "%s\n", qPrintable(reply.value().join(qL1C('\n'))));
+    qApp->quit();
 }
 
 void showInstallationLocation(const QString &location, bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToInstaller();
 
-    QTimer::singleShot(0, [location, asJson]() {
-        auto reply = dbus.installer()->getInstallationLocation(location);
-        reply.waitForFinished();
-        if (reply.isError())
-            throw Exception(Error::IO, "failed to call getInstallationLocation via DBus: %1").arg(reply.error().message());
+    auto reply = dbus.installer()->getInstallationLocation(location);
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to call getInstallationLocation via DBus: %1").arg(reply.error().message());
 
-        QVariant app = reply.value();
-        fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(app).toJson().constData()
-                                       : QtYaml::yamlFromVariantDocuments({ app }).constData());
-        qApp->quit();
-    });
+    QVariant app = reply.value();
+    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(app).toJson().constData()
+                                   : QtYaml::yamlFromVariantDocuments({ app }).constData());
+    qApp->quit();
 }

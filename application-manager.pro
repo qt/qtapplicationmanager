@@ -5,6 +5,7 @@ requires(linux|win32:!winrt|macos)
 TEMPLATE = subdirs
 CONFIG += ordered
 
+SUBDIRS += qmake-features
 SUBDIRS += benchmarks
 
 enable-tests:QT_BUILD_PARTS *= tests
@@ -17,7 +18,7 @@ qtCompileTest(libarchive)
 qtCompileTest(libyaml)
 !headless:qtCompileTest(touchemulation)
 
-qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private):CONFIG += am_compatible_compositor
+qtHaveModule(waylandcompositor):CONFIG += am_compatible_compositor
 
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")
@@ -107,7 +108,6 @@ OTHER_FILES += \
     .qmake.conf \
     application-manager.conf \
     template-opt/am/*.yaml \
-    qmake-features/*.prf \
     sync.profile \
     header.*[^~] \
     LICENSE.*[^~] \

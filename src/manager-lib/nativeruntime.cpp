@@ -283,6 +283,13 @@ bool NativeRuntime::start()
     if (!openGLConfig.isEmpty())
         uiConfig.insert(qSL("opengl"), openGLConfig);
 
+    QString iconThemeName = manager()->iconThemeName();
+    QStringList iconThemeSearchPaths = manager()->iconThemeSearchPaths();
+    if (!iconThemeName.isEmpty())
+        uiConfig.insert(qSL("iconThemeName"), iconThemeName);
+    if (!iconThemeSearchPaths.isEmpty())
+        uiConfig.insert(qSL("iconThemeSearchPaths"), iconThemeSearchPaths);
+
     QVariantMap config = {
         { qSL("logging"), loggingConfig },
         { qSL("baseDir"), QDir::currentPath() },

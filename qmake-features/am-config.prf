@@ -21,7 +21,7 @@ linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|
 
 !force-single-process {
     linux|osx {
-        headless|if(qtHaveModule(waylandcompositor):qtHaveModule(waylandcompositor-private)) {
+        headless|if(qtHaveModule(waylandcompositor)) {
             CONFIG *= auto-multi-process
         }
     }

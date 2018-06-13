@@ -46,6 +46,8 @@
 #  include <QQuickItem>
 #  include <QtAppManCommon/global.h>
 
+#include <QSharedPointer>
+
 QT_FORWARD_DECLARE_CLASS(QQmlComponentAttached)
 
 QT_BEGIN_NAMESPACE_AM
@@ -53,149 +55,151 @@ QT_BEGIN_NAMESPACE_AM
 class QmlInProcessRuntime;
 class InProcessSurfaceItem;
 
-class FakeApplicationManagerWindow : public QQuickItem
+class FakeApplicationManagerWindow : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
-    Q_PROPERTY(QString title READ dummyGetterString WRITE dummySetterString)
+    Q_PROPERTY(QQuickItem* contentItem READ contentItem CONSTANT)
 
-    Q_PROPERTY(bool visible READ isFakeVisible WRITE setFakeVisible NOTIFY visibleChanged FINAL)
+    // QWindow properties
+    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
+    //Q_PROPERTY(Qt::WindowModality modality READ modality WRITE setModality NOTIFY modalityChanged)
+    //Q_PROPERTY(Qt::WindowFlags flags READ flags WRITE setFlags)
+    Q_PROPERTY(int x READ x WRITE setX NOTIFY xChanged)
+    Q_PROPERTY(int y READ y WRITE setY NOTIFY yChanged)
+    Q_PROPERTY(int width READ width WRITE setWidth NOTIFY widthChanged)
+    Q_PROPERTY(int height READ height WRITE setHeight NOTIFY heightChanged)
+    Q_PROPERTY(int minimumWidth READ minimumWidth WRITE setMinimumWidth NOTIFY minimumWidthChanged)
+    Q_PROPERTY(int minimumHeight READ minimumHeight WRITE setMinimumHeight NOTIFY minimumHeightChanged)
+    Q_PROPERTY(int maximumWidth READ maximumWidth WRITE setMaximumWidth NOTIFY maximumWidthChanged)
+    Q_PROPERTY(int maximumHeight READ maximumHeight WRITE setMaximumHeight NOTIFY maximumHeightChanged)
+    Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
+    Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
+    //Q_PROPERTY(Visibility visibility READ visibility WRITE setVisibility NOTIFY visibilityChanged)
+    //Q_PROPERTY(Qt::ScreenOrientation contentOrientation READ contentOrientation WRITE reportContentOrientationChange NOTIFY contentOrientationChanged)
+    Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged)
 
-    // for API compatibility with QWaylandQuickItem - we cannot really simulate these,
-    // but at least the QML code will not throw errors due to missing properties.
-    Q_PROPERTY(bool paintEnabled READ dummyGetter WRITE dummySetter)
-    Q_PROPERTY(bool touchEventsEnabled READ dummyGetter WRITE dummySetter)
-    Q_PROPERTY(bool inputEventsEnabled READ dummyGetter WRITE dummySetter)
-    Q_PROPERTY(bool focusOnClick READ dummyGetter WRITE dummySetter)
+    Q_PROPERTY(QQmlListProperty<QObject> data READ data)
 
-    // Hide the following properties (from QQuickIem),
-    // since they are not available in multi-process mode (QWindow):
-    Q_PROPERTY(QJSValue parent READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue children READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue resources READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue z READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue enabled READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue visibleChildren READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue states READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue transitions READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue state READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue childrenRect READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue anchors READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue left READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue right READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue horizontalCenter READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue top READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue bottom READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue verticalCenter READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue baseline READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue clip READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue focus READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue activeFocus READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue activeFocusOnTab READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue rotation READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue scale READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue transformOrigin READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue transformOriginPoint READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue transform READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue smooth READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue antialiasing READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue implicitWidth READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue implicitHeight READ getUndefined CONSTANT)
-    Q_PROPERTY(QJSValue layer READ getUndefined CONSTANT)
+    Q_CLASSINFO("DefaultProperty", "data")
 
 public:
-    explicit FakeApplicationManagerWindow(QQuickItem *parent = nullptr);
+    explicit FakeApplicationManagerWindow(QObject *parent = nullptr);
     ~FakeApplicationManagerWindow() override;
 
     QColor color() const;
     void setColor(const QColor &c);
 
-    bool isFakeVisible() const;
-    void setFakeVisible(bool visible);
+    QQmlListProperty<QObject> data();
 
     Q_INVOKABLE bool setWindowProperty(const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;
     Q_INVOKABLE QVariantMap windowProperties() const;
 
+    QQuickItem *contentItem();
+
+    // From QQmlParserStatus
+    void classBegin() override {}
     void componentComplete() override;
+
+    static void data_append(QQmlListProperty<QObject> *property, QObject *value);
+    static int data_count(QQmlListProperty<QObject> *property);
+    static QObject *data_at(QQmlListProperty<QObject> *property, int index);
+    static void data_clear(QQmlListProperty<QObject> *property);
+
+    // Getters and setters for QWindow properties
+
+    QString title() const { return m_title; }
+    void setTitle(const QString &);
+
+    int x() const { return m_x; }
+    void setX(int);
+
+    int y() const { return m_y; }
+    void setY(int);
+
+    int width() const;
+    void setWidth(int);
+
+    int height() const;
+    void setHeight(int);
+
+    int minimumWidth() const { return m_minimumWidth; }
+    void setMinimumWidth(int);
+
+    int minimumHeight() const { return m_minimumHeight; }
+    void setMinimumHeight(int);
+
+    int maximumWidth() const { return m_maximumWidth; }
+    void setMaximumWidth(int);
+
+    int maximumHeight() const { return m_maximumHeight; }
+    void setMaximumHeight(int);
+
+    bool isVisible() const;
+    void setVisible(bool visible);
+
+    bool isActive() const { return m_active; }
+
+    qreal opacity() const { return m_opacity; }
+    void setOpacity(qreal);
 
 public slots:
     void close();
     void showFullScreen();
     void showMaximized();
     void showNormal();
-    //    bool close() { emit fakeCloseSignal(); return true; } // not supported right now, because it causes crashes in multiprocess mode
-    //... revisit later (after andies resize-redesign) to check if close() is working for wayland
 
     // following QWindow slots aren't implemented yet:
     //    void hide()
     //    void lower()
     //    void raise()
-    //    void setHeight(int arg)
-    //    void setMaximumHeight(int h)
-    //    void setMaximumWidth(int w)
-    //    void setMinimumHeight(int h)
-    //    void setMinimumWidth(int w)
-    //    void setTitle(const QString &)
-    //    void setVisible(bool visible)
-    //    void setWidth(int arg)
-    //    void setX(int arg)
-    //    void setY(int arg)
     //    void show()
     //    void showMinimized()
 
-    // Hide the following functions (from QQuickIem),
-    // since they are not available in multi-process mode (QWindow):
-    Q_INVOKABLE void grabToImage() const;
-    Q_INVOKABLE void mapFromItem() const;
-    Q_INVOKABLE void mapToItem() const;
-    Q_INVOKABLE void mapFromGlobal() const;
-    Q_INVOKABLE void mapToGlobal() const;
-    Q_INVOKABLE void forceActiveFocus() const;
-    Q_INVOKABLE void nextItemInFocusChain() const;
-    Q_INVOKABLE void childAt() const;
-#if defined(Q_CC_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Woverloaded-virtual"
-#endif
-    // Although "contains" is virtual in QQuickItem with a different signature, from QML
-    // the following, intentionally overloaded version without parameters will be called:
-    Q_INVOKABLE void contains() const;
-#if defined(Q_CC_CLANG)
-#pragma clang diagnostic pop
-#endif
-
 signals:
-    void fakeCloseSignal();
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void colorChanged();
-    void visibleChanged();
 
-protected:
-    bool eventFilter(QObject *o, QEvent *e) override;
-    QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
-    void connectNotify(const QMetaMethod &signal) override;
+    // signals for QWindow properties
+    void titleChanged();
+    void xChanged();
+    void yChanged();
+    void widthChanged();
+    void heightChanged();
+    void minimumWidthChanged();
+    void minimumHeightChanged();
+    void maximumWidthChanged();
+    void maximumHeightChanged();
+    void visibleChanged();
+    void activeChanged();
+    void opacityChanged();
+
+private slots:
+    void addOrRemoveSurface();
 
 private:
-    bool dummyGetter() const { return false; }
-    void dummySetter(bool) { }
-    QString dummyGetterString() const { return QString(); }
-    void dummySetterString(const QString&) {}
-
     void determineRuntime();
-    void onVisibleChanged();
-    QJSValue getUndefined() const;
-    void referenceError(const char *symbol) const;
+    void findParentWindow(QObject *object = nullptr);
+    void setParentWindow(FakeApplicationManagerWindow *fakeAppWindow);
 
-    InProcessSurfaceItem *m_surfaceItem = nullptr;
-    QSharedPointer<QObject> m_windowProperties;
+    QSharedPointer<InProcessSurfaceItem> m_surfaceItem;
     QmlInProcessRuntime *m_runtime = nullptr;
-    QColor m_color;
-    bool m_fakeVisible = true;
     QVector<QQmlComponentAttached *> m_attachedCompleteHandlers;
+    FakeApplicationManagerWindow *m_parentWindow = nullptr;
+
+    // QWindow properties
+    QString m_title;
+    int m_x;
+    int m_y;
+    int m_minimumWidth;
+    int m_minimumHeight;
+    int m_maximumWidth;
+    int m_maximumHeight;
+    bool m_active;
+    qreal m_opacity;
 
     friend class QmlInProcessRuntime; // for setting the m_runtime member
-    friend class InProcessSurfaceItem;
 };
 
 QT_END_NAMESPACE_AM

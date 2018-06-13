@@ -131,40 +131,22 @@ and multi-process mode is the goal, there is no way around using an ApplicationM
 are other benefits when using an ApplicationManagerWindow, as well (e.g. window properties).
 
 In multi-process mode an ApplicationManagerWindow derives from Window and in single-process mode
-from Item. Consequently, there is a multitude of different properties, methods and signals in an
-ApplicationManagerWindow depending on whether it is used in single- or multi-process mode. For
-instance an Item has a parent property, which a Window does not have. Hence, if you bind an Item to
-the (non-existent) parent property in multi-process mode a warning will be shown and the
-application will not start.
-
-In order to have a similar behavior in single-process mode, the parent property has been overwritten
-in the single-process version of ApplicationManagerWindow, so it will also log a message and abort.
-The same approach has been applied to all other properties, methods and signals that are only
-available in an Item. Note however, that the message type and text might be different and even
-misleading. Only the termination behavior will be the same. For instance binding a non-existent
-property causes an abort, whereas assignment doesn't. There are more subtle differences caused by
-the different base classes:
+from QtObject. So several properties coming from Window won't have any effect in single-process
+mode, although ApplicationManagerWindow will still define them for compatbility purposes.
 
 \list
-\li If an ApplicationManagerWindow is placed in an object hierarchy including other Items, those
-    Items will influence the effective visibility of it in single-process mode, whereas in
-    multi-process mode only the Window hierarchy is considered (Items are ignored). This behavior
-    is not application-manager specific, it is inherent in QtQuick already.
 \li An ApplicationManagerWindow is exposed to the System-UI in two different ways: in multi-process
     mode a handle to the window's content surface is sent over the process boundary via the Wayland
     protocol. The System-UI gets this as a surface Item, which is hierarchically independent from
-    the application's window. In single-process mode the ApplicationManagerWindow is simply an Item
-    which is provided (through another proxy Item) to the System-UI. Consequently, it would be
-    possible to gain access from the System-UI to the ApplicationManagerWindow and vice versa.
+    the application's window. In single-process mode the ApplicationManagerWindow provides its
+    contentElement Item directly to System-UI. Consequently, it's possible for an application to
+    gain access to Items from System UI itself or from any other running application as they are
+    all sharing the same QML scene.
 \li Many properties, functions and signals defined in a Window are not reimplemented (yet) in the
     single-process version of ApplicationManagerWindow.
 \li An error encountered in a code block due to properties or methods described above will cause
     subsequent statements not to be evaluated in multi-process mode, whereas in single-process mode
     they are.
-\li In single-process mode, if the ApplicationManagerWindow is loaded dynamically via a Loader,
-    setting the loader to inactive will destruct the ApplicationManagerWindow immediately and hence
-    there is no possibility to play a window closing animation. In multi-process mode there is
-    still the surface Item available on the System-UI side, which can be animated.
 \endlist
 
 

@@ -43,10 +43,13 @@
 
 #include <QtAppManManager/abstractruntime.h>
 
+#include <QSharedPointer>
+
 QT_BEGIN_NAMESPACE_AM
 
 class FakeApplicationManagerWindow;
 class QmlInProcessApplicationInterface;
+class InProcessSurfaceItem;
 
 class QmlInProcessRuntimeManager : public AbstractRuntimeManager
 {
@@ -77,17 +80,13 @@ public slots:
     bool start() override;
     void stop(bool forceKill = false) override;
 #if !defined(AM_HEADLESS)
-    void inProcessSurfaceItemReleased(QQuickItem *window) override;
+    void inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem>) override;
 #endif
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface
 
 private slots:
-#if !defined(AM_HEADLESS)
-    void onWindowClose();
-    void onWindowDestroyed();
-#endif
     void finish(int exitCode, QProcess::ExitStatus status);
 
 private:
@@ -99,11 +98,11 @@ private:
 
 #if !defined(AM_HEADLESS)
     // used by FakeApplicationManagerWindow to register windows
-    void addWindow(QQuickItem *window);
-    void removeWindow(QQuickItem *window);
+    void addWindow(const QSharedPointer<InProcessSurfaceItem> &window);
+    void removeWindow(const QSharedPointer<InProcessSurfaceItem> &window);
 
     QObject *m_rootObject = nullptr;
-    QList<QQuickItem *> m_surfaces;
+    QList< QSharedPointer<InProcessSurfaceItem> > m_surfaces;
 
     friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
 #endif

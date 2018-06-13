@@ -187,14 +187,8 @@ TestCase {
         // Single- vs. multiprocess difference:
         app.start("show-sub2");
         var expectedWindowCount;
-        if (ApplicationManager.singleProcess) {
-            // Sub-window 2 has an invisible Rectangle as parent and hence the effective
-            // visible state is false. Consequently no windowReady signal will be emitted.
-            expectedWindowCount = 2;
-        } else {
-            // A Window's effective visible state solely depends on Window hierarchy.
-            expectedWindowCount = 3;
-        }
+        // A Window's effective visible state solely depends on Window hierarchy.
+        expectedWindowCount = 3;
         tryCompare(WindowManager, "count", expectedWindowCount);
 
         app.start("hide-sub");

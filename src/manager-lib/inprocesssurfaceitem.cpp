@@ -40,58 +40,123 @@
 ****************************************************************************/
 
 #include "inprocesssurfaceitem.h"
-#include "fakeapplicationmanagerwindow.h"
+#include <QQmlEngine>
+#include <QSGSimpleRectNode>
 
 QT_BEGIN_NAMESPACE_AM
 
-InProcessSurfaceItem::InProcessSurfaceItem(FakeApplicationManagerWindow *content)
-    : m_contentItem(content)
+static QByteArray nameToKey(const QString &name)
 {
-    content->m_surfaceItem = this;
-    m_windowProperties = content->m_windowProperties;
-    setParentItem(content->parentItem());
-    content->setParentItem(this);
+    return QByteArray("_am_") + name.toUtf8();
+}
 
-    connect(m_contentItem, &QQuickItem::widthChanged, this, [this](){
-        if (!m_blockSizePropagation) {
-            m_blockSizePropagation = true;
-            setWidth(m_contentItem->width());
-            m_blockSizePropagation = false;
-        }
-    });
+static QString keyToName(const QByteArray &key)
+{
+    return QString::fromUtf8(key.mid(4));
+}
 
-    connect(m_contentItem, &QQuickItem::heightChanged, this, [this](){
-        if (!m_blockSizePropagation) {
-            m_blockSizePropagation = true;
-            setHeight(m_contentItem->height());
-            m_blockSizePropagation = false;
-        }
-    });
+static bool isName(const QByteArray &key)
+{
+    return key.startsWith("_am_");
+}
 
-    m_blockSizePropagation = true;
-    setWidth(content->width());
-    setHeight(content->height());
-    m_blockSizePropagation = false;
+InProcessSurfaceItem::InProcessSurfaceItem(QQuickItem *parent)
+    : QQuickItem(parent)
+{
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    setClip(true);
+    setFlag(ItemHasContents);
+    m_windowProperties.installEventFilter(this);
 }
 
 InProcessSurfaceItem::~InProcessSurfaceItem()
 {
-    if (m_contentItem)
-        m_contentItem->m_surfaceItem = nullptr;
 }
 
-QSharedPointer<QObject> InProcessSurfaceItem::windowProperties()
+bool InProcessSurfaceItem::setWindowProperty(const QString &name, const QVariant &value)
 {
-    return m_windowProperties;
+    QByteArray key = nameToKey(name);
+    QVariant oldValue = m_windowProperties.property(key);
+    bool changed = !oldValue.isValid() || (oldValue != value);
+
+    if (changed)
+        m_windowProperties.setProperty(key, value);
+
+    return true;
 }
 
-void InProcessSurfaceItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
+QVariant InProcessSurfaceItem::windowProperty(const QString &name) const
 {
-    QQuickItem::geometryChanged(newGeometry, oldGeometry);
-    if (!m_blockSizePropagation && m_contentItem) {
-        m_blockSizePropagation = true;
-        m_contentItem->setSize(newGeometry.size().toSize());
-        m_blockSizePropagation = false;
+    QByteArray key = nameToKey(name);
+    return m_windowProperties.property(key);
+}
+
+QVariantMap InProcessSurfaceItem::windowPropertiesAsVariantMap() const
+{
+    const QList<QByteArray> keys = m_windowProperties.dynamicPropertyNames();
+    QVariantMap map;
+
+    for (const QByteArray &key : keys) {
+        if (!isName(key))
+            continue;
+
+        QString name = keyToName(key);
+        map[name] = m_windowProperties.property(key);
+    }
+
+    return map;
+}
+
+bool InProcessSurfaceItem::eventFilter(QObject *o, QEvent *e)
+{
+    if ((o == &m_windowProperties) && (e->type() == QEvent::DynamicPropertyChange)) {
+        QDynamicPropertyChangeEvent *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
+        QByteArray key = dpce->propertyName();
+
+        if (isName(key)) {
+            QString name = keyToName(dpce->propertyName());
+            emit windowPropertyChanged(name, m_windowProperties.property(key));
+        }
+    }
+
+    return QQuickItem::eventFilter(o, e);
+}
+
+void InProcessSurfaceItem::setVisibleClientSide(bool value)
+{
+    if (value != m_visibleClientSide) {
+        m_visibleClientSide = value;
+        emit visibleClientSideChanged();
+    }
+}
+
+bool InProcessSurfaceItem::visibleClientSide() const
+{
+    return m_visibleClientSide;
+}
+
+QSGNode *InProcessSurfaceItem::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
+{
+    QSGSimpleRectNode *node = static_cast<QSGSimpleRectNode *>(oldNode);
+    if (!node) {
+        node = new QSGSimpleRectNode(clipRect(), m_color);
+    } else {
+        node->setRect(clipRect());
+        node->setColor(m_color);
+    }
+    return node;
+}
+
+QColor InProcessSurfaceItem::color() const
+{
+    return m_color;
+}
+
+void InProcessSurfaceItem::setColor(const QColor &c)
+{
+    if (m_color != c) {
+        m_color = c;
+        update();
     }
 }
 

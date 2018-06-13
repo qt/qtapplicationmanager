@@ -5,7 +5,7 @@ MODULE = appman_manager
 load(am-config)
 
 QT = core network qml
-!headless:QT *= gui gui-private quick qml-private
+!headless:QT *= gui gui-private quick qml-private quick-private
 qtHaveModule(dbus):QT *= dbus
 QT_FOR_PRIVATE *= \
     appman_common-private \

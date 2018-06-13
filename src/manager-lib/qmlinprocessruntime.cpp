@@ -82,7 +82,7 @@ QmlInProcessRuntime::~QmlInProcessRuntime()
     // if there is still a window present at this point, fire the 'closing' signal (probably) again,
     // because it's still the duty of WindowManager together with qml-ui to free and delete this item!!
     for (int i = m_surfaces.size(); i; --i)
-        emit inProcessSurfaceItemClosing(m_surfaces.at(i-1));
+        m_surfaces.at(i-1)->setVisibleClientSide(false);
 #endif
 }
 
@@ -150,8 +150,11 @@ bool QmlInProcessRuntime::start()
 #if !defined(AM_HEADLESS)
             if (!qobject_cast<FakeApplicationManagerWindow*>(obj)) {
                 QQuickItem *item = qobject_cast<QQuickItem*>(obj);
-                if (item)
-                    addWindow(item);
+                if (item) {
+                    auto surfaceItem = new InProcessSurfaceItem;
+                    item->setParentItem(surfaceItem);
+                    addWindow(QSharedPointer<InProcessSurfaceItem>(surfaceItem));
+                }
             }
             m_rootObject = obj;
 #endif
@@ -171,7 +174,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
 
 #if !defined(AM_HEADLESS)
     for (int i = m_surfaces.size(); i; --i)
-        emit inProcessSurfaceItemClosing(m_surfaces.at(i-1));
+        m_surfaces.at(i-1)->setVisibleClientSide(false);
 
     if (m_surfaces.isEmpty()) {
         delete m_rootObject;
@@ -221,10 +224,8 @@ void QmlInProcessRuntime::finish(int exitCode, QProcess::ExitStatus status)
 
 #if !defined(AM_HEADLESS)
 
-void QmlInProcessRuntime::inProcessSurfaceItemReleased(QQuickItem *surface)
+void QmlInProcessRuntime::inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem> surface)
 {
-    // TODO: Take a snapshot of the last window frame and use this for potential systemUI animations.
-    //       Stop the application (delete its object hierarchy) immediately and remove this workaround.
     m_surfaces.removeOne(surface);
     if (state() != Active && m_surfaces.isEmpty()) {
         delete m_rootObject;
@@ -234,49 +235,20 @@ void QmlInProcessRuntime::inProcessSurfaceItemReleased(QQuickItem *surface)
     }
 }
 
-void QmlInProcessRuntime::onWindowClose()
-{
-    QQuickItem* surface = reinterpret_cast<QQuickItem*>(sender()); // reinterpret_cast because the object might be broken down already!
-    Q_ASSERT(surface && m_surfaces.contains(surface));
-
-    emit inProcessSurfaceItemClosing(surface);
-}
-
-void QmlInProcessRuntime::onWindowDestroyed()
-{
-    QObject* sndr = sender();
-    m_surfaces.removeAll(reinterpret_cast<QQuickItem*>(sndr)); // reinterpret_cast because the object might be broken down already!
-    if (m_rootObject == sndr)
-        m_rootObject = nullptr;
-}
-
-void QmlInProcessRuntime::addWindow(QQuickItem *window)
+void QmlInProcessRuntime::addWindow(const QSharedPointer<InProcessSurfaceItem> &surface)
 {
     // Below check is only needed if the root element is a QtObject.
     // It should be possible to remove this, once proper visible handling is in place.
     if (state() != Inactive && state() != Shutdown) {
-        auto famw = qobject_cast<FakeApplicationManagerWindow *>(window);
-        QQuickItem *surface = famw ? famw->m_surfaceItem : window;
-
-        if (!m_surfaces.contains(surface)) {
-            if (famw) {
-                surface = new InProcessSurfaceItem(famw);
-                connect(famw, &FakeApplicationManagerWindow::fakeCloseSignal, this, &QmlInProcessRuntime::onWindowClose);
-                connect(famw, &QObject::destroyed, this, &QmlInProcessRuntime::onWindowDestroyed);
-            }
+        if (!m_surfaces.contains(surface))
             m_surfaces.append(surface);
-        }
-
         emit inProcessSurfaceItemReady(surface);
     }
 }
 
-void QmlInProcessRuntime::removeWindow(QQuickItem *window)
+void QmlInProcessRuntime::removeWindow(const QSharedPointer<InProcessSurfaceItem> &surface)
 {
-    auto famw = qobject_cast<FakeApplicationManagerWindow *>(window);
-    QQuickItem *surface = famw ? famw->m_surfaceItem : window;
-    if (m_surfaces.removeOne(surface))
-        emit inProcessSurfaceItemClosing(surface);
+    m_surfaces.removeOne(surface);
 }
 
 #endif // !AM_HEADLESS

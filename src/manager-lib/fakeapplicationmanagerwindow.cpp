@@ -43,162 +43,133 @@
 #include "fakeapplicationmanagerwindow.h"
 #include "inprocesssurfaceitem.h"
 #include "qmlinprocessruntime.h"
-#include <QSGSimpleRectNode>
-#include <QQmlComponent>
-#include <QQmlEngine>
-#include <QQmlContext>
-#include <QQmlInfo>
 #include <private/qqmlcomponentattached_p.h>
 
+#include <QtQuick/private/qquickitem_p.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-static QByteArray nameToKey(const QString &name)
+FakeApplicationManagerWindow::FakeApplicationManagerWindow(QObject *parent)
+    : QObject(parent)
+    , m_surfaceItem(new InProcessSurfaceItem)
 {
-    return QByteArray("_am_") + name.toUtf8();
-}
+    m_surfaceItem->setFakeApplicationManagerWindow(this);
 
-static QString keyToName(const QByteArray &key)
-{
-    return QString::fromUtf8(key.mid(4));
-}
+    connect(m_surfaceItem.data(), &QQuickItem::widthChanged,
+            this, &FakeApplicationManagerWindow::widthChanged);
 
-static bool isName(const QByteArray &key)
-{
-    return key.startsWith("_am_");
-}
+    connect(m_surfaceItem.data(), &QQuickItem::heightChanged,
+            this, &FakeApplicationManagerWindow::heightChanged);
 
-
-FakeApplicationManagerWindow::FakeApplicationManagerWindow(QQuickItem *parent)
-    : QQuickItem(parent)
-    , m_windowProperties(new QObject)
-{
-    setFlag(ItemHasContents);
-    setClip(true);
-    connect(this, &QQuickItem::visibleChanged, this, &FakeApplicationManagerWindow::onVisibleChanged);
-
-    m_windowProperties.data()->installEventFilter(this);
+    connect(m_surfaceItem.data(), &InProcessSurfaceItem::windowPropertyChanged,
+            this, &FakeApplicationManagerWindow::windowPropertyChanged);
 }
 
 FakeApplicationManagerWindow::~FakeApplicationManagerWindow()
 {
-    if (m_surfaceItem) {
-        m_runtime->removeWindow(this);
-        m_surfaceItem->m_contentItem = nullptr;
-    }
+    setVisible(false);
 }
 
-bool FakeApplicationManagerWindow::isFakeVisible() const
+bool FakeApplicationManagerWindow::isVisible() const
 {
-    return m_fakeVisible;
+    return m_surfaceItem->visibleClientSide();
 }
 
-void FakeApplicationManagerWindow::setFakeVisible(bool visible)
+void FakeApplicationManagerWindow::setVisible(bool visible)
 {
-    if (visible != m_fakeVisible) {
-        m_fakeVisible = visible;
-        setVisible(visible);
-        if (m_surfaceItem) {
-            m_surfaceItem->setVisible(visible);
-            if (m_runtime && !visible)
-                m_runtime->removeWindow(m_surfaceItem);
-        } else {
-            visibleChanged();
-        }
+    if (visible != m_surfaceItem->visibleClientSide()) {
+        m_surfaceItem->setVisibleClientSide(visible);
+        emit visibleChanged();
+        addOrRemoveSurface();
     }
 }
 
 QColor FakeApplicationManagerWindow::color() const
 {
-    return m_color;
+    return m_surfaceItem->color();
 }
 
 void FakeApplicationManagerWindow::setColor(const QColor &c)
 {
-    if (m_color != c) {
-        m_color = c;
+    if (color() != c) {
+        m_surfaceItem->setColor(c);
         emit colorChanged();
-        update();
     }
 }
 
 void FakeApplicationManagerWindow::close()
 {
-    emit fakeCloseSignal();
+    setVisible(false);
 }
 
 void FakeApplicationManagerWindow::showFullScreen()
 {
+    setVisible(true);
 }
 
 void FakeApplicationManagerWindow::showMaximized()
 {
+    setVisible(true);
 }
 
 void FakeApplicationManagerWindow::showNormal()
 {
-    // doesn't work in wayland right now, so do nothing... revisit later (after andies resize-redesign)
+    setVisible(true);
 }
 
 bool FakeApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
-    QByteArray key = nameToKey(name);
-    QVariant oldValue = m_windowProperties->property(key);
-    bool changed = !oldValue.isValid() || (oldValue != value);
-
-    if (changed)
-        m_windowProperties->setProperty(key, value);
-
-    return true;
+    return m_surfaceItem->setWindowProperty(name, value);
 }
 
 QVariant FakeApplicationManagerWindow::windowProperty(const QString &name) const
 {
-    QByteArray key = nameToKey(name);
-    return m_windowProperties->property(key);
+    return m_surfaceItem->windowProperty(name);
 }
 
 QVariantMap FakeApplicationManagerWindow::windowProperties() const
 {
-    const QList<QByteArray> keys = m_windowProperties->dynamicPropertyNames();
-    QVariantMap map;
-
-    for (const QByteArray &key : keys) {
-        if (!isName(key))
-            continue;
-
-        QString name = keyToName(key);
-        map[name] = m_windowProperties->property(key);
-    }
-
-    return map;
+    return m_surfaceItem->windowPropertiesAsVariantMap();
 }
 
-bool FakeApplicationManagerWindow::eventFilter(QObject *o, QEvent *e)
+QQmlListProperty<QObject> FakeApplicationManagerWindow::data()
 {
-    if ((o == m_windowProperties) && (e->type() == QEvent::DynamicPropertyChange)) {
-        QDynamicPropertyChangeEvent *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
-        QByteArray key = dpce->propertyName();
-
-        if (isName(key)) {
-            QString name = keyToName(dpce->propertyName());
-            emit windowPropertyChanged(name, m_windowProperties->property(key));
-        }
-    }
-
-    return QQuickItem::eventFilter(o, e);
+    return QQmlListProperty<QObject>(this, nullptr,
+            FakeApplicationManagerWindow::data_append,
+            FakeApplicationManagerWindow::data_count,
+            FakeApplicationManagerWindow::data_at,
+            FakeApplicationManagerWindow::data_clear);
 }
 
-QSGNode *FakeApplicationManagerWindow::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
+void FakeApplicationManagerWindow::data_append(QQmlListProperty<QObject> *property, QObject *value)
 {
-    QSGSimpleRectNode *node = static_cast<QSGSimpleRectNode *>(oldNode);
-    if (!node) {
-        node = new QSGSimpleRectNode(clipRect(), m_color);
-    } else {
-        node->setRect(clipRect());
-        node->setColor(m_color);
-    }
-    return node;
+    auto *that = static_cast<FakeApplicationManagerWindow*>(property->object);
+
+    QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
+    itemProperty.append(&itemProperty, value);
+}
+
+int FakeApplicationManagerWindow::data_count(QQmlListProperty<QObject> *property)
+{
+    auto *that = static_cast<FakeApplicationManagerWindow*>(property->object);
+    if (!QQuickItemPrivate::get(that->contentItem())->data().count)
+        return 0;
+    QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
+    return itemProperty.count(&itemProperty);
+}
+
+QObject *FakeApplicationManagerWindow::data_at(QQmlListProperty<QObject> *property, int index)
+{
+    auto *that = static_cast<FakeApplicationManagerWindow*>(property->object);
+    QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
+    return itemProperty.at(&itemProperty, index);
+}
+
+void FakeApplicationManagerWindow::data_clear(QQmlListProperty<QObject> *property)
+{
+    auto *that = static_cast<FakeApplicationManagerWindow*>(property->object);
+    QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
+    itemProperty.clear(&itemProperty);
 }
 
 void FakeApplicationManagerWindow::determineRuntime()
@@ -217,8 +188,9 @@ void FakeApplicationManagerWindow::componentComplete()
 {
     qCDebug(LogSystem) << "FakeApplicationManagerWindow componentComplete() this:" << this;
 
-    QQuickItem::componentComplete();
     determineRuntime();
+
+    findParentWindow(parent());
 
     // This part is scary, but we need to make sure that all Component.onComplete: handlers on
     // the QML side have been run, before we hand this window over to the WindowManager for the
@@ -242,77 +214,143 @@ void FakeApplicationManagerWindow::componentComplete()
             m_attachedCompleteHandlers.removeAll(a);
 
             if (m_attachedCompleteHandlers.isEmpty())
-                onVisibleChanged();
+                addOrRemoveSurface();
         });
     }
 
     // If we do not even have a single Component.onCompleted handler on the QML side, we need to
     // show the window immediately.
-    if (m_attachedCompleteHandlers.isEmpty())
-        onVisibleChanged();
+    if (m_attachedCompleteHandlers.isEmpty()) {
+        addOrRemoveSurface();
+    }
 }
 
-void FakeApplicationManagerWindow::onVisibleChanged()
+void FakeApplicationManagerWindow::addOrRemoveSurface()
 {
-    if (m_runtime && isVisible() && !m_surfaceItem)
-        m_runtime->addWindow(this);
+    if (!m_runtime)
+        return;
+
+    if (isVisible() && m_attachedCompleteHandlers.isEmpty() && (!m_parentWindow || m_parentWindow->isVisible()))
+        m_runtime->addWindow(m_surfaceItem);
+    else
+        m_runtime->removeWindow(m_surfaceItem);
 }
 
-/* The rest of the code is merely to hide properties and functions that
- * are derived from QQuickItem, but are not available in real QWindows. */
-
-QJSValue FakeApplicationManagerWindow::getUndefined() const
+QQuickItem *FakeApplicationManagerWindow::contentItem()
 {
-    return QJSValue();
+    return m_surfaceItem.data();
 }
 
-void FakeApplicationManagerWindow::referenceError(const char *symbol) const
+void FakeApplicationManagerWindow::findParentWindow(QObject *object)
 {
-    qmlWarning(this) << "ReferenceError: " << symbol << " is not defined";
+    if (!object)
+        return;
+
+    auto surfaceItem = qobject_cast<InProcessSurfaceItem*>(object);
+    if (surfaceItem) {
+        setParentWindow(static_cast<FakeApplicationManagerWindow*>(surfaceItem->fakeApplicationManagerWindow()));
+    } else {
+        auto fakeAppWindow = qobject_cast<FakeApplicationManagerWindow*>(object);
+        if (fakeAppWindow)
+            setParentWindow(fakeAppWindow);
+        else
+            findParentWindow(object->parent());
+    }
 }
 
-void FakeApplicationManagerWindow::grabToImage() const          { referenceError("grabToImage"); }
-void FakeApplicationManagerWindow::contains() const             { referenceError("contains"); }
-void FakeApplicationManagerWindow::mapFromItem() const          { referenceError("mapFromItem"); }
-void FakeApplicationManagerWindow::mapToItem() const            { referenceError("mapToItem"); }
-void FakeApplicationManagerWindow::mapFromGlobal() const        { referenceError("mapFromGlobal"); }
-void FakeApplicationManagerWindow::mapToGlobal() const          { referenceError("mapToGlobal"); }
-void FakeApplicationManagerWindow::forceActiveFocus() const     { referenceError("forceActiveFocus"); }
-void FakeApplicationManagerWindow::nextItemInFocusChain() const { referenceError("nextItemInFocusChain"); }
-void FakeApplicationManagerWindow::childAt() const              { referenceError("childAt"); }
-
-void FakeApplicationManagerWindow::connectNotify(const QMetaMethod &signal)
+void FakeApplicationManagerWindow::setParentWindow(FakeApplicationManagerWindow *fakeAppWindow)
 {
-    // array of signal indices that should not be connected to
-    static const QVector<int> metaIndices = {
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("parentChanged(QQuickItem*)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("childrenChanged()"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("childrenRectChanged(QRectF)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("zChanged()"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("enabledChanged()"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("visibleChildrenChanged()"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("stateChanged(QString)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("clipChanged(bool)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("focusChanged(bool)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("activeFocusChanged(bool)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("activeFocusOnTabChanged(bool)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("rotationChanged()"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("scaleChanged()"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("transformOriginChanged(TransformOrigin)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("smoothChanged(bool)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("antialiasingChanged(bool)"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("implicitWidthChanged()"),
-        FakeApplicationManagerWindow::staticMetaObject.indexOfSignal("implicitHeightChanged()")
-    };
+    if (m_parentWindow)
+        disconnect(m_parentWindow, nullptr, this, nullptr);
 
-    if (metaIndices.contains(signal.methodIndex())) {
-        determineRuntime();
-        if (m_runtime)
-            m_runtime->m_componentError = true;
+    m_parentWindow = fakeAppWindow;
 
-        QString name = qSL("on") + QString::fromUtf8(signal.name());
-        name[2] = name[2].toUpper();
-        qmlWarning(this) << "Cannot assign to non-existent property \"" << name << "\"";
+    if (m_parentWindow)
+        connect(m_parentWindow, &FakeApplicationManagerWindow::visibleChanged,
+                this, &FakeApplicationManagerWindow::addOrRemoveSurface);
+}
+
+void FakeApplicationManagerWindow::setTitle(const QString &value)
+{
+    if (m_title != value) {
+        m_title = value;
+        emit titleChanged();
+    }
+}
+
+void FakeApplicationManagerWindow::setX(int value)
+{
+    if (m_x != value) {
+        m_x = value;
+        emit xChanged();
+    }
+}
+
+void FakeApplicationManagerWindow::setY(int value)
+{
+    if (m_y != value) {
+        m_y = value;
+        emit yChanged();
+    }
+}
+
+int FakeApplicationManagerWindow::width() const
+{
+    return m_surfaceItem->width();
+}
+
+void FakeApplicationManagerWindow::setWidth(int value)
+{
+    m_surfaceItem->setWidth(value);
+}
+
+int FakeApplicationManagerWindow::height() const
+{
+    return m_surfaceItem->height();
+}
+
+void FakeApplicationManagerWindow::setHeight(int value)
+{
+    m_surfaceItem->setHeight(value);
+}
+
+void FakeApplicationManagerWindow::setMinimumWidth(int value)
+{
+    if (m_minimumWidth != value) {
+        m_minimumWidth = value;
+        emit minimumWidthChanged();
+    }
+}
+
+void FakeApplicationManagerWindow::setMinimumHeight(int value)
+{
+    if (m_minimumHeight != value) {
+        m_minimumHeight = value;
+        emit minimumHeightChanged();
+    }
+}
+
+void FakeApplicationManagerWindow::setMaximumWidth(int value)
+{
+    if (m_maximumWidth != value) {
+        m_maximumWidth = value;
+        emit maximumWidthChanged();
+    }
+}
+
+void FakeApplicationManagerWindow::setMaximumHeight(int value)
+{
+    if (m_maximumHeight != value) {
+        m_maximumHeight = value;
+        emit maximumHeightChanged();
+    }
+}
+
+void FakeApplicationManagerWindow::setOpacity(qreal value)
+{
+    if (m_opacity != value) {
+        m_opacity = value;
+        emit opacityChanged();
     }
 }
 

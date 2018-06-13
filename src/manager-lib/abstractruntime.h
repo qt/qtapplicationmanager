@@ -45,6 +45,7 @@
 #include <QString>
 #include <QProcess>
 #include <QPointer>
+#include <QSharedPointer>
 #include <QVariantMap>
 
 #include <QtAppManCommon/global.h>
@@ -58,6 +59,7 @@ class Application;
 class AbstractContainer;
 class AbstractRuntime;
 class AbstractContainer;
+class InProcessSurfaceItem;
 
 class AbstractRuntimeManager : public QObject
 {
@@ -144,7 +146,7 @@ public:
     virtual void stop(bool forceKill = false) = 0;
 
 #if !defined(AM_HEADLESS)
-    virtual void inProcessSurfaceItemReleased(QQuickItem *);
+    virtual void inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem>);
 #endif
 
 signals:
@@ -153,8 +155,7 @@ signals:
 
 #if !defined(AM_HEADLESS)
     // these signals are for in-process mode runtimes only
-    void inProcessSurfaceItemReady(QQuickItem *window);
-    void inProcessSurfaceItemClosing(QQuickItem *window);
+    void inProcessSurfaceItemReady(QSharedPointer<InProcessSurfaceItem> window);
 #endif
 
 protected:

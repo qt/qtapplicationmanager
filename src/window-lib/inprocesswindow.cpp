@@ -44,94 +44,43 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-static QByteArray nameToKey(const QString &name)
-{
-    return QByteArray("_am_") + name.toUtf8();
-}
-
-static QString keyToName(const QByteArray &key)
-{
-    return QString::fromUtf8(key.mid(4));
-}
-
-static bool isName(const QByteArray &key)
-{
-    return key.startsWith("_am_");
-}
-
-InProcessWindow::InProcessWindow(AbstractApplication *app, QQuickItem *surfaceItem)
+InProcessWindow::InProcessWindow(AbstractApplication *app, const QSharedPointer<InProcessSurfaceItem> &surfaceItem)
     : Window(app)
-    , m_rootItem(surfaceItem)
+    , m_surfaceItem(surfaceItem)
 {
-    auto ipsi = qobject_cast<InProcessSurfaceItem *>(surfaceItem);
-    if (ipsi)
-        m_windowProperties = ipsi->windowProperties();
-    else
-        m_windowProperties.reset(new QObject());
+    connect(m_surfaceItem.data(), &InProcessSurfaceItem::windowPropertyChanged,
+            this, &Window::windowPropertyChanged);
 
-    m_windowProperties->installEventFilter(this);
+    connect(m_surfaceItem.data(), &QQuickItem::widthChanged, this, &Window::sizeChanged);
+    connect(m_surfaceItem.data(), &QQuickItem::heightChanged, this, &Window::sizeChanged);
 
-    connect(m_rootItem, &QQuickItem::widthChanged, this, &Window::sizeChanged);
-    connect(m_rootItem, &QQuickItem::heightChanged, this, &Window::sizeChanged);
-}
-
-InProcessWindow::~InProcessWindow()
-{
-    // Ownership of this item is an eye watering mess.
-    // QmlInProcessRuntime may delete it, but if not, we should do it here.
-    // TODO: sort out this mess.
-    auto *item =  m_rootItem.data();
-    m_rootItem.clear();
-    delete item;
+    // queued to emulate the behavior of the out-of-process counterpart
+    connect(m_surfaceItem.data(), &InProcessSurfaceItem::visibleClientSideChanged,
+            this, &InProcessWindow::onVisibleClientSideChanged,
+            Qt::QueuedConnection);
 }
 
 bool InProcessWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
-    QByteArray key = nameToKey(name);
-    QVariant oldValue = m_windowProperties->property(key);
-    bool changed = !oldValue.isValid() || (oldValue != value);
-
-    if (changed)
-        m_windowProperties->setProperty(key, value);
-
-    return true;
+    return m_surfaceItem->setWindowProperty(name, value);
 }
 
 QVariant InProcessWindow::windowProperty(const QString &name) const
 {
-    QByteArray key = nameToKey(name);
-    return m_windowProperties->property(key);
+    return m_surfaceItem->windowProperty(name);
 }
 
 QVariantMap InProcessWindow::windowProperties() const
 {
-    const QList<QByteArray> keys = m_windowProperties->dynamicPropertyNames();
-    QVariantMap map;
-
-    for (const QByteArray &key : keys) {
-        if (!isName(key))
-            continue;
-
-        QString name = keyToName(key);
-        map[name] = m_windowProperties->property(key);
-    }
-
-    return map;
+    return m_surfaceItem->windowPropertiesAsVariantMap();
 }
 
-bool InProcessWindow::eventFilter(QObject *o, QEvent *e)
+void InProcessWindow::onVisibleClientSideChanged()
 {
-    if ((o == m_windowProperties) && (e->type() == QEvent::DynamicPropertyChange)) {
-        QDynamicPropertyChangeEvent *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
-        QByteArray key = dpce->propertyName();
-
-        if (isName(key)) {
-            QString name = keyToName(dpce->propertyName());
-            emit windowPropertyChanged(name, m_windowProperties->property(key));
-        }
+    if (!m_surfaceItem->visibleClientSide()) {
+        setContentState(Window::SurfaceNoContent);
+        setContentState(Window::NoSurface);
     }
-
-    return Window::eventFilter(o, e);
 }
 
 void InProcessWindow::setContentState(ContentState newState)
@@ -144,7 +93,7 @@ void InProcessWindow::setContentState(ContentState newState)
 
 QSize InProcessWindow::size() const
 {
-    return m_rootItem->size().toSize();
+    return m_surfaceItem->size().toSize();
 }
 
 QT_END_NAMESPACE_AM

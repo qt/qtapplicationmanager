@@ -43,37 +43,60 @@
 
 #if !defined(AM_HEADLESS)
 
+#include <QColor>
 #include <QQuickItem>
+#include <QPointer>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class FakeApplicationManagerWindow;
-
 /*
- *  Item exposed to the system UI, FakeApplicationManagerWindows will be wrapped inside those.
+ *  Item exposed to the system UI
  */
 class InProcessSurfaceItem : public QQuickItem
 {
     Q_OBJECT
 public:
-    InProcessSurfaceItem(FakeApplicationManagerWindow *famw);
+    InProcessSurfaceItem(QQuickItem *parent = nullptr);
     ~InProcessSurfaceItem() override;
 
-    QSharedPointer<QObject> windowProperties();
+    bool setWindowProperty(const QString &name, const QVariant &value);
+    QVariant windowProperty(const QString &name) const;
+    QObject &windowProperties() { return m_windowProperties; }
+    QVariantMap windowPropertiesAsVariantMap() const;
+
+    // Whether the surface is visible on the client (application) side.
+    // The when application hides its surface, system UI should, in an animated way,
+    // remove it from user's view.
+    // That's why a client shouldn't have control over the actual visible property
+    // of its surface item.
+    void setVisibleClientSide(bool);
+    bool visibleClientSide() const;
+
+    QColor color() const;
+    void setColor(const QColor &c);
+
+    QObject *fakeApplicationManagerWindow() { return m_fakeAppManWindow.data(); }
+    void setFakeApplicationManagerWindow(QObject* win) { m_fakeAppManWindow = win; }
+
+signals:
+    void visibleClientSideChanged();
+    void windowPropertyChanged(const QString &name, const QVariant &value);
 
 protected:
-    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+    bool eventFilter(QObject *o, QEvent *e) override;
+    QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
 
 private:
-    FakeApplicationManagerWindow *m_contentItem = nullptr;
-    QSharedPointer<QObject> m_windowProperties;
-    bool m_blockSizePropagation = false;
-
-    friend class QmlInProcessRuntime;
-    friend class FakeApplicationManagerWindow;
+    QObject m_windowProperties;
+    bool m_visibleClientSide = true;
+    QColor m_color;
+    QPointer<QObject> m_fakeAppManWindow;
 };
 
 QT_END_NAMESPACE_AM
+
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem*))
+Q_DECLARE_METATYPE(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)>)
 
 #endif  // !AM_HEADLESS

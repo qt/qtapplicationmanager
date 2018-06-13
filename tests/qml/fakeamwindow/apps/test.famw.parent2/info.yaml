@@ -1,9 +1,0 @@
-formatVersion: 1
-formatType: am-application
----
-id:      'test.famw.parent2'
-icon:    'icon.png'
-code:    'parent2.qml'
-runtime: 'qml'
-name:
-  en: 'FakeApplicationManagerWindow parent property'

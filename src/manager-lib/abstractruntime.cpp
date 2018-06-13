@@ -95,7 +95,7 @@ QVariantMap AbstractRuntime::systemProperties() const
 }
 
 #if !defined(AM_HEADLESS)
-void AbstractRuntime::inProcessSurfaceItemReleased(QQuickItem *)
+void AbstractRuntime::inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem>)
 {
     // generally there is nothing to do
 }

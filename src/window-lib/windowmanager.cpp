@@ -249,6 +249,9 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QStrin
 
     qmlRegisterType<WindowItem>("QtApplicationManager", 1, 0, "WindowItem");
 
+    qRegisterMetaType<InProcessSurfaceItem*>("InProcessSurfaceItem*");
+    qRegisterMetaType<QSharedPointer<InProcessSurfaceItem>>("QSharedPointer<InProcessSurfaceItem>");
+
     return s_instance = new WindowManager(qmlEngine, waylandSocketName);
 }
 
@@ -488,9 +491,7 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
         runtime->setInProcessQmlEngine(d->qmlEngine);
 
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemReady,
-                this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemCreated), Qt::QueuedConnection);
-        connect(runtime, &AbstractRuntime::inProcessSurfaceItemClosing,
-                this, static_cast<void (WindowManager::*)(QQuickItem *)>(&WindowManager::inProcessSurfaceItemClosing), Qt::QueuedConnection);
+                this, &WindowManager::inProcessSurfaceItemCreated, Qt::QueuedConnection);
         connect(this, &WindowManager::_inProcessSurfaceItemReleased, runtime,
                 &AbstractRuntime::inProcessSurfaceItemReleased, Qt::QueuedConnection);
     }
@@ -507,8 +508,7 @@ void WindowManager::releaseWindow(Window *window)
 
     emit windowAboutToBeRemoved(window);
     if (window->isInProcess()) {
-        QQuickItem *item = static_cast<InProcessWindow*>(window)->rootItem();
-        emit _inProcessSurfaceItemReleased(item);
+        emit _inProcessSurfaceItemReleased(static_cast<InProcessWindow*>(window)->surfaceItem());
     }
 
     beginRemoveRows(QModelIndex(), index, index);
@@ -579,7 +579,7 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 /*! \internal
     Only used for in-process surfaces
  */
-void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
+void WindowManager::inProcessSurfaceItemCreated(QSharedPointer<InProcessSurfaceItem> surfaceItem)
 {
     AbstractRuntime *rt = qobject_cast<AbstractRuntime *>(sender());
     if (!rt) {
@@ -593,32 +593,13 @@ void WindowManager::inProcessSurfaceItemCreated(QQuickItem *surfaceItem)
     }
 
     //Only create a new Window if we don't have it already in the window list, as the user controls whether windows are removed or not
-    int index = d->findWindowBySurfaceItem(surfaceItem);
+    int index = d->findWindowBySurfaceItem(surfaceItem.data());
     if (index == -1) {
         setupWindow(new InProcessWindow(app, surfaceItem));
     } else {
         auto window = qobject_cast<InProcessWindow*>(d->windows.at(index));
         window->setContentState(Window::SurfaceWithContent);
     }
-}
-
-void WindowManager::inProcessSurfaceItemClosing(QQuickItem *surfaceItem)
-{
-    qCDebug(LogGraphics) << "inProcessSurfaceItemClosing" << surfaceItem;
-
-    int index = d->findWindowBySurfaceItem(surfaceItem);
-    if (index == -1) {
-        qCWarning(LogGraphics) << "inProcessSurfaceItemClosing: could not find an application window for item" << surfaceItem;
-        return;
-    }
-    InProcessWindow *win = qobject_cast<InProcessWindow *>(d->windows.at(index));
-    if (!win) {
-        qCCritical(LogGraphics) << "inProcessSurfaceItemClosing: expected surfaceItem to be a InProcessWindow, got" << d->windows.at(index);
-        return;
-    }
-
-    win->setContentState(Window::SurfaceNoContent);
-    win->setContentState(Window::NoSurface);
 }
 
 /*! \internal

@@ -57,6 +57,7 @@ QT_FORWARD_DECLARE_CLASS(QWindow)
 
 QT_BEGIN_NAMESPACE_AM
 
+class InProcessSurfaceItem;
 class Window;
 class WindowSurface;
 class WindowManagerPrivate;
@@ -119,11 +120,10 @@ signals:
 
     void slowAnimationsChanged(bool);
 
-    void _inProcessSurfaceItemReleased(QQuickItem *);
+    void _inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem>);
 
 private slots:
-    void inProcessSurfaceItemCreated(QQuickItem *surfaceItem);
-    void inProcessSurfaceItemClosing(QQuickItem *surfaceItem);
+    void inProcessSurfaceItemCreated(QSharedPointer<InProcessSurfaceItem> surfaceItem);
     void setupWindow(QT_PREPEND_NAMESPACE_AM(Window) *window);
 
 public:

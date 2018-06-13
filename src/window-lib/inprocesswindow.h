@@ -46,6 +46,7 @@
 #include <QScopedPointer>
 
 #include <QtAppManWindow/window.h>
+#include <QtAppManManager/inprocesssurfaceitem.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -54,8 +55,7 @@ class InProcessWindow : public Window
     Q_OBJECT
 
 public:
-    InProcessWindow(AbstractApplication *app, QQuickItem *windowItem);
-    ~InProcessWindow();
+    InProcessWindow(AbstractApplication *app, const QSharedPointer<InProcessSurfaceItem> &surfaceItem);
 
     bool isInProcess() const override { return true; }
 
@@ -66,19 +66,19 @@ public:
     ContentState contentState() const override { return m_contentState; }
     QSize size() const override;
 
-    QQuickItem *rootItem() const { return m_rootItem.data(); }
+    InProcessSurfaceItem *rootItem() const { return m_surfaceItem.data(); }
+    QSharedPointer<InProcessSurfaceItem> surfaceItem() { return m_surfaceItem; }
 
     // The content state is wholly emulated as there's no actual surface behind this window
     // So we let it be set at will (likely by WindowManager)
     void setContentState(ContentState);
 
-protected:
-    bool eventFilter(QObject *o, QEvent *e) override;
+private slots:
+    void onVisibleClientSideChanged();
 
 private:
     ContentState m_contentState = SurfaceWithContent;
-    QSharedPointer<QObject> m_windowProperties;
-    QPointer<QQuickItem> m_rootItem;
+    QSharedPointer<InProcessSurfaceItem> m_surfaceItem;
 };
 
 QT_END_NAMESPACE_AM

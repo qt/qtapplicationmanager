@@ -75,6 +75,7 @@ public:
 
     QVariantMap windowProperties(QWindow *window) const;
     void setWindowProperty(QWindow *window, const QString &name, const QVariant &value);
+    void clearWindowPropertyCache(QWindow *window);
 
 signals:
     void windowPropertyChanged(QWindow *window, const QString &name, const QVariant &value);

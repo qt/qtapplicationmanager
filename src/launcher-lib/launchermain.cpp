@@ -157,6 +157,16 @@ void LauncherMain::setWindowProperty(QWindow *window, const QString &name, const
 #endif
 }
 
+void LauncherMain::clearWindowPropertyCache(QWindow *window)
+{
+#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+    if (m_waylandExtension && window)
+        m_waylandExtension->clearWindowPropertyCache(window);
+#else
+    Q_UNUSED(window)
+#endif
+}
+
 void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCEPT_EXPR(false)
 {
     auto docs = QtYaml::variantDocumentsFromYaml(configYaml.isEmpty() ? qgetenv("AM_CONFIG")

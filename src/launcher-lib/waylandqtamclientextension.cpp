@@ -82,7 +82,7 @@ bool WaylandQtAMClientExtension::eventFilter(QObject *o, QEvent *e)
             break;
         }
         case QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed:
-            m_windowProperties.remove(window);
+            // NOOP
             break;
         }
     }
@@ -125,6 +125,11 @@ bool WaylandQtAMClientExtension::setWindowPropertyHelper(QWindow *window, const 
         return true;
     }
     return false;
+}
+
+void WaylandQtAMClientExtension::clearWindowPropertyCache(QWindow *window)
+{
+    m_windowProperties.remove(window);
 }
 
 void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surface *surface, const QString &name, wl_array *value)

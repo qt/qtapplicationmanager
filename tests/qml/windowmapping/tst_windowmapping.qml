@@ -310,4 +310,22 @@ TestCase {
         compare(allProps.key2, "val2");
         compare(allProps.objectName, 42);
     }
+
+    // Checks that window properties survice show/hide cycles
+    // Regression test for https://bugreports.qt.io/browse/AUTOSUITE-447
+    function test_window_properties_survive_show_hide() {
+        var app = ApplicationManager.application("test.winmap.amwin");
+
+        app.start("show-main");
+        tryCompare(WindowManager, "count", 1);
+
+        compare(lastWindowAdded.windowProperty("objectName"), 42);
+
+        app.start("hide-main");
+        tryCompare(WindowManager, "count", 0);
+        app.start("show-main");
+        tryCompare(WindowManager, "count", 1);
+
+        compare(lastWindowAdded.windowProperty("objectName"), 42);
+    }
 }

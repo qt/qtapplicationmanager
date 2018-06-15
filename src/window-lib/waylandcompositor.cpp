@@ -42,6 +42,8 @@
 
 #include <QQuickView>
 #include <QWaylandOutput>
+#include <QWaylandSeat>
+#include <QWaylandKeymap>
 
 #include "global.h"
 #include "logging.h"
@@ -168,6 +170,9 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     });
 
     create();
+
+    // set a sensible default keymap
+    defaultSeat()->keymap()->setLayout(QLocale::system().name().section('_', 1, 1).toLower());
 }
 
 void WaylandCompositor::registerOutputWindow(QQuickWindow* window)

@@ -104,4 +104,12 @@ unit-tests: it can be found in \c tests/data/certificates/create-test-certificat
 never use this to create a production environment, but it could be helpful to quickly and easily
 switch to developing with signed packages.
 
+\section1 Related Pages
+
+\list
+  \li \l {Package Format}
+  \li \l {Packager}
+  \li \l {Installation Locations}
+  \li \l {ApplicationInstaller}{ApplicationInstaller API}
+\endlist
 */

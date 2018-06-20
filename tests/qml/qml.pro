@@ -4,4 +4,5 @@ SUBDIRS = \
     windowmapping \
     fakeamwindow \
     installer \
-    monitoring
+    monitoring \
+    quicklaunch

@@ -227,6 +227,8 @@ void WindowItem::makePrimary()
     if (oldPrimaryItem)
         emit oldPrimaryItem->primaryChanged();
     emit primaryChanged();
+
+    m_impl->updateSize(size());
 }
 
 void WindowItem::updateImplicitSize()
@@ -324,8 +326,6 @@ void WindowItem::WaylandImpl::setup(Window *window)
 
     m_waylandItem->setBufferLocked(false);
     m_waylandItem->setSurface(m_waylandWindow->surface());
-
-    updateSize(q->size());
 }
 
 void WindowItem::WaylandImpl::createWaylandItem()
@@ -349,9 +349,10 @@ void WindowItem::WaylandImpl::updateSize(const QSizeF &newSize)
 {
     m_waylandItem->setSize(newSize);
 
-    if (q->primary()) {
+    auto *surface = m_waylandWindow->surface();
+
+    if (q->primary() && surface) {
         AbstractApplication *app = nullptr; // prevent expensive lookup when not printing qDebugs
-        auto *surface = m_waylandWindow->surface();
         qCDebug(LogGraphics) << "Sending geometry change request to Wayland client for surface"
                             << surface << "new:" << newSize << "of"
                             << ((app = ApplicationManager::instance()->fromProcessId(surface->client()->processId()))

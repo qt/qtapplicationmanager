@@ -44,6 +44,7 @@ import QtTest 1.0
 import QtApplicationManager 1.0
 
 Item {
+    id: root
     width: 500
     height: 500
     visible: true
@@ -55,10 +56,20 @@ Item {
             window: model.window
         }
     }
+    Repeater {
+        id: sizedWindowItemsRepeater
+        model: ListModel { id: sizedWindowItemsModel }
+        delegate: WindowItem {
+            width: 200
+            height: 100
+            window: model.window
+        }
+    }
+    property var chosenModel
     Connections {
         target: WindowManager
         onWindowAdded:  {
-            windowItemsModel.append({"window":window});
+            root.chosenModel.append({"window":window});
         }
     }
 
@@ -84,17 +95,13 @@ Item {
 
         function init() {
             compare(windowItemsModel.count, 0);
+            compare(sizedWindowItemsModel.count, 0);
             compare(WindowManager.count, 0);
-
-            app = ApplicationManager.application("test.windowitem.app");
-            app.start();
-
-            tryCompare(windowItemsModel, "count", 1);
-            tryCompare(WindowManager, "count", 1);
-        }
+       }
 
         function cleanup() {
             windowItemsModel.clear();
+            sizedWindowItemsModel.clear();
 
             // TODO: If you call stop() on the same application twice,
             // WindowManager::inProcessSurfaceItemClosing will be called twice, and the
@@ -125,11 +132,30 @@ Item {
             }
         }
 
+        function initWindowItemsModel() {
+            root.chosenModel = windowItemsModel;
+            startAppAndCheckWindow();
+        }
+
+        function initSizedWindowItemsModel() {
+            root.chosenModel = sizedWindowItemsModel;
+            startAppAndCheckWindow();
+        }
+
+        function startAppAndCheckWindow() {
+            app = ApplicationManager.application("test.windowitem.app");
+            app.start();
+
+            tryCompare(root.chosenModel, "count", 1);
+            tryCompare(WindowManager, "count", 1);
+        }
+
         /*
             The first WindowItem showing a window have primary==true, from the
             second onwards they should have primary==false
          */
         function test_onlyFirstItemIsPrimary() {
+            initWindowItemsModel();
             var firstWindowItem = windowItemsRepeater.itemAt(0);
             compare(firstWindowItem.primary, true);
 
@@ -146,6 +172,7 @@ Item {
             Check that the previously primary is now secondary and vice-versa.
          */
         function test_turnSecondaryIntoPrimary() {
+            initWindowItemsModel();
             var firstWindowItem = windowItemsRepeater.itemAt(0);
 
             // Add a second view for the same WindowObject
@@ -176,6 +203,7 @@ Item {
             the remaining one takes over the primary role.
          */
         function test_destroyPrimaryRemainingTakesOver() {
+            initWindowItemsModel();
             var firstWindowItem = windowItemsRepeater.itemAt(0);
 
             // Add a second view for the same WindowObject
@@ -203,6 +231,7 @@ Item {
             only once all WindowItems using it are gone.
          */
         function test_surfacelessObjectStaysUntilAllItemsAreGone() {
+            initWindowItemsModel();
             var firstWindowItem = windowItemsRepeater.itemAt(0);
 
             // Add a second view for the same WindowObject
@@ -235,6 +264,7 @@ Item {
             Checks that the implicit size of a WindowItem matches the explicit size of the client's ApplicationManagerWindow
          */
         function test_implicitSize() {
+            initWindowItemsModel();
             var windowItem = windowItemsRepeater.itemAt(0);
             var window = windowItem.window
 
@@ -250,6 +280,19 @@ Item {
             tryCompare(window, "size", Qt.size(200,300));
             tryCompare(windowItem, "width", 200);
             tryCompare(windowItem, "height", 300);
+        }
+
+        /*
+            Checks that once a Window is assinged to a WindowItem its underlying surface
+            gets resized to match that WindowItem's size (considering it's the first,
+            primary, one)
+         */
+        function test_initialResize() {
+            initSizedWindowItemsModel();
+            var windowItem = sizedWindowItemsRepeater.itemAt(0);
+            var window = windowItem.window
+
+            tryCompare(window, "size", Qt.size(windowItem.width, windowItem.height));
         }
     }
 

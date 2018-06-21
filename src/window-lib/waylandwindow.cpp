@@ -50,6 +50,18 @@
 #include "waylandcompositor.h"
 #include "waylandqtamserverextension_p.h"
 
+/*!
+    \qmlproperty WaylandSurface WindowObject::waylandSurface
+    \readonly
+
+    This property exists only when running in multi-process mode. Enables
+    you to access the underlying WaylandSurface of this window, if any.
+    It will be null in case WindowObject::contentState is WindowObject.NoSurface.
+
+    Naturally you should avoid using this property in code that should work in
+    both single and multi-process modes.
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 bool WaylandWindow::m_watchdogEnabled = true;
@@ -84,6 +96,7 @@ WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
         connect(surf, &QWaylandSurface::surfaceDestroyed, this, [this]() {
             m_surface = nullptr;
             onContentStateChanged();
+            emit waylandSurfaceChanged();
         });
 
         enableOrDisablePing();
@@ -160,6 +173,11 @@ void WaylandWindow::onContentStateChanged()
 QSize WaylandWindow::size() const
 {
     return m_surface->size();
+}
+
+QWaylandQuickSurface* WaylandWindow::waylandSurface() const
+{
+    return m_surface;
 }
 
 QT_END_NAMESPACE_AM

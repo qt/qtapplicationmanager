@@ -45,7 +45,7 @@
 
 #if defined(AM_MULTI_PROCESS)
 
-#include <QWaylandSurface>
+#include <QWaylandQuickSurface>
 #include <QTimer>
 
 QT_BEGIN_NAMESPACE_AM
@@ -55,6 +55,7 @@ class WindowSurface;
 class WaylandWindow : public Window
 {
     Q_OBJECT
+    Q_PROPERTY(QWaylandQuickSurface* waylandSurface READ waylandSurface NOTIFY waylandSurfaceChanged)
 
 public:
     WaylandWindow(AbstractApplication *app, WindowSurface *surface);
@@ -71,10 +72,13 @@ public:
 
     WindowSurface *surface() const { return m_surface; }
 
+    QWaylandQuickSurface* waylandSurface() const;
+
     static bool m_watchdogEnabled;
 
 signals:
     void frameUpdated();
+    void waylandSurfaceChanged();
 
 private slots:
     void pongReceived();

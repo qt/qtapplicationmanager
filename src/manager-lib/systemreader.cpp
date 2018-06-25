@@ -47,6 +47,10 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+#if defined(Q_OS_LINUX)
+QString g_systemRootDir(qSL("/"));
+#endif
+
 quint64 MemoryReader::s_totalValue = 0;
 
 quint64 MemoryReader::totalValue() const
@@ -62,6 +66,7 @@ QT_END_NAMESPACE_AM
 #  include "sysfsreader.h"
 #  include <qplatformdefs.h>
 #  include <QElapsedTimer>
+#  include <QFile>
 #  include <QSocketNotifier>
 #  include <QProcess>
 #  include <QCoreApplication>
@@ -328,8 +333,9 @@ MemoryReader::MemoryReader() : MemoryReader(QString())
 MemoryReader::MemoryReader(const QString &groupPath)
     : m_groupPath(groupPath)
 {
-    const QString path = cGroupsMemoryBaseDir + m_groupPath + qSL("/memory.usage_in_bytes");
-    m_sysFs.reset(new SysFsReader(path.toLocal8Bit(), 41));
+    const QString path = g_systemRootDir + cGroupsMemoryBaseDir + m_groupPath + qSL("/memory.stat");
+
+    m_sysFs.reset(new SysFsReader(path.toLocal8Bit(), 1500));
     if (!m_sysFs->isOpen()) {
         qCWarning(LogSystem) << "WARNING: could not read memory statistics from" << m_sysFs->fileName()
                              << "(make sure that the memory cgroup is mounted)";
@@ -351,14 +357,22 @@ MemoryReader::MemoryReader(const QString &groupPath)
 
 quint64 MemoryReader::groupLimit()
 {
-    QString path = cGroupsMemoryBaseDir + m_groupPath + qSL("/memory.limit_in_bytes");
+    QString path = g_systemRootDir + cGroupsMemoryBaseDir + m_groupPath + qSL("/memory.limit_in_bytes");
     QByteArray ba = SysFsReader(path.toLocal8Bit(), 41).readValue();
     return ::strtoull(ba, nullptr, 10);
 }
 
 quint64 MemoryReader::readUsedValue() const
 {
-    return ::strtoull(m_sysFs->readValue().constData(), nullptr, 10);
+    QByteArray buffer = m_sysFs->readValue();
+
+    int i = buffer.indexOf("total_rss ");
+    if (i == -1) {
+        qCWarning(LogSystem) << "WARNING: Could not read memory.stat or its contents are invalid";
+        return 0;
+    }
+
+    return ::strtoull(buffer.data() + i + sizeof("total_rss ")-1, nullptr, 10);
 }
 
 
@@ -568,6 +582,30 @@ void MemoryWatcher::checkMemoryConsumption()
         emit memoryLow();
     hasMemoryCriticalWarning = nowMemoryCritical;
     hasMemoryLowWarning = nowMemoryLow;
+}
+
+QMap<QByteArray, QByteArray> fetchCGroupProcessInfo(qint64 pid)
+{
+    QMap<QByteArray, QByteArray> result;
+
+    auto cgroupPath = QString(qSL("%1/proc/%2/cgroup"))
+        .arg(g_systemRootDir)
+        .arg(pid);
+
+    QFile file(cgroupPath);
+    if (!file.open(QIODevice::ReadOnly))
+        return result;
+
+    char textBuffer[250];
+    while (file.readLine(textBuffer, sizeof(textBuffer)) > 0) {
+        // NB: we don't want the ending '\n' character, hence the -1
+        auto fields = QByteArray::fromRawData(textBuffer, strlen(textBuffer)-1).split(':');
+        if (fields.size() == 3) {
+            result[fields[1]] = fields[2];
+        }
+    }
+
+    return result;
 }
 
 QT_END_NAMESPACE_AM

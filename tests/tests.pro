@@ -17,7 +17,8 @@ SUBDIRS = \
 
 linux*:SUBDIRS += \
     sudo \
-    processmonitor
+    processmonitor \
+    systemreader \
 
 OTHER_FILES += \
     tests.pri \

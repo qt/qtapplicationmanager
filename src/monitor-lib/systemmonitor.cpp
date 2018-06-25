@@ -665,7 +665,13 @@ SystemMonitor::SystemMonitor()
     d->idleCpu = new CpuReader;
     d->cpu = new CpuReader;
     d->gpu = new GpuReader;
+
+#if defined(Q_OS_LINUX)
+    QMap<QByteArray, QByteArray> cgroupInfo = fetchCGroupProcessInfo(QCoreApplication::applicationPid());
+    d->memory = new MemoryReader(QString::fromLatin1(cgroupInfo["memory"]));
+#else
     d->memory = new MemoryReader;
+#endif
 
     d->idleTimerId = d->startTimer(1000);
 
@@ -765,7 +771,15 @@ quint64 SystemMonitor::totalMemory() const
 {
     Q_D(const SystemMonitor);
 
+#if defined(Q_OS_LINUX)
+    auto limit = d->memory->groupLimit();
+    if (limit > 0 && limit < d->memory->totalValue())
+        return limit;
+    else
+        return d->memory->totalValue();
+#else
     return d->memory->totalValue();
+#endif
 }
 
 quint64 SystemMonitor::memoryUsed() const

@@ -187,5 +187,15 @@ private:
     QScopedPointer<MemoryReader> m_reader;
 };
 
+#if defined(Q_OS_LINUX)
+// Parses the file /proc/$PID/cgroup, returning a map groupName->path
+// eg: map["memory"] == "/user.slice"
+QMap<QByteArray, QByteArray> fetchCGroupProcessInfo(qint64 pid);
+
+// Where the filesystem root directory is located. This exists solely to enable testing.
+// In production it's naturally "/"
+extern QString g_systemRootDir;
+#endif
+
 QT_END_NAMESPACE_AM
 // We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

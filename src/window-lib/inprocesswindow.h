@@ -66,6 +66,8 @@ public:
     ContentState contentState() const override { return m_contentState; }
     QSize size() const override;
 
+    void close() override;
+
     InProcessSurfaceItem *rootItem() const { return m_surfaceItem.data(); }
     QSharedPointer<InProcessSurfaceItem> surfaceItem() { return m_surfaceItem; }
 

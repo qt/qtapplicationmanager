@@ -76,12 +76,15 @@ public:
     QColor color() const;
     void setColor(const QColor &c);
 
+    void close();
+
     QObject *fakeApplicationManagerWindow() { return m_fakeAppManWindow.data(); }
     void setFakeApplicationManagerWindow(QObject* win) { m_fakeAppManWindow = win; }
 
 signals:
     void visibleClientSideChanged();
     void windowPropertyChanged(const QString &name, const QVariant &value);
+    void closeRequested();
 
 protected:
     bool eventFilter(QObject *o, QEvent *e) override;

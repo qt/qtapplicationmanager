@@ -96,4 +96,9 @@ QSize InProcessWindow::size() const
     return QSize(m_surfaceItem->width(), m_surfaceItem->height());
 }
 
+void InProcessWindow::close()
+{
+    m_surfaceItem->close();
+}
+
 QT_END_NAMESPACE_AM

@@ -116,6 +116,14 @@
     The size of the window surface, in pixels
 */
 
+/*!
+    \qmlmethod bool WindowObject::close()
+
+    Sends a close event to the WindowObject.
+
+    \sa QWindow::close(), QCloseEvent
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 Window::Window(AbstractApplication *app)

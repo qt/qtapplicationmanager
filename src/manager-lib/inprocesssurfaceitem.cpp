@@ -160,4 +160,9 @@ void InProcessSurfaceItem::setColor(const QColor &c)
     }
 }
 
+void InProcessSurfaceItem::close()
+{
+    emit closeRequested();
+}
+
 QT_END_NAMESPACE_AM

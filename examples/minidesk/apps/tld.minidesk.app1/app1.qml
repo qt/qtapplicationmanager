@@ -81,7 +81,7 @@ ApplicationManagerWindow {
                     rotation.pause();
                     root.setWindowProperty("rotation", parent.rotation);
                 }
-                popUp.visible = !popUp.visible;
+                popUp.visible = rotation.paused;
             }
         }
     }

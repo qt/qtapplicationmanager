@@ -89,6 +89,7 @@ public:
     QWindow *outputWindow() const;
 
     void ping();
+    void close();
 
 signals:
     void pong();

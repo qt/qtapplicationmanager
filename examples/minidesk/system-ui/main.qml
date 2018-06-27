@@ -170,7 +170,7 @@ Rectangle {
         }
     }
 
-    // System-UI for a pop-up and notification
+    // System-UI for pop-ups
     Repeater {
         model: ListModel { id: popupsModel }
         delegate: WindowItem {
@@ -185,9 +185,23 @@ Rectangle {
                         popupsModel.remove(model.index, 1);
                 }
             }
+            Rectangle {
+                width: 25
+                height: 25
+                z: 2
+                anchors.horizontalCenter: parent.right
+                anchors.verticalCenter: parent.top
+                color: "chocolate"
+                Text { text: "X"; anchors.centerIn: parent }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: model.window.close()
+                }
+            }
         }
     }
 
+    // System-UI for a notification
     Text {
         z: 30001
         font.pixelSize: 46

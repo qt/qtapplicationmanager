@@ -180,6 +180,11 @@ QWaylandQuickSurface* WaylandWindow::waylandSurface() const
     return m_surface;
 }
 
+void WaylandWindow::close()
+{
+    m_surface->close();
+}
+
 QT_END_NAMESPACE_AM
 
 #endif // AM_MULTI_PROCESS

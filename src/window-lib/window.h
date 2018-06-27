@@ -97,6 +97,8 @@ public:
     Q_INVOKABLE virtual QVariant windowProperty(const QString &name) const = 0;
     Q_INVOKABLE virtual QVariantMap windowProperties() const = 0;
 
+    Q_INVOKABLE virtual void close() = 0;
+
     virtual QSize size() const = 0;
 
 signals:

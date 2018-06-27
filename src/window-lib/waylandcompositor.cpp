@@ -115,6 +115,14 @@ void WindowSurface::ping()
     }
 }
 
+void WindowSurface::close()
+{
+    if (m_xdgSurface)
+        m_xdgSurface->sendClose();
+    else
+        qCWarning(LogGraphics) << this << "is not using the XDG V5 Shell extension. Unable to send close signal.";
+}
+
 WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName)
     : QWaylandQuickCompositor()
     , m_wlShell(new QWaylandWlShell(this))

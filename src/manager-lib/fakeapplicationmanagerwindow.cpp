@@ -63,6 +63,9 @@ FakeApplicationManagerWindow::FakeApplicationManagerWindow(QObject *parent)
 
     connect(m_surfaceItem.data(), &InProcessSurfaceItem::windowPropertyChanged,
             this, &FakeApplicationManagerWindow::windowPropertyChanged);
+
+    connect(m_surfaceItem.data(), &InProcessSurfaceItem::closeRequested,
+            this, &FakeApplicationManagerWindow::close);
 }
 
 FakeApplicationManagerWindow::~FakeApplicationManagerWindow()

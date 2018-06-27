@@ -68,6 +68,8 @@ public:
 
     ContentState contentState() const override;
 
+    void close() override;
+
     QSize size() const override;
 
     WindowSurface *surface() const { return m_surface; }

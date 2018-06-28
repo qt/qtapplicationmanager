@@ -100,6 +100,7 @@ public:
     Q_INVOKABLE virtual void close() = 0;
 
     virtual QSize size() const = 0;
+    Q_INVOKABLE virtual void resize(const QSize &size) = 0;
 
 signals:
     void sizeChanged();

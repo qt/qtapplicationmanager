@@ -88,6 +88,15 @@
 */
 
 /*!
+    \qmlmethod var WindowObject::resize(Size size)
+
+    Resizes the WindowObject to the given size, in pixels. Usually you don't have to call
+    this yourself as WindowItem takes there of it by default.
+
+    \sa WindowObject::size, WindowItem::objectFollowsItemSize
+*/
+
+/*!
     \qmlproperty enumeration WindowObject::contentState
     \readonly
 
@@ -114,6 +123,8 @@
     \readonly
 
     The size of the window surface, in pixels
+
+    \sa WindowObject::resize
 */
 
 /*!

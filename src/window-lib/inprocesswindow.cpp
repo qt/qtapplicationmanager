@@ -96,6 +96,11 @@ QSize InProcessWindow::size() const
     return QSize(m_surfaceItem->width(), m_surfaceItem->height());
 }
 
+void InProcessWindow::resize(const QSize &size)
+{
+    m_surfaceItem->setSize(size);
+}
+
 void InProcessWindow::close()
 {
     m_surfaceItem->close();

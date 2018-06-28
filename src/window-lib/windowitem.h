@@ -63,6 +63,9 @@ class WindowItem : public QQuickItem
 
     Q_PROPERTY(Window* window READ window WRITE setWindow NOTIFY windowChanged)
     Q_PROPERTY(bool primary READ primary NOTIFY primaryChanged)
+    Q_PROPERTY(bool objectFollowsItemSize READ objectFollowsItemSize
+                                          WRITE setObjectFollowsItemSize
+                                          NOTIFY objectFollowsItemSizeChanged)
 public:
     WindowItem(QQuickItem *parent = nullptr) : QQuickItem(parent) {}
     ~WindowItem();
@@ -72,11 +75,15 @@ public:
 
     bool primary() const;
     Q_INVOKABLE void makePrimary();
+
+    bool objectFollowsItemSize() { return m_objectFollowsItemSize; }
+    void setObjectFollowsItemSize(bool value);
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 signals:
     void windowChanged();
     void primaryChanged();
+    void objectFollowsItemSizeChanged();
 private slots:
     void updateImplicitSize();
 private:
@@ -129,6 +136,7 @@ private:
 #endif // AM_MULTI_PROCESS
 
     Impl *m_impl{nullptr};
+    bool m_objectFollowsItemSize{true};
 };
 
 QT_END_NAMESPACE_AM

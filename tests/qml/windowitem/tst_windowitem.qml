@@ -65,6 +65,16 @@ Item {
             window: model.window
         }
     }
+    Repeater {
+        id: noResizeWindowItemsRepeater
+        model: ListModel { id: noResizeWindowItemsModel }
+        delegate: WindowItem {
+            width: 200
+            height: 100
+            objectFollowsItemSize: false
+            window: model.window
+        }
+    }
     property var chosenModel
     Connections {
         target: WindowManager
@@ -96,12 +106,14 @@ Item {
         function init() {
             compare(windowItemsModel.count, 0);
             compare(sizedWindowItemsModel.count, 0);
+            compare(noResizeWindowItemsRepeater.count, 0);
             compare(WindowManager.count, 0);
        }
 
         function cleanup() {
             windowItemsModel.clear();
             sizedWindowItemsModel.clear();
+            noResizeWindowItemsModel.clear();
 
             // TODO: If you call stop() on the same application twice,
             // WindowManager::inProcessSurfaceItemClosing will be called twice, and the
@@ -274,12 +286,28 @@ Item {
             compare(windowItem.width, 123);
             compare(windowItem.height, 321);
 
-            window.setWindowProperty("requestedWidth", 200);
-            window.setWindowProperty("requestedHeight", 300);
+            // Avoid a race condition where the item's implicit size (and therefore the item's
+            // size itself as no explicit width or height was assigned) would be set to match
+            // the window's size while at the same time an item's resize would make the item resize the window.
+            // In short: item size depending on window size while at the same time window size is
+            // depending on item size.
+            windowItem.objectFollowsItemSize = false;
 
-            tryCompare(window, "size", Qt.size(200,300));
-            tryCompare(windowItem, "width", 200);
-            tryCompare(windowItem, "height", 300);
+            var width = 130;
+            var height = 330;
+            var i;
+            for (i = 0; i < 20; i += 1) {
+                window.setWindowProperty("requestedWidth", width);
+                window.setWindowProperty("requestedHeight", height);
+
+                tryCompare(window, "size", Qt.size(width,height));
+                tryCompare(windowItem, "width", width);
+                tryCompare(windowItem, "height", height);
+
+                width += 5;
+                height += 5;
+                wait(10);
+            }
         }
 
         /*
@@ -294,6 +322,52 @@ Item {
 
             tryCompare(window, "size", Qt.size(windowItem.width, windowItem.height));
         }
-    }
 
+        /*
+            By default a WindowItem will resize the WindowObject it's displaying to match his own size.
+            So resizing a WindowItem will cause his WindowObject to follow suit, so that both always
+            have matching sizes.
+         */
+        function test_objectFollowsItemSize() {
+            initSizedWindowItemsModel();
+            var windowItem = sizedWindowItemsRepeater.itemAt(0);
+            var window = windowItem.window;
+
+            windowItem.width = 200;
+            windowItem.height = 100;
+            tryCompare(window, "size", Qt.size(200, 100));
+
+            windowItem.width = 201;
+            windowItem.height = 101;
+            tryCompare(window, "size", Qt.size(201, 101));
+
+            windowItem.width = 202;
+            windowItem.height = 102;
+            tryCompare(window, "size", Qt.size(202, 102));
+        }
+
+        /*
+            When WindowItem.objectFollowsItemSize is false, resizing the WindowItem will have no effect
+            over the WindowObject's size.
+         */
+        function test_windowDoesNotFolowItemSize() {
+            root.chosenModel = noResizeWindowItemsModel;
+            startAppAndCheckWindow();
+
+            var windowItem = noResizeWindowItemsRepeater.itemAt(0);
+            var window = windowItem.window;
+
+            windowItem.width = 200;
+            windowItem.height = 100;
+            tryCompare(window, "size", Qt.size(123, 321));
+
+            windowItem.width = 201;
+            windowItem.height = 101;
+            tryCompare(window, "size", Qt.size(123, 321));
+
+            windowItem.width = 202;
+            windowItem.height = 102;
+            tryCompare(window, "size", Qt.size(123, 321));
+        }
+    }
 }

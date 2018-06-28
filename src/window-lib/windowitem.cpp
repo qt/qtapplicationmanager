@@ -45,7 +45,6 @@
 #if defined(AM_MULTI_PROCESS)
 #include "waylandcompositor.h"
 #include "waylandwindow.h"
-#include <QWaylandWlShellSurface>
 #endif // AM_MULTI_PROCESS
 
 #include "applicationmanager.h"
@@ -100,6 +99,21 @@
     The first WindowItem to display a window is by default the primary one.
 
     \sa makePrimary
+*/
+
+/*!
+    \qmlproperty bool WindowItem::objectFollowsItemSize
+
+    If true, WindowItem will resize the WindowObject it's displaying to match his own size.
+    If false, resizing the WindowItem will have no effect over the size of the WindowObject
+    being displayed. This property is true by default.
+
+    You should to set it to false when you want the WindowItem size to be determined by the
+    WindowObject's size. In this case, in addition to setting this property to false, either
+    don't specify a width and height (as the item's implicit size is its WindowObject's size)
+    or explicitly set it to match WindowObject's size.
+
+    \sa WindowObject::resize
 */
 
 /*!
@@ -241,6 +255,19 @@ void WindowItem::updateImplicitSize()
     }
 }
 
+void WindowItem::setObjectFollowsItemSize(bool value)
+{
+    if (m_objectFollowsItemSize == value)
+        return;
+
+    m_objectFollowsItemSize = value;
+
+    if (m_objectFollowsItemSize && m_impl)
+        m_impl->updateSize(QSizeF(width(), height()));
+
+    emit objectFollowsItemSizeChanged();
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // WindowItem::InProcessImpl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,8 +293,8 @@ void WindowItem::InProcessImpl::tearDown()
 
 void WindowItem::InProcessImpl::updateSize(const QSizeF &newSize)
 {
-    if (!m_shaderEffectSource)
-        m_inProcessWindow->rootItem()->setSize(newSize);
+    if (!m_shaderEffectSource && q->m_objectFollowsItemSize)
+        m_inProcessWindow->resize(newSize.toSize());
 }
 
 Window *WindowItem::InProcessImpl::window() const
@@ -284,7 +311,6 @@ void WindowItem::InProcessImpl::setupPrimaryView()
     rootItem->setParentItem(q);
     rootItem->setX(0);
     rootItem->setY(0);
-    rootItem->setSize(QSizeF(q->width(), q->height()));
 }
 
 void WindowItem::InProcessImpl::setupSecondaryView()
@@ -350,16 +376,8 @@ void WindowItem::WaylandImpl::updateSize(const QSizeF &newSize)
 {
     m_waylandItem->setSize(newSize);
 
-    auto *surface = m_waylandWindow->surface();
-
-    if (q->primary() && surface) {
-        AbstractApplication *app = nullptr; // prevent expensive lookup when not printing qDebugs
-        qCDebug(LogGraphics) << "Sending geometry change request to Wayland client for surface"
-                            << surface << "new:" << newSize << "of"
-                            << ((app = ApplicationManager::instance()->fromProcessId(surface->client()->processId()))
-                                ? app->id() : QString::fromLatin1("pid: %1").arg(surface->client()->processId()));
-        surface->sendResizing(newSize.toSize());
-    }
+    if (q->primary() && q->m_objectFollowsItemSize)
+        m_waylandWindow->resize(newSize.toSize());
 }
 
 Window *WindowItem::WaylandImpl::window() const

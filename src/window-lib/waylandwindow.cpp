@@ -50,6 +50,8 @@
 #include "waylandcompositor.h"
 #include "waylandqtamserverextension_p.h"
 
+#include <QWaylandWlShellSurface>
+
 /*!
     \qmlproperty WaylandSurface WindowObject::waylandSurface
     \readonly
@@ -173,6 +175,21 @@ void WaylandWindow::onContentStateChanged()
 QSize WaylandWindow::size() const
 {
     return m_surface->size();
+}
+
+void WaylandWindow::resize(const QSize &newSize)
+{
+    if (!m_surface)
+        return;
+
+    AbstractApplication *app = nullptr; // prevent expensive lookup when not printing qDebugs
+
+    qCDebug(LogGraphics) << "Sending geometry change request to Wayland client for surface"
+        << m_surface << "new:" << newSize << "of"
+        << ((app = ApplicationManager::instance()->fromProcessId(m_surface->client()->processId()))
+                ? app->id() : QString::fromLatin1("pid: %1").arg(m_surface->client()->processId()));
+
+    m_surface->sendResizing(newSize);
 }
 
 QWaylandQuickSurface* WaylandWindow::waylandSurface() const

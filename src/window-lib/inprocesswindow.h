@@ -65,6 +65,7 @@ public:
 
     ContentState contentState() const override { return m_contentState; }
     QSize size() const override;
+    void resize(const QSize &size) override;
 
     void close() override;
 

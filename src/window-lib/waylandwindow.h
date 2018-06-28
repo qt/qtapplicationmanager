@@ -71,6 +71,7 @@ public:
     void close() override;
 
     QSize size() const override;
+    void resize(const QSize &size) override;
 
     WindowSurface *surface() const { return m_surface; }
 

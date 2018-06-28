@@ -228,7 +228,7 @@ void WindowItem::makePrimary()
         emit oldPrimaryItem->primaryChanged();
     emit primaryChanged();
 
-    m_impl->updateSize(size());
+    m_impl->updateSize(QSizeF(width(), height()));
 }
 
 void WindowItem::updateImplicitSize()
@@ -284,7 +284,7 @@ void WindowItem::InProcessImpl::setupPrimaryView()
     rootItem->setParentItem(q);
     rootItem->setX(0);
     rootItem->setY(0);
-    rootItem->setSize(q->size());
+    rootItem->setSize(QSizeF(q->width(), q->height()));
 }
 
 void WindowItem::InProcessImpl::setupSecondaryView()

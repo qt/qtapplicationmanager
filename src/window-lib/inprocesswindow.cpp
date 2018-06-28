@@ -93,7 +93,7 @@ void InProcessWindow::setContentState(ContentState newState)
 
 QSize InProcessWindow::size() const
 {
-    return m_surfaceItem->size().toSize();
+    return QSize(m_surfaceItem->width(), m_surfaceItem->height());
 }
 
 QT_END_NAMESPACE_AM

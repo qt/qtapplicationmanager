@@ -54,21 +54,21 @@ tst_SystemReader::tst_SystemReader()
 void tst_SystemReader::cgroupProcessInfo()
 {
     auto map = fetchCGroupProcessInfo(1234);
-    QCOMPARE(map["memory"], "/system.slice/run-u5853.scope");
+    QCOMPARE(map["memory"], QByteArray("/system.slice/run-u5853.scope"));
 }
 
 void tst_SystemReader::memoryReaderReadUsedValue()
 {
     MemoryReader memoryReader(qSL("/system.slice/run-u5853.scope"));
     quint64 value = memoryReader.readUsedValue();
-    QCOMPARE(value, UINT64_C(66809856));
+    QCOMPARE(value, Q_UINT64_C(66809856));
 }
 
 void tst_SystemReader::memoryReaderGroupLimit()
 {
     MemoryReader memoryReader(qSL("/system.slice/run-u5853.scope"));
     quint64 value = memoryReader.groupLimit();
-    QCOMPARE(value, UINT64_C(524288000));
+    QCOMPARE(value, Q_UINT64_C(524288000));
 }
 
 QTEST_APPLESS_MAIN(tst_SystemReader)

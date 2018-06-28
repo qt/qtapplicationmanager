@@ -53,6 +53,7 @@
 #include "waylandcompositor.h"
 
 #include <QWaylandWlShell>
+#include <QWaylandXdgShellV5>
 #include <QWaylandQuickOutput>
 #include <QWaylandTextInputManager>
 #include <QWaylandQtWindowManager>
@@ -68,14 +69,18 @@ WindowSurface::WindowSurface(WaylandCompositor *comp, QWaylandClient *client, ui
 
 void WindowSurface::setShellSurface(QWaylandWlShellSurface *shellSurface)
 {
-    m_shellSurface = shellSurface;
-    connect(m_shellSurface, &QWaylandWlShellSurface::pong,
+    Q_ASSERT(!m_xdgSurface);
+    m_wlSurface = shellSurface;
+    connect(m_wlSurface, &QWaylandWlShellSurface::pong,
             this, &WindowSurface::pong);
 }
 
-QWaylandWlShellSurface *WindowSurface::shellSurface() const
+void WindowSurface::sendResizing(const QSize &size)
 {
-    return m_shellSurface;
+    if (m_xdgSurface)
+        m_xdgSurface->sendResizing(size);
+    else
+        m_wlSurface->sendConfigure(size, QWaylandWlShellSurface::NoneEdge);
 }
 
 WaylandCompositor *WindowSurface::compositor() const
@@ -102,12 +107,18 @@ QWindow *WindowSurface::outputWindow() const
 
 void WindowSurface::ping()
 {
-    m_shellSurface->ping();
+    if (m_xdgSurface) {
+        // FIXME: ping should be done per-application, not per-window
+        m_compositor->xdgPing(this);
+    } else {
+        m_wlSurface->ping();
+    }
 }
 
 WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName)
     : QWaylandQuickCompositor()
-    , m_shell(new QWaylandWlShell(this))
+    , m_wlShell(new QWaylandWlShell(this))
+    , m_xdgShell(new QWaylandXdgShellV5(this))
     , m_amExtension(new WaylandQtAMServerExtension(this))
     , m_textInputManager(new QWaylandTextInputManager(this))
 {
@@ -116,7 +127,10 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     connect(this, &QWaylandCompositor::surfaceRequested, this, &WaylandCompositor::doCreateSurface);
 
-    connect(m_shell, &QWaylandWlShell::wlShellSurfaceRequested, this, &WaylandCompositor::createShellSurface);
+    connect(m_wlShell, &QWaylandWlShell::wlShellSurfaceRequested, this, &WaylandCompositor::createWlSurface);
+
+    connect(m_xdgShell, &QWaylandXdgShellV5::xdgSurfaceCreated, this, &WaylandCompositor::onXdgSurfaceCreated);
+    connect(m_xdgShell, &QWaylandXdgShellV5::pong, this, &WaylandCompositor::onXdgPongReceived);
 
     auto wmext = new QWaylandQtWindowManager(this);
     connect(wmext, &QWaylandQtWindowManager::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
@@ -128,6 +142,20 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     // set a sensible default keymap
     defaultSeat()->keymap()->setLayout(QLocale::system().name().section('_', 1, 1).toLower());
+}
+
+void WaylandCompositor::xdgPing(WindowSurface* surface)
+{
+    uint serial = m_xdgShell->ping(surface->client());
+    m_xdgPingMap[serial] = surface;
+}
+
+void WaylandCompositor::onXdgPongReceived(uint serial)
+{
+    WindowSurface *surface = m_xdgPingMap.take(serial);
+    if (surface) {
+        emit surface->pong();
+    }
 }
 
 void WaylandCompositor::registerOutputWindow(QQuickWindow* window)
@@ -148,15 +176,30 @@ void WaylandCompositor::doCreateSurface(QWaylandClient *client, uint id, int ver
     (void) new WindowSurface(this, client, id, version);
 }
 
-void WaylandCompositor::createShellSurface(QWaylandSurface *surface, const QWaylandResource &resource)
+
+void WaylandCompositor::createWlSurface(QWaylandSurface *surface, const QWaylandResource &resource)
 {
     WindowSurface *windowSurface = static_cast<WindowSurface *>(surface);
-    QWaylandWlShellSurface *ss = new QWaylandWlShellSurface(m_shell, windowSurface, resource);
+    QWaylandWlShellSurface *ss = new QWaylandWlShellSurface(m_wlShell, windowSurface, resource);
     windowSurface->setShellSurface(ss);
 
     connect(windowSurface, &QWaylandSurface::hasContentChanged, this, [this, windowSurface]() {
         if (windowSurface->hasContent())
             emit this->surfaceMapped(static_cast<WindowSurface*>(windowSurface));
+    });
+}
+
+
+void WaylandCompositor::onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface)
+{
+    WindowSurface *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
+
+    Q_ASSERT(!windowSurface->m_wlSurface);
+    windowSurface->m_xdgSurface = xdgSurface;
+
+    connect(windowSurface, &QWaylandSurface::hasContentChanged, this, [this, windowSurface]() {
+        if (windowSurface->hasContent())
+            emit this->surfaceMapped(windowSurface);
     });
 }
 

@@ -357,7 +357,7 @@ void WindowItem::WaylandImpl::updateSize(const QSizeF &newSize)
                             << surface << "new:" << newSize << "of"
                             << ((app = ApplicationManager::instance()->fromProcessId(surface->client()->processId()))
                                 ? app->id() : QString::fromLatin1("pid: %1").arg(surface->client()->processId()));
-        surface->shellSurface()->sendConfigure(newSize.toSize(), QWaylandWlShellSurface::NoneEdge);
+        surface->sendResizing(newSize.toSize());
     }
 }
 

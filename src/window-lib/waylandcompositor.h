@@ -51,9 +51,13 @@
 #include <QWaylandQuickSurface>
 #include <QWaylandQuickItem>
 
+#include <QMap>
+
 QT_FORWARD_DECLARE_CLASS(QWaylandResource)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShellSurface)
+QT_FORWARD_DECLARE_CLASS(QWaylandXdgShellV5)
+QT_FORWARD_DECLARE_CLASS(QWaylandXdgSurfaceV5)
 QT_FORWARD_DECLARE_CLASS(QWaylandTextInputManager)
 
 QT_BEGIN_NAMESPACE_AM
@@ -74,11 +78,10 @@ public:
     QWaylandWlShellSurface *shellSurface() const;
     WaylandCompositor *compositor() const;
 
-private:
-    void setShellSurface(QWaylandWlShellSurface *ss);
+    void sendResizing(const QSize &size);
 
 private:
-    QWaylandWlShellSurface *m_shellSurface = nullptr;
+    void setShellSurface(QWaylandWlShellSurface *ss);
 
 public:
     QWaylandSurface *surface() const;
@@ -93,6 +96,8 @@ signals:
 private:
     QWaylandSurface *m_surface;
     WaylandCompositor *m_compositor;
+    QWaylandWlShellSurface *m_wlSurface = nullptr;
+    QWaylandXdgSurfaceV5 *m_xdgSurface = nullptr;
 
     friend class WaylandCompositor;
 };
@@ -106,17 +111,23 @@ public:
 
     WaylandQtAMServerExtension *amExtension();
 
+    void xdgPing(WindowSurface*);
+
 signals:
     void surfaceMapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
 
 protected:
     void doCreateSurface(QWaylandClient *client, uint id, int version);
-    void createShellSurface(QWaylandSurface *surface, const QWaylandResource &resource);
+    void createWlSurface(QWaylandSurface *surface, const QWaylandResource &resource);
+    void onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface);
+    void onXdgPongReceived(uint serial);
 
-    QWaylandWlShell *m_shell;
+    QWaylandWlShell *m_wlShell;
+    QWaylandXdgShellV5 *m_xdgShell;
     QVector<QWaylandOutput *> m_outputs;
     WaylandQtAMServerExtension *m_amExtension;
     QWaylandTextInputManager *m_textInputManager;
+    QMap<uint, WindowSurface*> m_xdgPingMap;
 };
 
 QT_END_NAMESPACE_AM

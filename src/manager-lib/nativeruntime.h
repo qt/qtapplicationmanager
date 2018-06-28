@@ -117,14 +117,14 @@ private:
     void shutdown(int exitCode, QProcess::ExitStatus status);
     void registerExtensionInterfaces();
     QDBusServer *applicationInterfaceServer() const;
+    bool startApplicationViaLauncher();
 
     bool m_isQuickLauncher;
-    bool m_needsLauncher;
+    bool m_startedViaLauncher;
 
     QString m_document;
     QString m_mimeType;
-    bool m_launchWhenReady = false;
-    bool m_applicationInterfaceConnected = false;
+    bool m_connectedToRuntimeInterface = false;
     bool m_dbusConnection = false;
     QString m_dbusConnectionName;
 

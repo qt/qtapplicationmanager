@@ -251,7 +251,8 @@
     \qmlsignal ApplicationManager::applicationRunStateChanged(string id, enumeration runState)
 
     This signal is emitted when the \a runState of the application identified by \a id changed.
-    The \a runState can be one of:
+    Possible values for the \l {Application::runState} {runState} are defined by the Application
+    type.
 
     For example this signal can be used to restart an application in multi-process mode when
     it has crashed:
@@ -260,7 +261,7 @@
     Connections {
         target: ApplicationManager
         onApplicationRunStateChanged: {
-            if (runState === ApplicationManager.NotRunning
+            if (runState === Application.NotRunning
                 && ApplicationManager.application(id).lastExitStatus === Application.CrashExit) {
                 ApplicationManager.startApplication(id);
             }

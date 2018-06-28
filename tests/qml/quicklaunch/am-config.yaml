@@ -1,0 +1,19 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installedAppsManifestDir: "/tmp/am-quicklaunch-test/manifests"
+  appImageMountDir: "/tmp/am-quicklaunch-test/image-mounts"
+  database: "/tmp/am-quicklaunch-test/apps.db"
+
+installationLocations:
+- id: "internal-0"
+  installationPath: "/tmp/am/apps"
+  documentPath: "/tmp/am/docs"
+  mountPoint: "/tmp"
+  isDefault: true
+
+quicklaunch:
+  runtimesPerContainer: 2
+  idleLoad: 1.0

@@ -56,32 +56,33 @@ TestCase {
     }
 
     SignalSpy {
-        id: windowReadySpy
+        id: windowAddedSpy
         target: WindowManager
-        signalName: "windowReady"
+        signalName: "windowAdded"
     }
 
     SignalSpy {
         id: runStateChangedSpy
-        target: ApplicationManager
-        signalName: "applicationRunStateChanged"
+        signalName: "runStateChanged"
     }
 
     function test_quicklaunch() {
-        var app = "tld.test.quicklaunch"
+        var app = ApplicationManager.application("tld.test.quicklaunch");
+        runStateChangedSpy.target = app;
+
         wait(1000);
         // Check for quick-launching is done every second in appman. After 1s now, this test
         // sometimes caused some race where the app would not be started at all in the past:
-        ApplicationManager.startApplication(app);
-        windowReadySpy.wait(3000);
+        app.start();
+        windowAddedSpy.wait(3000);
         runStateChangedSpy.clear();
-        ApplicationManager.stopApplication(app, true);
+        app.stop(true);
         runStateChangedSpy.wait(3000);    // wait for ShuttingDown
         runStateChangedSpy.wait(3000);    // wait for NotRunning
         wait(1000);
         // Unfortunately there is no reliable means to determine, whether a quicklaunch process
         // is running, but after at least 2s now, there should be a process that can be attached to.
-        ApplicationManager.startApplication(app);
-        windowReadySpy.wait(3000);
+        app.start();
+        windowAddedSpy.wait(3000);
     }
 }

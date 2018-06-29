@@ -110,7 +110,7 @@ static qint64 getDBusPeerPid(const QDBusConnection &conn)
 NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, NativeRuntimeManager *manager)
     : AbstractRuntime(container, app, manager)
     , m_isQuickLauncher(app == nullptr)
-    , m_needsLauncher(manager->identifier() != qL1S("native"))
+    , m_startedViaLauncher(manager->identifier() != qL1S("native"))
 {
     QString dbusAddress = QUuid::createUuid().toString().mid(1,36);
     m_applicationInterfaceServer = new QDBusServer(qSL("unix:path=/tmp/dbus-qtam-") + dbusAddress);
@@ -164,7 +164,7 @@ bool NativeRuntime::isQuickLauncher() const
 
 bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
 {
-    if (!app || !isQuickLauncher() || !m_needsLauncher)
+    if (!app || !isQuickLauncher() || !m_startedViaLauncher)
         return false;
 
     m_isQuickLauncher = false;
@@ -178,8 +178,7 @@ bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
         // we have no D-Bus connection yet, so hope for the best
         ret = true;
     } else {
-        onApplicationFinishedInitialization();
-        ret = m_applicationInterfaceConnected;
+        ret = startApplicationViaLauncher();
     }
 
     if (ret)
@@ -190,7 +189,7 @@ bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
 
 bool NativeRuntime::initialize()
 {
-    if (m_needsLauncher) {
+    if (m_startedViaLauncher) {
         static QVector<QString> possibleLocations;
         if (possibleLocations.isEmpty()) {
             // try the main binaries directory
@@ -231,12 +230,12 @@ bool NativeRuntime::initialize()
 
 void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
 {
-    if (!m_isQuickLauncher || m_applicationInterfaceConnected) {
+    if (!m_isQuickLauncher || m_connectedToRuntimeInterface) {
         qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
                            << "pid:" << m_process->processId() << ") exited with code:" << exitCode
                            << "status:" << status;
     }
-    m_applicationInterfaceConnected = m_launchWhenReady = m_dbusConnection = false;
+    m_connectedToRuntimeInterface = m_dbusConnection = false;
 
     // unregister all extension interfaces
     const auto interfaces = ApplicationIPCManager::instance()->interfaces();
@@ -298,7 +297,7 @@ bool NativeRuntime::start()
         { qSL("dbus"), dbusConfig }
     };
 
-    if (!m_needsLauncher && !m_isQuickLauncher)
+    if (!m_startedViaLauncher && !m_isQuickLauncher)
         config.insert(qSL("systemProperties"), systemProperties());
     if (!uiConfig.isEmpty())
         config.insert(qSL("ui"), uiConfig);
@@ -340,9 +339,7 @@ bool NativeRuntime::start()
 
     QStringList args;
 
-    if (m_needsLauncher) {
-        m_launchWhenReady = true;
-    } else {
+    if (!m_startedViaLauncher) {
         args.append(variantToStringList(m_app->runtimeParameters().value(qSL("arguments"))));
 
         if (!m_document.isNull())
@@ -378,8 +375,8 @@ void NativeRuntime::stop(bool forceKill)
     setState(Shutdown);
     emit aboutToStop();
 
-    if (!m_applicationInterfaceConnected) {
-        //The launcher didn't connected to the RuntimeInterface yet, so we it won't get the quit signal
+    if (!m_connectedToRuntimeInterface) {
+        //The launcher didn't connected to the RuntimeInterface yet, so it won't get the quit signal
         m_process->terminate();
     } else if (forceKill) {
         m_process->kill();
@@ -396,7 +393,7 @@ void NativeRuntime::stop(bool forceKill)
 
 void NativeRuntime::onProcessStarted()
 {
-    if (!m_needsLauncher && !application()->nonAliasedInfo()->supportsApplicationInterface())
+    if (!m_startedViaLauncher && !application()->nonAliasedInfo()->supportsApplicationInterface())
         setState(Active);
 }
 
@@ -435,7 +432,7 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
     connect(m_applicationInterface, &NativeRuntimeApplicationInterface::applicationFinishedInitialization,
             this, &NativeRuntime::onApplicationFinishedInitialization);
 
-    if (m_needsLauncher && m_launchWhenReady && !m_applicationInterfaceConnected) {
+    if (m_startedViaLauncher) {
         m_runtimeInterface = new NativeRuntimeInterface(this);
         if (!conn.registerObject(qSL("/RuntimeInterface"), m_runtimeInterface, QDBusConnection::ExportScriptableContents))
             qCWarning(LogSystem) << "ERROR: could not register the /RuntimeInterface object on the peer DBus.";
@@ -454,21 +451,29 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 
 void NativeRuntime::onApplicationFinishedInitialization()
 {
-    if (!m_applicationInterfaceConnected) {
+    m_connectedToRuntimeInterface = true;
+
+    if (m_app) {
         registerExtensionInterfaces();
 
-        if (m_needsLauncher && m_launchWhenReady &&  m_app && m_runtimeInterface) {
-
-            QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
-            QString pathInContainer = m_container->mapHostPathToContainer(m_app->nonAliasedInfo()->absoluteCodeFilePath());
-
-            emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
-                                                      convertFromJSVariant(QVariant(m_app->info()->toVariantMap())).toMap(),
-                                                      convertFromJSVariant(QVariant(systemProperties())).toMap());
-        }
-        m_applicationInterfaceConnected = true;
+        if (m_startedViaLauncher && m_runtimeInterface)
+            startApplicationViaLauncher();
     }
+}
+
+bool NativeRuntime::startApplicationViaLauncher()
+{
+    if (!m_startedViaLauncher || !m_runtimeInterface || !m_app)
+        return false;
+
+    QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
+    QString pathInContainer = m_container->mapHostPathToContainer(m_app->nonAliasedInfo()->absoluteCodeFilePath());
+
+    emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
+                                              convertFromJSVariant(QVariant(m_app->info()->toVariantMap())).toMap(),
+                                              convertFromJSVariant(QVariant(systemProperties())).toMap());
     setState(Active);
+    return true;
 }
 
 void NativeRuntime::registerExtensionInterfaces()

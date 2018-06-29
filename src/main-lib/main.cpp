@@ -915,6 +915,7 @@ void Main::registerDBusInterfaces(const std::function<QString(const char *)> &bu
         } catch (const Exception &e) {
             //TODO: what should we do here? on the desktop this will obviously always fail
             qCCritical(LogSystem) << "WARNING:" << e.what();
+            qCCritical(LogSystem) << "NOTE: Please consider starting with the --start-session-dbus option to work around this issue.";
         }
 
         auto wma = new WindowManagerDBusContextAdaptor(m_windowManager);

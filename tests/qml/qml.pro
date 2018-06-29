@@ -4,4 +4,5 @@ SUBDIRS = \
     windowmapping \
     windowitem \
     installer \
-    monitoring
+    monitoring \
+    quicklaunch

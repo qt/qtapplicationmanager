@@ -372,7 +372,11 @@ void WindowItem::WaylandImpl::setupPrimaryView()
     Q_ASSERT(m_waylandWindow);
     Q_ASSERT(m_waylandItem);
 
-    m_waylandItem->setPrimary();
+    // Calling setPrimary() on an item without a surface causes either a crash (old versions)
+    // or a warning (newer versions) in qtwayland. Let's avoid that.
+    if (m_waylandItem->surface())
+        m_waylandItem->setPrimary();
+
     m_waylandItem->setInputEventsEnabled(true);
     m_waylandItem->setTouchEventsEnabled(true);
 }

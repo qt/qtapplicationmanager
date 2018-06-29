@@ -343,6 +343,7 @@ void WindowItem::WaylandImpl::createWaylandItem()
 void WindowItem::WaylandImpl::tearDown()
 {
     m_waylandItem->setSurface(nullptr);
+    m_waylandWindow = nullptr;
 }
 
 void WindowItem::WaylandImpl::updateSize(const QSizeF &newSize)

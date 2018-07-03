@@ -115,15 +115,8 @@ Item {
             sizedWindowItemsModel.clear();
             noResizeWindowItemsModel.clear();
 
-            // TODO: If you call stop() on the same application twice,
-            // WindowManager::inProcessSurfaceItemClosing will be called twice, and the
-            // second time it's called the surfaceItem there will be a dangling pointer.
-            // So we're avoding calling app.stop() twice here.
-            // See comment in InProcessWindow::~InProcessWindow() for more information
-            if (app) {
+            if (app)
                 app.stop();
-                app = null;
-            }
 
             waitUntilAllAppsAreStopped();
         }
@@ -255,7 +248,6 @@ Item {
 
             compare(window.contentState, WindowObject.SurfaceWithContent);
             app.stop();
-            app = null;
             wait(50); // give it some time for any queued events/emissions to be processed.
 
             // The WindowObject should still be there, albeit without a surface
@@ -381,7 +373,6 @@ Item {
             var window = windowItem.window;
 
             app.stop();
-            app = null;
 
             tryCompare(window, "contentState", WindowObject.NoSurface);
 

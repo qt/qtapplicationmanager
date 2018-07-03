@@ -369,5 +369,23 @@ Item {
             windowItem.height = 102;
             tryCompare(window, "size", Qt.size(123, 321));
         }
+
+        /*
+            Checks that calling close() on an empty WindowObject won't cause a crash (particularly
+            in multi-process)
+         */
+        function test_closeEmptyWindow() {
+            initWindowItemsModel();
+
+            var windowItem = windowItemsRepeater.itemAt(0);
+            var window = windowItem.window;
+
+            app.stop();
+            app = null;
+
+            tryCompare(window, "contentState", WindowObject.NoSurface);
+
+            window.close();
+        }
     }
 }

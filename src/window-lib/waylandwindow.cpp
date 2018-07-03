@@ -199,7 +199,8 @@ QWaylandQuickSurface* WaylandWindow::waylandSurface() const
 
 void WaylandWindow::close()
 {
-    m_surface->close();
+    if (m_surface)
+        m_surface->close();
 }
 
 QT_END_NAMESPACE_AM

@@ -30,7 +30,8 @@ multi-process:!headless {
     WAYLANDSERVERSOURCES += \
         ../wayland-extensions/qtam-extension.xml
 
-    CONFIG *= wayland-scanner
+    CONFIG *= wayland-scanner generated_privates
+    private_headers.CONFIG += no_check_exists
 }
 
 !headless:HEADERS += \

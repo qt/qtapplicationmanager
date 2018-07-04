@@ -33,3 +33,14 @@
     "qtdeclarative" => "",
     "qtwayland" => "",
 );
+%inject_headers = (
+    "$basedir/src/launcher-lib" => [
+        "^qwayland-qtam-extension.h",
+        "^wayland-qtam-extension-client-protocol.h",
+    ],
+    "$basedir/src/window-lib" => [
+        "^qwayland-server-qtam-extension.h",
+        "^wayland-qtam-extension-server-protocol.h"
+    ],
+);
+@private_headers = ( qr/^qwayland-.*\.h/, qr/^wayland-.*-protocol\.h/ );

@@ -27,7 +27,8 @@ SOURCES += \
 
 !headless:qtHaveModule(waylandclient) {
     QT *= waylandclient waylandclient-private
-    CONFIG *= wayland-scanner
+    CONFIG *= wayland-scanner generated_privates
+    private_headers.CONFIG += no_check_exists
     WAYLANDCLIENTSOURCES += ../wayland-extensions/qtam-extension.xml
     HEADERS += waylandqtamclientextension_p.h
     SOURCES += waylandqtamclientextension.cpp

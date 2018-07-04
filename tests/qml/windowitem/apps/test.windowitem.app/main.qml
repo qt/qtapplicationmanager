@@ -44,13 +44,19 @@ import QtApplicationManager 1.0
 
 ApplicationManagerWindow {
     id: root
+    color: "red"
 
     width: 123
     height: 321
 
-    Rectangle {
+    MouseArea {
+        id: mouseArea
+        property int clickCount: 0
         anchors.fill: parent
-        color: "red"
+        onClicked: {
+            clickCount += 1;
+            root.setWindowProperty("clickCount", clickCount);
+        }
     }
 
     // A way for test code to trigger ApplicationManagerWindow's size changes from
@@ -60,5 +66,9 @@ ApplicationManagerWindow {
             root.width = value;
         else if (name === "requestedHeight")
             root.height = value;
+    }
+
+    Component.onCompleted: {
+        root.setWindowProperty("clickCount", mouseArea.clickCount);
     }
 }

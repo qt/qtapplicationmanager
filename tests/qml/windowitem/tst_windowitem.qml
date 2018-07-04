@@ -53,7 +53,18 @@ Item {
         id: windowItemsRepeater
         model: ListModel { id: windowItemsModel }
         delegate: WindowItem {
+            id: windowItem
             window: model.window
+
+            property int clickCount: 0
+            property alias mouseAreaVisible: mouseArea.visible
+
+            MouseArea {
+                id: mouseArea
+                anchors.fill: parent
+                onClicked: windowItem.clickCount += 1;
+                z: -100 // some arbitrary, negative, Z
+            }
         }
     }
     Repeater {
@@ -377,6 +388,37 @@ Item {
             tryCompare(window, "contentState", WindowObject.NoSurface);
 
             window.close();
+        }
+
+        /*
+            Children added by System-UI code must always stay in front of WindowItem's own private children.
+         */
+        function test_childrenZOrder() {
+            initWindowItemsModel();
+
+            var windowItem = windowItemsRepeater.itemAt(0);
+            var window = windowItem.window;
+
+            windowItem.mouseAreaVisible = false;
+
+            touchEvent(windowItem).press(0).commit();
+            touchEvent(windowItem).release(0).commit();
+
+            // There's nothing in front of the wayland item (at least nothing visible).
+            // The touch event will reach it.
+            tryVerify(function() { return window.windowProperty("clickCount") === 1; });
+            compare(windowItem.clickCount, 0);
+
+            windowItem.mouseAreaVisible = true;
+
+            touchEvent(windowItem).press(0).commit();
+            touchEvent(windowItem).release(0).commit();
+
+            // Since a visible MouseArea is now in front of WindowItem's internal wayland item
+            // the second touch event was caught by that MouseArea instead.
+            tryCompare(windowItem, "clickCount", 1);
+            compare(window.windowProperty("clickCount"), 1);
+
         }
     }
 }

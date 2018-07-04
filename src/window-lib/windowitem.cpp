@@ -56,6 +56,7 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlProperty>
+#include <QtQuick/private/qquickitem_p.h>
 
 /*!
     \qmltype WindowItem
@@ -129,6 +130,17 @@ QT_BEGIN_NAMESPACE_AM
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // WindowItem
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+WindowItem::WindowItem(QQuickItem *parent)
+    : QQuickItem(parent)
+    , m_contentItem(new QQuickItem(this))
+{
+    m_contentItem->setParent(this);
+
+    m_contentItem->setZ(2);
+    m_contentItem->setWidth(width());
+    m_contentItem->setHeight(height());
+}
 
 WindowItem::~WindowItem()
 {
@@ -211,6 +223,9 @@ void WindowItem::createImpl(bool inProcess)
 
 void WindowItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
+    m_contentItem->setWidth(newGeometry.width());
+    m_contentItem->setHeight(newGeometry.height());
+
     if (m_impl && newGeometry.isValid())
         m_impl->updateSize(newGeometry.size());
 
@@ -266,6 +281,46 @@ void WindowItem::setObjectFollowsItemSize(bool value)
         m_impl->updateSize(QSizeF(width(), height()));
 
     emit objectFollowsItemSizeChanged();
+}
+
+QQmlListProperty<QObject> WindowItem::contentItemData()
+{
+    return QQmlListProperty<QObject>(this, nullptr,
+            WindowItem::contentItemData_append,
+            WindowItem::contentItemData_count,
+            WindowItem::contentItemData_at,
+            WindowItem::contentItemData_clear);
+}
+
+void WindowItem::contentItemData_append(QQmlListProperty<QObject> *property, QObject *value)
+{
+    auto *that = static_cast<WindowItem*>(property->object);
+
+    QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->m_contentItem)->data();
+    itemProperty.append(&itemProperty, value);
+}
+
+int WindowItem::contentItemData_count(QQmlListProperty<QObject> *property)
+{
+    auto *that = static_cast<WindowItem*>(property->object);
+    if (!QQuickItemPrivate::get(that->m_contentItem)->data().count)
+        return 0;
+    QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->m_contentItem)->data();
+    return itemProperty.count(&itemProperty);
+}
+
+QObject *WindowItem::contentItemData_at(QQmlListProperty<QObject> *property, int index)
+{
+    auto *that = static_cast<WindowItem*>(property->object);
+    QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->m_contentItem)->data();
+    return itemProperty.at(&itemProperty, index);
+}
+
+void WindowItem::contentItemData_clear(QQmlListProperty<QObject> *property)
+{
+    auto *that = static_cast<WindowItem*>(property->object);
+    QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->m_contentItem)->data();
+    itemProperty.clear(&itemProperty);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

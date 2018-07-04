@@ -188,7 +188,6 @@ Rectangle {
             Rectangle {
                 width: 25
                 height: 25
-                z: 2
                 anchors.horizontalCenter: parent.right
                 anchors.verticalCenter: parent.top
                 color: "chocolate"

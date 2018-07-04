@@ -66,8 +66,12 @@ class WindowItem : public QQuickItem
     Q_PROPERTY(bool objectFollowsItemSize READ objectFollowsItemSize
                                           WRITE setObjectFollowsItemSize
                                           NOTIFY objectFollowsItemSizeChanged)
+
+    Q_PROPERTY(QQmlListProperty<QObject> contentItemData READ contentItemData)
+    Q_CLASSINFO("DefaultProperty", "contentItemData")
+
 public:
-    WindowItem(QQuickItem *parent = nullptr) : QQuickItem(parent) {}
+    WindowItem(QQuickItem *parent = nullptr);
     ~WindowItem();
 
     Window *window() const;
@@ -78,6 +82,14 @@ public:
 
     bool objectFollowsItemSize() { return m_objectFollowsItemSize; }
     void setObjectFollowsItemSize(bool value);
+
+    QQmlListProperty<QObject> contentItemData();
+
+    static void contentItemData_append(QQmlListProperty<QObject> *property, QObject *value);
+    static int contentItemData_count(QQmlListProperty<QObject> *property);
+    static QObject *contentItemData_at(QQmlListProperty<QObject> *property, int index);
+    static void contentItemData_clear(QQmlListProperty<QObject> *property);
+
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 signals:
@@ -137,6 +149,11 @@ private:
 
     Impl *m_impl{nullptr};
     bool m_objectFollowsItemSize{true};
+
+    // The only purpose of this item is to ensure all WindowItem children added by System-UI code ends up
+    // in front of WindowItem's internal QWaylandQuickItem (or the application's root item in case of
+    // inprocess)
+    QQuickItem *m_contentItem;
 };
 
 QT_END_NAMESPACE_AM

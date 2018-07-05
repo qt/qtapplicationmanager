@@ -1086,13 +1086,20 @@ QString Main::hardwareId() const
     if (f.open(QFile::ReadOnly))
         return QString::fromLocal8Bit(f.readAll().trimmed());
 #else
-    const auto allInterfaces = QNetworkInterface::allInterfaces();
-    for (const QNetworkInterface &iface : allInterfaces) {
-        if (iface.isValid() && (iface.flags() & QNetworkInterface::IsUp)
+    QVector<QNetworkInterface> candidateIfaces;
+    for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
+        if (iface.isValid()
                 && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
+                && iface.type() > QNetworkInterface::Virtual
                 && !iface.hardwareAddress().isEmpty()) {
-            return iface.hardwareAddress().replace(qL1C(':'), qL1S("-"));
+            candidateIfaces << iface;
         }
+    }
+    if (!candidateIfaces.isEmpty()) {
+        std::sort(candidateIfaces.begin(), candidateIfaces.end(), [](const QNetworkInterface &first, const QNetworkInterface &second) {
+            return first.name().compare(second.name()) < 0;
+        });
+        return candidateIfaces.constFirst().hardwareAddress().replace(qL1C(':'), qL1S("-"));
     }
 #endif
     return QString();

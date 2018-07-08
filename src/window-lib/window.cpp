@@ -57,9 +57,9 @@
 */
 
 /*!
-    \qmlmethod bool WindowObject::setWindowProperty(Item window, string name, var value)
+    \qmlmethod bool WindowObject::setWindowProperty(string name, var value)
 
-    Sets an application \a window's shared property identified by \a name to the given \a value.
+    Sets the application window's shared property identified by \a name to the given \a value.
 
     These properties are shared between the System-UI and the client application: in single-process
     mode simply via a QVariantMap; in multi-process mode the sharing is done via Qt's extended
@@ -72,17 +72,17 @@
 */
 
 /*!
-    \qmlmethod var WindowObject::windowProperty(Item window, string name)
+    \qmlmethod var WindowObject::windowProperty(string name)
 
-    Returns the value of an application \a window's shared property identified by \a name.
+    Returns the value of the application window's shared property identified by \a name.
 
     \sa setWindowProperty()
 */
 
 /*!
-    \qmlmethod var WindowObject::windowProperties(Item window)
+    \qmlmethod var WindowObject::windowProperties()
 
-    Returns an object containing all shared properties of an application \a window.
+    Returns an object containing all shared properties of the application window.
 
     \sa setWindowProperty()
 */
@@ -91,7 +91,7 @@
     \qmlmethod var WindowObject::resize(Size size)
 
     Resizes the WindowObject to the given size, in pixels. Usually you don't have to call
-    this yourself as WindowItem takes there of it by default.
+    this yourself as WindowItem takes care of it by default.
 
     \sa WindowObject::size, WindowItem::objectFollowsItemSize
 */
@@ -128,7 +128,14 @@
 */
 
 /*!
-    \qmlmethod bool WindowObject::close()
+    \qmlproperty ApplicationObject WindowObject::application
+    \readonly
+
+    This property holds the \l{ApplicationObject}{application} that created this window.
+*/
+
+/*!
+    \qmlmethod WindowObject::close()
 
     Sends a close event to the WindowObject.
 

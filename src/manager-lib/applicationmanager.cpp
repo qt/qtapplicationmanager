@@ -1573,10 +1573,10 @@ QVariantMap ApplicationManager::get(int row) const
 }
 
 /*!
-    \qmlmethod Application ApplicationManager::application(int index)
+    \qmlmethod ApplicationObject ApplicationManager::application(int index)
 
-    Returns the Application object corresponding to the given \a index in the model,
-    or \c null if the index is invalid.
+    Returns the \l{ApplicationObject}{application} corresponding to the given \a index in the
+    model, or \c null if the index is invalid.
 
     \note The object ownership of the returned Application object stays with the application-manager.
           If you want to store this pointer, you can use the ApplicationManager's QAbstractListModel
@@ -1593,9 +1593,9 @@ AbstractApplication *ApplicationManager::application(int index) const
 }
 
 /*!
-    \qmlmethod Application ApplicationManager::application(string id)
+    \qmlmethod ApplicationObject ApplicationManager::application(string id)
 
-    Returns the Application object corresponding to the given application \a id,
+    Returns the \l{ApplicationObject}{application} corresponding to the given application \a id,
     or \c null if the id does not exist.
 
     \note The object ownership of the returned Application object stays with the application-manager.

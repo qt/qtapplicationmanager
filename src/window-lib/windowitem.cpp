@@ -64,7 +64,7 @@
     \ingroup system-ui
     \brief An Item that renders a given WindowObject
 
-    In order to render a WindowObject in System UI's scene, you must specify where and how it should
+    In order to render a WindowObject inside the System-UI, you must specify where and how it should
     be done. This is achieved by placing a WindowItem in the scene, which is a regular QML Item, and
     assigning the desired WindowObject to it.
 
@@ -105,8 +105,8 @@
 /*!
     \qmlproperty bool WindowItem::objectFollowsItemSize
 
-    If true, WindowItem will resize the WindowObject it's displaying to match his own size.
-    If false, resizing the WindowItem will have no effect over the size of the WindowObject
+    If true, WindowItem will resize the WindowObject it's displaying to match its own size.
+    If false, resizing the WindowItem will have no effect on the size of the WindowObject
     being displayed. This property is true by default.
 
     You should to set it to false when you want the WindowItem size to be determined by the

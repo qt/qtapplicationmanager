@@ -456,7 +456,7 @@ QVariantMap WindowManager::get(int index) const
 }
 
 /*!
-    \qmlmethod int WindowManager::indexOfWindow(Window window)
+    \qmlmethod int WindowManager::indexOfWindow(WindowObject window)
 
     Returns the index of the \a window within the WindowManager model, or \c -1 if the window item is
     not a managed window.
@@ -667,7 +667,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 #endif // defined(AM_MULTI_PROCESS)
 
 /*!
-    \qmlsignal WindowManager::windowPropertyChanged(Item window, string name, var value)
+    \qmlsignal WindowManager::windowPropertyChanged(WindowObject window, string name, var value)
 
     Reports a change of an application \a window's property identified by \a name to the given
     \a value.

@@ -137,6 +137,7 @@ ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
 
 ApplicationManagerWindow::~ApplicationManagerWindow()
 {
+    d->launcherMain->clearWindowPropertyCache(this);
     delete d;
 }
 

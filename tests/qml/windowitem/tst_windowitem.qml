@@ -107,6 +107,11 @@ Item {
         }
     }
 
+    SignalSpy {
+        id: spyDestroyed
+        signalName: "_windowDestroyed"
+    }
+
     TestCase {
         id: testCase
         when: windowShown
@@ -256,13 +261,16 @@ Item {
             var secondWindowItem = windowItemsRepeater.itemAt(1);
 
             var window = WindowManager.get(0).window;
+            spyDestroyed.target = window;
+            spyDestroyed.clear();
 
             compare(window.contentState, WindowObject.SurfaceWithContent);
             app.stop();
-            wait(50); // give it some time for any queued events/emissions to be processed.
 
-            // The WindowObject should still be there, albeit without a surface
-            compare(WindowManager.count, 1);
+            // The WindowObject should still exist, albeit without a surface, even though
+            // no longer present in WindowManager's model.
+            tryCompare(WindowManager, "count", 0);
+            compare(spyDestroyed.count, 0);
             tryCompare(window, "contentState", WindowObject.NoSurface);
 
             // Destroy all WindowItems
@@ -272,7 +280,8 @@ Item {
 
             // Now that there are no WindowItems using that WindowObject anymore, it should
             // eventually be deleted by WindowManager
-            tryCompare(WindowManager, "count", 0);
+            spyDestroyed.wait();
+            compare(spyDestroyed.count, 1);
         }
 
         /*

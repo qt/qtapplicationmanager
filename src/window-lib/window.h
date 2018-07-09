@@ -108,6 +108,11 @@ signals:
     void isBeingDisplayedChanged();
     void contentStateChanged();
 
+    // Emitted when this window is destroyed. This signal exists because QObject::destroyed
+    // doesn't reach the QML/Javascript side. This exists just for testing purposes and
+    // is not considered part of the public API (hence the '_' prefix).
+    void _windowDestroyed();
+
 protected:
     AbstractApplication *m_application;
 

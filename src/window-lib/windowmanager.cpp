@@ -272,7 +272,7 @@ void WindowManager::shutDown()
 {
     d->shuttingDown = true;
 
-    if (d->windows.isEmpty())
+    if (d->allWindows.isEmpty())
         QTimer::singleShot(0, this, &WindowManager::shutDownFinished);
 }
 
@@ -392,7 +392,7 @@ int WindowManager::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
-    return d->windows.count();
+    return d->windowsInModel.count();
 }
 
 QVariant WindowManager::data(const QModelIndex &index, int role) const
@@ -400,7 +400,10 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
     if (index.parent().isValid() || !index.isValid())
         return QVariant();
 
-    Window *win = d->windows.at(index.row());
+    if (index.row() < 0 || index.row() >= d->windowsInModel.count())
+        return QVariant();
+
+    Window *win = d->windowsInModel.at(index.row());
 
     switch (role) {
     case Id:
@@ -463,7 +466,7 @@ QVariantMap WindowManager::get(int index) const
  */
 int WindowManager::indexOfWindow(Window *window)
 {
-    return d->windows.indexOf(window);
+    return d->windowsInModel.indexOf(window);
 }
 
 void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
@@ -480,23 +483,19 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 }
 
 /*
-    Releases all resources of the window surface and removes the window from the model.
+    Releases all resources of the window and destroys it.
 */
 void WindowManager::releaseWindow(Window *window)
 {
-    int index = d->windows.indexOf(window);
+    int index = d->allWindows.indexOf(window);
     if (index == -1)
         return;
 
-    emit windowAboutToBeRemoved(window);
     if (window->isInProcess()) {
         emit _inProcessSurfaceItemReleased(static_cast<InProcessWindow*>(window)->surfaceItem());
     }
 
-    beginRemoveRows(QModelIndex(), index, index);
-    d->windows.removeAt(index);
-    endRemoveRows();
-    emit countChanged();
+    d->allWindows.removeAt(index);
 
     disconnect(window, nullptr, this, nullptr);
 
@@ -504,6 +503,35 @@ void WindowManager::releaseWindow(Window *window)
 
     if (d->shuttingDown && (count() == 0))
         QTimer::singleShot(0, this, &WindowManager::shutDownFinished);
+}
+
+/*
+    Adds the given window to the model.
+ */
+void WindowManager::addWindow(Window *window)
+{
+    beginInsertRows(QModelIndex(), d->windowsInModel.count(), d->windowsInModel.count());
+    d->windowsInModel << window;
+    endInsertRows();
+    emit countChanged();
+    emit windowAdded(window);
+}
+
+/*
+    Removes the given window from the model.
+ */
+void WindowManager::removeWindow(Window *window)
+{
+    int index = d->windowsInModel.indexOf(window);
+    if (index == -1)
+        return;
+
+    emit windowAboutToBeRemoved(window);
+
+    beginRemoveRows(QModelIndex(), index, index);
+    d->windowsInModel.removeAt(index);
+    endRemoveRows();
+    emit countChanged();
 }
 
 /*!
@@ -579,7 +607,7 @@ void WindowManager::inProcessSurfaceItemCreated(QSharedPointer<InProcessSurfaceI
     if (index == -1) {
         setupWindow(new InProcessWindow(app, surfaceItem));
     } else {
-        auto window = qobject_cast<InProcessWindow*>(d->windows.at(index));
+        auto window = qobject_cast<InProcessWindow*>(d->allWindows.at(index));
         window->setContentState(Window::SurfaceWithContent);
     }
 }
@@ -602,8 +630,10 @@ void WindowManager::setupWindow(Window *window)
     });
 
     connect(window, &Window::isBeingDisplayedChanged, this, [this, window]() {
-        if (window->contentState() == Window::NoSurface && !window->isBeingDisplayed())
+        if (window->contentState() == Window::NoSurface && !window->isBeingDisplayed()) {
+            removeWindow(window);
             releaseWindow(window);
+        }
     });
 
     connect(window, &Window::contentStateChanged, this, [this, window]() {
@@ -618,16 +648,15 @@ void WindowManager::setupWindow(Window *window)
             emit dataChanged(modelIndex, modelIndex, QVector<int>() << ContentState);
         }
 
-        if (contentState == Window::NoSurface && !window->isBeingDisplayed())
-            releaseWindow(window);
+        if (contentState == Window::NoSurface) {
+            removeWindow(window);
+            if (!window->isBeingDisplayed())
+                releaseWindow(window);
+        }
     });
 
-    beginInsertRows(QModelIndex(), d->windows.count(), d->windows.count());
-    d->windows << window;
-    endInsertRows();
-    emit countChanged();
-
-    emit windowAdded(window);
+    d->allWindows << window;
+    addWindow(window);
 }
 
 
@@ -809,7 +838,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 
         auto grabbers = new QList<QSharedPointer<QQuickItemGrabResult>>;
 
-        for (const Window *w : qAsConst(d->windows)) {
+        for (const Window *w : qAsConst(d->windowsInModel)) {
             if (apps.contains(w->application())) {
                 if (attributeName.isEmpty()
                         || (w->windowProperty(attributeName).toString() == attributeValue)) {
@@ -858,8 +887,8 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 
 int WindowManagerPrivate::findWindowBySurfaceItem(QQuickItem *quickItem) const
 {
-    for (int i = 0; i < windows.count(); ++i) {
-        auto *window = windows.at(i);
+    for (int i = 0; i < allWindows.count(); ++i) {
+        auto *window = allWindows.at(i);
         if (window->isInProcess() && static_cast<InProcessWindow*>(window)->rootItem() == quickItem)
             return i;
     }
@@ -875,8 +904,8 @@ QList<QQuickWindow *> WindowManager::compositorViews() const
 
 int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const
 {
-    for (int i = 0; i < windows.count(); ++i) {
-        auto *window = windows.at(i);
+    for (int i = 0; i < allWindows.count(); ++i) {
+        auto *window = allWindows.at(i);
 
         if (window->isInProcess())
             continue;

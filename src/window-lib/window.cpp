@@ -152,6 +152,7 @@ Window::Window(AbstractApplication *app)
 
 Window::~Window()
 {
+    emit _windowDestroyed();
 }
 
 AbstractApplication *Window::application() const

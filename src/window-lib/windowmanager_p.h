@@ -65,7 +65,14 @@ public:
 #endif
 
     QHash<int, QByteArray> roleNames;
-    QVector<Window *> windows;
+
+    // All windows, regardless of content state, that haven't been released (hence destroyed) yet.
+    QVector<Window *> allWindows;
+
+    // Windows that are actually exposed by the model to the QML side.
+    // Only windows whose content state is different than Window::NoSurface are
+    // kept here.
+    QVector<Window *> windowsInModel;
 
     bool shuttingDown = false;
     bool slowAnimations = false;

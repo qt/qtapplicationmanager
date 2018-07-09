@@ -144,6 +144,8 @@ private:
 #endif
 
 private:
+    void addWindow(Window *window);
+    void removeWindow(Window *window);
     void releaseWindow(Window *window);
     void updateViewSlowMode(QQuickWindow *view);
     WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocketName);

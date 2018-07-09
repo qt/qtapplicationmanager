@@ -388,24 +388,6 @@ void WindowManager::enableWatchdog(bool enable)
 #endif
 }
 
-QVector<Window *> WindowManager::windows() const
-{
-    return d->windows;
-}
-
-QVector<Window *> WindowManager::applicationWindows(const QString &appId) const
-{
-    QVector<Window *> appWindows;
-
-    for (int i = 0; i < d->windows.size(); i++) {
-        if (d->windows.at(i)->application() &&
-                d->windows.at(i)->application()->id() == appId)
-            appWindows.append(d->windows.value(i));
-    }
-
-    return appWindows;
-}
-
 int WindowManager::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
@@ -872,17 +854,6 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
         }
     }
     return foundAtLeastOne && result;
-}
-
-
-int WindowManagerPrivate::findWindowByApplication(AbstractApplication *app) const
-{
-    for (int i = 0; i < windows.count(); ++i) {
-        auto * windowApp = windows.at(i)->application();
-        if (app == windowApp || app->nonAliased() == windowApp)
-            return i;
-    }
-    return -1;
 }
 
 int WindowManagerPrivate::findWindowBySurfaceItem(QQuickItem *quickItem) const

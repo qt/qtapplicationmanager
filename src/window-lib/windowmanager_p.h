@@ -54,7 +54,6 @@ QT_BEGIN_NAMESPACE_AM
 class WindowManagerPrivate
 {
 public:
-    int findWindowByApplication(AbstractApplication *app) const;
     int findWindowBySurfaceItem(QQuickItem *quickItem) const;
 
 #if defined(AM_MULTI_PROCESS)

@@ -89,8 +89,6 @@ public:
 
     void enableWatchdog(bool enable);
 
-    QVector<Window *> windows() const;
-
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role) const override;
@@ -132,7 +130,6 @@ public:
     bool setDBusPolicy(const QVariantMap &yamlFragment);
 
     QList<QQuickWindow *> compositorViews() const;
-    QVector<Window *> applicationWindows(const QString &appId) const;
 
     // evil hook to support in-process runtimes
     void setupInProcessRuntime(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);

@@ -100,7 +100,6 @@ private slots:
     void updateImplicitSize();
 private:
     void createImpl(bool inProcess);
-    void tearDown();
 
     struct Impl {
         Impl(WindowItem *windowItem) : q(windowItem) {}

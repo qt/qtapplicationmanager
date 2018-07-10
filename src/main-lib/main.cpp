@@ -1090,7 +1090,9 @@ QString Main::hardwareId() const
     for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
         if (iface.isValid()
                 && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
                 && iface.type() > QNetworkInterface::Virtual
+#endif
                 && !iface.hardwareAddress().isEmpty()) {
             candidateIfaces << iface;
         }

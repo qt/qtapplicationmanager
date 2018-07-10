@@ -1,4 +1,3 @@
-
 TEMPLATE = lib
 CONFIG += plugin c++11
 TARGET = startup-plugin
@@ -11,5 +10,5 @@ HEADERS += \
 SOURCES += \
     startup-plugin.cpp
 
-target.path = $$[QT_INSTALL_EXAMPLES]/startup-plugin
+target.path = $$[QT_INSTALL_EXAMPLES]/applicationmanager/startup-plugin
 INSTALLS += target

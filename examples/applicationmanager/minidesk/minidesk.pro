@@ -14,10 +14,14 @@ OTHER_FILES += \
     apps/tld.minidesk.app2/*.qml \
     apps/tld.minidesk.app2/*.png \
 
-target.path = $$[QT_INSTALL_EXAMPLES]/minidesk
+target.path = $$[QT_INSTALL_EXAMPLES]/applicationmanager/minidesk
 INSTALLS += target
 
 AM_COPY_DIRECTORIES += apps system-ui
 AM_COPY_FILES += am-config.yaml
 
 AM_DEFAULT_ARGS=-c am-config.yaml --start-session-dbus --verbose
+
+example_sources.path = $$target.path
+example_sources.files = $$AM_COPY_FILES $$AM_COPY_DIRECTORIES doc
+INSTALLS += example_sources

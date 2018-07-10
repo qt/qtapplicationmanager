@@ -12,7 +12,7 @@ HEADERS += \
 SOURCES += \
     softwarecontainer.cpp
 
-target.path = $$[QT_INSTALL_EXAMPLES]/softwarecontainer-plugin
+target.path = $$[QT_INSTALL_EXAMPLES]/applicationmanager/softwarecontainer-plugin
 INSTALLS += target
 
 DISTFILES += \

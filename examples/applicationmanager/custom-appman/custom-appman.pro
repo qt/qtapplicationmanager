@@ -14,5 +14,9 @@ OTHER_FILES += \
     doc/src/*.qdoc \
     doc/images/*.png \
 
-target.path = $$[QT_INSTALL_EXAMPLES]/custom-appman
+target.path = $$[QT_INSTALL_EXAMPLES]/applicationmanager/custom-appman
 INSTALLS += target
+
+example_sources.path = $$target.path
+example_sources.files = $SOURCES doc
+INSTALLS += example_sources

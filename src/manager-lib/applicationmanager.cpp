@@ -1272,7 +1272,9 @@ void ApplicationManager::progressingApplicationInstall(const QString &id, qreal 
     if (app->state() == Application::Installed)
         return;
     app->setProgress(progress);
-    emitDataChanged(app, QVector<int> { UpdateProgress });
+    // Icon will be in a "+" suffixed directory during installation. So notify about a change on its
+    // location as well.
+    emitDataChanged(app, QVector<int> { Icon, UpdateProgress });
 }
 
 bool ApplicationManager::finishedApplicationInstall(const QString &id)

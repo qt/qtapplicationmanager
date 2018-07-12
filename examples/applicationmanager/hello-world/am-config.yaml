@@ -1,0 +1,18 @@
+formatVersion: 1
+formatType: am-configuration
+---
+installationLocations:
+- id: "internal-0"
+  installationPath: "/tmp/hello-world/apps"
+  documentPath: "/tmp/hello-world/docs"
+  mountPoint: "/tmp"
+  isDefault: true
+
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installedAppsManifestDir: "/tmp/hello-world/manifests"
+  appImageMountDir: "/tmp/hello-world/image-mounts"
+  database: "/tmp/hello-world/apps.db"
+
+ui:
+  mainQml: "${CONFIG_PWD}/system-ui/main.qml"

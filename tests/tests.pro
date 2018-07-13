@@ -3,6 +3,7 @@ TEMPLATE = subdirs
 SUBDIRS = \
     application \
     applicationinfo \
+    main \
     runtime \
     cryptography \
     signature \

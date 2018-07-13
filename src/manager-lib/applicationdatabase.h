@@ -71,6 +71,7 @@ public:
     void invalidate();
 
 private:
+    static AbstractApplication *findAppWithId(QVector<AbstractApplication *> &apps, const QString &id);
     ApplicationDatabasePrivate *d;
     Q_DISABLE_COPY(ApplicationDatabase)
 };

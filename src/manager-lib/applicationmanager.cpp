@@ -1216,7 +1216,16 @@ bool ApplicationManager::startingApplicationInstallation(ApplicationInfo *info)
         if (!blockApplication(app->id()))
             return false;
 
-        app->setInfo(newInfo.take());
+        if (app->isBuiltIn()) {
+            // overlay the existing base info
+            // we will rollback to the base one if this update is removed.
+            app->setUpdatedInfo(newInfo.take());
+        } else {
+            // overwrite the existing base info
+            // we're not keeping track of the original. so removing the updated base version removes the
+            // application entirely.
+            app->setBaseInfo(newInfo.take());
+        }
         app->setState(Application::BeingUpdated);
         app->setProgress(0);
         emitDataChanged(app);
@@ -1248,13 +1257,17 @@ bool ApplicationManager::startingApplicationRemoval(const QString &id)
     if (app->isBlocked() || (app->state() != Application::Installed))
         return false;
 
-    if (app->isBuiltIn())
+    if (app->isBuiltIn() && !app->updatedInfo())
         return false;
 
     if (!blockApplication(id))
         return false;
 
-    app->setState(Application::BeingRemoved);
+    if (app->updatedInfo())
+        app->setState(Application::BeingDowngraded);
+    else
+        app->setState(Application::BeingRemoved);
+
     app->setProgress(0);
     emitDataChanged(app, QVector<int> { IsUpdating });
     return true;
@@ -1320,6 +1333,20 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
         emit app->bulkChange(); // not ideal, but icon and codeDir have changed
         break;
     }
+    case Application::BeingDowngraded:
+        app->setUpdatedInfo(nullptr);
+        app->setState(Application::Installed);
+        registerMimeTypes();
+        try {
+            if (d->database)
+                d->database->write(d->apps);
+        } catch (const Exception &e) {
+            qCCritical(LogInstaller) << "ERROR: Application" << app->id() << "was downgraded, but writing the "
+                                        "updated application database to disk failed:" << e.errorString();
+            d->database->invalidate(); // make sure that the next AM start will re-read the DB
+            return false;
+        }
+        break;
     case Application::BeingRemoved: {
         int row = d->apps.indexOf(app);
         if (row >= 0) {
@@ -1371,6 +1398,7 @@ bool ApplicationManager::canceledApplicationInstall(const QString &id)
         break;
     }
     case Application::BeingUpdated:
+    case Application::BeingDowngraded:
     case Application::BeingRemoved:
         app->setState(Application::Installed);
         app->setProgress(0);

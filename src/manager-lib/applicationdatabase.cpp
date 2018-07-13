@@ -47,6 +47,7 @@
 #include "application.h"
 #include "applicationdatabase.h"
 #include "exception.h"
+#include "logging.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -141,8 +142,35 @@ QVector<AbstractApplication *> ApplicationDatabase::read(AbstractApplicationMana
                 if (!originalApp)
                     throw Exception(Error::Parse, "Could not find base app for alias id %2").arg(appInfo->id());
                 app.reset(new ApplicationAlias(originalApp, static_cast<ApplicationAliasInfo*>(appInfo.take()), appMan));
-            } else
-                app.reset(new Application(static_cast<ApplicationInfo*>(appInfo.take()), appMan));
+            } else {
+                AbstractApplication *otherAbsApp = findAppWithId(apps, appInfo->id());
+                if (otherAbsApp) {
+                    // There's already another ApplicationInfo with the same id. It's probably an update for a
+                    // built-in app, in which case we use the same Application instance to hold both
+                    // ApplicationInfo instances.
+                    bool merged = false;
+
+                    if (!otherAbsApp->isAlias()) {
+                        auto otherApp = static_cast<Application*>(otherAbsApp);
+                        auto fullAppInfo = static_cast<ApplicationInfo*>(appInfo.data());
+                        if (otherApp->isBuiltIn() && !fullAppInfo->isBuiltIn() && !otherApp->updatedInfo()) {
+                            otherApp->setUpdatedInfo(static_cast<ApplicationInfo*>(appInfo.take()));
+                            merged = true;
+                        } else if (!otherApp->isBuiltIn() && fullAppInfo->isBuiltIn() && !otherApp->updatedInfo()) {
+                            auto currentBaseInfo = otherApp->takeBaseInfo();
+                            otherApp->setBaseInfo(static_cast<ApplicationInfo*>(appInfo.take()));
+                            otherApp->setUpdatedInfo(currentBaseInfo);
+                            merged = true;
+                        }
+                    }
+
+                    if (!merged)
+                        qCWarning(LogSystem).nospace() << "ApplicationDatabase: found a second application with id "
+                            << appInfo->id() << " which is not an update for a built-in one. Ignoring it.";
+                } else {
+                    app.reset(new Application(static_cast<ApplicationInfo*>(appInfo.take()), appMan));
+                }
+            }
 
             if (ds.status() != QDataStream::Ok) {
                 if (ds.status() != QDataStream::ReadPastEnd) {
@@ -151,7 +179,9 @@ QVector<AbstractApplication *> ApplicationDatabase::read(AbstractApplicationMana
                 }
                 break;
             }
-            apps << app.take();
+
+            if (!app.isNull())
+                apps << app.take();
         }
     }
 
@@ -175,8 +205,14 @@ void ApplicationDatabase::write(const QVector<AbstractApplication *> &apps) Q_DE
     d->validateWritableFile();
 
     QDataStream ds(d->file);
-    for (auto *app : apps)
+    for (auto *app : apps) {
         app->info()->writeToDataStream(ds);
+        if (!app->isAlias()) {
+            auto fullApp = static_cast<Application*>(app);
+            if (fullApp->updatedInfo())
+                fullApp->updatedInfo()->writeToDataStream(ds);
+        }
+    }
 
     if (ds.status() != QDataStream::Ok)
         throw Exception(*d->file, "could not write to application database");
@@ -190,6 +226,16 @@ void ApplicationDatabase::invalidate()
         d->file->remove();
         d->file = nullptr;
     }
+}
+
+
+AbstractApplication *ApplicationDatabase::findAppWithId(QVector<AbstractApplication *> &apps, const QString &id)
+{
+    for (AbstractApplication *app : apps) {
+        if (app->id() == id)
+            return app;
+    }
+    return nullptr;
 }
 
 QT_END_NAMESPACE_AM

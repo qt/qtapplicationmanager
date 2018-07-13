@@ -85,6 +85,7 @@ public:
         Installed,
         BeingInstalled,
         BeingUpdated,
+        BeingDowngraded,
         BeingRemoved
     };
     Q_ENUM(State)
@@ -115,7 +116,7 @@ public:
 
         Use info()->isAlias() to check and cast as appropriate.
      */
-    AbstractApplicationInfo *info() const { return m_info.data(); }
+    virtual AbstractApplicationInfo *info() const = 0;
 
     /*
         Always returns information about the "concrete", non-aliased, application.
@@ -170,9 +171,35 @@ class Application : public AbstractApplication
     Q_OBJECT
 public:
     Application(ApplicationInfo*, AbstractApplicationManager*);
+
+
+    // Returns the updated info, if there's one. Otherwise
+    // returns the base info.
+    AbstractApplicationInfo *info() const override;
+
+    // same as info()
     ApplicationInfo *nonAliasedInfo() const override;
 
-    void setInfo(ApplicationInfo*);
+
+    /*
+        All applications have a base info.
+
+        Built-in applications, when updated, also get an updated info.
+        The updated info then overlays the base one. Subsequent updates
+        just replace the updated info. When requested to be removed, a
+        built-in application only loses its updated info, returning to
+        expose the base one.
+
+        Regular applications (ie, non-built-in) only have a base info. When
+        updated their base info gets replaced and thus there's no way to go
+        back to a previous version. Regular applications get completely
+        removed when requested.
+     */
+    void setBaseInfo(ApplicationInfo*);
+    void setUpdatedInfo(ApplicationInfo*);
+    ApplicationInfo *updatedInfo() const { return m_updatedInfo.data(); }
+    ApplicationInfo *takeBaseInfo();
+
     void setState(State);
     void setProgress(qreal);
     void setRunState(RunState);
@@ -204,6 +231,8 @@ private:
 
     int m_lastExitCode = 0;
     ExitStatus m_lastExitStatus = NormalExit;
+
+    QScopedPointer<ApplicationInfo> m_updatedInfo;
 };
 
 class ApplicationAlias : public AbstractApplication
@@ -212,6 +241,7 @@ class ApplicationAlias : public AbstractApplication
 public:
     ApplicationAlias(Application*, ApplicationAliasInfo*, AbstractApplicationManager*);
 
+    AbstractApplicationInfo *info() const { return m_info.data(); }
     Application *nonAliased() override { return m_application; }
     QString runtimeName() const override;
     QVariantMap runtimeParameters() const override;
@@ -225,6 +255,7 @@ public:
     int lastExitCode() const override { return m_application->lastExitCode(); }
     ExitStatus lastExitStatus() const override { return m_application->lastExitStatus(); }
 protected:
+    // Returns info() from the application being aliased
     ApplicationInfo *nonAliasedInfo() const override;
 private:
     Application *m_application;

@@ -126,6 +126,9 @@ packager create-package "$dst/test-extra.appkg" "$src" \
 info "Dev-sign package with extra meta-data"
 packager dev-sign-package "$dst/test-extra.appkg" "$dst/test-extra-dev-signed.appkg" certificates/dev1.p12 password
 
+info "Create a hello-world.red update package"
+packager create-package "$dst/hello-world.red.appkg" hello-world.red
+
 ### v2 packages for testing updates
 
 echo "test update" >"$src/test"

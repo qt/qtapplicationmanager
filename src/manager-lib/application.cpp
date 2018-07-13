@@ -203,6 +203,10 @@
     \li ApplicationObject.Installed - The application is completely installed and ready to be used.
     \li ApplicationObject.BeingInstalled - The application is currently in the process of being installed.
     \li ApplicationObject.BeingUpdated - The application is currently in the process of being updated.
+    \li ApplicationObject.BeingDowngraded - The application is currently in the process of being downgraded.
+                                            That can only happen for a built-in application that was previously
+                                            upgraded. It will then be brought back to its original, built-in,
+                                            version and its state will go back to ApplicationObject.Installed.
     \li ApplicationObject.BeingRemoved - The application is currently in the process of being removed.
     \endlist
 */
@@ -273,7 +277,7 @@ QString AbstractApplication::id() const
 
 QUrl AbstractApplication::icon() const
 {
-    if (m_info->icon().isEmpty())
+    if (info()->icon().isEmpty())
         return QUrl();
 
     auto appInfo = this->nonAliasedInfo();
@@ -291,12 +295,12 @@ QUrl AbstractApplication::icon() const
         dir = QDir(appInfo->codeDir().absolutePath() + QLatin1Char('-'));
         break;
     }
-    return QUrl::fromLocalFile(dir.absoluteFilePath(m_info->icon()));
+    return QUrl::fromLocalFile(dir.absoluteFilePath(info()->icon()));
 }
 
 QString AbstractApplication::documentUrl() const
 {
-    return m_info->documentUrl();
+    return info()->documentUrl();
 }
 
 bool AbstractApplication::isBuiltIn() const
@@ -306,7 +310,7 @@ bool AbstractApplication::isBuiltIn() const
 
 bool AbstractApplication::isAlias() const
 {
-    return m_info->isAlias();
+    return info()->isAlias();
 }
 
 QStringList AbstractApplication::capabilities() const
@@ -326,7 +330,7 @@ QStringList AbstractApplication::categories() const
 
 QVariantMap AbstractApplication::applicationProperties() const
 {
-    return m_info->applicationProperties();
+    return info()->applicationProperties();
 }
 
 bool AbstractApplication::supportsApplicationInterface() const
@@ -355,7 +359,7 @@ QString AbstractApplication::codeDir() const
 
 QString AbstractApplication::name(const QString &language) const
 {
-    return m_info->name(language);
+    return info()->name(language);
 }
 
 bool AbstractApplication::start(const QString &documentUrl)
@@ -430,17 +434,22 @@ void Application::setRunState(AbstractApplication::RunState runState)
 
 QString Application::runtimeName() const
 {
-    return static_cast<ApplicationInfo*>(m_info.data())->runtimeName();
+    return Application::nonAliasedInfo()->runtimeName();
 }
 
 QVariantMap Application::runtimeParameters() const
 {
-    return static_cast<ApplicationInfo*>(m_info.data())->runtimeParameters();
+    return Application::nonAliasedInfo()->runtimeParameters();
+}
+
+AbstractApplicationInfo *Application::info() const
+{
+    return m_updatedInfo ? m_updatedInfo.data() : m_info.data();
 }
 
 ApplicationInfo *Application::nonAliasedInfo() const
 {
-    return static_cast<ApplicationInfo*>(m_info.data());
+    return static_cast<ApplicationInfo*>(Application::info());
 }
 
 void Application::setLastExitCodeAndStatus(int code, QProcess::ExitStatus processStatus)
@@ -467,9 +476,22 @@ void Application::setLastExitCodeAndStatus(int code, QProcess::ExitStatus proces
     }
 }
 
-void Application::setInfo(ApplicationInfo *info)
+void Application::setBaseInfo(ApplicationInfo *info)
 {
     m_info.reset(info);
+    emit bulkChange();
+}
+
+ApplicationInfo *Application::takeBaseInfo()
+{
+    return static_cast<ApplicationInfo*>(m_info.take());
+}
+
+void Application::setUpdatedInfo(ApplicationInfo* info)
+{
+    Q_ASSERT(!info || (m_info && info->id() == m_info->id()));
+
+    m_updatedInfo.reset(info);
     emit bulkChange();
 }
 

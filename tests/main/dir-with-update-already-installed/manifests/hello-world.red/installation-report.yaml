@@ -1,0 +1,15 @@
+%YAML 1.1
+---
+formatType: 'am-installation-report'
+formatVersion: 1
+---
+applicationId: 'hello-world.red'
+digest: '45ca0f9dfbddca129687900ae3260fe4a35ca09efd189581e196c0a75da47a0f'
+diskSpaceUsed: 575488
+files:
+- 'info.yaml'
+- 'icon.png'
+- 'main.qml'
+installationLocationId: 'internal-0'
+---
+hmac: '98cc78740bf87707de6163879b611f96f8fd2faf592218afa4f5361836d81caf'

@@ -209,6 +209,7 @@ ApplicationInstaller::ApplicationInstaller(const QVector<InstallationLocation> &
 ApplicationInstaller::~ApplicationInstaller()
 {
     delete d;
+    s_instance = nullptr;
 }
 
 ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<InstallationLocation> &installationLocations,

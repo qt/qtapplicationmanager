@@ -65,7 +65,10 @@ ContainerFactory::ContainerFactory(QObject *parent)
 { }
 
 ContainerFactory::~ContainerFactory()
-{ }
+{
+    qDeleteAll(m_containers);
+    s_instance = nullptr;
+}
 
 QStringList ContainerFactory::containerIds() const
 {

@@ -64,7 +64,10 @@ RuntimeFactory::RuntimeFactory(QObject *parent)
 { }
 
 RuntimeFactory::~RuntimeFactory()
-{ }
+{
+    qDeleteAll(m_runtimes);
+    s_instance = nullptr;
+}
 
 QStringList RuntimeFactory::runtimeIds() const
 {

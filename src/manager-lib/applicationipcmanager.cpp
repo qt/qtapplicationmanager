@@ -66,7 +66,9 @@ QT_BEGIN_NAMESPACE_AM
 ApplicationIPCManager *ApplicationIPCManager::s_instance = nullptr;
 
 ApplicationIPCManager::~ApplicationIPCManager()
-{ }
+{
+    s_instance = nullptr;
+}
 
 ApplicationIPCManager *ApplicationIPCManager::createInstance()
 {

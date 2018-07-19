@@ -697,6 +697,7 @@ SystemMonitor::~SystemMonitor()
     delete d->gpu;
     qDeleteAll(d->ioHash);
     delete d;
+    s_instance = nullptr;
 }
 
 int SystemMonitor::rowCount(const QModelIndex &parent) const

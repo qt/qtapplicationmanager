@@ -377,6 +377,7 @@ WindowManager::~WindowManager()
     delete d->waylandCompositor;
 #endif
     delete d;
+    s_instance = nullptr;
 }
 
 void WindowManager::enableWatchdog(bool enable)

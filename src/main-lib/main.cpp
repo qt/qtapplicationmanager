@@ -175,6 +175,10 @@ Main::~Main()
     delete m_quickLauncher;
     delete m_systemMonitor;
     delete m_applicationIPCManager;
+
+    delete RuntimeFactory::instance();
+    delete ContainerFactory::instance();
+    delete StartupTimer::instance();
 }
 
 /*! \internal

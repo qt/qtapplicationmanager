@@ -371,6 +371,8 @@ StartupTimer *StartupTimer::s_instance = new StartupTimer();
 
 StartupTimer *StartupTimer::instance()
 {
+    if (!s_instance)
+        s_instance = new StartupTimer();
     return s_instance;
 }
 

@@ -70,6 +70,7 @@ QuickLauncher::~QuickLauncher()
     if (m_idleTimerId)
         killTimer(m_idleTimerId);
     delete m_idleCpu;
+    s_instance = nullptr;
 }
 
 void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)

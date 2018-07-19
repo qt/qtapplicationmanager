@@ -318,6 +318,7 @@ NotificationManager::NotificationManager(QObject *parent)
 NotificationManager::~NotificationManager()
 {
     delete d;
+    s_instance = nullptr;
 }
 
 int NotificationManager::rowCount(const QModelIndex &parent) const

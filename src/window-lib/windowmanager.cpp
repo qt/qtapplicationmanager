@@ -634,7 +634,7 @@ void WindowManager::setupWindow(Window *window)
             removeWindow(window);
             releaseWindow(window);
         }
-    });
+    }, Qt::QueuedConnection);
 
     connect(window, &Window::contentStateChanged, this, [this, window]() {
         auto contentState = window->contentState();
@@ -653,7 +653,7 @@ void WindowManager::setupWindow(Window *window)
             if (!window->isBeingDisplayed())
                 releaseWindow(window);
         }
-    });
+    }, Qt::QueuedConnection);
 
     d->allWindows << window;
     addWindow(window);

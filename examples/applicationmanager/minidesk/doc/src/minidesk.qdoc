@@ -27,7 +27,7 @@
 
 /*!
 
-\example minidesk
+\example applicationmanager/minidesk
 \title Desktop System-UI Example
 \image minidesk.png Screenshot
 \brief Minimal Desktop System-UI in pure QML
@@ -80,7 +80,7 @@ path/to/bin/appman -c am-config.yaml -r --start-session-dbus
 
 \section2 System-UI Window
 
-\quotefromfile minidesk/system-ui/main.qml
+\quotefromfile applicationmanager/minidesk/system-ui/main.qml
 \skipto import Qt
 \printuntil text:
 \printline }
@@ -115,7 +115,7 @@ two applications in an \l{ApplicationManagerWindow} root element.
 
 \section2 Application Windows in the System-UI
 
-\printto System-UI for a pop-up and notification
+\printto System-UI for pop-ups
 
 This second \l{Repeater} provides the window chrome for the actual applications in its delegate.
 The model is the same as for the first \l{Repeater}, essentially the \l{ApplicationManager}
@@ -151,7 +151,7 @@ This is the corresponding System-UI code:
 The \c popUpContainer \l{Item} provides a System-UI recipient for the pop-up rendered
 by App1. App1 instantiates another \l{ApplicationManagerWindow} for the pop-up within its
 \l{ApplicationManagerWindow} root element, as shown here:
-\quotefromfile minidesk/apps/tld.minidesk.app1/app1.qml
+\quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app1/app1.qml
 \skipto Rectangle
 \skipto ApplicationManagerWindow
 \printuntil Component.onCompleted
@@ -167,7 +167,7 @@ An alternative to the above approach is to use the application-manager's \l{Noti
 the application (client) side and the \l{NotificationManager} API on the System-UI (server) side.
 The following code is invoked when the \e bulb icon of App2 is clicked:
 
-\quotefromfile minidesk/apps/tld.minidesk.app2/app2.qml
+\quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app2/app2.qml
 \skipto var notification
 \printuntil notification.show();
 
@@ -179,7 +179,7 @@ notification. Presenting the first notification only is a simplification to keep
 
 \section2 WindowManager Signal Handler
 
-\quotefromfile minidesk/system-ui/main.qml
+\quotefromfile applicationmanager/minidesk/system-ui/main.qml
 \skipto Handler for WindowManager signals
 \printto IPC extension
 This is the vital part of the System-UI, where the window surfaces of the applications are mapped
@@ -229,7 +229,7 @@ be used from the application processes.
 On the application side, the \l{ApplicationInterfaceExtension} type has to be used. Here is how
 App2 makes use of this interface extension:
 
-\quotefromfile minidesk/apps/tld.minidesk.app2/app2.qml
+\quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app2/app2.qml
 \skipto ApplicationInterfaceExtension
 \printuntil onPiChanged
 \printline }
@@ -245,7 +245,7 @@ When an application is stopped from the System-UI through
 the \l{ApplicationInterface::quit()}{ApplicationInterface.quit()} signal. The application can do
 some clean-up and must subsequently confirm with
 \l{ApplicationInterface::acknowledgeQuit()}{ApplicationInterface.acknowledgeQuit()}, like App2 does:
-\quotefromfile minidesk/apps/tld.minidesk.app2/app2.qml
+\quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app2/app2.qml
 \skipto Connections
 \printuntil onQuit
 \printline }

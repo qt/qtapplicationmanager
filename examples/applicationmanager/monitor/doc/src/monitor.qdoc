@@ -27,7 +27,7 @@
 
 /*!
 
-\example monitor
+\example applicationmanager/monitor
 \title Performance Monitoring Example
 \image monitor.png Screenshot
 \brief A resource and performance monitor
@@ -61,7 +61,7 @@ We will start from the bottom, because this is the essential part.
 
 \section2 SystemMonitor and ProcessMonitor Usage
 
-\quotefromfile monitor/system-ui/main.qml
+\quotefromfile applicationmanager/monitor/system-ui/main.qml
 \skipto ProcessMonitor
 \printuntil ApplicationManager.startApplication
 \printline }
@@ -92,7 +92,7 @@ ProcessMonitor::processId will be set to 0.
 
 \section2 The User Interface
 
-\quotefromfile monitor/system-ui/main.qml
+\quotefromfile applicationmanager/monitor/system-ui/main.qml
 \skipto import Qt
 \printto ProcessMonitor
 \dots

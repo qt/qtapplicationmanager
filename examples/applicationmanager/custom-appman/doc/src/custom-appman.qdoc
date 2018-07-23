@@ -27,7 +27,7 @@
 
 /*!
 
-\example custom-appman
+\example applicationmanager/custom-appman
 \title Implementing a Custom Application-Manager Example
 \image custom-appman.png Screenshot
 \brief Basic structure and starting point for a custom application-manager executable.
@@ -53,7 +53,7 @@ display something on the screen, just as the standard \c appman executable.
 
 Following is a breakdown of the minimal code needed for such a custom implementation:
 
-\quotefromfile custom-appman/custom-appman.cpp
+\quotefromfile applicationmanager/custom-appman/custom-appman.cpp
 \skipto #include
 \printuntil QT_USE_NAMESPACE_AM
 

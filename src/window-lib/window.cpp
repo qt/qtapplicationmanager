@@ -44,7 +44,7 @@
 /*!
     \qmltype WindowObject
     \inqmlmodule QtApplicationManager
-    \ingroup system-ui
+    \ingroup system-ui-non-instantiable
     \brief A client window surface
 
     A WindowObject represents a window from a client application. Each visible

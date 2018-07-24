@@ -154,6 +154,16 @@
     both single and multi-process modes.
 */
 
+/*!
+    \qmlsignal WindowObject::windowPropertyChanged(string name, var value)
+
+    Notifies that the window property with \a name has a new \a value.
+    Window property changes can be caused either by the System-UI (via WindowObject::setWindowProperty)
+    or by the application that created that window (via ApplicationManagerWindow::setWindowProperty).
+
+    \sa setWindowProperty
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 Window::Window(AbstractApplication *app)

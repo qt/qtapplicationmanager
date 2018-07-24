@@ -1,9 +1,9 @@
 # generate code coverage information using gcov/lcov/genhtml
 CONFIG(debug,debug|release) {
     equals(TEMPLATE, "subdirs") {
-        sub-coverage.target = coverage
-        sub-coverage.CONFIG = recursive
-        QMAKE_EXTRA_TARGETS += sub-coverage
+        coverage.target = coverage
+        coverage.CONFIG = recursive
+        QMAKE_EXTRA_TARGETS += coverage
     } else {
         coverage_pre.commands += @echo && echo "Building with coverage support..." && echo $(eval CXXFLAGS += -O0 -fprofile-arcs -ftest-coverage)$(eval LFLAGS += -O0 -fprofile-arcs -ftest-coverage)
 

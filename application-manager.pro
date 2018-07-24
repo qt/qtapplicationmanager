@@ -1,5 +1,11 @@
 requires(linux|win32:!winrt|macos)
 
+!equals(QT_MAJOR_VERSION, 5)|lessThan(QT_MINOR_VERSION, 11) {
+    log("$$escape_expand(\\n\\n) *** The QtApplicationManager module needs to be built against Qt 5.11+ ***$$escape_expand(\\n\\n)")
+    CONFIG += Qt_version_needs_to_be_at_least_5_11
+}
+requires(!Qt_version_needs_to_be_at_least_5_11)
+
 !tools-only:!qtHaveModule(qml):error("The QtQml library is required for a non 'tools-only' build")
 
 TEMPLATE = subdirs
@@ -26,10 +32,6 @@ force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-
 if(linux|force-libcrypto) {
     !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")|contains(QT_CONFIG,"ssl")):error("Qt was built without OpenSSL support.")
 }
-
-MIN_MINOR=9
-
-!equals(QT_MAJOR_VERSION, 5)|lessThan(QT_MINOR_VERSION, $$MIN_MINOR):error("This application needs to be built against Qt 5.$${MIN_MINOR}+")
 
 load(am-config)
 

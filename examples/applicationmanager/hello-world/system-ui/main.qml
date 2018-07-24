@@ -53,7 +53,7 @@
 import QtQuick 2.4
 import QtApplicationManager 1.0
 
-Rectangle {
+Item {
     width: 800
     height: 600
 
@@ -81,7 +81,6 @@ Rectangle {
     // Show windows
     Column {
         anchors.right: parent.right
-        width: 600
         Repeater {
             model: WindowManager
             WindowItem {

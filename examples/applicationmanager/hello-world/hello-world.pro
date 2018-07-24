@@ -3,6 +3,8 @@ CONFIG += am-systemui
 
 OTHER_FILES += \
     am-config.yaml \
+    doc/images/*.png \
+    doc/src/*.qdoc \
     system-ui/*.qml \
     apps/hello-world.blue/*.yaml \
     apps/hello-world.blue/*.qml \

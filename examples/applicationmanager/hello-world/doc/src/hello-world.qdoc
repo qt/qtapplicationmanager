@@ -1,0 +1,181 @@
+/****************************************************************************
+**
+** Copyright (C) 2018 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\example applicationmanager/hello-world
+\title "Hello World!" System-UI Example
+\image hello-world-example.png The Hello World example with two applications running.
+\brief Your first System-UI. Start here.
+\ingroup applicationmanager-examples
+
+\section1 Introduction
+
+This example shows a very simple System-UI implementation, in the spirit of "Hello World!" examples,
+showcasing the fundamental building blocks of Qt Application Manager. You're able to see icons and names
+of the available applications on the left, start and stop them by clicking on their respective icons,
+and see their windows in a column layout on the right side.
+
+The applications themselves just display "Hello World!" against a background of a specific color.
+
+\section1 Files and folder structure
+
+This example is comprised of a System-UI and three sample applications ("Hello Red", "Hello Green"
+and "Hello Blue"), making for four separate QML applications in total. System-UI is also just a QML
+application in the end, albeit a special one.
+
+Each application is put in its own separate directory as described below:
+
+\list
+\li \tt{\b{apps}}
+    \list
+    \li \tt{\b{hello-world.blue}}
+        \list
+        \li \tt{icon.png}
+        \li \tt{info.yaml}
+        \li \tt{main.qml}
+        \endlist
+    \li \tt{\b{hello-world.red}}
+        \list
+        \li \tt{icon.png}
+        \li \tt{info.yaml}
+        \li \tt{main.qml}
+        \endlist
+    \li \tt{\b{hello-world.green}}
+        \list
+        \li \tt{icon.png}
+        \li \tt{info.yaml}
+        \li \tt{main.qml}
+        \endlist
+    \endlist
+\li \tt{\b{system-ui}}
+    \list
+    \li \tt{main.qml}
+    \endlist
+\li \tt{am-config.yaml}
+\endlist
+
+As you can see above, each application, besides its mail QML file, also has an icon and a
+\tt{info.yaml}. That YAML file contains the application metadata (it tells System-UI the
+name of the application, its icon filename, etc).
+
+\tt{am-config.yaml} is the main Qt Application Manager configuration file and is what you need to pass
+to the \tt{appman} executable to run your System-UI. It tells, among other things, where the System-UI
+and applications are located.
+
+\section1 Running
+
+Assuming the appman executable is in your path, you can run the System-UI as follows:
+
+\badcode
+examples/applicationmanager/hello-world$ appman --config-file am-config.yaml
+\endcode
+
+And this is what you should see:
+
+\image hello-world-launched.png
+
+\section1 System-UI implementation
+
+Our Hello World System-UI code starts like any simple QML application, with some imports and a plain
+Item at the root. The only difference is that it also imports the \c QtApplicationManager module,
+besides \c QtQuick.
+
+\quotefromfile applicationmanager/hello-world/system-ui/main.qml
+\skipto import QtQuick
+\printuntil height:
+
+Next we have a Column on the left side of the root Item where we lay out the icons of the available applications
+along with their names.
+
+\printto Show windows
+
+As the model we use the \c ApplicationManager singleton which provides a row for each available application.
+Each row has, among others, an \c icon role containing the icon URL, a \c name role with the localized application
+name, a boolean \c isRunning role that tells whether the application is currently running and a \c application
+role containing its ApplicationObject. For information on other roles see the ApplicationManager documentation.
+
+Clicking on an icon will either start its application or stop it in case it's already running.
+
+Next we place a \c Column anchored to the right side of the root \c Item. In that column we lay out the existing
+windows from all currently running applications:
+
+\printto /^\}/
+
+This time we use the WindowManager singleton as the model. There's a row for each window, with its
+WindowObject in the \c window role.
+
+In order to have a window rendered in our System-UI we have to assign its WindowObject to a WindowItem,
+as was above. By default the window will be resized to match the size of the WindowItem rendering it.
+
+\section1 Application implementation
+
+Our Hello World applications just display a "Hello World!" text against a colored background.
+
+\quotefromfile applicationmanager/hello-world/apps/hello-world.blue/main.qml
+\skipto import QtQuick
+\printuntil /^\}/
+
+The only difference from a plain QML application is that the root element is an ApplicationManagerWindow,
+provided by the \c QtApplicationManager module.
+
+\section2 Application metadata
+
+The info.yaml file contains the metadata about an application.
+
+It starts with some boilerplate telling that this file contains Qt Application Manager application metadata.
+
+\quotefromfile applicationmanager/hello-world/apps/hello-world.blue/info.yaml
+\printuntil --
+
+Then comes the application id, which uniquely identifies the application. It's recommended to follow a
+reverse DNS scheme, although this is not enforced. Here it's the "Blue" application from the "Hello World"
+example UI.
+
+\printline id:
+
+Then the icon filename, which is self-explanatory:
+
+\printline icon:
+
+The entry point of the application is specified by the \c code field. For QML applications
+this means the filename of the main QML file.
+
+\printline code:
+
+The \c runtime field specifies the runtime used by the application. In this Hello World example, all applications
+are written in QML and hence we use the \c 'qml' runtime. Another runtime is \c 'native' for instance, used for compiled,
+executable, applications where the \c code entry would point to its binary executable filename.
+
+\printline runtime:
+
+And finally comes the user-visible name of the application in any number of languages (in this example, only English
+was provided):
+
+\printuntil
+
+*/

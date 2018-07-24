@@ -142,6 +142,18 @@
     \sa QWindow::close(), QCloseEvent
 */
 
+/*!
+    \qmlproperty WaylandSurface WindowObject::waylandSurface
+    \readonly
+
+    This property exists only when running in multi-process mode. Enables
+    you to access the underlying WaylandSurface of this window, if any.
+    It will be null in case WindowObject::contentState is WindowObject.NoSurface.
+
+    Naturally you should avoid using this property in code that should work in
+    both single and multi-process modes.
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 Window::Window(AbstractApplication *app)

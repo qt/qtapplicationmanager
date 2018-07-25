@@ -1,0 +1,75 @@
+/****************************************************************************
+**
+** Copyright (C) 2018 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\example applicationmanager/animated-windows
+\title Animated Windows System-UI Example
+\image animated-windows-example.jpg The "Animated Windows" example with two applications running.
+\brief How to animate the appearance and disappearance of windows.
+\ingroup applicationmanager-examples
+
+This example shows you how to animate the appearance and disappearance of windows in a System-UI. It
+assumes you're already familiar with the concepts and topics introduced in the \l {"Hello World!"
+System-UI Example}.
+
+Unlike our \l {"Hello World!" System-UI Example} {Hello World} example, most graphical user interfaces
+avoid making sudden, abrupt, changes since they can confuse the user and are not visually pleasant. So
+when a new WindowObject is created by the WindowManager we want to animate its appearance instead of
+simply having it popping up on the screen. Likewise, once a WindowObject loses its surface (because
+the application closed this window or stopped altogether) and is thus removed from WindowManager's
+model we want to animate its disappearance instead of having it vanish immediately.
+
+If you are using a ready-made, advanced, layout such as ListView, you can assign Transitions to
+different actions like add, remove, displaced, etc and keep using WindowManager as your model.
+But in many situations this is not the case and thus you will have to create your own separate model
+(a ListModel should suffice), so that a WindowObject only leaves it once you have finished animating
+the disappearance of its delegate. This example showcases such a technique.
+
+\section1 The windows model
+
+The key point in this example is the model we use for instantiating our \l{WindowItem}{windows}.
+
+Instead of using WindowManager directly as our model we use a plain ListModel:
+
+\quotefromfile applicationmanager/animated-windows/system-ui/main.qml
+\skipto Each WindowObject
+\skipline Each WindowObject
+\printuntil delegate: Rectangle
+
+We remove a WindowObject from that model only after is has reached its end state (WindowObject.NoSurface)
+and it's no longer being shown on screen (any state transition has already finished).
+
+\skipto property bool safeToRemove
+\printuntil onSafeToRemoveChanged
+
+And we add a WindowObject to it (and hence have it displayed on screen) as soon as WindowManager creates one.
+
+\skipto Connections
+\printuntil /\s+\}/
+
+*/

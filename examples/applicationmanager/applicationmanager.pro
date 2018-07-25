@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS = \
+    animated-windows \
     hello-world \
     minidesk \
     monitor \

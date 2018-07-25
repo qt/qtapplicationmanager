@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'animated-windows.fish'
+icon:    'fish.svg'
+code:    'fish.qml'
+runtime: 'qml'
+name:
+  en: 'Fish'

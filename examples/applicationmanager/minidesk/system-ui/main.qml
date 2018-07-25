@@ -95,8 +95,6 @@ Rectangle {
             z: model.index
             color: "tan"
 
-            property bool manuallyClosed: false
-
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "Decoration: " + model.window.application.name("en")
@@ -114,10 +112,7 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: {
-                        winChrome.manuallyClosed = true;
-                        model.window.application.stop();
-                    }
+                    onClicked: model.window.close()
                 }
             }
 
@@ -133,40 +128,14 @@ Rectangle {
                 winChrome.y =  10 + model.index * 30;
             }
 
-            states: [
-                State {
-                    name: "open"
-                    when: model.window && model.window.contentState === WindowObject.SurfaceWithContent && !manuallyClosed
-                    PropertyChanges {
-                        target:  winChrome
-                        opacity: 1
-                        scale: 1
-                        visible: true
-                    }
+            Connections {
+                target: model.window
+                onContentStateChanged: {
+                    if (model.window.contentState === WindowObject.NoSurface)
+                        topLevelWindowsModel.remove(model.index, 1);
                 }
-            ]
+            }
 
-            opacity: 0.25
-            scale: 0.50
-            visible: false
-
-            transitions: [
-                Transition {
-                    to: "open"
-                    NumberAnimation { target: winChrome; properties: "opacity,scale"; duration: 500; easing.type: Easing.OutQuad}
-                },
-                Transition {
-                    from: "open"
-                    SequentialAnimation {
-                        PropertyAction { target: winChrome; property: "visible"; value: true } // we wanna see the window during the closing animation
-                        NumberAnimation { target: winChrome; properties: "opacity,scale"; duration: 500; easing.type: Easing.InQuad}
-                        ScriptAction { script: {
-                            if (model.window.contentState === WindowObject.NoSurface)
-                                topLevelWindowsModel.remove(model.index, 1);
-                        } }
-                    }
-                }
-            ]
         }
     }
 

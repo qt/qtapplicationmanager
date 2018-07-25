@@ -222,7 +222,7 @@ void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
     globalContext->setScreen(QGuiApplication::primaryScreen());
 
     if (!globalContext->create())
-        throw Exception("Failed to create the global shared OpenGL context.");
+        qCWarning(LogGraphics) << "Failed to create the global shared OpenGL context.";
 
     // check if we got what we requested on the OpenGL side
     checkOpenGLFormat("global shared context", globalContext->format());

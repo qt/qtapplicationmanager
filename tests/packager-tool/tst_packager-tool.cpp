@@ -53,10 +53,12 @@ class tst_PackagerTool : public QObject
 
 private Q_SLOTS:
     void initTestCase();
+    void cleanup();
 
     void test();
     void brokenMetadata_data();
     void brokenMetadata();
+    void iconFileName();
 
 private:
     QString pathTo(const char *file)
@@ -67,7 +69,9 @@ private:
     bool createInfoYaml(QTemporaryDir &tmp, const QString &changeField = QString(), const QVariant &toValue = QVariant());
     bool createIconPng(QTemporaryDir &tmp);
     bool createCode(QTemporaryDir &tmp);
+    void createDummyFile(QTemporaryDir &tmp, const QString &fileName, const char *data);
 
+    void installPackage(const QString &filePath);
 
     ApplicationInstaller *m_ai = nullptr;
     QTemporaryDir m_workDir;
@@ -133,6 +137,18 @@ void tst_PackagerTool::initTestCase()
     RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager(qSL("qml")));
 }
 
+void tst_PackagerTool::cleanup()
+{
+    recursiveOperation(pathTo("manifests"), safeRemove);
+    recursiveOperation(pathTo("image-mounts"), safeRemove);
+    recursiveOperation(pathTo("internal-0"), safeRemove);
+    recursiveOperation(pathTo("documents-0"), safeRemove);
+
+    QDir dir(m_workDir.path());
+    QStringList fileNames = dir.entryList(QDir::Files);
+    for (auto fileName : fileNames)
+        dir.remove(fileName);
+}
 
 // exceptions are nice -- just not for unit testing :)
 static bool packagerCheck(PackagingJob *p, QString &errorString)
@@ -169,7 +185,7 @@ void tst_PackagerTool::test()
 
     // no icon
     QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains(qL1S("missing the 'icon.png' file")), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("missing the file referenced by the 'icon' field")), qPrintable(errorString));
 
     // add an icon
     createIconPng(tmp);
@@ -248,17 +264,7 @@ void tst_PackagerTool::test()
 
     // now that we have it, see if the package actually installs correctly
 
-    QSignalSpy finishedSpy(m_ai, &ApplicationInstaller::taskFinished);
-
-    m_ai->setDevelopmentMode(true); // allow packages without store signature
-
-    QString taskId = m_ai->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(pathTo("test.dev-signed.appkg")));
-    m_ai->acknowledgePackageInstallation(taskId);
-
-    QVERIFY(finishedSpy.wait(2 * spyTimeout));
-    QCOMPARE(finishedSpy.first()[0].toString(), taskId);
-
-    m_ai->setDevelopmentMode(false);
+    installPackage(pathTo("test.dev-signed.appkg"));
 
     QDir checkDir(pathTo("internal-0"));
     QVERIFY(checkDir.cd(qSL("com.pelagicore.test")));
@@ -304,6 +310,42 @@ void tst_PackagerTool::brokenMetadata()
     AM_CHECK_ERRORSTRING(error, errorString);
 }
 
+/*
+    Specify an icon whose name is different from "icon.png".
+    Packaging should work fine
+ */
+void tst_PackagerTool::iconFileName()
+{
+    QTemporaryDir tmp;
+    QString errorString;
+
+    createInfoYaml(tmp, "icon", "foo.bar");
+    createCode(tmp);
+    createDummyFile(tmp, "foo.bar", "this-is-a-dummy-icon-file");
+
+    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test-foobar-icon.appkg"), tmp.path()), errorString),
+            qPrintable(errorString));
+
+    // see if the package installs correctly
+
+    m_ai->setAllowInstallationOfUnsignedPackages(true);
+    installPackage(pathTo("test-foobar-icon.appkg"));
+    m_ai->setAllowInstallationOfUnsignedPackages(false);
+
+    QDir checkDir(pathTo("internal-0"));
+    QVERIFY(checkDir.cd(qSL("com.pelagicore.test")));
+
+    for (const QString &file : { qSL("info.yaml"), qSL("foo.bar"), qSL("test.qml") }) {
+        QVERIFY(checkDir.exists(file));
+        QFile src(QDir(tmp.path()).absoluteFilePath(file));
+        QVERIFY(src.open(QFile::ReadOnly));
+        QFile dst(checkDir.absoluteFilePath(file));
+        QVERIFY(dst.open(QFile::ReadOnly));
+        QCOMPARE(src.readAll(), dst.readAll());
+    }
+}
+
+
 bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const QString &changeField, const QVariant &toValue)
 {
     QByteArray yaml =
@@ -337,6 +379,32 @@ bool tst_PackagerTool::createCode(QTemporaryDir &tmp)
 {
     QFile code(QDir(tmp.path()).absoluteFilePath(qSL("test.qml")));
     return code.open(QFile::WriteOnly) && code.write("// test") == 7LL;
+}
+
+void tst_PackagerTool::createDummyFile(QTemporaryDir &tmp, const QString &fileName, const char *data)
+{
+    QFile code(QDir(tmp.path()).absoluteFilePath(fileName));
+    QVERIFY(code.open(QFile::WriteOnly));
+
+    auto written = code.write(data);
+
+    QCOMPARE(written, (qint64)strlen(data));
+}
+
+void tst_PackagerTool::installPackage(const QString &filePath)
+{
+    QSignalSpy finishedSpy(m_ai, &ApplicationInstaller::taskFinished);
+
+    m_ai->setDevelopmentMode(true); // allow packages without store signature
+
+    QString taskId = m_ai->startPackageInstallation(qSL("internal-0"),
+            QUrl::fromLocalFile(filePath));
+    m_ai->acknowledgePackageInstallation(taskId);
+
+    QVERIFY(finishedSpy.wait(2 * spyTimeout));
+    QCOMPARE(finishedSpy.first()[0].toString(), taskId);
+
+    m_ai->setDevelopmentMode(false);
 }
 
 QTEST_GUILESS_MAIN(tst_PackagerTool)

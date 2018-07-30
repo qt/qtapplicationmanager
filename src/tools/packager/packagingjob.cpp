@@ -156,9 +156,10 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         InstallationReport report(app->id());
         report.addFile(infoName);
 
+        // check icon
         if (!QFile::exists(source.absoluteFilePath(app->icon())))
-            throw Exception(Error::Package, "missing the 'icon.png' file");
-        report.addFile(qSL("icon.png"));
+            throw Exception(Error::Package, "missing the file referenced by the 'icon' field");
+        report.addFile(app->icon());
 
         // check executable
         if (!QFile::exists(source.absoluteFilePath(app->codeFilePath())))
@@ -188,7 +189,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
 
             estimatedImageSize += (entryInfo.size() + Ext2BlockSize - 1) / Ext2BlockSize;
 
-            if (entryPath != infoName && entryPath != qL1S("icon.png"))
+            if (entryPath != infoName && entryPath != app->icon())
                 report.addFile(entryPath);
         }
 

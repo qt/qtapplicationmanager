@@ -183,7 +183,7 @@ void AbstractApplicationInfo::validate() const Q_DECL_NOEXCEPT_EXPR(false)
     if (names().isEmpty())
         throw Exception(Error::Parse, "the 'name' field must not be empty");
 
-    // This check won't work during installations, since icon.png is extracted after info.json
+    // This check won't work during installations, since the icon file is extracted after info.json
     //        if (!QFile::exists(displayIcon()))
     //            throw Exception("the 'icon' field refers to a non-existent file");
 

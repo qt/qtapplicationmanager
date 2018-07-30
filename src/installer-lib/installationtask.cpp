@@ -106,7 +106,7 @@
   if (optional uid separation)
       chown/chmod recursively in <extractionDir> and document directory
 
-  copy info.yaml and icon.png from <extractiondir> to <manifestdir>/<id>+
+  copy info.yaml and the icon file from <extractiondir> to <manifestdir>/<id>+
 
   if (removable)
       unmount loopback, destroy loopback, remove mount-point
@@ -211,7 +211,7 @@ void InstallationTask::execute()
             throw Exception(m_extractor->errorCode(), m_extractor->errorString());
 
         if (!m_foundInfo || !m_foundIcon)
-            throw Exception(Error::Package, "package did not contain a valid info.json and icon.png file");
+            throw Exception(Error::Package, "package did not contain a valid info.json and icon file");
 
         QList<QByteArray> chainOfTrust = m_ai->caCertificates();
 
@@ -302,17 +302,22 @@ void InstallationTask::execute()
 
 void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    if (++m_extractedFileCount > 2)
-        throw Exception(Error::Package, "could not find info.yaml and icon.png at the beginning of the package");
+    ++m_extractedFileCount;
 
-    if (file == qL1S("info.yaml")) {
-        if (m_foundInfo)
-            throw Exception(Error::Package, "found multiple info.yaml files in the package");
+    if (m_extractedFileCount == 1) {
+        if (file != qL1S("info.yaml"))
+            throw Exception(Error::Package, "info.yaml must be the first file in the package. Got %1")
+                .arg(file);
 
         YamlApplicationScanner yas;
         m_app.reset(yas.scan(m_extractor->destinationDirectory().absoluteFilePath(file)));
         if (m_app->id() != m_extractor->installationReport().applicationId())
             throw Exception(Error::Package, "the application identifiers in --PACKAGE-HEADER--' and info.yaml do not match");
+
+        m_iconFileName = m_app->icon(); // store it separately as we will give away ApplicationInfo later on
+
+        if (m_iconFileName.isEmpty())
+            throw Exception(Error::Package, "the 'icon' field in info.yaml cannot be empty or absent.");
 
         InstallationLocation existingLocation = m_ai->installationLocationFromApplication(m_app->id());
 
@@ -325,15 +330,25 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         m_applicationId = m_app->id();
 
         m_foundInfo = true;
-    } else if (file == qL1S("icon.png")) {
-        if (m_foundIcon)
-            throw Exception(Error::Package, "found multiple icon.png files in the package");
+    } else if (m_extractedFileCount == 2) {
+        // the second file must be the icon
+
+        Q_ASSERT(m_foundInfo);
+        Q_ASSERT(!m_foundIcon);
+
+        if (file != m_iconFileName)
+            throw Exception(Error::Package,
+                    "The application icon (as stated in info.yaml) must be the second file in the package."
+                    " Expected '%1', got '%2'").arg(m_iconFileName, file);
 
         QFile icon(m_extractor->destinationDirectory().absoluteFilePath(file));
+
         if (icon.size() > 256*1024)
-            throw Exception(Error::Package, "the size of icon.png is too large (max. 256KB)");
+            throw Exception(Error::Package, "the size of %1 is too large (max. 256KB)").arg(file);
 
         m_foundIcon = true;
+    } else {
+        throw Exception(Error::Package, "Could not find info.yaml and the icon file at the beginning of the package.");
     }
 
     if (m_foundIcon && m_foundInfo) {
@@ -347,7 +362,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         startInstallation();
 
         QFile::copy(oldDestinationDirectory.filePath(qSL("info.yaml")), m_extractionDir.filePath(qSL("info.yaml")));
-        QFile::copy(oldDestinationDirectory.filePath(qSL("icon.png")), m_extractionDir.filePath(qSL("icon.png")));
+        QFile::copy(oldDestinationDirectory.filePath(m_iconFileName), m_extractionDir.filePath(m_iconFileName));
 
         {
             QMutexLocker locker(&m_mutex);
@@ -537,11 +552,11 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 #endif
 
     // copy meta-data to manifest directory
-    for (const QString &file : { qSL("info.yaml"), qSL("icon.png") })
+    for (const QString &file : { qSL("info.yaml"), m_iconFileName })
         if (!QFile::copy(m_extractionDir.absoluteFilePath(file), m_manifestDirPlusCreator.dir().absoluteFilePath(file))) {
             throw Exception(Error::IO, "could not copy %1 from the application directory to the manifest directory").arg(file);
     }
-    // in case we need persistent data in addition to info.yaml and icon.png,
+    // in case we need persistent data in addition to info.yaml and the icon file,
     // we could copy these out of the image right now...
 
     // removable special handling

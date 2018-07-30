@@ -78,7 +78,7 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: application.start();
+                    onClicked: isRunning ? application.stop() : application.start()
                 }
             }
         }
@@ -89,7 +89,7 @@ Rectangle {
         model: ListModel { id: topLevelWindowsModel }
 
         delegate: Rectangle {
-            id: winChrome
+            id: decoratedWindow
 
             width: 400; height: 320
             z: model.index
@@ -124,8 +124,8 @@ Rectangle {
             }
 
             Component.onCompleted: {
-                winChrome.x =  300 + model.index * 50;
-                winChrome.y =  10 + model.index * 30;
+                decoratedWindow.x =  300 + model.index * 50;
+                decoratedWindow.y =  10 + model.index * 30;
             }
 
             Connections {
@@ -152,18 +152,6 @@ Rectangle {
                 onContentStateChanged: {
                     if (model.window.contentState === WindowObject.NoSurface)
                         popupsModel.remove(model.index, 1);
-                }
-            }
-            Rectangle {
-                width: 25
-                height: 25
-                anchors.horizontalCenter: parent.right
-                anchors.verticalCenter: parent.top
-                color: "chocolate"
-                Text { text: "X"; anchors.centerIn: parent }
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: model.window.close()
                 }
             }
         }

@@ -105,36 +105,39 @@ application has been launched, the opacity of the corresponding application's ic
 through a binding to the \c isRunning role.
 
 Clicking on an application icon will launch the corresponding application through a call to
-\l {ApplicationManager::startApplication()}{ApplicationManager.startApplication()}. The first
-argument, \c applicationId, is provided by the ApplicationManager model (e.g. "tld.minidesk.app1"
-for the first application). Both applications will be started with the (optional) document URL
-"documentUrl". Subsequent clicks on an already launched icon will still call
-\l{ApplicationManager::}{startApplication()}, but will be silently ignored. The content of the
-\c appContainter will be set below in the \c onWindowReady handler. The content is provided by the
-two applications in an \l{ApplicationManagerWindow} root element.
+\l {ApplicationObject::start()}{ApplicationObject.start()}. If the application is already
+running, \l {ApplicationObject::stop()}{ApplicationObject.stop()} will be called instead.
 
 \section2 Application Windows in the System-UI
 
 \printto System-UI for pop-ups
 
-This second \l{Repeater} provides the window chrome for the actual applications in its delegate.
-The model is the same as for the first \l{Repeater}, essentially the \l{ApplicationManager}
-element. The chrome consists of:
+This second Repeater provides the window chrome for the application windows in its delegate.
+The model is a plain ListModel fed with \l{WindowObject}{window objects} as they get created by
+WindowManager and put on a \c window role. The code that populates this ListModel will be
+shown later on. For now let's focus on what this Repeater's delegate does. It consists of:
 \list
 \li A fixed size window \l{Rectangle} with a "tan" color. The default location depends on the
-    \c model.index, hence each application has a different location.
-\li The name of the application, prefixed with "Decoration" on the top horizontal center. The name
-    is also provided by the \l{ApplicationManager} model and read from the application's
-    \l{Manifest Definition}{info.yaml} file.
-\li A \l{MouseArea} for dragging the window and setting the z-order. The \l{MouseArea} fills the
+    \c model.index, hence each application window has a different location.
+\li The name of the application that created that window, prefixed with "Decoration" on the top
+    horizontal center. The name is provided by the ApplicationObject related to that window
+    and is defined in application's \l{Manifest Definition}{info.yaml} file.
+\li A MouseArea for dragging and raising the window. The MouseArea fills the
     entire window, though the application container is placed on top of it and hence it will not
-    handle dragging. Simply increasing the z-order on each click is only done to keep the code to
-    a minimum.
-\li A small chocolate-colored \l Rectangle on the top left corner for closing the window chrome and
-    stopping the actual application (see
-    \l{ApplicationManager::stopApplication()}{stopApplication()}).
-\li A container \l{Item} where the actual application will be placed in. The \c appContainer is
-    exposed, so it can later be referenced to place the actual application window in it.
+    handle dragging.
+\li A small chocolate-colored \l Rectangle on the top left corner for closing the window (see
+    \l{WindowObject::close()}{WindowObject.close()}). Since our sample applications
+    only have one top-level window, closing it will also cause the corresponding application to
+    quit.
+\li The centerpiece: a \l WindowItem to render the \c WindowObject on screen.
+    That's similar to the relationship between image files and QML's Image component.
+\li Code for defining its initial position, so that when you start one app right after the other
+    their windows get different positions and thus don't completely overlap each other.
+\li And finally code to remove a row from the ListModel once its window has been destroyed from
+    the client (application) side. Either because it was closed, made invisible, or the application
+    itself quit or crashed. Any of these cases results in the \l WindowObject losing its surface.
+    A more sophisticaded System-UI would animate the disappearance of a window. For that please
+    check the \l {Animated Windows System-UI Example}
 \endlist
 
 \section2 Pop-ups
@@ -147,9 +150,16 @@ Two approaches are implemented to display pop-ups in the System-UI:
 This is the corresponding System-UI code:
 \printto Handler for WindowManager signals
 
+The first approach is the same as what was done for regular application windows in the previous
+section: a ListModel delegate which is manually populated with \l{WindowObject}{WindowObjects}
+coming from \l{WindowManager} (shown in \l{WindowManager Signal Handler} section later on).
+The difference here is the decoration put around the WindowItem. Whereas regular application
+windows are freely draggable and have title bars and borders, pop-up windows are just centered
+and have no decorations at all. We also ensure they're put in front of regular windows by having
+their Repeater declared after the Repeater for regular windows.
+
 \section3 Client Application Rendering
-The \c popUpContainer \l{Item} provides a System-UI recipient for the pop-up rendered
-by App1. App1 instantiates another \l{ApplicationManagerWindow} for the pop-up within its
+App1 instantiates another \l{ApplicationManagerWindow} for the pop-up within its
 \l{ApplicationManagerWindow} root element, as shown here:
 \quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app1/app1.qml
 \skipto Rectangle
@@ -158,14 +168,14 @@ by App1. App1 instantiates another \l{ApplicationManagerWindow} for the pop-up w
 \printline }
 The \l{ApplicationManagerWindow::setWindowProperty}{ApplicationManagerWindow.setWindowProperty()}
 method is used to set a freely selectable shared property. Here we choose \c{type: "pop-up"} to
-indicate that the window is supposed to be shown as a pop-up. In the \c onWindowReady handler below
+indicate that the window is supposed to be shown as a pop-up. In the \c onWindowAdded handler below
 the System-UI checks for this property and handles the window appropriately as a pop-up.
 
 \section3 Notification API Usage
 
-An alternative to the above approach is to use the application-manager's \l{Notification} API on
-the application (client) side and the \l{NotificationManager} API on the System-UI (server) side.
-The following code is invoked when the \e bulb icon of App2 is clicked:
+An alternative to the window property approach is to use the application-manager's \l{Notification}
+API on the application (client) side and the \l{NotificationManager} API on the System-UI (server)
+side. The following code is invoked when the \e bulb icon of App2 is clicked:
 
 \quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app2/app2.qml
 \skipto var notification
@@ -182,38 +192,37 @@ notification. Presenting the first notification only is a simplification to keep
 \quotefromfile applicationmanager/minidesk/system-ui/main.qml
 \skipto Handler for WindowManager signals
 \printto IPC extension
-This is the vital part of the System-UI, where the window surfaces of the applications are mapped
-to items in the System-UI. The \l {WindowManager::windowReady}{onWindowReady} handler is invoked
-when a new application window is shown (visibility set to true). The \c index parameter references
-into the \l{WindowManager} model, which holds the window surfaces. The first line translates this
-index to the application index of the \l{ApplicationManager} model and assigns it to \c appIndex.
+Here we split the content of WindowManager into two separate models. This is where our two
+\l{ListModel}{ListModels} get populated. Whenever WindowManager adds a new WindowObject to its
+model we check its \c "type"  window property. If it's a pop-up we add it to the \c popupsModel,
+so that it's displayed as such (centralized and in front of regular windows, without any decorations
+whatsoever). Otherwise we add it to the \c topLevelWindowsModel and thus is gets displayed as a regular
+top-level window (draggable and decorated with borders, a title bar and a close button).
 
-Only the "pop-up" ApplicationManagerWindow of App1 has the user-defined \c type property set. All
-other windows don't have the \c type property. In the latter case, the application's \c window
-passed to \c onWindowReady is re-parented to the System-UI's \c winChrome. Also the size of the
-window is set to fill the entire \c appContainer.
+If we didn't have this distinction on how we display different \l{WindowObject}{WindowObjects}
+we could have used a single Repeater instead, and hence a single model, which could be WindowManager
+itself (like in the \l{"Hello World!" System-UI Example}{Hello World} example).
 
-There is a special treatment for an invalid \c appIndex for demonstration purposes: it is assumed
-that the window surface is from an external application that follows the Wayland protocol. For
-example a Qt application could be started on the command line as follows:
+WindowManager creates \l{WindowObject}{WindowObjects} for any wayland client connected to the System-UI
+(which is a wayland server when in multi-process mode). If you have "\c flags/noSecurity: \c yes" in your
+configuration it will include wayland clients which were not started by ApplicationManager and ones that
+are not even registered as Qt Application Manager applications. So if you launch some Qt application
+(such as KDE's Calculator for instance) from the command line as shown below:
 
 \badcode
-QT_WAYLAND_DISABLE_WINDOWDECORATION=1 ./qtapp -platform wayland
+$ QT_WAYLAND_DISABLE_WINDOWDECORATION=1 QT_WAYLAND_SHELL_INTEGRATION=xdg-shell-v5 kcalc -platform wayland
 \endcode
 
-This application will then be shown inside the App1 container.
-\c QT_WAYLAND_DISABLE_WINDOWDECORATION is set to disable client side window decorations, since they
-are provided by the System-UI. Note, that an application started in this way, can just as well be
-closed only from the command line.
+You will see that the System-UI does display it, even though it doesn't have a matching ApplicationObject.
+But as System-UI doesn't know anything about the application that created this window it cannot show its
+name on the window title bar, for instance.
 
-Pop-ups (windows with type "pop-up") are re-parented to their respective \c popUpContainer.
+\image kcalc.jpg
 
-The \c onWindowClosing handler determines if the window is a top-level application window. If so,
-the applications's \c winChrome is set to invisible and the corresponding application icon is set
-to fully opaque to indicate that the application is not running. The \c onWindowLost handler calls
-\l{WindowManager::releaseWindow()}{WindowManager.releaseWindow()} to free all resources associated
-with the \c window.
-
+In case you were wondering, \c QT_WAYLAND_DISABLE_WINDOWDECORATION is set to disable client side
+window decorations, since our System-UI already provides them. A \c QT_WAYLAND_SHELL_INTEGRATION is specified
+so that the client can understand higher level concepts from window managers such as close events. Without
+this, clicking on the close rectangle in the window decoration would yield nothing.
 
 \section2 IPC Extension
 The following snippet demonstrates how the \l{ApplicationIPCInterface} can be used to define an IPC

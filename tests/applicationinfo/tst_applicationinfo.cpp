@@ -53,6 +53,8 @@ private slots:
     void application();
     void validApplicationId_data();
     void validApplicationId();
+    void validIcon_data();
+    void validIcon();
 
 private:
     QVector<const AbstractApplicationInfo *> apps;
@@ -255,6 +257,35 @@ void tst_ApplicationInfo::validApplicationId()
     bool result = AbstractApplicationInfo::isValidApplicationId(appId, isAlias, &errorString);
 
     QVERIFY2(valid == result, qPrintable(errorString));
+}
+
+void tst_ApplicationInfo::validIcon_data()
+{
+    QTest::addColumn<QString>("icon");
+    QTest::addColumn<bool>("isValid");
+
+    // valid
+    QTest::newRow("'icon.png' is valid") << "icon.png" << true;
+    QTest::newRow("'foo.bar' is valid") << "foo.bar" << true;
+    QTest::newRow("'foo' is valid") << "foo" << true;
+
+    // invalid
+    QTest::newRow("empty is invalid") << "" << false;
+    QTest::newRow("'foo/icon.png' is invalid") << "foo/icon.png" << false;
+    QTest::newRow("'../icon.png' is invalid") << "../icon.png" << false;
+    QTest::newRow("'icon.png/' is invalid") << "icon.png/" << false;
+    QTest::newRow("'/foo' is invalid") << "/foo" << false;
+}
+
+void tst_ApplicationInfo::validIcon()
+{
+    QFETCH(QString, icon);
+    QFETCH(bool, isValid);
+
+    QString errorString;
+    bool result = AbstractApplicationInfo::isValidIcon(icon, errorString);
+
+    QCOMPARE(result, isValid);
 }
 
 QTEST_APPLESS_MAIN(tst_ApplicationInfo)

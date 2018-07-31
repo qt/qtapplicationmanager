@@ -120,7 +120,8 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
 \row
     \li \c icon
     \li string
-    \li The filesystem path to the icon, relative to the \c info.yaml file. \e {(Required)}
+    \li The icon file name. It must be in the same directory as \c info.yaml and can be of
+        any image format supported by Qt. \e {(Required)}
 \row
     \li \c name
     \target application-name-map

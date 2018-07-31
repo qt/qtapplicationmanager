@@ -99,6 +99,23 @@ bool AbstractApplicationInfo::isValidApplicationId(const QString &appId, bool is
     }
 }
 
+bool AbstractApplicationInfo::isValidIcon(const QString &icon, QString &errorString)
+{
+    if (icon.isEmpty()) {
+        errorString = qSL("it's empty");
+        return false;
+    }
+
+    QFileInfo fileInfo(icon);
+
+    if (fileInfo.fileName() != icon) {
+        errorString = QString(qSL("'%1' is not a valid file name")).arg(icon);
+        return false;
+    }
+
+    return true;
+}
+
 //TODO Make this really unique
 static int uniqueCounter = 0;
 static int nextUniqueNumber() {
@@ -156,12 +173,12 @@ QVariantMap AbstractApplicationInfo::allAppProperties() const
 
 void AbstractApplicationInfo::validate() const Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QString appIdError;
-    if (!isValidApplicationId(id(), isAlias(), &appIdError))
-        throw Exception(Error::Parse, "the identifier (%1) is not a valid application-id: %2").arg(id()).arg(appIdError);
+    QString errorMsg;
+    if (!isValidApplicationId(id(), isAlias(), &errorMsg))
+        throw Exception(Error::Parse, "the identifier (%1) is not a valid application-id: %2").arg(id()).arg(errorMsg);
 
-    if (icon().isEmpty())
-        throw Exception(Error::Parse, "the 'icon' field must not be empty");
+    if (!isValidIcon(icon(), errorMsg))
+        throw Exception(Error::Parse, "Invalid 'icon' field: %1").arg(errorMsg);
 
     if (names().isEmpty())
         throw Exception(Error::Parse, "the 'name' field must not be empty");

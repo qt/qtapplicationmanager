@@ -79,6 +79,7 @@ public:
     virtual void validate() const Q_DECL_NOEXCEPT_EXPR(false);
 
     static bool isValidApplicationId(const QString &appId, bool isAliasName = false, QString *errorString = nullptr);
+    static bool isValidIcon(const QString &icon, QString &errorString);
     static AbstractApplicationInfo *readFromDataStream(QDataStream &ds);
 
 protected:

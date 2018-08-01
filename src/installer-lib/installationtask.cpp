@@ -386,7 +386,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
 void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 {
     // 1. delete $manifestDir+ and $manifestDir-
-    m_manifestDir = m_ai->manifestDirectory().absoluteFilePath(m_applicationId);
+    m_manifestDir = m_ai->manifestDirectory()->absoluteFilePath(m_applicationId);
     removeRecursiveHelper(m_manifestDir.absolutePath() + qL1C('+'));
     removeRecursiveHelper(m_manifestDir.absolutePath() + qL1C('-'));
 
@@ -443,7 +443,11 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
         }
         m_imageCreator.create(m_extractionImageFile, false /*do not remove existing*/);
 
-        QDir tmpMountPoint(m_ai->applicationImageMountDirectory());
+        if (!m_ai->applicationImageMountDirectory())
+            throw Exception("Cannot install application in a removable location. An application image"
+                    " mount directory wasn't supplied via configuration file or command line parameter.");
+
+        QDir tmpMountPoint(*m_ai->applicationImageMountDirectory());
         tmpMountPoint = tmpMountPoint.absoluteFilePath(m_applicationId + qL1C('+'));
         if (!m_tmpMountPointCreator.create(tmpMountPoint.absolutePath()))
             throw Exception("could not create temporary mountpoint %1").arg(tmpMountPoint);

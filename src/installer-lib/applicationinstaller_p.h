@@ -44,6 +44,7 @@
 #include <QMutex>
 #include <QQueue>
 #include <QSet>
+#include <QScopedPointer>
 #include <QThread>
 
 #include <QtAppManInstaller/applicationinstaller.h>
@@ -64,8 +65,8 @@ public:
     uint maxUserId = uint(-1);
     uint commonGroupId = uint(-1);
 
-    QDir manifestDir;
-    QDir imageMountDir;
+    QScopedPointer<QDir> manifestDir;
+    QScopedPointer<QDir> imageMountDir;
     QVector<InstallationLocation> installationLocations;
     InstallationLocation invalidInstallationLocation;
 

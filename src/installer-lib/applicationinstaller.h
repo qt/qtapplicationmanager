@@ -79,8 +79,8 @@ public:
 
     ~ApplicationInstaller();
     static ApplicationInstaller *createInstance(const QVector<InstallationLocation> &installationLocations,
-                                                const QDir &manifestDir, const QDir &imageMountDir, const QString &hardwareId,
-                                                QString *error);
+                                                const QString &manifestDirPath, const QString &imageMountDirPath,
+                                                const QString &hardwareId, QString *error);
     static ApplicationInstaller *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
@@ -95,8 +95,13 @@ public:
 
     bool enableApplicationUserIdSeparation(uint minUserId, uint maxUserId, uint commonGroupId);
 
-    QDir manifestDirectory() const;
-    QDir applicationImageMountDirectory() const;
+    // Ownership of QDir* stays with ApplicationInstaller
+    // Never returns null
+    const QDir *manifestDirectory() const;
+
+    // Ownership of QDir* stays with ApplicationInstaller
+    // Will return null if app img mounting is disabled.
+    const QDir *applicationImageMountDirectory() const;
 
     bool setDBusPolicy(const QVariantMap &yamlFragment);
     void setCACertificates(const QList<QByteArray> &chainOfTrust);
@@ -161,6 +166,7 @@ private slots:
     void executeNextTask();
 
 private:
+    void cleanupMounts() const;
     void triggerExecuteNextTask();
     QString enqueueTask(AsynchronousTask *task);
     void handleFailure(AsynchronousTask *task);
@@ -170,8 +176,9 @@ private:
     uint findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
-    ApplicationInstaller(const QVector<InstallationLocation> &installationLocations, const QDir &manifestDir,
-                         const QDir &imageMountDir, const QString &hardwareId, QObject *parent);
+    // Ownership of manifestDir and iamgeMountDir is passed to ApplicationInstaller
+    ApplicationInstaller(const QVector<InstallationLocation> &installationLocations, QDir *manifestDir,
+                         QDir *imageMountDir, const QString &hardwareId, QObject *parent);
     ApplicationInstaller(const ApplicationInstaller &);
     static ApplicationInstaller *s_instance;
 

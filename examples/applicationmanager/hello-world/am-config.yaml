@@ -4,7 +4,6 @@ formatType: am-configuration
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
   installedAppsManifestDir: "/tmp/hello-world/manifests"
-  appImageMountDir: "/tmp/hello-world/image-mounts"
   database: "/tmp/hello-world/apps.db"
 
 ui:

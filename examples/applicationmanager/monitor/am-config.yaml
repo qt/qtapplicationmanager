@@ -12,7 +12,6 @@ installationLocations:
 applications:
   builtinAppsManifestDir: "apps"
   installedAppsManifestDir: "/tmp/am/manifests"
-  appImageMountDir: "/tmp/am/image-mounts"
   database: "/tmp/am/apps.db"
 
 logging:

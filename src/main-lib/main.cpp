@@ -493,7 +493,7 @@ void Main::setupInstaller(const QString &appImageMountDir, const QStringList &ca
     if (Q_UNLIKELY(!QDir::root().mkpath(m_installedAppsManifestDir)))
         throw Exception("could not create manifest directory %1").arg(m_installedAppsManifestDir);
 
-    if (Q_UNLIKELY(!QDir::root().mkpath(appImageMountDir)))
+    if (Q_UNLIKELY(!appImageMountDir.isEmpty() && !QDir::root().mkpath(appImageMountDir)))
         throw Exception("could not create the image-mount directory %1").arg(appImageMountDir);
 
     StartupTimer::instance()->checkpoint("after installer setup checks");

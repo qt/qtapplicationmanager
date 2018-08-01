@@ -117,7 +117,7 @@ void DeinstallationTask::execute()
             }
         }
 
-        if (!manifestRename.rename(ApplicationInstaller::instance()->manifestDirectory().absoluteFilePath(m_app->id()),
+        if (!manifestRename.rename(ApplicationInstaller::instance()->manifestDirectory()->absoluteFilePath(m_app->id()),
                                    ScopedRenamer::NameToNameMinus)) {
             throw Exception(Error::IO, "could not rename %1 to %1-").arg(manifestRename.baseName());
         }

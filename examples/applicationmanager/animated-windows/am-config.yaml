@@ -4,7 +4,6 @@ formatType: am-configuration
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
   installedAppsManifestDir: "/tmp/animated-windows/manifests"
-  appImageMountDir: "/tmp/animated-windows/image-mounts"
   database: "/tmp/animated-windows/apps.db"
 
 ui:

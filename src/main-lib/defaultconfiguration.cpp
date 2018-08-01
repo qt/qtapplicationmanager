@@ -91,7 +91,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ { qSL("r"), qSL("recreate-database") },  qSL("recreate the application database.") });
     m_clp.addOption({ qSL("builtin-apps-manifest-dir"),   qSL("base directory for built-in application manifests."), qSL("dir") });
     m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("base directory for installed application manifests."), qSL("dir"), qSL("/opt/am/manifests") });
-    m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("base directory where application images are mounted to."), qSL("dir"), qSL("/opt/am/image-mounts") });
+    m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("base directory where application images are mounted to."), qSL("dir") });
 #if defined(QT_DBUS_LIB)
 #  if defined(Q_OS_LINUX)
     const QString defaultDBus = qSL("session");
@@ -133,6 +133,13 @@ void DefaultConfiguration::parse(QStringList *deploymentWarnings)
         showParserMessage(qL1S("Only one main qml file can be specified.\n"), ErrorMessage);
         exit(1);
     }
+
+    if (!deploymentWarnings)
+        return;
+
+    if (appImageMountDir().isEmpty())
+        *deploymentWarnings << qL1S("No --app-image-mount-dir command line parameter or applications/appImageMountDir"
+                " configuration key specified. Attempting to mount an application image will fail.");
 }
 
 QString DefaultConfiguration::mainQmlFile() const

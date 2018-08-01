@@ -11,7 +11,6 @@ installationLocations:
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
   installedAppsManifestDir: "/tmp/multi-views/manifests"
-  appImageMountDir: "/tmp/multi-views/image-mounts"
   database: "/tmp/multi-views/apps.db"
 
 logging:

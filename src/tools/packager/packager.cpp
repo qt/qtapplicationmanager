@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
                 clp.showHelp(1);
 
             p = PackagingJob::storeVerify(clp.positionalArguments().at(1),
-                                          clp.positionalArguments().mid(2, clp.positionalArguments().size() - 2),
+                                          clp.positionalArguments().mid(2, clp.positionalArguments().size() - 3),
                                           *--clp.positionalArguments().cend());
             break;
         }

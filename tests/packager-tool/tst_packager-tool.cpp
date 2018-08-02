@@ -104,7 +104,7 @@ void tst_PackagerTool::initTestCase()
     QVector<InstallationLocation> locations = InstallationLocation::parseInstallationLocations({ internalLocation }, m_hardwareId);
 
     QString errorString;
-    m_ai = ApplicationInstaller::createInstance(locations, pathTo("manifests"), pathTo("image-mounts"), &errorString);
+    m_ai = ApplicationInstaller::createInstance(locations, pathTo("manifests"), pathTo("image-mounts"), m_hardwareId, &errorString);
     QVERIFY2(m_ai, qPrintable(errorString));
 
     QVERIFY2(ApplicationManager::createInstance(nullptr, true, &errorString), qPrintable(errorString));

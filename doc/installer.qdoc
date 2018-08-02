@@ -85,7 +85,7 @@ If you want to make use of signed packages, you need to setup a public key infra
 support this. You need:
 
 \list
-  \li A \e {Developer CA} which is responsible for creating certicates that are distributed
+  \li A \e {Developer CA} which is responsible for creating certificates that are distributed
       to developers in P12 format. The developers use these certificates to developer-sign their
       packages (using the Packager tool), before submitting to an app-store.
   \li An \e {App-Store CA} which is responsible for creating certificates that are used

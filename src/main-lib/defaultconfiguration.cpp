@@ -108,6 +108,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ qSL("slow-animations"),      qSL("run all animations in slow motion.") });
     m_clp.addOption({ qSL("load-dummydata"),       qSL("loads QML dummy-data.") });
     m_clp.addOption({ qSL("no-security"),          qSL("disables all security related checks (dev only!)") });
+    m_clp.addOption({ qSL("development-mode"),     qSL("enable development mode, allowing installation of dev-signed packages.") });
     m_clp.addOption({ qSL("no-ui-watchdog"),       qSL("disables detecting hung UI applications (e.g. via Wayland's ping/pong).") });
     m_clp.addOption({ qSL("no-dlt-logging"),       qSL("disables logging using automotive DLT.") });
     m_clp.addOption({ qSL("force-single-process"), qSL("forces single-process mode even on a wayland enabled build.") });
@@ -211,6 +212,11 @@ bool DefaultConfiguration::loadDummyData() const
 bool DefaultConfiguration::noSecurity() const
 {
     return value<bool>("no-security", { "flags", "noSecurity" });
+}
+
+bool DefaultConfiguration::developmentMode() const
+{
+    return value<bool>("development-mode", { "flags", "developmentMode" });
 }
 
 bool DefaultConfiguration::noUiWatchdog() const

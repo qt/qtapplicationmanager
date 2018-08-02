@@ -261,8 +261,11 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
                 m_output = qSL("no store signature");
                 m_resultCode = 1;
             } else {
-                QByteArray digestPlusId = QMessageAuthenticationCode::hash(report.digest(), m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
-                Signature sig(digestPlusId);
+                QByteArray sigDigest = report.digest();
+                if (!m_hardwareId.isEmpty())
+                    sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
+
+                Signature sig(sigDigest);
                 if (!sig.verify(report.storeSignature(), certificates)) {
                     m_output = qSL("invalid store signature (") + sig.errorString() + qSL(")");
                     m_resultCode = 2;
@@ -295,8 +298,11 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
                 throw Exception(Error::Package, "could not create signature: %1").arg(sig.errorString());
             report.setDeveloperSignature(signature);
         } else if (m_mode == StoreSign) {
-            QByteArray digestPlusId = QMessageAuthenticationCode::hash(report.digest(), m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
-            Signature sig(digestPlusId);
+            QByteArray sigDigest = report.digest();
+            if (!m_hardwareId.isEmpty())
+                sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
+
+            Signature sig(sigDigest);
             QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
 
             if (signature.isEmpty())

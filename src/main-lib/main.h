@@ -170,6 +170,7 @@ private:
     QVector<QVariantMap> m_systemProperties;
 
     bool m_noSecurity = false;
+    bool m_developmentMode = false;
     QStringList m_builtinAppsManifestDirs;
     QString m_installedAppsManifestDir;
 };

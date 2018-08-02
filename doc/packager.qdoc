@@ -116,10 +116,10 @@ developer only (development mode), and packages that are signed by a trusted app
 
         \c{<password>}
 
-        \c{[device-id]}
+        \c{<device-id>}
     \li Takes the input \c package, adds a store signature and writes the output to \c signed-package.
         You need to supply a \c certificate in P12 format together with a \c password matching the
-        certificate. If you specify the optional \c device-id, the resulting package can only be
+        certificate. If you don't leave the \c device-id empty, the resulting package can only be
         installed on this specific device. The following options are supported:
 
         \c{--verbose}: Dump the package's meta-data header and footer information to stdout.

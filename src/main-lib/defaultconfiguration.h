@@ -75,6 +75,7 @@ public:
     bool slowAnimations() const;
     bool loadDummyData() const;
     bool noSecurity() const;
+    bool developmentMode() const;
     bool noUiWatchdog() const;
     bool noDltLogging() const;
     bool forceSingleProcess() const;

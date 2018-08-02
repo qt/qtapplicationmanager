@@ -71,6 +71,7 @@ public:
 
     QString error;
 
+    QString hardwareId;
     QList<QByteArray> chainOfTrust;
 
     QQueue<AsynchronousTask *> taskQueue;

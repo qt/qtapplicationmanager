@@ -167,7 +167,7 @@
     for this \a taskId, to either cancel the installation or try to complete it.
 
     The ApplicationInstaller has two convenience functions to help the System-UI with verifying the
-    meta-data: versionCompare() and, in case you are using reverse-DNS notation for application-ids,
+    meta-data: compareVersions() and, in case you are using reverse-DNS notation for application-ids,
     validateDnsName().
 
     \sa taskStateChanged(), startPackageInstallation()
@@ -197,13 +197,14 @@ ApplicationInstaller *ApplicationInstaller::s_instance = nullptr;
 
 ApplicationInstaller::ApplicationInstaller(const QVector<InstallationLocation> &installationLocations,
                                            const QDir &manifestDir, const QDir &imageMountDir,
-                                           QObject *parent)
+                                           const QString &hardwareId, QObject *parent)
     : QObject(parent)
     , d(new ApplicationInstallerPrivate())
 {
     d->installationLocations = installationLocations;
     d->manifestDir = manifestDir;
     d->imageMountDir = imageMountDir;
+    d->hardwareId = hardwareId;
 }
 
 ApplicationInstaller::~ApplicationInstaller()
@@ -212,7 +213,8 @@ ApplicationInstaller::~ApplicationInstaller()
 }
 
 ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<InstallationLocation> &installationLocations,
-                                                           const QDir &manifestDir, const QDir &imageMountDir, QString *error)
+                                                           const QDir &manifestDir, const QDir &imageMountDir,
+                                                           const QString &hardwareId, QString *error)
 {
     if (Q_UNLIKELY(s_instance))
         qFatal("ApplicationInstaller::createInstance() was called a second time.");
@@ -234,7 +236,8 @@ ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<Install
     qmlRegisterSingletonType<ApplicationInstaller>("QtApplicationManager", 1, 0, "ApplicationInstaller",
                                                    &ApplicationInstaller::instanceForQml);
 
-    return s_instance = new ApplicationInstaller(installationLocations, manifestDir, imageMountDir, QCoreApplication::instance());
+    return s_instance = new ApplicationInstaller(installationLocations, manifestDir, imageMountDir,
+                                                 hardwareId, QCoreApplication::instance());
 }
 
 ApplicationInstaller *ApplicationInstaller::instance()
@@ -268,6 +271,11 @@ bool ApplicationInstaller::allowInstallationOfUnsignedPackages() const
 void ApplicationInstaller::setAllowInstallationOfUnsignedPackages(bool b)
 {
     d->allowInstallationOfUnsignedPackages = b;
+}
+
+QString ApplicationInstaller::hardwareId() const
+{
+    return d->hardwareId;
 }
 
 bool ApplicationInstaller::isApplicationUserIdSeparationEnabled() const

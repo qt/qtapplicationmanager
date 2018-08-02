@@ -254,6 +254,11 @@ all your imports paths and file references relative to your main config file.
     \li bool
     \li Disables all security related checks. Use this in a development setup only! (default: false)
 \row
+    \li \b --development-mode
+    \br \e flags/developmentMode
+    \li bool
+    \li Allows the installation of packages that only come with a valid developer signature. (default: false)
+\row
     \li \b --no-ui-watchdog
     \br \e flags/noUiWatchdog
     \li bool

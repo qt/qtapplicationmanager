@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include <QTemporaryDir>
+#include <QMessageAuthenticationCode>
 
 #include "logging.h"
 #include "applicationinstaller_p.h"
@@ -217,9 +218,19 @@ void InstallationTask::execute()
         if (ApplicationManager::instance()->securityChecksEnabled()) {
             if (!m_extractor->installationReport().storeSignature().isEmpty()) {
                 // normal package from the store
-                if (!Signature(m_extractor->installationReport().digest()).verify(m_extractor->installationReport().storeSignature(), chainOfTrust))
-                    throw Exception(Error::Package, "could not verify the package's store signature");
+                QByteArray sigDigest = m_extractor->installationReport().digest();
+                bool sigOk = false;
 
+                if (Signature(sigDigest).verify(m_extractor->installationReport().storeSignature(), chainOfTrust)) {
+                    sigOk = true;
+                } else if (!m_ai->hardwareId().isEmpty()) {
+                    // did not verify - if we have a hardware-id, try to verify with it
+                    sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_ai->hardwareId().toUtf8(), QCryptographicHash::Sha256);
+                    if (Signature(sigDigest).verify(m_extractor->installationReport().storeSignature(), chainOfTrust))
+                        sigOk = true;
+                }
+                if (!sigOk)
+                    throw Exception(Error::Package, "could not verify the package's store signature");
             } else if (!m_extractor->installationReport().developerSignature().isEmpty()) {
                 // developer package - needs a device in dev mode
                 if (!m_ai->developmentMode())

@@ -101,6 +101,12 @@ packager create-package "$dst/test.appkg" "$src"
 info "Dev-sign package"
 packager dev-sign-package "$dst/test.appkg" "$dst/test-dev-signed.appkg" certificates/dev1.p12 password
 
+info "Store-sign package"
+packager store-sign-package "$dst/test.appkg" "$dst/test-store-signed.appkg" certificates/store.p12 password "foobar"
+
+info "Store-sign dev package"
+packager store-sign-package "$dst/test-dev-signed.appkg" "$dst/test-store-dev-signed.appkg" certificates/store.p12 password "foobar"
+
 info "Create package with extra meta-data"
 cat >"$tmp/exmd" <<EOT
 array:

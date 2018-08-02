@@ -189,6 +189,7 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
 {
     // basics that are needed in multiple setup functions below
     m_noSecurity = cfg->noSecurity();
+    m_developmentMode = cfg->developmentMode();
     m_builtinAppsManifestDirs = cfg->builtinAppsManifestDirs();
     m_installedAppsManifestDir = cfg->installedAppsManifestDir();
 
@@ -501,11 +502,15 @@ void Main::setupInstaller(const QString &appImageMountDir, const QStringList &ca
     m_applicationInstaller = ApplicationInstaller::createInstance(m_installationLocations,
                                                                   m_installedAppsManifestDir,
                                                                   appImageMountDir,
+                                                                  hardwareId(),
                                                                   &error);
     if (Q_UNLIKELY(!m_applicationInstaller))
         throw Exception(Error::System, error);
-    if (m_noSecurity) {
+
+    if (m_developmentMode)
         m_applicationInstaller->setDevelopmentMode(true);
+
+    if (m_noSecurity) {
         m_applicationInstaller->setAllowInstallationOfUnsignedPackages(true);
     } else {
         QList<QByteArray> caCertificateList;

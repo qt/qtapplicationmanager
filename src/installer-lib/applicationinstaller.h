@@ -79,7 +79,7 @@ public:
 
     ~ApplicationInstaller();
     static ApplicationInstaller *createInstance(const QVector<InstallationLocation> &installationLocations,
-                                                const QDir &manifestDir, const QDir &imageMountDir,
+                                                const QDir &manifestDir, const QDir &imageMountDir, const QString &hardwareId,
                                                 QString *error);
     static ApplicationInstaller *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
@@ -88,6 +88,7 @@ public:
     void setDevelopmentMode(bool b);
     bool allowInstallationOfUnsignedPackages() const;
     void setAllowInstallationOfUnsignedPackages(bool b);
+    QString hardwareId() const;
 
     bool isApplicationUserIdSeparationEnabled() const;
     uint commonApplicationGroupId() const;
@@ -170,7 +171,7 @@ private:
 
 private:
     ApplicationInstaller(const QVector<InstallationLocation> &installationLocations, const QDir &manifestDir,
-                         const QDir &imageMountDir, QObject *parent);
+                         const QDir &imageMountDir, const QString &hardwareId, QObject *parent);
     ApplicationInstaller(const ApplicationInstaller &);
     static ApplicationInstaller *s_instance;
 

@@ -100,7 +100,7 @@ runSSL req -batch -subj '/C=DE/ST=Foo/L=Bar/CN=www.other.com' -newkey rsa:2048 -
 runSSL ca -batch -config openssl-other-ca.cnf -policy signing_policy -extensions signing_req -out other.crt -infiles other.csr
 runSSL pkcs12 -export -out other.p12 -password pass:password -inkey other-priv.key -nodes -certfile other-ca.crt -in other.crt -name "Other Certificate"
 
-echo -e "$G All test certificated have been created successfully$W"
+echo -e "$G All test certificates have been created successfully$W"
 echo
 
 exit 0

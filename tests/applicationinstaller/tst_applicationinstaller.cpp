@@ -59,20 +59,42 @@ static QString sudoServerError;
 static int spyTimeout = 5000; // shorthand for specifying QSignalSpy timeouts
 
 // RAII to reset the global attribute
-class AllowUnsignedInstallation
+class AllowInstallations
 {
 public:
-    AllowUnsignedInstallation(bool b = true)
-        : m_old(ApplicationInstaller::instance()->allowInstallationOfUnsignedPackages())
+    enum Type {
+        AllowUnsinged,
+        RequireDevSigned,
+        RequireStoreSigned
+    };
+
+    AllowInstallations(Type t)
+        : m_oldUnsigned(ApplicationInstaller::instance()->allowInstallationOfUnsignedPackages())
+        , m_oldDevMode(ApplicationInstaller::instance()->developmentMode())
     {
-        ApplicationInstaller::instance()->setAllowInstallationOfUnsignedPackages(b);
+        switch (t) {
+        case AllowUnsinged:
+            ApplicationInstaller::instance()->setAllowInstallationOfUnsignedPackages(true);
+            ApplicationInstaller::instance()->setDevelopmentMode(false);
+            break;
+        case RequireDevSigned:
+            ApplicationInstaller::instance()->setAllowInstallationOfUnsignedPackages(false);
+            ApplicationInstaller::instance()->setDevelopmentMode(true);
+            break;
+        case RequireStoreSigned:
+            ApplicationInstaller::instance()->setAllowInstallationOfUnsignedPackages(false);
+            ApplicationInstaller::instance()->setDevelopmentMode(false);
+            break;
+        }
     }
-    ~AllowUnsignedInstallation()
+    ~AllowInstallations()
     {
-        ApplicationInstaller::instance()->setAllowInstallationOfUnsignedPackages(m_old);
+        ApplicationInstaller::instance()->setAllowInstallationOfUnsignedPackages(m_oldUnsigned);
+        ApplicationInstaller::instance()->setDevelopmentMode(m_oldDevMode);
     }
 private:
-    bool m_old;
+    bool m_oldUnsigned;
+    bool m_oldDevMode;
 };
 
 class tst_ApplicationInstaller : public QObject
@@ -359,7 +381,7 @@ void tst_ApplicationInstaller::initTestCase()
     // finally, instantiate the ApplicationInstaller and a bunch of signal-spies for its signals
 
     QString installerError;
-    m_ai = ApplicationInstaller::createInstance(m_installationLocations, pathTo(Manifests), pathTo(ImageMounts), &installerError);
+    m_ai = ApplicationInstaller::createInstance(m_installationLocations, pathTo(Manifests), pathTo(ImageMounts), m_hardwareId, &installerError);
     QVERIFY2(m_ai, qPrintable(installerError));
 
     m_startedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskStarted);
@@ -374,9 +396,11 @@ void tst_ApplicationInstaller::initTestCase()
     // crypto stuff - we need to load the root CA and developer CA certificates
 
     QFile devcaFile(AM_TESTDATA_DIR "certificates/devca.crt");
+    QFile storecaFile(AM_TESTDATA_DIR "certificates/store.crt");
     QFile caFile(AM_TESTDATA_DIR "certificates/ca.crt");
     QVERIFY2(devcaFile.open(QIODevice::ReadOnly), qPrintable(devcaFile.errorString()));
-    QVERIFY2(caFile.open(QIODevice::ReadOnly), qPrintable(devcaFile.errorString()));
+    QVERIFY2(storecaFile.open(QIODevice::ReadOnly), qPrintable(storecaFile.errorString()));
+    QVERIFY2(caFile.open(QIODevice::ReadOnly), qPrintable(caFile.errorString()));
 
     QList<QByteArray> chainOfTrust;
     chainOfTrust << devcaFile.readAll() << caFile.readAll();
@@ -547,6 +571,7 @@ void tst_ApplicationInstaller::packageInstallation_data()
     QTest::addColumn<QString>("updatePackageName");
     QTest::addColumn<QString>("updateInstallationLocationId");
     QTest::addColumn<bool>("devSigned");
+    QTest::addColumn<bool>("storeSigned");
     QTest::addColumn<bool>("expectedSuccess");
     QTest::addColumn<bool>("updateExpectedSuccess");
     QTest::addColumn<QVariantMap>("extraMetaData");
@@ -569,59 +594,71 @@ void tst_ApplicationInstaller::packageInstallation_data()
 
     QTest::newRow("normal") \
             << "test.appkg" << "internal-0" << "test-update.appkg" << "internal-0"
-            << false << true << true << nomd<< "";
+            << false << false << true << true << nomd<< "";
+    QTest::newRow("no-dev-signed") \
+            << "test.appkg" << "internal-0" << "" << ""
+            << true << false << false << false << nomd << "cannot install unsigned packages";
     QTest::newRow("dev-signed") \
             << "test-dev-signed.appkg" << "internal-0" << "test-update-dev-signed.appkg" << "internal-0"
-            << true << true << true << nomd << "";
+            << true << false << true << true << nomd << "";
+    QTest::newRow("no-store-signed") \
+            << "test.appkg" << "internal-0" << "" << ""
+            << false << true << false << false << nomd << "cannot install unsigned packages";
+    QTest::newRow("no-store-but-dev-signed") \
+            << "test-dev-signed.appkg" << "internal-0" << "" << ""
+            << false << true << false << false << nomd << "cannot install development packages on consumer devices";
+    QTest::newRow("store-signed") \
+            << "test-store-signed.appkg" << "internal-0" << "" << ""
+            << false << true << true << false << nomd << "";
     QTest::newRow("extra-metadata") \
             << "test-extra.appkg" << "internal-0" << "" << ""
-            << false << true << false << extramd << "";
+            << false << false << true << false << extramd << "";
     QTest::newRow("extra-metadata-dev-signed") \
             << "test-extra-dev-signed.appkg" << "internal-0" << "" << ""
-            << true << true << false << extramd << "";
+            << true << false << true << false << extramd << "";
     QTest::newRow("update-to-different-location") \
             << "test.appkg" << "internal-0" << "test-update.appkg" << "internal-1"
-            << false << true << false << nomd << "the application com.pelagicore.test cannot be installed to internal-1, since it is already installed to internal-0";
+            << false << false << true << false << nomd << "the application com.pelagicore.test cannot be installed to internal-1, since it is already installed to internal-0";
     QTest::newRow("invalid-location") \
             << "test.appkg" << "internal-42" << "" << ""
-            << false << false << false << nomd << "invalid installation location";
+            << false << false << false << false << nomd << "invalid installation location";
     QTest::newRow("invalid-file-order") \
             << "test-invalid-file-order.appkg" << "internal-0" << "" << ""
-            << false << false << false << nomd << "could not find info.yaml and icon.png at the beginning of the package";
+            << false << false << false << false << nomd << "could not find info.yaml and icon.png at the beginning of the package";
     QTest::newRow("invalid-header-format") \
             << "test-invalid-header-formatversion.appkg" << "internal-0" << "" << ""
-            << false << false << false << nomd << "metadata has an invalid format specification: wrong formatVersion header: expected 1, got 2";
+            << false << false << false << false << nomd << "metadata has an invalid format specification: wrong formatVersion header: expected 1, got 2";
     QTest::newRow("invalid-header-diskspaceused") \
             << "test-invalid-header-diskspaceused.appkg" << "internal-0" << "" << ""
-            << false << false << false << nomd << "metadata has an invalid diskSpaceUsed field (0)";
+            << false << false << false << false << nomd << "metadata has an invalid diskSpaceUsed field (0)";
     QTest::newRow("invalid-header-id") \
             << "test-invalid-header-id.appkg" << "internal-0" << "" << ""
-            << false << false << false << nomd << "metadata has an invalid applicationId field (:invalid)";
+            << false << false << false << false << nomd << "metadata has an invalid applicationId field (:invalid)";
     QTest::newRow("non-matching-header-id") \
             << "test-non-matching-header-id.appkg" << "internal-0" << "" << ""
-            << false << false << false << nomd << "the application identifiers in --PACKAGE-HEADER--' and info.yaml do not match";
+            << false << false << false << false << nomd << "the application identifiers in --PACKAGE-HEADER--' and info.yaml do not match";
     QTest::newRow("tampered-extra-signed-header") \
             << "test-tampered-extra-signed-header.appkg" << "internal-0" << "" << ""
-            << false << false << false << nomd << "~package digest mismatch.*";
+            << false << false << false << false << nomd << "~package digest mismatch.*";
     QTest::newRow("invalid-info.yaml") \
             << "test-invalid-info.appkg" << "internal-0" << "" << ""
-            << false << false << false << nomd << "~.*YAML parse error at line \\d+, column \\d+: did not find expected key";
+            << false << false << false << false << nomd << "~.*YAML parse error at line \\d+, column \\d+: did not find expected key";
     QTest::newRow("invalid-info.yaml-id") \
             << "test-invalid-info-id.appkg" << "internal-0" << "" << ""
-            << false << false << false << nomd << "~.*the identifier \\(:invalid\\) is not a valid application-id: must consist of printable ASCII characters only, except any of .*";
+            << false << false << false << false << nomd << "~.*the identifier \\(:invalid\\) is not a valid application-id: must consist of printable ASCII characters only, except any of .*";
     QTest::newRow("invalid-footer-signature") \
             << "test-invalid-footer-signature.appkg" << "internal-0" << "" << ""
-            << false << false << false << nomd << "could not verify the package's developer signature";
+            << true << false << false << false << nomd << "could not verify the package's developer signature";
 #ifdef Q_OS_LINUX
     QTest::newRow("sdcard") \
             << "test.appkg" << "removable-0" << "test-update.appkg" << "removable-0"
-            << false << true << true << nomd << "";
+            << false << false << true << true << nomd << "";
     QTest::newRow("sdcard-dev-signed") \
             << "test-dev-signed.appkg" << "removable-0" << "test-update-dev-signed.appkg" << "removable-0"
-            << true << true << true << nomd << "";
+            << true << false << true << true << nomd << "";
     QTest::newRow("sdcard-no-space") \
             << "bigtest-dev-signed.appkg" << "removable-0" << "" << ""
-            << true << false << false << nomd << "~not enough storage space left on removable-0: [0-9.]+ MB available, but [0-9.]+ MB needed";
+            << true << false << false << false << nomd << "~not enough storage space left on removable-0: [0-9.]+ MB available, but [0-9.]+ MB needed";
 #endif
 }
 
@@ -635,6 +672,7 @@ void tst_ApplicationInstaller::packageInstallation()
     QFETCH(QString, updatePackageName);
     QFETCH(QString, updateInstallationLocationId);
     QFETCH(bool, devSigned);
+    QFETCH(bool, storeSigned);
     QFETCH(bool, expectedSuccess);
     QFETCH(bool, updateExpectedSuccess);
     QFETCH(QVariantMap, extraMetaData);
@@ -645,7 +683,9 @@ void tst_ApplicationInstaller::packageInstallation()
         QSKIP("no removable installation locations on this platform");
 #endif
 
-    AllowUnsignedInstallation allow(!devSigned);
+    AllowInstallations allow(storeSigned ? AllowInstallations::RequireStoreSigned
+                                         : (devSigned ? AllowInstallations::RequireDevSigned
+                                                      : AllowInstallations::AllowUnsinged));
 
     int lastPass = (updatePackageName.isEmpty() ? 1 : 2);
     // pass 1 is the installation / pass 2 is the update (if needed)

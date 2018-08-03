@@ -49,7 +49,6 @@ QT_BEGIN_NAMESPACE_AM
 
 class Application;
 class AbstractApplication;
-class AbstractApplicationManager;
 class ApplicationDatabasePrivate;
 
 class ApplicationDatabase
@@ -64,7 +63,7 @@ public:
     QString errorString() const;
     QString name() const;
 
-    QVector<AbstractApplication *> read(AbstractApplicationManager*) Q_DECL_NOEXCEPT_EXPR(false);
+    QVector<AbstractApplication *> read() Q_DECL_NOEXCEPT_EXPR(false);
     void write(const QVector<AbstractApplication *> &apps) Q_DECL_NOEXCEPT_EXPR(false);
     void write(const QVector<const AbstractApplicationInfo *> &apps) Q_DECL_NOEXCEPT_EXPR(false);
 

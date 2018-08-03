@@ -136,7 +136,7 @@ void tst_Runtime::factory()
 
     Application *a = nullptr;
     try {
-        a = new Application(YamlApplicationScanner().scan(temp.fileName()),  nullptr /*appMan*/);
+        a = new Application(YamlApplicationScanner().scan(temp.fileName()));
     } catch (const Exception &e) {
         QVERIFY2(false, qPrintable(e.errorString()));
     }

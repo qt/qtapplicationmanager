@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "application.h"
-#include "abstractapplicationmanager.h"
 #include "abstractruntime.h"
 #include "applicationinfo.h"
 
@@ -264,9 +263,8 @@ QT_BEGIN_NAMESPACE_AM
 // AbstractApplication
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-AbstractApplication::AbstractApplication(AbstractApplicationInfo *info, AbstractApplicationManager *appMan)
+AbstractApplication::AbstractApplication(AbstractApplicationInfo *info)
     : m_info(info)
-    , m_appMan(appMan)
 {
 }
 
@@ -362,30 +360,27 @@ QString AbstractApplication::name(const QString &language) const
     return info()->name(language);
 }
 
-bool AbstractApplication::start(const QString &documentUrl)
+void AbstractApplication::start(const QString &documentUrl)
 {
-    Q_ASSERT(m_appMan);
-    return m_appMan->startApplication(id(), documentUrl);
+    emit requests.startRequested(documentUrl);
 }
 
-bool AbstractApplication::debug(const QString &debugWrapper, const QString &documentUrl)
+void AbstractApplication::debug(const QString &debugWrapper, const QString &documentUrl)
 {
-    Q_ASSERT(m_appMan);
-    return m_appMan->debugApplication(id(), debugWrapper, documentUrl);
+    emit requests.debugRequested(debugWrapper, documentUrl);
 }
 
 void AbstractApplication::stop(bool forceKill)
 {
-    Q_ASSERT(m_appMan);
-    m_appMan->stopApplication(id(), forceKill);
+    emit requests.stopRequested(forceKill);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Application
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Application::Application(ApplicationInfo *info, AbstractApplicationManager *appMan)
-    : AbstractApplication(info, appMan)
+Application::Application(ApplicationInfo *info)
+    : AbstractApplication(info)
 {
 }
 
@@ -512,8 +507,8 @@ void Application::setProgress(qreal value)
 // ApplicationAlias
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-ApplicationAlias::ApplicationAlias(Application* app, ApplicationAliasInfo* info, AbstractApplicationManager* appMan)
-    : AbstractApplication(info, appMan)
+ApplicationAlias::ApplicationAlias(Application* app, ApplicationAliasInfo* info)
+    : AbstractApplication(info)
     , m_application(app)
 {
     connect(m_application, &AbstractApplication::runtimeChanged, this, &AbstractApplication::runtimeChanged);

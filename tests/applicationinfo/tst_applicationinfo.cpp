@@ -106,7 +106,7 @@ void tst_ApplicationInfo::database()
         QVERIFY(adb.isValid());
 
         try {
-            QVector<AbstractApplication *> appsInDb = adb.read(nullptr /*appMan*/);
+            QVector<AbstractApplication *> appsInDb = adb.read();
             QVERIFY(appsInDb.isEmpty());
 
             adb.write(apps);
@@ -123,7 +123,7 @@ void tst_ApplicationInfo::database()
         QVERIFY(adb.isValid());
 
         try {
-            QVector<AbstractApplication *> appsInDb = adb.read(nullptr /*appMan*/);
+            QVector<AbstractApplication *> appsInDb = adb.read();
             QCOMPARE(appsInDb.size(), apps.size());
             qDeleteAll(appsInDb);
         } catch (Exception &e) {

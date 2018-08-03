@@ -397,12 +397,9 @@ ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb,
 
     try {
         if (adb) {
-            am->d->apps = adb->read(am.data());
-
-            // we need to set a valid parent on QObjects that get exposed to QML via
-            // Q_INVOKABLE return values -- otherwise QML will take over ownership
-            for (auto &app : am->d->apps)
-                app->setParent(am.data());
+            QVector<AbstractApplication *> apps = adb->read();
+            for (auto app : apps)
+                am->addApplication(app);
         }
         am->registerMimeTypes();
     } catch (const Exception &e) {
@@ -442,7 +439,7 @@ QObject *ApplicationManager::instanceForQml(QQmlEngine *, QJSEngine *)
 }
 
 ApplicationManager::ApplicationManager(ApplicationDatabase *adb, bool singleProcess, QObject *parent)
-    : AbstractApplicationManager(parent)
+    : QAbstractListModel(parent)
     , d(new ApplicationManagerPrivate())
 {
     d->singleProcess = singleProcess;
@@ -1234,10 +1231,10 @@ bool ApplicationManager::startingApplicationInstallation(ApplicationInfo *info)
         app->setProgress(0);
         emitDataChanged(app);
     } else { // installation
-        Application *app = new Application(newInfo.take(), this);
+        Application *app = new Application(newInfo.take());
 
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
-        d->apps << app;
+        addApplication(app);
         endInsertRows();
         emit applicationAdded(app->id());
         emitDataChanged(app);
@@ -1695,6 +1692,28 @@ Application::RunState ApplicationManager::applicationRunState(const QString &id)
         return Application::NotRunning;
     }
     return d->apps.at(index)->runState();
+}
+
+void ApplicationManager::addApplication(AbstractApplication *app)
+{
+    QQmlEngine::setObjectOwnership(app, QQmlEngine::CppOwnership);
+
+    connect (&app->requests, &ApplicationRequests::startRequested,
+            this, [this, app](const QString &documentUrl) {
+        startApplication(app->id(), documentUrl);
+    });
+
+    connect (&app->requests, &ApplicationRequests::debugRequested,
+            this, [this, app](const QString &debugWrapper, const QString &documentUrl) {
+        debugApplication(app->id(), debugWrapper, documentUrl);
+    });
+
+    connect (&app->requests, &ApplicationRequests::stopRequested,
+            this, [this, app](bool forceKill) {
+        stopApplication(app->id(), forceKill);
+    });
+
+    d->apps << app;
 }
 
 QT_END_NAMESPACE_AM

@@ -50,9 +50,19 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class AbstractApplicationManager;
 class AbstractRuntime;
 class Application;
+
+// A place to collect signals used internally by appman without polluting
+// AbstractApplication's public QML API.
+class ApplicationRequests : public QObject
+{
+    Q_OBJECT
+signals:
+    void startRequested(const QString &documentUrl);
+    void debugRequested(const QString &debugWrapper, const QString &documentUrl);
+    void stopRequested(bool forceKill);
+};
 
 class AbstractApplication : public QObject
 {
@@ -101,10 +111,10 @@ public:
     };
     Q_ENUM(RunState)
 
-    AbstractApplication(AbstractApplicationInfo *info, AbstractApplicationManager *);
+    AbstractApplication(AbstractApplicationInfo *info);
 
-    Q_INVOKABLE bool start(const QString &documentUrl = QString());
-    Q_INVOKABLE bool debug(const QString &debugWrapper, const QString &documentUrl = QString());
+    Q_INVOKABLE void start(const QString &documentUrl = QString());
+    Q_INVOKABLE void debug(const QString &debugWrapper, const QString &documentUrl = QString());
     Q_INVOKABLE void stop(bool forceKill = false);
 
     virtual Application *nonAliased() = 0;
@@ -152,6 +162,8 @@ public:
     virtual int lastExitCode() const = 0;
     virtual ExitStatus lastExitStatus() const = 0;
 
+    ApplicationRequests requests;
+
 signals:
     void bulkChange();
     void runtimeChanged();
@@ -163,14 +175,13 @@ signals:
 
 protected:
     QScopedPointer<AbstractApplicationInfo> m_info;
-    AbstractApplicationManager *m_appMan{nullptr};
 };
 
 class Application : public AbstractApplication
 {
     Q_OBJECT
 public:
-    Application(ApplicationInfo*, AbstractApplicationManager*);
+    Application(ApplicationInfo*);
 
 
     // Returns the updated info, if there's one. Otherwise
@@ -239,7 +250,7 @@ class ApplicationAlias : public AbstractApplication
 {
     Q_OBJECT
 public:
-    ApplicationAlias(Application*, ApplicationAliasInfo*, AbstractApplicationManager*);
+    ApplicationAlias(Application*, ApplicationAliasInfo*);
 
     AbstractApplicationInfo *info() const override { return m_info.data(); }
     Application *nonAliased() override { return m_application; }

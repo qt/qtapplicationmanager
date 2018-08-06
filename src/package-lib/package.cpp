@@ -44,6 +44,8 @@
 
 #include "package.h"
 
+#include <clocale>
+
 QT_BEGIN_NAMESPACE_AM
 
 bool Package::ensureCorrectLocale()

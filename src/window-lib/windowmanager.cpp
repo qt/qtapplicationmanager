@@ -345,7 +345,7 @@ void WindowManager::updateViewSlowMode(QQuickWindow *view)
         QMetaObject::Connection con = conns[view];
         if (con) {
 #if defined(Q_CC_MSVC)
-            qApp->disconnect(con); // MSVC2013 cannot call static member functions without capturing this
+            qApp->disconnect(con); // MSVC cannot distinguish between static and non-static overloads in lambdas
 #else
             QObject::disconnect(con);
 #endif

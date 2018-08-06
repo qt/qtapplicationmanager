@@ -318,6 +318,8 @@ void Main::setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false)
 
         StartupTimer::instance()->checkpoint("after starting session D-Bus");
     }
+#else
+    Q_UNUSED(startSessionBus)
 #endif
 }
 
@@ -701,11 +703,11 @@ void Main::showWindow(bool showFullscreen)
         static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {
             // this is a queued signal, so there may be still one in the queue after calling disconnect()
             if (conn) {
-    #  if defined(Q_CC_MSVC)
-                qApp->disconnect(conn); // MSVC2013 cannot call static member functions without capturing this
-    #  else
+#  if defined(Q_CC_MSVC)
+                qApp->disconnect(conn); // MSVC cannot distinguish between static and non-static overloads in lambdas
+#  else
                 QObject::disconnect(conn);
-    #  endif
+#  endif
                 auto st = StartupTimer::instance();
                 st->checkFirstFrame();
                 if (!st->automaticReporting())

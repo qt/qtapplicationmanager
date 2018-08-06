@@ -515,11 +515,11 @@ void Controller::updateSlowMode(bool isSlow)
 
     connection = connect(m_window, &QQuickWindow::beforeRendering, this, [isSlow] {
         if (connection) {
-#if defined(Q_CC_MSVC)
-            qApp->disconnect(connection); // MSVC2013 cannot call static member functions without capturing this
-#else
+#  if defined(Q_CC_MSVC)
+            qApp->disconnect(connection); // MSVC cannot distinguish between static and non-static overloads in lambdas
+#  else
             QObject::disconnect(connection);
-#endif
+#  endif
             QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
         }
     }, Qt::DirectConnection);

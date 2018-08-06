@@ -177,7 +177,7 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
     if ((err = CMSDecoderCopyAllCerts(decoder, &msgCerts)))
         throw SecurityException(err, "Could not retrieve certificates from message");
 
-    QCFType<SecPolicyRef> secPolicy = SecPolicyCreateWithOID(kSecPolicyAppleSMIME);
+    QCFType<SecPolicyRef> secPolicy = SecPolicyCreateWithProperties(kSecPolicyAppleSMIME, nullptr);
     CMSSignerStatus signerStatusOut = kCMSSignerUnsigned;
     QCFType<SecTrustRef> trustRef;
 

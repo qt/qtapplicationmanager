@@ -870,7 +870,11 @@ bool ApplicationManager::startApplication(AbstractApplication *app, const QStrin
             } else {
                 // We postpone the starting of the application to a later point in time,
                 // since the container is not ready yet
+#  if defined(Q_CC_MSVC)
+                qApp->connect(container, &AbstractContainer::ready, doStartInContainer); // MSVC cannot distinguish between static and non-static overloads in lambdas
+# else
                 connect(container, &AbstractContainer::ready, doStartInContainer);
+#endif
                 return true;
             }
         };

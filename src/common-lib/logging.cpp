@@ -273,7 +273,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
         static QByteArray appName = QCoreApplication::applicationName().toLocal8Bit();
 
-        __android_log_print(pri, appName.constData(), out.constData());
+        __android_log_write(pri, appName.constData(), out.constData());
         return;
 #endif
     }

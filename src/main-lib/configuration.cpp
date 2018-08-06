@@ -202,7 +202,7 @@ void Configuration::showParserMessage(const QString &message, MessageType type)
 #elif defined(Q_OS_ANDROID)
     static QByteArray appName = QCoreApplication::applicationName().toLocal8Bit();
 
-    __android_log_print(type == UsageMessage ? ANDROID_LOG_WARN : ANDROID_LOG_ERROR,
+    __android_log_write(type == UsageMessage ? ANDROID_LOG_WARN : ANDROID_LOG_ERROR,
                         appName.constData(), qPrintable(message));
     return;
 

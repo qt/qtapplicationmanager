@@ -241,7 +241,7 @@ class ApplicationAlias : public AbstractApplication
 public:
     ApplicationAlias(Application*, ApplicationAliasInfo*, AbstractApplicationManager*);
 
-    AbstractApplicationInfo *info() const { return m_info.data(); }
+    AbstractApplicationInfo *info() const override { return m_info.data(); }
     Application *nonAliased() override { return m_application; }
     QString runtimeName() const override;
     QVariantMap runtimeParameters() const override;

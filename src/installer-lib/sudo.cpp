@@ -446,6 +446,8 @@ void SudoServer::run()
 #else
     Q_UNUSED(m_socket)
     Q_UNUSED(m_loopControl)
+    Q_ASSERT(false);
+    exit(0);
 #endif
 }
 

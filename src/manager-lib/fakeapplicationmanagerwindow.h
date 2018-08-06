@@ -58,6 +58,7 @@ class InProcessSurfaceItem;
 class FakeApplicationManagerWindow : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
     Q_PROPERTY(QQuickItem* contentItem READ contentItem CONSTANT)
 

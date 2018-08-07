@@ -50,8 +50,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationDatabase;
-
 class ApplicationManagerPrivate
 {
 public:
@@ -60,7 +58,6 @@ public:
     bool shuttingDown = false;
     bool windowManagerCompositorReady = false;
     QVariantMap systemProperties;
-    ApplicationDatabase *database = nullptr;
 
     QVector<AbstractApplication *> apps;
 

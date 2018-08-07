@@ -55,11 +55,19 @@ QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationDatabase;
 class ApplicationManagerPrivate;
 class AbstractRuntime;
 class IpcProxyObject;
 
+// A place to collect signals used internally by appman without polluting
+// ApplicationManager's public QML API.
+class ApplicationManagerInternalSignals : public QObject
+{
+    Q_OBJECT
+signals:
+    // Emitted after an application is installed, updated, downgraded or removed
+    void applicationsChanged();
+};
 
 class ApplicationManager : public QAbstractListModel
 {
@@ -78,7 +86,7 @@ class ApplicationManager : public QAbstractListModel
 
 public:
     ~ApplicationManager() override;
-    static ApplicationManager *createInstance(ApplicationDatabase *adb, bool singleProcess, QString *error);
+    static ApplicationManager *createInstance(bool singleProcess);
     static ApplicationManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
@@ -87,6 +95,11 @@ public:
     bool isShuttingDown() const;
     QVariantMap systemProperties() const;
     void setSystemProperties(const QVariantMap &map);
+
+    // Set the initial application list
+    // To be used only during startup (ie, before exposing ApplicationManager to QML) as
+    // no model update signals are emitted.
+    void setApplications(const QVector<AbstractApplication *> &apps);
 
     QVector<AbstractApplication *> applications() const;
 
@@ -141,6 +154,10 @@ public:
     Q_SCRIPTABLE QString identifyApplication(qint64 pid) const;
     Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(AbstractApplication::RunState) applicationRunState(const QString &id) const;
 
+    ApplicationManagerInternalSignals internalSignals;
+
+    void enableSingleAppMode();
+
 public slots:
     void shutDown();
 
@@ -166,7 +183,7 @@ signals:
     void windowManagerCompositorReadyChanged(bool ready);
 
 private slots:
-    void preload();
+    void startSingleAppAndQuitWhenStopped();
     void openUrlRelay(const QUrl &url);
     void addApplication(AbstractApplication *app);
 
@@ -191,7 +208,7 @@ private:
     void emitActivated(AbstractApplication *app);
     void registerMimeTypes();
 
-    ApplicationManager(ApplicationDatabase *adb, bool singleProcess, QObject *parent = nullptr);
+    ApplicationManager(bool singleProcess, QObject *parent = nullptr);
     ApplicationManager(const ApplicationManager &);
     ApplicationManager &operator=(const ApplicationManager &);
     static ApplicationManager *s_instance;

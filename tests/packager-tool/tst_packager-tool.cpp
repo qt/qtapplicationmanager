@@ -111,7 +111,7 @@ void tst_PackagerTool::initTestCase()
     m_ai = ApplicationInstaller::createInstance(locations, pathTo("manifests"), pathTo("image-mounts"), m_hardwareId, &errorString);
     QVERIFY2(m_ai, qPrintable(errorString));
 
-    QVERIFY2(ApplicationManager::createInstance(nullptr, true, &errorString), qPrintable(errorString));
+    QVERIFY(ApplicationManager::createInstance(true));
 
 
     // crypto stuff - we need to load the root CA and developer CA certificates

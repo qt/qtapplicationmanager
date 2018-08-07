@@ -59,7 +59,6 @@
 #include "applicationinfo.h"
 #include "logging.h"
 #include "exception.h"
-#include "applicationdatabase.h"
 #include "applicationmanager.h"
 #include "applicationmodel.h"
 #include "applicationmanager_p.h"
@@ -382,31 +381,17 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
 
 ApplicationManagerPrivate::~ApplicationManagerPrivate()
 {
-    delete database;
     qDeleteAll(apps);
 }
 
 ApplicationManager *ApplicationManager::s_instance = nullptr;
 
-ApplicationManager *ApplicationManager::createInstance(ApplicationDatabase *adb, bool singleProcess, QString *error)
+ApplicationManager *ApplicationManager::createInstance(bool singleProcess)
 {
     if (Q_UNLIKELY(s_instance))
         qFatal("ApplicationManager::createInstance() was called a second time.");
 
-    QScopedPointer<ApplicationManager> am(new ApplicationManager(adb, singleProcess));
-
-    try {
-        if (adb) {
-            QVector<AbstractApplication *> apps = adb->read();
-            for (auto app : apps)
-                am->addApplication(app);
-        }
-        am->registerMimeTypes();
-    } catch (const Exception &e) {
-        if (error)
-            *error = e.errorString();
-        return nullptr;
-    }
+    QScopedPointer<ApplicationManager> am(new ApplicationManager(singleProcess));
 
     qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager", 1, 0, "ApplicationManager",
                                                  &ApplicationManager::instanceForQml);
@@ -438,18 +423,15 @@ QObject *ApplicationManager::instanceForQml(QQmlEngine *, QJSEngine *)
     return instance();
 }
 
-ApplicationManager::ApplicationManager(ApplicationDatabase *adb, bool singleProcess, QObject *parent)
+ApplicationManager::ApplicationManager(bool singleProcess, QObject *parent)
     : QAbstractListModel(parent)
     , d(new ApplicationManagerPrivate())
 {
     d->singleProcess = singleProcess;
-    d->database = adb;
     connect(this, &QAbstractItemModel::rowsInserted, this, &ApplicationManager::countChanged);
     connect(this, &QAbstractItemModel::rowsRemoved, this, &ApplicationManager::countChanged);
     connect(this, &QAbstractItemModel::layoutChanged, this, &ApplicationManager::countChanged);
     connect(this, &QAbstractItemModel::modelReset, this, &ApplicationManager::countChanged);
-
-    QTimer::singleShot(0, this, &ApplicationManager::preload);
 }
 
 ApplicationManager::~ApplicationManager()
@@ -1320,14 +1302,6 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
         app->setState(Application::Installed);
         app->setProgress(0);
 
-        try {
-            if (d->database)
-                d->database->write(d->apps);
-        } catch (const Exception &e) {
-            qCCritical(LogInstaller) << "ERROR: Application" << app->id() << "was installed, but writing the "
-                                        "updated application database to disk failed:" << e.errorString();
-            d->database->invalidate(); // make sure that the next AM start will re-read the DB
-        }
         emitDataChanged(app);
 
         unblockApplication(id);
@@ -1338,15 +1312,6 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
         app->setUpdatedInfo(nullptr);
         app->setState(Application::Installed);
         registerMimeTypes();
-        try {
-            if (d->database)
-                d->database->write(d->apps);
-        } catch (const Exception &e) {
-            qCCritical(LogInstaller) << "ERROR: Application" << app->id() << "was downgraded, but writing the "
-                                        "updated application database to disk failed:" << e.errorString();
-            d->database->invalidate(); // make sure that the next AM start will re-read the DB
-            return false;
-        }
         break;
     case Application::BeingRemoved: {
         int row = d->apps.indexOf(app);
@@ -1358,18 +1323,11 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
         }
         delete app;
         registerMimeTypes();
-        try {
-            if (d->database)
-                d->database->write(d->apps);
-        } catch (const Exception &e) {
-            qCCritical(LogInstaller) << "ERROR: Application" << app->id() << "was removed, but writing the "
-                                        "updated application database to disk failed:" << e.errorString();
-            d->database->invalidate(); // make sure that the next AM start will re-read the DB
-            return false;
-        }
         break;
     }
     }
+
+    emit internalSignals.applicationsChanged();
 
     return true;
 }
@@ -1411,26 +1369,26 @@ bool ApplicationManager::canceledApplicationInstall(const QString &id)
     return true;
 }
 
-void ApplicationManager::preload()
+void ApplicationManager::enableSingleAppMode()
 {
-    bool singleAppMode = d->database && d->database->isTemporary();
+    QTimer::singleShot(0, this, &ApplicationManager::startSingleAppAndQuitWhenStopped);
+}
 
-    for (AbstractApplication *app : qAsConst(d->apps)) {
-        if (singleAppMode) {
-            if (!startApplication(app)) {
-                if (!singleAppMode)
-                    qCWarning(LogSystem) << "WARNING: unable to start preload-enabled application" << app->id();
-                else
-                    QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection, Q_ARG(int, 1));
-            } else if (singleAppMode) {
-                connect(this, &ApplicationManager::applicationRunStateChanged, [app](const QString &id, Application::RunState runState) {
-                    if ((id == app->id()) && (runState == Application::NotRunning)) {
-                        QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection,
-                                                  Q_ARG(int, app->lastExitCode()));
-                    }
-                });
+void ApplicationManager::startSingleAppAndQuitWhenStopped()
+{
+    Q_ASSERT(d->apps.count() == 1);
+
+    AbstractApplication *app = d->apps[0];
+
+    if (!startApplication(app)) {
+        QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection, Q_ARG(int, 1));
+    } else {
+        connect(this, &ApplicationManager::applicationRunStateChanged, [app](const QString &id, Application::RunState runState) {
+            if ((id == app->id()) && (runState == Application::NotRunning)) {
+                QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection,
+                                          Q_ARG(int, app->lastExitCode()));
             }
-        }
+        });
     }
 }
 
@@ -1692,6 +1650,14 @@ Application::RunState ApplicationManager::applicationRunState(const QString &id)
         return Application::NotRunning;
     }
     return d->apps.at(index)->runState();
+}
+
+void ApplicationManager::setApplications(const QVector<AbstractApplication *> &apps)
+{
+    Q_ASSERT(d->apps.count() == 0);
+    for (auto app : apps)
+        addApplication(app);
+    registerMimeTypes();
 }
 
 void ApplicationManager::addApplication(AbstractApplication *app)

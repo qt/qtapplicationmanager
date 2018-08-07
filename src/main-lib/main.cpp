@@ -224,6 +224,9 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
                     cfg->quickLaunchIdleLoad());
 
+    if (!cfg->singleApp().isEmpty())
+        m_applicationManager->enableSingleAppMode();
+
     setupInstaller(cfg->appImageMountDir(), cfg->caCertificates(),
                    std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
                              std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -452,11 +455,21 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
 void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
                            int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QString error;
-    m_applicationManager = ApplicationManager::createInstance(m_applicationDatabase.take(),
-                                                              m_isSingleProcessMode, &error);
-    if (Q_UNLIKELY(!m_applicationManager))
-        throw Exception(Error::System, error);
+    m_applicationManager = ApplicationManager::createInstance(m_isSingleProcessMode);
+
+    m_applicationManager->setApplications(m_applicationDatabase->read());
+
+    connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::applicationsChanged,
+            this, [this]() {
+        try {
+            if (m_applicationDatabase)
+                m_applicationDatabase->write(m_applicationManager->applications());
+        } catch (const Exception &e) {
+            qCCritical(LogInstaller) << "Failed to write the application database to disk:" << e.errorString();
+            m_applicationDatabase->invalidate(); // make sure that the next AM start will rebuild the DB
+        }
+    });
+
     if (m_noSecurity)
         m_applicationManager->setSecurityChecksEnabled(false);
 

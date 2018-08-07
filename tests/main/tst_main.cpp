@@ -171,7 +171,7 @@ void tst_Main::installPackage(const QString &pkgPath)
             installationFinished = true;
     });
 
-    appInstaller->startPackageInstallation(qSL("internal-0"), pkgPath);
+    appInstaller->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(pkgPath));
 
     QTRY_COMPARE(installationFinished, true);
 }

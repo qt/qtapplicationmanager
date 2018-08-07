@@ -44,13 +44,18 @@
 #include <QtAppManCommon/global.h>
 #include <QObject>
 #include <QAtomicInteger>
+
 #include <initializer_list>
 #include <list>
 #include <vector>
 #include <functional>
 #include <signal.h>
+
 #if defined(Q_OS_UNIX)
 #  include <unistd.h>
+#elif defined(Q_OS_WIN)
+#  include <QMutex>
+#  include <QWinEventNotifier>
 #endif
 
 QT_BEGIN_NAMESPACE_AM
@@ -103,6 +108,10 @@ private:
     QAtomicInteger<am_sigmask_t> m_resetSignalMask;
 #if defined(Q_OS_UNIX)
     int m_pipe[2];
+#elif defined(Q_OS_WIN)
+    QMutex m_winLock;
+    QWinEventNotifier *m_winEvent = nullptr;
+    QList<int> m_signalsForEventLoop;
 #endif
 };
 

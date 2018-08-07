@@ -47,9 +47,16 @@
 
 #include <errno.h>
 
+#if defined(Q_OS_WIN)
+#  include <windows.h>
+#  include <synchapi.h>
+#endif
+
+
 QT_BEGIN_NAMESPACE_AM
 
 #if defined(Q_OS_UNIX)
+
 // make it clear in the valgrind backtrace that this is a deliberate leak
 static void *malloc_valgrind_ignore(size_t size)
 {
@@ -119,12 +126,19 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
 
         for (const auto &h : that->m_handlers) {
             if (h.m_signal == sig) {
-                if (!h.m_qt)
+                if (!h.m_qt) {
                     h.m_handler(sig);
+                } else {
 #if defined(Q_OS_UNIX)
-                else
                     (void) write(that->m_pipe[1], &sig, sizeof(int));
+#elif defined(Q_OS_WIN)
+                    // we're running in a separate thread now
+                    that->m_winLock.lock();
+                    that->m_signalsForEventLoop << sig;
+                    that->m_winLock.unlock();
+                    PulseEvent(that->m_winEvent->handle());
 #endif
+                }
             }
         }
         if (that->m_resetSignalMask) {
@@ -161,6 +175,23 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
                     if (h.m_qt && h.m_signal == sig)
                         h.m_handler(sig);
                 }
+            });
+        }
+#elif defined(Q_OS_WIN)
+        if (!m_winEvent) {
+            m_winEvent = new QWinEventNotifier(CreateEventW(nullptr, false, false, nullptr), this);
+
+            connect(m_winEvent, &QWinEventNotifier::activated, qApp, [this]() {
+                // this lambda is the "signal handler" multiplexer within the Qt event loop
+                m_winLock.lock();
+                for (const int &sig : qAsConst(m_signalsForEventLoop)) {
+                    for (const auto &h : UnixSignalHandler::instance()->m_handlers) {
+                        if (h.m_qt && h.m_signal == sig)
+                            h.m_handler(sig);
+                    }
+                }
+                m_signalsForEventLoop.clear();
+                m_winLock.unlock();
             });
         }
 #else

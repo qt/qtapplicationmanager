@@ -34,6 +34,7 @@
 
 #include "applicationinstaller.h"
 #include "applicationmanager.h"
+#include "logging.h"
 #include "main.h"
 #include <QtAppManMain/defaultconfiguration.h>
 
@@ -49,6 +50,7 @@ public:
     ~tst_Main();
 
 private slots:
+    void initTestcase();
     void init();
     void cleanup();
     void installAndRemoveUpdateForBuiltIn();
@@ -66,6 +68,7 @@ private:
     char **argv;
     Main *main{nullptr};
     DefaultConfiguration *config{nullptr};
+    bool m_verbose = false;
 };
 
 tst_Main::tst_Main()
@@ -85,6 +88,12 @@ tst_Main::~tst_Main()
     for (int i = 0; i < argc; ++i)
         delete []argv[i];
     delete []argv;
+}
+
+void tst_Main::initTestcase()
+{
+    m_verbose = qEnvironmentVariableIsSet("VERBOSE_TEST");
+    qInfo() << "Verbose mode is" << (m_verbose ? "on" : "off") << "(changed by (un)setting $VERBOSE_TEST)";
 }
 
 void tst_Main::copyRecursively(const QString &sourcePath, const QString &destPath)
@@ -132,6 +141,8 @@ void tst_Main::initMain()
     config->parse(&deploymentWarnings);
 
     main->setup(config, deploymentWarnings);
+    if (m_verbose)
+        Logging::setFilterRules(Logging::filterRules() += qSL("am.installer.debug=true"));
 
     ApplicationInstaller::instance()->setAllowInstallationOfUnsignedPackages(true);
 }

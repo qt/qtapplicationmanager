@@ -42,6 +42,8 @@
 #include "application.h"
 #include "abstractruntime.h"
 #include "applicationinfo.h"
+#include "exception.h"
+#include "logging.h"
 
 #include <QDebug>
 
@@ -373,6 +375,71 @@ void AbstractApplication::debug(const QString &debugWrapper, const QString &docu
 void AbstractApplication::stop(bool forceKill)
 {
     emit requests.stopRequested(forceKill);
+}
+
+QVector<AbstractApplication *> AbstractApplication::fromApplicationInfoVector(
+        QVector<AbstractApplicationInfo *> &appInfoVector)
+{
+    QVector<AbstractApplication *> apps;
+
+    auto findAppWithId = [&apps] (const QString &id) -> AbstractApplication*
+    {
+        for (AbstractApplication *app : apps) {
+            if (app->id() == id)
+                return app;
+        }
+        return nullptr;
+    };
+
+    auto extractBaseId = [] (const QString &id) -> QString
+    {
+        return id.section(qL1C('@'), 0, 0);
+    };
+
+    for (auto *appInfo : appInfoVector) {
+        QScopedPointer<AbstractApplication> app;
+        if (appInfo->isAlias()) {
+            auto *originalApp = findAppWithId(extractBaseId(appInfo->id()));
+            if (!originalApp)
+                throw Exception(Error::Parse, "Could not find base app for alias id %2").arg(appInfo->id());
+            Q_ASSERT(!originalApp->isAlias());
+            app.reset(new ApplicationAlias(static_cast<Application*>(originalApp),
+                                           static_cast<ApplicationAliasInfo*>(appInfo)));
+        } else {
+            AbstractApplication *otherAbsApp = findAppWithId(appInfo->id());
+            if (otherAbsApp) {
+                // There's already another ApplicationInfo with the same id. It's probably an update for a
+                // built-in app, in which case we use the same Application instance to hold both
+                // ApplicationInfo instances.
+                bool merged = false;
+
+                if (!otherAbsApp->isAlias()) {
+                    auto otherApp = static_cast<Application*>(otherAbsApp);
+                    auto fullAppInfo = static_cast<ApplicationInfo*>(appInfo);
+                    if (otherApp->isBuiltIn() && !fullAppInfo->isBuiltIn() && !otherApp->updatedInfo()) {
+                        otherApp->setUpdatedInfo(static_cast<ApplicationInfo*>(appInfo));
+                        merged = true;
+                    } else if (!otherApp->isBuiltIn() && fullAppInfo->isBuiltIn() && !otherApp->updatedInfo()) {
+                        auto currentBaseInfo = otherApp->takeBaseInfo();
+                        otherApp->setBaseInfo(static_cast<ApplicationInfo*>(appInfo));
+                        otherApp->setUpdatedInfo(currentBaseInfo);
+                        merged = true;
+                    }
+                }
+
+                if (!merged)
+                    qCWarning(LogSystem).nospace() << "Found a second application with id "
+                        << appInfo->id() << " which is not an update for a built-in one. Ignoring it.";
+            } else {
+                app.reset(new Application(static_cast<ApplicationInfo*>(appInfo)));
+            }
+        }
+
+        if (!app.isNull())
+            apps << app.take();
+    }
+
+    return apps;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

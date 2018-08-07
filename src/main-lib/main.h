@@ -117,7 +117,8 @@ protected:
     void loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
                                  const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
-                         int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false);
+                         int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
+                         const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
     void setupInstaller(const QString &appImageMountDir, const QStringList &caCertificatePaths,
                         const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
 
@@ -143,11 +144,13 @@ private:
     void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName, const char *serviceName,
                             const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false);
 #endif
-    static QVector<const AbstractApplicationInfo *> scanForApplication(const QString &singleAppInfoYaml,
+    static QVector<AbstractApplicationInfo *> scanForApplication(const QString &singleAppInfoYaml,
             const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false);
-    static QVector<const AbstractApplicationInfo *> scanForApplications(const QStringList &builtinAppsDirs,
+    static QVector<AbstractApplicationInfo *> scanForApplications(const QStringList &builtinAppsDirs,
             const QString &installedAppsDir,
             const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false);
+
+    void setupApplicationManagerWithDatabase();
 
 private:
     QVector<InstallationLocation> m_installationLocations;

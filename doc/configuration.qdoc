@@ -114,13 +114,17 @@ all your imports paths and file references relative to your main config file.
     \li \b --database
     \br \e applications/database
     \li string
-    \li The location of the application database. (default: \c /opt/am/apps.db)
+    \li To decrease the start up time of the System-UI, its application database can be cached
+        in a file so that in subsequent start ups it doesn't have to scan and parse the
+        \c info.yaml files of installed applications all over again. This option specifies the
+        filepath of such cache file. (default: empty/disabled)
 \row
     \li \b --recreate-database or \c -r
     \br \e -
     \li bool
-    \li Recreate the application database by (re)scanning all \c info.yaml files in \c
-        builtin-apps-manifest-dir and \c installed-apps-manifest-dir. (default: false)
+    \li Ignores any preexisting database cache and creates a new one by (re)scanning all
+        \c info.yaml files in \c builtin-apps-manifest-dir and \c installed-apps-manifest-dir.
+        (default: false)
 \row
     \li \b --builtin-apps-manifest-dir
     \br \e applications/builtinAppsManifestDir

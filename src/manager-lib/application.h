@@ -164,6 +164,10 @@ public:
 
     ApplicationRequests requests;
 
+    // Creates a list of Applications from a list of ApplicationInfo objects.
+    // Ownership of the given ApplicationInfo objects is passed to the returned Applications.
+    static QVector<AbstractApplication *> fromApplicationInfoVector(QVector<AbstractApplicationInfo *> &);
+
 signals:
     void bulkChange();
     void runtimeChanged();

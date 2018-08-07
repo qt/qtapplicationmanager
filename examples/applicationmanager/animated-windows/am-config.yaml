@@ -4,7 +4,6 @@ formatType: am-configuration
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
   installedAppsManifestDir: "/tmp/animated-windows/manifests"
-  database: "/tmp/animated-windows/apps.db"
 
 ui:
   mainQml: "${CONFIG_PWD}/system-ui/main.qml"

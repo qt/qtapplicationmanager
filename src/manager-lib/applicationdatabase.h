@@ -65,12 +65,11 @@ public:
 
     QVector<AbstractApplication *> read() Q_DECL_NOEXCEPT_EXPR(false);
     void write(const QVector<AbstractApplication *> &apps) Q_DECL_NOEXCEPT_EXPR(false);
-    void write(const QVector<const AbstractApplicationInfo *> &apps) Q_DECL_NOEXCEPT_EXPR(false);
+    void write(const QVector<AbstractApplicationInfo *> &apps) Q_DECL_NOEXCEPT_EXPR(false);
 
     void invalidate();
 
 private:
-    static AbstractApplication *findAppWithId(QVector<AbstractApplication *> &apps, const QString &id);
     ApplicationDatabasePrivate *d;
     Q_DISABLE_COPY(ApplicationDatabase)
 };

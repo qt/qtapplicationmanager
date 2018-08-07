@@ -220,12 +220,12 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
                                cfg->containerConfigurations(), cfg->pluginFilePaths("container"),
                                cfg->iconThemeSearchPaths(), cfg->iconThemeName());
     setupInstallationLocations(cfg->installationLocations());
-    loadApplicationDatabase(cfg->database(), cfg->recreateDatabase(), cfg->singleApp());
-    setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
-                    cfg->quickLaunchIdleLoad());
 
-    if (!cfg->singleApp().isEmpty())
-        m_applicationManager->enableSingleAppMode();
+    if (!cfg->database().isEmpty())
+        loadApplicationDatabase(cfg->database(), cfg->recreateDatabase(), cfg->singleApp());
+
+    setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
+                    cfg->quickLaunchIdleLoad(), cfg->singleApp());
 
     setupInstaller(cfg->appImageMountDir(), cfg->caCertificates(),
                    std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
@@ -424,7 +424,7 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
     }
 
     if (!m_applicationDatabase->isValid() || recreateDatabase) {
-        QVector<const AbstractApplicationInfo *> apps;
+        QVector<AbstractApplicationInfo *> apps;
 
         if (!singleApp.isEmpty()) {
             apps = scanForApplication(singleApp, m_builtinAppsManifestDirs);
@@ -453,22 +453,30 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
 }
 
 void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
-                           int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
+                           int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
+                           const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_applicationManager = ApplicationManager::createInstance(m_isSingleProcessMode);
 
-    m_applicationManager->setApplications(m_applicationDatabase->read());
+    if (m_applicationDatabase) {
+        setupApplicationManagerWithDatabase();
+    } else {
+        QVector<AbstractApplicationInfo *> appInfoVector;
 
-    connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::applicationsChanged,
-            this, [this]() {
-        try {
-            if (m_applicationDatabase)
-                m_applicationDatabase->write(m_applicationManager->applications());
-        } catch (const Exception &e) {
-            qCCritical(LogInstaller) << "Failed to write the application database to disk:" << e.errorString();
-            m_applicationDatabase->invalidate(); // make sure that the next AM start will rebuild the DB
+        if (!singleApp.isEmpty()) {
+            appInfoVector = scanForApplication(singleApp, m_builtinAppsManifestDirs);
+        } else {
+            appInfoVector = scanForApplications(m_builtinAppsManifestDirs,
+                                       m_installedAppsManifestDir,
+                                       m_installationLocations);
         }
-    });
+
+        QVector<AbstractApplication *> apps = AbstractApplication::fromApplicationInfoVector(appInfoVector);
+        m_applicationManager->setApplications(apps);
+    }
+
+    if (!singleApp.isEmpty())
+        m_applicationManager->enableSingleAppMode();
 
     if (m_noSecurity)
         m_applicationManager->setSecurityChecksEnabled(false);
@@ -490,6 +498,22 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     m_quickLauncher = QuickLauncher::instance();
     m_quickLauncher->initialize(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad);
     StartupTimer::instance()->checkpoint("after quick-launcher setup");
+}
+
+void Main::setupApplicationManagerWithDatabase()
+{
+    m_applicationManager->setApplications(m_applicationDatabase->read());
+
+    connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::applicationsChanged,
+            this, [this]() {
+        try {
+            if (m_applicationDatabase)
+                m_applicationDatabase->write(m_applicationManager->applications());
+        } catch (const Exception &e) {
+            qCCritical(LogInstaller) << "Failed to write the application database to disk:" << e.errorString();
+            m_applicationDatabase->invalidate(); // make sure that the next AM start will rebuild the DB
+        }
+    });
 }
 
 void Main::setupInstaller(const QString &appImageMountDir, const QStringList &caCertificatePaths,
@@ -960,10 +984,10 @@ void Main::registerDBusInterfaces(const std::function<QString(const char *)> &bu
 }
 
 
-QVector<const AbstractApplicationInfo *> Main::scanForApplication(const QString &singleAppInfoYaml,
+QVector<AbstractApplicationInfo *> Main::scanForApplication(const QString &singleAppInfoYaml,
         const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QVector<const AbstractApplicationInfo *> result;
+    QVector<AbstractApplicationInfo *> result;
     YamlApplicationScanner yas;
 
     QDir appDir = QFileInfo(singleAppInfoYaml).dir();
@@ -1004,10 +1028,10 @@ QVector<const AbstractApplicationInfo *> Main::scanForApplication(const QString 
     return result;
 }
 
-QVector<const AbstractApplicationInfo *> Main::scanForApplications(const QStringList &builtinAppsDirs, const QString &installedAppsDir,
+QVector<AbstractApplicationInfo *> Main::scanForApplications(const QStringList &builtinAppsDirs, const QString &installedAppsDir,
         const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QVector<const AbstractApplicationInfo *> result;
+    QVector<AbstractApplicationInfo *> result;
     YamlApplicationScanner yas;
 
     auto scan = [&result, &yas, &installationLocations](const QDir &baseDir, bool scanningBuiltinApps) {

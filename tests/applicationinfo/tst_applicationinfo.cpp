@@ -57,7 +57,7 @@ private slots:
     void validIcon();
 
 private:
-    QVector<const AbstractApplicationInfo *> apps;
+    QVector<AbstractApplicationInfo *> apps;
 };
 
 tst_ApplicationInfo::tst_ApplicationInfo()

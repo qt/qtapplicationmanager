@@ -87,8 +87,8 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
                                     + qL1S(description));
 
     m_clp.addPositionalArgument(qSL("qml-file"),   qSL("the main QML file."));
-    m_clp.addOption({ qSL("database"),             qSL("application database."), qSL("file"), qSL("/opt/am/apps.db") });
-    m_clp.addOption({ { qSL("r"), qSL("recreate-database") },  qSL("recreate the application database.") });
+    m_clp.addOption({ qSL("database"),             qSL("filepath of the application database cache."), qSL("file") });
+    m_clp.addOption({ { qSL("r"), qSL("recreate-database") },  qSL("recreate the application database cache.") });
     m_clp.addOption({ qSL("builtin-apps-manifest-dir"),   qSL("base directory for built-in application manifests."), qSL("dir") });
     m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("base directory for installed application manifests."), qSL("dir"), qSL("/opt/am/manifests") });
     m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("base directory where application images are mounted to."), qSL("dir") });
@@ -140,6 +140,10 @@ void DefaultConfiguration::parse(QStringList *deploymentWarnings)
     if (appImageMountDir().isEmpty())
         *deploymentWarnings << qL1S("No --app-image-mount-dir command line parameter or applications/appImageMountDir"
                 " configuration key specified. Attempting to mount an application image will fail.");
+
+    if (database().isEmpty())
+        *deploymentWarnings << qL1S("No --database command line parameter or applications/database configuration"
+                " key specified. Database won't be cached to speed up subsequent System-UI startups.");
 }
 
 QString DefaultConfiguration::mainQmlFile() const

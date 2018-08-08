@@ -624,7 +624,7 @@ void tst_ApplicationInstaller::packageInstallation_data()
             << false << false << false << false << nomd << "invalid installation location";
     QTest::newRow("invalid-file-order") \
             << "test-invalid-file-order.appkg" << "internal-0" << "" << ""
-            << false << false << false << false << nomd << "could not find info.yaml and icon.png at the beginning of the package";
+            << false << false << false << false << nomd << "The application icon (as stated in info.yaml) must be the second file in the package. Expected 'icon.png', got 'test'";
     QTest::newRow("invalid-header-format") \
             << "test-invalid-header-formatversion.appkg" << "internal-0" << "" << ""
             << false << false << false << false << nomd << "metadata has an invalid format specification: wrong formatVersion header: expected 1, got 2";

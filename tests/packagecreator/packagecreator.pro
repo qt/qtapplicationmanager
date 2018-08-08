@@ -1,7 +1,5 @@
 TARGET = tst_packagecreator
 
-cross_compile:CONFIG += insignificant_test # no test-data available in the CI
-
 include($$PWD/../tests.pri)
 
 QT *= \

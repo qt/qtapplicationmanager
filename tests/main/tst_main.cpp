@@ -50,7 +50,7 @@ public:
     ~tst_Main();
 
 private slots:
-    void initTestcase();
+    void initTestCase();
     void init();
     void cleanup();
     void installAndRemoveUpdateForBuiltIn();
@@ -90,8 +90,11 @@ tst_Main::~tst_Main()
     delete []argv;
 }
 
-void tst_Main::initTestcase()
+void tst_Main::initTestCase()
 {
+    if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
+        QSKIP("No test packages available in the data/ directory");
+
     m_verbose = qEnvironmentVariableIsSet("VERBOSE_TEST");
     qInfo() << "Verbose mode is" << (m_verbose ? "on" : "off") << "(changed by (un)setting $VERBOSE_TEST)";
 }

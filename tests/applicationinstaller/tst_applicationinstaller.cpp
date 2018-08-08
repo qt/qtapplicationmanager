@@ -244,7 +244,8 @@ private:
     }
 
 private:
-    SudoClient *m_root = nullptr;
+    SudoClient *m_sudo = nullptr;
+    bool m_fakeSudo = false;
 
     QTemporaryDir m_workDir;
     QString m_hardwareId;
@@ -269,9 +270,9 @@ tst_ApplicationInstaller::tst_ApplicationInstaller(QObject *parent)
 tst_ApplicationInstaller::~tst_ApplicationInstaller()
 {
     if (m_workDir.isValid()) {
-        detachLoopbacksAndUnmount(m_root, m_workDir.path());
-        if (m_root)
-            m_root->removeRecursive(m_workDir.path());
+        detachLoopbacksAndUnmount(m_sudo, m_workDir.path());
+        if (m_sudo)
+            m_sudo->removeRecursive(m_workDir.path());
         else
             recursiveOperation(m_workDir.path(), safeRemove);
     }
@@ -302,8 +303,9 @@ void tst_ApplicationInstaller::initTestCase()
 
     QVERIFY(Package::checkCorrectLocale());
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
-    m_root = SudoClient::instance();
-    QVERIFY(m_root);
+    m_sudo = SudoClient::instance();
+    QVERIFY(m_sudo);
+    m_fakeSudo = m_sudo->isFallbackImplementation();
 
     // we need a (dummy) ApplicationManager for the installer, since the installer will
     // notify the manager during installations
@@ -320,63 +322,64 @@ void tst_ApplicationInstaller::initTestCase()
     for (int i = 0; i < PathLocationCount; ++i)
         QVERIFY(QDir().mkdir(pathTo(PathLocation(i))));
 
-#ifdef Q_OS_LINUX
-    // we have support for loopback devices, so we create two FAT images that simulate SDCards
-    // (a lambda would have been perfect here, but QVERIFY/QCOMPARE do not work inside lambdas).
+    if (!m_fakeSudo) {
+        // we have support for loopback devices, so we create two FAT images that simulate SDCards
+        // (a lambda would have been perfect here, but QVERIFY/QCOMPARE do not work inside lambdas).
 
-    for (int i = 0; i < 2; ++i) {
-        QFile f(pathTo(QString::fromLatin1("sdcard-image-%1").arg(i)));
-        QVERIFY2(f.open(QFile::WriteOnly | QFile::Truncate), qPrintable(f.errorString()));
-        QVERIFY2(f.resize(3*1024*1024), qPrintable(f.errorString()));
-        f.close();
-        QCOMPARE(f.size(), 3*1024*1024);
+        for (int i = 0; i < 2; ++i) {
+            QFile f(pathTo(QString::fromLatin1("sdcard-image-%1").arg(i)));
+            QVERIFY2(f.open(QFile::WriteOnly | QFile::Truncate), qPrintable(f.errorString()));
+            QVERIFY2(f.resize(3*1024*1024), qPrintable(f.errorString()));
+            f.close();
+            QCOMPARE(f.size(), 3*1024*1024);
 
-        m_loopbackForSDCard[i] = m_root->attachLoopback(f.fileName());
-        QVERIFY2(!m_loopbackForSDCard[i].isEmpty(), qPrintable(m_root->lastError()));
-        QVERIFY2(m_root->mkfs(m_loopbackForSDCard[i], "vfat"), qPrintable(m_root->lastError()));
-        QVERIFY2(m_root->mount(m_loopbackForSDCard[i], pathTo(i == 0 ? SDCard0 : SDCard1), false, "vfat"), qPrintable(m_root->lastError()));
+            m_loopbackForSDCard[i] = m_sudo->attachLoopback(f.fileName());
+            QVERIFY2(!m_loopbackForSDCard[i].isEmpty(), qPrintable(m_sudo->lastError()));
+            QVERIFY2(m_sudo->mkfs(m_loopbackForSDCard[i], "vfat"), qPrintable(m_sudo->lastError()));
+            QVERIFY2(m_sudo->mount(m_loopbackForSDCard[i], pathTo(i == 0 ? SDCard0 : SDCard1), false, "vfat"), qPrintable(m_sudo->lastError()));
 
-        // those paths have been hidden due to the mount, so recreate them
-        QVERIFY(QDir().mkdir(pathTo(i == 0 ? SDCard0Images : SDCard1Images)));
-    };
-#endif // Q_OS_LINUX
+            // those paths have been hidden due to the mount, so recreate them
+            QVERIFY(QDir().mkdir(pathTo(i == 0 ? SDCard0Images : SDCard1Images)));
+        }
+    }
 
     // define some installation locations for testing
 
-    m_installationLocations = InstallationLocation::parseInstallationLocations(QVariantList {
-        QVariantMap {
-            { "isDefault", true },
-            { "id", "internal-0" },
-            { "installationPath", pathTo(Internal0) },
-            { "documentPath", pathTo(Documents0) }
-        },
-        QVariantMap {
-            { "id", "internal-1" },
-            { "installationPath", pathTo(Internal1) },
-            { "documentPath", pathTo(Documents1) },
-        }
-#ifdef Q_OS_LINUX
-        , QVariantMap {
-            { "id", "removable-0" },
-            { "mountPoint", pathTo(SDCard0) },
-            { "installationPath", pathTo(SDCard0, "@HARDWARE-ID@") },
-            { "documentPath", pathTo(Documents0) },
-        },
-        QVariantMap {
-            { "id", "removable-1" },
-            { "mountPoint", pathTo(SDCard1) },
-            { "installationPath", pathTo(SDCard1, "@HARDWARE-ID@") },
-            { "documentPath", pathTo(Documents1) },
-        }
-#endif // Q_OS_LINUX
-    }, m_hardwareId);
+    QVariantList iloc = QVariantList {
+            QVariantMap {
+                { "isDefault", true },
+                { "id", "internal-0" },
+                { "installationPath", pathTo(Internal0) },
+                { "documentPath", pathTo(Documents0) }
+            },
+            QVariantMap {
+                { "id", "internal-1" },
+                { "installationPath", pathTo(Internal1) },
+                { "documentPath", pathTo(Documents1) },
+            }
+    };
+    if (!m_fakeSudo) {
+        iloc += QVariantList {
+                QVariantMap {
+                    { "id", "removable-0" },
+                    { "mountPoint", pathTo(SDCard0) },
+                    { "installationPath", pathTo(SDCard0, "@HARDWARE-ID@") },
+                    { "documentPath", pathTo(Documents0) },
+                },
+                QVariantMap {
+                    { "id", "removable-1" },
+                    { "mountPoint", pathTo(SDCard1) },
+                    { "installationPath", pathTo(SDCard1, "@HARDWARE-ID@") },
+                    { "documentPath", pathTo(Documents1) },
+                }
+        };
+    }
 
-#ifdef Q_OS_LINUX
-    QCOMPARE(m_installationLocations.size(), 4);
-    QCOMPARE(m_installationLocations.at(2).installationPath(), pathTo(SDCard0, m_hardwareId));
-#else
-    QCOMPARE(m_installationLocations.size(), 2);
-#endif // Q_OS_LINUX
+    m_installationLocations = InstallationLocation::parseInstallationLocations(iloc, m_hardwareId);
+
+    QCOMPARE(m_installationLocations.size(), m_fakeSudo ? 2 : 4);
+    if (!m_fakeSudo)
+        QCOMPARE(m_installationLocations.at(2).installationPath(), pathTo(SDCard0, m_hardwareId));
 
     // finally, instantiate the ApplicationInstaller and a bunch of signal-spies for its signals
 
@@ -501,7 +504,11 @@ void tst_ApplicationInstaller::packageActivation()
 {
 #ifndef Q_OS_LINUX
     QSKIP("Cannot run SD-Card tests on non-Linux systems");
+#else
+    if (m_fakeSudo)
+        QSKIP("Cannot run SD-Card tests without root privileges");
 #endif
+
 
     QVERIFY(!m_ai->activatePackage(QString()));
     QVERIFY(!m_ai->activatePackage("does.not.exist"));
@@ -649,17 +656,18 @@ void tst_ApplicationInstaller::packageInstallation_data()
     QTest::newRow("invalid-footer-signature") \
             << "test-invalid-footer-signature.appkg" << "internal-0" << "" << ""
             << true << false << false << false << nomd << "could not verify the package's developer signature";
-#ifdef Q_OS_LINUX
-    QTest::newRow("sdcard") \
-            << "test.appkg" << "removable-0" << "test-update.appkg" << "removable-0"
-            << false << false << true << true << nomd << "";
-    QTest::newRow("sdcard-dev-signed") \
-            << "test-dev-signed.appkg" << "removable-0" << "test-update-dev-signed.appkg" << "removable-0"
-            << true << false << true << true << nomd << "";
-    QTest::newRow("sdcard-no-space") \
-            << "bigtest-dev-signed.appkg" << "removable-0" << "" << ""
-            << true << false << false << false << nomd << "~not enough storage space left on removable-0: [0-9.]+ MB available, but [0-9.]+ MB needed";
-#endif
+
+    if (!m_fakeSudo) {
+        QTest::newRow("sdcard") \
+                << "test.appkg" << "removable-0" << "test-update.appkg" << "removable-0"
+                << false << false << true << true << nomd << "";
+        QTest::newRow("sdcard-dev-signed") \
+                << "test-dev-signed.appkg" << "removable-0" << "test-update-dev-signed.appkg" << "removable-0"
+                << true << false << true << true << nomd << "";
+        QTest::newRow("sdcard-no-space") \
+                << "bigtest-dev-signed.appkg" << "removable-0" << "" << ""
+                << true << false << false << false << nomd << "~not enough storage space left on removable-0: [0-9.]+ MB available, but [0-9.]+ MB needed";
+    }
 }
 
 // this test function is a bit of a kitchen sink, but the basic boiler plate
@@ -681,6 +689,9 @@ void tst_ApplicationInstaller::packageInstallation()
 #if !defined(Q_OS_LINUX)
     if (installationLocationId.startsWith("removable-"))
         QSKIP("no removable installation locations on this platform");
+#else
+    if (m_fakeSudo)
+        QSKIP("removable installation locations cannot be tested without root privileges");
 #endif
 
     AllowInstallations allow(storeSigned ? AllowInstallations::RequireStoreSigned
@@ -736,9 +747,9 @@ void tst_ApplicationInstaller::packageInstallation()
 
                 QVERIFY(QFile::exists(imgPath));
 
-                loopbackDevice = m_root->attachLoopback(imgPath, true);
-                QVERIFY2(!loopbackDevice.isEmpty(), qPrintable(m_root->lastError()));
-                QVERIFY2(m_root->mount(loopbackDevice, pathTo(TemporaryMount), true), qPrintable(m_root->lastError()));
+                loopbackDevice = m_sudo->attachLoopback(imgPath, true);
+                QVERIFY2(!loopbackDevice.isEmpty(), qPrintable(m_sudo->lastError()));
+                QVERIFY2(m_sudo->mount(loopbackDevice, pathTo(TemporaryMount), true), qPrintable(m_sudo->lastError()));
                 fileCheckPath = pathTo(TemporaryMount);
             } else {
                 fileCheckPath = il.installationPath() + "/com.pelagicore.test";
@@ -759,8 +770,8 @@ void tst_ApplicationInstaller::packageInstallation()
             // remove loopback and unmount in case of an SDCard installation
 
             if (il.isRemovable()) {
-                QVERIFY2(m_root->unmount(pathTo(TemporaryMount)), qPrintable(m_root->lastError()));
-                QVERIFY2(m_root->detachLoopback(loopbackDevice), qPrintable(m_root->lastError()));
+                QVERIFY2(m_sudo->unmount(pathTo(TemporaryMount)), qPrintable(m_sudo->lastError()));
+                QVERIFY2(m_sudo->detachLoopback(loopbackDevice), qPrintable(m_sudo->lastError()));
             }
 
             // check metadata
@@ -811,6 +822,9 @@ void tst_ApplicationInstaller::removeAppOnMissingSDCard()
 {
 #ifndef Q_OS_LINUX
     QSKIP("Cannot run SD-Card tests on non-Linux systems");
+#else
+    if (m_fakeSudo)
+        QSKIP("Cannot run SD-Card tests without root privileges");
 #endif
 
     // install package to sdcard
@@ -833,7 +847,7 @@ void tst_ApplicationInstaller::removeAppOnMissingSDCard()
 
     // simulate removal of SD-Card
 
-    QVERIFY2(m_root->unmount(pathTo(SDCard0), true), qPrintable(m_root->lastError()));
+    QVERIFY2(m_sudo->unmount(pathTo(SDCard0), true), qPrintable(m_sudo->lastError()));
 
     // try to remove the package
 
@@ -862,7 +876,7 @@ void tst_ApplicationInstaller::removeAppOnMissingSDCard()
 
     // "re-insert" the SD-Card
 
-    QVERIFY(m_root->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"));
+    QVERIFY(m_sudo->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"));
     QVERIFY(QFile::exists(pathTo(SDCard0Images, "com.pelagicore.test.appimg")));
     QVERIFY(QFile::remove(pathTo(SDCard0Images, "com.pelagicore.test.appimg")));
 
@@ -906,15 +920,15 @@ void tst_ApplicationInstaller::simulateErrorConditions_data()
 
      QTest::newRow("sdcard-not-mounted") \
              << "removable-0" << false << "installation medium removable-0 is not mounted" \
-             << FunctionMap { { "before-start", [this]() { return m_root->unmount(pathTo(SDCard0), true); } },
-                              { "after-failed", [this]() { return m_root->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"); } } };
+             << FunctionMap { { "before-start", [this]() { return m_sudo->unmount(pathTo(SDCard0), true); } },
+                              { "after-failed", [this]() { return m_sudo->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"); } } };
 
      QTest::newRow("sdcard-unmounted-while-installing") \
              << "removable-0" << false << "removable medium removable-0 is not mounted" \
              << FunctionMap { { "after-start", [this]() { return m_requestingInstallationAcknowledgeSpy->wait(spyTimeout)
                                                                      && m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout)
-                                                                     && m_root->unmount(pathTo(SDCard0), true); } },
-                              { "after-failed", [this]() { return m_root->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"); } } };
+                                                                     && m_sudo->unmount(pathTo(SDCard0), true); } },
+                              { "after-failed", [this]() { return m_sudo->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"); } } };
 
 #endif
 }
@@ -923,6 +937,9 @@ void tst_ApplicationInstaller::simulateErrorConditions()
 {
 #ifndef Q_OS_LINUX
     QSKIP("Cannot run SD-Card tests on non-Linux systems");
+#else
+    if (m_fakeSudo)
+        QSKIP("Cannot run SD-Card tests without root privileges");
 #endif
 
     QFETCH(QString, installationLocation);

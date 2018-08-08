@@ -248,7 +248,7 @@ private:
         return QDir(m_workDir.path()).absoluteFilePath(file);
     }
 
-    SudoClient *m_root = nullptr;
+    SudoClient *m_sudo = nullptr;
     QTemporaryDir m_workDir;
 };
 
@@ -271,9 +271,9 @@ void tst_Sudo::initTestCase()
     processTimeout *= timeoutFactor();
 
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
-    m_root = SudoClient::instance();
-    QVERIFY(m_root);
-    if (SudoClient::instance()->isFallbackImplementation())
+    m_sudo = SudoClient::instance();
+    QVERIFY(m_sudo);
+    if (m_sudo->isFallbackImplementation())
         QSKIP("Not running with root privileges - neither directly, or SUID-root, or sudo");
 
     QVERIFY(QFile::exists(LOSETUP));
@@ -315,8 +315,8 @@ void tst_Sudo::loopback()
     QFETCH(bool, readOnly);
     QFETCH(bool, valid);
 
-    QString loopbackDevice = m_root->attachLoopback(imageFile, readOnly);
-    QVERIFY2(valid == !loopbackDevice.isEmpty(), qPrintable(m_root->lastError()));
+    QString loopbackDevice = m_sudo->attachLoopback(imageFile, readOnly);
+    QVERIFY2(valid == !loopbackDevice.isEmpty(), qPrintable(m_sudo->lastError()));
     if (!loopbackDevice.isEmpty()) {
         ScopedLoopbackManager slm;
         QVERIFY(slm.create(ScopedLoopbackManager::CreateFromLoopbackDevice, loopbackDevice));
@@ -332,7 +332,7 @@ void tst_Sudo::loopback()
 
             QTest::qWait(200);
 
-            QVERIFY2(m_root->detachLoopback(loopbackDevice), qPrintable(m_root->lastError()));
+            QVERIFY2(m_sudo->detachLoopback(loopbackDevice), qPrintable(m_sudo->lastError()));
             slm.detach();
             QVERIFY(!QFile::exists(slm.loopbackDevice()));
         }
@@ -362,12 +362,12 @@ void tst_Sudo::mount()
     QString loopbackDevice = slm.loopbackDevice();
     QVERIFY(imageFile.isEmpty() == loopbackDevice.isEmpty());
 
-    bool mountOk = m_root->mount(loopbackDevice, mountPoint, readOnly);
+    bool mountOk = m_sudo->mount(loopbackDevice, mountPoint, readOnly);
 
     if (imageFile.isEmpty() || mountPoint.isEmpty()) {
         QVERIFY(!mountOk);
     } else {
-        QVERIFY2(mountOk, qPrintable(m_root->lastError()));
+        QVERIFY2(mountOk, qPrintable(m_sudo->lastError()));
 
         ScopedMountManager smm;
         QVERIFY(smm.create(ScopedMountManager::CreateFromMounted, loopbackDevice, mountPoint));
@@ -423,10 +423,10 @@ void tst_Sudo::unmount()
     }
     QTest::qWait(200);
 
-    bool ok = m_root->unmount(pathTo("mp-0"), forceUnmount);
+    bool ok = m_sudo->unmount(pathTo("mp-0"), forceUnmount);
     if (ok)
         smm.detach();
-    QVERIFY2(ok == canUnmount, qPrintable(m_root->lastError()));
+    QVERIFY2(ok == canUnmount, qPrintable(m_sudo->lastError()));
     QCOMPARE(!smm.checkKernelMountStatus(), canUnmount);
 }
 
@@ -481,7 +481,7 @@ void tst_Sudo::image()
         ScopedLoopbackManager slm;
         QVERIFY(slm.create(ScopedLoopbackManager::CreateFromImageFile, imageFile));
 
-        QVERIFY2(m_root->mkfs(slm.loopbackDevice()), qPrintable(m_root->lastError()));
+        QVERIFY2(m_sudo->mkfs(slm.loopbackDevice()), qPrintable(m_sudo->lastError()));
 
         ScopedRootPrivileges sudo;
 

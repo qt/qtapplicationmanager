@@ -1,7 +1,5 @@
 TARGET = tst_main
 
-CONFIG += insignificant_test # no test-data available in the CI
-
 include($$PWD/../tests.pri)
 
 QT *= appman_manager-private \

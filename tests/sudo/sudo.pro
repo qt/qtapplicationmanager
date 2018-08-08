@@ -1,7 +1,5 @@
 TARGET    = tst_sudo
 
-CONFIG += insignificant_test # the CI cannot run this test via sudo
-
 COVERAGE_RUNTIME = sudo
 
 include($$PWD/../tests.pri)

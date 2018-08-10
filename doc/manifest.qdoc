@@ -218,11 +218,6 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         The properties will just be converted to QVariantMaps, but the application-manager will not
         interpret them in any way.
 \row
-    \li \c preload
-    \li bool
-    \li \e Deprecated. If needed, use \c applicationProperties and implement custom logic in your
-        System-UI to load specific applications on startup.
-\row
     \li \c importance
     \li real
     \li \e Deprecated. Use \c applicationProperties if needed.

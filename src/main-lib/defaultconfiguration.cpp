@@ -47,16 +47,12 @@
 
 #include "defaultconfiguration.h"
 
-#if !defined(AM_CONFIG_FILE)
-#  define AM_CONFIG_FILE "/opt/am/config.yaml"
-#endif
-
 QT_BEGIN_NAMESPACE_AM
 
 
 DefaultConfiguration::DefaultConfiguration(const char *additionalDescription,
                                            bool onlyOnePositionalArgument)
-    : DefaultConfiguration(QStringList { qSL(AM_CONFIG_FILE) }, qSL(":/build-config.yaml"),
+    : DefaultConfiguration(QStringList(), qSL(":/build-config.yaml"),
                            additionalDescription, onlyOnePositionalArgument)
 { }
 

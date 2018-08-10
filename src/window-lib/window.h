@@ -65,6 +65,7 @@ class Window : public QObject
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
     Q_PROPERTY(ContentState contentState READ contentState NOTIFY contentStateChanged)
     Q_PROPERTY(AbstractApplication* application READ application CONSTANT)
+
 public:
 
     enum ContentState {

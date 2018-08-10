@@ -74,10 +74,17 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
         emit started();
     });
     connect(&m_process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
-            this, &HostProcess::errorOccured);
+            this, [this](QProcess::ProcessError error) {
+        emit errorOccured(static_cast<Am::ProcessError>(error));
+    });
     connect(&m_process, static_cast<void (QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),
-            this, &HostProcess::finished);
-    connect(&m_process, &QProcess::stateChanged, this, &HostProcess::stateChanged);
+            this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
+        emit finished(exitCode, static_cast<Am::ExitStatus>(exitStatus));
+    });
+    connect(&m_process, &QProcess::stateChanged,
+            this, [this](QProcess::ProcessState newState) {
+        emit stateChanged(static_cast<Am::RunState>(newState));
+    });
 
 #if defined(Q_OS_UNIX)
     // make sure that the redirection fds do not have a close-on-exec flag, since we need them
@@ -129,9 +136,9 @@ qint64 HostProcess::processId() const
     return m_pid;
 }
 
-QProcess::ProcessState HostProcess::state() const
+Am::RunState HostProcess::state() const
 {
-    return m_process.state();
+    return static_cast<Am::RunState>(m_process.state());
 }
 
 void HostProcess::setStdioRedirections(const QVector<int> &stdioRedirections)

@@ -43,12 +43,12 @@
 
 #include <QObject>
 #include <QString>
-#include <QProcess>
 #include <QPointer>
 #include <QSharedPointer>
 #include <QVariantMap>
 
 #include <QtAppManCommon/global.h>
+#include <QtAppManManager/amnamespace.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QQuickItem)
@@ -111,13 +111,6 @@ class AbstractRuntime : public QObject
 public:
     virtual ~AbstractRuntime();
 
-    enum State {
-        Inactive,
-        Startup,
-        Active,
-        Shutdown
-    };
-
     AbstractContainer *container() const;
     Application *application() const;
     AbstractRuntimeManager *manager() const;
@@ -126,7 +119,7 @@ public:
     virtual bool isQuickLauncher() const;
     virtual bool attachApplicationToQuickLauncher(Application *app);
 
-    State state() const;
+    Am::RunState state() const;
 
     enum { SecurityTokenSize = 16 };
     QByteArray securityToken() const;
@@ -150,8 +143,8 @@ public:
 #endif
 
 signals:
-    void stateChanged(QT_PREPEND_NAMESPACE_AM(AbstractRuntime::State) newState);
-    void finished(int exitCode, QProcess::ExitStatus status);
+    void stateChanged(QT_PREPEND_NAMESPACE_AM(Am::RunState) newState);
+    void finished(int exitCode, Am::ExitStatus status);
 
 #if !defined(AM_HEADLESS)
     // these signals are for in-process mode runtimes only
@@ -160,7 +153,7 @@ signals:
 
 protected:
     explicit AbstractRuntime(AbstractContainer *container, Application *app, AbstractRuntimeManager *manager);
-    void setState(State newState);
+    void setState(Am::RunState newState);
 
     QVariantMap configuration() const;
 
@@ -170,7 +163,7 @@ protected:
 
     QByteArray m_securityToken;
     QQmlEngine *m_inProcessQmlEngine = nullptr;
-    State m_state = Inactive;
+    Am::RunState m_state = Am::NotRunning;
 
     friend class AbstractRuntimeManager;
 };

@@ -230,7 +230,7 @@ signals:
 
 public slots:
     void readingUpdate();
-    void appRuntimeChanged(const QString &id, Application::RunState state);
+    void appRuntimeChanged(const QString &id, Am::RunState state);
 #if defined(AM_MULTI_PROCESS) && !defined(AM_HEADLESS)
     void onWindowContentStateChanged(Window *window);
 #endif

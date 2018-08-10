@@ -43,11 +43,11 @@
 
 #include <QObject>
 #include <QString>
-#include <QProcess>
 #include <QVariantMap>
 #include <QVector>
 
 #include <QtAppManCommon/global.h>
+#include <QtAppManManager/amnamespace.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -83,7 +83,7 @@ class AbstractContainerProcess : public QObject
 
 public:
     virtual qint64 processId() const = 0;
-    virtual QProcess::ProcessState state() const = 0;
+    virtual Am::RunState state() const = 0;
 
 public slots:
     virtual void kill() = 0;
@@ -91,9 +91,9 @@ public slots:
 
 signals:
     void started();
-    void errorOccured(QProcess::ProcessError error);
-    void finished(int exitCode, QProcess::ExitStatus status);
-    void stateChanged(QProcess::ProcessState newState);
+    void errorOccured(Am::ProcessError error);
+    void finished(int exitCode, Am::ExitStatus status);
+    void stateChanged(Am::RunState newState);
 };
 
 class AbstractContainer : public QObject

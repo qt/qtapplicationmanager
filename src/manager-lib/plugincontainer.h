@@ -75,7 +75,7 @@ public:
     PluginContainerProcess(PluginContainer *container);
 
     qint64 processId() const override;
-    QProcess::ProcessState state() const override;
+    Am::RunState state() const override;
 
 public slots:
     void kill() override;

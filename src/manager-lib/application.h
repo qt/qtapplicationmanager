@@ -42,10 +42,10 @@
 #pragma once
 
 #include <QObject>
-#include <QProcess>
 #include <QScopedPointer>
 #include <QUrl>
 #include <QtAppManApplication/applicationinfo.h>
+#include <QtAppManManager/amnamespace.h>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -83,12 +83,12 @@ class AbstractApplication : public QObject
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties NOTIFY bulkChange)
     Q_PROPERTY(AbstractRuntime *runtime READ currentRuntime NOTIFY runtimeChanged)
     Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged)
-    Q_PROPERTY(ExitStatus lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged)
+    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Am::ExitStatus) lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged)
     Q_PROPERTY(QString version READ version NOTIFY bulkChange)
     Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface NOTIFY bulkChange)
     Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
-    Q_PROPERTY(RunState runState READ runState NOTIFY runStateChanged)
+    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Am::RunState) runState READ runState NOTIFY runStateChanged)
 
 public:
     enum State {
@@ -99,17 +99,6 @@ public:
         BeingRemoved
     };
     Q_ENUM(State)
-
-    enum ExitStatus { NormalExit, CrashExit, ForcedExit };
-    Q_ENUM(ExitStatus)
-
-    enum RunState {
-        NotRunning,
-        StartingUp,
-        Running,
-        ShuttingDown,
-    };
-    Q_ENUM(RunState)
 
     AbstractApplication(AbstractApplicationInfo *info);
 
@@ -158,9 +147,9 @@ public:
     virtual bool block() = 0;
     virtual bool unblock() = 0;
     virtual qreal progress() const = 0;
-    virtual RunState runState() const = 0;
+    virtual Am::RunState runState() const = 0;
     virtual int lastExitCode() const = 0;
-    virtual ExitStatus lastExitStatus() const = 0;
+    virtual Am::ExitStatus lastExitStatus() const = 0;
 
     ApplicationRequests requests;
 
@@ -175,7 +164,7 @@ signals:
     void lastExitStatusChanged();
     void activated();
     void stateChanged(State state);
-    void runStateChanged(RunState state);
+    void runStateChanged(Am::RunState state);
 
 protected:
     QScopedPointer<AbstractApplicationInfo> m_info;
@@ -217,7 +206,7 @@ public:
 
     void setState(State);
     void setProgress(qreal);
-    void setRunState(RunState);
+    void setRunState(Am::RunState);
     void setCurrentRuntime(AbstractRuntime *rt);
 
     Application *nonAliased() override { return this; }
@@ -229,23 +218,23 @@ public:
     bool block() override;
     bool unblock() override;
     qreal progress() const override { return m_progress; }
-    RunState runState() const override { return m_runState; }
+    Am::RunState runState() const override { return m_runState; }
     int lastExitCode() const override { return m_lastExitCode; }
-    ExitStatus lastExitStatus() const override { return m_lastExitStatus; }
+    Am::ExitStatus lastExitStatus() const override { return m_lastExitStatus; }
 
 private:
-    void setLastExitCodeAndStatus(int code, QProcess::ExitStatus);
+    void setLastExitCodeAndStatus(int exitCode, Am::ExitStatus exitStatus);
 
     AbstractRuntime *m_runtime = nullptr;
     QAtomicInt m_blocked;
     QAtomicInt m_mounted;
 
     State m_state = Installed;
-    RunState m_runState = NotRunning;
+    Am::RunState m_runState = Am::NotRunning;
     qreal m_progress = 0;
 
     int m_lastExitCode = 0;
-    ExitStatus m_lastExitStatus = NormalExit;
+    Am::ExitStatus m_lastExitStatus = Am::NormalExit;
 
     QScopedPointer<ApplicationInfo> m_updatedInfo;
 };
@@ -266,9 +255,9 @@ public:
     bool block() override { return m_application->block(); }
     bool unblock() override { return m_application->unblock(); }
     qreal progress() const override { return m_application->progress(); }
-    RunState runState() const override { return m_application->runState(); }
+    Am::RunState runState() const override { return m_application->runState(); }
     int lastExitCode() const override { return m_application->lastExitCode(); }
-    ExitStatus lastExitStatus() const override { return m_application->lastExitStatus(); }
+    Am::ExitStatus lastExitStatus() const override { return m_application->lastExitStatus(); }
 protected:
     // Returns info() from the application being aliased
     ApplicationInfo *nonAliasedInfo() const override;
@@ -279,6 +268,5 @@ private:
 QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(const QT_PREPEND_NAMESPACE_AM(AbstractApplication *))
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(AbstractApplication::RunState))
 
 QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(AbstractApplication) *app);

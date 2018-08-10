@@ -49,20 +49,20 @@ public:
 
     qint64 applicationProcessId() const
     {
-        return m_state == AbstractRuntime::Active ? 1 : 0;
+        return m_state == Am::Running ? 1 : 0;
     }
 
 public slots:
     bool start()
     {
-        m_state = AbstractRuntime::Active;
+        m_state = Am::Running;
         return true;
     }
 
     void stop(bool forceKill)
     {
         Q_UNUSED(forceKill);
-        m_state = AbstractRuntime::Inactive;
+        m_state = Am::NotRunning;
     }
 };
 

@@ -63,20 +63,20 @@ public:
 
     qint64 applicationProcessId() const
     {
-        return m_state == AbstractRuntime::Active ? 1 : 0;
+        return m_state == Am::Running ? 1 : 0;
     }
 
 public slots:
     bool start()
     {
-        m_state = AbstractRuntime::Active;
+        m_state = Am::Running;
         return true;
     }
 
     void stop(bool forceKill)
     {
         Q_UNUSED(forceKill);
-        m_state = AbstractRuntime::Inactive;
+        m_state = Am::NotRunning;
     }
 };
 
@@ -146,7 +146,7 @@ void tst_Runtime::factory()
     QVERIFY(r);
     QVERIFY(r->application() == a);
     QVERIFY(r->manager()->inProcess());
-    QVERIFY(r->state() == AbstractRuntime::Inactive);
+    QVERIFY(r->state() == Am::NotRunning);
     QVERIFY(r->applicationProcessId() == 0);
     {
         QScopedPointer<QQmlEngine> engine(new QQmlEngine());
@@ -156,10 +156,10 @@ void tst_Runtime::factory()
         r->setInProcessQmlEngine(nullptr);
     }
     QVERIFY(r->start());
-    QVERIFY(r->state() == AbstractRuntime::Active);
+    QVERIFY(r->state() == Am::Running);
     QVERIFY(r->applicationProcessId() == 1);
     r->stop();
-    QVERIFY(r->state() == AbstractRuntime::Inactive);
+    QVERIFY(r->state() == Am::NotRunning);
     QVERIFY(!r->securityToken().isEmpty());
 
     delete r;

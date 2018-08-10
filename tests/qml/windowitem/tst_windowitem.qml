@@ -142,7 +142,7 @@ Item {
                 var numRunningApps = 0;
                 for (var i = 0; i < ApplicationManager.count; i++) {
                     var app = ApplicationManager.application(i);
-                    if (app.runState !== ApplicationObject.NotRunning)
+                    if (app.runState !== Am.NotRunning)
                         numRunningApps += 1;
                 }
 

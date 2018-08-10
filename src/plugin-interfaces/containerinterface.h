@@ -41,15 +41,41 @@
 
 #pragma once
 
+#include <QObject>
 #include <functional>
-
-#include <QProcess>
 
 class ContainerInterface : public QObject
 {
     Q_OBJECT
 
 public:
+    // keep these enums in sync with those in amnamespace.h
+    enum ExitStatus {
+        NormalExit,
+        CrashExit,
+        ForcedExit
+    };
+    Q_ENUM(ExitStatus)
+
+    enum RunState {
+        NotRunning,
+        StartingUp,
+        Running,
+        ShuttingDown,
+    };
+    Q_ENUM(RunState)
+
+    enum ProcessError {
+        FailedToStart, //### file not found, resource error
+        Crashed,
+        Timedout,
+        ReadError,
+        WriteError,
+        UnknownError
+    };
+    Q_ENUM(ProcessError)
+
+
     virtual ~ContainerInterface();
 
     virtual bool attachApplication(const QVariantMap &application) = 0;
@@ -68,7 +94,7 @@ public:
     virtual bool start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment) = 0;
 
     virtual qint64 processId() const = 0;
-    virtual QProcess::ProcessState state() const = 0;
+    virtual RunState state() const = 0;
 
     virtual void kill() = 0;
     virtual void terminate() = 0;
@@ -76,9 +102,9 @@ public:
 Q_SIGNALS:
     void ready();
     void started();
-    void errorOccured(QProcess::ProcessError processError);
-    void finished(int exitCode, QProcess::ExitStatus exitStatus);
-    void stateChanged(QProcess::ProcessState state);
+    void errorOccured(ProcessError processError);
+    void finished(int exitCode, ExitStatus exitStatus);
+    void stateChanged(RunState state);
 };
 
 class ContainerManagerInterface

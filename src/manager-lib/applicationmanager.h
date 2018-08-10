@@ -44,7 +44,6 @@
 #include <QAbstractListModel>
 #include <QStringList>
 #include <QVariantList>
-#include <QProcess>
 #include <QJSValue>
 #include <QtAppManCommon/global.h>
 #include <QtAppManManager/application.h>
@@ -152,7 +151,7 @@ public:
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;
     Q_SCRIPTABLE QString identifyApplication(qint64 pid) const;
-    Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(AbstractApplication::RunState) applicationRunState(const QString &id) const;
+    Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(Am::RunState) applicationRunState(const QString &id) const;
 
     ApplicationManagerInternalSignals internalSignals;
 
@@ -162,7 +161,7 @@ public slots:
     void shutDown();
 
 signals:
-    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(AbstractApplication::RunState) runState);
+    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(Am::RunState) runState);
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
     Q_SCRIPTABLE void countChanged();
 

@@ -72,6 +72,7 @@
 #include "utilities.h"
 #include "qtyaml.h"
 #include "debugwrapper.h"
+#include "amnamespace.h"
 
 /*!
     \qmltype ApplicationManager
@@ -260,8 +261,8 @@
     Connections {
         target: ApplicationManager
         onApplicationRunStateChanged: {
-            if (runState === Application.NotRunning
-                && ApplicationManager.application(id).lastExitStatus === Application.CrashExit) {
+            if (runState === Am.NotRunning
+                && ApplicationManager.application(id).lastExitStatus === Am.CrashExit) {
                 ApplicationManager.startApplication(id);
             }
         }
@@ -344,16 +345,6 @@ enum Roles
 
 QT_BEGIN_NAMESPACE_AM
 
-static AbstractApplication::RunState runtimeToApplicationRunState(AbstractRuntime::State rtState)
-{
-    switch (rtState) {
-    case AbstractRuntime::Startup: return AbstractApplication::StartingUp;
-    case AbstractRuntime::Active: return AbstractApplication::Running;
-    case AbstractRuntime::Shutdown: return AbstractApplication::ShuttingDown;
-    default: return AbstractApplication::NotRunning;
-    }
-}
-
 ApplicationManagerPrivate::ApplicationManagerPrivate()
 {
     currentLocale = QLocale::system().name(); //TODO: language changes
@@ -405,7 +396,13 @@ ApplicationManager *ApplicationManager::createInstance(bool singleProcess)
     qmlRegisterUncreatableType<AbstractContainer>("QtApplicationManager", 1, 0, "Container",
                                                   qSL("Cannot create objects of type Container"));
     qRegisterMetaType<AbstractContainer*>("AbstractContainer*");
-    qRegisterMetaType<AbstractApplication::RunState>("AbstractApplication::RunState");
+
+    qmlRegisterUncreatableType<Am>("QtApplicationManager", 1, 0, "Am",
+                                   qSL("Cannot create objects of type Am"));
+
+    qRegisterMetaType<Am::RunState>();
+    qRegisterMetaType<Am::ExitStatus>();
+    qRegisterMetaType<Am::ProcessError>();
 
     return s_instance = am.take();
 }
@@ -665,8 +662,8 @@ bool ApplicationManager::startApplication(AbstractApplication *app, const QStrin
 
     if (runtime) {
         switch (runtime->state()) {
-        case AbstractRuntime::Startup:
-        case AbstractRuntime::Active:
+        case Am::StartingUp:
+        case Am::Running:
             if (!debugWrapperCommand.isEmpty()) {
                 throw Exception("Application %1 is already running - cannot start with debug-wrapper: %2")
                         .arg(app->id(), debugWrapperSpecification);
@@ -680,10 +677,10 @@ bool ApplicationManager::startApplication(AbstractApplication *app, const QStrin
             emitActivated(app);
             return true;
 
-        case AbstractRuntime::Shutdown:
+        case Am::ShuttingDown:
             return false;
 
-        case AbstractRuntime::Inactive:
+        case Am::NotRunning:
             break;
         }
     }
@@ -785,7 +782,7 @@ bool ApplicationManager::startApplication(AbstractApplication *app, const QStrin
         return false;
     }
 
-    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app](AbstractRuntime::State newRuntimeState) {
+    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app](Am::RunState newRuntimeState) {
         QVector<AbstractApplication *> apps;
         //Always emit the actual starting app/alias first
         apps.append(app);
@@ -801,12 +798,10 @@ bool ApplicationManager::startApplication(AbstractApplication *app, const QStrin
                 apps.append(alias);
         }
 
-        AbstractApplication::RunState newRunState = runtimeToApplicationRunState(newRuntimeState);
-
-        static_cast<Application*>(nonAliasedApp)->setRunState(newRunState);
+        static_cast<Application*>(nonAliasedApp)->setRunState(newRuntimeState);
 
         for (AbstractApplication *app : qAsConst(apps)) {
-            emit applicationRunStateChanged(app->id(), newRunState);
+            emit applicationRunStateChanged(app->id(), newRuntimeState);
             emitDataChanged(app, QVector<int> { IsRunning, IsStartingUp, IsShuttingDown });
         }
     });
@@ -1383,8 +1378,8 @@ void ApplicationManager::startSingleAppAndQuitWhenStopped()
     if (!startApplication(app)) {
         QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection, Q_ARG(int, 1));
     } else {
-        connect(this, &ApplicationManager::applicationRunStateChanged, [app](const QString &id, Application::RunState runState) {
-            if ((id == app->id()) && (runState == Application::NotRunning)) {
+        connect(this, &ApplicationManager::applicationRunStateChanged, [app](const QString &id, Am::RunState runState) {
+            if ((id == app->id()) && (runState == Am::NotRunning)) {
                 QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection,
                                           Q_ARG(int, app->lastExitCode()));
             }
@@ -1490,11 +1485,11 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
         return app->icon();
 
     case IsRunning:
-        return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Active) : false;
+        return app->currentRuntime() ? (app->currentRuntime()->state() == Am::Running) : false;
     case IsStartingUp:
-        return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Startup) : false;
+        return app->currentRuntime() ? (app->currentRuntime()->state() == Am::StartingUp) : false;
     case IsShuttingDown:
-        return app->currentRuntime() ? (app->currentRuntime()->state() == AbstractRuntime::Shutdown) : false;
+        return app->currentRuntime() ? (app->currentRuntime()->state() == Am::ShuttingDown) : false;
     case IsBlocked:
         return app->isBlocked();
     case IsUpdating:
@@ -1642,12 +1637,12 @@ QVariantMap ApplicationManager::get(const QString &id) const
     return map;
 }
 
-Application::RunState ApplicationManager::applicationRunState(const QString &id) const
+Am::RunState ApplicationManager::applicationRunState(const QString &id) const
 {
     int index = indexOfApplication(id);
     if (index < 0) {
         qCWarning(LogSystem) << "invalid index:" << index;
-        return Application::NotRunning;
+        return Am::NotRunning;
     }
     return d->apps.at(index)->runState();
 }

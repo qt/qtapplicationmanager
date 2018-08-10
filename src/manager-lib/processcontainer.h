@@ -42,6 +42,7 @@
 #pragma once
 
 #include <QtAppManManager/abstractcontainer.h>
+#include <QProcess>
 
 #define AM_HOST_CONTAINER_AVAILABLE
 
@@ -73,7 +74,7 @@ public:
     virtual ~HostProcess() override;
 
     virtual qint64 processId() const override;
-    virtual QProcess::ProcessState state() const override;
+    virtual Am::RunState state() const override;
 
     void setStdioRedirections(const QVector<int> &stdioRedirections);
     void setWorkingDirectory(const QString &dir);

@@ -39,6 +39,7 @@ HEADERS += \
     applicationmanager_p.h \
     systemreader.h \
     debugwrapper.h \
+    amnamespace.h \
 
 linux:HEADERS += \
     sysfsreader.h \

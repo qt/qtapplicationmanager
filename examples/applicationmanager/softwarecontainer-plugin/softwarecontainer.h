@@ -78,7 +78,7 @@ public:
     bool start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment) override;
 
     qint64 processId() const override;
-    QProcess::ProcessState state() const override;
+    RunState state() const override;
 
     void kill() override;
     void terminate() override;
@@ -96,7 +96,7 @@ private:
     QString m_baseDir;
     bool m_ready = false;
     qint64 m_pid = 0;
-    QProcess::ProcessState m_state = QProcess::NotRunning;
+    RunState m_state = NotRunning;
     QVariantMap m_application;
     QString m_appRelativeCodePath;
     QString m_hostPath;

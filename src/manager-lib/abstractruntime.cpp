@@ -156,12 +156,12 @@ bool AbstractRuntime::attachApplicationToQuickLauncher(Application *app)
     return false;
 }
 
-AbstractRuntime::State AbstractRuntime::state() const
+Am::RunState AbstractRuntime::state() const
 {
     return m_state;
 }
 
-void AbstractRuntime::setState(AbstractRuntime::State newState)
+void AbstractRuntime::setState(Am::RunState newState)
 {
     if (m_state != newState) {
         m_state = newState;

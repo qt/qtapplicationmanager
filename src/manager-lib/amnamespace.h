@@ -41,71 +41,46 @@
 
 #pragma once
 
-#include <QtAppManManager/abstractruntime.h>
-
-#include <QSharedPointer>
+#include <QObject>
+#include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class FakeApplicationManagerWindow;
-class QmlInProcessApplicationInterface;
-class InProcessSurfaceItem;
-
-class QmlInProcessRuntimeManager : public AbstractRuntimeManager
+// a namespace with Q_NAMESPACE would be better suited, but this leads to weird issues with the
+// enums when used as Q_PROPERTY types and accessed from QML
+class Am : public QObject
 {
+    //Q_GADGET
     Q_OBJECT
 public:
-    explicit QmlInProcessRuntimeManager(QObject *parent = nullptr);
-    explicit QmlInProcessRuntimeManager(const QString &id, QObject *parent = nullptr);
 
-    static QString defaultIdentifier();
-    bool inProcess() const override;
+    // we cannot use QProcess enums directly, since some supported platforms might
+    // not have QProcess available at all.
+    // keep these enums in sync with those in containerinterface.h
+    enum ExitStatus {
+        NormalExit,
+        CrashExit,
+        ForcedExit
+    };
+    Q_ENUM(ExitStatus)
 
-    AbstractRuntime *create(AbstractContainer *container, Application *app) override;
-};
+    enum RunState {
+        NotRunning,
+        StartingUp,
+        Running,
+        ShuttingDown,
+    };
+    Q_ENUM(RunState)
 
-
-class QmlInProcessRuntime : public AbstractRuntime
-{
-    Q_OBJECT
-
-public:
-    explicit QmlInProcessRuntime(Application *app, QmlInProcessRuntimeManager *manager);
-    ~QmlInProcessRuntime() override;
-
-    void openDocument(const QString &document, const QString &mimeType) override;
-    qint64 applicationProcessId() const override;
-
-public slots:
-    bool start() override;
-    void stop(bool forceKill = false) override;
-#if !defined(AM_HEADLESS)
-    void inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem>) override;
-#endif
-
-signals:
-    void aboutToStop(); // used for the ApplicationInterface
-
-private slots:
-    void finish(int exitCode, Am::ExitStatus status);
-
-private:
-    static const char *s_runtimeKey;
-
-    QString m_document;
-    QmlInProcessApplicationInterface *m_applicationIf = nullptr;
-    bool m_componentError;
-
-#if !defined(AM_HEADLESS)
-    // used by FakeApplicationManagerWindow to register windows
-    void addWindow(const QSharedPointer<InProcessSurfaceItem> &window);
-    void removeWindow(const QSharedPointer<InProcessSurfaceItem> &window);
-
-    QObject *m_rootObject = nullptr;
-    QList< QSharedPointer<InProcessSurfaceItem> > m_surfaces;
-
-    friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
-#endif
+    enum ProcessError {
+        FailedToStart, //### file not found, resource error
+        Crashed,
+        Timedout,
+        ReadError,
+        WriteError,
+        UnknownError
+    };
+    Q_ENUM(ProcessError)
 };
 
 QT_END_NAMESPACE_AM

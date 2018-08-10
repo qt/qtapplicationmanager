@@ -91,7 +91,7 @@ bool QmlInProcessRuntime::start()
 #if !defined(AM_HEADLESS)
     Q_ASSERT(!m_rootObject);
 #endif
-    setState(Startup);
+    setState(Am::StartingUp);
 
     if (!m_inProcessQmlEngine)
         return false;
@@ -130,7 +130,7 @@ bool QmlInProcessRuntime::start()
     m_applicationIf = new QmlInProcessApplicationInterface(this);
     appContext->setContextProperty(qSL("ApplicationInterface"), m_applicationIf);
     connect(m_applicationIf, &QmlInProcessApplicationInterface::quitAcknowledged,
-            this, [this]() { finish(0, QProcess::NormalExit); });
+            this, [this]() { finish(0, Am::NormalExit); });
 
     if (appContext->setProperty(s_runtimeKey, QVariant::fromValue(this)))
         qCritical() << "Could not set" << s_runtimeKey << "property in QML context";
@@ -145,7 +145,7 @@ bool QmlInProcessRuntime::start()
             delete appContext;
             delete m_applicationIf;
             m_applicationIf = nullptr;
-            finish(3, QProcess::NormalExit);
+            finish(3, Am::NormalExit);
         } else {
 #if !defined(AM_HEADLESS)
             if (!qobject_cast<FakeApplicationManagerWindow*>(obj)) {
@@ -160,7 +160,7 @@ bool QmlInProcessRuntime::start()
 #endif
             if (!m_document.isEmpty())
                 openDocument(m_document, QString());
-            setState(Active);
+            setState(Am::Running);
         }
         delete component;
     });
@@ -169,7 +169,7 @@ bool QmlInProcessRuntime::start()
 
 void QmlInProcessRuntime::stop(bool forceKill)
 {
-    setState(Shutdown);
+    setState(Am::ShuttingDown);
     emit aboutToStop();
 
 #if !defined(AM_HEADLESS)
@@ -188,7 +188,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
 #else
         int exitCode = 0;
 #endif
-        finish(exitCode, QProcess::CrashExit);
+        finish(exitCode, Am::CrashExit);
         return;
     }
 
@@ -202,17 +202,17 @@ void QmlInProcessRuntime::stop(bool forceKill)
 #else
         int exitCode = 0;
 #endif
-        finish(exitCode, QProcess::CrashExit);
+        finish(exitCode, Am::CrashExit);
     });
 }
 
-void QmlInProcessRuntime::finish(int exitCode, QProcess::ExitStatus status)
+void QmlInProcessRuntime::finish(int exitCode, Am::ExitStatus status)
 {
     QTimer::singleShot(0, this, [this, exitCode, status]() {
         qCDebug(LogSystem) << "QmlInProcessRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
                            << ") exited with code:" << exitCode << "status:" << status;
         emit finished(exitCode, status);
-        setState(Inactive);
+        setState(Am::NotRunning);
 #if !defined(AM_HEADLESS)
         if (m_surfaces.isEmpty())
             deleteLater();
@@ -227,10 +227,10 @@ void QmlInProcessRuntime::finish(int exitCode, QProcess::ExitStatus status)
 void QmlInProcessRuntime::inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem> surface)
 {
     m_surfaces.removeOne(surface);
-    if (state() != Active && m_surfaces.isEmpty()) {
+    if (state() != Am::Running && m_surfaces.isEmpty()) {
         delete m_rootObject;
         m_rootObject = nullptr;
-        if (state() == Inactive)
+        if (state() == Am::NotRunning)
             deleteLater();
     }
 }
@@ -239,7 +239,7 @@ void QmlInProcessRuntime::addWindow(const QSharedPointer<InProcessSurfaceItem> &
 {
     // Below check is only needed if the root element is a QtObject.
     // It should be possible to remove this, once proper visible handling is in place.
-    if (state() != Inactive && state() != Shutdown) {
+    if (state() != Am::NotRunning && state() != Am::ShuttingDown) {
         if (!m_surfaces.contains(surface))
             m_surfaces.append(surface);
         emit inProcessSurfaceItemReady(surface);

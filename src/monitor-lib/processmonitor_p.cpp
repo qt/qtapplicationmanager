@@ -425,9 +425,9 @@ ProcessMonitorPrivate::~ProcessMonitorPrivate()
     thread.wait();
 }
 
-void ProcessMonitorPrivate::appRuntimeChanged(const QString &id, Application::RunState state)
+void ProcessMonitorPrivate::appRuntimeChanged(const QString &id, Am::RunState state)
 {
-    if (id == appId && (state == Application::Running || state == Application::NotRunning))
+    if (id == appId && (state == Am::Running || state == Am::NotRunning))
         determinePid();
 }
 

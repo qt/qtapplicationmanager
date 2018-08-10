@@ -270,7 +270,7 @@ bool SoftwareContainer::attachApplication(const QVariantMap &application)
     // attachApplication. In this case we need to configure the container
     // with any extra capabilities etc.
 
-    m_state = QProcess::Starting;
+    m_state = StartingUp;
     m_application = application;
 
     m_hostPath = application.value(qSL("codeDir")).toString();
@@ -536,7 +536,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
 
     m_pid = reply.arguments().at(0).value<int>();
 
-    m_state = QProcess::Running;
+    m_state = Running;
     QTimer::singleShot(0, this, [this]() {
         emit stateChanged(m_state);
         emit started();
@@ -549,7 +549,7 @@ qint64 SoftwareContainer::processId() const
     return m_pid;
 }
 
-QProcess::ProcessState SoftwareContainer::state() const
+SoftwareContainer::RunState SoftwareContainer::state() const
 {
     return m_state;
 }
@@ -578,8 +578,8 @@ void SoftwareContainer::terminate()
 
 void SoftwareContainer::containerExited(uint exitCode)
 {
-    m_state = QProcess::NotRunning;
+    m_state = NotRunning;
     emit stateChanged(m_state);
-    emit finished(WEXITSTATUS(exitCode), WIFEXITED(exitCode) ? QProcess::NormalExit : QProcess::CrashExit);
+    emit finished(WEXITSTATUS(exitCode), WIFEXITED(exitCode) ? NormalExit : CrashExit);
     deleteLater();
 }

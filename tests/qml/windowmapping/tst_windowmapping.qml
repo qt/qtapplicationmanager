@@ -119,7 +119,7 @@ TestCase {
             var numRunningApps = 0;
             for (var i = 0; i < ApplicationManager.count; i++) {
                 var app = ApplicationManager.application(i);
-                if (app.runState !== ApplicationObject.NotRunning)
+                if (app.runState !== Am.NotRunning)
                     numRunningApps += 1;
             }
 
@@ -278,13 +278,13 @@ TestCase {
 
         AmTest.ignoreMessage(AmTest.CriticalMsg, /Stopping application.*because we did not receive a Wayland-Pong/);
         app.start();
-        tryCompare(app, "runState", ApplicationObject.Running);
+        tryCompare(app, "runState", Am.Running);
         runStateChangedSpy.clear();
         wait(2200);
         runStateChangedSpy.wait(2000);
-        compare(runStateChangedSpy.signalArguments[0][1], ApplicationObject.ShuttingDown);
+        compare(runStateChangedSpy.signalArguments[0][1], Am.ShuttingDown);
         runStateChangedSpy.wait(2000);
-        compare(runStateChangedSpy.signalArguments[1][1], ApplicationObject.NotRunning);
+        compare(runStateChangedSpy.signalArguments[1][1], Am.NotRunning);
     }
 
     function test_window_properties() {

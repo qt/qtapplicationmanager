@@ -170,11 +170,11 @@
     This property returns the last exit-status of the application's process in multi-process mode.
 
     \list
-    \li ApplicationObject.NormalExit - The application exited normally.
-    \li ApplicationObject.CrashExit - The application crashed.
-    \li ApplicationObject.ForcedExit - The application was killed by the application-manager, since it
-                                 ignored the quit request originating from a call to
-                                 ApplicationManager::stopApplication.
+    \li Am.NormalExit - The application exited normally.
+    \li Am.CrashExit - The application crashed.
+    \li Am.ForcedExit - The application was killed by the application-manager, since it
+                        ignored the quit request originating from a call to
+                        ApplicationManager::stopApplication.
     \endlist
 
     \sa ApplicationInterface::quit, ApplicationInterface::acknowledgeQuit
@@ -218,12 +218,12 @@
     This property holds the current run state of the application. It can be one of:
 
     \list
-    \li ApplicationObject.NotRunning - the application has not been started yet
-    \li ApplicationObject.StartingUp - the application has been started and is initializing
-    \li ApplicationObject.Running - the application is running
-    \li ApplicationObject.ShuttingDown - the application has been stopped and is cleaning up (in
-                                   multi-process mode this signal is only emitted if the
-                                   application terminates gracefully)
+    \li Am.NotRunning - the application has not been started yet
+    \li Am.StartingUp - the application has been started and is initializing
+    \li Am.Running - the application is running
+    \li Am.ShuttingDown - the application has been stopped and is cleaning up (in
+                          multi-process mode this signal is only emitted if the
+                          application terminates gracefully)
     \endlist
 */
 /*!
@@ -468,7 +468,7 @@ void Application::setCurrentRuntime(AbstractRuntime *rt)
             this->setCurrentRuntime(nullptr);
         });
     } else
-        setRunState(NotRunning);
+        setRunState(Am::NotRunning);
 }
 
 bool Application::isBlocked() const
@@ -486,7 +486,7 @@ bool Application::unblock()
     return m_blocked.testAndSetOrdered(1, 0);
 }
 
-void Application::setRunState(AbstractApplication::RunState runState)
+void Application::setRunState(Am::RunState runState)
 {
     if (runState != m_runState) {
         m_runState = runState;
@@ -514,22 +514,22 @@ ApplicationInfo *Application::nonAliasedInfo() const
     return static_cast<ApplicationInfo*>(Application::info());
 }
 
-void Application::setLastExitCodeAndStatus(int code, QProcess::ExitStatus processStatus)
+void Application::setLastExitCodeAndStatus(int exitCode, Am::ExitStatus exitStatus)
 {
-    if (m_lastExitCode != code) {
-        m_lastExitCode = code;
+    if (m_lastExitCode != exitCode) {
+        m_lastExitCode = exitCode;
         emit lastExitCodeChanged();
     }
 
-    ExitStatus newStatus;
-    if (processStatus == QProcess::CrashExit) {
+    Am::ExitStatus newStatus;
+    if (exitStatus == Am::CrashExit) {
 #if defined(Q_OS_UNIX)
-        newStatus = (code == SIGTERM || code == SIGKILL) ? ForcedExit : CrashExit;
+        newStatus = (exitCode == SIGTERM || exitCode == SIGKILL) ? Am::ForcedExit : Am::CrashExit;
 #else
-        newStatus = CrashExit;
+        newStatus = Am::CrashExit;
 #endif
     } else {
-        newStatus = NormalExit;
+        newStatus = Am::NormalExit;
     }
 
     if (m_lastExitStatus != newStatus) {

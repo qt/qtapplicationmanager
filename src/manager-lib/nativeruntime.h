@@ -46,7 +46,6 @@
 #if defined(AM_MULTI_PROCESS)
 
 #include <QtPlugin>
-#include <QProcess>
 #include <QVector>
 
 #include <QtAppManManager/abstractruntime.h>
@@ -104,8 +103,8 @@ signals:
 
 private slots:
     void onProcessStarted();
-    void onProcessFinished(int exitCode, QProcess::ExitStatus status);
-    void onProcessError(QProcess::ProcessError error);
+    void onProcessFinished(int exitCode, Am::ExitStatus status);
+    void onProcessError(Am::ProcessError error);
     void onDBusPeerConnection(const QDBusConnection &connection);
     void onApplicationFinishedInitialization();
 
@@ -114,7 +113,7 @@ protected:
 
 private:
     bool initialize();
-    void shutdown(int exitCode, QProcess::ExitStatus status);
+    void shutdown(int exitCode, Am::ExitStatus status);
     void registerExtensionInterfaces();
     QDBusServer *applicationInterfaceServer() const;
     bool startApplicationViaLauncher();

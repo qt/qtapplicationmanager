@@ -171,7 +171,7 @@ bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
     m_app = app;
     m_app->setCurrentRuntime(this);
 
-    setState(Startup);
+    setState(Am::StartingUp);
 
     bool ret;
     if (!m_dbusConnection) {
@@ -182,7 +182,7 @@ bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
     }
 
     if (ret)
-        setState(Active);
+        setState(Am::Running);
 
     return ret;
 }
@@ -228,7 +228,7 @@ bool NativeRuntime::initialize()
     }
 }
 
-void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
+void NativeRuntime::shutdown(int exitCode, Am::ExitStatus status)
 {
     if (!m_isQuickLauncher || m_connectedToRuntimeInterface) {
         qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
@@ -243,7 +243,7 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
         iface->dbusUnregister(QDBusConnection(m_dbusConnectionName));
 
     emit finished(exitCode, status);
-    setState(Inactive);
+    setState(Am::NotRunning);
 
     deleteLater();
 }
@@ -251,12 +251,12 @@ void NativeRuntime::shutdown(int exitCode, QProcess::ExitStatus status)
 bool NativeRuntime::start()
 {
     switch (state()) {
-    case Startup:
-    case Active:
+    case Am::StartingUp:
+    case Am::Running:
         return true;
-    case Shutdown:
+    case Am::ShuttingDown:
         return false;
-    case Inactive:
+    case Am::NotRunning:
         break;
     }
 
@@ -364,7 +364,7 @@ bool NativeRuntime::start()
     QObject::connect(ApplicationIPCManager::instance(), &ApplicationIPCManager::interfaceCreated,
                      this, &NativeRuntime::registerExtensionInterfaces);
 
-    setState(Startup);
+    setState(Am::StartingUp);
     return true;
 }
 
@@ -373,7 +373,7 @@ void NativeRuntime::stop(bool forceKill)
     if (!m_process)
         return;
 
-    setState(Shutdown);
+    setState(Am::ShuttingDown);
     emit aboutToStop();
 
     if (!m_connectedToRuntimeInterface) {
@@ -395,17 +395,17 @@ void NativeRuntime::stop(bool forceKill)
 void NativeRuntime::onProcessStarted()
 {
     if (!m_startedViaLauncher && !application()->nonAliasedInfo()->supportsApplicationInterface())
-        setState(Active);
+        setState(Am::Running);
 }
 
-void NativeRuntime::onProcessError(QProcess::ProcessError error)
+void NativeRuntime::onProcessError(Am::ProcessError error)
 {
     Q_UNUSED(error)
-    if (m_state != Active && m_state != Shutdown)
-        shutdown(-1, QProcess::CrashExit);
+    if (m_state != Am::Running && m_state != Am::ShuttingDown)
+        shutdown(-1, Am::CrashExit);
 }
 
-void NativeRuntime::onProcessFinished(int exitCode, QProcess::ExitStatus status)
+void NativeRuntime::onProcessFinished(int exitCode, Am::ExitStatus status)
 {
     shutdown(exitCode, status);
 }
@@ -473,7 +473,7 @@ bool NativeRuntime::startApplicationViaLauncher()
     emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
                                               convertFromJSVariant(QVariant(m_app->info()->toVariantMap())).toMap(),
                                               convertFromJSVariant(QVariant(systemProperties())).toMap());
-    setState(Active);
+    setState(Am::Running);
     return true;
 }
 

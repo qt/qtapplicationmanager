@@ -140,10 +140,18 @@ PluginContainer::PluginContainer(AbstractContainerManager *manager, AbstractAppl
 
     connect(containerInterface, &ContainerInterface::ready, this, &PluginContainer::ready);
     connect(containerInterface, &ContainerInterface::started, m_process, &PluginContainerProcess::started);
-    connect(containerInterface, &ContainerInterface::errorOccured, m_process, &PluginContainerProcess::errorOccured);
-    connect(containerInterface, &ContainerInterface::finished, m_process, &PluginContainerProcess::finished);
-    connect(containerInterface, &ContainerInterface::stateChanged, m_process, &PluginContainerProcess::stateChanged);
-
+    connect(containerInterface, &ContainerInterface::errorOccured,
+            m_process, [this](ContainerInterface::ProcessError processError) {
+        emit m_process->errorOccured(static_cast<Am::ProcessError>(processError));
+    });
+    connect(containerInterface, &ContainerInterface::finished,
+            m_process, [this](int exitCode, ContainerInterface::ExitStatus exitStatus) {
+        emit m_process->finished(exitCode, static_cast<Am::ExitStatus>(exitStatus));
+    });
+    connect(containerInterface, &ContainerInterface::stateChanged,
+            m_process, [this](ContainerInterface::RunState newState) {
+        emit m_process->stateChanged(static_cast<Am::RunState>(newState));
+    });
     connect(this, &AbstractContainer::applicationChanged, this, [this]() {
         m_interface->attachApplication(application()->info()->toVariantMap());
     });
@@ -161,9 +169,9 @@ qint64 PluginContainerProcess::processId() const
     return m_container->m_interface->processId();
 }
 
-QProcess::ProcessState PluginContainerProcess::state() const
+Am::RunState PluginContainerProcess::state() const
 {
-    return m_container->m_interface->state();
+    return static_cast<Am::RunState>(m_container->m_interface->state());
 }
 
 void PluginContainerProcess::kill()

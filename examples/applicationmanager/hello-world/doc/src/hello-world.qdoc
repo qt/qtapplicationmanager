@@ -51,6 +51,7 @@ application in the end, albeit a special one.
 Each application is put in its own separate directory as described below:
 
 \list
+\li \tt{system-ui.qml}
 \li \tt{\b{apps}}
     \list
     \li \tt{\b{hello-world.blue}}
@@ -72,32 +73,29 @@ Each application is put in its own separate directory as described below:
         \li \tt{main.qml}
         \endlist
     \endlist
-\li \tt{\b{system-ui}}
-    \list
-    \li \tt{main.qml}
-    \endlist
-\li \tt{am-config.yaml}
 \endlist
 
 As you can see above, each application, besides its mail QML file, also has an icon and a
 \tt{info.yaml}. That YAML file contains the application metadata (it tells System-UI the
 name of the application, its icon filename, etc).
 
-\tt{am-config.yaml} is the main Qt Application Manager configuration file and is what you need to pass
-to the \tt{appman} executable to run your System-UI. It tells, among other things, where the System-UI
-and applications are located.
-
 \section1 Running
 
-Assuming the appman executable is in your path, you can run the System-UI as follows:
+Assuming the \c appman executable is in your path, you can run the System-UI as follows:
 
 \badcode
-examples/applicationmanager/hello-world$ appman --config-file am-config.yaml
+examples/applicationmanager/hello-world$ appman --builtin-apps-manifest-dir ./apps system-ui.qml
 \endcode
+
+The first command line parameter tells \c appman where to find bult-in applications (ie, applications
+that come pre-installed and cannot be removed via ApplicationInstaller APIs). In this case, they're in
+the \c apps subdirectory. The last parameter is the main QML file of the System-UI.
 
 And this is what you should see:
 
 \image hello-world-launched.png
+
+For information on these and other command line options you can run \tt{appman --help}.
 
 \section1 System-UI implementation
 
@@ -105,7 +103,7 @@ Our Hello World System-UI code starts like any simple QML application, with some
 Item at the root. The only difference is that it also imports the \c QtApplicationManager module,
 besides \c QtQuick.
 
-\quotefromfile applicationmanager/hello-world/system-ui/main.qml
+\quotefromfile applicationmanager/hello-world/system-ui.qml
 \skipto import QtQuick
 \printuntil height:
 

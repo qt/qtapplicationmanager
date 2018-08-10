@@ -67,6 +67,9 @@
     part of the application manager. It provides both a DBus and QML APIs for
     all of its functionality.
 
+    \note The ApplicationInstaller singleton and its corresponding DBus API are only available if you
+          specify a base directory for installed application manifests. See \l{Configuration} for details.
+
     \target TaskStates
 
     The following table describes all possible states that a background task could be in:

@@ -227,9 +227,13 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
                     cfg->quickLaunchIdleLoad(), cfg->singleApp());
 
-    setupInstaller(cfg->appImageMountDir(), cfg->caCertificates(),
-                   std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
-                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    if (m_installedAppsManifestDir.isEmpty()) {
+        StartupTimer::instance()->checkpoint("skipping installer");
+    } else {
+        setupInstaller(cfg->appImageMountDir(), cfg->caCertificates(),
+                       std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
+                                 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    }
 
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
@@ -530,7 +534,7 @@ void Main::setupInstaller(const QString &appImageMountDir, const QStringList &ca
         throw Exception("the installer is enabled, but the device-id is empty");
 
     if (Q_UNLIKELY(!QDir::root().mkpath(m_installedAppsManifestDir)))
-        throw Exception("could not create manifest directory %1").arg(m_installedAppsManifestDir);
+        throw Exception("could not create manifest directory for installed applications: \'%1\'").arg(m_installedAppsManifestDir);
 
     if (Q_UNLIKELY(!appImageMountDir.isEmpty() && !QDir::root().mkpath(appImageMountDir)))
         throw Exception("could not create the image-mount directory %1").arg(appImageMountDir);
@@ -946,12 +950,14 @@ void Main::registerDBusInterfaces(const std::function<QString(const char *)> &bu
             throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");
 
 #  if !defined(AM_DISABLE_INSTALLER)
-        auto aia = new ApplicationInstallerDBusContextAdaptor(m_applicationInstaller);
-        const char *aiInterfaceName = dbusInterfaceName(m_applicationInstaller);
-        registerDBusObject(aia->generatedAdaptor(), busForInterface(aiInterfaceName),
-                           "io.qt.ApplicationManager", aiInterfaceName, "/ApplicationInstaller");
-        if (!DBusPolicy::add(aia->generatedAdaptor(), policyForInterface(aiInterfaceName)))
-            throw Exception(Error::DBus, "could not set DBus policy for ApplicationInstaller");
+        if (m_applicationInstaller) {
+            auto aia = new ApplicationInstallerDBusContextAdaptor(m_applicationInstaller);
+            const char *aiInterfaceName = dbusInterfaceName(m_applicationInstaller);
+            registerDBusObject(aia->generatedAdaptor(), busForInterface(aiInterfaceName),
+                               "io.qt.ApplicationManager", aiInterfaceName, "/ApplicationInstaller");
+            if (!DBusPolicy::add(aia->generatedAdaptor(), policyForInterface(aiInterfaceName)))
+                throw Exception(Error::DBus, "could not set DBus policy for ApplicationInstaller");
+        }
 #  endif
 
 #  if !defined(AM_HEADLESS)
@@ -1120,7 +1126,8 @@ QVector<AbstractApplicationInfo *> Main::scanForApplications(const QStringList &
     for (const QString &dir : builtinAppsDirs)
         scan(dir, true);
 #if !defined(AM_DISABLE_INSTALLER)
-    scan(installedAppsDir, false);
+    if (!installedAppsDir.isEmpty())
+        scan(installedAppsDir, false);
 #endif
     return result;
 }

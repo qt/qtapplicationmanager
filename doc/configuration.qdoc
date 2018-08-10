@@ -135,7 +135,9 @@ all your imports paths and file references relative to your main config file.
     \li \b --installed-apps-manifest-dir
     \br \e applications/installedAppsManifestDir
     \li string
-    \li The base directory for installed application manifests. (defaults: \c /opt/am/manifests)
+    \li The base directory for installed application manifests. This must be specified if you
+        want to install new applications, otherwise only the built-in ones will be available.
+        (default: empty/disabled)
 \row
     \li \b --app-image-mount-dir
     \br \e applications/appImageMountDir

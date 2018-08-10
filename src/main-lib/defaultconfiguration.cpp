@@ -90,7 +90,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ qSL("database"),             qSL("filepath of the application database cache."), qSL("file") });
     m_clp.addOption({ { qSL("r"), qSL("recreate-database") },  qSL("recreate the application database cache.") });
     m_clp.addOption({ qSL("builtin-apps-manifest-dir"),   qSL("base directory for built-in application manifests."), qSL("dir") });
-    m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("base directory for installed application manifests."), qSL("dir"), qSL("/opt/am/manifests") });
+    m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("base directory for installed application manifests."), qSL("dir") });
     m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("base directory where application images are mounted to."), qSL("dir") });
 #if defined(QT_DBUS_LIB)
 #  if defined(Q_OS_LINUX)
@@ -144,6 +144,11 @@ void DefaultConfiguration::parse(QStringList *deploymentWarnings)
     if (database().isEmpty())
         *deploymentWarnings << qL1S("No --database command line parameter or applications/database configuration"
                 " key specified. Database won't be cached to speed up subsequent System-UI startups.");
+
+    if (installedAppsManifestDir().isEmpty())
+        *deploymentWarnings << qL1S("No --installed-apps-manifest-dir command line parameter or"
+                " applications/installedAppsManifestDir configuration key specified. It won't be possible to install,"
+                " remove or access installable applications.");
 }
 
 QString DefaultConfiguration::mainQmlFile() const

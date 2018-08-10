@@ -3,7 +3,6 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installedAppsManifestDir: "/tmp/hello-world/manifests"
 
 ui:
   mainQml: "${CONFIG_PWD}/system-ui/main.qml"

@@ -98,7 +98,7 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li Description
 \row
   \li \c{-config force-libcrypto}
-  \li Force building against OpenSSL, even on Windows and Mac OS X.
+  \li Force building against OpenSSL, even on Windows and macOS.
 \row
   \li \c{-config force-system-libarchive}
   \li Force building against the system libarchive.

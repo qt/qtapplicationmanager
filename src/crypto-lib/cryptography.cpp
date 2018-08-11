@@ -54,9 +54,10 @@
 #  undef SystemFunction036
 #endif
 
-#if defined(Q_OS_OSX)
+#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
 #  include <QtCore/private/qcore_mac_p.h>
 #  include <Security/SecBase.h>
+#  include <Availability.h>
 #endif
 
 #if defined(AM_USE_LIBCRYPTO)
@@ -137,10 +138,16 @@ QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescrip
         result.append(QString::fromWCharArray(msg).trimmed());
         HeapFree(GetProcessHeap(), 0, msg);
     }
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     if (osCryptoError) {
-        QCFType<CFStringRef> msg = SecCopyErrorMessageString(osCryptoError, nullptr);
-        result.append(QString::fromCFString(msg));
+#  if QT_MACOS_IOS_PLATFORM_SDK_EQUAL_OR_ABOVE(100300, 110300)
+        if (__builtin_available(macOS 10.3, iOS 12.3, *)) {
+            QCFType<CFStringRef> msg = SecCopyErrorMessageString(qint32(osCryptoError), nullptr);
+            result.append(QString::fromCFString(msg));
+        }
+#  else
+        result.append(QString::number(osCryptoError));
+#  endif
     }
 #endif
 

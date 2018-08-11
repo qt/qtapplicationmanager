@@ -56,7 +56,7 @@ bool Package::ensureCorrectLocale()
     // This has to be done *before* the QApplication constructor to avoid
     // the initialization of the text codecs.
 
-#if defined(Q_OS_WIN) || defined(Q_OS_OSX)
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     // Windows is UTF16
     // Mac is UTF8
     return true;
@@ -110,7 +110,7 @@ bool Package::checkCorrectLocale()
 {
     // see ensureCorrectLocale() above. Call this after the QApplication
     // constructor as a sanity check.
-#if defined(Q_OS_WIN) || defined(Q_OS_OSX)
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     return true;
 #else
     // check if umlaut-a converts correctly

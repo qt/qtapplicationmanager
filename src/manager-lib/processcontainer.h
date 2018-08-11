@@ -42,9 +42,8 @@
 #pragma once
 
 #include <QtAppManManager/abstractcontainer.h>
+#include <QtAppManManager/amnamespace.h>
 #include <QProcess>
-
-#define AM_HOST_CONTAINER_AVAILABLE
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -64,6 +63,9 @@ public:
                               const QMap<QString, QString> &debugWrapperEnvironment,
                               const QStringList &debugWrapperCommand) override;
 };
+
+
+class HostQProcess;
 
 class HostProcess : public AbstractContainerProcess
 {
@@ -88,16 +90,7 @@ public slots:
     void setStopBeforeExec(bool stopBeforeExec);
 
 private:
-    class MyQProcess : public QProcess // clazy:exclude=missing-qobject-macro
-    {
-    protected:
-        void setupChildProcess() override;
-    public:
-        bool m_stopBeforeExec = false;
-        QVector<int> m_stdioRedirections;
-    };
-
-    MyQProcess m_process;
+    HostQProcess *m_process;
     qint64 m_pid = 0;
 };
 

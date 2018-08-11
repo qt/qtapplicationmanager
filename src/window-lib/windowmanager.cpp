@@ -285,7 +285,7 @@ void WindowManager::shutDown()
 */
 bool WindowManager::isRunningOnDesktop() const
 {
-#if defined(Q_OS_WIN) || defined(Q_OS_OSX)
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
     return true;
 #else
     return qApp->platformName() == qSL("xcb");

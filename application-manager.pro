@@ -1,4 +1,4 @@
-requires(linux|win32:!winrt|macos)
+requires(linux|android|macos|ios|win32:!winrt)
 
 !equals(QT_MAJOR_VERSION, 5)|lessThan(QT_MINOR_VERSION, 11) {
     log("$$escape_expand(\\n\\n) *** The QtApplicationManager module needs to be built against Qt 5.11+ ***$$escape_expand(\\n\\n)")
@@ -19,10 +19,12 @@ else:contains(QT_BUILD_PARTS, "tests"):CONFIG += enable-tests
 enable-examples:QT_BUILD_PARTS *= examples
 else:contains(QT_BUILD_PARTS, "examples"):CONFIG += enable-examples
 
-load(configure)
-qtCompileTest(libarchive)
-qtCompileTest(libyaml)
-!headless:qtCompileTest(touchemulation)
+!ios { # QtCreator won't load the pro file correctly otherwise
+    load(configure)
+    qtCompileTest(libarchive)
+    qtCompileTest(libyaml)
+    !headless:qtCompileTest(touchemulation)
+}
 
 qtHaveModule(waylandcompositor):CONFIG += am_compatible_compositor
 
@@ -63,7 +65,7 @@ android|tools-only {
 
 if(linux|force-libcrypto):check_crypto = "libcrypto / OpenSSL"
 else:win32:check_crypto = "WinCrypt"
-else:osx:check_crypto = "SecurityFramework"
+else:if(macos|ios):check_crypto = "SecurityFramework"
 
 auto-multi-process { check_multi = "yes (auto detect)" } else { check_multi = "no (auto detect)" }
 force-single-process { check_multi = "no (force-single-process)" }

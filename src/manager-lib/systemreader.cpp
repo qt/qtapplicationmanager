@@ -664,7 +664,7 @@ quint64 MemoryReader::readUsedValue() const
 
 QT_END_NAMESPACE_AM
 
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
 
 #include <mach/mach.h>
 #include <sys/sysctl.h>

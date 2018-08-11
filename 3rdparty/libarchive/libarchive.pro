@@ -9,7 +9,8 @@ CONFIG += \
     exceptions_off rtti_off warn_off \
     installed
 
-osx:LIBS += -framework CoreServices -liconv
+macos:LIBS += -framework CoreServices -liconv
+ios:LIBS += -liconv
 win32:LIBS += -lcrypt32
 win32:MODULE_DEFINES += LIBARCHIVE_STATIC
 MODULE_INCLUDEPATH += $$PWD/libarchive
@@ -29,13 +30,15 @@ win32-msvc* {
 
 android:DEFINES += PLATFORM_CONFIG_H=\\\"config-android.h\\\"
 else:win32:DEFINES += PLATFORM_CONFIG_H=\\\"config-windows.h\\\"
-else:osx:DEFINES += PLATFORM_CONFIG_H=\\\"config-osx.h\\\"
+else:macos:DEFINES += PLATFORM_CONFIG_H=\\\"config-macos.h\\\"
+else:ios:DEFINES += PLATFORM_CONFIG_H=\\\"config-ios.h\\\"
 else:DEFINES += PLATFORM_CONFIG_H=\\\"config-unix.h\\\"
 
 OTHER_FILES += \
     config-android.h \
     config-windows.h \
-    config-osx.h \
+    config-macos.h \
+    config-ios.h \
     config-unix.h \
     android_lf.h \
 
@@ -45,7 +48,7 @@ include(../libz.pri)
 
 # disabled for now, since we have 2 problems:
 #  1) the python/django appstore is based on python 2.7 which does not support it via tarfile
-#  2) we get a weird error on MacOSX when creating XZ'ed packages from libarchive
+#  2) we get a weird error on macOS when creating XZ'ed packages from libarchive
 # include(../liblzma.pri)
 
 SOURCES += \

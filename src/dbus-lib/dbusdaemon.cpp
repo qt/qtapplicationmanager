@@ -61,7 +61,7 @@ DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
     QString program = qSL("dbus-daemon");
     QStringList arguments = { qSL("--nofork"), qSL("--print-address"), qSL("--session") };
 
-#if defined(Q_OS_OSX)
+#if defined(Q_OS_MACOS)
     // there's no native dbus support on macOS, so we try to use brew's dbus support
     program = qSL("/usr/local/bin/dbus-daemon");
     // brew's dbus-daemon needs an address, because it will otherwise assume that it was

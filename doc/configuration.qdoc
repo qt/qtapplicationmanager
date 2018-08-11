@@ -194,7 +194,7 @@ all your imports paths and file references relative to your main config file.
     \li string
     \li If set, the given image file will be used as a window icon for all application-manager
         windows. This setting is only useful for development and will only take effect on Windows,
-        Mac OS X and Linux/X11.
+        macOS and Linux/X11.
 \row
     \li \b -I
     \br \e ui/importPaths

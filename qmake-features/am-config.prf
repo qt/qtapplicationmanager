@@ -20,7 +20,7 @@ config_touchemulation:DEFINES += AM_ENABLE_TOUCH_EMULATION
 linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release)):DEFINES *= AM_USE_LIBBACKTRACE
 
 !force-single-process {
-    linux|osx {
+    linux|macos {
         headless|if(qtHaveModule(waylandcompositor)) {
             CONFIG *= auto-multi-process
         }

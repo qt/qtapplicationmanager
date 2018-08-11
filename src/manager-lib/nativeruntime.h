@@ -43,15 +43,12 @@
 
 #include <qglobal.h>
 
-#if defined(AM_MULTI_PROCESS)
-
 #include <QtPlugin>
 #include <QVector>
 
 #include <QtAppManManager/abstractruntime.h>
 #include <QtAppManManager/abstractcontainer.h>
-
-#define AM_NATIVE_RUNTIME_AVAILABLE
+#include <QtAppManManager/amnamespace.h>
 
 QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 QT_FORWARD_DECLARE_CLASS(QDBusServer)
@@ -139,5 +136,3 @@ private:
 };
 
 QT_END_NAMESPACE_AM
-
-#endif //defined(QT_DBUS_LIB)

@@ -131,7 +131,7 @@ public:
 QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
                                     const QByteArray &signingCertificatePassword) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    // Although OpenSSL could, the OSX Security Framework cannot process empty detached data
+    // Although OpenSSL could, the macOS Security Framework cannot process empty detached data
     if (hash.isEmpty())
         throw OpenSslException("cannot sign an empty hash value");
 

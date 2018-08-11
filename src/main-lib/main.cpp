@@ -104,8 +104,10 @@
 #include "runtimefactory.h"
 #include "containerfactory.h"
 #include "quicklauncher.h"
-#include "nativeruntime.h"
-#include "processcontainer.h"
+#if defined(AM_MULTI_PROCESS)
+#  include "processcontainer.h"
+#  include "nativeruntime.h"
+#endif
 #include "plugincontainer.h"
 #include "notificationmanager.h"
 #include "qmlinprocessruntime.h"
@@ -370,12 +372,11 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
         RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager(qSL("qml")));
     } else {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager());
-#if defined(AM_NATIVE_RUNTIME_AVAILABLE)
+#if defined(AM_MULTI_PROCESS)
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager());
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(qSL("qml")));
         //RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(qSL("html")));
-#endif
-#if defined(AM_HOST_CONTAINER_AVAILABLE)
+
         ContainerFactory::instance()->registerContainer(new ProcessContainerManager());
 #endif
         auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", containerPluginPaths);

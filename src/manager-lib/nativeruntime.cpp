@@ -117,7 +117,7 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
 
     connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
             this, [this](const QDBusConnection &connection) {
-#if defined(Q_OS_OSX)
+#if defined(Q_OS_MACOS)
         // getting the pid is not supported on macOS. Accepting everything is not secure
         // but it at least works
         onDBusPeerConnection(connection);

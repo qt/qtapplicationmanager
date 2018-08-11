@@ -60,7 +60,7 @@
 #  if !defined(SYS_gettid)
 #    define SYS_gettid __NR_gettid
 #  endif
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
 #  include <unistd.h>
 #  include <sys/sysctl.h>
 #endif
@@ -324,7 +324,7 @@ StartupTimer::StartupTimer()
         }
     }
 
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     int mibNames[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
     size_t procInfoSize;
 

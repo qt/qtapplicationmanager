@@ -14,7 +14,7 @@ defineTest(printConfigLine) {
     isEmpty(width):width = 30
 
     unix:system("test -t 2") { # check if we are on unix and stderr is a tty
-        osx:echo="echo"
+        macos:echo="echo"
         else:echo="/bin/echo -e"
 
         equals(color, "auto") {

@@ -105,7 +105,7 @@ private:
 #if defined(Q_OS_LINUX)
     QScopedPointer<SysFsReader> m_sysFs;
     const QString m_groupPath;
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     static int s_pageSize;
 #endif
     Q_DISABLE_COPY(MemoryReader)

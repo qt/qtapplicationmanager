@@ -75,7 +75,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
     };
 
     try {
-        // Although WinCrypt could, the OSX Security Framework cannot process empty detached data
+        // Although WinCrypt could, the macOS Security Framework cannot process empty detached data
         if (hash.isEmpty())
             throw WinCryptException("cannot sign an empty hash value");
 

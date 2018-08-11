@@ -55,33 +55,63 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-HostProcess::HostProcess()
+class HostQProcess : public QProcess // clazy:exclude=missing-qobject-macro
 {
-    m_process.setProcessChannelMode(QProcess::ForwardedChannels);
-    m_process.setInputChannelMode(QProcess::ForwardedInputChannel);
+protected:
+    void setupChildProcess() override
+    {
+#if defined(Q_OS_UNIX)
+        if (m_stopBeforeExec) {
+            fprintf(stderr, "\n*** a 'process' container was started in stopped state ***\nthe process is suspended via SIGSTOP and you can attach a debugger to it via\n\n   gdb -p %d\n\n", getpid());
+            raise(SIGSTOP);
+        }
+        // duplicate any requested redirections to the respective stdin/out/err fd. Also make sure to
+        // close the original fd: otherwise we would block the tty where the fds originated from.
+        for (int i = 0; i < 3; ++i) {
+            int fd = m_stdioRedirections.value(i, -1);
+            if (fd >= 0) {
+                dup2(fd, i);
+                ::close(fd);
+            }
+        }
+#endif
+    }
+
+public:
+    bool m_stopBeforeExec = false;
+    QVector<int> m_stdioRedirections;
+};
+
+
+HostProcess::HostProcess()
+    : m_process(new HostQProcess)
+{
+    m_process->setProcessChannelMode(QProcess::ForwardedChannels);
+    m_process->setInputChannelMode(QProcess::ForwardedInputChannel);
 }
 
 HostProcess::~HostProcess()
 {
-    m_process.disconnect(this);
+    m_process->disconnect(this);
+    delete m_process;
 }
 
 void HostProcess::start(const QString &program, const QStringList &arguments)
 {
-    connect(&m_process, &QProcess::started, this, [this]() {
+    connect(m_process, &QProcess::started, this, [this]() {
          // we to cache the pid in order to have it available after the process crashed
-        m_pid = m_process.processId();
+        m_pid = m_process->processId();
         emit started();
     });
-    connect(&m_process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+    connect(m_process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
             this, [this](QProcess::ProcessError error) {
         emit errorOccured(static_cast<Am::ProcessError>(error));
     });
-    connect(&m_process, static_cast<void (QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),
+    connect(m_process, static_cast<void (QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),
             this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
         emit finished(exitCode, static_cast<Am::ExitStatus>(exitStatus));
     });
-    connect(&m_process, &QProcess::stateChanged,
+    connect(m_process, &QProcess::stateChanged,
             this, [this](QProcess::ProcessState newState) {
         emit stateChanged(static_cast<Am::RunState>(newState));
     });
@@ -89,7 +119,7 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
 #if defined(Q_OS_UNIX)
     // make sure that the redirection fds do not have a close-on-exec flag, since we need them
     // in the child process.
-    for (int fd : qAsConst(m_process.m_stdioRedirections)) {
+    for (int fd : qAsConst(m_process->m_stdioRedirections)) {
         if (fd < 0)
             continue;
         int flags = fcntl(fd, F_GETFD);
@@ -98,13 +128,13 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
     }
 #endif
 
-    m_process.start(program, arguments);
+    m_process->start(program, arguments);
 
 #if defined(Q_OS_UNIX)
     // we are forked now and the child process has received a copy of all redirected fds
     // now it's time to close our fds, since we don't need them anymore (plus we would block
     // the tty where they originated from)
-    for (int fd : qAsConst(m_process.m_stdioRedirections)) {
+    for (int fd : qAsConst(m_process->m_stdioRedirections)) {
         if (fd >= 0)
             ::close(fd);
     }
@@ -113,22 +143,22 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
 
 void HostProcess::setWorkingDirectory(const QString &dir)
 {
-    m_process.setWorkingDirectory(dir);
+    m_process->setWorkingDirectory(dir);
 }
 
 void HostProcess::setProcessEnvironment(const QProcessEnvironment &environment)
 {
-    m_process.setProcessEnvironment(environment);
+    m_process->setProcessEnvironment(environment);
 }
 
 void HostProcess::kill()
 {
-    m_process.kill();
+    m_process->kill();
 }
 
 void HostProcess::terminate()
 {
-    m_process.terminate();
+    m_process->terminate();
 }
 
 qint64 HostProcess::processId() const
@@ -138,17 +168,17 @@ qint64 HostProcess::processId() const
 
 Am::RunState HostProcess::state() const
 {
-    return static_cast<Am::RunState>(m_process.state());
+    return static_cast<Am::RunState>(m_process->state());
 }
 
 void HostProcess::setStdioRedirections(const QVector<int> &stdioRedirections)
 {
-    m_process.m_stdioRedirections = stdioRedirections;
+    m_process->m_stdioRedirections = stdioRedirections;
 }
 
 void HostProcess::setStopBeforeExec(bool stopBeforeExec)
 {
-    m_process.m_stopBeforeExec = stopBeforeExec;
+    m_process->m_stopBeforeExec = stopBeforeExec;
 }
 
 
@@ -292,25 +322,6 @@ AbstractContainer *ProcessContainerManager::create(AbstractApplication *app, con
                                                    const QStringList &debugWrapperCommand)
 {
     return new ProcessContainer(this, app, stdioRedirections, debugWrapperEnvironment, debugWrapperCommand);
-}
-
-void HostProcess::MyQProcess::setupChildProcess()
-{
-#if defined(Q_OS_UNIX)
-    if (m_stopBeforeExec) {
-        fprintf(stderr, "\n*** a 'process' container was started in stopped state ***\nthe process is suspended via SIGSTOP and you can attach a debugger to it via\n\n   gdb -p %d\n\n", getpid());
-        raise(SIGSTOP);
-    }
-    // duplicate any requested redirections to the respective stdin/out/err fd. Also make sure to
-    // close the original fd: otherwise we would block the tty where the fds originated from.
-    for (int i = 0; i < 3; ++i) {
-        int fd = m_stdioRedirections.value(i, -1);
-        if (fd >= 0) {
-            dup2(fd, i);
-            ::close(fd);
-        }
-    }
-#endif
 }
 
 QT_END_NAMESPACE_AM

@@ -119,7 +119,7 @@ existing implementations:
 \list
   \li C++ OpenSSL based in \c{src/crypto-lib/signature_openssl.cpp}
   \li C++ WinCrypt based in \c{src/crypto-lib/signature_win.cpp} (Windows only)
-  \li C++ SecurityFramework based in \c{src/crypto-lib/signature_osx.cpp} (OS X only)
+  \li C++ SecurityFramework based in \c{src/crypto-lib/signature_macos.cpp} (macOS only)
   \li Python m2crypt based in the appstore-server reference implementation.
 \endlist
 

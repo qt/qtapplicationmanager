@@ -25,8 +25,8 @@ win32:!force-libcrypto {
     SOURCES += signature_win.cpp
 
     LIBS += -lcrypt32
-} else:osx:!force-libcrypto {
-    SOURCES += signature_osx.cpp
+} else:macos:!force-libcrypto {
+    SOURCES += signature_macos.cpp
 
     LIBS += -framework CoreFoundation -framework Security
     QT *= core-private

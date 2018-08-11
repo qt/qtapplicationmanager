@@ -29,7 +29,6 @@ HEADERS += \
     abstractcontainer.h \
     containerfactory.h \
     plugincontainer.h \
-    processcontainer.h \
     abstractruntime.h \
     runtimefactory.h \
     quicklauncher.h \
@@ -51,6 +50,7 @@ linux:HEADERS += \
 multi-process:HEADERS += \
     nativeruntime.h \
     nativeruntime_p.h \
+    processcontainer.h \
 
 qtHaveModule(qml):HEADERS += \
     qmlinprocessruntime.h \
@@ -65,7 +65,6 @@ SOURCES += \
     abstractcontainer.cpp \
     containerfactory.cpp \
     plugincontainer.cpp \
-    processcontainer.cpp \
     abstractruntime.cpp \
     runtimefactory.cpp \
     quicklauncher.cpp \
@@ -83,6 +82,7 @@ linux:SOURCES += \
 
 multi-process:SOURCES += \
     nativeruntime.cpp \
+    processcontainer.cpp \
 
 qtHaveModule(qml):SOURCES += \
     qmlinprocessruntime.cpp \

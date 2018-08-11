@@ -73,12 +73,14 @@
 #  include <windows.h>
 #  include <io.h>
 #  include <tlhelp32.h>
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
 #  include <unistd.h>
 #  include <sys/mount.h>
 #  include <sys/statvfs.h>
 #  include <sys/sysctl.h>
-#  include <libproc.h>
+#  if defined(Q_OS_MACOS)
+#    include <libproc.h>
+#  endif
 #else
 #  include <stdio.h>
 #  include <mntent.h>
@@ -144,7 +146,7 @@ QMultiMap<QString, QString> mountedDirectories()
 #if defined(Q_OS_WIN)
     return result; // no mounts on Windows
 
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     struct statfs *sfs = nullptr;
     int count = getmntinfo(&sfs, MNT_NOWAIT);
 
@@ -249,7 +251,7 @@ void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *c
                 runningInCreatorDetected = true;
                 break;
             }
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS)
             static char buffer[PROC_PIDPATHINFO_MAXSIZE + 1];
             int len = proc_pidpath(pid, buffer, sizeof(buffer) - 1);
             if ((len > 0) && QByteArray::fromRawData(buffer, len).contains("Qt Creator")) {
@@ -354,7 +356,7 @@ qint64 getParentPid(qint64 pid)
             ppid = strtoll(ba.constData() + pos + 4, nullptr, 10);
     }
 
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     int mibNames[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, (pid_t) pid };
     size_t procInfoSize;
 

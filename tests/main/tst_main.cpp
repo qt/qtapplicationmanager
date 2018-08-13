@@ -56,6 +56,7 @@ private slots:
     void installAndRemoveUpdateForBuiltIn();
     void updateForBuiltInAlreadyInstalled();
     void loadDatabaseWithUpdatedBuiltInApp();
+    void nonExistentMainQmlFile();
 
 private:
     void cleanUpInstallationDir();
@@ -285,6 +286,41 @@ void tst_Main::loadDatabaseWithUpdatedBuiltInApp()
 
     auto app = appMan->application(0);
     QCOMPARE(app->name(qSL("en")), qSL("Hello Updated Red"));
+}
+
+/*
+   When the "main QML file" parameter contains a relative filepath like "foo/bar.qml",
+   Main should treat it as a local file (instead of a remote url) and complain that it
+   doesn't exist.
+ */
+void tst_Main::nonExistentMainQmlFile()
+{
+    QStringList arguments;
+    arguments << "tst_update-builtin-app";
+    arguments << "--dbus";
+    arguments << "none";
+    arguments << "foo/bar.qml";
+
+    QString errorMsg;
+
+    main = new Main(argc, argv);
+
+    config = new DefaultConfiguration;
+    config->parseWithArguments(arguments);
+
+    try {
+        main->setup(config);
+    } catch (const std::exception &e) {
+        errorMsg.append(e.what());
+    }
+
+    QVERIFY(errorMsg.startsWith("no/invalid main QML file specified:"));
+    QVERIFY(errorMsg.contains("bar.qml"));
+
+    delete config;
+    config = nullptr;
+    delete main;
+    main = nullptr;
 }
 
 QTEST_APPLESS_MAIN(tst_Main)

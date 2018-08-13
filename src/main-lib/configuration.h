@@ -53,7 +53,8 @@ class Configuration
 {
 public:
     virtual ~Configuration();
-    virtual void parse(QStringList *deploymentWarnings = nullptr);
+    void parse(QStringList *deploymentWarnings = nullptr);
+    virtual void parseWithArguments(const QStringList &arguments, QStringList *deploymentWarnings = nullptr);
     QVariant buildConfig() const;
 
 protected:

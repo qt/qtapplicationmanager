@@ -214,7 +214,12 @@ void Configuration::showParserMessage(const QString &message, MessageType type)
 
 void Configuration::parse(QStringList *deploymentWarnings)
 {
-    if (!m_clp.parse(QCoreApplication::arguments())) {
+    parseWithArguments(QCoreApplication::arguments(), deploymentWarnings);
+}
+
+void Configuration::parseWithArguments(const QStringList &arguments, QStringList *deploymentWarnings)
+{
+    if (!m_clp.parse(arguments)) {
         showParserMessage(m_clp.errorText() + qL1C('\n'), ErrorMessage);
         exit(1);
     }

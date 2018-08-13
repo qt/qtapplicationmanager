@@ -121,9 +121,9 @@ DefaultConfiguration::~DefaultConfiguration()
 }
 
 
-void DefaultConfiguration::parse(QStringList *deploymentWarnings)
+void DefaultConfiguration::parseWithArguments(const QStringList &arguments, QStringList *deploymentWarnings)
 {
-    Configuration::parse(deploymentWarnings);
+    Configuration::parseWithArguments(arguments, deploymentWarnings);
 
     if (m_onlyOnePositionalArgument && (m_clp.positionalArguments().size() > 1)) {
         showParserMessage(qL1S("Only one main qml file can be specified.\n"), ErrorMessage);

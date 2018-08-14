@@ -64,7 +64,7 @@
 /*!
     \qmltype SystemMonitor
     \inqmlmodule QtApplicationManager
-    \ingroup system-ui-singletons
+    \ingroup system-ui
     \brief The system monitoring model, giving access to a range of measurements, e.g. CPU load,
     frame rate, etc.
 
@@ -623,33 +623,6 @@ public:
     }
 };
 
-
-SystemMonitor *SystemMonitor::s_instance = nullptr;
-
-
-SystemMonitor *SystemMonitor::createInstance()
-{
-    if (Q_UNLIKELY(s_instance))
-        qFatal("SystemMonitor::createInstance() was called a second time.");
-
-    qmlRegisterSingletonType<SystemMonitor>("QtApplicationManager", 1, 0, "SystemMonitor",
-                                                 &SystemMonitor::instanceForQml);
-    return s_instance = new SystemMonitor();
-}
-
-SystemMonitor *SystemMonitor::instance()
-{
-    if (!s_instance)
-        qFatal("SystemMonitor::instance() was called before createInstance().");
-    return s_instance;
-}
-
-QObject *SystemMonitor::instanceForQml(QQmlEngine *, QJSEngine *)
-{
-    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
-    return instance();
-}
-
 SystemMonitor::SystemMonitor()
     : d_ptr(new SystemMonitorPrivate(this))
 {
@@ -690,7 +663,6 @@ SystemMonitor::~SystemMonitor()
     delete d->gpu;
     qDeleteAll(d->ioHash);
     delete d;
-    s_instance = nullptr;
 }
 
 int SystemMonitor::rowCount(const QModelIndex &parent) const

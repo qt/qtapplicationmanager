@@ -48,29 +48,33 @@ TestCase {
     when: windowShown
     name: "Monitoring"
 
+    SystemMonitor {
+        id: systemMonitor
+    }
+
     ListView {
         id: listView
-        model: SystemMonitor
+        model: systemMonitor
         delegate: Item {}
     }
 
     SignalSpy {
         id: memoryReportingChangedSpy
-        target: SystemMonitor
+        target: systemMonitor
         signalName: "memoryReportingChanged"
     }
 
     function test_mem_reporting() {
-        compare(SystemMonitor.count, 10);
-        verify(!SystemMonitor.memoryReportingEnabled);
+        compare(systemMonitor.count, 10);
+        verify(!systemMonitor.memoryReportingEnabled);
 
-        SystemMonitor.reportingInterval = 80
-        SystemMonitor.count = 5;
-        SystemMonitor.memoryReportingEnabled = true;
+        systemMonitor.reportingInterval = 80
+        systemMonitor.count = 5;
+        systemMonitor.memoryReportingEnabled = true;
 
-        compare(SystemMonitor.reportingInterval, 80);
-        compare(SystemMonitor.count, 5);
-        verify(SystemMonitor.memoryReportingEnabled);
+        compare(systemMonitor.reportingInterval, 80);
+        compare(systemMonitor.count, 5);
+        verify(systemMonitor.memoryReportingEnabled);
 
         memoryReportingChangedSpy.wait(100);
         compare(memoryReportingChangedSpy.count, 1);
@@ -86,20 +90,20 @@ TestCase {
         compare(listView.model.get(0).memoryUsed, mem[1]);
         compare(listView.model.get(1).memoryUsed, mem[0]);
 
-        SystemMonitor.count = 4;
+        systemMonitor.count = 4;
         compare(listView.model.get(0).memoryUsed, mem[1]);
         compare(listView.model.get(1).memoryUsed, mem[0]);
 
-        SystemMonitor.reportingInterval = 85;
+        systemMonitor.reportingInterval = 85;
         compare(listView.model.get(0).memoryUsed, 0);
         compare(listView.model.get(1).memoryUsed, 0);
     }
 
     function test_static() {
-        console.info("CPU Cores: " + SystemMonitor.cpuCores);
-        console.info("Total Memory: " + (SystemMonitor.totalMemory/1e9).toFixed(1) + " GB");
-        verify(SystemMonitor.cpuCores >= 1);
-        verify(SystemMonitor.totalMemory > 64000);
-        compare(SystemMonitor.idleLoadThreshold, 0.1);
+        console.info("CPU Cores: " + systemMonitor.cpuCores);
+        console.info("Total Memory: " + (systemMonitor.totalMemory/1e9).toFixed(1) + " GB");
+        verify(systemMonitor.cpuCores >= 1);
+        verify(systemMonitor.totalMemory > 64000);
+        compare(systemMonitor.idleLoadThreshold, 0.1);
     }
 }

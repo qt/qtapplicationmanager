@@ -64,6 +64,16 @@ Window {
     height: 600
     color: "black"
 
+    SystemMonitor {
+        id: systemMonitor
+        reportingInterval: 1000
+        count: 12
+        idleLoadThreshold: 0.05
+        cpuLoadReportingEnabled: true
+        gpuLoadReportingEnabled: true
+        memoryReportingEnabled: true
+    }
+
     Column {
         x: 10
         padding: 20
@@ -72,20 +82,20 @@ Window {
             Column {
                 spacing: 10
                 MonitorText { text: "System"; font.pixelSize: 26 }
-                MonitorText { text: "CPU Cores: " + SystemMonitor.cpuCores }
-                MonitorText { text: "Total Memory: " + (SystemMonitor.totalMemory / 1e9).toFixed(1) + " GB" }
-                MonitorText { text: "Used Memory: " + (SystemMonitor.memoryUsed / 1e9).toFixed(1) + " GB" }
-                MonitorText { text: "Idle Threshold: " + SystemMonitor.idleLoadThreshold * 100 + " %" }
-                MonitorText { text: "Idle: " + SystemMonitor.idle }
-                MonitorText { text: "GPU Load: " + SystemMonitor.gpuLoad * 100 + " %" }
+                MonitorText { text: "CPU Cores: " + systemMonitor.cpuCores }
+                MonitorText { text: "Total Memory: " + (systemMonitor.totalMemory / 1e9).toFixed(1) + " GB" }
+                MonitorText { text: "Used Memory: " + (systemMonitor.memoryUsed / 1e9).toFixed(1) + " GB" }
+                MonitorText { text: "Idle Threshold: " + systemMonitor.idleLoadThreshold * 100 + " %" }
+                MonitorText { text: "Idle: " + systemMonitor.idle }
+                MonitorText { text: "GPU Load: " + systemMonitor.gpuLoad * 100 + " %" }
             }
         }
 
         Tile {
             MonitorChart {
                 title: "CPU Load"
-                model: SystemMonitor
-                reading: (SystemMonitor.cpuLoad * 100).toFixed(1) + " %"
+                model: systemMonitor
+                reading: (systemMonitor.cpuLoad * 100).toFixed(1) + " %"
                 delegate: Rectangle {
                     width: 11
                     height: parent.height
@@ -245,14 +255,6 @@ Window {
     }
 
     Component.onCompleted: {
-        SystemMonitor.reportingInterval = 1000;
-        SystemMonitor.count = 12;
-
-        SystemMonitor.idleLoadThreshold = 0.05;
-        SystemMonitor.cpuLoadReportingEnabled = true;
-        SystemMonitor.gpuLoadReportingEnabled = true;
-        SystemMonitor.memoryReportingEnabled = true;
-
         ApplicationManager.application(0).start();
     }
 }

@@ -168,7 +168,6 @@ private:
     NotificationManager *m_notificationManager = nullptr;
     WindowManager *m_windowManager = nullptr;
     QuickLauncher *m_quickLauncher = nullptr;
-    SystemMonitor *m_systemMonitor = nullptr;
     QVector<StartupInterface *> m_startupPlugins;
     QVector<QVariantMap> m_systemProperties;
 

@@ -70,10 +70,8 @@ class SystemMonitor : public QAbstractListModel
     Q_PROPERTY(bool idle READ isIdle NOTIFY idleChanged)
 
 public:
+    SystemMonitor();
     ~SystemMonitor() override;
-    static SystemMonitor *createInstance();
-    static SystemMonitor *instance();
-    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -140,9 +138,6 @@ signals:
     void fpsReportingEnabledChanged();
 
 private:
-    SystemMonitor();
-    static SystemMonitor *s_instance;
-
     SystemMonitorPrivate *d_ptr;
     Q_DECLARE_PRIVATE(SystemMonitor)
 };

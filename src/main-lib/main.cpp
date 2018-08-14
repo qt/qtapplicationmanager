@@ -173,7 +173,6 @@ Main::~Main()
 #  endif
     delete m_applicationManager;
     delete m_quickLauncher;
-    delete m_systemMonitor;
     delete m_applicationIPCManager;
 
     delete RuntimeFactory::instance();
@@ -496,9 +495,6 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     m_applicationIPCManager = ApplicationIPCManager::createInstance();
     StartupTimer::instance()->checkpoint("after ApplicationIPCManager instantiation");
 
-    m_systemMonitor = SystemMonitor::createInstance();
-    StartupTimer::instance()->checkpoint("after SystemMonitor instantiation");
-
     m_quickLauncher = QuickLauncher::instance();
     m_quickLauncher->initialize(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad);
     StartupTimer::instance()->checkpoint("after quick-launcher setup");
@@ -599,6 +595,7 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     qmlRegisterType<FakeApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
     qmlRegisterType<ProcessMonitor>("QtApplicationManager", 1, 0, "ProcessMonitor");
+    qmlRegisterType<SystemMonitor>("QtApplicationManager", 1, 0, "SystemMonitor");
 
     StartupTimer::instance()->checkpoint("after QML registrations");
 

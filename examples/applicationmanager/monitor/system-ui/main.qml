@@ -54,12 +54,11 @@ import QtQuick 2.6
 import QtQuick.Window 2.0
 import QtApplicationManager 1.0
 
-
 Window {
     id: root
 
-    property var primaryWindow
-    property var secondaryWindow
+    property alias primaryWindow: primaryContainer.window
+    property alias secondaryWindow: secondaryContainer.window
 
     width: 720
     height: 600
@@ -71,13 +70,11 @@ Window {
 
         Tile {
             Column {
-                id: systemOverview
                 spacing: 10
-
                 MonitorText { text: "System"; font.pixelSize: 26 }
                 MonitorText { text: "CPU Cores: " + SystemMonitor.cpuCores }
                 MonitorText { text: "Total Memory: " + (SystemMonitor.totalMemory / 1e9).toFixed(1) + " GB" }
-                MonitorText { id: systemMem; text: "Used Memory:"  }
+                MonitorText { text: "Used Memory: " + (SystemMonitor.memoryUsed / 1e9).toFixed(1) + " GB" }
                 MonitorText { text: "Idle Threshold: " + SystemMonitor.idleLoadThreshold * 100 + " %" }
                 MonitorText { text: "Idle: " + SystemMonitor.idle }
                 MonitorText { text: "GPU Load: " + SystemMonitor.gpuLoad * 100 + " %" }
@@ -86,9 +83,9 @@ Window {
 
         Tile {
             MonitorChart {
-                id: systemLoad
                 title: "CPU Load"
                 model: SystemMonitor
+                reading: (SystemMonitor.cpuLoad * 100).toFixed(1) + " %"
                 delegate: Rectangle {
                     width: 11
                     height: parent.height
@@ -136,7 +133,7 @@ Window {
                                 console.warn("There is no dedicated application process in single-process mode");
 
                             if (primaryWindow && secondaryWindow) {
-                                processMon.monitoredWindows = primary.active ? [primaryWindow] : [secondaryWindow]
+                                processMon.monitoredWindows = primaryContainer.active ? [primaryWindow] : [secondaryWindow]
                             } else {
                                 processMon.monitoredWindows = []
                                 console.warn("No application window available. Please check your QtWayland configuration.");
@@ -159,19 +156,21 @@ Window {
                 }
 
                 WindowContainer {
-                    id: primary
+                    id: primaryContainer
                     active: true
+                    window: root.primaryWindow
                     onActivated: {
                         processMon.monitoredWindows = [primaryWindow];
-                        secondary.active = false;
+                        secondaryContainer.active = false;
                     }
                 }
 
                 WindowContainer {
-                    id: secondary
+                    id: secondaryContainer
+                    window: root.secondaryWindow
                     onActivated: {
                         processMon.monitoredWindows = [secondaryWindow];
-                        primary.active = false;
+                        primaryContainer.active = false;
                     }
                 }
             }
@@ -211,21 +210,20 @@ Window {
 
     Connections {
         target: WindowManager
-        onWindowReady:  {
-            if (WindowManager.windowProperty(window, "windowType") === "primary") {
+        onWindowAdded:  {
+            if (window.windowProperty("windowType") === "primary") {
                 primaryWindow = window
-                window.parent = primary.container
-                window.anchors.fill = primary.container
             } else {
                 secondaryWindow = window
-                window.parent = secondary.container
-                window.anchors.fill = secondary.container
             }
         }
 
-        onWindowLost: {
-            processMon.monitoredWindows = []
-            WindowManager.releaseWindow(window);
+        onWindowAboutToBeRemoved: {
+            if (primaryWindow === window) {
+                primaryWindow = null;
+            } else if (secondaryWindow === window) {
+                secondaryWindow = null;
+            }
         }
     }
 
@@ -246,13 +244,6 @@ Window {
         }
     }
 
-    Connections {
-        target: SystemMonitor
-        onCpuLoadReportingChanged: systemLoad.reading = (load * 100).toFixed(1) + " %";
-        onMemoryReportingChanged: systemMem.text = "Used Memory: " + (used / 1e9).toFixed(1) + " GB"
-    }
-
-
     Component.onCompleted: {
         SystemMonitor.reportingInterval = 1000;
         SystemMonitor.count = 12;
@@ -262,6 +253,6 @@ Window {
         SystemMonitor.gpuLoadReportingEnabled = true;
         SystemMonitor.memoryReportingEnabled = true;
 
-        ApplicationManager.startApplication(ApplicationManager.application(0).id);
+        ApplicationManager.application(0).start();
     }
 }

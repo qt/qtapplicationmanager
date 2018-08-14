@@ -51,18 +51,19 @@
 ****************************************************************************/
 
 import QtQuick 2.6
+import QtApplicationManager 1.0
 
 Rectangle {
     property bool active: false
-    property alias container: container
+    property alias window: windowItem.window
     signal activated()
 
     width: 180; height: 65
 
     color: active ? "white" : "transparent"
 
-    Item {
-        id: container
+    WindowItem {
+        id: windowItem
         anchors.margins: 2
         anchors.fill: parent
     }

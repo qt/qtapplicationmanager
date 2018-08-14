@@ -47,7 +47,7 @@ The example monitors performance (frame rate), as well as rescource usage (memor
 \section2 Invocation
 The example can be started from within the "monitor" folder with:
 \badcode
-path/to/bin/appman -c am-config.yaml -r
+path/to/bin/appman -c am-config.yaml
 \endcode
 
 \note The application-manager attempts to register a \c freedesktop.org compliant notification
@@ -63,13 +63,13 @@ We will start from the bottom, because this is the essential part.
 
 \quotefromfile applicationmanager/monitor/system-ui/main.qml
 \skipto ProcessMonitor
-\printuntil ApplicationManager.startApplication
+\printuntil ApplicationManager.application(0).start()
 \printline }
 The ProcessMonitor is an instantiatable type that will monitor the process that is associated with
 its \l {ProcessMonitor::applicationId}{applicationId} property. An empty applicationId string means
 that the System-UI process is monitored. By clicking the "Switch Process" button, the monitored
 process can be changed to the \c tld.monitor.app application. Measurements will be performed each
-second (1000 ms) and 12 reading points will be kept in the model (the ProcessMonitor is a model).
+second (1000 ms) and 12 reading points will be kept in the model (ProcessMonitor is a model).
 The model is used below to display the bar charts.
 
 Memory and frame rate reporting need to be enabled, since we are interested in both. For frame rate

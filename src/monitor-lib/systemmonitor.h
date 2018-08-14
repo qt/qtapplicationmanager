@@ -57,7 +57,6 @@ class SystemMonitor : public QAbstractListModel
     Q_OBJECT
     Q_PROPERTY(int count READ count WRITE setCount NOTIFY countChanged)
     Q_PROPERTY(int reportingInterval READ reportingInterval WRITE setReportingInterval NOTIFY reportingIntervalChanged)
-    Q_PROPERTY(int reportingRange READ reportingRange WRITE setReportingRange NOTIFY reportingRangeChanged)  // deprecated
     Q_PROPERTY(qreal idleLoadThreshold READ idleLoadThreshold WRITE setIdleLoadThreshold NOTIFY idleLoadThresholdChanged)
     Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
     Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryReportingChanged)
@@ -120,9 +119,6 @@ public:
     void setReportingInterval(int intervalInMSec);
     int reportingInterval() const;
 
-    void setReportingRange(int rangeInMSec);
-    int reportingRange() const;
-
     // semi-public API: used for the WindowManager to report FPS
     void reportFrameSwap();
 
@@ -130,7 +126,6 @@ signals:
     void countChanged();
     void idleChanged(bool idle);
     void reportingIntervalChanged(int reportingInterval);
-    void reportingRangeChanged(int reportingRange);
     void idleLoadThresholdChanged(qreal idleLoadThreshold);
 
     void memoryReportingChanged(quint64 used);

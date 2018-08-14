@@ -46,7 +46,6 @@ import QtQml 2.0
 
 QtObject {
     property int reportingInterval
-    property int reportingRange
     property bool cpuLoadReportingEnabled
     property bool fpsReportingEnabled
     signal fpsReportingChanged(real average, real minimum, real maximum, real jitter)

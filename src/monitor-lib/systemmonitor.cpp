@@ -380,8 +380,6 @@ public:
     QHash<QString, IoReader *> ioHash;
     int reportingInterval = -1;
     int count = 10;
-    int reportingRange = 100 * 100;
-    bool reportingRangeSet = false;
     int reportingTimerId = 0;
     bool reportCpu = false;
     bool reportGpu = false;
@@ -588,11 +586,6 @@ public:
         Q_Q(SystemMonitor);
 
         q->beginResetModel();
-
-        if (reportingRangeSet) {
-            // we need at least 2 items, otherwise we cannot move rows
-            count = qMax(2, reportingRange / reportingInterval);
-        }
 
         if (clear) {
             reports.clear();
@@ -1074,27 +1067,6 @@ int SystemMonitor::count() const
     Q_D(const SystemMonitor);
 
     return d->count;
-}
-
-void SystemMonitor::setReportingRange(int rangeInMSec)
-{
-    Q_D(SystemMonitor);
-
-    qCWarning(LogSystem) << "Property \"reportingRange\" is deprecated, use \"count\" instead.";
-
-    if (d->reportingRange != rangeInMSec && rangeInMSec > 0) {
-        d->reportingRange = rangeInMSec;
-        d->reportingRangeSet = true;
-        d->updateModel(false);
-        emit reportingRangeChanged(rangeInMSec);
-    }
-}
-
-int SystemMonitor::reportingRange() const
-{
-    Q_D(const SystemMonitor);
-
-    return d->reportingRange;
 }
 
 /*! \internal

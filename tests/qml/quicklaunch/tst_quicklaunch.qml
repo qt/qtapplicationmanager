@@ -50,11 +50,6 @@ TestCase {
     when: windowShown
     name: "Quicklaunch"
 
-    Connections {
-        target: WindowManager
-        onWindowLost: WindowManager.releaseWindow(window);
-    }
-
     SignalSpy {
         id: windowAddedSpy
         target: WindowManager

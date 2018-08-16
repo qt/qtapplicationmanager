@@ -538,7 +538,6 @@ void ProcessMonitorPrivate::readingUpdate()
         roles.append(CpuLoad);
     } else if (results.cpu.read) {
         data.cpuLoad = results.cpu.load;
-        emit q->cpuLoadReportingChanged(data.cpuLoad);
         roles.append(CpuLoad);
     }
 
@@ -559,8 +558,6 @@ void ProcessMonitorPrivate::readingUpdate()
         data.pss.insert(qSL("total"), quint64(results.memory.totalPss) << 10);
         data.pss.insert(qSL("text"), quint64(results.memory.textPss) << 10);
         data.pss.insert(qSL("heap"), quint64(results.memory.heapPss) << 10);
-
-        emit q->memoryReportingChanged(data.vm, data.rss, data.pss);
 
         roles.append({ MemVirtual, MemRss, MemPss });
     }
@@ -592,6 +589,12 @@ void ProcessMonitorPrivate::readingUpdate()
         reportPos = 0;
     q->endMoveRows();
     q->dataChanged(q->index(0), q->index(0), roles);
+
+    if (reportCpu)
+        emit q->cpuLoadReportingChanged(data.cpuLoad);
+
+    if (results.memory.read || memTail > 0)
+        emit q->memoryReportingChanged(data.vm, data.rss, data.pss);
 }
 
 void ProcessMonitorPrivate::setupFrameRateMonitoring()

@@ -102,12 +102,14 @@
             example.
     \row
         \li \c memoryRss
+        \target memoryRss-role
         \li var
         \li A map of the process's RSS (Resident Set Size) memory usage. This is the amount of
             memory that is actually mapped to physical RAM. See below for a list of supported
             keys.
     \row
         \li \c memoryPss
+        \target memoryPss-role
         \li var
         \li A map of the process's PSS (Proportional Set Size) memory usage. This is the
             proportional share of the RSS value above. For instance if two processes share 2 MB
@@ -508,6 +510,46 @@ void ProcessMonitor::setMonitoredWindows(QList<QObject *> windows)
     d->updateMonitoredWindows(windows);
 }
 
+qreal ProcessMonitor::cpuLoad() const
+{
+    Q_D(const ProcessMonitor);
+    return d->modelData[d->latestReportPos()].cpuLoad;
+}
 
+/*!
+    \qmlproperty QVariantMap ProcessMonitor::memoryVirtual
+
+    A map of the process's virtual memory usage.
+    \sa memoryVirtual-role
+*/
+QVariantMap ProcessMonitor::memoryVirtual() const
+{
+    Q_D(const ProcessMonitor);
+    return d->modelData[d->latestReportPos()].vm;
+}
+
+/*!
+    \qmlproperty QVariantMap ProcessMonitor::memoryRss
+
+    A map of the process's RSS (Resident Set Size) memory usage.
+    \sa memoryRss-role
+*/
+QVariantMap ProcessMonitor::memoryRss() const
+{
+    Q_D(const ProcessMonitor);
+    return d->modelData[d->latestReportPos()].rss;
+}
+
+/*!
+    \qmlproperty QVariantMap ProcessMonitor::memoryPss
+
+    A map of the process's PSS (Proportional Set Size) memory usage.
+    \sa memoryPss-role
+*/
+QVariantMap ProcessMonitor::memoryPss() const
+{
+    Q_D(const ProcessMonitor);
+    return d->modelData[d->latestReportPos()].pss;
+}
 
 QT_END_NAMESPACE_AM

@@ -60,7 +60,11 @@ class ProcessMonitor : public QAbstractListModel
     Q_PROPERTY(QString applicationId READ applicationId WRITE setApplicationId NOTIFY applicationIdChanged)
     Q_PROPERTY(int reportingInterval READ reportingInterval WRITE setReportingInterval NOTIFY reportingIntervalChanged)
     Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled NOTIFY memoryReportingEnabledChanged)
+    Q_PROPERTY(QVariantMap memoryVirtual READ memoryVirtual NOTIFY memoryReportingChanged)
+    Q_PROPERTY(QVariantMap memoryRss READ memoryRss NOTIFY memoryReportingChanged)
+    Q_PROPERTY(QVariantMap memoryPss READ memoryPss NOTIFY memoryReportingChanged)
     Q_PROPERTY(bool cpuLoadReportingEnabled READ isCpuLoadReportingEnabled WRITE setCpuLoadReportingEnabled NOTIFY cpuLoadReportingEnabledChanged)
+    Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadReportingChanged)
     Q_PROPERTY(bool frameRateReportingEnabled READ isFrameRateReportingEnabled WRITE setFrameRateReportingEnabled NOTIFY frameRateReportingEnabledChanged)
     Q_PROPERTY(QList<QObject *> monitoredWindows READ monitoredWindows WRITE setMonitoredWindows NOTIFY monitoredWindowsChanged)
 
@@ -96,6 +100,11 @@ public:
 
     QList<QObject *> monitoredWindows() const;
     void setMonitoredWindows(QList<QObject *> windows);
+
+    qreal cpuLoad() const;
+    QVariantMap memoryVirtual() const;
+    QVariantMap memoryRss() const;
+    QVariantMap memoryPss() const;
 
 signals:
     void countChanged(int count);

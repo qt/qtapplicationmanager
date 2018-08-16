@@ -214,6 +214,12 @@ public:
     void resetFrameRateMonitoring();
     void clearMonitoredWindows();
 
+    int latestReportPos() const {
+        // show the one before reportPos, wrapping around if reportPos
+        // is already the very first index.
+        return reportPos == 0 ? modelData.size() - 1 : reportPos - 1;
+    }
+
 signals:
     void setupTimer(bool enabled, int interval);
     void newPid(qint64 pid);

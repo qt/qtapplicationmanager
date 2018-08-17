@@ -1,0 +1,58 @@
+/****************************************************************************
+**
+** Copyright (C) 2018 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\example applicationmanager/multi-views
+\title Multiple Views per Window System-UI Example
+\image multi-views.png
+\brief A WindowObject being rendered by multiple WindowItems
+\ingroup applicationmanager-examples
+
+This example shows that it is possible to assign the same WindowObject to multiple WindowItems (so that
+you get the same surface being rendered multiple times on the screen) and the difference between being
+a primary WindowItem or not. Its implementation builds on top of the \l{Animated Windows System-UI Example}.
+
+The button on the top left of the screen shows the icon (a cog) of the only built-in application of this
+example. Overlayed on the icon is the action taken when you click on it. "Start" will be shown when the
+application is not running, and clicking on it will call \l{ApplicationObject::start}{ApplicationObject.start}.
+Otherwise it will show "Stop" and the corresponding action will be executed when clicked.
+
+Once the application is started, its sole window will be shown, decorated with a title bar and borders.
+The title bar displays "Primary" if \l{WindowItem::primary}{WindowItem.primary} is true or "Secondary"
+otherwise. Then comes the name of the application that created the window, which in this example is called
+simply "App1". On the far left of a window's title bar is a "-" button that destroys its WindowItem and on
+the far right a "+" button that creates a new WindowItem and assigns the same WindowObject to it. Finally,
+in case of secondary WindowItems, there will also be a "P" button on the right side of the title bar that
+sets the \l{WindowItem::primary}{primary} property of that WindowItem to true.
+
+The background color of the window turns red when pressed. So when you click over the \l{WindowItem::primary}{primary}
+WindowItem you will see that the event reaches the application since it sets the background color of its
+window to red. But if you create one or more secondary WindowItems and click on them you will notice that
+these secondary windows won't flash red, as secondary WindowItems do not forward input events to the WindowObjects they
+render.
+*/

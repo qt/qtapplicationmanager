@@ -1,0 +1,232 @@
+/****************************************************************************
+**
+** Copyright (C) 2018 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\page migration-guide-5.12.html
+\title Migrating code from 5.11 to 5.12
+
+Qt Application Manager 5.12 is not API compatible with the 5.11 release. In this document we go through
+the main API breaks and how to port affected code from the 5.11 to the new 5.12 API. The API breaks lie
+solely on the System-UI side, therefore application code remains unchanged.
+
+There are also cases where there's no API break but instead new, better, APIs for achieving the same
+result in 5.12. This document also covers some of such situations.
+
+\section1 ApplicationManager and applications
+
+\section2 ApplicationObject
+
+In 5.11, the object type representing an application was named \c Application. But since Qt also has
+an object type with the same name, in order to be able to reference enumerations defined in it you
+had to import QtApplicationManager in a separate namespace. In 5.12, that object type was renamed to
+ApplicationObject and thus it no longer clashes with Qt's own \c Application type.
+
+\oldcode
+import QtApplicationManager 1.0 as AppMan
+...
+if (application.state === AppMan.Application.Installed) {
+    ...
+}
+\newcode
+import QtApplicationManager 1.0
+...
+if (application.state === ApplicationObject.Installed) {
+    ...
+}
+\endcode
+
+\section2 Starting and stopping applications
+
+The ApplicationObject is smarter now, moving away from being mostly a plain-old-data structure to also
+contain all actions pertaining to the application at hand, making for a more object oriented API. This
+is reflected in the way you can start and stop applications in 5.12.
+
+\oldcode
+var application = ApplicationManager.fromId("com.example.music");
+...
+ApplicationManager.startApplication(application.id);
+\newcode
+var application = ApplicationManager.fromId("com.example.music");
+...
+application.start();
+\endcode
+
+\section1 WindowManager and windows
+
+Windows are now represented by instances of the WindowObject type instead of being Item instances. WindowObjects
+cannot be displayed directly and have to be assigned to a WindowItem to be rendered on the screen.
+
+This is also reflected in WindowManager model roles, which are now fewer and different. The \c windowItem role
+has been replaced with the \l{windowmanager-window-role}{window} role. The \c isFullscreen role has been removed
+and there's no replacement for it. \c isMapped and \c isClosing were replaced with a single role named
+\l{windowmanager-contentState-role}{contentState}.
+
+\oldcode
+Connections {
+    target: WindowManager
+    onWindowReady: {
+        window.parent = windowContainer;
+        window.width = Qt.binding(function() { return windowContainer.width; });
+        window.height = Qt.binding(function() { return windowContainer.height; });
+    }
+    ...
+}
+...
+Item {
+    id: windowContainer
+    ...
+}
+\newcode
+Connections {
+    target: WindowManager
+    onWindowAdded: {
+        windowItem.window = window;
+    }
+    ...
+}
+...
+WindowItem {
+    id: windowItem
+    ...
+}
+\endcode
+
+See the new \l{"Hello World!" System-UI Example}{Hello World} and \l{Animated Windows System-UI Example}{Animated Windows}
+examples for further explanations on the new way of manipulating windows in your System-UI.
+
+\section2 WindowManager signals
+
+Signals in WindowManager related to the window lifecycle have all changed. \c windowReady is the only signal thas has an
+equivalent in the new API, as seen in the previous code snippet. For others there's no exact match, although the new API
+has similar signals.
+
+\oldcode
+Connections {
+    target: WindowManager
+    onWindowClosing: {
+        ...
+    }
+    onWindowLost: {
+        ...
+    }
+    ...
+}
+\newcode
+Connections {
+    target: WindowManager
+    onWindowContentStateChanged: {
+        if (window.contentState === WindowObject.SurfaceNoContent) {
+            // code from onWindowClosing
+            ...
+        } else if (window.contentState === WindowObject.NoSurface) {
+            // code from onWindowLost
+            ...
+        }
+    }
+    ...
+}
+\endcode
+
+You can also check and track the content state of a window from its \l{WindowObject::contentState}{WindowObject.contentState}
+property.
+
+\section2 Releasing windows
+
+In the new API there's no longer the concept of releasing windows. Thus the signal \c WindowManager.windowReleased and the
+method \c WindowManager.releaseWindow() have been removed. Instead, a WindowObject is destroyed once it no longer has a
+backing surface (ie, its contentState is \l{windowobject-nosurface}{WindowObject.NoSurface}) and it is not assigned to any
+WindowItem.
+
+\section2 Window properties
+
+The window properties of a given window can now be set, queried and tracked from its WindowObject, without the need
+to use the WindowManager singleton. That way code can be more readable and modular.
+
+\oldcode
+WindowManager.setWindowProperty(window, "type", "dialog");
+...
+Connections {
+    target: WindowManager
+    onWindowPropertyChanged: {
+        if (window === fooWindow) {
+            console.log("fooWindow's property " + name + " is now " + value);
+        }
+    }
+}
+\newcode
+window.setWindowProperty("type", "dialog");
+...
+Connections {
+    target: fooWindow
+    onWindowPropertyChanged: {
+        console.log("fooWindow's property " + name + " is now " + value);
+    }
+}
+\endcode
+
+\section1 SystemMonitor
+
+SystemMonitor is no longer a singleton. That way it's simpler to bind expressions to its properties and
+you have control over the lifecycle of that object, so that you only create an instance of it when you
+actually need it. It's also simpler to test code that uses a regular QML object instead of a singleton,
+as you can apply patterns such as dependency injection.
+
+\oldcode
+Item {
+    id: root
+    ...
+    Label {
+        text: "CPU Cores: " + SystemMonitor.cpuCores
+    }
+    ...
+    Component.onCompleted: {
+        SystemMonitor.reportingInterval = 1000;
+        SystemMonitor.count = 12;
+        SystemMonitor.idleLoadThreshold = 0.05;
+    }
+    Binding { target: SystemMonitor; property: "cpuLoadReportingEnabled"; value: root.visible }
+}
+\newcode
+Item {
+    id: root
+    ...
+    Label {
+        text: "CPU Cores: " + systemMonitor.cpuCores
+    }
+    ...
+    SystemMonitor {
+        id: systemMonitor
+        reportingInterval: 1000
+        count: 12
+        idleLoadThreshold: 0.05
+        cpuLoadReportingEnabled: root.visible
+    }
+}
+\endcode
+
+ */

@@ -110,6 +110,7 @@
                                         It may get content again, in which case the state goes back to
                                         WindowObject::SurfaceWithContent, or it may be followed by a state change to
                                         WindowObject::NoSurface.
+    \target windowobject-nosurface
     \li WindowObject.NoSurface - The window doesn't have a surface anymore. This is an end state. After displaying
                                  the appropriate animations (if any), System UI should ensure that there's no
                                  WindowItem instance left pointing to this Window (by either destroying them or

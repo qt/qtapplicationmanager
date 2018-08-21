@@ -20,7 +20,6 @@ multi-process {
 }
 
 HEADERS += \
-    abstractapplicationmanager.h \
     application.h \
     applicationmanager.h \
     applicationmodel.h \

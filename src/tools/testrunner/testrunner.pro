@@ -13,3 +13,6 @@ HEADERS += \
 
 SOURCES += \
     testrunner.cpp
+
+# For android installing the binaries doesn't make sense, as it's a command-line utility which doesn't work on android anyway.
+android: INSTALLS=

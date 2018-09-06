@@ -22,3 +22,6 @@ isEmpty(GIT_VERSION):GIT_VERSION="unknown"
 
 createBuildConfig(_DATE_, MODULE_VERSION, GIT_VERSION, SOURCE_DIR, BUILD_DIR, INSTALL_PREFIX, \
                   QT_ARCH, QT_VERSION, QT_CONFIG, CONFIG, DEFINES, INCLUDEPATH, LIBS)
+
+# For android installing the binaries doesn't make sense, as it's a command-line utility which doesn't work on android anyway.
+android:INSTALLS=

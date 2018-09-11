@@ -44,11 +44,14 @@
 #include <QtAppManCommon/global.h>
 #include <QVariantMap>
 
+QT_FORWARD_DECLARE_CLASS(QQmlEngine)
+
 QT_BEGIN_NAMESPACE_AM
 
 namespace CrashHandler {
 
 void setCrashActionConfiguration(const QVariantMap &config);
+void setQmlEngine(QQmlEngine *engine);
 
 }
 

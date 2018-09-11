@@ -580,6 +580,11 @@ The following conditions will be handled:
     \li Try to print a readable backtrace. Will use the primitive backtrace functionality from glibc,
         unless libbacktrace was enabled at configure time (default: true).
 \row
+    \li \c printQmlStack
+    \li bool
+    \li Try to print a readable QML stack trace. This is similar to \c printBacktrace above, but
+        prints the current QML function stack when the crash occurred (default: true).
+\row
     \li \c dumpCore
     \li bool
     \li Will end the process via \c abort instead of \c _exit. This will dump a \c core file,

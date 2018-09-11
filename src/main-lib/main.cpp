@@ -555,6 +555,7 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     disconnect(m_engine, &QQmlEngine::exit, qApp, nullptr);
     connect(m_engine, &QQmlEngine::quit, this, [this]() { shutDown(); });
     connect(m_engine, &QQmlEngine::exit, this, [this](int retCode) { shutDown(retCode); });
+    CrashHandler::setQmlEngine(m_engine);
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
     m_engine->setImportPathList(m_engine->importPathList() + importPaths);

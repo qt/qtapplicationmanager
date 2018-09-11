@@ -39,59 +39,60 @@
 **
 ****************************************************************************/
 
-#pragma once
-
-#include <QtAppManCommon/global.h>
-#include <QLoggingCategory>
-
-QT_BEGIN_NAMESPACE_AM
-
-Q_DECLARE_LOGGING_CATEGORY(LogSystem)
-Q_DECLARE_LOGGING_CATEGORY(LogInstaller)
-Q_DECLARE_LOGGING_CATEGORY(LogGraphics)
-Q_DECLARE_LOGGING_CATEGORY(LogWaylandDebug)
-Q_DECLARE_LOGGING_CATEGORY(LogQml)
-Q_DECLARE_LOGGING_CATEGORY(LogNotifications)
-Q_DECLARE_LOGGING_CATEGORY(LogQmlRuntime)
-Q_DECLARE_LOGGING_CATEGORY(LogQmlIpc)
-Q_DECLARE_LOGGING_CATEGORY(LogDeployment)
-
-class Logging
-{
-public:
-    static void initialize();
-    static void initialize(int argc, const char * const *argv);
-    static QStringList filterRules();
-    static void setFilterRules(const QStringList &rules);
-
-    static QByteArray applicationId();
-    static void setApplicationId(const QByteArray &appId);
-
-    // DLT functionality
-    static bool isDltEnabled();
-    static void setDltEnabled(bool enabled);
-
-    static void registerUnregisteredDltContexts();
-    static void setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription);
-
-    static void logToDlt(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
-
-private:
-    static bool s_dltEnabled;
-    static bool s_useDefaultQtHandler;
-    static QStringList s_rules;
-    static QtMessageHandler s_defaultQtHandler;
-    static QByteArray s_applicationId;
-};
+import QtQuick 2.3
+import QtTest 1.0
+import QtApplicationManager 1.0
+import QtApplicationManager 1.0 as AM
 
 
-void am_trace(QDebug);
-template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest... trest)
-{ dbg << t; am_trace(dbg, trest...); }
+TestCase {
+    id: testCase
+    when: windowShown
+    name: "Crashtest"
 
-#define AM_TRACE(category, ...) \
-    for (bool qt_category_enabled = category().isDebugEnabled(); qt_category_enabled; qt_category_enabled = false) { \
-        QT_PREPEND_NAMESPACE_AM(am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__)); \
+    property string appId: "tld.test.crash"
+    property var app: ApplicationManager.application(appId);
+
+    SignalSpy {
+        id: runStateChangedSpy
+        target: ApplicationManager
+        signalName: "applicationRunStateChanged"
+    }
+
+    function initTestCase() {
+        compare(app.lastExitStatus, AM.Application.NormalExit)
     }
 
-QT_END_NAMESPACE_AM
+    function test_crash_data() {
+        return [ { tag: "gracefully" },
+                 { tag: "illegalMemory" },
+                 { tag: "illegalMemoryInThread" },
+                 { tag: "unhandledException" } ];
+               //{ tag: "stackOverflow" },
+               //{ tag: "divideByZero" },
+               //{ tag: "abort" },
+               //{ tag: "raise" } ];
+    }
+
+    function test_crash(data) {
+        if (ApplicationManager.singleProcess)
+            skip("Application crash recovery not supported in single-process mode");
+
+        ApplicationManager.startApplication(appId);
+        runStateChangedSpy.wait(3000);
+        runStateChangedSpy.wait(3000);
+        compare(app.runState, AM.Application.Running);
+        ApplicationManager.startApplication(appId, data.tag);
+        runStateChangedSpy.wait(3000);
+        compare(app.runState, AM.Application.NotRunning);
+        if (data.tag === "gracefully") {
+            compare(app.lastExitStatus, AM.Application.NormalExit);
+            compare(app.lastExitCode, 5);
+        } else {
+            compare(app.lastExitStatus, AM.Application.CrashExit);
+            console.info("================================");
+            console.info("=== INTENDED CRASH (TESTING) ===");
+            console.info("================================");
+        }
+    }
+}

@@ -6,4 +6,6 @@ SUBDIRS = \
     windowitem2 \
     installer \
     monitoring \
-    quicklaunch
+    quicklaunch \
+    crash/apps/tld.test.crash/terminator2 \
+    crash

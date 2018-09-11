@@ -51,9 +51,18 @@ void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
     Q_UNUSED(config)
 }
 
+void CrashHandler::setQmlEngine(QQmlEngine *engine)
+{
+    Q_UNUSED(engine)
+}
+
 QT_END_NAMESPACE_AM
 
 #else
+
+#include <QQmlEngine>
+#include <QtQml/private/qv4engine_p.h>
+#include <QtQml/private/qv8engine_p.h>
 
 #include <cxxabi.h>
 #include <execinfo.h>
@@ -67,18 +76,24 @@ QT_END_NAMESPACE_AM
 #endif
 
 #include "unixsignalhandler.h"
+#include "logging.h"
 #include "utilities.h"
 #include "processtitle.h"
 
 QT_BEGIN_NAMESPACE_AM
 
+enum PrintDestination { Console, Dlt };
+
 static bool printBacktrace;
+static bool printQmlStack;
 static bool useAnsiColor;
 static bool dumpCore;
 static int waitForGdbAttach;
 
 static char *demangleBuffer;
 static size_t demangleBufferSize;
+
+static QQmlEngine *qmlEngine;
 
 // this will make it run before all other static constructor functions
 static void initBacktrace() __attribute__((constructor(101)));
@@ -88,10 +103,16 @@ static Q_NORETURN void crashHandler(const char *why, int stackFramesToIgnore);
 void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
 {
     printBacktrace = config.value(qSL("printBacktrace"), printBacktrace).toBool();
+    printQmlStack = config.value(qSL("printQmlStack"), printQmlStack).toBool();
     waitForGdbAttach = config.value(qSL("waitForGdbAttach"), waitForGdbAttach).toInt() * timeoutFactor();
     dumpCore = config.value(qSL("dumpCore"), dumpCore).toBool();
 }
 
+
+void CrashHandler::setQmlEngine(QQmlEngine *engine)
+{
+    qmlEngine = engine;
+}
 
 static void initBacktrace()
 {
@@ -112,6 +133,7 @@ static void initBacktrace()
     // throw std::logic_error("test output");
 
     printBacktrace = true;
+    printQmlStack = true;
     dumpCore = true;
     waitForGdbAttach = 0;
 
@@ -161,15 +183,37 @@ static void initBacktrace()
     });
 }
 
-static void crashHandler(const char *why, int stackFramesToIgnore)
+static void printMsgToConsole(const char *format, ...) Q_ATTRIBUTE_FORMAT_PRINTF(1, 2);
+static void printMsgToConsole(const char *format, ...)
 {
-    pid_t pid = getpid();
+    va_list arglist;
+    va_start(arglist, format);
+    vfprintf(stderr, format, arglist);
+    va_end(arglist);
+    fputs("\n", stderr);
+}
+
+static void printMsgToDlt(const char *format, ...) Q_ATTRIBUTE_FORMAT_PRINTF(1, 2);
+static void printMsgToDlt(const char *format, ...)
+{
+    va_list arglist;
+    va_start(arglist, format);
+    Logging::logToDlt(QtMsgType::QtFatalMsg, QMessageLogContext(), QString::vasprintf(format, arglist));
+    va_end(arglist);
+}
+
+static void printCrashInfo(PrintDestination dest, const char *why, int stackFramesToIgnore)
+{
     char who[256];
     int whoLen = readlink("/proc/self/exe", who, sizeof(who) -1);
     who[qMax(0, whoLen)] = '\0';
     const char *title = ProcessTitle::title();
 
-    fprintf(stderr, "\n*** process %s (%d) crashed ***\n\n > why: %s\n", title ? title : who, pid, why);
+    using printMsgType = void (*)(const char *format, ...);
+    static printMsgType printMsg;
+    printMsg = (dest == Dlt) ? printMsgToDlt : printMsgToConsole;
+
+    printMsg("\n*** process %s (%d) crashed ***\n\n > why: %s", title ? title : who, getpid(), why);
 
     if (printBacktrace) {
 #if defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
@@ -179,29 +223,28 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
             int level;
         };
 
-        static auto printBacktraceLine = [](int level, const char *symbol, uintptr_t offset, const char *file = nullptr, int line = -1) {
-            const char *fmt1 = " %3d: %s [%" PRIxPTR "]";
-            const char *fmt2 = " in %s:%d";
-            if (useAnsiColor) {
-                fmt1 = " %3d: \x1b[1m%s\x1b[0m [\x1b[36m%" PRIxPTR "\x1b[0m]";
-                fmt2 = " in \x1b[35m%s\x1b[0m:\x1b[35;1m%d\x1b[0m";
+        static auto printBacktraceLine = [](int level, const char *symbol, uintptr_t offset,
+                                            const char *file = nullptr, int line = -1) {
+            if (file) {
+                printMsg(useAnsiColor ? " %3d: \x1b[1m%s\x1b[0m [\x1b[36m%" PRIxPTR "\x1b[0m]"
+                                        " in \x1b[35m%s\x1b[0m:\x1b[35;1m%d\x1b[0m"
+                                      : " %3d: %s [%" PRIxPTR "] in %s:%d", level, symbol, offset, file, line);
+            } else {
+                printMsg(useAnsiColor ? " %3d: \x1b[1m%s\x1b[0m [\x1b[36m%" PRIxPTR "\x1b[0m]"
+                                      : " %3d: %s [%" PRIxPTR "]", level, symbol, offset);
             }
-
-            fprintf(stderr, fmt1, level, symbol, offset);
-            if (file)
-                fprintf(stderr, fmt2, file, line);
-            fputs("\n", stderr);
         };
 
         static auto errorCallback = [](void *data, const char *msg, int errnum) {
             const char *fmt = " %3d: ERROR: %s (%d)\n";
             if (useAnsiColor)
-                fmt = " %3d: \x1b[31;1mERROR: \x1b[0;1m%s (%d)\x1b[0m\n";
+                fmt = " %3d: \x1b[31;1mERROR: \x1b[0;1m%s (%d)\x1b[0m";
 
-            fprintf(stderr, fmt, static_cast<btData *>(data)->level, msg, errnum);
+            printMsg(fmt, static_cast<btData *>(data)->level, msg, errnum);
         };
 
-        static auto syminfoCallback = [](void *data, uintptr_t pc, const char *symname, uintptr_t symval, uintptr_t symsize) {
+        static auto syminfoCallback = [](void *data, uintptr_t pc, const char *symname, uintptr_t symval,
+                                         uintptr_t symsize) {
             Q_UNUSED(symval)
             Q_UNUSED(symsize)
 
@@ -219,7 +262,8 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
             }
         };
 
-        static auto fullCallback = [](void *data, uintptr_t pc, const char *filename, int lineno, const char *function) -> int {
+        static auto fullCallback = [](void *data, uintptr_t pc, const char *filename, int lineno,
+                                      const char *function) -> int {
             if (function) {
                 int status;
                 abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
@@ -242,7 +286,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
         struct backtrace_state *state = backtrace_create_state(nullptr, BACKTRACE_SUPPORTS_THREADS,
                                                                errorCallback, nullptr);
 
-        fprintf(stderr, "\n > backtrace:\n");
+        printMsg("\n > backtrace:");
         btData data = { state, 0 };
         //backtrace_print(state, stackFramesToIgnore, stderr);
         backtrace_simple(state, stackFramesToIgnore, simpleCallback, errorCallback, &data);
@@ -252,15 +296,15 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
         int addrCount = backtrace(addrArray, sizeof(addrArray) / sizeof(*addrArray));
 
         if (!addrCount) {
-            fprintf(stderr, " > no backtrace available\n");
+            printMsg(" > no backtrace available");
         } else {
             char **symbols = backtrace_symbols(addrArray, addrCount);
             //backtrace_symbols_fd(addrArray, addrCount, 2);
 
             if (!symbols) {
-                fprintf(stderr, " > no symbol names available\n");
+                printMsg(" > no symbol names available");
             } else {
-                fprintf(stderr, " > backtrace:\n");
+                printMsg("\n > backtrace:");
                 for (int i = 1; i < addrCount; ++i) {
                     char *function = nullptr;
                     char *offset = nullptr;
@@ -283,22 +327,47 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
                         abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
 
                         if (status == 0 && *demangleBuffer) {
-                            fprintf(stderr, " %3d: %s [+%s]\n", i, demangleBuffer, offset + 1);
+                            printMsg(" %3d: %s [+%s]", i, demangleBuffer, offset + 1);
                         } else {
-                            fprintf(stderr, " %3d: %s [+%s]\n", i, function, offset + 1);
+                            printMsg(" %3d: %s [+%s]", i, function, offset + 1);
                         }
                     } else  {
-                        fprintf(stderr, " %3d: %s\n", i, symbols[i]);
+                        printMsg(" %3d: %s", i, symbols[i]);
                     }
                 }
-                fprintf(stderr, "\n");
             }
         }
 #endif // defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
     }
+
+    if (printQmlStack && qmlEngine) {
+        const QV4::ExecutionEngine *qv4engine = qmlEngine->handle();
+        if (qv4engine) {
+            const QV4::StackTrace stackTrace = qv4engine->stackTrace();
+            if (stackTrace.size()) {
+                printMsg("\n > qml stack:");
+                int frame = 0;
+                for (const auto &stackFrame : stackTrace) {
+                    printMsg(useAnsiColor ? " %3d: \x1b[1m%s\x1b[0m in \x1b[35m%s\x1b[0m:\x1b[35;1m%d\x1b[0m"
+                                          : " %3d: %s in %s:%d",
+                             frame, stackFrame.function.toLocal8Bit().constData(),
+                             stackFrame.source.toLocal8Bit().constData(), stackFrame.line);
+                    frame++;
+                }
+            } else {
+                printMsg("\n > qml stack: empty");
+            }
+        }
+    }
+}
+
+static void crashHandler(const char *why, int stackFramesToIgnore)
+{
+    printCrashInfo(Console, why, stackFramesToIgnore);
+
     if (waitForGdbAttach > 0) {
-        fprintf(stderr, "\n > the process will be suspended for %d seconds and you can attach a debugger to it via\n\n   gdb -p %d\n",
-                waitForGdbAttach, pid);
+        fprintf(stderr, "\n > the process will be suspended for %d seconds and you can attach a debugger"
+                        " to it via\n\n   gdb -p %d\n", waitForGdbAttach, getpid());
         static jmp_buf jmpenv;
         signal(SIGALRM, [](int) {
             longjmp(jmpenv, 1);
@@ -314,14 +383,21 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
             fprintf(stderr, "\n > no gdb attached\n");
         }
     }
+
+    if (Logging::isDltEnabled()) {
+        useAnsiColor = false;
+        printCrashInfo(Dlt, why, stackFramesToIgnore);
+    }
+
     if (dumpCore) {
-        fprintf(stderr, "\n > the process will be aborted (core dump)\n\n");
+        fprintf(stderr, "\n > the process will be aborted (core dumped)\n\n");
         UnixSignalHandler::instance()->resetToDefault({ SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT });
         abort();
     }
+
     _exit(-1);
 }
 
 QT_END_NAMESPACE_AM
 
-#endif // !Q_OS_LINUX
+#endif // !Q_OS_LINUX || defined(Q_OS_ANDROID)

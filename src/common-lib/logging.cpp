@@ -363,6 +363,18 @@ void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &
 #endif
 }
 
+void Logging::logToDlt(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
+{
+#if defined(QT_GENIVIEXTRAS_LIB)
+    if (s_dltEnabled)
+        QDltRegistration::messageHandler(msgType, context, message);
+#else
+    Q_UNUSED(msgType)
+    Q_UNUSED(context)
+    Q_UNUSED(message)
+#endif
+}
+
 void am_trace(QDebug)
 { }
 

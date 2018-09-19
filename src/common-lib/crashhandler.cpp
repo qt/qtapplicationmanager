@@ -60,15 +60,20 @@ QT_END_NAMESPACE_AM
 
 #else
 
-#include <QQmlEngine>
-#include <QtQml/private/qv4engine_p.h>
-#include <QtQml/private/qv8engine_p.h>
+#if defined(QT_QML_LIB)
+#  include <QQmlEngine>
+#  include <QtQml/private/qv4engine_p.h>
+#  include <QtQml/private/qv8engine_p.h>
+#endif
 
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <inttypes.h>
+#include <sys/syscall.h>
+#include <pthread.h>
+#include <stdio.h>
 
 #if defined(AM_USE_LIBBACKTRACE)
 #  include <libbacktrace/backtrace.h>
@@ -93,8 +98,6 @@ static int waitForGdbAttach;
 static char *demangleBuffer;
 static size_t demangleBufferSize;
 
-static QQmlEngine *qmlEngine;
-
 // this will make it run before all other static constructor functions
 static void initBacktrace() __attribute__((constructor(101)));
 
@@ -108,11 +111,14 @@ void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
     dumpCore = config.value(qSL("dumpCore"), dumpCore).toBool();
 }
 
+#if defined(QT_QML_LIB)
+static QQmlEngine *qmlEngine;
 
 void CrashHandler::setQmlEngine(QQmlEngine *engine)
 {
     qmlEngine = engine;
 }
+#endif
 
 static void initBacktrace()
 {
@@ -204,16 +210,30 @@ static void printMsgToDlt(const char *format, ...)
 
 static void printCrashInfo(PrintDestination dest, const char *why, int stackFramesToIgnore)
 {
-    char who[256];
-    int whoLen = readlink("/proc/self/exe", who, sizeof(who) -1);
-    who[qMax(0, whoLen)] = '\0';
-    const char *title = ProcessTitle::title();
-
     using printMsgType = void (*)(const char *format, ...);
     static printMsgType printMsg;
     printMsg = (dest == Dlt) ? printMsgToDlt : printMsgToConsole;
 
-    printMsg("\n*** process %s (%d) crashed ***\n\n > why: %s", title ? title : who, getpid(), why);
+    const char *title = ProcessTitle::title();
+    char who[256];
+    if (!title) {
+        int whoLen = readlink("/proc/self/exe", who, sizeof(who) -1);
+        who[qMax(0, whoLen)] = '\0';
+        title = who;
+    }
+
+    pid_t pid = getpid();
+    long tid = syscall(SYS_gettid);
+    pthread_t pthreadId = pthread_self();
+    char threadName[16];
+    if (tid == pid)
+        strcpy(threadName, "main");
+    else if (pthread_getname_np(pthreadId, threadName, sizeof(threadName)))
+        strcpy(threadName, "unknown");
+
+    printMsg("\n*** process %s (%d) crashed ***", title, pid);
+    printMsg("\n > why: %s", why);
+    printMsg("\n > where: %s thread, TID: %d, pthread ID: %p", threadName, tid, pthreadId);
 
     if (printBacktrace) {
 #if defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
@@ -340,6 +360,7 @@ static void printCrashInfo(PrintDestination dest, const char *why, int stackFram
 #endif // defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
     }
 
+#if defined(QT_QML_LIB)
     if (printQmlStack && qmlEngine) {
         const QV4::ExecutionEngine *qv4engine = qmlEngine->handle();
         if (qv4engine) {
@@ -359,6 +380,7 @@ static void printCrashInfo(PrintDestination dest, const char *why, int stackFram
             }
         }
     }
+#endif
 }
 
 static void crashHandler(const char *why, int stackFramesToIgnore)

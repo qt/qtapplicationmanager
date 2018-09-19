@@ -101,5 +101,5 @@ TerminatorThread::TerminatorThread(Terminator *parent)
 
 void TerminatorThread::run()
 {
-    m_terminator->accessIllegalMemory();;
+    m_terminator->accessIllegalMemory();
 }

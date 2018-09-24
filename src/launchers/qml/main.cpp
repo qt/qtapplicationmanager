@@ -465,8 +465,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
                 auto st = StartupTimer::instance();
                 st->checkFirstFrame();
-                if (!st->automaticReporting())
-                    st->createReport(applicationId);
+                st->createAutomaticReport(applicationId);
 
                 for (StartupInterface *iface : qAsConst(startupPlugins))
                     iface->afterWindowShow(m_window);
@@ -499,7 +498,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     StartupTimer::instance()->checkpoint("component loading and creating complete.");
     if (createStartupReportNow)
-        StartupTimer::instance()->createReport(applicationId);
+        StartupTimer::instance()->createAutomaticReport(applicationId);
 
     if (!document.isEmpty() && m_applicationInterface)
         emit m_applicationInterface->openDocument(document, mimeType);

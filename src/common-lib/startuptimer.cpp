@@ -424,6 +424,12 @@ void StartupTimer::reset()
     }
 }
 
+void StartupTimer::createAutomaticReport(const QString &title)
+{
+    if (m_automaticReporting)
+        createReport(title);
+}
+
 bool StartupTimer::automaticReporting() const
 {
     return m_automaticReporting;

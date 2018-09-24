@@ -700,8 +700,7 @@ void Main::showWindow(bool showFullscreen)
     #  endif
                 auto st = StartupTimer::instance();
                 st->checkFirstFrame();
-                if (!st->automaticReporting())
-                    st->createReport(qSL("System-UI"));
+                st->createAutomaticReport(qSL("System-UI"));
             }
         });
 
@@ -726,7 +725,7 @@ void Main::showWindow(bool showFullscreen)
                 checkOpenGLFormat("first window", win->format());
             }
         });
-        StartupTimer::instance()->createReport(qSL("System-UI"));
+        StartupTimer::instance()->createAutomaticReport(qSL("System-UI"));
     }
 #endif
 }

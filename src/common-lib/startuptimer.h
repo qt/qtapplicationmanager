@@ -69,6 +69,7 @@ public:
     bool automaticReporting() const;
 
     void checkpoint(const char *name);
+    void createAutomaticReport(const QString &title);
     void checkFirstFrame();
     void reset();
 

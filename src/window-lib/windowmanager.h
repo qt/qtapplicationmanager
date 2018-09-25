@@ -100,7 +100,9 @@ public:
     Q_INVOKABLE int indexOfWindow(Window *window);
 
 
-    Q_INVOKABLE void registerCompositorView(QQuickWindow *view);
+    void registerCompositorView(QQuickWindow *view);
+
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 signals:
     void countChanged();

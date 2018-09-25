@@ -371,10 +371,14 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
     d->roleNames.insert(ContentState, "contentState");
 
     d->qmlEngine = qmlEngine;
+
+    qApp->installEventFilter(this);
 }
 
 WindowManager::~WindowManager()
 {
+    qApp->removeEventFilter(this);
+
 #if defined(AM_MULTI_PROCESS)
     delete d->waylandCompositor;
 #endif
@@ -537,16 +541,11 @@ void WindowManager::removeWindow(Window *window)
     emit countChanged();
 }
 
-/*!
-    \qmlmethod WindowManager::registerCompositorView(QQuickWindow *view)
-
+/*
     Registers the given \a view as a possible destination for Wayland window composition.
 
     Wayland window items can only be rendered within top-level windows that have been registered
     via this function.
-
-    \note The \a view parameter is an actual top-level window on the server side - not a client
-          application window item.
 */
 void WindowManager::registerCompositorView(QQuickWindow *view)
 {
@@ -931,5 +930,19 @@ QString WindowManagerPrivate::applicationId(AbstractApplication *app, WindowSurf
 }
 
 #endif // defined(AM_MULTI_PROCESS)
+
+bool WindowManager::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::PlatformSurface) {
+        auto *window = qobject_cast<QQuickWindow *>(watched);
+        if (!window)
+            return false;
+
+        auto surfaceEventType = static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType();
+        if (surfaceEventType == QPlatformSurfaceEvent::SurfaceCreated)
+            registerCompositorView(window);
+    }
+    return false;
+}
 
 QT_END_NAMESPACE_AM

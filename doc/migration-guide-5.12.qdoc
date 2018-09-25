@@ -189,6 +189,33 @@ Connections {
 }
 \endcode
 
+\section2 Registering compositor views
+
+In the new API, on the System UI side, there's no longer a need to explicitly call WindowManager.registerCompositorView
+on a Window to be able to composite client application surfaces on them (ie. have WindowItems rendering WindowObjects).
+This is now handled internally automatically and thus this function has been removed from the Qt Application Manager API.
+
+\oldcode
+QtObject {
+    Window {
+        id: someSysUIWindow
+        visible: true
+        ...
+        Component.onCompleted: {
+            WindowManager.registerCompositorView(someSysUIWindow);
+        }
+    }
+}
+\newcode
+QtObject {
+    Window {
+        id: someSysUIWindow
+        visible: true
+        ...
+    }
+}
+\endcode
+
 \section1 SystemMonitor
 
 SystemMonitor is no longer a singleton. That way it's simpler to bind expressions to its properties and

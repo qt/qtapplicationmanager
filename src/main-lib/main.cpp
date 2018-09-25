@@ -733,8 +733,6 @@ void Main::showWindow(bool showFullscreen)
                 break;
             }
         }
-    } else {
-        m_windowManager->registerCompositorView(window);
     }
 
     if (window) {

@@ -243,9 +243,6 @@
 
     \note It is possible to monitor server side (System-UI) views, as well,
     if the \l applicationId is empty (hence the System-UI process will be monitored).
-    Those windows are available from QML since they need to be registered with
-    \l {WindowManager::registerCompositorView(QQuickWindow *view)} {WindowManager}
-    and can be assigned to \l monitoredWindows.
 
     \sa frameRateReportingEnabled
 */

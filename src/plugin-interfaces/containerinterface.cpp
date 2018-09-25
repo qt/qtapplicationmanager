@@ -58,6 +58,42 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     The interface is closely modelled after QProcess and even reuses many of QProcess' enums.
 */
 
+/*! \enum ContainerInterface::ExitStatus
+    This enum describes the different exit statuses of an application.
+
+    \value NormalExit The application exited normally.
+    \value CrashExit  The application crashed.
+    \value ForcedExit The application was killed by the application-manager, since it ignored the
+                      quit request originating from a call to ApplicationManager::stopApplication.
+
+    \sa ApplicationObject::lastExitStatus, QProcess::ExitStatus
+*/
+
+/*! \enum ContainerInterface::RunState
+    This enum describes the different run states of an application.
+
+    \value NotRunning   The application has not been started yet.
+    \value StartingUp   The application has been started and is initializing.
+    \value Running      The application is running.
+    \value ShuttingDown The application has been stopped and is cleaning up (in multi-process mode
+                        this state is only reached if the application is terminating gracefully).
+
+    \sa ApplicationObject::runState, QProcess::ProcessState
+*/
+
+/*! \enum ContainerInterface::ProcessError
+    This enum describes the different types of errors that are reported by an application.
+
+    Its names and values are an exact copy of QProcess::ProcessError.
+
+    \omitvalue FailedToStart
+    \omitvalue Crashed
+    \omitvalue Timedout
+    \omitvalue WriteError
+    \omitvalue ReadError
+    \omitvalue UnknownError
+*/
+
 /*! \fn bool ContainerInterface::attachApplication(const QVariantMap &application)
 
     The application-manager calls this function, when an \a application has to be attached to this
@@ -158,13 +194,107 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     You can simply return \a hostPath, if both are running in the same namespace.
 */
 
-/*! \fn bool ContainerInterface::start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment)
+/*! \fn bool ContainerInterface::start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment, const QVariantMap &amConfig)
     This function will be called to asynchronously start the application's program (as set by
     setProgram()), with the additional command line \a arguments and with the additional environment
     variables from \a runtimeEnvironment.
 
     The \a runtimeEnvironment is a string map for environment variables and their values. An empty
-    value in this map means, that the environment variable denoted by its key shall be unset.
+    value in this map means, that the environment variable denoted by its key shall be unset. The
+    native runtime will define these variables by default:
+
+    \table
+    \header
+      \li Name
+      \li Description
+    \row
+      \li \c QT_QPA_PLATFORM
+      \li Set to \c wayland.
+    \row
+      \li \c QT_IM_MODULE
+      \li Empty (unset), which results in applications using the default wayland text input method.
+    \row
+      \li \c QT_SCALE_FACTOR
+      \li Empty (unset), to prevent scaling of wayland clients relative to the compositor. Otherwise
+          running the application-manager on a 4K desktop with scaling would result in double-scaled
+          applications within the application-manager.
+    \row
+      \li \c QT_WAYLAND_SHELL_INTEGRATION
+      \li Set to \c xdg-shell-v5. This is the preferred wayland shell integration.
+    \row
+      \li \c AM_CONFIG
+      \li A YAML, UTF-8 encoded version of \a amConfig (see below).
+    \row
+      \li \c AM_NO_DLT_LOGGING
+      \li Only set to \c 1, if DLT logging is to be switched off (otherwise not set at all).
+          The same information is available via \a amConfig (see below), but some applications and
+          launchers may need this information as early as possible.
+    \endtable
+
+    The \a amConfig map is a collection of settings that are communicated to the program from the
+    application-manager. The same information is already encoded in the \c AM_CONFIG environment
+    variable within \a runtimeEnvironment, but it would be tedious to reparse that YAML fragment
+    in the container plugin.
+    These are the currently defined fields:
+
+    \table
+    \header
+      \li Name
+      \li Type
+      \li Description
+    \row
+      \li \c baseDir
+      \li string
+      \li The base directory from where the application-manager was started. Needed for relative
+          import paths.
+    \row
+      \li \c dbus/p2p
+      \li string
+      \li The D-Bus address for the peer-to-peer bus between the application-manager and this
+          application.
+    \row
+      \li \c dbus/org.freedesktop.Notifications
+      \li string
+      \li The D-Bus address for the notification interface. Can either be \c session (default),
+          \c system or an actual D-Bus bus address.
+    \row
+      \li \c logging/dlt
+      \li bool
+      \li Logging should be done via DLT, if this is set to \c true.
+    \row
+      \li \c logging/rules
+      \li array<string>
+      \li The Qt logging rules as set in the application-manager's main config.
+    \row
+      \li \c systemProperties
+      \li object
+      \li The project specific \l{system properties} that were set via the application-manager's
+          main config file.
+    \row
+      \li \c runtimeConfiguration
+      \li object
+      \li The \l {Runtime configuration} used for this application.
+    \row
+      \li \c ui/slowAnimations
+      \li bool
+      \li Set to \c true, if animations should be slowed down.
+    \row
+      \li \c ui/iconThemeName
+      \li string
+      \li If set in the application-manager, this will forward the \l{QIcon::setThemeName}
+          {icon theme name} to the application.
+    \row
+      \li \c ui/iconThemeSearchPaths
+      \li string
+      \li If set in the application-manager, this will forward the \l{QIcon::setThemeSearchPaths}
+          {icon theme search paths} to the application.
+    \row
+      \li \c ui/opengl
+      \li object
+      \li If a specific OpenGL configuration is requested either globally for the application-manager
+          or just for this application (via its \c info.yaml manifest), this field will contain the
+          \l{OpenGL Specification}{required OpenGL configuration}.
+    \endtable
 
     The application-manager will only ever call this function once for any given instance.
 
@@ -238,7 +368,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \sa QProcess::started()
 */
 
-/*! \fn void ContainerInterface::errorOccured(QProcess::ProcessError processError)
+/*! \fn void ContainerInterface::errorOccured(ProcessError processError)
 
     This signal needs to be emitted when an error occurs with the process within the container. The
     specified \a processError describes the type of error that occurred.
@@ -246,7 +376,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \sa QProcess::errorOccurred()
 */
 
-/*! \fn void ContainerInterface::finished(int exitCode, QProcess::ExitStatus exitStatus)
+/*! \fn void ContainerInterface::finished(int exitCode, ExitStatus exitStatus)
 
     This signal has to be emitted when the process within the container finishes. The \a exitStatus
     parameter gives an indication why the process exited - in case of a normal exit, the \a exitCode
@@ -255,7 +385,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \sa QProcess::finished()
 */
 
-/*! \fn void ContainerInterface::stateChanged(QProcess::ProcessState state)
+/*! \fn void ContainerInterface::stateChanged(RunState state)
 
     This signal needs to be emitted whenever the \a state of the process within the container changes.
 */

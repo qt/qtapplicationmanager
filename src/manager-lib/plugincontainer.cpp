@@ -119,12 +119,13 @@ QString PluginContainer::mapHostPathToContainer(const QString &hostPath) const
     return m_interface->mapHostPathToContainer(hostPath);
 }
 
-AbstractContainerProcess *PluginContainer::start(const QStringList &arguments, const QMap<QString, QString> &env)
+AbstractContainerProcess *PluginContainer::start(const QStringList &arguments, const QMap<QString, QString> &env,
+                                                 const QVariantMap &amConfig)
 {
     if (m_startCalled)
         return nullptr;
 
-    if (m_interface->start(arguments, env)) {
+    if (m_interface->start(arguments, env, amConfig)) {
         m_startCalled = true;
         return m_process;
     }

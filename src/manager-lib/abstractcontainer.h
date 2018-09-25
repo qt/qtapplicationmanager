@@ -118,7 +118,8 @@ public:
     virtual QString mapHostPathToContainer(const QString &hostPath) const;
 
     virtual AbstractContainerProcess *start(const QStringList &arguments,
-                                            const QMap<QString, QString> &runtimeEnvironment) = 0;
+                                            const QMap<QString, QString> &runtimeEnvironment,
+                                            const QVariantMap &amConfig) = 0;
 
     AbstractContainerProcess *process() const;
 

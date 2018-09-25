@@ -91,7 +91,8 @@ public:
     virtual QString mapContainerPathToHost(const QString &containerPath) const = 0;
     virtual QString mapHostPathToContainer(const QString &hostPath) const = 0;
 
-    virtual bool start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment) = 0;
+    virtual bool start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment,
+                       const QVariantMap &amConfig) = 0;
 
     virtual qint64 processId() const = 0;
     virtual RunState state() const = 0;

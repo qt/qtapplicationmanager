@@ -218,12 +218,11 @@
     This property holds the current run state of the application. It can be one of:
 
     \list
-    \li Am.NotRunning - the application has not been started yet
-    \li Am.StartingUp - the application has been started and is initializing
-    \li Am.Running - the application is running
-    \li Am.ShuttingDown - the application has been stopped and is cleaning up (in
-                          multi-process mode this signal is only emitted if the
-                          application terminates gracefully)
+    \li Am.NotRunning - the application has not been started yet.
+    \li Am.StartingUp - the application has been started and is initializing.
+    \li Am.Running - the application is running.
+    \li Am.ShuttingDown - the application has been stopped and is cleaning up (in multi-process mode
+                          this state is only reached, if the application is terminating gracefully).
     \endlist
 */
 /*!

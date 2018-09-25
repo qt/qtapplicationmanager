@@ -251,8 +251,11 @@ bool ProcessContainer::isReady()
 }
 
 AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
-                                                  const QMap<QString, QString> &runtimeEnvironment)
+                                                  const QMap<QString, QString> &runtimeEnvironment,
+                                                  const QVariantMap &amConfig)
 {
+    Q_UNUSED(amConfig)
+
     if (m_process) {
         qWarning() << "Process" << m_program << "is already started and cannot be started again";
         return nullptr;

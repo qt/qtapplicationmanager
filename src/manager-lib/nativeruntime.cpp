@@ -350,7 +350,7 @@ bool NativeRuntime::start()
     if (m_isQuickLauncher)
         args << qSL("--quicklaunch");
 
-    m_process = m_container->start(args, env);
+    m_process = m_container->start(args, env, config);
 
     if (!m_process)
         return false;

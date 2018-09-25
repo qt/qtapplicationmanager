@@ -103,7 +103,8 @@ public:
     QString mapContainerPathToHost(const QString &containerPath) const override;
     QString mapHostPathToContainer(const QString &hostPath) const override;
 
-    AbstractContainerProcess *start(const QStringList &arguments, const QMap<QString, QString> &env) override;
+    AbstractContainerProcess *start(const QStringList &arguments, const QMap<QString, QString> &env,
+                                    const QVariantMap &amConfig) override;
 
 protected:
     explicit PluginContainer(AbstractContainerManager *manager, AbstractApplication *app, ContainerInterface *containerInterface);

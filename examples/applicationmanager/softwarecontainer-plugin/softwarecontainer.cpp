@@ -393,7 +393,8 @@ bool SoftwareContainer::sendBindMounts()
 
 }
 
-bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment)
+bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment,
+                              const QVariantMap &amConfig)
 {
     auto iface = manager()->interface();
     if (!iface)
@@ -407,7 +408,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
         return false;
 
     // parse out the actual socket file name from the DBus specification
-    QString dbusP2PSocket = runtimeEnvironment.value(QStringLiteral("AM_DBUS_PEER_ADDRESS"));
+    QString dbusP2PSocket = amConfig.value(QStringLiteral("dbus")).toMap().value(QStringLiteral("p2p")).toString();
     dbusP2PSocket = dbusP2PSocket.mid(dbusP2PSocket.indexOf(QLatin1Char('=')) + 1);
     dbusP2PSocket = dbusP2PSocket.left(dbusP2PSocket.indexOf(QLatin1Char(',')));
     QFileInfo dbusP2PInfo(dbusP2PSocket);

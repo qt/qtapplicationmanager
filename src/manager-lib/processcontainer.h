@@ -111,7 +111,8 @@ public:
     bool isReady() override;
 
     AbstractContainerProcess *start(const QStringList &arguments,
-                                    const QMap<QString, QString> &runtimeEnvironment) override;
+                                    const QMap<QString, QString> &runtimeEnvironment,
+                                    const QVariantMap &amConfig) override;
 
 private:
     QString m_currentControlGroup;

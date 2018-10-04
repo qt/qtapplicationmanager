@@ -68,6 +68,9 @@ tools_dumpqmltypes.depends = manager_lib installer_lib window_lib monitor_lib la
 tools_packager.subdir = tools/packager
 tools_packager.depends = package_lib
 
+tools_uploader.subdir = tools/uploader
+tools_uploader.depends = common_lib
+
 tools_controller.subdir = tools/controller
 tools_controller.depends = common_lib
 
@@ -80,6 +83,7 @@ SUBDIRS = \
 !tools-only {
     SUBDIRS += \
         plugin_interfaces \
+        tools_uploader \
 
     !disable-external-dbus-interfaces:qtHaveModule(dbus):SUBDIRS += \
         dbus_lib \

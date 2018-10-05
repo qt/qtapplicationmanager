@@ -67,9 +67,7 @@ Rectangle {
 
     // Application launcher panel
     Column {
-        id: launcher
         Repeater {
-            id: menuItems
             model: ApplicationManager
 
             Image {
@@ -78,7 +76,7 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: isRunning ? application.stop() : application.start()
+                    onClicked: isRunning ? application.stop() : application.start("documentUrl");
                 }
             }
         }
@@ -89,9 +87,9 @@ Rectangle {
         model: ListModel { id: topLevelWindowsModel }
 
         delegate: Rectangle {
-            id: decoratedWindow
-
             width: 400; height: 320
+            x: 300 + model.index * 50;
+            y:  10 + model.index * 30;
             z: model.index
             color: "tan"
 
@@ -103,7 +101,7 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 drag.target: parent
-                onPressed: topLevelWindowsModel.move(model.index, topLevelWindowsModel.count-1, 1);
+                onPressed: topLevelWindowsModel.move(model.index, topLevelWindowsModel.count - 1, 1);
             }
 
             Rectangle {
@@ -112,7 +110,7 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: model.window.close()
+                    onClicked: model.window.close();
                 }
             }
 
@@ -121,37 +119,30 @@ Rectangle {
                 anchors.margins: 3
                 anchors.topMargin: 25
                 window: model.window
-            }
 
-            Component.onCompleted: {
-                decoratedWindow.x =  300 + model.index * 50;
-                decoratedWindow.y =  10 + model.index * 30;
-            }
-
-            Connections {
-                target: model.window
-                onContentStateChanged: {
-                    if (model.window.contentState === WindowObject.NoSurface)
-                        topLevelWindowsModel.remove(model.index, 1);
+                Connections {
+                    target: window
+                    onContentStateChanged: {
+                        if (window.contentState === WindowObject.NoSurface)
+                            topLevelWindowsModel.remove(model.index, 1);
+                    }
                 }
             }
-
         }
     }
 
-    // System-UI for pop-ups
-    Repeater {
-        model: ListModel { id: popupsModel }
-        delegate: WindowItem {
-            z: 100 + model.index
-            width: 200; height: 60
-            anchors.centerIn: parent
-            window: model.window
-            Connections {
-                target: model.window
-                onContentStateChanged: {
-                    if (model.window.contentState === WindowObject.NoSurface)
-                        popupsModel.remove(model.index, 1);
+    // System-UI for a pop-up
+    WindowItem {
+        id: popUpContainer
+        z: 9998
+        width: 200; height: 60
+        anchors.centerIn: parent
+
+        Connections {
+            target: popUpContainer.window
+            onContentStateChanged: {
+                if (popUpContainer.window.contentState === WindowObject.NoSurface) {
+                    popUpContainer.window = null;
                 }
             }
         }
@@ -159,7 +150,7 @@ Rectangle {
 
     // System-UI for a notification
     Text {
-        z: 30001
+        z: 9999
         font.pixelSize: 46
         anchors.centerIn: parent
         text: NotificationManager.count > 0 ? NotificationManager.get(0).summary : ""
@@ -169,16 +160,20 @@ Rectangle {
     Connections {
         target: WindowManager
         onWindowAdded:  {
-            // separate windows by their type, adding them to their respective model
-            var model = window.windowProperty("type") === "pop-up" ? popupsModel : topLevelWindowsModel;
-            model.append({"window":window});
+            if (window.windowProperty("type") === "pop-up") {
+                popUpContainer.window = window;
+            } else {
+                topLevelWindowsModel.append({"window": window});
+                window.setWindowProperty("propA", 42);
+            }
         }
+
+        onWindowPropertyChanged: console.log("SystemUI: OnWindowPropertyChanged [" + window + "] - "
+                                                       + name + ": " + value);
     }
 
     // IPC extension
     ApplicationIPCInterface {
-        id: extension
-
         property double pi
         signal computed(string what)
         readonly property var _decltype_circumference: { "double": [ "double", "string" ] }
@@ -190,6 +185,6 @@ Rectangle {
             return circ;
         }
 
-        Component.onCompleted: ApplicationIPCManager.registerInterface(extension, "tld.minidesk.interface", {});
+        Component.onCompleted: ApplicationIPCManager.registerInterface(this, "tld.minidesk.interface", {});
     }
 }

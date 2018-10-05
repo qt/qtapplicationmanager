@@ -10,6 +10,7 @@ installationLocations:
 
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installedAppsManifestDir: "/tmp/minidesk/manifests"
 
 logging:
   rules:

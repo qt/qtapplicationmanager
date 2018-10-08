@@ -649,7 +649,7 @@ void Main::setupWindowManager(const QString &waylandSocketName, bool slowAnimati
     m_windowManager->setSlowAnimations(slowAnimations);
     m_windowManager->enableWatchdog(!uiWatchdog);
 
-    QObject::connect(m_applicationManager, &ApplicationManager::inProcessRuntimeCreated,
+    QObject::connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::newRuntimeCreated,
                      m_windowManager, &WindowManager::setupInProcessRuntime);
     QObject::connect(m_applicationManager, &ApplicationManager::applicationWasActivated,
                      m_windowManager, &WindowManager::raiseApplicationWindow);

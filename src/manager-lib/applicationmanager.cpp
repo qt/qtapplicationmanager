@@ -771,10 +771,8 @@ bool ApplicationManager::startApplicationInternal(AbstractApplication *app, cons
         if (!runtime)
             runtime = RuntimeFactory::instance()->create(container, realApp);
 
-        if (runtime && inProcess)  {
-            // evil hook to get in-process mode working transparently
-            emit inProcessRuntimeCreated(runtime);
-        }
+        if (runtime)
+            emit internalSignals.newRuntimeCreated(runtime);
     }
 
     if (!runtime) {

@@ -66,6 +66,8 @@ class ApplicationManagerInternalSignals : public QObject
 signals:
     // Emitted after an application is installed, updated, downgraded or removed
     void applicationsChanged();
+    // Emitted every time a new Runtime object is created
+    void newRuntimeCreated(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);
 };
 
 class ApplicationManager : public QAbstractListModel
@@ -170,8 +172,6 @@ signals:
     Q_SCRIPTABLE void applicationChanged(const QString &id, const QStringList &changedRoles);
 
     void openUrlRequested(const QString &requestId, const QString &url, const QString &mimeType, const QStringList &possibleAppIds);
-
-    void inProcessRuntimeCreated(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime); // evil hook to support in-process runtimes
 
     void memoryLowWarning();
     void memoryCriticalWarning();

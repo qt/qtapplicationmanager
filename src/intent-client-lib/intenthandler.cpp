@@ -39,58 +39,51 @@
 **
 ****************************************************************************/
 
-#pragma once
-
-#include <QObject>
-#include <QUrl>
-#include <QVariantMap>
-#include <QtAppManCommon/global.h>
+#include "intenthandler.h"
+#include "intentclient.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationInterface : public QObject
+IntentHandler::IntentHandler(QObject *parent)
+    : QObject(parent)
+{ }
+
+IntentHandler::IntentHandler(const QString &intentId, QObject *parent)
+    : QObject(parent)
+    , m_intentIds(intentId)
+{ }
+
+IntentHandler::IntentHandler(const QStringList &intentIds, QObject *parent)
+    : QObject(parent)
+    , m_intentIds(intentIds)
+
+{ }
+
+IntentHandler::~IntentHandler()
 {
-    Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")
-    Q_PROPERTY(QString applicationId READ applicationId CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap name READ name CONSTANT)
-    Q_PROPERTY(QUrl icon READ icon CONSTANT)
-    Q_PROPERTY(QString version READ version CONSTANT)
-    Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true)
+    if (auto ie = IntentClient::instance())
+        ie->unregisterHandler(this);
+}
 
-public:
-    virtual QString applicationId() const = 0;
-    virtual QVariantMap name() const = 0;
-    virtual QUrl icon() const = 0;
-    virtual QString version() const = 0;
-    virtual QVariantMap systemProperties() const = 0;
-    virtual QVariantMap applicationProperties() const = 0;
+QStringList IntentHandler::intentIds() const
+{
+    return m_intentIds;
+}
 
-#ifdef Q_QDOC
-    Q_INVOKABLE Notification *createNotification();
-    Q_INVOKABLE IntentRequest *createIntentRequest();
-    Q_INVOKABLE virtual void acknowledgeQuit() const;
-#endif
-    Q_SCRIPTABLE virtual void finishedInitialization() = 0;
+void IntentHandler::setIntentIds(const QStringList &intentIds)
+{
+    if (intentIds != m_intentIds) {
+        m_intentIds = intentIds;
+        emit intentIdsChanged(m_intentIds);
+    }
+}
 
-signals:
-    Q_SCRIPTABLE void quit();
-    Q_SCRIPTABLE void memoryLowWarning();
-    Q_SCRIPTABLE void memoryCriticalWarning();
+void IntentHandler::componentComplete()
+{
+    IntentClient::instance()->registerHandler(this);
+}
 
-    Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
-    Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
-
-    Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
-
-protected:
-    ApplicationInterface(QObject *parent)
-        : QObject(parent)
-    { }
-
-private:
-    Q_DISABLE_COPY(ApplicationInterface)
-};
+void IntentHandler::classBegin()
+{ }
 
 QT_END_NAMESPACE_AM

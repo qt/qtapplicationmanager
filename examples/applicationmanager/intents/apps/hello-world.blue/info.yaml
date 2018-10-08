@@ -1,0 +1,15 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'hello-world.blue'
+icon:    'icon.png'
+code:    'main.qml'
+runtime: 'qml'
+name:
+  en: 'Hello Blue'
+
+intents:
+- id: io.qt.blue
+  requiredCapabilities: [ "foo" ]
+- id: io.qt.blue.private
+  visibility: private

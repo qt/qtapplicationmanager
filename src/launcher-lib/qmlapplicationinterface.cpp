@@ -43,6 +43,7 @@
 #include <QDBusInterface>
 #include <QDBusMessage>
 #include <QDBusReply>
+#include <QQmlEngine>
 #include <QDebug>
 #include <QPointer>
 #include <QCoreApplication>
@@ -55,6 +56,9 @@
 #include "notification.h"
 #include "ipcwrapperobject.h"
 #include "utilities.h"
+#include "intentclient.h"
+#include "intentclientrequest.h"
+#include "intentclientdbusimplementation.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -144,6 +148,12 @@ bool QmlApplicationInterface::initialize()
 
     QmlApplicationInterfaceExtension::initialize(m_connection);
 
+    auto intentClientDBusInterface = new IntentClientDBusImplementation(m_connection.name());
+    if (!IntentClient::createInstance(intentClientDBusInterface)) {
+        qCritical("ERROR: could not connect to the application manager's IntentInterface on the P2P D-Bus");
+        return false;
+    }
+
     if (ok)
         finishedInitialization();
     return ok;
@@ -196,6 +206,18 @@ QVariantMap QmlApplicationInterface::systemProperties() const
 QVariantMap QmlApplicationInterface::applicationProperties() const
 {
     return m_applicationProperties;
+}
+
+IntentClientRequest *QmlApplicationInterface::createIntentRequest(const QString &intentId, const QVariantMap &parameters)
+{
+    return createIntentRequest(intentId, QString(), parameters);
+}
+
+IntentClientRequest *QmlApplicationInterface::createIntentRequest(const QString &intentId, const QString &applicationId, const QVariantMap &parameters)
+{
+    auto req = IntentClientRequest::create(this->applicationId(), intentId, applicationId, parameters);
+    QQmlEngine::setObjectOwnership(req, QQmlEngine::CppOwnership);
+    return req;
 }
 
 uint QmlApplicationInterface::notificationShow(QmlNotification *n)

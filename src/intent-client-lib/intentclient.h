@@ -42,55 +42,56 @@
 #pragma once
 
 #include <QObject>
-#include <QUrl>
+#include <QString>
 #include <QVariantMap>
+#include <QList>
+#include <QMap>
+
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationInterface : public QObject
+class IntentHandler;
+class IntentClientRequest;
+class IntentClientSystemInterface;
+
+/* internal interface used by IntentRequest and IntentHandler */
+
+class IntentClient : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")
-    Q_PROPERTY(QString applicationId READ applicationId CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap name READ name CONSTANT)
-    Q_PROPERTY(QUrl icon READ icon CONSTANT)
-    Q_PROPERTY(QString version READ version CONSTANT)
-    Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true)
 
 public:
-    virtual QString applicationId() const = 0;
-    virtual QVariantMap name() const = 0;
-    virtual QUrl icon() const = 0;
-    virtual QString version() const = 0;
-    virtual QVariantMap systemProperties() const = 0;
-    virtual QVariantMap applicationProperties() const = 0;
+    ~IntentClient() override;
+    static IntentClient *createInstance(IntentClientSystemInterface *systemInterface);
+    static IntentClient *instance();
 
-#ifdef Q_QDOC
-    Q_INVOKABLE Notification *createNotification();
-    Q_INVOKABLE IntentRequest *createIntentRequest();
-    Q_INVOKABLE virtual void acknowledgeQuit() const;
-#endif
-    Q_SCRIPTABLE virtual void finishedInitialization() = 0;
+    IntentClientRequest *requestToSystem(const QString &requestingApplicationId, const QString &intentId, const QString &applicationId,
+                                         const QVariantMap &parameters);
+    void replyFromApplication(IntentClientRequest *icr, const QVariantMap &result);
+    void errorReplyFromApplication(IntentClientRequest *icr, const QString &errorMessage);
 
-signals:
-    Q_SCRIPTABLE void quit();
-    Q_SCRIPTABLE void memoryLowWarning();
-    Q_SCRIPTABLE void memoryCriticalWarning();
-
-    Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
-    Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
-
-    Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
-
-protected:
-    ApplicationInterface(QObject *parent)
-        : QObject(parent)
-    { }
+    void registerHandler(IntentHandler *handler);
+    void unregisterHandler(IntentHandler *handler);
 
 private:
-    Q_DISABLE_COPY(ApplicationInterface)
+    void requestToSystemFinished(IntentClientRequest *icr, const QUuid &newRequestId,
+                                 bool error, const QString &errorMessage);
+    void replyFromSystem(const QString &requestId, bool error, const QVariantMap &result);
+
+    void requestToApplication(const QString &requestId, const QString &intentId,
+                              const QString &applicationId, const QVariantMap &parameters);
+
+private:
+    IntentClient(IntentClientSystemInterface *systemInterface, QObject *parent = nullptr);
+    Q_DISABLE_COPY(IntentClient)
+    static IntentClient *s_instance;
+
+    QList<IntentClientRequest *> m_waiting;
+    QMap<QString, IntentHandler *> m_handlers;
+
+    IntentClientSystemInterface *m_systemInterface;
+    friend class IntentClientSystemInterface;
 };
 
 QT_END_NAMESPACE_AM

@@ -39,58 +39,21 @@
 **
 ****************************************************************************/
 
-#pragma once
-
-#include <QObject>
-#include <QUrl>
-#include <QVariantMap>
-#include <QtAppManCommon/global.h>
+#include "intentclientsysteminterface.h"
+#include "intentclient.h"
+#include "intentclientrequest.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationInterface : public QObject
+void IntentClientSystemInterface::initialize(IntentClient *intentClient)
 {
-    Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")
-    Q_PROPERTY(QString applicationId READ applicationId CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap name READ name CONSTANT)
-    Q_PROPERTY(QUrl icon READ icon CONSTANT)
-    Q_PROPERTY(QString version READ version CONSTANT)
-    Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true)
-
-public:
-    virtual QString applicationId() const = 0;
-    virtual QVariantMap name() const = 0;
-    virtual QUrl icon() const = 0;
-    virtual QString version() const = 0;
-    virtual QVariantMap systemProperties() const = 0;
-    virtual QVariantMap applicationProperties() const = 0;
-
-#ifdef Q_QDOC
-    Q_INVOKABLE Notification *createNotification();
-    Q_INVOKABLE IntentRequest *createIntentRequest();
-    Q_INVOKABLE virtual void acknowledgeQuit() const;
-#endif
-    Q_SCRIPTABLE virtual void finishedInitialization() = 0;
-
-signals:
-    Q_SCRIPTABLE void quit();
-    Q_SCRIPTABLE void memoryLowWarning();
-    Q_SCRIPTABLE void memoryCriticalWarning();
-
-    Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
-    Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
-
-    Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
-
-protected:
-    ApplicationInterface(QObject *parent)
-        : QObject(parent)
-    { }
-
-private:
-    Q_DISABLE_COPY(ApplicationInterface)
-};
+    m_ic = intentClient;
+    connect(this, &IntentClientSystemInterface::requestToSystemFinished,
+            m_ic, &IntentClient::requestToSystemFinished);
+    connect(this, &IntentClientSystemInterface::replyFromSystem,
+            m_ic, &IntentClient::replyFromSystem);
+    connect(this, &IntentClientSystemInterface::requestToApplication,
+            m_ic, &IntentClient::requestToApplication);
+}
 
 QT_END_NAMESPACE_AM

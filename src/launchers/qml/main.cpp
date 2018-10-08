@@ -279,7 +279,8 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
         connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
                 this, &Controller::startApplication);
         if (!m_applicationInterface->initialize())
-            throw Exception("Could not connect to the application manager's interface on the peer D-Bus");
+            throw Exception("Could not connect to the application manager's ApplicationInterface on the peer D-Bus");
+
     } else {
         QTimer::singleShot(0, [this, directLoad]() {
             QFileInfo fi(directLoad);

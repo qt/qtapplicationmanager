@@ -39,58 +39,30 @@
 **
 ****************************************************************************/
 
-#pragma once
-
-#include <QObject>
-#include <QUrl>
-#include <QVariantMap>
-#include <QtAppManCommon/global.h>
+#include "intentserversysteminterface.h"
+#include "intentserver.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationInterface : public QObject
+void IntentServerSystemInterface::initialize(IntentServer *intentServer)
 {
-    Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")
-    Q_PROPERTY(QString applicationId READ applicationId CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap name READ name CONSTANT)
-    Q_PROPERTY(QUrl icon READ icon CONSTANT)
-    Q_PROPERTY(QString version READ version CONSTANT)
-    Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true)
+    m_is = intentServer;
 
-public:
-    virtual QString applicationId() const = 0;
-    virtual QVariantMap name() const = 0;
-    virtual QUrl icon() const = 0;
-    virtual QString version() const = 0;
-    virtual QVariantMap systemProperties() const = 0;
-    virtual QVariantMap applicationProperties() const = 0;
+    connect(this, &IntentServerSystemInterface::replyFromApplication,
+            m_is, &IntentServer::replyFromApplication);
+    connect(this, &IntentServerSystemInterface::applicationWasStarted,
+            m_is, &IntentServer::applicationWasStarted);
+}
 
-#ifdef Q_QDOC
-    Q_INVOKABLE Notification *createNotification();
-    Q_INVOKABLE IntentRequest *createIntentRequest();
-    Q_INVOKABLE virtual void acknowledgeQuit() const;
-#endif
-    Q_SCRIPTABLE virtual void finishedInitialization() = 0;
+IntentServer *IntentServerSystemInterface::intentServer() const
+{
+    return m_is;
+}
 
-signals:
-    Q_SCRIPTABLE void quit();
-    Q_SCRIPTABLE void memoryLowWarning();
-    Q_SCRIPTABLE void memoryCriticalWarning();
-
-    Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
-    Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
-
-    Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
-
-protected:
-    ApplicationInterface(QObject *parent)
-        : QObject(parent)
-    { }
-
-private:
-    Q_DISABLE_COPY(ApplicationInterface)
-};
+IntentServerRequest *IntentServerSystemInterface::requestToSystem(const QString &requestingApplicationId, const QString &intentId, const QString &applicationId, const QVariantMap &parameters)
+{
+    // not possible to do via signal, due to return value
+    return m_is->requestToSystem(requestingApplicationId, intentId, applicationId, parameters);
+}
 
 QT_END_NAMESPACE_AM

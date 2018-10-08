@@ -69,6 +69,8 @@ enum class Error {
 
     MediumNotAvailable = 50,
     WrongMedium = 51,
+
+    Intents = 60
 };
 
 QT_END_NAMESPACE_AM

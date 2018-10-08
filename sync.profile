@@ -13,6 +13,8 @@
     "QtAppManPluginInterfaces" => "$basedir/src/plugin-interfaces",
     "QtAppManMonitor" => "$basedir/src/monitor-lib",
     "QtAppManDBus" => "$basedir/src/dbus-lib",
+    "QtAppManIntentServer" => "$basedir/src/intent-server-lib",
+    "QtAppManIntentClient" => "$basedir/src/intent-client-lib",
 );
 %moduleheaders = ( # restrict the module headers to those found in relative path
 );

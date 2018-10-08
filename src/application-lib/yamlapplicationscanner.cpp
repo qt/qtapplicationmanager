@@ -184,6 +184,8 @@ AbstractApplicationInfo *YamlApplicationScanner::scanInternal(const QString &fil
                         if (!validKeys.contains(it.key()))
                             throw Exception(Error::Parse, "the 'opengl' object contains the unsupported key '%1'").arg(it.key());
                     }
+                } else if (field == "intents") {
+                    appInfo->m_intents = v.toList();
                 } else {
                     unknownField = true;
                 }

@@ -12,8 +12,11 @@ QT_FOR_PRIVATE *= \
     appman_shared_main-private \
     appman_application-private \
     appman_notification-private \
+    appman_intent_client-private \
 
 CONFIG *= static internal_module
+
+DBUS_INTERFACES += ../dbus-lib/io.qt.applicationmanager.intentinterface.xml
 
 SOURCES += \
     qmlapplicationinterface.cpp \
@@ -21,6 +24,7 @@ SOURCES += \
     qmlapplicationinterfaceextension.cpp \
     qmlnotification.cpp \
     launchermain.cpp \
+    intentclientdbusimplementation.cpp
 
 !headless:SOURCES += \
     applicationmanagerwindow.cpp \
@@ -41,6 +45,7 @@ HEADERS += \
     qmlapplicationinterfaceextension.h \
     qmlnotification.h \
     launchermain.h \
+    intentclientdbusimplementation.h
 
 !headless:HEADERS += \
     applicationmanagerwindow_p.h

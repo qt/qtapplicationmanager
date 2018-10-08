@@ -51,6 +51,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 class QmlInProcessRuntime;
+class IntentClientRequest;
 
 class QmlInProcessNotification : public Notification // clazy:exclude=missing-qobject-macro
 {
@@ -90,6 +91,8 @@ public:
     QVariantMap applicationProperties() const override;
 
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest *) createIntentRequest(const QString &intentId, const QVariantMap &parameters);
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest *) createIntentRequest(const QString &intentId, const QString &applicationId, const QVariantMap &parameters);
     Q_INVOKABLE void acknowledgeQuit();
 
     void finishedInitialization() override;

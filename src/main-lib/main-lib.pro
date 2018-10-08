@@ -18,6 +18,7 @@ QT *= \
     appman_notification-private \
     appman_monitor-private \
     appman_shared_main-private \
+    appman_intent_server-private \
 
 !headless:QT *= appman_window-private
 !disable-external-dbus-interfaces:qtHaveModule(dbus):QT *= dbus appman_dbus-private

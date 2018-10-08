@@ -77,6 +77,7 @@ class ApplicationDatabase;
 class ApplicationManager;
 class ApplicationInstaller;
 class NotificationManager;
+class IntentServer;
 class WindowManager;
 class QuickLauncher;
 class SystemMonitor;
@@ -116,6 +117,7 @@ protected:
     void setupInstallationLocations(const QVariantList &installationLocations);
     void loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
                                  const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupIntents() Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
                          int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
                          const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
@@ -166,6 +168,7 @@ private:
     ApplicationIPCManager *m_applicationIPCManager = nullptr;
     ApplicationInstaller *m_applicationInstaller = nullptr;
     NotificationManager *m_notificationManager = nullptr;
+    IntentServer *m_intentServer = nullptr;
     WindowManager *m_windowManager = nullptr;
     QuickLauncher *m_quickLauncher = nullptr;
     QVector<StartupInterface *> m_startupPlugins;

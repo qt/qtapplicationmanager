@@ -20,7 +20,7 @@ package_lib.subdir = package-lib
 package_lib.depends = crypto_lib application_lib
 
 manager_lib.subdir = manager-lib
-manager_lib.depends = application_lib notification_lib plugin_interfaces
+manager_lib.depends = application_lib notification_lib intent_server_lib intent_client_lib plugin_interfaces
 
 installer_lib.subdir = installer-lib
 installer_lib.depends = package_lib manager_lib
@@ -34,8 +34,14 @@ monitor_lib.depends = manager_lib window_lib
 shared_main_lib.subdir = shared-main-lib
 shared_main_lib.depends = common_lib
 
+intent_server_lib.subdir = intent-server-lib
+intent_server_lib.depends = common_lib
+
+intent_client_lib.subdir = intent-client-lib
+intent_client_lib.depends = common_lib
+
 launcher_lib.subdir = launcher-lib
-launcher_lib.depends = application_lib notification_lib shared_main_lib
+launcher_lib.depends = application_lib notification_lib shared_main_lib intent_client_lib
 
 main_lib.subdir = main-lib
 main_lib.depends = shared_main_lib manager_lib installer_lib window_lib monitor_lib
@@ -85,6 +91,8 @@ SUBDIRS = \
         window_lib \
         monitor_lib \
         shared_main_lib \
+        intent_server_lib \
+        intent_client_lib \
         main_lib \
         tools_appman \
         # Although the testrunner is in tools we don't want to build it with tools-only

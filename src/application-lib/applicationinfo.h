@@ -125,6 +125,7 @@ public:
     QStringList categories() const;
     QString version() const;
     QVariantMap openGLConfiguration() const;
+    QVariantList intents() const;
     bool supportsApplicationInterface() const;
 
     void setSupportsApplicationInterface(bool supportsAppInterface);
@@ -157,6 +158,7 @@ private:
     QString m_version;
 
     QVariantMap m_openGLConfiguration;
+    QVariantList m_intents;
 
     // added by installer
     QScopedPointer<InstallationReport> m_installationReport;

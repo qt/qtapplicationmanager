@@ -50,6 +50,7 @@
 #include "notificationmanager.h"
 #include "applicationipcmanager.h"
 #include "applicationipcinterface.h"
+#include "intentclientrequest.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -110,6 +111,21 @@ QVariantMap QmlInProcessApplicationInterface::applicationProperties() const
         return m_runtime->application()->info()->allAppProperties();
     }
     return QVariantMap();
+}
+
+IntentClientRequest *QmlInProcessApplicationInterface::createIntentRequest(const QString &intentId,
+                                                                           const QVariantMap &parameters)
+{
+    return createIntentRequest(intentId, QString(), parameters);
+}
+
+IntentClientRequest *QmlInProcessApplicationInterface::createIntentRequest(const QString &intentId,
+                                                                           const QString &applicationId,
+                                                                           const QVariantMap &parameters)
+{
+    auto req = IntentClientRequest::create(this->applicationId(), intentId, applicationId, parameters);
+    QQmlEngine::setObjectOwnership(req, QQmlEngine::CppOwnership);
+    return req;
 }
 
 void QmlInProcessApplicationInterface::acknowledgeQuit()

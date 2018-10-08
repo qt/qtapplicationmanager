@@ -42,55 +42,47 @@
 #pragma once
 
 #include <QObject>
-#include <QUrl>
+#include <QQmlParserStatus>
+#include <QUuid>
+#include <QString>
+#include <QStringList>
 #include <QVariantMap>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationInterface : public QObject
+class IntentClientRequest;
+
+class IntentHandler : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")
-    Q_PROPERTY(QString applicationId READ applicationId CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap name READ name CONSTANT)
-    Q_PROPERTY(QUrl icon READ icon CONSTANT)
-    Q_PROPERTY(QString version READ version CONSTANT)
-    Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true)
+    Q_INTERFACES(QQmlParserStatus)
+    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds NOTIFY intentIdsChanged)
 
 public:
-    virtual QString applicationId() const = 0;
-    virtual QVariantMap name() const = 0;
-    virtual QUrl icon() const = 0;
-    virtual QString version() const = 0;
-    virtual QVariantMap systemProperties() const = 0;
-    virtual QVariantMap applicationProperties() const = 0;
+    IntentHandler(QObject *parent = nullptr);
+    IntentHandler(const QString &intentId, QObject *parent = nullptr);
+    IntentHandler(const QStringList &intentIds, QObject *parent = nullptr);
+    ~IntentHandler() override;
 
-#ifdef Q_QDOC
-    Q_INVOKABLE Notification *createNotification();
-    Q_INVOKABLE IntentRequest *createIntentRequest();
-    Q_INVOKABLE virtual void acknowledgeQuit() const;
-#endif
-    Q_SCRIPTABLE virtual void finishedInitialization() = 0;
+    QStringList intentIds() const;
+    void setIntentIds(const QStringList &intentId);
 
 signals:
-    Q_SCRIPTABLE void quit();
-    Q_SCRIPTABLE void memoryLowWarning();
-    Q_SCRIPTABLE void memoryCriticalWarning();
+    void intentIdsChanged(const QStringList &intentId);
 
-    Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
-    Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
-
-    Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
+    void receivedRequest(QtAM::IntentClientRequest *request);
 
 protected:
-    ApplicationInterface(QObject *parent)
-        : QObject(parent)
-    { }
+    void componentComplete() override;
+    void classBegin() override;
 
 private:
-    Q_DISABLE_COPY(ApplicationInterface)
+    Q_DISABLE_COPY(IntentHandler)
+
+    QStringList m_intentIds;
 };
 
 QT_END_NAMESPACE_AM
+
+Q_DECLARE_METATYPE(QtAM::IntentHandler *)

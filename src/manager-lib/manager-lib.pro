@@ -6,17 +6,33 @@ load(am-config)
 
 QT = core network qml
 !headless:QT *= gui gui-private quick qml-private quick-private
-qtHaveModule(dbus):QT *= dbus
 QT_FOR_PRIVATE *= \
     appman_common-private \
     appman_application-private \
     appman_notification-private \
     appman_plugininterfaces-private \
+    appman_intent_server-private \
+    appman_intent_client-private \
 
 CONFIG *= static internal_module
 
 multi-process {
-    LIBS += -ldl
+    QT *= dbus
+    LIBS *= -ldl
+
+    HEADERS += \
+        nativeruntime.h \
+        nativeruntime_p.h \
+        processcontainer.h \
+
+    SOURCES += \
+        nativeruntime.cpp \
+        processcontainer.cpp \
+
+    CONFIG = dbus-adaptors-xml $$CONFIG
+
+    ADAPTORS_XML = \
+        ../dbus-lib/io.qt.applicationmanager.intentinterface.xml
 }
 
 HEADERS += \
@@ -38,6 +54,7 @@ HEADERS += \
     systemreader.h \
     debugwrapper.h \
     amnamespace.h \
+    intentaminterface.h
 
 linux:HEADERS += \
     sysfsreader.h \
@@ -45,11 +62,6 @@ linux:HEADERS += \
 !headless:HEADERS += \
     fakeapplicationmanagerwindow.h \
     inprocesssurfaceitem.h
-
-multi-process:HEADERS += \
-    nativeruntime.h \
-    nativeruntime_p.h \
-    processcontainer.h \
 
 qtHaveModule(qml):HEADERS += \
     qmlinprocessruntime.h \
@@ -71,6 +83,7 @@ SOURCES += \
     applicationipcinterface.cpp \
     systemreader.cpp \
     debugwrapper.cpp \
+    intentaminterface.cpp
 
 linux:SOURCES += \
     sysfsreader.cpp \
@@ -78,10 +91,6 @@ linux:SOURCES += \
 !headless:SOURCES += \
     fakeapplicationmanagerwindow.cpp \
     inprocesssurfaceitem.cpp
-
-multi-process:SOURCES += \
-    nativeruntime.cpp \
-    processcontainer.cpp \
 
 qtHaveModule(qml):SOURCES += \
     qmlinprocessruntime.cpp \

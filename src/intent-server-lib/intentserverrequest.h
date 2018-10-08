@@ -42,55 +42,63 @@
 #pragma once
 
 #include <QObject>
-#include <QUrl>
+#include <QString>
 #include <QVariantMap>
+#include <QUuid>
+#include <QVector>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationInterface : public QObject
+class IntentServer;
+class Intent;
+
+class IntentServerRequest
 {
-    Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")
-    Q_PROPERTY(QString applicationId READ applicationId CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap name READ name CONSTANT)
-    Q_PROPERTY(QUrl icon READ icon CONSTANT)
-    Q_PROPERTY(QString version READ version CONSTANT)
-    Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true)
-    Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true)
+    Q_GADGET
 
 public:
-    virtual QString applicationId() const = 0;
-    virtual QVariantMap name() const = 0;
-    virtual QUrl icon() const = 0;
-    virtual QString version() const = 0;
-    virtual QVariantMap systemProperties() const = 0;
-    virtual QVariantMap applicationProperties() const = 0;
+    IntentServerRequest(bool external, const QString &requestingAppId, const QVector<const Intent *> &intents,
+                        const QVariantMap &parameters);
 
-#ifdef Q_QDOC
-    Q_INVOKABLE Notification *createNotification();
-    Q_INVOKABLE IntentRequest *createIntentRequest();
-    Q_INVOKABLE virtual void acknowledgeQuit() const;
-#endif
-    Q_SCRIPTABLE virtual void finishedInitialization() = 0;
+    enum class State {
+        ReceivedRequest,
+        WaitingForDisambiguation,
+        Disambiguated,
+        WaitingForApplicationStart,
+        StartedApplication,
+        WaitingForReplyFromApplication,
+        ReceivedReplyFromApplication,
+    };
 
-signals:
-    Q_SCRIPTABLE void quit();
-    Q_SCRIPTABLE void memoryLowWarning();
-    Q_SCRIPTABLE void memoryCriticalWarning();
+    Q_ENUM(State)
 
-    Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
-    Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
+    State state() const;
+    QUuid id() const;
+    const QtAM::Intent *intent() const;
+    QVariantMap parameters() const;
+    bool isWaiting() const;
+    bool hasSucceeded() const;
+    QVariantMap result() const;
 
-    Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
-
-protected:
-    ApplicationInterface(QObject *parent)
-        : QObject(parent)
-    { }
+    void requestFailed(const QString &errorMessage);
+    void requestSucceeded(const QVariantMap &result);
 
 private:
-    Q_DISABLE_COPY(ApplicationInterface)
+    void setState(State newState);
+
+private:
+    QUuid m_id;
+    State m_state;
+    bool m_external;
+    bool m_succeeded = false;
+    QString m_requestingAppId;
+    QVector<const Intent *> m_intents;
+    QVariantMap m_parameters;
+    QVariantMap m_result;
+    const Intent *m_actualIntent;
+
+    friend class IntentServer;
 };
 
 QT_END_NAMESPACE_AM

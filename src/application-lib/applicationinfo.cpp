@@ -330,6 +330,11 @@ QVariantMap ApplicationInfo::openGLConfiguration() const
     return m_openGLConfiguration;
 }
 
+QVariantList ApplicationInfo::intents() const
+{
+    return m_intents;
+}
+
 void ApplicationInfo::setBuiltIn(bool builtIn)
 {
     m_builtIn = builtIn;

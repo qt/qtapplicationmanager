@@ -108,11 +108,11 @@ public:
     QVector<AbstractApplication *> schemeHandlers(const QString &scheme) const;
     QVector<AbstractApplication *> mimeTypeHandlers(const QString &mimeType) const;
 
-    bool startApplication(AbstractApplication *app, const QString &documentUrl = QString(),
-                          const QString &documentMimeType = QString(),
-                          const QString &debugWrapperSpecification = QString(),
-                          const QVector<int> &stdioRedirections = QVector<int>()) Q_DECL_NOEXCEPT_EXPR(false);
-    void stopApplication(AbstractApplication *app, bool forceKill = false);
+    bool startApplicationInternal(AbstractApplication *app, const QString &documentUrl = QString(),
+                                  const QString &documentMimeType = QString(),
+                                  const QString &debugWrapperSpecification = QString(),
+                                  const QVector<int> &stdioRedirections = QVector<int>()) Q_DECL_NOEXCEPT_EXPR(false);
+    void stopApplicationInternal(AbstractApplication *app, bool forceKill = false);
 
     // only use these two functions for development!
     bool securityChecksEnabled() const;

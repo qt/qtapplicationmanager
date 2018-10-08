@@ -171,7 +171,7 @@ bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QStrin
     int result = false;
     auto am = ApplicationManager::instance();
     try {
-        result = am->startApplication(am->fromId(id), documentUrl, QString(), debugWrapper, stdioRedirections);
+        result = am->startApplicationInternal(am->fromId(id), documentUrl, QString(), debugWrapper, stdioRedirections);
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
         AbstractDBusContextAdaptor::dbusContextFor(this)->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
@@ -246,7 +246,7 @@ bool ApplicationManagerAdaptor::startApplication(const QString &id, const QtAM::
     int result = false;
     auto am = ApplicationManager::instance();
     try {
-        result = am->startApplication(am->fromId(id), documentUrl, QString(), QString(), stdioRedirections);
+        result = am->startApplicationInternal(am->fromId(id), documentUrl, QString(), QString(), stdioRedirections);
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
         AbstractDBusContextAdaptor::dbusContextFor(this)->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());

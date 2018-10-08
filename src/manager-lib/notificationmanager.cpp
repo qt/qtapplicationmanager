@@ -408,7 +408,7 @@ int NotificationManager::count() const
 QVariantMap NotificationManager::get(int index) const
 {
     if (index < 0 || index >= count()) {
-        qCWarning(LogNotifications) << "invalid index:" << index;
+        qCWarning(LogSystem) << "NotificationManager::get(index): invalid index:" << index;
         return QVariantMap();
     }
 

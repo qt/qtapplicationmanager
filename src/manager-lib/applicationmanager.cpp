@@ -1530,27 +1530,27 @@ int ApplicationManager::count() const
 }
 
 /*!
-    \qmlmethod object ApplicationManager::get(int row)
+    \qmlmethod object ApplicationManager::get(int index)
 
-    Retrieves the model data at \a row as a JavaScript object. See the
+    Retrieves the model data at \a index as a JavaScript object. See the
     \l {ApplicationManager Roles}{role names} for the expected object fields.
 
-    Returns an empty object if the specified \a row is invalid.
+    Returns an empty object if the specified \a index is invalid.
 
     \note This is very inefficient if you only want to access a single property from QML; use
           application() instead to access the Application object's properties directly.
 */
-QVariantMap ApplicationManager::get(int row) const
+QVariantMap ApplicationManager::get(int index) const
 {
-    if (row < 0 || row >= count()) {
-        qCWarning(LogSystem) << "invalid index:" << row;
+    if (index < 0 || index >= count()) {
+        qCWarning(LogSystem) << "ApplicationManager::get(index): invalid index:" << index;
         return QVariantMap();
     }
 
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(qL1S(it.value()), data(index(row), it.key()));
+        map.insert(qL1S(it.value()), data(this->index(index), it.key()));
     return map;
 }
 
@@ -1568,7 +1568,7 @@ QVariantMap ApplicationManager::get(int row) const
 AbstractApplication *ApplicationManager::application(int index) const
 {
     if (index < 0 || index >= count()) {
-        qCWarning(LogSystem) << "invalid index:" << index;
+        qCWarning(LogSystem) << "ApplicationManager::application(index): invalid index:" << index;
         return nullptr;
     }
     return d->apps.at(index);
@@ -1587,7 +1587,8 @@ AbstractApplication *ApplicationManager::application(int index) const
 */
 AbstractApplication *ApplicationManager::application(const QString &id) const
 {
-    return application(indexOfApplication(id));
+    auto index = indexOfApplication(id);
+    return (index < 0) ? nullptr : application(index);
 }
 
 /*!
@@ -1631,18 +1632,14 @@ QStringList ApplicationManager::applicationIds() const
 */
 QVariantMap ApplicationManager::get(const QString &id) const
 {
-    auto map = get(indexOfApplication(id));
-    return map;
+    int index = indexOfApplication(id);
+    return (index < 0) ? QVariantMap{} : get(index);
 }
 
 Am::RunState ApplicationManager::applicationRunState(const QString &id) const
 {
     int index = indexOfApplication(id);
-    if (index < 0) {
-        qCWarning(LogSystem) << "invalid index:" << index;
-        return Am::NotRunning;
-    }
-    return d->apps.at(index)->runState();
+    return (index < 0) ? Am::NotRunning : d->apps.at(index)->runState();
 }
 
 void ApplicationManager::setApplications(const QVector<AbstractApplication *> &apps)

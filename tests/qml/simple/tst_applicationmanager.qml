@@ -428,19 +428,12 @@ TestCase {
     }
 
     function test_errors() {
-        ignoreWarning("invalid index: -1");
+        ignoreWarning("ApplicationManager::application(index): invalid index: -1");
         verify(!ApplicationManager.application(-1));
-
-        ignoreWarning("invalid index: -1");
         verify(!ApplicationManager.application("invalidApplication"));
-
-        ignoreWarning("invalid index: -1");
+        ignoreWarning("ApplicationManager::get(index): invalid index: -1");
         compare(ApplicationManager.get(-1), {});
-
-        ignoreWarning("invalid index: -1");
         compare(ApplicationManager.get("invalidApplication"), {});
-
-        ignoreWarning("invalid index: -1");
         compare(ApplicationManager.applicationRunState("invalidApplication"), Am.NotRunning);
 
         ignoreWarning("Cannot start an invalid application");

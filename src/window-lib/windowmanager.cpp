@@ -454,7 +454,7 @@ int WindowManager::count() const
 QVariantMap WindowManager::get(int index) const
 {
     if (index < 0 || index >= count()) {
-        qCWarning(LogGraphics) << "invalid index:" << index;
+        qCWarning(LogSystem) << "WindowManager::get(index): invalid index:" << index;
         return QVariantMap();
     }
 

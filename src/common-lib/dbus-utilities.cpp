@@ -137,6 +137,18 @@ QVariant convertFromDBusVariant(const QVariant &variant)
         default:
             return QVariant();
         }
+    } else if (type == QMetaType::QVariantList) {
+        QVariantList outList;
+        QVariantList inList = variant.toList();
+        for (auto it = inList.cbegin(); it != inList.cend(); ++it)
+            outList.append(convertFromDBusVariant(*it));
+        return outList;
+    } else if (type == QMetaType::QVariantMap) {
+        QVariantMap outMap;
+        QVariantMap inMap = variant.toMap();
+        for (auto it = inMap.cbegin(); it != inMap.cend(); ++it)
+            outMap.insert(it.key(), convertFromDBusVariant(it.value()));
+        return outMap;
     } else {
         return variant;
     }

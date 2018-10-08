@@ -48,11 +48,18 @@
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
+QT_FORWARD_DECLARE_CLASS(QDBusConnection)
+
+#ifdef interface
+#  undef interface
+#endif
 
 QT_BEGIN_NAMESPACE_AM
 
 class ApplicationIPCManagerAttached;
 class ApplicationIPCInterface;
+class AbstractRuntime;
+class Application;
 
 class ApplicationIPCManager : public QObject
 {
@@ -68,8 +75,10 @@ public:
     Q_INVOKABLE bool registerInterface(QT_PREPEND_NAMESPACE_AM(ApplicationIPCInterface*) interface, const QString &name, const QVariantMap &filter);
     QVector<ApplicationIPCInterface *> interfaces() const;
 
+    void attachToRuntime(AbstractRuntime *runtime);
+
 signals:
-    void interfaceCreated();
+    void interfaceCreated(ApplicationIPCInterface *iface);
 
 private:
     ApplicationIPCManager(QObject *parent = nullptr);

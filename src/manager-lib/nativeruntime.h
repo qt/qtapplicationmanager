@@ -98,6 +98,10 @@ signals:
     void aboutToStop(); // used for the ApplicationInterface
     void interfaceCreated(const QString &interfaceName);
 
+    void applicationConnectedToPeerDBus(const QDBusConnection &connection, Application *application);
+    void applicationReadyOnPeerDBus(const QDBusConnection &connection, Application *application);
+    void applicationDisconnectedFromPeerDBus(const QDBusConnection &connection, Application *application);
+
 private slots:
     void onProcessStarted();
     void onProcessFinished(int exitCode, Am::ExitStatus status);
@@ -111,7 +115,6 @@ protected:
 private:
     bool initialize();
     void shutdown(int exitCode, Am::ExitStatus status);
-    void registerExtensionInterfaces();
     QDBusServer *applicationInterfaceServer() const;
     bool startApplicationViaLauncher();
 

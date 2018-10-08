@@ -39,12 +39,18 @@
 **
 ****************************************************************************/
 
+#include "application.h"
 #include "applicationipcmanager.h"
 #include "applicationipcinterface.h"
 #include "applicationipcinterface_p.h"
 #include "qml-utilities.h"
 #include "global.h"
 #include "logging.h"
+
+#if defined(AM_MULTI_PROCESS)
+#  include "nativeruntime.h"
+#  include <QDBusError>
+#endif
 
 
 /*!
@@ -247,13 +253,71 @@ bool ApplicationIPCManager::registerInterface(QT_PREPEND_NAMESPACE_AM(Applicatio
 
     interface->m_ipcProxy = new IpcProxyObject(interface->serviceObject(), QString(), createPathFromName(name), name, filter);
     m_interfaces.append(interface);
-    emit interfaceCreated();
+    emit interfaceCreated(interface);
     return true;
 }
 
 QVector<ApplicationIPCInterface *> ApplicationIPCManager::interfaces() const
 {
     return m_interfaces;
+}
+
+#if defined(AM_MULTI_PROCESS)
+
+static void registerInterfaceHelper(const QDBusConnection &connection, ApplicationIPCInterface *iface,
+                                    Application *application, NativeRuntime *runtime)
+{
+    if (iface->isValidForApplication(application)) {
+        if (!iface->dbusRegister(application, connection)) {
+            qCWarning(LogSystem) << "ERROR: could not register the application IPC interface"
+                                 << iface->interfaceName() << "at" << iface->pathName()
+                                 << "on the peer DBus:" << connection.lastError().name()
+                                 << connection.lastError().message();
+        } else {
+            // this should not be in NativeRuntime, but in a separate object
+            emit runtime->interfaceCreated(iface->interfaceName());
+        }
+
+#ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
+        iface->dbusRegister(application, QDBusConnection::sessionBus(),
+                            qSL("/Application%1").arg(applicationProcessId()));
+#endif
+    }
+}
+
+#endif // defined(AM_MULTI_PROCESS)
+
+void ApplicationIPCManager::attachToRuntime(AbstractRuntime *runtime)
+{
+#if defined(AM_MULTI_PROCESS)
+    if (NativeRuntime *nativeRuntime = qobject_cast<NativeRuntime *>(runtime)) {
+        connect(nativeRuntime, &NativeRuntime::applicationConnectedToPeerDBus, this,
+                [this, nativeRuntime](const QDBusConnection &connection, Application *application) {
+            if (!application || !connection.isConnected())
+                return;
+
+            // register all known extension interfaces
+            for (ApplicationIPCInterface *iface : qAsConst(m_interfaces))
+                registerInterfaceHelper(connection, iface, application, nativeRuntime);
+
+            // make sure that future extension interfaces get registered as well
+            connect(this, &ApplicationIPCManager::interfaceCreated,
+                    this, [this, connection, nativeRuntime](ApplicationIPCInterface *iface) {
+                registerInterfaceHelper(connection, iface, nativeRuntime->application(), nativeRuntime);
+
+            });
+        });
+
+        connect(nativeRuntime, &NativeRuntime::applicationDisconnectedFromPeerDBus,
+                this, [this](const QDBusConnection &connection, Application *) {
+            // unregister all extension interfaces
+            for (ApplicationIPCInterface *iface : qAsConst(m_interfaces))
+                iface->dbusUnregister(connection);
+        });
+    }
+#else
+    Q_UNUSED(runtime)
+#endif
 }
 
 QT_END_NAMESPACE_AM

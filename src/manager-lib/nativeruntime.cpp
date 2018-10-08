@@ -237,10 +237,8 @@ void NativeRuntime::shutdown(int exitCode, Am::ExitStatus status)
     }
     m_connectedToRuntimeInterface = m_dbusConnection = false;
 
-    // unregister all extension interfaces
-    const auto interfaces = ApplicationIPCManager::instance()->interfaces();
-    for (ApplicationIPCInterface *iface : interfaces)
-        iface->dbusUnregister(QDBusConnection(m_dbusConnectionName));
+    QDBusConnection connection(m_dbusConnectionName);
+    emit applicationDisconnectedFromPeerDBus(connection, application());
 
     emit finished(exitCode, status);
     setState(Am::NotRunning);
@@ -361,8 +359,6 @@ bool NativeRuntime::start()
                      this, &NativeRuntime::onProcessError);
     QObject::connect(m_process, &AbstractContainerProcess::finished,
                      this, &NativeRuntime::onProcessFinished);
-    QObject::connect(ApplicationIPCManager::instance(), &ApplicationIPCManager::interfaceCreated,
-                     this, &NativeRuntime::registerExtensionInterfaces);
 
     setState(Am::StartingUp);
     return true;
@@ -443,11 +439,9 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
                                                      m_runtimeInterface, QDBusConnection::ExportScriptableContents);
 #endif
     }
-
-    // interface availability is dependent on the actual app and we don't
-    // have one when quick-launching a runtime
-    if (m_app)
-        registerExtensionInterfaces();
+    // the server side of the p2p bus can be setup now, but the client is not able service any
+    // requests just yet - only after emitting applicationReadyOnPeerDBus()
+    emit applicationConnectedToPeerDBus(conn, m_app);
 }
 
 void NativeRuntime::onApplicationFinishedInitialization()
@@ -455,10 +449,13 @@ void NativeRuntime::onApplicationFinishedInitialization()
     m_connectedToRuntimeInterface = true;
 
     if (m_app) {
-        registerExtensionInterfaces();
+        // now we know which app was launched, so initialize any additional interfaces on the p2p bus
+        emit applicationReadyOnPeerDBus(QDBusConnection(m_dbusConnectionName), m_app);
 
         if (m_startedViaLauncher && m_runtimeInterface)
             startApplicationViaLauncher();
+
+        setState(Am::Running);
     }
 }
 
@@ -473,37 +470,7 @@ bool NativeRuntime::startApplicationViaLauncher()
     emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
                                               convertFromJSVariant(QVariant(m_app->info()->toVariantMap())).toMap(),
                                               convertFromJSVariant(QVariant(systemProperties())).toMap());
-    setState(Am::Running);
     return true;
-}
-
-void NativeRuntime::registerExtensionInterfaces()
-{
-    if (!m_dbusConnection)
-        return;
-
-    if (!application())
-        return;
-
-    QDBusConnection conn(m_dbusConnectionName);
-
-    // register all extension interfaces
-    const auto interfaces = ApplicationIPCManager::instance()->interfaces();
-    for (ApplicationIPCInterface *iface : interfaces) {
-        if (!iface->isValidForApplication(application()) || m_applicationIPCInterfaces.contains(iface))
-            continue;
-
-        if (!iface->dbusRegister(application(), conn)) {
-            qCWarning(LogSystem) << "ERROR: could not register the application IPC interface" << iface->interfaceName()
-                                 << "at" << iface->pathName() << "on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
-        } else {
-            m_applicationIPCInterfaces.append(iface);
-            emit interfaceCreated(iface->interfaceName());
-        }
-#ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-        iface->dbusRegister(application(), QDBusConnection::sessionBus());
-#endif
-    }
 }
 
 qint64 NativeRuntime::applicationProcessId() const

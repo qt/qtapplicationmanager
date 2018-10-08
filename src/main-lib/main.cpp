@@ -494,6 +494,8 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     StartupTimer::instance()->checkpoint("after NotificationManager instantiation");
 
     m_applicationIPCManager = ApplicationIPCManager::createInstance();
+    connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::newRuntimeCreated,
+            m_applicationIPCManager, &ApplicationIPCManager::attachToRuntime);
     StartupTimer::instance()->checkpoint("after ApplicationIPCManager instantiation");
 
     m_quickLauncher = QuickLauncher::instance();

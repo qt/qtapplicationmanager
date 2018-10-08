@@ -42,11 +42,11 @@
 #pragma once
 
 #if !defined(AM_HEADLESS)
+#  include <QSharedPointer>
+#  include <QtQml/QQmlParserStatus>
 #  include <QColor>
 #  include <QQuickItem>
 #  include <QtAppManCommon/global.h>
-
-#include <QSharedPointer>
 
 QT_FORWARD_DECLARE_CLASS(QQmlComponentAttached)
 

@@ -43,6 +43,7 @@
 
 #include <QVector>
 #include <QPointer>
+#include <QtQml/QQmlParserStatus>
 
 #include <QtAppManApplication/applicationinterface.h>
 #include <QtAppManNotification/notification.h>

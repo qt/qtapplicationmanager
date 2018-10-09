@@ -9,7 +9,8 @@ QT_FOR_PRIVATE *= \
     appman_common-private \
     appman_manager-private \
 
-CONFIG *= static internal_module dbus-adaptors-xml
+CONFIG *= static internal_module
+CONFIG = dbus-adaptors-xml $$CONFIG
 
 HEADERS += \
     dbuspolicy.h \

@@ -10,6 +10,8 @@ adaptors_header.variable_out = dbus_adaptor_headers
 adaptors_header.input = ADAPTORS_XML
 adaptors_header.CONFIG += target_predep
 
+QMAKE_EXTRA_COMPILERS += adaptors_header
+
 adaptors_moc.commands = $$moc_header.commands
 adaptors_moc.depends += $$QMAKE_MOC_EXE
 adaptors_moc.output = $$moc_header.output
@@ -17,4 +19,4 @@ adaptors_moc.input = dbus_adaptor_headers
 adaptors_moc.variable_out = GENERATED_SOURCES
 adaptors_moc.name = DBUS adaptor MOC headers
 
-QMAKE_EXTRA_COMPILERS += adaptors_header adaptors_moc
+QMAKE_EXTRA_COMPILERS += adaptors_moc

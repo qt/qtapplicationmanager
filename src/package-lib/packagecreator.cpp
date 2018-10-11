@@ -58,6 +58,11 @@
 #include "installationreport.h"
 #include "qtyaml.h"
 
+// archive.h might #define this for Android
+#ifdef open
+#  undef open
+#endif
+// these are not defined on all platforms
 #ifndef S_IREAD
 #  define S_IREAD S_IRUSR
 #endif

@@ -50,21 +50,6 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
-import QtApplicationManager 1.0
+import "../../shared"
 
-ApplicationManagerWindow {
-    color: "blue"
-
-    Text {
-        anchors.centerIn: parent
-        text: "Hello World!"
-    }
-
-    IntentHandler {
-        intentIds: [ "io.qt.blue" ]
-        onReceivedRequest: {
-            request.sendReply({ "this": "is a result", "nested": { "a": 1, "b": 2 } })
-        }
-    }
-}
+IntentClient { }

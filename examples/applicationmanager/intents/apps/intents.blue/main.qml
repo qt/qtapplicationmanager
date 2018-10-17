@@ -50,14 +50,6 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
-import QtApplicationManager 1.0
+import "../../shared"
 
-ApplicationManagerWindow {
-    color: "Green"
-
-    Text {
-        anchors.centerIn: parent
-        text: "Hello World!"
-    }
-}
+IntentClient { }

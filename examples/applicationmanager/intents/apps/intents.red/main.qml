@@ -50,26 +50,6 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
-import QtApplicationManager 1.0
+import "../../shared"
 
-ApplicationManagerWindow {
-    color: "red"
-
-    Text {
-        anchors.fill: parent
-        text: "Hello World!"
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                var request = ApplicationInterface.createIntentRequest("io.qt.blue", { "hello": "world", "number": 42 })
-                request.onFinished.connect(function() {
-                    console.warn("Request finished " + request.requestId
-                                 + (request.succeeded ? (" Result: " + JSON.stringify(request.result))
-                                                      : (" Error: " + request.errorString)))
-                })
-            }
-        }
-    }
-}
+IntentClient { }

@@ -1,0 +1,13 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'intents.green'
+icon:    'icon.png'
+code:    'main.qml'
+runtime: 'qml-inprocess'
+name:
+  en: 'Green Intents'
+
+intents:
+- id: rotate-window
+- id: scale-window

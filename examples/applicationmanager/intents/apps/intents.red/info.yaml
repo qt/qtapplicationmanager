@@ -1,0 +1,16 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'intents.red'
+icon:    'icon.png'
+code:    'main.qml'
+runtime: 'qml'
+name:
+  en: 'Red Intents'
+
+capabilities: 'call-blue'
+
+intents:
+- id: rotate-window
+- id: scale-window
+- id: blink-window

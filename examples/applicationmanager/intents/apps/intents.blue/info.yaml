@@ -1,0 +1,17 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'intents.blue'
+icon:    'icon.png'
+code:    'main.qml'
+runtime: 'qml'
+name:
+  en: 'Blue Intents'
+
+intents:
+- id: rotate-window
+  requiredCapabilities: [ 'call-blue' ]
+- id: scale-window
+- id: blink-window
+- id: blue-window-private
+  visibility: private

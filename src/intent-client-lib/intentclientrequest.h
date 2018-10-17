@@ -55,7 +55,7 @@ class IntentClient;
 class IntentClientRequest : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString requestId READ requestId NOTIFY requestIdChanged)
+    Q_PROPERTY(QUuid requestId READ requestId NOTIFY requestIdChanged)
     Q_PROPERTY(Direction direction READ direction CONSTANT)
     Q_PROPERTY(QString intentId READ intentId CONSTANT)
     Q_PROPERTY(QString applicationId READ applicationId CONSTANT)
@@ -71,9 +71,8 @@ public:
     static IntentClientRequest *create(const QString &requestingApplicationId, const QString &intentId, const QVariantMap &parameters);
     static IntentClientRequest *create(const QString &requestingApplicationId, const QString &intentId, const QString &applicationId, const QVariantMap &parameters);
 
-    QUuid id() const;
+    QUuid requestId() const;
     Direction direction() const;
-    QString requestId() const;
     QString intentId() const;
     QString applicationId() const;
     QString requestingApplicationId() const;

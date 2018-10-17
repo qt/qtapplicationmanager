@@ -44,31 +44,50 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-IntentServerRequest::IntentServerRequest(bool external, const QString &requestingAppId,
-                                         const QVector<const Intent *> &intents,
+IntentServerRequest::IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
+                                         const QVector<Intent> &potentialIntents,
                                          const QVariantMap &parameters)
     : m_id(QUuid::createUuid())
     , m_state(State::ReceivedRequest)
-    , m_external(external)
-    , m_requestingAppId(requestingAppId)
-    , m_intents(intents)
+    , m_intentId(intentId)
+    , m_requestingApplicationId(requestingApplicationId)
+    , m_potentialIntents(potentialIntents)
     , m_parameters(parameters)
-    , m_actualIntent(intents.size() == 1 ? intents.first() : nullptr)
-{ }
+{
+    Q_ASSERT(!potentialIntents.isEmpty());
+
+    if (potentialIntents.size() == 1)
+        setHandlingApplicationId(potentialIntents.first().applicationId());
+}
 
 IntentServerRequest::State IntentServerRequest::state() const
 {
     return m_state;
 }
 
-QUuid IntentServerRequest::id() const
+QString IntentServerRequest::intentId() const
+{
+    return m_intentId;
+}
+
+QUuid IntentServerRequest::requestId() const
 {
     return m_id;
 }
 
-const Intent *IntentServerRequest::intent() const
+QString IntentServerRequest::requestingApplicationId() const
 {
-    return m_actualIntent;
+    return m_requestingApplicationId;
+}
+
+QString IntentServerRequest::handlingApplicationId() const
+{
+    return m_handlingApplicationId;
+}
+
+QVector<Intent> IntentServerRequest::potentialIntents() const
+{
+    return m_potentialIntents;
 }
 
 QVariantMap IntentServerRequest::parameters() const
@@ -76,19 +95,7 @@ QVariantMap IntentServerRequest::parameters() const
     return m_parameters;
 }
 
-bool IntentServerRequest::isWaiting() const
-{
-    switch (state()) {
-    case State::WaitingForDisambiguation:
-    case State::WaitingForApplicationStart:
-    case State::WaitingForReplyFromApplication:
-        return true;
-    default:
-        return false;
-    }
-}
-
-bool IntentServerRequest::hasSucceeded() const
+bool IntentServerRequest::succeeded() const
 {
     return m_succeeded;
 }
@@ -98,7 +105,7 @@ QVariantMap IntentServerRequest::result() const
     return m_result;
 }
 
-void IntentServerRequest::requestFailed(const QString &errorMessage)
+void IntentServerRequest::setRequestFailed(const QString &errorMessage)
 {
     m_succeeded = false;
     m_result.clear();
@@ -106,7 +113,7 @@ void IntentServerRequest::requestFailed(const QString &errorMessage)
     m_state = State::ReceivedReplyFromApplication;
 }
 
-void IntentServerRequest::requestSucceeded(const QVariantMap &result)
+void IntentServerRequest::setRequestSucceeded(const QVariantMap &result)
 {
     m_succeeded = true;
     m_result = result;
@@ -116,6 +123,11 @@ void IntentServerRequest::requestSucceeded(const QVariantMap &result)
 void IntentServerRequest::setState(IntentServerRequest::State newState)
 {
     m_state = newState;
+}
+
+void IntentServerRequest::setHandlingApplicationId(const QString &applicationId)
+{
+    m_handlingApplicationId = applicationId;
 }
 
 QT_END_NAMESPACE_AM

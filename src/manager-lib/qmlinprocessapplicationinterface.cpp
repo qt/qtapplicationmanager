@@ -113,21 +113,6 @@ QVariantMap QmlInProcessApplicationInterface::applicationProperties() const
     return QVariantMap();
 }
 
-IntentClientRequest *QmlInProcessApplicationInterface::createIntentRequest(const QString &intentId,
-                                                                           const QVariantMap &parameters)
-{
-    return createIntentRequest(intentId, QString(), parameters);
-}
-
-IntentClientRequest *QmlInProcessApplicationInterface::createIntentRequest(const QString &intentId,
-                                                                           const QString &applicationId,
-                                                                           const QVariantMap &parameters)
-{
-    auto req = IntentClientRequest::create(this->applicationId(), intentId, applicationId, parameters);
-    QQmlEngine::setObjectOwnership(req, QQmlEngine::CppOwnership);
-    return req;
-}
-
 void QmlInProcessApplicationInterface::acknowledgeQuit()
 {
     emit quitAcknowledged();

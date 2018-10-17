@@ -46,9 +46,46 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-QString Intent::id() const
+Intent::Intent()
+{ }
+
+Intent::Intent(const Intent &other)
+    : m_intentId(other.m_intentId)
+    , m_visibility(other.m_visibility)
+    , m_requiredCapabilities(other.m_requiredCapabilities)
+    , m_parameterMatch(other.m_parameterMatch)
+    , m_applicationId(other.m_applicationId)
+    , m_backgroundHandlerId(other.m_backgroundHandlerId)
+{ }
+
+Intent::Intent(const QString &id, const QString &applicationId, const QString &backgroundHandlerId,
+               const QStringList &capabilities, Intent::Visibility visibility, const QVariantMap &parameterMatch)
+    : m_intentId(id)
+    , m_visibility(visibility)
+    , m_requiredCapabilities(capabilities)
+    , m_parameterMatch(parameterMatch)
+    , m_applicationId(applicationId)
+    , m_backgroundHandlerId(backgroundHandlerId)
+{ }
+
+Intent::operator bool() const
 {
-    return m_id;
+    return !m_intentId.isEmpty();
+}
+
+bool Intent::operator==(const Intent &other) const
+{
+    return (m_intentId == other.m_intentId)
+            && (m_visibility == other.m_visibility)
+            && (m_requiredCapabilities == other.m_requiredCapabilities)
+            && (m_parameterMatch == other.m_parameterMatch)
+            && (m_applicationId == other.m_applicationId)
+            && (m_backgroundHandlerId == other.m_backgroundHandlerId);
+}
+
+QString Intent::intentId() const
+{
+    return m_intentId;
 }
 
 Intent::Visibility Intent::visibility() const
@@ -73,7 +110,7 @@ QString Intent::applicationId() const
 
 QString Intent::backgroundServiceId() const
 {
-    return m_backgroundServiceId;
+    return m_backgroundHandlerId;
 }
 
 bool Intent::checkParameterMatch(const QVariantMap &parameters) const
@@ -119,15 +156,5 @@ bool Intent::checkParameterMatch(const QVariantMap &parameters) const
     }
     return true;
 }
-
-Intent::Intent(const QString &id, const QString &applicationId, const QString &backgroundHandlerId,
-               const QStringList &capabilities, Intent::Visibility visibility, const QVariantMap &parameterMatch)
-    : m_id(id)
-    , m_visibility(visibility)
-    , m_requiredCapabilities(capabilities)
-    , m_parameterMatch(parameterMatch)
-    , m_applicationId(applicationId)
-    , m_backgroundServiceId(backgroundHandlerId)
-{ }
 
 QT_END_NAMESPACE_AM

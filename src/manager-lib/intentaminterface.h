@@ -59,10 +59,13 @@ class IntentInterfaceAdaptor;
 QT_BEGIN_NAMESPACE_AM
 
 class Application;
+class AbstractApplication;
 class IntentServerRequest;
 
 namespace IntentAMImplementation {
 IntentServer *createIntentServerAndClientInstance();
+void addApplicationIntents(AbstractApplication *app, IntentServer *intentServer);
+void removeApplicationIntents(AbstractApplication *app, IntentServer *intentServer);
 }
 
 // the server side
@@ -74,7 +77,7 @@ public:
     void setIntentClientSystemInterface(IntentClientSystemInterface *iface);
     IntentClientSystemInterface *intentClientSystemInterface() const;
 
-    void initialize(IntentServer *intentManager) override;
+    void initialize(IntentServer *intentServer) override;
 
     bool checkApplicationCapabilities(const QString &applicationId,
                                       const QStringList &requiredCapabilities) override;
@@ -96,6 +99,7 @@ public:
     IntentClientAMImplementation(IntentServerAMImplementation *serverInterface);
 
     void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false) override;
+    QString currentApplicationId() override;
 
     void requestToSystem(IntentClientRequest *icr) override;
     void replyFromApplication(IntentClientRequest *icr) override;
@@ -115,6 +119,7 @@ public:
     static IntentServerIpcConnection *find(const QString &appId);
 
     Application *application() const;
+    virtual QString applicationId() const;
     bool isInProcess() const;
 
     bool isReady() const;
@@ -134,7 +139,7 @@ protected:
     bool m_inprocess = true;
     bool m_ready = false;
 
-    static QList<IntentServerIpcConnection *> s_allPeers;
+    static QList<IntentServerIpcConnection *> s_ipcConnections;
 };
 
 // ... derived for in-process clients
@@ -144,14 +149,17 @@ class IntentServerInProcessIpcConnection : public IntentServerIpcConnection
 
 public:
     static IntentServerInProcessIpcConnection *create(Application *application, IntentServerAMImplementation *iface);
+    static IntentServerInProcessIpcConnection *createSystemUi(IntentServerAMImplementation *iface);
 
-    ~IntentServerInProcessIpcConnection() override;
+    QString applicationId() const override;
 
     void replyFromSystem(IntentServerRequest *irs) override;
     void requestToApplication(IntentServerRequest *irs) override;
 
 private:
     IntentServerInProcessIpcConnection(Application *application, IntentServerAMImplementation *iface);
+
+    bool m_isSystemUi = false;
 };
 
 #if defined(AM_MULTI_PROCESS)

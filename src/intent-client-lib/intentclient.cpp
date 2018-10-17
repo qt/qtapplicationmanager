@@ -42,6 +42,7 @@
 #include <QScopedPointer>
 #include <qqml.h>
 #include <QQmlInfo>
+#include <QQmlEngine>
 
 #include "intentclient.h"
 #include "intentclientsysteminterface.h"
@@ -69,6 +70,11 @@ IntentClient *IntentClient::createInstance(IntentClientSystemInterface *systemIn
         qCWarning(LogIntents) << "Failed to initialize IntentClient:" << exc.what();
         return nullptr;
     }
+    qmlRegisterSingletonType<IntentClient>("QtApplicationManager", 1, 0, "IntentClient",
+                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
+        QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
+        return instance();
+    });
 
     qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 1, 0, "IntentRequest",
                                                     qSL("Cannot create objects of type IntentRequest"));
@@ -116,6 +122,20 @@ void IntentClient::unregisterHandler(IntentHandler *handler)
         m_handlers.remove(intentId);
 }
 
+IntentClientRequest *IntentClient::createIntentRequest(const QString &intentId, const QVariantMap &parameters)
+{
+    return createIntentRequest(intentId, QString(), parameters);
+}
+
+IntentClientRequest *IntentClient::createIntentRequest(const QString &intentId, const QString &applicationId, const QVariantMap &parameters)
+{
+    auto req = IntentClientRequest::create(m_systemInterface->currentApplicationId(),
+                                           intentId, applicationId, parameters);
+    QQmlEngine::setObjectOwnership(req, QQmlEngine::CppOwnership);
+    return req;
+}
+
+
 IntentClientRequest *IntentClient::requestToSystem(const QString &requestingApplicationId,
                                                    const QString &intentId, const QString &applicationId,
                                                    const QVariantMap &parameters)
@@ -144,12 +164,12 @@ void IntentClient::requestToSystemFinished(IntentClientRequest *icr, const QUuid
     }
 }
 
-void IntentClient::replyFromSystem(const QString &requestId, bool error, const QVariantMap &result)
+void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result)
 {
     IntentClientRequest *icr = nullptr;
     auto it = std::find_if(m_waiting.begin(), m_waiting.end(),
                            [requestId](IntentClientRequest *ir) -> bool {
-            return (ir->id() == requestId);
+            return (ir->requestId() == requestId);
 });
     if (it == m_waiting.cend()) {
         qCWarning(LogIntents) << "IntentClient received an unexpected intent reply for request"
@@ -171,11 +191,11 @@ void IntentClient::replyFromSystem(const QString &requestId, bool error, const Q
                         << icr->errorMessage() << "result:" << icr->result();
 }
 
-void IntentClient::requestToApplication(const QString &requestId, const QString &intentId,
+void IntentClient::requestToApplication(const QUuid &requestId, const QString &intentId,
                                         const QString &applicationId, const QVariantMap &parameters)
 {
     //TODO: we should sanity check the applicationId
-    qCDebug(LogIntents) << "Incoming intent request" << requestId << " to application" << applicationId
+    qCDebug(LogIntents) << "Client: Incoming intent request" << requestId << "to application" << applicationId
                         << "for intent" << intentId << "parameters" << parameters;
 
     IntentClientRequest *icr = new IntentClientRequest(IntentClientRequest::Direction::ToApplication,

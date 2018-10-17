@@ -65,19 +65,14 @@ IntentClientRequest *IntentClientRequest::create(const QString &requestingApplic
     return IntentClient::instance()->requestToSystem(requestingApplicationId, intentId, applicationId, parameters);
 }
 
-QUuid IntentClientRequest::id() const
-{
-    return m_id;
-}
-
 IntentClientRequest::Direction IntentClientRequest::direction() const
 {
     return m_direction;
 }
 
-QString IntentClientRequest::requestId() const
+QUuid IntentClientRequest::requestId() const
 {
-    return id().toString();
+    return m_id;
 }
 
 QString IntentClientRequest::intentId() const

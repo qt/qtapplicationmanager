@@ -79,7 +79,7 @@ public:
 
 signals:
     void applicationWasStarted(const QString &appId);
-    void replyFromApplication(const QString &replyingApplicationId, const QString &requestId,
+    void replyFromApplication(const QString &replyingApplicationId, const QUuid &requestId,
                               bool error, const QVariantMap &result);
 
 private:

@@ -61,15 +61,17 @@ public:
 
     virtual void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false);
 
+    virtual QString currentApplicationId() = 0;
+
     virtual void requestToSystem(IntentClientRequest *icr) = 0;
     virtual void replyFromApplication(IntentClientRequest *icr) = 0;
 
 signals:
     void requestToSystemFinished(IntentClientRequest *icr, const QUuid &newRequestId,
                                  bool error, const QString &errorMessage);
-    void replyFromSystem(const QString &requestId, bool error, const QVariantMap &result);
+    void replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result);
 
-    void requestToApplication(const QString &requestId, const QString &intentId,
+    void requestToApplication(const QUuid &requestId, const QString &intentId,
                               const QString &applicationId, const QVariantMap &parameters);
 
 protected:

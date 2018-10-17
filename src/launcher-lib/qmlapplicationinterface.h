@@ -77,8 +77,6 @@ public:
     QVariantMap systemProperties() const override;
     QVariantMap applicationProperties() const override;
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest *) createIntentRequest(const QString &intentId, const QVariantMap &parameters);
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest *) createIntentRequest(const QString &intentId, const QString &applicationId, const QVariantMap &parameters);
     Q_INVOKABLE void acknowledgeQuit() const;
     Q_INVOKABLE void finishedInitialization() override;
 

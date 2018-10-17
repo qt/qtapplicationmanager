@@ -69,8 +69,22 @@ IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemIn
     QScopedPointer<IntentServer> is(new IntentServer(systemInterface));
     systemInterface->initialize(is.data());
 
-    qmlRegisterSingletonType<IntentServer>("QtApplicationManager", 1, 0, "IntentManager",
-                                           &IntentServer::instanceForQml);
+    qRegisterMetaType<Intent>("Intent");
+
+    // Have a nicer name in the C++ API, since QML cannot cope with QList<Q_GADGET-type>
+    qRegisterMetaType<QVariantList>("IntentList");
+
+    // needed to get access to the Visibility enum from QML
+    qmlRegisterUncreatableType<Intent>("QtApplicationManager", 1, 0, "Intent",
+                                       qSL("Cannot create objects of type Intent"));
+
+    qmlRegisterUncreatableType<IntentServerRequest>("QtApplicationManager", 1, 0, "IntentServerRequest",
+                                                    qSL("Cannot create objects of type IntentServerRequest"));
+    qmlRegisterSingletonType<IntentServer>("QtApplicationManager", 1, 0, "IntentServer",
+                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
+        QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
+        return instance();
+    });
     return s_instance = is.take();
 }
 
@@ -81,18 +95,13 @@ IntentServer *IntentServer::instance()
     return s_instance;
 }
 
-QObject *IntentServer::instanceForQml(QQmlEngine *, QJSEngine *)
-{
-    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
-    return instance();
-}
-
-
 IntentServer::IntentServer(IntentServerSystemInterface *systemInterface, QObject *parent)
     : QObject(parent)
     , m_systemInterface(systemInterface)
 {
     m_systemInterface->setParent(this);
+    connect(this, &IntentServer::intentAdded, this, &IntentServer::intentListChanged);
+    connect(this, &IntentServer::intentRemoved, this, &IntentServer::intentListChanged);
 }
 
 IntentServer::~IntentServer()
@@ -108,6 +117,12 @@ bool IntentServer::addApplication(const QString &applicationId)
     return true;
 }
 
+void IntentServer::removeApplication(const QString &applicationId)
+{
+    m_knownBackgroundServices.remove(applicationId);
+    m_knownApplications.removeOne(applicationId);
+}
+
 bool IntentServer::addApplicationBackgroundHandler(const QString &applicationId, const QString &backgroundServiceId)
 {
     if (!m_knownApplications.contains(applicationId))
@@ -119,77 +134,116 @@ bool IntentServer::addApplicationBackgroundHandler(const QString &applicationId,
     return true;
 }
 
-const Intent *IntentServer::addIntent(const QString &id, const QString &applicationId, const QStringList &capabilities, Intent::Visibility visibility, const QVariantMap &parameterMatch)
+void IntentServer::removeApplicationBackgroundHandler(const QString &applicationId, const QString &backgroundServiceId)
+{
+    m_knownBackgroundServices[applicationId].removeAll(backgroundServiceId);
+}
+
+Intent IntentServer::addIntent(const QString &id, const QString &applicationId,
+                               const QStringList &capabilities, Intent::Visibility visibility,
+                               const QVariantMap &parameterMatch)
 {
     return addIntent(id, applicationId, QString(), capabilities, visibility, parameterMatch);
 }
 
-const Intent *IntentServer::addIntent(const QString &id, const QString &applicationId, const QString &backgroundHandlerId, const QStringList &capabilities, Intent::Visibility visibility, const QVariantMap &parameterMatch)
+Intent IntentServer::addIntent(const QString &id, const QString &applicationId,
+                               const QString &backgroundHandlerId,
+                               const QStringList &capabilities, Intent::Visibility visibility,
+                               const QVariantMap &parameterMatch)
 {
     if (id.isEmpty()
             || !m_knownApplications.contains(applicationId)
             || find(id, applicationId)
             || (!backgroundHandlerId.isEmpty()
                 && !m_knownBackgroundServices[applicationId].contains(backgroundHandlerId))) {
-        return nullptr;
+        return Intent();
     }
 
-    auto intent = new Intent(id, applicationId, backgroundHandlerId, capabilities, visibility,
-                             parameterMatch);
+    auto intent = Intent(id, applicationId, backgroundHandlerId, capabilities, visibility,
+                         parameterMatch);
     m_intents << intent;
     emit intentAdded(intent);
     return intent;
 }
 
-void IntentServer::removeIntent(const Intent *intent)
+void IntentServer::removeIntent(const Intent &intent)
 {
-    if (intent) {
-        int pos = m_intents.indexOf(intent);
-
-        if (pos >= 0) {
-            m_intents.removeAt(pos);
-            emit intentRemoved(intent);
-        }
+    int index = m_intents.indexOf(intent);
+    if (index >= 0) {
+        m_intents.removeAt(index);
+        emit intentRemoved(intent);
     }
 }
 
-QVector<const Intent *> IntentServer::all() const
+QVector<Intent> IntentServer::all() const
 {
     return m_intents;
 }
 
-QVector<const Intent *> IntentServer::filterByIntentId(const QString &intentId, const QVariantMap &parameters) const
+QVector<Intent> IntentServer::filterByIntentId(const QVector<Intent> &intents, const QString &intentId,
+                                               const QVariantMap &parameters) const
 {
-    QVector<const Intent *> result;
-    std::copy_if(m_intents.cbegin(), m_intents.cend(), std::back_inserter(result),
-                 [intentId, parameters](const Intent *intent) -> bool {
-        return (intent->id() == intentId) && intent->checkParameterMatch(parameters);
+    QVector<Intent> result;
+    std::copy_if(intents.cbegin(), intents.cend(), std::back_inserter(result),
+                 [intentId, parameters](const Intent &intent) -> bool {
+        return (intent.intentId() == intentId) && intent.checkParameterMatch(parameters);
 
     });
     return result;
 }
 
-QVector<const Intent *> IntentServer::filterByApplicationId(const QString &applicationId, const QVariantMap &parameters) const
+QVector<Intent> IntentServer::filterByHandlingApplicationId(const QVector<Intent> &intents,
+                                                            const QString &handlingApplicationId,
+                                                            const QVariantMap &parameters) const
 {
-    QVector<const Intent *> result;
-    std::copy_if(m_intents.cbegin(), m_intents.cend(), std::back_inserter(result),
-                 [applicationId, parameters](const Intent *intent) -> bool {
-        return (intent->applicationId() == applicationId) && intent->checkParameterMatch(parameters);
+    QVector<Intent> result;
+    std::copy_if(intents.cbegin(), intents.cend(), std::back_inserter(result),
+                 [handlingApplicationId, parameters](const Intent &intent) -> bool {
+        return (intent.applicationId() == handlingApplicationId) && intent.checkParameterMatch(parameters);
 
     });
     return result;
 }
 
-const Intent *IntentServer::find(const QString &intentId, const QString &applicationId, const QVariantMap &parameters) const
+QVector<Intent> IntentServer::filterByRequestingApplicationId(const QVector<Intent> &intents,
+                                                              const QString &requestingApplicationId) const
+{
+    QVector<Intent> result;
+    std::copy_if(intents.cbegin(), intents.cend(), std::back_inserter(result),
+                 [this, requestingApplicationId](const Intent &intent) -> bool {
+        // filter on visibility and capabilities
+
+        if ((intent.visibility() == Intent::Private)
+                && (intent.applicationId() != requestingApplicationId)) {
+            qCDebug(LogIntents) << "Not considering" << intent.intentId() << "/" << intent.applicationId()
+                                << "due to private visibility";
+            return false;
+        } else if (!intent.requiredCapabilities().isEmpty()
+                   && !m_systemInterface->checkApplicationCapabilities(requestingApplicationId,
+                                                                       intent.requiredCapabilities())) {
+            qCDebug(LogIntents) << "Not considering" << intent.intentId() << "/" << intent.applicationId()
+                                << "due to missing capabilities";
+            return false;
+        }
+        return true;
+    });
+    return result;
+}
+
+IntentList IntentServer::intentList() const
+{
+    return convertToQml(all());
+}
+
+Intent IntentServer::find(const QString &intentId, const QString &applicationId, const QVariantMap &parameters) const
 {
     auto it = std::find_if(m_intents.cbegin(), m_intents.cend(),
-                           [intentId, applicationId, parameters](const Intent *intent) -> bool {
-        return (intent->applicationId() == applicationId) && (intent->id() == intentId)
-                && intent->checkParameterMatch(parameters);
+                           [intentId, applicationId, parameters](const Intent &intent) -> bool {
+        return (intent.applicationId() == applicationId) && (intent.intentId() == intentId)
+                && intent.checkParameterMatch(parameters);
     });
-    return (it != m_intents.cend()) ? *it : nullptr;
+    return (it != m_intents.cend()) ? *it : Intent();
 }
-
 
 void IntentServer::triggerRequestQueue()
 {
@@ -198,7 +252,7 @@ void IntentServer::triggerRequestQueue()
 
 void IntentServer::enqueueRequest(IntentServerRequest *irs)
 {
-    qCDebug(LogIntents) << "Enqueueing Intent request:" << irs << irs->id() << irs->state() << m_requestQueue.size();
+    qCDebug(LogIntents) << "Enqueueing Intent request:" << irs << irs->requestId() << irs->state();
     m_requestQueue.enqueue(irs);
     triggerRequestQueue();
 }
@@ -208,99 +262,120 @@ void IntentServer::processRequestQueue()
     if (m_requestQueue.isEmpty())
         return;
 
-    IntentServerRequest *irs = m_requestQueue.takeFirst();
+    IntentServerRequest *isr = m_requestQueue.takeFirst();
 
-    qCDebug(LogIntents) << "Processing intent request" << irs << irs->id() << "in state" << irs->state()  << m_requestQueue.size();
+    qCDebug(LogIntents) << "Processing intent request" << isr << isr->requestId() << "in state" << isr->state();
 
-    if (irs->state() == IntentServerRequest::State::ReceivedRequest) { // step 1) disambiguate
-        if (!irs->m_actualIntent) {
+    if (isr->state() == IntentServerRequest::State::ReceivedRequest) { // step 1) disambiguate
+        if (isr->handlingApplicationId().isEmpty()) {
             // not disambiguated yet
 
             if (!isSignalConnected(QMetaMethod::fromSignal(&IntentServer::disambiguationRequest))) {
                 // If the System-UI does not react to the signal, then just use the first match.
-                irs->m_actualIntent = irs->m_intents.first();
+                isr->setHandlingApplicationId(isr->potentialIntents().first().applicationId());
             } else {
-                m_disambiguationQueue.enqueue(irs);
-                irs->setState(IntentServerRequest::State::WaitingForDisambiguation);
-                emit disambiguationRequest(irs->id(), irs->m_intents.first()->id(), irs->m_intents, irs->m_parameters);
+                m_disambiguationQueue.enqueue(isr);
+                isr->setState(IntentServerRequest::State::WaitingForDisambiguation);
+                emit disambiguationRequest(isr->requestId(), convertToQml(isr->potentialIntents()),
+                                           isr->parameters());
             }
         }
-        if (irs->intent()) {
-            qCDebug(LogIntents) << "No disambiguation necessary/required for intent" << irs->intent()->id();
-            irs->setState(IntentServerRequest::State::Disambiguated);
+        if (!isr->handlingApplicationId().isEmpty()) {
+            qCDebug(LogIntents) << "No disambiguation necessary/required for intent" << isr->intentId();
+            isr->setState(IntentServerRequest::State::Disambiguated);
         }
     }
 
-    if (irs->state() == IntentServerRequest::State::Disambiguated) { // step 2) start app
-        auto handlerIPC = m_systemInterface->findClientIpc(irs->intent()->applicationId());
+    if (isr->state() == IntentServerRequest::State::Disambiguated) { // step 2) start app
+        auto handlerIPC = m_systemInterface->findClientIpc(isr->handlingApplicationId());
         if (!handlerIPC) {
-            qCDebug(LogIntents) << "Intent target app" << irs->intent()->applicationId() << "is not running";
-            m_startingAppQueue.enqueue(irs);
-            irs->setState(IntentServerRequest::State::WaitingForApplicationStart);
-            m_systemInterface->startApplication(irs->intent()->applicationId());
+            qCDebug(LogIntents) << "Intent handler" << isr->handlingApplicationId() << "is not running";
+            m_startingAppQueue.enqueue(isr);
+            isr->setState(IntentServerRequest::State::WaitingForApplicationStart);
+            m_systemInterface->startApplication(isr->handlingApplicationId());
         } else {
-            qCDebug(LogIntents) << "Intent target app" << irs->intent()->applicationId() << "is already running";
-            irs->setState(IntentServerRequest::State::StartedApplication);
+            qCDebug(LogIntents) << "Intent handler" << isr->handlingApplicationId() << "is already running";
+            isr->setState(IntentServerRequest::State::StartedApplication);
         }
     }
 
-    if (irs->state() == IntentServerRequest::State::StartedApplication) { // step 3) send request out
-        auto clientIPC = m_systemInterface->findClientIpc(irs->intent()->applicationId());
+    if (isr->state() == IntentServerRequest::State::StartedApplication) { // step 3) send request out
+        auto clientIPC = m_systemInterface->findClientIpc(isr->handlingApplicationId());
         if (!clientIPC) {
             qCWarning(LogIntents) << "Could not find an IPC connection for application"
-                                 << irs->intent()->applicationId() << "to forward the intent request"
-                                 << irs->id();
-            irs->requestFailed(qSL("No IPC channel to reach target application."));
+                                  << isr->handlingApplicationId() << "to forward the intent request"
+                                  << isr->requestId();
+            isr->setRequestFailed(qSL("No IPC channel to reach target application."));
         } else {
-            qCDebug(LogIntents) << "Sending intent request to application" << irs->intent()->applicationId();
-            m_sentToAppQueue.enqueue(irs);
-            m_systemInterface->requestToApplication(clientIPC, irs);
-            irs->setState(IntentServerRequest::State::WaitingForReplyFromApplication);
+            qCDebug(LogIntents) << "Sending intent request to handler application"
+                                << isr->handlingApplicationId();
+            m_sentToAppQueue.enqueue(isr);
+            m_systemInterface->requestToApplication(clientIPC, isr);
+            isr->setState(IntentServerRequest::State::WaitingForReplyFromApplication);
         }
     }
 
-    if (irs->state() == IntentServerRequest::State::ReceivedReplyFromApplication) { // step 5) send reply to requesting app
-        auto clientIPC = m_systemInterface->findClientIpc(irs->m_requestingAppId);
+    if (isr->state() == IntentServerRequest::State::ReceivedReplyFromApplication) { // step 5) send reply to requesting app
+        auto clientIPC = m_systemInterface->findClientIpc(isr->requestingApplicationId());
         if (!clientIPC) {
             qCWarning(LogIntents) << "Could not find an IPC connection for application"
-                                 << irs->m_requestingAppId << "to forward the Intent reply"
-                                 << irs->id();
+                                  << isr->requestingApplicationId() << "to forward the Intent reply"
+                                  << isr->requestId();
         } else {
-            qCDebug(LogIntents) << "Forwarding intent reply" << irs->id() << "to requesting application"
-                               << irs->m_requestingAppId;
-            m_systemInterface->replyFromSystem(clientIPC, irs);
+            qCDebug(LogIntents) << "Forwarding intent reply" << isr->requestId()
+                                << "to requesting application" << isr->requestingApplicationId();
+            m_systemInterface->replyFromSystem(clientIPC, isr);
         }
-        QTimer::singleShot(0, this, [irs]() { delete irs; }); // aka deleteLater for non-QObject
-        irs = nullptr;
+        QTimer::singleShot(0, this, [isr]() { delete isr; }); // aka deleteLater for non-QObject
+        isr = nullptr;
     }
 
     triggerRequestQueue();
 }
 
-void IntentServer::acknowledgeDisambiguationRequest(const QUuid &requestId, const Intent *intent)
+IntentList IntentServer::convertToQml(const QVector<Intent> &intents)
+{
+    QVariantList vl;
+    for (auto intent : intents)
+        vl << QVariant::fromValue(intent);
+    return vl;
+}
+
+void IntentServer::acknowledgeDisambiguationRequest(const QUuid &requestId, const Intent &selectedIntent)
+{
+    internalDisambiguateRequest(requestId, false, selectedIntent);
+}
+
+void IntentServer::rejectDisambiguationRequest(const QUuid &requestId)
+{
+    internalDisambiguateRequest(requestId, true, Intent());
+}
+
+void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reject, const Intent &selectedIntent)
 {
     IntentServerRequest *irs = nullptr;
     for (int i = 0; i < m_disambiguationQueue.size(); ++i) {
-        if (m_disambiguationQueue.at(i)->id() == requestId) {
+        if (m_disambiguationQueue.at(i)->requestId() == requestId) {
             irs = m_disambiguationQueue.takeAt(i);
             break;
         }
     }
 
     if (!irs) {
-        qmlWarning(this) << "Got a disambiguation acknowledge for intent" << requestId
+        qmlWarning(this) << "Got a disambiguation acknowledge or reject for intent" << requestId
                          << "but no disambiguation was expected for this intent";
     } else {
-        if (irs->m_intents.contains(intent)) {
-            irs->m_actualIntent = intent;
+        if (reject) {
+            irs->setRequestFailed(qSL("Disambiguation was rejected"));
+        } else if (irs->potentialIntents().contains(selectedIntent)) {
+            irs->setHandlingApplicationId(selectedIntent.applicationId());
             irs->setState(IntentServerRequest::State::Disambiguated);
         } else {
             qCWarning(LogIntents) << "IntentServer::acknowledgeDisambiguationRequest for intent"
-                                 << requestId << "tried to disambiguate to the intent"
-                                 << (intent ? intent->id() : qSL("<null>"))
-                                 << "which was not in the list of available disambiguations";
+                                  << requestId << "tried to disambiguate to the intent" << selectedIntent.intentId()
+                                  << "which was not in the list of potential disambiguations";
 
-            irs->requestFailed(qSL("Failed to disambiguate"));
+            irs->setRequestFailed(qSL("Failed to disambiguate"));
         }
         enqueueRequest(irs);
     }
@@ -312,9 +387,9 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
     bool foundOne = false;
     for (int i = 0; i < m_startingAppQueue.size(); ++i) {
         auto irs = m_startingAppQueue.at(i);
-        if (irs->intent()->applicationId() == applicationId) {
-            qCDebug(LogIntents) << "Intent request" << irs->intent()->id()
-                               << "can now be forwarded to application" << applicationId;
+        if (irs->handlingApplicationId() == applicationId) {
+            qCDebug(LogIntents) << "Intent request" << irs->intentId()
+                                << "can now be forwarded to application" << applicationId;
 
             irs->setState(IntentServerRequest::State::StartedApplication);
             m_requestQueue << m_startingAppQueue.takeAt(i);
@@ -325,11 +400,12 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
         triggerRequestQueue();
 }
 
-void IntentServer::replyFromApplication(const QString &replyingApplicationId, const QString &requestId, bool error, const QVariantMap &result)
+void IntentServer::replyFromApplication(const QString &replyingApplicationId, const QUuid &requestId,
+                                        bool error, const QVariantMap &result)
 {
     IntentServerRequest *irs = nullptr;
     for (int i = 0; i < m_sentToAppQueue.size(); ++i) {
-        if (m_sentToAppQueue.at(i)->id() == requestId) {
+        if (m_sentToAppQueue.at(i)->requestId() == requestId) {
             irs = m_sentToAppQueue.takeAt(i);
             break;
         }
@@ -337,79 +413,64 @@ void IntentServer::replyFromApplication(const QString &replyingApplicationId, co
 
     if (!irs) {
         qCWarning(LogIntents) << "Got a reply for intent" << requestId << "from application"
-                             << replyingApplicationId << "but no reply was expected for this intent";
+                              << replyingApplicationId << "but no reply was expected for this intent";
     } else {
-        if (irs->intent()->applicationId() != replyingApplicationId) {
-            qCWarning(LogIntents) << "Got a reply for intent" << irs->id() << "from application"
-                                 << replyingApplicationId << "but expected a reply from"
-                                 << irs->intent()->applicationId() << "instead";
-            irs->requestFailed(qSL("Request reply received from wrong application"));
+        if (irs->handlingApplicationId() != replyingApplicationId) {
+            qCWarning(LogIntents) << "Got a reply for intent" << irs->requestId() << "from application"
+                                  << replyingApplicationId << "but expected a reply from"
+                                  << irs->handlingApplicationId() << "instead";
+            irs->setRequestFailed(qSL("Request reply received from wrong application"));
         } else {
             QString errorMessage;
             if (error) {
                 errorMessage = result.value(qSL("errorMessage")).toString();
-                qCDebug(LogIntents) << "Got an error reply for intent" << irs->id() << "from application"
-                                   << replyingApplicationId << ":" << errorMessage;
-                irs->requestFailed(errorMessage);
+                qCDebug(LogIntents) << "Got an error reply for intent" << irs->requestId() << "from application"
+                                    << replyingApplicationId << ":" << errorMessage;
+                irs->setRequestFailed(errorMessage);
             } else {
-                qCDebug(LogIntents) << "Got a reply for intent" << irs->id() << "from application"
-                                   << replyingApplicationId << ":" << result;
-                irs->requestSucceeded(result);
+                qCDebug(LogIntents) << "Got a reply for intent" << irs->requestId() << "from application"
+                                    << replyingApplicationId << ":" << result;
+                irs->setRequestSucceeded(result);
             }
         }
         enqueueRequest(irs);
     }
 }
 
-IntentServerRequest *IntentServer::requestToSystem(const QString &requestingApplicationId, const QString &intentId, const QString &applicationId, const QVariantMap &parameters)
+IntentServerRequest *IntentServer::requestToSystem(const QString &requestingApplicationId,
+                                                   const QString &intentId, const QString &applicationId,
+                                                   const QVariantMap &parameters)
 {
-    qCDebug(LogIntents) << "Incoming intent request" << intentId << "from application"
-                       << requestingApplicationId << "to application" << applicationId;
+    qCDebug(LogIntents) << "Server: Incoming intent request" << intentId << "from application"
+                        << requestingApplicationId << "to application" << applicationId;
 
-    QVector<const Intent *> intents;
+    if (!m_systemInterface->findClientIpc(requestingApplicationId)) {
+        qCWarning(LogIntents) << "Intent" << intentId << "was requested from unknown application"
+                              << requestingApplicationId;
+        return nullptr;
+    }
+
+    QVector<Intent> intents;
     if (applicationId.isEmpty())
-        intents = filterByIntentId(intentId, parameters);
-    else if (const Intent *intent = find(intentId, applicationId, parameters))
+        intents = filterByIntentId(all(), intentId, parameters);
+    else if (Intent intent = find(intentId, applicationId, parameters))
         intents << intent;
 
     if (intents.isEmpty()) {
         qCWarning(LogIntents) << "Unknown intent" << intentId << "was requested from application"
-                             << requestingApplicationId;
+                              << requestingApplicationId;
         return nullptr;
     }
 
-    // filter on visibility and capabilities
-    //TODO: move this part to a separate filter() function?
-    for (auto it = intents.begin(); it != intents.end(); ) {
-        const Intent *intent = *it;
-        bool keep = true;
-
-        if ((intent->visibility() == Intent::Private)
-                && (intent->applicationId() != requestingApplicationId)) {
-            qCDebug(LogIntents) << "Not considering" << intent->id() << "/" << intent->applicationId()
-                               << "due to private visibility";
-            keep = false;
-        }
-        else if (!intent->requiredCapabilities().isEmpty()
-                && !m_systemInterface->checkApplicationCapabilities(requestingApplicationId,
-                                                                    intent->requiredCapabilities())) {
-            qCDebug(LogIntents) << "Not considering" << intent->id() << "/" << intent->applicationId()
-                               << "due to missing capabilities";
-            keep = false;
-        }
-        if (!keep)
-            intents.erase(it);
-        else
-            ++it;
-    }
+    intents = filterByRequestingApplicationId(intents, requestingApplicationId);
 
     if (intents.isEmpty()) {
         qCWarning(LogIntents) << "Inaccessible intent" << intentId << "was requested from application"
-                             << requestingApplicationId;
+                              << requestingApplicationId;
         return nullptr;
     }
 
-    auto irs = new IntentServerRequest(true, requestingApplicationId, intents, parameters);
+    auto irs = new IntentServerRequest(requestingApplicationId, intentId, intents, parameters);
     enqueueRequest(irs);
     return irs;
 }

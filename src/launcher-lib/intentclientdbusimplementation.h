@@ -54,6 +54,8 @@ public:
 
     void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false) override;
 
+    QString currentApplicationId() override;
+
     void requestToSystem(IntentClientRequest *icr) override;
     void replyFromApplication(IntentClientRequest *icr) override;
 

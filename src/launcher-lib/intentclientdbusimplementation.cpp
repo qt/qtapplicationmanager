@@ -56,15 +56,20 @@ IntentClientDBusImplementation::IntentClientDBusImplementation(const QString &db
     , m_dbusName(dbusName)
 { }
 
+QString IntentClientDBusImplementation::currentApplicationId()
+{
+    return QString(); // doesn't matter
+}
+
 void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false)
 {
     IntentClientSystemInterface::initialize(intentClient);
 
     m_dbusInterface = new IoQtApplicationManagerIntentInterfaceInterface(
-                QString(), qSL("/IntentManager"), QDBusConnection(m_dbusName), intentClient);
+                QString(), qSL("/IntentServer"), QDBusConnection(m_dbusName), intentClient);
 
     if (!m_dbusInterface->isValid())
-        throw std::logic_error("Could not connect to the /IntentManager object on the P2P D-Bus");
+        throw std::logic_error("Could not connect to the /IntentServer object on the P2P D-Bus");
 
     connect(m_dbusInterface, &IoQtApplicationManagerIntentInterfaceInterface::replyFromSystem,
             intentClient, [this](const QString &requestId, bool error, const QVariantMap &result) {
@@ -96,7 +101,7 @@ void IntentClientDBusImplementation::requestToSystem(IntentClientRequest *icr)
 
 void IntentClientDBusImplementation::replyFromApplication(IntentClientRequest *icr)
 {
-    m_dbusInterface->replyFromApplication(icr->id().toString(), !icr->succeeded(),
+    m_dbusInterface->replyFromApplication(icr->requestId().toString(), !icr->succeeded(),
                                           convertFromJSVariant(icr->result()).toMap());
 
     //TODO: should we wait for the call completion - how/why would we report a possible failure?

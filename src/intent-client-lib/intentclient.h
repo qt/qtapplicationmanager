@@ -66,20 +66,26 @@ public:
     static IntentClient *createInstance(IntentClientSystemInterface *systemInterface);
     static IntentClient *instance();
 
-    IntentClientRequest *requestToSystem(const QString &requestingApplicationId, const QString &intentId, const QString &applicationId,
-                                         const QVariantMap &parameters);
+    IntentClientRequest *requestToSystem(const QString &requestingApplicationId, const QString &intentId,
+                                         const QString &applicationId, const QVariantMap &parameters);
     void replyFromApplication(IntentClientRequest *icr, const QVariantMap &result);
     void errorReplyFromApplication(IntentClientRequest *icr, const QString &errorMessage);
 
     void registerHandler(IntentHandler *handler);
     void unregisterHandler(IntentHandler *handler);
 
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *createIntentRequest(const QString &intentId,
+                                                                                  const QVariantMap &parameters);
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *createIntentRequest(const QString &intentId,
+                                                                                  const QString &applicationId,
+                                                                                  const QVariantMap &parameters);
+
 private:
     void requestToSystemFinished(IntentClientRequest *icr, const QUuid &newRequestId,
                                  bool error, const QString &errorMessage);
-    void replyFromSystem(const QString &requestId, bool error, const QVariantMap &result);
+    void replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result);
 
-    void requestToApplication(const QString &requestId, const QString &intentId,
+    void requestToApplication(const QUuid &requestId, const QString &intentId,
                               const QString &applicationId, const QVariantMap &parameters);
 
 private:

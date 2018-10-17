@@ -238,7 +238,7 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
                        std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
                                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     }
-
+    setupIntents();
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
     setupWindowManager(cfg->waylandSocketName(), cfg->slowAnimations(), cfg->noUiWatchdog());
@@ -461,68 +461,15 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
 
 void Main::setupIntents() Q_DECL_NOEXCEPT_EXPR(false)
 {
+    m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance();
+
     qCDebug(LogSystem) << "Registering intents:";
 
     const auto apps = m_applicationManager->applications();
-    for (const AbstractApplication *app : apps) {
-        if (app->isAlias())
-            continue;
-        const ApplicationInfo *info = app->nonAliasedInfo();
-        QSet<QString> intentIds;
+    for (AbstractApplication *app : apps)
+        IntentAMImplementation::addApplicationIntents(app, m_intentServer);
 
-        const auto intents = info->intents();
-
-        if (!intents.isEmpty())
-            m_intentServer->addApplication(app->id());
-
-        for (const auto &intent : intents) {
-            /* example:
-            id: io.qt.shareImage
-            handledBy: main
-            visibility: public*|private
-            requiredCapabilities: [ a, b ]
-            parameterMatch:
-              mimeType: "^image/.*\.png$"
-            */
-            const QVariantMap map = intent.toMap();
-            const QString id = map[qSL("id")].toString();
-            Intent::Visibility visibility = Intent::Public;
-            const QString visibilityStr = map[qSL("visibility")].toString();
-            QString handledBy = map[qSL("handledBy")].toString();
-            const QStringList capabilities = map[qSL("requiredCapabilities")].toStringList();
-            const QVariantMap parameterMatch = map[qSL("parameterMatch")].toMap(); // do we really need that?
-
-            if (id.isEmpty())
-                throw Exception(Error::Intents, "intents need to have an id (app %1)").arg(app->id());
-            if (intentIds.contains(id))
-                throw Exception(Error::Intents, "found two intent handlers for %2 (app %1)").arg(app->id()).arg(id);
-            intentIds << id;
-
-            if (visibilityStr == qL1S("private"))
-                visibility = Intent::Private;
-            else if (visibilityStr == qL1S("hidden"))
-                visibility = Intent::Hidden;
-            else if (!visibilityStr.isEmpty() && (visibilityStr != qL1S("public"))) {
-                throw Exception(Error::Intents, "intent visibilty %3 is invalid (intent %2, app %1)")
-                    .arg(app->id()).arg(id).arg(visibilityStr);
-            }
-
-            if (handledBy == qL1S("main"))
-                handledBy.clear();
-            // we do not support bg services yet
-            if (!handledBy.isEmpty()) {
-                throw Exception(Error::Intents, "service background handlers for intent are not supported yet (intent %2, app %1)")
-                    .arg(app->id()).arg(id).arg(visibilityStr);
-            }
-
-            qCDebug(LogSystem).nospace().noquote() << " * " << id << " [app: " << app->id() << "]";
-
-            if (!m_intentServer->addIntent(id, app->id(), handledBy, capabilities,
-                                           visibility, parameterMatch)) {
-                throw Exception(Error::Intents, "could not add intent %2 for app %1").arg(app->id()).arg(id);
-            }
-        }
-    }
+    StartupTimer::instance()->checkpoint("after Intents setup");
 }
 
 void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
@@ -558,10 +505,6 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     m_applicationManager->setContainerSelectionConfiguration(containerSelectionConfiguration);
 
     StartupTimer::instance()->checkpoint("after ApplicationManager instantiation");
-
-    m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance();
-    setupIntents();
-    StartupTimer::instance()->checkpoint("after IntentManager instantiation");
 
     m_notificationManager = NotificationManager::createInstance();
     StartupTimer::instance()->checkpoint("after NotificationManager instantiation");

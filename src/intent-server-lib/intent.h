@@ -50,14 +50,26 @@ QT_BEGIN_NAMESPACE_AM
 
 class Intent
 {
+    Q_GADGET
+    Q_PROPERTY(bool valid READ (operator bool))
+    Q_PROPERTY(QString intentId READ intentId)
+    Q_PROPERTY(QString applicationId READ applicationId)
+    Q_PROPERTY(QtAM::Intent::Visibility visibility READ visibility)
+    Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities)
+    Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch)
+
 public:
     enum Visibility {
         Public,
         Hidden,
         Private
     };
+    Q_ENUM(Visibility)
 
-    QString id() const;
+    Intent();
+    Intent(const Intent &other);
+
+    QString intentId() const;
     Visibility visibility() const;
     QStringList requiredCapabilities() const;
     QVariantMap parameterMatch() const;
@@ -67,20 +79,25 @@ public:
 
     bool checkParameterMatch(const QVariantMap &parameters) const;
 
+    explicit operator bool() const;
+    bool operator ==(const Intent &other) const;
+
 private:
-    Intent(const QString &id, const QString &applicationId, const QString &backgroundHandlerId,
+    Intent(const QString &intentId, const QString &applicationId, const QString &backgroundHandlerId,
            const QStringList &capabilities, Intent::Visibility visibility,
            const QVariantMap &parameterMatch = QVariantMap());
 
-    QString m_id;
+    QString m_intentId;
     Visibility m_visibility = Private;
     QStringList m_requiredCapabilities;
     QVariantMap m_parameterMatch;
 
     QString m_applicationId;
-    QString m_backgroundServiceId;
+    QString m_backgroundHandlerId;
 
     friend class IntentServer;
 };
 
 QT_END_NAMESPACE_AM
+
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Intent))

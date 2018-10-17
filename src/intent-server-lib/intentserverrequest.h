@@ -47,19 +47,19 @@
 #include <QUuid>
 #include <QVector>
 #include <QtAppManCommon/global.h>
+#include <QtAppManIntentServer/intent.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class IntentServer;
-class Intent;
 
 class IntentServerRequest
 {
     Q_GADGET
 
 public:
-    IntentServerRequest(bool external, const QString &requestingAppId, const QVector<const Intent *> &intents,
-                        const QVariantMap &parameters);
+    IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
+                        const QVector<Intent> &potentialIntents, const QVariantMap &parameters);
 
     enum class State {
         ReceivedRequest,
@@ -74,31 +74,31 @@ public:
     Q_ENUM(State)
 
     State state() const;
-    QUuid id() const;
-    const QtAM::Intent *intent() const;
+    QUuid requestId() const;
+    QString intentId() const;
+    QString requestingApplicationId() const;
+    QString handlingApplicationId() const;
+    QVector<Intent> potentialIntents() const;
     QVariantMap parameters() const;
-    bool isWaiting() const;
-    bool hasSucceeded() const;
+    bool succeeded() const;
     QVariantMap result() const;
 
-    void requestFailed(const QString &errorMessage);
-    void requestSucceeded(const QVariantMap &result);
-
-private:
     void setState(State newState);
+    void setHandlingApplicationId(const QString &applicationId);
+
+    void setRequestFailed(const QString &errorMessage);
+    void setRequestSucceeded(const QVariantMap &result);
 
 private:
     QUuid m_id;
     State m_state;
-    bool m_external;
     bool m_succeeded = false;
-    QString m_requestingAppId;
-    QVector<const Intent *> m_intents;
+    QString m_intentId;
+    QString m_requestingApplicationId;
+    QString m_handlingApplicationId;
+    QVector<Intent> m_potentialIntents;
     QVariantMap m_parameters;
     QVariantMap m_result;
-    const Intent *m_actualIntent;
-
-    friend class IntentServer;
 };
 
 QT_END_NAMESPACE_AM

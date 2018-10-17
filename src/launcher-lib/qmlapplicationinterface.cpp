@@ -208,18 +208,6 @@ QVariantMap QmlApplicationInterface::applicationProperties() const
     return m_applicationProperties;
 }
 
-IntentClientRequest *QmlApplicationInterface::createIntentRequest(const QString &intentId, const QVariantMap &parameters)
-{
-    return createIntentRequest(intentId, QString(), parameters);
-}
-
-IntentClientRequest *QmlApplicationInterface::createIntentRequest(const QString &intentId, const QString &applicationId, const QVariantMap &parameters)
-{
-    auto req = IntentClientRequest::create(this->applicationId(), intentId, applicationId, parameters);
-    QQmlEngine::setObjectOwnership(req, QQmlEngine::CppOwnership);
-    return req;
-}
-
 uint QmlApplicationInterface::notificationShow(QmlNotification *n)
 {
     if (n && m_notifyIf && m_notifyIf->isValid()) {

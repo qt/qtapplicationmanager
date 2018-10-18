@@ -306,7 +306,7 @@ int IpcWrapperObject::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
             value = QVariant::fromValue(dbv);
         }
         // the boolean 'was-successful' return code is stored in _a[1]
-        _a[1] = reinterpret_cast<void *>(mp.write(m_dbusInterface, value) ? 1 : 0);
+        _a[1] = reinterpret_cast<void *>(mp.write(m_dbusInterface, value) ? intptr_t(1) : intptr_t(0));
         break;
     }
     case QMetaObject::InvokeMetaMethod: {

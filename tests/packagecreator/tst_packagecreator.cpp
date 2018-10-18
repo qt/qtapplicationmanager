@@ -136,6 +136,9 @@ void tst_PackageCreator::createAndVerify()
     expectedContents.append(qSL("--PACKAGE-FOOTER--"));
 
     QStringList actualContents = QString::fromLocal8Bit(tar.readAllStandardOutput()).split(qL1C('\n'), QString::SkipEmptyParts);
+#if defined(Q_OS_WIN)
+    actualContents.replaceInStrings(qSL("\r"), QString());
+#endif
     QCOMPARE(actualContents, expectedContents);
 
     // check the contents of the files

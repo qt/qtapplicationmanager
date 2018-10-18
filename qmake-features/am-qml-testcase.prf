@@ -70,7 +70,8 @@ for(file, TEST_FILES) {
     !equals(MODE, "single-process"):check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) --force-multi-process -- $(TESTARGS) &&
     !equals(MODE, "multi-process"):check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) --force-single-process -- $(TESTARGS) &&
 }
-check.commands += true;
+msvc:check.commands += VER>NUL
+else:check.commands += true;
 OTHER_FILES += $$TEST_FILES
 
 # Copy assets to build folder

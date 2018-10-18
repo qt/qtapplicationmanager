@@ -287,6 +287,13 @@ void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *c
             ConsoleThread(QObject *parent)
                 : QThread(parent)
             { }
+
+            ~ConsoleThread()
+            {
+                terminate();
+                wait();
+            }
+
         protected:
             void run() override
             {

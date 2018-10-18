@@ -49,6 +49,7 @@
 #include <QFileInfo>
 #include <QLibrary>
 #include <QIcon>
+#include <QStandardPaths>
 #include <QQmlDebuggingEnabler>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -112,7 +113,8 @@ int &SharedMain::preConstructor(int &argc)
 
 #  if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
     // set a reasonable default for OSes/distros that do not set this by default
-    setenv("XDG_RUNTIME_DIR", QDir::tempPath().toLocal8Bit(), 0);
+    if (!qEnvironmentVariableIsSet("XDG_RUNTIME_DIR"))
+        setenv("XDG_RUNTIME_DIR", QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toLocal8Bit(), 1);
 #  endif
 #endif
     return argc;

@@ -153,7 +153,7 @@ bool QmlInProcessRuntime::start()
                 if (item) {
                     auto surfaceItem = new InProcessSurfaceItem;
                     item->setParentItem(surfaceItem);
-                    addWindow(QSharedPointer<InProcessSurfaceItem>(surfaceItem));
+                    addSurfaceItem(QSharedPointer<InProcessSurfaceItem>(surfaceItem));
                 }
             }
             m_rootObject = obj;
@@ -224,6 +224,23 @@ void QmlInProcessRuntime::finish(int exitCode, Am::ExitStatus status)
 
 #if !defined(AM_HEADLESS)
 
+void QmlInProcessRuntime::stopIfNoVisibleSurfaces()
+{
+    if (!hasVisibleSurfaces())
+        stop();
+    else
+        m_stopIfNoVisibleSurfaces = true;
+}
+
+bool QmlInProcessRuntime::hasVisibleSurfaces() const
+{
+    for (int i = 0; i < m_surfaces.count(); ++i) {
+        if (m_surfaces[i]->visibleClientSide())
+            return true;
+    }
+    return false;
+}
+
 void QmlInProcessRuntime::onSurfaceItemReleased(InProcessSurfaceItem *surface)
 {
     for (int i = 0; i < m_surfaces.count(); ++i) {
@@ -242,26 +259,25 @@ void QmlInProcessRuntime::onSurfaceItemReleased(InProcessSurfaceItem *surface)
     }
 }
 
-void QmlInProcessRuntime::addWindow(const QSharedPointer<InProcessSurfaceItem> &surface)
+void QmlInProcessRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface)
 {
     // Below check is only needed if the root element is a QtObject.
     // It should be possible to remove this, once proper visible handling is in place.
     if (state() != Am::NotRunning && state() != Am::ShuttingDown) {
+        m_stopIfNoVisibleSurfaces = false; // the appearance of a new surface disarms that death trigger
         if (!m_surfaces.contains(surface)) {
             m_surfaces.append(surface);
             InProcessSurfaceItem *surfacePtr = surface.data();
             connect(surfacePtr, &InProcessSurfaceItem::released, this, [this, surfacePtr]() {
                 onSurfaceItemReleased(surfacePtr);
             });
+            connect(surfacePtr, &InProcessSurfaceItem::visibleClientSideChanged, this, [this, surfacePtr]() {
+                if (m_stopIfNoVisibleSurfaces && !hasVisibleSurfaces())
+                    stop();
+            });
         }
         emit inProcessSurfaceItemReady(surface);
     }
-}
-
-void QmlInProcessRuntime::removeWindow(const QSharedPointer<InProcessSurfaceItem> &surface)
-{
-    m_surfaces.removeOne(surface);
-    disconnect(surface.data(), nullptr, this, nullptr);
 }
 
 #endif // !AM_HEADLESS

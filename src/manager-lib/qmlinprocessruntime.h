@@ -79,6 +79,7 @@ public:
 public slots:
     bool start() override;
     void stop(bool forceKill = false) override;
+    void stopIfNoVisibleSurfaces();
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface
@@ -89,7 +90,6 @@ private slots:
     void onSurfaceItemReleased(InProcessSurfaceItem*);
 #endif
 
-
 private:
     static const char *s_runtimeKey;
 
@@ -97,10 +97,13 @@ private:
     QmlInProcessApplicationInterface *m_applicationIf = nullptr;
     bool m_componentError;
 
+    bool m_stopIfNoVisibleSurfaces = false;
+
 #if !defined(AM_HEADLESS)
-    // used by FakeApplicationManagerWindow to register windows
-    void addWindow(const QSharedPointer<InProcessSurfaceItem> &window);
-    void removeWindow(const QSharedPointer<InProcessSurfaceItem> &window);
+    // used by FakeApplicationManagerWindow to register surfaceItems
+    void addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface);
+
+    bool hasVisibleSurfaces() const;
 
     QObject *m_rootObject = nullptr;
     QList< QSharedPointer<InProcessSurfaceItem> > m_surfaces;

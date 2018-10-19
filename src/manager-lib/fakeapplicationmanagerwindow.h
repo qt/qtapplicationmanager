@@ -177,7 +177,7 @@ signals:
     void opacityChanged();
 
 private slots:
-    void addOrRemoveSurface();
+    void notifyRuntimeAboutSurface();
 
 private:
     void determineRuntime();

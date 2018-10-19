@@ -400,6 +400,46 @@ Item {
         }
 
         /*
+            Regression test for https://bugreports.qt.io/browse/AUTOSUITE-652
+
+            - Start an application that has two windows.
+            - Call close() on the first one. It should vanish. Application should keep running normally.
+            - Call close() on the second one. It should vanish as well and, being the app's last window, it should
+              also cause the application to quit.
+         */
+        function test_closeWindows() {
+            root.chosenModel = windowItemsModel;
+
+            app = ApplicationManager.application("test.windowitem.multiwin");
+            app.start();
+
+            tryCompare(windowItemsModel, "count", 2);
+            tryCompare(WindowManager, "count", 2);
+
+            var firstWindow = windowItemsModel.get(0).window;
+            var secondWindow = windowItemsModel.get(1).window;
+
+            compare(app.runState, Am.Running);
+            compare(firstWindow.contentState, WindowObject.SurfaceWithContent);
+
+            firstWindow.close();
+
+            tryCompare(firstWindow, "contentState", WindowObject.NoSurface);
+            windowItemsModel.remove(0);
+            firstWindow = null;
+
+            wait(100);
+
+            compare(app.runState, Am.Running);
+            compare(secondWindow.contentState, WindowObject.SurfaceWithContent);
+
+            secondWindow.close();
+
+            tryCompare(secondWindow, "contentState", WindowObject.NoSurface);
+            tryCompare(app, "runState", Am.NotRunning);
+        }
+
+        /*
             Children added by System-UI code must always stay in front of WindowItem's own private children.
          */
         function test_childrenZOrder() {

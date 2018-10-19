@@ -83,7 +83,7 @@ void FakeApplicationManagerWindow::setVisible(bool visible)
     if (visible != m_surfaceItem->visibleClientSide()) {
         m_surfaceItem->setVisibleClientSide(visible);
         emit visibleChanged();
-        addOrRemoveSurface();
+        notifyRuntimeAboutSurface();
     }
 }
 
@@ -103,6 +103,10 @@ void FakeApplicationManagerWindow::setColor(const QColor &c)
 void FakeApplicationManagerWindow::close()
 {
     setVisible(false);
+    if (m_runtime) {
+        // Queued because the runtime might end up deleting this object
+        QMetaObject::invokeMethod(m_runtime, &QmlInProcessRuntime::stopIfNoVisibleSurfaces, Qt::QueuedConnection);
+    }
 }
 
 void FakeApplicationManagerWindow::showFullScreen()
@@ -202,7 +206,7 @@ void FakeApplicationManagerWindow::componentComplete()
     // could switch back to the event loop a couple of times before finally calling the QML
     // onCompleted handler(s).
     // The workaround is to setup watchers for all Component.onCompleted handlers for this object
-    // and wait until the last of them has been dealt with, to finally call our addWindow
+    // and wait until the last of them has been dealt with, to finally call our addSurfaceItem
     // function (we are also relying on the signal emission order, so that our lambda is called
     // after the actual QML handler).
 
@@ -217,26 +221,24 @@ void FakeApplicationManagerWindow::componentComplete()
             m_attachedCompleteHandlers.removeAll(a);
 
             if (m_attachedCompleteHandlers.isEmpty())
-                addOrRemoveSurface();
+                notifyRuntimeAboutSurface();
         });
     }
 
     // If we do not even have a single Component.onCompleted handler on the QML side, we need to
     // show the window immediately.
     if (m_attachedCompleteHandlers.isEmpty()) {
-        addOrRemoveSurface();
+        notifyRuntimeAboutSurface();
     }
 }
 
-void FakeApplicationManagerWindow::addOrRemoveSurface()
+void FakeApplicationManagerWindow::notifyRuntimeAboutSurface()
 {
     if (!m_runtime)
         return;
 
     if (isVisible() && m_attachedCompleteHandlers.isEmpty() && (!m_parentWindow || m_parentWindow->isVisible()))
-        m_runtime->addWindow(m_surfaceItem);
-    else
-        m_runtime->removeWindow(m_surfaceItem);
+        m_runtime->addSurfaceItem(m_surfaceItem);
 }
 
 QQuickItem *FakeApplicationManagerWindow::contentItem()
@@ -270,7 +272,7 @@ void FakeApplicationManagerWindow::setParentWindow(FakeApplicationManagerWindow 
 
     if (m_parentWindow)
         connect(m_parentWindow, &FakeApplicationManagerWindow::visibleChanged,
-                this, &FakeApplicationManagerWindow::addOrRemoveSurface);
+                this, &FakeApplicationManagerWindow::notifyRuntimeAboutSurface);
 }
 
 void FakeApplicationManagerWindow::setTitle(const QString &value)

@@ -60,6 +60,11 @@ InProcessWindow::InProcessWindow(AbstractApplication *app, const QSharedPointer<
             Qt::QueuedConnection);
 }
 
+InProcessWindow::~InProcessWindow()
+{
+    emit m_surfaceItem->released();
+}
+
 bool InProcessWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
     return m_surfaceItem->setWindowProperty(name, value);

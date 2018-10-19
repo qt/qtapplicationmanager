@@ -79,15 +79,16 @@ public:
 public slots:
     bool start() override;
     void stop(bool forceKill = false) override;
-#if !defined(AM_HEADLESS)
-    void inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem>) override;
-#endif
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface
 
 private slots:
     void finish(int exitCode, Am::ExitStatus status);
+#if !defined(AM_HEADLESS)
+    void onSurfaceItemReleased(InProcessSurfaceItem*);
+#endif
+
 
 private:
     static const char *s_runtimeKey;

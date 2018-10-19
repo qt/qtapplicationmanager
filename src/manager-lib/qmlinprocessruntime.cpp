@@ -224,9 +224,16 @@ void QmlInProcessRuntime::finish(int exitCode, Am::ExitStatus status)
 
 #if !defined(AM_HEADLESS)
 
-void QmlInProcessRuntime::inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem> surface)
+void QmlInProcessRuntime::onSurfaceItemReleased(InProcessSurfaceItem *surface)
 {
-    m_surfaces.removeOne(surface);
+    for (int i = 0; i < m_surfaces.count(); ++i) {
+        if (surface == m_surfaces[i].data()) {
+            m_surfaces.removeAt(i);
+            disconnect(surface, nullptr, this, nullptr);
+            break;
+        }
+    }
+
     if (state() != Am::Running && m_surfaces.isEmpty()) {
         delete m_rootObject;
         m_rootObject = nullptr;
@@ -240,8 +247,13 @@ void QmlInProcessRuntime::addWindow(const QSharedPointer<InProcessSurfaceItem> &
     // Below check is only needed if the root element is a QtObject.
     // It should be possible to remove this, once proper visible handling is in place.
     if (state() != Am::NotRunning && state() != Am::ShuttingDown) {
-        if (!m_surfaces.contains(surface))
+        if (!m_surfaces.contains(surface)) {
             m_surfaces.append(surface);
+            InProcessSurfaceItem *surfacePtr = surface.data();
+            connect(surfacePtr, &InProcessSurfaceItem::released, this, [this, surfacePtr]() {
+                onSurfaceItemReleased(surfacePtr);
+            });
+        }
         emit inProcessSurfaceItemReady(surface);
     }
 }
@@ -249,6 +261,7 @@ void QmlInProcessRuntime::addWindow(const QSharedPointer<InProcessSurfaceItem> &
 void QmlInProcessRuntime::removeWindow(const QSharedPointer<InProcessSurfaceItem> &surface)
 {
     m_surfaces.removeOne(surface);
+    disconnect(surface.data(), nullptr, this, nullptr);
 }
 
 #endif // !AM_HEADLESS

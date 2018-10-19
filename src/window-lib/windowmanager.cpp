@@ -484,8 +484,6 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemReady,
                 this, &WindowManager::inProcessSurfaceItemCreated, Qt::QueuedConnection);
-        connect(this, &WindowManager::_inProcessSurfaceItemReleased, runtime,
-                &AbstractRuntime::inProcessSurfaceItemReleased, Qt::QueuedConnection);
     }
 }
 
@@ -497,10 +495,6 @@ void WindowManager::releaseWindow(Window *window)
     int index = d->allWindows.indexOf(window);
     if (index == -1)
         return;
-
-    if (window->isInProcess()) {
-        emit _inProcessSurfaceItemReleased(static_cast<InProcessWindow*>(window)->surfaceItem());
-    }
 
     d->allWindows.removeAt(index);
 

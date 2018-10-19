@@ -138,10 +138,6 @@ public:
     virtual bool start() = 0;
     virtual void stop(bool forceKill = false) = 0;
 
-#if !defined(AM_HEADLESS)
-    virtual void inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem>);
-#endif
-
 signals:
     void stateChanged(QT_PREPEND_NAMESPACE_AM(Am::RunState) newState);
     void finished(int exitCode, Am::ExitStatus status);

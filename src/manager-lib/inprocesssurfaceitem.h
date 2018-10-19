@@ -86,6 +86,10 @@ signals:
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void closeRequested();
 
+    // Emitted when WindowManager is no longer tracking this surface item
+    // (ie, the Window that was tracking this surface item has been destroyed)
+    void released();
+
 protected:
     bool eventFilter(QObject *o, QEvent *e) override;
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;

@@ -211,19 +211,20 @@ QVector<Intent> IntentServer::filterByRequestingApplicationId(const QVector<Inte
     QVector<Intent> result;
     std::copy_if(intents.cbegin(), intents.cend(), std::back_inserter(result),
                  [this, requestingApplicationId](const Intent &intent) -> bool {
-        // filter on visibility and capabilities
-
-        if ((intent.visibility() == Intent::Private)
-                && (intent.applicationId() != requestingApplicationId)) {
-            qCDebug(LogIntents) << "Not considering" << intent.intentId() << "/" << intent.applicationId()
-                                << "due to private visibility";
-            return false;
-        } else if (!intent.requiredCapabilities().isEmpty()
-                   && !m_systemInterface->checkApplicationCapabilities(requestingApplicationId,
-                                                                       intent.requiredCapabilities())) {
-            qCDebug(LogIntents) << "Not considering" << intent.intentId() << "/" << intent.applicationId()
-                                << "due to missing capabilities";
-            return false;
+        // filter on visibility and capabilities, if the requesting app is different from the
+        // handling app
+        if (intent.applicationId() != requestingApplicationId) {
+            if (intent.visibility() == Intent::Private) {
+                qCDebug(LogIntents) << "Not considering" << intent.intentId() << "/" << intent.applicationId()
+                                    << "due to private visibility";
+                return false;
+            } else if (!intent.requiredCapabilities().isEmpty()
+                       && !m_systemInterface->checkApplicationCapabilities(requestingApplicationId,
+                                                                           intent.requiredCapabilities())) {
+                qCDebug(LogIntents) << "Not considering" << intent.intentId() << "/" << intent.applicationId()
+                                    << "due to missing capabilities";
+                return false;
+            }
         }
         return true;
     });

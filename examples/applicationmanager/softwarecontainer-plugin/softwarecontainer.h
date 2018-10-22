@@ -108,6 +108,7 @@ private:
     QMap<QString, QString> m_debugWrapperEnvironment;
     QStringList m_debugWrapperCommand;
     QFileInfo m_dbusP2PInfo;
+    QFileInfo m_qtPluginPathInfo;
 };
 
 class SoftwareContainerManager : public QObject, public ContainerManagerInterface

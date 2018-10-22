@@ -329,7 +329,13 @@ QString SoftwareContainer::mapContainerPathToHost(const QString &containerPath) 
 
 QString SoftwareContainer::mapHostPathToContainer(const QString &hostPath) const
 {
-    return hostPath;
+    QString containerPath = m_containerPath;
+
+    QFileInfo fileInfo(hostPath);
+    if (fileInfo.isFile())
+        containerPath = m_containerPath + QString("/") + fileInfo.fileName();
+
+    return containerPath;
 }
 
 bool SoftwareContainer::sendCapabilities()
@@ -363,6 +369,9 @@ bool SoftwareContainer::sendBindMounts()
 
     // we need to share the fontconfig cache - otherwise the container startup might take a long time
     bindMounts.append(std::make_tuple(fontCacheInfo.absoluteFilePath(), fontCacheInfo.absoluteFilePath(), false));
+
+    // Qt's plugin path
+    bindMounts.append(std::make_tuple(m_qtPluginPathInfo.absoluteFilePath(), m_qtPluginPathInfo.absoluteFilePath(), false));
 
     // the actual path to the application
     bindMounts.append(std::make_tuple(m_hostPath, m_containerPath, true));
@@ -413,6 +422,10 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
     dbusP2PSocket = dbusP2PSocket.left(dbusP2PSocket.indexOf(QLatin1Char(',')));
     QFileInfo dbusP2PInfo(dbusP2PSocket);
     m_dbusP2PInfo = dbusP2PInfo;
+
+    // for bind-mounting the plugin-path later on
+    QString qtPluginPath = runtimeEnvironment.value(QStringLiteral("QT_PLUGIN_PATH"));
+    m_qtPluginPathInfo = QFileInfo(qtPluginPath);
 
     // Only send the bindmounts if this is not a quick-launch instance.
     if (!m_isQuickLaunch && !sendBindMounts())

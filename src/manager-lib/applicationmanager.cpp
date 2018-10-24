@@ -44,7 +44,7 @@
 #include <QFileInfo>
 #include <QProcess>
 #include <QDir>
-#include <QTimer>
+#include <QMetaObject>
 #include <QUuid>
 #include <QThread>
 #include <QMimeDatabase>
@@ -997,7 +997,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
     // on the desktop, but is completely counter-productive for the AM.
     static bool recursionGuard = false;
     if (recursionGuard) {
-        QTimer::singleShot(0, this, [urlStr, this]() { openUrl(urlStr); });
+        QMetaObject::invokeMethod(this, [urlStr, this]() { openUrl(urlStr); }, Qt::QueuedConnection);
         return true; // this is not correct, but the best we can do in this situation
     }
     recursionGuard = true;
@@ -1364,7 +1364,7 @@ bool ApplicationManager::canceledApplicationInstall(const QString &id)
 
 void ApplicationManager::enableSingleAppMode()
 {
-    QTimer::singleShot(0, this, &ApplicationManager::startSingleAppAndQuitWhenStopped);
+    QMetaObject::invokeMethod(this, &ApplicationManager::startSingleAppAndQuitWhenStopped, Qt::QueuedConnection);
 }
 
 void ApplicationManager::startSingleAppAndQuitWhenStopped()

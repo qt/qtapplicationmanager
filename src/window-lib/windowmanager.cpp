@@ -46,7 +46,7 @@
 #include <QQuickItemGrabResult>
 #include <QQmlEngine>
 #include <QVariant>
-#include <QTimer>
+#include <QMetaObject>
 #include <QThread>
 #include <private/qabstractanimation_p.h>
 
@@ -275,7 +275,7 @@ void WindowManager::shutDown()
     d->shuttingDown = true;
 
     if (d->allWindows.isEmpty())
-        QTimer::singleShot(0, this, &WindowManager::shutDownFinished);
+        QMetaObject::invokeMethod(this, &WindowManager::shutDownFinished, Qt::QueuedConnection);
 }
 
 /*!
@@ -503,7 +503,7 @@ void WindowManager::releaseWindow(Window *window)
     window->deleteLater();
 
     if (d->shuttingDown && (count() == 0))
-        QTimer::singleShot(0, this, &WindowManager::shutDownFinished);
+        QMetaObject::invokeMethod(this, &WindowManager::shutDownFinished, Qt::QueuedConnection);
 }
 
 /*

@@ -41,6 +41,7 @@
 
 #include <QCoreApplication>
 #include <QTimer>
+#include <QMetaObject>
 
 #include "logging.h"
 #include "abstractcontainer.h"
@@ -263,7 +264,7 @@ void QuickLauncher::shutDown()
         }
     }
     if (!waitForRemove)
-        QTimer::singleShot(0, this, &QuickLauncher::shutDownFinished);
+        QMetaObject::invokeMethod(this, &QuickLauncher::shutDownFinished, Qt::QueuedConnection);
 }
 
 QT_END_NAMESPACE_AM

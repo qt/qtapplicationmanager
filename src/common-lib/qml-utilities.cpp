@@ -39,7 +39,6 @@
 **
 ****************************************************************************/
 
-#include <QTimer>
 #include <QDir>
 #include <QQmlComponent>
 #include <QQmlContext>

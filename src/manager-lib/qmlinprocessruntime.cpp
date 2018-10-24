@@ -44,6 +44,7 @@
 #include <QQmlComponent>
 #include <QCoreApplication>
 #include <QTimer>
+#include <QMetaObject>
 
 #if !defined(AM_HEADLESS)
 #  include <QQuickView>
@@ -137,7 +138,7 @@ bool QmlInProcessRuntime::start()
 
     QObject *obj = component->beginCreate(appContext);
 
-    QTimer::singleShot(0, this, [component, appContext, obj, this]() {
+    QMetaObject::invokeMethod(this, [component, appContext, obj, this]() {
         component->completeCreate();
         if (!obj || m_componentError) {
             qCCritical(LogSystem) << "could not load" << m_app->nonAliasedInfo()->absoluteCodeFilePath() << ": no root object";
@@ -163,7 +164,7 @@ bool QmlInProcessRuntime::start()
             setState(Am::Running);
         }
         delete component;
-    });
+    }, Qt::QueuedConnection);
     return true;
 }
 
@@ -208,7 +209,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
 
 void QmlInProcessRuntime::finish(int exitCode, Am::ExitStatus status)
 {
-    QTimer::singleShot(0, this, [this, exitCode, status]() {
+    QMetaObject::invokeMethod(this, [this, exitCode, status]() {
         qCDebug(LogSystem) << "QmlInProcessRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
                            << ") exited with code:" << exitCode << "status:" << status;
         emit finished(exitCode, status);
@@ -219,7 +220,7 @@ void QmlInProcessRuntime::finish(int exitCode, Am::ExitStatus status)
 #else
         deleteLater();
 #endif
-    });
+    }, Qt::QueuedConnection);
 }
 
 #if !defined(AM_HEADLESS)

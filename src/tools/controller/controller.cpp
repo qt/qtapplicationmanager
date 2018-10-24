@@ -36,7 +36,7 @@
 #include <QDBusConnection>
 #include <QDBusPendingReply>
 #include <QDBusError>
-#include <QTimer>
+#include <QMetaObject>
 #include <QThread>
 
 #if defined(Q_OS_UNIX)
@@ -206,7 +206,7 @@ public:
     template <typename T> void runLater(T slot)
     {
         // run the specified function as soon as the event loop is up and running
-        QTimer::singleShot(0, this, slot);
+        QMetaObject::invokeMethod(this, slot, Qt::QueuedConnection);
     }
 
 protected:

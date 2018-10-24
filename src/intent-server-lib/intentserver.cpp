@@ -48,7 +48,7 @@
 
 #include <QRegularExpression>
 #include <QUuid>
-#include <QTimer>
+#include <QMetaObject>
 #include <QDebug>
 
 #include <QQmlEngine>
@@ -248,7 +248,7 @@ Intent IntentServer::find(const QString &intentId, const QString &applicationId,
 
 void IntentServer::triggerRequestQueue()
 {
-    QTimer::singleShot(0, this, &IntentServer::processRequestQueue);
+    QMetaObject::invokeMethod(this, &IntentServer::processRequestQueue, Qt::QueuedConnection);
 }
 
 void IntentServer::enqueueRequest(IntentServerRequest *irs)
@@ -327,7 +327,7 @@ void IntentServer::processRequestQueue()
                                 << "to requesting application" << isr->requestingApplicationId();
             m_systemInterface->replyFromSystem(clientIPC, isr);
         }
-        QTimer::singleShot(0, this, [isr]() { delete isr; }); // aka deleteLater for non-QObject
+        QMetaObject::invokeMethod(this, [isr]() { delete isr; }, Qt::QueuedConnection); // aka deleteLater for non-QObject
         isr = nullptr;
     }
 

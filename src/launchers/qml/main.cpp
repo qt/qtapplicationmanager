@@ -51,7 +51,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QtEndian>
-#include <QTimer>
+#include <QMetaObject>
 #include <QRegularExpression>
 #include <QCommandLineParser>
 
@@ -59,7 +59,6 @@
 #include <QDBusInterface>
 #include <QDBusArgument>
 #include <QLoggingCategory>
-
 #include <private/qabstractanimation_p.h> // For QUnifiedTimer
 #include <qplatformdefs.h>
 
@@ -282,7 +281,7 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
             throw Exception("Could not connect to the application manager's ApplicationInterface on the peer D-Bus");
 
     } else {
-        QTimer::singleShot(0, [this, directLoad]() {
+        QMetaObject::invokeMethod(this, [this, directLoad]() {
             QFileInfo fi(directLoad);
             YamlApplicationScanner yas;
             try {
@@ -291,7 +290,7 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
             } catch (const Exception &e) {
                 throw Exception("Could not parse info.yaml file: %1").arg(e.what());
             }
-        });
+        }, Qt::QueuedConnection);
     }
 
     StartupTimer::instance()->checkpoint("after application interface initialization");

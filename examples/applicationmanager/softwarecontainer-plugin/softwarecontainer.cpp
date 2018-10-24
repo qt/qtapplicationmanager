@@ -45,6 +45,7 @@
 #include <QtAppManCommon/global.h>
 #include <QJsonDocument>
 #include <QSocketNotifier>
+#include <QMetaObject>
 #include <qplatformdefs.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -551,10 +552,10 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
     m_pid = reply.arguments().at(0).value<int>();
 
     m_state = Running;
-    QTimer::singleShot(0, this, [this]() {
+    QMetaObject::invokeMethod(this, [this]() {
         emit stateChanged(m_state);
         emit started();
-    });
+    }, Qt::QueuedConnection);
     return true;
 }
 

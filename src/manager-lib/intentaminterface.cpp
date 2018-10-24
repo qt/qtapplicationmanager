@@ -50,7 +50,7 @@
 #  include "nativeruntime.h"
 #endif
 #include <QDebug>
-#include <QTimer>
+#include <QMetaObject>
 #include <QQmlEngine>
 #include <QQmlExpression>
 #include <QQmlContext>
@@ -323,10 +323,10 @@ void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest>
 
     QUuid requestId = isr ? isr->requestId() : QUuid();
 
-    QTimer::singleShot(0, m_ic, [icr, requestId, this]() {
+    QMetaObject::invokeMethod(m_ic, [icr, requestId, this]() {
         emit requestToSystemFinished(icr.data(), requestId, requestId.isNull(),
                                      requestId.isNull() ? qSL("Failed") : QString());
-    });
+    }, Qt::QueuedConnection);
 }
 
 void IntentClientAMImplementation::replyFromApplication(QPointer<IntentClientRequest> icr)
@@ -414,7 +414,9 @@ IntentServerInProcessIpcConnection *IntentServerInProcessIpcConnection::create(A
                                                                                IntentServerAMImplementation *iface)
 {
     auto ipcConnection = new IntentServerInProcessIpcConnection(application, iface);
-    QTimer::singleShot(0, ipcConnection, [ipcConnection, application]() { ipcConnection->setReady(application); });
+    QMetaObject::invokeMethod(ipcConnection,
+                              [ipcConnection, application]() { ipcConnection->setReady(application); },
+                              Qt::QueuedConnection);
     s_ipcConnections << ipcConnection;
     return ipcConnection;
 }
@@ -435,21 +437,21 @@ void IntentServerInProcessIpcConnection::requestToApplication(IntentServerReques
 {
     // we need decouple the server/client interface at this point to have a consistent
     // behavior in single- and multi-process mode
-    QTimer::singleShot(0, this, [this, irs]() {
+    QMetaObject::invokeMethod(this, [this, irs]() {
         auto clientInterface = m_interface->intentClientSystemInterface();
         emit clientInterface->requestToApplication(irs->requestId().toString(), irs->intentId(),
                                                    irs->handlingApplicationId(), irs->parameters());
-    });
+    }, Qt::QueuedConnection);
 }
 
 void IntentServerInProcessIpcConnection::replyFromSystem(IntentServerRequest *irs)
 {
     // we need decouple the server/client interface at this point to have a consistent
     // behavior in single- and multi-process mode
-    QTimer::singleShot(0, this, [this, irs]() {
+    QMetaObject::invokeMethod(this, [this, irs]() {
         auto clientInterface = m_interface->intentClientSystemInterface();
         emit clientInterface->replyFromSystem(irs->requestId().toString(), !irs->succeeded(), irs->result());
-    });
+    }, Qt::QueuedConnection);
 }
 
 

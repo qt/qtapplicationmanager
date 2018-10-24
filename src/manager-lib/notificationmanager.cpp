@@ -42,6 +42,7 @@
 #include <QVariant>
 #include <QCoreApplication>
 #include <QTimer>
+#include <QMetaObject>
 
 #include "global.h"
 #include "logging.h"
@@ -545,9 +546,9 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
     if (replaces_id == 0) { // new notification
         uint id = ++idCounter;
         // we need to delay the model update until the client has a valid id
-        QTimer::singleShot(0, this, [this, app_name, id, app_icon, summary, body, actions, hints, timeout]() {
+        QMetaObject::invokeMethod(this, [this, app_name, id, app_icon, summary, body, actions, hints, timeout]() {
             notifyHelper(app_name, id, false, app_icon, summary, body, actions, hints, timeout);
-        });
+        }, Qt::QueuedConnection);
         return id;
     } else {
         return notifyHelper(app_name, replaces_id, true, app_icon, summary, body, actions, hints, timeout);

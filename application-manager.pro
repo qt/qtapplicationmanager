@@ -1,10 +1,9 @@
 requires(linux|android|macos|ios|win32:!winrt)
-
-!equals(QT_MAJOR_VERSION, 5)|lessThan(QT_MINOR_VERSION, 11) {
-    log("$$escape_expand(\\n\\n) *** The QtApplicationManager module needs to be built against Qt 5.11+ ***$$escape_expand(\\n\\n)")
-    CONFIG += Qt_version_needs_to_be_at_least_5_11
+!versionAtLeast(QT_VERSION, 5.11.2) {
+    log("$$escape_expand(\\n\\n) *** The QtApplicationManager module needs to be built against Qt 5.11.2+ ***$$escape_expand(\\n\\n)")
+    CONFIG += Qt_version_needs_to_be_at_least_5_11_2
 }
-requires(!Qt_version_needs_to_be_at_least_5_11)
+requires(!Qt_version_needs_to_be_at_least_5_11_2)
 
 !tools-only:!qtHaveModule(qml):error("The QtQml library is required for a non 'tools-only' build")
 

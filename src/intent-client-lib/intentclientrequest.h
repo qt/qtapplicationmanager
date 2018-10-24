@@ -68,8 +68,7 @@ public:
     enum class Direction { ToSystem, ToApplication };
     Q_ENUM(Direction)
 
-    static IntentClientRequest *create(const QString &requestingApplicationId, const QString &intentId, const QVariantMap &parameters);
-    static IntentClientRequest *create(const QString &requestingApplicationId, const QString &intentId, const QString &applicationId, const QVariantMap &parameters);
+    ~IntentClientRequest() override;
 
     QUuid requestId() const;
     Direction direction() const;
@@ -85,9 +84,14 @@ public:
     Q_INVOKABLE void sendReply(const QVariantMap &result);
     Q_INVOKABLE void sendErrorReply(const QString &errorMessage);
 
+    void startTimeout(int timeout = 5000);
+
 signals:
     void requestIdChanged();
     void finished();
+
+protected:
+    void connectNotify(const QMetaMethod &signal) override;
 
 private:
     IntentClientRequest(Direction direction, const QString &requestingApplicationId, const QUuid &id,
@@ -96,6 +100,7 @@ private:
     void setRequestId(const QUuid &requestId);
     void setResult(const QVariantMap &result);
     void setErrorMessage(const QString &errorMessage);
+    void doFinish();
 
     Direction m_direction;
     QUuid m_id;
@@ -105,9 +110,12 @@ private:
     QVariantMap m_parameters;
     QVariantMap m_result;
     QString m_errorMessage;
-    bool m_requestSent = false;
-    bool m_replyReceived = false;
     bool m_succeeded = false;
+    // The client side of this request is finished - the object will stay in this state until
+    // garbage collected by the JS engine. The state is entered, depending on the direction:
+    //  ToSystem: we have received the final reply with result or errorMessage
+    //  ToApplication: the request was handled and send(Error)Reply was called
+    bool m_finished = false;
 
     Q_DISABLE_COPY(IntentClientRequest)
 

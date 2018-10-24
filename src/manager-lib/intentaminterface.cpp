@@ -316,7 +316,7 @@ void IntentClientAMImplementation::initialize(IntentClient *intentClient) Q_DECL
     IntentClientSystemInterface::initialize(intentClient);
 }
 
-void IntentClientAMImplementation::requestToSystem(IntentClientRequest *icr)
+void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest> icr)
 {
     IntentServerRequest *isr = m_issi->requestToSystem(icr->requestingApplicationId(), icr->intentId(),
                                                        icr->applicationId(), icr->parameters());
@@ -324,15 +324,17 @@ void IntentClientAMImplementation::requestToSystem(IntentClientRequest *icr)
     QUuid requestId = isr ? isr->requestId() : QUuid();
 
     QTimer::singleShot(0, m_ic, [icr, requestId, this]() {
-        emit requestToSystemFinished(icr, requestId, requestId.isNull(),
+        emit requestToSystemFinished(icr.data(), requestId, requestId.isNull(),
                                      requestId.isNull() ? qSL("Failed") : QString());
     });
 }
 
-void IntentClientAMImplementation::replyFromApplication(IntentClientRequest *icr)
+void IntentClientAMImplementation::replyFromApplication(QPointer<IntentClientRequest> icr)
 {
-    emit m_issi->replyFromApplication(icr->applicationId(), icr->requestId(), !icr->succeeded(),
-                                      icr->result());
+    if (icr) {
+        emit m_issi->replyFromApplication(icr->applicationId(), icr->requestId(), !icr->succeeded(),
+                                          icr->result());
+    }
 }
 
 

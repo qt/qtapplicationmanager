@@ -83,7 +83,7 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DE
     });
 }
 
-void IntentClientDBusImplementation::requestToSystem(IntentClientRequest *icr)
+void IntentClientDBusImplementation::requestToSystem(QPointer<IntentClientRequest> icr)
 {
     QDBusPendingReply<QString> reply =
             m_dbusInterface->requestToSystem(icr->intentId(), icr->applicationId(),
@@ -99,12 +99,13 @@ void IntentClientDBusImplementation::requestToSystem(IntentClientRequest *icr)
     });
 }
 
-void IntentClientDBusImplementation::replyFromApplication(IntentClientRequest *icr)
+void IntentClientDBusImplementation::replyFromApplication(QPointer<IntentClientRequest> icr)
 {
-    m_dbusInterface->replyFromApplication(icr->requestId().toString(), !icr->succeeded(),
-                                          convertFromJSVariant(icr->result()).toMap());
-
-    //TODO: should we wait for the call completion - how/why would we report a possible failure?
+    if (icr) {
+        m_dbusInterface->replyFromApplication(icr->requestId().toString(), !icr->succeeded(),
+                                              convertFromJSVariant(icr->result()).toMap());
+        //TODO: should we wait for the call completion - how/why would we report a possible failure?
+    }
 }
 
 QT_END_NAMESPACE_AM

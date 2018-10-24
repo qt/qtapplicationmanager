@@ -42,6 +42,7 @@
 #pragma once
 
 #include <QObject>
+#include <QPointer>
 #include <QUuid>
 #include <QVariantMap>
 #include <QtAppManCommon/global.h>
@@ -63,11 +64,11 @@ public:
 
     virtual QString currentApplicationId() = 0;
 
-    virtual void requestToSystem(IntentClientRequest *icr) = 0;
-    virtual void replyFromApplication(IntentClientRequest *icr) = 0;
+    virtual void requestToSystem(QPointer<IntentClientRequest> icr) = 0;
+    virtual void replyFromApplication(QPointer<IntentClientRequest> icr) = 0;
 
 signals:
-    void requestToSystemFinished(IntentClientRequest *icr, const QUuid &newRequestId,
+    void requestToSystemFinished(QPointer<IntentClientRequest> icr, const QUuid &newRequestId,
                                  bool error, const QString &errorMessage);
     void replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result);
 

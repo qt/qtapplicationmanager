@@ -44,30 +44,22 @@
 
 #include <QQmlEngine>
 #include <QThread>
+#include <QPointer>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE_AM
 
-IntentClientRequest *IntentClientRequest::create(const QString &requestingApplicationId,
-                                                 const QString &intentId, const QVariantMap &parameters)
-{
-    return create(requestingApplicationId, intentId, QString(), parameters);
-}
-
-IntentClientRequest *IntentClientRequest::create(const QString &requestingApplicationId,
-                                                 const QString &intentId, const QString &applicationId,
-                                                 const QVariantMap &parameters)
-{
-    //TODO: check that parameters only contains basic datatypes. convertFromJSVariant() does most of
-    //      this already, but doesn't bail out on unconvertible types (yet)
-
-    if (intentId.isEmpty())
-        return nullptr;
-    return IntentClient::instance()->requestToSystem(requestingApplicationId, intentId, applicationId, parameters);
-}
 
 IntentClientRequest::Direction IntentClientRequest::direction() const
 {
     return m_direction;
+}
+
+IntentClientRequest::~IntentClientRequest()
+{
+    // the incoming request was gc'ed on the JavaScript side, but no reply was sent yet
+    if ((direction() == Direction::ToApplication) && !m_finished)
+        sendErrorReply(qSL("Request not handled"));
 }
 
 QUuid IntentClientRequest::requestId() const
@@ -120,8 +112,10 @@ void IntentClientRequest::sendReply(const QVariantMap &result)
     IntentClient *ic = IntentClient::instance();
 
     if (QThread::currentThread() != ic->thread()) {
-        ic->metaObject()->invokeMethod(ic, [this, ic, result]()
-        { ic->replyFromApplication(this, result); },
+        QPointer<IntentClientRequest> that(this);
+
+        ic->metaObject()->invokeMethod(ic, [that, ic, result]()
+        { if (that) ic->replyFromApplication(that.data(), result); },
         Qt::QueuedConnection);
     } else {
         ic->replyFromApplication(this, result);
@@ -135,12 +129,33 @@ void IntentClientRequest::sendErrorReply(const QString &errorMessage)
     IntentClient *ic = IntentClient::instance();
 
     if (QThread::currentThread() != ic->thread()) {
-        ic->metaObject()->invokeMethod(ic, [this, ic, errorMessage]()
-        { ic->errorReplyFromApplication(this, errorMessage); },
+        QPointer<IntentClientRequest> that(this);
+
+        ic->metaObject()->invokeMethod(ic, [that, ic, errorMessage]()
+        { if (that) ic->errorReplyFromApplication(that.data(), errorMessage); },
         Qt::QueuedConnection);
     } else {
         ic->errorReplyFromApplication(this, errorMessage);
     }
+}
+
+void IntentClientRequest::startTimeout(int timeout)
+{
+    QTimer::singleShot(timeout, this, [this, timeout]() {
+        if (direction() == Direction::ToApplication)
+            sendErrorReply(qSL("Intent request to application timed out after %1 ms").arg(timeout));
+        else
+            setErrorMessage(qSL("No reply received from Intent server after %1 ms").arg(timeout));
+    });
+}
+
+void IntentClientRequest::connectNotify(const QMetaMethod &signal)
+{
+    // take care of connects happening after the request is already finished:
+    // re-emit the finished signal in this case (this shouldn't happen in practice, but better be
+    // safe than sorry)
+    if (m_finished && (signal == QMetaMethod::fromSignal(&IntentClientRequest::finished)))
+        QMetaObject::invokeMethod(this, &IntentClientRequest::doFinish, Qt::QueuedConnection);
 }
 
 IntentClientRequest::IntentClientRequest(Direction direction, const QString &requestingApplicationId,
@@ -168,7 +183,7 @@ void IntentClientRequest::setResult(const QVariantMap &result)
     if (m_result != result) {
         m_result = result;
         m_succeeded = true;
-        emit finished();
+        doFinish();
     }
 }
 
@@ -177,8 +192,17 @@ void IntentClientRequest::setErrorMessage(const QString &errorMessage)
     if (m_errorMessage != errorMessage) {
         m_errorMessage = errorMessage;
         m_succeeded = false;
-        emit finished();
+        doFinish();
     }
+}
+
+void IntentClientRequest::doFinish()
+{
+    m_finished = true;
+    emit finished();
+    // We need to disconnect all JS handlers now, because otherwise the request object would
+    // never be garbage collected (the signal connections increase the use-counter).
+    disconnect(this, &IntentClientRequest::finished, nullptr, nullptr);
 }
 
 QT_END_NAMESPACE_AM

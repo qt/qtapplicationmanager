@@ -129,12 +129,17 @@ IntentClientRequest *IntentClient::createIntentRequest(const QString &intentId, 
 
 IntentClientRequest *IntentClient::createIntentRequest(const QString &intentId, const QString &applicationId, const QVariantMap &parameters)
 {
-    auto req = IntentClientRequest::create(m_systemInterface->currentApplicationId(),
-                                           intentId, applicationId, parameters);
-    QQmlEngine::setObjectOwnership(req, QQmlEngine::CppOwnership);
-    return req;
-}
+    if (intentId.isEmpty())
+        return nullptr;
 
+    //TODO: check that parameters only contains basic datatypes. convertFromJSVariant() does most of
+    //      this already, but doesn't bail out on unconvertible types (yet)
+
+    auto icr = requestToSystem(m_systemInterface->currentApplicationId(), intentId, applicationId, parameters);
+    QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
+    icr->startTimeout();
+    return icr;
+}
 
 IntentClientRequest *IntentClient::requestToSystem(const QString &requestingApplicationId,
                                                    const QString &intentId, const QString &applicationId,
@@ -152,12 +157,13 @@ IntentClientRequest *IntentClient::requestToSystem(const QString &requestingAppl
 
 void IntentClient::requestToSystemFinished(IntentClientRequest *icr, const QUuid &newRequestId, bool error, const QString &errorMessage)
 {
+    if (!icr)
+        return;
+
     if (error) {
         icr->setErrorMessage(errorMessage);
-        icr->deleteLater();
     } else if (newRequestId.isNull()) {
         icr->setErrorMessage(qL1S("No matching Intent found in the system"));
-        icr->deleteLater();
     } else {
         icr->setRequestId(newRequestId);
         m_waiting << icr;
@@ -171,6 +177,7 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
                            [requestId](IntentClientRequest *ir) -> bool {
             return (ir->requestId() == requestId);
 });
+
     if (it == m_waiting.cend()) {
         qCWarning(LogIntents) << "IntentClient received an unexpected intent reply for request"
                               << requestId << " succeeded:" << error << "error:"
@@ -184,7 +191,6 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
         icr->setErrorMessage(result.value(qSL("errorMessage")).toString());
     else
         icr->setResult(result);
-    icr->deleteLater();
 
     qCDebug(LogIntents) << "Application" << icr->requestingApplicationId() << "received an intent reply for"
                         << icr->intentId() << " succeeded:" << icr->succeeded() << "error:"
@@ -204,10 +210,14 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
 
     IntentHandler *handler = m_handlers.value(intentId);
     if (handler) {
+        QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
+        icr->startTimeout();
+
         emit handler->receivedRequest(icr);
     } else {
         qCDebug(LogIntents) << "No Intent handler registered for intent" << intentId;
         errorReplyFromApplication(icr, qSL("No matching IntentHandler found."));
+        delete icr; // still exclusively on the C++ side
     }
 }
 
@@ -216,10 +226,10 @@ void IntentClient::replyFromApplication(IntentClientRequest *icr, const QVariant
     if (!icr || icr->m_direction != IntentClientRequest::Direction::ToApplication)
         return;
     icr->m_succeeded = true;
+    icr->m_finished = true;
     icr->m_result = result;
 
     m_systemInterface->replyFromApplication(icr);
-    icr->deleteLater();
 }
 
 void IntentClient::errorReplyFromApplication(IntentClientRequest *icr, const QString &errorMessage)
@@ -227,11 +237,10 @@ void IntentClient::errorReplyFromApplication(IntentClientRequest *icr, const QSt
     if (!icr || icr->m_direction != IntentClientRequest::Direction::ToApplication)
         return;
     icr->m_succeeded = false;
+    icr->m_finished = true;
     icr->m_result = QVariantMap{ { qSL("errorMessage"), errorMessage } };
 
     m_systemInterface->replyFromApplication(icr);
-    icr->deleteLater();
 }
 
 QT_END_NAMESPACE_AM
-

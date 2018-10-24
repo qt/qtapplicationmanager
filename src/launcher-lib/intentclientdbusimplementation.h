@@ -41,6 +41,7 @@
 
 #pragma once
 
+#include <QPointer>
 #include <QtAppManIntentClient/intentclientsysteminterface.h>
 
 class IoQtApplicationManagerIntentInterfaceInterface;
@@ -56,8 +57,8 @@ public:
 
     QString currentApplicationId() override;
 
-    void requestToSystem(IntentClientRequest *icr) override;
-    void replyFromApplication(IntentClientRequest *icr) override;
+    void requestToSystem(QPointer<IntentClientRequest> icr) override;
+    void replyFromApplication(QPointer<IntentClientRequest> icr) override;
 
 private:
     IoQtApplicationManagerIntentInterfaceInterface *m_dbusInterface;

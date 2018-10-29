@@ -126,7 +126,7 @@ private:
                                          const QString &applicationId, const QVariantMap &parameters);
 
     void triggerRequestQueue();
-    void enqueueRequest(IntentServerRequest *irs);
+    void enqueueRequest(IntentServerRequest *isr);
     void processRequestQueue();
 
     static IntentList convertToQml(const QVector<Intent> &intents);

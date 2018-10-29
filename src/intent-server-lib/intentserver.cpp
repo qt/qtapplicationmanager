@@ -388,31 +388,31 @@ void IntentServer::rejectDisambiguationRequest(const QUuid &requestId)
 
 void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reject, const Intent &selectedIntent)
 {
-    IntentServerRequest *irs = nullptr;
+    IntentServerRequest *isr = nullptr;
     for (int i = 0; i < m_disambiguationQueue.size(); ++i) {
         if (m_disambiguationQueue.at(i)->requestId() == requestId) {
-            irs = m_disambiguationQueue.takeAt(i);
+            isr = m_disambiguationQueue.takeAt(i);
             break;
         }
     }
 
-    if (!irs) {
+    if (!isr) {
         qmlWarning(this) << "Got a disambiguation acknowledge or reject for intent" << requestId
                          << "but no disambiguation was expected for this intent";
     } else {
         if (reject) {
-            irs->setRequestFailed(qSL("Disambiguation was rejected"));
-        } else if (irs->potentialIntents().contains(selectedIntent)) {
-            irs->setHandlingApplicationId(selectedIntent.applicationId());
-            irs->setState(IntentServerRequest::State::Disambiguated);
+            isr->setRequestFailed(qSL("Disambiguation was rejected"));
+        } else if (isr->potentialIntents().contains(selectedIntent)) {
+            isr->setHandlingApplicationId(selectedIntent.applicationId());
+            isr->setState(IntentServerRequest::State::Disambiguated);
         } else {
             qCWarning(LogIntents) << "IntentServer::acknowledgeDisambiguationRequest for intent"
                                   << requestId << "tried to disambiguate to the intent" << selectedIntent.intentId()
                                   << "which was not in the list of potential disambiguations";
 
-            irs->setRequestFailed(qSL("Failed to disambiguate"));
+            isr->setRequestFailed(qSL("Failed to disambiguate"));
         }
-        enqueueRequest(irs);
+        enqueueRequest(isr);
     }
 }
 
@@ -421,13 +421,13 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
     // check if any intent request is waiting for this app to start
     bool foundOne = false;
     for (auto it = m_startingAppQueue.begin(); it != m_startingAppQueue.end(); ) {
-        auto irs = *it;
-        if (irs->handlingApplicationId() == applicationId) {
-            qCDebug(LogIntents) << "Intent request" << irs->intentId()
+        auto isr = *it;
+        if (isr->handlingApplicationId() == applicationId) {
+            qCDebug(LogIntents) << "Intent request" << isr->intentId()
                                 << "can now be forwarded to application" << applicationId;
 
-            irs->setState(IntentServerRequest::State::StartedApplication);
-            m_requestQueue << irs;
+            isr->setState(IntentServerRequest::State::StartedApplication);
+            m_requestQueue << isr;
             foundOne = true;
 
             it = m_startingAppQueue.erase(it);
@@ -442,37 +442,37 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
 void IntentServer::replyFromApplication(const QString &replyingApplicationId, const QUuid &requestId,
                                         bool error, const QVariantMap &result)
 {
-    IntentServerRequest *irs = nullptr;
+    IntentServerRequest *isr = nullptr;
     for (int i = 0; i < m_sentToAppQueue.size(); ++i) {
         if (m_sentToAppQueue.at(i)->requestId() == requestId) {
-            irs = m_sentToAppQueue.takeAt(i);
+            isr = m_sentToAppQueue.takeAt(i);
             break;
         }
     }
 
-    if (!irs) {
+    if (!isr) {
         qCWarning(LogIntents) << "Got a reply for intent" << requestId << "from application"
                               << replyingApplicationId << "but no reply was expected for this intent";
     } else {
-        if (irs->handlingApplicationId() != replyingApplicationId) {
-            qCWarning(LogIntents) << "Got a reply for intent" << irs->requestId() << "from application"
+        if (isr->handlingApplicationId() != replyingApplicationId) {
+            qCWarning(LogIntents) << "Got a reply for intent" << isr->requestId() << "from application"
                                   << replyingApplicationId << "but expected a reply from"
-                                  << irs->handlingApplicationId() << "instead";
-            irs->setRequestFailed(qSL("Request reply received from wrong application"));
+                                  << isr->handlingApplicationId() << "instead";
+            isr->setRequestFailed(qSL("Request reply received from wrong application"));
         } else {
             QString errorMessage;
             if (error) {
                 errorMessage = result.value(qSL("errorMessage")).toString();
-                qCDebug(LogIntents) << "Got an error reply for intent" << irs->requestId() << "from application"
+                qCDebug(LogIntents) << "Got an error reply for intent" << isr->requestId() << "from application"
                                     << replyingApplicationId << ":" << errorMessage;
-                irs->setRequestFailed(errorMessage);
+                isr->setRequestFailed(errorMessage);
             } else {
-                qCDebug(LogIntents) << "Got a reply for intent" << irs->requestId() << "from application"
+                qCDebug(LogIntents) << "Got a reply for intent" << isr->requestId() << "from application"
                                     << replyingApplicationId << ":" << result;
-                irs->setRequestSucceeded(result);
+                isr->setRequestSucceeded(result);
             }
         }
-        enqueueRequest(irs);
+        enqueueRequest(isr);
     }
 }
 
@@ -509,9 +509,9 @@ IntentServerRequest *IntentServer::requestToSystem(const QString &requestingAppl
         return nullptr;
     }
 
-    auto irs = new IntentServerRequest(requestingApplicationId, intentId, intents, parameters);
-    enqueueRequest(irs);
-    return irs;
+    auto isr = new IntentServerRequest(requestingApplicationId, intentId, intents, parameters);
+    enqueueRequest(isr);
+    return isr;
 }
 
 QT_END_NAMESPACE_AM

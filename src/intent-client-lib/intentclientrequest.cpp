@@ -154,7 +154,7 @@ void IntentClientRequest::connectNotify(const QMetaMethod &signal)
     // take care of connects happening after the request is already finished:
     // re-emit the finished signal in this case (this shouldn't happen in practice, but better be
     // safe than sorry)
-    if (m_finished && (signal == QMetaMethod::fromSignal(&IntentClientRequest::finished)))
+    if (m_finished && (signal == QMetaMethod::fromSignal(&IntentClientRequest::replyReceived)))
         QMetaObject::invokeMethod(this, &IntentClientRequest::doFinish, Qt::QueuedConnection);
 }
 
@@ -199,10 +199,10 @@ void IntentClientRequest::setErrorMessage(const QString &errorMessage)
 void IntentClientRequest::doFinish()
 {
     m_finished = true;
-    emit finished();
+    emit replyReceived();
     // We need to disconnect all JS handlers now, because otherwise the request object would
     // never be garbage collected (the signal connections increase the use-counter).
-    disconnect(this, &IntentClientRequest::finished, nullptr, nullptr);
+    disconnect(this, &IntentClientRequest::replyReceived, nullptr, nullptr);
 }
 
 QT_END_NAMESPACE_AM

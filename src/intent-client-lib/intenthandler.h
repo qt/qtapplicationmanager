@@ -71,7 +71,7 @@ public:
 signals:
     void intentIdsChanged(const QStringList &intentId);
 
-    void receivedRequest(QtAM::IntentClientRequest *request);
+    void requestReceived(QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *request);
 
 protected:
     void componentComplete() override;

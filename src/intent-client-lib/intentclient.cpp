@@ -122,12 +122,13 @@ void IntentClient::unregisterHandler(IntentHandler *handler)
         m_handlers.remove(intentId);
 }
 
-IntentClientRequest *IntentClient::createIntentRequest(const QString &intentId, const QVariantMap &parameters)
+IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, const QVariantMap &parameters)
 {
-    return createIntentRequest(intentId, QString(), parameters);
+    return sendIntentRequest(intentId, QString(), parameters);
 }
 
-IntentClientRequest *IntentClient::createIntentRequest(const QString &intentId, const QString &applicationId, const QVariantMap &parameters)
+IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, const QString &applicationId,
+                                                     const QVariantMap &parameters)
 {
     if (intentId.isEmpty())
         return nullptr;
@@ -213,7 +214,7 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
         QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
         icr->startTimeout();
 
-        emit handler->receivedRequest(icr);
+        emit handler->requestReceived(icr);
     } else {
         qCDebug(LogIntents) << "No Intent handler registered for intent" << intentId;
         errorReplyFromApplication(icr, qSL("No matching IntentHandler found."));

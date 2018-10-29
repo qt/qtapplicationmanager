@@ -103,8 +103,8 @@ Item {
             title: "System-UI"
 
             onRequest: {
-                var request = IntentClient.createIntentRequest(intentId, applicationId, parameters)
-                request.onFinished.connect(function() {
+                var request = IntentClient.sendIntentRequest(intentId, applicationId, parameters)
+                request.onReplyReceived.connect(function() {
                     sysui_page.setResult(request.requestId, request.succeeded,
                                          request.succeeded ? request.result : request.errorMessage)
                 })

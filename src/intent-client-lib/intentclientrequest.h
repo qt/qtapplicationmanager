@@ -60,9 +60,9 @@ class IntentClientRequest : public QObject
     Q_PROPERTY(QString intentId READ intentId CONSTANT)
     Q_PROPERTY(QString applicationId READ applicationId CONSTANT)
     Q_PROPERTY(QVariantMap parameters READ parameters CONSTANT)
-    Q_PROPERTY(bool succeeded READ succeeded NOTIFY finished)
-    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY finished)
-    Q_PROPERTY(QVariantMap result READ result NOTIFY finished)
+    Q_PROPERTY(bool succeeded READ succeeded NOTIFY replyReceived)
+    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY replyReceived)
+    Q_PROPERTY(QVariantMap result READ result NOTIFY replyReceived)
 
 public:
     enum class Direction { ToSystem, ToApplication };
@@ -88,7 +88,7 @@ public:
 
 signals:
     void requestIdChanged();
-    void finished();
+    void replyReceived();
 
 protected:
     void connectNotify(const QMetaMethod &signal) override;
@@ -113,7 +113,7 @@ private:
     bool m_succeeded = false;
     // The client side of this request is finished - the object will stay in this state until
     // garbage collected by the JS engine. The state is entered, depending on the direction:
-    //  ToSystem: we have received the final reply with result or errorMessage
+    //  ToSystem: we have received the final result or errorMessage via replyReceived()
     //  ToApplication: the request was handled and send(Error)Reply was called
     bool m_finished = false;
 

@@ -146,7 +146,7 @@ IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, co
     //TODO: check that parameters only contains basic datatypes. convertFromJSVariant() does most of
     //      this already, but doesn't bail out on unconvertible types (yet)
 
-    auto icr = requestToSystem(m_systemInterface->currentApplicationId(), intentId, applicationId, parameters);
+    auto icr = requestToSystem(m_systemInterface->currentApplicationId(this), intentId, applicationId, parameters);
     QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
     icr->startTimeout(m_replyFromSystemTimeout);
     return icr;

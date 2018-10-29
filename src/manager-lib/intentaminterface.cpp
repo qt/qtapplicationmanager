@@ -54,8 +54,6 @@
 #include <QQmlEngine>
 #include <QQmlExpression>
 #include <QQmlContext>
-#include <private/qv4engine_p.h>
-#include <private/qqmlcontext_p.h>
 
 #include "error.h"
 #include "exception.h"
@@ -287,28 +285,11 @@ IntentClientAMImplementation::IntentClientAMImplementation(IntentServerAMImpleme
     serverInterface->setIntentClientSystemInterface(this);
 }
 
-QString IntentClientAMImplementation::currentApplicationId()
+QString IntentClientAMImplementation::currentApplicationId(QObject *hint)
 {
-    // IntentClient is a singleton and as such, it is running in its own global QQmlContext, which
-    // is independent of the current execution context. Since we want to know the appId of the
-    // in-process app that called into the singleton, we need to rely on the callingQmlContext()
-    // provided by the v4 engine.
+    QmlInProcessRuntime *runtime = QmlInProcessRuntime::determineRuntime(hint);
 
-    if (QQmlEngine *engine = qmlEngine(m_ic)) {
-        if (QV4::ExecutionEngine *v4 = engine->handle()) {
-            if (QQmlContextData *ctxtData = v4->callingQmlContext()) {
-                if (QQmlContext *ctxt = ctxtData->asQQmlContext()) {
-                    QQmlExpression expr(ctxt, nullptr, qSL("ApplicationInterface.applicationId"), nullptr);
-                    QVariant v = expr.evaluate();
-                    if (!v.isNull())
-                        return v.toString();
-                    else
-                        return qSL(":sysui:");
-                }
-            }
-        }
-    }
-    return QString();
+    return runtime ? runtime->application()->info()->id() : sysUiId;
 }
 
 void IntentClientAMImplementation::initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false)

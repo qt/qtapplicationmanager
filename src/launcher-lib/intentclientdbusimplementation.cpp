@@ -56,8 +56,9 @@ IntentClientDBusImplementation::IntentClientDBusImplementation(const QString &db
     , m_dbusName(dbusName)
 { }
 
-QString IntentClientDBusImplementation::currentApplicationId()
+QString IntentClientDBusImplementation::currentApplicationId(QObject *hint)
 {
+    Q_UNUSED(hint)
     return QString(); // doesn't matter
 }
 

@@ -45,6 +45,8 @@
 #include <QCoreApplication>
 #include <QTimer>
 #include <QMetaObject>
+#include <private/qv4engine_p.h>
+#include <private/qqmlcontext_p.h>
 
 #if !defined(AM_HEADLESS)
 #  include <QQuickView>
@@ -295,6 +297,39 @@ qint64 QmlInProcessRuntime::applicationProcessId() const
     return QCoreApplication::applicationPid();
 }
 
+/*! \internal
+  In single process mode, every app plus the system-ui itself run within the same QQmlEngine. For
+  some operations, we need to figure out though, which app/system-ui is the currently "active" one.
+  In order to do that we need an anchor or hint: the \a object parameter. Each QObject exposed to
+  QML has an associated QQmlContext. For objects created by apps, we can deduce the apps's root
+  context from this object context. This fails however, if the object is a singleton or an object
+  exposed from C++. In this case we can examine the "calling context" of the V4 JS engine to
+  determine who called into this object.
+*/
+QmlInProcessRuntime *QmlInProcessRuntime::determineRuntime(QObject *object)
+{
+    auto findRuntime = [](QQmlContext *context) -> QmlInProcessRuntime * {
+        while (context) {
+            if (context->property(s_runtimeKey).isValid())
+                return context->property(s_runtimeKey).value<QmlInProcessRuntime *>();
+            context = context->parentContext();
+        }
+        return nullptr;
+    };
+
+    // check the context the object lives in
+    QmlInProcessRuntime *runtime = findRuntime(QQmlEngine::contextForObject(object));
+    if (!runtime) {
+        // if this didn't work out, check out the calling context
+        if (QQmlEngine *engine = qmlEngine(object)) {
+            if (QV4::ExecutionEngine *v4 = engine->handle()) {
+                if (QQmlContextData *callingContext = v4->callingQmlContext())
+                    runtime = findRuntime(callingContext->asQQmlContext());
+            }
+        }
+    }
+    return runtime;
+}
 
 QmlInProcessRuntimeManager::QmlInProcessRuntimeManager(QObject *parent)
     : AbstractRuntimeManager(defaultIdentifier(), parent)

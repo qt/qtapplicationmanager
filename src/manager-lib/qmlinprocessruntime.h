@@ -76,6 +76,8 @@ public:
     void openDocument(const QString &document, const QString &mimeType) override;
     qint64 applicationProcessId() const override;
 
+    static QmlInProcessRuntime *determineRuntime(QObject *object);
+
 public slots:
     bool start() override;
     void stop(bool forceKill = false) override;

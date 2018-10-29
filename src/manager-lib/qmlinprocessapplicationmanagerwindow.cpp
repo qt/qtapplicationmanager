@@ -179,23 +179,12 @@ void QmlInProcessApplicationManagerWindow::data_clear(QQmlListProperty<QObject> 
     itemProperty.clear(&itemProperty);
 }
 
-void QmlInProcessApplicationManagerWindow::determineRuntime()
-{
-    if (!m_runtime) {
-        QQmlContext *ctx = QQmlEngine::contextForObject(this);
-        while (ctx && !m_runtime) {
-            if (ctx->property(QmlInProcessRuntime::s_runtimeKey).isValid())
-                m_runtime = ctx->property(QmlInProcessRuntime::s_runtimeKey).value<QmlInProcessRuntime*>();
-            ctx = ctx->parentContext();
-        }
-    }
-}
-
 void QmlInProcessApplicationManagerWindow::componentComplete()
 {
     qCDebug(LogSystem) << "QmlInProcessApplicationManagerWindow componentComplete() this:" << this;
 
-    determineRuntime();
+    if (!m_runtime)
+        m_runtime = QmlInProcessRuntime::determineRuntime(this);
 
     findParentWindow(parent());
 

@@ -62,7 +62,7 @@ public:
 
     virtual void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false);
 
-    virtual QString currentApplicationId() = 0;
+    virtual QString currentApplicationId(QObject *hint) = 0;
 
     virtual void requestToSystem(QPointer<IntentClientRequest> icr) = 0;
     virtual void replyFromApplication(QPointer<IntentClientRequest> icr) = 0;

@@ -99,7 +99,7 @@ public:
     IntentClientAMImplementation(IntentServerAMImplementation *serverInterface);
 
     void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false) override;
-    QString currentApplicationId() override;
+    QString currentApplicationId(QObject *hint) override;
 
     void requestToSystem(QPointer<IntentClientRequest> icr) override;
     void replyFromApplication(QPointer<IntentClientRequest> icr) override;

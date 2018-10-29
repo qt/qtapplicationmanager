@@ -90,6 +90,16 @@ IntentClient *IntentClient::instance()
     return s_instance;
 }
 
+void IntentClient::setReplyFromSystemTimeout(int timeout)
+{
+    m_replyFromSystemTimeout = timeout;
+}
+
+void IntentClient::setReplyFromApplicationTimeout(int timeout)
+{
+    m_replyFromApplicationTimeout = timeout;
+}
+
 IntentClient::IntentClient(IntentClientSystemInterface *systemInterface, QObject *parent)
     : QObject(parent)
     , m_systemInterface(systemInterface)
@@ -138,7 +148,7 @@ IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, co
 
     auto icr = requestToSystem(m_systemInterface->currentApplicationId(), intentId, applicationId, parameters);
     QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
-    icr->startTimeout();
+    icr->startTimeout(m_replyFromSystemTimeout);
     return icr;
 }
 
@@ -212,7 +222,7 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
     IntentHandler *handler = m_handlers.value(intentId);
     if (handler) {
         QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
-        icr->startTimeout();
+        icr->startTimeout(m_replyFromApplicationTimeout);
 
         emit handler->requestReceived(icr);
     } else {

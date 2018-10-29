@@ -49,6 +49,7 @@
 #include <QRegularExpression>
 #include <QUuid>
 #include <QMetaObject>
+#include <QTimer>
 #include <QDebug>
 
 #include <QQmlEngine>
@@ -93,6 +94,21 @@ IntentServer *IntentServer::instance()
     if (!s_instance)
         qFatal("IntentServer::instance() was called before createInstance().");
     return s_instance;
+}
+
+void IntentServer::setDisambiguationTimeout(int timeout)
+{
+    m_disambiguationTimeout = timeout;
+}
+
+void IntentServer::setStartApplicationTimeout(int timeout)
+{
+    m_startingAppTimeout = timeout;
+}
+
+void IntentServer::setReplyFromApplicationTimeout(int timeout)
+{
+    m_sentToAppTimeout = timeout;
 }
 
 IntentServer::IntentServer(IntentServerSystemInterface *systemInterface, QObject *parent)
@@ -251,10 +267,10 @@ void IntentServer::triggerRequestQueue()
     QMetaObject::invokeMethod(this, &IntentServer::processRequestQueue, Qt::QueuedConnection);
 }
 
-void IntentServer::enqueueRequest(IntentServerRequest *irs)
+void IntentServer::enqueueRequest(IntentServerRequest *isr)
 {
-    qCDebug(LogIntents) << "Enqueueing Intent request:" << irs << irs->requestId() << irs->state();
-    m_requestQueue.enqueue(irs);
+    qCDebug(LogIntents) << "Enqueueing Intent request:" << isr << isr->requestId() << isr->state();
+    m_requestQueue.enqueue(isr);
     triggerRequestQueue();
 }
 
@@ -277,6 +293,12 @@ void IntentServer::processRequestQueue()
             } else {
                 m_disambiguationQueue.enqueue(isr);
                 isr->setState(IntentServerRequest::State::WaitingForDisambiguation);
+                QTimer::singleShot(m_disambiguationTimeout, [this, isr]() {
+                    if (m_disambiguationQueue.removeOne(isr)) {
+                        isr->setRequestFailed(qSL("Disambiguation timed out after %1 ms").arg(m_disambiguationTimeout));
+                        enqueueRequest(isr);
+                    }
+                });
                 emit disambiguationRequest(isr->requestId(), convertToQml(isr->potentialIntents()),
                                            isr->parameters());
             }
@@ -293,6 +315,12 @@ void IntentServer::processRequestQueue()
             qCDebug(LogIntents) << "Intent handler" << isr->handlingApplicationId() << "is not running";
             m_startingAppQueue.enqueue(isr);
             isr->setState(IntentServerRequest::State::WaitingForApplicationStart);
+            QTimer::singleShot(m_startingAppTimeout, [this, isr]() {
+                if (m_startingAppQueue.removeOne(isr)) {
+                    isr->setRequestFailed(qSL("Starting handler application timed out after %1 ms").arg(m_startingAppTimeout));
+                    enqueueRequest(isr);
+                }
+            });
             m_systemInterface->startApplication(isr->handlingApplicationId());
         } else {
             qCDebug(LogIntents) << "Intent handler" << isr->handlingApplicationId() << "is already running";
@@ -311,8 +339,14 @@ void IntentServer::processRequestQueue()
             qCDebug(LogIntents) << "Sending intent request to handler application"
                                 << isr->handlingApplicationId();
             m_sentToAppQueue.enqueue(isr);
-            m_systemInterface->requestToApplication(clientIPC, isr);
             isr->setState(IntentServerRequest::State::WaitingForReplyFromApplication);
+            QTimer::singleShot(m_sentToAppTimeout, [this, isr]() {
+                if (m_sentToAppQueue.removeOne(isr)) {
+                    isr->setRequestFailed(qSL("Waiting for reply from handler application timed out after %1 ms").arg(m_sentToAppTimeout));
+                    enqueueRequest(isr);
+                }
+            });
+            m_systemInterface->requestToApplication(clientIPC, isr);
         }
     }
 
@@ -386,15 +420,19 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
 {
     // check if any intent request is waiting for this app to start
     bool foundOne = false;
-    for (int i = 0; i < m_startingAppQueue.size(); ++i) {
-        auto irs = m_startingAppQueue.at(i);
+    for (auto it = m_startingAppQueue.begin(); it != m_startingAppQueue.end(); ) {
+        auto irs = *it;
         if (irs->handlingApplicationId() == applicationId) {
             qCDebug(LogIntents) << "Intent request" << irs->intentId()
                                 << "can now be forwarded to application" << applicationId;
 
             irs->setState(IntentServerRequest::State::StartedApplication);
-            m_requestQueue << m_startingAppQueue.takeAt(i);
+            m_requestQueue << irs;
             foundOne = true;
+
+            it = m_startingAppQueue.erase(it);
+        } else {
+            ++it;
         }
     }
     if (foundOne)

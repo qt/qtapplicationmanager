@@ -70,6 +70,10 @@ public:
     static IntentServer *createInstance(IntentServerSystemInterface *systemInterface);
     static IntentServer *instance();
 
+    void setDisambiguationTimeout(int timeout);
+    void setStartApplicationTimeout(int timeout);
+    void setReplyFromApplicationTimeout(int timeout);
+
     bool addApplication(const QString &applicationId);
     void removeApplication(const QString &applicationId);
 
@@ -140,6 +144,10 @@ private:
     QQueue<IntentServerRequest *> m_disambiguationQueue;
     QQueue<IntentServerRequest *> m_startingAppQueue;
     QQueue<IntentServerRequest *> m_sentToAppQueue;
+
+    int m_disambiguationTimeout = 10000;
+    int m_startingAppTimeout = 3000;
+    int m_sentToAppTimeout = 5000;
 
     QVector<Intent> m_intents;
 

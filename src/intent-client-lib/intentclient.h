@@ -66,6 +66,9 @@ public:
     static IntentClient *createInstance(IntentClientSystemInterface *systemInterface);
     static IntentClient *instance();
 
+    void setReplyFromSystemTimeout(int timeout);
+    void setReplyFromApplicationTimeout(int timeout);
+
     IntentClientRequest *requestToSystem(const QString &requestingApplicationId, const QString &intentId,
                                          const QString &applicationId, const QVariantMap &parameters);
     void replyFromApplication(IntentClientRequest *icr, const QVariantMap &result);
@@ -95,6 +98,9 @@ private:
 
     QList<IntentClientRequest *> m_waiting;
     QMap<QString, IntentHandler *> m_handlers;
+
+    int m_replyFromSystemTimeout = 20000;
+    int m_replyFromApplicationTimeout = 4000;
 
     IntentClientSystemInterface *m_systemInterface;
     friend class IntentClientSystemInterface;

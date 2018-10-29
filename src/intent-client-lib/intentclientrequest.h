@@ -84,7 +84,7 @@ public:
     Q_INVOKABLE void sendReply(const QVariantMap &result);
     Q_INVOKABLE void sendErrorReply(const QString &errorMessage);
 
-    void startTimeout(int timeout = 5000);
+    void startTimeout(int timeout);
 
 signals:
     void requestIdChanged();

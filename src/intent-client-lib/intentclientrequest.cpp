@@ -141,6 +141,9 @@ void IntentClientRequest::sendErrorReply(const QString &errorMessage)
 
 void IntentClientRequest::startTimeout(int timeout)
 {
+    if (timeout <= 0)
+        return;
+
     QTimer::singleShot(timeout, this, [this, timeout]() {
         if (direction() == Direction::ToApplication)
             sendErrorReply(qSL("Intent request to application timed out after %1 ms").arg(timeout));

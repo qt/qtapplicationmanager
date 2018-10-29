@@ -101,8 +101,8 @@ public:
     void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false) override;
     QString currentApplicationId() override;
 
-    void requestToSystem(QPointer<QtAM::IntentClientRequest> icr) override;
-    void replyFromApplication(QPointer<QtAM::IntentClientRequest> icr) override;
+    void requestToSystem(QPointer<IntentClientRequest> icr) override;
+    void replyFromApplication(QPointer<IntentClientRequest> icr) override;
 
 private:
     IntentServerSystemInterface *m_issi;

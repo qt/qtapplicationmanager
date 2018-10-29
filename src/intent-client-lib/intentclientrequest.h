@@ -124,4 +124,4 @@ private:
 
 QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(QtAM::IntentClientRequest *)
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *)

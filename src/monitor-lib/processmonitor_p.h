@@ -76,7 +76,6 @@
 QT_BEGIN_NAMESPACE_AM
 
 class Window;
-class tst_ProcessMonitor;
 
 class ReadingTask : public QObject
 {

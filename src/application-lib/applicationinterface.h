@@ -69,7 +69,6 @@ public:
 
 #ifdef Q_QDOC
     Q_INVOKABLE Notification *createNotification();
-    Q_INVOKABLE IntentRequest *createIntentRequest();
     Q_INVOKABLE virtual void acknowledgeQuit() const;
 #endif
     Q_SCRIPTABLE virtual void finishedInitialization() = 0;

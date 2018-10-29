@@ -176,7 +176,7 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
     auto it = std::find_if(m_waiting.begin(), m_waiting.end(),
                            [requestId](IntentClientRequest *ir) -> bool {
             return (ir->requestId() == requestId);
-});
+    });
 
     if (it == m_waiting.cend()) {
         qCWarning(LogIntents) << "IntentClient received an unexpected intent reply for request"

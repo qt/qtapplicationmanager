@@ -38,7 +38,7 @@ public:
     using ReadingTask::readMemory;
 };
 
-class QtAM::tst_ProcessMonitor : public QObject
+class tst_ProcessMonitor : public QObject
 {
     Q_OBJECT
 

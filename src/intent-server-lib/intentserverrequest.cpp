@@ -39,7 +39,6 @@
 **
 ****************************************************************************/
 
-#include <QDebug>
 #include "intentserverrequest.h"
 
 QT_BEGIN_NAMESPACE_AM

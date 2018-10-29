@@ -54,7 +54,7 @@ class Intent
     Q_PROPERTY(bool valid READ (operator bool))
     Q_PROPERTY(QString intentId READ intentId)
     Q_PROPERTY(QString applicationId READ applicationId)
-    Q_PROPERTY(QtAM::Intent::Visibility visibility READ visibility)
+    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Intent)::Visibility visibility READ visibility)
     Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities)
     Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch)
 

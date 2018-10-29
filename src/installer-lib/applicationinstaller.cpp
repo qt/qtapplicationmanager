@@ -941,8 +941,10 @@ bool ApplicationInstaller::validateDnsName(const QString &name, int minimalPartC
     try {
         // check if we have enough parts: e.g. "tld.company.app" would have 3 parts
         QStringList parts = name.split('.');
-        if (parts.size() < minimalPartCount)
-            throw Exception(Error::Parse, "the minimum amount of parts (subdomains) is 3 (found %1)").arg(parts.size());
+        if (parts.size() < minimalPartCount) {
+            throw Exception(Error::Parse, "the minimum amount of parts (subdomains) is %1 (found %2)")
+                .arg(minimalPartCount).arg(parts.size());
+        }
 
         // standard RFC compliance tests (RFC 1035/1123)
 

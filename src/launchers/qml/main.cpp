@@ -218,10 +218,10 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
     CrashHandler::setQmlEngine(&m_engine);
 
 #if !defined(AM_HEADLESS)
-    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
+    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 1, 0, "ApplicationManagerWindow");
 #endif
-    qmlRegisterType<QmlNotification>("QtApplicationManager", 1, 0, "Notification");
-    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
+    qmlRegisterType<QmlNotification>("QtApplicationManager.Application", 1, 0, "Notification");
+    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager.Application", 1, 0, "ApplicationInterfaceExtension");
 
     m_configuration = a->runtimeConfiguration();
 

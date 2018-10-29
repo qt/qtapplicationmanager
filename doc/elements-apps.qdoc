@@ -28,11 +28,10 @@
 /*!
 
 \page qml-apps.html
-\title Applications QML Types
-\brief A listing of standard QML types used in applications.
+\title QtApplicationManager.Application QML module
+\brief Qt Application Manager module to be used in applications
 
-These are the functionally grouped lists of QML types as part of \c
-QtApplicationManager.
+The QtApplicationManager.Application QML module contains the components and types to be used in an application.
 
 Singleton QML types need not be declared, they are referenced by just their type name.
 

@@ -607,14 +607,14 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     if (!quickControlsStyle.isEmpty())
         qputenv("QT_QUICK_CONTROLS_STYLE", quickControlsStyle.toLocal8Bit());
 
-    qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 1, 0, "Notification");
-    qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
+    qmlRegisterType<QmlInProcessNotification>("QtApplicationManager.Application", 1, 0, "Notification");
+    qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager.Application", 1, 0, "ApplicationInterfaceExtension");
 
 #if !defined(AM_HEADLESS)
-    qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
+    qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager.Application", 1, 0, "ApplicationManagerWindow");
 #endif
-    qmlRegisterType<ProcessMonitor>("QtApplicationManager", 1, 0, "ProcessMonitor");
-    qmlRegisterType<SystemMonitor>("QtApplicationManager", 1, 0, "SystemMonitor");
+    qmlRegisterType<ProcessMonitor>("QtApplicationManager.SystemUI", 1, 0, "ProcessMonitor");
+    qmlRegisterType<SystemMonitor>("QtApplicationManager.SystemUI", 1, 0, "SystemMonitor");
 
     StartupTimer::instance()->checkpoint("after QML registrations");
 

@@ -53,7 +53,7 @@ class ApplicationManagerWindowPrivate;
 class ApplicationManagerWindow : public QQuickWindowQmlImpl
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationManagerWindow 1.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/ApplicationManagerWindow 1.0")
 
 public:
     explicit ApplicationManagerWindow(QWindow *parent = nullptr);

@@ -63,7 +63,7 @@
 
 /*!
     \qmltype SystemMonitor
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui
     \brief The system monitoring model, giving access to a range of measurements, e.g. CPU load,
     frame rate, etc.
@@ -125,11 +125,11 @@
     \note The model will be updated each \l reportingInterval milliseconds. The roles will only
           be populated, if the corresponding reporting parts (memory, CPU, etc.) have been enabled.
 
-    After importing \c QtApplicationManager you could use the SystemMonitor singleton as follows:
+    After importing \c QtApplicationManager.SystemUI you could use the SystemMonitor singleton as follows:
 
     \qml
     import QtQuick 2.4
-    import QtApplicationManager 1.0
+    import QtApplicationManager.SystemUI 1.0
 
     ListView {
         width: 200; height: 200

@@ -59,7 +59,7 @@
 
 /*!
     \qmltype ApplicationInstaller
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-singletons
     \brief The package installation/removal/update part of the application-manager.
 
@@ -246,7 +246,7 @@ ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<Install
         return nullptr;
     }
 
-    qmlRegisterSingletonType<ApplicationInstaller>("QtApplicationManager", 1, 0, "ApplicationInstaller",
+    qmlRegisterSingletonType<ApplicationInstaller>("QtApplicationManager.SystemUI", 1, 0, "ApplicationInstaller",
                                                    &ApplicationInstaller::instanceForQml);
 
     return s_instance = new ApplicationInstaller(installationLocations, manifestDir.take(), imageMountDir.take(),

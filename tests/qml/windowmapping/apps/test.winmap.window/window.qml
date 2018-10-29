@@ -41,7 +41,7 @@
 
 import QtQuick 2.4
 import QtQuick.Window 2.0
-import QtApplicationManager 1.0
+import QtApplicationManager.Application 1.0
 
 Window {
     id: root

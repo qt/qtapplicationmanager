@@ -50,7 +50,7 @@
 
 /*!
     \qmltype Runtime
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
     \brief The handle for a runtime that is executing an \l Application.
 

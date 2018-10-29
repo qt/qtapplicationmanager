@@ -53,7 +53,7 @@
 
 /*!
     \qmltype ApplicationObject
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
     \brief The handle for an application known to the ApplicationManager.
 

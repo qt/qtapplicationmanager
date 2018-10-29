@@ -41,7 +41,7 @@
 
 /*!
     \qmltype ApplicationInterface
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.Application
     \ingroup app-singletons
     \brief The main interface between apps and the application-manager.
 

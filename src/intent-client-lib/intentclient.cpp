@@ -78,7 +78,7 @@ IntentClient *IntentClient::createInstance(IntentClientSystemInterface *systemIn
 
     qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 1, 0, "IntentRequest",
                                                     qSL("Cannot create objects of type IntentRequest"));
-    qmlRegisterType<IntentHandler>("QtApplicationManager", 1, 0, "IntentHandler");
+    qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 1, 0, "IntentHandler");
 
     return s_instance = ic.take();
 }

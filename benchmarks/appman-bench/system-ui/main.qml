@@ -52,8 +52,7 @@
 
 import QtQuick 2.8
 import QtQuick.Window 2.2
-import QtApplicationManager 1.0
-import QtApplicationManager 1.0 as AppMan
+import QtApplicationManager.SystemUI 1.0
 
 Window {
     id: root

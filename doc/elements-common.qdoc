@@ -27,21 +27,15 @@
 
 /*!
 
-    \qmlmodule QtApplicationManager.SystemUI 1.0
-    \title Qt Application Manager System-UI QML types
-    \ingroup qmlmodules
-*/
+\page qml-common.html
+\title QtApplicationManager QML module
+\brief Qt Application Manager module common to both System-UI and applications
 
-/*!
+The QtApplicationManager QML module contains the components and types available to both System-UI and applications.
 
-    \qmlmodule QtApplicationManager.Application 1.0
-    \title Qt Application Manager Application QML types
-    \ingroup qmlmodules
-*/
+Singleton QML types need not be declared, they are referenced by just their type name.
 
-/*!
+\section1 QML Singletons
+\annotatedlist common-singletons
 
-    \qmlmodule QtApplicationManager 1.0
-    \title Qt Application Manager QML types common to System-UI and applications
-    \ingroup qmlmodules
 */

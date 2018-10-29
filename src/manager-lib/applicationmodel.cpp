@@ -54,7 +54,7 @@
     \qmltype ApplicationModel
     \inherits QSortFilterProxyModel
     \ingroup system-ui
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.SystemUI
     \brief A proxy model for the ApplicationManager singleton.
 
     The ApplicationModel type provides a customizable model of applications. It can be used to
@@ -72,7 +72,7 @@
 
     \qml
     import QtQuick 2.6
-    import QtApplicationManager 1.0
+    import QtApplicationManager.SystemUI 1.0
 
     ListView {
         model: ApplicationModel {

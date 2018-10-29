@@ -41,9 +41,7 @@
 
 import QtQuick 2.3
 import QtTest 1.0
-import QtApplicationManager 1.0
-import QtApplicationManager 1.0 as AM
-
+import QtApplicationManager.SystemUI 1.0
 
 TestCase {
     id: testCase
@@ -60,7 +58,7 @@ TestCase {
     }
 
     function initTestCase() {
-        compare(app.lastExitStatus, AM.ApplicationObject.NormalExit)
+        compare(app.lastExitStatus, ApplicationObject.NormalExit)
     }
 
     function test_crash_data() {
@@ -81,15 +79,15 @@ TestCase {
         ApplicationManager.startApplication(appId);
         runStateChangedSpy.wait(3000);
         runStateChangedSpy.wait(3000);
-        compare(app.runState, AM.ApplicationObject.Running);
+        compare(app.runState, ApplicationObject.Running);
         ApplicationManager.startApplication(appId, data.tag);
         runStateChangedSpy.wait(3000);
-        compare(app.runState, AM.ApplicationObject.NotRunning);
+        compare(app.runState, ApplicationObject.NotRunning);
         if (data.tag === "gracefully") {
-            compare(app.lastExitStatus, AM.ApplicationObject.NormalExit);
+            compare(app.lastExitStatus, ApplicationObject.NormalExit);
             compare(app.lastExitCode, 5);
         } else {
-            compare(app.lastExitStatus, AM.ApplicationObject.CrashExit);
+            compare(app.lastExitStatus, ApplicationObject.CrashExit);
             console.info("================================");
             console.info("=== INTENDED CRASH (TESTING) ===");
             console.info("================================");

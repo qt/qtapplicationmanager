@@ -48,7 +48,7 @@
 
 /*!
     \qmltype ProcessMonitor
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui
     \brief A type for monitoring process resource usage
 
@@ -62,7 +62,7 @@
     Here is an example, how the ProcessMonitor can be used:
 
     \qml
-    import QtApplicationManager 1.0
+    import QtApplicationManager.SystemUI 1.0
 
     ProcessMonitor {
         applicationId: ""

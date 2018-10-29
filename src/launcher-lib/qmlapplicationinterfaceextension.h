@@ -54,7 +54,7 @@ class QmlApplicationInterfaceExtensionPrivate;
 class QmlApplicationInterfaceExtension : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/ApplicationInterfaceExtension 1.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationInterfaceExtension 1.0")
     Q_INTERFACES(QQmlParserStatus)
 
     Q_PROPERTY(QString name READ name WRITE setName)

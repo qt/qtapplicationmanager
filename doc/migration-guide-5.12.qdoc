@@ -37,6 +37,32 @@ solely on the System-UI side, therefore application code remains unchanged.
 There are also cases where there's no API break but instead new, better, APIs for achieving the same
 result in 5.12. This document also covers some of such situations.
 
+\section1 Import statements
+
+Most of the content of the QtApplicationManager QML module was moved into two new modules:
+\l{QtApplicationManager.SystemUI QML module}{QtApplicationManager.SystemUI}
+and \l{QtApplicationManager.Application QML module}{QtApplicationManager.Application}. The following
+table briefly explains each of them:
+
+\table
+\header
+    \li QML Module Name
+    \li Content
+\row
+    \li \l{QtApplicationManager QML module}{QtApplicationManager}
+    \li Components and types in common to applications and System-UI. Both
+        System-UI and application code can import this module.
+\row
+    \li \l{QtApplicationManager.SystemUI QML module}{QtApplicationManager.SystemUI}
+    \li Components and types that a System-UI can use. Applications should
+        not import this module.
+\row
+    \li \l{QtApplicationManager.Application QML module}{QtApplicationManager.Application}
+    \li Components and types that an application can use. System-UI code should
+        not import this module.
+\endtable
+
+
 \section1 ApplicationManager and applications
 
 \section2 ApplicationObject
@@ -53,7 +79,7 @@ if (application.state === AppMan.Application.Installed) {
     ...
 }
 \newcode
-import QtApplicationManager 1.0
+import QtApplicationManager.Application 1.0
 ...
 if (application.state === ApplicationObject.Installed) {
     ...

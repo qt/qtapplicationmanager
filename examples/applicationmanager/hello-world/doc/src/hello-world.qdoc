@@ -100,7 +100,7 @@ For information on these and other command line options you can run \tt{appman -
 \section1 System-UI implementation
 
 Our Hello World System-UI code starts like any simple QML application, with some imports and a plain
-Item at the root. The only difference is that it also imports the \c QtApplicationManager module,
+Item at the root. The only difference is that it also imports the \c QtApplicationManager.SystemUI module,
 besides \c QtQuick.
 
 \quotefromfile applicationmanager/hello-world/system-ui.qml
@@ -139,7 +139,7 @@ Our Hello World applications just display a "Hello World!" text against a colore
 \printuntil /^\}/
 
 The only difference from a plain QML application is that the root element is an ApplicationManagerWindow,
-provided by the \c QtApplicationManager module.
+provided by the \c QtApplicationManager.Application module.
 
 \section2 Application metadata
 

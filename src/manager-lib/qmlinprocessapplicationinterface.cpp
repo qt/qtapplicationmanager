@@ -206,7 +206,7 @@ uint QmlInProcessNotification::libnotifyShow()
 
 /*!
     \qmltype ApplicationInterfaceExtension
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.Application
     \ingroup system-ui-and-app
     \ingroup app
     \brief Client side access to IPC interface extensions in the System-UI.

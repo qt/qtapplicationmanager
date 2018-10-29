@@ -43,7 +43,7 @@
 
 /*!
     \qmltype WindowObject
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
     \brief A client window surface
 

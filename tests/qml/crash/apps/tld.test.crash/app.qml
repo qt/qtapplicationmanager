@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 import QtQuick 2.3
-import QtApplicationManager 1.0
+import QtApplicationManager.Application 1.0
 import Terminator 2.0
 
 ApplicationManagerWindow {

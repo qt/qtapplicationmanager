@@ -41,7 +41,7 @@
 
 import QtQuick 2.3
 import QtTest 1.0
-import QtApplicationManager 1.0
+import QtApplicationManager.SystemUI 1.0
 
 // Tests are meaningless in single-process mode, but still work
 

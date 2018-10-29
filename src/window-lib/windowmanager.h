@@ -69,7 +69,7 @@ class WindowManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.WindowManager")
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/WindowManager 1.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/WindowManager 1.0")
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT)

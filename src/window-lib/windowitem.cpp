@@ -60,7 +60,7 @@
 
 /*!
     \qmltype WindowItem
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui
     \brief An Item that renders a given WindowObject
 

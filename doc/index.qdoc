@@ -63,8 +63,9 @@ high-level overview of the package.
 \section1 Reference
 \list
     \li \l{Manifest Definition}{Applications Manifest Definition (info.yaml)}
-    \li \l{System-UI QML Types}
-    \li \l{Applications QML Types}
+    \li \l{QtApplicationManager QML module}
+    \li \l{QtApplicationManager.SystemUI QML module}
+    \li \l{QtApplicationManager.Application QML module}
 \endlist
 
 \section1 Examples

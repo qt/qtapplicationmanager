@@ -51,7 +51,7 @@
 ****************************************************************************/
 
 import QtQuick 2.6
-import QtApplicationManager 1.0
+import QtApplicationManager.Application 1.0
 
 ApplicationWindow {
     title: "Primary Window"

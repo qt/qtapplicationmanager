@@ -28,11 +28,10 @@
 /*!
 
 \page qml-sysui.html
-\title System-UI QML Types
-\brief A listing of standard QML types used in the System-UI.
+\title QtApplicationManager.SystemUI QML module
+\brief Qt Application Manager module to be used in a System-UI
 
-These are the functionally grouped lists of QML types as part of \c
-QtApplicationManager.
+The QtApplicationManager.SystemUI QML module contains the components and types to be used in a System-UI.
 
 Singleton QML types need not be declared, they are referenced by just their type name.
 

@@ -47,7 +47,7 @@
 
 /*!
     \qmltype Container
-    \inqmlmodule QtApplicationManager
+    \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
     \brief The handle for a container, that an application's \l Runtime is using.
 

@@ -43,6 +43,7 @@
 #include "intentclient.h"
 
 #include <QQmlEngine>
+#include <QQmlInfo>
 #include <QThread>
 #include <QPointer>
 #include <QTimer>
@@ -107,8 +108,10 @@ void IntentClientRequest::sendReply(const QVariantMap &result)
     //TODO: check that result only contains basic datatypes. convertFromJSVariant() does most of
     //      this already, but doesn't bail out on unconvertible types (yet)
 
-    if (m_direction != Direction::ToApplication)
+    if (m_direction == Direction::ToSystem) {
+        qmlWarning(this) << "Calling IntentRequest::sendReply on requests originating from this application is a no-op.";
         return;
+    }
     IntentClient *ic = IntentClient::instance();
 
     if (QThread::currentThread() != ic->thread()) {
@@ -124,8 +127,10 @@ void IntentClientRequest::sendReply(const QVariantMap &result)
 
 void IntentClientRequest::sendErrorReply(const QString &errorMessage)
 {
-    if (m_direction != Direction::ToApplication)
+    if (m_direction == Direction::ToSystem) {
+        qmlWarning(this) << "Calling IntentRequest::sendErrorReply on requests originating from this application is a no-op.";
         return;
+    }
     IntentClient *ic = IntentClient::instance();
 
     if (QThread::currentThread() != ic->thread()) {
@@ -145,10 +150,12 @@ void IntentClientRequest::startTimeout(int timeout)
         return;
 
     QTimer::singleShot(timeout, this, [this, timeout]() {
-        if (direction() == Direction::ToApplication)
-            sendErrorReply(qSL("Intent request to application timed out after %1 ms").arg(timeout));
-        else
-            setErrorMessage(qSL("No reply received from Intent server after %1 ms").arg(timeout));
+        if (!m_finished) {
+            if (direction() == Direction::ToApplication)
+                sendErrorReply(qSL("Intent request to application timed out after %1 ms").arg(timeout));
+            else
+                setErrorMessage(qSL("No reply received from Intent server after %1 ms").arg(timeout));
+        }
     });
 }
 
@@ -157,8 +164,14 @@ void IntentClientRequest::connectNotify(const QMetaMethod &signal)
     // take care of connects happening after the request is already finished:
     // re-emit the finished signal in this case (this shouldn't happen in practice, but better be
     // safe than sorry)
-    if (m_finished && (signal == QMetaMethod::fromSignal(&IntentClientRequest::replyReceived)))
-        QMetaObject::invokeMethod(this, &IntentClientRequest::doFinish, Qt::QueuedConnection);
+    if (signal == QMetaMethod::fromSignal(&IntentClientRequest::replyReceived)) {
+        if (direction() == Direction::ToApplication) {
+            qmlWarning(this) << "Connecting to IntentRequest::replyReceived on requests received "
+                                "by IntentHandlers is a no-op.";
+        } else if (m_finished) {
+            QMetaObject::invokeMethod(this, &IntentClientRequest::doFinish, Qt::QueuedConnection);
+        }
+    }
 }
 
 IntentClientRequest::IntentClientRequest(Direction direction, const QString &requestingApplicationId,

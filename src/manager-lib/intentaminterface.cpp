@@ -325,7 +325,7 @@ void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest>
 
     QMetaObject::invokeMethod(m_ic, [icr, requestId, this]() {
         emit requestToSystemFinished(icr.data(), requestId, requestId.isNull(),
-                                     requestId.isNull() ? qSL("Failed") : QString());
+                                     requestId.isNull() ? qL1S("No matching intent handler registered.") : QString());
     }, Qt::QueuedConnection);
 }
 
@@ -519,7 +519,12 @@ QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,
     auto requestingApplicationId = application() ? application()->id() : QString();
     auto irs = m_interface->requestToSystem(requestingApplicationId, intentId, applicationId,
                                             convertFromDBusVariant(parameters).toMap());
-    return irs ? irs->requestId().toString() : QString();
+    if (!irs) {
+        sendErrorReply(QDBusError::NotSupported, qL1S("No matching intent handler registered."));
+        return QString();
+    } else {
+         return irs->requestId().toString();
+    }
 }
 
 void IntentServerDBusIpcConnection::replyFromApplication(const QString &requestId, bool error,

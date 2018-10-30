@@ -65,7 +65,7 @@ We will start from the bottom, because this is the essential part.
 \skipto ProcessMonitor
 \printuntil ApplicationManager.application(0).start()
 \printline }
-The ProcessMonitor is an instantiatable type that will monitor the process that is associated with
+The ProcessMonitor will monitor the process that is associated with
 its \l {ProcessMonitor::applicationId}{applicationId} property. An empty applicationId string means
 that the System-UI process is monitored. By clicking the "Switch Process" button, the monitored
 process can be changed to the \c tld.monitor.app application. Measurements will be performed each
@@ -81,9 +81,8 @@ and frame rate changed signal handlers will update the current values of the cor
 The Connections type is used to implement signal handlers for the property changes of the
 SystemMonitor. The current values of the corresponding views are updated, as well.
 
-The SystemMonitor is a singleton type. It is set-up in the Component.onCompleted handler. Like
-above, measurements will be performed each second (1000 ms) and 12 reading points will be kept in
-the model (the SystemMonitor is a model, as well).
+For the SystemMonitor, like above, measurements will be performed each second (1000 ms) and
+12 reading points will be kept in the model (the SystemMonitor is a model, as well).
 
 The very last line will start the only application that is provided by this example. Note that, if
 the application-manager is running in single-process mode, the application will run within the

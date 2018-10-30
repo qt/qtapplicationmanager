@@ -47,7 +47,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class FakeApplicationManagerWindow;
+class QmlInProcessApplicationManagerWindow;
 class QmlInProcessApplicationInterface;
 class InProcessSurfaceItem;
 
@@ -100,7 +100,7 @@ private:
     bool m_stopIfNoVisibleSurfaces = false;
 
 #if !defined(AM_HEADLESS)
-    // used by FakeApplicationManagerWindow to register surfaceItems
+    // used by QmlInProcessApplicationManagerWindow to register surfaceItems
     void addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface);
 
     bool hasVisibleSurfaces() const;
@@ -108,7 +108,7 @@ private:
     QObject *m_rootObject = nullptr;
     QList< QSharedPointer<InProcessSurfaceItem> > m_surfaces;
 
-    friend class FakeApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
+    friend class QmlInProcessApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
 #endif
 };
 

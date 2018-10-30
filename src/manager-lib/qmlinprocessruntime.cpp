@@ -49,7 +49,7 @@
 #if !defined(AM_HEADLESS)
 #  include <QQuickView>
 
-#  include "fakeapplicationmanagerwindow.h"
+#  include "qmlinprocessapplicationmanagerwindow.h"
 #  include "inprocesssurfaceitem.h"
 #endif
 
@@ -149,7 +149,7 @@ bool QmlInProcessRuntime::start()
             finish(3, Am::NormalExit);
         } else {
 #if !defined(AM_HEADLESS)
-            if (!qobject_cast<FakeApplicationManagerWindow*>(obj)) {
+            if (!qobject_cast<QmlInProcessApplicationManagerWindow*>(obj)) {
                 QQuickItem *item = qobject_cast<QQuickItem*>(obj);
                 if (item) {
                     auto surfaceItem = new InProcessSurfaceItem;

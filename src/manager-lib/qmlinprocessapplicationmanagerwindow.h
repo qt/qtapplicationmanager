@@ -55,7 +55,7 @@ QT_BEGIN_NAMESPACE_AM
 class QmlInProcessRuntime;
 class InProcessSurfaceItem;
 
-class FakeApplicationManagerWindow : public QObject, public QQmlParserStatus
+class QmlInProcessApplicationManagerWindow : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
@@ -85,8 +85,8 @@ class FakeApplicationManagerWindow : public QObject, public QQmlParserStatus
     Q_CLASSINFO("DefaultProperty", "data")
 
 public:
-    explicit FakeApplicationManagerWindow(QObject *parent = nullptr);
-    ~FakeApplicationManagerWindow() override;
+    explicit QmlInProcessApplicationManagerWindow(QObject *parent = nullptr);
+    ~QmlInProcessApplicationManagerWindow() override;
 
     QColor color() const;
     void setColor(const QColor &c);
@@ -182,12 +182,12 @@ private slots:
 private:
     void determineRuntime();
     void findParentWindow(QObject *object = nullptr);
-    void setParentWindow(FakeApplicationManagerWindow *fakeAppWindow);
+    void setParentWindow(QmlInProcessApplicationManagerWindow *appWindow);
 
     QSharedPointer<InProcessSurfaceItem> m_surfaceItem;
     QmlInProcessRuntime *m_runtime = nullptr;
     QVector<QQmlComponentAttached *> m_attachedCompleteHandlers;
-    FakeApplicationManagerWindow *m_parentWindow = nullptr;
+    QmlInProcessApplicationManagerWindow *m_parentWindow = nullptr;
 
     // QWindow properties
     QString m_title;

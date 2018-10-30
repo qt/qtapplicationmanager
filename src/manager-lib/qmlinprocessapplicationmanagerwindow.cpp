@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "logging.h"
-#include "fakeapplicationmanagerwindow.h"
+#include "qmlinprocessapplicationmanagerwindow.h"
 #include "inprocesssurfaceitem.h"
 #include "qmlinprocessruntime.h"
 #include <private/qqmlcomponentattached_p.h>
@@ -49,36 +49,36 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-FakeApplicationManagerWindow::FakeApplicationManagerWindow(QObject *parent)
+QmlInProcessApplicationManagerWindow::QmlInProcessApplicationManagerWindow(QObject *parent)
     : QObject(parent)
     , m_surfaceItem(new InProcessSurfaceItem)
 {
-    m_surfaceItem->setFakeApplicationManagerWindow(this);
+    m_surfaceItem->setInProcessApplicationManagerWindow(this);
 
     connect(m_surfaceItem.data(), &QQuickItem::widthChanged,
-            this, &FakeApplicationManagerWindow::widthChanged);
+            this, &QmlInProcessApplicationManagerWindow::widthChanged);
 
     connect(m_surfaceItem.data(), &QQuickItem::heightChanged,
-            this, &FakeApplicationManagerWindow::heightChanged);
+            this, &QmlInProcessApplicationManagerWindow::heightChanged);
 
     connect(m_surfaceItem.data(), &InProcessSurfaceItem::windowPropertyChanged,
-            this, &FakeApplicationManagerWindow::windowPropertyChanged);
+            this, &QmlInProcessApplicationManagerWindow::windowPropertyChanged);
 
     connect(m_surfaceItem.data(), &InProcessSurfaceItem::closeRequested,
-            this, &FakeApplicationManagerWindow::close);
+            this, &QmlInProcessApplicationManagerWindow::close);
 }
 
-FakeApplicationManagerWindow::~FakeApplicationManagerWindow()
+QmlInProcessApplicationManagerWindow::~QmlInProcessApplicationManagerWindow()
 {
     setVisible(false);
 }
 
-bool FakeApplicationManagerWindow::isVisible() const
+bool QmlInProcessApplicationManagerWindow::isVisible() const
 {
     return m_surfaceItem->visibleClientSide();
 }
 
-void FakeApplicationManagerWindow::setVisible(bool visible)
+void QmlInProcessApplicationManagerWindow::setVisible(bool visible)
 {
     if (visible != m_surfaceItem->visibleClientSide()) {
         m_surfaceItem->setVisibleClientSide(visible);
@@ -87,12 +87,12 @@ void FakeApplicationManagerWindow::setVisible(bool visible)
     }
 }
 
-QColor FakeApplicationManagerWindow::color() const
+QColor QmlInProcessApplicationManagerWindow::color() const
 {
     return m_surfaceItem->color();
 }
 
-void FakeApplicationManagerWindow::setColor(const QColor &c)
+void QmlInProcessApplicationManagerWindow::setColor(const QColor &c)
 {
     if (color() != c) {
         m_surfaceItem->setColor(c);
@@ -100,7 +100,7 @@ void FakeApplicationManagerWindow::setColor(const QColor &c)
     }
 }
 
-void FakeApplicationManagerWindow::close()
+void QmlInProcessApplicationManagerWindow::close()
 {
     setVisible(false);
     if (m_runtime) {
@@ -109,77 +109,77 @@ void FakeApplicationManagerWindow::close()
     }
 }
 
-void FakeApplicationManagerWindow::showFullScreen()
+void QmlInProcessApplicationManagerWindow::showFullScreen()
 {
     setVisible(true);
 }
 
-void FakeApplicationManagerWindow::showMaximized()
+void QmlInProcessApplicationManagerWindow::showMaximized()
 {
     setVisible(true);
 }
 
-void FakeApplicationManagerWindow::showNormal()
+void QmlInProcessApplicationManagerWindow::showNormal()
 {
     setVisible(true);
 }
 
-bool FakeApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
+bool QmlInProcessApplicationManagerWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
     return m_surfaceItem->setWindowProperty(name, value);
 }
 
-QVariant FakeApplicationManagerWindow::windowProperty(const QString &name) const
+QVariant QmlInProcessApplicationManagerWindow::windowProperty(const QString &name) const
 {
     return m_surfaceItem->windowProperty(name);
 }
 
-QVariantMap FakeApplicationManagerWindow::windowProperties() const
+QVariantMap QmlInProcessApplicationManagerWindow::windowProperties() const
 {
     return m_surfaceItem->windowPropertiesAsVariantMap();
 }
 
-QQmlListProperty<QObject> FakeApplicationManagerWindow::data()
+QQmlListProperty<QObject> QmlInProcessApplicationManagerWindow::data()
 {
     return QQmlListProperty<QObject>(this, nullptr,
-            FakeApplicationManagerWindow::data_append,
-            FakeApplicationManagerWindow::data_count,
-            FakeApplicationManagerWindow::data_at,
-            FakeApplicationManagerWindow::data_clear);
+            QmlInProcessApplicationManagerWindow::data_append,
+            QmlInProcessApplicationManagerWindow::data_count,
+            QmlInProcessApplicationManagerWindow::data_at,
+            QmlInProcessApplicationManagerWindow::data_clear);
 }
 
-void FakeApplicationManagerWindow::data_append(QQmlListProperty<QObject> *property, QObject *value)
+void QmlInProcessApplicationManagerWindow::data_append(QQmlListProperty<QObject> *property, QObject *value)
 {
-    auto *that = static_cast<FakeApplicationManagerWindow*>(property->object);
+    auto *that = static_cast<QmlInProcessApplicationManagerWindow*>(property->object);
 
     QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
     itemProperty.append(&itemProperty, value);
 }
 
-int FakeApplicationManagerWindow::data_count(QQmlListProperty<QObject> *property)
+int QmlInProcessApplicationManagerWindow::data_count(QQmlListProperty<QObject> *property)
 {
-    auto *that = static_cast<FakeApplicationManagerWindow*>(property->object);
+    auto *that = static_cast<QmlInProcessApplicationManagerWindow*>(property->object);
     if (!QQuickItemPrivate::get(that->contentItem())->data().count)
         return 0;
     QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
     return itemProperty.count(&itemProperty);
 }
 
-QObject *FakeApplicationManagerWindow::data_at(QQmlListProperty<QObject> *property, int index)
+QObject *QmlInProcessApplicationManagerWindow::data_at(QQmlListProperty<QObject> *property, int index)
 {
-    auto *that = static_cast<FakeApplicationManagerWindow*>(property->object);
+    auto *that = static_cast<QmlInProcessApplicationManagerWindow*>(property->object);
     QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
     return itemProperty.at(&itemProperty, index);
 }
 
-void FakeApplicationManagerWindow::data_clear(QQmlListProperty<QObject> *property)
+void QmlInProcessApplicationManagerWindow::data_clear(QQmlListProperty<QObject> *property)
 {
-    auto *that = static_cast<FakeApplicationManagerWindow*>(property->object);
+    auto *that = static_cast<QmlInProcessApplicationManagerWindow*>(property->object);
     QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
     itemProperty.clear(&itemProperty);
 }
 
-void FakeApplicationManagerWindow::determineRuntime()
+void QmlInProcessApplicationManagerWindow::determineRuntime()
 {
     if (!m_runtime) {
         QQmlContext *ctx = QQmlEngine::contextForObject(this);
@@ -191,9 +191,9 @@ void FakeApplicationManagerWindow::determineRuntime()
     }
 }
 
-void FakeApplicationManagerWindow::componentComplete()
+void QmlInProcessApplicationManagerWindow::componentComplete()
 {
-    qCDebug(LogSystem) << "FakeApplicationManagerWindow componentComplete() this:" << this;
+    qCDebug(LogSystem) << "QmlInProcessApplicationManagerWindow componentComplete() this:" << this;
 
     determineRuntime();
 
@@ -211,8 +211,8 @@ void FakeApplicationManagerWindow::componentComplete()
     // after the actual QML handler).
 
     for (auto a = QQmlComponent::qmlAttachedProperties(this); a; a = a->next) {
-        auto famw = qobject_cast<FakeApplicationManagerWindow *>(a->parent());
-        if (!famw || famw != this)
+        auto appWindow = qobject_cast<QmlInProcessApplicationManagerWindow *>(a->parent());
+        if (!appWindow || appWindow != this)
             continue;
 
         m_attachedCompleteHandlers << a;
@@ -232,7 +232,7 @@ void FakeApplicationManagerWindow::componentComplete()
     }
 }
 
-void FakeApplicationManagerWindow::notifyRuntimeAboutSurface()
+void QmlInProcessApplicationManagerWindow::notifyRuntimeAboutSurface()
 {
     if (!m_runtime)
         return;
@@ -241,41 +241,41 @@ void FakeApplicationManagerWindow::notifyRuntimeAboutSurface()
         m_runtime->addSurfaceItem(m_surfaceItem);
 }
 
-QQuickItem *FakeApplicationManagerWindow::contentItem()
+QQuickItem *QmlInProcessApplicationManagerWindow::contentItem()
 {
     return m_surfaceItem.data();
 }
 
-void FakeApplicationManagerWindow::findParentWindow(QObject *object)
+void QmlInProcessApplicationManagerWindow::findParentWindow(QObject *object)
 {
     if (!object)
         return;
 
     auto surfaceItem = qobject_cast<InProcessSurfaceItem*>(object);
     if (surfaceItem) {
-        setParentWindow(static_cast<FakeApplicationManagerWindow*>(surfaceItem->fakeApplicationManagerWindow()));
+        setParentWindow(static_cast<QmlInProcessApplicationManagerWindow*>(surfaceItem->inProcessApplicationManagerWindow()));
     } else {
-        auto fakeAppWindow = qobject_cast<FakeApplicationManagerWindow*>(object);
-        if (fakeAppWindow)
-            setParentWindow(fakeAppWindow);
+        auto inProcessAppWindow = qobject_cast<QmlInProcessApplicationManagerWindow*>(object);
+        if (inProcessAppWindow)
+            setParentWindow(inProcessAppWindow);
         else
             findParentWindow(object->parent());
     }
 }
 
-void FakeApplicationManagerWindow::setParentWindow(FakeApplicationManagerWindow *fakeAppWindow)
+void QmlInProcessApplicationManagerWindow::setParentWindow(QmlInProcessApplicationManagerWindow *inProcessAppWindow)
 {
     if (m_parentWindow)
         disconnect(m_parentWindow, nullptr, this, nullptr);
 
-    m_parentWindow = fakeAppWindow;
+    m_parentWindow = inProcessAppWindow;
 
     if (m_parentWindow)
-        connect(m_parentWindow, &FakeApplicationManagerWindow::visibleChanged,
-                this, &FakeApplicationManagerWindow::notifyRuntimeAboutSurface);
+        connect(m_parentWindow, &QmlInProcessApplicationManagerWindow::visibleChanged,
+                this, &QmlInProcessApplicationManagerWindow::notifyRuntimeAboutSurface);
 }
 
-void FakeApplicationManagerWindow::setTitle(const QString &value)
+void QmlInProcessApplicationManagerWindow::setTitle(const QString &value)
 {
     if (m_title != value) {
         m_title = value;
@@ -283,7 +283,7 @@ void FakeApplicationManagerWindow::setTitle(const QString &value)
     }
 }
 
-void FakeApplicationManagerWindow::setX(int value)
+void QmlInProcessApplicationManagerWindow::setX(int value)
 {
     if (m_x != value) {
         m_x = value;
@@ -291,7 +291,7 @@ void FakeApplicationManagerWindow::setX(int value)
     }
 }
 
-void FakeApplicationManagerWindow::setY(int value)
+void QmlInProcessApplicationManagerWindow::setY(int value)
 {
     if (m_y != value) {
         m_y = value;
@@ -299,27 +299,27 @@ void FakeApplicationManagerWindow::setY(int value)
     }
 }
 
-int FakeApplicationManagerWindow::width() const
+int QmlInProcessApplicationManagerWindow::width() const
 {
     return m_surfaceItem->width();
 }
 
-void FakeApplicationManagerWindow::setWidth(int value)
+void QmlInProcessApplicationManagerWindow::setWidth(int value)
 {
     m_surfaceItem->setWidth(value);
 }
 
-int FakeApplicationManagerWindow::height() const
+int QmlInProcessApplicationManagerWindow::height() const
 {
     return m_surfaceItem->height();
 }
 
-void FakeApplicationManagerWindow::setHeight(int value)
+void QmlInProcessApplicationManagerWindow::setHeight(int value)
 {
     m_surfaceItem->setHeight(value);
 }
 
-void FakeApplicationManagerWindow::setMinimumWidth(int value)
+void QmlInProcessApplicationManagerWindow::setMinimumWidth(int value)
 {
     if (m_minimumWidth != value) {
         m_minimumWidth = value;
@@ -327,7 +327,7 @@ void FakeApplicationManagerWindow::setMinimumWidth(int value)
     }
 }
 
-void FakeApplicationManagerWindow::setMinimumHeight(int value)
+void QmlInProcessApplicationManagerWindow::setMinimumHeight(int value)
 {
     if (m_minimumHeight != value) {
         m_minimumHeight = value;
@@ -335,7 +335,7 @@ void FakeApplicationManagerWindow::setMinimumHeight(int value)
     }
 }
 
-void FakeApplicationManagerWindow::setMaximumWidth(int value)
+void QmlInProcessApplicationManagerWindow::setMaximumWidth(int value)
 {
     if (m_maximumWidth != value) {
         m_maximumWidth = value;
@@ -343,7 +343,7 @@ void FakeApplicationManagerWindow::setMaximumWidth(int value)
     }
 }
 
-void FakeApplicationManagerWindow::setMaximumHeight(int value)
+void QmlInProcessApplicationManagerWindow::setMaximumHeight(int value)
 {
     if (m_maximumHeight != value) {
         m_maximumHeight = value;
@@ -351,7 +351,7 @@ void FakeApplicationManagerWindow::setMaximumHeight(int value)
     }
 }
 
-void FakeApplicationManagerWindow::setOpacity(qreal value)
+void QmlInProcessApplicationManagerWindow::setOpacity(qreal value)
 {
     if (m_opacity != value) {
         m_opacity = value;

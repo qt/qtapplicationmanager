@@ -78,8 +78,8 @@ public:
 
     void close();
 
-    QObject *fakeApplicationManagerWindow() { return m_fakeAppManWindow.data(); }
-    void setFakeApplicationManagerWindow(QObject* win) { m_fakeAppManWindow = win; }
+    QObject *inProcessApplicationManagerWindow() { return m_inProcessAppManWindow.data(); }
+    void setInProcessApplicationManagerWindow(QObject* win) { m_inProcessAppManWindow = win; }
 
 signals:
     void visibleClientSideChanged();
@@ -98,7 +98,7 @@ private:
     QObject m_windowProperties;
     bool m_visibleClientSide = true;
     QColor m_color;
-    QPointer<QObject> m_fakeAppManWindow;
+    QPointer<QObject> m_inProcessAppManWindow;
 };
 
 QT_END_NAMESPACE_AM

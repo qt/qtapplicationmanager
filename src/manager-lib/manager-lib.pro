@@ -60,7 +60,7 @@ linux:HEADERS += \
     sysfsreader.h \
 
 !headless:HEADERS += \
-    fakeapplicationmanagerwindow.h \
+    qmlinprocessapplicationmanagerwindow.h \
     inprocesssurfaceitem.h
 
 qtHaveModule(qml):HEADERS += \
@@ -89,7 +89,7 @@ linux:SOURCES += \
     sysfsreader.cpp \
 
 !headless:SOURCES += \
-    fakeapplicationmanagerwindow.cpp \
+    qmlinprocessapplicationmanagerwindow.cpp \
     inprocesssurfaceitem.cpp
 
 qtHaveModule(qml):SOURCES += \

@@ -120,7 +120,7 @@
 
 #if !defined(AM_HEADLESS)
 #  include "windowmanager.h"
-#  include "fakeapplicationmanagerwindow.h"
+#  include "qmlinprocessapplicationmanagerwindow.h"
 #  if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 #    include "windowmanagerdbuscontextadaptor.h"
 #  endif
@@ -611,7 +611,7 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager", 1, 0, "ApplicationInterfaceExtension");
 
 #if !defined(AM_HEADLESS)
-    qmlRegisterType<FakeApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
+    qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager", 1, 0, "ApplicationManagerWindow");
 #endif
     qmlRegisterType<ProcessMonitor>("QtApplicationManager", 1, 0, "ProcessMonitor");
     qmlRegisterType<SystemMonitor>("QtApplicationManager", 1, 0, "SystemMonitor");

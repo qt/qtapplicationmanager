@@ -35,7 +35,14 @@ The QtApplicationManager QML module contains the components and types available 
 
 Singleton QML types need not be declared, they are referenced by just their type name.
 
+Instantiable QML types are declared with the their name followed by curly braces. These
+declarations may be nested, creating parent-child relationships between the items.
+
 \section1 QML Singletons
 \annotatedlist common-singletons
+
+\section1 Instantiatable QML Types
+
+\annotatedlist common-instantiatable
 
 */

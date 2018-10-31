@@ -44,13 +44,13 @@
 
 /*!
     \qmltype Notification
-    \inqmlmodule QtApplicationManager.Application
-    \ingroup system-ui-and-app
-    \ingroup app
+    \inqmlmodule QtApplicationManager
+    \ingroup common-instantiatable
     \brief An abstraction layer to enable QML applications to issue notifications to the System-UI.
 
     The Notification type is available for QML applications by either creating a Notification item
-    statically or by dynamically calling ApplicationInterface::createNotification.
+    statically or by dynamically calling ApplicationInterface::createNotification. A System-UI can
+    also create Notification instances.
     For all other applications and services, the notification service of the application-manager
     is available via a freedesktop.org compliant \l{https://developer.gnome.org/notification-spec/}
     {org.freedesktop.Notifications} D-Bus interface.

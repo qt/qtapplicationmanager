@@ -45,6 +45,7 @@
 #include <QTimerEvent>
 #include <QElapsedTimer>
 #include <vector>
+#include <QtQml/qqmlinfo.h>
 #if !defined(AM_HEADLESS)
 #  include <QGuiApplication>
 #  include <QQuickView>
@@ -384,80 +385,50 @@ void SystemMonitorPrivate::setupFpsReporting()
 #endif
 }
 
-void SystemMonitorPrivate::setupTimer(int newInterval)
+void SystemMonitorPrivate::setupTimer()
 {
-    bool useNewInterval = (newInterval != -1) && (newInterval != reportingInterval);
-    bool shouldBeOn = reportCpu || reportGpu || reportMem || reportFps || !ioHash.isEmpty()
-        || cpuTail > 0 || memTail > 0 || fpsTail > 0 || !ioTails.isEmpty();
+    bool shouldBeOn = reportCpu || reportGpu || reportMem || reportFps || !ioHash.isEmpty();
 
-    if (useNewInterval)
-        reportingInterval = newInterval;
-
-    if (!shouldBeOn) {
-        if (reportingTimerId) {
-            killTimer(reportingTimerId);
-            reportingTimerId = 0;
-        }
-    } else {
-        if (reportingTimerId) {
-            if (useNewInterval) {
-                killTimer(reportingTimerId);
-                reportingTimerId = 0;
-            }
-        }
-        if (!reportingTimerId && reportingInterval >= 0)
-            reportingTimerId = startTimer(reportingInterval);
+    if (!shouldBeOn && reportingTimerId) {
+        killTimer(reportingTimerId);
+        reportingTimerId = 0;
+    } else if (shouldBeOn && !reportingTimerId) {
+        updateModel(true /* clear */);
+        reportingTimerId = startTimer(reportingInterval);
     }
 }
 
-void SystemMonitorPrivate::timerEvent(QTimerEvent *te)
+void SystemMonitorPrivate::makeNewReport()
 {
     Q_Q(SystemMonitor);
 
-    if (te && te->timerId() == reportingTimerId) {
-        Report r;
-        QVector<int> roles;
+    Report r;
+    QVector<int> changedRoles;
+    {
+        const Report &currentReport = reports.at(reportPos);
 
-        if (reportCpu) {
+        if (reportCpu)
             r.cpuLoad = cpu->readLoadValue();
-            roles.append(CpuLoad);
-        } else if (cpuTail > 0) {
-            --cpuTail;
-            roles.append(CpuLoad);
-        }
+        if (currentReport.cpuLoad != r.cpuLoad)
+            changedRoles.append(CpuLoad);
 
-        if (reportGpu) {
+        if (reportGpu)
             r.gpuLoad = gpu->readLoadValue();
-            roles.append(GpuLoad);
-        } else if (gpuTail > 0) {
-            --gpuTail;
-            roles.append(GpuLoad);
-        }
+        if (currentReport.gpuLoad != r.gpuLoad)
+            changedRoles.append(GpuLoad);
 
-        if (reportMem) {
+        if (reportMem)
             r.memoryUsed = memory->readUsedValue();
-            roles.append(MemoryUsed);
-        } else if (memTail > 0) {
-            --memTail;
-            roles.append(MemoryUsed);
-        }
+        if (currentReport.memoryUsed != r.memoryUsed)
+            changedRoles.append(MemoryUsed);
 
         for (auto it = ioHash.cbegin(); it != ioHash.cend(); ++it) {
             qreal ioVal = it.value()->readLoadValue();
             emit q->ioLoadReportingChanged(it.key(), ioVal);
             r.ioLoad.insert(it.key(), ioVal);
         }
-        if (!r.ioLoad.isEmpty())
-            roles.append(IoLoad);
-        if (!ioTails.isEmpty()) {
-            if (r.ioLoad.isEmpty())
-                roles.append(IoLoad);
-            for (const auto &it : ioTails.keys()) {
-                r.ioLoad.insert(it, 0.0);
-                if (--ioTails[it] == 0)
-                    ioTails.remove(it);
-            }
-        }
+        if (currentReport.ioLoad != r.ioLoad)
+            changedRoles.append(IoLoad);
 
         if (reportFps) {
             if (FrameTimer *ft = frameTimer.value(nullptr)) {
@@ -467,39 +438,43 @@ void SystemMonitorPrivate::timerEvent(QTimerEvent *te)
                 r.fpsJitter = ft->jitterFps();
                 ft->reset();
                 emit q->fpsReportingChanged(r.fpsAvg, r.fpsMin, r.fpsMax, r.fpsJitter);
-                roles.append(AverageFps);
-                roles.append(MinimumFps);
-                roles.append(MaximumFps);
-                roles.append(FpsJitter);
             }
-        } else if (fpsTail > 0){
-            --fpsTail;
-            roles.append(AverageFps);
-            roles.append(MinimumFps);
-            roles.append(MaximumFps);
-            roles.append(FpsJitter);
         }
+        if (currentReport.fpsAvg != r.fpsAvg)
+            changedRoles.append(AverageFps);
+        if (currentReport.fpsMin != r.fpsMin)
+            changedRoles.append(MinimumFps);
+        if (currentReport.fpsMax != r.fpsMax)
+            changedRoles.append(MaximumFps);
+        if (currentReport.fpsJitter != r.fpsJitter)
+            changedRoles.append(FpsJitter);
+    }
 
-        // ring buffer handling
-        // optimization: instead of sending a dataChanged for every item, we always move the
-        // last item to the front and change its data only
-        int last = reports.size() - 1;
-        q->beginMoveRows(QModelIndex(), last, last, QModelIndex(), 0);
-        reports[reportPos++] = r;
-        if (reportPos > last)
-            reportPos = 0;
-        q->endMoveRows();
-        q->dataChanged(q->index(0), q->index(0), roles);
+    // ring buffer handling
+    // optimization: instead of sending a dataChanged for every item, we always move the
+    // last item to the front and change its data only
+    int last = reports.size() - 1;
+    q->beginMoveRows(QModelIndex(), last, last, QModelIndex(), 0);
+    reports[reportPos++] = r;
+    if (reportPos > last)
+        reportPos = 0;
+    q->endMoveRows();
+    q->dataChanged(q->index(0), q->index(0), changedRoles);
 
-        if (reportMem)
-            emit q->memoryReportingChanged(r.memoryUsed);
-        if (reportCpu)
-            emit q->cpuLoadReportingChanged(r.cpuLoad);
-        if (reportGpu)
-            emit q->gpuLoadReportingChanged(r.gpuLoad);
+    if (reportMem)
+        emit q->memoryReportingChanged(r.memoryUsed);
+    if (reportCpu)
+        emit q->cpuLoadReportingChanged(r.cpuLoad);
+    if (reportGpu)
+        emit q->gpuLoadReportingChanged(r.gpuLoad);
+}
 
-        setupTimer();  // we might be able to stop this timer, when end of tail reached
+void SystemMonitorPrivate::timerEvent(QTimerEvent *te)
+{
+    Q_Q(SystemMonitor);
 
+    if (te && te->timerId() == reportingTimerId) {
+        makeNewReport();
     } else if (te && te->timerId() == idleTimerId) {
         qreal idleVal = idleCpu->readLoadValue();
         bool nowIdle = (idleVal <= idleThreshold);
@@ -531,8 +506,6 @@ void SystemMonitorPrivate::updateModel(bool clear)
         reports.clear();
         reports.resize(count);
         reportPos = 0;
-        cpuTail = memTail = fpsTail = 0;
-        ioTails.clear();
     } else {
         int oldCount = reports.size();
         int diff = count - oldCount;
@@ -549,15 +522,6 @@ void SystemMonitorPrivate::updateModel(bool clear)
                 reportPos = 0;
             }
         }
-
-        if (cpuTail > 0)
-            cpuTail += diff;
-        if (memTail > 0)
-            memTail += diff;
-        if (fpsTail > 0)
-            fpsTail += diff;
-        for (const auto &it : ioTails.keys())
-            ioTails[it] += diff;
     }
     q->endResetModel();
 }
@@ -808,10 +772,7 @@ void SystemMonitor::setMemoryReportingEnabled(bool enabled)
 
     if (enabled != d->reportMem) {
         d->reportMem = enabled;
-        if (!enabled)
-            d->memTail = d->count;
-        else
-            d->setupTimer();
+        d->setupTimer();
         emit memoryReportingEnabledChanged();
     }
 }
@@ -829,10 +790,7 @@ void SystemMonitor::setCpuLoadReportingEnabled(bool enabled)
 
     if (enabled != d->reportCpu) {
         d->reportCpu = enabled;
-        if (!enabled)
-            d->cpuTail = d->count;
-        else
-            d->setupTimer();
+        d->setupTimer();
         emit cpuLoadReportingEnabledChanged();
     }
 }
@@ -850,10 +808,7 @@ void SystemMonitor::setGpuLoadReportingEnabled(bool enabled)
 
     if (enabled != d->reportGpu) {
         d->reportGpu = enabled;
-        if (!enabled)
-            d->gpuTail = d->count;
-        else
-            d->setupTimer();
+        d->setupTimer();
         d->gpu->setActive(enabled);
         emit gpuLoadReportingEnabledChanged();
     }
@@ -885,8 +840,6 @@ bool SystemMonitor::addIoLoadReporting(const QString &deviceName)
     if (d->ioHash.contains(deviceName))
         return false;
 
-    d->ioTails.remove(deviceName);
-
     IoReader *ior = new IoReader(deviceName.toLocal8Bit().constData());
     d->ioHash.insert(deviceName, ior);
     if (d->reportingInterval >= 0)
@@ -905,7 +858,6 @@ void SystemMonitor::removeIoLoadReporting(const QString &deviceName)
     Q_D(SystemMonitor);
 
     delete d->ioHash.take(deviceName);
-    d->ioTails.insert(deviceName, d->count);
 }
 
 /*!
@@ -926,10 +878,7 @@ void SystemMonitor::setFpsReportingEnabled(bool enabled)
 
     if (enabled != d->reportFps) {
         d->reportFps = enabled;
-        if (!enabled)
-            d->fpsTail = d->count;
-        else
-            d->setupTimer();
+        d->setupTimer();
         d->setupFpsReporting();
         emit fpsReportingEnabledChanged();
     }
@@ -945,14 +894,31 @@ bool SystemMonitor::isFpsReportingEnabled() const
 void SystemMonitor::setReportingInterval(int intervalInMSec)
 {
     Q_D(SystemMonitor);
+    d->setReportingInterval(intervalInMSec);
+}
 
-    if (d->reportingInterval != intervalInMSec && intervalInMSec > 0) {
-        for (auto it = d->ioHash.cbegin(); it != d->ioHash.cend(); ++it)
-            it.value()->readLoadValue();   // for initialization only
-        d->updateModel(true);
-        d->setupTimer(intervalInMSec);
-        emit reportingIntervalChanged(intervalInMSec);
+void SystemMonitorPrivate::setReportingInterval(int intervalInMSec)
+{
+    Q_Q(SystemMonitor);
+
+    if (reportingInterval == intervalInMSec)
+        return; // NOOP
+
+    if (intervalInMSec <= 0) {
+        qmlWarning(q) << "Cannot set a reportingInterval <= 0";
+        return;
     }
+
+    for (auto it = ioHash.cbegin(); it != ioHash.cend(); ++it)
+        it.value()->readLoadValue();   // for initialization only
+    updateModel(true);
+    reportingInterval = intervalInMSec;
+    if (reportingTimerId) {
+        killTimer(reportingTimerId);
+        reportingTimerId = 0;
+    }
+    setupTimer();
+    emit q->reportingIntervalChanged(intervalInMSec);
 }
 
 int SystemMonitor::reportingInterval() const

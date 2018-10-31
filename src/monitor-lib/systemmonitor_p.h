@@ -61,6 +61,8 @@ public:
         : q_ptr(q)
     { }
 
+    static const SystemMonitorPrivate* get(const SystemMonitor *sysMon) { return sysMon->d_func(); }
+
     SystemMonitor *q_ptr;
     Q_DECLARE_PUBLIC(SystemMonitor)
 
@@ -90,11 +92,6 @@ public:
     bool reportGpu = false;
     bool reportMem = false;
     bool reportFps = false;
-    int cpuTail = 0;
-    int gpuTail = 0;
-    int memTail = 0;
-    int fpsTail = 0;
-    QMap<QString, int> ioTails;
     bool windowManagerConnectionCreated = false;
 
     struct Report
@@ -114,6 +111,8 @@ public:
     // model
     QHash<int, QByteArray> roleNames;
 
+    void makeNewReport();
+
     int latestReportPos() const;
 
 #if !defined(AM_HEADLESS)
@@ -121,13 +120,15 @@ public:
 #endif
 
     void setupFpsReporting();
-    void setupTimer(int newInterval = -1);
+    void setupTimer();
 
     void timerEvent(QTimerEvent *te) override;
 
     const Report &reportForRow(int row) const;
 
     void updateModel(bool clear);
+
+    void setReportingInterval(int intervalInMSec);
 };
 
 QT_END_NAMESPACE_AM

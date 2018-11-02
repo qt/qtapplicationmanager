@@ -153,42 +153,60 @@ qreal CpuReader::readLoadValue()
     return m_load;
 }
 
+GpuVendor::Vendor GpuVendor::s_vendor = GpuVendor::Undefined;
+
+GpuVendor::Vendor GpuVendor::get()
+{
+    if (s_vendor == Undefined)
+        fetch();
+
+    return s_vendor;
+}
+
+void GpuVendor::fetch()
+{
+    QByteArray vendor;
+#  if !defined(AM_HEADLESS)
+    auto readVendor = [&vendor](QOpenGLContext *c) {
+        const GLubyte *p = c->functions()->glGetString(GL_VENDOR);
+        if (p)
+            vendor = QByteArray(reinterpret_cast<const char *>(p)).toLower();
+    };
+
+    if (QOpenGLContext::currentContext()) {
+        readVendor(QOpenGLContext::currentContext());
+    } else {
+        QOpenGLContext context;
+        if (context.create()) {
+            QOffscreenSurface surface;
+            surface.setFormat(context.format());
+            surface.create();
+            context.makeCurrent(&surface);
+            readVendor(&context);
+            context.doneCurrent();
+        }
+    }
+#  endif
+    if (vendor.contains("intel"))
+        s_vendor = Intel;
+    else if (vendor.contains("nvidia"))
+        s_vendor = Nvidia;
+    else
+        s_vendor = Unsupported;
+}
+
 class GpuTool : protected QProcess
 {
 public:
     GpuTool()
         : QProcess(qApp)
     {
-        QByteArray vendor;
-#  if !defined(AM_HEADLESS)
-        auto readVendor = [&vendor](QOpenGLContext *c) {
-            const GLubyte *p = c->functions()->glGetString(GL_VENDOR);
-            if (p)
-                vendor = QByteArray(reinterpret_cast<const char *>(p)).toLower();
-        };
-
-        if (QOpenGLContext::currentContext()) {
-            readVendor(QOpenGLContext::currentContext());
-        } else {
-            QOpenGLContext c;
-            if (c.create()) {
-                QOffscreenSurface s;
-                s.setFormat(c.format());
-                s.create();
-                c.makeCurrent(&s);
-                readVendor(&c);
-                c.doneCurrent();
-            }
-        }
-#  endif
-        if (vendor.contains("intel")) {
+        if (GpuVendor::get() == GpuVendor::Intel) {
             setProgram(qSL("intel_gpu_top"));
             setArguments({ qSL("-o-"), qSL("-s 1000") });
-            m_vendor = Intel;
-        } else if (vendor.contains("nvidia")) {
+        } else if (GpuVendor::get() == GpuVendor::Nvidia) {
             setProgram(qSL("nvidia-smi"));
             setArguments({ qSL("dmon"), qSL("--select"), qSL("u") });
-            m_vendor = Nvidia;
         }
 
         QObject::connect(this, static_cast<void(QProcess::*)(int)>(&QProcess::finished), this, [this](int exitCode) {
@@ -224,12 +242,12 @@ public:
                     pos = int(endPtr - str.constData() + 1);
                 }
 
-                switch (m_vendor) {
-                case Intel:
+                switch (GpuVendor::get()) {
+                case GpuVendor::Intel:
                     if (values.size() >= 2)
                         m_lastValue = values.at(1) / 100;
                     break;
-                case Nvidia:
+                case GpuVendor::Nvidia:
                     if (values.size() >= 2) {
                         if (qFuzzyIsNull(values.at(0)))  // hardcoded to first gfx card
                             m_lastValue = values.at(1) / 100;
@@ -272,11 +290,6 @@ public:
         return (state() == QProcess::Running);
     }
 
-    bool isSupported() const
-    {
-        return m_vendor != Unsupported;
-    }
-
     qreal loadValue() const
     {
         return m_lastValue;
@@ -285,13 +298,6 @@ public:
 private:
     QAtomicInteger<int> m_refCount;
     qreal m_lastValue = 0;
-
-    enum Vendor {
-        Unsupported = 0,
-        Intel,
-        Nvidia
-    };
-    Vendor m_vendor = Unsupported;
 };
 
 GpuTool *GpuReader::s_gpuToolProcess = nullptr;
@@ -304,7 +310,7 @@ void GpuReader::setActive(bool enabled)
     if (!s_gpuToolProcess)
         s_gpuToolProcess = new GpuTool();
 
-    if (!s_gpuToolProcess->isSupported()) {
+    if (GpuVendor::get() == GpuVendor::Unsupported) {
         qCWarning(LogSystem) << "GPU monitoring is not supported on this platform.";
     } else {
         if (enabled)

@@ -71,6 +71,20 @@ private:
     Q_DISABLE_COPY(CpuReader)
 };
 
+class GpuVendor {
+public:
+    enum Vendor {
+        Undefined = 0, // didn't try to determine the vendor yet
+        Unsupported,
+        Intel,
+        Nvidia
+    };
+    static Vendor get();
+private:
+    static void fetch();
+    static Vendor s_vendor;
+};
+
 class GpuTool;
 
 class GpuReader

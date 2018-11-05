@@ -395,9 +395,13 @@ IntentServerInProcessIpcConnection *IntentServerInProcessIpcConnection::create(A
                                                                                IntentServerAMImplementation *iface)
 {
     auto ipcConnection = new IntentServerInProcessIpcConnection(application, iface);
-    QMetaObject::invokeMethod(ipcConnection,
-                              [ipcConnection, application]() { ipcConnection->setReady(application); },
-                              Qt::QueuedConnection);
+    if (application) {
+        QMetaObject::invokeMethod(ipcConnection,
+                                  [ipcConnection, application]() { ipcConnection->setReady(application); },
+                                  Qt::QueuedConnection);
+    } else {
+        ipcConnection->m_ready = true;
+    }
     s_ipcConnections << ipcConnection;
     return ipcConnection;
 }

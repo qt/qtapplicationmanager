@@ -1,0 +1,12 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'cannot-start'
+icon:    'icon.png'
+code:    'cannot-start'
+runtime: 'native'
+name:
+  en: 'Cannot start'
+
+intents:
+- id: cannot-start-intent

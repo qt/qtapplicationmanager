@@ -1,0 +1,20 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'intents1'
+icon:    'icon.png'
+code:    'intents1.qml'
+runtime: 'qml'
+name:
+  en: 'Intents1'
+
+intents:
+- id: only1
+- id: both
+- id: match
+  parameterMatch:
+    list: [ 'a', 'b' ]
+    int: 42
+    string: "^foo_.*_bar$"
+    complex: { 'a': 1 }
+- id: custom-error

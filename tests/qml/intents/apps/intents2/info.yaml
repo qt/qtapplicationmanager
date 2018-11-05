@@ -1,0 +1,14 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'intents2'
+icon:    'icon.png'
+code:    'intents2.qml'
+runtime: 'qml'
+name:
+  en: 'Intents2'
+
+intents:
+- id: only2
+- id: both
+- id: only1 # declared here, but no handler to provoke an error

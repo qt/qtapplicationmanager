@@ -1,0 +1,23 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+
+ui:
+  fullscreen: no
+
+flags:
+  noSecurity: yes
+  noUiWatchdog: yes
+
+runtimes:
+  qml:
+    quitTime: 1000
+
+intents:
+  timeouts:
+    disambiguation: 1000
+    startApplication: 1000
+    replyFromApplication: 1000
+    requestToSystem: 2000

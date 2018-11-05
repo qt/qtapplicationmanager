@@ -385,6 +385,12 @@ static void printCrashInfo(PrintDestination dest, const char *why, int stackFram
 
 static void crashHandler(const char *why, int stackFramesToIgnore)
 {
+    // We also need to reset all the "crash" signals plus SIGINT for three reasons:
+    //  1) avoid recursions
+    //  2) SIGABRT to re-enable standard abort() handling
+    //  3) SIGINT, so that you can Ctrl+C the app if the crash handler ends up freezing
+    UnixSignalHandler::instance()->resetToDefault({ SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT, SIGINT });
+
     printCrashInfo(Console, why, stackFramesToIgnore);
 
     if (waitForGdbAttach > 0) {
@@ -413,7 +419,6 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
 
     if (dumpCore) {
         fprintf(stderr, "\n > the process will be aborted (core dumped)\n\n");
-        UnixSignalHandler::instance()->resetToDefault({ SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT });
         abort();
     }
 

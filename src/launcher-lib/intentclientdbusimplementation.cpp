@@ -42,6 +42,7 @@
 #include <QDBusConnection>
 #include <QDBusPendingReply>
 #include <QDBusPendingCallWatcher>
+#include "launchermain.h"
 #include "dbus-utilities.h"
 #include "intentclient.h"
 #include "intentclientrequest.h"
@@ -59,7 +60,7 @@ IntentClientDBusImplementation::IntentClientDBusImplementation(const QString &db
 QString IntentClientDBusImplementation::currentApplicationId(QObject *hint)
 {
     Q_UNUSED(hint)
-    return QString(); // doesn't matter
+    return LauncherMain::instance()->applicationId();
 }
 
 void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false)

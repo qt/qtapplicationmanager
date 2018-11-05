@@ -96,6 +96,9 @@ public:
     void setWindowProperty(QWindow *window, const QString &name, const QVariant &value);
     void clearWindowPropertyCache(QWindow *window);
 
+    QString applicationId() const;
+    void setApplicationId(const QString &applicationId);
+
 signals:
     void windowPropertyChanged(QWindow *window, const QString &name, const QVariant &value);
 

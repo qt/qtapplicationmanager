@@ -305,6 +305,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     m_launched = true;
 
     static QString applicationId = application.value(qSL("id")).toString();
+    LauncherMain::instance()->setApplicationId(applicationId);
 
     if (m_quickLaunched) {
         //StartupTimer::instance()->createReport(applicationId  + qSL(" [process launch]"));

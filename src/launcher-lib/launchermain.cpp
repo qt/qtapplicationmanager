@@ -167,6 +167,16 @@ void LauncherMain::clearWindowPropertyCache(QWindow *window)
 #endif
 }
 
+QString LauncherMain::applicationId() const
+{
+    return property("__am_applicationId").toString();
+}
+
+void LauncherMain::setApplicationId(const QString &applicationId)
+{
+    setProperty("__am_applicationId", applicationId);
+}
+
 void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCEPT_EXPR(false)
 {
     auto docs = QtYaml::variantDocumentsFromYaml(configYaml.isEmpty() ? qgetenv("AM_CONFIG")

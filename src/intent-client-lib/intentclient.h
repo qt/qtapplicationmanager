@@ -46,6 +46,7 @@
 #include <QVariantMap>
 #include <QList>
 #include <QMap>
+#include <QPair>
 
 #include <QtAppManCommon/global.h>
 
@@ -97,7 +98,7 @@ private:
     static IntentClient *s_instance;
 
     QList<IntentClientRequest *> m_waiting;
-    QMap<QString, IntentHandler *> m_handlers;
+    QMap<QPair<QString, QString>, IntentHandler *> m_handlers; // intentId + appId -> handler
 
     int m_replyFromSystemTimeout = 20000;
     int m_replyFromApplicationTimeout = 4000;

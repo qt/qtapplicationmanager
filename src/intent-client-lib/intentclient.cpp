@@ -114,22 +114,32 @@ IntentClient::~IntentClient()
 
 void IntentClient::registerHandler(IntentHandler *handler)
 {
+    QString applicationId = m_systemInterface->currentApplicationId(handler);
+
+    qCDebug(LogIntents) << "Client: Registering intent handler" << handler << "for" << handler->intentIds()
+                        << "for application" << applicationId;
+
     const QStringList intentIds = handler->intentIds();
     for (auto intentId : intentIds) {
-        if (m_handlers.contains(intentId)) {
-            qmlWarning(handler) << "Double registration for intent" << intentId << "detected. "
-                                                                                   "Only the handler that registered first will be active.";
+        auto key = qMakePair(intentId, applicationId);
+
+        if (m_handlers.contains(key)) {
+            qmlWarning(handler) << "Double registration for intent " << intentId << " within application "
+                                << applicationId << " detected. Only the handler that registered first will be active.";
         } else {
-            m_handlers.insert(intentId, handler);
+            m_handlers.insert(key, handler);
         }
     }
 }
 
 void IntentClient::unregisterHandler(IntentHandler *handler)
 {
-    const QStringList intentIds = handler->intentIds();
-    for (auto intentId : intentIds)
-        m_handlers.remove(intentId);
+    for (auto it = m_handlers.begin(); it != m_handlers.end(); ) {
+        if (it.value() == handler)
+            it = m_handlers.erase(it);
+        else
+            ++it;
+    }
 }
 
 IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, const QVariantMap &parameters)
@@ -211,7 +221,6 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
 void IntentClient::requestToApplication(const QUuid &requestId, const QString &intentId,
                                         const QString &applicationId, const QVariantMap &parameters)
 {
-    //TODO: we should sanity check the applicationId
     qCDebug(LogIntents) << "Client: Incoming intent request" << requestId << "to application" << applicationId
                         << "for intent" << intentId << "parameters" << parameters;
 
@@ -219,7 +228,7 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
                                                        QString(), requestId, intentId, applicationId,
                                                        parameters);
 
-    IntentHandler *handler = m_handlers.value(intentId);
+    IntentHandler *handler = m_handlers.value(qMakePair(intentId, applicationId));
     if (handler) {
         QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
         icr->startTimeout(m_replyFromApplicationTimeout);
@@ -228,7 +237,7 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
     } else {
         qCDebug(LogIntents) << "No Intent handler registered for intent" << intentId;
         errorReplyFromApplication(icr, qSL("No matching IntentHandler found."));
-        delete icr; // still exclusively on the C++ side
+        delete icr;
     }
 }
 

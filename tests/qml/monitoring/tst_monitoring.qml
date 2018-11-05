@@ -42,6 +42,7 @@
 import QtQuick 2.6
 import QtTest 1.0
 import QtApplicationManager.SystemUI 1.0
+import QtApplicationManager 1.0
 
 TestCase {
     id: testCase
@@ -76,14 +77,16 @@ TestCase {
         compare(systemMonitor.count, 5);
         verify(systemMonitor.memoryReportingEnabled);
 
-        memoryReportingChangedSpy.wait(100);
+        if (memoryReportingChangedSpy.count < 1)
+            memoryReportingChangedSpy.wait(1000 * AmTest.timeoutFactor);
         compare(memoryReportingChangedSpy.count, 1);
         console.info("Used Memory: " + (memoryReportingChangedSpy.signalArguments[0][0]/1e9).toFixed(1) + " GB");
         var mem = [memoryReportingChangedSpy.signalArguments[0][0]];
         verify(mem[0] > 16000);
         compare(listView.model.get(0).memoryUsed, mem[0]);
 
-        memoryReportingChangedSpy.wait(100);
+        if (memoryReportingChangedSpy.count < 2)
+            memoryReportingChangedSpy.wait(1000 * AmTest.timeoutFactor);
         compare(memoryReportingChangedSpy.count, 2);
         mem[1] = memoryReportingChangedSpy.signalArguments[1][0];
         verify(mem[1] > 16000);

@@ -53,6 +53,8 @@
 #include <private/qtestlog_p.h>
 #include "testrunner_p.h"
 
+#include "utilities.h"
+
 QT_BEGIN_NAMESPACE
 namespace QTest {
     extern Q_TESTLIB_EXPORT bool printAvailableFunctions;
@@ -72,6 +74,11 @@ AmTest *AmTest::instance()
         object = new AmTest;
     }
     return object;
+}
+
+int AmTest::timeoutFactor() const
+{
+    return QT_PREPEND_NAMESPACE_AM(timeoutFactor)();
 }
 
 static QtMsgType convertMsgType(AmTest::MsgType type)

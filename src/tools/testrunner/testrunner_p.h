@@ -90,6 +90,7 @@ private:
 class AmTest : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(int timeoutFactor READ timeoutFactor CONSTANT)
 
     AmTest();
 
@@ -98,6 +99,8 @@ public:
     Q_ENUM(MsgType)
 
     static AmTest *instance();
+
+    int timeoutFactor() const;
 
     Q_INVOKABLE void ignoreMessage(MsgType type, const char* msg);
     Q_INVOKABLE void ignoreMessage(MsgType type, const QRegExp &expression);

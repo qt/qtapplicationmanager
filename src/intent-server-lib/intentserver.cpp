@@ -71,6 +71,7 @@ IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemIn
     systemInterface->initialize(is.data());
 
     qRegisterMetaType<Intent>("Intent");
+    QMetaType::registerComparators<Intent>();
 
     // Have a nicer name in the C++ API, since QML cannot cope with QList<Q_GADGET-type>
     qRegisterMetaType<QVariantList>("IntentList");

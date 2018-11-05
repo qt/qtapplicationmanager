@@ -83,6 +83,11 @@ bool Intent::operator==(const Intent &other) const
             && (m_backgroundHandlerId == other.m_backgroundHandlerId);
 }
 
+bool Intent::operator <(const Intent &other) const
+{
+    return (m_intentId < other.m_intentId) ? true : (m_applicationId < other.m_applicationId);
+}
+
 QString Intent::intentId() const
 {
     return m_intentId;

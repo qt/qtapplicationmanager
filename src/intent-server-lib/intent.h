@@ -81,6 +81,7 @@ public:
 
     explicit operator bool() const;
     bool operator ==(const Intent &other) const;
+    bool operator <(const Intent &other) const; // need for QMetaType::registerComparators
 
 private:
     Intent(const QString &intentId, const QString &applicationId, const QString &backgroundHandlerId,

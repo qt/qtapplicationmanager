@@ -51,11 +51,6 @@ These types are only available for the System-UI:
 
 \annotatedlist system-ui
 
-The following types are generic and can be used within an application as well as within the System-UI.
-There is no need to use a single-process application when using these types.
-
-\annotatedlist system-ui-and-app
-
 \section1 Non-Instantiable QML Types
 
 All these types are only available from within the System-UI and cannot be instantiated from its QML code.

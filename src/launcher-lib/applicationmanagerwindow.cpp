@@ -60,7 +60,6 @@ public:
 /*!
     \qmltype ApplicationManagerWindow
     \inqmlmodule QtApplicationManager.Application
-    \ingroup system-ui-and-app
     \ingroup app
     \brief The window root item required in a multi-process environment.
 

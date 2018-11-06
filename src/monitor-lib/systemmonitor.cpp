@@ -42,7 +42,6 @@
 #include <QSysInfo>
 #include <QThread>
 #include <QFile>
-#include <QHash>
 #include <QTimerEvent>
 #include <QElapsedTimer>
 #include <vector>
@@ -56,9 +55,8 @@
 #include "qml-utilities.h"
 #include "applicationmanager.h"
 #include "systemmonitor.h"
-#include "systemreader.h"
+#include "systemmonitor_p.h"
 #include <QtAppManWindow/windowmanager.h>
-#include "frametimer.h"
 
 
 /*!
@@ -349,279 +347,220 @@ enum Roles
 };
 }
 
-class SystemMonitorPrivate : public QObject // clazy:exclude=missing-qobject-macro
+
+
+int SystemMonitorPrivate::latestReportPos() const
 {
-public:
-    SystemMonitorPrivate(SystemMonitor *q)
-        : q_ptr(q)
-    { }
-
-    SystemMonitor *q_ptr;
-    Q_DECLARE_PUBLIC(SystemMonitor)
-
-    // idle
-    qreal idleThreshold = 0.1;
-    CpuReader *idleCpu = nullptr;
-    int idleTimerId = 0;
-    bool isIdle = false;
-
-    // memory thresholds
-    qreal memoryLowWarning = -1;
-    qreal memoryCriticalWarning = -1;
-    MemoryWatcher *memoryWatcher = nullptr;
-
-    // fps
-    QHash<QObject *, FrameTimer *> frameTimer;
-
-    // reporting
-    MemoryReader *memory = nullptr;
-    CpuReader *cpu = nullptr;
-    GpuReader *gpu = nullptr;
-    QHash<QString, IoReader *> ioHash;
-    int reportingInterval = -1;
-    int count = 10;
-    int reportingTimerId = 0;
-    bool reportCpu = false;
-    bool reportGpu = false;
-    bool reportMem = false;
-    bool reportFps = false;
-    int cpuTail = 0;
-    int gpuTail = 0;
-    int memTail = 0;
-    int fpsTail = 0;
-    QMap<QString, int> ioTails;
-    bool windowManagerConnectionCreated = false;
-
-    struct Report
-    {
-        qreal cpuLoad = 0;
-        qreal gpuLoad = 0;
-        qreal fpsAvg = 0;
-        qreal fpsMin = 0;
-        qreal fpsMax = 0;
-        qreal fpsJitter = 0;
-        quint64 memoryUsed = 0;
-        QVariantMap ioLoad;
-    };
-    QVector<Report> reports;
-    int reportPos = 0;
-
-    // model
-    QHash<int, QByteArray> roleNames;
-
-    int latestReportPos() const
-    {
-        if (reportPos == 0)
-            return reports.size() - 1;
-        else
-            return reportPos - 1;
-    }
+    if (reportPos == 0)
+        return reports.size() - 1;
+    else
+        return reportPos - 1;
+}
 
 #if !defined(AM_HEADLESS)
-    void registerNewView(QQuickWindow *view)
-    {
-        Q_Q(SystemMonitor);
+void SystemMonitorPrivate::registerNewView(QQuickWindow *view)
+{
+    Q_Q(SystemMonitor);
+    if (reportFps)
+        connect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
+}
+#endif
+
+void SystemMonitorPrivate::setupFpsReporting()
+{
+#if !defined(AM_HEADLESS)
+    Q_Q(SystemMonitor);
+    if (!windowManagerConnectionCreated) {
+        connect(WindowManager::instance(), &WindowManager::compositorViewRegistered, this, &SystemMonitorPrivate::registerNewView);
+        windowManagerConnectionCreated = true;
+    }
+
+    for (const QQuickWindow *view : WindowManager::instance()->compositorViews()) {
         if (reportFps)
             connect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
+        else
+            disconnect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
     }
 #endif
+}
 
-    void setupFpsReporting()
-    {
-#if !defined(AM_HEADLESS)
-        Q_Q(SystemMonitor);
-        if (!windowManagerConnectionCreated) {
-            connect(WindowManager::instance(), &WindowManager::compositorViewRegistered, this, &SystemMonitorPrivate::registerNewView);
-            windowManagerConnectionCreated = true;
+void SystemMonitorPrivate::setupTimer(int newInterval)
+{
+    bool useNewInterval = (newInterval != -1) && (newInterval != reportingInterval);
+    bool shouldBeOn = reportCpu || reportGpu || reportMem || reportFps || !ioHash.isEmpty()
+        || cpuTail > 0 || memTail > 0 || fpsTail > 0 || !ioTails.isEmpty();
+
+    if (useNewInterval)
+        reportingInterval = newInterval;
+
+    if (!shouldBeOn) {
+        if (reportingTimerId) {
+            killTimer(reportingTimerId);
+            reportingTimerId = 0;
         }
-
-        for (const QQuickWindow *view : WindowManager::instance()->compositorViews()) {
-            if (reportFps)
-                connect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
-            else
-                disconnect(view, &QQuickWindow::frameSwapped, q, &SystemMonitor::reportFrameSwap);
-        }
-#endif
-    }
-
-    void setupTimer(int newInterval = -1)
-    {
-        bool useNewInterval = (newInterval != -1) && (newInterval != reportingInterval);
-        bool shouldBeOn = reportCpu || reportGpu || reportMem || reportFps || !ioHash.isEmpty()
-                          || cpuTail > 0 || memTail > 0 || fpsTail > 0 || !ioTails.isEmpty();
-
-        if (useNewInterval)
-            reportingInterval = newInterval;
-
-        if (!shouldBeOn) {
-            if (reportingTimerId) {
+    } else {
+        if (reportingTimerId) {
+            if (useNewInterval) {
                 killTimer(reportingTimerId);
                 reportingTimerId = 0;
             }
-        } else {
-            if (reportingTimerId) {
-                if (useNewInterval) {
-                    killTimer(reportingTimerId);
-                    reportingTimerId = 0;
-                }
-            }
-            if (!reportingTimerId && reportingInterval >= 0)
-                reportingTimerId = startTimer(reportingInterval);
         }
+        if (!reportingTimerId && reportingInterval >= 0)
+            reportingTimerId = startTimer(reportingInterval);
     }
+}
 
-    void timerEvent(QTimerEvent *te)
-    {
-        Q_Q(SystemMonitor);
+void SystemMonitorPrivate::timerEvent(QTimerEvent *te)
+{
+    Q_Q(SystemMonitor);
 
-        if (te && te->timerId() == reportingTimerId) {
-            Report r;
-            QVector<int> roles;
+    if (te && te->timerId() == reportingTimerId) {
+        Report r;
+        QVector<int> roles;
 
-            if (reportCpu) {
-                r.cpuLoad = cpu->readLoadValue();
-                roles.append(CpuLoad);
-            } else if (cpuTail > 0) {
-                --cpuTail;
-                roles.append(CpuLoad);
-            }
+        if (reportCpu) {
+            r.cpuLoad = cpu->readLoadValue();
+            roles.append(CpuLoad);
+        } else if (cpuTail > 0) {
+            --cpuTail;
+            roles.append(CpuLoad);
+        }
 
-            if (reportGpu) {
-                r.gpuLoad = gpu->readLoadValue();
-                roles.append(GpuLoad);
-            } else if (gpuTail > 0) {
-                --gpuTail;
-                roles.append(GpuLoad);
-            }
+        if (reportGpu) {
+            r.gpuLoad = gpu->readLoadValue();
+            roles.append(GpuLoad);
+        } else if (gpuTail > 0) {
+            --gpuTail;
+            roles.append(GpuLoad);
+        }
 
-            if (reportMem) {
-                r.memoryUsed = memory->readUsedValue();
-                roles.append(MemoryUsed);
-            } else if (memTail > 0) {
-                --memTail;
-                roles.append(MemoryUsed);
-            }
+        if (reportMem) {
+            r.memoryUsed = memory->readUsedValue();
+            roles.append(MemoryUsed);
+        } else if (memTail > 0) {
+            --memTail;
+            roles.append(MemoryUsed);
+        }
 
-            for (auto it = ioHash.cbegin(); it != ioHash.cend(); ++it) {
-                qreal ioVal = it.value()->readLoadValue();
-                emit q->ioLoadReportingChanged(it.key(), ioVal);
-                r.ioLoad.insert(it.key(), ioVal);
-            }
-            if (!r.ioLoad.isEmpty())
+        for (auto it = ioHash.cbegin(); it != ioHash.cend(); ++it) {
+            qreal ioVal = it.value()->readLoadValue();
+            emit q->ioLoadReportingChanged(it.key(), ioVal);
+            r.ioLoad.insert(it.key(), ioVal);
+        }
+        if (!r.ioLoad.isEmpty())
+            roles.append(IoLoad);
+        if (!ioTails.isEmpty()) {
+            if (r.ioLoad.isEmpty())
                 roles.append(IoLoad);
-            if (!ioTails.isEmpty()) {
-                if (r.ioLoad.isEmpty())
-                    roles.append(IoLoad);
-                for (const auto &it : ioTails.keys()) {
-                    r.ioLoad.insert(it, 0.0);
-                    if (--ioTails[it] == 0)
-                        ioTails.remove(it);
-                }
+            for (const auto &it : ioTails.keys()) {
+                r.ioLoad.insert(it, 0.0);
+                if (--ioTails[it] == 0)
+                    ioTails.remove(it);
             }
+        }
 
-            if (reportFps) {
-                if (FrameTimer *ft = frameTimer.value(nullptr)) {
-                    r.fpsAvg = ft->averageFps();
-                    r.fpsMin = ft->minimumFps();
-                    r.fpsMax = ft->maximumFps();
-                    r.fpsJitter = ft->jitterFps();
-                    ft->reset();
-                    emit q->fpsReportingChanged(r.fpsAvg, r.fpsMin, r.fpsMax, r.fpsJitter);
-                    roles.append(AverageFps);
-                    roles.append(MinimumFps);
-                    roles.append(MaximumFps);
-                    roles.append(FpsJitter);
-                }
-            } else if (fpsTail > 0){
-                --fpsTail;
+        if (reportFps) {
+            if (FrameTimer *ft = frameTimer.value(nullptr)) {
+                r.fpsAvg = ft->averageFps();
+                r.fpsMin = ft->minimumFps();
+                r.fpsMax = ft->maximumFps();
+                r.fpsJitter = ft->jitterFps();
+                ft->reset();
+                emit q->fpsReportingChanged(r.fpsAvg, r.fpsMin, r.fpsMax, r.fpsJitter);
                 roles.append(AverageFps);
                 roles.append(MinimumFps);
                 roles.append(MaximumFps);
                 roles.append(FpsJitter);
             }
-
-            // ring buffer handling
-            // optimization: instead of sending a dataChanged for every item, we always move the
-            // last item to the front and change its data only
-            int last = reports.size() - 1;
-            q->beginMoveRows(QModelIndex(), last, last, QModelIndex(), 0);
-            reports[reportPos++] = r;
-            if (reportPos > last)
-                reportPos = 0;
-            q->endMoveRows();
-            q->dataChanged(q->index(0), q->index(0), roles);
-
-            if (reportMem)
-                emit q->memoryReportingChanged(r.memoryUsed);
-            if (reportCpu)
-                emit q->cpuLoadReportingChanged(r.cpuLoad);
-            if (reportGpu)
-                emit q->gpuLoadReportingChanged(r.gpuLoad);
-
-            setupTimer();  // we might be able to stop this timer, when end of tail reached
-
-        } else if (te && te->timerId() == idleTimerId) {
-            qreal idleVal = idleCpu->readLoadValue();
-            bool nowIdle = (idleVal <= idleThreshold);
-            if (nowIdle != isIdle) {
-                isIdle = nowIdle;
-                emit q->idleChanged(nowIdle);
-            }
+        } else if (fpsTail > 0){
+            --fpsTail;
+            roles.append(AverageFps);
+            roles.append(MinimumFps);
+            roles.append(MaximumFps);
+            roles.append(FpsJitter);
         }
-    }
 
-    const Report &reportForRow(int row) const
-    {
-        // convert a visual row position to an index into the internal ringbuffer
-        int pos = reportPos - row - 1;
-        if (pos < 0)
-            pos += reports.size();
-        if (pos < 0 || pos >= reports.size())
-            return reports.first();
-        return reports.at(pos);
-    }
-
-    void updateModel(bool clear)
-    {
-        Q_Q(SystemMonitor);
-
-        q->beginResetModel();
-
-        if (clear) {
-            reports.clear();
-            reports.resize(count);
+        // ring buffer handling
+        // optimization: instead of sending a dataChanged for every item, we always move the
+        // last item to the front and change its data only
+        int last = reports.size() - 1;
+        q->beginMoveRows(QModelIndex(), last, last, QModelIndex(), 0);
+        reports[reportPos++] = r;
+        if (reportPos > last)
             reportPos = 0;
-            cpuTail = memTail = fpsTail = 0;
-            ioTails.clear();
-        } else {
-            int oldCount = reports.size();
-            int diff = count - oldCount;
-            if (diff > 0)
-                reports.insert(reportPos, diff, Report());
-            else {
-                if (reportPos <= count) {
-                    reports.remove(reportPos, -diff);
-                    if (reportPos == count)
-                        reportPos = 0;
-                } else {
-                    reports.remove(reportPos, oldCount - reportPos);
-                    reports.remove(0, reportPos - count);
-                    reportPos = 0;
-                }
-            }
+        q->endMoveRows();
+        q->dataChanged(q->index(0), q->index(0), roles);
 
-            if (cpuTail > 0)
-                cpuTail += diff;
-            if (memTail > 0)
-                memTail += diff;
-            if (fpsTail > 0)
-                fpsTail += diff;
-            for (const auto &it : ioTails.keys())
-                ioTails[it] += diff;
+        if (reportMem)
+            emit q->memoryReportingChanged(r.memoryUsed);
+        if (reportCpu)
+            emit q->cpuLoadReportingChanged(r.cpuLoad);
+        if (reportGpu)
+            emit q->gpuLoadReportingChanged(r.gpuLoad);
+
+        setupTimer();  // we might be able to stop this timer, when end of tail reached
+
+    } else if (te && te->timerId() == idleTimerId) {
+        qreal idleVal = idleCpu->readLoadValue();
+        bool nowIdle = (idleVal <= idleThreshold);
+        if (nowIdle != isIdle) {
+            isIdle = nowIdle;
+            emit q->idleChanged(nowIdle);
         }
-        q->endResetModel();
     }
-};
+}
+
+auto SystemMonitorPrivate::reportForRow(int row) const -> const Report &
+{
+    // convert a visual row position to an index into the internal ringbuffer
+    int pos = reportPos - row - 1;
+    if (pos < 0)
+        pos += reports.size();
+    if (pos < 0 || pos >= reports.size())
+        return reports.first();
+    return reports.at(pos);
+}
+
+void SystemMonitorPrivate::updateModel(bool clear)
+{
+    Q_Q(SystemMonitor);
+
+    q->beginResetModel();
+
+    if (clear) {
+        reports.clear();
+        reports.resize(count);
+        reportPos = 0;
+        cpuTail = memTail = fpsTail = 0;
+        ioTails.clear();
+    } else {
+        int oldCount = reports.size();
+        int diff = count - oldCount;
+        if (diff > 0)
+            reports.insert(reportPos, diff, Report());
+        else {
+            if (reportPos <= count) {
+                reports.remove(reportPos, -diff);
+                if (reportPos == count)
+                    reportPos = 0;
+            } else {
+                reports.remove(reportPos, oldCount - reportPos);
+                reports.remove(0, reportPos - count);
+                reportPos = 0;
+            }
+        }
+
+        if (cpuTail > 0)
+            cpuTail += diff;
+        if (memTail > 0)
+            memTail += diff;
+        if (fpsTail > 0)
+            fpsTail += diff;
+        for (const auto &it : ioTails.keys())
+            ioTails[it] += diff;
+    }
+    q->endResetModel();
+}
 
 SystemMonitor::SystemMonitor()
     : d_ptr(new SystemMonitorPrivate(this))

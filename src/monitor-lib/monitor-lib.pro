@@ -16,6 +16,7 @@ CONFIG *= static internal_module
 
 HEADERS += \
     systemmonitor.h \
+    systemmonitor_p.h \
     processmonitor.h \
     processmonitor_p.h \
     frametimer.h

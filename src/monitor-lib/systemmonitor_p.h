@@ -85,7 +85,7 @@ public:
     CpuReader *cpu = nullptr;
     GpuReader *gpu = nullptr;
     QHash<QString, IoReader *> ioHash;
-    int reportingInterval = -1;
+    int reportingInterval = 1000;
     int count = 10;
     int reportingTimerId = 0;
     bool reportCpu = false;

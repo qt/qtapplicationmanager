@@ -53,8 +53,8 @@ main_lib.depends = shared_main_lib manager_lib installer_lib window_lib monitor_
     main_lib.depends += dbus_lib
 }
 
-launchers_qml.subdir = launchers/qml
-launchers_qml.depends = launcher_lib plugin_interfaces
+tools_launcher_qml.subdir = tools/launcher-qml
+tools_launcher_qml.depends = launcher_lib plugin_interfaces
 
 tools_appman.subdir = tools/appman
 tools_appman.depends = main_lib
@@ -109,7 +109,7 @@ SUBDIRS = \
         tools_dumpqmltypes \
 
     multi-process:qtHaveModule(qml):qtHaveModule(dbus):SUBDIRS += \
-        launchers_qml \
+        tools_launcher_qml \
 }
 
 !android:SUBDIRS += \

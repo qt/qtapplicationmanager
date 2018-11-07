@@ -12,8 +12,11 @@ QT *= \
     appman_plugininterfaces-private \
     appman_launcher-private \
 
+HEADERS += \
+    launcher-qml_p.h
+
 SOURCES += \
-    main.cpp \
+    launcher-qml.cpp \
 
 load(qt_tool)
 

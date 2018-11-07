@@ -39,11 +39,8 @@
 **
 ****************************************************************************/
 
-
-#include <QQmlApplicationEngine>
 #include <QQmlComponent>
 #include <QQmlContext>
-#include <QQmlIncubationController>
 #include <QQmlDebuggingEnabler>
 
 #include <QSocketNotifier>
@@ -92,54 +89,7 @@
 #include "startuptimer.h"
 #include "processtitle.h"
 #include "qml-utilities.h"
-
-QT_BEGIN_NAMESPACE_AM
-
-// maybe make this configurable for specific workloads?
-class HeadlessIncubationController : public QObject, public QQmlIncubationController // clazy:exclude=missing-qobject-macro
-{
-public:
-    HeadlessIncubationController(QObject *parent)
-        : QObject(parent)
-    {
-        startTimer(50);
-    }
-
-protected:
-    void timerEvent(QTimerEvent *) override
-    {
-        incubateFor(25);
-    }
-};
-
-
-
-class Controller : public QObject
-{
-    Q_OBJECT
-
-public:
-    Controller(LauncherMain *a, bool quickLaunched, const QString &directLoad = QString());
-
-public slots:
-    void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
-                          const QString &mimeType, const QVariantMap &application, const QVariantMap systemProperties);
-
-private:
-    QQmlApplicationEngine m_engine;
-    QmlApplicationInterface *m_applicationInterface = nullptr;
-    QVariantMap m_configuration;
-    bool m_launched = false;
-    bool m_quickLaunched;
-#if !defined(AM_HEADLESS)
-    QQuickWindow *m_window = nullptr;
-private slots:
-    void updateSlowMode(bool isSlow);
-#endif
-};
-
-
-QT_END_NAMESPACE_AM
+#include "launcher-qml_p.h"
 
 QT_USE_NAMESPACE_AM
 
@@ -209,6 +159,7 @@ int main(int argc, char *argv[])
         return 2;
     }
 }
+
 
 Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &directLoad)
     : QObject(a)
@@ -298,7 +249,7 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
 
 void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
                                   const QString &mimeType, const QVariantMap &application,
-                                  const QVariantMap systemProperties)
+                                  const QVariantMap &systemProperties)
 {
     if (m_launched)
         return;
@@ -527,4 +478,14 @@ void Controller::updateSlowMode(bool isSlow)
 }
 #endif  // !defined(AM_HEADLESS)
 
-#include "main.moc"
+
+HeadlessIncubationController::HeadlessIncubationController(QObject *parent)
+    : QObject(parent)
+{
+    startTimer(50);
+}
+
+void HeadlessIncubationController::timerEvent(QTimerEvent *)
+{
+    incubateFor(25);
+}

@@ -23,9 +23,9 @@ headerdirs += \
     ../src/notification-lib \
     ../src/window-lib \
     ../src/launcher-lib \
-    ../src/launchers/qml \
     ../src/monitor-lib \
     ../src/plugin-interfaces \
+    ../src/tools/launcher-qml \
 
 sourcedirs += \
     . \
@@ -39,11 +39,11 @@ sourcedirs += \
     ../src/notification-lib \
     ../src/window-lib \
     ../src/launcher-lib \
-    ../src/launchers/qml \
     ../src/monitor-lib \
     ../src/plugin-interfaces \
     ../src/tools/packager \
     ../src/tools/controller \
+    ../src/tools/launcher-qml \
     $$BUILDDIR \
 
 exampledirs = ../examples

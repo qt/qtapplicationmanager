@@ -9,7 +9,8 @@ CONFIG *= console
 QT += qmltest qmltest-private
 
 HEADERS += \
-    testrunner.h
+    testrunner.h \
+    testrunner_p.h
 
 SOURCES += \
     testrunner.cpp

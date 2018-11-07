@@ -43,17 +43,15 @@
 
 #include <QCoreApplication>
 #include <QEventLoop>
-#include <QObject>
-#include <QPointer>
 #include <QQmlEngine>
 #include <QRegExp>
 #include <QRegularExpression>
 
 #include <qlogging.h>
-#include <QtQml/qqmlpropertymap.h>
 #include <QtTest/qtestsystem.h>
 #include <private/quicktestresult_p.h>
 #include <private/qtestlog_p.h>
+#include "testrunner_p.h"
 
 QT_BEGIN_NAMESPACE
 namespace QTest {
@@ -63,77 +61,8 @@ QT_END_NAMESPACE
 
 QT_BEGIN_NAMESPACE_AM
 
-class QTestRootObject : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(bool windowShown READ windowShown NOTIFY windowShownChanged)
-    Q_PROPERTY(bool hasTestCase READ hasTestCase WRITE setHasTestCase NOTIFY hasTestCaseChanged)
-    Q_PROPERTY(QObject *defined READ defined)
-
-public:
-    QTestRootObject(QObject *parent = nullptr)
-        : QObject(parent)
-        , m_windowShown(false)
-        , m_hasTestCase(false)
-        , m_hasQuit(false)
-        , m_defined(new QQmlPropertyMap(this))
-    {
-#if defined(QT_OPENGL_ES_2_ANGLE)
-        m_defined->insert(QLatin1String("QT_OPENGL_ES_2_ANGLE"), QVariant(true));
-#endif
-    }
-
-    static QTestRootObject *instance()
-    {
-        static QPointer<QTestRootObject> object = new QTestRootObject;
-        if (!object) {
-            qWarning("A new test root object has been created, the behavior may be compromised");
-            object = new QTestRootObject;
-        }
-        return object;
-    }
-
-    bool hasQuit() const { return m_hasQuit; }
-
-    bool hasTestCase() const { return m_hasTestCase; }
-    void setHasTestCase(bool value) { m_hasTestCase = value; emit hasTestCaseChanged(); }
-
-    bool windowShown() const { return m_windowShown; }
-    void setWindowShown(bool value) { m_windowShown = value; emit windowShownChanged(); }
-    QQmlPropertyMap *defined() const { return m_defined; }
-
-    void init() { setWindowShown(false); setHasTestCase(false); m_hasQuit = false; }
-
-Q_SIGNALS:
-    void windowShownChanged();
-    void hasTestCaseChanged();
-
-private Q_SLOTS:
-    void quit() { m_hasQuit = true; }
-
-private:
-    bool m_windowShown;
-    bool m_hasTestCase;
-    bool m_hasQuit;
-    QQmlPropertyMap *m_defined;
-    friend class TestRunner;
-};
-
-class AmTest : public QObject
-{
-    Q_OBJECT
-
-    AmTest() {}
-
-public:
-    enum MsgType { DebugMsg, WarningMsg, CriticalMsg, FatalMsg, InfoMsg, SystemMsg = CriticalMsg };
-    Q_ENUM(MsgType)
-
-    static AmTest *instance();
-
-    Q_INVOKABLE void ignoreMessage(MsgType type, const char* msg);
-    Q_INVOKABLE void ignoreMessage(MsgType type, const QRegExp &expression);
-};
+AmTest::AmTest()
+{}
 
 AmTest *AmTest::instance()
 {
@@ -177,6 +106,32 @@ void AmTest::ignoreMessage(MsgType type, const QRegExp &expression)
     qWarning() << "Cannot ignore message: regular expressions are not supported";
 #endif
 }
+
+
+QTestRootObject::QTestRootObject(QObject *parent)
+    : QObject(parent)
+    , m_windowShown(false)
+    , m_hasTestCase(false)
+    , m_hasQuit(false)
+    , m_defined(new QQmlPropertyMap(this))
+{
+#if defined(QT_OPENGL_ES_2_ANGLE)
+    m_defined->insert(QLatin1String("QT_OPENGL_ES_2_ANGLE"), QVariant(true));
+#endif
+}
+
+QTestRootObject *QTestRootObject::instance()
+{
+    static QPointer<QTestRootObject> object = new QTestRootObject;
+    if (!object) {
+        qWarning("A new test root object has been created, the behavior may be compromised");
+        object = new QTestRootObject;
+    }
+    return object;
+}
+
+
+
 
 static QObject *testRootObject(QQmlEngine *engine, QJSEngine *jsEngine)
 {
@@ -237,5 +192,3 @@ int TestRunner::exec(QQmlEngine *engine)
 }
 
 QT_END_NAMESPACE_AM
-
-#include "testrunner.moc"

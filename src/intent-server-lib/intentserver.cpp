@@ -294,6 +294,7 @@ void IntentServer::processRequestQueue()
             } else {
                 m_disambiguationQueue.enqueue(isr);
                 isr->setState(IntentServerRequest::State::WaitingForDisambiguation);
+                qCDebug(LogIntents) << "Waiting for disambiguation on intent" << isr->intentId();
                 QTimer::singleShot(m_disambiguationTimeout, [this, isr]() {
                     if (m_disambiguationQueue.removeOne(isr)) {
                         isr->setRequestFailed(qSL("Disambiguation timed out after %1 ms").arg(m_disambiguationTimeout));

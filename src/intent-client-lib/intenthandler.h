@@ -61,8 +61,6 @@ class IntentHandler : public QObject, public QQmlParserStatus
 
 public:
     IntentHandler(QObject *parent = nullptr);
-    IntentHandler(const QString &intentId, QObject *parent = nullptr);
-    IntentHandler(const QStringList &intentIds, QObject *parent = nullptr);
     ~IntentHandler() override;
 
     QStringList intentIds() const;

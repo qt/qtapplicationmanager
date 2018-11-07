@@ -48,17 +48,6 @@ IntentHandler::IntentHandler(QObject *parent)
     : QObject(parent)
 { }
 
-IntentHandler::IntentHandler(const QString &intentId, QObject *parent)
-    : QObject(parent)
-    , m_intentIds(intentId)
-{ }
-
-IntentHandler::IntentHandler(const QStringList &intentIds, QObject *parent)
-    : QObject(parent)
-    , m_intentIds(intentIds)
-
-{ }
-
 IntentHandler::~IntentHandler()
 {
     if (auto ie = IntentClient::instance())

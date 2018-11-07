@@ -88,6 +88,8 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ qSL("builtin-apps-manifest-dir"),   qSL("base directory for built-in application manifests."), qSL("dir") });
     m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("base directory for installed application manifests."), qSL("dir") });
     m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("base directory where application images are mounted to."), qSL("dir") });
+    m_clp.addOption({ qSL("disable-installer"),    qSL("disable the application installer sub-system.") });
+    m_clp.addOption({ qSL("disable-intents"),      qSL("disable the intents sub-system.") });
 #if defined(QT_DBUS_LIB)
 #  if defined(Q_OS_LINUX)
     const QString defaultDBus = qSL("session");
@@ -180,6 +182,30 @@ QString DefaultConfiguration::appImageMountDir() const
 {
     return value<QString>("app-image-mount-dir", { "applications", "appImageMountDir" });
 }
+
+bool DefaultConfiguration::disableInstaller() const
+{
+    return value<bool>("disable-installer", { "installer", "disable" });
+}
+
+bool DefaultConfiguration::disableIntents() const
+{
+    return value<bool>("disable-intents", { "intents", "disable" });
+}
+
+QMap<QString, int> DefaultConfiguration::intentTimeouts() const
+{
+    QVariantMap map = value<QVariant>(nullptr, { "intents", "timeouts" }).toMap();
+    QMap<QString, int> timeouts;
+
+    for (auto it = map.cbegin(); it != map.cend(); ++it) {
+        QVariant v = it.value();
+        if (v.canConvert<int>())
+            timeouts.insert(it.key(), v.toInt());
+    }
+    return timeouts;
+}
+
 
 bool DefaultConfiguration::fullscreen() const
 {

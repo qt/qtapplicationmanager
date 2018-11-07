@@ -122,6 +122,7 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li Enable building of all unit-tests.
 \row
   \li \c{-config disable-installer}
+    \target config disable installer
   \li Disable the installer part.
 \row
   \li \c{-config disable-external-dbus-interfaces}

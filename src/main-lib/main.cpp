@@ -223,7 +223,8 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->openGLConfiguration(),
                                cfg->containerConfigurations(), cfg->pluginFilePaths("container"),
                                cfg->iconThemeSearchPaths(), cfg->iconThemeName());
-    setupInstallationLocations(cfg->installationLocations());
+    if (!cfg->disableInstaller())
+        setupInstallationLocations(cfg->installationLocations());
 
     if (!cfg->database().isEmpty())
         loadApplicationDatabase(cfg->database(), cfg->recreateDatabase(), cfg->singleApp());
@@ -231,14 +232,16 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
                     cfg->quickLaunchIdleLoad(), cfg->singleApp());
 
-    if (m_installedAppsManifestDir.isEmpty()) {
+    if (m_installedAppsManifestDir.isEmpty() || cfg->disableInstaller()) {
         StartupTimer::instance()->checkpoint("skipping installer");
     } else {
         setupInstaller(cfg->appImageMountDir(), cfg->caCertificates(),
                        std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
                                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     }
-    setupIntents();
+    if (!cfg->disableIntents())
+        setupIntents(cfg->intentTimeouts());
+
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
     setupWindowManager(cfg->waylandSocketName(), cfg->slowAnimations(), cfg->noUiWatchdog());
@@ -459,9 +462,9 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
     StartupTimer::instance()->checkpoint("after application database loading");
 }
 
-void Main::setupIntents() Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupIntents(const QMap<QString, int> &timeouts) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance();
+    m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance(timeouts);
 
     qCDebug(LogSystem) << "Registering intents:";
 

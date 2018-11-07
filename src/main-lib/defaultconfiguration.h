@@ -66,6 +66,9 @@ public:
     QStringList builtinAppsManifestDirs() const;
     QString installedAppsManifestDir() const;
     QString appImageMountDir() const;
+    bool disableInstaller() const;
+    bool disableIntents() const;
+    QMap<QString, int> intentTimeouts() const;
 
     bool fullscreen() const;
     bool noFullscreen() const;

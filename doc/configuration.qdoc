@@ -352,6 +352,12 @@ all your imports paths and file references relative to your main config file.
               directory is not writable or if the environment variable is not even set in the first
               place.
 \row
+    \li \b --disable-installer
+    \br \e installer/disable
+    \li bool
+    \li Completely disables the installer sub-system at runtime. Another option would be to not
+        even compile it in the first place in the \l{config disable installer}{qmake step}.
+\row
     \li \b -
     \br \e installer/caCertificates
         \target ca certificates

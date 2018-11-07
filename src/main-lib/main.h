@@ -117,7 +117,7 @@ protected:
     void setupInstallationLocations(const QVariantList &installationLocations);
     void loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
                                  const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupIntents() Q_DECL_NOEXCEPT_EXPR(false);
+    void setupIntents(const QMap<QString, int> &timeouts) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
                          int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
                          const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);

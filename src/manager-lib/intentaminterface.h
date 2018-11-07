@@ -63,7 +63,7 @@ class AbstractApplication;
 class IntentServerRequest;
 
 namespace IntentAMImplementation {
-IntentServer *createIntentServerAndClientInstance();
+IntentServer *createIntentServerAndClientInstance(const QMap<QString, int> &timeouts);
 void addApplicationIntents(AbstractApplication *app, IntentServer *intentServer);
 void removeApplicationIntents(AbstractApplication *app, IntentServer *intentServer);
 }

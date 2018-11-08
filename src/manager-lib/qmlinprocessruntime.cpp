@@ -274,7 +274,7 @@ void QmlInProcessRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceIt
             connect(surfacePtr, &InProcessSurfaceItem::released, this, [this, surfacePtr]() {
                 onSurfaceItemReleased(surfacePtr);
             });
-            connect(surfacePtr, &InProcessSurfaceItem::visibleClientSideChanged, this, [this, surfacePtr]() {
+            connect(surfacePtr, &InProcessSurfaceItem::visibleClientSideChanged, this, [this]() {
                 if (m_stopIfNoVisibleSurfaces && !hasVisibleSurfaces())
                     stop();
             });

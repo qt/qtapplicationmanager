@@ -97,14 +97,6 @@ static qint64 getDBusPeerPid(const QDBusConnection &conn)
     return 0;
 }
 
-#else
-
-static qint64 getDBusPeerPid(const QDBusConnection &conn)
-{
-    Q_UNUSED(conn)
-    return 0;
-}
-
 #endif
 
 NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, NativeRuntimeManager *manager)
@@ -117,11 +109,7 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
 
     connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
             this, [this](const QDBusConnection &connection) {
-#if defined(Q_OS_MACOS)
-        // getting the pid is not supported on macOS. Accepting everything is not secure
-        // but it at least works
-        onDBusPeerConnection(connection);
-#else
+#if defined(AM_MULTI_PROCESS) && defined(Q_OS_LINUX)
         qint64 pid = getDBusPeerPid(connection);
         if (pid <= 0) {
             QDBusConnection::disconnectFromPeer(connection.name());
@@ -143,6 +131,10 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
 
         QDBusConnection::disconnectFromPeer(connection.name());
         qCWarning(LogSystem) << "Connection attempt on peer D-Bus from unknown pid:" << pid;
+#else
+        // getting the pid is not supported on e.g. macOS. Accepting everything is not secure
+        // but it at least works
+        onDBusPeerConnection(connection);
 #endif
     });
 }

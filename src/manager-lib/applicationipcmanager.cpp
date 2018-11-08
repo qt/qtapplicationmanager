@@ -302,7 +302,7 @@ void ApplicationIPCManager::attachToRuntime(AbstractRuntime *runtime)
 
             // make sure that future extension interfaces get registered as well
             connect(this, &ApplicationIPCManager::interfaceCreated,
-                    this, [this, connection, nativeRuntime](ApplicationIPCInterface *iface) {
+                    this, [connection, nativeRuntime](ApplicationIPCInterface *iface) {
                 registerInterfaceHelper(connection, iface, nativeRuntime->application(), nativeRuntime);
 
             });

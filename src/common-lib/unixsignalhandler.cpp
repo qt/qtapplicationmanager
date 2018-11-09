@@ -167,7 +167,7 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
                 int sig = 0;
 
                 if (read(m_pipe[0], &sig, sizeof(int)) != sizeof(int)) {
-                    qCWarning(LogSystem) << "Error writing to signal handler:" << strerror(errno);;
+                    qCWarning(LogSystem) << "Error reading from signal handler:" << strerror(errno);;
                     return;
                 }
 
@@ -225,6 +225,7 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
     for (int sig : sigs) {
         sigaddset(&unblockSet, sig);
         sigaction(sig, &sigact, nullptr);
+        m_resetSignalMask &= ~am_sigmask(sig); // cancel unfinished reset
     }
     sigprocmask(SIG_UNBLOCK, &unblockSet, nullptr);
 #else

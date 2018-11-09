@@ -610,7 +610,7 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     if (!quickControlsStyle.isEmpty())
         qputenv("QT_QUICK_CONTROLS_STYLE", quickControlsStyle.toLocal8Bit());
 
-    qmlRegisterType<QmlInProcessNotification>("QtApplicationManager.Application", 1, 0, "Notification");
+    qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 1, 0, "Notification");
     qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager.Application", 1, 0, "ApplicationInterfaceExtension");
 
 #if !defined(AM_HEADLESS)

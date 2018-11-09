@@ -21,7 +21,10 @@ INSTALLS += target
 AM_COPY_DIRECTORIES += apps
 AM_COPY_FILES += system-ui.qml
 
-AM_DEFAULT_ARGS=--builtin-apps-manifest-dir $$target.path/apps $$target.path/system-ui.qml
+prefix_build:tpath = $$target.path
+else:tpath = $$_PRO_FILE_PWD_
+
+AM_DEFAULT_ARGS=--builtin-apps-manifest-dir $$tpath/apps $$tpath/system-ui.qml
 
 example_sources.path = $$target.path
 example_sources.files = $$AM_COPY_FILES $$AM_COPY_DIRECTORIES

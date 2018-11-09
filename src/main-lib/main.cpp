@@ -200,6 +200,8 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     CrashHandler::setCrashActionConfiguration(cfg->managerCrashAction());
     setupLoggingRules(cfg->verbose(), cfg->loggingRules());
     setupQmlDebugging(cfg->qmlDebugging());
+    if (!cfg->dltId().isEmpty() || !cfg->dltDescription().isEmpty())
+        Logging::setSystemUiDltId(cfg->dltId().toLocal8Bit(), cfg->dltDescription().toLocal8Bit());
     Logging::registerUnregisteredDltContexts();
 
     // dump accumulated warnings, now that logging rules are set

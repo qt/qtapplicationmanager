@@ -265,12 +265,18 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         StartupTimer::instance()->checkpoint("starting application");
     }
 
-    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(qSL("runtimeParameters")));
-
     //Change the DLT Application description, to easily identify the application on the DLT logs.
-    char dltAppId[5];
-    qsnprintf(dltAppId, 5, "A%03d", application.value(qSL("uniqueNumber")).toInt());
-    Logging::setDltApplicationId(dltAppId, QByteArray("Application-Manager App: ") + applicationId.toLocal8Bit());
+    const QVariantMap dlt = qdbus_cast<QVariantMap>(application.value(qSL("dlt")));
+    QByteArray dltId = dlt.value(qSL("id")).toString().toLocal8Bit();
+    QByteArray dltDescription = dlt.value(qSL("description")).toString().toLocal8Bit();
+    if (dltId.isEmpty()) {
+        char uniqueId[5];
+        qsnprintf(uniqueId, sizeof(uniqueId), "A%03d", application.value(qSL("uniqueNumber")).toInt());
+        dltId = uniqueId;
+    }
+    if (dltDescription.isEmpty())
+        dltDescription = QByteArray("Application-Manager App: ") + applicationId.toLocal8Bit();
+    Logging::setDltApplicationId(dltId, dltDescription);
     Logging::registerUnregisteredDltContexts();
 
     // Dress up the ps output to make it easier to correlate all the launcher processes
@@ -281,6 +287,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             args = qApp->arguments().mid(1).join(qL1C(' ')).toLocal8Bit();
         ProcessTitle::setTitle("%s%s%s", id.constData(), args.isEmpty() ? "" : " ", args.constData());
     }
+
+    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(qSL("runtimeParameters")));
 
     qCDebug(LogQmlRuntime) << "loading" << applicationId << "- main:" << qmlFile << "- document:" << document
                            << "- mimeType:" << mimeType << "- parameters:" << runtimeParameters

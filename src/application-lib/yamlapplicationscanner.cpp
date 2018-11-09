@@ -180,10 +180,26 @@ AbstractApplicationInfo *YamlApplicationScanner::scanInternal(const QString &fil
                         qSL("esMajorVersion"),
                         qSL("esMinorVersion")
                     };
-                    for (auto it = appInfo->m_openGLConfiguration.cbegin(); it != appInfo->m_openGLConfiguration.cend(); ++it) {
-                        if (!validKeys.contains(it.key()))
-                            throw Exception(Error::Parse, "the 'opengl' object contains the unsupported key '%1'").arg(it.key());
+                    for (auto it = appInfo->m_openGLConfiguration.cbegin();
+                              it != appInfo->m_openGLConfiguration.cend(); ++it) {
+                        if (!validKeys.contains(it.key())) {
+                            throw Exception(Error::Parse, "the 'opengl' object contains the unsupported key '%1'")
+                                                          .arg(it.key());
+                        }
                     }
+                } else if (field == "logging") {
+                    const QVariantMap logging = v.toMap();
+                    if (!logging.isEmpty()) {
+                        if (logging.size() > 1 || logging.firstKey() != qSL("dlt"))
+                            throw Exception(Error::Parse, "'logging' only supports the 'dlt' key");
+                        appInfo->m_dlt = logging.value(qSL("dlt")).toMap();
+
+                        // sanity check
+                        for (auto it = appInfo->m_dlt.cbegin(); it != appInfo->m_dlt.cend(); ++it) {
+                            if (it.key() != qSL("id") && it.key() != qSL("description"))
+                                throw Exception(Error::Parse, "unsupported key in 'logging/dlt'");
+                        }
+                     }
                 } else if (field == "intents") {
                     appInfo->m_intents = v.toList();
                 } else {

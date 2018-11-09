@@ -218,6 +218,20 @@ The meaning of the fields within the \c info.yaml actual manifest data (second Y
         The properties will just be converted to QVariantMaps, but the application-manager will not
         interpret them in any way.
 \row
+    \li \c logging/dlt/id
+    \li string
+    \li If provided, it will be used as the automotive DLT application id. The size is limited to
+        four characters, additional characters will be discarded. If the id is not provided, it
+        will default to 'A' followed by a three digit application number. Note that the id will be
+        "PCLQ" for qml runtimes from the very start of the application process until it is changed
+        as described here.
+\row
+    \li \c logging/dlt/description
+    \li string
+    \li If provided, it will be used as the automotive DLT application description. This allows to
+        augment the short DLT application id with a more verbose definition. A default description
+        will be used, if not explicitly provided.
+\row
     \li \c importance
     \li real
     \li \e Deprecated. Use \c applicationProperties if needed.

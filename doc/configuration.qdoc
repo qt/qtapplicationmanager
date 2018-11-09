@@ -295,16 +295,30 @@ all your imports paths and file references relative to your main config file.
         format. Application-manager specific logging categories are listed in
         \l {Logging and Debugging}.
 \row
-    \li \b --qml-debug
-    \br \b -
-    \li bool
-    \li Enables QML Debugging/Profiling. See \l {Logging and Debugging} for more information.
+    \li \b -
+    \br \e logging/dlt/id
+    \li string
+    \li If provided, it will be used as the automotive DLT application id. The size is limited to
+        four characters, additional characters will be discarded. Note that the default id "PCAM"
+        is used until this configuration option has been applied.
+\row
+    \li \b -
+    \br \e logging/dlt/description
+    \li string
+    \li If provided, it will be used as the automotive DLT application description. This allows to
+        augment the short DLT application id with a more verbose definition. Note that a default
+        description is used until this configuration option has been applied.
 \row
     \li \b --no-dlt-logging
-    \br \b -
+    \br \e -
     \li bool
     \li Disables logging using automotive DLT. This is especially useful when currently no dlt-daemon
         is running as otherwise the processes will hang at exit for some time to send the logs.
+\row
+    \li \b --qml-debug
+    \br \e -
+    \li bool
+    \li Enables QML Debugging/Profiling. See \l {Logging and Debugging} for more information.
 \row
     \li \b -
     \br \e installationLocations

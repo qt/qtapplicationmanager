@@ -90,6 +90,8 @@ public:
     QString iconThemeName() const;
     QStringList iconThemeSearchPaths() const;
     bool enableTouchEmulation() const;
+    QString dltId() const;
+    QString dltDescription() const;
 
     QVariantMap openGLConfiguration() const;
 

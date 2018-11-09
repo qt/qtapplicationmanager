@@ -159,6 +159,7 @@ private:
 
     QVariantMap m_openGLConfiguration;
     QVariantList m_intents;
+    QVariantMap m_dlt;
 
     // added by installer
     QScopedPointer<InstallationReport> m_installationReport;

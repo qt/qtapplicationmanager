@@ -71,6 +71,11 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 
 QT_BEGIN_NAMESPACE_AM
 
+#if defined(QT_GENIVIEXTRAS_LIB)
+static const char *s_defaultSystemUiDltId = "PCAM";
+static const char *s_defaultSystemUiDltDescription = "Pelagicore Application-Manager";
+#endif
+
 /*
 //! [am-logging-categories]
 \list
@@ -89,7 +94,7 @@ QT_BEGIN_NAMESPACE_AM
 //! [am-logging-categories]
 */
 QDLT_REGISTER_CONTEXT_ON_FIRST_USE(true)
-QDLT_REGISTER_APPLICATION("PCAM", "Pelagicore Application-Manager")
+QDLT_REGISTER_APPLICATION(s_defaultSystemUiDltId, s_defaultSystemUiDltDescription)
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General system messages")
 QDLT_LOGGING_CATEGORY(LogInstaller, "am.installer", "INST", "Installer sub-system")
 QDLT_LOGGING_CATEGORY(LogGraphics, "am.graphics", "GRPH", "OpenGL/UI related messages")
@@ -346,19 +351,32 @@ void Logging::setDltEnabled(bool enabled)
 
 void Logging::registerUnregisteredDltContexts()
 {
-    if (!s_dltEnabled)
-        return;
 #ifdef AM_GENIVIEXTRAS_LAZY_INIT
-    globalDltRegistration()->registerUnregisteredContexts();
+    if (s_dltEnabled)
+        globalDltRegistration()->registerUnregisteredContexts();
+#endif
+}
+
+void Logging::setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dltAppDescription)
+{
+#if defined(QT_GENIVIEXTRAS_LIB)
+    if (s_dltEnabled) {
+        const QByteArray id = dltAppId.isEmpty() ? QByteArray(s_defaultSystemUiDltId) : dltAppId;
+        const QByteArray description = dltAppDescription.isEmpty() ? QByteArray(s_defaultSystemUiDltDescription)
+                                                                   : dltAppDescription;
+        globalDltRegistration()->registerApplication(id, description);
+    }
+#else
+    Q_UNUSED(dltAppId)
+    Q_UNUSED(dltAppDescription)
 #endif
 }
 
 void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription)
 {
-    if (!s_dltEnabled)
-        return;
 #if defined(QT_GENIVIEXTRAS_LIB)
-    globalDltRegistration()->registerApplication(dltAppId, dltAppDescription);
+    if (s_dltEnabled)
+        globalDltRegistration()->registerApplication(dltAppId, dltAppDescription);
 #else
     Q_UNUSED(dltAppId)
     Q_UNUSED(dltAppDescription)

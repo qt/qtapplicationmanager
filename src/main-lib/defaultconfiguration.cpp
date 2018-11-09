@@ -312,6 +312,16 @@ bool DefaultConfiguration::enableTouchEmulation() const
     return value<bool>("enable-touch-emulation", { "ui", "enableTouchEmulation" });
 }
 
+QString DefaultConfiguration::dltId() const
+{
+    return value<QString>(nullptr, { "logging", "dlt", "id" });
+}
+
+QString DefaultConfiguration::dltDescription() const
+{
+    return value<QString>(nullptr, { "logging", "dlt", "description" });
+}
+
 QVariantMap DefaultConfiguration::openGLConfiguration() const
 {
     return value<QVariant>(nullptr, { "ui", "opengl" }).toMap();

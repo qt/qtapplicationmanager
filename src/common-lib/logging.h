@@ -73,6 +73,7 @@ public:
     static void setDltEnabled(bool enabled);
 
     static void registerUnregisteredDltContexts();
+    static void setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dltAppDescription);
     static void setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription);
 
     static void logToDlt(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
@@ -84,7 +85,6 @@ private:
     static QtMessageHandler s_defaultQtHandler;
     static QByteArray s_applicationId;
 };
-
 
 void am_trace(QDebug);
 template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest... trest)

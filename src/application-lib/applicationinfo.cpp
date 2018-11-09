@@ -370,7 +370,8 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
        << serializedReport
        << m_manifestDir.absolutePath()
        << m_codeDir.absolutePath()
-       << m_uid;
+       << m_uid
+       << m_dlt;
 }
 
 bool ApplicationInfo::supportsApplicationInterface() const
@@ -399,7 +400,8 @@ void ApplicationInfo::read(QDataStream &ds)
        >> installationReport
        >> manifestDir
        >> codeDir
-       >> m_uid;
+       >> m_uid
+       >> m_dlt;
 
     m_capabilities.sort();
     m_categories.sort();
@@ -432,6 +434,7 @@ void ApplicationInfo::toVariantMapHelper(QVariantMap &map) const
     map[qSL("installationLocationId")] = installationReport() ? installationReport()->installationLocationId()
                                                               : QString();
     map[qSL("supportsApplicationInterface")] = m_supportsApplicationInterface;
+    map[qSL("dlt")] = m_dlt;
 }
 
 QT_END_NAMESPACE_AM

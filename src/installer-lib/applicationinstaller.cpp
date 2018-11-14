@@ -813,7 +813,7 @@ QString ApplicationInstaller::removePackage(const QString &id, bool keepDocument
 
     Returns \c ApplicationInstaller.Invalid if the \a taskId is invalid.
 */
-AsynchronousTask::TaskState ApplicationInstaller::taskState(const QString &taskId)
+AsynchronousTask::TaskState ApplicationInstaller::taskState(const QString &taskId) const
 {
     auto allTasks = d->taskQueue;
     allTasks.append(d->activeTask);
@@ -835,7 +835,7 @@ AsynchronousTask::TaskState ApplicationInstaller::taskState(const QString &taskI
 
     Returns an empty string if the \a taskId is invalid.
 */
-QString ApplicationInstaller::taskApplicationId(const QString &taskId)
+QString ApplicationInstaller::taskApplicationId(const QString &taskId) const
 {
     auto allTasks = d->taskQueue;
     allTasks.append(d->activeTask);

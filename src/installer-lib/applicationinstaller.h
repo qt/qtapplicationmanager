@@ -125,8 +125,8 @@ public:
     Q_SCRIPTABLE void acknowledgePackageInstallation(const QString &taskId);
     Q_SCRIPTABLE QString removePackage(const QString &id, bool keepDocuments, bool force = false);
 
-    Q_SCRIPTABLE AsynchronousTask::TaskState taskState(const QString &taskId);
-    Q_SCRIPTABLE QString taskApplicationId(const QString &taskId);
+    Q_SCRIPTABLE AsynchronousTask::TaskState taskState(const QString &taskId) const;
+    Q_SCRIPTABLE QString taskApplicationId(const QString &taskId) const;
     Q_SCRIPTABLE QStringList activeTaskIds() const;
     Q_SCRIPTABLE bool cancelTask(const QString &taskId);
 

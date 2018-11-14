@@ -217,3 +217,15 @@ QString ApplicationInstallerAdaptor::taskState(const QString &taskId)
     AM_AUTHENTICATE_DBUS(QString)
     return taskStateToString(ApplicationInstaller::instance()->taskState(taskId));
 }
+
+QString ApplicationInstallerAdaptor::taskApplicationId(const QString &taskId)
+{
+    AM_AUTHENTICATE_DBUS(QString)
+    return ApplicationInstaller::instance()->taskApplicationId(taskId);
+}
+
+QStringList ApplicationInstallerAdaptor::activeTaskIds()
+{
+    AM_AUTHENTICATE_DBUS(QStringList)
+    return ApplicationInstaller::instance()->activeTaskIds();
+}

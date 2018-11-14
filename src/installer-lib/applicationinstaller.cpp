@@ -848,6 +848,21 @@ QString ApplicationInstaller::taskApplicationId(const QString &taskId)
 }
 
 /*!
+    \qmlmethod list<string> ApplicationInstaller::activeTaskIds()
+
+    Retuns a list of all currently active installation task ids.
+*/
+QStringList ApplicationInstaller::activeTaskIds() const
+{
+    QStringList result;
+    for (const AsynchronousTask *task : qAsConst(d->taskQueue))
+        result << task->id();
+    if (d->activeTask)
+        result << d->activeTask->id();
+    return result;
+}
+
+/*!
     \qmlmethod bool ApplicationInstaller::cancelTask(string taskId)
 
     Tries to cancel the installation task identified by \a taskId.

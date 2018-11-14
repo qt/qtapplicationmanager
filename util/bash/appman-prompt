@@ -51,7 +51,8 @@ _appman-controller()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     commands="start-application debug-application stop-application stop-all-applications list-applications \
-show-application install-package remove-package list-installation-locations show-installation-location"
+show-application install-package remove-package list-installation-tasks cancel-installation-task \
+list-installation-locations show-installation-location"
     opts="-h -v --help --version"
 
     if [ ${COMP_CWORD} -eq 1 ] && [[ ${cur} == -* ]] ; then
@@ -74,6 +75,11 @@ show-application install-package remove-package list-installation-locations show
                 ;;
             install-package)
                 COMPREPLY=( $( compgen -f -- ${cur}) )
+                ;;
+            cancel-installation-task)
+                eval cmd="${COMP_WORDS[0]}"
+                tasks="$(${cmd} list-installation-tasks 2> /dev/null)"
+                COMPREPLY=( $(compgen -W "${tasks}" -- ${cur}) )
                 ;;
             show-installation-location)
                 eval cmd="${COMP_WORDS[0]}"

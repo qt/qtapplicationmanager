@@ -79,6 +79,13 @@
       <arg type="s" direction="out"/>
       <arg name="taskId" type="s" direction="in"/>
     </method>
+    <method name="taskApplicationId">
+      <arg type="s" direction="out"/>
+      <arg name="taskId" type="s" direction="in"/>
+    </method>
+    <method name="activeTaskIds">
+      <arg type="as" direction="out"/>
+    </method>
     <method name="cancelTask">
       <arg type="b" direction="out"/>
       <arg name="taskId" type="s" direction="in"/>

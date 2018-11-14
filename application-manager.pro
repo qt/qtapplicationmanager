@@ -116,6 +116,8 @@ OTHER_FILES += \
     LICENSE.*[^~] \
     config.tests/libarchive/* \
     config.tests/libyaml/* \
+    util/bash/appman-prompt \
+    util/bash/README \
 
 GCOV_EXCLUDE = /usr/* \
                $$[QT_INSTALL_PREFIX]/* \

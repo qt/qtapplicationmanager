@@ -127,6 +127,7 @@ public:
 
     Q_SCRIPTABLE AsynchronousTask::TaskState taskState(const QString &taskId);
     Q_SCRIPTABLE QString taskApplicationId(const QString &taskId);
+    Q_SCRIPTABLE QStringList activeTaskIds() const;
     Q_SCRIPTABLE bool cancelTask(const QString &taskId);
 
     // convenience function for app-store implementations

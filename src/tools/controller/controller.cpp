@@ -37,11 +37,6 @@
 #include <QDBusPendingReply>
 #include <QDBusError>
 #include <QMetaObject>
-#include <QThread>
-
-#if defined(Q_OS_UNIX)
-#  include <sys/poll.h>
-#endif
 
 #include <functional>
 
@@ -54,6 +49,8 @@
 
 #include "applicationmanager_interface.h"
 #include "applicationinstaller_interface.h"
+
+#include "interrupthandler.h"
 
 QT_USE_NAMESPACE_AM
 
@@ -141,6 +138,8 @@ enum Command {
     ShowApplication,
     InstallPackage,
     RemovePackage,
+    ListInstallationTasks,
+    CancelInstallationTask,
     ListInstallationLocations,
     ShowInstallationLocation
 };
@@ -159,6 +158,8 @@ static struct {
     { ShowApplication,  "show-application",  "Show application meta-data." },
     { InstallPackage,   "install-package",   "Install a package." },
     { RemovePackage,    "remove-package",    "Remove a package." },
+    { ListInstallationTasks,     "list-installation-tasks",     "List all active installation tasks." },
+    { CancelInstallationTask,    "cancel-installation-task",    "Cancel an active installation task." },
     { ListInstallationLocations, "list-installation-locations", "List all installaton locations." },
     { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." }
 };
@@ -188,6 +189,8 @@ static void listApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void showApplication(const QString &appId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
 static void installPackage(const QString &package, const QString &location, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false);
 static void removePackage(const QString &package, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false);
+static void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false);
+static void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
 static void showInstallationLocation(const QString &location, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
 
@@ -405,6 +408,26 @@ int main(int argc, char *argv[])
                                  clp.isSet(qSL("f"))));
             break;
 
+        case ListInstallationTasks:
+            clp.process(a);
+            a.runLater(listInstallationTasks);
+            break;
+
+        case CancelInstallationTask: {
+            clp.addPositionalArgument(qSL("task-id"), qSL("The id of an active installation task."));
+            clp.addOption({ { qSL("a"), qSL("all") }, qSL("Cancel all active installation tasks.") });
+            clp.process(a);
+
+            int args = clp.positionalArguments().size();
+            bool all = clp.isSet(qSL("a"));
+            if (!(((args == 1) && all) || ((args == 2) && !all)))
+                clp.showHelp(1);
+
+            a.runLater(std::bind(cancelInstallationTask,
+                                 all,
+                                 args == 2 ? clp.positionalArguments().at(1) : QString()));
+            break;
+        }
         case ListInstallationLocations:
             clp.process(a);
             a.runLater(listInstallationLocations);
@@ -514,48 +537,11 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
         if (!isStarted) {
             qApp->exit(2);
         } else {
-            // on Ctrl+C or SIGTERM -> stop the application
-            UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
-            { SIGTERM, SIGINT
-#if defined(Q_OS_UNIX)
-                             , SIGPIPE, SIGHUP
-#endif
-            }, [appId](int /*sig*/) {
+            InterruptHandler::install([appId](int) {
                 auto reply = dbus.manager()->stopApplication(appId, true);
                 reply.waitForFinished();
                 qApp->exit(1);
             });
-
-#if defined(POLLRDHUP)
-            // ssh does not forward Ctrl+C, but we can detect a hangup condition on stdin
-            class HupThread : public QThread // clazy:exclude=missing-qobject-macro
-            {
-            public:
-                HupThread(QCoreApplication *parent)
-                    : QThread(parent)
-                {
-                    connect(parent, &QCoreApplication::aboutToQuit, this, [this]() {
-                        if (isRunning()) {
-                            terminate();
-                            wait();
-                        }
-                    });
-                }
-
-                void run() override
-                {
-                    while (true) {
-                        struct pollfd pfd = { 0, POLLRDHUP, 0 };
-                        int res = poll(&pfd, 1, -1);
-                        if (res == 1 && pfd.revents & POLLHUP) {
-                            kill(getpid(), SIGHUP);
-                            return;
-                        }
-                    }
-                }
-            };
-            (new HupThread(qApp))->start();
-#endif // defined(POLLRDHUP)
         }
     }
 }
@@ -692,6 +678,15 @@ void installPackage(const QString &package, const QString &location, bool acknow
     installationId = reply.value();
     if (installationId.isEmpty())
         throw Exception(Error::IO, "startPackageInstallation returned an empty taskId");
+
+    // cancel the job on Ctrl+C
+
+    InterruptHandler::install([](int) {
+        fprintf(stdout, "Cancelling package installation.\n");
+        auto reply = dbus.installer()->cancelTask(installationId);
+        reply.waitForFinished();
+        qApp->exit(1);
+    });
 }
 
 void removePackage(const QString &applicationId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false)
@@ -733,6 +728,93 @@ void removePackage(const QString &applicationId, bool keepDocuments, bool force)
     installationId = reply.value();
     if (installationId.isEmpty())
         throw Exception(Error::IO, "removePackage returned an empty taskId");
+}
+
+void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false)
+{
+    dbus.connectToInstaller();
+
+    auto reply = dbus.installer()->activeTaskIds();
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
+
+    const auto taskIds = reply.value();
+    for (auto taskId : taskIds)
+        fprintf(stdout, "%s\n", qPrintable(taskId));
+    qApp->quit();
+}
+
+
+void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXPR(false)
+{
+    dbus.connectToInstaller();
+
+    // both the async lambdas below need to share this variables
+    static QStringList cancelTaskIds;
+    static int result = 0;
+
+    if (all) {
+        dbus.connectToInstaller();
+
+        auto reply = dbus.installer()->activeTaskIds();
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
+
+        const auto taskIds = reply.value();
+        for (auto taskId : taskIds)
+            cancelTaskIds << taskId;
+    } else {
+        cancelTaskIds << taskId;
+    }
+
+    if (cancelTaskIds.isEmpty())
+        qApp->quit();
+
+    // on task failure
+
+    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFailed,
+                     [](const QString &taskId, int errorCode, const QString &errorString) {
+        if (cancelTaskIds.removeOne(taskId)) {
+            if (errorCode != int(Error::Canceled)) {
+                fprintf(stdout, "Could not cancel task %s anymore - the installation task already failed (%s).\n",
+                        qPrintable(taskId), qPrintable(errorString));
+                result |= 2;
+            } else {
+                fprintf(stdout, "Installation task was canceled successfully.\n");
+            }
+            if (cancelTaskIds.isEmpty())
+                qApp->exit(result);
+        }
+    });
+
+    // on success
+
+    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFinished,
+                     [](const QString &taskId) {
+        if (cancelTaskIds.removeOne(taskId)) {
+            fprintf(stdout, "Could not cancel task %s anymore - the installation task already finished successfully.\n",
+                    qPrintable(taskId));
+            result |= 1;
+            if (cancelTaskIds.isEmpty())
+                qApp->exit(result);
+        }
+    });
+
+    for (auto cancelTaskId : qAsConst(cancelTaskIds)) {
+        fprintf(stdout, "Canceling installation task %s...\n", qPrintable(cancelTaskId));
+
+        // cancel the task
+
+        auto reply = dbus.installer()->cancelTask(cancelTaskId);
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call cancelTask via DBus: %1").arg(reply.error().message());
+
+        if (!reply.value())
+            throw Exception(Error::IO, "failed to cancel the installation task.");
+    }
 }
 
 void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)

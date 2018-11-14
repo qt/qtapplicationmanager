@@ -10,6 +10,7 @@ CONFIG *= console
 
 SOURCES +=  \
     controller.cpp \
+    interrupthandler.cpp
 
 appmanif.files =  ../../dbus-lib/io.qt.applicationmanager.xml
 appmanif.header_flags = -i dbus-utilities.h
@@ -21,3 +22,6 @@ DBUS_INTERFACES += \
 load(qt_tool)
 
 load(install-prefix)
+
+HEADERS += \
+    interrupthandler.h

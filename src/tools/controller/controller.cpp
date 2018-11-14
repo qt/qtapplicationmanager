@@ -591,7 +591,9 @@ void listApplications() Q_DECL_NOEXCEPT_EXPR(false)
     if (reply.isError())
         throw Exception(Error::IO, "failed to call applicationIds via DBus: %1").arg(reply.error().message());
 
-    fprintf(stdout, "%s\n", qPrintable(reply.value().join(qL1C('\n'))));
+    const auto applicationIds = reply.value();
+    for (auto applicationId : applicationIds)
+        fprintf(stdout, "%s\n", qPrintable(applicationId));
     qApp->quit();
 }
 
@@ -742,7 +744,9 @@ void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
     if (reply.isError())
         throw Exception(Error::IO, "failed to call installationLocationIds via DBus: %1").arg(reply.error().message());
 
-    fprintf(stdout, "%s\n", qPrintable(reply.value().join(qL1C('\n'))));
+    const auto installationLocationIds = reply.value();
+    for (auto installationLocationId : installationLocationIds)
+        fprintf(stdout, "%s\n", qPrintable(installationLocationId));
     qApp->quit();
 }
 

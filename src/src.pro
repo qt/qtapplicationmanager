@@ -83,7 +83,6 @@ SUBDIRS = \
 !tools-only {
     SUBDIRS += \
         plugin_interfaces \
-        tools_uploader \
 
     !disable-external-dbus-interfaces:qtHaveModule(dbus):SUBDIRS += \
         dbus_lib \
@@ -114,6 +113,7 @@ SUBDIRS = \
 
 !android:SUBDIRS += \
     tools_packager \
+    tools_uploader \
 
 qtHaveModule(dbus):SUBDIRS += \
     tools_controller \

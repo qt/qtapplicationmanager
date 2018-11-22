@@ -56,9 +56,20 @@
 QT_FORWARD_DECLARE_CLASS(QWaylandResource)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShellSurface)
-QT_FORWARD_DECLARE_CLASS(QWaylandXdgShellV5)
-QT_FORWARD_DECLARE_CLASS(QWaylandXdgSurfaceV5)
 QT_FORWARD_DECLARE_CLASS(QWaylandTextInputManager)
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    QT_FORWARD_DECLARE_CLASS(QWaylandXdgShell)
+    QT_FORWARD_DECLARE_CLASS(QWaylandXdgSurface)
+    QT_FORWARD_DECLARE_CLASS(QWaylandXdgToplevel)
+    typedef QWaylandXdgShell WaylandXdgShell;
+    typedef QWaylandXdgSurface WaylandXdgSurface;
+#else
+    QT_FORWARD_DECLARE_CLASS(QWaylandXdgShellV5)
+    QT_FORWARD_DECLARE_CLASS(QWaylandXdgSurfaceV5)
+    typedef QWaylandXdgShellV5 WaylandXdgShell;
+    typedef QWaylandXdgSurfaceV5 WaylandXdgSurface;
+#endif
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -69,6 +80,15 @@ class WindowSurfaceQuickItem;
 // A WindowSurface object exists for every Wayland surface created in the Wayland server.
 // Not every WindowSurface maybe an application's Window though - those that are, are available
 // through the WindowManager model.
+
+// On Qt 5.11: we support wl-shell and xdg-shell-v5 shell integration extensions. There's no xdg-shell yet
+//             in qtwayland
+//
+// On Qt 5.12: we support wl-shell and xdg-shell shell integration extensions. Both wl-shell and xdg-shell-v5
+//             are deprecated and additionally xdg-shell-v5 is partially broken in qtwayland.
+//
+// In any case, wl-shell doesn't provide all the features needed by appman, so clients using it will never work
+// perfectly.
 
 class WindowSurface : public QWaylandQuickSurface
 {
@@ -98,7 +118,11 @@ private:
     QWaylandSurface *m_surface;
     WaylandCompositor *m_compositor;
     QWaylandWlShellSurface *m_wlSurface = nullptr;
-    QWaylandXdgSurfaceV5 *m_xdgSurface = nullptr;
+
+    WaylandXdgSurface *m_xdgSurface = nullptr;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    QWaylandXdgToplevel *m_topLevel = nullptr;
+#endif
 
     friend class WaylandCompositor;
 };
@@ -120,11 +144,14 @@ signals:
 protected:
     void doCreateSurface(QWaylandClient *client, uint id, int version);
     void createWlSurface(QWaylandSurface *surface, const QWaylandResource &resource);
-    void onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface);
+    void onXdgSurfaceCreated(WaylandXdgSurface *xdgSurface);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    void onTopLevelCreated(QWaylandXdgToplevel *toplevel, QWaylandXdgSurface *xdgSurface);
+#endif
     void onXdgPongReceived(uint serial);
 
     QWaylandWlShell *m_wlShell;
-    QWaylandXdgShellV5 *m_xdgShell;
+    WaylandXdgShell *m_xdgShell;
     QVector<QWaylandOutput *> m_outputs;
     WaylandQtAMServerExtension *m_amExtension;
     QWaylandTextInputManager *m_textInputManager;

@@ -297,7 +297,12 @@ bool NativeRuntime::start()
         { qSL("QT_IM_MODULE"), QString() },     // Applications should use wayland text input
         { qSL("QT_SCALE_FACTOR"), QString() },  // do not scale wayland clients
         { qSL("AM_CONFIG"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ config })) },
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+        { qSL("QT_WAYLAND_SHELL_INTEGRATION"), qSL("xdg-shell")},
+#else
         { qSL("QT_WAYLAND_SHELL_INTEGRATION"), qSL("xdg-shell-v5")},
+#endif
     };
 
     if (!Logging::isDltEnabled()) {

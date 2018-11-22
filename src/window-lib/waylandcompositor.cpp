@@ -53,7 +53,11 @@
 #include "waylandcompositor.h"
 
 #include <QWaylandWlShell>
-#include <QWaylandXdgShellV5>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+#  include <QWaylandXdgShell>
+#else
+#  include <QWaylandXdgShellV5>
+#endif
 #include <QWaylandQuickOutput>
 #include <QWaylandTextInputManager>
 #include <QWaylandQtWindowManager>
@@ -77,8 +81,13 @@ void WindowSurface::setShellSurface(QWaylandWlShellSurface *shellSurface)
 
 void WindowSurface::sendResizing(const QSize &size)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    if (m_topLevel)
+        m_topLevel->sendResizing(size);
+#else
     if (m_xdgSurface)
         m_xdgSurface->sendResizing(size);
+#endif
     else
         m_wlSurface->sendConfigure(size, QWaylandWlShellSurface::NoneEdge);
 }
@@ -117,16 +126,23 @@ void WindowSurface::ping()
 
 void WindowSurface::close()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    if (m_topLevel)
+        m_topLevel->sendClose();
+    else
+        qCWarning(LogGraphics) << this << "is not using the XDG Shell extension. Unable to send close signal.";
+#else
     if (m_xdgSurface)
         m_xdgSurface->sendClose();
     else
         qCWarning(LogGraphics) << this << "is not using the XDG V5 Shell extension. Unable to send close signal.";
+#endif
 }
 
 WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName)
     : QWaylandQuickCompositor()
     , m_wlShell(new QWaylandWlShell(this))
-    , m_xdgShell(new QWaylandXdgShellV5(this))
+    , m_xdgShell(new WaylandXdgShell(this))
     , m_amExtension(new WaylandQtAMServerExtension(this))
     , m_textInputManager(new QWaylandTextInputManager(this))
 {
@@ -137,8 +153,11 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     connect(m_wlShell, &QWaylandWlShell::wlShellSurfaceRequested, this, &WaylandCompositor::createWlSurface);
 
-    connect(m_xdgShell, &QWaylandXdgShellV5::xdgSurfaceCreated, this, &WaylandCompositor::onXdgSurfaceCreated);
-    connect(m_xdgShell, &QWaylandXdgShellV5::pong, this, &WaylandCompositor::onXdgPongReceived);
+    connect(m_xdgShell, &WaylandXdgShell::xdgSurfaceCreated, this, &WaylandCompositor::onXdgSurfaceCreated);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    connect(m_xdgShell, &QWaylandXdgShell::toplevelCreated, this, &WaylandCompositor::onTopLevelCreated);
+#endif
+    connect(m_xdgShell, &WaylandXdgShell::pong, this, &WaylandCompositor::onXdgPongReceived);
 
     auto wmext = new QWaylandQtWindowManager(this);
     connect(wmext, &QWaylandQtWindowManager::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
@@ -198,7 +217,7 @@ void WaylandCompositor::createWlSurface(QWaylandSurface *surface, const QWayland
 }
 
 
-void WaylandCompositor::onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface)
+void WaylandCompositor::onXdgSurfaceCreated(WaylandXdgSurface *xdgSurface)
 {
     WindowSurface *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
 
@@ -210,5 +229,17 @@ void WaylandCompositor::onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface)
             emit this->surfaceMapped(windowSurface);
     });
 }
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+void WaylandCompositor::onTopLevelCreated(QWaylandXdgToplevel *topLevel, QWaylandXdgSurface *xdgSurface)
+{
+    WindowSurface *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
+
+    Q_ASSERT(!windowSurface->m_wlSurface);
+    Q_ASSERT(windowSurface->m_xdgSurface == xdgSurface);
+
+    windowSurface->m_topLevel = topLevel;
+}
+#endif
 
 QT_END_NAMESPACE_AM

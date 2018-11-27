@@ -1,0 +1,6 @@
+formatVersion: 1
+formatType: am-configuration
+---
+systemProperties:
+  private:
+    nodbus: yes

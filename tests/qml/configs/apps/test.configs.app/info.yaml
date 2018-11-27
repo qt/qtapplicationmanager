@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.configs.app'
+icon:    'icon.png'
+code:    'app.qml'
+runtime: 'qml'
+name:
+  en: 'ApplicationManager Application'

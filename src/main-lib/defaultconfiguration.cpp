@@ -389,11 +389,6 @@ QString DefaultConfiguration::dbusRegistration(const char *interfaceName) const
     return dbus;
 }
 
-int DefaultConfiguration::dbusRegistrationDelay() const
-{
-    return qMax(0, value<QVariant>(nullptr, { "dbus", "registrationDelay" }).toInt());
-}
-
 bool DefaultConfiguration::dbusStartSessionBus() const
 {
     return value<bool>("start-session-dbus", { "dbus", "startSessionBus" });

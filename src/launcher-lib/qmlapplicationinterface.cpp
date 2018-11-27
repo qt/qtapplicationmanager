@@ -97,9 +97,6 @@ bool QmlApplicationInterface::initialize()
                              m_connection, this);
     m_applicationIf = tryConnect(qSL(""), qSL("/ApplicationInterface"), qSL("io.qt.ApplicationManager.ApplicationInterface"),
                                  m_connection, this);
-    m_notifyIf = tryConnect(qSL("org.freedesktop.Notifications"), qSL("/org/freedesktop/Notifications"), qSL("org.freedesktop.Notifications"),
-                            m_notificationConnection, this);
-
 
     if (!m_applicationIf) {
         qCritical("ERROR: could not connect to the ApplicationInterface on the P2P D-Bus");
@@ -136,14 +133,21 @@ bool QmlApplicationInterface::initialize()
     if (!ok)
         qCritical("ERROR: could not connect the ApplicationInterface via D-Bus: %s", qPrintable(m_applicationIf->lastError().name()));
 
-    if (m_notifyIf) {
-        ok = ok && connect(m_notifyIf, SIGNAL(NotificationClosed(uint,uint)), this, SLOT(notificationClosed(uint,uint)));
-        ok = ok && connect(m_notifyIf, SIGNAL(ActionInvoked(uint,QString)), this, SLOT(notificationActionTriggered(uint,QString)));
+    if (!m_notificationConnection.name().isEmpty()) {
+        m_notifyIf = tryConnect(qSL("org.freedesktop.Notifications"), qSL("/org/freedesktop/Notifications"),
+                                qSL("org.freedesktop.Notifications"), m_notificationConnection, this);
+        if (m_notifyIf) {
+            ok = ok && connect(m_notifyIf, SIGNAL(NotificationClosed(uint,uint)),
+                               this, SLOT(notificationClosed(uint,uint)));
+            ok = ok && connect(m_notifyIf, SIGNAL(ActionInvoked(uint,QString)),
+                               this, SLOT(notificationActionTriggered(uint,QString)));
 
-        if (!ok)
-            qCritical("ERROR: could not connect the org.freedesktop.Notifications interface via D-Bus: %s", qPrintable(m_notifyIf->lastError().name()));
-    } else {
-        qCritical("ERROR: could not create the org.freedesktop.Notifications interface on D-Bus");
+            if (!ok)
+                qCritical("ERROR: could not connect the org.freedesktop.Notifications interface via D-Bus: %s",
+                          qPrintable(m_notifyIf->lastError().name()));
+        } else {
+            qCritical("ERROR: could not create the org.freedesktop.Notifications interface on D-Bus");
+        }
     }
 
     QmlApplicationInterfaceExtension::initialize(m_connection);

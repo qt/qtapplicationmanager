@@ -103,7 +103,6 @@ public:
 
     QVariantMap dbusPolicy(const char *interfaceName) const;
     QString dbusRegistration(const char *interfaceName) const;
-    int dbusRegistrationDelay() const;
     bool dbusStartSessionBus() const;
 
     QVariantMap rawSystemProperties() const;

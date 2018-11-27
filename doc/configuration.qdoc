@@ -165,14 +165,6 @@ all your imports paths and file references relative to your main config file.
         org.freedesktop.Notifications). If such a key is present, it will take precedence over the
         command-line option \c dbus. Each key's value is a \l{D-Bus specification} object.
 \row
-    \li \b -
-    \br \e dbus/registrationDelay
-    \li int
-    \li The non-interface key \c registrationDelay within the \c dbus object is an integer value,
-        which delays the registration of the global D-Bus interfaces by the field's value in
-        milli-seconds. Values must be greater than or equal to 0, which is also the default value
-        (in this case registration will be done immediately after the event loop is executing).
-\row
     \li \b --start-session-dbus
     \br \e -
     \li bool

@@ -116,7 +116,7 @@ QString LauncherMain::p2pDBusName() const
 
 QString LauncherMain::notificationDBusName() const
 {
-    return qSL("am_notification_bus");
+    return m_dbusAddressNotifications.isEmpty() ? QString() : qSL("am_notification_bus");
 }
 
 QVariantMap LauncherMain::openGLConfiguration() const
@@ -231,20 +231,21 @@ void LauncherMain::setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false)
 
     qCDebug(LogQmlRuntime) << "Connected to the P2P D-Bus via:" << m_dbusAddressP2P;
 
-    if (m_dbusAddressNotifications.isEmpty())
-        m_dbusAddressNotifications = qSL("session");
+    if (!m_dbusAddressNotifications.isEmpty()) {
+        if (m_dbusAddressNotifications == qL1S("system"))
+            dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SystemBus, notificationDBusName());
+        else if (m_dbusAddressNotifications == qL1S("session"))
+            dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SessionBus, notificationDBusName());
+        else
+            dbusConnection = QDBusConnection::connectToBus(m_dbusAddressNotifications, notificationDBusName());
 
-    if (m_dbusAddressNotifications == qL1S("system"))
-        dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SystemBus, notificationDBusName());
-    else if (m_dbusAddressNotifications == qL1S("session"))
-        dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SessionBus, notificationDBusName());
-    else
-        dbusConnection = QDBusConnection::connectToBus(m_dbusAddressNotifications, notificationDBusName());
+        if (!dbusConnection.isConnected())
+            throw Exception("could not connect to the Notification D-Bus via: %1").arg(m_dbusAddressNotifications);
 
-    if (!dbusConnection.isConnected())
-        throw Exception("could not connect to the Notification D-Bus via: %1").arg(m_dbusAddressNotifications);
-
-    qCDebug(LogQmlRuntime) << "Connected to the Notification D-Bus via:" << m_dbusAddressNotifications;
+        qCDebug(LogQmlRuntime) << "Connected to the Notification D-Bus via:" << m_dbusAddressNotifications;
+    } else {
+        qCWarning(LogDeployment) << "Notifications are not supported by this configuration";
+    }
 }
 
 QT_END_NAMESPACE_AM

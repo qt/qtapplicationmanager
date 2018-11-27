@@ -214,12 +214,6 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     loadStartupPlugins(cfg->pluginFilePaths("startup"));
     parseSystemProperties(cfg->rawSystemProperties());
 
-    setupDBus(cfg->dbusStartSessionBus());
-    QTimer::singleShot(cfg->dbusRegistrationDelay(), this, [this, cfg] {
-        registerDBusInterfaces(std::bind(&DefaultConfiguration::dbusRegistration, cfg, std::placeholders::_1),
-                std::bind(&DefaultConfiguration::dbusPolicy, cfg, std::placeholders::_1));
-    });
-
     setMainQmlFile(cfg->mainQmlFile());
     setupSingleOrMultiProcess(cfg->forceSingleProcess(), cfg->forceMultiProcess());
     setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->openGLConfiguration(),
@@ -250,6 +244,10 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupTouchEmulation(cfg->enableTouchEmulation());
     setupShellServer(cfg->telnetAddress(), cfg->telnetPort());
     setupSSDPService();
+
+    setupDBus(cfg->dbusStartSessionBus());
+    registerDBusInterfaces(std::bind(&DefaultConfiguration::dbusRegistration, cfg, std::placeholders::_1),
+                           std::bind(&DefaultConfiguration::dbusPolicy, cfg, std::placeholders::_1));
 }
 
 bool Main::isSingleProcessMode() const
@@ -914,10 +912,10 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
                 .arg(dbusAddress.isEmpty() ? dbusName : dbusAddress).arg(conn.lastError().message());
     }
 
-    if (adaptor->parent()) {
+    if (adaptor->parent() && adaptor->parent()->parent()) {
         // we need this information later on to tell apps where services are listening
-        adaptor->parent()->setProperty("_am_dbus_name", dbusName);
-        adaptor->parent()->setProperty("_am_dbus_address", dbusAddress);
+        adaptor->parent()->parent()->setProperty("_am_dbus_name", dbusName);
+        adaptor->parent()->parent()->setProperty("_am_dbus_address", dbusAddress);
     }
 
     if (!conn.registerObject(qL1S(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {

@@ -65,10 +65,17 @@ OTHER_FILES += $$AM_CONFIG
 
 QMAKE_EXTRA_TARGETS *= check
 
+# Set default test configuration (each config is run separately)
+isEmpty(TEST_CONFIGURATIONS) {
+    !equals(MODE, "single-process"): TEST_CONFIGURATIONS = "--force-multi-process"
+    !equals(MODE, "multi-process"): TEST_CONFIGURATIONS += "--force-single-process"
+}
+
 # Execute a testrunner for every file
 for(file, TEST_FILES) {
-    !equals(MODE, "single-process"):check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) --force-multi-process -- $(TESTARGS) &&
-    !equals(MODE, "multi-process"):check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) --force-single-process -- $(TESTARGS) &&
+    for(config, TEST_CONFIGURATIONS) {
+        check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) $${config} -- $(TESTARGS) &&
+    }
 }
 msvc:check.commands += VER>NUL
 else:check.commands += true;

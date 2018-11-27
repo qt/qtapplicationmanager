@@ -9,4 +9,5 @@ SUBDIRS = \
     quicklaunch \
     intents \
     crash/apps/tld.test.crash/terminator2 \
-    crash
+    crash \
+    configs

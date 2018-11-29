@@ -98,6 +98,8 @@ private:
     bool m_installationAcknowledged = false;
     QWaitCondition m_installationAcknowledgeWaitCondition;
 
+    static QMutex s_serializeFinishInstallation;
+
     QDir m_manifestDir;
     QDir m_applicationDir;
     QDir m_extractionDir;

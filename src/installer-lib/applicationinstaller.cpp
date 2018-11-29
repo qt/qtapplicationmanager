@@ -761,10 +761,9 @@ void ApplicationInstaller::acknowledgePackageInstallation(const QString &taskId)
 {
     AM_TRACE(LogInstaller, taskId)
 
-    auto allTasks = d->taskQueue;
-    allTasks.append(d->activeTask);
+    const auto allTasks = d->allTasks();
 
-    for (AsynchronousTask *task : qAsConst(allTasks)) {
+    for (AsynchronousTask *task : allTasks) {
         if (qobject_cast<InstallationTask *>(task) && (task->id() == taskId)) {
             static_cast<InstallationTask *>(task)->acknowledge();
             break;
@@ -815,10 +814,9 @@ QString ApplicationInstaller::removePackage(const QString &id, bool keepDocument
 */
 AsynchronousTask::TaskState ApplicationInstaller::taskState(const QString &taskId) const
 {
-    auto allTasks = d->taskQueue;
-    allTasks.append(d->activeTask);
+    const auto allTasks = d->allTasks();
 
-    for (const AsynchronousTask *task : qAsConst(allTasks)) {
+    for (const AsynchronousTask *task : allTasks) {
         if (task && (task->id() == taskId))
             return task->state();
     }
@@ -837,10 +835,9 @@ AsynchronousTask::TaskState ApplicationInstaller::taskState(const QString &taskI
 */
 QString ApplicationInstaller::taskApplicationId(const QString &taskId) const
 {
-    auto allTasks = d->taskQueue;
-    allTasks.append(d->activeTask);
+    const auto allTasks = d->allTasks();
 
-    for (const AsynchronousTask *task : qAsConst(allTasks)) {
+    for (const AsynchronousTask *task : allTasks) {
         if (task && (task->id() == taskId))
             return task->applicationId();
     }
@@ -850,15 +847,15 @@ QString ApplicationInstaller::taskApplicationId(const QString &taskId) const
 /*!
     \qmlmethod list<string> ApplicationInstaller::activeTaskIds()
 
-    Retuns a list of all currently active installation task ids.
+    Retuns a list of all currently active (as in not yet finished or failed) installation task ids.
 */
 QStringList ApplicationInstaller::activeTaskIds() const
 {
+    const auto allTasks = d->allTasks();
+
     QStringList result;
-    for (const AsynchronousTask *task : qAsConst(d->taskQueue))
+    for (const AsynchronousTask *task : allTasks)
         result << task->id();
-    if (d->activeTask)
-        result << d->activeTask->id();
     return result;
 }
 
@@ -873,20 +870,28 @@ bool ApplicationInstaller::cancelTask(const QString &taskId)
 {
     AM_TRACE(LogInstaller, taskId)
 
-    if (d->activeTask && d->activeTask->id() == taskId)
-        return d->activeTask->cancel();
-
-    for (AsynchronousTask *task : qAsConst(d->taskQueue)) {
+    // incoming tasks can be forcefully cancelled right away
+    for (AsynchronousTask *task : qAsConst(d->incomingTaskList)) {
         if (task->id() == taskId) {
             task->forceCancel();
             task->deleteLater();
 
             handleFailure(task);
 
-            d->taskQueue.removeOne(task);
+            d->incomingTaskList.removeOne(task);
             triggerExecuteNextTask();
             return true;
         }
+    }
+
+    // the active task and async tasks might be in a state where cancellation is not possible,
+    // so we have to ask them nicely
+    if (d->activeTask && d->activeTask->id() == taskId)
+        return d->activeTask->cancel();
+
+    for (AsynchronousTask *task : qAsConst(d->installationTaskList)) {
+        if (task->id() == taskId)
+            return task->cancel();
     }
     return false;
 }
@@ -1174,7 +1179,7 @@ bool ApplicationInstaller::deactivatePackage(const QString &id)
 
 QString ApplicationInstaller::enqueueTask(AsynchronousTask *task)
 {
-    d->taskQueue.enqueue(task);
+    d->incomingTaskList.append(task);
     triggerExecuteNextTask();
     return task->id();
 }
@@ -1187,10 +1192,10 @@ void ApplicationInstaller::triggerExecuteNextTask()
 
 void ApplicationInstaller::executeNextTask()
 {
-    if (d->activeTask || d->taskQueue.isEmpty())
+    if (d->activeTask || d->incomingTaskList.isEmpty())
         return;
 
-    AsynchronousTask *task = d->taskQueue.dequeue();
+    AsynchronousTask *task = d->incomingTaskList.takeFirst();
 
     if (task->hasFailed()) {
         task->setState(AsynchronousTask::Failed);
@@ -1231,8 +1236,8 @@ void ApplicationInstaller::executeNextTask()
 
         if (d->activeTask == task)
             d->activeTask = nullptr;
+        d->installationTaskList.removeOne(task);
 
-        //task->deleteLater();
         delete task;
         triggerExecuteNextTask();
     });
@@ -1241,6 +1246,14 @@ void ApplicationInstaller::executeNextTask()
         connect(static_cast<InstallationTask *>(task), &InstallationTask::finishedPackageExtraction, this, [this, task]() {
             qCDebug(LogInstaller) << "emit blockingUntilInstallationAcknowledge" << task->id();
             emit taskBlockingUntilInstallationAcknowledge(task->id());
+
+            // we can now start the next download in parallel - the InstallationTask will take care
+            // of serializing the final installation steps on its own as soon as it gets the
+            // required acknowledge (or cancel).
+            if (d->activeTask == task)
+                d->activeTask = nullptr;
+            d->installationTaskList.append(task);
+            triggerExecuteNextTask();
         });
     }
 

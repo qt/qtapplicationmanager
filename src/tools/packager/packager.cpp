@@ -29,6 +29,9 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QStringList>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QDebug>
 
 #include <stdio.h>
@@ -48,6 +51,7 @@ enum Command {
     DevVerifyPackage,
     StoreSignPackage,
     StoreVerifyPackage,
+    YamlToJson
 };
 
 // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
@@ -60,7 +64,8 @@ static struct {
     { DevSignPackage,     "dev-sign-package",     "Add developer signature to package." },
     { DevVerifyPackage,   "dev-verify-package",   "Verify developer signature on package." },
     { StoreSignPackage,   "store-sign-package",   "Add store signature to package." },
-    { StoreVerifyPackage, "store-verify-package", "Verify store signature on package." }
+    { StoreVerifyPackage, "store-verify-package", "Verify store signature on package." },
+    { YamlToJson,         "yaml-to-json",         "Convenience functionality for build systems (internal)." }
 };
 
 static Command command(QCommandLineParser &clp)
@@ -268,6 +273,48 @@ int main(int argc, char *argv[])
                                           clp.positionalArguments().mid(2, clp.positionalArguments().size() - 3),
                                           *--clp.positionalArguments().cend());
             break;
+
+        case YamlToJson: {
+            clp.addOption({{ qSL("i"), qSL("document-index") }, qSL("Only output the specified YAML sub-document."), qSL("index") });
+            clp.addPositionalArgument(qSL("yaml-file"), qSL("YAML file name, defaults to stdin (input)."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() > 2)
+                clp.showHelp(1);
+
+            QString yamlName = (clp.positionalArguments().size() == 2) ? clp.positionalArguments().at(1)
+                                                                       : qSL("-");
+            QFile yaml(yamlName);
+            if (yamlName == qL1S("-")) {
+                if (!yaml.open(0, QIODevice::ReadOnly))
+                    throw Exception("Could not open stdin for reading");
+            } else if (!yaml.open(QIODevice::ReadOnly)) {
+                throw Exception(yaml, "Could not open YAML input file");
+            }
+            QtYaml::ParseError error;
+            auto docs = QtYaml::variantDocumentsFromYaml(yaml.readAll(), &error);
+            if (docs.isEmpty()) {
+                throw Exception("Failed to parse YAML file: %1 at line %2, column %3")
+                        .arg(error.errorString()).arg(error.line).arg(error.column);
+            }
+            QJsonDocument json;
+            if (clp.isSet(qSL("i"))) {
+                bool isInt;
+                int index = clp.value(qSL("i")).toInt(&isInt);
+                if (!isInt || index < 0) {
+                    throw Exception("Invalid document index specified: %1").arg(clp.value(qSL("i")));
+                } else if (index >= docs.size()) {
+                    throw Exception("Requested YAML sub document at index %1, but only indices 0 to %2 are available in this document.")
+                            .arg(index).arg(docs.size() - 1);
+                } else {
+                    json = QJsonDocument::fromVariant(docs.at(index));
+                }
+            } else {
+                json.setArray(QJsonArray::fromVariantList(docs.toList()));
+            }
+            fprintf(stdout, "%s", json.toJson(QJsonDocument::Indented).constData());
+            return 0;
+        }
         }
 
         if (!p)

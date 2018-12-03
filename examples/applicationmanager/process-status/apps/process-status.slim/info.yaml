@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'process-status.slim'
+icon:    'icon.png'
+code:    'main.qml'
+runtime: 'qml'
+name:
+  en: 'Slim'

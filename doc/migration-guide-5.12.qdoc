@@ -244,40 +244,77 @@ QtObject {
 
 \section1 SystemMonitor
 
-SystemMonitor is no longer a singleton. That way it's simpler to bind expressions to its properties and
-you have control over the lifecycle of that object, so that you only create an instance of it when you
-actually need it. It's also simpler to test code that uses a regular QML object instead of a singleton,
-as you can apply patterns such as dependency injection.
+The SystemMonitor singleton no longer exists. The functionality that it provided has been split into several new
+components, namely: MonitorModel, CpuStatus, GpuStatus, MemoryStatus, FrameTimer and IoStatus.
 
 \oldcode
 Item {
     id: root
     ...
-    Label {
-        text: "CPU Cores: " + SystemMonitor.cpuCores
-    }
-    ...
     Component.onCompleted: {
-        SystemMonitor.reportingInterval = 1000;
-        SystemMonitor.count = 12;
-        SystemMonitor.idleLoadThreshold = 0.05;
+        SystemMonitor.reportingInterval = 1500;
+        SystemMonitor.count = 20;
     }
     Binding { target: SystemMonitor; property: "cpuLoadReportingEnabled"; value: root.visible }
+
+    // Draw a graph of CPU usage
+    ListView {
+        model: SystemMonitor
+        ...
+    }
 }
 \newcode
 Item {
     id: root
     ...
-    Label {
-        text: "CPU Cores: " + systemMonitor.cpuCores
+    // Draw a graph of CPU usage
+    ListView {
+        model: MonitorModel {
+            interval: 1500
+            running: root.visible
+            maximumCount: 20
+            CpuStatus {}
+        }
+        ...
     }
+}
+\endcode
+
+\section1 ProcessMonitor
+
+The ProcessMonitor component no longer exists. The functionality that it provided has been split into a
+couple of new components, namely: ProcessStatus, MonitorModel and FrameTimer.
+
+\oldcode
+Item {
+    id: root
     ...
-    SystemMonitor {
-        id: systemMonitor
-        reportingInterval: 1000
-        count: 12
-        idleLoadThreshold: 0.05
-        cpuLoadReportingEnabled: root.visible
+    // Draw a graph of CPU usage
+    ListView {
+        model: ProcessMonitor {
+            count: 20
+            cpuReportingEnabled: root.visible
+            reportingInterval: 1500
+            applicationId: "foo.app"
+        }
+        ...
+    }
+}
+\newcode
+Item {
+    id: root
+    ...
+    // Draw a graph of CPU usage
+    ListView {
+        model: MonitorModel {
+            maximumCount: 20
+            running: root.visible
+            interval: 1500
+            ProcessStatus {
+                applicationId: "foo.app"
+            }
+        }
+        ...
     }
 }
 \endcode

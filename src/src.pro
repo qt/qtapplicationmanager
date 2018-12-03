@@ -54,7 +54,7 @@ main_lib.depends = shared_main_lib manager_lib installer_lib window_lib monitor_
 }
 
 tools_launcher_qml.subdir = tools/launcher-qml
-tools_launcher_qml.depends = launcher_lib plugin_interfaces
+tools_launcher_qml.depends = launcher_lib plugin_interfaces monitor_lib
 
 tools_appman.subdir = tools/appman
 tools_appman.depends = main_lib

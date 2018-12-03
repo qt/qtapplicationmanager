@@ -1,0 +1,8 @@
+This is a playground for manually experimenting with the MonitorModel component and seeing how it behaves.
+A good way to find bugs and doing some sanity checking.
+
+TODO: It could probably later be used by qmlauto tests as a way to ensure it's always kept in a healthy state
+and also as a way to manually reproduce what an automated test does.
+
+To run it simply do this from a terminal window:
+$ /path/to/your/bin/appman main.qml

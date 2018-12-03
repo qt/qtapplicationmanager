@@ -18,8 +18,7 @@ SUBDIRS = \
 
 linux*:SUBDIRS += \
     sudo \
-    processmonitor \
-    systemmonitor \
+    processreader \
     systemreader \
 
 OTHER_FILES += \

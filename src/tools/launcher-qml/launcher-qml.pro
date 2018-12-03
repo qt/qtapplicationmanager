@@ -7,6 +7,7 @@ QT = qml dbus core-private
 !headless:QT += quick gui gui-private quick-private
 QT *= \
     appman_common-private \
+    appman_monitor-private \
     appman_notification-private \
     appman_application-private \
     appman_plugininterfaces-private \

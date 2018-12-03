@@ -1,0 +1,54 @@
+/****************************************************************************
+**
+** Copyright (C) 2018 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\example applicationmanager/frame-timer
+\title Displaying Frame-Rate of System-UI and Applications Example
+\image frame-timer-example.png The "FrameTimer" example with two applications running.
+\brief How to use FrameTimer to display frame-rate information.
+\ingroup applicationmanager-examples
+
+This example shows you how to use the \l FrameTimer component to display frame-rate information
+of both System-UI and application windows.
+
+The System-UI is comprised of a column of application icons on the left side and a graph on the top
+right side, displaying the average frame-rate of the System-UI itself (actually of System-UI's top-level
+Window, to be more precise). If there are no applications running, System-UI's frame rate will mostly
+stay at 1 frame per second. That's because a Qt QML application window is only redrawn when needed. If
+nothing changed on it, it won't redraw (zero frames per second then). The only reason that System-UI
+stays around 1 FPS when there are no apps running is because of the FPS graph itself, which is updated
+once every second and thus causes a redraw of the System-UI (an
+\l{https://en.wikipedia.org/wiki/Observer_effect_(information_technology)}{Observer effect}).
+
+The Fish application animates (and therefore redraws) at a rate of 25 frames per second. So running it will
+instantly raise the frame-rate of System-UI to 25 FPS (frames per second) as well.
+
+The Rabbit application animates at native speed (ie, as fast as the system can or is configured to do, which
+is usually 60 FPS). So running it will raise System-UI's FPS further, to 60 FPS.
+
+*/

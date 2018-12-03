@@ -91,6 +91,14 @@
 #include "qml-utilities.h"
 #include "launcher-qml_p.h"
 
+// monitor-lib
+#include "cpustatus.h"
+#include "frametimer.h"
+#include "gpustatus.h"
+#include "iostatus.h"
+#include "memorystatus.h"
+#include "monitormodel.h"
+
 QT_USE_NAMESPACE_AM
 
 
@@ -173,6 +181,14 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
 #endif
     qmlRegisterType<QmlNotification>("QtApplicationManager", 1, 0, "Notification");
     qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager.Application", 1, 0, "ApplicationInterfaceExtension");
+
+    // monitor-lib
+    qmlRegisterType<CpuStatus>("QtApplicationManager", 1, 0, "CpuStatus");
+    qmlRegisterType<FrameTimer>("QtApplicationManager", 1, 0, "FrameTimer");
+    qmlRegisterType<GpuStatus>("QtApplicationManager", 1, 0, "GpuStatus");
+    qmlRegisterType<IoStatus>("QtApplicationManager", 1, 0, "IoStatus");
+    qmlRegisterType<MemoryStatus>("QtApplicationManager", 1, 0, "MemoryStatus");
+    qmlRegisterType<MonitorModel>("QtApplicationManager", 1, 0, "MonitorModel");
 
     m_configuration = a->runtimeConfiguration();
 

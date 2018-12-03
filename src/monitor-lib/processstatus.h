@@ -41,95 +41,73 @@
 
 #pragma once
 
-#include <QElapsedTimer>
+#include <QAtomicInteger>
 #include <QObject>
 #include <QPointer>
-#include <QTimer>
-#include <QtAppManCommon/global.h>
-#include <limits>
+#include <QThread>
+#include <QVariant>
 
-#if defined(AM_MULTI_PROCESS)
-#  include <QtWaylandCompositor/QWaylandQuickSurface>
-#endif
+#include <QtAppManCommon/global.h>
+#include <QtAppManManager/amnamespace.h>
+#include <QtAppManManager/application.h>
+#include <QtAppManMonitor/processreader.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class FrameTimer : public QObject
+// It's assumed that all ProcessStatus instances are created from the same thread (most likely the main one).
+class ProcessStatus : public QObject
 {
     Q_OBJECT
-
-    Q_PROPERTY(qreal averageFps READ averageFps NOTIFY updated)
-    Q_PROPERTY(qreal minimumFps READ minimumFps NOTIFY updated)
-    Q_PROPERTY(qreal maximumFps READ maximumFps NOTIFY updated)
-    Q_PROPERTY(qreal jitterFps READ jitterFps NOTIFY updated)
-
-    Q_PROPERTY(QObject* window READ window WRITE setWindow NOTIFY windowChanged)
-
-    Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged)
-    Q_PROPERTY(bool running READ running WRITE setRunning NOTIFY runningChanged)
-
+    Q_PROPERTY(QString applicationId READ applicationId WRITE setApplicationId NOTIFY applicationIdChanged)
+    Q_PROPERTY(qint64 processId READ processId NOTIFY processIdChanged)
+    Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadChanged)
+    Q_PROPERTY(QVariantMap memoryVirtual READ memoryVirtual NOTIFY memoryReportingChanged)
+    Q_PROPERTY(QVariantMap memoryRss READ memoryRss NOTIFY memoryReportingChanged)
+    Q_PROPERTY(QVariantMap memoryPss READ memoryPss NOTIFY memoryReportingChanged)
     Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
-
 public:
-    FrameTimer(QObject *parent = nullptr);
+    ProcessStatus(QObject *parent = nullptr);
 
     QStringList roleNames() const;
 
     Q_INVOKABLE void update();
 
-    qreal averageFps() const;
-    qreal minimumFps() const;
-    qreal maximumFps() const;
-    qreal jitterFps() const;
+    qint64 processId() const;
 
-    QObject *window() const;
-    void setWindow(QObject *value);
+    QString applicationId() const;
+    void setApplicationId(const QString &appId);
 
-    bool running() const;
-    void setRunning(bool value);
-
-    int interval() const;
-    void setInterval(int value);
+    qreal cpuLoad();
+    QVariantMap memoryVirtual() const;
+    QVariantMap memoryRss() const;
+    QVariantMap memoryPss() const;
 
 signals:
-    void updated();
-    void intervalChanged();
-    void runningChanged();
-    void windowChanged();
+    void applicationIdChanged(const QString &applicationId);
+    void processIdChanged(qint64 processId);
+    void cpuLoadChanged();
+    void memoryReportingChanged(const QVariantMap &memoryVirtual, const QVariantMap &memoryRss,
+                                                                  const QVariantMap &memoryPss);
 
 private slots:
-    void newFrame();
+    void onRunStateChanged(Am::RunState state);
 
 private:
-    void reset();
-    bool connectToQuickWindow();
-    bool connectToAppManWindow();
+    void fetchMemoryReadings();
+    void determinePid();
 
-#if defined(AM_MULTI_PROCESS)
-    void disconnectFromWaylandSurface();
-    void connectToWaylandSurface();
-    QPointer<QWaylandQuickSurface> m_waylandSurface;
-#endif
+    QString m_appId;
+    qint64 m_pid = 0;
 
-    int m_count = 0;
-    int m_sum = 0;
-    int m_min = std::numeric_limits<int>::max();
-    int m_max = 0;
-    qreal m_jitter = 0.0;
+    QVariantMap m_memoryVirtual;
+    QVariantMap m_memoryRss;
+    QVariantMap m_memoryPss;
 
-    QPointer<QObject> m_window;
+    QPointer<AbstractApplication> m_application;
 
-    QElapsedTimer m_timer;
-
-    QTimer m_updateTimer;
-
-    qreal m_averageFps;
-    qreal m_minimumFps;
-    qreal m_maximumFps;
-    qreal m_jitterFps;
-
-    static const int IdealFrameTime = 16667; // usec - could be made configurable via an env variable
-    static const qreal MicrosInSec;
+    bool m_pendingUpdate = false;
+    QScopedPointer<ProcessReader> m_reader;
+    static QThread *m_workerThread;
 };
 
 QT_END_NAMESPACE_AM

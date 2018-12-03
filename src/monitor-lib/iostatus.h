@@ -41,95 +41,49 @@
 
 #pragma once
 
-#include <QElapsedTimer>
-#include <QObject>
-#include <QPointer>
-#include <QTimer>
 #include <QtAppManCommon/global.h>
-#include <limits>
 
-#if defined(AM_MULTI_PROCESS)
-#  include <QtWaylandCompositor/QWaylandQuickSurface>
-#endif
+#include <QHash>
+#include <QObject>
+#include <QStringList>
+#include <QVariant>
+
+#include <QtAppManManager/systemreader.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class FrameTimer : public QObject
+class IoStatus : public QObject
 {
     Q_OBJECT
-
-    Q_PROPERTY(qreal averageFps READ averageFps NOTIFY updated)
-    Q_PROPERTY(qreal minimumFps READ minimumFps NOTIFY updated)
-    Q_PROPERTY(qreal maximumFps READ maximumFps NOTIFY updated)
-    Q_PROPERTY(qreal jitterFps READ jitterFps NOTIFY updated)
-
-    Q_PROPERTY(QObject* window READ window WRITE setWindow NOTIFY windowChanged)
-
-    Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged)
-    Q_PROPERTY(bool running READ running WRITE setRunning NOTIFY runningChanged)
+    Q_PROPERTY(QStringList deviceNames READ deviceNames WRITE setDeviceNames NOTIFY deviceNamesChanged)
+    Q_PROPERTY(QVariantMap ioLoad READ ioLoad NOTIFY ioLoadChanged)
 
     Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
 
 public:
-    FrameTimer(QObject *parent = nullptr);
+    IoStatus(QObject *parent = nullptr);
+    virtual ~IoStatus();
+
+    QStringList deviceNames() const;
+    void setDeviceNames(const QStringList &value);
+
+    QVariantMap ioLoad() const;
 
     QStringList roleNames() const;
 
     Q_INVOKABLE void update();
 
-    qreal averageFps() const;
-    qreal minimumFps() const;
-    qreal maximumFps() const;
-    qreal jitterFps() const;
-
-    QObject *window() const;
-    void setWindow(QObject *value);
-
-    bool running() const;
-    void setRunning(bool value);
-
-    int interval() const;
-    void setInterval(int value);
-
 signals:
-    void updated();
-    void intervalChanged();
-    void runningChanged();
-    void windowChanged();
-
-private slots:
-    void newFrame();
+    void deviceNamesChanged();
+    void ioLoadChanged();
 
 private:
-    void reset();
-    bool connectToQuickWindow();
-    bool connectToAppManWindow();
+    void addIoReader(const QString &deviceName);
 
-#if defined(AM_MULTI_PROCESS)
-    void disconnectFromWaylandSurface();
-    void connectToWaylandSurface();
-    QPointer<QWaylandQuickSurface> m_waylandSurface;
-#endif
-
-    int m_count = 0;
-    int m_sum = 0;
-    int m_min = std::numeric_limits<int>::max();
-    int m_max = 0;
-    qreal m_jitter = 0.0;
-
-    QPointer<QObject> m_window;
-
-    QElapsedTimer m_timer;
-
-    QTimer m_updateTimer;
-
-    qreal m_averageFps;
-    qreal m_minimumFps;
-    qreal m_maximumFps;
-    qreal m_jitterFps;
-
-    static const int IdealFrameTime = 16667; // usec - could be made configurable via an env variable
-    static const qreal MicrosInSec;
+    QStringList m_deviceNames;
+    QHash<QString, IoReader *> m_ioHash;
+    QVariantMap m_ioLoad;
 };
 
 QT_END_NAMESPACE_AM
+

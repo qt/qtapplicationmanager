@@ -15,16 +15,23 @@ QT_FOR_PRIVATE *= \
 CONFIG *= static internal_module
 
 HEADERS += \
-    systemmonitor.h \
-    systemmonitor_p.h \
-    processmonitor.h \
-    processmonitor_p.h \
-    frametimer.h
+    cpustatus.h \
+    frametimer.h \
+    gpustatus.h \
+    iostatus.h \
+    memorystatus.h \
+    monitormodel.h \
+    processreader.h \
+    processstatus.h \
 
 SOURCES += \
-    systemmonitor.cpp \
-    processmonitor.cpp \
-    processmonitor_p.cpp \
-    frametimer.cpp
+    cpustatus.cpp \
+    frametimer.cpp \
+    gpustatus.cpp \
+    iostatus.cpp \
+    memorystatus.cpp \
+    monitormodel.cpp \
+    processreader.cpp \
+    processstatus.cpp \
 
 load(qt_module)

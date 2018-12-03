@@ -41,95 +41,58 @@
 
 #pragma once
 
+#include <QAtomicInteger>
 #include <QElapsedTimer>
 #include <QObject>
-#include <QPointer>
-#include <QTimer>
-#include <QtAppManCommon/global.h>
-#include <limits>
 
-#if defined(AM_MULTI_PROCESS)
-#  include <QtWaylandCompositor/QWaylandQuickSurface>
+#include <QtAppManCommon/global.h>
+
+#if defined(Q_OS_LINUX)
+#  include <QScopedPointer>
+#  include <QtAppManManager/sysfsreader.h>
 #endif
 
 QT_BEGIN_NAMESPACE_AM
 
-class FrameTimer : public QObject
-{
+class ProcessReader : public QObject {
     Q_OBJECT
-
-    Q_PROPERTY(qreal averageFps READ averageFps NOTIFY updated)
-    Q_PROPERTY(qreal minimumFps READ minimumFps NOTIFY updated)
-    Q_PROPERTY(qreal maximumFps READ maximumFps NOTIFY updated)
-    Q_PROPERTY(qreal jitterFps READ jitterFps NOTIFY updated)
-
-    Q_PROPERTY(QObject* window READ window WRITE setWindow NOTIFY windowChanged)
-
-    Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged)
-    Q_PROPERTY(bool running READ running WRITE setRunning NOTIFY runningChanged)
-
-    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
-
-public:
-    FrameTimer(QObject *parent = nullptr);
-
-    QStringList roleNames() const;
-
-    Q_INVOKABLE void update();
-
-    qreal averageFps() const;
-    qreal minimumFps() const;
-    qreal maximumFps() const;
-    qreal jitterFps() const;
-
-    QObject *window() const;
-    void setWindow(QObject *value);
-
-    bool running() const;
-    void setRunning(bool value);
-
-    int interval() const;
-    void setInterval(int value);
+public slots:
+    void update();
+    void setProcessId(qint64 pid);
 
 signals:
     void updated();
-    void intervalChanged();
-    void runningChanged();
-    void windowChanged();
 
-private slots:
-    void newFrame();
+public:
+    QAtomicInteger<quint32> cpuLoad;
 
-private:
-    void reset();
-    bool connectToQuickWindow();
-    bool connectToAppManWindow();
+    QAtomicInteger<quint32> totalVm;
+    QAtomicInteger<quint32> totalRss;
+    QAtomicInteger<quint32> totalPss;
+    QAtomicInteger<quint32> textVm;
+    QAtomicInteger<quint32> textRss;
+    QAtomicInteger<quint32> textPss;
+    QAtomicInteger<quint32> heapVm;
+    QAtomicInteger<quint32> heapRss;
+    QAtomicInteger<quint32> heapPss;
 
-#if defined(AM_MULTI_PROCESS)
-    void disconnectFromWaylandSurface();
-    void connectToWaylandSurface();
-    QPointer<QWaylandQuickSurface> m_waylandSurface;
+#if defined(Q_OS_LINUX)
+    // it's public solely for testing purposes
+    bool readSmaps(const QByteArray &smapsFile);
 #endif
 
-    int m_count = 0;
-    int m_sum = 0;
-    int m_min = std::numeric_limits<int>::max();
-    int m_max = 0;
-    qreal m_jitter = 0.0;
+private:
+    void openCpuLoad();
+    qreal readCpuLoad();
+    bool readMemory();
 
-    QPointer<QObject> m_window;
+#if defined(Q_OS_LINUX)
+    QScopedPointer<SysFsReader> m_statReader;
+#endif
+    QElapsedTimer m_elapsedTime;
+    quint64 m_lastCpuUsage = 0.0;
 
-    QElapsedTimer m_timer;
-
-    QTimer m_updateTimer;
-
-    qreal m_averageFps;
-    qreal m_minimumFps;
-    qreal m_maximumFps;
-    qreal m_jitterFps;
-
-    static const int IdealFrameTime = 16667; // usec - could be made configurable via an env variable
-    static const qreal MicrosInSec;
+    qint64 m_pid = 0;
 };
 
 QT_END_NAMESPACE_AM

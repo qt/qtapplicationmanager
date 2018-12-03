@@ -1,9 +1,0 @@
-formatVersion: 1
-formatType: am-application
----
-id:      'tld.monitor.app'
-icon:    'dummyicon'
-code:    'app.qml'
-runtime: 'qml'
-name:
-  en: 'Application'

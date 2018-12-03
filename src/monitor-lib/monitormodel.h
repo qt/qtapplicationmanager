@@ -41,49 +41,44 @@
 
 #pragma once
 
-#include <QElapsedTimer>
-#include <QObject>
-#include <QPointer>
-#include <QTimer>
+#include <QAbstractListModel>
 #include <QtAppManCommon/global.h>
-#include <limits>
-
-#if defined(AM_MULTI_PROCESS)
-#  include <QtWaylandCompositor/QWaylandQuickSurface>
-#endif
+#include <QtQml/qqmllist.h>
+#include <QList>
+#include <QStringList>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE_AM
 
-class FrameTimer : public QObject
+class MonitorModel : public QAbstractListModel
 {
     Q_OBJECT
 
-    Q_PROPERTY(qreal averageFps READ averageFps NOTIFY updated)
-    Q_PROPERTY(qreal minimumFps READ minimumFps NOTIFY updated)
-    Q_PROPERTY(qreal maximumFps READ maximumFps NOTIFY updated)
-    Q_PROPERTY(qreal jitterFps READ jitterFps NOTIFY updated)
+    Q_PROPERTY(QQmlListProperty<QObject> dataSources READ dataSources)
+    Q_CLASSINFO("DefaultProperty", "dataSources")
 
-    Q_PROPERTY(QObject* window READ window WRITE setWindow NOTIFY windowChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int maximumCount READ maximumCount WRITE setMaximumCount  NOTIFY maximumCountChanged)
 
     Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged)
     Q_PROPERTY(bool running READ running WRITE setRunning NOTIFY runningChanged)
 
-    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
-
 public:
-    FrameTimer(QObject *parent = nullptr);
+    MonitorModel(QObject *parent = nullptr);
+    ~MonitorModel() override;
 
-    QStringList roleNames() const;
+    QQmlListProperty<QObject> dataSources();
 
-    Q_INVOKABLE void update();
+    static void dataSources_append(QQmlListProperty<QObject> *property, QObject *value);
+    static int dataSources_count(QQmlListProperty<QObject> *property);
+    static QObject *dataSources_at(QQmlListProperty<QObject> *property, int index);
+    static void dataSources_clear(QQmlListProperty<QObject> *property);
 
-    qreal averageFps() const;
-    qreal minimumFps() const;
-    qreal maximumFps() const;
-    qreal jitterFps() const;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
-    QObject *window() const;
-    void setWindow(QObject *value);
+    int count() const;
 
     bool running() const;
     void setRunning(bool value);
@@ -91,45 +86,47 @@ public:
     int interval() const;
     void setInterval(int value);
 
+    int maximumCount() const;
+    void setMaximumCount(int value);
+
+    Q_INVOKABLE void clear();
+
 signals:
-    void updated();
+    void countChanged();
     void intervalChanged();
     void runningChanged();
-    void windowChanged();
+    void maximumCountChanged();
 
 private slots:
-    void newFrame();
+    void readDataSourcesAndAddRow();
 
 private:
-    void reset();
-    bool connectToQuickWindow();
-    bool connectToAppManWindow();
+    struct DataRow {
+        QHash<int, QVariant> dataFromRoleIndex;
+    };
 
-#if defined(AM_MULTI_PROCESS)
-    void disconnectFromWaylandSurface();
-    void connectToWaylandSurface();
-    QPointer<QWaylandQuickSurface> m_waylandSurface;
-#endif
+    struct DataSource {
+        QObject *obj;
+        QVector<QByteArray> roleNames;
+    };
 
-    int m_count = 0;
-    int m_sum = 0;
-    int m_min = std::numeric_limits<int>::max();
-    int m_max = 0;
-    qreal m_jitter = 0.0;
+    void clearDataSources();
+    void appendDataSource(QObject *dataSource);
+    void fillDataRow(DataRow *dataRow);
+    void readDataSource(DataSource *dataSource, DataRow *dataRow);
+    void trimHistory();
+    bool extractRoleNamesFromJsArray(DataSource *dataSource);
+    bool extractRoleNamesFromStringList(DataSource *dataSource);
+    void addRoleName(QByteArray roleName, DataSource *dataSource);
 
-    QPointer<QObject> m_window;
+    QList<DataSource*> m_dataSources;
+    QList<QByteArray> m_roleNamesList; // also maps a role index to its name
+    QHash<QByteArray, int> m_roleNameToIndex;
 
-    QElapsedTimer m_timer;
+    QList<DataRow*> m_rows;
 
-    QTimer m_updateTimer;
-
-    qreal m_averageFps;
-    qreal m_minimumFps;
-    qreal m_maximumFps;
-    qreal m_jitterFps;
-
-    static const int IdealFrameTime = 16667; // usec - could be made configurable via an env variable
-    static const qreal MicrosInSec;
+    QTimer m_timer;
+    int m_maximumCount = 10;
 };
 
 QT_END_NAMESPACE_AM

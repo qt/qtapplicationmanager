@@ -2,10 +2,11 @@ TEMPLATE = subdirs
 
 SUBDIRS = \
     animated-windows \
+    frame-timer \
     hello-world \
     minidesk \
-    monitor \
     multi-views \
+    process-status \
     startup-plugin \
     intents \
 

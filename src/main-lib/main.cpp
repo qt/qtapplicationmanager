@@ -133,10 +133,17 @@
 #include "crashhandler.h"
 #include "qmllogger.h"
 #include "startuptimer.h"
-#include "systemmonitor.h"
-#include "processmonitor.h"
 #include "applicationipcmanager.h"
 #include "unixsignalhandler.h"
+
+// monitor-lib
+#include "cpustatus.h"
+#include "frametimer.h"
+#include "gpustatus.h"
+#include "iostatus.h"
+#include "memorystatus.h"
+#include "monitormodel.h"
+#include "processstatus.h"
 
 #include "../plugin-interfaces/startupinterface.h"
 
@@ -616,8 +623,15 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
 #if !defined(AM_HEADLESS)
     qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager.Application", 1, 0, "ApplicationManagerWindow");
 #endif
-    qmlRegisterType<ProcessMonitor>("QtApplicationManager.SystemUI", 1, 0, "ProcessMonitor");
-    qmlRegisterType<SystemMonitor>("QtApplicationManager.SystemUI", 1, 0, "SystemMonitor");
+
+    // monitor-lib
+    qmlRegisterType<CpuStatus>("QtApplicationManager", 1, 0, "CpuStatus");
+    qmlRegisterType<FrameTimer>("QtApplicationManager", 1, 0, "FrameTimer");
+    qmlRegisterType<GpuStatus>("QtApplicationManager", 1, 0, "GpuStatus");
+    qmlRegisterType<IoStatus>("QtApplicationManager", 1, 0, "IoStatus");
+    qmlRegisterType<MemoryStatus>("QtApplicationManager", 1, 0, "MemoryStatus");
+    qmlRegisterType<MonitorModel>("QtApplicationManager", 1, 0, "MonitorModel");
+    qmlRegisterType<ProcessStatus>("QtApplicationManager.SystemUI", 1, 0, "ProcessStatus");
 
     StartupTimer::instance()->checkpoint("after QML registrations");
 

@@ -1,0 +1,53 @@
+/****************************************************************************
+**
+** Copyright (C) 2018 Pelagicore AG
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Pelagicore Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\example applicationmanager/process-status
+\title Displaying Information About Application Processes
+\image process-status-example.png
+\brief How to use ProcessStatus to display application process information.
+\ingroup applicationmanager-examples
+
+This example shows you how to use the \l ProcessStatus component to display information
+about an application's process.
+
+This example is based on the simpler \l {"Hello World!" System-UI Example} {Hello World} one. You might
+want to start from there if you haven't seen it already.
+
+On the left side the built-in applications are listed in a column, where each application has a row containing
+its icon and name next to a tabbed view that shows information about the application's process (in case the
+application is actually running).
+
+On the right side of the System-UI the windows of the running applications are stacked in a column, in order of
+appearance (oldest window at the top and youngest at the bottom).
+
+There are three applications available, a red one called "CPU Hog" which consumes a lot of CPU, a green one
+called "Memory Hog" that continually increases its memory consumption (so don't leave it running for too long
+as it will eat up all available RAM eventually) and a blue one called "Slim", which behaves normally.
+
+*/

@@ -77,4 +77,76 @@ database by calling \c{appman --recreate-database}.
 \note Dynamically adding/updating/removing single applications is supported via the
 ApplicationInstaller interface.
 
+\section2 Qmake Integration
+
+To install applications into a system-ui using the \l{Installer}{Installer Sub-System}, the
+application first needs to be packaged. This can be done using the \l{Packager utility}. To better
+integrate the packaging into your usual developer workflow you can also use the qmake integration
+provided by the application-manager.
+
+The integration will add an additional \c{package} target to the Makefile. By calling \c{make package}
+on the command line or adding it as an additional build step in QtCreator a new application package
+gets created.
+
+\section3 Simple QML Apps
+
+For simple QML only apps, just create a qmake project file which defines an install step for all the
+needed files. The actual install location doesn't matter in this case, because it will just be
+used as a temporary path during package creation.
+
+\code
+TEMPLATE = aux
+
+FILES += info.yaml \
+         icon.png \
+         Main.qml
+
+app.files = $$FILES
+app.path = /apps/com.example.application
+INSTALLS += app
+\endcode
+
+In addition add the following two lines to provide the install location to the packaging step and
+to load the actual qmake integration.
+
+\code
+AM_PACKAGE_DIR = $$app.path
+
+load(am-app)
+\endcode
+
+\section3 Complex Apps
+
+For more complex apps, where you need to deploy a C++ based QML plugin in addition to your QML
+content, you need to split your app into multiple folders and project files. One folder for the QML
+part, another one for the C++ plugin and a SUBDIRS project to glue them together.
+
+The packaging integration will be done in the SUBDIRS project and expects that the other project
+files provide install targets to a shared install location. E.g the QML part installs it's files to
+'/apps/com.example.application', while the C++ plugin will install to
+'/apps/com.example.application/imports/com/example/application'.
+
+In the SUBDIRS project you need to define the AM_MANIFEST variable and set it to the location of
+your info.yaml file as well as define the shared install location as AM_PACKAGE_DIR:
+
+\code
+AM_MANIFEST = $$PWD/app/info.yaml
+AM_PACKAGE_DIR = /apps/com.example.application
+
+load(am-app)
+\endcode
+
+\section3 Packaging multiple apps
+
+If your repository provides multiple apps, like the
+\l{http://code.qt.io/cgit/qt-apps/qt-auto-extra-apps.git/}{Qt Auto Extra Apps Repository}, you can
+use the am-package qmake feature to provide a repository wide \c{package} step.
+
+Just add a ".qmake.conf" file with the following content to your repository, which gets
+automatically loaded by qmake:
+
+\code
+CONFIG += am-package
+\endcode
+
 */

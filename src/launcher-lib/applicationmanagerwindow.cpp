@@ -111,8 +111,8 @@ public:
 
     \endlist
 
-    Now you can run your appication within qmlscene with \c{qmlscene -I <path to base dir>}
-
+    Now you can run your appication within \c qmlscene (or \c qml) with e.g.
+    \c{qmlscene -I <path to base dir>}
 */
 
 ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)

@@ -256,7 +256,7 @@ an additional column specifying which runtime a configuration option applies to:
     \li qml, qml-in-process
     \li bool
     \li Automatically load dummy-data for the application, using the same algorithm as
-           Qt's \c qmlscene tool. By default no dummy-data is loaded.
+        Qt's \c qmlscene and \c qml tools. By default no dummy-data is loaded.
 \row
     \li \c importPaths
     \li qml, qml-in-process

@@ -244,7 +244,7 @@ all your imports paths and file references relative to your main config file.
     \li \b --load-dummydata
     \br \e ui/loadDummyData
     \li bool
-    \li Loads QML dummy-data into the System-UI (just like \c qmlscene would).
+    \li Loads QML dummy-data into the System-UI (just like \c qmlscene and \c qml would).
 \row
     \target no-security
     \li \b --no-security
@@ -276,7 +276,7 @@ all your imports paths and file references relative to your main config file.
     \br \e -
     \li string
     \li Runs the application-manager with a single application only (ignoring the database).
-        In this mode, the application-manager can act as a \c qmlscene replacement.
+        In this mode, the application-manager can act as a \c qmlscene / \c qml replacement.
         The argument is the path to \c info.yaml. Aliases (\c{info-*.yaml}) will also be
         loaded from the given path.
 \row
@@ -545,7 +545,7 @@ an additional column specifying which runtime a configuration option applies to:
     \li \c loadDummyData
     \li qml
     \li bool
-    \li Loads QML dummy-data into the app (just like \c qmlscene would). Defaults to \c false.
+    \li Loads QML dummy-data into the app (just like \c qmlscene and \c qml would). Defaults to \c false.
 \row
     \li \c backgroundColor
     \li qml

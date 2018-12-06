@@ -30,7 +30,7 @@
 \example applicationmanager/monitor
 \title Performance Monitoring Example
 \image monitor.png Screenshot
-\brief A resource and performance monitor
+\brief A resource and performance monitor.
 \ingroup applicationmanager-examples
 
 \section1 Introduction

@@ -50,7 +50,7 @@
     \qmltype ProcessMonitor
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui
-    \brief A type for monitoring process resource usage
+    \brief A type for monitoring process resource usage.
 
     The ProcessMonitor type provides statistics about the resource usage and performance for a process known to the
     application-manager. Currently, CPU load, memory usage and frame rate can be monitored. This type is

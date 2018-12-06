@@ -42,7 +42,9 @@
 #pragma once
 
 #include <QObject>
-#include <functional>
+#include <QStringList>
+#include <QVariantMap>
+#include <QVector>
 
 class ContainerInterface : public QObject
 {

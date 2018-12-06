@@ -99,7 +99,7 @@
     \qmlproperty var ApplicationModel::filterFunction
 
     A JavaScript function callback that will be invoked for each application in the
-    ApplicationManager source model. It gets one parameter of type \l Application and must return
+    ApplicationManager source model. It gets one parameter of type ApplicationObject and must return
     a bool. If the passed application should be included in this model the function must return
     \c true and \c false otherwise.
 
@@ -114,7 +114,7 @@
     \qmlproperty var ApplicationModel::sortFunction
 
     A JavaScript function callback that will be invoked to sort the applications in this model. It
-    gets two parameters of type \l Application and must return a bool. If the first application
+    gets two parameters of type ApplicationObject and must return a bool. If the first application
     should have a smaller index in this model than the second, the function must return \c true
     and \c false otherwise.
 

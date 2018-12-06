@@ -30,7 +30,7 @@
 \example applicationmanager/multi-views
 \title Multiple Views per Window System-UI Example
 \image multi-views.png
-\brief A WindowObject being rendered by multiple WindowItems
+\brief A WindowObject being rendered by multiple WindowItems.
 \ingroup applicationmanager-examples
 
 This example shows that it is possible to assign the same WindowObject to multiple WindowItems (so that

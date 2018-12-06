@@ -106,7 +106,7 @@
 
     Will return \c true if this ApplicationObject object is an alias to another one.
 
-    \sa Application::nonAliased
+    \sa nonAliased
 */
 /*!
     \qmlproperty ApplicationObject ApplicationObject::nonAliased

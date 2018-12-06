@@ -13,3 +13,4 @@ build_online_docs: {
 OTHER_FILES += \
     *.qdocconf \
     *.qdoc \
+    QtApplicationManagerDoc \

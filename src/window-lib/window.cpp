@@ -45,7 +45,7 @@
     \qmltype WindowObject
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
-    \brief A client window surface
+    \brief A client window surface.
 
     A WindowObject represents a window from a client application. Each visible
     ApplicationManagerWindow on the application side will be reflected by a
@@ -140,7 +140,7 @@
 
     Sends a close event to the WindowObject.
 
-    \sa QWindow::close(), QCloseEvent
+    \sa Window::close()
 */
 
 /*!

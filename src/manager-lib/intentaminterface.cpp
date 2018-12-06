@@ -473,7 +473,7 @@ void IntentServerInProcessIpcConnection::replyFromSystem(IntentServerRequest *ir
 IntentServerDBusIpcConnection::IntentServerDBusIpcConnection(QDBusConnection connection,
                                                              Application *application,
                                                              IntentServerAMImplementation *iface)
-    : IntentServerIpcConnection(false /*!inProcess*/, application, iface)
+    : IntentServerIpcConnection(false /* !inProcess*/, application, iface)
 {
     m_connectionName = connection.name();
     m_adaptor = new IntentInterfaceAdaptor(this);

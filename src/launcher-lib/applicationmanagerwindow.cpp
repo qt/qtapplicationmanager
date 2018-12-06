@@ -192,7 +192,7 @@ QVariantMap ApplicationManagerWindow::windowProperties() const
     Reports a change of this application window's property identified by \a name to the given
     \a value.
 
-    \sa WindowManager::setWindowProperty
+    \sa setWindowProperty
 */
 
 

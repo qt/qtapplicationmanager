@@ -65,7 +65,7 @@ table briefly explains each of them:
 
 \section1 ApplicationManager and applications
 
-\section2 ApplicationObject
+\section2 Refactored ApplicationObject
 
 In 5.11, the object type representing an application was named \c Application. But since Qt also has
 an object type with the same name, in order to be able to reference enumerations defined in it you

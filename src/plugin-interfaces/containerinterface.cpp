@@ -281,13 +281,13 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \row
       \li \c ui/iconThemeName
       \li string
-      \li If set in the application-manager, this will forward the \l{QIcon::setThemeName}
-          {icon theme name} to the application.
+      \li If set in the application-manager, this will forward the icon theme name to the application
+          (see QIcon::setThemeName()).
     \row
       \li \c ui/iconThemeSearchPaths
       \li string
-      \li If set in the application-manager, this will forward the \l{QIcon::setThemeSearchPaths}
-          {icon theme search paths} to the application.
+      \li If set in the application-manager, this will forward the icon theme search paths to the
+          application (see QIcon::setThemeSearchPaths()).
     \row
       \li \c ui/opengl
       \li object

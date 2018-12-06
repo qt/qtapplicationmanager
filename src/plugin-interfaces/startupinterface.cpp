@@ -83,7 +83,7 @@ StartupInterface::~StartupInterface() { }
 
 /*! \fn void StartupInterface::initialize(const QVariantMap &systemProperties)
 
-    This method is called right after the \l{system properties}{systemProperties} have been parsed.
+    This method is called right after the \l{system properties}{\a systemProperties} have been parsed.
 */
 
 /*! \fn void StartupInterface::afterRuntimeRegistration()

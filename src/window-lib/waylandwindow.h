@@ -94,6 +94,7 @@ private:
     QTimer *m_pingTimer;
     QTimer *m_pongTimer;
     WindowSurface *m_surface;
+    QVariantMap m_windowProperties;
 };
 
 QT_END_NAMESPACE_AM

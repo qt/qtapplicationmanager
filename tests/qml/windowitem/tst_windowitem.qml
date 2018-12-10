@@ -469,5 +469,23 @@ Item {
             compare(window.windowProperty("clickCount"), 1);
 
         }
+
+        // Checks that window properties are kept even when contentState is WindowObject.NoSurface
+        // Regression test for https://bugreports.qt.io/browse/AUTOSUITE-694
+        function test_window_keep_properties_when_nosurface() {
+            initWindowItemsModel();
+
+            var window = windowItemsModel.get(0).window;
+
+            compare(window.contentState, WindowObject.SurfaceWithContent);
+
+            window.setWindowProperty("foo", "bar");
+            compare(window.windowProperty("foo"), "bar");
+
+            app.stop();
+
+            tryCompare(window, "contentState", WindowObject.NoSurface);
+            compare(window.windowProperty("foo"), "bar");
+        }
     }
 }

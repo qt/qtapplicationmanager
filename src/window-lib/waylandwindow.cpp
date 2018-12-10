@@ -79,8 +79,10 @@ WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
 
         connect(surf->compositor()->amExtension(), &WaylandQtAMServerExtension::windowPropertyChanged,
                 this, [this](QWaylandSurface *surface, const QString &name, const QVariant &value) {
-            if (surface == m_surface)
+            if (surface == m_surface) {
+                m_windowProperties[name] = value;
                 emit windowPropertyChanged(name, value);
+            }
         });
 
         connect(surf, &QWaylandSurface::surfaceDestroyed, this, [this]() {
@@ -88,6 +90,11 @@ WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
             onContentStateChanged();
             emit waylandSurfaceChanged();
         });
+
+        // Caching them so that Window::windowProperty and Window::windowProperties
+        // still return the expected values even after the underlying wayland surface
+        // is gone (content state NoSurface).
+        m_windowProperties = m_surface->compositor()->amExtension()->windowProperties(m_surface);
 
         enableOrDisablePing();
     }
@@ -125,12 +132,12 @@ bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value
 
 QVariant WaylandWindow::windowProperty(const QString &name) const
 {
-    return windowProperties().value(name);
+    return m_windowProperties.value(name);
 }
 
 QVariantMap WaylandWindow::windowProperties() const
 {
-    return m_surface ? m_surface->compositor()->amExtension()->windowProperties(m_surface) : QVariantMap();
+    return m_windowProperties;
 }
 
 auto WaylandWindow::contentState() const -> ContentState

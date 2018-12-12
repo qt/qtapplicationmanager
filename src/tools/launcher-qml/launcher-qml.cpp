@@ -459,7 +459,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
                 this, &Controller::updateSlowMode);
 
-        if (qEnvironmentVariableIsSet("AM_SLOW_ANIMATIONS"))
+        if (LauncherMain::instance()->slowAnimations())
             updateSlowMode(true);
     }
 

@@ -64,7 +64,7 @@ class Application;
 class ApplicationIPCManager : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationIPCManager 1.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationIPCManager 2.0")
 
 public:
     ~ApplicationIPCManager();

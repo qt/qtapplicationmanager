@@ -173,7 +173,7 @@
 
     \qml
     import QtQuick 2.0
-    import QtApplicationManager.SystemUI 1.0
+    import QtApplicationManager.SystemUI 2.0
 
     ListView {
         id: appList
@@ -384,20 +384,20 @@ ApplicationManager *ApplicationManager::createInstance(bool singleProcess)
 
     QScopedPointer<ApplicationManager> am(new ApplicationManager(singleProcess));
 
-    qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager.SystemUI", 1, 0, "ApplicationManager",
+    qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager.SystemUI", 2, 0, "ApplicationManager",
                                                  &ApplicationManager::instanceForQml);
-    qmlRegisterType<ApplicationModel>("QtApplicationManager.SystemUI", 1, 0, "ApplicationModel");
-    qmlRegisterUncreatableType<AbstractApplication>("QtApplicationManager.SystemUI", 1, 0, "ApplicationObject",
+    qmlRegisterType<ApplicationModel>("QtApplicationManager.SystemUI", 2, 0, "ApplicationModel");
+    qmlRegisterUncreatableType<AbstractApplication>("QtApplicationManager.SystemUI", 2, 0, "ApplicationObject",
                                                   qSL("Cannot create objects of type ApplicationObject"));
     qRegisterMetaType<AbstractApplication*>("AbstractApplication*");
-    qmlRegisterUncreatableType<AbstractRuntime>("QtApplicationManager.SystemUI", 1, 0, "Runtime",
+    qmlRegisterUncreatableType<AbstractRuntime>("QtApplicationManager.SystemUI", 2, 0, "Runtime",
                                                 qSL("Cannot create objects of type Runtime"));
     qRegisterMetaType<AbstractRuntime*>("AbstractRuntime*");
-    qmlRegisterUncreatableType<AbstractContainer>("QtApplicationManager.SystemUI", 1, 0, "Container",
+    qmlRegisterUncreatableType<AbstractContainer>("QtApplicationManager.SystemUI", 2, 0, "Container",
                                                   qSL("Cannot create objects of type Container"));
     qRegisterMetaType<AbstractContainer*>("AbstractContainer*");
 
-    qmlRegisterUncreatableType<Am>("QtApplicationManager.SystemUI", 1, 0, "Am",
+    qmlRegisterUncreatableType<Am>("QtApplicationManager.SystemUI", 2, 0, "Am",
                                    qSL("Cannot create objects of type Am"));
 
     qRegisterMetaType<Am::RunState>();

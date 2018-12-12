@@ -82,8 +82,8 @@ ApplicationIPCManager *ApplicationIPCManager::createInstance()
         qFatal("ApplicationIPCManager::createInstance() was called a second time.");
 
     qmlRegisterType<ApplicationIPCInterfaceAttached>();
-    qmlRegisterType<ApplicationIPCInterface>("QtApplicationManager.SystemUI", 1, 0, "ApplicationIPCInterface");
-    qmlRegisterSingletonType<ApplicationIPCManager>("QtApplicationManager.SystemUI", 1, 0, "ApplicationIPCManager",
+    qmlRegisterType<ApplicationIPCInterface>("QtApplicationManager.SystemUI", 2, 0, "ApplicationIPCInterface");
+    qmlRegisterSingletonType<ApplicationIPCManager>("QtApplicationManager.SystemUI", 2, 0, "ApplicationIPCManager",
                                                     &ApplicationIPCManager::instanceForQml);
     return s_instance = new ApplicationIPCManager();
 }
@@ -195,7 +195,7 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
 
     \qml
     import QtQuick 2.0
-    import QtApplicationManager.SystemUI 1.0
+    import QtApplicationManager.SystemUI 2.0
 
     ApplicationIPCInterface {
         id: extension

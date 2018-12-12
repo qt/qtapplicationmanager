@@ -63,7 +63,7 @@ class QmlApplicationInterfaceExtension;
 class QmlApplicationInterface : public ApplicationInterface
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/ApplicationInterface 1.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/ApplicationInterface 2.0")
 
 public:
     explicit QmlApplicationInterface(const QString &dbusConnectionName,

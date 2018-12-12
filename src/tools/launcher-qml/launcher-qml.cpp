@@ -177,18 +177,18 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
     CrashHandler::setQmlEngine(&m_engine);
 
 #if !defined(AM_HEADLESS)
-    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 1, 0, "ApplicationManagerWindow");
+    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
 #endif
-    qmlRegisterType<QmlNotification>("QtApplicationManager", 1, 0, "Notification");
-    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager.Application", 1, 0, "ApplicationInterfaceExtension");
+    qmlRegisterType<QmlNotification>("QtApplicationManager", 2, 0, "Notification");
+    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager.Application", 2, 0, "ApplicationInterfaceExtension");
 
     // monitor-lib
-    qmlRegisterType<CpuStatus>("QtApplicationManager", 1, 0, "CpuStatus");
-    qmlRegisterType<FrameTimer>("QtApplicationManager", 1, 0, "FrameTimer");
-    qmlRegisterType<GpuStatus>("QtApplicationManager", 1, 0, "GpuStatus");
-    qmlRegisterType<IoStatus>("QtApplicationManager", 1, 0, "IoStatus");
-    qmlRegisterType<MemoryStatus>("QtApplicationManager", 1, 0, "MemoryStatus");
-    qmlRegisterType<MonitorModel>("QtApplicationManager", 1, 0, "MonitorModel");
+    qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
+    qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
+    qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
+    qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
+    qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
+    qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
 
     m_configuration = a->runtimeConfiguration();
 

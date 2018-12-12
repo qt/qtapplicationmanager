@@ -70,15 +70,15 @@ IntentClient *IntentClient::createInstance(IntentClientSystemInterface *systemIn
         qCWarning(LogIntents) << "Failed to initialize IntentClient:" << exc.what();
         return nullptr;
     }
-    qmlRegisterSingletonType<IntentClient>("QtApplicationManager", 1, 0, "IntentClient",
+    qmlRegisterSingletonType<IntentClient>("QtApplicationManager", 2, 0, "IntentClient",
                                            [](QQmlEngine *, QJSEngine *) -> QObject * {
         QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
         return instance();
     });
 
-    qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 1, 0, "IntentRequest",
+    qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 2, 0, "IntentRequest",
                                                     qSL("Cannot create objects of type IntentRequest"));
-    qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 1, 0, "IntentHandler");
+    qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 2, 0, "IntentHandler");
 
     return s_instance = ic.take();
 }

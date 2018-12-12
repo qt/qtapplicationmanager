@@ -77,12 +77,12 @@ IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemIn
     qRegisterMetaType<QVariantList>("IntentList");
 
     // needed to get access to the Visibility enum from QML
-    qmlRegisterUncreatableType<Intent>("QtApplicationManager.SystemUI", 1, 0, "Intent",
+    qmlRegisterUncreatableType<Intent>("QtApplicationManager.SystemUI", 2, 0, "Intent",
                                        qSL("Cannot create objects of type Intent"));
 
-    qmlRegisterUncreatableType<IntentServerRequest>("QtApplicationManager.SystemUI", 1, 0, "IntentServerRequest",
+    qmlRegisterUncreatableType<IntentServerRequest>("QtApplicationManager.SystemUI", 2, 0, "IntentServerRequest",
                                                     qSL("Cannot create objects of type IntentServerRequest"));
-    qmlRegisterSingletonType<IntentServer>("QtApplicationManager.SystemUI", 1, 0, "IntentServer",
+    qmlRegisterSingletonType<IntentServer>("QtApplicationManager.SystemUI", 2, 0, "IntentServer",
                                            [](QQmlEngine *, QJSEngine *) -> QObject * {
         QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
         return instance();

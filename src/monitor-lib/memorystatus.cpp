@@ -55,7 +55,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     MonitorModel {
         MemoryStatus {}
@@ -66,7 +66,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     MemoryStatus { id: memoryStatus }
     Timer {

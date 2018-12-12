@@ -54,7 +54,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     GpuStatus { id: gpuStatus }
     Timer {
@@ -74,7 +74,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     MonitorModel {
         GpuStatus {}

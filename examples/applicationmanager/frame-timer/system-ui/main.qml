@@ -53,8 +53,8 @@
 import QtQuick 2.11
 import QtQuick.Layouts 1.11
 import QtQuick.Window 2.11
-import QtApplicationManager 1.0
-import QtApplicationManager.SystemUI 1.0
+import QtApplicationManager 2.0
+import QtApplicationManager.SystemUI 2.0
 
 Window {
     id: sysuiWindow

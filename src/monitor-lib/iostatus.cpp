@@ -57,7 +57,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     MonitorModel {
         IoStatus {
@@ -70,7 +70,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     IoStatus {
         id: ioStatus

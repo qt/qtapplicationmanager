@@ -52,7 +52,7 @@ QT_BEGIN_NAMESPACE_AM
 class Notification : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/Notification 1.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/Notification 2.0")
     Q_INTERFACES(QQmlParserStatus)
 
     Q_PROPERTY(uint notificationId READ notificationId NOTIFY notificationIdChanged)

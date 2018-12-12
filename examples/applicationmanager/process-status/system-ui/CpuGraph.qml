@@ -41,8 +41,8 @@
 
 import QtQuick 2.11
 import QtQuick.Controls 2.4
-import QtApplicationManager 1.0
-import QtApplicationManager.SystemUI 1.0
+import QtApplicationManager 2.0
+import QtApplicationManager.SystemUI 2.0
 
 /*
     This file shows how to use ProcessStatus inside a MonitorModel to draw a graph

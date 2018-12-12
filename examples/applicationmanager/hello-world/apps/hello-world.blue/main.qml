@@ -51,7 +51,7 @@
 ****************************************************************************/
 
 import QtQuick 2.4
-import QtApplicationManager.Application 1.0
+import QtApplicationManager.Application 2.0
 
 ApplicationManagerWindow {
     color: "blue"

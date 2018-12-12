@@ -71,13 +71,13 @@ public:
 
     The QML import for this item is
 
-    \c{import QtApplicationManager.Application 1.0}
+    \c{import QtApplicationManager.Application 2.0}
 
     After importing, you can instantiate the QML item like so:
 
     \qml
     import QtQuick 2.0
-    import QtApplicationManager.Application 1.0
+    import QtApplicationManager.Application 2.0
 
     ApplicationManagerWindow {
         Text {
@@ -92,7 +92,7 @@ public:
 
     \list 1
     \li Pick a base dir and create a \c{QtApplicationManager.Application} directory in it
-    \li Add a file named \c qmldir there, consisting of the single line \c{ApplicationManagerWindow 1.0 ApplicationManagerWindow.qml}
+    \li Add a file named \c qmldir there, consisting of the single line \c{ApplicationManagerWindow 2.0 ApplicationManagerWindow.qml}
     \li Add a second file named \c ApplicationManagerWindow.qml, with the following content
 
     \qml

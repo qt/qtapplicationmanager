@@ -246,7 +246,7 @@ ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<Install
         return nullptr;
     }
 
-    qmlRegisterSingletonType<ApplicationInstaller>("QtApplicationManager.SystemUI", 1, 0, "ApplicationInstaller",
+    qmlRegisterSingletonType<ApplicationInstaller>("QtApplicationManager.SystemUI", 2, 0, "ApplicationInstaller",
                                                    &ApplicationInstaller::instanceForQml);
 
     return s_instance = new ApplicationInstaller(installationLocations, manifestDir.take(), imageMountDir.take(),

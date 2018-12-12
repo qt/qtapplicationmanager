@@ -41,7 +41,7 @@
 
 import QtQuick 2.4
 import QtQuick.Controls 2.4
-import QtApplicationManager.SystemUI 1.0
+import QtApplicationManager.SystemUI 2.0
 
 /*
  This file shows how to use ProcessStatus alongside a Timer (instead of putting it inside a MonitorModel)

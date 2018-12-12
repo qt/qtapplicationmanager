@@ -72,7 +72,7 @@
 
     \qml
     import QtQuick 2.6
-    import QtApplicationManager.SystemUI 1.0
+    import QtApplicationManager.SystemUI 2.0
 
     ListView {
         model: ApplicationModel {

@@ -62,6 +62,9 @@ table briefly explains each of them:
         not import this module.
 \endtable
 
+In order to avoid compatibility problems with old code expecting the old APIs, \b all imports have
+been bumped up to version \c 2.0. Importing the \c 1.0 versions will just yield a QML error.
+
 
 \section1 ApplicationManager and applications
 
@@ -79,7 +82,7 @@ if (application.state === AppMan.Application.Installed) {
     ...
 }
 \newcode
-import QtApplicationManager.Application 1.0
+import QtApplicationManager.Application 2.0
 ...
 if (application.state === ApplicationObject.Installed) {
     ...

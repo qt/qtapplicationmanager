@@ -129,7 +129,7 @@
 
     \qml
     import QtQuick 2.10
-    import QtApplicationManager.SystemUI 1.0
+    import QtApplicationManager.SystemUI 2.0
 
     // Simple solution for a full-screen setup
     Item {
@@ -243,13 +243,13 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QStrin
     if (s_instance)
         qFatal("WindowManager::createInstance() was called a second time.");
 
-    qmlRegisterSingletonType<WindowManager>("QtApplicationManager.SystemUI", 1, 0, "WindowManager",
+    qmlRegisterSingletonType<WindowManager>("QtApplicationManager.SystemUI", 2, 0, "WindowManager",
                                             &WindowManager::instanceForQml);
 
-    qmlRegisterUncreatableType<Window>("QtApplicationManager.SystemUI", 1, 0, "WindowObject", qSL("Cannot create objects of type WindowObject"));
+    qmlRegisterUncreatableType<Window>("QtApplicationManager.SystemUI", 2, 0, "WindowObject", qSL("Cannot create objects of type WindowObject"));
     qRegisterMetaType<Window*>("Window*");
 
-    qmlRegisterType<WindowItem>("QtApplicationManager.SystemUI", 1, 0, "WindowItem");
+    qmlRegisterType<WindowItem>("QtApplicationManager.SystemUI", 2, 0, "WindowItem");
 
     qRegisterMetaType<InProcessSurfaceItem*>("InProcessSurfaceItem*");
     qRegisterMetaType<QSharedPointer<InProcessSurfaceItem>>("QSharedPointer<InProcessSurfaceItem>");

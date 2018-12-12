@@ -57,7 +57,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     MonitorModel {
         CpuStatus {}
@@ -68,7 +68,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     CpuStatus { id: cpuStatus }
     Timer {

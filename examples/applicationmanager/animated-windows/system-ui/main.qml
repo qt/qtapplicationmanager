@@ -52,7 +52,7 @@
 
 import QtQuick 2.4
 import QtQuick.Layouts 1.11
-import QtApplicationManager.SystemUI 1.0
+import QtApplicationManager.SystemUI 2.0
 
 Rectangle {
     width: 1024

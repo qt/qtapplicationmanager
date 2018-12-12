@@ -32,7 +32,7 @@
 isWin=0
 isMac=0
 [ "$OS" == "Windows_NT" ] && isWin=1
-[ "$(uname)" != "Darwin" ] && isMac=1
+[ "$(uname)" == "Darwin" ] && isMac=1
 
 # check basic requirement
 [ "$isMac" != "1" ] && [ "$isWin" != "1" ] && [ "${LANG%%.UTF-8}" = "$LANG" ] && { echo "The application-packager needs to be run with UTF-8 locale variant"; exit 1; }

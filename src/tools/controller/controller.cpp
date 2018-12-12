@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:GPL-EXCEPT-QTAS$
 ** Commercial License Usage
@@ -231,13 +232,13 @@ private:
 int main(int argc, char *argv[])
 {
     QCoreApplication::setApplicationName(qSL("ApplicationManager Controller"));
-    QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
-    QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
+    QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
+    QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     ThrowingApplication a(argc, argv);
 
-    QString desc = qSL("\nPelagicore ApplicationManager controller tool\n\nAvailable commands are:\n");
+    QString desc = qSL("\nLuxoft ApplicationManager controller tool\n\nAvailable commands are:\n");
     uint longestName = 0;
     for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i)
         longestName = qMax(longestName, qstrlen(commandTable[i].name));

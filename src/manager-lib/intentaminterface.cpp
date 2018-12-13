@@ -151,8 +151,6 @@ void IntentAMImplementation::addApplicationIntents(AbstractApplication *app, Int
 
         if (visibilityStr == qL1S("private"))
             visibility = Intent::Private;
-        else if (visibilityStr == qL1S("hidden"))
-            visibility = Intent::Hidden;
         else if (!visibilityStr.isEmpty() && (visibilityStr != qL1S("public"))) {
             throw Exception(Error::Intents, "intent visibilty %3 is invalid (intent %2, app %1)")
                     .arg(app->id()).arg(id).arg(visibilityStr);

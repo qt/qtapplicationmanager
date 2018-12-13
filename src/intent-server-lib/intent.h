@@ -62,7 +62,6 @@ class Intent
 public:
     enum Visibility {
         Public,
-        Hidden,
         Private
     };
     Q_ENUM(Visibility)

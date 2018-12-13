@@ -4,7 +4,8 @@
 #include <QtAppManCrypto/QtAppManCrypto>
 #include <QtAppManDBus/QtAppManDBus>
 #include <QtAppManInstaller/QtAppManInstaller>
-#include <QtAppManIpc/QtAppManIpc>
+#include <QtAppManIntentClient/QtAppManIntentClient>
+#include <QtAppManIntentServer/QtAppManIntentServer>
 #include <QtAppManLauncher/QtAppManLauncher>
 #include <QtAppManMain/QtAppManMain>
 #include <QtAppManManager/QtAppManManager>

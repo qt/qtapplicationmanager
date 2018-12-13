@@ -45,6 +45,62 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+/*! \qmltype IntentHandler
+    \inqmlmodule QtApplicationManager.Application
+    \ingroup common-instantiatable
+    \brief A handler for intent requests received by applications.
+
+    Any application that has intents listed in its manifest file needs to have a corresponding
+    IntentHandler instance that is actually able to handle incoming requests. This class gives
+    you the flexibility to handle multiple, different intent ids via a single IntentHandler
+    instance or have a dedicated IntentHandler instance for every intent id (or any combination of
+    those).
+
+    Here is a fairly standard way to handle an incoming intent request and send out a result or
+    error message:
+
+    \qml
+    Image {
+        id: viewer
+    }
+
+    IntentHandler {
+        intentIds: [ "show-image" ]
+        onRequestReceived: {
+            var url = request.parameters["url"]
+            if (!url.startsWith("file://")) {
+                request.sendErrorReply("Only file:// urls are supported")
+            } else {
+                viewer.source = url
+                request.sendReply({ "status": source.status })
+            }
+        }
+    }
+    \endqml
+
+*/
+
+/*! \qmlproperty list<string> IntentHandler::intentIds
+
+    Every handler needs to register at least one unique intent id that it will handle. Having
+    multiple IntentHandlers that are registering the same intent id is not possible.
+
+    \note Any changes to this property after component completion will have no effect. This
+          restriction will likely be removed in a future update.
+*/
+
+/*! \qmlsignal IntentHandler::requestReceived(IntentRequest request)
+
+    This signal will be emitted once for every incoming intent \a request that this handler was
+    registered for via its intentIds property.
+    Handling the request can be done synchronously or asynchronously. As soon as your handler has
+    either produced a result or detected an error condition, it should call either
+    IntentClientRequest::sendReply() or IntentClientRequest::sendErrorReply respectively to send a
+    reply back to the requesting party.
+    Only the first call to one of these functions will have any effect. Any further invocations
+    will be ignored.
+*/
+
 IntentHandler::IntentHandler(QObject *parent)
     : QObject(parent)
 { }

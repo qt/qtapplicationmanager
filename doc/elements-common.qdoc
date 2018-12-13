@@ -46,4 +46,7 @@ declarations may be nested, creating parent-child relationships between the item
 
 \annotatedlist common-instantiatable
 
+\section1 Non-Instantiable QML Types
+
+\annotatedlist common-non-instantiable
 */

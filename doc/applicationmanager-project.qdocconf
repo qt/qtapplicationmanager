@@ -20,6 +20,8 @@ headerdirs += \
     ../src/application-lib \
     ../src/package-lib \
     ../src/installer-lib \
+    ../src/intent-client-lib \
+    ../src/intent-server-lib \
     ../src/notification-lib \
     ../src/window-lib \
     ../src/launcher-lib \
@@ -36,6 +38,8 @@ sourcedirs += \
     ../src/application-lib \
     ../src/package-lib \
     ../src/installer-lib \
+    ../src/intent-client-lib \
+    ../src/intent-server-lib \
     ../src/notification-lib \
     ../src/window-lib \
     ../src/launcher-lib \

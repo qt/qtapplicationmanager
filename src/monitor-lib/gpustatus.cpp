@@ -123,7 +123,7 @@ GpuStatus::GpuStatus(QObject *parent)
             or the application-manager has to be run as the \c root user.
     \endtable
 
-    \sa \l{GpuStatus::update}{update()}
+    \sa update
 */
 qreal GpuStatus::gpuLoad() const
 {

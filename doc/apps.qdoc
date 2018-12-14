@@ -81,7 +81,7 @@ ApplicationInstaller interface.
 \section2 Qmake Integration
 
 To install applications into a system-ui using the \l{Installer}{Installer Sub-System}, the
-application first needs to be packaged. This can be done using the \l{Packager utility}. To better
+application first needs to be packaged. This can be done using the \l{Packager} utility. To better
 integrate the packaging into your usual developer workflow you can also use the qmake integration
 provided by the application-manager.
 

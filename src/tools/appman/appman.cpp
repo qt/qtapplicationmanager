@@ -52,6 +52,7 @@
 #  include "sudo.h"
 #endif
 #include "startuptimer.h"
+#include "exception.h"
 
 #if defined(AM_TESTRUNNER)
 #  include "testrunner.h"
@@ -118,8 +119,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #else
         return MainBase::exec();
 #endif
-    } catch (const std::exception &e) {
-        qCCritical(LogSystem) << "ERROR:" << e.what();
+    } catch (const Exception &e) {
+        qCCritical(LogSystem) << "ERROR:" << e.errorString();
         return 2;
     }
 }

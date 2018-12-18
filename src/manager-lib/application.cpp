@@ -233,6 +233,12 @@
     been requested to be brought to foreground or raised.
 */
 /*!
+    \qmlmethod string ApplicationObject::name(string language)
+
+    Returns the name of the application in the given \a language, as provided in the the info.yaml
+    file.
+*/
+/*!
     \qmlmethod bool ApplicationObject::start(string document)
 
     Starts the application. The optional argument \a document will be supplied to the application as

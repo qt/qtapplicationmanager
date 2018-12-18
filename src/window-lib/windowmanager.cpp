@@ -212,6 +212,13 @@
 */
 
 /*!
+    \qmlsignal WindowManager::windowAboutToBeRemoved(WindowObject window)
+
+    This signal is emitted before the \a window is removed from the model. This happens for
+    instance, when the window \c visible property is set to \c false on the application side.
+*/
+
+/*!
     \qmlsignal WindowManager::windowContentStateChanged(WindowObject window)
 
     This signal is emitted when the WindowObject::contentState of the given \a window changes.

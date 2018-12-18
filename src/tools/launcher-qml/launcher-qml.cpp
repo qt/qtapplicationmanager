@@ -356,7 +356,21 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         avm = qdbus_cast<QVariantMap>(application.value(qSL("applicationProperties")));
         for (auto it = avm.begin(); it != avm.end(); ++it)
             it.value() = convertFromDBusVariant(it.value());
+
+        connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
+                LauncherMain::instance(), &LauncherMain::setSlowAnimations);
     }
+
+    // Going through the LauncherMain instance here is a bit weird, and should be refactored
+    // sometime. Having the flag there makes sense though, because this class can also be used for
+    // custom launchers.
+    connect(LauncherMain::instance(), &LauncherMain::slowAnimationsChanged,
+            this, &Controller::updateSlowAnimations);
+
+    updateSlowAnimations(LauncherMain::instance()->slowAnimations());
+
+    // we need to catch all show events to apply the slow-animations
+    QCoreApplication::instance()->installEventFilter(this);
 
     QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
     auto startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
@@ -456,12 +470,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             m_window->setClearBeforeRendering(true);
             m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
         }
-
-        connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
-                this, &Controller::updateSlowMode);
-
-        if (LauncherMain::instance()->slowAnimations())
-            updateSlowMode(true);
     }
 
     // needed, even though we do not explicitly show() the window any more
@@ -482,25 +490,50 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 }
 
 #if !defined(AM_HEADLESS)
-void Controller::updateSlowMode(bool isSlow)
+bool Controller::eventFilter(QObject *o, QEvent *e)
 {
-    QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+    if (e && (e->type() == QEvent::Show) && qobject_cast<QQuickWindow *>(o)) {
+        auto window = static_cast<QQuickWindow *>(o);
+        m_allWindows.append(window);
+        updateSlowAnimationsForWindow(window);
+    }
+    return QObject::eventFilter(o, e);
+}
 
+void Controller::updateSlowAnimationsForWindow(QQuickWindow *window)
+{
     // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
     // we need to enable the slow mode in this timer as well.
-    static QMetaObject::Connection connection;
-
-    connection = connect(m_window, &QQuickWindow::beforeRendering, this, [isSlow] {
-        if (connection) {
+    QMetaObject::Connection *connection = new QMetaObject::Connection;
+    *connection = connect(window, &QQuickWindow::beforeRendering,
+                          this, [connection] {
+        if (connection && *connection) {
 #  if defined(Q_CC_MSVC)
-            qApp->disconnect(connection); // MSVC cannot distinguish between static and non-static overloads in lambdas
+            qApp->disconnect(*connection); // MSVC cannot distinguish between static and non-static overloads in lambdas
 #  else
-            QObject::disconnect(connection);
+            QObject::disconnect(*connection);
 #  endif
-            QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+            QUnifiedTimer::instance()->setSlowModeEnabled(LauncherMain::instance()->slowAnimations());
+            delete connection;
         }
     }, Qt::DirectConnection);
 }
+
+void Controller::updateSlowAnimations(bool isSlow)
+{
+    QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+
+    for (auto it = m_allWindows.begin(); it != m_allWindows.end(); ) {
+        QPointer<QQuickWindow> window = *it;
+        if (!window) {
+            m_allWindows.erase(it);
+        } else {
+            updateSlowAnimationsForWindow(window.data());
+            ++it;
+        }
+    }
+}
+
 #endif  // !defined(AM_HEADLESS)
 
 

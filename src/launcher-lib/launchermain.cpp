@@ -100,6 +100,14 @@ bool LauncherMain::slowAnimations() const
     return m_slowAnimations;
 }
 
+void LauncherMain::setSlowAnimations(bool slow)
+{
+    if (slow != m_slowAnimations) {
+        m_slowAnimations = slow;
+        emit slowAnimationsChanged(slow);
+    }
+}
+
 QVariantMap LauncherMain::systemProperties() const
 {
     return m_systemProperties;

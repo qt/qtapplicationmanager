@@ -70,6 +70,16 @@ bool WindowManagerAdaptor::runningOnDesktop() const
     return WindowManager::instance()->isRunningOnDesktop();
 }
 
+bool WindowManagerAdaptor::slowAnimations() const
+{
+    return WindowManager::instance()->slowAnimations();
+}
+
+void WindowManagerAdaptor::setSlowAnimations(bool slow)
+{
+    WindowManager::instance()->setSlowAnimations(slow);
+}
+
 bool WindowManagerAdaptor::makeScreenshot(const QString &filename, const QString &selector)
 {
     return WindowManager::instance()->makeScreenshot(filename, selector);

@@ -82,6 +82,7 @@ public:
     QVariantMap runtimeConfiguration() const;
     QByteArray securityToken() const;
     bool slowAnimations() const;
+    void setSlowAnimations(bool slow);
     QVariantMap systemProperties() const;
     QStringList loggingRules() const;
 
@@ -102,6 +103,7 @@ public:
 
 signals:
     void windowPropertyChanged(QWindow *window, const QString &name, const QVariant &value);
+    void slowAnimationsChanged(bool slow);
 
 private:
     QVariantMap m_configuration;

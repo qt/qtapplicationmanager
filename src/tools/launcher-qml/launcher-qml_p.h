@@ -44,6 +44,8 @@
 
 #include <QObject>
 #include <QVariantMap>
+#include <QVector>
+#include <QPointer>
 #include <QQmlIncubationController>
 #include <QQmlApplicationEngine>
 #include <QtAppManCommon/global.h>
@@ -87,8 +89,16 @@ private:
     bool m_quickLaunched;
 #if !defined(AM_HEADLESS)
     QQuickWindow *m_window = nullptr;
+    QVector<QPointer<QQuickWindow>> m_allWindows;
+
+    void updateSlowAnimationsForWindow(QQuickWindow *window);
+
+protected:
+    bool eventFilter(QObject *o, QEvent *e) override;
+
 private slots:
-    void updateSlowMode(bool isSlow);
+    void updateSlowAnimations(bool isSlow);
+
 #endif
 };
 

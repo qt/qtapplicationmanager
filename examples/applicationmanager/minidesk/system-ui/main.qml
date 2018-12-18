@@ -89,8 +89,6 @@ Rectangle {
 
         delegate: Rectangle {
             width: 400; height: 320
-            x: 300 + model.index * 50;
-            y:  10 + model.index * 30;
             z: model.index
             color: "tan"
 
@@ -128,6 +126,11 @@ Rectangle {
                             topLevelWindowsModel.remove(model.index, 1);
                     }
                 }
+            }
+
+            Component.onCompleted: {
+                x = 300 + model.index * 50;
+                y =  10 + model.index * 30;
             }
         }
     }

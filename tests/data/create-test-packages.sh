@@ -94,7 +94,15 @@ echo "Generating test packages:"
 cp info.yaml "$src"
 cp icon.png "$src"
 echo "test" >"$src/test"
-echo "test with umlaut" >"$src/täst"
+if [ "$isMac" = "1" ]; then
+  # macOS shells create filenames with unicode characters in pre-composed UTF form, which is
+  # non-standard on macOS. Qt's internal QFileSystemIterator class on the other hand is ignoring
+  # these filenames as being invalid. A workaround is to convert the name to de-composed form
+  # already in the shell environment:
+  echo "test with umlaut" >"$src/$(iconv -f utf-8 -t utf-8-mac <<< täst)"
+else
+  echo "test with umlaut" >"$src/täst"
+fi
 
 info "Create package"
 packager create-package "$dst/test.appkg" "$src"

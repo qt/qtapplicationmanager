@@ -52,7 +52,7 @@ linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|
     check_libbacktrace = "no"
 }
 
-!tools-only: SUBDIRS += doc dummyimports
+!tools-only: SUBDIRS += doc
 
 load(qt_parts)
 

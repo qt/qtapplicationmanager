@@ -14,6 +14,9 @@ QT *= \
     appman_notification-private \
     appman_window-private \
     appman_launcher-private \
+    appman_intent_client-private \
+    appman_intent_server-private \
+    appman_monitor-private \
 
 CONFIG *= console
 

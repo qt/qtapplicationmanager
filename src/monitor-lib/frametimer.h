@@ -58,6 +58,7 @@ QT_BEGIN_NAMESPACE_AM
 class FrameTimer : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/FrameTimer 2.0")
 
     Q_PROPERTY(qreal averageFps READ averageFps NOTIFY updated)
     Q_PROPERTY(qreal minimumFps READ minimumFps NOTIFY updated)

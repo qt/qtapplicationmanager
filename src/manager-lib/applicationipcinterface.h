@@ -43,6 +43,8 @@
 #pragma once
 
 #include <QObject>
+#include <QString>
+#include <QVariant>
 #include <qqml.h>
 #if defined(QT_DBUS_LIB)
 #  include <QDBusConnection>
@@ -58,6 +60,8 @@ class IpcProxyObject;
 class ApplicationIPCInterface : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationIPCInterface 2.0")
+
     Q_PROPERTY(QObject *serviceObject READ serviceObject WRITE setServiceObject NOTIFY serviceObjectChanged)
 
 public:
@@ -85,6 +89,30 @@ private:
     IpcProxyObject *m_ipcProxy = nullptr;
 
     friend class ApplicationIPCManager;
+};
+
+class ApplicationIPCInterfaceAttached : public QObject
+{
+    Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationIPCInterfaceAttached 2.0")
+
+    Q_PROPERTY(QString sender READ sender)
+    Q_PROPERTY(QVariant receivers READ receivers WRITE setReceivers)
+    Q_PROPERTY(QVariant inProcessReceiversOnly READ inProcessReceiversOnly CONSTANT)
+
+public:
+    ApplicationIPCInterfaceAttached(QObject *object);
+
+    QString sender() const;
+    QVariant receivers() const;
+    void setReceivers(const QVariant &receivers);
+    QVariant inProcessReceiversOnly() const;
+
+private:
+    bool resolveProxy() const;
+
+    QObject *m_object;
+    mutable IpcProxyObject *m_proxy = nullptr;
 };
 
 QT_END_NAMESPACE_AM

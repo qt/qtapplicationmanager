@@ -62,6 +62,7 @@ class WindowItem;
 class Window : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/Window 2.0")
 
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
     Q_PROPERTY(ContentState contentState READ contentState NOTIFY contentStateChanged)

@@ -64,6 +64,8 @@ typedef QVariantList IntentList;
 class IntentServer : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentServer 2.0")
+
     Q_PROPERTY(IntentList intentList READ intentList NOTIFY intentListChanged)
 
 public:

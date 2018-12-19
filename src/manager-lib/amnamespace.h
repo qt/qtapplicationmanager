@@ -51,10 +51,10 @@ QT_BEGIN_NAMESPACE_AM
 // enums when used as Q_PROPERTY types and accessed from QML
 class Am : public QObject
 {
-    //Q_GADGET
     Q_OBJECT
-public:
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/Am 2.0")
 
+public:
     // we cannot use QProcess enums directly, since some supported platforms might
     // not have QProcess available at all.
     // keep these enums in sync with those in containerinterface.h

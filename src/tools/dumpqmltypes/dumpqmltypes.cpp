@@ -29,6 +29,8 @@
 
 #include <QtAppManInstaller/applicationinstaller.h>
 #include <QtAppManManager/applicationmanager.h>
+#include <QtAppManManager/applicationmodel.h>
+#include <QtAppManManager/amnamespace.h>
 #include <QtAppManManager/applicationipcmanager.h>
 #include <QtAppManManager/applicationipcinterface.h>
 #include <QtAppManManager/application.h>
@@ -39,10 +41,25 @@
 #include <QtAppManManager/notificationmanager.h>
 #include <QtAppManManager/qmlinprocessapplicationinterface.h>
 #include <QtAppManWindow/windowmanager.h>
+#include <QtAppManWindow/window.h>
+#include <QtAppManWindow/windowitem.h>
 #include <QtAppManLauncher/qmlapplicationinterface.h>
 #include <QtAppManLauncher/qmlapplicationinterfaceextension.h>
 #include <QtAppManLauncher/private/applicationmanagerwindow_p.h>
+#include <QtAppManIntentServer/intent.h>
+#include <QtAppManIntentServer/intentserver.h>
+#include <QtAppManIntentClient/intentclient.h>
+#include <QtAppManIntentClient/intentclientrequest.h>
+#include <QtAppManIntentClient/intenthandler.h>
+#include <QtAppManMonitor/cpustatus.h>
+#include <QtAppManMonitor/gpustatus.h>
+#include <QtAppManMonitor/memorystatus.h>
+#include <QtAppManMonitor/iostatus.h>
+#include <QtAppManMonitor/processstatus.h>
+#include <QtAppManMonitor/frametimer.h>
+#include <QtAppManMonitor/monitormodel.h>
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/exception.h>
 
 #include <QCoreApplication>
 #include <QCommandLineParser>
@@ -50,6 +67,49 @@
 #include <stdio.h>
 
 QT_USE_NAMESPACE_AM
+
+static const QVector<const QMetaObject *> all = {
+    // manager-lib
+    &ApplicationManager::staticMetaObject,
+    &ApplicationInstaller::staticMetaObject,
+    &NotificationManager::staticMetaObject,
+    &ApplicationIPCManager::staticMetaObject,
+    &AbstractApplication::staticMetaObject,
+    &AbstractRuntime::staticMetaObject,
+    &AbstractContainer::staticMetaObject,
+    &Notification::staticMetaObject,
+    &QmlApplicationInterface::staticMetaObject,
+    &QmlApplicationInterfaceExtension::staticMetaObject,
+    &ApplicationManagerWindow::staticMetaObject,
+    &ApplicationModel::staticMetaObject,
+    &Am::staticMetaObject,
+    &ApplicationIPCInterface::staticMetaObject,
+    &ApplicationIPCInterfaceAttached::staticMetaObject,
+
+    // window-lib
+    &WindowManager::staticMetaObject,
+    &Window::staticMetaObject,
+    &WindowItem::staticMetaObject,
+
+    // intent-client-lib
+    &IntentClient::staticMetaObject,
+    &IntentClientRequest::staticMetaObject,
+    &IntentHandler::staticMetaObject,
+
+    // intent-server-lib
+    &IntentServer::staticMetaObject,
+    &Intent::staticMetaObject,
+
+    // monitor-lib
+    &CpuStatus::staticMetaObject,
+    &GpuStatus::staticMetaObject,
+    &MemoryStatus::staticMetaObject,
+    &IoStatus::staticMetaObject,
+    &ProcessStatus::staticMetaObject,
+    &FrameTimer::staticMetaObject,
+    &MonitorModel::staticMetaObject
+};
+
 
 static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool indentFirstLine)
 {
@@ -83,17 +143,17 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
 
     str = str + "Component {\n";
     str = str
-        + indent2
-        + "name: \""
-        + stripNamespace(mo->className())
-        + "\"\n";
+            + indent2
+            + "name: \""
+            + stripNamespace(mo->className())
+            + "\"\n";
 
     if (mo->superClass()) {
         str = str
-            + indent2
-            + "prototype: \""
-            + stripNamespace(mo->superClass()->className())
-            + "\"\n";
+                + indent2
+                + "prototype: \""
+                + stripNamespace(mo->superClass()->className())
+                + "\"\n";
     }
 
     for (int i = mo->classInfoOffset(); i < mo->classInfoCount(); ++i) {
@@ -111,9 +171,9 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
     for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
         QMetaProperty p = mo->property(i);
         str = str
-            + indent2
-            + "Property { name: \"" + p.name()
-            + "\"; type: \"" + mapTypeName(p.typeName(), true) + "\";";
+                + indent2
+                + "Property { name: \"" + p.name()
+                + "\"; type: \"" + mapTypeName(p.typeName(), true) + "\";";
         if (QByteArray(p.typeName()).endsWith('*'))
             str += " isPointer: true;";
         if (!p.isWritable())
@@ -140,15 +200,15 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
         }
 
         str = str
-            + indent2
-            + methodtype + " {\n" + indent3 + "name: \"" + m.name() + "\"\n";
+                + indent2
+                + methodtype + " {\n" + indent3 + "name: \"" + m.name() + "\"\n";
         if (qstrcmp(m.typeName(), "void") != 0)
             str = str + indent3 + "type: \"" + mapTypeName(m.typeName(), false) + "\"\n";
 
         for (int j = 0; j < m.parameterCount(); ++j) {
             str = str
-                + indent3 + "Parameter { name: \""
-                + m.parameterNames().at(j) + "\"; type: \"" + mapTypeName(m.parameterTypes().at(j), true) + "\";";
+                    + indent3 + "Parameter { name: \""
+                    + m.parameterNames().at(j) + "\"; type: \"" + mapTypeName(m.parameterTypes().at(j), true) + "\";";
             if (m.parameterTypes().at(j).endsWith('*'))
                 str += " isPointer: true;";
             str = str + " }\n";
@@ -164,91 +224,123 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
 
 int main(int argc, char **argv)
 {
-    QCoreApplication::setApplicationName(qSL("ApplicationManager qmltypes dumper"));
-    QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
-    QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
-    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
+    try {
+        QCoreApplication::setApplicationName(qSL("ApplicationManager qmltypes dumper"));
+        QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
+        QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
+        QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
-    QCoreApplication a(argc, argv);
-    Q_UNUSED(a)
-    QCommandLineParser clp;
+        QCoreApplication a(argc, argv);
+        Q_UNUSED(a)
+        QCommandLineParser clp;
 
-    const char *desc =
-        "Luxoft ApplicationManager qmltypes dumper"
-        "\n\n"
-        "This tool is used to generate the qmltypes type information for all ApplicationManager\n"
-        "classes to get auto-completion in QtCreator.\n"
-        "Either install the resulting output as $QTDIR/qml/QtApplicationManager/plugins.qmltypes\n"
-        "or simply run this tool with the --install option.\n";
+        const char *desc =
+                "Luxoft ApplicationManager qmltypes dumper"
+                "\n\n"
+                "This tool is used to generate the qmltypes type information for all ApplicationManager\n"
+                "classes to get auto-completion in QtCreator.\n"
+                "Either install the resulting output as $QTDIR/qml/QtApplicationManager/plugins.qmltypes\n"
+                "or simply run this tool with the --install option.\n";
 
-    clp.setApplicationDescription(qL1S(desc));
-    clp.addHelpOption();
-    clp.addVersionOption();
-    clp.addOption({ qSL("install"), qSL("directly install into the Qt directory.") });
+        clp.setApplicationDescription(qL1S(desc));
+        clp.addHelpOption();
+        clp.addVersionOption();
+        clp.addOption({ qSL("install"), qSL("directly install into the Qt directory.") });
+        clp.addPositionalArgument(qSL("destination"), qSL("Destination directory where the qmltypes information is created."), qSL("dir"));
 
-    if (!clp.parse(QCoreApplication::arguments())) {
-        fprintf(stderr, "%s\n", qPrintable(clp.errorText()));
+        if (!clp.parse(QCoreApplication::arguments()))
+            throw Exception(clp.errorText());
+
+        if (clp.isSet(qSL("version")))
+            clp.showVersion();
+        if (clp.isSet(qSL("help")))
+            clp.showHelp();
+
+        QDir outDir;
+
+        if (clp.isSet(qSL("install")) && clp.positionalArguments().isEmpty()) {
+            outDir = QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath);
+            if (!outDir.exists())
+                throw Exception("Qt's QML2 imports directory (%1) is missing.")
+                    .arg(outDir.absolutePath());
+        } else if (clp.positionalArguments().count() == 1) {
+            outDir = clp.positionalArguments().first();
+            if (!outDir.mkpath(qSL(".")))
+                throw Exception("Cannot create destination directory %1.").arg(outDir.absolutePath());
+        } else {
+            throw Exception("You need to either specify a destination directory or run with --install.");
+        }
+
+
+        QMultiMap<QString, const QMetaObject *> imports;
+        QVector<QByteArray> sanityCheck; // check for copy&paste errors
+
+        for (const auto &mo : all) {
+            bool foundType = false;
+            for (int i = mo->classInfoOffset(); (i < mo->classInfoCount()) && !foundType; ++i) {
+                QMetaClassInfo c = mo->classInfo(i);
+                if (qstrcmp(c.name(), "AM-QmlType") == 0) {
+                    QByteArray type = c.value();
+                    QByteArray import = type.left(type.indexOf('/'));
+
+                    imports.insert(QString::fromLatin1(import), mo);
+                    foundType = true;
+
+                    if (sanityCheck.contains(type))
+                        throw Exception("Q_CLASSINFO(\"AM-QmlType\", \"%1\") was found multiple times").arg(type);
+                    sanityCheck << type;
+                }
+            }
+            if (!foundType)
+                throw Exception("Missing Q_CLASSINFO(\"AM-QmlType\", \"...\") on class %1").arg(mo->className());
+        }
+
+        for (auto it = imports.keyBegin(); it != imports.keyEnd(); ++it) {
+            QString importPath = *it;
+            importPath.replace(qL1C('.'), qL1C('/'));
+
+            QDir importDir = outDir;
+            if (!importDir.mkpath(importPath))
+                throw Exception("Cannot create directory %1/%2").arg(importDir.absolutePath(), importPath);
+            if (!importDir.cd(importPath))
+                throw Exception("Cannot cd into directory %1/%2").arg(importDir.absolutePath(), importPath);
+
+            QFile qmldirFile(importDir.absoluteFilePath(qSL("qmldir")));
+            if (!qmldirFile.open(QFile::WriteOnly))
+                throw Exception(qmldirFile, "Failed to open for writing");
+            QTextStream qmldirOut(&qmldirFile);
+            qmldirOut << "typeinfo plugins.qmltypes\n";
+            qmldirFile.close();
+
+            QFile typesFile(importDir.absoluteFilePath(qSL("plugins.qmltypes")));
+            if (!typesFile.open(QFile::WriteOnly))
+                throw Exception(typesFile, "Failed to open for writing");
+            QTextStream typesOut(&typesFile);
+
+            const char *header = \
+                    "import QtQuick.tooling 1.2\n"
+                    "\n"
+                    "// This file describes the plugin-supplied types contained in the application-manager.\n"
+                    "// It is used for QML tooling purposes only.\n"
+                    "//\n"
+                    "// This file was auto-generated by:\n"
+                    "// appman-dumpqmltypes\n"
+                    "\n"
+                    "Module {\n"
+                    "    dependencies: []\n";
+            const char *footer = "}\n";
+
+            typesOut << header;
+
+            auto mos = imports.values(*it);
+            for (const auto &mo : qAsConst(mos))
+                typesOut << qmlTypeForMetaObect(mo, 1, true);
+
+            typesOut << footer;
+        }
+    } catch (const Exception &e) {
+        fprintf(stderr, "%s\n", qPrintable(e.errorString()));
         return 1;
     }
-    if (clp.isSet(qSL("version")))
-        clp.showVersion();
-    if (clp.isSet(qSL("help")))
-        clp.showHelp();
-
-    QFile outFile;
-
-    if (clp.isSet(qSL("install"))) {
-        QDir qmlDir = QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath);
-        if (!qmlDir.exists()) {
-            fprintf(stderr, "Qt's QML2 imports directory (%s) is missing.\n",
-                    qPrintable(qmlDir.absolutePath()));
-            return 2;
-        }
-
-        outFile.setFileName(qmlDir.absoluteFilePath(qSL("QtApplicationManager/plugins.qmltypes")));
-        if (!outFile.open(QFile::WriteOnly)) {
-            fprintf(stderr, "Failed to open %s for writing: %s\n", qPrintable(outFile.fileName()),
-                    qPrintable(outFile.errorString()));
-            return 3;
-        }
-    } else {
-        outFile.open(stdout, QFile::WriteOnly);
-    }
-
-    QTextStream out(&outFile);
-
-    const char *header = \
-        "import QtQuick.tooling 1.2\n"
-        "\n"
-        "// This file describes the plugin-supplied types contained in the application-manager.\n"
-        "// It is used for QML tooling purposes only.\n"
-        "//\n"
-        "// This file was auto-generated by:\n"
-        "// appman-dumpqmltypes\n"
-        "\n"
-        "Module {\n"
-        "    dependencies: []\n";
-    const char *footer = "}\n";
-
-    out << header;
-
-    QVector<const QMetaObject *> all;
-    all << &ApplicationManager::staticMetaObject
-        << &ApplicationInstaller::staticMetaObject
-        << &WindowManager::staticMetaObject
-        << &NotificationManager::staticMetaObject
-        << &ApplicationIPCManager::staticMetaObject
-        << &AbstractApplication::staticMetaObject
-        << &AbstractRuntime::staticMetaObject
-        << &AbstractContainer::staticMetaObject
-        << &Notification::staticMetaObject
-        << &QmlApplicationInterface::staticMetaObject
-        << &QmlApplicationInterfaceExtension::staticMetaObject
-        << &ApplicationManagerWindow::staticMetaObject;
-
-    for (const auto &mo : qAsConst(all))
-        out << qmlTypeForMetaObect(mo, 1, true);
-
-    out << footer;
     return 0;
 }

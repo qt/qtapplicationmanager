@@ -129,29 +129,5 @@ private:
     IpcProxyObject *m_proxyObject;
 };
 
-class IpcProxyObject;
-
-class ApplicationIPCInterfaceAttached : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(QString sender READ sender)
-    Q_PROPERTY(QVariant receivers READ receivers WRITE setReceivers)
-    Q_PROPERTY(QVariant inProcessReceiversOnly READ inProcessReceiversOnly CONSTANT)
-
-public:
-    ApplicationIPCInterfaceAttached(QObject *object);
-
-    QString sender() const;
-    QVariant receivers() const;
-    void setReceivers(const QVariant &receivers);
-    QVariant inProcessReceiversOnly() const;
-
-private:
-    bool resolveProxy() const;
-
-    QObject *m_object;
-    mutable IpcProxyObject *m_proxy = nullptr;
-};
-
 QT_END_NAMESPACE_AM
 // We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

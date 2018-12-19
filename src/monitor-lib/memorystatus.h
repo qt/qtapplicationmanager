@@ -54,6 +54,7 @@ QT_BEGIN_NAMESPACE_AM
 class MemoryStatus : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/MemoryStatus 2.0")
     Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
     Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryUsedChanged)
 

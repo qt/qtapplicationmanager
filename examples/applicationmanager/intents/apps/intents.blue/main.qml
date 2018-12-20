@@ -53,4 +53,4 @@
 
 import "../../shared"
 
-IntentClient { }
+IntentsApplicationWindow { }

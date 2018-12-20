@@ -76,7 +76,7 @@ Each application is put in its own separate directory as described below:
     \endlist
 \endlist
 
-As you can see above, each application, besides its mail QML file, also has an icon and a
+As you can see above, each application, besides its main QML file, also has an icon and a
 \tt{info.yaml}. That YAML file contains the application metadata (it tells System-UI the
 name of the application, its icon filename, etc).
 

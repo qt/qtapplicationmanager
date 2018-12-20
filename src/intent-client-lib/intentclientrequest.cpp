@@ -160,7 +160,7 @@ QT_BEGIN_NAMESPACE_AM
     valid.
 
     \note This signal will only ever by emitted for request objects created by
-          IntentClient.sendIntentRequest().
+          IntentClient::sendIntentRequest().
 */
 
 

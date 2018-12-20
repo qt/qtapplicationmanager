@@ -51,6 +51,8 @@
 **
 ****************************************************************************/
 
+//! [Main]
 import "../../shared"
 
-IntentClient { }
+IntentsApplicationWindow { }
+//! [Main]

@@ -3,6 +3,8 @@ CONFIG += am-systemui
 
 OTHER_FILES += \
     *.qml \
+    doc/images/*.png \
+    doc/src/*.qdoc \
     shared/*.qml \
     apps/intents.blue/*.yaml \
     apps/intents.blue/*.qml \

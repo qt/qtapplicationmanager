@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -268,7 +269,7 @@ NotificationManager *NotificationManager::createInstance()
     if (Q_UNLIKELY(s_instance))
         qFatal("NotificationManager::createInstance() was called a second time.");
 
-    qmlRegisterSingletonType<NotificationManager>("QtApplicationManager.SystemUI", 1, 0, "NotificationManager",
+    qmlRegisterSingletonType<NotificationManager>("QtApplicationManager.SystemUI", 2, 0, "NotificationManager",
                                                  &NotificationManager::instanceForQml);
     return s_instance = new NotificationManager();
 }

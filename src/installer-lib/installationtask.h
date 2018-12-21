@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -97,6 +98,8 @@ private:
     bool m_canceled = false;
     bool m_installationAcknowledged = false;
     QWaitCondition m_installationAcknowledgeWaitCondition;
+
+    static QMutex s_serializeFinishInstallation;
 
     QDir m_manifestDir;
     QDir m_applicationDir;

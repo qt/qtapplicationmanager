@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -42,7 +43,9 @@
 #pragma once
 
 #include <QObject>
-#include <functional>
+#include <QStringList>
+#include <QVariantMap>
+#include <QVector>
 
 class ContainerInterface : public QObject
 {

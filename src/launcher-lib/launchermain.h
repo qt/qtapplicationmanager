@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -81,6 +82,7 @@ public:
     QVariantMap runtimeConfiguration() const;
     QByteArray securityToken() const;
     bool slowAnimations() const;
+    void setSlowAnimations(bool slow);
     QVariantMap systemProperties() const;
     QStringList loggingRules() const;
 
@@ -101,6 +103,7 @@ public:
 
 signals:
     void windowPropertyChanged(QWindow *window, const QString &name, const QVariant &value);
+    void slowAnimationsChanged(bool slow);
 
 private:
     QVariantMap m_configuration;

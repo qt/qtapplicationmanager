@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -55,7 +56,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     MonitorModel {
         MemoryStatus {}
@@ -66,7 +67,7 @@
 
     \qml
     import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtApplicationManager 2.0
     ...
     MemoryStatus { id: memoryStatus }
     Timer {

@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -62,7 +63,7 @@
     \qmltype WindowItem
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui
-    \brief An Item that renders a given WindowObject
+    \brief An Item that renders a given WindowObject.
 
     In order to render a WindowObject inside the System-UI, you must specify where and how it should
     be done. This is achieved by placing a WindowItem in the scene, which is a regular QML Item, and

@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -42,7 +43,7 @@
 #pragma once
 
 #include <QMutex>
-#include <QQueue>
+#include <QList>
 #include <QSet>
 #include <QScopedPointer>
 #include <QThread>
@@ -75,8 +76,19 @@ public:
     QString hardwareId;
     QList<QByteArray> chainOfTrust;
 
-    QQueue<AsynchronousTask *> taskQueue;
-    AsynchronousTask *activeTask = nullptr;
+    QList<AsynchronousTask *> incomingTaskList;     // incoming queue
+    QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge
+    AsynchronousTask *activeTask = nullptr;         // currently active
+
+    QList<AsynchronousTask *> allTasks() const
+    {
+        QList<AsynchronousTask *> all = incomingTaskList;
+        if (!installationTaskList.isEmpty())
+            all += installationTaskList;
+        if (activeTask)
+            all += activeTask;
+        return all;
+    }
 
     QMutex activationLock;
     QMap<QString, QString> activatedPackages; // id -> installationPath

@@ -1,0 +1,46 @@
+isEmpty(AM_PACKAGE_DIR): error("AM_PACKAGE_DIR not set, don't know what to package")
+
+isEmpty(AM_MANIFEST): AM_MANIFEST = info.yaml
+AM_MANIFEST_PATH = $$absolute_path($$AM_MANIFEST, $$_PRO_FILE_PWD_)
+!exists($$AM_MANIFEST_PATH): error("Couldn't find a valid info.yaml. Please make sure it exists in the project folder or set AM_MANIFEST to the correct location")
+
+!isEmpty(AM_PACKAGE_EXTRA_METADATA): OPTIONS += --extra-metadata $$EXTRA_METADATA
+!isEmpty(AM_PACKAGE_EXTRA_METADATA_FILE): OPTIONS += --extra-metadata-file $$system_quote($$EXTRA_METADATA_FILE)
+!isEmpty(AM_PACKAGE_EXTRA_SIGNED_METADATA): OPTIONS += --extra-signed-metadata $$EXTRA_SIGNED_METADATA
+!isEmpty(AM_PACKAGE_EXTRA_SIGNED_METADATA_FILE): OPTIONS += --extra-signed-metadata-file $$system_quote($$EXTRA_SIGNED_METADATA_FILE)
+
+# Call the appman-packager to convert the yaml to JSON to parse it here
+qtPrepareTool(APPMAN_PACKAGER, appman-packager, , system)
+
+JSON = $$system($$APPMAN_PACKAGER yaml-to-json -i1 $$system_quote($$AM_MANIFEST_PATH))
+parseJson(JSON, INFO)| error("Failed to parse appman-packager output.")
+
+AM_PACKAGE_NAME = $${INFO.id}
+contains(INFO._KEYS_, version): {
+    AM_PACKAGE_NAME = $${AM_PACKAGE_NAME}-$${INFO.version}
+}
+
+equals(QMAKE_HOST.os, Windows):ECHO_NL=echo.
+else:ECHO_NL=echo
+
+# The prepackaging step
+# Calls make install with a special INSTALL_ROOT to collect all files (including sub projects)
+prepackage.commands += @$$ECHO_NL && echo "Fetching files for package $${AM_PACKAGE_NAME}" && $$ECHO_NL &&
+equals(QMAKE_HOST.os, Windows): prepackage.commands += set INSTALL_ROOT=$$system_quote($$shell_path($$OUT_PWD/package-tmp/))&& $(MAKE) -f $(MAKEFILE) install
+else:prepackage.commands += INSTALL_ROOT=$$OUT_PWD/package-tmp/ $(MAKE) -f $(MAKEFILE) install
+prepackage.depends += qmake
+
+# The actual packaging step
+# Call the prepackage step and package everything which got installed
+package.commands += @$$ECHO_NL && echo "Packaging $${AM_PACKAGE_NAME}" &&
+package.commands += $$APPMAN_PACKAGER create-package $${OPTIONS} $$system_quote($$OUT_PWD/$${AM_PACKAGE_NAME}.pkg) $$system_quote($$OUT_PWD/package-tmp/$$AM_PACKAGE_DIR) &&
+package.commands += echo "The package is now ready at: $$OUT_PWD/$${AM_PACKAGE_NAME}.pkg" && $$ECHO_NL
+package.depends += prepackage
+
+# clean step
+package_clean.commands = $$QMAKE_DEL_TREE $$OUT_PWD/package-tmp/
+
+QMAKE_EXTRA_TARGETS *= package prepackage package_clean
+CLEAN_DEPS *= package_clean
+
+QMAKE_CLEAN += $$OUT_PWD/$${AM_PACKAGE_NAME}.pkg

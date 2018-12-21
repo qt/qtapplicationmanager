@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -45,7 +46,7 @@
     \qmltype WindowObject
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
-    \brief A client window surface
+    \brief A client window surface.
 
     A WindowObject represents a window from a client application. Each visible
     ApplicationManagerWindow on the application side will be reflected by a
@@ -140,7 +141,7 @@
 
     Sends a close event to the WindowObject.
 
-    \sa QWindow::close(), QCloseEvent
+    \sa Window::close()
 */
 
 /*!

@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -41,7 +42,7 @@
 
 import QtQuick 2.3
 import QtTest 1.0
-import QtApplicationManager.SystemUI 1.0
+import QtApplicationManager.SystemUI 2.0
 
 Item {
     id: root
@@ -468,6 +469,24 @@ Item {
             tryCompare(windowItem, "clickCount", 1);
             compare(window.windowProperty("clickCount"), 1);
 
+        }
+
+        // Checks that window properties are kept even when contentState is WindowObject.NoSurface
+        // Regression test for https://bugreports.qt.io/browse/AUTOSUITE-694
+        function test_window_keep_properties_when_nosurface() {
+            initWindowItemsModel();
+
+            var window = windowItemsModel.get(0).window;
+
+            compare(window.contentState, WindowObject.SurfaceWithContent);
+
+            window.setWindowProperty("foo", "bar");
+            compare(window.windowProperty("foo"), "bar");
+
+            app.stop();
+
+            tryCompare(window, "contentState", WindowObject.NoSurface);
+            compare(window.windowProperty("foo"), "bar");
         }
     }
 }

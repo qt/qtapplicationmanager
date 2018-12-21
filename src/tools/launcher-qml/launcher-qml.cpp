@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -107,8 +108,8 @@ int main(int argc, char *argv[])
     StartupTimer::instance()->checkpoint("entered main");
 
     QCoreApplication::setApplicationName(qSL("ApplicationManager QML Launcher"));
-    QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
-    QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
+    QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
+    QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     if (qEnvironmentVariableIsSet("AM_NO_DLT_LOGGING"))
@@ -120,7 +121,7 @@ int main(int argc, char *argv[])
 
     // As we don't know the app-id yet, we are registering a place holder so we are able to see
     // something in the dlt logs if general errors occur.
-    Logging::setDltApplicationId("PCLQ", "Pelagicore Application-Manager Launcher QML");
+    Logging::setDltApplicationId("PCLQ", "Luxoft Application-Manager Launcher QML");
     Logging::setApplicationId("qml-launcher");
     Logging::initialize();
 
@@ -177,10 +178,18 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
     CrashHandler::setQmlEngine(&m_engine);
 
 #if !defined(AM_HEADLESS)
-    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 1, 0, "ApplicationManagerWindow");
+    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
 #endif
-    qmlRegisterType<QmlNotification>("QtApplicationManager", 1, 0, "Notification");
-    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager.Application", 1, 0, "ApplicationInterfaceExtension");
+    qmlRegisterType<QmlNotification>("QtApplicationManager", 2, 0, "Notification");
+    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager.Application", 2, 0, "ApplicationInterfaceExtension");
+
+    // monitor-lib
+    qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
+    qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
+    qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
+    qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
+    qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
+    qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 1, 0, "CpuStatus");
@@ -355,7 +364,21 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         avm = qdbus_cast<QVariantMap>(application.value(qSL("applicationProperties")));
         for (auto it = avm.begin(); it != avm.end(); ++it)
             it.value() = convertFromDBusVariant(it.value());
+
+        connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
+                LauncherMain::instance(), &LauncherMain::setSlowAnimations);
     }
+
+    // Going through the LauncherMain instance here is a bit weird, and should be refactored
+    // sometime. Having the flag there makes sense though, because this class can also be used for
+    // custom launchers.
+    connect(LauncherMain::instance(), &LauncherMain::slowAnimationsChanged,
+            this, &Controller::updateSlowAnimations);
+
+    updateSlowAnimations(LauncherMain::instance()->slowAnimations());
+
+    // we need to catch all show events to apply the slow-animations
+    QCoreApplication::instance()->installEventFilter(this);
 
     QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
     auto startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
@@ -455,12 +478,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             m_window->setClearBeforeRendering(true);
             m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
         }
-
-        connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
-                this, &Controller::updateSlowMode);
-
-        if (qEnvironmentVariableIsSet("AM_SLOW_ANIMATIONS"))
-            updateSlowMode(true);
     }
 
     // needed, even though we do not explicitly show() the window any more
@@ -481,25 +498,50 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 }
 
 #if !defined(AM_HEADLESS)
-void Controller::updateSlowMode(bool isSlow)
+bool Controller::eventFilter(QObject *o, QEvent *e)
 {
-    QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+    if (e && (e->type() == QEvent::Show) && qobject_cast<QQuickWindow *>(o)) {
+        auto window = static_cast<QQuickWindow *>(o);
+        m_allWindows.append(window);
+        updateSlowAnimationsForWindow(window);
+    }
+    return QObject::eventFilter(o, e);
+}
 
+void Controller::updateSlowAnimationsForWindow(QQuickWindow *window)
+{
     // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
     // we need to enable the slow mode in this timer as well.
-    static QMetaObject::Connection connection;
-
-    connection = connect(m_window, &QQuickWindow::beforeRendering, this, [isSlow] {
-        if (connection) {
+    QMetaObject::Connection *connection = new QMetaObject::Connection;
+    *connection = connect(window, &QQuickWindow::beforeRendering,
+                          this, [connection] {
+        if (connection && *connection) {
 #  if defined(Q_CC_MSVC)
-            qApp->disconnect(connection); // MSVC cannot distinguish between static and non-static overloads in lambdas
+            qApp->disconnect(*connection); // MSVC cannot distinguish between static and non-static overloads in lambdas
 #  else
-            QObject::disconnect(connection);
+            QObject::disconnect(*connection);
 #  endif
-            QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+            QUnifiedTimer::instance()->setSlowModeEnabled(LauncherMain::instance()->slowAnimations());
+            delete connection;
         }
     }, Qt::DirectConnection);
 }
+
+void Controller::updateSlowAnimations(bool isSlow)
+{
+    QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+
+    for (auto it = m_allWindows.begin(); it != m_allWindows.end(); ) {
+        QPointer<QQuickWindow> window = *it;
+        if (!window) {
+            m_allWindows.erase(it);
+        } else {
+            updateSlowAnimationsForWindow(window.data());
+            ++it;
+        }
+    }
+}
+
 #endif  // !defined(AM_HEADLESS)
 
 

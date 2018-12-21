@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:GPL-EXCEPT-QTAS$
 ** Commercial License Usage
@@ -128,6 +129,8 @@ private slots:
 
     void cancelPackageInstallation_data();
     void cancelPackageInstallation();
+
+    void parallelPackageInstallation();
 
     void validateDnsName_data();
     void validateDnsName();
@@ -1036,6 +1039,28 @@ void tst_ApplicationInstaller::cancelPackageInstallation()
         QVERIFY(m_finishedSpy->wait(spyTimeout));
         QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
     }
+    clearSignalSpies();
+}
+
+void tst_ApplicationInstaller::parallelPackageInstallation()
+{
+    QString task1Id = m_ai->startPackageInstallation("internal-0", QUrl::fromLocalFile(AM_TESTDATA_DIR "packages/test-dev-signed.appkg"));
+    QVERIFY(!task1Id.isEmpty());
+    QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
+    QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), task1Id);
+
+    QString task2Id = m_ai->startPackageInstallation("internal-0", QUrl::fromLocalFile(AM_TESTDATA_DIR "packages/bigtest-dev-signed.appkg"));
+    QVERIFY(!task2Id.isEmpty());
+    m_ai->acknowledgePackageInstallation(task2Id);
+    QVERIFY(m_finishedSpy->wait(spyTimeout));
+    QCOMPARE(m_finishedSpy->first()[0].toString(), task2Id);
+
+    clearSignalSpies();
+    m_ai->acknowledgePackageInstallation(task1Id);
+    QVERIFY(m_finishedSpy->wait(spyTimeout));
+    QCOMPARE(m_finishedSpy->first()[0].toString(), task1Id);
+
+    clearSignalSpies();
 }
 
 

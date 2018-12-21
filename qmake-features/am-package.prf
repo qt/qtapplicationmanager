@@ -1,0 +1,14 @@
+CONFIG(debug,debug|release) {
+    !contains(QMAKE_EXTRA_TARGETS, "package"): {
+        equals(TEMPLATE, "subdirs"): {
+            package.target = package
+            package.CONFIG = recursive
+            QMAKE_EXTRA_TARGETS += package
+        } else {
+            #add a dummy target to make the recursive package step work
+            package.target = package
+            QMAKE_EXTRA_TARGETS += package
+        }
+    }
+}
+

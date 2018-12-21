@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -45,6 +46,62 @@
 #include <QVariant>
 
 QT_BEGIN_NAMESPACE_AM
+
+
+/*!
+    \qmltype Intent
+    \inqmlmodule QtApplicationManager.SystemUI
+    \ingroup system-ui-non-instantiable
+    \brief This type represents an Intent definition on the System-UI side.
+
+    This is a QML gadget class representing a single Intent definition for a specific application.
+    It is not creatable from QML code and all properties are read-only. Only functions and
+    properties of IntentServer will return instances of this class.
+*/
+
+/*! \qmlproperty bool Intent::valid
+    \readonly
+    Set to \c true, if this instance reprensents a valid intent, or \c false otherwise.
+*/
+
+/*! \qmlproperty string Intent::intentId
+    \readonly
+    The id of the intent.
+*/
+
+/*! \qmlproperty string Intent::applicationId
+    \readonly
+    The id of the application that is handling this intent.
+*/
+
+/*! \qmlproperty Intent.Visibility Intent::visibility
+    \readonly
+    The visibility of this intent for other applications.
+
+    \list
+    \li Intent.Public - Any application can request this intent.
+    \li Intent.Private - Only the handling application can request this intent (this will be more
+                         useful once application background services have been implemented).
+    \endlist
+*/
+
+/*! \qmlproperty list<string> Intent::requiredCapabilities
+    \readonly
+    An \l{ApplicationObject}{application} requesting this intent needs to have all of the given
+    capabilities.
+
+    \sa ApplicationObject::capabilities
+*/
+
+/*! \qmlproperty var Intent::parameterMatch
+    \readonly
+    A handling application can limit what parameter values it accepts. One example would be an
+    open-mime-type intent that is implemented by many applications: there would be a \c mimeType
+    parameter and each application could limit the requests it wants to receive by setting a
+    parameterMatch on this \c mimeType parameter, e.g. \c{{ mimeType: "^image/.*\.png$" }}
+
+*/
+
 
 Intent::Intent()
 { }

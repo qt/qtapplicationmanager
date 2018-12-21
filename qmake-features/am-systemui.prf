@@ -1,4 +1,4 @@
-win32: {
+win32|cross_compile: {
     TEMPLATE = aux
     warning("Couldn't generate a appman wrapper. Please start the example as mentioned in the documentation instead.")
 } else {

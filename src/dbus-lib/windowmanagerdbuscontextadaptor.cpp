@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -67,6 +68,16 @@ WindowManagerAdaptor::~WindowManagerAdaptor()
 bool WindowManagerAdaptor::runningOnDesktop() const
 {
     return WindowManager::instance()->isRunningOnDesktop();
+}
+
+bool WindowManagerAdaptor::slowAnimations() const
+{
+    return WindowManager::instance()->slowAnimations();
+}
+
+void WindowManagerAdaptor::setSlowAnimations(bool slow)
+{
+    WindowManager::instance()->setSlowAnimations(slow);
 }
 
 bool WindowManagerAdaptor::makeScreenshot(const QString &filename, const QString &selector)

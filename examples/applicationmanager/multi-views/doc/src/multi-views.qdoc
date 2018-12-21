@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the documentation of the Pelagicore Application Manager.
+** This file is part of the documentation of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:FDL-QTAS$
 ** Commercial License Usage
@@ -30,7 +31,7 @@
 \example applicationmanager/multi-views
 \title Multiple Views per Window System-UI Example
 \image multi-views.png
-\brief A WindowObject being rendered by multiple WindowItems
+\brief A WindowObject being rendered by multiple WindowItems.
 \ingroup applicationmanager-examples
 
 This example shows that it is possible to assign the same WindowObject to multiple WindowItems (so that

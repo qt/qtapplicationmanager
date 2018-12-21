@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -71,13 +72,13 @@ public:
 
     The QML import for this item is
 
-    \c{import QtApplicationManager.Application 1.0}
+    \c{import QtApplicationManager.Application 2.0}
 
     After importing, you can instantiate the QML item like so:
 
     \qml
     import QtQuick 2.0
-    import QtApplicationManager.Application 1.0
+    import QtApplicationManager.Application 2.0
 
     ApplicationManagerWindow {
         Text {
@@ -92,7 +93,7 @@ public:
 
     \list 1
     \li Pick a base dir and create a \c{QtApplicationManager.Application} directory in it
-    \li Add a file named \c qmldir there, consisting of the single line \c{ApplicationManagerWindow 1.0 ApplicationManagerWindow.qml}
+    \li Add a file named \c qmldir there, consisting of the single line \c{ApplicationManagerWindow 2.0 ApplicationManagerWindow.qml}
     \li Add a second file named \c ApplicationManagerWindow.qml, with the following content
 
     \qml
@@ -111,8 +112,8 @@ public:
 
     \endlist
 
-    Now you can run your appication within qmlscene with \c{qmlscene -I <path to base dir>}
-
+    Now you can run your appication within \c qmlscene (or \c qml) with e.g.
+    \c{qmlscene -I <path to base dir>}
 */
 
 ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
@@ -192,7 +193,7 @@ QVariantMap ApplicationManagerWindow::windowProperties() const
     Reports a change of this application window's property identified by \a name to the given
     \a value.
 
-    \sa WindowManager::setWindowProperty
+    \sa setWindowProperty
 */
 
 

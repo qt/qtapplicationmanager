@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -94,6 +95,7 @@ private:
     QTimer *m_pingTimer;
     QTimer *m_pongTimer;
     WindowSurface *m_surface;
+    QVariantMap m_windowProperties;
 };
 
 QT_END_NAMESPACE_AM

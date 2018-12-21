@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -148,6 +149,9 @@ private:
     Q_DISABLE_COPY(TemporaryDir)
 };
 
+
+QMutex InstallationTask::s_serializeFinishInstallation { };
+
 InstallationTask::InstallationTask(const InstallationLocation &installationLocation, const QUrl &sourceUrl, QObject *parent)
     : AsynchronousTask(parent)
     , m_ai(ApplicationInstaller::instance())
@@ -260,7 +264,9 @@ void InstallationTask::execute()
 
         setState(Installing);
 
-        // if we would allow parallel installations - this would be the place to serialize them
+        // However many downloads are allowed to happen in parallel: we need to serialize those
+        // tasks here for the finishInstallation() step
+        QMutexLocker finishLocker(&s_serializeFinishInstallation);
 
         finishInstallation();
 

@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -58,6 +59,34 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+/*!
+    \qmltype IntentServer
+    \inqmlmodule QtApplicationManager.SystemUI
+    \ingroup system-ui-singletons
+    \brief The System-UI side singleton representing the Intents sub-system.
+
+    This singleton serves two purposes: for one, it gives the System-UI access to the database of
+    all the available intents via intentList, plus it exposes the API to deal with ambigous intent
+    requests. Intent requests can be ambigous if the requesting party only specified the \c
+    intentId, but not the targeted \c applicationId in its call to
+    IntentClient::sendIntentRequest(). In these cases, it is the responsibility of the System-UI to
+    disambiguate these requests by reacting on the disambiguationRequest() signal.
+*/
+
+/*! \qmlsignal IntentServer::intentAdded(Intent intent)
+    Emitted when a new \a intent gets added to the intentList (e.g. on application installation).
+*/
+
+/*! \qmlsignal IntentServer::intentRemoved(Intent intent)
+    Emitted when an existing \a intent is removed from the intentList (e.g. on application
+    deinstallation).
+*/
+
+/*! \qmlsignal IntentServer::intentListChanged()
+    Emitted when either a new \a intent gets added to or an existing \a intent is remove from the
+    intentList.
+*/
+
 IntentServer *IntentServer::s_instance = nullptr;
 
 IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemInterface)
@@ -77,12 +106,12 @@ IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemIn
     qRegisterMetaType<QVariantList>("IntentList");
 
     // needed to get access to the Visibility enum from QML
-    qmlRegisterUncreatableType<Intent>("QtApplicationManager.SystemUI", 1, 0, "Intent",
+    qmlRegisterUncreatableType<Intent>("QtApplicationManager.SystemUI", 2, 0, "Intent",
                                        qSL("Cannot create objects of type Intent"));
 
-    qmlRegisterUncreatableType<IntentServerRequest>("QtApplicationManager.SystemUI", 1, 0, "IntentServerRequest",
+    qmlRegisterUncreatableType<IntentServerRequest>("QtApplicationManager.SystemUI", 2, 0, "IntentServerRequest",
                                                     qSL("Cannot create objects of type IntentServerRequest"));
-    qmlRegisterSingletonType<IntentServer>("QtApplicationManager.SystemUI", 1, 0, "IntentServer",
+    qmlRegisterSingletonType<IntentServer>("QtApplicationManager.SystemUI", 2, 0, "IntentServer",
                                            [](QQmlEngine *, QJSEngine *) -> QObject * {
         QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
         return instance();
@@ -248,11 +277,27 @@ QVector<Intent> IntentServer::filterByRequestingApplicationId(const QVector<Inte
     return result;
 }
 
+/*! \qmlproperty list<Intent> IntentServer::intentList
+
+    The list of all registered \l{Intent}{Intents} in the system.
+*/
+
 IntentList IntentServer::intentList() const
 {
     return convertToQml(all());
 }
 
+/*! \qmlmethod Intent IntentServer::find(string intentId, string applicationId, var parameters = {})
+
+    This method exposes the same functionality that is used internally to match incoming Intent
+    requests for the intent identified by \a intentId and targeted for the application identified by
+    \a applicationId.
+    Although you could iterate over the intentList yourself in JavaScript, this function has the
+    added benefit of also checking the \a parameters against any given \l{Intent::parameterMatch}
+    {parameter matches}.
+
+    If no matching Intent is found, the function will return an \l{Intent::valid}{invalid} Intent.
+*/
 Intent IntentServer::find(const QString &intentId, const QString &applicationId, const QVariantMap &parameters) const
 {
     auto it = std::find_if(m_intents.cbegin(), m_intents.cend(),
@@ -378,11 +423,47 @@ IntentList IntentServer::convertToQml(const QVector<Intent> &intents)
     return vl;
 }
 
+/*!
+    \qmlsignal IntentServer::disambiguationRequest(uuid requestId, list<Intent> potentialIntents, var parameters)
+
+    This signal is emitted when the IntentServer receives an intent request that could potentially
+    be handled by more than one application.
+
+    \note This signal is only emitted, if there is a receiver connected at all. If the signal is not
+          connected, an arbitrary application from the list of potential matches will be chosen to
+          handle this request.
+
+    The receiver of this signal gets the requested \a requestId and its \a parameters. It can
+    then either call acknowledgeDisambiguationRequest() to choose from one of the supplied \a
+    potentialIntents or call rejectDisambiguationRequest() to reject the intent request completely.
+    In both cases the unique \a requestId needs to be sent along to identify the intent request.
+
+    Not calling one of these two functions will result in memory leaks.
+
+    \sa IntentClient::sendIntentRequest
+*/
+
+/*! \qmlmethod IntentServer::acknowledgeDisambiguationRequest(uuid requestId, Intent selectedIntent)
+
+    Tells the IntentServer to go ahead with the sender's intent request identified by \a requestId.
+    The chosen \a selectedIntent needs to be one of the \c potentialIntents supplied to the
+    receiver of the disambiguationRequest signal.
+
+    \sa IntentClient::sendIntentRequest
+*/
 void IntentServer::acknowledgeDisambiguationRequest(const QUuid &requestId, const Intent &selectedIntent)
 {
     internalDisambiguateRequest(requestId, false, selectedIntent);
 }
 
+
+/*! \qmlmethod IntentServer::rejectDisambiguationRequest(uuid requestId)
+
+    Tells the IntentServer to ignore the sender's intent request identified by \a requestId.
+    The original sender will get an error reply back in this case.
+
+    \sa IntentClient::sendIntentRequest
+*/
 void IntentServer::rejectDisambiguationRequest(const QUuid &requestId)
 {
     internalDisambiguateRequest(requestId, true, Intent());

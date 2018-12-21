@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -54,6 +55,34 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+/*!
+    \qmltype IntentClient
+    \inqmlmodule QtApplicationManager
+    \ingroup common-singletons
+    \brief Singleton that provides functions to create Intent requests.
+
+    This type can be used both in applications as well as within the System-UI to create intent
+    requests. This type is only the factory, returning instances of the type IntentRequest. See
+    the IntentRequest documentation for details on how to actually handle these asynchronous calls.
+
+    Here is a fairly standard way to send an intent request and react on its result (or error
+    message):
+
+    \qml
+    MouseArea {
+        onClicked: {
+            var request = IntentClient.sendIntentRequest("show-image", { url: "file://x.png" })
+            request.onReplyReceived.connect(function() {
+                if (request.succeeded)
+                    var result = request.result
+                else
+                    console.log("Intent request failed: " + request.errorMessage)
+            })
+        }
+    }
+    \endqml
+*/
+
 IntentClient *IntentClient::s_instance = nullptr;
 
 IntentClient *IntentClient::createInstance(IntentClientSystemInterface *systemInterface)
@@ -70,15 +99,15 @@ IntentClient *IntentClient::createInstance(IntentClientSystemInterface *systemIn
         qCWarning(LogIntents) << "Failed to initialize IntentClient:" << exc.what();
         return nullptr;
     }
-    qmlRegisterSingletonType<IntentClient>("QtApplicationManager", 1, 0, "IntentClient",
+    qmlRegisterSingletonType<IntentClient>("QtApplicationManager", 2, 0, "IntentClient",
                                            [](QQmlEngine *, QJSEngine *) -> QObject * {
         QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
         return instance();
     });
 
-    qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 1, 0, "IntentRequest",
+    qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 2, 0, "IntentRequest",
                                                     qSL("Cannot create objects of type IntentRequest"));
-    qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 1, 0, "IntentHandler");
+    qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 2, 0, "IntentHandler");
 
     return s_instance = ic.take();
 }
@@ -142,11 +171,34 @@ void IntentClient::unregisterHandler(IntentHandler *handler)
     }
 }
 
+/*! \qmlmethod IntentRequest IntentClient::sendIntentRequest(string intentId, var parameters)
+
+    Sends a request for an intent with the given \a intentId to the system. The additional
+    \a parameters are specific to the requested \a intentId, but the format is always the same: a
+    standard JavaScript object, which can also be just empty if the requested intent doesn't
+    require any parameters.
+
+    Returns an IntentRequest object that can be used to track this asynchronous request.
+
+    \note The returned object has JavaScript ownership, which means that you do not have to worry
+          about freeing resources. Even just ignoring the return value is fine, if you are not
+          interested in the result (or error condition) of your request.
+*/
 IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, const QVariantMap &parameters)
 {
     return sendIntentRequest(intentId, QString(), parameters);
 }
 
+/*! \qmlmethod IntentRequest IntentClient::sendIntentRequest(string intentId, string applicationId, var parameters)
+    \overload
+
+    Instead of letting the system-ui (or the user) choose which application should handle your
+    request, you can use this overload to hardcode the \a applicationId that is required to handle
+    it. The request will fail, if this specified application doesn't exist or can't handle this
+    specific request, even though other applications would be able to do it.
+
+    \sa sendIntentRequest
+*/
 IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, const QString &applicationId,
                                                      const QVariantMap &parameters)
 {

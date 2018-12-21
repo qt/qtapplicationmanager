@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -41,7 +42,7 @@
 
 import QtQuick 2.4
 import QtQuick.Controls 2.4
-import QtApplicationManager.SystemUI 1.0
+import QtApplicationManager.SystemUI 2.0
 
 Pane {
     width: 900

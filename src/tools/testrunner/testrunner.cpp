@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -172,7 +173,7 @@ void TestRunner::initialize(const QStringList &testRunnerArguments)
 
     // Register the test object and application-manager test add-on
     qmlRegisterSingletonType<QTestRootObject>("Qt.test.qtestroot", 1, 0, "QTestRootObject", testRootObject);
-    qmlRegisterSingletonType<AmTest>("QtApplicationManager", 1, 0, "AmTest", amTest);
+    qmlRegisterSingletonType<AmTest>("QtApplicationManager", 2, 0, "AmTest", amTest);
 
     QTestRootObject::instance()->init();
 }

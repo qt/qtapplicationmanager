@@ -2,6 +2,7 @@
 <node>
   <interface name="io.qt.WindowManager">
     <property name="runningOnDesktop" type="b" access="read"/>
+    <property name="slowAnimations" type="b" access="readwrite"/>
     <method name="makeScreenshot">
       <arg type="b" direction="out"/>
       <arg name="filename" type="s" direction="in"/>

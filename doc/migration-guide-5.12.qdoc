@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the documentation of the Pelagicore Application Manager.
+** This file is part of the documentation of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:FDL-QTAS$
 ** Commercial License Usage
@@ -62,10 +63,13 @@ table briefly explains each of them:
         not import this module.
 \endtable
 
+In order to avoid compatibility problems with old code expecting the old APIs, \b all imports have
+been bumped up to version \c 2.0. Importing the \c 1.0 versions will just yield a QML error.
+
 
 \section1 ApplicationManager and applications
 
-\section2 ApplicationObject
+\section2 Refactored ApplicationObject
 
 In 5.11, the object type representing an application was named \c Application. But since Qt also has
 an object type with the same name, in order to be able to reference enumerations defined in it you
@@ -79,7 +83,7 @@ if (application.state === AppMan.Application.Installed) {
     ...
 }
 \newcode
-import QtApplicationManager.Application 1.0
+import QtApplicationManager.Application 2.0
 ...
 if (application.state === ApplicationObject.Installed) {
     ...

@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:GPL-EXCEPT-QTAS$
 ** Commercial License Usage
@@ -164,8 +165,8 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
 int main(int argc, char **argv)
 {
     QCoreApplication::setApplicationName(qSL("ApplicationManager qmltypes dumper"));
-    QCoreApplication::setOrganizationName(qSL("Pelagicore AG"));
-    QCoreApplication::setOrganizationDomain(qSL("pelagicore.com"));
+    QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
+    QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     QCoreApplication a(argc, argv);
@@ -173,7 +174,7 @@ int main(int argc, char **argv)
     QCommandLineParser clp;
 
     const char *desc =
-        "Pelagicore ApplicationManager qmltypes dumper"
+        "Luxoft ApplicationManager qmltypes dumper"
         "\n\n"
         "This tool is used to generate the qmltypes type information for all ApplicationManager\n"
         "classes to get auto-completion in QtCreator.\n"

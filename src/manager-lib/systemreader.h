@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -69,6 +70,20 @@ private:
     static QScopedPointer<SysFsReader> s_sysFs;
 #endif
     Q_DISABLE_COPY(CpuReader)
+};
+
+class GpuVendor {
+public:
+    enum Vendor {
+        Undefined = 0, // didn't try to determine the vendor yet
+        Unsupported,
+        Intel,
+        Nvidia
+    };
+    static Vendor get();
+private:
+    static void fetch();
+    static Vendor s_vendor;
 };
 
 class GpuTool;

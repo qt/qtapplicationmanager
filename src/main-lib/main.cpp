@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -617,21 +618,21 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     if (!quickControlsStyle.isEmpty())
         qputenv("QT_QUICK_CONTROLS_STYLE", quickControlsStyle.toLocal8Bit());
 
-    qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 1, 0, "Notification");
-    qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager.Application", 1, 0, "ApplicationInterfaceExtension");
+    qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 2, 0, "Notification");
+    qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager.Application", 2, 0, "ApplicationInterfaceExtension");
 
 #if !defined(AM_HEADLESS)
-    qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager.Application", 1, 0, "ApplicationManagerWindow");
+    qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
 #endif
 
     // monitor-lib
-    qmlRegisterType<CpuStatus>("QtApplicationManager", 1, 0, "CpuStatus");
-    qmlRegisterType<FrameTimer>("QtApplicationManager", 1, 0, "FrameTimer");
-    qmlRegisterType<GpuStatus>("QtApplicationManager", 1, 0, "GpuStatus");
-    qmlRegisterType<IoStatus>("QtApplicationManager", 1, 0, "IoStatus");
-    qmlRegisterType<MemoryStatus>("QtApplicationManager", 1, 0, "MemoryStatus");
-    qmlRegisterType<MonitorModel>("QtApplicationManager", 1, 0, "MonitorModel");
-    qmlRegisterType<ProcessStatus>("QtApplicationManager.SystemUI", 1, 0, "ProcessStatus");
+    qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
+    qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
+    qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
+    qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
+    qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
+    qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
+    qmlRegisterType<ProcessStatus>("QtApplicationManager.SystemUI", 2, 0, "ProcessStatus");
 
     StartupTimer::instance()->checkpoint("after QML registrations");
 

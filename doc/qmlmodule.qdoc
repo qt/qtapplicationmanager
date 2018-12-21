@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the documentation of the Pelagicore Application Manager.
+** This file is part of the documentation of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:FDL-QTAS$
 ** Commercial License Usage
@@ -27,21 +28,21 @@
 
 /*!
 
-    \qmlmodule QtApplicationManager.SystemUI 1.0
+    \qmlmodule QtApplicationManager.SystemUI 2.0
     \title Qt Application Manager System-UI QML types
     \ingroup qmlmodules
 */
 
 /*!
 
-    \qmlmodule QtApplicationManager.Application 1.0
+    \qmlmodule QtApplicationManager.Application 2.0
     \title Qt Application Manager Application QML types
     \ingroup qmlmodules
 */
 
 /*!
 
-    \qmlmodule QtApplicationManager 1.0
+    \qmlmodule QtApplicationManager 2.0
     \title Qt Application Manager QML types common to System-UI and applications
     \ingroup qmlmodules
 */

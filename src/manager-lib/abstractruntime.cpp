@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -52,10 +53,10 @@
     \qmltype Runtime
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
-    \brief The handle for a runtime that is executing an \l Application.
+    \brief The handle for a runtime that is executing an application.
 
-    While an \l Application is running, the associated Runtime object will be valid and yield access
-    to runtime related information.
+    While an \l{ApplicationObject}{Application} is running, the associated Runtime object will be
+    valid and yield access to runtime related information.
 
     Right now, only the accessor property for the \l Container object is exposed to the QML side.
 */

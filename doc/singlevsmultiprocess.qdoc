@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the documentation of the Pelagicore Application Manager.
+** This file is part of the documentation of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:FDL-QTAS$
 ** Commercial License Usage
@@ -125,10 +126,11 @@ multi-process case, where the singleton is instantiated anew.
 
 A major difference between single- and multi-process mode is how windows are represented. Windows
 are exposed from the application to the System-UI through WindowManager::windowReady. For
-convenience and to serve as a replacement for qmlscene, it is possible to use plain QML Windows in
-applications or even an Item as the root element. However, if close resemblance between single-
-and multi-process mode is the goal, there is no way around using an ApplicationManagerWindow. There
-are other benefits when using an ApplicationManagerWindow, as well (e.g. window properties).
+convenience and to serve as a replacement for Qt's standard \c qmlscene and \c qml tools, it is
+possible to use plain QML Windows in applications or even an Item as the root element. However, if
+close resemblance between single- and multi-process mode is the goal, there is no way around using
+an ApplicationManagerWindow. There are other benefits when using an ApplicationManagerWindow, as
+well (e.g. window properties).
 
 In multi-process mode an ApplicationManagerWindow derives from Window and in single-process mode
 from QtObject. So several properties coming from Window won't have any effect in single-process

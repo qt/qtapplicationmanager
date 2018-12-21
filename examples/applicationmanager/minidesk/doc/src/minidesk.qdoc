@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the documentation of the Pelagicore Application Manager.
+** This file is part of the documentation of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:FDL-QTAS$
 ** Commercial License Usage
@@ -30,7 +31,7 @@
 \example applicationmanager/minidesk
 \title Desktop System-UI Example
 \image minidesk.png Screenshot
-\brief Minimal Desktop System-UI in pure QML
+\brief Minimal Desktop System-UI in pure QML.
 \ingroup applicationmanager-examples
 
 \section1 Introduction
@@ -90,7 +91,7 @@ path/to/bin/appman -c am-config.yaml -r --start-session-dbus
 The \l{QtApplicationManager.SystemUI} module has to be imported to be able to access the application-manager
 APIs. The System-UI window has a fixed size and linen background color. Instead of a \l{Rectangle},
 the root element could as well be a \l{Window}. On top of the background the
-\l{minidesk/system-ui/Readme.qml}{Readme} element is shown that displays a usage how-to. At the
+\l{applicationmanager/minidesk/system-ui/Readme.qml}{Readme} element is shown that displays a usage how-to. At the
 bottom left there is a textual indication for whether the application-manager runs in single- or
 multi-process mode.
 
@@ -161,7 +162,7 @@ App1 instantiates another \l{ApplicationManagerWindow} for the pop-up within its
 The \l{ApplicationManagerWindow::setWindowProperty}{ApplicationManagerWindow.setWindowProperty()}
 method is used to set a freely selectable shared property. Here we chose \c{type: "pop-up"} to
 indicate that the window is supposed to be shown as a pop-up. In the
-\l{WindowManager::onWindowAdded()}{WindowManager.onWindowAdded()} handler below the System-UI
+WindowManager::onWindowAdded() handler below the System-UI
 checks this property and handles the window appropriately as a pop-up.
 
 A pop-up window will be set as the content window of the \c popUpContainer WindowItem in the

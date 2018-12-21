@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the documentation of the Pelagicore Application Manager.
+** This file is part of the documentation of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:FDL-QTAS$
 ** Commercial License Usage
@@ -45,4 +46,7 @@ declarations may be nested, creating parent-child relationships between the item
 
 \annotatedlist common-instantiatable
 
+\section1 Non-Instantiable QML Types
+
+\annotatedlist common-non-instantiable
 */

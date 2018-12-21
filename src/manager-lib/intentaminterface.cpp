@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -150,8 +151,6 @@ void IntentAMImplementation::addApplicationIntents(AbstractApplication *app, Int
 
         if (visibilityStr == qL1S("private"))
             visibility = Intent::Private;
-        else if (visibilityStr == qL1S("hidden"))
-            visibility = Intent::Hidden;
         else if (!visibilityStr.isEmpty() && (visibilityStr != qL1S("public"))) {
             throw Exception(Error::Intents, "intent visibilty %3 is invalid (intent %2, app %1)")
                     .arg(app->id()).arg(id).arg(visibilityStr);
@@ -473,7 +472,7 @@ void IntentServerInProcessIpcConnection::replyFromSystem(IntentServerRequest *ir
 IntentServerDBusIpcConnection::IntentServerDBusIpcConnection(QDBusConnection connection,
                                                              Application *application,
                                                              IntentServerAMImplementation *iface)
-    : IntentServerIpcConnection(false /*!inProcess*/, application, iface)
+    : IntentServerIpcConnection(false /* !inProcess*/, application, iface)
 {
     m_connectionName = connection.name();
     m_adaptor = new IntentInterfaceAdaptor(this);

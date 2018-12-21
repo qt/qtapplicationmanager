@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -73,7 +74,7 @@ QT_BEGIN_NAMESPACE_AM
 
 #if defined(QT_GENIVIEXTRAS_LIB)
 static const char *s_defaultSystemUiDltId = "PCAM";
-static const char *s_defaultSystemUiDltDescription = "Pelagicore Application-Manager";
+static const char *s_defaultSystemUiDltDescription = "Luxoft Application-Manager";
 #endif
 
 /*

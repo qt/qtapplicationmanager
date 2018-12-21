@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -106,7 +107,7 @@
 
     Will return \c true if this ApplicationObject object is an alias to another one.
 
-    \sa Application::nonAliased
+    \sa nonAliased
 */
 /*!
     \qmlproperty ApplicationObject ApplicationObject::nonAliased
@@ -230,6 +231,12 @@
 
     This signal is emitted when the application is started or when it's already running but has
     been requested to be brought to foreground or raised.
+*/
+/*!
+    \qmlmethod string ApplicationObject::name(string language)
+
+    Returns the name of the application in the given \a language, as provided in the the info.yaml
+    file.
 */
 /*!
     \qmlmethod bool ApplicationObject::start(string document)

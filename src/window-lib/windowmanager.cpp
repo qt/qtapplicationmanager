@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -129,7 +130,7 @@
 
     \qml
     import QtQuick 2.10
-    import QtApplicationManager.SystemUI 1.0
+    import QtApplicationManager.SystemUI 2.0
 
     // Simple solution for a full-screen setup
     Item {
@@ -211,6 +212,13 @@
 */
 
 /*!
+    \qmlsignal WindowManager::windowAboutToBeRemoved(WindowObject window)
+
+    This signal is emitted before the \a window is removed from the model. This happens for
+    instance, when the window \c visible property is set to \c false on the application side.
+*/
+
+/*!
     \qmlsignal WindowManager::windowContentStateChanged(WindowObject window)
 
     This signal is emitted when the WindowObject::contentState of the given \a window changes.
@@ -243,13 +251,13 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QStrin
     if (s_instance)
         qFatal("WindowManager::createInstance() was called a second time.");
 
-    qmlRegisterSingletonType<WindowManager>("QtApplicationManager.SystemUI", 1, 0, "WindowManager",
+    qmlRegisterSingletonType<WindowManager>("QtApplicationManager.SystemUI", 2, 0, "WindowManager",
                                             &WindowManager::instanceForQml);
 
-    qmlRegisterUncreatableType<Window>("QtApplicationManager.SystemUI", 1, 0, "WindowObject", qSL("Cannot create objects of type WindowObject"));
+    qmlRegisterUncreatableType<Window>("QtApplicationManager.SystemUI", 2, 0, "WindowObject", qSL("Cannot create objects of type WindowObject"));
     qRegisterMetaType<Window*>("Window*");
 
-    qmlRegisterType<WindowItem>("QtApplicationManager.SystemUI", 1, 0, "WindowItem");
+    qmlRegisterType<WindowItem>("QtApplicationManager.SystemUI", 2, 0, "WindowItem");
 
     qRegisterMetaType<InProcessSurfaceItem*>("InProcessSurfaceItem*");
     qRegisterMetaType<QSharedPointer<InProcessSurfaceItem>>("QSharedPointer<InProcessSurfaceItem>");

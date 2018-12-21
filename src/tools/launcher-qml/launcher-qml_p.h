@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -43,6 +44,8 @@
 
 #include <QObject>
 #include <QVariantMap>
+#include <QVector>
+#include <QPointer>
 #include <QQmlIncubationController>
 #include <QQmlApplicationEngine>
 #include <QtAppManCommon/global.h>
@@ -86,8 +89,16 @@ private:
     bool m_quickLaunched;
 #if !defined(AM_HEADLESS)
     QQuickWindow *m_window = nullptr;
+    QVector<QPointer<QQuickWindow>> m_allWindows;
+
+    void updateSlowAnimationsForWindow(QQuickWindow *window);
+
+protected:
+    bool eventFilter(QObject *o, QEvent *e) override;
+
 private slots:
-    void updateSlowMode(bool isSlow);
+    void updateSlowAnimations(bool isSlow);
+
 #endif
 };
 

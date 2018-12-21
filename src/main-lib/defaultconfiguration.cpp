@@ -1,9 +1,10 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Pelagicore Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -91,12 +92,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ qSL("disable-installer"),    qSL("disable the application installer sub-system.") });
     m_clp.addOption({ qSL("disable-intents"),      qSL("disable the intents sub-system.") });
 #if defined(QT_DBUS_LIB)
-#  if defined(Q_OS_LINUX)
-    const QString defaultDBus = qSL("session");
-#  else
-    const QString defaultDBus = qSL("none");
-#  endif
-    m_clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none"), defaultDBus });
+    m_clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none"), qSL("session") });
     m_clp.addOption({ qSL("start-session-dbus"),   qSL("start a private session bus instead of using an existing one.") });
 #endif
     m_clp.addOption({ qSL("fullscreen"),           qSL("display in full-screen.") });

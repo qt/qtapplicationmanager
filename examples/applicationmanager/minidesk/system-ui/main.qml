@@ -94,7 +94,8 @@ Rectangle {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Decoration: " + model.window.application.name("en")
+                text: "Decoration: " + (model.window.application ? model.window.application.name("en")
+                                                                 : 'External Application')
             }
 
             MouseArea {

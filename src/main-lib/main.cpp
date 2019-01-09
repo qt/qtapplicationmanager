@@ -297,7 +297,22 @@ void Main::shutDown(int exitCode)
                 this, []() { checkShutDownFinished(WindowManagerDown); });
         m_windowManager->shutDown();
     }
+#else
+    checkShutDownFinished(WindowManagerDown);
 #endif
+
+    QTimer::singleShot(5000, [exitCode] {
+        QStringList resources;
+        if (!(down & ApplicationManagerDown))
+            resources << qSL("runtimes");
+        if (!(down & QuickLauncherDown))
+            resources << qSL("quick-launchers");
+        if (!(down & WindowManagerDown))
+            resources << qSL("windows");
+        qCCritical(LogSystem, "There are still resources in use (%s). Check your System-UI implementation. "
+                              "Exiting anyhow.", resources.join(qSL(", ")).toLocal8Bit().constData());
+        QCoreApplication::exit(exitCode);
+    });
 }
 
 QQmlApplicationEngine *Main::qmlEngine() const

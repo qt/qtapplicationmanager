@@ -4,6 +4,8 @@ CONFIG += am-systemui
 OTHER_FILES += \
     am-config.yaml \
     system-ui/*.qml \
+    doc/images/*.png \
+    doc/src/*.qdoc \
     apps/frame-timer.fish/*.yaml \
     apps/frame-timer.fish/*.qml \
     apps/frame-timer.fish/*.svg \

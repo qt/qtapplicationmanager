@@ -1,6 +1,21 @@
 TEMPLATE = app
 CONFIG += am-systemui
 
+OTHER_FILES += \
+    am-config.yaml \
+    system-ui/*.qml \
+    doc/images/*.png \
+    doc/src/*.qdoc \
+    apps/process-status.cpu-hog/*.yaml \
+    apps/process-status.cpu-hog/*.qml \
+    apps/process-status.cpu-hog/*.png \
+    apps/process-status.mem-hog/*.yaml \
+    apps/process-status.mem-hog/*.qml \
+    apps/process-status.mem-hog/*.png \
+    apps/process-status.slim/*.yaml \
+    apps/process-status.slim/*.qml \
+    apps/process-status.slim/*.png \
+
 target.path = $$[QT_INSTALL_EXAMPLES]/applicationmanager/process-status
 INSTALLS += target
 

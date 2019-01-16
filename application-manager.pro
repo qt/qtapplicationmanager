@@ -122,9 +122,9 @@ OTHER_FILES += \
 GCOV_EXCLUDE = /usr/* \
                $$[QT_INSTALL_PREFIX]/* \
                $$[QT_INSTALL_PREFIX/src]/* \
-               tests/* \
+               $$_PRO_FILE_PWD_/tests/* \
                moc_* \
-               examples/* \
+               $$_PRO_FILE_PWD_/examples/* \
                $$OUT_PWD/* \
 
 

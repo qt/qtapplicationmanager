@@ -77,13 +77,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     Logging::initialize(argc, argv);
     StartupTimer::instance()->checkpoint("after basic initialization");
 
-#if !defined(AM_DISABLE_INSTALLER)
-    Package::ensureCorrectLocale();
-#endif
-
     try {
         QStringList deploymentWarnings;
+
 #if !defined(AM_DISABLE_INSTALLER)
+        Package::ensureCorrectLocale(&deploymentWarnings);
         Sudo::forkServer(Sudo::DropPrivilegesPermanently, &deploymentWarnings);
         StartupTimer::instance()->checkpoint("after sudo server fork");
 #endif

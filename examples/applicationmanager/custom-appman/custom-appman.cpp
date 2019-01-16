@@ -67,19 +67,16 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion("0.1");
 
     Logging::initialize(argc, argv);
-
     Package::ensureCorrectLocale();
+    Sudo::forkServer(Sudo::DropPrivilegesPermanently);
 
     try {
-        QStringList deploymentWarnings;
-        Sudo::forkServer(Sudo::DropPrivilegesPermanently, &deploymentWarnings);
-
         Main a(argc, argv);
 
         DefaultConfiguration cfg;
         cfg.parse();
 
-        a.setup(&cfg, deploymentWarnings);
+        a.setup(&cfg);
         a.loadQml(cfg.loadDummyData());
         a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
 

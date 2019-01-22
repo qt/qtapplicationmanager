@@ -238,8 +238,8 @@ uint QmlInProcessNotification::libnotifyShow()
     \readonly
 
     This property will change to \c true, as soon as the connection to the remote interface has
-    succeeded. In single-process setups, this will always be \c true, whereas in multi-process
-    setups, it takes a few milli-seconds to setup the D-Bus connection first.
+    succeeded. In multi-process setups, it takes a few milli-seconds to establish the D-Bus
+    connection.
 */
 
 /*!
@@ -283,6 +283,11 @@ void QmlInProcessApplicationInterfaceExtension::componentComplete()
 
     connect(ApplicationIPCManager::instance(), &ApplicationIPCManager::interfaceCreated,
             this, &QmlInProcessApplicationInterfaceExtension::resolveObject);
+
+    if (isReady()) {
+        emit objectChanged();
+        emit readyChanged();
+    }
 }
 
 void QmlInProcessApplicationInterfaceExtension::resolveObject()

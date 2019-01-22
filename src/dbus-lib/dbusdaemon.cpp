@@ -71,6 +71,8 @@ DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
             + QString::number(QCoreApplication::applicationPid()) + qSL("-session.bus");
 
     arguments << address;
+#elif defined(Q_OS_WIN)
+    arguments << qSL(" --address=tcp:host=localhost");
 #endif
     setProgram(program);
     setArguments(arguments);
@@ -95,6 +97,8 @@ void DBusDaemonProcess::start() Q_DECL_NOEXCEPT_EXPR(false)
 {
     static const int timeout = 10000 * int(timeoutFactor());
 
+    qunsetenv("DBUS_SESSION_BUS_ADDRESS");
+
     auto dbusDaemon = new DBusDaemonProcess(qApp);
     dbusDaemon->QProcess::start(QIODevice::ReadOnly);
     if (!dbusDaemon->waitForStarted(timeout) || !dbusDaemon->waitForReadyRead(timeout)) {
@@ -102,6 +106,7 @@ void DBusDaemonProcess::start() Q_DECL_NOEXCEPT_EXPR(false)
                 .arg(dbusDaemon->program(), dbusDaemon->errorString());
     }
     QByteArray busAddress = dbusDaemon->readAllStandardOutput().trimmed();
+
     qputenv("DBUS_SESSION_BUS_ADDRESS", busAddress);
     qCInfo(LogSystem, "NOTICE: running on private D-Bus session bus to avoid conflicts:");
     qCInfo(LogSystem, "        DBUS_SESSION_BUS_ADDRESS=%s", busAddress.constData());

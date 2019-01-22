@@ -117,7 +117,7 @@ run_test()
 
     echo "Running $test_qml in $temp_folder"
     cp $test_qml $temp_folder/test.qml
-    (cd $temp_folder && $APPMAN -c am-config.yaml -r --no-dlt-logging --start-session-dbus)
+    (cd $temp_folder && $APPMAN -c am-config.yaml -r --no-dlt-logging)
 }
 
 if [ -n "$TEST" ]

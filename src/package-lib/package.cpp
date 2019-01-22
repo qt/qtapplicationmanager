@@ -60,6 +60,7 @@ bool Package::ensureCorrectLocale(QStringList *warnings)
 
 #if defined(Q_OS_WIN)
     // Windows is UTF16
+    Q_UNUSED(warnings)
     return true;
 #else
 

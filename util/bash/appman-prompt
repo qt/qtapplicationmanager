@@ -36,7 +36,7 @@ _appman()
 --database --dbus --force-multi-process --force-single-process --fullscreen --help -I \
 --installed-apps-manifest-dir --load-dummydata --logging-rule --no-config-cache --no-dlt-logging \
 --no-fullscreen --no-security --no-ui-watchdog -o --option --qml-debug --recreate-database -r --single-app \
---slow-animations --start-session-dbus --verbose --version --wayland-socket-name"
+--slow-animations --verbose --version --wayland-socket-name"
 
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )

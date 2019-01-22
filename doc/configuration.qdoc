@@ -149,13 +149,19 @@ all your imports paths and file references relative to your main config file.
     \br \e -
     \li string
     \li Register the ApplicationManager, ApplicationInstaller, NotificationManager and
-        WindowManager on the specified D-Bus: can be either \c session, \c system, \c none (for no
-        registration at all) or a full D-Bus bus specification string. (default: \c session on
-        Linux, \c none on all other platforms)
-        \note On production systems, you most likely want to put the application manager on the
-              \c system bus, where you can set detailed security policies using standard D-Bus
-              mechanisms, while keeping the NotificationManager on the session bus. See the more
-              advanced config-file option \c dbus below.
+        WindowManager on the specified D-Bus: can be either a full D-Bus bus specification string,
+        \c session, \c system, \c auto (default), or \c none (for no registration at all).
+
+        Use the \c auto keyword on the desktop or during development only. This keyword implies that
+        the application manager tries to start a private session bus and uses that bus if
+        successful. Otherwise, it results in no registration at all, which is equivalent to \c none.
+
+        On production systems, you may want to put the application manager on the \c system bus,
+        where you can set detailed security policies using standard D-Bus mechanisms, while keeping
+        the NotificationManager on the session bus. See the more advanced config-file option
+        \c dbus below.
+
+        \note The new \c auto keyword replaces the old \c --start-session-dbus flag
 \row
     \li \b -
     \br \e dbus
@@ -165,11 +171,6 @@ all your imports paths and file references relative to your main config file.
         name you want to configure (\c io.qt.ApplicationManager, \c io.qt.ApplicationInstaller or \c
         org.freedesktop.Notifications). If such a key is present, it will take precedence over the
         command-line option \c dbus. Each key's value is a \l{D-Bus specification} object.
-\row
-    \li \b --start-session-dbus
-    \br \e -
-    \li bool
-    \li Start a private session bus instead of using an existing one.
 \row
     \li \b --fullscreen
     \br \e ui/fullscreen

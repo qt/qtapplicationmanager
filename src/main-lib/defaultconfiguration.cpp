@@ -93,8 +93,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ qSL("disable-installer"),    qSL("disable the application installer sub-system.") });
     m_clp.addOption({ qSL("disable-intents"),      qSL("disable the intents sub-system.") });
 #if defined(QT_DBUS_LIB)
-    m_clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none"), qSL("session") });
-    m_clp.addOption({ qSL("start-session-dbus"),   qSL("start a private session bus instead of using an existing one.") });
+    m_clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none|auto"), qSL("auto") });
 #endif
     m_clp.addOption({ qSL("fullscreen"),           qSL("display in full-screen.") });
     m_clp.addOption({ qSL("no-fullscreen"),        qSL("do not display in full-screen.") });
@@ -402,15 +401,7 @@ QVariantMap DefaultConfiguration::dbusPolicy(const char *interfaceName) const
 
 QString DefaultConfiguration::dbusRegistration(const char *interfaceName) const
 {
-    QString dbus = value<QString>("dbus", { "dbus", interfaceName, "register" });
-    if (dbus == qL1S("none"))
-        dbus.clear();
-    return dbus;
-}
-
-bool DefaultConfiguration::dbusStartSessionBus() const
-{
-    return value<bool>("start-session-dbus", { "dbus", "startSessionBus" });
+    return value<QString>("dbus", { "dbus", interfaceName, "register" });
 }
 
 QVariantMap DefaultConfiguration::rawSystemProperties() const

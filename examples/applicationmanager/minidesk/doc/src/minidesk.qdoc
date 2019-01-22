@@ -70,14 +70,6 @@ The example can be started from within the minidesk folder with:
 path/to/bin/appman -c am-config.yaml -r
 \endcode
 
-\note The application-manager attempts to register a \c freedesktop.org compliant notification
-server. DBus errors might occur if it conflicts with the server running on the host desktop
-environment. In this case, a private session bus needs to be started by adding the
-\c --start-session-dbus option:
-\badcode
-path/to/bin/appman -c am-config.yaml -r --start-session-dbus
-\endcode
-
 \section1 Walkthrough
 
 \section2 System-UI Window

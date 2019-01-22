@@ -107,9 +107,8 @@ public:
 protected:
     void loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false);
     void parseSystemProperties(const QVariantMap &rawSystemProperties);
-    void setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false);
-    void registerDBusInterfaces(const std::function<QString(const char *)> &busForInterface,
-                                const std::function<QVariantMap(const char *)> &policyForInterface);
+    void setupDBus(const std::function<QString(const char *)> &busForInterface,
+                   const std::function<QVariantMap(const char *)> &policyForInterface);
     void setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false);
     void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &openGLConfiguration,
@@ -143,8 +142,7 @@ protected:
 
 private:
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
-    const char *dbusInterfaceName(QObject *o) const Q_DECL_NOEXCEPT_EXPR(false);
-    void registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName, const char *serviceName,
+    void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName,
                             const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false);
 #endif
     static QVector<AbstractApplicationInfo *> scanForApplication(const QString &singleAppInfoYaml,

@@ -253,9 +253,8 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupShellServer(cfg->telnetAddress(), cfg->telnetPort());
     setupSSDPService();
 
-    setupDBus(cfg->dbusStartSessionBus());
-    registerDBusInterfaces(std::bind(&DefaultConfiguration::dbusRegistration, cfg, std::placeholders::_1),
-                           std::bind(&DefaultConfiguration::dbusPolicy, cfg, std::placeholders::_1));
+    setupDBus(std::bind(&DefaultConfiguration::dbusRegistration, cfg, std::placeholders::_1),
+              std::bind(&DefaultConfiguration::dbusPolicy, cfg, std::placeholders::_1));
 }
 
 bool Main::isSingleProcessMode() const
@@ -345,19 +344,6 @@ void Main::parseSystemProperties(const QVariantMap &rawSystemProperties)
 
     for (auto iface : qAsConst(m_startupPlugins))
         iface->initialize(m_systemProperties.at(SP_SystemUi));
-}
-
-void Main::setupDBus(bool startSessionBus) Q_DECL_NOEXCEPT_EXPR(false)
-{
-#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
-    if (Q_LIKELY(startSessionBus)) {
-        DBusDaemonProcess::start();
-
-        StartupTimer::instance()->checkpoint("after starting session D-Bus");
-    }
-#else
-    Q_UNUSED(startSessionBus)
-#endif
 }
 
 void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
@@ -905,17 +891,7 @@ void Main::setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false)
 
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 
-const char *Main::dbusInterfaceName(QObject *o) const Q_DECL_NOEXCEPT_EXPR(false)
-{
-    int idx = o->metaObject()->indexOfClassInfo("D-Bus Interface");
-    if (idx < 0) {
-        throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
-            .arg(qL1S(o->metaObject()->className()));
-    }
-    return o->metaObject()->classInfo(idx).value();
-}
-
-void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName, const char *serviceName, const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName, const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString dbusAddress;
     QDBusConnection conn((QString()));
@@ -932,6 +908,12 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
     } else if (dbusName == qL1S("session")) {
         dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
         conn = QDBusConnection::sessionBus();
+    } else if (dbusName == qL1S("auto")) {
+        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
+        conn = QDBusConnection::sessionBus();
+        if (!conn.isConnected())
+            return;
+        dbusName = qL1S("session");
     } else {
         dbusAddress = dbusName;
         conn = QDBusConnection::connectToBus(dbusAddress, qSL("custom"));
@@ -979,56 +961,91 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbus
 #endif // defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 
 
-void Main::registerDBusInterfaces(const std::function<QString(const char *)> &busForInterface,
-                                  const std::function<QVariantMap(const char *)> &policyForInterface)
+void Main::setupDBus(const std::function<QString(const char *)> &busForInterface,
+                     const std::function<QVariantMap(const char *)> &policyForInterface)
 {
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
     registerDBusTypes();
 
-    try {
-        qCDebug(LogSystem) << "Registering D-Bus services:";
+    // <0> AbstractDBusContextAdaptor instance
+    // <1> D-Bus name (extracted from callback function busForInterface)
+    // <2> D-Bus service
+    // <3> D-Bus path
+    // <4> Interface name (extracted from Q_CLASSINFO below)
 
-        auto ama = new ApplicationManagerDBusContextAdaptor(m_applicationManager);
+    std::vector<std::tuple<AbstractDBusContextAdaptor *, QString, const char *, const char *, const char *>> ifaces;
 
-        const char *amInterfaceName = dbusInterfaceName(ama->generatedAdaptor());
-        registerDBusObject(ama->generatedAdaptor(), busForInterface(amInterfaceName),
-                           "io.qt.ApplicationManager", amInterfaceName, "/ApplicationManager");
-        if (!DBusPolicy::add(ama->generatedAdaptor(), policyForInterface(amInterfaceName)))
-            throw Exception(Error::DBus, "could not set DBus policy for ApplicationManager");
+    auto addInterface = [&ifaces, &busForInterface](AbstractDBusContextAdaptor *adaptor, const char *service, const char *path) {
+        int idx = adaptor->parent()->metaObject()->indexOfClassInfo("D-Bus Interface");
+        if (idx < 0) {
+            throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
+                    .arg(qL1S(adaptor->parent()->metaObject()->className()));
+        }
+        const char *interfaceName = adaptor->parent()->metaObject()->classInfo(idx).value();
+        ifaces.emplace_back(adaptor, busForInterface(interfaceName), service, path, interfaceName);
+    };
 
 #  if !defined(AM_DISABLE_INSTALLER)
-        if (m_applicationInstaller) {
-            auto aia = new ApplicationInstallerDBusContextAdaptor(m_applicationInstaller);
-            const char *aiInterfaceName = dbusInterfaceName(m_applicationInstaller);
-            registerDBusObject(aia->generatedAdaptor(), busForInterface(aiInterfaceName),
-                               "io.qt.ApplicationManager", aiInterfaceName, "/ApplicationInstaller");
-            if (!DBusPolicy::add(aia->generatedAdaptor(), policyForInterface(aiInterfaceName)))
-                throw Exception(Error::DBus, "could not set DBus policy for ApplicationInstaller");
-        }
+    addInterface(new ApplicationInstallerDBusContextAdaptor(m_applicationInstaller),
+                 "io.qt.ApplicationManager", "/ApplicationInstaller");
 #  endif
-
 #  if !defined(AM_HEADLESS)
-        try {
-            auto nma = new NotificationManagerDBusContextAdaptor(m_notificationManager);
-            const char *nmInterfaceName = dbusInterfaceName(m_notificationManager);
-            registerDBusObject(nma->generatedAdaptor(), busForInterface(nmInterfaceName),
-                               "org.freedesktop.Notifications", nmInterfaceName, "/org/freedesktop/Notifications");
-        } catch (const Exception &e) {
-            //TODO: what should we do here? on the desktop this will obviously always fail
-            qCCritical(LogSystem) << "WARNING:" << e.what();
-            qCCritical(LogSystem) << "NOTE: Please consider starting with the --start-session-dbus option to work around this issue.";
-        }
-
-        auto wma = new WindowManagerDBusContextAdaptor(m_windowManager);
-        const char *wmInterfaceName = dbusInterfaceName(m_windowManager);
-        registerDBusObject(wma->generatedAdaptor(), busForInterface(wmInterfaceName),
-                           "io.qt.ApplicationManager", wmInterfaceName, "/WindowManager");
-        if (!DBusPolicy::add(wma->generatedAdaptor(), policyForInterface(wmInterfaceName)))
-            throw Exception(Error::DBus, "could not set DBus policy for WindowManager");
+    addInterface(new WindowManagerDBusContextAdaptor(m_windowManager),
+                 "io.qt.ApplicationManager", "/WindowManager");
+    addInterface(new NotificationManagerDBusContextAdaptor(m_notificationManager),
+                 "org.freedesktop.Notifications", "/org/freedesktop/Notifications");
 #  endif
-    } catch (const std::exception &e) {
-        qCCritical(LogSystem) << "ERROR:" << e.what();
-        qApp->exit(2);
+    addInterface(new ApplicationManagerDBusContextAdaptor(m_applicationManager),
+                 "io.qt.ApplicationManager", "/ApplicationManager");
+
+    bool autoOnly = true;
+    bool noneOnly = true;
+
+    // check if all interfaces are on the "auto" bus and replace the "none" bus with nullptr
+    for (auto &&iface : ifaces) {
+        QString dbusName = std::get<1>(iface);
+        if (dbusName != qSL("auto"))
+            autoOnly = false;
+        if (dbusName == qSL("none"))
+            std::get<1>(iface).clear();
+        else
+            noneOnly = false;
+    }
+
+    // start a private dbus-daemon session instance if all interfaces are set to "auto"
+    if (Q_UNLIKELY(autoOnly)) {
+        try {
+            DBusDaemonProcess::start();
+            StartupTimer::instance()->checkpoint("after starting session D-Bus");
+        } catch (const Exception &e) {
+            qCWarning(LogSystem) << "Disabling external D-Bus interfaces:" << e.what();
+            for (auto &&iface : ifaces)
+                std::get<1>(iface).clear();
+            noneOnly = true;
+        }
+    }
+
+    if (!noneOnly) {
+        try {
+            qCDebug(LogSystem) << "Registering D-Bus services:";
+
+            for (auto &&iface : ifaces) {
+                AbstractDBusContextAdaptor *dbusAdaptor = std::get<0>(iface);
+                QString &dbusName = std::get<1>(iface);
+                const char *interfaceName = std::get<4>(iface);
+
+                if (dbusName.isEmpty())
+                    continue;
+
+                registerDBusObject(dbusAdaptor->generatedAdaptor(), dbusName,
+                                   std::get<2>(iface),interfaceName, std::get<3>(iface));
+                if (!DBusPolicy::add(dbusAdaptor->generatedAdaptor(), policyForInterface(interfaceName)))
+                    throw Exception(Error::DBus, "could not set DBus policy for %1").arg(qL1S(interfaceName));
+            }
+        } catch (const std::exception &e) {
+            qCCritical(LogSystem) << "ERROR:" << e.what();
+            qApp->exit(2);
+        }
     }
 #else
     Q_UNUSED(busForInterface)

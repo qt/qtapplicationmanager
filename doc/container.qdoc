@@ -57,7 +57,7 @@ TEMPLATE = lib
 CONFIG += plugin
 TARGET = mycontainer-plugin
 
-QT = appman_plugininterfaces-private
+QT += appman_plugininterfaces-private
 \endcode
 
 The only thing you have to then implement are two classes that derive from \c ContainerInterface

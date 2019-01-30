@@ -552,7 +552,7 @@ void Main::setupInstaller(const QString &appImageMountDir, const QStringList &ca
 #if !defined(AM_DISABLE_INSTALLER)
     if (!Package::checkCorrectLocale()) {
         // we should really throw here, but so many embedded systems are badly set up
-        qCWarning(LogDeployment) << "The appman installer needs a UTF-8 locale to work correctly:\n"
+        qCWarning(LogDeployment) << "The appman installer needs a UTF-8 locale to work correctly: "
                                     "even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
     }
 

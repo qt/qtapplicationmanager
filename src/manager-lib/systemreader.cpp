@@ -374,11 +374,8 @@ quint64 MemoryReader::readUsedValue() const
     QByteArray buffer = m_sysFs->readValue();
 
     int i = buffer.indexOf("total_rss ");
-    if (i == -1) {
-        qCWarning(LogSystem) << "WARNING: Could not read memory.stat or its contents are invalid";
+    if (i == -1)
         return 0;
-    }
-
     return ::strtoull(buffer.data() + i + sizeof("total_rss ")-1, nullptr, 10);
 }
 

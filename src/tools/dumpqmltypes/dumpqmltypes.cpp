@@ -133,6 +133,42 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
         }
     };
 
+    // parse the AM-QmlType Q_CLASSINFO
+    QByteArray type;
+    int revMajor = -1;
+    int revMinor = -1;
+    bool isUncreatable = false;
+    bool isSingleton = false;
+
+    QMetaClassInfo c = mo->classInfo(mo->indexOfClassInfo("AM-QmlType"));
+    QList<QByteArray> qmlType = QByteArray(c.value()).split(' ');
+    if (qmlType.size() >= 2) {
+        type = qmlType.at(0);
+        QList<QByteArray> rev = qmlType.at(1).split('.');
+        if (rev.size() == 2) {
+            bool ok;
+            revMajor = rev.at(0).toInt(&ok);
+            if (!ok)
+                revMajor = -1;
+            revMinor = rev.at(1).toInt(&ok);
+            if (!ok)
+                revMinor = -1;
+        }
+        for (int j = 2; j < qmlType.size(); ++j) {
+            const QByteArray &tag = qmlType.at(j);
+            if (tag == "UNCREATABLE") {
+                isUncreatable = true;
+            } else if (tag == "SINGLETON") {
+                isSingleton = true;
+            } else {
+                throw Exception("Unknown tag %1 found in AM-QmlType class info in class %2")
+                        .arg(tag).arg(mo->className());
+            }
+        }
+    }
+    if (type.isEmpty() || revMajor < 0 || revMinor < 0)
+        throw Exception("Class %1 has an invalid AM-QmlType class info").arg(mo->className());
+
     QByteArray str;
     QByteArray indent1 = QByteArray(level * 4, ' ');
     QByteArray indent2 = QByteArray((level + 1) * 4, ' ');
@@ -141,35 +177,24 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
     if (indentFirstLine)
         str.append(indent1);
 
-    str = str + "Component {\n";
     str = str
-            + indent2
-            + "name: \""
-            + stripNamespace(mo->className())
-            + "\"\n";
-
-    if (mo->superClass()) {
-        str = str
-                + indent2
-                + "prototype: \""
-                + stripNamespace(mo->superClass()->className())
-                + "\"\n";
-    }
-
-    for (int i = mo->classInfoOffset(); i < mo->classInfoCount(); ++i) {
-        QMetaClassInfo c = mo->classInfo(i);
-        if (qstrcmp(c.name(), "AM-QmlType") == 0) {
-            QByteArray type = c.value();
-            int rev = type.mid(type.lastIndexOf('.')).toInt();
-
-            str = str + indent2 + "exports: [ \"" + type + "\" ]\n";
-            str = str + indent2 + "exportMetaObjectRevisions: [ " + QByteArray::number(rev) + " ]\n";
-            break;
-        }
-    }
+            + "Component {\n"
+            + indent2 + "name: \"" + stripNamespace(mo->className()) + "\"\n"
+            + indent2 + "exports: [ \"" + type + " "
+                      + QByteArray::number(revMajor) + "." + QByteArray::number(revMinor) + "\" ]\n"
+            + indent2 + "exportMetaObjectRevisions: [ 0 ]\n";
+    if (mo->superClass())
+        str = str + indent2 + "prototype: \"" + stripNamespace(mo->superClass()->className()) + "\"\n";
+    if (isSingleton)
+        str = str + indent2 + "isSingleton: true\n";
+    if (isUncreatable)
+        str = str + indent2 + "isCreatable: false\n";
 
     for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
         QMetaProperty p = mo->property(i);
+        if (QByteArray(p.name()).startsWith('_')) // ignore "private"
+            continue;
+
         str = str
                 + indent2
                 + "Property { name: \"" + p.name()
@@ -183,9 +208,9 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
 
     for (int i = mo->methodOffset(); i < mo->methodCount(); ++i) {
         QMetaMethod m = mo->method(i);
-
-        // suppress D-Bus interfaces
-        if (isupper(m.name().at(0)))
+        if (m.name().startsWith('_')) // ignore "private"
+            continue;
+        if (isupper(m.name().at(0))) // ignore D-Bus interfaces
             continue;
 
         QByteArray methodtype;
@@ -199,16 +224,15 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
             methodtype = "Method";
         }
 
-        str = str
-                + indent2
-                + methodtype + " {\n" + indent3 + "name: \"" + m.name() + "\"\n";
+        str = str + indent2 + methodtype + " {\n" + indent3 + "name: \"" + m.name() + "\"\n";
         if (qstrcmp(m.typeName(), "void") != 0)
             str = str + indent3 + "type: \"" + mapTypeName(m.typeName(), false) + "\"\n";
 
         for (int j = 0; j < m.parameterCount(); ++j) {
             str = str
                     + indent3 + "Parameter { name: \""
-                    + m.parameterNames().at(j) + "\"; type: \"" + mapTypeName(m.parameterTypes().at(j), true) + "\";";
+                    + m.parameterNames().at(j) + "\"; type: \""
+                    + mapTypeName(m.parameterTypes().at(j), true) + "\";";
             if (m.parameterTypes().at(j).endsWith('*'))
                 str += " isPointer: true;";
             str = str + " }\n";
@@ -272,29 +296,35 @@ int main(int argc, char **argv)
         }
 
 
+        // group all metaobjects by import namespace and sanity check the Q_CLASSINFOs
         QMultiMap<QString, const QMetaObject *> imports;
-        QVector<QByteArray> sanityCheck; // check for copy&paste errors
+        QVector<QString> sanityCheck; // check for copy&paste errors
 
         for (const auto &mo : all) {
-            bool foundType = false;
-            for (int i = mo->classInfoOffset(); (i < mo->classInfoCount()) && !foundType; ++i) {
+            bool foundClassInfo = false;
+            for (int i = mo->classInfoOffset(); (i < mo->classInfoCount()); ++i) {
                 QMetaClassInfo c = mo->classInfo(i);
                 if (qstrcmp(c.name(), "AM-QmlType") == 0) {
-                    QByteArray type = c.value();
-                    QByteArray import = type.left(type.indexOf('/'));
+                    if (foundClassInfo)
+                        throw Exception("Class %1 has multiple AM-QmlType class infos").arg(mo->className());
+                    foundClassInfo = true;
 
-                    imports.insert(QString::fromLatin1(import), mo);
-                    foundType = true;
+                    QString qmlType = qL1S(c.value());
+                    imports.insert(qmlType.section(qL1C('/'), 0, 0), mo);
 
-                    if (sanityCheck.contains(type))
-                        throw Exception("Q_CLASSINFO(\"AM-QmlType\", \"%1\") was found multiple times").arg(type);
-                    sanityCheck << type;
+                    QString typeCheck = qmlType.section(qL1C(' '), 0, 1);
+                    if (sanityCheck.contains(typeCheck)) {
+                        throw Exception("Class %1 duplicates the type %2 already found in another class")
+                            .arg(mo->className()).arg(typeCheck);
+                    }
+                    sanityCheck << typeCheck;
                 }
             }
-            if (!foundType)
-                throw Exception("Missing Q_CLASSINFO(\"AM-QmlType\", \"...\") on class %1").arg(mo->className());
+            if (!foundClassInfo)
+                throw Exception("Class %1 is missing the AM-QmlType class info").arg(mo->className());
         }
 
+        // go over the import namespaces and dump the metaobjects of each one
         for (auto it = imports.keyBegin(); it != imports.keyEnd(); ++it) {
             QString importPath = *it;
             importPath.replace(qL1C('.'), qL1C('/'));
@@ -327,10 +357,11 @@ int main(int argc, char **argv)
                     "// appman-dumpqmltypes\n"
                     "\n"
                     "Module {\n"
-                    "    dependencies: []\n";
+                    "    dependencies: [ \"QtQuick.Window 2.${QT_MINOR_VERSION}\", \"QtQuick 2.${QT_MINOR_VERSION}\" ]\n";
             const char *footer = "}\n";
 
-            typesOut << header;
+            typesOut << QByteArray(header).replace("${QT_MINOR_VERSION}",
+                                                   QByteArray::number(QLibraryInfo::version().minorVersion()));
 
             auto mos = imports.values(*it);
             for (const auto &mo : qAsConst(mos))
@@ -339,7 +370,7 @@ int main(int argc, char **argv)
             typesOut << footer;
         }
     } catch (const Exception &e) {
-        fprintf(stderr, "%s\n", qPrintable(e.errorString()));
+        fprintf(stderr, "ERROR: %s\n", qPrintable(e.errorString()));
         return 1;
     }
     return 0;

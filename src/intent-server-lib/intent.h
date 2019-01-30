@@ -52,7 +52,7 @@ QT_BEGIN_NAMESPACE_AM
 class Intent
 {
     Q_GADGET
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/Intent 2.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/Intent 2.0 UNCREATABLE")
 
     Q_PROPERTY(bool valid READ (operator bool))
     Q_PROPERTY(QString intentId READ intentId)

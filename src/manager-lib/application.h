@@ -68,7 +68,7 @@ signals:
 class AbstractApplication : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationObject 2.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationObject 2.0 UNCREATABLE")
 
     Q_PROPERTY(QString id READ id CONSTANT)
     Q_PROPERTY(QString runtimeName READ runtimeName NOTIFY bulkChange)

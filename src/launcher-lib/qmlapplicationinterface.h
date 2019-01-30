@@ -64,7 +64,7 @@ class QmlApplicationInterfaceExtension;
 class QmlApplicationInterface : public ApplicationInterface
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/ApplicationInterface 2.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/ApplicationInterface 2.0 UNCREATABLE")
 
 public:
     explicit QmlApplicationInterface(const QString &dbusConnectionName,

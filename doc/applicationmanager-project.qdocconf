@@ -52,7 +52,7 @@ sourcedirs += \
 
 exampledirs = ../examples
 
-depends += qtcore qtquick qtqml qtdoc
+depends += qtcore qtquick qtqml qtdoc qtwaylandcompositor
 
 qhp.projects                               = ApplicationManager
 qhp.ApplicationManager.file                = applicationmanager.qhp

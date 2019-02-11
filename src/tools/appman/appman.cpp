@@ -104,6 +104,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         StartupTimer::instance()->checkpoint("after command line parse");
 #if defined(AM_TESTRUNNER)
         TestRunner::initialize(cfg.testRunnerArguments());
+        cfg.setForceVerbose(qEnvironmentVariableIsSet("VERBOSE_TEST"));
+        qInfo() << "Verbose mode is" << (cfg.verbose() ? "on" : "off") << "(changed by (un)setting $VERBOSE_TEST)";
 #endif
         a.setup(&cfg, deploymentWarnings);
 #if defined(AM_TESTRUNNER)

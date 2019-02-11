@@ -76,6 +76,7 @@ public:
     QString windowIcon() const;
     QStringList importPaths() const;
     bool verbose() const;
+    void setForceVerbose(bool forceVerbose);
     bool slowAnimations() const;
     bool loadDummyData() const;
     bool noSecurity() const;
@@ -129,6 +130,7 @@ public:
 private:
     QString m_mainQmlFile;
     bool m_onlyOnePositionalArgument = false;
+    bool m_forceVerbose = false;
 };
 
 QT_END_NAMESPACE_AM

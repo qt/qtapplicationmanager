@@ -230,7 +230,12 @@ QStringList DefaultConfiguration::importPaths() const
 
 bool DefaultConfiguration::verbose() const
 {
-    return value<bool>("verbose");
+    return value<bool>("verbose") || m_forceVerbose;
+}
+
+void QtAM::DefaultConfiguration::setForceVerbose(bool forceVerbose)
+{
+    m_forceVerbose = forceVerbose;
 }
 
 bool DefaultConfiguration::slowAnimations() const

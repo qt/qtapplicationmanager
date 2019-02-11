@@ -1209,15 +1209,17 @@ bool ApplicationManager::startingApplicationInstallation(ApplicationInfo *info)
     } else { // installation
         Application *app = new Application(newInfo.take());
 
-        beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
-        addApplication(app);
-        endInsertRows();
-        emit applicationAdded(app->id());
-        emitDataChanged(app);
-
         app->block();
         app->setState(Application::BeingInstalled);
         app->setProgress(0);
+
+        beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
+        addApplication(app);
+        endInsertRows();
+
+        emitDataChanged(app);
+
+        emit applicationAdded(app->id());
     }
     return true;
 }

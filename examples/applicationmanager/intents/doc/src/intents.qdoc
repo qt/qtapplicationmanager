@@ -36,43 +36,43 @@
 
 \section1 Introduction
 
-This example shows how the System-UI and applications can send and receive Intents. Just like in the
-"Hello World!" example, the window management part is kept to a minimum: the 2x2 grid on the right
-will always show the System-UI part (gray) in the top-left quadrant, while the three apps (red,
-green and blue) will dynamically occupy the other quadrants in the order they are started. You're
-able to see icons and names of the available applications on the left and start and stop them by
-clicking on their respective icons.
+This example shows how the System-UI and applications can send and receive Intents. Similar to the
+\l{"Hello World!" System-UI Example}, the window management aspect is kept to a minimum to focus
+only on Intents: the 2x2 grid on the right will always show the System-UI part (gray) in the
+top-left corner, while the three apps (red, green and blue) will dynamically occupy the other
+corner in the order they are started. You can see the names and icons for the available
+applications on the left; click on their respective icons to start and stop these applications.
 
-Each application, as well as the System-UI look alike and have the same functionality available in
-the UI: You can choose from one of the available intent ids in the top combo-box (labeled \e Intent),
-and optionally also specify which application you would like to handle the chosen request via the
-combo-box below (labeled \e Application).
+Each application, as well as the System-UI, look alike and have the same functionality available in
+the UI: You can choose from one of the available intent IDs in the top combo-box (labeled \e Intent),
+and optionally also specify the corresponding application that should handle the chosen request
+(labeled \e Application).
 Clicking the \e Request button will create and send the corresponding intent request to the
-application-manager's IntentServer for handling. There are three possible outcomes:
+application-manager's IntentServer for handling:
 \list
-\li The \e Intent / \e Application combination was valid and the target application was able to
-    handle the request: the \l{IntentRequest::result}{result of this request} will be shown
+\li The combination of \e Intent and \e Application was valid and the target application was able to
+    handle the request; the \l{IntentRequest::result}{result of this request} will be shown
     as JSON text in the lower output field labeled \e Request.
 
-\li Either the \e Intent / \e Application combination was invalid or the target application was not
-    able to handle the request properly: the \l{IntentRequest::errorMessage}
+\li Either the combination of \e Intent and \e Application was invalid or the target application
+    was not able to handle the request properly; the \l{IntentRequest::errorMessage}
     {error message of this request} will be shown as plain text in the lower output field
     labeled \e Request.
 
-\li You did not specify an \e Application, plus the chosen \e Intent can be handled by more than
-    one application: in this case the example's System-UI will display a dialog, prompting the user
+\li The \e Application was not specified, plus the \e Intent chosen can be handled by more than one
+    application; in this case the example's System-UI will display a dialog, prompting the user
     to \l{IntentServer::disambiguationRequest}{disambiguate the request}.
 \endlist
 
 
-\section1 Files and folder structure
+\section1 Files and Folder Structure
 
-This example is comprised of a System-UI and three sample applications ("Red Intents", "Green Intents"
-and "Blue Intents"), making for four separate QML applications in total. System-UI is also just a QML
-application in the end, albeit a special one.
+This example comprises of a System-UI and three sample applications ("Red Intents", "Green Intents"
+and "Blue Intents"), resulting in four separate QML applications in total. System-UI is also just a
+QML application in the end, albeit a special one.
 
 Each application is put in its own separate directory as described below. Since the QtQuickControls
-2 based UI is used by all the applications and the System-UI, its component live in a shared
+2 based UI is used by all the applications and the System-UI, its components live in a shared
 directory.
 
 \list
@@ -106,10 +106,10 @@ directory.
 \endlist
 
 As you can see above, each application, besides its main QML file, also has an icon and a
-\tt{info.yaml}. That YAML file contains the application metadata, which also includes the
-definition of the intents that this application is able to handle.
+\tt{info.yaml} file that contains the application metadata, which also includes the
+definition of the intents that this application can handle.
 
-\section1 Running
+\section1 Running the Example
 
 Assuming the \c appman executable is in your path, you can run the System-UI as follows:
 
@@ -123,60 +123,61 @@ And this is what you should see:
 
 \image intents-launched.png
 
-For information on these and other command line options you can run \tt{appman --help}.
+For information on these and other command line options you can run \tt{appman --help} or have a
+look at the \l{Configuration} documentation.
 
 
 \section1 Application implementation
 
-All the applicationa (red, green and blue) are exactly the same and their \c main.qml just
+All the applications (red, green and blue) are identical and their \c main.qml just
 instantiates the shared IntentsApplicationWindow component.
 
 \snippet applicationmanager/intents/apps/intents.red/main.qml Main
 
 The IntentsApplicationWindow component is actually a top-level ApplicationManagerWindow, with its
-UI contents being defined by instantiating the - also shared - component \c IntentsUIPage. This UI
-component does not have any intent specific code, so the actual sending is done in signal
+UI contents being defined by instantiating the \c IntentsUIPage component, that is also shared. This
+UI component does not have any intent-specific code, so the actual sending is done in the signal
 handler attached to the IntentsUIPage request signal:
 
 \snippet applicationmanager/intents/shared/IntentsApplicationWindow.qml Send Intent
 
 After calling IntentClient::sendIntentRequest with the parameters as chosen in the UI, the
-example code will connect a function object to the \l{IntentClientRequest::replyReceived}
-{request's replyReceived} signal. As mentioned in the introduction, it will then dump the result
-into the \e Request field in the UI.
+example code will connect a function object to the \l{IntentRequest::replyReceived}
+{request's replyReceived} signal. The result is placed in the \e Request field in the UI.
 
-In addition, it defines all the necessary IntentHandlers for the applications, e.g.:
+In addition, it defines all the necessary IntentHandlers for the applications, for example:
 
 \snippet applicationmanager/intents/shared/IntentsApplicationWindow.qml Intent Handler
 
-These intent handlers are pretty simple, with each one just triggering a simple animation that is
+These intent handlers are not complex, with each one just triggering a basic animation that is
 also defined in this file, so for the \c rotate-window intent this would be:
 
 \snippet applicationmanager/intents/shared/IntentsApplicationWindow.qml Intent Animation
 
-Just implementing IntentHandlers in QML is not enough though, because the application-manager needs
-the information on which application supports which intents \b before the applications are already
-running, most importantly to faciliate auto-starting applications on intent requests. As for
-every other application configuration in the application-manager, this is done through the
-applications's manifest file \c info.yaml:
+In QML, only implementing the IntentHandlers is not sufficient, because the application-manager
+needs to have information on which application supports which intents. This information must be
+available to the application-manager \b before the applications run, to facilitate auto-starting
+applications on intent requests.
+As for every other application configuration in the application-manager, this is done through the
+application's manifest file \c info.yaml:
 
-The \b Red application defines three available intents.
+The \b Red application defines three available intents:
 
 \quotefromfile applicationmanager/intents/apps/intents.red/info.yaml
 \skipto intents:
 \printto
 
-Additionally, the red application gains the \c call-blue capability, which is required by certain
-intents in the blue application (see below)
+Additionally, the \b Red application gains the \c call-blue capability, which is required by certain
+intents in the \b Blue application.
 
 \quotefromfile applicationmanager/intents/apps/intents.red/info.yaml
 \skipto capabilities:
 \printline capabilities
 
 
-The \b Green application defines only two available intents. Please note that even though the green
+The \b Green application defines only two available intents. Note that even though this
 application has an IntentHandler for the \c blink-window intent through the shared
-IntentsApplicationWindow component, this handler would never be called, since this intent id is not
+IntentsApplicationWindow component, this handler is never called, since this intent ID is not
 registered with the system via the \c info.yaml manifest:
 
 \quotefromfile applicationmanager/intents/apps/intents.green/info.yaml
@@ -184,12 +185,12 @@ registered with the system via the \c info.yaml manifest:
 \printto
 
 The \b Blue application has the most complex intent definition. In addition to handling the same
-three intents as the red application, it registeres the \c blue-window-private intent that has the
+three intents as the \b Red application, it registers the \c blue-window-private intent that has the
 attribute \c{visibility: private}. Private intents can only be requested from the same application
-that registered them, so in this case only blue can successfully request the \c blue-window-private
-intent. Furthermore, the \c rotate-window intent in this application can only be requested by
-applications that have the \c call-blue capability: here the red application comes with the
-required capability, while the green one doesn't (see above).
+that registered them, so in this case only \b Blue can successfully request the \c blue-window-private
+intent. Furthermore, the \c rotate-window intent can only be requested by
+applications that have the \c call-blue capability: here the \b Red application comes with the
+required capability, while the \b Green doesn't.
 
 \quotefromfile applicationmanager/intents/apps/intents.blue/info.yaml
 \skipto intents:
@@ -198,21 +199,15 @@ required capability, while the green one doesn't (see above).
 
 \section1 System-UI implementation
 
-The windows and application management part of the System-UI is in large parts a copy of the
-"Hello-World!" example. Instead of arranging all incoming application windows in a column on the
-right, the Intents example uses a 2x2 grid to display its own UI and the three applications it
-comes with. The System-UI in the top-left part is the shared IntentsUIPage component, that is used
-the same way in the applications (see below).
-
-What is special about the System-UI as compared to the applications, is the disambiguation
-mechanism and the accompanying UI. Registering for the IntentServer's disambiguation requests is
-done here:
+What is special about the System-UI as compared to the applications, is the \l
+{IntentServer::disambiguationRequest}{disambiguation mechanism} and the accompanying UI.
+Registering for the IntentServer's disambiguation requests is done here:
 
 \snippet applicationmanager/intents/system-ui.qml Connection
 
 Since we want to stay flexible with regards to the number of parallel intent requests in the system,
 we just add the incoming request to a queue (\c allRequests). The \c Dialog that consumes that
-queue is a fairly standard QtQuickControls 2 dialog, that gives you nice UI showing you the
+queue is a fairly standard QtQuickControls 2 dialog, that gives you a nice UI showing you the
 possible application choices coming from the IntentServer::disambiguationRequested() signal. Upon
 pressing \e Ok or \e Cancel, the dialog will notify the IntentServer about the user's decision:
 

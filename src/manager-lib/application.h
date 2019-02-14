@@ -175,7 +175,7 @@ class Application : public AbstractApplication
 {
     Q_OBJECT
 public:
-    Application(ApplicationInfo*);
+    Application(ApplicationInfo *info, State initialState = Installed);
 
 
     // Returns the updated info, if there's one. Otherwise

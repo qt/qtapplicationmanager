@@ -67,12 +67,6 @@ TestCase {
         signalName: "taskRequestingInstallationAcknowledge"
     }
 
-    SignalSpy {
-        id: applicationAddedSpy
-        target: ApplicationManager
-        signalName: "applicationAdded"
-    }
-
     property var stateList: []
     property int spyTimeout: 5000 * AmTest.timeoutFactor
 
@@ -86,6 +80,7 @@ TestCase {
 
         ApplicationManager.applicationAdded.connect(function(appId) {
             var app = ApplicationManager.application(appId);
+            stateList.push(app.state)
             app.stateChanged.connect(function(state) {
                 compare(state, app.state)
                 stateList.push(state)

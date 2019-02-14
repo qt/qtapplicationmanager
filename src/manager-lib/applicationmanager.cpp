@@ -1207,11 +1207,9 @@ bool ApplicationManager::startingApplicationInstallation(ApplicationInfo *info)
         app->setProgress(0);
         emitDataChanged(app);
     } else { // installation
-        Application *app = new Application(newInfo.take());
+        Application *app = new Application(newInfo.take(), Application::BeingInstalled);
 
         app->block();
-        app->setState(Application::BeingInstalled);
-        app->setProgress(0);
 
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
         addApplication(app);

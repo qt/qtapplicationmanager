@@ -206,9 +206,9 @@ WindowItem.
 
 \section2 Window properties
 
-The window properties of a given window are now set, queried and tracked from its WindowObject,
-without the need to use the WindowManager singleton. The code becomes more readable and modular
-this way:
+The window properties of a given window are now set, queried and tracked from its WindowObject; the
+corresponding, old API in the WindowManager singleton has been removed. The code becomes more
+readable and modular this way:
 
 \oldcode
 import QtApplicationManager 1.0

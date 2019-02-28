@@ -36,7 +36,7 @@ The application manager can run the System UI and QML applications in two differ
 \list 1
    \li Single-process mode: where the System UI and QML applications are all run in \b one, single
        process, that belongs to the System UI. This mode is only supported by QML applications -
-       applications that use the \qml or \qml-inprocess runtime.
+       applications that use the \c qml or \c qml-inprocess runtime.
    \li Multi-process mode: where the System UI and QML applications all run in their own, dedicated
        process.
 \endlist

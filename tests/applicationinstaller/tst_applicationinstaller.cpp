@@ -340,6 +340,10 @@ void tst_ApplicationInstaller::initTestCase()
             QVERIFY2(m_sudo->mkfs(m_loopbackForSDCard[i], "vfat"), qPrintable(m_sudo->lastError()));
             QVERIFY2(m_sudo->mount(m_loopbackForSDCard[i], pathTo(i == 0 ? SDCard0 : SDCard1), false, "vfat"), qPrintable(m_sudo->lastError()));
 
+            // Wait for the mount to be completed. Usually this is not needed, but sometimes the
+            // mount takes longer and then the mkdir command will fail afterwards.
+            QTest::qSleep(200);
+
             // those paths have been hidden due to the mount, so recreate them
             QVERIFY(QDir().mkdir(pathTo(i == 0 ? SDCard0Images : SDCard1Images)));
         }

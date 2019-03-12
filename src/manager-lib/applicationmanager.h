@@ -75,12 +75,12 @@ class ApplicationManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationManager 2.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationManager 2.0 SINGLETON")
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT)
     Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged)
-    Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled)
+    Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled CONSTANT)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
     Q_PROPERTY(bool windowManagerCompositorReady READ isWindowManagerCompositorReady NOTIFY windowManagerCompositorReadyChanged)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT)

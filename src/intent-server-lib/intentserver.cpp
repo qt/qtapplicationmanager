@@ -109,8 +109,6 @@ IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemIn
     qmlRegisterUncreatableType<Intent>("QtApplicationManager.SystemUI", 2, 0, "Intent",
                                        qSL("Cannot create objects of type Intent"));
 
-    qmlRegisterUncreatableType<IntentServerRequest>("QtApplicationManager.SystemUI", 2, 0, "IntentServerRequest",
-                                                    qSL("Cannot create objects of type IntentServerRequest"));
     qmlRegisterSingletonType<IntentServer>("QtApplicationManager.SystemUI", 2, 0, "IntentServer",
                                            [](QQmlEngine *, QJSEngine *) -> QObject * {
         QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);

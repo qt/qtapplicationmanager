@@ -83,7 +83,7 @@ if (application.state === AppMan.Application.Installed) {
     ...
 }
 \newcode
-import QtApplicationManager.Application 2.0
+import QtApplicationManager.SystemUI 2.0
 ...
 if (application.state === ApplicationObject.Installed) {
     ...
@@ -97,10 +97,14 @@ contain all actions pertaining to the application at hand, making for a more obj
 is reflected in the way you can start and stop applications in 5.12.
 
 \oldcode
+import QtApplicationManager 1.0
+...
 var application = ApplicationManager.fromId("com.example.music");
 ...
 ApplicationManager.startApplication(application.id);
 \newcode
+import QtApplicationManager.SystemUI 2.0
+...
 var application = ApplicationManager.fromId("com.example.music");
 ...
 application.start();
@@ -117,6 +121,8 @@ and there's no replacement for it. \c isMapped and \c isClosing were replaced wi
 \l{windowmanager-contentState-role}{contentState}.
 
 \oldcode
+import QtApplicationManager 1.0
+...
 Connections {
     target: WindowManager
     onWindowReady: {
@@ -132,6 +138,8 @@ Item {
     ...
 }
 \newcode
+import QtApplicationManager.SystemUI 2.0
+...
 Connections {
     target: WindowManager
     onWindowAdded: {
@@ -156,6 +164,8 @@ equivalent in the new API, as seen in the previous code snippet. For others ther
 has similar signals.
 
 \oldcode
+import QtApplicationManager 1.0
+...
 Connections {
     target: WindowManager
     onWindowClosing: {
@@ -167,6 +177,8 @@ Connections {
     ...
 }
 \newcode
+import QtApplicationManager.SystemUI 2.0
+...
 Connections {
     target: WindowManager
     onWindowContentStateChanged: {
@@ -194,10 +206,13 @@ WindowItem.
 
 \section2 Window properties
 
-The window properties of a given window can now be set, queried and tracked from its WindowObject, without the need
-to use the WindowManager singleton. That way code can be more readable and modular.
+The window properties of a given window are now set, queried and tracked from its WindowObject; the
+corresponding, old API in the WindowManager singleton has been removed. The code becomes more
+readable and modular this way:
 
 \oldcode
+import QtApplicationManager 1.0
+...
 WindowManager.setWindowProperty(window, "type", "dialog");
 ...
 Connections {
@@ -209,6 +224,8 @@ Connections {
     }
 }
 \newcode
+import QtApplicationManager.SystemUI 2.0
+...
 window.setWindowProperty("type", "dialog");
 ...
 Connections {
@@ -226,6 +243,8 @@ on a Window to be able to composite client application surfaces on them (ie. hav
 This is now handled internally automatically and thus this function has been removed from the Qt Application Manager API.
 
 \oldcode
+import QtApplicationManager 1.0
+...
 QtObject {
     Window {
         id: someSysUIWindow
@@ -237,6 +256,8 @@ QtObject {
     }
 }
 \newcode
+import QtApplicationManager.SystemUI 2.0
+...
 QtObject {
     Window {
         id: someSysUIWindow
@@ -248,10 +269,13 @@ QtObject {
 
 \section1 SystemMonitor
 
-The SystemMonitor singleton no longer exists. The functionality that it provided has been split into several new
-components, namely: MonitorModel, CpuStatus, GpuStatus, MemoryStatus, FrameTimer and IoStatus.
+The SystemMonitor singleton no longer exists. The functionality that it provided has been split into
+several new components, namely: MonitorModel, CpuStatus, GpuStatus, MemoryStatus, FrameTimer and
+IoStatus.
 
 \oldcode
+import QtApplicationManager 1.0
+...
 Item {
     id: root
     ...
@@ -268,6 +292,8 @@ Item {
     }
 }
 \newcode
+import QtApplicationManager 2.0
+...
 Item {
     id: root
     ...
@@ -290,6 +316,8 @@ The ProcessMonitor component no longer exists. The functionality that it provide
 couple of new components, namely: ProcessStatus, MonitorModel and FrameTimer.
 
 \oldcode
+import QtApplicationManager 1.0
+...
 Item {
     id: root
     ...
@@ -305,6 +333,9 @@ Item {
     }
 }
 \newcode
+import QtApplicationManager 2.0
+import QtApplicationManager.SystemUI 2.0
+...
 Item {
     id: root
     ...
@@ -323,4 +354,4 @@ Item {
 }
 \endcode
 
- */
+*/

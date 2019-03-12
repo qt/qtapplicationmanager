@@ -1207,17 +1207,17 @@ bool ApplicationManager::startingApplicationInstallation(ApplicationInfo *info)
         app->setProgress(0);
         emitDataChanged(app);
     } else { // installation
-        Application *app = new Application(newInfo.take());
+        Application *app = new Application(newInfo.take(), Application::BeingInstalled);
+
+        app->block();
 
         beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
         addApplication(app);
         endInsertRows();
-        emit applicationAdded(app->id());
+
         emitDataChanged(app);
 
-        app->block();
-        app->setState(Application::BeingInstalled);
-        app->setProgress(0);
+        emit applicationAdded(app->id());
     }
     return true;
 }

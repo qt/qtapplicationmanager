@@ -98,7 +98,7 @@ Item {
         }
         columns: 2
 
-        IntentPage {
+        IntentsUIPage {
             id: sysui_page
             width: parent.width / 2
             height: parent.height / 2
@@ -123,6 +123,12 @@ Item {
         }
     }
 
+    //! [Connection]
+    Connections {
+        target: IntentServer
+        onDisambiguationRequest: { disambiguationDialog.add(requestId, potentialIntents) }
+    }
+    //! [Connection]
 
     Dialog {
         id: disambiguationDialog
@@ -156,6 +162,8 @@ Item {
                 open()
             }
         }
+
+        //! [OkCancel]
         onAccepted: {
             IntentServer.acknowledgeDisambiguationRequest(currentRequest.requestId,
                                                           currentRequest.intents[handlingApplications.currentIndex]);
@@ -165,6 +173,7 @@ Item {
             IntentServer.rejectDisambiguationRequest(currentRequest.requestId)
             showNext()
         }
+        //! [OkCancel]
 
         GridLayout {
             id: grid
@@ -206,10 +215,5 @@ Item {
                 ScrollIndicator.vertical: ScrollIndicator { }
             }
         }
-    }
-
-    Connections {
-        target: IntentServer
-        onDisambiguationRequest: { disambiguationDialog.add(requestId, potentialIntents) }
     }
 }

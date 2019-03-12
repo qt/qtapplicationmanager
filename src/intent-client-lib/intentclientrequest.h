@@ -56,6 +56,8 @@ class IntentClient;
 class IntentClientRequest : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IntentRequest 2.0 UNCREATABLE")
+
     Q_PROPERTY(QUuid requestId READ requestId NOTIFY requestIdChanged)
     Q_PROPERTY(Direction direction READ direction CONSTANT)
     Q_PROPERTY(QString intentId READ intentId CONSTANT)

@@ -149,7 +149,8 @@ decltype(ProcessTitleInitialize) *init_ProcessTitleInitialize
 void ProcessTitle::setTitle(const char *fmt, ...)
 {
     if (!startOfArgv || maxArgvSize <= 0 || !originalArgv || originalArgvSize <= 0) {
-        qCritical(LogSystem) << "ERROR: called ProcessTitle::setTitle(), but the initialization function was not called via .init_array beforehand.";
+        qWarning(LogSystem) << "ProcessTitle::setTitle() failed, because its initialization function"
+                               " was not called via an .init_array section at process startup.";
         return;
     }
 
@@ -191,10 +192,6 @@ void ProcessTitle::setTitle(const char *fmt, ...)
 
 const char *ProcessTitle::title()
 {
-    if (!startOfArgv || maxArgvSize <= 0 || !originalArgv || originalArgvSize <= 0) {
-        qCritical(LogSystem) << "ERROR: called ProcessTitle::title(), but the initialization function was not called via .init_array beforehand.";
-        return nullptr;
-    }
     return startOfArgv;
 }
 

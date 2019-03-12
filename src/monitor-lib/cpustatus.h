@@ -54,6 +54,7 @@ QT_BEGIN_NAMESPACE_AM
 class CpuStatus : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/CpuStatus 2.0")
     Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadChanged)
     Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
 

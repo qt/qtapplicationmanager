@@ -141,7 +141,7 @@ QVariantMap WaylandWindow::windowProperties() const
     return m_windowProperties;
 }
 
-auto WaylandWindow::contentState() const -> ContentState
+Window::ContentState WaylandWindow::contentState() const
 {
     if (m_surface)
         return m_surface->hasContent() ? SurfaceWithContent : SurfaceNoContent;
@@ -162,10 +162,20 @@ void WaylandWindow::enableOrDisablePing()
 
 void WaylandWindow::onContentStateChanged()
 {
-    qCDebug(LogGraphics) << this << "of" << application()->id() << "contentState changed to" << contentState();
+    qCDebug(LogGraphics) << this << "of" << applicationId() << "contentState changed to" << contentState();
 
     enableOrDisablePing();
     emit contentStateChanged();
+}
+
+QString WaylandWindow::applicationId() const
+{
+    if (application())
+        return application()->id();
+    else if (m_surface && m_surface->client())
+        return qSL("[pid: %1]").arg(m_surface->client()->processId());
+    else
+        return qSL("[external app]");
 }
 
 QSize WaylandWindow::size() const
@@ -178,12 +188,8 @@ void WaylandWindow::resize(const QSize &newSize)
     if (!m_surface)
         return;
 
-    AbstractApplication *app = nullptr; // prevent expensive lookup when not printing qDebugs
-
-    qCDebug(LogGraphics) << "Sending geometry change request to Wayland client for surface"
-        << m_surface << "new:" << newSize << "of"
-        << ((app = ApplicationManager::instance()->fromProcessId(m_surface->client()->processId()))
-                ? app->id() : QString::fromLatin1("pid: %1").arg(m_surface->client()->processId()));
+    qCDebug(LogGraphics) << this << "of" << applicationId() << "sending resize request for surface"
+                         << m_surface << "to" << newSize;
 
     m_surface->sendResizing(newSize);
 }

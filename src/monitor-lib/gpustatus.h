@@ -54,6 +54,7 @@ QT_BEGIN_NAMESPACE_AM
 class GpuStatus : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/GpuStatus 2.0")
     Q_PROPERTY(qreal gpuLoad READ gpuLoad NOTIFY gpuLoadChanged)
 
     Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)

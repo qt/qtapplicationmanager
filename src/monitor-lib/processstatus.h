@@ -59,6 +59,7 @@ QT_BEGIN_NAMESPACE_AM
 class ProcessStatus : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ProcessStatus 2.0")
     Q_PROPERTY(QString applicationId READ applicationId WRITE setApplicationId NOTIFY applicationIdChanged)
     Q_PROPERTY(qint64 processId READ processId NOTIFY processIdChanged)
     Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadChanged)

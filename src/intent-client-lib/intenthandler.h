@@ -57,6 +57,8 @@ class IntentClientRequest;
 class IntentHandler : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/IntentHandler 2.0")
+
     Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds NOTIFY intentIdsChanged)
 

@@ -42,6 +42,7 @@
 
 #include <QFileInfo>
 #include <QCoreApplication>
+#include <QFile>
 #include <QDebug>
 
 #include <QtAppManCommon/logging.h>
@@ -230,7 +231,12 @@ QStringList DefaultConfiguration::importPaths() const
 
 bool DefaultConfiguration::verbose() const
 {
-    return value<bool>("verbose");
+    return value<bool>("verbose") || m_forceVerbose;
+}
+
+void QtAM::DefaultConfiguration::setForceVerbose(bool forceVerbose)
+{
+    m_forceVerbose = forceVerbose;
 }
 
 bool DefaultConfiguration::slowAnimations() const
@@ -442,7 +448,21 @@ int DefaultConfiguration::quickLaunchRuntimesPerContainer() const
 
 QString DefaultConfiguration::waylandSocketName() const
 {
-    return value<QString>("wayland-socket-name");
+    const QString socket = m_clp.value(qSL("wayland-socket-name")); // get the default value
+    if (!socket.isEmpty())
+        return socket;
+
+    const char *envName = "WAYLAND_DISPLAY";
+    if (qEnvironmentVariableIsSet(envName))
+        return qEnvironmentVariable(envName);
+
+    const QString lockPattern = qEnvironmentVariable("XDG_RUNTIME_DIR") + qSL("/qtam-wayland-%1.lock");
+    for (int i = 0; i < 32; ++i) {
+        QFile lock(lockPattern.arg(i));
+        if (lock.open(QIODevice::ReadWrite | QIODevice::NewOnly))
+            return qSL("qtam-wayland-%1").arg(i);
+    }
+    return QString();
 }
 
 QString DefaultConfiguration::telnetAddress() const

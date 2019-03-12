@@ -91,6 +91,8 @@ private slots:
     void onContentStateChanged();
 
 private:
+    QString applicationId() const;
+
     void enableOrDisablePing();
     QTimer *m_pingTimer;
     QTimer *m_pongTimer;

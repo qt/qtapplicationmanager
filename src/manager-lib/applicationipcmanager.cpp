@@ -82,7 +82,8 @@ ApplicationIPCManager *ApplicationIPCManager::createInstance()
     if (Q_UNLIKELY(s_instance))
         qFatal("ApplicationIPCManager::createInstance() was called a second time.");
 
-    qmlRegisterType<ApplicationIPCInterfaceAttached>();
+    qmlRegisterUncreatableType<ApplicationIPCInterfaceAttached>("QtApplicationManager.SystemUI", 2, 0, "ApplicationIPCInterfaceAttached",
+                                                                qSL("This type is only providing attached properties"));
     qmlRegisterType<ApplicationIPCInterface>("QtApplicationManager.SystemUI", 2, 0, "ApplicationIPCInterface");
     qmlRegisterSingletonType<ApplicationIPCManager>("QtApplicationManager.SystemUI", 2, 0, "ApplicationIPCManager",
                                                     &ApplicationIPCManager::instanceForQml);

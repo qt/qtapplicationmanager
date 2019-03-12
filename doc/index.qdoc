@@ -54,7 +54,7 @@ high-level overview of the package.
     \li \l{The Application Installer}
     \li \l{Logging and Debugging}
     \li \l{Containers}
-    \li \l{Single- vs. Multi-Process Mode}
+    \li \l{Single-Process vs. Multi-Process Mode}
     \li \l{Migrating code from 5.11 to 5.12}
 \endlist
 

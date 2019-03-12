@@ -52,6 +52,11 @@ Exception::Exception(const char *errorString) Q_DECL_NOEXCEPT
     , m_errorString(errorString ? qL1S(errorString) : QString())
 { }
 
+Exception::Exception(const QString &errorString) Q_DECL_NOEXCEPT
+    : m_errorCode(Error::System)
+    , m_errorString(errorString)
+{ }
+
 Exception::Exception(Error errorCode, const char *errorString) Q_DECL_NOEXCEPT
     : m_errorCode(errorCode)
     , m_errorString(errorString ? qL1S(errorString) : QString())

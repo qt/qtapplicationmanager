@@ -43,12 +43,13 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
+#include <QStringList>
 
 QT_BEGIN_NAMESPACE_AM
 
 namespace Package
 {
-bool ensureCorrectLocale();
+bool ensureCorrectLocale(QStringList *warnings = nullptr);
 bool checkCorrectLocale();
 }
 

@@ -43,6 +43,7 @@
 import QtQuick 2.3
 import QtTest 1.0
 import QtApplicationManager.SystemUI 2.0
+import QtApplicationManager 2.0
 
 TestCase {
     name: "Installer"
@@ -66,24 +67,20 @@ TestCase {
         signalName: "taskRequestingInstallationAcknowledge"
     }
 
-    SignalSpy {
-        id: applicationAddedSpy
-        target: ApplicationManager
-        signalName: "applicationAdded"
-    }
-
     property var stateList: []
+    property int spyTimeout: 5000 * AmTest.timeoutFactor
 
     function test_states() {
         // App could potentially be installed already. Remove it.
         if (ApplicationInstaller.removePackage("test.install.app", false, true)) {
-            taskFinishedSpy.wait(2000);
+            taskFinishedSpy.wait(spyTimeout);
             compare(taskFinishedSpy.count, 1);
             taskFinishedSpy.clear();
         }
 
         ApplicationManager.applicationAdded.connect(function(appId) {
             var app = ApplicationManager.application(appId);
+            stateList.push(app.state)
             app.stateChanged.connect(function(state) {
                 compare(state, app.state)
                 stateList.push(state)
@@ -91,7 +88,7 @@ TestCase {
         })
 
         var id = ApplicationInstaller.startPackageInstallation("internal-0", "appv1.pkg")
-        taskRequestingInstallationAcknowledgeSpy.wait(2000);
+        taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
         var appId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
@@ -99,7 +96,7 @@ TestCase {
         ApplicationInstaller.acknowledgePackageInstallation(id);
 
         if (!taskFinishedSpy.count)
-            taskFinishedSpy.wait(2000);
+            taskFinishedSpy.wait(spyTimeout);
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
@@ -109,12 +106,12 @@ TestCase {
         stateList = []
 
         id = ApplicationInstaller.startPackageInstallation("internal-0", "appv2.pkg")
-        taskRequestingInstallationAcknowledgeSpy.wait(2000);
+        taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
         ApplicationInstaller.acknowledgePackageInstallation(id);
 
-        taskFinishedSpy.wait(2000);
+        taskFinishedSpy.wait(spyTimeout);
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
@@ -124,7 +121,7 @@ TestCase {
 
         id = ApplicationInstaller.removePackage(appId, false, false);
 
-        taskFinishedSpy.wait(2000);
+        taskFinishedSpy.wait(spyTimeout);
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 

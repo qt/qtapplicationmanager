@@ -59,6 +59,7 @@
 QT_BEGIN_NAMESPACE
 namespace QTest {
     extern Q_TESTLIB_EXPORT bool printAvailableFunctions;
+    extern Q_TESTLIB_EXPORT void qtest_qParseArgs(int argc, char *argv[], bool qml);
 }
 QT_END_NAMESPACE
 
@@ -168,7 +169,12 @@ void TestRunner::initialize(const QStringList &testRunnerArguments)
 
     QuickTestResult::setCurrentAppname(testArgV.constFirst());
     QuickTestResult::setProgramName(testArgV.constFirst());
-    QuickTestResult::parseArgs(testArgV.size(), testArgV.data());
+
+    // Allocate a QuickTestResult to create QBenchmarkGlobalData, otherwise the benchmark options don't work
+    QuickTestResult result;
+    // We would call QuickTestResult::parseArgs here, but that would include qml options in the help
+    // which we don't support
+    QTest::qtest_qParseArgs(testArgV.size(), testArgV.data(), false /*no qml options*/);
     qputenv("QT_QTESTLIB_RUNNING", "1");
 
     // Register the test object and application-manager test add-on

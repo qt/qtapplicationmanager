@@ -452,8 +452,9 @@ QVector<AbstractApplication *> AbstractApplication::fromApplicationInfoVector(
 // Application
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Application::Application(ApplicationInfo *info)
+Application::Application(ApplicationInfo *info, State initialState)
     : AbstractApplication(info)
+    , m_state(initialState)
 {
 }
 

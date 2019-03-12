@@ -59,12 +59,13 @@ ApplicationManagerWindow {
     id: root
     property string flavor: ApplicationInterface.applicationId.split(".")[1]
 
-    IntentPage {
+    IntentsUIPage {
         id: intentPage
         anchors.fill: parent
         flavor: root.flavor
         title: ApplicationInterface.name["en"]
 
+        //! [Send Intent]
         onRequest: {
             var request = IntentClient.sendIntentRequest(intentId, applicationId, parameters)
             request.onReplyReceived.connect(function() {
@@ -72,12 +73,15 @@ ApplicationManagerWindow {
                                      request.succeeded ? request.result : request.errorMessage)
             })
         }
+        //! [Send Intent]
 
+        //! [Intent Animation]
         RotationAnimation on rotation {
             id: rotationAnimation
             running: false
             duration: 500; from: 0; to: 360
         }
+        //! [Intent Animation]
 
         SequentialAnimation  on scale {
             id: scaleAnimation
@@ -101,6 +105,7 @@ ApplicationManagerWindow {
         }
     }
 
+    //! [Intent Handler]
     IntentHandler {
         intentIds: "rotate-window"
         onRequestReceived: {
@@ -108,6 +113,7 @@ ApplicationManagerWindow {
             request.sendReply({ "done": true })
         }
     }
+    //! [Intent Handler]
 
     IntentHandler {
         intentIds: "scale-window"

@@ -44,12 +44,13 @@
 #include <QString>
 
 #include "package.h"
+#include "global.h"
 
 #include <clocale>
 
 QT_BEGIN_NAMESPACE_AM
 
-bool Package::ensureCorrectLocale()
+bool Package::ensureCorrectLocale(QStringList *warnings)
 {
     // We need to make sure we are running in a Unicode locale, since we are
     // running into problems when unpacking packages with libarchive that
@@ -57,9 +58,8 @@ bool Package::ensureCorrectLocale()
     // This has to be done *before* the QApplication constructor to avoid
     // the initialization of the text codecs.
 
-#if defined(Q_OS_WIN) || defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#if defined(Q_OS_WIN)
     // Windows is UTF16
-    // Mac is UTF8
     return true;
 #else
 
@@ -79,6 +79,11 @@ bool Package::ensureCorrectLocale()
     if (checkUtf())
         return true;
 
+    if (warnings) {
+        *warnings << qL1S("The current locale is not UTF-8 capable. Trying to find a capable one "
+                          "now, but this is time consuming and should be avoided");
+    }
+
     // LC_ALL trumps all the rest, so if this is not specifying an UTF-8 locale, we need to unset it
     QByteArray lc_all = qgetenv("LC_ALL");
     if (!lc_all.isEmpty() && !(lc_all.endsWith(".UTF-8") || lc_all.endsWith(".UTF_8"))) {
@@ -91,11 +96,17 @@ bool Package::ensureCorrectLocale()
         return true;
 
     // now the time-consuming part: trying to switch to a well-known UTF-8 locale
-    const char *locales[] = { "C.UTF-8", "en_US.UTF-8", nullptr };
-    for (const char **loc = locales; *loc; ++loc) {
-        if (const char *old = setlocale(LC_CTYPE, *loc)) {
+    const char *locales[] = {
+#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+        "UTF-8"
+#else
+        "C.UTF-8", "en_US.UTF-8"
+#endif
+    };
+    for (const char *loc : locales) {
+        if (const char *old = setlocale(LC_CTYPE, loc)) {
             if (checkUtf()) {
-                if (setenv("LC_CTYPE", *loc, 1) == 0)
+                if (setenv("LC_CTYPE", loc, 1) == 0)
                     return true;
             }
             setlocale(LC_CTYPE, old);
@@ -111,7 +122,7 @@ bool Package::checkCorrectLocale()
 {
     // see ensureCorrectLocale() above. Call this after the QApplication
     // constructor as a sanity check.
-#if defined(Q_OS_WIN) || defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#if defined(Q_OS_WIN)
     return true;
 #else
     // check if umlaut-a converts correctly

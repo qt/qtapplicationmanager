@@ -80,7 +80,7 @@ If you are using the installer part of the application-manager, this function ne
 \e before the QApplication constructor to make sure your C locale is an UTF-8 variant (this is a
 requirement in order to get deterministic results when using \c libarchive with non-ASCII filenames).
 
-\printto try
+\printline Sudo::forkServer
 
 Again, for the installer part only, an additional setup step is necessary before running the
 QApplication constructor: if the executable is setuid-root, this call will \c fork of a child

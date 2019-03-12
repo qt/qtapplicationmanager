@@ -67,6 +67,29 @@ Window {
         anchors.fill: parent
         color: "linen"
 
+        // Show a warning on non-Linux platforms
+        Rectangle {
+            visible: Qt.platform.os !== 'linux'
+            anchors {
+                bottom: parent.bottom
+                horizontalCenter: parent.horizontalCenter
+            }
+            width: parent.width / 2
+            height: warningLabel.height
+            z: 1000
+            color: "red"
+            border.color: "white"
+            Text {
+                id: warningLabel
+                width: parent.width
+                color: "white"
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                text: "Please note that this example will not show sensible data on your current " +
+                      "platform (" + Qt.platform.os + "). Only Linux/multi-process will produce " +
+                      "all relevant data points."
+            }
+        }
 
         // A graph displaying the FPS of the System UI itself
         Rectangle {

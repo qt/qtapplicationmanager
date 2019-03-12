@@ -33,7 +33,7 @@
 
 \section1 Main Configuration
 
-The application-manager can be configured through config files and the command line.
+The application manager can be configured through config files and the command line.
 The currently supported command-line options can always be displayed by running \c{appman --help}.
 Some of these options can also be set via config files, which in itself are referenced on the
 command-line with the \c{--config-file <filename>} option.
@@ -64,12 +64,12 @@ all your imports paths and file references relative to your main config file.
     \li \b --version
     \br \e -
     \li bool
-    \li Prints the current version of the application-manager and exits.
+    \li Prints the current version of the application manager and exits.
 \row
     \li \b --build-config
     \br \e -
     \li bool
-    \li Prints the build configuration of the application-manager in YAML format and exits.
+    \li Prints the build configuration of the application manager in YAML format and exits.
 \row
     \li \b --config-file or \c -c
     \br \e -
@@ -85,7 +85,7 @@ all your imports paths and file references relative to your main config file.
         \li maps will be merged with earlier maps recursively on a key-by-key basis, according to
             rules 1 and 2.
         \endlist
-        The application-manager will save the result of parsing and evaluating all the
+        The application manager will save the result of parsing and evaluating all the
         configuration files into a cache. This cache is loaded on subsequent starts if the exact
         same set of config files is used unchanged.
 
@@ -100,7 +100,7 @@ all your imports paths and file references relative to your main config file.
     \li \b --clear-config-cache
     \br \e -
     \li bool
-    \li Although the application-manager should detect if the configuration file cache is out of
+    \li Although the application manager should detect if the configuration file cache is out of
         sync, you can force-clear the cache on startup with this option.
 \row
     \li \b --option or \c -o
@@ -115,7 +115,7 @@ all your imports paths and file references relative to your main config file.
     \li \b --database
     \br \e applications/database
     \li string
-    \li To decrease the start up time of the System-UI, its application database can be cached
+    \li To decrease the start up time of the System UI, its application database can be cached
         in a file so that in subsequent start ups it doesn't have to scan and parse the
         \c info.yaml files of installed applications all over again. This option specifies the
         filepath of such cache file. (default: empty/disabled)
@@ -152,7 +152,7 @@ all your imports paths and file references relative to your main config file.
         WindowManager on the specified D-Bus: can be either \c session, \c system, \c none (for no
         registration at all) or a full D-Bus bus specification string. (default: \c session on
         Linux, \c none on all other platforms)
-        \note On production systems, you most likely want to put the application-manager on the
+        \note On production systems, you most likely want to put the application manager on the
               \c system bus, where you can set detailed security policies using standard D-Bus
               mechanisms, while keeping the NotificationManager on the session bus. See the more
               advanced config-file option \c dbus below.
@@ -179,20 +179,20 @@ all your imports paths and file references relative to your main config file.
     \li \b --no-fullscreen
     \br \e -
     \li bool
-    \li Override full-screen setting in the System-UI's config file. Useful for development on the
+    \li Override full-screen setting in the System UI's config file. Useful for development on the
         desktop. (default: false)
 \row
     \li \b -
     \br \e ui/windowIcon
     \li string
-    \li If set, the given image file will be used as a window icon for all application-manager
+    \li If set, the given image file will be used as a window icon for all application manager
         windows. This setting is only useful for development and will only take effect on Windows,
         macOS and Linux/X11.
 \row
     \li \b -I
     \br \e ui/importPaths
     \li array<string>
-    \li Adds additional QML import paths to the System-UI.
+    \li Adds additional QML import paths to the System UI.
 \row
     \li \b -
     \br \e ui/style
@@ -202,30 +202,30 @@ all your imports paths and file references relative to your main config file.
     \li \b -
     \br \e plugins
     \li map<array<string>>
-    \li A string-to-string-list map that defines plugins that the application-manager should load.
+    \li A string-to-string-list map that defines plugins that the application manager should load.
         The value must be a list of plugin library file path names. A single plugin will also be
         accepted. Currently the only valid key is \c startup. The plugin itself must implement the
-        StartupInterface. The application-manager will call the function hooks during startup of
-        the System-UI.
+        StartupInterface. The application manager will call the function hooks during startup of
+        the System UI.
 \row
     \target system properties
     \li \b -
     \br \e systemProperties
     \li object
-    \li Exports user-defined properties (key/value pairs) to the System-UI and applications. This
+    \li Exports user-defined properties (key/value pairs) to the System UI and applications. This
         field can only have the following children, that control access to the actual properties:
         \c private, \c protected and \c public (other children will be ignored). Properties under
         one of the access tags can be freely chosen and can also be nested. The properties
-        are exposed as ApplicationManager::systemProperties to the System-UI and as
+        are exposed as ApplicationManager::systemProperties to the System UI and as
         ApplicationInterface::systemProperties to all QML applications:
         \list
-        \li The System-UI has access to public, protected and private properties.
+        \li The System UI has access to public, protected and private properties.
         \li Built-in applilcations have access to public and protected properties.
         \li Installed (third party) applications have access to public properties only.
         \endlist
         Private keys will overwrite identical protected and public ones and protected keys will
         overwrite identical public ones. The properties will just be converted to QVariantMaps, but
-        the application-manager will not interpret them in any way.
+        the application manager will not interpret them in any way.
         Non-QML applications can access this data via the environment variable
         \c $AM_RUNTIME_SYSTEM_PROPERTIES as a YAML snippet.
 \row
@@ -233,7 +233,7 @@ all your imports paths and file references relative to your main config file.
     \br \e -
     \li bool
     \li Enable verbose output. All logging categories and message types will be enabled with the
-        exception of some Qt internal debug messages (\c logging-rules will be ignored). Note that
+        exception of some Qt internal debug messages; \c logging-rules will be ignored. Note that
         logging rules provided via the QT_LOGGING_RULES environment variable will still prevail.
         For more control over the logging output, see \c logging-rules below.
 \row
@@ -245,13 +245,13 @@ all your imports paths and file references relative to your main config file.
     \li \b --load-dummydata
     \br \e ui/loadDummyData
     \li bool
-    \li Loads QML dummy-data into the System-UI (just like \c qmlscene and \c qml would).
+    \li Loads QML dummy data into the System UI, similar to \c qmlscene and \c qml.
 \row
     \target no-security
     \li \b --no-security
     \br \e flags/noSecurity
     \li bool
-    \li Disables all security related checks. Use this in a development setup only! (default: false)
+    \li Disables all security related checks. Use this in a development setup only; never in production. (default: false)
 \row
     \li \b --development-mode
     \br \e flags/developmentMode
@@ -276,8 +276,8 @@ all your imports paths and file references relative to your main config file.
     \li \b --single-app
     \br \e -
     \li string
-    \li Runs the application-manager with a single application only (ignoring the database).
-        In this mode, the application-manager can act as a \c qmlscene / \c qml replacement.
+    \li Runs the application manager with a single application only (ignoring the database).
+        In this mode, the application manager can act as a \c qmlscene / \c qml replacement.
         The argument is the path to \c info.yaml. Aliases (\c{info-*.yaml}) will also be
         loaded from the given path.
 \row
@@ -285,7 +285,7 @@ all your imports paths and file references relative to your main config file.
     \br \e logging/rules
     \li array<string>
     \li Adds standard Qt logging rules - see the QLoggingCategory documentation for the required
-        format. Application-manager specific logging categories are listed in
+        format. application manager specific logging categories are listed in
         \l {Logging and Debugging}.
 \row
     \li \b -
@@ -336,7 +336,7 @@ all your imports paths and file references relative to your main config file.
     \li \b -
     \br \e quicklaunch/idleLoad
     \li real
-    \li This is a system-load value between \c 0 and \c 1. The application-manager will not start
+    \li This is a system-load value between \c 0 and \c 1. The application manager will not start
         a new quick-launcher, as long as the idle-load of the system is higher than this value.
         (default: 0)
 \row
@@ -375,7 +375,7 @@ all your imports paths and file references relative to your main config file.
     \li \b -
     \br \e crashAction
     \li object
-    \li Specifies which actions to take, if the application-manager is crashing. See
+    \li Specifies which actions to take, if the application manager is crashing. See
         \l{Crash Action Specification} {below} for more information.
 \row
     \li \b -
@@ -395,7 +395,7 @@ all your imports paths and file references relative to your main config file.
     \br \e ui/iconThemeSearchPaths
         \target iconThemeSearchPaths
     \li list<string>
-    \li Adds additional icon theme search paths to the System-UI and all apps. This can be used
+    \li Adds additional icon theme search paths to the System UI and all apps. This can be used
         to add a custom icon theme to the search path and load it by specifying
         \l{iconThemeName} {ui/iconThemeName}.
 
@@ -408,7 +408,7 @@ applicationUserIdSeparation: this should be factored out into a container plugin
 
 \section1 D-Bus Specification
 
-These YAML objects describe both which D-Bus interfaces are registered on as well as access
+These YAML objects describe both, which D-Bus interfaces are registered on, as well as access
 policies.
 
 \table
@@ -419,20 +419,19 @@ policies.
 \row
     \li \c register
     \li string
-    \li Register the interface on the specified D-Bus: can be either \c session, \c system, \c none
-        or \c ~ (for no registration at all) or a full D-Bus bus specification string.
+    \li Registers the interface on the specified D-Bus: can be either \c session, \c system, \c none,
+        \c ~ (for no registration at all), or a full D-Bus bus specification string.
 \row
     \li \c policy
     \li map<object>
     \li These optional access policies can be used either instead of or in addition to the standard
-        D-Bus policy configuration. The keys into this map are the (undecorated) D-Bus function
-        names (e.g. \c startApplication). As soon as a key is specified, the corresponding function's
-        access policy is \c deny, until you add \c allow criterias (all of them are and-ed):
-
-
+        D-Bus policy configuration. The keys into this map are the undecorated D-Bus function
+        names, such as \c startApplication. When a key is specified, the corresponding function's
+        access policy is \c deny, until you add \c allow criterias -- all of which are AND-ed
+        together.
 \endtable
 
-A simple example, that would only allow applications with the capability \c appstore, running with
+A simple example, that only allows applications with the capability \c appstore, running with
 user-id \c 1000 to call the installer's \c startPackageInstallation function, while preventing anyone
 to remotely call \c acknowledgePackageInstallation:
 
@@ -475,13 +474,14 @@ ApplicationInstaller::getInstallationLocation
 \row
     \li \c isDefault
     \li bool
-    \li Exactly one installation location can be the default location which must be mounted and
-        accessible at all times. This can be used by an UI application to get a sensible
-        default for the installation location that it needs to pass to \l{ApplicationInstaller::startPackageInstallation()}{startPackageInstallation()}.
+    \li Only one installation location can be the default location, which must be mounted and
+        accessible at all times. This location can be used by a UI application to get a sensible
+        default for the installation location that it needs to pass to
+        \l{ApplicationInstaller::startPackageInstallation()}{startPackageInstallation()}.
 \row
     \li \c installationPath
     \li string
-    \li The absolute file-system path to the base directory under which applications are installed.
+    \li The absolute file system path to the base directory under which applications are installed.
 \row
     \li \c documentPath
     \li string
@@ -551,13 +551,13 @@ an additional column specifying which runtime a configuration option applies to:
     \li \c backgroundColor
     \li qml
     \li string
-    \li If set, the main window of the app will get this color set as the default clear color. This
-        will also give the surface an 8-bit alpha buffer.
+    \li If set, the main window of the app gets this color set as the default clear color. This option
+        also gives the surface an 8-bit alpha buffer.
 \row
     \li \c quitTime
     \li qml
     \li int
-    \li Defines the grace period in milliseconds an application is given for shutting down. This is
+    \li Defines the grace period in milliseconds, that an application is given for shutting down. This is
         the time limit between receiving the \l{ApplicationInterface::quit()}{quit()} signal and responding with
         \l{ApplicationInterface::acknowledgeQuit()}{acknowledgeQuit()}. (default: 250).
 \row
@@ -565,20 +565,20 @@ an additional column specifying which runtime a configuration option applies to:
     \li qml
     \li object
     \li Specifies which actions to take, if a QML client application is crashing. See
-        \l{Crash Action Specification} {below} for more information.
+        \l{Crash Action Specification} for more information.
 \endtable
 
 \section1 Crash Action Specification
 
-These sub-objects specify which actions to take, if the application-manager or QML runtimes are
+These sub-objects specify which actions to take, if the application manager or QML runtimes are
 crashing.
 
 \note All of these actions only work on Linux.
 
-The following conditions will be handled:
+The following conditions are handled:
 
 \list
-\li Uncaught exceptions. Exceptions derived from \c std::exception will also show the \c {what()}
+\li Uncaught exceptions. Exceptions derived from \c std::exception also show the \c {what()}
     information.
 \li \c SIGSEGV
 \li \c SIGABRT
@@ -596,17 +596,17 @@ The following conditions will be handled:
 \row
     \li \c printBacktrace
     \li bool
-    \li Try to print a readable backtrace. Will use the primitive backtrace functionality from glibc,
-        unless libbacktrace was enabled at configure time (default: true).
+    \li Tries to print a readable backtrace. This type uses the primitive backtrace functionality
+        from glibc, unless \c libbacktrace was enabled at configure time (default: true).
 \row
     \li \c printQmlStack
     \li bool
-    \li Try to print a readable QML stack trace. This is similar to \c printBacktrace above, but
+    \li Tries to print a readable QML stack trace. This is similar to \c printBacktrace above, but
         prints the current QML function stack when the crash occurred (default: true).
 \row
     \li \c dumpCore
     \li bool
-    \li Will end the process via \c abort instead of \c _exit. This will dump a \c core file,
+    \li Ends the process via \c abort instead of \c _exit. This will dump a \c core file,
         depending on your kernel configuration (default: true).
 \row
     \li \c waitForGdbAttach
@@ -630,15 +630,15 @@ profile.
     \li \c desktopProfile
     \li string
     \li When running on a desktop, you can request a non-default OpenGL profile by setting this
-        value to either \c core or \c compatibility. Not specifying anything here will lead to Qt
-        using the default settings for this platform. OpenGL ES has no support for profiles, so this
+        value to either \c core or \c compatibility. If you do not specify anything here, Qt uses
+        the default settings for this platform. OpenGL ES has no support for profiles, so this
         setting is ignored on platforms using OpenGL ES.
-        \note Be aware that this is just a request. The application-manager will output a warning,
+        \note Be aware that this is just a request. The application manager will output a warning,
               if the requested profile does not match the actual profile.
 \row
     \li \c esMajorVersion
     \li int
-    \li When set, the application-manager will request the specified OpenGL ES major version. On
+    \li When set, the application manager will request the specified OpenGL ES major version. On
         the desktop, the given GLES version is transparently mapped to the corresponding desktop GL
         version.
         The current mapping table is as follows:
@@ -649,14 +649,15 @@ profile.
             \li 3.2 \unicode{0x2192} 4.6
         \endlist
 
-        \note Be aware that this is just a request. The application-manager will output a warning,
+        Make sure to either specify \e both \c esMajorVersion and \c esMinorVersion options; or
+        \e none at all.
+
+        \note Be aware that this is just a request. The application manager will output a warning,
               if the requested version does not match the actual version.
-        \note Also make sure to either specify \e both \c esMajorVersion and \c esMinorVersion
-              options or \e none at all.
 \row
     \li \c esMinorVersion
     \li int
-    \li When set, the application-manager will request the specified OpenGL ES minor version. See
+    \li When set, the application manager will request the specified OpenGL ES minor version. See
         \c esMajorVersion above for more information.
 \endtable
 

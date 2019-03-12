@@ -31,31 +31,29 @@
 \page installation.html
 \title Installation
 
-\section1 Platforms
+\section1 Supported Platforms
 
-The application-manager is tested regularly on these platforms:
+The application manager is tested regularly on these platforms:
 \list
 \li Windows (single-process)
 \li macOS (single-process)
 \li Linux desktop (single-process)
 \li Linux desktop (multi-process)
-    \note Due to the wildly varying stability of Wayland drivers, only the \b Intel and \b VMWare
-          drivers are supported. Other drivers may work, but may also need either special QtWayland
-          versions or specific firmware blobs for the GPU driver.
+    \note Due to the varying stability levels in Wayland drivers, only the \b Intel and \b VMWare
+          drivers are supported. While other drivers may work, they require either special
+          QtWayland versions or specific firmware blobs for the GPU driver.
 \endlist
-
 
 \section1 Prerequisites
 
-In order to build the application-manager with all its features, the following
-components are required:
+To build the application manager with all its features, the following components are required:
 
 \list
     \li \b Qt 5.9.0 or higher.
     \li \b libyaml 1.6 or higher.
     \li \b openssl 1.0.1 or higher \e{- Linux only}. At compile time, only the headers need to be
-           available. The needed libraries will be dynamically loaded at runtime.
-    \li \b libarchive 3.0 or higher \e{- only if you need the installer functionality}.
+           available. The necessary libraries are dynamically loaded at runtime.
+    \li \b libarchive 3.0 or higher \e{- if you need the installer functionality}.
 \endlist
 
 On Debian-based systems, this command installs the three required packages:
@@ -63,35 +61,36 @@ On Debian-based systems, this command installs the three required packages:
 apt-get install libyaml-dev libarchive-dev libssl-dev
 \endcode
 
-\note On platforms without \c pkg-config (for example, Windows and macOS) as well as on platforms lacking
-one of the dependencies, the bundled versions of these libraries from the \c 3rdparty folder will
-automatically be used instead. Make sure you are aware of the licensing implications, since these bundled
-3rdparty libs will be linked in as static libraries. This option is not meant for production, but for
-development and testing environments only.
+\note On platforms without \c pkg-config (for example, Windows or macOS) as well as on platforms
+that lack one of the dependencies, the bundled versions of these libraries from the \c 3rdparty
+folder are automatically used instead. Make sure you are aware of the licensing implications,
+since these bundled 3rdparty libs will be linked in as static libraries. This option is not meant
+for production, but for development and testing environments only.
 
-\section1 Multi- vs. Single-process
+\section1 Multi-process vs. Single-process
 
-By default, the application-manager always tries to build in multi-process mode, but will fallback
-to single-process mode, if certain dependencies are not available:
+By default, the application manager always tries to build in multi-process mode, but falls back
+to single-process mode, if certain dependencies are not available, such as:
+
 \list
 \li You are building for \b Linux.
-\li The \b QtWayland module is available.
-\li The \b QtDBus module is available.
+\li The \c QtWayland module is available.
+\li The \c QtDBus module is available.
 \endlist
 
-You can force the build mode though via the respective \c -config options \c force-multi-process and
-\c force-single-process (see below).
+You can force the build mode via the respective \c -config options \c force-multi-process and
+\c force-single-process, as described below.
 
 
-\section1 Building
+\section1 Build
 
-The application-manager is using \c qmake for its build-system. This means that the basic
-installation steps are:
+The application manager uses \c qmake for its build system. The basic installation steps are:
+
 \code
 qmake && make && make install
 \endcode
 
-There are various options that can be given to \c qmake to tailor the build to your needs:
+There are various options that can be given to \c qmake to tailor the build to suit your needs:
 
 \table
 \header
@@ -99,16 +98,16 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li Description
 \row
   \li \c{-config force-libcrypto}
-  \li Force building against OpenSSL, even on Windows and macOS.
+  \li Force a build against OpenSSL, even on Windows and macOS.
 \row
   \li \c{-config force-system-libarchive}
-  \li Force building against the system libarchive.
+  \li Force a build against the system libarchive.
 \row
   \li \c{-config no-system-libarchive}
   \li Do not build against the system libarchive, even if one was detected.
 \row
   \li \c{-config force-system-libyaml}
-  \li Force building against the system libyaml.
+  \li Force a build against the system libyaml.
 \row
   \li \c{-config no-system-libyaml}
   \li Do not build against the system libyaml, even if one was detected.
@@ -117,64 +116,65 @@ There are various options that can be given to \c qmake to tailor the build to y
   \li Force a single-process build, even if Qt's Wayland \c compositor module is available.
 \row
   \li \c{-config force-multi-process}
-  \li Force a multi-process build - this will break if Qt's Wayland \c compositor module is not available.
+  \li Force a multi-process build - this will break if Qt's Wayland \c compositor module is not
+      available.
 \row
   \li \c{-config enable-tests}
-  \li Enable building of all unit-tests.
+  \li Enable a build of all unit-tests.
 \row
   \li \c{-config disable-installer}
     \target config disable installer
   \li Disable the installer part.
 \row
   \li \c{-config disable-external-dbus-interfaces}
-  \li Completely disable the external D-Bus interfaces. The internal communication channel between the
-      applications and the application-manager will still be based on a peer-to-peer D-Bus though.
+  \li Completely disable the external D-Bus interfaces. The internal communication channel between
+      the applications and the application manager will still be based on a peer-to-peer D-Bus.
 \row
   \li \c{-config tools-only}
   \li Build tools only: \l{Controller}{appman-controller} and \l{Packager}{appman-packager}.
 \row
   \li \c{-config install-prefix=<path>}
   \li Uses \c path as the base directory for \c{make install}.
-      If you are not specifying an \c install-prefix when running qmake, then the application-manager
+      If you do not specify an \c install-prefix when you run qmake, then the application manager
       will behave like a standard Qt module:
       \list
       \li in developer builds, the binaries will be compiled directly to \c ${qtbase}/bin
       \li in prefix builds, the binaries will be compiled to \c ${builddir}/bin
       \endlist
 
-      If you specify an \c install-prefix, this will change:
+      If you specify an \c install-prefix, this means:
       \list
       \li in developer builds, the binaries will be compiled directly to \c ${install-prefix}/bin
       \li in prefix builds, the binaries will be compiled to \c ${builddir}/bin
       \endlist
 
-      In addition, all binaries on Linux will get an absolute \c RPATH / \c RUNPATH when configured
-      with an \c install-prefix. This will allow you to run the binaries from the build directory
-      directly without weird side-effects (Linux will just pull in the system-Qt, if it cannot find
+      Additionally, all binaries on Linux will get an absolute \c RPATH / \c RUNPATH when configured
+      with an \c install-prefix. This allows you to run the binaries from the build directory
+      directly without any weird side-effects. Linux pulls in the system-Qt, if it cannot find
       the necessary libs in \c RUNPATH.
 
-      In any case, the application-manager is a Qt module. This means that all libraries and headers
+      Ultimately, the application manager is a Qt module. This means that all libraries and headers
       are always installed into \c ${qtbase} to make them accessible via standard Qt mechanisms.
-
 \row
   \li \c{-config systemd-workaround}
-  \li Paramount if you are running systemd and plan on supporting SD-Card installations. Works
+  \li Paramount if you are running systemd and plan to support SD-Card installations. Works
       around systemd interfering with loopback mounts.
 \row
   \li \c{-config enable-widgets}
-  \li Enables support for Qt widgets. Enabling this option can be useful to enable the use of some
+  \li Enables support for Qt widgets. This option can be useful to enable the use of some
       development graphical tools using Qt widgets.
 \row
   \li \c{-config hardware-id=<id>}
-  \li Compiles in \c id as a hard-coded hardware-id (see below for more information)
+  \li Compiles in \c id as a hard-coded hardware ID; see \l{The Hardware ID} for more information.
 \row
   \li \c{-config hardware-id-from-file=<file>}
-  \li The hardware-id will be read from the specified \c file at runtime (see below for more information)
+  \li The hardware-id is read from the specified \c file at runtime; see \l{The Hardware ID} for
+      more information.
 \row
   \li \c{-config enable-libbacktrace}
-  \li Enables building and linking against \c libbacktrace in the 3rdparty folder. This will give
-      you readable backtraces on crash, but will also increase the binary size slightly.
-      This is enabled by default for debug builds.
+  \li Enables building and linking against \c libbacktrace in the 3rdparty folder. This gives
+      you readable backtraces on crash, but also increases the binary size slightly. For debug
+      builds, this option is enabled by default.
 \row
   \li \c{-config disable-libbacktrace}
   \li Disables building and linking against \c libbacktrace in the 3rdparty folder.
@@ -182,85 +182,89 @@ There are various options that can be given to \c qmake to tailor the build to y
 
 \section2 The Hardware ID
 
-The installer part of the application-manager needs an unique device id for two purposes:
+The installer part of the application manager needs a unique device ID for two reasons:
 \list 1
 \li If you want to deliver application packages that are bound to a specific device unit from your
-    app-store. The use case is that you don't want customers buying apps and then sharing them
+    app-store. The use case here is to prevent customers from buying apps once and then sharing them
     with others for free.
 
-\li When installing application packages onto an SD card that can be removed by the user. The use
+\li When you install application packages onto an SD card that can be removed by the user. The use
     case here is that we need to be able to detect which SD card "belongs" to which device, in case
-    the user is swapping a card between devices.
+    the user is swapping the same card between devices.
 \endlist
 
-Since the application-manager doesn't know at build time how a potential app-store will be
-configured, and if installations on removable SD-cards are enabled, it tries to create an unique id
-based on the MAC address of the first configured ethernet device. If the ethernet device is not
-configured at all (or configured after the start of the application-manager), this will obviously
-not work.
+Since the application manager doesn't know, at build time, how a potential app-store will be
+configured, and if installations on removable SD-cards are enabled, the application manager tries
+to create a unique ID based on the MAC address of the first configured ethernet device. If the
+ethernet device is not configured at all, or configured after the application manager starts, this
+scenario will not work.
 
-All in all, there are 3 different methods to specify an id:
+There are three different ways to specify a hardware ID:
 
 \list 1
-\li No configure option: use the MAC of the first ethernet device. Works in 90% of all cases out of
-    the box.
+\li No configure option: use the MAC address of the first ethernet device. Typically, this option
+    works out of the box.
 
-\li \c{qmake --config hardware-id=foo} hardcodes the id to \c foo. This is ideal, if you do not use
-    any application-manager features that require this id to be unique and if you cannot (or do not
-    want to) guarantee that an ethernet device is up when starting the application-manager.
+\li \c{qmake --config hardware-id=yourID} hardcodes the ID to \c yourID. This option is ideal, if
+    you do not use any application manager features that require this ID to be unique and if you
+    cannot (or do not want to) guarantee that an ethernet device is up when the application manager
+    starts.
 
-\li \c{qmake --config hardware-id-from-file=bar} makes the application-manager read the contents of
-    the file \c bar at startup and use its content as the id instead of the ethernet MAC. Useful if
-    your device has a unique device id available via \c /proc or \c /sys and you want to use
-    features requiring such an id.
+\li \c{qmake --config hardware-id-from-file=yourFile} makes the application manager read the
+    contents of \c yourFile at startup and uses its content as the ID; instead of the ethernet MAC
+    address. This option is useful if your device has a unique device ID available via \c /proc or
+    \c /sys and you want to use features that require such an ID.
 \endlist
 
-All executables (including the unit-tests) can be found in the build folder's \c bin directory after
+All executables, including the unit tests, can be found in the build folder's \c bin directory, after
 compiling.
 
-\section1 Generating Code-Coverage Data
+\section1 Generate Code-Coverage Data
 
 Instead of doing a normal build, you can also create a coverage build by running \c{make coverage}.
-As every compile step needs to be instrumented with special compiler flags, you need to make sure
-to run \c{make clean} before.
-Using a build like this enables you to generate HTML coverage reports simply by executing:
+Since every compile step needs to be instrumented with special compiler flags, make sure to run
+\c{make clean} before \c{make coverage}.
+
+Using a build like this enables you to generate HTML coverage reports with the following command
+in the build directory:
 
 \badcode
 make check-coverage
 \endcode
 
-in the build directory. The command-line output will tell you the url to the generated report.
+The command line output provides you the URL to the generated report.
 
 \section1 System Setup
 
-The runtime configuration of the application-manager is done through command-line switches and
+The runtime configuration of the application manager is done through command line switches and
 one or more configuration files.
 
 Normally, the basic configuration is done via two separate config files:
 one for target system specific setup and one for System-UI specific settings. The
 default location for the system specific part is \c{/opt/am}. A standard
-setup is shipped with the application-manager in the \c{template-opt} directory.
-You can either stick with the default:
+setup is shipped with the application manager in the \c{template-opt} directory.
+
+You can stick with the default, via the following command:
 
 \badcode
 sudo cp -r template-opt/am /opt
 sudo chown $(whoami) /opt/am -R
 \endcode
 
-or you could copy the contents of \c{template-opt} somewhere else; be sure to
-edit the contained \c{config.yaml} file to reflect the changed paths.
+Alternatively, you can copy the contents of \c{template-opt} somewhere else; be sure to
+edit the \c{config.yaml} file to reflect the changed paths.
 
-Once this is done, add a file called \c{am-config.yaml} to your System-UI
-with UI specific settings (for example, QML import path, path to built-in apps).
+Once this is done, add a file called \c{am-config.yaml} to your System-UI with UI specific
+settings. For example, the QML import path, path to built-in apps, and so on.
 
-With everything in place, you can start the application-manager:
+With everything in place, you can start the application manager:
+
 \badcode
 cd /path/to/system-ui
 appman -c /opt/am/config.yaml -c am-config.yaml -r --verbose main.qml
 \endcode
 
-
-\c{-r} makes sure to recreate the apps database and \c{--verbose} will give you verbose output,
+\c{-r} makes sure to recreate the apps database and \c{--verbose} gives you verbose output,
 which is quite helpful when first setting up the environment.
 
 */

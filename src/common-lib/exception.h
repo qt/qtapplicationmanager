@@ -60,6 +60,7 @@ class Exception : public QException
 {
 public:
     explicit Exception(const char *errorString) Q_DECL_NOEXCEPT;
+    explicit Exception(const QString &errorString) Q_DECL_NOEXCEPT;
     explicit Exception(Error errorCode, const char *errorString = nullptr) Q_DECL_NOEXCEPT;
     explicit Exception(Error errorCode, const QString &errorString) Q_DECL_NOEXCEPT;
     explicit Exception(int _errno, const char *errorString) Q_DECL_NOEXCEPT;

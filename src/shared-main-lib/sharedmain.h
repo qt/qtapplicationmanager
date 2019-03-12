@@ -63,7 +63,7 @@ public:
     static int &preConstructor(int &argc);
     void setupIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
     void setupQmlDebugging(bool qmlDebugging);
-    void setupLoggingRules(bool verbose, const QStringList &loggingRules);
+    void setupLogging(bool verbose, const QStringList &loggingRules, const QString &messagePattern, const QVariant &useAMConsoleLogger);
     void setupOpenGL(const QVariantMap &openGLConfiguration);
 
 #if !defined(AM_HEADLESS)

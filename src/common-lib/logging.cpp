@@ -116,10 +116,12 @@ bool Logging::s_dltEnabled =
 #else
         false;
 #endif
-bool Logging::s_useDefaultQtHandler = false;
+bool Logging::s_messagePatternDefined = false;
+bool Logging::s_useAMConsoleLogger = false;
 QStringList Logging::s_rules;
 QtMessageHandler Logging::s_defaultQtHandler = nullptr;
 QByteArray Logging::s_applicationId = QByteArray();
+QVariant Logging::s_useAMConsoleLoggerConfig = QVariant();
 
 
 static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
@@ -309,13 +311,13 @@ void Logging::initialize(int argc, const char * const *argv)
         if (s_dltEnabled)
             QDltRegistration::messageHandler(msgType, context, message);
 #endif
-        if (Q_UNLIKELY(s_useDefaultQtHandler))
+        if (Q_UNLIKELY(!s_useAMConsoleLogger))
             s_defaultQtHandler(msgType, context, message);
         else
             colorLogToStderr(msgType, context, message);
     };
 
-    s_useDefaultQtHandler = qEnvironmentVariableIsSet("QT_MESSAGE_PATTERN");
+    s_messagePatternDefined = qEnvironmentVariableIsSet("QT_MESSAGE_PATTERN");
     s_defaultQtHandler = qInstallMessageHandler(messageHandler);
 }
 
@@ -328,6 +330,30 @@ void Logging::setFilterRules(const QStringList &rules)
 {
     s_rules = rules;
     QLoggingCategory::setFilterRules(rules.join(qL1C('\n')));
+}
+
+void Logging::setMessagePattern(const QString &pattern)
+{
+    if (!pattern.isEmpty()) {
+        if (!s_messagePatternDefined) {
+            qputenv("QT_MESSAGE_PATTERN", pattern.toLocal8Bit());
+            s_messagePatternDefined = true;
+        }
+    }
+}
+
+QVariant Logging::useAMConsoleLogger()
+{
+    return s_useAMConsoleLoggerConfig;
+}
+
+void Logging::useAMConsoleLogger(const QVariant &config)
+{
+    s_useAMConsoleLoggerConfig = config;
+    if (!s_useAMConsoleLoggerConfig.isValid())
+        s_useAMConsoleLogger = !s_messagePatternDefined;
+    else
+        s_useAMConsoleLogger = s_useAMConsoleLoggerConfig.toBool();
 }
 
 QByteArray Logging::applicationId()

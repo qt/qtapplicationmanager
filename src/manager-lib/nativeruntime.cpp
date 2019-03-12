@@ -258,7 +258,8 @@ bool NativeRuntime::start()
 
     QVariantMap loggingConfig = {
         { qSL("dlt"), Logging::isDltEnabled() },
-        { qSL("rules"), Logging::filterRules() }
+        { qSL("rules"), Logging::filterRules() },
+        { qSL("useAMConsoleLogger"), Logging::useAMConsoleLogger() }
     };
 
     QVariantMap uiConfig;

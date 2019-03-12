@@ -85,6 +85,7 @@ public:
     void setSlowAnimations(bool slow);
     QVariantMap systemProperties() const;
     QStringList loggingRules() const;
+    QVariant useAMConsoleLogger() const;
 
     QString p2pDBusName() const;
     QString notificationDBusName() const;
@@ -118,6 +119,7 @@ private:
     QVariantMap m_openGLConfiguration;
     QString m_iconThemeName;
     QStringList m_iconThemeSearchPaths;
+    QVariant m_useAMConsoleLogger;
     WaylandQtAMClientExtension *m_waylandExtension = nullptr;
 };
 

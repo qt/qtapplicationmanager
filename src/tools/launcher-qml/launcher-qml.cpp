@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
             a.loadConfiguration();
 
         CrashHandler::setCrashActionConfiguration(a.runtimeConfiguration().value(qSL("crashAction")).toMap());
-        a.setupLoggingRules(false, a.loggingRules()); // the verbose flag has already been factored into the rules
+        a.setupLogging(false, a.loggingRules(), QString(), a.useAMConsoleLogger()); // the verbose flag has already been factored into the rules
         a.setupQmlDebugging(clp.isSet(qSL("qml-debug")));
         a.setupOpenGL(a.openGLConfiguration());
         a.setupIconTheme(a.iconThemeSearchPaths(), a.iconThemeName());

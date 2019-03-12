@@ -298,6 +298,23 @@ QStringList DefaultConfiguration::loggingRules() const
     return value<QStringList>("logging-rule", { "logging", "rules" });
 }
 
+QString DefaultConfiguration::messagePattern() const
+{
+    return value<QString>(nullptr, { "logging", "messagePattern" });
+}
+
+QVariant DefaultConfiguration::useAMConsoleLogger() const
+{
+    // true = use the am logger
+    // false = don't use the am logger
+    // invalid = don't use the am logger when QT_MESSAGE_PATTERN is set
+    QVariant val = value<QVariant>(nullptr, { "logging", "useAMConsoleLogger" });
+    if (val.type() == QVariant::Bool)
+        return val;
+    else
+        return QVariant();
+}
+
 QString DefaultConfiguration::style() const
 {
     return value<QString>(nullptr, { "ui", "style" });

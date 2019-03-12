@@ -65,6 +65,9 @@ public:
     static void initialize(int argc, const char * const *argv);
     static QStringList filterRules();
     static void setFilterRules(const QStringList &rules);
+    static void setMessagePattern(const QString &pattern);
+    static QVariant useAMConsoleLogger();
+    static void useAMConsoleLogger(const QVariant &config);
 
     static QByteArray applicationId();
     static void setApplicationId(const QByteArray &appId);
@@ -81,10 +84,12 @@ public:
 
 private:
     static bool s_dltEnabled;
-    static bool s_useDefaultQtHandler;
+    static bool s_messagePatternDefined;
+    static bool s_useAMConsoleLogger;
     static QStringList s_rules;
     static QtMessageHandler s_defaultQtHandler;
     static QByteArray s_applicationId;
+    static QVariant s_useAMConsoleLoggerConfig;
 };
 
 void am_trace(QDebug);

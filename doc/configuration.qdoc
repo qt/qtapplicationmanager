@@ -289,6 +289,19 @@ all your imports paths and file references relative to your main config file.
         \l {Logging and Debugging}.
 \row
     \li \b -
+    \br \e logging/messagePattern
+    \li string
+    \li If provided, used as the Qt message pattern. For more information about the format see
+        qSetMessagePattern().
+\row
+    \li \b -
+    \br \e logging/useAMConsoleLogger
+    \li bool
+    \li Always use the application manager specific logging function, which enables colored console
+        output. If no value or an invalid value is provided, the logging function is only used when
+        messagePattern isn't set.
+\row
+    \li \b -
     \br \e logging/dlt/id
     \li string
     \li If provided, it will be used as the automotive DLT application id. The size is limited to

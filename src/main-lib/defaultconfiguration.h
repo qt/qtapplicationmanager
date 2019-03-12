@@ -88,6 +88,8 @@ public:
     bool qmlDebugging() const;
     QString singleApp() const;
     QStringList loggingRules() const;
+    QString messagePattern() const;
+    QVariant useAMConsoleLogger() const;
     QString style() const;
     QString iconThemeName() const;
     QStringList iconThemeSearchPaths() const;

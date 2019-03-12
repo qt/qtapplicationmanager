@@ -206,7 +206,7 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     m_installedAppsManifestDir = cfg->installedAppsManifestDir();
 
     CrashHandler::setCrashActionConfiguration(cfg->managerCrashAction());
-    setupLoggingRules(cfg->verbose(), cfg->loggingRules());
+    setupLogging(cfg->verbose(), cfg->loggingRules(), cfg->messagePattern(), cfg->useAMConsoleLogger());
     setupQmlDebugging(cfg->qmlDebugging());
     if (!cfg->dltId().isEmpty() || !cfg->dltDescription().isEmpty())
         Logging::setSystemUiDltId(cfg->dltId().toLocal8Bit(), cfg->dltDescription().toLocal8Bit());

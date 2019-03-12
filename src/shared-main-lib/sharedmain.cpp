@@ -150,12 +150,14 @@ void SharedMain::setupQmlDebugging(bool qmlDebugging)
     }
 }
 
-void SharedMain::setupLoggingRules(bool verbose, const QStringList &loggingRules)
+void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules, const QString &messagePattern, const QVariant &useAMConsoleLogger)
 {
     const QStringList rules = verbose ? QStringList() << qSL("*=true") << qSL("qt.*.debug=false")
                                       : loggingRules.isEmpty() ? QStringList(qSL("*.debug=false"))
                                                                : loggingRules;
     Logging::setFilterRules(rules);
+    Logging::setMessagePattern(messagePattern);
+    Logging::useAMConsoleLogger(useAMConsoleLogger);
     StartupTimer::instance()->checkpoint("after logging setup");
 }
 

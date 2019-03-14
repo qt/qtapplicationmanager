@@ -34,8 +34,8 @@
 
 \section1 Overview
 
-The package manifest or metadata file, \c info.yaml, is a YAML (version 1.1) file that consists of
-two YAML documents: the file-type header and the application manifest.
+The package manifest or metadata file, \c info.yaml, is a \l {YAML syntax}
+{YAML file following the same rules} as all the other YAML files used in the application manager.
 
 While the application manager can support other file formats, such as XML, currently the only
 metadata loader implemented is based on YAML.

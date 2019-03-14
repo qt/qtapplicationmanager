@@ -38,12 +38,25 @@ The currently supported command-line options can always be displayed by running 
 Some of these options can also be set via config files, which in itself are referenced on the
 command-line with the \c{--config-file <filename>} option.
 
-The config file is a YAML file, consisting of exactly one object and it supports a subset of the
-command-line options.
+The config file is a \l {YAML syntax}{YAML file following the same rules} as all the other YAML
+files used in the application manager. Some of the options can only be set via the command line
+though.
 
 Any value that starts with the magic string \c ${CONFIG_PWD} will have this magic string replaced
 with the absolute path to the config file where it appears in - this makes it very easy to have
 all your imports paths and file references relative to your main config file.
+
+If an option is specified in more than one place: either on the command line and the config files,
+or across multiple config files, the final value is resolved based on these rules:
+\list
+\li Options are parsed from all the config files available, based on the order in which they appear
+    on the command line. Values are overridden by config files, as they are loaded.
+\li Options that are specified directly via the command line always override values in any config
+    file.
+\li There is one exception: options that expect a list of values, such as \c -I or \c ui/importPaths.
+    In this case, all values, regardless of where they are specified, will be merged into one
+    single, final list.
+\endlist
 
 \table
 \header
@@ -458,7 +471,7 @@ dbus:
       startPackageInstallation:
         uids: [ 1000 ]
         capabilities: [ 'appstore' ]
-      acknowledgePackageInstallation: ~
+      acknowledgePackageInstallation: null
 ...
 \endcode
 

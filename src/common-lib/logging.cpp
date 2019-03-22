@@ -157,15 +157,14 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 #endif
         if (pos < 0)
             pos = ba.lastIndexOf('/');
-        if (pos >= 0) {
-            filename = context.file + pos + 1;
-            filenameLength = ba.size() - pos - 1;
 
-            linenumberLength = qsnprintf(linenumber, 8, "%d", qMin(context.line, 9999999));
-            if (linenumberLength < 0 || linenumberLength >= int(sizeof(linenumber)))
-                linenumberLength = 0;
-            linenumber[linenumberLength] = 0;
-        }
+        filename = context.file + pos + 1;
+        filenameLength = ba.size() - pos - 1;
+
+        linenumberLength = qsnprintf(linenumber, 8, "%d", qMin(context.line, 9999999));
+        if (linenumberLength < 0 || linenumberLength >= int(sizeof(linenumber)))
+            linenumberLength = 0;
+        linenumber[linenumberLength] = 0;
     }
 
     enum ConsoleColor { Off = 0, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, BrightFlag = 0x80 };

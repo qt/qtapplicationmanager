@@ -91,6 +91,7 @@ GpuStatus::GpuStatus(QObject *parent)
     , m_gpuReader(new GpuReader)
     , m_gpuLoad(0)
 {
+    m_gpuReader->setActive(true);
 }
 
 /*!

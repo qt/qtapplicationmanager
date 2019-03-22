@@ -53,12 +53,18 @@
 
 import QtQuick 2.8
 import QtQuick.Window 2.2
+import QtApplicationManager 2.0
 import QtApplicationManager.SystemUI 2.0
 
 Window {
     id: root
     width: 1024
     height: 640
+
+    LoggingCategory {
+        id: benchCategory
+        name: "am.bench"
+    }
 
     Loader {
         anchors.fill: parent
@@ -76,8 +82,6 @@ Window {
         }
     }
 
-    property int loadedApps: 0
-
     Grid {
         id: grid
         anchors.fill: parent
@@ -86,42 +90,36 @@ Window {
 
         Repeater {
             id: windows
-            model: ApplicationManager.count
+            model: WindowManager
 
             Item {
-                id: winChrome
-
-                property alias appContainer: appContainer
-                property string appId
                 property alias processMonitor: appProcessMonitor
+                property alias frameTimer: appFrameTimer
 
                 width: root.width / grid.columns;
                 height: root.height / Math.ceil(ApplicationManager.count / grid.columns)
-                visible: false
 
-                Item {
-                    id: appContainer
+                WindowItem {
                     anchors.fill: parent
                     anchors.margins: 3
                     anchors.topMargin: 25
+                    window: model.window
                 }
 
-                ProcessMonitor {
+                MonitorModel {
                     id: appProcessMonitor
-                    applicationId: winChrome.appId
-                    reportingInterval: 100
-                    count: 100
-                    memoryReportingEnabled: true
-                    cpuLoadReportingEnabled: true
-                    frameRateReportingEnabled: true
+                    maximumCount: 100
+                    running: true
+                    interval: 100
 
-                    property int cpuReportings
-                    property int memoryReportings
-                    property int fpsReportings
+                    ProcessStatus {
+                        applicationId: model.window.application.id
+                    }
 
-                    onCpuLoadReportingChanged: { cpuReportings++ }
-                    onMemoryReportingChanged: { memoryReportings++ }
-                    onFrameRateReportingChanged: { fpsReportings++ }
+                    FrameTimer {
+                        id: appFrameTimer
+                        window: model.window
+                    }
                 }
             }
         }
@@ -129,147 +127,104 @@ Window {
 
     Connections {
         target: WindowManager
-        onWindowReady:  {
-            var appId = WindowManager.get(index).applicationId;
-            var appIndex = ApplicationManager.indexOfApplication(appId);
-            console.log("SystemUI: onWindowReady [" + window + "] - index: "
-                        + index + ", appIndex: " + appIndex );
-
-            var chrome = windows.itemAt(appIndex);
-            window.parent = chrome.appContainer;
-            window.anchors.fill = chrome.appContainer;
-            chrome.visible = true;
-            chrome.appId = appId
-            chrome.processMonitor.monitoredWindows = [ window ]
-
+        onWindowAdded: {
+            console.log("System-UI: onWindowAdded: " + window);
             if (WindowManager.count >= ApplicationManager.count)
-                statsTimer.start()
-        }
-
-        onWindowClosing: {
-            console.log("SystemUI: onWindowClosing [" + window + "] - index: " + index);
-            var appIndex = ApplicationManager.indexOfApplication(WindowManager.get(index).applicationId);
-            if (appIndex === -1)
-                appIndex = 0;
-            windows.itemAt(appIndex).visible = false;
-        }
-
-        onWindowLost: {
-            console.log("SystemUI: onWindowLost [" + window + "] - index: " + index);
-            WindowManager.releaseWindow(window);
+                statsTimer.start();
         }
     }
 
-    LoggingCategory {
-        id: benchCategory
-        name: "am.bench"
-    }
-
-    ProcessMonitor {
+    MonitorModel {
         id: systemUiMonitor
-        applicationId: ""
-        count: 100
-        reportingInterval: 100
-        cpuLoadReportingEnabled: true
-        memoryReportingEnabled: true
-        frameRateReportingEnabled: true
+        maximumCount: 100
+        running: true
+        interval: 100
 
-        property int cpuReportings
-        property int memoryReportings
-        property int fpsReportings
+        ProcessStatus {
+            applicationId: ""
+        }
 
-        onCpuLoadReportingChanged: { cpuReportings++ }
-        onMemoryReportingChanged: { memoryReportings++ }
-        onFrameRateReportingChanged: { fpsReportings++ }
+        FrameTimer {
+            id: systemFrameTimer
+            window: root
+        }
+
+        GpuStatus {}
     }
 
     Timer {
         id: statsTimer
-        repeat: false
         interval: 2000
         onTriggered: {
-            var load = avg(systemUiMonitor, systemUiMonitor.cpuReportings, "cpuLoad")
-            var pss = "System-UI PSS Max: " + format((max(systemUiMonitor, systemUiMonitor.memoryReportings, "memoryPss.total") / 1e6).toFixed(0)) + " MB";
-            var rss = "System-UI RSS Max: " + format((max(systemUiMonitor, systemUiMonitor.memoryReportings, "memoryRss.total") / 1e6).toFixed(0)) + " MB";
-            var fps = "System-UI FPS Avg: " + format((avg_fps(systemUiMonitor)).toFixed(2)) + " fps";
-            var cpuLoad = "System-UI CPU Load Avg: " + format((load * 100).toFixed(2)) + " %";
-            var gpuLoad = "System GPU Load Avg: " + format((avg(SystemMonitor, SystemMonitor.count, "gpuLoad") * 100).toFixed(0)) + " %";
+            systemUiMonitor.running = false;
+            var load = avg(systemUiMonitor, systemUiMonitor.count, "cpuLoad");
+            var rss = "System-UI RSS Max: " + format((max(systemUiMonitor, systemUiMonitor.count, "memoryRss.total")
+                                                      / 1e6).toFixed(0)) + " MB";
+            var pss = "System-UI PSS Max: " + format((max(systemUiMonitor, systemUiMonitor.count, "memoryPss.total")
+                                                      / 1e6).toFixed(0)) + " MB";
+            var fps = "System-UI FPS Avg: " + format(systemFrameTimer.averageFps.toFixed(1)) + " fps";
+            var cpuLoad = "System-UI CPU Load Avg: " + format((load * 100).toFixed(1)) + " %";
+            var gpuLoad = "System GPU Load Avg: " + format((avg(systemUiMonitor, systemUiMonitor.count, "gpuLoad")
+                                                            * 100).toFixed(0)) + " %";
 
-            var totalAppPSS = 0
-            var totalAppRSS = 0
-            var totalAppFPS = 0
-            var totalCPULoad = load
-            for (var i=0; i<ApplicationManager.count; i++) {
+            var totalAppRSS = 0;
+            var totalAppPSS = 0;
+            var totalAppFPS = 0;
+            var totalCPULoad = load;
+            for (var i = 0; i < windows.count; i++) {
                 var chrome = windows.itemAt(i);
-                totalAppRSS += max(chrome.processMonitor, chrome.processMonitor.memoryReportings, "memoryRss.total")
-                totalAppPSS += max(chrome.processMonitor, chrome.processMonitor.memoryReportings, "memoryPss.total")
-                totalAppFPS += avg_fps(chrome.processMonitor)
-                totalCPULoad += avg(chrome.processMonitor, chrome.processMonitor.cpuReportings, "cpuLoad")
+                chrome.processMonitor.running = false;
+                totalAppRSS += max(chrome.processMonitor, chrome.processMonitor.count, "memoryRss.total");
+                totalAppPSS += max(chrome.processMonitor, chrome.processMonitor.count, "memoryPss.total");
+                totalAppFPS += chrome.processMonitor.get(chrome.processMonitor.count - 1).averageFps ;
+                totalCPULoad += avg(chrome.processMonitor, chrome.processMonitor.count, "cpuLoad");
                 ApplicationManager.stopApplication(ApplicationManager.application(i).id);
             }
 
             var appRSS = "App RSS Max: " + format((totalAppRSS / ApplicationManager.count / 1e6).toFixed(0)) + " MB";
             var appPSS = "App PSS Max: " + format((totalAppPSS / ApplicationManager.count / 1e6).toFixed(0)) + " MB";
-            var appFPS = "App FPS Avg: " + format((totalAppFPS / ApplicationManager.count ).toFixed(0)) + " fps";
+            var appFPS = "App FPS Avg: " + format((totalAppFPS / ApplicationManager.count ).toFixed(1)) + " fps";
 
-            var accCpuLoad = "Acc. CPU Load Avg: " + format((totalCPULoad * 100).toFixed(2)) + " %";
+            var accCpuLoad = "Acc. CPU Load Avg: " + format((totalCPULoad * 100).toFixed(1)) + " %";
 
-            console.log(benchCategory, "System-UI Resolution: " + root.width + "x" + root.height + " App Resolution: " +  windows.itemAt(0).width + "x" + windows.itemAt(0).height)
-            console.log(benchCategory, cpuLoad + " " + accCpuLoad + " " + gpuLoad + " " + fps + " " + rss + " " + pss + " " + appRSS + " " + appPSS + " " + appFPS)
+            console.log(benchCategory, "System-UI Resolution: " + root.width + "x" + root.height + " | App Resolution: "
+                                         +  windows.itemAt(0).width + "x" + windows.itemAt(0).height);
+            console.log(benchCategory, cpuLoad + " | " + accCpuLoad + " | " + gpuLoad + " | " + fps + " | " + rss
+                                         + " | " + pss + " | " + appFPS + " | " + appRSS + " | " + appPSS);
             Qt.quit();
         }
     }
 
     function max(monitor, size, key) {
-        var value = 0
-        for (var i=0; i<size; i++) {
-            var val = eval("monitor.get(i)." + key)
-            if (val == undefined)
-                continue
-            value = Math.max(val, value)
+        var value = 0;
+        for (var i = 0; i < size; i++) {
+            var val = eval("monitor.get(i)." + key);
+            if (val)
+                value = Math.max(val, value);
         }
-        return value
+        return value;
     }
 
     function avg(monitor, size, key) {
-        var sum = 0
-        for (var i=0; i< size; i++) {
+        var sum = 0;
+        for (var i = 0; i < size; i++) {
             var val = eval("monitor.get(i)." + key)
             if (val == undefined)
-                break
-            sum += val
+                break;
+            sum += val;
         }
-        return sum / size
-    }
-
-    function avg_fps(monitor) {
-        var sum = 0
-        var counter = 0
-        for (var i=0; i< monitor.fpsReportings; i++) {
-            var val = monitor.get(i).frameRate[0]
-            if (val == undefined)
-                continue
-            sum += val.average
-            counter++
-        }
-        return sum / counter
+        return sum / size;
     }
 
     function format(n) {
         return String("      " + n).slice(-6);
     }
 
-    Component.onCompleted: {
-        for (var i=0; i<ApplicationManager.count; i++) {
-            ApplicationManager.startApplication(ApplicationManager.application(i).id);
+    Connections {
+        target: ApplicationManager
+        onWindowManagerCompositorReadyChanged: {
+            for (var i = 0; i < ApplicationManager.count; i++)
+                ApplicationManager.application(i).start();
         }
-
-        SystemMonitor.reportingInterval = 100;
-        SystemMonitor.count = 100;
-
-        SystemMonitor.idleLoadThreshold = 0.05;
-        SystemMonitor.gpuLoadReportingEnabled = true;
-
-        systemUiMonitor.monitoredWindows = [root]
     }
 }

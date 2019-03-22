@@ -65,8 +65,8 @@ usage()
      echo "-n <number of apps>         : Defines how many applications are executed at the same time."
      echo "-r <runtime-template-name>  : Defines which runtime template is used. Possible values are:"
      echo "  'appman-qml'              : Starts a normal appman qml runtime using appman-launcher-qml"
-     echo "  'qmlscene'                : Starts a native runtime and using qmlscene for interpreting the qml code"
-     echo "-q <qt-folder>              : Defines which Qt is used. This is needed by some runtime-templates e.g. qmlscene."
+     echo "  'qmlscene'                : Starts a native runtime using qmlscene for interpreting the qml code"
+     echo "-q <qt-folder>              : Defines which Qt is used. This is required by the qmlscene runtime-template."
      echo "-t <test>                   : Only executes this given single test. If not provided all tests in the 'tests' folder are executed"
      echo ""
      exit 1

@@ -92,6 +92,7 @@ public:
     void setMaximumCount(int value);
 
     Q_INVOKABLE void clear();
+    Q_INVOKABLE QVariantMap get(int row) const;
 
 signals:
     void countChanged();

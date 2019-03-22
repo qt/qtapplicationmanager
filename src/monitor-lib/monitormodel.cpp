@@ -41,6 +41,7 @@
 ****************************************************************************/
 
 #include "monitormodel.h"
+#include "logging.h"
 
 #include <QMetaProperty>
 #include <qqmlinfo.h>
@@ -171,11 +172,12 @@ MonitorModel::~MonitorModel()
 }
 
 /*!
-    \qmlproperty list<Object> MonitorModel::dataSources
+    \qmlproperty list<object> MonitorModel::dataSources
+    \default
 
-    List of data sources to be used by the MonitorModel. A data source can be any QtObject
-    containing at least a \c roleNames property and a \c update() function. See MonitorModel's description
-    for more information.
+    List of data sources for the MonitorModel to use. A data source can be any QtObject containing
+    at least a \c roleNames property and an \c update() function. For more information, see
+    detailed description above.
 */
 QQmlListProperty<QObject> MonitorModel::dataSources()
 {
@@ -328,7 +330,7 @@ QHash<int, QByteArray> MonitorModel::roleNames() const
     \qmlproperty bool MonitorModel::running
 
     While true, MonitorModel will keep probing its data sources and adding new rows every
-    \l MonitorModel::interval milliseconds.
+    \l MonitorModel::interval milliseconds. The default value is \c false.
 
     Normally you have this property set to true only while the data is being displayed.
 
@@ -353,7 +355,8 @@ void MonitorModel::setRunning(bool value)
 /*!
     \qmlproperty int MonitorModel::interval
 
-    Interval, in milliseconds, between each row addition while MonitorModel is \l MonitorModel::running.
+    Interval, in milliseconds, between model updates (while \l MonitorModel::running). The default
+    value is 1000.
 
     \sa MonitorModel::running
 */
@@ -471,4 +474,25 @@ void MonitorModel::clear()
     endResetModel();
 
     emit countChanged();
+}
+
+/*!
+    \qmlmethod object MonitorModel::get(int index)
+
+    Returns the model data for the reading point identified by \a index as a JavaScript object.
+    The \a index must be in the range [0, \l count); returns an empty object otherwise.
+*/
+QVariantMap MonitorModel::get(int row) const
+{
+    if (row < 0 || row >= count()) {
+        qCWarning(LogSystem) << "MonitorModel::get invalid row:" << row;
+        return QVariantMap();
+    }
+
+    QVariantMap map;
+    QHash<int, QByteArray> roles = roleNames();
+    for (auto it = roles.cbegin(); it != roles.cend(); ++it)
+        map.insert(qL1S(it.value()), data(index(row), it.key()));
+
+    return map;
 }

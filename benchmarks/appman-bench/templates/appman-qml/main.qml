@@ -70,4 +70,9 @@ ApplicationManagerWindow {
             to: 360
         }
     }
+
+    Connections {
+        target: ApplicationInterface
+        onQuit: target.acknowledgeQuit();
+    }
 }

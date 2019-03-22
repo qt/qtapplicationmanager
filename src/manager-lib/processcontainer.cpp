@@ -261,8 +261,10 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
         qWarning() << "Process" << m_program << "is already started and cannot be started again";
         return nullptr;
     }
-    if (!QFile::exists(m_program))
+    if (!QFile::exists(m_program)) {
+        qCWarning(LogSystem) << "Program" << m_program << "not found";
         return nullptr;
+    }
 
     QProcessEnvironment penv = QProcessEnvironment::systemEnvironment();
 

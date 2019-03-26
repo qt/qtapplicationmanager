@@ -30,15 +30,15 @@
 
 \page appman-packager.html
 \title Packager
-\brief A command-line utility for managing the installation of packages.
+\brief A command-line utility to manage the installation of packages.
 \ingroup qtappman-tools
 
-The \c{appman-packager} is a command-line utility that is used by the developer to manage installation
-packages. It could also be used as a signing and verification tool on a app-store backend server.
-This tool is meant for usage on the developer's desktop machine or packaging server, but not on the
-target device.
+The \c{appman-packager} is a command-line utility that can be used by the developer to manage
+installation packages. This utility can also be used as a signing and verification tool on an
+app-store backend server. This tool is meant for use on the developer's desktop machine or
+packaging server, but \b not on the target device.
 
-At the moment the application-manager supports unsigned packages, packages that are signed by the
+Currently, the application manager supports unsigned packages, packages that are signed by the
 developer only (development mode), and packages that are signed by a trusted app-store. The
 \c{appman-packager} can create all these variations with the following commands:
 

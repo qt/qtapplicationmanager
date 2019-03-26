@@ -35,12 +35,11 @@
 
 \section1 Overview
 
-The application-manager binary (\c appman) is a headless daemon by itself. A suitable QML file
-needs to be supplied on the command-line or via a config file at startup, which will act as a
+The application manager binary (\c appman) is a headless daemon by itself. You need to supply a
+suitable QML file via the command-line or via a config file at startup, which then acts as a
 compositing window manager using the APIs that are exported from the C++ side.
 
-Please read the \l{The Qt Application Manager}{Introduction to the Qt Application Manager} for a
-high-level overview of the package.
+For a high-level overview, see \l{The Qt Application Manager}{Introduction to the Qt Application Manager}.
 
 \section1 Important topics
 \list
@@ -50,8 +49,8 @@ high-level overview of the package.
     \omit
     \li \l{How to write a System-UI}
     \endomit
-    \li \l{Writing Applications}
-    \li \l{The Application Installer}
+    \li \l{Write Applications}
+    \li \l{Application Installer}
     \li \l{Logging and Debugging}
     \li \l{Containers}
     \li \l{Single-Process vs. Multi-Process Mode}

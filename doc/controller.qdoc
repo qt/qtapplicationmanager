@@ -29,13 +29,13 @@
 /*!
 \page appman-controller.html
 \title Controller
-\brief A command-line utility for triggering the installation of a specified
-       package on the target device.
+\brief A command-line utility to trigger the installation of a specified package on the
+       target device.
 \ingroup qtappman-tools
 
-The \c{appman-controller} is a command-line utility that can be used by the developer (or indirectly
-by other tools) on the target device to control the application-manager without directly talking to
-its D-Bus interface.
+The \c{appman-controller} is a command-line utility that can be used by the developer, or
+indirectly by other tools, on the target device to control the application manager without
+communicating directly with its D-Bus interface.
 
 The following commands are available:
 
@@ -48,52 +48,49 @@ The following commands are available:
     \li \span {style="white-space: nowrap"} {\c start-application}
     \li \c{<application-id>}
 
-        \c{[document-url]}
-    \li Starts the application identified by \c application-id within the application-manager. The
-        \c document-url parameter is optional.
+        \c{[document-url]} [optional]
+    \li Starts the application with \c application-id within the application manager.
 \row
     \li \span {style="white-space: nowrap"} {\c debug-application}
     \li \c{<debug-wrapper-specification>}
 
         \c{<application-id>}
 
-        \c{[document-url]}
-    \li Starts the application identified by \c application-id within the application-manager using
-        a debug-wrapper: see \l{DebugWrappers}{the debugging documentation} for more information on
-        this specification string. The \c document-url parameter is optional.
+        \c{[document-url]} [optional]
+    \li Starts the application with \c application-id within the application manager using
+        a debug-wrapper. For more information, see \l{DebugWrappers}.
 \row
     \li \span {style="white-space: nowrap"} {\c stop-application}
     \li \c{<application-id>}
-    \li Stops the application identified by \c application-id.
+    \li Stops the application with \c application-id.
 \row
     \li \span {style="white-space: nowrap"} {\c stop-all-applications}
     \li (none)
-    \li Stops all applications that are running within the application-manager.
+    \li Stops all applications that are running within the application manager.
 \row
     \li \span {style="white-space: nowrap"} {\c list-applications}
     \li (none)
-    \li Outputs all available application ids on the console (one per line).
+    \li Outputs all available application IDs on the console, one per line.
 \row
     \li \span {style="white-space: nowrap"} {\c show-application}
     \li \c{<application-id>}
-    \li Shows the current meta-data of the given application in YAML format. The following options
-        are supported:
-
-        \c{--json}: Output in JSON format instead of YAML.
+    \li Shows the current metadata for the given application in YAML format. Alternatively, use
+        \c{--json} to get the metadata in JSON format instead.
 \row
     \li \span {style="white-space: nowrap"} {\c install-package}
     \li \c{<package>}
     \li Installs the package given on the command-line. If the package file is specified as \c{-},
-        the tool will try to read the package from \c stdin. The following options are supported:
+        the tool tries to read the package from \c stdin. The following options are supported:
 
-        \c{-l, --location}: Install to a specific installation location (see \c show-installation-location).
+        \c{-l, --location}: Install to a specific installation location
+        (see \c show-installation-location).
 
-        \c{-a, --acknowledge}: Automatically acknowledge the installation, instead of relying on the System-UI's logic.
-
+        \c{-a, --acknowledge}: Automatically acknowledge the installation, instead of relying on
+        the System UI's logic.
 \row
     \li \span {style="white-space: nowrap"} {\c remove-package}
     \li \c{<application-id>}
-    \li Removes the package that previously installed the application specified with
+    \li Removes the package that previously installed the application, specified with
         \c application-id. The following options are supported:
 
         \c{-f, --force}: Force removal of package.
@@ -106,10 +103,8 @@ The following commands are available:
 \row
     \li \span {style="white-space: nowrap"} {\c show-installation-location}
     \li \c{<installation-location>}
-    \li Shows details for installation location specified with \c installation-location in YAML
-        format. The following options are supported:
-
-        \c{--json}: Output in JSON format instead of YAML.
+    \li Shows details for the specified \c installation-location in YAML format. Alternatively, use
+        \c{--json} to get the location details in JSON format instead.
 \endtable
 
 The \c{appman-controller} naturally supports the standard Unix \c{--help} command-line option.

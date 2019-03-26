@@ -31,26 +31,26 @@
 \page containers.html
 \title Containers
 
-A \b container in the application-manager world describes an execution environment for an
-executable (either an app's binary or its runtime binary) in multi-process mode. This does not have
-to be something sophisticated like a Docker container, but can be as simple as an Unix process.
+In the application manager context, a \b container describes an execution environment for an
+executable: either an application's binary or its runtime binary, in multi-process mode. The
+container does not have to be something sophisticated like a Docker container, but can be as
+simple as a Unix process.
 
 \section1 Predefined Containers
 
-The application-manager comes with a single type of container built-in: the \c process container,
-which simply spawns a new Unix process to execute the requested binary.
+The application manager comes with a one built-in container type: the \c process container,
+that spawns a new Unix process to execute the requested binary.
 
-In addition, a very basic integration of Pelagicore's
-\l{https://github.com/Pelagicore/softwarecontainer}{software-containers} is provided in \c
+In addition, you can find a basic integration of Pelagicore's
+\l{https://github.com/Pelagicore/softwarecontainer}{software-containers} in \c
 examples/softwarecontainers. This can be used as a blueprint to either create a customer-specific
 production version of a softwarecontainers plugin, or to integrate another container solution.
 
-\section1 Extending with Container Plugins
+\section1 Extend with Container Plugins
 
-Custom container solution can easily be added via plugins.
-These plugins need not to be built as part of the application-manager, but
-they need to be built against a private Qt module to get the interface
-definition:
+Custom container solutions can be added via plugins. These plugins need not to be built as part
+of the application manager, but they need to be built against a private Qt module to get the
+interface definition:
 
 \badcode
 TEMPLATE = lib
@@ -60,8 +60,8 @@ TARGET = mycontainer-plugin
 QT += appman_plugininterfaces-private
 \endcode
 
-The only thing you have to then implement are two classes that derive from \c ContainerInterface
-and from ContainerManagerInterface respectively, e.g.:
+Then, you only have to implement two classes that derive from \c ContainerInterface
+and from \c ContainerManagerInterface respectively:
 
 \code
 #include <QtAppManPluginInterfaces/containerinterface.h>
@@ -81,29 +81,30 @@ class SoftwareContainerManager : public QObject, public ContainerManagerInterfac
 };
 \endcode
 
-Please be aware that your container plugin has to support a few basic requirements in order to
-support UI clients in multi-process mode:
+Be aware that your container plugin has to support a few basic requirements to support UI clients
+in multi-process mode:
 \list 1
-\li The plugin has to be able to forward Unix local sockets into the container. This is needed for
-    both the Wayland socket as well as for the private peer-to-peer D-Bus connection. If the plugin
-    is not able to map these sockets to the exact same location within the container, it needs to
-    alter the environment variables for the respective locations before passing them into the
-    container. See below for a list of relevant environment variables.
-\li In order to support hardware OpenGL acceleration, the container needs to have access to the
-    necessary devices: for GPUs following Linux standards (e.g. Intel), you have to make sure to
-    have /c{/dev/dri/*} available within the container.
-\li If you want to make use of the application-manager's security features, you also have to
-    implement PID mapping in your plugin (this is unnecessary if your container solution shares its
-    PID namespace with the rest of the system). Every connection coming into the application-manager
-    via the Wayland or D-Bus Unix local sockets is queried for the PID of the application requesting
-    the connection. The application-manager will verify these PIDs against the PIDs of all running
-    applications via ContainerInterface::processId(). Connections that will not match a PID will
-    not be accepted. This behavior can be disable though by use of the \l{no-security}{\c{--no-security}}
-    command line option.
+  \li The plugin has to be able to forward Unix local sockets into the container. This is needed
+      for both the \l{Qt Wayland Compositor}{Wayland} socket as well as for the private peer-to-peer
+      D-Bus connection. If the plugin cannot map these sockets to the correct location within the
+      container, the plugin then needs to modify the environment variables for the respective
+      locations before passing them on to the container. The table below lists the relevant
+      environment variables.
+  \li To support hardware OpenGL acceleration, the container needs to have access to the necessary
+      device. For GPUs that follow Linux standards, such as Intel, make sure to have /c{/dev/dri/*}
+      available within the container.
+  \li You have to implement PID mapping in your plugin; unless your container solution shares its
+      PID namespace with the rest of the ssytem. This is necessary if you want to make use of the
+      application manager's security features. Each connection coming into the application manager
+      via the Wayland or D-Bus Unix local sockets is queried for the PID of the application that
+      requests the connection. The application manager verifies these PIDs against the PIDs of all
+      running applications via ContainerInterface::processId(). Connections that don't match a PID
+      are not accepted. However, you can disable this behavior via the
+      \l{no-security}{\c{--no-security}} command line option.
 \endlist
 
-The application-manager will use these environment variables to communicate various settings to the
-application. A custom container plugin has to make sure to forward these or adjust them accordingly:
+The application manager uses the following environment variables to communicate various settings to
+the application. A custom container plugin must forward these variables or adjust them accordingly:
 
 \table
 \header
@@ -112,33 +113,33 @@ application. A custom container plugin has to make sure to forward these or adju
 \row
   \li \c{WAYLAND_DISPLAY}
   \li The path to the Wayland server socket. If your container uses its own filesystem namespace,
-      you need to make sure that this socket gets forwarded accordingly.
+      make sure that this socket is forwarded accordingly.
 \row
   \li \c{QT_QPA_PLATFORM}
   \li Always set to \c{wayland}.
 \row
   \li \c{QT_IM_MODULE}
-  \li Not really set, but explicitly unset by the application-manager. Make sure to not set it, if
-      the automatic Wayland input method implementation should be used.
+  \li Not set, but explicitly unset by the application manager. Make sure to leave it unset it, to
+      use the automatic Wayland input method implementation.
 \row
   \li \c{DBUS_SESSION_BUS_ADDRESS}
-  \li The standard D-Bus session bus
+  \li The standard D-Bus session bus.
 \row
   \li \c{AM_DBUS_PEER_ADDRESS}
-  \li This variable holds the D-Bus socket identifier for the private peer-to-peer bus between the
-      application-manager and the application. If your container uses its own filesystem namespace,
-      you need to make sure that this socket gets forwarded accordingly.
+  \li Holds the D-Bus socket identifier for the private peer-to-peer bus between the application
+      manager and the application itself. If your container uses its own filesystem namespace,
+      make sure that this socket is forwarded accordingly.
 \row
   \li \c{AM_DBUS_NOTIFICATION_BUS_ADDRESS}
-  \li Since the \c{org.freedesktop.Notifications} interface could be on a different bus as the rest
-      of the D-Bus interfaces, the application-manager needs to tell the application explicitly
-      where to look for this interface.
+  \li Since the \c{org.freedesktop.Notifications} interface could be on a different bus from the
+      rest of the D-Bus interfaces, the application manager needs to explicitly tell the
+      application where to look for this interface.
 \row
   \li \c{AM_BASE_DIR}
-  \li The current directory of the application-manager.
+  \li The current directory for the application manager.
 \row
   \li \c{AM_RUNTIME_SYSTEM_PROPERTIES}
-  \li The public part of the \l{system-properties}{system properties}, encoded as an YAML document.
+  \li The public part of the \l{system-properties}{system properties}, encoded as a YAML document.
 \row
   \li \c{AM_NO_DLT_LOGGING}
   \li Tells the application to not use DLT for logging.
@@ -146,31 +147,35 @@ application. A custom container plugin has to make sure to forward these or adju
 
 \section1 Configuration
 
-There are three parts to the container configuration:
+A container configuration has three parts:
+
 \list 1
-\li Configure which containers are available at all.
-\li Add specific settings for each available container integration.
-\li Configure which container solution is selected to run a specific application.
+  \li Configure which containers are available when \l{load-plugins}{loading} the container plugins
+  \li Add specific settings for each \l{container-integration}{container integration} available
+  \li Configure which container solution to \l{container-selection}{select} to run a specific
+      application
 \endlist
 
+\target load-plugins
 \section1 Load Container Plugins
 
-In order to activate an existing container plugin for use in the application-manager, you need to
-add its full path to the list of plugins to load in the application-manager's config file:
+To configure an existing container plugin for use in the application manager, you need to
+add its full path to the list of plugins to load in the application manager's config file:
 
 \badcode
 plugins:
   container: [ "/full/path/to/softwarecontainers.so", "/another/plugin.so" ]
 \endcode
 
-Please note that the application-manager does \b not load plugins automatically if they are placed
+Note that the application manager does \b not load plugins automatically if they are placed
 in a specific directory, since container plugins control the central security mechanism for
 separating applications.
 
-\section1 Container Integration Configuration
+\target container-integration
+\section1 Add Container Integration Settings
 
-Each container integration has an unique id, which can be used to add settings to the
-application-manager's config file, e.g.
+Each container integration has a unique ID, which can be used to add settings to the
+application manager's config file, such as:
 
 \badcode
 containers:
@@ -183,79 +188,76 @@ containers:
 The \c process container accepts the following configuration settings:
 
 \table
-\header
-  \li Name
-  \li Type
-  \li Description
-\row
-  \target control group mapping
-  \li \c controlGroups
-  \li object
-  \li A two-stage mapping object to allow for more readable code when dealing with cgroups from the
-      System-UI via Container::controlGroup. The top-level keys are readable group names
-      that are used to interface Container::controlGroup, while the values are themselves
-      maps between multiple low-level cgroup sub-system names and the actual cgroup names within
-      those sub-systems, e.g.:
+  \header
+    \li Settings Name
+    \li Type
+    \li Description
+  \row
+    \target control group mapping
+    \li \c controlGroups
+    \li object
+    \li A two-stage mapping object to allow for more readable code when dealing with \c cgroups
+        from the System UI via Container::controlGroup. The top-level keys are readable group names
+        that are used to interface with Container::controlGroup. The values themselves are maps
+        between multiple low-level \c cgroup sub-system names and the actual \c cgroup names within
+        those sub-systems, such as:
 
-\badcode
-controlGroups:
-  foreGround:
-    memory: mem1
-    cpu: cpu_full
-  backGround:
-    memory: mem2
-    cpu: cpu_minimal
-\endcode
+    \badcode
+    controlGroups:
+      foreGround:
+        memory: mem1
+        cpu: cpu_full
+      backGround:
+        memory: mem2
+        cpu: cpu_minimal
+    \endcode
 
-\row
-  \li \c defaultControlGroup
-  \li string
-  \li The default control group for an application when it is first launched.
+  \row
+    \li \c defaultControlGroup
+    \li string
+    \li The default control group for an application when it is first launched.
 \endtable
 
-For other container plugins, please consult the respective documentation.
+For other container plugins, refer to their respective documentation.
 
-
+\target container-selection
 \section1 Container Selection Configuration
 
-There are multiple ways to control which container integration is used when
-starting an application from within the application-manager:
+When you start an application from within the application manager, there are multiple ways to
+control which container integration is used:
 
 \list 1
-\li If the config file does not contain the key \c containers/selection, the container integration
-    id will default to \c process
+  \li If the config file does not contain the \c containers/selection key, the container
+      integration ID defaults to \c process.
+  \li If the \c containers/selection key exists, its contents are parsed as a list of maps, where
+      each map has a single mapping only. While this single mapping is awkward, it is necessary to
+      preserve the order of the mappings. Each key is interpreted as a standard Unix wildcard
+      expression that is matched against the application ID. The first match stops the algorithm
+      and the mapping's value is used as the container integration ID. If no matches are found,=
+      the resulting containter integration ID is an empty string.
 
-\li If the aforementioned key exists, its contents will be parsed as a list of maps, where each map
-    only has a single mapping (this is a bit awkward, but needed to preserve the order of the
-    mappings). Each key is interpreted as a standard Unix wildcard expression that will be matched
-    against the application id.
-    The first match will stop this algorithm and the mapping's value will be used as the container
-    integration id. If no matches are found, the resulting containter integration id will be the
-    empty string.
+    \badcode
+    containers:
+      selection:
+      - com.pelagicore.*: "process"
+      - com.navigation: "special-container"
+      - '*': "softwarecontainers"  # a single asterisk needs to be quoted
+    \endcode
 
-\badcode
-containers:
-  selection:
-  - com.pelagicore.*: "process"
-  - com.navigation: "special-container"
-  - '*': "softwarecontainers"  # a single asterisk needs to be quoted
-\endcode
+  \li Afterwards, if the System UI did set the ApplicationManager::containerSelectionFunction
+      property to a valid JavaScript function, this function is called with the first parameter set
+      to the application's ID and the second parameter set to the container integration ID that
+      resulted from step 1 and 2.
 
-
-\li Afterwards, if the System-UI did set the ApplicationManager::containerSelectionFunction property
-    to a valid JavaScript function, this function will be called with the first parameter set to the
-    application's id and the second parameter set to the container integration id that resulted from
-    step 1 and 2.
-
-\badcode
-ApplicationManager.containerSelectionFunction = function(appId, containerId) {
-    var app = ApplicationManager.application(appId)
-    if (app.capabilities.indexOf("non-secure") != -1)
-        return "process"
-    else
-        return containerId
-}
-\endcode
+    \badcode
+    ApplicationManager.containerSelectionFunction = function(appId, containerId) {
+        var app = ApplicationManager.application(appId)
+        if (app.capabilities.indexOf("non-secure") != -1)
+            return "process"
+        else
+            return containerId
+    }
+    \endcode
 \endlist
 
 */

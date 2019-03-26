@@ -50,6 +50,8 @@ sourcedirs += \
     ../src/tools/launcher-qml \
     $$BUILDDIR \
 
+
+imagedirs += ../doc/images
 exampledirs = ../examples
 
 depends += qtcore qtquick qtqml qtdoc qtwaylandcompositor

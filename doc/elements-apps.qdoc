@@ -30,11 +30,12 @@
 
 \page qml-apps.html
 \title QtApplicationManager.Application QML module
-\brief Qt Application Manager module to be used in applications
+\brief Qt Application Manager module to use in applications.
 
-The QtApplicationManager.Application QML module contains the components and types to be used in an application.
+The QtApplicationManager.Application QML module contains the components and types to use in an
+application.
 
-Singleton QML types need not be declared, they are referenced by just their type name.
+Singleton QML types need not be declared, they are referenced by their type name.
 
 Instantiable QML types are declared with the their name followed by curly braces. These
 declarations may be nested, creating parent-child relationships between the items.

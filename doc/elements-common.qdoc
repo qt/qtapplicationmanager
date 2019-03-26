@@ -30,11 +30,12 @@
 
 \page qml-common.html
 \title QtApplicationManager QML module
-\brief Qt Application Manager module common to both System-UI and applications
+\brief Qt Application Manager module common to both System UI and applications.
 
-The QtApplicationManager QML module contains the components and types available to both System-UI and applications.
+The QtApplicationManager QML module contains the components and types available to both System UI
+and applications.
 
-Singleton QML types need not be declared, they are referenced by just their type name.
+Singleton QML types need not be declared, they are referenced by their type name.
 
 Instantiable QML types are declared with the their name followed by curly braces. These
 declarations may be nested, creating parent-child relationships between the items.

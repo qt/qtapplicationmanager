@@ -94,6 +94,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ qSL("disable-intents"),      qSL("disable the intents sub-system.") });
 #if defined(QT_DBUS_LIB)
     m_clp.addOption({ qSL("dbus"),                 qSL("register on the specified D-Bus."), qSL("<bus>|system|session|none|auto"), qSL("auto") });
+    m_clp.addOption({ qSL("start-session-dbus"),   qSL("deprecated (ignored).") });
 #endif
     m_clp.addOption({ qSL("fullscreen"),           qSL("display in full-screen.") });
     m_clp.addOption({ qSL("no-fullscreen"),        qSL("do not display in full-screen.") });
@@ -143,6 +144,9 @@ void DefaultConfiguration::parseWithArguments(const QStringList &arguments, QStr
         *deploymentWarnings << qL1S("No --installed-apps-manifest-dir command line parameter or"
                 " applications/installedAppsManifestDir configuration key specified. It won't be possible to install,"
                 " remove or access installable applications.");
+
+    if (value<bool>("start-session-dbus"))
+        *deploymentWarnings << qL1S("Option \"--start-session-dbus\" has been deprecated and will be ignored.");
 }
 
 QString DefaultConfiguration::mainQmlFile() const

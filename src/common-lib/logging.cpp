@@ -73,7 +73,7 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 QT_BEGIN_NAMESPACE_AM
 
 #if defined(QT_GENIVIEXTRAS_LIB)
-static const char *s_defaultSystemUiDltId = "PCAM";
+static const char *s_defaultSystemUiDltId = "LXAM";
 static const char *s_defaultSystemUiDltDescription = "Luxoft Application-Manager";
 #endif
 

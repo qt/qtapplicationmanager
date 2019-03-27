@@ -986,8 +986,10 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
     };
 
 #  if !defined(AM_DISABLE_INSTALLER)
-    addInterface(new ApplicationInstallerDBusContextAdaptor(m_applicationInstaller),
-                 "io.qt.ApplicationManager", "/ApplicationInstaller");
+    if (m_applicationInstaller) {
+        addInterface(new ApplicationInstallerDBusContextAdaptor(m_applicationInstaller),
+                     "io.qt.ApplicationManager", "/ApplicationInstaller");
+    }
 #  endif
 #  if !defined(AM_HEADLESS)
     addInterface(new WindowManagerDBusContextAdaptor(m_windowManager),

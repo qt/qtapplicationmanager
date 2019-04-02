@@ -60,13 +60,11 @@ class IntentInterfaceAdaptor;
 QT_BEGIN_NAMESPACE_AM
 
 class Application;
-class AbstractApplication;
+class PackageInfo;
 class IntentServerRequest;
 
 namespace IntentAMImplementation {
 IntentServer *createIntentServerAndClientInstance(const QMap<QString, int> &timeouts);
-void addApplicationIntents(AbstractApplication *app, IntentServer *intentServer);
-void removeApplicationIntents(AbstractApplication *app, IntentServer *intentServer);
 }
 
 // the server side

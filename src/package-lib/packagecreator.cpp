@@ -51,7 +51,7 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-#include "package_p.h"
+#include "packageutilities_p.h"
 #include "packagecreator.h"
 #include "packagecreator_p.h"
 #include "exception.h"
@@ -174,18 +174,18 @@ bool PackageCreatorPrivate::create()
     char buffer[64 * 1024];
 
     try {
-        if (m_report.applicationId().isNull())
+        if (m_report.packageId().isNull())
             throw Exception("package identifier is null");
 
         QCryptographicHash digest(QCryptographicHash::Sha256);
 
         QVariantMap headerFormat {
             { qSL("formatType"), qSL("am-package-header") },
-            { qSL("formatVersion"), 1 }
+            { qSL("formatVersion"), 2 }
         };
 
         m_metaData = QVariantMap {
-            { qSL("applicationId"), m_report.applicationId() },
+            { qSL("packageId"), m_report.packageId() },
             { qSL("diskSpaceUsed"), m_report.diskSpaceUsed() }
         };
         if (!m_report.extraMetaData().isEmpty())
@@ -342,7 +342,7 @@ bool PackageCreatorPrivate::create()
 
         QVariantMap footerFormat {
             { qSL("formatType"), qSL("am-package-footer") },
-            { qSL("formatVersion"), 1 }
+            { qSL("formatVersion"), 2 }
         };
 
         QVariantMap footerData {

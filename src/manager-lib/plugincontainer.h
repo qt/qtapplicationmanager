@@ -56,7 +56,7 @@ public:
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
 
-    AbstractContainer *create(AbstractApplication *app, const QVector<int> &stdioRedirections,
+    AbstractContainer *create(Application *app, const QVector<int> &stdioRedirections,
                               const QMap<QString, QString> &debugWrapperEnvironment,
                               const QStringList &debugWrapperCommand) override;
 
@@ -108,7 +108,7 @@ public:
                                     const QVariantMap &amConfig) override;
 
 protected:
-    explicit PluginContainer(AbstractContainerManager *manager, AbstractApplication *app, ContainerInterface *containerInterface);
+    explicit PluginContainer(AbstractContainerManager *manager, Application *app, ContainerInterface *containerInterface);
     ContainerInterface *m_interface;
     PluginContainerProcess *m_process;
     bool m_startCalled = false;

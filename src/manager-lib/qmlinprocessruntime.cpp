@@ -107,7 +107,7 @@ bool QmlInProcessRuntime::start()
 
     if (m_app->runtimeParameters().value(qSL("loadDummyData")).toBool()) {
         qCDebug(LogSystem) << "Loading dummy-data";
-        loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->nonAliasedInfo()->absoluteCodeFilePath()).path());
+        loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->info()->absoluteCodeFilePath()).path());
     }
 
     const QStringList importPaths = variantToStringList(configuration().value(qSL("importPaths")))
@@ -120,10 +120,10 @@ bool QmlInProcessRuntime::start()
         qCDebug(LogSystem) << "Updated Qml import paths:" << m_inProcessQmlEngine->importPathList();
     }
 
-    QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, m_app->nonAliasedInfo()->absoluteCodeFilePath());
+    QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, m_app->info()->absoluteCodeFilePath());
 
     if (!component->isReady()) {
-        qCDebug(LogSystem) << "qml-file (" << m_app->nonAliasedInfo()->absoluteCodeFilePath() << "): component not ready:\n" << component->errorString();
+        qCDebug(LogSystem) << "qml-file (" << m_app->info()->absoluteCodeFilePath() << "): component not ready:\n" << component->errorString();
         return false;
     }
 
@@ -143,7 +143,7 @@ bool QmlInProcessRuntime::start()
     QMetaObject::invokeMethod(this, [component, appContext, obj, this]() {
         component->completeCreate();
         if (!obj) {
-            qCCritical(LogSystem) << "could not load" << m_app->nonAliasedInfo()->absoluteCodeFilePath() << ": no root object";
+            qCCritical(LogSystem) << "could not load" << m_app->info()->absoluteCodeFilePath() << ": no root object";
             delete obj;
             delete appContext;
             delete m_applicationIf;

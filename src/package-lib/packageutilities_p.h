@@ -52,14 +52,13 @@ QT_FORWARD_DECLARE_CLASS(QCryptographicHash)
 
 QT_BEGIN_NAMESPACE_AM
 
-class PackageUtilities
+namespace PackageUtilities
 {
-public:
-    static void addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest);
-    static void addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) Q_DECL_NOEXCEPT_EXPR(false);
+void addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest);
+void addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) Q_DECL_NOEXCEPT_EXPR(false);
 
-    // key == field name, value == type to choose correct hashing algorithm
-    static QVariantMap headerDataForDigest;
+// key == field name, value == type to choose correct hashing algorithm
+extern QVariantMap headerDataForDigest;
 };
 
 enum PackageEntryType {

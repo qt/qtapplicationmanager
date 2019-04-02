@@ -182,8 +182,6 @@ void QmlInProcessApplicationManagerWindow::data_clear(QQmlListProperty<QObject> 
 
 void QmlInProcessApplicationManagerWindow::componentComplete()
 {
-    qCDebug(LogSystem) << "QmlInProcessApplicationManagerWindow componentComplete() this:" << this;
-
     if (!m_runtime)
         m_runtime = QmlInProcessRuntime::determineRuntime(this);
 

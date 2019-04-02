@@ -1,7 +1,6 @@
 /****************************************************************************
 **
 ** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Luxoft Application Manager.
@@ -42,53 +41,64 @@
 
 #pragma once
 
-#include <QMutex>
-#include <QList>
-#include <QSet>
-#include <QScopedPointer>
-#include <QThread>
+#include <QMap>
+#include <QString>
+#include <QStringList>
+#include <QVariantMap>
+#include <QVector>
 
-#include <QtAppManInstaller/applicationinstaller.h>
-#include <QtAppManInstaller/sudo.h>
 #include <QtAppManCommon/global.h>
+
+QT_FORWARD_DECLARE_CLASS(QDataStream)
 
 QT_BEGIN_NAMESPACE_AM
 
-bool removeRecursiveHelper(const QString &path);
+class YamlPackageScanner;
+class PackageInfo;
 
-class ApplicationInstallerPrivate
+class IntentInfo
 {
 public:
-    bool developmentMode = false;
-    bool allowInstallationOfUnsignedPackages = false;
-    bool userIdSeparation = false;
-    uint minUserId = uint(-1);
-    uint maxUserId = uint(-1);
-    uint commonGroupId = uint(-1);
+    IntentInfo(PackageInfo *packageInfo);
+    ~IntentInfo();
 
-    QScopedPointer<QDir> manifestDir;
-    QVector<InstallationLocation> installationLocations;
-    InstallationLocation invalidInstallationLocation;
+    enum Visibility {
+        Public,
+        Private
+    };
 
-    QString error;
+    QString id() const;
+    Visibility visibility() const;
+    QStringList requiredCapabilities() const;
+    QVariantMap parameterMatch() const;
+    QString handlingApplicationId() const;
 
-    QString hardwareId;
-    QList<QByteArray> chainOfTrust;
+    QStringList categories() const;
 
-    QList<AsynchronousTask *> incomingTaskList;     // incoming queue
-    QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge
-    AsynchronousTask *activeTask = nullptr;         // currently active
+    QMap<QString, QString> names() const;
+    QString name(const QString &language) const;
+    QMap<QString, QString> descriptions() const;
+    QString description(const QString &language) const;
+    QString icon() const;
 
-    QList<AsynchronousTask *> allTasks() const
-    {
-        QList<AsynchronousTask *> all = incomingTaskList;
-        if (!installationTaskList.isEmpty())
-            all += installationTaskList;
-        if (activeTask)
-            all += activeTask;
-        return all;
-    }
+    void writeToDataStream(QDataStream &ds) const;
+    static IntentInfo *readFromDataStream(PackageInfo *pkg, QDataStream &ds);
+
+private:
+    PackageInfo *m_packageInfo;
+    QString m_id;
+    Visibility m_visibility = Public;
+    QStringList m_requiredCapabilities;
+    QVariantMap m_parameterMatch;
+
+    QString m_handlingApplicationId;
+    QStringList m_categories;
+    QMap<QString, QString> m_name; // language -> name
+    QMap<QString, QString> m_description; // language -> description
+    QString m_icon; // relative to info.json location
+
+    friend class YamlPackageScanner;
+    Q_DISABLE_COPY(IntentInfo)
 };
 
 QT_END_NAMESPACE_AM
-// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

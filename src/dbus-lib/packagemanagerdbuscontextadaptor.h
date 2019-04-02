@@ -42,26 +42,16 @@
 
 #pragma once
 
-#include <QtAppManApplication/applicationscanner.h>
+#include <QtAppManDBus/abstractdbuscontextadaptor.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class AbstractApplicationInfo;
+class PackageManager;
 
-class YamlApplicationScanner : public ApplicationScanner
+class PackageManagerDBusContextAdaptor : public AbstractDBusContextAdaptor
 {
 public:
-    YamlApplicationScanner();
-
-    ApplicationInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
-    ApplicationAliasInfo *scanAlias(const QString &filePath,
-                                    const ApplicationInfo *application) Q_DECL_NOEXCEPT_EXPR(false) override;
-
-    QString metaDataFileName() const override;
-
-private:
-    AbstractApplicationInfo *scanInternal(const QString &filePath, bool scanAlias,
-                                          const ApplicationInfo *application) Q_DECL_NOEXCEPT_EXPR(false);
+    explicit PackageManagerDBusContextAdaptor(PackageManager *pm);
 };
 
 QT_END_NAMESPACE_AM

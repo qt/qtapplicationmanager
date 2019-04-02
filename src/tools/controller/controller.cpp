@@ -49,7 +49,7 @@
 #include <QtAppManCommon/dbus-utilities.h>
 
 #include "applicationmanager_interface.h"
-#include "applicationinstaller_interface.h"
+#include "packagemanager_interface.h"
 
 #include "interrupthandler.h"
 
@@ -72,13 +72,13 @@ public:
         m_manager = new IoQtApplicationManagerInterface(qSL("io.qt.ApplicationManager"), qSL("/ApplicationManager"), conn, this);
     }
 
-    void connectToInstaller() Q_DECL_NOEXCEPT_EXPR(false)
+    void connectToPackager() Q_DECL_NOEXCEPT_EXPR(false)
     {
-        if (m_installer)
+        if (m_packager)
             return;
 
-        auto conn = connectTo(qSL("io.qt.ApplicationInstaller"));
-        m_installer = new IoQtApplicationInstallerInterface(qSL("io.qt.ApplicationManager"), qSL("/ApplicationInstaller"), conn, this);
+        auto conn = connectTo(qSL("io.qt.PackageManager"));
+        m_packager = new IoQtPackageManagerInterface(qSL("io.qt.ApplicationManager"), qSL("/PackageManager"), conn, this);
     }
 
 private:
@@ -111,9 +111,9 @@ private:
     }
 
 public:
-    IoQtApplicationInstallerInterface *installer() const
+    IoQtPackageManagerInterface *packager() const
     {
-        return m_installer;
+        return m_packager;
     }
 
     IoQtApplicationManagerInterface *manager() const
@@ -122,7 +122,7 @@ public:
     }
 
 private:
-    IoQtApplicationInstallerInterface *m_installer = nullptr;
+    IoQtPackageManagerInterface *m_packager = nullptr;
     IoQtApplicationManagerInterface *m_manager = nullptr;
 };
 
@@ -137,6 +137,8 @@ enum Command {
     StopAllApplications,
     ListApplications,
     ShowApplication,
+    ListPackages,
+    ShowPackage,
     InstallPackage,
     RemovePackage,
     ListInstallationTasks,
@@ -157,6 +159,8 @@ static struct {
     { StopAllApplications,  "stop-all-applications",  "Stop all applications." },
     { ListApplications, "list-applications", "List all installed applications." },
     { ShowApplication,  "show-application",  "Show application meta-data." },
+    { ListPackages,     "list-packages",     "List all installed packages." },
+    { ShowPackage,      "show-package",      "Show package meta-data." },
     { InstallPackage,   "install-package",   "Install a package." },
     { RemovePackage,    "remove-package",    "Remove a package." },
     { ListInstallationTasks,     "list-installation-tasks",     "List all active installation tasks." },
@@ -188,8 +192,10 @@ static void stopApplication(const QString &appId, bool forceKill = false) Q_DECL
 static void stopAllApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void listApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void showApplication(const QString &appId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
-static void installPackage(const QString &package, const QString &location, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false);
-static void removePackage(const QString &package, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false);
+static void listPackages() Q_DECL_NOEXCEPT_EXPR(false);
+static void showPackage(const QString &packageId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
+static void installPackage(const QString &packageUrl, const QString &location, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false);
+static void removePackage(const QString &packageId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false);
 static void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
@@ -377,6 +383,24 @@ int main(int argc, char *argv[])
                 clp.showHelp(1);
 
             a.runLater(std::bind(showApplication,
+                                 clp.positionalArguments().at(1),
+                                 clp.isSet(qSL("json"))));
+            break;
+
+        case ListPackages:
+            clp.process(a);
+            a.runLater(listPackages);
+            break;
+
+        case ShowPackage:
+            clp.addOption({ qSL("json"), qSL("Output in JSON format instead of YAML.") });
+            clp.addPositionalArgument(qSL("package-id"), qSL("The id of an installed package."));
+            clp.process(a);
+
+            if (clp.positionalArguments().size() != 2)
+                clp.showHelp(1);
+
+            a.runLater(std::bind(showPackage,
                                  clp.positionalArguments().at(1),
                                  clp.isSet(qSL("json"))));
             break;
@@ -601,6 +625,36 @@ void showApplication(const QString &appId, bool asJson) Q_DECL_NOEXCEPT_EXPR(fal
     qApp->quit();
 }
 
+void listPackages() Q_DECL_NOEXCEPT_EXPR(false)
+{
+    dbus.connectToPackager();
+
+    auto reply = dbus.packager()->packageIds();
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to call packageIds via DBus: %1").arg(reply.error().message());
+
+    const auto packageIds = reply.value();
+    for (auto packageId : packageIds)
+        fprintf(stdout, "%s\n", qPrintable(packageId));
+    qApp->quit();
+}
+
+void showPackage(const QString &packageId, bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
+{
+    dbus.connectToPackager();
+
+    auto reply = dbus.packager()->get(packageId);
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception(Error::IO, "failed to get package via DBus: %1").arg(reply.error().message());
+
+    QVariant package = reply.value();
+    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(package).toJson().constData()
+                                   : QtYaml::yamlFromVariantDocuments({ package }).constData());
+    qApp->quit();
+}
+
 void installPackage(const QString &package, const QString &location, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString packageFile = package;
@@ -632,7 +686,7 @@ void installPackage(const QString &package, const QString &location, bool acknow
     fprintf(stdout, "Starting installation of package %s to %s...\n", qPrintable(packageFile), qPrintable(location));
 
     dbus.connectToManager();
-    dbus.connectToInstaller();
+    dbus.connectToPackager();
 
     // all the async lambdas below need to share this variable
     static QString installationId;
@@ -640,7 +694,7 @@ void installPackage(const QString &package, const QString &location, bool acknow
     // as soon as we have the manifest available: get the app id and acknowledge the installation
 
     if (acknowledge) {
-        QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskRequestingInstallationAcknowledge,
+        QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskRequestingInstallationAcknowledge,
                          [](const QString &taskId, const QVariantMap &metadata) {
             if (taskId != installationId)
                 return;
@@ -648,13 +702,13 @@ void installPackage(const QString &package, const QString &location, bool acknow
             if (applicationId.isEmpty())
                 throw Exception(Error::IO, "could not find a valid application id in the package");
             fprintf(stdout, "Acknowledging package installation...\n");
-            dbus.installer()->acknowledgePackageInstallation(taskId);
+            dbus.packager()->acknowledgePackageInstallation(taskId);
         });
     }
 
     // on failure: quit
 
-    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFailed,
+    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFailed,
                      [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
@@ -663,7 +717,7 @@ void installPackage(const QString &package, const QString &location, bool acknow
 
     // on success
 
-    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFinished,
+    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFinished,
                      [](const QString &taskId) {
         if (taskId != installationId)
             return;
@@ -673,7 +727,7 @@ void installPackage(const QString &package, const QString &location, bool acknow
 
     // start the package installation
 
-    auto reply = dbus.installer()->startPackageInstallation(location, fi.absoluteFilePath());
+    auto reply = dbus.packager()->startPackageInstallation(location, fi.absoluteFilePath());
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());
@@ -686,7 +740,7 @@ void installPackage(const QString &package, const QString &location, bool acknow
 
     InterruptHandler::install([](int) {
         fprintf(stdout, "Cancelling package installation.\n");
-        auto reply = dbus.installer()->cancelTask(installationId);
+        auto reply = dbus.packager()->cancelTask(installationId);
         reply.waitForFinished();
         qApp->exit(1);
     });
@@ -697,14 +751,14 @@ void removePackage(const QString &applicationId, bool keepDocuments, bool force)
     fprintf(stdout, "Starting removal of package %s...\n", qPrintable(applicationId));
 
     dbus.connectToManager();
-    dbus.connectToInstaller();
+    dbus.connectToPackager();
 
     // both the async lambdas below need to share this variables
     static QString installationId;
 
     // on failure: quit
 
-    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFailed,
+    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFailed,
                      [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
@@ -713,7 +767,7 @@ void removePackage(const QString &applicationId, bool keepDocuments, bool force)
 
     // on success
 
-    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFinished,
+    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFinished,
                      [](const QString &taskId) {
         if (taskId != installationId)
             return;
@@ -723,7 +777,7 @@ void removePackage(const QString &applicationId, bool keepDocuments, bool force)
 
     // start the package installation
 
-    auto reply = dbus.installer()->removePackage(applicationId, keepDocuments, force);
+    auto reply = dbus.packager()->removePackage(applicationId, keepDocuments, force);
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call removePackage via DBus: %1").arg(reply.error().message());
@@ -735,9 +789,9 @@ void removePackage(const QString &applicationId, bool keepDocuments, bool force)
 
 void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false)
 {
-    dbus.connectToInstaller();
+    dbus.connectToPackager();
 
-    auto reply = dbus.installer()->activeTaskIds();
+    auto reply = dbus.packager()->activeTaskIds();
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
@@ -751,16 +805,16 @@ void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false)
 
 void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    dbus.connectToInstaller();
+    dbus.connectToPackager();
 
     // both the async lambdas below need to share this variables
     static QStringList cancelTaskIds;
     static int result = 0;
 
     if (all) {
-        dbus.connectToInstaller();
+        dbus.connectToPackager();
 
-        auto reply = dbus.installer()->activeTaskIds();
+        auto reply = dbus.packager()->activeTaskIds();
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
@@ -777,7 +831,7 @@ void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXP
 
     // on task failure
 
-    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFailed,
+    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFailed,
                      [](const QString &taskId, int errorCode, const QString &errorString) {
         if (cancelTaskIds.removeOne(taskId)) {
             if (errorCode != int(Error::Canceled)) {
@@ -794,7 +848,7 @@ void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXP
 
     // on success
 
-    QObject::connect(dbus.installer(), &IoQtApplicationInstallerInterface::taskFinished,
+    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFinished,
                      [](const QString &taskId) {
         if (cancelTaskIds.removeOne(taskId)) {
             fprintf(stdout, "Could not cancel task %s anymore - the installation task already finished successfully.\n",
@@ -810,7 +864,7 @@ void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXP
 
         // cancel the task
 
-        auto reply = dbus.installer()->cancelTask(cancelTaskId);
+        auto reply = dbus.packager()->cancelTask(cancelTaskId);
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call cancelTask via DBus: %1").arg(reply.error().message());
@@ -822,9 +876,9 @@ void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXP
 
 void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
 {
-    dbus.connectToInstaller();
+    dbus.connectToPackager();
 
-    auto reply = dbus.installer()->installationLocationIds();
+    auto reply = dbus.packager()->installationLocationIds();
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call installationLocationIds via DBus: %1").arg(reply.error().message());
@@ -837,9 +891,9 @@ void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
 
 void showInstallationLocation(const QString &location, bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    dbus.connectToInstaller();
+    dbus.connectToPackager();
 
-    auto reply = dbus.installer()->getInstallationLocation(location);
+    auto reply = dbus.packager()->getInstallationLocation(location);
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call getInstallationLocation via DBus: %1").arg(reply.error().message());

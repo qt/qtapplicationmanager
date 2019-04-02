@@ -42,7 +42,7 @@
 
 #include "logging.h"
 #include "scopeutilities.h"
-#include "applicationinstaller_p.h"
+#include "packagemanager_p.h"
 #include "utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -91,7 +91,6 @@ QDir ScopedDirectoryCreator::dir()
 {
     return QDir(m_path);
 }
-
 
 ScopedRenamer::ScopedRenamer()
 { }

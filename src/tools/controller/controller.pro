@@ -16,7 +16,7 @@ appmanif.files =  ../../dbus-lib/io.qt.applicationmanager.xml
 appmanif.header_flags = -i dbus-utilities.h
 
 DBUS_INTERFACES += \
-    ../../dbus-lib/io.qt.applicationinstaller.xml \
+    ../../dbus-lib/io.qt.packagemanager.xml \
     appmanif
 
 load(qt_tool)

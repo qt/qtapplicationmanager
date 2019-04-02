@@ -55,7 +55,7 @@
 #include <QtAppManCommon/logging.h>
 #include <QtAppManMain/main.h>
 #include <QtAppManMain/defaultconfiguration.h>
-#include <QtAppManPackage/package.h>
+#include <QtAppManPackage/packageutilities.h>
 #include <QtAppManInstaller/sudo.h>
 
 
@@ -67,7 +67,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion("0.1");
 
     Logging::initialize(argc, argv);
-    Package::ensureCorrectLocale();
+    PackageUtilities::ensureCorrectLocale();
     Sudo::forkServer(Sudo::DropPrivilegesPermanently);
 
     try {

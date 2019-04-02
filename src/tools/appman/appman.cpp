@@ -47,7 +47,7 @@
 #include "logging.h"
 #include "main.h"
 #include "defaultconfiguration.h"
-#include "package.h"
+#include "packageutilities.h"
 #if !defined(AM_DISABLE_INSTALLER)
 #  include "sudo.h"
 #endif
@@ -81,7 +81,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         QStringList deploymentWarnings;
 
 #if !defined(AM_DISABLE_INSTALLER)
-        Package::ensureCorrectLocale(&deploymentWarnings);
+        PackageUtilities::ensureCorrectLocale(&deploymentWarnings);
         Sudo::forkServer(Sudo::DropPrivilegesPermanently, &deploymentWarnings);
         StartupTimer::instance()->checkpoint("after sudo server fork");
 #endif

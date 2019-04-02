@@ -31,7 +31,8 @@
 #include <QQmlEngine>
 
 #include "application.h"
-#include "yamlapplicationscanner.h"
+#include "package.h"
+#include "yamlpackagescanner.h"
 #include "abstractruntime.h"
 #include "runtimefactory.h"
 #include "exception.h"
@@ -62,19 +63,19 @@ public:
 
     void setSlowAnimations(bool) override {}
 
-    qint64 applicationProcessId() const
+    qint64 applicationProcessId() const override
     {
         return m_state == Am::Running ? 1 : 0;
     }
 
 public slots:
-    bool start()
+    bool start() override
     {
         m_state = Am::Running;
         return true;
     }
 
-    void stop(bool forceKill)
+    void stop(bool forceKill) override
     {
         Q_UNUSED(forceKill);
         m_state = Am::NotRunning;
@@ -137,7 +138,10 @@ void tst_Runtime::factory()
 
     Application *a = nullptr;
     try {
-        a = new Application(YamlApplicationScanner().scan(temp.fileName()));
+        PackageInfo *pi = YamlPackageScanner().scan(temp.fileName());
+        QVERIFY(pi);
+        Package *p = new Package(pi);
+        a = new Application(pi->applications().first(), p);
     } catch (const Exception &e) {
         QVERIFY2(false, qPrintable(e.errorString()));
     }

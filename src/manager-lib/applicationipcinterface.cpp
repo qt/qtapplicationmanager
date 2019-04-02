@@ -100,7 +100,7 @@ QString ApplicationIPCInterface::pathName() const
     return m_ipcProxy ? m_ipcProxy->pathName() : QString();
 }
 
-bool ApplicationIPCInterface::isValidForApplication(AbstractApplication *app) const
+bool ApplicationIPCInterface::isValidForApplication(Application *app) const
 {
     return m_ipcProxy ? m_ipcProxy->isValidForApplication(app) : false;
 }
@@ -126,7 +126,7 @@ void ApplicationIPCInterface::setServiceObject(QObject *serviceObject)
 }
 
 #if defined(QT_DBUS_LIB)
-bool ApplicationIPCInterface::dbusRegister(AbstractApplication *app, QDBusConnection connection, const QString &debugPathPrefix)
+bool ApplicationIPCInterface::dbusRegister(Application *app, QDBusConnection connection, const QString &debugPathPrefix)
 {
     return m_ipcProxy ? m_ipcProxy->dbusRegister(app, connection, debugPathPrefix) : false;
 }
@@ -432,7 +432,7 @@ QStringList IpcProxyObject::connectionNames() const
     return m_connectionNamesToApplicationIds.keys();
 }
 
-bool IpcProxyObject::isValidForApplication(AbstractApplication *app) const
+bool IpcProxyObject::isValidForApplication(Application *app) const
 {
     if (!app)
         return false;
@@ -454,7 +454,7 @@ bool IpcProxyObject::isValidForApplication(AbstractApplication *app) const
 
 #if defined(QT_DBUS_LIB)
 
-bool IpcProxyObject::dbusRegister(AbstractApplication *app, QDBusConnection connection, const QString &debugPathPrefix)
+bool IpcProxyObject::dbusRegister(Application *app, QDBusConnection connection, const QString &debugPathPrefix)
 {
     if (m_connectionNamesToApplicationIds.contains(connection.name()))
         return false;

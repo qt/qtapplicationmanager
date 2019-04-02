@@ -40,17 +40,25 @@
 **
 ****************************************************************************/
 
+
+#include <QFileInfo>
+#include <QDataStream>
+#include <QCryptographicHash>
 #include <QByteArray>
 #include <QString>
 
-#include "package.h"
+#include <archive.h>
+
+#include "packageutilities.h"
+#include "packageutilities_p.h"
 #include "global.h"
 
 #include <clocale>
 
+
 QT_BEGIN_NAMESPACE_AM
 
-bool Package::ensureCorrectLocale(QStringList *warnings)
+bool PackageUtilities::ensureCorrectLocale(QStringList *warnings)
 {
     // We need to make sure we are running in a Unicode locale, since we are
     // running into problems when unpacking packages with libarchive that
@@ -119,7 +127,7 @@ bool Package::ensureCorrectLocale(QStringList *warnings)
 }
 
 
-bool Package::checkCorrectLocale()
+bool PackageUtilities::checkCorrectLocale()
 {
     // see ensureCorrectLocale() above. Call this after the QApplication
     // constructor as a sanity check.
@@ -129,6 +137,43 @@ bool Package::checkCorrectLocale()
     // check if umlaut-a converts correctly
     return QString::fromUtf8("\xc3\xa4").toLocal8Bit() == "\xc3\xa4";
 #endif
+}
+
+
+ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString)
+    : Exception(Error::Archive, qSL("[libarchive] ") + qL1S(errorString) + qSL(": ") + QString::fromLocal8Bit(::archive_error_string(ar)))
+{ }
+
+
+QVariantMap PackageUtilities::headerDataForDigest = QVariantMap {
+    { "extraSigned", QVariantMap() }
+};
+
+void PackageUtilities::addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest)
+{
+    // (using QDataStream would be more readable, but it would make the algorithm Qt dependent)
+    QByteArray addToDigest = ((fi.isDir()) ? "D/" : "F/")
+            + QByteArray::number(fi.isDir() ? 0 : fi.size())
+            + '/' + entryFilePath.toUtf8();
+    digest.addData(addToDigest);
+}
+
+void PackageUtilities::addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) Q_DECL_NOEXCEPT_EXPR(false)
+{
+    for (auto it = headerDataForDigest.constBegin(); it != headerDataForDigest.constEnd(); ++it) {
+        if (header.contains(it.key())) {
+            QByteArray ba;
+            QDataStream ds(&ba, QIODevice::WriteOnly);
+
+            QVariant v = header.value(it.key());
+            if (!v.convert(int(it.value().type())))
+                throw Exception(Error::Package, "metadata field %1 has invalid type for digest calculation (cannot convert %2 to %3)")
+                    .arg(it.key()).arg(header.value(it.key()).type()).arg(it.value().type());
+            ds << v;
+
+            digest.addData(ba);
+        }
+    }
 }
 
 QT_END_NAMESPACE_AM

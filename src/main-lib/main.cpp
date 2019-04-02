@@ -49,7 +49,7 @@
 #  include "dbusdaemon.h"
 #  include "dbuspolicy.h"
 #  include "applicationmanagerdbuscontextadaptor.h"
-#  include "applicationinstallerdbuscontextadaptor.h"
+#  include "packagemanagerdbuscontextadaptor.h"
 #  include "notificationmanagerdbuscontextadaptor.h"
 #endif
 
@@ -95,13 +95,18 @@
 #include "main.h"
 #include "defaultconfiguration.h"
 #include "applicationinfo.h"
+#include "intentinfo.h"
+#include "packageinfo.h"
 #include "applicationmanager.h"
-#include "applicationdatabase.h"
+#include "packagemanager.h"
+#include "package.h"
+#include "packagedatabase.h"
 #include "installationreport.h"
-#include "yamlapplicationscanner.h"
+#include "yamlpackagescanner.h"
 #if !defined(AM_DISABLE_INSTALLER)
 #  include "applicationinstaller.h"
 #  include "sudo.h"
+#  include "packageutilities.h"
 #endif
 #include "runtimefactory.h"
 #include "containerfactory.h"
@@ -116,7 +121,6 @@
 #include "qmlinprocessapplicationinterface.h"
 #include "qml-utilities.h"
 #include "dbus-utilities.h"
-#include "package.h"
 #include "intentserver.h"
 #include "intentaminterface.h"
 
@@ -186,6 +190,10 @@ Main::~Main()
     delete m_view;
 #  endif
     delete m_applicationManager;
+#if !defined(AM_DISABLE_INSTALLER)
+    delete m_applicationInstaller;
+#endif
+    delete m_packageManager;
     delete m_quickLauncher;
     delete m_applicationIPCManager;
 
@@ -231,11 +239,10 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     if (!cfg->disableInstaller())
         setupInstallationLocations(cfg->installationLocations());
 
-    if (!cfg->database().isEmpty())
-        loadApplicationDatabase(cfg->database(), cfg->recreateDatabase(), cfg->singleApp());
+    loadPackageDatabase(cfg->recreateDatabase(), cfg->singleApp());
 
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
-                    cfg->quickLaunchIdleLoad(), cfg->singleApp());
+                    cfg->quickLaunchIdleLoad());
 
     if (m_installedAppsManifestDir.isEmpty() || cfg->disableInstaller()) {
         StartupTimer::instance()->checkpoint("skipping installer");
@@ -420,64 +427,54 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
 
 void Main::setupInstallationLocations(const QVariantList &installationLocations)
 {
+#if !defined(AM_DISABLE_INSTALLER)
     m_installationLocations = InstallationLocation::parseInstallationLocations(installationLocations,
                                                                                hardwareId());
     if (m_installationLocations.isEmpty())
         qCWarning(LogDeployment) << "No installation locations defined in config file";
+#else
+    Q_UNUSED(installationLocations)
+#endif
 }
 
-void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
-                                   const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    if (singleApp.isEmpty()) {
-        if (!QFile::exists(databasePath)) // make sure to create a database on the first run
-            recreateDatabase = true;
-        if (QFileInfo(databasePath).size() == 0) // cope with Windows' 0-byte left-overs
-            recreateDatabase = true;
-
-        if (recreateDatabase) {
-            const QString dbDir = QFileInfo(databasePath).absolutePath();
-            if (Q_UNLIKELY(!QDir(dbDir).exists()) && Q_UNLIKELY(!QDir::root().mkpath(dbDir)))
-                throw Exception("could not create application database directory %1").arg(dbDir);
-        }
-        m_applicationDatabase.reset(new ApplicationDatabase(databasePath));
+    if (!singlePackage.isEmpty()) {
+        m_packageDatabase = new PackageDatabase(singlePackage);
     } else {
-        m_applicationDatabase.reset(new ApplicationDatabase());
-        recreateDatabase = true;
+        m_packageDatabase = new PackageDatabase(m_builtinAppsManifestDirs, m_installedAppsManifestDir);
+        if (!recreateDatabase)
+            m_packageDatabase->enableLoadFromCache();
+        m_packageDatabase->enableSaveToCache();
     }
+    m_packageDatabase->parse();
 
-    if (Q_UNLIKELY(!m_applicationDatabase->isValid() && !recreateDatabase)) {
-        throw Exception("database file %1 is not a valid application database: %2")
-            .arg(m_applicationDatabase->name(), m_applicationDatabase->errorString());
-    }
+    const QVector<PackageInfo *> allPackages =
+            m_packageDatabase->builtInPackages()
+            + m_packageDatabase->installedPackages();
 
-    if (!m_applicationDatabase->isValid() || recreateDatabase) {
-        QVector<AbstractApplicationInfo *> apps;
+    for (auto package : allPackages) {
+        // check that the runtimes are supported in this instance of the AM
+        auto apps = package->applications();
 
-        if (!singleApp.isEmpty()) {
-            apps = scanForApplication(singleApp, m_builtinAppsManifestDirs);
-        } else {
-            apps = scanForApplications(m_builtinAppsManifestDirs,
-                                       m_installedAppsManifestDir,
-                                       m_installationLocations);
+        for (const auto app : apps) {
+            if (!RuntimeFactory::instance()->manager(app->runtimeName()))
+                throw Exception("application '%1' uses an unknown runtime: %2").arg(app->id(), app->runtimeName());
         }
 
-        if (LogSystem().isDebugEnabled()) {
-            qCDebug(LogSystem) << "Registering applications:";
-            for (auto *app : qAsConst(apps)) {
-                if (app->isAlias())
-                    qCDebug(LogSystem).nospace().noquote() << " * " << app->id();
-                else
-                    qCDebug(LogSystem).nospace().noquote() << " * " << app->id() << " [at: "
-                        << static_cast<const ApplicationInfo*>(app)->codeDir().path() << "]";
+        // fix the basedir of the package here, because (PackageDatabase
+        // (application-lib) doesn't know about InstallationLocation (installer-lib)
+        if (package->installationReport()) {
+            for (const InstallationLocation &il : m_installationLocations) {
+                if (il.id() == package->installationReport()->installationLocationId()) {
+                    package->setBaseDir(QDir(il.installationPath() + package->id()));
+                    break;
+                }
             }
         }
-
-        m_applicationDatabase->write(apps);
-        qDeleteAll(apps);
     }
 
-    StartupTimer::instance()->checkpoint("after application database loading");
+    StartupTimer::instance()->checkpoint("after package database loading");
 }
 
 void Main::setupIntents(const QMap<QString, int> &timeouts) Q_DECL_NOEXCEPT_EXPR(false)
@@ -486,38 +483,56 @@ void Main::setupIntents(const QMap<QString, int> &timeouts) Q_DECL_NOEXCEPT_EXPR
 
     qCDebug(LogSystem) << "Registering intents:";
 
-    const auto apps = m_applicationManager->applications();
-    for (AbstractApplication *app : apps)
-        IntentAMImplementation::addApplicationIntents(app, m_intentServer);
+    const auto packages = m_packageManager->packages();
+    for (const Package *package : packages) {
+        const auto intents = package->info()->intents();
+        if (!intents.isEmpty())
+            m_intentServer->addApplication(package->id());
+
+        for (const IntentInfo *intent : intents) {
+            if (!m_intentServer->addIntent(intent->id(), package->id(), intent->handlingApplicationId(),
+                                           intent->requiredCapabilities(),
+                                           intent->visibility() == IntentInfo::Public ? Intent::Public
+                                                                                      : Intent::Private,
+                                           intent->parameterMatch())) {
+                throw Exception(Error::Intents, "could not add intent %1 for package %2")
+                    .arg(intent->id()).arg(package->id());
+            }
+            qCDebug(LogSystem).nospace().noquote() << " * " << intent->id() << " [package: " << package->id() << "]";
+        }
+    }
 
     StartupTimer::instance()->checkpoint("after Intents setup");
 }
 
 void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
-                           int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
-                           const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false)
+                           int quickLaunchRuntimesPerContainer,
+                           qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_applicationManager = ApplicationManager::createInstance(m_isSingleProcessMode);
+    m_packageManager = PackageManager::createInstance(m_packageDatabase, m_installationLocations);
 
-    if (m_applicationDatabase) {
-        setupApplicationManagerWithDatabase();
-    } else {
-        QVector<AbstractApplicationInfo *> appInfoVector;
+    qCDebug(LogSystem) << "Registering packages:";
 
-        if (!singleApp.isEmpty()) {
-            appInfoVector = scanForApplication(singleApp, m_builtinAppsManifestDirs);
-        } else {
-            appInfoVector = scanForApplications(m_builtinAppsManifestDirs,
-                                       m_installedAppsManifestDir,
-                                       m_installationLocations);
+    QVector<Application *> applications;
+    const auto allPackages = m_packageManager->packages();
+    for (auto package : allPackages) {
+        qCDebug(LogSystem).nospace().noquote() << " * " << package->id() << " [at: "
+                                               << QDir().relativeFilePath(package->info()->baseDir().path()) << "]";
+        const auto appInfos = package->info()->applications();
+        for (auto appInfo : appInfos) {
+            applications << new Application(appInfo, package);
+            qCDebug(LogSystem).nospace().noquote() << "   * application:" << appInfo->id();
         }
-
-        QVector<AbstractApplication *> apps = AbstractApplication::fromApplicationInfoVector(appInfoVector);
-        m_applicationManager->setApplications(apps);
     }
 
-    if (!singleApp.isEmpty())
-        m_applicationManager->enableSingleAppMode();
+    m_applicationManager = ApplicationManager::createInstance(m_isSingleProcessMode);
+    m_applicationManager->setApplications(applications);
+
+    connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::applicationsChanged,
+            this, [this]() {
+        //m_packageDatabase->saveToCache();
+        //TODO: this is wrong - we haven't update the info cache!
+    });
 
     if (m_noSecurity)
         m_applicationManager->setSecurityChecksEnabled(false);
@@ -540,27 +555,11 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     StartupTimer::instance()->checkpoint("after quick-launcher setup");
 }
 
-void Main::setupApplicationManagerWithDatabase()
-{
-    m_applicationManager->setApplications(m_applicationDatabase->read());
-
-    connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::applicationsChanged,
-            this, [this]() {
-        try {
-            if (m_applicationDatabase)
-                m_applicationDatabase->write(m_applicationManager->applications());
-        } catch (const Exception &e) {
-            qCCritical(LogInstaller) << "Failed to write the application database to disk:" << e.errorString();
-            m_applicationDatabase->invalidate(); // make sure that the next AM start will rebuild the DB
-        }
-    });
-}
-
 void Main::setupInstaller(const QStringList &caCertificatePaths,
                           const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if !defined(AM_DISABLE_INSTALLER)
-    if (!Package::checkCorrectLocale()) {
+    if (!PackageUtilities::checkCorrectLocale()) {
         // we should really throw here, but so many embedded systems are badly set up
         qCWarning(LogDeployment) << "The appman installer needs a UTF-8 locale to work correctly: "
                                     "even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
@@ -574,19 +573,13 @@ void Main::setupInstaller(const QStringList &caCertificatePaths,
 
     StartupTimer::instance()->checkpoint("after installer setup checks");
 
-    QString error;
-    m_applicationInstaller = ApplicationInstaller::createInstance(m_installationLocations,
-                                                                  m_installedAppsManifestDir,
-                                                                  hardwareId(),
-                                                                  &error);
-    if (Q_UNLIKELY(!m_applicationInstaller))
-        throw Exception(Error::System, error);
+    m_applicationInstaller = ApplicationInstaller::createInstance(m_packageManager);
 
     if (m_developmentMode)
-        m_applicationInstaller->setDevelopmentMode(true);
+        m_packageManager->setDevelopmentMode(true);
 
     if (m_noSecurity) {
-        m_applicationInstaller->setAllowInstallationOfUnsignedPackages(true);
+        m_packageManager->setAllowInstallationOfUnsignedPackages(true);
     } else {
         QList<QByteArray> caCertificateList;
 
@@ -599,13 +592,13 @@ void Main::setupInstaller(const QStringList &caCertificatePaths,
                 throw Exception(f, "CA-certificate file is empty");
             caCertificateList << cert;
         }
-        m_applicationInstaller->setCACertificates(caCertificateList);
+        m_packageManager->setCACertificates(caCertificateList);
     }
 
     uint minUserId, maxUserId, commonGroupId;
     if (userIdSeparation && userIdSeparation(&minUserId, &maxUserId, &commonGroupId)) {
 #  if defined(Q_OS_LINUX)
-        if (!m_applicationInstaller->enableApplicationUserIdSeparation(minUserId, maxUserId, commonGroupId))
+        if (!m_packageManager->enableApplicationUserIdSeparation(minUserId, maxUserId, commonGroupId))
             throw Exception("could not enable application user-id separation in the installer.");
 #  else
         qCCritical(LogSystem) << "WARNING: application user-id separation requested, but not possible on this platform.";
@@ -613,9 +606,12 @@ void Main::setupInstaller(const QStringList &caCertificatePaths,
     }
 
     //TODO: this could be delayed, but needs to have a lock on the app-db in this case
-    m_applicationInstaller->cleanupBrokenInstallations();
+    m_packageManager->cleanupBrokenInstallations();
 
-    StartupTimer::instance()->checkpoint("after ApplicationInstaller instantiation");
+    StartupTimer::instance()->checkpoint("after PackageManager instantiation");
+#else
+    Q_UNUSED(caCertificatePaths)
+    Q_UNUSED(userIdSeparation)
 #endif // AM_DISABLE_INSTALLER
 }
 
@@ -1008,9 +1004,9 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
     };
 
 #  if !defined(AM_DISABLE_INSTALLER)
-    if (m_applicationInstaller) {
-        addInterface(new ApplicationInstallerDBusContextAdaptor(m_applicationInstaller),
-                     "io.qt.ApplicationManager", "/ApplicationInstaller");
+    if (m_packageManager) {
+        addInterface(new PackageManagerDBusContextAdaptor(m_packageManager),
+                     "io.qt.ApplicationManager", "/PackageManager");
     }
 #  endif
 #  if !defined(AM_HEADLESS)
@@ -1075,149 +1071,6 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
     Q_UNUSED(busForInterface)
     Q_UNUSED(policyForInterface)
 #endif // defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
-}
-
-
-QVector<AbstractApplicationInfo *> Main::scanForApplication(const QString &singleAppInfoYaml,
-        const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false)
-{
-    QVector<AbstractApplicationInfo *> result;
-    YamlApplicationScanner yas;
-
-    QDir appDir = QFileInfo(singleAppInfoYaml).dir();
-
-    QScopedPointer<ApplicationInfo> a(yas.scan(singleAppInfoYaml));
-    Q_ASSERT(a);
-
-    if (!RuntimeFactory::instance()->manager(a->runtimeName())) {
-        qCDebug(LogSystem) << "Ignoring application" << a->id() << ", because it uses an unknown runtime:" << a->runtimeName();
-        return result;
-    }
-
-    QStringList aliasPaths = appDir.entryList(QStringList(qSL("info-*.yaml")));
-    std::vector<std::unique_ptr<AbstractApplicationInfo>> aliases;
-
-    for (int i = 0; i < aliasPaths.size(); ++i) {
-        std::unique_ptr<AbstractApplicationInfo> alias(yas.scanAlias(appDir.absoluteFilePath(aliasPaths.at(i)), a.data()));
-
-        Q_ASSERT(alias);
-        Q_ASSERT(alias->isAlias());
-
-        aliases.push_back(std::move(alias));
-    }
-
-    if (appDir.cdUp()) {
-        for (const QString &dir : builtinAppsDirs) {
-            if (appDir == QDir(dir)) {
-                a->setBuiltIn(true);
-                break;
-            }
-        }
-    }
-
-    result << a.take();
-    for (auto &&alias : aliases)
-        result << alias.release();
-
-    return result;
-}
-
-QVector<AbstractApplicationInfo *> Main::scanForApplications(const QStringList &builtinAppsDirs, const QString &installedAppsDir,
-        const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false)
-{
-    QVector<AbstractApplicationInfo *> result;
-    YamlApplicationScanner yas;
-
-    auto scan = [&result, &yas, &installationLocations](const QDir &baseDir, bool scanningBuiltinApps) {
-        auto flags = scanningBuiltinApps ? QDir::Dirs | QDir::NoDotAndDotDot
-                                         : QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks;
-        const QStringList appDirNames = baseDir.entryList(flags);
-
-        for (const QString &appDirName : appDirNames) {
-            if (appDirName.endsWith('+') || appDirName.endsWith('-'))
-                continue;
-            QString appIdError;
-            if (!AbstractApplicationInfo::isValidApplicationId(appDirName, false, &appIdError)) {
-                qCDebug(LogSystem) << "Ignoring application directory" << appDirName
-                                   << ": not a valid application-id:" << qPrintable(appIdError);
-                continue;
-            }
-            QDir appDir = baseDir.absoluteFilePath(appDirName);
-            if (!appDir.exists())
-                continue;
-            if (!appDir.exists(qSL("info.yaml"))) {
-                qCDebug(LogSystem) << "Couldn't find a info.yaml in:" << appDir;
-                continue;
-            }
-            if (!scanningBuiltinApps && !appDir.exists(qSL("installation-report.yaml")))
-                continue;
-
-            QScopedPointer<ApplicationInfo> a(yas.scan(appDir.absoluteFilePath(qSL("info.yaml"))));
-            Q_ASSERT(a);
-
-            AbstractRuntimeManager *runtimeManager = RuntimeFactory::instance()->manager(a->runtimeName());
-            if (!runtimeManager) {
-                qCDebug(LogSystem) << "Ignoring application" << a->id() << ", because it uses an unknown runtime:" << a->runtimeName();
-                continue;
-            }
-            if (runtimeManager->supportsQuickLaunch()) {
-                if (a->supportsApplicationInterface())
-                    qCDebug(LogSystem) << "Ignoring supportsApplicationInterface for application" << a->id() <<
-                                          "as the runtime launcher supports it by default";
-                a->setSupportsApplicationInterface(true);
-            }
-            if (a->id() != appDirName) {
-                throw Exception(Error::Parse, "an info.yaml for built-in applications must be in a directory "
-                                              "that has the same name as the application's id: found %1 in %2")
-                    .arg(a->id(), appDirName);
-            }
-            if (scanningBuiltinApps) {
-                a->setBuiltIn(true);
-                QStringList aliasPaths = appDir.entryList(QStringList(qSL("info-*.yaml")));
-                std::vector<std::unique_ptr<AbstractApplicationInfo>> aliases;
-
-                for (int i = 0; i < aliasPaths.size(); ++i) {
-                    std::unique_ptr<AbstractApplicationInfo> alias(yas.scanAlias(appDir.absoluteFilePath(aliasPaths.at(i)), a.data()));
-
-                    Q_ASSERT(alias);
-                    Q_ASSERT(alias->isAlias());
-
-                    aliases.push_back(std::move(alias));
-                }
-                result << a.take();
-                for (auto &&alias : aliases)
-                    result << alias.release();
-            } else { // 3rd-party apps
-                QFile f(appDir.absoluteFilePath(qSL("installation-report.yaml")));
-                if (!f.open(QFile::ReadOnly))
-                    continue;
-
-                QScopedPointer<InstallationReport> report(new InstallationReport(a->id()));
-                if (!report->deserialize(&f))
-                    continue;
-
-#if !defined(AM_DISABLE_INSTALLER)
-                // fix the basedir of the application
-                for (const InstallationLocation &il : installationLocations) {
-                    if (il.id() == report->installationLocationId()) {
-                        a->setCodeDir(il.installationPath() + a->id());
-                        break;
-                    }
-                }
-#endif
-                a->setInstallationReport(report.take());
-                result << a.take();
-            }
-        }
-    };
-
-    for (const QString &dir : builtinAppsDirs)
-        scan(dir, true);
-#if !defined(AM_DISABLE_INSTALLER)
-    if (!installedAppsDir.isEmpty())
-        scan(installedAppsDir, false);
-#endif
-    return result;
 }
 
 QString Main::hardwareId() const

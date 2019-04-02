@@ -54,14 +54,14 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-#include "package_p.h"
+#include "packageutilities_p.h"
 #include "packageextractor.h"
 #include "packageextractor_p.h"
 #include "exception.h"
 #include "error.h"
 #include "installationreport.h"
 #include "utilities.h"
-#include "applicationinfo.h"
+#include "packageinfo.h"
 #include "qtyaml.h"
 
 // archive.h might #define this for Android
@@ -463,7 +463,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
             .arg(error.errorString()).arg(error.line).arg(error.column);
 
     try {
-        checkYamlFormat(docs, -2 /*at least 2 docs*/, { isHeader ? "am-package-header" : "am-package-footer" }, 1);
+        checkYamlFormat(docs, -2 /*at least 2 docs*/, { isHeader ? "am-package-header" : "am-package-footer" }, 2);
     } catch (const Exception &e) {
         throw Exception(Error::Package, "metadata has an invalid format specification: %1").arg(e.errorString());
     }
@@ -471,12 +471,12 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
     QVariantMap map = docs.at(1).toMap();
 
     if (isHeader) {
-        QString applicationId = map.value(qSL("applicationId")).toString();
+        QString packageId = map.value(qSL("packageId")).toString();
         quint64 diskSpaceUsed = map.value(qSL("diskSpaceUsed")).toULongLong();
 
-        if (applicationId.isNull() || !ApplicationInfo::isValidApplicationId(applicationId))
-            throw Exception(Error::Package, "metadata has an invalid applicationId field (%1)").arg(applicationId);
-        m_report.setApplicationId(applicationId);
+        if (packageId.isNull() || !PackageInfo::isValidApplicationId(packageId))
+            throw Exception(Error::Package, "metadata has an invalid packageId field (%1)").arg(packageId);
+        m_report.setPackageId(packageId);
 
         if (!diskSpaceUsed)
             throw Exception(Error::Package, "metadata has an invalid diskSpaceUsed field (%1)").arg(diskSpaceUsed);

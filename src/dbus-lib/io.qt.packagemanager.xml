@@ -1,6 +1,6 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
-  <interface name="io.qt.ApplicationInstaller">
+  <interface name="io.qt.PackageManager">
     <property name="allowInstallationOfUnsignedPackages" type="b" access="read"/>
     <property name="developmentMode" type="b" access="read"/>
     <property name="applicationUserIdSeparation" type="b" access="read"/>
@@ -26,7 +26,7 @@
     </signal>
     <signal name="taskRequestingInstallationAcknowledge">
       <arg name="taskId" type="s" direction="out"/>
-      <arg name="applicationAsVariantMap" type="a{sv}" direction="out"/>
+      <arg name="packageAsVariantMap" type="a{sv}" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap"/>
       <arg name="packageExtraMetaData" type="a{sv}" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="QVariantMap"/>
@@ -36,10 +36,18 @@
     <signal name="taskBlockingUntilInstallationAcknowledge">
       <arg name="taskId" type="s" direction="out"/>
     </signal>
+    <method name="packageIds">
+      <arg type="as" direction="out"/>
+    </method>
+    <method name="get">
+      <arg type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
     <method name="installationLocationIds">
       <arg type="as" direction="out"/>
     </method>
-    <method name="installationLocationIdFromApplication">
+    <method name="installationLocationIdFromPackage">
       <arg type="s" direction="out"/>
       <arg name="id" type="s" direction="in"/>
     </method>
@@ -71,7 +79,7 @@
       <arg type="s" direction="out"/>
       <arg name="taskId" type="s" direction="in"/>
     </method>
-    <method name="taskApplicationId">
+    <method name="taskPackageId">
       <arg type="s" direction="out"/>
       <arg name="taskId" type="s" direction="in"/>
     </method>
@@ -87,16 +95,16 @@
       <arg name="version1" type="s" direction="in"/>
       <arg name="version2" type="s" direction="in"/>
     </method>
-    <method name="installedApplicationSize">
+    <method name="installedPackageSize">
       <arg type="x" direction="out"/>
       <arg name="id" type="s" direction="in"/>
     </method>
-    <method name="installedApplicationExtraMetaData">
+    <method name="installedPackageExtraMetaData">
       <arg type="a{sv}" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
       <arg name="id" type="s" direction="in"/>
     </method>
-    <method name="installedApplicationExtraSignedMetaData">
+    <method name="installedPackageExtraSignedMetaData">
       <arg type="a{sv}" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
       <arg name="id" type="s" direction="in"/>

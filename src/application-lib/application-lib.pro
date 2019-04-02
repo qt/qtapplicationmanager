@@ -13,15 +13,21 @@ CONFIG -= create_cmake
 
 HEADERS += \
     applicationinfo.h \
-    applicationscanner.h \
-    yamlapplicationscanner.h \
+    packagescanner.h \
+    yamlpackagescanner.h \
     installationreport.h \
     applicationinterface.h \
+    intentinfo.h \
+    packageinfo.h \
+    packagedatabase.h \
 
 SOURCES += \
     applicationinfo.cpp \
-    yamlapplicationscanner.cpp \
+    yamlpackagescanner.cpp \
     installationreport.cpp \
     applicationinterface.cpp \
+    intentinfo.cpp \
+    packageinfo.cpp \
+    packagedatabase.cpp \
 
 load(qt_module)

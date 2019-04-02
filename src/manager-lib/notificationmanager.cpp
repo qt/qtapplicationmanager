@@ -207,7 +207,7 @@ enum Roles
 struct NotificationData
 {
     uint id;
-    AbstractApplication *application;
+    Application *application;
     uint priority;
     QString summary;
     QString body;
@@ -353,7 +353,7 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
     case Icon:
          if (!n->iconUrl.isEmpty())
              return n->iconUrl;
-         return n->application ? n->application->icon() : QString();
+         return n->application ? n->application->info()->packageInfo()->icon() : QString();
     case Image:
         return n->imageUrl;
     case ShowActionsAsIcons:
@@ -580,7 +580,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
         qCDebug(LogNotifications) << "  -> adding new notification with id" << id;
     }
 
-    AbstractApplication *app = ApplicationManager::instance()->fromId(app_name);
+    Application *app = ApplicationManager::instance()->fromId(app_name);
 
     if (replaces && app != n->application) {
         // no hijacking allowed

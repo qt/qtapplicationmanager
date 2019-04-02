@@ -42,137 +42,70 @@
 
 #pragma once
 
-#include <QDataStream>
 #include <QDir>
 #include <QMap>
 #include <QString>
 #include <QStringList>
 #include <QVariantMap>
+#include <QVector>
 
 #include <QtAppManCommon/global.h>
-#include <QtAppManApplication/installationreport.h>
+
+QT_FORWARD_DECLARE_CLASS(QDataStream)
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationManager;
-class InstallationReport;
+class PackageInfo;
 
-class AbstractApplicationInfo
+class ApplicationInfo
 {
 public:
-    AbstractApplicationInfo();
-    virtual ~AbstractApplicationInfo() {}
+    ApplicationInfo(PackageInfo *packageInfo);
 
-    QString id() const;
-    int uniqueNumber() const;
-    QMap<QString, QString> names() const;
-    QString name(const QString &language) const;
-    QString icon() const;
-    QString documentUrl() const;
-    QVariantMap applicationProperties() const;
-    QVariantMap allAppProperties() const;
+    PackageInfo *packageInfo() const;
 
     QVariantMap toVariantMap() const;
-    virtual void toVariantMapHelper(QVariantMap &map) const;
-
-    virtual bool isAlias() const = 0;
-    virtual void writeToDataStream(QDataStream &ds) const;
-    virtual void validate() const Q_DECL_NOEXCEPT_EXPR(false);
-
-    static bool isValidApplicationId(const QString &appId, bool isAliasName = false, QString *errorString = nullptr);
-    static bool isValidIcon(const QString &icon, QString &errorString);
-    static AbstractApplicationInfo *readFromDataStream(QDataStream &ds);
-
-protected:
-    virtual void read(QDataStream &ds);
-
-    // static part from info.json
-    QString m_id;
-    int m_uniqueNumber;
-
-    QMap<QString, QString> m_name; // language -> name
-    QString m_icon; // relative to info.json location
-    QString m_documentUrl;
-    QVariantMap m_sysAppProperties;
-    QVariantMap m_allAppProperties;
-
-    friend class YamlApplicationScanner;
-};
-
-class ApplicationAliasInfo : public AbstractApplicationInfo
-{
-public:
-    bool isAlias() const override { return true; }
-};
-
-class ApplicationInfo : public AbstractApplicationInfo
-{
-public:
-    ApplicationInfo();
-
-    bool isAlias() const override { return false; }
-    void writeToDataStream(QDataStream &ds) const override;
-    void validate() const Q_DECL_NOEXCEPT_EXPR(false) override;
-
-    const QDir &codeDir() const { return m_codeDir; }
+    QString id() const;
+    int uniqueNumber() const;
+    QVariantMap applicationProperties() const;
+    QVariantMap allAppProperties() const;
     QString absoluteCodeFilePath() const;
     QString codeFilePath() const;
     QString runtimeName() const;
     QVariantMap runtimeParameters() const;
-    QVariantMap environmentVariables() const { return m_environmentVariables; }
-    bool isBuiltIn() const;
     QStringList capabilities() const;
     QStringList supportedMimeTypes() const;
-    QStringList categories() const;
-    QString version() const;
     QVariantMap openGLConfiguration() const;
-    QVariantList intents() const;
     bool supportsApplicationInterface() const;
 
-    void setSupportsApplicationInterface(bool supportsAppInterface);
-    void setBuiltIn(bool builtIn);
-
-    const InstallationReport *installationReport() const { return m_installationReport.data(); }
-    void setInstallationReport(InstallationReport *report) { m_installationReport.reset(report); }
-    QString manifestDir() const { return m_manifestDir.absolutePath(); }
-    uint uid() const { return m_uid; }
-    void setManifestDir(const QString &path) { m_manifestDir.setPath(path); }
-    void setCodeDir(const QString &path) { m_codeDir.setPath(path); }
-
-    void toVariantMapHelper(QVariantMap &map) const override;
+    void writeToDataStream(QDataStream &ds) const;
+    static ApplicationInfo *readFromDataStream(PackageInfo *pkg, QDataStream &ds);
 
 private:
-    void read(QDataStream &ds) override;
+    void read(QDataStream &ds);
+
+    // static part from info.json
+    PackageInfo *m_packageInfo;
+
+    QString m_id;
+    int m_uniqueNumber;
+
+    QVariantMap m_sysAppProperties;
+    QVariantMap m_allAppProperties;
 
     QString m_codeFilePath; // relative to info.json location
     QString m_runtimeName;
     QVariantMap m_runtimeParameters;
-    QVariantMap m_environmentVariables;
     bool m_supportsApplicationInterface = false;
-
-    bool m_builtIn = false; // system app - not removable
-
     QStringList m_capabilities;
-    QStringList m_categories;
-    QStringList m_mimeTypes;
-
-    QString m_version;
-
     QVariantMap m_openGLConfiguration;
-    QVariantList m_intents;
-    QVariantMap m_dlt;
+    QStringList m_supportedMimeTypes; // deprecated
 
-    // added by installer
-    QScopedPointer<InstallationReport> m_installationReport;
-    QDir m_manifestDir;
-    QDir m_codeDir;
-    uint m_uid = uint(-1); // unix user id - move to installationReport
-
-    friend class YamlApplicationScanner;
     friend class ApplicationManager; // needed to update installation status
-    friend class ApplicationDatabase; // needed to create ApplicationInfo objects
+    friend class PackageDatabase; // needed to create ApplicationInfo objects
     friend class InstallationTask; // needed to set m_uid and m_builtin during the installation
 
+    friend class YamlPackageScanner;
     Q_DISABLE_COPY(ApplicationInfo)
 };
 

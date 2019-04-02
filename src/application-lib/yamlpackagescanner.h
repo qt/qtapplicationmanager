@@ -42,15 +42,18 @@
 
 #pragma once
 
-#include <QtAppManCommon/global.h>
-#include <QStringList>
+#include <QtAppManApplication/packagescanner.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-namespace Package
+
+class YamlPackageScanner : public PackageScanner
 {
-bool ensureCorrectLocale(QStringList *warnings = nullptr);
-bool checkCorrectLocale();
-}
+public:
+    YamlPackageScanner();
+
+    PackageInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
+    QString metaDataFileName() const override;
+};
 
 QT_END_NAMESPACE_AM

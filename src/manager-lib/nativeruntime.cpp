@@ -215,7 +215,7 @@ bool NativeRuntime::initialize()
         if (!m_app)
             return false;
 
-        m_container->setProgram(m_app->nonAliasedInfo()->absoluteCodeFilePath());
+        m_container->setProgram(m_app->info()->absoluteCodeFilePath());
         m_container->setBaseDirectory(m_app->codeDir());
         return true;
     }
@@ -271,7 +271,7 @@ bool NativeRuntime::start()
 
     QVariantMap openGLConfig;
     if (m_app)
-        openGLConfig = m_app->nonAliasedInfo()->openGLConfiguration();
+        openGLConfig = m_app->info()->openGLConfiguration();
     if (openGLConfig.isEmpty())
         openGLConfig = manager()->systemOpenGLConfiguration();
     if (!openGLConfig.isEmpty())
@@ -392,8 +392,10 @@ void NativeRuntime::stop(bool forceKill)
 
 void NativeRuntime::onProcessStarted()
 {
-    if (!m_startedViaLauncher && !application()->nonAliasedInfo()->supportsApplicationInterface())
+    if (!m_startedViaLauncher
+            && !(application()->info()->supportsApplicationInterface() || manager()->supportsQuickLaunch())) {
         setState(Am::Running);
+    }
 }
 
 void NativeRuntime::onProcessError(Am::ProcessError error)
@@ -467,7 +469,7 @@ bool NativeRuntime::startApplicationViaLauncher()
         return false;
 
     QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
-    QString pathInContainer = m_container->mapHostPathToContainer(m_app->nonAliasedInfo()->absoluteCodeFilePath());
+    QString pathInContainer = m_container->mapHostPathToContainer(m_app->info()->absoluteCodeFilePath());
 
     emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
                                               convertFromJSVariant(QVariant(m_app->info()->toVariantMap())).toMap(),

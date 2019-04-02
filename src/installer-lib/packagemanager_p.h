@@ -40,51 +40,57 @@
 **
 ****************************************************************************/
 
+#pragma once
 
-#include <QFileInfo>
-#include <QDataStream>
-#include <QCryptographicHash>
+#include <QMutex>
+#include <QList>
+#include <QSet>
+#include <QScopedPointer>
+#include <QThread>
 
-#include <archive.h>
-
-#include "package_p.h"
+#include <QtAppManInstaller/packagemanager.h>
+#include <QtAppManApplication/packagedatabase.h>
+#include <QtAppManInstaller/asynchronoustask.h>
+#include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString)
-    : Exception(Error::Archive, qSL("[libarchive] ") + qL1S(errorString) + qSL(": ") + QString::fromLocal8Bit(::archive_error_string(ar)))
-{ }
+bool removeRecursiveHelper(const QString &path);
 
+class PackageManagerPrivate
+{
+public:
+    PackageDatabase *database = nullptr;
+    QVector<Package *> packages;
 
-QVariantMap PackageUtilities::headerDataForDigest = QVariantMap {
-    { "extraSigned", QVariantMap() }
+    bool developmentMode = false;
+    bool allowInstallationOfUnsignedPackages = false;
+    bool userIdSeparation = false;
+    uint minUserId = uint(-1);
+    uint maxUserId = uint(-1);
+    uint commonGroupId = uint(-1);
+
+    QVector<InstallationLocation> installationLocations;
+
+    QString error;
+
+    QString hardwareId;
+    QList<QByteArray> chainOfTrust;
+
+    QList<AsynchronousTask *> incomingTaskList;     // incoming queue
+    QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge
+    AsynchronousTask *activeTask = nullptr;         // currently active
+
+    QList<AsynchronousTask *> allTasks() const
+    {
+        QList<AsynchronousTask *> all = incomingTaskList;
+        if (!installationTaskList.isEmpty())
+            all += installationTaskList;
+        if (activeTask)
+            all += activeTask;
+        return all;
+    }
 };
 
-void PackageUtilities::addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest)
-{
-    // (using QDataStream would be more readable, but it would make the algorithm Qt dependent)
-    QByteArray addToDigest = ((fi.isDir()) ? "D/" : "F/")
-            + QByteArray::number(fi.isDir() ? 0 : fi.size())
-            + '/' + entryFilePath.toUtf8();
-    digest.addData(addToDigest);
-}
-
-void PackageUtilities::addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) Q_DECL_NOEXCEPT_EXPR(false)
-{
-    for (auto it = headerDataForDigest.constBegin(); it != headerDataForDigest.constEnd(); ++it) {
-        if (header.contains(it.key())) {
-            QByteArray ba;
-            QDataStream ds(&ba, QIODevice::WriteOnly);
-
-            QVariant v = header.value(it.key());
-            if (!v.convert(int(it.value().type())))
-                throw Exception(Error::Package, "metadata field %1 has invalid type for digest calculation (cannot convert %2 to %3)")
-                    .arg(it.key()).arg(header.value(it.key()).type()).arg(it.value().type());
-            ds << v;
-
-            digest.addData(ba);
-        }
-    }
-}
-
 QT_END_NAMESPACE_AM
+// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

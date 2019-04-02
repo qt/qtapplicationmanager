@@ -1,7 +1,6 @@
 /****************************************************************************
 **
 ** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Luxoft Application Manager.
@@ -42,63 +41,82 @@
 
 #pragma once
 
+#include <QDir>
+#include <QMap>
 #include <QString>
 #include <QStringList>
-#include <QByteArray>
 #include <QVariantMap>
+#include <QVector>
+
 #include <QtAppManCommon/global.h>
 
-QT_FORWARD_DECLARE_CLASS(QIODevice)
+QT_FORWARD_DECLARE_CLASS(QDataStream)
 
 QT_BEGIN_NAMESPACE_AM
 
-class InstallationReport
+class InstallationReport;
+class IntentInfo;
+class ApplicationInfo;
+class YamlPackageScanner;
+
+class PackageInfo
 {
 public:
-    InstallationReport(const QString &packageId = QString());
+    PackageInfo();
+    ~PackageInfo();
 
-    QString packageId() const;
-    void setPackageId(const QString &packageId);
+    void validate() const Q_DECL_NOEXCEPT_EXPR(false);
 
-    QString installationLocationId() const;
-    void setInstallationLocationId(const QString &installationLocationId);
+    QString id() const;
 
-    QVariantMap extraMetaData() const;
-    void setExtraMetaData(const QVariantMap &extraMetaData);
-    QVariantMap extraSignedMetaData() const;
-    void setExtraSignedMetaData(const QVariantMap &extraSignedMetaData);
+    QMap<QString, QString> names() const;
+    QString name(const QString &language) const;
+    QMap<QString, QString> descriptions() const;
+    QString description(const QString &language) const;
+    QString icon() const;
+    QStringList categories() const;
 
-    QByteArray digest() const;
-    void setDigest(const QByteArray &sha1);
+    bool isBuiltIn() const;
+    void setBuiltIn(bool builtIn);
+    QString version() const;
+    QVariantMap dltConfiguration() const;
+    uint uid() const { return m_uid; }
 
-    quint64 diskSpaceUsed() const;
-    void setDiskSpaceUsed(quint64 diskSpaceUsed);
+    const QDir &baseDir() const;
+    void setBaseDir(const QDir &dir);
 
-    QByteArray developerSignature() const;
-    void setDeveloperSignature(const QByteArray &developerSignature);
+    QVector<ApplicationInfo *> applications() const;
+    QVector<IntentInfo *> intents() const;
 
-    QByteArray storeSignature() const;
-    void setStoreSignature(const QByteArray &storeSignature);
+    const InstallationReport *installationReport() const;
+    void setInstallationReport(InstallationReport *report);
 
-    QStringList files() const;
-    void addFile(const QString &file);
-    void addFiles(const QStringList &files);
+    void writeToDataStream(QDataStream &ds) const;
+    static PackageInfo *readFromDataStream(QDataStream &ds);
 
-    bool isValid() const;
-
-    bool deserialize(QIODevice *from);
-    bool serialize(QIODevice *to) const;
+    static bool isValidApplicationId(const QString &appId, QString *errorString = nullptr);
+    static bool isValidIcon(const QString &icon, QString *errorString = nullptr);
 
 private:
-    QString m_packageId;
-    QString m_installationLocationId;
-    QByteArray m_digest;
-    quint64 m_diskSpaceUsed = 0;
-    QStringList m_files;
-    QByteArray m_developerSignature;
-    QByteArray m_storeSignature;
-    QVariantMap m_extraMetaData;
-    QVariantMap m_extraSignedMetaData;
+    QString m_id;
+    QMap<QString, QString> m_name; // language -> name
+    QMap<QString, QString> m_description; // language -> description
+    QStringList m_categories;
+    QString m_icon; // relative to info.json location
+    QString m_version;
+    bool m_builtIn = false; // system package - not removable
+    uint m_uid = uint(-1); // unix user id - move to installationReport
+    QVariantMap m_dltConfiguration;
+    QVector<ApplicationInfo *> m_applications;
+    QVector<IntentInfo *> m_intents;
+
+    // added by installer
+    QScopedPointer<InstallationReport> m_installationReport;
+    QDir m_baseDir;
+
+    friend class YamlPackageScanner;
+    friend class InstallationTask;
+    Q_DISABLE_COPY(PackageInfo)
 };
 
 QT_END_NAMESPACE_AM

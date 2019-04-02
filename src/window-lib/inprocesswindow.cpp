@@ -45,7 +45,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-InProcessWindow::InProcessWindow(AbstractApplication *app, const QSharedPointer<InProcessSurfaceItem> &surfaceItem)
+InProcessWindow::InProcessWindow(Application *app, const QSharedPointer<InProcessSurfaceItem> &surfaceItem)
     : Window(app)
     , m_surfaceItem(surfaceItem)
 {

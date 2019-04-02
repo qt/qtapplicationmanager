@@ -53,7 +53,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class AbstractApplication;
+class Application;
 class ApplicationIPCInterfaceAttached;
 class IpcProxyObject;
 
@@ -70,12 +70,12 @@ public:
 
     QString interfaceName() const;
     QString pathName() const;
-    bool isValidForApplication(AbstractApplication *app) const;
+    bool isValidForApplication(Application *app) const;
     QObject *serviceObject() const;
     void setServiceObject(QObject *serviceObject);
 
 #if defined(QT_DBUS_LIB)
-    bool dbusRegister(AbstractApplication *app, QDBusConnection connection, const QString &debugPathPrefix = QString());
+    bool dbusRegister(Application *app, QDBusConnection connection, const QString &debugPathPrefix = QString());
     bool dbusUnregister(QDBusConnection connection);
 #endif
 

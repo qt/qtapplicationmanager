@@ -33,6 +33,8 @@
 #include "global.h"
 #include "application.h"
 #include "applicationinfo.h"
+#include "packageinfo.h"
+#include "package.h"
 #include "abstractruntime.h"
 
 QT_USE_NAMESPACE_AM
@@ -48,19 +50,19 @@ public:
 
     void setSlowAnimations(bool) override {}
 
-    qint64 applicationProcessId() const
+    qint64 applicationProcessId() const override
     {
         return m_state == Am::Running ? 1 : 0;
     }
 
 public slots:
-    bool start()
+    bool start() override
     {
         m_state = Am::Running;
         return true;
     }
 
-    void stop(bool forceKill)
+    void stop(bool forceKill) override
     {
         Q_UNUSED(forceKill);
         m_state = Am::NotRunning;
@@ -104,7 +106,10 @@ private slots:
 // the application no longer holds a reference to it
 void tst_Application::runtimeDestroyed()
 {
-    auto app = new Application(new ApplicationInfo);
+    auto pi = new PackageInfo;
+    auto pkg = new Package(pi);
+    auto ai = new ApplicationInfo(pi);
+    auto app = new Application(ai, pkg);
 
     auto runtimeManager = new TestRuntimeManager(qSL("foo"), qApp);
     auto runtime = runtimeManager->create(nullptr, app);

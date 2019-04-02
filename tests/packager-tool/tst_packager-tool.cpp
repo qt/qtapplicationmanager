@@ -36,8 +36,9 @@
 #include "application.h"
 #include "qtyaml.h"
 #include "exception.h"
+#include "packagedatabase.h"
+#include "packagemanager.h"
 #include "packagingjob.h"
-#include "applicationinstaller.h"
 #include "qmlinprocessruntime.h"
 #include "runtimefactory.h"
 #include "utilities.h"
@@ -74,7 +75,7 @@ private:
 
     void installPackage(const QString &filePath);
 
-    ApplicationInstaller *m_ai = nullptr;
+    PackageManager *m_pm = nullptr;
     QTemporaryDir m_workDir;
 
     QString m_devPassword;
@@ -93,12 +94,10 @@ void tst_PackagerTool::initTestCase()
     spyTimeout *= timeoutFactor();
 
     QVERIFY(m_workDir.isValid());
-
-    QVERIFY(QDir::root().mkpath(pathTo("manifests")));
     QVERIFY(QDir::root().mkpath(pathTo("internal-0")));
     QVERIFY(QDir::root().mkpath(pathTo("documents-0")));
 
-    m_hardwareId = "foobar";
+    m_hardwareId = qSL("foobar");
 
     QVariantMap internalLocation {
         { "id", "internal-0" },
@@ -107,9 +106,13 @@ void tst_PackagerTool::initTestCase()
     };
     QVector<InstallationLocation> locations = InstallationLocation::parseInstallationLocations({ internalLocation }, m_hardwareId);
 
-    QString errorString;
-    m_ai = ApplicationInstaller::createInstance(locations, pathTo("manifests"), m_hardwareId, &errorString);
-    QVERIFY2(m_ai, qPrintable(errorString));
+    PackageDatabase *pdb = new PackageDatabase(pathTo("internal-0"));
+    try {
+        m_pm = PackageManager::createInstance(pdb, locations);
+        m_pm->setHardwareId(m_hardwareId);
+    } catch (const Exception &e) {
+        QVERIFY2(false, e.what());
+    }
 
     QVERIFY(ApplicationManager::createInstance(true));
 
@@ -125,7 +128,7 @@ void tst_PackagerTool::initTestCase()
     chainOfTrust << devcaFile.readAll() << caFile.readAll();
     QVERIFY(!chainOfTrust.at(0).isEmpty());
     QVERIFY(!chainOfTrust.at(1).isEmpty());
-    m_ai->setCACertificates(chainOfTrust);
+    m_pm->setCACertificates(chainOfTrust);
 
     m_caFiles << devcaFile.fileName() << caFile.fileName();
 
@@ -139,7 +142,6 @@ void tst_PackagerTool::initTestCase()
 
 void tst_PackagerTool::cleanup()
 {
-    recursiveOperation(pathTo("manifests"), safeRemove);
     recursiveOperation(pathTo("internal-0"), safeRemove);
     recursiveOperation(pathTo("documents-0"), safeRemove);
 
@@ -284,10 +286,10 @@ void tst_PackagerTool::brokenMetadata_data()
     QTest::addColumn<QVariant>("yamlValue");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("missing-name")       << "name"    << QVariant("") << "~.*the 'name' field must not be empty";
-    QTest::newRow("missing-runtime")    << "runtime" << QVariant("") << "~.*the 'runtimeName' field must not be empty";
-    QTest::newRow("missing-identifier") << "id"      << QVariant("") << "~.*the identifier \\(\\) is not a valid application-id: must not be empty";
-    QTest::newRow("missing-code")       << "code"    << QVariant("") << "~.*the 'code' field must not be empty";
+    QTest::newRow("missing-name")       << qSL("name")    << QVariant() << "~.*the 'name' field must not be empty";
+    QTest::newRow("missing-runtime")    << qSL("runtime") << QVariant() << "~.*the 'runtimeName' field must not be empty.*";
+    QTest::newRow("missing-identifier") << qSL("id")      << QVariant() << "~.*packages need to have an id.*";
+    QTest::newRow("missing-code")       << qSL("code")    << QVariant() << "~.*the 'code' field must not be empty.*";
 }
 
 void tst_PackagerTool::brokenMetadata()
@@ -318,18 +320,18 @@ void tst_PackagerTool::iconFileName()
     QTemporaryDir tmp;
     QString errorString;
 
-    createInfoYaml(tmp, "icon", "foo.bar");
+    createInfoYaml(tmp, qSL("icon"), qSL("foo.bar"));
     createCode(tmp);
-    createDummyFile(tmp, "foo.bar", "this-is-a-dummy-icon-file");
+    createDummyFile(tmp, qSL("foo.bar"), "this-is-a-dummy-icon-file");
 
     QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test-foobar-icon.appkg"), tmp.path()), errorString),
             qPrintable(errorString));
 
     // see if the package installs correctly
 
-    m_ai->setAllowInstallationOfUnsignedPackages(true);
+    m_pm->setAllowInstallationOfUnsignedPackages(true);
     installPackage(pathTo("test-foobar-icon.appkg"));
-    m_ai->setAllowInstallationOfUnsignedPackages(false);
+    m_pm->setAllowInstallationOfUnsignedPackages(false);
 
     QDir checkDir(pathTo("internal-0"));
     QVERIFY(checkDir.cd(qSL("com.pelagicore.test")));
@@ -387,23 +389,23 @@ void tst_PackagerTool::createDummyFile(QTemporaryDir &tmp, const QString &fileNa
 
     auto written = code.write(data);
 
-    QCOMPARE(written, (qint64)strlen(data));
+    QCOMPARE(written, static_cast<qint64>(strlen(data)));
 }
 
 void tst_PackagerTool::installPackage(const QString &filePath)
 {
-    QSignalSpy finishedSpy(m_ai, &ApplicationInstaller::taskFinished);
+    QSignalSpy finishedSpy(m_pm, &PackageManager::taskFinished);
 
-    m_ai->setDevelopmentMode(true); // allow packages without store signature
+    m_pm->setDevelopmentMode(true); // allow packages without store signature
 
-    QString taskId = m_ai->startPackageInstallation(qSL("internal-0"),
-            QUrl::fromLocalFile(filePath));
-    m_ai->acknowledgePackageInstallation(taskId);
+    QString taskId = m_pm->startPackageInstallation(qSL("internal-0"),
+                                                    QUrl::fromLocalFile(filePath));
+    m_pm->acknowledgePackageInstallation(taskId);
 
     QVERIFY(finishedSpy.wait(2 * spyTimeout));
     QCOMPARE(finishedSpy.first()[0].toString(), taskId);
 
-    m_ai->setDevelopmentMode(false);
+    m_pm->setDevelopmentMode(false);
 }
 
 QTEST_GUILESS_MAIN(tst_PackagerTool)

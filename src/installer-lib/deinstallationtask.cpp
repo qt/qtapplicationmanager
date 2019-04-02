@@ -41,26 +41,25 @@
 ****************************************************************************/
 
 #include "logging.h"
-#include "applicationinstaller.h"
-#include "applicationinstaller_p.h"
-#include "applicationmanager.h"
+#include "packagemanager.h"
+#include "packagemanager_p.h"
 #include "installationreport.h"
-#include "applicationinfo.h"
+#include "packageinfo.h"
 #include "exception.h"
 #include "scopeutilities.h"
 #include "deinstallationtask.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-DeinstallationTask::DeinstallationTask(ApplicationInfo *app, const InstallationLocation &installationLocation,
+DeinstallationTask::DeinstallationTask(PackageInfo *package, const InstallationLocation &installationLocation,
                                        bool forceDeinstallation, bool keepDocuments, QObject *parent)
     : AsynchronousTask(parent)
-    , m_app(app)
+    , m_package(package)
     , m_installationLocation(installationLocation)
     , m_forceDeinstallation(forceDeinstallation)
     , m_keepDocuments(keepDocuments)
 {
-    m_applicationId = m_app->id(); // in base class
+    m_packageId = m_package->id(); // in base class
 }
 
 bool DeinstallationTask::cancel()
@@ -72,30 +71,30 @@ bool DeinstallationTask::cancel()
 
 void DeinstallationTask::execute()
 {
-    // these have been checked in ApplicationInstaller::removePackage() already
-    Q_ASSERT(m_app);
-    Q_ASSERT(m_app->installationReport());
-    Q_ASSERT(m_app->installationReport()->installationLocationId() == m_installationLocation.id());
+    // these have been checked in PackageManager::removePackage() already
+    Q_ASSERT(m_package);
+    Q_ASSERT(m_package->installationReport());
+    Q_ASSERT(m_package->installationReport()->installationLocationId() == m_installationLocation.id());
     Q_ASSERT(m_installationLocation.isValid());
 
     bool managerApproval = false;
 
     try {
-        // we need to call those ApplicationManager methods in the correct thread
-        // this will also exclusively lock the application for us
-        QMetaObject::invokeMethod(ApplicationManager::instance(),
-                                  "startingApplicationRemoval",
-                                  Qt::BlockingQueuedConnection,
-                                  Q_RETURN_ARG(bool, managerApproval),
-                                  Q_ARG(QString, m_app->id()));
+        // we need to call those PackageManager methods in the correct thread
+        // this will also exclusively lock the package for us
+        QMetaObject::invokeMethod(PackageManager::instance(), [this, &managerApproval]()
+            { managerApproval = PackageManager::instance()->startingPackageRemoval(m_package->id()); },
+            Qt::BlockingQueuedConnection);
+
         if (!managerApproval)
-            throw Exception("ApplicationManager rejected the removal of app %1").arg(m_app->id());
+            throw Exception("ApplicationManager rejected the removal of package %1").arg(m_package->id());
 
         // if the app was running before, we now need to wait until is has actually stopped
-        while (!m_canceled &&
-               (ApplicationManager::instance()->applicationRunState(m_app->id()) != Am::NotRunning)) {
-            QThread::msleep(30);
-        }
+//TODO: this needs to be ported to the new PackageManager architecture
+//        while (!m_canceled &&
+//               (ApplicationManager::instance()->applicationRunState(m_app->id()) != Am::NotRunning)) {
+//            QThread::msleep(30);
+//        }
         // there's a small race condition here, but not doing a planned cancellation isn't harmful
         m_canBeCanceled = false;
         if (m_canceled)
@@ -103,59 +102,50 @@ void DeinstallationTask::execute()
 
         ScopedRenamer docDirRename;
         ScopedRenamer appDirRename;
-        ScopedRenamer manifestRename;
 
         if (!m_keepDocuments) {
-            if (!docDirRename.rename(QDir(m_installationLocation.documentPath()).absoluteFilePath(m_app->id()),
+            if (!docDirRename.rename(QDir(m_installationLocation.documentPath()).absoluteFilePath(m_package->id()),
                                      ScopedRenamer::NameToNameMinus)) {
                 throw Exception(Error::IO, "could not rename %1 to %1-").arg(docDirRename.baseName());
             }
         }
 
-        if (!appDirRename.rename(QDir(m_installationLocation.installationPath()).absoluteFilePath(m_app->id()),
+        if (!appDirRename.rename(QDir(m_installationLocation.installationPath()).absoluteFilePath(m_package->id()),
                                  ScopedRenamer::NameToNameMinus)) {
             throw Exception(Error::IO, "could not rename %1 to %1-").arg(appDirRename.baseName());
         }
 
-        if (!manifestRename.rename(ApplicationInstaller::instance()->manifestDirectory()->absoluteFilePath(m_app->id()),
-                                   ScopedRenamer::NameToNameMinus)) {
-            throw Exception(Error::IO, "could not rename %1 to %1-").arg(manifestRename.baseName());
-        }
-
-        manifestRename.take();
         docDirRename.take();
         appDirRename.take();
 
         // point of no return
 
-        for (ScopedRenamer *toDelete : { &manifestRename, &docDirRename, &appDirRename }) {
+        for (ScopedRenamer *toDelete : { &docDirRename, &appDirRename }) {
             if (toDelete->isRenamed()) {
                 if (!removeRecursiveHelper(toDelete->baseName() + qL1C('-')))
                     qCCritical(LogInstaller) << "ERROR: could not remove" << (toDelete->baseName() + qL1C('-'));
             }
         }
 
-        // we need to call those ApplicationManager methods in the correct thread
+        // we need to call those PackageManager methods in the correct thread
         bool finishOk = false;
-        QMetaObject::invokeMethod(ApplicationManager::instance(),
-                                  "finishedApplicationInstall",
-                                  Qt::BlockingQueuedConnection,
-                                  Q_RETURN_ARG(bool, finishOk),
-                                  Q_ARG(QString, m_applicationId));
+        QMetaObject::invokeMethod(PackageManager::instance(), [this, &finishOk]()
+            { finishOk = PackageManager::instance()->finishedPackageInstall(m_package->id()); },
+            Qt::BlockingQueuedConnection);
+
         if (!finishOk)
-            qCWarning(LogInstaller) << "ApplicationManager did not approve deinstallation of " << m_applicationId;
+            qCWarning(LogInstaller) << "PackageManager did not approve deinstallation of " << m_packageId;
 
     } catch (const Exception &e) {
         // we need to call those ApplicationManager methods in the correct thread
         if (managerApproval) {
             bool cancelOk = false;
-            QMetaObject::invokeMethod(ApplicationManager::instance(),
-                                      "canceledApplicationInstall",
-                                      Qt::BlockingQueuedConnection,
-                                      Q_RETURN_ARG(bool, cancelOk),
-                                      Q_ARG(QString, m_applicationId));
+            QMetaObject::invokeMethod(PackageManager::instance(), [this, &cancelOk]()
+                { cancelOk = PackageManager::instance()->canceledPackageInstall(m_package->id()); },
+                Qt::BlockingQueuedConnection);
+
             if (!cancelOk)
-                qCWarning(LogInstaller) << "ApplicationManager could not re-enable app" << m_applicationId << "after a failed removal";
+                qCWarning(LogInstaller) << "PackageManager could not re-enable package" << m_packageId << "after a failed removal";
         }
 
         setError(e.errorCode(), e.errorString());

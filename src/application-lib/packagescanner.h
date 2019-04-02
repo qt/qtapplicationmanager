@@ -43,36 +43,25 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QList>
-#include <QString>
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
-class AbstractApplication;
-class ApplicationDatabasePrivate;
+class PackageInfo;
 
-class ApplicationDatabase
+class PackageScanner
 {
 public:
-    explicit ApplicationDatabase();
-    explicit ApplicationDatabase(const QString &fileName);
-    ~ApplicationDatabase();
+    virtual ~PackageScanner() = default;
 
-    bool isValid() const;
-    bool isTemporary() const;
-    QString errorString() const;
-    QString name() const;
+    virtual PackageInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) = 0;
 
-    QVector<AbstractApplication *> read() Q_DECL_NOEXCEPT_EXPR(false);
-    void write(const QVector<AbstractApplication *> &apps) Q_DECL_NOEXCEPT_EXPR(false);
-    void write(const QVector<AbstractApplicationInfo *> &apps) Q_DECL_NOEXCEPT_EXPR(false);
+    virtual QString metaDataFileName() const = 0;
 
-    void invalidate();
+protected:
+    PackageScanner() = default;
 
 private:
-    ApplicationDatabasePrivate *d;
-    Q_DISABLE_COPY(ApplicationDatabase)
+    Q_DISABLE_COPY(PackageScanner)
 };
 
 QT_END_NAMESPACE_AM

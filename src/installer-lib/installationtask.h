@@ -47,14 +47,15 @@
 #include <QWaitCondition>
 #include <QMutex>
 
-#include <QtAppManInstaller/applicationinstaller.h>
 #include <QtAppManApplication/installationreport.h>
+#include <QtAppManInstaller/installationlocation.h>
 #include <QtAppManInstaller/asynchronoustask.h>
 #include <QtAppManInstaller/scopeutilities.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationInfo;
+class PackageInfo;
+class PackageManager;
 class PackageExtractor;
 
 
@@ -81,7 +82,7 @@ private:
     void checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
-    ApplicationInstaller *m_ai;
+    PackageManager *m_pm;
     const InstallationLocation &m_installationLocation;
     QUrl m_sourceUrl;
     bool m_foundInfo = false;
@@ -90,7 +91,7 @@ private:
     bool m_locked = false;
     uint m_extractedFileCount = 0;
     bool m_managerApproval = false;
-    QScopedPointer<ApplicationInfo> m_app;
+    QScopedPointer<PackageInfo> m_package;
     uint m_applicationUid = uint(-1);
 
     // changes to these 4 member variables are protected by m_mutex
@@ -101,11 +102,9 @@ private:
 
     static QMutex s_serializeFinishInstallation;
 
-    QDir m_manifestDir;
     QDir m_applicationDir;
     QDir m_extractionDir;
 
-    ScopedDirectoryCreator m_manifestDirPlusCreator;
     ScopedDirectoryCreator m_installationDirCreator;
 };
 

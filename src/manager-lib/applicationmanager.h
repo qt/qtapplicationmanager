@@ -101,21 +101,21 @@ public:
     // Set the initial application list
     // To be used only during startup (ie, before exposing ApplicationManager to QML) as
     // no model update signals are emitted.
-    void setApplications(const QVector<AbstractApplication *> &apps);
+    void setApplications(const QVector<Application *> &apps);
 
-    QVector<AbstractApplication *> applications() const;
+    QVector<Application *> applications() const;
 
-    AbstractApplication *fromId(const QString &id) const;
-    AbstractApplication *fromProcessId(qint64 pid) const;
-    AbstractApplication *fromSecurityToken(const QByteArray &securityToken) const;
-    QVector<AbstractApplication *> schemeHandlers(const QString &scheme) const;
-    QVector<AbstractApplication *> mimeTypeHandlers(const QString &mimeType) const;
+    Application *fromId(const QString &id) const;
+    Application *fromProcessId(qint64 pid) const;
+    Application *fromSecurityToken(const QByteArray &securityToken) const;
+    QVector<Application *> schemeHandlers(const QString &scheme) const;
+    QVector<Application *> mimeTypeHandlers(const QString &mimeType) const;
 
     bool startApplicationInternal(const QString &appId, const QString &documentUrl = QString(),
                                   const QString &documentMimeType = QString(),
                                   const QString &debugWrapperSpecification = QString(),
                                   const QVector<int> &stdioRedirections = QVector<int>()) Q_DECL_NOEXCEPT_EXPR(false);
-    void stopApplicationInternal(AbstractApplication *app, bool forceKill = false);
+    void stopApplicationInternal(Application *app, bool forceKill = false);
 
     // only use these two functions for development!
     bool securityChecksEnabled() const;
@@ -137,8 +137,8 @@ public:
 
     int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-    Q_INVOKABLE AbstractApplication *application(int index) const;
-    Q_INVOKABLE AbstractApplication *application(const QString &id) const;
+    Q_INVOKABLE Application *application(int index) const;
+    Q_INVOKABLE Application *application(const QString &id) const;
     Q_INVOKABLE int indexOfApplication(const QString &id) const;
 
     Q_INVOKABLE void acknowledgeOpenUrlRequest(const QString &requestId, const QString &appId);
@@ -157,8 +157,6 @@ public:
     Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(Am::RunState) applicationRunState(const QString &id) const;
 
     ApplicationManagerInternalSignals internalSignals;
-
-    void enableSingleAppMode();
 
 public slots:
     void shutDown();
@@ -183,29 +181,15 @@ signals:
     void windowManagerCompositorReadyChanged(bool ready);
 
 private slots:
-    void startSingleAppAndQuitWhenStopped();
     void openUrlRelay(const QUrl &url);
-    void addApplication(AbstractApplication *app);
+    void addApplication(Application *app);
 
-    // Interface for the installer
-    //TODO: Find something nicer than private slots with 3 friend classes.
-    //      This is hard though, since the senders live in different threads and
-    //      need to use BlockingQueuedConnections
     bool blockApplication(const QString &id);
     bool unblockApplication(const QString &id);
-    bool startingApplicationInstallation(QT_PREPEND_NAMESPACE_AM(ApplicationInfo*) installApp);
-    bool startingApplicationRemoval(const QString &id);
-    void progressingApplicationInstall(const QString &id, qreal progress);
-    bool finishedApplicationInstall(const QString &id);
-    bool canceledApplicationInstall(const QString &id);
-
-    friend class ApplicationInstaller;
-    friend class InstallationTask;
-    friend class DeinstallationTask;
 
 private:
-    void emitDataChanged(AbstractApplication *app, const QVector<int> &roles = QVector<int>());
-    void emitActivated(AbstractApplication *app);
+    void emitDataChanged(Application *app, const QVector<int> &roles = QVector<int>());
+    void emitActivated(Application *app);
     void registerMimeTypes();
 
     ApplicationManager(bool singleProcess, QObject *parent = nullptr);

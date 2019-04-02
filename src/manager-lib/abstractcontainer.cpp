@@ -118,7 +118,7 @@ AbstractContainerProcess *AbstractContainer::process() const
     return m_process;
 }
 
-void AbstractContainer::setApplication(AbstractApplication *app)
+void AbstractContainer::setApplication(Application *app)
 {
     if (app != m_app) {
         m_app = app;
@@ -126,12 +126,12 @@ void AbstractContainer::setApplication(AbstractApplication *app)
     }
 }
 
-AbstractApplication *AbstractContainer::application() const
+Application *AbstractContainer::application() const
 {
     return m_app;
 }
 
-AbstractContainer::AbstractContainer(AbstractContainerManager *manager, AbstractApplication *app)
+AbstractContainer::AbstractContainer(AbstractContainerManager *manager, Application *app)
     : QObject(manager)
     , m_manager(manager)
     , m_app(app)

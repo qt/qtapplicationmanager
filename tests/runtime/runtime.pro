@@ -7,5 +7,6 @@ QT *= \
     appman_common-private \
     appman_application-private \
     appman_manager-private \
+    appman_installer-private \
 
 SOURCES += tst_runtime.cpp

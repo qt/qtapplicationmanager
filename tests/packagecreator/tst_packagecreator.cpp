@@ -31,7 +31,7 @@
 
 #include "global.h"
 #include "installationreport.h"
-#include "package.h"
+#include "packageutilities.h"
 #include "packagecreator.h"
 #include "utilities.h"
 
@@ -80,7 +80,7 @@ void tst_PackageCreator::initTestCase()
 
     m_isCygwin = tar.readAllStandardOutput().contains("Cygwin");
 
-    QVERIFY(Package::checkCorrectLocale());
+    QVERIFY(PackageUtilities::checkCorrectLocale());
 }
 
 void tst_PackageCreator::createAndVerify_data()
@@ -173,7 +173,7 @@ QString tst_PackageCreator::escapeFilename(const QString &name)
 
 int main(int argc, char *argv[])
 {
-    Package::ensureCorrectLocale();
+    PackageUtilities::ensureCorrectLocale();
     QCoreApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
     tst_PackageCreator tc;

@@ -83,7 +83,7 @@ AbstractContainerManager *ContainerFactory::manager(const QString &id)
     return m_containers.value(id);
 }
 
-AbstractContainer *ContainerFactory::create(const QString &id, AbstractApplication *app,
+AbstractContainer *ContainerFactory::create(const QString &id, Application *app,
                                             const QVector<int> &stdioRedirections,
                                             const QMap<QString, QString> &debugWrapperEnvironment,
                                             const QStringList &debugWrapperCommand)

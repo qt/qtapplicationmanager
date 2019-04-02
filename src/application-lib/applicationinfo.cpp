@@ -40,82 +40,16 @@
 **
 ****************************************************************************/
 
-#include <QDebug>
+#include <QDataStream>
 #include <QBuffer>
 
 #include "applicationinfo.h"
 #include "exception.h"
 #include "installationreport.h"
+#include "packageinfo.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// AbstractApplicationInfo
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool AbstractApplicationInfo::isValidApplicationId(const QString &appId, bool isAliasName, QString *errorString)
-{
-    static const int maxLength = 150;
-
-    try {
-        if (appId.isEmpty())
-            throw Exception(Error::Parse, "must not be empty");
-
-        // we need to make sure that we can use the name as directory on a FAT formatted SD-card,
-        // which has a 255 character path length restriction
-        if (appId.length() > maxLength)
-            throw Exception(Error::Parse, "the maximum length is %1 characters (found %2 characters)").arg(maxLength, appId.length());
-
-        int aliasPos = -1;
-
-        // aliases need to have the '@' marker
-        if (isAliasName) {
-            aliasPos = appId.indexOf(qL1C('@'));
-            if (aliasPos < 0 || aliasPos == (appId.size() - 1))
-                throw Exception(Error::Parse, "missing alias-id tag '@'");
-        }
-
-        // all characters need to be ASCII minus '@' and any filesystem special characters:
-        bool spaceOnly = true;
-        static const char forbiddenChars[] = "@<>:\"/\\|?*";
-        for (int pos = 0; pos < appId.length(); ++pos) {
-            if (pos == aliasPos)
-                continue;
-            ushort ch = appId.at(pos).unicode();
-            if ((ch < 0x20) || (ch > 0x7f) || strchr(forbiddenChars, ch & 0xff)) {
-                throw Exception(Error::Parse, "must consist of printable ASCII characters only, except any of \'%1'")
-                        .arg(QString::fromLatin1(forbiddenChars));
-            }
-            if (spaceOnly)
-                spaceOnly = QChar(ch).isSpace();
-        }
-        if (spaceOnly)
-            throw Exception(Error::Parse, "must not consist of only white-space characters");
-
-        return true;
-    } catch (const Exception &e) {
-        if (errorString)
-            *errorString = e.errorString();
-        return false;
-    }
-}
-
-bool AbstractApplicationInfo::isValidIcon(const QString &icon, QString &errorString)
-{
-    if (icon.isEmpty()) {
-        errorString = qSL("it's empty");
-        return false;
-    }
-
-    QFileInfo fileInfo(icon);
-
-    if (fileInfo.fileName() != icon) {
-        errorString = QString(qSL("'%1' is not a valid file name")).arg(icon);
-        return false;
-    }
-
-    return true;
-}
 
 //TODO Make this really unique
 static int uniqueCounter = 0;
@@ -127,163 +61,115 @@ static int nextUniqueNumber() {
     return uniqueCounter;
 }
 
-AbstractApplicationInfo::AbstractApplicationInfo()
-    : m_uniqueNumber(nextUniqueNumber())
+ApplicationInfo::ApplicationInfo(PackageInfo *packageInfo)
+    : m_packageInfo(packageInfo)
+    , m_uniqueNumber(nextUniqueNumber())
+{ }
+
+PackageInfo *ApplicationInfo::packageInfo() const
 {
+    return m_packageInfo;
 }
 
-QString AbstractApplicationInfo::id() const
+QString ApplicationInfo::id() const
 {
     return m_id;
 }
 
-int AbstractApplicationInfo::uniqueNumber() const
+int ApplicationInfo::uniqueNumber() const
 {
     return m_uniqueNumber;
 }
 
-QMap<QString, QString> AbstractApplicationInfo::names() const
-{
-    return m_name;
-}
-
-QString AbstractApplicationInfo::name(const QString &language) const
-{
-    return m_name.value(language);
-}
-
-QString AbstractApplicationInfo::icon() const
-{
-    return m_icon;
-}
-
-QString AbstractApplicationInfo::documentUrl() const
-{
-    return m_documentUrl;
-}
-
-QVariantMap AbstractApplicationInfo::applicationProperties() const
+QVariantMap ApplicationInfo::applicationProperties() const
 {
     return m_sysAppProperties;
 }
 
-QVariantMap AbstractApplicationInfo::allAppProperties() const
+QVariantMap ApplicationInfo::allAppProperties() const
 {
     return m_allAppProperties;
 }
 
-void AbstractApplicationInfo::validate() const Q_DECL_NOEXCEPT_EXPR(false)
+void ApplicationInfo::writeToDataStream(QDataStream &ds) const
 {
-    QString errorMsg;
-    if (!isValidApplicationId(id(), isAlias(), &errorMsg))
-        throw Exception(Error::Parse, "the identifier (%1) is not a valid application-id: %2").arg(id()).arg(errorMsg);
-
-    if (!isValidIcon(icon(), errorMsg))
-        throw Exception(Error::Parse, "Invalid 'icon' field: %1").arg(errorMsg);
-
-    if (names().isEmpty())
-        throw Exception(Error::Parse, "the 'name' field must not be empty");
-
-    // This check won't work during installations, since the icon file is extracted after info.json
-    //        if (!QFile::exists(displayIcon()))
-    //            throw Exception("the 'icon' field refers to a non-existent file");
-
-    //TODO: check for valid capabilities
-}
-
-void AbstractApplicationInfo::read(QDataStream &ds)
-{
-    ds >> m_id
-       >> m_uniqueNumber
-       >> m_name
-       >> m_icon
-       >> m_documentUrl
-       >> m_sysAppProperties
-       >> m_allAppProperties;
-
-    uniqueCounter = qMax(uniqueCounter, m_uniqueNumber);
-}
-
-void AbstractApplicationInfo::writeToDataStream(QDataStream &ds) const
-{
-    ds << isAlias()
-       << m_id
+    ds << m_id
        << m_uniqueNumber
-       << m_name
-       << m_icon
-       << m_documentUrl
        << m_sysAppProperties
-       << m_allAppProperties;
+       << m_allAppProperties
+       << m_codeFilePath
+       << m_runtimeName
+       << m_runtimeParameters
+       << m_supportsApplicationInterface
+       << m_capabilities
+       << m_openGLConfiguration;
 }
 
-AbstractApplicationInfo *AbstractApplicationInfo::readFromDataStream(QDataStream &ds)
+ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
 {
-    bool isAlias;
-    ds >> isAlias;
+    QScopedPointer<ApplicationInfo> app(new ApplicationInfo(pkg));
 
-    QScopedPointer<AbstractApplicationInfo> app;
+    ds >> app->m_id
+       >> app->m_uniqueNumber
+       >> app->m_sysAppProperties
+       >> app->m_allAppProperties
+       >> app->m_codeFilePath
+       >> app->m_runtimeName
+       >> app->m_runtimeParameters
+       >> app->m_supportsApplicationInterface
+       >> app->m_capabilities
+       >> app->m_openGLConfiguration;
 
-    if (isAlias)
-        app.reset(new ApplicationAliasInfo);
-    else
-        app.reset(new ApplicationInfo);
-
-    app->read(ds);
+    uniqueCounter = qMax(uniqueCounter, app->m_uniqueNumber);
+    app->m_capabilities.sort();
 
     return app.take();
 }
 
-void AbstractApplicationInfo::toVariantMapHelper(QVariantMap &map) const
+
+QVariantMap ApplicationInfo::toVariantMap() const
 {
+    QVariantMap map;
     //TODO: check if we can find a better method to keep this as similar as possible to
     //      ApplicationManager::get().
-    //      This is used for RuntimeInterface::startApplication(), ContainerInterface and
-    //      ApplicationInstaller::taskRequestingInstallationAcknowledge.
+    //      This is used for RuntimeInterface::startApplication() and the ContainerInterface
 
     map[qSL("id")] = m_id;
     map[qSL("uniqueNumber")] = m_uniqueNumber;
 
     {
         QVariantMap displayName;
-        auto names = m_name;
+        auto names = packageInfo()->names();
         for (auto it = names.constBegin(); it != names.constEnd(); ++it)
             displayName.insert(it.key(), it.value());
         map[qSL("displayName")] = displayName;
     }
 
-    map[qSL("displayIcon")] = m_icon;
+    map[qSL("displayIcon")] = packageInfo()->icon();
     map[qSL("applicationProperties")] = m_allAppProperties;
-}
+    map[qSL("codeFilePath")] = m_codeFilePath;
+    map[qSL("runtimeName")] = m_runtimeName;
+    map[qSL("runtimeParameters")] = m_runtimeParameters;
+    map[qSL("capabilities")] = m_capabilities;
+    map[qSL("mimeTypes")] = m_supportedMimeTypes;
 
-QVariantMap AbstractApplicationInfo::toVariantMap() const
-{
-    QVariantMap map;
-    toVariantMapHelper(map);
+    map[qSL("categories")] = packageInfo()->categories();
+    map[qSL("version")] = packageInfo()->version();
+    map[qSL("baseDir")] = packageInfo()->baseDir().absolutePath();
+    map[qSL("codeDir")] = map[qSL("baseDir")];     // 5.12 backward compatibility
+    map[qSL("manifestDir")] = map[qSL("baseDir")]; // 5.12 backward compatibility
+    map[qSL("installationLocationId")] = packageInfo()->installationReport()
+            ? packageInfo()->installationReport()->installationLocationId() : QString();
+    map[qSL("supportsApplicationInterface")] = m_supportsApplicationInterface;
+    map[qSL("dlt")] = packageInfo()->dltConfiguration();
+
     return map;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// ApplicationInfo
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-ApplicationInfo::ApplicationInfo()
-{ }
-
-void ApplicationInfo::validate() const Q_DECL_NOEXCEPT_EXPR(false)
-{
-    AbstractApplicationInfo::validate();
-
-    if (absoluteCodeFilePath().isEmpty())
-        throw Exception(Error::Parse, "the 'code' field must not be empty");
-
-    if (runtimeName().isEmpty())
-        throw Exception(Error::Parse, "the 'runtimeName' field must not be empty");
 }
 
 QString ApplicationInfo::absoluteCodeFilePath() const
 {
     QString code = m_codeFilePath;
-    return code.isEmpty() ? QString() : QDir(codeDir()).absoluteFilePath(code);
+    return code.isEmpty() ? QString() : QDir(packageInfo()->baseDir()).absoluteFilePath(code);
 }
 
 QString ApplicationInfo::codeFilePath() const
@@ -301,11 +187,6 @@ QVariantMap ApplicationInfo::runtimeParameters() const
     return m_runtimeParameters;
 }
 
-bool ApplicationInfo::isBuiltIn() const
-{
-    return m_builtIn;
-}
-
 QStringList ApplicationInfo::capabilities() const
 {
     return m_capabilities;
@@ -313,17 +194,7 @@ QStringList ApplicationInfo::capabilities() const
 
 QStringList ApplicationInfo::supportedMimeTypes() const
 {
-    return m_mimeTypes;
-}
-
-QStringList ApplicationInfo::categories() const
-{
-    return m_categories;
-}
-
-QString ApplicationInfo::version() const
-{
-    return m_version;
+    return m_supportedMimeTypes;
 }
 
 QVariantMap ApplicationInfo::openGLConfiguration() const
@@ -331,114 +202,9 @@ QVariantMap ApplicationInfo::openGLConfiguration() const
     return m_openGLConfiguration;
 }
 
-QVariantList ApplicationInfo::intents() const
-{
-    return m_intents;
-}
-
-void ApplicationInfo::setBuiltIn(bool builtIn)
-{
-    m_builtIn = builtIn;
-}
-
-void ApplicationInfo::setSupportsApplicationInterface(bool supportsAppInterface)
-{
-    m_supportsApplicationInterface = supportsAppInterface;
-}
-
-void ApplicationInfo::writeToDataStream(QDataStream &ds) const
-{
-    AbstractApplicationInfo::writeToDataStream(ds);
-
-    QByteArray serializedReport;
-
-    if (auto report = installationReport()) {
-        QBuffer buffer(&serializedReport);
-        buffer.open(QBuffer::WriteOnly);
-        report->serialize(&buffer);
-    }
-
-    ds << m_codeFilePath
-       << m_runtimeName
-       << m_runtimeParameters
-       << m_supportsApplicationInterface
-       << m_builtIn
-       << m_capabilities
-       << m_categories
-       << m_mimeTypes
-       << m_version
-       << m_openGLConfiguration
-       << serializedReport
-       << m_manifestDir.absolutePath()
-       << m_codeDir.absolutePath()
-       << m_uid
-       << m_dlt
-       << m_intents;
-}
-
 bool ApplicationInfo::supportsApplicationInterface() const
 {
     return m_supportsApplicationInterface;
-}
-
-void ApplicationInfo::read(QDataStream &ds)
-{
-    AbstractApplicationInfo::read(ds);
-
-    QString codeDir;
-    QString manifestDir;
-    QByteArray installationReport;
-
-    ds >> m_codeFilePath
-       >> m_runtimeName
-       >> m_runtimeParameters
-       >> m_supportsApplicationInterface
-       >> m_builtIn
-       >> m_capabilities
-       >> m_categories
-       >> m_mimeTypes
-       >> m_version
-       >> m_openGLConfiguration
-       >> installationReport
-       >> manifestDir
-       >> codeDir
-       >> m_uid
-       >> m_dlt
-       >> m_intents;
-
-    m_capabilities.sort();
-    m_categories.sort();
-    m_mimeTypes.sort();
-
-    m_codeDir.setPath(codeDir);
-    m_manifestDir.setPath(manifestDir);
-    if (!installationReport.isEmpty()) {
-        QBuffer buffer(&installationReport);
-        buffer.open(QBuffer::ReadOnly);
-        m_installationReport.reset(new InstallationReport(m_id));
-        if (!m_installationReport->deserialize(&buffer))
-            m_installationReport.reset();
-    }
-}
-
-void ApplicationInfo::toVariantMapHelper(QVariantMap &map) const
-{
-    AbstractApplicationInfo::toVariantMapHelper(map);
-
-    map[qSL("codeFilePath")] = m_codeFilePath;
-    map[qSL("runtimeName")] = m_runtimeName;
-    map[qSL("runtimeParameters")] = m_runtimeParameters;
-    map[qSL("capabilities")] = m_capabilities;
-    map[qSL("mimeTypes")] = m_mimeTypes;
-    map[qSL("categories")] = m_categories;
-    map[qSL("version")] = m_version;
-    map[qSL("codeDir")] = m_codeDir.absolutePath();
-    map[qSL("manifestDir")] = m_manifestDir.absolutePath();
-    map[qSL("installationLocationId")] = installationReport() ? installationReport()->installationLocationId()
-                                                              : QString();
-    map[qSL("supportsApplicationInterface")] = m_supportsApplicationInterface;
-    map[qSL("dlt")] = m_dlt;
-    map[qSL("intents")] = m_intents;
 }
 
 QT_END_NAMESPACE_AM

@@ -71,10 +71,11 @@ class StartupInterface;
 
 QT_BEGIN_NAMESPACE_AM
 
-class AbstractApplicationInfo;
+class ApplicationInfo;
 class StartupTimer;
 class ApplicationIPCManager;
-class ApplicationDatabase;
+class PackageDatabase;
+class PackageManager;
 class ApplicationManager;
 class ApplicationInstaller;
 class NotificationManager;
@@ -115,12 +116,10 @@ protected:
                                     const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
                                     const QStringList &iconThemeSearchPaths, const QString &iconThemeName);
     void setupInstallationLocations(const QVariantList &installationLocations);
-    void loadApplicationDatabase(const QString &databasePath, bool recreateDatabase,
-                                 const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
+    void loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) Q_DECL_NOEXCEPT_EXPR(false);
     void setupIntents(const QMap<QString, int> &timeouts) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
-                         int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
-                         const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
+                         int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false);
     void setupInstaller(const QStringList &caCertificatePaths,
                         const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
 
@@ -145,16 +144,8 @@ private:
     void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName,
                             const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false);
 #endif
-    static QVector<AbstractApplicationInfo *> scanForApplication(const QString &singleAppInfoYaml,
-            const QStringList &builtinAppsDirs) Q_DECL_NOEXCEPT_EXPR(false);
-    static QVector<AbstractApplicationInfo *> scanForApplications(const QStringList &builtinAppsDirs,
-            const QString &installedAppsDir,
-            const QVector<InstallationLocation> &installationLocations) Q_DECL_NOEXCEPT_EXPR(false);
-
-    void setupApplicationManagerWithDatabase();
 
 private:
-    QVector<InstallationLocation> m_installationLocations;
     bool m_isSingleProcessMode = false;
     QUrl m_mainQml;
     QString m_mainQmlLocalFile;
@@ -162,10 +153,14 @@ private:
     QQmlApplicationEngine *m_engine = nullptr;
     QQuickView *m_view = nullptr; // only set if we allocate the window ourselves
 
-    QScopedPointer<ApplicationDatabase> m_applicationDatabase;
+    PackageDatabase *m_packageDatabase = nullptr;
+    PackageManager *m_packageManager = nullptr;
     ApplicationManager *m_applicationManager = nullptr;
     ApplicationIPCManager *m_applicationIPCManager = nullptr;
+#if !defined(AM_DISABLE_INSTALLER)
     ApplicationInstaller *m_applicationInstaller = nullptr;
+#endif
+    QVector<InstallationLocation> m_installationLocations;
     NotificationManager *m_notificationManager = nullptr;
     IntentServer *m_intentServer = nullptr;
     WindowManager *m_windowManager = nullptr;

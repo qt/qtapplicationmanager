@@ -66,7 +66,7 @@ class Window : public QObject
 
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
     Q_PROPERTY(ContentState contentState READ contentState NOTIFY contentStateChanged)
-    Q_PROPERTY(AbstractApplication* application READ application CONSTANT)
+    Q_PROPERTY(Application* application READ application CONSTANT)
     Q_PROPERTY(bool popup READ isPopup CONSTANT)
     Q_PROPERTY(QPoint requestedPopupPosition READ requestedPopupPosition NOTIFY requestedPopupPositionChanged)
 
@@ -79,11 +79,11 @@ public:
     };
     Q_ENUM(ContentState)
 
-    Window(AbstractApplication *app);
+    Window(Application *app);
     virtual ~Window();
 
     virtual bool isInProcess() const = 0;
-    virtual AbstractApplication *application() const;
+    virtual Application *application() const;
 
     // Controls how many items (which are views from a model-view perspective) are currently rendering this window
     void registerItem(WindowItem *item);
@@ -125,7 +125,7 @@ signals:
     void _windowDestroyed();
 
 protected:
-    QPointer<AbstractApplication> m_application;
+    QPointer<Application> m_application;
 
     QSet<WindowItem*> m_items;
     WindowItem *m_primaryItem{nullptr};

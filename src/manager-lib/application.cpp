@@ -43,6 +43,7 @@
 #include "application.h"
 #include "abstractruntime.h"
 #include "applicationinfo.h"
+#include "package.h"
 #include "exception.h"
 #include "logging.h"
 
@@ -90,9 +91,12 @@
 /*!
     \qmlproperty string ApplicationObject::documentUrl
     \readonly
+    \obsolete
 
-    This property always returns the default \c documentUrl specified in the manifest file, even if
-    a different URL was used to start the application.
+    This was used to distinguish between application aliases, which have been replaced by the
+    intents mechanism.
+
+    Always returns an empty string.
 */
 /*!
     \qmlproperty bool ApplicationObject::builtIn
@@ -104,22 +108,22 @@
 /*!
     \qmlproperty bool ApplicationObject::alias
     \readonly
+    \obsolete
 
-    Will return \c true if this ApplicationObject object is an alias to another one.
+    This was used to distinguish between application aliases, which have been replaced by the
+    intents mechanism.
 
-    \sa nonAliased
+    Always returns \c false.
 */
 /*!
     \qmlproperty ApplicationObject ApplicationObject::nonAliased
     \readonly
+    \obsolete
 
-    If this ApplicationObject is an alias, then you can access the non-alias, base ApplicationObject
-    via this property, otherwise it contains a reference to itself. This means that if you're interested
-    in accessing the base application regardless of whether the object at hand is just an alias, you
-    can always safely refer to this property.
+    This was used to distinguish between application aliases, which have been replaced by the
+    intents mechanism.
 
-    If you want to know whether this object is an alias or a base ApplicationObject, use
-    ApplicationObject::alias instead.
+    Always returns the object itself.
 */
 /*!
     \qmlproperty list<string> ApplicationObject::capabilities
@@ -272,108 +276,20 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// AbstractApplication
+// Application
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-AbstractApplication::AbstractApplication(AbstractApplicationInfo *info)
+Application::Application(ApplicationInfo *info, Package *package)
     : m_info(info)
+    , m_package(package)
 {
+    Q_ASSERT(info);
+    Q_ASSERT(package);
 }
 
-QString AbstractApplication::id() const
-{
-    return m_info->id();
-}
-
-QUrl AbstractApplication::icon() const
-{
-    if (info()->icon().isEmpty())
-        return QUrl();
-
-    auto appInfo = this->nonAliasedInfo();
-    QDir dir;
-    switch (state()) {
-    default:
-    case Installed:
-        dir.setPath(appInfo->manifestDir());
-        break;
-    case BeingInstalled:
-    case BeingUpdated:
-        dir.setPath(appInfo->codeDir().absolutePath() + QLatin1Char('+'));
-        break;
-    case BeingRemoved:
-        dir.setPath(appInfo->codeDir().absolutePath() + QLatin1Char('-'));
-        break;
-    }
-    return QUrl::fromLocalFile(dir.absoluteFilePath(info()->icon()));
-}
-
-QString AbstractApplication::documentUrl() const
-{
-    return info()->documentUrl();
-}
-
-bool AbstractApplication::isBuiltIn() const
-{
-    return nonAliasedInfo()->isBuiltIn();
-}
-
-bool AbstractApplication::isAlias() const
-{
-    return info()->isAlias();
-}
-
-QStringList AbstractApplication::capabilities() const
-{
-    return nonAliasedInfo()->capabilities();
-}
-
-QStringList AbstractApplication::supportedMimeTypes() const
-{
-    return nonAliasedInfo()->supportedMimeTypes();
-}
-
-QStringList AbstractApplication::categories() const
-{
-    return nonAliasedInfo()->categories();
-}
-
-QVariantMap AbstractApplication::applicationProperties() const
-{
-    return info()->applicationProperties();
-}
-
-bool AbstractApplication::supportsApplicationInterface() const
-{
-    return nonAliasedInfo()->supportsApplicationInterface();
-}
-
-QString AbstractApplication::version() const
-{
-    return nonAliasedInfo()->version();
-}
-
-QString AbstractApplication::codeDir() const
-{
-    switch (state()) {
-    default:
-    case Installed:
-        return nonAliasedInfo()->codeDir().absolutePath();
-    case BeingInstalled:
-    case BeingUpdated:
-        return nonAliasedInfo()->codeDir().absolutePath() + QLatin1Char('+');
-    case BeingRemoved:
-        return nonAliasedInfo()->codeDir().absolutePath() + QLatin1Char('-');
-    }
-}
-
-QString AbstractApplication::name(const QString &language) const
-{
-    return info()->name(language);
-}
-
-bool AbstractApplication::start(const QString &documentUrl)
+bool Application::start(const QString &documentUrl)
 {
     if (requests.startRequested)
         return requests.startRequested(documentUrl);
@@ -381,7 +297,7 @@ bool AbstractApplication::start(const QString &documentUrl)
         return false;
 }
 
-bool AbstractApplication::debug(const QString &debugWrapper, const QString &documentUrl)
+bool Application::debug(const QString &debugWrapper, const QString &documentUrl)
 {
     if (requests.debugRequested)
         return requests.debugRequested(debugWrapper, documentUrl);
@@ -389,105 +305,114 @@ bool AbstractApplication::debug(const QString &debugWrapper, const QString &docu
         return false;
 }
 
-void AbstractApplication::stop(bool forceKill)
+void Application::stop(bool forceKill)
 {
     if (requests.stopRequested)
         requests.stopRequested(forceKill);
 }
 
-QVector<AbstractApplication *> AbstractApplication::fromApplicationInfoVector(
-        QVector<AbstractApplicationInfo *> &appInfoVector)
+ApplicationInfo *Application::info() const
 {
-    QVector<AbstractApplication *> apps;
+    return m_info.data();
+}
 
-    auto findAppWithId = [&apps] (const QString &id) -> AbstractApplication*
-    {
-        for (AbstractApplication *app : apps) {
-            if (app->id() == id)
-                return app;
-        }
-        return nullptr;
-    };
+PackageInfo *Application::packageInfo() const
+{
+    return m_info->packageInfo();
+}
 
-    auto extractBaseId = [] (const QString &id) -> QString
-    {
-        return id.section(qL1C('@'), 0, 0);
-    };
+Package *Application::package() const
+{
+    return m_package;
+}
 
-    for (auto *appInfo : appInfoVector) {
-        QScopedPointer<AbstractApplication> app;
-        if (appInfo->isAlias()) {
-            auto *originalApp = findAppWithId(extractBaseId(appInfo->id()));
-            if (!originalApp)
-                throw Exception(Error::Parse, "Could not find base app for alias id %2").arg(appInfo->id());
-            Q_ASSERT(!originalApp->isAlias());
-            app.reset(new ApplicationAlias(static_cast<Application*>(originalApp),
-                                           static_cast<ApplicationAliasInfo*>(appInfo)));
-        } else {
-            AbstractApplication *otherAbsApp = findAppWithId(appInfo->id());
-            if (otherAbsApp) {
-                // There's already another ApplicationInfo with the same id. It's probably an update for a
-                // built-in app, in which case we use the same Application instance to hold both
-                // ApplicationInfo instances.
-                bool merged = false;
+QString Application::id() const
+{
+    return m_info->id();
+}
 
-                if (!otherAbsApp->isAlias()) {
-                    auto otherApp = static_cast<Application*>(otherAbsApp);
-                    auto fullAppInfo = static_cast<ApplicationInfo*>(appInfo);
-                    if (otherApp->isBuiltIn() && !fullAppInfo->isBuiltIn() && !otherApp->updatedInfo()) {
-                        otherApp->setUpdatedInfo(static_cast<ApplicationInfo*>(appInfo));
-                        merged = true;
-                    } else if (!otherApp->isBuiltIn() && fullAppInfo->isBuiltIn() && !otherApp->updatedInfo()) {
-                        auto currentBaseInfo = otherApp->takeBaseInfo();
-                        otherApp->setBaseInfo(static_cast<ApplicationInfo*>(appInfo));
-                        otherApp->setUpdatedInfo(currentBaseInfo);
-                        merged = true;
-                    }
-                }
+bool Application::isBuiltIn() const
+{
+    return packageInfo()->isBuiltIn();
+}
 
-                if (!merged)
-                    qCWarning(LogSystem).nospace() << "Found a second application with id "
-                        << appInfo->id() << " which is not an update for a built-in one. Ignoring it.";
-            } else {
-                app.reset(new Application(static_cast<ApplicationInfo*>(appInfo)));
-            }
-        }
+QString Application::runtimeName() const
+{
+    return m_info->runtimeName();
+}
 
-        if (!app.isNull())
-            apps << app.take();
+QVariantMap Application::runtimeParameters() const
+{
+    return m_info->runtimeParameters();
+}
+
+QStringList Application::capabilities() const
+{
+    return m_info->capabilities();
+}
+
+QStringList Application::categories() const
+{
+    return package()->categories();
+}
+
+QUrl Application::icon() const
+{
+    return package()->icon();
+}
+
+QStringList Application::supportedMimeTypes() const
+{
+    return info()->supportedMimeTypes();
+}
+
+QString Application::name() const
+{
+    return package()->name();
+}
+
+QString Application::name(const QString &language) const
+{
+    return package()->names().value(language).toString();
+}
+
+QVariantMap Application::applicationProperties() const
+{
+    return info()->applicationProperties();
+}
+
+bool Application::supportsApplicationInterface() const
+{
+    return info()->supportsApplicationInterface();
+}
+
+QString Application::codeDir() const
+{
+    switch (package()->state()) {
+    default:
+    case Package::Installed:
+        return packageInfo()->baseDir().absolutePath();
+    case Package::BeingInstalled:
+    case Package::BeingUpdated:
+        return packageInfo()->baseDir().absolutePath() + QLatin1Char('+');
+    case Package::BeingRemoved:
+        return packageInfo()->baseDir().absolutePath() + QLatin1Char('-');
     }
-
-    return apps;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Application
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-Application::Application(ApplicationInfo *info, State initialState)
-    : AbstractApplication(info)
-    , m_state(initialState)
+QString Application::version() const
 {
+    return packageInfo()->version();
 }
 
-void Application::setCurrentRuntime(AbstractRuntime *rt)
+Application::State Application::state() const
 {
-    if (m_runtime == rt)
-        return;
+    return static_cast<State>(package()->state());
+}
 
-    if (m_runtime)
-        disconnect(m_runtime, nullptr, this, nullptr);
-
-    m_runtime = rt;
-    emit runtimeChanged();
-
-    if (m_runtime) {
-        connect(m_runtime, &AbstractRuntime::finished, this, &Application::setLastExitCodeAndStatus);
-        connect(m_runtime, &QObject::destroyed, this, [this]() {
-            this->setCurrentRuntime(nullptr);
-        });
-    } else
-        setRunState(Am::NotRunning);
+qreal Application::progress() const
+{
+    return package()->progress();
 }
 
 bool Application::isBlocked() const
@@ -513,24 +438,25 @@ void Application::setRunState(Am::RunState runState)
     }
 }
 
-QString Application::runtimeName() const
+void Application::setCurrentRuntime(AbstractRuntime *runtime)
 {
-    return Application::nonAliasedInfo()->runtimeName();
-}
+    if (m_runtime == runtime)
+        return;
 
-QVariantMap Application::runtimeParameters() const
-{
-    return Application::nonAliasedInfo()->runtimeParameters();
-}
+    if (m_runtime)
+        disconnect(m_runtime, nullptr, this, nullptr);
 
-AbstractApplicationInfo *Application::info() const
-{
-    return m_updatedInfo ? m_updatedInfo.data() : m_info.data();
-}
+    m_runtime = runtime;
+    emit runtimeChanged();
 
-ApplicationInfo *Application::nonAliasedInfo() const
-{
-    return static_cast<ApplicationInfo*>(Application::info());
+    if (m_runtime) {
+        connect(m_runtime, &AbstractRuntime::finished, this, &Application::setLastExitCodeAndStatus);
+        connect(m_runtime, &QObject::destroyed, this, [this]() {
+            this->setCurrentRuntime(nullptr);
+        });
+    } else {
+        setRunState(Am::NotRunning);
+    }
 }
 
 void Application::setLastExitCodeAndStatus(int exitCode, Am::ExitStatus exitStatus)
@@ -557,71 +483,9 @@ void Application::setLastExitCodeAndStatus(int exitCode, Am::ExitStatus exitStat
     }
 }
 
-void Application::setBaseInfo(ApplicationInfo *info)
-{
-    m_info.reset(info);
-    emit bulkChange();
-}
-
-ApplicationInfo *Application::takeBaseInfo()
-{
-    return static_cast<ApplicationInfo*>(m_info.take());
-}
-
-void Application::setUpdatedInfo(ApplicationInfo* info)
-{
-    Q_ASSERT(!info || (m_info && info->id() == m_info->id()));
-
-    m_updatedInfo.reset(info);
-    emit bulkChange();
-}
-
-void Application::setState(State state)
-{
-    if (m_state != state) {
-        m_state = state;
-        emit stateChanged(m_state);
-    }
-}
-
-void Application::setProgress(qreal value)
-{
-    m_progress = value;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// ApplicationAlias
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-ApplicationAlias::ApplicationAlias(Application* app, ApplicationAliasInfo* info)
-    : AbstractApplication(info)
-    , m_application(app)
-{
-    connect(m_application, &AbstractApplication::runtimeChanged, this, &AbstractApplication::runtimeChanged);
-    connect(m_application, &AbstractApplication::lastExitCodeChanged, this, &AbstractApplication::lastExitCodeChanged);
-    connect(m_application, &AbstractApplication::lastExitStatusChanged, this, &AbstractApplication::lastExitStatusChanged);
-    connect(m_application, &AbstractApplication::stateChanged, this, &AbstractApplication::stateChanged);
-    connect(m_application, &AbstractApplication::runStateChanged, this, &AbstractApplication::runStateChanged);
-}
-
-QString ApplicationAlias::runtimeName() const
-{
-    return m_application->runtimeName();
-}
-
-QVariantMap ApplicationAlias::runtimeParameters() const
-{
-    return m_application->runtimeParameters();
-}
-
-ApplicationInfo *ApplicationAlias::nonAliasedInfo() const
-{
-    return m_application->nonAliasedInfo();
-}
-
 QT_END_NAMESPACE_AM
 
-QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(AbstractApplication) *app)
+QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(Application) *app)
 {
     debug << "Application Object:";
     if (app)

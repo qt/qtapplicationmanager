@@ -61,7 +61,7 @@ bool PluginContainerManager::supportsQuickLaunch() const
     return m_interface->supportsQuickLaunch();
 }
 
-AbstractContainer *PluginContainerManager::create(AbstractApplication *app, const QVector<int> &stdioRedirections,
+AbstractContainer *PluginContainerManager::create(Application *app, const QVector<int> &stdioRedirections,
                                                   const QMap<QString, QString> &debugWrapperEnvironment,
                                                   const QStringList &debugWrapperCommand)
 {
@@ -133,7 +133,7 @@ AbstractContainerProcess *PluginContainer::start(const QStringList &arguments, c
     return nullptr;
 }
 
-PluginContainer::PluginContainer(AbstractContainerManager *manager, AbstractApplication *app, ContainerInterface *containerInterface)
+PluginContainer::PluginContainer(AbstractContainerManager *manager, Application *app, ContainerInterface *containerInterface)
     : AbstractContainer(manager, app)
     , m_interface(containerInterface)
     , m_process(new PluginContainerProcess(this))

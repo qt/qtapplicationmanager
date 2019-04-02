@@ -59,7 +59,7 @@ class WaylandWindow : public Window
     Q_PROPERTY(QWaylandQuickSurface* waylandSurface READ waylandSurface NOTIFY waylandSurfaceChanged)
 
 public:
-    WaylandWindow(AbstractApplication *app, WindowSurface *surface);
+    WaylandWindow(Application *app, WindowSurface *surface);
 
     bool isInProcess() const override { return false; }
 

@@ -50,7 +50,7 @@
 
 #include "global.h"
 #include "qtyaml.h"
-#include "applicationinfo.h"
+#include "packageinfo.h"
 #include "utilities.h"
 #include "exception.h"
 #include "installationreport.h"
@@ -69,18 +69,18 @@ static const unsigned char privateHmacKeyData[64] = {
 };
 
 
-InstallationReport::InstallationReport(const QString &applicationId)
-    : m_applicationId(applicationId)
+InstallationReport::InstallationReport(const QString &packageId)
+    : m_packageId(packageId)
 { }
 
-QString InstallationReport::applicationId() const
+QString InstallationReport::packageId() const
 {
-    return m_applicationId;
+    return m_packageId;
 }
 
-void InstallationReport::setApplicationId(const QString &applicationId)
+void InstallationReport::setPackageId(const QString &packageId)
 {
-    m_applicationId = applicationId;
+    m_packageId = packageId;
 }
 
 QString InstallationReport::installationLocationId() const
@@ -170,7 +170,7 @@ void InstallationReport::addFiles(const QStringList &files)
 
 bool InstallationReport::isValid() const
 {
-    return AbstractApplicationInfo::isValidApplicationId(m_applicationId) && !m_digest.isEmpty() && !m_files.isEmpty();
+    return PackageInfo::isValidApplicationId(m_packageId) && !m_digest.isEmpty() && !m_files.isEmpty();
 }
 
 bool InstallationReport::deserialize(QIODevice *from)
@@ -188,7 +188,7 @@ bool InstallationReport::deserialize(QIODevice *from)
         return false;
 
     try {
-        checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 1);
+        checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 2 /*version*/);
     } catch (const Exception &) {
         return false;
     }
@@ -196,11 +196,11 @@ bool InstallationReport::deserialize(QIODevice *from)
     const QVariantMap &root = docs.at(1).toMap();
 
     try {
-        if (m_applicationId.isEmpty()) {
-            m_applicationId = root[qSL("applicationId")].toString();
-            if (m_applicationId.isEmpty())
+        if (m_packageId.isEmpty()) {
+            m_packageId = root[qSL("packageId")].toString();
+            if (m_packageId.isEmpty())
                 throw false;
-        } else if (root[qSL("applicationId")].toString() != m_applicationId) {
+        } else if (root[qSL("packageId")].toString() != m_packageId) {
             throw false;
         }
 
@@ -240,7 +240,8 @@ bool InstallationReport::deserialize(QIODevice *from)
 
         // see if the file has been tampered with by checking the hmac
         QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(qSL("hmac")).toString().toLatin1());
-        QByteArray hmacKey = QByteArray::fromRawData((const char *) privateHmacKeyData, sizeof(privateHmacKeyData));
+        QByteArray hmacKey = QByteArray::fromRawData(reinterpret_cast<const char *>(privateHmacKeyData),
+                                                     sizeof(privateHmacKeyData));
         QByteArray hmacCalc= QMessageAuthenticationCode::hash(QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle),
                                                               hmacKey,
                                                               QCryptographicHash::Sha256);
@@ -264,11 +265,11 @@ bool InstallationReport::serialize(QIODevice *to) const
         return false;
 
     QVariantMap header {
-        { "formatVersion", 1 },
+        { "formatVersion", 2 },
         { "formatType", "am-installation-report" }
     };
     QVariantMap root {
-        { qSL("applicationId"), applicationId() },
+        { qSL("packageId"), packageId() },
         { qSL("installationLocationId"), installationLocationId() },
         { qSL("diskSpaceUsed"), diskSpaceUsed() },
         { qSL("digest"), QLatin1String(digest().toHex()) }
@@ -289,7 +290,8 @@ bool InstallationReport::serialize(QIODevice *to) const
     docs << root;
 
     // generate hmac to prevent tampering
-    QByteArray hmacKey = QByteArray::fromRawData((const char *) privateHmacKeyData, sizeof(privateHmacKeyData));
+    QByteArray hmacKey = QByteArray::fromRawData(reinterpret_cast<const char *>(privateHmacKeyData),
+                                                 sizeof(privateHmacKeyData));
     QByteArray hmacCalc= QMessageAuthenticationCode::hash(QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle),
                                                           hmacKey,
                                                           QCryptographicHash::Sha256);

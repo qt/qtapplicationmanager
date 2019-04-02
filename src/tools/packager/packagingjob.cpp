@@ -42,9 +42,11 @@
 #include "exception.h"
 #include "signature.h"
 #include "qtyaml.h"
+#include "packageinfo.h"
 #include "applicationinfo.h"
+#include "intentinfo.h"
 #include "installationreport.h"
-#include "yamlapplicationscanner.h"
+#include "yamlpackagescanner.h"
 #include "packageextractor.h"
 #include "packagecreator.h"
 
@@ -149,22 +151,38 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
             throw Exception(Error::Package, "source %1 is not a directory").arg(m_sourceDir);
 
         // check metadata
-        YamlApplicationScanner yas;
-        QString infoName = yas.metaDataFileName();
-        QScopedPointer<ApplicationInfo> app(yas.scan(source.absoluteFilePath(infoName)));
+        YamlPackageScanner yps;
+        QString infoName = yps.metaDataFileName();
+        QScopedPointer<PackageInfo> package(yps.scan(source.absoluteFilePath(infoName)));
 
         // build report
-        InstallationReport report(app->id());
+        InstallationReport report(package->id());
         report.addFile(infoName);
 
         // check icon
-        if (!QFile::exists(source.absoluteFilePath(app->icon())))
+        if (!QFile::exists(source.absoluteFilePath(package->icon())))
             throw Exception(Error::Package, "missing the file referenced by the 'icon' field");
-        report.addFile(app->icon());
+        report.addFile(package->icon());
 
-        // check executable
-        if (!QFile::exists(source.absoluteFilePath(app->codeFilePath())))
-            throw Exception(Error::Package, "missing the file referenced by the 'code' field");
+        // check intent icons
+        auto intents = package->intents();
+        for (const auto intent : intents) {
+            if (!QFile::exists(source.absoluteFilePath(intent->icon()))) {
+                throw Exception(Error::Package, "missing the file referenced by the 'icon' field for intent '%1'")
+                    .arg(intent->id());
+            }
+        }
+
+        // check executables
+        auto applications = package->applications();
+        if (applications.isEmpty())
+            throw Exception(Error::Package, "no applications defined in package");
+        for (const auto application : applications) {
+            if (!QFile::exists(source.absoluteFilePath(application->codeFilePath()))) {
+                throw Exception(Error::Package, "missing the file referenced by the 'code' field for application '%1'")
+                    .arg(application->id());
+            }
+        }
 
         quint64 estimatedImageSize = 0;
         QString canonicalSourcePath = source.canonicalPath();
@@ -188,16 +206,16 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
             if (entryInfo.fileName().startsWith(qL1S("--PACKAGE-")))
                 throw Exception(Error::Package, "file names starting with --PACKAGE- are reserved by the packager (found: %1)").arg(entryPath);
 
-            estimatedImageSize += (entryInfo.size() + Ext2BlockSize - 1) / Ext2BlockSize;
+            estimatedImageSize += (quint64(entryInfo.size()) + Ext2BlockSize - 1) / Ext2BlockSize;
 
-            if (entryPath != infoName && entryPath != app->icon())
+            if (entryPath != infoName && entryPath != package->icon())
                 report.addFile(entryPath);
         }
 
         // we have the estimatedImageSize for the raw content now, but we need to add the inode
         // overhead still. This algorithm comes from buildroot:
         // http://git.buildroot.net/buildroot/tree/package/mke2img/mke2img
-        estimatedImageSize = (500 + (estimatedImageSize + report.files().count() + 400 / 8) * 11 / 10) * Ext2BlockSize;
+        estimatedImageSize = (500 + (estimatedImageSize + quint64(report.files().count()) + 400 / 8) * 11 / 10) * Ext2BlockSize;
         report.setDiskSpaceUsed(estimatedImageSize);
 
         // set extra metadata
@@ -207,11 +225,11 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         // finally create the package
         PackageCreator creator(source, &destination, report);
         if (!creator.create())
-            throw Exception(Error::Package, "could not create package %1: %2").arg(app->id()).arg(creator.errorString());
+            throw Exception(Error::Package, "could not create package %1: %2").arg(package->id()).arg(creator.errorString());
 
         QVariantMap md = creator.metaData();
-        m_output = m_asJson ? QJsonDocument::fromVariant(md).toJson().constData()
-                            : QtYaml::yamlFromVariantDocuments({ md }).constData();
+        m_output = QString::fromUtf8(m_asJson ? QJsonDocument::fromVariant(md).toJson()
+                                              : QtYaml::yamlFromVariantDocuments({ md }));
         break;
     }
     case DeveloperSign:
@@ -316,8 +334,8 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
             throw Exception(Error::Package, "could not create package %1: %2").arg(m_destinationName).arg(creator.errorString());
 
         QVariantMap md = creator.metaData();
-        m_output = m_asJson ? QJsonDocument::fromVariant(md).toJson().constData()
-                            : QtYaml::yamlFromVariantDocuments({ md }).constData();
+        m_output = QString::fromUtf8(m_asJson ? QJsonDocument::fromVariant(md).toJson()
+                                              : QtYaml::yamlFromVariantDocuments({ md }));
         break;
     }
     default:

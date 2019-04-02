@@ -67,7 +67,7 @@ void tst_InstallationReport::test()
     ir.setStoreSignature("$$store-sig$$");
 
     QVERIFY(ir.isValid());
-    QCOMPARE(ir.applicationId(), qSL("com.pelagicore.test"));
+    QCOMPARE(ir.packageId(), qSL("com.pelagicore.test"));
     QCOMPARE(ir.files(), files);
     QCOMPARE(ir.diskSpaceUsed(), 42ULL);
     QCOMPARE(ir.digest().constData(), "##digest##");
@@ -85,7 +85,7 @@ void tst_InstallationReport::test()
     buffer.seek(0);
 
     QVERIFY(ir2.isValid());
-    QCOMPARE(ir2.applicationId(), qSL("com.pelagicore.test"));
+    QCOMPARE(ir2.packageId(), qSL("com.pelagicore.test"));
     QCOMPARE(ir2.files(), files);
     QCOMPARE(ir2.diskSpaceUsed(), 42ULL);
     QCOMPARE(ir2.digest().constData(), "##digest##");

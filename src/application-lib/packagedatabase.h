@@ -1,7 +1,6 @@
 /****************************************************************************
 **
 ** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Luxoft Application Manager.
@@ -43,27 +42,54 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
+#include <QVector>
+#include <QString>
+
+#include <QtAppManApplication/packageinfo.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationInfo;
-class ApplicationAliasInfo;
+class PackageInfo;
+class YamlPackageScanner;
 
-class ApplicationScanner
+
+class PackageDatabase
 {
 public:
-    virtual ~ApplicationScanner() = default;
+    PackageDatabase(const QStringList &builtInAppsDirs, const QString &installedAppsDir = QString());
+    PackageDatabase(const QString &singlePackagePath);
 
-    virtual ApplicationInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) = 0;
-    virtual ApplicationAliasInfo *scanAlias(const QString &filePath, const ApplicationInfo *application) Q_DECL_NOEXCEPT_EXPR(false) = 0;
+    void enableLoadFromCache();
+    void enableSaveToCache();
 
-    virtual QString metaDataFileName() const = 0;
+    void parse();
 
-protected:
-    ApplicationScanner() = default;
+    QVector<PackageInfo *> builtInPackages() const;
+    QVector<PackageInfo *> installedPackages() const;
+
+    //TODO: runtime installations
+    //void addPackage(PackageInfo *package);
+    //void removePackage(PackageInfo *package);
+    //void updatePackage(PackageInfo *oldPackage, PackageInfo *newPackage);
 
 private:
-    Q_DISABLE_COPY(ApplicationScanner)
+    PackageInfo *loadManifest(YamlPackageScanner *yps, const QString &manifestPath);
+    QMap<PackageInfo *, QString> loadManifestsFromDir(YamlPackageScanner *yps, const QString &manifestDir, bool scanningBuiltInApps);
+
+    bool loadFromCache();
+    void saveToCache();
+
+    bool m_loadFromCache = false;
+    bool m_saveToCache = false;
+    bool m_parsed = false;
+    QStringList m_builtInAppsDirs;
+    QString m_installedAppsDir;
+    QString m_singlePackagePath;
+
+    QMap<PackageInfo *, QString> m_builtInPackages;
+    QMap<PackageInfo *, QString> m_installedPackages;
+
+    bool canBeRevertedToBuiltIn(PackageInfo *pi);
 };
 
 QT_END_NAMESPACE_AM

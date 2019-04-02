@@ -1,9 +1,11 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
-id:      'tld.minidesk.app1'
-icon:    'icon.png'
-code:    'app1.qml'
-runtime: 'qml'
+id:   'tld.minidesk.app1'
+icon: 'icon.png'
 name:
   en: 'App1'
+applications:
+  - id:      'tld.minidesk.app1'
+    code:    'app1.qml'
+    runtime: 'qml'

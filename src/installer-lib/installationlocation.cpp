@@ -48,7 +48,7 @@
 #include "exception.h"
 
 #if defined(Q_OS_WIN)
-#  include <windows.h>
+#  include <Windows.h>
 #else
 #  include <sys/stat.h>
 #  include <errno.h>
@@ -98,6 +98,8 @@ static bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFr
     return false;
 #endif // Q_OS_WIN
 }
+
+const InstallationLocation InstallationLocation::invalid = InstallationLocation {};
 
 
 bool InstallationLocation::operator==(const InstallationLocation &other) const

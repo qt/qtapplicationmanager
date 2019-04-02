@@ -27,7 +27,8 @@
 **
 ****************************************************************************/
 
-#include <QtAppManInstaller/applicationinstaller.h>
+#include <QtAppManInstaller/packagemanager.h>
+#include <QtAppManMain/applicationinstaller.h>
 #include <QtAppManManager/applicationmanager.h>
 #include <QtAppManManager/applicationmodel.h>
 #include <QtAppManManager/amnamespace.h>
@@ -72,9 +73,10 @@ static const QVector<const QMetaObject *> all = {
     // manager-lib
     &ApplicationManager::staticMetaObject,
     &ApplicationInstaller::staticMetaObject,
+    &PackageManager::staticMetaObject,
     &NotificationManager::staticMetaObject,
     &ApplicationIPCManager::staticMetaObject,
-    &AbstractApplication::staticMetaObject,
+    &Application::staticMetaObject,
     &AbstractRuntime::staticMetaObject,
     &AbstractContainer::staticMetaObject,
     &Notification::staticMetaObject,

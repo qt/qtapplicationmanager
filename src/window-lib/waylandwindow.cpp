@@ -57,7 +57,7 @@ QT_BEGIN_NAMESPACE_AM
 
 bool WaylandWindow::m_watchdogEnabled = true;
 
-WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
+WaylandWindow::WaylandWindow(Application *app, WindowSurface *surf)
     : Window(app)
     , m_pingTimer(new QTimer(this))
     , m_pongTimer(new QTimer(this))

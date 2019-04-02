@@ -68,6 +68,7 @@
 #include "qmlinprocessruntime.h"
 #include "application.h"
 #include "applicationmanager.h"
+#include "applicationinfo.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -113,75 +114,6 @@ IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(const 
     // of both client and server as well as both their AM interfaces
     intentClient->setParent(intentServer);
     return intentServer;
-}
-
-void IntentAMImplementation::addApplicationIntents(AbstractApplication *app, IntentServer *intentServer)
-{
-    if (app->isAlias())
-        return;
-
-    QSet<QString> intentIds;
-    const auto intents = app->nonAliasedInfo()->intents();
-
-    if (!intents.isEmpty())
-        intentServer->addApplication(app->id());
-
-    for (const auto &intent : intents) {
-        /* example:
-           id: io.qt.shareImage
-           handledBy: main
-           visibility: public*|private
-           requiredCapabilities: [ a, b ]
-           parameterMatch:
-             mimeType: "^image/.*\.png$"
-        */
-        const QVariantMap map = intent.toMap();
-        const QString id = map[qSL("id")].toString();
-        Intent::Visibility visibility = Intent::Public;
-        const QString visibilityStr = map[qSL("visibility")].toString();
-        QString handledBy = map[qSL("handledBy")].toString();
-        const QStringList capabilities = map[qSL("requiredCapabilities")].toStringList();
-        const QVariantMap parameterMatch = map[qSL("parameterMatch")].toMap(); // do we really need that?
-
-        if (id.isEmpty())
-            throw Exception(Error::Intents, "intents need to have an id (app %1)").arg(app->id());
-        if (intentIds.contains(id))
-            throw Exception(Error::Intents, "found two intent handlers for %2 (app %1)").arg(app->id()).arg(id);
-        intentIds << id;
-
-        if (visibilityStr == qL1S("private"))
-            visibility = Intent::Private;
-        else if (!visibilityStr.isEmpty() && (visibilityStr != qL1S("public"))) {
-            throw Exception(Error::Intents, "intent visibilty %3 is invalid (intent %2, app %1)")
-                    .arg(app->id()).arg(id).arg(visibilityStr);
-        }
-
-        if (handledBy == qL1S("main"))
-            handledBy.clear();
-        // we do not support bg services yet
-        if (!handledBy.isEmpty()) {
-            throw Exception(Error::Intents, "service background handlers for intent are not supported yet (intent %2, app %1)")
-                    .arg(app->id()).arg(id).arg(visibilityStr);
-        }
-
-        qCDebug(LogSystem).nospace().noquote() << " * " << id << " [app: " << app->id() << "]";
-
-        if (!intentServer->addIntent(id, app->id(), handledBy, capabilities,
-                                     visibility, parameterMatch)) {
-            throw Exception(Error::Intents, "could not add intent %2 for app %1").arg(app->id()).arg(id);
-        }
-    }
-}
-
-void IntentAMImplementation::removeApplicationIntents(AbstractApplication *app, IntentServer *intentServer)
-{
-    if (app->isAlias())
-        return;
-    auto intents = intentServer->filterByHandlingApplicationId(intentServer->all(), app->id());
-    for (const auto &intent : intents)
-        intentServer->removeIntent(intent);
-
-    intentServer->removeApplication(app->id());
 }
 
 // ^^^ IntentAMImplementation ^^^

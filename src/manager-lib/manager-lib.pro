@@ -13,6 +13,7 @@ QT_FOR_PRIVATE *= \
     appman_plugininterfaces-private \
     appman_intent_server-private \
     appman_intent_client-private \
+    appman_installer-private \
     appman_monitor-private \
 
 CONFIG *= static internal_module
@@ -41,7 +42,6 @@ HEADERS += \
     application.h \
     applicationmanager.h \
     applicationmodel.h \
-    applicationdatabase.h \
     notificationmanager.h \
     abstractcontainer.h \
     containerfactory.h \
@@ -70,7 +70,6 @@ SOURCES += \
     application.cpp \
     applicationmanager.cpp \
     applicationmodel.cpp \
-    applicationdatabase.cpp \
     notificationmanager.cpp \
     abstractcontainer.cpp \
     containerfactory.cpp \

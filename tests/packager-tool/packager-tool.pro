@@ -10,7 +10,7 @@ QT *= \
     appman_manager-private \
     appman_installer-private \
 
-INCLUDEPATH += ../../src/tools/packager
-SOURCES += ../../src/tools/packager/packagingjob.cpp
+INCLUDEPATH += $$PWD/../../src/tools/packager
+SOURCES += $$PWD/../../src/tools/packager/packagingjob.cpp
 
 SOURCES += tst_packager-tool.cpp

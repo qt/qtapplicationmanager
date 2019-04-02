@@ -185,7 +185,7 @@
 */
 QT_BEGIN_NAMESPACE_AM
 
-Window::Window(AbstractApplication *app)
+Window::Window(Application *app)
     : QObject()
     , m_application(app)
 {
@@ -196,7 +196,7 @@ Window::~Window()
     emit _windowDestroyed();
 }
 
-AbstractApplication *Window::application() const
+Application *Window::application() const
 {
     return m_application;
 }

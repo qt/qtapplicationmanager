@@ -129,8 +129,6 @@ private slots:
 public:
     Q_SCRIPTABLE bool makeScreenshot(const QString &filename, const QString &selector);
 
-    bool setDBusPolicy(const QVariantMap &yamlFragment);
-
     QList<QQuickWindow *> compositorViews() const;
 
     // evil hook to support in-process runtimes

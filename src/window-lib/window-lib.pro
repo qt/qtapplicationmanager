@@ -10,6 +10,7 @@ QT_FOR_PRIVATE *= \
     appman_common-private \
     appman_application-private \
     appman_manager-private \
+    appman_monitor-private \
 
 CONFIG *= static internal_module
 CONFIG -= create_cmake
@@ -44,7 +45,6 @@ multi-process:!headless {
     windowmanager.h \
     windowmanager_p.h \
     touchemulation.h \
-
 
 !headless:SOURCES += \
     window.cpp \

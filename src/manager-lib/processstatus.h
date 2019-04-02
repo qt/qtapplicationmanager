@@ -105,7 +105,7 @@ private:
     QVariantMap m_memoryRss;
     QVariantMap m_memoryPss;
 
-    QPointer<AbstractApplication> m_application;
+    QPointer<Application> m_application;
 
     bool m_pendingUpdate = false;
     QScopedPointer<ProcessReader> m_reader;

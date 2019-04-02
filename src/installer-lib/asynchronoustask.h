@@ -83,7 +83,10 @@ public:
     virtual bool cancel();
     bool forceCancel(); // will always work in Queued state
 
-    QString applicationId() const; // convenience
+    QString packageId() const; // convenience
+
+    virtual bool preExecute();
+    virtual bool postExecute();
 
 signals:
     void stateChanged(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) newState);
@@ -98,10 +101,11 @@ protected:
     QMutex m_mutex;
 
     QString m_id;
-    QString m_applicationId;
+    QString m_packageId;
     TaskState m_state = Queued;
     Error m_errorCode = Error::None;
     QString m_errorString;
 };
+
 
 QT_END_NAMESPACE_AM

@@ -41,7 +41,7 @@
 #include "global.h"
 #include "packageextractor.h"
 #include "installationreport.h"
-#include "package.h"
+#include "packageutilities.h"
 
 #include "../error-checking.h"
 
@@ -80,7 +80,7 @@ void tst_PackageExtractor::initTestCase()
     if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    QVERIFY(Package::checkCorrectLocale());
+    QVERIFY(PackageUtilities::checkCorrectLocale());
 }
 
 void tst_PackageExtractor::init()
@@ -300,7 +300,7 @@ void tst_PackageExtractor::extractFromFifo()
 
 int main(int argc, char *argv[])
 {
-    Package::ensureCorrectLocale();
+    PackageUtilities::ensureCorrectLocale();
     QCoreApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
     tst_PackageExtractor tc;

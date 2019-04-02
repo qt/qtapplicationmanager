@@ -120,7 +120,7 @@ void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
     }
 
     if (numberOfDocuments < 0) {
-        if (actualSize < numberOfDocuments) {
+        if (actualSize < -numberOfDocuments) {
             throw Exception("wrong number of YAML documents: expected at least %1, got %2")
                 .arg(-numberOfDocuments).arg(actualSize);
         }
@@ -131,7 +131,7 @@ void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
         }
     }
     if (!formatTypes.contains(actualFormatType)) {
-        throw Exception("wrong formatType header: expected %1, got %2")
+        throw Exception("wrong formatType header: expected '%1', got '%2'")
             .arg(QString::fromUtf8(formatTypes.toList().join(", or ")), QString::fromUtf8(actualFormatType));
     }
     if (actualFormatVersion != formatVersion) {

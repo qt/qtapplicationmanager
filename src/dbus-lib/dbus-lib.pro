@@ -33,9 +33,9 @@ ADAPTORS_XML = \
 
 !disable-installer {
     QT *= appman_installer-private
-    HEADERS += applicationinstallerdbuscontextadaptor.h
-    SOURCES += applicationinstallerdbuscontextadaptor.cpp
-    ADAPTORS_XML += io.qt.applicationinstaller.xml
+    HEADERS += packagemanagerdbuscontextadaptor.h
+    SOURCES += packagemanagerdbuscontextadaptor.cpp
+    ADAPTORS_XML += io.qt.packagemanager.xml
 }
 
 !headless{
@@ -46,7 +46,7 @@ ADAPTORS_XML = \
 }
 
 OTHER_FILES = \
-    io.qt.applicationinstaller.xml \
+    io.qt.packagemanager.xml \
     io.qt.applicationmanager.applicationinterface.xml \
     io.qt.applicationmanager.runtimeinterface.xml \
     io.qt.applicationmanager.intentinterface.xml \
@@ -59,8 +59,8 @@ qtPrepareTool(QDBUSCPP2XML, qdbuscpp2xml)
 recreate-applicationmanager-dbus-xml.CONFIG = phony
 recreate-applicationmanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager-lib/applicationmanager.h -o $$PWD/io.qt.applicationmanager.xml
 
-recreate-applicationinstaller-dbus-xml.CONFIG = phony
-recreate-applicationinstaller-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../installer-lib/applicationinstaller.h -o $$PWD/io.qt.applicationinstaller.xml
+recreate-packagemanager-dbus-xml.CONFIG = phony
+recreate-packagemanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../installer-lib/packagemanager.h -o $$PWD/io.qt.packagemanager.xml
 
 recreate-windowmanager-dbus-xml.CONFIG = phony
 recreate-windowmanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager/windowmanager.h -o $$PWD/io.qt.windowmanager.xml
@@ -70,7 +70,7 @@ recreate-dbus-xml.depends = recreate-applicationmanager-dbus-xml recreate-applic
 QMAKE_EXTRA_TARGETS += \
     recreate-dbus-xml \
     recreate-applicationmanager-dbus-xml \
-    recreate-applicationinstaller-dbus-xml \
+    recreate-packagemanager-dbus-xml \
     recreate-windowmanager-dbus-xml \
 
 load(qt_module)

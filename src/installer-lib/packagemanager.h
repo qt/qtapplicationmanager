@@ -43,78 +43,102 @@
 #pragma once
 
 #include <QObject>
-#include <QVariant>
-#include <QUrl>
-#include <QStringList>
-#include <QDir>
-#include <QtAppManCommon/error.h>
+#include <QAbstractListModel>
+#include <QtAppManCommon/global.h>
+#include <QtAppManApplication/packageinfo.h>
 #include <QtAppManInstaller/installationlocation.h>
 #include <QtAppManInstaller/asynchronoustask.h>
+#include <QtAppManInstaller/installationtask.h>
+#include <QtAppManInstaller/deinstallationtask.h>
+
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationManager;
-class ApplicationInstallerPrivate;
-class SudoClient;
+class PackageDatabase;
+class Package;
+class PackageManagerPrivate;
 
-
-class ApplicationInstaller : public QObject
+class PackageManager : public QAbstractListModel
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationInstaller")
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationInstaller 2.0 SINGLETON")
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_CLASSINFO("D-Bus Interface", "io.qt.PackageManager")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/PackageManager 2.0 SINGLETON")
 
-    // both are const on purpose - these should never change in a running system
+    // these are const on purpose - these should never change in a running system
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT)
     Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT)
+    Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT)
 
     Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled)
     Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId)
 
-
 public:
-    Q_ENUMS(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState))
+    enum CacheMode {
+        NoCache,
+        UseCache,
+        RecreateCache
+    };
 
-    ~ApplicationInstaller();
-    static ApplicationInstaller *createInstance(const QVector<InstallationLocation> &installationLocations,
-                                                const QString &manifestDirPath,
-                                                const QString &hardwareId, QString *error);
-    static ApplicationInstaller *instance();
+    ~PackageManager() override;
+    static PackageManager *createInstance(PackageDatabase *packageDatabase,
+                                          const QVector<InstallationLocation> &installationLocations);
+    static PackageManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
+    QVector<Package *> packages() const;
+
+    Package *fromId(const QString &id) const;
+
+    // the item model part
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
+
+    int count() const;
+    Q_INVOKABLE QVariantMap get(int index) const;
+    Q_INVOKABLE Package *package(int index) const;
+    Q_INVOKABLE Package *package(const QString &id) const;
+    Q_INVOKABLE int indexOfPackage(const QString &id) const;
+
     bool developmentMode() const;
-    void setDevelopmentMode(bool b);
+    void setDevelopmentMode(bool enable);
     bool allowInstallationOfUnsignedPackages() const;
-    void setAllowInstallationOfUnsignedPackages(bool b);
+    void setAllowInstallationOfUnsignedPackages(bool enable);
     QString hardwareId() const;
+    void setHardwareId(const QString &hwId);
+//    bool securityChecksEnabled() const;
+//    void setSecurityChecksEnabled(bool enabled);
 
     bool isApplicationUserIdSeparationEnabled() const;
     uint commonApplicationGroupId() const;
 
     bool enableApplicationUserIdSeparation(uint minUserId, uint maxUserId, uint commonGroupId);
 
-    // Ownership of QDir* stays with ApplicationInstaller
-    // Never returns null
-    const QDir *manifestDirectory() const;
-
-    bool setDBusPolicy(const QVariantMap &yamlFragment);
     void setCACertificates(const QList<QByteArray> &chainOfTrust);
 
-    void cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EXPR(false);
+    void cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false);
 
     // InstallationLocation handling
     QVector<InstallationLocation> installationLocations() const;
     const InstallationLocation &defaultInstallationLocation() const;
     const InstallationLocation &installationLocationFromId(const QString &installationLocationId) const;
-    const InstallationLocation &installationLocationFromApplication(const QString &id) const;
+    const InstallationLocation &installationLocationFromPackage(const QString &packageId) const;
 
     // Q_SCRIPTABLEs are available via both QML and D-Bus
+    Q_SCRIPTABLE QStringList packageIds() const;
+    Q_SCRIPTABLE QVariantMap get(const QString &id) const;
+
     Q_SCRIPTABLE QStringList installationLocationIds() const;
-    Q_SCRIPTABLE QString installationLocationIdFromApplication(const QString &id) const;
+    Q_SCRIPTABLE QString installationLocationIdFromPackage(const QString &packageId) const;
     Q_SCRIPTABLE QVariantMap getInstallationLocation(const QString &installationLocationId) const;
+
+    Q_SCRIPTABLE qint64 installedPackageSize(const QString &packageId) const;
+    Q_SCRIPTABLE QVariantMap installedPackageExtraMetaData(const QString &packageId) const;
+    Q_SCRIPTABLE QVariantMap installedPackageExtraSignedMetaData(const QString &packageId) const;
 
     // all QString return values are task-ids
     QString startPackageInstallation(const QString &installationLocationId, const QUrl &sourceUrl);
@@ -123,7 +147,7 @@ public:
     Q_SCRIPTABLE QString removePackage(const QString &id, bool keepDocuments, bool force = false);
 
     Q_SCRIPTABLE AsynchronousTask::TaskState taskState(const QString &taskId) const;
-    Q_SCRIPTABLE QString taskApplicationId(const QString &taskId) const;
+    Q_SCRIPTABLE QString taskPackageId(const QString &taskId) const;
     Q_SCRIPTABLE QStringList activeTaskIds() const;
     Q_SCRIPTABLE bool cancelTask(const QString &taskId);
 
@@ -131,11 +155,14 @@ public:
     Q_SCRIPTABLE int compareVersions(const QString &version1, const QString &version2);
     Q_SCRIPTABLE bool validateDnsName(const QString &name, int minimumParts = 1);
 
-    Q_SCRIPTABLE qint64 installedApplicationSize(const QString &id) const;
-    Q_SCRIPTABLE QVariantMap installedApplicationExtraMetaData(const QString &id) const;
-    Q_SCRIPTABLE QVariantMap installedApplicationExtraSignedMetaData(const QString &id) const;
 
 signals:
+    Q_SCRIPTABLE void countChanged();
+
+    Q_SCRIPTABLE void packageAdded(const QString &id);
+    Q_SCRIPTABLE void packageAboutToBeRemoved(const QString &id);
+    Q_SCRIPTABLE void packageChanged(const QString &id, const QStringList &changedRoles);
+
     Q_SCRIPTABLE void taskStarted(const QString &taskId);
     Q_SCRIPTABLE void taskProgressChanged(const QString &taskId, qreal progress);
     Q_SCRIPTABLE void taskFinished(const QString &taskId);
@@ -145,7 +172,7 @@ signals:
 
     // installation only
     Q_SCRIPTABLE void taskRequestingInstallationAcknowledge(const QString &taskId,
-                                                            const QVariantMap &applicationAsVariantMap,
+                                                            const QVariantMap &packageAsVariantMap,
                                                             const QVariantMap &packageExtraMetaData,
                                                             const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);
@@ -153,28 +180,36 @@ signals:
 private slots:
     void executeNextTask();
 
+protected:
+    bool startingPackageInstallation(PackageInfo *info);
+    bool startingPackageRemoval(const QString &id);
+    bool finishedPackageInstall(const QString &id);
+    bool canceledPackageInstall(const QString &id);
+
 private:
-    void cleanupMounts() const;
+    void emitDataChanged(Package *package, const QVector<int> &roles = QVector<int>());
+    static void registerQmlTypes();
+
     void triggerExecuteNextTask();
     QString enqueueTask(AsynchronousTask *task);
     void handleFailure(AsynchronousTask *task);
 
     QList<QByteArray> caCertificates() const;
 
+private:
     uint findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false);
 
-private:
-    // Ownership of manifestDir and iamgeMountDir is passed to ApplicationInstaller
-    ApplicationInstaller(const QVector<InstallationLocation> &installationLocations, QDir *manifestDir, const QString &hardwareId, QObject *parent);
-    ApplicationInstaller(const ApplicationInstaller &);
-    static ApplicationInstaller *s_instance;
+    explicit PackageManager(PackageDatabase *packageDatabase,
+                            const QVector<InstallationLocation> &installationLocations);
+    PackageManager(const PackageManager &);
+    PackageManager &operator=(const PackageManager &);
+    static PackageManager *s_instance;
+    static QHash<int, QByteArray> s_roleNames;
 
-    ApplicationInstallerPrivate *d;
+    PackageManagerPrivate *d;
 
     friend class InstallationTask;
     friend class DeinstallationTask;
 };
 
 QT_END_NAMESPACE_AM
-
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState))

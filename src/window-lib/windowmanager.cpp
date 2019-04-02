@@ -334,7 +334,7 @@ void WindowManager::setSlowAnimations(bool slowAnimations)
         RuntimeFactory::instance()->setSlowAnimations(d->slowAnimations);
 
         // Update already running applications
-        for (AbstractApplication *application : ApplicationManager::instance()->applications()) {
+        for (Application *application : ApplicationManager::instance()->applications()) {
             auto runtime = application->currentRuntime();
             if (runtime)
                 runtime->setSlowAnimations(d->slowAnimations);
@@ -654,7 +654,7 @@ void WindowManager::inProcessSurfaceItemCreated(QSharedPointer<InProcessSurfaceI
         qCCritical(LogSystem) << "This function must be called by a signal of Runtime!";
         return;
     }
-    AbstractApplication *app = rt->application() ? rt->application()->nonAliased() : nullptr;
+    Application *app = rt->application() ? rt->application()->nonAliased() : nullptr;
     if (!app) {
         qCCritical(LogSystem) << "This function must be called by a signal of Runtime which actually has an application attached!";
         return;
@@ -730,7 +730,7 @@ void WindowManager::waylandSurfaceCreated(QWaylandSurface *surface)
 void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 {
     qint64 processId = surface->processId();
-    AbstractApplication *app = ApplicationManager::instance()->fromProcessId(processId);
+    Application *app = ApplicationManager::instance()->fromProcessId(processId);
 
     if (!app && ApplicationManager::instance()->securityChecksEnabled()) {
         qCCritical(LogGraphics) << "SECURITY ALERT: an unknown application with pid" << processId
@@ -888,8 +888,8 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
         // app without System-UI
 
         // filter out alias and apps not matching appId (if set)
-        QVector<AbstractApplication *> apps = ApplicationManager::instance()->applications();
-        auto it = std::remove_if(apps.begin(), apps.end(), [appId](AbstractApplication *app) {
+        QVector<Application *> apps = ApplicationManager::instance()->applications();
+        auto it = std::remove_if(apps.begin(), apps.end(), [appId](Application *app) {
             return app->isAlias() || (!appId.isEmpty() && (appId != app->id()));
         });
         apps.erase(it, apps.end());
@@ -975,7 +975,7 @@ int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSur
     return -1;
 }
 
-QString WindowManagerPrivate::applicationId(AbstractApplication *app, WindowSurface *windowSurface)
+QString WindowManagerPrivate::applicationId(Application *app, WindowSurface *windowSurface)
 {
     if (app)
         return app->id();

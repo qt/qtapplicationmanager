@@ -62,7 +62,7 @@ public:
 
     WaylandCompositor *waylandCompositor = nullptr;
 
-    static QString applicationId(AbstractApplication *app, WindowSurface *windowSurface);
+    static QString applicationId(Application *app, WindowSurface *windowSurface);
 #endif
 
     QHash<int, QByteArray> roleNames;

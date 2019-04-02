@@ -33,7 +33,7 @@
 #include <QString>
 #include <QStringList>
 
-#include "applicationinstaller.h"
+#include "packagemanager.h"
 #include "applicationmanager.h"
 #include "logging.h"
 #include "main.h"
@@ -150,7 +150,7 @@ void tst_Main::initMain()
     if (m_verbose)
         Logging::setFilterRules(Logging::filterRules() += qSL("am.installer.debug=true"));
 
-    ApplicationInstaller::instance()->setAllowInstallationOfUnsignedPackages(true);
+    PackageManager::instance()->setAllowInstallationOfUnsignedPackages(true);
 }
 
 void tst_Main::destroyMain()
@@ -173,38 +173,38 @@ void tst_Main::cleanup()
 
 void tst_Main::installPackage(const QString &pkgPath)
 {
-    auto appInstaller = ApplicationInstaller::instance();
+    auto packageManager = PackageManager::instance();
 
     bool installationFinished = false;
 
-    connect(appInstaller, &ApplicationInstaller::taskRequestingInstallationAcknowledge,
-            this, [this, appInstaller](const QString &taskId, const QVariantMap &,
-                                       const QVariantMap &, const QVariantMap &) {
-            appInstaller->acknowledgePackageInstallation(taskId);
+    connect(packageManager, &PackageManager::taskRequestingInstallationAcknowledge,
+            this, [this, packageManager](const QString &taskId, const QVariantMap &,
+                                         const QVariantMap &, const QVariantMap &) {
+            packageManager->acknowledgePackageInstallation(taskId);
     });
 
-    connect(appInstaller, &ApplicationInstaller::taskFinished,
+    connect(packageManager, &PackageManager::taskFinished,
             this, [this, &installationFinished](const QString &) {
             installationFinished = true;
     });
 
-    appInstaller->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(pkgPath));
+    packageManager->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(pkgPath));
 
     QTRY_COMPARE(installationFinished, true);
 }
 
 void tst_Main::removePackage(const QString &id)
 {
-    auto appInstaller = ApplicationInstaller::instance();
+    auto packageManager = PackageManager::instance();
 
     bool removalFinished = false;
 
-    connect(appInstaller, &ApplicationInstaller::taskFinished,
+    connect(packageManager, &PackageManager::taskFinished,
             this, [this, &removalFinished](const QString &) {
             removalFinished = true;
     });
 
-    appInstaller->removePackage(id, false /* keepDocuments */);
+    packageManager->removePackage(id, false /* keepDocuments */);
 
     QTRY_COMPARE(removalFinished, true);
 }

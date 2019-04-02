@@ -78,8 +78,10 @@ mkdir -p "$src"
 
 packager()
 {
+  set +e
   packagerOutput=`"$PACKAGER" "$@" 2>&1`
   packagerResult=$?
+  set -e
   if [ $packagerResult -ne 0 ]; then
     echo -e "`basename $PACKAGER`$R failed with exit code $packagerResult$W. The executed command was:"
     echo
@@ -185,7 +187,7 @@ echo "invalid" >"$dst/test-invalid-format.appkg"
 
 info "Create a package with an invalid formatVersion header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
-echo '{formatType: "am-package-header", formatVersion: 2}' >$src/--PACKAGE-HEADER--
+sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" 's/formatVersion: 2/formatVersion: X/'
 tar -C "$src" -cf "$dst/test-invalid-header-formatversion.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
@@ -197,13 +199,13 @@ mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with an invalid id header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
-sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/applicationId: '[a-z0-9.-]*'/applicationId: ':invalid'/"
+sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/packageId: '[a-z0-9.-]*'/packageId: ':invalid'/"
 tar -C "$src" -cf "$dst/test-invalid-header-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with a non-matching id header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
-sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/applicationId: '[a-z0-9.-]*'/applicationId: 'non-matching'/"
+sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/packageId: '[a-z0-9.-]*'/packageId: 'non-matching'/"
 tar -C "$src" -cf "$dst/test-non-matching-header-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 

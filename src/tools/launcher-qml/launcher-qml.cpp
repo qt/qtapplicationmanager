@@ -83,7 +83,7 @@
 #include "utilities.h"
 #include "exception.h"
 #include "crashhandler.h"
-#include "yamlapplicationscanner.h"
+#include "yamlpackagescanner.h"
 #include "applicationinfo.h"
 #include "startupinterface.h"
 #include "dbus-utilities.h"
@@ -265,10 +265,11 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
     } else {
         QMetaObject::invokeMethod(this, [this, directLoad]() {
             QFileInfo fi(directLoad);
-            YamlApplicationScanner yas;
+            YamlPackageScanner yps;
             try {
-                ApplicationInfo *a = yas.scan(directLoad);
-                startApplication(fi.absolutePath(), a->codeFilePath(), QString(), QString(), a->toVariantMap(), QVariantMap());
+                //TODO: how should this work?
+//                ApplicationInfo *a = yps.scan(directLoad);
+//                startApplication(fi.absolutePath(), a->codeFilePath(), QString(), QString(), a->toVariantMap(), QVariantMap());
             } catch (const Exception &e) {
                 throw Exception("Could not parse info.yaml file: %1").arg(e.what());
             }

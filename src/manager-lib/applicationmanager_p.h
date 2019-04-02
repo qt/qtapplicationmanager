@@ -60,7 +60,8 @@ public:
     bool windowManagerCompositorReady = false;
     QVariantMap systemProperties;
 
-    QVector<AbstractApplication *> apps;
+    QVector<PackageInfo> packages;
+    QVector<Application *> apps;
 
     QString currentLocale;
     QHash<int, QByteArray> roleNames;

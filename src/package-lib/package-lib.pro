@@ -17,17 +17,16 @@ include($$SOURCE_DIR/3rdparty/libarchive.pri)
 include($$SOURCE_DIR/3rdparty/libz.pri)
 
 HEADERS += \
-    package_p.h \
     packageextractor_p.h \
     packageextractor.h \
     packagecreator_p.h \
     packagecreator.h \
-    package.h
+    packageutilities.h \
+    packageutilities_p.h \
 
 SOURCES += \
-    package_p.cpp \
     packagecreator.cpp \
     packageextractor.cpp \
-    package.cpp
+    packageutilities.cpp
 
 load(qt_module)

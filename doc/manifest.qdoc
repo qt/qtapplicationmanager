@@ -109,7 +109,7 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
     \li string
     \li The unique ID of an application represented as a string with a maximum length of 150
         characters. This ID can be used to look up information about the application in the
-        \l{ApplicationModel QML Type}. Since this ID is used in the file system, only a subset of
+        \l{ApplicationModel}{ApplicationModel QML Type}. Since this ID is used in the file system, only a subset of
         the printable ASCII characters are allowed: \c{0-9}, \c{a-z}, \c{A-Z} as well as any of
         \c{!#$%&'`^~_+-=.,;()[]{}}. If you are building a larger system with third party
         applications, it is good practice to use reverse DNS notation for the application IDs to

@@ -79,34 +79,72 @@ static const char *s_defaultSystemUiDltDescription = "Luxoft Application-Manager
 
 /*
 //! [am-logging-categories]
-\list
-\li \c am.system - General system messages
-\li \c am.installer - Installer sub-system
-\li \c am.graphics - OpenGL/UI related messages
-\li \c am.wayland.debug - Wayland protocol related messages
-\li \c am.qml - QML messages
-\li \c am.runtime.qml - QML runtime
-\li \c am.qml.ipc - QML IPC
-\li \c am.notify - Notification sub-system
-\li \c am.deployment - Deployment hints
-\li \c am.intent - Intent sub-system
-\li \c general - General messages not part of any ApplicationManager sub-system
-\endlist
+\table
+\header
+    \li Category
+    \li DLT Context ID
+    \li Description
+\row
+    \li \c am.system
+    \li \c SYS
+    \li General system messages
+\row
+    \li \c am.installer
+    \li \c INST
+    \li Installer sub-system messages
+\row
+    \li \c am.graphics
+    \li \c GRPH
+    \li OpenGL/UI related messages
+\row
+    \li \c am.wayland.debug
+    \li \c WAYL
+    \li Wayland related messages
+\row
+    \li \c am.qml
+    \li \c QML
+    \li General QML related messages
+\row
+    \li \c am.runtime.qml
+    \li \c QMRT
+    \li QML runtime messages
+\row
+    \li \c am.qml.ipc
+    \li \c QMIP
+    \li QML IPC messages
+\row
+    \li \c am.notify
+    \li \c NTFY
+    \li Notification sub-system messages
+\row
+    \li \c am.deployment
+    \li \c DPLM
+    \li Deployment hints
+\row
+    \li \c am.intent
+    \li \c INTN
+    \li Intent sub-system messages
+\row
+    \li \c general
+    \li \c GEN
+    \li Used for DLT logging only and enabled by default. Categories that have no context ID
+        mapping in DLT default to \c GEN; this includes uncategorized logging.
+\endtable
 //! [am-logging-categories]
 */
 QDLT_REGISTER_CONTEXT_ON_FIRST_USE(true)
 QDLT_REGISTER_APPLICATION(s_defaultSystemUiDltId, s_defaultSystemUiDltDescription)
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General system messages")
-QDLT_LOGGING_CATEGORY(LogInstaller, "am.installer", "INST", "Installer sub-system")
+QDLT_LOGGING_CATEGORY(LogInstaller, "am.installer", "INST", "Installer sub-system messages")
 QDLT_LOGGING_CATEGORY(LogGraphics, "am.graphics", "GRPH", "OpenGL/UI related messages")
-QDLT_LOGGING_CATEGORY(LogWaylandDebug, "am.wayland.debug", "WAYL", "Wayland protocol related messages")
-QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "QML messages")
-QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime")
-QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC")
-QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notifications sub-system")
+QDLT_LOGGING_CATEGORY(LogWaylandDebug, "am.wayland.debug", "WAYL", "Wayland related messages")
+QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "General QML related messages")
+QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime messages")
+QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC messages")
+QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notifications sub-system messages")
 QDLT_LOGGING_CATEGORY(LogDeployment, "am.deployment", "DPLM", "Deployment hints")
-QDLT_LOGGING_CATEGORY(LogIntents, "am.intent", "INTN", "Intents sub-system")
-QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "General messages not part of any ApplicationManager sub-system")
+QDLT_LOGGING_CATEGORY(LogIntents, "am.intent", "INTN", "Intents sub-system messages")
+QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "Messages without dedicated context ID (fallback)")
 QDLT_FALLBACK_CATEGORY(LogGeneral)
 
 
@@ -328,7 +366,12 @@ QStringList Logging::filterRules()
 void Logging::setFilterRules(const QStringList &rules)
 {
     s_rules = rules;
-    QLoggingCategory::setFilterRules(rules.join(qL1C('\n')));
+    QString rulesStr = rules.join(qL1C('\n'));
+#if defined(QT_GENIVIEXTRAS_LIB)
+    if (s_dltEnabled)
+        rulesStr += qSL("\ngeneral=true");
+#endif
+    QLoggingCategory::setFilterRules(rulesStr);
 }
 
 void Logging::setMessagePattern(const QString &pattern)

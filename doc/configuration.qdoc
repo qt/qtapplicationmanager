@@ -299,7 +299,7 @@ or across multiple config files, the final value is resolved based on these rule
     \br \e logging/rules
     \li array<string>
     \li Adds standard Qt logging rules - see the QLoggingCategory documentation for the required
-        format. application manager specific logging categories are listed in
+        format. Application manager specific logging categories are listed in
         \l {Logging and Debugging}.
 \row
     \li \b -

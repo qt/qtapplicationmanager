@@ -33,404 +33,383 @@
 
 \section1 Main Configuration
 
-The application manager can be configured through config files and the command line.
-The currently supported command-line options can always be displayed by running \c{appman --help}.
-Some of these options can also be set via config files, which in itself are referenced on the
-command-line with the \c{--config-file <filename>} option.
+You can configure the application manager through config files and the command line. To display the
+currently supported command line options, run \c{appman --help}. Some of these options can also be
+set via config files that are referenced on the command line with the \c{--config-file <filename>}
+option.
 
-The config file is a \l {YAML syntax}{YAML file following the same rules} as all the other YAML
-files used in the application manager. Some of the options can only be set via the command line
-though.
+The config file is a \l{YAML syntax}{YAML file that follows the same rules} as all the other YAML
+files used in the application manager.
 
-Any value that starts with the magic string \c ${CONFIG_PWD} will have this magic string replaced
-with the absolute path to the config file where it appears in - this makes it very easy to have
-all your imports paths and file references relative to your main config file.
+Any value that starts with the \c ${CONFIG_PWD} string has this string replaced with the absolute
+path to where the config file is located. This makes it easy to have all your import paths and
+file references relative to your main config file.
 
 If an option is specified in more than one place: either on the command line and the config files,
 or across multiple config files, the final value is resolved based on these rules:
+
 \list
-\li Options are parsed from all the config files available, based on the order in which they appear
-    on the command line. Values are overridden by config files, as they are loaded.
-\li Options that are specified directly via the command line always override values in any config
-    file.
-\li There is one exception: options that expect a list of values, such as \c -I or \c ui/importPaths.
-    In this case, all values, regardless of where they are specified, will be merged into one
-    single, final list.
+    \li Options are parsed from all the config files available, in the order in which they appear
+        on the command line. Values are overridden by config files, as they are loaded.
+    \li Options that are specified directly via the command line always override values in any
+        config file.
+    \li There is one exception: options that expect a list of values, such as \c -I or
+        \c ui/importPaths. In this case, all values, regardless of where they are specified, are
+        merged into one single, final list.
 \endlist
 
-\table
-\header
-    \li Command Line \br \e {Config key}
-    \li Type
-    \li Description
-\row
-    \li \b {(first non-option)}
-    \br \e ui/mainQml
-    \li string
-    \li The main QML file.
-\row
-    \li \b --help
-    \br \e -
-    \li bool
-    \li Prints the supported options and exits.
-\row
-    \li \b --version
-    \br \e -
-    \li bool
-    \li Prints the current version of the application manager and exits.
-\row
-    \li \b --build-config
-    \br \e -
-    \li bool
-    \li Prints the build configuration of the application manager in YAML format and exits.
-\row
-    \li \b --config-file or \c -c
-    \br \e -
-    \li array<string>
-    \li Loads configuration settings from a set of files. Using more than one config file could be
-        used to cleanly split the configuration into a device specific and a UI specific part.
-        All the config files' content will be merged in the order they appear on the command line:
-        keys that did not appear in an earlier config value are taken as is; duplicate keys are
-        merged according to the following algorithm:
-        \list 1
-        \li scalar values simply overwrite earlier config values.
-        \li lists get appended to earlier lists' content.
-        \li maps will be merged with earlier maps recursively on a key-by-key basis, according to
-            rules 1 and 2.
-        \endlist
-        The application manager will save the result of parsing and evaluating all the
-        configuration files into a cache. This cache is loaded on subsequent starts if the exact
-        same set of config files is used unchanged.
+\table 100%
+    \header
+        \li Command Line \br [\c {Config Key}]
+        \li Type
+        \li Description
+    \row
+        \li \b {(first non-option)}
+            \br [\c ui/mainQml]
+        \li string
+        \li The main QML file.
+    \row
+        \li \b --help
+        \li bool
+        \li Prints the supported options and exits.
+    \row
+        \li \b --version
+        \li bool
+        \li Prints the current version of the application manager and exits.
+    \row
+        \li \b --build-config
+        \li bool
+        \li Prints the build configuration of the application manager in YAML format and exits.
+    \row
+        \li \b --config-file or \b{\c -c}
+        \li array<string>
+        \li Loads configuration settings from a set of files. You can use more than one config
+            file, for example, to split the configuration cleanly, into a device specific and a
+            UI specific part. All the config files' content are merged in the order in which they
+            appear on the command line: keys that didn't appear in an earlier config value are
+            taken as is; duplicate keys are merged according to the following algorithm:
+            \list 1
+                \li Scalar values overwrite earlier config values.
+                \li Lists are appended to the content from earlier lists.
+                \li Maps are merged with earlier maps, recursively on a key-by-key basis, according
+                    to rules 1 and 2.
+            \endlist
 
-        (default: \c /opt/am/config.yaml)
-\row
-    \li \b --no-config-cache
-    \br \e -
-    \li bool
-    \li Disables the caching functionality for the configuration files: the cache is neither read
-        from or written to.
-\row
-    \li \b --clear-config-cache
-    \br \e -
-    \li bool
-    \li Although the application manager should detect if the configuration file cache is out of
-        sync, you can force-clear the cache on startup with this option.
-\row
-    \li \b --option or \c -o
-    \br \e -
-    \li YAML
-    \li Use this option to set or override parts of your config files from the command-line. This
-        option can be given multiple times and its values are evaluated the same way as the content
-        of configuration files specified via \c -c. The evaluation order is after the configuration
-        files, but before more specific, direct options like e.g. \c --fullscreen (which could be
-        rewritten as \c{ -o 'ui: { fullscreen: no }'}).
-\row
-    \li \b --database
-    \br \e applications/database
-    \li string
-    \li To decrease the start up time of the System UI, its application database can be cached
-        in a file so that in subsequent start ups it doesn't have to scan and parse the
-        \c info.yaml files of installed applications all over again. This option specifies the
-        filepath of such cache file. (default: empty/disabled)
-\row
-    \li \b --recreate-database or \c -r
-    \br \e -
-    \li bool
-    \li Ignores any preexisting database cache and creates a new one by (re)scanning all
-        \c info.yaml files in \c builtin-apps-manifest-dir and \c installed-apps-manifest-dir.
-        (default: false)
-\row
-    \li \b --builtin-apps-manifest-dir
-    \br \e applications/builtinAppsManifestDir
-    \li string
-    \li The base directory for built-in application manifests. You can also specify multiple
-        directories as a list.
-\row
-    \li \b --installed-apps-manifest-dir
-    \br \e applications/installedAppsManifestDir
-    \li string
-    \li The base directory for installed application manifests. This must be specified if you
-        want to install new applications, otherwise only the built-in ones will be available.
-        (default: empty/disabled)
-\row
-    \li \b --app-image-mount-dir
-    \br \e applications/appImageMountDir
-    \li string
-    \li The base directory where application images are mounted to. (defaults: \c /opt/am/image-mounts)
-\row
-    \li \b --dbus
-    \br \e -
-    \li string
-    \li Register the ApplicationManager, ApplicationInstaller, NotificationManager and
-        WindowManager on the specified D-Bus: can be either a full D-Bus bus specification string,
-        \c session, \c system, \c auto (default), or \c none (for no registration at all).
+            The application manager saves the result of parsing and evaluating all the
+            configuration files into a cache. This cache is loaded on subsequent starts, if the
+            exact set of config files is used, unchanged.
 
-        Use the \c auto keyword on the desktop or during development only. This keyword implies that
-        the application manager tries to start a private session bus and uses that bus if
-        successful. Otherwise, it results in no registration at all, which is equivalent to \c none.
+            (default: \c /opt/am/config.yaml)
+    \row
+        \li \b --no-config-cache
+        \li bool
+        \li Disables the caching functionality for the configuration files: the cache is neither
+            read from or written to.
+    \row
+        \li \b --clear-config-cache
+        \li bool
+        \li Although the application manager should detect if the configuration file cache is out
+            of sync, you can force-clear the cache on startup with this option.
+    \row
+        \li \b --option or \b{\c -o}
+        \li YAML
+        \li Use this option to set or overwrite parts of your config files from the command line.
+            This option can be specified multiple times and its values are evaluated the same way
+            as the content of config files specified via \c -c. The evaluation order is after the
+            configuration files, but before more specific, direct options such as \c --fullscreen
+            (which can be rewritten as \c{ -o 'ui: { fullscreen: no }'}).
+    \row
+        \li \b --database
+            \br [\c applications/database]
+        \li string
+        \li To decrease the startup time of the System UI, its application database can be cached
+            in a file. This way, in subsequent startups, the System UI doesn't have to scan and
+            parse the \c info.yaml files for the applications installed, all over again. This
+            option specifies the path for this cache file. (default: empty/disabled)
+    \row
+        \li \b --recreate-database or \b{\c -r}
+        \li bool
+        \li Ignores any pre-existing database cache and creates a new one by (re)scanning all
+            \c info.yaml files in \c builtin-apps-manifest-dir and \c installed-apps-manifest-dir.
+            (default: false)
+    \row
+        \li \b --builtin-apps-manifest-dir
+            \br [\c applications/builtinAppsManifestDir]
+        \li string
+        \li The base directory for built-in application manifests; you can also specify multiple
+            directories as a list.
+    \row
+        \li \b --installed-apps-manifest-dir
+            \br [\c applications/installedAppsManifestDir]
+        \li string
+        \li The base directory for installed application manifests. This option must be specified
+            if you want to install new applications; otherwise only the built-in ones are
+            available. (default: empty/disabled)
+    \row
+        \li \b --app-image-mount-dir
+            \br [\c applications/appImageMountDir]
+        \li string
+        \li The base directory where application images are mounted to.
+            (defaults: \c /opt/am/image-mounts)
+    \row
+        \li \b --dbus
+        \li string
+        \li Registers the ApplicationManager, ApplicationInstaller, NotificationManager, and
+            WindowManager on the specified D-Bus: can be a full D-Bus bus specification string,
+            \c session, \c system, \c auto (default), or \c none (for no registration at all).
 
-        On production systems, you may want to put the application manager on the \c system bus,
-        where you can set detailed security policies using standard D-Bus mechanisms, while keeping
-        the NotificationManager on the session bus. See the more advanced config-file option
-        \c dbus below.
+            Use the \c auto keyword on the desktop or during development only. This keyword implies
+            that the application manager tries to start a private session bus and uses that bus if
+            successful. Otherwise, it results in no registration at all, which is equivalent to
+            \c none.
 
-        \note The new \c auto keyword replaces the old \c --start-session-dbus flag
-\row
-    \li \b -
-    \br \e dbus
-    \li map<object>
-    \li Allows for more fine-grained control over D-Bus registrations and function call policies.
-        Every key (with one exception - see next) in this map corresponds to the D-Bus interface
-        name you want to configure (\c io.qt.ApplicationManager, \c io.qt.ApplicationInstaller or \c
-        org.freedesktop.Notifications). If such a key is present, it will take precedence over the
-        command-line option \c dbus. Each key's value is a \l{D-Bus specification} object.
-\row
-    \li \b --fullscreen
-    \br \e ui/fullscreen
-    \li bool
-    \li Display in full-screen. (default: false)
-\row
-    \li \b --no-fullscreen
-    \br \e -
-    \li bool
-    \li Override full-screen setting in the System UI's config file. Useful for development on the
-        desktop. (default: false)
-\row
-    \li \b -
-    \br \e ui/windowIcon
-    \li string
-    \li If set, the given image file will be used as a window icon for all application manager
-        windows. This setting is only useful for development and will only take effect on Windows,
-        macOS and Linux/X11.
-\row
-    \li \b -I
-    \br \e ui/importPaths
-    \li array<string>
-    \li Adds additional QML import paths to the System UI.
-\row
-    \li \b -
-    \br \e ui/style
-    \li string
-    \li If set, the given style will be used by QtQuickControls 2.
-\row
-    \li \b -
-    \br \e plugins
-    \li map<array<string>>
-    \li A string-to-string-list map that defines plugins that the application manager should load.
-        The value must be a list of plugin library file path names. A single plugin will also be
-        accepted. Currently the only valid key is \c startup. The plugin itself must implement the
-        StartupInterface. The application manager will call the function hooks during startup of
-        the System UI.
-\row
-    \target system properties
-    \li \b -
-    \br \e systemProperties
-    \li object
-    \li Exports user-defined properties (key/value pairs) to the System UI and applications. This
-        field can only have the following children, that control access to the actual properties:
-        \c private, \c protected and \c public (other children will be ignored). Properties under
-        one of the access tags can be freely chosen and can also be nested. The properties
-        are exposed as ApplicationManager::systemProperties to the System UI and as
-        ApplicationInterface::systemProperties to all QML applications:
-        \list
-        \li The System UI has access to public, protected and private properties.
-        \li Built-in applilcations have access to public and protected properties.
-        \li Installed (third party) applications have access to public properties only.
-        \endlist
-        Private keys will overwrite identical protected and public ones and protected keys will
-        overwrite identical public ones. The properties will just be converted to QVariantMaps, but
-        the application manager will not interpret them in any way.
-        Non-QML applications can access this data via the environment variable
-        \c $AM_RUNTIME_SYSTEM_PROPERTIES as a YAML snippet.
-\row
-    \li \b --verbose
-    \br \e -
-    \li bool
-    \li Enable verbose output. All logging categories and message types will be enabled with the
-        exception of some Qt internal debug messages; \c logging-rules will be ignored. Note that
-        logging rules provided via the QT_LOGGING_RULES environment variable will still prevail.
-        For more control over the logging output, see \c logging-rules below.
-\row
-    \li \b --slow-animations
-    \br \e -
-    \li bool
-    \li Run all animations in slow motion. (default: false)
-\row
-    \li \b --load-dummydata
-    \br \e ui/loadDummyData
-    \li bool
-    \li Loads QML dummy data into the System UI, similar to \c qmlscene and \c qml.
-\row
-    \target no-security
-    \li \b --no-security
-    \br \e flags/noSecurity
-    \li bool
-    \li Disables all security related checks. Use this in a development setup only; never in production. (default: false)
-\row
-    \li \b --development-mode
-    \br \e flags/developmentMode
-    \li bool
-    \li Allows the installation of packages that only come with a valid developer signature. (default: false)
-\row
-    \li \b --no-ui-watchdog
-    \br \e flags/noUiWatchdog
-    \li bool
-    \li Disables detecting hung UI applications (e.g. via Wayland's ping/pong). (default: false)
-\row
-    \li \b --force-single-process
-    \br \e flags/forceSingleProcess
-    \li bool
-    \li Forces single-process mode even on a Wayland enabled build. (default: false)
-\row
-    \li \b --force-multi-process
-    \br \e flags/forceMultiProcess
-    \li bool
-    \li Forces multi-process mode. Will exit immediately if this is not possible. (default: false)
-\row
-    \li \b --single-app
-    \br \e -
-    \li string
-    \li Runs the application manager with a single application only (ignoring the database).
-        In this mode, the application manager can act as a \c qmlscene / \c qml replacement.
-        The argument is the path to \c info.yaml. Aliases (\c{info-*.yaml}) will also be
-        loaded from the given path.
-\row
-    \li \b --logging-rule
-    \br \e logging/rules
-    \li array<string>
-    \li Adds standard Qt logging rules - see the QLoggingCategory documentation for the required
-        format. Application manager specific logging categories are listed in
-        \l {Logging and Debugging}.
-\row
-    \li \b -
-    \br \e logging/messagePattern
-    \li string
-    \li If provided, used as the Qt message pattern. For more information about the format see
-        qSetMessagePattern().
-\row
-    \li \b -
-    \br \e logging/useAMConsoleLogger
-    \li bool
-    \li Always use the application manager specific logging function, which enables colored console
-        output. If no value or an invalid value is provided, the logging function is only used when
-        messagePattern isn't set.
-\row
-    \li \b -
-    \br \e logging/dlt/id
-    \li string
-    \li If provided, it will be used as the automotive DLT application id. The size is limited to
-        four characters, additional characters will be discarded. Note that the default id "PCAM"
-        is used until this configuration option has been applied.
-\row
-    \li \b -
-    \br \e logging/dlt/description
-    \li string
-    \li If provided, it will be used as the automotive DLT application description. This allows to
-        augment the short DLT application id with a more verbose definition. Note that a default
-        description is used until this configuration option has been applied.
-\row
-    \li \b --no-dlt-logging
-    \br \e -
-    \li bool
-    \li Disables logging using automotive DLT. This is especially useful when currently no dlt-daemon
-        is running as otherwise the processes will hang at exit for some time to send the logs.
-\row
-    \li \b --qml-debug
-    \br \e -
-    \li bool
-    \li Enables QML Debugging/Profiling. See \l {Logging and Debugging} for more information.
-\row
-    \li \b -
-    \br \e installationLocations
-    \li array<object>
-    \li Definition of available installation locations on the system. This is an array of
-        \l {Installation Locations} objects.
-\row
-    \li \b -
-    \br \e runtimes
-    \li map<object>
-    \li This can be used to specify options for runtimes - the key in this map is the
-        runtime's name and the value is interpreted by the respective runtime implementation.
-        \l {Runtime configuration}{See below} for specific information.
-\row
-    \li \b -
-    \br \e containers
-    \li map<object>
-    \li This can be used to specify options for containers - the key in this map is the
-        container's name and the value is interpreted by the respective container implementation.
-        \l {Containers} for specific information.
-\row
-    \li \b -
-    \br \e quicklaunch/idleLoad
-    \li real
-    \li This is a system-load value between \c 0 and \c 1. The application manager will not start
-        a new quick-launcher, as long as the idle-load of the system is higher than this value.
-        (default: 0)
-\row
-    \li \b -
-    \br \e quicklaunch/runtimesPerContainer
-    \li int
-    \li Specifies how many quick-launchers should always be ready for all active container/runtime
-        combinations. (default: 0)
-        \note Values bigger than 10 will be ignored, since this does not make sense and could also
-              potentially freeze your device if you have a container plugin were instantiation
-              is expensive resource-wise.
-\row
-    \li \b --wayland-socket-name
-    \br \e -
-    \li  string
-    \li A filesystem name for the Wayland socket that should be used when creating the compositor
-        component. (default: auto-detected by \c libwayland-server, most likely \c wayland-0)
-        \note You can only specify the name here, but not a path: Wayland will always create this
-              socket in \c{$XDG_RUNTIME_DIR} and will fail to start the compositor, if this
-              directory is not writable or if the environment variable is not even set in the first
-              place.
-\row
-    \li \b --disable-installer
-    \br \e installer/disable
-    \li bool
-    \li Completely disables the installer sub-system at runtime. Another option would be to not
-        even compile it in the first place in the \l{config disable installer}{qmake step}.
-\row
-    \li \b -
-    \br \e installer/caCertificates
-        \target ca certificates
-    \li list<string>
-    \li A list of file-paths to CA-certifcates that are used to verify packages. For more details,
-        see the \l {Public Key Infrastructure} {Installer documentation}.
-\row
-    \li \b -
-    \br \e crashAction
-    \li object
-    \li Specifies which actions to take, if the application manager is crashing. See
-        \l{Crash Action Specification} {below} for more information.
-\row
-    \li \b -
-    \br \e ui/opengl
-    \li object
-    \li Gives you the possibility to specify the required OpenGL version and/or profile. See
-        \l{OpenGL Specification} {below} for more information.
-\row
-    \li \b -
-    \br \e ui/iconThemeName
-        \target iconThemeName
-    \li string
-    \li Specifies which icon theme is used. See \l{iconThemeSearchPaths} {ui/iconThemeSearchPaths}
-        for how to add a path to a custom theme.
-\row
-    \li \b -
-    \br \e ui/iconThemeSearchPaths
-        \target iconThemeSearchPaths
-    \li list<string>
-    \li Adds additional icon theme search paths to the System UI and all apps. This can be used
-        to add a custom icon theme to the search path and load it by specifying
-        \l{iconThemeName} {ui/iconThemeName}.
+            On production systems, you may want to put the application manager on the \c system bus,
+            where you can set detailed security policies using standard D-Bus mechanisms, while
+            keeping the NotificationManager on the session bus. See the more advanced config-file
+            option\c dbus below.
 
+            \note As of Qt 5.13, the new \c auto keyword replaces the old \c --start-session-dbus
+                  flag.
+    \row
+        \li [\c dbus]
+        \li map<object>
+        \li Allows for more fine-grained control over D-Bus registrations and function call
+            policies. Every key (with one exception - see next) in this map corresponds to the
+            D-Bus interface name you want to configure (\c io.qt.ApplicationManager,
+            \c io.qt.ApplicationInstaller or \c org.freedesktop.Notifications). If such a key is
+            present, it takes precedence over the \c dbus command line option. Each key's value is
+            a \l{D-Bus specification} object.
+    \row
+        \li \b --fullscreen
+            \br [\c ui/fullscreen]
+        \li bool
+        \li Display in full-screen. (default: false)
+    \row
+        \li \b --no-fullscreen
+        \li bool
+        \li Override full-screen setting in the System UI's config file. Useful for development on
+            the desktop. (default: false)
+    \row
+        \li [\c ui/windowIcon]
+        \li string
+        \li If set, the given image file is used as a window icon for all application manager
+            windows. This option is only useful for development and takes effect on Windows, macOS,
+            and Linux/X11.
+    \row
+        \li \b -I
+            \br [\c ui/importPaths]
+        \li array<string>
+        \li Adds additional QML import paths to the System UI.
+    \row
+        \li [\c ui/style]
+        \li string
+        \li If set, the given style is used by QtQuickControls 2.
+    \row
+        \li [\c plugins]
+        \li map<array<string>>
+        \li A string-to-string-list map that defines plugins that the application manager should
+            load. The value must be a single plugin or a list of plugin library file path names.
+            Currently the only valid keys are \c startup and \c container:
+            \list
+                \li \c startup: this plugin must implement the StartupInterface. The QML runtime
+                calls the function hooks on application startup.
+                \li \c container: this plugin must implement the ContainerInterface
+                (see \l Containers).
+            \endlist
+    \row
+        \target system properties
+        \li [\c systemProperties]
+        \li object
+        \li Exports user-defined properties (key/value pairs) to the System UI and applications.
+            This field can only have the following children, that control access to the actual
+            properties: \c private, \c protected, and \c public; other children are ignored.
+            Properties under one of these access tags can be freely chosen and can also be nested.
+            These properties are exposed as ApplicationManager::systemProperties to the System UI
+            and as ApplicationInterface::systemProperties to all QML applications:
+            \list
+                \li The System UI has access to public, protected, and private properties.
+                \li Built-in applilcations have access to public and protected properties.
+                \li Installed (third party) applications have access to public properties only.
+            \endlist
+            Private keys overwrite identical protected and public keys; protected keys overwrite
+            identical public keys. The properties are converted to QVariantMaps, but the
+            application manager won't interpret them in any way. Non-QML applications can access
+            this data via the \c $AM_RUNTIME_SYSTEM_PROPERTIES environment variable, as a YAML
+            snippet.
+    \row
+        \li \b --verbose
+        \li bool
+        \li Enables verbose output. All logging categories and message types are enabled with the
+            exception of some Qt internal debug messages; \c logging-rules is ignored.
 
-\omit
-telnetPort and telnetAddress: these are configuring the Pelagicore proprietary telnet component
-applicationUserIdSeparation: this should be factored out into a container plugin
-\endomit
+            \note Logging rules provided via the QT_LOGGING_RULES environment variable still
+                prevails. For more control over the logging output, see \c logging-rules below.
+    \row
+        \li \b --slow-animations
+        \li bool
+        \li Runs all animations in slow motion. (default: false)
+    \row
+        \li \b --load-dummydata
+            \br [\c ui/loadDummyData]
+        \li bool
+        \li Loads QML dummy data into the System UI, similar to \c qmlscene and \c qml.
+    \row
+        \target no-security
+        \li \b --no-security
+            \br [\c flags/noSecurity]
+        \li bool
+        \li Disables all security related checks. Use this option in a development setup only;
+            never in production. (default: false)
+    \row
+        \li \b --development-mode
+            \br [\c flags/developmentMode]
+        \li bool
+        \li Allows the installation of packages that only come with a valid developer signature.
+            (default: false)
+    \row
+        \li \b --no-ui-watchdog
+            \br [\c flags/noUiWatchdog]
+        \li bool
+        \li Disables detecting UI applications that have hung (for example, via Wayland's ping/pong
+            mechanism). (default: false)
+    \row
+        \li \b --force-single-process
+            \br [\c flags/forceSingleProcess]
+        \li bool
+        \li Forces single-process mode even on a Wayland-enabled build. (default: false)
+    \row
+        \li \b --force-multi-process
+            \br [\c flags/forceMultiProcess]
+        \li bool
+        \li Forces multi-process mode; exits immediately if this is not possible. (default: false)
+    \row
+        \li \b --single-app
+        \li string
+        \li Runs the application manager with a single application only (ignoring the database).
+            In this mode, the application manager can act as a \c qmlscene or \c qml replacement.
+            The argument is the path to \c info.yaml. Aliases (\c{info-*.yaml}) are also loaded
+            from the given path.
+    \row
+        \li \b --logging-rule
+            \br [\c logging/rules]
+        \li array<string>
+        \li Adds standard Qt logging rules - see the QLoggingCategory documentation for the
+            required format. Application manager specific logging categories are described in
+            \l {Logging and Debugging}.
+    \row
+        \li [\c logging/messagePattern]
+        \li string
+        \li If provided, used as the Qt message pattern. For more information about the format, see
+            qSetMessagePattern().
+    \row
+        \li [\c logging/useAMConsoleLogger]
+        \li bool
+        \li Always use the application manager specific logging function, which enables colored
+            console output. If no value or an invalid value is provided, the logging function is
+            only used when messagePattern isn't set.
+    \row
+        \li [\c logging/dlt/id]
+        \li string
+        \li If provided, it is used as the automotive DLT application ID. The size is limited to
+            four characters, additional characters are discarded.
+            \note The default ID, "PCAM", is used until this configuration option has been applied.
+    \row
+        \li [\c logging/dlt/description]
+        \li string
+        \li If provided, it is used as the automotive DLT application description. This allows to
+            augment the short DLT application ID with a more verbose definition.
+            \note A default description is used until this configuration option has been applied.
+    \row
+        \li \b --no-dlt-logging
+        \li bool
+        \li Disables logging using automotive DLT. This option is especially useful when no
+            dlt-daemon is running currently; otherwise the processes hang on exit for a while to
+            send the logs.
+    \row
+        \li \b --qml-debug
+        \li bool
+        \li Enables QML Debugging/Profiling. For more information, see \l {Logging and Debugging}.
+    \row
+        \li [\c installationLocations]
+        \li array<object>
+        \li The definition of installation locations available on the system; an array of
+            \l {Installation Locations} objects.
+    \row
+        \li [\c runtimes]
+        \li map<object>
+        \li This option can be used to specify options for runtimes, as a map of key-value pairs.
+            The key is the runtime's name; the value is interpreted by the respective runtime
+            implementation. For more information, see \l {Runtime Configuration}.
+    \row
+        \li [\c containers]
+        \li map<object>
+        \li This option can be used to specify options for containers, as a map of key-value pairs.
+            The key is the container's name; the value is interpreted by the respective container
+            implementation. For more information, see \l {Containers}.
+    \row
+        \li [\c quicklaunch/idleLoad]
+        \li real
+        \li This is a system load value between \c 0 and \c 1. The application manager does not
+            start a new quick launcher, as long as the system's idle load is higher than this
+            value. (default: 0)
+    \row
+        \li [\c quicklaunch/runtimesPerContainer]
+        \li int
+        \li Specifies how many quick launchers should always be ready for all active container/
+            runtime combinations. (default: 0)
+            \note Values bigger than 10 are ignored, since this does not make sense and could also
+                potentially freeze your device if you have a container plugin where instantiation
+                is expensive, resource-wise.
+    \row
+        \li \b --wayland-socket-name
+        \li string
+        \li A filesystem name for the Wayland socket that should be used when creating the
+            compositor component. (default: auto-detected by \c libwayland-server, most likely
+            \c wayland-0)
+            \note You can only specify the name here, but not a path: Wayland will always create
+                  this socket in \c{$XDG_RUNTIME_DIR}. The compositor will fail to start if this
+                  directory is not writable or if the environment variable is not even set in the
+                  first place.
+    \row
+        \li \b --disable-installer
+            \br [\c installer/disable]
+        \li bool
+        \li Disables the installer sub-system at runtime completely. Another option would be to
+            not even compile it in the first place, in the \l{config disable installer}{qmake step}.
+    \row
+        \li [\c installer/caCertificates]
+            \target ca certificates
+        \li list<string>
+        \li A list of file paths to CA-certifcates that are used to verify packages. For more
+            details, see the \l {Public Key Infrastructure} {Installer documentation}.
+    \row
+        \li [\c crashAction]
+        \li object
+        \li Specifies which actions to take, if the application manager is crashing. For more
+            details, see \l{Crash Action Specification}.
+    \row
+        \li [\c ui/opengl]
+        \li object
+        \li Lets you specify the required OpenGL version and/or profile. For more details, see
+            \l{OpenGL Specification}.
+    \row
+        \li [\c ui/iconThemeName]
+            \target iconThemeName
+        \li string
+        \li Specifies which icon theme to use. See \l{iconThemeSearchPaths}{ui/iconThemeSearchPaths}
+            for details on how to add a path to a custom theme.
+    \row
+        \li [\c ui/iconThemeSearchPaths]
+            \target iconThemeSearchPaths
+        \li list<string>
+        \li Adds additional icon theme search paths to the System UI and all apps. This option can
+            be used to add a custom icon theme to the search path and load it by specifying
+            \l{iconThemeName} {ui/iconThemeName}.
+
+    \omit
+    telnetPort and telnetAddress: these are configuring the Pelagicore proprietary telnet component
+    applicationUserIdSeparation: this should be factored out into a container plugin
+    \endomit
 \endtable
 
 \section1 D-Bus Specification
@@ -440,27 +419,26 @@ policies.
 
 \table
 \header
-    \li Name
+    \li Config Key
     \li Type
     \li Description
 \row
     \li \c register
     \li string
-    \li Registers the interface on the specified D-Bus: can be either \c session, \c system, \c none,
-        \c ~ (for no registration at all), or a full D-Bus bus specification string.
+    \li Registers the interface on the specified D-Bus: can be either \c session, \c system,
+        \c none, \c ~ (for no registration at all), or a full D-Bus bus specification string.
 \row
     \li \c policy
     \li map<object>
-    \li These optional access policies can be used either instead of or in addition to the standard
-        D-Bus policy configuration. The keys into this map are the undecorated D-Bus function
-        names, such as \c startApplication. When a key is specified, the corresponding function's
-        access policy is \c deny, until you add \c allow criterias -- all of which are AND-ed
-        together.
+    \li These optional access policies can be used instead of or in addition to the standard D-Bus
+        policy configuration. The keys into this map are the undecorated D-Bus function names, such
+        as \c startApplication. When a key is specified, the corresponding function's access policy
+        is \c deny, until you add \c allow criterias -- all of which are AND-ed together.
 \endtable
 
-A simple example, that only allows applications with the capability \c appstore, running with
-user-id \c 1000 to call the installer's \c startPackageInstallation function, while preventing anyone
-to remotely call \c acknowledgePackageInstallation:
+The code snippet below shows a simple example, that only allows applications with the \c appstore
+capability, running with user ID \c 1000 to call the installer's \c startPackageInstallation
+function, while preventing anyone to remotely call \c acknowledgePackageInstallation:
 
 \badcode
 ...
@@ -479,47 +457,47 @@ dbus:
 \section1 Installation Locations
 
 The \c installationLocations YAML field is a list of YAML objects, very similar to
-ApplicationInstaller::getInstallationLocation
+ApplicationInstaller::getInstallationLocation.
 
 \table
-\header
-    \li Name
-    \li Type
-    \li Description
-\row
-    \li \c id
-    \li string
-    \li The installation location id that is used as the handle for all other ApplicationInstaller
-        function calls. The \c id consists of the \c type and \c index field, concatenated by
-        a single dash (for example, \c removable-0).
+    \header
+        \li Config Key
+        \li Type
+        \li Description
+    \row
+        \li \c id
+        \li string
+        \li The installation location ID that is used as the handle for all other
+            ApplicationInstaller function calls. The \c id consists of a \c type and \c index
+            field, concatenated with a single dash. For example, \c removable-0.
 
-        Valid values for \c type are \c internal and \c removable.
+            Valid values for \c type are \c internal and \c removable.
 
-        In case there is more than one installation location for the same type of device, this
-        zero-based index is used for disambiguation. For example, two SD card slots will result in the
-        ids \c removable-0 and \c removable-1. Otherwise, the index is always \c 0.
-\row
-    \li \c isDefault
-    \li bool
-    \li Only one installation location can be the default location, which must be mounted and
-        accessible at all times. This location can be used by a UI application to get a sensible
-        default for the installation location that it needs to pass to
-        \l{ApplicationInstaller::startPackageInstallation()}{startPackageInstallation()}.
-\row
-    \li \c installationPath
-    \li string
-    \li The absolute file system path to the base directory under which applications are installed.
-\row
-    \li \c documentPath
-    \li string
-    \li The absolute file-system path to the base directory under which per-user document
-        directories are created. This entry can either be located on this device, or it can be the
-        same as the \c documentPath of the master installation location.
-\row
-    \li \c mountPoint
-    \li string
-    \li Only required for \c removable installation location: The absolute file-system path to the
-        mount-point of the device where \c installationPath is located.
+            In case there is more than one installation location for the same type of device, this
+            zero-based index is used for disambiguation. For example, two SD card slots will result
+            in the IDs \c removable-0 and \c removable-1. Otherwise, the index is always \c 0.
+    \row
+        \li \c isDefault
+        \li bool
+        \li Only one installation location can be the default location, which must be mounted and
+            accessible at all times. This location can be used by a UI application to get a
+            sensible default for the installation location that it needs to pass to
+            \l{ApplicationInstaller::startPackageInstallation()}{startPackageInstallation()}.
+    \row
+        \li \c installationPath
+        \li string
+        \li The absolute file system path to the base directory where applications are installed.
+    \row
+        \li \c documentPath
+        \li string
+        \li The absolute file system path to the base directory where per-user document directories
+            are created. This entry can either be located on this device, or it can be the same as
+            the \c documentPath of the master installation location.
+    \row
+        \li \c mountPoint
+        \li string
+        \li Only required for \c removable installation location: The absolute file system path to
+            the mount-point of the device, where \c installationPath is located.
 \endtable
 
 \section1 Runtime Configuration
@@ -528,71 +506,73 @@ The runtime configuration sub-objects are specific to the actual runtimes, so th
 an additional column specifying which runtime a configuration option applies to:
 
 \table
-\header
-    \li Name
-    \li Runtimes
-    \li Type
-    \li Description
-\row
-    \li \c environmentVariables
-    \li native, qml
-    \li map<string>
-    \li A simple string-to-string map, describing the environment variables that should be set when
-        spawning the runtime process. You can remove a variable from the default environment by
-        giving it a null value.
-\row
-    \li \c importPaths
-    \li qml
-    \li array<string>
-    \li Add an additional QML import path for apps started via this runtime.
-\row
-    \li \c plugins
-    \li qml
-    \li map<array<string>>
-    \li A string-to-string-list map that defines plugins that the QML runtime should load. The
-        value must be a list of plugin library file path names. A single plugin will also be
-        accepted. Currently the only valid keys are \c startup and \c container:
-        \list
-        \li \c startup: this plugin must implement the StartupInterface. The QML runtime will
-            call the function hooks during startup of an application.
-        \li \c container: this plugin must implement the ContainerInterface (see \l Containers).
-        \endlist
-\row
-    \li \c quicklaunchQml
-    \li qml
-    \li string
-    \li A QML source file that is loaded when a quick-launcher is started. It will not be loaded
-        when an application is started directly. Providing this file is only useful, if
-        \e quicklaunch/runtimesPerContainer > 0. It can be used to improve subsequent start-up
-        performance of the actual application, e.g. by importing and hence preloading common
-        application plugins and instantiating costly singletons. Creating other objects is
-        generally useless as the created component will immediately be deleted again. For the same
-        reason visual items should not be created. Always keep in mind that everything included in
-        this file will be loaded into \b all applications that use the QML runtime.
-\row
-    \li \c loadDummyData
-    \li qml
-    \li bool
-    \li Loads QML dummy-data into the app (just like \c qmlscene and \c qml would). Defaults to \c false.
-\row
-    \li \c backgroundColor
-    \li qml
-    \li string
-    \li If set, the main window of the app gets this color set as the default clear color. This option
-        also gives the surface an 8-bit alpha buffer.
-\row
-    \li \c quitTime
-    \li qml
-    \li int
-    \li Defines the grace period in milliseconds, that an application is given for shutting down. This is
-        the time limit between receiving the \l{ApplicationInterface::quit()}{quit()} signal and responding with
-        \l{ApplicationInterface::acknowledgeQuit()}{acknowledgeQuit()}. (default: 250).
-\row
-    \li \c crashAction
-    \li qml
-    \li object
-    \li Specifies which actions to take, if a QML client application is crashing. See
-        \l{Crash Action Specification} for more information.
+    \header
+        \li Config Key
+        \li Runtimes
+        \li Type
+        \li Description
+    \row
+        \li \c environmentVariables
+        \li native, qml
+        \li map<string>
+        \li A simple string-to-string map that describes the environment variables that should be
+            set when spawning the runtime process. To remove a variable from the default
+            environment, give it a null value.
+    \row
+        \li \c importPaths
+        \li qml
+        \li array<string>
+        \li Adds an additional QML import path for apps started via this runtime.
+    \row
+        \li \c plugins
+        \li qml
+        \li map<array<string>>
+        \li A string-to-string-list map that defines plugins that the QML runtime should load. The
+            value must be a single plugin or a list of plugin library file path names. Currently
+            the only valid key is \c startup:
+            \list
+                \li \c startup: this plugin must implement the StartupInterface. The QML runtime
+                    calls the function hooks on application startup.
+            \endlist
+    \row
+        \li \c quicklaunchQml
+        \li qml
+        \li string
+        \li A QML source file that is loaded when a quick launcher is started; but not when an
+            application is started directly. Providing this file is only useful, if
+            \c quicklaunch/runtimesPerContainer > 0. This option can be used to improve subsequent
+            startup performance of the actual application, such as by importing and hence
+            preloading common application plugins and instantiating costly singletons. Generally,
+            creating other objects is not useful as the created component is immediately deleted
+            again. For the same reason, visual items should not be created. Always keep in mind
+            that everything included in this file is loaded into \b all applications that use the
+            QML runtime.
+    \row
+        \li \c loadDummyData
+        \li qml
+        \li bool
+        \li Loads QML dummy-data into the app, just like \c qmlscene and \c qml would.
+            (default: false)
+    \row
+        \li \c backgroundColor
+        \li qml
+        \li string
+        \li If set, the main window of the app gets this color set as the default clear color.
+            This option also gives the surface an 8-bit alpha buffer.
+    \row
+        \li \c quitTime
+        \li qml
+        \li int
+        \li Defines the grace period in milliseconds, that an application is given for shutting
+            down. This is the time limit between receiving the
+            \l{ApplicationInterface::quit()}{quit()} signal and responding with
+            \l{ApplicationInterface::acknowledgeQuit()}{acknowledgeQuit()}. (default: 250)
+    \row
+        \li \c crashAction
+        \li qml
+        \li object
+        \li Specifies which actions to take, if a QML client application is crashing. See
+            \l{Crash Action Specification} for more information.
 \endtable
 
 \section1 Crash Action Specification
@@ -604,88 +584,87 @@ crashing.
 
 The following conditions are handled:
 
-\list
-\li Uncaught exceptions. Exceptions derived from \c std::exception also show the \c {what()}
-    information.
-\li \c SIGSEGV
-\li \c SIGABRT
-\li \c SIGBUS
-\li \c SIGILL
-\li \c SIGFPE
-\li \c SIGPIPE
-\endlist
+    \list
+        \li Uncaught exceptions. Exceptions derived from \c std::exception also show details on
+            \c {what()} occurred.
+        \li \c SIGSEGV
+        \li \c SIGABRT
+        \li \c SIGBUS
+        \li \c SIGILL
+        \li \c SIGFPE
+        \li \c SIGPIPE
+    \endlist
 
 \table
-\header
-    \li Name
-    \li Type
-    \li Description
-\row
-    \li \c printBacktrace
-    \li bool
-    \li Tries to print a readable backtrace. This type uses the primitive backtrace functionality
-        from glibc, unless \c libbacktrace was enabled at configure time (default: true).
-\row
-    \li \c printQmlStack
-    \li bool
-    \li Tries to print a readable QML stack trace. This is similar to \c printBacktrace above, but
-        prints the current QML function stack when the crash occurred (default: true).
-\row
-    \li \c dumpCore
-    \li bool
-    \li Ends the process via \c abort instead of \c _exit. This will dump a \c core file,
-        depending on your kernel configuration (default: true).
-\row
-    \li \c waitForGdbAttach
-    \li int
-    \li Specifies a timeout in seconds while the crashed program is being held in the stopped state,
-        waiting for a debugger to attach. Any value \c{<= 0} will skip this step (default: 0).
+    \header
+        \li Config Key
+        \li Type
+        \li Description
+    \row
+        \li \c printBacktrace
+        \li bool
+        \li Tries to print a readable backtrace, using the primitive backtrace functionality from
+            glibc, unless \c libbacktrace was enabled at configure time (default: true).
+    \row
+        \li \c printQmlStack
+        \li bool
+        \li Tries to print a readable QML stack trace. Similar to \c printBacktrace above, but
+            prints the current QML function stack when the crash occurred. (default: true)
+    \row
+        \li \c dumpCore
+        \li bool
+        \li Ends the process via \c abort instead of \c _exit. Dumps a \c core file, depending on
+            your kernel configuration. (default: true)
+    \row
+        \li \c waitForGdbAttach
+        \li int
+        \li Specifies a timeout in seconds while the crashed program is being held in the stopped
+            state, waiting for a debugger to attach. Any value \c{<= 0} skips this step.
+            (default: 0)
 \endtable
 
 
 \section1 OpenGL Specification
 
-The \c opengl sub-object gives you the possibility to specify the required OpenGL version and/or
-profile.
+The \c opengl sub-object lets you specify the required OpenGL version and/or profile.
 
 \table
-\header
-    \li Name
-    \li Type
-    \li Description
-\row
-    \li \c desktopProfile
-    \li string
-    \li When running on a desktop, you can request a non-default OpenGL profile by setting this
-        value to either \c core or \c compatibility. If you do not specify anything here, Qt uses
-        the default settings for this platform. OpenGL ES has no support for profiles, so this
-        setting is ignored on platforms using OpenGL ES.
-        \note Be aware that this is just a request. The application manager will output a warning,
-              if the requested profile does not match the actual profile.
-\row
-    \li \c esMajorVersion
-    \li int
-    \li When set, the application manager will request the specified OpenGL ES major version. On
-        the desktop, the given GLES version is transparently mapped to the corresponding desktop GL
-        version.
-        The current mapping table is as follows:
-        \list
-            \li 2.0 \unicode{0x2192} 2.1
-            \li 3.0 \unicode{0x2192} 4.3
-            \li 3.1 \unicode{0x2192} 4.5
-            \li 3.2 \unicode{0x2192} 4.6
-        \endlist
+    \header
+        \li Config Key
+        \li Type
+        \li Description
+    \row
+        \li \c desktopProfile
+        \li string
+        \li When running on a desktop, set this value to either \c core or \c compatibility to
+            request a non-default OpenGL profile. If you do not specify anything here, Qt uses
+            the default settings for this platform. OpenGL ES has no support for profiles, so
+            this setting is ignored on platforms using OpenGL ES.
+            \note Be aware that this is just a request. The application manager outputs a
+                  warning, if the requested profile doesn't match the actual profile.
+    \row
+        \li \c esMajorVersion
+        \li int
+        \li When set, the application manager requests the specified OpenGL ES major version.
+            On the desktop, the given GLES version is transparently mapped to the corresponding
+            desktop GL version.
+            The current mapping table is as follows:
+            \list
+                \li 2.0 \unicode{0x2192} 2.1
+                \li 3.0 \unicode{0x2192} 4.3
+                \li 3.1 \unicode{0x2192} 4.5
+                \li 3.2 \unicode{0x2192} 4.6
+            \endlist
 
-        Make sure to either specify \e both \c esMajorVersion and \c esMinorVersion options; or
-        \e none at all.
+            Make sure to specify either \b both options: \c esMajorVersion and \c esMinorVersion;
+            or \b none at all.
 
-        \note Be aware that this is just a request. The application manager will output a warning,
-              if the requested version does not match the actual version.
-\row
-    \li \c esMinorVersion
-    \li int
-    \li When set, the application manager will request the specified OpenGL ES minor version. See
-        \c esMajorVersion above for more information.
+            \note Be aware that this is just a request. The application manager outputs a
+                    warning, if the requested version doesn't match the actual version.
+    \row
+        \li \c esMinorVersion
+        \li int
+        \li When set, the application manager requests the specified OpenGL ES minor version.
+            For more information, see \c esMajorVersion above.
 \endtable
-
 */

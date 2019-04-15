@@ -29,151 +29,164 @@
 /*!
 
 \example applicationmanager/hello-world
-\title "Hello World!" System-UI Example
-\image hello-world-example.png The Hello World example with two applications running.
-\brief Your first System-UI. Start here.
+\brief Learn how to write your first System UI.
 \ingroup applicationmanager-examples
+\title "Hello World!" System UI Example
+\image hello-world-example.png The Hello World example with two applications running.
 
 \section1 Introduction
 
-This example shows a very simple System-UI implementation, in the spirit of "Hello World!" examples,
-showcasing the fundamental building blocks of Qt Application Manager. You're able to see icons and names
-of the available applications on the left, start and stop them by clicking on their respective icons,
-and see their windows in a column layout on the right side.
+This example shows a very simple System UI implementation that showcases Qt Application Manager's
+fundamental building blocks.
 
-The applications themselves just display "Hello World!" against a background of a specific color.
+The applications' icons and names are on the left. You can click on their respective icons to start
+and stop them. The column layout on the right shows their windows.
 
-\section1 Files and folder structure
+The applications display "Hello World!" against a background of a specific color.
 
-This example is comprised of a System-UI and three sample applications ("Hello Red", "Hello Green"
-and "Hello Blue"), making for four separate QML applications in total. System-UI is also just a QML
-application in the end, albeit a special one.
+\section1 Files and Folder Structure
 
-Each application is put in its own separate directory as described below:
+This example comprises of four separate QML applications: a System UI and three sample
+applications: "Hello Red", "Hello Green" and "Hello Blue". The System UI is also a QML application,
+albeit a special one.
+
+Each application is put in a separate directory as follows:
 
 \list
-\li \tt{system-ui.qml}
+\li \tt system-ui.qml
 \li \tt{\b{apps}}
     \list
     \li \tt{\b{hello-world.blue}}
         \list
-        \li \tt{icon.png}
-        \li \tt{info.yaml}
-        \li \tt{main.qml}
+        \li \tt icon.png
+        \li \tt info.yaml
+        \li \tt main.qml
         \endlist
     \li \tt{\b{hello-world.red}}
         \list
-        \li \tt{icon.png}
-        \li \tt{info.yaml}
-        \li \tt{main.qml}
+        \li \tt icon.png
+        \li \tt info.yaml
+        \li \tt main.qml
         \endlist
     \li \tt{\b{hello-world.green}}
         \list
-        \li \tt{icon.png}
-        \li \tt{info.yaml}
-        \li \tt{main.qml}
+        \li \tt icon.png
+        \li \tt info.yaml
+        \li \tt main.qml
         \endlist
     \endlist
 \endlist
 
-As you can see above, each application, besides its main QML file, also has an icon and a
-\tt{info.yaml}. That YAML file contains the application metadata (it tells System-UI the
-name of the application, its icon filename, etc).
+Each application has a \c main.qml file, an icon, and an \l{Manifest Definition}{\c info.yaml}.
+This YAML file contains application metadata such as the name of the application, its icon
+filename, and more.
 
-\section1 Running
+\section1 Run the System UI
 
-Assuming the \c appman executable is in your path, you can run the System-UI as follows:
+Verify that you have the \c appman binary in your path. Otherwise, you have to explicitly specify
+the location for your \c appman binary when you use it.
+
+If you have the \c appman binary in your path, you can run the System UI as follows:
 
 \badcode
 examples/applicationmanager/hello-world$ appman --builtin-apps-manifest-dir ./apps system-ui.qml
 \endcode
 
-The first command line parameter tells \c appman where to find bult-in applications (ie, applications
-that come pre-installed and cannot be removed via ApplicationInstaller APIs). In this case, they're in
-the \c apps subdirectory. The last parameter is the main QML file of the System-UI.
+The \c --builtin-apps-manifest-dir command line parameter tells \c appman where to find bult-in
+applications, in this case the \c apps subdirectory. Built-in applications are those that come
+pre-installed and cannot be removed via the ApplicationInstaller APIs. The next parameter is the
+System UI's \c main.qml filename, \c system-ui.qml.
 
-And this is what you should see:
+The screenshot below is what you should see:
 
 \image hello-world-launched.png
 
-For information on these and other command line options you can run \tt{appman --help}.
+For more information on the command line options, run \c {appman --help}.
 
-\section1 System-UI implementation
+\section1 Implement the System UI
 
-Our Hello World System-UI code starts like any simple QML application, with some imports and a plain
-Item at the root. The only difference is that it also imports the \c QtApplicationManager.SystemUI module,
-besides \c QtQuick.
+Like any simple QML application, our example's code starts with some imports and a plain Item at
+the root. The only difference is that our System UI also imports the
+\c QtApplicationManager.SystemUI module, besides \c QtQuick.
 
 \quotefromfile applicationmanager/hello-world/system-ui.qml
 \skipto import QtQuick
 \printuntil height:
 
-Next we have a Column on the left side of the root Item where we lay out the icons of the available applications
-along with their names.
+Next, we have a Column on the left side of the root Item where we place the icons of the available
+applications along with their names.
 
 \printto Show windows
 
-As the model we use the \c ApplicationManager singleton which provides a row for each available application.
-Each row has, among others, an \c icon role containing the icon URL, a \c name role with the localized application
-name, a boolean \c isRunning role that tells whether the application is currently running and a \c application
-role containing its ApplicationObject. For information on other roles see the ApplicationManager documentation.
+We use the \c ApplicationManager singleton, as a model, which provides a row for each application
+available. In each row, we have:
 
-Clicking on an icon will either start its application or stop it in case it's already running.
+\list
+    \li an \c icon role with the icon URL
+    \li a \c name role with the localized application's name
+    \li a boolean \c isRunning that provides the application's status
+    \li an \c application role that contains its ApplicationObject
+\endlist
 
-Next we place a \c Column anchored to the right side of the root \c Item. In that column we lay out the existing
-windows from all currently running applications:
+For information on the other roles available, see \l{ApplicationManager}{ApplicationManager QML Type}.
+
+Clicking on an icon either starts its application or stops it if it's already running.
+
+Next, we place a \c Column anchored to the right side of the root \c Item. In this column, we lay
+out the existing windows for all applications that are currently running:
 
 \printto /^\}/
 
-This time we use the WindowManager singleton as the model. There's a row for each window, with its
-WindowObject in the \c window role.
+This time, we use the \c WindowManager singleton as the model. There's a row for each window, with
+its WindowObject in the \c window role.
 
-In order to have a window rendered in our System-UI we have to assign its WindowObject to a WindowItem,
-as was above. By default the window will be resized to match the size of the WindowItem rendering it.
+To have a window rendered in our System UI, we have to assign its WindowObject to a WindowItem,
+as we did above. By default, the window is resized to match the size of the WindowItem rendering
+it.
 
-\section1 Application implementation
+\section1 Implement the Application
 
-Our Hello World applications just display a "Hello World!" text against a colored background.
+Our Hello World applications display a "Hello World!" text against a colored background.
 
 \quotefromfile applicationmanager/hello-world/apps/hello-world.blue/main.qml
 \skipto import QtQuick
 \printuntil /^\}/
 
-The only difference from a plain QML application is that the root element is an ApplicationManagerWindow,
-provided by the \c QtApplicationManager.Application module.
+The only difference between this example and a plain QML application is that the root element is
+an ApplicationManagerWindow, provided by the \c QtApplicationManager.Application module.
 
-\section2 Application metadata
+\section2 Application Metadata
 
-The info.yaml file contains the metadata about an application.
-
-It starts with some boilerplate telling that this file contains Qt Application Manager application metadata.
+The \c info.yaml file contains the metadata about an application. It starts with some boilerplate
+desribing that this file contains Qt Application Manager application metadata.
 
 \quotefromfile applicationmanager/hello-world/apps/hello-world.blue/info.yaml
 \printuntil --
 
-Then comes the application id, which uniquely identifies the application. It's recommended to follow a
-reverse DNS scheme, although this is not enforced. Here it's the "Blue" application from the "Hello World"
-example UI.
+Then comes the application ID, which uniquely identifies the application. It's recommended to
+follow a reverse DNS scheme, but it's not enforced. Here it's the "Blue" application from the
+"Hello World" example UI.
 
 \printline id:
 
-Then the icon filename, which is self-explanatory:
+Then the icon filename:
 
 \printline icon:
 
-The entry point of the application is specified by the \c code field. For QML applications
-this means the filename of the main QML file.
+The \c code field specifies the entry point of the application. For QML applications, this means
+the filename of its main QML file.
 
 \printline code:
 
-The \c runtime field specifies the runtime used by the application. In this Hello World example, all applications
-are written in QML and hence we use the \c 'qml' runtime. Another runtime is \c 'native' for instance, used for compiled,
-executable, applications where the \c code entry would point to its binary executable filename.
+The \c runtime field specifies the runtime used by the application. In this example, all
+applications are written in QML and hence we use the \c 'qml' runtime. Another runtime is
+\c 'native' for instance, used for compiled, executable, applications where the \c code
+entry would point to its binary executable filename.
 
 \printline runtime:
 
-And finally comes the user-visible name of the application in any number of languages (in this example, only English
-was provided):
+And finally comes the user-visible name of the application in any number of languages. For this
+example, we only provide English:
 
 \printuntil
 

@@ -29,27 +29,39 @@
 /*!
 
 \example applicationmanager/frame-timer
-\title Displaying Frame-Rate of System-UI and Applications Example
+\title Display Frame Rate for the System UI and Applications Example
 \image frame-timer-example.png The "FrameTimer" example with two applications running.
-\brief How to use FrameTimer to display frame-rate information.
+\brief How to use the FrameTimer to display information about the frame rate.
 \ingroup applicationmanager-examples
 
-This example shows you how to use the \l FrameTimer component to display frame-rate information
-of both System-UI and application windows.
+\section1 Introduction
 
-The System-UI is comprised of a column of application icons on the left side and a graph on the top
-right side, displaying the average frame-rate of the System-UI itself (actually of System-UI's top-level
-Window, to be more precise). If there are no applications running, System-UI's frame rate will mostly
-stay at 1 frame per second. That's because a Qt QML application window is only redrawn when needed. If
-nothing changed on it, it won't redraw (zero frames per second then). The only reason that System-UI
-stays around 1 FPS when there are no apps running is because of the FPS graph itself, which is updated
-once every second and thus causes a redraw of the System-UI (an
-\l{https://en.wikipedia.org/wiki/Observer_effect_(information_technology)}{Observer effect}).
+This example shows you how to use the \l FrameTimer component to display frame rate information for
+both the System UI and the application windows.
 
-The Fish application animates (and therefore redraws) at a rate of 25 frames per second. So running it will
-instantly raise the frame-rate of System-UI to 25 FPS (frames per second) as well.
+The System UI comprises of a column of application icons on the left and a graph on the top
+right, displaying the average frame rate for the System UI itself. To be more precise, this is the
+System UI's top-level Window. If there are no applications running, the System UI's frame rate
+typically stays at 1 Frame per Second (FPS). This is because a Qt QML application window is only
+redrawn= when necessary. If nothing has changed in this window, it isn't redrawn. System UI's frame
+rate is then 0 FPS. The only reason the System UI stays around 1 FPS when there are no applications
+running is because of the FPS graph itself, which is updated once every second and thus causes a
+redraw of the System UI. This is commonly referred to as the
+\l{https://en.wikipedia.org/wiki/Observer_effect_(information_technology)}{Observer effect}.
 
-The Rabbit application animates at native speed (ie, as fast as the system can or is configured to do, which
-is usually 60 FPS). So running it will raise System-UI's FPS further, to 60 FPS.
+The Fish application animates, and therefore redraws, at a rate of 25 FPS. So running it will
+instantly raise the frame-rate of System UI to 25 FPS as well.
+
+\quotefromfile applicationmanager/frame-timer/apps/frame-timer.fish/fish.qml
+\skipto Timer
+\printuntil /^\}/
+
+The Rabbit application animates at native speed, which is as fast as the system can or is
+configured to do, which is usually 60 FPS. Consequently, running this application raises the
+System UI's FPS further, to 60 FPS.
+
+\quotefromfile applicationmanager/frame-timer/apps/frame-timer.rabbit/rabbit.qml
+\skipto RotationAnimation
+\printuntil /^\}/
 
 */

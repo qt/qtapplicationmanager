@@ -29,31 +29,35 @@
 /*!
 
 \example applicationmanager/animated-windows
-\title Animated Windows System-UI Example
-\image animated-windows-example.jpg The "Animated Windows" example with two applications running.
-\brief How to animate the appearance and disappearance of windows.
+\brief Learn how to animate windows to appear and disappear.
 \ingroup applicationmanager-examples
+\title Animated Windows System UI Example
+\image animated-windows-example.jpg The Animated Windows example with two applications running.
 
-This example shows you how to animate the appearance and disappearance of windows in a System-UI. It
-assumes you're already familiar with the concepts and topics introduced in the \l {"Hello World!"
-System-UI Example}.
+\section1 Introduction
 
-Unlike our \l {"Hello World!" System-UI Example} {Hello World} example, most graphical user interfaces
-avoid making sudden, abrupt, changes since they can confuse the user and are not visually pleasant. So
-when a new WindowObject is created by the WindowManager we want to animate its appearance instead of
-simply having it popping up on the screen. Likewise, once a WindowObject loses its surface (because
-the application closed this window or stopped altogether) and is thus removed from WindowManager's
-model we want to animate its disappearance instead of having it vanish immediately.
+This example shows you how to animate windows to appear and disappear, in a System UI.
 
-If you are using a ready-made, advanced, layout such as ListView, you can assign Transitions to
-different actions like add, remove, displaced, etc and keep using WindowManager as your model.
-But in many situations this is not the case and thus you will have to create your own separate model
-(a ListModel should suffice), so that a WindowObject only leaves it once you have finished animating
-the disappearance of its delegate. This example showcases such a technique.
+\b Prerequisites: You're already familiar with the concepts and topics introduced in the
+   \l {"Hello World!" System UI Example}.
 
-\section1 The windows model
+Unlike with the \l {"Hello World!" System UI Example} {Hello World} example, most Graphical User
+Interfaces (GUIs) avoid making sudden, abrupt, changes as they can confuse the user and are not
+visually pleasant. So, when the WindowManager creates a new WindowObject, we want to animate its
+appearance instead of simply having it pop up on the screen. Likewise, once a WindowObject loses
+its surface - because the application closed this window or stopped altogether - and is removed
+from the WindowManager's model, we want to animate its disappearance instead of having it vanish
+immediately.
 
-The key point in this example is the model we use for instantiating our \l{WindowItem}{windows}.
+If you're using a ready-made, advanced, layout such as ListView, you can assign Transitions to
+different actions like add, remove, displaced, and so on, and keep using WindowManager as your
+model. But in many situations this is not the case. Instead, you have to create your own model,
+such as a ListModel, so that a WindowObject only leaves the model when you have finished
+animating its delegate's disappearance. This example showcases this technique.
+
+\section1 The Windows Model
+
+The model we use to instantiate our \l{WindowItem}{windows} is the key point in this example.
 
 Instead of using WindowManager directly as our model we use a plain ListModel:
 
@@ -62,13 +66,15 @@ Instead of using WindowManager directly as our model we use a plain ListModel:
 \skipline Each WindowObject
 \printuntil delegate: Rectangle
 
-We remove a WindowObject from that model only after is has reached its end state (WindowObject.NoSurface)
-and it's no longer being shown on screen (any state transition has already finished).
+We remove a WindowObject from that model only after it has reached its end state:
+WindowObject.NoSurface and is no longer being shown on screen; any state transition has already
+finished.
 
 \skipto property bool safeToRemove
 \printuntil onSafeToRemoveChanged
 
-And we add a WindowObject to it (and hence have it displayed on screen) as soon as WindowManager creates one.
+Then, we add a WindowObject to it, and have it displayed on screen as soon as WindowManager creates
+a WindowObject.
 
 \skipto Connections
 \printuntil /\s+\}/

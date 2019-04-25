@@ -372,7 +372,8 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
        << m_manifestDir.absolutePath()
        << m_codeDir.absolutePath()
        << m_uid
-       << m_dlt;
+       << m_dlt
+       << m_intents;
 }
 
 bool ApplicationInfo::supportsApplicationInterface() const
@@ -402,7 +403,8 @@ void ApplicationInfo::read(QDataStream &ds)
        >> manifestDir
        >> codeDir
        >> m_uid
-       >> m_dlt;
+       >> m_dlt
+       >> m_intents;
 
     m_capabilities.sort();
     m_categories.sort();
@@ -436,6 +438,7 @@ void ApplicationInfo::toVariantMapHelper(QVariantMap &map) const
                                                               : QString();
     map[qSL("supportsApplicationInterface")] = m_supportsApplicationInterface;
     map[qSL("dlt")] = m_dlt;
+    map[qSL("intents")] = m_intents;
 }
 
 QT_END_NAMESPACE_AM

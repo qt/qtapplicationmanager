@@ -74,20 +74,20 @@ Item {
             color: "grey"
             font.pixelSize: 16
             text: "The following features are supported:\n" +
-                  "\u2022 Start applications by clicking an icon on the top left\n" +
-                  "\u2022 Stop an application by clicking the icon on the top left again\n" +
-                  "\u2022 Close an application window by clicking on the top/left window decoration rectangle\n" +
-                  "\u2022 Raise applications by clicking on the decoration\n" +
+                  "\u2022 Start applications by clicking on an icon in the top left\n" +
+                  "\u2022 Stop an application by clicking on the icon in the top left again\n" +
+                  "\u2022 Close application windows by clicking on the top left window decoration rectangle\n" +
+                  "\u2022 Bring applications forward by clicking on the decoration\n" +
                   "\u2022 Drag windows by pressing on the window decoration and moving them\n" +
-                  "\u2022 System-UI sends 'propA' change when an app is started\n" +
-                  "\u2022 System-UI and App2 react on window property changes with a debug message\n" +
-                  "\u2022 App1 animation can be stopped and restarted by a click\n" +
-                  "\u2022 App1 sends rotation angle as a window property to System-UI on stop\n" +
+                  "\u2022 The System UI sends a 'propA' change when an app starts\n" +
+                  "\u2022 The System UI and App2 react to window property changes with a debug message\n" +
+                  "\u2022 Stop or restart App1 animations with a click\n" +
+                  "\u2022 App1 sends rotation angle as a window property to System UI on stop\n" +
                   "\u2022 App1 shows a pop-up on the System-UI while it is paused\n" +
-                  "\u2022 App2 will make use of an IPC extension when it is started\n" +
-                  "\u2022 App2 logs the document URL it has been started with\n" +
-                  "\u2022 App2 triggers a notification in the System-UI when the bulb icon is clicked\n" +
-                  "\u2022 Wayland client windows from processes started outside of appman will be shown"
+                  "\u2022 App2 makes use of an IPC extension when it starts\n" +
+                  "\u2022 App2 logs the document URL that started it\n" +
+                  "\u2022 App2 triggers a notification in the System UI when the bulb icon is clicked\n" +
+                  "\u2022 Show Wayland client windows that originate from processes outside of \c appman"
         }
     }
 }

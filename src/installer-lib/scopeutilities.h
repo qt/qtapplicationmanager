@@ -69,63 +69,6 @@ private:
     bool m_taken = false;
 };
 
-class ScopedFileCreator
-{
-public:
-    ScopedFileCreator();
-    bool create(const QString &path, bool removeExisting = true);
-    bool take();
-    ~ScopedFileCreator();
-
-    QFile *file();
-
-private:
-    Q_DISABLE_COPY(ScopedFileCreator)
-
-    QFile m_file;
-    bool m_created = false;
-    bool m_taken = false;
-};
-
-class ScopedLoopbackCreator
-{
-public:
-    ScopedLoopbackCreator();
-    bool create(const QString &imagePath);
-    bool take();
-    bool destroy();
-    ~ScopedLoopbackCreator();
-
-    QString device() const;
-    QString errorString() const;
-
-private:
-    Q_DISABLE_COPY(ScopedLoopbackCreator)
-
-    QString m_loopDevice;
-    bool m_taken = false;
-};
-
-class ScopedMounter
-{
-public:
-    ScopedMounter();
-    bool mount(const QString &devicePath, const QString &mountPoint, bool readWrite);
-    bool take();
-    bool unmount();
-    ~ScopedMounter();
-
-    QString errorString() const;
-
-private:
-    Q_DISABLE_COPY(ScopedMounter)
-
-    QString m_devicePath;
-    QString m_mountPoint;
-    bool m_mounted = false;
-    bool m_taken = false;
-};
-
 class ScopedRenamer
 {
 public:

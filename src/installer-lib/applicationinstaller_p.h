@@ -67,7 +67,6 @@ public:
     uint commonGroupId = uint(-1);
 
     QScopedPointer<QDir> manifestDir;
-    QScopedPointer<QDir> imageMountDir;
     QVector<InstallationLocation> installationLocations;
     InstallationLocation invalidInstallationLocation;
 
@@ -89,9 +88,6 @@ public:
             all += activeTask;
         return all;
     }
-
-    QMutex activationLock;
-    QMap<QString, QString> activatedPackages; // id -> installationPath
 };
 
 QT_END_NAMESPACE_AM

@@ -64,24 +64,11 @@
 
   delete <manifestdir>/<id>+
   delete <manifestdir>/<id>-
+  delete <location>/<id>+
 
-  if (removable)
-      delete <location>/<id>.appimg+
-  else
-      delete <location>/<id>+
-
-  create <manifestdir>/<id>+
-
-  if (removable)
-      create ext2 image at <location>/<id>/.appimg+
-      create loopback device on image file
-      mkfs.ext2 on loopback device
-      mount loopback to <imagemountdir>/<id>+
-      set <extractiondir> to <imagemountdir>/<id>+
-  else
-      create dir <location>/<id>+
-      set <extractiondir> to <location>/<id>+
-
+  create dir <manifestdir>/<id>+
+  create dir <location>/<id>+
+  set <extractiondir> to <location>/<id>+
 
   Step 2 -- unpack files
   ======================
@@ -92,14 +79,9 @@
   Step 3 -- finishInstallation()
   ================================
 
-  if (removable)
-      if (exists <location>/<id>.appimg)
-          set <isupdate> to <true>
-  else
-      if (exists <location>/<id>)
-          set <isupdate> to <true>
-
-  create installation report at <manifestdir>/installation-report.yaml
+  if (exists <location>/<id>)
+      set <isupdate> to <true>
+  create installation report at <manifestDir>/installation-report.yaml
 
   if (not <isupdate>)
       create document directory
@@ -109,9 +91,6 @@
 
   copy info.yaml and the icon file from <extractiondir> to <manifestdir>/<id>+
 
-  if (removable)
-      unmount loopback, destroy loopback, remove mount-point
-
 
   Step 3.1 -- final rename in finishInstallation()
   ==================================================
@@ -119,12 +98,9 @@
   rename <manifestdir>/<id> to <manifestdir>/<id>-
   rename <manifestdir>/<id>+ to <manifestdir>/<id>
 
-  if (removable)
-      rename <location>/<id>.appimg+ to <location>/<id>.appimg
-  else
-     if (<isupdate>)
-         rename <location>/<id> to <location>/<id>-
-     rename <location>/<id>+ to <location>/<id>
+  if (<isupdate>)
+      rename <location>/<id> to <location>/<id>-
+  rename <location>/<id>+ to <location>/<id>
 */
 
 QT_BEGIN_NAMESPACE_AM
@@ -377,10 +353,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
             QString path = m_extractionDir.absolutePath();
             path.chop(1); // remove the '+'
             m_app->setManifestDir(m_manifestDir.absolutePath());
-            if (m_installationLocation.isRemovable())
-                m_app->setCodeDir(m_app->manifestDir());
-            else
-                m_app->setCodeDir(path);
+            m_app->setCodeDir(path);
         }
         // we need to find a free uid before we call startingApplicationInstallation
         m_app->m_uid = m_ai->findUnusedUserId();
@@ -412,20 +385,9 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
     removeRecursiveHelper(m_manifestDir.absolutePath() + qL1C('-'));
 
     // 2. delete old, partial installation
-
     QDir installationDir = QString(m_installationLocation.installationPath() + qL1C('/'));
-    QString installationTarget;
-    if (m_installationLocation.isRemovable()) {
-        installationTarget = m_applicationId + qSL(".appimg+");
+    QString installationTarget = m_applicationId + qL1C('+');
 
-        if (!m_installationLocation.isMounted()) // make sure the device is mounted
-            throw Exception(Error::MediumNotAvailable, "installation medium %1 is not mounted").arg(m_installationLocation.id());
-
-        if (m_ai->isPackageActivated(m_applicationId))
-            throw Exception("existing application image %1 is still mounted").arg(installationTarget);
-    } else {
-        installationTarget = m_applicationId + qL1C('+');
-    }
     if (installationDir.exists(installationTarget)) {
         if (!removeRecursiveHelper(installationDir.absoluteFilePath(installationTarget)))
             throw Exception("could not remove old, partial installation %1/%2").arg(installationDir).arg(installationTarget);
@@ -436,62 +398,12 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
         throw Exception("could not create manifest sub-directory %1+").arg(m_manifestDir);
 
     // 4. create new installation
-    if (m_installationLocation.isRemovable()) {
-        if (!m_installationDirCreator.create(installationDir.absolutePath()))
-            throw Exception("could not create application image base directory %1").arg(installationDir);
-
-        quint64 neededSize = qMax(m_extractor->installationReport().diskSpaceUsed(), quint64(70 * 1024));
-
-        quint64 availableSize = 0;
-        if (!m_installationLocation.installationDeviceFreeSpace(nullptr, &availableSize) || availableSize < neededSize) {
-            throw Exception(Error::StorageSpace, "not enough storage space left on %1: %2 MB available, but %3 MB needed")
-                    .arg(m_installationLocation.id())
-                    .arg(double(availableSize) / (1024 * 1024), 0, 'f', 2)
-                    .arg(double(neededSize) / (1024 * 1024), 0, 'f', 2);
-        }
-
-        m_extractionImageFile = installationDir.absoluteFilePath(installationTarget);
-        m_applicationImageFile = installationDir.absoluteFilePath(m_applicationId + qSL(".appimg"));
-
-        QFile image(m_extractionImageFile);
-        if (image.exists())
-            throw Exception(Error::IO, "image file %1 already exists").arg(m_extractionImageFile);
-        if (!image.open(QFile::WriteOnly | QFile::Truncate))
-            throw Exception(image, "could not open image file for writing");
-        if (!image.resize(static_cast<qint64>(neededSize))) {
-            image.remove();
-            throw Exception(image, "could not resize image file to %1 bytes").arg(neededSize);
-        }
-        m_imageCreator.create(m_extractionImageFile, false /*do not remove existing*/);
-
-        if (!m_ai->applicationImageMountDirectory())
-            throw Exception("Cannot install application in a removable location. An application image"
-                    " mount directory wasn't supplied via configuration file or command line parameter.");
-
-        QDir tmpMountPoint(*m_ai->applicationImageMountDirectory());
-        tmpMountPoint = tmpMountPoint.absoluteFilePath(m_applicationId + qL1C('+'));
-        if (!m_tmpMountPointCreator.create(tmpMountPoint.absolutePath()))
-            throw Exception("could not create temporary mountpoint %1").arg(tmpMountPoint);
-
-        if (!m_loopbackCreator.create(m_extractionImageFile))
-            throw Exception("could not create loopback device for %1: %2").arg(m_extractionImageFile, m_loopbackCreator.errorString());
-
-        if (!SudoClient::instance()->mkfs(m_loopbackCreator.device()))
-            throw Exception("could not create filesystem on device %1: %2").arg(m_loopbackCreator.device(), SudoClient::instance()->lastError());
-
-        if (!m_imageMounter.mount(m_loopbackCreator.device(), tmpMountPoint.absolutePath(), false /*ro*/))
-            throw Exception("could not mount device %1 on %2: %3").arg(m_loopbackCreator.device(), tmpMountPoint.absolutePath(), m_imageMounter.errorString());
-
-        if (!m_extractionDir.cd(tmpMountPoint.absolutePath()))
-            throw Exception("could not cd into temporary mountpoint %1").arg(tmpMountPoint);
-    } else {
-        if (!m_installationDirCreator.create(installationDir.absoluteFilePath(installationTarget)))
-            throw Exception("could not create installation directory %1/%2").arg(installationDir).arg(installationTarget);
-        m_extractionDir = installationDir;
-        if (!m_extractionDir.cd(installationTarget))
-            throw Exception("could not cd into installation directory %1/%2").arg(installationDir).arg(installationTarget);
-        m_applicationDir = installationDir.absoluteFilePath(m_applicationId);
-    }
+    if (!m_installationDirCreator.create(installationDir.absoluteFilePath(installationTarget)))
+        throw Exception("could not create installation directory %1/%2").arg(installationDir).arg(installationTarget);
+    m_extractionDir = installationDir;
+    if (!m_extractionDir.cd(installationTarget))
+        throw Exception("could not cd into installation directory %1/%2").arg(installationDir).arg(installationTarget);
+    m_applicationDir = installationDir.absoluteFilePath(m_applicationId);
 }
 
 void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
@@ -500,25 +412,9 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
     ScopedDirectoryCreator documentDirCreator;
 
     enum { Installation, Update } mode = Installation;
-    enum { IntoFileSystem, IntoImage } destination = IntoFileSystem;
 
-    if (m_installationLocation.isRemovable()) {
-        destination = IntoImage;
-
-        if (!m_installationLocation.isMounted())
-            throw Exception(Error::MediumNotAvailable, "removable medium %1 is not mounted").arg(m_installationLocation.id());
-
-        if (!QFile::exists(m_extractionImageFile))
-            throw Exception("removable medium %1 was removed during the installation").arg(m_installationLocation.id());
-
-        if ((destination == IntoImage) && QFile::exists(m_applicationImageFile))
-            mode = Update;
-    } else {
-        destination = IntoFileSystem;
-
-        if ((destination == IntoFileSystem) && m_applicationDir.exists())
-            mode = Update;
-    }
+    if (m_applicationDir.exists())
+        mode = Update;
 
     // create the installation report
     InstallationReport report = m_extractor->installationReport();
@@ -565,15 +461,6 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
     // in case we need persistent data in addition to info.yaml and the icon file,
     // we could copy these out of the image right now...
 
-    // removable special handling
-    if (destination == IntoImage) {
-        //TODO: if any of these fails, we're screwed and the only way to get back to a
-        //      working state, would be a reboot
-        m_imageMounter.unmount();
-        m_loopbackCreator.destroy();
-        m_tmpMountPointCreator.destroy();
-    }
-
     // final rename
 
     // POSIX cannot atomically rename directories, if the destination directory exists
@@ -586,17 +473,12 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
     if (!renameManifest.rename(m_manifestDir, (mode == Update ? ScopedRenamer::NameToNameMinus | ScopedRenamer::NamePlusToName : ScopedRenamer::NamePlusToName)))
         throw Exception(Error::IO, "could not rename manifest directory %1+ to %1 (including a backup to %1-)").arg(m_manifestDir);
 
-    if (destination == IntoFileSystem) {
-        if (mode == Update) {
-            if (!renameApplication.rename(m_applicationDir, ScopedRenamer::NamePlusToName | ScopedRenamer::NameToNameMinus))
-                throw Exception(Error::IO, "could not rename application directory %1+ to %1 (including a backup to %1-)").arg(m_applicationDir);
-        } else {
-            if (!renameApplication.rename(m_applicationDir, ScopedRenamer::NamePlusToName))
-                throw Exception(Error::IO, "could not rename application directory %1+ to %1").arg(m_applicationDir);
-        }
-    } else if (destination == IntoImage) {
-        if (!renameApplication.rename(m_applicationImageFile, ScopedRenamer::NamePlusToName))
-            throw Exception(Error::IO, "could not rename image file %1+ to %1").arg(m_applicationImageFile);
+    if (mode == Update) {
+        if (!renameApplication.rename(m_applicationDir, ScopedRenamer::NamePlusToName | ScopedRenamer::NameToNameMinus))
+            throw Exception(Error::IO, "could not rename application directory %1+ to %1 (including a backup to %1-)").arg(m_applicationDir);
+    } else {
+        if (!renameApplication.rename(m_applicationDir, ScopedRenamer::NamePlusToName))
+            throw Exception(Error::IO, "could not rename application directory %1+ to %1").arg(m_applicationDir);
     }
 
     // from this point onwards, we are not allowed to throw anymore, since the installation is "done"
@@ -607,7 +489,6 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
     renameManifest.take();
     documentDirCreator.take();
 
-    m_imageCreator.take();
     m_installationDirCreator.take();
     m_manifestDirPlusCreator.take();
 

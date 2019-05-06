@@ -200,14 +200,13 @@ QT_BEGIN_NAMESPACE_AM
 ApplicationInstaller *ApplicationInstaller::s_instance = nullptr;
 
 ApplicationInstaller::ApplicationInstaller(const QVector<InstallationLocation> &installationLocations,
-                                           QDir *manifestDir, QDir *imageMountDir, const QString &hardwareId,
+                                           QDir *manifestDir, const QString &hardwareId,
                                            QObject *parent)
     : QObject(parent)
     , d(new ApplicationInstallerPrivate())
 {
     d->installationLocations = installationLocations;
     d->manifestDir.reset(manifestDir);
-    d->imageMountDir.reset(imageMountDir);
     d->hardwareId = hardwareId;
 }
 
@@ -218,7 +217,7 @@ ApplicationInstaller::~ApplicationInstaller()
 }
 
 ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<InstallationLocation> &installationLocations,
-                                                           const QString &manifestDirPath, const QString &imageMountDirPath,
+                                                           const QString &manifestDirPath,
                                                            const QString &hardwareId, QString *error)
 {
     if (Q_UNLIKELY(s_instance))
@@ -235,23 +234,11 @@ ApplicationInstaller *ApplicationInstaller::createInstance(const QVector<Install
         return nullptr;
     }
 
-    QScopedPointer<QDir> imageMountDir;
-
-    if (!imageMountDirPath.isEmpty())
-        imageMountDir.reset(new QDir(imageMountDirPath));
-
-    if (Q_UNLIKELY(!imageMountDir.isNull() && !imageMountDir->exists())) {
-        if (error)
-            *error = qL1S("ApplicationInstaller::createInstance() could not access the image-mount directory ")
-                + imageMountDirPath;
-        return nullptr;
-    }
-
     qmlRegisterSingletonType<ApplicationInstaller>("QtApplicationManager.SystemUI", 2, 0, "ApplicationInstaller",
                                                    &ApplicationInstaller::instanceForQml);
 
-    return s_instance = new ApplicationInstaller(installationLocations, manifestDir.take(), imageMountDir.take(),
-            hardwareId, QCoreApplication::instance());
+    return s_instance = new ApplicationInstaller(installationLocations, manifestDir.take(),
+                                                 hardwareId, QCoreApplication::instance());
 }
 
 ApplicationInstaller *ApplicationInstaller::instance()
@@ -340,11 +327,6 @@ const QDir *ApplicationInstaller::manifestDirectory() const
     return d->manifestDir.get();
 }
 
-const QDir *ApplicationInstaller::applicationImageMountDirectory() const
-{
-    return d->imageMountDir.get();
-}
-
 QList<QByteArray> ApplicationInstaller::caCertificates() const
 {
     return d->chainOfTrust;
@@ -355,48 +337,10 @@ void ApplicationInstaller::setCACertificates(const QList<QByteArray> &chainOfTru
     d->chainOfTrust = chainOfTrust;
 }
 
-// find mounts and loopbacks left-over from a previous instance and kill them
-void ApplicationInstaller::cleanupMounts() const
-{
-    // nothing to do as we don't support mounting app images
-    if (d->imageMountDir.isNull())
-        return;
-
-    QMultiMap<QString, QString> mountPoints = mountedDirectories();
-
-    const QFileInfoList mounts = d->imageMountDir->entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
-    for (const QFileInfo &fi : mounts) {
-        QString path = fi.canonicalFilePath();
-        QString device = mountPoints.value(path);
-
-        if (!device.isEmpty()) {
-            qCDebug(LogInstaller) << "cleanup: trying to unmount stale application mount" << path;
-
-            if (!SudoClient::instance()->unmount(path)) {
-                if (!SudoClient::instance()->unmount(path, true /*force*/))
-                    throw Exception("failed to un-mount stale mount %1 on %2: %3")
-                        .arg(device, path, SudoClient::instance()->lastError());
-            }
-            if (device.startsWith(qL1S("/dev/loop"))) {
-                if (!SudoClient::instance()->detachLoopback(device)) {
-                    qCWarning(LogInstaller) << "failed to detach stale loopback device" << device;
-                    // we can still continue here
-                }
-            }
-        }
-
-        if (!SudoClient::instance()->removeRecursive(path))
-            throw Exception(Error::IO, SudoClient::instance()->lastError());
-    }
-}
-
 void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EXPR(false)
 {
-    // 1. find mounts and loopbacks left-over from a previous instance and kill them
-    cleanupMounts();
-
-    // 2. Check that everything in the app-db is available
-    //    -> if not, remove from app-db
+    // Check that everything in the app-db is available
+    //   -> if not, remove from app-db
 
     ApplicationManager *am = ApplicationManager::instance();
 
@@ -405,10 +349,8 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
         { manifestDirectory()->absolutePath(), QString() }
     };
     for (const InstallationLocation &il : qAsConst(d->installationLocations)) {
-        if (!il.isRemovable() || il.isMounted()) {
-            validPaths.insert(il.documentPath(), QString());
-            validPaths.insert(il.installationPath(), QString());
-        }
+        validPaths.insert(il.documentPath(), QString());
+        validPaths.insert(il.installationPath(), QString());
     }
 
     const auto allApps = am->applications();
@@ -422,7 +364,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
             if (!valid)
                 qCDebug(LogInstaller) << "cleanup: uninstalling" << app->id() << "- installationLocation is invalid";
 
-            if (valid && (!il.isRemovable() || il.isMounted())) {
+            if (valid) {
                 QStringList checkDirs;
                 QStringList checkFiles;
 
@@ -430,11 +372,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
                 checkFiles << manifestDirectory()->absoluteFilePath(app->id()) + qSL("/info.yaml");
                 checkFiles << manifestDirectory()->absoluteFilePath(app->id()) + qSL("/installation-report.yaml");
                 checkDirs << il.documentPath() + app->id();
-
-                if (il.isRemovable())
-                    checkFiles << il.installationPath() + app->id() + qSL(".appimg");
-                else
-                    checkDirs << il.installationPath() + app->id();
+                checkDirs << il.installationPath() + app->id();
 
                 for (const QString &checkFile : qAsConst(checkFiles)) {
                     QFileInfo fi(checkFile);
@@ -454,10 +392,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
                 }
 
                 if (valid) {
-                    if (il.isRemovable())
-                        validPaths.insertMulti(il.installationPath(), app->id() + qSL(".appimg"));
-                    else
-                        validPaths.insertMulti(il.installationPath(), app->id() + qL1C('/'));
+                    validPaths.insertMulti(il.installationPath(), app->id() + qL1C('/'));
                     validPaths.insertMulti(il.documentPath(), app->id() + qL1C('/'));
                     validPaths.insertMulti(manifestDirectory()->absolutePath(), app->id() + qL1C('/'));
                 }
@@ -472,7 +407,7 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
         }
     }
 
-    // 3. Remove everything that is not referenced from the app-db
+    // Remove everything that is not referenced from the app-db
 
     for (auto it = validPaths.cbegin(); it != validPaths.cend(); ) {
         const QString currentDir = it.key();
@@ -493,8 +428,13 @@ void ApplicationInstaller::cleanupBrokenInstallations() const Q_DECL_NOEXCEPT_EX
             if ((!fi.isDir() && !fi.isFile()) || !validNames.contains(name)) {
                 qCDebug(LogInstaller) << "cleanup: removing unreferenced inode" << name;
 
-                if (!SudoClient::instance()->removeRecursive(fi.absoluteFilePath()))
-                    throw Exception(Error::IO, "could not remove broken installation leftover %1 : %2").arg(fi.absoluteFilePath()).arg(SudoClient::instance()->lastError());
+                if (SudoClient::instance()) {
+                    if (!SudoClient::instance()->removeRecursive(fi.absoluteFilePath()))
+                        throw Exception(Error::IO, "could not remove broken installation leftover %1 : %2").arg(fi.absoluteFilePath()).arg(SudoClient::instance()->lastError());
+                } else {
+                    if (!recursiveOperation(fi.absoluteFilePath(), safeRemove))
+                        throw Exception(Error::IO, "could not remove broken installation leftover %1 (maybe due to missing root privileges)").arg(fi.absoluteFilePath());
+                }
             }
         }
     }
@@ -997,186 +937,6 @@ bool ApplicationInstaller::validateDnsName(const QString &name, int minimalPartC
         return false;
     }
 }
-
-
-// this is a simple helper class - we need this to be able to run the filesystem (un)mounting
-// in a separate thread to avoid blocking the UI and D-Bus
-class ActivationHelper : public QObject // clazy:exclude=missing-qobject-macro
-{
-public:
-    enum Mode { Activate, Deactivate, IsActivated };
-
-    static bool run(Mode mode, const QString &id)
-    {
-        if (!SudoClient::instance())
-            return false;
-
-        const QDir *imageMountDir = ApplicationInstaller::instance()->applicationImageMountDirectory();
-
-        if (id.isEmpty() || !imageMountDir || !imageMountDir->exists())
-            return false;
-
-        const InstallationLocation &il = ApplicationInstaller::instance()->installationLocationFromApplication(id);
-        if (!il.isValid() || !il.isRemovable())
-            return false;
-
-        QString imageName = il.installationPath() + id + qSL(".appimg");
-        if (!QFile::exists(imageName))
-            return false;
-
-        QString mountPoint = imageMountDir->absoluteFilePath(id);
-        QString mountedDevice;
-        auto currentMounts = mountedDirectories();
-        bool isMounted = currentMounts.contains(mountPoint);
-
-        switch (mode) {
-
-        case Activate:
-            if (isMounted)
-                return false;
-            mountPoint.clear(); // not mounted yet
-            break;
-        case Deactivate:
-            if (!isMounted)
-                return false;
-            mountedDevice = currentMounts.value(mountPoint);
-            break;
-        case IsActivated:
-            return isMounted;
-        }
-
-        ActivationHelper *a = new ActivationHelper(id, imageName, *imageMountDir, mountPoint, mountedDevice);
-        QThread *t = new QThread();
-        a->moveToThread(t);
-        connect(t, &QThread::started, a, [t, a, mode]() {
-            a->m_status = (mode == Activate) ? a->mount()
-                                             : a->unmount();
-            t->quit();
-        });
-        connect(t, &QThread::finished, ApplicationInstaller::instance(), [id, t, a, mode]() {
-            if (mode == Activate) {
-                emit ApplicationInstaller::instance()->packageActivated(id, a->m_status);
-                if (!a->m_status)
-                    qCCritical(LogSystem) << "ERROR: failed to activate package" << id << ":" << a->m_errorString;
-            } else {
-                emit ApplicationInstaller::instance()->packageDeactivated(id, a->m_status);
-                if (!a->m_status)
-                    qCCritical(LogSystem) << "ERROR: failed to de-activate package" << id << ":" << a->m_errorString;
-            }
-            delete a;
-            t->deleteLater();
-        });
-        t->start();
-        return true;
-    }
-
-    ActivationHelper(const QString &id, const QString &imageName, const QDir &imageMountDir,
-                     const QString &mountPoint, const QString &mountedDevice)
-        : m_applicationId(id)
-        , m_imageName(imageName)
-        , m_imageMountDir(imageMountDir)
-        , m_mountPoint(mountPoint)
-        , m_mountedDevice(mountedDevice)
-    { }
-
-    bool mount()
-    {
-        SudoClient *root = SudoClient::instance();
-
-        // m_mountPoint is only set, if the image is/was actually mounted
-        QString mountDir = m_imageMountDir.filePath(m_applicationId);
-
-        try {
-            QFileInfo fi(mountDir);
-            if (!fi.isDir() && !QDir(fi.absolutePath()).mkpath(fi.fileName()))
-                throw Exception("could not create mountpoint directory %1").arg(mountDir);
-
-            m_mountedDevice = root->attachLoopback(m_imageName, true /*ro*/);
-            if (m_mountedDevice.isEmpty())
-                throw Exception("could not create a new loopback device: %1").arg(root->lastError());
-
-            if (!root->mount(m_mountedDevice, mountDir, true /*ro*/))
-                throw Exception("could not mount application image %1 to %2: %3").arg(mountDir, m_mountedDevice, root->lastError());
-            m_mountPoint = mountDir;
-
-            // better be safe than sorry - make sure this is the exact same version we installed
-            // (we cannot check every single file, but we at least make sure that info.yaml matches)
-            QFile manifest1(ApplicationInstaller::instance()->manifestDirectory()->absoluteFilePath(m_applicationId + qSL("/info.yaml")));
-            QFile manifest2(QDir(mountDir).absoluteFilePath(qSL("info.yaml")));
-
-            if ((manifest1.size() != manifest2.size())
-                    || (manifest1.size() > (16 * 1024))
-                    || !manifest1.open(QFile::ReadOnly)
-                    || !manifest2.open(QFile::ReadOnly)
-                    || (manifest1.readAll() != manifest2.readAll())) {
-                throw Exception("the info.yaml files in the manifest directory and within the application image do not match");
-            }
-            return true;
-        } catch (const Exception &e) {
-            unmount();
-            m_errorCode = e.errorCode();
-            m_errorString = e.errorString();
-            return false;
-        }
-    }
-
-
-    bool unmount()
-    {
-        SudoClient *root = SudoClient::instance();
-
-        try {
-            if (!m_mountPoint.isEmpty() && !root->unmount(m_mountPoint))
-                throw Exception("could not unmount the application image at %1: %2").arg(m_mountPoint, root->lastError());
-
-            if (!m_mountedDevice.isEmpty() && !root->detachLoopback(m_mountedDevice))
-                throw Exception("could not remove loopback device %1: %2").arg(m_mountedDevice, root->lastError());
-
-            // m_mountPoint is only set, if the image is/was actually mounted
-            QString mountDir = m_imageMountDir.filePath(m_applicationId);
-            if (QFileInfo(mountDir).isDir() && !m_imageMountDir.rmdir(m_applicationId))
-                throw Exception("could not remove mount-point directory %1").arg(mountDir);
-
-            return true;
-        } catch (const Exception &e) {
-            m_errorCode = e.errorCode();
-            m_errorString = e.errorString();
-            return false;
-        }
-    }
-
-private:
-    QString m_applicationId;
-    QString m_imageName;
-    QDir m_imageMountDir;
-    QString m_mountPoint;
-    QString m_mountedDevice;
-    bool m_status = false;
-    Error m_errorCode = Error::None;
-    QString m_errorString;
-};
-
-bool ApplicationInstaller::doesPackageNeedActivation(const QString &id)
-{
-    const InstallationLocation &il = installationLocationFromApplication(id);
-    return il.isValid() && il.isRemovable();
-}
-
-bool ApplicationInstaller::isPackageActivated(const QString &id)
-{
-    return ActivationHelper::run(ActivationHelper::IsActivated, id);
-}
-
-bool ApplicationInstaller::activatePackage(const QString &id)
-{
-    return ActivationHelper::run(ActivationHelper::Activate, id);
-}
-
-bool ApplicationInstaller::deactivatePackage(const QString &id)
-{
-    return ActivationHelper::run(ActivationHelper::Deactivate, id);
-}
-
 
 QString ApplicationInstaller::enqueueTask(AsynchronousTask *task)
 {

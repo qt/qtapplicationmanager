@@ -75,11 +75,6 @@ class SudoInterface
 public:
     virtual ~SudoInterface() = default;
 
-    virtual QString attachLoopback(const QString &imagePath, bool readonly) = 0;
-    virtual bool detachLoopback(const QString &loopDev) = 0;
-    virtual bool mount(const QString &device, const QString &mountPoint, bool readonly, const QString &fstype) = 0;
-    virtual bool unmount(const QString &mountPoint, bool force) = 0;
-    virtual bool mkfs(const QString &device, const QString &fstype, const QStringList &options) = 0;
     virtual bool removeRecursive(const QString &fileOrDir) = 0;
     virtual bool setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions) = 0;
 
@@ -109,11 +104,6 @@ public:
 
     bool isFallbackImplementation() const;
 
-    QString attachLoopback(const QString &imagePath, bool readonly = false) override;
-    bool detachLoopback(const QString &loopDev) override;
-    bool mount(const QString &device, const QString &mountPoint, bool readonly = false, const QString &fstype = QStringLiteral("ext2")) override;
-    bool unmount(const QString &mountPoint, bool force = false) override;
-    bool mkfs(const QString &device, const QString &fstype = QStringLiteral("ext2"), const QStringList &options = QStringList()) override;
     bool removeRecursive(const QString &fileOrDir) override;
     bool setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions) override;
 
@@ -137,15 +127,10 @@ private:
 class SudoServer : public SudoInterface
 {
 public:
-    static SudoServer *createInstance(int socketFd, int loopControlFd);
+    static SudoServer *createInstance(int socketFd);
 
     static SudoServer *instance();
 
-    QString attachLoopback(const QString &imagePath, bool readonly) override;
-    bool detachLoopback(const QString &loopDev) override;
-    bool mount(const QString &device, const QString &mountPoint, bool readonly, const QString &fstype) override;
-    bool unmount(const QString &mountPoint, bool force) override;
-    bool mkfs(const QString &device, const QString &fstype, const QStringList &options) override;
     bool removeRecursive(const QString &fileOrDir) override;
     bool setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions) override;
 
@@ -154,13 +139,12 @@ public:
     Q_NORETURN void run();
 
 private:
-    SudoServer(int socketFd, int loopControlFd);
+    SudoServer(int socketFd);
 
     QByteArray receive(const QByteArray &msg);
     friend class SudoClient;
 
     int m_socket;
-    int m_loopControl;
     QString m_errorString;
     bool m_stop = false;
 

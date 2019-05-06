@@ -104,15 +104,9 @@ private:
     QDir m_manifestDir;
     QDir m_applicationDir;
     QDir m_extractionDir;
-    QString m_applicationImageFile;
-    QString m_extractionImageFile;
 
     ScopedDirectoryCreator m_manifestDirPlusCreator;
     ScopedDirectoryCreator m_installationDirCreator;
-    ScopedFileCreator m_imageCreator;
-    ScopedDirectoryCreator m_tmpMountPointCreator;
-    ScopedLoopbackCreator m_loopbackCreator;
-    ScopedMounter m_imageMounter;
 };
 
 QT_END_NAMESPACE_AM

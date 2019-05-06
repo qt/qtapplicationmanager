@@ -239,7 +239,7 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     if (m_installedAppsManifestDir.isEmpty() || cfg->disableInstaller()) {
         StartupTimer::instance()->checkpoint("skipping installer");
     } else {
-        setupInstaller(cfg->appImageMountDir(), cfg->caCertificates(),
+        setupInstaller(cfg->caCertificates(),
                        std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
                                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     }
@@ -547,7 +547,7 @@ void Main::setupApplicationManagerWithDatabase()
     });
 }
 
-void Main::setupInstaller(const QString &appImageMountDir, const QStringList &caCertificatePaths,
+void Main::setupInstaller(const QStringList &caCertificatePaths,
                           const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if !defined(AM_DISABLE_INSTALLER)
@@ -563,15 +563,11 @@ void Main::setupInstaller(const QString &appImageMountDir, const QStringList &ca
     if (Q_UNLIKELY(!QDir::root().mkpath(m_installedAppsManifestDir)))
         throw Exception("could not create manifest directory for installed applications: \'%1\'").arg(m_installedAppsManifestDir);
 
-    if (Q_UNLIKELY(!appImageMountDir.isEmpty() && !QDir::root().mkpath(appImageMountDir)))
-        throw Exception("could not create the image-mount directory %1").arg(appImageMountDir);
-
     StartupTimer::instance()->checkpoint("after installer setup checks");
 
     QString error;
     m_applicationInstaller = ApplicationInstaller::createInstance(m_installationLocations,
                                                                   m_installedAppsManifestDir,
-                                                                  appImageMountDir,
                                                                   hardwareId(),
                                                                   &error);
     if (Q_UNLIKELY(!m_applicationInstaller))

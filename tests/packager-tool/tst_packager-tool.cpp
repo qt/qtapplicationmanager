@@ -95,7 +95,6 @@ void tst_PackagerTool::initTestCase()
     QVERIFY(m_workDir.isValid());
 
     QVERIFY(QDir::root().mkpath(pathTo("manifests")));
-    QVERIFY(QDir::root().mkpath(pathTo("image-mounts")));
     QVERIFY(QDir::root().mkpath(pathTo("internal-0")));
     QVERIFY(QDir::root().mkpath(pathTo("documents-0")));
 
@@ -109,7 +108,7 @@ void tst_PackagerTool::initTestCase()
     QVector<InstallationLocation> locations = InstallationLocation::parseInstallationLocations({ internalLocation }, m_hardwareId);
 
     QString errorString;
-    m_ai = ApplicationInstaller::createInstance(locations, pathTo("manifests"), pathTo("image-mounts"), m_hardwareId, &errorString);
+    m_ai = ApplicationInstaller::createInstance(locations, pathTo("manifests"), m_hardwareId, &errorString);
     QVERIFY2(m_ai, qPrintable(errorString));
 
     QVERIFY(ApplicationManager::createInstance(true));
@@ -141,7 +140,6 @@ void tst_PackagerTool::initTestCase()
 void tst_PackagerTool::cleanup()
 {
     recursiveOperation(pathTo("manifests"), safeRemove);
-    recursiveOperation(pathTo("image-mounts"), safeRemove);
     recursiveOperation(pathTo("internal-0"), safeRemove);
     recursiveOperation(pathTo("documents-0"), safeRemove);
 

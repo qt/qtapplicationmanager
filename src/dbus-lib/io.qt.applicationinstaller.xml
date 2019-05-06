@@ -36,14 +36,6 @@
     <signal name="taskBlockingUntilInstallationAcknowledge">
       <arg name="taskId" type="s" direction="out"/>
     </signal>
-    <signal name="packageActivated">
-      <arg name="id" type="s" direction="out"/>
-      <arg name="successful" type="b" direction="out"/>
-    </signal>
-    <signal name="packageDeactivated">
-      <arg name="id" type="s" direction="out"/>
-      <arg name="successful" type="b" direction="out"/>
-    </signal>
     <method name="installationLocationIds">
       <arg type="as" direction="out"/>
     </method>
@@ -107,22 +99,6 @@
     <method name="installedApplicationExtraSignedMetaData">
       <arg type="a{sv}" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
-      <arg name="id" type="s" direction="in"/>
-    </method>
-    <method name="doesPackageNeedActivation">
-      <arg type="b" direction="out"/>
-      <arg name="id" type="s" direction="in"/>
-    </method>
-    <method name="isPackageActivated">
-      <arg type="b" direction="out"/>
-      <arg name="id" type="s" direction="in"/>
-    </method>
-    <method name="activatePackage">
-      <arg type="b" direction="out"/>
-      <arg name="id" type="s" direction="in"/>
-    </method>
-    <method name="deactivatePackage">
-      <arg type="b" direction="out"/>
       <arg name="id" type="s" direction="in"/>
     </method>
   </interface>

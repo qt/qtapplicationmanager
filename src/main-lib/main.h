@@ -121,7 +121,7 @@ protected:
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
                          int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
                          const QString &singleApp) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupInstaller(const QString &appImageMountDir, const QStringList &caCertificatePaths,
+    void setupInstaller(const QStringList &caCertificatePaths,
                         const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
 
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());

@@ -93,7 +93,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ { qSL("r"), qSL("recreate-database") },  qSL("recreate the application database cache.") });
     m_clp.addOption({ qSL("builtin-apps-manifest-dir"),   qSL("base directory for built-in application manifests."), qSL("dir") });
     m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("base directory for installed application manifests."), qSL("dir") });
-    m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("base directory where application images are mounted to."), qSL("dir") });
+    m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("deprecated, not needed anymore."), qSL("dir") });
     m_clp.addOption({ qSL("disable-installer"),    qSL("disable the application installer sub-system.") });
     m_clp.addOption({ qSL("disable-intents"),      qSL("disable the intents sub-system.") });
 #if defined(QT_DBUS_LIB)
@@ -136,10 +136,6 @@ void DefaultConfiguration::parseWithArguments(const QStringList &arguments, QStr
     if (!deploymentWarnings)
         return;
 
-    if (appImageMountDir().isEmpty())
-        *deploymentWarnings << qL1S("No --app-image-mount-dir command line parameter or applications/appImageMountDir"
-                " configuration key specified. Attempting to mount an application image will fail.");
-
     if (database().isEmpty())
         *deploymentWarnings << qL1S("No --database command line parameter or applications/database configuration"
                 " key specified. Database won't be cached to speed up subsequent System-UI startups.");
@@ -180,11 +176,6 @@ QStringList DefaultConfiguration::builtinAppsManifestDirs() const
 QString DefaultConfiguration::installedAppsManifestDir() const
 {
     return value<QString>("installed-apps-manifest-dir", { "applications", "installedAppsManifestDir" });
-}
-
-QString DefaultConfiguration::appImageMountDir() const
-{
-    return value<QString>("app-image-mount-dir", { "applications", "appImageMountDir" });
 }
 
 bool DefaultConfiguration::disableInstaller() const

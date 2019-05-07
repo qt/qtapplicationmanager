@@ -50,7 +50,7 @@
 
 #if defined(Q_OS_LINUX)
 #  include <QScopedPointer>
-#  include <QtAppManManager/sysfsreader.h>
+#  include <QtAppManMonitor/sysfsreader.h>
 QT_FORWARD_DECLARE_CLASS(QSocketNotifier)
 #endif
 

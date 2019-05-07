@@ -4,34 +4,25 @@ MODULE = appman_monitor
 
 load(am-config)
 
-QT = core qml
+QT = core gui
 
 QT_FOR_PRIVATE *= \
     appman_common-private \
-    appman_application-private \
-    appman_manager-private \
-    appman_window-private \
 
 CONFIG *= static internal_module
 
+linux:HEADERS += \
+    sysfsreader.h \
+
 HEADERS += \
-    cpustatus.h \
-    frametimer.h \
-    gpustatus.h \
-    iostatus.h \
-    memorystatus.h \
-    monitormodel.h \
+    systemreader.h \
     processreader.h \
-    processstatus.h \
+
+linux:SOURCES += \
+    sysfsreader.cpp \
 
 SOURCES += \
-    cpustatus.cpp \
-    frametimer.cpp \
-    gpustatus.cpp \
-    iostatus.cpp \
-    memorystatus.cpp \
-    monitormodel.cpp \
+    systemreader.cpp \
     processreader.cpp \
-    processstatus.cpp \
 
 load(qt_module)

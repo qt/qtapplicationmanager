@@ -42,58 +42,40 @@
 
 #pragma once
 
-#include <QAtomicInteger>
-#include <QElapsedTimer>
-#include <QObject>
-
 #include <QtAppManCommon/global.h>
 
-#if defined(Q_OS_LINUX)
-#  include <QScopedPointer>
-#  include <QtAppManMonitor/sysfsreader.h>
-#endif
+#include <QtAppManMonitor/systemreader.h>
+
+#include <QObject>
+#include <QScopedPointer>
 
 QT_BEGIN_NAMESPACE_AM
 
-class ProcessReader : public QObject {
+class CpuStatus : public QObject
+{
     Q_OBJECT
-public slots:
-    void update();
-    void setProcessId(qint64 pid);
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/CpuStatus 2.0")
+    Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadChanged)
+    Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
 
-signals:
-    void updated();
+    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
 
 public:
-    QAtomicInteger<quint32> cpuLoad;
+    CpuStatus(QObject *parent = nullptr);
 
-    QAtomicInteger<quint32> totalVm;
-    QAtomicInteger<quint32> totalRss;
-    QAtomicInteger<quint32> totalPss;
-    QAtomicInteger<quint32> textVm;
-    QAtomicInteger<quint32> textRss;
-    QAtomicInteger<quint32> textPss;
-    QAtomicInteger<quint32> heapVm;
-    QAtomicInteger<quint32> heapRss;
-    QAtomicInteger<quint32> heapPss;
+    qreal cpuLoad() const;
+    int cpuCores() const;
 
-#if defined(Q_OS_LINUX)
-    // it's public solely for testing purposes
-    bool readSmaps(const QByteArray &smapsFile);
-#endif
+    QStringList roleNames() const;
+
+    Q_INVOKABLE void update();
+
+signals:
+    void cpuLoadChanged();
 
 private:
-    void openCpuLoad();
-    qreal readCpuLoad();
-    bool readMemory();
-
-#if defined(Q_OS_LINUX)
-    QScopedPointer<SysFsReader> m_statReader;
-#endif
-    QElapsedTimer m_elapsedTime;
-    quint64 m_lastCpuUsage = 0.0;
-
-    qint64 m_pid = 0;
+    QScopedPointer<CpuReader> m_cpuReader;
+    qreal m_cpuLoad;
 };
 
 QT_END_NAMESPACE_AM

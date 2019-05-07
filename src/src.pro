@@ -20,7 +20,7 @@ package_lib.subdir = package-lib
 package_lib.depends = crypto_lib application_lib
 
 manager_lib.subdir = manager-lib
-manager_lib.depends = application_lib notification_lib intent_server_lib intent_client_lib plugin_interfaces
+manager_lib.depends = application_lib notification_lib intent_server_lib intent_client_lib monitor_lib plugin_interfaces
 
 installer_lib.subdir = installer-lib
 installer_lib.depends = package_lib manager_lib
@@ -29,10 +29,10 @@ window_lib.subdir = window-lib
 window_lib.depends = manager_lib
 
 monitor_lib.subdir = monitor-lib
-monitor_lib.depends = manager_lib window_lib
+monitor_lib.depends = common_lib
 
 shared_main_lib.subdir = shared-main-lib
-shared_main_lib.depends = common_lib
+shared_main_lib.depends = common_lib monitor_lib
 
 intent_server_lib.subdir = intent-server-lib
 intent_server_lib.depends = common_lib
@@ -63,7 +63,7 @@ tools_testrunner.subdir = tools/testrunner
 tools_testrunner.depends = main_lib
 
 tools_dumpqmltypes.subdir = tools/dumpqmltypes
-tools_dumpqmltypes.depends = manager_lib installer_lib window_lib monitor_lib launcher_lib
+tools_dumpqmltypes.depends = manager_lib installer_lib window_lib shared_main_lib launcher_lib
 
 tools_packager.subdir = tools/packager
 tools_packager.depends = package_lib

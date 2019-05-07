@@ -40,60 +40,82 @@
 **
 ****************************************************************************/
 
-#pragma once
+#include "windowframetimer.h"
 
-#include <QAtomicInteger>
-#include <QElapsedTimer>
-#include <QObject>
+#include <qqmlinfo.h>
 
-#include <QtAppManCommon/global.h>
+#include "waylandwindow.h"
+#include "inprocesswindow.h"
+#include "qmlinprocessapplicationmanagerwindow.h"
 
-#if defined(Q_OS_LINUX)
-#  include <QScopedPointer>
-#  include <QtAppManMonitor/sysfsreader.h>
-#endif
 
 QT_BEGIN_NAMESPACE_AM
 
-class ProcessReader : public QObject {
-    Q_OBJECT
-public slots:
-    void update();
-    void setProcessId(qint64 pid);
+WindowFrameTimer::WindowFrameTimer(QObject *parent)
+    : FrameTimer(parent)
+{ }
 
-signals:
-    void updated();
+bool WindowFrameTimer::connectToAppManWindow()
+{
+    if (qobject_cast<QmlInProcessApplicationManagerWindow *>(m_window.data())) {
+        qmlWarning(this) << "It makes no sense to measure the FPS of an application's window in single-process mode."
+                            " FrameTimer won't operate with the given window.";
+        return true;
+    }
 
-public:
-    QAtomicInteger<quint32> cpuLoad;
+    Window *appManWindow = qobject_cast<Window*>(m_window.data());
+    if (!appManWindow)
+        return false;
 
-    QAtomicInteger<quint32> totalVm;
-    QAtomicInteger<quint32> totalRss;
-    QAtomicInteger<quint32> totalPss;
-    QAtomicInteger<quint32> textVm;
-    QAtomicInteger<quint32> textRss;
-    QAtomicInteger<quint32> textPss;
-    QAtomicInteger<quint32> heapVm;
-    QAtomicInteger<quint32> heapRss;
-    QAtomicInteger<quint32> heapPss;
+    if (qobject_cast<InProcessWindow*>(appManWindow)) {
+        qmlWarning(this) << "It makes no sense to measure the FPS of a WindowObject in single-process mode."
+                            " FrameTimer won't operate with the given window.";
+        return true;
+    }
 
-#if defined(Q_OS_LINUX)
-    // it's public solely for testing purposes
-    bool readSmaps(const QByteArray &smapsFile);
+#if defined(AM_MULTI_PROCESS)
+    WaylandWindow *waylandWindow = qobject_cast<WaylandWindow*>(m_window);
+    Q_ASSERT(waylandWindow);
+
+    connect(waylandWindow, &WaylandWindow::waylandSurfaceChanged,
+            this, &WindowFrameTimer::connectToWaylandSurface, Qt::UniqueConnection);
+
+    connectToWaylandSurface();
 #endif
 
-private:
-    void openCpuLoad();
-    qreal readCpuLoad();
-    bool readMemory();
+    return true;
+}
 
-#if defined(Q_OS_LINUX)
-    QScopedPointer<SysFsReader> m_statReader;
+void WindowFrameTimer::disconnectFromAppManWindow()
+{
+#if defined(AM_MULTI_PROCESS)
+    disconnectFromWaylandSurface();
 #endif
-    QElapsedTimer m_elapsedTime;
-    quint64 m_lastCpuUsage = 0.0;
+}
 
-    qint64 m_pid = 0;
-};
+#if defined(AM_MULTI_PROCESS)
+void WindowFrameTimer::connectToWaylandSurface()
+{
+    WaylandWindow *waylandWindow = qobject_cast<WaylandWindow*>(m_window);
+    Q_ASSERT(waylandWindow);
+
+    disconnectFromWaylandSurface();
+
+    m_waylandSurface = waylandWindow->waylandSurface();
+    if (m_waylandSurface)
+        connect(m_waylandSurface, &QWaylandQuickSurface::redraw, this, &WindowFrameTimer::newFrame, Qt::UniqueConnection);
+}
+
+void WindowFrameTimer::disconnectFromWaylandSurface()
+{
+    if (!m_waylandSurface)
+        return;
+
+    disconnect(m_waylandSurface, nullptr, this, nullptr);
+
+    m_waylandSurface = nullptr;
+}
+#endif
+
 
 QT_END_NAMESPACE_AM

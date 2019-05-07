@@ -92,7 +92,7 @@
 #include "qml-utilities.h"
 #include "launcher-qml_p.h"
 
-// monitor-lib
+// shared-main-lib
 #include "cpustatus.h"
 #include "frametimer.h"
 #include "gpustatus.h"

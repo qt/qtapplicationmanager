@@ -49,7 +49,7 @@
 #include <QStringList>
 #include <QVariant>
 
-#include <QtAppManManager/systemreader.h>
+#include <QtAppManMonitor/systemreader.h>
 
 QT_BEGIN_NAMESPACE_AM
 

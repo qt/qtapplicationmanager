@@ -129,6 +129,7 @@
 #    include "windowmanagerdbuscontextadaptor.h"
 #  endif
 #  include "touchemulation.h"
+#  include "windowframetimer.h"
 #endif
 
 #include "configuration.h"
@@ -142,7 +143,6 @@
 
 // monitor-lib
 #include "cpustatus.h"
-#include "frametimer.h"
 #include "gpustatus.h"
 #include "iostatus.h"
 #include "memorystatus.h"
@@ -653,7 +653,7 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
-    qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
+    qmlRegisterType<WindowFrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
     qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");

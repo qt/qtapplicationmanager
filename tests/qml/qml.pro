@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 SUBDIRS = \
     simple \
+    windowmanager \
     windowmapping \
     windowitem \
     windowitem2 \

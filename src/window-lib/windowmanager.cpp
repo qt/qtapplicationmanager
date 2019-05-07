@@ -49,6 +49,7 @@
 #include <QVariant>
 #include <QMetaObject>
 #include <QThread>
+#include <QQmlComponent>
 #include <private/qabstractanimation_p.h>
 
 #if defined(AM_MULTI_PROCESS)
@@ -482,6 +483,59 @@ QVariantMap WindowManager::get(int index) const
 int WindowManager::indexOfWindow(Window *window)
 {
     return d->windowsInModel.indexOf(window);
+}
+
+/*!
+    \qmlmethod object WindowManager::addExtension(Component component)
+
+    Creates a Wayland compositor extension from \a component and adds it to the System-UI's
+    underlying WaylandCompositor. The \a component must hold a valid Wayland compositor extension.
+    On success, in multi-process mode, the function returns the created extension. Extensions can
+    only be added, once ApplicationManager::windowManagerCompositorReady is true, for example:
+
+    \code
+    import QtWayland.Compositor.TextureSharingExtension 1.0
+
+    Component {
+        id: texshare
+        TextureSharingExtension {}
+    }
+
+    Connections {
+        target: ApplicationManager
+        onWindowManagerCompositorReadyChanged: WindowManager.addExtension(texshare);
+    }
+    \endcode
+
+    \sa ApplicationManager::windowManagerCompositorReady
+
+ */
+QObject *WindowManager::addExtension(QQmlComponent *component) const
+{
+#if defined(AM_MULTI_PROCESS)
+    if (!component || ApplicationManager::instance()->isSingleProcess())
+        return nullptr;
+
+    if (!d->waylandCompositor) {
+        qCWarning(LogSystem) << "Extensions can only be added after ApplicationManager::windowManagerCompositorReady";
+        return nullptr;
+    }
+
+    QObject *obj = component->beginCreate(qmlContext(this));
+    auto extension = qobject_cast<QWaylandCompositorExtension*>(obj);
+
+    if (extension)
+        extension->setParent(d->waylandCompositor);
+
+    component->completeCreate();
+
+    if (!extension)
+        delete obj;
+
+    return extension;
+#else
+    return nullptr;
+#endif
 }
 
 void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)

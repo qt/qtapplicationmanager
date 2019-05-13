@@ -45,19 +45,19 @@ direct access to data that would otherwise only be available (partially) through
 item models.
 
 \section1 QML Singletons
-\annotatedlist System UI-singletons
+\annotatedlist system-ui-singletons
 
 \section1 Instantiable QML Types
 
 These types are only available for the System UI:
 
-\annotatedlist System UI
+\annotatedlist system-ui
 
 \section1 Non-Instantiable QML Types
 
 All these types are only available from within the System UI and cannot be instantiated from its
 QML code.
 
-\annotatedlist System UI-non-instantiable
+\annotatedlist system-ui-non-instantiable
 
 */

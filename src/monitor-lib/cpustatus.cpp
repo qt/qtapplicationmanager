@@ -98,8 +98,8 @@ CpuStatus::CpuStatus(QObject *parent)
     \qmlproperty real CpuStatus::cpuLoad
     \readonly
 
-    The CPU utilization when update() was last called, as a value ranging from 0 (inclusive, completely
-    idle) to 1 (inclusive, fully busy).
+    Holds the overall system's CPU utilization at the point when update() was last called, as a
+    value ranging from 0 (inclusive, completely idle) to 1 (inclusive, fully busy).
 
     \sa CpuStatus::update
 */

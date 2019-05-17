@@ -45,6 +45,10 @@
 #include <QFile>
 #include <QDebug>
 
+#if defined(Q_OS_LINUX)
+#  include <sys/file.h>
+#endif
+
 #include <QtAppManCommon/logging.h>
 
 #include "defaultconfiguration.h"
@@ -468,12 +472,24 @@ QString DefaultConfiguration::waylandSocketName() const
     if (qEnvironmentVariableIsSet(envName))
         return qEnvironmentVariable(envName);
 
-    const QString lockPattern = qEnvironmentVariable("XDG_RUNTIME_DIR") + qSL("/qtam-wayland-%1.lock");
+#if defined(Q_OS_LINUX)
+    // modelled after wl_socket_lock() in wayland_server.c
+    const QString xdgDir = qEnvironmentVariable("XDG_RUNTIME_DIR") + qSL("/");
+    const QString pattern = qSL("qtam-wayland-%1");
+    const QString lockSuffix = qSL(".lock");
+
     for (int i = 0; i < 32; ++i) {
-        QFile lock(lockPattern.arg(i));
-        if (lock.open(QIODevice::ReadWrite | QIODevice::NewOnly))
-            return qSL("qtam-wayland-%1").arg(i);
+        const QString socketName = pattern.arg(i);
+        QFile lock(xdgDir + socketName + lockSuffix);
+        if (lock.open(QIODevice::ReadWrite)) {
+            if (::flock(lock.handle(), LOCK_EX | LOCK_NB) == 0) {
+                QFile socket(xdgDir + socketName);
+                if (!socket.exists() || socket.remove())
+                    return socketName;
+            }
+        }
     }
+#endif
     return QString();
 }
 

@@ -111,7 +111,7 @@ public:
     QVector<AbstractApplication *> schemeHandlers(const QString &scheme) const;
     QVector<AbstractApplication *> mimeTypeHandlers(const QString &mimeType) const;
 
-    bool startApplicationInternal(AbstractApplication *app, const QString &documentUrl = QString(),
+    bool startApplicationInternal(const QString &appId, const QString &documentUrl = QString(),
                                   const QString &documentMimeType = QString(),
                                   const QString &debugWrapperSpecification = QString(),
                                   const QVector<int> &stdioRedirections = QVector<int>()) Q_DECL_NOEXCEPT_EXPR(false);

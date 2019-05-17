@@ -608,15 +608,16 @@ void ApplicationManager::registerMimeTypes()
 #endif
 }
 
-bool ApplicationManager::startApplicationInternal(AbstractApplication *app, const QString &documentUrl,
+bool ApplicationManager::startApplicationInternal(const QString &appId, const QString &documentUrl,
                                                   const QString &documentMimeType,
                                                   const QString &debugWrapperSpecification,
                                                   const QVector<int> &stdioRedirections)  Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (d->shuttingDown)
         throw Exception("Cannot start applications during shutdown");
+    AbstractApplication *app = fromId(appId);
     if (!app)
-        throw Exception("Cannot start an invalid application");
+        throw Exception("Cannot start application: id '%1' is not known").arg(appId);
     if (app->isBlocked())
         throw Exception("Application %1 is blocked - cannot start").arg( app->id());
 
@@ -892,7 +893,7 @@ void ApplicationManager::stopApplicationInternal(AbstractApplication *app, bool 
 bool ApplicationManager::startApplication(const QString &id, const QString &documentUrl)
 {
     try {
-        return startApplicationInternal(fromId(id), documentUrl);
+        return startApplicationInternal(id, documentUrl);
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
         return false;
@@ -912,7 +913,7 @@ bool ApplicationManager::startApplication(const QString &id, const QString &docu
 bool ApplicationManager::debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl)
 {
     try {
-        return startApplicationInternal(fromId(id), documentUrl, QString(), debugWrapper);
+        return startApplicationInternal(id, documentUrl, QString(), debugWrapper);
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
         return false;
@@ -1039,7 +1040,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
     if (!apps.isEmpty()) {
         if (!isSignalConnected(QMetaMethod::fromSignal(&ApplicationManager::openUrlRequested))) {
             // If the System-UI does not react to the signal, then just use the first match.
-            startApplicationInternal(apps.constFirst(), urlStr, mimeTypeName);
+            startApplicationInternal(apps.constFirst()->id(), urlStr, mimeTypeName);
         } else {
             ApplicationManagerPrivate::OpenUrlRequest req {
                 QUuid::createUuid().toString(),
@@ -1096,7 +1097,7 @@ void ApplicationManager::acknowledgeOpenUrlRequest(const QString &requestId, con
     for (auto it = d->openUrlRequests.begin(); it != d->openUrlRequests.end(); ++it) {
         if (it->requestId == requestId) {
             if (it->possibleAppIds.contains(appId)) {
-                startApplicationInternal(application(appId), it->urlStr, it->mimeTypeName);
+                startApplicationInternal(appId, it->urlStr, it->mimeTypeName);
             } else {
                 qCWarning(LogSystem) << "acknowledgeOpenUrlRequest for" << it->urlStr << "requested app"
                                      << appId << "which is not one of the registered possibilities:"
@@ -1374,7 +1375,7 @@ void ApplicationManager::startSingleAppAndQuitWhenStopped()
 
     AbstractApplication *app = d->apps[0];
 
-    if (!startApplicationInternal(app)) {
+    if (!startApplicationInternal(app->id())) {
         QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection, Q_ARG(int, 1));
     } else {
         connect(this, &ApplicationManager::applicationRunStateChanged, [app](const QString &id, Am::RunState runState) {
@@ -1657,7 +1658,7 @@ void ApplicationManager::addApplication(AbstractApplication *app)
 
     connect (&app->requests, &ApplicationRequests::startRequested,
             this, [this, app](const QString &documentUrl) {
-        startApplicationInternal(app, documentUrl);
+        startApplicationInternal(app->id(), documentUrl);
     });
 
     connect (&app->requests, &ApplicationRequests::debugRequested,

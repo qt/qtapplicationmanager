@@ -64,7 +64,6 @@ QT_END_NAMESPACE_AM
 #if defined(QT_QML_LIB)
 #  include <QQmlEngine>
 #  include <QtQml/private/qv4engine_p.h>
-#  include <QtQml/private/qv8engine_p.h>
 #endif
 
 #include <cxxabi.h>

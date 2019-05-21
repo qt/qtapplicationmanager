@@ -60,16 +60,21 @@ QT_FORWARD_DECLARE_CLASS(QWaylandWlShellSurface)
 QT_FORWARD_DECLARE_CLASS(QWaylandTextInputManager)
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-    QT_FORWARD_DECLARE_CLASS(QWaylandXdgShell)
-    QT_FORWARD_DECLARE_CLASS(QWaylandXdgSurface)
-    QT_FORWARD_DECLARE_CLASS(QWaylandXdgToplevel)
-    typedef QWaylandXdgShell WaylandXdgShell;
-    typedef QWaylandXdgSurface WaylandXdgSurface;
+
+QT_FORWARD_DECLARE_CLASS(QWaylandXdgShell)
+QT_FORWARD_DECLARE_CLASS(QWaylandXdgSurface)
+QT_FORWARD_DECLARE_CLASS(QWaylandXdgToplevel)
+QT_FORWARD_DECLARE_CLASS(QWaylandXdgPopup)
+typedef QWaylandXdgShell WaylandXdgShell;
+typedef QWaylandXdgSurface WaylandXdgSurface;
+
 #else
-    QT_FORWARD_DECLARE_CLASS(QWaylandXdgShellV5)
-    QT_FORWARD_DECLARE_CLASS(QWaylandXdgSurfaceV5)
-    typedef QWaylandXdgShellV5 WaylandXdgShell;
-    typedef QWaylandXdgSurfaceV5 WaylandXdgSurface;
+
+QT_FORWARD_DECLARE_CLASS(QWaylandXdgShellV5)
+QT_FORWARD_DECLARE_CLASS(QWaylandXdgSurfaceV5)
+typedef QWaylandXdgShellV5 WaylandXdgShell;
+typedef QWaylandXdgSurfaceV5 WaylandXdgSurface;
+
 #endif
 
 QT_BEGIN_NAMESPACE_AM
@@ -99,6 +104,8 @@ public:
     QWaylandWlShellSurface *shellSurface() const;
     WaylandCompositor *compositor() const;
 
+    bool isPopup() const;
+    QRect popupGeometry() const;
     void sendResizing(const QSize &size);
 
 private:
@@ -114,6 +121,7 @@ public:
 
 signals:
     void pong();
+    void popupGeometryChanged();
 
 private:
     QWaylandSurface *m_surface;
@@ -123,6 +131,7 @@ private:
     WaylandXdgSurface *m_xdgSurface = nullptr;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
     QWaylandXdgToplevel *m_topLevel = nullptr;
+    QWaylandXdgPopup *m_popup = nullptr;
 #endif
 
     friend class WaylandCompositor;
@@ -148,6 +157,7 @@ protected:
     void onXdgSurfaceCreated(WaylandXdgSurface *xdgSurface);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
     void onTopLevelCreated(QWaylandXdgToplevel *toplevel, QWaylandXdgSurface *xdgSurface);
+    void onPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface);
 #endif
     void onXdgPongReceived(uint serial);
 

@@ -67,6 +67,8 @@ class Window : public QObject
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
     Q_PROPERTY(ContentState contentState READ contentState NOTIFY contentStateChanged)
     Q_PROPERTY(AbstractApplication* application READ application CONSTANT)
+    Q_PROPERTY(bool popup READ isPopup CONSTANT)
+    Q_PROPERTY(QPoint requestedPopupPosition READ requestedPopupPosition NOTIFY requestedPopupPositionChanged)
 
 public:
 
@@ -91,6 +93,11 @@ public:
     void setPrimaryItem(WindowItem *item);
     WindowItem *primaryItem() const { return m_primaryItem; }
 
+    // This really depends on the windowing system - currently only Wayland with xdg-shell 6
+    // supports popups natively
+    virtual bool isPopup() const = 0;
+    virtual QPoint requestedPopupPosition() const = 0;
+
     // Whether there's any view (WindowItem) holding a reference to this window
     bool isBeingDisplayed() const;
 
@@ -110,6 +117,7 @@ signals:
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void isBeingDisplayedChanged();
     void contentStateChanged();
+    void requestedPopupPositionChanged();
 
     // Emitted when this window is destroyed. This signal exists because QObject::destroyed
     // doesn't reach the QML/Javascript side. This exists just for testing purposes and

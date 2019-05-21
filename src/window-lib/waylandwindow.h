@@ -63,6 +63,9 @@ public:
 
     bool isInProcess() const override { return false; }
 
+    bool isPopup() const override;
+    QPoint requestedPopupPosition() const override;
+
     bool setWindowProperty(const QString &name, const QVariant &value) override;
     QVariant windowProperty(const QString &name) const override;
     QVariantMap windowProperties() const override;

@@ -56,6 +56,9 @@
 #include <QWaylandWlShell>
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
 #  include <QWaylandXdgShell>
+#  if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+#    include <private/qwaylandxdgshell_p.h>
+#  endif
 #else
 #  include <QWaylandXdgShellV5>
 #endif
@@ -85,6 +88,8 @@ void WindowSurface::sendResizing(const QSize &size)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
     if (m_topLevel)
         m_topLevel->sendResizing(size);
+    else if (m_popup)
+        ; // do nothing
 #else
     if (m_xdgSurface)
         m_xdgSurface->sendResizing(size);
@@ -96,6 +101,16 @@ void WindowSurface::sendResizing(const QSize &size)
 WaylandCompositor *WindowSurface::compositor() const
 {
     return m_compositor;
+}
+
+bool WindowSurface::isPopup() const
+{
+    return m_popup;
+}
+
+QRect WindowSurface::popupGeometry() const
+{
+    return m_popup ? m_popup->configuredGeometry() : QRect();
 }
 
 QWaylandSurface *WindowSurface::surface() const
@@ -128,10 +143,17 @@ void WindowSurface::ping()
 void WindowSurface::close()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-    if (m_topLevel)
+    if (m_topLevel) {
         m_topLevel->sendClose();
-    else
-        qCWarning(LogGraphics) << this << "is not using the XDG Shell extension. Unable to send close signal.";
+    } else if (m_popup) {
+#  if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+        QWaylandXdgPopupPrivate::get(m_popup)->send_popup_done();
+#  else
+        m_popup->sendPopupDone();
+#  endif
+    } else {
+        qCWarning(LogGraphics) << "The Wayland surface" << this << "is not using the XDG Shell extension. Unable to send close signal.";
+    }
 #else
     if (m_xdgSurface)
         m_xdgSurface->sendClose();
@@ -157,6 +179,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     connect(m_xdgShell, &WaylandXdgShell::xdgSurfaceCreated, this, &WaylandCompositor::onXdgSurfaceCreated);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
     connect(m_xdgShell, &QWaylandXdgShell::toplevelCreated, this, &WaylandCompositor::onTopLevelCreated);
+    connect(m_xdgShell, &QWaylandXdgShell::popupCreated, this, &WaylandCompositor::onPopupCreated);
 #endif
     connect(m_xdgShell, &WaylandXdgShell::pong, this, &WaylandCompositor::onXdgPongReceived);
 
@@ -240,6 +263,19 @@ void WaylandCompositor::onTopLevelCreated(QWaylandXdgToplevel *topLevel, QWaylan
     Q_ASSERT(windowSurface->m_xdgSurface == xdgSurface);
 
     windowSurface->m_topLevel = topLevel;
+}
+
+void WaylandCompositor::onPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface)
+{
+    WindowSurface *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
+
+    Q_ASSERT(!windowSurface->m_wlSurface);
+    Q_ASSERT(windowSurface->m_xdgSurface == xdgSurface);
+
+    windowSurface->m_popup = popup;
+
+    connect(popup, &QWaylandXdgPopup::configuredGeometryChanged,
+            windowSurface, &WindowSurface::popupGeometryChanged);
 }
 #endif
 

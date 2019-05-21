@@ -28,87 +28,94 @@
 
 /*!
 
-\page troubleshooting.html
-\title Troubleshooting
+\page troubleshoot.html
+\title Troubleshoot
 
-This page contains frequently asked questions/problems and how to fix them.
+This section lists possible issues you may encounter while using QtApplicationManager and how to
+solve them.
 
 \table
-\header \li \b {Issues}
-\row \li \l{ts-01}{How do I check whether I run appman in multi-process mode ?}
-\row \li \l{ts-02}{How do I check why my appman doesn't support multi-process mode ?}
-\row \li \l{ts-03}{My applications are running slow within appman. What can I do ?}
-\row \li \l{ts-04}{How do I check whether my applications use hardware-acceleration ?}
-\row \li \l{ts-05}{How do I turn on hardware-accerlation ?}
+    \header
+        \li Possible Issues
+    \row
+        \li \l{ts-01}{How do I check whether my application manager instance is running in multi-process mode?}
+    \row
+        \li \l{ts-02}{How do I find out why my application manager instance doesn't support multi-process mode?}
+    \row
+        \li \l{ts-03}{My applications are running slowly within the application manager. What are some possible solutions?}
+    \row
+        \li \l{ts-04}{How do I find out if my applications use hardware acceleration?}
+    \row
+        \li \l{ts-05}{How do I enable hardware acceleration?}
 \endtable
 
 \target ts-01
-\b {How do I check whether I run appman in multi-process mode ?}
+\b{How do I check whether my application manager instance is running in multi-process mode?}
 
-Either start the application-manager with \c --verbose and look for the
-output \c{WindowManager: running in Wayland mode}, or simply start an
-application and make sure you can see at least one appman-launcher-qml
-process running.
+Start the Application manager with the \c --verbose argument and verify that you see
+\c{WindowManager: running in Wayland mode} in the output. Alternatively, start an application and
+make sure that you can see at least one \c appman-launcher-qml process running.
 
 \target ts-02
-\b {How do I check why my appman doesn't support multi-process mode ?}
+\b{How do I find out why my application manager instance doesn't support multi-process mode?}
 
-Check the configure output of appman (Most likely you are missing the qtwayland module).
+Check the "Application Manager configuration", which is visible when you run the \c qmake command.
+It's possible that your configuration doesn't support the \c QtCompositor module.
 
 \target ts-03
-\b {My applications are running slow within appman. What can I do ?}
+\b{My applications are running slowly within the application manager. What are some possible solutions?}
 
-Check whether your applications run with hardware acceleration.
+Verify if your applications are running with hardware acceleration.
 
 \target ts-04
-\b {How do I check whether my applications use hardware-acceleration ?}
+\b{How do I find out if my applications use hardware acceleration?}
 
-Run appman with the environment variable \b QSG_INFO=1. You should see output looking similar
-this, when starting an application:
+Run the \c appman, with the environment variable \c QSG_INFO=1. When you start an application, you
+should see a similar output:
 
 \badcode
-[DBG  | qt.scenegraph.general | c.p.music] Using sg animation driver
-[DBG  | qt.scenegraph.general | c.p.music] Animation Driver: using vsync: 16.95 ms
-[DBG  | qt.scenegraph.general | c.p.music] texture atlas dimensions: 1024x1024
-[DBG  | qt.scenegraph.general | c.p.music] R/G/B/A Buffers:    8 8 8 8
-[DBG  | qt.scenegraph.general | c.p.music] Depth Buffer:       24
-[DBG  | qt.scenegraph.general | c.p.music] Stencil Buffer:     8
-[DBG  | qt.scenegraph.general | c.p.music] Samples:            0
-[DBG  | qt.scenegraph.general | c.p.music] GL_VENDOR:          VMware, Inc.
-[DBG  | qt.scenegraph.general | c.p.music] GL_RENDERER:        llvmpipe (LLVM 5.0, 256 bits)
-[DBG  | qt.scenegraph.general | c.p.music] GL_VERSION:         3.0 Mesa 17.3.0
+    [DBG  | qt.scenegraph.general | c.p.music] Using sg animation driver
+    [DBG  | qt.scenegraph.general | c.p.music] Animation Driver: using vsync: 16.95 ms
+    [DBG  | qt.scenegraph.general | c.p.music] texture atlas dimensions: 1024x1024
+    [DBG  | qt.scenegraph.general | c.p.music] R/G/B/A Buffers:    8 8 8 8
+    [DBG  | qt.scenegraph.general | c.p.music] Depth Buffer:       24
+    [DBG  | qt.scenegraph.general | c.p.music] Stencil Buffer:     8
+    [DBG  | qt.scenegraph.general | c.p.music] Samples:            0
+    [DBG  | qt.scenegraph.general | c.p.music] GL_VENDOR:          VMware, Inc.
+    [DBG  | qt.scenegraph.general | c.p.music] GL_RENDERER:        llvmpipe (LLVM 5.0, 256 bits)
+    [DBG  | qt.scenegraph.general | c.p.music] GL_VERSION:         3.0 Mesa 17.3.0
 \endcode
 
-If \e GL_RENDERER is \e "llvmpipe" you are using software-rendering for your wayland clients.
+If \c GL_RENDERER is \c llvmpipe, you're using software rendering for your Wayland clients.
 
-\note You will also get this information output for the system-ui itself -
-make sure to look at the information table that has the application's id in
-the prefix (in the example above, \c com.pelagicore.music)
+\note This information is also available for the System UI itself, based on the application's ID in
+the prefix. In the example above, \c{com.pelagicore.music} is truncated to \c{c.p.music}.
 
 \target ts-05
-\b {How do I turn on hardware-accerlation ?}
+\b{How do I enable hardware acceleration?}
 
-This depends on your hardware and the operating system:
+This depends on your hardware and operating system:
 
-In general you need to make sure you have the correct drivers installed:
+You need to make sure that you have the correct drivers installed:
 \list
-    \li NVIDIA on ubuntu/debian you need: \e nvidia-egl-wayland-icd
-    \li Intel on ubuntu/debian you need: \e libwayland-egl1-mesa
+    \li For NVIDIA on Ubuntu or Debian you need \c nvidia-egl-wayland-icd
+    \li For Intel on Ubuntu or Debian you need \c libwayland-egl1-mesa
 \endlist
 
-On desktop systems make sure your Qt is configured to use at least OpenGL
-ES2/ES3 and \b NOT Desktop OpenGL. Check for the following configure summary line
-in Qt itself:
+On desktop systems, make sure your Qt is configured to use at least OpenGL ES2/ES3 instead of
+Desktop OpenGL. In Qt's configure summary, verify that you see the following line:
+
 \badcode
     OpenGL ES 2.0 ........................ yes
 \endcode
 
-You can force Qt to use Opengl ES2 by using the \e "--opengl es2" configure option.
+You can force Qt to use Opengl ES2 by using the \c --opengl es2 configure option.
 
-Make sure the wayland-egl integration plugin is built:
-Check for the following file: \e <QT_DIR>/plugins/wayland-graphics-integration-client/libwayland-egl.so
+Additionally, you also need to make sure that the \c wayland-egl integration plugin is built. If
+the plugin built successfully, you should have the following file:
+\e <QT_DIR>/plugins/wayland-graphics-integration-client/libwayland-egl.so
 
-If that is not available, check the QtWayland configure summary and make sure it
-does get built.
+If that file isn't available, check QtWayland's configure summary and make sure this plugin is
+built.
 
 */

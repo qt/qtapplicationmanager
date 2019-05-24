@@ -94,6 +94,8 @@ public:
     Main(int &argc, char **argv);
     ~Main();
 
+    static int &preConstructor(int &argc);
+
     bool isSingleProcessMode() const;
 
     void setup(const DefaultConfiguration *cfg, const QStringList &deploymentWarnings = QStringList()) Q_DECL_NOEXCEPT_EXPR(false);

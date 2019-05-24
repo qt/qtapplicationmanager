@@ -622,10 +622,18 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             connect(d->waylandCompositor, &WaylandCompositor::surfaceMapped,
                     this, &WindowManager::waylandSurfaceMapped);
 
+            // sadly, there's no simple getter for the buffer integration in QWaylandCompositor
+            QByteArray clientBufferIntegration = qgetenv("QT_WAYLAND_HARDWARE_INTEGRATION");
+            if (clientBufferIntegration.isEmpty())
+                clientBufferIntegration = qgetenv("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION");
+            if (clientBufferIntegration.isEmpty())
+                clientBufferIntegration = "default";
+
             // export the actual socket name for our child processes.
             qputenv("WAYLAND_DISPLAY", d->waylandCompositor->socketName());
-            qCInfo(LogGraphics).nospace() << "WindowManager: running in Wayland mode [socket: "
-                                           << d->waylandCompositor->socketName() << "]";
+            qCInfo(LogGraphics).nospace() << "The Wayland compositor is using the "
+                                          << clientBufferIntegration << " buffer integration [socket: "
+                                          << d->waylandCompositor->socketName() << "]";
             ApplicationManager::instance()->setWindowManagerCompositorReady(true);
         } else {
             d->waylandCompositor->registerOutputWindow(view);

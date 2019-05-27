@@ -82,7 +82,6 @@ private:
 };
 
 QVector<QVariant> variantDocumentsFromYaml(const QByteArray &yaml, ParseError *error = nullptr);
-QVector<QVariant> variantDocumentsFromYamlFiltered(const QByteArray &yaml, std::function<QVariant(const QVariant &)> filter, ParseError *error = nullptr);
 
 enum YamlStyle { FlowStyle, BlockStyle };
 

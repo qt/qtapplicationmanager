@@ -41,9 +41,30 @@ option.
 The config file is a \l{YAML syntax}{YAML file that follows the same rules} as all the other YAML
 files used in the application manager.
 
-Any value that starts with the \c ${CONFIG_PWD} string has this string replaced with the absolute
-path to where the config file is located. This makes it easy to have all your import paths and
-file references relative to your main config file.
+Before parsing the YAML document, the application manager substitutes variables denoted by a
+syntax similar to \c bash: \c ${VariableName}. There are different types of variables that can be
+substituted this way:
+
+\table
+    \header
+        \li Type
+        \li Description
+    \row
+        \li \c ${CONFIG_PWD}
+        \li Is substituted with the absolute path to the config file being parsed. This feature
+            makes it possible to have all your import paths and file references relative to your
+            main config file.
+    \row
+        \li \c ${env:ENV_VAR_NAME}
+        \li Is substituted with the value of the \c $ENV_VAR_NAME environment variable. For
+            example \c ${env:USER} is replaced by your Unix user name.
+    \row
+        \li \c ${stdpath:Location}
+        \li Is substituted with the platform's value of the corresponding \l
+            {QStandardPaths::StandardLocation}{standard location} for \c Location. For example,
+            \c ${stdpath:TempLocation} is replaced by \c /tmp on Unix; unless configured
+            otherwise by your system administrator.
+\endtable
 
 If an option is specified in more than one place: either on the command line and the config files,
 or across multiple config files, the final value is resolved based on these rules:

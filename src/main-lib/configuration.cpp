@@ -274,10 +274,18 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
     QAtomicInt useCache = false;
     QVariantMap cache;
 
+    static const quint32 CacheMagicHeader = 0xe42ad845;
+
     if (!noConfigCache && !clearConfigCache) {
         if (cacheFile.open(QFile::ReadOnly)) {
             try {
                 QDataStream ds(&cacheFile);
+                quint32 magic;
+                ds >> magic;
+
+                if (magic != CacheMagicHeader)
+                    throw Exception("failed to read config cache header");
+
                 QVector<QPair<QString, QByteArray>> configChecksums; // abs. file path -> sha1
                 ds >> configChecksums >> cache;
 
@@ -403,7 +411,7 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
                 for (const ConfigFile &cf : qAsConst(configFiles))
                     configChecksums.append(qMakePair(cf.filePath, cf.checksum));
 
-                ds << configChecksums << m_config;
+                ds << CacheMagicHeader << configChecksums << m_config;
 
                 if (ds.status() != QDataStream::Ok)
                     throw Exception("error writing config cache content");

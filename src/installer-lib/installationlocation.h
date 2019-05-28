@@ -51,19 +51,12 @@ QT_BEGIN_NAMESPACE_AM
 class InstallationLocation
 {
 public:
-    enum Type {
-        Invalid  = -1,
-        Internal,
-        Removable,
-    };
-
     static const InstallationLocation invalid;
 
     bool operator==(const InstallationLocation &other) const;
     inline bool operator!=(const InstallationLocation &other) const { return !((*this) == other); }
 
     QString id() const;
-    Type type() const;
     int index() const;
 
     QString installationPath() const;
@@ -74,26 +67,18 @@ public:
 
     bool isValid() const;
     bool isDefault() const;
-    bool isRemovable() const;
-    bool isMounted() const;
 
     QVariantMap toVariantMap() const;
-
-    QString mountPoint() const; // debug only / not exported to QVariantMap
-
-    static Type typeFromString(const QString &str);
-    static QString typeToString(Type type);
 
     static QVector<InstallationLocation> parseInstallationLocations(const QVariantList &list,
                                                                     const QString &hardwareId) Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
-    Type m_type = Invalid;
+    bool m_valid = false;
     int m_index = 0;
     bool m_isDefault = false;
     QString m_installationPath;
     QString m_documentPath;
-    QString m_mountPoint;
 };
 
 QT_END_NAMESPACE_AM

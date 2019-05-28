@@ -1,0 +1,14 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  installedAppsManifestDir: "/tmp/am/manifests"
+  appImageMountDir: "/tmp/am/image-mounts"
+  database: "/tmp/am/apps.db"
+
+installationLocations:
+- id: "internal-0"
+  installationPath: "/tmp/am/apps"
+  documentPath: "/tmp/am/docs"
+  mountPoint: "/tmp"
+  isDefault: true

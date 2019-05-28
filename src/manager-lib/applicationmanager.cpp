@@ -312,10 +312,8 @@
     \readonly
 
     This property starts with the value \c false and will change to \c true once the Wayland
-    compositor is ready to accept connections from other processes. Please be aware that this
-    will only happen either implicitly after the System-UI's main QML has been loaded or explicitly
-    when calling WindowManager::registerCompositorView() from QML before the loading stage has
-    completed.
+    compositor is ready to accept connections from other processes. In multi-process mode, this
+    happens implicitly after the System-UI's main QML has been loaded.
 */
 
 enum Roles

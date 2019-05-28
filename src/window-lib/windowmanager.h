@@ -55,6 +55,7 @@ QT_FORWARD_DECLARE_CLASS(QQuickItem)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
 QT_FORWARD_DECLARE_CLASS(QWindow)
+QT_FORWARD_DECLARE_CLASS(QQmlComponent)
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -99,9 +100,7 @@ public:
     Q_INVOKABLE QVariantMap get(int index) const;
 
     Q_INVOKABLE int indexOfWindow(Window *window);
-
-
-    void registerCompositorView(QQuickWindow *view);
+    Q_INVOKABLE QObject *addExtension(QQmlComponent *component) const;
 
     bool eventFilter(QObject *watched, QEvent *event) override;
 
@@ -147,6 +146,7 @@ private:
 #endif
 
 private:
+    void registerCompositorView(QQuickWindow *view);
     void addWindow(Window *window);
     void removeWindow(Window *window);
     void releaseWindow(Window *window);

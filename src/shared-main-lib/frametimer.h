@@ -99,27 +99,24 @@ signals:
     void runningChanged();
     void windowChanged();
 
-private slots:
+protected slots:
     void newFrame();
+
+protected:
+    virtual bool connectToAppManWindow();
+    virtual void disconnectFromAppManWindow();
+
+    QPointer<QObject> m_window;
 
 private:
     void reset();
     bool connectToQuickWindow();
-    bool connectToAppManWindow();
-
-#if defined(AM_MULTI_PROCESS)
-    void disconnectFromWaylandSurface();
-    void connectToWaylandSurface();
-    QPointer<QWaylandQuickSurface> m_waylandSurface;
-#endif
 
     int m_count = 0;
     int m_sum = 0;
     int m_min = std::numeric_limits<int>::max();
     int m_max = 0;
     qreal m_jitter = 0.0;
-
-    QPointer<QObject> m_window;
 
     QElapsedTimer m_timer;
 

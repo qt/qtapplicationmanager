@@ -29,26 +29,34 @@
 /*!
 
 \example applicationmanager/process-status
-\title Displaying Information About Application Processes
+\title Display Information about Application Processes
 \image process-status-example.png
 \brief How to use ProcessStatus to display application process information.
 \ingroup applicationmanager-examples
 
-This example shows you how to use the \l ProcessStatus component to display information
-about an application's process.
+\section1 Introduction
 
-This example is based on the simpler \l {"Hello World!" System-UI Example} {Hello World} one. You might
-want to start from there if you haven't seen it already.
+This example shows you how to use the \l ProcessStatus component to display information about
+an application's process. It is based on the simpler
+\l{"Hello World!" System UI Example}{Hello World}.
 
-On the left side the built-in applications are listed in a column, where each application has a row containing
-its icon and name next to a tabbed view that shows information about the application's process (in case the
-application is actually running).
+\b Prerequisites: You're already familiar with the concepts and topics introduced in the
+   \l {"Hello World!" System UI Example}.
 
-On the right side of the System-UI the windows of the running applications are stacked in a column, in order of
-appearance (oldest window at the top and youngest at the bottom).
+On the left, the built-in applications are listed in a column, where each application has a row
+that contains its icon and name, next to a tabbed view that shows information about the
+application's process (if the application is running).
 
-There are three applications available, a red one called "CPU Hog" which consumes a lot of CPU, a green one
-called "Memory Hog" that continually increases its memory consumption (so don't leave it running for too long
-as it will eat up all available RAM eventually) and a blue one called "Slim", which behaves normally.
+On the right of the System UI, the windows of the running applications are stacked in a column, in
+order of appearance: oldest window on top; youngest at the bottom.
+
+There are three applications available:
+
+\list
+    \li "CPU Hog" - a red application that consumes a lot of CPU
+    \li "Memory Hog" - a green application that continually increases its memory consumption;
+        don't leave it running for too long, it eats up all available RAM eventually.
+    \li "Slim" - a blue application that behaves normally.
+\endlist
 
 */

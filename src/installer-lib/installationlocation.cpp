@@ -102,43 +102,18 @@ static bool diskUsage(const QString &path, quint64 *bytesTotal, quint64 *bytesFr
 
 bool InstallationLocation::operator==(const InstallationLocation &other) const
 {
-    return (m_type == other.m_type)
+    return (m_valid == other.m_valid)
             && (m_index == other.m_index)
             && (m_installationPath == other.m_installationPath)
-            && (m_documentPath == other.m_documentPath)
-            && (m_mountPoint == other.m_mountPoint);
-}
-
-InstallationLocation::Type InstallationLocation::typeFromString(const QString &str)
-{
-    for (Type t: { Invalid, Internal, Removable}) {
-        if (typeToString(t) == str)
-            return t;
-    }
-    return Invalid;
-}
-
-QString InstallationLocation::typeToString(Type type)
-{
-    switch (type) {
-    default:
-    case Invalid: return qSL("invalid");
-    case Internal: return qSL("internal");
-    case Removable: return qSL("removable");
-    }
+            && (m_documentPath == other.m_documentPath);
 }
 
 QString InstallationLocation::id() const
 {
-    QString name = typeToString(m_type);
-    if (m_type != Invalid)
+    QString name = m_valid ? qSL("internal") : qSL("invalid");
+    if (m_valid)
         name = name + QLatin1Char('-') + QString::number(m_index);
     return name;
-}
-
-InstallationLocation::Type InstallationLocation::type() const
-{
-    return m_type;
 }
 
 int InstallationLocation::index() const
@@ -148,27 +123,12 @@ int InstallationLocation::index() const
 
 bool InstallationLocation::isValid() const
 {
-    return m_type != Invalid;
+    return m_valid;
 }
 
 bool InstallationLocation::isDefault() const
 {
     return m_isDefault;
-}
-
-bool InstallationLocation::isRemovable() const
-{
-    return m_type == Removable;
-}
-
-bool InstallationLocation::isMounted() const
-{
-    if (!isRemovable())
-        return true;
-    else if (m_mountPoint.isEmpty())
-        return false;
-    else
-        return mountedDirectories().uniqueKeys().contains(QDir(m_mountPoint).canonicalPath());
 }
 
 QString InstallationLocation::installationPath() const
@@ -195,36 +155,25 @@ QVariantMap InstallationLocation::toVariantMap() const
 {
     QVariantMap map;
     map[qSL("id")] = id();
-    map[qSL("type")] = typeToString(type());
+    map[qSL("type")] = m_valid ? qSL("internal") : qSL("invalid");
     map[qSL("index")] = index();
     map[qSL("installationPath")] = installationPath();
     map[qSL("documentPath")] = documentPath();
-    map[qSL("isRemovable")] = isRemovable();
     map[qSL("isDefault")] = isDefault();
 
-    bool mounted = isMounted();
-
     quint64 total = 0, free = 0;
-    if (mounted)
-        installationDeviceFreeSpace(&total, &free);
+    installationDeviceFreeSpace(&total, &free);
 
-    map[qSL("isMounted")] = mounted;
     map[qSL("installationDeviceSize")] = total;
     map[qSL("installationDeviceFree")] = free;
 
     total = free = 0;
-    if (mounted)
-        documentDeviceFreeSpace(&total, &free);
+    documentDeviceFreeSpace(&total, &free);
 
     map[qSL("documentDeviceSize")] = total;
     map[qSL("documentDeviceFree")] = free;
 
     return map;
-}
-
-QString InstallationLocation::mountPoint() const
-{
-    return m_mountPoint;
 }
 
 QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(const QVariantList &list,
@@ -239,7 +188,6 @@ QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(c
         QString id = map.value(qSL("id")).toString();
         QString instPath = map.value(qSL("installationPath")).toString();
         QString documentPath = map.value(qSL("documentPath")).toString();
-        QString mountPoint = map.value(qSL("mountPoint")).toString();
         bool isDefault = map.value(qSL("isDefault")).toBool();
 
         if (isDefault) {
@@ -249,27 +197,27 @@ QVector<InstallationLocation> InstallationLocation::parseInstallationLocations(c
                 throw Exception(Error::Parse, "multiple default installation locations defined");
         }
 
-        Type type = InstallationLocation::typeFromString(id.section('-', 0, 0));
+        QString type = id.section('-', 0, 0);
         bool ok = false;
         int index = id.section('-', 1).toInt(&ok);
 
-        if ((type != Invalid) && (index >= 0) && ok) {
+        if ((type == qSL("internal")) && (index >= 0) && ok) {
             InstallationLocation il;
-            il.m_type = type;
+            il.m_valid = true;
             il.m_index = index;
             il.m_installationPath = fixPath(instPath, hardwareId);
             il.m_documentPath = fixPath(documentPath, hardwareId);
-            il.m_mountPoint = mountPoint;
             il.m_isDefault = isDefault;
 
-            //RG: should we disallow Removable locations to be the default location?
-
-            if (!il.isRemovable()) {
-                if (!QDir::root().mkpath(instPath))
-                    throw Exception(Error::Parse, "the app directory %2 for the installation location %1 does not exist although the location is not removable").arg(id).arg(instPath);
-                if (!QDir::root().mkpath(documentPath))
-                    throw Exception(Error::Parse, "the doc directory %2 for the installation location %1 does not exist although the location is not removable").arg(id).arg(documentPath);
+            if (!QDir::root().mkpath(instPath)) {
+                throw Exception(Error::Parse, "the app directory %2 for the installation location %1 does not exist")
+                        .arg(id).arg(instPath);
             }
+            if (!QDir::root().mkpath(documentPath)) {
+                throw Exception(Error::Parse, "the doc directory %2 for the installation location %1 does not exist")
+                    .arg(id).arg(documentPath);
+            }
+
             locations.append(il);
         } else {
             throw Exception(Error::Parse, "could not parse the installation location with id %1").arg(id);

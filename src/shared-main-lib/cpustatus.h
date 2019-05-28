@@ -42,53 +42,40 @@
 
 #pragma once
 
-#include <QMutex>
-#include <QList>
-#include <QSet>
-#include <QScopedPointer>
-#include <QThread>
-
-#include <QtAppManInstaller/applicationinstaller.h>
-#include <QtAppManInstaller/sudo.h>
 #include <QtAppManCommon/global.h>
+
+#include <QtAppManMonitor/systemreader.h>
+
+#include <QObject>
+#include <QScopedPointer>
 
 QT_BEGIN_NAMESPACE_AM
 
-bool removeRecursiveHelper(const QString &path);
-
-class ApplicationInstallerPrivate
+class CpuStatus : public QObject
 {
+    Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/CpuStatus 2.0")
+    Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadChanged)
+    Q_PROPERTY(int cpuCores READ cpuCores CONSTANT)
+
+    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
+
 public:
-    bool developmentMode = false;
-    bool allowInstallationOfUnsignedPackages = false;
-    bool userIdSeparation = false;
-    uint minUserId = uint(-1);
-    uint maxUserId = uint(-1);
-    uint commonGroupId = uint(-1);
+    CpuStatus(QObject *parent = nullptr);
 
-    QScopedPointer<QDir> manifestDir;
-    QVector<InstallationLocation> installationLocations;
-    InstallationLocation invalidInstallationLocation;
+    qreal cpuLoad() const;
+    int cpuCores() const;
 
-    QString error;
+    QStringList roleNames() const;
 
-    QString hardwareId;
-    QList<QByteArray> chainOfTrust;
+    Q_INVOKABLE void update();
 
-    QList<AsynchronousTask *> incomingTaskList;     // incoming queue
-    QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge
-    AsynchronousTask *activeTask = nullptr;         // currently active
+signals:
+    void cpuLoadChanged();
 
-    QList<AsynchronousTask *> allTasks() const
-    {
-        QList<AsynchronousTask *> all = incomingTaskList;
-        if (!installationTaskList.isEmpty())
-            all += installationTaskList;
-        if (activeTask)
-            all += activeTask;
-        return all;
-    }
+private:
+    QScopedPointer<CpuReader> m_cpuReader;
+    qreal m_cpuLoad;
 };
 
 QT_END_NAMESPACE_AM
-// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

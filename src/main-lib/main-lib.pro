@@ -28,15 +28,18 @@ CONFIG *= static internal_module
 win32:LIBS += -luser32
 
 DEFINES += AM_BUILD_DIR=\\\"$$BUILD_DIR\\\"
+cross_compile:DEFINES += AM_CROSS_COMPILED
 
 HEADERS += \
-    $$PWD/configuration.h \
-    $$PWD/main.h \
-    $$PWD/defaultconfiguration.h
+    configuration.h \
+    main.h \
+    defaultconfiguration.h \
+    windowframetimer.h \
 
 SOURCES += \
-    $$PWD/main.cpp \
-    $$PWD/configuration.cpp \
-    $$PWD/defaultconfiguration.cpp
+    main.cpp \
+    configuration.cpp \
+    defaultconfiguration.cpp \
+    windowframetimer.cpp \
 
 load(qt_module)

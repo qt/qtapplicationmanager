@@ -87,7 +87,6 @@ void DeinstallationTask::execute()
 
         ScopedRenamer docDirRename;
         ScopedRenamer appDirRename;
-        ScopedRenamer appImageRename;
         ScopedRenamer manifestRename;
 
         if (!m_keepDocuments) {
@@ -97,25 +96,9 @@ void DeinstallationTask::execute()
             }
         }
 
-        if (m_installationLocation.isRemovable()) {
-            QString imageFile = QDir(m_installationLocation.installationPath()).absoluteFilePath(m_app->id() + qSL(".appimg"));
-
-            if (m_installationLocation.isMounted() && QFile::exists(imageFile)) {
-                // the correct medium is currently mounted
-                if (!appImageRename.rename(imageFile, ScopedRenamer::NameToNameMinus)
-                        && !m_forceDeinstallation) {
-                    throw Exception(Error::IO, "could not rename %1 to %1-").arg(appImageRename.baseName());
-                }
-            } else {
-                // either no medium or the wrong one are mounted at the moment
-                if (!m_forceDeinstallation)
-                    throw Exception(Error::MediumNotAvailable, "cannot delete application %1 without the removable medium it was installed on").arg(m_applicationId);
-            }
-        } else {
-            if (!appDirRename.rename(QDir(m_installationLocation.installationPath()).absoluteFilePath(m_app->id()),
-                                     ScopedRenamer::NameToNameMinus)) {
-                throw Exception(Error::IO, "could not rename %1 to %1-").arg(appDirRename.baseName());
-            }
+        if (!appDirRename.rename(QDir(m_installationLocation.installationPath()).absoluteFilePath(m_app->id()),
+                                 ScopedRenamer::NameToNameMinus)) {
+            throw Exception(Error::IO, "could not rename %1 to %1-").arg(appDirRename.baseName());
         }
 
         if (!manifestRename.rename(ApplicationInstaller::instance()->manifestDirectory()->absoluteFilePath(m_app->id()),
@@ -126,11 +109,10 @@ void DeinstallationTask::execute()
         manifestRename.take();
         docDirRename.take();
         appDirRename.take();
-        appImageRename.take();
 
         // point of no return
 
-        for (ScopedRenamer *toDelete : { &manifestRename, &docDirRename, &appDirRename, &appImageRename}) {
+        for (ScopedRenamer *toDelete : { &manifestRename, &docDirRename, &appDirRename }) {
             if (toDelete->isRenamed()) {
                 if (!removeRecursiveHelper(toDelete->baseName() + qL1C('-')))
                     qCCritical(LogInstaller) << "ERROR: could not remove" << (toDelete->baseName() + qL1C('-'));

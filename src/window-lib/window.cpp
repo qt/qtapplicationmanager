@@ -165,7 +165,23 @@
 
     \sa setWindowProperty
 */
+/*!
+    \qmlproperty bool WindowObject::popup
 
+    Returns \c true if this window is a native popup to the windowing system or \c false otherwise.
+    Currently, only popups created through Wayland's xdg-shell extension are recognized as native.
+*/
+/*!
+    \qmlproperty point WindowObject::requestedPopupPosition
+
+    The position of the native popup as requested by the client; corresponds to
+    QWaylandXdgPopup::configuredGeometry.
+
+    Currently, only popups created through Wayland's xdg-shell extension are recognized as native.
+    In all other cases this property returns a null point.
+
+    \sa popup
+*/
 QT_BEGIN_NAMESPACE_AM
 
 Window::Window(AbstractApplication *app)

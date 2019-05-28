@@ -49,6 +49,7 @@
 #include <QVariant>
 #include <QMetaObject>
 #include <QThread>
+#include <QQmlComponent>
 #include <private/qabstractanimation_p.h>
 
 #if defined(AM_MULTI_PROCESS)
@@ -484,6 +485,59 @@ int WindowManager::indexOfWindow(Window *window)
     return d->windowsInModel.indexOf(window);
 }
 
+/*!
+    \qmlmethod object WindowManager::addExtension(Component component)
+
+    Creates a Wayland compositor extension from \a component and adds it to the System-UI's
+    underlying WaylandCompositor. The \a component must hold a valid Wayland compositor extension.
+    On success, in multi-process mode, the function returns the created extension. Extensions can
+    only be added, once ApplicationManager::windowManagerCompositorReady is true, for example:
+
+    \code
+    import QtWayland.Compositor.TextureSharingExtension 1.0
+
+    Component {
+        id: texshare
+        TextureSharingExtension {}
+    }
+
+    Connections {
+        target: ApplicationManager
+        onWindowManagerCompositorReadyChanged: WindowManager.addExtension(texshare);
+    }
+    \endcode
+
+    \sa ApplicationManager::windowManagerCompositorReady
+
+ */
+QObject *WindowManager::addExtension(QQmlComponent *component) const
+{
+#if defined(AM_MULTI_PROCESS)
+    if (!component || ApplicationManager::instance()->isSingleProcess())
+        return nullptr;
+
+    if (!d->waylandCompositor) {
+        qCWarning(LogSystem) << "Extensions can only be added after ApplicationManager::windowManagerCompositorReady";
+        return nullptr;
+    }
+
+    QObject *obj = component->beginCreate(qmlContext(this));
+    auto extension = qobject_cast<QWaylandCompositorExtension*>(obj);
+
+    if (extension)
+        extension->setParent(d->waylandCompositor);
+
+    component->completeCreate();
+
+    if (!extension)
+        delete obj;
+
+    return extension;
+#else
+    return nullptr;
+#endif
+}
+
 void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 {
     // special hacks to get in-process mode working transparently
@@ -568,10 +622,18 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             connect(d->waylandCompositor, &WaylandCompositor::surfaceMapped,
                     this, &WindowManager::waylandSurfaceMapped);
 
+            // sadly, there's no simple getter for the buffer integration in QWaylandCompositor
+            QByteArray clientBufferIntegration = qgetenv("QT_WAYLAND_HARDWARE_INTEGRATION");
+            if (clientBufferIntegration.isEmpty())
+                clientBufferIntegration = qgetenv("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION");
+            if (clientBufferIntegration.isEmpty())
+                clientBufferIntegration = "default";
+
             // export the actual socket name for our child processes.
             qputenv("WAYLAND_DISPLAY", d->waylandCompositor->socketName());
-            qCInfo(LogGraphics).nospace() << "WindowManager: running in Wayland mode [socket: "
-                                           << d->waylandCompositor->socketName() << "]";
+            qCInfo(LogGraphics).nospace() << "The Wayland compositor is using the "
+                                          << clientBufferIntegration << " buffer integration [socket: "
+                                          << d->waylandCompositor->socketName() << "]";
             ApplicationManager::instance()->setWindowManagerCompositorReady(true);
         } else {
             d->waylandCompositor->registerOutputWindow(view);

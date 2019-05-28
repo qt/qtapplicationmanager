@@ -73,10 +73,6 @@ ApplicationInstallerAdaptor::ApplicationInstallerAdaptor(QObject *parent)
 {
     auto ai = ApplicationInstaller::instance();
 
-    connect(ai, &ApplicationInstaller::packageActivated,
-            this, &ApplicationInstallerAdaptor::packageActivated);
-    connect(ai, &ApplicationInstaller::packageDeactivated,
-            this, &ApplicationInstallerAdaptor::packageDeactivated);
     connect(ai, &ApplicationInstaller::taskBlockingUntilInstallationAcknowledge,
             this, &ApplicationInstallerAdaptor::taskBlockingUntilInstallationAcknowledge);
     connect(ai, &ApplicationInstaller::taskFailed,
@@ -124,12 +120,6 @@ void ApplicationInstallerAdaptor::acknowledgePackageInstallation(const QString &
     return ApplicationInstaller::instance()->acknowledgePackageInstallation(taskId);
 }
 
-bool ApplicationInstallerAdaptor::activatePackage(const QString &id)
-{
-    AM_AUTHENTICATE_DBUS(bool)
-    return ApplicationInstaller::instance()->activatePackage(id);
-}
-
 bool ApplicationInstallerAdaptor::cancelTask(const QString &taskId)
 {
     AM_AUTHENTICATE_DBUS(bool)
@@ -140,18 +130,6 @@ int ApplicationInstallerAdaptor::compareVersions(const QString &version1, const 
 {
     AM_AUTHENTICATE_DBUS(int)
     return ApplicationInstaller::instance()->compareVersions(version1, version2);
-}
-
-bool ApplicationInstallerAdaptor::deactivatePackage(const QString &id)
-{
-    AM_AUTHENTICATE_DBUS(bool)
-    return ApplicationInstaller::instance()->deactivatePackage(id);
-}
-
-bool ApplicationInstallerAdaptor::doesPackageNeedActivation(const QString &id)
-{
-    AM_AUTHENTICATE_DBUS(bool)
-    return ApplicationInstaller::instance()->doesPackageNeedActivation(id);
 }
 
 QVariantMap ApplicationInstallerAdaptor::getInstallationLocation(const QString &installationLocationId)
@@ -188,12 +166,6 @@ QVariantMap ApplicationInstallerAdaptor::installedApplicationExtraSignedMetaData
 {
     AM_AUTHENTICATE_DBUS(QVariantMap)
     return ApplicationInstaller::instance()->installedApplicationExtraSignedMetaData(id);
-}
-
-bool ApplicationInstallerAdaptor::isPackageActivated(const QString &id)
-{
-    AM_AUTHENTICATE_DBUS(bool)
-    return ApplicationInstaller::instance()->isPackageActivated(id);
 }
 
 QString ApplicationInstallerAdaptor::removePackage(const QString &id, bool keepDocuments)

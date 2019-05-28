@@ -1,7 +1,6 @@
 /****************************************************************************
 **
 ** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Luxoft Application Manager.
@@ -40,55 +39,16 @@
 **
 ****************************************************************************/
 
-#pragma once
+import QtQuick 2.11
+import QtApplicationManager.SystemUI 2.0
+import QtWayland.Compositor 1.1
 
-#include <QMutex>
-#include <QList>
-#include <QSet>
-#include <QScopedPointer>
-#include <QThread>
-
-#include <QtAppManInstaller/applicationinstaller.h>
-#include <QtAppManInstaller/sudo.h>
-#include <QtAppManCommon/global.h>
-
-QT_BEGIN_NAMESPACE_AM
-
-bool removeRecursiveHelper(const QString &path);
-
-class ApplicationInstallerPrivate
-{
-public:
-    bool developmentMode = false;
-    bool allowInstallationOfUnsignedPackages = false;
-    bool userIdSeparation = false;
-    uint minUserId = uint(-1);
-    uint maxUserId = uint(-1);
-    uint commonGroupId = uint(-1);
-
-    QScopedPointer<QDir> manifestDir;
-    QVector<InstallationLocation> installationLocations;
-    InstallationLocation invalidInstallationLocation;
-
-    QString error;
-
-    QString hardwareId;
-    QList<QByteArray> chainOfTrust;
-
-    QList<AsynchronousTask *> incomingTaskList;     // incoming queue
-    QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge
-    AsynchronousTask *activeTask = nullptr;         // currently active
-
-    QList<AsynchronousTask *> allTasks() const
-    {
-        QList<AsynchronousTask *> all = incomingTaskList;
-        if (!installationTaskList.isEmpty())
-            all += installationTaskList;
-        if (activeTask)
-            all += activeTask;
-        return all;
+QtObject {
+    property Component iviComp: Component {
+        IviApplication {}
     }
-};
 
-QT_END_NAMESPACE_AM
-// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.
+    function addExtension() {
+        return WindowManager.addExtension(iviComp);
+    }
+}

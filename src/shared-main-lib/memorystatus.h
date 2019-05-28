@@ -44,36 +44,38 @@
 
 #include <QtAppManCommon/global.h>
 
-#include <QtAppManManager/systemreader.h>
+#include <QtAppManMonitor/systemreader.h>
 
 #include <QObject>
 #include <QScopedPointer>
 
 QT_BEGIN_NAMESPACE_AM
 
-class GpuStatus : public QObject
+class MemoryStatus : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/GpuStatus 2.0")
-    Q_PROPERTY(qreal gpuLoad READ gpuLoad NOTIFY gpuLoadChanged)
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/MemoryStatus 2.0")
+    Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
+    Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryUsedChanged)
 
     Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
 
 public:
-    GpuStatus(QObject *parent = nullptr);
+    MemoryStatus(QObject *parent = nullptr);
 
-    qreal gpuLoad() const;
+    quint64 totalMemory() const;
+    quint64 memoryUsed() const;
 
     QStringList roleNames() const;
 
     Q_INVOKABLE void update();
 
 signals:
-    void gpuLoadChanged();
+    void memoryUsedChanged();
 
 private:
-    QScopedPointer<GpuReader> m_gpuReader;
-    qreal m_gpuLoad;
+    QScopedPointer<MemoryReader> m_memoryReader;
+    quint64 m_memoryUsed;
 };
 
 QT_END_NAMESPACE_AM

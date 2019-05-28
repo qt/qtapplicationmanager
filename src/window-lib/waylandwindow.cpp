@@ -97,6 +97,11 @@ WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
         // is gone (content state NoSurface).
         m_windowProperties = m_surface->compositor()->amExtension()->windowProperties(m_surface);
 
+        if (m_surface->isPopup()) {
+            connect(m_surface, &WindowSurface::popupGeometryChanged,
+                    this, &WaylandWindow::requestedPopupPositionChanged);
+        }
+
         enableOrDisablePing();
     }
 }
@@ -139,6 +144,16 @@ QVariant WaylandWindow::windowProperty(const QString &name) const
 QVariantMap WaylandWindow::windowProperties() const
 {
     return m_windowProperties;
+}
+
+bool WaylandWindow::isPopup() const
+{
+    return m_surface ? m_surface->isPopup() : false;
+}
+
+QPoint WaylandWindow::requestedPopupPosition() const
+{
+    return m_surface ? m_surface->popupGeometry().topLeft() : QPoint();
 }
 
 Window::ContentState WaylandWindow::contentState() const

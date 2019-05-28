@@ -26,6 +26,8 @@ multi-process:!headless {
 
     qtHaveModule(waylandcompositor) {
         QT *= waylandcompositor
+        # Qt < 5.14 is missing the sendPopupDone() method in QWaylandXdgShell
+        !versionAtLeast(QT_VERSION, 5.14.0):QT *= waylandcompositor-private
     }
     WAYLANDSERVERSOURCES += \
         ../wayland-extensions/qtam-extension.xml

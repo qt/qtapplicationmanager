@@ -45,9 +45,6 @@
 #include <QQuickWindow>
 #include <qqmlinfo.h>
 
-#include "waylandwindow.h"
-#include "inprocesswindow.h"
-
 /*!
     \qmltype FrameTimer
     \inqmlmodule QtApplicationManager
@@ -206,10 +203,7 @@ void FrameTimer::setWindow(QObject *value)
     if (m_window == value)
         return;
 
-#if defined(AM_MULTI_PROCESS)
-    disconnectFromWaylandSurface();
-#endif
-
+    disconnectFromAppManWindow();
     if (m_window)
         disconnect(m_window, nullptr, this, nullptr);
 
@@ -235,52 +229,12 @@ bool FrameTimer::connectToQuickWindow()
 
 bool FrameTimer::connectToAppManWindow()
 {
-    Window *appManWindow = qobject_cast<Window*>(m_window);
-    if (!appManWindow)
-        return false;
-
-    if (qobject_cast<InProcessWindow*>(appManWindow)) {
-        qmlWarning(this) << "It makes no sense to measure the FPS of a WindowObject in single-process mode."
-                            " FrameTimer won't operate with the given window.";
-        return true;
-    }
-
-#if defined(AM_MULTI_PROCESS)
-    WaylandWindow *waylandWindow = qobject_cast<WaylandWindow*>(m_window);
-    Q_ASSERT(waylandWindow);
-
-    connect(waylandWindow, &WaylandWindow::waylandSurfaceChanged,
-            this, &FrameTimer::connectToWaylandSurface, Qt::UniqueConnection);
-
-    connectToWaylandSurface();
-#endif
-
-    return true;
+    return false;
 }
 
-#if defined(AM_MULTI_PROCESS)
-void FrameTimer::connectToWaylandSurface()
-{
-    WaylandWindow *waylandWindow = qobject_cast<WaylandWindow*>(m_window);
-    Q_ASSERT(waylandWindow);
 
-    disconnectFromWaylandSurface();
-
-    m_waylandSurface = waylandWindow->waylandSurface();
-    if (m_waylandSurface)
-        connect(m_waylandSurface, &QWaylandQuickSurface::redraw, this, &FrameTimer::newFrame, Qt::UniqueConnection);
-}
-
-void FrameTimer::disconnectFromWaylandSurface()
-{
-    if (!m_waylandSurface)
-        return;
-
-    disconnect(m_waylandSurface, nullptr, this, nullptr);
-
-    m_waylandSurface = nullptr;
-}
-#endif
+void FrameTimer::disconnectFromAppManWindow()
+{ }
 
 /*!
     \qmlproperty list<string> FrameTimer::roleNames

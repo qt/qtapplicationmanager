@@ -8,4 +8,3 @@ DEFINES *= AM_TESTDATA_DIR=\\\"$$PWD/data/\\\"
 
 HEADERS += \
     $$PWD/error-checking.h \
-    $$PWD/sudo-cleanup.h \

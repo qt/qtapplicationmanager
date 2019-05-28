@@ -13,6 +13,7 @@ QT_FOR_PRIVATE *= \
     appman_plugininterfaces-private \
     appman_intent_server-private \
     appman_intent_client-private \
+    appman_monitor-private \
 
 CONFIG *= static internal_module
 
@@ -51,13 +52,10 @@ HEADERS += \
     applicationipcinterface.h \
     applicationipcinterface_p.h \
     applicationmanager_p.h \
-    systemreader.h \
     debugwrapper.h \
     amnamespace.h \
-    intentaminterface.h
-
-linux:HEADERS += \
-    sysfsreader.h \
+    intentaminterface.h \
+    processstatus.h \
 
 !headless:HEADERS += \
     qmlinprocessapplicationmanagerwindow.h \
@@ -81,12 +79,9 @@ SOURCES += \
     quicklauncher.cpp \
     applicationipcmanager.cpp \
     applicationipcinterface.cpp \
-    systemreader.cpp \
     debugwrapper.cpp \
-    intentaminterface.cpp
-
-linux:SOURCES += \
-    sysfsreader.cpp \
+    intentaminterface.cpp \
+    processstatus.cpp \
 
 !headless:SOURCES += \
     qmlinprocessapplicationmanagerwindow.cpp \

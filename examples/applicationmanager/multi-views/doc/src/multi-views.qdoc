@@ -29,31 +29,40 @@
 /*!
 
 \example applicationmanager/multi-views
-\title Multiple Views per Window System-UI Example
-\image multi-views.png
-\brief A WindowObject being rendered by multiple WindowItems.
+\brief Learn how to render a WindowObject using multiple WindowItems.
 \ingroup applicationmanager-examples
+\title Multiple Views per Window System UI Example
+\image multi-views.png
 
-This example shows that it is possible to assign the same WindowObject to multiple WindowItems (so that
-you get the same surface being rendered multiple times on the screen) and the difference between being
-a primary WindowItem or not. Its implementation builds on top of the \l{Animated Windows System-UI Example}.
+\section1 Introduction
 
-The button on the top left of the screen shows the icon (a cog) of the only built-in application of this
-example. Overlayed on the icon is the action taken when you click on it. "Start" will be shown when the
-application is not running, and clicking on it will call \l{ApplicationObject::start}{ApplicationObject.start}.
-Otherwise it will show "Stop" and the corresponding action will be executed when clicked.
+This example shows you how to assign the same WindowObject to multiple WindowItems, resulting in
+the same surface being rendered multiple times on screen. The example also illustrates the pros
+and cons of a primary window.
 
-Once the application is started, its sole window will be shown, decorated with a title bar and borders.
-The title bar displays "Primary" if \l{WindowItem::primary}{WindowItem.primary} is true or "Secondary"
-otherwise. Then comes the name of the application that created the window, which in this example is called
-simply "App1". On the far left of a window's title bar is a "-" button that destroys its WindowItem and on
-the far right a "+" button that creates a new WindowItem and assigns the same WindowObject to it. Finally,
-in case of secondary WindowItems, there will also be a "P" button on the right side of the title bar that
-sets the \l{WindowItem::primary}{primary} property of that WindowItem to true.
+\b Prerequisites: You're already familiar with the concepts and topics introduced in the
+   \l{Animated Windows System UI Example}.
 
-The background color of the window turns red when pressed. So when you click over the \l{WindowItem::primary}{primary}
-WindowItem you will see that the event reaches the application since it sets the background color of its
-window to red. But if you create one or more secondary WindowItems and click on them you will notice that
-these secondary windows won't flash red, as secondary WindowItems do not forward input events to the WindowObjects they
-render.
+The button on the top left of the screen shows an icon, a cog, for the only built-in application
+in this example. Overlayed on this icon is the action taken when you click on it. \uicontrol Start
+is shown when the application is not running, and clicking on it calls
+\l{ApplicationObject::start}{ApplicationObject.start}. Otherwise, the button shows \uicontrol Stop
+and the corresponding action is taken when clicked.
+
+When the application starts, its sole window is shown, decorated with a title bar and borders.
+The title bar displays \uicontrol Primary if \l{WindowItem::primary}{WindowItem.primary} is true;
+\uicontrol Secondary otherwise.
+
+Then, comes the name of the application that created the window, which in this case is \b App1.
+On the far left of a window's title bar is a minus button (-) that destroys its WindowItem. On the
+far right, there's a plus (+) button that creates a new WindowItem and assigns the same
+WindowObject to it. Finally, for secondary WindowItems, there's also a \uicontrol P button on the
+right of the title bar that sets the \l{WindowItem::primary}{primary} property of that WindowItem
+to true.
+
+When you click on a window, its background color turns red. So when you click on the
+\l{WindowItem::primary}{primary} WindowItem you'll see that the event reaches the application,
+since the window's background color becomes red. But if you create one or more secondary
+WindowItems and click on them, you will notice that these secondary windows don't flash red, as
+secondary WindowItems do not forward input events to the WindowObjects they render.
 */

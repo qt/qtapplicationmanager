@@ -64,11 +64,8 @@
 #  include <unistd.h>
 #  include <sys/socket.h>
 #  include <sys/errno.h>
-#  include <sys/mount.h>
 #  include <sys/ioctl.h>
 #  include <sys/stat.h>
-#  include <mntent.h>
-#  include <linux/loop.h>
 #  include <sys/prctl.h>
 #  include <linux/capability.h>
 
@@ -97,14 +94,6 @@ extern "C" int capget(cap_user_header_t header, const cap_user_data_t data);
 #    define AM_CAP_SIZE    _LINUX_CAPABILITY_U32S_1
 #  endif
 
-// Missing support for dynamic loop device management
-#  if !defined(LOOP_CTL_REMOVE)
-#    define LOOP_CTL_REMOVE 0x4C81
-#  endif
-#  if !defined(LOOP_CTL_GET_FREE)
-#    define LOOP_CTL_GET_FREE 0x4C82
-#  endif
-
 // Convenient way to ignore EINTR on any system call
 #  define EINTR_LOOP(cmd) __extension__ ({__typeof__(cmd) res = 0; do { res = cmd; } while (res == -1 && errno == EINTR); res; })
 
@@ -131,24 +120,18 @@ QT_BEGIN_NAMESPACE_AM
 void Sudo::forkServer(DropPrivileges dropPrivileges, QStringList *warnings)
 {
     bool canSudo = false;
-    int loopControlFd = -1;
 
 #if defined(Q_OS_LINUX)
     uid_t realUid = getuid();
     uid_t effectiveUid = geteuid();
     canSudo = (realUid == 0) || (effectiveUid == 0);
-
-    // check for new style loopback device control
-    loopControlFd = EINTR_LOOP(open("/dev/loop-control", O_RDWR));
-    if (warnings && canSudo && (loopControlFd < 0))
-        *warnings << qSL("Could not open /dev/loop-control, which is needed by the installer for SD-Card installations");
 #else
     Q_UNUSED(warnings)
     Q_UNUSED(dropPrivileges)
 #endif
 
     if (!canSudo) {
-        SudoServer::createInstance(-1, loopControlFd);
+        SudoServer::createInstance(-1);
         SudoClient::createInstance(-1, SudoServer::instance());
         if (warnings) {
             *warnings << qSL("For the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred)");
@@ -233,12 +216,11 @@ void Sudo::forkServer(DropPrivileges dropPrivileges, QStringList *warnings)
         if (!capSetOk)
             qCCritical(LogSystem) << "could not drop privileges in the SudoServer process -- continuing with full root privileges";
 
-        SudoServer::createInstance(socketFds[0], loopControlFd);
+        SudoServer::createInstance(socketFds[0]);
         ProcessTitle::setTitle("%s", "sudo helper");
         SudoServer::instance()->run();
     }
     // parent
-    close(loopControlFd);
 
     // reset umask
     if (realUmask)
@@ -342,31 +324,6 @@ template <typename R, typename C, typename ...Ps> R returnType(R (C::*)(Ps...));
     result >> r; \
     return r
 
-QString SudoClient::attachLoopback(const QString &imagePath, bool readonly)
-{
-    CALL(attachLoopback, imagePath << readonly);
-}
-
-bool SudoClient::detachLoopback(const QString &loopDev)
-{
-    CALL(detachLoopback, loopDev);
-}
-
-bool SudoClient::mount(const QString &device, const QString &mountPoint, bool readonly, const QString &fstype)
-{
-    CALL(mount, device << mountPoint << readonly << fstype);
-}
-
-bool SudoClient::unmount(const QString &mountPoint, bool force)
-{
-    CALL(unmount, mountPoint << force);
-}
-
-bool SudoClient::mkfs(const QString &device, const QString &fstype, const QStringList &options)
-{
-    CALL(mkfs, device << fstype << options);
-}
-
 bool SudoClient::removeRecursive(const QString &fileOrDir)
 {
     CALL(removeRecursive, fileOrDir);
@@ -418,15 +375,14 @@ SudoServer *SudoServer::instance()
     return s_instance;
 }
 
-SudoServer::SudoServer(int socketFd, int loopControlFd)
+SudoServer::SudoServer(int socketFd)
     : m_socket(socketFd)
-    , m_loopControl(loopControlFd)
 { }
 
-SudoServer *SudoServer::createInstance(int socketFd, int loopControlFd)
+SudoServer *SudoServer::createInstance(int socketFd)
 {
     if (!s_instance)
-        s_instance = new SudoServer(socketFd, loopControlFd);
+        s_instance = new SudoServer(socketFd);
     return s_instance;
 }
 
@@ -446,7 +402,6 @@ void SudoServer::run()
     }
 #else
     Q_UNUSED(m_socket)
-    Q_UNUSED(m_loopControl)
     Q_ASSERT(false);
     exit(0);
 #endif
@@ -463,34 +418,7 @@ QByteArray SudoServer::receive(const QByteArray &msg)
     QDataStream result(&reply, QIODevice::WriteOnly);
     m_errorString.clear();
 
-    if (function == "attachLoopback") {
-        QString imagePath;
-        bool readonly;
-        params >> imagePath >> readonly;
-        result << attachLoopback(imagePath, readonly);
-    } else if (function == "detachLoopback") {
-        QString loopDev;
-        params >> loopDev;
-        result << detachLoopback(loopDev);
-    } else if (function == QByteArray("mount")) {
-        QString device;
-        QString mountPoint;
-        bool readonly;
-        QString fstype;
-        params >> device >> mountPoint >> readonly >> fstype;
-        result << mount(device, mountPoint, readonly, fstype);
-    } else if (function == "unmount") {
-        QString mountPoint;
-        bool force;
-        params >> mountPoint >> force;
-        result << unmount(mountPoint, force);
-    } else if (function == "mkfs") {
-        QString device;
-        QString fstype;
-        QStringList options;
-        params >> device >> fstype >> options;
-        result << mkfs(device, fstype, options);
-    } else if (function == "removeRecursive") {
+    if (function == "removeRecursive") {
         QString fileOrDir;
         params >> fileOrDir;
         result << removeRecursive(fileOrDir);
@@ -508,262 +436,6 @@ QByteArray SudoServer::receive(const QByteArray &msg)
         m_errorString = QString::fromLatin1("unknown function '%1' called in SudoServer").arg(qL1S(function));
     }
     return reply;
-}
-
-QString SudoServer::attachLoopback(const QString &imagePath, bool readonly)
-{
-    QString loopDev;
-#if defined(Q_OS_LINUX)
-    int loopFd = -1;
-    int imageFd = -1;
-
-    try {
-        if (!QFile::exists(imagePath))
-            throw Exception(Error::IO, "image %1 does not exist").arg(imagePath);
-
-        // the kernel API has a race condition between getting the next
-        // free loop device number and actually claiming it.
-        for (int tries = 0; tries < 100; ++tries) {
-            int loopId = EINTR_LOOP(ioctl(m_loopControl, LOOP_CTL_GET_FREE));
-
-            if (loopId < 0)
-                throw Exception(Error::IO, "the system could not allocate more loop devices");
-
-            loopDev = qSL("/dev/loop%1").arg(loopId);
-            loopFd = EINTR_LOOP(open(loopDev.toLocal8Bit(), readonly ? O_RDONLY : O_RDWR));
-
-            if (loopFd < 0) {
-                if (errno == EACCES)
-                    continue; // race condition - retry
-                else
-                    throw Exception(Error::IO, "could not open loop device %1: %2").arg(loopDev).arg(QString::fromLocal8Bit(strerror(errno)));
-            }
-
-            struct loop_info64 loopInfo;
-
-            if (EINTR_LOOP(ioctl(loopFd, LOOP_GET_STATUS64, &loopInfo)) == 0) {
-                memset(&loopInfo, 0, sizeof(loopInfo));
-                EINTR_LOOP(close(loopFd));
-                continue; // race condition - retry
-            } else if (errno == ENXIO) {
-                break; // found a free one
-            } else {
-                throw Exception(Error::IO, "could not call LOOP_GET_STATUS64 on loop device: %1")
-                        .arg(QString::fromLocal8Bit(strerror(errno)));
-            }
-        }
-
-        if (loopFd < 0)
-            throw Exception(Error::IO, "could not find a free loop device");
-
-        imageFd = EINTR_LOOP(open(imagePath.toLocal8Bit(), readonly ? O_RDONLY : O_RDWR));
-        if (imageFd < 0)
-            throw Exception(Error::IO, "could not open image file %1: %2").arg(imagePath).arg(QString::fromLocal8Bit(strerror(errno)));
-
-        if (EINTR_LOOP(ioctl(loopFd, LOOP_SET_FD, imageFd)) < 0)
-            throw Exception(Error::IO, "could not attach the image %1 to the loop device %2: %3").arg(imagePath).arg(loopDev).arg(QString::fromLocal8Bit(strerror(errno)));
-
-    } catch (const Exception &e) {
-        m_errorString = e.errorString();
-        loopDev.clear();
-    }
-
-    if (imageFd >= 0)
-        EINTR_LOOP(close(imageFd));
-    if (loopFd >= 0)
-        EINTR_LOOP(close(loopFd));
-#else
-    Q_UNUSED(imagePath)
-    Q_UNUSED(readonly)
-#endif // Q_OS_LINUX
-
-    return loopDev;
-}
-
-bool SudoServer::detachLoopback(const QString &loopDev)
-{
-    bool result = false;
-#if defined(Q_OS_LINUX)
-    int loopFd = -1;
-    int loopId = -1;
-
-    try {
-        if (!loopDev.startsWith(qL1S("/dev/loop"))
-                || [&loopId,&loopDev]{ bool ok; loopId = loopDev.midRef(9).toInt(&ok); return !ok; }()
-                || (loopId < 0)) {
-            throw Exception(Error::IO, "invalid loop device name: %1").arg(loopDev);
-        }
-
-        if ((loopFd = EINTR_LOOP(open(loopDev.toLocal8Bit(), O_RDWR))) < 0)
-            throw Exception(Error::IO, "could not open loop device %1: %2").arg(loopDev).arg(QString::fromLocal8Bit(strerror(errno)));
-
-        // we are working with very small delays in the micro-second range here, so a linear factor
-        // to support valgrind would have to be very large and probably conflict with usage elsewhere
-        // in the codebase, where the ranges are normally in the seconds.
-        static const int timeout = timeoutFactor() * timeoutFactor() * 50;
-
-        int clearErrno = 0;
-        for (int tries = 0; tries < 100; ++tries) {
-            if (EINTR_LOOP(ioctl(loopFd, LOOP_CLR_FD, 0)) == 0)
-                break;
-
-            clearErrno = errno;
-            usleep(static_cast<useconds_t>(timeout)); // might still be busy after lazy umount
-        }
-
-        EINTR_LOOP(close(loopFd));
-
-#if !defined(AM_SYSTEMD_WORKAROUND)
-        // be nice and tell the kernel to clean up
-        EINTR_LOOP(ioctl(m_loopControl, LOOP_CTL_REMOVE, loopId));
-#endif
-        if (clearErrno)
-            throw Exception(Error::IO, "could not clear loop device %1: %2").arg(loopDev).arg(QString::fromLocal8Bit(strerror(clearErrno)));
-
-        result = true;
-    } catch (const Exception &e) {
-        m_errorString = e.errorString();
-    }
-
-    if (loopFd >= 0)
-        EINTR_LOOP(close(loopFd));
-
-#else
-    Q_UNUSED(loopDev)
-#endif // Q_OS_LINUX
-    return result;
-}
-
-
-bool SudoServer::mount(const QString &device, const QString &mountPoint, bool readonly, const QString &fstype)
-{
-#if defined(Q_OS_LINUX)
-    unsigned long options = MS_MGC_VAL | (readonly ? MS_RDONLY : 0);
-
-    try {
-        if (!QFile::exists(device))
-            throw Exception(Error::IO, "device %1 does not exist").arg(device);
-        if (!QDir(mountPoint).exists())
-            throw Exception(Error::IO, "mount point %1 does not exist").arg(mountPoint);
-
-        if (::mount(device.toLocal8Bit(),
-                    mountPoint.toLocal8Bit(),
-                    fstype.toLocal8Bit(),
-                    options, nullptr) < 0) {
-            throw Exception(Error::IO, "could not mount device %1 to %2: %3").arg(device).arg(mountPoint).arg(QString::fromLocal8Bit(strerror(errno)));
-        }
-        return true;
-
-    } catch (const Exception &e) {
-        m_errorString = e.errorString();
-    }
-#else
-    Q_UNUSED(device)
-    Q_UNUSED(mountPoint)
-    Q_UNUSED(readonly)
-    Q_UNUSED(fstype)
-#endif // Q_OS_LINUX
-    return false;
-}
-
-bool SudoServer::unmount(const QString &mountPoint, bool force)
-{
-#if defined(Q_OS_LINUX)
-    int options = force ? MNT_FORCE | MNT_DETACH : 0;
-
-    try {
-        if (!QDir(mountPoint).exists() && !force)
-            throw Exception(Error::IO, "mount point %1 does not exist").arg(mountPoint);
-
-        if (umount2(mountPoint.toLocal8Bit(), options) < 0)
-            throw Exception(Error::IO, "could not un-mount %1: %2").arg(mountPoint).arg(QString::fromLocal8Bit(strerror(errno)));
-
-        return true;
-    } catch (const Exception &e) {
-        m_errorString = e.errorString();
-    }
-#else
-    Q_UNUSED(mountPoint)
-    Q_UNUSED(force)
-#endif // Q_OS_LINUX
-    return false;
-}
-
-
-bool SudoServer::mkfs(const QString &device, const QString &fstype, const QStringList &options)
-{
-#if defined(Q_OS_LINUX)
-    static QString mkfsBaseCmd(qSL("/sbin/mkfs."));
-    static QString tune2fsCmd(qSL("/sbin/tune2fs"));
-
-    bool isExt2 = fstype.startsWith(qL1S("ext")) && (fstype.midRef(3).toInt() >= 2);
-
-    try {
-        if (!QFile::exists(device))
-            throw Exception("device %1 does not exist").arg(device);
-
-        QString mkfsCmd = mkfsBaseCmd + fstype;
-
-        if (!QFileInfo(mkfsCmd).isExecutable())
-            throw Exception("the binary %1 is not available and executable").arg(mkfsCmd);
-
-        QStringList mkfsOptions = options;
-
-        if (isExt2) {
-            if (!QFileInfo(tune2fsCmd).isExecutable())
-                throw Exception("the binary %1 is not available and executable").arg(tune2fsCmd);
-
-            // defaults to create a loop mounted app image
-            if (options.isEmpty()) {
-                mkfsOptions = QStringList() << qSL("-F")
-                                            << qSL("-i") << qSL("4096")
-                                            << qSL("-I") << qSL("128")
-                                            << qSL("-b") << qSL("1024")
-                                            << qSL("-m") << qSL("0")
-                                            << qSL("-E") << qSL("root_owner=%1:%2").arg(getuid()).arg(getgid())
-                                            << qSL("-O") << qSL("sparse_super,^resize_inode");
-            }
-        }
-
-        mkfsOptions << device;
-
-        static const int timeout = 20000 * timeoutFactor();
-
-        QProcess p;
-        p.setProgram(mkfsCmd);
-        p.setArguments(mkfsOptions);
-
-        p.start();
-        p.waitForFinished(timeout);
-        if (p.exitCode() != 0) {
-            throw Exception("could not create an %1 filesystem on %2: %3")
-                .arg(fstype).arg(device).arg(QString::fromLocal8Bit(p.readAllStandardError()));
-        }
-
-        if (isExt2) {
-            // disable file-system checks on mount
-            p.setProgram(tune2fsCmd);
-            p.setArguments(QStringList() << qSL("-c") << qSL("0")
-                                         << qSL("-i") << qSL("0")
-                                         << device);
-            p.start();
-            p.waitForFinished(timeout);
-            if (p.exitCode() != 0) {
-                throw Exception("could not disable ext2 filesystem checks on %2: %3")
-                        .arg(device).arg(QString::fromLocal8Bit(p.readAllStandardError()));
-            }
-        }
-        return true;
-
-    } catch (const Exception &e) {
-        m_errorString = e.errorString();
-    }
-#else
-    Q_UNUSED(device)
-    Q_UNUSED(fstype)
-    Q_UNUSED(options)
-#endif // Q_OS_LINUX
-    return false;
 }
 
 bool SudoServer::removeRecursive(const QString &fileOrDir)

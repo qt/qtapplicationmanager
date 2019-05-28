@@ -40,69 +40,82 @@
 **
 ****************************************************************************/
 
-#pragma once
+#include "windowframetimer.h"
 
-#include <QtAppManWindow/window.h>
+#include <qqmlinfo.h>
 
-#if defined(AM_MULTI_PROCESS)
+#include "waylandwindow.h"
+#include "inprocesswindow.h"
+#include "qmlinprocessapplicationmanagerwindow.h"
 
-#include <QWaylandQuickSurface>
-#include <QTimer>
 
 QT_BEGIN_NAMESPACE_AM
 
-class WindowSurface;
+WindowFrameTimer::WindowFrameTimer(QObject *parent)
+    : FrameTimer(parent)
+{ }
 
-class WaylandWindow : public Window
+bool WindowFrameTimer::connectToAppManWindow()
 {
-    Q_OBJECT
-    Q_PROPERTY(QWaylandQuickSurface* waylandSurface READ waylandSurface NOTIFY waylandSurfaceChanged)
+    if (qobject_cast<QmlInProcessApplicationManagerWindow *>(m_window.data())) {
+        qmlWarning(this) << "It makes no sense to measure the FPS of an application's window in single-process mode."
+                            " FrameTimer won't operate with the given window.";
+        return true;
+    }
 
-public:
-    WaylandWindow(AbstractApplication *app, WindowSurface *surface);
+    Window *appManWindow = qobject_cast<Window*>(m_window.data());
+    if (!appManWindow)
+        return false;
 
-    bool isInProcess() const override { return false; }
+    if (qobject_cast<InProcessWindow*>(appManWindow)) {
+        qmlWarning(this) << "It makes no sense to measure the FPS of a WindowObject in single-process mode."
+                            " FrameTimer won't operate with the given window.";
+        return true;
+    }
 
-    bool isPopup() const override;
-    QPoint requestedPopupPosition() const override;
+#if defined(AM_MULTI_PROCESS)
+    WaylandWindow *waylandWindow = qobject_cast<WaylandWindow*>(m_window);
+    Q_ASSERT(waylandWindow);
 
-    bool setWindowProperty(const QString &name, const QVariant &value) override;
-    QVariant windowProperty(const QString &name) const override;
-    QVariantMap windowProperties() const override;
+    connect(waylandWindow, &WaylandWindow::waylandSurfaceChanged,
+            this, &WindowFrameTimer::connectToWaylandSurface, Qt::UniqueConnection);
 
-    ContentState contentState() const override;
+    connectToWaylandSurface();
+#endif
 
-    void close() override;
+    return true;
+}
 
-    QSize size() const override;
-    void resize(const QSize &size) override;
+void WindowFrameTimer::disconnectFromAppManWindow()
+{
+#if defined(AM_MULTI_PROCESS)
+    disconnectFromWaylandSurface();
+#endif
+}
 
-    WindowSurface *surface() const { return m_surface; }
+#if defined(AM_MULTI_PROCESS)
+void WindowFrameTimer::connectToWaylandSurface()
+{
+    WaylandWindow *waylandWindow = qobject_cast<WaylandWindow*>(m_window);
+    Q_ASSERT(waylandWindow);
 
-    QWaylandQuickSurface* waylandSurface() const;
+    disconnectFromWaylandSurface();
 
-    static bool m_watchdogEnabled;
+    m_waylandSurface = waylandWindow->waylandSurface();
+    if (m_waylandSurface)
+        connect(m_waylandSurface, &QWaylandQuickSurface::redraw, this, &WindowFrameTimer::newFrame, Qt::UniqueConnection);
+}
 
-signals:
-    void frameUpdated();
-    void waylandSurfaceChanged();
+void WindowFrameTimer::disconnectFromWaylandSurface()
+{
+    if (!m_waylandSurface)
+        return;
 
-private slots:
-    void pongReceived();
-    void pongTimeout();
-    void pingTimeout();
-    void onContentStateChanged();
+    disconnect(m_waylandSurface, nullptr, this, nullptr);
 
-private:
-    QString applicationId() const;
+    m_waylandSurface = nullptr;
+}
+#endif
 
-    void enableOrDisablePing();
-    QTimer *m_pingTimer;
-    QTimer *m_pongTimer;
-    WindowSurface *m_surface;
-    QVariantMap m_windowProperties;
-};
 
 QT_END_NAMESPACE_AM
-
-#endif // AM_MULTI_PROCESS

@@ -80,7 +80,7 @@ public:
 
     ~ApplicationInstaller();
     static ApplicationInstaller *createInstance(const QVector<InstallationLocation> &installationLocations,
-                                                const QString &manifestDirPath, const QString &imageMountDirPath,
+                                                const QString &manifestDirPath,
                                                 const QString &hardwareId, QString *error);
     static ApplicationInstaller *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
@@ -99,10 +99,6 @@ public:
     // Ownership of QDir* stays with ApplicationInstaller
     // Never returns null
     const QDir *manifestDirectory() const;
-
-    // Ownership of QDir* stays with ApplicationInstaller
-    // Will return null if app img mounting is disabled.
-    const QDir *applicationImageMountDirectory() const;
 
     bool setDBusPolicy(const QVariantMap &yamlFragment);
     void setCACertificates(const QList<QByteArray> &chainOfTrust);
@@ -139,13 +135,6 @@ public:
     Q_SCRIPTABLE QVariantMap installedApplicationExtraMetaData(const QString &id) const;
     Q_SCRIPTABLE QVariantMap installedApplicationExtraSignedMetaData(const QString &id) const;
 
-    // these 4 functions are not really for installation/deinstallation, but
-    // for correctly (un)mounting a package that was installed on a removable medium.
-    Q_SCRIPTABLE bool doesPackageNeedActivation(const QString &id);
-    Q_SCRIPTABLE bool isPackageActivated(const QString &id);
-    Q_SCRIPTABLE bool activatePackage(const QString &id);
-    Q_SCRIPTABLE bool deactivatePackage(const QString &id);
-
 signals:
     Q_SCRIPTABLE void taskStarted(const QString &taskId);
     Q_SCRIPTABLE void taskProgressChanged(const QString &taskId, qreal progress);
@@ -160,9 +149,6 @@ signals:
                                                             const QVariantMap &packageExtraMetaData,
                                                             const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);
-
-    Q_SCRIPTABLE void packageActivated(const QString &id, bool successful);
-    Q_SCRIPTABLE void packageDeactivated(const QString &id, bool successful);
 
 private slots:
     void executeNextTask();
@@ -179,8 +165,7 @@ private:
 
 private:
     // Ownership of manifestDir and iamgeMountDir is passed to ApplicationInstaller
-    ApplicationInstaller(const QVector<InstallationLocation> &installationLocations, QDir *manifestDir,
-                         QDir *imageMountDir, const QString &hardwareId, QObject *parent);
+    ApplicationInstaller(const QVector<InstallationLocation> &installationLocations, QDir *manifestDir, const QString &hardwareId, QObject *parent);
     ApplicationInstaller(const ApplicationInstaller &);
     static ApplicationInstaller *s_instance;
 

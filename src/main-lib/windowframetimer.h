@@ -42,53 +42,33 @@
 
 #pragma once
 
-#include <QMutex>
-#include <QList>
-#include <QSet>
-#include <QScopedPointer>
-#include <QThread>
-
-#include <QtAppManInstaller/applicationinstaller.h>
-#include <QtAppManInstaller/sudo.h>
+#include <QtAppManSharedMain/frametimer.h>
 #include <QtAppManCommon/global.h>
+
+#if defined(AM_MULTI_PROCESS)
+#  include <QtWaylandCompositor/QWaylandQuickSurface>
+#endif
 
 QT_BEGIN_NAMESPACE_AM
 
-bool removeRecursiveHelper(const QString &path);
-
-class ApplicationInstallerPrivate
+class WindowFrameTimer : public FrameTimer
 {
+    Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/FrameTimer 2.0")
+
 public:
-    bool developmentMode = false;
-    bool allowInstallationOfUnsignedPackages = false;
-    bool userIdSeparation = false;
-    uint minUserId = uint(-1);
-    uint maxUserId = uint(-1);
-    uint commonGroupId = uint(-1);
+    WindowFrameTimer(QObject *parent = nullptr);
 
-    QScopedPointer<QDir> manifestDir;
-    QVector<InstallationLocation> installationLocations;
-    InstallationLocation invalidInstallationLocation;
+protected:
+    bool connectToAppManWindow() override;
+    void disconnectFromAppManWindow() override;
 
-    QString error;
-
-    QString hardwareId;
-    QList<QByteArray> chainOfTrust;
-
-    QList<AsynchronousTask *> incomingTaskList;     // incoming queue
-    QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge
-    AsynchronousTask *activeTask = nullptr;         // currently active
-
-    QList<AsynchronousTask *> allTasks() const
-    {
-        QList<AsynchronousTask *> all = incomingTaskList;
-        if (!installationTaskList.isEmpty())
-            all += installationTaskList;
-        if (activeTask)
-            all += activeTask;
-        return all;
-    }
+private:
+#if defined(AM_MULTI_PROCESS)
+    void disconnectFromWaylandSurface();
+    void connectToWaylandSurface();
+    QPointer<QWaylandQuickSurface> m_waylandSurface;
+#endif
 };
 
 QT_END_NAMESPACE_AM
-// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

@@ -30,7 +30,6 @@
 
 \page qtapplicationmanager-index.html
 \keyword Qt Application Manager Reference Documentation
-\indexpage
 \title Qt Application Manager
 
 \section1 Overview
@@ -45,7 +44,7 @@ For a high-level overview, see \l{The Qt Application Manager}{Introduction to th
 \list
     \li \l{Installation}
     \li \l{Configuration}
-    \li \l{Troubleshooting}
+    \li \l{Troubleshoot}
     \omit
     \li \l{How to write a System-UI}
     \endomit

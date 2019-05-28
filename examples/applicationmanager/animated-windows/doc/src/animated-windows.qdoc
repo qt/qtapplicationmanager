@@ -41,7 +41,7 @@ This example shows you how to animate windows to appear and disappear, in a Syst
 \b Prerequisites: You're already familiar with the concepts and topics introduced in the
    \l {"Hello World!" System UI Example}.
 
-Unlike with the \l {"Hello World!" System UI Example} {Hello World} example, most Graphical User
+Unlike with the \l{"Hello World!" System UI Example}{Hello World} example, most Graphical User
 Interfaces (GUIs) avoid making sudden, abrupt, changes as they can confuse the user and are not
 visually pleasant. So, when the WindowManager creates a new WindowObject, we want to animate its
 appearance instead of simply having it pop up on the screen. Likewise, once a WindowObject loses
@@ -49,7 +49,7 @@ its surface - because the application closed this window or stopped altogether -
 from the WindowManager's model, we want to animate its disappearance instead of having it vanish
 immediately.
 
-If you're using a ready-made, advanced, layout such as ListView, you can assign Transitions to
+If you're using a ready-made, advanced layout such as ListView, you can assign Transitions to
 different actions like add, remove, displaced, and so on, and keep using WindowManager as your
 model. But in many situations this is not the case. Instead, you have to create your own model,
 such as a ListModel, so that a WindowObject only leaves the model when you have finished
@@ -73,7 +73,7 @@ finished.
 \skipto property bool safeToRemove
 \printuntil onSafeToRemoveChanged
 
-Then, we add a WindowObject to it, and have it displayed on screen as soon as WindowManager creates
+Then, we add a WindowObject to it, and display it on screen as soon as WindowManager creates
 a WindowObject.
 
 \skipto Connections

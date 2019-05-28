@@ -12,6 +12,7 @@ QT *= \
     appman_application-private \
     appman_plugininterfaces-private \
     appman_launcher-private \
+    appman_shared_main-private \
 
 HEADERS += \
     launcher-qml_p.h

@@ -51,13 +51,13 @@
 #include <QtAppManIntentClient/intentclient.h>
 #include <QtAppManIntentClient/intentclientrequest.h>
 #include <QtAppManIntentClient/intenthandler.h>
-#include <QtAppManMonitor/cpustatus.h>
-#include <QtAppManMonitor/gpustatus.h>
-#include <QtAppManMonitor/memorystatus.h>
-#include <QtAppManMonitor/iostatus.h>
-#include <QtAppManMonitor/processstatus.h>
-#include <QtAppManMonitor/frametimer.h>
-#include <QtAppManMonitor/monitormodel.h>
+#include <QtAppManSharedMain/cpustatus.h>
+#include <QtAppManSharedMain/gpustatus.h>
+#include <QtAppManSharedMain/memorystatus.h>
+#include <QtAppManSharedMain/iostatus.h>
+#include <QtAppManManager/processstatus.h>
+#include <QtAppManSharedMain/frametimer.h>
+#include <QtAppManSharedMain/monitormodel.h>
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/exception.h>
 

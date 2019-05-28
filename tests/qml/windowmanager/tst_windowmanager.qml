@@ -1,7 +1,6 @@
 /****************************************************************************
 **
 ** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Luxoft Application Manager.
@@ -40,43 +39,39 @@
 **
 ****************************************************************************/
 
-#pragma once
+import QtQuick 2.11
+import QtTest 1.0
+import QtApplicationManager.SystemUI 2.0
 
-#include <QtAppManCommon/global.h>
+TestCase {
+    id: testCase
+    when: windowShown
+    name: "WindowManager"
+    visible: true
 
-#include <QtAppManManager/systemreader.h>
+    Component {
+        id: textComp
+        Text {}
+    }
 
-#include <QObject>
-#include <QScopedPointer>
+    SignalSpy {
+        id: windowManagerCompositorReadyChangedSpy
+        target: ApplicationManager
+        signalName: "windowManagerCompositorReadyChanged"
+    }
 
-QT_BEGIN_NAMESPACE_AM
-
-class MemoryStatus : public QObject
-{
-    Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/MemoryStatus 2.0")
-    Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
-    Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryUsedChanged)
-
-    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
-
-public:
-    MemoryStatus(QObject *parent = nullptr);
-
-    quint64 totalMemory() const;
-    quint64 memoryUsed() const;
-
-    QStringList roleNames() const;
-
-    Q_INVOKABLE void update();
-
-signals:
-    void memoryUsedChanged();
-
-private:
-    QScopedPointer<MemoryReader> m_memoryReader;
-    quint64 m_memoryUsed;
-};
-
-QT_END_NAMESPACE_AM
-
+    function test_addExtension() {
+        if (!ApplicationManager.singleProcess) {
+            if (!ApplicationManager.windowManagerCompositorReady) {
+                var extnull = Qt.createComponent("IviApplicationExtension.qml").createObject(null).addExtension();
+                compare(extnull, null);
+                windowManagerCompositorReadyChangedSpy.wait(2000);
+                verify(ApplicationManager.windowManagerCompositorReady);
+            }
+            var extension = Qt.createComponent("IviApplicationExtension.qml").createObject(null).addExtension();
+            verify(extension);
+            verify(extension.hasOwnProperty('iviSurfaceCreated'));
+        }
+        compare(WindowManager.addExtension(textComp), null);
+    }
+}

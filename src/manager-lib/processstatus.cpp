@@ -160,8 +160,12 @@ void ProcessStatus::update()
 /*!
     \qmlproperty string ProcessStatus::applicationId
 
-    \l{ApplicationObject::id}{Id} of the \l{ApplicationObject}{application} whose process is to
-    be monitored.
+    Holds the \l{ApplicationObject::id}{ID} of the \l{ApplicationObject}{application} whose process
+    is to be monitored. This ID must be one that is known to the application-manager
+    (\l{ApplicationManager::applicationIds}{applicationIds()} provides a list of valid IDs). There
+    is one exception: if you want to monitor the System UI's process, set the ID to an empty
+    string. In single-process mode, the System UI process is the only valid process, since all
+    applications run within this process.
 
     \sa ApplicationObject
 */

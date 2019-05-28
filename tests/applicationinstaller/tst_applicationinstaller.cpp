@@ -43,13 +43,6 @@
 #include "qmlinprocessruntime.h"
 #include "package.h"
 
-#ifdef Q_OS_LINUX
-#  include <signal.h>
-#  include <linux/loop.h>
-#  include <sys/ioctl.h>
-#endif
-
-#include "../sudo-cleanup.h"
 #include "../error-checking.h"
 
 QT_USE_NAMESPACE_AM
@@ -117,12 +110,8 @@ private slots:
 
     void installationLocations();
 
-    void packageActivation();
-
     void packageInstallation_data();
     void packageInstallation();
-
-    void removeAppOnMissingSDCard();
 
     void simulateErrorConditions_data();
     void simulateErrorConditions();
@@ -140,17 +129,11 @@ private slots:
 
 public:
     enum PathLocation {
-        TemporaryMount = 0,
-        Manifests,
-        ImageMounts,
+        Manifests = 0,
         Internal0,
         Documents0,
         Internal1,
         Documents1,
-        SDCard0,
-        SDCard0Images,
-        SDCard1,
-        SDCard1Images,
 
         PathLocationCount
     };
@@ -166,16 +149,10 @@ private:
         QString base;
         switch (pathLocation) {
         case Manifests:      base = "manifests"; break;
-        case TemporaryMount: base = "mnt"; break;
-        case ImageMounts:    base = "image-mounts"; break;
         case Internal0:      base = "internal-0"; break;
         case Documents0:     base = "documents-0"; break;
         case Internal1:      base = "internal-1"; break;
         case Documents1:     base = "documents-1"; break;
-        case SDCard0:        base = "sdcard0"; break;
-        case SDCard0Images:  base = "sdcard0/" + m_hardwareId; break;
-        case SDCard1:        base = "sdcard1"; break;
-        case SDCard1Images:  base = "sdcard1/" + m_hardwareId; break;
         default: break;
         }
 
@@ -204,41 +181,6 @@ private:
         m_progressSpy->clear();
         m_finishedSpy->clear();
         m_failedSpy->clear();
-        m_packageActivatedSpy->clear();
-        m_packageDeactivatedSpy->clear();
-    }
-
-    bool checkPackageActivation(const QString &appId, int waitmsec = 0)
-    {
-        return internalCheckActivation(m_packageActivatedSpy, appId, waitmsec);
-    }
-
-    bool checkPackageDeactivation(const QString &appId, int waitmsec = 0)
-    {
-        return internalCheckActivation(m_packageDeactivatedSpy, appId, waitmsec);
-    }
-
-    bool internalCheckActivation(QSignalSpy *spy, const QString &appId, int waitmsec)
-    {
-        auto check = [spy, appId]() -> bool
-        {
-            for (int i = 0; i < spy->count(); ++i) {
-                const QVariantList &paramList = spy->at(i);
-                if ((paramList.size() == 2) && (paramList.at(0).toString() == appId))
-                    return paramList.at(1).toBool();
-            }
-            return false;
-        };
-
-        forever {
-            bool result = check();
-            if (!result && waitmsec) {
-                QTest::qWait(100);
-                waitmsec -= qMin(100, waitmsec);
-            } else {
-                return result;
-            }
-        }
     }
 
     static bool isDataTag(const char *tag)
@@ -252,7 +194,6 @@ private:
 
     QTemporaryDir m_workDir;
     QString m_hardwareId;
-    QString m_loopbackForSDCard[2];
     QVector<InstallationLocation> m_installationLocations;
     ApplicationInstaller *m_ai = nullptr;
     QSignalSpy *m_startedSpy = nullptr;
@@ -261,8 +202,6 @@ private:
     QSignalSpy *m_progressSpy = nullptr;
     QSignalSpy *m_finishedSpy = nullptr;
     QSignalSpy *m_failedSpy = nullptr;
-    QSignalSpy *m_packageActivatedSpy = nullptr;
-    QSignalSpy *m_packageDeactivatedSpy = nullptr;
 };
 
 
@@ -273,15 +212,12 @@ tst_ApplicationInstaller::tst_ApplicationInstaller(QObject *parent)
 tst_ApplicationInstaller::~tst_ApplicationInstaller()
 {
     if (m_workDir.isValid()) {
-        detachLoopbacksAndUnmount(m_sudo, m_workDir.path());
         if (m_sudo)
             m_sudo->removeRecursive(m_workDir.path());
         else
             recursiveOperation(m_workDir.path(), safeRemove);
     }
 
-    delete m_packageDeactivatedSpy;
-    delete m_packageActivatedSpy;
     delete m_failedSpy;
     delete m_finishedSpy;
     delete m_progressSpy;
@@ -324,31 +260,6 @@ void tst_ApplicationInstaller::initTestCase()
     for (int i = 0; i < PathLocationCount; ++i)
         QVERIFY(QDir().mkdir(pathTo(PathLocation(i))));
 
-    if (!m_fakeSudo) {
-        // we have support for loopback devices, so we create two FAT images that simulate SDCards
-        // (a lambda would have been perfect here, but QVERIFY/QCOMPARE do not work inside lambdas).
-
-        for (int i = 0; i < 2; ++i) {
-            QFile f(pathTo(QString::fromLatin1("sdcard-image-%1").arg(i)));
-            QVERIFY2(f.open(QFile::WriteOnly | QFile::Truncate), qPrintable(f.errorString()));
-            QVERIFY2(f.resize(3*1024*1024), qPrintable(f.errorString()));
-            f.close();
-            QCOMPARE(f.size(), 3*1024*1024);
-
-            m_loopbackForSDCard[i] = m_sudo->attachLoopback(f.fileName());
-            QVERIFY2(!m_loopbackForSDCard[i].isEmpty(), qPrintable(m_sudo->lastError()));
-            QVERIFY2(m_sudo->mkfs(m_loopbackForSDCard[i], "vfat"), qPrintable(m_sudo->lastError()));
-            QVERIFY2(m_sudo->mount(m_loopbackForSDCard[i], pathTo(i == 0 ? SDCard0 : SDCard1), false, "vfat"), qPrintable(m_sudo->lastError()));
-
-            // Wait for the mount to be completed. Usually this is not needed, but sometimes the
-            // mount takes longer and then the mkdir command will fail afterwards.
-            QTest::qSleep(200);
-
-            // those paths have been hidden due to the mount, so recreate them
-            QVERIFY(QDir().mkdir(pathTo(i == 0 ? SDCard0Images : SDCard1Images)));
-        }
-    }
-
     // define some installation locations for testing
 
     QVariantList iloc = QVariantList {
@@ -364,33 +275,15 @@ void tst_ApplicationInstaller::initTestCase()
                 { "documentPath", pathTo(Documents1) },
             }
     };
-    if (!m_fakeSudo) {
-        iloc += QVariantList {
-                QVariantMap {
-                    { "id", "removable-0" },
-                    { "mountPoint", pathTo(SDCard0) },
-                    { "installationPath", pathTo(SDCard0, "@HARDWARE-ID@") },
-                    { "documentPath", pathTo(Documents0) },
-                },
-                QVariantMap {
-                    { "id", "removable-1" },
-                    { "mountPoint", pathTo(SDCard1) },
-                    { "installationPath", pathTo(SDCard1, "@HARDWARE-ID@") },
-                    { "documentPath", pathTo(Documents1) },
-                }
-        };
-    }
 
     m_installationLocations = InstallationLocation::parseInstallationLocations(iloc, m_hardwareId);
 
-    QCOMPARE(m_installationLocations.size(), m_fakeSudo ? 2 : 4);
-    if (!m_fakeSudo)
-        QCOMPARE(m_installationLocations.at(2).installationPath(), pathTo(SDCard0, m_hardwareId));
+    QCOMPARE(m_installationLocations.size(), 2);
 
     // finally, instantiate the ApplicationInstaller and a bunch of signal-spies for its signals
 
     QString installerError;
-    m_ai = ApplicationInstaller::createInstance(m_installationLocations, pathTo(Manifests), pathTo(ImageMounts), m_hardwareId, &installerError);
+    m_ai = ApplicationInstaller::createInstance(m_installationLocations, pathTo(Manifests), m_hardwareId, &installerError);
     QVERIFY2(m_ai, qPrintable(installerError));
 
     m_startedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskStarted);
@@ -399,8 +292,6 @@ void tst_ApplicationInstaller::initTestCase()
     m_progressSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskProgressChanged);
     m_finishedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskFinished);
     m_failedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::taskFailed);
-    m_packageActivatedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::packageActivated);
-    m_packageDeactivatedSpy = new QSignalSpy(m_ai, &ApplicationInstaller::packageDeactivated);
 
     // crypto stuff - we need to load the root CA and developer CA certificates
 
@@ -428,10 +319,6 @@ void tst_ApplicationInstaller::initTestCase()
 
 void tst_ApplicationInstaller::cleanupTestCase()
 {
-    if (m_ai && m_ai->isPackageActivated("com.pelagicore.test")) {
-        QVERIFY(m_ai->deactivatePackage("com.pelagicore.test"));
-        QTRY_VERIFY(checkPackageDeactivation("com.pelagicore.test"));
-    }
     // the real cleanup happens in ~tst_ApplicationInstaller, since we also need
     // to call this cleanup from the crash handler
 }
@@ -461,22 +348,13 @@ void tst_ApplicationInstaller::cleanup()
 
 void tst_ApplicationInstaller::installationLocations()
 {
-    QCOMPARE(InstallationLocation().type(), InstallationLocation::Invalid);
-
-    for (int i = InstallationLocation::Removable; i >= InstallationLocation::Invalid; --i) {
-        QString s = InstallationLocation::typeToString((InstallationLocation::Type) i);
-        QVERIFY(!s.isEmpty());
-        QVERIFY(InstallationLocation::typeFromString(s) == i);
-    }
+    QVERIFY(!InstallationLocation().isValid());
 
     const QVector<InstallationLocation> loclist = m_ai->installationLocations();
 
     QCOMPARE(loclist.size(), m_installationLocations.size());
-    for (const InstallationLocation &loc : loclist) {
+    for (const InstallationLocation &loc : loclist)
         QVERIFY(m_installationLocations.contains(loc));
-
-        QCOMPARE(loc.id(), InstallationLocation::typeToString(loc.type()) + "-" + QString::number(loc.index()));
-    }
 
     QVector<InstallationLocation> locationList = InstallationLocation::parseInstallationLocations(QVariantList {
         QVariantMap {
@@ -492,88 +370,14 @@ void tst_ApplicationInstaller::installationLocations()
     QVERIFY(!map.isEmpty());
 
     QCOMPARE(map.value("id").toString(), tmp.id());
-    QCOMPARE(map.value("type").toString(), InstallationLocation::typeToString(tmp.type()));
     QCOMPARE(map.value("index").toInt(), tmp.index());
     QCOMPARE(map.value("installationPath").toString(), tmp.installationPath());
     QCOMPARE(map.value("documentPath").toString(), tmp.documentPath());
     QCOMPARE(map.value("isDefault").toBool(), tmp.isDefault());
-    QCOMPARE(map.value("isRemovable").toBool(), tmp.isRemovable());
-    QCOMPARE(map.value("isMounted").toBool(), tmp.isMounted());
     QVERIFY(map.value("installationDeviceSize").toLongLong() > 0);
     QVERIFY(map.value("installationDeviceFree").toLongLong() > 0);
     QVERIFY(map.value("documentDeviceSize").toLongLong() > 0);
     QVERIFY(map.value("documentDeviceFree").toLongLong() > 0);
-}
-
-
-void tst_ApplicationInstaller::packageActivation()
-{
-#ifndef Q_OS_LINUX
-    QSKIP("Cannot run SD-Card tests on non-Linux systems");
-#else
-    if (m_fakeSudo)
-        QSKIP("Cannot run SD-Card tests without root privileges");
-#endif
-
-
-    QVERIFY(!m_ai->activatePackage(QString()));
-    QVERIFY(!m_ai->activatePackage("does.not.exist"));
-    QVERIFY(!m_ai->deactivatePackage(QString()));
-    QVERIFY(!m_ai->deactivatePackage("does.not.exist"));
-
-    // install package to sdcard
-
-    QString taskId = m_ai->startPackageInstallation("removable-0", QUrl::fromLocalFile(AM_TESTDATA_DIR "packages/test-dev-signed.appkg"));
-    QVERIFY(!taskId.isEmpty());
-    m_ai->acknowledgePackageInstallation(taskId);
-
-    // check received signals
-
-    QVERIFY(m_finishedSpy->wait(spyTimeout));
-    QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
-    clearSignalSpies();
-
-    // activate the package
-
-    QString name = "com.pelagicore.test";
-
-    QVERIFY(m_ai->doesPackageNeedActivation(name));
-    QVERIFY(!m_ai->isPackageActivated(name));
-    QVERIFY(m_ai->activatePackage(name));
-
-    QVERIFY(checkPackageActivation(name, 3000));
-    QVERIFY(m_ai->isPackageActivated(name));
-    QVERIFY(!m_ai->activatePackage(name));
-    clearSignalSpies();
-
-    // check actual file-system mount
-
-    QString mountPoint = QDir(pathTo(ImageMounts, name)).canonicalPath();
-    QVERIFY(mountedDirectories().value(mountPoint).startsWith("/dev/loop"));
-    QFile testFile(mountPoint + "/test");
-    QVERIFY(testFile.exists());
-    QVERIFY(!testFile.open(QFile::ReadWrite));
-
-    // deactivate the package again
-
-    QVERIFY(m_ai->deactivatePackage(name));
-    QVERIFY(checkPackageDeactivation(name, 3000));
-    QVERIFY(!m_ai->isPackageActivated(name));
-    QVERIFY(!m_ai->deactivatePackage(name));
-    clearSignalSpies();
-
-    // check that the actual file-system mount is gone
-
-    QVERIFY2(!mountedDirectories().contains(mountPoint),
-             qPrintable(mountedDirectories().value(mountPoint)));
-    QVERIFY(!testFile.exists());
-
-    // remove package again
-
-    taskId = m_ai->removePackage(name, false);
-    QVERIFY(!taskId.isEmpty());
-    QVERIFY(m_finishedSpy->wait(spyTimeout));
-    QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
 }
 
 
@@ -662,18 +466,6 @@ void tst_ApplicationInstaller::packageInstallation_data()
     QTest::newRow("invalid-footer-signature") \
             << "test-invalid-footer-signature.appkg" << "internal-0" << "" << ""
             << true << false << false << false << nomd << "could not verify the package's developer signature";
-
-    if (!m_fakeSudo) {
-        QTest::newRow("sdcard") \
-                << "test.appkg" << "removable-0" << "test-update.appkg" << "removable-0"
-                << false << false << true << true << nomd << "";
-        QTest::newRow("sdcard-dev-signed") \
-                << "test-dev-signed.appkg" << "removable-0" << "test-update-dev-signed.appkg" << "removable-0"
-                << true << false << true << true << nomd << "";
-        QTest::newRow("sdcard-no-space") \
-                << "bigtest-dev-signed.appkg" << "removable-0" << "" << ""
-                << true << false << false << false << nomd << "~not enough storage space left on removable-0: [0-9.]+ MB available, but [0-9.]+ MB needed";
-    }
 }
 
 // this test function is a bit of a kitchen sink, but the basic boiler plate
@@ -691,14 +483,6 @@ void tst_ApplicationInstaller::packageInstallation()
     QFETCH(bool, updateExpectedSuccess);
     QFETCH(QVariantMap, extraMetaData);
     QFETCH(QString, errorString);
-
-#if !defined(Q_OS_LINUX)
-    if (installationLocationId.startsWith("removable-"))
-        QSKIP("no removable installation locations on this platform");
-#else
-    if (m_fakeSudo)
-        QSKIP("removable installation locations cannot be tested without root privileges");
-#endif
 
     AllowInstallations allow(storeSigned ? AllowInstallations::RequireStoreSigned
                                          : (devSigned ? AllowInstallations::RequireDevSigned
@@ -743,28 +527,11 @@ void tst_ApplicationInstaller::packageInstallation()
             QVERIFY(QFile::exists(pathTo(Manifests, "com.pelagicore.test/installation-report.yaml")));
             QVERIFY(QDir(pathTo(il.documentPath() + "/com.pelagicore.test")).exists());
 
-            // if we installed to an SDCard, we need to mount the generate image first
-            // in order to check its contents
-
-            QString loopbackDevice;
-            QString fileCheckPath;
-            if (il.isRemovable()) {
-                QString imgPath = il.installationPath() + "/com.pelagicore.test.appimg";
-
-                QVERIFY(QFile::exists(imgPath));
-
-                loopbackDevice = m_sudo->attachLoopback(imgPath, true);
-                QVERIFY2(!loopbackDevice.isEmpty(), qPrintable(m_sudo->lastError()));
-                QVERIFY2(m_sudo->mount(loopbackDevice, pathTo(TemporaryMount), true), qPrintable(m_sudo->lastError()));
-                fileCheckPath = pathTo(TemporaryMount);
-            } else {
-                fileCheckPath = il.installationPath() + "/com.pelagicore.test";
-            }
+            QString fileCheckPath = il.installationPath() + "/com.pelagicore.test";
 
             // now check the installed files
 
             QStringList files = QDir(fileCheckPath).entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
-            files.removeAll("lost+found"); // no way to get rid of this completely
             files.sort();
             QVERIFY2(files == QStringList({ "icon.png", "info.yaml", "test", QString::fromUtf8("t\xc3\xa4st") }), qPrintable(files.join(", ")));
 
@@ -772,13 +539,6 @@ void tst_ApplicationInstaller::packageInstallation()
             QVERIFY(f.open(QFile::ReadOnly));
             QCOMPARE(f.readAll(), QByteArray(pass == 1 ? "test\n" : "test update\n"));
             f.close();
-
-            // remove loopback and unmount in case of an SDCard installation
-
-            if (il.isRemovable()) {
-                QVERIFY2(m_sudo->unmount(pathTo(TemporaryMount)), qPrintable(m_sudo->lastError()));
-                QVERIFY2(m_sudo->detachLoopback(loopbackDevice), qPrintable(m_sudo->lastError()));
-            }
 
             // check metadata
             QCOMPARE(m_requestingInstallationAcknowledgeSpy->count(), 1);
@@ -817,76 +577,10 @@ void tst_ApplicationInstaller::packageInstallation()
     }
     // check that all files are gone
 
-    for (PathLocation pl: { Manifests, Internal0, Internal1, Documents0, Documents1, SDCard0Images, SDCard1Images }) {
+    for (PathLocation pl: { Manifests, Internal0, Internal1, Documents0, Documents1 }) {
         QStringList entries = QDir(pathTo(pl)).entryList({ "com.pelagicore.test*" });
         QVERIFY2(entries.isEmpty(), qPrintable(pathTo(pl) + ": " + entries.join(", ")));
     }
-}
-
-
-void tst_ApplicationInstaller::removeAppOnMissingSDCard()
-{
-#ifndef Q_OS_LINUX
-    QSKIP("Cannot run SD-Card tests on non-Linux systems");
-#else
-    if (m_fakeSudo)
-        QSKIP("Cannot run SD-Card tests without root privileges");
-#endif
-
-    // install package to sdcard
-
-    QString taskId = m_ai->startPackageInstallation("removable-0", QUrl::fromLocalFile(AM_TESTDATA_DIR "packages/test-dev-signed.appkg"));
-    QVERIFY(!taskId.isEmpty());
-    m_ai->acknowledgePackageInstallation(taskId);
-
-    // check received signals
-
-    QVERIFY(m_finishedSpy->wait(spyTimeout));
-    QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
-    clearSignalSpies();
-
-    // check files
-
-    QVERIFY(QFile::exists(pathTo(Manifests, "com.pelagicore.test/installation-report.yaml")));
-    QVERIFY(QDir(pathTo(Documents0, "com.pelagicore.test")).exists());
-    QVERIFY(QFile::exists(pathTo(SDCard0Images, "com.pelagicore.test.appimg")));
-
-    // simulate removal of SD-Card
-
-    QVERIFY2(m_sudo->unmount(pathTo(SDCard0), true), qPrintable(m_sudo->lastError()));
-
-    // try to remove the package
-
-    taskId = m_ai->removePackage("com.pelagicore.test", false);
-    QVERIFY(!taskId.isEmpty());
-    QVERIFY(m_failedSpy->wait(spyTimeout));
-    QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
-    QCOMPARE(m_failedSpy->first()[2].toString(), QString::fromLatin1("cannot delete application com.pelagicore.test without the removable medium it was installed on"));
-    clearSignalSpies();
-
-    QVERIFY(QFile::exists(pathTo(Manifests, "com.pelagicore.test/installation-report.yaml")));
-    QVERIFY(QDir(pathTo(Documents0, "com.pelagicore.test")).exists());
-
-    // now force remove it
-
-    taskId = m_ai->removePackage("com.pelagicore.test", false, true /*force*/);
-    QVERIFY(!taskId.isEmpty());
-    QVERIFY(m_finishedSpy->wait(spyTimeout));
-    QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
-    clearSignalSpies();
-
-    // check if files that are not on SD-Card are gone
-
-    QVERIFY(!QDir(pathTo(Manifests, "com.pelagicore.test")).exists());
-    QVERIFY(!QDir(pathTo(Documents0, "com.pelagicore.test")).exists());
-
-    // "re-insert" the SD-Card
-
-    QVERIFY(m_sudo->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"));
-    QVERIFY(QFile::exists(pathTo(SDCard0Images, "com.pelagicore.test.appimg")));
-    QVERIFY(QFile::remove(pathTo(SDCard0Images, "com.pelagicore.test.appimg")));
-
-    //TODO: now that AI::cleanupBrokenInstallations() works, call it here and check the results
 }
 
 
@@ -916,38 +610,11 @@ void tst_ApplicationInstaller::simulateErrorConditions_data()
              << "internal-0" << false << "~could not create the document directory .*" \
              << FunctionMap { { "before-start", [this]() { return chmod(pathTo(Documents0).toLocal8Bit(), 0000) == 0; } },
                               { "after-failed", [this]() { return chmod(pathTo(Documents0).toLocal8Bit(), 0777) == 0; } } };
-
-     QTest::newRow("image-still-activated") \
-             << "removable-0" << true << "~existing application image .* is still mounted" \
-             << FunctionMap { { "before-start", [this]() { return m_ai->activatePackage("com.pelagicore.test")
-                                                                      && checkPackageActivation("com.pelagicore.test", 3000); } },
-                              { "after-failed", [this]() { return m_ai->deactivatePackage("com.pelagicore.test")
-                                                                      && checkPackageDeactivation("com.pelagicore.test", 3000); } } };
-
-     QTest::newRow("sdcard-not-mounted") \
-             << "removable-0" << false << "installation medium removable-0 is not mounted" \
-             << FunctionMap { { "before-start", [this]() { return m_sudo->unmount(pathTo(SDCard0), true); } },
-                              { "after-failed", [this]() { return m_sudo->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"); } } };
-
-     QTest::newRow("sdcard-unmounted-while-installing") \
-             << "removable-0" << false << "removable medium removable-0 is not mounted" \
-             << FunctionMap { { "after-start", [this]() { return m_requestingInstallationAcknowledgeSpy->wait(spyTimeout)
-                                                                     && m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout)
-                                                                     && m_sudo->unmount(pathTo(SDCard0), true); } },
-                              { "after-failed", [this]() { return m_sudo->mount(m_loopbackForSDCard[0], pathTo(SDCard0), false, "vfat"); } } };
-
 #endif
 }
 
 void tst_ApplicationInstaller::simulateErrorConditions()
 {
-#ifndef Q_OS_LINUX
-    QSKIP("Cannot run SD-Card tests on non-Linux systems");
-#else
-    if (m_fakeSudo)
-        QSKIP("Cannot run SD-Card tests without root privileges");
-#endif
-
     QFETCH(QString, installationLocation);
     QFETCH(bool, testUpdate);
     QFETCH(QString, errorString);
@@ -1081,23 +748,6 @@ int main(int argc, char **argv)
 
     QCoreApplication a(argc, argv);
     tstApplicationInstaller = new tst_ApplicationInstaller(&a);
-
-#ifdef Q_OS_LINUX
-    auto crashHandler = [](int sigNum) -> void {
-        // we are doing very unsafe things from a within a signal handler, but
-        // we've crashed anyway at this point and the alternative is that we are
-        // leaking mounts and attached loopback devices.
-
-        tstApplicationInstaller->~tst_ApplicationInstaller();
-
-        if (sigNum != -1)
-            exit(1);
-    };
-
-    signal(SIGABRT, crashHandler);
-    signal(SIGSEGV, crashHandler);
-    signal(SIGINT, crashHandler);
-#endif // Q_OS_LINUX
 
     return QTest::qExec(tstApplicationInstaller, argc, argv);
 }

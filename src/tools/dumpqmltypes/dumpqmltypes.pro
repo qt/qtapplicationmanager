@@ -17,6 +17,7 @@ QT *= \
     appman_intent_client-private \
     appman_intent_server-private \
     appman_monitor-private \
+    appman_shared_main-private \
 
 CONFIG *= console
 

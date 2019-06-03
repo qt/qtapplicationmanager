@@ -56,11 +56,11 @@
     \qmltype ProcessStatus
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui
-    \brief Provides information on the status of an application process.
+    \brief Provides information about the status of an application process.
 
     ProcessStatus provides information about the process of a given application.
 
-    You can use it alongside a Timer for instance to periodically query the status of an
+    You can use it alongside a Timer, for instance, to periodically query the status of an
     application process.
 
     \qml
@@ -88,8 +88,8 @@
     }
     \endqml
 
-    You can also use this component as a MonitorModel data source if you want to plot its
-    previous values over time:
+    You can also use this type as a data source for MonitorModel, if you want to plot its previous
+    values over time:
 
     \qml
     import QtQuick 2.11
@@ -104,7 +104,9 @@
     }
     \endqml
 
-    These are the supported keys in the memory properties (\c memoryVirtual, \c memoryRss and \c memoryPss):
+    \target supported-keys
+    The following are the keys supported in the memory properties (\c memoryVirtual, \c memoryRss,
+    and \c memoryPss):
 
     \table
     \header
@@ -112,14 +114,14 @@
         \li Description
     \row
         \li \c total
-        \li The amount of memory used in total in bytes.
+        \li The total amount of memory used, in bytes.
     \row
         \li \c text
-        \li The amount of memory used by the code section in bytes.
+        \li The amount of memory used by the code section, in bytes.
     \row
         \li \c heap
-        \li The amount of memory used by the heap in bytes. This is private, dynamically allocated
-            memory (for example through \c malloc or \c mmap on Linux).
+        \li The amount of memory used by the heap, in bytes. The heap is private, dynamically
+            allocated memory, for example through \c malloc or \c mmap on Linux.
     \endtable
 */
 
@@ -147,7 +149,7 @@ ProcessStatus::ProcessStatus(QObject *parent)
 /*!
     \qmlmethod ProcessStatus::update
 
-    Updates the properties cpuLoad, memoryVirtual, memoryRss and memoryPss.
+    Updates the cpuLoad, memoryVirtual, memoryRss, and memoryPss properties.
 */
 void ProcessStatus::update()
 {
@@ -161,7 +163,7 @@ void ProcessStatus::update()
     \qmlproperty string ProcessStatus::applicationId
 
     Holds the \l{ApplicationObject::id}{ID} of the \l{ApplicationObject}{application} whose process
-    is to be monitored. This ID must be one that is known to the application-manager
+    is to be monitored. This ID must be one that is known to the application manager
     (\l{ApplicationManager::applicationIds}{applicationIds()} provides a list of valid IDs). There
     is one exception: if you want to monitor the System UI's process, set the ID to an empty
     string. In single-process mode, the System UI process is the only valid process, since all
@@ -225,10 +227,11 @@ void ProcessStatus::determinePid()
     \qmlproperty int ProcessStatus::processId
     \readonly
 
-    This property holds the OS specific process identifier (PID) that is monitored. This can be
-    used by external tools for example. The property is 0, if there is no process associated with
-    the \l applicationId. In particular, if the application-manager runs in single-process mode,
-    only the System-UI (identified by an empty \l applicationId) will have an associated process.
+    This property holds the OS-specific process identifier (PID) that is monitored. It can be
+    used by external tools, for example. The property is 0, if there is no process associated with
+    the \l applicationId. In particular, if the application manager runs in single-process mode,
+    only the System UI has an associated process. The System UI is always identified by an empty
+    \l applicationId.
 */
 qint64 ProcessStatus::processId() const
 {
@@ -239,9 +242,9 @@ qint64 ProcessStatus::processId() const
     \qmlproperty real ProcessStatus::cpuLoad
     \readonly
 
-    The process's CPU utilization when update() was last called. A value of 0 means
-    that the process was idle, a value of 1 means it fully used the equivalent of one core
-    (which may be split over several ones).
+    This property holds the process' CPU utilization during the previous measurement interval, when
+    update() was last called. A value of 0 means the process was idle; a value of 1 means the process used
+    the equivalent of one core, which may be split across several cores.
 
     \sa ProcessStatus::update
 */
@@ -271,13 +274,13 @@ void ProcessStatus::fetchMemoryReadings()
     \qmlproperty var ProcessStatus::memoryVirtual
     \readonly
 
-    A map of the process's virtual memory usage. See ProcessStatus description for a list of supported keys.
-    The total amount of virtual memory is provided through \c memoryVirtual.total for
-    example.
+    A map of the process's virtual memory usage. For example, the total amount of virtual memory
+    is provided through \c memoryVirtual.total. For more information, see the table of
+    \l{supported-keys}{supported keys}.
 
-    The value of this property is updated when ProcessStatus::update is called.
+    Calling ProcessStatus::update() updates the value of this property.
 
-    \sa ProcessStatus::update
+    \sa ProcessStatus::update()
 */
 QVariantMap ProcessStatus::memoryVirtual() const
 {
@@ -288,12 +291,13 @@ QVariantMap ProcessStatus::memoryVirtual() const
     \qmlproperty var ProcessStatus::memoryRss
     \readonly
 
-    A map of the process's RSS (Resident Set Size) memory usage. This is the amount of memory that is
-    actually mapped to physical RAM. See ProcessStatus description for a list of supported keys.
+    A map of the process' Resident Set Size (RSS) memory usage. This is the amount of memory that
+    is actually mapped to physical RAM. For more information, see the table of
+    \l{supported-keys}{supported keys}.
 
-    The value of this property is updated when ProcessStatus::update is called.
+    Calling ProcessStatus::update() updates the value of this property.
 
-    \sa ProcessStatus::update
+    \sa ProcessStatus::update()
 */
 QVariantMap ProcessStatus::memoryRss() const
 {
@@ -304,16 +308,16 @@ QVariantMap ProcessStatus::memoryRss() const
     \qmlproperty var ProcessStatus::memoryPss
     \readonly
 
-    A map of the process's PSS (Proportional Set Size) memory usage. This is the
-    proportional share of the RSS value above. For instance if two processes share 2 MB
-    the RSS value will be 2 MB for each process and the PSS value 1 MB for each process.
-    As the name implies, the code section of shared libraries is generally shared between
-    processes. Memory may also be shared by other means provided by the OS (e.g. through
-    \c mmap on Linux). See ProcessStatus description for a list of supported keys.
+    A map of the process' Proportional Set Size (PSS) memory usage. This is the proportional share
+    of the RSS value in ProcessStatus::memoryRss. For instance, if two processes share 2 MB, then
+    the RSS value is 2 MB for each process; the PSS value is 1 MB for each process. As the name
+    implies, the code section of shared libraries is generally shared between processes. Memory
+    may also be shared by other means provided by the OS, for example, through \c mmap on Linux.
+    For more information, see the table of \l{supported-keys}{supported keys}.
 
-    The value of this property is updated when ProcessStatus::update is called.
+    Calling ProcessStatus::update() updates the value of this property.
 
-    \sa ProcessStatus::update
+    \sa ProcessStatus::update()
 */
 QVariantMap ProcessStatus::memoryPss() const
 {
@@ -324,7 +328,7 @@ QVariantMap ProcessStatus::memoryPss() const
     \qmlproperty list<string> ProcessStatus::roleNames
     \readonly
 
-    Names of the roles provided by ProcessStatus when used as a MonitorModel data source.
+    Names of the roles that ProcessStatus provides when used as a data source for MonitorModel.
 
     \sa MonitorModel
 */

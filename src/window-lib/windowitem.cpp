@@ -65,20 +65,21 @@
     \ingroup system-ui
     \brief An Item that renders a given WindowObject.
 
-    In order to render a WindowObject inside the System-UI, you must specify where and how it should
-    be done. This is achieved by placing a WindowItem in the scene, which is a regular QML Item, and
-    assigning the desired WindowObject to it.
+    To render a WindowObject inside the System UI, you must specify where and how it should be
+    done using a WindowItem. A WindowItem is a regular QML Item, that you place in the scene
+    and assign the desired WindowObject to it.
 
-    The WindowObject will then be rendered in the System-UI scene according to the WindowItem's geometry,
-    opacity, visibility, transformations, etc.
+    The WindowObject is then rendered in the System UI scene according to the WindowItem's
+    geometry, opacity, visibility, transformations, and so on.
 
-    The relationship between WindowObjects and WindowItems is similar to the one between image files
-    and Image items. The former is the content and the latter defines how it's rendered in a QML scene.
+    The relationship between WindowObjects and WindowItems is similar to the one between image
+    files and Image items. The former is the content; the latter defines how it's rendered in a
+    QML scene.
 
-    It's possible to assign the same WindowObject to multiple WindowItems, which will result in it being
-    rendered multiple times.
+    It's possible to assign the same WindowObject to multiple WindowItems, so it can be rendered
+    multiple times.
 
-    The implicit size of a WindowItem is the size of the WindowObject it is displaying.
+    The implicit size of a WindowItem is the size of the WindowObject it displays.
 
     \sa WindowObject
 */
@@ -86,19 +87,22 @@
 /*!
     \qmlproperty WindowObject WindowItem::window
 
-    The window surface to be displayed.
+    The window surface to display.
 */
 
 /*!
     \qmlproperty bool WindowItem::primary
+    \readonly
 
-    Returns whether this is the primary view of the set WindowObject.
-    The primary WindowItem will be the one sending input events and defining the size of the WindowObject.
+    Returns whether this is the primary view of the WindowObject set.
 
-    A WindowObject can have only one primary WindowItem. If multiple WindowItems are rendering the same
-    WindowObject, making one primary will automatically turn the primary property of all others to false.
+    The primary WindowItem is the one sending input events and defining the size of the
+    WindowObject. A WindowObject can have only one primary WindowItem. If multiple WindowItems
+    are rendering the same WindowObject, making one primary automatically sets the primary
+    property of all other WindowItems to false.
 
-    The first WindowItem to display a window is by default the primary one.
+    By default, the first WindowItem that gets a particular WindowObject assigned will be the
+    primary WindowItem for that WindowObject.
 
     \sa makePrimary
 */
@@ -106,14 +110,14 @@
 /*!
     \qmlproperty bool WindowItem::objectFollowsItemSize
 
-    If true, WindowItem will resize the WindowObject it's displaying to match its own size.
-    If false, resizing the WindowItem will have no effect on the size of the WindowObject
-    being displayed. This property is true by default.
+    If true, WindowItem resizes the WindowObject it's displaying to match its own size.
+    If false, resizing the WindowItem has no effect on the size of the WindowObject being
+    displayed. By default, this property is true.
 
-    You should to set it to false when you want the WindowItem size to be determined by the
-    WindowObject's size. In this case, in addition to setting this property to false, either
-    don't specify a width and height (as the item's implicit size is its WindowObject's size)
-    or explicitly set it to match WindowObject's size.
+    Set this property to false when you want the WindowItem size to be determined by the
+    WindowObject's size. Additionally, don't specify a width and height to maintain the
+    item's implicit size as its WindowObject's size, or explicitly set it to match the
+    WindowObject's size.
 
     \sa WindowObject::resize
 */
@@ -121,7 +125,7 @@
 /*!
     \qmlmethod void WindowItem::makePrimary
 
-    Make it the primary WindowItem of the window it is displaying.
+    Make the currently displayed window the primary WindowItem.
 
     \sa primary
 */

@@ -29,7 +29,7 @@
 /*!
 
 \example applicationmanager/intents
-\title Intents System-UI and Applications Example
+\title Intents System UI and Applications Example
 \image intents-example.png The Intents example with all applications running.
 \brief Three applications and a System-UI communicating over Intents.
 \ingroup applicationmanager-examples

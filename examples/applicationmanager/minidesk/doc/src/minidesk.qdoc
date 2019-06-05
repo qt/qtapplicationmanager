@@ -66,8 +66,9 @@ generic Inter-Process Communication (IPC).
 
 To start the example, navigate to the \c minidesk folder, and run the following command:
 \badcode
-<path-to-appman.bin>/ -c am-config.yaml -r
+<path-to-appman-binary> -c am-config.yaml -r
 \endcode
+The \c appman binary (executable file) is usually located in the Qt installation \c bin folder.
 
 \section1 Walkthrough
 

@@ -108,9 +108,6 @@
 #if defined(AM_MULTI_PROCESS)
 #  include "processcontainer.h"
 #  include "nativeruntime.h"
-#  if defined(Q_OS_LINUX)
-#    include "sysfsreader.h"
-#  endif
 #endif
 #include "plugincontainer.h"
 #include "notificationmanager.h"
@@ -157,7 +154,7 @@ QT_BEGIN_NAMESPACE_AM
 // The QGuiApplication constructor
 
 Main::Main(int &argc, char **argv)
-    : MainBase(Main::preConstructor(argc), argv)
+    : MainBase(SharedMain::preConstructor(argc), argv)
     , SharedMain()
 {
     // this might be needed later on by the native runtime to find a suitable qml runtime launcher
@@ -194,32 +191,6 @@ Main::~Main()
     delete RuntimeFactory::instance();
     delete ContainerFactory::instance();
     delete StartupTimer::instance();
-}
-
-// We need to do some things BEFORE the Q*Application constructor runs, so we're using this
-// old trick to do this hooking transparently for the user of the class.
-int &Main::preConstructor(int &argc)
-{
-    SharedMain::preConstructor(argc);
-
-#if defined(AM_MULTI_PROCESS) && defined(Q_OS_LINUX) && !defined(AM_CROSS_COMPILED)
-    // Check if we are running with a propietary NVIDIA driver: if not, we can enable the
-    // new "linux-dmabuf" Wayland buffer extension, which will enable hardware accelerated
-    // OpenGL for Wayland clients, even when running the compositor as an X11 client.
-
-    SysFsReader modules("/proc/modules", 32768); // 32K should be plenty
-    const QByteArray ba = modules.readValue();
-    const int pos = ba.indexOf("nvidia");
-    if ((pos < 0) || ((pos > 0) && ba.at(pos - 1) != '\n')) { // not found or not at start of line
-        // only set linux-dmabuf, if the user doesn't force something else
-        if (!qEnvironmentVariableIsSet("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION")
-                && !qEnvironmentVariableIsSet("QT_XCB_GL_INTEGRATION")) {
-            qputenv("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION", "linux-dmabuf-unstable-v1");
-            qputenv("QT_XCB_GL_INTEGRATION", "xcb_egl");
-        }
-    }
-#endif
-    return argc;
 }
 
 /*! \internal

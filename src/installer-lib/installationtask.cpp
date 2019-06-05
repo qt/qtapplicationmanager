@@ -380,7 +380,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
 void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 {
     // 1. delete $manifestDir+ and $manifestDir-
-    m_manifestDir = m_ai->manifestDirectory()->absoluteFilePath(m_applicationId);
+    m_manifestDir.setPath(m_ai->manifestDirectory()->absoluteFilePath(m_applicationId));
     removeRecursiveHelper(m_manifestDir.absolutePath() + qL1C('+'));
     removeRecursiveHelper(m_manifestDir.absolutePath() + qL1C('-'));
 
@@ -403,7 +403,7 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
     m_extractionDir = installationDir;
     if (!m_extractionDir.cd(installationTarget))
         throw Exception("could not cd into installation directory %1/%2").arg(installationDir).arg(installationTarget);
-    m_applicationDir = installationDir.absoluteFilePath(m_applicationId);
+    m_applicationDir.setPath(installationDir.absoluteFilePath(m_applicationId));
 }
 
 void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)

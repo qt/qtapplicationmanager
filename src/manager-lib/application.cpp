@@ -291,14 +291,14 @@ QUrl AbstractApplication::icon() const
     switch (state()) {
     default:
     case Installed:
-        dir = appInfo->manifestDir();
+        dir.setPath(appInfo->manifestDir());
         break;
     case BeingInstalled:
     case BeingUpdated:
-        dir = QDir(appInfo->codeDir().absolutePath() + QLatin1Char('+'));
+        dir.setPath(appInfo->codeDir().absolutePath() + QLatin1Char('+'));
         break;
     case BeingRemoved:
-        dir = QDir(appInfo->codeDir().absolutePath() + QLatin1Char('-'));
+        dir.setPath(appInfo->codeDir().absolutePath() + QLatin1Char('-'));
         break;
     }
     return QUrl::fromLocalFile(dir.absoluteFilePath(info()->icon()));

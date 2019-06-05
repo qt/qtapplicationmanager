@@ -136,8 +136,8 @@ public:
     void setInstallationReport(InstallationReport *report) { m_installationReport.reset(report); }
     QString manifestDir() const { return m_manifestDir.absolutePath(); }
     uint uid() const { return m_uid; }
-    void setManifestDir(const QString &path) { m_manifestDir = path; }
-    void setCodeDir(const QString &path) { m_codeDir = path; }
+    void setManifestDir(const QString &path) { m_manifestDir.setPath(path); }
+    void setCodeDir(const QString &path) { m_codeDir.setPath(path); }
 
     void toVariantMapHelper(QVariantMap &map) const override;
 

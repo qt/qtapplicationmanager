@@ -283,12 +283,12 @@ int main(int argc, char **argv)
         QDir outDir;
 
         if (clp.isSet(qSL("install")) && clp.positionalArguments().isEmpty()) {
-            outDir = QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath);
+            outDir.setPath(QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath));
             if (!outDir.exists())
                 throw Exception("Qt's QML2 imports directory (%1) is missing.")
                     .arg(outDir.absolutePath());
         } else if (clp.positionalArguments().count() == 1) {
-            outDir = clp.positionalArguments().first();
+            outDir.setPath(clp.positionalArguments().first());
             if (!outDir.mkpath(qSL(".")))
                 throw Exception("Cannot create destination directory %1.").arg(outDir.absolutePath());
         } else {

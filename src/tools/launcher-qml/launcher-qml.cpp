@@ -410,6 +410,12 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     StartupTimer::instance()->checkpoint("after loading plugins and import paths");
 
+    // protect our namespace from this point onward
+    qmlProtectModule("QtApplicationManager", 1);
+    qmlProtectModule("QtApplicationManager.Application", 1);
+    qmlProtectModule("QtApplicationManager", 2);
+    qmlProtectModule("QtApplicationManager.Application", 2);
+
     QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
     m_engine.rootContext()->setContextProperty(qSL("StartupTimer"), StartupTimer::instance());
     m_engine.load(qmlFileUrl);

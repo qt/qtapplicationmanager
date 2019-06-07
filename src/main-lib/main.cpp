@@ -708,6 +708,12 @@ void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
     for (auto iface : qAsConst(m_startupPlugins))
         iface->beforeQmlEngineLoad(m_engine);
 
+    // protect our namespace from this point onward
+    qmlProtectModule("QtApplicationManager", 1);
+    qmlProtectModule("QtApplicationManager.SystemUI", 1);
+    qmlProtectModule("QtApplicationManager", 2);
+    qmlProtectModule("QtApplicationManager.SystemUI", 2);
+
     if (Q_UNLIKELY(loadDummyData)) {
         if (m_mainQmlLocalFile.isEmpty()) {
             qCDebug(LogQml) << "Not loading QML dummy data on non-local URL" << m_mainQml;

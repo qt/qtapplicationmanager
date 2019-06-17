@@ -1202,30 +1202,33 @@ QVector<AbstractApplicationInfo *> Main::scanForApplications(const QStringList &
 
 QString Main::hardwareId() const
 {
+    static QString hardwareId;
+    if (hardwareId.isEmpty()) {
 #if defined(AM_HARDWARE_ID)
-    return QString::fromLocal8Bit(AM_HARDWARE_ID);
+        hardwareId = QString::fromLocal8Bit(AM_HARDWARE_ID);
 #elif defined(AM_HARDWARE_ID_FROM_FILE)
-    QFile f(QString::fromLocal8Bit(AM_HARDWARE_ID_FROM_FILE));
-    if (f.open(QFile::ReadOnly))
-        return QString::fromLocal8Bit(f.readAll().trimmed());
+        QFile f(QString::fromLocal8Bit(AM_HARDWARE_ID_FROM_FILE));
+        if (f.open(QFile::ReadOnly))
+            hardwareId = QString::fromLocal8Bit(f.readAll().trimmed());
 #else
-    QVector<QNetworkInterface> candidateIfaces;
-    for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
-        if (iface.isValid()
-                && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
-                && iface.type() > QNetworkInterface::Virtual
-                && !iface.hardwareAddress().isEmpty()) {
-            candidateIfaces << iface;
+        QVector<QNetworkInterface> candidateIfaces;
+        for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
+            if (iface.isValid()
+                    && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
+                    && iface.type() > QNetworkInterface::Virtual
+                    && !iface.hardwareAddress().isEmpty()) {
+                candidateIfaces << iface;
+            }
         }
-    }
-    if (!candidateIfaces.isEmpty()) {
-        std::sort(candidateIfaces.begin(), candidateIfaces.end(), [](const QNetworkInterface &first, const QNetworkInterface &second) {
-            return first.name().compare(second.name()) < 0;
-        });
-        return candidateIfaces.constFirst().hardwareAddress().replace(qL1C(':'), qL1S("-"));
-    }
+        if (!candidateIfaces.isEmpty()) {
+            std::sort(candidateIfaces.begin(), candidateIfaces.end(), [](const QNetworkInterface &first, const QNetworkInterface &second) {
+                return first.name().compare(second.name()) < 0;
+            });
+            hardwareId = candidateIfaces.constFirst().hardwareAddress().replace(qL1C(':'), qL1S("-"));
+        }
 #endif
-    return QString();
+    }
+    return hardwareId;
 }
 
 QT_END_NAMESPACE_AM

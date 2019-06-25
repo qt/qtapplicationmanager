@@ -197,9 +197,9 @@ or across multiple config files, the final value is resolved based on these rule
         \li Allows for more fine-grained control over D-Bus registrations and function call
             policies. Every key (with one exception - see next) in this map corresponds to the
             D-Bus interface name you want to configure (\c io.qt.ApplicationManager,
-            \c io.qt.ApplicationInstaller or \c org.freedesktop.Notifications). If such a key is
-            present, it takes precedence over the \c dbus command line option. Each key's value is
-            a \l{D-Bus specification} object.
+            \c io.qt.ApplicationInstaller, \c io.qt.WindowManager, and \c org.freedesktop.Notifications).
+            If such a key is present, it takes precedence over the \c dbus command line option.
+            Each key's value is a \l{D-Bus specification} object.
     \row
         \li \b --fullscreen
             \br [\c ui/fullscreen]
@@ -474,6 +474,26 @@ dbus:
 ...
 \endcode
 
+Only the public D-Bus interfaces of the application manager can be configured this way. The names
+of these available interfaces are as follows:
+\table
+    \header
+        \li Interface
+        \li Corresponding QML class
+    \row
+        \li \c io.qt.ApplicationManager
+        \li ApplicationManager
+    \row
+        \li \c io.qt.ApplicationInstaller
+        \li ApplicationInstaller
+    \row
+        \li \c io.qt.WindowManager
+        \li WindowManager
+    \row
+        \li \c org.freedesktop.Notifications
+        \li Not application manager specific - this interface adheres to the
+            \l {freedesktop.org specification}
+\endtable
 
 \section1 Installation Locations
 

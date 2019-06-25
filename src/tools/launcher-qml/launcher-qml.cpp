@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 {
     StartupTimer::instance()->checkpoint("entered main");
 
-    QCoreApplication::setApplicationName(qSL("ApplicationManager QML Launcher"));
+    QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Launcher"));
     QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
     QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));

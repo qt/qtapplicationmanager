@@ -63,7 +63,7 @@ QT_USE_NAMESPACE_AM
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
-    QCoreApplication::setApplicationName(qSL("Custom ApplicationManager"));
+    QCoreApplication::setApplicationName(qSL("Custom Application Manager"));
     QCoreApplication::setApplicationVersion("0.1");
 
     Logging::initialize(argc, argv);

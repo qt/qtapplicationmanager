@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     QCommandLineParser clp;
-    clp.setApplicationDescription(applicationName);
+    clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName());
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
     clp.addHelpOption();
     clp.addVersionOption();

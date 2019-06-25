@@ -83,8 +83,7 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
         "                         and to 'off' to disable it. Any other value will result\n"
         "                         in the default, auto-detection behavior.\n";
 
-    m_clp.setApplicationDescription(QCoreApplication::organizationName() + qL1C(' ')
-                                    + QCoreApplication::applicationName() + qSL("\n\n")
+    m_clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qSL("\n\n")
                                     + (additionalDescription ? (qL1S(additionalDescription) + qSL("\n\n")) : QString())
                                     + qL1S(description));
 

@@ -81,7 +81,9 @@ which the application manager runs:
 \list
 \li In \b single-process mode, you can start the \c appman binary using any debugging tool
     directly, for example, \c{gdb --args appman -c config.yaml}. Since everything runs in a single
-    process, you can't debug applications independently.
+    process, you can't debug applications separately. Instead, all applications started are loaded
+    into \b{a single process}, so you can only debug the entire process at once; not each
+    application independently.
 
 \li In \b multi-process mode, you have to distinguish between debugging the application manager
     itself or the System UI and debugging individual applications: The application manager and

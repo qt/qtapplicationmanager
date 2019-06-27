@@ -152,7 +152,7 @@ TestCase {
         compare(simpleApplication.applicationProperties.pri1, undefined)
     }
 
-    function test_aliasApplication() {
+    function test_applicationAlias() {
         // Test that the alias has the same info, be indentified as an alias and points to the original app
         compare(applicationAlias.id, "tld.test.simple1@alias")
         compare(applicationAlias.alias, true)
@@ -437,7 +437,7 @@ TestCase {
         compare(ApplicationManager.get("invalidApplication"), {});
         compare(ApplicationManager.applicationRunState("invalidApplication"), Am.NotRunning);
 
-        ignoreWarning("Cannot start an invalid application");
+        ignoreWarning("Cannot start application: id 'invalidApplication' is not known");
         verify(!ApplicationManager.startApplication("invalidApplication"))
 
         //All following tests don't work in single-process mode

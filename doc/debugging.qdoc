@@ -33,13 +33,14 @@
 
 \section1 Logging
 
-The application-manager installs its own message handler that neatly formats logging output.
-It will also pass the output to GENIVI DLT (Diagnostic Log and Trace), if the QtGeniviExtras module
-is available.
+The application manager installs its own message handler to format logging output neatly. If the
+\l{Qt GENIVI Extras}{QtGeniviExtras} module is available, this message handler passes the output
+to GENIVI Diagnostic Log and Trace (DLT).
 
 \section2 Categories
 
-The following logging categories are defined by the application manager:
+The application manager defines the following logging categories:
+
 \include logging.cpp am-logging-categories
 
 \section2 Environment Variables
@@ -52,60 +53,62 @@ This is a (incomplete) list of environment variables that influence the logging 
     \li Description
 \row
     \li AM_STARTUP_TIMER
-    \li If set to 1, a startup performance analysis will be printed on the console. Anything other
-        than 1 will be interpreted as the name of a file that is used instead of the console. For
-        more in-depth information see StartupTimer.
+    \li If set to 1, a startup performance analysis is printed on the console. Anything other than
+        1 is interpreted as the name of a file to use, instead of the console. For more
+        information, see StartupTimer.
 \row
     \li AM_FORCE_COLOR_OUTPUT
-    \li Can be set to \c on to force color output to the console and to \c off to disable it. Any
-        other value will result in the default, auto-detection behavior.
+    \li Can be set to \c on to force color output to the console or to \c off to disable it. Any
+        other value results in the default, auto-detection behavior.
 \row
     \li AM_TIMEOUT_FACTOR
-    \li All timed wait statements within the application-manager will be slowed down by this
-        (integer) factor. Useful if executing in slow wrappers, like e.g. valgrind. Defaults to \c 1.
+    \li An integer factor that slows down all timed wait statements within the application manager.
+    Useful if running in slow wrappers, such as Valgrind. The default value is \c 1.
 \row
     \li QT_MESSAGE_PATTERN
-    \li Setting this variable has the same effect as described on the
-        \l{Warning and Debugging Messages}{Debugging Techniques} page and will overwrite the
-        default application-manager message handler. Parallel DLT logging will still be supported,
-        if available.
+    \li Setting this variable has the same effect as described in
+        \l{Warning and Debugging Messages}{Debugging Techniques} and overwrites the default
+        application manager message handler. Parallel DLT logging is still supported, if available.
 \endtable
 
 \section1 Debugging
 
 \section2 Introduction
 
-Debugging the application-manager, the System-UI and applications is dependent on the mode the
-application-manager is running in:
+When debugging the application manager, the System UI and applications are dependent on the mode in
+which the application manager runs:
 
 \list
-\li In \b single-process mode, you can just start the \c appman binary using your debugging tool of
-    choice directly (e.g. \c{gdb --args appman -c config.yaml}). Since everything is running in a
-    single process, you cannot debug applications independently though.
+\li In \b single-process mode, you can start the \c appman binary using any debugging tool
+    directly, for example, \c{gdb --args appman -c config.yaml}. Since everything runs in a single
+    process, you can't debug applications separately. Instead, all applications started are loaded
+    into \b{a single process}, so you can only debug the entire process at once; not each
+    application independently.
 
-\li In \b multi-process mode, you have to distinguish between debugging the application-manager itself
-    or the System-UI and debugging individual applications: The application-manager and System-UI
-    can be debugged in the same way as described for a single-process setup above. Debugging
-    applications is a bit more tricky though, since they have to be started by the application-manager:
-    this is accomplished by running the app through a debug wrapper which describe how to start an
-    application using your favorite debugging tool.
+\li In \b multi-process mode, you have to distinguish between debugging the application manager
+    itself or the System UI and debugging individual applications: The application manager and
+    System UI can be debugged in the same way as for a single-process setup above. Debugging
+    is a bit more tricky for applications, as they have to be started by the application manager.
+    You can accomplish this by running the application through a debug wrapper which describes
+    how to start an application using your favorite debugging tool.
 \endlist
 
-To enable QML Debugging/Profiling in the application-manager or an application it needs to be started
-with the \c --qml-debug argument. See \l{QML Debugging Infrastructure} for more information.
+To enable QML Debugging or QML Profiling in the application manager or an application, start it
+with the \c --qml-debug argument. For more information, see \l{QML Debugging Infrastructure}.
 
-Please note that although the concept is called "debug" wrappers, these wrappers are not limited to
-actual debugging tasks. They are also useful for various other tasks that involve running the
-program under test through a wrapper, e.g. profiling tools.
+\note Although the concept is called "debug" wrappers, these wrappers are not limited to debugging
+tasks only. They are also useful for various other tasks that involve running the application under
+test through a wrapper, like profiling tools.
 
 \target DebugWrappers
-\section2 Using Debug Wrappers
+\section2 Use Debug Wrappers
 
-There are three ways to do start applications using debug wrappers - all of them rely on a common
-way to specify which debug wrapper to use:
+There are three ways to start applications using debug wrappers - all of them rely on a common way
+to specify which debug wrapper to use:
 
 \list
-\li Within your System-UI, do not use \c startApplication to start an app, but debugApplication:
+\li Within your System UI, use \c debugApplication to start an application, instead of
+    \c startApplication:
     \badcode
     ApplicationManager.debugApplication("io.qt.app", "/usr/bin/strace -f")
     \endcode
@@ -118,19 +121,19 @@ way to specify which debug wrapper to use:
     \badcode
     appman-controller debug-application -ioe "valgrind --tool=helgrind" io.qt.app
     \endcode
-    The optional \c -i, \c -o and \c -e parameters will redirect the respective IO streams (\c stdin,
-    \c stdout and \c stderr) to the calling terminal.
+    The optional \c -i, \c -o, and \c -e parameters redirect the respective IO streams (\c stdin,
+    \c stdout, and \c stderr) to the calling terminal.
 \endlist
 
-\note In order to use the D-Bus options, the application-manager has to be connected to either
-a session- or system-bus - make sure to not run it with \c{--dbus none}.
+\note To use the D-Bus options, the application manager has to be connected to either a session- or
+system-bus; don't run it with \c{--dbus none}.
 
-The debug wrapper specification has to be a single argument string, that is interpreted as a command
-line. If this string contains the sub-string \c{%program%}, it will be replaced with the full path
-to the executable of the application (or the \c appman-launcher-qml binary for QML applications).
-The same thing happens for \c{%arguments%}, which will be replaced with potential command line
-arguments for the application. If you don't specify \c{%program%} or \c{%arguments%}, they will
-simply be appended to the resulting command line.
+The debug wrapper specification has to be a single argument string, that is interpreted as a
+command line. If this string contains the \c{%program%} sub-string, it is replaced with the full
+path to the application's executable (or the \c appman-launcher-qml binary for QML applications).
+The same thing happens for \c{%arguments%}, which is replaced with potential command line arguments
+for the application. If you don't specify \c{%program%} or \c{%arguments%}, they are appended to
+the resulting command line.
 
 This means that all of these debug wrappers are essentially the same:
 \badcode
@@ -146,19 +149,19 @@ mode:
 appman-controller debug-application "%program% -qmljsdebugger=port:1234,block %arguments%" io.qt.browser
 \endcode
 
-You also have the possibility to specify environment variables for the debug wrapper - just like on
-the command line. This command will run your application through \c strace while also setting the
-\c WAYLAND_DEBUG environment variable to \c 1.
+You can also specify environment variables for the debug wrapper - just like on the command line.
+This command runs your application through \c strace while also setting the \c WAYLAND_DEBUG
+environment variable to \c 1.
 \badcode
 appman-controller debug-application "WAYLAND_DEBUG=1 strace -f" io.qt.browser
 \endcode
-For added convenience, you can even just only set environment variables without any actual debug
-wrapper, e.g. to debug imports and plugin loading in a QML application:
+For added convenience, you can even set environment variables only, without any actual debug
+wrapper, to debug imports and plugin loading in a QML application:
 \badcode
 appman-controller debug-application "QT_DEBUG_PLUGINS=1 QML_IMPORT_TRACE=1" io.qt.browser
 \endcode
 
+When using complex debug wrappers on the command line often, it's advisable to create aliases or
+wrapper scripts.
 
-It is advisable to create aliases or wrapper scripts when using complex debug wrappers on the
-command line often.
 */

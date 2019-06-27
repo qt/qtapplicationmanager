@@ -66,9 +66,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     StartupTimer::instance()->checkpoint("entered main");
 
 #if defined(AM_TESTRUNNER)
-    QCoreApplication::setApplicationName(qSL("ApplicationManager QML Test Runner"));
+    QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Test Runner"));
 #else
-    QCoreApplication::setApplicationName(qSL("ApplicationManager"));
+    QCoreApplication::setApplicationName(qSL("Qt Application Manager"));
 #endif
     QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
     QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));

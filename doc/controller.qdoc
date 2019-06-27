@@ -37,6 +37,9 @@ The \c{appman-controller} is a command-line utility that can be used by the deve
 indirectly by other tools, on the target device to control the application manager without
 communicating directly with its D-Bus interface.
 
+\note In order to use this tool, the application manager has to be connected to either a session- or
+system-bus; don't run it with \c{--dbus none}.
+
 The following commands are available:
 
 \table

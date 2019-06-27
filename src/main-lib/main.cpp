@@ -108,9 +108,6 @@
 #if defined(AM_MULTI_PROCESS)
 #  include "processcontainer.h"
 #  include "nativeruntime.h"
-#  if defined(Q_OS_LINUX)
-#    include "sysfsreader.h"
-#  endif
 #endif
 #include "plugincontainer.h"
 #include "notificationmanager.h"
@@ -157,7 +154,7 @@ QT_BEGIN_NAMESPACE_AM
 // The QGuiApplication constructor
 
 Main::Main(int &argc, char **argv)
-    : MainBase(Main::preConstructor(argc), argv)
+    : MainBase(SharedMain::preConstructor(argc), argv)
     , SharedMain()
 {
     // this might be needed later on by the native runtime to find a suitable qml runtime launcher
@@ -194,32 +191,6 @@ Main::~Main()
     delete RuntimeFactory::instance();
     delete ContainerFactory::instance();
     delete StartupTimer::instance();
-}
-
-// We need to do some things BEFORE the Q*Application constructor runs, so we're using this
-// old trick to do this hooking transparently for the user of the class.
-int &Main::preConstructor(int &argc)
-{
-    SharedMain::preConstructor(argc);
-
-#if defined(AM_MULTI_PROCESS) && defined(Q_OS_LINUX) && !defined(AM_CROSS_COMPILED)
-    // Check if we are running with a propietary NVIDIA driver: if not, we can enable the
-    // new "linux-dmabuf" Wayland buffer extension, which will enable hardware accelerated
-    // OpenGL for Wayland clients, even when running the compositor as an X11 client.
-
-    SysFsReader modules("/proc/modules", 32768); // 32K should be plenty
-    const QByteArray ba = modules.readValue();
-    const int pos = ba.indexOf("nvidia");
-    if ((pos < 0) || ((pos > 0) && ba.at(pos - 1) != '\n')) { // not found or not at start of line
-        // only set linux-dmabuf, if the user doesn't force something else
-        if (!qEnvironmentVariableIsSet("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION")
-                && !qEnvironmentVariableIsSet("QT_XCB_GL_INTEGRATION")) {
-            qputenv("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION", "linux-dmabuf-unstable-v1");
-            qputenv("QT_XCB_GL_INTEGRATION", "xcb_egl");
-        }
-    }
-#endif
-    return argc;
 }
 
 /*! \internal
@@ -737,6 +708,12 @@ void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
     for (auto iface : qAsConst(m_startupPlugins))
         iface->beforeQmlEngineLoad(m_engine);
 
+    // protect our namespace from this point onward
+    qmlProtectModule("QtApplicationManager", 1);
+    qmlProtectModule("QtApplicationManager.SystemUI", 1);
+    qmlProtectModule("QtApplicationManager", 2);
+    qmlProtectModule("QtApplicationManager.SystemUI", 2);
+
     if (Q_UNLIKELY(loadDummyData)) {
         if (m_mainQmlLocalFile.isEmpty()) {
             qCDebug(LogQml) << "Not loading QML dummy data on non-local URL" << m_mainQml;
@@ -1225,30 +1202,33 @@ QVector<AbstractApplicationInfo *> Main::scanForApplications(const QStringList &
 
 QString Main::hardwareId() const
 {
+    static QString hardwareId;
+    if (hardwareId.isEmpty()) {
 #if defined(AM_HARDWARE_ID)
-    return QString::fromLocal8Bit(AM_HARDWARE_ID);
+        hardwareId = QString::fromLocal8Bit(AM_HARDWARE_ID);
 #elif defined(AM_HARDWARE_ID_FROM_FILE)
-    QFile f(QString::fromLocal8Bit(AM_HARDWARE_ID_FROM_FILE));
-    if (f.open(QFile::ReadOnly))
-        return QString::fromLocal8Bit(f.readAll().trimmed());
+        QFile f(QString::fromLocal8Bit(AM_HARDWARE_ID_FROM_FILE));
+        if (f.open(QFile::ReadOnly))
+            hardwareId = QString::fromLocal8Bit(f.readAll().trimmed());
 #else
-    QVector<QNetworkInterface> candidateIfaces;
-    for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
-        if (iface.isValid()
-                && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
-                && iface.type() > QNetworkInterface::Virtual
-                && !iface.hardwareAddress().isEmpty()) {
-            candidateIfaces << iface;
+        QVector<QNetworkInterface> candidateIfaces;
+        for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
+            if (iface.isValid()
+                    && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
+                    && iface.type() > QNetworkInterface::Virtual
+                    && !iface.hardwareAddress().isEmpty()) {
+                candidateIfaces << iface;
+            }
         }
-    }
-    if (!candidateIfaces.isEmpty()) {
-        std::sort(candidateIfaces.begin(), candidateIfaces.end(), [](const QNetworkInterface &first, const QNetworkInterface &second) {
-            return first.name().compare(second.name()) < 0;
-        });
-        return candidateIfaces.constFirst().hardwareAddress().replace(qL1C(':'), qL1S("-"));
-    }
+        if (!candidateIfaces.isEmpty()) {
+            std::sort(candidateIfaces.begin(), candidateIfaces.end(), [](const QNetworkInterface &first, const QNetworkInterface &second) {
+                return first.name().compare(second.name()) < 0;
+            });
+            hardwareId = candidateIfaces.constFirst().hardwareAddress().replace(qL1C(':'), qL1S("-"));
+        }
 #endif
-    return QString();
+    }
+    return hardwareId;
 }
 
 QT_END_NAMESPACE_AM

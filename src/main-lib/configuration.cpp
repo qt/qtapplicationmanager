@@ -134,6 +134,47 @@ void Configuration::mergeConfig(const QVariantMap &other)
     recursiveMergeVariantMap(m_config, other);
 }
 
+QByteArray Configuration::substituteVars(const QByteArray &str, const QString &fileName,
+                                         QStringList *deploymentWarnings)
+{
+    QByteArray string = str;
+    int posBeg = -1;
+    int posEnd = -1;
+    while (true) {
+        if ((posBeg = string.indexOf("${", posEnd + 1)) < 0)
+            break;
+        if ((posEnd = string.indexOf('}', posBeg + 2)) < 0)
+            break;
+
+        const QByteArray varName = string.mid(posBeg + 2, posEnd - posBeg - 2);
+
+        QByteArray varValue;
+        if (varName == "CONFIG_PWD") {
+            static QByteArray path;
+            if (path.isEmpty() && !fileName.isEmpty())
+                path = QFileInfo(fileName).path().toUtf8();
+            varValue = path;
+        } else if (varName.startsWith("env:")) {
+            varValue = qgetenv(varName.constData() + 4);
+        } else if (varName.startsWith("stdpath:")) {
+            bool exists;
+            int loc = QMetaEnum::fromType<QStandardPaths::StandardLocation>().keyToValue(varName.constData() + 8, &exists);
+            if (exists)
+                varValue = QStandardPaths::writableLocation(static_cast<QStandardPaths::StandardLocation>(loc)).toUtf8();
+        }
+
+        if (varValue.isEmpty() && deploymentWarnings) {
+            *deploymentWarnings << qL1S("Could not replace variable ${") + qL1S(varName)
+                                   + qL1S("} while parsing ") + fileName;
+            continue;
+        }
+        string.replace(posBeg, varName.length() + 3, varValue);
+        // varName and varValue most likely have a different length, so we have to adjust
+        posEnd = posEnd - 3 - varName.length() + varValue.length();
+    }
+    return string;
+}
+
 
 Configuration::Configuration(const QStringList &defaultConfigFilePaths, const QString &buildConfigFilePath)
     : m_defaultConfigFilePaths(defaultConfigFilePaths)
@@ -323,7 +364,7 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
         if (file.size() > 1024*1024)
             throw Exception("Config file '%1' is too big (> 1MB).\n").arg(file.fileName());
 
-        cf.content = file.readAll();
+        cf.content = substituteVars(file.readAll(), cf.filePath, deploymentWarnings);
 
         QByteArray checksum = QCryptographicHash::hash(cf.content, QCryptographicHash::Sha1);
         if (useCache && (checksum != cf.checksum)) {
@@ -353,21 +394,8 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
         m_config = cache;
     } else if (!configFilePaths.isEmpty()) {
         auto parseConfigFile = [](ConfigFile &cf) {
-            // we want to replace ${CONFIG_PWD} (when at the start of a value) with the abs. path
-            // to the config file it appears in, similar to qmake's $$_PRO_FILE_PWD
-            QString configFilePath = QFileInfo(cf.filePath).absolutePath();
-
-            auto replaceConfigPwd = [configFilePath](const QVariant &value) -> QVariant {
-                if (value.type() == QVariant::String) {
-                    QString str = value.toString();
-                    if (str.startsWith(qSL("${CONFIG_PWD}")))
-                        return QVariant(configFilePath + str.midRef(13));
-                }
-                return value;
-            };
-
             QtYaml::ParseError parseError;
-            QVector<QVariant> docs = QtYaml::variantDocumentsFromYamlFiltered(cf.content, replaceConfigPwd, &parseError);
+            QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(cf.content, &parseError);
 
             if (parseError.error != QJsonParseError::NoError) {
                 throw Exception("Could not parse config file '%1', line %2, column %3: %4.\n")

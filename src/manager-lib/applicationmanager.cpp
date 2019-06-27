@@ -1038,7 +1038,12 @@ bool ApplicationManager::openUrl(const QString &urlStr)
     if (!apps.isEmpty()) {
         if (!isSignalConnected(QMetaMethod::fromSignal(&ApplicationManager::openUrlRequested))) {
             // If the System-UI does not react to the signal, then just use the first match.
-            startApplicationInternal(apps.constFirst()->id(), urlStr, mimeTypeName);
+            try {
+                startApplicationInternal(apps.constFirst()->id(), urlStr, mimeTypeName);
+            } catch (const Exception &e) {
+                qCWarning(LogSystem) << "openUrl for" << urlStr << "requested app" << apps.constFirst()->id()
+                                     << "which could not be started:" << e.errorString();
+            }
         } else {
             ApplicationManagerPrivate::OpenUrlRequest req {
                 QUuid::createUuid().toString(),
@@ -1095,7 +1100,12 @@ void ApplicationManager::acknowledgeOpenUrlRequest(const QString &requestId, con
     for (auto it = d->openUrlRequests.begin(); it != d->openUrlRequests.end(); ++it) {
         if (it->requestId == requestId) {
             if (it->possibleAppIds.contains(appId)) {
-                startApplicationInternal(appId, it->urlStr, it->mimeTypeName);
+                try {
+                    startApplicationInternal(appId, it->urlStr, it->mimeTypeName);
+                } catch (const Exception &e) {
+                    qCWarning(LogSystem) << "acknowledgeOpenUrlRequest for" << it->urlStr << "requested app"
+                                         << appId << "which could not be started:" << e.errorString();
+                }
             } else {
                 qCWarning(LogSystem) << "acknowledgeOpenUrlRequest for" << it->urlStr << "requested app"
                                      << appId << "which is not one of the registered possibilities:"
@@ -1373,7 +1383,7 @@ void ApplicationManager::startSingleAppAndQuitWhenStopped()
 
     AbstractApplication *app = d->apps[0];
 
-    if (!startApplicationInternal(app->id())) {
+    if (!startApplication(app->id())) {
         QMetaObject::invokeMethod(qApp, "shutDown", Qt::DirectConnection, Q_ARG(int, 1));
     } else {
         connect(this, &ApplicationManager::applicationRunStateChanged, [app](const QString &id, Am::RunState runState) {
@@ -1656,7 +1666,7 @@ void ApplicationManager::addApplication(AbstractApplication *app)
 
     connect (&app->requests, &ApplicationRequests::startRequested,
             this, [this, app](const QString &documentUrl) {
-        startApplicationInternal(app->id(), documentUrl);
+        startApplication(app->id(), documentUrl);
     });
 
     connect (&app->requests, &ApplicationRequests::debugRequested,

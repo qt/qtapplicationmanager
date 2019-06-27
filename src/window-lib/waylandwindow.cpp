@@ -69,7 +69,11 @@ WaylandWindow::WaylandWindow(AbstractApplication *app, WindowSurface *surf)
         connect(m_surface, &WindowSurface::redraw,
                 this, &WaylandWindow::frameUpdated);
         connect(m_surface, &QWaylandSurface::hasContentChanged, this, &WaylandWindow::onContentStateChanged);
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
         connect(m_surface, &QWaylandSurface::sizeChanged, this, &Window::sizeChanged);
+#else
+        connect(m_surface, &QWaylandSurface::bufferSizeChanged, this, &Window::sizeChanged);
+#endif
 
         m_pingTimer->setInterval(1000);
         m_pingTimer->setSingleShot(true);
@@ -195,7 +199,11 @@ QString WaylandWindow::applicationId() const
 
 QSize WaylandWindow::size() const
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
     return m_surface->size();
+#else
+    return m_surface->bufferSize();
+#endif
 }
 
 void WaylandWindow::resize(const QSize &newSize)

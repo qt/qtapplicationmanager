@@ -87,7 +87,7 @@ Item {
                   "\u2022 App2 makes use of an IPC extension when it starts\n" +
                   "\u2022 App2 logs the document URL that started it\n" +
                   "\u2022 App2 triggers a notification in the System UI when the bulb icon is clicked\n" +
-                  "\u2022 Show Wayland client windows that originate from processes outside of \c appman"
+                  "\u2022 Show Wayland client windows that originate from processes outside of appman"
         }
     }
 }

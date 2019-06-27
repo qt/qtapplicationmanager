@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 {
     StartupTimer::instance()->checkpoint("entered main");
 
-    QCoreApplication::setApplicationName(qSL("ApplicationManager QML Launcher"));
+    QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Launcher"));
     QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
     QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
@@ -409,6 +409,12 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         iface->beforeQmlEngineLoad(&m_engine);
 
     StartupTimer::instance()->checkpoint("after loading plugins and import paths");
+
+    // protect our namespace from this point onward
+    qmlProtectModule("QtApplicationManager", 1);
+    qmlProtectModule("QtApplicationManager.Application", 1);
+    qmlProtectModule("QtApplicationManager", 2);
+    qmlProtectModule("QtApplicationManager.Application", 2);
 
     QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
     m_engine.rootContext()->setContextProperty(qSL("StartupTimer"), StartupTimer::instance());

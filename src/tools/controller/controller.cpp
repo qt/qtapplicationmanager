@@ -231,28 +231,30 @@ private:
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setApplicationName(qSL("ApplicationManager Controller"));
+    QCoreApplication::setApplicationName(qSL("Qt Application Manager Controller"));
     QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
     QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     ThrowingApplication a(argc, argv);
 
-    QString desc = qSL("\nLuxoft ApplicationManager controller tool\n\nAvailable commands are:\n");
+    QByteArray desc = "\n\nAvailable commands are:\n";
     uint longestName = 0;
     for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i)
         longestName = qMax(longestName, qstrlen(commandTable[i].name));
     for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
-        desc += qSL("  %1%2  %3\n")
-                .arg(qL1S(commandTable[i].name),
-                     QString(int(longestName - qstrlen(commandTable[i].name)), qL1C(' ')),
-                     qL1S(commandTable[i].description));
+        desc += "  ";
+        desc += commandTable[i].name;
+        desc += QByteArray(1 + int(longestName - qstrlen(commandTable[i].name)), ' ');
+        desc += commandTable[i].description;
+        desc += '\n';
     }
 
-    desc += qSL("\nMore information about each command can be obtained by running\n  appman-controller <command> --help");
+    desc += "\nMore information about each command can be obtained by running\n" \
+            "  appman-controller <command> --help";
 
     QCommandLineParser clp;
-    clp.setApplicationDescription(desc);
+    clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qL1S(desc));
 
     clp.addHelpOption();
     clp.addVersionOption();

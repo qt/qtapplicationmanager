@@ -56,6 +56,9 @@ class DeinstallationTask : public AsynchronousTask
 public:
     DeinstallationTask(ApplicationInfo *app, const InstallationLocation &installationLocation,
                        bool forceDeinstallation, bool keepDocuments, QObject *parent = nullptr);
+
+    bool cancel() override;
+
 protected:
     void execute() override;
 
@@ -64,6 +67,8 @@ private:
     const InstallationLocation &m_installationLocation;
     bool m_forceDeinstallation;
     bool m_keepDocuments;
+    bool m_canBeCanceled = true;
+    bool m_canceled = false;
 };
 
 QT_END_NAMESPACE_AM

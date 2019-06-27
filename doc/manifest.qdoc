@@ -189,6 +189,12 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
     \li array<string>
     \li An optional, platform specific list of special access rights for the application. Later,
         the middleware can query these capabilities and verify them, via the application manager.
+
+        \note The application manager itself does not attach any meaning to this list of strings.
+              Instead, the application manager acts as a trustee between the (digitally signed)
+              application manifest and the (customer specific) middleware; this middleware may
+              require more information about the application it's communicating with and the
+              application manager can act as a trusted source of application \e capabilities.
 \row
     \li \c version
     \li string

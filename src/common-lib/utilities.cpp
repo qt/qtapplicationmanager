@@ -248,7 +248,7 @@ void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *c
 #if defined(Q_OS_LINUX)
             static QString checkCreator = qSL("/proc/%1/exe");
             QFileInfo fi(checkCreator.arg(pid));
-            if (fi.readLink().contains(qSL("qtcreator"))) {
+            if (fi.symLinkTarget().contains(qSL("qtcreator"))) {
                 runningInCreatorDetected = true;
                 break;
             }

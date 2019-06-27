@@ -28,7 +28,6 @@ CONFIG *= static internal_module
 win32:LIBS += -luser32
 
 DEFINES += AM_BUILD_DIR=\\\"$$BUILD_DIR\\\"
-cross_compile:DEFINES += AM_CROSS_COMPILED
 
 HEADERS += \
     configuration.h \

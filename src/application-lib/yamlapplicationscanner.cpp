@@ -114,7 +114,7 @@ AbstractApplicationInfo *YamlApplicationScanner::scanInternal(const QString &fil
             app.reset(new ApplicationInfo);
             auto *appInfo = static_cast<ApplicationInfo*>(app.data());
             appInfo->m_manifestDir = QFileInfo(f).absoluteDir();
-            appInfo->m_codeDir = appInfo->manifestDir();
+            appInfo->m_codeDir.setPath(appInfo->manifestDir());
         }
 
         QVariantMap yaml = docs.at(1).toMap();

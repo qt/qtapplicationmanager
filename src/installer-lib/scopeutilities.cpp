@@ -124,7 +124,7 @@ bool ScopedRenamer::internalRename(const QDir &dir, const QString &from, const Q
 bool ScopedRenamer::rename(const QString &baseName, ScopedRenamer::Modes modes)
 {
     QFileInfo fi(baseName);
-    m_basePath = fi.absolutePath();
+    m_basePath.setPath(fi.absolutePath());
     m_name = fi.fileName();
     m_requested = modes;
 

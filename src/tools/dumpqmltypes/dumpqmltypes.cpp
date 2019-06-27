@@ -249,7 +249,7 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
 int main(int argc, char **argv)
 {
     try {
-        QCoreApplication::setApplicationName(qSL("ApplicationManager qmltypes dumper"));
+        QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Types Dumper"));
         QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
         QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
         QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
@@ -259,14 +259,13 @@ int main(int argc, char **argv)
         QCommandLineParser clp;
 
         const char *desc =
-                "Luxoft ApplicationManager qmltypes dumper"
                 "\n\n"
                 "This tool is used to generate the qmltypes type information for all ApplicationManager\n"
                 "classes to get auto-completion in QtCreator.\n"
                 "Either install the resulting output as $QTDIR/qml/QtApplicationManager/plugins.qmltypes\n"
                 "or simply run this tool with the --install option.\n";
 
-        clp.setApplicationDescription(qL1S(desc));
+        clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qL1S(desc));
         clp.addHelpOption();
         clp.addVersionOption();
         clp.addOption({ qSL("install"), qSL("directly install into the Qt directory.") });
@@ -283,12 +282,12 @@ int main(int argc, char **argv)
         QDir outDir;
 
         if (clp.isSet(qSL("install")) && clp.positionalArguments().isEmpty()) {
-            outDir = QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath);
+            outDir.setPath(QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath));
             if (!outDir.exists())
                 throw Exception("Qt's QML2 imports directory (%1) is missing.")
                     .arg(outDir.absolutePath());
         } else if (clp.positionalArguments().count() == 1) {
-            outDir = clp.positionalArguments().first();
+            outDir.setPath(clp.positionalArguments().first());
             if (!outDir.mkpath(qSL(".")))
                 throw Exception("Cannot create destination directory %1.").arg(outDir.absolutePath());
         } else {

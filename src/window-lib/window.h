@@ -48,10 +48,10 @@
 #include <QQuickItem>
 #include <QSet>
 #include <QtAppManCommon/global.h>
+#include <QtAppManManager/application.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class AbstractApplication;
 class WindowItem;
 
 // A Window object exists for every application window that is managed by the application-manager
@@ -125,7 +125,7 @@ signals:
     void _windowDestroyed();
 
 protected:
-    AbstractApplication *m_application;
+    QPointer<AbstractApplication> m_application;
 
     QSet<WindowItem*> m_items;
     WindowItem *m_primaryItem{nullptr};

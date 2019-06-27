@@ -75,6 +75,8 @@ protected:
 private:
     QVariant findInConfigFile(const QVector<const char *> &path, bool *found = nullptr) const;
     void mergeConfig(const QVariantMap &other);
+    static QByteArray substituteVars(const QByteArray &str, const QString &fileName,
+                                     QStringList *deploymentWarnings = nullptr);
 
 protected:
     QStringList m_defaultConfigFilePaths;

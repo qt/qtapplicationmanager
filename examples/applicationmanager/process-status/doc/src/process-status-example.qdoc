@@ -29,7 +29,7 @@
 /*!
 
 \example applicationmanager/process-status
-\title Display Information about Application Processes
+\title Display Information about Application Processes Example
 \image process-status-example.png
 \brief How to use ProcessStatus to display application process information.
 \ingroup applicationmanager-examples

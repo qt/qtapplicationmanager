@@ -96,6 +96,9 @@ StartupInterface::~StartupInterface() { }
 /*! \fn void StartupInterface::beforeQmlEngineLoad(QQmlEngine *engine)
 
     This method is called, before the QML \a engine is loaded.
+
+    \note All \c QtApplicationManager* QML namespaces are locked for new registrations via
+          qmlProtectModule() after this call.
 */
 
 /*! \fn void StartupInterface::afterQmlEngineLoad(QQmlEngine *engine)

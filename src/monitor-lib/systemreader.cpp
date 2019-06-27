@@ -210,7 +210,8 @@ public:
             setArguments({ qSL("dmon"), qSL("--select"), qSL("u") });
         }
 
-        QObject::connect(this, static_cast<void(QProcess::*)(int)>(&QProcess::finished), this, [this](int exitCode) {
+        QObject::connect(this, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+                         this, [this](int exitCode, QProcess::ExitStatus) {
             if (m_refCount) {
                 qCWarning(LogSystem) << "Failed to run GPU monitoring tool:"
                                      << program() << arguments().join(qSL(" ")) << " - "

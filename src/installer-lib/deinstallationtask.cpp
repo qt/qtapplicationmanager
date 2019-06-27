@@ -63,6 +63,13 @@ DeinstallationTask::DeinstallationTask(ApplicationInfo *app, const InstallationL
     m_applicationId = m_app->id(); // in base class
 }
 
+bool DeinstallationTask::cancel()
+{
+    if (m_canBeCanceled)
+        m_canceled = true;
+    return m_canceled;
+}
+
 void DeinstallationTask::execute()
 {
     // these have been checked in ApplicationInstaller::removePackage() already
@@ -84,6 +91,15 @@ void DeinstallationTask::execute()
         if (!managerApproval)
             throw Exception("ApplicationManager rejected the removal of app %1").arg(m_app->id());
 
+        // if the app was running before, we now need to wait until is has actually stopped
+        while (!m_canceled &&
+               (ApplicationManager::instance()->applicationRunState(m_app->id()) != Am::NotRunning)) {
+            QThread::msleep(30);
+        }
+        // there's a small race condition here, but not doing a planned cancellation isn't harmful
+        m_canBeCanceled = false;
+        if (m_canceled)
+            throw Exception(Error::Canceled, "canceled");
 
         ScopedRenamer docDirRename;
         ScopedRenamer appDirRename;

@@ -425,6 +425,8 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
     if (singleApp.isEmpty()) {
         if (!QFile::exists(databasePath)) // make sure to create a database on the first run
             recreateDatabase = true;
+        if (QFileInfo(databasePath).size() == 0) // cope with Windows' 0-byte left-overs
+            recreateDatabase = true;
 
         if (recreateDatabase) {
             const QString dbDir = QFileInfo(databasePath).absolutePath();

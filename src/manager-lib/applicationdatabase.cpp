@@ -167,6 +167,8 @@ void ApplicationDatabase::write(const QVector<AbstractApplication *> &apps) Q_DE
 
     if (ds.status() != QDataStream::Ok)
         throw Exception(*d->file, "could not write to application database");
+
+    d->file->flush();
 }
 
 void ApplicationDatabase::invalidate()

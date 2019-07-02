@@ -120,7 +120,6 @@ bool QmlInProcessRuntime::start()
         qCDebug(LogSystem) << "Updated Qml import paths:" << m_inProcessQmlEngine->importPathList();
     }
 
-    m_componentError = false;
     QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, m_app->nonAliasedInfo()->absoluteCodeFilePath());
 
     if (!component->isReady()) {
@@ -143,7 +142,7 @@ bool QmlInProcessRuntime::start()
 
     QMetaObject::invokeMethod(this, [component, appContext, obj, this]() {
         component->completeCreate();
-        if (!obj || m_componentError) {
+        if (!obj) {
             qCCritical(LogSystem) << "could not load" << m_app->nonAliasedInfo()->absoluteCodeFilePath() << ": no root object";
             delete obj;
             delete appContext;

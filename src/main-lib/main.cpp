@@ -348,11 +348,11 @@ void Main::parseSystemProperties(const QVariantMap &rawSystemProperties)
 
 void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    // For some weird reason, QFile cannot cope with "qrc:/" and QUrl cannot cope with ":/" , so
-    // we have to translate ourselves between those two "worlds".
+    // For some weird reason, QFile cannot cope with "qrc:/" and QUrl cannot cope with ":/",
+    // so we have to translate ourselves between those two "worlds".
 
     if (mainQml.startsWith(qSL(":/")))
-        m_mainQml = QUrl(qSL("qrc:") + mainQml.mid(1));
+        m_mainQml = QUrl(qSL("qrc") + mainQml);
     else
         m_mainQml = QUrl::fromUserInput(mainQml, QDir::currentPath(), QUrl::AssumeLocalFile);
 
@@ -361,8 +361,14 @@ void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
     else if (m_mainQml.scheme() == qSL("qrc"))
         m_mainQmlLocalFile = qL1C(':') + m_mainQml.path();
 
-    if (!m_mainQmlLocalFile.isEmpty() && !QFile::exists(m_mainQmlLocalFile))
-        throw Exception("no/invalid main QML file specified: %1").arg(m_mainQmlLocalFile);
+    if (!QFileInfo(m_mainQmlLocalFile).isFile()) {
+        if (mainQml.isEmpty())
+            throw Exception("No main QML file specified");
+
+        // basically accept schemes other than file and qrc:
+        if (!m_mainQmlLocalFile.isEmpty())
+            throw Exception("Invalid main QML file specified: %1").arg(mainQml);
+    }
 }
 
 void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false)

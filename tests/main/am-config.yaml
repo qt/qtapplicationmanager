@@ -12,3 +12,6 @@ installationLocations:
   documentPath: "/tmp/am-test-main/docs"
   mountPoint: "/tmp"
   isDefault: true
+
+ui:
+  mainQml: "${CONFIG_PWD}/dummy.qml"

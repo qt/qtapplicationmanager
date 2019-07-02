@@ -57,7 +57,8 @@ private slots:
     void installAndRemoveUpdateForBuiltIn();
     void updateForBuiltInAlreadyInstalled();
     void loadDatabaseWithUpdatedBuiltInApp();
-    void nonExistentMainQmlFile();
+    void mainQmlFile_data();
+    void mainQmlFile();
 
 private:
     void cleanUpInstallationDir();
@@ -289,25 +290,46 @@ void tst_Main::loadDatabaseWithUpdatedBuiltInApp()
     QCOMPARE(app->name(qSL("en")), qSL("Hello Updated Red"));
 }
 
-/*
-   When the "main QML file" parameter contains a relative filepath like "foo/bar.qml",
-   Main should treat it as a local file (instead of a remote url) and complain that it
-   doesn't exist.
- */
-void tst_Main::nonExistentMainQmlFile()
+void tst_Main::mainQmlFile_data()
 {
+    QTest::addColumn<QString>("mainQml");
+    QTest::addColumn<QString>("expectedErrorMsg");
+
+    QTest::newRow("none") << "" << "No main QML file specified";
+
+    QTest::newRow("invalid") << "foo/bar.qml" << "Invalid main QML file specified: foo/bar.qml";
+    QTest::newRow("invalid-dir") << "." << "Invalid main QML file specified: .";
+    QTest::newRow("invalid-qrc1") << ":/bar.qml" << "Invalid main QML file specified: :/bar.qml";
+    // "://bar.qml" yields an absolute file path of ":" and QFile::exists() would always return true
+    QTest::newRow("invalid-qrc2") << "://bar.qml" << "Invalid main QML file specified: ://bar.qml";
+    QTest::newRow("invalid-qrc-dir") << ":/foo" << "Invalid main QML file specified: :/foo";
+
+    QTest::newRow("valid-native") << QFINDTESTDATA("dummy.qml") << "";
+    QTest::newRow("valid-qrc-file") << ":/foo/dummy.qml" << "";
+    QTest::newRow("valid-qrc-url") << "qrc:///foo/dummy.qml" << "";
+
+    // Passes unchecked:
+    QTest::newRow("https") << "https://www.qt.io/foo/bar.qml" << "";
+    QTest::newRow("assets") << "assets:///foo/bar.qml" << "";
+}
+
+void tst_Main::mainQmlFile()
+{
+    QFETCH(QString, mainQml);
+    QFETCH(QString, expectedErrorMsg);
+
     QStringList arguments;
     arguments << "tst_update-builtin-app";
     arguments << "--dbus";
     arguments << "none";
-    arguments << "foo/bar.qml";
-
-    QString errorMsg;
+    arguments << mainQml;
 
     main = new Main(argc, argv);
 
-    config = new DefaultConfiguration;
+    config = new DefaultConfiguration(QStringList(QFINDTESTDATA("am-config.yaml")), QString());
     config->parseWithArguments(arguments);
+
+    QString errorMsg;
 
     try {
         main->setup(config);
@@ -315,8 +337,7 @@ void tst_Main::nonExistentMainQmlFile()
         errorMsg.append(e.what());
     }
 
-    QVERIFY(errorMsg.startsWith("no/invalid main QML file specified:"));
-    QVERIFY(errorMsg.contains("bar.qml"));
+    QCOMPARE(errorMsg, expectedErrorMsg);
 
     delete config;
     config = nullptr;

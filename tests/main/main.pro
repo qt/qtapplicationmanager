@@ -12,3 +12,5 @@ QT *= appman_manager-private \
       appman_main-private \
 
 SOURCES += tst_main.cpp
+
+RESOURCES = main.qrc

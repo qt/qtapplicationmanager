@@ -150,7 +150,7 @@ void DefaultConfiguration::parseWithArguments(const QStringList &arguments, QStr
 
 QString DefaultConfiguration::mainQmlFile() const
 {
-    if (!m_clp.positionalArguments().isEmpty() && m_clp.positionalArguments().at(0).endsWith(qL1S(".qml")))
+    if (!m_clp.positionalArguments().isEmpty())
         return m_clp.positionalArguments().at(0);
     else
         return value<QString>(nullptr, { "ui", "mainQml" });

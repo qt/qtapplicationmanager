@@ -98,7 +98,6 @@ private:
 
     QString m_document;
     QmlInProcessApplicationInterface *m_applicationIf = nullptr;
-    bool m_componentError;
 
     bool m_stopIfNoVisibleSurfaces = false;
 

@@ -76,6 +76,7 @@
 #  include <QGuiApplication>
 #  include <QQuickView>
 #  include <QQuickItem>
+#  include <QTouchDevice>
 #  include <private/qopenglcontext_p.h>
 #endif
 
@@ -695,9 +696,14 @@ void Main::setupTouchEmulation(bool enableTouchEmulation)
 {
     if (enableTouchEmulation) {
         if (TouchEmulation::isSupported()) {
-            TouchEmulation::createInstance();
-            qCDebug(LogGraphics) << "Touch emulation is enabled: all mouse events will be converted "
-                                    "to touch events.";
+            if (QTouchDevice::devices().isEmpty()) {
+                TouchEmulation::createInstance();
+                qCDebug(LogGraphics) << "Touch emulation is enabled: all mouse events will be "
+                                        "converted to touch events.";
+            } else {
+                qCDebug(LogGraphics) << "Touch emulation is disabled, because at least one touch "
+                                        "input device was detected";
+            }
         } else {
             qCWarning(LogGraphics) << "Touch emulation cannot be enabled. Either it was disabled at "
                                       "build time or the platform does not support it.";

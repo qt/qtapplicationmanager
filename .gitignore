@@ -24,6 +24,7 @@ branch-coverage
 .qmake.*
 *.pch
 *.log
+*.rcc
 
 config.tests/*/*
 !config.tests/*/*[.]*

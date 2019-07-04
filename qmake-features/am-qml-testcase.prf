@@ -55,7 +55,8 @@ OTHER_FILES += $$IMPORTS_DIR
 
 # Read a config file
 for(config, AM_CONFIG) {
-    COMMAND += -c $$absolute_path($$config, $$_PRO_FILE_PWD_)
+    isEmpty(TESTRUN_CWD): COMMAND += -c $$absolute_path($$config, $$_PRO_FILE_PWD_)
+    else: COMMAND += -c $$config
 }
 OTHER_FILES += $$AM_CONFIG
 
@@ -82,8 +83,7 @@ OTHER_FILES += $$TEST_FILES
 
 # Copy assets to build folder
 for (d , DIRECTORIES) {
-    win32: do_copydata.commands += $(COPY_DIR) $$shell_path($$_PRO_FILE_PWD_/$${d}) $$shell_path($$OUT_PWD/$${d}) $$escape_expand(\n\t)
-    else: do_copydata.commands += $(COPY_DIR) $$shell_path($$_PRO_FILE_PWD_/$${d}) $$shell_path($$OUT_PWD) $$escape_expand(\n\t)
+    do_copydata.commands += $(COPY_DIR) $$shell_path($$_PRO_FILE_PWD_/$${d}) $$shell_path($$OUT_PWD/$${d}) $$escape_expand(\n\t)
 }
 for (f , FILES) {
     do_copydata.commands += $(COPY) $$shell_path($$_PRO_FILE_PWD_/$${f}) $$shell_path($$OUT_PWD/$${f}) $$escape_expand(\n\t)

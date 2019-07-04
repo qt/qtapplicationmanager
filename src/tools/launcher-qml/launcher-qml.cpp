@@ -349,7 +349,18 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     }
 
-    if (!QFile::exists(qmlFile)) {
+    QVariant resVar = runtimeParameters.value(qSL("resources"));
+    const QVariantList resources = (resVar.type() == QVariant::String) ? QVariantList{resVar}
+                                                                       : qdbus_cast<QVariantList>(resVar);
+    for (const QVariant &resource : resources) {
+        if (!loadResource(resource.toString()))
+            qCWarning(LogQmlRuntime) << "Cannot register resource:" << resource.toString();
+    }
+
+    const QUrl qmlFileUrl = filePathToUrl(qmlFile, baseDir);
+    const QString qmlFileStr = urlToLocalFilePath(qmlFileUrl);
+
+    if (!QFile::exists(qmlFileStr)) {
         qCCritical(LogQmlRuntime) << "could not load" << qmlFile << ": file does not exist";
         QCoreApplication::exit(2);
         return;
@@ -399,7 +410,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     if (loadDummyData) {
         qCDebug(LogQmlRuntime) << "loading dummy-data";
-        loadQmlDummyDataFiles(&m_engine, QFileInfo(qmlFile).path());
+        loadQmlDummyDataFiles(&m_engine, QFileInfo(qmlFileStr).path());
     }
 
     QVariant imports = runtimeParameters.value(qSL("importPaths"));
@@ -407,8 +418,9 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
                                                                  : qdbus_cast<QVariantList>(imports);
     for (const QVariant &v : vl) {
         const QString path = v.toString();
-        if (QFileInfo(path).isRelative())
-            m_engine.addImportPath(QDir().absoluteFilePath(path));
+        const QFileInfo fi(path);
+        if (!(fi.isNativePath() && fi.isAbsolute()))
+            m_engine.addImportPath(toAbsoluteFilePath(path));
         else
             qCWarning(LogQmlRuntime) << "Omitting absolute import path in info file for safety reasons:" << path;
     }
@@ -425,7 +437,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     qmlProtectModule("QtApplicationManager", 2);
     qmlProtectModule("QtApplicationManager.Application", 2);
 
-    QUrl qmlFileUrl = QUrl::fromLocalFile(qmlFile);
     m_engine.rootContext()->setContextProperty(qSL("StartupTimer"), StartupTimer::instance());
     m_engine.load(qmlFileUrl);
 
@@ -434,7 +445,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     auto topLevels = m_engine.rootObjects();
 
     if (Q_UNLIKELY(topLevels.isEmpty() || !topLevels.at(0))) {
-        qCCritical(LogSystem) << "could not load" << qmlFile << ": no root object";
+        qCCritical(LogSystem) << "could not load" << qmlFileStr << ": no root object";
         QCoreApplication::exit(3);
         return;
     }

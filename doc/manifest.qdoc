@@ -271,6 +271,13 @@ that specifies which runtime a configuration option applies to:
     \li A list of paths to add to the QML-engine's import paths. Use of this parameter is
         equivalent to setting \c QML2_IMPORT_PATH for a program started from the command line.
 \row
+    \li \c resources
+    \li qml, qml-in-process
+    \li array<string>
+    \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that have
+        resources \l{Compiled-In Resources}{compiled-in} and registers them within the application
+        process. Resources can be accessed with the ":" or "qrc://" file path prefix.
+\row
     \li \c arguments
     \li native
     \li array<string>

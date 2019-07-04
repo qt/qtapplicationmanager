@@ -1,0 +1,16 @@
+formatVersion: 1
+formatType: am-package
+---
+id: 'app1'
+icon: 'icon.png'
+name:
+  en: 'Resource Test App 1'
+
+applications:
+  - id: 'app1'
+    code: 'qrc:///app1.qml'
+    runtime: 'qml'
+    runtimeParameters:
+      importPaths: "qrc:///qml"
+      resources: [ "app1file.rcc",
+                   "libapp1plugin.so" ]

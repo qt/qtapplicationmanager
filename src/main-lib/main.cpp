@@ -226,6 +226,8 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     for (const QString &warning : deploymentWarnings)
         qCWarning(LogDeployment).noquote() << warning;
 
+    registerResources(cfg->resources());
+
     setupOpenGL(cfg->openGLConfiguration());
     setupIconTheme(cfg->iconThemeSearchPaths(), cfg->iconThemeName());
 
@@ -326,6 +328,14 @@ QQmlApplicationEngine *Main::qmlEngine() const
     return m_engine;
 }
 
+void Main::registerResources(const QStringList &resources) const
+{
+    for (const QString &resource: resources) {
+        if (!loadResource(resource))
+            qCWarning(LogSystem) << "Cannot register resource:" << resource;
+    }
+}
+
 void Main::loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginPaths);
@@ -358,15 +368,8 @@ void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
     // For some weird reason, QFile cannot cope with "qrc:/" and QUrl cannot cope with ":/",
     // so we have to translate ourselves between those two "worlds".
 
-    if (mainQml.startsWith(qSL(":/")))
-        m_mainQml = QUrl(qSL("qrc") + mainQml);
-    else
-        m_mainQml = QUrl::fromUserInput(mainQml, QDir::currentPath(), QUrl::AssumeLocalFile);
-
-    if (m_mainQml.isLocalFile())
-        m_mainQmlLocalFile = m_mainQml.toLocalFile();
-    else if (m_mainQml.scheme() == qSL("qrc"))
-        m_mainQmlLocalFile = qL1C(':') + m_mainQml.path();
+    m_mainQml = filePathToUrl(mainQml, QDir::currentPath());
+    m_mainQmlLocalFile = urlToLocalFilePath(m_mainQml);
 
     if (!QFileInfo(m_mainQmlLocalFile).isFile()) {
         if (mainQml.isEmpty())

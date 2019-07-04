@@ -1,0 +1,3 @@
+module widgets
+RedRect 1.0 RedRect.qml
+MagentaRect 1.0 MagentaRect.qml

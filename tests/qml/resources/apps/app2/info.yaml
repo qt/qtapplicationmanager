@@ -1,0 +1,15 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'app2'
+icon:    'icon.png'
+name:
+  en: 'Resource Test App 2'
+
+applications:
+  - id: 'app2'
+    code:    ':/app2.qml'
+    runtime: 'qml'
+    runtimeParameters:
+      importPaths: "qml"
+      resources: "app2.rcc"

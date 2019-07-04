@@ -46,6 +46,11 @@
 #include <QByteArray>
 #include <QMultiMap>
 #include <QVariant>
+#include <QString>
+#include <QUrl>
+#include <QDir>
+#include <QResource>
+#include <QLibrary>
 
 #include <QtAppManCommon/global.h>
 
@@ -68,6 +73,28 @@ inline QStringList variantToStringList(const QVariant &v)
 {
     return (v.type() == QVariant::String) ? QStringList(v.toString())
                                           : v.toStringList();
+}
+
+// Translate between QFile and QUrl (resource) representations.
+// For some weird reason, QFile cannot cope with "qrc:" and QUrl cannot cope with ":".
+inline QUrl filePathToUrl(const QString &path, const QString &baseDir)
+{
+    return path.startsWith(qSL(":")) ? QUrl(qSL("qrc") + path)
+                                     : QUrl::fromUserInput(path, baseDir, QUrl::AssumeLocalFile);
+}
+
+inline QString urlToLocalFilePath(const QUrl &url)
+{
+    if (url.isLocalFile())
+        return url.toLocalFile();
+    else if (url.scheme() == qSL("qrc"))
+        return qL1C(':') + url.path();
+    return QString();
+}
+
+inline QString toAbsoluteFilePath(const QString &path, const QString &baseDir = QDir::currentPath())
+{
+    return path.startsWith(qSL("qrc:")) ? path.mid(3) : QDir(baseDir).absoluteFilePath(path);
 }
 
 /*! \internal
@@ -118,6 +145,14 @@ QVector<T *> loadPlugins(const char *type, const QStringList &files) Q_DECL_NOEX
     for (auto p : plugins)
         result << qobject_cast<T *>(p);
     return result;
+}
+
+// Load a Qt resource, either in the form of a resource file or a plugin
+inline bool loadResource(const QString &resource)
+{
+    return QLibrary::isLibrary(resource)
+           ? (QLibrary(QDir().absoluteFilePath(resource)).load() || QResource::registerResource(resource))
+           : (QResource::registerResource(resource) || QLibrary(QDir().absoluteFilePath(resource)).load());
 }
 
 QT_END_NAMESPACE_AM

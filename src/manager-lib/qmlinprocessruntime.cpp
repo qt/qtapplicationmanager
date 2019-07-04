@@ -105,6 +105,19 @@ bool QmlInProcessRuntime::start()
         return false;
     }
 
+    const QString codeDir = m_app->codeDir() + QDir::separator();
+
+    const QStringList resources = variantToStringList(m_app->runtimeParameters().value(qSL("resources")));
+    for (const QString &resource : resources) {
+        const QString path = QFileInfo(resource).isRelative() ? codeDir + resource : resource;
+        static QStringList cache;
+        if (!cache.contains(path)) {
+            if (!loadResource(path))
+                qCWarning(LogQmlRuntime) << "Cannot register resource:" << path;
+            cache.append(path);
+        }
+    }
+
     if (m_app->runtimeParameters().value(qSL("loadDummyData")).toBool()) {
         qCDebug(LogSystem) << "Loading dummy-data";
         loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->info()->absoluteCodeFilePath()).path());
@@ -113,14 +126,14 @@ bool QmlInProcessRuntime::start()
     const QStringList importPaths = variantToStringList(configuration().value(qSL("importPaths")))
                                   + variantToStringList(m_app->runtimeParameters().value(qSL("importPaths")));
     if (!importPaths.isEmpty()) {
-        const QString codeDir = m_app->codeDir() + QDir::separator();
         for (const QString &path : importPaths)
             m_inProcessQmlEngine->addImportPath(QFileInfo(path).isRelative() ? codeDir + path : path);
 
         qCDebug(LogSystem) << "Updated Qml import paths:" << m_inProcessQmlEngine->importPathList();
     }
 
-    QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, m_app->info()->absoluteCodeFilePath());
+    const QUrl qmlFileUrl = filePathToUrl(m_app->info()->absoluteCodeFilePath(), codeDir);
+    QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, qmlFileUrl);
 
     if (!component->isReady()) {
         qCDebug(LogSystem) << "qml-file (" << m_app->info()->absoluteCodeFilePath() << "): component not ready:\n" << component->errorString();

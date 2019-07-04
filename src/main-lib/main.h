@@ -105,6 +105,7 @@ public:
     QQmlApplicationEngine *qmlEngine() const;
 
 protected:
+    void registerResources(const QStringList &resources) const;
     void loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false);
     void parseSystemProperties(const QVariantMap &rawSystemProperties);
     void setupDBus(const std::function<QString(const char *)> &busForInterface,

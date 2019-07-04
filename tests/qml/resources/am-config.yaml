@@ -1,0 +1,13 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installedAppsManifestDir: "/tmp/am-resource-test/manifests"
+  installationDir: "/tmp/am-resource-test/apps"
+  appImageMountDir: "/tmp/am-resource-test/image-mounts"
+
+ui:
+  importPaths: "qrc:///qml"
+  resources: [ "${CONFIG_PWD}/systemuifile.rcc",
+               "${CONFIG_PWD}/libsystemuiplugin.so" ]

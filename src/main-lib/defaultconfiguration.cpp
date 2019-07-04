@@ -56,6 +56,7 @@
 #include <QtAppManCommon/logging.h>
 
 #include "defaultconfiguration.h"
+#include "utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -256,7 +257,7 @@ QStringList DefaultConfiguration::importPaths() const
     QStringList importPaths = value<QStringList>("I", { "ui", "importPaths" });
 
     for (int i = 0; i < importPaths.size(); ++i)
-        importPaths[i] = QFileInfo(importPaths.at(i)).absoluteFilePath();
+        importPaths[i] = toAbsoluteFilePath(importPaths.at(i));
 
     return importPaths;
 }
@@ -371,6 +372,11 @@ QString DefaultConfiguration::dltId() const
 QString DefaultConfiguration::dltDescription() const
 {
     return value<QString>(nullptr, { "logging", "dlt", "description" });
+}
+
+QStringList DefaultConfiguration::resources() const
+{
+    return value<QStringList>(nullptr, { "ui", "resources" });
 }
 
 QVariantMap DefaultConfiguration::openGLConfiguration() const

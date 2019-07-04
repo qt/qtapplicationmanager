@@ -47,6 +47,7 @@
 #include "exception.h"
 #include "installationreport.h"
 #include "packageinfo.h"
+#include "utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -167,8 +168,7 @@ QVariantMap ApplicationInfo::toVariantMap() const
 
 QString ApplicationInfo::absoluteCodeFilePath() const
 {
-    QString code = m_codeFilePath;
-    return code.isEmpty() ? QString() : QDir(packageInfo()->baseDir()).absoluteFilePath(code);
+    return toAbsoluteFilePath(m_codeFilePath, packageInfo()->baseDir().path());
 }
 
 QString ApplicationInfo::codeFilePath() const

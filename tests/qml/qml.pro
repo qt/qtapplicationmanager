@@ -15,4 +15,5 @@ SUBDIRS = \
     crash/apps/tld.test.crash/terminator2 \
     crash \
     configs \
-    lifecycle
+    lifecycle \
+    resources

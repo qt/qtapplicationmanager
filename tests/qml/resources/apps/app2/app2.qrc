@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>app2.qml</file>
+    <file>BlueRect.qml</file>
+</qresource>
+</RCC>

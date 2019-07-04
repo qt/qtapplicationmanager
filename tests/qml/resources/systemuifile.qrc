@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>qml/widgets/RedRect.qml</file>
+    <file>qml/widgets/qmldir</file>
+</qresource>
+</RCC>

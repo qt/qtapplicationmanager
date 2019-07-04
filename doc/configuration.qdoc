@@ -226,6 +226,12 @@ or across multiple config files, the final value is resolved based on these rule
         \li string
         \li If set, the given style is used by QtQuickControls 2.
     \row
+        \li [\c ui/resources]
+        \li array<string>
+        \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that
+            have resources \l{Compiled-In Resources}{compiled-in} and registers them within the
+            System UI process. Resources can be accessed with the ":" or "qrc://" file path prefix.
+    \row
         \li [\c plugins]
         \li map<array<string>>
         \li A string-to-string-list map that defines plugins that the application manager should

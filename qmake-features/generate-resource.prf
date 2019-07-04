@@ -1,0 +1,10 @@
+load(resources)
+
+generate_rcc.input = RESOURCE_SOURCE
+generate_rcc.name = RCC Generator
+generate_rcc.depend_command = $$QMAKE_RCC_DEP -list -binary ${QMAKE_FILE_IN}
+generate_rcc.CONFIG += dep_lines target_predeps no_link
+generate_rcc.output = ${QMAKE_FILE_BASE}.rcc
+generate_rcc.commands = $$QMAKE_RCC -binary ${QMAKE_FILE_IN} -o ${QMAKE_FILE_OUT}
+
+QMAKE_EXTRA_COMPILERS += generate_rcc

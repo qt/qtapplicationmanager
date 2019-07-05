@@ -4,7 +4,8 @@ MODULE = appman_monitor
 
 load(am-config)
 
-QT = core gui
+QT = core
+!headless: QT *= gui
 
 QT_FOR_PRIVATE *= \
     appman_common-private \

@@ -42,6 +42,8 @@
 
 #pragma once
 
+#if !defined(AM_HEADLESS)
+
 #include <QElapsedTimer>
 #include <QObject>
 #include <QPointer>
@@ -132,3 +134,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // !AM_HEADLESS

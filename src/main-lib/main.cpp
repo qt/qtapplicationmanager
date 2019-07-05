@@ -128,6 +128,7 @@
 #  endif
 #  include "touchemulation.h"
 #  include "windowframetimer.h"
+#  include "gpustatus.h"
 #endif
 
 #include "configuration.h"
@@ -141,7 +142,6 @@
 
 // monitor-lib
 #include "cpustatus.h"
-#include "gpustatus.h"
 #include "iostatus.h"
 #include "memorystatus.h"
 #include "monitormodel.h"
@@ -627,8 +627,10 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
+#if !defined(AM_HEADLESS)
     qmlRegisterType<WindowFrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
+#endif
     qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
@@ -694,6 +696,9 @@ void Main::setupWindowManager(const QString &waylandSocketName, bool slowAnimati
 
 void Main::setupTouchEmulation(bool enableTouchEmulation)
 {
+#if defined(AM_HEADLESS)
+    Q_UNUSED(enableTouchEmulation)
+#else
     if (enableTouchEmulation) {
         if (TouchEmulation::isSupported()) {
             if (QTouchDevice::devices().isEmpty()) {
@@ -709,6 +714,7 @@ void Main::setupTouchEmulation(bool enableTouchEmulation)
                                       "build time or the platform does not support it.";
         }
     }
+#endif
 }
 
 void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)

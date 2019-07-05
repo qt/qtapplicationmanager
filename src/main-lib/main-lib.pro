@@ -33,12 +33,16 @@ HEADERS += \
     configuration.h \
     main.h \
     defaultconfiguration.h \
+
+!headless:HEADERS += \
     windowframetimer.h \
 
 SOURCES += \
     main.cpp \
     configuration.cpp \
     defaultconfiguration.cpp \
+
+!headless:SOURCES += \
     windowframetimer.cpp \
 
 load(qt_module)

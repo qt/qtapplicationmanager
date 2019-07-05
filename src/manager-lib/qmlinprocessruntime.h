@@ -82,7 +82,9 @@ public:
 public slots:
     bool start() override;
     void stop(bool forceKill = false) override;
+#if !defined(AM_HEADLESS)
     void stopIfNoVisibleSurfaces();
+#endif
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface

@@ -2,7 +2,8 @@ TEMPLATE = aux
 
 # setup the correct include paths for qdoc
 CONFIG += force_qt
-QT *= core network quick
+QT = core network
+qtHaveModule(quick):QT *= quick
 
 # needed for the new clang based qdoc parser in Qt 5.11
 !prefix_build:INCLUDEPATH *= $$[QT_INSTALL_HEADERS]

@@ -5,6 +5,10 @@ CONFIG *= no_private_qt_headers_warning hide_symbols
 CONFIG -= app_bundle qml_debug
 CONFIG += exceptions
 
+!qtHaveModule(gui)|!qtHaveModule(quick)|!qtConfig(opengl) {
+    CONFIG *= headless
+}
+
 DEFINES += QT_MESSAGELOGCONTEXT
 
 win32-msvc*:QMAKE_CXXFLAGS += /FS /wd4290 /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS

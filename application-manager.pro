@@ -22,10 +22,12 @@ else:contains(QT_BUILD_PARTS, "examples"):CONFIG += enable-examples
     load(configure)
     qtCompileTest(libarchive)
     qtCompileTest(libyaml)
-    !headless:qtCompileTest(touchemulation)
+    !headless:qtHaveModule(gui):qtCompileTest(touchemulation)
 }
 
-qtHaveModule(waylandcompositor):CONFIG += am_compatible_compositor
+qtHaveModule(waylandcompositor):qtHaveModule(quick):qtConfig(opengl):CONFIG += am_compatible_compositor
+
+load(am-config)
 
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")
@@ -33,8 +35,6 @@ force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-
 if(linux|force-libcrypto) {
     !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")|contains(QT_CONFIG,"ssl")):error("Qt was built without OpenSSL support.")
 }
-
-load(am-config)
 
 !config_libyaml|no-system-libyaml {
     force-system-libyaml:error("Could not find a system installation for libyaml.")

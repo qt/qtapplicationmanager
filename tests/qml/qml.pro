@@ -1,3 +1,7 @@
+load(am-config)
+
+requires(!headless)
+
 TEMPLATE = subdirs
 SUBDIRS = \
     simple \

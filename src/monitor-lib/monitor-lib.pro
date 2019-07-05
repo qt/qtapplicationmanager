@@ -16,8 +16,6 @@ CONFIG *= static internal_module
 
 HEADERS += \
     cpustatus.h \
-    frametimer.h \
-    gpustatus.h \
     iostatus.h \
     memorystatus.h \
     monitormodel.h \
@@ -26,12 +24,19 @@ HEADERS += \
 
 SOURCES += \
     cpustatus.cpp \
-    frametimer.cpp \
-    gpustatus.cpp \
     iostatus.cpp \
     memorystatus.cpp \
     monitormodel.cpp \
     processreader.cpp \
     processstatus.cpp \
+
+!headless:HEADERS += \
+    frametimer.h \
+    gpustatus.h \
+
+!headless:SOURCES += \
+    frametimer.cpp \
+    gpustatus.cpp \
+
 
 load(qt_module)

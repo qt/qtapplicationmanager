@@ -42,6 +42,8 @@
 
 #pragma once
 
+#if !defined(AM_HEADLESS)
+
 #include <QtAppManCommon/global.h>
 
 #include <QtAppManManager/systemreader.h>
@@ -78,3 +80,4 @@ private:
 
 QT_END_NAMESPACE_AM
 
+#endif // !AM_HEADLESS

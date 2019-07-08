@@ -244,7 +244,8 @@
     Starts the application. The optional argument \a document will be supplied to the application as
     is - most commonly this is used to refer to a document to display.
 
-    \sa ApplicationManager::startApplication
+    Returns a \c bool value indicating success. See the full documentation at
+    ApplicationManager::startApplication for more information.
 */
 /*!
     \qmlmethod bool ApplicationObject::debug(string debugWrapper, string document)
@@ -252,7 +253,8 @@
     Same as start() with the difference that it is started via the given \a debugWrapper.
     Please see the \l{Debugging} page for more information on how to setup and use these debug-wrappers.
 
-    \sa ApplicationManager::debugApplication
+    Returns a \c bool value indicating success. See the full documentation at
+    ApplicationManager::debugApplication for more information.
 */
 /*!
     \qmlmethod ApplicationObject::stop(bool forceKill)
@@ -368,19 +370,26 @@ QString AbstractApplication::name(const QString &language) const
     return info()->name(language);
 }
 
-void AbstractApplication::start(const QString &documentUrl)
+bool AbstractApplication::start(const QString &documentUrl)
 {
-    emit requests.startRequested(documentUrl);
+    if (requests.startRequested)
+        return requests.startRequested(documentUrl);
+    else
+        return false;
 }
 
-void AbstractApplication::debug(const QString &debugWrapper, const QString &documentUrl)
+bool AbstractApplication::debug(const QString &debugWrapper, const QString &documentUrl)
 {
-    emit requests.debugRequested(debugWrapper, documentUrl);
+    if (requests.debugRequested)
+        return requests.debugRequested(debugWrapper, documentUrl);
+    else
+        return false;
 }
 
 void AbstractApplication::stop(bool forceKill)
 {
-    emit requests.stopRequested(forceKill);
+    if (requests.stopRequested)
+        requests.stopRequested(forceKill);
 }
 
 QVector<AbstractApplication *> AbstractApplication::fromApplicationInfoVector(

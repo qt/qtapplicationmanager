@@ -1664,20 +1664,17 @@ void ApplicationManager::addApplication(AbstractApplication *app)
 {
     QQmlEngine::setObjectOwnership(app, QQmlEngine::CppOwnership);
 
-    connect (&app->requests, &ApplicationRequests::startRequested,
-            this, [this, app](const QString &documentUrl) {
-        startApplication(app->id(), documentUrl);
-    });
+    app->requests.startRequested = [this, app](const QString &documentUrl) {
+        return startApplication(app->id(), documentUrl);
+    };
 
-    connect (&app->requests, &ApplicationRequests::debugRequested,
-            this, [this, app](const QString &debugWrapper, const QString &documentUrl) {
-        debugApplication(app->id(), debugWrapper, documentUrl);
-    });
+    app->requests.debugRequested =  [this, app](const QString &debugWrapper, const QString &documentUrl) {
+        return debugApplication(app->id(), debugWrapper, documentUrl);
+    };
 
-    connect (&app->requests, &ApplicationRequests::stopRequested,
-            this, [this, app](bool forceKill) {
+    app->requests.stopRequested = [this, app](bool forceKill) {
         stopApplication(app->id(), forceKill);
-    });
+    };
 
     d->apps << app;
 }

@@ -240,7 +240,7 @@ int ApplicationModel::mapToSource(int ourIndex) const
 }
 
 /*!
-    \qmlmethod int ApplicationModel::mapFromSource(int sourceIndex)
+    \qmlmethod int ApplicationModel::mapFromSource(int index)
 
     Maps an application's \a index from the ApplicationManager model to the corresponding index in
     this model. Returns \c -1 if the specified \a index is invalid.

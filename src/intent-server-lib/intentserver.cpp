@@ -83,7 +83,7 @@ QT_BEGIN_NAMESPACE_AM
 */
 
 /*! \qmlsignal IntentServer::intentListChanged()
-    Emitted when either a new \a intent gets added to or an existing \a intent is remove from the
+    Emitted when either a new intent gets added to or an existing intent is remove from the
     intentList.
 */
 
@@ -285,14 +285,14 @@ IntentList IntentServer::intentList() const
     return convertToQml(all());
 }
 
-/*! \qmlmethod Intent IntentServer::find(string intentId, string applicationId, var parameters = {})
+/*! \qmlmethod Intent IntentServer::find(string intentId, string applicationId, var parameters)
 
     This method exposes the same functionality that is used internally to match incoming Intent
     requests for the intent identified by \a intentId and targeted for the application identified by
     \a applicationId.
     Although you could iterate over the intentList yourself in JavaScript, this function has the
-    added benefit of also checking the \a parameters against any given \l{Intent::parameterMatch}
-    {parameter matches}.
+    added benefit of also checking the optionally provided \a parameters against any given
+    \l{Intent::parameterMatch}{parameter matches}.
 
     If no matching Intent is found, the function will return an \l{Intent::valid}{invalid} Intent.
 */

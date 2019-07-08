@@ -250,7 +250,10 @@
 /*!
     \qmlmethod bool ApplicationObject::debug(string debugWrapper, string document)
 
-    Same as start() with the difference that it is started via the given \a debugWrapper.
+    Same as start() with the difference that it is started via the given \a debugWrapper. The
+    optional argument \a document will be supplied to the application as is - most commonly this is
+    used to refer to a document to display.
+
     Please see the \l{Debugging} page for more information on how to setup and use these debug-wrappers.
 
     Returns a \c bool value indicating success. See the full documentation at

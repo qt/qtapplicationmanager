@@ -901,9 +901,16 @@ bool ApplicationManager::startApplication(const QString &id, const QString &docu
 /*!
     \qmlmethod bool ApplicationManager::debugApplication(string id, string debugWrapper, string document)
 
-    Instructs the application manager to start the application just like startApplication. The
-    application is started via the given \a debugWrapper though. Please see the \l{Debugging} page
-    for more information on how to setup and use these debug-wrappers.
+    Instructs the application manager to start the application identified by its unique \a id, just
+    like startApplication. The application is started via the given \a debugWrapper though. The
+    optional argument \a document will be supplied to the application as is - most commonly this is
+    used to refer to a document to display.
+
+    Returns a \c bool value indicating success. See the full documentation at
+    ApplicationManager::startApplication for more information.
+
+    Please see the \l{Debugging} page for more information on how to setup and use these
+    debug-wrappers.
 
     \sa ApplicationObject::debug
 */

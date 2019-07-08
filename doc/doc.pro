@@ -4,6 +4,7 @@ TEMPLATE = aux
 CONFIG += force_qt
 QT = core network
 qtHaveModule(quick):QT *= quick
+qtHaveModule(dbus): QT *= dbus
 
 # needed for the new clang based qdoc parser in Qt 5.11
 !prefix_build:INCLUDEPATH *= $$[QT_INSTALL_HEADERS]

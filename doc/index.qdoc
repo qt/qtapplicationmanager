@@ -45,9 +45,7 @@ For a high-level overview, see \l{The Qt Application Manager}{Introduction to th
     \li \l{Installation}
     \li \l{Configuration}
     \li \l{Troubleshoot}
-    \omit
-    \li \l{How to write a System-UI}
-    \endomit
+    \li \l{The System UI}
     \li \l{Write Applications}
     \li \l{Application Installer}
     \li \l{Logging and Debugging}

@@ -47,6 +47,8 @@
 #include <QQmlEngine>
 #include <QRegExp>
 #include <QRegularExpression>
+#include <QDir>
+#include <QFileInfo>
 
 #include <qlogging.h>
 #include <QtTest/qtestsystem.h>
@@ -156,19 +158,26 @@ static QObject *amTest(QQmlEngine *engine, QJSEngine *jsEngine)
     return AmTest::instance();
 }
 
-void TestRunner::initialize(const QStringList &testRunnerArguments)
+void TestRunner::initialize(const QString &testFile, const QStringList &testRunnerArguments)
 {
     Q_ASSERT(!testRunnerArguments.isEmpty());
+
+    const QString name = QFileInfo(testRunnerArguments.at(0)).fileName() + "::" + QDir().relativeFilePath(testFile);
+    static const char *programName = strdup(name.toLocal8Bit().constData());
+    QuickTestResult::setProgramName(programName);
 
     // Convert all the arguments back into a char * array.
     // These need to be alive as long as the program is running!
     static QVector<char *> testArgV;
     for (const auto &arg : testRunnerArguments)
         testArgV << strdup(arg.toLocal8Bit().constData());
-    atexit([]() { std::for_each(testArgV.constBegin(), testArgV.constEnd(), free); });
+
+    atexit([]() {
+        free(const_cast<char*>(programName));
+        std::for_each(testArgV.constBegin(), testArgV.constEnd(), free);
+    });
 
     QuickTestResult::setCurrentAppname(testArgV.constFirst());
-    QuickTestResult::setProgramName(testArgV.constFirst());
 
     // Allocate a QuickTestResult to create QBenchmarkGlobalData, otherwise the benchmark options don't work
     QuickTestResult result;

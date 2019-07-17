@@ -45,7 +45,7 @@ import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.11
 import QtQuick.Window 2.11
 
-import QtApplicationManager.SystemUI 2.0
+import QtApplicationManager 2.0
 
 Window {
     width: 1200

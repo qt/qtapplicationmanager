@@ -44,7 +44,7 @@ _appman()
         COMPREPLY=( $( compgen -f -- ${cur}) )
     fi
 }
-complete -o filenames -F _appman appman
+complete -o filenames -F _appman appman appman-qmltestrunner
 
 _appman-controller()
 {

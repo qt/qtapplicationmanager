@@ -81,11 +81,11 @@ The \c appman binary (executable file) is usually located in the Qt installation
 \dots
 
 The \l{QtApplicationManager.SystemUI} module has to be imported to access the application manager
-APIs. The System UI window has a fixed size and linen background color. Instead of a \l{Rectangle},
-the root element could also be a \l{Window}. On top of the background, we display a
-\c Readme element with information on the
-features available. At the bottom left there is a textual indication for whether the
-application manager runs in single-process or multi-process mode.
+APIs. The System UI window has a fixed size and "whitesmoke" background color. Instead of a
+\l{Window}, the root element could also be a regular item, like a \l{Rectangle}. The application
+manager would wrap it in a window for you. On top of the background, we display a \c Readme element
+with information on the features available. At the bottom left there is a textual indication for
+whether the application manager runs in single-process or multi-process mode.
 
 \section2 Launcher
 
@@ -114,8 +114,8 @@ WindowManager. The code that populates the window role of this ListModel is show
 now let's focus on what this Repeater's delegate consists of:
 
 \list
-    \li A fixed size window container \l{Rectangle} in "tan" color. The location depends on the
-        \c model.index, hence each application window has a different initial location.
+    \li A mostly transparent background \l{Image}. The location depends on the \c model.index,
+        hence each application window has a different initial location.
     \li The name of the application that created that window, prefixed with "Decoration" on top.
         This name is from the related ApplicationObject, defined in the application's
         \l{Manifest Definition}{info.yaml} file.
@@ -205,7 +205,7 @@ the \l {WindowManager::windowAdded}{onWindowAdded} handler is invoked.
 
 Only App1's "pop-up" ApplicationManagerWindow has the user-defined \c type property set. Such a
 window is placed in the \c popUpContainer WindowItem. All other windows don't have a \c type
-property; they are added to the \c topLevelWindowsModel. This model is used in the SystemUI chrome
+property; they are added to the \c topLevelWindowsModel. This model is used in the System UI chrome
 Repeater above. Consequently, the \l {WindowObject}{window} object passed as an argument to
 \l {WindowManager::windowAdded}{onWindowAdded} is set as the
 \l{WindowItem::window}{window} property of the WindowItem (within the Repeater's delegate).
@@ -215,7 +215,7 @@ will also be displayed since in the configuration file, "\c flags/noSecurity: \c
 instance in KDE's Calculator:
 
 \badcode
-$ QT_WAYLAND_DISABLE_WINDOWDECORATION=1 QT_WAYLAND_SHELL_INTEGRATION=xdg-shell-v5 kcalc -platform wayland
+$ QT_WAYLAND_DISABLE_WINDOWDECORATION=1 WAYLAND_DISPLAY=qtam-wayland-0 kcalc -platform wayland
 \endcode
 
 \section2 Inter-Process Communication (IPC) Extension

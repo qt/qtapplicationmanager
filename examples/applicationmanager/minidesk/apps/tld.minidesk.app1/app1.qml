@@ -56,12 +56,12 @@ import QtApplicationManager.Application 2.0
 
 ApplicationManagerWindow {
     id: root
-    color: "peachpuff"
+    color: "lightgrey"
 
     Rectangle {
         anchors.centerIn: parent
         width: 180; height: 180; radius: width/4
-        color: "peru"
+        color: "lightsteelblue"
 
         Image {
             source: ApplicationInterface.icon
@@ -90,7 +90,7 @@ ApplicationManagerWindow {
     ApplicationManagerWindow {
         id: popUp
         visible: false
-        color: "lightcoral"
+        color: "orangered"
 
         Text {
             anchors.centerIn: parent

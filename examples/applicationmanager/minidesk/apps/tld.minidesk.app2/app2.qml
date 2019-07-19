@@ -55,7 +55,7 @@ import QtQuick 2.4
 import QtApplicationManager.Application 2.0
 
 ApplicationManagerWindow {
-    color: ApplicationInterface.systemProperties.light ? "peachpuff" : "black"
+    color: ApplicationInterface.systemProperties.light ? "#B0808080" : "black"
 
     Image {
         anchors.centerIn: parent

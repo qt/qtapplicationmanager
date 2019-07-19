@@ -51,13 +51,15 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.4
+import QtQuick 2.11
+import QtQuick.Window 2.11
 import QtApplicationManager.SystemUI 2.0
 
-Rectangle {
+Window {
+    title: "Minidesk - QtApplicationManager Example"
     width: 1024
     height: 640
-    color: "linen"
+    color: "whitesmoke"
 
     Readme {}
 
@@ -87,10 +89,9 @@ Rectangle {
     Repeater {
         model: ListModel { id: topLevelWindowsModel }
 
-        delegate: Rectangle {
-            width: 400; height: 320
+        delegate: Image {
+            source: "chrome-bg.png"
             z: model.index
-            color: "tan"
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter

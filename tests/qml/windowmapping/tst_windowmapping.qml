@@ -292,6 +292,7 @@ TestCase {
     function test_window_properties() {
         var app = ApplicationManager.application("test.winmap.amwin");
 
+        windowPropertyChangedSpy.clear();
         app.start();
         tryCompare(WindowManager, "count", 1);
 

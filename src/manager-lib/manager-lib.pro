@@ -16,6 +16,7 @@ QT_FOR_PRIVATE *= \
     appman_monitor-private \
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 multi-process {
     QT *= dbus

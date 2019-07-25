@@ -9,6 +9,7 @@ qtHaveModule(qml):QT *= qml
 QT_FOR_PRIVATE *= appman_common-private
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 HEADERS += \
     notification.h \

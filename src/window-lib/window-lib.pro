@@ -12,6 +12,7 @@ QT_FOR_PRIVATE *= \
     appman_manager-private \
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 multi-process:!headless {
     HEADERS += \

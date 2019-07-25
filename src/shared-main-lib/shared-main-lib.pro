@@ -11,6 +11,7 @@ QT *= \
     appman_monitor-private \
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 HEADERS += \
     sharedmain.h \

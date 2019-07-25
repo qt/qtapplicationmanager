@@ -24,6 +24,7 @@ QT *= \
 !disable-external-dbus-interfaces:qtHaveModule(dbus):QT *= dbus appman_dbus-private
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 win32:LIBS += -luser32
 

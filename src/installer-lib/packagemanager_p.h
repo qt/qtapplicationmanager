@@ -70,7 +70,8 @@ public:
     uint maxUserId = uint(-1);
     uint commonGroupId = uint(-1);
 
-    QVector<InstallationLocation> installationLocations;
+    QString installationPath;
+    QString documentPath;
 
     QString error;
 

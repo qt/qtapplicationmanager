@@ -60,9 +60,6 @@ public:
     QString packageId() const;
     void setPackageId(const QString &packageId);
 
-    QString installationLocationId() const;
-    void setInstallationLocationId(const QString &installationLocationId);
-
     QVariantMap extraMetaData() const;
     void setExtraMetaData(const QVariantMap &extraMetaData);
     QVariantMap extraSignedMetaData() const;
@@ -91,7 +88,6 @@ public:
 
 private:
     QString m_packageId;
-    QString m_installationLocationId;
     QByteArray m_digest;
     quint64 m_diskSpaceUsed = 0;
     QStringList m_files;

@@ -85,9 +85,6 @@ The following commands are available:
     \li Installs the package given on the command-line. If the package file is specified as \c{-},
         the tool tries to read the package from \c stdin. The following options are supported:
 
-        \c{-l, --location}: Install to a specific installation location
-        (see \c show-installation-location).
-
         \c{-a, --acknowledge}: Automatically acknowledge the installation, instead of relying on
         the System UI's logic.
 \row

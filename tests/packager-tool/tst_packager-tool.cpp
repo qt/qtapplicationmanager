@@ -31,7 +31,6 @@
 #include <QCoreApplication>
 
 #include "global.h"
-#include "installationlocation.h"
 #include "applicationmanager.h"
 #include "application.h"
 #include "qtyaml.h"
@@ -99,16 +98,9 @@ void tst_PackagerTool::initTestCase()
 
     m_hardwareId = qSL("foobar");
 
-    QVariantMap internalLocation {
-        { "id", "internal-0" },
-        { "installationPath", pathTo("internal-0") },
-        { "documentPath", pathTo("documents-0") },
-    };
-    QVector<InstallationLocation> locations = InstallationLocation::parseInstallationLocations({ internalLocation }, m_hardwareId);
-
     PackageDatabase *pdb = new PackageDatabase(pathTo("internal-0"));
     try {
-        m_pm = PackageManager::createInstance(pdb, locations);
+        m_pm = PackageManager::createInstance(pdb, pathTo("documents-0"));
         m_pm->setHardwareId(m_hardwareId);
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
@@ -398,8 +390,7 @@ void tst_PackagerTool::installPackage(const QString &filePath)
 
     m_pm->setDevelopmentMode(true); // allow packages without store signature
 
-    QString taskId = m_pm->startPackageInstallation(qSL("internal-0"),
-                                                    QUrl::fromLocalFile(filePath));
+    QString taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(filePath));
     m_pm->acknowledgePackageInstallation(taskId);
 
     QVERIFY(finishedSpy.wait(2 * spyTimeout));

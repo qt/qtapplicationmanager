@@ -158,8 +158,7 @@ QVariantMap ApplicationInfo::toVariantMap() const
     map[qSL("baseDir")] = packageInfo()->baseDir().absolutePath();
     map[qSL("codeDir")] = map[qSL("baseDir")];     // 5.12 backward compatibility
     map[qSL("manifestDir")] = map[qSL("baseDir")]; // 5.12 backward compatibility
-    map[qSL("installationLocationId")] = packageInfo()->installationReport()
-            ? packageInfo()->installationReport()->installationLocationId() : QString();
+    map[qSL("installationLocationId")] = packageInfo()->installationReport() ? qSL("internal-0") : QString();
     map[qSL("supportsApplicationInterface")] = m_supportsApplicationInterface;
     map[qSL("dlt")] = packageInfo()->dltConfiguration();
 

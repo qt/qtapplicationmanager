@@ -160,18 +160,18 @@ or across multiple config files, the final value is resolved based on these rule
         \li The base directory for built-in application manifests; you can also specify multiple
             directories as a list.
     \row
-        \li \b --installed-apps-manifest-dir
-            \br [\c applications/installedAppsManifestDir]
+        \li \b --installation-dir
+            \br [\c applications/installationDir]
         \li string
-        \li The base directory for installed application manifests. This option must be specified
-            if you want to install new applications; otherwise only the built-in ones are
+        \li The base directory for package installations. This option must be specified
+            if you want to install new package; otherwise only the built-in ones are
             available. (default: empty/disabled)
     \row
-        \li \b --app-image-mount-dir
-            \br [\c applications/appImageMountDir]
+        \li \b --document-dir
+            \br [\c applications/documentDir]
         \li string
-        \li The base directory where application images are mounted to.
-            (defaults: \c /opt/am/image-mounts)
+        \li The base directory for per-package document storage directories.
+            (default: empty/disabled)
     \row
         \li \b --dbus
         \li string
@@ -353,8 +353,9 @@ or across multiple config files, the final value is resolved based on these rule
     \row
         \li [\c installationLocations]
         \li array<object>
-        \li The definition of installation locations available on the system; an array of
-            \l {Installation Locations} objects.
+        \li The definition of installation locations available on the system. This is deprecated,
+            since only a single installation location is supported now, defined by \c
+            --installationDir or \c{applications/installationDir}.
     \row
         \li [\c runtimes]
         \li map<object>
@@ -493,52 +494,6 @@ of these available interfaces are as follows:
         \li \c org.freedesktop.Notifications
         \li Not application manager specific - this interface adheres to the
             \l {freedesktop.org specification}
-\endtable
-
-\section1 Installation Locations
-
-The \c installationLocations YAML field is a list of YAML objects, very similar to
-ApplicationInstaller::getInstallationLocation.
-
-\table
-    \header
-        \li Config Key
-        \li Type
-        \li Description
-    \row
-        \li \c id
-        \li string
-        \li The installation location ID that is used as the handle for all other
-            ApplicationInstaller function calls. The \c id consists of a \c type and \c index
-            field, concatenated with a single dash. For example, \c removable-0.
-
-            Valid values for \c type are \c internal and \c removable.
-
-            In case there is more than one installation location for the same type of device, this
-            zero-based index is used for disambiguation. For example, two SD card slots will result
-            in the IDs \c removable-0 and \c removable-1. Otherwise, the index is always \c 0.
-    \row
-        \li \c isDefault
-        \li bool
-        \li Only one installation location can be the default location, which must be mounted and
-            accessible at all times. This location can be used by a UI application to get a
-            sensible default for the installation location that it needs to pass to
-            \l{ApplicationInstaller::startPackageInstallation()}{startPackageInstallation()}.
-    \row
-        \li \c installationPath
-        \li string
-        \li The absolute file system path to the base directory where applications are installed.
-    \row
-        \li \c documentPath
-        \li string
-        \li The absolute file system path to the base directory where per-user document directories
-            are created. This entry can either be located on this device, or it can be the same as
-            the \c documentPath of the master installation location.
-    \row
-        \li \c mountPoint
-        \li string
-        \li Only required for \c removable installation location: The absolute file system path to
-            the mount-point of the device, where \c installationPath is located.
 \endtable
 
 \section1 Runtime Configuration

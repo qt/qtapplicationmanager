@@ -53,16 +53,21 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-PackageDatabase::PackageDatabase(const QStringList &builtInAppsDirs,
-                                 const QString &installedAppsDir)
-    : m_builtInAppsDirs(builtInAppsDirs)
-    , m_installedAppsDir(installedAppsDir)
+PackageDatabase::PackageDatabase(const QStringList &builtInPackagesDirs,
+                                 const QString &installedPackagesDir)
+    : m_builtInPackagesDirs(builtInPackagesDirs)
+    , m_installedPackagesDir(installedPackagesDir)
 { }
 
 PackageDatabase::PackageDatabase(const QString &singlePackagePath)
     : m_singlePackagePath(singlePackagePath)
 {
     Q_ASSERT(!singlePackagePath.isEmpty());
+}
+
+QString PackageDatabase::installedPackagesDir() const
+{
+    return m_installedPackagesDir;
 }
 
 void PackageDatabase::enableLoadFromCache()
@@ -151,6 +156,7 @@ QMap<PackageInfo *, QString> PackageDatabase::loadManifestsFromDir(YamlPackageSc
                     throw Exception(f, "failed to deserialize the installation report");
 
                 pkg->setInstallationReport(report.take());
+                pkg->setBaseDir(QDir(m_installedPackagesDir).filePath(pkg->id()));
             }
             result.insert(pkg.take(), manifestPath);
         } catch (const Exception &e) {
@@ -191,11 +197,11 @@ void PackageDatabase::parse()
             throw Exception("Failed to load manifest for package: %1").arg(e.errorString());
         }
     } else {
-        for (const QString &dir : m_builtInAppsDirs)
+        for (const QString &dir : m_builtInPackagesDirs)
             m_builtInPackages.unite(loadManifestsFromDir(&yps, dir, true));
 
-        if (!m_installedAppsDir.isEmpty())
-            m_installedPackages = loadManifestsFromDir(&yps, m_installedAppsDir, false);
+        if (!m_installedPackagesDir.isEmpty())
+            m_installedPackages = loadManifestsFromDir(&yps, m_installedPackagesDir, false);
     }
 
     if (m_saveToCache)

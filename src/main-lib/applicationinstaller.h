@@ -47,12 +47,12 @@
 #include <QUrl>
 #include <QStringList>
 #include <QDir>
+#include <QDebug>
 #include <QtAppManCommon/error.h>
-#include <QtAppManCommon/error.h>
+#include <QtAppManCommon/logging.h>
 #include <QtAppManManager/applicationmanager.h>
 #include <QtAppManInstaller/packagemanager.h>
 #include <QtAppManInstaller/package.h>
-#include <QtAppManInstaller/installationlocation.h>
 #include <QtAppManInstaller/asynchronoustask.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -91,18 +91,48 @@ public:
     uint commonApplicationGroupId() const { return m_pm->commonApplicationGroupId(); }
 
     // Q_SCRIPTABLEs are available via both QML and D-Bus
-    Q_SCRIPTABLE QStringList installationLocationIds() const { return m_pm->installationLocationIds(); }
+    Q_SCRIPTABLE QStringList installationLocationIds() const { return { qL1S("internal-0") }; }
     Q_SCRIPTABLE QString installationLocationIdFromApplication(const QString &applicationId) const
     {
         auto app = ApplicationManager::instance()->fromId(applicationId);
-        return m_pm->installationLocationIdFromPackage(app ? app->package()->id() : QString());
+        if (app && ((!app->package()->isBuiltIn() || app->package()->canBeRevertedToBuiltIn())))
+            return qL1S("internal-0");
+        return QString();
     }
     Q_SCRIPTABLE QVariantMap getInstallationLocation(const QString &installationLocationId) const
-    { return m_pm->getInstallationLocation(installationLocationId); }
+    {
+        if (installationLocationId != qL1S("internal-0"))
+            return QVariantMap { };
+
+        auto iloc = m_pm->installationLocation();
+        auto dloc = m_pm->documentLocation();
+
+        return QVariantMap {
+            { qSL("id"), qSL("internal-0") },
+            { qSL("type"), qSL("internal") },
+            { qSL("index"), 0 },
+            { qSL("isDefault"), true },
+            { qSL("installationPath"), iloc.value(qL1S("path")) },
+            { qSL("installationDeviceSize"), iloc.value(qL1S("size")) },
+            { qSL("installationDeviceFree"), iloc.value(qL1S("free")) },
+            { qSL("documentPath"), dloc.value(qL1S("path")) },
+            { qSL("documentDeviceSize"), dloc.value(qL1S("size")) },
+            { qSL("documentDeviceFree"), dloc.value(qL1S("free")) }
+        };
+    }
 
     // all QString return values are task-ids
     Q_SCRIPTABLE QString startPackageInstallation(const QString &installationLocationId, const QString &sourceUrl)
-    { return m_pm->startPackageInstallation(installationLocationId, sourceUrl); }
+    {
+        if (installationLocationId == qL1S("internal-0")) {
+            return m_pm->startPackageInstallation(sourceUrl);
+        } else {
+            qCWarning(LogInstaller) << "The only supported legacy installation location is 'internal-0', "
+                                       "but an installation was requested to:" << installationLocationId;
+            return QString();
+        }
+    }
+
     Q_SCRIPTABLE void acknowledgePackageInstallation(const QString &taskId)
     { return m_pm->acknowledgePackageInstallation(taskId); }
     Q_SCRIPTABLE QString removePackage(const QString &packageId, bool keepDocuments, bool force = false)

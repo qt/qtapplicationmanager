@@ -194,12 +194,12 @@ static void listApplications() Q_DECL_NOEXCEPT_EXPR(false);
 static void showApplication(const QString &appId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
 static void listPackages() Q_DECL_NOEXCEPT_EXPR(false);
 static void showPackage(const QString &packageId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
-static void installPackage(const QString &packageUrl, const QString &location, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false);
+static void installPackage(const QString &packageUrl, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false);
 static void removePackage(const QString &packageId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false);
 static void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
-static void showInstallationLocation(const QString &location, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
+static void showInstallationLocation(bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
 
 class ThrowingApplication : public QCoreApplication // clazy:exclude=missing-qobject-macro
 {
@@ -406,17 +406,18 @@ int main(int argc, char *argv[])
             break;
 
         case InstallPackage:
-            clp.addOption({ { qSL("l"), qSL("location") }, qSL("Set a custom installation location."), qSL("installation-location"), qSL("internal-0") });
+            clp.addOption({ { qSL("l"), qSL("location") }, qSL("Set a custom installation location (deprecated and ignored)."), qSL("installation-location"), qSL("internal-0") });
             clp.addOption({ { qSL("a"), qSL("acknowledge") }, qSL("Automatically acknowledge the installation (unattended mode).") });
             clp.addPositionalArgument(qSL("package"), qSL("The file name of the package; can be - for stdin."));
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
+            if (clp.isSet(qSL("l")))
+                fprintf(stderr, "Ignoring the deprecated -l option.\n");
 
             a.runLater(std::bind(installPackage,
                                  clp.positionalArguments().at(1),
-                                 clp.value(qSL("l")),
                                  clp.isSet(qSL("a"))));
             break;
 
@@ -461,15 +462,16 @@ int main(int argc, char *argv[])
             break;
 
         case ShowInstallationLocation:
-            clp.addPositionalArgument(qSL("installation-location"), qSL("The id of an installation location."));
+            clp.addPositionalArgument(qSL("installation-location"), qSL("The id of an installation location (deprecated and ignored)."));
             clp.addOption({ qSL("json"), qSL("Output in JSON format instead of YAML.") });
             clp.process(a);
 
-            if (clp.positionalArguments().size() != 2)
+            if (clp.positionalArguments().size() > 2)
                 clp.showHelp(1);
+            if (clp.positionalArguments().size() == 2)
+                fprintf(stderr, "Ignoring the deprecated installation-location.\n");
 
             a.runLater(std::bind(showInstallationLocation,
-                                 clp.positionalArguments().at(1),
                                  clp.isSet(qSL("json"))));
             break;
         }
@@ -655,7 +657,7 @@ void showPackage(const QString &packageId, bool asJson) Q_DECL_NOEXCEPT_EXPR(fal
     qApp->quit();
 }
 
-void installPackage(const QString &package, const QString &location, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false)
+void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString packageFile = package;
 
@@ -683,7 +685,7 @@ void installPackage(const QString &package, const QString &location, bool acknow
     if (!fi.exists() || !fi.isReadable() || !fi.isFile())
         throw Exception(Error::IO, "Package file is not readable: %1").arg(packageFile);
 
-    fprintf(stdout, "Starting installation of package %s to %s...\n", qPrintable(packageFile), qPrintable(location));
+    fprintf(stdout, "Starting installation of package %s ...\n", qPrintable(packageFile));
 
     dbus.connectToManager();
     dbus.connectToPackager();
@@ -727,7 +729,7 @@ void installPackage(const QString &package, const QString &location, bool acknow
 
     // start the package installation
 
-    auto reply = dbus.packager()->startPackageInstallation(location, fi.absoluteFilePath());
+    auto reply = dbus.packager()->startPackageInstallation(fi.absoluteFilePath());
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());
@@ -878,28 +880,18 @@ void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToPackager();
 
-    auto reply = dbus.packager()->installationLocationIds();
-    reply.waitForFinished();
-    if (reply.isError())
-        throw Exception(Error::IO, "failed to call installationLocationIds via DBus: %1").arg(reply.error().message());
-
-    const auto installationLocationIds = reply.value();
-    for (auto installationLocationId : installationLocationIds)
-        fprintf(stdout, "%s\n", qPrintable(installationLocationId));
+    auto installationLocation = dbus.packager()->installationLocation().variant().toMap();
+    if (!installationLocation.isEmpty())
+        fputs("internal-0\n", stdout);
     qApp->quit();
 }
 
-void showInstallationLocation(const QString &location, bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
+void showInstallationLocation(bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToPackager();
 
-    auto reply = dbus.packager()->getInstallationLocation(location);
-    reply.waitForFinished();
-    if (reply.isError())
-        throw Exception(Error::IO, "failed to call getInstallationLocation via DBus: %1").arg(reply.error().message());
-
-    QVariant app = reply.value();
-    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(app).toJson().constData()
-                                   : QtYaml::yamlFromVariantDocuments({ app }).constData());
+    auto installationLocation = dbus.packager()->installationLocation().variant().toMap();
+    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(installationLocation).toJson().constData()
+                                   : QtYaml::yamlFromVariantDocuments({ installationLocation }).constData());
     qApp->quit();
 }

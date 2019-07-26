@@ -83,16 +83,6 @@ void InstallationReport::setPackageId(const QString &packageId)
     m_packageId = packageId;
 }
 
-QString InstallationReport::installationLocationId() const
-{
-    return m_installationLocationId;
-}
-
-void InstallationReport::setInstallationLocationId(const QString &installationLocationId)
-{
-    m_installationLocationId = installationLocationId;
-}
-
 QVariantMap InstallationReport::extraMetaData() const
 {
     return m_extraMetaData;
@@ -188,7 +178,7 @@ bool InstallationReport::deserialize(QIODevice *from)
         return false;
 
     try {
-        checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 2 /*version*/);
+        checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 3 /*version*/);
     } catch (const Exception &) {
         return false;
     }
@@ -204,7 +194,6 @@ bool InstallationReport::deserialize(QIODevice *from)
             throw false;
         }
 
-        m_installationLocationId = root[qSL("installationLocationId")].toString();
         m_diskSpaceUsed = root[qSL("diskSpaceUsed")].toULongLong();
         m_digest = QByteArray::fromHex(root[qSL("digest")].toString().toLatin1());
         if (m_digest.isEmpty())
@@ -265,12 +254,11 @@ bool InstallationReport::serialize(QIODevice *to) const
         return false;
 
     QVariantMap header {
-        { "formatVersion", 2 },
+        { "formatVersion", 3 },
         { "formatType", "am-installation-report" }
     };
     QVariantMap root {
         { qSL("packageId"), packageId() },
-        { qSL("installationLocationId"), installationLocationId() },
         { qSL("diskSpaceUsed"), diskSpaceUsed() },
         { qSL("digest"), QLatin1String(digest().toHex()) }
     };

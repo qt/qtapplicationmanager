@@ -59,7 +59,6 @@ typedef QApplication MainBase;
 typedef QGuiApplication MainBase;
 #endif
 
-#include <QtAppManInstaller/installationlocation.h>
 #include <QtAppManSharedMain/sharedmain.h>
 #include <QVector>
 
@@ -115,7 +114,6 @@ protected:
     void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &openGLConfiguration,
                                     const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
                                     const QStringList &iconThemeSearchPaths, const QString &iconThemeName);
-    void setupInstallationLocations(const QVariantList &installationLocations);
     void loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) Q_DECL_NOEXCEPT_EXPR(false);
     void setupIntents(const QMap<QString, int> &timeouts) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
@@ -160,7 +158,6 @@ private:
 #if !defined(AM_DISABLE_INSTALLER)
     ApplicationInstaller *m_applicationInstaller = nullptr;
 #endif
-    QVector<InstallationLocation> m_installationLocations;
     NotificationManager *m_notificationManager = nullptr;
     IntentServer *m_intentServer = nullptr;
     WindowManager *m_windowManager = nullptr;
@@ -171,7 +168,8 @@ private:
     bool m_noSecurity = false;
     bool m_developmentMode = false;
     QStringList m_builtinAppsManifestDirs;
-    QString m_installedAppsManifestDir;
+    QString m_installationDir;
+    QString m_documentDir;
 };
 
 QT_END_NAMESPACE_AM

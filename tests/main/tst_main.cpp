@@ -77,13 +77,11 @@ private:
 tst_Main::tst_Main()
 {
     argc = 3;
-    argv = new char*[3];
-    argv[0] = new char[255];
-    sprintf(argv[0], "tst_update-builtin-app");
-    argv[1] = new char[255];
-    sprintf(argv[1], "--dbus");
-    argv[2] = new char[255];
-    sprintf(argv[2], "none");
+    argv = new char*[argc + 1];
+    argv[0] = qstrdup("tst_update-builtin-app");
+    argv[1] = qstrdup("--dbus");
+    argv[2] = qstrdup("none");
+    argv[3] = nullptr;
 }
 
 tst_Main::~tst_Main()
@@ -188,9 +186,9 @@ void tst_Main::installPackage(const QString &pkgPath)
             installationFinished = true;
     });
 
-    packageManager->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(pkgPath));
+    packageManager->startPackageInstallation(QUrl::fromLocalFile(pkgPath));
 
-    QTRY_COMPARE(installationFinished, true);
+    QTRY_VERIFY(installationFinished);
 }
 
 void tst_Main::removePackage(const QString &id)
@@ -206,7 +204,7 @@ void tst_Main::removePackage(const QString &id)
 
     packageManager->removePackage(id, false /* keepDocuments */);
 
-    QTRY_COMPARE(removalFinished, true);
+    QTRY_VERIFY(removalFinished);
 }
 
 /*

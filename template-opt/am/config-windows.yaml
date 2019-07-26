@@ -4,15 +4,6 @@ formatType: am-configuration
 # installations will go into the standard /opt/am hierarchy
 
 applications:
-  installedAppsManifestDir: "c:/cygwin/opt/am/manifests"
-  appImageMountDir: "c:/cygwin/opt/am/image-mounts"
+  installationDir: "c:/cygwin/opt/am/apps"
+  documentDir: "c:/cygwin/opt/am/docs"
   database: "c:/cygwin/opt/am/apps.db"
-
-# simulate an internal and a SD-card installation location
-
-installationLocations:
-- id: "internal-0"
-  installationPath: "c:/cygwin/opt/am/apps"
-  documentPath: "c:/cygwin/opt/am/docs"
-  mountPoint: "c:/cygwin/opt"
-  isDefault: true

@@ -194,10 +194,7 @@
     \qmlproperty string ApplicationObject::codeDir
     \readonly
 
-    The absolute path to the application's installation directory. Please note this directory might
-    not always be available for applications that were installed onto removable media.
-
-    \sa {Installation Locations}
+    The absolute path to the application's installation directory.
 */
 /*!
     \qmlproperty enumeration ApplicationObject::state

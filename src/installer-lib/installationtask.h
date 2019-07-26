@@ -48,7 +48,6 @@
 #include <QMutex>
 
 #include <QtAppManApplication/installationreport.h>
-#include <QtAppManInstaller/installationlocation.h>
 #include <QtAppManInstaller/asynchronoustask.h>
 #include <QtAppManInstaller/scopeutilities.h>
 
@@ -63,8 +62,8 @@ class InstallationTask : public AsynchronousTask
 {
     Q_OBJECT
 public:
-    InstallationTask(const InstallationLocation &installationLocation, const QUrl &sourceUrl,
-                     QObject *parent = nullptr);
+    InstallationTask(const QString &installationPath, const QString &documentPath,
+                     const QUrl &sourceUrl, QObject *parent = nullptr);
     ~InstallationTask() override;
 
     void acknowledge();
@@ -83,7 +82,8 @@ private:
 
 private:
     PackageManager *m_pm;
-    const InstallationLocation &m_installationLocation;
+    QString m_installationPath;
+    QString m_documentPath;
     QUrl m_sourceUrl;
     bool m_foundInfo = false;
     bool m_foundIcon = false;

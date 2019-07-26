@@ -91,7 +91,9 @@ DefaultConfiguration::DefaultConfiguration(const QStringList &defaultConfigFileP
     m_clp.addOption({ qSL("database"),             qSL("filepath of the application database cache."), qSL("file") });
     m_clp.addOption({ { qSL("r"), qSL("recreate-database") },  qSL("recreate the application database cache.") });
     m_clp.addOption({ qSL("builtin-apps-manifest-dir"),   qSL("base directory for built-in application manifests."), qSL("dir") });
-    m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("base directory for installed application manifests."), qSL("dir") });
+    m_clp.addOption({ qSL("installation-dir"),     qSL("base directory for package installations."), qSL("dir") });
+    m_clp.addOption({ qSL("document-dir"),         qSL("base directory for per-package document directories."), qSL("dir") });
+    m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("deprecated (ignored)."), qSL("dir") });
     m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("deprecated, not needed anymore."), qSL("dir") });
     m_clp.addOption({ qSL("disable-installer"),    qSL("disable the application installer sub-system.") });
     m_clp.addOption({ qSL("disable-intents"),      qSL("disable the intents sub-system.") });
@@ -139,10 +141,30 @@ void DefaultConfiguration::parseWithArguments(const QStringList &arguments, QStr
         *deploymentWarnings << qL1S("No --database command line parameter or applications/database configuration"
                 " key specified. Database won't be cached to speed up subsequent System-UI startups.");
 
-    if (installedAppsManifestDir().isEmpty())
-        *deploymentWarnings << qL1S("No --installed-apps-manifest-dir command line parameter or"
-                " applications/installedAppsManifestDir configuration key specified. It won't be possible to install,"
-                " remove or access installable applications.");
+    if (installationDir().isEmpty()) {
+        const auto ilocs = value<QVariant>(nullptr, { "installationLocations" }).toList();
+        if (!ilocs.isEmpty()) {
+            *deploymentWarnings << qL1S("Support for \"installationLocations\" in the main config file has been removed:");
+
+            for (const auto iloc : ilocs) {
+                QVariantMap map = iloc.toMap();
+                QString id = map.value(qSL("id")).toString();
+                if (id == qSL("internal-0")) {
+                    m_installationDir = map.value(qSL("installationPath")).toString();
+                    m_documentDir = map.value(qSL("documentPath")).toString();
+                    *deploymentWarnings << qL1S(" * still using installation location \"internal-0\" for backward compatibility");
+                } else {
+                    *deploymentWarnings << qL1S(" * ignoring installation location ") + id;
+                }
+            }
+        }
+    }
+
+    if (installationDir().isEmpty()) {
+        *deploymentWarnings << qL1S("No --installation-dir command line parameter or"
+                " applications/installationDir configuration key specified. It won't be possible to install,"
+                " remove or access installable packages.");
+    }
 
     if (value<bool>("start-session-dbus"))
         *deploymentWarnings << qL1S("Option \"--start-session-dbus\" has been deprecated and will be ignored.");
@@ -172,9 +194,18 @@ QStringList DefaultConfiguration::builtinAppsManifestDirs() const
     return value<QStringList>("builtin-apps-manifest-dir", { "applications", "builtinAppsManifestDir" });
 }
 
-QString DefaultConfiguration::installedAppsManifestDir() const
+QString DefaultConfiguration::installationDir() const
 {
-    return value<QString>("installed-apps-manifest-dir", { "applications", "installedAppsManifestDir" });
+    if (m_installationDir.isEmpty())
+        m_installationDir = value<QString>("installation-dir", { "applications", "installationDir" });
+    return m_installationDir;
+}
+
+QString DefaultConfiguration::documentDir() const
+{
+    if (m_documentDir.isEmpty())
+        m_documentDir = value<QString>("document-dir", { "applications", "documentDir" });
+    return m_documentDir;
 }
 
 bool DefaultConfiguration::disableInstaller() const
@@ -341,11 +372,6 @@ QString DefaultConfiguration::dltDescription() const
 QVariantMap DefaultConfiguration::openGLConfiguration() const
 {
     return value<QVariant>(nullptr, { "ui", "opengl" }).toMap();
-}
-
-QVariantList DefaultConfiguration::installationLocations() const
-{
-    return value<QVariant>(nullptr, { "installationLocations" }).toList();
 }
 
 QList<QPair<QString, QString>> DefaultConfiguration::containerSelectionConfiguration() const

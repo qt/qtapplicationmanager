@@ -5,6 +5,12 @@
     <property name="developmentMode" type="b" access="read"/>
     <property name="applicationUserIdSeparation" type="b" access="read"/>
     <property name="commonApplicationGroupId" type="u" access="read"/>
+    <property name="installationLocation" type="v" access="read">
+      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
+    </property>
+    <property name="documentLocation" type="v" access="read">
+      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
+    </property>
     <signal name="taskStarted">
       <arg name="taskId" type="s" direction="out"/>
     </signal>
@@ -44,21 +50,8 @@
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
       <arg name="id" type="s" direction="in"/>
     </method>
-    <method name="installationLocationIds">
-      <arg type="as" direction="out"/>
-    </method>
-    <method name="installationLocationIdFromPackage">
-      <arg type="s" direction="out"/>
-      <arg name="id" type="s" direction="in"/>
-    </method>
-    <method name="getInstallationLocation">
-      <arg type="a{sv}" direction="out"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
-      <arg name="installationLocationId" type="s" direction="in"/>
-    </method>
     <method name="startPackageInstallation">
       <arg type="s" direction="out"/>
-      <arg name="installationLocationId" type="s" direction="in"/>
       <arg name="sourceUrl" type="s" direction="in"/>
     </method>
     <method name="acknowledgePackageInstallation">

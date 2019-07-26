@@ -122,10 +122,12 @@ private:
 
 QMutex InstallationTask::s_serializeFinishInstallation { };
 
-InstallationTask::InstallationTask(const InstallationLocation &installationLocation, const QUrl &sourceUrl, QObject *parent)
+InstallationTask::InstallationTask(const QString &installationPath, const QString &documentPath,
+                                   const QUrl &sourceUrl, QObject *parent)
     : AsynchronousTask(parent)
     , m_pm(PackageManager::instance())
-    , m_installationLocation(installationLocation)
+    , m_installationPath(installationPath)
+    , m_documentPath(documentPath)
     , m_sourceUrl(sourceUrl)
 { }
 
@@ -161,8 +163,8 @@ void InstallationTask::acknowledge()
 void InstallationTask::execute()
 {
     try {
-        if (!m_installationLocation.isValid())
-            throw Exception("invalid installation location");
+        if (m_installationPath.isEmpty())
+            throw Exception("no installation location was configured");
 
         TemporaryDir extractionDir;
         if (!extractionDir.isValid())
@@ -293,13 +295,6 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         if (m_iconFileName.isEmpty())
             throw Exception(Error::Package, "the 'icon' field in info.yaml cannot be empty or absent.");
 
-        InstallationLocation existingLocation = m_pm->installationLocationFromPackage(m_package->id());
-
-        if (existingLocation.isValid() && (existingLocation != m_installationLocation)) {
-            throw Exception(Error::Package, "the package %1 cannot be installed to %2, since it is already installed to %3")
-                .arg(m_package->id(), m_installationLocation.id(), existingLocation.id());
-        }
-
         m_packageId = m_package->id();
 
         m_foundInfo = true;
@@ -342,7 +337,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
             { qSL("baseDir"), m_package->baseDir().absolutePath() },
             { qSL("codeDir"), m_package->baseDir().absolutePath() },     // 5.12 backward compatibility
             { qSL("manifestDir"), m_package->baseDir().absolutePath() }, // 5.12 backward compatibility
-            { qSL("installationLocationId"), m_installationLocation.id() }
+            { qSL("installationLocationId"), qSL("internal-0") } // 5.13 backward compatibility
         };
         emit m_pm->taskRequestingInstallationAcknowledge(id(), applicationData,
                                                          m_extractor->installationReport().extraMetaData(),
@@ -387,7 +382,7 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 {
     // 2. delete old, partial installation
 
-    QDir installationDir = QString(m_installationLocation.installationPath() + qL1C('/'));
+    QDir installationDir = QString(m_installationPath + qL1C('/'));
     QString installationTarget = m_packageId + qL1C('+');
     if (installationDir.exists(installationTarget)) {
         if (!removeRecursiveHelper(installationDir.absoluteFilePath(installationTarget)))
@@ -405,7 +400,7 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 
 void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QDir documentDirectory(m_installationLocation.documentPath());
+    QDir documentDirectory(m_documentPath);
     ScopedDirectoryCreator documentDirCreator;
 
     enum { Installation, Update } mode = Installation;
@@ -415,7 +410,6 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 
     // create the installation report
     InstallationReport report = m_extractor->installationReport();
-    report.setInstallationLocationId(m_installationLocation.id());
 
     QFile reportFile(m_extractionDir.absoluteFilePath(qSL(".installation-report.yaml")));
     if (!reportFile.open(QFile::WriteOnly) || !report.serialize(&reportFile))

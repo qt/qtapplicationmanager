@@ -131,10 +131,6 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \row
       \li \c applicationProperties
       \li A map with all application properties as seen in the manifest.
-    \row
-      \li \c installationLocationId
-      \li The installation location id, if this application was installed - empty for built-in
-          applications.
     \endtable
 */
 

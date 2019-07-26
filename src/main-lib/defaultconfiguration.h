@@ -65,7 +65,10 @@ public:
     bool recreateDatabase() const;
 
     QStringList builtinAppsManifestDirs() const;
-    QString installedAppsManifestDir() const;
+
+    QString installationDir() const;
+    QString documentDir() const;
+
     bool disableInstaller() const;
     bool disableIntents() const;
     QMap<QString, int> intentTimeouts() const;
@@ -98,8 +101,6 @@ public:
 
     QVariantMap openGLConfiguration() const;
 
-    QVariantList installationLocations() const;
-
     QList<QPair<QString, QString>> containerSelectionConfiguration() const;
     QVariantMap containerConfigurations() const;
     QVariantMap runtimeConfigurations() const;
@@ -131,6 +132,8 @@ private:
     QString m_mainQmlFile;
     bool m_onlyOnePositionalArgument = false;
     bool m_forceVerbose = false;
+    mutable QString m_installationDir; // cached value
+    mutable QString m_documentDir;     // cached value
 };
 
 QT_END_NAMESPACE_AM

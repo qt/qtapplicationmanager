@@ -212,7 +212,8 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     m_noSecurity = cfg->noSecurity();
     m_developmentMode = cfg->developmentMode();
     m_builtinAppsManifestDirs = cfg->builtinAppsManifestDirs();
-    m_installedAppsManifestDir = cfg->installedAppsManifestDir();
+    m_installationDir = cfg->installationDir();
+    m_documentDir = cfg->documentDir();
 
     CrashHandler::setCrashActionConfiguration(cfg->managerCrashAction());
     setupLogging(cfg->verbose(), cfg->loggingRules(), cfg->messagePattern(), cfg->useAMConsoleLogger());
@@ -236,15 +237,13 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->openGLConfiguration(),
                                cfg->containerConfigurations(), cfg->pluginFilePaths("container"),
                                cfg->iconThemeSearchPaths(), cfg->iconThemeName());
-    if (!cfg->disableInstaller())
-        setupInstallationLocations(cfg->installationLocations());
 
     loadPackageDatabase(cfg->recreateDatabase(), cfg->singleApp());
 
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
                     cfg->quickLaunchIdleLoad());
 
-    if (m_installedAppsManifestDir.isEmpty() || cfg->disableInstaller()) {
+    if (m_installationDir.isEmpty() || cfg->disableInstaller()) {
         StartupTimer::instance()->checkpoint("skipping installer");
     } else {
         setupInstaller(cfg->caCertificates(),
@@ -425,24 +424,12 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
     StartupTimer::instance()->checkpoint("after runtime registration");
 }
 
-void Main::setupInstallationLocations(const QVariantList &installationLocations)
-{
-#if !defined(AM_DISABLE_INSTALLER)
-    m_installationLocations = InstallationLocation::parseInstallationLocations(installationLocations,
-                                                                               hardwareId());
-    if (m_installationLocations.isEmpty())
-        qCWarning(LogDeployment) << "No installation locations defined in config file";
-#else
-    Q_UNUSED(installationLocations)
-#endif
-}
-
 void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (!singlePackage.isEmpty()) {
         m_packageDatabase = new PackageDatabase(singlePackage);
     } else {
-        m_packageDatabase = new PackageDatabase(m_builtinAppsManifestDirs, m_installedAppsManifestDir);
+        m_packageDatabase = new PackageDatabase(m_builtinAppsManifestDirs, m_installationDir);
         if (!recreateDatabase)
             m_packageDatabase->enableLoadFromCache();
         m_packageDatabase->enableSaveToCache();
@@ -460,17 +447,6 @@ void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePacka
         for (const auto app : apps) {
             if (!RuntimeFactory::instance()->manager(app->runtimeName()))
                 throw Exception("application '%1' uses an unknown runtime: %2").arg(app->id(), app->runtimeName());
-        }
-
-        // fix the basedir of the package here, because (PackageDatabase
-        // (application-lib) doesn't know about InstallationLocation (installer-lib)
-        if (package->installationReport()) {
-            for (const InstallationLocation &il : m_installationLocations) {
-                if (il.id() == package->installationReport()->installationLocationId()) {
-                    package->setBaseDir(QDir(il.installationPath() + package->id()));
-                    break;
-                }
-            }
         }
     }
 
@@ -509,7 +485,7 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
                            int quickLaunchRuntimesPerContainer,
                            qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_packageManager = PackageManager::createInstance(m_packageDatabase, m_installationLocations);
+    m_packageManager = PackageManager::createInstance(m_packageDatabase, m_documentDir);
 
     qCDebug(LogSystem) << "Registering packages:";
 
@@ -568,8 +544,10 @@ void Main::setupInstaller(const QStringList &caCertificatePaths,
     if (Q_UNLIKELY(hardwareId().isEmpty()))
         throw Exception("the installer is enabled, but the device-id is empty");
 
-    if (Q_UNLIKELY(!QDir::root().mkpath(m_installedAppsManifestDir)))
-        throw Exception("could not create manifest directory for installed applications: \'%1\'").arg(m_installedAppsManifestDir);
+    if (!m_installationDir.isEmpty() && !QDir::root().mkpath(m_installationDir))
+        throw Exception("could not create package installation directory: \'%1\'").arg(m_installationDir);
+    if (!m_documentDir.isEmpty() && !QDir::root().mkpath(m_documentDir))
+        throw Exception("could not create document directory for packages: \'%1\'").arg(m_documentDir);
 
     StartupTimer::instance()->checkpoint("after installer setup checks");
 

@@ -109,8 +109,6 @@ private slots:
 
     //TODO: test AI::cleanupBrokenInstallations() before calling cleanup() the first time!
 
-    void installationLocations();
-
     void packageInstallation_data();
     void packageInstallation();
 
@@ -132,8 +130,6 @@ public:
     enum PathLocation {
         Internal0,
         Documents0,
-        Internal1,
-        Documents1,
 
         PathLocationCount
     };
@@ -148,10 +144,8 @@ private:
     {
         QString base;
         switch (pathLocation) {
-        case Internal0:      base = qSL("internal-0"); break;
-        case Documents0:     base = qSL("documents-0"); break;
-        case Internal1:      base = qSL("internal-1"); break;
-        case Documents1:     base = qSL("documents-1"); break;
+        case Internal0:      base = qSL("internal"); break;
+        case Documents0:     base = qSL("documents"); break;
         default: break;
         }
 
@@ -193,7 +187,6 @@ private:
 
     QTemporaryDir m_workDir;
     QString m_hardwareId;
-    QVector<InstallationLocation> m_installationLocations;
     PackageManager *m_pm = nullptr;
     QSignalSpy *m_startedSpy = nullptr;
     QSignalSpy *m_requestingInstallationAcknowledgeSpy = nullptr;
@@ -254,35 +247,28 @@ void tst_PackageManager::initTestCase()
     for (int i = 0; i < PathLocationCount; ++i)
         QVERIFY(QDir().mkdir(pathTo(PathLocation(i))));
 
-    // define some installation locations for testing
-
-    QVariantList iloc = QVariantList {
-            QVariantMap {
-                { "isDefault", true },
-                { "id", "internal-0" },
-                { "installationPath", pathTo(Internal0) },
-                { "documentPath", pathTo(Documents0) }
-            },
-            QVariantMap {
-                { "id", "internal-1" },
-                { "installationPath", pathTo(Internal1) },
-                { "documentPath", pathTo(Documents1) },
-            }
-    };
-
-    m_installationLocations = InstallationLocation::parseInstallationLocations(iloc, m_hardwareId);
-
-    QCOMPARE(m_installationLocations.size(), 2);
-
     // finally, instantiate the PackageManager and a bunch of signal-spies for its signals
-
     try {
-        PackageDatabase *pdb = new PackageDatabase({ pathTo(Internal0) }, pathTo(Internal1));
-        m_pm = PackageManager::createInstance(pdb, m_installationLocations);
+        PackageDatabase *pdb = new PackageDatabase(QStringList(), pathTo(Internal0));
+        m_pm = PackageManager::createInstance(pdb, pathTo(Documents0));
         m_pm->setHardwareId(m_hardwareId);
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
     }
+
+    const QVariantMap iloc = m_pm->installationLocation();
+    QCOMPARE(iloc.size(), 3);
+    QCOMPARE(iloc.value(qSL("path")).toString(), pathTo(Internal0));
+    QVERIFY(iloc.value(qSL("deviceSize")).toLongLong() > 0);
+    QVERIFY(iloc.value(qSL("deviceFree")).toLongLong() > 0);
+    QVERIFY(iloc.value(qSL("deviceFree")).toLongLong() < iloc.value(qSL("deviceSize")).toLongLong());
+
+    const QVariantMap dloc = m_pm->documentLocation();
+    QCOMPARE(dloc.size(), 3);
+    QCOMPARE(dloc.value(qSL("path")).toString(), pathTo(Documents0));
+    QVERIFY(dloc.value(qSL("deviceSize")).toLongLong() > 0);
+    QVERIFY(dloc.value(qSL("deviceFree")).toLongLong() > 0);
+    QVERIFY(dloc.value(qSL("deviceFree")).toLongLong() < dloc.value(qSL("deviceSize")).toLongLong());
 
     m_startedSpy = new QSignalSpy(m_pm, &PackageManager::taskStarted);
     m_requestingInstallationAcknowledgeSpy = new QSignalSpy(m_pm, &PackageManager::taskRequestingInstallationAcknowledge);
@@ -344,46 +330,10 @@ void tst_PackageManager::cleanup()
     recursiveOperation(pathTo(Internal0), safeRemove);
 }
 
-void tst_PackageManager::installationLocations()
-{
-    QVERIFY(!InstallationLocation().isValid());
-
-    const QVector<InstallationLocation> loclist = m_pm->installationLocations();
-
-    QCOMPARE(loclist.size(), m_installationLocations.size());
-    for (const InstallationLocation &loc : loclist)
-        QVERIFY(m_installationLocations.contains(loc));
-
-    QVector<InstallationLocation> locationList = InstallationLocation::parseInstallationLocations(QVariantList {
-        QVariantMap {
-            { "id", "internal-0" },
-            { "installationPath", QDir::tempPath() },
-            { "documentPath", QDir::tempPath() },
-            { "isDefault", true }
-        },
-    }, m_hardwareId);
-    QCOMPARE(locationList.size(), 1);
-    InstallationLocation &tmp = locationList.first();
-    QVariantMap map = tmp.toVariantMap();
-    QVERIFY(!map.isEmpty());
-
-    QCOMPARE(map.value(qSL("id")).toString(), tmp.id());
-    QCOMPARE(map.value(qSL("index")).toInt(), tmp.index());
-    QCOMPARE(map.value(qSL("installationPath")).toString(), tmp.installationPath());
-    QCOMPARE(map.value(qSL("documentPath")).toString(), tmp.documentPath());
-    QCOMPARE(map.value(qSL("isDefault")).toBool(), tmp.isDefault());
-    QVERIFY(map.value(qSL("installationDeviceSize")).toLongLong() > 0);
-    QVERIFY(map.value(qSL("installationDeviceFree")).toLongLong() > 0);
-    QVERIFY(map.value(qSL("documentDeviceSize")).toLongLong() > 0);
-    QVERIFY(map.value(qSL("documentDeviceFree")).toLongLong() > 0);
-}
-
 void tst_PackageManager::packageInstallation_data()
 {
     QTest::addColumn<QString>("packageName");
-    QTest::addColumn<QString>("installationLocationId");
     QTest::addColumn<QString>("updatePackageName");
-    QTest::addColumn<QString>("updateInstallationLocationId");
     QTest::addColumn<bool>("devSigned");
     QTest::addColumn<bool>("storeSigned");
     QTest::addColumn<bool>("expectedSuccess");
@@ -407,61 +357,55 @@ void tst_PackageManager::packageInstallation_data()
     };
 
     QTest::newRow("normal") \
-            << "test.appkg" << "internal-0" << "test-update.appkg" << "internal-0"
+            << "test.appkg" << "test-update.appkg"
             << false << false << true << true << nomd<< "";
     QTest::newRow("no-dev-signed") \
-            << "test.appkg" << "internal-0" << "" << ""
+            << "test.appkg" << ""
             << true << false << false << false << nomd << "cannot install unsigned packages";
     QTest::newRow("dev-signed") \
-            << "test-dev-signed.appkg" << "internal-0" << "test-update-dev-signed.appkg" << "internal-0"
+            << "test-dev-signed.appkg" << "test-update-dev-signed.appkg"
             << true << false << true << true << nomd << "";
     QTest::newRow("no-store-signed") \
-            << "test.appkg" << "internal-0" << "" << ""
+            << "test.appkg" << ""
             << false << true << false << false << nomd << "cannot install unsigned packages";
     QTest::newRow("no-store-but-dev-signed") \
-            << "test-dev-signed.appkg" << "internal-0" << "" << ""
+            << "test-dev-signed.appkg" << ""
             << false << true << false << false << nomd << "cannot install development packages on consumer devices";
     QTest::newRow("store-signed") \
-            << "test-store-signed.appkg" << "internal-0" << "" << ""
+            << "test-store-signed.appkg" << ""
             << false << true << true << false << nomd << "";
     QTest::newRow("extra-metadata") \
-            << "test-extra.appkg" << "internal-0" << "" << ""
+            << "test-extra.appkg" << ""
             << false << false << true << false << extramd << "";
     QTest::newRow("extra-metadata-dev-signed") \
-            << "test-extra-dev-signed.appkg" << "internal-0" << "" << ""
+            << "test-extra-dev-signed.appkg" << ""
             << true << false << true << false << extramd << "";
-    QTest::newRow("update-to-different-location") \
-            << "test.appkg" << "internal-0" << "test-update.appkg" << "internal-1"
-            << false << false << true << false << nomd << "the package com.pelagicore.test cannot be installed to internal-1, since it is already installed to internal-0";
-    QTest::newRow("invalid-location") \
-            << "test.appkg" << "internal-42" << "" << ""
-            << false << false << false << false << nomd << "invalid installation location";
     QTest::newRow("invalid-file-order") \
-            << "test-invalid-file-order.appkg" << "internal-0" << "" << ""
+            << "test-invalid-file-order.appkg" << ""
             << false << false << false << false << nomd << "The package icon (as stated in info.yaml) must be the second file in the package. Expected 'icon.png', got 'test'";
     QTest::newRow("invalid-header-format") \
-            << "test-invalid-header-formatversion.appkg" << "internal-0" << "" << ""
+            << "test-invalid-header-formatversion.appkg" << ""
             << false << false << false << false << nomd << "metadata has an invalid format specification: wrong formatVersion header: expected 2, got 0";
     QTest::newRow("invalid-header-diskspaceused") \
-            << "test-invalid-header-diskspaceused.appkg" << "internal-0" << "" << ""
+            << "test-invalid-header-diskspaceused.appkg" << ""
             << false << false << false << false << nomd << "metadata has an invalid diskSpaceUsed field (0)";
     QTest::newRow("invalid-header-id") \
-            << "test-invalid-header-id.appkg" << "internal-0" << "" << ""
+            << "test-invalid-header-id.appkg" << ""
             << false << false << false << false << nomd << "metadata has an invalid packageId field (:invalid)";
     QTest::newRow("non-matching-header-id") \
-            << "test-non-matching-header-id.appkg" << "internal-0" << "" << ""
+            << "test-non-matching-header-id.appkg" << ""
             << false << false << false << false << nomd << "the package identifiers in --PACKAGE-HEADER--' and info.yaml do not match";
     QTest::newRow("tampered-extra-signed-header") \
-            << "test-tampered-extra-signed-header.appkg" << "internal-0" << "" << ""
+            << "test-tampered-extra-signed-header.appkg" << ""
             << false << false << false << false << nomd << "~package digest mismatch.*";
     QTest::newRow("invalid-info.yaml") \
-            << "test-invalid-info.appkg" << "internal-0" << "" << ""
+            << "test-invalid-info.appkg" << ""
             << false << false << false << false << nomd << "~.*YAML parse error at line \\d+, column \\d+: did not find expected key";
     QTest::newRow("invalid-info.yaml-id") \
-            << "test-invalid-info-id.appkg" << "internal-0" << "" << ""
+            << "test-invalid-info-id.appkg" << ""
             << false << false << false << false << nomd << "~.*the identifier \\(:invalid\\) is not a valid package-id: must consist of printable ASCII characters only, except any of .*";
     QTest::newRow("invalid-footer-signature") \
-            << "test-invalid-footer-signature.appkg" << "internal-0" << "" << ""
+            << "test-invalid-footer-signature.appkg" << ""
             << true << false << false << false << nomd << "could not verify the package's developer signature";
 }
 
@@ -471,15 +415,16 @@ void tst_PackageManager::packageInstallation_data()
 void tst_PackageManager::packageInstallation()
 {
     QFETCH(QString, packageName);
-    QFETCH(QString, installationLocationId);
     QFETCH(QString, updatePackageName);
-    QFETCH(QString, updateInstallationLocationId);
     QFETCH(bool, devSigned);
     QFETCH(bool, storeSigned);
     QFETCH(bool, expectedSuccess);
     QFETCH(bool, updateExpectedSuccess);
     QFETCH(QVariantMap, extraMetaData);
     QFETCH(QString, errorString);
+
+    QString installationDir = m_pm->installationLocation().value(qSL("path")).toString();
+    QString documentDir = m_pm->documentLocation().value(qSL("path")).toString();
 
     AllowInstallations allow(storeSigned ? AllowInstallations::RequireStoreSigned
                                          : (devSigned ? AllowInstallations::RequireDevSigned
@@ -488,8 +433,6 @@ void tst_PackageManager::packageInstallation()
     int lastPass = (updatePackageName.isEmpty() ? 1 : 2);
     // pass 1 is the installation / pass 2 is the update (if needed)
     for (int pass = 1; pass <= lastPass; ++pass) {
-        const InstallationLocation &il = m_pm->installationLocationFromId(pass == 1 ? installationLocationId : updateInstallationLocationId);
-
         // this makes the results a bit ugly to look at, but it helps with debugging a lot
         if (pass > 1)
             qInfo("Pass %d", pass);
@@ -497,7 +440,7 @@ void tst_PackageManager::packageInstallation()
         // install (or update) the package
 
         QUrl url = QUrl::fromLocalFile(AM_TESTDATA_DIR "packages/" + (pass == 1 ? packageName : updatePackageName));
-        QString taskId = m_pm->startPackageInstallation(il.id(), url);
+        QString taskId = m_pm->startPackageInstallation(url);
         QVERIFY(!taskId.isEmpty());
         m_pm->acknowledgePackageInstallation(taskId);
 
@@ -523,10 +466,10 @@ void tst_PackageManager::packageInstallation()
 
             //TODO: remove system((QString::fromUtf8("find ") + m_workDir.path()).toLocal8Bit().constData());
 
-            QVERIFY(QFile::exists(il.installationPath() + qSL("com.pelagicore.test/.installation-report.yaml")));
-            QVERIFY(QDir(pathTo(il.documentPath() + "/com.pelagicore.test")).exists());
+            QVERIFY(QFile::exists(installationDir + qSL("/com.pelagicore.test/.installation-report.yaml")));
+            QVERIFY(QDir(documentDir + qSL("/com.pelagicore.test")).exists());
 
-            QString fileCheckPath = il.installationPath() + "/com.pelagicore.test";
+            QString fileCheckPath = installationDir + "/com.pelagicore.test";
 
             // now check the installed files
 
@@ -577,7 +520,7 @@ void tst_PackageManager::packageInstallation()
     }
     // check that all files are gone
 
-    for (PathLocation pl: { Internal0, Internal1, Documents0, Documents1 }) {
+    for (PathLocation pl: { Internal0, Documents0 }) {
         QStringList entries = QDir(pathTo(pl)).entryList({ qSL("com.pelagicore.test*") });
         QVERIFY2(entries.isEmpty(), qPrintable(pathTo(pl) + qSL(": ") + entries.join(qSL(", "))));
     }
@@ -590,19 +533,18 @@ Q_DECLARE_METATYPE(FunctionMap)
 
 void tst_PackageManager::simulateErrorConditions_data()
 {
-     QTest::addColumn<QString>("installationLocation");
      QTest::addColumn<bool>("testUpdate");
      QTest::addColumn<QString>("errorString");
      QTest::addColumn<FunctionMap>("functions");
 
 #ifdef Q_OS_LINUX
      QTest::newRow("applications-dir-read-only") \
-             << "internal-0" << false << "~could not create installation directory .*" \
+             << false << "~could not create installation directory .*" \
              << FunctionMap { { "before-start", [this]() { return chmod(pathTo(Internal0).toLocal8Bit(), 0000) == 0; } },
                               { "after-failed", [this]() { return chmod(pathTo(Internal0).toLocal8Bit(), 0777) == 0; } } };
 
      QTest::newRow("documents-dir-read-only") \
-             << "internal-0" << false << "~could not create the document directory .*" \
+             << false << "~could not create the document directory .*" \
              << FunctionMap { { "before-start", [this]() { return chmod(pathTo(Documents0).toLocal8Bit(), 0000) == 0; } },
                               { "after-failed", [this]() { return chmod(pathTo(Documents0).toLocal8Bit(), 0777) == 0; } } };
 #endif
@@ -610,7 +552,6 @@ void tst_PackageManager::simulateErrorConditions_data()
 
 void tst_PackageManager::simulateErrorConditions()
 {
-    QFETCH(QString, installationLocation);
     QFETCH(bool, testUpdate);
     QFETCH(QString, errorString);
     QFETCH(FunctionMap, functions);
@@ -620,7 +561,7 @@ void tst_PackageManager::simulateErrorConditions()
     if (testUpdate) {
         // the check will run when updating a package, so we need to install it first
 
-        taskId = m_pm->startPackageInstallation(installationLocation, QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+        taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
         QVERIFY(!taskId.isEmpty());
         m_pm->acknowledgePackageInstallation(taskId);
         QVERIFY(m_finishedSpy->wait(spyTimeout));
@@ -631,7 +572,7 @@ void tst_PackageManager::simulateErrorConditions()
     foreach (const auto &f, functions.values(qSL("before-start")))
         QVERIFY(f());
 
-    taskId = m_pm->startPackageInstallation(installationLocation, QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
 
     foreach (const auto &f, functions.values(qSL("after-start")))
         QVERIFY(f());
@@ -671,7 +612,7 @@ void tst_PackageManager::cancelPackageInstallation()
 {
     QFETCH(bool, expectedResult);
 
-    QString taskId = m_pm->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    QString taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
     QVERIFY(!taskId.isEmpty());
 
     if (isDataTag("before-started-signal")) {
@@ -710,12 +651,12 @@ void tst_PackageManager::cancelPackageInstallation()
 
 void tst_PackageManager::parallelPackageInstallation()
 {
-    QString task1Id = m_pm->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    QString task1Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
     QVERIFY(!task1Id.isEmpty());
     QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
     QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), task1Id);
 
-    QString task2Id = m_pm->startPackageInstallation(qSL("internal-0"), QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/bigtest-dev-signed.appkg")));
+    QString task2Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/bigtest-dev-signed.appkg")));
     QVERIFY(!task2Id.isEmpty());
     m_pm->acknowledgePackageInstallation(task2Id);
     QVERIFY(m_finishedSpy->wait(spyTimeout));

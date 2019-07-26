@@ -62,7 +62,6 @@ void tst_InstallationReport::test()
     ir.setDigest("##digest##");
     QVERIFY(ir.isValid());
     ir.addFiles(files.mid(1));
-    ir.setInstallationLocationId(qSL("test-42"));
     ir.setDeveloperSignature("%%dev-sig%%");
     ir.setStoreSignature("$$store-sig$$");
 
@@ -71,7 +70,6 @@ void tst_InstallationReport::test()
     QCOMPARE(ir.files(), files);
     QCOMPARE(ir.diskSpaceUsed(), 42ULL);
     QCOMPARE(ir.digest().constData(), "##digest##");
-    QCOMPARE(ir.installationLocationId(), qSL("test-42"));
     QCOMPARE(ir.developerSignature().constData(), "%%dev-sig%%");
     QCOMPARE(ir.storeSignature().constData(), "$$store-sig$$");
 
@@ -89,7 +87,6 @@ void tst_InstallationReport::test()
     QCOMPARE(ir2.files(), files);
     QCOMPARE(ir2.diskSpaceUsed(), 42ULL);
     QCOMPARE(ir2.digest().constData(), "##digest##");
-    QCOMPARE(ir2.installationLocationId(), qSL("test-42"));
     QCOMPARE(ir2.developerSignature().constData(), "%%dev-sig%%");
     QCOMPARE(ir2.storeSignature().constData(), "$$store-sig$$");
 

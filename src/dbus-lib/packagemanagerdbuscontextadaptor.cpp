@@ -114,6 +114,16 @@ bool PackageManagerAdaptor::developmentMode() const
     return PackageManager::instance()->developmentMode();
 }
 
+QDBusVariant PackageManagerAdaptor::installationLocation() const
+{
+    return QDBusVariant(PackageManager::instance()->installationLocation());
+}
+
+QDBusVariant PackageManagerAdaptor::documentLocation() const
+{
+    return QDBusVariant(PackageManager::instance()->documentLocation());
+}
+
 void PackageManagerAdaptor::acknowledgePackageInstallation(const QString &taskId)
 {
     AM_AUTHENTICATE_DBUS(void)
@@ -146,24 +156,6 @@ QVariantMap PackageManagerAdaptor::get(const QString &id)
     return map;
 }
 
-QVariantMap PackageManagerAdaptor::getInstallationLocation(const QString &installationLocationId)
-{
-    AM_AUTHENTICATE_DBUS(QVariantMap)
-    return PackageManager::instance()->getInstallationLocation(installationLocationId);
-}
-
-QString PackageManagerAdaptor::installationLocationIdFromPackage(const QString &packageId)
-{
-    AM_AUTHENTICATE_DBUS(QString)
-    return PackageManager::instance()->installationLocationIdFromPackage(packageId);
-}
-
-QStringList PackageManagerAdaptor::installationLocationIds()
-{
-    AM_AUTHENTICATE_DBUS(QStringList)
-    return PackageManager::instance()->installationLocationIds();
-}
-
 qlonglong PackageManagerAdaptor::installedPackageSize(const QString &packageId)
 {
     AM_AUTHENTICATE_DBUS(qlonglong)
@@ -193,10 +185,10 @@ QString PackageManagerAdaptor::removePackage(const QString &packageId, bool keep
     return PackageManager::instance()->removePackage(packageId, keepDocuments, force);
 }
 
-QString PackageManagerAdaptor::startPackageInstallation(const QString &installationLocationId, const QString &sourceUrl)
+QString PackageManagerAdaptor::startPackageInstallation(const QString &sourceUrl)
 {
     AM_AUTHENTICATE_DBUS(QString)
-    return PackageManager::instance()->startPackageInstallation(installationLocationId, sourceUrl);
+    return PackageManager::instance()->startPackageInstallation(sourceUrl);
 }
 
 QString PackageManagerAdaptor::taskState(const QString &taskId)

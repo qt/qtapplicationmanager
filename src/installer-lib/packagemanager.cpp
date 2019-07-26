@@ -53,6 +53,20 @@
 #include "sudo.h"
 #include "utilities.h"
 
+#if defined(Q_OS_WIN)
+#  include <Windows.h>
+#else
+#  include <sys/stat.h>
+#  include <errno.h>
+#  if defined(Q_OS_ANDROID)
+#    include <sys/vfs.h>
+#    define statvfs statfs
+#  else
+#    include <sys/statvfs.h>
+#  endif
+#endif
+
+
 QT_BEGIN_NAMESPACE_AM
 
 enum Roles
@@ -76,14 +90,14 @@ PackageManager *PackageManager::s_instance = nullptr;
 QHash<int, QByteArray> PackageManager::s_roleNames;
 
 PackageManager *PackageManager::createInstance(PackageDatabase *packageDatabase,
-                                               const QVector<InstallationLocation> &installationLocations)
+                                               const QString &documentPath)
 {
     if (Q_UNLIKELY(s_instance))
         qFatal("PackageManager::createInstance() was called a second time.");
 
     Q_ASSERT(packageDatabase);
 
-    QScopedPointer<PackageManager> pm(new PackageManager(packageDatabase, installationLocations));
+    QScopedPointer<PackageManager> pm(new PackageManager(packageDatabase, documentPath));
     registerQmlTypes();
 
     // map all the built-in packages first
@@ -155,12 +169,13 @@ void PackageManager::registerQmlTypes()
 }
 
 PackageManager::PackageManager(PackageDatabase *packageDatabase,
-                               const QVector<InstallationLocation> &installationLocations)
+                               const QString &documentPath)
     : QAbstractListModel()
     , d(new PackageManagerPrivate())
 {
     d->database = packageDatabase;
-    d->installationLocations = installationLocations;
+    d->installationPath = packageDatabase->installedPackagesDir();
+    d->documentPath = documentPath;
 }
 
 PackageManager::~PackageManager()
@@ -405,6 +420,86 @@ void PackageManager::setCACertificates(const QList<QByteArray> &chainOfTrust)
     d->chainOfTrust = chainOfTrust;
 }
 
+static QVariantMap locationMap(const QString &path)
+{
+    QString cpath = QFileInfo(path).canonicalPath();
+    quint64 bytesTotal = 0;
+    quint64 bytesFree = 0;
+
+#if defined(Q_OS_WIN)
+    GetDiskFreeSpaceExW((LPCWSTR) cpath.utf16(), (ULARGE_INTEGER *) &bytesFree,
+                        (ULARGE_INTEGER *) &bytesTotal, nullptr);
+
+#else // Q_OS_UNIX
+    int result;
+    struct ::statvfs svfs;
+
+    do {
+        result = ::statvfs(cpath.toLocal8Bit(), &svfs);
+        if (result == -1 && errno == EINTR)
+            continue;
+    } while (false);
+
+    if (result == 0) {
+        bytesTotal = quint64(svfs.f_frsize) * svfs.f_blocks;
+        bytesFree = quint64(svfs.f_frsize) * svfs.f_bavail;
+    }
+#endif // Q_OS_WIN
+
+
+    return QVariantMap {
+        { qSL("path"), path },
+        { qSL("deviceSize"), bytesTotal },
+        { qSL("deviceFree"), bytesFree }
+    };
+}
+
+/*!
+    \qmlproperty object PackageManager::installationLocation
+
+    Returns an object describing the location under which applications are installed in detail.
+
+    The returned object has the following members:
+
+    \table
+    \header
+        \li \c Name
+        \li \c Type
+        \li Description
+    \row
+        \li \c path
+        \li \c string
+        \li The absolute file-system path to the base directory.
+    \row
+        \li \c deviceSize
+        \li \c int
+        \li The size of the device holding \c path in bytes.
+    \row
+        \li \c deviceFree
+        \li \c int
+        \li The amount of bytes available on the device holding \c path.
+    \endtable
+
+    Returns an empty object in case the installer component is disabled.
+*/
+QVariantMap PackageManager::installationLocation() const
+{
+    return locationMap(d->installationPath);
+}
+
+/*!
+    \qmlproperty object PackageManager::documentLocation
+
+    Returns an object describing the location under which per-user document
+    directories are created in detail.
+
+    The returned object has the same members as described in PackageManager::installationLocation.
+*/
+QVariantMap PackageManager::documentLocation() const
+{
+    return locationMap(d->documentPath);
+}
+
 void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
 {
     // Check that everything in the app-db is available
@@ -412,54 +507,46 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
 
     // key: baseDirPath, value: subDirName/ or fileName
     QMultiMap<QString, QString> validPaths;
-    for (const InstallationLocation &il : qAsConst(d->installationLocations)) {
-        validPaths.insert(il.documentPath(), QString());
-        validPaths.insert(il.installationPath(), QString());
-    }
+    if (!d->documentPath.isEmpty())
+        validPaths.insert(d->documentPath, QString());
+    if (!d->installationPath.isEmpty())
+        validPaths.insert(d->installationPath, QString());
 
     for (Package *pkg : d->packages) { // we want to detach here!
         const InstallationReport *ir = pkg->info()->installationReport();
         if (ir) {
-            const InstallationLocation &il = installationLocationFromId(ir->installationLocationId());
+            bool valid = true;
 
-            bool valid = il.isValid();
+            QString pkgDir = d->installationPath + pkg->id();
+            QStringList checkDirs;
+            QStringList checkFiles;
 
-            if (!valid)
-                qCDebug(LogInstaller) << "cleanup: uninstalling" << pkg->id() << "- installationLocation is invalid";
+            checkFiles << pkgDir + qSL("/info.yaml");
+            checkFiles << pkgDir + qSL("/.installation-report.yaml");
+            checkDirs << pkgDir;
+            checkDirs << d->installationPath + pkg->id();
 
-            if (valid) {
-                QString pkgDir = il.installationPath() + pkg->id();
-                QStringList checkDirs;
-                QStringList checkFiles;
-
-                checkFiles << pkgDir + qSL("/info.yaml");
-                checkFiles << pkgDir + qSL("/.installation-report.yaml");
-                checkDirs << pkgDir;
-                checkDirs << il.installationPath() + pkg->id();
-
-                for (const QString &checkFile : qAsConst(checkFiles)) {
-                    QFileInfo fi(checkFile);
-                    if (!fi.exists() || !fi.isFile() || !fi.isReadable()) {
-                        valid = false;
-                        qCDebug(LogInstaller) << "cleanup: uninstalling" << pkg->id() << "- file missing:" << checkFile;
-                        break;
-                    }
-                }
-                for (const QString &checkDir : checkDirs) {
-                    QFileInfo fi(checkDir);
-                    if (!fi.exists() || !fi.isDir() || !fi.isReadable()) {
-                        valid = false;
-                        qCDebug(LogInstaller) << "cleanup: uninstalling" << pkg->id() << "- directory missing:" << checkDir;
-                        break;
-                    }
-                }
-
-                if (valid) {
-                    validPaths.insertMulti(il.installationPath(), pkg->id() + qL1C('/'));
-                    validPaths.insertMulti(il.documentPath(), pkg->id() + qL1C('/'));
+            for (const QString &checkFile : qAsConst(checkFiles)) {
+                QFileInfo fi(checkFile);
+                if (!fi.exists() || !fi.isFile() || !fi.isReadable()) {
+                    valid = false;
+                    qCDebug(LogInstaller) << "cleanup: uninstalling" << pkg->id() << "- file missing:" << checkFile;
+                    break;
                 }
             }
-            if (!valid) {
+            for (const QString &checkDir : checkDirs) {
+                QFileInfo fi(checkDir);
+                if (!fi.exists() || !fi.isDir() || !fi.isReadable()) {
+                    valid = false;
+                    qCDebug(LogInstaller) << "cleanup: uninstalling" << pkg->id() << "- directory missing:" << checkDir;
+                    break;
+                }
+            }
+
+            if (valid) {
+                validPaths.insertMulti(d->installationPath, pkg->id() + qL1C('/'));
+                validPaths.insertMulti(d->documentPath, pkg->id() + qL1C('/'));
+            } else {
                 if (startingPackageRemoval(pkg->id())) {
                     if (finishedPackageInstall(pkg->id()))
                         continue;
@@ -506,39 +593,6 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
     }
 }
 
-
-QVector<InstallationLocation> PackageManager::installationLocations() const
-{
-    return d->installationLocations;
-}
-
-const InstallationLocation &PackageManager::defaultInstallationLocation() const
-{
-    for (const InstallationLocation &il : d->installationLocations) {
-        if (il.isDefault())
-            return il;
-    }
-    return InstallationLocation::invalid;
-}
-
-const InstallationLocation &PackageManager::installationLocationFromId(const QString &installationLocationId) const
-{
-    for (const InstallationLocation &il : d->installationLocations) {
-        if (il.id() == installationLocationId)
-            return il;
-    }
-    return InstallationLocation::invalid;
-}
-
-const InstallationLocation &PackageManager::installationLocationFromPackage(const QString &packageId) const
-{
-    if (Package *package = fromId(packageId)) {
-        if (const InstallationReport *report = package->info()->installationReport())
-            return installationLocationFromId(report->installationLocationId());
-    }
-    return InstallationLocation::invalid;
-}
-
 /*!
     \qmlmethod list<string> PackageManager::packageIds()
 
@@ -566,105 +620,6 @@ QVariantMap PackageManager::get(const QString &id) const
 {
     int index = indexOfPackage(id);
     return (index < 0) ? QVariantMap{} : get(index);
-}
-
-/*!
-   \qmlmethod list<string> PackageManager::installationLocationIds()
-
-   Retuns a list of all known installation location ids. Calling getInstallationLocation() on one of
-   the returned identifiers will yield specific information about the individual installation locations.
-*/
-QStringList PackageManager::installationLocationIds() const
-{
-    QStringList ids;
-    for (const InstallationLocation &il : d->installationLocations)
-        ids << il.id();
-    return ids;
-}
-
-/*!
-   \qmlmethod string PackageManager::installationLocationIdFromApplication(string packageId)
-
-   Returns the installation location id for the package identified by \a packageId. Returns
-   an empty string in case the package is not installed.
-
-   \sa installationLocationIds()
-*/
-QString PackageManager::installationLocationIdFromPackage(const QString &packageId) const
-{
-    const InstallationLocation &il = installationLocationFromPackage(packageId);
-    return il.isValid() ? il.id() : QString();
-}
-
-/*!
-    \qmlmethod object PackageManager::getInstallationLocation(string installationLocationId)
-
-    Returns an object describing the installation location identified by \a installationLocationId
-    in detail.
-
-    The returned object has the following members:
-
-    \table
-    \header
-        \li \c Name
-        \li \c Type
-        \li Description
-    \row
-        \li \c id
-        \li \c string
-        \li The installation location id that is used as the handle for all other ApplicationInstaller
-            function calls. The \c id consists of the \c type and \c index field, concatenated by
-            a single dash (for example, \c internal-0).
-    \row
-        \li \c type
-        \li \c string
-        \li The type of device this installation location is connected to. Valid values are \c
-            internal (for any kind of built-in storage, e.g. flash) and \c invalid.
-    \row
-        \li \c index
-        \li \c int
-        \li In case there is more than one installation location for the same type of device, this
-            \c zero-based index is used for disambiguation. Otherwise, the index is always \c 0.
-    \row
-        \li \c isDefault
-        \li \c bool
-
-        \li Exactly one installation location is the default location which must be mounted and
-            accessible at all times. This can be used by an UI application to get a sensible
-            default for the installation location that it needs to pass to startPackageInstallation().
-    \row
-        \li \c installationPath
-        \li \c string
-        \li The absolute file-system path to the base directory under which applications are installed.
-    \row
-        \li \c installationDeviceSize
-        \li \c int
-        \li The size of the device holding \c installationPath in bytes.
-    \row
-        \li \c installationDeviceFree
-        \li \c int
-        \li The amount of bytes available on the device holding \c installationPath.
-    \row
-        \li \c documentPath
-        \li \c string
-        \li The absolute file-system path to the base directory under which per-user document
-            directories are created.
-    \row
-        \li \c documentDeviceSize
-        \li \c int
-        \li The size of the device holding \c documentPath in bytes.
-    \row
-        \li \c documentDeviceFree
-        \li \c int
-        \li The amount of bytes available on the device holding \c documentPath.
-    \endtable
-
-    Returns an empty object in case the \a installationLocationId is not valid.
-*/
-QVariantMap PackageManager::getInstallationLocation(const QString &installationLocationId) const
-{
-    const InstallationLocation &il = installationLocationFromId(installationLocationId);
-    return il.isValid() ? il.toVariantMap() : QVariantMap();
 }
 
 /*!
@@ -720,20 +675,17 @@ QVariantMap PackageManager::installedPackageExtraSignedMetaData(const QString &p
 /*! \internal
   Type safe convenience function, since DBus does not like QUrl
 */
-QString PackageManager::startPackageInstallation(const QString &installationLocationId, const QUrl &sourceUrl)
+QString PackageManager::startPackageInstallation(const QUrl &sourceUrl)
 {
-    AM_TRACE(LogInstaller, installationLocationId, sourceUrl);
+    AM_TRACE(LogInstaller, sourceUrl);
 
-    const InstallationLocation &il = installationLocationFromId(installationLocationId);
-
-    return enqueueTask(new InstallationTask(il, sourceUrl));
+    return enqueueTask(new InstallationTask(d->installationPath, d->documentPath, sourceUrl));
 }
 
 /*!
-    \qmlmethod string PackageManager::startPackageInstallation(string installationLocationId, string sourceUrl)
+    \qmlmethod string PackageManager::startPackageInstallation(string sourceUrl)
 
-    Downloads an application package from \a sourceUrl and installs it to the installation location
-    described by \a installationLocationId.
+    Downloads an application package from \a sourceUrl and installs it.
 
     The actual download and installation will happen asynchronously in the background. The
     PackageManager emits the signals \l taskStarted, \l taskProgressChanged, \l
@@ -751,12 +703,12 @@ QString PackageManager::startPackageInstallation(const QString &installationLoca
     Returns a unique \c taskId. This can also be an empty string, if the task could not be
     created (in this case, no signals will be emitted).
 */
-QString PackageManager::startPackageInstallation(const QString &installationLocationId, const QString &sourceUrl)
+QString PackageManager::startPackageInstallation(const QString &sourceUrl)
 {
     QUrl url(sourceUrl);
     if (url.scheme().isEmpty())
         url = QUrl::fromLocalFile(sourceUrl);
-    return startPackageInstallation(installationLocationId, url);
+    return startPackageInstallation(url);
 }
 
 /*!
@@ -803,11 +755,9 @@ QString PackageManager::removePackage(const QString &packageId, bool keepDocumen
     AM_TRACE(LogInstaller, packageId, keepDocuments)
 
     if (Package *package = fromId(packageId)) {
-        if (const InstallationReport *report = package->info()->installationReport()) {
-            const InstallationLocation &il = installationLocationFromId(report->installationLocationId());
-
-            if (il.isValid() && (il.id() == report->installationLocationId()))
-                return enqueueTask(new DeinstallationTask(package->info(), il, force, keepDocuments));
+        if (package->info()->installationReport()) {
+            return enqueueTask(new DeinstallationTask(package->info(), d->installationPath,
+                                                      d->documentPath, force, keepDocuments));
         }
     }
     return QString();

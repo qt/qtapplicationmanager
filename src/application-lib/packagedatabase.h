@@ -56,8 +56,10 @@ class YamlPackageScanner;
 class PackageDatabase
 {
 public:
-    PackageDatabase(const QStringList &builtInAppsDirs, const QString &installedAppsDir = QString());
+    PackageDatabase(const QStringList &builtInPackagesDirs, const QString &installedPackagesDir = QString());
     PackageDatabase(const QString &singlePackagePath);
+
+    QString installedPackagesDir() const;
 
     void enableLoadFromCache();
     void enableSaveToCache();
@@ -82,8 +84,8 @@ private:
     bool m_loadFromCache = false;
     bool m_saveToCache = false;
     bool m_parsed = false;
-    QStringList m_builtInAppsDirs;
-    QString m_installedAppsDir;
+    QStringList m_builtInPackagesDirs;
+    QString m_installedPackagesDir;
     QString m_singlePackagePath;
 
     QMap<PackageInfo *, QString> m_builtInPackages;

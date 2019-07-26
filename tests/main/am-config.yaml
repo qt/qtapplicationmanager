@@ -3,15 +3,9 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/builtin-apps"
-  installedAppsManifestDir: "/tmp/am-test-main/manifests"
+  installationDir: "/tmp/am-test-main/apps"
+  documentDir: "/tmp/am-test-main/docs"
   database: "/tmp/am-test-main/apps.db"
-
-installationLocations:
-- id: "internal-0"
-  installationPath: "/tmp/am-test-main/apps"
-  documentPath: "/tmp/am-test-main/docs"
-  mountPoint: "/tmp"
-  isDefault: true
 
 ui:
   mainQml: "${CONFIG_PWD}/dummy.qml"

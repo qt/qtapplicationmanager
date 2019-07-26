@@ -51,11 +51,13 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-DeinstallationTask::DeinstallationTask(PackageInfo *package, const InstallationLocation &installationLocation,
-                                       bool forceDeinstallation, bool keepDocuments, QObject *parent)
+DeinstallationTask::DeinstallationTask(PackageInfo *package, const QString &installationPath,
+                                       const QString &documentPath, bool forceDeinstallation,
+                                       bool keepDocuments, QObject *parent)
     : AsynchronousTask(parent)
     , m_package(package)
-    , m_installationLocation(installationLocation)
+    , m_installationPath(installationPath)
+    , m_documentPath(documentPath)
     , m_forceDeinstallation(forceDeinstallation)
     , m_keepDocuments(keepDocuments)
 {
@@ -74,8 +76,6 @@ void DeinstallationTask::execute()
     // these have been checked in PackageManager::removePackage() already
     Q_ASSERT(m_package);
     Q_ASSERT(m_package->installationReport());
-    Q_ASSERT(m_package->installationReport()->installationLocationId() == m_installationLocation.id());
-    Q_ASSERT(m_installationLocation.isValid());
 
     bool managerApproval = false;
 
@@ -104,13 +104,13 @@ void DeinstallationTask::execute()
         ScopedRenamer appDirRename;
 
         if (!m_keepDocuments) {
-            if (!docDirRename.rename(QDir(m_installationLocation.documentPath()).absoluteFilePath(m_package->id()),
+            if (!docDirRename.rename(QDir(m_documentPath).absoluteFilePath(m_package->id()),
                                      ScopedRenamer::NameToNameMinus)) {
                 throw Exception(Error::IO, "could not rename %1 to %1-").arg(docDirRename.baseName());
             }
         }
 
-        if (!appDirRename.rename(QDir(m_installationLocation.installationPath()).absoluteFilePath(m_package->id()),
+        if (!appDirRename.rename(QDir(m_installationPath).absoluteFilePath(m_package->id()),
                                  ScopedRenamer::NameToNameMinus)) {
             throw Exception(Error::IO, "could not rename %1 to %1-").arg(appDirRename.baseName());
         }

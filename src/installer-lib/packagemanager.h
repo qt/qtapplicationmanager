@@ -46,7 +46,6 @@
 #include <QAbstractListModel>
 #include <QtAppManCommon/global.h>
 #include <QtAppManApplication/packageinfo.h>
-#include <QtAppManInstaller/installationlocation.h>
 #include <QtAppManInstaller/asynchronoustask.h>
 #include <QtAppManInstaller/installationtask.h>
 #include <QtAppManInstaller/deinstallationtask.h>
@@ -73,6 +72,9 @@ class PackageManager : public QAbstractListModel
     Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT)
     Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT)
 
+    Q_PROPERTY(QVariantMap installationLocation READ installationLocation CONSTANT)
+    Q_PROPERTY(QVariantMap documentLocation READ documentLocation CONSTANT)
+
     Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled)
     Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId)
 
@@ -85,7 +87,7 @@ public:
 
     ~PackageManager() override;
     static PackageManager *createInstance(PackageDatabase *packageDatabase,
-                                          const QVector<InstallationLocation> &installationLocations);
+                                          const QString &documentPath);
     static PackageManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
@@ -122,27 +124,20 @@ public:
 
     void cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false);
 
-    // InstallationLocation handling
-    QVector<InstallationLocation> installationLocations() const;
-    const InstallationLocation &defaultInstallationLocation() const;
-    const InstallationLocation &installationLocationFromId(const QString &installationLocationId) const;
-    const InstallationLocation &installationLocationFromPackage(const QString &packageId) const;
+    QVariantMap installationLocation() const;
+    QVariantMap documentLocation() const;
 
     // Q_SCRIPTABLEs are available via both QML and D-Bus
     Q_SCRIPTABLE QStringList packageIds() const;
     Q_SCRIPTABLE QVariantMap get(const QString &id) const;
-
-    Q_SCRIPTABLE QStringList installationLocationIds() const;
-    Q_SCRIPTABLE QString installationLocationIdFromPackage(const QString &packageId) const;
-    Q_SCRIPTABLE QVariantMap getInstallationLocation(const QString &installationLocationId) const;
 
     Q_SCRIPTABLE qint64 installedPackageSize(const QString &packageId) const;
     Q_SCRIPTABLE QVariantMap installedPackageExtraMetaData(const QString &packageId) const;
     Q_SCRIPTABLE QVariantMap installedPackageExtraSignedMetaData(const QString &packageId) const;
 
     // all QString return values are task-ids
-    QString startPackageInstallation(const QString &installationLocationId, const QUrl &sourceUrl);
-    Q_SCRIPTABLE QString startPackageInstallation(const QString &installationLocationId, const QString &sourceUrl);
+    QString startPackageInstallation(const QUrl &sourceUrl);
+    Q_SCRIPTABLE QString startPackageInstallation(const QString &sourceUrl);
     Q_SCRIPTABLE void acknowledgePackageInstallation(const QString &taskId);
     Q_SCRIPTABLE QString removePackage(const QString &id, bool keepDocuments, bool force = false);
 
@@ -200,7 +195,7 @@ private:
     uint findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false);
 
     explicit PackageManager(PackageDatabase *packageDatabase,
-                            const QVector<InstallationLocation> &installationLocations);
+                            const QString &documentPath);
     PackageManager(const PackageManager &);
     PackageManager &operator=(const PackageManager &);
     static PackageManager *s_instance;

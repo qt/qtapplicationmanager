@@ -22,7 +22,6 @@ HEADERS += \
     deinstallationtask.h \
     installationtask.h \
     scopeutilities.h \
-    installationlocation.h \
     package.h \
     packagemanager.h \
     packagemanager_p.h \
@@ -33,7 +32,6 @@ SOURCES += \
     installationtask.cpp \
     deinstallationtask.cpp \
     scopeutilities.cpp \
-    installationlocation.cpp \
     packagemanager.cpp \
     package.cpp \
     sudo.cpp \

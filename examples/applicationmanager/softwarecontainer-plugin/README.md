@@ -35,7 +35,8 @@ that the application-manager is using, if you intend on forwarding this
 bus. This is a bit tricky if the agent is run as root and the application-
 manager as non-root user, since the default session-bus policy in most
 distros disallows root to access user session-busses: the workaround is to
-add a `<allow user="root"/>` policy in `/etc/dbus-1/session.conf`.
+add a `<allow user="root"/>` policy within the `<policy context="default">`
+element in `/etc/dbus-1/session.conf`.
 
 Please do also not forget to tell the agent about your environment, when
 running it via sudo:

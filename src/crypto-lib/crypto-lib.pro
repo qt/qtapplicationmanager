@@ -8,6 +8,7 @@ QT = core
 QT_FOR_PRIVATE *= appman_common-private
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 SOURCES += \
     cryptography.cpp \

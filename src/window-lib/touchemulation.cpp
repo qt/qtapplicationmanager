@@ -41,6 +41,7 @@
 ****************************************************************************/
 
 #include <QtAppManCommon/global.h>
+#include <QGuiApplication>
 #include "touchemulation.h"
 #if defined(AM_ENABLE_TOUCH_EMULATION)
 #  include "touchemulation_x11_p.h"
@@ -66,7 +67,8 @@ TouchEmulation *TouchEmulation::createInstance()
         qFatal("TouchEmulation::createInstance() was called a second time.");
 
 #if defined(AM_ENABLE_TOUCH_EMULATION)
-    s_instance = new TouchEmulationX11();
+    if (isSupported())
+        s_instance = new TouchEmulationX11();
 #endif
 
     return s_instance;
@@ -75,10 +77,10 @@ TouchEmulation *TouchEmulation::createInstance()
 bool TouchEmulation::isSupported()
 {
 #if defined(AM_ENABLE_TOUCH_EMULATION)
-    return true;
-#else
-    return false;
+    if (QGuiApplication::platformName() == qL1S("xcb"))
+        return true;
 #endif
+    return false;
 }
 
 QT_END_NAMESPACE_AM

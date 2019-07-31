@@ -24,6 +24,7 @@ QT *= \
 !disable-external-dbus-interfaces:qtHaveModule(dbus):QT *= dbus appman_dbus-private
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 win32:LIBS += -luser32
 
@@ -33,12 +34,16 @@ HEADERS += \
     configuration.h \
     main.h \
     defaultconfiguration.h \
+
+!headless:HEADERS += \
     windowframetimer.h \
 
 SOURCES += \
     main.cpp \
     configuration.cpp \
     defaultconfiguration.cpp \
+
+!headless:SOURCES += \
     windowframetimer.cpp \
 
 load(qt_module)

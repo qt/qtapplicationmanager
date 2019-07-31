@@ -15,6 +15,7 @@ QT_FOR_PRIVATE *= \
     appman_intent_client-private \
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 DBUS_INTERFACES += ../dbus-lib/io.qt.applicationmanager.intentinterface.xml
 

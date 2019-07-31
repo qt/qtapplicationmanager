@@ -1,5 +1,7 @@
 include(../appman/appman.pro)
 
+requires(!headless)
+
 TARGET   = appman-qmltestrunner
 
 DEFINES += AM_TESTRUNNER

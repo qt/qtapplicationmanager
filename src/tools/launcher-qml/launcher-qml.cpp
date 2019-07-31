@@ -94,8 +94,10 @@
 
 // shared-main-lib
 #include "cpustatus.h"
-#include "frametimer.h"
-#include "gpustatus.h"
+#if !defined(AM_HEADLESS)
+#  include "frametimer.h"
+#  include "gpustatus.h"
+#endif
 #include "iostatus.h"
 #include "memorystatus.h"
 #include "monitormodel.h"
@@ -185,16 +187,20 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
+#if !defined(AM_HEADLESS)
     qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
+#endif
     qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 1, 0, "CpuStatus");
+#if !defined(AM_HEADLESS)
     qmlRegisterType<FrameTimer>("QtApplicationManager", 1, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 1, 0, "GpuStatus");
+#endif
     qmlRegisterType<IoStatus>("QtApplicationManager", 1, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 1, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 1, 0, "MonitorModel");
@@ -369,6 +375,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
                 LauncherMain::instance(), &LauncherMain::setSlowAnimations);
     }
 
+#if !defined(AM_HEADLESS)
     // Going through the LauncherMain instance here is a bit weird, and should be refactored
     // sometime. Having the flag there makes sense though, because this class can also be used for
     // custom launchers.
@@ -379,6 +386,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     // we need to catch all show events to apply the slow-animations
     QCoreApplication::instance()->installEventFilter(this);
+#endif
 
     QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
     auto startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);

@@ -11,6 +11,7 @@ QT_FOR_PRIVATE *= \
     appman_application-private \
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 include($$SOURCE_DIR/3rdparty/libarchive.pri)
 include($$SOURCE_DIR/3rdparty/libz.pri)

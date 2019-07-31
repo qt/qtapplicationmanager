@@ -15,6 +15,7 @@ versionAtLeast(QT.geniviextras.VERSION, 1.1.0) {
 }
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 
 include($$SOURCE_DIR/3rdparty/libyaml.pri)
 contains(DEFINES, "AM_USE_LIBBACKTRACE"):include($$SOURCE_DIR/3rdparty/libbacktrace.pri)

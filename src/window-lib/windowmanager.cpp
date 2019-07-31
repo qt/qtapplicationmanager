@@ -545,7 +545,7 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
         runtime->setInProcessQmlEngine(d->qmlEngine);
 
         connect(runtime, &AbstractRuntime::inProcessSurfaceItemReady,
-                this, &WindowManager::inProcessSurfaceItemCreated, Qt::QueuedConnection);
+                this, &WindowManager::inProcessSurfaceItemCreated);
     }
 }
 

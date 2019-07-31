@@ -49,7 +49,6 @@
 #include <QVariant>
 #include <QFileInfo>
 #include <QLibrary>
-#include <QIcon>
 #include <QStandardPaths>
 #include <QQmlDebuggingEnabler>
 #include <QQmlComponent>
@@ -59,6 +58,7 @@
 
 #if !defined(AM_HEADLESS)
 #  include <QGuiApplication>
+#  include <QIcon>
 #  include <private/qopenglcontext_p.h>
 #endif
 
@@ -123,8 +123,13 @@ int &SharedMain::preConstructor(int &argc)
 
 void SharedMain::setupIconTheme(const QStringList &themeSearchPaths, const QString &themeName)
 {
+#if defined(AM_HEADLESS)
+    Q_UNUSED(themeSearchPaths)
+    Q_UNUSED(themeName)
+#else
     QIcon::setThemeSearchPaths(themeSearchPaths);
     QIcon::setThemeName(themeName);
+#endif
 }
 
 void SharedMain::setupQmlDebugging(bool qmlDebugging)
@@ -158,7 +163,9 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules, con
 
 void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
 {
-#if !defined(AM_HEADLESS)
+#if defined(AM_HEADLESS)
+    Q_UNUSED(openGLConfiguration)
+#else
     QString profileName = openGLConfiguration.value(qSL("desktopProfile")).toString();
     int majorVersion = openGLConfiguration.value(qSL("esMajorVersion"), -1).toInt();
     int minorVersion = openGLConfiguration.value(qSL("esMinorVersion"), -1).toInt();

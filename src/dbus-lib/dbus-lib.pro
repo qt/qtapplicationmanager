@@ -10,6 +10,7 @@ QT_FOR_PRIVATE *= \
     appman_manager-private \
 
 CONFIG *= static internal_module
+CONFIG -= create_cmake
 CONFIG = dbus-adaptors-xml $$CONFIG
 
 HEADERS += \

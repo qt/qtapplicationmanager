@@ -58,18 +58,19 @@
     \inqmlmodule QtApplicationManager.SystemUI
     \brief A proxy model for the ApplicationManager singleton.
 
-    The ApplicationModel type provides a customizable model of applications. It can be used to
-    tailor the ApplicationManager model to your needs (the ApplicationManager singleton is itself
-    a model that includes all available applications). It supports filtering and sorting.
-    Since this model is based on the ApplicationManager model, the latter will be referred to as
-    the \e source model. The ApplicationModel includes the same \l {ApplicationManager Roles}
+    The ApplicationModel type provides a customizable model that can be used to tailor the
+    ApplicationManager model to your needs. The ApplicationManager singleton is a model itself,
+    that includes all available applications. In contrast, the ApplicationModel supports filtering
+    and sorting.
+
+    Since the ApplicationModel is based on the ApplicationManager model, the latter is referred
+    to as the \e source model. The ApplicationModel includes the same \l {ApplicationManager Roles}
     {roles} as the ApplicationManager model.
 
-    \note If a model with all applications is needed, ApplicationManager should be used directly,
-    since it performs slightly better.
+    \note If you require a model with all applications, with no filtering whatsoever, you should
+    use the ApplicationManager directly, as it has better performance.
 
-    As an example, the following code snippet will show all icons of non-aliased applications in a
-    list:
+    The following code snippet displays all the icons of non-aliased applications in a list:
 
     \qml
     import QtQuick 2.6
@@ -99,31 +100,31 @@
 /*!
     \qmlproperty var ApplicationModel::filterFunction
 
-    A JavaScript function callback that will be invoked for each application in the
-    ApplicationManager source model. It gets one parameter of type ApplicationObject and must return
-    a bool. If the passed application should be included in this model the function must return
-    \c true and \c false otherwise.
+    A JavaScript function callback that is invoked for each application in the ApplicationManager
+    source model. This function gets one ApplicationObject parameter and must return a Boolean.
+    If the application passed should be included in this model, then the function must return
+    \c true; \c false otherwise.
 
-    \note The filter will be reevaluated when this function is changed. However, dynamic properties
-    (like \c isRunning) used in this function will not trigger a reevaluation when the property
-    changes. Changes in the source model will be reflected, though. Since the type is derived from
+    \note Whenever this function is changed, the filter is reevaluated. However, dynamic properties
+    used in this function, like \c isRunning, don't trigger a reevaluation when those properties
+    change. Changes in the source model are reflected. Since the type is derived from
     QSortFilterProxyModel, the \l {QSortFilterProxyModel::invalidate()}{invalidate()} slot can be
-    used to force a reevalution.
+    used to force a reevaluation.
 */
 
 /*!
     \qmlproperty var ApplicationModel::sortFunction
 
-    A JavaScript function callback that will be invoked to sort the applications in this model. It
-    gets two parameters of type ApplicationObject and must return a bool. If the first application
-    should have a smaller index in this model than the second, the function must return \c true
-    and \c false otherwise.
+    A JavaScript function callback that is invoked to sort the applications in this model. This
+    function gets two ApplicationObject parameters and must return a Boolean. If the first
+    application should have a smaller index in this model than the second, the function must return
+    \c true; \c false otherwise.
 
-    \note Sorting will be done whenever this function is changed. However, dynamic properties
-    (like \c isRunning) used in this function will not trigger sorting when the property changes.
-    Changes in the source model will be reflected, though. Since the type is derived from
+    \note Whenever this function is changed, the model is sorted. However, dynamic properties
+    used in this function, like \c isRunning, don't trigge a sort when when those properties change.
+    Changes in the source model are reflected. Since the type is derived from
     QSortFilterProxyModel, the \l {QSortFilterProxyModel::invalidate()}{invalidate()} slot can be
-    used to force a reevalution.
+    used to force a sort.
 */
 
 
@@ -240,7 +241,7 @@ int ApplicationModel::mapToSource(int ourIndex) const
 }
 
 /*!
-    \qmlmethod int ApplicationModel::mapFromSource(int sourceIndex)
+    \qmlmethod int ApplicationModel::mapFromSource(int index)
 
     Maps an application's \a index from the ApplicationManager model to the corresponding index in
     this model. Returns \c -1 if the specified \a index is invalid.

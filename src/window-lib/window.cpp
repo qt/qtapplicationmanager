@@ -61,6 +61,7 @@
     \qmlmethod bool WindowObject::setWindowProperty(string name, var value)
 
     Sets the application window's shared property identified by \a name to the given \a value.
+    Returns \c true when successful.
 
     These properties are shared between the System-UI and the client application: in single-process
     mode simply via a QVariantMap; in multi-process mode the sharing is done via Qt's extended
@@ -91,7 +92,7 @@
 /*!
     \qmlmethod var WindowObject::resize(Size size)
 
-    Resizes the WindowObject to the given size, in pixels. Usually you don't have to call
+    Resizes the WindowObject to the given \a size, in pixels. Usually you don't have to call
     this yourself as WindowItem takes care of it by default.
 
     \sa WindowObject::size, WindowItem::objectFollowsItemSize

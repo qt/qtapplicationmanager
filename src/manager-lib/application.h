@@ -54,15 +54,14 @@ QT_BEGIN_NAMESPACE_AM
 class AbstractRuntime;
 class Application;
 
-// A place to collect signals used internally by appman without polluting
-// AbstractApplication's public QML API.
-class ApplicationRequests : public QObject
+// A place to collect functions used internally by appman without polluting
+// Application's public QML API.
+class ApplicationRequests
 {
-    Q_OBJECT
-signals:
-    void startRequested(const QString &documentUrl);
-    void debugRequested(const QString &debugWrapper, const QString &documentUrl);
-    void stopRequested(bool forceKill);
+public:
+    std::function<bool(const QString &documentUrl)> startRequested;
+    std::function<bool(const QString &debugWrapper, const QString &documentUrl)> debugRequested;
+    std::function<void(bool forceKill)> stopRequested;
 };
 
 class AbstractApplication : public QObject
@@ -103,8 +102,8 @@ public:
 
     AbstractApplication(AbstractApplicationInfo *info);
 
-    Q_INVOKABLE void start(const QString &documentUrl = QString());
-    Q_INVOKABLE void debug(const QString &debugWrapper, const QString &documentUrl = QString());
+    Q_INVOKABLE bool start(const QString &documentUrl = QString());
+    Q_INVOKABLE bool debug(const QString &debugWrapper, const QString &documentUrl = QString());
     Q_INVOKABLE void stop(bool forceKill = false);
 
     virtual Application *nonAliased() = 0;

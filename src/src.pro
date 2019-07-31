@@ -104,7 +104,9 @@ SUBDIRS = \
 
     qtHaveModule(qml):qtHaveModule(dbus):SUBDIRS += \
         launcher_lib \
-        # This tool links against everything to extract the Qml type information
+
+    # This tool links against everything to extract the Qml type information
+    qtHaveModule(qml):qtHaveModule(dbus):!headless:SUBDIRS += \
         tools_dumpqmltypes \
 
     multi-process:qtHaveModule(qml):qtHaveModule(dbus):SUBDIRS += \

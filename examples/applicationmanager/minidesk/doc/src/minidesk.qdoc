@@ -83,7 +83,7 @@ The \c appman binary (executable file) is usually located in the Qt installation
 The \l{QtApplicationManager.SystemUI} module has to be imported to access the application manager
 APIs. The System UI window has a fixed size and linen background color. Instead of a \l{Rectangle},
 the root element could also be a \l{Window}. On top of the background, we display a
-\l{applicationmanager/minidesk/system-ui/Readme.qml}{Readme} element with information on the
+\c Readme element with information on the
 features available. At the bottom left there is a textual indication for whether the
 application manager runs in single-process or multi-process mode.
 

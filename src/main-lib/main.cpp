@@ -76,6 +76,7 @@
 #  include <QGuiApplication>
 #  include <QQuickView>
 #  include <QQuickItem>
+#  include <QTouchDevice>
 #  include <private/qopenglcontext_p.h>
 #endif
 
@@ -127,6 +128,7 @@
 #  endif
 #  include "touchemulation.h"
 #  include "windowframetimer.h"
+#  include "gpustatus.h"
 #endif
 
 #include "configuration.h"
@@ -140,7 +142,6 @@
 
 // monitor-lib
 #include "cpustatus.h"
-#include "gpustatus.h"
 #include "iostatus.h"
 #include "memorystatus.h"
 #include "monitormodel.h"
@@ -431,6 +432,8 @@ void Main::loadApplicationDatabase(const QString &databasePath, bool recreateDat
     if (singleApp.isEmpty()) {
         if (!QFile::exists(databasePath)) // make sure to create a database on the first run
             recreateDatabase = true;
+        if (QFileInfo(databasePath).size() == 0) // cope with Windows' 0-byte left-overs
+            recreateDatabase = true;
 
         if (recreateDatabase) {
             const QString dbDir = QFileInfo(databasePath).absolutePath();
@@ -630,8 +633,10 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
+#if !defined(AM_HEADLESS)
     qmlRegisterType<WindowFrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
+#endif
     qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
@@ -697,16 +702,25 @@ void Main::setupWindowManager(const QString &waylandSocketName, bool slowAnimati
 
 void Main::setupTouchEmulation(bool enableTouchEmulation)
 {
+#if defined(AM_HEADLESS)
+    Q_UNUSED(enableTouchEmulation)
+#else
     if (enableTouchEmulation) {
         if (TouchEmulation::isSupported()) {
-            TouchEmulation::createInstance();
-            qCDebug(LogGraphics) << "Touch emulation is enabled: all mouse events will be converted "
-                                    "to touch events.";
+            if (QTouchDevice::devices().isEmpty()) {
+                TouchEmulation::createInstance();
+                qCDebug(LogGraphics) << "Touch emulation is enabled: all mouse events will be "
+                                        "converted to touch events.";
+            } else {
+                qCDebug(LogGraphics) << "Touch emulation is disabled, because at least one touch "
+                                        "input device was detected";
+            }
         } else {
             qCWarning(LogGraphics) << "Touch emulation cannot be enabled. Either it was disabled at "
                                       "build time or the platform does not support it.";
         }
     }
+#endif
 }
 
 void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)

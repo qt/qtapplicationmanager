@@ -1,0 +1,25 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installationDir: "/tmp/application-features/apps"
+  installedAppsManifestDir: "/tmp/application-features/manifests"
+
+logging:
+  rules:
+    - "*=false"
+    - "qt.*=false"
+    - "am.*=false"
+    - "qml*=true"
+    - "*.warning=true"
+    - "*.critical=true"
+
+ui:
+  fullscreen: no
+  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
+
+# development setup:
+flags:
+  noSecurity: yes
+  noUiWatchdog: yes

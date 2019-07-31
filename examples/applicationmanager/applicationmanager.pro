@@ -9,6 +9,7 @@ SUBDIRS = \
     frame-timer \
     hello-world \
     minidesk \
+    application-features \
     multi-views \
     process-status \
     startup-plugin \

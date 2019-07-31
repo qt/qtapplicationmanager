@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'twins'
+icon:    'icon.png'
+code:    'twins.qml'
+runtime: 'qml'
+name:
+  en: 'Two Top-Level Windows'

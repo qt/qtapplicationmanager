@@ -9,7 +9,7 @@ moc_*
 qrc_*
 *.moc
 *.user*
-Makefile
+Makefile*
 core
 DEADJOE
 *.gcda
@@ -49,3 +49,5 @@ src/tools/appman/config.qrc
 doc/codeattributions.qdoc
 examples/applicationmanager/custom-appman/custom-appman
 tests/qml/crash/apps/tld.test.crash/terminator2/Terminator/
+examples/applicationmanager/fancyapps/apps/crash/Terminator/
+examples/applicationmanager/fancyapps/apps/widgets/widgets

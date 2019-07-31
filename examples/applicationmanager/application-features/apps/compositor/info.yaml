@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'compositor'
+icon:    'icon.png'
+code:    'compositor.qml'
+runtime: 'qml'
+name:
+  en: 'Nested Compositor'

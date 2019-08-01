@@ -44,14 +44,14 @@
 #include "packagemanager.h"
 #include "packagemanager_p.h"
 #include "installationreport.h"
-#include "packageinfo.h"
+#include "package.h"
 #include "exception.h"
 #include "scopeutilities.h"
 #include "deinstallationtask.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-DeinstallationTask::DeinstallationTask(PackageInfo *package, const QString &installationPath,
+DeinstallationTask::DeinstallationTask(Package *package, const QString &installationPath,
                                        const QString &documentPath, bool forceDeinstallation,
                                        bool keepDocuments, QObject *parent)
     : AsynchronousTask(parent)
@@ -75,7 +75,8 @@ void DeinstallationTask::execute()
 {
     // these have been checked in PackageManager::removePackage() already
     Q_ASSERT(m_package);
-    Q_ASSERT(m_package->installationReport());
+    Q_ASSERT(m_package->info());
+    Q_ASSERT(m_package->info()->installationReport());
 
     bool managerApproval = false;
 
@@ -87,14 +88,13 @@ void DeinstallationTask::execute()
             Qt::BlockingQueuedConnection);
 
         if (!managerApproval)
-            throw Exception("ApplicationManager rejected the removal of package %1").arg(m_package->id());
+            throw Exception("PackageManager rejected the removal of package %1").arg(m_package->id());
 
-        // if the app was running before, we now need to wait until is has actually stopped
-//TODO: this needs to be ported to the new PackageManager architecture
-//        while (!m_canceled &&
-//               (ApplicationManager::instance()->applicationRunState(m_app->id()) != Am::NotRunning)) {
-//            QThread::msleep(30);
-//        }
+        // if any of the apps in the package were running before, we now need to wait until all of
+        // them have actually stopped
+        while (!m_canceled && !m_package->areAllApplicationsStoppedDueToBlock())
+            QThread::msleep(30);
+
         // there's a small race condition here, but not doing a planned cancellation isn't harmful
         m_canBeCanceled = false;
         if (m_canceled)

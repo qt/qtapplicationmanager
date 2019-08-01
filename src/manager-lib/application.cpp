@@ -284,6 +284,20 @@ Application::Application(ApplicationInfo *info, Package *package)
 {
     Q_ASSERT(info);
     Q_ASSERT(package);
+
+    // handle package blocking: all apps have to be stopped and the stop state has to be reported
+    // back to the package
+    connect(package, &Package::blockedChanged, this, [this](bool blocked) {
+        emit blockedChanged(blocked);
+        if (blocked && (runState() == Am::NotRunning))
+            this->package()->applicationStoppedDueToBlock(id());
+        else if (blocked)
+            stop(true);
+    });
+    connect(this, &Application::runStateChanged, this, [this](Am::RunState runState) {
+        if (isBlocked() && (runState == Am::NotRunning))
+            this->package()->applicationStoppedDueToBlock(id());
+    });
 }
 
 bool Application::start(const QString &documentUrl)
@@ -373,6 +387,11 @@ QString Application::name(const QString &language) const
     return package()->names().value(language).toString();
 }
 
+bool Application::isBlocked() const
+{
+    return package()->isBlocked();
+}
+
 QVariantMap Application::applicationProperties() const
 {
     return info()->applicationProperties();
@@ -410,21 +429,6 @@ Application::State Application::state() const
 qreal Application::progress() const
 {
     return package()->progress();
-}
-
-bool Application::isBlocked() const
-{
-    return m_blocked.load() == 1;
-}
-
-bool Application::block()
-{
-    return m_blocked.testAndSetOrdered(0, 1);
-}
-
-bool Application::unblock()
-{
-    return m_blocked.testAndSetOrdered(1, 0);
 }
 
 void Application::setRunState(Am::RunState runState)

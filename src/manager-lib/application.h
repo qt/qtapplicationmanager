@@ -92,6 +92,7 @@ class Application : public QObject
     Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Am::RunState) runState READ runState NOTIFY runStateChanged)
+    Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged)
 
 public:
     enum State { // kept for compatibility ... in reality moved to class Package
@@ -122,6 +123,7 @@ public:
     QStringList supportedMimeTypes() const;
     QString name() const;
     Q_INVOKABLE QString name(const QString &language) const;
+    bool isBlocked() const;
 
     // Properties that mainly forward content from ApplicationInfo
     QString id() const;
@@ -140,9 +142,6 @@ public:
     State state() const;
     qreal progress() const;
     Am::RunState runState() const { return m_runState; }
-    bool isBlocked() const;
-    bool block();
-    bool unblock();
     int lastExitCode() const { return m_lastExitCode; }
     Am::ExitStatus lastExitStatus() const { return m_lastExitStatus; }
 
@@ -159,6 +158,7 @@ signals:
     void activated();
     void stateChanged(State state);
     void runStateChanged(Am::RunState state);
+    void blockedChanged(bool blocked);
 
 private:
     void setLastExitCodeAndStatus(int exitCode, Am::ExitStatus exitStatus);
@@ -166,8 +166,6 @@ private:
     QScopedPointer<ApplicationInfo> m_info;
     Package *m_package = nullptr;
     AbstractRuntime *m_runtime = nullptr;
-    QAtomicInt m_blocked;
-    QAtomicInt m_mounted;
 
     Am::RunState m_runState = Am::NotRunning;
 

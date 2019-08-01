@@ -236,7 +236,7 @@ QVariant PackageManager::data(const QModelIndex &index, int role) const
     case Icon:
         return package->icon();
     case IsBlocked:
-        return false; //TODO package->isBlocked();
+        return package->isBlocked();
     case IsUpdating:
         return package->state() != Package::Installed;
     case UpdateProgress:
@@ -656,7 +656,7 @@ QVariantMap PackageManager::installedPackageExtraMetaData(const QString &package
 }
 
 /*!
-   \qmlmethod var PackageManager::installedApplicationExtraSignedMetaData(string packageId)
+   \qmlmethod var PackageManager::installedPackageExtraSignedMetaData(string packageId)
 
    Returns a map of all signed extra metadata in the package header of the package identified
    by \a packageId.
@@ -756,7 +756,7 @@ QString PackageManager::removePackage(const QString &packageId, bool keepDocumen
 
     if (Package *package = fromId(packageId)) {
         if (package->info()->installationReport()) {
-            return enqueueTask(new DeinstallationTask(package->info(), d->installationPath,
+            return enqueueTask(new DeinstallationTask(package, d->installationPath,
                                                       d->documentPath, force, keepDocuments));
         }
     }
@@ -1035,8 +1035,8 @@ bool PackageManager::startingPackageInstallation(PackageInfo *info)
 //        return false;
 
     if (package) { // update
-//        if (!blockApplication(app->id()))
-//            return false;
+        if (!package->block())
+            return false;
 
         if (package->isBuiltIn()) {
             // overlay the existing base info
@@ -1054,7 +1054,7 @@ bool PackageManager::startingPackageInstallation(PackageInfo *info)
     } else { // installation
         package = new Package(newInfo.take(), Package::BeingInstalled);
 
-        //app->block();
+        Q_ASSERT(package->block());
 
         beginInsertRows(QModelIndex(), d->packages.count(), d->packages.count());
 
@@ -1076,14 +1076,14 @@ bool PackageManager::startingPackageRemoval(const QString &id)
     if (!package)
         return false;
 
-    if (/*package->isBlocked()*/ false || (package->state() != Package::Installed))
+    if (package->isBlocked() || (package->state() != Package::Installed))
         return false;
 
     if (package->isBuiltIn() && !package->canBeRevertedToBuiltIn())
         return false;
 
-//    if (!blockApplication(id))
-//        return false;
+    if (!package->block()) // this will implicitly stop all apps in this package (asynchronously)
+        return false;
 
     package->setState(package->canBeRevertedToBuiltIn() ? Package::BeingDowngraded
                                                         : Package::BeingRemoved);
@@ -1120,7 +1120,7 @@ bool PackageManager::finishedPackageInstall(const QString &id)
 
         emitDataChanged(package);
 
-       // unblockApplication(id);
+        package->unblock();
         emit package->bulkChange(); // not ideal, but icon and codeDir have changed
         break;
     }
@@ -1175,12 +1175,11 @@ bool PackageManager::canceledPackageInstall(const QString &id)
         package->setProgress(0);
         emitDataChanged(package, QVector<int> { IsUpdating });
 
-      //  unblockApplication(id);
+        package->unblock();
         break;
     }
     return true;
 }
-
 
 bool removeRecursiveHelper(const QString &path)
 {

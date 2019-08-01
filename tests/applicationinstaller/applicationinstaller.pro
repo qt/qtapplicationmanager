@@ -9,6 +9,5 @@ QT *= \
     appman_application-private \
     appman_package-private \
     appman_manager-private \
-    appman_installer-private
 
 SOURCES += tst_applicationinstaller.cpp

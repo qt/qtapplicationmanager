@@ -27,7 +27,7 @@
 **
 ****************************************************************************/
 
-#include <QtAppManInstaller/packagemanager.h>
+#include <QtAppManManager/packagemanager.h>
 #include <QtAppManMain/applicationinstaller.h>
 #include <QtAppManManager/applicationmanager.h>
 #include <QtAppManManager/applicationmodel.h>

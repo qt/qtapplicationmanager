@@ -46,9 +46,9 @@
 #include <QAbstractListModel>
 #include <QtAppManCommon/global.h>
 #include <QtAppManApplication/packageinfo.h>
-#include <QtAppManInstaller/asynchronoustask.h>
-#include <QtAppManInstaller/installationtask.h>
-#include <QtAppManInstaller/deinstallationtask.h>
+#include <QtAppManManager/asynchronoustask.h>
+#include <QtAppManManager/installationtask.h>
+#include <QtAppManManager/deinstallationtask.h>
 
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)

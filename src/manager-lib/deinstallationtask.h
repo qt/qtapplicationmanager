@@ -42,56 +42,34 @@
 
 #pragma once
 
-#include <QMutex>
-#include <QList>
-#include <QSet>
-#include <QScopedPointer>
-#include <QThread>
-
-#include <QtAppManInstaller/packagemanager.h>
-#include <QtAppManApplication/packagedatabase.h>
-#include <QtAppManInstaller/asynchronoustask.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/asynchronoustask.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-bool removeRecursiveHelper(const QString &path);
+class Package;
+class InstallationLocation;
 
-class PackageManagerPrivate
+class DeinstallationTask : public AsynchronousTask
 {
+    Q_OBJECT
+
 public:
-    PackageDatabase *database = nullptr;
-    QVector<Package *> packages;
+    DeinstallationTask(Package *package, const QString &installationPath, const QString &documentPath,
+                       bool forceDeinstallation, bool keepDocuments, QObject *parent = nullptr);
 
-    bool developmentMode = false;
-    bool allowInstallationOfUnsignedPackages = false;
-    bool userIdSeparation = false;
-    uint minUserId = uint(-1);
-    uint maxUserId = uint(-1);
-    uint commonGroupId = uint(-1);
+    bool cancel() override;
 
-    QString installationPath;
-    QString documentPath;
+protected:
+    void execute() override;
 
-    QString error;
-
-    QString hardwareId;
-    QList<QByteArray> chainOfTrust;
-
-    QList<AsynchronousTask *> incomingTaskList;     // incoming queue
-    QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge
-    AsynchronousTask *activeTask = nullptr;         // currently active
-
-    QList<AsynchronousTask *> allTasks() const
-    {
-        QList<AsynchronousTask *> all = incomingTaskList;
-        if (!installationTaskList.isEmpty())
-            all += installationTaskList;
-        if (activeTask)
-            all += activeTask;
-        return all;
-    }
+private:
+    Package *m_package;
+    QString m_installationPath;
+    QString m_documentPath;
+    bool m_forceDeinstallation;
+    bool m_keepDocuments;
+    bool m_canBeCanceled = true;
+    bool m_canceled = false;
 };
 
 QT_END_NAMESPACE_AM
-// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

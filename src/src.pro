@@ -19,11 +19,9 @@ notification_lib.depends = common_lib
 package_lib.subdir = package-lib
 package_lib.depends = crypto_lib application_lib
 
-installer_lib.subdir = installer-lib
-installer_lib.depends = package_lib
-
 manager_lib.subdir = manager-lib
-manager_lib.depends = application_lib notification_lib intent_server_lib intent_client_lib installer_lib monitor_lib plugin_interfaces
+manager_lib.depends = application_lib notification_lib intent_server_lib intent_client_lib monitor_lib plugin_interfaces
+!disable-installer:manager_lib.depends += package_lib crypto_lib
 
 window_lib.subdir = window-lib
 window_lib.depends = manager_lib
@@ -49,7 +47,6 @@ main_lib.depends = shared_main_lib manager_lib window_lib monitor_lib
 !disable-external-dbus-interfaces:qtHaveModule(dbus) {
     dbus_lib.subdir = dbus-lib
     dbus_lib.depends = manager_lib window_lib
-    !disable-installer:dbus_lib.depends += installer_lib
 
     main_lib.depends += dbus_lib
 }
@@ -64,10 +61,10 @@ tools_testrunner.subdir = tools/testrunner
 tools_testrunner.depends = main_lib
 
 tools_dumpqmltypes.subdir = tools/dumpqmltypes
-tools_dumpqmltypes.depends = manager_lib installer_lib window_lib shared_main_lib main_lib launcher_lib
+tools_dumpqmltypes.depends = manager_lib window_lib shared_main_lib main_lib launcher_lib
 
 tools_packager.subdir = tools/packager
-tools_packager.depends = package_lib
+tools_packager.depends = package_lib application_lib crypto_lib
 
 tools_uploader.subdir = tools/uploader
 tools_uploader.depends = common_lib
@@ -91,7 +88,6 @@ SUBDIRS = \
     qtHaveModule(qml):SUBDIRS += \
         notification_lib \
         manager_lib \
-        installer_lib \
         window_lib \
         monitor_lib \
         shared_main_lib \

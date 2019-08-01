@@ -8,7 +8,6 @@ QT *= \
     appman_application-private \
     appman_package-private \
     appman_manager-private \
-    appman_installer-private \
 
 INCLUDEPATH += $$PWD/../../src/tools/packager
 SOURCES += $$PWD/../../src/tools/packager/packagingjob.cpp

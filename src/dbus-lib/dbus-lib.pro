@@ -32,7 +32,6 @@ ADAPTORS_XML = \
     org.freedesktop.notifications.xml \
 
 !disable-installer {
-    QT *= appman_installer-private
     HEADERS += packagemanagerdbuscontextadaptor.h
     SOURCES += packagemanagerdbuscontextadaptor.cpp
     ADAPTORS_XML += io.qt.packagemanager.xml

@@ -56,7 +56,7 @@
 #include <QtAppManMain/main.h>
 #include <QtAppManMain/defaultconfiguration.h>
 #include <QtAppManPackage/packageutilities.h>
-#include <QtAppManInstaller/sudo.h>
+#include <QtAppManManager/sudo.h>
 
 
 QT_USE_NAMESPACE_AM

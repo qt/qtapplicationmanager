@@ -44,6 +44,7 @@
 
 #include "package.h"
 #include "packageinfo.h"
+#include "applicationinfo.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -188,6 +189,49 @@ PackageInfo *Package::takeBaseInfo()
 bool Package::canBeRevertedToBuiltIn() const
 {
     return m_info && m_updatedInfo;
+}
+
+bool Package::isBlocked() const
+{
+    return m_blocked > 0;
+}
+
+bool Package::block()
+{
+    bool blockedNow = (m_blocked.fetchAndAddOrdered(1) == 0);
+    if (blockedNow) {
+        emit blockedChanged(true);
+        m_blockedApps = info()->applications();
+    }
+    return blockedNow;
+}
+
+bool Package::unblock()
+{
+    bool unblockedNow = (m_blocked.fetchAndSubOrdered(1) == 1);
+    if (unblockedNow) {
+        m_blockedApps.clear();
+        emit blockedChanged(false);
+    }
+    return unblockedNow;
+
+}
+
+void Package::applicationStoppedDueToBlock(const QString &appId)
+{
+    if (!isBlocked())
+        return;
+
+    auto it = std::find_if(m_blockedApps.cbegin(), m_blockedApps.cend(), [appId](const ApplicationInfo *appInfo) {
+        return appInfo->id() == appId;
+    });
+    if (it != m_blockedApps.cend())
+        m_blockedApps.removeOne(*it);
+}
+
+bool Package::areAllApplicationsStoppedDueToBlock() const
+{
+    return isBlocked() && m_blockedApps.isEmpty();
 }
 
 QT_END_NAMESPACE_AM

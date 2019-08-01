@@ -184,9 +184,6 @@ private slots:
     void openUrlRelay(const QUrl &url);
     void addApplication(Application *app);
 
-    bool blockApplication(const QString &id);
-    bool unblockApplication(const QString &id);
-
 private:
     void emitDataChanged(Application *app, const QVector<int> &roles = QVector<int>());
     void emitActivated(Application *app);

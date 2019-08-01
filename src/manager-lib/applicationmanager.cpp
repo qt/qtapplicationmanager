@@ -1126,30 +1126,6 @@ QString ApplicationManager::identifyApplication(qint64 pid) const
     return app ? app->id() : QString();
 }
 
-bool ApplicationManager::blockApplication(const QString &id)
-{
-    Application *app = fromId(id);
-    if (!app)
-        return false;
-    if (!app->block())
-        return false;
-    emitDataChanged(app, QVector<int> { IsBlocked });
-    stopApplicationInternal(app, true);
-    emitDataChanged(app, QVector<int> { IsRunning });
-    return true;
-}
-
-bool ApplicationManager::unblockApplication(const QString &id)
-{
-    Application *app = fromId(id);
-    if (!app)
-        return false;
-    if (!app->unblock())
-        return false;
-    emitDataChanged(app, QVector<int> { IsBlocked });
-    return true;
-}
-
 void ApplicationManager::shutDown()
 {
     d->shuttingDown = true;
@@ -1415,6 +1391,11 @@ void ApplicationManager::addApplication(Application *app)
     app->requests.stopRequested = [this, app](bool forceKill) {
         stopApplication(app->id(), forceKill);
     };
+
+    connect(app, &Application::blockedChanged,
+            this, [this, app]() {
+        emitDataChanged(app, QVector<int> { IsBlocked });
+    });
 
     d->apps << app;
 }

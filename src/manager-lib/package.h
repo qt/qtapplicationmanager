@@ -46,7 +46,7 @@
 #include <QtAppManApplication/packageinfo.h>
 #include <QUrl>
 #include <QString>
-
+#include <QAtomicInt>
 #include <QObject>
 
 QT_BEGIN_NAMESPACE_AM
@@ -66,6 +66,7 @@ class Package : public QObject
     Q_PROPERTY(QVariantMap descriptions READ descriptions NOTIFY bulkChange)
     Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
+    Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged)
 
 public:
     enum State {
@@ -123,9 +124,19 @@ public:
 
     bool canBeRevertedToBuiltIn() const;
 
+    bool isBlocked() const;
+    bool block();
+    bool unblock();
+
+    // function for Application to report it has stopped after getting a block request
+    void applicationStoppedDueToBlock(const QString &appId);
+    // query function for the installer to verify that it is safe to manipulate binaries
+    bool areAllApplicationsStoppedDueToBlock() const;
+
 signals:
     void bulkChange();
     void stateChanged(State state);
+    void blockedChanged(bool blocked);
 
 private:
     QScopedPointer<PackageInfo> m_info;
@@ -133,6 +144,8 @@ private:
 
     State m_state = Installed;
     qreal m_progress = 0;
+    QAtomicInt m_blocked;
+    QVector<ApplicationInfo *> m_blockedApps;
 };
 
 QT_END_NAMESPACE_AM

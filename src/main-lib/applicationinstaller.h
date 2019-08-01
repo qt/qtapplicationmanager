@@ -51,9 +51,9 @@
 #include <QtAppManCommon/error.h>
 #include <QtAppManCommon/logging.h>
 #include <QtAppManManager/applicationmanager.h>
-#include <QtAppManInstaller/packagemanager.h>
-#include <QtAppManInstaller/package.h>
-#include <QtAppManInstaller/asynchronoustask.h>
+#include <QtAppManManager/packagemanager.h>
+#include <QtAppManManager/package.h>
+#include <QtAppManManager/asynchronoustask.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)

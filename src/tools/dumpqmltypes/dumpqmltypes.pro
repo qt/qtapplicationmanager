@@ -10,7 +10,6 @@ QT *= \
     appman_common-private \
     appman_application-private \
     appman_manager-private \
-    appman_installer-private \
     appman_notification-private \
     appman_window-private \
     appman_launcher-private \

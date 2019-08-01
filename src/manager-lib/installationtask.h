@@ -48,8 +48,8 @@
 #include <QMutex>
 
 #include <QtAppManApplication/installationreport.h>
-#include <QtAppManInstaller/asynchronoustask.h>
-#include <QtAppManInstaller/scopeutilities.h>
+#include <QtAppManManager/asynchronoustask.h>
+#include <QtAppManManager/scopeutilities.h>
 
 QT_BEGIN_NAMESPACE_AM
 

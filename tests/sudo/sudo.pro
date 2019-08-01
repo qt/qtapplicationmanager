@@ -6,6 +6,6 @@ include($$PWD/../tests.pri)
 
 QT *= \
     appman_common-private \
-    appman_installer-private \
+    appman_manager-private \
 
 SOURCES += tst_sudo.cpp

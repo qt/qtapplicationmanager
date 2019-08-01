@@ -49,9 +49,6 @@
 
 #include <QDebug>
 
-#if defined(Q_OS_UNIX)
-#  include <signal.h>
-#endif
 
 /*!
     \qmltype ApplicationObject
@@ -467,19 +464,8 @@ void Application::setLastExitCodeAndStatus(int exitCode, Am::ExitStatus exitStat
         emit lastExitCodeChanged();
     }
 
-    Am::ExitStatus newStatus;
-    if (exitStatus == Am::CrashExit) {
-#if defined(Q_OS_UNIX)
-        newStatus = (exitCode == SIGTERM || exitCode == SIGKILL) ? Am::ForcedExit : Am::CrashExit;
-#else
-        newStatus = Am::CrashExit;
-#endif
-    } else {
-        newStatus = Am::NormalExit;
-    }
-
-    if (m_lastExitStatus != newStatus) {
-        m_lastExitStatus = newStatus;
+    if (m_lastExitStatus != exitStatus) {
+        m_lastExitStatus = exitStatus;
         emit lastExitStatusChanged();
     }
 }

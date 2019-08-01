@@ -75,6 +75,7 @@ QT_BEGIN_NAMESPACE_AM
 QT_END_NAMESPACE_AM
 #  include <dlfcn.h>
 #  include <sys/socket.h>
+#  include <signal.h>
 QT_BEGIN_NAMESPACE_AM
 
 static qint64 getDBusPeerPid(const QDBusConnection &conn)
@@ -223,6 +224,10 @@ bool NativeRuntime::initialize()
 
 void NativeRuntime::shutdown(int exitCode, Am::ExitStatus status)
 {
+    // see NativeRuntime::stop() below
+    if ((status == Am::CrashExit) && (exitCode == SIGTERM || exitCode == SIGKILL))
+        status = Am::ForcedExit;
+
     if (!m_isQuickLauncher || m_connectedToRuntimeInterface) {
         qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
                            << "pid:" << m_process->processId() << ") exited with code:" << exitCode

@@ -576,9 +576,6 @@ void ApplicationManager::registerMimeTypes()
     schemes << qSL("file") << qSL("http") << qSL("https");
 
     for (Application *app : qAsConst(d->apps)) {
-        if (app->isAlias())
-            continue;
-
         const auto mimeTypes = app->supportedMimeTypes();
         for (const QString &mime : mimeTypes) {
             int pos = mime.indexOf(QLatin1Char('/'));

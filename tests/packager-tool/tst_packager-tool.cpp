@@ -98,7 +98,7 @@ void tst_PackagerTool::initTestCase()
 
     m_hardwareId = qSL("foobar");
 
-    PackageDatabase *pdb = new PackageDatabase(pathTo("internal-0"));
+    PackageDatabase *pdb = new PackageDatabase({}, pathTo("internal-0"));
     try {
         m_pm = PackageManager::createInstance(pdb, pathTo("documents-0"));
         m_pm->setHardwareId(m_hardwareId);

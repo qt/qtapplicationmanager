@@ -4,6 +4,8 @@ CONFIG += am-systemui
 OTHER_FILES += \
     am-config.yaml \
     system-ui/*.qml \
+    doc/src/*.qdoc \
+    doc/images/*.png \
     apps/tld.multi-views.app/*.yaml \
     apps/tld.multi-views.app/*.qml \
     apps/tld.multi-views.app/*.png \

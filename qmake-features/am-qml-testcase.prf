@@ -93,3 +93,6 @@ for (f , FILES) {
     check.depends = do_copydata
     QMAKE_EXTRA_TARGETS += do_copydata
 }
+
+# Make sure that possible apps are in OTHER_FILES
+for (app, TEST_APPS): OTHER_FILES += apps/$${app}/*.yaml apps/$${app}/*.qml  apps/$${app}/*.png

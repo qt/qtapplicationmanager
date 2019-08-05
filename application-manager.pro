@@ -116,6 +116,7 @@ OTHER_FILES += \
     LICENSE.*[^~] \
     config.tests/libarchive/* \
     config.tests/libyaml/* \
+    config.tests/touchemulation/* \
     util/bash/appman-prompt \
     util/bash/README \
 

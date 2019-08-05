@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS = \
+    manual \
     application \
     applicationinfo \
     main \
@@ -25,6 +26,7 @@ OTHER_FILES += \
     tests.pri \
     data/create-test-packages.sh \
     data/certificates/create-test-certificates.sh \
+    data/utilities.sh \
 
 # sadly, the appman-packager is too complex to build as a host tool
 !cross_compile {

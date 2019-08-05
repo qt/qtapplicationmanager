@@ -4,7 +4,7 @@
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Luxoft Application Manager.
+** This file is part of the Qt Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -110,8 +110,8 @@ int main(int argc, char *argv[])
     StartupTimer::instance()->checkpoint("entered main");
 
     QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Launcher"));
-    QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
-    QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
+    QCoreApplication::setOrganizationName(qSL("QtProject"));
+    QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     if (qEnvironmentVariableIsSet("AM_NO_DLT_LOGGING"))
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
     // As we don't know the app-id yet, we are registering a place holder so we are able to see
     // something in the dlt logs if general errors occur.
-    Logging::setDltApplicationId("PCLQ", "Luxoft Application-Manager Launcher QML");
+    Logging::setDltApplicationId("QTLQ", "Qt Application-Manager Launcher QML");
     Logging::setApplicationId("qml-launcher");
     Logging::initialize();
 

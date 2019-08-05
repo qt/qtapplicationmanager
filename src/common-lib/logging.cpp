@@ -4,7 +4,7 @@
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Luxoft Application Manager.
+** This file is part of the Qt Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -73,8 +73,8 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 QT_BEGIN_NAMESPACE_AM
 
 #if defined(QT_GENIVIEXTRAS_LIB)
-static const char *s_defaultSystemUiDltId = "LXAM";
-static const char *s_defaultSystemUiDltDescription = "Luxoft Application-Manager";
+static const char *s_defaultSystemUiDltId = "QTAM";
+static const char *s_defaultSystemUiDltDescription = "Qt Application Manager";
 #endif
 
 /*

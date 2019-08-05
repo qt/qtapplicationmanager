@@ -4,7 +4,7 @@
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Luxoft Application Manager.
+** This file is part of the Qt Application Manager.
 **
 ** $QT_BEGIN_LICENSE:GPL-EXCEPT-QTAS$
 ** Commercial License Usage
@@ -238,8 +238,8 @@ private:
 int main(int argc, char *argv[])
 {
     QCoreApplication::setApplicationName(qSL("Qt Application Manager Controller"));
-    QCoreApplication::setOrganizationName(qSL("Luxoft Sweden AB"));
-    QCoreApplication::setOrganizationDomain(qSL("luxoft.com"));
+    QCoreApplication::setOrganizationName(qSL("QtProject"));
+    QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
     ThrowingApplication a(argc, argv);

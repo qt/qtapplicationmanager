@@ -44,7 +44,7 @@ stand-alone QML application, except for these three additional tasks:
 
 \section2 The Root Element
 
-It is recommended to use either an ApplicationManagerWindow or a QtObject as the root of your QML
+It's recommended to use either an ApplicationManagerWindow or a QtObject as the root of your QML
 application. This is especially important if you require similar behavior in single-process and
 multi-process mode. If you use a QtObject, any visible base elements should still be
 \l{ApplicationManagerWindow}{ApplicationManagerWindows}. Nevertheless, other root elements are

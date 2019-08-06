@@ -475,12 +475,53 @@ QVariantMap WindowManager::get(int index) const
 }
 
 /*!
+    \qmlmethod WindowObject WindowManager::window(int index)
+
+    Returns the \l{WindowObject}{window} corresponding to the given \a index in the
+    model, or \c null if the index is invalid.
+
+    \note The object ownership of the returned Window object stays with the application-manager.
+          If you want to store this pointer, you can use the WindowManager's QAbstractListModel
+          signals or the windowAboutToBeRemoved signal to get notified if the object is about
+          to be deleted on the C++ side.
+*/
+Window *WindowManager::window(int index) const
+{
+    if (index < 0 || index >= count()) {
+        qCWarning(LogSystem) << "WindowManager::window(index): invalid index:" << index;
+        return nullptr;
+    }
+    return d->windowsInModel.at(index);
+}
+
+/*!
+    \qmlmethod list<WindowObject> WindowManager::windowsOfApplication(string applicationId)
+
+    Returns a list of \l{WindowObject}{windows} belonging to the given \a applicationId in the
+    model, or an empty list if the applicationId is invalid.
+
+    \note The object ownership of the returned Window objects stays with the application-manager.
+          If you want to store these pointers, you can use the WindowManager's QAbstractListModel
+          signals or the windowAboutToBeRemoved signal to get notified if the objects are about
+          to be deleted on the C++ side.
+*/
+QList<QObject *> WindowManager::windowsOfApplication(const QString &id) const
+{
+    QList<QObject *> result;
+    for (Window *window : d->windowsInModel) {
+        if (window->application() && window->application()->id() == id)
+            result << window;
+    }
+    return result;
+}
+
+/*!
     \qmlmethod int WindowManager::indexOfWindow(WindowObject window)
 
     Returns the index of the \a window within the WindowManager model, or \c -1 if the window item is
     not a managed window.
  */
-int WindowManager::indexOfWindow(Window *window)
+int WindowManager::indexOfWindow(Window *window) const
 {
     return d->windowsInModel.indexOf(window);
 }

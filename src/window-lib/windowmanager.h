@@ -98,8 +98,9 @@ public:
 
     Q_INVOKABLE int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-
-    Q_INVOKABLE int indexOfWindow(Window *window);
+    Q_INVOKABLE Window *window(int index) const;
+    Q_INVOKABLE QList<QObject *> windowsOfApplication(const QString &id) const;
+    Q_INVOKABLE int indexOfWindow(Window *window) const;
     Q_INVOKABLE QObject *addExtension(QQmlComponent *component) const;
 
     bool eventFilter(QObject *watched, QEvent *event) override;

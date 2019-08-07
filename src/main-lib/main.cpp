@@ -446,7 +446,7 @@ void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePacka
 
         for (const auto app : apps) {
             if (!RuntimeFactory::instance()->manager(app->runtimeName()))
-                throw Exception("application '%1' uses an unknown runtime: %2").arg(app->id(), app->runtimeName());
+                qCWarning(LogSystem) << "Application" << app->id() << "uses an unknown runtime:" << app->runtimeName();
         }
     }
 

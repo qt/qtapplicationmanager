@@ -1,0 +1,10 @@
+formatType: am-package
+formatVersion: 1
+---
+id: pkg.test
+name: { en: "Test Package" }
+icon: icon.png
+applications:
+- id: app.test
+  runtime: qml
+  code: info.yaml # just to make the test simpler

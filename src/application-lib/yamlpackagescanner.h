@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -53,7 +54,6 @@ public:
     YamlPackageScanner();
 
     PackageInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
-    QString metaDataFileName() const override;
 };
 
 QT_END_NAMESPACE_AM

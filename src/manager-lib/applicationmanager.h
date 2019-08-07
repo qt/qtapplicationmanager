@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -65,8 +66,6 @@ class ApplicationManagerInternalSignals : public QObject
 {
     Q_OBJECT
 signals:
-    // Emitted after an application is installed, updated, downgraded or removed
-    void applicationsChanged();
     // Emitted every time a new Runtime object is created
     void newRuntimeCreated(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);
 };
@@ -98,11 +97,8 @@ public:
     QVariantMap systemProperties() const;
     void setSystemProperties(const QVariantMap &map);
 
-    // Set the initial application list
-    // To be used only during startup (ie, before exposing ApplicationManager to QML) as
-    // no model update signals are emitted.
-    void setApplications(const QVector<Application *> &apps);
-
+    void addApplication(ApplicationInfo *appInfo, Package *package);
+    void removeApplication(ApplicationInfo *appInfo, Package *package);
     QVector<Application *> applications() const;
 
     Application *fromId(const QString &id) const;
@@ -182,7 +178,6 @@ signals:
 
 private slots:
     void openUrlRelay(const QUrl &url);
-    void addApplication(Application *app);
 
 private:
     void emitDataChanged(Application *app, const QVector<int> &roles = QVector<int>());

@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -47,7 +48,6 @@
 #include "packagemanager_p.h"
 #include "packageinfo.h"
 #include "packageextractor.h"
-#include "yamlpackagescanner.h"
 #include "exception.h"
 #include "packagemanager.h"
 #include "sudo.h"
@@ -285,8 +285,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
             throw Exception(Error::Package, "info.yaml must be the first file in the package. Got %1")
                 .arg(file);
 
-        YamlPackageScanner yps;
-        m_package.reset(yps.scan(m_extractor->destinationDirectory().absoluteFilePath(file)));
+        m_package.reset(PackageInfo::fromManifest(m_extractor->destinationDirectory().absoluteFilePath(file)));
         if (m_package->id() != m_extractor->installationReport().packageId())
             throw Exception(Error::Package, "the package identifiers in --PACKAGE-HEADER--' and info.yaml do not match");
 

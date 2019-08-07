@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -34,8 +35,8 @@
 
 #include "packagemanager.h"
 #include "packagedatabase.h"
-#include "applicationmanager.h"
-#include "application.h"
+#include "package.h"
+#include "applicationinfo.h"
 #include "sudo.h"
 #include "utilities.h"
 #include "error.h"
@@ -252,6 +253,15 @@ void tst_PackageManager::initTestCase()
         PackageDatabase *pdb = new PackageDatabase(QStringList(), pathTo(Internal0));
         m_pm = PackageManager::createInstance(pdb, pathTo(Documents0));
         m_pm->setHardwareId(m_hardwareId);
+
+        // simulate the ApplicationManager stopping blocked applications
+        connect(&m_pm->internalSignals, &PackageManagerInternalSignals::registerApplication,
+                this, [this](ApplicationInfo *ai, Package *package) {
+            connect(package, &Package::blockedChanged, this, [ai, package](bool blocked) {
+                if (blocked)
+                    package->applicationStoppedDueToBlock(ai->id());
+            });
+        });
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
     }
@@ -512,7 +522,6 @@ void tst_PackageManager::packageInstallation()
             QVERIFY(!taskId.isEmpty());
 
             // check signals
-
             QVERIFY(m_finishedSpy->wait(spyTimeout));
             QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
         }

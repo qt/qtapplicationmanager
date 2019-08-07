@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -299,7 +300,7 @@ void tst_PackagerTool::brokenMetadata()
     // check if packaging actually fails with the expected error
 
     QString error;
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), error));
+    QVERIFY2(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), error), qPrintable(error));
     AM_CHECK_ERRORSTRING(error, errorString);
 }
 

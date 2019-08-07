@@ -8,3 +8,6 @@ QT *= \
     appman_manager-private \
 
 SOURCES += tst_application.cpp
+
+OTHER_FILES += info.yaml
+RESOURCES += tst_application.qrc

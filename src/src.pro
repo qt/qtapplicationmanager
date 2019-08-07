@@ -61,7 +61,7 @@ tools_testrunner.subdir = tools/testrunner
 tools_testrunner.depends = main_lib
 
 tools_dumpqmltypes.subdir = tools/dumpqmltypes
-tools_dumpqmltypes.depends = manager_lib window_lib shared_main_lib main_lib launcher_lib
+tools_dumpqmltypes.depends = manager_lib intent_server_lib window_lib shared_main_lib launcher_lib main_lib
 
 tools_packager.subdir = tools/packager
 tools_packager.depends = package_lib application_lib crypto_lib

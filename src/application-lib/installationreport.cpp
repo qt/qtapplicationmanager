@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -163,10 +164,10 @@ bool InstallationReport::isValid() const
     return PackageInfo::isValidApplicationId(m_packageId) && !m_digest.isEmpty() && !m_files.isEmpty();
 }
 
-bool InstallationReport::deserialize(QIODevice *from)
+void InstallationReport::deserialize(QIODevice *from)
 {
     if (!from || !from->isReadable() || (from->size() > 2*1024*1024))
-        return false;
+        throw Exception("Installation report is invalid");
 
     m_digest.clear();
     m_files.clear();
@@ -175,13 +176,9 @@ bool InstallationReport::deserialize(QIODevice *from)
     QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(from->readAll(), &error);
 
     if (error.error != QJsonParseError::NoError)
-        return false;
+        throw Exception("Failed to parse YAML: %1").arg(error.errorString());
 
-    try {
-        checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 3 /*version*/);
-    } catch (const Exception &) {
-        return false;
-    }
+    checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 3 /*version*/);
 
     const QVariantMap &root = docs.at(1).toMap();
 
@@ -189,43 +186,44 @@ bool InstallationReport::deserialize(QIODevice *from)
         if (m_packageId.isEmpty()) {
             m_packageId = root[qSL("packageId")].toString();
             if (m_packageId.isEmpty())
-                throw false;
+                throw Exception("packageId is empty");
         } else if (root[qSL("packageId")].toString() != m_packageId) {
-            throw false;
+            throw Exception("packageId does not match: expected '%1', but got '%2'")
+                    .arg(m_packageId).arg(root[qSL("packageId")].toString());
         }
 
         m_diskSpaceUsed = root[qSL("diskSpaceUsed")].toULongLong();
         m_digest = QByteArray::fromHex(root[qSL("digest")].toString().toLatin1());
         if (m_digest.isEmpty())
-            throw false;
+            throw Exception("digest is empty");
 
         auto devSig = root.find(qSL("developerSignature"));
         if (devSig != root.end()) {
             m_developerSignature = QByteArray::fromBase64(devSig.value().toString().toLatin1());
             if (m_developerSignature.isEmpty())
-                throw false;
+                throw Exception("developerSignature is empty");
         }
         auto storeSig = root.find(qSL("storeSignature"));
         if (storeSig != root.end()) {
             m_storeSignature = QByteArray::fromBase64(storeSig.value().toString().toLatin1());
             if (m_storeSignature.isEmpty())
-                throw false;
+                throw Exception("storeSignature is empty");
         }
         auto extra = root.find(qSL("extra"));
         if (extra != root.end()) {
             m_extraMetaData = extra.value().toMap();
             if (m_extraMetaData.isEmpty())
-                throw false;
+                throw Exception("extra metadata is empty");
         }
         auto extraSigned = root.find(qSL("extraSigned"));
         if (extraSigned != root.end()) {
             m_extraSignedMetaData = extraSigned.value().toMap();
             if (m_extraSignedMetaData.isEmpty())
-                throw false;
+                throw Exception("extraSigned metadata is empty");
         }
         m_files = root[qSL("files")].toStringList();
         if (m_files.isEmpty())
-            throw false;
+            throw Exception("No files");
 
         // see if the file has been tampered with by checking the hmac
         QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(qSL("hmac")).toString().toLatin1());
@@ -235,16 +233,16 @@ bool InstallationReport::deserialize(QIODevice *from)
                                                               hmacKey,
                                                               QCryptographicHash::Sha256);
 
-        if (hmacFile != hmacCalc)
-            throw false;
-
-        return true;
-    } catch (bool) {
+        if (hmacFile != hmacCalc) {
+            throw Exception("HMAC does not match: expected '%1', but got '%2'")
+                .arg(hmacCalc.toHex()).arg(hmacFile.toHex());
+        }
+    } catch (const Exception &) {
         m_digest.clear();
         m_diskSpaceUsed = 0;
         m_files.clear();
 
-        return false;
+        throw;
     }
 }
 

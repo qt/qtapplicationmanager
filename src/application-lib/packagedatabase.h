@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Contact: https://www.qt.io/licensing/
 **
@@ -50,7 +51,6 @@
 QT_BEGIN_NAMESPACE_AM
 
 class PackageInfo;
-class YamlPackageScanner;
 
 
 class PackageDatabase
@@ -58,6 +58,7 @@ class PackageDatabase
 public:
     PackageDatabase(const QStringList &builtInPackagesDirs, const QString &installedPackagesDir = QString());
     PackageDatabase(const QString &singlePackagePath);
+    ~PackageDatabase();
 
     QString installedPackagesDir() const;
 
@@ -69,14 +70,14 @@ public:
     QVector<PackageInfo *> builtInPackages() const;
     QVector<PackageInfo *> installedPackages() const;
 
-    //TODO: runtime installations
-    //void addPackage(PackageInfo *package);
-    //void removePackage(PackageInfo *package);
-    //void updatePackage(PackageInfo *oldPackage, PackageInfo *newPackage);
+    // runtime installations
+    void addPackageInfo(PackageInfo *package);
+    void removePackageInfo(PackageInfo *package);
 
 private:
-    PackageInfo *loadManifest(YamlPackageScanner *yps, const QString &manifestPath);
-    QMap<PackageInfo *, QString> loadManifestsFromDir(YamlPackageScanner *yps, const QString &manifestDir, bool scanningBuiltInApps);
+    Q_DISABLE_COPY(PackageDatabase)
+
+    QVector<PackageInfo *> loadManifestsFromDir(const QString &manifestDir, bool scanningBuiltInApps);
 
     bool loadFromCache();
     void saveToCache();
@@ -88,10 +89,10 @@ private:
     QString m_installedPackagesDir;
     QString m_singlePackagePath;
 
-    QMap<PackageInfo *, QString> m_builtInPackages;
-    QMap<PackageInfo *, QString> m_installedPackages;
+    QVector<PackageInfo *> m_builtInPackages;
+    QVector<PackageInfo *> m_installedPackages;
 
-    bool canBeRevertedToBuiltIn(PackageInfo *pi);
+    bool builtInHasRemovableUpdate(PackageInfo *packageInfo) const;
 };
 
 QT_END_NAMESPACE_AM

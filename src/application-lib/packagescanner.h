@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -54,8 +55,6 @@ public:
     virtual ~PackageScanner() = default;
 
     virtual PackageInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) = 0;
-
-    virtual QString metaDataFileName() const = 0;
 
 protected:
     PackageScanner() = default;

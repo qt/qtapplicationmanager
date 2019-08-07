@@ -1,9 +1,24 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'hello-world.red'
 icon:    'icon.png'
-code:    'main.qml'
-runtime: 'qml'
 name:
   en: 'Hello Red'
+
+applications:
+- id: red1
+  runtime: 'qml'
+  code:    'main.qml'
+
+- id: red2
+  runtime: 'qml'
+  code:    'main2.qml'
+
+intents:
+- id: red.intent1
+  handlingApplicationId: red1
+  categories: [ launcher, one ]
+- id: red.intent2
+  handlingApplicationId: red2
+  categories: [ launcher, two ]

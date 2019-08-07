@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -104,15 +105,6 @@ QT_BEGIN_NAMESPACE_AM
 
 
 Intent::Intent()
-{ }
-
-Intent::Intent(const Intent &other)
-    : m_intentId(other.m_intentId)
-    , m_visibility(other.m_visibility)
-    , m_requiredCapabilities(other.m_requiredCapabilities)
-    , m_parameterMatch(other.m_parameterMatch)
-    , m_applicationId(other.m_applicationId)
-    , m_backgroundHandlerId(other.m_backgroundHandlerId)
 { }
 
 Intent::Intent(const QString &id, const QString &applicationId, const QString &backgroundHandlerId,

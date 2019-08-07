@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -83,7 +84,7 @@ public:
 
     bool isValid() const;
 
-    bool deserialize(QIODevice *from);
+    void deserialize(QIODevice *from);
     bool serialize(QIODevice *to) const;
 
 private:

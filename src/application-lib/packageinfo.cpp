@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Contact: https://www.qt.io/licensing/
 **
@@ -47,6 +48,7 @@
 #include "intentinfo.h"
 #include "exception.h"
 #include "installationreport.h"
+#include "yamlpackagescanner.h"
 
 
 QT_BEGIN_NAMESPACE_AM
@@ -55,7 +57,10 @@ PackageInfo::PackageInfo()
 { }
 
 PackageInfo::~PackageInfo()
-{ }
+{
+    qDeleteAll(m_intents);
+    qDeleteAll(m_applications);
+}
 
 void PackageInfo::validate() const Q_DECL_NOEXCEPT_EXPR(false)
 {
@@ -63,11 +68,14 @@ void PackageInfo::validate() const Q_DECL_NOEXCEPT_EXPR(false)
     if (!isValidApplicationId(id(), &errorMsg))
         throw Exception(Error::Parse, "the identifier (%1) is not a valid package-id: %2").arg(id()).arg(errorMsg);
 
+    if (m_applications.isEmpty())
+        throw Exception(Error::Parse, "package contains no applications");
+
     for (const auto &app : m_applications) {
         if (!isValidApplicationId(app->id(), &errorMsg))
             throw Exception(Error::Parse, "the identifier (%1) is not a valid application-id: %2").arg(app->id()).arg(errorMsg);
 
-        if (app->absoluteCodeFilePath().isEmpty())
+        if (app->codeFilePath().isEmpty())
             throw Exception(Error::Parse, "the 'code' field must not be empty on application %1").arg(app->id());
 
         if (app->runtimeName().isEmpty())
@@ -82,22 +90,22 @@ QString PackageInfo::id() const
 
 QMap<QString, QString> PackageInfo::names() const
 {
-    return m_name;
+    return m_names;
 }
 
 QString PackageInfo::name(const QString &language) const
 {
-    return m_name.value(language);
+    return m_names.value(language);
 }
 
 QMap<QString, QString> PackageInfo::descriptions() const
 {
-    return m_description;
+    return m_descriptions;
 }
 
 QString PackageInfo::description(const QString &language) const
 {
-    return m_description.value(language);
+    return m_descriptions.value(language);
 }
 
 QString PackageInfo::icon() const
@@ -131,6 +139,7 @@ QVariantMap PackageInfo::dltConfiguration() const
 }
 
 const QDir &PackageInfo::baseDir() const
+
 {
     return m_baseDir;
 }
@@ -171,9 +180,9 @@ void PackageInfo::writeToDataStream(QDataStream &ds) const
     }
 
     ds << m_id
-       << m_name
+       << m_names
        << m_icon
-       << m_description
+       << m_descriptions
        << m_categories
        << m_version
        << m_builtIn
@@ -199,9 +208,9 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
     QByteArray installationReport;
 
     ds >> pkg->m_id
-       >> pkg->m_name
+       >> pkg->m_names
        >> pkg->m_icon
-       >> pkg->m_description
+       >> pkg->m_descriptions
        >> pkg->m_categories
        >> pkg->m_version
        >> pkg->m_builtIn
@@ -216,8 +225,11 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
         QBuffer buffer(&installationReport);
         buffer.open(QBuffer::ReadOnly);
         pkg->m_installationReport.reset(new InstallationReport(pkg->id()));
-        if (!pkg->m_installationReport->deserialize(&buffer))
+        try {
+            pkg->m_installationReport->deserialize(&buffer);
+        } catch (...) {
             pkg->m_installationReport.reset();
+        }
     }
 
     return pkg.take();
@@ -279,5 +291,14 @@ bool PackageInfo::isValidIcon(const QString &icon, QString *errorString)
     }
 }
 
+QString PackageInfo::manifestPath() const
+{
+    return m_baseDir.filePath(m_manifestName);
+}
+
+PackageInfo *PackageInfo::fromManifest(const QString &manifestPath)
+{
+    return YamlPackageScanner().scan(manifestPath);
+}
 
 QT_END_NAMESPACE_AM

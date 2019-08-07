@@ -60,6 +60,11 @@ for(config, AM_CONFIG) {
 }
 OTHER_FILES += $$AM_CONFIG
 
+# Make AM_TESTDATA_DIR known
+!isEmpty(AM_TESTDATA_DIR) {
+    COMMAND += -o \'systemProperties: { public: { AM_TESTDATA_DIR: $$AM_TESTDATA_DIR } }\'
+}
+
 !isEmpty(TESTRUN_CWD):!contains(TESTRUN_CWD, ^\\./?): \
     COMMAND = cd $$shell_path($$TESTRUN_CWD) && $$eval(COMMAND)
 

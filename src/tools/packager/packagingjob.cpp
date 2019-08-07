@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -46,7 +47,6 @@
 #include "applicationinfo.h"
 #include "intentinfo.h"
 #include "installationreport.h"
-#include "yamlpackagescanner.h"
 #include "packageextractor.h"
 #include "packagecreator.h"
 
@@ -151,9 +151,8 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
             throw Exception(Error::Package, "source %1 is not a directory").arg(m_sourceDir);
 
         // check metadata
-        YamlPackageScanner yps;
-        QString infoName = yps.metaDataFileName();
-        QScopedPointer<PackageInfo> package(yps.scan(source.absoluteFilePath(infoName)));
+        QString infoName = qSL("info.yaml");
+        QScopedPointer<PackageInfo> package(PackageInfo::fromManifest(source.absoluteFilePath(infoName)));
 
         // build report
         InstallationReport report(package->id());

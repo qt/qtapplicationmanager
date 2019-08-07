@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -31,6 +32,7 @@
 #include <QtTest>
 
 #include "global.h"
+#include "exception.h"
 #include "installationreport.h"
 
 QT_USE_NAMESPACE_AM
@@ -79,7 +81,11 @@ void tst_InstallationReport::test()
     buffer.seek(0);
 
     InstallationReport ir2;
-    QVERIFY(ir2.deserialize(&buffer));
+    try {
+        ir2.deserialize(&buffer);
+    } catch (const Exception &e) {
+        QVERIFY2(false, e.what());
+    }
     buffer.seek(0);
 
     QVERIFY(ir2.isValid());
@@ -100,7 +106,11 @@ void tst_InstallationReport::test()
     yaml.replace(pos, hmac.size(), hmac);
     QCOMPARE(yaml.mid(pos + hmac.size(), 2).constData(), "'\n");
 
-    QVERIFY(!ir2.deserialize(&buffer));
+    try {
+        ir2.deserialize(&buffer);
+        QVERIFY(false);
+    } catch (...) {
+    }
 }
 
 QTEST_APPLESS_MAIN(tst_InstallationReport)

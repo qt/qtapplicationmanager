@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -106,7 +107,7 @@ private slots:
 // the application no longer holds a reference to it
 void tst_Application::runtimeDestroyed()
 {
-    auto pi = new PackageInfo;
+    auto pi = PackageInfo::fromManifest(qL1S(":/info.yaml"));
     auto pkg = new Package(pi);
     auto ai = new ApplicationInfo(pi);
     auto app = new Application(ai, pkg);

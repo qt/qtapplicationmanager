@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -51,19 +52,19 @@ TestCase {
 
     SignalSpy {
         id: taskFinishedSpy
-        target: ApplicationInstaller
+        target: PackageManager
         signalName: "taskFinished"
     }
 
     SignalSpy {
         id: taskStateChangedSpy
-        target: ApplicationInstaller
+        target: PackageManager
         signalName: "taskStateChanged"
     }
 
     SignalSpy {
         id: taskRequestingInstallationAcknowledgeSpy
-        target: ApplicationInstaller
+        target: PackageManager
         signalName: "taskRequestingInstallationAcknowledge"
     }
 
@@ -72,28 +73,29 @@ TestCase {
 
     function test_states() {
         // App could potentially be installed already. Remove it.
-        if (ApplicationInstaller.removePackage("test.install.app", false, true)) {
+        if (PackageManager.removePackage("com.pelagicore.test", false, true)) {
             taskFinishedSpy.wait(spyTimeout);
             compare(taskFinishedSpy.count, 1);
             taskFinishedSpy.clear();
         }
 
-        ApplicationManager.applicationAdded.connect(function(appId) {
-            var app = ApplicationManager.application(appId);
-            stateList.push(app.state)
-            app.stateChanged.connect(function(state) {
-                compare(state, app.state)
+        PackageManager.packageAdded.connect(function(pkgId) {
+            var pkg = PackageManager.package(pkgId);
+            stateList.push(pkg.state)
+            pkg.stateChanged.connect(function(state) {
+                compare(state, pkg.state)
                 stateList.push(state)
             })
         })
 
-        var id = ApplicationInstaller.startPackageInstallation("internal-0", "appv1.pkg")
+        var id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
+                                                         + "/packages/test-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
-        var appId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
+        var pkgId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
         taskRequestingInstallationAcknowledgeSpy.clear();
-        ApplicationInstaller.acknowledgePackageInstallation(id);
+        PackageManager.acknowledgePackageInstallation(id);
 
         if (!taskFinishedSpy.count)
             taskFinishedSpy.wait(spyTimeout);
@@ -101,46 +103,47 @@ TestCase {
         taskFinishedSpy.clear();
 
         compare(stateList.length, 2);
-        compare(stateList[0], ApplicationObject.BeingInstalled)
-        compare(stateList[1], ApplicationObject.Installed)
+        compare(stateList[0], PackageObject.BeingInstalled)
+        compare(stateList[1], PackageObject.Installed)
         stateList = []
 
-        id = ApplicationInstaller.startPackageInstallation("internal-0", "appv2.pkg")
+        id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
+                                                     + "/packages/test-update-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
-        ApplicationInstaller.acknowledgePackageInstallation(id);
+        PackageManager.acknowledgePackageInstallation(id);
 
         taskFinishedSpy.wait(spyTimeout);
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
-        compare(stateList[0], ApplicationObject.BeingUpdated)
-        compare(stateList[1], ApplicationObject.Installed)
+        compare(stateList[0], PackageObject.BeingUpdated)
+        compare(stateList[1], PackageObject.Installed)
         stateList = []
 
-        id = ApplicationInstaller.removePackage(appId, false, false);
+        id = PackageManager.removePackage(pkgId, false, false);
 
         taskFinishedSpy.wait(spyTimeout);
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
-        compare(stateList[0], ApplicationObject.BeingRemoved)
+        compare(stateList[0], PackageObject.BeingRemoved)
         stateList = []
         // Cannot compare app.state any more, since app might already be dead
 
         verify(taskStateChangedSpy.count > 10);
-        var taskStates = [ ApplicationInstaller.Executing,
-                           ApplicationInstaller.AwaitingAcknowledge,
-                           ApplicationInstaller.Installing,
-                           ApplicationInstaller.CleaningUp,
-                           ApplicationInstaller.Finished,
-                           ApplicationInstaller.Executing,
-                           ApplicationInstaller.AwaitingAcknowledge,
-                           ApplicationInstaller.Installing,
-                           ApplicationInstaller.CleaningUp,
-                           ApplicationInstaller.Finished,
-                           ApplicationInstaller.Executing ]
+        var taskStates = [ PackageManager.Executing,
+                           PackageManager.AwaitingAcknowledge,
+                           PackageManager.Installing,
+                           PackageManager.CleaningUp,
+                           PackageManager.Finished,
+                           PackageManager.Executing,
+                           PackageManager.AwaitingAcknowledge,
+                           PackageManager.Installing,
+                           PackageManager.CleaningUp,
+                           PackageManager.Finished,
+                           PackageManager.Executing ]
         for (var i = 0; i < taskStates.length; i++)
             compare(taskStateChangedSpy.signalArguments[i][1], taskStates[i], "- index: " + i);
     }

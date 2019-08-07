@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -284,6 +285,7 @@ Application::Application(ApplicationInfo *info, Package *package)
 
     // handle package blocking: all apps have to be stopped and the stop state has to be reported
     // back to the package
+
     connect(package, &Package::blockedChanged, this, [this](bool blocked) {
         emit blockedChanged(blocked);
         if (blocked && (runState() == Am::NotRunning))
@@ -295,6 +297,11 @@ Application::Application(ApplicationInfo *info, Package *package)
         if (isBlocked() && (runState == Am::NotRunning))
             this->package()->applicationStoppedDueToBlock(id());
     });
+
+    connect(package, &Package::stateChanged, this, [this]() {
+        emit stateChanged(state());
+    });
+    connect(package, &Package::bulkChange, this, &Application::bulkChange);
 }
 
 bool Application::start(const QString &documentUrl)
@@ -321,7 +328,7 @@ void Application::stop(bool forceKill)
 
 ApplicationInfo *Application::info() const
 {
-    return m_info.data();
+    return m_info;
 }
 
 PackageInfo *Application::packageInfo() const

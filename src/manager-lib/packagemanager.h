@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -60,6 +61,21 @@ class PackageDatabase;
 class Package;
 class PackageManagerPrivate;
 
+// A place to collect signals used internally by appman without polluting
+// PackageManager's public QML API.
+class PackageManagerInternalSignals : public QObject
+{
+    Q_OBJECT
+signals:
+    // the slots connected to these signals are allowed to throw Exception objects, if the
+    // connection is direct!
+    void registerApplication(ApplicationInfo *applicationInfo, Package *package);
+    void unregisterApplication(ApplicationInfo *applicationInfo, Package *package);
+
+    void registerIntent(IntentInfo *intentInfo, Package *package);
+    void unregisterIntent(IntentInfo *intentInfo, Package *package);
+};
+
 class PackageManager : public QAbstractListModel
 {
     Q_OBJECT
@@ -79,6 +95,8 @@ class PackageManager : public QAbstractListModel
     Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId)
 
 public:
+    Q_ENUMS(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState))
+
     enum CacheMode {
         NoCache,
         UseCache,
@@ -90,6 +108,8 @@ public:
                                           const QString &documentPath);
     static PackageManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
+
+    void registerPackages();
 
     QVector<Package *> packages() const;
 
@@ -150,6 +170,7 @@ public:
     Q_SCRIPTABLE int compareVersions(const QString &version1, const QString &version2);
     Q_SCRIPTABLE bool validateDnsName(const QString &name, int minimumParts = 1);
 
+    PackageManagerInternalSignals internalSignals;
 
 signals:
     Q_SCRIPTABLE void countChanged();
@@ -183,6 +204,10 @@ protected:
 
 private:
     void emitDataChanged(Package *package, const QVector<int> &roles = QVector<int>());
+    void registerPackage(PackageInfo *packageInfo, PackageInfo *updatedPackageInfo,
+                         bool currentlyBeingInstalled = false);
+    void registerApplicationsAndIntentsOfPackage(Package *package);
+    void unregisterApplicationsAndIntentsOfPackage(Package *package);
     static void registerQmlTypes();
 
     void triggerExecuteNextTask();

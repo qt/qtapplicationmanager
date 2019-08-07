@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -1365,16 +1366,18 @@ Am::RunState ApplicationManager::applicationRunState(const QString &id) const
     return (index < 0) ? Am::NotRunning : d->apps.at(index)->runState();
 }
 
-void ApplicationManager::setApplications(const QVector<Application *> &apps)
+void ApplicationManager::addApplication(ApplicationInfo *appInfo, Package *package)
 {
-    Q_ASSERT(d->apps.count() == 0);
-    for (auto app : apps)
-        addApplication(app);
-    registerMimeTypes();
-}
+    // check for id clashes outside of the package (the scanner made sure the package itself is
+    // consistent and doesn't have duplicates already)
+    for (Application *checkApp : qAsConst(d->apps)) {
+        if ((checkApp->id() == appInfo->id()) && (checkApp->package() != package)) {
+            throw Exception("found an application with the same id in package %1")
+                .arg(checkApp->packageInfo()->id());
+        }
+    }
 
-void ApplicationManager::addApplication(Application *app)
-{
+    auto app = new Application(appInfo, package);
     QQmlEngine::setObjectOwnership(app, QQmlEngine::CppOwnership);
 
     app->requests.startRequested = [this, app](const QString &documentUrl) {
@@ -1393,8 +1396,45 @@ void ApplicationManager::addApplication(Application *app)
             this, [this, app]() {
         emitDataChanged(app, QVector<int> { IsBlocked });
     });
+    connect(app, &Application::bulkChange,
+            this, [this, app]() {
+        emitDataChanged(app);
+    });
 
+    beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
     d->apps << app;
+
+    endInsertRows();
+
+    registerMimeTypes();
+    emit applicationAdded(appInfo->id());
+}
+
+void ApplicationManager::removeApplication(ApplicationInfo *appInfo, Package *package)
+{
+    int index = -1;
+
+    for (int i = 0; i < d->apps.size(); ++i) {
+        if (d->apps.at(i)->info() == appInfo) {
+            index = i;
+            break;
+        }
+    }
+    if (index < 0)
+        return;
+
+    Q_ASSERT(d->apps.at(index)->package() == package);
+
+    emit applicationAboutToBeRemoved(appInfo->id());
+
+    beginRemoveRows(QModelIndex(), index, index);
+    auto app = d->apps.takeAt(index);
+
+    endRemoveRows();
+
+    registerMimeTypes();
+
+    delete app;
 }
 
 QT_END_NAMESPACE_AM

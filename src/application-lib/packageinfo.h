@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Contact: https://www.qt.io/licensing/
 **
@@ -52,6 +53,8 @@
 
 QT_FORWARD_DECLARE_CLASS(QDataStream)
 
+class tst_Application;
+
 QT_BEGIN_NAMESPACE_AM
 
 class InstallationReport;
@@ -62,7 +65,6 @@ class YamlPackageScanner;
 class PackageInfo
 {
 public:
-    PackageInfo();
     ~PackageInfo();
 
     void validate() const Q_DECL_NOEXCEPT_EXPR(false);
@@ -97,10 +99,17 @@ public:
     static bool isValidApplicationId(const QString &appId, QString *errorString = nullptr);
     static bool isValidIcon(const QString &icon, QString *errorString = nullptr);
 
+    QString manifestPath() const;
+
+    static PackageInfo *fromManifest(const QString &manifestPath);
+
 private:
+    PackageInfo();
+
+    QString m_manifestName;
     QString m_id;
-    QMap<QString, QString> m_name; // language -> name
-    QMap<QString, QString> m_description; // language -> description
+    QMap<QString, QString> m_names; // language -> name
+    QMap<QString, QString> m_descriptions; // language -> description
     QStringList m_categories;
     QString m_icon; // relative to info.json location
     QString m_version;

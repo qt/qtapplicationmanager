@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -58,11 +59,12 @@ class Package : public QObject
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/PackageObject 2.0 UNCREATABLE")
     Q_PROPERTY(QString id READ id CONSTANT)
     Q_PROPERTY(bool builtIn READ isBuiltIn NOTIFY bulkChange)
+    Q_PROPERTY(bool builtInHasRemovableUpdate READ builtInHasRemovableUpdate NOTIFY bulkChange)
     Q_PROPERTY(QUrl icon READ icon NOTIFY bulkChange)
     Q_PROPERTY(QString version READ version NOTIFY bulkChange)
     Q_PROPERTY(QString name READ name NOTIFY bulkChange)
     Q_PROPERTY(QVariantMap names READ names NOTIFY bulkChange)
-    Q_PROPERTY(QString description READ version NOTIFY bulkChange)
+    Q_PROPERTY(QString description READ description NOTIFY bulkChange)
     Q_PROPERTY(QVariantMap descriptions READ descriptions NOTIFY bulkChange)
     Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
@@ -82,6 +84,7 @@ public:
 
     QString id() const;
     bool isBuiltIn() const;
+    bool builtInHasRemovableUpdate() const;
     QUrl icon() const;
     QString version() const;
     QString name() const;
@@ -95,10 +98,6 @@ public:
 
     void setState(State state);
     void setProgress(qreal progress);
-
-    // Creates a list of Applications from a list of ApplicationInfo objects.
-    // Ownership of the given ApplicationInfo objects is passed to the returned Applications.
-    //static QVector<Application *> fromApplicationInfoVector(QVector<ApplicationInfo *> &);
 
     /*
         All packages have a base info.
@@ -114,15 +113,13 @@ public:
         back to a previous version. Regular packages get completely
         removed when requested.
      */
-    void setBaseInfo(PackageInfo *info);
-    void setUpdatedInfo(PackageInfo *info);
 
     // Returns the updated info, if there's one. Otherwise returns the base info.
     PackageInfo *info() const;
+    PackageInfo *baseInfo() const;
     PackageInfo *updatedInfo() const;
-    PackageInfo *takeBaseInfo();
-
-    bool canBeRevertedToBuiltIn() const;
+    PackageInfo *setUpdatedInfo(PackageInfo *info);
+    PackageInfo *setBaseInfo(PackageInfo *info);
 
     bool isBlocked() const;
     bool block();
@@ -139,8 +136,8 @@ signals:
     void blockedChanged(bool blocked);
 
 private:
-    QScopedPointer<PackageInfo> m_info;
-    QScopedPointer<PackageInfo> m_updatedInfo;
+    PackageInfo *m_info = nullptr;
+    PackageInfo *m_updatedInfo = nullptr;
 
     State m_state = Installed;
     qreal m_progress = 0;

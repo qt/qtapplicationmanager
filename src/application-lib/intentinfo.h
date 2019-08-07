@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Contact: https://www.qt.io/licensing/
 **
@@ -93,8 +94,8 @@ private:
 
     QString m_handlingApplicationId;
     QStringList m_categories;
-    QMap<QString, QString> m_name; // language -> name
-    QMap<QString, QString> m_description; // language -> description
+    QMap<QString, QString> m_names; // language -> name
+    QMap<QString, QString> m_descriptions; // language -> description
     QString m_icon; // relative to info.json location
 
     friend class YamlPackageScanner;

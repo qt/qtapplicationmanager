@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -60,7 +61,12 @@ QString Package::id() const
 
 bool Package::isBuiltIn() const
 {
-    return info()->isBuiltIn();
+    return m_info->isBuiltIn();
+}
+
+bool Package::builtInHasRemovableUpdate() const
+{
+    return isBuiltIn() && m_updatedInfo;
 }
 
 QString Package::version() const
@@ -156,39 +162,40 @@ void Package::setProgress(qreal progress)
     m_progress = progress;
 }
 
-
-void Package::setBaseInfo(PackageInfo *info)
-{
-    m_info.reset(info);
-    emit bulkChange();
-}
-
-void Package::setUpdatedInfo(PackageInfo *info)
-{
-    Q_ASSERT(!info || (m_info && info->id() == m_info->id()));
-
-    m_updatedInfo.reset(info);
-    emit bulkChange();
-}
-
 PackageInfo *Package::info() const
 {
-    return m_updatedInfo ? m_updatedInfo.data() : m_info.data();
+    return m_updatedInfo ? m_updatedInfo : m_info;
+}
+
+PackageInfo *Package::baseInfo() const
+{
+    return m_info;
 }
 
 PackageInfo *Package::updatedInfo() const
 {
-    return m_updatedInfo.data();
+    return m_updatedInfo;
 }
 
-PackageInfo *Package::takeBaseInfo()
+PackageInfo *Package::setUpdatedInfo(PackageInfo *info)
 {
-    return m_info.take();
+    Q_ASSERT(!info || (m_info && info->id() == m_info->id()));
+    Q_ASSERT(info != m_updatedInfo);
+
+    auto old = m_updatedInfo;
+    m_updatedInfo = info;
+    emit bulkChange();
+    return old;
 }
 
-bool Package::canBeRevertedToBuiltIn() const
+PackageInfo *Package::setBaseInfo(PackageInfo *info)
 {
-    return m_info && m_updatedInfo;
+    Q_ASSERT(info != m_info);
+
+    auto old = m_info;
+    m_info = info;
+    emit bulkChange();
+    return old;
 }
 
 bool Package::isBlocked() const
@@ -200,8 +207,8 @@ bool Package::block()
 {
     bool blockedNow = (m_blocked.fetchAndAddOrdered(1) == 0);
     if (blockedNow) {
-        emit blockedChanged(true);
         m_blockedApps = info()->applications();
+        emit blockedChanged(true);
     }
     return blockedNow;
 }

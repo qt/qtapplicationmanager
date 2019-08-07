@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -94,12 +95,8 @@
 #include "logging.h"
 #include "main.h"
 #include "defaultconfiguration.h"
-#include "applicationinfo.h"
-#include "intentinfo.h"
-#include "packageinfo.h"
 #include "applicationmanager.h"
 #include "packagemanager.h"
-#include "package.h"
 #include "packagedatabase.h"
 #include "installationreport.h"
 #include "yamlpackagescanner.h"
@@ -245,6 +242,11 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
                     cfg->quickLaunchIdleLoad());
 
+    if (!cfg->disableIntents())
+        setupIntents(cfg->intentTimeouts());
+
+    registerPackages();
+
     if (m_installationDir.isEmpty() || cfg->disableInstaller()) {
         StartupTimer::instance()->checkpoint("skipping installer");
     } else {
@@ -252,9 +254,6 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
                        std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
                                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     }
-    if (!cfg->disableIntents())
-        setupIntents(cfg->intentTimeouts());
-
     setLibraryPaths(libraryPaths() + cfg->pluginPaths());
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
@@ -459,30 +458,9 @@ void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePacka
 
 void Main::setupIntents(const QMap<QString, int> &timeouts) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance(timeouts);
-
-    qCDebug(LogSystem) << "Registering intents:";
-
-    const auto packages = m_packageManager->packages();
-    for (const Package *package : packages) {
-        const auto intents = package->info()->intents();
-        if (!intents.isEmpty())
-            m_intentServer->addApplication(package->id());
-
-        for (const IntentInfo *intent : intents) {
-            if (!m_intentServer->addIntent(intent->id(), package->id(), intent->handlingApplicationId(),
-                                           intent->requiredCapabilities(),
-                                           intent->visibility() == IntentInfo::Public ? Intent::Public
-                                                                                      : Intent::Private,
-                                           intent->parameterMatch())) {
-                throw Exception(Error::Intents, "could not add intent %1 for package %2")
-                    .arg(intent->id()).arg(package->id());
-            }
-            qCDebug(LogSystem).nospace().noquote() << " * " << intent->id() << " [package: " << package->id() << "]";
-        }
-    }
-
-    StartupTimer::instance()->checkpoint("after Intents setup");
+    m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance(m_packageManager,
+                                                                                 timeouts);
+    StartupTimer::instance()->checkpoint("after IntentServer instantiation");
 }
 
 void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
@@ -490,28 +468,17 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
                            qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_packageManager = PackageManager::createInstance(m_packageDatabase, m_documentDir);
-
-    qCDebug(LogSystem) << "Registering packages:";
-
-    QVector<Application *> applications;
-    const auto allPackages = m_packageManager->packages();
-    for (auto package : allPackages) {
-        qCDebug(LogSystem).nospace().noquote() << " * " << package->id() << " [at: "
-                                               << QDir().relativeFilePath(package->info()->baseDir().path()) << "]";
-        const auto appInfos = package->info()->applications();
-        for (auto appInfo : appInfos) {
-            applications << new Application(appInfo, package);
-            qCDebug(LogSystem).nospace().noquote() << "   * application:" << appInfo->id();
-        }
-    }
-
     m_applicationManager = ApplicationManager::createInstance(m_isSingleProcessMode);
-    m_applicationManager->setApplications(applications);
 
-    connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::applicationsChanged,
-            this, [this]() {
-        //m_packageDatabase->saveToCache();
-        //TODO: this is wrong - we haven't update the info cache!
+    connect(&m_packageManager->internalSignals, &PackageManagerInternalSignals::registerApplication,
+            m_applicationManager, [this](ApplicationInfo *applicationInfo, Package *package) {
+        m_applicationManager->addApplication(applicationInfo, package);
+        qCDebug(LogSystem).nospace().noquote() << " ++ application: " << applicationInfo->id() << " [package: " << package->id() << "]";
+    });
+    connect(&m_packageManager->internalSignals, &PackageManagerInternalSignals::unregisterApplication,
+            m_applicationManager, [this](ApplicationInfo *applicationInfo, Package *package) {
+        m_applicationManager->removeApplication(applicationInfo, package);
+        qCDebug(LogSystem).nospace().noquote() << " -- application: " << applicationInfo->id() << " [package: " << package->id() << "]";
     });
 
     if (m_noSecurity)
@@ -590,11 +557,17 @@ void Main::setupInstaller(const QStringList &caCertificatePaths,
     //TODO: this could be delayed, but needs to have a lock on the app-db in this case
     m_packageManager->cleanupBrokenInstallations();
 
-    StartupTimer::instance()->checkpoint("after PackageManager instantiation");
+    StartupTimer::instance()->checkpoint("after installer setup");
 #else
     Q_UNUSED(caCertificatePaths)
     Q_UNUSED(userIdSeparation)
 #endif // AM_DISABLE_INSTALLER
+}
+
+void Main::registerPackages()
+{
+    m_packageManager->registerPackages();
+    StartupTimer::instance()->checkpoint("after package registration");
 }
 
 void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle)

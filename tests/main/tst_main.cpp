@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -37,6 +38,8 @@
 #include "applicationmanager.h"
 #include "logging.h"
 #include "main.h"
+#include "intentserver.h"
+#include "intent.h"
 #include <QtAppManMain/defaultconfiguration.h>
 
 
@@ -111,7 +114,7 @@ void tst_Main::copyRecursively(const QString &sourcePath, const QString &destPat
         copyRecursively(sourceDir.filePath(subdirName), destDir.filePath(subdirName));
     }
 
-    QStringList fileNames = sourceDir.entryList(QDir::Files);
+    QStringList fileNames = sourceDir.entryList(QDir::Files | QDir::Hidden);
     for (auto fileName : fileNames)
         QFile::copy(sourceDir.filePath(fileName), destDir.filePath(fileName));
 }
@@ -143,10 +146,10 @@ void tst_Main::initMain()
 
     config = new DefaultConfiguration(pathList, QString());
     config->parse(&deploymentWarnings);
+    if (m_verbose)
+        config->setForceVerbose(true);
 
     main->setup(config, deploymentWarnings);
-    if (m_verbose)
-        Logging::setFilterRules(Logging::filterRules() += qSL("am.installer.debug=true"));
 
     PackageManager::instance()->setAllowInstallationOfUnsignedPackages(true);
 }
@@ -219,26 +222,62 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     initMain();
 
     auto appMan = ApplicationManager::instance();
-    QCOMPARE(appMan->count(), 1);
+    QCOMPARE(appMan->count(), 2);
+    auto intents = IntentServer::instance();
+    QCOMPARE(intents->count(), 2);
 
-    auto app = appMan->application(0);
-    QCOMPARE(app->name(qSL("en")), qSL("Hello Red"));
+    auto app1 = appMan->application(0);
+    QCOMPARE(app1->name(qSL("en")), qSL("Hello Red"));
+    QCOMPARE(app1->id(), qSL("red1"));
+    auto app2 = appMan->application(1);
+    QCOMPARE(app2->name(qSL("en")), qSL("Hello Red"));
+    QCOMPARE(app2->id(), qSL("red2"));
+
+    auto intent1 = intents->applicationIntent(qSL("red.intent1"), qSL("red1"));
+    QVERIFY(intent1);
+    QCOMPARE(intent1->intentId(), qSL("red.intent1"));
+    QCOMPARE(intent1->applicationId(), qSL("red1"));
+    QCOMPARE(intent1->packageId(), qSL("hello-world.red"));
+    QVERIFY(intent1->categories().contains(qSL("one")));
+    QVERIFY(intent1->categories().contains(qSL("launcher")));
+
+    auto intent2 = intents->applicationIntent(qSL("red.intent2"), qSL("red2"));
+    QVERIFY(intent2);
+    QCOMPARE(intent2->intentId(), qSL("red.intent2"));
+    QCOMPARE(intent2->applicationId(), qSL("red2"));
+    QCOMPARE(intent2->packageId(), qSL("hello-world.red"));
+    QVERIFY(intent2->categories().contains(qSL("two")));
+    QVERIFY(intent2->categories().contains(qSL("launcher")));
 
     installPackage(qL1S(AM_TESTDATA_DIR "packages/hello-world.red.appkg"));
 
     QCOMPARE(appMan->count(), 1);
-    // it must still be the same Application instance as before the installation
-    QCOMPARE(appMan->application(0), app);
+    QCOMPARE(intents->count(), 0);
+
+    // it must still be a different Application instance as before the installation, but quite
+    // often we get the same pointer back because it's a delete/new back-to-back
+    app1 = appMan->application(0);
+
     // but with different contents
-    QCOMPARE(app->name(qSL("en")), qSL("Hello Updated Red"));
+    QCOMPARE(app1->name(qSL("en")), qSL("Hello Updated Red"));
+    intent1 = intents->applicationIntent(qSL("red.intent1"), qSL("red1"));
+    QVERIFY(!intent1);
 
     removePackage(qSL("hello-world.red"));
 
     // After removal of the updated version all data in Application should be as before the
     // installation took place.
-    QCOMPARE(appMan->count(), 1);
-    QCOMPARE(appMan->application(0), app);
-    QCOMPARE(app->name(qSL("en")), qSL("Hello Red"));
+    QCOMPARE(appMan->count(), 2);
+    QCOMPARE(intents->count(), 2);
+
+    app1 = appMan->application(0);
+    QCOMPARE(app1->name(qSL("en")), qSL("Hello Red"));
+    intent1 = intents->applicationIntent(qSL("red.intent1"), qSL("red1"));
+    QVERIFY(intent1);
+    QCOMPARE(intent1->intentId(), qSL("red.intent1"));
+    intent2 = intents->applicationIntent(qSL("red.intent2"), qSL("red2"));
+    QVERIFY(intent2);
+    QCOMPARE(intent2->intentId(), qSL("red.intent2"));
 }
 
 /*
@@ -271,13 +310,9 @@ void tst_Main::updateForBuiltInAlreadyInstalled()
  */
 void tst_Main::loadDatabaseWithUpdatedBuiltInApp()
 {
-    QCOMPARE(QFile::exists("/tmp/am-test-main/apps.db"), false);
-
     initMain();
     installPackage(qL1S(AM_TESTDATA_DIR "packages/hello-world.red.appkg"));
     destroyMain();
-
-    QCOMPARE(QFile::exists("/tmp/am-test-main/apps.db"), true);
 
     initMain();
 

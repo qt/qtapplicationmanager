@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -68,6 +69,8 @@
 #include "qmlinprocessruntime.h"
 #include "application.h"
 #include "applicationmanager.h"
+#include "package.h"
+#include "packagemanager.h"
 #include "applicationinfo.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -79,7 +82,8 @@ static QString sysUiId = qSL(":sysui:");
 // vvv IntentAMImplementation vvv
 
 
-IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(const QMap<QString, int> &timeouts)
+IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(PackageManager *packageManager,
+                                                                          const QMap<QString, int> &timeouts)
 {
     auto intentServerAMInterface = new IntentServerAMImplementation;
     auto intentClientAMInterface = new IntentClientAMImplementation(intentServerAMInterface);
@@ -108,13 +112,54 @@ IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(const 
     if (it != timeouts.cend())
         intentClient->setReplyFromSystemTimeout(it.value());
 
-
-
     // this way, deleting the server (the return value of this factory function) will get rid
     // of both client and server as well as both their AM interfaces
     intentClient->setParent(intentServer);
+
+    // connect the APIs of the PackageManager and the IntentServer
+    // the Intent API does not use AM internal types, so we have to translate using id strings:
+    // the idea behind this is that the Intent subsystem could be useful outside of the AM as well,
+    // so we try not to use AM specific classes in the intent-server and intent-client modules.
+    QObject::connect(packageManager, &PackageManager::packageAdded,
+                     intentServer, &IntentServer::addPackage);
+    QObject::connect(packageManager, &PackageManager::packageAboutToBeRemoved,
+                     intentServer, &IntentServer::removePackage);
+
+    QObject::connect(&packageManager->internalSignals, &PackageManagerInternalSignals::registerApplication,
+                     intentServer, [intentServer](ApplicationInfo *applicationInfo, Package *package) {
+        intentServer->addApplication(applicationInfo->id(), package->id());
+    });
+    QObject::connect(&packageManager->internalSignals, &PackageManagerInternalSignals::unregisterApplication,
+                     intentServer, [intentServer](ApplicationInfo *applicationInfo, Package *package) {
+        intentServer->removeApplication(applicationInfo->id(), package->id());
+    });
+
+    QObject::connect(&packageManager->internalSignals, &PackageManagerInternalSignals::registerIntent,
+                     intentServer, [intentServer](IntentInfo *intentInfo, Package *package) {
+
+        if (!intentServer->addIntent(intentInfo->id(), package->id(), intentInfo->handlingApplicationId(),
+                                     intentInfo->requiredCapabilities(),
+                                     intentInfo->visibility() == IntentInfo::Public ? Intent::Public
+                                                                                    : Intent::Private,
+                                     intentInfo->parameterMatch(), intentInfo->names(),
+                                     QUrl::fromLocalFile(package->info()->baseDir().absoluteFilePath(intentInfo->icon())),
+                                     intentInfo->categories())) {
+            throw Exception(Error::Intents, "could not add intent %1 for package %2")
+                .arg(intentInfo->id()).arg(package->id());
+        }
+        qCDebug(LogSystem).nospace().noquote() << " ++ intent: " << intentInfo->id() << " [package: " << package->id() << "]";
+    });
+    QObject::connect(&packageManager->internalSignals, &PackageManagerInternalSignals::unregisterIntent,
+                     intentServer, [intentServer](IntentInfo *intentInfo, Package *package) {
+        Intent *intent = intentServer->packageIntent(intentInfo->id(), package->id(),
+                                                     intentInfo->parameterMatch());
+        qCDebug(LogSystem).nospace().noquote() << " -- intent: " << intentInfo->id() << " [package: " << package->id() << "]";
+        Q_ASSERT(intent);
+        intentServer->removeIntent(intent);
+    });
     return intentServer;
 }
+
 
 // ^^^ IntentAMImplementation ^^^
 //////////////////////////////////////////////////////////////////////////

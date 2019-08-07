@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Contact: https://www.qt.io/licensing/
 **
@@ -65,6 +66,12 @@ PackageDatabase::PackageDatabase(const QString &singlePackagePath)
     Q_ASSERT(!singlePackagePath.isEmpty());
 }
 
+PackageDatabase::~PackageDatabase()
+{
+    qDeleteAll(m_builtInPackages);
+    qDeleteAll(m_installedPackages);
+}
+
 QString PackageDatabase::installedPackagesDir() const
 {
     return m_installedPackagesDir;
@@ -95,21 +102,21 @@ void PackageDatabase::saveToCache()
     //TODO: write cache file
 }
 
-bool PackageDatabase::canBeRevertedToBuiltIn(PackageInfo *pi)
+bool PackageDatabase::builtInHasRemovableUpdate(PackageInfo *packageInfo) const
 {
-    if (!pi || pi->isBuiltIn() || !m_installedPackages.contains(pi))
+    if (!packageInfo || packageInfo->isBuiltIn() || !m_installedPackages.contains(packageInfo))
         return false;
-    for (auto it = m_builtInPackages.cbegin(); it != m_builtInPackages.cend(); ++it) {
-        if (it.key()->id() == pi->id())
+    for (const auto *pi : m_builtInPackages) {
+        if (pi->id() == packageInfo->id())
             return true;
     }
     return false;
 }
 
 
-QMap<PackageInfo *, QString> PackageDatabase::loadManifestsFromDir(YamlPackageScanner *yps, const QString &manifestDir, bool scanningBuiltInApps)
+QVector<PackageInfo *> PackageDatabase::loadManifestsFromDir(const QString &manifestDir, bool scanningBuiltInApps)
 {
-    QMap<PackageInfo *, QString> result;
+    QVector<PackageInfo *> result;
 
     auto flags = scanningBuiltInApps ? QDir::Dirs | QDir::NoDotAndDotDot
                                      : QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks;
@@ -137,8 +144,8 @@ QMap<PackageInfo *, QString> PackageDatabase::loadManifestsFromDir(YamlPackageSc
             if (!scanningBuiltInApps && !pkgDir.exists(qSL(".installation-report.yaml")))
                 throw Exception("found a non-built-in package without an installation report");
 
-            QString manifestPath = pkgDir.absoluteFilePath(yps->metaDataFileName());
-            QScopedPointer<PackageInfo> pkg(loadManifest(yps, manifestPath));
+            QString manifestPath = pkgDir.absoluteFilePath(qSL("info.yaml"));
+            QScopedPointer<PackageInfo> pkg(PackageInfo::fromManifest(manifestPath));
 
             if (pkg->id() != pkgDir.dirName()) {
                 throw Exception("an info.yaml must be in a directory that has"
@@ -152,29 +159,21 @@ QMap<PackageInfo *, QString> PackageDatabase::loadManifestsFromDir(YamlPackageSc
                     throw Exception(f, "failed to open the installation report");
 
                 QScopedPointer<InstallationReport> report(new InstallationReport(pkg->id()));
-                if (!report->deserialize(&f))
-                    throw Exception(f, "failed to deserialize the installation report");
+                try {
+                    report->deserialize(&f);
+                } catch (const Exception &e) {
+                    throw Exception("Failed to deserialize the installation report %1: %2")
+                            .arg(f.fileName()).arg(e.errorString());
+                }
 
                 pkg->setInstallationReport(report.take());
-                pkg->setBaseDir(QDir(m_installedPackagesDir).filePath(pkg->id()));
             }
-            result.insert(pkg.take(), manifestPath);
+            result.append(pkg.take());
         } catch (const Exception &e) {
             qCDebug(LogSystem) << "Ignoring package" << pkgDirName << ":" << e.what();
         }
     }
     return result;
-}
-
-PackageInfo *PackageDatabase::loadManifest(YamlPackageScanner *yps, const QString &manifestPath)
-{
-    QScopedPointer<PackageInfo> pkg(yps->scan(manifestPath));
-    Q_ASSERT(pkg);
-
-    if (pkg->applications().isEmpty())
-        throw Exception("package contains no applications");
-
-    return pkg.take();
 }
 
 void PackageDatabase::parse()
@@ -188,34 +187,43 @@ void PackageDatabase::parse()
             return;
     }
 
-    YamlPackageScanner yps;
-
     if (!m_singlePackagePath.isEmpty()) {
         try {
-            m_builtInPackages.insert(loadManifest(&yps, m_singlePackagePath), m_singlePackagePath);
+            m_builtInPackages.append(PackageInfo::fromManifest(m_singlePackagePath));
         } catch (const Exception &e) {
             throw Exception("Failed to load manifest for package: %1").arg(e.errorString());
         }
     } else {
         for (const QString &dir : m_builtInPackagesDirs)
-            m_builtInPackages.unite(loadManifestsFromDir(&yps, dir, true));
+            m_builtInPackages.append(loadManifestsFromDir(dir, true));
 
         if (!m_installedPackagesDir.isEmpty())
-            m_installedPackages = loadManifestsFromDir(&yps, m_installedPackagesDir, false);
+            m_installedPackages = loadManifestsFromDir(m_installedPackagesDir, false);
     }
 
     if (m_saveToCache)
         saveToCache();
 }
 
+void PackageDatabase::addPackageInfo(PackageInfo *package)
+{
+    m_installedPackages.append(package);
+}
+
+void PackageDatabase::removePackageInfo(PackageInfo *package)
+{
+    if (m_installedPackages.removeAll(package))
+        delete package;
+}
+
 QVector<PackageInfo *> PackageDatabase::installedPackages() const
 {
-    return m_installedPackages.keys().toVector();
+    return m_installedPackages;
 }
 
 QVector<PackageInfo *> PackageDatabase::builtInPackages() const
 {
-    return m_builtInPackages.keys().toVector();
+    return m_builtInPackages;
 }
 
 QT_END_NAMESPACE_AM

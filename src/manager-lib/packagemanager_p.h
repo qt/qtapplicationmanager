@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -62,6 +63,8 @@ class PackageManagerPrivate
 public:
     PackageDatabase *database = nullptr;
     QVector<Package *> packages;
+
+    QMap<Package *, PackageInfo *> pendingPackageInfoUpdates;
 
     bool developmentMode = false;
     bool allowInstallationOfUnsignedPackages = false;

@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -32,7 +33,6 @@
 
 #include "application.h"
 #include "package.h"
-#include "yamlpackagescanner.h"
 #include "abstractruntime.h"
 #include "runtimefactory.h"
 #include "exception.h"
@@ -138,7 +138,7 @@ void tst_Runtime::factory()
 
     Application *a = nullptr;
     try {
-        PackageInfo *pi = YamlPackageScanner().scan(temp.fileName());
+        PackageInfo *pi = PackageInfo::fromManifest(temp.fileName());
         QVERIFY(pi);
         Package *p = new Package(pi);
         a = new Application(pi->applications().first(), p);

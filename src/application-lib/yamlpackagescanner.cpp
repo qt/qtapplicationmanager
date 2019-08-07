@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -115,7 +116,11 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
 
         QStringList appIds; // duplicate check
         QScopedPointer<PackageInfo> pkgInfo(new PackageInfo);
-        pkgInfo->setBaseDir(QFileInfo(f).absoluteDir());
+        {
+            QFileInfo fi(f);
+            pkgInfo->m_baseDir = fi.absoluteDir();
+            pkgInfo->m_manifestName = fi.fileName();
+        }
 
         QScopedPointer<ApplicationInfo> legacyAppInfo(legacy ? new ApplicationInfo(pkgInfo.data()) : nullptr);
 
@@ -136,16 +141,16 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
         fields.emplace_back("name", true, [&pkgInfo](const QVariant &v) {
             auto nameMap = v.toMap();
             for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
-                pkgInfo->m_name.insert(it.key(), it.value().toString());
+                pkgInfo->m_names.insert(it.key(), it.value().toString());
 
-            if (pkgInfo->m_name.isEmpty())
+            if (pkgInfo->m_names.isEmpty())
                 throw Exception(Error::Parse, "the 'name' field must not be empty");
         });
         if (!legacy) {
             fields.emplace_back("description", false, [&pkgInfo](const QVariant &v) {
                 auto descriptionMap = v.toMap();
                 for (auto it = descriptionMap.constBegin(); it != descriptionMap.constEnd(); ++it)
-                    pkgInfo->m_description.insert(it.key(), it.value().toString());
+                    pkgInfo->m_descriptions.insert(it.key(), it.value().toString());
             });
         }
         fields.emplace_back("categories", false, [&pkgInfo](const QVariant &v) {
@@ -233,9 +238,9 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
                     appFields.emplace_back("id", true, [&appInfo, &appIds](const QVariant &v) {
                         QString id = v.toString();
                         if (id.isEmpty())
-                            throw Exception(Error::Intents, "applications need to have an id");
+                            throw Exception(Error::Parse, "applications need to have an id");
                         if (appIds.contains(id))
-                            throw Exception(Error::Intents, "found two applications with id %1").arg(id);
+                            throw Exception(Error::Parse, "found two applications with the same id %1").arg(id);
                         appInfo->m_id = id;
                     });
                     appFields.emplace_back("code", true, [&appInfo](const QVariant &v) {
@@ -281,6 +286,7 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
                     });
 
                     parseMap(appsIt->toMap(), appFields);
+                    appIds << appInfo->id();
                     pkgInfo->m_applications << appInfo.take();
                 }
             });
@@ -313,23 +319,13 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
                                 .arg(intentInfo->m_id).arg(visibilityStr);
                     }
                 });
-                intentFields.emplace_back(legacy ? "handledBy" : "handlingApplicationId", legacy ? false : true, [&pkgInfo, &intentInfo, &appIds](const QVariant &v) {
+                intentFields.emplace_back(legacy ? "handledBy" : "handlingApplicationId", false, [&intentInfo, &appIds](const QVariant &v) {
                     QString appId = v.toString();
-
-                    if (appId.isEmpty()) {
-                        if (pkgInfo->m_applications.count() == 1) {
-                            intentInfo->m_handlingApplicationId = pkgInfo->m_applications.constFirst()->id();
-                        } else {
-                            throw Exception(Error::Intents, "a 'handlingApplicationId' field on intent %1 is needed if more than one application is defined")
-                                    .arg(intentInfo->m_id);
-                        }
+                    if (appIds.contains(appId)) {
+                        intentInfo->m_handlingApplicationId = appId;
                     } else {
-                        if (appIds.contains(appId)) {
-                            intentInfo->m_handlingApplicationId = appId;
-                        } else {
-                            throw Exception(Error::Intents, "the 'handlingApplicationId' field on intent %1 points to the unknown application id %2")
-                                    .arg(intentInfo->m_id).arg(appId);
-                        }
+                        throw Exception(Error::Intents, "the 'handlingApplicationId' field on intent %1 points to the unknown application id %2")
+                                .arg(intentInfo->m_id).arg(appId);
                     }
                 });
                 intentFields.emplace_back("requiredCapabilities", false, [&intentInfo](const QVariant &v) {
@@ -344,12 +340,12 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
                 intentFields.emplace_back("name", false, [&intentInfo](const QVariant &v) {
                     auto nameMap = v.toMap();
                     for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
-                        intentInfo->m_name.insert(it.key(), it.value().toString());
+                        intentInfo->m_names.insert(it.key(), it.value().toString());
                 });
                 intentFields.emplace_back("description", false, [&intentInfo](const QVariant &v) {
                     auto descriptionMap = v.toMap();
                     for (auto it = descriptionMap.constBegin(); it != descriptionMap.constEnd(); ++it)
-                        intentInfo->m_description.insert(it.key(), it.value().toString());
+                        intentInfo->m_descriptions.insert(it.key(), it.value().toString());
                 });
                 intentFields.emplace_back("categories", false, [&intentInfo](const QVariant &v) {
                     intentInfo->m_categories = variantToStringList(v);
@@ -357,6 +353,18 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
                 });
 
                 parseMap(intentsIt->toMap(), intentFields);
+
+                if (intentInfo->handlingApplicationId().isEmpty()) {
+                    if (legacy) {
+                        intentInfo->m_handlingApplicationId = pkgInfo->id();
+                    } else if (pkgInfo->m_applications.count() == 1) {
+                        intentInfo->m_handlingApplicationId = pkgInfo->m_applications.constFirst()->id();
+                    } else {
+                        throw Exception(Error::Intents, "a 'handlingApplicationId' field on intent %1 is needed if more than one application is defined")
+                                .arg(intentInfo->m_id);
+                    }
+                }
+
                 pkgInfo->m_intents << intentInfo.take();
             }
         });
@@ -372,11 +380,6 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse manifest file %1: %2").arg(QDir().relativeFilePath(filePath), e.errorString());
     }
-}
-
-QString YamlPackageScanner::metaDataFileName() const
-{
-    return qSL("info.yaml");
 }
 
 

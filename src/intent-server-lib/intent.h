@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -69,7 +70,6 @@ public:
     Q_ENUM(Visibility)
 
     Intent();
-    Intent(const Intent &other);
 
     QString intentId() const;
     Visibility visibility() const;

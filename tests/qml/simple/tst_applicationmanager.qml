@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -51,10 +52,10 @@ TestCase {
     name: "ApplicationManager"
 
     property var simpleApplication
-    property var applicationAlias
     property var capsApplication
     // Either appman is build in single-process mode or it was started with --force-single-process
-    property bool singleProcess : Qt.application.arguments.indexOf("--force-single-process") !== -1 || buildConfig[0].CONFIG.indexOf("multi-process") === -1
+    property bool singleProcess : Qt.application.arguments.indexOf("--force-single-process") !== -1
+                                  || buildConfig[0].CONFIG.indexOf("multi-process") === -1
     property QtObject windowHandler: QtObject {
         function windowAddedHandler(window) {
             console.info("window " + window + " added");
@@ -84,10 +85,9 @@ TestCase {
         WindowManager.windowAdded.connect(windowHandler.windowAddedHandler)
         WindowManager.windowContentStateChanged.connect(windowHandler.windowContentStateChangedHandler)
 
-        compare(ApplicationManager.count, 3)
+        compare(ApplicationManager.count, 2)
         simpleApplication = ApplicationManager.application(0);
-        applicationAlias = ApplicationManager.application(1);
-        capsApplication = ApplicationManager.application(2);
+        capsApplication = ApplicationManager.application(1);
     }
 
     function test_properties() {
@@ -152,23 +152,10 @@ TestCase {
         compare(simpleApplication.applicationProperties.pri1, undefined)
     }
 
-    function test_applicationAlias() {
-        // Test that the alias has the same info, be indentified as an alias and points to the original app
-        compare(applicationAlias.id, "tld.test.simple1@alias")
-        compare(applicationAlias.alias, true)
-        compare(applicationAlias.nonAliased, simpleApplication)
-        //TODO this should be a Url instead, as this is what's used in QML usually
-        compare(applicationAlias.icon.toString(), Qt.resolvedUrl("apps/tld.test.simple1/icon2.png"))
-        compare(applicationAlias.documentUrl, "x-test:alias")
-        compare(applicationAlias.runtimeName, simpleApplication.runtimeName)
-        compare(applicationAlias.capabilities, simpleApplication.capabilities)
-        compare(applicationAlias.supportedMimeTypes, simpleApplication.supportedMimeTypes)
-    }
-
     function test_indexOfApplication() {
         // Test index of
         compare(ApplicationManager.indexOfApplication(simpleApplication.id), 0)
-        compare(ApplicationManager.indexOfApplication(applicationAlias.id), 1)
+        compare(ApplicationManager.indexOfApplication(capsApplication.id), 1)
         compare(ApplicationManager.indexOfApplication("error"), -1)
     }
 
@@ -177,7 +164,7 @@ TestCase {
         var apps = ApplicationManager.applicationIds()
         compare(apps.length, ApplicationManager.count)
         compare(ApplicationManager.applicationIds()[0], simpleApplication.id)
-        compare(ApplicationManager.applicationIds()[1], applicationAlias.id)
+        compare(ApplicationManager.applicationIds()[1], capsApplication.id)
     }
 
     function test_capabilities() {
@@ -214,18 +201,15 @@ TestCase {
     }
 
     function test_applicationModel() {
-        compare(appModel.count, 3);
+        compare(appModel.count, 2);
         compare(appModel.indexOfApplication(capsApplication.id), 0);
-        compare(appModel.indexOfApplication(applicationAlias.id), 1);
-        compare(appModel.indexOfApplication(simpleApplication.id), 2);
+        compare(appModel.indexOfApplication(simpleApplication.id), 1);
         compare(appModel.mapToSource(0), ApplicationManager.indexOfApplication(capsApplication.id));
-        compare(appModel.mapFromSource(ApplicationManager.indexOfApplication(simpleApplication.id)), 2);
+        compare(appModel.mapFromSource(ApplicationManager.indexOfApplication(simpleApplication.id)), 1);
 
         appModel.sortFunction = undefined;
         compare(appModel.indexOfApplication(simpleApplication.id),
                 ApplicationManager.indexOfApplication(simpleApplication.id));
-        compare(appModel.indexOfApplication(applicationAlias.id),
-                ApplicationManager.indexOfApplication(applicationAlias.id));
         compare(appModel.indexOfApplication(capsApplication.id),
                 ApplicationManager.indexOfApplication(capsApplication.id));
 
@@ -235,7 +219,6 @@ TestCase {
         compare(appModelCountSpy.count, 1);
         compare(appModel.count, 1);
         compare(appModel.indexOfApplication(capsApplication.id), 0);
-        compare(appModel.indexOfApplication(applicationAlias.id), -1);
         compare(appModel.indexOfApplication(simpleApplication.id), -1);
 
         listView.model = appModel;
@@ -243,21 +226,11 @@ TestCase {
         compare(listView.currentItem.modelData.name, "Caps");
         listView.model = ApplicationManager;
 
-        var criteria = false;
-        appModel.filterFunction = function(app) { return app.alias === criteria; };
-        appModelCountSpy.wait(1000);
-        compare(appModelCountSpy.count, 2);
-        compare(appModel.count, 2);
-        compare(appModel.indexOfApplication(applicationAlias.id), -1);
-        criteria = true;
-        appModel.invalidate();
-        compare(appModel.count, 1);
-
         appModel.filterFunction = function() {};
         compare(appModel.count, 0);
 
         appModel.filterFunction = undefined;
-        compare(appModel.count, 3);
+        compare(appModel.count, 2);
     }
 
     function test_get_data() {
@@ -318,11 +291,16 @@ TestCase {
 
     function test_startAndStopApplication_data() {
         return [
-                    {tag: "StartStop", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: Am.NormalExit },
-                    {tag: "StartStopAlias", appId: "tld.test.simple1@alias", index: 0, forceKill: false, exitCode: 0, exitStatus: Am.NormalExit },
-                    {tag: "Debug", appId: "tld.test.simple1", index: 0, forceKill: false, exitCode: 0, exitStatus: Am.NormalExit },
-                    {tag: "ForceKill", appId: "tld.test.simple2", index: 2, forceKill: true, exitCode: Qt.platform.os !== 'windows' ? 9 : 0, exitStatus: Qt.platform.os !== 'windows' ? Am.ForcedExit : Am.CrashExit },
-                    {tag: "AutoTerminate", appId: "tld.test.simple2", index: 2, forceKill: false, exitCode: Qt.platform.os !== 'windows' ? 15 : 0, exitStatus: Qt.platform.os !== 'windows' ? Am.ForcedExit : Am.CrashExit }
+                    {tag: "StartStop", appId: "tld.test.simple1", index: 0, forceKill: false,
+                        exitCode: 0, exitStatus: Am.NormalExit },
+                    {tag: "Debug", appId: "tld.test.simple1", index: 0, forceKill: false,
+                        exitCode: 0, exitStatus: Am.NormalExit },
+                    {tag: "ForceKill", appId: "tld.test.simple2", index: 1, forceKill: true,
+                        exitCode: Qt.platform.os !== 'windows' ? 9 : 0,
+                        exitStatus: Qt.platform.os !== 'windows' ? Am.ForcedExit : Am.CrashExit },
+                    {tag: "AutoTerminate", appId: "tld.test.simple2", index: 1, forceKill: false,
+                        exitCode: Qt.platform.os !== 'windows' ? 15 : 0,
+                        exitStatus: Qt.platform.os !== 'windows' ? Am.ForcedExit : Am.CrashExit }
                 ];
     }
 
@@ -369,7 +347,9 @@ TestCase {
 
     function test_startAndStopAllApplications_data() {
         return [
-                    {tag: "StopAllApplications", appId1: "tld.test.simple1", index1: 0, appId2: "tld.test.simple2", index2: 2, forceKill: false, exitCode: 0, exitStatus: Am.NormalExit }
+                    {tag: "StopAllApplications", appId1: "tld.test.simple1", index1: 0,
+                        appId2: "tld.test.simple2", index2: 1, forceKill: false, exitCode: 0,
+                        exitStatus: Am.NormalExit }
                ];
     }
 
@@ -408,12 +388,12 @@ TestCase {
 
         ApplicationManager.stopAllApplications(data.forceKill);
 
-        while (runStateChangedSpy.count < 6)
+        while (runStateChangedSpy.count < 4)
             runStateChangedSpy.wait(10000);
 
         var args = runStateChangedSpy.signalArguments
 
-        for (var i = 0; i < 6; ++i) {
+        for (var i = 0; i < 4; ++i) {
             var id = args[i][0]
             var state = args[i][1]
 
@@ -460,7 +440,6 @@ TestCase {
     function test_openUrl_data() {
         return [
                     {tag: "customMimeType", url: "x-test://12345", expectedApp: simpleApplication.id },
-                    {tag: "openAlias", url: "x-test:alias", expectedApp: applicationAlias.id },
                     {tag: "text/plain", url: "file://text-file.txt", expectedApp: simpleApplication.id }
                 ];
     }

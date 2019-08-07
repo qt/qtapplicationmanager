@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -74,7 +75,8 @@ class Controller : public QObject
     Q_OBJECT
 
 public:
-    Controller(LauncherMain *a, bool quickLaunched, const QString &directLoad = QString());
+    Controller(LauncherMain *a, bool quickLaunched);
+    Controller(LauncherMain *a, bool quickLaunched, const QPair<QString, QString> &directLoad);
 
 public slots:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,

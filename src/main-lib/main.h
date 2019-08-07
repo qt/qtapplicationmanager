@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -121,6 +122,7 @@ protected:
                          int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false);
     void setupInstaller(const QStringList &caCertificatePaths,
                         const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
+    void registerPackages();
 
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());
     void setupWindowTitle(const QString &title, const QString &iconPath);

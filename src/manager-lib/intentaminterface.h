@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -54,17 +55,18 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManIntentServer/intentserversysteminterface.h>
 #include <QtAppManIntentClient/intentclientsysteminterface.h>
+#include <QtAppManApplication/intentinfo.h>
 
 class IntentInterfaceAdaptor;
 
 QT_BEGIN_NAMESPACE_AM
 
 class Application;
-class PackageInfo;
+class PackageManager;
 class IntentServerRequest;
 
 namespace IntentAMImplementation {
-IntentServer *createIntentServerAndClientInstance(const QMap<QString, int> &timeouts);
+IntentServer *createIntentServerAndClientInstance(PackageManager *packageManager, const QMap<QString, int> &timeouts);
 }
 
 // the server side

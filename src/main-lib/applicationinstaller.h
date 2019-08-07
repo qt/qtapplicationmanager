@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -95,7 +96,7 @@ public:
     Q_SCRIPTABLE QString installationLocationIdFromApplication(const QString &applicationId) const
     {
         auto app = ApplicationManager::instance()->fromId(applicationId);
-        if (app && ((!app->package()->isBuiltIn() || app->package()->canBeRevertedToBuiltIn())))
+        if (app && ((!app->package()->isBuiltIn() || app->package()->builtInHasRemovableUpdate())))
             return qL1S("internal-0");
         return QString();
     }

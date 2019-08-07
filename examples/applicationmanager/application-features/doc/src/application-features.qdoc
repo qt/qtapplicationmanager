@@ -73,7 +73,7 @@ The QML code for the nested compositor application is as follows:
 
 \quotefromfile applicationmanager/application-features/apps/compositor/compositor.qml
 \skipto import QtQuick 2.11
-\printuntil -platform wayland"); }
+\printuntil /^\}/
 
 \section2 Crash Simulation and Recovery
 

@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -74,66 +75,51 @@ TestCase {
         signalName: "replyReceived"
     }
 
-    function test_intent_gadget() {
-        var allIntents = IntentServer.intentList
-        verify(allIntents.length > 0)
+    function test_intent_object() {
+        verify(IntentServer.count> 0)
 
         // test intent properties
-        var intent = IntentServer.find("both", "intents1")
-        verify(intent.valid)
+        var intent = IntentServer.applicationIntent("both", "intents1")
+        verify(intent)
         compare(intent.intentId, "both")
         compare(intent.applicationId, "intents1")
         compare(intent.visibility, Intent.Public)
         compare(intent.requiredCapabilities, [])
         compare(intent.parameterMatch, {})
 
-        // test comparison operators
-        var pos = allIntents.indexOf(intent)
-        verify(pos >= 0)
-        var intent1 = IntentServer.find("both", "intents1")
-        var intent2 =  IntentServer.find("both", "intents2")
-        verify(intent1.valid)
-        verify(intent2.valid)
-        verify(intent1 == intent)
-        verify(intent1 === intent)
-        verify(intent1 != intent2)
-        verify(intent1 !== intent2)
-        verify(intent1 < intent2)
-        verify(intent2 > intent1)
-
-        verify(!IntentServer.find("both", "intents3").valid)
-        verify(!IntentServer.find("bothx", "intents1").valid)
-        verify(!IntentServer.find("both", "").valid)
-        verify(!IntentServer.find("", "intents1").valid)
-        verify(!IntentServer.find("", "").valid)
+        verify(!IntentServer.applicationIntent("both", "intents3"))
+        verify(!IntentServer.applicationIntent("bothx", "intents1"))
+        verify(!IntentServer.applicationIntent("both", ""))
+        verify(!IntentServer.applicationIntent("", "intents1"))
+        verify(!IntentServer.applicationIntent("", ""))
     }
 
 
     function test_match() {
         // first, check the matching on the server API
-        var intent = IntentServer.find("match", "intents1")
-        verify(!intent.valid)
-        intent = IntentServer.find("match", "intents1", matchParams)
-        verify(intent.valid)
+        var intent = IntentServer.applicationIntent("match", "intents1")
+        verify(!intent)
+        intent = IntentServer.applicationIntent("match", "intents1", matchParams)
+        verify(intent)
         compare(intent.parameterMatch, { "list": [ "a", "b" ], "int": 42, "string": "^foo_.*_bar$", "complex": { "a": 1 } })
 
         var params = matchParams
         params.list = "c"
-        verify(!IntentServer.find("match", "intents1", params).valid)
+        verify(!IntentServer.applicationIntent("match", "intents1", params))
         params.list = "b"
-        verify(IntentServer.find("match", "intents1", params).valid)
+        verify(IntentServer.applicationIntent("match", "intents1", params))
 
         params.int = 2
-        verify(!IntentServer.find("match", "intents1", params).valid)
+        verify(!IntentServer.applicationIntent("match", "intents1", params))
         params.int = 42
 
         params.string = "foo"
-        verify(!IntentServer.find("match", "intents1", params).valid)
+        verify(!IntentServer.applicationIntent("match", "intents1", params))
         params.string = "foo_test_bar"
-        verify(IntentServer.find("match", "intents1", params).valid)
+        verify(IntentServer.applicationIntent("match", "intents1", params))
 
         params.complex = "string"
-        verify(!IntentServer.find("match", "intents1", params).valid)
+        verify(!IntentServer.applicationIntent("match", "intents1", params))
         params.complex = matchParams.complex
     }
 
@@ -241,8 +227,9 @@ TestCase {
                 break
             case "acknowledge":
                 var intent = possibleIntents[0]
-                if (data.acknowledgeIntentId)
-                    intent = IntentServer.find(data.acknowledgeIntentId, possibleIntents[0].applicationId)
+                if (data.acknowledgeIntentId) {
+                    intent = IntentServer.applicationIntent(data.acknowledgeIntentId, possibleIntents[0].applicationId)
+                }
                 IntentServer.acknowledgeDisambiguationRequest(disambiguateSpy.signalArguments[0][0], intent)
                 break
             }

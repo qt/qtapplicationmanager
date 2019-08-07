@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -84,6 +85,7 @@
 #include "exception.h"
 #include "crashhandler.h"
 #include "yamlpackagescanner.h"
+#include "packageinfo.h"
 #include "applicationinfo.h"
 #include "startupinterface.h"
 #include "dbus-utilities.h"
@@ -134,13 +136,13 @@ int main(int argc, char *argv[])
         clp.addHelpOption();
         clp.addOption({ qSL("qml-debug"),   qSL("Enables QML debugging and profiling.") });
         clp.addOption({ qSL("quicklaunch"), qSL("Starts the launcher in the quicklaunching mode.") });
-        clp.addOption({ qSL("directload") , qSL("The info.yaml to start."), qSL("info.yaml") });
+        clp.addOption({ qSL("directload") , qSL("The info.yaml to start (you can add '@<appid>' to start a specific app within the package, instead of the first one)."), qSL("info.yaml") });
         clp.process(a);
 
         bool quicklaunched = clp.isSet(qSL("quicklaunch"));
-        QString directLoad = clp.value(qSL("directload"));
+        QString directLoadManifest = clp.value(qSL("directload"));
 
-        if (directLoad.isEmpty())
+        if (directLoadManifest.isEmpty())
             a.loadConfiguration();
 
         CrashHandler::setCrashActionConfiguration(a.runtimeConfiguration().value(qSL("crashAction")).toMap());
@@ -152,17 +154,25 @@ int main(int argc, char *argv[])
 
         StartupTimer::instance()->checkpoint("after basic initialization");
 
-        if (!directLoad.isEmpty()) {
-            QFileInfo fi(directLoad);
+        if (!directLoadManifest.isEmpty()) {
+            QString directLoadAppId;
+            int appPos = directLoadManifest.indexOf(qSL("@"));
+            if (appPos > 0) {
+                directLoadAppId = directLoadManifest.mid(appPos + 1);
+                directLoadManifest.truncate(appPos);
+            }
+
+            QFileInfo fi(directLoadManifest);
             if (!fi.exists() || fi.fileName() != qSL("info.yaml"))
                 throw Exception("--directload needs a valid info.yaml file as parameter");
-            directLoad = fi.absoluteFilePath();
+            directLoadManifest = fi.absoluteFilePath();
+            new Controller(&a, quicklaunched, qMakePair(directLoadManifest, directLoadAppId));
         } else {
             a.setupDBusConnections();
             StartupTimer::instance()->checkpoint("after dbus initialization");
+            new Controller(&a, quicklaunched);
         }
 
-        new Controller(&a, quicklaunched, directLoad);
         return a.exec();
 
     } catch (const std::exception &e) {
@@ -171,8 +181,11 @@ int main(int argc, char *argv[])
     }
 }
 
+Controller::Controller(LauncherMain *a, bool quickLaunched)
+    : Controller(a, quickLaunched, qMakePair(QString{}, QString{}))
+{ }
 
-Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &directLoad)
+Controller::Controller(LauncherMain *a, bool quickLaunched, const QPair<QString, QString> &directLoad)
     : QObject(a)
     , m_quickLaunched(quickLaunched)
 {
@@ -271,7 +284,7 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
         }
     }
 
-    if (directLoad.isEmpty()) {
+    if (directLoad.first.isEmpty()) {
         m_applicationInterface = new QmlApplicationInterface(a->p2pDBusName(), a->notificationDBusName(), this);
         connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
                 this, &Controller::startApplication);
@@ -280,15 +293,32 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
 
     } else {
         QMetaObject::invokeMethod(this, [this, directLoad]() {
-            QFileInfo fi(directLoad);
-            YamlPackageScanner yps;
+            PackageInfo *pi;
             try {
-                //TODO: how should this work?
-//                ApplicationInfo *a = yps.scan(directLoad);
-//                startApplication(fi.absolutePath(), a->codeFilePath(), QString(), QString(), a->toVariantMap(), QVariantMap());
+                pi = YamlPackageScanner().scan(directLoad.first);
             } catch (const Exception &e) {
-                throw Exception("Could not parse info.yaml file: %1").arg(e.what());
+                qCCritical(LogQmlRuntime) << "Could not parse info.yaml file:" << e.what();
+                QCoreApplication::exit(20);
+                return;
             }
+            const auto apps = pi->applications();
+            const ApplicationInfo *a = apps.constFirst();
+            if (!directLoad.second.isEmpty()) {
+                auto it = std::find_if(apps.cbegin(), apps.cend(),
+                                       [appId = directLoad.second](ApplicationInfo *appInfo) -> bool {
+                    return (appInfo->id() == appId);
+                });
+                if (it == apps.end()) {
+                    qCCritical(LogQmlRuntime) << "Could not find the requested application id"
+                                              << directLoad.second << "within the info.yaml file";
+                    QCoreApplication::exit(21);
+                    return;
+                }
+                a = *it;
+            }
+
+            startApplication(QFileInfo(directLoad.first).absolutePath(), a->codeFilePath(),
+                             QString(), QString(), a->toVariantMap(), QVariantMap());
         }, Qt::QueuedConnection);
     }
 

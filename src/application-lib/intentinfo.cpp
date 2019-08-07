@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Contact: https://www.qt.io/licensing/
 **
@@ -86,27 +87,27 @@ QStringList IntentInfo::categories() const
 
 QMap<QString, QString> IntentInfo::names() const
 {
-    return m_name;
+    return m_names.isEmpty() ? m_packageInfo->names() : m_names;
 }
 
 QString IntentInfo::name(const QString &language) const
 {
-    return m_name.value(language);
+    return m_names.isEmpty() ? m_packageInfo->name(language) : m_names.value(language);
 }
 
 QMap<QString, QString> IntentInfo::descriptions() const
 {
-    return m_description;
+    return m_descriptions;
 }
 
 QString IntentInfo::description(const QString &language) const
 {
-    return m_description.value(language);
+    return m_descriptions.value(language);
 }
 
 QString IntentInfo::icon() const
 {
-    return m_icon;
+    return m_icon.isEmpty() ? m_packageInfo->icon() : m_icon;
 }
 
 void IntentInfo::writeToDataStream(QDataStream &ds) const
@@ -117,8 +118,8 @@ void IntentInfo::writeToDataStream(QDataStream &ds) const
        << m_parameterMatch
        << m_handlingApplicationId
        << m_categories
-       << m_name
-       << m_description
+       << m_names
+       << m_descriptions
        << m_icon;
 }
 
@@ -133,8 +134,8 @@ IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
        >> intent->m_parameterMatch
        >> intent->m_handlingApplicationId
        >> intent->m_categories
-       >> intent->m_name
-       >> intent->m_description
+       >> intent->m_names
+       >> intent->m_descriptions
        >> intent->m_icon;
 
     intent->m_visibility = (visibilityStr == qSL("public")) ? Public : Private;

@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -46,6 +47,8 @@
 #include "packagemanager.h"
 #include "packagedatabase.h"
 #include "packagemanager_p.h"
+#include "applicationinfo.h"
+#include "intentinfo.h"
 #include "package.h"
 #include "logging.h"
 #include "installationreport.h"
@@ -100,33 +103,6 @@ PackageManager *PackageManager::createInstance(PackageDatabase *packageDatabase,
     QScopedPointer<PackageManager> pm(new PackageManager(packageDatabase, documentPath));
     registerQmlTypes();
 
-    // map all the built-in packages first
-    const auto builtinPackages = packageDatabase->builtInPackages();
-    for (auto packageInfo : builtinPackages) {
-        auto *package = new Package(packageInfo);
-        QQmlEngine::setObjectOwnership(package, QQmlEngine::CppOwnership);
-        pm->d->packages << package;
-    }
-
-    // next, map all the installed packages, making sure to detect updates to built-in ones
-    const auto installedPackages = packageDatabase->installedPackages();
-    for (auto packageInfo : installedPackages) {
-        Package *builtInPackage = pm->fromId(packageInfo->id());
-
-        if (builtInPackage) { // update
-            if (builtInPackage->updatedInfo()) { // but there already is an update applied!?
-                throw Exception(Error::Package, "Found more than one update for the built-in package '%1'")
-                        .arg(builtInPackage->id());
-                //TODO: can we get the paths to both info.yaml here?
-            }
-            builtInPackage->setUpdatedInfo(packageInfo);
-        } else {
-            auto *package = new Package(packageInfo);
-            QQmlEngine::setObjectOwnership(package, QQmlEngine::CppOwnership);
-            pm->d->packages << package;
-        }
-    }
-
     return s_instance = pm.take();
 }
 
@@ -141,6 +117,133 @@ QObject *PackageManager::instanceForQml(QQmlEngine *, QJSEngine *)
 {
     QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
     return instance();
+}
+
+void PackageManager::registerPackages()
+{
+    qCDebug(LogSystem) << "Registering packages:";
+
+    // collect all updates to builtin first, so we can avoid re-creating a lot of objects,
+    // if we find an update to a builin app later on
+    QMap<QString, QPair<PackageInfo *, PackageInfo *>> pkgs;
+
+    // map all the built-in packages first
+    const auto builtinPackages = d->database->builtInPackages();
+    for (auto packageInfo : builtinPackages) {
+        if (Package *existingPackage = fromId(packageInfo->id())) {
+            throw Exception(Error::Package, "Found more than one built-in package with id '%1': here: %2 and there: %3")
+                    .arg(packageInfo->id())
+                    .arg(existingPackage->info()->manifestPath())
+                    .arg(packageInfo->manifestPath());
+        }
+        pkgs.insert(packageInfo->id(), qMakePair(packageInfo, nullptr));
+    }
+
+    // next, map all the installed packages, making sure to detect updates to built-in ones
+    const auto installedPackages = d->database->installedPackages();
+    for (auto packageInfo : installedPackages) {
+        auto existingPackageInfos = pkgs.value(packageInfo->id());
+        if (existingPackageInfos.first) {
+            if (existingPackageInfos.first->isBuiltIn()) { // update
+                if (existingPackageInfos.second) { // but there already is an update applied!?
+                    throw Exception(Error::Package, "Found more than one update for the built-in package with id '%1' here: %2 and there: %3")
+                            .arg(packageInfo->id())
+                            .arg(existingPackageInfos.second->manifestPath())
+                            .arg(packageInfo->manifestPath());
+                }
+                pkgs[packageInfo->id()] = qMakePair(existingPackageInfos.first, packageInfo);
+
+            } else {
+                throw Exception(Error::Package, "Found more than one installed package with the same id '%1' here: %2 and there: %3")
+                        .arg(packageInfo->id())
+                        .arg(existingPackageInfos.first->manifestPath())
+                        .arg(packageInfo->manifestPath());
+            }
+        } else {
+            pkgs.insert(packageInfo->id(), qMakePair(packageInfo, nullptr));
+        }
+    }
+    for (auto it = pkgs.constBegin(); it != pkgs.constEnd(); ++it)
+        registerPackage(it.value().first, it.value().second);
+}
+
+void PackageManager::registerPackage(PackageInfo *packageInfo, PackageInfo *updatedPackageInfo,
+                                     bool currentlyBeingInstalled)
+{
+    auto *package = new Package(packageInfo, currentlyBeingInstalled ? Package::BeingInstalled
+                                                                     : Package::Installed);
+    if (updatedPackageInfo)
+        package->setUpdatedInfo(updatedPackageInfo);
+
+    QQmlEngine::setObjectOwnership(package, QQmlEngine::CppOwnership);
+
+    if (currentlyBeingInstalled) {
+        Q_ASSERT(package->block());
+
+        beginInsertRows(QModelIndex(), d->packages.count(), d->packages.count());
+        qCDebug(LogSystem) << "Installing package:";
+    }
+
+    d->packages << package;
+
+    qCDebug(LogSystem).nospace().noquote() << " + package: " << package->id() << " [at: "
+                                           << QDir().relativeFilePath(package->info()->baseDir().path()) << "]";
+
+    if (currentlyBeingInstalled) {
+        endInsertRows();
+        emitDataChanged(package);
+    }
+
+    emit packageAdded(package->id());
+
+    if (!currentlyBeingInstalled)
+        registerApplicationsAndIntentsOfPackage(package);
+}
+
+void PackageManager::registerApplicationsAndIntentsOfPackage(Package *package)
+{
+    const auto appInfos = package->info()->applications();
+    for (auto appInfo : appInfos) {
+        try {
+            emit internalSignals.registerApplication(appInfo, package);
+        } catch (const Exception &e) {
+            qCWarning(LogSystem) << "Cannot register application" << appInfo->id() << ":"
+                                 << e.errorString();
+        }
+    }
+
+    const auto intentInfos = package->info()->intents();
+    for (auto intentInfo : intentInfos) {
+        try {
+            emit internalSignals.registerIntent(intentInfo, package);
+        } catch (const Exception &e) {
+            qCWarning(LogSystem) << "Cannot register intent" << intentInfo->id() << ":"
+                                 << e.errorString();
+        }
+    }
+}
+
+void PackageManager::unregisterApplicationsAndIntentsOfPackage(Package *package)
+{
+    const auto intentInfos = package->info()->intents();
+    for (auto intentInfo : intentInfos) {
+        try {
+            emit internalSignals.unregisterIntent(intentInfo, package); // not throwing ATM
+        } catch (const Exception &e) {
+            qCWarning(LogSystem) << "Cannot unregister intent" << intentInfo->id() << ":"
+                                 << e.errorString();
+        }
+    }
+
+    const auto appInfos = package->info()->applications();
+    for (auto appInfo : appInfos) {
+        try {
+            emit internalSignals.unregisterApplication(appInfo, package); // not throwing ATM
+        } catch (const Exception &e) {
+            qCWarning(LogSystem) << "Cannot unregister application" << appInfo->id() << ":"
+                                 << e.errorString();
+        }
+    }
 }
 
 QVector<Package *> PackageManager::packages() const
@@ -180,6 +283,7 @@ PackageManager::PackageManager(PackageDatabase *packageDatabase,
 
 PackageManager::~PackageManager()
 {
+    qDeleteAll(d->packages);
     delete d->database;
     delete d;
     s_instance = nullptr;
@@ -517,14 +621,13 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
         if (ir) {
             bool valid = true;
 
-            QString pkgDir = d->installationPath + pkg->id();
+            QString pkgDir = d->installationPath + QDir::separator() + pkg->id();
             QStringList checkDirs;
             QStringList checkFiles;
 
             checkFiles << pkgDir + qSL("/info.yaml");
             checkFiles << pkgDir + qSL("/.installation-report.yaml");
             checkDirs << pkgDir;
-            checkDirs << d->installationPath + pkg->id();
 
             for (const QString &checkFile : qAsConst(checkFiles)) {
                 QFileInfo fi(checkFile);
@@ -544,8 +647,8 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
             }
 
             if (valid) {
-                validPaths.insertMulti(d->installationPath, pkg->id() + qL1C('/'));
-                validPaths.insertMulti(d->documentPath, pkg->id() + qL1C('/'));
+                validPaths.insertMulti(d->installationPath, pkg->id() + QDir::separator());
+                validPaths.insertMulti(d->documentPath, pkg->id() + QDir::separator());
             } else {
                 if (startingPackageRemoval(pkg->id())) {
                     if (finishedPackageInstall(pkg->id()))
@@ -572,7 +675,7 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
         for (const QFileInfo &fi : dirEntries) {
             QString name = fi.fileName();
             if (fi.isDir())
-                name.append(qL1C('/'));
+                name.append(QDir::separator());
 
             if ((!fi.isDir() && !fi.isFile()) || !validNames.contains(name)) {
                 qCDebug(LogInstaller) << "cleanup: removing unreferenced inode" << name;
@@ -1030,42 +1133,22 @@ bool PackageManager::startingPackageInstallation(PackageInfo *info)
 
     if (!newInfo || newInfo->id().isEmpty())
         return false;
+
     Package *package = fromId(newInfo->id());
-//    if (!RuntimeFactory::instance()->manager(newInfo->runtimeName()))
-//        return false;
 
     if (package) { // update
         if (!package->block())
             return false;
 
-        if (package->isBuiltIn()) {
-            // overlay the existing base info
-            // we will rollback to the base one if this update is removed.
-            package->setUpdatedInfo(newInfo.take());
-        } else {
-            // overwrite the existing base info
-            // we're not keeping track of the original. so removing the updated base version removes the
-            // application entirely.
-            package->setBaseInfo(newInfo.take());
-        }
+        // do not overwrite the base-info / update-info yet - only after a successful installation
+        d->pendingPackageInfoUpdates.insert(package, newInfo.take());
+
         package->setState(Package::BeingUpdated);
         package->setProgress(0);
         emitDataChanged(package);
     } else { // installation
-        package = new Package(newInfo.take(), Package::BeingInstalled);
-
-        Q_ASSERT(package->block());
-
-        beginInsertRows(QModelIndex(), d->packages.count(), d->packages.count());
-
-        QQmlEngine::setObjectOwnership(package, QQmlEngine::CppOwnership);
-        d->packages << package;
-
-        endInsertRows();
-
-        emitDataChanged(package);
-
-        emit packageAdded(package->id());
+        // add a new package to the model and block it
+        registerPackage(newInfo.take(), nullptr, true);
     }
     return true;
 }
@@ -1079,14 +1162,14 @@ bool PackageManager::startingPackageRemoval(const QString &id)
     if (package->isBlocked() || (package->state() != Package::Installed))
         return false;
 
-    if (package->isBuiltIn() && !package->canBeRevertedToBuiltIn())
+    if (package->isBuiltIn() && !package->builtInHasRemovableUpdate())
         return false;
 
     if (!package->block()) // this will implicitly stop all apps in this package (asynchronously)
         return false;
 
-    package->setState(package->canBeRevertedToBuiltIn() ? Package::BeingDowngraded
-                                                        : Package::BeingRemoved);
+    package->setState(package->builtInHasRemovableUpdate() ? Package::BeingDowngraded
+                                                           : Package::BeingRemoved);
 
     package->setProgress(0);
     emitDataChanged(package, QVector<int> { IsUpdating });
@@ -1103,33 +1186,73 @@ bool PackageManager::finishedPackageInstall(const QString &id)
     case Package::Installed:
         return false;
 
+    case Package::BeingUpdated:
     case Package::BeingInstalled:
-    case Package::BeingUpdated: {
-        // The Package object has been updated right at the start of the installation/update.
-        // Now's the time to update the InstallationReport that was written by the installer.
-        QFile irfile(QDir(package->info()->baseDir()).absoluteFilePath(qSL(".installation-report.yaml")));
-        QScopedPointer<InstallationReport> ir(new InstallationReport(package->id()));
-        if (!irfile.open(QFile::ReadOnly) || !ir->deserialize(&irfile)) {
-            qCCritical(LogInstaller) << "Could not read the new installation-report for package"
-                                     << package->id() << "at" << irfile.fileName();
-            return false;
+    case Package::BeingDowngraded: {
+        bool isUpdate = (package->state() == Package::BeingUpdated);
+        bool isDowngrade = (package->state() == Package::BeingDowngraded);
+
+        // figure out what the new info is
+        PackageInfo *newPackageInfo;
+        if (isUpdate)
+            newPackageInfo = d->pendingPackageInfoUpdates.take(package);
+        else if (isDowngrade)
+            newPackageInfo = nullptr;
+        else
+            newPackageInfo = package->baseInfo();
+
+        // attach the installation report (unless we're just downgrading a built-in)
+        if (!isDowngrade) {
+            QFile irfile(newPackageInfo->baseDir().absoluteFilePath(qSL(".installation-report.yaml")));
+            QScopedPointer<InstallationReport> ir(new InstallationReport(package->id()));
+            irfile.open(QFile::ReadOnly);
+            try {
+                ir->deserialize(&irfile);
+            } catch (const Exception &e) {
+                qCCritical(LogInstaller) << "Could not read the new installation-report for package"
+                                         << package->id() << "at" << irfile.fileName() << ":"
+                                         << e.errorString();
+                return false;
+            }
+            newPackageInfo->setInstallationReport(ir.take());
         }
-        package->info()->setInstallationReport(ir.take());
+
+        if (isUpdate || isDowngrade) {
+            // unregister all the old apps & intents
+            unregisterApplicationsAndIntentsOfPackage(package);
+
+            // update the correct base/updated info pointer
+            PackageInfo *oldPackageInfo;
+            if (package->isBuiltIn())
+                oldPackageInfo = package->setUpdatedInfo(newPackageInfo);
+            else
+                oldPackageInfo = package->setBaseInfo(newPackageInfo);
+
+            if (oldPackageInfo)
+                d->database->removePackageInfo(oldPackageInfo);
+        }
+
+        // add the new info to the package db
+        if (newPackageInfo)
+            d->database->addPackageInfo(newPackageInfo);
+
+        // register all the apps & intents
+        registerApplicationsAndIntentsOfPackage(package);
+
+        // boiler-plate cleanup code
         package->setState(Package::Installed);
         package->setProgress(0);
-
         emitDataChanged(package);
-
         package->unblock();
         emit package->bulkChange(); // not ideal, but icon and codeDir have changed
         break;
     }
-    case Package::BeingDowngraded:
-        package->setUpdatedInfo(nullptr);
-        package->setState(Package::Installed);
-        break;
 
     case Package::BeingRemoved: {
+        // unregister all the apps & intents
+        unregisterApplicationsAndIntentsOfPackage(package);
+
+        // remove the package from the model
         int row = d->packages.indexOf(package);
         if (row >= 0) {
             emit packageAboutToBeRemoved(package->id());
@@ -1137,12 +1260,16 @@ bool PackageManager::finishedPackageInstall(const QString &id)
             d->packages.removeAt(row);
             endRemoveRows();
         }
+
+        // cleanup
+        package->unblock();
         delete package;
+
+        // remove the package from the package db
+        d->database->removePackageInfo(package->info());
         break;
     }
     }
-
-    //emit internalSignals.applicationsChanged();
 
     return true;
 }
@@ -1165,6 +1292,7 @@ bool PackageManager::canceledPackageInstall(const QString &id)
             d->packages.removeAt(row);
             endRemoveRows();
         }
+        package->unblock();
         delete package;
         break;
     }

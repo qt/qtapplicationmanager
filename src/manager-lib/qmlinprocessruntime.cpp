@@ -191,7 +191,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
 #else
         int exitCode = 0;
 #endif
-        finish(exitCode, Am::CrashExit);
+        finish(exitCode, Am::ForcedExit);
         return;
     }
 
@@ -205,7 +205,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
 #else
         int exitCode = 0;
 #endif
-        finish(exitCode, Am::CrashExit);
+        finish(exitCode, Am::ForcedExit);
     });
 }
 

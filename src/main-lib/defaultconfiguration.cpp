@@ -49,6 +49,10 @@
 #  include <sys/file.h>
 #endif
 
+#if !defined(AM_HEADLESS)
+#  include <QGuiApplication>
+#endif
+
 #include <QtAppManCommon/logging.h>
 
 #include "defaultconfiguration.h"
@@ -480,22 +484,26 @@ int DefaultConfiguration::quickLaunchRuntimesPerContainer() const
 
 QString DefaultConfiguration::waylandSocketName() const
 {
-    const QString socket = m_clp.value(qSL("wayland-socket-name")); // get the default value
-    if (!socket.isEmpty())
-        return socket;
+#if !defined(AM_HEADLESS)
+    QString socketName = m_clp.value(qSL("wayland-socket-name")); // get the default value
+    if (!socketName.isEmpty())
+        return socketName;
 
     const char *envName = "WAYLAND_DISPLAY";
-    if (qEnvironmentVariableIsSet(envName))
-        return qEnvironmentVariable(envName);
+    if (qEnvironmentVariableIsSet(envName)) {
+        socketName = qEnvironmentVariable(envName);
+        if (!QGuiApplication::platformName().startsWith(qSL("wayland")) || (socketName != qSL("wayland-0")))
+            return socketName;
+    }
 
-#if defined(Q_OS_LINUX)
+#  if defined(Q_OS_LINUX)
     // modelled after wl_socket_lock() in wayland_server.c
     const QString xdgDir = qEnvironmentVariable("XDG_RUNTIME_DIR") + qSL("/");
     const QString pattern = qSL("qtam-wayland-%1");
     const QString lockSuffix = qSL(".lock");
 
     for (int i = 0; i < 32; ++i) {
-        const QString socketName = pattern.arg(i);
+        socketName = pattern.arg(i);
         QFile lock(xdgDir + socketName + lockSuffix);
         if (lock.open(QIODevice::ReadWrite)) {
             if (::flock(lock.handle(), LOCK_EX | LOCK_NB) == 0) {
@@ -505,6 +513,7 @@ QString DefaultConfiguration::waylandSocketName() const
             }
         }
     }
+#  endif
 #endif
     return QString();
 }

@@ -14,4 +14,5 @@ SUBDIRS = \
     intents \
     crash/apps/tld.test.crash/terminator2 \
     crash \
-    configs
+    configs \
+    lifecycle

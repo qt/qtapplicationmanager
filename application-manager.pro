@@ -25,7 +25,7 @@ else:contains(QT_BUILD_PARTS, "examples"):CONFIG += enable-examples
     !headless:qtHaveModule(gui):qtCompileTest(touchemulation)
 }
 
-qtHaveModule(waylandcompositor):CONFIG += am_compatible_compositor
+qtHaveModule(waylandcompositor):qtHaveModule(quick):qtConfig(opengl):CONFIG += am_compatible_compositor
 
 load(am-config)
 

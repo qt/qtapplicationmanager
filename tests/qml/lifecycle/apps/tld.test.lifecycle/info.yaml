@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id: 'tld.test.lifecycle'
+name:
+  en: 'Lifecycle Tests'
+icon: 'icon.png'
+code: 'app.qml'
+runtime: 'qml'

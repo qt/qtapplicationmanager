@@ -105,6 +105,10 @@ public:
 
     Q_INVOKABLE void ignoreMessage(MsgType type, const char* msg);
     Q_INVOKABLE void ignoreMessage(MsgType type, const QRegExp &expression);
+    Q_INVOKABLE int observeObjectDestroyed(QObject *obj);
+
+Q_SIGNALS:
+    void objectDestroyed(int index);
 };
 
 QT_END_NAMESPACE_AM

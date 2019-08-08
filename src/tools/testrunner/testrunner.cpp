@@ -116,6 +116,18 @@ void AmTest::ignoreMessage(MsgType type, const QRegExp &expression)
 #endif
 }
 
+int AmTest::observeObjectDestroyed(QObject *obj)
+{
+    static int idx = 0;
+    int index = idx++;
+
+    connect(obj, &QObject::destroyed, [this, index] () {
+        emit objectDestroyed(index);
+    });
+
+    return index;
+}
+
 
 QTestRootObject::QTestRootObject(QObject *parent)
     : QObject(parent)

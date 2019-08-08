@@ -71,11 +71,11 @@ QT_END_NAMESPACE_AM
 #  include <QSocketNotifier>
 #  include <QProcess>
 #  include <QCoreApplication>
+#  include <QAtomicInteger>
 #  if !defined(AM_HEADLESS)
 #    include <QOffscreenSurface>
 #    include <QOpenGLContext>
 #    include <QOpenGLFunctions>
-#    include <QAtomicInteger>
 #  endif
 
 #  include <sys/eventfd.h>

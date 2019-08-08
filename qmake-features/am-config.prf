@@ -5,7 +5,9 @@ CONFIG *= no_private_qt_headers_warning hide_symbols
 CONFIG -= app_bundle qml_debug
 CONFIG += exceptions
 
-!qtHaveModule(gui):CONFIG *= headless
+!qtHaveModule(gui)|!qtHaveModule(quick)|!qtConfig(opengl) {
+    CONFIG *= headless
+}
 
 DEFINES += QT_MESSAGELOGCONTEXT
 

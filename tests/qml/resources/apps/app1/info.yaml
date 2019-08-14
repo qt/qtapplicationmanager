@@ -8,9 +8,9 @@ name:
 
 applications:
   - id: 'app1'
-    code: 'qrc:///app1.qml'
+    code: 'qrc:///app1/app1.qml'
     runtime: 'qml'
     runtimeParameters:
-      importPaths: "qrc:///qml"
+      importPaths: "qrc:///app1/qml"
       resources: [ "app1file.rcc",
                    "libapp1plugin.so" ]

@@ -1,5 +1,5 @@
 <!DOCTYPE RCC><RCC version="1.0">
-<qresource>
+<qresource prefix="/app1">
     <file>app1.qml</file>
     <file>qml/forms/YellowRect.qml</file>
     <file>qml/forms/qmldir</file>

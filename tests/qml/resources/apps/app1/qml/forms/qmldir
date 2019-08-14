@@ -1,4 +1,4 @@
 module forms
-YellowRect 1.0 qrc:///qml/forms/YellowRect.qml
-#                   :/qml/forms/YellowRect.qml would not work
+YellowRect 1.0 qrc:///app1/qml/forms/YellowRect.qml
+#                   :/app1/qml/forms/YellowRect.qml would not work
 AquaRect 1.0 AquaRect.qml

@@ -259,8 +259,12 @@ bool NativeRuntime::start()
         { qSL("org.freedesktop.Notifications"), NotificationManager::instance()->property("_am_dbus_name").toString()}
     };
 
+    QVariantMap dltConfig = {
+        { qSL("longMessageBehavior"),  Logging::dltLongMessageBehavior() }
+    };
+
     QVariantMap loggingConfig = {
-        { qSL("dlt"), Logging::isDltEnabled() },
+        { qSL("dlt"),  dltConfig },
         { qSL("rules"), Logging::filterRules() },
         { qSL("useAMConsoleLogger"), Logging::useAMConsoleLogger() }
     };

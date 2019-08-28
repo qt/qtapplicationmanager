@@ -148,6 +148,10 @@ void DefaultConfiguration::parseWithArguments(const QStringList &arguments, QStr
         *deploymentWarnings << qL1S("No --installed-apps-manifest-dir command line parameter or"
                 " applications/installedAppsManifestDir configuration key specified. It won't be possible to install,"
                 " remove or access installable applications.");
+
+    static const QStringList validDltLMBValues({qL1S("split"), qL1S("truncate"), qL1S("pass")});
+    if (!dltLongMessageBehavior().isEmpty() && !validDltLMBValues.contains(dltLongMessageBehavior()))
+        *deploymentWarnings << qL1S("Invalid dltLongMessageBehavior");
 }
 
 QString DefaultConfiguration::mainQmlFile() const
@@ -343,6 +347,11 @@ QString DefaultConfiguration::dltId() const
 QString DefaultConfiguration::dltDescription() const
 {
     return value<QString>(nullptr, { "logging", "dlt", "description" });
+}
+
+QString DefaultConfiguration::dltLongMessageBehavior() const
+{
+    return value<QString>(nullptr, { "logging", "dlt", "longMessageBehavior" });
 }
 
 QVariantMap DefaultConfiguration::openGLConfiguration() const

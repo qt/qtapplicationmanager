@@ -150,6 +150,8 @@ int main(int argc, char *argv[])
         a.setupIconTheme(a.iconThemeSearchPaths(), a.iconThemeName());
         a.registerWaylandExtensions();
 
+        Logging::setDltLongMessageBehavior(a.dltLongMessageBehavior());
+
         StartupTimer::instance()->checkpoint("after basic initialization");
 
         if (!directLoad.isEmpty()) {

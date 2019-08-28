@@ -210,6 +210,7 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupQmlDebugging(cfg->qmlDebugging());
     if (!cfg->dltId().isEmpty() || !cfg->dltDescription().isEmpty())
         Logging::setSystemUiDltId(cfg->dltId().toLocal8Bit(), cfg->dltDescription().toLocal8Bit());
+    Logging::setDltLongMessageBehavior(cfg->dltLongMessageBehavior());
     Logging::registerUnregisteredDltContexts();
 
     // dump accumulated warnings, now that logging rules are set

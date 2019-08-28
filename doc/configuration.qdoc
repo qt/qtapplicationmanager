@@ -315,6 +315,14 @@ all your imports paths and file references relative to your main config file.
         augment the short DLT application id with a more verbose definition. Note that a default
         description is used until this configuration option has been applied.
 \row
+    \li \b -
+    \br \e logging/dlt/longMessageBehavior
+    \li string
+    \li Configures how very long messages (more than ~1000 characters) should be handled when using
+        automotive DLT. The default behavior is to truncate the message to the maximum possible
+        size. Other options are \c split to cut the message into several smaller messages, or
+        \c pass to pass it as is to DLT.
+\row
     \li \b --no-dlt-logging
     \br \e -
     \li bool

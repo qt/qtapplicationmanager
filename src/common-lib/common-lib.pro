@@ -13,6 +13,9 @@ qtHaveModule(qml):QT *= qml qml-private
 versionAtLeast(QT.geniviextras.VERSION, 1.1.0) {
     DEFINES += AM_GENIVIEXTRAS_LAZY_INIT
 }
+versionAtLeast(QT.geniviextras.VERSION, 5.12.4) {
+    DEFINES += AM_GENIVIEXTRAS_MSG_BEHAVIOR
+}
 
 CONFIG *= static internal_module
 

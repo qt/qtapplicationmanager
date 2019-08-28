@@ -79,6 +79,8 @@ public:
     static void registerUnregisteredDltContexts();
     static void setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dltAppDescription);
     static void setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription);
+    static QString dltLongMessageBehavior();
+    static void setDltLongMessageBehavior(const QString &behaviorString);
 
     static void logToDlt(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
 
@@ -90,6 +92,7 @@ private:
     static QtMessageHandler s_defaultQtHandler;
     static QByteArray s_applicationId;
     static QVariant s_useAMConsoleLoggerConfig;
+    static QString s_dltLongMessageBehavior;
 };
 
 void am_trace(QDebug);

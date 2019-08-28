@@ -59,17 +59,21 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-LauncherMain::LauncherMain(int &argc, char **argv) Q_DECL_NOEXCEPT
-    : LauncherMainBase(SharedMain::preConstructor(argc), argv)
-    , SharedMain()
-{ }
+LauncherMain *LauncherMain::s_instance = nullptr;
+
+LauncherMain::LauncherMain() Q_DECL_NOEXCEPT
+{
+    if (LauncherMain::s_instance)
+        qCritical("ERROR: only one instance of LauncherMain is allowed");
+    s_instance = this;
+};
 
 LauncherMain::~LauncherMain()
 { }
 
 LauncherMain *LauncherMain::instance()
 {
-    return qobject_cast<LauncherMain *>(qApp);
+    return s_instance;
 }
 
 void LauncherMain::registerWaylandExtensions() Q_DECL_NOEXCEPT

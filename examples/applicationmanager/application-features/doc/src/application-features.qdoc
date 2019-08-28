@@ -110,7 +110,7 @@ The QML code for the two top-level windows application is as follows:
 This application is based on \l{QWidget}s. Compared to the other applications in this example,
 which are QML applications, this one uses the native runtime. Consequently, the application's entry
 point isn't a \c{main.qml} file, but an executable. This application is a basic application that
-still adheres to this particular System UI. It's mean to illustrate the concept: the System UI
+still adheres to this particular System UI. It's meant to illustrate the concept: the System UI
 needs a \c type window property to differentiate between normal windows and popups.
 
 This application only works in multi-process mode, as application processes cannot be started in

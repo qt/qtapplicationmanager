@@ -80,6 +80,7 @@ QtObject {
 
         ApplicationManagerWindow {
             id: popup
+            width: 300; height: 100
 
             Rectangle {
                 anchors.fill: parent

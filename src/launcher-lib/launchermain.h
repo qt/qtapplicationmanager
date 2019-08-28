@@ -45,31 +45,18 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManSharedMain/sharedmain.h>
 
-#if defined(AM_HEADLESS)
-#  include <QCoreApplication>
-typedef QCoreApplication LauncherMainBase;
 QT_FORWARD_DECLARE_CLASS(QWindow)
-#elif defined(AM_ENABLE_WIDGETS)
-#  include <QApplication>
-#  include <QSurfaceFormat>
-typedef QApplication LauncherMainBase;
-#else
-#  include <QGuiApplication>
-#  include <QSurfaceFormat>
-typedef QGuiApplication LauncherMainBase;
-#endif
-
 
 QT_BEGIN_NAMESPACE_AM
 
 class WaylandQtAMClientExtension;
 
-class LauncherMain : public LauncherMainBase, public SharedMain
+class LauncherMain : public QObject, public SharedMain
 {
     Q_OBJECT
 public:
-    LauncherMain(int &argc, char **argv) Q_DECL_NOEXCEPT;
-    ~LauncherMain();
+    LauncherMain() Q_DECL_NOEXCEPT;
+    virtual ~LauncherMain();
 
     static LauncherMain *instance();
 
@@ -107,6 +94,9 @@ signals:
     void slowAnimationsChanged(bool slow);
 
 private:
+    static LauncherMain *s_instance;
+    Q_DISABLE_COPY(LauncherMain)
+
     QVariantMap m_configuration;
     QString m_baseDir;
     QVariantMap m_runtimeConfiguration;

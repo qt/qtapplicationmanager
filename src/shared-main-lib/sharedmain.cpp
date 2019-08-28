@@ -84,21 +84,34 @@ static QMap<int, QString> openGLProfileNames = {
     { QSurfaceFormat::CoreProfile,          qSL("core") },
     { QSurfaceFormat::CompatibilityProfile, qSL("compatibility") }
 };
+
+bool QtAM::SharedMain::s_initialized = false;
 #endif
 
 SharedMain::SharedMain()
-{ }
+{
+#if !defined(AM_HEADLESS)
+    if (Q_UNLIKELY(!s_initialized || !QCoreApplication::instance())) {
+        qCritical() << "ERROR: Q(Gui)Application must be instantiated after SharedMain::initialize "
+                       "has been called and before SharedMain is instantiated";
+    }
+#endif
+}
 
 SharedMain::~SharedMain()
 {
     delete m_debuggingEnabler;
 }
 
-// We need to do some things BEFORE the Q*Application constructor runs, so we're using this
-// old trick to do this hooking transparently for the user of the class.
-int &SharedMain::preConstructor(int &argc)
+// Initialization routine that needs to be called BEFORE the Q*Application constructor
+void SharedMain::initialize()
 {
 #if !defined(AM_HEADLESS)
+    if (Q_UNLIKELY(QCoreApplication::instance()))
+        qCritical() << "ERROR: SharedMain::initialize must be called before Q(Gui)Application is instantiated.";
+
+    s_initialized = true;
+
 #  if !defined(QT_NO_SESSIONMANAGER)
         QGuiApplication::setFallbackSessionManagementEnabled(false);
 #  endif
@@ -118,6 +131,13 @@ int &SharedMain::preConstructor(int &argc)
         setenv("XDG_RUNTIME_DIR", QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toLocal8Bit(), 1);
 #  endif
 #endif
+}
+
+// We need to do some things BEFORE the Q*Application constructor runs, so we're using this
+// old trick to do this hooking transparently for the user of the class.
+int &SharedMain::preConstructor(int &argc)
+{
+    initialize();
     return argc;
 }
 

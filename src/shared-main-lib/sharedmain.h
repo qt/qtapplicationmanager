@@ -50,7 +50,6 @@
 #endif
 
 QT_FORWARD_DECLARE_STRUCT(QQmlDebuggingEnabler)
-QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -60,6 +59,7 @@ public:
     SharedMain();
     ~SharedMain();
 
+    static void initialize();
     static int &preConstructor(int &argc);
     void setupIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
     void setupQmlDebugging(bool qmlDebugging);
@@ -74,6 +74,7 @@ private:
     QQmlDebuggingEnabler *m_debuggingEnabler = nullptr;
 
 #if !defined(AM_HEADLESS)
+    static bool s_initialized;
     QSurfaceFormat::OpenGLContextProfile m_requestedOpenGLProfile = QSurfaceFormat::NoProfile;
     int m_requestedOpenGLMajorVersion = -1;
     int m_requestedOpenGLMinorVersion = -1;

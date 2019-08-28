@@ -228,12 +228,12 @@ void NativeRuntime::shutdown(int exitCode, Am::ExitStatus status)
     if ((status == Am::CrashExit) && (exitCode == SIGTERM || exitCode == SIGKILL))
         status = Am::ForcedExit;
 
-    if (!m_isQuickLauncher || m_connectedToRuntimeInterface) {
+    if (!m_isQuickLauncher || m_connectedToApplicationInterface) {
         qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
                            << "pid:" << m_process->processId() << ") exited with code:" << exitCode
                            << "status:" << status;
     }
-    m_connectedToRuntimeInterface = m_dbusConnection = false;
+    m_connectedToApplicationInterface = m_dbusConnection = false;
 
     QDBusConnection connection(m_dbusConnectionName);
     emit applicationDisconnectedFromPeerDBus(connection, application());
@@ -345,6 +345,9 @@ bool NativeRuntime::start()
 
         if (!m_document.isNull())
             args << qSL("--start-argument") << m_document;
+
+        if (!Logging::isDltEnabled())
+            args << qSL("--no-dlt-logging");
     }
 
     if (m_isQuickLauncher)
@@ -374,8 +377,8 @@ void NativeRuntime::stop(bool forceKill)
     setState(Am::ShuttingDown);
     emit aboutToStop();
 
-    if (!m_connectedToRuntimeInterface) {
-        //The launcher didn't connected to the RuntimeInterface yet, so it won't get the quit signal
+    if (!m_connectedToApplicationInterface) {
+        //The launcher didn't connected to the ApplicationInterface yet, so it won't get the quit signal
         m_process->terminate();
     } else if (forceKill) {
         m_process->kill();
@@ -450,7 +453,7 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
 
 void NativeRuntime::onApplicationFinishedInitialization()
 {
-    m_connectedToRuntimeInterface = true;
+    m_connectedToApplicationInterface = true;
 
     if (m_app) {
         // now we know which app was launched, so initialize any additional interfaces on the p2p bus

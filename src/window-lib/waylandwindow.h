@@ -84,7 +84,6 @@ public:
     static bool m_watchdogEnabled;
 
 signals:
-    void frameUpdated();
     void waylandSurfaceChanged();
 
 private slots:

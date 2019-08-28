@@ -29,15 +29,23 @@
 #include <QApplication>
 #include <QPushButton>
 #include <QDialog>
-#include "private/waylandqtamclientextension_p.h"
 
-QT_USE_NAMESPACE_AM
+#include "launchermain.h"
+#include "logging.h"
+
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    QtAM::Logging::initialize(argc, argv);
 
-    WaylandQtAMClientExtension waylandExtension;
+    QtAM::LauncherMain::initialize();
+    QApplication app(argc, argv);
+    QtAM::LauncherMain launcher;
+
+    launcher.registerWaylandExtensions();
+    launcher.loadConfiguration();
+    launcher.setupDBusConnections();
+    launcher.setupLogging(false, launcher.loggingRules(), QString(), launcher.useAMConsoleLogger());
 
     QPushButton window("I'm a top-level window!\nClick to open/close a popup.");
     QDialog *popup = new QDialog(&window);
@@ -46,12 +54,12 @@ int main(int argc, char *argv[])
     window.setStyleSheet("QPushButton { background-color : lightgrey; font-size: 36px; }");
     popup->setStyleSheet("QPushButton { background-color : green; color : white; font-size: 24px; }");
 
-    QObject::connect(&window, &QPushButton::clicked, [&popup, &waylandExtension] () {
+    QObject::connect(&window, &QPushButton::clicked, [&popup, &launcher] () {
         popup->setVisible(!popup->isVisible());
-        waylandExtension.setWindowProperty(popup->windowHandle(),
-                                           "type", QVariant::fromValue(QStringLiteral("pop-up")));
+        launcher.setWindowProperty(popup->windowHandle(), "type", QVariant::fromValue(QStringLiteral("pop-up")));
     });
 
+    app.processEvents();
     window.showNormal();
 
     return app.exec();

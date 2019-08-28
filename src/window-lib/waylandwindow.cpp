@@ -66,8 +66,6 @@ WaylandWindow::WaylandWindow(Application *app, WindowSurface *surf)
     if (surf) {
         connect(surf, &WindowSurface::pong,
                 this, &WaylandWindow::pongReceived);
-        connect(m_surface, &WindowSurface::redraw,
-                this, &WaylandWindow::frameUpdated);
         connect(m_surface, &QWaylandSurface::hasContentChanged, this, &WaylandWindow::onContentStateChanged);
 #if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
         connect(m_surface, &QWaylandSurface::sizeChanged, this, &Window::sizeChanged);

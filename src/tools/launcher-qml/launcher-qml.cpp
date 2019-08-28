@@ -104,6 +104,18 @@
 #include "memorystatus.h"
 #include "monitormodel.h"
 
+#if defined(AM_HEADLESS)
+#  include <QCoreApplication>
+using Application = QCoreApplication;
+#elif defined(AM_ENABLE_WIDGETS)
+#  include <QApplication>
+using Application = QApplication;
+#else
+#  include <QGuiApplication>
+using Application = QGuiApplication;
+#endif
+
+
 QT_USE_NAMESPACE_AM
 
 
@@ -130,27 +142,30 @@ int main(int argc, char *argv[])
     Logging::initialize();
 
     try {
-        LauncherMain a(argc, argv);
+        LauncherMain::initialize();
+        Application app(argc, argv);
+        LauncherMain launcher;
 
         QCommandLineParser clp;
         clp.addHelpOption();
         clp.addOption({ qSL("qml-debug"),   qSL("Enables QML debugging and profiling.") });
         clp.addOption({ qSL("quicklaunch"), qSL("Starts the launcher in the quicklaunching mode.") });
         clp.addOption({ qSL("directload") , qSL("The info.yaml to start (you can add '@<appid>' to start a specific app within the package, instead of the first one)."), qSL("info.yaml") });
-        clp.process(a);
+        clp.process(app);
 
         bool quicklaunched = clp.isSet(qSL("quicklaunch"));
         QString directLoadManifest = clp.value(qSL("directload"));
 
         if (directLoadManifest.isEmpty())
-            a.loadConfiguration();
+            launcher.loadConfiguration();
 
-        CrashHandler::setCrashActionConfiguration(a.runtimeConfiguration().value(qSL("crashAction")).toMap());
-        a.setupLogging(false, a.loggingRules(), QString(), a.useAMConsoleLogger()); // the verbose flag has already been factored into the rules
-        a.setupQmlDebugging(clp.isSet(qSL("qml-debug")));
-        a.setupOpenGL(a.openGLConfiguration());
-        a.setupIconTheme(a.iconThemeSearchPaths(), a.iconThemeName());
-        a.registerWaylandExtensions();
+        CrashHandler::setCrashActionConfiguration(launcher.runtimeConfiguration().value(qSL("crashAction")).toMap());
+        // the verbose flag has already been factored into the rules:
+        launcher.setupLogging(false, launcher.loggingRules(), QString(), launcher.useAMConsoleLogger());
+        launcher.setupQmlDebugging(clp.isSet(qSL("qml-debug")));
+        launcher.setupOpenGL(launcher.openGLConfiguration());
+        launcher.setupIconTheme(launcher.iconThemeSearchPaths(), launcher.iconThemeName());
+        launcher.registerWaylandExtensions();
 
         StartupTimer::instance()->checkpoint("after basic initialization");
 
@@ -166,14 +181,14 @@ int main(int argc, char *argv[])
             if (!fi.exists() || fi.fileName() != qSL("info.yaml"))
                 throw Exception("--directload needs a valid info.yaml file as parameter");
             directLoadManifest = fi.absoluteFilePath();
-            new Controller(&a, quicklaunched, qMakePair(directLoadManifest, directLoadAppId));
+            new Controller(&launcher, quicklaunched, qMakePair(directLoadManifest, directLoadAppId));
         } else {
-            a.setupDBusConnections();
+            launcher.setupDBusConnections();
             StartupTimer::instance()->checkpoint("after dbus initialization");
-            new Controller(&a, quicklaunched);
+            new Controller(&launcher, quicklaunched);
         }
 
-        return a.exec();
+        return app.exec();
 
     } catch (const std::exception &e) {
         qCCritical(LogQmlRuntime) << "ERROR:" << e.what();
@@ -185,11 +200,11 @@ Controller::Controller(LauncherMain *a, bool quickLaunched)
     : Controller(a, quickLaunched, qMakePair(QString{}, QString{}))
 { }
 
-Controller::Controller(LauncherMain *a, bool quickLaunched, const QPair<QString, QString> &directLoad)
-    : QObject(a)
+Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<QString, QString> &directLoad)
+    : QObject(launcher)
     , m_quickLaunched(quickLaunched)
 {
-    connect(&m_engine, &QObject::destroyed, a, &QCoreApplication::quit);
+    connect(&m_engine, &QObject::destroyed, QCoreApplication::instance(), &QCoreApplication::quit);
     CrashHandler::setQmlEngine(&m_engine);
 
 #if !defined(AM_HEADLESS)
@@ -218,13 +233,13 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QPair<QString,
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 1, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 1, 0, "MonitorModel");
 
-    m_configuration = a->runtimeConfiguration();
+    m_configuration = launcher->runtimeConfiguration();
 
     QString absolutePluginPath;
     QStringList pluginPaths = variantToStringList(m_configuration.value(qSL("pluginPaths")));
     for (QString &path : pluginPaths) {
         if (QFileInfo(path).isRelative())
-            path.prepend(a->baseDir());
+            path.prepend(launcher->baseDir());
         else if (absolutePluginPath.isEmpty())
             absolutePluginPath = path;
 
@@ -240,7 +255,7 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QPair<QString,
     QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
     for (QString &path : importPaths) {
         if (QFileInfo(path).isRelative())
-            path.prepend(a->baseDir());
+            path.prepend(launcher->baseDir());
         else if (absoluteImportPath.isEmpty())
             absoluteImportPath = path;
 
@@ -271,7 +286,7 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QPair<QString,
     QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
     if (!quicklaunchQml.isEmpty() && quickLaunched) {
         if (QFileInfo(quicklaunchQml).isRelative())
-            quicklaunchQml.prepend(a->baseDir());
+            quicklaunchQml.prepend(launcher->baseDir());
 
         QQmlComponent quicklaunchComp(&m_engine, quicklaunchQml);
         if (!quicklaunchComp.isError()) {
@@ -285,10 +300,11 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QPair<QString,
     }
 
     if (directLoad.first.isEmpty()) {
-        m_applicationInterface = new QmlApplicationInterface(a->p2pDBusName(), a->notificationDBusName(), this);
+        m_applicationInterface = new QmlApplicationInterface(launcher->p2pDBusName(),
+                                                             launcher->notificationDBusName(), this);
         connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
                 this, &Controller::startApplication);
-        if (!m_applicationInterface->initialize())
+        if (!m_applicationInterface->initialize(true))
             throw Exception("Could not connect to the application manager's ApplicationInterface on the peer D-Bus");
 
     } else {

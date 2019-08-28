@@ -176,7 +176,6 @@ Window {
         model: ListModel { id: popupsModel }
         delegate: WindowItem {
             z: 9999 + model.index
-            width: 300; height: 100
             anchors.centerIn: parent
             window: model.window
             Connections {

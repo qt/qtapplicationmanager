@@ -124,7 +124,7 @@ private:
 
     QString m_document;
     QString m_mimeType;
-    bool m_connectedToRuntimeInterface = false;
+    bool m_connectedToApplicationInterface = false;
     bool m_dbusConnection = false;
     QString m_dbusConnectionName;
 

@@ -75,7 +75,7 @@ QmlApplicationInterface::QmlApplicationInterface(const QString &dbusConnectionNa
     s_instance = this;
 }
 
-bool QmlApplicationInterface::initialize()
+bool QmlApplicationInterface::initialize(bool hasRuntime)
 {
     // we are working with very small delays in the milli-second range here, so a linear factor
     // to support valgrind would have to be very large and probably conflict with usage elsewhere
@@ -94,36 +94,43 @@ bool QmlApplicationInterface::initialize()
         return nullptr;
     };
 
-    m_runtimeIf = tryConnect(qSL(""), qSL("/RuntimeInterface"), qSL("io.qt.ApplicationManager.RuntimeInterface"),
-                             m_connection, this);
-    m_applicationIf = tryConnect(qSL(""), qSL("/ApplicationInterface"), qSL("io.qt.ApplicationManager.ApplicationInterface"),
-                                 m_connection, this);
+    m_applicationIf = tryConnect(qSL(""), qSL("/ApplicationInterface"),
+                                 qSL("io.qt.ApplicationManager.ApplicationInterface"), m_connection, this);
 
     if (!m_applicationIf) {
         qCritical("ERROR: could not connect to the ApplicationInterface on the P2P D-Bus");
         return false;
     }
-    if (!m_runtimeIf) {
-        qCritical("ERROR: could not connect to the RuntimeInterface on the P2P D-Bus");
-        return false;
-    }
+
     if (!m_applicationIf->isValid()) {
         qCritical("ERROR: ApplicationInterface on the P2P D-Bus is not valid: %s",
                   qPrintable(m_applicationIf->lastError().message()));
         return false;
     }
-    if (!m_runtimeIf->isValid()) {
-        qCritical("ERROR: RuntimeInterface on the P2P D-Bus is not valid: %s",
-                  qPrintable(m_runtimeIf->lastError().message()));
-        return false;
-    }
 
     bool ok = true;
-    ok = ok && connect(m_runtimeIf, SIGNAL(startApplication(QString,QString,QString,QString,QVariantMap,QVariantMap)),
-                       this,        SIGNAL(startApplication(QString,QString,QString,QString,QVariantMap,QVariantMap)));
 
-    if (!ok)
-        qCritical("ERROR: could not connect the RuntimeInterface via D-Bus: %s", qPrintable(m_runtimeIf->lastError().name()));
+    if (hasRuntime) {
+        m_runtimeIf = tryConnect(qSL(""), qSL("/RuntimeInterface"), qSL("io.qt.ApplicationManager.RuntimeInterface"),
+                                 m_connection, this);
+        if (!m_runtimeIf) {
+            qCritical("ERROR: could not connect to the RuntimeInterface on the P2P D-Bus");
+            return false;
+        }
+
+        if (!m_runtimeIf->isValid()) {
+            qCritical("ERROR: RuntimeInterface on the P2P D-Bus is not valid: %s",
+                      qPrintable(m_runtimeIf->lastError().message()));
+            return false;
+        }
+
+        ok = connect(m_runtimeIf, SIGNAL(startApplication(QString,QString,QString,QString,QVariantMap,QVariantMap)),
+                     this,        SIGNAL(startApplication(QString,QString,QString,QString,QVariantMap,QVariantMap)));
+        if (!ok) {
+            qCritical("ERROR: could not connect the RuntimeInterface via D-Bus: %s",
+                      qPrintable(m_runtimeIf->lastError().name()));
+        }
+    }
 
     ok = ok && connect(m_applicationIf, SIGNAL(quit()), this, SIGNAL(quit()));
     ok = ok && connect(m_applicationIf, SIGNAL(memoryLowWarning()), this, SIGNAL(memoryLowWarning()));

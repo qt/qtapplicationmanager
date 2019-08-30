@@ -81,7 +81,7 @@ to single-process mode, if certain dependencies are not available, such as:
 You can force the build mode via the respective \c -config options \c force-multi-process and
 \c force-single-process, as described below.
 
-
+\target build
 \section1 Build
 
 The application manager uses \c qmake for its build system. The basic installation steps are:

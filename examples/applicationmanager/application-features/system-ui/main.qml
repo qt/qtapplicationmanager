@@ -55,7 +55,7 @@ import QtQuick.Window 2.11
 import QtApplicationManager.SystemUI 2.0
 
 Window {
-    title: "Fancy Apps - QtApplicationManager Example"
+    title: "Application Features - QtApplicationManager Example"
     width: 1280
     height: 800
     color: "whitesmoke"

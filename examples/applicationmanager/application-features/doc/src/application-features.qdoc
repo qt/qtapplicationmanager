@@ -35,58 +35,100 @@
 
 \section1 Introduction
 
-This example demonstrates some particular features that an application might implement, for
-instance it shows how to implement a nested compositor and it is the only example with an
-application that uses the "native" runtime. Most of the features are only supported properly in
-multi-process mode (for details see the following section).
+This example demonstrates how to implement some particular features you may require in an
+application, such as:
 
-\note This example focuses on the application (client) side. The System UI (compositor/server) is just a
-modified version of the "Desktop System UI Example" (minidesk). For more information on how this
-System UI is implemented, see \l{Desktop System UI Example}.
+\list
+    \li how to implement a nested compositor
+    \li how to simulate a crash and recover from it
+    \li how to show multiple top-level windows simultaneously
+    \li how to use the native runtime, with no QML
 
+\endlist
 
-\section1 The Client Applications
+Most of these features are only supported properly in
+\l{Single-Process vs. Multi-Process Mode}{multi-process mode}.
 
-The following applications are included in this example:
+\note This example focuses on the application (client) side. The \l{The System UI}{System UI}
+(compositor/server) is based on the \l{Desktop System UI Example} with some modifications. Refer
+to that example for more details on how to implement a System UI.
 
 \section2 Nested Compositor
-The nested compositor application shows how a Wayland compositor can be implemented inside an
-application (Wayland client) window. The compositor is implemented in pure QML and is kept to a
-minimum. In order to display Wayland clients inside this compositor, the WAYLAND_DISPLAY
-environment variable needs to be set appropriately. Starting a client on the command line could be
-done like this:
+
+The nested compositor application shows how to implement a Wayland compositor inside an application
+(Wayland client) window. The compositor is implemented in pure QML and kept to a minimum. To
+display Wayland clients within this compositor, you need to set the \c WAYLAND_DISPLAY environment
+variable appropriately.
+
+To start a client with this environment variable set via command line:
+
 \badcode
 WAYLAND_DISPLAY=qtam-wayland-nested qmlscene client.qml -platform wayland
 \endcode
-Note that this works only in multi-process mode, since the nested compositor needs a real window as
+
+This command only works in multi-process mode, since the nested compositor needs a real window as
 its root element.
 
+The QML code for the nested compositor application is as follows:
+
+\quotefromfile applicationmanager/application-features/apps/compositor/compositor.qml
+\skipto import QtQuick 2.11
+\printuntil -platform wayland"); }
+
 \section2 Crash Simulation and Recovery
-The crash application provides various means to force a crash in the application, like a
-segmentation fault. It utilizes a QML plugin implemented in C++, that provides the \c Terminator
-QML type to trigger crashes. The application manager will print the cause of the crash and other
-information like a backtrace. The System UI implements a basic form of crash recovery: it simply
-restarts the application. Note that this works only in mulit-process mode. In single process mode a
-crash will affect the entire (System UI) program.
+
+This application provides various means to force a crash in an application, such as a segmentation
+fault. It utilizes a QML plugin implemented in C++, to provide the \c Terminator QML type to
+trigger crashes. The application manager then prints the cause of the crash and related
+information, like a backtrace. The System UI implements a basic form of crash recovery: restarting
+the application.
+
+This application only works on multi-process mode. In single-process mode a crash affects the entire
+program (the System UI).
+
+The QML code for the crash simulation and recovery application is as follows:
+
+\quotefromfile applicationmanager/application-features/apps/crash/crashapp.qml
+\skipto import QtQuick 2.11
+\printuntil case "gracefully": Terminator.exitGracefully(); break;
+\printuntil } } } } } } }
 
 \section2 Two Top-Level Windows
-This application shows how multiple top-level windows can be displayed by having a QtObject as the
-application's root element.
+
+This application illustrates how you can display multiple top-level windows by having a QtObject
+as the application's root element.
+
+The QML code for the two top-level windows application is as follows:
+
+\quotefromfile applicationmanager/application-features/apps/twins/twins.qml
+\skipto import QtQuick 2.11
+\printuntil Component.onCompleted: setWindowProperty("type", "pop-up");
+\printuntil } } }
 
 \section2 Native Widgets
-The native widgets application is based on \l{QWidget}s. In contrast to the other applications
-which are QML applications, this one uses the "native" runtime. Consequently, the application's
-entry point isn't a main QML file, but an executable. It is probably the most basic application,
-that still adheres to this particular System UI. It is just for illustrating the concept: the
-System UI needs a \c type window property to differentiate between normal windows and popups. Note
-that this works only in multi-process mode; naturally, application processes cannot be started in
+
+This application is based on \l{QWidget}s. Compared to the other applications in this example,
+which are QML applications, this one uses the native runtime. Consequently, the application's entry
+point isn't a \c{main.qml} file, but an executable. This application is a basic application that
+still adheres to this particular System UI. It's mean to illustrate the concept: the System UI
+needs a \c type window property to differentiate between normal windows and popups.
+
+This application only works in multi-process mode, as application processes cannot be started in
 single-process mode.
-\endlist
+
+The C++ code for the native widgets application is as follows:
+
+\quotefromfile applicationmanager/application-features/native/widgets/main.cpp
+\skipto #include <QApplication>
+\printuntil return app.exec(); }
 
 \section1 Code Structure
-In contrast to other application manager examples, which are purely based on QML, this example
-needs to be built necessarily. The code is structured in a way, that the resulting application
-folders only contain the needed artifacts to run the application. Hence they could be packaged and
-installed, as well (for instance to the \l{Desktop System UI Example}).
 
+Compared to the other Qt Application Manager Examples, which are purely based on QML, this example
+requires you to build it explicitly. The code is structured in a way where the resulting application
+folders only contain the artifacts necessary to run the application. Consequently, you can package
+these applications and install them as well.
+
+To build Qt Application Manager including its examples, you need to pass \c qmake the
+\c{-config enable-examples} parameter For more details, see \l{build}{Build}.
 */

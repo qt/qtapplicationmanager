@@ -12,6 +12,8 @@ headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
 examples.fileextensions = "*.qml *.yaml"
 examples.imageextensions = "*.png *.jpg *.gif"
 
+include(config/exampleurl-qtapplicationmanager.qdocconf)
+
 headerdirs += \
     ../src/common-lib \
     ../src/shared-main-lib \

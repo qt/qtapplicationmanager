@@ -165,7 +165,7 @@ signals:
     void lastExitStatusChanged();
     void activated();
     void stateChanged(State state);
-    void runStateChanged(Am::RunState state);
+    void runStateChanged(QT_PREPEND_NAMESPACE_AM(Am::RunState) state);
 
 protected:
     QScopedPointer<AbstractApplicationInfo> m_info;

@@ -122,7 +122,6 @@ QStringList Logging::s_rules;
 QtMessageHandler Logging::s_defaultQtHandler = nullptr;
 QByteArray Logging::s_applicationId = QByteArray();
 QVariant Logging::s_useAMConsoleLoggerConfig = QVariant();
-QString Logging::s_dltLongMessageBehavior = QString();
 
 
 static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
@@ -408,30 +407,6 @@ void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &
 #else
     Q_UNUSED(dltAppId)
     Q_UNUSED(dltAppDescription)
-#endif
-}
-
-QString Logging::dltLongMessageBehavior()
-{
-    return s_dltLongMessageBehavior;
-}
-
-void Logging::setDltLongMessageBehavior(const QString &behaviorString)
-{
-#if defined(AM_GENIVIEXTRAS_MSG_BEHAVIOR)
-    if (!s_dltEnabled)
-        return;
-
-    s_dltLongMessageBehavior = behaviorString;
-    QDltRegistration::LongMessageBehavior behavior = QDltRegistration::LongMessageBehavior::Truncate;
-    if (behaviorString == qL1S("split"))
-        behavior = QDltRegistration::LongMessageBehavior::Split;
-    else if (behaviorString == qL1S("pass"))
-        behavior = QDltRegistration::LongMessageBehavior::Pass;
-
-    globalDltRegistration()->setLongMessageBehavior(behavior);
-#else
-    Q_UNUSED(behaviorString)
 #endif
 }
 

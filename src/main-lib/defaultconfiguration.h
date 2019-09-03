@@ -96,7 +96,6 @@ public:
     bool enableTouchEmulation() const;
     QString dltId() const;
     QString dltDescription() const;
-    QString dltLongMessageBehavior() const;
 
     QVariantMap openGLConfiguration() const;
 

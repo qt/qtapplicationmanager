@@ -123,11 +123,6 @@ QVariant LauncherMain::useAMConsoleLogger() const
     return m_useAMConsoleLogger;
 }
 
-QString LauncherMain::dltLongMessageBehavior() const
-{
-    return m_dltLongMessageBehavior;
-}
-
 QString LauncherMain::p2pDBusName() const
 {
     return qSL("am");
@@ -221,9 +216,6 @@ void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCE
     m_openGLConfiguration = uiConfig.value(qSL("opengl")).toMap();
     m_iconThemeName = uiConfig.value(qSL("iconThemeName")).toString();
     m_iconThemeSearchPaths = uiConfig.value(qSL("iconThemeSearchPaths")).toStringList();
-
-    QVariantMap dltConfig = m_configuration.value(qSL("dlt")).toMap();
-    m_dltLongMessageBehavior = uiConfig.value(qSL("longMessageBehavior")).toString();
 
     // un-comment this if things go south:
     //qWarning() << "### LOG " << m_loggingRules;

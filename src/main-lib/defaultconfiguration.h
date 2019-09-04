@@ -74,6 +74,7 @@ public:
     bool noFullscreen() const;
     QString windowIcon() const;
     QStringList importPaths() const;
+    QStringList pluginPaths() const;
     bool verbose() const;
     void setForceVerbose(bool forceVerbose);
     bool slowAnimations() const;

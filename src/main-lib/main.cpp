@@ -247,6 +247,7 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     if (!cfg->disableIntents())
         setupIntents(cfg->intentTimeouts());
 
+    setLibraryPaths(libraryPaths() + cfg->pluginPaths());
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
     setupWindowManager(cfg->waylandSocketName(), cfg->slowAnimations(), cfg->noUiWatchdog());

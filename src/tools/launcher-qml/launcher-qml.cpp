@@ -207,20 +207,36 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
 
     m_configuration = a->runtimeConfiguration();
 
-    QString absolutePath;
+    QString absolutePluginPath;
+    QStringList pluginPaths = variantToStringList(m_configuration.value(qSL("pluginPaths")));
+    for (QString &path : pluginPaths) {
+        if (QFileInfo(path).isRelative())
+            path.prepend(a->baseDir());
+        else if (absolutePluginPath.isEmpty())
+            absolutePluginPath = path;
+
+        qApp->addLibraryPath(path);
+    }
+
+    if (!absolutePluginPath.isEmpty()) {
+        qCWarning(LogDeployment).nospace() << "Absolute plugin path in the runtime configuration "
+                            "can lead to problems inside containers (e.g. " << absolutePluginPath << ")";
+    }
+
+    QString absoluteImportPath;
     QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
     for (QString &path : importPaths) {
         if (QFileInfo(path).isRelative())
             path.prepend(a->baseDir());
-        else if (absolutePath.isEmpty())
-            absolutePath = path;
+        else if (absoluteImportPath.isEmpty())
+            absoluteImportPath = path;
 
         m_engine.addImportPath(path);
     }
 
-    if (!absolutePath.isEmpty()) {
+    if (!absoluteImportPath.isEmpty()) {
         qCWarning(LogDeployment).nospace() << "Absolute import path in the runtime configuration "
-                            "can lead to problems inside containers (e.g. " << absolutePath << ")";
+                            "can lead to problems inside containers (e.g. " << absoluteImportPath << ")";
     }
 
     StartupTimer::instance()->checkpoint("after application config initialization");
@@ -401,10 +417,22 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         loadQmlDummyDataFiles(&m_engine, QFileInfo(qmlFile).path());
     }
 
+    QVariant pluginPaths = runtimeParameters.value(qSL("pluginPaths"));
+    const QVariantList ppvl = (pluginPaths.type() == QVariant::String) ? QVariantList{pluginPaths}
+                                                                       : qdbus_cast<QVariantList>(pluginPaths);
+    for (const QVariant &v : ppvl) {
+        const QString path = v.toString();
+        if (QFileInfo(path).isRelative())
+            qApp->addLibraryPath(QDir().absoluteFilePath(path));
+        else
+            qCWarning(LogQmlRuntime) << "Omitting absolute plugin path in info file for safety reasons:" << path;
+    }
+    qCDebug(LogQmlRuntime) << "Plugin paths:" << qApp->libraryPaths();
+
     QVariant imports = runtimeParameters.value(qSL("importPaths"));
-    const QVariantList vl = (imports.type() == QVariant::String) ? QVariantList{imports}
-                                                                 : qdbus_cast<QVariantList>(imports);
-    for (const QVariant &v : vl) {
+    const QVariantList ipvl = (imports.type() == QVariant::String) ? QVariantList{imports}
+                                                                  : qdbus_cast<QVariantList>(imports);
+    for (const QVariant &v : ipvl) {
         const QString path = v.toString();
         if (QFileInfo(path).isRelative())
             m_engine.addImportPath(QDir().absoluteFilePath(path));

@@ -1203,16 +1203,10 @@ bool ApplicationManager::startingApplicationInstallation(ApplicationInfo *info)
         if (!blockApplication(app->id()))
             return false;
 
-        if (app->isBuiltIn()) {
-            // overlay the existing base info
-            // we will rollback to the base one if this update is removed.
-            app->setUpdatedInfo(newInfo.take());
-        } else {
-            // overwrite the existing base info
-            // we're not keeping track of the original. so removing the updated base version removes the
-            // application entirely.
-            app->setBaseInfo(newInfo.take());
-        }
+        // There is still an issue with "shadowing" built-in apps (which will be properly fixed in 5.14):
+        // As the updatedInfo might be used already (by an already updated built-in app), we cannot revert back any
+        // more to the previous version. Canceling the update will therefore revert back to the original app.
+        app->setUpdatedInfo(newInfo.take());
         app->setState(Application::BeingUpdated);
         app->setProgress(0);
         emitDataChanged(app);
@@ -1290,8 +1284,11 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
     case Application::Installed:
         return false;
 
-    case Application::BeingInstalled:
-    case Application::BeingUpdated: {
+    case Application::BeingUpdated:
+        if (!static_cast<ApplicationInfo*>(app->baseInfo())->isBuiltIn())
+            app->setBaseInfo(app->takeUpdatedInfo());
+        Q_FALLTHROUGH();
+    case Application::BeingInstalled: {
         // The Application object has been updated right at the start of the installation/update.
         // Now's the time to update the InstallationReport that was written by the installer.
         QFile irfile(QDir(app->nonAliasedInfo()->manifestDir()).absoluteFilePath(qSL("installation-report.yaml")));
@@ -1316,6 +1313,8 @@ bool ApplicationManager::finishedApplicationInstall(const QString &id)
         app->setUpdatedInfo(nullptr);
         app->setState(Application::Installed);
         registerMimeTypes();
+        emitDataChanged(app);
+        unblockApplication(id);
         break;
     case Application::BeingRemoved: {
         int row = d->apps.indexOf(app);
@@ -1361,11 +1360,13 @@ bool ApplicationManager::canceledApplicationInstall(const QString &id)
         break;
     }
     case Application::BeingUpdated:
+        app->setUpdatedInfo(nullptr);
+        Q_FALLTHROUGH();
     case Application::BeingDowngraded:
     case Application::BeingRemoved:
         app->setState(Application::Installed);
         app->setProgress(0);
-        emitDataChanged(app, QVector<int> { IsUpdating });
+        emitDataChanged(app);
 
         unblockApplication(id);
         break;

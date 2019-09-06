@@ -417,25 +417,20 @@ QVector<AbstractApplication *> AbstractApplication::fromApplicationInfoVector(
                 // There's already another ApplicationInfo with the same id. It's probably an update for a
                 // built-in app, in which case we use the same Application instance to hold both
                 // ApplicationInfo instances.
-                bool merged = false;
-
                 if (!otherAbsApp->isAlias()) {
                     auto otherApp = static_cast<Application*>(otherAbsApp);
                     auto fullAppInfo = static_cast<ApplicationInfo*>(appInfo);
                     if (otherApp->isBuiltIn() && !fullAppInfo->isBuiltIn() && !otherApp->updatedInfo()) {
                         otherApp->setUpdatedInfo(static_cast<ApplicationInfo*>(appInfo));
-                        merged = true;
                     } else if (!otherApp->isBuiltIn() && fullAppInfo->isBuiltIn() && !otherApp->updatedInfo()) {
                         auto currentBaseInfo = otherApp->takeBaseInfo();
                         otherApp->setBaseInfo(static_cast<ApplicationInfo*>(appInfo));
                         otherApp->setUpdatedInfo(currentBaseInfo);
-                        merged = true;
                     }
+                } else {
+                    qCWarning(LogSystem) << "Found a second application with id" << appInfo->id()
+                                         << "which is not an update for a built-in one. Ignoring it.";
                 }
-
-                if (!merged)
-                    qCWarning(LogSystem).nospace() << "Found a second application with id "
-                        << appInfo->id() << " which is not an update for a built-in one. Ignoring it.";
             } else {
                 app.reset(new Application(static_cast<ApplicationInfo*>(appInfo)));
             }
@@ -562,6 +557,11 @@ void Application::setUpdatedInfo(ApplicationInfo* info)
 
     m_updatedInfo.reset(info);
     emit bulkChange();
+}
+
+ApplicationInfo *Application::takeUpdatedInfo()
+{
+    return m_updatedInfo.take();
 }
 
 void Application::setState(State state)

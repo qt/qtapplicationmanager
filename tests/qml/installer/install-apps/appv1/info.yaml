@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'test.install.app'
+version: 'v1'
+icon:    'icon1.png'
+code:    'app1.qml'
+runtime: 'qml'
+name:
+  en: 'Installation Test App Version 1'

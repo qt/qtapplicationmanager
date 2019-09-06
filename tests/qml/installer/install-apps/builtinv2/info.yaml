@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'builtin.app'
+version: 'v2'
+icon:    'icon2.png'
+code:    'app2.qml'
+runtime: 'qml'
+name:
+  en: 'Builtin Installation Test App v2'

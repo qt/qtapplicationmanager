@@ -52,6 +52,7 @@ For a high-level overview, see \l{The Qt Application Manager}{Introduction to th
     \li \l{Application Installer}
     \li \l{Logging and Debugging}
     \li \l{Containers}
+    \li \l{Use Qt Resources}
     \li \l{Single-Process vs. Multi-Process Mode}
     \li \l{Migrating code from 5.11 to 5.12}
 \endlist

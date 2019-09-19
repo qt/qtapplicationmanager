@@ -1,0 +1,140 @@
+/****************************************************************************
+**
+** Copyright (C) 2019 Luxoft Sweden AB
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Qt Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\page use-qt-resources.html
+\title Use Qt Resources
+
+\l{The Qt Resource System} lets you store files in your program's executable. In some ways,
+this feature resembles a dedicated file system, which we call \e{resource file system}. Usually,
+this file system contains QML code and other assets like images. If you use the QML compiler, the
+compiled code is always placed in the resource file system. There are a few application manager
+specific considerations, especially when your application needs to support both single-process and
+multi-process modes.
+
+\section1 Compile Resources
+
+You can add resources as \l{External Binary Resources}{external binary resources} or as
+\l{Compiled-In Resources}{compiled-in resources}; both are generated from a \c .qrc file.
+Typically, external binary resources are stored in a file with the \c .rcc extension, whereas
+compiled-in resources are stored in libraries in the Application Manager context.
+
+It's important to understand that each process has its own resource file system. Consequently, to
+support multi-process mode, resources must be generated separately for the System UI and for each
+application. Conversely, in single-process mode there is only one resource file system and you must
+ensure that file paths don't clash. To prevent clashes, we recommend to prefix each application
+file path with the unique application ID.
+
+Consider the following application file structure:
+
+\badcode
+apps
+|---- app1
+|     |---- main.qml
+|     |---- app1.qrc
+|     ...
+|---- app2
+|     |---- main.qml
+|     |---- app2.qrc
+|     ...
+\endcode
+
+Without a prefix, in single-process mode, the \c main.qml files would clash. To avoid this, the
+\c .qrc file for app1 should read like this:
+
+\badcode
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="app1">
+    <file>main.qml</file>
+</qresource>
+</RCC>
+\endcode
+
+For \c app2 the prefix should be "app2", respectively. Generally, all files contained in any
+\c .qrc file should be unique; this also includes files that the System UI uses.
+
+
+\section1 Load Resources
+
+In addition to the approaches described in \l{The Qt Resource System}, the Application Manager
+provides configuration options to load resources, both -- external binary resources and
+compiled-in resources in the form of a library.
+
+Suppose you have a \c my.rcc binary file and a \c myplugin.so library file. These can be loaded
+into the System UI by adding the following lines to the \c am-config.yaml file:
+
+\badcode
+ui:
+  resources: [ "${CONFIG_PWD}/my.rcc",
+               "${CONFIG_PWD}/myplugin.so" ]
+\endcode
+
+You can also load these two files into an application by adding the following snippet to the
+\c info.yaml file:
+
+\badcode
+runtimeParameters:
+  resources: [ "my.rcc",
+               "myplugin.so" ]
+\endcode
+
+The resources are loaded when the System UI starts, before the QML engine is instantiated. In
+multi-process mode the application resources are also loaded into the application process at
+startup. In single-process mode, resources are loaded when the application first starts and then
+reused on subsequent invocations; they are never unloaded.
+
+\section1 Access Resources
+
+The application manager allows for file access in the resource file system, either with the URL
+scheme (\c{qrc}) or the file name prefix (\c{:}). Both these options require an absolute file path
+in the resource file system, such as:
+
+\list
+  \li \c{qrc:/app1/main.qml} or \c{qrc:///app1/main.qml}
+  \li \c{:/app1/main.qml}
+\endlist
+
+While the Qt Application Manager accepts this relaxed naming structure, the QML engine
+distinguishes between URLs and file names. For instance, an \l{Image::source}
+{Image source} property only accepts the \c{qrc} scheme.
+
+If you want to specify a relative path, don't use the scheme or file path prefix.
+
+If your files aren't found in the resource file system, you can list the contents of the entire
+resource file system with the following code snippet:
+
+\code
+QDirIterator it(qSL(":"), QDirIterator::Subdirectories);
+while (it.hasNext()) {
+    const QString fn = it.next();
+    if (!fn.startsWith(qSL(":/qt-project.org")))  // exclude Qt internal files
+        qDebug() << fn;
+}
+\endcode
+
+*/

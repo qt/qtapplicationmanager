@@ -43,16 +43,16 @@
 #include <QDBusInterface>
 
 #include "logging.h"
-#include "qmlapplicationinterfaceextension.h"
-#include "qmlapplicationinterface.h"
+#include "dbusapplicationinterfaceextension.h"
+#include "dbusapplicationinterface.h"
 #include "ipcwrapperobject.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class QmlApplicationInterfaceExtensionPrivate
+class DBusApplicationInterfaceExtensionPrivate
 {
 public:
-    QmlApplicationInterfaceExtensionPrivate(const QDBusConnection &connection)
+    DBusApplicationInterfaceExtensionPrivate(const QDBusConnection &connection)
         : m_connection(connection)
     { }
 
@@ -60,58 +60,58 @@ public:
     QDBusConnection m_connection;
 };
 
-QmlApplicationInterfaceExtensionPrivate *QmlApplicationInterfaceExtension::d = nullptr;
+DBusApplicationInterfaceExtensionPrivate *DBusApplicationInterfaceExtension::d = nullptr;
 
-void QmlApplicationInterfaceExtension::initialize(const QDBusConnection &connection)
+void DBusApplicationInterfaceExtension::initialize(const QDBusConnection &connection)
 {
     if (!d)
-        d = new QmlApplicationInterfaceExtensionPrivate(connection);
+        d = new DBusApplicationInterfaceExtensionPrivate(connection);
 }
 
-QmlApplicationInterfaceExtension::QmlApplicationInterfaceExtension(QObject *parent)
+DBusApplicationInterfaceExtension::DBusApplicationInterfaceExtension(QObject *parent)
     : QObject(parent)
 {
     Q_ASSERT(d);
 
-    if (QmlApplicationInterface::s_instance->m_applicationIf) {
-        connect(QmlApplicationInterface::s_instance->m_applicationIf, SIGNAL(interfaceCreated(QString)),
+    if (DBusApplicationInterface::s_instance->m_applicationIf) {
+        connect(DBusApplicationInterface::s_instance->m_applicationIf, SIGNAL(interfaceCreated(QString)),
                      this, SLOT(onInterfaceCreated(QString)));
     } else {
         qCritical("ERROR: ApplicationInterface not initialized!");
     }
 }
 
-QmlApplicationInterfaceExtension::~QmlApplicationInterfaceExtension()
+DBusApplicationInterfaceExtension::~DBusApplicationInterfaceExtension()
 {
     d->m_interfaces.remove(m_name);
 
 }
 
-QString QmlApplicationInterfaceExtension::name() const
+QString DBusApplicationInterfaceExtension::name() const
 {
     return m_name;
 }
 
-bool QmlApplicationInterfaceExtension::isReady() const
+bool DBusApplicationInterfaceExtension::isReady() const
 {
     return m_object;
 }
 
-QObject *QmlApplicationInterfaceExtension::object() const
+QObject *DBusApplicationInterfaceExtension::object() const
 {
     return m_object;
 }
 
-void QmlApplicationInterfaceExtension::classBegin()
+void DBusApplicationInterfaceExtension::classBegin()
 {
 }
 
-void QmlApplicationInterfaceExtension::componentComplete()
+void DBusApplicationInterfaceExtension::componentComplete()
 {
     tryInit();
 }
 
-void QmlApplicationInterfaceExtension::tryInit()
+void DBusApplicationInterfaceExtension::tryInit()
 {
     if (m_name.isEmpty())
         return;
@@ -154,7 +154,7 @@ void QmlApplicationInterfaceExtension::tryInit()
     emit readyChanged();
 }
 
-void QmlApplicationInterfaceExtension::setName(const QString &name)
+void DBusApplicationInterfaceExtension::setName(const QString &name)
 {
     if (!m_complete) {
         m_name = name;
@@ -164,7 +164,7 @@ void QmlApplicationInterfaceExtension::setName(const QString &name)
     }
 }
 
-void QmlApplicationInterfaceExtension::onInterfaceCreated(const QString &interfaceName)
+void DBusApplicationInterfaceExtension::onInterfaceCreated(const QString &interfaceName)
 {
     if (m_name == interfaceName)
         tryInit();

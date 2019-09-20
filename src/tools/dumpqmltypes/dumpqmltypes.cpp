@@ -45,8 +45,8 @@
 #include <QtAppManWindow/windowmanager.h>
 #include <QtAppManWindow/window.h>
 #include <QtAppManWindow/windowitem.h>
-#include <QtAppManLauncher/qmlapplicationinterface.h>
-#include <QtAppManLauncher/qmlapplicationinterfaceextension.h>
+#include <QtAppManLauncher/dbusapplicationinterface.h>
+#include <QtAppManLauncher/dbusapplicationinterfaceextension.h>
 #include <QtAppManLauncher/private/applicationmanagerwindow_p.h>
 #include <QtAppManIntentServer/intent.h>
 #include <QtAppManIntentServer/intentserver.h>
@@ -82,8 +82,8 @@ static const QVector<const QMetaObject *> all = {
     &AbstractRuntime::staticMetaObject,
     &AbstractContainer::staticMetaObject,
     &Notification::staticMetaObject,
-    &QmlApplicationInterface::staticMetaObject,
-    &QmlApplicationInterfaceExtension::staticMetaObject,
+    &DBusApplicationInterface::staticMetaObject,
+    &DBusApplicationInterfaceExtension::staticMetaObject,
     &ApplicationManagerWindow::staticMetaObject,
     &ApplicationModel::staticMetaObject,
     &Am::staticMetaObject,

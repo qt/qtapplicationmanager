@@ -51,9 +51,9 @@
 #include <QThread>
 
 #include "global.h"
-#include "qmlapplicationinterface.h"
-#include "qmlapplicationinterfaceextension.h"
-#include "qmlnotification.h"
+#include "dbusapplicationinterface.h"
+#include "dbusapplicationinterfaceextension.h"
+#include "dbusnotification.h"
 #include "notification.h"
 #include "ipcwrapperobject.h"
 #include "utilities.h"
@@ -63,19 +63,20 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-QmlApplicationInterface *QmlApplicationInterface::s_instance = nullptr;
+DBusApplicationInterface *DBusApplicationInterface::s_instance = nullptr;
 
-QmlApplicationInterface::QmlApplicationInterface(const QString &dbusConnectionName, const QString &dbusNotificationBusName, QObject *parent)
+DBusApplicationInterface::DBusApplicationInterface(const QString &dbusConnectionName,
+                                                   const QString &dbusNotificationBusName, QObject *parent)
     : ApplicationInterface(parent)
     , m_connection(dbusConnectionName)
     , m_notificationConnection(dbusNotificationBusName)
 {
-    if (QmlApplicationInterface::s_instance)
-        qCritical("ERROR: only one instance of QmlApplicationInterface is allowed");
+    if (DBusApplicationInterface::s_instance)
+        qCritical("ERROR: only one instance of DBusApplicationInterface is allowed");
     s_instance = this;
 }
 
-bool QmlApplicationInterface::initialize(bool hasRuntime)
+bool DBusApplicationInterface::initialize(bool hasRuntime)
 {
     // we are working with very small delays in the milli-second range here, so a linear factor
     // to support valgrind would have to be very large and probably conflict with usage elsewhere
@@ -158,7 +159,7 @@ bool QmlApplicationInterface::initialize(bool hasRuntime)
         }
     }
 
-    QmlApplicationInterfaceExtension::initialize(m_connection);
+    DBusApplicationInterfaceExtension::initialize(m_connection);
 
     auto intentClientDBusInterface = new IntentClientDBusImplementation(m_connection.name());
     if (!IntentClient::createInstance(intentClientDBusInterface)) {
@@ -171,56 +172,56 @@ bool QmlApplicationInterface::initialize(bool hasRuntime)
     return ok;
 }
 
-QString QmlApplicationInterface::applicationId() const
+QString DBusApplicationInterface::applicationId() const
 {
     if (m_appId.isEmpty() && m_applicationIf->isValid())
         m_appId = m_applicationIf->property("applicationId").toString();
     return m_appId;
 }
 
-QVariantMap QmlApplicationInterface::name() const
+QVariantMap DBusApplicationInterface::name() const
 {
     return m_name;
 }
 
-QUrl QmlApplicationInterface::icon() const
+QUrl DBusApplicationInterface::icon() const
 {
     return QUrl::fromLocalFile(m_icon);
 }
 
-QString QmlApplicationInterface::version() const
+QString DBusApplicationInterface::version() const
 {
     return m_version;
 }
 
-Notification *QmlApplicationInterface::createNotification()
+Notification *DBusApplicationInterface::createNotification()
 {
-    QmlNotification *n = new QmlNotification(this, Notification::Dynamic);
+    DBusNotification *n = new DBusNotification(this, Notification::Dynamic);
     return n;
 }
 
-void QmlApplicationInterface::acknowledgeQuit() const
+void DBusApplicationInterface::acknowledgeQuit() const
 {
     QCoreApplication::instance()->quit();
 }
 
-void QmlApplicationInterface::finishedInitialization()
+void DBusApplicationInterface::finishedInitialization()
 {
     if (m_applicationIf->isValid())
         m_applicationIf->asyncCall(qSL("finishedInitialization"));
 }
 
-QVariantMap QmlApplicationInterface::systemProperties() const
+QVariantMap DBusApplicationInterface::systemProperties() const
 {
     return m_systemProperties;
 }
 
-QVariantMap QmlApplicationInterface::applicationProperties() const
+QVariantMap DBusApplicationInterface::applicationProperties() const
 {
     return m_applicationProperties;
 }
 
-uint QmlApplicationInterface::notificationShow(QmlNotification *n)
+uint DBusApplicationInterface::notificationShow(DBusNotification *n)
 {
     if (n && m_notifyIf && m_notifyIf->isValid()) {
         QDBusReply<uint> newId = m_notifyIf->call(qSL("Notify"), applicationId(), n->notificationId(),
@@ -236,16 +237,16 @@ uint QmlApplicationInterface::notificationShow(QmlNotification *n)
 }
 
 
-void QmlApplicationInterface::notificationClose(QmlNotification *n)
+void DBusApplicationInterface::notificationClose(DBusNotification *n)
 {
     if (n && m_notifyIf && m_notifyIf->isValid())
         m_notifyIf->asyncCall(qSL("CloseNotification"), n->notificationId());
 }
 
-void QmlApplicationInterface::notificationClosed(uint notificationId, uint reason)
+void DBusApplicationInterface::notificationClosed(uint notificationId, uint reason)
 {
     qDebug("Notification was closed signal: %u", notificationId);
-    for (const QPointer<QmlNotification> &n : m_allNotifications) {
+    for (const QPointer<DBusNotification> &n : m_allNotifications) {
         if (n->notificationId() == notificationId) {
             n->libnotifyNotificationClosed(reason);
             m_allNotifications.removeAll(n);
@@ -254,10 +255,10 @@ void QmlApplicationInterface::notificationClosed(uint notificationId, uint reaso
     }
 }
 
-void QmlApplicationInterface::notificationActionTriggered(uint notificationId, const QString &actionId)
+void DBusApplicationInterface::notificationActionTriggered(uint notificationId, const QString &actionId)
 {
     qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
-    for (const QPointer<QmlNotification> &n : m_allNotifications) {
+    for (const QPointer<DBusNotification> &n : m_allNotifications) {
         if (n->notificationId() == notificationId) {
             n->libnotifyActionInvoked(actionId);
             break;

@@ -68,7 +68,7 @@ protected:
 
 
 class LauncherMain;
-class QmlApplicationInterface;
+class DBusApplicationInterface;
 
 class Controller : public QObject
 {
@@ -85,7 +85,7 @@ public slots:
 
 private:
     QQmlApplicationEngine m_engine;
-    QmlApplicationInterface *m_applicationInterface = nullptr;
+    DBusApplicationInterface *m_applicationInterface = nullptr;
     QVariantMap m_configuration;
     bool m_launched = false;
     bool m_quickLaunched;

@@ -40,25 +40,31 @@
 **
 ****************************************************************************/
 
-#pragma once
-
-#include <QtAppManCommon/global.h>
-#include <QtAppManNotification/notification.h>
+#include "dbusnotification.h"
+#include "dbusapplicationinterface.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-class QmlApplicationInterface;
+DBusNotification::DBusNotification(QObject *parent, ConstructionMode mode)
+    : Notification(parent, mode)
+{ }
 
-class QmlNotification : public Notification // clazy:exclude=missing-qobject-macro
+DBusNotification *DBusNotification::create(QObject *parent)
 {
-public:
-    QmlNotification(QObject *parent = nullptr, Notification::ConstructionMode mode = Notification::Declarative);
+    return new DBusNotification(parent, QtAM::Notification::Dynamic);
+}
 
-protected:
-    uint libnotifyShow() override;
-    void libnotifyClose() override;
+void DBusNotification::libnotifyClose()
+{
+    if (DBusApplicationInterface::s_instance)
+        DBusApplicationInterface::s_instance->notificationClose(this);
+}
 
-    friend class QmlApplicationInterface;
-};
+uint DBusNotification::libnotifyShow()
+{
+    if (DBusApplicationInterface::s_instance)
+        return DBusApplicationInterface::s_instance->notificationShow(this);
+    return 0;
+}
 
 QT_END_NAMESPACE_AM

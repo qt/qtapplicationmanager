@@ -50,9 +50,9 @@ QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 
 QT_BEGIN_NAMESPACE_AM
 
-class QmlApplicationInterfaceExtensionPrivate;
+class DBusApplicationInterfaceExtensionPrivate;
 
-class QmlApplicationInterfaceExtension : public QObject, public QQmlParserStatus
+class DBusApplicationInterfaceExtension : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationInterfaceExtension 2.0")
@@ -65,8 +65,8 @@ class QmlApplicationInterfaceExtension : public QObject, public QQmlParserStatus
 public:
     static void initialize(const QDBusConnection &connection);
 
-    explicit QmlApplicationInterfaceExtension(QObject *parent = nullptr);
-    ~QmlApplicationInterfaceExtension() override;
+    explicit DBusApplicationInterfaceExtension(QObject *parent = nullptr);
+    ~DBusApplicationInterfaceExtension() override;
 
     QString name() const;
     bool isReady() const;
@@ -89,7 +89,7 @@ signals:
 private:
     void tryInit();
 
-    static QmlApplicationInterfaceExtensionPrivate *d;
+    static DBusApplicationInterfaceExtensionPrivate *d;
     QString m_name;
     QObject *m_object = nullptr;
     bool m_complete = false;

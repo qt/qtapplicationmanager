@@ -54,20 +54,20 @@ QT_FORWARD_DECLARE_CLASS(QDBusInterface)
 
 QT_BEGIN_NAMESPACE_AM
 
-class QmlNotification;
+class DBusNotification;
 class Notification;
 class IntentClientRequest;
 class Controller;
-class QmlApplicationInterfaceExtension;
+class DBusApplicationInterfaceExtension;
 
 
-class QmlApplicationInterface : public ApplicationInterface
+class DBusApplicationInterface : public ApplicationInterface
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/ApplicationInterface 2.0 UNCREATABLE")
 
 public:
-    explicit QmlApplicationInterface(const QString &dbusConnectionName,
+    explicit DBusApplicationInterface(const QString &dbusConnectionName,
                                      const QString &dbusNotificationBusName, QObject *parent = nullptr);
     bool initialize(bool hasRuntime = false);
 
@@ -89,8 +89,8 @@ private:
                                    const QString &mimeType, const QVariantMap &runtimeParams,
                                    const QVariantMap systemProperties);
 
-    uint notificationShow(QmlNotification *n);
-    void notificationClose(QmlNotification *n);
+    uint notificationShow(DBusNotification *n);
+    void notificationClose(DBusNotification *n);
 
     QDBusConnection m_connection;
     QDBusConnection m_notificationConnection;
@@ -103,13 +103,13 @@ private:
     QString m_version;
     QVariantMap m_systemProperties;
     QVariantMap m_applicationProperties;
-    QVector<QPointer<QmlNotification> > m_allNotifications;
+    QVector<QPointer<DBusNotification> > m_allNotifications;
 
-    static QmlApplicationInterface *s_instance;
+    static DBusApplicationInterface *s_instance;
 
-    friend class QmlNotification;
+    friend class DBusNotification;
     friend class Controller;
-    friend class QmlApplicationInterfaceExtension;
+    friend class DBusApplicationInterfaceExtension;
 };
 
 QT_END_NAMESPACE_AM

@@ -20,10 +20,10 @@ CONFIG -= create_cmake
 DBUS_INTERFACES += ../dbus-lib/io.qt.applicationmanager.intentinterface.xml
 
 SOURCES += \
-    qmlapplicationinterface.cpp \
+    dbusapplicationinterface.cpp \
     ipcwrapperobject.cpp \
-    qmlapplicationinterfaceextension.cpp \
-    qmlnotification.cpp \
+    dbusapplicationinterfaceextension.cpp \
+    dbusnotification.cpp \
     launchermain.cpp \
     intentclientdbusimplementation.cpp
 
@@ -40,11 +40,11 @@ SOURCES += \
 }
 
 HEADERS += \
-    qmlapplicationinterface.h \
+    dbusapplicationinterface.h \
     ipcwrapperobject.h \
     ipcwrapperobject_p.h \
-    qmlapplicationinterfaceextension.h \
-    qmlnotification.h \
+    dbusapplicationinterfaceextension.h \
+    dbusnotification.h \
     launchermain.h \
     intentclientdbusimplementation.h
 

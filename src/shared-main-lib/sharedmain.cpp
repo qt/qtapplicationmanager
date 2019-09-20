@@ -154,23 +154,26 @@ void SharedMain::setupIconTheme(const QStringList &themeSearchPaths, const QStri
 
 void SharedMain::setupQmlDebugging(bool qmlDebugging)
 {
-    bool hasJSDebugArg = !static_cast<QCoreApplicationPrivate *>(QObjectPrivate::get(qApp))->qmljsDebugArgumentsString().isEmpty();
+    bool hasJSDebugArg = !static_cast<QCoreApplicationPrivate *>
+                         (QObjectPrivate::get(qApp))->qmljsDebugArgumentsString().isEmpty();
 
     if (hasJSDebugArg || qmlDebugging) {
 #if !defined(QT_NO_QML_DEBUGGER)
         m_debuggingEnabler = new QQmlDebuggingEnabler(true);
         if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
-            qCCritical(LogQmlRuntime) << "The default 'debug' logging category was disabled. "
-                                         "Re-enabling it for the QML Debugger interface to work correctly.";
+            qCCritical(LogRuntime) << "The default 'debug' logging category was disabled. "
+                                      "Re-enabling it for the QML Debugger interface to work correctly.";
             QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
         }
 #else
-        qCWarning(LogSystem) << "The --qml-debug/-qmljsdebugger options are ignored, because Qt was built without support for QML Debugging!";
+        qCWarning(LogSystem) << "The --qml-debug/-qmljsdebugger options are ignored, "
+                                "because Qt was built without support for QML Debugging!";
 #endif
     }
 }
 
-void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules, const QString &messagePattern, const QVariant &useAMConsoleLogger)
+void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
+                              const QString &messagePattern, const QVariant &useAMConsoleLogger)
 {
     const QStringList rules = verbose ? QStringList() << qSL("*=true") << qSL("qt.*.debug=false")
                                       : loggingRules.isEmpty() ? QStringList(qSL("*.debug=false"))

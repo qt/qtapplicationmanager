@@ -74,9 +74,9 @@
 #  include <QCoreApplication>
 #endif
 
-#include "qmlapplicationinterface.h"
-#include "qmlapplicationinterfaceextension.h"
-#include "qmlnotification.h"
+#include "dbusapplicationinterface.h"
+#include "dbusapplicationinterfaceextension.h"
+#include "dbusnotification.h"
 #include "notification.h"
 #include "qtyaml.h"
 #include "global.h"
@@ -210,8 +210,9 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
 #if !defined(AM_HEADLESS)
     qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
 #endif
-    qmlRegisterType<QmlNotification>("QtApplicationManager", 2, 0, "Notification");
-    qmlRegisterType<QmlApplicationInterfaceExtension>("QtApplicationManager.Application", 2, 0, "ApplicationInterfaceExtension");
+    qmlRegisterType<DBusNotification>("QtApplicationManager", 2, 0, "Notification");
+    qmlRegisterType<DBusApplicationInterfaceExtension>("QtApplicationManager.Application", 2, 0,
+                                                       "ApplicationInterfaceExtension");
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
@@ -300,9 +301,9 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
     }
 
     if (directLoad.first.isEmpty()) {
-        m_applicationInterface = new QmlApplicationInterface(launcher->p2pDBusName(),
+        m_applicationInterface = new DBusApplicationInterface(launcher->p2pDBusName(),
                                                              launcher->notificationDBusName(), this);
-        connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
+        connect(m_applicationInterface, &DBusApplicationInterface::startApplication,
                 this, &Controller::startApplication);
         if (!m_applicationInterface->initialize(true))
             throw Exception("Could not connect to the application manager's ApplicationInterface on the peer D-Bus");

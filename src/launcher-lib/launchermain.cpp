@@ -254,7 +254,7 @@ void LauncherMain::setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false)
     if (!dbusConnection.isConnected())
         throw Exception("could not connect to the P2P D-Bus via: %1").arg(m_dbusAddressP2P);
 
-    qCDebug(LogQmlRuntime) << "Connected to the P2P D-Bus via:" << m_dbusAddressP2P;
+    qCDebug(LogRuntime) << "Connected to the P2P D-Bus via:" << m_dbusAddressP2P;
 
     if (!m_dbusAddressNotifications.isEmpty()) {
         if (m_dbusAddressNotifications == qL1S("system"))
@@ -267,7 +267,7 @@ void LauncherMain::setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false)
         if (!dbusConnection.isConnected())
             throw Exception("could not connect to the Notification D-Bus via: %1").arg(m_dbusAddressNotifications);
 
-        qCDebug(LogQmlRuntime) << "Connected to the Notification D-Bus via:" << m_dbusAddressNotifications;
+        qCDebug(LogRuntime) << "Connected to the Notification D-Bus via:" << m_dbusAddressNotifications;
     } else {
         qCWarning(LogDeployment) << "Notifications are not supported by this configuration";
     }

@@ -106,6 +106,10 @@ static const char *s_defaultSystemUiDltDescription = "Qt Application Manager";
     \li \c QML
     \li General QML related messages
 \row
+    \li \c am.runtime
+    \li \c RT
+    \li Runtime messages
+\row
     \li \c am.runtime.qml
     \li \c QMRT
     \li QML runtime messages
@@ -144,6 +148,7 @@ QDLT_LOGGING_CATEGORY(LogInstaller, "am.installer", "INST", "Installer sub-syste
 QDLT_LOGGING_CATEGORY(LogGraphics, "am.graphics", "GRPH", "OpenGL/UI related messages")
 QDLT_LOGGING_CATEGORY(LogWaylandDebug, "am.wayland.debug", "WAYL", "Wayland related messages")
 QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "General QML related messages")
+QDLT_LOGGING_CATEGORY(LogRuntime, "am.runtime", "RT", "Runtime messages")
 QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime messages")
 QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC messages")
 QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notifications sub-system messages")
@@ -398,10 +403,10 @@ QVariant Logging::useAMConsoleLogger()
 void Logging::useAMConsoleLogger(const QVariant &config)
 {
     s_useAMConsoleLoggerConfig = config;
-    if (!s_useAMConsoleLoggerConfig.isValid())
-        s_useAMConsoleLogger = !s_messagePatternDefined;
-    else
+    if (s_useAMConsoleLoggerConfig.userType() == QMetaType::Bool)
         s_useAMConsoleLogger = s_useAMConsoleLoggerConfig.toBool();
+    else
+        s_useAMConsoleLogger = !s_messagePatternDefined;
 }
 
 QByteArray Logging::applicationId()

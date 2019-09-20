@@ -188,6 +188,14 @@ Window {
         }
     }
 
+    Text {
+        z: 9999
+        font.pixelSize: 46
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        text: NotificationManager.count > 0 ? NotificationManager.get(0).summary : ""
+    }
+
     Connections {
         target: WindowManager
         onWindowAdded:  {

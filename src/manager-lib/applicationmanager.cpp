@@ -721,7 +721,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
             else if (hasStdioRedirections)
                 cannotUseQuickLaunch = "standard I/O is redirected";
             else if (!app->runtimeParameters().value(qSL("environmentVariables")).toMap().isEmpty())
-                cannotUseQuickLaunch = "the app requests customs environment variables";
+                cannotUseQuickLaunch = "the app requests custom environment variables";
             else if (app->info()->openGLConfiguration() != runtimeManager->systemOpenGLConfiguration())
                 cannotUseQuickLaunch = "the app requests a custom OpenGL configuration";
 

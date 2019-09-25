@@ -38,13 +38,15 @@ simple as a Unix process.
 
 \section1 Predefined Containers
 
-The application manager comes with a one built-in container type: the \c process container,
+The application manager comes with one built-in container type: the \c process container,
 that spawns a new Unix process to execute the requested binary.
 
 In addition, you can find a basic integration of Pelagicore's
-\l{https://github.com/Pelagicore/softwarecontainer}{software-containers} in \c
-examples/softwarecontainers. This can be used as a blueprint to either create a customer-specific
-production version of a softwarecontainers plugin, or to integrate another container solution.
+\l{https://github.com/Pelagicore/softwarecontainer}{SoftwareContainer} in \c
+examples/applicationmanager/softwarecontainer-plugin. For more information, see
+\l{SoftwareContainer Plugin Example}. This example can be used as a blueprint to either create a
+customer-specific production version of a SoftwareContainer plugin, or to integrate another
+container solution.
 
 \section1 Extend with Container Plugins
 
@@ -60,8 +62,8 @@ TARGET = mycontainer-plugin
 QT += appman_plugininterfaces-private
 \endcode
 
-Then, you only have to implement two classes that derive from \c ContainerInterface
-and from \c ContainerManagerInterface respectively:
+Then, you only have to implement two classes that derive from \l ContainerInterface
+and from \l ContainerManagerInterface respectively:
 
 \code
 #include <QtAppManPluginInterfaces/containerinterface.h>
@@ -91,8 +93,8 @@ in multi-process mode:
       locations before passing them on to the container. The table below lists the relevant
       environment variables.
   \li To support hardware OpenGL acceleration, the container needs to have access to the necessary
-      device. For GPUs that follow Linux standards, such as Intel, make sure to have /c{/dev/dri/*}
-      available within the container.
+      devices. For GPUs that follow Linux standards, such as Intel, make sure to have
+      \c{/dev/dri/*} available within the container.
   \li You have to implement PID mapping in your plugin; unless your container solution shares its
       PID namespace with the rest of the ssytem. This is necessary if you want to make use of the
       application manager's security features. Each connection coming into the application manager
@@ -119,7 +121,7 @@ the application. A custom container plugin must forward these variables or adjus
   \li Always set to \c{wayland}.
 \row
   \li \c{QT_IM_MODULE}
-  \li Not set, but explicitly unset by the application manager. Make sure to leave it unset it, to
+  \li Not set, but explicitly unset by the application manager. Make sure to leave it unset, to
       use the automatic Wayland input method implementation.
 \row
   \li \c{DBUS_SESSION_BUS_ADDRESS}
@@ -233,7 +235,7 @@ control which container integration is used:
       each map has a single mapping only. While this single mapping is awkward, it is necessary to
       preserve the order of the mappings. Each key is interpreted as a standard Unix wildcard
       expression that is matched against the application ID. The first match stops the algorithm
-      and the mapping's value is used as the container integration ID. If no matches are found,=
+      and the mapping's value is used as the container integration ID. If no matches are found,
       the resulting containter integration ID is an empty string.
 
     \badcode

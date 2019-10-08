@@ -104,7 +104,7 @@ One example of a simple System UI is the one written for the "Hello World!" Syst
 
 \quotefromfile ../examples/applicationmanager/hello-world/system-ui.qml
 \skipto Item {
-\printuntil window: model.window } } } }
+\printuntil
 
 \section2 Notifications
 

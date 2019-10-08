@@ -376,11 +376,10 @@ void Logging::setFilterRules(const QStringList &rules)
 
 void Logging::setMessagePattern(const QString &pattern)
 {
-    if (!pattern.isEmpty()) {
-        if (!s_messagePatternDefined) {
-            qputenv("QT_MESSAGE_PATTERN", pattern.toLocal8Bit());
-            s_messagePatternDefined = true;
-        }
+    if (!pattern.isEmpty() && !s_messagePatternDefined) {
+        qputenv("QT_MESSAGE_PATTERN", pattern.toLocal8Bit()); // pass on to application processes, however for the
+        qSetMessagePattern(pattern);  // System UI this might be too late, so set pattern explicitly here.
+        s_messagePatternDefined = true;
     }
 }
 

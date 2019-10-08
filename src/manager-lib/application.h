@@ -200,9 +200,11 @@ public:
         removed when requested.
      */
     void setBaseInfo(ApplicationInfo*);
+    AbstractApplicationInfo *baseInfo() const { return m_info.data(); }
+    ApplicationInfo *takeBaseInfo();
     void setUpdatedInfo(ApplicationInfo*);
     ApplicationInfo *updatedInfo() const { return m_updatedInfo.data(); }
-    ApplicationInfo *takeBaseInfo();
+    ApplicationInfo *takeUpdatedInfo();
 
     void setState(State);
     void setProgress(qreal);

@@ -49,10 +49,19 @@ TestCase {
     name: "Installer"
     when: windowShown
 
+    property var stateList: []
+    property int spyTimeout: 5000 * AmTest.timeoutFactor
+
     SignalSpy {
         id: taskFinishedSpy
         target: ApplicationInstaller
         signalName: "taskFinished"
+    }
+
+    SignalSpy {
+        id: taskFailedSpy
+        target: ApplicationInstaller
+        signalName: "taskFailed"
     }
 
     SignalSpy {
@@ -67,27 +76,34 @@ TestCase {
         signalName: "taskRequestingInstallationAcknowledge"
     }
 
-    property var stateList: []
-    property int spyTimeout: 5000 * AmTest.timeoutFactor
+    SignalSpy {
+        id: applicationChangedSpy
+        target: ApplicationManager
+        signalName: "applicationChanged"
+    }
 
-    function test_states() {
-        // App could potentially be installed already. Remove it.
+
+    function init() {
+        // Remove previous installations
         if (ApplicationInstaller.removePackage("test.install.app", false, true)) {
             taskFinishedSpy.wait(spyTimeout);
             compare(taskFinishedSpy.count, 1);
             taskFinishedSpy.clear();
         }
+    }
 
-        ApplicationManager.applicationAdded.connect(function(appId) {
-            var app = ApplicationManager.application(appId);
-            stateList.push(app.state)
+    function test_states() {
+        ApplicationManager.applicationAdded.connect(function(id) {
+            var app = ApplicationManager.application(id);
+            stateList.push(app.state);
             app.stateChanged.connect(function(state) {
-                compare(state, app.state)
-                stateList.push(state)
-            })
-        })
+                compare(state, app.state);
+                stateList.push(state);
+            });
+        });
 
-        var id = ApplicationInstaller.startPackageInstallation("internal-0", "appv1.pkg")
+        taskStateChangedSpy.clear();
+        var id = ApplicationInstaller.startPackageInstallation("internal-0", "appv1.pkg");
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -101,23 +117,24 @@ TestCase {
         taskFinishedSpy.clear();
 
         compare(stateList.length, 2);
-        compare(stateList[0], ApplicationObject.BeingInstalled)
-        compare(stateList[1], ApplicationObject.Installed)
-        stateList = []
+        compare(stateList[0], ApplicationObject.BeingInstalled);
+        compare(stateList[1], ApplicationObject.Installed);
+        stateList = [];
 
         id = ApplicationInstaller.startPackageInstallation("internal-0", "appv2.pkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
+        taskRequestingInstallationAcknowledgeSpy.clear();
         ApplicationInstaller.acknowledgePackageInstallation(id);
 
         taskFinishedSpy.wait(spyTimeout);
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
-        compare(stateList[0], ApplicationObject.BeingUpdated)
-        compare(stateList[1], ApplicationObject.Installed)
-        stateList = []
+        compare(stateList[0], ApplicationObject.BeingUpdated);
+        compare(stateList[1], ApplicationObject.Installed);
+        stateList = [];
 
         id = ApplicationInstaller.removePackage(appId, false, false);
 
@@ -125,8 +142,8 @@ TestCase {
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
-        compare(stateList[0], ApplicationObject.BeingRemoved)
-        stateList = []
+        compare(stateList[0], ApplicationObject.BeingRemoved);
+        stateList = [];
         // Cannot compare app.state any more, since app might already be dead
 
         verify(taskStateChangedSpy.count > 10);
@@ -143,5 +160,88 @@ TestCase {
                            ApplicationInstaller.Executing ]
         for (var i = 0; i < taskStates.length; i++)
             compare(taskStateChangedSpy.signalArguments[i][1], taskStates[i], "- index: " + i);
+    }
+
+    function test_cancel_update() {
+        var id = ApplicationInstaller.startPackageInstallation("internal-0", "appv1.pkg")
+        taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
+        compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
+        compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
+        var appId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
+        compare(appId, "test.install.app");
+        taskRequestingInstallationAcknowledgeSpy.clear();
+        ApplicationInstaller.acknowledgePackageInstallation(id);
+
+        taskFinishedSpy.wait(spyTimeout);
+        taskFinishedSpy.clear();
+
+        var app = ApplicationManager.application(appId);
+        compare(app.icon.toString().slice(-9), "icon1.png")
+        compare(app.version, "v1");
+
+        id = ApplicationInstaller.startPackageInstallation("internal-0", "appv2.pkg")
+        taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
+        appId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
+        compare(appId, "test.install.app");
+        taskRequestingInstallationAcknowledgeSpy.clear();
+        ApplicationInstaller.cancelTask(id);
+
+        taskFailedSpy.wait(spyTimeout);
+        taskFailedSpy.clear();
+
+        compare(app.icon.toString().slice(-9), "icon1.png")
+        compare(app.version, "v1");
+    }
+
+    function test_cancel_builtin_update() {
+        taskStateChangedSpy.clear()
+        var app = ApplicationManager.application("builtin.app");
+        verify(app.builtIn);
+        compare(app.icon.toString().slice(-9), "icon1.png")
+        compare(app.version, "v1");
+
+        var id = ApplicationInstaller.startPackageInstallation("internal-0", "builtinv2.pkg")
+        taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
+        compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
+        compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
+        taskRequestingInstallationAcknowledgeSpy.clear();
+        ApplicationInstaller.cancelTask(id);
+
+        taskFailedSpy.wait(spyTimeout);
+        taskFailedSpy.clear();
+
+        verify(app.builtIn);
+        compare(app.icon.toString().slice(-9), "icon1.png")
+        compare(app.version, "v1");
+    }
+
+    function test_builtin_update_downgrade() {
+        taskStateChangedSpy.clear()
+        var id = ApplicationInstaller.startPackageInstallation("internal-0", "builtinv2.pkg")
+        taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
+        compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
+        compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
+        taskRequestingInstallationAcknowledgeSpy.clear();
+        ApplicationInstaller.acknowledgePackageInstallation(id);
+
+        taskFinishedSpy.wait(spyTimeout);
+        compare(ApplicationManager.get("builtin.app").version, "v2");
+        taskFinishedSpy.clear();
+        applicationChangedSpy.clear();
+
+        // remvove is a downgrade
+        verify(ApplicationInstaller.removePackage("builtin.app", false, true));
+        taskFinishedSpy.wait(spyTimeout);
+        compare(taskFinishedSpy.count, 1);
+        taskFinishedSpy.clear();
+
+        compare(applicationChangedSpy.count, 5);
+        compare(applicationChangedSpy.signalArguments[3][0], "builtin.app");
+        compare(applicationChangedSpy.signalArguments[3][1], []);
+        compare(applicationChangedSpy.signalArguments[4][1], ["isBlocked"]);
+
+        var appmodel = ApplicationManager.get("builtin.app");
+        verify(!appmodel.isBlocked);
+        compare(appmodel.version, "v1");
     }
 }

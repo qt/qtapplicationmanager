@@ -262,6 +262,16 @@ QStringList DefaultConfiguration::importPaths() const
     return importPaths;
 }
 
+QStringList DefaultConfiguration::pluginPaths() const
+{
+    QStringList pluginPaths = value<QStringList>(nullptr, { "ui", "pluginPaths" });
+
+    for (int i = 0; i < pluginPaths.size(); ++i)
+        pluginPaths[i] = QFileInfo(pluginPaths.at(i)).absoluteFilePath();
+
+    return pluginPaths;
+}
+
 bool DefaultConfiguration::verbose() const
 {
     return value<bool>("verbose") || m_forceVerbose;

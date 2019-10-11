@@ -97,6 +97,14 @@ by containers and for security reasons.
 In general, paths defined in the configuration might be provided to QML as absolute paths in
 single-process mode; but as relative paths in multi-process mode.
 
+Similarly, a custom \c pluginPath as part of \c info.yaml behaves differently in single-process
+mode, than in multi-process mode. When a new process starts in multi-process mode, the new \c
+pluginPath can be added to Qt very early on, before most systems are initialized. This ensures that
+when a QPluginLoader is used, the \c pluginPath is correct. In comparison, with single-process
+mode, we need to add an additional \c pluginPath to the QApplication already running. Whether this
+change has any effect depends on how the plugin is loaded: if the \c pluginPath is reevaluated
+whenever a new plugin needs to be loaded.
+
 \note In single-process mode, some configuration options have no effect, such as: \c quicklaunch,
       \c quicklaunchQml, \c crashAction, and so on.
 

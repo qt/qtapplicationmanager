@@ -190,7 +190,7 @@ void ProcessStatus::setApplicationId(const QString &appId)
                 qmlWarning(this) << "Invalid application ID:" << appId;
             } else {
                 m_application = ApplicationManager::instance()->application(appIndex);
-                connect(m_application, &Application::runStateChanged, this, &ProcessStatus::onRunStateChanged);
+                connect(m_application.data(), &Application::runStateChanged, this, &ProcessStatus::onRunStateChanged);
             }
         }
         determinePid();

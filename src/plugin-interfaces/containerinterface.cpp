@@ -296,8 +296,9 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     The application-manager will only ever call this function once for any given instance.
 
     This function should return \c true in case it succeeded or \c false otherwise. In case it
-    returns \c true, the implementation needs to either emit the started() or errorOccurred() signal
-    (can be delayed) in response to this call.
+    returns \c true, the implementation needs to either emit the started() or
+    \l{QProcess::errorOccurred()}{errorOccurred()} signal (can be delayed) in response to this
+    call.
 
     \sa QProcess::start()
 */
@@ -326,7 +327,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 
 /*! \fn void ContainerInterface::kill()
 
-    Called by the application-manager, if it wants to kills the current process within the
+    Called by the application-manager, if it wants to kill the current process within the
     container, causing it to exit immediately.
 
     On Unix, the equivalent would be sending a \c SIGKILL signal.
@@ -431,6 +432,6 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 
     In case the \a debugWrapperCommand is not empty, the plugin is requested to execute the binary
     set by ContainterInterface::setProgram using this debug-wrapper. The plugin is responsible for
-    combining both and by handling the replacement of \c{%program%} and \c{%arguments%}. See the
+    combining both and for handling the replacement of \c{%program%} and \c{%arguments%}. See the
     \l{DebugWrappers} {debug-wrapper documentation} for more information.
 */

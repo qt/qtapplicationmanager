@@ -1,0 +1,106 @@
+/****************************************************************************
+**
+** Copyright (C) 2019 Luxoft Sweden AB
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Qt Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\example applicationmanager/softwarecontainer-plugin
+\brief Learn how to integrate Software Containers with the Application Manager.
+\ingroup applicationmanager-examples
+\title SoftwareContainer Plugin Example
+
+\section1 Introduction
+
+This example shows how to integrate \l{https://github.com/Pelagicore/softwarecontainer}
+{Pelagicore's SoftwareContainers} with the Application Manager.
+
+\note As a prerequisite, familiarize yourself with \l{Containers} beforehand.
+
+In \c softwarecontainer.cpp, parts of the container's configuration is hardcoded; all of the
+capability definition is in the JSON manifest file located in
+\c{service-manifest.d/io.qt.AppliciationManager.Application/}.
+
+The Wayland/OpenGL passthrough is tested against Intel GPUs and VMWare's virtual GPU.
+
+\section1 Run the SoftwareContainer Agent
+
+To run the softwarecontainer-agent, you must start it as root. By default, this agent registers
+itself on the system D-Bus. So, you need to have a policy file in place, to allow the agent to
+register itself on the system-bus.
+
+If you want to run the agent on the session bus instead, via the \c{--session-bus} parameter,
+then you have to add the following lines to one of your \c config.yaml files:
+
+\badcode
+containers:
+  softwarecontainer:
+    dbus: 'session'
+\endcode
+
+It's mandatory to pass the service manifest directory that comes with the plugin via \c{-m}.
+Otherwise, the container setup fails due to the missing \c{io.qt.ApplicationManager.Application}
+capability.
+
+Make sure that the agent has access to the same session bus that the application manager uses,
+if you intend on forwarding this bus. If the agent is run as root, but the application manager
+isn't, this can be tricky -- since the default session bus policy in most Linux distros
+disallows root to access user session busses. However, you can workaround this issue by adding
+an \c{<allow user="root"/>} policy within the \c{<policy context="default">} element in
+\c{/etc/dbus-1/session.conf}.
+
+Additionally, make sure to tell the agent about your environment, when running it via sudo:
+
+\badcode
+sudo XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS softwarecontainer-agent -m
+/path/to/application-manager/examples/softwarecontainer-plugin/service-manifest.d/
+\endcode
+
+On the Application Manager side, you need to activate the plugin by adding a line similar to the
+one shown below, to one of your \c config.yaml files:
+
+\badcode
+plugins:
+   container: [ "/path/to/libsoftwarecontainer-plugin.so" ]
+\endcode
+
+To actually run applications within software containers, you have to add a container selection
+configuration. For more information, see \l{Container Selection Configuration}.
+
+To simplify developing on the desktop, normally, you want your \c $HOME directory mounted into
+the container in \c read-only mode. This way, you don't have to install your application manager
+into \c{/usr/} after every build. This behavior only works, given that your build directory is
+located somewhere in \c{$HOME}, otherwise the container won't see the appman-launcher-qml binary.
+This behavior is \b not enabled by default; but you can activate it with the following lines in
+one of your \c config.yaml files:
+
+\badcode
+containers:
+  softwarecontainer:
+    bindMountHome: yes
+\endcode
+
+*/

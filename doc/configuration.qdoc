@@ -222,6 +222,10 @@ or across multiple config files, the final value is resolved based on these rule
         \li array<string>
         \li Adds additional QML import paths to the System UI.
     \row
+        \li [\c ui/pluginPaths]
+        \li array<string>
+        \li Adds additional Qt plugin paths to the System UI.
+    \row
         \li [\c ui/style]
         \li string
         \li If set, the given style is used by QtQuickControls 2.
@@ -524,7 +528,12 @@ an additional column specifying which runtime a configuration option applies to:
         \li \c importPaths
         \li qml
         \li array<string>
-        \li Adds an additional QML import path for apps started via this runtime.
+        \li Adds additional QML import paths for apps started via this runtime.
+    \row
+        \li \c pluginPaths
+        \li qml
+        \li array<string>
+        \li Adds additional Qt plugin paths for apps started via this runtime.
     \row
         \li \c plugins
         \li qml

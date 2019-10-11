@@ -278,6 +278,13 @@ that specifies which runtime a configuration option applies to:
         resources \l{Compiled-In Resources}{compiled-in} and registers them within the application
         process. Resources can be accessed with the ":" or "qrc://" file path prefix.
 \row
+    \li \c pluginPaths
+    \li qml, qml-in-process
+    \li array<string>
+    \li A list of paths to add to Qt's library paths, which are used to find plugins. Use of this
+        parameter is equivalent to setting \c QT_PLUGIN_PATH for a program started from the command
+        line.
+\row
     \li \c arguments
     \li native
     \li array<string>

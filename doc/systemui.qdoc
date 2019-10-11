@@ -26,21 +26,194 @@
 **
 ****************************************************************************/
 
-/*
-    We should mention some peculiarities, once this is documented:
-
-    If the root element of the System-UI is an Item, the application-manager will create a
-    QQuickWindow for it and set the Item as its root Item.
-
-    If the root element of the System-UI is a Window (or an Item, which will be wrapped in a
-    Window, see above), the window will be shown initially, regardless of its visible property.
-    Also, it will be registered as a compositor view. All other windows have to be registered
-    manually.
-*/
-
 /*!
 
-\page howto-sysui.html
-\title How to write a System-UI
+\page system-ui.html
+\title The System UI
+
+The System UI is the part of a UI which starts and stops any application, on a device. It's
+responsible for managing the application windows and compositing them in a specific way. For
+example, to display the applications in full-screen, or to allow multiple windows to be displayed
+from different applications at the same time.
+
+On desktop systems, the System UI is akin to the Microsoft Windows' Shell, or KDE's Plasmashell
+plus the KWin compositor.
+
+The System UI has the following tasks:
+\table
+    \header
+        \li Task
+        \li Description
+    \row
+        \li Compositing
+        \li Manage multiple applications' surfaces, known as windows. \br
+            Arrange these windows on one or more physical screens, according to the required
+            design. \br
+            Handle window decoration, transition effects and other system-wide user experience.
+    \row
+        \li Communication Interface
+        \li Act as a channel to exchange information between applciations and itself, such as to
+            switch the language.
+    \row
+        \li Input Handling
+        \li Switch focus between input events, according to the user's current focus. \br
+            Provide system input services, such as launch a virtual keyboard for touch-based
+            systems.
+    \row
+        \li Manage system-wide applications and services
+        \li Manage the application life-cycle, by starting applications upon user interaction and
+            stopping them in critical situations, such as low memory. \br
+            Provide a central UI to monitor the UI performance and all applications that have
+            started, by showing statistics such as frame rate, the amount of CPU currently used,
+            and memory resources.
+    \row
+        \li Manage idle time and display the \uicontrol{Home Screen}
+        \li Display the default view to the user after startup. \br
+            Display essential data, such as the current time. \br
+            Display a view composed of several selected applications.
+\endtable
+
+\section1 Implement a System UI
+
+The System UI's main feature is its ability to manage multiple applications and windows.
+Consequently, Linux-based systems are the recommended development environment, where multi-process
+mode is enabled. On other Operating Systems, you can use the single-process mode. For more
+information on the difference between single-process and multi-process, see
+\l{Single-Process vs. Multi-Process Mode} and \l{Wayland and Qt}.
+
+\section2 Window Management
+
+The System UI's central role is to handle application windows. On the client side, you need to use
+an \l{ApplicationManagerWindow}. On the System UI side, you need to implement a handler for
+WindowManager::windowAdded. Whenever a client window becomes visible, the WindowManager::windowAdded
+signal is emitted. The signal has one parameter, WindowObject, which is the System UI side
+representation of the client side ApplicationManagerWindow.
+
+To differentiate between client windows, you should use window properties. For instance, you could
+attach a \c type property to a client window, to tell the System UI, whether it's a top-level
+window, a popup, or something else. Both client and server side window representations can access
+these properties. Typically, they are always in-sync; but the underlying Wayland protocol is
+entirely asynchronous.
+
+To include the WindowObject in the System UI's render tree, set the WindowObject as the \c window
+property for a WindowItem. The WindowItem acts as a container \l{Item} for WindowObjects.
+Consequently, the WindowItem determines the position, visibility, and so on, of the client window
+in the System UI.
+
+One example of a simple System UI is the one written for the "Hello World!" System UI Example:
+
+\quotefromfile ../examples/applicationmanager/hello-world/system-ui.qml
+\skipto Item {
+\printuntil window: model.window } } } }
+
+\section2 Notifications
+
+In cases where you'd like to display notificiations or pop-ups, applications or clients can
+create these with \l{ApplicationInterface.createNotification()}. They are then made available
+on the System UI via the \l{NotificationManager}.
+
+The code snippet below is part of the \l{Desktop System UI Example} that illustrates how to
+display pop-ups.
+
+\quotefromfile ../examples/applicationmanager/minidesk/system-ui/main.qml
+\skipto System-UI for a notification
+\printto Handler for WindowManager signals
+
+\section2 Intents
+
+The System UI and other applications can send and receive intents. This is exposed via the
+\l{Intent} and \l{IntentServer} QML types. The Intent represents a single intent definition on
+the System UI; the IntentServer is the singleton on the System UI-side that represents the
+intents sub-system.
+
+For more details on implementing support for intents, see the
+\l{Intents System UI and Applications Example}.
+
+\section2 Life-Cycle
+
+The \l{ApplicationManager} provides APIs to start and stop an application. However, the
+recommended approach is to use \l{ApplicationObject::start()} and \l{ApplicationObject::stop()}.
+Optionally, you can also pass a \c documentUrl in the \l{ApplicationObject::start()}{start()}
+function. Then, when you call \c{start()} several times, with a different \c documentUrl()
+each time, you won't be restarting the application; but only triggering the
+\l{ApplicationInterface::openDocument()} on the application or client side.
+\l{ApplicationInterface::stop()} triggers \l{ApplicationInterface::quit()} on the application
+side. The application should do all the necessary clean-ups and then confirm that it can be
+terminates with \l{ApplicationInterface::acknowledgeQuit()}.
+
+You can implement other life-cycle management features that are tailored to the specific
+requirements of IPC mechanisms like window properties, \l{ApplicationInterfaceExtension},
+or proprietary IPCs.
+
+For more information, see the \l{Desktop System UI Example}.
+
+\section2 Monitoring
+
+To monitor your application, you can use the \l{MonitorModel} to fetch data from various
+sources at intervals and store a history of these values. You can use this data for analytical
+purposes, such as to plot its previous values over time. For more information, see the
+\l{Display Information about Application Processes Example}.
+
+\section2 Application Installer
+
+The \l{ApplicationManager} provides a list of all available applications in the
+\l{ApplicationModel}. In addition to applications bundled with the System UI,
+\e{system applications}, the ApplicationManager also provides a way to install new applications
+at runtime. These applications are maintained by the \l{ApplicationInstaller} singleton.
+
+To start an installation, use \l{ApplicationInstaller::startPackageInstallation}. Once all
+metadata from the application's package is extracted, the
+\l{ApplicationInstaller::taskRequestingInstallationAcknowledge} signal is emitted. This signal
+can be used to give you more information about the package, such as the name, size, or
+permissions. This installation needs to be confirmed using
+\l{ApplicationInstaller::acknowledgePackageInstallation}. After the installation is complete,
+you can start the new application, as described in the \l{Life-Cycle}. To remove applications
+that have been installed, use \l{ApplicationInstaller::removePackage}.
+
+For more information, see \l{Application Installer}.
+
+\section1 Best Practices When You Write a System UI
+
+Below are some key practices to consider when you write a System UI:
+
+\list
+    \li \b{Always test your System UI and its applications on the target as early as possible.}
+        This is especially useful because the combination of your target hardware and the
+        asynchronous Wayland protocol may result in some timing constraints on some parts of
+        the system. For example, when are window properties available to the System UI, after
+        an application has started. These constraints are best identified as early as possible.
+        To be able to run a fluent UI, hardware acceleration is necessary for the System UI as
+        well as for applications (or Wayland clients). This fluency is achieved via hardware
+        specific texture sharing mechanisms. Now, these mechanisms are hardware specific and
+        it's likely that a different mechanism is used on the target platform, compared to your
+        development machine. Testing on the target hardware as early as possible can help to
+        bring forward any issues with the sharing mechanism or side effects from other graphic
+        intense elements, such as shader effects or 3D engine integrations.
+    \li \b{Allow the System UI to stop applications that take up too much memory or CPU.}
+        Design your system in such a way that lets the System UI stop applications when necessary,
+        particularly in situations where hardware resources like memory or CPU is low. This
+        provides better scalability.
+    \li \b{Always use two different plugin folders.}
+        One folder for System UI-specific or privileged applications. Another folder for other
+        applications that contain base elements, such as your UI style or the Items for your
+        different window types.
+\endlist
+
+
+\section1 Notes on The Root Element
+
+\list
+    \li If the root element of the System UI is an Item, the application manager creates a
+        QQuickWindow for it and sets the Item as its root Item.
+    \li If the root element of the System UI is a Window -- or an Item that is wrapped in a Window
+        -- the window is shown initially, regardless of the value of its \c visible property.
+\endlist
+
+\section1 Related Information
+
+\list
+    \li \l{Write Applications}
+    \li \l{QtApplicationManager.SystemUI QML module}
+\endlist
 
 */

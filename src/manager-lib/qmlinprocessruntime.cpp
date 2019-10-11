@@ -123,6 +123,17 @@ bool QmlInProcessRuntime::start()
         loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->info()->absoluteCodeFilePath()).path());
     }
 
+    const QStringList pluginPaths = variantToStringList(configuration().value(qSL("pluginPaths")))
+                                  + variantToStringList(m_app->runtimeParameters().value(qSL("pluginPaths")));
+
+    if (!pluginPaths.isEmpty()) {
+        const QString codeDir = m_app->codeDir() + QDir::separator();
+        for (const QString &path : pluginPaths)
+            qApp->addLibraryPath(QFileInfo(path).isRelative() ? codeDir + path : path);
+
+        qCDebug(LogSystem) << "Updated plugin paths:" << qApp->libraryPaths();
+    }
+
     const QStringList importPaths = variantToStringList(configuration().value(qSL("importPaths")))
                                   + variantToStringList(m_app->runtimeParameters().value(qSL("importPaths")));
     if (!importPaths.isEmpty()) {

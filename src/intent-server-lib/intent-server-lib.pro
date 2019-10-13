@@ -15,12 +15,14 @@ HEADERS += \
     intent.h \
     intentserver.h \
     intentserverrequest.h \
-    intentserversysteminterface.h
+    intentserversysteminterface.h \
+    intentmodel.h \
 
 SOURCES += \
     intent.cpp \
     intentserver.cpp \
     intentserverrequest.cpp \
-    intentserversysteminterface.cpp
+    intentserversysteminterface.cpp \
+    intentmodel.cpp \
 
 load(qt_module)

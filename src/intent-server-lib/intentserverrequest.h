@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -60,7 +61,7 @@ class IntentServerRequest
 
 public:
     IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
-                        const QVector<Intent> &potentialIntents, const QVariantMap &parameters);
+                        const QVector<Intent *> &potentialIntents, const QVariantMap &parameters);
 
     enum class State {
         ReceivedRequest,
@@ -79,7 +80,7 @@ public:
     QString intentId() const;
     QString requestingApplicationId() const;
     QString handlingApplicationId() const;
-    QVector<Intent> potentialIntents() const;
+    QVector<Intent *> potentialIntents() const;
     QVariantMap parameters() const;
     bool succeeded() const;
     QVariantMap result() const;
@@ -97,7 +98,7 @@ private:
     QString m_intentId;
     QString m_requestingApplicationId;
     QString m_handlingApplicationId;
-    QVector<Intent> m_potentialIntents;
+    QVector<Intent *> m_potentialIntents;
     QVariantMap m_parameters;
     QVariantMap m_result;
 };

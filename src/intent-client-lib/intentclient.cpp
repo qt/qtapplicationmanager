@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -253,7 +254,7 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
 
     if (it == m_waiting.cend()) {
         qCWarning(LogIntents) << "IntentClient received an unexpected intent reply for request"
-                              << requestId << " succeeded:" << error << "error:"
+                              << requestId << " succeeded:" << !error << "error:"
                               << result.value(qL1S("errorMessage")).toString() << "result:" << result;
         return;
     }

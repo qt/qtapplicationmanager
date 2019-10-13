@@ -2,7 +2,6 @@
 **
 ** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Qt Application Manager.
@@ -51,20 +50,20 @@ QT_FORWARD_DECLARE_CLASS(QJSEngine);
 
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationModelPrivate;
-class Application;
+class Intent;
+class IntentModelPrivate;
 
-class ApplicationModel : public QSortFilterProxyModel
+class IntentModel : public QSortFilterProxyModel
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationModel 2.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentModel 2.0")
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(QJSValue filterFunction READ filterFunction WRITE setFilterFunction NOTIFY filterFunctionChanged)
     Q_PROPERTY(QJSValue sortFunction READ sortFunction WRITE setSortFunction NOTIFY sortFunctionChanged)
 
 public:
-    ApplicationModel(QObject *parent = nullptr);
+    IntentModel(QObject *parent = nullptr);
 
     int count() const;
 
@@ -74,8 +73,9 @@ public:
     QJSValue sortFunction() const;
     void setSortFunction(const QJSValue &callback);
 
-    Q_INVOKABLE int indexOfApplication(const QString &id) const;
-    Q_INVOKABLE int indexOfApplication(Application *application) const;
+    Q_INVOKABLE int indexOfIntent(const QString &intentId, const QString &applicationId,
+                                  const QVariantMap &parameters = {}) const;
+    Q_INVOKABLE int indexOfIntent(Intent *intent);
     Q_INVOKABLE int mapToSource(int ourIndex) const;
     Q_INVOKABLE int mapFromSource(int sourceIndex) const;
 
@@ -94,7 +94,7 @@ signals:
 private:
     QJSEngine *getJSEngine() const;
 
-    ApplicationModelPrivate *d;
+    IntentModelPrivate *d;
 };
 
 QT_END_NAMESPACE_AM

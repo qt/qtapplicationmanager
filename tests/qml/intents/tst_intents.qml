@@ -83,7 +83,7 @@ TestCase {
         verify(intent)
         compare(intent.intentId, "both")
         compare(intent.applicationId, "intents1")
-        compare(intent.visibility, Intent.Public)
+        compare(intent.visibility, IntentObject.Public)
         compare(intent.requiredCapabilities, [])
         compare(intent.parameterMatch, {})
 

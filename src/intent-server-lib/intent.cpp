@@ -45,48 +45,48 @@
 
 #include <QRegularExpression>
 #include <QVariant>
+#include <QLocale>
 
 QT_BEGIN_NAMESPACE_AM
 
 
 /*!
-    \qmltype Intent
+    \qmltype IntentObject
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
     \brief This type represents an Intent definition on the System-UI side.
 
-    This is a QML gadget class representing a single Intent definition for a specific application.
+    This is a QML object class representing a single Intent definition for a specific application.
     It is not creatable from QML code and all properties are read-only. Only functions and
-    properties of IntentServer will return instances of this class.
+    properties of IntentServer will return pointers to this class.
 */
 
-/*! \qmlproperty bool Intent::valid
-    \readonly
-    Set to \c true, if this instance reprensents a valid intent, or \c false otherwise.
-*/
-
-/*! \qmlproperty string Intent::intentId
+/*! \qmlproperty string IntentObject::intentId
     \readonly
     The id of the intent.
 */
 
-/*! \qmlproperty string Intent::applicationId
+/*! \qmlproperty string IntentObject::packageId
     \readonly
-    The id of the application that is handling this intent.
+    The id of the package that the handling application of this intent is part of.
 */
 
-/*! \qmlproperty Intent.Visibility Intent::visibility
+/*! \qmlproperty string IntentObject::applicationId
     \readonly
-    The visibility of this intent for other applications.
+    The id of the application responsible for handling this intent.
+*/
+
+/*! \qmlproperty IntentObject.Visibility IntentObject::visibility
+    \readonly
+    The visibility of this intent for other packages.
 
     \list
-    \li Intent.Public - Any application can request this intent.
-    \li Intent.Private - Only the handling application can request this intent (this will be more
-                         useful once application background services have been implemented).
+    \li IntentObject.Public - Any application can request this intent.
+    \li IntentObject.Private - Only applications from the same package can request this intent.
     \endlist
 */
 
-/*! \qmlproperty list<string> Intent::requiredCapabilities
+/*! \qmlproperty list<string> IntentObject::requiredCapabilities
     \readonly
     An \l{ApplicationObject}{application} requesting this intent needs to have all of the given
     capabilities.
@@ -94,7 +94,7 @@ QT_BEGIN_NAMESPACE_AM
     \sa ApplicationObject::capabilities
 */
 
-/*! \qmlproperty var Intent::parameterMatch
+/*! \qmlproperty var IntentObject::parameterMatch
     \readonly
     A handling application can limit what parameter values it accepts. One example would be an
     open-mime-type intent that is implemented by many applications: there would be a \c mimeType
@@ -107,34 +107,21 @@ QT_BEGIN_NAMESPACE_AM
 Intent::Intent()
 { }
 
-Intent::Intent(const QString &id, const QString &applicationId, const QString &backgroundHandlerId,
-               const QStringList &capabilities, Intent::Visibility visibility, const QVariantMap &parameterMatch)
+Intent::Intent(const QString &id, const QString &packageId, const QString &applicationId,
+               const QStringList &capabilities, Intent::Visibility visibility,
+               const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
+               const QUrl &icon, const QStringList &categories)
     : m_intentId(id)
     , m_visibility(visibility)
     , m_requiredCapabilities(capabilities)
     , m_parameterMatch(parameterMatch)
+    , m_packageId(packageId)
     , m_applicationId(applicationId)
-    , m_backgroundHandlerId(backgroundHandlerId)
-{ }
-
-Intent::operator bool() const
+    , m_categories(categories)
+    , m_icon(icon)
 {
-    return !m_intentId.isEmpty();
-}
-
-bool Intent::operator==(const Intent &other) const
-{
-    return (m_intentId == other.m_intentId)
-            && (m_visibility == other.m_visibility)
-            && (m_requiredCapabilities == other.m_requiredCapabilities)
-            && (m_parameterMatch == other.m_parameterMatch)
-            && (m_applicationId == other.m_applicationId)
-            && (m_backgroundHandlerId == other.m_backgroundHandlerId);
-}
-
-bool Intent::operator <(const Intent &other) const
-{
-    return (m_intentId < other.m_intentId) ? true : (m_applicationId < other.m_applicationId);
+    for (auto it = names.cbegin(); it != names.cend(); ++it)
+        m_names.insert(it.key(), it.value());
 }
 
 QString Intent::intentId() const
@@ -157,14 +144,14 @@ QVariantMap Intent::parameterMatch() const
     return m_parameterMatch;
 }
 
+QString Intent::packageId() const
+{
+    return m_packageId;
+}
+
 QString Intent::applicationId() const
 {
     return m_applicationId;
-}
-
-QString Intent::backgroundServiceId() const
-{
-    return m_backgroundHandlerId;
 }
 
 bool Intent::checkParameterMatch(const QVariantMap &parameters) const
@@ -192,7 +179,7 @@ bool Intent::checkParameterMatch(const QVariantMap &parameters) const
             bool foundMatch = false;
             const QVariantList rvlist = requiredValue.toList();
             for (const QVariant &rv2 : rvlist) {
-                if (actualValue.canConvert(rv2.type()) && actualValue == rv2) {
+                if (actualValue.canConvert(int(rv2.type())) && actualValue == rv2) {
                     foundMatch = true;
                     break;
                 }
@@ -209,6 +196,38 @@ bool Intent::checkParameterMatch(const QVariantMap &parameters) const
         }
     }
     return true;
+}
+
+QUrl Intent::icon() const
+{
+    return m_icon;
+}
+
+QString Intent::name() const
+{
+    QVariant name;
+    if (!m_names.isEmpty()) {
+        name = m_names.value(QLocale::system().name()); //TODO: language changes
+        if (name.isNull())
+            name = m_names.value(qSL("en"));
+        if (name.isNull())
+            name = m_names.value(qSL("en_US"));
+        if (name.isNull())
+            name = *m_names.constBegin();
+    } else {
+        name = intentId();
+    }
+    return name.toString();
+}
+
+QVariantMap Intent::names() const
+{
+    return m_names;
+}
+
+QStringList Intent::categories() const
+{
+    return m_categories;
 }
 
 QT_END_NAMESPACE_AM

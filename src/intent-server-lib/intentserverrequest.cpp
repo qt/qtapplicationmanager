@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -45,7 +46,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 IntentServerRequest::IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
-                                         const QVector<Intent> &potentialIntents,
+                                         const QVector<Intent *> &potentialIntents,
                                          const QVariantMap &parameters)
     : m_id(QUuid::createUuid())
     , m_state(State::ReceivedRequest)
@@ -57,7 +58,7 @@ IntentServerRequest::IntentServerRequest(const QString &requestingApplicationId,
     Q_ASSERT(!potentialIntents.isEmpty());
 
     if (potentialIntents.size() == 1)
-        setHandlingApplicationId(potentialIntents.first().applicationId());
+        setHandlingApplicationId(potentialIntents.first()->applicationId());
 }
 
 IntentServerRequest::State IntentServerRequest::state() const
@@ -85,7 +86,7 @@ QString IntentServerRequest::handlingApplicationId() const
     return m_handlingApplicationId;
 }
 
-QVector<Intent> IntentServerRequest::potentialIntents() const
+QVector<Intent *> IntentServerRequest::potentialIntents() const
 {
     return m_potentialIntents;
 }

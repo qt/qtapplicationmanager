@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -60,7 +61,10 @@ IntentServer *IntentServerSystemInterface::intentServer() const
     return m_is;
 }
 
-IntentServerRequest *IntentServerSystemInterface::requestToSystem(const QString &requestingApplicationId, const QString &intentId, const QString &applicationId, const QVariantMap &parameters)
+IntentServerRequest *IntentServerSystemInterface::requestToSystem(const QString &requestingApplicationId,
+                                                                  const QString &intentId,
+                                                                  const QString &applicationId,
+                                                                  const QVariantMap &parameters)
 {
     // not possible to do via signal, due to return value
     return m_is->requestToSystem(requestingApplicationId, intentId, applicationId, parameters);

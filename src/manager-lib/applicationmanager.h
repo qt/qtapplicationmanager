@@ -136,6 +136,7 @@ public:
     Q_INVOKABLE Application *application(int index) const;
     Q_INVOKABLE Application *application(const QString &id) const;
     Q_INVOKABLE int indexOfApplication(const QString &id) const;
+    Q_INVOKABLE int indexOfApplication(Application *application) const;
 
     Q_INVOKABLE void acknowledgeOpenUrlRequest(const QString &requestId, const QString &appId);
     Q_INVOKABLE void rejectOpenUrlRequest(const QString &requestId);

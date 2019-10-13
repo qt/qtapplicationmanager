@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -49,6 +50,7 @@
 #include <QtAppManLauncher/private/applicationmanagerwindow_p.h>
 #include <QtAppManIntentServer/intent.h>
 #include <QtAppManIntentServer/intentserver.h>
+#include <QtAppManIntentServer/intentmodel.h>
 #include <QtAppManIntentClient/intentclient.h>
 #include <QtAppManIntentClient/intentclientrequest.h>
 #include <QtAppManIntentClient/intenthandler.h>
@@ -101,6 +103,7 @@ static const QVector<const QMetaObject *> all = {
     // intent-server-lib
     &IntentServer::staticMetaObject,
     &Intent::staticMetaObject,
+    &IntentModel::staticMetaObject,
 
     // monitor-lib
     &CpuStatus::staticMetaObject,

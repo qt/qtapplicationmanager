@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -333,20 +334,18 @@ void IntentClientRequest::setRequestId(const QUuid &requestId)
 
 void IntentClientRequest::setResult(const QVariantMap &result)
 {
-    if (m_result != result) {
+    if (m_result != result)
         m_result = result;
-        m_succeeded = true;
-        doFinish();
-    }
+    m_succeeded = true;
+    doFinish();
 }
 
 void IntentClientRequest::setErrorMessage(const QString &errorMessage)
 {
-    if (m_errorMessage != errorMessage) {
+    if (m_errorMessage != errorMessage)
         m_errorMessage = errorMessage;
-        m_succeeded = false;
-        doFinish();
-    }
+    m_succeeded = false;
+    doFinish();
 }
 
 void IntentClientRequest::doFinish()

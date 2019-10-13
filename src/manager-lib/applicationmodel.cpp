@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -42,10 +43,12 @@
 
 #include <QQmlContext>
 #include <QQmlEngine>
+#include <QQmlInfo>
 #include <QJSEngine>
 #include <QJSValueList>
 
 #include "global.h"
+#include "logging.h"
 #include "applicationmanager.h"
 #include "applicationmodel.h"
 #include "application.h"
@@ -105,6 +108,9 @@
     If the application passed should be included in this model, then the function must return
     \c true; \c false otherwise.
 
+    If you need no filtering at all, you should set this property to an undefined (the default) or
+    null value.
+
     \note Whenever this function is changed, the filter is reevaluated. However, dynamic properties
     used in this function, like \c isRunning, don't trigger a reevaluation when those properties
     change. Changes in the source model are reflected. Since the type is derived from
@@ -119,6 +125,9 @@
     function gets two ApplicationObject parameters and must return a Boolean. If the first
     application should have a smaller index in this model than the second, the function must return
     \c true; \c false otherwise.
+
+    If you need no sorting at all, you should set this property to an undefined (the default) or
+    null value.
 
     \note Whenever this function is changed, the model is sorted. However, dynamic properties
     used in this function, like \c isRunning, don't trigge a sort when when those properties change.
@@ -140,8 +149,9 @@ public:
 };
 
 
-ApplicationModel::ApplicationModel()
-    : d(new ApplicationModelPrivate())
+ApplicationModel::ApplicationModel(QObject *parent)
+    : QSortFilterProxyModel(parent)
+    , d(new ApplicationModelPrivate())
 {
     setSourceModel(ApplicationManager::instance());
 
@@ -162,6 +172,8 @@ bool ApplicationModel::filterAcceptsRow(int source_row, const QModelIndex &sourc
 
     if (!d->m_engine)
         d->m_engine = getJSEngine();
+    if (!d->m_engine)
+        qCWarning(LogSystem) << "ApplicationModel can't filter without a JavaScript engine";
 
     if (d->m_engine && d->m_filterFunction.isCallable()) {
         const QObject *app = ApplicationManager::instance()->application(source_row);
@@ -176,6 +188,8 @@ bool ApplicationModel::lessThan(const QModelIndex &source_left, const QModelInde
 {
     if (!d->m_engine)
         d->m_engine = getJSEngine();
+    if (!d->m_engine)
+        qCWarning(LogSystem) << "ApplicationModel can't sort without a JavaScript engine";
 
     if (d->m_engine && d->m_sortFunction.isCallable()) {
         const QObject *app1 = ApplicationManager::instance()->application(source_left.row());
@@ -195,6 +209,10 @@ QJSValue ApplicationModel::filterFunction() const
 
 void ApplicationModel::setFilterFunction(const QJSValue &callback)
 {
+    if (!callback.isCallable() && !callback.isNull() && !callback.isUndefined()) {
+        qmlWarning(this) << "The filterFunction property of ApplicationModel needs to be either "
+                            "callable, or undefined/null to clear it.";
+    }
     if (!callback.equals(d->m_filterFunction)) {
         d->m_filterFunction = callback;
         emit filterFunctionChanged();
@@ -209,6 +227,10 @@ QJSValue ApplicationModel::sortFunction() const
 
 void ApplicationModel::setSortFunction(const QJSValue &callback)
 {
+    if (!callback.isCallable() && !callback.isNull() && !callback.isUndefined()) {
+        qmlWarning(this) << "The sortFunction property of ApplicationModel needs to be either "
+                            "callable, or undefined/null to clear it.";
+    }
     if (!callback.equals(d->m_sortFunction)) {
         d->m_sortFunction = callback;
         emit sortFunctionChanged();
@@ -220,12 +242,24 @@ void ApplicationModel::setSortFunction(const QJSValue &callback)
 /*!
     \qmlmethod int ApplicationModel::indexOfApplication(string id)
 
-    Maps the application \a id to its position within this model. Returns \c -1 if the specified
-    \a id is invalid, or not part of this model.
+    Maps the application corresponding to the given \a id to its position within this model. Returns
+    \c -1 if the specified application is invalid, or not part of this model.
 */
 int ApplicationModel::indexOfApplication(const QString &id) const
 {
     int idx = ApplicationManager::instance()->indexOfApplication(id);
+    return idx != -1 ? mapFromSource(idx) : idx;
+}
+
+/*!
+    \qmlmethod int ApplicationModel::indexOfApplication(ApplicationObject application)
+
+    Maps the \a application to its position within this model. Returns \c -1 if the specified
+    application is invalid, or not part of this model.
+*/
+int ApplicationModel::indexOfApplication(Application *application) const
+{
+    int idx = ApplicationManager::instance()->indexOfApplication(application);
     return idx != -1 ? mapFromSource(idx) : idx;
 }
 

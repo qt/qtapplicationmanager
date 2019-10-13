@@ -1318,9 +1318,8 @@ Application *ApplicationManager::application(const QString &id) const
 /*!
     \qmlmethod int ApplicationManager::indexOfApplication(string id)
 
-    Maps the application \a id to its position within the model.
-
-    Returns \c -1 if the specified \a id is invalid.
+    Maps the application corresponding to the given \a id to its position within the model. Returns
+    \c -1 if the specified \a id is invalid.
 */
 int ApplicationManager::indexOfApplication(const QString &id) const
 {
@@ -1329,6 +1328,17 @@ int ApplicationManager::indexOfApplication(const QString &id) const
             return i;
     }
     return -1;
+}
+
+/*!
+    \qmlmethod int ApplicationManager::indexOfApplication(ApplicationObject application)
+
+    Maps the \a application to its position within this model. Returns \c -1 if the specified
+    application is invalid.
+*/
+int ApplicationManager::indexOfApplication(Application *application) const
+{
+    return d->apps.indexOf(application);
 }
 
 /*!

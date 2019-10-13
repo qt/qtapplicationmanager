@@ -42,7 +42,7 @@
 
 #pragma once
 
-#include <QObject>
+#include <QAbstractListModel>
 #include <QVariantMap>
 #include <QVector>
 #include <QUuid>
@@ -57,16 +57,13 @@ class AbstractRuntime;
 class IntentServerRequest;
 class IntentServerSystemInterface;
 
-// We cannot expose a list of Q_GADGETs to QML in a type-safe way. We can however
-// at least try to make the C++ side of the API a bit more descriptive.
-typedef QVariantList IntentList;
 
-class IntentServer : public QObject
+class IntentServer : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentServer 2.0 SINGLETON")
 
-    Q_PROPERTY(IntentList intentList READ intentList NOTIFY intentListChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
 
 public:
     ~IntentServer() override;
@@ -77,51 +74,63 @@ public:
     void setStartApplicationTimeout(int timeout);
     void setReplyFromApplicationTimeout(int timeout);
 
-    bool addApplication(const QString &applicationId);
-    void removeApplication(const QString &applicationId);
+    bool addPackage(const QString &packageId);
+    void removePackage(const QString &packageId);
 
-    bool addApplicationBackgroundHandler(const QString &applicationId, const QString &backgroundServiceId);
-    void removeApplicationBackgroundHandler(const QString &applicationId, const QString &backgroundServiceId);
+    bool addApplication(const QString &applicationId, const QString &packageId);
+    void removeApplication(const QString &applicationId, const QString &packageId);
 
-    Intent addIntent(const QString &id, const QString &applicationId, const QStringList &capabilities,
-                     Intent::Visibility visibility, const QVariantMap &parameterMatch = QVariantMap());
+    Intent *addIntent(const QString &id, const QString &packageId, const QString &handlingApplicationId,
+                      const QStringList &capabilities, Intent::Visibility visibility,
+                      const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
+                      const QUrl &icon, const QStringList &categories);
 
-    Intent addIntent(const QString &id, const QString &applicationId, const QString &backgroundHandlerId,
-                     const QStringList &capabilities, Intent::Visibility visibility,
-                     const QVariantMap &parameterMatch = QVariantMap());
+    void removeIntent(Intent *intent);
 
-    void removeIntent(const Intent &intent);
+    QVector<Intent *> filterByIntentId(const QVector<Intent *> &intents, const QString &intentId,
+                                       const QVariantMap &parameters = QVariantMap{}) const;
+    QVector<Intent *> filterByRequestingApplicationId(const QVector<Intent *> &intents,
+                                                      const QString &requestingApplicationId) const;
 
-    QVector<Intent> all() const;
-    QVector<Intent> filterByIntentId(const QVector<Intent> &intents, const QString &intentId,
-                                     const QVariantMap &parameters = QVariantMap{}) const;
-    QVector<Intent> filterByHandlingApplicationId(const QVector<Intent> &intents,
-                                                  const QString &handlingApplicationId,
-                                                  const QVariantMap &parameters = QVariantMap{}) const;
-    QVector<Intent> filterByRequestingApplicationId(const QVector<Intent> &intents,
-                                                    const QString &requestingApplicationId) const;
+    // the item model part
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
     // vvv QML API vvv
 
-    IntentList intentList() const;
+    int count() const;
 
-    Q_INVOKABLE Intent find(const QString &intentId, const QString &applicationId,
-                            const QVariantMap &parameters = QVariantMap{}) const;
+    Q_INVOKABLE QVariantMap get(int index) const;
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Intent) *intent(int index) const;
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Intent) *applicationIntent(const QString &intentId, const QString &applicationId,
+                                                                   const QVariantMap &parameters = QVariantMap{}) const;
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Intent) *packageIntent(const QString &intentId, const QString &packageId,
+                                                               const QVariantMap &parameters = QVariantMap{}) const;
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Intent) *packageIntent(const QString &intentId, const QString &packageId,
+                                                               const QString &applicationId,
+                                                               const QVariantMap &parameters = QVariantMap{}) const;
+    Q_INVOKABLE int indexOfIntent(const QString &intentId, const QString &applicationId,
+                                  const QVariantMap &parameters = QVariantMap{}) const;
+    Q_INVOKABLE int indexOfIntent(Intent *intent);
 
-    Q_INVOKABLE void acknowledgeDisambiguationRequest(const QUuid &requestId, const Intent &selectedIntent);
+    Q_INVOKABLE void acknowledgeDisambiguationRequest(const QUuid &requestId, Intent *selectedIntent);
     Q_INVOKABLE void rejectDisambiguationRequest(const QUuid &requestId);
 
 signals:
-    void intentAdded(const Intent &intent);
-    void intentRemoved(const Intent &intent);
-    void intentListChanged();
+    void intentAdded(QT_PREPEND_NAMESPACE_AM(Intent) *intent);
+    void intentAboutToBeRemoved(QT_PREPEND_NAMESPACE_AM(Intent) *intent);
 
-    void disambiguationRequest(const QUuid &requestId, const IntentList &potentialIntents,
+    void countChanged();
+
+    // QML can only accept QList<QObject *> as signal parameter. Using QList<Intent *> or
+    // QVector<QObject> will lead to an undefined QVariant on the QML side.
+    void disambiguationRequest(const QUuid &requestId, const QList<QObject *> &potentialIntents,
                                const QVariantMap &parameters);
     /// ^^^ QML API ^^^
 
 private:
-    void internalDisambiguateRequest(const QUuid &requestId, bool reject, const Intent &selectedIntent);
+    void internalDisambiguateRequest(const QUuid &requestId, bool reject, Intent *selectedIntent);
     void applicationWasStarted(const QString &applicationId);
     void replyFromApplication(const QString &replyingApplicationId, const QUuid &requestId,
                               bool error, const QVariantMap &result);
@@ -132,15 +141,17 @@ private:
     void enqueueRequest(IntentServerRequest *isr);
     void processRequestQueue();
 
-    static IntentList convertToQml(const QVector<Intent> &intents);
+    static QList<QObject *> convertToQml(const QVector<Intent *> &intents);
+    QString packageIdForApplicationId(const QString &applicationId) const;
 
 private:
     IntentServer(IntentServerSystemInterface *systemInterface, QObject *parent = nullptr);
     Q_DISABLE_COPY(IntentServer)
     static IntentServer *s_instance;
 
-    QStringList m_knownApplications;
-    QMap<QString, QStringList> m_knownBackgroundServices;
+    static QHash<int, QByteArray> s_roleNames;
+
+    QMap<QString, QStringList> m_knownApplications;
 
     QQueue<IntentServerRequest *> m_requestQueue;
 
@@ -152,7 +163,7 @@ private:
     int m_startingAppTimeout = 3000;
     int m_sentToAppTimeout = 5000;
 
-    QVector<Intent> m_intents;
+    QVector<Intent *> m_intents;
 
     IntentServerSystemInterface *m_systemInterface;
     friend class IntentServerSystemInterface;

@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -95,7 +96,7 @@ QT_BEGIN_NAMESPACE_AM
     registered for via its intentIds property.
     Handling the request can be done synchronously or asynchronously. As soon as your handler has
     either produced a result or detected an error condition, it should call either
-    IntentClientRequest::sendReply() or IntentClientRequest::sendErrorReply respectively to send a
+    IntentRequest::sendReply() or IntentRequest::sendErrorReply respectively to send a
     reply back to the requesting party.
     Only the first call to one of these functions will have any effect. Any further invocations
     will be ignored.

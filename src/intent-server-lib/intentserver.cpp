@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -43,6 +44,8 @@
 #include "intentserver.h"
 #include "intentserversysteminterface.h"
 #include "intentserverrequest.h"
+#include "intentmodel.h"
+
 #include <QtAppManCommon/logging.h>
 
 #include <algorithm>
@@ -66,11 +69,58 @@ QT_BEGIN_NAMESPACE_AM
     \brief The System-UI side singleton representing the Intents sub-system.
 
     This singleton serves two purposes: for one, it gives the System-UI access to the database of
-    all the available intents via intentList, plus it exposes the API to deal with ambigous intent
+    all the available intents via its item model API, plus it exposes the API to deal with ambigous intent
     requests. Intent requests can be ambigous if the requesting party only specified the \c
     intentId, but not the targeted \c applicationId in its call to
     IntentClient::sendIntentRequest(). In these cases, it is the responsibility of the System-UI to
     disambiguate these requests by reacting on the disambiguationRequest() signal.
+
+    The type is derived from \c QAbstractListModel, so it can be used directly
+    as a model in app-grid views.
+
+    \target IntentServer Roles
+
+    The following roles are available in this model:
+
+    \table
+    \header
+        \li Role name
+        \li Type
+        \li Description
+    \row
+        \li \c intentId
+        \li string
+        \li The id of the intent.
+    \row
+        \li \c packageId
+        \li string
+        \li The unique id of the package that the handling application of this intent is part of.
+    \row
+        \li \c applicationId
+        \li string
+        \li The id of the application responsible for handling this intent.
+    \row
+        \li \c name
+        \li string
+        \li The name of the intent. If possible, already translated to the current locale.
+            If no name was defined for the intent, the name of the corresponding package will be
+            returned.
+    \row
+        \li \c icon
+        \li string
+        \li The URL of the intent's icon.
+            If no icon was defined for the intent, the icon of the corresponding package will be
+            returned.
+    \row
+        \li \c categories
+        \li list<string>
+        \li The categories this intent is registered for via its meta-data file.
+    \row
+        \li \c intent
+        \li Intent
+        \li The underlying Intent object for quick access to the properties outside of a
+            model delegate.
+    \endtable
 */
 
 /*! \qmlsignal IntentServer::intentAdded(Intent intent)
@@ -87,7 +137,20 @@ QT_BEGIN_NAMESPACE_AM
     intentList.
 */
 
+enum Roles
+{
+    IntentId = Qt::UserRole,
+    ApplicationId,
+    PackageId,
+    ParameterMatch,
+    Name,
+    Icon,
+    Categories,
+    IntentItem
+};
+
 IntentServer *IntentServer::s_instance = nullptr;
+QHash<int, QByteArray> IntentServer::s_roleNames;
 
 IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemInterface)
 {
@@ -99,16 +162,8 @@ IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemIn
     QScopedPointer<IntentServer> is(new IntentServer(systemInterface));
     systemInterface->initialize(is.data());
 
-    qRegisterMetaType<Intent>("Intent");
-    if (!QMetaType::hasRegisteredComparators<Intent>())
-        QMetaType::registerComparators<Intent>();
-
-    // Have a nicer name in the C++ API, since QML cannot cope with QList<Q_GADGET-type>
-    qRegisterMetaType<QVariantList>("IntentList");
-
-    // needed to get access to the Visibility enum from QML
-    qmlRegisterUncreatableType<Intent>("QtApplicationManager.SystemUI", 2, 0, "Intent",
-                                       qSL("Cannot create objects of type Intent"));
+    qmlRegisterType<Intent>("QtApplicationManager.SystemUI", 2, 0, "IntentObject");
+    qmlRegisterType<IntentModel>("QtApplicationManager.SystemUI", 2, 0, "IntentModel");
 
     qmlRegisterSingletonType<IntentServer>("QtApplicationManager.SystemUI", 2, 0, "IntentServer",
                                            [](QQmlEngine *, QJSEngine *) -> QObject * {
@@ -141,12 +196,21 @@ void IntentServer::setReplyFromApplicationTimeout(int timeout)
 }
 
 IntentServer::IntentServer(IntentServerSystemInterface *systemInterface, QObject *parent)
-    : QObject(parent)
+    : QAbstractListModel(parent)
     , m_systemInterface(systemInterface)
 {
     m_systemInterface->setParent(this);
-    connect(this, &IntentServer::intentAdded, this, &IntentServer::intentListChanged);
-    connect(this, &IntentServer::intentRemoved, this, &IntentServer::intentListChanged);
+
+    if (s_roleNames.isEmpty()) {
+        s_roleNames.insert(IntentId, "intentId");
+        s_roleNames.insert(ApplicationId, "applicationId");
+        s_roleNames.insert(PackageId, "packageId");
+        s_roleNames.insert(ParameterMatch, "paramterMatch");
+        s_roleNames.insert(Name, "name");
+        s_roleNames.insert(Icon, "icon");
+        s_roleNames.insert(Categories, "categories");
+        s_roleNames.insert(IntentItem, "intent");
+    }
 }
 
 IntentServer::~IntentServer()
@@ -154,120 +218,120 @@ IntentServer::~IntentServer()
     s_instance = nullptr;
 }
 
-bool IntentServer::addApplication(const QString &applicationId)
+bool IntentServer::addPackage(const QString &packageId)
 {
-    if (m_knownApplications.contains(applicationId))
+    if (m_knownApplications.contains(packageId))
         return false;
-    m_knownApplications << applicationId;
+    m_knownApplications.insert(packageId, QStringList());
     return true;
 }
 
-void IntentServer::removeApplication(const QString &applicationId)
+void IntentServer::removePackage(const QString &packageId)
 {
-    m_knownBackgroundServices.remove(applicationId);
-    m_knownApplications.removeOne(applicationId);
+    m_knownApplications.remove(packageId);
 }
 
-bool IntentServer::addApplicationBackgroundHandler(const QString &applicationId, const QString &backgroundServiceId)
+bool IntentServer::addApplication(const QString &applicationId, const QString &packageId)
 {
-    if (!m_knownApplications.contains(applicationId))
+    if (!m_knownApplications.contains(packageId))
         return false;
-    const QStringList services = m_knownBackgroundServices.value(applicationId);
-    if (services.contains(backgroundServiceId))
+    if (m_knownApplications.value(packageId).contains(applicationId))
         return false;
-    m_knownBackgroundServices[applicationId].append(backgroundServiceId);
+    m_knownApplications[packageId].append(applicationId);
     return true;
 }
 
-void IntentServer::removeApplicationBackgroundHandler(const QString &applicationId, const QString &backgroundServiceId)
+void IntentServer::removeApplication(const QString &applicationId, const QString &packageId)
 {
-    m_knownBackgroundServices[applicationId].removeAll(backgroundServiceId);
+    m_knownApplications[packageId].removeAll(applicationId);
 }
 
-Intent IntentServer::addIntent(const QString &id, const QString &applicationId,
-                               const QStringList &capabilities, Intent::Visibility visibility,
-                               const QVariantMap &parameterMatch)
+Intent *IntentServer::addIntent(const QString &id, const QString &packageId,
+                                const QString &handlingApplicationId,
+                                const QStringList &capabilities, Intent::Visibility visibility,
+                                const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
+                                const QUrl &icon, const QStringList &categories)
 {
-    return addIntent(id, applicationId, QString(), capabilities, visibility, parameterMatch);
-}
-
-Intent IntentServer::addIntent(const QString &id, const QString &applicationId,
-                               const QString &backgroundHandlerId,
-                               const QStringList &capabilities, Intent::Visibility visibility,
-                               const QVariantMap &parameterMatch)
-{
-    if (id.isEmpty()
-            || !m_knownApplications.contains(applicationId)
-            || find(id, applicationId)
-            || (!backgroundHandlerId.isEmpty()
-                && !m_knownBackgroundServices[applicationId].contains(backgroundHandlerId))) {
-        return Intent();
+    try {
+        if (id.isEmpty())
+            throw "no id specified";
+        if (packageId.isEmpty())
+            throw "no packageId specified";
+        if (handlingApplicationId.isEmpty())
+            throw "no handlingApplicationId specified";
+        if (!m_knownApplications.contains(packageId))
+            throw "packageId is not known";
+        if (!m_knownApplications.value(packageId).contains(handlingApplicationId))
+            throw "applicationId is not known or not part of the specified package";
+        if (applicationIntent(id, handlingApplicationId))
+            throw "intent with given id/handlingApplicationId already exists";
+    } catch (const char *e) {
+        qCWarning(LogIntents) << "Cannot add intent" << id << "in package" << packageId
+                              << "handled by" << handlingApplicationId << ":" << e;
+        return nullptr;
     }
 
-    auto intent = Intent(id, applicationId, backgroundHandlerId, capabilities, visibility,
-                         parameterMatch);
+    auto intent = new Intent(id, packageId, handlingApplicationId, capabilities, visibility,
+                             parameterMatch, names, icon, categories);
+    QQmlEngine::setObjectOwnership(intent, QQmlEngine::CppOwnership);
+
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
     m_intents << intent;
+    endInsertRows();
+
+    emit countChanged();
     emit intentAdded(intent);
     return intent;
 }
 
-void IntentServer::removeIntent(const Intent &intent)
+void IntentServer::removeIntent(Intent *intent)
 {
     int index = m_intents.indexOf(intent);
     if (index >= 0) {
+        emit intentAboutToBeRemoved(intent);
+        beginRemoveRows(QModelIndex(), index, index);
         m_intents.removeAt(index);
-        emit intentRemoved(intent);
+        endRemoveRows();
+
+        emit countChanged();
     }
 }
 
-QVector<Intent> IntentServer::all() const
+QVector<Intent *> IntentServer::filterByIntentId(const QVector<Intent *> &intents, const QString &intentId,
+                                                 const QVariantMap &parameters) const
 {
-    return m_intents;
-}
-
-QVector<Intent> IntentServer::filterByIntentId(const QVector<Intent> &intents, const QString &intentId,
-                                               const QVariantMap &parameters) const
-{
-    QVector<Intent> result;
+    QVector<Intent *> result;
     std::copy_if(intents.cbegin(), intents.cend(), std::back_inserter(result),
-                 [intentId, parameters](const Intent &intent) -> bool {
-        return (intent.intentId() == intentId) && intent.checkParameterMatch(parameters);
+                 [intentId, parameters](Intent *intent) -> bool {
+        return (intent->intentId() == intentId) && intent->checkParameterMatch(parameters);
 
     });
     return result;
 }
 
-QVector<Intent> IntentServer::filterByHandlingApplicationId(const QVector<Intent> &intents,
-                                                            const QString &handlingApplicationId,
-                                                            const QVariantMap &parameters) const
-{
-    QVector<Intent> result;
-    std::copy_if(intents.cbegin(), intents.cend(), std::back_inserter(result),
-                 [handlingApplicationId, parameters](const Intent &intent) -> bool {
-        return (intent.applicationId() == handlingApplicationId) && intent.checkParameterMatch(parameters);
 
-    });
-    return result;
-}
-
-QVector<Intent> IntentServer::filterByRequestingApplicationId(const QVector<Intent> &intents,
-                                                              const QString &requestingApplicationId) const
+QVector<Intent *> IntentServer::filterByRequestingApplicationId(const QVector<Intent *> &intents,
+                                                                const QString &requestingApplicationId) const
 {
-    QVector<Intent> result;
+    const QString requestingPackageId = packageIdForApplicationId(requestingApplicationId);
+
+    QVector<Intent *> result;
     std::copy_if(intents.cbegin(), intents.cend(), std::back_inserter(result),
-                 [this, requestingApplicationId](const Intent &intent) -> bool {
+                 [this, requestingPackageId, requestingApplicationId](Intent *intent) -> bool {
         // filter on visibility and capabilities, if the requesting app is different from the
         // handling app
-        if (intent.applicationId() != requestingApplicationId) {
-            if (intent.visibility() == Intent::Private) {
-                qCDebug(LogIntents) << "Not considering" << intent.intentId() << "/" << intent.applicationId()
-                                    << "due to private visibility";
+
+        if (intent->packageId() != requestingPackageId) {
+            if (intent->visibility() == Intent::Private) {
+                qCDebug(LogIntents) << "Not considering" << intent->intentId() << "in package"
+                                    << intent->packageId() << "due to private visibility";
                 return false;
-            } else if (!intent.requiredCapabilities().isEmpty()
+            } else if (!intent->requiredCapabilities().isEmpty()
                        && !m_systemInterface->checkApplicationCapabilities(requestingApplicationId,
-                                                                           intent.requiredCapabilities())) {
-                qCDebug(LogIntents) << "Not considering" << intent.intentId() << "/" << intent.applicationId()
-                                    << "due to missing capabilities";
+                                                                           intent->requiredCapabilities())) {
+                qCDebug(LogIntents) << "Not considering" << intent->intentId() << "in package"
+                                    << intent->packageId()
+                                    << "due to missing capabilities of requesting application";
                 return false;
             }
         }
@@ -276,35 +340,181 @@ QVector<Intent> IntentServer::filterByRequestingApplicationId(const QVector<Inte
     return result;
 }
 
-/*! \qmlproperty list<Intent> IntentServer::intentList
-
-    The list of all registered \l{Intent}{Intents} in the system.
-*/
-
-IntentList IntentServer::intentList() const
+int IntentServer::rowCount(const QModelIndex &parent) const
 {
-    return convertToQml(all());
+    return parent.isValid() ? -1 : m_intents.count();
 }
 
-/*! \qmlmethod Intent IntentServer::find(string intentId, string applicationId, var parameters)
+QVariant IntentServer::data(const QModelIndex &index, int role) const
+{
+    if (index.parent().isValid() || !index.isValid())
+        return QVariant();
+
+    Intent *intent = m_intents.at(index.row());
+
+    switch (role) {
+    case IntentId:
+        return intent->intentId();
+    case PackageId:
+        return intent->packageId();
+    case ApplicationId:
+        return intent->applicationId();
+    case ParameterMatch:
+        return intent->parameterMatch();
+    case Name:
+        return intent->name();
+    case Icon:
+        return intent->icon();
+    case Categories:
+        return intent->categories();
+    case IntentItem:
+        return QVariant::fromValue(intent);
+    }
+    return QVariant();
+}
+
+QHash<int, QByteArray> IntentServer::roleNames() const
+{
+    return s_roleNames;
+}
+
+int IntentServer::count() const
+{
+    return rowCount();
+}
+
+/*!
+    \qmlmethod object IntentServer::get(int index)
+
+    Retrieves the model data at \a index as a JavaScript object. See the
+    \l {IntentServer Roles}{role names} for the expected object fields.
+
+    Returns an empty object if the specified \a index is invalid.
+
+    \note This is very inefficient if you only want to access a single property from QML; use
+          intent() instead to access the Intent object's properties directly.
+*/
+QVariantMap IntentServer::get(int index) const
+{
+    if (index < 0 || index >= count()) {
+        qCWarning(LogSystem) << "IntentServer::get(index): invalid index:" << index;
+        return QVariantMap();
+    }
+
+    QVariantMap map;
+    QHash<int, QByteArray> roles = roleNames();
+    for (auto it = roles.begin(); it != roles.end(); ++it)
+        map.insert(qL1S(it.value()), data(this->index(index), it.key()));
+    return map;
+}
+
+/*!
+    \qmlmethod IntentObject IntentServer::intent(int index)
+
+    Returns the \l{IntentObject}{intent} corresponding to the given \a index in the
+    model, or \c null if the index is invalid.
+
+    \note The object ownership of the returned Intent object stays with the application-manager.
+          If you want to store this pointer, you can use the IntentServer's QAbstractListModel
+          signals or the intentAboutToBeRemoved signal to get notified if the object is about
+          to be deleted on the C++ side.
+*/
+Intent *IntentServer::intent(int index) const
+{
+    if (index < 0 || index >= count()) {
+        qCWarning(LogSystem) << "IntentServer::intent(index): invalid index:" << index;
+        return nullptr;
+    }
+    return m_intents.at(index);
+}
+
+/*! \qmlmethod IntentObject IntentServer::applicationIntent(string intentId, string applicationId, var parameters)
+
+    Returns the \l{IntentObject}{intent} corresponding to the given \a intentId, \a applicationId
+    and \a parameters or \c null if the id does not exist.
 
     This method exposes the same functionality that is used internally to match incoming Intent
-    requests for the intent identified by \a intentId and targeted for the application identified by
-    \a applicationId.
+    requests for the intent identified by \a intentId and targeted for the package identified by
+    \a packageId.
     Although you could iterate over the intentList yourself in JavaScript, this function has the
     added benefit of also checking the optionally provided \a parameters against any given
     \l{Intent::parameterMatch}{parameter matches}.
 
-    If no matching Intent is found, the function will return an \l{Intent::valid}{invalid} Intent.
+    \note The object ownership of the returned Intent object stays with the application-manager.
+          If you want to store this pointer, you can use the IntentServer's QAbstractListModel
+          signals or the intentAboutToBeRemoved signal to get notified if the object is about
+          to be deleted on the C++ side.
 */
-Intent IntentServer::find(const QString &intentId, const QString &applicationId, const QVariantMap &parameters) const
+Intent *IntentServer::applicationIntent(const QString &intentId, const QString &applicationId,
+                             const QVariantMap &parameters) const
 {
     auto it = std::find_if(m_intents.cbegin(), m_intents.cend(),
-                           [intentId, applicationId, parameters](const Intent &intent) -> bool {
-        return (intent.applicationId() == applicationId) && (intent.intentId() == intentId)
-                && intent.checkParameterMatch(parameters);
+                           [intentId, applicationId, parameters](Intent *intent) -> bool {
+        return (intent->applicationId() == applicationId) && (intent->intentId() == intentId)
+                && intent->checkParameterMatch(parameters);
     });
-    return (it != m_intents.cend()) ? *it : Intent();
+    return (it != m_intents.cend()) ? *it : nullptr;
+}
+
+/*! \qmlmethod IntentObject IntentServer::packageIntent(string intentId, string packageId, var parameters)
+
+    Returns the \l{IntentObject}{intent} corresponding to the given \a intentId, \a packageId
+    and \a parameters or \c null if the id does not exist.
+
+    \sa applicationIntent
+*/
+Intent *IntentServer::packageIntent(const QString &intentId, const QString &packageId,
+                                    const QVariantMap &parameters) const
+{
+    auto it = std::find_if(m_intents.cbegin(), m_intents.cend(),
+                           [intentId, packageId, parameters](Intent *intent) -> bool {
+        return (intent->packageId() == packageId) && (intent->intentId() == intentId)
+                && intent->checkParameterMatch(parameters);
+    });
+    return (it != m_intents.cend()) ? *it : nullptr;
+}
+
+/*! \qmlmethod IntentObject IntentServer::packageIntent(string intentId, string packageId, string applicationId, var parameters)
+
+    Returns the \l{IntentObject}{intent} corresponding to the given \a intentId, \a packageId,
+    \a applicationId and \a parameters or \c null if the id does not exist.
+
+    \sa applicationIntent
+*/
+Intent *IntentServer::packageIntent(const QString &intentId, const QString &packageId,
+                                    const QString &applicationId, const QVariantMap &parameters) const
+{
+    auto it = std::find_if(m_intents.cbegin(), m_intents.cend(),
+                           [intentId, packageId, applicationId, parameters](Intent *intent) -> bool {
+        return (intent->packageId() == packageId) && (intent->applicationId() == applicationId)
+                && (intent->intentId() == intentId) && intent->checkParameterMatch(parameters);
+    });
+    return (it != m_intents.cend()) ? *it : nullptr;
+}
+
+/*! \qmlmethod int IntentServer::indexOfIntent(string intentId, string applicationId, var parameters)
+
+    Maps the intent corresponding to the given \a intentId, \a applicationId and \a parameters to
+    its position within this model. Returns \c -1 if the specified intent is invalid.
+
+    \sa intent()
+*/
+int IntentServer::indexOfIntent(const QString &intentId, const QString &applicationId,
+                                const QVariantMap &parameters) const
+{
+    return m_intents.indexOf(applicationIntent(intentId, applicationId, parameters));
+}
+
+/*! \qmlmethod int IntentServer::indexOfIntent(IntentObject intent)
+
+    Maps the \a intent to its position within this model. Returns \c -1 if the specified intent is
+    invalid.
+
+    \sa intent()
+*/
+int IntentServer::indexOfIntent(Intent *intent)
+{
+    return m_intents.indexOf(intent);
 }
 
 void IntentServer::triggerRequestQueue()
@@ -334,7 +544,7 @@ void IntentServer::processRequestQueue()
 
             if (!isSignalConnected(QMetaMethod::fromSignal(&IntentServer::disambiguationRequest))) {
                 // If the System-UI does not react to the signal, then just use the first match.
-                isr->setHandlingApplicationId(isr->potentialIntents().first().applicationId());
+                isr->setHandlingApplicationId(isr->potentialIntents().first()->packageId());
             } else {
                 m_disambiguationQueue.enqueue(isr);
                 isr->setState(IntentServerRequest::State::WaitingForDisambiguation);
@@ -414,12 +624,23 @@ void IntentServer::processRequestQueue()
     triggerRequestQueue();
 }
 
-IntentList IntentServer::convertToQml(const QVector<Intent> &intents)
+QList<QObject *> IntentServer::convertToQml(const QVector<Intent *> &intents)
 {
-    QVariantList vl;
+    QList<QObject *> ol;
     for (auto intent : intents)
-        vl << QVariant::fromValue(intent);
-    return vl;
+        ol << intent;
+    return ol;
+}
+
+QString IntentServer::packageIdForApplicationId(const QString &applicationId) const
+{
+    for (auto pit = m_knownApplications.cbegin(); pit != m_knownApplications.cend(); ++pit) {
+        for (auto ait = pit.value().cbegin(); ait != pit.value().cend(); ++ait) {
+            if (*ait == applicationId)
+                return pit.key();
+        }
+    }
+    return QString();
 }
 
 /*!
@@ -450,7 +671,7 @@ IntentList IntentServer::convertToQml(const QVector<Intent> &intents)
 
     \sa IntentClient::sendIntentRequest
 */
-void IntentServer::acknowledgeDisambiguationRequest(const QUuid &requestId, const Intent &selectedIntent)
+void IntentServer::acknowledgeDisambiguationRequest(const QUuid &requestId, Intent *selectedIntent)
 {
     internalDisambiguateRequest(requestId, false, selectedIntent);
 }
@@ -465,10 +686,10 @@ void IntentServer::acknowledgeDisambiguationRequest(const QUuid &requestId, cons
 */
 void IntentServer::rejectDisambiguationRequest(const QUuid &requestId)
 {
-    internalDisambiguateRequest(requestId, true, Intent());
+    internalDisambiguateRequest(requestId, true, nullptr);
 }
 
-void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reject, const Intent &selectedIntent)
+void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reject, Intent *selectedIntent)
 {
     IntentServerRequest *isr = nullptr;
     for (int i = 0; i < m_disambiguationQueue.size(); ++i) {
@@ -479,17 +700,17 @@ void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reje
     }
 
     if (!isr) {
-        qmlWarning(this) << "Got a disambiguation acknowledge or reject for intent" << requestId
-                         << "but no disambiguation was expected for this intent";
+        qmlWarning(this) << "Got a disambiguation acknowledge or reject for intent " << requestId
+                         << ", but no disambiguation was expected for this intent";
     } else {
         if (reject) {
             isr->setRequestFailed(qSL("Disambiguation was rejected"));
         } else if (isr->potentialIntents().contains(selectedIntent)) {
-            isr->setHandlingApplicationId(selectedIntent.applicationId());
+            isr->setHandlingApplicationId(selectedIntent->packageId());
             isr->setState(IntentServerRequest::State::Disambiguated);
         } else {
             qCWarning(LogIntents) << "IntentServer::acknowledgeDisambiguationRequest for intent"
-                                  << requestId << "tried to disambiguate to the intent" << selectedIntent.intentId()
+                                  << requestId << "tried to disambiguate to the intent" << selectedIntent->intentId()
                                   << "which was not in the list of potential disambiguations";
 
             isr->setRequestFailed(qSL("Failed to disambiguate"));
@@ -571,11 +792,13 @@ IntentServerRequest *IntentServer::requestToSystem(const QString &requestingAppl
         return nullptr;
     }
 
-    QVector<Intent> intents;
-    if (applicationId.isEmpty())
-        intents = filterByIntentId(all(), intentId, parameters);
-    else if (Intent intent = find(intentId, applicationId, parameters))
-        intents << intent;
+    QVector<Intent *> intents;
+    if (applicationId.isEmpty()) {
+        intents = filterByIntentId(m_intents, intentId, parameters);
+    } else {
+        if (Intent *intent = this->applicationIntent(intentId, applicationId, parameters))
+            intents << intent;
+    }
 
     if (intents.isEmpty()) {
         qCWarning(LogIntents) << "Unknown intent" << intentId << "was requested from application"

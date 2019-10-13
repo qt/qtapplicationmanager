@@ -410,6 +410,7 @@ IntentServerInProcessIpcConnection *IntentServerInProcessIpcConnection::createSy
 {
     auto ipcConnection = create(nullptr, iface);
     ipcConnection->m_isSystemUi = true;
+    ipcConnection->setParent(iface);
     return ipcConnection;
 }
 
@@ -518,6 +519,7 @@ void IntentServerDBusIpcConnection::replyFromApplication(const QString &requestI
     emit m_interface->replyFromApplication(application()->id(), requestId, error,
                                            convertFromDBusVariant(result).toMap());
 }
+
 
 #endif // defined(AM_MULTI_PROCESS)
 

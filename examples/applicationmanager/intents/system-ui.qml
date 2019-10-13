@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -204,8 +205,8 @@ Item {
                 delegate: ItemDelegate {
                     property ApplicationObject application: ApplicationManager.application(modelData.applicationId)
                     width: parent.width
-                    text: application.name("en") + " (" + modelData.applicationId + ")"
-                    icon.source: application.icon
+                    text: modelData.name + " (" + modelData.applicationId + ")"
+                    icon.source: modelData.icon
                     icon.color: "transparent"
                     highlighted: ListView.isCurrentItem
                     onClicked: { handlingApplications.currentIndex = index }

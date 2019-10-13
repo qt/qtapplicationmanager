@@ -8,6 +8,7 @@ SUBDIRS = \
     animated-windows \
     frame-timer \
     hello-world \
+    launch-intents \
     minidesk \
     application-features \
     multi-views \

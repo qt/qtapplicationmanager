@@ -1,0 +1,18 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'launch-intents.blue'
+icon:    'icon.png'
+name:
+  en: 'Blue App'
+
+applications:
+- id: launch-intents.blue
+  runtime: 'qml'
+  code:    'main.qml'
+
+intents:
+- id: launch
+  name:
+    en: 'Launch Blue'
+  categories: [ launcher ]

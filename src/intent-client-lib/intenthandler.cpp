@@ -94,12 +94,20 @@ QT_BEGIN_NAMESPACE_AM
 
     This signal will be emitted once for every incoming intent \a request that this handler was
     registered for via its intentIds property.
-    Handling the request can be done synchronously or asynchronously. As soon as your handler has
-    either produced a result or detected an error condition, it should call either
-    IntentRequest::sendReply() or IntentRequest::sendErrorReply respectively to send a
-    reply back to the requesting party.
-    Only the first call to one of these functions will have any effect. Any further invocations
+
+    Handling the request can be done synchronously or asynchronously.  As soon as your handler has
+    either produced a result or detected an error condition, it should call
+    IntentRequest::sendReply() or IntentRequest::sendErrorReply() respectively to send a reply back
+    to the requesting party.  Even if your intent does not have a return value, you still need to
+    send an empty object \c{{}} reply to signal that the intent request has been handled
+    successfully.
+
+    Only the first call to one of these functions will have any effect.  Any further invocations
     will be ignored.
+
+    If these functions are not called after receiving an intent request within the \l{Intent
+    Timeout Specification}{system's specified timeout interval}, the system will send an implicit
+    "failed due to timeout" error reply back to the original sender.
 */
 
 IntentHandler::IntentHandler(QObject *parent)

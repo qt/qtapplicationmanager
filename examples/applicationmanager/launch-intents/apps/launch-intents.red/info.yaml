@@ -1,0 +1,23 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'launch-intents.red'
+icon:    'icon.png'
+name:
+  en: 'Red App'
+
+applications:
+- id: launch-intents.red
+  runtime: 'qml'
+  code:    'main.qml'
+
+intents:
+- id: launch
+  name:
+    en: 'Launch Red'
+  categories: [ launcher ]
+
+- id: another-launch
+  name:
+    en: 'Launch Another Red'
+  categories: [ launcher ]

@@ -158,7 +158,7 @@ an ApplicationManagerWindow, provided by the \c QtApplicationManager.Application
 \section2 Application Metadata
 
 The \c info.yaml file contains the metadata about an application. It starts with some boilerplate
-desribing that this file contains Qt Application Manager application metadata.
+describing that this file contains Qt Application Manager application metadata.
 
 \quotefromfile applicationmanager/hello-world/apps/hello-world.blue/info.yaml
 \printuntil --

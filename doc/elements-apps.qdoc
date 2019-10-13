@@ -37,7 +37,7 @@ application.
 
 Singleton QML types need not be declared, they are referenced by their type name.
 
-Instantiable QML types are declared with the their name followed by curly braces. These
+Instantiable QML types are declared with their name followed by curly braces. These
 declarations may be nested, creating parent-child relationships between the items.
 
 \section1 QML Singletons

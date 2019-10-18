@@ -353,7 +353,12 @@ bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const QString &changeF
             "runtime: qml\n";
 
     if (!changeField.isEmpty()) {
-        QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(yaml);
+        QVector<QVariant> docs;
+        try {
+            docs = YamlParser::parseAllDocuments(yaml);
+        } catch (...) {
+        }
+
         QVariantMap map = docs.at(1).toMap();
         map[changeField] = toValue;
         yaml = QtYaml::yamlFromVariantDocuments({ docs.at(0), map });

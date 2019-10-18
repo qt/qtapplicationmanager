@@ -9,6 +9,7 @@ SUBDIRS = \
     cryptography \
     signature \
     utilities \
+    yaml \
     installationreport \
     packagecreator \
     packageextractor \

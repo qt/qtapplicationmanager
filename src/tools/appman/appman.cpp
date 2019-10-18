@@ -53,6 +53,7 @@
 #endif
 #include "startuptimer.h"
 #include "exception.h"
+#include "qtyaml.h"
 
 #if defined(AM_TESTRUNNER)
 #  include "testrunner.h"

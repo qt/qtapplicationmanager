@@ -89,6 +89,27 @@ public:
         return *this;
     }
 
+    // this will generate compiler errors if there's no suitable QString::arg(const C &) overload
+    template <typename C> typename QtPrivate::QEnableIf<QtPrivate::IsSequentialContainer<C>::Value, Exception>::Type &
+    arg(const C &c) Q_DECL_NOEXCEPT
+    {
+        QString s;
+        for (int i = 0; i < c.size(); ++i) {
+            s += qSL("%1").arg(c.at(i));
+            if (i < (c.size() - 1))
+                s.append(qL1S(", "));
+        }
+        m_errorString = m_errorString.arg(s);
+        return *this;
+    }
+
+    // QStringList is always special
+    Exception &arg(const QStringList &sl) Q_DECL_NOEXCEPT
+    {
+        return arg(static_cast<QList<QString>>(sl));
+    }
+
+    // this will generate compiler errors if there's no suitable QString::arg(const Ts &) overload
     template <typename... Ts> Exception &arg(const Ts & ...ts) Q_DECL_NOEXCEPT
     {
         m_errorString = m_errorString.arg(ts...);

@@ -96,15 +96,9 @@ template<> QStringList Configuration::value(const char *clname, const QVector<co
 
 template<> QVariant Configuration::value(const char *clname, const QVector<const char *> &cfname) const
 {
-    QString yaml;
-    if (clname)
-        yaml = m_clp.value(qL1S(clname));
-    if (!yaml.isEmpty()) {
-        auto docs = QtYaml::variantDocumentsFromYaml(yaml.toUtf8());
-        return docs.isEmpty() ? QVariant() : docs.constFirst();
-    } else {
-        return findInConfigFile(cfname);
-    }
+    Q_ASSERT(!clname);
+    Q_UNUSED(clname);
+    return findInConfigFile(cfname);
 }
 
 QVariant Configuration::findInConfigFile(const QVector<const char *> &path, bool *found) const
@@ -195,10 +189,13 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths, const QS
 QVariant Configuration::buildConfig() const
 {
     QFile f(m_buildConfigFilePath);
-    if (f.open(QFile::ReadOnly))
-        return QtYaml::variantDocumentsFromYaml(f.readAll()).toList();
-    else
-        return QVariant();
+    if (f.open(QFile::ReadOnly)) {
+        try {
+            return YamlParser::parseAllDocuments(f.readAll()).toList();
+        } catch (...) {
+        }
+    }
+    return QVariant();
 }
 
 Configuration::~Configuration()
@@ -394,22 +391,15 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
         m_config = cache;
     } else if (!configFilePaths.isEmpty()) {
         auto parseConfigFile = [](ConfigFile &cf) {
-            QtYaml::ParseError parseError;
-            QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(cf.content, &parseError);
-
-            if (parseError.error != QJsonParseError::NoError) {
-                throw Exception("Could not parse config file '%1', line %2, column %3: %4.\n")
-                        .arg(cf.filePath).arg(parseError.line).arg(parseError.column)
-                        .arg(parseError.errorString());
-            }
-
             try {
+                QVector<QVariant> docs = YamlParser::parseAllDocuments(cf.content);
                 checkYamlFormat(docs, 2 /*number of expected docs*/, { "am-configuration" }, 1);
+                cf.config = docs.at(1).toMap();
             } catch (const Exception &e) {
-                throw Exception("Could not parse config file '%1': %2.\n")
-                        .arg(cf.filePath).arg(e.errorString());
+                throw Exception("Could not parse config file '%1': %2\n")
+                        .arg(cf.filePath)
+                        .arg(e.errorString());
             }
-            cf.config = docs.at(1).toMap();
         };
 
         try {
@@ -456,14 +446,16 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
 
     const QStringList options = m_clp.values(qSL("o"));
     for (const QString &option : options) {
-        QtYaml::ParseError parseError;
-        QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(option.toUtf8(), &parseError);
-        if (parseError.error != QJsonParseError::NoError) {
-            showParserMessage(QString::fromLatin1("Could not parse --option value, column %1: %2.\n")
-                              .arg(parseError.column).arg(parseError.errorString()),
+        QVector<QVariant> docs;
+        try {
+            docs = YamlParser::parseAllDocuments(option.toUtf8());
+        } catch (const Exception &e) {
+            showParserMessage(QString::fromLatin1("Could not parse --option value: %1.\n")
+                              .arg(e.errorString()),
                               ErrorMessage);
             exit(1);
         }
+
         if (docs.size() != 1) {
             showParserMessage(QString::fromLatin1("Could not parse --option value: Invalid document format.\n"),
                               ErrorMessage);

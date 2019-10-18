@@ -176,13 +176,14 @@ int main(int argc, char *argv[])
                     metadata.append(qMakePair(snippet.toUtf8(), QString()));
 
                 for (const auto &md : metadata) {
-                    QtYaml::ParseError parseError;
-                    const QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(md.first, &parseError);
-                    if (parseError.error != QJsonParseError::NoError) {
-                        throw Exception(Error::IO, "YAML parse error in --extra-%4metadata%5 %6 at line %1, column %2: %3")
-                                .arg(parseError.line).arg(parseError.column).arg(parseError.errorString())
+                    QVector<QVariant> docs;
+                    try {
+                        docs = YamlParser::parseAllDocuments(md.first);
+                    } catch (const Exception &e) {
+                        throw Exception(Error::IO, "in --extra-%1metadata%2 %3: %4")
                                 .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
-                                .arg(md.second.isEmpty() ? qSL("option") : md.second);
+                                .arg(md.second.isEmpty() ? qSL("option") : md.second)
+                                .arg(e.errorString());
                     }
                     if (docs.size() < 1) {
                         throw Exception("Could not parse --extra-%1metadata%2 %3: Invalid document format")
@@ -294,12 +295,8 @@ int main(int argc, char *argv[])
             } else if (!yaml.open(QIODevice::ReadOnly)) {
                 throw Exception(yaml, "Could not open YAML input file");
             }
-            QtYaml::ParseError error;
-            auto docs = QtYaml::variantDocumentsFromYaml(yaml.readAll(), &error);
-            if (docs.isEmpty()) {
-                throw Exception("Failed to parse YAML file: %1 at line %2, column %3")
-                        .arg(error.errorString()).arg(error.line).arg(error.column);
-            }
+
+            QVector<QVariant> docs = YamlParser::parseAllDocuments(yaml.readAll());
             QJsonDocument json;
             if (clp.isSet(qSL("i"))) {
                 bool isInt;

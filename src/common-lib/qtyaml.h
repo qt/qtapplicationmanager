@@ -43,6 +43,7 @@
 #pragma once
 
 #include <functional>
+#include <vector>
 
 #include <QJsonParseError>
 #include <QVector>
@@ -50,7 +51,10 @@
 #include <QString>
 #include <QVariant>
 
-QT_BEGIN_NAMESPACE
+#include "global.h"
+#include "exception.h"
+
+QT_BEGIN_NAMESPACE_AM
 
 namespace QtYaml {
 
@@ -89,4 +93,72 @@ QByteArray yamlFromVariantDocuments(const QVector<QVariant> &maps, YamlStyle sty
 
 } // namespace QtYaml
 
-QT_END_NAMESPACE
+class YamlParserPrivate;
+class YamlParserException;
+
+class YamlParser
+{
+public:
+    YamlParser(const QByteArray &data);
+    ~YamlParser();
+
+    static QVector<QVariant> parseAllDocuments(const QByteArray &yaml);
+
+    QPair<QString, int> parseHeader();
+
+    bool nextDocument();
+    void nextEvent();
+
+    bool isScalar() const;
+    QVariant parseScalar() const;
+    QString parseString() const;
+
+    bool isMap() const;
+    QVariantMap parseMap();
+
+    bool isList() const;
+    QVariantList parseList();
+    void parseList(const std::function<void (YamlParser *)> &callback);
+
+    // convenience
+    QVariant parseVariant();
+    QStringList parseStringOrStringList();
+
+    enum FieldType { Scalar = 0x01, List = 0x02, Map = 0x04 };
+    Q_DECLARE_FLAGS(FieldTypes, FieldType)
+    struct Field
+    {
+        QByteArray name;
+        bool required;
+        FieldTypes types;
+        std::function<void(YamlParser *)> callback;
+
+        Field(const char *_name, bool _required, FieldTypes _types, const std::function<void(YamlParser *)> &_callback)
+            : name(_name)
+            , required(_required)
+            , types(_types)
+            , callback(_callback)
+        { }
+    };
+    typedef std::vector<Field> Fields;
+
+    void parseFields(const Fields &fields);
+
+private:
+    Q_DISABLE_COPY(YamlParser)
+
+    QString parseMapKey();
+
+    YamlParserPrivate *d;
+    friend class YamlParserException;
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(YamlParser::FieldTypes)
+
+class YamlParserException : public Exception
+{
+public:
+    explicit YamlParserException(YamlParser *p, const char *errorString);
+};
+
+QT_END_NAMESPACE_AM

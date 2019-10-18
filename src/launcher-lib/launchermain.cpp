@@ -193,10 +193,15 @@ void LauncherMain::setApplicationId(const QString &applicationId)
 
 void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    auto docs = QtYaml::variantDocumentsFromYaml(configYaml.isEmpty() ? qgetenv("AM_CONFIG")
-                                                                      : configYaml);
-    if (docs.size() == 1)
-        m_configuration = docs.first().toMap();
+    try {
+        QVector<QVariant> docs = YamlParser::parseAllDocuments(configYaml.isEmpty() ? qgetenv("AM_CONFIG")
+                                                                                    : configYaml);
+        if (docs.size() == 1)
+            m_configuration = docs.first().toMap();
+    } catch (const Exception &e) {
+        throw Exception("Runtime launcher could not parse the YAML configuration coming from the "
+                        "application-manager: %1").arg(e.errorString());
+    }
 
     m_baseDir = m_configuration.value(qSL("baseDir")).toString() + qL1C('/');
     m_runtimeConfiguration = m_configuration.value(qSL("runtimeConfiguration")).toMap();

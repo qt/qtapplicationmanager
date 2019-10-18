@@ -455,12 +455,13 @@ void PackageExtractorPrivate::extract()
 void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCryptographicHash &digest,
                                               bool isHeader) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    QtYaml::ParseError error;
-    QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(metadata, &error);
-
-    if (error.error != QJsonParseError::NoError)
-        throw Exception(Error::Package, "metadata is not a valid YAML document: %1 (line: %2, column %3)")
-            .arg(error.errorString()).arg(error.line).arg(error.column);
+    QVector<QVariant> docs;
+    try {
+        docs = YamlParser::parseAllDocuments(metadata);
+    } catch (const Exception &e) {
+        throw Exception(Error::Package, "metadata is not a valid YAML document: %1")
+                .arg(e.errorString());
+    }
 
     try {
         checkYamlFormat(docs, -2 /*at least 2 docs*/, { isHeader ? "am-package-header" : "am-package-footer" }, 2);

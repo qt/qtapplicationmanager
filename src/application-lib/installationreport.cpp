@@ -172,12 +172,7 @@ void InstallationReport::deserialize(QIODevice *from)
     m_digest.clear();
     m_files.clear();
 
-    QtYaml::ParseError error;
-    QVector<QVariant> docs = QtYaml::variantDocumentsFromYaml(from->readAll(), &error);
-
-    if (error.error != QJsonParseError::NoError)
-        throw Exception("Failed to parse YAML: %1").arg(error.errorString());
-
+    auto docs = YamlParser::parseAllDocuments(from->readAll());
     checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 3 /*version*/);
 
     const QVariantMap &root = docs.at(1).toMap();
@@ -229,9 +224,9 @@ void InstallationReport::deserialize(QIODevice *from)
         QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(qSL("hmac")).toString().toLatin1());
         QByteArray hmacKey = QByteArray::fromRawData(reinterpret_cast<const char *>(privateHmacKeyData),
                                                      sizeof(privateHmacKeyData));
-        QByteArray hmacCalc= QMessageAuthenticationCode::hash(QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle),
-                                                              hmacKey,
-                                                              QCryptographicHash::Sha256);
+
+        QByteArray out = QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle);
+        QByteArray hmacCalc= QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
 
         if (hmacFile != hmacCalc) {
             throw Exception("HMAC does not match: expected '%1', but got '%2'")
@@ -278,14 +273,13 @@ bool InstallationReport::serialize(QIODevice *to) const
     // generate hmac to prevent tampering
     QByteArray hmacKey = QByteArray::fromRawData(reinterpret_cast<const char *>(privateHmacKeyData),
                                                  sizeof(privateHmacKeyData));
-    QByteArray hmacCalc= QMessageAuthenticationCode::hash(QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle),
-                                                          hmacKey,
-                                                          QCryptographicHash::Sha256);
+    QByteArray out = QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle);
+    QByteArray hmacCalc= QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
 
-    QVariantMap footer { { qSL("hmac"), QString::fromLatin1(hmacCalc.toHex()) } };
-    docs << footer;
-
-    QByteArray out = QtYaml::yamlFromVariantDocuments(docs, QtYaml::BlockStyle);
+    // add another YAML document with a single key/value (way faster than using QtYaml)
+    out += "---\nhmac: '";
+    out += hmacCalc.toHex();
+    out += "'\n";
 
     return (to->write(out) == out.size());
 }

@@ -123,25 +123,53 @@
     \endtable
 */
 
+/*!
+    \qmlsignal ProcessStatus::memoryReportingChanged(memoryVirtual, memoryRss, memoryPss)
+
+    This signal is emitted after \l{ProcessStatus::update()}{update()} has been called and the
+    memory usage values have been refreshed. The arguments are key-value pairs with the keys listed
+    in the table \l{supported-keys}{above}.
+*/
+
+
 QT_USE_NAMESPACE_AM
 
 QThread *ProcessStatus::m_workerThread = nullptr;
+int ProcessStatus::m_instanceCount = 0;
 
 ProcessStatus::ProcessStatus(QObject *parent)
     : QObject(parent)
 {
-    if (!m_workerThread) {
+    if (m_instanceCount == 0) {
         m_workerThread = new QThread;
         m_workerThread->start();
     }
+    ++m_instanceCount;
 
-    m_reader.reset(new ProcessReader);
-    connect(m_reader.data(), &ProcessReader::updated, this, [this]() {
+    m_reader = new ProcessReader;
+    m_reader->moveToThread(m_workerThread);
+
+    connect(m_reader, &ProcessReader::updated, this, [this]() {
         emit cpuLoadChanged();
         fetchMemoryReadings();
+        emit memoryReportingChanged(m_memoryVirtual, m_memoryRss, m_memoryPss);
         m_pendingUpdate = false;
     });
-    connect(this, &ProcessStatus::processIdChanged, m_reader.data(), &ProcessReader::setProcessId);
+    connect(this, &ProcessStatus::processIdChanged, m_reader, &ProcessReader::setProcessId);
+    connect(this, &ProcessStatus::memoryReportingEnabledChanged, m_reader, &ProcessReader::enableMemoryReporting);
+}
+
+ProcessStatus::~ProcessStatus()
+{
+    m_reader->deleteLater();
+
+    --m_instanceCount;
+    if (m_instanceCount == 0) {
+        m_workerThread->quit();
+        m_workerThread->wait();
+        delete m_workerThread;
+        m_workerThread = nullptr;
+    }
 }
 
 /*!
@@ -153,7 +181,7 @@ void ProcessStatus::update()
 {
     if (!m_pendingUpdate) {
         m_pendingUpdate = true;
-        QMetaObject::invokeMethod(m_reader.data(), &ProcessReader::update);
+        QMetaObject::invokeMethod(m_reader, &ProcessReader::update);
     }
 }
 
@@ -243,8 +271,7 @@ qint64 ProcessStatus::processId() const
 */
 qreal ProcessStatus::cpuLoad()
 {
-    quint32 value = m_reader->cpuLoad.load();
-    return ((qreal)value) / ((qreal)std::numeric_limits<quint32>::max());
+    return m_reader->cpuLoad.load() / ProcessReader::cpuLoadFactor;
 }
 
 void ProcessStatus::fetchMemoryReadings()
@@ -259,8 +286,6 @@ void ProcessStatus::fetchMemoryReadings()
     m_memoryPss[qSL("total")] = quint64(m_reader->totalPss.load()) << 10;
     m_memoryPss[qSL("text")] = quint64(m_reader->textPss.load()) << 10;
     m_memoryPss[qSL("heap")] = quint64(m_reader->heapPss.load()) << 10;
-
-    emit memoryReportingChanged(m_memoryVirtual, m_memoryRss, m_memoryPss);
 }
 
 /*!
@@ -314,6 +339,29 @@ QVariantMap ProcessStatus::memoryRss() const
 QVariantMap ProcessStatus::memoryPss() const
 {
     return m_memoryPss;
+}
+
+/*!
+    \qmlproperty bool ProcessStatus::memoryReportingEnabled
+
+    A boolean value that determines whether the memory properties are refreshed each time
+    \l{ProcessStatus::update()}{update()} is called. The default value is \c true. In your System
+    UI, the process of determining memory consumption adds additional load to the CPU, affecting
+    the \c cpuLoad value. If \c cpuLoad needs to be kept accurate, consider disabling memory
+    reporting.
+*/
+
+bool ProcessStatus::isMemoryReportingEnabled() const
+{
+    return m_memoryReportingEnabled;
+}
+
+void ProcessStatus::setMemoryReportingEnabled(bool enabled)
+{
+    if (enabled != m_memoryReportingEnabled) {
+        m_memoryReportingEnabled = enabled;
+        emit memoryReportingEnabledChanged(m_memoryReportingEnabled);
+    }
 }
 
 /*!

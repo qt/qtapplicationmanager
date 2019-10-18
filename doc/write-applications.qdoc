@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -38,8 +39,7 @@ stand-alone QML application, except for these three additional tasks:
     \li If you write a QML application, make your QML scene's root element an
         ApplicationManagerWindow; or derive your own custom root item from it.
     \li Provide a valid \l{Manifest definition}{info.yaml} file.
-    \li Make the application manager aware of your application by running
-        \c{appman --recreate-database}.
+    \li Restart the application manager to make it aware of your application.
 \endlist
 
 \section2 The Root Element

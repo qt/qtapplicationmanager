@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -43,6 +44,7 @@
 #pragma once
 
 #include <QVector>
+#include <QPair>
 #include <QByteArray>
 #include <QMultiMap>
 #include <QVariant>
@@ -62,8 +64,10 @@ QT_BEGIN_NAMESPACE_AM
 
 int timeoutFactor();
 
-void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
-                     const QVector<QByteArray> &formatTypes, int formatVersion) Q_DECL_NOEXCEPT_EXPR(false);
+using YamlFormat = QPair<QString, int>;
+
+YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
+                           const QVector<YamlFormat> &formatTypesAndVersions) Q_DECL_NOEXCEPT_EXPR(false);
 
 /*! \internal
     Convenience function that makes it easy to accept a plain string where

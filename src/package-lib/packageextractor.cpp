@@ -465,7 +465,8 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
     }
 
     try {
-        checkYamlFormat(docs, -2 /*at least 2 docs*/, { isHeader ? "am-package-header" : "am-package-footer" }, 2);
+        checkYamlFormat(docs, -2 /*at least 2 docs*/, { { isHeader ? qSL("am-package-header")
+                                                                   : qSL("am-package-footer"), 2 } });
     } catch (const Exception &e) {
         throw Exception(Error::Package, "metadata has an invalid format specification: %1").arg(e.errorString());
     }

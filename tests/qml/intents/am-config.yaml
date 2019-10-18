@@ -20,4 +20,4 @@ intents:
     disambiguation: 1000
     startApplication: 1000
     replyFromApplication: 1000
-    requestToSystem: 2000
+    replyFromSystem: 2000

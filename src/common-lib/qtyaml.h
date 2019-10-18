@@ -51,9 +51,8 @@
 #include <QByteArray>
 #include <QString>
 #include <QVariant>
-
-#include "global.h"
-#include "exception.h"
+#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/exception.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -100,8 +99,12 @@ class YamlParserException;
 class YamlParser
 {
 public:
-    YamlParser(const QByteArray &data);
+    YamlParser(const QByteArray &data, const QString &fileName = QString());
     ~YamlParser();
+
+    QString sourcePath() const;
+    QString sourceDir() const;
+    QString sourceName() const;
 
     static QVector<QVariant> parseAllDocuments(const QByteArray &yaml);
 
@@ -134,7 +137,8 @@ public:
         FieldTypes types;
         std::function<void(YamlParser *)> callback;
 
-        Field(const char *_name, bool _required, FieldTypes _types, const std::function<void(YamlParser *)> &_callback)
+        Field(const char *_name, bool _required, FieldTypes _types,
+              const std::function<void(YamlParser *)> &_callback)
             : name(_name)
             , required(_required)
             , types(_types)
@@ -163,3 +167,4 @@ public:
 };
 
 QT_END_NAMESPACE_AM
+// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

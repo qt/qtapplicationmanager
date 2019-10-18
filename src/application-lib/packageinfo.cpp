@@ -205,7 +205,7 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
     QScopedPointer<PackageInfo> pkg(new PackageInfo);
 
     QString baseDir;
-    QByteArray installationReport;
+    QByteArray serializedReport;
 
     ds >> pkg->m_id
        >> pkg->m_names
@@ -217,12 +217,12 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
        >> pkg->m_uid
        >> pkg->m_dltConfiguration
        >> baseDir
-       >> installationReport;
+       >> serializedReport;
 
     pkg->m_baseDir.setPath(baseDir);
 
-    if (!installationReport.isEmpty()) {
-        QBuffer buffer(&installationReport);
+    if (!serializedReport.isEmpty()) {
+        QBuffer buffer(&serializedReport);
         buffer.open(QBuffer::ReadOnly);
         pkg->m_installationReport.reset(new InstallationReport(pkg->id()));
         try {
@@ -231,6 +231,16 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
             pkg->m_installationReport.reset();
         }
     }
+
+    int applicationsSize;
+    ds >> applicationsSize;
+    while (--applicationsSize >= 0)
+        pkg->m_applications << ApplicationInfo::readFromDataStream(pkg.data(), ds);
+
+    int intentsSize;
+    ds >> intentsSize;
+    while (--intentsSize >= 0)
+        pkg->m_intents << IntentInfo::readFromDataStream(pkg.data(), ds);
 
     return pkg.take();
 }

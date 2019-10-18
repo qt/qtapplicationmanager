@@ -64,14 +64,18 @@ QT_BEGIN_NAMESPACE_AM
 YamlPackageScanner::YamlPackageScanner()
 { }
 
-PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false)
+PackageInfo *YamlPackageScanner::scan(const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false)
+{
+    QFile f(fileName);
+    if (!f.open(QIODevice::ReadOnly))
+        throw Exception(f, "Cannot open for reading");
+    return scan(&f, f.fileName());
+}
+
+PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false)
 {
     try {
-        QFile f(filePath);
-        if (!f.open(QIODevice::ReadOnly))
-            throw Exception(f, "could not open file for reading");
-
-        YamlParser p(f.readAll());
+        YamlParser p(source->readAll());
 
         bool legacy = false;
         try {
@@ -87,8 +91,8 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
 
         QStringList appIds; // duplicate check
         QScopedPointer<PackageInfo> pkgInfo(new PackageInfo);
-        {
-            QFileInfo fi(f);
+        if (!fileName.isEmpty()) {
+            QFileInfo fi(fileName);
             pkgInfo->m_baseDir = fi.absoluteDir();
             pkgInfo->m_manifestName = fi.fileName();
         }
@@ -346,7 +350,8 @@ PackageInfo *YamlPackageScanner::scan(const QString &filePath) Q_DECL_NOEXCEPT_E
         pkgInfo->validate();
         return pkgInfo.take();
     } catch (const Exception &e) {
-        throw Exception(e.errorCode(), "Failed to parse manifest file %1: %2").arg(QDir().relativeFilePath(filePath), e.errorString());
+        throw Exception(e.errorCode(), "Failed to parse manifest file %1: %2")
+                .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : qSL("<stream>"), e.errorString());
     }
 }
 

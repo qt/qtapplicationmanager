@@ -5,7 +5,7 @@
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Luxoft Application Manager.
+** This file is part of the Qt Application Manager.
 **
 ** $QT_BEGIN_LICENSE:GPL-EXCEPT-QTAS$
 ** Commercial License Usage
@@ -32,6 +32,7 @@
 #include <QtTest>
 
 #include "qtyaml.h"
+#include "configcache.h"
 #include "exception.h"
 #include "global.h"
 
@@ -47,6 +48,8 @@ public:
 private slots:
     void parser();
     void documentParser();
+    void cache();
+    void mergedCache();
 };
 
 
@@ -55,6 +58,8 @@ tst_Yaml::tst_Yaml()
 
 void tst_Yaml::parser()
 {
+    static const QVariant vnull = QVariant::fromValue(nullptr);
+
     QVector<QPair<const char *, QVariant>> tests = {
         { "dec", QVariant::fromValue<int>(10) },
         { "hex", QVariant::fromValue<int>(16) },
@@ -64,17 +69,17 @@ void tst_Yaml::parser()
         { "float2", QVariant::fromValue<double>(.1) },
         { "float3", QVariant::fromValue<double>(.1) },
         { "number-separators", QVariant::fromValue<int>(1234567) },
-        { "bool-true", QVariant::fromValue<bool>(true) },
-        { "bool-yes", QVariant::fromValue<bool>(true) },
-        { "bool-false", QVariant::fromValue<bool>(false) },
-        { "bool-no", QVariant::fromValue<bool>(false) },
-        { "null-literal", QVariant() },
-        { "null-tilde", QVariant() },
-        { "string-unquoted", QVariant::fromValue<QString>(qSL("unquoted")) },
-        { "string-singlequoted", QVariant::fromValue<QString>(qSL("singlequoted")) },
-        { "string-doublequoted", QVariant::fromValue<QString>(qSL("doublequoted")) },
+        { "bool-true", true },
+        { "bool-yes", true },
+        { "bool-false", false },
+        { "bool-no", false },
+        { "null-literal", vnull },
+        { "null-tilde", vnull },
+        { "string-unquoted", QVariant::fromValue<QString>("unquoted") },
+        { "string-singlequoted", QVariant::fromValue<QString>("singlequoted") },
+        { "string-doublequoted", QVariant::fromValue<QString>("doublequoted") },
         { "list-int", QVariantList { 1, 2, 3 } },
-        { "list-mixed", QVariantList { 1, qSL("two"), QVariantList { true, QVariant { } } } },
+        { "list-mixed", QVariantList { 1, "two", QVariantList { true, vnull } } },
         { "map1", QVariantMap { { "a", 1 }, { "b", "two" }, { "c", QVariantList { 1, 2, 3 } } } }
     };
 
@@ -105,7 +110,7 @@ void tst_Yaml::parser()
                 case YamlParser::Scalar: {
                     QVERIFY(p->isScalar());
                     QVariant v = p->parseScalar();
-                    QCOMPARE(v.type(), value.type());
+                    QCOMPARE(int(v.type()), int(value.type()));
                     QVERIFY(v == value);
                     break;
                 }
@@ -130,7 +135,7 @@ void tst_Yaml::parser()
                       QVERIFY(p->isScalar());
                       QVariant v = p->parseScalar();
                       QCOMPARE(v.type(), QVariant::String);
-                      QCOMPARE(v.toString(), qSL("ext string"));
+                      QCOMPARE(v.toString(), "ext string");
                   } }
             };
             p->parseFields(extFields);
@@ -174,6 +179,8 @@ void tst_Yaml::parser()
 
 void tst_Yaml::documentParser()
 {
+    static const QVariant vnull = QVariant::fromValue(nullptr);
+
     try {
         QFile f(":/data/test.yaml");
         QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
@@ -200,13 +207,13 @@ void tst_Yaml::documentParser()
             { "bool-yes", true },
             { "bool-false", false },
             { "bool-no", false },
-            { "null-literal", QVariant() },
-            { "null-tilde", QVariant() },
-            { "string-unquoted", qSL("unquoted") },
-            { "string-singlequoted", qSL("singlequoted") },
-            { "string-doublequoted", qSL("doublequoted") },
+            { "null-literal", vnull },
+            { "null-tilde", vnull },
+            { "string-unquoted", "unquoted" },
+            { "string-singlequoted", "singlequoted" },
+            { "string-doublequoted", "doublequoted" },
             { "list-int", QVariantList { 1, 2, 3 } },
-            { "list-mixed", QVariantList { 1, qSL("two"), QVariantList { true, QVariant { } } } },
+            { "list-mixed", QVariantList { 1, qSL("two"), QVariantList { true, vnull } } },
             { "map1", QVariantMap { { "a", 1 }, { "b", "two" }, { "c", QVariantList { 1, 2, 3 } } } },
 
 
@@ -225,6 +232,106 @@ void tst_Yaml::documentParser()
 
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
+    }
+}
+struct CacheTest
+{
+    QString name;
+    QString file;
+};
+
+// GCC < 7 bug, currently still in RHEL7, https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56480
+// this should simply be:
+// template<> class QT_PREPEND_NAMESPACE_AM(ConfigCacheAdaptor<CacheTest>)
+
+QT_BEGIN_NAMESPACE_AM
+template<> class ConfigCacheAdaptor<CacheTest>
+{
+public:
+    CacheTest *loadFromSource(QIODevice *source, const QString &fileName)
+    {
+        QScopedPointer<CacheTest> ct(new CacheTest);
+        YamlParser p(source->readAll(), fileName);
+        p.nextDocument();
+        p.parseFields({ { "name", true, YamlParser::Scalar, [&ct](YamlParser *p) {
+                          ct->name = p->parseScalar().toString(); } },
+                        { "file", true, YamlParser::Scalar, [&ct](YamlParser *p) {
+                          ct->file = p->parseScalar().toString(); } }
+                      });
+        return ct.take();
+    }
+    CacheTest *loadFromCache(QDataStream &ds)
+    {
+        CacheTest *ct = new CacheTest;
+        ds >> ct->name >> ct->file;
+        return ct;
+    }
+    void saveToCache(QDataStream &ds, const CacheTest *ct)
+    {
+        ds << ct->name << ct->file;
+    }
+
+    void merge(CacheTest *ct1, const CacheTest *ct2)
+    {
+        ct1->name = ct2->name;
+        ct1->file = ct1->file + qSL(",") + ct2->file;
+    }
+    void preProcessSourceContent(QByteArray &sourceContent, const QString &fileName)
+    {
+        sourceContent.replace("${FILE}", fileName.toUtf8());
+    }
+    QStringList *warnings;
+};
+QT_END_NAMESPACE_AM
+
+void tst_Yaml::cache()
+{
+    QStringList files = { ":/data/cache1.yaml", ":/data/cache2.yaml" };
+    QStringList warnings;
+
+    for (int step = 0; step < 2; ++step) {
+        try {
+            ConfigCache<CacheTest> cache(files, "cache-test", step == 0 ? AbstractConfigCache::ClearCache
+                                                                        : AbstractConfigCache::None);
+            cache.parse(&warnings);
+            QVERIFY2(warnings.isEmpty(), qPrintable(warnings.join(qSL("\n"))));
+            CacheTest *ct1 = cache.takeResult(0);
+            QVERIFY(ct1);
+            QCOMPARE(ct1->name, "cache1");
+            QCOMPARE(ct1->file, ":/data/cache1.yaml");
+            CacheTest *ct2 = cache.takeResult(1);
+            QVERIFY(ct2);
+            QCOMPARE(ct2->name, "cache2");
+            QCOMPARE(ct2->file, ":/data/cache2.yaml");
+        } catch (const Exception &e) {
+            QVERIFY2(false, e.what());
+        }
+    }
+}
+
+void tst_Yaml::mergedCache()
+{
+    QStringList files = { ":/data/cache1.yaml", ":/data/cache2.yaml" };
+    QStringList warnings;
+
+    for (int step = 0; step < 4; ++step) {
+        AbstractConfigCache::Options options = AbstractConfigCache::MergedResult;
+        if (step % 2 == 0)
+            options |= AbstractConfigCache::ClearCache;
+        if (step == 2)
+            std::reverse(files.begin(), files.end());
+
+        try {
+            ConfigCache<CacheTest> cache(files, "cache-test", options);
+            cache.parse(&warnings);
+            QVERIFY2(warnings.isEmpty(), qPrintable(warnings.join(qSL("\n"))));
+            CacheTest *ct = cache.takeMergedResult();
+            QVERIFY(ct);
+            QCOMPARE(ct->name, QFileInfo(files.last()).baseName());
+            QCOMPARE(ct->file, files.join(qSL(",")));
+        } catch (const Exception &e) {
+            QVERIFY2(false, e.what());
+        }
     }
 }
 

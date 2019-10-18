@@ -1,6 +1,7 @@
 #!/bin/bash
 #############################################################################
 ##
+## Copyright (C) 2019 The Qt Company Ltd.
 ## Copyright (C) 2019 Luxoft Sweden AB
 ## Copyright (C) 2018 Pelagicore AG
 ## Contact: https://www.qt.io/licensing/
@@ -117,7 +118,7 @@ run_test()
 
     echo "Running $test_qml in $temp_folder"
     cp $test_qml $temp_folder/test.qml
-    (cd $temp_folder && $APPMAN -c am-config.yaml -r --no-dlt-logging)
+    (cd $temp_folder && $APPMAN -c am-config.yaml --clear-cache --no-dlt-logging)
 }
 
 if [ -n "$TEST" ]

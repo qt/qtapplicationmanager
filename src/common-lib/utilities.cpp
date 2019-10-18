@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -104,42 +105,62 @@ QT_BEGIN_NAMESPACE_AM
     Check a YAML document against the "standard" AM header.
     If \a numberOfDocuments is positive, the number of docs need to match exactly. If it is
     negative, the \a numberOfDocuments is taken as the required minimum amount of documents.
-
+    Otherwise, the amount of documents is irrelevant.
 */
-void checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
-                     const QVector<QByteArray> &formatTypes, int formatVersion) Q_DECL_NOEXCEPT_EXPR(false)
+YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
+                           const QVector<YamlFormat> &formatTypesAndVersions) Q_DECL_NOEXCEPT_EXPR(false)
 {
     int actualSize = docs.size();
-    QByteArray actualFormatType;
-    int actualFormatVersion = 0;
-
-    if (actualSize >= 1) {
-        const auto map = docs.constFirst().toMap();
-        actualFormatType = map.value(qSL("formatType")).toString().toUtf8();
-        actualFormatVersion = map.value(qSL("formatVersion")).toInt();
-    }
+    if (actualSize < 1)
+        throw Exception("no header YAML document found");
 
     if (numberOfDocuments < 0) {
         if (actualSize < -numberOfDocuments) {
             throw Exception("wrong number of YAML documents: expected at least %1, got %2")
                 .arg(-numberOfDocuments).arg(actualSize);
         }
-    } else {
+    } else if (numberOfDocuments > 0) {
         if (actualSize != numberOfDocuments) {
             throw Exception("wrong number of YAML documents: expected %1, got %2")
                 .arg(numberOfDocuments).arg(actualSize);
         }
     }
-    if (!formatTypes.contains(actualFormatType)) {
-        throw Exception("wrong formatType header: expected '%1', got '%2'")
-            .arg(QString::fromUtf8(formatTypes.toList().join(", or ")), QString::fromUtf8(actualFormatType));
-    }
-    if (actualFormatVersion != formatVersion) {
-        throw Exception("wrong formatVersion header: expected %1, got %2")
-                .arg(formatVersion).arg(actualFormatVersion);
-    }
-}
 
+    const auto map = docs.constFirst().toMap();
+    YamlFormat actualFormatTypeAndVersion = {
+        map.value(qSL("formatType")).toString(),
+        map.value(qSL("formatVersion")).toInt()
+    };
+
+    class StringifyTypeAndVersion
+    {
+    public:
+        StringifyTypeAndVersion() = default;
+        StringifyTypeAndVersion(const QPair<QString, int> &typeAndVersion)
+        {
+            operator()(typeAndVersion);
+        }
+        QString string() const
+        {
+            return m_str;
+        }
+        void operator()(const QPair<QString, int> &typeAndVersion)
+        {
+            if (!m_str.isEmpty())
+                m_str += qSL(", or ");
+            m_str = m_str + typeAndVersion.first + qSL(" version ") + QString::number(typeAndVersion.second);
+        }
+    private:
+        QString m_str;
+    };
+
+    if (!formatTypesAndVersions.contains(actualFormatTypeAndVersion)) {
+        throw Exception("wrong header: expected %1, got %2")
+                .arg(std::for_each(formatTypesAndVersions.cbegin(), formatTypesAndVersions.cend(), StringifyTypeAndVersion()).string())
+                .arg(StringifyTypeAndVersion(actualFormatTypeAndVersion).string());
+    }
+    return actualFormatTypeAndVersion;
+}
 
 QMultiMap<QString, QString> mountedDirectories()
 {

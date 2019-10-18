@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -66,7 +67,7 @@ generic Inter-Process Communication (IPC).
 
 To start the example, navigate to the \c minidesk folder, and run the following command:
 \badcode
-<path-to-appman-binary> -c am-config.yaml -r
+<path-to-appman-binary> -c am-config.yaml
 \endcode
 The \c appman binary (executable file) is usually located in the Qt installation \c bin folder.
 

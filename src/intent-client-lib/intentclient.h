@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -102,8 +103,9 @@ private:
     QList<IntentClientRequest *> m_waiting;
     QMap<QPair<QString, QString>, IntentHandler *> m_handlers; // intentId + appId -> handler
 
-    int m_replyFromSystemTimeout = 20000;
-    int m_replyFromApplicationTimeout = 4000;
+    // no timeouts by default -- these have to be set at runtime
+    int m_replyFromSystemTimeout = 0;
+    int m_replyFromApplicationTimeout = 0;
 
     IntentClientSystemInterface *m_systemInterface;
     friend class IntentClientSystemInterface;

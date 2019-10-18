@@ -77,10 +77,8 @@ public:
 private:
     Q_DISABLE_COPY(PackageDatabase)
 
-    QVector<PackageInfo *> loadManifestsFromDir(const QString &manifestDir, bool scanningBuiltInApps);
-
-    bool loadFromCache();
-    void saveToCache();
+    bool builtInHasRemovableUpdate(PackageInfo *packageInfo) const;
+    QStringList findManifestsInDir(const QDir &manifestDir, bool scanningBuiltInApps);
 
     bool m_loadFromCache = false;
     bool m_saveToCache = false;
@@ -92,7 +90,6 @@ private:
     QVector<PackageInfo *> m_builtInPackages;
     QVector<PackageInfo *> m_installedPackages;
 
-    bool builtInHasRemovableUpdate(PackageInfo *packageInfo) const;
 };
 
 QT_END_NAMESPACE_AM

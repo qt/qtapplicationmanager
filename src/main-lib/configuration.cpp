@@ -41,150 +41,172 @@
 **
 ****************************************************************************/
 
-#include <QFile>
-#include <QFileInfo>
 #include <QCoreApplication>
-#include <QDebug>
+#include <QFile>
 #include <QStandardPaths>
+#include <QMetaEnum>
+#include <QProcessEnvironment>
+#include <private/qvariant_p.h>
+
 #include <QDataStream>
-#include <QCryptographicHash>
-#include <QElapsedTimer>
-#include <QtConcurrent/QtConcurrent>
+#include <QFileInfo>
+#include <QDir>
+#include <QBuffer>
+
+#if !defined(AM_HEADLESS)
+#  include <QGuiApplication>
+#endif
 
 #include <functional>
+
+#if defined(Q_OS_LINUX)
+#  include <sys/file.h>
+#endif
 
 #include "global.h"
 #include "logging.h"
 #include "qtyaml.h"
+#include "configcache.h"
 #include "utilities.h"
 #include "exception.h"
-#include "qml-utilities.h"
+#include "utilities.h"
 #include "configuration.h"
-
-// enable this to benchmark the config cache
-//#define AM_TIME_CONFIG_PARSING
-
-// use QtConcurrent to parse the config files, if there are more than x config files
-#define AM_PARALLEL_THRESHOLD  1
+#include "configuration_p.h"
 
 QT_BEGIN_NAMESPACE_AM
 
 
-template<> bool Configuration::value(const char *clname, const QVector<const char *> &cfname) const
+template<> bool Configuration::value(const char *clname, const bool &cfvalue) const
 {
-    return (clname && m_clp.isSet(qL1S(clname))) || findInConfigFile(cfname).toBool();
+    return (clname && m_clp.isSet(qL1S(clname))) || cfvalue;
 }
 
-template<> QString Configuration::value(const char *clname, const QVector<const char *> &cfname) const
+template<> QString Configuration::value(const char *clname, const QString &cfvalue) const
 {
-    QString clval;
-    if (clname)
-        clval = m_clp.value(qL1S(clname));
-    bool cffound;
-    QString cfval = findInConfigFile(cfname, &cffound).toString();
-    return ((clname && m_clp.isSet(qL1S(clname))) || !cffound) ? clval : cfval;
+    return (clname && m_clp.isSet(qL1S(clname))) ? m_clp.value(qL1S(clname)) : cfvalue;
 }
 
-template<> QStringList Configuration::value(const char *clname, const QVector<const char *> &cfname) const
+template<> QStringList Configuration::value(const char *clname, const QStringList &cfvalue) const
 {
     QStringList result;
     if (clname)
         result = m_clp.values(qL1S(clname));
-    if (!cfname.isEmpty())
-        result += variantToStringList(findInConfigFile(cfname));
+    if (!cfvalue.isEmpty())
+        result += cfvalue;
     return result;
 }
 
-template<> QVariant Configuration::value(const char *clname, const QVector<const char *> &cfname) const
+
+// the templated adaptor class needed to instantiate ConfigCache<ConfigurationData> in parse() below
+template<> class ConfigCacheAdaptor<ConfigurationData>
 {
-    Q_ASSERT(!clname);
-    Q_UNUSED(clname);
-    return findInConfigFile(cfname);
-}
-
-QVariant Configuration::findInConfigFile(const QVector<const char *> &path, bool *found) const
-{
-    if (found)
-        *found = false;
-
-    if (path.isEmpty())
-        return QVariant();
-
-    QVariantMap var = m_config;
-
-    for (int i = 0; i < (path.size() - 1); ++i) {
-        QVariant subvar = var.value(qL1S(path.at(i)));
-        if (subvar.type() == QVariant::Map)
-            var = subvar.toMap();
-        else
-            return QVariant();
+public:
+    static ConfigurationData *loadFromSource(QIODevice *source, const QString &fileName)
+    {
+        return ConfigurationData::loadFromSource(source, fileName);
     }
-    if (found)
-        *found = var.contains(qL1S(path.last()));
-    return var.value(qL1S(path.last()));
-}
-
-void Configuration::mergeConfig(const QVariantMap &other)
-{
-    recursiveMergeVariantMap(m_config, other);
-}
-
-QByteArray Configuration::substituteVars(const QByteArray &str, const QString &fileName,
-                                         QStringList *deploymentWarnings)
-{
-    QByteArray string = str;
-    int posBeg = -1;
-    int posEnd = -1;
-    while (true) {
-        if ((posBeg = string.indexOf("${", posEnd + 1)) < 0)
-            break;
-        if ((posEnd = string.indexOf('}', posBeg + 2)) < 0)
-            break;
-
-        const QByteArray varName = string.mid(posBeg + 2, posEnd - posBeg - 2);
-
-        QByteArray varValue;
-        if (varName == "CONFIG_PWD") {
-            static QByteArray path;
-            if (path.isEmpty() && !fileName.isEmpty())
-                path = QFileInfo(fileName).path().toUtf8();
-            varValue = path;
-        } else if (varName.startsWith("env:")) {
-            varValue = qgetenv(varName.constData() + 4);
-        } else if (varName.startsWith("stdpath:")) {
-            bool exists;
-            int loc = QMetaEnum::fromType<QStandardPaths::StandardLocation>().keyToValue(varName.constData() + 8, &exists);
-            if (exists)
-                varValue = QStandardPaths::writableLocation(static_cast<QStandardPaths::StandardLocation>(loc)).toUtf8();
-        }
-
-        if (varValue.isEmpty() && deploymentWarnings) {
-            *deploymentWarnings << qL1S("Could not replace variable ${") + qL1S(varName)
-                                   + qL1S("} while parsing ") + fileName;
-            continue;
-        }
-        string.replace(posBeg, varName.length() + 3, varValue);
-        // varName and varValue most likely have a different length, so we have to adjust
-        posEnd = posEnd - 3 - varName.length() + varValue.length();
+    void preProcessSourceContent(QByteArray &sourceContent, const QString &fileName)
+    {
+        sourceContent = ConfigurationData::substituteVars(sourceContent, fileName, warnings);
     }
-    return string;
-}
+    ConfigurationData *loadFromCache(QDataStream &ds)
+    {
+        return ConfigurationData::loadFromCache(ds);
+    }
+    void saveToCache(QDataStream &ds, const ConfigurationData *cd)
+    {
+        cd->saveToCache(ds);
+    }
+    static void merge(ConfigurationData *to, const ConfigurationData *from)
+    {
+        to->mergeFrom(from);
+    }
+    QStringList *warnings;
+};
 
 
-Configuration::Configuration(const QStringList &defaultConfigFilePaths, const QString &buildConfigFilePath)
+Configuration::Configuration(const char *additionalDescription,
+                             bool onlyOnePositionalArgument)
+    : Configuration(QStringList(), qSL(":/build-config.yaml"),
+                    additionalDescription, onlyOnePositionalArgument)
+{ }
+
+Configuration::Configuration(const QStringList &defaultConfigFilePaths,
+                             const QString &buildConfigFilePath,
+                             const char *additionalDescription,
+                             bool onlyOnePositionalArgument)
     : m_defaultConfigFilePaths(defaultConfigFilePaths)
     , m_buildConfigFilePath(buildConfigFilePath)
+    , m_onlyOnePositionalArgument(onlyOnePositionalArgument)
 {
-    m_clp.addHelpOption();
-    m_clp.addVersionOption();
-    QCommandLineOption cf { { qSL("c"), qSL("config-file") }, qSL("load cnfiguration from file (can be given multiple times)."), qSL("files") };
+    // using QStringLiteral for all strings here adds a few KB of ro-data, but will also improve
+    // startup times slightly: less allocations and copies. MSVC cannot cope with multi-line though
+
+    const char *description =
+        "In addition to the commandline options below, the following environment\n"
+        "variables can be set:\n\n"
+        "  AM_STARTUP_TIMER  If set to 1, a startup performance analysis will be printed\n"
+        "                    on the console. Anything other than 1 will be interpreted\n"
+        "                    as the name of a file that is used instead of the console.\n"
+        "\n"
+        "  AM_FORCE_COLOR_OUTPUT  Can be set to 'on' to force color output to the console\n"
+        "                         and to 'off' to disable it. Any other value will result\n"
+        "                         in the default, auto-detection behavior.\n";
+
+    m_clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qSL("\n\n")
+                                    + (additionalDescription ? (qL1S(additionalDescription) + qSL("\n\n")) : QString())
+                                    + qL1S(description));
+
+    m_clp.addOption({ { qSL("h"), qSL("help")
+#if defined(Q_OS_WINDOWS)
+                        , qSL("?")
+#endif
+                      },                           qSL("Displays this help.") });
+    m_clp.addOption({ qSL("version"),              qSL("Displays version information.") });
+    QCommandLineOption cf { { qSL("c"), qSL("config-file") },
+                                                   qSL("Load configuration from file (can be given multiple times)."), qSL("files") };
     cf.setDefaultValues(m_defaultConfigFilePaths);
     m_clp.addOption(cf);
-    m_clp.addOption({ { qSL("o"), qSL("option") }, qSL("override a specific config option."), qSL("yaml-snippet") });
-    m_clp.addOption({ qSL("no-config-cache"),      qSL("disable the use of the config file cache.") });
-    m_clp.addOption({ qSL("clear-config-cache"),   qSL("ignore an existing config file cache.") });
+    m_clp.addOption({ { qSL("o"), qSL("option") }, qSL("Override a specific config option."), qSL("yaml-snippet") });
+    m_clp.addOption({ { qSL("no-cache"), qSL("no-config-cache") },
+                                                   qSL("Disable the use of the config and appdb file cache.") });
+    m_clp.addOption({ { qSL("clear-cache"), qSL("clear-config-cache") },
+                                                   qSL("Ignore an existing config and appdb file cache.") });
+    m_clp.addOption({ { qSL("r"), qSL("recreate-database") },
+                                                   qSL("Backwards compatibility: synonyms for --clear-cache.") });
     if (!buildConfigFilePath.isEmpty())
-        m_clp.addOption({ qSL("build-config"),         qSL("dumps the build configuration and exits.") });
+        m_clp.addOption({ qSL("build-config"),     qSL("Dumps the build configuration and exits.") });
+
+    m_clp.addPositionalArgument(qSL("qml-file"),   qSL("The main QML file."));
+    m_clp.addOption({ qSL("database"),             qSL("Deprecated (ingored)."), qSL("file") });
+    m_clp.addOption({ qSL("builtin-apps-manifest-dir"), qSL("Base directory for built-in application manifests."), qSL("dir") });
+    m_clp.addOption({ qSL("installation-dir"),     qSL("Base directory for package installations."), qSL("dir") });
+    m_clp.addOption({ qSL("document-dir"),         qSL("Base directory for per-package document directories."), qSL("dir") });
+    m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("Deprecated (ignored)."), qSL("dir") });
+    m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("Deprecated (ignored)."), qSL("dir") });
+    m_clp.addOption({ qSL("disable-installer"),    qSL("Disable the application installer sub-system.") });
+    m_clp.addOption({ qSL("disable-intents"),      qSL("Disable the intents sub-system.") });
+#if defined(QT_DBUS_LIB)
+    m_clp.addOption({ qSL("dbus"),                 qSL("Register on the specified D-Bus."), qSL("<bus>|system|session|none|auto"), qSL("auto") });
+    m_clp.addOption({ qSL("start-session-dbus"),   qSL("Deprecated (ignored).") });
+#endif
+    m_clp.addOption({ qSL("fullscreen"),           qSL("Display in full-screen.") });
+    m_clp.addOption({ qSL("no-fullscreen"),        qSL("Do not display in full-screen.") });
+    m_clp.addOption({ qSL("I"),                    qSL("Additional QML import path."), qSL("dir") });
+    m_clp.addOption({ { qSL("v"), qSL("verbose") }, qSL("Verbose output.") });
+    m_clp.addOption({ qSL("slow-animations"),      qSL("Run all animations in slow motion.") });
+    m_clp.addOption({ qSL("load-dummydata"),       qSL("Loads QML dummy-data.") });
+    m_clp.addOption({ qSL("no-security"),          qSL("Disables all security related checks (dev only!)") });
+    m_clp.addOption({ qSL("development-mode"),     qSL("Enable development mode, allowing installation of dev-signed packages.") });
+    m_clp.addOption({ qSL("no-ui-watchdog"),       qSL("Disables detecting hung UI applications (e.g. via Wayland's ping/pong).") });
+    m_clp.addOption({ qSL("no-dlt-logging"),       qSL("Disables logging using automotive DLT.") });
+    m_clp.addOption({ qSL("force-single-process"), qSL("Forces single-process mode even on a wayland enabled build.") });
+    m_clp.addOption({ qSL("force-multi-process"),  qSL("Forces multi-process mode. Will exit immediately if this is not possible.") });
+    m_clp.addOption({ qSL("wayland-socket-name"),  qSL("Use this file name to create the wayland socket."), qSL("socket") });
+    m_clp.addOption({ qSL("single-app"),           qSL("Runs a single application only (ignores the database)"), qSL("info.yaml file") }); // rename single-package
+    m_clp.addOption({ qSL("logging-rule"),         qSL("Adds a standard Qt logging rule."), qSL("rule") });
+    m_clp.addOption({ qSL("qml-debug"),            qSL("Enables QML debugging and profiling.") });
+    m_clp.addOption({ qSL("enable-touch-emulation"), qSL("Enables the touch emulation, converting mouse to touch events.") });
 }
 
 QVariant Configuration::buildConfig() const
@@ -200,9 +222,7 @@ QVariant Configuration::buildConfig() const
 }
 
 Configuration::~Configuration()
-{
-
-}
+{ }
 
 // vvvv copied from QCommandLineParser ... why is this not public API?
 
@@ -287,193 +307,891 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
 
     QStringList configFilePaths = m_clp.values(qSL("config-file"));
 
-    struct ConfigFile
-    {
-        QString filePath;    // abs. file path
-        QByteArray checksum; // sha1 (fast and sufficient for this use-case)
-        QByteArray content;
-        QVariantMap config;
-    };
-    QVarLengthArray<ConfigFile> configFiles(configFilePaths.size());
+    AbstractConfigCache::Options cacheOptions = AbstractConfigCache::MergedResult;
+    if (noCache())
+        cacheOptions |= AbstractConfigCache::NoCache;
+    if (clearCache())
+        cacheOptions |= AbstractConfigCache::ClearCache;
 
-    for (int i = 0; i < configFiles.size(); ++i)
-        configFiles[i].filePath = QFileInfo(configFilePaths.at(i)).absoluteFilePath();
-
-    bool noConfigCache = m_clp.isSet(qSL("no-config-cache"));
-    bool clearConfigCache = m_clp.isSet(qSL("clear-config-cache"));
-
-    const QDir cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-
-    if (!cacheLocation.exists())
-        cacheLocation.mkpath(qSL("."));
-
-    const QString cacheFilePath = cacheLocation.absoluteFilePath(qSL("appman-config.cache"));
-
-    QFile cacheFile(cacheFilePath);
-    QAtomicInt useCache = false;
-    QVariantMap cache;
-
-    static const quint32 CacheMagicHeader = 0xe42ad845;
-
-    if (!noConfigCache && !clearConfigCache) {
-        if (cacheFile.open(QFile::ReadOnly)) {
-            try {
-                QDataStream ds(&cacheFile);
-                quint32 magic;
-                ds >> magic;
-
-                if (magic != CacheMagicHeader)
-                    throw Exception("failed to read config cache header");
-
-                QVector<QPair<QString, QByteArray>> configChecksums; // abs. file path -> sha1
-                ds >> configChecksums >> cache;
-
-                if (ds.status() != QDataStream::Ok)
-                    throw Exception("failed to read config cache content");
-
-                if (configFiles.count() != configChecksums.count())
-                    throw Exception("the number of cached config files does not match the current set");
-
-                for (int i = 0; i < configFiles.count(); ++i) {
-                    ConfigFile &cf = configFiles[i];
-                    if (cf.filePath != configChecksums.at(i).first)
-                        throw Exception("the cached config file names do not match the current set (or their order changed)");
-                    cf.checksum = configChecksums.at(i).second;
-                }
-                useCache = true;
-
-#if defined(AM_TIME_CONFIG_PARSING)
-                qCDebug(LogSystem) << "Config parsing: cache loaded after" << (timer.nsecsElapsed() / 1000) << "usec";
-#endif
-            } catch (const Exception &e) {
-                if (deploymentWarnings)
-                    *deploymentWarnings << qL1S("Failed to read config cache:") + qL1S(e.what());
-            }
-        }
-    }
-
-    // reads a single config file and calculates its hash - defined as lambda to be usable
-    // both via QtConcurrent and via std:for_each
-    auto readConfigFile = [&useCache, &deploymentWarnings](ConfigFile &cf) {
-        QFile file(cf.filePath);
-        if (!file.open(QIODevice::ReadOnly))
-            throw Exception("Failed to open config file '%1' for reading.\n").arg(file.fileName());
-
-        if (file.size() > 1024*1024)
-            throw Exception("Config file '%1' is too big (> 1MB).\n").arg(file.fileName());
-
-        cf.content = substituteVars(file.readAll(), cf.filePath, deploymentWarnings);
-
-        QByteArray checksum = QCryptographicHash::hash(cf.content, QCryptographicHash::Sha1);
-        if (useCache && (checksum != cf.checksum)) {
-            if (deploymentWarnings)
-                *deploymentWarnings << qL1S("Failed to read config cache: cached config file checksums do not match current set");
-            useCache = false;
-        }
-        cf.checksum = checksum;
-    };
-
-    try {
-        if (configFiles.size() > AM_PARALLEL_THRESHOLD)
-            QtConcurrent::blockingMap(configFiles, readConfigFile);
-        else
-            std::for_each(configFiles.begin(), configFiles.end(), readConfigFile);
-    } catch (const Exception &e) {
-        showParserMessage(e.errorString(), ErrorMessage);
-        exit(1);
-    }
-
-#if defined(AM_TIME_CONFIG_PARSING)
-    qCDebug(LogSystem) << "Config parsing" << configFiles.size() << "files: loading finished after"
-                       << (timer.nsecsElapsed() / 1000) << "usec";
-#endif
-
-    if (useCache) {
-        m_config = cache;
-    } else if (!configFilePaths.isEmpty()) {
-        auto parseConfigFile = [](ConfigFile &cf) {
-            try {
-                QVector<QVariant> docs = YamlParser::parseAllDocuments(cf.content);
-                checkYamlFormat(docs, 2 /*number of expected docs*/, { "am-configuration" }, 1);
-                cf.config = docs.at(1).toMap();
-            } catch (const Exception &e) {
-                throw Exception("Could not parse config file '%1': %2\n")
-                        .arg(cf.filePath)
-                        .arg(e.errorString());
-            }
-        };
+    if (configFilePaths.isEmpty()) {
+        m_data = new ConfigurationData();
+    } else {
+        ConfigCache<ConfigurationData> cache(configFilePaths, qSL("config"), cacheOptions);
 
         try {
-            if (configFiles.size() > AM_PARALLEL_THRESHOLD)
-                QtConcurrent::blockingMap(configFiles, parseConfigFile);
-            else
-                std::for_each(configFiles.begin(), configFiles.end(), parseConfigFile);
+            cache.parse(deploymentWarnings);
+            m_data = cache.takeMergedResult();
         } catch (const Exception &e) {
             showParserMessage(e.errorString(), ErrorMessage);
             exit(1);
         }
-
-        // we cannot parallelize this step, since subsequent config files can overwrite
-        // or append to values
-        m_config = configFiles.at(0).config;
-        for (int i = 1; i < configFiles.size(); ++i)
-            mergeConfig(configFiles.at(i).config);
-
-        if (!noConfigCache) {
-            try {
-                QFile cacheFile(cacheFilePath);
-                if (!cacheFile.open(QFile::WriteOnly | QFile::Truncate))
-                    throw Exception(cacheFile, "failed to open file for writing");
-
-                QDataStream ds(&cacheFile);
-                QVector<QPair<QString, QByteArray>> configChecksums;
-                for (const ConfigFile &cf : qAsConst(configFiles))
-                    configChecksums.append(qMakePair(cf.filePath, cf.checksum));
-
-                ds << CacheMagicHeader << configChecksums << m_config;
-
-                if (ds.status() != QDataStream::Ok)
-                    throw Exception("error writing config cache content");
-            } catch (const Exception &e) {
-                if (deploymentWarnings)
-                    *deploymentWarnings << qL1S("Failed to write config cache: ") + qL1S(e.what());
-            }
-        }
-#if defined(AM_TIME_CONFIG_PARSING)
-        qCDebug(LogSystem) << "Config parsing" << configFiles.size() << "files: parsing finished after"
-                           << (timer.nsecsElapsed() / 1000) << "usec";
-#endif
     }
 
     const QStringList options = m_clp.values(qSL("o"));
     for (const QString &option : options) {
-        QVector<QVariant> docs;
+        QByteArray yaml("formatVersion: 1\nformatType: am-configuration\n---\n");
+        yaml.append(option.toUtf8());
+        QBuffer buffer(&yaml);
+        buffer.open(QIODevice::ReadOnly);
         try {
-            docs = YamlParser::parseAllDocuments(option.toUtf8());
+            ConfigurationData *cd = ConfigCacheAdaptor<ConfigurationData>::loadFromSource(&buffer, qSL("command line"));
+            if (cd)
+                ConfigCacheAdaptor<ConfigurationData>::merge(m_data, cd);
         } catch (const Exception &e) {
             showParserMessage(QString::fromLatin1("Could not parse --option value: %1.\n")
                               .arg(e.errorString()),
                               ErrorMessage);
             exit(1);
         }
-
-        if (docs.size() != 1) {
-            showParserMessage(QString::fromLatin1("Could not parse --option value: Invalid document format.\n"),
-                              ErrorMessage);
-            exit(1);
-        }
-        mergeConfig(docs.at(0).toMap());
     }
 
-#if defined(AM_TIME_CONFIG_PARSING)
-    qCDebug(LogSystem) << "Config parsing" << options.size() << "-o options: parsing finished after"
-                       << (timer.nsecsElapsed() / 1000) << "usec";
-#endif
+    // early sanity checks
+    if (m_onlyOnePositionalArgument && (m_clp.positionalArguments().size() > 1)) {
+        showParserMessage(qL1S("Only one main qml file can be specified.\n"), ErrorMessage);
+        exit(1);
+    }
 
-    // QML cannot cope with invalid QVariants and QDataStream cannot cope with nullptr inside a
-    // QVariant ... the workaround is to save invalid variants to the cache and fix them up
-    // afterwards:
-    fixNullValuesForQml(m_config);
+    if (installationDir().isEmpty()) {
+        const auto ilocs = m_data->installationLocations;
+        if (!ilocs.isEmpty() && deploymentWarnings) {
+            *deploymentWarnings << qL1S("Support for \"installationLocations\" in the main config file has been removed:");
+
+            for (const auto iloc : ilocs) {
+                QVariantMap map = iloc.toMap();
+                QString id = map.value(qSL("id")).toString();
+                if (id == qSL("internal-0")) {
+                    m_installationDir = map.value(qSL("installationPath")).toString();
+                    m_documentDir = map.value(qSL("documentPath")).toString();
+                    if (deploymentWarnings)
+                        *deploymentWarnings << qL1S(" * still using installation location \"internal-0\" for backward compatibility");
+                } else if (deploymentWarnings) {
+                    *deploymentWarnings << qL1S(" * ignoring installation location ") + id;
+                }
+            }
+        }
+    }
+
+    if (installationDir().isEmpty() && deploymentWarnings) {
+        *deploymentWarnings << qL1S("No --installation-dir command line parameter or"
+                                    " applications/installationDir configuration key specified. It won't be possible to install,"
+                                    " remove or access installable packages.");
+    }
+
+    if (value<bool>("start-session-dbus") && deploymentWarnings)
+        *deploymentWarnings << qL1S("Option \"--start-session-dbus\" has been deprecated and will be ignored.");
+}
+
+ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
+{
+    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust all of
+    //            loadFromCache(), saveToCache() and mergeFrom() at the same time!
+
+    ConfigurationData *cd = new ConfigurationData;
+    ds >> cd->runtimes.configurations
+       >> cd->containers.configurations
+       >> cd->containers.selection
+       >> cd->intents.disable
+       >> cd->intents.timeouts.disambiguation
+       >> cd->intents.timeouts.startApplication
+       >> cd->intents.timeouts.replyFromApplication
+       >> cd->intents.timeouts.replyFromSystem
+       >> cd->plugins.startup
+       >> cd->plugins.container
+       >> cd->logging.dlt.id
+       >> cd->logging.dlt.description
+       >> cd->logging.rules
+       >> cd->logging.messagePattern
+       >> cd->logging.useAMConsoleLogger
+       >> cd->installer.disable
+       >> cd->installer.caCertificates
+       >> cd->installer.applicationUserIdSeparation.maxUserId
+       >> cd->installer.applicationUserIdSeparation.minUserId
+       >> cd->installer.applicationUserIdSeparation.commonGroupId
+       >> cd->dbus.policies
+       >> cd->dbus.registrations
+       >> cd->quicklaunch.idleLoad
+       >> cd->quicklaunch.runtimesPerContainer
+       >> cd->ui.style
+       >> cd->ui.mainQml
+       >> cd->ui.resources
+       >> cd->ui.fullscreen
+       >> cd->ui.windowIcon
+       >> cd->ui.importPaths
+       >> cd->ui.pluginPaths
+       >> cd->ui.iconThemeName
+       >> cd->ui.loadDummyData
+       >> cd->ui.enableTouchEmulation
+       >> cd->ui.iconThemeSearchPaths
+       >> cd->ui.opengl
+       >> cd->applications.builtinAppsManifestDir
+       >> cd->applications.installationDir
+       >> cd->applications.documentDir
+       >> cd->installationLocations
+       >> cd->crashAction
+       >> cd->systemProperties
+       >> cd->flags.noSecurity
+       >> cd->flags.noUiWatchdog
+       >> cd->flags.developmentMode
+       >> cd->flags.forceMultiProcess
+       >> cd->flags.forceSingleProcess;
+    return cd;
+}
+
+void ConfigurationData::saveToCache(QDataStream &ds) const
+{
+    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust all of
+    //            loadFromCache(), saveToCache() and mergeFrom() at the same time!
+
+    ds << runtimes.configurations
+       << containers.configurations
+       << containers.selection
+       << intents.disable
+       << intents.timeouts.disambiguation
+       << intents.timeouts.startApplication
+       << intents.timeouts.replyFromApplication
+       << intents.timeouts.replyFromSystem
+       << plugins.startup
+       << plugins.container
+       << logging.dlt.id
+       << logging.dlt.description
+       << logging.rules
+       << logging.messagePattern
+       << logging.useAMConsoleLogger
+       << installer.disable
+       << installer.caCertificates
+       << installer.applicationUserIdSeparation.maxUserId
+       << installer.applicationUserIdSeparation.minUserId
+       << installer.applicationUserIdSeparation.commonGroupId
+       << dbus.policies
+       << dbus.registrations
+       << quicklaunch.idleLoad
+       << quicklaunch.runtimesPerContainer
+       << ui.style
+       << ui.mainQml
+       << ui.resources
+       << ui.fullscreen
+       << ui.windowIcon
+       << ui.importPaths
+       << ui.pluginPaths
+       << ui.iconThemeName
+       << ui.loadDummyData
+       << ui.enableTouchEmulation
+       << ui.iconThemeSearchPaths
+       << ui.opengl
+       << applications.builtinAppsManifestDir
+       << applications.installationDir
+       << applications.documentDir
+       << installationLocations
+       << crashAction
+       << systemProperties
+       << flags.noSecurity
+       << flags.noUiWatchdog
+       << flags.developmentMode
+       << flags.forceMultiProcess
+       << flags.forceSingleProcess;
+}
+
+// templates would we way nicer, but we cannot get nice pointers-to-member-data for all elements in
+// our sub-structs in a generic way without a lot of boilerplate code
+#define MERGE_SCALAR(x) if (from->x != def.x) { this->x = from->x; } else { }
+#define MERGE_LIST(x)   this->x.append(from->x)
+#define MERGE_MAP(x)    recursiveMergeVariantMap(this->x, from->x)
+
+void ConfigurationData::mergeFrom(const ConfigurationData *from)
+{
+    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust all of
+    //            loadFromCache(), saveToCache() and mergeFrom() at the same time!
+
+    static const ConfigurationData def;
+
+    MERGE_MAP(runtimes.configurations);
+    MERGE_MAP(containers.configurations);
+
+    MERGE_SCALAR(intents.disable);
+    MERGE_SCALAR(intents.timeouts.disambiguation);
+    MERGE_SCALAR(intents.timeouts.startApplication);
+    MERGE_SCALAR(intents.timeouts.replyFromApplication);
+    MERGE_SCALAR(intents.timeouts.replyFromSystem);
+    MERGE_LIST(plugins.startup);
+    MERGE_LIST(plugins.container);
+    MERGE_SCALAR(logging.dlt.id);
+    MERGE_SCALAR(logging.dlt.description);
+    MERGE_LIST(logging.rules);
+    MERGE_LIST(logging.messagePattern);
+    MERGE_SCALAR(logging.useAMConsoleLogger);
+    MERGE_SCALAR(installer.disable);
+    MERGE_LIST(installer.caCertificates);
+    MERGE_SCALAR(installer.applicationUserIdSeparation.maxUserId);
+    MERGE_SCALAR(installer.applicationUserIdSeparation.minUserId);
+    MERGE_SCALAR(installer.applicationUserIdSeparation.commonGroupId);
+    MERGE_MAP(dbus.policies);
+    MERGE_MAP(dbus.registrations);
+    MERGE_SCALAR(quicklaunch.idleLoad);
+    MERGE_SCALAR(quicklaunch.runtimesPerContainer);
+    MERGE_SCALAR(ui.style);
+    MERGE_SCALAR(ui.mainQml);
+    MERGE_LIST(ui.resources);
+    MERGE_SCALAR(ui.fullscreen);
+    MERGE_SCALAR(ui.windowIcon);
+    MERGE_LIST(ui.importPaths);
+    MERGE_LIST(ui.pluginPaths);
+    MERGE_SCALAR(ui.iconThemeName);
+    MERGE_SCALAR(ui.loadDummyData);
+    MERGE_SCALAR(ui.enableTouchEmulation);
+    MERGE_LIST(ui.iconThemeSearchPaths);
+    MERGE_MAP(ui.opengl);
+    MERGE_LIST(applications.builtinAppsManifestDir);
+    MERGE_SCALAR(applications.installationDir);
+    MERGE_SCALAR(applications.documentDir);
+    MERGE_LIST(installationLocations);
+    MERGE_MAP(crashAction);
+    MERGE_MAP(systemProperties);
+    MERGE_SCALAR(flags.noSecurity);
+    MERGE_SCALAR(flags.noUiWatchdog);
+    MERGE_SCALAR(flags.developmentMode);
+    MERGE_SCALAR(flags.forceMultiProcess);
+    MERGE_SCALAR(flags.forceSingleProcess);
+}
+
+QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName,
+                                             QStringList *deploymentWarnings)
+{
+    QByteArray string = sourceContent;
+    int posBeg = -1;
+    int posEnd = -1;
+    while (true) {
+        if ((posBeg = string.indexOf("${", posEnd + 1)) < 0)
+            break;
+        if ((posEnd = string.indexOf('}', posBeg + 2)) < 0)
+            break;
+
+        const QByteArray varName = string.mid(posBeg + 2, posEnd - posBeg - 2);
+
+        QByteArray varValue;
+        if (varName == "CONFIG_PWD") {
+            static QByteArray path;
+            if (path.isEmpty() && !fileName.isEmpty())
+                path = QFileInfo(fileName).path().toUtf8();
+            varValue = path;
+        } else if (varName.startsWith("env:")) {
+            varValue = qgetenv(varName.constData() + 4);
+        } else if (varName.startsWith("stdpath:")) {
+            bool exists;
+            int loc = QMetaEnum::fromType<QStandardPaths::StandardLocation>().keyToValue(varName.constData() + 8, &exists);
+            if (exists)
+                varValue = QStandardPaths::writableLocation(static_cast<QStandardPaths::StandardLocation>(loc)).toUtf8();
+        }
+
+        if (varValue.isNull() && deploymentWarnings) {
+            *deploymentWarnings << qL1S("Could not replace variable ${") + qL1S(varName)
+                                   + qL1S("} while parsing ") + fileName;
+            continue;
+        }
+        string.replace(posBeg, varName.length() + 3, varValue);
+        // varName and varValue most likely have a different length, so we have to adjust
+        posEnd = posEnd - 3 - varName.length() + varValue.length();
+    }
+    return string;
+}
+
+ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QString &fileName)
+{
+    try {
+        YamlParser p(source->readAll(), fileName);
+        auto header = p.parseHeader();
+        if (!(header.first == qL1S("am-configuration") && header.second == 1))
+            throw Exception("Unsupported format type and/or version");
+        p.nextDocument();
+
+        QString pwd;
+        if (!fileName.isEmpty())
+            pwd = QFileInfo(fileName).absoluteDir().path();
+
+        QScopedPointer<ConfigurationData> cd(new ConfigurationData);
+
+        YamlParser::Fields fields = {
+            { "runtimes", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  cd->runtimes.configurations = p->parseMap(); } },
+            { "containers", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  cd->containers.configurations = p->parseMap();
+
+                  QVariant containerSelection = cd->containers.configurations.take(qSL("selection"));
+
+
+                  QList<QPair<QString, QString>> config;
+
+                  // this is easy to get wrong in the config file, so we do not just ignore a map here
+                  // (this will in turn trigger the warning below)
+                  if (containerSelection.type() == QVariant::Map)
+                      containerSelection = QVariantList { containerSelection };
+
+                  if (containerSelection.type() == QVariant::String) {
+                      config.append(qMakePair(qSL("*"), containerSelection.toString()));
+                  } else if (containerSelection.type() == QVariant::List) {
+                      QVariantList list = containerSelection.toList();
+                      for (const QVariant &v : list) {
+                          if (v.type() == QVariant::Map) {
+                              QVariantMap map = v.toMap();
+
+                              if (map.size() != 1) {
+                                  qCWarning(LogSystem) << "The container selection configuration needs to be a list of "
+                                                          "single mappings, in order to preserve the evaluation "
+                                                          "order: found a mapping with" << map.size() << "entries.";
+                              }
+
+                              for (auto it = map.cbegin(); it != map.cend(); ++it)
+                                  config.append(qMakePair(it.key(), it.value().toString()));
+                          }
+                      }
+                  }
+                  cd->containers.selection = config;
+              } },
+            { "installationLocations", false, YamlParser::List, [&cd](YamlParser *p) {
+                  cd->installationLocations = p->parseList(); } },
+            { "plugins", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  p->parseFields({
+                      { "startup", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                            cd->plugins.startup = p->parseStringOrStringList(); } },
+                      { "container", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                            cd->plugins.container = p->parseStringOrStringList(); } },
+                  }); } },
+            { "logging", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  p->parseFields({
+                      { "rules", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                            cd->logging.rules = p->parseStringOrStringList(); } },
+                      { "messagePattern", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->logging.messagePattern = p->parseScalar().toString(); } },
+                      { "useAMConsoleLogger", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->logging.useAMConsoleLogger = p->parseScalar(); } },
+                      { "dlt", false, YamlParser::Map, [&cd](YamlParser *p) {
+                            p->parseFields( {
+                                { "id", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->logging.dlt.id = p->parseScalar().toString(); } },
+                                { "description", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->logging.dlt.description = p->parseScalar().toString(); } }
+                            }); } }
+                  }); } },
+            { "installer", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  p->parseFields({
+                      { "disable", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->installer.disable = p->parseScalar().toBool(); } },
+                      { "caCertificated", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                            cd->installer.caCertificates = p->parseStringOrStringList(); } },
+                      { "applicationUserIdSeparation", false, YamlParser::Map, [&cd](YamlParser *p) {
+                            p->parseFields({
+                                { "minUserId", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->installer.applicationUserIdSeparation.minUserId = p->parseScalar().toInt(); } },
+                                { "maxUserId", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->installer.applicationUserIdSeparation.maxUserId = p->parseScalar().toInt(); } },
+                                { "commonGroupId", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->installer.applicationUserIdSeparation.commonGroupId = p->parseScalar().toInt(); } }
+                            }); } }
+                  }); } },
+            { "quicklaunch", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  p->parseFields({
+                      { "idleLoad", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->quicklaunch.idleLoad = p->parseScalar().toDouble(); } },
+                      { "runtimesPerContainer", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->quicklaunch.runtimesPerContainer = p->parseScalar().toInt(); } },
+                  }); } },
+            { "ui", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  p->parseFields({
+                      { "enableTouchEmulation", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->ui.enableTouchEmulation = p->parseScalar().toBool(); } },
+                      { "iconThemeSearchPaths", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                            cd->ui.iconThemeSearchPaths = p->parseStringOrStringList(); } },
+                      { "iconThemeName", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->ui.iconThemeName = p->parseScalar().toString(); } },
+                      { "style", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->ui.style = p->parseScalar().toString(); } },
+                      { "loadDummyData", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->ui.loadDummyData = p->parseScalar().toBool(); } },
+                      { "importPaths", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                            cd->ui.importPaths = p->parseStringOrStringList(); } },
+                      { "pluginPaths", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                            cd->ui.pluginPaths = p->parseStringOrStringList(); } },
+                      { "windowIcon", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->ui.windowIcon = p->parseScalar().toString(); } },
+                      { "fullscreen", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->ui.fullscreen = p->parseScalar().toBool(); } },
+                      { "mainQml", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->ui.mainQml = p->parseScalar().toString(); } },
+                      { "resources", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                            cd->ui.resources = p->parseStringOrStringList(); } },
+                      { "opengl", false, YamlParser::Map, [&cd](YamlParser *p) {
+                            p->parseFields({
+                                { "desktopProfile", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->ui.opengl.insert(qSL("desktopProfile"), p->parseScalar().toString()); } },
+                                { "esMajorVersion", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->ui.opengl.insert(qSL("esMajorVersion"), p->parseScalar().toInt()); } },
+                                { "esMinorVersion", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->ui.opengl.insert(qSL("esMinorVersion"), p->parseScalar().toInt()); } }
+                            });
+                        } },
+                  }); } },
+            { "applications", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  p->parseFields({
+                      { "builtinAppsManifestDir", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                            cd->applications.builtinAppsManifestDir = p->parseStringOrStringList(); } },
+                      { "installedAppsManifestDir", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *) {
+                             /* deprecated - ignore */ } },
+                      { "installationDir", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
+                             cd->applications.installationDir = p->parseScalar().toString(); } },
+                      { "documentDir", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
+                             cd->applications.documentDir = p->parseScalar().toString(); } }
+                  }); } },
+            { "flags", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  p->parseFields({
+                      { "forceSingleProcess", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->flags.forceSingleProcess = p->parseScalar().toBool(); } },
+                      { "forceMultiProcess", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->flags.forceMultiProcess = p->parseScalar().toBool(); } },
+                      { "noSecurity", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->flags.noSecurity = p->parseScalar().toBool(); } },
+                      { "developmentMode", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->flags.developmentMode = p->parseScalar().toBool(); } },
+                      { "noUiWatchdog", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->flags.noUiWatchdog = p->parseScalar().toBool(); } },
+                  }); } },
+            { "systemProperties", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  cd->systemProperties = p->parseMap(); } },
+            { "crashAction", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  cd->crashAction = p->parseMap(); } },
+            { "intents", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  p->parseFields({
+                      { "disable", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->intents.disable = p->parseScalar().toBool(); } },
+                      { "timeouts", false, YamlParser::Map, [&cd](YamlParser *p) {
+                            p->parseFields({
+                                { "disambiguation", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->intents.timeouts.disambiguation = p->parseScalar().toInt(); } },
+                                { "startApplication", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->intents.timeouts.startApplication = p->parseScalar().toInt(); } },
+                                { "replyFromApplication", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->intents.timeouts.replyFromApplication = p->parseScalar().toInt(); } },
+                                { "replyFromSystem", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      cd->intents.timeouts.replyFromSystem = p->parseScalar().toInt(); } },
+                            }); } }
+                  }); } },
+            { "dbus", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  const QVariantMap dbus = p->parseMap();
+                  for (auto it = dbus.cbegin(); it != dbus.cend(); ++it) {
+                      const QString &ifaceName = it.key();
+                      const QVariantMap &ifaceData = it.value().toMap();
+
+                      auto rit = ifaceData.constFind(qSL("register"));
+                      if (rit != ifaceData.cend())
+                          cd->dbus.registrations.insert(ifaceName, rit->toString());
+
+                      auto pit = ifaceData.constFind(qSL("policy"));
+                      if (pit != ifaceData.cend())
+                          cd->dbus.policies.insert(ifaceName, pit->toMap());
+                  }
+              } }
+        };
+
+        p.parseFields(fields);
+        return cd.take();
+    } catch (const Exception &e) {
+        throw Exception(e.errorCode(), "Failed to parse config file %1: %2")
+                .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : qSL("<stream>"), e.errorString());
+    }
+}
+
+
+// getters
+
+static QString replaceEnvVars(QString string)
+{
+    // note: we cannot replace ${CONFIG_PWD} here, since we have lost that information during
+    //       the config file merge!
+
+    static QHash<QString, QString> replacement;
+    if (replacement.isEmpty()) {
+        QMetaEnum locations = QMetaEnum::fromType<QStandardPaths::StandardLocation>();
+        for (int i = 0; i < locations.keyCount(); ++i) {
+            replacement.insert(qSL("stdpath:") + qL1S(locations.key(i)),
+                               QStandardPaths::writableLocation(static_cast<QStandardPaths::StandardLocation>(locations.value(i))));
+        }
+        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+        QStringList envNames = env.keys();
+        for (const auto &envName : qAsConst(envNames))
+            replacement.insert(qSL("env:") + envName, env.value(envName));
+    }
+
+    // this will return immediately, if no vars are referenced
+    int posBeg = -1;
+    int posEnd = -1;
+    while (true) {
+        if ((posBeg = string.indexOf(qL1S("${"), posEnd + 1)) < 0)
+            break;
+        if ((posEnd = string.indexOf('}', posBeg + 2)) < 0)
+            break;
+
+        const QString varName = string.mid(posBeg + 2, posEnd - posBeg - 2);
+        const QString varValue = replacement.value(varName);
+        string.replace(posBeg, varName.length() + 3, varValue);
+
+        // varName and varValue most likely have a different length, so we have to adjust
+        posEnd = posEnd - 3 - varName.length() + varValue.length();
+    }
+    return string;
+}
+
+
+QString Configuration::mainQmlFile() const
+{
+    if (!m_clp.positionalArguments().isEmpty())
+        return m_clp.positionalArguments().at(0);
+    else
+        return replaceEnvVars(m_data->ui.mainQml);
+}
+
+bool Configuration::noCache() const
+{
+    return value<bool>("no-cache");
+}
+
+bool Configuration::clearCache() const
+{
+    return value<bool>("clear-cache");
+}
+
+
+QStringList Configuration::builtinAppsManifestDirs() const
+{
+    return value<QStringList>("builtin-apps-manifest-dir", m_data->applications.builtinAppsManifestDir);
+}
+
+QString Configuration::installationDir() const
+{
+    if (m_installationDir.isEmpty())
+        m_installationDir = value<QString>("installation-dir", m_data->applications.installationDir);
+    return m_installationDir;
+}
+
+QString Configuration::documentDir() const
+{
+    if (m_documentDir.isEmpty())
+        m_documentDir = value<QString>("document-dir", m_data->applications.documentDir);
+    return m_documentDir;
+}
+
+bool Configuration::disableInstaller() const
+{
+    return value<bool>("disable-installer", m_data->installer.disable);
+}
+
+bool Configuration::disableIntents() const
+{
+    return value<bool>("disable-intents", m_data->intents.disable);
+}
+
+int Configuration::intentTimeoutForDisambiguation() const
+{
+    return m_data->intents.timeouts.disambiguation;
+}
+
+int Configuration::intentTimeoutForStartApplication() const
+{
+    return m_data->intents.timeouts.startApplication;
+}
+
+int Configuration::intentTimeoutForReplyFromApplication() const
+{
+    return m_data->intents.timeouts.replyFromApplication;
+}
+
+int Configuration::intentTimeoutForReplyFromSystem() const
+{
+    return m_data->intents.timeouts.replyFromSystem;
+}
+
+bool Configuration::fullscreen() const
+{
+    return value<bool>("fullscreen", m_data->ui.fullscreen);
+}
+
+bool Configuration::noFullscreen() const
+{
+    return value<bool>("no-fullscreen");
+}
+
+QString Configuration::windowIcon() const
+{
+    return m_data->ui.windowIcon;
+}
+
+QStringList Configuration::importPaths() const
+{
+    QStringList importPaths = value<QStringList>("I", m_data->ui.importPaths);
+
+    for (int i = 0; i < importPaths.size(); ++i)
+        importPaths[i] = toAbsoluteFilePath(importPaths.at(i));
+
+    return importPaths;
+}
+
+QStringList Configuration::pluginPaths() const
+{
+    return m_data->ui.pluginPaths;
+}
+
+bool Configuration::verbose() const
+{
+    return value<bool>("verbose") || m_forceVerbose;
+}
+
+void QtAM::Configuration::setForceVerbose(bool forceVerbose)
+{
+    m_forceVerbose = forceVerbose;
+}
+
+bool Configuration::slowAnimations() const
+{
+    return value<bool>("slow-animations");
+}
+
+bool Configuration::loadDummyData() const
+{
+    return value<bool>("load-dummydata", m_data->ui.loadDummyData);
+}
+
+bool Configuration::noSecurity() const
+{
+    return value<bool>("no-security", m_data->flags.noSecurity);
+}
+
+bool Configuration::developmentMode() const
+{
+    return value<bool>("development-mode", m_data->flags.developmentMode);
+}
+
+bool Configuration::noUiWatchdog() const
+{
+    return value<bool>("no-ui-watchdog", m_data->flags.noUiWatchdog);
+}
+
+bool Configuration::noDltLogging() const
+{
+    return value<bool>("no-dlt-logging");
+}
+
+bool Configuration::forceSingleProcess() const
+{
+    return value<bool>("force-single-process", m_data->flags.forceSingleProcess);
+}
+
+bool Configuration::forceMultiProcess() const
+{
+    return value<bool>("force-multi-process", m_data->flags.forceMultiProcess);
+}
+
+bool Configuration::qmlDebugging() const
+{
+    return value<bool>("qml-debug");
+}
+
+QString Configuration::singleApp() const
+{
+    //TODO: single-package
+    return value<QString>("single-app");
+}
+
+QStringList Configuration::loggingRules() const
+{
+    return value<QStringList>("logging-rule", m_data->logging.rules);
+}
+
+QString Configuration::messagePattern() const
+{
+    return m_data->logging.messagePattern;
+}
+
+QVariant Configuration::useAMConsoleLogger() const
+{
+    // true = use the am logger
+    // false = don't use the am logger
+    // invalid = don't use the am logger when QT_MESSAGE_PATTERN is set
+    const QVariant &val = m_data->logging.useAMConsoleLogger;
+    if (val.type() == QVariant::Bool)
+        return val;
+    else
+        return QVariant();
+}
+
+QString Configuration::style() const
+{
+    return m_data->ui.style;
+}
+
+QString Configuration::iconThemeName() const
+{
+    return m_data->ui.iconThemeName;
+}
+
+QStringList Configuration::iconThemeSearchPaths() const
+{
+    return m_data->ui.iconThemeSearchPaths;
+}
+
+bool Configuration::enableTouchEmulation() const
+{
+    return value("enable-touch-emulation", m_data->ui.enableTouchEmulation);
+}
+
+QString Configuration::dltId() const
+{
+    return value<QString>(nullptr, m_data->logging.dlt.id);
+}
+
+QString Configuration::dltDescription() const
+{
+    return value<QString>(nullptr, m_data->logging.dlt.description);
+}
+
+QStringList Configuration::resources() const
+{
+    return m_data->ui.resources;
+}
+
+QVariantMap Configuration::openGLConfiguration() const
+{
+    return m_data->ui.opengl;
+}
+
+QVariantList Configuration::installationLocations() const
+{
+    return m_data->installationLocations;
+}
+
+QList<QPair<QString, QString>> Configuration::containerSelectionConfiguration() const
+{
+    return m_data->containers.selection;
+}
+
+QVariantMap Configuration::containerConfigurations() const
+{
+    return m_data->containers.configurations;
+}
+
+QVariantMap Configuration::runtimeConfigurations() const
+{
+    return m_data->runtimes.configurations;
+}
+
+QVariantMap Configuration::dbusPolicy(const char *interfaceName) const
+{
+    return m_data->dbus.policies.value(qL1S(interfaceName)).toMap();
+}
+
+QString Configuration::dbusRegistration(const char *interfaceName) const
+{
+    auto hasConfig = m_data->dbus.registrations.constFind(qL1S(interfaceName));
+
+    if (hasConfig != m_data->dbus.registrations.cend())
+        return hasConfig->toString();
+    else
+        return m_clp.value(qSL("dbus"));
+}
+
+QVariantMap Configuration::rawSystemProperties() const
+{
+    return m_data->systemProperties;
+}
+
+bool Configuration::applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const
+{
+    const auto &sep = m_data->installer.applicationUserIdSeparation;
+    if (sep.minUserId >= 0 && sep.maxUserId >= 0 && sep.commonGroupId >= 0) {
+        if (minUserId)
+            *minUserId = sep.minUserId;
+        if (maxUserId)
+            *maxUserId = sep.maxUserId;
+        if (commonGroupId)
+            *commonGroupId = sep.commonGroupId;
+        return true;
+    }
+    return false;
+}
+
+qreal Configuration::quickLaunchIdleLoad() const
+{
+    return m_data->quicklaunch.idleLoad;
+}
+
+int Configuration::quickLaunchRuntimesPerContainer() const
+{
+    // if you need more than 10 quicklaunchers per runtime, you're probably doing something wrong
+    // or you have a typo in your YAML, which could potentially freeze your target (container
+    // construction can be expensive)
+    return qBound(0, m_data->quicklaunch.runtimesPerContainer, 10);
+}
+
+QString Configuration::waylandSocketName() const
+{
+#if !defined(AM_HEADLESS)
+    QString socketName = m_clp.value(qSL("wayland-socket-name")); // get the default value
+    if (!socketName.isEmpty())
+        return socketName;
+
+    const char *envName = "WAYLAND_DISPLAY";
+    if (qEnvironmentVariableIsSet(envName)) {
+        socketName = qEnvironmentVariable(envName);
+        if (!QGuiApplication::platformName().startsWith(qSL("wayland")) || (socketName != qSL("wayland-0")))
+            return socketName;
+    }
+
+#  if defined(Q_OS_LINUX)
+    // modelled after wl_socket_lock() in wayland_server.c
+    const QString xdgDir = qEnvironmentVariable("XDG_RUNTIME_DIR") + qSL("/");
+    const QString pattern = qSL("qtam-wayland-%1");
+    const QString lockSuffix = qSL(".lock");
+
+    for (int i = 0; i < 32; ++i) {
+        socketName = pattern.arg(i);
+        QFile lock(xdgDir + socketName + lockSuffix);
+        if (lock.open(QIODevice::ReadWrite)) {
+            if (::flock(lock.handle(), LOCK_EX | LOCK_NB) == 0) {
+                QFile socket(xdgDir + socketName);
+                if (!socket.exists() || socket.remove())
+                    return socketName;
+            }
+        }
+    }
+#  endif
+#endif
+    return QString();
+
+}
+
+QVariantMap Configuration::managerCrashAction() const
+{
+    return m_data->crashAction;
+}
+
+QStringList Configuration::caCertificates() const
+{
+    return m_data->installer.caCertificates;
+}
+
+QStringList Configuration::pluginFilePaths(const char *type) const
+{
+    if (qstrcmp(type, "startup") == 0)
+        return m_data->plugins.startup;
+    else if (qstrcmp(type, "container") == 0)
+        return m_data->plugins.container;
+    else
+        return QStringList();
+}
+
+QStringList Configuration::testRunnerArguments() const
+{
+    QStringList targs = m_clp.positionalArguments();
+    if (!targs.isEmpty() && targs.constFirst().endsWith(qL1S(".qml")))
+        targs.removeFirst();
+    targs.prepend(QCoreApplication::arguments().constFirst());
+    return targs;
 }
 
 QT_END_NAMESPACE_AM

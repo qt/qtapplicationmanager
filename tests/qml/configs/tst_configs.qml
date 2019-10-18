@@ -90,7 +90,7 @@ TestCase {
     function test_basic_ipc() {
         compare(NotificationManager.count, 0);
         compare(windowAddedSpy.count, 0);
-        ApplicationManager.startApplication("test.configs.app");
+        verify(ApplicationManager.startApplication("test.configs.app"))
         windowAddedSpy.wait();
         compare(windowAddedSpy.count, 1);
         var window = windowAddedSpy.signalArguments[0][0];

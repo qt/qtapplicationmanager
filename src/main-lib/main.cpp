@@ -94,7 +94,7 @@
 #include "global.h"
 #include "logging.h"
 #include "main.h"
-#include "defaultconfiguration.h"
+#include "configuration.h"
 #include "applicationmanager.h"
 #include "packagemanager.h"
 #include "packagedatabase.h"
@@ -203,7 +203,7 @@ Main::~Main()
     The caller has to make sure that cfg will be available even after this function returns:
     we will access the cfg object from delayed init functions via lambdas!
 */
-void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentWarnings) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setup(const Configuration *cfg, const QStringList &deploymentWarnings) Q_DECL_NOEXCEPT_EXPR(false)
 {
     // basics that are needed in multiple setup functions below
     m_noSecurity = cfg->noSecurity();
@@ -237,13 +237,15 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
                                cfg->containerConfigurations(), cfg->pluginFilePaths("container"),
                                cfg->iconThemeSearchPaths(), cfg->iconThemeName());
 
-    loadPackageDatabase(cfg->recreateDatabase(), cfg->singleApp());
+    loadPackageDatabase(cfg->clearCache() || cfg->noCache(), cfg->singleApp());
 
     setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
                     cfg->quickLaunchIdleLoad());
 
-    if (!cfg->disableIntents())
-        setupIntents(cfg->intentTimeouts());
+    if (!cfg->disableIntents()) {
+        setupIntents(cfg->intentTimeoutForDisambiguation(), cfg->intentTimeoutForStartApplication(),
+                     cfg->intentTimeoutForReplyFromApplication(), cfg->intentTimeoutForReplyFromSystem());
+    }
 
     registerPackages();
 
@@ -251,7 +253,7 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
         StartupTimer::instance()->checkpoint("skipping installer");
     } else {
         setupInstaller(cfg->caCertificates(),
-                       std::bind(&DefaultConfiguration::applicationUserIdSeparation, cfg,
+                       std::bind(&Configuration::applicationUserIdSeparation, cfg,
                                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     }
     setLibraryPaths(libraryPaths() + cfg->pluginPaths());
@@ -259,11 +261,11 @@ void Main::setup(const DefaultConfiguration *cfg, const QStringList &deploymentW
     setupWindowTitle(QString(), cfg->windowIcon());
     setupWindowManager(cfg->waylandSocketName(), cfg->slowAnimations(), cfg->noUiWatchdog());
     setupTouchEmulation(cfg->enableTouchEmulation());
-    setupShellServer(cfg->telnetAddress(), cfg->telnetPort());
+    setupShellServer(QString(), 0); // remove
     setupSSDPService();
 
-    setupDBus(std::bind(&DefaultConfiguration::dbusRegistration, cfg, std::placeholders::_1),
-              std::bind(&DefaultConfiguration::dbusPolicy, cfg, std::placeholders::_1));
+    setupDBus(std::bind(&Configuration::dbusRegistration, cfg, std::placeholders::_1),
+              std::bind(&Configuration::dbusPolicy, cfg, std::placeholders::_1));
 }
 
 bool Main::isSingleProcessMode() const
@@ -456,10 +458,14 @@ void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePacka
     StartupTimer::instance()->checkpoint("after package database loading");
 }
 
-void Main::setupIntents(const QMap<QString, int> &timeouts) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupIntents(int disambiguationTimeout, int startApplicationTimeout,
+                        int replyFromApplicationTimeout, int replyFromSystemTimeout) Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance(m_packageManager,
-                                                                                 timeouts);
+                                                                                 disambiguationTimeout,
+                                                                                 startApplicationTimeout,
+                                                                                 replyFromApplicationTimeout,
+                                                                                 replyFromSystemTimeout);
     StartupTimer::instance()->checkpoint("after IntentServer instantiation");
 }
 

@@ -30,6 +30,7 @@ SOURCES += \
     crashhandler.cpp \
     logging.cpp \
     dbus-utilities.cpp \
+    configcache.cpp
 
 qtHaveModule(qml):SOURCES += \
     qml-utilities.cpp \
@@ -44,7 +45,9 @@ HEADERS += \
     unixsignalhandler.h \
     processtitle.h \
     crashhandler.h \
-    logging.h
+    logging.h \
+    configcache.h \
+    configcache_p.h
 
 qtHaveModule(qml):HEADERS += \
     qml-utilities.h \

@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -159,9 +160,10 @@ private:
     QQueue<IntentServerRequest *> m_startingAppQueue;
     QQueue<IntentServerRequest *> m_sentToAppQueue;
 
-    int m_disambiguationTimeout = 10000;
-    int m_startingAppTimeout = 3000;
-    int m_sentToAppTimeout = 5000;
+    // no timeouts by default -- these have to be set at runtime
+    int m_disambiguationTimeout = 0;
+    int m_startingAppTimeout = 0;
+    int m_sentToAppTimeout = 0;
 
     QVector<Intent *> m_intents;
 

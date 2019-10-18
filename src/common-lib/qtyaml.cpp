@@ -46,6 +46,8 @@
 #include <QDebug>
 #include <QtNumeric>
 #include <QTextCodec>
+#include <QFileInfo>
+#include <QDir>
 
 #include <yaml.h>
 
@@ -379,6 +381,8 @@ QByteArray yamlFromVariantDocuments(const QVector<QVariant> &documents, YamlStyl
 class YamlParserPrivate
 {
 public:
+    QString sourceName;
+    QString sourceDir;
     QByteArray data;
     QTextCodec *codec = nullptr;
     bool parsedHeader = false;
@@ -388,10 +392,15 @@ public:
 };
 
 
-YamlParser::YamlParser(const QByteArray &data)
+YamlParser::YamlParser(const QByteArray &data, const QString &fileName)
     : d(new YamlParserPrivate)
 {
     d->data = data;
+    if (!fileName.isEmpty()) {
+        QFileInfo fi(fileName);
+        d->sourceDir = fi.absolutePath();
+        d->sourceName = fi.fileName();
+    }
 
     memset(&d->parser, 0, sizeof(d->parser));
     memset(&d->event, 0, sizeof(d->event));
@@ -417,6 +426,21 @@ YamlParser::~YamlParser()
         yaml_event_delete(&d->event);
     yaml_parser_delete(&d->parser);
     delete d;
+}
+
+QString YamlParser::sourcePath() const
+{
+    return QDir(sourceDir()).absoluteFilePath(sourceName());
+}
+
+QString YamlParser::sourceDir() const
+{
+    return d->sourceDir;
+}
+
+QString YamlParser::sourceName() const
+{
+    return d->sourceName;
 }
 
 QVector<QVariant> YamlParser::parseAllDocuments(const QByteArray &yaml)
@@ -474,6 +498,8 @@ void YamlParser::nextEvent()
     do {
         if (!yaml_parser_parse(&d->parser, &d->event))
             throw YamlParserException(this, "cannot get next event");
+        if (d->event.type == YAML_ALIAS_EVENT)
+            throw YamlParserException(this, "anchors and aliases are not supported");
     } while (d->event.type == YAML_NO_EVENT);
 }
 
@@ -519,7 +545,7 @@ QVariant YamlParser::parseScalar() const
     };
 
     static const QVariant staticValues[] = {
-        QVariant(),                    // ValueNull
+        QVariant::fromValue(nullptr),  // ValueNull
         QVariant(true),                // ValueTrue
         QVariant(false),               // ValueFalse
         QVariant(qQNaN()),             // ValueNaN
@@ -773,7 +799,8 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
             allowedEvents.append(YAML_SEQUENCE_START_EVENT);
 
         if (!allowedEvents.contains(d->event.type)) { // ALIASES MISSING HERE!
-            throw YamlParserException(this, "Field '%1' expected to have one of these types (%2), but got %3")
+            //TODO: better output -- the integer here is confusing
+            throw YamlParserException(this, "Field '%1' expected to have one of these types [%2], but got %3")
                             .arg(field->name).arg(allowedEvents).arg(d->event.type);
         }
 
@@ -806,11 +833,11 @@ YamlParserException::YamlParserException(YamlParser *p, const char *errorString)
     yaml_mark_t &mark = isProblem ? p->d->parser.problem_mark : p->d->parser.mark;
 
     QString context = QTextDecoder(p->d->codec).toUnicode(p->d->data);
+    int lpos = context.lastIndexOf(qL1C('\n'), int(mark.index ? mark.index - 1 : 0));
     int rpos = context.indexOf(qL1C('\n'), int(mark.index));
-    int lpos = context.lastIndexOf(qL1C('\n'), int(mark.index));
     context = context.mid(lpos + 1, rpos == -1 ? context.size() : rpos - lpos - 1);
 
-    m_errorString.append(qSL(" at line %1, column %2 [%3]").arg(mark.line + 1).arg(mark.column + 1).arg(context));
+    m_errorString.append(qSL(" at line %1, column %2 [.. %3 ..]").arg(mark.line + 1).arg(mark.column + 1).arg(context));
     if (isProblem)
         m_errorString.append(qSL(" (%1)").arg(QString::fromUtf8(p->d->parser.problem)));
     if (errorString)

@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -50,45 +51,113 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+class ConfigurationData;
+
 class Configuration
 {
 public:
+    Configuration(const QStringList &defaultConfigFilePaths, const QString &buildConfigFilePath,
+                  const char *additionalDescription = nullptr, bool onlyOnePositionalArgument = true);
+    Configuration(const char *additionalDescription = nullptr, bool onlyOnePositionalArgument = true);
+
     virtual ~Configuration();
     void parse(QStringList *deploymentWarnings = nullptr);
     virtual void parseWithArguments(const QStringList &arguments, QStringList *deploymentWarnings = nullptr);
     QVariant buildConfig() const;
 
-protected:
-    Configuration(const QStringList &defaultConfigFilePaths, const QString &buildConfigFilePath);
+    QString mainQmlFile() const;
 
+    bool noCache() const;
+    bool clearCache() const;
+
+    QStringList builtinAppsManifestDirs() const;
+    QString documentDir() const;
+    QString installationDir() const;
+    bool disableInstaller() const;
+    bool disableIntents() const;
+    int intentTimeoutForDisambiguation() const;
+    int intentTimeoutForStartApplication() const;
+    int intentTimeoutForReplyFromApplication() const;
+    int intentTimeoutForReplyFromSystem() const;
+
+    bool fullscreen() const;
+    bool noFullscreen() const;
+    QString windowIcon() const;
+    QStringList importPaths() const;
+    QStringList pluginPaths() const;
+    bool verbose() const;
+    void setForceVerbose(bool forceVerbose);
+    bool slowAnimations() const;
+    bool loadDummyData() const;
+    bool noSecurity() const;
+    bool developmentMode() const;
+    bool noUiWatchdog() const;
+    bool noDltLogging() const;
+    bool forceSingleProcess() const;
+    bool forceMultiProcess() const;
+    bool qmlDebugging() const;
+    QString singleApp() const;
+    QStringList loggingRules() const;
+    QString messagePattern() const;
+    QVariant useAMConsoleLogger() const;
+    QString style() const;
+    QString iconThemeName() const;
+    QStringList iconThemeSearchPaths() const;
+    bool enableTouchEmulation() const;
+    QString dltId() const;
+    QString dltDescription() const;
+    QStringList resources() const;
+
+    QVariantMap openGLConfiguration() const;
+
+    QVariantList installationLocations() const;
+
+    QList<QPair<QString, QString>> containerSelectionConfiguration() const;
+    QVariantMap containerConfigurations() const;
+    QVariantMap runtimeConfigurations() const;
+
+    QVariantMap dbusPolicy(const char *interfaceName) const;
+    QString dbusRegistration(const char *interfaceName) const;
+
+    QVariantMap rawSystemProperties() const;
+
+    bool applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const;
+
+    qreal quickLaunchIdleLoad() const;
+    int quickLaunchRuntimesPerContainer() const;
+
+    QString waylandSocketName() const;
+
+    QVariantMap managerCrashAction() const;
+
+    QStringList caCertificates() const;
+
+    QStringList pluginFilePaths(const char *type) const;
+
+    QStringList testRunnerArguments() const;
+
+private:
     enum MessageType { UsageMessage, ErrorMessage };
 
     void showParserMessage(const QString &message, MessageType type);
 
-    template <typename T> T value(const char *clname, const QVector<const char *> &cfname = QVector<const char *>()) const
+    template <typename T> T value(const char *clname, const T &cfvalue = T()) const
     {
         Q_UNUSED(clname)
-        Q_UNUSED(cfname)
+        Q_UNUSED(cfvalue)
         return T();
     }
 
-private:
-    QVariant findInConfigFile(const QVector<const char *> &path, bool *found = nullptr) const;
-    void mergeConfig(const QVariantMap &other);
-    static QByteArray substituteVars(const QByteArray &str, const QString &fileName,
-                                     QStringList *deploymentWarnings = nullptr);
-
-protected:
     QStringList m_defaultConfigFilePaths;
     QString m_buildConfigFilePath;
     QCommandLineParser m_clp;
-    QVariantMap m_config;
+    ConfigurationData *m_data;
+    QString m_mainQmlFile;
+    bool m_onlyOnePositionalArgument = false;
+    bool m_forceVerbose = false;
+    mutable QString m_installationDir; // cached value
+    mutable QString m_documentDir;     // cached value
 };
-
-template<> bool Configuration::value(const char *clname, const QVector<const char *> &cfname) const;
-template<> QString Configuration::value(const char *clname, const QVector<const char *> &cfname) const;
-template<> QStringList Configuration::value(const char *clname, const QVector<const char *> &cfname) const;
-template<> QVariant Configuration::value(const char *clname, const QVector<const char *> &cfname) const;
 
 QT_END_NAMESPACE_AM
 

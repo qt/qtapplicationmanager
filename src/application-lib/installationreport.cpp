@@ -173,7 +173,7 @@ void InstallationReport::deserialize(QIODevice *from)
     m_files.clear();
 
     auto docs = YamlParser::parseAllDocuments(from->readAll());
-    checkYamlFormat(docs, 3 /*number of expected docs*/, { "am-installation-report" }, 3 /*version*/);
+    checkYamlFormat(docs, 3 /*number of expected docs*/, { { qSL("am-installation-report"), 3 } });
 
     const QVariantMap &root = docs.at(1).toMap();
 

@@ -43,6 +43,7 @@
 #include <QDir>
 #include <QFile>
 #include <QScopedPointer>
+#include <QDataStream>
 
 #include "packagedatabase.h"
 #include "packageinfo.h"
@@ -51,8 +52,33 @@
 #include "installationreport.h"
 #include "exception.h"
 #include "logging.h"
+#include "configcache.h"
 
 QT_BEGIN_NAMESPACE_AM
+
+// the templated adaptor class needed to instantiate ConfigCache<PackageInfo> in parse() below
+template<> class ConfigCacheAdaptor<PackageInfo>
+{
+public:
+    PackageInfo *loadFromSource(QIODevice *source, const QString &fileName)
+    {
+        return YamlPackageScanner().scan(source, fileName);
+    }
+    PackageInfo *loadFromCache(QDataStream &ds)
+    {
+        return PackageInfo::readFromDataStream(ds);
+    }
+    void saveToCache(QDataStream &ds, const PackageInfo *pi)
+    {
+        pi->writeToDataStream(ds);
+    }
+
+    void preProcessSourceContent(QByteArray &, const QString &) { }
+    void merge(PackageInfo *, const PackageInfo *) { }
+
+    QStringList *warnings;
+};
+
 
 PackageDatabase::PackageDatabase(const QStringList &builtInPackagesDirs,
                                  const QString &installedPackagesDir)
@@ -91,17 +117,6 @@ void PackageDatabase::enableSaveToCache()
     m_saveToCache = true;
 }
 
-bool PackageDatabase::loadFromCache()
-{
-    return false;
-    //TODO: read cache file
-}
-
-void PackageDatabase::saveToCache()
-{
-    //TODO: write cache file
-}
-
 bool PackageDatabase::builtInHasRemovableUpdate(PackageInfo *packageInfo) const
 {
     if (!packageInfo || packageInfo->isBuiltIn() || !m_installedPackages.contains(packageInfo))
@@ -113,10 +128,9 @@ bool PackageDatabase::builtInHasRemovableUpdate(PackageInfo *packageInfo) const
     return false;
 }
 
-
-QVector<PackageInfo *> PackageDatabase::loadManifestsFromDir(const QString &manifestDir, bool scanningBuiltInApps)
+QStringList PackageDatabase::findManifestsInDir(const QDir &manifestDir, bool scanningBuiltInApps)
 {
-    QVector<PackageInfo *> result;
+    QStringList files;
 
     auto flags = scanningBuiltInApps ? QDir::Dirs | QDir::NoDotAndDotDot
                                      : QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks;
@@ -137,7 +151,7 @@ QVector<PackageInfo *> PackageDatabase::loadManifestsFromDir(const QString &mani
             // ignore directory names with weird/forbidden characters
             QString pkgIdError;
             if (!PackageInfo::isValidApplicationId(pkgDirName, &pkgIdError))
-                throw Exception("directory name is not a valid package-id: %1").arg(pkgIdError);
+                throw Exception("not a valid package-id: %1").arg(pkgIdError);
 
             if (!pkgDir.exists(qSL("info.yaml")))
                 throw Exception("couldn't find an info.yaml manifest");
@@ -145,14 +159,59 @@ QVector<PackageInfo *> PackageDatabase::loadManifestsFromDir(const QString &mani
                 throw Exception("found a non-built-in package without an installation report");
 
             QString manifestPath = pkgDir.absoluteFilePath(qSL("info.yaml"));
-            QScopedPointer<PackageInfo> pkg(PackageInfo::fromManifest(manifestPath));
+            files << manifestPath;
+
+        } catch (const Exception &e) {
+            qCDebug(LogSystem) << "Ignoring package" << pkgDirName << ":" << e.what();
+        }
+    }
+    return files;
+}
+
+void PackageDatabase::parse()
+{
+    if (m_parsed)
+        throw Exception("PackageDatabase::parse() has been called multiple times");
+    m_parsed = true;
+
+    if (!m_singlePackagePath.isEmpty()) {
+        try {
+            m_builtInPackages.append(PackageInfo::fromManifest(m_singlePackagePath));
+        } catch (const Exception &e) {
+            throw Exception("Failed to load manifest for package: %1").arg(e.errorString());
+        }
+    } else {
+        QStringList manifestFiles;
+
+        // parallelize this
+        for (const QString &dir : m_builtInPackagesDirs)
+            manifestFiles << findManifestsInDir(dir, true);
+        int installedOffset = manifestFiles.size();
+        if (!m_installedPackagesDir.isEmpty())
+            manifestFiles << findManifestsInDir(m_installedPackagesDir, false);
+
+        AbstractConfigCache::Options cacheOptions = AbstractConfigCache::None;
+        if (!m_loadFromCache)
+            cacheOptions |= AbstractConfigCache::ClearCache;
+        if (!m_loadFromCache && !m_saveToCache)
+            cacheOptions |= AbstractConfigCache::NoCache;
+
+        ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb"), cacheOptions);
+        cache.parse();
+
+        for (int i = 0; i < manifestFiles.size(); ++i) {
+            bool isBuiltIn = (i < installedOffset);
+            QString manifestFile = manifestFiles.at(i);
+            QDir pkgDir = QFileInfo(manifestFile).dir();
+            QScopedPointer<PackageInfo>pkg(cache.takeResult(i));
 
             if (pkg->id() != pkgDir.dirName()) {
-                throw Exception("an info.yaml must be in a directory that has"
+                throw Exception("an info.yaml for built-in packages must be in a directory that has"
                                 " the same name as the package's id: found '%1'").arg(pkg->id());
             }
-            if (scanningBuiltInApps) {
+            if (isBuiltIn) {
                 pkg->setBuiltIn(true);
+                m_builtInPackages.append(pkg.take());
             } else { // 3rd-party apps
                 QFile f(pkgDir.absoluteFilePath(qSL(".installation-report.yaml")));
                 if (!f.open(QFile::ReadOnly))
@@ -167,42 +226,11 @@ QVector<PackageInfo *> PackageDatabase::loadManifestsFromDir(const QString &mani
                 }
 
                 pkg->setInstallationReport(report.take());
+                pkg->setBaseDir(pkgDir.path());
+                m_installedPackages.append(pkg.take());
             }
-            result.append(pkg.take());
-        } catch (const Exception &e) {
-            qCDebug(LogSystem) << "Ignoring package" << pkgDirName << ":" << e.what();
         }
     }
-    return result;
-}
-
-void PackageDatabase::parse()
-{
-    if (m_parsed)
-        throw Exception("PackageDatabase::parse() has been called multiple times");
-    m_parsed = true;
-
-    if (m_loadFromCache) {
-        if (loadFromCache())
-            return;
-    }
-
-    if (!m_singlePackagePath.isEmpty()) {
-        try {
-            m_builtInPackages.append(PackageInfo::fromManifest(m_singlePackagePath));
-        } catch (const Exception &e) {
-            throw Exception("Failed to load manifest for package: %1").arg(e.errorString());
-        }
-    } else {
-        for (const QString &dir : m_builtInPackagesDirs)
-            m_builtInPackages.append(loadManifestsFromDir(dir, true));
-
-        if (!m_installedPackagesDir.isEmpty())
-            m_installedPackages = loadManifestsFromDir(m_installedPackagesDir, false);
-    }
-
-    if (m_saveToCache)
-        saveToCache();
 }
 
 void PackageDatabase::addPackageInfo(PackageInfo *package)

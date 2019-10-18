@@ -66,7 +66,9 @@ class PackageManager;
 class IntentServerRequest;
 
 namespace IntentAMImplementation {
-IntentServer *createIntentServerAndClientInstance(PackageManager *packageManager, const QMap<QString, int> &timeouts);
+IntentServer *createIntentServerAndClientInstance(PackageManager *packageManager, int disambiguationTimeout,
+                                                  int startApplicationTimeout, int replyFromApplicationTimeout,
+                                                  int replyFromSystemTimeout);
 }
 
 // the server side

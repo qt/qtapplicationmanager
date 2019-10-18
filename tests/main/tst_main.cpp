@@ -362,15 +362,12 @@ void tst_Main::mainQmlFile()
     config = new DefaultConfiguration(QStringList(QFINDTESTDATA("am-config.yaml")), QString());
     config->parseWithArguments(arguments);
 
-    QString errorMsg;
-
     try {
         main->setup(config);
+        QVERIFY2(expectedErrorMsg.isEmpty(), "Exception was expected, but none was thrown");
     } catch (const std::exception &e) {
-        errorMsg.append(e.what());
+        QCOMPARE(e.what(), expectedErrorMsg);
     }
-
-    QCOMPARE(errorMsg, expectedErrorMsg);
 
     delete config;
     config = nullptr;

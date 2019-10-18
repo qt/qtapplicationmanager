@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -57,6 +58,7 @@ Q_DECLARE_LOGGING_CATEGORY(LogQmlRuntime)
 Q_DECLARE_LOGGING_CATEGORY(LogQmlIpc)
 Q_DECLARE_LOGGING_CATEGORY(LogDeployment)
 Q_DECLARE_LOGGING_CATEGORY(LogIntents)
+Q_DECLARE_LOGGING_CATEGORY(LogCache)
 
 class Logging
 {

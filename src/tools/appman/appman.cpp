@@ -47,7 +47,7 @@
 #include "global.h"
 #include "logging.h"
 #include "main.h"
-#include "defaultconfiguration.h"
+#include "configuration.h"
 #include "packageutilities.h"
 #if !defined(AM_DISABLE_INSTALLER)
 #  include "sudo.h"
@@ -100,7 +100,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         bool onlyOnePositionalArgument = true;
 #endif
 
-        DefaultConfiguration cfg(additionalDescription, onlyOnePositionalArgument);
+        Configuration cfg(additionalDescription, onlyOnePositionalArgument);
         cfg.parse(&deploymentWarnings);
 
         StartupTimer::instance()->checkpoint("after command line parse");

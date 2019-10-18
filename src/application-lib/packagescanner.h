@@ -45,6 +45,8 @@
 
 #include <QtAppManCommon/global.h>
 
+QT_FORWARD_DECLARE_CLASS(QIODevice)
+
 QT_BEGIN_NAMESPACE_AM
 
 class PackageInfo;
@@ -54,7 +56,8 @@ class PackageScanner
 public:
     virtual ~PackageScanner() = default;
 
-    virtual PackageInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) = 0;
+    virtual PackageInfo *scan(const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false) = 0;
+    virtual PackageInfo *scan(QIODevice *source, const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false) = 0;
 
 protected:
     PackageScanner() = default;

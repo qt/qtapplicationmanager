@@ -83,34 +83,30 @@ static QString sysUiId = qSL(":sysui:");
 
 
 IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(PackageManager *packageManager,
-                                                                          const QMap<QString, int> &timeouts)
+                                                                          int disambiguationTimeout,
+                                                                          int startApplicationTimeout,
+                                                                          int replyFromApplicationTimeout,
+                                                                          int replyFromSystemTimeout)
 {
     auto intentServerAMInterface = new IntentServerAMImplementation;
     auto intentClientAMInterface = new IntentClientAMImplementation(intentServerAMInterface);
     auto intentServer = IntentServer::createInstance(intentServerAMInterface);
     auto intentClient = IntentClient::createInstance(intentClientAMInterface);
 
-    auto it = timeouts.constFind(qSL("disambiguation"));
-    if (it != timeouts.cend())
-        intentServer->setDisambiguationTimeout(it.value());
-    it = timeouts.constFind(qSL("startApplication"));
-    if (it != timeouts.cend())
-        intentServer->setStartApplicationTimeout(it.value());
-    it = timeouts.constFind(qSL("replyFromApplication"));
-    if (it != timeouts.cend()) {
-        int t = it.value();
+    intentServer->setDisambiguationTimeout(disambiguationTimeout);
+    intentServer->setStartApplicationTimeout(startApplicationTimeout);
 
-        // These timeouts are for the same thing - the time needed for the application's handler to
-        // generate a reply - but one is for the server side, while the other for the client side.
-        // Having two separate config values would be confusing, so we set the application side to
-        // 90% of the server side, because the communication overhead is not included there.
+    // These timeouts are for the same thing - the time needed for the application's handler to
+    // generate a reply - but one is for the server side, while the other for the client side.
+    // Having two separate config values would be confusing, so we set the application side to
+    // 90% of the server side, because the communication overhead is not included there.
+    {
+        int t = replyFromApplicationTimeout;
         intentServer->setReplyFromApplicationTimeout(t);
         intentClient->setReplyFromApplicationTimeout(t <= 0 ? t : int(t * 0.9));
     }
 
-    it = timeouts.constFind(qSL("requestToSystem"));
-    if (it != timeouts.cend())
-        intentClient->setReplyFromSystemTimeout(it.value());
+    intentClient->setReplyFromSystemTimeout(replyFromSystemTimeout);
 
     // this way, deleting the server (the return value of this factory function) will get rid
     // of both client and server as well as both their AM interfaces

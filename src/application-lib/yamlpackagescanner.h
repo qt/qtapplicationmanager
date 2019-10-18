@@ -43,6 +43,7 @@
 
 #pragma once
 
+#include <QIODevice>
 #include <QtAppManApplication/packagescanner.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -54,6 +55,7 @@ public:
     YamlPackageScanner();
 
     PackageInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
+    PackageInfo *scan(QIODevice *source, const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
 };
 
 QT_END_NAMESPACE_AM

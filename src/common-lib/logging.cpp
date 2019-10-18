@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -125,6 +126,10 @@ static const char *s_defaultSystemUiDltDescription = "Qt Application Manager";
     \li \c INTN
     \li Intent sub-system messages
 \row
+    \li \c am.cache
+    \li \c CACH
+    \li Cache sub-system messages
+\row
     \li \c general
     \li \c GEN
     \li Used for DLT logging only and enabled by default. Categories that have no context ID
@@ -144,6 +149,7 @@ QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC messages")
 QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notifications sub-system messages")
 QDLT_LOGGING_CATEGORY(LogDeployment, "am.deployment", "DPLM", "Deployment hints")
 QDLT_LOGGING_CATEGORY(LogIntents, "am.intent", "INTN", "Intents sub-system messages")
+QDLT_LOGGING_CATEGORY(LogCache, "am.cache", "CACH", "Cache sub-system messages")
 QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "Messages without dedicated context ID (fallback)")
 QDLT_FALLBACK_CATEGORY(LogGeneral)
 

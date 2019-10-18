@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -264,10 +265,10 @@ With everything in place, you can start the application manager:
 
 \badcode
 cd /path/to/system-ui
-appman -c /opt/am/config.yaml -c am-config.yaml -r --verbose main.qml
+appman -c /opt/am/config.yaml -c am-config.yaml --verbose main.qml
 \endcode
 
-\c{-r} makes sure to recreate the apps database and \c{--verbose} gives you verbose output,
-which is quite helpful when first setting up the environment.
+\c{--verbose} gives you verbose output, which is quite helpful when first setting up the environment
+and also for debugging purposes.
 
 */

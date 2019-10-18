@@ -395,7 +395,7 @@ void tst_PackageManager::packageInstallation_data()
             << false << false << false << false << nomd << "The package icon (as stated in info.yaml) must be the second file in the package. Expected 'icon.png', got 'test'";
     QTest::newRow("invalid-header-format") \
             << "test-invalid-header-formatversion.appkg" << ""
-            << false << false << false << false << nomd << "metadata has an invalid format specification: wrong formatVersion header: expected 2, got 0";
+            << false << false << false << false << nomd << "metadata has an invalid format specification: wrong header: expected am-package-header version 2, got am-package-header version 0";
     QTest::newRow("invalid-header-diskspaceused") \
             << "test-invalid-header-diskspaceused.appkg" << ""
             << false << false << false << false << nomd << "metadata has an invalid diskSpaceUsed field (0)";
@@ -410,7 +410,7 @@ void tst_PackageManager::packageInstallation_data()
             << false << false << false << false << nomd << "~package digest mismatch.*";
     QTest::newRow("invalid-info.yaml") \
             << "test-invalid-info.appkg" << ""
-            << false << false << false << false << nomd << "~.*YAML parse error at line \\d+, column \\d+: did not find expected key";
+            << false << false << false << false << nomd << "~.*YAML parse error.*did not find expected key.*";
     QTest::newRow("invalid-info.yaml-id") \
             << "test-invalid-info-id.appkg" << ""
             << false << false << false << false << nomd << "~.*the identifier \\(:invalid\\) is not a valid package-id: must consist of printable ASCII characters only, except any of .*";

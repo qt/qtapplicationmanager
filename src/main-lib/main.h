@@ -83,8 +83,7 @@ class IntentServer;
 class WindowManager;
 class QuickLauncher;
 class SystemMonitor;
-class DefaultConfiguration;
-
+class Configuration;
 
 class Main : public MainBase, protected SharedMain
 {
@@ -97,7 +96,7 @@ public:
 
     bool isSingleProcessMode() const;
 
-    void setup(const DefaultConfiguration *cfg, const QStringList &deploymentWarnings = QStringList()) Q_DECL_NOEXCEPT_EXPR(false);
+    void setup(const Configuration *cfg, const QStringList &deploymentWarnings = QStringList()) Q_DECL_NOEXCEPT_EXPR(false);
     void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
     void showWindow(bool showFullscreen);
 
@@ -117,7 +116,8 @@ protected:
                                     const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
                                     const QStringList &iconThemeSearchPaths, const QString &iconThemeName);
     void loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupIntents(const QMap<QString, int> &timeouts) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupIntents(int disambiguationTimeout, int startApplicationTimeout,
+                      int replyFromApplicationTimeout, int replyFromSystemTimeout) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
                          int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false);
     void setupInstaller(const QStringList &caCertificatePaths,

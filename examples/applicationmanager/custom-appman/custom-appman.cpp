@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -54,7 +55,7 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/logging.h>
 #include <QtAppManMain/main.h>
-#include <QtAppManMain/defaultconfiguration.h>
+#include <QtAppManMain/configuration.h>
 #include <QtAppManPackage/packageutilities.h>
 #include <QtAppManManager/sudo.h>
 
@@ -73,7 +74,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     try {
         Main a(argc, argv);
 
-        DefaultConfiguration cfg;
+        Configuration cfg;
         cfg.parse();
 
         a.setup(&cfg);

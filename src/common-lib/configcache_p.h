@@ -2,7 +2,6 @@
 **
 ** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Qt Application Manager.
@@ -43,11 +42,43 @@
 
 #pragma once
 
-#include <QtAppManCommon/global.h>
-#include <QtAppManMain/configuration.h>
+#include "configcache.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-using DefaultConfiguration = Configuration;
+struct ConfigCacheEntry
+{
+    QString filePath;    // abs. file path
+    QByteArray checksum; // sha1 (fast and sufficient for this use-case)
+    QByteArray rawContent;  // raw YAML content
+    void *content = nullptr;  // parsed YAML content
+    bool checksumMatches = false;
+};
+
+struct CacheHeader
+{
+    enum { Magic = 0x23d39366, // dd if=/dev/random bs=4 count=1 status=none | xxd -p
+           Version = 1 };
+    static quint64 s_globalId;
+
+    quint32 magic = Magic;
+    quint32 version = Version;
+    quint64 globalId = 0;
+    QString baseName;
+    quint32 entries = 0;
+
+    bool isValid(const QString &baseName) const;
+};
+
+class ConfigCachePrivate
+{
+public:
+    AbstractConfigCache::Options options;
+    QStringList rawFiles;
+    QString cacheBaseName;
+    QVector<ConfigCacheEntry> cache;
+    QMap<QString, int> cacheIndex;
+    void *mergedContent = nullptr;
+};
 
 QT_END_NAMESPACE_AM

@@ -1,5 +1,6 @@
 /****************************************************************************
 **
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -102,7 +103,7 @@ or across multiple config files, the final value is resolved based on these rule
         \li bool
         \li Prints the build configuration of the application manager in YAML format and exits.
     \row
-        \li \b --config-file or \b{\c -c}
+        \li \b --config-file or \b -c
         \li array<string>
         \li Loads configuration settings from a set of files. You can use more than one config
             file, for example, to split the configuration cleanly, into a device specific and a
@@ -122,17 +123,24 @@ or across multiple config files, the final value is resolved based on these rule
 
             (default: \c /opt/am/config.yaml)
     \row
-        \li \b --no-config-cache
+        \li \b --no-cache
         \li bool
-        \li Disables the caching functionality for the configuration files: the cache is neither
-            read from or written to.
+        \li Disables the caching functionality for the configuration files and the application
+            database : the caches are neither read from or written to.
+            (default: false)
     \row
-        \li \b --clear-config-cache
+        \li \b --clear-cache
         \li bool
-        \li Although the application manager should detect if the configuration file cache is out
-            of sync, you can force-clear the cache on startup with this option.
+        \li Although the application manager should detect if the configuration file and application
+            database caches are out of sync, you can force-clear the caches on startup with this
+            option.
+
+            The old options \c --clear-config-cache, \c -r, and \c --recreate-database are also still
+            supported and do also - despite their names - clear both caches.
+
+            (default: false)
     \row
-        \li \b --option or \b{\c -o}
+        \li \b --option or \b -o
         \li YAML
         \li Use this option to set or overwrite parts of your config files from the command line.
             This option can be specified multiple times and its values are evaluated the same way
@@ -143,15 +151,15 @@ or across multiple config files, the final value is resolved based on these rule
         \li \b --database
             \br [\c applications/database]
         \li string
-        \li To decrease the startup time of the System UI, its application database can be cached
-            in a file. This way, in subsequent startups, the System UI doesn't have to scan and
-            parse the \c info.yaml files for the applications installed, all over again. This
-            option specifies the path for this cache file. (default: empty/disabled)
+        \li Deprecated and ignored. The application database will transparently be cached - see also
+            the \c --clear-cache and \c --no-cache options.
     \row
-        \li \b --recreate-database or \b{\c -r}
+        \li \b --recreate-database or \b -r
         \li bool
-        \li Ignores any pre-existing database cache and creates a new one by (re)scanning all
-            \c info.yaml files in \c builtin-apps-manifest-dir and \c installed-apps-manifest-dir.
+        \li Deprecated. These options were necessary for the application-manager to react on changes
+            to the application manifest files, but this is not needed anymore. For backward
+            compatibility these options do map to the \c --clear-cache option, which will clear both
+            the configuration and application database cache.
             (default: false)
     \row
         \li \b --builtin-apps-manifest-dir

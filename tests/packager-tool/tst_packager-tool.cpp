@@ -168,11 +168,11 @@ void tst_PackagerTool::test()
 
     // no valid destination
     QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), pathTo("test.appkg")), errorString));
-    QVERIFY2(errorString.contains(qL1S("not a directory")), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("is not a directory")), qPrintable(errorString));
 
     // no valid info.yaml
     QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains(qL1S("could not open file for reading")), qPrintable(errorString));
+    QVERIFY2(errorString.contains(qL1S("Cannot open for reading")), qPrintable(errorString));
 
     // add an info.yaml file
     createInfoYaml(tmp);
@@ -279,10 +279,10 @@ void tst_PackagerTool::brokenMetadata_data()
     QTest::addColumn<QVariant>("yamlValue");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("missing-name")       << qSL("name")    << QVariant() << "~.*the 'name' field must not be empty";
-    QTest::newRow("missing-runtime")    << qSL("runtime") << QVariant() << "~.*the 'runtimeName' field must not be empty.*";
-    QTest::newRow("missing-identifier") << qSL("id")      << QVariant() << "~.*packages need to have an id.*";
-    QTest::newRow("missing-code")       << qSL("code")    << QVariant() << "~.*the 'code' field must not be empty.*";
+    QTest::newRow("missing-name")       << qSL("name")    << QVariant() << "~.*Required field\\(s\\) 'name' are missing.*";
+    QTest::newRow("missing-runtime")    << qSL("runtime") << QVariant() << "~.*Required field\\(s\\) 'runtime' are missing.*";
+    QTest::newRow("missing-identifier") << qSL("id")      << QVariant() << "~.*Required field\\(s\\) 'id' are missing.*";
+    QTest::newRow("missing-code")       << qSL("code")    << QVariant() << "~.*Required field\\(s\\) 'code' are missing.*";
 }
 
 void tst_PackagerTool::brokenMetadata()
@@ -360,7 +360,10 @@ bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const QString &changeF
         }
 
         QVariantMap map = docs.at(1).toMap();
-        map[changeField] = toValue;
+        if (!toValue.isValid())
+            map.remove(changeField);
+        else
+            map[changeField] = toValue;
         yaml = QtYaml::yamlFromVariantDocuments({ docs.at(0), map });
     }
 

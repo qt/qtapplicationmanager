@@ -32,19 +32,20 @@ DEFINES += AM_BUILD_DIR=\\\"$$BUILD_DIR\\\"
 HEADERS += \
     configuration.h \
     main.h \
+    configuration_p.h \
     defaultconfiguration.h \
+    applicationinstaller.h \
 
 !headless:HEADERS += \
     windowframetimer.h \
-    applicationinstaller.h \
 
 SOURCES += \
     main.cpp \
     configuration.cpp \
     defaultconfiguration.cpp \
+    applicationinstaller.cpp \
 
 !headless:SOURCES += \
     windowframetimer.cpp \
-    applicationinstaller.cpp \
 
 load(qt_module)

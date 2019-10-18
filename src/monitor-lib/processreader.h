@@ -60,6 +60,7 @@ class ProcessReader : public QObject {
 public slots:
     void update();
     void setProcessId(qint64 pid);
+    void enableMemoryReporting(bool enabled);
 
 signals:
     void updated();
@@ -81,11 +82,13 @@ public:
     // it's public solely for testing purposes
     bool readSmaps(const QByteArray &smapsFile);
 #endif
+    static constexpr qreal cpuLoadFactor = 1000000.0;
 
 private:
     void openCpuLoad();
     qreal readCpuLoad();
     bool readMemory();
+    void zeroMemory();
 
 #if defined(Q_OS_LINUX)
     QScopedPointer<SysFsReader> m_statReader;
@@ -94,6 +97,7 @@ private:
     quint64 m_lastCpuUsage = 0.0;
 
     qint64 m_pid = 0;
+    bool m_memoryReportingEnabled = true;
 };
 
 QT_END_NAMESPACE_AM

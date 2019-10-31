@@ -434,11 +434,11 @@ Intent *IntentServer::intent(int index) const
     and \a parameters or \c null if the id does not exist.
 
     This method exposes the same functionality that is used internally to match incoming Intent
-    requests for the intent identified by \a intentId and targeted for the package identified by
-    \a packageId.
+    requests for the intent identified by \a intentId and targeted for the application identified by
+    \a applicationId.
     Although you could iterate over the intentList yourself in JavaScript, this function has the
     added benefit of also checking the optionally provided \a parameters against any given
-    \l{Intent::parameterMatch}{parameter matches}.
+    \l{IntentObject::parameterMatch}{parameter matches}.
 
     \note The object ownership of the returned Intent object stays with the application-manager.
           If you want to store this pointer, you can use the IntentServer's QAbstractListModel

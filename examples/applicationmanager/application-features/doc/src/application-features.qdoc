@@ -91,7 +91,7 @@ The QML code for the crash simulation and recovery application is as follows:
 \quotefromfile applicationmanager/application-features/apps/crash/crashapp.qml
 \skipto import QtQuick 2.11
 \printuntil case "gracefully": Terminator.exitGracefully(); break;
-\printuntil } } } } } } }
+\printuntil /^\}/
 
 \section2 Two Top-Level Windows
 
@@ -103,7 +103,7 @@ The QML code for the two top-level windows application is as follows:
 \quotefromfile applicationmanager/application-features/apps/twins/twins.qml
 \skipto import QtQuick 2.11
 \printuntil Component.onCompleted: setWindowProperty("type", "pop-up");
-\printuntil } } }
+\printuntil /^\}/
 
 \section2 Native Widgets
 
@@ -120,7 +120,7 @@ The C++ code for the native widgets application is as follows:
 
 \quotefromfile applicationmanager/application-features/native/widgets/main.cpp
 \skipto #include <QApplication>
-\printuntil return app.exec(); }
+\printuntil /^\}/
 
 \section1 Code Structure
 

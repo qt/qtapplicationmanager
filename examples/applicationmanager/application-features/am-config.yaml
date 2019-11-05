@@ -4,7 +4,6 @@ formatType: am-configuration
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
   installationDir: "/tmp/application-features/apps"
-  installedAppsManifestDir: "/tmp/application-features/manifests"
 
 logging:
   rules:

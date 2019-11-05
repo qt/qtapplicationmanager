@@ -3,9 +3,6 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installedAppsManifestDir: "${CONFIG_PWD}/manifests"
-  appImageMountDir: "${CONFIG_PWD}/image-mounts"
-  database: "${CONFIG_PWD}/apps.db"
 
 runtimes:
   qml:

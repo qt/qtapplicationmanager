@@ -6,4 +6,3 @@ formatType: am-configuration
 applications:
   installationDir: "c:/cygwin/opt/am/apps"
   documentDir: "c:/cygwin/opt/am/docs"
-  database: "c:/cygwin/opt/am/apps.db"

@@ -5,7 +5,6 @@ applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/builtin-apps"
   installationDir: "/tmp/am-test-main/apps"
   documentDir: "/tmp/am-test-main/docs"
-  database: "/tmp/am-test-main/apps.db"
 
 ui:
   mainQml: "${CONFIG_PWD}/dummy.qml"

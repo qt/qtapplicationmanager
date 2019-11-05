@@ -6,4 +6,3 @@ formatType: am-configuration
 applications:
   installationDir: "/opt/am/apps"
   documentDir: "/opt/am/docs"
-  database: "/opt/am/apps.db"

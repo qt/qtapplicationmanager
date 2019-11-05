@@ -3,15 +3,6 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installedAppsManifestDir: "/tmp/am-crash-test/manifests"
-  appImageMountDir: "/tmp/am-crash-test/image-mounts"
-  database: "/tmp/am-crash-test/apps.db"
-
-installationLocations:
-- id: "internal-0"
-  installationPath: "/tmp/am/apps"
-  documentPath: "/tmp/am/docs"
-  mountPoint: "/tmp"
 
 flags:
   noUiWatchdog: yes

@@ -3,16 +3,6 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installedAppsManifestDir: "/tmp/am-windowitem2/manifests"
-  appImageMountDir: "/tmp/am-windowitem2/image-mounts"
-  database: "/tmp/am-windowitem2/apps.db"
-
-installationLocations:
-- id: "internal-0"
-  installationPath: "/tmp/am-windowitem2/apps"
-  documentPath: "/tmp/am-windowitem2/docs"
-  mountPoint: "/tmp"
-  isDefault: true
 
 # Workaround for a crash in the mesa software renderer (llvmpipe)
 runtimes:

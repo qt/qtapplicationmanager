@@ -1,16 +1,10 @@
 formatVersion: 1
 formatType: am-configuration
 ---
-installationLocations:
-- id: "internal-0"
-  installationPath: "/tmp/minidesk/apps"
-  documentPath: "/tmp/minidesk/docs"
-  mountPoint: "/tmp"
-  isDefault: true
-
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installedAppsManifestDir: "/tmp/minidesk/manifests"
+  installationDir: "/tmp/minidesk/apps"
+  documentDir: "/tmp/minidesk/docs"
 
 logging:
   rules:

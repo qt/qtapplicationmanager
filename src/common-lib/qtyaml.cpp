@@ -497,7 +497,7 @@ void YamlParser::nextEvent()
 
     do {
         if (!yaml_parser_parse(&d->parser, &d->event))
-            throw YamlParserException(this, "cannot get next event");
+            throw YamlParserException(this, "invalid YAML syntax");
         if (d->event.type == YAML_ALIAS_EVENT)
             throw YamlParserException(this, "anchors and aliases are not supported");
     } while (d->event.type == YAML_NO_EVENT);
@@ -799,9 +799,31 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
             allowedEvents.append(YAML_SEQUENCE_START_EVENT);
 
         if (!allowedEvents.contains(d->event.type)) { // ALIASES MISSING HERE!
-            //TODO: better output -- the integer here is confusing
-            throw YamlParserException(this, "Field '%1' expected to have one of these types [%2], but got %3")
-                            .arg(field->name).arg(allowedEvents).arg(d->event.type);
+            auto mapEventNames = [](const QVector<yaml_event_type_t> &events) -> QString {
+                static const QHash<yaml_event_type_t, const char *> eventNames = {
+                    { YAML_NO_EVENT,             "nothing" },
+                    { YAML_STREAM_START_EVENT,   "stream start" },
+                    { YAML_STREAM_END_EVENT,     "stream end" },
+                    { YAML_DOCUMENT_START_EVENT, "document start" },
+                    { YAML_DOCUMENT_END_EVENT,   "document end" },
+                    { YAML_ALIAS_EVENT,          "alias" },
+                    { YAML_SCALAR_EVENT,         "scalar" },
+                    { YAML_SEQUENCE_START_EVENT, "sequence start" },
+                    { YAML_SEQUENCE_END_EVENT,   "sequence end" },
+                    { YAML_MAPPING_START_EVENT,  "mapping start" },
+                    { YAML_MAPPING_END_EVENT,    "mapping end" }
+                };
+                QString names;
+                for (int i = 0; i < events.size(); ++i) {
+                    if (i)
+                        names.append(i == (events.size() - 1) ? qL1S(" or ") : qL1S(", "));
+                    names.append(qL1S(eventNames.value(events.at(i), "<unknown>")));
+                }
+                return names;
+            };
+
+            throw YamlParserException(this, "Field '%1' expected to be of type '%2', but got '%3'")
+                            .arg(field->name).arg(mapEventNames(allowedEvents)).arg(mapEventNames({ d->event.type }));
         }
 
         yaml_event_type_t typeBefore = d->event.type;
@@ -823,7 +845,7 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
             fieldsMissing.append(qL1S(field.name));
     }
     if (!fieldsMissing.isEmpty())
-        throw YamlParserException(this, "Required field(s) '%1' are missing").arg(fieldsMissing);
+        throw YamlParserException(this, "Required fields are missing: %1").arg(fieldsMissing);
 }
 
 YamlParserException::YamlParserException(YamlParser *p, const char *errorString)
@@ -836,12 +858,15 @@ YamlParserException::YamlParserException(YamlParser *p, const char *errorString)
     int lpos = context.lastIndexOf(qL1C('\n'), int(mark.index ? mark.index - 1 : 0));
     int rpos = context.indexOf(qL1C('\n'), int(mark.index));
     context = context.mid(lpos + 1, rpos == -1 ? context.size() : rpos - lpos - 1);
+    int contextPos = int(mark.index) - (lpos + 1);
 
-    m_errorString.append(qSL(" at line %1, column %2 [.. %3 ..]").arg(mark.line + 1).arg(mark.column + 1).arg(context));
-    if (isProblem)
-        m_errorString.append(qSL(" (%1)").arg(QString::fromUtf8(p->d->parser.problem)));
+    m_errorString.append(qSL(":\nfile://%1:%2:%3: error").arg(p->sourcePath()).arg(mark.line + 1).arg(mark.column + 1));
     if (errorString)
         m_errorString.append(qSL(": %1").arg(qL1S(errorString)));
+    if (isProblem)
+        m_errorString.append(qSL(": %1").arg(QString::fromUtf8(p->d->parser.problem)));
+    if (!context.isEmpty())
+        m_errorString.append(qSL("\n %1\n %2^").arg(context, QString(contextPos, qL1C(' '))));
 }
 
 QT_END_NAMESPACE_AM

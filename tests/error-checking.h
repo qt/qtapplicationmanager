@@ -34,7 +34,7 @@
 // sadly this has to be a define for QVERIFY2() to work
 #define AM_CHECK_ERRORSTRING(_actual_errstr, _expected_errstr) do { \
     if (_expected_errstr.startsWith(QLatin1String("~"))) { \
-        QRegularExpression re(QStringLiteral("\\A") + _expected_errstr.mid(1) + QStringLiteral("\\z")); \
+        QRegularExpression re(_expected_errstr.mid(1)); \
         QVERIFY2(re.match(_actual_errstr).hasMatch(), \
                  qPrintable("\n    Got     : " + _actual_errstr.toLocal8Bit() + \
                             "\n    Expected: " + _expected_errstr.toLocal8Bit())); \

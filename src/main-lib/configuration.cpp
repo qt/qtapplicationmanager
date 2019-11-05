@@ -322,7 +322,7 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
             cache.parse(deploymentWarnings);
             m_data = cache.takeMergedResult();
         } catch (const Exception &e) {
-            showParserMessage(e.errorString(), ErrorMessage);
+            showParserMessage(e.errorString() + qL1C('\n'), ErrorMessage);
             exit(1);
         }
     }

@@ -410,7 +410,7 @@ void tst_PackageManager::packageInstallation_data()
             << false << false << false << false << nomd << "~package digest mismatch.*";
     QTest::newRow("invalid-info.yaml") \
             << "test-invalid-info.appkg" << ""
-            << false << false << false << false << nomd << "~.*YAML parse error.*did not find expected key.*";
+            << false << false << false << false << nomd << "~.*did not find expected key.*";
     QTest::newRow("invalid-info.yaml-id") \
             << "test-invalid-info-id.appkg" << ""
             << false << false << false << false << nomd << "~.*the identifier \\(:invalid\\) is not a valid package-id: must consist of printable ASCII characters only, except any of .*";

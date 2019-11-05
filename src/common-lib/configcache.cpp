@@ -333,7 +333,7 @@ void AbstractConfigCache::parse(QStringList *warnings)
                 buffer.open(QIODevice::ReadOnly);
                 ce.content = loadFromSource(&buffer, ce.filePath);
             } catch (const Exception &e) {
-                throw Exception("Could not parse file '%1': %2.\n")
+                throw Exception("Could not parse file '%1': %2")
                         .arg(ce.filePath).arg(e.errorString());
             }
         };

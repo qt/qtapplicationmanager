@@ -291,7 +291,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                                 .arg(intentInfo->m_id).arg(visibilityStr);
                     }
                 });
-                intentFields.emplace_back(legacy ? "handledBy" : "handlingApplicationId", false,  YamlParser::Scalar, [&pkgInfo, &intentInfo, &appIds](YamlParser *p) {
+                intentFields.emplace_back(legacy ? "handledBy" : "handlingApplicationId", false,  YamlParser::Scalar, [&intentInfo, &appIds](YamlParser *p) {
                     QString appId = p->parseString();
                     if (appIds.contains(appId)) {
                         intentInfo->m_handlingApplicationId = appId;

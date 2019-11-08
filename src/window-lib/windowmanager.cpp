@@ -575,6 +575,7 @@ QObject *WindowManager::addExtension(QQmlComponent *component) const
 
     return extension;
 #else
+    Q_UNUSED(component)
     return nullptr;
 #endif
 }

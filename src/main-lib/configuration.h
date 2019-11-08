@@ -51,7 +51,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class ConfigurationData;
+struct ConfigurationData;
 
 class Configuration
 {

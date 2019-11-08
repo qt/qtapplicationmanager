@@ -561,6 +561,10 @@ void tst_PackageManager::simulateErrorConditions_data()
 
 void tst_PackageManager::simulateErrorConditions()
 {
+#ifndef Q_OS_LINUX
+    QSKIP("Only tested on Linux");
+#endif
+
     QFETCH(bool, testUpdate);
     QFETCH(QString, errorString);
     QFETCH(FunctionMap, functions);

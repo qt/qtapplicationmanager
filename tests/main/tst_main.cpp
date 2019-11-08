@@ -179,13 +179,13 @@ void tst_Main::installPackage(const QString &pkgPath)
     bool installationFinished = false;
 
     connect(packageManager, &PackageManager::taskRequestingInstallationAcknowledge,
-            this, [this, packageManager](const QString &taskId, const QVariantMap &,
+            this, [packageManager](const QString &taskId, const QVariantMap &,
                                          const QVariantMap &, const QVariantMap &) {
             packageManager->acknowledgePackageInstallation(taskId);
     });
 
     connect(packageManager, &PackageManager::taskFinished,
-            this, [this, &installationFinished](const QString &) {
+            this, [&installationFinished](const QString &) {
             installationFinished = true;
     });
 
@@ -201,7 +201,7 @@ void tst_Main::removePackage(const QString &id)
     bool removalFinished = false;
 
     connect(packageManager, &PackageManager::taskFinished,
-            this, [this, &removalFinished](const QString &) {
+            this, [&removalFinished](const QString &) {
             removalFinished = true;
     });
 

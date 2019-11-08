@@ -50,13 +50,6 @@
 #  include <unistd.h>
 #endif
 
-namespace {
-    static uint parseValue(const char *pl) {
-        while (*pl && (*pl < '0' || *pl > '9'))
-            pl++;
-        return static_cast<uint>(strtoul(pl, nullptr, 10));
-    }
-}
 
 QT_USE_NAMESPACE_AM
 
@@ -71,8 +64,7 @@ void ProcessReader::update()
 {
     // read cpu
     {
-        qreal cpuLoadFloat = readCpuLoad();
-        quint32 value = ((qreal)std::numeric_limits<quint32>::max()) * cpuLoadFloat;
+        quint32 value = quint32(readCpuLoad() * std::numeric_limits<quint32>::max());
         cpuLoad.store(value);
     }
 
@@ -94,6 +86,12 @@ void ProcessReader::update()
 }
 
 #if defined(Q_OS_LINUX)
+
+static uint parseValue(const char *pl) {
+    while (*pl && (*pl < '0' || *pl > '9'))
+        pl++;
+    return static_cast<uint>(strtoul(pl, nullptr, 10));
+}
 
 void ProcessReader::openCpuLoad()
 {
@@ -345,7 +343,8 @@ bool ProcessReader::readMemory()
     struct task_basic_info t_info;
     mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
 
-    if (KERN_SUCCESS != task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count)) {
+    if (KERN_SUCCESS != task_info(mach_task_self(), TASK_BASIC_INFO,
+                                  reinterpret_cast<task_info_t>(&t_info), &t_info_count)) {
         qCWarning(LogSystem) << "Could not read memory data";
         return false;
     }

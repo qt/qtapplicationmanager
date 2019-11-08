@@ -329,14 +329,15 @@ StartupTimer::StartupTimer()
     size_t procInfoSize;
 
     if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), nullptr, &procInfoSize, nullptr, 0) == 0) {
-        kinfo_proc *procInfo = (kinfo_proc *) malloc(procInfoSize);
+        kinfo_proc *procInfo = static_cast<kinfo_proc *>(malloc(procInfoSize));
 
         if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), procInfo, &procInfoSize, nullptr, 0) == 0) {
             struct timeval now;
 
             if (gettimeofday(&now, nullptr) == 0) {
-                m_processCreation = (quint64(now.tv_sec) * 1000000 + now.tv_usec)
-                        - (procInfo->kp_proc.p_un.__p_starttime.tv_sec * 1000000 + procInfo->kp_proc.p_un.__p_starttime.tv_usec);
+                m_processCreation = (quint64(now.tv_sec) * 1000000 + quint64(now.tv_usec))
+                        - (quint64(procInfo->kp_proc.p_un.__p_starttime.tv_sec) * 1000000
+                           + quint64(procInfo->kp_proc.p_un.__p_starttime.tv_usec));
                 m_initialized = true;
             }
         } else {
@@ -353,7 +354,7 @@ StartupTimer::StartupTimer()
         size_t bootTimeLen = sizeof(bootTime);
         int mibNames[2] = { CTL_KERN, KERN_BOOTTIME };
         if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), &bootTime, &bootTimeLen, nullptr, 0) == 0 ) {
-            m_systemUpTime = (time(nullptr) - bootTime.tv_sec) * 1000; // we don't need more precision on macOS
+            m_systemUpTime = quint64(time(nullptr) - bootTime.tv_sec) * 1000; // we don't need more precision on macOS
             emit systemUpTimeChanged(m_systemUpTime);
         }
     }
@@ -450,10 +451,9 @@ void StartupTimer::createReport(const QString &title)
         if (m_output == stderr)
             getOutputInformation(&ansiColorSupport, nullptr, nullptr);
 
-        const char *format = "\n== STARTUP TIMING REPORT: %s ==\n";
-        if (ansiColorSupport)
-            format = "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n";
-        fprintf(m_output, format, title.toLocal8Bit().data());
+        constexpr const char *plainFormat = "\n== STARTUP TIMING REPORT: %s ==\n";
+        constexpr const char *colorFormat = "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n";
+        fprintf(m_output, ansiColorSupport ? colorFormat : plainFormat, title.toLocal8Bit().data());
 
         static const int barCols = 60;
 
@@ -475,12 +475,11 @@ void StartupTimer::createReport(const QString &title)
             QByteArray spacing(maxTextLen - text.length(), ' ');
             SplitSeconds ss = splitMicroSecs(usec);
 
-            const char *format = "%d'%03d.%03d %s %s#%s\n";
-            if (ansiColorSupport)
-                format = "\033[32m%d'%03d.%03d\033[0m %s %s\033[44m %s\033[0m\n";
+            constexpr const char *plainFormat = "%d'%03d.%03d %s %s#%s\n";
+            constexpr const char *colorFormat = "\033[32m%d'%03d.%03d\033[0m %s %s\033[44m %s\033[0m\n";
 
-            fprintf(m_output, format, ss.sec, ss.msec, ss.usec,
-                    text.constData(), spacing.constData(), bar.constData());
+            fprintf(m_output, ansiColorSupport ? colorFormat : plainFormat,
+                    ss.sec, ss.msec, ss.usec, text.constData(), spacing.constData(), bar.constData());
         }
 
         fflush(m_output);

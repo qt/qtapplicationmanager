@@ -43,6 +43,7 @@
 
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QCoreApplication>
 
 #include "global.h"
 #include "logging.h"

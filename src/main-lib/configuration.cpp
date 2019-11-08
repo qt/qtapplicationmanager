@@ -733,8 +733,8 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                   p->parseFields({
                       { "builtinAppsManifestDir", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
                             cd->applications.builtinAppsManifestDir = p->parseStringOrStringList(); } },
-                      { "installedAppsManifestDir", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *) {
-                             /* deprecated - ignore */ } },
+                      { "installedAppsManifestDir", false, YamlParser::Scalar, [](YamlParser *p) {
+                            (void) p->parseScalar(); /* deprecated - ignore */ } },
                       { "installationDir", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
                              cd->applications.installationDir = p->parseScalar().toString(); } },
                       { "documentDir", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {

@@ -686,8 +686,9 @@ qreal CpuReader::readLoadValue()
     mach_msg_type_number_t cpuLoadInfoCount = 0;
 
     if (host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &cpuCount,
-                            (processor_info_array_t *) &cpuLoadInfo, &cpuLoadInfoCount) == KERN_SUCCESS) {
-        uint64_t idle = 0, total = 0;
+                            reinterpret_cast<processor_info_array_t *>(&cpuLoadInfo),
+                            &cpuLoadInfoCount) == KERN_SUCCESS) {
+        qint64 idle = 0, total = 0;
 
         for (natural_t i = 0; i < cpuCount; ++i) {
             idle += cpuLoadInfo[i].cpu_ticks[CPU_STATE_IDLE];
@@ -696,7 +697,7 @@ qreal CpuReader::readLoadValue()
                     + cpuLoadInfo[i].cpu_ticks[CPU_STATE_IDLE] \
                     + cpuLoadInfo[i].cpu_ticks[CPU_STATE_NICE];
         }
-        vm_deallocate(mach_task_self(), (vm_address_t) cpuLoadInfo, cpuLoadInfoCount);
+        vm_deallocate(mach_task_self(), reinterpret_cast<vm_address_t>(cpuLoadInfo), cpuLoadInfoCount);
 
         m_load = qreal(1) - (qreal(idle - m_lastIdle) / qreal(total - m_lastTotal));
 
@@ -719,7 +720,7 @@ MemoryReader::MemoryReader()
         size_t hwMemSize = sizeof(hwMem);
 
         if (sysctl(mib, sizeof(mib) / sizeof(*mib), &hwMem, &hwMemSize, nullptr, 0) == KERN_SUCCESS)
-            s_totalValue = hwMem;
+            s_totalValue = quint64(hwMem);
 
         mib[1] = HW_PAGESIZE;
         int hwPageSize;
@@ -735,12 +736,13 @@ quint64 MemoryReader::readUsedValue() const
     vm_statistics64_data_t vmStat;
     mach_msg_type_number_t vmStatCount = HOST_VM_INFO64_COUNT;
 
-    if (host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t) &vmStat, &vmStatCount) == KERN_SUCCESS) {
+    if (host_statistics64(mach_host_self(), HOST_VM_INFO64,
+                          reinterpret_cast<host_info64_t>(&vmStat), &vmStatCount) == KERN_SUCCESS) {
         quint64 app = vmStat.internal_page_count;
         quint64 compressed = vmStat.compressor_page_count;
         quint64 wired = vmStat.wire_count;
 
-        return (app + compressed + wired) * s_pageSize;
+        return (app + compressed + wired) * quint64(s_pageSize);
     } else {
         return 0;
     }

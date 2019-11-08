@@ -81,7 +81,7 @@ QT_BEGIN_NAMESPACE_AM
 */
 static void fixed_archive_entry_set_pathname(archive_entry *entry, const QString &pathname)
 {
-    wchar_t *wchars = new wchar_t[pathname.length() + 1];
+    wchar_t *wchars = new wchar_t[size_t(pathname.length()) + 1];
     wchars[pathname.toWCharArray(wchars)] = 0;
     archive_entry_copy_pathname_w(entry, wchars);
     delete[] wchars;

@@ -178,7 +178,8 @@ void PackageManager::registerPackage(PackageInfo *packageInfo, PackageInfo *upda
     QQmlEngine::setObjectOwnership(package, QQmlEngine::CppOwnership);
 
     if (currentlyBeingInstalled) {
-        Q_ASSERT(package->block());
+        bool blocked = package->block();
+        Q_ASSERT(blocked);
 
         beginInsertRows(QModelIndex(), d->packages.count(), d->packages.count());
         qCDebug(LogSystem) << "Installing package:";

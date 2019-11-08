@@ -258,7 +258,7 @@ void tst_PackageManager::initTestCase()
         connect(&m_pm->internalSignals, &PackageManagerInternalSignals::registerApplication,
                 this, [this](ApplicationInfo *ai, Package *package) {
             connect(package, &Package::blockedChanged, this, [ai, package](bool blocked) {
-                if (blocked)
+                if (package->info()->applications().contains(ai) && blocked)
                     package->applicationStoppedDueToBlock(ai->id());
             });
         });

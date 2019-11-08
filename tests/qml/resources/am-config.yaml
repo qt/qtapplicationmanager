@@ -7,5 +7,6 @@ applications:
 
 ui:
   importPaths: "qrc:///qml"
-  resources: [ "${CONFIG_PWD}/systemuifile.rcc",
-               "${CONFIG_PWD}/libsystemuiplugin.so" ]
+  resources:
+    - "${CONFIG_PWD}/systemuifile.rcc"
+    - "${CONFIG_PWD}/systemuiplugin"   # libsystemuiplugin.so would only work on Linux

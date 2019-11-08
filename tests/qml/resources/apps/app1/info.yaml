@@ -12,5 +12,6 @@ applications:
     runtime: 'qml'
     runtimeParameters:
       importPaths: "qrc:///app1/qml"
-      resources: [ "app1file.rcc",
-                   "libapp1plugin.so" ]
+      resources:
+        - app1file.rcc
+        - app1plugin    # libapp1plugin.so would only work on Linux

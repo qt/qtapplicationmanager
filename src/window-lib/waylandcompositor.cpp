@@ -54,13 +54,9 @@
 #include "waylandcompositor.h"
 
 #include <QWaylandWlShell>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-#  include <QWaylandXdgShell>
-#  if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-#    include <private/qwaylandxdgshell_p.h>
-#  endif
-#else
-#  include <QWaylandXdgShellV5>
+#include <QWaylandXdgShell>
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+#  include <private/qwaylandxdgshell_p.h>
 #endif
 #include <QWaylandQuickOutput>
 #include <QWaylandTextInputManager>
@@ -85,15 +81,10 @@ void WindowSurface::setShellSurface(QWaylandWlShellSurface *shellSurface)
 
 void WindowSurface::sendResizing(const QSize &size)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
     if (m_topLevel)
         m_topLevel->sendResizing(size);
     else if (m_popup)
         ; // do nothing
-#else
-    if (m_xdgSurface)
-        m_xdgSurface->sendResizing(size);
-#endif
     else
         m_wlSurface->sendConfigure(size, QWaylandWlShellSurface::NoneEdge);
 }
@@ -142,30 +133,23 @@ void WindowSurface::ping()
 
 void WindowSurface::close()
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
     if (m_topLevel) {
         m_topLevel->sendClose();
     } else if (m_popup) {
-#  if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
         QWaylandXdgPopupPrivate::get(m_popup)->send_popup_done();
-#  else
+#else
         m_popup->sendPopupDone();
-#  endif
+#endif
     } else {
         qCWarning(LogGraphics) << "The Wayland surface" << this << "is not using the XDG Shell extension. Unable to send close signal.";
     }
-#else
-    if (m_xdgSurface)
-        m_xdgSurface->sendClose();
-    else
-        qCWarning(LogGraphics) << this << "is not using the XDG V5 Shell extension. Unable to send close signal.";
-#endif
 }
 
 WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylandSocketName)
     : QWaylandQuickCompositor()
     , m_wlShell(new QWaylandWlShell(this))
-    , m_xdgShell(new WaylandXdgShell(this))
+    , m_xdgShell(new QWaylandXdgShell(this))
     , m_amExtension(new WaylandQtAMServerExtension(this))
     , m_textInputManager(new QWaylandTextInputManager(this))
 {
@@ -176,12 +160,10 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     connect(m_wlShell, &QWaylandWlShell::wlShellSurfaceRequested, this, &WaylandCompositor::createWlSurface);
 
-    connect(m_xdgShell, &WaylandXdgShell::xdgSurfaceCreated, this, &WaylandCompositor::onXdgSurfaceCreated);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    connect(m_xdgShell, &QWaylandXdgShell::xdgSurfaceCreated, this, &WaylandCompositor::onXdgSurfaceCreated);
     connect(m_xdgShell, &QWaylandXdgShell::toplevelCreated, this, &WaylandCompositor::onTopLevelCreated);
     connect(m_xdgShell, &QWaylandXdgShell::popupCreated, this, &WaylandCompositor::onPopupCreated);
-#endif
-    connect(m_xdgShell, &WaylandXdgShell::pong, this, &WaylandCompositor::onXdgPongReceived);
+    connect(m_xdgShell, &QWaylandXdgShell::pong, this, &WaylandCompositor::onXdgPongReceived);
 
     auto wmext = new QWaylandQtWindowManager(this);
     connect(wmext, &QWaylandQtWindowManager::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
@@ -241,7 +223,7 @@ void WaylandCompositor::createWlSurface(QWaylandSurface *surface, const QWayland
 }
 
 
-void WaylandCompositor::onXdgSurfaceCreated(WaylandXdgSurface *xdgSurface)
+void WaylandCompositor::onXdgSurfaceCreated(QWaylandXdgSurface *xdgSurface)
 {
     WindowSurface *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
 
@@ -254,7 +236,6 @@ void WaylandCompositor::onXdgSurfaceCreated(WaylandXdgSurface *xdgSurface)
     });
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
 void WaylandCompositor::onTopLevelCreated(QWaylandXdgToplevel *topLevel, QWaylandXdgSurface *xdgSurface)
 {
     WindowSurface *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
@@ -277,6 +258,5 @@ void WaylandCompositor::onPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurfa
     connect(popup, &QWaylandXdgPopup::configuredGeometryChanged,
             windowSurface, &WindowSurface::popupGeometryChanged);
 }
-#endif
 
 QT_END_NAMESPACE_AM

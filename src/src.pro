@@ -113,7 +113,7 @@ SUBDIRS = \
         tools_launcher_qml \
 }
 
-!android:SUBDIRS += \
+!cross_compile | tools-only:SUBDIRS += \
     tools_packager \
     tools_uploader \
 

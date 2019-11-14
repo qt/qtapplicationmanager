@@ -106,8 +106,9 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
     , m_isQuickLauncher(app == nullptr)
     , m_startedViaLauncher(manager->identifier() != qL1S("native"))
 {
+    QDir::root().mkdir("/tmp/dbus-qtam");
     QString dbusAddress = QUuid::createUuid().toString().mid(1,36);
-    m_applicationInterfaceServer = new QDBusServer(qSL("unix:path=/tmp/dbus-qtam-") + dbusAddress, this);
+    m_applicationInterfaceServer = new QDBusServer(qSL("unix:path=/tmp/dbus-qtam/dbus-qtam-") + dbusAddress, this);
 
     connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
             this, [this](const QDBusConnection &connection) {

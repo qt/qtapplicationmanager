@@ -353,20 +353,19 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
 
     if (installationDir().isEmpty()) {
         const auto ilocs = m_data->installationLocations;
-        if (!ilocs.isEmpty() && deploymentWarnings) {
+        if (!ilocs.isEmpty() && deploymentWarnings)
             *deploymentWarnings << qL1S("Support for \"installationLocations\" in the main config file has been removed:");
 
-            for (const auto iloc : ilocs) {
-                QVariantMap map = iloc.toMap();
-                QString id = map.value(qSL("id")).toString();
-                if (id == qSL("internal-0")) {
-                    m_installationDir = map.value(qSL("installationPath")).toString();
-                    m_documentDir = map.value(qSL("documentPath")).toString();
-                    if (deploymentWarnings)
-                        *deploymentWarnings << qL1S(" * still using installation location \"internal-0\" for backward compatibility");
-                } else if (deploymentWarnings) {
-                    *deploymentWarnings << qL1S(" * ignoring installation location ") + id;
-                }
+        for (const auto iloc : ilocs) {
+            QVariantMap map = iloc.toMap();
+            QString id = map.value(qSL("id")).toString();
+            if (id == qSL("internal-0")) {
+                m_installationDir = map.value(qSL("installationPath")).toString();
+                m_documentDir = map.value(qSL("documentPath")).toString();
+                if (deploymentWarnings)
+                    *deploymentWarnings << qL1S(" * still using installation location \"internal-0\" for backward compatibility");
+            } else if (deploymentWarnings) {
+                *deploymentWarnings << qL1S(" * ignoring installation location ") + id;
             }
         }
     }

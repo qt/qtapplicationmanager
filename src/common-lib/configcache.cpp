@@ -163,11 +163,6 @@ void AbstractConfigCache::parse(QStringList *warnings)
     for (const auto &rawFile : d->rawFiles)
         rawFilePaths << QFileInfo(rawFile).canonicalFilePath();
 
-    // optimization, so that we can quickly determine if we have a complete match, even if the order
-    // of the input files changed since the cache was last created
-    if (!(d->options & MergedResult))
-        rawFilePaths.sort();
-
     // find the correct cache location and make sure it exists
     const QDir cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     if (!cacheLocation.exists())

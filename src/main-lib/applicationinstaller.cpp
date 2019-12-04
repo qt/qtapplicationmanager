@@ -191,7 +191,23 @@ ApplicationInstaller *ApplicationInstaller::s_instance = nullptr;
 ApplicationInstaller::ApplicationInstaller(PackageManager *pm, QObject *parent)
     : QObject(parent)
     , m_pm(pm)
-{ }
+{
+    // connect the APIs of the PackageManager and ApplicationInstaller
+    QObject::connect(pm, &PackageManager::taskProgressChanged,
+                     this, &ApplicationInstaller::taskProgressChanged);
+    QObject::connect(pm, &PackageManager::taskStarted,
+                     this, &ApplicationInstaller::taskStarted);
+    QObject::connect(pm, &PackageManager::taskFinished,
+                     this, &ApplicationInstaller::taskFinished);
+    QObject::connect(pm, &PackageManager::taskFailed,
+                     this, &ApplicationInstaller::taskFailed);
+    QObject::connect(pm, &PackageManager::taskStateChanged,
+                     this, &ApplicationInstaller::taskStateChanged);
+    QObject::connect(pm, &PackageManager::taskRequestingInstallationAcknowledge,
+                     this, &ApplicationInstaller::taskRequestingInstallationAcknowledge);
+    QObject::connect(pm, &PackageManager::taskBlockingUntilInstallationAcknowledge,
+                     this, &ApplicationInstaller::taskBlockingUntilInstallationAcknowledge);
+}
 
 ApplicationInstaller::~ApplicationInstaller()
 {

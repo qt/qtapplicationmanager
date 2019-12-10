@@ -124,7 +124,9 @@ bool QmlInProcessRuntime::start()
     QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, m_app->nonAliasedInfo()->absoluteCodeFilePath());
 
     if (!component->isReady()) {
-        qCDebug(LogSystem) << "qml-file (" << m_app->nonAliasedInfo()->absoluteCodeFilePath() << "): component not ready:\n" << component->errorString();
+        qCCritical(LogSystem).noquote().nospace() << "Failed to load component "
+                                                  << m_app->nonAliasedInfo()->absoluteCodeFilePath()
+                                                  << ":\n" << component->errorString();
         return false;
     }
 

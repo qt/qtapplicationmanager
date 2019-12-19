@@ -5,6 +5,16 @@ applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
   installationDir: "/tmp/am-resource-test/apps"
 
+quicklaunch:
+  runtimesPerContainer: 1
+  idleLoad: 1.0
+
+runtimes:
+  qml:
+    resources: "${CONFIG_PWD}/appcommon/appcommonfile.rcc"
+    importPaths: "qrc:/appcommon/qml"
+    quicklaunchQml: "qrc:/appcommon/Quicklaunch.qml"
+
 ui:
   importPaths: "qrc:///qml"
   resources:

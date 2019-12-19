@@ -107,7 +107,8 @@ bool QmlInProcessRuntime::start()
 
     const QString codeDir = m_app->codeDir() + QDir::separator();
 
-    const QStringList resources = variantToStringList(m_app->runtimeParameters().value(qSL("resources")));
+    const QStringList resources = variantToStringList(configuration().value(qSL("resources")))
+                                  + variantToStringList(m_app->runtimeParameters().value(qSL("resources")));
     for (const QString &resource : resources) {
         const QString path = QFileInfo(resource).isRelative() ? codeDir + resource : resource;
         static QStringList cache;

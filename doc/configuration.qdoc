@@ -554,6 +554,14 @@ an additional column specifying which runtime a configuration option applies to:
                     calls the function hooks on application startup.
             \endlist
     \row
+        \li [\c resources]
+        \li qml
+        \li array<string>
+        \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that
+            have resources \l{Compiled-In Resources}{compiled-in} and registers them within each
+            QML runtime. Consequently, all running QML applications will include these resources.
+            The resources can be accessed with the ":" or "qrc://" file path prefix.
+    \row
         \li \c quicklaunchQml
         \li qml
         \li string

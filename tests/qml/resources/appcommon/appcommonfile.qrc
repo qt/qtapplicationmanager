@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="appcommon">
+    <file>qml/common/CommonObj.qml</file>
+    <file>qml/common/qmldir</file>
+    <file>Quicklaunch.qml</file>
+</qresource>
+</RCC>

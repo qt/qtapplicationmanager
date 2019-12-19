@@ -3,7 +3,7 @@
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the Qt Application Manager.
+** This file is part of the Luxoft Application Manager.
 **
 ** $QT_BEGIN_LICENSE:LGPL-QTAS$
 ** Commercial License Usage
@@ -39,19 +39,8 @@
 **
 ****************************************************************************/
 
-import QtApplicationManager.Application 2.0
 import QtQuick 2.11
-import appwidgets 1.0
-import common 1.0
 
-ApplicationManagerWindow {
-    CommonObj { id: common }
-    BlueRect { }
-    GreenRect { }
-
-    Timer {
-        running: true
-        interval: 20
-        onTriggered: setWindowProperty("meaning", common.meaning);
-    }
+QtObject {
+    property int meaning: 42
 }

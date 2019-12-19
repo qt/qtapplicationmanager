@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 import QtQuick 2.11
-import QtQuick.Window 2.11
 import QtTest 1.0
 import QtApplicationManager.SystemUI 2.0
 import widgets 1.0
@@ -59,20 +58,35 @@ TestCase {
         signalName: "applicationRunStateChanged"
     }
 
+    SignalSpy {
+        id: windowPropertyChangedSpy
+        target: WindowManager
+        signalName: "windowPropertyChanged"
+    }
+
     function test_basic_data() {
         return [ { tag: "app1" },
                  { tag: "app2" } ];
     }
 
     function test_basic(data) {
+        wait(1200);    // wait for quicklaunch
+
         var app = ApplicationManager.application(data.tag);
+        windowPropertyChangedSpy.clear();
+
         app.start();
-        runStateChangedSpy.wait(3000);
-        runStateChangedSpy.wait(3000);
-        compare(app.runState, ApplicationObject.Running);
+        while (app.runState !== ApplicationObject.Running)
+            runStateChangedSpy.wait(3000);
+
+        if (data.tag === "app2") {
+            windowPropertyChangedSpy.wait(2000);
+            compare(windowPropertyChangedSpy.count, 1);
+            compare(windowPropertyChangedSpy.signalArguments[0][0].windowProperty("meaning"), 42);
+        }
+
         app.stop();
-        runStateChangedSpy.wait(3000);
-        runStateChangedSpy.wait(3000);
-        compare(app.runState, ApplicationObject.NotRunning);
+        while (app.runState !== ApplicationObject.NotRunning)
+            runStateChangedSpy.wait(3000);
     }
 }

@@ -236,6 +236,12 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
 
     m_configuration = launcher->runtimeConfiguration();
 
+    const QStringList resources = variantToStringList(m_configuration.value(qSL("resources")));
+    for (const QString &resource: resources) {
+        if (!loadResource(resource))
+            qCWarning(LogSystem) << "Cannot register resource:" << resource;
+    }
+
     QString absolutePluginPath;
     QStringList pluginPaths = variantToStringList(m_configuration.value(qSL("pluginPaths")));
     for (QString &path : pluginPaths) {
@@ -255,12 +261,10 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
     QString absoluteImportPath;
     QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
     for (QString &path : importPaths) {
-        if (QFileInfo(path).isRelative())
-            path.prepend(launcher->baseDir());
-        else if (absoluteImportPath.isEmpty())
+        const QFileInfo fi(path);
+        if (fi.isNativePath() && fi.isAbsolute() && absoluteImportPath.isEmpty())
             absoluteImportPath = path;
-
-        m_engine.addImportPath(path);
+        m_engine.addImportPath(toAbsoluteFilePath(path, launcher->baseDir()));
     }
 
     if (!absoluteImportPath.isEmpty()) {
@@ -284,12 +288,9 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
 
     StartupTimer::instance()->checkpoint("after window registration");
 
-    QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
+    const QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
     if (!quicklaunchQml.isEmpty() && quickLaunched) {
-        if (QFileInfo(quicklaunchQml).isRelative())
-            quicklaunchQml.prepend(launcher->baseDir());
-
-        QQmlComponent quicklaunchComp(&m_engine, quicklaunchQml);
+        QQmlComponent quicklaunchComp(&m_engine, filePathToUrl(quicklaunchQml, launcher->baseDir()));
         if (!quicklaunchComp.isError()) {
             QScopedPointer<QObject> quicklaunchInstance(quicklaunchComp.create());
             quicklaunchComp.completeCreate();

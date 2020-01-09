@@ -52,6 +52,7 @@
 #include "notificationmanager.h"
 #include "qml-utilities.h"
 #include "dbus-utilities.h"
+#include "package.h"
 
 /*!
     \externalpage https://developer.gnome.org/notification-spec/
@@ -353,7 +354,8 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
     case Icon:
          if (!n->iconUrl.isEmpty())
              return n->iconUrl;
-         return n->application ? n->application->info()->packageInfo()->icon() : QString();
+         return n->application && n->application->package() ? n->application->package()->icon()
+                                                            : QString();
     case Image:
         return n->imageUrl;
     case ShowActionsAsIcons:

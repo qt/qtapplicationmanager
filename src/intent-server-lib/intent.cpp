@@ -96,11 +96,24 @@ QT_BEGIN_NAMESPACE_AM
 
 /*! \qmlproperty var IntentObject::parameterMatch
     \readonly
-    A handling application can limit what parameter values it accepts. One example would be an
-    open-mime-type intent that is implemented by many applications: there would be a \c mimeType
-    parameter and each application could limit the requests it wants to receive by setting a
-    parameterMatch on this \c mimeType parameter, e.g. \c{{ mimeType: "^image/.*\.png$" }}
+    A handling application can limit what parameter values it accepts. The property itself is an
+    object that corresponds to a subset of allowed parameter object of this intent.
+    When set, the parameters of each incoming intent request are matched against this object,
+    following these rules:
+    \list
+    \li a field missing from \c parameterMatch is ignored.
+    \li a field of type \c string specified in \c parameterMatch is matched as a regular
+        expressions against the corresponding parameter value.
+    \li for fields of type \c list specified in \c parameterMatch, the corresponding parameter value
+        has to match any of the values in the list (using QVariant compare).
+    \li any other fields in \c parameterMatch are compared as QVariants to the corresponding
+        parameter value.
+    \endlist
 
+    One example would be an \c open-mime-type intent that is implemented by many applications: there
+    would be a \c mimeType parameter and each application could limit the requests it wants to
+    receive by setting a parameterMatch on this \c mimeType parameter, e.g.
+    \c{{ mimeType: "^image/.*\.png$" }}
 */
 
 

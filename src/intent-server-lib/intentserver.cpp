@@ -205,7 +205,7 @@ IntentServer::IntentServer(IntentServerSystemInterface *systemInterface, QObject
         s_roleNames.insert(IntentId, "intentId");
         s_roleNames.insert(ApplicationId, "applicationId");
         s_roleNames.insert(PackageId, "packageId");
-        s_roleNames.insert(ParameterMatch, "paramterMatch");
+        s_roleNames.insert(ParameterMatch, "parameterMatch");
         s_roleNames.insert(Name, "name");
         s_roleNames.insert(Icon, "icon");
         s_roleNames.insert(Categories, "categories");

@@ -82,7 +82,7 @@ QString IntentInfo::handlingApplicationId() const
 
 QStringList IntentInfo::categories() const
 {
-    return m_categories;
+    return m_categories.isEmpty() ? m_packageInfo->categories() : m_categories;
 }
 
 QMap<QString, QString> IntentInfo::names() const

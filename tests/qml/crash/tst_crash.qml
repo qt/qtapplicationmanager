@@ -66,10 +66,10 @@ TestCase {
         return [ { tag: "gracefully" },
                  { tag: "illegalMemory" },
                  { tag: "illegalMemoryInThread" },
-                 { tag: "unhandledException" } ];
+                 { tag: "unhandledException" },
+                 { tag: "abort" } ];
                //{ tag: "stackOverflow" },
                //{ tag: "divideByZero" },
-               //{ tag: "abort" },
                //{ tag: "raise" } ];
     }
 

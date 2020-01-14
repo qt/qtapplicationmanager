@@ -146,7 +146,7 @@ static void initBacktrace()
 
     getOutputInformation(&useAnsiColor, nullptr, nullptr);
 
-    demangleBufferSize = 512;
+    demangleBufferSize = 768;
     demangleBuffer = static_cast<char *>(malloc(demangleBufferSize));
 
     UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler,
@@ -172,7 +172,7 @@ static void initBacktrace()
         const char *typeName = type->name();
         if (typeName) {
             int status;
-            abi::__cxa_demangle(typeName, demangleBuffer, &demangleBufferSize, &status);
+            demangleBuffer = abi::__cxa_demangle(typeName, demangleBuffer, &demangleBufferSize, &status);
             if (status == 0 && *demangleBuffer) {
                 typeName = demangleBuffer;
             }
@@ -272,7 +272,7 @@ static void printCrashInfo(PrintDestination dest, const char *why, int stackFram
             int level = static_cast<btData *>(data)->level;
             if (symname) {
                 int status;
-                abi::__cxa_demangle(symname, demangleBuffer, &demangleBufferSize, &status);
+                demangleBuffer = abi::__cxa_demangle(symname, demangleBuffer, &demangleBufferSize, &status);
 
                 if (status == 0 && *demangleBuffer)
                     printBacktraceLine(level, demangleBuffer, pc);
@@ -287,7 +287,7 @@ static void printCrashInfo(PrintDestination dest, const char *why, int stackFram
                                       const char *function) -> int {
             if (function) {
                 int status;
-                abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
+                demangleBuffer = abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
 
                 printBacktraceLine(static_cast<btData *>(data)->level,
                                    (status == 0 && *demangleBuffer) ? demangleBuffer : function,
@@ -345,7 +345,7 @@ static void printCrashInfo(PrintDestination dest, const char *why, int stackFram
                         *end = 0;
 
                         int status;
-                        abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
+                        demangleBuffer = abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
 
                         if (status == 0 && *demangleBuffer) {
                             printMsg(" %3d: %s [+%s]", i, demangleBuffer, offset + 1);

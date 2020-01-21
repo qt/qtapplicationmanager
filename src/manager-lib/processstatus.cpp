@@ -43,6 +43,7 @@
 #include "processstatus.h"
 
 #include <QCoreApplication>
+#include <QMutexLocker>
 #include <QtQml/qqmlinfo.h>
 
 
@@ -152,8 +153,8 @@ ProcessStatus::ProcessStatus(QObject *parent)
     m_reader->moveToThread(m_workerThread);
 
     connect(m_reader, &ProcessReader::updated, this, [this]() {
+        fetchReadings();
         emit cpuLoadChanged();
-        fetchMemoryReadings();
         emit memoryReportingChanged(m_memoryVirtual, m_memoryRss, m_memoryPss);
         m_pendingUpdate = false;
     });
@@ -278,21 +279,25 @@ qint64 ProcessStatus::processId() const
 */
 qreal ProcessStatus::cpuLoad()
 {
-    return m_reader->cpuLoad.load() / ProcessReader::cpuLoadFactor;
+    return m_cpuLoad;
 }
 
-void ProcessStatus::fetchMemoryReadings()
+void ProcessStatus::fetchReadings()
 {
+    QMutexLocker locker(&m_reader->mutex);
+
+    m_cpuLoad = m_reader->cpuLoad;
+
     // Although smaps claims to report kB it's actually KiB (2^10 = 1024 Bytes)
-    m_memoryVirtual[qSL("total")] = quint64(m_reader->totalVm.load()) << 10;
-    m_memoryVirtual[qSL("text")] = quint64(m_reader->textVm.load()) << 10;
-    m_memoryVirtual[qSL("heap")] = quint64(m_reader->heapVm.load()) << 10;
-    m_memoryRss[qSL("total")] = quint64(m_reader->totalRss.load()) << 10;
-    m_memoryRss[qSL("text")] = quint64(m_reader->textRss.load()) << 10;
-    m_memoryRss[qSL("heap")] = quint64(m_reader->heapRss.load()) << 10;
-    m_memoryPss[qSL("total")] = quint64(m_reader->totalPss.load()) << 10;
-    m_memoryPss[qSL("text")] = quint64(m_reader->textPss.load()) << 10;
-    m_memoryPss[qSL("heap")] = quint64(m_reader->heapPss.load()) << 10;
+    m_memoryVirtual[qSL("total")] = static_cast<quint64>(m_reader->memory.totalVm) << 10;
+    m_memoryVirtual[qSL("text")] = static_cast<quint64>(m_reader->memory.textVm) << 10;
+    m_memoryVirtual[qSL("heap")] = static_cast<quint64>(m_reader->memory.heapVm) << 10;
+    m_memoryRss[qSL("total")] = static_cast<quint64>(m_reader->memory.totalRss) << 10;
+    m_memoryRss[qSL("text")] = static_cast<quint64>(m_reader->memory.textRss) << 10;
+    m_memoryRss[qSL("heap")] = static_cast<quint64>(m_reader->memory.heapRss) << 10;
+    m_memoryPss[qSL("total")] = static_cast<quint64>(m_reader->memory.totalPss) << 10;
+    m_memoryPss[qSL("text")] = static_cast<quint64>(m_reader->memory.textPss) << 10;
+    m_memoryPss[qSL("heap")] = static_cast<quint64>(m_reader->memory.heapPss) << 10;
 }
 
 /*!

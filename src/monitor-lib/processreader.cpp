@@ -40,6 +40,7 @@
 **
 ****************************************************************************/
 
+#include <QMutexLocker>
 #include "processreader.h"
 
 #include "logging.h"
@@ -63,30 +64,25 @@ void ProcessReader::enableMemoryReporting(bool enabled)
 {
     m_memoryReportingEnabled = enabled;
     if (!m_memoryReportingEnabled)
-        zeroMemory();
+        memory = Memory();
 }
 
 void ProcessReader::update()
 {
-    cpuLoad.store(static_cast<quint32>(cpuLoadFactor * readCpuLoad()));
+    qreal load = readCpuLoad();
 
-    if (m_memoryReportingEnabled && !readMemory())
-        zeroMemory();
+    if (m_memoryReportingEnabled) {
+        Memory mem;
+        bool memRead = readMemory(mem);
+        QMutexLocker locker(&mutex);
+        memory = memRead ? mem : Memory();
+        cpuLoad = load;
+    } else {
+        QMutexLocker locker(&mutex);
+        cpuLoad = load;
+    }
 
     emit updated();
-}
-
-void ProcessReader::zeroMemory()
-{
-    totalVm.store(0);
-    totalRss.store(0);
-    totalPss.store(0);
-    textVm.store(0);
-    textRss.store(0);
-    textPss.store(0);
-    heapVm.store(0);
-    heapRss.store(0);
-    heapPss.store(0);
 }
 
 #if defined(Q_OS_LINUX)
@@ -134,10 +130,10 @@ qreal ProcessReader::readCpuLoad()
 }
 
 
-bool ProcessReader::readMemory()
+bool ProcessReader::readMemory(Memory &mem)
 {
-    QByteArray smapsFile = "/proc/" + QByteArray::number(m_pid) + "/smaps";
-    return readSmaps(smapsFile);
+    const QByteArray smapsFile = "/proc/" + QByteArray::number(m_pid) + "/smaps";
+    return readSmaps(smapsFile, mem);
 }
 
 static uint parseValue(const char *pl) {
@@ -146,18 +142,8 @@ static uint parseValue(const char *pl) {
     return static_cast<uint>(strtoul(pl, nullptr, 10));
 }
 
-bool ProcessReader::readSmaps(const QByteArray &smapsFile)
+bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
 {
-    quint32 _totalVm = 0;
-    quint32 _totalRss = 0;
-    quint32 _totalPss = 0;
-    quint32 _textVm = 0;
-    quint32 _textRss = 0;
-    quint32 _textPss = 0;
-    quint32 _heapVm = 0;
-    quint32 _heapRss = 0;
-    quint32 _heapPss = 0;
-
     struct ScopedFile {
         ~ScopedFile() { if (file) fclose(file); }
         FILE *file = nullptr;
@@ -288,22 +274,22 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile)
         if (foundTags < allTags)
             break;
 
-        _totalVm += vm;
-        _totalRss += rss;
-        _totalPss += pss;
+        mem.totalVm += vm;
+        mem.totalRss += rss;
+        mem.totalPss += pss;
 
         static const char permRXP[] = { 'r', '-', 'x', 'p' };
         static const char permRWP[] = { 'r', 'w', '-', 'p' };
         if (!memcmp(permissions, permRXP, sizeof(permissions))) {
-            _textVm += vm;
-            _textRss += rss;
-            _textPss += pss;
+            mem.textVm += vm;
+            mem.textRss += rss;
+            mem.textPss += pss;
         } else if (!memcmp(permissions, permRWP, sizeof(permissions))
                    && !isMainStack && (vm != 8192 || hasInode || !wasPrivateOnly) // try to exclude stack
                    && !hasInode) {
-            _heapVm += vm;
-            _heapRss += rss;
-            _heapPss += pss;
+            mem.heapVm += vm;
+            mem.heapRss += rss;
+            mem.heapPss += pss;
         }
 
         static const char permP[] = { '-', '-', '-', 'p' };
@@ -315,20 +301,13 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile)
         }
     }
 
-    if (ok) {
-        // publish the readings
-        totalVm.store(_totalVm);
-        totalRss.store(_totalRss);
-        totalPss.store(_totalPss);
-        textVm.store(_textVm);
-        textRss.store(_textRss);
-        textPss.store(_textPss);
-        heapVm.store(_heapVm);
-        heapRss.store(_heapRss);
-        heapPss.store(_heapPss);
-    }
-
     return ok;
+}
+
+bool ProcessReader::testReadSmaps(const QByteArray &smapsFile)
+{
+    memory = Memory();
+    return readSmaps(smapsFile, memory);
 }
 
 #elif defined(Q_OS_MACOS)
@@ -342,7 +321,7 @@ qreal ProcessReader::readCpuLoad()
     return 0.0;
 }
 
-bool ProcessReader::readMemory()
+bool ProcessReader::readMemory(Memory &mem)
 {
     struct task_basic_info t_info;
     mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
@@ -352,8 +331,8 @@ bool ProcessReader::readMemory()
         return false;
     }
 
-    totalRss.store(t_info.resident_size);
-    totalVm.store(t_info.virtual_size);
+    mem.totalRss = t_info.resident_size;
+    mem.totalVm = t_info.virtual_size;
 
     return true;
 }
@@ -369,8 +348,9 @@ qreal ProcessReader::readCpuLoad()
     return 0.0;
 }
 
-bool ProcessReader::readMemory()
+bool ProcessReader::readMemory(Memory &mem)
 {
+    Q_UNUSED(mem)
     return false;
 }
 

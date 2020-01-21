@@ -110,7 +110,7 @@ SUBDIRS = \
         tools_launcher_qml \
 }
 
-!android {
+!cross_compile | tools-only {
     !disable-installer:SUBDIRS += \
         tools_packager
 

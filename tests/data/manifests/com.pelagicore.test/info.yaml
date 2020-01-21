@@ -11,6 +11,8 @@ name:
   en: 'english'
   de: 'deutsch'
 
+version: v1
+
 mimeTypes:
 - "x-scheme-handler/mailto"
 - "text/plain"

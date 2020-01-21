@@ -180,7 +180,7 @@ void tst_Main::installPackage(const QString &pkgPath)
 
     connect(packageManager, &PackageManager::taskRequestingInstallationAcknowledge,
             this, [packageManager](const QString &taskId, const QVariantMap &,
-                                         const QVariantMap &, const QVariantMap &) {
+                                   const QVariantMap &, const QVariantMap &) {
             packageManager->acknowledgePackageInstallation(taskId);
     });
 
@@ -201,8 +201,9 @@ void tst_Main::removePackage(const QString &id)
     bool removalFinished = false;
 
     connect(packageManager, &PackageManager::taskFinished,
-            this, [&removalFinished](const QString &) {
-            removalFinished = true;
+            this, [this, &removalFinished](const QString &) {
+        Q_UNUSED(this); // gcc 9.2 bug: without capturing 'this', broken code will be generated
+        removalFinished = true;
     });
 
     packageManager->removePackage(id, false /* keepDocuments */);

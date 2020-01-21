@@ -208,6 +208,7 @@ bool Package::block()
     bool blockedNow = (m_blocked.fetchAndAddOrdered(1) == 0);
     if (blockedNow) {
         m_blockedApps = info()->applications();
+        m_blockedAppsCount = m_blockedApps.count();
         emit blockedChanged(true);
     }
     return blockedNow;
@@ -218,6 +219,7 @@ bool Package::unblock()
     bool unblockedNow = (m_blocked.fetchAndSubOrdered(1) == 1);
     if (unblockedNow) {
         m_blockedApps.clear();
+        m_blockedAppsCount = 0;
         emit blockedChanged(false);
     }
     return unblockedNow;
@@ -234,11 +236,12 @@ void Package::applicationStoppedDueToBlock(const QString &appId)
     });
     if (it != m_blockedApps.cend())
         m_blockedApps.removeOne(*it);
+    m_blockedAppsCount = m_blockedApps.count();
 }
 
 bool Package::areAllApplicationsStoppedDueToBlock() const
 {
-    return isBlocked() && m_blockedApps.isEmpty();
+    return isBlocked() && !m_blockedAppsCount;
 }
 
 QT_END_NAMESPACE_AM

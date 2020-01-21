@@ -1,7 +1,6 @@
 /****************************************************************************
 **
 ** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Qt Application Manager.
@@ -40,64 +39,8 @@
 **
 ****************************************************************************/
 
-#pragma once
+import QtApplicationManager.Application 2.0
 
-#include <QAtomicInteger>
-#include <QElapsedTimer>
-#include <QObject>
-
-#include <QtAppManCommon/global.h>
-
-#if defined(Q_OS_LINUX)
-#  include <QScopedPointer>
-#  include <QtAppManMonitor/sysfsreader.h>
-#endif
-
-QT_BEGIN_NAMESPACE_AM
-
-class ProcessReader : public QObject {
-    Q_OBJECT
-public slots:
-    void update();
-    void setProcessId(qint64 pid);
-    void enableMemoryReporting(bool enabled);
-
-signals:
-    void updated();
-
-public:
-    QAtomicInteger<quint32> cpuLoad;
-
-    QAtomicInteger<quint32> totalVm;
-    QAtomicInteger<quint32> totalRss;
-    QAtomicInteger<quint32> totalPss;
-    QAtomicInteger<quint32> textVm;
-    QAtomicInteger<quint32> textRss;
-    QAtomicInteger<quint32> textPss;
-    QAtomicInteger<quint32> heapVm;
-    QAtomicInteger<quint32> heapRss;
-    QAtomicInteger<quint32> heapPss;
-
-#if defined(Q_OS_LINUX)
-    // it's public solely for testing purposes
-    bool readSmaps(const QByteArray &smapsFile);
-#endif
-    static constexpr qreal cpuLoadFactor = 1000000.0;
-
-private:
-    void openCpuLoad();
-    qreal readCpuLoad();
-    bool readMemory();
-    void zeroMemory();
-
-#if defined(Q_OS_LINUX)
-    QScopedPointer<SysFsReader> m_statReader;
-#endif
-    QElapsedTimer m_elapsedTime;
-    quint64 m_lastCpuUsage = 0.0;
-
-    qint64 m_pid = 0;
-    bool m_memoryReportingEnabled = true;
-};
-
-QT_END_NAMESPACE_AM
+ApplicationManagerWindow {
+    color: "green"
+}

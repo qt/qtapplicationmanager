@@ -8,7 +8,6 @@
     "QtAppManSharedMain" => "$basedir/src/shared-main-lib",
     "QtAppManMain" => "$basedir/src/main-lib",
     "QtAppManWindow" => "$basedir/src/window-lib",
-    "QtAppManInstaller" => "$basedir/src/installer-lib",
     "QtAppManLauncher" => "$basedir/src/launcher-lib",
     "QtAppManPluginInterfaces" => "$basedir/src/plugin-interfaces",
     "QtAppManMonitor" => "$basedir/src/monitor-lib",

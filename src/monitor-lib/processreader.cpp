@@ -50,7 +50,6 @@
 #  include <unistd.h>
 #endif
 
-
 QT_USE_NAMESPACE_AM
 
 void ProcessReader::setProcessId(qint64 pid)
@@ -60,38 +59,37 @@ void ProcessReader::setProcessId(qint64 pid)
         openCpuLoad();
 }
 
+void ProcessReader::enableMemoryReporting(bool enabled)
+{
+    m_memoryReportingEnabled = enabled;
+    if (!m_memoryReportingEnabled)
+        zeroMemory();
+}
+
 void ProcessReader::update()
 {
-    // read cpu
-    {
-        quint32 value = quint32(readCpuLoad() * std::numeric_limits<quint32>::max());
-        cpuLoad.store(value);
-    }
+    cpuLoad.store(static_cast<quint32>(cpuLoadFactor * readCpuLoad()));
 
-    {
-        if (!readMemory()) {
-            totalVm.store(0);
-            totalRss.store(0);
-            totalPss.store(0);
-            textVm.store(0);
-            textRss.store(0);
-            textPss.store(0);
-            heapVm.store(0);
-            heapRss.store(0);
-            heapPss.store(0);
-        }
-    }
+    if (m_memoryReportingEnabled && !readMemory())
+        zeroMemory();
 
     emit updated();
 }
 
-#if defined(Q_OS_LINUX)
-
-static uint parseValue(const char *pl) {
-    while (*pl && (*pl < '0' || *pl > '9'))
-        pl++;
-    return static_cast<uint>(strtoul(pl, nullptr, 10));
+void ProcessReader::zeroMemory()
+{
+    totalVm.store(0);
+    totalRss.store(0);
+    totalPss.store(0);
+    textVm.store(0);
+    textRss.store(0);
+    textPss.store(0);
+    heapVm.store(0);
+    heapRss.store(0);
+    heapPss.store(0);
 }
+
+#if defined(Q_OS_LINUX)
 
 void ProcessReader::openCpuLoad()
 {
@@ -140,6 +138,12 @@ bool ProcessReader::readMemory()
 {
     QByteArray smapsFile = "/proc/" + QByteArray::number(m_pid) + "/smaps";
     return readSmaps(smapsFile);
+}
+
+static uint parseValue(const char *pl) {
+    while (*pl && (*pl < '0' || *pl > '9'))
+        pl++;
+    return static_cast<uint>(strtoul(pl, nullptr, 10));
 }
 
 bool ProcessReader::readSmaps(const QByteArray &smapsFile)

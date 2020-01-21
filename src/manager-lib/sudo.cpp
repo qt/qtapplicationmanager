@@ -349,8 +349,11 @@ QByteArray SudoClient::call(const QByteArray &msg)
 {
     QMutexLocker locker(&m_mutex);
 
-    if (m_shortCircuit)
-        return m_shortCircuit->receive(msg);
+    if (m_shortCircuit) {
+        const QByteArray res = m_shortCircuit->receive(msg);
+        m_errorString = m_shortCircuit->lastError();
+        return res;
+    }
 
 #ifdef Q_OS_LINUX
     if (m_socket >= 0) {

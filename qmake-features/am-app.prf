@@ -11,6 +11,10 @@ AM_MANIFEST_PATH = $$absolute_path($$AM_MANIFEST, $$_PRO_FILE_PWD_)
 
 # Call the appman-packager to convert the yaml to JSON to parse it here
 qtPrepareTool(APPMAN_PACKAGER, appman-packager, , system)
+!exists($$APPMAN_PACKAGER): {
+    warning("Couldn't add the 'package' step, due to the missing appman-packager binary")
+    return()
+}
 
 JSON = $$system($$APPMAN_PACKAGER yaml-to-json -i1 $$system_quote($$AM_MANIFEST_PATH))
 parseJson(JSON, INFO)| error("Failed to parse appman-packager output.")

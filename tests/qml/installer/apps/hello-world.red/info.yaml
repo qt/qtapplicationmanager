@@ -2,9 +2,9 @@ formatVersion: 1
 formatType: am-application
 ---
 id:      'hello-world.red'
-icon:    'icon.png'
-code:    'main.qml'
+version: 'v1'
+icon:    'icon1.png'
+code:    'app1.qml'
 runtime: 'qml'
 name:
-  en: 'Hello Updated Red'
-version: red
+  en: 'Builtin Installation Test App v1'

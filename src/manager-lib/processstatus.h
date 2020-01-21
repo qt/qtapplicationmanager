@@ -66,9 +66,12 @@ class ProcessStatus : public QObject
     Q_PROPERTY(QVariantMap memoryVirtual READ memoryVirtual NOTIFY memoryReportingChanged)
     Q_PROPERTY(QVariantMap memoryRss READ memoryRss NOTIFY memoryReportingChanged)
     Q_PROPERTY(QVariantMap memoryPss READ memoryPss NOTIFY memoryReportingChanged)
+    Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled
+                                           NOTIFY memoryReportingEnabledChanged)
     Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
 public:
     ProcessStatus(QObject *parent = nullptr);
+    ~ProcessStatus();
 
     QStringList roleNames() const;
 
@@ -84,12 +87,16 @@ public:
     QVariantMap memoryRss() const;
     QVariantMap memoryPss() const;
 
+    bool isMemoryReportingEnabled() const;
+    void setMemoryReportingEnabled(bool enabled);
+
 signals:
     void applicationIdChanged(const QString &applicationId);
     void processIdChanged(qint64 processId);
     void cpuLoadChanged();
     void memoryReportingChanged(const QVariantMap &memoryVirtual, const QVariantMap &memoryRss,
                                                                   const QVariantMap &memoryPss);
+    void memoryReportingEnabledChanged(bool enabled);
 
 private slots:
     void onRunStateChanged(Am::RunState state);
@@ -104,12 +111,14 @@ private:
     QVariantMap m_memoryVirtual;
     QVariantMap m_memoryRss;
     QVariantMap m_memoryPss;
+    bool m_memoryReportingEnabled = true;
 
     QPointer<Application> m_application;
 
     bool m_pendingUpdate = false;
-    QScopedPointer<ProcessReader> m_reader;
+    ProcessReader *m_reader;
     static QThread *m_workerThread;
+    static int m_instanceCount;
 };
 
 QT_END_NAMESPACE_AM

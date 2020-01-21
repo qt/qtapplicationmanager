@@ -9,7 +9,7 @@ includepaths = -I .
 
 sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
 headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
-examples.fileextensions = "*.qml *.yaml"
+examples.fileextensions = "*.cpp *.h *.qml *.yaml"
 examples.imageextensions = "*.png *.jpg *.gif"
 
 include(config/exampleurl-qtapplicationmanager.qdocconf)
@@ -21,7 +21,6 @@ headerdirs += \
     ../src/manager-lib \
     ../src/application-lib \
     ../src/package-lib \
-    ../src/installer-lib \
     ../src/intent-client-lib \
     ../src/intent-server-lib \
     ../src/notification-lib \
@@ -39,7 +38,6 @@ sourcedirs += \
     ../src/manager-lib \
     ../src/application-lib \
     ../src/package-lib \
-    ../src/installer-lib \
     ../src/intent-client-lib \
     ../src/intent-server-lib \
     ../src/notification-lib \

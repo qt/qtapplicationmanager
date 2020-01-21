@@ -142,6 +142,7 @@ private:
     State m_state = Installed;
     qreal m_progress = 0;
     QAtomicInt m_blocked;
+    QAtomicInt m_blockedAppsCount;
     QVector<ApplicationInfo *> m_blockedApps;
 };
 

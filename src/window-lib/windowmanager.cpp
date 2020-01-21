@@ -948,7 +948,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 
                             bool onScreen = false;
 
-                            auto itemList = w->items().toList();
+                            auto itemList = w->items().values();
                             if (itemList.count() == 0)
                                 continue;
 

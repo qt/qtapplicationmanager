@@ -104,8 +104,7 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
         m_pid = m_process->processId();
         emit started();
     });
-    connect(m_process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
-            this, [this](QProcess::ProcessError error) {
+    connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         emit errorOccured(static_cast<Am::ProcessError>(error));
     });
     connect(m_process, static_cast<void (QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),

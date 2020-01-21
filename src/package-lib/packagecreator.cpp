@@ -135,7 +135,7 @@ bool PackageCreator::hasFailed() const
 
 bool PackageCreator::wasCanceled() const
 {
-    return d->m_canceled.load();
+    return d->m_canceled != 0;
 }
 
 Error PackageCreator::errorCode() const

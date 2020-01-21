@@ -352,8 +352,8 @@ void AbstractConfigCache::parse(QStringList *warnings)
             }
         }
 
-        qCDebug(LogCache) << d->cacheBaseName << "parsing" << count.load() << "file(s) finished after"
-                          << (timer.nsecsElapsed() / 1000) << "usec";
+        qCDebug(LogCache) << d->cacheBaseName << "parsing" << count.loadAcquire()
+                          << "file(s) finished after" << (timer.nsecsElapsed() / 1000) << "usec";
 
         if (!d->options.testFlag(NoCache)) {
             // everything is parsed now, so we can write a new cache file

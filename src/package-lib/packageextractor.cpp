@@ -129,7 +129,7 @@ bool PackageExtractor::hasFailed() const
 
 bool PackageExtractor::wasCanceled() const
 {
-    return d->m_canceled.load();
+    return d->m_canceled != 0;
 }
 
 Error PackageExtractor::errorCode() const

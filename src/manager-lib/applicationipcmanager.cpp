@@ -293,21 +293,34 @@ void ApplicationIPCManager::attachToRuntime(AbstractRuntime *runtime)
 {
 #if defined(AM_MULTI_PROCESS)
     if (NativeRuntime *nativeRuntime = qobject_cast<NativeRuntime *>(runtime)) {
-        connect(nativeRuntime, &NativeRuntime::applicationConnectedToPeerDBus, this,
-                [this, nativeRuntime](const QDBusConnection &connection, Application *application) {
-            if (!application || !connection.isConnected())
-                return;
-
-            // register all known extension interfaces
-            for (ApplicationIPCInterface *iface : qAsConst(m_interfaces))
-                registerInterfaceHelper(connection, iface, application, nativeRuntime);
-
-            // make sure that future extension interfaces get registered as well
-            connect(this, &ApplicationIPCManager::interfaceCreated,
-                    this, [connection, nativeRuntime](ApplicationIPCInterface *iface) {
-                registerInterfaceHelper(connection, iface, nativeRuntime->application(), nativeRuntime);
-
+        if (!nativeRuntime->isQuickLauncher()) {
+            connect(nativeRuntime, &NativeRuntime::applicationConnectedToPeerDBus, this,
+                    [this, nativeRuntime](const QDBusConnection &connection, Application *application) {
+                registerInterfaces(nativeRuntime, connection, application);
             });
+        }
+    }
+#else
+    Q_UNUSED(runtime)
+#endif
+}
+
+void ApplicationIPCManager::registerInterfaces(AbstractRuntime *runtime, const QDBusConnection &connection,
+                                               Application *application)
+{
+#if defined(AM_MULTI_PROCESS)
+    if (NativeRuntime *nativeRuntime = qobject_cast<NativeRuntime *>(runtime)) {
+        Q_ASSERT(application);
+        Q_ASSERT(connection.isConnected());
+
+        // register all known extension interfaces
+        for (ApplicationIPCInterface *iface : qAsConst(m_interfaces))
+            registerInterfaceHelper(connection, iface, application, nativeRuntime);
+
+        // make sure that future extension interfaces get registered as well
+        connect(this, &ApplicationIPCManager::interfaceCreated,
+                this, [connection, nativeRuntime](ApplicationIPCInterface *iface) {
+            registerInterfaceHelper(connection, iface, nativeRuntime->application(), nativeRuntime);
         });
 
         connect(nativeRuntime, &NativeRuntime::applicationDisconnectedFromPeerDBus,
@@ -319,6 +332,8 @@ void ApplicationIPCManager::attachToRuntime(AbstractRuntime *runtime)
     }
 #else
     Q_UNUSED(runtime)
+    Q_UNUSED(application)
+    Q_UNUSED(connection)
 #endif
 }
 

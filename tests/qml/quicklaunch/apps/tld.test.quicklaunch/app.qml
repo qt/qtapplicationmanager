@@ -45,4 +45,9 @@ import QtApplicationManager.Application 2.0
 ApplicationManagerWindow {
     width: 320
     height: 240
+
+    ApplicationInterfaceExtension {
+        name: "quicklaunch.interface"
+        onReadyChanged: object.acknowledge();
+    }
 }

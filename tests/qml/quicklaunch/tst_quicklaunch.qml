@@ -51,6 +51,8 @@ TestCase {
     when: windowShown
     name: "Quicklaunch"
 
+    property bool acknowledged: false
+
     SignalSpy {
         id: windowAddedSpy
         target: WindowManager
@@ -62,6 +64,12 @@ TestCase {
         signalName: "runStateChanged"
     }
 
+    ApplicationIPCInterface {
+        function acknowledge() { acknowledged = true; }
+        Component.onCompleted: ApplicationIPCManager.registerInterface(this, "quicklaunch.interface", {});
+    }
+
+
     function test_quicklaunch() {
         var app = ApplicationManager.application("tld.test.quicklaunch");
         runStateChangedSpy.target = app;
@@ -71,14 +79,22 @@ TestCase {
         // sometimes caused some race where the app would not be started at all in the past:
         app.start();
         windowAddedSpy.wait(3000);
+        tryCompare(testCase, "acknowledged", true);
         runStateChangedSpy.clear();
         app.stop(true);
         runStateChangedSpy.wait(3000);    // wait for ShuttingDown
         runStateChangedSpy.wait(3000);    // wait for NotRunning
+
         wait(1000);
         // Unfortunately there is no reliable means to determine, whether a quicklaunch process
         // is running, but after at least 2s now, there should be a process that can be attached to.
+        acknowledged = false;
         app.start();
         windowAddedSpy.wait(3000);
+        tryCompare(testCase, "acknowledged", true);
+        runStateChangedSpy.clear();
+        app.stop(true);
+        runStateChangedSpy.wait(3000);    // wait for ShuttingDown
+        runStateChangedSpy.wait(3000);    // wait for NotRunning
     }
 }

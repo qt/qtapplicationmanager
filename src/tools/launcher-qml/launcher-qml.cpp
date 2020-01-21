@@ -255,22 +255,6 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
 
     StartupTimer::instance()->checkpoint("after window registration");
 
-    QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
-    if (!quicklaunchQml.isEmpty() && quickLaunched) {
-        if (QFileInfo(quicklaunchQml).isRelative())
-            quicklaunchQml.prepend(a->baseDir());
-
-        QQmlComponent quicklaunchComp(&m_engine, quicklaunchQml);
-        if (!quicklaunchComp.isError()) {
-            QScopedPointer<QObject> quicklaunchInstance(quicklaunchComp.create());
-            quicklaunchComp.completeCreate();
-        } else {
-            const QList<QQmlError> errors = quicklaunchComp.errors();
-            for (const QQmlError &error : errors)
-                qCCritical(LogQmlRuntime) << error;
-        }
-    }
-
     if (directLoad.isEmpty()) {
         m_applicationInterface = new QmlApplicationInterface(a->p2pDBusName(), a->notificationDBusName(), this);
         connect(m_applicationInterface, &QmlApplicationInterface::startApplication,
@@ -289,6 +273,21 @@ Controller::Controller(LauncherMain *a, bool quickLaunched, const QString &direc
                 throw Exception("Could not parse info.yaml file: %1").arg(e.what());
             }
         }, Qt::QueuedConnection);
+    }
+
+    QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
+    if (!quicklaunchQml.isEmpty() && quickLaunched) {
+        if (QFileInfo(quicklaunchQml).isRelative())
+            quicklaunchQml.prepend(a->baseDir());
+
+        QQmlComponent quicklaunchComp(&m_engine, quicklaunchQml);
+        if (!quicklaunchComp.isError()) {
+            QScopedPointer<QObject> quicklaunchInstance(quicklaunchComp.create());
+        } else {
+            const QList<QQmlError> errors = quicklaunchComp.errors();
+            for (const QQmlError &error : errors)
+                qCCritical(LogQmlRuntime) << error;
+        }
     }
 
     StartupTimer::instance()->checkpoint("after application interface initialization");

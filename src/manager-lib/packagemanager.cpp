@@ -1136,7 +1136,7 @@ bool PackageManager::cancelTask(const QString &taskId)
 {
     AM_TRACE(LogInstaller, taskId)
 
-    // incoming tasks can be forcefully cancelled right away
+    // incoming tasks can be forcefully canceled right away
     for (AsynchronousTask *task : qAsConst(d->incomingTaskList)) {
         if (task->id() == taskId) {
             task->forceCancel();

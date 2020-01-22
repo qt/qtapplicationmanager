@@ -445,6 +445,16 @@ or across multiple config files, the final value is resolved based on these rule
         \li Adds additional icon theme search paths to the System UI and all apps. This option can
             be used to add a custom icon theme to the search path and load it by specifying
             \l{iconThemeName} {ui/iconThemeName}.
+    \row
+        \li [\c intents/disable]
+        \li bool
+        \li Disables the intent sub-system at runtime completely.
+    \row
+        \li [\c intents/timeouts]
+            \target intentConfiguration
+        \li object
+        \li Lets you specify the processing timeouts used in the intent
+            sub-system. For more details, see \l{Intent Timeout Specification}.
 
     \omit
     telnetPort and telnetAddress: these are configuring the Pelagicore proprietary telnet component
@@ -651,6 +661,56 @@ The following conditions are handled:
 \endtable
 
 
+\section1 Intent Timeout Specification
+
+The \c intents/timeouts sub-object lets you specify the exact timeouts in milli-seconds for the
+asynchronous IPC used to implement the intents mechanism. Any intent whose lifetime exceeds a
+timeout for the stages shown below is canceled by the system and an error reply is sent back
+to the original sender.
+Setting any of the timeout values to \c 0 or a negative number disables the timeout handling for
+that specific stage.
+
+\table
+    \header
+        \li Config Key
+        \li Type
+        \li Description
+    \row
+        \li \c disambiguation
+        \li int
+        \li The time interval in milli-seconds, in which a disambiguation decision for an intent
+            has to be made in the System UI. (default: 10000)
+    \row
+        \li \c startApplication
+        \li int
+        \li The time interval in milli-seconds, in which an application that should handle an
+            intent request is supposed to be started - of course, only if it is not already
+            running. (default: 3000)
+    \row
+        \li \c replyFromApplication
+        \li int
+        \li The time interval in milli-seconds, in which the handling application needs to
+            acknowledge the receipt of an intent request. For QML applications, this is done in
+            IntentHandler::requestReceived. (default: 5000)
+    \row
+        \li \c replyFromSystem
+        \li int
+        \li The time interval in milli-seconds, after which the complete handling of a single
+            intent needs to be finished: this starts when actually creating the intent in the
+            requesting application, going through the server to the handling application and then
+            returning the (error) result back from the handling to the requesting application.
+            \note It makes sense that this timeout value is slightly bigger than the sum of the
+                  previous three timeout values described above: all the other timeouts are
+                  sub-steps towards the completion of an intent request, while this timeout
+                  represents the whole process. Making it slightly bigger than the sum accounts
+                  for processing and communication overhead that is not part of the individual sub
+                  timeouts. (default: 20000)
+\endtable
+
+Please be aware that due to the asynchronous nature of the intent delivery, an intent might be
+canceled by the system because it ran into either a \c replyFromApplication or \c replyFromSystem
+timeout, although the receiver still received and processed it.
+
 \section1 OpenGL Specification
 
 The \c opengl sub-object lets you specify the required OpenGL version and/or profile.
@@ -694,4 +754,5 @@ The \c opengl sub-object lets you specify the required OpenGL version and/or pro
         \li When set, the application manager requests the specified OpenGL ES minor version.
             For more information, see \c esMajorVersion above.
 \endtable
+
 */

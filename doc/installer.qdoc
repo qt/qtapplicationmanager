@@ -78,7 +78,7 @@ the source of the package. Out of the box, the application manager accepts the f
 All of the above methods work asynchronously and also support streaming: this means that the actual
 installation is done while the package is being downloaded. If the package is successfully verified
 after the download, it only needs a quick finalization step. Otherwise, if an error occurred, the
-installation process is simply cancelled and rolled back.
+installation process is simply canceled and rolled back.
 
 \section1 Public Key Infrastructure
 

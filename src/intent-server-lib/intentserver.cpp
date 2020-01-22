@@ -549,12 +549,14 @@ void IntentServer::processRequestQueue()
                 m_disambiguationQueue.enqueue(isr);
                 isr->setState(IntentServerRequest::State::WaitingForDisambiguation);
                 qCDebug(LogIntents) << "Waiting for disambiguation on intent" << isr->intentId();
-                QTimer::singleShot(m_disambiguationTimeout, [this, isr]() {
-                    if (m_disambiguationQueue.removeOne(isr)) {
-                        isr->setRequestFailed(qSL("Disambiguation timed out after %1 ms").arg(m_disambiguationTimeout));
-                        enqueueRequest(isr);
-                    }
-                });
+                if (m_disambiguationTimeout > 0) {
+                    QTimer::singleShot(m_disambiguationTimeout, [this, isr]() {
+                        if (m_disambiguationQueue.removeOne(isr)) {
+                            isr->setRequestFailed(qSL("Disambiguation timed out after %1 ms").arg(m_disambiguationTimeout));
+                            enqueueRequest(isr);
+                        }
+                    });
+                }
                 emit disambiguationRequest(isr->requestId(), convertToQml(isr->potentialIntents()),
                                            isr->parameters());
             }
@@ -571,12 +573,14 @@ void IntentServer::processRequestQueue()
             qCDebug(LogIntents) << "Intent handler" << isr->handlingApplicationId() << "is not running";
             m_startingAppQueue.enqueue(isr);
             isr->setState(IntentServerRequest::State::WaitingForApplicationStart);
-            QTimer::singleShot(m_startingAppTimeout, [this, isr]() {
-                if (m_startingAppQueue.removeOne(isr)) {
-                    isr->setRequestFailed(qSL("Starting handler application timed out after %1 ms").arg(m_startingAppTimeout));
-                    enqueueRequest(isr);
-                }
-            });
+            if (m_startingAppTimeout > 0) {
+                QTimer::singleShot(m_startingAppTimeout, [this, isr]() {
+                    if (m_startingAppQueue.removeOne(isr)) {
+                        isr->setRequestFailed(qSL("Starting handler application timed out after %1 ms").arg(m_startingAppTimeout));
+                        enqueueRequest(isr);
+                    }
+                });
+            }
             m_systemInterface->startApplication(isr->handlingApplicationId());
         } else {
             qCDebug(LogIntents) << "Intent handler" << isr->handlingApplicationId() << "is already running";
@@ -596,12 +600,14 @@ void IntentServer::processRequestQueue()
                                 << isr->handlingApplicationId();
             m_sentToAppQueue.enqueue(isr);
             isr->setState(IntentServerRequest::State::WaitingForReplyFromApplication);
-            QTimer::singleShot(m_sentToAppTimeout, [this, isr]() {
-                if (m_sentToAppQueue.removeOne(isr)) {
-                    isr->setRequestFailed(qSL("Waiting for reply from handler application timed out after %1 ms").arg(m_sentToAppTimeout));
-                    enqueueRequest(isr);
-                }
-            });
+            if (m_sentToAppTimeout > 0) {
+                QTimer::singleShot(m_sentToAppTimeout, [this, isr]() {
+                    if (m_sentToAppQueue.removeOne(isr)) {
+                        isr->setRequestFailed(qSL("Waiting for reply from handler application timed out after %1 ms").arg(m_sentToAppTimeout));
+                        enqueueRequest(isr);
+                    }
+                });
+            }
             m_systemInterface->requestToApplication(clientIPC, isr);
         }
     }

@@ -521,7 +521,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     auto topLevels = m_engine.rootObjects();
 
     if (Q_UNLIKELY(topLevels.isEmpty() || !topLevels.at(0))) {
-        qCCritical(LogSystem) << "could not load" << qmlFileStr << ": no root object";
+        qCCritical(LogSystem) << "Failed to load component" << qmlFile << ": no root object";
         QCoreApplication::exit(3);
         return;
     }

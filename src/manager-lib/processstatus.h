@@ -102,12 +102,13 @@ private slots:
     void onRunStateChanged(Am::RunState state);
 
 private:
-    void fetchMemoryReadings();
+    void fetchReadings();
     void determinePid();
 
     QString m_appId;
     qint64 m_pid = 0;
 
+    qreal m_cpuLoad = 0;
     QVariantMap m_memoryVirtual;
     QVariantMap m_memoryRss;
     QVariantMap m_memoryPss;

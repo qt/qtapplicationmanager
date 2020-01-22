@@ -148,7 +148,9 @@ bool QmlInProcessRuntime::start()
     QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, qmlFileUrl);
 
     if (!component->isReady()) {
-        qCDebug(LogSystem) << "qml-file (" << m_app->info()->absoluteCodeFilePath() << "): component not ready:\n" << component->errorString();
+        qCCritical(LogSystem).noquote().nospace() << "Failed to load component "
+                                                  << m_app->info()->absoluteCodeFilePath()
+                                                  << ":\n" << component->errorString();
         return false;
     }
 

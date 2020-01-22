@@ -68,74 +68,74 @@ void tst_ProcessReader::memInvalid()
 {
     QFETCH(QString, file);
 
-    reader.readSmaps(file.toLocal8Bit());
+    reader.testReadSmaps(file.toLocal8Bit());
 
-    QCOMPARE(reader.totalVm.load(), 0u);
-    QCOMPARE(reader.totalRss.load(), 0u);
-    QCOMPARE(reader.totalPss.load(), 0u);
-    QCOMPARE(reader.textVm.load(), 0u);
-    QCOMPARE(reader.textRss.load(), 0u);
-    QCOMPARE(reader.textPss.load(), 0u);
-    QCOMPARE(reader.heapVm.load(), 0u);
-    QCOMPARE(reader.heapRss.load(), 0u);
-    QCOMPARE(reader.heapPss.load(), 0u);
+    QCOMPARE(reader.memory.totalVm, 0u);
+    QCOMPARE(reader.memory.totalRss, 0u);
+    QCOMPARE(reader.memory.totalPss, 0u);
+    QCOMPARE(reader.memory.textVm, 0u);
+    QCOMPARE(reader.memory.textRss, 0u);
+    QCOMPARE(reader.memory.textPss, 0u);
+    QCOMPARE(reader.memory.heapVm, 0u);
+    QCOMPARE(reader.memory.heapRss, 0u);
+    QCOMPARE(reader.memory.heapPss, 0u);
 }
 
 void tst_ProcessReader::memTestProcess()
 {
     const QByteArray file = "/proc/" + QByteArray::number(QCoreApplication::applicationPid()) + "/smaps";
 
-    QVERIFY(reader.readSmaps(file));
+    QVERIFY(reader.testReadSmaps(file));
     //printMem(reader);
-    QVERIFY(reader.totalVm.load() >= reader.totalRss.load());
-    QVERIFY(reader.totalRss.load() >= reader.totalPss.load());
-    QVERIFY(reader.textVm.load() >= reader.textRss.load());
-    QVERIFY(reader.textRss.load() >= reader.textPss.load());
-    QVERIFY(reader.heapVm.load() >= reader.heapRss.load());
-    QVERIFY(reader.heapRss.load() >= reader.heapPss.load());
+    QVERIFY(reader.memory.totalVm >= reader.memory.totalRss);
+    QVERIFY(reader.memory.totalRss >= reader.memory.totalPss);
+    QVERIFY(reader.memory.textVm >= reader.memory.textRss);
+    QVERIFY(reader.memory.textRss >= reader.memory.textPss);
+    QVERIFY(reader.memory.heapVm >= reader.memory.heapRss);
+    QVERIFY(reader.memory.heapRss >= reader.memory.heapPss);
 }
 
 void tst_ProcessReader::memBasic()
 {
-    QVERIFY(reader.readSmaps(QFINDTESTDATA("basic.smaps").toLocal8Bit()));
+    QVERIFY(reader.testReadSmaps(QFINDTESTDATA("basic.smaps").toLocal8Bit()));
     //printMem(reader);
-    QCOMPARE(reader.totalVm.load(), 107384u);
-    QCOMPARE(reader.totalRss.load(), 20352u);
-    QCOMPARE(reader.totalPss.load(), 13814u);
-    QCOMPARE(reader.textVm.load(), 7800u);
-    QCOMPARE(reader.textRss.load(), 5884u);
-    QCOMPARE(reader.textPss.load(), 2318u);
-    QCOMPARE(reader.heapVm.load(), 24376u);
-    QCOMPARE(reader.heapRss.load(), 7556u);
-    QCOMPARE(reader.heapPss.load(), 7556u);
+    QCOMPARE(reader.memory.totalVm, 107384u);
+    QCOMPARE(reader.memory.totalRss, 20352u);
+    QCOMPARE(reader.memory.totalPss, 13814u);
+    QCOMPARE(reader.memory.textVm, 7800u);
+    QCOMPARE(reader.memory.textRss, 5884u);
+    QCOMPARE(reader.memory.textPss, 2318u);
+    QCOMPARE(reader.memory.heapVm, 24376u);
+    QCOMPARE(reader.memory.heapRss, 7556u);
+    QCOMPARE(reader.memory.heapPss, 7556u);
 }
 
 void tst_ProcessReader::memAdvanced()
 {
-    QVERIFY(reader.readSmaps(QFINDTESTDATA("advanced.smaps").toLocal8Bit()));
+    QVERIFY(reader.testReadSmaps(QFINDTESTDATA("advanced.smaps").toLocal8Bit()));
     //printMem(reader);
-    QCOMPARE(reader.totalVm.load(), 77728u);
-    QCOMPARE(reader.totalRss.load(), 17612u);
-    QCOMPARE(reader.totalPss.load(), 17547u);
-    QCOMPARE(reader.textVm.load(), 2104u);
-    QCOMPARE(reader.textRss.load(), 1772u);
-    QCOMPARE(reader.textPss.load(), 1707u);
-    QCOMPARE(reader.heapVm.load(), 16032u);
-    QCOMPARE(reader.heapRss.load(), 15740u);
-    QCOMPARE(reader.heapPss.load(), 15740u);
+    QCOMPARE(reader.memory.totalVm, 77728u);
+    QCOMPARE(reader.memory.totalRss, 17612u);
+    QCOMPARE(reader.memory.totalPss, 17547u);
+    QCOMPARE(reader.memory.textVm, 2104u);
+    QCOMPARE(reader.memory.textRss, 1772u);
+    QCOMPARE(reader.memory.textPss, 1707u);
+    QCOMPARE(reader.memory.heapVm, 16032u);
+    QCOMPARE(reader.memory.heapRss, 15740u);
+    QCOMPARE(reader.memory.heapPss, 15740u);
 }
 
 void tst_ProcessReader::printMem(const ProcessReader &reader)
 {
-    qDebug() << "totalVm:" << reader.totalVm.load();
-    qDebug() << "totalRss:" << reader.totalRss.load();
-    qDebug() << "totalPss:" << reader.totalPss.load();
-    qDebug() << "textVm:" << reader.textVm.load();
-    qDebug() << "textRss:" << reader.textRss.load();
-    qDebug() << "textPss:" << reader.textPss.load();
-    qDebug() << "heapVm:" << reader.heapVm.load();
-    qDebug() << "heapRss:" << reader.heapRss.load();
-    qDebug() << "heapPss:" << reader.heapPss.load();
+    qDebug() << "totalVm:" << reader.memory.totalVm;
+    qDebug() << "totalRss:" << reader.memory.totalRss;
+    qDebug() << "totalPss:" << reader.memory.totalPss;
+    qDebug() << "textVm:" << reader.memory.textVm;
+    qDebug() << "textRss:" << reader.memory.textRss;
+    qDebug() << "textPss:" << reader.memory.textPss;
+    qDebug() << "heapVm:" << reader.memory.heapVm;
+    qDebug() << "heapRss:" << reader.memory.heapRss;
+    qDebug() << "heapPss:" << reader.memory.heapPss;
 }
 
 QTEST_APPLESS_MAIN(tst_ProcessReader)

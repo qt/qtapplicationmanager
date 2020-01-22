@@ -42,7 +42,7 @@
 
 #pragma once
 
-#include <QAtomicInteger>
+#include <QMutex>
 #include <QElapsedTimer>
 #include <QObject>
 
@@ -57,6 +57,27 @@ QT_BEGIN_NAMESPACE_AM
 
 class ProcessReader : public QObject {
     Q_OBJECT
+
+public:
+    QMutex mutex;
+    qreal cpuLoad;
+    struct Memory {
+        quint32 totalVm = 0;
+        quint32 totalRss = 0;
+        quint32 totalPss = 0;
+        quint32 textVm = 0;
+        quint32 textRss = 0;
+        quint32 textPss = 0;
+        quint32 heapVm = 0;
+        quint32 heapRss = 0;
+        quint32 heapPss = 0;
+    } memory;
+
+#if defined(Q_OS_LINUX)
+    // solely for testing purposes
+    bool testReadSmaps(const QByteArray &smapsFile);
+#endif
+
 public slots:
     void update();
     void setProcessId(qint64 pid);
@@ -65,32 +86,14 @@ public slots:
 signals:
     void updated();
 
-public:
-    QAtomicInteger<quint32> cpuLoad;
-
-    QAtomicInteger<quint32> totalVm;
-    QAtomicInteger<quint32> totalRss;
-    QAtomicInteger<quint32> totalPss;
-    QAtomicInteger<quint32> textVm;
-    QAtomicInteger<quint32> textRss;
-    QAtomicInteger<quint32> textPss;
-    QAtomicInteger<quint32> heapVm;
-    QAtomicInteger<quint32> heapRss;
-    QAtomicInteger<quint32> heapPss;
-
-#if defined(Q_OS_LINUX)
-    // it's public solely for testing purposes
-    bool readSmaps(const QByteArray &smapsFile);
-#endif
-    static constexpr qreal cpuLoadFactor = 1000000.0;
-
 private:
     void openCpuLoad();
     qreal readCpuLoad();
-    bool readMemory();
-    void zeroMemory();
+    bool readMemory(Memory &mem);
 
 #if defined(Q_OS_LINUX)
+    bool readSmaps(const QByteArray &smapsFile, Memory &mem);
+
     QScopedPointer<SysFsReader> m_statReader;
 #endif
     QElapsedTimer m_elapsedTime;

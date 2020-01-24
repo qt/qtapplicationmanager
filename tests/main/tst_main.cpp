@@ -35,6 +35,7 @@
 #include <QStringList>
 
 #include "packagemanager.h"
+#include "package.h"
 #include "applicationmanager.h"
 #include "logging.h"
 #include "main.h"
@@ -179,7 +180,7 @@ void tst_Main::installPackage(const QString &pkgPath)
     bool installationFinished = false;
 
     connect(packageManager, &PackageManager::taskRequestingInstallationAcknowledge,
-            this, [packageManager](const QString &taskId, const QVariantMap &,
+            this, [packageManager](const QString &taskId, Package *,
                                    const QVariantMap &, const QVariantMap &) {
             packageManager->acknowledgePackageInstallation(taskId);
     });

@@ -149,7 +149,7 @@ public:
 
     // Q_SCRIPTABLEs are available via both QML and D-Bus
     Q_SCRIPTABLE QStringList packageIds() const;
-    Q_SCRIPTABLE QVariantMap get(const QString &id) const;
+    Q_SCRIPTABLE QVariantMap get(const QString &packageId) const;
 
     Q_SCRIPTABLE qint64 installedPackageSize(const QString &packageId) const;
     Q_SCRIPTABLE QVariantMap installedPackageExtraMetaData(const QString &packageId) const;
@@ -187,8 +187,7 @@ signals:
                                        QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) newState);
 
     // installation only
-    Q_SCRIPTABLE void taskRequestingInstallationAcknowledge(const QString &taskId,
-                                                            const QVariantMap &packageAsVariantMap,
+    Q_SCRIPTABLE void taskRequestingInstallationAcknowledge(const QString &taskId, Package *package,
                                                             const QVariantMap &packageExtraMetaData,
                                                             const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);

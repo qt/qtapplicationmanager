@@ -44,7 +44,7 @@
     \qmltype ApplicationInterface
     \inqmlmodule QtApplicationManager.Application
     \ingroup app-singletons
-    \brief The main interface between apps and the application-manager.
+    \brief The main interface between apps and the application manager.
 
     This item is available for QML applications using the root context property
     \c ApplicationInterface. For other native applications, the same interface
@@ -194,5 +194,5 @@
     ApplicationManager::startApplication without a \c documentUrl argument or
     the \c target argument of Qt::openUrlExternally, when your application matches
     a MIME-type request. In the latter case \a mimeType contains the MIME-type detected
-    by the ApplicationManager.
+    by the application manager.
 */

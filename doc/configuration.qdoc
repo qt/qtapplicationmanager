@@ -278,7 +278,7 @@ or across multiple config files, the final value is resolved based on these rule
     \row
         \li \b --verbose
         \li bool
-        \li Enables verbose output. All logging categories and message types are enabled with the
+        \li Enables verbose output. All logging categories and message types are enabled with the
             exception of some Qt internal debug messages; \c logging-rules is ignored.
 
             \note Logging rules provided via the QT_LOGGING_RULES environment variable still
@@ -554,7 +554,7 @@ an additional column specifying which runtime a configuration option applies to:
                     calls the function hooks on application startup.
             \endlist
     \row
-        \li [\c resources]
+        \li \c resources
         \li qml
         \li array<string>
         \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that

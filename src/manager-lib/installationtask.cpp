@@ -46,6 +46,7 @@
 
 #include "logging.h"
 #include "packagemanager_p.h"
+#include "package.h"
 #include "packageinfo.h"
 #include "packageextractor.h"
 #include "exception.h"
@@ -321,24 +322,9 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
     if (m_foundIcon && m_foundInfo) {
         qCDebug(LogInstaller) << "emit taskRequestingInstallationAcknowledge" << id() << "for package" << m_package->id();
 
-        QVariantMap nameMap;
-        auto names = m_package->names();
-        for (auto it = names.constBegin(); it != names.constEnd(); ++it)
-            nameMap.insert(it.key(), it.value());
+        auto package = new Package(m_package.data(), Package::BeingInstalled);
 
-        QVariantMap applicationData {
-            { qSL("id"), m_package->id() },
-            { qSL("version"), m_package->version() },
-            { qSL("icon"), m_package->icon() },
-            { qSL("displayIcon"), m_package->icon() }, // legacy
-            { qSL("name"), nameMap },
-            { qSL("displayName"), nameMap }, // legacy
-            { qSL("baseDir"), m_package->baseDir().absolutePath() },
-            { qSL("codeDir"), m_package->baseDir().absolutePath() },     // 5.12 backward compatibility
-            { qSL("manifestDir"), m_package->baseDir().absolutePath() }, // 5.12 backward compatibility
-            { qSL("installationLocationId"), qSL("internal-0") } // 5.13 backward compatibility
-        };
-        emit m_pm->taskRequestingInstallationAcknowledge(id(), applicationData,
+        emit m_pm->taskRequestingInstallationAcknowledge(id(), package,
                                                          m_extractor->installationReport().extraMetaData(),
                                                          m_extractor->installationReport().extraSignedMetaData());
 

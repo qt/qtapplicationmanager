@@ -56,9 +56,18 @@ QT_BEGIN_NAMESPACE_AM
     \ingroup system-ui-non-instantiable
     \brief This type represents an Intent definition on the System-UI side.
 
-    This is a QML object class representing a single Intent definition for a specific application.
-    It is not creatable from QML code and all properties are read-only. Only functions and
-    properties of IntentServer will return pointers to this class.
+    Each instance of this class represents a single Intent definition for a specific application.
+
+    Most of the read-only properties map directly to values read from the package's
+    \c info.yaml file - these are documented in the \l{Manifest Definition}.
+
+    Items of this type are not creatable from QML code. Only functions and properties of
+    IntentServer and IntentModel will return pointers to this class.
+
+    Make sure to \b not save references to an IntentObject across function calls: packages (and
+    with that, the intents contained within) can be deinstalled at any time, invalidating your
+    reference. In case you do need a persistent handle, use the intentId together with the
+    applicationId string.
 */
 
 /*! \qmlproperty string IntentObject::intentId

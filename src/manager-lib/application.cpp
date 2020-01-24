@@ -55,12 +55,20 @@
     \qmltype ApplicationObject
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
-    \brief The handle for an application known to the ApplicationManager.
+    \brief The handle for an application known to the application manager.
 
-    Most of the read-only properties map directly to values read from the application's
+    Each instance of this class represents a single application known to the application manager.
+
+    Most of the read-only properties map directly to values read from the application package's
     \c info.yaml file - these are documented in the \l{Manifest Definition}.
-*/
 
+    Items of this type are not creatable from QML code. Only functions and properties of
+    ApplicationManager and ApplicationModel will return pointers to this class.
+
+    Make sure to \b not save references to an ApplicationObject across function calls: packages (and
+    with that, the applications contained within) can be deinstalled at any time, invalidating your
+    reference. In case you do need a persistent handle, use the id string.
+*/
 /*!
     \qmlproperty string ApplicationObject::id
     \readonly
@@ -81,49 +89,6 @@
     runtime.
 */
 /*!
-    \qmlproperty url ApplicationObject::icon
-    \readonly
-
-    The URL of the application's icon - can be used as the source property of an \l Image.
-*/
-/*!
-    \qmlproperty string ApplicationObject::documentUrl
-    \readonly
-    \obsolete
-
-    This was used to distinguish between application aliases, which have been replaced by the
-    intents mechanism.
-
-    Always returns an empty string.
-*/
-/*!
-    \qmlproperty bool ApplicationObject::builtIn
-    \readonly
-
-    This property describes, if this application is part of the built-in set of applications of the
-    current System-UI.
-*/
-/*!
-    \qmlproperty bool ApplicationObject::alias
-    \readonly
-    \obsolete
-
-    This was used to distinguish between application aliases, which have been replaced by the
-    intents mechanism.
-
-    Always returns \c false.
-*/
-/*!
-    \qmlproperty ApplicationObject ApplicationObject::nonAliased
-    \readonly
-    \obsolete
-
-    This was used to distinguish between application aliases, which have been replaced by the
-    intents mechanism.
-
-    Always returns the object itself.
-*/
-/*!
     \qmlproperty list<string> ApplicationObject::capabilities
     \readonly
 
@@ -131,18 +96,19 @@
     and verified by the middleware via the application-manager.
 */
 /*!
+    \qmlproperty string ApplicationObject::documentUrl
+    \readonly
+
+    This was used to distinguish between application aliases, which have been replaced by the
+    intents mechanism.
+
+    Always returns an empty string.
+*/
+/*!
     \qmlproperty list<string> ApplicationObject::supportedMimeTypes
     \readonly
 
     An array of MIME types the application can handle.
-*/
-/*!
-    \qmlproperty list<string> ApplicationObject::categories
-    \readonly
-
-    A list of category names the application should be associated with. This is mainly for the
-    automated app-store uploads as well as displaying the application within a fixed set of
-    categories in the System-UI.
 */
 /*!
     \qmlproperty object ApplicationObject::applicationProperties
@@ -183,33 +149,10 @@
     \sa ApplicationInterface::quit, ApplicationInterface::acknowledgeQuit
 */
 /*!
-    \qmlproperty string ApplicationObject::version
-    \readonly
-
-    Holds the version of the application as a string.
-*/
-/*!
     \qmlproperty string ApplicationObject::codeDir
     \readonly
 
     The absolute path to the application's installation directory.
-*/
-/*!
-    \qmlproperty enumeration ApplicationObject::state
-    \readonly
-
-    This property holds the current installation state of the application. It can be one of:
-
-    \list
-    \li ApplicationObject.Installed - The application is completely installed and ready to be used.
-    \li ApplicationObject.BeingInstalled - The application is currently in the process of being installed.
-    \li ApplicationObject.BeingUpdated - The application is currently in the process of being updated.
-    \li ApplicationObject.BeingDowngraded - The application is currently in the process of being downgraded.
-                                            That can only happen for a built-in application that was previously
-                                            upgraded. It will then be brought back to its original, built-in,
-                                            version and its state will go back to ApplicationObject.Installed.
-    \li ApplicationObject.BeingRemoved - The application is currently in the process of being removed.
-    \endlist
 */
 /*!
     \qmlproperty enumeration ApplicationObject::runState
@@ -230,12 +173,6 @@
 
     This signal is emitted when the application is started or when it's already running but has
     been requested to be brought to foreground or raised.
-*/
-/*!
-    \qmlmethod string ApplicationObject::name(string language)
-
-    Returns the name of the application in the given \a language, as provided in the the info.yaml
-    file.
 */
 /*!
     \qmlmethod bool ApplicationObject::start(string document)
@@ -267,6 +204,77 @@
     kill hanging applications.
 
     \sa ApplicationManager::stopApplication
+*/
+
+/*!
+    \qmlproperty url ApplicationObject::icon
+    \readonly
+    \qmlobsolete
+
+    Use PackageObject::icon
+*/
+/*!
+    \qmlproperty bool ApplicationObject::builtIn
+    \readonly
+    \qmlobsolete
+
+    Use PackageObject::builtIn
+*/
+/*!
+    \qmlproperty bool ApplicationObject::alias
+    \readonly
+    \qmlobsolete
+
+    This was used to distinguish between application aliases, which have been replaced by the
+    intents mechanism.
+
+    Always returns \c false.
+*/
+/*!
+    \qmlproperty ApplicationObject ApplicationObject::nonAliased
+    \readonly
+    \qmlobsolete
+
+    This was used to distinguish between application aliases, which have been replaced by the
+    intents mechanism.
+
+    Always returns the ApplicationObject itself.
+*/
+/*!
+    \qmlproperty list<string> ApplicationObject::categories
+    \readonly
+    \qmlobsolete
+
+    Use PackageObject::categories.
+*/
+/*!
+    \qmlproperty string ApplicationObject::version
+    \readonly
+    \qmlobsolete
+
+    Use PackageObject::version.
+*/
+/*!
+    \qmlproperty enumeration ApplicationObject::state
+    \readonly
+    \qmlobsolete
+
+    Use PackageObject::state.
+*/
+/*!
+    \qmlproperty bool ApplicationObject::blocked
+    \readonly
+    \qmlobsolete
+
+    Use PackageObject::version.
+*/
+/*!
+    \qmlmethod string ApplicationObject::name(string language)
+    \qmlobsolete
+
+    Use the PackageObject::names property.
+
+    Returns the name of the application in the given \a language.
 */
 
 QT_BEGIN_NAMESPACE_AM

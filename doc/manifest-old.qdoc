@@ -28,13 +28,14 @@
 
 /*!
 
-\page manifest.html
+\page manifest-old.html
 \keyword info.yaml metadata manifest format
-\title Manifest Definition
+\title Manifest Definition (pre 5.14)
 
-\note This page describes the current metadata format (\c am-package, version \c 1) that was
-      introduced with the 5.14 release. For the old format - that is still supported - please see
-      \l{Manifest Definition (pre 5.14)}{here}.
+\note This page describes the old metadata format (\c am-application, version \c 1) that was used
+      up until 5.14. For the current format, please see \l{Manifest Definition}{here}. The 5.14
+      application manager is still able to parse the old format, but \l{Alias Manifests} are not
+      supported anymore.
 
 \section1 Overview
 
@@ -44,10 +45,15 @@ The package manifest or metadata file, \c info.yaml, is a \l {YAML syntax}
 While the application manager can support other file formats, such as XML, currently the only
 metadata loader implemented is based on YAML.
 
-All packages and their contained applications are described by a single \c info.yaml file, in the
-root directory of the package.
+Dynamically installed applications are described by a single \c info.yaml file, in their root
+directory. Built-in applications, that are shipped as part of the System UI can optionally have
+multiple aliases. This behavior is similar to a Microsoft Windows shortcut, where you can start
+the same program using a different icon, name, and commandline arguments. These files have to be
+in the same folder as the application's basic \c info.yaml file and need to be named
+\c info-<descriptive name>.yaml. See \l{Alias Manifests}{below} for a description of these alias
+manifests.
 
-\section1 Package Manifest
+\section1 Basic Manifest
 
 This is an example of a full-featured \c info.yaml file, that also shows how you can mix and match
 classic YAML and JSON style in YAML 1.1 documents:
@@ -56,26 +62,27 @@ classic YAML and JSON style in YAML 1.1 documents:
 %YAML 1.1
 ---
 formatVersion: 1
-formatType: am-package
+formatType: am-application
 ---
 id: 'com.pelagicore.radio'
 icon: 'FM-Radio.png'
 name:
   en: "FM Radio"
   de: "UKW-Rundfunk"
+code: "radio.qml"
+
+runtime: qml
+runtimeParameters: { loadDummyData: true }
+documentUrl: "fm"
+
+mimeTypes: [ "x-scheme-handler/x-radio" ]
+
+capabilities:
+- cameraAccess
+- locationAccess
 
 version: '1.2.1-alpha3'
 
-applications:
-- id: com.pelagicore.radio.app
-  code: "radio.qml"
-
-  runtime: qml
-  runtimeParameters: { loadDummyData: true }
-
-  capabilities:
-  - cameraAccess
-  - locationAccess
 \endcode
 
 The fields within the \c info.yaml file header (first YAML document) are as follows:
@@ -92,68 +99,10 @@ The fields within the \c info.yaml file header (first YAML document) are as foll
 \row
     \li \c formatType
     \li string
-    \li \e Required. Always \c am-package.
+    \li \e Required. Always \c am-application.
 \endtable
 
 The fields within the \c info.yaml manifest data (second YAML document) are as follows:
-
-\table
-\header
-    \li Field Name
-    \li Type
-    \li Description
-\row
-    \li \c id
-    \li string
-    \li The unique ID of the package represented as a string with a maximum length of 150
-        characters. This ID can be used to look up information about the package in the
-        \l{PackageManager}{PackageManager QML Type}. Since this ID is used in the file system, only
-        a subset of the printable ASCII characters are allowed: \c{0-9}, \c{a-z}, \c{A-Z} as well as
-        any of \c{!#$%&'`^~_+-=.,;()[]{}}. If you are building a larger system with third party
-        applications, it is good practice to use reverse DNS notation for the package IDs to
-        help keep track of your IDs in the long run. The helper function
-        \l{PackageManager::validateDnsName} can help you to enforce this policy from the
-        System UI.
-\row
-    \li \c icon
-    \li string
-    \li \e Required. The icon's file name. The file must be located in the same directory as
-        \c info.yaml and can be in any image format that Qt supports.
-\row
-    \li \c name
-    \target package-name-map
-    \li object
-    \li \e Required. An object containing language (\c string) to display name (\c string)
-        mappings. The language identifiers need to adhere to the standard POSIX locale definition.
-        For more information, see \l{QLocale}. At least one mapping needs to be present. However,
-        it is good practice to supply the English (\c en) mapping, at least, as a fallback.
-\row
-    \li \c description
-    \li object
-    \li \e An optional object containing language (\c string) to descriptive name (\c string)
-        mappings. This field uses the same syntax as the \c name field.
-\row
-    \li \c categories
-    \li list<string>
-    \li The list of category names the package should be associated with. This is mainly for
-        the automated app-store uploads as well as displaying the packages's applications or
-        intents within a fixed set of categories in the System UI.
-\row
-    \li \c version
-    \li string
-    \li The version of the package as a string.
-\row
-    \li \c applications
-    \li list
-    \li \e Required. The list of applications contained in this package. At least one application
-        has to be defined.
-\row
-    \li \c intents
-    \li list
-    \li \e The list of intents provided by applications in this package.
-\endtable
-
-The fields used for each item within the \c applications list are as follows:
 
 \table
 \header
@@ -173,9 +122,28 @@ The fields used for each item within the \c applications list are as follows:
         \l{ApplicationInstaller::validateDnsName} can help you to enforce this policy from the
         System UI.
 \row
+    \li \c icon
+    \li string
+    \li \e Required. The icon's file name. The file must be located in the same directory as
+        \c info.yaml and can be in any image format that Qt supports.
+\row
+    \li \c name
+    \target application-name-map
+    \li object
+    \li \e Required. An object containing language (\c string) to display name (\c string)
+        mappings. The language identifiers need to adhere to the standard POSIX locale definition.
+        For more information, see \l{QLocale}. At least one mapping needs to be present. However,
+        it is good practice to supply the English (\c en) mapping, at least, as a fallback.
+\row
     \li \c code
     \li string
     \li \e Required. The main executable - interpreted by the \c runtime.
+\row
+    \li \c categories
+    \li array<string>
+    \li The list of category names the application should be associated with. This is mainly for
+        the automated app-store uploads as well as displaying the application within a fixed set
+        of categories in the System UI.
 \row
     \li \c runtime
     \li string
@@ -198,6 +166,15 @@ The fields used for each item within the \c applications list are as follows:
 
         See \l{runtime-parameters-details}{runtime parameters} for a full list.
 \row
+    \li \c environmentVariables
+    \li object
+    \li \e Deprecated; moved to \l{runtime-parameters-details}{runtime parameters}.
+\row
+    \li \c documentUrl
+    \li string
+    \li An optional default document URL to use if the application is started without
+        specifying a document URL (see \l{ApplicationManager::startApplication}).
+\row
     \li \c supportsApplicationInterface
     \li bool
     \li If set to \c true the application must implement the \l ApplicationInterface API.
@@ -206,8 +183,15 @@ The fields used for each item within the \c applications list are as follows:
         support quick launching (like the \c qml runtime) this is not required as it defaults to
         \c true. Otherwise the default is \c false.
 \row
+    \li \c mimeTypes
+    \target mimeTypes field
+    \li array<string>
+    \li An optional array of MIME types the application can handle. The application manager
+        supports the classic file name or content to MIME type matching, as well as URL scheme
+        matching. For more information, see \l{ApplicationManager::openUrl}.
+\row
     \li \c capabilities
-    \li list<string>
+    \li array<string>
     \li An optional, platform specific list of special access rights for the application. Later,
         the middleware can query these capabilities and verify them, via the application manager.
 
@@ -216,6 +200,10 @@ The fields used for each item within the \c applications list are as follows:
               application manifest and the (customer specific) middleware; this middleware may
               require more information about the application it's communicating with and the
               application manager can act as a trusted source of application \e capabilities.
+\row
+    \li \c version
+    \li string
+    \li The version of the application as a string.
 \row
     \li \c opengl
     \li object
@@ -254,67 +242,14 @@ The fields used for each item within the \c applications list are as follows:
     \li If provided, it is used as the automotive DLT application description, which allows to
         augment the short DLT application ID with a more verbose description. If not explicitly
         provided, a default description is used.
-\endtable
-
-The fields used for each item within the \c intents list are as follows:
-
-\table
-\header
-    \li Field Name
-    \li Type
-    \li Description
 \row
-    \li \c id
+    \li \c importance
+    \li real
+    \li \e Deprecated. Use \c applicationProperties instead.
+\row
+    \li \c backgroundMode
     \li string
-    \li Required. The id of the intent. Make sure to only specify intent IDs that the applications
-        in this package are actually handling.
-\row
-    \li \c visibility
-    \li string
-    \li The visibility of this intent outside of this package: Can be either \c private or \c public
-        (which is the default, if this field is not specified at all). Private intents can only be
-        requested by applications from this package, while public intents can also be requested by
-        other applications in the system.
-\row
-    \li \c handlingApplicationId
-    \li string
-    \li If this package contains more than one application, then it is mandatory to specify which
-        application is handling this intent; if there is only one application defined, then this
-        application will be used as the default handler for all intents.
-        The given application id has to be from within this package.
-\row
-    \li \c requiredCapabilities
-    \li list<string>
-    \li Limit the client applications that are able to call this intent to applications having at
-        least one of the capabilities given in this list. An empty list or by simply not specifying
-        this field at all will lead to no capability restrictions.
-\row
-    \li \c parameterMatch
-    \li object
-    \li Filter the intent based on the incoming parameters. This can be used to have multiple
-        applications being able to handle the same intent, dependent on the actual parameters in
-        the intent request. See the IntentObject::parameterMatch documentation for a detailed
-        explanation for this field.
-\row
-    \li \c name
-    \li object
-    \li The name of the intent. It will default to the \c name field in the global section, but it
-        can be overridden for each intent by specifying this field.
-\row
-    \li \c icon
-    \li string
-    \li The icon of the intent. It will default to the \c icon field in the global section, but it
-        can be overridden for each intent by specifying this field.
-\row
-    \li \c description
-    \li object
-    \li The description of the intent. It will default to the \c description field in the global
-        section, but it can be overridden for each intent by specifying this field.
-\row
-    \li \c categories
-    \li object
-    \li The list of categories for this intent. It will default to the \c categories field in the
-        global section, but it can be overridden for each intent by specifying this field.
+    \li \e Deprecated. Use \c applicationProperties instead.
 \endtable
 
 
@@ -337,27 +272,27 @@ that specifies which runtime a configuration option applies to:
 \row
     \li \c importPaths
     \li qml, qml-in-process
-    \li list<string>
+    \li array<string>
     \li A list of paths to add to the QML-engine's import paths. Use of this parameter is
         equivalent to setting \c QML2_IMPORT_PATH for a program started from the command line.
 \row
     \li \c resources
     \li qml, qml-in-process
-    \li list<string>
+    \li array<string>
     \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that have
         resources \l{Compiled-In Resources}{compiled-in} and registers them within the application
         process. Resources can be accessed with the ":" or "qrc://" file path prefix.
 \row
     \li \c pluginPaths
     \li qml, qml-in-process
-    \li list<string>
+    \li array<string>
     \li A list of paths to add to Qt's library paths, which are used to find plugins. Use of this
         parameter is equivalent to setting \c QT_PLUGIN_PATH for a program started from the command
         line.
 \row
     \li \c arguments
     \li native
-    \li list<string>
+    \li array<string>
     \li A list of command line parameters to use when starting the application's executable.
 \row
     \li \c environmentVariables
@@ -375,6 +310,86 @@ that specifies which runtime a configuration option applies to:
         \li Setting these variables disables the use of the quick launch mechanism for this
             application.
         \endlist
+\endtable
+
+\section1 Alias Manifests
+
+\note This page describes the old metadata format (\c am-application, version \c 1) that was used
+      up until 5.14. For the current format, please see \l{Manifest Definition}{here}. The 5.14
+      application manager is still able to parse the old format, but \l{Alias Manifests} are not
+      supported anymore.
+
+This is an example of an alias manifest, \c info-am.yaml, for the \c info.yaml file in the
+\l{Basic Manifest}. This way, you can have one single tuner application \c radio.qml running,
+that can be started using two different entries, both with different text and icons, in the
+application launcher.
+
+\badcode
+%YAML 1.1
+---
+formatVersion: 1
+formatType: am-application-alias
+---
+aliasId: 'com.pelagicore.radio@am'
+icon: 'AM-Radio.png'
+name:
+  en: "AM Radio"
+  de: "Langwellenrundfunk"
+
+documentUrl: "x-radio://am"
+
+\endcode
+
+If you start an alias while the application is already running, it does not start another instance.
+Only if a \c documentUrl is set, then does the instance currently running receive the
+\l{ApplicationInterface::openDocument} signal, that contains the respective strings that
+were set via the \c documentUrl parameter. Then, the application can change its UI accordingly.
+The alias manifests have to be in the same folder as the application's \c info.yaml file and
+must be named \c info-<descriptive name>.yaml.
+
+The meaning of the fields within the \c info-am.yaml file header (first YAML document) is as
+follows:
+
+\table
+\header
+    \li Field Name
+    \li Type
+    \li Description
+\row
+    \li \c formatVersion
+    \li int
+    \li \e Required. Currently always \c 1.
+\row
+    \li \c formatType
+    \li string
+    \li \e Required. Always \c am-application-alias.
+\endtable
+
+The meaning of the fields within the alias manifest data (second YAML document) is as follows:
+
+\table
+\header
+    \li Field Name
+    \li Type
+    \li Description
+\row
+    \li \c aliasId
+    \li string
+    \li \e Required. The unique ID for the base application, followed by the \c{@} sign and a
+        unique tag for this alias. This tag has the same character restrictions as the main
+        application ID. See the \c id field in \l{Basic Manifest}.
+\row
+    \li \c icon
+    \li string
+    \li \e Required. See the \c icon field in \l{Basic Manifest}.
+\row
+    \li \c name
+    \li object
+    \li \e Required. See the \c name field in \l{Basic Manifest}.
+\row
+    \li \c documentUrl
+    \li string
+    \li See the \c documentUrl in \l{Basic Manifest}.
 \endtable
 
 */

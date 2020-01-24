@@ -135,20 +135,6 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
         fields.emplace_back("version", false, YamlParser::Scalar, [&pkgInfo](YamlParser *p) {
             pkgInfo->m_version = p->parseString();
         });
-        fields.emplace_back("logging", false, YamlParser::Map, [&pkgInfo](YamlParser *p) {
-            const QVariantMap logging = p->parseMap();
-            if (!logging.isEmpty()) {
-                if (logging.size() > 1 || logging.firstKey() != qSL("dlt"))
-                    throw YamlParserException(p, "'logging' only supports the 'dlt' key");
-                pkgInfo->m_dltConfiguration = logging.value(qSL("dlt")).toMap();
-
-                // sanity check
-                for (auto it = pkgInfo->m_dltConfiguration.cbegin(); it != pkgInfo->m_dltConfiguration.cend(); ++it) {
-                    if (it.key() != qSL("id") && it.key() != qSL("description"))
-                        throw YamlParserException(p, "unsupported key in 'logging/dlt'");
-                }
-            }
-        });
         if (legacy) {
             fields.emplace_back("code", true, YamlParser::Scalar, [&legacyAppInfo](YamlParser *p) {
                 legacyAppInfo->m_codeFilePath = p->parseString();
@@ -257,6 +243,20 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                         const QVariantMap pri = rawMap.value(qSL("private")).toMap();
                         for (auto it = pri.cbegin(); it != pri.cend(); ++it)
                             appInfo->m_allAppProperties.insert(it.key(), it.value());
+                    });
+                    appFields.emplace_back("logging", false, YamlParser::Map, [&appInfo](YamlParser *p) {
+                        const QVariantMap logging = p->parseMap();
+                        if (!logging.isEmpty()) {
+                            if (logging.size() > 1 || logging.firstKey() != qSL("dlt"))
+                                throw YamlParserException(p, "'logging' only supports the 'dlt' key");
+                            appInfo->m_dltConfiguration = logging.value(qSL("dlt")).toMap();
+
+                            // sanity check
+                            for (auto it = appInfo->m_dltConfiguration.cbegin(); it != appInfo->m_dltConfiguration.cend(); ++it) {
+                                if (it.key() != qSL("id") && it.key() != qSL("description"))
+                                    throw YamlParserException(p, "unsupported key in 'logging/dlt'");
+                            }
+                        }
                     });
 
                     p->parseFields(appFields);

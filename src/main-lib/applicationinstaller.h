@@ -136,9 +136,11 @@ public:
 
     Q_SCRIPTABLE void acknowledgePackageInstallation(const QString &taskId)
     { return m_pm->acknowledgePackageInstallation(taskId); }
-    Q_SCRIPTABLE QString removePackage(const QString &packageId, bool keepDocuments, bool force = false)
-    { return m_pm->removePackage(packageId, keepDocuments, force); }
-
+    Q_SCRIPTABLE QString removePackage(const QString &applicationId, bool keepDocuments, bool force = false)
+    {
+        auto app = ApplicationManager::instance()->fromId(applicationId);
+        return m_pm->removePackage(app ? app->packageInfo()->id() : QString(), keepDocuments, force);
+    }
     Q_SCRIPTABLE AsynchronousTask::TaskState taskState(const QString &taskId) const
     { return m_pm->taskState(taskId); }
     Q_SCRIPTABLE QString taskApplicationId(const QString &taskId) const

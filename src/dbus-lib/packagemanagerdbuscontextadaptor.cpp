@@ -41,6 +41,7 @@
 ****************************************************************************/
 
 #include "packagemanagerdbuscontextadaptor.h"
+#include "package.h"
 #include "packagemanager.h"
 #include "io.qt.packagemanager_adaptor.h"
 #include "dbuspolicy.h"
@@ -71,21 +72,26 @@ QT_USE_NAMESPACE_AM
 PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
     : QDBusAbstractAdaptor(parent)
 {
-    auto ai = PackageManager::instance();
+    auto pm = PackageManager::instance();
 
-    connect(ai, &PackageManager::taskBlockingUntilInstallationAcknowledge,
+    connect(pm, &PackageManager::taskBlockingUntilInstallationAcknowledge,
             this, &PackageManagerAdaptor::taskBlockingUntilInstallationAcknowledge);
-    connect(ai, &PackageManager::taskFailed,
+    connect(pm, &PackageManager::taskFailed,
             this, &PackageManagerAdaptor::taskFailed);
-    connect(ai, &PackageManager::taskFinished,
+    connect(pm, &PackageManager::taskFinished,
             this, &PackageManagerAdaptor::taskFinished);
-    connect(ai, &PackageManager::taskProgressChanged,
+    connect(pm, &PackageManager::taskProgressChanged,
             this, &PackageManagerAdaptor::taskProgressChanged);
-    connect(ai, &PackageManager::taskRequestingInstallationAcknowledge,
-            this, &PackageManagerAdaptor::taskRequestingInstallationAcknowledge);
-    connect(ai, &PackageManager::taskStarted,
+    connect(pm, &PackageManager::taskRequestingInstallationAcknowledge,
+            this, [this](const QString &taskId, Package *package,
+                         const QVariantMap &packageExtraMetaData,
+                         const QVariantMap &packageExtraSignedMetaData) {
+        taskRequestingInstallationAcknowledge(taskId, get(package->id()), packageExtraMetaData,
+                                              packageExtraSignedMetaData);
+    });
+    connect(pm, &PackageManager::taskStarted,
             this, &PackageManagerAdaptor::taskStarted);
-    connect(ai, &PackageManager::taskStateChanged,
+    connect(pm, &PackageManager::taskStateChanged,
             [this](const QString &taskId, AsynchronousTask::TaskState newState) {
                 emit taskStateChanged(taskId, taskStateToString(newState));
             });

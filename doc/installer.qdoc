@@ -29,24 +29,24 @@
 /*!
 
 \page installer.html
-\title Application Installer
+\title Package Installer
 \keyword Installer
 
-\section1 Dynamically Installing, Updating, and Removing Applications
+\section1 Dynamically Installing, Updating, and Removing Packages
 
-After applications have been packaged by the \c application-packager, they can be installed by the
-application manager at runtime. There are two interfaces for this functionality:
+After applications have been packaged by the \l {Packager}{\c appman-packager} tool, they can be
+installed by the application manager at runtime. There are two interfaces for this functionality:
 
 \list
     \li a QML interface for use within the application manager process
     \li a D-Bus interface for use by any process that is allowed to talk to the application
-        manager's \c ApplicationInstaller interface.
+        manager's \c PackageManager interface.
 \endlist
 
-Both interfaces are very similar and are described in the ApplicationInstaller.
+Both interfaces are very similar and are described in the PackageManager.
 
 \note A prerequisite for dynamically installed application packages is a valid
-\l {Installation Locations}{installation location} configuration for the application manager.
+\l {Configuration}{\c installationDir configuration} for the application manager.
 
 \section1 Packages
 
@@ -109,7 +109,6 @@ signed packages.
 \list
   \li \l {Package Format}
   \li \l {Packager}
-  \li \l {Installation Locations}
-  \li \l {ApplicationInstaller}{ApplicationInstaller API}
+  \li \l {PackageManager}{PackageManager API}
 \endlist
 */

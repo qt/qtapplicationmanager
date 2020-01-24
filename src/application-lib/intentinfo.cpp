@@ -47,6 +47,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+static constexpr quint32 IntentInfoDataStreamVersion = 1;
+
 
 IntentInfo::IntentInfo(PackageInfo *packageInfo)
     : m_packageInfo(packageInfo)
@@ -112,7 +114,8 @@ QString IntentInfo::icon() const
 
 void IntentInfo::writeToDataStream(QDataStream &ds) const
 {
-    ds << m_id
+    ds << IntentInfoDataStreamVersion
+       << m_id
        << (m_visibility == Public ? qSL("public") : qSL("private"))
        << m_requiredCapabilities
        << m_parameterMatch
@@ -127,8 +130,10 @@ IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
 {
     QScopedPointer<IntentInfo> intent(new IntentInfo(pkg));
     QString visibilityStr;
+    auto dataStreamVersion = IntentInfoDataStreamVersion;
 
-    ds >> intent->m_id
+    ds >> dataStreamVersion
+       >> intent->m_id
        >> visibilityStr
        >> intent->m_requiredCapabilities
        >> intent->m_parameterMatch
@@ -137,6 +142,9 @@ IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
        >> intent->m_names
        >> intent->m_descriptions
        >> intent->m_icon;
+
+    if (dataStreamVersion != IntentInfoDataStreamVersion)
+        return nullptr;
 
     intent->m_visibility = (visibilityStr == qSL("public")) ? Public : Private;
     intent->m_categories.sort();

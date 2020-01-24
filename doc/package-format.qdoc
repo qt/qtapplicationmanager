@@ -60,7 +60,8 @@ These are the important files in a package:
 \row
   \li \c info.yaml
   \li The manifest of the application. The packaging tool needs to make sure that this file is
-      within the first 10 entries of the tar archive.
+      within the first 10 entries of the tar archive. See \l{Manifest Definition} for the
+      documentation of the file format.
 \row
   \li \c icon.png
   \li The icon of the application that is used in the app-store. Can also be used as the app's icon
@@ -124,6 +125,48 @@ existing implementations:
   \li Python m2crypt based in the appstore-server reference implementation.
 \endlist
 
+\section1 The Header and Footer file format
+
+The fields within the \c{--PACKAGE-FOOTER--} and \c{--PACKAGE-HEADER--} file headers (first YAML
+document) are as follows:
+
+\table
+\header
+    \li Field Name
+    \li Type
+    \li Description
+\row
+    \li \c formatVersion
+    \li int
+    \li \e Required. Currently always \c 2.
+\row
+    \li \c formatType
+    \li string
+    \li \e Required. Always \c am-package-header for headers or \c am-package-footer for footers.
+\endtable
+
+The fields within the \c{--PACKAGE-FOOTER--} and \c{--PACKAGE-HEADER--} data (second YAML document)
+are as follows:
+
+\table
+\header
+    \li Field Name
+    \li Type
+    \li Description
+\row
+    \li \c id
+    \li string
+    \li The unique ID of the package. This has to match the ID of the package as described by the
+        encompaning \c info.yaml manifest file.
+\row
+    \li \c icon
+    \li string
+    \li \e Required. The icon's file name. The file must be located in the same directory as
+        \c info.yaml and can be in any image format that Qt supports.
+\endtable
+
+\note The old format (pre 5.14) had the formatVersion header field set to \c 1 and used the field
+      name \c applicationId instead of \c packageId.
 
 \section1 Example Package
 
@@ -143,9 +186,9 @@ tar cvzf qmlapp.appkg ./--PACKAGE-HEADER-- info.yaml icon.png main.qml ./--PACKA
 %YAML 1.1
 ---
 formatType: am-package-header
-formatVersion: 1
+formatVersion: 2
 ---
-applicationId: com.pelagicore.minimal
+packageId: com.pelagicore.minimal
 diskSpaceUsed: 1000
   \endcode
 \row
@@ -153,16 +196,17 @@ diskSpaceUsed: 1000
   \li \badcode
 %YAML 1.1
 ---
-formatType: am-application
+formatType: am-package
 formatVersion: 1
 ---
 id: 'com.pelagicore.minimal'
 icon: 'icon.png'
 name:
   en: 'Minimal App'
-code: 'main.qml'
-
-runtime: 'qml'
+applications:
+- id: com.pelagicore.minimalapp
+  code: 'main.qml'
+  runtime: 'qml'
   \endcode
 \row
   \li \c icon.png
@@ -178,7 +222,7 @@ runtime: 'qml'
 %YAML 1.1
 ---
 formatType: am-package-footer
-formatVersion: 1
+formatVersion: 2
 ---
 # SHA256 digest in 32 char hex representation
 digest: '9df5635bb50e93846954c6377468c07835119e2835475ec90b3e9a9f7261cf27'

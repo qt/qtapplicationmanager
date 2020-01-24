@@ -47,6 +47,124 @@
 #include "packageinfo.h"
 #include "applicationinfo.h"
 
+/*!
+    \qmltype PackageObject
+    \inqmlmodule QtApplicationManager.SystemUI
+    \ingroup system-ui-non-instantiable
+    \brief The handle for a package known to the application manager.
+
+    Each instance of this class represents a single package known to the application manager.
+
+    Most of the read-only properties map directly to values read from the package's
+    \c info.yaml file - these are documented in the \l{Manifest Definition}.
+
+    Items of this type are not creatable from QML code. Only functions and properties of
+    PackageManager will return pointers to this class.
+
+    Make sure to \b not save references to a PackageObject across function calls: packages can
+    be deinstalled at any time, invalidating your reference. In case you do need a persistent
+    handle, use the id string.
+*/
+
+/*!
+    \qmlproperty string PackageObject::id
+    \readonly
+
+    This property returns the unique id of the package.
+*/
+/*!
+    \qmlproperty bool PackageObject::builtIn
+    \readonly
+
+    This property describes, if this package is part of the built-in set of packages of the
+    current System-UI.
+*/
+/*!
+    \qmlproperty bool PackageObject::builtInHasRemovableUpdate
+    \readonly
+
+    This property describes, if this package is part of the built-in set of packages of the
+    current System-UI \b and if there is currently an update installed that shadows the original
+    built-in package contents.
+
+    \sa builtIn
+*/
+/*!
+    \qmlproperty url PackageObject::icon
+    \readonly
+
+    The URL of the package's icon - can be used as the source property of an \l Image.
+*/
+/*!
+    \qmlproperty string PackageObject::version
+    \readonly
+
+    Holds the version of the package as a string.
+*/
+/*!
+    \qmlproperty string PackageObject::name
+    \readonly
+
+    Returns the localized name of the package - as provided in the info.yaml file - in the currently
+    active locale.
+
+*/
+/*!
+    \qmlproperty var PackageObject::names
+    \readonly
+
+    Returns an object with all the language code to localized name mappings as provided in the
+    package's info.yaml file.
+*/
+/*!
+    \qmlproperty string PackageObject::description
+    \readonly
+
+    Returns the localized description of the package - as provided in the info.yaml file - in the
+    currently active locale.
+
+*/
+/*!
+    \qmlproperty var PackageObject::descriptions
+    \readonly
+
+    Returns an object with all the language code to localized description mappings as provided in
+    the package's info.yaml file.
+*/
+/*!
+    \qmlproperty list<string> PackageObject::categories
+    \readonly
+
+    A list of category names the package should be associated with. This is mainly for the
+    automated app-store uploads as well as displaying the package within a fixed set of
+    categories in the System-UI.
+*/
+/*!
+    \qmlproperty enumeration PackageObject::state
+    \readonly
+
+    This property holds the current installation state of the package. It can be one of:
+
+    \list
+    \li PackageObject.Installed - The package is completely installed and ready to be used.
+    \li PackageObject.BeingInstalled - The package is currently in the process of being installed.
+    \li PackageObject.BeingUpdated - The package is currently in the process of being updated.
+    \li PackageObject.BeingDowngraded - The package is currently in the process of being downgraded.
+                                        That can only happen for a built-in package that was previously
+                                        upgraded. It will then be brought back to its original, built-in,
+                                        version and its state will go back to PackageObject.Installed.
+    \li PackageObject.BeingRemoved - The package is currently in the process of being removed.
+    \endlist
+*/
+/*!
+    \qmlproperty bool PackageObject::blocked
+    \readonly
+
+    Describes if this package is currently blocked: being blocked means that all applications in
+    the package are stopped and are prevented from being started while in this state.
+    This is normally only the case while an update is being applied.
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 Package::Package(PackageInfo *packageInfo, State initialState)

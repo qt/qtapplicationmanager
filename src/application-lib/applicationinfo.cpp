@@ -51,6 +51,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+static constexpr quint32 ApplicationInfoDataStreamVersion = 1;
 
 //TODO Make this really unique
 static int uniqueCounter = 0;
@@ -61,6 +62,7 @@ static int nextUniqueNumber() {
 
     return uniqueCounter;
 }
+
 
 ApplicationInfo::ApplicationInfo(PackageInfo *packageInfo)
     : m_packageInfo(packageInfo)
@@ -94,7 +96,8 @@ QVariantMap ApplicationInfo::allAppProperties() const
 
 void ApplicationInfo::writeToDataStream(QDataStream &ds) const
 {
-    ds << m_id
+    ds << ApplicationInfoDataStreamVersion
+       << m_id
        << m_uniqueNumber
        << m_sysAppProperties
        << m_allAppProperties
@@ -103,14 +106,17 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
        << m_runtimeParameters
        << m_supportsApplicationInterface
        << m_capabilities
-       << m_openGLConfiguration;
+       << m_openGLConfiguration
+       << m_dltConfiguration;
 }
 
 ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
 {
     QScopedPointer<ApplicationInfo> app(new ApplicationInfo(pkg));
+    auto dataStreamVersion = ApplicationInfoDataStreamVersion;
 
-    ds >> app->m_id
+    ds >> dataStreamVersion
+       >> app->m_id
        >> app->m_uniqueNumber
        >> app->m_sysAppProperties
        >> app->m_allAppProperties
@@ -119,7 +125,11 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
        >> app->m_runtimeParameters
        >> app->m_supportsApplicationInterface
        >> app->m_capabilities
-       >> app->m_openGLConfiguration;
+       >> app->m_openGLConfiguration
+       >> app->m_dltConfiguration;
+
+    if (dataStreamVersion != ApplicationInfoDataStreamVersion)
+        return nullptr;
 
     uniqueCounter = qMax(uniqueCounter, app->m_uniqueNumber);
     app->m_capabilities.sort();
@@ -161,7 +171,7 @@ QVariantMap ApplicationInfo::toVariantMap() const
     map[qSL("manifestDir")] = map[qSL("baseDir")]; // 5.12 backward compatibility
     map[qSL("installationLocationId")] = packageInfo()->installationReport() ? qSL("internal-0") : QString();
     map[qSL("supportsApplicationInterface")] = m_supportsApplicationInterface;
-    map[qSL("dlt")] = packageInfo()->dltConfiguration();
+    map[qSL("dlt")] = m_dltConfiguration;
 
     return map;
 }
@@ -204,6 +214,11 @@ QVariantMap ApplicationInfo::openGLConfiguration() const
 bool ApplicationInfo::supportsApplicationInterface() const
 {
     return m_supportsApplicationInterface;
+}
+
+QVariantMap ApplicationInfo::dltConfiguration() const
+{
+    return m_dltConfiguration;
 }
 
 QT_END_NAMESPACE_AM

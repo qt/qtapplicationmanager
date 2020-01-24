@@ -53,6 +53,9 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+static constexpr quint32 PackageInfoDataStreamVersion = 1;
+
+
 PackageInfo::PackageInfo()
 { }
 
@@ -133,11 +136,6 @@ QString PackageInfo::version() const
     return m_version;
 }
 
-QVariantMap PackageInfo::dltConfiguration() const
-{
-    return m_dltConfiguration;
-}
-
 const QDir &PackageInfo::baseDir() const
 
 {
@@ -179,7 +177,8 @@ void PackageInfo::writeToDataStream(QDataStream &ds) const
         report->serialize(&buffer);
     }
 
-    ds << m_id
+    ds << PackageInfoDataStreamVersion
+       << m_id
        << m_names
        << m_icon
        << m_descriptions
@@ -187,7 +186,6 @@ void PackageInfo::writeToDataStream(QDataStream &ds) const
        << m_version
        << m_builtIn
        << m_uid
-       << m_dltConfiguration
        << m_baseDir.absolutePath()
        << serializedReport;
 
@@ -206,8 +204,10 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
 
     QString baseDir;
     QByteArray serializedReport;
+    auto dataStreamVersion = PackageInfoDataStreamVersion;
 
-    ds >> pkg->m_id
+    ds >> dataStreamVersion
+       >> pkg->m_id
        >> pkg->m_names
        >> pkg->m_icon
        >> pkg->m_descriptions
@@ -215,9 +215,11 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
        >> pkg->m_version
        >> pkg->m_builtIn
        >> pkg->m_uid
-       >> pkg->m_dltConfiguration
        >> baseDir
        >> serializedReport;
+
+    if (dataStreamVersion != PackageInfoDataStreamVersion)
+        return nullptr;
 
     pkg->m_baseDir.setPath(baseDir);
 
@@ -228,19 +230,27 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
         try {
             pkg->m_installationReport->deserialize(&buffer);
         } catch (...) {
-            pkg->m_installationReport.reset();
+            return nullptr;
         }
     }
 
     int applicationsSize;
     ds >> applicationsSize;
-    while (--applicationsSize >= 0)
-        pkg->m_applications << ApplicationInfo::readFromDataStream(pkg.data(), ds);
+    while (--applicationsSize >= 0) {
+        if (auto app = ApplicationInfo::readFromDataStream(pkg.data(), ds))
+            pkg->m_applications << app;
+        else
+            return nullptr;
+    }
 
     int intentsSize;
     ds >> intentsSize;
-    while (--intentsSize >= 0)
-        pkg->m_intents << IntentInfo::readFromDataStream(pkg.data(), ds);
+    while (--intentsSize >= 0) {
+        if (auto intent = IntentInfo::readFromDataStream(pkg.data(), ds))
+            pkg->m_intents << intent;
+        else
+            return nullptr;
+    }
 
     return pkg.take();
 }

@@ -77,6 +77,7 @@ public:
     QStringList supportedMimeTypes() const;
     QVariantMap openGLConfiguration() const;
     bool supportsApplicationInterface() const;
+    QVariantMap dltConfiguration() const;
 
     void writeToDataStream(QDataStream &ds) const;
     static ApplicationInfo *readFromDataStream(PackageInfo *pkg, QDataStream &ds);
@@ -100,6 +101,7 @@ private:
     QStringList m_capabilities;
     QVariantMap m_openGLConfiguration;
     QStringList m_supportedMimeTypes; // deprecated
+    QVariantMap m_dltConfiguration;
 
     friend class ApplicationManager; // needed to update installation status
     friend class PackageDatabase; // needed to create ApplicationInfo objects

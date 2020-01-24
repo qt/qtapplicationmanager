@@ -70,6 +70,208 @@
 #endif
 
 
+/*!
+    \qmltype PackageManager
+    \inqmlmodule QtApplicationManager.SystemUI
+    \ingroup system-ui-singletons
+    \brief The package installation/removal/update part of the application manager.
+
+    The PackageManager singleton type handles the package installation
+    part of the application manager. It provides both a DBus and QML APIs for
+    all of its functionality.
+
+    \note Unlike the deprecated ApplicationInstaller class, the PackageManager singleton and its
+          corresponding DBus API are always available. Disabling the installer functionality via the
+          application-manager's \l{Configuration} will just lead to package (de-) installations
+          failing instantly.
+
+    The type is derived from \c QAbstractListModel, so it can be used directly as a model from QML.
+
+    \target PackageManager Roles
+
+    The following roles are available in this model:
+
+    \table
+    \header
+        \li Role name
+        \li Type
+        \li Description
+    \row
+        \li \c packageId
+        \li string
+        \li The unique ID of a package, represented as a string (e.g. \c Browser or
+            \c com.pelagicore.music)
+    \row
+        \li \c name
+        \li string
+        \li The name of the package. If possible, already translated to the current locale.
+    \row
+        \li \c icon
+        \li string
+        \li The URL of the package's icon.
+    \row
+        \li \c isBlocked
+        \li bool
+        \li A boolean value that gets set when the application-manager needs to block any
+            application within this package from running: this is normally only the case while an
+            update is being applied.
+    \row
+        \li \c isUpdating
+        \li bool
+        \li A boolean value indicating whether the package is currently being installed or updated.
+            If \c true, the \c updateProgress can be used to track the actual progress.
+    \row
+        \li \c isRemovable
+        \li bool
+        \li A boolean value indicating whether this package is user-removable; \c true for all
+            dynamically installed third party packages and \c false for all system packages.
+    \row
+        \li \c updateProgress
+        \li real
+        \li While \c isUpdating is \c true, querying this role returns the actual progress as a
+            floating-point value in the \c 0.0 to \c 1.0 range.
+    \row
+        \li \c categories
+        \li list<string>
+        \li The categories this package is registered for via its meta-data file.
+    \row
+        \li \c version
+        \li string
+        \li The currently installed version of this package.
+    \row
+        \li \c package
+        \li Package
+        \li The underlying package object for quick access to the properties outside of a
+            model delegate.
+    \endtable
+
+    \target TaskStates
+
+    The following table describes all possible states that a background task could be in:
+
+    \table
+    \header
+        \li Task State
+        \li Description
+    \row
+        \li \c Queued
+        \li The task was created and is now queued up for execution.
+    \row
+        \li \c Executing
+        \li The task is being executed.
+    \row
+        \li \c Finished
+        \li The task was executed successfully.
+    \row
+        \li \c Failed
+        \li The task failed to execute successfully.
+    \row
+        \li \c AwaitingAcknowledge
+        \li \e{Installation tasks only!} The task is currently halted, waiting for either
+            acknowledgePackageInstallation() or cancelTask() to continue. See startPackageInstallation()
+            for more information on the installation workflow.
+    \row
+        \li \c Installing
+        \li \e{Installation tasks only!} The installation was acknowledged via acknowledgePackageInstallation()
+            and the final installation phase is now running.
+    \row
+        \li \c CleaningUp
+        \li \e{Installation tasks only!} The installation has finished, and previous installations as
+            well as temporary files are being cleaned up.
+    \endtable
+
+    The normal workflow for tasks is: \c Queued \unicode{0x2192} \c Executing \unicode{0x2192} \c
+    Finished. The task can enter the \c Failed state at any point though - either by being canceled via
+    cancelTask() or simply by failing due to an error.
+
+    Installation tasks are a bit more complex due to the acknowledgment: \c Queued \unicode{0x2192}
+    \c Executing \unicode{0x2192} \c AwaitingAcknowledge (this state may be skipped if
+    acknowledgePackageInstallation() was called already) \unicode{0x2192} \c Installing
+    \unicode{0x2192} \c Cleanup \unicode{0x2192} \c Finished. Again, the task can fail at any point.
+*/
+
+//TODO: THIS IS MISSING AN EXAMPLE!
+
+/*!
+    \qmlsignal PackageManager::taskStateChanged(string taskId, string newState)
+
+    This signal is emitted when the state of the task identified by \a taskId changes. The
+    new state is supplied in the parameter \a newState.
+
+    \sa taskState()
+*/
+
+/*!
+    \qmlsignal PackageManager::taskStarted(string taskId)
+
+    This signal is emitted when the task identified by \a taskId enters the \c Executing state.
+
+    \sa taskStateChanged()
+*/
+
+/*!
+    \qmlsignal PackageManager::taskFinished(string taskId)
+
+    This signal is emitted when the task identified by \a taskId enters the \c Finished state.
+
+    \sa taskStateChanged()
+*/
+
+/*!
+    \qmlsignal PackageManager::taskFailed(string taskId)
+
+    This signal is emitted when the task identified by \a taskId enters the \c Failed state.
+
+    \sa taskStateChanged()
+*/
+
+/*!
+    \qmlsignal PackageManager::taskRequestingInstallationAcknowledge(string taskId, PackageObject package, object packageExtraMetaData, object packageExtraSignedMetaData)
+
+    This signal is emitted when the installation task identified by \a taskId has received enough
+    meta-data to be able to emit this signal. The task may be in either \c Executing or \c
+    AwaitingAcknowledge state.
+
+    A temporary PackageObject is supplied via \a package. Please note, that this object is just
+    constructed on the fly for this signal emission and is not part of the PackageManager model.
+    The package object is destroyed again after the signal callback returns. Another permanent
+    PackageObject that is also part of the model will be constructed later in the installation
+    process.
+
+    In addition, the package's extra meta-data (signed and unsinged) is also supplied via \a
+    packageExtraMetaData and \a packageExtraSignedMetaData respectively as JavaScript objects.
+    Both these objects are optional and need to be explicitly either populated during an
+    application's packaging step or added by an intermediary app-store server.
+    By default, both will just be empty.
+
+    Following this signal, either cancelTask() or acknowledgePackageInstallation() has to be called
+    for this \a taskId, to either cancel the installation or try to complete it.
+
+    The PackageManager has two convenience functions to help the System-UI with verifying the
+    meta-data: compareVersions() and, in case you are using reverse-DNS notation for application-ids,
+    validateDnsName().
+
+    \sa taskStateChanged(), startPackageInstallation()
+*/
+
+/*!
+    \qmlsignal PackageManager::taskBlockingUntilInstallationAcknowledge(string taskId)
+
+    This signal is emitted when the installation task identified by \a taskId cannot continue
+    due to a missing acknowledgePackageInstallation() call for the task.
+
+    \sa taskStateChanged(), acknowledgePackageInstallation()
+*/
+
+/*!
+    \qmlsignal PackageManager::taskProgressChanged(string taskId, qreal progress)
+
+    This signal is emitted whenever the task identified by \a taskId makes progress towards its
+    completion. The \a progress is reported as a floating-point number ranging from \c 0.0 to \c 1.0.
+
+    \sa taskStateChanged()
+*/
+
 QT_BEGIN_NAMESPACE_AM
 
 enum Roles
@@ -375,7 +577,7 @@ int PackageManager::count() const
     Returns an empty object if the specified \a index is invalid.
 
     \note This is very inefficient if you only want to access a single property from QML; use
-          package() instead to access the Package object's properties directly.
+          package() instead to access the PackageObject's properties directly.
 */
 QVariantMap PackageManager::get(int index) const
 {
@@ -394,10 +596,10 @@ QVariantMap PackageManager::get(int index) const
 /*!
     \qmlmethod PackageObject PackageManager::package(int index)
 
-    Returns the \l{PackageObject}{package} corresponding to the given \a index in the
-    model, or \c null if the index is invalid.
+    Returns the PackageObject corresponding to the given \a index in the model, or \c null if the
+    index is invalid.
 
-    \note The object ownership of the returned Package object stays with the application-manager.
+    \note The object ownership of the returned PackageObject stays with the application-manager.
           If you want to store this pointer, you can use the PackageManager's QAbstractListModel
           signals or the packageAboutToBeRemoved signal to get notified if the object is about
           to be deleted on the C++ side.
@@ -414,10 +616,10 @@ Package *PackageManager::package(int index) const
 /*!
     \qmlmethod PackageObject PackageManager::package(string id)
 
-    Returns the \l{PackageObject}{package} corresponding to the given package \a id,
-    or \c null if the id does not exist.
+    Returns the PackageObject corresponding to the given package \a id, or \c null if the id does
+    not exist.
 
-    \note The object ownership of the returned Package object stays with the application-manager.
+    \note The object ownership of the returned PackageObject stays with the application-manager.
           If you want to store this pointer, you can use the PackageManager's QAbstractListModel
           signals or the packageAboutToBeRemoved signal to get notified if the object is about
           to be deleted on the C++ side.
@@ -562,7 +764,7 @@ static QVariantMap locationMap(const QString &path)
 /*!
     \qmlproperty object PackageManager::installationLocation
 
-    Returns an object describing the location under which applications are installed in detail.
+    Returns an object describing the location under which packages are installed in detail.
 
     The returned object has the following members:
 
@@ -713,16 +915,16 @@ QStringList PackageManager::packageIds() const
 }
 
 /*!
-    \qmlmethod object PackageManager::get(string id)
+    \qmlmethod object PackageManager::get(string packageId)
 
-    Retrieves the model data for the package identified by \a id as a JavaScript object.
+    Retrieves the model data for the package identified by \a packageId as a JavaScript object.
     See the \l {PackageManager Roles}{role names} for the expected object fields.
 
-    Returns an empty object if the specified \a id is invalid.
+    Returns an empty object if the specified \a packageId is invalid.
 */
-QVariantMap PackageManager::get(const QString &id) const
+QVariantMap PackageManager::get(const QString &packageId) const
 {
-    int index = indexOfPackage(id);
+    int index = indexOfPackage(packageId);
     return (index < 0) ? QVariantMap{} : get(index);
 }
 
@@ -781,7 +983,7 @@ QVariantMap PackageManager::installedPackageExtraSignedMetaData(const QString &p
 */
 QString PackageManager::startPackageInstallation(const QUrl &sourceUrl)
 {
-    AM_TRACE(LogInstaller, sourceUrl);
+    AM_TRACE(LogInstaller, sourceUrl)
 
     return enqueueTask(new InstallationTask(d->installationPath, d->documentPath, sourceUrl));
 }
@@ -841,7 +1043,7 @@ void PackageManager::acknowledgePackageInstallation(const QString &taskId)
 /*!
     \qmlmethod string PackageManager::removePackage(string packageId, bool keepDocuments, bool force)
 
-    Uninstalls the package identified by \a id. Normally, the documents directory of the
+    Uninstalls the package identified by \a packageId. Normally, the documents directory of the
     package is deleted on removal, but this can be prevented by setting \a keepDocuments to \c true.
 
     The actual removal will happen asynchronously in the background. The PackageManager will

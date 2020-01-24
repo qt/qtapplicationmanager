@@ -127,11 +127,12 @@
 */
 
 /*!
-    \qmlsignal ProcessStatus::memoryReportingChanged(memoryVirtual, memoryRss, memoryPss)
+    \qmlsignal ProcessStatus::memoryReportingChanged(var memoryVirtual, var memoryRss, var memoryPss)
 
     This signal is emitted after \l{ProcessStatus::update()}{update()} has been called and the
-    memory usage values have been refreshed. The arguments are key-value pairs with the keys listed
-    in the table \l{supported-keys}{above}.
+    memory usage values have been refreshed. Each of the arguments \a memoryVirtual, \a memoryRss
+    and \a memoryPss is an JavaScript object with the available properties listed in the table
+    \l{supported-keys}{above}.
 */
 
 

@@ -4,8 +4,11 @@ url = https://doc.qt.io/QtApplicationManager
 version = $QT_VERSION
 
 # needed for the new clang based qdoc parser in Qt 5.11
-moduleheader = QtApplicationManagerDoc
-includepaths = -I .
+moduleheader = QtApplicationManagerDoc
+includepaths = -I .
+
+# \obsolete generates broken links and/or missing docs when used for QML
+macro.qmlobsolete = "This method is obsolete. It is provided to keep old source code working. We strongly advise against using it in new code."
 
 sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
 headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
@@ -15,46 +18,46 @@ examples.imageextensions = "*.png *.jpg *.gif"
 include(config/exampleurl-qtapplicationmanager.qdocconf)
 
 headerdirs += \
-    ../src/common-lib \
-    ../src/shared-main-lib \
-    ../src/main-lib \
-    ../src/manager-lib \
     ../src/application-lib \
-    ../src/package-lib \
+    ../src/common-lib \
     ../src/intent-client-lib \
     ../src/intent-server-lib \
-    ../src/notification-lib \
-    ../src/window-lib \
     ../src/launcher-lib \
+    ../src/main-lib \
+    ../src/manager-lib \
     ../src/monitor-lib \
+    ../src/notification-lib \
+    ../src/package-lib \
+    ../src/shared-main-lib \
+    ../src/window-lib \
     ../src/plugin-interfaces \
     ../src/tools/launcher-qml \
 
 sourcedirs += \
     . \
-    ../src/common-lib \
-    ../src/shared-main-lib \
-    ../src/main-lib \
-    ../src/manager-lib \
     ../src/application-lib \
-    ../src/package-lib \
+    ../src/common-lib \
     ../src/intent-client-lib \
     ../src/intent-server-lib \
-    ../src/notification-lib \
-    ../src/window-lib \
     ../src/launcher-lib \
+    ../src/main-lib \
+    ../src/manager-lib \
     ../src/monitor-lib \
+    ../src/notification-lib \
+    ../src/package-lib \
+    ../src/shared-main-lib \
+    ../src/window-lib \
     ../src/plugin-interfaces \
-    ../src/tools/packager \
     ../src/tools/controller \
     ../src/tools/launcher-qml \
+    ../src/tools/packager \
     $$BUILDDIR \
 
 
 imagedirs += ../doc/images
 exampledirs = ../examples
 
-depends += qtcore qtquick qtqml qtdoc qtwaylandcompositor
+depends += qtcore qtquick qtqml qtdoc qtwaylandcompositor qtwidgets qtgeniviextras
 
 qhp.projects                               = ApplicationManager
 qhp.ApplicationManager.file                = applicationmanager.qhp

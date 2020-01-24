@@ -76,26 +76,28 @@ class Application : public QObject
     Q_PROPERTY(QString id READ id CONSTANT)
     Q_PROPERTY(QString runtimeName READ runtimeName CONSTANT)
     Q_PROPERTY(QVariantMap runtimeParameters READ runtimeParameters CONSTANT)
-    Q_PROPERTY(QUrl icon READ icon NOTIFY bulkChange)
-    Q_PROPERTY(QString documentUrl READ documentUrl CONSTANT) // REMOVE
-    Q_PROPERTY(bool builtIn READ isBuiltIn CONSTANT)
-    Q_PROPERTY(bool alias READ isAlias CONSTANT)  // REMOVE
-    Q_PROPERTY(Application *nonAliased READ nonAliased CONSTANT) // REMOVE
     Q_PROPERTY(QStringList capabilities READ capabilities CONSTANT)
-    Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes CONSTANT) // REMOVE
-    Q_PROPERTY(QStringList categories READ categories CONSTANT)
+    Q_PROPERTY(QString documentUrl READ documentUrl CONSTANT)
+    Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes CONSTANT)
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT)
     Q_PROPERTY(AbstractRuntime *runtime READ currentRuntime NOTIFY runtimeChanged)
     Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged)
     Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Am::ExitStatus) lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged)
-    Q_PROPERTY(QString version READ version CONSTANT)
-    Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface CONSTANT)
     Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange)
     Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Am::RunState) runState READ runState NOTIFY runStateChanged)
 
     // legacy, forwarded to Package
+    Q_PROPERTY(QUrl icon READ icon NOTIFY bulkChange)
+    Q_PROPERTY(bool builtIn READ isBuiltIn CONSTANT)
+    Q_PROPERTY(bool alias READ isAlias CONSTANT)
+    Q_PROPERTY(Application *nonAliased READ nonAliased CONSTANT)
+    Q_PROPERTY(QStringList categories READ categories CONSTANT)
+    Q_PROPERTY(QString version READ version CONSTANT)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged)
+
+    // internal
+    Q_PROPERTY(bool supportsApplicationInterface READ supportsApplicationInterface CONSTANT)
 
 public:
     enum State { // kept for compatibility ... in reality moved to class Package

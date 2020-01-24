@@ -109,7 +109,7 @@ One example of a simple System UI is the one written for the "Hello World!" Syst
 \section2 Notifications
 
 In cases where you'd like to display notificiations or pop-ups, applications or clients can
-create these with \l{ApplicationInterface.createNotification()}. They are then made available
+create these with \l{ApplicationInterface::createNotification()}. They are then made available
 on the System UI via the \l{NotificationManager}.
 
 The code snippet below is part of the \l{Desktop System UI Example} that illustrates how to
@@ -122,7 +122,7 @@ display pop-ups.
 \section2 Intents
 
 The System UI and other applications can send and receive intents. This is exposed via the
-\l{Intent} and \l{IntentServer} QML types. The Intent represents a single intent definition on
+\l{IntentObject} and \l{IntentServer} QML types. The Intent represents a single intent definition on
 the System UI; the IntentServer is the singleton on the System UI-side that represents the
 intents sub-system.
 
@@ -137,7 +137,7 @@ Optionally, you can also pass a \c documentUrl in the \l{ApplicationObject::star
 function. Then, when you call \c{start()} several times, with a different \c documentUrl()
 each time, you won't be restarting the application; but only triggering the
 \l{ApplicationInterface::openDocument()} on the application or client side.
-\l{ApplicationInterface::stop()} triggers \l{ApplicationInterface::quit()} on the application
+\l{ApplicationObject::stop()} triggers \l{ApplicationInterface::quit()} on the application
 side. The application should do all the necessary clean-ups and then confirm that it can be
 terminates with \l{ApplicationInterface::acknowledgeQuit()}.
 

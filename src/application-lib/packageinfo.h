@@ -81,7 +81,6 @@ public:
     bool isBuiltIn() const;
     void setBuiltIn(bool builtIn);
     QString version() const;
-    QVariantMap dltConfiguration() const;
     uint uid() const { return m_uid; }
 
     const QDir &baseDir() const;
@@ -115,7 +114,6 @@ private:
     QString m_version;
     bool m_builtIn = false; // system package - not removable
     uint m_uid = uint(-1); // unix user id - move to installationReport
-    QVariantMap m_dltConfiguration;
     QVector<ApplicationInfo *> m_applications;
     QVector<IntentInfo *> m_intents;
 

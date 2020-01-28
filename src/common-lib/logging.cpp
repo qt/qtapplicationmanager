@@ -159,6 +159,20 @@ QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "Messages without dedicated 
 QDLT_FALLBACK_CATEGORY(LogGeneral)
 
 
+struct DeferredMessage {
+    DeferredMessage(QtMsgType _msgType, const QMessageLogContext &_context, const QString &_message);
+    DeferredMessage(DeferredMessage &&other) Q_DECL_NOEXCEPT;
+    ~DeferredMessage();
+
+    QtMsgType msgType;
+    int line;
+    const char *file;
+    const char *function;
+    const char *category;
+    const QString message;
+};
+
+
 bool Logging::s_dltEnabled =
 #if defined(QT_GENIVIEXTRAS_LIB)
         true;
@@ -171,6 +185,38 @@ QStringList Logging::s_rules;
 QtMessageHandler Logging::s_defaultQtHandler = nullptr;
 QByteArray Logging::s_applicationId = QByteArray();
 QVariant Logging::s_useAMConsoleLoggerConfig = QVariant();
+
+static std::vector<DeferredMessage> s_deferredMessages;
+
+DeferredMessage::DeferredMessage(QtMsgType _msgType, const QMessageLogContext &_context, const QString &_message)
+    : msgType(_msgType)
+    , line(_context.line)
+    , message(_message)
+{
+    file = qstrdup(_context.file);
+    function = qstrdup(_context.function);
+    category = qstrdup(_context.category);
+}
+
+DeferredMessage::DeferredMessage(DeferredMessage &&other) Q_DECL_NOEXCEPT
+    : msgType(other.msgType)
+    , line(other.line)
+    , file(other.file)
+    , function(other.function)
+    , category(other.category)
+    , message(other.message)
+{
+    other.file = nullptr;
+    other.function = nullptr;
+    other.category = nullptr;
+}
+
+DeferredMessage::~DeferredMessage()
+{
+    delete[] file;
+    delete[] function;
+    delete[] category;
+}
 
 
 static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
@@ -338,6 +384,23 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
     fputs(out.constData(), stderr);
 }
 
+void Logging::messageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
+{
+#if defined(QT_GENIVIEXTRAS_LIB)
+    if (s_dltEnabled)
+        QDltRegistration::messageHandler(msgType, context, message);
+#endif
+    if (Q_UNLIKELY(!s_useAMConsoleLogger))
+        s_defaultQtHandler(msgType, context, message);
+    else
+        colorLogToStderr(msgType, context, message);
+}
+
+void Logging::deferredMessageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
+{
+    s_deferredMessages.emplace_back(msgType, context, message);
+}
+
 void Logging::initialize()
 {
     initialize(0, nullptr);
@@ -345,28 +408,19 @@ void Logging::initialize()
 
 void Logging::initialize(int argc, const char * const *argv)
 {
+    bool instantLogging = false;
     if (argc > 0 && argv) {
         for (int i = 1; i < argc; ++i) {
-            if (strcmp("--no-dlt-logging", argv[i]) == 0) {
+            if (strcmp("--no-dlt-logging", argv[i]) == 0)
                 Logging::setDltEnabled(false);
-                break;
-            }
+            else if (strcmp("--log-instant", argv[i]) == 0)
+                instantLogging = true;
         }
     }
 
-    auto messageHandler = [](QtMsgType msgType, const QMessageLogContext &context, const QString &message) {
-#if defined(QT_GENIVIEXTRAS_LIB)
-        if (s_dltEnabled)
-            QDltRegistration::messageHandler(msgType, context, message);
-#endif
-        if (Q_UNLIKELY(!s_useAMConsoleLogger))
-            s_defaultQtHandler(msgType, context, message);
-        else
-            colorLogToStderr(msgType, context, message);
-    };
-
     s_messagePatternDefined = qEnvironmentVariableIsSet("QT_MESSAGE_PATTERN");
-    s_defaultQtHandler = qInstallMessageHandler(messageHandler);
+    s_defaultQtHandler = instantLogging ? qInstallMessageHandler(messageHandler)
+                                        : qInstallMessageHandler(deferredMessageHandler);
 }
 
 QStringList Logging::filterRules()
@@ -408,6 +462,20 @@ void Logging::useAMConsoleLogger(const QVariant &config)
         s_useAMConsoleLogger = !s_messagePatternDefined;
 }
 
+void Logging::completeSetup()
+{
+    for (const DeferredMessage &msg : s_deferredMessages) {
+        QLoggingCategory cat(msg.category);
+        if (cat.isEnabled(msg.msgType)) {
+            QMessageLogContext context(msg.file, msg.line, msg.function, msg.category);
+            messageHandler(msg.msgType, context, msg.message);
+        }
+    }
+
+    std::vector<DeferredMessage>().swap(s_deferredMessages);
+    qInstallMessageHandler(messageHandler);
+}
+
 QByteArray Logging::applicationId()
 {
     return s_applicationId;
@@ -416,6 +484,11 @@ QByteArray Logging::applicationId()
 void Logging::setApplicationId(const QByteArray &appId)
 {
     s_applicationId = appId;
+}
+
+bool Logging::deferredMessages()
+{
+    return !s_deferredMessages.empty();
 }
 
 bool Logging::isDltEnabled()

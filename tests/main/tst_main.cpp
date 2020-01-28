@@ -32,7 +32,6 @@
 #include <QtTest>
 #include <QDir>
 #include <QString>
-#include <QStringList>
 
 #include "packagemanager.h"
 #include "package.h"
@@ -140,17 +139,15 @@ void tst_Main::initMain()
 {
     main = new Main(argc, argv);
 
-    QStringList deploymentWarnings;
-
     QString amConfigPath = QFINDTESTDATA("am-config.yaml");
     auto pathList = QStringList(amConfigPath);
 
     config = new DefaultConfiguration(pathList, QString());
-    config->parse(&deploymentWarnings);
+    config->parse();
     if (m_verbose)
         config->setForceVerbose(true);
 
-    main->setup(config, deploymentWarnings);
+    main->setup(config);
 
     PackageManager::instance()->setAllowInstallationOfUnsignedPackages(true);
 }

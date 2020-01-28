@@ -412,6 +412,11 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
         }
     }
 
+    if (Logging::deferredMessages()) {
+        fprintf(stderr, "\n > Accumulated logging output\n");
+        Logging::completeSetup();
+    }
+
     if (Logging::isDltEnabled()) {
         useAnsiColor = false;
         printCrashInfo(Dlt, why, stackFramesToIgnore);

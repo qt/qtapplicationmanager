@@ -52,13 +52,14 @@
 #include "packageutilities.h"
 #include "packageutilities_p.h"
 #include "global.h"
+#include "logging.h"
 
 #include <clocale>
 
 
 QT_BEGIN_NAMESPACE_AM
 
-bool PackageUtilities::ensureCorrectLocale(QStringList *warnings)
+bool PackageUtilities::ensureCorrectLocale()
 {
     // We need to make sure we are running in a Unicode locale, since we are
     // running into problems when unpacking packages with libarchive that
@@ -68,7 +69,6 @@ bool PackageUtilities::ensureCorrectLocale(QStringList *warnings)
 
 #if defined(Q_OS_WIN)
     // Windows is UTF16
-    Q_UNUSED(warnings)
     return true;
 #else
 
@@ -88,10 +88,8 @@ bool PackageUtilities::ensureCorrectLocale(QStringList *warnings)
     if (checkUtf())
         return true;
 
-    if (warnings) {
-        *warnings << qL1S("The current locale is not UTF-8 capable. Trying to find a capable one "
-                          "now, but this is time consuming and should be avoided");
-    }
+    qCWarning(LogDeployment) << "The current locale is not UTF-8 capable. Trying to find a capable one now, "
+                                "but this is time consuming and should be avoided";
 
     // LC_ALL trumps all the rest, so if this is not specifying an UTF-8 locale, we need to unset it
     QByteArray lc_all = qgetenv("LC_ALL");

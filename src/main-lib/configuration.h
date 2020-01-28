@@ -61,8 +61,8 @@ public:
     Configuration(const char *additionalDescription = nullptr, bool onlyOnePositionalArgument = true);
 
     virtual ~Configuration();
-    void parse(QStringList *deploymentWarnings = nullptr);
-    virtual void parseWithArguments(const QStringList &arguments, QStringList *deploymentWarnings = nullptr);
+    void parse();
+    virtual void parseWithArguments(const QStringList &arguments);
     QVariant buildConfig() const;
 
     QString mainQmlFile() const;

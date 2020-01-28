@@ -107,7 +107,7 @@ public:
     }
     void preProcessSourceContent(QByteArray &sourceContent, const QString &fileName)
     {
-        sourceContent = ConfigurationData::substituteVars(sourceContent, fileName, warnings);
+        sourceContent = ConfigurationData::substituteVars(sourceContent, fileName);
     }
     ConfigurationData *loadFromCache(QDataStream &ds)
     {
@@ -178,6 +178,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
         m_clp.addOption({ qSL("build-config"),     qSL("Dumps the build configuration and exits.") });
 
     m_clp.addPositionalArgument(qSL("qml-file"),   qSL("The main QML file."));
+    m_clp.addOption({ qSL("log-instant"),          qSL("Log instantly at start-up, neglect configuration") });
     m_clp.addOption({ qSL("database"),             qSL("Deprecated (ingored)."), qSL("file") });
     m_clp.addOption({ qSL("builtin-apps-manifest-dir"), qSL("Base directory for built-in application manifests."), qSL("dir") });
     m_clp.addOption({ qSL("installation-dir"),     qSL("Base directory for package installations."), qSL("dir") });
@@ -272,12 +273,12 @@ void Configuration::showParserMessage(const QString &message, MessageType type)
 
 // ^^^^ copied from QCommandLineParser ... why is this not public API?
 
-void Configuration::parse(QStringList *deploymentWarnings)
+void Configuration::parse()
 {
-    parseWithArguments(QCoreApplication::arguments(), deploymentWarnings);
+    parseWithArguments(QCoreApplication::arguments());
 }
 
-void Configuration::parseWithArguments(const QStringList &arguments, QStringList *deploymentWarnings)
+void Configuration::parseWithArguments(const QStringList &arguments)
 {
     if (!m_clp.parse(arguments)) {
         showParserMessage(m_clp.errorText() + qL1C('\n'), ErrorMessage);
@@ -300,6 +301,7 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
             exit(1);
         }
     }
+
 #if defined(AM_TIME_CONFIG_PARSING)
     QElapsedTimer timer;
     timer.start();
@@ -319,7 +321,7 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
         ConfigCache<ConfigurationData> cache(configFilePaths, qSL("config"), cacheOptions);
 
         try {
-            cache.parse(deploymentWarnings);
+            cache.parse();
             m_data = cache.takeMergedResult();
         } catch (const Exception &e) {
             showParserMessage(e.errorString() + qL1C('\n'), ErrorMessage);
@@ -353,8 +355,10 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
 
     if (installationDir().isEmpty()) {
         const auto ilocs = m_data->installationLocations;
-        if (!ilocs.isEmpty() && deploymentWarnings)
-            *deploymentWarnings << qL1S("Support for \"installationLocations\" in the main config file has been removed:");
+        if (!ilocs.isEmpty()) {
+            qCWarning(LogDeployment) << "Support for \"installationLocations\" in the main config file "
+                                        "has been removed:";
+        }
 
         for (const auto iloc : ilocs) {
             QVariantMap map = iloc.toMap();
@@ -362,22 +366,22 @@ void Configuration::parseWithArguments(const QStringList &arguments, QStringList
             if (id == qSL("internal-0")) {
                 m_installationDir = map.value(qSL("installationPath")).toString();
                 m_documentDir = map.value(qSL("documentPath")).toString();
-                if (deploymentWarnings)
-                    *deploymentWarnings << qL1S(" * still using installation location \"internal-0\" for backward compatibility");
-            } else if (deploymentWarnings) {
-                *deploymentWarnings << qL1S(" * ignoring installation location ") + id;
+                qCWarning(LogDeployment) << " * still using installation location \"internal-0\" for backward "
+                                            "compatibility";
+            } else {
+                qCWarning(LogDeployment) << " * ignoring installation location" << id;
             }
         }
     }
 
-    if (installationDir().isEmpty() && deploymentWarnings) {
-        *deploymentWarnings << qL1S("No --installation-dir command line parameter or"
-                                    " applications/installationDir configuration key specified. It won't be possible to install,"
-                                    " remove or access installable packages.");
+    if (installationDir().isEmpty()) {
+        qCWarning(LogDeployment) << "No --installation-dir command line parameter or applications/installationDir "
+                                    "configuration key specified. It won't be possible to install, remove or "
+                                    "access installable packages.";
     }
 
-    if (value<bool>("start-session-dbus") && deploymentWarnings)
-        *deploymentWarnings << qL1S("Option \"--start-session-dbus\" has been deprecated and will be ignored.");
+    if (value<bool>("start-session-dbus"))
+        qCWarning(LogDeployment) << "Option \"--start-session-dbus\" has been deprecated and will be ignored.";
 }
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -552,8 +556,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_SCALAR(flags.forceSingleProcess);
 }
 
-QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName,
-                                             QStringList *deploymentWarnings)
+QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
 {
     QByteArray string = sourceContent;
     int posBeg = -1;
@@ -581,9 +584,9 @@ QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, co
                 varValue = QStandardPaths::writableLocation(static_cast<QStandardPaths::StandardLocation>(loc)).toUtf8();
         }
 
-        if (varValue.isNull() && deploymentWarnings) {
-            *deploymentWarnings << qL1S("Could not replace variable ${") + qL1S(varName)
-                                   + qL1S("} while parsing ") + fileName;
+        if (varValue.isNull()) {
+            qCWarning(LogDeployment).nospace() << "Could not replace variable ${" << varName << "} while parsing "
+                                               << fileName;
             continue;
         }
         string.replace(posBeg, varName.length() + 3, varValue);

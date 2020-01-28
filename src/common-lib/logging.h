@@ -66,14 +66,19 @@ class Logging
 public:
     static void initialize();
     static void initialize(int argc, const char * const *argv);
+    static void messageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
+    static void deferredMessageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
     static QStringList filterRules();
     static void setFilterRules(const QStringList &rules);
     static void setMessagePattern(const QString &pattern);
     static QVariant useAMConsoleLogger();
     static void useAMConsoleLogger(const QVariant &config);
+    static void completeSetup();
 
     static QByteArray applicationId();
     static void setApplicationId(const QByteArray &appId);
+
+    static bool deferredMessages();
 
     // DLT functionality
     static bool isDltEnabled();

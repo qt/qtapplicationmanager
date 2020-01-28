@@ -117,7 +117,7 @@ QT_END_NAMESPACE_AM
 
 QT_BEGIN_NAMESPACE_AM
 
-void Sudo::forkServer(DropPrivileges dropPrivileges, QStringList *warnings)
+void Sudo::forkServer(DropPrivileges dropPrivileges)
 {
     bool canSudo = false;
 
@@ -126,17 +126,16 @@ void Sudo::forkServer(DropPrivileges dropPrivileges, QStringList *warnings)
     uid_t effectiveUid = geteuid();
     canSudo = (realUid == 0) || (effectiveUid == 0);
 #else
-    Q_UNUSED(warnings)
     Q_UNUSED(dropPrivileges)
 #endif
 
     if (!canSudo) {
         SudoServer::createInstance(-1);
         SudoClient::createInstance(-1, SudoServer::instance());
-        if (warnings) {
-            *warnings << qSL("For the installer to work correctly, the executable needs to be run either as root via sudo or SUID (preferred)");
-            *warnings << qSL("(using fallback implementation - you might experience permission errors on installer operations)");
-        }
+        qCWarning(LogDeployment) << "For the installer to work correctly, the executable needs to be run either as "
+                                    "root via sudo or SUID (preferred)";
+        qCWarning(LogDeployment) << "(using fallback implementation - you might experience permission errors on "
+                                    "installer operations)";
         return;
     }
 

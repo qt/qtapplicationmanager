@@ -329,6 +329,12 @@ or across multiple config files, the final value is resolved based on these rule
             The argument is the path to \c info.yaml. Aliases (\c{info-*.yaml}) are also loaded
             from the given path.
     \row
+        \li \b --log-instant
+        \li bool
+        \li Causes all logging messages to be printed right away at start-up. Usually, the
+            logging output is deferred until the logging configuration (e.g. logging rules) is
+            known. Expect different output and format at start-up.
+    \row
         \li \b --logging-rule
             \br [\c logging/rules]
         \li array<string>

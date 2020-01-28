@@ -81,11 +81,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     StartupTimer::instance()->checkpoint("after basic initialization");
 
     try {
-        QStringList deploymentWarnings;
-
 #if !defined(AM_DISABLE_INSTALLER)
-        PackageUtilities::ensureCorrectLocale(&deploymentWarnings);
-        Sudo::forkServer(Sudo::DropPrivilegesPermanently, &deploymentWarnings);
+        PackageUtilities::ensureCorrectLocale();
+        Sudo::forkServer(Sudo::DropPrivilegesPermanently);
         StartupTimer::instance()->checkpoint("after sudo server fork");
 #endif
 
@@ -102,7 +100,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
 
         Configuration cfg(additionalDescription, onlyOnePositionalArgument);
-        cfg.parse(&deploymentWarnings);
+        cfg.parse();
 
         StartupTimer::instance()->checkpoint("after command line parse");
 #if defined(AM_TESTRUNNER)
@@ -112,7 +110,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         cfg.setForceVerbose(qEnvironmentVariableIsSet("VERBOSE_TEST"));
         qInfo() << "Verbose mode is" << (cfg.verbose() ? "on" : "off") << "(changed by (un)setting $VERBOSE_TEST)";
 #endif
-        a.setup(&cfg, deploymentWarnings);
+        a.setup(&cfg);
 #if defined(AM_TESTRUNNER)
         a.qmlEngine()->rootContext()->setContextProperty("buildConfig", cfg.buildConfig());
 #endif

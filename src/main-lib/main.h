@@ -96,7 +96,9 @@ public:
 
     bool isSingleProcessMode() const;
 
-    void setup(const Configuration *cfg, const QStringList &deploymentWarnings = QStringList()) Q_DECL_NOEXCEPT_EXPR(false);
+    Q_DECL_DEPRECATED void setup(const Configuration *cfg, const QStringList &deploymentWarnings)
+                                                                      Q_DECL_NOEXCEPT_EXPR(false);
+    void setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false);
     void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
     void showWindow(bool showFullscreen);
 

@@ -181,6 +181,7 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
     Logging::setFilterRules(rules);
     Logging::setMessagePattern(messagePattern);
     Logging::useAMConsoleLogger(useAMConsoleLogger);
+    Logging::completeSetup();
     StartupTimer::instance()->checkpoint("after logging setup");
 }
 

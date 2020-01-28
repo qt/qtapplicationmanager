@@ -60,8 +60,7 @@ QT_BEGIN_NAMESPACE_AM
 struct ConfigurationData
 {
     static ConfigurationData *loadFromSource(QIODevice *source, const QString &fileName);
-    static QByteArray substituteVars(const QByteArray &sourceContent, const QString &fileName,
-                                     QStringList *deploymentWarnings = nullptr);
+    static QByteArray substituteVars(const QByteArray &sourceContent, const QString &fileName);
     static ConfigurationData *loadFromCache(QDataStream &ds);
     void saveToCache(QDataStream &ds) const;
     void mergeFrom(const ConfigurationData *from);

@@ -205,6 +205,12 @@ Main::~Main()
 */
 void Main::setup(const Configuration *cfg, const QStringList &deploymentWarnings) Q_DECL_NOEXCEPT_EXPR(false)
 {
+    Q_UNUSED(deploymentWarnings);
+    setup(cfg);
+}
+
+void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
+{
     // basics that are needed in multiple setup functions below
     m_noSecurity = cfg->noSecurity();
     m_developmentMode = cfg->developmentMode();
@@ -213,15 +219,11 @@ void Main::setup(const Configuration *cfg, const QStringList &deploymentWarnings
     m_documentDir = cfg->documentDir();
 
     CrashHandler::setCrashActionConfiguration(cfg->managerCrashAction());
-    setupLogging(cfg->verbose(), cfg->loggingRules(), cfg->messagePattern(), cfg->useAMConsoleLogger());
     setupQmlDebugging(cfg->qmlDebugging());
     if (!cfg->dltId().isEmpty() || !cfg->dltDescription().isEmpty())
         Logging::setSystemUiDltId(cfg->dltId().toLocal8Bit(), cfg->dltDescription().toLocal8Bit());
     Logging::registerUnregisteredDltContexts();
-
-    // dump accumulated warnings, now that logging rules are set
-    for (const QString &warning : deploymentWarnings)
-        qCWarning(LogDeployment).noquote() << warning;
+    setupLogging(cfg->verbose(), cfg->loggingRules(), cfg->messagePattern(), cfg->useAMConsoleLogger());
 
     registerResources(cfg->resources());
 

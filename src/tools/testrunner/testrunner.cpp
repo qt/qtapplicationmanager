@@ -135,7 +135,6 @@ QTestRootObject::QTestRootObject(QObject *parent)
     : QObject(parent)
     , m_windowShown(false)
     , m_hasTestCase(false)
-    , m_hasQuit(false)
     , m_defined(new QQmlPropertyMap(this))
 {
 #if defined(QT_OPENGL_ES_2_ANGLE)
@@ -152,9 +151,6 @@ QTestRootObject *QTestRootObject::instance()
     }
     return object;
 }
-
-
-
 
 static QObject *testRootObject(QQmlEngine *engine, QJSEngine *jsEngine)
 {
@@ -205,20 +201,16 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
     QTestRootObject::instance()->init();
 }
 
-int TestRunner::exec(QQmlEngine *engine)
+int TestRunner::exec()
 {
     QEventLoop eventLoop;
-    QObject::connect(engine, &QQmlEngine::quit,
-                     QTestRootObject::instance(), &QTestRootObject::quit);
-    QObject::connect(engine, &QQmlEngine::quit,
-                     &eventLoop, &QEventLoop::quit);
 
     QTestRootObject::instance()->setWindowShown(true);
 
     if (QTest::printAvailableFunctions)
         return 0;
 
-    if (!QTestRootObject::instance()->hasQuit() && QTestRootObject::instance()->hasTestCase())
+    if (QTestRootObject::instance()->hasTestCase())
         eventLoop.exec();
 
     QuickTestResult::setProgramName(nullptr);

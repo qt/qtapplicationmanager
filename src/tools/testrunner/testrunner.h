@@ -44,7 +44,6 @@
 
 #include <QtAppManCommon/global.h>
 
-QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QStringList)
 
 QT_BEGIN_NAMESPACE_AM
@@ -53,7 +52,7 @@ class TestRunner
 {
 public:
     static void initialize(const QString &testFile, const QStringList &testRunnerArguments);
-    static int exec(QQmlEngine *engine);
+    static int exec();
 };
 
 QT_END_NAMESPACE_AM

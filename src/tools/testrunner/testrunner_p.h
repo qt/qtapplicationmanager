@@ -62,8 +62,6 @@ public:
 
     static QTestRootObject *instance();
 
-    bool hasQuit() const { return m_hasQuit; }
-
     bool hasTestCase() const { return m_hasTestCase; }
     void setHasTestCase(bool value) { m_hasTestCase = value; emit hasTestCaseChanged(); }
 
@@ -71,19 +69,15 @@ public:
     void setWindowShown(bool value) { m_windowShown = value; emit windowShownChanged(); }
     QQmlPropertyMap *defined() const { return m_defined; }
 
-    void init() { setWindowShown(false); setHasTestCase(false); m_hasQuit = false; }
+    void init() { setWindowShown(false); setHasTestCase(false); }
 
 Q_SIGNALS:
     void windowShownChanged();
     void hasTestCaseChanged();
 
-private Q_SLOTS:
-    void quit() { m_hasQuit = true; }
-
 private:
     bool m_windowShown;
     bool m_hasTestCase;
-    bool m_hasQuit;
     QQmlPropertyMap *m_defined;
     friend class TestRunner;
 };

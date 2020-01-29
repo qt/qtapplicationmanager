@@ -117,7 +117,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
 
 #if defined(AM_TESTRUNNER)
-        return TestRunner::exec(a.qmlEngine());
+        return TestRunner::exec();
 #else
         return MainBase::exec();
 #endif

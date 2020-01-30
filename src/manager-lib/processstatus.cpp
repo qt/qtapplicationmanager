@@ -56,7 +56,7 @@
 /*!
     \qmltype ProcessStatus
     \inqmlmodule QtApplicationManager.SystemUI
-    \ingroup system-ui
+    \ingroup system-ui-instantiable
     \brief Provides information about the status of an application process.
 
     ProcessStatus provides information about the process of a given application.

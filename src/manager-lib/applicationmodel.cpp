@@ -57,7 +57,7 @@
 /*!
     \qmltype ApplicationModel
     \inherits QSortFilterProxyModel
-    \ingroup system-ui
+    \ingroup system-ui-instantiable
     \inqmlmodule QtApplicationManager.SystemUI
     \brief A proxy model for the ApplicationManager singleton.
 

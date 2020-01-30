@@ -42,9 +42,8 @@
 ****************************************************************************/
 
 #include <QScopedPointer>
-#include <qqml.h>
-#include <QQmlInfo>
 #include <QQmlEngine>
+#include <QQmlInfo>
 
 #include "intentclient.h"
 #include "intentclientsysteminterface.h"
@@ -100,16 +99,6 @@ IntentClient *IntentClient::createInstance(IntentClientSystemInterface *systemIn
         qCWarning(LogIntents) << "Failed to initialize IntentClient:" << exc.what();
         return nullptr;
     }
-    qmlRegisterSingletonType<IntentClient>("QtApplicationManager", 2, 0, "IntentClient",
-                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
-        QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
-        return instance();
-    });
-
-    qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 2, 0, "IntentRequest",
-                                                    qSL("Cannot create objects of type IntentRequest"));
-    qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 2, 0, "IntentHandler");
-
     return s_instance = ic.take();
 }
 
@@ -272,14 +261,15 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
 }
 
 void IntentClient::requestToApplication(const QUuid &requestId, const QString &intentId,
+                                        const QString &requestingApplicationId,
                                         const QString &applicationId, const QVariantMap &parameters)
 {
     qCDebug(LogIntents) << "Client: Incoming intent request" << requestId << "to application" << applicationId
                         << "for intent" << intentId << "parameters" << parameters;
 
     IntentClientRequest *icr = new IntentClientRequest(IntentClientRequest::Direction::ToApplication,
-                                                       QString(), requestId, intentId, applicationId,
-                                                       parameters);
+                                                       requestingApplicationId, requestId, intentId,
+                                                       applicationId, parameters);
 
     IntentHandler *handler = m_handlers.value(qMakePair(intentId, applicationId));
     if (handler) {

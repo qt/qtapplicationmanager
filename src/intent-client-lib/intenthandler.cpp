@@ -41,6 +41,8 @@
 **
 ****************************************************************************/
 
+#include <QQmlInfo>
+
 #include "intenthandler.h"
 #include "intentclient.h"
 
@@ -48,7 +50,7 @@ QT_BEGIN_NAMESPACE_AM
 
 /*! \qmltype IntentHandler
     \inqmlmodule QtApplicationManager.Application
-    \ingroup common-instantiatable
+    \ingroup application-instantiatable
     \brief A handler for intent requests received by applications.
 
     Any application that has intents listed in its manifest file needs to have a corresponding
@@ -56,6 +58,10 @@ QT_BEGIN_NAMESPACE_AM
     you the flexibility to handle multiple, different intent ids via a single IntentHandler
     instance or have a dedicated IntentHandler instance for every intent id (or any combination of
     those).
+
+    \note For handling intent requests within the system ui, you have to use the derived component
+          IntentServerHandler, which works the same way, but provides all the necessary meta-data
+          from within QML.
 
     Here is a fairly standard way to handle an incoming intent request and send out a result or
     error message:
@@ -86,8 +92,7 @@ QT_BEGIN_NAMESPACE_AM
     Every handler needs to register at least one unique intent id that it will handle. Having
     multiple IntentHandlers that are registering the same intent id is not possible.
 
-    \note Any changes to this property after component completion will have no effect. This
-          restriction will likely be removed in a future update.
+    \note Any changes to this property after component completion will have no effect.
 */
 
 /*! \qmlsignal IntentHandler::requestReceived(IntentRequest request)
@@ -127,18 +132,25 @@ QStringList IntentHandler::intentIds() const
 
 void IntentHandler::setIntentIds(const QStringList &intentIds)
 {
-    if (intentIds != m_intentIds) {
-        m_intentIds = intentIds;
-        emit intentIdsChanged(m_intentIds);
+    if (isComponentCompleted()) {
+        qmlWarning(this) << "Cannot change the intentIds property of an IntentHandler after creation.";
+        return;
     }
+    m_intentIds = intentIds;
 }
 
 void IntentHandler::componentComplete()
 {
     IntentClient::instance()->registerHandler(this);
+    m_completed = true;
 }
 
 void IntentHandler::classBegin()
 { }
+
+bool IntentHandler::isComponentCompleted() const
+{
+    return m_completed;
+}
 
 QT_END_NAMESPACE_AM

@@ -74,7 +74,8 @@ signals:
     void replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result);
 
     void requestToApplication(const QUuid &requestId, const QString &intentId,
-                              const QString &applicationId, const QVariantMap &parameters);
+                              const QString &requestingApplicationId, const QString &applicationId,
+                              const QVariantMap &parameters);
 
 protected:
     IntentClient *m_ic = nullptr;

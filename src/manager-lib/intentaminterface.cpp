@@ -56,6 +56,7 @@
 #include <QQmlEngine>
 #include <QQmlExpression>
 #include <QQmlContext>
+#include <QQmlInfo>
 
 #include "error.h"
 #include "exception.h"
@@ -291,6 +292,18 @@ QString IntentClientAMImplementation::currentApplicationId(QObject *hint)
 void IntentClientAMImplementation::initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false)
 {
     IntentClientSystemInterface::initialize(intentClient);
+
+    qmlRegisterSingletonType<IntentClient>("QtApplicationManager", 2, 0, "IntentClient",
+                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
+        QQmlEngine::setObjectOwnership(IntentClient::instance(), QQmlEngine::CppOwnership);
+        return IntentClient::instance();
+    });
+
+    qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 2, 0, "IntentRequest",
+                                                    qSL("Cannot create objects of type IntentRequest"));
+    qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 2, 0, "IntentHandler");
+
+    qmlRegisterType<IntentServerHandler>("QtApplicationManager.SystemUI", 2, 0, "IntentServerHandler");
 }
 
 void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest> icr)
@@ -422,6 +435,7 @@ void IntentServerInProcessIpcConnection::requestToApplication(IntentServerReques
     QMetaObject::invokeMethod(this, [this, irs]() {
         auto clientInterface = m_interface->intentClientSystemInterface();
         emit clientInterface->requestToApplication(irs->requestId().toString(), irs->intentId(),
+                                                   irs->requestingApplicationId(),
                                                    irs->handlingApplicationId(), irs->parameters());
     }, Qt::QueuedConnection);
 }
@@ -516,15 +530,14 @@ void IntentServerDBusIpcConnection::replyFromApplication(const QString &requestI
                                            convertFromDBusVariant(result).toMap());
 }
 
-
 #endif // defined(AM_MULTI_PROCESS)
-
-QT_END_NAMESPACE_AM
 
 
 // ^^^ IntentServerDBusIpcConnection ^^^
 //////////////////////////////////////////////////////////////////////////
 // vvv IntentInterfaceAdaptor vvv
+
+QT_END_NAMESPACE_AM
 
 #if defined(AM_MULTI_PROCESS)
 
@@ -551,5 +564,208 @@ QString IntentInterfaceAdaptor::requestToSystem(const QString &intentId, const Q
 
 #endif // defined(AM_MULTI_PROCESS)
 
+QT_BEGIN_NAMESPACE_AM
+
 // ^^^ IntentInterfaceAdaptor ^^^
 //////////////////////////////////////////////////////////////////////////
+// vvv IntentServerHandler vvv
+
+/*! \qmltype IntentServerHandler
+    \inqmlmodule QtApplicationManager.SystemUI
+    \ingroup system-ui-instantiable
+    \brief A handler for intent requests received within the system ui.
+
+    If intents need to be handled from within the system ui, you need to have a corresponding
+    IntentServerHandler instance that is actually able to handle incoming requests. This class gives
+    you the flexibility to handle multiple, different intent ids via a single IntentServerHandler
+    instance or have a dedicated IntentServerHandler instance for every intent id (or any
+    combination of those).
+
+    \note For handling intent requests within an application, you have to use the application side
+          component IntentHandler, which works the same way, but provides all the necessary
+          meta-data in the application's info.yaml manifest file.
+
+    For more information see IntentHandler and the description of the \l{manifest-intent}
+    {meta-data in the manifest documentation}.
+
+    Callbacks connected to the onRequestReceived signal have access to the sender's application ID.
+    Due to security restrictions, this is \b not the case for such handlers implemented in an
+    application context via IntentHandler.
+*/
+
+/*! \qmlproperty url IntentServerHandler::icon
+
+    The intent's icon - see  the \l{manifest-intent}{manifest documentation} for more
+    details.
+
+    \note Any changes to this property after component completion will have no effect.
+*/
+/*! \qmlproperty object IntentServerHandler::names
+
+    The intent's name - see  the \l{manifest-intent}{manifest documentation} for more
+    details.
+
+    \note Any changes to this property after component completion will have no effect.
+*/
+/*! \qmlproperty list<string> IntentServerHandler::categories
+
+    The intent's categories - see  the \l{manifest-intent}{manifest documentation} for more
+    details.
+
+    \note Any changes to this property after component completion will have no effect.
+*/
+/*! \qmlproperty enum IntentServerHandler::visibility
+
+    The intent's visibility - see  the \l{manifest-intent}{manifest documentation} for more
+    details.
+    Can be either \c IntentObject.Public or \c IntentObject.Private (the default).
+
+    \note Any changes to this property after component completion will have no effect.
+*/
+/*! \qmlproperty list<string> IntentServerHandler::requiredCapabilities
+
+    The intent's required capabilities - see  the \l{manifest-intent}{manifest documentation} for
+    more details.
+
+    \note Any changes to this property after component completion will have no effect.
+*/
+/*! \qmlproperty object IntentServerHandler::parameterMatch
+
+    The intent's parameter requirements - see  the \l{manifest-intent}{manifest documentation} for
+    more details.
+
+    \note Any changes to this property after component completion will have no effect.
+*/
+
+IntentServerHandler::IntentServerHandler(QObject *parent)
+    : IntentHandler(parent)
+    , m_intent(new Intent())
+{ }
+
+IntentServerHandler::~IntentServerHandler()
+{
+    IntentServer *is = IntentServer::instance();
+
+    for (const auto &intent : m_registeredIntents)
+        is->removeIntent(intent);
+
+    delete m_intent;
+}
+
+QUrl IntentServerHandler::icon() const
+{
+    return m_intent->icon();
+}
+
+QVariantMap IntentServerHandler::names() const
+{
+    return m_intent->names();
+}
+
+QStringList IntentServerHandler::categories() const
+{
+    return m_intent->categories();
+}
+
+Intent::Visibility IntentServerHandler::visibility() const
+{
+    return m_intent->visibility();
+}
+
+QStringList IntentServerHandler::requiredCapabilities() const
+{
+    return m_intent->requiredCapabilities();
+}
+
+QVariantMap IntentServerHandler::parameterMatch() const
+{
+    return m_intent->parameterMatch();
+}
+
+void IntentServerHandler::setIcon(const QUrl &icon)
+{
+    if (isComponentCompleted()) {
+        qmlWarning(this) << "Cannot change the icon property of an IntentServerHandler after creation.";
+        return;
+    }
+    m_intent->m_icon = icon;
+}
+
+void IntentServerHandler::setNames(const QVariantMap &names)
+{
+    if (isComponentCompleted()) {
+        qmlWarning(this) << "Cannot change the names property of an IntentServerHandler after creation.";
+        return;
+    }
+    m_intent->m_names = names;
+}
+
+void IntentServerHandler::setCategories(const QStringList &categories)
+{
+    if (isComponentCompleted()) {
+        qmlWarning(this) << "Cannot change the categories property of an IntentServerHandler after creation.";
+        return;
+    }
+    m_intent->m_categories = categories;
+}
+
+void IntentServerHandler::setVisibility(Intent::Visibility visibility)
+{
+    if (isComponentCompleted()) {
+        qmlWarning(this) << "Cannot change the visibility property of an IntentServerHandler after creation.";
+        return;
+    }
+    m_intent->m_visibility = visibility;
+}
+
+void IntentServerHandler::setRequiredCapabilities(const QStringList &requiredCapabilities)
+{
+    if (isComponentCompleted()) {
+        qmlWarning(this) << "Cannot change the requiredCapabilities property of an IntentServerHandler after creation.";
+        return;
+    }
+    m_intent->m_requiredCapabilities = requiredCapabilities;
+}
+
+void IntentServerHandler::setParameterMatch(const QVariantMap &parameterMatch)
+{
+    if (isComponentCompleted()) {
+        qmlWarning(this) << "Cannot change the parameterMatch property of an IntentServerHandler after creation.";
+        return;
+    }
+    m_intent->m_parameterMatch = parameterMatch;
+}
+
+void IntentServerHandler::componentComplete()
+{
+    if (QmlInProcessRuntime::determineRuntime(this)) {
+        qmlWarning(this) << "Using IntentServerHandler for handling events in an application "
+                            "context does not work. Use IntentHandler instead";
+        return;
+    }
+
+    IntentServer *is = IntentServer::instance();
+    is->addPackage(sysUiId);
+    is->addApplication(sysUiId, sysUiId);
+
+    const auto ids = intentIds();
+    for (const auto &intentId : ids) {
+        // convert from QVariantMap to QMap<QString, QString>
+        QMap<QString, QString> names;
+        const auto qvm_names = m_intent->names();
+        for (auto it = qvm_names.cbegin(); it != qvm_names.cend(); ++it)
+            names.insert(it.key(), it.value().toString());
+
+        auto intent = is->addIntent(intentId, sysUiId, sysUiId, m_intent->requiredCapabilities(),
+                                    m_intent->visibility(), m_intent->parameterMatch(), names,
+                                    m_intent->icon(), m_intent->categories());
+        if (intent)
+            m_registeredIntents << intent;
+        else
+            qmlWarning(this) << "IntentServerHandler: could not add intent" << intentId;
+    }
+
+    IntentHandler::componentComplete();
+}
+
+QT_END_NAMESPACE_AM

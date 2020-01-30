@@ -115,6 +115,16 @@ QT_BEGIN_NAMESPACE_AM
     \note Constant, valid on both sent and received requests.
 */
 
+/*! \qmlproperty string IntentRequest::requestingApplicationId
+    \readonly
+
+    The id of the application which created this intent request. Returns an empty string if called
+    from within an application context - only the server side has access to this information in
+    IntentServerHandler::requestReceived.
+
+    \note Constant, valid on both sent and received requests.
+*/
+
 /*! \qmlproperty var IntentRequest::parameters
     \readonly
 

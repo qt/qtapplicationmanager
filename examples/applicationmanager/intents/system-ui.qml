@@ -112,6 +112,23 @@ Item {
                                          request.succeeded ? request.result : request.errorMessage)
                 })
             }
+            RotationAnimation on rotation {
+                id: rotationAnimation
+                running: false
+                duration: 500; from: 0; to: 360
+            }
+            //! [IntentServerHandler]
+            IntentServerHandler {
+                intentIds: "rotate-window"
+                names: { "en": "Rotate System-UI" }
+                visibility: IntentObject.Public
+
+                onRequestReceived: {
+                    rotationAnimation.start()
+                    request.sendReply({ "wasRequestedBy": request.requestingApplicationId })
+                }
+            }
+            //! [IntentServerHandler]
         }
 
         Repeater {

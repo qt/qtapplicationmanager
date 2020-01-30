@@ -42,6 +42,7 @@
 
 #include <QQmlEngine>
 #include <QQmlExpression>
+#include <QQmlInfo>
 
 #include "logging.h"
 #include "qmlinprocessapplicationinterface.h"
@@ -309,7 +310,7 @@ void QmlInProcessApplicationInterfaceExtension::setName(const QString &name)
         m_name = name;
         resolveObject();
     } else {
-        qWarning("Cannot change the name property of an ApplicationInterfaceExtension after creation.");
+        qmlWarning(this) << "Cannot change the name property of an ApplicationInterfaceExtension after creation.";
     }
 }
 

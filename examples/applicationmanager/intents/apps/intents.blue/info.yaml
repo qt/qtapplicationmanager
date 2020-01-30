@@ -10,8 +10,16 @@ name:
 
 intents:
 - id: rotate-window
+  name:
+    en: Rotate Blue
   requiredCapabilities: [ 'call-blue' ]
 - id: scale-window
+  name:
+    en: Scale Blue
 - id: blink-window
+  name:
+    en: Blink Blue
 - id: blue-window-private
+  name:
+    en: Blue Private Intent
   visibility: private

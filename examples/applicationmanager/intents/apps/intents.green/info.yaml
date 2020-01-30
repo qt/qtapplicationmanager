@@ -10,4 +10,8 @@ name:
 
 intents:
 - id: rotate-window
+  name:
+    en: Rotate Green
 - id: scale-window
+  name:
+    en: Scale Green

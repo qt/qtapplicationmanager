@@ -51,7 +51,7 @@ item models.
 
 These types are only available for the System UI:
 
-\annotatedlist system-ui
+\annotatedlist system-ui-instantiable
 
 \section1 Non-Instantiable QML Types
 

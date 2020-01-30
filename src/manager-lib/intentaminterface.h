@@ -48,13 +48,16 @@
 #include <QString>
 #include <QVariantMap>
 #include <QList>
+#include <QUrl>
 #if defined(AM_MULTI_PROCESS)
 #  include <QDBusConnection>
 #  include <QDBusContext>
 #endif
 #include <QtAppManCommon/global.h>
 #include <QtAppManIntentServer/intentserversysteminterface.h>
+#include <QtAppManIntentServer/intent.h>
 #include <QtAppManIntentClient/intentclientsysteminterface.h>
+#include <QtAppManIntentClient/intenthandler.h>
 #include <QtAppManApplication/intentinfo.h>
 
 class IntentInterfaceAdaptor;
@@ -194,5 +197,50 @@ private:
 };
 
 #endif // defined(AM_MULTI_PROCESS)
+
+// server-side IntentHandlers
+class IntentServerHandler : public IntentHandler
+{
+    Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentServerHandler 2.0")
+
+    // the following properties cannot be changed after construction (hence, also no 'changed' signal)
+    // these replace the meta-data that's provided through the info.yaml manifests for client-side
+    // handlers
+    Q_PROPERTY(QUrl icon READ icon WRITE setIcon)
+    Q_PROPERTY(QVariantMap names READ names WRITE setNames)
+    Q_PROPERTY(QStringList categories READ categories WRITE setCategories)
+    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Intent)::Visibility visibility READ visibility WRITE setVisibility)
+    Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities WRITE setRequiredCapabilities)
+    Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch WRITE setParameterMatch)
+
+public:
+    IntentServerHandler(QObject *parent = nullptr);
+    ~IntentServerHandler() override;
+
+    QUrl icon() const;
+    QVariantMap names() const;
+    QStringList categories() const;
+    Intent::Visibility visibility() const;
+    QStringList requiredCapabilities() const;
+    QVariantMap parameterMatch() const;
+
+public slots:
+    void setIcon(const QUrl &icon);
+    void setNames(const QVariantMap &names);
+    void setCategories(const QStringList &categories);
+    void setVisibility(Intent::Visibility visibility);
+    void setRequiredCapabilities(const QStringList &requiredCapabilities);
+    void setParameterMatch(const QVariantMap &parameterMatch);
+
+protected:
+    void componentComplete() override;
+
+private:
+    Q_DISABLE_COPY(IntentServerHandler)
+    Intent *m_intent = nullptr; // DRY: just a container for our otherwise needed members vars
+    QVector<Intent *> m_registeredIntents;
+    bool m_completed = false;
+};
 
 QT_END_NAMESPACE_AM

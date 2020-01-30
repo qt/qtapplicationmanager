@@ -60,7 +60,7 @@ class IntentHandler : public QObject, public QQmlParserStatus
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/IntentHandler 2.0")
 
     Q_INTERFACES(QQmlParserStatus)
-    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds NOTIFY intentIdsChanged)
+    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds)
 
 public:
     IntentHandler(QObject *parent = nullptr);
@@ -78,10 +78,13 @@ protected:
     void componentComplete() override;
     void classBegin() override;
 
+    bool isComponentCompleted() const;
+
 private:
     Q_DISABLE_COPY(IntentHandler)
 
     QStringList m_intentIds;
+    bool m_completed = false;
 };
 
 QT_END_NAMESPACE_AM

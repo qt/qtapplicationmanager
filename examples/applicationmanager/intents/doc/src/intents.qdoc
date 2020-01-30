@@ -127,7 +127,7 @@ For information on these and other command line options you can run \tt{appman -
 look at the \l{Configuration} documentation.
 
 
-\section1 Application implementation
+\section1 Application Implementation
 
 All the applications (red, green and blue) are identical and their \c main.qml just
 instantiates the shared IntentsApplicationWindow component.
@@ -197,10 +197,36 @@ required capability, while the \b Green doesn't.
 \printto
 
 
-\section1 System-UI implementation
+\section1 System-UI Implementation
 
-What is special about the System-UI as compared to the applications, is the \l
-{IntentServer::disambiguationRequest}{disambiguation mechanism} and the accompanying UI.
+Apart from the left side bar that deals with starting and stopping the apps, the System-UI has two
+special features that deal with the intent mechanism:
+
+\list
+    \li Handling Intents in the System-UI and
+    \li Disambiguation of Intent Requests
+\endlist
+
+\section2 Handling Intents in the System-UI
+
+Intents can not only be handled in applications, but also in the System-UI. Since the System-UI is
+always running, we do not need to rely on \c info.yaml manifest files to define the supported
+intents, but instead can declare the needed meta-data directly as properties of the
+IntentServerHandler component. The IntentServerHandler is actually derived from IntentHandler, so
+it works the same way as its application side counter part: it only adds the required properties to
+define all the meta-data (e.g. \c names, \c icon, ...) on top.
+
+\snippet applicationmanager/intents/system-ui.qml IntentServerHandler
+
+The handler callback is nearly the same as the one in the applications. The only noteworthy
+difference here is, that we have access to the \l{IntentRequest::}{requestingApplicationId}
+to identify where the request originated from; for security reasons, this data is not available to
+intent handlers in applications.
+
+\section2 Disambiguation of Intent Requests
+
+The example implements an UI that lets the user choose how to
+\l {IntentServer::disambiguationRequest}{to disambiguate incoming intent requests}.
 Registering for the IntentServer's disambiguation requests is done here:
 
 \snippet applicationmanager/intents/system-ui.qml Connection

@@ -62,6 +62,7 @@ class IntentClientRequest : public QObject
     Q_PROPERTY(Direction direction READ direction CONSTANT)
     Q_PROPERTY(QString intentId READ intentId CONSTANT)
     Q_PROPERTY(QString applicationId READ applicationId CONSTANT)
+    Q_PROPERTY(QString requestingApplicationId READ requestingApplicationId CONSTANT)
     Q_PROPERTY(QVariantMap parameters READ parameters CONSTANT)
     Q_PROPERTY(bool succeeded READ succeeded NOTIFY replyReceived)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY replyReceived)

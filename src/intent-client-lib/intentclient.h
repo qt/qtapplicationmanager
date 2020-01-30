@@ -92,7 +92,7 @@ private:
                                  bool error, const QString &errorMessage);
     void replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result);
 
-    void requestToApplication(const QUuid &requestId, const QString &intentId,
+    void requestToApplication(const QUuid &requestId, const QString &intentId, const QString &requestingApplicationId,
                               const QString &applicationId, const QVariantMap &parameters);
 
 private:

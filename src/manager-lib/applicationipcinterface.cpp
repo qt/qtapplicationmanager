@@ -64,7 +64,7 @@
 
 /*!
     \qmltype ApplicationIPCInterface
-    \ingroup system-ui
+    \ingroup system-ui-instantiable
     \inqmlmodule QtApplicationManager.SystemUI
     \brief The definition of an IPC interface between the application manager and applications.
 

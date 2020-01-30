@@ -104,7 +104,7 @@ Rectangle {
         Label { text: "Application:" }
         ComboBox {
             id: cbApplication
-            model: [ "<not specified>", "intents.red", "intents.green", "intents.blue" ]
+            model: [ "<not specified>", "intents.red", "intents.green", "intents.blue", ":sysui:" ]
             Layout.fillWidth: true
         }
         Button {

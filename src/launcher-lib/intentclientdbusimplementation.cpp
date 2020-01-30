@@ -43,11 +43,15 @@
 #include <QDBusConnection>
 #include <QDBusPendingReply>
 #include <QDBusPendingCallWatcher>
+#include <QQmlEngine>
+#include <qqml.h>
+
 #include "launchermain.h"
 #include "dbus-utilities.h"
 #include "intentclient.h"
 #include "intentclientrequest.h"
 #include "intentclientdbusimplementation.h"
+#include "intenthandler.h"
 
 #include "intentinterface_interface.h"
 
@@ -68,6 +72,17 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DE
 {
     IntentClientSystemInterface::initialize(intentClient);
 
+    qmlRegisterSingletonType<IntentClient>("QtApplicationManager", 2, 0, "IntentClient",
+                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
+        QQmlEngine::setObjectOwnership(IntentClient::instance(), QQmlEngine::CppOwnership);
+        return IntentClient::instance();
+    });
+
+    qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 2, 0, "IntentRequest",
+                                                    qSL("Cannot create objects of type IntentRequest"));
+    qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 2, 0, "IntentHandler");
+
+
     m_dbusInterface = new IoQtApplicationManagerIntentInterfaceInterface(
                 QString(), qSL("/IntentServer"), QDBusConnection(m_dbusName), intentClient);
 
@@ -82,7 +97,7 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DE
     connect(m_dbusInterface, &IoQtApplicationManagerIntentInterfaceInterface::requestToApplication,
             intentClient, [this](const QString &requestId, const QString &id,
             const QString &applicationId, const QVariantMap &parameters) {
-        emit requestToApplication(requestId, id, applicationId, convertFromDBusVariant(parameters).toMap());
+        emit requestToApplication(requestId, id, QString(), applicationId, convertFromDBusVariant(parameters).toMap());
     });
 }
 

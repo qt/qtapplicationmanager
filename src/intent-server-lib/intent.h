@@ -114,6 +114,7 @@ private:
     QUrl m_icon;
 
     friend class IntentServer;
+    friend class IntentServerHandler;
 };
 
 QT_END_NAMESPACE_AM

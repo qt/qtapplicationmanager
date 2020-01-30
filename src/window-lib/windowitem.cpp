@@ -62,7 +62,7 @@
 /*!
     \qmltype WindowItem
     \inqmlmodule QtApplicationManager.SystemUI
-    \ingroup system-ui
+    \ingroup system-ui-instantiable
     \brief An Item that renders a given WindowObject.
 
     To render a WindowObject inside the System UI, you must specify where and how it should be

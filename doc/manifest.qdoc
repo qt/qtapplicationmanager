@@ -256,6 +256,7 @@ The fields used for each item within the \c applications list are as follows:
         provided, a default description is used.
 \endtable
 
+\target manifest-intent
 The fields used for each item within the \c intents list are as follows:
 
 \table

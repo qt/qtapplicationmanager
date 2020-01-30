@@ -12,5 +12,11 @@ capabilities: 'call-blue'
 
 intents:
 - id: rotate-window
+  name:
+    en: Rotate Red
 - id: scale-window
+  name:
+    en: Scale Red
 - id: blink-window
+  name:
+    en: Blink Red

@@ -205,7 +205,7 @@ Main::~Main()
 */
 void Main::setup(const Configuration *cfg, const QStringList &deploymentWarnings) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    Q_UNUSED(deploymentWarnings);
+    Q_UNUSED(deploymentWarnings)
     setup(cfg);
 }
 

@@ -61,7 +61,9 @@ public:
     Configuration(const char *additionalDescription = nullptr, bool onlyOnePositionalArgument = true);
 
     virtual ~Configuration();
+    Q_DECL_DEPRECATED void parse(QStringList *deploymentWarnings);
     void parse();
+    Q_DECL_DEPRECATED virtual void parseWithArguments(const QStringList &arguments, QStringList *deploymentWarnings);
     virtual void parseWithArguments(const QStringList &arguments);
     QVariant buildConfig() const;
 

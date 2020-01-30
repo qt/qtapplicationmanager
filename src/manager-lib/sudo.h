@@ -67,6 +67,8 @@ public:
         DropPrivilegesRegainable, // only use this for auto-tests
     };
 
+    Q_DECL_DEPRECATED static void forkServer(DropPrivileges dropPrivileges, QStringList *warnings)
+                                                                       Q_DECL_NOEXCEPT_EXPR(false);
     static void forkServer(DropPrivileges dropPrivileges) Q_DECL_NOEXCEPT_EXPR(false);
 };
 

@@ -59,6 +59,12 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+bool PackageUtilities::ensureCorrectLocale(QStringList *warnings)
+{
+    Q_UNUSED(warnings)
+    return ensureCorrectLocale();
+}
+
 bool PackageUtilities::ensureCorrectLocale()
 {
     // We need to make sure we are running in a Unicode locale, since we are
@@ -123,7 +129,6 @@ bool PackageUtilities::ensureCorrectLocale()
     return false;
 #endif
 }
-
 
 bool PackageUtilities::checkCorrectLocale()
 {

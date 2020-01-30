@@ -75,8 +75,6 @@ public:
 
     void preProcessSourceContent(QByteArray &, const QString &) { }
     void merge(PackageInfo *, const PackageInfo *) { }
-
-    QStringList *warnings;
 };
 
 

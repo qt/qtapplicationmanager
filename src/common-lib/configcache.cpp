@@ -147,7 +147,7 @@ void *AbstractConfigCache::takeResult(const QString &rawFile) const
     return takeResult(d->cacheIndex.value(rawFile, -1));
 }
 
-void AbstractConfigCache::parse(QStringList *warnings)
+void AbstractConfigCache::parse()
 {
     clear();
 
@@ -229,10 +229,7 @@ void AbstractConfigCache::parse(QStringList *warnings)
 
 
             } catch (const Exception &e) {
-                if (warnings)
-                    *warnings << qL1S("Failed to read cache: ") + qL1S(e.what());
-                else
-                    qWarning(LogCache) << "Failed to read cache:" << e.what();
+                qWarning(LogCache) << "Failed to read cache:" << e.what();
             }
         }
     } else if (d->options.testFlag(ClearCache)) {
@@ -277,7 +274,7 @@ void AbstractConfigCache::parse(QStringList *warnings)
 
     // reads a single config file and calculates its hash - defined as lambda to be usable
     // both via QtConcurrent and via std:for_each
-    auto readConfigFile = [&cacheIsComplete, &warnings, this](ConfigCacheEntry &ce) {
+    auto readConfigFile = [&cacheIsComplete, this](ConfigCacheEntry &ce) {
         QFile file(ce.filePath);
         if (!file.open(QIODevice::ReadOnly))
             throw Exception("Failed to open file '%1' for reading.\n").arg(file.fileName());
@@ -293,10 +290,7 @@ void AbstractConfigCache::parse(QStringList *warnings)
         ce.checksum = checksum;
         if (!ce.checksumMatches) {
             if (ce.content) {
-                if (warnings)
-                    *warnings << qL1S("Failed to read Cache: cached file checksums do not match");
-                else
-                    qWarning(LogCache) << "Failed to read Cache: cached file checksums do not match";
+                qWarning(LogCache) << "Failed to read Cache: cached file checksums do not match";
                 destruct(ce.content);
                 ce.content = nullptr;
             }
@@ -383,10 +377,7 @@ void AbstractConfigCache::parse(QStringList *warnings)
                 if (ds.status() != QDataStream::Ok)
                     throw Exception("error writing content");
             } catch (const Exception &e) {
-                if (warnings)
-                    *warnings << qL1S("Failed to write Cache: ") + qL1S(e.what());
-                else
-                    qCWarning(LogCache) << "Failed to write Cache:" << e.what();
+                qCWarning(LogCache) << "Failed to write Cache:" << e.what();
             }
             qCDebug(LogCache) << d->cacheBaseName << "writing the cache finished after"
                               << (timer.nsecsElapsed() / 1000) << "usec";

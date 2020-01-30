@@ -62,8 +62,6 @@ public:
     T *loadFromCache(QDataStream &ds);
     void saveToCache(QDataStream &ds, const T *t);
     void merge(T *to, const T *from) { *to = *from; }
-
-    QStringList *warnings;
 };
 
 class AbstractConfigCache
@@ -80,7 +78,7 @@ public:
     AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName, Options options = None);
     virtual ~AbstractConfigCache();
 
-    virtual void parse(QStringList *warnings = nullptr);
+    virtual void parse();
 
     void *takeMergedResult() const;
     void *takeResult(int index) const;
@@ -117,10 +115,9 @@ public:
         clear();
     }
 
-    void parse(QStringList *warnings = nullptr) override
+    void parse() override
     {
-        m_adaptor.warnings = warnings;
-        AbstractConfigCache::parse(warnings);
+        AbstractConfigCache::parse();
     }
 
     T *takeMergedResult() const

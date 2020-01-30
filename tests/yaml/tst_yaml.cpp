@@ -280,21 +280,18 @@ public:
     {
         sourceContent.replace("${FILE}", fileName.toUtf8());
     }
-    QStringList *warnings;
 };
 QT_END_NAMESPACE_AM
 
 void tst_Yaml::cache()
 {
     QStringList files = { ":/data/cache1.yaml", ":/data/cache2.yaml" };
-    QStringList warnings;
 
     for (int step = 0; step < 2; ++step) {
         try {
             ConfigCache<CacheTest> cache(files, "cache-test", step == 0 ? AbstractConfigCache::ClearCache
                                                                         : AbstractConfigCache::None);
-            cache.parse(&warnings);
-            QVERIFY2(warnings.isEmpty(), qPrintable(warnings.join(qSL("\n"))));
+            cache.parse();
             CacheTest *ct1 = cache.takeResult(0);
             QVERIFY(ct1);
             QCOMPARE(ct1->name, "cache1");
@@ -312,7 +309,6 @@ void tst_Yaml::cache()
 void tst_Yaml::mergedCache()
 {
     QStringList files = { ":/data/cache1.yaml", ":/data/cache2.yaml" };
-    QStringList warnings;
 
     for (int step = 0; step < 4; ++step) {
         AbstractConfigCache::Options options = AbstractConfigCache::MergedResult;
@@ -323,8 +319,7 @@ void tst_Yaml::mergedCache()
 
         try {
             ConfigCache<CacheTest> cache(files, "cache-test", options);
-            cache.parse(&warnings);
-            QVERIFY2(warnings.isEmpty(), qPrintable(warnings.join(qSL("\n"))));
+            cache.parse();
             CacheTest *ct = cache.takeMergedResult();
             QVERIFY(ct);
             QCOMPARE(ct->name, QFileInfo(files.last()).baseName());

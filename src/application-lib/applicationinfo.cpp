@@ -51,7 +51,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-static constexpr quint32 ApplicationInfoDataStreamVersion = 1;
+static constexpr quint32 ApplicationInfoDataStreamVersion = 2;
 
 //TODO Make this really unique
 static int uniqueCounter = 0;
@@ -107,7 +107,8 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
        << m_supportsApplicationInterface
        << m_capabilities
        << m_openGLConfiguration
-       << m_dltConfiguration;
+       << m_dltConfiguration
+       << m_supportedMimeTypes;
 }
 
 ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
@@ -126,7 +127,8 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
        >> app->m_supportsApplicationInterface
        >> app->m_capabilities
        >> app->m_openGLConfiguration
-       >> app->m_dltConfiguration;
+       >> app->m_dltConfiguration
+       >> app->m_supportedMimeTypes;
 
     if (dataStreamVersion != ApplicationInfoDataStreamVersion)
         return nullptr;

@@ -41,7 +41,7 @@
 ****************************************************************************/
 
 #include <QVariant>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QDebug>
 #include <QtNumeric>
 
@@ -156,17 +156,21 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
 
         if ((firstChar >= '0' && firstChar <= '9')   // cheap check to avoid expensive regexps
                 || firstChar == '+' || firstChar == '-' || firstChar == '.') {
-            static const QRegExp numberRegExps[] = {
-                QRegExp(qSL("[-+]?0b[0-1_]+")),        // binary
-                QRegExp(qSL("[-+]?0x[0-9a-fA-F_]+")),  // hexadecimal
-                QRegExp(qSL("[-+]?0[0-7_]+")),         // octal
-                QRegExp(qSL("[-+]?(0|[1-9][0-9_]*)")), // decimal
-                QRegExp(qSL("[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?")), // float
-                QRegExp()
+            // We are using QRegularExpressions in multiple threads here, although the class is not
+            // marked thread-safe. We are relying on the const match() function to behave thread-safe
+            // which it does.
+            // The easiest way would be to deep-copy the objects into TLS instances, but
+            // QRegularExpression is lacking such a functionality. Creating all the objects from
+            // scratch in every thread is expensive though, so we count on match() being thread-safe.
+            static const QRegularExpression numberRegExps[] = {
+                QRegularExpression(qSL("\\A[-+]?(0|[1-9][0-9_]*)\\z")), // decimal
+                QRegularExpression(qSL("\\A[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?\\z")), // float
+                QRegularExpression(qSL("\\A[-+]?0x[0-9a-fA-F_]+\\z")),  // hexadecimal
+                QRegularExpression(qSL("\\A[-+]?0b[0-1_]+\\z")),        // binary
+                QRegularExpression(qSL("\\A[-+]?0[0-7_]+\\z")),         // octal
             };
-
-            for (int numberIndex = 0; !numberRegExps[numberIndex].isEmpty(); ++numberIndex) {
-                if (numberRegExps[numberIndex].exactMatch(str)) {
+            for (size_t numberIndex = 0; numberIndex < (sizeof(numberRegExps) / sizeof(*numberRegExps)); ++numberIndex) {
+                if (numberRegExps[numberIndex].match(str).hasMatch()) {
                     bool ok = false;
                     QVariant val;
 
@@ -174,16 +178,16 @@ static QVariant convertYamlNodeToVariant(yaml_document_t *doc, yaml_node_t *node
                     if (str.contains(qL1C('_')))
                         str = str.replace(qL1C('_'), qSL(""));
 
-                    if (numberIndex == 4) {
+                    if (numberIndex == 1) {
                         val = str.toDouble(&ok);
                     } else {
                         int base = 10;
 
                         switch (numberIndex) {
-                        case 0: base = 2; str.replace(qSL("0b"), qSL("")); break; // Qt chokes on 0b
-                        case 1: base = 16; break;
-                        case 2: base = 8; break;
-                        case 3: base = 10; break;
+                        case 0: base = 10; break;
+                        case 2: base = 16; break;
+                        case 3: base = 2; str.replace(qSL("0b"), qSL("")); break; // Qt chokes on 0b
+                        case 4: base = 8; break;
                         }
 
                         qint64 s64 = str.toLongLong(&ok, base);

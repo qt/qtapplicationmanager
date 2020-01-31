@@ -1,0 +1,45 @@
+formatVersion: 42
+formatType: testfile
+---
+dec: 10
+hex: 0x10
+oct: 010
+bin: 0b10
+float1: 10.10
+float2: 0.10
+float3: .10
+number-separators: 1_234_567
+bool-true: true
+bool-yes: yes
+bool-false: false
+bool-no: no
+null-literal: null
+null-tilde: ~
+string-unquoted: unquoted
+string-singlequoted: 'singlequoted'
+string-doublequoted: "doublequoted"
+list-int:
+- 1
+- 2
+- 3
+list-mixed:
+- 1
+- two
+- [yes, ~]
+map1:
+  a: 1
+  b: two
+  c: [ 1, 2, 3]
+
+extended:
+  ext-string: 'ext string'
+
+stringlist-string: string
+stringlist-list1: [ string ]
+stringlist-list2: [ string1, string2 ]
+
+list-of-maps:
+- index: 1
+  name: '1'
+- index: 2
+  name: '2'

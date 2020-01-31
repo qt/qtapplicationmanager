@@ -15,6 +15,7 @@ SUBDIRS = \
     applicationinstaller \
     debugwrapper \
     qml \
+    yaml \
 
 linux*:SUBDIRS += \
     sudo \

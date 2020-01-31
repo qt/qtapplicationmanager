@@ -464,9 +464,11 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
                 .arg(e.errorString());
     }
 
+    const QString formatType = isHeader ? qSL("am-package-header") : qSL("am-package-footer");
+    bool formatVersion = 0;
     try {
-        checkYamlFormat(docs, -2 /*at least 2 docs*/, { { isHeader ? qSL("am-package-header")
-                                                                   : qSL("am-package-footer"), 2 } });
+        formatVersion = checkYamlFormat(docs, -2 /*at least 2 docs*/, { { formatType, 2 },
+                                                                        { formatType, 1 } }).second;
     } catch (const Exception &e) {
         throw Exception(Error::Package, "metadata has an invalid format specification: %1").arg(e.errorString());
     }
@@ -474,11 +476,13 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
     QVariantMap map = docs.at(1).toMap();
 
     if (isHeader) {
-        QString packageId = map.value(qSL("packageId")).toString();
+        const QString idField = (formatVersion == 1) ? qSL("applicationId") : qSL("packageId");
+
+        QString packageId = map.value(idField).toString();
         quint64 diskSpaceUsed = map.value(qSL("diskSpaceUsed")).toULongLong();
 
         if (packageId.isNull() || !PackageInfo::isValidApplicationId(packageId))
-            throw Exception(Error::Package, "metadata has an invalid packageId field (%1)").arg(packageId);
+            throw Exception(Error::Package, "metadata has an invalid %2 field (%1)").arg(packageId).arg(idField);
         m_report.setPackageId(packageId);
 
         if (!diskSpaceUsed)

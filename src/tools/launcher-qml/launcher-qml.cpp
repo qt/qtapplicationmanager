@@ -288,19 +288,6 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
 
     StartupTimer::instance()->checkpoint("after window registration");
 
-    const QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
-    if (!quicklaunchQml.isEmpty() && quickLaunched) {
-        QQmlComponent quicklaunchComp(&m_engine, filePathToUrl(quicklaunchQml, launcher->baseDir()));
-        if (!quicklaunchComp.isError()) {
-            QScopedPointer<QObject> quicklaunchInstance(quicklaunchComp.create());
-            quicklaunchComp.completeCreate();
-        } else {
-            const QList<QQmlError> errors = quicklaunchComp.errors();
-            for (const QQmlError &error : errors)
-                qCCritical(LogQmlRuntime) << error;
-        }
-    }
-
     if (directLoad.first.isEmpty()) {
         m_applicationInterface = new DBusApplicationInterface(launcher->p2pDBusName(),
                                                              launcher->notificationDBusName(), this);
@@ -338,6 +325,21 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
             startApplication(QFileInfo(directLoad.first).absolutePath(), a->codeFilePath(),
                              QString(), QString(), a->toVariantMap(), QVariantMap());
         }, Qt::QueuedConnection);
+    }
+
+    QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
+    if (!quicklaunchQml.isEmpty() && quickLaunched) {
+        if (QFileInfo(quicklaunchQml).isRelative())
+            quicklaunchQml.prepend(launcher->baseDir());
+
+        QQmlComponent quicklaunchComp(&m_engine, quicklaunchQml);
+        if (!quicklaunchComp.isError()) {
+            QScopedPointer<QObject> quicklaunchInstance(quicklaunchComp.create());
+        } else {
+            const QList<QQmlError> errors = quicklaunchComp.errors();
+            for (const QQmlError &error : errors)
+                qCCritical(LogQmlRuntime) << error;
+        }
     }
 
     StartupTimer::instance()->checkpoint("after application interface initialization");

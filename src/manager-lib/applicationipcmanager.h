@@ -77,6 +77,7 @@ public:
     QVector<ApplicationIPCInterface *> interfaces() const;
 
     void attachToRuntime(AbstractRuntime *runtime);
+    void registerInterfaces(AbstractRuntime *runtime, const QDBusConnection &connection, Application *application);
 
 signals:
     void interfaceCreated(ApplicationIPCInterface *iface);

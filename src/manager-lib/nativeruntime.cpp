@@ -173,6 +173,8 @@ bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
         // we have no D-Bus connection yet, so hope for the best
         ret = true;
     } else {
+        QDBusConnection connection(m_dbusConnectionName);
+        ApplicationIPCManager::instance()->registerInterfaces(this, connection, app);
         ret = startApplicationViaLauncher();
     }
 
@@ -593,6 +595,7 @@ AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, Appl
     QScopedPointer<NativeRuntime> nrt(new NativeRuntime(container, app, this));
     if (!nrt || !nrt->initialize())
         return nullptr;
+
     return nrt.take();
 }
 

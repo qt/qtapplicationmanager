@@ -30,6 +30,7 @@
 
 #include <QtCore>
 #include <QtTest>
+#include <QThreadPool>
 
 #include "qtyaml.h"
 #include "configcache.h"
@@ -50,6 +51,7 @@ private slots:
     void documentParser();
     void cache();
     void mergedCache();
+    void parallel();
 };
 
 
@@ -177,10 +179,47 @@ void tst_Yaml::parser()
     }
 }
 
+static const QVariant vnull = QVariant::fromValue(nullptr);
+
+static const QVariantMap testHeaderDoc = {
+    { "formatVersion", 42 }, { "formatType", "testfile" }
+};
+
+static const QVariantMap testMainDoc = {
+    { "dec", 10 },
+    { "hex", 16 },
+    { "bin", 2 },
+    { "oct", 8 },
+    { "float1", 10.1 },
+    { "float2", .1 },
+    { "float3", .1 },
+    { "number-separators", 1234567 },
+    { "bool-true", true },
+    { "bool-yes", true },
+    { "bool-false", false },
+    { "bool-no", false },
+    { "null-literal", vnull },
+    { "null-tilde", vnull },
+    { "string-unquoted", "unquoted" },
+    { "string-singlequoted", "singlequoted" },
+    { "string-doublequoted", "doublequoted" },
+    { "list-int", QVariantList { 1, 2, 3 } },
+    { "list-mixed", QVariantList { 1, qSL("two"), QVariantList { true, vnull } } },
+    { "map1", QVariantMap { { "a", 1 }, { "b", "two" }, { "c", QVariantList { 1, 2, 3 } } } },
+
+
+    { "extended", QVariantMap { { "ext-string", "ext string" } } },
+
+    { "stringlist-string", "string" },
+    { "stringlist-list1", QVariantList { "string" } },
+    { "stringlist-list2", QVariantList { "string1", "string2" } },
+
+    { "list-of-maps", QVariantList { QVariantMap { { "index", 1 }, { "name", "1" } },
+                                     QVariantMap { { "index", 2 }, { "name", "2" } } } }
+};
+
 void tst_Yaml::documentParser()
 {
-    static const QVariant vnull = QVariant::fromValue(nullptr);
-
     try {
         QFile f(":/data/test.yaml");
         QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
@@ -190,45 +229,8 @@ void tst_Yaml::documentParser()
         QCOMPARE(docs.size(), 2);
         QCOMPARE(docs.at(0).toMap().size(), 2);
 
-        QVariantMap header = {
-            { "formatVersion", 42 }, { "formatType", "testfile" }
-        };
-
-        QVariantMap main = {
-            { "dec", 10 },
-            { "hex", 16 },
-            { "bin", 2 },
-            { "oct", 8 },
-            { "float1", 10.1 },
-            { "float2", .1 },
-            { "float3", .1 },
-            { "number-separators", 1234567 },
-            { "bool-true", true },
-            { "bool-yes", true },
-            { "bool-false", false },
-            { "bool-no", false },
-            { "null-literal", vnull },
-            { "null-tilde", vnull },
-            { "string-unquoted", "unquoted" },
-            { "string-singlequoted", "singlequoted" },
-            { "string-doublequoted", "doublequoted" },
-            { "list-int", QVariantList { 1, 2, 3 } },
-            { "list-mixed", QVariantList { 1, qSL("two"), QVariantList { true, vnull } } },
-            { "map1", QVariantMap { { "a", 1 }, { "b", "two" }, { "c", QVariantList { 1, 2, 3 } } } },
-
-
-            { "extended", QVariantMap { { "ext-string", "ext string" } } },
-
-            { "stringlist-string", "string" },
-            { "stringlist-list1", QVariantList { "string" } },
-            { "stringlist-list2", QVariantList { "string1", "string2" } },
-
-            { "list-of-maps", QVariantList { QVariantMap { { "index", 1 }, { "name", "1" } },
-                                             QVariantMap { { "index", 2 }, { "name", "2" } } } }
-        };
-
-        QCOMPARE(header, docs.at(0).toMap());
-        QCOMPARE(main, docs.at(1).toMap());
+        QCOMPARE(testHeaderDoc, docs.at(0).toMap());
+        QCOMPARE(testMainDoc, docs.at(1).toMap());
 
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
@@ -328,6 +330,62 @@ void tst_Yaml::mergedCache()
             QVERIFY2(false, e.what());
         }
     }
+}
+
+class YamlRunnable : public QRunnable
+{
+public:
+    YamlRunnable(const QByteArray &yaml, QAtomicInt &success, QAtomicInt &fail)
+        : m_yaml(yaml)
+        , m_success(success)
+        , m_fail(fail)
+    { }
+
+    void run() override
+    {
+        QVector<QVariant> docs;
+        try {
+            docs = YamlParser::parseAllDocuments(m_yaml);
+        } catch (...) {
+            docs.clear();
+        }
+        if ((docs.size() == 2)
+            && (docs.at(0).toMap().size() == 2)
+            && (testHeaderDoc == docs.at(0).toMap())
+            && (testMainDoc == docs.at(1).toMap())) {
+            m_success.fetchAndAddOrdered(1);
+        } else {
+            m_fail.fetchAndAddOrdered(1);
+        }
+    }
+private:
+    const QByteArray m_yaml;
+    QAtomicInt &m_success;
+    QAtomicInt &m_fail;
+};
+
+void tst_Yaml::parallel()
+{
+    QFile f(":/data/test.yaml");
+    QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
+    QByteArray ba = f.readAll();
+    QVERIFY(!ba.isEmpty());
+
+    constexpr int threadCount = 16;
+
+    QAtomicInt success;
+    QAtomicInt fail;
+
+    QThreadPool tp;
+    if (tp.maxThreadCount() < threadCount)
+        tp.setMaxThreadCount(threadCount);
+
+    for (int i = 0; i < threadCount; ++i)
+        tp.start(new YamlRunnable(ba, success, fail));
+
+    QVERIFY(tp.waitForDone(5000));
+    QCOMPARE(fail.loadAcquire(), 0);
+    QCOMPARE(success.loadAcquire(), threadCount);
 }
 
 QTEST_MAIN(tst_Yaml)

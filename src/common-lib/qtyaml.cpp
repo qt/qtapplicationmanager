@@ -412,6 +412,13 @@ QVariant YamlParser::parseScalar() const
 
     if ((firstChar >= '0' && firstChar <= '9')   // cheap check to avoid expensive regexps
             || firstChar == '+' || firstChar == '-' || firstChar == '.') {
+        // We are using QRegularExpressions in multiple threads here, although the class is not
+        // marked thread-safe. We are relying on the const match() function to behave thread-safe
+        // which it does. There's an autotest (tst_yaml / parallel) to make sure we catch changes
+        // in the internal implementation in the future.
+        // The easiest way would be to deep-copy the objects into TLS instances, but
+        // QRegularExpression is lacking such a functionality. Creating all the objects from
+        // scratch in every thread is expensive though, so we count on match() being thread-safe.
         static const QRegularExpression numberRegExps[] = {
             QRegularExpression(qSL("\\A[-+]?(0|[1-9][0-9_]*)\\z")), // decimal
             QRegularExpression(qSL("\\A[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?\\z")), // float

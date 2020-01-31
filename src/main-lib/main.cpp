@@ -162,10 +162,12 @@ Main::Main(int &argc, char **argv)
     // this might be needed later on by the native runtime to find a suitable qml runtime launcher
     setProperty("_am_build_dir", qSL(AM_BUILD_DIR));
 
-    UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler, SIGINT,
-                                           [](int /*sig*/) {
-        UnixSignalHandler::instance()->resetToDefault(SIGINT);
-        fputs("\n*** received SIGINT / Ctrl+C ... exiting ***\n\n", stderr);
+    UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
+                                           { SIGINT, SIGTERM },
+                                           [](int sig) {
+        UnixSignalHandler::instance()->resetToDefault(sig);
+        if (sig == SIGINT)
+            fputs("\n*** received SIGINT / Ctrl+C ... exiting ***\n\n", stderr);
         static_cast<Main *>(QCoreApplication::instance())->shutDown();
     });
     StartupTimer::instance()->checkpoint("after application constructor");

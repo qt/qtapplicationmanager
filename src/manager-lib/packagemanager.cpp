@@ -1061,10 +1061,8 @@ QString PackageManager::removePackage(const QString &packageId, bool keepDocumen
     AM_TRACE(LogInstaller, packageId, keepDocuments)
 
     if (Package *package = fromId(packageId)) {
-        if (package->info()->installationReport()) {
-            return enqueueTask(new DeinstallationTask(package, d->installationPath,
-                                                      d->documentPath, force, keepDocuments));
-        }
+        return enqueueTask(new DeinstallationTask(package, d->installationPath,
+                                                  d->documentPath, force, keepDocuments));
     }
     return QString();
 }

@@ -76,11 +76,16 @@ void DeinstallationTask::execute()
     // these have been checked in PackageManager::removePackage() already
     Q_ASSERT(m_package);
     Q_ASSERT(m_package->info());
-    Q_ASSERT(m_package->info()->installationReport());
 
     bool managerApproval = false;
 
     try {
+        if (m_package->isBuiltIn() && !m_package->builtInHasRemovableUpdate())
+            throw Exception("There is no removable update for the built-in package %1").arg(m_package->id());
+
+        if (!m_package->info()->installationReport())
+            throw Exception("Cannot remove package %1 due to missing installation report").arg(m_package->id());
+
         // we need to call those PackageManager methods in the correct thread
         // this will also exclusively lock the package for us
         QMetaObject::invokeMethod(PackageManager::instance(), [this, &managerApproval]()

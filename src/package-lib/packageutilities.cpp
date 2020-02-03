@@ -67,6 +67,11 @@ bool PackageUtilities::ensureCorrectLocale(QStringList *warnings)
 
 bool PackageUtilities::ensureCorrectLocale()
 {
+    static bool once = false;
+    if (once)
+        return true;
+    once = true;
+
     // We need to make sure we are running in a Unicode locale, since we are
     // running into problems when unpacking packages with libarchive that
     // contain non-ASCII characters.

@@ -68,7 +68,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion("0.1");
 
     Logging::initialize(argc, argv);
-    PackageUtilities::ensureCorrectLocale();
     Sudo::forkServer(Sudo::DropPrivilegesPermanently);
 
     try {

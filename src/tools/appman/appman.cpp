@@ -82,7 +82,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     try {
 #if !defined(AM_DISABLE_INSTALLER)
-        PackageUtilities::ensureCorrectLocale();
         Sudo::forkServer(Sudo::DropPrivilegesPermanently);
         StartupTimer::instance()->checkpoint("after sudo server fork");
 #endif

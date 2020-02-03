@@ -147,6 +147,7 @@ private:
     void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName,
                             const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false);
 #endif
+    static int &preConstructor(int &argc);
 
 private:
     bool m_isSingleProcessMode = false;

@@ -153,10 +153,17 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-// The QGuiApplication constructor
+// We need to do some things BEFORE the Q*Application constructor runs, so we're using this
+// old trick to do this hooking transparently for the user of the class.
+int &Main::preConstructor(int &argc)
+{
+    // try to set a reasonable locale - we later call checkCorrectLocale() if we succeeded
+    PackageUtilities::ensureCorrectLocale();
+    return argc;
+}
 
 Main::Main(int &argc, char **argv)
-    : MainBase(SharedMain::preConstructor(argc), argv)
+    : MainBase(SharedMain::preConstructor(Main::preConstructor(argc)), argv)
     , SharedMain()
 {
     // this might be needed later on by the native runtime to find a suitable qml runtime launcher
@@ -516,7 +523,7 @@ void Main::setupInstaller(const QStringList &caCertificatePaths,
                           const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if !defined(AM_DISABLE_INSTALLER)
-    if (!PackageUtilities::checkCorrectLocale()) {
+    if (Q_UNLIKELY(!PackageUtilities::checkCorrectLocale())) {
         // we should really throw here, but so many embedded systems are badly set up
         qCWarning(LogDeployment) << "The appman installer needs a UTF-8 locale to work correctly: "
                                     "even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";

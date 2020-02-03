@@ -196,8 +196,18 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
             if (canonicalDestination == entryPath)
                 continue;
 
-            if (!entryPath.startsWith(canonicalSourcePath))
-                throw Exception(Error::Package, "file %1 is not inside the source directory %2").arg(entryPath).arg(canonicalSourcePath);
+            // prevent the packaging of symlinks
+            if (entryInfo.isSymLink()) {
+                fprintf(stderr, "WARNING: sym-links are not supported (found: %s -> %s)\n",
+                        qPrintable(entryInfo.filePath()), qPrintable(entryInfo.symLinkTarget()));
+                continue;
+            }
+
+            // we sorted out sym-links, but just to be safe, we check the canonical path
+            if (!entryPath.startsWith(canonicalSourcePath)) {
+                throw Exception(Error::Package, "file %1 is not inside the source directory %2")
+                    .arg(entryInfo.filePath()).arg(canonicalSourcePath);
+            }
 
             // QDirIterator::filePath() returns absolute paths, although the naming suggests otherwise
             entryPath = entryPath.mid(canonicalSourcePath.size() + 1);

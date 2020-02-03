@@ -138,10 +138,6 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
     if (!canSudo) {
         SudoServer::createInstance(-1);
         SudoClient::createInstance(-1, SudoServer::instance());
-        qCWarning(LogDeployment) << "For the installer to work correctly, the executable needs to be run either as "
-                                    "root via sudo or SUID (preferred)";
-        qCWarning(LogDeployment) << "(using fallback implementation - you might experience permission errors on "
-                                    "installer operations)";
         return;
     }
 

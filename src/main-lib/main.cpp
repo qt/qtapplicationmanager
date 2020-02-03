@@ -157,7 +157,7 @@ QT_BEGIN_NAMESPACE_AM
 // old trick to do this hooking transparently for the user of the class.
 int &Main::preConstructor(int &argc)
 {
-    // try to set a reasonable locale - we later call checkCorrectLocale() if we succeeded
+    // try to set a reasonable locale - we later verify with checkCorrectLocale() if we succeeded
     PackageUtilities::ensureCorrectLocale();
     return argc;
 }
@@ -166,6 +166,13 @@ Main::Main(int &argc, char **argv)
     : MainBase(SharedMain::preConstructor(Main::preConstructor(argc)), argv)
     , SharedMain()
 {
+    m_isRunningOnEmbedded =
+#if defined(Q_OS_LINUX)
+            !qEnvironmentVariableIsSet("XDG_CURRENT_DESKTOP");
+#else
+            false;
+#endif
+
     // this might be needed later on by the native runtime to find a suitable qml runtime launcher
     setProperty("_am_build_dir", qSL(AM_BUILD_DIR));
 
@@ -282,6 +289,11 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 bool Main::isSingleProcessMode() const
 {
     return m_isSingleProcessMode;
+}
+
+bool Main::isRunningOnEmbedded() const
+{
+    return m_isRunningOnEmbedded;
 }
 
 void Main::shutDown(int exitCode)
@@ -529,12 +541,26 @@ void Main::setupInstaller(const QStringList &caCertificatePaths,
                                     "even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
     }
 
+    // we only output these deployment warnings, if we are on embedded, applicationUserIdSeparation
+    // is enabled and either...
+    if (isRunningOnEmbedded() && userIdSeparation) {
+        // ... the user forgot to call Sudo::forkServer() quite early in main()
+        if (Q_UNLIKELY(!SudoClient::instance())) {
+            qCWarning(LogDeployment) << "In order for the package-manager to support \"applicationUserIdSeparation\", "
+                                        "please call Sudo::forkServer() as early as possible in main()";
+        // ... or the user called Sudo::forkServer() explicitly AND that called failed.
+        } else if (Q_UNLIKELY(SudoClient::instance()->isFallbackImplementation())) {
+            qCWarning(LogDeployment) << "In order for the package-manager to support \"applicationUserIdSeparation\", "
+                                        "please run as root either via sudo or SUID (preferred)";
+        }
+    }
+
     if (Q_UNLIKELY(hardwareId().isEmpty()))
         throw Exception("the installer is enabled, but the device-id is empty");
 
-    if (!m_installationDir.isEmpty() && !QDir::root().mkpath(m_installationDir))
+    if (Q_UNLIKELY(!m_installationDir.isEmpty() && !QDir::root().mkpath(m_installationDir)))
         throw Exception("could not create package installation directory: \'%1\'").arg(m_installationDir);
-    if (!m_documentDir.isEmpty() && !QDir::root().mkpath(m_documentDir))
+    if (Q_UNLIKELY(!m_documentDir.isEmpty() && !QDir::root().mkpath(m_documentDir)))
         throw Exception("could not create document directory for packages: \'%1\'").arg(m_documentDir);
 
     StartupTimer::instance()->checkpoint("after installer setup checks");
@@ -633,13 +659,7 @@ void Main::setupWindowTitle(const QString &title, const QString &iconPath)
     Q_UNUSED(iconPath)
 #else
     // For development only: set an icon, so you know which window is the AM
-    bool setTitle =
-#  if defined(Q_OS_LINUX)
-            (platformName() == qL1S("xcb"));
-#  else
-            true;
-#  endif
-    if (Q_UNLIKELY(setTitle)) {
+    if (Q_UNLIKELY(!isRunningOnEmbedded())) {
         if (!iconPath.isEmpty())
             QGuiApplication::setWindowIcon(QIcon(iconPath));
         if (!title.isEmpty())

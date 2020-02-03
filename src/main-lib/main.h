@@ -95,6 +95,7 @@ public:
     ~Main();
 
     bool isSingleProcessMode() const;
+    bool isRunningOnEmbedded() const;
 
     Q_DECL_DEPRECATED void setup(const Configuration *cfg, const QStringList &deploymentWarnings)
                                                                       Q_DECL_NOEXCEPT_EXPR(false);
@@ -151,6 +152,7 @@ private:
 
 private:
     bool m_isSingleProcessMode = false;
+    bool m_isRunningOnEmbedded = false;
     QUrl m_mainQml;
     QString m_mainQmlLocalFile;
 

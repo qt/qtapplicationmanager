@@ -187,6 +187,9 @@ static void initBacktrace()
         // 4 means to remove 4 stack frames: this way the backtrace starts at std::terminate
         crashHandler(buffer, 4);
     });
+
+    // create a new process group, so that we are able to kill all children with ::kill(0, ...)
+    setpgid(0, 0);
 }
 
 static void printMsgToConsole(const char *format, ...) Q_ATTRIBUTE_FORMAT_PRINTF(1, 2);
@@ -416,6 +419,9 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
         useAnsiColor = false;
         printCrashInfo(Dlt, why, stackFramesToIgnore);
     }
+
+    // make sure to kill our sub-process as well
+    kill(0, SIGABRT);
 
     if (dumpCore) {
         fprintf(stderr, "\n > the process will be aborted (core dumped)\n\n");

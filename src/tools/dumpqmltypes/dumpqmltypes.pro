@@ -34,8 +34,8 @@ load(install-prefix)
     QT_TOOL_ENV =
 
     build_pass|!debug_and_release {
-        QMAKE_POST_LINK += $$QMLPLUGINDUMP $$OUT_PWD
-        qmltypes_file.files = $$OUT_PWD/QtApplicationManager
+        QMAKE_POST_LINK += $$QMLPLUGINDUMP $$SOURCE_DIR/qmltypes
+        qmltypes_file.files = $$SOURCE_DIR/qmltypes/QtApplicationManager
         qmltypes_file.path = $$[QT_INSTALL_QML]
         qmltypes_file.CONFIG = no_check_exist directory
 

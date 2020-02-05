@@ -43,7 +43,7 @@
 #include "crashhandler.h"
 #include "global.h"
 
-#if !defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)
+#if !defined(Q_OS_UNIX) || defined(Q_OS_ANDROID)
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -226,10 +226,17 @@ static void printCrashInfo(PrintDestination dest, const char *why, int stackFram
     }
 
     pid_t pid = getpid();
+#if defined(Q_OS_LINUX)
     long tid = syscall(SYS_gettid);
+    bool isMainThread = (tid == pid);
+#else
+    long tid = -1;
+    bool isMainThread = pthread_main_np();
+#endif
     pthread_t pthreadId = pthread_self();
     char threadName[16];
-    if (tid == pid)
+
+    if (isMainThread)
         strcpy(threadName, "main");
     else if (pthread_getname_np(pthreadId, threadName, sizeof(threadName)))
         strcpy(threadName, "unknown");

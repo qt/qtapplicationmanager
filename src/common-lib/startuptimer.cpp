@@ -40,14 +40,8 @@
 **
 ****************************************************************************/
 
-#ifdef _WIN32
-// needed for QueryFullProcessImageNameW
-#  define WINVER _WIN32_WINNT_VISTA
-#  define _WIN32_WINNT _WIN32_WINNT_VISTA
-#endif
-
 #include "startuptimer.h"
-#include "utilities.h"
+#include "logging.h"
 
 #if defined(Q_OS_WIN)
 #  include <windows.h>
@@ -448,8 +442,10 @@ void StartupTimer::createReport(const QString &title)
 {
     if (m_output && !m_checkpoints.isEmpty()) {
         bool ansiColorSupport = false;
-        if (m_output == stderr)
-            getOutputInformation(&ansiColorSupport, nullptr, nullptr);
+        if (m_output == stderr) {
+            Console::init();
+            ansiColorSupport = Console::supportsAnsiColor;
+        }
 
         constexpr const char *plainFormat = "\n== STARTUP TIMING REPORT: %s ==\n";
         constexpr const char *colorFormat = "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n";

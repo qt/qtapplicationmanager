@@ -41,17 +41,40 @@
 **
 ****************************************************************************/
 
+#if defined(_WIN32) && (_WIN32_WINNT-0 < _WIN32_WINNT_VISTA)
+// needed for QueryFullProcessImageNameW
+#  undef WINVER
+#  undef _WIN32_WINNT
+#  define WINVER _WIN32_WINNT_VISTA
+#  define _WIN32_WINNT _WIN32_WINNT_VISTA
+#endif
+
 #include <QThreadStorage>
 #include <QAtomicInteger>
+#include <QCoreApplication>
 
 #include "global.h"
 #include "logging.h"
 #include "utilities.h"
+#include "unixsignalhandler.h"
 
 #include <stdio.h>
+
 #if defined(Q_OS_WIN)
+#  include <Windows.h>
+#  include <io.h>
+#  include <QOperatingSystemVersion>
+#  include <QThread>
+
 Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
-#  include <windows.h>
+#else
+#  include <unistd.h>
+#  include <sys/ioctl.h>
+#  include <termios.h>
+#  include <signal.h>
+#  if defined(Q_OS_MACOS)
+#    include <libproc.h>
+#  endif
 #endif
 #if defined(Q_OS_ANDROID)
 #  include <QCoreApplication>
@@ -233,10 +256,8 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         out.reserve(512);
     out.resize(0);
 
-    int consoleWidth = -1;
-    bool ansiColorSupport = false;
-    bool runningInCreator = false;
-    getOutputInformation(&ansiColorSupport, &runningInCreator, &consoleWidth);
+    Console::init();
+    int consoleWidth = Console::width();
 
     // Find out, if we have a valid code location and prepare the output strings
     const char *filename = nullptr;
@@ -262,32 +283,9 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         linenumber[linenumberLength] = 0;
     }
 
-    enum ConsoleColor { Off = 0, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, BrightFlag = 0x80 };
-
-    // helper function to append ANSI color codes to a string
-    static auto color = [ansiColorSupport](QByteArray &out, int consoleColor) -> void {
-        static const char *ansiColors[] = {
-            "\x1b[1m",  // bright
-            "\x1b[0m",  // off
-            "\x1b[30m", // black
-            "\x1b[31m", // red
-            "\x1b[32m", // green
-            "\x1b[33m", // yellow
-            "\x1b[34m", // blue
-            "\x1b[35m", // magenta
-            "\x1b[36m", // cyan
-            "\x1b[37m" // gray
-        };
-
-        if (!ansiColorSupport)
-            return;
-        if (consoleColor & BrightFlag)
-            out.append(ansiColors[0]);
-        out.append(ansiColors[1 + (consoleColor & ~BrightFlag)]);
-    };
-
     static const char *msgTypeStr[] = { "DBG ", "WARN", "CRIT", "FATL", "INFO" };
-    static const ConsoleColor msgTypeColor[] = { Green, Yellow, Red, Magenta, Blue };
+    static const Console::Color msgTypeColor[] = { Console::Green, Console::Yellow, Console::Red,
+                                                   Console::Magenta, Console::Blue };
     int categoryLength = int(qstrlen(context.category));
     QByteArray msg = message.toLocal8Bit(); // sadly this allocates, but there's no other way in Qt
 
@@ -295,23 +293,23 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
     int outLength = 10 + int(qstrlen(context.category)) + msg.length(); // 10 = strlen("[XXXX | ] ")
     out.append('[');
 
-    color(out, BrightFlag | msgTypeColor[msgType]);
+    Console::colorize(out, Console::BrightFlag | msgTypeColor[msgType]);
     out.append(msgTypeStr[msgType], 4); // all msgTypeStrs are 4 characters
-    color(out, Off);
+    Console::colorize(out, Console::Off);
 
     out.append(" | ");
 
-    color(out, Red + qHash(QByteArray::fromRawData(context.category, categoryLength)) % 7);
+    Console::colorize(out, Console::Red + qHash(QByteArray::fromRawData(context.category, categoryLength)) % 7);
     out.append(context.category, categoryLength);
-    color(out, Off);
+    Console::colorize(out, Console::Off);
 
     const QByteArray appId = Logging::applicationId();
     if (!appId.isEmpty()) {
         out.append(" | ");
 
-        color(out, Red + qHash(appId) % 7);
+        Console::colorize(out, Console::Red + qHash(appId) % 7);
         out.append(appId);
-        color(out, Off);
+        Console::colorize(out, Console::Off);
 
         outLength += (3 + appId.length()); // 3 == strlen(" | ")
     }
@@ -337,15 +335,15 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         out.append(spacing, ' ');
         out.append('[');
 
-        color(out, Magenta);
+        Console::colorize(out, Console::Magenta);
         out.append(filename, filenameLength);
-        color(out, Off);
+        Console::colorize(out, Console::Off);
 
         out.append(':');
 
-        color(out, BrightFlag | Magenta);
+        Console::colorize(out, Console::BrightFlag | Console::Magenta);
         out.append(linenumber, linenumberLength);
-        color(out, Off);
+        Console::colorize(out, Console::Off);
 
         out.append("]\n");
     } else {
@@ -549,5 +547,176 @@ void Logging::logToDlt(QtMsgType msgType, const QMessageLogContext &context, con
 
 void am_trace(QDebug)
 { }
+
+bool Console::supportsAnsiColor = false;
+bool Console::isRunningInQtCreator = false;
+bool Console::hasConsoleWindow = false;
+QAtomicInt Console::consoleWidthCached(0);
+
+void Console::init()
+{
+    static bool once = false;
+    if (!once) {
+        once = true;
+
+        enum { ColorAuto, ColorOff, ColorOn } forceColor = ColorAuto;
+        const QByteArray forceColorOutput = qgetenv("AM_FORCE_COLOR_OUTPUT");
+        if (forceColorOutput == "off" || forceColorOutput == "0")
+            forceColor = ColorOff;
+        else if (forceColorOutput == "on" || forceColorOutput == "1")
+            forceColor = ColorOn;
+
+#if defined(Q_OS_UNIX)
+        if (::isatty(STDERR_FILENO)) {
+            hasConsoleWindow = true;
+            supportsAnsiColor = true;
+        }
+
+#elif defined(Q_OS_WIN)
+        HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
+        if (h != INVALID_HANDLE_VALUE) {
+
+            if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10) {
+                // enable ANSI mode on Windows 10
+                DWORD mode = 0;
+                if (GetConsoleMode(h, &mode)) {
+                    mode |= 0x04;
+                    if (SetConsoleMode(h, mode)) {
+                        supportsAnsiColor = true;
+                        hasConsoleWindow = true;
+                    }
+                }
+            }
+        }
+#endif
+
+        qint64 pid = QCoreApplication::applicationPid();
+        forever {
+            pid = getParentPid(pid);
+            if (pid <= 1)
+                break;
+
+#if defined(Q_OS_LINUX)
+            static QString checkCreator = qSL("/proc/%1/exe");
+            QFileInfo fi(checkCreator.arg(pid));
+            if (fi.symLinkTarget().contains(qSL("qtcreator"))) {
+                isRunningInQtCreator = true;
+                break;
+            }
+#elif defined(Q_OS_MACOS)
+            static char buffer[PROC_PIDPATHINFO_MAXSIZE + 1];
+            int len = proc_pidpath(pid, buffer, sizeof(buffer) - 1);
+            if ((len > 0) && QByteArray::fromRawData(buffer, len).contains("Qt Creator")) {
+                isRunningInQtCreator = true;
+                break;
+            }
+#elif defined(Q_OS_WIN)
+            HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, pid);
+            if (hProcess) {
+                wchar_t exeName[1024] = { 0 };
+                DWORD exeNameSize = sizeof(exeName) - 1;
+                if (QueryFullProcessImageNameW(hProcess, 0, exeName, &exeNameSize)) {
+                    if (QString::fromWCharArray(exeName, exeNameSize).contains(qSL("qtcreator.exe")))
+                        isRunningInQtCreator = true;
+                }
+            }
+#endif
+        }
+
+        if (forceColor != ColorAuto)
+            supportsAnsiColor = (forceColor == ColorOn);
+        else if (!supportsAnsiColor)
+            supportsAnsiColor = isRunningInQtCreator;
+
+#if defined(Q_OS_UNIX) && defined(SIGWINCH)
+        UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, SIGWINCH, [](int) {
+            // we are in a signal handler, so we just clear the cached value in the atomic int
+            consoleWidthCached = 0;
+        });
+#elif defined(Q_OS_WIN)
+        class ConsoleThread : public QThread
+        {
+        public:
+            ConsoleThread(QObject *parent)
+                : QThread(parent)
+            { }
+
+            ~ConsoleThread()
+            {
+                terminate();
+                wait();
+            }
+
+        protected:
+            void run() override
+            {
+                HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+                DWORD mode = 0;
+                if (!GetConsoleMode(h, &mode))
+                    return;
+                if (!SetConsoleMode(h, mode | ENABLE_WINDOW_INPUT))
+                    return;
+
+                INPUT_RECORD ir;
+                DWORD irRead = 0;
+                while (ReadConsoleInputW(h, &ir, 1, &irRead)) {
+                    if ((irRead == 1) && (ir.EventType == WINDOW_BUFFER_SIZE_EVENT))
+                        consoleWidthCached = 0;
+                }
+            }
+        };
+        (new ConsoleThread(qApp))->start();
+#endif // Q_OS_WIN
+    }
+}
+
+int Console::width()
+{
+    int consoleWidthCalculated = consoleWidthCached;
+
+    if (consoleWidthCalculated <= 0) {
+        if (hasConsoleWindow) {
+#if defined(Q_OS_UNIX)
+            struct ::winsize ws;
+            if ((::ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == 0) && (ws.ws_col > 0))
+                consoleWidthCalculated = ws.ws_col;
+#elif defined(Q_OS_WIN)
+            HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            if (GetConsoleScreenBufferInfo(h, &csbi))
+                consoleWidthCalculated = csbi.dwSize.X;
+#endif
+        }
+        consoleWidthCached = consoleWidthCalculated;
+    }
+    if ((consoleWidthCalculated <= 0) && isRunningInQtCreator)
+        return 120;
+    else
+        return consoleWidthCalculated;
+}
+
+QByteArray &Console::colorize(QByteArray &out, int ansiColor, bool forceNoColor)
+{
+    static const char *ansiColors[] = {
+        "\x1b[1m",  // bright
+        "\x1b[0m",  // off
+        "\x1b[30m", // black
+        "\x1b[31m", // red
+        "\x1b[32m", // green
+        "\x1b[33m", // yellow
+        "\x1b[34m", // blue
+        "\x1b[35m", // magenta
+        "\x1b[36m", // cyan
+        "\x1b[37m" // gray
+    };
+
+    if (forceNoColor || !supportsAnsiColor)
+        return out;
+    if (ansiColor & BrightFlag)
+        out.append(ansiColors[0]);
+    if (ansiColor != BrightFlag)
+        out.append(ansiColors[1 + (ansiColor & ~BrightFlag)]);
+    return out;
+}
 
 QT_END_NAMESPACE_AM

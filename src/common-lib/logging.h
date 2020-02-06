@@ -109,4 +109,21 @@ template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest...
         QT_PREPEND_NAMESPACE_AM(am_trace(QMessageLogger(__FILE__, __LINE__, __FUNCTION__, category().categoryName()).debug(), "TRACE", __FUNCTION__, __VA_ARGS__)); \
     }
 
+class Console
+{
+public:
+    static void init();
+
+    static bool supportsAnsiColor;
+    static bool isRunningInQtCreator;
+    static bool hasConsoleWindow;
+    static int width();
+
+    enum Color { Off = 0, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, BrightFlag = 0x80 };
+    static QByteArray &colorize(QByteArray &out, int color, bool forceNoColor = false);
+
+private:
+    static QAtomicInt consoleWidthCached;
+};
+
 QT_END_NAMESPACE_AM

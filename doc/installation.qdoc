@@ -177,11 +177,19 @@ There are various options that can be given to \c qmake to tailor the build to s
 \row
   \li \c{-config enable-libbacktrace}
   \li Enables building and linking against \c libbacktrace in the 3rdparty folder. This gives
-      you readable backtraces on crash, but also increases the binary size slightly. For debug
-      builds, this option is enabled by default.
+      you readable backtraces on Linux on crashes, but also increases the binary size slightly.
+      For debug builds, this option is enabled by default.
+\row
+  \li \c{-config enable-stackwalker}
+  \li Enables building and linking against \c stackwalker in the 3rdparty folder. This gives
+      you readable backtraces on Windows on crashes, but also increases the binary size slightly.
+      For debug builds, this option is enabled by default.
 \row
   \li \c{-config disable-libbacktrace}
   \li Disables building and linking against \c libbacktrace in the 3rdparty folder.
+\row
+  \li \c{-config disable-stackwalker}
+  \li Disables building and linking against \c stackwalker in the 3rdparty folder.
 \endtable
 
 \section2 The Hardware ID

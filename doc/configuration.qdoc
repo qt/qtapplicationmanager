@@ -646,8 +646,10 @@ The following conditions are handled:
     \row
         \li \c printBacktrace
         \li bool
-        \li Tries to print a readable backtrace, using the primitive backtrace functionality from
-            glibc, unless \c libbacktrace was enabled at configure time (default: true).
+        \li Tries to print a readable backtrace. On Linux, it uses the primitive backtrace
+            functionality from glibc, unless \c libbacktrace was enabled at configure time.
+            On Windows, backtraces are only printed if \c stackwalker was enabled at
+            configure time. (default: true).
     \row
         \li \c printQmlStack
         \li bool

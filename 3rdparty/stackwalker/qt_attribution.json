@@ -1,0 +1,15 @@
+{
+    "Id": "stackwalker",
+    "Name": "StackWalker",
+    "QDocModule": "applicationmanager",
+    "QtUsage": "Automatically used in Qt ApplicationManager, if available. Configure with -config disable-stackwalker to avoid.",
+
+    "Description": "Walking the callstack in windows applications.",
+    "Homepage": "https://github.com/JochenKalmbach/StackWalker",
+    "Version": "2020-02-06",
+
+    "License": "BSD 2-clause \"Simplified\" License",
+    "LicenseId": "BSD-2-Clause",
+    "LicenseFile": "LICENSE",
+    "Copyright": "Copyright (C) 2005-2019 Jochen Kalmbach"
+}

@@ -135,8 +135,6 @@ bool recursiveOperation(const QDir &path, const std::function<bool(const QString
 // makes files and directories writable, then deletes them
 bool safeRemove(const QString &path, RecursiveOperationType type);
 
-void getOutputInformation(bool *ansiColorSupport, bool *runningInCreator, int *consoleWidth);
-
 qint64 getParentPid(qint64 pid);
 
 QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) Q_DECL_NOEXCEPT_EXPR(false);

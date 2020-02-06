@@ -52,6 +52,13 @@ linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|
     check_libbacktrace = "no"
 }
 
+windows:msvc:!disable-stackwalker:if(enable-stackwalker|CONFIG(debug, debug|release)|debug_and_release)  {
+    check_stackwalker = "yes"
+    SUBDIRS += 3rdparty/stackwalker/stackwalker.pro
+} else {
+    check_stackwalker = "no"
+}
+
 !tools-only: SUBDIRS += doc
 
 load(qt_parts)
@@ -100,7 +107,8 @@ printConfigLine("Crypto backend", $$check_crypto, auto)
 printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)
 printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto)
 printConfigLine("Genivi support", $$yesNo(qtHaveModule(geniviextras)), auto)
-printConfigLine("libbacktrace support", $$check_libbacktrace, auto)
+unix:printConfigLine("libbacktrace support", $$check_libbacktrace, auto)
+windows:printConfigLine("StackWalker support", $$check_stackwalker, auto)
 printConfigLine("Systemd workaround", $$yesNo(CONFIG(systemd-workaround)), auto)
 printConfigLine("System libarchive", $$yesNo(config_libarchive:!no-system-libarchive), auto)
 printConfigLine("System libyaml", $$yesNo(config_libyaml:!no-system-libyaml), auto)

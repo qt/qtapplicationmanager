@@ -42,7 +42,9 @@
 
 #ifdef _WIN32
 // needed for crypto API compatibility - otherwise this will only work on Win8+
+#  undef WINVER
 #  define WINVER _WIN32_WINNT_WIN7
+#  undef _WIN32_WINNT
 #  define _WIN32_WINNT _WIN32_WINNT_WIN7
 #endif
 

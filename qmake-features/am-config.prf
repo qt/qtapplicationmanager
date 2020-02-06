@@ -20,6 +20,7 @@ headless:DEFINES *= AM_HEADLESS
 enable-widgets:DEFINES *= AM_ENABLE_WIDGETS
 config_touchemulation:DEFINES += AM_ENABLE_TOUCH_EMULATION
 linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release)):DEFINES *= AM_USE_LIBBACKTRACE
+windows:msvc:!disable-stackwalker:if(enable-stackwalker|CONFIG(debug, debug|release)):DEFINES *= AM_USE_STACKWALKER
 
 !force-single-process {
     linux|macos {
@@ -54,7 +55,7 @@ linux|force-libcrypto:DEFINES *= AM_USE_LIBCRYPTO
 !win32:load(am-coverage.prf)
 
 
-# Unlike MSVC, MingW does not add a dummy manifest, leading to UAC prompts on executable
+# Unlike MSVC, MinGW does not add a dummy manifest, leading to UAC prompts on executable
 # filenames containing "bad" words like setup, install, update, patch, ...
 # RC files cannot be compiled into static libs, so we just generate one for each app.
 win32-g++*:equals(TEMPLATE, "app") {

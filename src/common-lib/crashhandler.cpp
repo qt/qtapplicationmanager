@@ -59,6 +59,31 @@ void CrashHandler::setQmlEngine(QQmlEngine *engine)
 
 QT_END_NAMESPACE_AM
 
+#if defined(Q_OS_WINDOWS)
+
+#include <Windows.h>
+
+// this will make the constructor run before all other static constructor functions
+#  pragma warning(push)
+#  pragma warning(disable: 4074)
+#  pragma init_seg(compiler)
+static struct InitReaper
+{
+    InitReaper()
+    {
+        // create a "process group", so that child process are automatically killed if this process dies
+        HANDLE hJob = CreateJobObject(nullptr, nullptr);
+        JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits;
+        memset(&limits, 0, sizeof(limits));
+        limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        SetInformationJobObject(hJob, JobObjectExtendedLimitInformation, &limits, sizeof(limits));
+        AssignProcessToJobObject(hJob, GetCurrentProcess());
+    }
+} dummy;
+#  pragma warning(pop)
+
+#endif
+
 #else
 
 #if defined(QT_QML_LIB)

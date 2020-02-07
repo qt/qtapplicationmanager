@@ -395,7 +395,7 @@ void tst_PackageManager::packageInstallation_data()
             << false << false << false << false << nomd << "The package icon (as stated in info.yaml) must be the second file in the package. Expected 'icon.png', got 'test'";
     QTest::newRow("invalid-header-format") \
             << "test-invalid-header-formatversion.appkg" << ""
-            << false << false << false << false << nomd << "metadata has an invalid format specification: wrong header: expected am-package-header version 2, got am-package-header version 0";
+            << false << false << false << false << nomd << "metadata has an invalid format specification: wrong header: expected type 'am-package-header', version '2' or type 'am-package-header', version '1', but instead got type 'am-package-header', version '0'";
     QTest::newRow("invalid-header-diskspaceused") \
             << "test-invalid-header-diskspaceused.appkg" << ""
             << false << false << false << false << nomd << "metadata has an invalid diskSpaceUsed field (0)";

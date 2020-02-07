@@ -88,6 +88,9 @@ TestCase {
         // Remove previous installations
 
         for (var pkg of [ "hello-world.red", "com.pelagicore.test" ]) {
+            var po = PackageManager.package(pkg)
+            if (!po || (po.builtIn && !po.builtInHasRemovableUpdate))
+                continue
             if (PackageManager.removePackage(pkg, false, true)) {
                 taskFinishedSpy.wait(spyTimeout);
                 compare(taskFinishedSpy.count, 1);

@@ -465,7 +465,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
     }
 
     const QString formatType = isHeader ? qSL("am-package-header") : qSL("am-package-footer");
-    bool formatVersion = 0;
+    int formatVersion = 0;
     try {
         formatVersion = checkYamlFormat(docs, -2 /*at least 2 docs*/, { { formatType, 2 },
                                                                         { formatType, 1 } }).second;

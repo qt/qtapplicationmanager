@@ -147,15 +147,16 @@ YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
         void operator()(const QPair<QString, int> &typeAndVersion)
         {
             if (!m_str.isEmpty())
-                m_str += qSL(", or ");
-            m_str = m_str + typeAndVersion.first + qSL(" version ") + QString::number(typeAndVersion.second);
+                m_str += qSL(" or ");
+            m_str = m_str + qSL("type '") + typeAndVersion.first + qSL("', version '")
+                    + QString::number(typeAndVersion.second) + qL1C('\'');
         }
     private:
         QString m_str;
     };
 
     if (!formatTypesAndVersions.contains(actualFormatTypeAndVersion)) {
-        throw Exception("wrong header: expected %1, got %2")
+        throw Exception("wrong header: expected %1, but instead got %2")
                 .arg(std::for_each(formatTypesAndVersions.cbegin(), formatTypesAndVersions.cend(), StringifyTypeAndVersion()).string())
                 .arg(StringifyTypeAndVersion(actualFormatTypeAndVersion).string());
     }

@@ -114,10 +114,12 @@ public:
     QVector<Package *> packages() const;
 
     Package *fromId(const QString &id) const;
+    QVariantMap get(Package *package) const;
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role) const override;
+    QVariant dataForRole(Package *package, int role) const;
     QHash<int, QByteArray> roleNames() const override;
 
     int count() const;

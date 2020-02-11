@@ -700,10 +700,10 @@ void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EX
                          [](const QString &taskId, const QVariantMap &metadata) {
             if (taskId != installationId)
                 return;
-            QString applicationId = metadata.value(qSL("id")).toString();
-            if (applicationId.isEmpty())
-                throw Exception(Error::IO, "could not find a valid application id in the package");
-            fprintf(stdout, "Acknowledging package installation...\n");
+            QString packageId = metadata.value(qSL("packageId")).toString();
+            if (packageId.isEmpty())
+                throw Exception(Error::IO, "could not find a valid package id in the package");
+            fprintf(stdout, "Acknowledging package installation for '%s'...\n", qPrintable(packageId));
             dbus.packager()->acknowledgePackageInstallation(taskId);
         });
     }
@@ -748,9 +748,9 @@ void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EX
     });
 }
 
-void removePackage(const QString &applicationId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false)
+void removePackage(const QString &packageId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    fprintf(stdout, "Starting removal of package %s...\n", qPrintable(applicationId));
+    fprintf(stdout, "Starting removal of package %s...\n", qPrintable(packageId));
 
     dbus.connectToManager();
     dbus.connectToPackager();
@@ -779,7 +779,7 @@ void removePackage(const QString &applicationId, bool keepDocuments, bool force)
 
     // start the package installation
 
-    auto reply = dbus.packager()->removePackage(applicationId, keepDocuments, force);
+    auto reply = dbus.packager()->removePackage(packageId, keepDocuments, force);
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call removePackage via DBus: %1").arg(reply.error().message());

@@ -501,6 +501,17 @@ Package *PackageManager::fromId(const QString &id) const
     return nullptr;
 }
 
+QVariantMap PackageManager::get(Package *package) const
+{
+    QVariantMap map;
+    if (package) {
+        QHash<int, QByteArray> roles = roleNames();
+        for (auto it = roles.begin(); it != roles.end(); ++it)
+            map.insert(qL1S(it.value()), dataForRole(package, it.key()));
+    }
+    return map;
+}
+
 void PackageManager::emitDataChanged(Package *package, const QVector<int> &roles)
 {
     int row = d->packages.indexOf(package);
@@ -532,7 +543,11 @@ QVariant PackageManager::data(const QModelIndex &index, int role) const
         return QVariant();
 
     Package *package = d->packages.at(index.row());
+    return dataForRole(package, role);
+}
 
+QVariant PackageManager::dataForRole(Package *package, int role) const
+{
     switch (role) {
     case Id:
         return package->id();
@@ -554,8 +569,9 @@ QVariant PackageManager::data(const QModelIndex &index, int role) const
         return package->version();
     case PackageItem:
         return QVariant::fromValue(package);
+    default:
+        return QVariant();
     }
-    return QVariant();
 }
 
 QHash<int, QByteArray> PackageManager::roleNames() const
@@ -585,12 +601,7 @@ QVariantMap PackageManager::get(int index) const
         qCWarning(LogSystem) << "PackageManager::get(index): invalid index:" << index;
         return QVariantMap();
     }
-
-    QVariantMap map;
-    QHash<int, QByteArray> roles = roleNames();
-    for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(qL1S(it.value()), data(this->index(index), it.key()));
-    return map;
+    return get(d->packages.at(index));
 }
 
 /*!
@@ -607,7 +618,7 @@ QVariantMap PackageManager::get(int index) const
 Package *PackageManager::package(int index) const
 {
     if (index < 0 || index >= count()) {
-        qCWarning(LogSystem) << "PackageManager::application(index): invalid index:" << index;
+        qCWarning(LogSystem) << "PackageManager::package(index): invalid index:" << index;
         return nullptr;
     }
     return d->packages.at(index);
@@ -924,8 +935,7 @@ QStringList PackageManager::packageIds() const
 */
 QVariantMap PackageManager::get(const QString &packageId) const
 {
-    int index = indexOfPackage(packageId);
-    return (index < 0) ? QVariantMap{} : get(index);
+    return get(package(packageId));
 }
 
 /*!

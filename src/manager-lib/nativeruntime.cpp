@@ -109,6 +109,7 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
     QDir().mkdir(qSL("/tmp/dbus-qtam"));
     QString dbusAddress = QUuid::createUuid().toString().mid(1,36);
     m_applicationInterfaceServer = new QDBusServer(qSL("unix:path=/tmp/dbus-qtam/dbus-qtam-") + dbusAddress, this);
+    m_applicationInterfaceServer->setAnonymousAuthenticationAllowed(true);
 
     connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
             this, [this](const QDBusConnection &connection) {

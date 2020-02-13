@@ -196,12 +196,13 @@ static void logMsgF(LogToDestination logTo, const char *format, ...)
     logMsg(logTo, buffer, qMin(len, int(sizeof(buffer)) - 1));
 }
 
-
 static void logBacktraceLine(LogToDestination logTo, int level, const char *symbol,
-                             uintptr_t offset = 0, const char *file = nullptr, int line = -1)
+                             uintptr_t offset = 0, const char *file = nullptr, int line = -1,
+                             int errorCode = 0, const char *errorString = nullptr)
 {
     bool wantClickableUrl = (Console::isRunningInQtCreator && !Console::hasConsoleWindow);
-    bool forceNoColor = wantClickableUrl || (logTo != Console);
+    bool forceNoColor = (logTo != Console);
+    bool isError = (errorString);
 
     backtraceLineOut->clear();
     backtraceLineTmp->setNum(level);
@@ -209,7 +210,18 @@ static void logBacktraceLine(LogToDestination logTo, int level, const char *symb
     backtraceLineOut->append(*backtraceLineTmp);
     backtraceLineOut->append(": ");
     Console::colorize(*backtraceLineOut, Console::BrightFlag, forceNoColor);
-    backtraceLineOut->append(symbol ? symbol : "?");
+    if (isError) {
+        Console::colorize(*backtraceLineOut, Console::Red, forceNoColor);
+        backtraceLineOut->append("ERROR: ");
+        Console::colorize(*backtraceLineOut, Console::Off, forceNoColor);
+        backtraceLineOut->append(errorString);
+        backtraceLineTmp->setNum(errorCode);
+        backtraceLineOut->append(" (");
+        backtraceLineOut->append(*backtraceLineTmp);
+        backtraceLineOut->append(")");
+    } else {
+        backtraceLineOut->append(symbol ? symbol : "?");
+    }
     Console::colorize(*backtraceLineOut, Console::Off, forceNoColor);
     if (offset) {
         backtraceLineTmp->setNum(static_cast<qulonglong>(offset), 16);
@@ -389,9 +401,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
 
         static auto errorCallback = [](void *data, const char *msg, int errnum) {
             auto btdata = static_cast<btData *>(data);
-
-            snprintf(demangleBuffer, demangleBufferSize, "ERROR: %s (%d)", msg, errnum);
-            logBacktraceLine(btdata->logTo, btdata->level, demangleBuffer);
+            logBacktraceLine(btdata->logTo, btdata->level, nullptr, 0, nullptr, 0, errnum, msg);
         };
 
         static auto syminfoCallback = [](void *data, uintptr_t pc, const char *symname,
@@ -566,7 +576,10 @@ public:
         , ignoreUpToLevel(stackFramesToIgnore)
     { }
     void OnOutput(LPCSTR) override { }
-    void OnDbgHelpErr(LPCSTR, DWORD, DWORD64) override { }
+    void OnDbgHelpErr(LPCSTR errorString, DWORD lastError, DWORD64 address) override
+    {
+        logBacktraceLine(logToDestination, 0, nullptr, address, nullptr, 0, lastError, errorString);
+    }
     void OnSymInit(LPCSTR, DWORD, LPCSTR) override { }
     void OnLoadModule(LPCSTR, LPCSTR, DWORD64, DWORD, DWORD, LPCSTR, LPCSTR, ULONGLONG) override { }
     void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry) override

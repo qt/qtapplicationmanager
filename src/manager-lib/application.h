@@ -85,6 +85,7 @@ class Application : public QObject
     Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Am::ExitStatus) lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged)
     Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange)
     Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Am::RunState) runState READ runState NOTIFY runStateChanged)
+    Q_PROPERTY(Package *package READ package CONSTANT)
 
     // legacy, forwarded to Package
     Q_PROPERTY(QUrl icon READ icon NOTIFY bulkChange)

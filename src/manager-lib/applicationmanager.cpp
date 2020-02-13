@@ -76,6 +76,7 @@
 #include "qtyaml.h"
 #include "debugwrapper.h"
 #include "amnamespace.h"
+#include "package.h"
 
 /*!
     \qmltype ApplicationManager
@@ -1417,6 +1418,8 @@ void ApplicationManager::addApplication(ApplicationInfo *appInfo, Package *packa
     endInsertRows();
 
     registerMimeTypes();
+
+    package->addApplication(app);
     emit applicationAdded(appInfo->id());
 }
 
@@ -1436,6 +1439,8 @@ void ApplicationManager::removeApplication(ApplicationInfo *appInfo, Package *pa
     Q_ASSERT(d->apps.at(index)->package() == package);
 
     emit applicationAboutToBeRemoved(appInfo->id());
+
+    package->removeApplication(d->apps.at(index));
 
     beginRemoveRows(QModelIndex(), index, index);
     auto app = d->apps.takeAt(index);

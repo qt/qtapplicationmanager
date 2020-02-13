@@ -510,6 +510,7 @@ Module {
         Property { name: "lastExitStatus"; type: "ExitStatus"; isReadonly: true }
         Property { name: "codeDir"; type: "string"; isReadonly: true }
         Property { name: "runState"; type: "RunState"; isReadonly: true }
+        Property { name: "package"; type: "Package"; isPointer: true; isReadonly: true }
         Property { name: "icon"; type: "QUrl"; isReadonly: true }
         Property { name: "builtIn"; type: "bool"; isReadonly: true }
         Property { name: "alias"; type: "bool"; isReadonly: true }

@@ -52,6 +52,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+class Application;
 
 class Package : public QObject
 {
@@ -69,6 +70,7 @@ class Package : public QObject
     Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged)
+    Q_PROPERTY(QList<QObject *> applications READ applications NOTIFY applicationsChanged)
 
 public:
     enum State {
@@ -92,6 +94,7 @@ public:
     QString description() const;
     QVariantMap descriptions() const;
     QStringList categories() const;
+    QList<QObject *> applications() const;
 
     State state() const { return m_state; }
     qreal progress() const { return m_progress; }
@@ -130,10 +133,15 @@ public:
     // query function for the installer to verify that it is safe to manipulate binaries
     bool areAllApplicationsStoppedDueToBlock() const;
 
+    // for the ApplicationManager to update the package -> application mapping
+    void addApplication(Application *application);
+    void removeApplication(Application *application);
+
 signals:
     void bulkChange();
     void stateChanged(State state);
     void blockedChanged(bool blocked);
+    void applicationsChanged();
 
 private:
     PackageInfo *m_info = nullptr;
@@ -144,6 +152,7 @@ private:
     QAtomicInt m_blocked;
     QAtomicInt m_blockedAppsCount;
     QVector<ApplicationInfo *> m_blockedApps;
+    QVector<Application *> m_applications;
 };
 
 QT_END_NAMESPACE_AM

@@ -46,6 +46,7 @@
 #include "package.h"
 #include "packageinfo.h"
 #include "applicationinfo.h"
+#include "application.h"
 
 /*!
     \qmltype PackageObject
@@ -245,6 +246,18 @@ QStringList Package::categories() const
     return info()->categories();
 }
 
+QList<QObject *> Package::applications() const
+{
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+    QList<QObject *> result;
+    for (auto app : m_applications)
+        result << app;
+    return result;
+#else
+    return QList<QObject *>(m_applications.cbegin(), m_applications.cend());
+#endif
+}
+
 QUrl Package::icon() const
 {
     if (info()->icon().isEmpty())
@@ -360,6 +373,18 @@ void Package::applicationStoppedDueToBlock(const QString &appId)
 bool Package::areAllApplicationsStoppedDueToBlock() const
 {
     return isBlocked() && !m_blockedAppsCount;
+}
+
+void Package::addApplication(Application *application)
+{
+    m_applications.append(application);
+    emit applicationsChanged();
+}
+
+void Package::removeApplication(Application *application)
+{
+    m_applications.removeAll(application);
+    emit applicationsChanged();
 }
 
 QT_END_NAMESPACE_AM

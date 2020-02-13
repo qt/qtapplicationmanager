@@ -123,6 +123,15 @@ TestCase {
         compare(ApplicationManager.systemProperties.nullTest, null)
     }
 
+    function test_package() {
+        compare(PackageManager.count, 2)
+        verify(simpleApplication.package !== capsApplication.package)
+        compare(simpleApplication.package, PackageManager.package("tld.test.simple1"))
+        compare(simpleApplication.package.id, "tld.test.simple1")
+        compare(simpleApplication.package.applications.length, 1)
+        compare(simpleApplication.package.applications[0], simpleApplication)
+    }
+
     function test_application() {
         var id = simpleApplication.id;
         compare(simpleApplication.id, "tld.test.simple1")

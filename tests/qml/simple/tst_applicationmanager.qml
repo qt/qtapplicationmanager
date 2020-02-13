@@ -58,11 +58,11 @@ TestCase {
                                   || buildConfig[0].CONFIG.indexOf("multi-process") === -1
     property QtObject windowHandler: QtObject {
         function windowAddedHandler(window) {
-            console.info("window " + window + " added");
+            // console.info("window " + window + " added");
         }
 
         function windowContentStateChangedHandler(window) {
-            console.info("window content state = " + window.contentState);
+            // console.info("window content state = " + window.contentState);
         }
     }
 

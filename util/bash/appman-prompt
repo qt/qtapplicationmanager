@@ -34,7 +34,7 @@ _appman()
     cur="${COMP_WORDS[COMP_CWORD]}"
     opts="--app-image-mount-dir --build-config --builtin-apps-manifest-dir -c --clear-cache --config-file \
 --database --dbus --force-multi-process --force-single-process --fullscreen --help -I \
---installed-apps-manifest-dir --load-dummydata --logging-rule --no-cache --no-dlt-logging \
+--installed-apps-manifest-dir --load-dummydata --log-instant --logging-rule --no-cache --no-dlt-logging \
 --no-fullscreen --no-security --no-ui-watchdog -o --option --qml-debug --single-app \
 --slow-animations --verbose --version --wayland-socket-name"
 

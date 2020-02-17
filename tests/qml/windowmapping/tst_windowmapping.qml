@@ -314,7 +314,7 @@ TestCase {
         compare(allProps.objectName, 42);
     }
 
-    // Checks that window properties survice show/hide cycles
+    // Checks that window properties survive show/hide cycles
     // Regression test for https://bugreports.qt.io/browse/AUTOSUITE-447
     function test_window_properties_survive_show_hide() {
         var app = ApplicationManager.application("test.winmap.amwin");

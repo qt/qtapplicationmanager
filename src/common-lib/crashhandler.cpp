@@ -406,12 +406,13 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
 
     if (printBacktrace) {
         if (!QLibraryInfo::isDebugBuild()) {
-            logMsgF(logTo, "\n > Your binary is build in release mode. The provided stacktrace might not very accurate.");
-            logMsgF(logTo, " > Please consider using a debug build for a more accurate stacktrace.");
-#    if defined(Q_OS_MACOS)
-            logMsgF(logTo, " > E.g. By running the binary using DYLD_IMAGE_SUFFIX=_debug");
+            logMsgF(logTo, "\n > Your binary is built in release mode. The following backtrace might be inaccurate.");
+            logMsgF(logTo, " > Please consider using a debug build for a more accurate backtrace.");
+#  if defined(Q_OS_MACOS)
+            logMsgF(logTo, " > E.g. by running the binary using DYLD_IMAGE_SUFFIX=_debug");
 #  endif
         }
+
 #  if defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
         struct btData
         {
@@ -487,7 +488,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
         int addrCount = backtrace(addrArray, sizeof(addrArray) / sizeof(*addrArray));
 
         if (!addrCount) {
-            logMsg(logTo, " > no backtrace available");
+            logMsg(logTo, " > no C++ backtrace available");
         } else {
             //backtrace_symbols_fd(addrArray, addrCount, 2);
             char **symbols = backtrace_symbols(addrArray, addrCount);
@@ -495,7 +496,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
             if (!symbols) {
                 logMsg(logTo, " > no symbol names available");
             } else {
-                logMsg(logTo, "\n > backtrace:");
+                logMsg(logTo, "\n > C++ backtrace:");
                 for (int i = 1; i < addrCount; ++i) {
                     char *function = nullptr;
                     char *offset = nullptr;

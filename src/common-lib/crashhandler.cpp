@@ -61,7 +61,7 @@ QT_END_NAMESPACE_AM
 
 #if defined(Q_OS_WINDOWS)
 
-#include <Windows.h>
+#include <windows.h>
 
 // this will make the constructor run before all other static constructor functions
 #  pragma warning(push)

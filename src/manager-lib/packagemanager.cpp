@@ -57,7 +57,7 @@
 #include "utilities.h"
 
 #if defined(Q_OS_WIN)
-#  include <Windows.h>
+#  include <windows.h>
 #else
 #  include <sys/stat.h>
 #  include <errno.h>

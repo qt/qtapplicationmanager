@@ -59,8 +59,8 @@
 #  include <unistd.h>
 #endif
 #if defined(Q_OS_WIN)
-#  include <Windows.h>
-#  include <TlHelp32.h>
+#  include <windows.h>
+#  include <tlhelp32.h>
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
 #  include <unistd.h>
 #  include <sys/mount.h>

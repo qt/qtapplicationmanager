@@ -61,7 +61,7 @@
 #include <stdio.h>
 
 #if defined(Q_OS_WIN)
-#  include <Windows.h>
+#  include <windows.h>
 #  include <io.h>
 #  include <QOperatingSystemVersion>
 #  include <QThread>

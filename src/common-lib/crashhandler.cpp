@@ -568,8 +568,8 @@ QT_END_NAMESPACE_AM
 
 #elif defined(Q_OS_WINDOWS)
 
-#  include <Windows.h>
-#  include <DbgHelp.h>
+#  include <windows.h>
+#  include <dbghelp.h>
 #  if defined(AM_USE_STACKWALKER)
 #    include <stackwalker.h>
 #  endif

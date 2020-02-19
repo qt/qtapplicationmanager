@@ -364,6 +364,9 @@ static void initBacktraceUnix()
         // 4 means to remove 4 stack frames: this way the backtrace starts at std::terminate
         crashHandler(buffer, 4);
     });
+
+    // create a new process group, so that we are able to kill all children with ::kill(0, ...)
+    setpgid(0, 0);
 }
 
 static void logCrashInfo(LogToDestination logTo, const char *why, int stackFramesToIgnore)
@@ -377,10 +380,17 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
     }
 
     pid_t pid = getpid();
+#if defined(Q_OS_LINUX)
     long tid = syscall(SYS_gettid);
+    bool isMainThread = (tid == pid);
+#else
+    long tid = -1;
+    bool isMainThread = pthread_main_np();
+#endif
     pthread_t pthreadId = pthread_self();
     char threadName[16];
-    if (tid == pid)
+
+    if (isMainThread)
         strcpy(threadName, "main");
     else if (pthread_getname_np(pthreadId, threadName, sizeof(threadName)))
         strcpy(threadName, "unknown");
@@ -542,6 +552,9 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     if (Logging::isDltEnabled())
         logCrashInfo(Dlt, why, stackFramesToIgnore);
 #  endif
+
+    // make sure to kill our sub-process as well
+    kill(0, SIGABRT);
 
     if (dumpCore) {
         logMsg(Console, "\n > the process will be aborted (core dumped)\n\n");

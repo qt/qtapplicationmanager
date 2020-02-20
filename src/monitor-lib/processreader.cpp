@@ -93,6 +93,8 @@ void ProcessReader::openCpuLoad()
     m_statReader.reset(new SysFsReader(fileName));
     if (!m_statReader->isOpen())
         qCWarning(LogSystem) << "Cannot read CPU load from" << fileName;
+    m_lastCpuUsage = 0;
+    m_elapsedTime.invalidate();
 }
 
 qreal ProcessReader::readCpuLoad()
@@ -124,7 +126,7 @@ qreal ProcessReader::readCpuLoad()
     pos = int(endPtr - str.constData() + 1);
     quint64 stime = strtoull(str.constData() + pos, nullptr, 10); // check missing for overflow
 
-    qreal load = elapsed != 0 ? (utime + stime - m_lastCpuUsage) * 1000.0 / sysconf(_SC_CLK_TCK) / elapsed : 0.0;
+    qreal load = (elapsed != 0) ? ((utime + stime - m_lastCpuUsage) * 1000.0 / sysconf(_SC_CLK_TCK) / elapsed) : 0.0;
     m_lastCpuUsage = utime + stime;
     return load;
 }

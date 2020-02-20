@@ -154,6 +154,21 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         QString infoName = qSL("info.yaml");
         QScopedPointer<PackageInfo> package(PackageInfo::fromManifest(source.absoluteFilePath(infoName)));
 
+        // warn the user that old-style manifests are going to be deprecated in the future
+        try {
+            QFile f(package->manifestPath());
+            f.open(QFile::ReadOnly);
+            YamlParser p(f.readAll());
+
+            auto header = p.parseHeader();
+            if (header.first == qL1S("am-application") && header.second == 1) {
+                fprintf(stderr, "WARNING: 'info.yaml' is still using the old format (type '%s', version '%d').\n"
+                                "         This is going to be deprecated in a future release.\n",
+                        qPrintable(header.first), header.second);
+            }
+        } catch (...) {
+        }
+
         // build report
         InstallationReport report(package->id());
         report.addFile(infoName);

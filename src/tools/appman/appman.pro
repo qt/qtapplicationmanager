@@ -7,6 +7,9 @@ QT = appman_main-private
 
 CONFIG *= console
 
+# As the testrunner includes this files as well, only enable it for the appman
+macos: equals(_PRO_FILE_, $$_PRO_FILE_PWD_/appman.pro): CONFIG *= separate_debug_info
+
 SOURCES += \
     $$PWD/appman.cpp
 

@@ -47,6 +47,8 @@
 #  include <QtQml/private/qv4engine_p.h>
 #endif
 
+#include <QLibraryInfo>
+
 #include "crashhandler.h"
 #include "global.h"
 #include "utilities.h"
@@ -403,6 +405,13 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
             threadName, tid, pthreadId);
 
     if (printBacktrace) {
+        if (!QLibraryInfo::isDebugBuild()) {
+            logMsgF(logTo, "\n > Your binary is build in release mode. The provided stacktrace might not very accurate.");
+            logMsgF(logTo, " > Please consider using a debug build for a more accurate stacktrace.");
+#    if defined(Q_OS_MACOS)
+            logMsgF(logTo, " > E.g. By running the binary using DYLD_IMAGE_SUFFIX=_debug");
+#  endif
+        }
 #  if defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
         struct btData
         {

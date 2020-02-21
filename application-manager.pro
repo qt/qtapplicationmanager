@@ -52,7 +52,7 @@ linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|
     check_libbacktrace = "no"
 }
 
-windows:msvc:!disable-stackwalker:if(enable-stackwalker|CONFIG(debug, debug|release)|debug_and_release)  {
+windows:msvc:!disable-stackwalker {
     check_stackwalker = "yes"
     SUBDIRS += 3rdparty/stackwalker/stackwalker.pro
 } else {

@@ -45,7 +45,7 @@ if(linux|force-libcrypto) {
     else:SUBDIRS += 3rdparty/libarchive/libarchive.pro
 }
 
-linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release))  {
+!disable-libbacktrace:if(linux:!android:if(enable-libbacktrace|CONFIG(debug, debug|release))|macos) {
     check_libbacktrace = "yes"
     SUBDIRS += 3rdparty/libbacktrace/libbacktrace.pro
 } else {

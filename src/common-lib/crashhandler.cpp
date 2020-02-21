@@ -306,6 +306,8 @@ QT_END_NAMESPACE_AM
 #  endif
 #  if defined(Q_OS_LINUX)
 #    include <dlfcn.h>
+#  elif defined(Q_OS_MACOS)
+#    include <mach-o/dyld.h>
 #  endif
 
 #  include "unixsignalhandler.h"
@@ -454,7 +456,15 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
             return 0;
         };
 
-        struct backtrace_state *state = backtrace_create_state(nullptr, BACKTRACE_SUPPORTS_THREADS,
+        char *executable_path = nullptr;
+#    if defined(Q_OS_MACOS)
+        char executable_path_buf[1024];
+        uint32_t executable_path_buf_len = sizeof(executable_path_buf);
+        if (_NSGetExecutablePath(executable_path_buf, &executable_path_buf_len) == 0)
+            executable_path = executable_path_buf;
+#    endif
+
+        struct backtrace_state *state = backtrace_create_state(executable_path, BACKTRACE_SUPPORTS_THREADS,
                                                                errorCallback, nullptr);
 
         logMsg(logTo, "\n > C++ backtrace:");

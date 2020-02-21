@@ -19,7 +19,7 @@ systemd-workaround:DEFINES *= AM_SYSTEMD_WORKAROUND
 headless:DEFINES *= AM_HEADLESS
 enable-widgets:DEFINES *= AM_ENABLE_WIDGETS
 config_touchemulation:DEFINES += AM_ENABLE_TOUCH_EMULATION
-linux:!android:!disable-libbacktrace:if(enable-libbacktrace|CONFIG(debug, debug|release)):DEFINES *= AM_USE_LIBBACKTRACE
+!disable-libbacktrace:if(linux:!android:if(enable-libbacktrace|CONFIG(debug, debug|release))|macos): DEFINES *= AM_USE_LIBBACKTRACE
 windows:msvc:!disable-stackwalker: DEFINES *= AM_USE_STACKWALKER
 
 !force-single-process {

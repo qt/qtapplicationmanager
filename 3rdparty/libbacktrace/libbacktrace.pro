@@ -1,4 +1,4 @@
-requires(linux)
+requires(linux|macos)
 
 TEMPLATE = lib
 TARGET = qtbacktrace
@@ -30,10 +30,12 @@ DEFINES *= _GNU_SOURCE
 
 INCLUDEPATH += $$PWD/auxincl $$PWD/libbacktrace
 
+linux: SOURCES += libbacktrace/elf.c
+macos: SOURCES += libbacktrace/macho.c
+
 SOURCES += \
     libbacktrace/backtrace.c \
     libbacktrace/simple.c \
-    libbacktrace/elf.c \
     libbacktrace/dwarf.c \
     libbacktrace/mmapio.c \
     libbacktrace/mmap.c \

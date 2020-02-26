@@ -62,6 +62,7 @@ QT_END_NAMESPACE_AM
 #else
 
 #if defined(QT_QML_LIB)
+#  include <QPointer>
 #  include <QQmlEngine>
 #  include <QtQml/private/qv4engine_p.h>
 #  include <QtQml/private/qv8engine_p.h>
@@ -113,7 +114,7 @@ void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
 }
 
 #if defined(QT_QML_LIB)
-static QQmlEngine *qmlEngine;
+static QPointer<QQmlEngine> qmlEngine;
 
 void CrashHandler::setQmlEngine(QQmlEngine *engine)
 {

@@ -50,6 +50,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+QVector<QmlInProcessApplicationManagerWindow *> QmlInProcessApplicationManagerWindow::s_inCompleteWindows;
+
 QmlInProcessApplicationManagerWindow::QmlInProcessApplicationManagerWindow(QObject *parent)
     : QObject(parent)
     , m_surfaceItem(new InProcessSurfaceItem)
@@ -188,8 +190,8 @@ void QmlInProcessApplicationManagerWindow::componentComplete()
     findParentWindow(parent());
 
     // This part is scary, but we need to make sure that all Component.onComplete: handlers on
-    // the QML side have been run, before we hand this window over to the WindowManager for the
-    // onWindowReady signal. The problem here is that the C++ componentComplete() handler (this
+    // the QML side have been run, before we hand this window over to the WindowManager to emit the
+    // windowAdded signal. The problem here is that the C++ componentComplete() handler (this
     // function) is called *before* the QML side, plus, to make matters worse, the QML incubator
     // could switch back to the event loop a couple of times before finally calling the QML
     // onCompleted handler(s).
@@ -197,6 +199,9 @@ void QmlInProcessApplicationManagerWindow::componentComplete()
     // and wait until the last of them has been dealt with, to finally call our addSurfaceItem
     // function (we are also relying on the signal emission order, so that our lambda is called
     // after the actual QML handler).
+    // We also make sure that onWindowAdded is called in the same order, as this function is
+    // called, so we don't depend on the existence of onCompleted handlers (and conform to multi-
+    // process mode; there is no guarantee though, since multi-process is inherently asynchronous).
 
     for (auto a = QQmlComponent::qmlAttachedProperties(this); a; a = a->next) {
         auto appWindow = qobject_cast<QmlInProcessApplicationManagerWindow *>(a->parent());
@@ -208,16 +213,30 @@ void QmlInProcessApplicationManagerWindow::componentComplete()
         connect(a, &QQmlComponentAttached::completed, this, [this, a]() {
             m_attachedCompleteHandlers.removeAll(a);
 
-            if (m_attachedCompleteHandlers.isEmpty())
-                notifyRuntimeAboutSurface();
+            if (m_attachedCompleteHandlers.isEmpty()) {
+                QMutableVectorIterator<QmlInProcessApplicationManagerWindow *> iter(s_inCompleteWindows);
+                while (iter.hasNext()) {
+                    QmlInProcessApplicationManagerWindow *win = iter.next();
+                    if (win->m_attachedCompleteHandlers.isEmpty()) {
+                        iter.remove();
+                        win->notifyRuntimeAboutSurface();
+                    } else {
+                        break;
+                    }
+
+                }
+            }
         });
     }
 
-    // If we do not even have a single Component.onCompleted handler on the QML side, we need to
-    // show the window immediately.
-    if (m_attachedCompleteHandlers.isEmpty()) {
+    // If we do not even have a single Component.onCompleted handler on the QML side and no
+    // previous window is waiting for onCompleted, we need to show the window immediately.
+    // Otherwise we save this window and process it later in the lambda above, in the same order as
+    // this function is called.
+    if (m_attachedCompleteHandlers.isEmpty() && s_inCompleteWindows.isEmpty())
         notifyRuntimeAboutSurface();
-    }
+    else
+        s_inCompleteWindows << this;
 }
 
 void QmlInProcessApplicationManagerWindow::notifyRuntimeAboutSurface()

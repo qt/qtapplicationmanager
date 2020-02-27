@@ -185,6 +185,8 @@ private:
     void findParentWindow(QObject *object = nullptr);
     void setParentWindow(QmlInProcessApplicationManagerWindow *appWindow);
 
+    static QVector<QmlInProcessApplicationManagerWindow *> s_inCompleteWindows;
+
     QSharedPointer<InProcessSurfaceItem> m_surfaceItem;
     QmlInProcessRuntime *m_runtime = nullptr;
     QVector<QQmlComponentAttached *> m_attachedCompleteHandlers;

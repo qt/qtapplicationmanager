@@ -56,15 +56,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-#if defined(Q_OS_UNIX)
-
-// make it clear in the valgrind backtrace that this is a deliberate leak
-static void *malloc_valgrind_ignore(size_t size)
-{
-    return malloc(size);
-}
-#endif
-
 // sigmask() is not available on Windows
 UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)
 {
@@ -73,12 +64,29 @@ UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)
 
 UnixSignalHandler *UnixSignalHandler::s_instance = nullptr;
 
+#if defined(Q_OS_UNIX)
+// make it clear in the valgrind backtrace that this is a deliberate leak
+static void *malloc_valgrind_ignore(size_t size)
+{
+    return malloc(size);
+}
+
 UnixSignalHandler::UnixSignalHandler()
     : QObject()
-#if defined(Q_OS_UNIX)
     , m_pipe { -1, -1 }
-#endif
+{
+    // Setup alternate signal stack (to get backtrace for stack overflow)
+    stack_t sigstack;
+    // valgrind will report this as leaked: nothing we can do about it
+    sigstack.ss_sp = malloc_valgrind_ignore(SIGSTKSZ);
+    sigstack.ss_size = SIGSTKSZ;
+    sigstack.ss_flags = 0;
+    sigaltstack(&sigstack, nullptr);
+}
+#else
+UnixSignalHandler::UnixSignalHandler() : QObject()
 { }
+#endif
 
 UnixSignalHandler *UnixSignalHandler::instance()
 {
@@ -208,13 +216,6 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
         m_handlers.emplace_back(sig, handlerType == ForwardedToEventLoopHandler, handler);
 
 #if defined(Q_OS_UNIX)
-    // Use alternate signal stack to get backtrace for stack overflow
-    stack_t sigstack;
-    sigstack.ss_sp = malloc_valgrind_ignore(SIGSTKSZ); // valgrind will report this as leaked: nothing we can do about it
-    sigstack.ss_size = SIGSTKSZ;
-    sigstack.ss_flags = 0;
-    sigaltstack(&sigstack, nullptr);
-
     struct sigaction sigact;
     sigact.sa_flags = SA_ONSTACK;
     sigact.sa_handler = sigHandler;

@@ -326,7 +326,7 @@ static void initBacktraceUnix()
 #  endif
 
     UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler,
-                                           { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT },
+                                           { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT, SIGQUIT, SIGSYS },
                                            [](int sig) {
         UnixSignalHandler::instance()->resetToDefault(sig);
         char buffer[256];
@@ -387,6 +387,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
 #if defined(Q_OS_LINUX)
     long tid = syscall(SYS_gettid);
     bool isMainThread = (tid == pid);
+
 #else
     long tid = -1;
     bool isMainThread = pthread_main_np();
@@ -540,7 +541,8 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     //  1) avoid recursions
     //  2) SIGABRT to re-enable standard abort() handling
     //  3) SIGINT, so that you can Ctrl+C the app if the crash handler ends up freezing
-    UnixSignalHandler::instance()->resetToDefault({ SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT, SIGINT });
+    UnixSignalHandler::instance()->resetToDefault({ SIGFPE, SIGSEGV, SIGILL, SIGBUS,
+                                                    SIGPIPE, SIGABRT, SIGINT, SIGQUIT, SIGSYS });
 
     logCrashInfo(Console, why, stackFramesToIgnore);
 
@@ -573,11 +575,12 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
         logCrashInfo(Dlt, why, stackFramesToIgnore);
 #  endif
 
-    // make sure to kill our sub-process as well
-    kill(0, SIGABRT);
+    // make sure to terminate our sub-process as well, but not ourselves
+    signal(SIGTERM, SIG_IGN);
+    kill(0, SIGTERM);
 
     if (dumpCore) {
-        logMsg(Console, "\n > the process will be aborted (core dumped)\n\n");
+        logMsg(Console, "\n > the process will be aborted (core dumped)\n");
         abort();
     }
 

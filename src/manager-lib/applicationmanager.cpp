@@ -619,8 +619,6 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     if (app->isBlocked())
         throw Exception("Application %1 is blocked - cannot start").arg( app->id());
 
-    Application* realApp = app->nonAliased();
-
     AbstractRuntime *runtime = app->currentRuntime();
     auto runtimeManager = runtime ? runtime->manager() : RuntimeFactory::instance()->manager(app->runtimeName());
     if (!runtimeManager)
@@ -769,7 +767,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
                 attachRuntime = true;
         }
         if (!runtime)
-            runtime = RuntimeFactory::instance()->create(container, realApp);
+            runtime = RuntimeFactory::instance()->create(container, app->nonAliased());
 
         if (runtime)
             emit internalSignals.newRuntimeCreated(runtime);
@@ -809,8 +807,6 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     else if (!app->documentUrl().isNull())
         runtime->openDocument(app->documentUrl(), documentMimeType);
 
-    emitActivated(app);
-
     qCDebug(LogSystem) << "Starting application" << app->id() << "in container" << containerId
                        << "using runtime" << runtimeManager->identifier();
     if (!documentUrl.isEmpty())
@@ -818,7 +814,9 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
 
     if (inProcess) {
         bool ok = runtime->start();
-        if (!ok)
+        if (ok)
+            emitActivated(app);
+        else
             runtime->deleteLater();
         return ok;
     } else {
@@ -826,11 +824,13 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
         // Using a state-machine would be one option, but then we would need that state-machine
         // object plus the per-app state. Relying on 2 lambdas is the easier choice for now.
 
-        auto doStartInContainer = [realApp, attachRuntime, runtime]() -> bool {
-            bool successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(realApp)
+        auto doStartInContainer = [this, app, attachRuntime, runtime]() -> bool {
+            bool successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app->nonAliased())
                                                      : runtime->start();
-            if (!successfullyStarted)
-                runtime->deleteLater(); // ~Runtime() will clean realApp->m_runtime
+            if (successfullyStarted)
+                emitActivated(app);
+            else
+                runtime->deleteLater(); // ~Runtime() will clean app->nonAliased()->m_runtime
 
             return successfullyStarted;
         };

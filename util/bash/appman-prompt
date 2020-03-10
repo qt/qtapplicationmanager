@@ -37,11 +37,17 @@ _appman()
 --installed-apps-manifest-dir --load-dummydata --log-instant --logging-rule --no-cache --no-dlt-logging \
 --no-fullscreen --no-security --no-ui-watchdog -o --option --qml-debug --single-app \
 --slow-animations --verbose --version --wayland-socket-name"
+    dbusopts="session system none"
 
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
     else
-        COMPREPLY=( $( compgen -f -- ${cur}) )
+        COMPREPLY=( $(compgen -W "${dbusopts}" -- ${cur}) )
+        if [ ${COMP_CWORD} -gt 1 ] && [[ ${COMP_WORDS[COMP_CWORD-1]} == "--dbus" ]] ; then
+            COMPREPLY=( $(compgen -W "${dbusopts}" -- ${cur}) )
+        else
+            COMPREPLY=( $( compgen -f -- ${cur}) )
+        fi
     fi
 }
 complete -o filenames -F _appman appman appman-qmltestrunner

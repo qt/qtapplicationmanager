@@ -81,7 +81,7 @@ tst_Main::tst_Main()
 {
     argc = 3;
     argv = new char*[argc + 1];
-    argv[0] = qstrdup("tst_update-builtin-app");
+    argv[0] = qstrdup("tst_Main");
     argv[1] = qstrdup("--dbus");
     argv[2] = qstrdup("none");
     argv[3] = nullptr;
@@ -351,7 +351,7 @@ void tst_Main::mainQmlFile()
     QFETCH(QString, expectedErrorMsg);
 
     QStringList arguments;
-    arguments << "tst_update-builtin-app";
+    arguments << "tst_Main";
     arguments << "--dbus";
     arguments << "none";
     arguments << mainQml;

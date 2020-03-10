@@ -636,6 +636,8 @@ The following conditions are handled:
         \li \c SIGILL
         \li \c SIGFPE
         \li \c SIGPIPE
+        \li \c SIGQUIT
+        \li \c SIGSYS
     \endlist
 
 \table

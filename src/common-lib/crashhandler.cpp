@@ -387,7 +387,6 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
 #if defined(Q_OS_LINUX)
     long tid = syscall(SYS_gettid);
     bool isMainThread = (tid == pid);
-
 #else
     long tid = -1;
     bool isMainThread = pthread_main_np();

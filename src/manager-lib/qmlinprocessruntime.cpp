@@ -156,7 +156,7 @@ bool QmlInProcessRuntime::start()
 
     // We are running each application in it's own, separate Qml context.
     // This way, we can export an unique ApplicationInterface object for each app
-    QQmlContext *appContext = new QQmlContext(m_inProcessQmlEngine->rootContext());
+    QQmlContext *appContext = new QQmlContext(m_inProcessQmlEngine->rootContext(), this);
     m_applicationIf = new QmlInProcessApplicationInterface(this);
     appContext->setContextProperty(qSL("ApplicationInterface"), m_applicationIf);
     connect(m_applicationIf, &QmlInProcessApplicationInterface::quitAcknowledged,
@@ -167,16 +167,17 @@ bool QmlInProcessRuntime::start()
 
     QObject *obj = component->beginCreate(appContext);
 
-    QMetaObject::invokeMethod(this, [component, appContext, obj, this]() {
+    QMetaObject::invokeMethod(this, [component, obj, this]() {
         component->completeCreate();
+        delete component;
         if (!obj) {
             qCCritical(LogSystem) << "could not load" << m_app->info()->absoluteCodeFilePath() << ": no root object";
-            delete obj;
-            delete appContext;
-            delete m_applicationIf;
-            m_applicationIf = nullptr;
             finish(3, Am::NormalExit);
         } else {
+            if (state() == Am::ShuttingDown) {
+                delete obj;
+                return;
+            }
 #if !defined(AM_HEADLESS)
             if (!qobject_cast<QmlInProcessApplicationManagerWindow*>(obj)) {
                 QQuickItem *item = qobject_cast<QQuickItem*>(obj);
@@ -192,7 +193,6 @@ bool QmlInProcessRuntime::start()
                 openDocument(m_document, QString());
             setState(Am::Running);
         }
-        delete component;
     }, Qt::QueuedConnection);
     return true;
 }

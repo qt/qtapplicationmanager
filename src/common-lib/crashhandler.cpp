@@ -43,6 +43,7 @@
 #include <inttypes.h>
 
 #if defined(QT_QML_LIB)
+#  include <QPointer>
 #  include <QQmlEngine>
 #  include <QtQml/private/qv4engine_p.h>
 #endif
@@ -82,7 +83,7 @@ static size_t demangleBufferSize;
 static QByteArray *backtraceLineOut;
 static QByteArray *backtraceLineTmp;
 
-static QQmlEngine *qmlEngine;
+static QPointer<QQmlEngine> qmlEngine;
 
 
 void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)

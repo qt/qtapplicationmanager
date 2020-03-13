@@ -49,7 +49,9 @@ QtObject {
 
     property var connections: Connections {
         target: ApplicationInterface
-        onQuit: target.acknowledgeQuit()
+        function onQuit() {
+            target.acknowledgeQuit();
+        }
     }
 
     property var handler: IntentHandler {

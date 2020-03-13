@@ -158,7 +158,7 @@ Window {
 
                 Connections {
                     target: window
-                    onContentStateChanged: {
+                    function onContentStateChanged() {
                         if (window.contentState === WindowObject.NoSurface)
                             topLevelWindowsModel.remove(model.index, 1);
                     }
@@ -180,7 +180,7 @@ Window {
             window: model.window
             Connections {
                 target: model.window
-                onContentStateChanged: {
+                function onContentStateChanged() {
                     if (model.window.contentState === WindowObject.NoSurface)
                         popupsModel.remove(model.index, 1);
                 }
@@ -198,7 +198,7 @@ Window {
 
     Connections {
         target: WindowManager
-        onWindowAdded:  {
+        function onWindowAdded(window) {
             var model = window.windowProperty("type") === "pop-up" ? popupsModel : topLevelWindowsModel;
             model.append({"window":window});
         }
@@ -206,7 +206,7 @@ Window {
 
     Connections {
         target: ApplicationManager
-        onApplicationRunStateChanged: {
+        function onApplicationRunStateChanged(id, runState) {
             if (runState === Am.NotRunning
                 && ApplicationManager.application(id).lastExitStatus === Am.CrashExit) {
                 ApplicationManager.startApplication(id);

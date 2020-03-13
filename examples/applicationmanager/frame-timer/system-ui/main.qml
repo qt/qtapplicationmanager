@@ -286,7 +286,9 @@ Window {
         // Populates the windowsModel
         Connections {
             target: WindowManager
-            onWindowAdded: windowsModel.append({"window":window})
+            function onWindowAdded(window) {
+                windowsModel.append({"window":window})
+            }
         }
     }
 }

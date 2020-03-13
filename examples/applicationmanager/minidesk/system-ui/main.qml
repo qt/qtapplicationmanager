@@ -123,7 +123,7 @@ Window {
 
                 Connections {
                     target: window
-                    onContentStateChanged: {
+                    function onContentStateChanged() {
                         if (window.contentState === WindowObject.NoSurface)
                             topLevelWindowsModel.remove(model.index, 1);
                     }
@@ -146,7 +146,7 @@ Window {
 
         Connections {
             target: popUpContainer.window
-            onContentStateChanged: {
+            function onContentStateChanged() {
                 if (popUpContainer.window.contentState === WindowObject.NoSurface) {
                     popUpContainer.window = null;
                 }
@@ -165,7 +165,7 @@ Window {
     // Handler for WindowManager signals
     Connections {
         target: WindowManager
-        onWindowAdded:  {
+        function onWindowAdded(window) {
             if (window.windowProperty("type") === "pop-up") {
                 popUpContainer.window = window;
             } else {
@@ -174,8 +174,9 @@ Window {
             }
         }
 
-        onWindowPropertyChanged: console.log("SystemUI: OnWindowPropertyChanged [" + window + "] - "
-                                                       + name + ": " + value);
+        function onWindowPropertyChanged(window, name, value) {
+            console.log("SystemUI: OnWindowPropertyChanged [" + window + "] - " + name + ": " + value);
+        }
     }
 
     // IPC extension

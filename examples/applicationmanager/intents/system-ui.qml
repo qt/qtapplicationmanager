@@ -144,7 +144,9 @@ Item {
     //! [Connection]
     Connections {
         target: IntentServer
-        onDisambiguationRequest: { disambiguationDialog.add(requestId, potentialIntents) }
+        function onDisambiguationRequest(requestId, potentialIntents) {
+            disambiguationDialog.add(requestId, potentialIntents)
+        }
     }
     //! [Connection]
 

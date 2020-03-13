@@ -127,7 +127,7 @@ Window {
 
     Connections {
         target: WindowManager
-        onWindowAdded: {
+        function onWindowAdded(window) {
             console.log("System-UI: onWindowAdded: " + window);
             if (WindowManager.count >= ApplicationManager.count)
                 statsTimer.start();
@@ -222,7 +222,7 @@ Window {
 
     Connections {
         target: ApplicationManager
-        onWindowManagerCompositorReadyChanged: {
+        function onWindowManagerCompositorReadyChanged() {
             for (var i = 0; i < ApplicationManager.count; i++)
                 ApplicationManager.application(i).start();
         }

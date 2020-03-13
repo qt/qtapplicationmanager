@@ -55,7 +55,7 @@ ApplicationManagerWindow {
 
     Connections {
         target: ApplicationInterface
-        onOpenDocument: {
+        function onOpenDocument(documentUrl) {
             switch (documentUrl) {
             case "show-sub": ldr.active = true; break;
             case "hide-sub": ldr.active = false; break;

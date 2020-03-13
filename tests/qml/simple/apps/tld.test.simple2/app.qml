@@ -54,8 +54,8 @@ ApplicationManagerWindow {
 
     Connections {
         target: ApplicationInterface
-        onQuit: {
-           //Do nothing, to we get killed by appman
+        function onQuit() {
+           //Do nothing, so we get killed by appman
         }
     }
 }

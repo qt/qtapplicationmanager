@@ -60,12 +60,14 @@ TestCase {
 
     Connections {
         target: WindowManager
-        onWindowAdded: chrome.window = window;
+        function onWindowAdded(window) {
+            chrome.window = window;
+        }
     }
 
     Connections {
         target: chrome.window
-        onContentStateChanged: {
+        function onContentStateChanged() {
             if (chrome.window.contentState === WindowObject.NoSurface)
                 chrome.window = null;
         }

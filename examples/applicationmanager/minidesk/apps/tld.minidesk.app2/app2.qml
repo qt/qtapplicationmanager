@@ -75,8 +75,12 @@ ApplicationManagerWindow {
 
     Connections {
         target: ApplicationInterface
-        onOpenDocument: console.log("App2: onOpenDocument - " + documentUrl);
-        onQuit: target.acknowledgeQuit();
+        function onOpenDocument(documentUrl, mimeType) {
+            console.log("App2: onOpenDocument - " + documentUrl);
+        }
+        function onQuit() {
+            target.acknowledgeQuit();
+        }
     }
 
     ApplicationInterfaceExtension {
@@ -89,7 +93,11 @@ ApplicationManagerWindow {
 
     Connections {
         target: extension.object
-        onComputed: console.log("App2: " + what + " has been computed");
-        onPiChanged: console.log("App2: pi changed: " + target.pi);
+        function onComputed(what) {
+            console.log("App2: " + what + " has been computed");
+        }
+        function onPiChanged() {
+            console.log("App2: pi changed: " + target.pi);
+        }
     }
 }

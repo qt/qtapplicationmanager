@@ -52,7 +52,7 @@ ApplicationManagerWindow {
 
     Connections {
         target: ApplicationInterface
-        onOpenDocument: {
+        function onOpenDocument(documentUrl) {
             switch (documentUrl) {
             case "illegalMemory": accessIllegalMemory(); break;
             case "illegalMemoryInThread": Terminator.accessIllegalMemoryInThread(); break;

@@ -59,7 +59,7 @@ QtObject {
 
     property Connections con: Connections {
         target: ApplicationInterface
-        onOpenDocument: {
+        function onOpenDocument(documentUrl) {
             switch (documentUrl) {
                 case "show-main": main.visible = true; break;
                 case "hide-main": main.visible = false; break;

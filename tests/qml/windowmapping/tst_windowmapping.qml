@@ -59,8 +59,9 @@ TestCase {
 
         Connections {
             target: chrome.window
-            onContentStateChanged: if (chrome.window.contentState === WindowObject.NoSurface) {
-                chrome.window = null;
+            function onContentStateChanged() {
+                if (chrome.window.contentState === WindowObject.NoSurface)
+                    chrome.window = null;
             }
         }
 
@@ -69,8 +70,9 @@ TestCase {
             anchors.fill: parent
             Connections {
                 target: subChrome.window
-                onContentStateChanged: if (subChrome.window.contentState === WindowObject.NoSurface) {
-                    subChrome.window = null;
+                function onContentStateChanged() {
+                    if (subChrome.window.contentState === WindowObject.NoSurface)
+                        subChrome.window = null;
                 }
             }
         }
@@ -78,7 +80,7 @@ TestCase {
 
     Connections {
         target: WindowManager
-        onWindowAdded: {
+        function onWindowAdded(window) {
             if (window.windowProperty("type") === "sub")
                 subChrome.window = window;
             else

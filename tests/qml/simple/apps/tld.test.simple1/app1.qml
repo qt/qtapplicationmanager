@@ -54,6 +54,8 @@ ApplicationManagerWindow {
 
     Connections {
         target: ApplicationInterface
-        onQuit: { target.acknowledgeQuit();}
+        function onQuit() {
+            target.acknowledgeQuit();
+        }
     }
 }

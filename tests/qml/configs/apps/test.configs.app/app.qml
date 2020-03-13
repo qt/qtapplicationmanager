@@ -66,7 +66,7 @@ ApplicationManagerWindow {
 
     Connections {
         target: extension.object
-        onTrigger: {
+        function onTrigger(type) {
             if (type === "Notification") {
                 if (target.func("bar") === 42)
                     notification.show();
@@ -78,7 +78,9 @@ ApplicationManagerWindow {
 
     Connections {
         target: ApplicationInterface
-        onQuit: target.acknowledgeQuit();
+        function onQuit() {
+            target.acknowledgeQuit();
+        }
     }
 
     Component.onCompleted: {

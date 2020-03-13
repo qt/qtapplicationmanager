@@ -56,11 +56,11 @@ Item {
 
     Connections {
         target: WindowManager
-        onWindowAdded:  {
+        function onWindowAdded(window) {
             windowItem.window = window;
         }
 
-        onWindowAboutToBeRemoved: {
+        function onWindowAboutToBeRemoved(window) {
             if (window === windowItem.window) {
                 windowItem.window = null;
             }

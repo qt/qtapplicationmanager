@@ -54,7 +54,7 @@ ApplicationManagerWindow {
 
     Connections {
         target: ApplicationInterface
-        onOpenDocument: {
+        function onOpenDocument(documentUrl) {
             switch (documentUrl) {
             case "show-main": root.visible = true; root.setWindowProperty("key1", "val1"); break;
             case "hide-main": root.visible = false; break;

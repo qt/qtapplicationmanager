@@ -90,7 +90,7 @@ Item {
     property var chosenModel
     Connections {
         target: WindowManager
-        onWindowAdded:  {
+        function onWindowAdded(window) {
             root.chosenModel.append({"window":window});
         }
     }

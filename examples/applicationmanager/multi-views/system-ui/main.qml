@@ -221,7 +221,7 @@ Rectangle {
     // Handler for WindowManager signals
     Connections {
         target: WindowManager
-        onWindowAdded:  {
+        function onWindowAdded(window) {
             topLevelWindowsModel.append({"window":window});
         }
     }

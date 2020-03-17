@@ -59,7 +59,6 @@
 #include "qtyaml.h"
 #include "applicationinterface.h"
 #include "applicationipcmanager.h"
-#include "applicationipcinterface.h"
 #include "utilities.h"
 #include "notificationmanager.h"
 #include "dbus-utilities.h"

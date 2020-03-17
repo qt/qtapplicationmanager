@@ -75,8 +75,8 @@ class Controller : public QObject
     Q_OBJECT
 
 public:
-    Controller(LauncherMain *a, bool quickLaunched);
-    Controller(LauncherMain *a, bool quickLaunched, const QPair<QString, QString> &directLoad);
+    Controller(LauncherMain *launcher, bool quickLaunched);
+    Controller(LauncherMain *launcher, bool quickLaunched, const QPair<QString, QString> &directLoad);
 
 public slots:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,

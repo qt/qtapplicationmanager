@@ -196,8 +196,8 @@ int main(int argc, char *argv[])
     }
 }
 
-Controller::Controller(LauncherMain *a, bool quickLaunched)
-    : Controller(a, quickLaunched, qMakePair(QString{}, QString{}))
+Controller::Controller(LauncherMain *launcher, bool quickLaunched)
+    : Controller(launcher, quickLaunched, qMakePair(QString{}, QString{}))
 { }
 
 Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<QString, QString> &directLoad)

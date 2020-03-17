@@ -60,8 +60,6 @@ class Notification;
 class NativeRuntime;
 class NativeRuntimeInterface;
 class NativeRuntimeApplicationInterface;
-class ApplicationIPCInterface;
-
 class NativeRuntimeManager : public AbstractRuntimeManager
 {
     Q_OBJECT
@@ -128,7 +126,6 @@ private:
     bool m_dbusConnection = false;
     QString m_dbusConnectionName;
 
-    QList<ApplicationIPCInterface *> m_applicationIPCInterfaces;
     NativeRuntimeApplicationInterface *m_applicationInterface = nullptr;
     NativeRuntimeInterface *m_runtimeInterface = nullptr;
     AbstractContainerProcess *m_process = nullptr;

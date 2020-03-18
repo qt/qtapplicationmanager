@@ -234,7 +234,6 @@ private:
     Exception *m_exception = nullptr;
 };
 
-
 int main(int argc, char *argv[])
 {
     QCoreApplication::setApplicationName(qSL("Qt Application Manager Controller"));
@@ -260,7 +259,6 @@ int main(int argc, char *argv[])
             "  appman-controller <command> --help";
 
     QCommandLineParser clp;
-    clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qL1S(desc));
 
     clp.addHelpOption();
     clp.addVersionOption();
@@ -270,10 +268,10 @@ int main(int argc, char *argv[])
     // ignore unknown options for now -- the sub-commands may need them later
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
 
-    if (!clp.parse(QCoreApplication::arguments())) {
-        fprintf(stderr, "%s\n", qPrintable(clp.errorText()));
-        exit(1);
-    }
+    // ignore the return value here, as we also accept options we don't know about yet.
+    // If an option is really not accepted by a command, the comman specific parsing should report
+    // this.
+    clp.parse(QCoreApplication::arguments());
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
 
     // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
@@ -282,8 +280,10 @@ int main(int argc, char *argv[])
         case NoCommand:
             if (clp.isSet(qSL("version")))
                 clp.showVersion();
+
+            clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qL1S(desc));
             if (clp.isSet(qSL("help")))
-                clp.showHelp();
+                clp.showHelp(0);
             clp.showHelp(1);
             break;
 

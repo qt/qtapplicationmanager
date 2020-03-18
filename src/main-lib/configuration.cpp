@@ -392,7 +392,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     }
 
     if (value<bool>("start-session-dbus"))
-        qCWarning(LogDeployment) << "Option \"--start-session-dbus\" has been deprecated and will be ignored.";
+        qCDebug(LogDeployment) << "ignoring '--start-session-dbus'";
 }
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -647,9 +647,10 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                               QVariantMap map = v.toMap();
 
                               if (map.size() != 1) {
-                                  qCWarning(LogSystem) << "The container selection configuration needs to be a list of "
-                                                          "single mappings, in order to preserve the evaluation "
-                                                          "order: found a mapping with" << map.size() << "entries.";
+                                  qCWarning(LogDeployment) << "The container selection configuration needs to be a "
+                                                              "list of single mappings, in order to preserve the "
+                                                              "evaluation order: found a mapping with"
+                                                           << map.size() << "entries.";
                               }
 
                               for (auto it = map.cbegin(); it != map.cend(); ++it)
@@ -688,7 +689,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                   p->parseFields({
                       { "disable", false, YamlParser::Scalar, [&cd](YamlParser *p) {
                             cd->installer.disable = p->parseScalar().toBool(); } },
-                      { "caCertificated", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
+                      { "caCertificates", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
                             cd->installer.caCertificates = p->parseStringOrStringList(); } },
                       { "applicationUserIdSeparation", false, YamlParser::Map, [&cd](YamlParser *p) {
                             p->parseFields({
@@ -746,12 +747,19 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                   p->parseFields({
                       { "builtinAppsManifestDir", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
                             cd->applications.builtinAppsManifestDir = p->parseStringOrStringList(); } },
-                      { "installedAppsManifestDir", false, YamlParser::Scalar, [](YamlParser *p) {
-                            (void) p->parseScalar(); /* deprecated - ignore */ } },
                       { "installationDir", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
-                             cd->applications.installationDir = p->parseScalar().toString(); } },
+                            cd->applications.installationDir = p->parseScalar().toString(); } },
                       { "documentDir", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
-                             cd->applications.documentDir = p->parseScalar().toString(); } }
+                            cd->applications.documentDir = p->parseScalar().toString(); } },
+                      { "installedAppsManifestDir", false, YamlParser::Scalar, [](YamlParser *p) {
+                            qCDebug(LogDeployment) << "ignoring 'installedAppsManifestDir'";
+                            (void) p->parseScalar(); } },
+                      { "database", false, YamlParser::Scalar | YamlParser::Scalar, [](YamlParser *p) {
+                            qCDebug(LogDeployment) << "ignoring 'database'";
+                            (void) p->parseScalar(); } },
+                      { "appImageMountDir", false, YamlParser::Scalar | YamlParser::Scalar, [](YamlParser *p) {
+                            qCDebug(LogDeployment) << "ignoring 'appImageMountDir'";
+                            (void) p->parseScalar(); } }
                   }); } },
             { "flags", false, YamlParser::Map, [&cd](YamlParser *p) {
                   p->parseFields({

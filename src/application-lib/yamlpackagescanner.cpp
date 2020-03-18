@@ -178,12 +178,30 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                     legacyAppInfo->m_allAppProperties.insert(it.key(), it.value());
             });
             fields.emplace_back("documentUrl", false, YamlParser::Scalar, [](YamlParser *p) {
-                qCDebug(LogSystem) << " ignoring 'documentUrl'";
+                qCDebug(LogSystem) << "ignoring 'documentUrl'";
                 (void) p->parseScalar();
             });
             fields.emplace_back("mimeTypes", false, YamlParser::Scalar | YamlParser::List, [&legacyAppInfo](YamlParser *p) {
                 legacyAppInfo->m_supportedMimeTypes = p->parseStringOrStringList();
                 legacyAppInfo->m_supportedMimeTypes.sort();
+            });
+            fields.emplace_back("logging", false, YamlParser::Map, [&legacyAppInfo](YamlParser *p) {
+                const QVariantMap logging = p->parseMap();
+                if (!logging.isEmpty()) {
+                    if (logging.size() > 1 || logging.firstKey() != qSL("dlt"))
+                        throw YamlParserException(p, "'logging' only supports the 'dlt' key");
+                    legacyAppInfo->m_dltConfiguration = logging.value(qSL("dlt")).toMap();
+
+                    // sanity check
+                    for (auto it = legacyAppInfo->m_dltConfiguration.cbegin(); it != legacyAppInfo->m_dltConfiguration.cend(); ++it) {
+                        if (it.key() != qSL("id") && it.key() != qSL("description"))
+                            throw YamlParserException(p, "unsupported key in 'logging/dlt'");
+                    }
+                }
+            });
+            fields.emplace_back("environmentVariables", false, YamlParser::Map, [](YamlParser *p) {
+                qCDebug(LogSystem) << "ignoring 'environmentVariables'";
+                (void) p->parseMap();
             });
         }
 

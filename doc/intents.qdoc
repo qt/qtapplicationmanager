@@ -1,0 +1,165 @@
+/****************************************************************************
+**
+** Copyright (C) 2020 The Qt Company Ltd.
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the documentation of the Qt Application Manager.
+**
+** $QT_BEGIN_LICENSE:FDL-QTAS$
+** Commercial License Usage
+** Licensees holding valid commercial Qt Automotive Suite licenses may use
+** this file in accordance with the commercial license agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and The Qt Company.  For
+** licensing terms and conditions see https://www.qt.io/terms-conditions.
+** For further information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+
+\page intents.html
+\title Intents
+
+Much like the intent concept used on mobile operating systems, the application manager's intent
+system is built around the idea of having a light weight inter-process communication (IPC)
+mechanisms between apps and the System UI without hard coded coupling or even compile time
+dependencies.
+The intent itself is a description of an action that the sender application would like to be
+performed by whichever part of the system is most capable of doing so. It is the application
+manager's responsibility to make sure that these intent requests are routed to the correct
+receivers.
+A very simple example would be a \c showImage intent, where a sending application could ask the
+system to display an image file: if the system has an image viewer application installed, that
+registered itself for handling the \c showImage intent, then any application could display image
+files without knowing any specifics of the image viewer application.
+
+
+The \l{https://developer.android.com/guide/components/intents-filters}{Android documentation} also
+has a nice introduction to this concept.
+
+The application manager's approach to intents is much simpler: although it (still) lacks a few
+features compared to other solutions (e.g. support for binary data or system broadcasts), it also
+comes with a very simple and straight forward API.
+
+\note While mobile operating systems provide you with both the intent \b mechanism as well as a
+description of all the defined \b{intent APIs}, the application manager is only providing the
+mechanism. This is in line with the philosophy used in other modules within the application
+manager, where the System UI is responsible for defining the system's interface and behavior.
+
+Here is some terminology to make it easier to understand the difference between all the IDs
+involved in an intent request:
+\list
+\li the \c intentId: the name or class of an intent. In complex systems it makes sense to use
+    reverse-DNS notation here, e.g. \c io.qt.openUrl.
+\li the \c requestId: a UUID used to track an intent request throughout the system, as it
+    crosses process boundaries between System UI and up to two applications.
+\li the \c applicationId denotes the application that is responsible for handling the request. This
+    directly maps to the ApplicationObject::id value.
+    If the handling application is in fact the System UI, this id will have the special value
+    \c {:sysui:}.
+\li the \c requestingApplicationId does the same as the \c applicationId, but for the application
+    sending the request. If the requesting application is in fact the System UI, this id will have
+    the special value \c {:sysui:}.
+\endlist
+
+Arbitrary data can be attached to an intent request (see IntentClient::sendIntentRequest) and to an
+intent request reply (see IntentRequest::sendReply). Please be aware that this data needs to be
+first serialized from JavaScript objects to the underlying IPC transport and then deserialized back
+to a JavaScript object on the receiving side. Restricting the types used within the parameters and
+result object to JSON types is strongly advised.
+
+
+\section1 Registering Intents
+
+Each application defines the intents it is capable of handling in its \c info.yaml manifest file.
+Please note that neither the packager tool nor the application manager are able to validate the
+intent ids in the manifest file to be valid for your specific project.
+
+Also the System UI itself can register intents: in this case no separate manifest file is needed,
+but instead the QML handler object itself will take care of providing the data necessary for the
+registration; see the \l {Handling Intents in QML} {next section}.
+
+The application manager parses all those manifest files on startup (as well as when an
+application is installed at run time). Only the application manager itself and the System UI have
+access to the full list of registered intents defined by all the applications; for security and
+privacy reason sthe applications themselves can't access this list.
+
+
+\section1 Handling Intents in QML
+
+In order to handle intents from within your QML application, you have to instantiate IntentHandler
+items for all the intents you have defined in your manifest file. Make sure that these items are
+constructed together with the application QML root object and are never deleted afterwards.
+
+Any incoming intent request is matched against all the previously registered intents in applications
+and the System UI. When the application manager determines that your application is responsible for
+handling such an intent, it will first start your application (if it was not already running) and
+will then emit the appropriate IntentHandler's \l{IntentHandler::} {requestReceived} signal on the
+application side. Replying to those incoming requests can be done either synchronously or
+asynchronously.
+
+As for handling intents within the System UI: instead of creating IntentHandler items, you have to
+instantiate IntentServerHandler items. The IntentServerHandler is actually derived from
+IntentHandler, so it works the same way as its application side counterpart: it only adds the
+required properties to define all the meta-data (e.g. \c names, \c icon, ...), whereas those are
+provided through the manifest file for applications.
+
+
+\section1 Creating Intent Requests in QML
+
+An application that wants to send out an intent request can do so by calling the factory function
+IntentClient::sendIntentRequest(). These requests cannot be created by other means.
+The request is sent to the system immediately and the returned IntentRequest object can then be
+used to track the completion and possible result value of this request.
+
+Within the System UI you can use exactly the same mechanism to create and track intent requests.
+
+
+\section1 Disambiguating Intent Request in the System UI
+
+In case an incoming intent request could potentially be handled by more than one application, the
+application manager will reach out to the System UI to disambiguate the request and pick an
+application. The System UI can react on this by connecting to the
+IntentServer::disambiguationRequest() signal and then picking one of the possible applications via
+\l{IntentServer::}{acknowledgeDisambiguationRequest}. It could even reject the request via
+\l{IntentServer::}{rejectDisambiguationRequest} if the request cannot be disambiguated at all.
+
+
+\section1 The IntentModel in the System UI
+
+While the applications only know about their own intents, the System UI has full access to meta-data
+of all the registered intents via the IntentServer singleton and IntentModel classes. Just like with
+the ApplicationManager singleton and the ApplicationModel class, the IntentServer is the system-wide
+singleton holding all the data, while the IntentModel class can be used to have a convenient sorted
+and filtered model interface to the raw data.
+
+By using these model interfaces, the classic launcher grid that normally operates on an
+ApplicationModel can be replaced with a version using an IntentModel, so that applications are
+implicitly launched via specific intent requests that could include parameters, instead of just
+calling the ApplicationObject::start() function.
+
+
+\section1 Intents for Native Applications
+
+The intents mechanism is using D-Bus as a transport protocol between the System UI and the
+applications' processes. The D-Bus interface is defined in the file
+\c{src/dbus-lib/io.qt.applicationmanager.intentinterface.xml}.
+The D-Bus API closely resembles the QML API. The intent, application and request ids are sent as
+strings, while the parameters are converted between JavaScript objects and D-Bus \c {a{sv}} variant
+dictionaries.
+
+If you are using the application manager's convenience \c{launcher-lib} as a basic building block
+for your mixed native and QML application, then all the D-Bus handling is already implemented for
+you and you can use the IntentHandler items as described above.
+
+*/

@@ -42,6 +42,7 @@
 
 import QtQuick 2.4
 import QtTest 1.0
+import QtApplicationManager 2.0
 import QtApplicationManager.SystemUI 2.0
 
 
@@ -68,6 +69,13 @@ TestCase {
 
     SignalSpy {
         id: windowPropertyChangedSpy
+        // Workaround to flush Wayland messages, see https://bugreports.qt.io/browse/AUTOSUITE-709
+        // A proper solution in QtWayland is sought here: https://bugreports.qt.io/browse/QTBUG-83422
+        function aboutToBlockWait(timeout)
+        {
+            AmTest.aboutToBlock();
+            wait(timeout);
+        }
         target: WindowManager
         signalName: "windowPropertyChanged"
     }
@@ -109,13 +117,12 @@ TestCase {
         }
 
         window.setWindowProperty("trigger", "now");
-        windowPropertyChangedSpy.wait();
+        windowPropertyChangedSpy.aboutToBlockWait();
         compare(windowPropertyChangedSpy.signalArguments[0][0], window);
         compare(window.windowProperty("trigger"), "now");
 
-        // The following would only work in single-process mode (see https://bugreports.qt.io/browse/AUTOSUITE-709)
-        // windowPropertyChangedSpy.wait();
-        // compare(windowPropertyChangedSpy.signalArguments[1][0], window);
-        // compare(window.windowProperty("ack"), "done");
+        windowPropertyChangedSpy.wait();
+        compare(windowPropertyChangedSpy.signalArguments[1][0], window);
+        compare(window.windowProperty("ack"), "done");
     }
 }

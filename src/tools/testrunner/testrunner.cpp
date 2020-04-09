@@ -43,6 +43,7 @@
 #include "testrunner.h"
 
 #include <QCoreApplication>
+#include <QAbstractEventDispatcher>
 #include <QEventLoop>
 #include <QQmlEngine>
 #include <QRegExp>
@@ -128,6 +129,11 @@ int AmTest::observeObjectDestroyed(QObject *obj)
     });
 
     return index;
+}
+
+void AmTest::aboutToBlock()
+{
+    emit QAbstractEventDispatcher::instance()->aboutToBlock();
 }
 
 

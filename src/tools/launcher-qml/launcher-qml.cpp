@@ -327,12 +327,9 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
         }, Qt::QueuedConnection);
     }
 
-    QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
+    const QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
     if (!quicklaunchQml.isEmpty() && quickLaunched) {
-        if (QFileInfo(quicklaunchQml).isRelative())
-            quicklaunchQml.prepend(launcher->baseDir());
-
-        QQmlComponent quicklaunchComp(&m_engine, quicklaunchQml);
+        QQmlComponent quicklaunchComp(&m_engine, filePathToUrl(quicklaunchQml, launcher->baseDir()));
         if (!quicklaunchComp.isError()) {
             QScopedPointer<QObject> quicklaunchInstance(quicklaunchComp.create());
         } else {
@@ -493,7 +490,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     QVariant imports = runtimeParameters.value(qSL("importPaths"));
     const QVariantList ipvl = (imports.type() == QVariant::String) ? QVariantList{imports}
-                                                                  : qdbus_cast<QVariantList>(imports);
+                                                                   : qdbus_cast<QVariantList>(imports);
     for (const QVariant &v : ipvl) {
         const QString path = v.toString();
         const QFileInfo fi(path);

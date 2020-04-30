@@ -53,6 +53,7 @@
 #include <QWaylandQuickItem>
 
 #include <QMap>
+#include <QPointer>
 
 QT_FORWARD_DECLARE_CLASS(QWaylandResource)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
@@ -156,7 +157,7 @@ protected:
     QVector<QWaylandOutput *> m_outputs;
     WaylandQtAMServerExtension *m_amExtension;
     QWaylandTextInputManager *m_textInputManager;
-    QMap<uint, WindowSurface*> m_xdgPingMap;
+    QMap<uint, QPointer<WindowSurface>> m_xdgPingMap;
 };
 
 QT_END_NAMESPACE_AM

@@ -180,7 +180,7 @@ void WaylandCompositor::xdgPing(WindowSurface* surface)
 
 void WaylandCompositor::onXdgPongReceived(uint serial)
 {
-    WindowSurface *surface = m_xdgPingMap.take(serial);
+    auto surface = m_xdgPingMap.take(serial);
     if (surface) {
         emit surface->pong();
     }

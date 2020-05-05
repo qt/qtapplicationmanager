@@ -34,7 +34,6 @@
 #include <QVector>
 #include <QPair>
 #include <QByteArray>
-#include <QMultiMap>
 #include <QVariant>
 #include <QString>
 #include <QUrl>
@@ -93,8 +92,6 @@ inline QString toAbsoluteFilePath(const QString &path, const QString &baseDir = 
     Recursively merge the second QVariantMap into the first one
 */
 void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from);
-
-QMultiMap<QString, QString> mountedDirectories();
 
 enum class RecursiveOperationType
 {

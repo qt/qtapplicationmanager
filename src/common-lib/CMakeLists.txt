@@ -15,6 +15,7 @@ qt_internal_add_module(AppManCommonPrivate
         dbus-utilities.cpp
         error.h
         exception.cpp exception.h
+        filesystemmountwatcher.cpp filesystemmountwatcher.h
         global.h
         logging.cpp logging.h
         processtitle.cpp processtitle.h

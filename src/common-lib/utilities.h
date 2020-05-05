@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2019 The Qt Company Ltd.
+** Copyright (C) 2021 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -46,7 +46,6 @@
 #include <QVector>
 #include <QPair>
 #include <QByteArray>
-#include <QMultiMap>
 #include <QVariant>
 #include <QString>
 #include <QUrl>
@@ -105,8 +104,6 @@ inline QString toAbsoluteFilePath(const QString &path, const QString &baseDir = 
     Recursively merge the second QVariantMap into the first one
 */
 void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from);
-
-QMultiMap<QString, QString> mountedDirectories();
 
 enum class RecursiveOperationType
 {

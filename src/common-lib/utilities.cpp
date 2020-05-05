@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2019 The Qt Company Ltd.
+** Copyright (C) 2021 The Qt Company Ltd.
 ** Copyright (C) 2019 Luxoft Sweden AB
 ** Copyright (C) 2018 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
@@ -63,19 +63,7 @@
 #  include <tlhelp32.h>
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
 #  include <unistd.h>
-#  include <sys/mount.h>
-#  include <sys/statvfs.h>
 #  include <sys/sysctl.h>
-#else
-#  include <mntent.h>
-#  include <sys/stat.h>
-#  if defined(Q_OS_ANDROID)
-#    include <sys/vfs.h>
-#    define statvfs statfs
-#  else
-#    include <sys/statvfs.h>
-#  endif
-#  include <qplatformdefs.h>
 #endif
 
 QT_BEGIN_NAMESPACE_AM
@@ -140,46 +128,6 @@ YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
                 .arg(StringifyTypeAndVersion(actualFormatTypeAndVersion).string());
     }
     return actualFormatTypeAndVersion;
-}
-
-QMultiMap<QString, QString> mountedDirectories()
-{
-    QMultiMap<QString, QString> result;
-#if defined(Q_OS_WIN)
-    return result; // no mounts on Windows
-
-#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
-    struct statfs *sfs = nullptr;
-    int count = getmntinfo(&sfs, MNT_NOWAIT);
-
-    for (int i = 0; i < count; ++i, ++sfs) {
-        result.insert(QString::fromLocal8Bit(sfs->f_mntonname),
-                      QString::fromLocal8Bit(sfs->f_mntfromname));
-    }
-#else
-    FILE *pm = fopen("/proc/self/mounts", "r");
-    if (!pm)
-        return result;
-
-#  if defined(Q_OS_ANDROID)
-    while (struct mntent *mntPtr = getmntent(pm)) {
-        result.insert(QString::fromLocal8Bit(mntPtr->mnt_dir),
-                      QString::fromLocal8Bit(mntPtr->mnt_fsname));
-    }
-#  else
-    int pathMax = static_cast<int>(pathconf("/", _PC_PATH_MAX)) * 2 + 1024;  // quite big, but better be safe than sorry
-    QScopedArrayPointer<char> strBuf(new char[pathMax]);
-    struct mntent mntBuf;
-
-    while (getmntent_r(pm, &mntBuf, strBuf.data(), pathMax - 1)) {
-        result.insert(QString::fromLocal8Bit(mntBuf.mnt_dir),
-                      QString::fromLocal8Bit(mntBuf.mnt_fsname));
-    }
-#  endif
-    fclose(pm);
-#endif
-
-    return result;
 }
 
 bool safeRemove(const QString &path, RecursiveOperationType type)

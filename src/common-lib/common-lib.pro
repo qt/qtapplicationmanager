@@ -25,6 +25,7 @@ contains(DEFINES, "AM_USE_STACKWALKER"):include($$SOURCE_DIR/3rdparty/stackwalke
 
 SOURCES += \
     exception.cpp \
+    filesystemmountwatcher.cpp \
     utilities.cpp \
     qtyaml.cpp \
     startuptimer.cpp \
@@ -42,6 +43,7 @@ HEADERS += \
     global.h \
     error.h \
     exception.h \
+    filesystemmountwatcher.h \
     utilities.h \
     qtyaml.h \
     startuptimer.h \

@@ -82,3 +82,4 @@ public:
 };
 
 QT_END_NAMESPACE_AM
+// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.

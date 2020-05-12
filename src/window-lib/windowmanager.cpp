@@ -936,7 +936,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
         });
         apps.erase(it, apps.end());
 
-        auto grabbers = new QList<QSharedPointer<QQuickItemGrabResult>>;
+        auto grabbers = new QList<QSharedPointer<const QQuickItemGrabResult>>;
 
         for (const Window *w : qAsConst(d->windowsInModel)) {
             if (apps.contains(w->application())) {
@@ -959,7 +959,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 
                             if (onScreen) {
                                 foundAtLeastOne = true;
-                                QSharedPointer<QQuickItemGrabResult> grabber = windowItem->grabToImage();
+                                QSharedPointer<const QQuickItemGrabResult> grabber = windowItem->grabToImage();
 
                                 if (!grabber) {
                                     result = false;

@@ -153,7 +153,8 @@ QMultiMap<QString, QString> mountedDirectories()
     int count = getmntinfo(&sfs, MNT_NOWAIT);
 
     for (int i = 0; i < count; ++i, ++sfs) {
-        result.insertMulti(QString::fromLocal8Bit(sfs->f_mntonname), QString::fromLocal8Bit(sfs->f_mntfromname));
+        result.insert(QString::fromLocal8Bit(sfs->f_mntonname),
+                      QString::fromLocal8Bit(sfs->f_mntfromname));
     }
 #else
     FILE *pm = fopen("/proc/self/mounts", "r");
@@ -162,8 +163,8 @@ QMultiMap<QString, QString> mountedDirectories()
 
 #  if defined(Q_OS_ANDROID)
     while (struct mntent *mntPtr = getmntent(pm)) {
-        result.insertMulti(QString::fromLocal8Bit(mntPtr->mnt_dir),
-                           QString::fromLocal8Bit(mntPtr->mnt_fsname));
+        result.insert(QString::fromLocal8Bit(mntPtr->mnt_dir),
+                      QString::fromLocal8Bit(mntPtr->mnt_fsname));
     }
 #  else
     int pathMax = static_cast<int>(pathconf("/", _PC_PATH_MAX)) * 2 + 1024;  // quite big, but better be safe than sorry
@@ -171,8 +172,8 @@ QMultiMap<QString, QString> mountedDirectories()
     struct mntent mntBuf;
 
     while (getmntent_r(pm, &mntBuf, strBuf.data(), pathMax - 1)) {
-        result.insertMulti(QString::fromLocal8Bit(mntBuf.mnt_dir),
-                           QString::fromLocal8Bit(mntBuf.mnt_fsname));
+        result.insert(QString::fromLocal8Bit(mntBuf.mnt_dir),
+                      QString::fromLocal8Bit(mntBuf.mnt_fsname));
     }
 #  endif
     fclose(pm);

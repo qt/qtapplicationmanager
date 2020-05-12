@@ -7,7 +7,6 @@ load(am-config)
 QT = core network
 QT_FOR_PRIVATE *= \
     appman_common-private \
-    appman_crypto-private \
     appman_application-private \
 
 CONFIG *= static internal_module

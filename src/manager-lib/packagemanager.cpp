@@ -321,12 +321,19 @@ QObject *PackageManager::instanceForQml(QQmlEngine *, QJSEngine *)
     return instance();
 }
 
+void PackageManager::enableInstaller()
+{
+#if !defined(AM_DISABLE_INSTALLER)
+    d->disableInstaller = false;
+#endif
+}
+
 void PackageManager::registerPackages()
 {
     qCDebug(LogSystem) << "Registering packages:";
 
     // collect all updates to builtin first, so we can avoid re-creating a lot of objects,
-    // if we find an update to a builin app later on
+    // if we find an update to a builtin app later on
     QMap<QString, QPair<PackageInfo *, PackageInfo *>> pkgs;
 
     // map all the built-in packages first
@@ -699,13 +706,17 @@ uint PackageManager::commonApplicationGroupId() const
 
 bool PackageManager::enableApplicationUserIdSeparation(uint minUserId, uint maxUserId, uint commonGroupId)
 {
-    if (minUserId >= maxUserId || minUserId == uint(-1) || maxUserId == uint(-1))
+    if (minUserId >= maxUserId || minUserId == uint(-1) || maxUserId == uint(-1) || commonGroupId == uint(-1))
         return false;
+#if !defined(AM_DISABLE_INSTALLER)
     d->userIdSeparation = true;
     d->minUserId = minUserId;
     d->maxUserId = maxUserId;
     d->commonGroupId = commonGroupId;
     return true;
+#else
+    return false;
+#endif
 }
 
 uint PackageManager::findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false)
@@ -820,6 +831,7 @@ QVariantMap PackageManager::documentLocation() const
 
 void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
 {
+#if !defined(AM_DISABLE_INSTALLER)
     // Check that everything in the app-db is available
     //    -> if not, remove from app-db
 
@@ -908,6 +920,7 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
             }
         }
     }
+#endif // !defined(AM_DISABLE_INSTALLER)
 }
 
 /*!
@@ -995,7 +1008,11 @@ QString PackageManager::startPackageInstallation(const QUrl &sourceUrl)
 {
     AM_TRACE(LogInstaller, sourceUrl)
 
-    return enqueueTask(new InstallationTask(d->installationPath, d->documentPath, sourceUrl));
+#if !defined(AM_DISABLE_INSTALLER)
+    if (!d->disableInstaller)
+        return enqueueTask(new InstallationTask(d->installationPath, d->documentPath, sourceUrl));
+#endif
+    return QString();
 }
 
 /*!
@@ -1040,14 +1057,18 @@ void PackageManager::acknowledgePackageInstallation(const QString &taskId)
 {
     AM_TRACE(LogInstaller, taskId)
 
-    const auto allTasks = d->allTasks();
+#if !defined(AM_DISABLE_INSTALLER)
+    if (!d->disableInstaller) {
+        const auto allTasks = d->allTasks();
 
-    for (AsynchronousTask *task : allTasks) {
-        if (qobject_cast<InstallationTask *>(task) && (task->id() == taskId)) {
-            static_cast<InstallationTask *>(task)->acknowledge();
-            break;
+        for (AsynchronousTask *task : allTasks) {
+            if (qobject_cast<InstallationTask *>(task) && (task->id() == taskId)) {
+                static_cast<InstallationTask *>(task)->acknowledge();
+                break;
+            }
         }
     }
+#endif
 }
 
 /*!
@@ -1068,12 +1089,16 @@ void PackageManager::acknowledgePackageInstallation(const QString &taskId)
 */
 QString PackageManager::removePackage(const QString &packageId, bool keepDocuments, bool force)
 {
-    AM_TRACE(LogInstaller, packageId, keepDocuments)
+    AM_TRACE(LogInstaller, packageId, keepDocuments, force)
 
-    if (Package *package = fromId(packageId)) {
-        return enqueueTask(new DeinstallationTask(package, d->installationPath,
-                                                  d->documentPath, force, keepDocuments));
+#if !defined(AM_DISABLE_INSTALLER)
+    if (!d->disableInstaller) {
+        if (Package *package = fromId(packageId)) {
+            return enqueueTask(new DeinstallationTask(package, d->installationPath,
+                                                      d->documentPath, force, keepDocuments));
+        }
     }
+#endif
     return QString();
 }
 
@@ -1088,12 +1113,18 @@ QString PackageManager::removePackage(const QString &packageId, bool keepDocumen
 */
 AsynchronousTask::TaskState PackageManager::taskState(const QString &taskId) const
 {
-    const auto allTasks = d->allTasks();
+#if !defined(AM_DISABLE_INSTALLER)
+    if (!d->disableInstaller) {
+        const auto allTasks = d->allTasks();
 
-    for (const AsynchronousTask *task : allTasks) {
-        if (task && (task->id() == taskId))
-            return task->state();
+        for (const AsynchronousTask *task : allTasks) {
+            if (task && (task->id() == taskId))
+                return task->state();
+        }
     }
+#else
+    Q_UNUSED(taskId)
+#endif
     return AsynchronousTask::Invalid;
 }
 
@@ -1109,12 +1140,18 @@ AsynchronousTask::TaskState PackageManager::taskState(const QString &taskId) con
 */
 QString PackageManager::taskPackageId(const QString &taskId) const
 {
-    const auto allTasks = d->allTasks();
+#if !defined(AM_DISABLE_INSTALLER)
+    if (!d->disableInstaller) {
+        const auto allTasks = d->allTasks();
 
-    for (const AsynchronousTask *task : allTasks) {
-        if (task && (task->id() == taskId))
-            return task->packageId();
+        for (const AsynchronousTask *task : allTasks) {
+            if (task && (task->id() == taskId))
+                return task->packageId();
+        }
     }
+#else
+    Q_UNUSED(taskId)
+#endif
     return QString();
 }
 
@@ -1125,11 +1162,15 @@ QString PackageManager::taskPackageId(const QString &taskId) const
 */
 QStringList PackageManager::activeTaskIds() const
 {
-    const auto allTasks = d->allTasks();
-
     QStringList result;
-    for (const AsynchronousTask *task : allTasks)
-        result << task->id();
+#if !defined(AM_DISABLE_INSTALLER)
+    if (!d->disableInstaller) {
+        const auto allTasks = d->allTasks();
+
+        for (const AsynchronousTask *task : allTasks)
+            result << task->id();
+    }
+#endif
     return result;
 }
 
@@ -1144,103 +1185,37 @@ bool PackageManager::cancelTask(const QString &taskId)
 {
     AM_TRACE(LogInstaller, taskId)
 
-    // incoming tasks can be forcefully canceled right away
-    for (AsynchronousTask *task : qAsConst(d->incomingTaskList)) {
-        if (task->id() == taskId) {
-            task->forceCancel();
-            task->deleteLater();
+#if !defined(AM_DISABLE_INSTALLER)
+    if (!d->disableInstaller) {
+        // incoming tasks can be forcefully canceled right away
+        for (AsynchronousTask *task : qAsConst(d->incomingTaskList)) {
+            if (task->id() == taskId) {
+                task->forceCancel();
+                task->deleteLater();
 
-            handleFailure(task);
+                handleFailure(task);
 
-            d->incomingTaskList.removeOne(task);
-            triggerExecuteNextTask();
-            return true;
+                d->incomingTaskList.removeOne(task);
+                triggerExecuteNextTask();
+                return true;
+            }
+        }
+
+        // the active task and async tasks might be in a state where cancellation is not possible,
+        // so we have to ask them nicely
+        if (d->activeTask && d->activeTask->id() == taskId)
+            return d->activeTask->cancel();
+
+        for (AsynchronousTask *task : qAsConst(d->installationTaskList)) {
+            if (task->id() == taskId)
+                return task->cancel();
         }
     }
-
-    // the active task and async tasks might be in a state where cancellation is not possible,
-    // so we have to ask them nicely
-    if (d->activeTask && d->activeTask->id() == taskId)
-        return d->activeTask->cancel();
-
-    for (AsynchronousTask *task : qAsConst(d->installationTaskList)) {
-        if (task->id() == taskId)
-            return task->cancel();
-    }
+#endif
     return false;
 }
 
-/*!
-    \qmlmethod int PackageManager::compareVersions(string version1, string version2)
-
-    Convenience method for app-store implementations or taskRequestingInstallationAcknowledge()
-    callbacks for comparing version numbers, as the actual version comparison algorithm is not
-    trivial.
-
-    Returns \c -1, \c 0 or \c 1 if \a version1 is smaller than, equal to, or greater than \a
-    version2 (similar to how \c strcmp() works).
-*/
-int PackageManager::compareVersions(const QString &version1, const QString &version2)
-{
-    int vn1Suffix = -1;
-    int vn2Suffix = -1;
-    QVersionNumber vn1 = QVersionNumber::fromString(version1, &vn1Suffix);
-    QVersionNumber vn2 = QVersionNumber::fromString(version2, &vn2Suffix);
-
-    int d = QVersionNumber::compare(vn1, vn2);
-    return d < 0 ? -1 : (d > 0 ? 1 : version1.mid(vn1Suffix).compare(version2.mid(vn2Suffix)));
-}
-
-/*!
-    \qmlmethod int PackageManager::validateDnsName(string name, int minimalPartCount)
-
-    Convenience method for app-store implementations or taskRequestingInstallationAcknowledge()
-    callbacks for checking if the given \a name is a valid DNS (or reverse-DNS) name according to
-    RFC 1035/1123. If the optional parameter \a minimalPartCount is specified, this function will
-    also check if \a name contains at least this amount of parts/sub-domains.
-
-    Returns \c true if the name is a valid DNS name or \c false otherwise.
-*/
-bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
-{
-    try {
-        // check if we have enough parts: e.g. "tld.company.app" would have 3 parts
-        QStringList parts = name.split('.');
-        if (parts.size() < minimalPartCount) {
-            throw Exception(Error::Parse, "the minimum amount of parts (subdomains) is %1 (found %2)")
-                .arg(minimalPartCount).arg(parts.size());
-        }
-
-        // standard RFC compliance tests (RFC 1035/1123)
-
-        auto partCheck = [](const QString &part) {
-            int len = part.length();
-
-            if (len < 1 || len > 63)
-                throw Exception(Error::Parse, "domain parts must consist of at least 1 and at most 63 characters (found %2 characters)").arg(len);
-
-            for (int pos = 0; pos < len; ++pos) {
-                ushort ch = part.at(pos).unicode();
-                bool isFirst = (pos == 0);
-                bool isLast  = (pos == (len - 1));
-                bool isDash  = (ch == '-');
-                bool isDigit = (ch >= '0' && ch <= '9');
-                bool isLower = (ch >= 'a' && ch <= 'z');
-
-                if ((isFirst || isLast || !isDash) && !isDigit && !isLower)
-                    throw Exception(Error::Parse, "domain parts must consist of only the characters '0-9', 'a-z', and '-' (which cannot be the first or last character)");
-            }
-        };
-
-        for (const QString &part : parts)
-            partCheck(part);
-
-        return true;
-    } catch (const Exception &e) {
-        qCDebug(LogInstaller).noquote() << "validateDnsName failed:" << e.errorString();
-        return false;
-    }
-}
+#if !defined(AM_DISABLE_INSTALLER)
 
 QString PackageManager::enqueueTask(AsynchronousTask *task)
 {
@@ -1251,7 +1226,7 @@ QString PackageManager::enqueueTask(AsynchronousTask *task)
 
 void PackageManager::triggerExecuteNextTask()
 {
-    if (!QMetaObject::invokeMethod(this, "executeNextTask", Qt::QueuedConnection))
+    if (!QMetaObject::invokeMethod(this, &PackageManager::executeNextTask, Qt::QueuedConnection))
         qCCritical(LogSystem) << "ERROR: failed to invoke method checkQueue";
 }
 
@@ -1336,6 +1311,9 @@ void PackageManager::handleFailure(AsynchronousTask *task)
     qCDebug(LogInstaller) << "emit failed" << task->id() << task->errorCode() << task->errorString();
     emit taskFailed(task->id(), int(task->errorCode()), task->errorString());
 }
+
+#endif // !defined(AM_DISABLE_INSTALLER)
+
 
 bool PackageManager::startingPackageInstallation(PackageInfo *info)
 {
@@ -1520,11 +1498,86 @@ bool PackageManager::canceledPackageInstall(const QString &id)
     return true;
 }
 
+
+/*!
+    \qmlmethod int PackageManager::compareVersions(string version1, string version2)
+
+    Convenience method for app-store implementations or taskRequestingInstallationAcknowledge()
+    callbacks for comparing version numbers, as the actual version comparison algorithm is not
+    trivial.
+
+    Returns \c -1, \c 0 or \c 1 if \a version1 is smaller than, equal to, or greater than \a
+    version2 (similar to how \c strcmp() works).
+*/
+int PackageManager::compareVersions(const QString &version1, const QString &version2)
+{
+    int vn1Suffix = -1;
+    int vn2Suffix = -1;
+    QVersionNumber vn1 = QVersionNumber::fromString(version1, &vn1Suffix);
+    QVersionNumber vn2 = QVersionNumber::fromString(version2, &vn2Suffix);
+
+    int d = QVersionNumber::compare(vn1, vn2);
+    return d < 0 ? -1 : (d > 0 ? 1 : version1.mid(vn1Suffix).compare(version2.mid(vn2Suffix)));
+}
+
+/*!
+    \qmlmethod int PackageManager::validateDnsName(string name, int minimalPartCount)
+
+    Convenience method for app-store implementations or taskRequestingInstallationAcknowledge()
+    callbacks for checking if the given \a name is a valid DNS (or reverse-DNS) name according to
+    RFC 1035/1123. If the optional parameter \a minimalPartCount is specified, this function will
+    also check if \a name contains at least this amount of parts/sub-domains.
+
+    Returns \c true if the name is a valid DNS name or \c false otherwise.
+*/
+bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
+{
+    try {
+        // check if we have enough parts: e.g. "tld.company.app" would have 3 parts
+        QStringList parts = name.split('.');
+        if (parts.size() < minimalPartCount) {
+            throw Exception(Error::Parse, "the minimum amount of parts (subdomains) is %1 (found %2)")
+                .arg(minimalPartCount).arg(parts.size());
+        }
+
+        // standard RFC compliance tests (RFC 1035/1123)
+
+        auto partCheck = [](const QString &part) {
+            int len = part.length();
+
+            if (len < 1 || len > 63)
+                throw Exception(Error::Parse, "domain parts must consist of at least 1 and at most 63 characters (found %2 characters)").arg(len);
+
+            for (int pos = 0; pos < len; ++pos) {
+                ushort ch = part.at(pos).unicode();
+                bool isFirst = (pos == 0);
+                bool isLast  = (pos == (len - 1));
+                bool isDash  = (ch == '-');
+                bool isDigit = (ch >= '0' && ch <= '9');
+                bool isLower = (ch >= 'a' && ch <= 'z');
+
+                if ((isFirst || isLast || !isDash) && !isDigit && !isLower)
+                    throw Exception(Error::Parse, "domain parts must consist of only the characters '0-9', 'a-z', and '-' (which cannot be the first or last character)");
+            }
+        };
+
+        for (const QString &part : parts)
+            partCheck(part);
+
+        return true;
+    } catch (const Exception &e) {
+        qCDebug(LogInstaller).noquote() << "validateDnsName failed:" << e.errorString();
+        return false;
+    }
+}
+
 bool removeRecursiveHelper(const QString &path)
 {
+#if !defined(AM_DISABLE_INSTALLER)
     if (PackageManager::instance()->isApplicationUserIdSeparationEnabled() && SudoClient::instance())
         return SudoClient::instance()->removeRecursive(path);
     else
+#endif
         return recursiveOperation(path, safeRemove);
 }
 

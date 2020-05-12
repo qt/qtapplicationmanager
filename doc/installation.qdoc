@@ -50,10 +50,11 @@ The application manager is tested regularly on these platforms:
 To build the application manager with all its features, the following components are required:
 
 \list
-    \li \b Qt 5.9.0 or higher.
+    \li \b Qt 5.12.0 or higher.
+
+    \li \b openssl \e{- Linux only and only if you need the installer functionality}.
+        Qt needs to be built with openssl support. The required minimum version is defined by Qt.
     \li \b libyaml 1.6 or higher.
-    \li \b openssl 1.0.1 or higher \e{- Linux only}. At compile time, only the headers need to be
-           available. The necessary libraries are dynamically loaded at runtime.
     \li \b libarchive 3.0 or higher \e{- if you need the installer functionality}.
 \endlist
 

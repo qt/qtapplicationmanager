@@ -122,6 +122,7 @@ public:
         };
     }
 
+#if !defined(AM_DISABLE_INSTALLER)
     // all QString return values are task-ids
     Q_SCRIPTABLE QString startPackageInstallation(const QString &installationLocationId, const QString &sourceUrl)
     {
@@ -154,6 +155,7 @@ public:
     { return m_pm->activeTaskIds(); }
     Q_SCRIPTABLE bool cancelTask(const QString &taskId)
     { return m_pm->cancelTask(taskId); }
+#endif
 
     // convenience function for app-store implementations
     Q_SCRIPTABLE int compareVersions(const QString &version1, const QString &version2)

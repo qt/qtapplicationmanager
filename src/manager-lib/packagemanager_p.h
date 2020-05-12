@@ -66,6 +66,11 @@ public:
 
     QMap<Package *, PackageInfo *> pendingPackageInfoUpdates;
 
+#if defined(AM_DISABLE_INSTALLER)
+    static constexpr
+#endif
+    bool disableInstaller = true;
+
     bool developmentMode = false;
     bool allowInstallationOfUnsignedPackages = false;
     bool userIdSeparation = false;

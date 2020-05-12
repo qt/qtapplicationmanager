@@ -17,7 +17,7 @@ notification_lib.subdir = notification-lib
 notification_lib.depends = common_lib
 
 package_lib.subdir = package-lib
-package_lib.depends = crypto_lib application_lib
+package_lib.depends = application_lib
 
 manager_lib.subdir = manager-lib
 manager_lib.depends = application_lib notification_lib intent_server_lib intent_client_lib monitor_lib plugin_interfaces
@@ -74,9 +74,11 @@ tools_controller.depends = common_lib
 
 SUBDIRS = \
     common_lib \
-    crypto_lib \
     application_lib \
     package_lib \
+
+!disable-installer:SUBDIRS += \
+    crypto_lib
 
 !tools-only {
     SUBDIRS += \

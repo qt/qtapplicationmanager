@@ -1,5 +1,8 @@
 TEMPLATE = subdirs
 
+load(am-config)
+requires(!disable-installer)
+
 SUBDIRS = \
     manual \
     application \

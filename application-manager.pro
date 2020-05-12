@@ -32,7 +32,7 @@ load(am-config)
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
 force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")
 
-if(linux|force-libcrypto) {
+!disable-installer:if(linux|force-libcrypto) {
     !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")|contains(QT_CONFIG,"ssl")):error("Qt was built without OpenSSL support.")
 }
 
@@ -103,7 +103,7 @@ printConfigLine("Installer enabled", $$yesNo(!CONFIG(disable-installer)), auto)
 printConfigLine("Ext. DBus interfaces enabled", $$yesNo(!CONFIG(disable-external-dbus-interfaces)), auto)
 printConfigLine("Tests enabled", $$yesNo(CONFIG(enable-tests)), auto)
 printConfigLine("Examples enabled", $$yesNo(CONFIG(enable-examples)), auto)
-printConfigLine("Crypto backend", $$check_crypto, auto)
+!disable-installer:printConfigLine("Crypto backend", $$check_crypto, auto)
 printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)
 printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto)
 printConfigLine("Genivi support", $$yesNo(qtHaveModule(geniviextras)), auto)

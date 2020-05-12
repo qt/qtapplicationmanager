@@ -137,6 +137,7 @@ ApplicationInstaller::ApplicationInstaller(PackageManager *pm, QObject *parent)
     : QObject(parent)
     , m_pm(pm)
 {
+#if !defined(AM_DISABLE_INSTALLER)
     // connect the APIs of the PackageManager and ApplicationInstaller
     QObject::connect(pm, &PackageManager::taskProgressChanged,
                      this, &ApplicationInstaller::taskProgressChanged);
@@ -177,6 +178,7 @@ ApplicationInstaller::ApplicationInstaller(PackageManager *pm, QObject *parent)
     });
     QObject::connect(pm, &PackageManager::taskBlockingUntilInstallationAcknowledge,
                      this, &ApplicationInstaller::taskBlockingUntilInstallationAcknowledge);
+#endif
 }
 
 ApplicationInstaller::~ApplicationInstaller()

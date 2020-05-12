@@ -597,6 +597,8 @@ void Main::setupInstaller(const QStringList &caCertificatePaths,
 #  endif // Q_OS_LINUX
     }
 
+    m_packageManager->enableInstaller();
+
     //TODO: this could be delayed, but needs to have a lock on the app-db in this case
     m_packageManager->cleanupBrokenInstallations();
 

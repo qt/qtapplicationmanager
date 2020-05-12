@@ -48,8 +48,10 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManApplication/packageinfo.h>
 #include <QtAppManManager/asynchronoustask.h>
-#include <QtAppManManager/installationtask.h>
-#include <QtAppManManager/deinstallationtask.h>
+#if !defined(AM_DISABLE_INSTALLER)
+#  include <QtAppManManager/installationtask.h>
+#  include <QtAppManManager/deinstallationtask.h>
+#endif
 
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -109,6 +111,7 @@ public:
     static PackageManager *instance();
     static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
+    void enableInstaller();
     void registerPackages();
 
     QVector<Package *> packages() const;
@@ -194,14 +197,20 @@ signals:
                                                             const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);
 
-private slots:
-    void executeNextTask();
-
 protected:
+
     bool startingPackageInstallation(PackageInfo *info);
     bool startingPackageRemoval(const QString &id);
     bool finishedPackageInstall(const QString &id);
     bool canceledPackageInstall(const QString &id);
+
+#if !defined(AM_DISABLE_INSTALLER)
+private:
+    void executeNextTask();
+    void triggerExecuteNextTask();
+    QString enqueueTask(AsynchronousTask *task);
+    void handleFailure(AsynchronousTask *task);
+#endif
 
 private:
     void emitDataChanged(Package *package, const QVector<int> &roles = QVector<int>());
@@ -210,16 +219,10 @@ private:
     void registerApplicationsAndIntentsOfPackage(Package *package);
     void unregisterApplicationsAndIntentsOfPackage(Package *package);
     static void registerQmlTypes();
-
-    void triggerExecuteNextTask();
-    QString enqueueTask(AsynchronousTask *task);
-    void handleFailure(AsynchronousTask *task);
-
     QList<QByteArray> caCertificates() const;
-
-private:
     uint findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false);
 
+private:
     explicit PackageManager(PackageDatabase *packageDatabase,
                             const QString &documentPath);
     PackageManager(const PackageManager &);

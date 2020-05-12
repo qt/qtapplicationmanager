@@ -41,6 +41,7 @@ HEADERS += \
     application.h \
     applicationmanager.h \
     applicationmodel.h \
+    asynchronoustask.h \
     notificationmanager.h \
     abstractcontainer.h \
     containerfactory.h \
@@ -72,6 +73,7 @@ SOURCES += \
     application.cpp \
     applicationmanager.cpp \
     applicationmodel.cpp \
+    asynchronoustask.cpp \
     notificationmanager.cpp \
     abstractcontainer.cpp \
     containerfactory.cpp \
@@ -107,14 +109,12 @@ HEADERS += ../plugin-interfaces/containerinterface.h
         appman_crypto-private \
 
     HEADERS += \
-        asynchronoustask.h \
         deinstallationtask.h \
         installationtask.h \
         scopeutilities.h \
         sudo.h \
 
     SOURCES += \
-        asynchronoustask.cpp \
         installationtask.cpp \
         deinstallationtask.cpp \
         scopeutilities.cpp \

@@ -51,8 +51,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-static constexpr quint32 ApplicationInfoDataStreamVersion = 2;
-
 //TODO Make this really unique
 static int uniqueCounter = 0;
 static int nextUniqueNumber() {
@@ -94,10 +92,15 @@ QVariantMap ApplicationInfo::allAppProperties() const
     return m_allAppProperties;
 }
 
+
+const quint32 ApplicationInfo::DataStreamVersion = 3;
+
+
 void ApplicationInfo::writeToDataStream(QDataStream &ds) const
 {
-    ds << ApplicationInfoDataStreamVersion
-       << m_id
+    //NOTE: increment DataStreamVersion above, if you make any changes here
+
+    ds << m_id
        << m_uniqueNumber
        << m_sysAppProperties
        << m_allAppProperties
@@ -113,11 +116,11 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
 
 ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
 {
-    QScopedPointer<ApplicationInfo> app(new ApplicationInfo(pkg));
-    auto dataStreamVersion = ApplicationInfoDataStreamVersion;
+    //NOTE: increment DataStreamVersion above, if you make any changes here
 
-    ds >> dataStreamVersion
-       >> app->m_id
+    QScopedPointer<ApplicationInfo> app(new ApplicationInfo(pkg));
+
+    ds >> app->m_id
        >> app->m_uniqueNumber
        >> app->m_sysAppProperties
        >> app->m_allAppProperties
@@ -129,9 +132,6 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
        >> app->m_openGLConfiguration
        >> app->m_dltConfiguration
        >> app->m_supportedMimeTypes;
-
-    if (dataStreamVersion != ApplicationInfoDataStreamVersion)
-        return nullptr;
 
     uniqueCounter = qMax(uniqueCounter, app->m_uniqueNumber);
     app->m_capabilities.sort();

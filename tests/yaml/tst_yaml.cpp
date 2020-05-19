@@ -291,9 +291,12 @@ void tst_Yaml::cache()
 
     for (int step = 0; step < 2; ++step) {
         try {
-            ConfigCache<CacheTest> cache(files, "cache-test", step == 0 ? AbstractConfigCache::ClearCache
-                                                                        : AbstractConfigCache::None);
+            ConfigCache<CacheTest> cache(files, "cache-test", "CTST", 1,
+                                         step == 0 ? AbstractConfigCache::ClearCache
+                                                   : AbstractConfigCache::None);
             cache.parse();
+            QVERIFY(cache.parseReadFromCache() == (step == 1));
+            QVERIFY(cache.parseWroteToCache() == (step == 0));
             CacheTest *ct1 = cache.takeResult(0);
             QVERIFY(ct1);
             QCOMPARE(ct1->name, "cache1");
@@ -306,6 +309,16 @@ void tst_Yaml::cache()
             QVERIFY2(false, e.what());
         }
     }
+
+    ConfigCache<CacheTest> wrongVersion(files, "cache-test", "CTST", 2, AbstractConfigCache::None);
+    QTest::ignoreMessage(QtWarningMsg, "Failed to read cache: failed to parse cache header");
+    wrongVersion.parse();
+    QVERIFY(!wrongVersion.parseReadFromCache());
+
+    ConfigCache<CacheTest> wrongType(files, "cache-test", "XTST", 1, AbstractConfigCache::None);
+    QTest::ignoreMessage(QtWarningMsg, "Failed to read cache: failed to parse cache header");
+    wrongType.parse();
+    QVERIFY(!wrongType.parseReadFromCache());
 }
 
 void tst_Yaml::mergedCache()
@@ -320,8 +333,10 @@ void tst_Yaml::mergedCache()
             std::reverse(files.begin(), files.end());
 
         try {
-            ConfigCache<CacheTest> cache(files, "cache-test", options);
+            ConfigCache<CacheTest> cache(files, "cache-test", "MTST", 1, options);
             cache.parse();
+            QVERIFY(cache.parseReadFromCache() == (step % 2 == 1));
+            QVERIFY(cache.parseWroteToCache() == (step % 2 == 0));
             CacheTest *ct = cache.takeMergedResult();
             QVERIFY(ct);
             QCOMPARE(ct->name, QFileInfo(files.last()).baseName());

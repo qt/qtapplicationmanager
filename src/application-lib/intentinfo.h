@@ -63,6 +63,8 @@ public:
     IntentInfo(PackageInfo *packageInfo);
     ~IntentInfo();
 
+    static const quint32 DataStreamVersion;
+
     enum Visibility {
         Public,
         Private

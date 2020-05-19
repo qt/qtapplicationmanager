@@ -62,6 +62,8 @@ class ApplicationInfo
 public:
     ApplicationInfo(PackageInfo *packageInfo);
 
+    static const quint32 DataStreamVersion;
+
     PackageInfo *packageInfo() const;
 
     QVariantMap toVariantMap() const;

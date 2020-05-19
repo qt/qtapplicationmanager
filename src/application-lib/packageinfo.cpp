@@ -53,8 +53,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-static constexpr quint32 PackageInfoDataStreamVersion = 1;
-
 
 PackageInfo::PackageInfo()
 { }
@@ -167,8 +165,16 @@ void PackageInfo::setInstallationReport(InstallationReport *report)
     m_installationReport.reset(report);
 }
 
+
+const quint32 PackageInfo::DataStreamVersion = 2 \
+        + (ApplicationInfo::DataStreamVersion << 8) \
+        + (IntentInfo::DataStreamVersion << 16);
+
+
 void PackageInfo::writeToDataStream(QDataStream &ds) const
 {
+    //NOTE: increment DataStreamVersion above, if you make any changes here
+
     QByteArray serializedReport;
 
     if (auto report = installationReport()) {
@@ -177,8 +183,7 @@ void PackageInfo::writeToDataStream(QDataStream &ds) const
         report->serialize(&buffer);
     }
 
-    ds << PackageInfoDataStreamVersion
-       << m_id
+    ds << m_id
        << m_names
        << m_icon
        << m_descriptions
@@ -200,14 +205,14 @@ void PackageInfo::writeToDataStream(QDataStream &ds) const
 
 PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
 {
+    //NOTE: increment DataStreamVersion above, if you make any changes here
+
     QScopedPointer<PackageInfo> pkg(new PackageInfo);
 
     QString baseDir;
     QByteArray serializedReport;
-    auto dataStreamVersion = PackageInfoDataStreamVersion;
 
-    ds >> dataStreamVersion
-       >> pkg->m_id
+    ds >> pkg->m_id
        >> pkg->m_names
        >> pkg->m_icon
        >> pkg->m_descriptions
@@ -217,9 +222,6 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
        >> pkg->m_uid
        >> baseDir
        >> serializedReport;
-
-    if (dataStreamVersion != PackageInfoDataStreamVersion)
-        return nullptr;
 
     pkg->m_baseDir.setPath(baseDir);
 

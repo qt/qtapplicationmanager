@@ -11,7 +11,7 @@ CONFIG += \
 
 macos:LIBS += -framework CoreServices -liconv
 ios:LIBS += -liconv
-win32:LIBS += -lcrypt32
+win32:LIBS += -lcrypt32 -ladvapi32
 win32:MODULE_DEFINES += LIBARCHIVE_STATIC
 MODULE_INCLUDEPATH += $$PWD/libarchive
 

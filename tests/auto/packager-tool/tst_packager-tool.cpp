@@ -104,6 +104,7 @@ void tst_PackagerTool::initTestCase()
         m_pm = PackageManager::createInstance(pdb, pathTo("documents-0"));
         m_pm->setHardwareId(m_hardwareId);
         m_pm->enableInstaller();
+        m_pm->registerPackages();
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
     }

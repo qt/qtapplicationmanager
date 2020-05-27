@@ -129,9 +129,10 @@ struct ConfigurationData
         QStringList builtinAppsManifestDir;
         QString installationDir;
         QString documentDir;
+        QString installationDirMountPoint;
     } applications; // TODO: rename to package?
 
-    QVariantList installationLocations;
+    QVariantList installationLocations; // deprecated
 
     QVariantMap crashAction;
     QVariantMap systemProperties;

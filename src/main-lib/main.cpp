@@ -197,6 +197,7 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     m_noSecurity = cfg->noSecurity();
     m_builtinAppsManifestDirs = cfg->builtinAppsManifestDirs();
     m_installationDir = cfg->installationDir();
+    m_installationDirMountPoint = cfg->installationDirMountPoint();
     m_documentDir = cfg->documentDir();
 
     CrashHandler::setCrashActionConfiguration(cfg->managerCrashAction());
@@ -419,7 +420,8 @@ void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePacka
     if (!singlePackage.isEmpty()) {
         m_packageDatabase = new PackageDatabase(singlePackage);
     } else {
-        m_packageDatabase = new PackageDatabase(m_builtinAppsManifestDirs, m_installationDir);
+        m_packageDatabase = new PackageDatabase(m_builtinAppsManifestDirs, m_installationDir,
+                                                m_installationDirMountPoint);
         if (!recreateDatabase)
             m_packageDatabase->enableLoadFromCache();
         m_packageDatabase->enableSaveToCache();
@@ -551,9 +553,6 @@ void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &c
 
     m_packageManager->enableInstaller();
 
-    //TODO: this could be delayed, but needs to have a lock on the app-db in this case
-    m_packageManager->cleanupBrokenInstallations();
-
     StartupTimer::instance()->checkpoint("after installer setup");
 #else
     Q_UNUSED(devMode)
@@ -565,8 +564,24 @@ void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &c
 
 void Main::registerPackages()
 {
-    m_packageManager->registerPackages();
-    StartupTimer::instance()->checkpoint("after package registration");
+    // the installation dir might not be mounted yet, so we have to watch for the package
+    // DB's signal and then register these packages later in the already running system
+    if (!(m_packageDatabase->parsedPackageLocations() & PackageDatabase::Installed)) {
+        connect(m_packageDatabase, &PackageDatabase::installedPackagesParsed,
+                m_packageManager, [this]() {
+            // we are not in main() anymore: we can't just throw
+            try {
+                m_packageManager->registerPackages();
+            } catch (const Exception &e) {
+                qCCritical(LogInstaller) << "Failed to register packages:" << e.what();
+                std::abort(); // there is no qCFatal()
+            }
+        });
+        StartupTimer::instance()->checkpoint("after package registration (delayed)");
+    } else {
+        m_packageManager->registerPackages();
+        StartupTimer::instance()->checkpoint("after package registration");
+    }
 }
 
 void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle)

@@ -63,6 +63,7 @@ public:
     QStringList builtinAppsManifestDirs() const;
     QString documentDir() const;
     QString installationDir() const;
+    QString installationDirMountPoint() const;
     bool disableInstaller() const;
     bool disableIntents() const;
     int intentTimeoutForDisambiguation() const;

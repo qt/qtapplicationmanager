@@ -41,6 +41,8 @@
 #include "exception.h"
 #include "logging.h"
 #include "configcache.h"
+#include "filesystemmountwatcher.h"
+
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -67,9 +69,10 @@ public:
 
 
 PackageDatabase::PackageDatabase(const QStringList &builtInPackagesDirs,
-                                 const QString &installedPackagesDir)
+                                 const QString &installedPackagesDir, const QString &installedPackagesMountPoint)
     : m_builtInPackagesDirs(builtInPackagesDirs)
     , m_installedPackagesDir(installedPackagesDir)
+    , m_installedPackagesMountPoint(installedPackagesMountPoint)
 { }
 
 PackageDatabase::PackageDatabase(const QString &singlePackagePath)
@@ -154,7 +157,7 @@ QStringList PackageDatabase::findManifestsInDir(const QDir &manifestDir, bool sc
     return files;
 }
 
-void PackageDatabase::parse()
+void PackageDatabase::parse(PackageLocations packageLocations)
 {
     if (m_parsed)
         throw Exception("PackageDatabase::parse() has been called multiple times");
@@ -166,30 +169,113 @@ void PackageDatabase::parse()
         } catch (const Exception &e) {
             throw Exception("Failed to load manifest for package: %1").arg(e.errorString());
         }
+        m_parsedPackageLocations = Builtin | Installed;
     } else {
-        QStringList manifestFiles;
-
-        // parallelize this
-        for (const QString &dir : qAsConst(m_builtInPackagesDirs))
-            manifestFiles << findManifestsInDir(dir, true);
-        int installedOffset = manifestFiles.size();
-        if (!m_installedPackagesDir.isEmpty())
-            manifestFiles << findManifestsInDir(m_installedPackagesDir, false);
-
         AbstractConfigCache::Options cacheOptions = AbstractConfigCache::IgnoreBroken;
         if (!m_loadFromCache)
             cacheOptions |= AbstractConfigCache::ClearCache;
         if (!m_loadFromCache && !m_saveToCache)
             cacheOptions |= AbstractConfigCache::NoCache;
 
-        ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb"), "MANI",
-                                       PackageInfo::DataStreamVersion, cacheOptions);
-        cache.parse();
+        if ((packageLocations & Builtin) && !(m_parsedPackageLocations & Builtin)) {
+            QStringList manifestFiles;
+            for (const QString &dir : m_builtInPackagesDirs)
+                manifestFiles << findManifestsInDir(dir, true);
 
-        for (int i = 0; i < manifestFiles.size(); ++i) {
-            bool isBuiltIn = (i < installedOffset);
-            QString manifestFile = manifestFiles.at(i);
-            QDir pkgDir = QFileInfo(manifestFile).dir();
+            ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb-builtin"), "PKGB",
+                                           PackageInfo::DataStreamVersion, cacheOptions);
+            cache.parse();
+
+            for (int i = 0; i < manifestFiles.size(); ++i) {
+                QString manifestFile = manifestFiles.at(i);
+                QDir pkgDir = QFileInfo(manifestFile).dir();
+                QScopedPointer<PackageInfo> pkg(cache.takeResult(i));
+
+                if (pkg.isNull()) { // the YAML file was not parseable and we ignore broken manifests
+                    qCWarning(LogSystem) << "The file" << manifestFile << "is not a valid manifest YAML"
+                                            " file and will be ignored.";
+                    continue;
+                }
+
+                if (pkg->id() != pkgDir.dirName()) {
+                    throw Exception("an info.yaml for packages must be in a directory that has"
+                                    " the same name as the package's id: found '%1'").arg(pkg->id());
+                }
+                pkg->setBuiltIn(true);
+                m_builtInPackages.append(pkg.take());
+            }
+            m_parsedPackageLocations |= Builtin;
+        }
+        if ((packageLocations & Installed) && !(m_parsedPackageLocations & Installed)) {
+            if (m_installedPackagesDir.isEmpty()) {
+                m_parsedPackageLocations |= Installed;
+            } else {
+                if (!m_installedPackagesMountPoint.isEmpty()) {
+                    if (!m_installedPackagesMountWatcher) {
+                        m_installedPackagesMountWatcher = new FileSystemMountWatcher(this);
+                        connect(m_installedPackagesMountWatcher, &FileSystemMountWatcher::mountChanged,
+                                this, [this](const QString &mountPoint, const QString &device) {
+                            if (mountPoint == m_installedPackagesMountPoint && !device.isEmpty()) {
+                                if (!(m_parsedPackageLocations & Installed)) {
+                                    // we are not in main() anymore: we can't just throw
+
+                                    try {
+                                        parseInstalled();
+                                    } catch (const Exception &e) {
+                                        qCCritical(LogInstaller) << "Failed to parse the package meta-data after the device"
+                                                                 << device << "was mounted onto" << mountPoint << ":"
+                                                                 << e.what();
+                                        std::abort(); // there is no qCFatal()
+                                    }
+                                    emit installedPackagesParsed();
+                                }
+                                m_installedPackagesMountWatcher->deleteLater();
+                                m_installedPackagesMountWatcher = nullptr;
+                            }
+                        });
+                        m_installedPackagesMountWatcher->addMountPoint(m_installedPackagesMountPoint);
+                        if (m_installedPackagesMountWatcher->currentMountPoints().contains(m_installedPackagesMountPoint)) {
+                            // we don't need the watcher, but we had to set it up to avoid a race condition
+                            delete m_installedPackagesMountWatcher;
+                            m_installedPackagesMountWatcher = nullptr;
+                        }
+                    }
+                }
+
+                // scan immediately, if we don't have to wait for the mountpoint
+                if (!m_installedPackagesMountWatcher)
+                    parseInstalled();
+            }
+        }
+    }
+}
+
+PackageDatabase::PackageLocations PackageDatabase::parsedPackageLocations() const
+{
+    return m_parsedPackageLocations;
+}
+
+void PackageDatabase::parseInstalled()
+{
+    Q_ASSERT(m_parsed && !(m_parsedPackageLocations & Installed));
+
+    QStringList manifestFiles = findManifestsInDir(m_installedPackagesDir, false);
+
+    AbstractConfigCache::Options cacheOptions = AbstractConfigCache::IgnoreBroken;
+    if (!m_loadFromCache)
+        cacheOptions |= AbstractConfigCache::ClearCache;
+    if (!m_loadFromCache && !m_saveToCache)
+        cacheOptions |= AbstractConfigCache::NoCache;
+
+    ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb-installed"), "PKGI",
+                                   PackageInfo::DataStreamVersion, cacheOptions);
+    cache.parse();
+
+    for (int i = 0; i < manifestFiles.size(); ++i) {
+        QString manifestFile = manifestFiles.at(i);
+        QDir pkgDir = QFileInfo(manifestFile).dir();
+
+        try {
             QScopedPointer<PackageInfo> pkg(cache.takeResult(i));
 
             if (pkg.isNull()) { // the YAML file was not parseable and we ignore broken manifests
@@ -199,31 +285,32 @@ void PackageDatabase::parse()
             }
 
             if (pkg->id() != pkgDir.dirName()) {
-                throw Exception("an info.yaml for built-in packages must be in a directory that has"
+                throw Exception("an info.yaml for packages must be in a directory that has"
                                 " the same name as the package's id: found '%1'").arg(pkg->id());
             }
-            if (isBuiltIn) {
-                pkg->setBuiltIn(true);
-                m_builtInPackages.append(pkg.take());
-            } else { // 3rd-party apps
-                QFile f(pkgDir.absoluteFilePath(qSL(".installation-report.yaml")));
-                if (!f.open(QFile::ReadOnly))
-                    throw Exception(f, "failed to open the installation report");
 
-                QScopedPointer<InstallationReport> report(new InstallationReport(pkg->id()));
-                try {
-                    report->deserialize(&f);
-                } catch (const Exception &e) {
-                    throw Exception("Failed to deserialize the installation report %1: %2")
-                            .arg(f.fileName()).arg(e.errorString());
-                }
+            QFile f(pkgDir.absoluteFilePath(qSL(".installation-report.yaml")));
+            if (!f.open(QFile::ReadOnly))
+                throw Exception(f, "failed to open the installation report");
 
-                pkg->setInstallationReport(report.take());
-                pkg->setBaseDir(pkgDir.path());
-                m_installedPackages.append(pkg.take());
+            QScopedPointer<InstallationReport> report(new InstallationReport(pkg->id()));
+            try {
+                report->deserialize(&f);
+            } catch (const Exception &e) {
+                throw Exception("Failed to deserialize the installation report %1: %2")
+                        .arg(f.fileName()).arg(e.errorString());
             }
+
+            pkg->setInstallationReport(report.take());
+            pkg->setBaseDir(pkgDir.path());
+            m_installedPackages.append(pkg.take());
+
+        } catch (const Exception &e) {
+            qCWarning(LogInstaller) << "Ignoring broken package at" << pkgDir.absolutePath()
+                                    << ":" << e.what();
         }
     }
+    m_parsedPackageLocations |= Installed;
 }
 
 void PackageDatabase::addPackageInfo(PackageInfo *package)

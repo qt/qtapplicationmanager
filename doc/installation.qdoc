@@ -34,15 +34,27 @@
 
 \section1 Supported Platforms
 
-The application manager is tested regularly on these platforms:
+The application manager is tested regularly on multiple platforms.
+
+The following platforms are only supported for \b{development and testing} purposes. In addition these
+platforms only allow the application manager to work in
+\l{Single-Process vs. Multi-Process Mode}{single-process mode}:
 \list
-\li Windows (single-process)
-\li macOS (single-process)
-\li Linux desktop (single-process)
-\li Linux desktop (multi-process)
-    \note Due to the varying stability levels in Wayland drivers, only the \b Intel and \b VMWare
-          drivers are supported. While other drivers may work, they require either special
-          QtWayland versions or specific firmware blobs for the GPU driver.
+\li Windows
+\li macOS
+\li Android (the application manager cannot be deployed directly, but only as part of an Android
+    APK package containing the System UI)
+\endlist
+
+These platforms can be used for \b{development and production} and will allow you to use the full
+feature set of the application manager:
+\list
+\li Linux desktop and embedded in \l{Single-Process vs. Multi-Process Mode}
+    {single-process and multi-process mode}
+    \note In multi-process mode, only the \b Intel, \b AMD (open source), and \b VMWare graphics
+          drivers are supported due to the varying stability levels in Wayland drivers. While other
+          drivers may work, they require either special QtWayland versions or specific firmware
+          blobs for the GPU driver.
 \endlist
 
 \section1 Prerequisites
@@ -50,7 +62,7 @@ The application manager is tested regularly on these platforms:
 To build the application manager with all its features, the following components are required:
 
 \list
-    \li \b Qt 5.12.0 or higher.
+    \li \b Qt 5.15.0 or higher.
 
     \li \b openssl \e{- Linux only and only if you need the installer functionality}.
         Qt needs to be built with openssl support. The required minimum version is defined by Qt.

@@ -352,7 +352,7 @@ bool PackageCreatorPrivate::create()
         if (!addVirtualFile(ar, qSL("--PACKAGE-FOOTER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerFormat, footerData })))
             throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
 
-        m_metaData.unite(footerData);
+        m_metaData.insert(footerData);
 
         if (!m_report.developerSignature().isEmpty()) {
             QVariantMap footerDevSig {
@@ -361,7 +361,7 @@ bool PackageCreatorPrivate::create()
             if (!addVirtualFile(ar, qSL("--PACKAGE-FOOTER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerDevSig })))
                 throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
 
-            m_metaData.unite(footerDevSig);
+            m_metaData.insert(footerDevSig);
         }
         if (!m_report.storeSignature().isEmpty()) {
             QVariantMap footerStoreSig {
@@ -370,7 +370,7 @@ bool PackageCreatorPrivate::create()
             if (!addVirtualFile(ar, qSL("--PACKAGE-FOOTER--"), QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerStoreSig })))
                 throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
 
-            m_metaData.unite(footerStoreSig);
+            m_metaData.insert(footerStoreSig);
         }
 
         if (archive_write_free(ar) != ARCHIVE_OK)

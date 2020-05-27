@@ -496,7 +496,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
 
     } else { // footer(s)
         for (int i = 2; i < docs.size(); ++i)
-            map = map.unite(docs.at(i).toMap());
+            map.insert(docs.at(i).toMap());
 
         QByteArray packageDigest = QByteArray::fromHex(map.value(qSL("digest")).toString().toLatin1());
 
@@ -544,7 +544,7 @@ void PackageExtractorPrivate::download(const QUrl &url)
     }
 #endif
 
-    connect(m_reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+    connect(m_reply, &QNetworkReply::errorOccurred,
             this, &PackageExtractorPrivate::networkError);
     connect(m_reply, &QNetworkReply::metaDataChanged,
             this, &PackageExtractorPrivate::handleRedirect);

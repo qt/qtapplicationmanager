@@ -873,8 +873,8 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
             }
 
             if (valid) {
-                validPaths.insertMulti(d->installationPath, pkg->id() + QDir::separator());
-                validPaths.insertMulti(d->documentPath, pkg->id() + QDir::separator());
+                validPaths.insert(d->installationPath, pkg->id() + QDir::separator());
+                validPaths.insert(d->documentPath, pkg->id() + QDir::separator());
             } else {
                 if (startingPackageRemoval(pkg->id())) {
                     if (finishedPackageInstall(pkg->id()))

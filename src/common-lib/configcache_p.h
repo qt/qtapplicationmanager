@@ -58,27 +58,31 @@ struct ConfigCacheEntry
 struct CacheHeader
 {
     enum { Magic = 0x23d39366, // dd if=/dev/random bs=4 count=1 status=none | xxd -p
-           Version = 1 };
-    static quint64 s_globalId;
+           Version = 2 };
 
     quint32 magic = Magic;
     quint32 version = Version;
-    quint64 globalId = 0;
+    quint32 typeId = 0;
+    quint32 typeVersion = 0;
     QString baseName;
     quint32 entries = 0;
 
-    bool isValid(const QString &baseName) const;
+    bool isValid(const QString &baseName, quint32 typeId = 0, quint32 typeVersion = 0) const;
 };
 
 class ConfigCachePrivate
 {
 public:
     AbstractConfigCache::Options options;
+    quint32 typeId;
+    quint32 typeVersion;
     QStringList rawFiles;
     QString cacheBaseName;
     QVector<ConfigCacheEntry> cache;
     QMap<QString, int> cacheIndex;
     void *mergedContent = nullptr;
+    bool cacheWasRead = false;
+    bool cacheWasWritten = false;
 };
 
 QT_END_NAMESPACE_AM

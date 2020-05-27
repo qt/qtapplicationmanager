@@ -67,6 +67,8 @@ class PackageInfo
 public:
     ~PackageInfo();
 
+    static const quint32 DataStreamVersion;
+
     void validate() const Q_DECL_NOEXCEPT_EXPR(false);
 
     QString id() const;

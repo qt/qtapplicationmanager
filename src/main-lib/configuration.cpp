@@ -329,7 +329,8 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     if (configFilePaths.isEmpty()) {
         m_data = new ConfigurationData();
     } else {
-        ConfigCache<ConfigurationData> cache(configFilePaths, qSL("config"), cacheOptions);
+        ConfigCache<ConfigurationData> cache(configFilePaths, qSL("config"), "CFGD",
+                                             ConfigurationData::DataStreamVersion, cacheOptions);
 
         try {
             cache.parse();
@@ -395,8 +396,14 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         qCDebug(LogDeployment) << "ignoring '--start-session-dbus'";
 }
 
+
+const quint32 ConfigurationData::DataStreamVersion = 2;
+
+
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
 {
+    // NOTE: increment DataStreamVersion above, if you make any changes here
+
     // IMPORTANT: when doing changes to ConfigurationData, remember to adjust all of
     //            loadFromCache(), saveToCache() and mergeFrom() at the same time!
 
@@ -453,6 +460,8 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
 
 void ConfigurationData::saveToCache(QDataStream &ds) const
 {
+    // NOTE: increment DataStreamVersion above, if you make any changes here
+
     // IMPORTANT: when doing changes to ConfigurationData, remember to adjust all of
     //            loadFromCache(), saveToCache() and mergeFrom() at the same time!
 

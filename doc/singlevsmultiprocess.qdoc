@@ -138,7 +138,7 @@ application crashes and can react on it, for example by restarting the applicati
 
 The usage of QML singletons in an application has some implications. In QML, singletons live in
 their own private, but global context - they are even shared between multiple QML engine instances.
-Singletons are instantiated on once and for all, on first use, and remain as long as the process
+Singletons are instantiated once and for all, on first use, and remain as long as the process
 exists. This means that if an application is terminated in single-process mode, any singleton that
 was already instantiated will persist and keep its current state. Consequently, when the
 application is restarted again, the singleton's state may differ from the multi-process case, where

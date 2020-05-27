@@ -253,6 +253,7 @@ void tst_PackageManager::initTestCase()
         PackageDatabase *pdb = new PackageDatabase(QStringList(), pathTo(Internal0));
         m_pm = PackageManager::createInstance(pdb, pathTo(Documents0));
         m_pm->setHardwareId(m_hardwareId);
+        m_pm->enableInstaller();
 
         // simulate the ApplicationManager stopping blocked applications
         connect(&m_pm->internalSignals, &PackageManagerInternalSignals::registerApplication,

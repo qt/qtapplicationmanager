@@ -75,7 +75,8 @@ public:
     };
     Q_DECLARE_FLAGS(Options, Option)
 
-    AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName, Options options = None);
+    AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName,
+                        const char typeId[4] = nullptr, quint32 version = 0, Options options = None);
     virtual ~AbstractConfigCache();
 
     virtual void parse();
@@ -85,6 +86,10 @@ public:
     void *takeResult(const QString &rawFile) const;
 
     void clear();
+
+    // mainly for debugging and auto tests
+    bool parseReadFromCache() const;
+    bool parseWroteToCache() const;
 
 protected:
     virtual void *loadFromSource(QIODevice *source, const QString &fileName) = 0;
@@ -106,8 +111,9 @@ public:
     using AbstractConfigCache::Option;
     using AbstractConfigCache::Options;
 
-    ConfigCache(const QStringList &configFiles, const QString &cacheBaseName, Options options = None)
-        : AbstractConfigCache(configFiles, cacheBaseName, options)
+    ConfigCache(const QStringList &configFiles, const QString &cacheBaseName, const char typeId[4],
+            qint32 typeVersion = 0, Options options = None)
+        : AbstractConfigCache(configFiles, cacheBaseName, typeId, typeVersion, options)
     { }
 
     ~ConfigCache()

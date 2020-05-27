@@ -79,13 +79,13 @@ QDataStream &operator<<(QDataStream &ds, const ConfigCacheEntry &ce)
 
 QDataStream &operator>>(QDataStream &ds, CacheHeader &ch)
 {
-    ds >> ch.magic >> ch.version >> ch.globalId >> ch.baseName >> ch.entries;
+    ds >> ch.magic >> ch.version >> ch.typeId >> ch.typeVersion >> ch.baseName >> ch.entries;
     return ds;
 }
 
 QDataStream &operator<<(QDataStream &ds, const CacheHeader &ch)
 {
-    ds << ch.magic << ch.version << ch.globalId << ch.baseName << ch.entries;
+    ds << ch.magic << ch.version << ch.typeId << ch.typeVersion << ch.baseName << ch.entries;
     return ds;
 }
 
@@ -98,23 +98,34 @@ QDebug operator<<(QDebug dbg, const ConfigCacheEntry &ce)
 }
 
 
-// this could be used in the future to have multiple AM instances that each have their own cache
-quint64 CacheHeader::s_globalId = 0;
+static quint32 makeTypeId(const char typeIdStr[4])
+{
+    if (typeIdStr) {
+        return (quint32(typeIdStr[0])) | (quint32(typeIdStr[1]) << 8)
+                | (quint32(typeIdStr[2]) << 16) | (quint32(typeIdStr[3]) << 24);
+    } else {
+        return 0;
+    }
+}
 
-bool CacheHeader::isValid(const QString &baseName) const
+bool CacheHeader::isValid(const QString &baseName, quint32 typeId, quint32 typeVersion) const
 {
     return magic == Magic
             && version == Version
-            && globalId == s_globalId
+            && this->typeId == typeId
+            && this->typeVersion == typeVersion
             && this->baseName == baseName
             && entries < 1000;
 }
 
 
-AbstractConfigCache::AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName, Options options)
+AbstractConfigCache::AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName,
+                                         const char typeId[4], quint32 version, Options options)
     : d(new ConfigCachePrivate)
 {
     d->options = options;
+    d->typeId = makeTypeId(typeId);
+    d->typeVersion = version;
     d->rawFiles = configFiles;
     d->cacheBaseName = cacheBaseName;
 }
@@ -190,7 +201,7 @@ void AbstractConfigCache::parse()
 
                 if (ds.status() != QDataStream::Ok)
                     throw Exception("failed to read cache header");
-                if (!cacheHeader.isValid(d->cacheBaseName))
+                if (!cacheHeader.isValid(d->cacheBaseName, d->typeId, d->typeVersion))
                     throw Exception("failed to parse cache header");
 
                 cache.resize(int(cacheHeader.entries));
@@ -226,7 +237,7 @@ void AbstractConfigCache::parse()
                     }
                     cacheIsComplete = true;
                 }
-
+                d->cacheWasRead = true;
 
             } catch (const Exception &e) {
                 qWarning(LogCache) << "Failed to read cache:" << e.what();
@@ -360,6 +371,8 @@ void AbstractConfigCache::parse()
                 QDataStream ds(&cacheFile);
                 CacheHeader cacheHeader;
                 cacheHeader.baseName = d->cacheBaseName;
+                cacheHeader.typeId = d->typeId;
+                cacheHeader.typeVersion = d->typeVersion;
                 cacheHeader.entries = quint32(cache.size());
                 ds << cacheHeader;
 
@@ -376,6 +389,8 @@ void AbstractConfigCache::parse()
 
                 if (ds.status() != QDataStream::Ok)
                     throw Exception("error writing content");
+
+                d->cacheWasWritten = true;
             } catch (const Exception &e) {
                 qCWarning(LogCache) << "Failed to write Cache:" << e.what();
             }
@@ -400,6 +415,18 @@ void AbstractConfigCache::clear()
     d->cacheIndex.clear();
     destruct(d->mergedContent);
     d->mergedContent = nullptr;
+    d->cacheWasRead = false;
+    d->cacheWasWritten = false;
+}
+
+bool AbstractConfigCache::parseReadFromCache() const
+{
+    return d->cacheWasRead;
+}
+
+bool AbstractConfigCache::parseWroteToCache() const
+{
+    return d->cacheWasWritten;
 }
 
 QT_END_NAMESPACE_AM

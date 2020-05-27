@@ -1,4 +1,4 @@
 TEMPLATE = subdirs
-qtHaveModule(waylandclient) {
+qtHaveModule(waylandclient):qtHaveModule(widgets) {
     SUBDIRS = widgets
 }

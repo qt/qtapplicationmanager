@@ -194,7 +194,8 @@ void PackageDatabase::parse()
         if (!m_loadFromCache && !m_saveToCache)
             cacheOptions |= AbstractConfigCache::NoCache;
 
-        ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb"), cacheOptions);
+        ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb"), "MANI",
+                                       PackageInfo::DataStreamVersion, cacheOptions);
         cache.parse();
 
         for (int i = 0; i < manifestFiles.size(); ++i) {

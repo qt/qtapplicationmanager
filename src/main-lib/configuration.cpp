@@ -401,7 +401,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 4;
+const quint32 ConfigurationData::DataStreamVersion = 5;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -451,6 +451,7 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->applications.builtinAppsManifestDir
        >> cd->applications.installationDir
        >> cd->applications.documentDir
+       >> cd->applications.installationDirMountPoint
        >> cd->installationLocations
        >> cd->crashAction
        >> cd->systemProperties
@@ -512,6 +513,7 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << applications.builtinAppsManifestDir
        << applications.installationDir
        << applications.documentDir
+       << applications.installationDirMountPoint
        << installationLocations
        << crashAction
        << systemProperties
@@ -610,6 +612,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(applications.builtinAppsManifestDir);
     MERGE_FIELD(applications.installationDir);
     MERGE_FIELD(applications.documentDir);
+    MERGE_FIELD(applications.installationDirMountPoint);
     MERGE_FIELD(installationLocations);
     MERGE_FIELD(crashAction);
     MERGE_FIELD(systemProperties);
@@ -807,6 +810,8 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                             cd->applications.installationDir = p->parseScalar().toString(); } },
                       { "documentDir", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
                             cd->applications.documentDir = p->parseScalar().toString(); } },
+                      { "installationDirMountPoint", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->applications.installationDirMountPoint = p->parseScalar().toString(); } },
                       { "installedAppsManifestDir", false, YamlParser::Scalar, [](YamlParser *p) {
                             qCDebug(LogDeployment) << "ignoring 'installedAppsManifestDir'";
                             (void) p->parseScalar(); } },
@@ -974,6 +979,11 @@ QString Configuration::documentDir() const
     if (m_documentDir.isEmpty())
         m_documentDir = value<QString>("document-dir", m_data->applications.documentDir);
     return m_documentDir;
+}
+
+QString Configuration::installationDirMountPoint() const
+{
+    return m_data->applications.installationDirMountPoint;
 }
 
 bool Configuration::disableInstaller() const

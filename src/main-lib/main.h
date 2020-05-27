@@ -177,6 +177,7 @@ private:
     QStringList m_builtinAppsManifestDirs;
     QString m_installationDir;
     QString m_documentDir;
+    QString m_installationDirMountPoint;
 };
 
 QT_END_NAMESPACE_AM

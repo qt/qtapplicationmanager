@@ -85,6 +85,7 @@ public:
 
     QString hardwareId;
     QList<QByteArray> chainOfTrust;
+    bool cleanupBrokenInstallationsDone = false;
 
     QList<AsynchronousTask *> incomingTaskList;     // incoming queue
     QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge

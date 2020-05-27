@@ -181,6 +181,11 @@ or across multiple config files, the final value is resolved based on these rule
         \li The base directory for per-package document storage directories.
             (default: empty/disabled)
     \row
+        \li [\c applications/installationDirMountPoint]
+        \li string
+        \li If set, package database loading will be delayed until the specified mount point has been mounted.
+            (default: empty/disabled)
+    \row
         \li \b --dbus
         \li string
         \li Registers the ApplicationManager, ApplicationInstaller, NotificationManager, and

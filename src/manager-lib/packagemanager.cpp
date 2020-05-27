@@ -375,6 +375,14 @@ void PackageManager::registerPackages()
     }
     for (auto it = pkgs.constBegin(); it != pkgs.constEnd(); ++it)
         registerPackage(it.value().first, it.value().second);
+
+    // now that we have a consistent pkg db, we can clean up the installed packages
+    cleanupBrokenInstallations();
+
+#if !defined(AM_DISABLE_INSTALLER)
+    // something might have been queued already before the cleanup had finished
+    triggerExecuteNextTask();
+#endif
 }
 
 Package *PackageManager::registerPackage(PackageInfo *packageInfo, PackageInfo *updatedPackageInfo,
@@ -833,6 +841,9 @@ QVariantMap PackageManager::documentLocation() const
 
 void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
 {
+    if (d->cleanupBrokenInstallationsDone)
+        return;
+
 #if !defined(AM_DISABLE_INSTALLER)
     // Check that everything in the app-db is available
     //    -> if not, remove from app-db
@@ -923,6 +934,8 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
         }
     }
 #endif // !defined(AM_DISABLE_INSTALLER)
+
+    d->cleanupBrokenInstallationsDone = true;
 }
 
 /*!
@@ -1234,7 +1247,7 @@ void PackageManager::triggerExecuteNextTask()
 
 void PackageManager::executeNextTask()
 {
-    if (d->activeTask || d->incomingTaskList.isEmpty())
+    if (!d->cleanupBrokenInstallationsDone || d->activeTask || d->incomingTaskList.isEmpty())
         return;
 
     AsynchronousTask *task = d->incomingTaskList.takeFirst();

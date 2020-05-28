@@ -58,13 +58,11 @@ class QuickLauncher : public QObject
     Q_OBJECT
 
 public:
+    static QuickLauncher *createInstance(int runtimesPerContainer, qreal idleLoad);
     static QuickLauncher *instance();
     ~QuickLauncher() override;
 
-    void initialize(int runtimesPerContainer, qreal idleLoad = 0);
-
     QPair<AbstractContainer *, AbstractRuntime *> take(const QString &containerId, const QString &runtimeId);
-
     void shutDown();
 
 public slots:
@@ -79,6 +77,7 @@ protected:
 private:
     QuickLauncher(QObject *parent = nullptr);
     QuickLauncher(const QuickLauncher &);
+    void initialize(int runtimesPerContainer, qreal idleLoad);
     QuickLauncher &operator=(const QuickLauncher &);
     static QuickLauncher *s_instance;
 

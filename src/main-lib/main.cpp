@@ -323,6 +323,8 @@ void Main::shutDown(int exitCode)
         connect(m_quickLauncher, &QuickLauncher::shutDownFinished,
                 this, []() { checkShutDownFinished(QuickLauncherDown); });
         m_quickLauncher->shutDown();
+    } else {
+        down |= QuickLauncherDown;
     }
 #if !defined(AM_HEADLESS)
     if (m_windowManager) {
@@ -526,9 +528,12 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
             m_applicationIPCManager, &ApplicationIPCManager::attachToRuntime);
     StartupTimer::instance()->checkpoint("after ApplicationIPCManager instantiation");
 
-    m_quickLauncher = QuickLauncher::instance();
-    m_quickLauncher->initialize(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad);
-    StartupTimer::instance()->checkpoint("after quick-launcher setup");
+    if (quickLaunchRuntimesPerContainer > 0) {
+        m_quickLauncher = QuickLauncher::createInstance(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad);
+        StartupTimer::instance()->checkpoint("after quick-launcher setup");
+    } else {
+        qCDebug(LogSystem) << "Not setting up the quick-launch pool (runtimesPerContainer is 0)";
+    }
 }
 
 void Main::setupInstaller(const QStringList &caCertificatePaths,

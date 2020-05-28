@@ -56,10 +56,18 @@ QT_BEGIN_NAMESPACE_AM
 
 QuickLauncher *QuickLauncher::s_instance = nullptr;
 
+QuickLauncher *QuickLauncher::createInstance(int runtimesPerContainer, qreal idleLoad)
+{
+    if (Q_UNLIKELY(s_instance))
+        qFatal("QuickLauncher instance already exists");
+
+    s_instance = new QuickLauncher();
+    s_instance->initialize(runtimesPerContainer, idleLoad);
+    return s_instance;
+}
+
 QuickLauncher *QuickLauncher::instance()
 {
-    if (!s_instance)
-        s_instance = new QuickLauncher();
     return s_instance;
 }
 
@@ -79,11 +87,6 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
 {
     ContainerFactory *cf = ContainerFactory::instance();
     RuntimeFactory *rf = RuntimeFactory::instance();
-
-    if (runtimesPerContainer <= 0) {
-        qCDebug(LogSystem) << "Not setting up the quick-launch pool (runtimesPerContainer is 0)";
-        return;
-    }
 
     qCDebug(LogSystem) << "Setting up the quick-launch pool:";
 

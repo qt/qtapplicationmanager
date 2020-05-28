@@ -710,39 +710,44 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
 
     if (!runtime) {
         if (!inProcess) {
-            // we cannot use the quicklaunch pool, if
-            //  (a) a debug-wrapper is being used,
-            //  (b) stdio is redirected or
-            //  (c) the app requests special environment variables or
-            //  (d) the app requests a different OpenGL config from the AM
-            const char *cannotUseQuickLaunch = nullptr;
+            if (QuickLauncher::instance()) {
+                // we cannot use the quicklaunch pool, if
+                //  (a) a debug-wrapper is being used,
+                //  (b) stdio is redirected or
+                //  (c) the app requests special environment variables or
+                //  (d) the app requests a different OpenGL config from the AM
+                const char *cannotUseQuickLaunch = nullptr;
 
-            if (!debugWrapperCommand.isEmpty())
-                cannotUseQuickLaunch = "the app is started using a debug-wrapper";
-            else if (hasStdioRedirections)
-                cannotUseQuickLaunch = "standard I/O is redirected";
-            else if (!app->runtimeParameters().value(qSL("environmentVariables")).toMap().isEmpty())
-                cannotUseQuickLaunch = "the app requests custom environment variables";
-            else if (app->info()->openGLConfiguration() != runtimeManager->systemOpenGLConfiguration())
-                cannotUseQuickLaunch = "the app requests a custom OpenGL configuration";
+                if (!debugWrapperCommand.isEmpty())
+                    cannotUseQuickLaunch = "the app is started using a debug-wrapper";
+                else if (hasStdioRedirections)
+                    cannotUseQuickLaunch = "standard I/O is redirected";
+                else if (!app->runtimeParameters().value(qSL("environmentVariables")).toMap().isEmpty())
+                    cannotUseQuickLaunch = "the app requests custom environment variables";
+                else if (app->info()->openGLConfiguration() != runtimeManager->systemOpenGLConfiguration())
+                    cannotUseQuickLaunch = "the app requests a custom OpenGL configuration";
 
-            if (cannotUseQuickLaunch) {
-                qCDebug(LogSystem) << "Cannot use quick-launch for application" << app->id()
-                                   << "because" << cannotUseQuickLaunch;
-            } else {
-                // check quicklaunch pool
-                QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
-                        QuickLauncher::instance()->take(containerId, app->info()->runtimeName());
-                container = quickLaunch.first;
-                runtime = quickLaunch.second;
+                if (cannotUseQuickLaunch) {
+                    qCDebug(LogSystem) << "Cannot use quick-launch for application" << app->id()
+                                       << "because" << cannotUseQuickLaunch;
+                } else {
+                    // check quicklaunch pool
+                    QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
+                            QuickLauncher::instance()->take(containerId, app->info()->runtimeName());
+                    container = quickLaunch.first;
+                    runtime = quickLaunch.second;
 
-                qCDebug(LogSystem) << "Found a quick-launch entry for container" << containerId
-                                   << "and runtime" << app->info()->runtimeName() << "->" << container << runtime;
+                    if (container || runtime) {
+                        qCDebug(LogSystem) << "Found a quick-launch entry for container" << containerId
+                                           << "and runtime" << app->info()->runtimeName() << "->"
+                                           << container << runtime;
 
-                if (!container && runtime) {
-                    runtime->deleteLater();
-                    qCCritical(LogSystem) << "ERROR: QuickLauncher provided a runtime without a container.";
-                    return false;
+                        if (!container && runtime) {
+                            runtime->deleteLater();
+                            qCCritical(LogSystem) << "ERROR: QuickLauncher provided a runtime without a container.";
+                            return false;
+                        }
+                    }
                 }
             }
 

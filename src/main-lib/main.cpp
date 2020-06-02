@@ -96,6 +96,7 @@
 #include "main.h"
 #include "configuration.h"
 #include "applicationmanager.h"
+#include "package.h"
 #include "packagemanager.h"
 #include "packagedatabase.h"
 #include "installationreport.h"
@@ -157,8 +158,10 @@ QT_BEGIN_NAMESPACE_AM
 // old trick to do this hooking transparently for the user of the class.
 int &Main::preConstructor(int &argc)
 {
+#if !defined(AM_DISABLE_INSTALLER)
     // try to set a reasonable locale - we later verify with checkCorrectLocale() if we succeeded
     PackageUtilities::ensureCorrectLocale();
+#endif
     return argc;
 }
 

@@ -217,7 +217,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
           applications within the application-manager.
     \row
       \li \c QT_WAYLAND_SHELL_INTEGRATION
-      \li Set to \c xdg-shell-v5. This is the preferred wayland shell integration.
+      \li Set to \c xdg-shell. This is the preferred wayland shell integration.
     \row
       \li \c AM_CONFIG
       \li A YAML, UTF-8 encoded version of \a amConfig (see below).

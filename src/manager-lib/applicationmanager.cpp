@@ -264,7 +264,7 @@
     \qml
     Connections {
         target: ApplicationManager
-        onApplicationRunStateChanged: {
+        function onApplicationRunStateChanged() {
             if (runState === Am.NotRunning
                 && ApplicationManager.application(id).lastExitStatus === Am.CrashExit) {
                 ApplicationManager.startApplication(id);

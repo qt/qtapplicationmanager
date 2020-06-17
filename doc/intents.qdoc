@@ -92,7 +92,7 @@ registration; see the \l {Handling Intents in QML} {next section}.
 The application manager parses all those manifest files on startup (as well as when an
 application is installed at run time). Only the application manager itself and the System UI have
 access to the full list of registered intents defined by all the applications; for security and
-privacy reason sthe applications themselves can't access this list.
+privacy reasons the applications themselves can't access this list.
 
 
 \section1 Handling Intents in QML

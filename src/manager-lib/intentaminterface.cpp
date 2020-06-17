@@ -572,6 +572,7 @@ QT_BEGIN_NAMESPACE_AM
 
 /*! \qmltype IntentServerHandler
     \inqmlmodule QtApplicationManager.SystemUI
+    \inherits IntentHandler
     \ingroup system-ui-instantiable
     \brief A handler for intent requests received within the system ui.
 

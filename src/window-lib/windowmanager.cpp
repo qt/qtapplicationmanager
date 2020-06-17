@@ -142,7 +142,9 @@
             target: WindowManager
             // Send windows to a separate model so that we have control
             // over removals and ordering
-            onWindowAdded: windowsModel.append({"window":window});
+            function onWindowAdded(window) {
+                windowsModel.append({"window":window});
+            }
         }
 
         Repeater {
@@ -544,7 +546,9 @@ int WindowManager::indexOfWindow(Window *window) const
 
     Connections {
         target: ApplicationManager
-        onWindowManagerCompositorReadyChanged: WindowManager.addExtension(texshare);
+        function onWindowManagerCompositorReadyChanged() {
+            WindowManager.addExtension(texshare);
+        }
     }
     \endcode
 

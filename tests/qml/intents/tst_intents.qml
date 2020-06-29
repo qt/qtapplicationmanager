@@ -64,7 +64,7 @@ TestCase {
 
     function initTestCase() {
         verify(ApplicationManager.application("intents1"))
-        verify(ApplicationManager.application("intents2"))
+        verify(ApplicationManager.application("intents2.1"))
         if (!ApplicationManager.singleProcess)
             verify(ApplicationManager.application("cannot-start"))
     }
@@ -127,8 +127,8 @@ TestCase {
     function test_intents_data() {
         return [
                     {tag: "1-1", intentId: "only1", appId: "intents1", succeeding: true },
-                    {tag: "2-2", intentId: "only2", appId: "intents2", succeeding: true },
-                    {tag: "1-2", intentId: "only1", appId: "intents2", succeeding: false,
+                    {tag: "2-2", intentId: "only2", appId: "intents2.1", succeeding: true },
+                    {tag: "1-2", intentId: "only1", appId: "intents2.1", succeeding: false,
                         errorMessage: "No matching IntentHandler found." },
                     {tag: "2-1", intentId: "only2", appId: "intents1", succeeding: false,
                         errorMessage: "No matching intent handler registered.",
@@ -218,7 +218,7 @@ TestCase {
             compare(possibleIntents[0].intentId, intentId)
             compare(possibleIntents[1].intentId, intentId)
             compare(possibleIntents[0].applicationId, "intents1")
-            compare(possibleIntents[1].applicationId, "intents2")
+            compare(possibleIntents[1].applicationId, "intents2.1")
             compare(disambiguateSpy.signalArguments[0][2], stdParams)
 
             switch (data.action) {
@@ -226,10 +226,9 @@ TestCase {
                 IntentServer.rejectDisambiguationRequest(disambiguateSpy.signalArguments[0][0])
                 break
             case "acknowledge":
-                var intent = possibleIntents[0]
-                if (data.acknowledgeIntentId) {
-                    intent = IntentServer.applicationIntent(data.acknowledgeIntentId, possibleIntents[0].applicationId)
-                }
+                var intent = data.acknowledgeIntentId ? IntentServer.applicationIntent(data.acknowledgeIntentId,
+                                                                                possibleIntents[0].applicationId)
+                                                      : possibleIntents[1]
                 IntentServer.acknowledgeDisambiguationRequest(disambiguateSpy.signalArguments[0][0], intent)
                 break
             }

@@ -127,15 +127,11 @@ QT_BEGIN_NAMESPACE_AM
     Emitted when a new \a intent gets added to the intentList (e.g. on application installation).
 */
 
-/*! \qmlsignal IntentServer::intentRemoved(Intent intent)
-    Emitted when an existing \a intent is removed from the intentList (e.g. on application
-    deinstallation).
+/*! \qmlsignal IntentServer::intentAboutToBeRemoved(Intent intent)
+    Emitted when an existing \a intent is going to be removed from the intentList (e.g. on
+    application deinstallation).
 */
 
-/*! \qmlsignal IntentServer::intentListChanged()
-    Emitted when either a new intent gets added to or an existing intent is remove from the
-    intentList.
-*/
 
 enum Roles
 {
@@ -712,7 +708,7 @@ void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reje
         if (reject) {
             isr->setRequestFailed(qSL("Disambiguation was rejected"));
         } else if (isr->potentialIntents().contains(selectedIntent)) {
-            isr->setHandlingApplicationId(selectedIntent->packageId());
+            isr->setHandlingApplicationId(selectedIntent->applicationId());
             isr->setState(IntentServerRequest::State::Disambiguated);
         } else {
             qCWarning(LogIntents) << "IntentServer::acknowledgeDisambiguationRequest for intent"

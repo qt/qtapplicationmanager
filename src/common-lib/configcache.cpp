@@ -171,8 +171,12 @@ void AbstractConfigCache::parse()
 
     // normalize all yaml file names
     QStringList rawFilePaths;
-    for (const auto &rawFile : d->rawFiles)
-        rawFilePaths << QFileInfo(rawFile).canonicalFilePath();
+    for (const auto &rawFile : d->rawFiles) {
+        const auto path = QFileInfo(rawFile).canonicalFilePath();
+        if (path.isEmpty())
+            throw Exception("file %1 does not exist").arg(rawFile);
+        rawFilePaths << path;
+    }
 
     // find the correct cache location and make sure it exists
     const QDir cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);

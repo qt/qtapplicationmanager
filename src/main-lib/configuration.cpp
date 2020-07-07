@@ -514,11 +514,38 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << flags.forceSingleProcess;
 }
 
-// templates would we way nicer, but we cannot get nice pointers-to-member-data for all elements in
-// our sub-structs in a generic way without a lot of boilerplate code
-#define MERGE_SCALAR(x) if (from->x != def.x) { this->x = from->x; } else { }
-#define MERGE_LIST(x)   this->x.append(from->x)
-#define MERGE_MAP(x)    recursiveMergeVariantMap(this->x, from->x)
+template <typename T> void mergeField(T &into, const T &from, const T &def)
+{
+    if (from != def)
+        into = from;
+}
+
+void mergeField(QVariantMap &into, const QVariantMap &from, const QVariantMap & /*def*/)
+{
+    recursiveMergeVariantMap(into, from);
+}
+
+template <typename T> void mergeField(QList<T> &into, const QList<T> &from, const QList<T> & /*def*/)
+{
+    into.append(from);
+}
+
+void mergeField(QList<QPair<QString, QString>> &into, const QList<QPair<QString, QString>> &from,
+                const QList<QPair<QString, QString>> & /*def*/)
+{
+    for (auto &p : from) {
+        auto it = std::find_if(into.begin(), into.end(), [p](const auto &fp) { return fp.first == p.first; });
+        if (it != into.end())
+            it->second = p.second;
+        else
+            into.append(p);
+    }
+}
+
+// using templates only would be better, but we cannot get nice pointers-to-member-data for
+// all elements in our sub-structs in a generic way without a lot of boilerplate code
+
+#define MERGE_FIELD(x) mergeField(this->x, from->x, def.x)
 
 void ConfigurationData::mergeFrom(const ConfigurationData *from)
 {
@@ -527,53 +554,54 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
 
     static const ConfigurationData def;
 
-    MERGE_MAP(runtimes.configurations);
-    MERGE_MAP(containers.configurations);
+    MERGE_FIELD(runtimes.configurations);
+    MERGE_FIELD(containers.configurations);
+    MERGE_FIELD(containers.selection);
 
-    MERGE_SCALAR(intents.disable);
-    MERGE_SCALAR(intents.timeouts.disambiguation);
-    MERGE_SCALAR(intents.timeouts.startApplication);
-    MERGE_SCALAR(intents.timeouts.replyFromApplication);
-    MERGE_SCALAR(intents.timeouts.replyFromSystem);
-    MERGE_LIST(plugins.startup);
-    MERGE_LIST(plugins.container);
-    MERGE_SCALAR(logging.dlt.id);
-    MERGE_SCALAR(logging.dlt.description);
-    MERGE_LIST(logging.rules);
-    MERGE_LIST(logging.messagePattern);
-    MERGE_SCALAR(logging.useAMConsoleLogger);
-    MERGE_SCALAR(installer.disable);
-    MERGE_LIST(installer.caCertificates);
-    MERGE_SCALAR(installer.applicationUserIdSeparation.maxUserId);
-    MERGE_SCALAR(installer.applicationUserIdSeparation.minUserId);
-    MERGE_SCALAR(installer.applicationUserIdSeparation.commonGroupId);
-    MERGE_MAP(dbus.policies);
-    MERGE_MAP(dbus.registrations);
-    MERGE_SCALAR(quicklaunch.idleLoad);
-    MERGE_SCALAR(quicklaunch.runtimesPerContainer);
-    MERGE_SCALAR(ui.style);
-    MERGE_SCALAR(ui.mainQml);
-    MERGE_LIST(ui.resources);
-    MERGE_SCALAR(ui.fullscreen);
-    MERGE_SCALAR(ui.windowIcon);
-    MERGE_LIST(ui.importPaths);
-    MERGE_LIST(ui.pluginPaths);
-    MERGE_SCALAR(ui.iconThemeName);
-    MERGE_SCALAR(ui.loadDummyData);
-    MERGE_SCALAR(ui.enableTouchEmulation);
-    MERGE_LIST(ui.iconThemeSearchPaths);
-    MERGE_MAP(ui.opengl);
-    MERGE_LIST(applications.builtinAppsManifestDir);
-    MERGE_SCALAR(applications.installationDir);
-    MERGE_SCALAR(applications.documentDir);
-    MERGE_LIST(installationLocations);
-    MERGE_MAP(crashAction);
-    MERGE_MAP(systemProperties);
-    MERGE_SCALAR(flags.noSecurity);
-    MERGE_SCALAR(flags.noUiWatchdog);
-    MERGE_SCALAR(flags.developmentMode);
-    MERGE_SCALAR(flags.forceMultiProcess);
-    MERGE_SCALAR(flags.forceSingleProcess);
+    MERGE_FIELD(intents.disable);
+    MERGE_FIELD(intents.timeouts.disambiguation);
+    MERGE_FIELD(intents.timeouts.startApplication);
+    MERGE_FIELD(intents.timeouts.replyFromApplication);
+    MERGE_FIELD(intents.timeouts.replyFromSystem);
+    MERGE_FIELD(plugins.startup);
+    MERGE_FIELD(plugins.container);
+    MERGE_FIELD(logging.dlt.id);
+    MERGE_FIELD(logging.dlt.description);
+    MERGE_FIELD(logging.rules);
+    MERGE_FIELD(logging.messagePattern);
+    MERGE_FIELD(logging.useAMConsoleLogger);
+    MERGE_FIELD(installer.disable);
+    MERGE_FIELD(installer.caCertificates);
+    MERGE_FIELD(installer.applicationUserIdSeparation.maxUserId);
+    MERGE_FIELD(installer.applicationUserIdSeparation.minUserId);
+    MERGE_FIELD(installer.applicationUserIdSeparation.commonGroupId);
+    MERGE_FIELD(dbus.policies);
+    MERGE_FIELD(dbus.registrations);
+    MERGE_FIELD(quicklaunch.idleLoad);
+    MERGE_FIELD(quicklaunch.runtimesPerContainer);
+    MERGE_FIELD(ui.style);
+    MERGE_FIELD(ui.mainQml);
+    MERGE_FIELD(ui.resources);
+    MERGE_FIELD(ui.fullscreen);
+    MERGE_FIELD(ui.windowIcon);
+    MERGE_FIELD(ui.importPaths);
+    MERGE_FIELD(ui.pluginPaths);
+    MERGE_FIELD(ui.iconThemeName);
+    MERGE_FIELD(ui.loadDummyData);
+    MERGE_FIELD(ui.enableTouchEmulation);
+    MERGE_FIELD(ui.iconThemeSearchPaths);
+    MERGE_FIELD(ui.opengl);
+    MERGE_FIELD(applications.builtinAppsManifestDir);
+    MERGE_FIELD(applications.installationDir);
+    MERGE_FIELD(applications.documentDir);
+    MERGE_FIELD(installationLocations);
+    MERGE_FIELD(crashAction);
+    MERGE_FIELD(systemProperties);
+    MERGE_FIELD(flags.noSecurity);
+    MERGE_FIELD(flags.noUiWatchdog);
+    MERGE_FIELD(flags.developmentMode);
+    MERGE_FIELD(flags.forceMultiProcess);
+    MERGE_FIELD(flags.forceSingleProcess);
 }
 
 QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)

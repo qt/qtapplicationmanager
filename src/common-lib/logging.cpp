@@ -416,6 +416,10 @@ void Logging::initialize(int argc, const char * const *argv)
         }
     }
 
+    // we do an unnecessary (but cheap) qInstallMessageHandler() at program exit, but this way
+    // we cannot forget to dump the deferred messages whenever we exit
+    atexit(Logging::completeSetup);
+
     s_messagePatternDefined = qEnvironmentVariableIsSet("QT_MESSAGE_PATTERN");
     s_defaultQtHandler = instantLogging ? qInstallMessageHandler(messageHandler)
                                         : qInstallMessageHandler(deferredMessageHandler);

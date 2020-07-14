@@ -145,7 +145,7 @@
             model delegate.
     \endtable
 
-    \target TaskStates
+    \target Task States
 
     The following table describes all possible states that a background task could be in:
 
@@ -1107,7 +1107,7 @@ QString PackageManager::removePackage(const QString &packageId, bool keepDocumen
     \qmlmethod enumeration PackageManager::taskState(string taskId)
 
     Returns the current state of the installation task identified by \a taskId.
-    \l {TaskStates}{See here} for a list of valid task states.
+    \l {Task States}{See here} for a list of valid task states.
 
     Returns \c PackageManager.Invalid if the \a taskId is invalid.
 */

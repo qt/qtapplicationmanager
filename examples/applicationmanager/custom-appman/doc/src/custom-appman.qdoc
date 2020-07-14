@@ -69,12 +69,6 @@ Generally, it's a good idea to set an application name and version.
 We want the application manager's logging part to be initialized as early as possible, especially
 when we are dealing with DLT logging.
 
-\printline PackageUtilities::ensure
-
-If you are using the application manager's installer part, this function needs to be called
-\e before the QApplication constructor to make sure that your C locale is a UTF-8 variant. This is
-a requirement, to get deterministic results when using \c libarchive with non-ASCII filenames.
-
 \printline Sudo::forkServer
 
 Again, for the installer part only, an additional setup step is necessary before running the

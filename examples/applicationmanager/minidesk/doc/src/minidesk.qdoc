@@ -238,7 +238,7 @@ App2 makes use of this interface extension:
 \quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app2/app2.qml
 \skipto ApplicationInterfaceExtension
 \printuntil onPiChanged
-\printline }
+\printuntil /^\s{4}\}/
 
 The interface is used here as soon as it's ready. Of course, the interface can be accessed from
 elsewhere, too. The \l{ApplicationInterfaceExtension::name}{ApplicationInterfaceExtension.name}
@@ -256,7 +256,7 @@ do some clean-up and it must subsequently confirm with
 \quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app2/app2.qml
 \skipto Connections
 \printuntil onQuit
-\printline }
+\printuntil /^\s{4}\}/
 
 Note that App1 is not well-behaved: it does not acknowledge the \c quit signal and will hence simply
 be terminated by the application manager.

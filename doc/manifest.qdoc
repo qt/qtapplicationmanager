@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
+** Copyright (C) 2020 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the documentation of the Qt Application Manager.
@@ -376,6 +375,11 @@ that specifies which runtime a configuration option applies to:
         \li Setting these variables disables the use of the quick launch mechanism for this
             application.
         \endlist
+\row
+    \li \c documentUrl
+    \li string
+    \li An optional default document URL to use if the application is started without
+        specifying a document URL (see \l{ApplicationManager::startApplication}).
 \endtable
 
 */

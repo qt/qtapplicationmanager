@@ -389,6 +389,11 @@ QStringList Application::supportedMimeTypes() const
     return info()->supportedMimeTypes();
 }
 
+QString Application::documentUrl() const
+{
+    return info()->documentUrl();
+}
+
 QString Application::name() const
 {
     return package()->name();

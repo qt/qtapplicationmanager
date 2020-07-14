@@ -77,6 +77,7 @@ public:
     QVariantMap runtimeParameters() const;
     QStringList capabilities() const;
     QStringList supportedMimeTypes() const;
+    QString documentUrl() const;
     QVariantMap openGLConfiguration() const;
     bool supportsApplicationInterface() const;
     QVariantMap dltConfiguration() const;
@@ -103,6 +104,7 @@ private:
     QStringList m_capabilities;
     QVariantMap m_openGLConfiguration;
     QStringList m_supportedMimeTypes; // deprecated
+    QString m_documentUrl; // deprecated
     QVariantMap m_dltConfiguration;
 
     friend class ApplicationManager; // needed to update installation status

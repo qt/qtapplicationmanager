@@ -177,9 +177,8 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                 for (auto it = pri.cbegin(); it != pri.cend(); ++it)
                     legacyAppInfo->m_allAppProperties.insert(it.key(), it.value());
             });
-            fields.emplace_back("documentUrl", false, YamlParser::Scalar, [](YamlParser *p) {
-                qCDebug(LogSystem) << "ignoring 'documentUrl'";
-                (void) p->parseScalar();
+            fields.emplace_back("documentUrl", false, YamlParser::Scalar, [&legacyAppInfo](YamlParser *p) {
+                legacyAppInfo->m_documentUrl = p->parseScalar().toString();
             });
             fields.emplace_back("mimeTypes", false, YamlParser::Scalar | YamlParser::List, [&legacyAppInfo](YamlParser *p) {
                 legacyAppInfo->m_supportedMimeTypes = p->parseStringOrStringList();

@@ -208,6 +208,11 @@ QStringList ApplicationInfo::supportedMimeTypes() const
     return m_supportedMimeTypes;
 }
 
+QString QtAM::ApplicationInfo::documentUrl() const
+{
+    return m_documentUrl;
+}
+
 QVariantMap ApplicationInfo::openGLConfiguration() const
 {
     return m_openGLConfiguration;

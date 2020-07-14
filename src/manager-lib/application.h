@@ -125,7 +125,7 @@ public:
     Application *nonAliased() { return this; }
     QStringList categories() const;
     QUrl icon() const;
-    QString documentUrl() const { return QString {}; }
+    QString documentUrl() const;
     QStringList supportedMimeTypes() const;
     QString name() const;
     Q_INVOKABLE QString name(const QString &language) const;

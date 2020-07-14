@@ -57,7 +57,7 @@ QT_BEGIN_NAMESPACE_AM
     \ingroup common-non-instantiable
     \brief Each instance represents an outgoing or incoming intent request.
 
-    This type is used both in applications as well as within the System-UI to represent an intent
+    This type is used both in applications as well as within the System UI to represent an intent
     request. This type can not be instantiated directly, but will be returned by
     IntentClient::sendIntentRequest() (for outgoing requests to the system) and
     IntentHandler::requestReceived() (for incoming requests to the application)

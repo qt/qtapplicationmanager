@@ -156,7 +156,7 @@ or across multiple config files, the final value is resolved based on these rule
     \row
         \li \b --recreate-database or \b -r
         \li bool
-        \li Deprecated. These options were necessary for the application-manager to react on changes
+        \li Deprecated. These options were necessary for the application manager to react on changes
             to the application manifest files, but this is not needed anymore. For backward
             compatibility these options do map to the \c --clear-cache option, which will clear both
             the configuration and application database cache.

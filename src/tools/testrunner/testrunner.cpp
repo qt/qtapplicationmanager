@@ -128,7 +128,7 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
     QTest::qtest_qParseArgs(testArgV.size(), testArgV.data(), false /*no qml options*/);
     qputenv("QT_QTESTLIB_RUNNING", "1");
 
-    // Register the test object and application-manager test add-on
+    // Register the test object and application manager test add-on
     qmlRegisterSingletonType<QTestRootObject>("Qt.test.qtestroot", 1, 0, "QTestRootObject", testRootObject);
     qmlRegisterSingletonType<AmTest>("QtApplicationManager", 2, 0, "AmTest", amTest);
 

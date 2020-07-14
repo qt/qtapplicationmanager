@@ -60,9 +60,9 @@
     \ingroup system-ui-singletons
     \brief Central registry for interfaces for System-UI-to-app communication.
 
-    This singleton type is the central manager for app-to-System-UI IPC interfaces within the application-manager.
+    This singleton type is the central manager for app-to-System-UI IPC interfaces within the application manager.
 
-    It only exports a single function towards the QML System-UI: registerInterface().
+    It only exports a single function towards the QML System UI: registerInterface().
 
     See ApplicationInterfaceExtension for information on how to access these registered IPC interfaces from
     the client (application) side.
@@ -112,7 +112,7 @@ ApplicationIPCManager::ApplicationIPCManager(QObject *parent)
 
     Registers an IPC \a interface object to extend the communication API between applications and
     the Application Manager itself. The \a interface object is an ApplicationIPCInterface item, that needs
-    to stay valid during the whole lifetime of the System-UI. The \a name of the interface has to
+    to stay valid during the whole lifetime of the System UI. The \a name of the interface has to
     adhere to D-Bus standards, so it needs to contain at least one period ('.') character
     (for example, \c{io.qt.test}).
     The interface is available to all applications matching the \a filter criteria (see below)

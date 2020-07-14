@@ -152,9 +152,9 @@ int main(int argc, char *argv[])
         case CreatePackage: {
             clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
             clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
-            clp.addOption({{ qSL("extra-metadata"),      qSL("m") }, qSL("Add extra meta-data to the package, supplied on the commandline."), qSL("yaml-snippet") });
+            clp.addOption({{ qSL("extra-metadata"),      qSL("m") }, qSL("Add extra meta-data to the package, supplied on the command line."), qSL("yaml-snippet") });
             clp.addOption({{ qSL("extra-metadata-file"), qSL("M") }, qSL("Add extra meta-data to the package, read from file."), qSL("yaml-file") });
-            clp.addOption({{ qSL("extra-signed-metadata"),      qSL("s") }, qSL("Add extra, digitally signed, meta-data to the package, supplied on the commandline."), qSL("yaml-snippet") });
+            clp.addOption({{ qSL("extra-signed-metadata"),      qSL("s") }, qSL("Add extra, digitally signed, meta-data to the package, supplied on the command line."), qSL("yaml-snippet") });
             clp.addOption({{ qSL("extra-signed-metadata-file"), qSL("S") }, qSL("Add extra, digitally signed, meta-data to the package, read from file."), qSL("yaml-file") });
             clp.addPositionalArgument(qSL("package"),          qSL("The file name of the created package."));
             clp.addPositionalArgument(qSL("source-directory"), qSL("The package's content root directory."));

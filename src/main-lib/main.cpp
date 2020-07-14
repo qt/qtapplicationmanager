@@ -347,7 +347,7 @@ void Main::shutDown(int exitCode)
             resources << qSL("quick-launchers");
         if (!(down & WindowManagerDown))
             resources << qSL("windows");
-        qCCritical(LogSystem, "There are still resources in use (%s). Check your System-UI implementation. "
+        qCCritical(LogSystem, "There are still resources in use (%s). Check your System UI implementation. "
                               "Exiting anyhow.", resources.join(qSL(", ")).toLocal8Bit().constData());
         QCoreApplication::exit(exitCode);
     });
@@ -805,7 +805,7 @@ void Main::showWindow(bool showFullscreen)
 #  endif
                 auto st = StartupTimer::instance();
                 st->checkFirstFrame();
-                st->createAutomaticReport(qSL("System-UI"));
+                st->createAutomaticReport(qSL("System UI"));
             }
         });
 
@@ -830,7 +830,7 @@ void Main::showWindow(bool showFullscreen)
                 checkOpenGLFormat("first window", win->format());
             }
         });
-        StartupTimer::instance()->createAutomaticReport(qSL("System-UI"));
+        StartupTimer::instance()->createAutomaticReport(qSL("System UI"));
     }
 #endif
 }

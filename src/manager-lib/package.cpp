@@ -78,14 +78,14 @@
     \readonly
 
     This property describes, if this package is part of the built-in set of packages of the
-    current System-UI.
+    current System UI.
 */
 /*!
     \qmlproperty bool PackageObject::builtInHasRemovableUpdate
     \readonly
 
     This property describes, if this package is part of the built-in set of packages of the
-    current System-UI \b and if there is currently an update installed that shadows the original
+    current System UI \b and if there is currently an update installed that shadows the original
     built-in package contents.
 
     \sa builtIn
@@ -138,7 +138,7 @@
 
     A list of category names the package should be associated with. This is mainly for the
     automated app-store uploads as well as displaying the package within a fixed set of
-    categories in the System-UI.
+    categories in the System UI.
 */
 /*!
     \qmlproperty enumeration PackageObject::state

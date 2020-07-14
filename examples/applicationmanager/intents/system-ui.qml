@@ -103,7 +103,7 @@ Item {
             id: sysui_page
             width: parent.width / 2
             height: parent.height / 2
-            title: "System-UI"
+            title: "System UI"
 
             onRequest: {
                 var request = IntentClient.sendIntentRequest(intentId, applicationId, parameters)
@@ -120,7 +120,7 @@ Item {
             //! [IntentServerHandler]
             IntentServerHandler {
                 intentIds: "rotate-window"
-                names: { "en": "Rotate System-UI" }
+                names: { "en": "Rotate System UI" }
                 visibility: IntentObject.Public
 
                 onRequestReceived: {

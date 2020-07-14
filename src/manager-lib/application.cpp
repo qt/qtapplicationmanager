@@ -93,7 +93,7 @@
     \readonly
 
     A list of special access rights for the application - these capabilities can later be queried
-    and verified by the middleware via the application-manager.
+    and verified by the middleware via the application manager.
 */
 /*!
     \qmlproperty string ApplicationObject::documentUrl
@@ -141,7 +141,7 @@
     \list
     \li Am.NormalExit - The application exited normally.
     \li Am.CrashExit - The application crashed.
-    \li Am.ForcedExit - The application was killed by the application-manager, since it
+    \li Am.ForcedExit - The application was killed by the application manager, since it
                         ignored the quit request originating from a call to
                         ApplicationManager::stopApplication.
     \endlist

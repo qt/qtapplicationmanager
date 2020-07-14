@@ -116,7 +116,7 @@ The code snippet below is part of the \l{Desktop System UI Example} that illustr
 display pop-ups.
 
 \quotefromfile ../examples/applicationmanager/minidesk/system-ui/main.qml
-\skipto System-UI for a notification
+\skipto System UI for a notification
 \printto Handler for WindowManager signals
 
 \section2 Intents

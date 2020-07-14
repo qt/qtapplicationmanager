@@ -441,7 +441,7 @@ Item {
         }
 
         /*
-            Children added by System-UI code must always stay in front of WindowItem's own private children.
+            Children added by System UI code must always stay in front of WindowItem's own private children.
          */
         function test_childrenZOrder() {
             initWindowItemsModel();

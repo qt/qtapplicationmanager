@@ -66,13 +66,13 @@ QT_BEGIN_NAMESPACE_AM
     \qmltype IntentServer
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-singletons
-    \brief The System-UI side singleton representing the Intents sub-system.
+    \brief The System UI side singleton representing the Intents sub-system.
 
-    This singleton serves two purposes: for one, it gives the System-UI access to the database of
+    This singleton serves two purposes: for one, it gives the System UI access to the database of
     all the available intents via its item model API, plus it exposes the API to deal with ambigous intent
     requests. Intent requests can be ambigous if the requesting party only specified the \c
     intentId, but not the targeted \c applicationId in its call to
-    IntentClient::sendIntentRequest(). In these cases, it is the responsibility of the System-UI to
+    IntentClient::sendIntentRequest(). In these cases, it is the responsibility of the System UI to
     disambiguate these requests by reacting on the disambiguationRequest() signal.
 
     The type is derived from \c QAbstractListModel, so it can be used directly
@@ -410,7 +410,7 @@ QVariantMap IntentServer::get(int index) const
     Returns the \l{IntentObject}{intent} corresponding to the given \a index in the
     model, or \c null if the index is invalid.
 
-    \note The object ownership of the returned Intent object stays with the application-manager.
+    \note The object ownership of the returned Intent object stays with the application manager.
           If you want to store this pointer, you can use the IntentServer's QAbstractListModel
           signals or the intentAboutToBeRemoved signal to get notified if the object is about
           to be deleted on the C++ side.
@@ -436,7 +436,7 @@ Intent *IntentServer::intent(int index) const
     added benefit of also checking the optionally provided \a parameters against any given
     \l{IntentObject::parameterMatch}{parameter matches}.
 
-    \note The object ownership of the returned Intent object stays with the application-manager.
+    \note The object ownership of the returned Intent object stays with the application manager.
           If you want to store this pointer, you can use the IntentServer's QAbstractListModel
           signals or the intentAboutToBeRemoved signal to get notified if the object is about
           to be deleted on the C++ side.
@@ -539,7 +539,7 @@ void IntentServer::processRequestQueue()
             // not disambiguated yet
 
             if (!isSignalConnected(QMetaMethod::fromSignal(&IntentServer::disambiguationRequest))) {
-                // If the System-UI does not react to the signal, then just use the first match.
+                // If the System UI does not react to the signal, then just use the first match.
                 isr->setHandlingApplicationId(isr->potentialIntents().first()->packageId());
             } else {
                 m_disambiguationQueue.enqueue(isr);

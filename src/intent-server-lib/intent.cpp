@@ -54,7 +54,7 @@ QT_BEGIN_NAMESPACE_AM
     \qmltype IntentObject
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
-    \brief This type represents an Intent definition on the System-UI side.
+    \brief This type represents an Intent definition on the System UI side.
 
     Each instance of this class represents a single Intent definition for a specific application.
 

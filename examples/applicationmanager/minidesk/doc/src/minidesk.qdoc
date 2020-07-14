@@ -90,7 +90,7 @@ whether the application manager runs in single-process or multi-process mode.
 
 \section2 Launcher
 
-\printto System-UI chrome for applications
+\printto System UI chrome for applications
 
 A \l{Repeater} provides the application icons arranged in a \l{Column} on the top left corner of
 the System UI; the \l{ApplicationManager} element is the model. Among others, the
@@ -107,7 +107,7 @@ the (optional) document URL, \c documentUrl. If the application is already runni
 
 \section2 Application Windows in the System UI
 
-\printto System-UI for a pop-up
+\printto System UI for a pop-up
 
 This second Repeater provides the window chrome for the application windows in its delegate. The
 model is a plain ListModel fed with \l{WindowObject}{window objects} as they are created by the
@@ -126,7 +126,7 @@ now let's focus on what this Repeater's delegate consists of:
     \li A small chocolate-colored \l Rectangle on the top left corner for closing the window (see
         \l{WindowObject::close()}{WindowObject.close()}). Since our sample applications only have one
         top-level window, closing it causes the corresponding application to quit.
-    \li The centerpiece: a \l WindowItem to render the \c WindowObject in the SystemUI; similar to
+    \li The centerpiece: a \l WindowItem to render the \c WindowObject in the System UI; similar to
         the relationship between image files and QML's Image component.
     \li And finally code to remove a row from the ListModel once its window has been destroyed from
         the application (client) side - either because it was closed, made invisible, or the
@@ -144,7 +144,7 @@ Two approaches are implemented to display pop-ups in the System UI:
     \li Through the notification API provided by the application manager
 \endlist
 
-This is the corresponding System-UI code:
+This is the corresponding System UI code:
 \printto Handler for WindowManager signals
 
 \section3 Client Application Rendering
@@ -163,10 +163,10 @@ method is used to set a freely selectable shared property. Here we chose \c{type
 indicate that the window is supposed to be shown as a pop-up.
 
 In the WindowManager::onWindowAdded() signal handler \l{WindowManager Signal Handler}{below}, the
-SystemUI checks this property and handles the window appropriately as a pop-up.
+System UI checks this property and handles the window appropriately as a pop-up.
 
 A pop-up window will be set as the content window of the \c popUpContainer WindowItem in the
-SystemUI code above. For demonstration purposes, the implementation supports only one pop-up at a
+System UI code above. For demonstration purposes, the implementation supports only one pop-up at a
 time. This is sufficient, since only App1 will display a single pop-up when its animation is
 paused. It is essential to understand, that there has to be an agreement between the System UI
 and applications, in terms of how windows are mapped. In contrast to regular application windows
@@ -180,7 +180,7 @@ it's more convenient.
 
 \section3 Notification API Usage
 
-An alternative to the window property approach is to use the application-manager's \l{Notification}
+An alternative to the window property approach is to use the application manager's \l{Notification}
 API on the application (client) side and the \l{NotificationManager} API on the System UI (server)
 side. The following code is invoked when you click on the \e bulb icon in App2:
 
@@ -201,7 +201,7 @@ notification. For brevity, the example only presents the first notification.
 \printto IPC extension
 
 This is the vital part of the System UI, where the window (surfaces) of the applications are mapped
-to \l{WindowItem}s in the SystemUI. When a new application window is available (becomes visible),
+to \l{WindowItem}s in the System UI. When a new application window is available (becomes visible),
 the \l {WindowManager::windowAdded}{onWindowAdded} handler is invoked.
 
 Only App1's "pop-up" ApplicationManagerWindow has the user-defined \c type property set. Such a

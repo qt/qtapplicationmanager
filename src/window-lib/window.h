@@ -54,7 +54,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class WindowItem;
 
-// A Window object exists for every application window that is managed by the application-manager
+// A Window object exists for every application window that is managed by the application manager
 // and has been shown (mapped) at least once.
 // In the Wayland case, every Window is a surface, but not every surface is a Window. That's why
 // there is a separate WindowSurface class in waylandcompositor.h.

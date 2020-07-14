@@ -121,7 +121,7 @@
     asynchronously on the server side, the windowPropertyChanged signal will not be emitted while
     the window object is not yet made available on the server side via the windowAdded signal. All
     those changes are not lost however, but the last change before emitting the windowAdded signal
-    will be the initial state of the window object on the System-UI side.
+    will be the initial state of the window object on the System UI side.
 
     \target Minimal compositor
 
@@ -482,7 +482,7 @@ QVariantMap WindowManager::get(int index) const
     Returns the \l{WindowObject}{window} corresponding to the given \a index in the
     model, or \c null if the index is invalid.
 
-    \note The object ownership of the returned Window object stays with the application-manager.
+    \note The object ownership of the returned Window object stays with the application manager.
           If you want to store this pointer, you can use the WindowManager's QAbstractListModel
           signals or the windowAboutToBeRemoved signal to get notified if the object is about
           to be deleted on the C++ side.
@@ -502,7 +502,7 @@ Window *WindowManager::window(int index) const
     Returns a list of \l{WindowObject}{windows} belonging to the given \a applicationId in the
     model, or an empty list if the applicationId is invalid.
 
-    \note The object ownership of the returned Window objects stays with the application-manager.
+    \note The object ownership of the returned Window objects stays with the application manager.
           If you want to store these pointers, you can use the WindowManager's QAbstractListModel
           signals or the windowAboutToBeRemoved signal to get notified if the objects are about
           to be deleted on the C++ side.
@@ -531,7 +531,7 @@ int WindowManager::indexOfWindow(Window *window) const
 /*!
     \qmlmethod object WindowManager::addExtension(Component component)
 
-    Creates a Wayland compositor extension from \a component and adds it to the System-UI's
+    Creates a Wayland compositor extension from \a component and adds it to the System UI's
     underlying WaylandCompositor. The \a component must hold a valid Wayland compositor extension.
     On success, in multi-process mode, the function returns the created extension. Extensions can
     only be added, once ApplicationManager::windowManagerCompositorReady is true, for example:
@@ -931,7 +931,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
             }
         }
     } else {
-        // app without System-UI
+        // app without System UI
 
         // filter out alias and apps not matching appId (if set)
         QVector<Application *> apps = ApplicationManager::instance()->applications();

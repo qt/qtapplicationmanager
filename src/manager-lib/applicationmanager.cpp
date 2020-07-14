@@ -206,15 +206,15 @@
     \qmlproperty bool ApplicationManager::singleProcess
     \readonly
 
-    This property indicates whether the application-manager runs in single- or multi-process mode.
+    This property indicates whether the application manager runs in single- or multi-process mode.
 */
 
 /*!
     \qmlproperty bool ApplicationManager::shuttingDown
     \readonly
 
-    This property is there to inform the System-UI, when the application-manager has entered its
-    shutdown phase. New application starts are already prevented, but the System-UI might want
+    This property is there to inform the System UI, when the application manager has entered its
+    shutdown phase. New application starts are already prevented, but the System UI might want
     to impose additional restrictions in this state.
 */
 
@@ -237,7 +237,7 @@
 /*!
     \qmlproperty var ApplicationManager::containerSelectionFunction
 
-    A JavaScript function callback that will be called whenever the application-manager needs to
+    A JavaScript function callback that will be called whenever the application manager needs to
     instantiate a container for running an application. See \l {Container Selection Configuration}
     for more information.
 */
@@ -282,7 +282,7 @@
     This signal is emitted after a new application, identified by \a id, has been installed via the
     ApplicationInstaller. The model has already been update before this signal is sent out.
 
-    \note In addition to the normal "low-level" QAbstractListModel signals, the application-manager
+    \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
           will also emit these "high-level" signals for System-UIs that cannot work directly on the
           ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
 */
@@ -293,7 +293,7 @@
     This signal is emitted before an existing application, identified by \a id, is removed via the
     ApplicationInstaller.
 
-    \note In addition to the normal "low-level" QAbstractListModel signals, the application-manager
+    \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
           will also emit these "high-level" signals for System-UIs that cannot work directly on the
           ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
 */
@@ -305,7 +305,7 @@
     identified by \a id. An empty list in the \a changedRoles argument means that all roles should
     be considered modified.
 
-    \note In addition to the normal "low-level" QAbstractListModel signals, the application-manager
+    \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
           will also emit these "high-level" signals for System-UIs that cannot work directly on the
           ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
 */
@@ -316,7 +316,7 @@
 
     This property starts with the value \c false and will change to \c true once the Wayland
     compositor is ready to accept connections from other processes. In multi-process mode, this
-    happens implicitly after the System-UI's main QML has been loaded.
+    happens implicitly after the System UI's main QML has been loaded.
 */
 
 enum Roles
@@ -639,7 +639,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     QMap<QString, QString> debugEnvironmentVariables;
     if (!debugWrapperSpecification.isEmpty()) {
         if (isSingleProcess())
-            throw Exception("Using debug-wrappers is not supported when the application-manager is running in single-process mode.");
+            throw Exception("Using debug-wrappers is not supported when the application manager is running in single-process mode.");
         if (inProcess) {
             throw Exception("Using debug-wrappers is not supported when starting an app using an in-process runtime (%1).")
                 .arg(runtimeManager->identifier());
@@ -940,19 +940,19 @@ void ApplicationManager::stopAllApplications(bool forceKill)
 /*!
     \qmlmethod bool ApplicationManager::openUrl(string url)
 
-    Tries start an application that is capable of handling \a url. The application-manager will
+    Tries start an application that is capable of handling \a url. The application manager will
     first look at the URL's scheme:
     \list
     \li If it is \c{file:}, the operating system's MIME database will be consulted, which will
         try to find a MIME type match, based on file endings or file content. In case this is
-        successful, the application-manager will use this MIME type to find all of its applications
+        successful, the application manager will use this MIME type to find all of its applications
         that claim support for it (see the \l{mimeTypes field} in the application's manifest).
         A music player application that can handle \c mp3 and \c wav files, could add this to its
         manifest:
         \badcode
         mimeTypes: [ 'audio/mpeg', 'audio/wav' ]
         \endcode
-    \li If it is something other than \c{file:}, the application-manager will consult its
+    \li If it is something other than \c{file:}, the application manager will consult its
         internal database of applications that claim support for a matching \c{x-scheme-handler/...}
         MIME type. In order to have your web-browser application handle \c{http:} and \c{https:}
         URLs, you would have to have this in your application's manifest:
@@ -962,9 +962,9 @@ void ApplicationManager::stopAllApplications(bool forceKill)
     \endlist
 
     If there is at least one possible match, it depends on the signal openUrlRequested() being
-    connected within the System-UI:
+    connected within the System UI:
     In case the signal is not connected, an arbitrary application from the matching set will be
-    started. Otherwise the application-manager will emit the openUrlRequested signal and
+    started. Otherwise the application manager will emit the openUrlRequested signal and
     return \c true. It is up to the receiver of this signal to choose from one of possible
     applications via acknowledgeOpenUrlRequest or deny the request entirely via rejectOpenUrlRequest.
     Not calling one of these two functions will result in memory leaks.
@@ -1009,7 +1009,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
 
     if (!apps.isEmpty()) {
         if (!isSignalConnected(QMetaMethod::fromSignal(&ApplicationManager::openUrlRequested))) {
-            // If the System-UI does not react to the signal, then just use the first match.
+            // If the System UI does not react to the signal, then just use the first match.
             try {
                 startApplicationInternal(apps.constFirst()->id(), urlStr, mimeTypeName);
             } catch (const Exception &e) {
@@ -1038,12 +1038,12 @@ bool ApplicationManager::openUrl(const QString &urlStr)
 /*!
     \qmlsignal ApplicationManager::openUrlRequested(string requestId, string url, string mimeType, list<string> possibleAppIds)
 
-    This signal is emitted when the application-manager is requested to open an URL. This can happen
+    This signal is emitted when the application manager is requested to open an URL. This can happen
     by calling
     \list
     \li Qt.openUrlExternally in an application,
-    \li Qt.openUrlExternally in the System-UI,
-    \li ApplicationManager::openUrl in the System-UI or
+    \li Qt.openUrlExternally in the System UI,
+    \li ApplicationManager::openUrl in the System UI or
     \li \c io.qt.ApplicationManager.openUrl via D-Bus
     \endlist
     \note This signal is only emitted, if there is a receiver connected at all - see openUrl for the
@@ -1061,7 +1061,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
 /*!
     \qmlmethod ApplicationManager::acknowledgeOpenUrlRequest(string requestId, string appId)
 
-    Tells the application-manager to go ahead with the request to open an URL, identified by \a
+    Tells the application manager to go ahead with the request to open an URL, identified by \a
     requestId. The chosen \a appId needs to be one of the \c possibleAppIds supplied to the
     receiver of the openUrlRequested signal.
 
@@ -1092,7 +1092,7 @@ void ApplicationManager::acknowledgeOpenUrlRequest(const QString &requestId, con
 /*!
     \qmlmethod ApplicationManager::rejectOpenUrlRequest(string requestId)
 
-    Tells the application-manager to ignore the request to open an URL, identified by \a requestId.
+    Tells the application manager to ignore the request to open an URL, identified by \a requestId.
 
     \sa openUrl, openUrlRequested
 */
@@ -1292,7 +1292,7 @@ QVariantMap ApplicationManager::get(int index) const
     Returns the \l{ApplicationObject}{application} corresponding to the given \a index in the
     model, or \c null if the index is invalid.
 
-    \note The object ownership of the returned Application object stays with the application-manager.
+    \note The object ownership of the returned Application object stays with the application manager.
           If you want to store this pointer, you can use the ApplicationManager's QAbstractListModel
           signals or the applicationAboutToBeRemoved signal to get notified if the object is about
           to be deleted on the C++ side.
@@ -1312,7 +1312,7 @@ Application *ApplicationManager::application(int index) const
     Returns the \l{ApplicationObject}{application} corresponding to the given application \a id,
     or \c null if the id does not exist.
 
-    \note The object ownership of the returned Application object stays with the application-manager.
+    \note The object ownership of the returned Application object stays with the application manager.
           If you want to store this pointer, you can use the ApplicationManager's QAbstractListModel
           signals or the applicationAboutToBeRemoved signal to get notified if the object is about
           to be deleted on the C++ side.

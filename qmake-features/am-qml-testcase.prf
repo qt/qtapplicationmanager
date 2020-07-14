@@ -43,7 +43,7 @@ prefix_build {
 COMMAND += $$AM_TESTRUNNER_DIR/appman-qmltestrunner --no-cache --no-dlt-logging
 mac: COMMAND += --dbus=none
 !multi-process: {
-    !build_pass:!qmltest-mode-auto:message("am-qml-testcase: forcing MODE to single-process, because application-manager is built in single-process mode")
+    !build_pass:!qmltest-mode-auto:message("am-qml-testcase: forcing MODE to single-process, because the application manager is built in single-process mode")
     MODE = single-process
 }
 

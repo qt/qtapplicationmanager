@@ -87,7 +87,7 @@ public:
     }
     \endqml
 
-    In order to make your applications easily runnable outside of the application-manager, even
+    In order to make your applications easily runnable outside of the application manager, even
     though you are using a ApplicationManagerWindow as a root item, you can simply provide this
     little dummy import to your application.
 
@@ -146,13 +146,13 @@ ApplicationManagerWindow::~ApplicationManagerWindow()
     \qmlmethod void ApplicationManagerWindow::setWindowProperty(string name, var &value)
     Sets this application window's shared property identified by \a name to the given \a value.
 
-    These properties are shared between the System-UI and the client applications: in single-process
+    These properties are shared between the System UI and the client applications: in single-process
     mode simply via a QVariantMap; in multi-process mode via Qt's extended surface Wayland extension.
     Changes from the client side are signalled via windowPropertyChanged.
 
     See WindowManager for the server side API.
 
-    \note When listening to property changes of Wayland clients on the System-UI side, be aware of
+    \note When listening to property changes of Wayland clients on the System UI side, be aware of
           the \l{Multi-process Wayland caveats}{asynchronous nature} of the underlying Wayland
           protocol.
 

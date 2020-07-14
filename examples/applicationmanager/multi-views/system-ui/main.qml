@@ -97,7 +97,7 @@ Rectangle {
         }
     }
 
-    // System-UI chrome for applications
+    // System UI chrome for applications
     Repeater {
         model: ListModel { id: topLevelWindowsModel }
 

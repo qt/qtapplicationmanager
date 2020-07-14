@@ -66,7 +66,7 @@
 
     This property returns the \l Container object of a running application. Please see the \l{Containers}
     {general Container} and the \l Container class documentation for more information on containers
-    within the application-manager.
+    within the application manager.
 */
 
 QT_BEGIN_NAMESPACE_AM

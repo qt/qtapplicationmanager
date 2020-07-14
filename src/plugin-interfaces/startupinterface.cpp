@@ -49,19 +49,19 @@ StartupInterface::~StartupInterface() { }
     \inmodule QtApplicationManager
     \brief An interface that allows to implement custom startup activities.
 
-    This interface provides hooks that are called during the startup of application-manager
+    This interface provides hooks that are called during the startup of application manager
     processes. Hence, implementers of the interface can run their custom code at certain points
     during the startup phase.
 
     A plugin has to implemet the pure virtual functions of the StartupInterface. The interface is
-    the same for the System-UI (appman), as well as for QML applications (appman-launcher-qml). The
+    the same for the System UI (appman), as well as for QML applications (appman-launcher-qml). The
     plugins that should be loaded have to be specified in the (am-config.yaml) configuration file.
-    The following snippet shows how the application-manager can be configured to load and execute
-    the \c libappmanplugin.so in both the System-UI and applications and additionally the
-    \c libextplugin.so in the System-UI only:
+    The following snippet shows how the application manager can be configured to load and execute
+    the \c libappmanplugin.so in both the System UI and applications and additionally the
+    \c libextplugin.so in the System UI only:
 
     \badcode
-    # System-UI
+    # System UI
     plugins:
       startup: [ "path/to/libappmanplugin.so", "path/to/libextplugin.so" ]
 
@@ -90,7 +90,7 @@ StartupInterface::~StartupInterface() { }
 /*! \fn void StartupInterface::afterRuntimeRegistration()
 
     This method is called, right after the runtime has been registered.
-    \note It will only be called in the System-UI process.
+    \note It will only be called in the System UI process.
 */
 
 /*! \fn void StartupInterface::beforeQmlEngineLoad(QQmlEngine *engine)

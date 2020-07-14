@@ -59,7 +59,7 @@ QT_BEGIN_NAMESPACE_AM
     instance or have a dedicated IntentHandler instance for every intent id (or any combination of
     those).
 
-    \note For handling intent requests within the system ui, you have to use the derived component
+    \note For handling intent requests within the System UI, you have to use the derived component
           IntentServerHandler, which works the same way, but provides all the necessary meta-data
           from within QML.
 

@@ -121,7 +121,7 @@ GpuStatus::GpuStatus(QObject *parent)
         \li Intel
         \li \c intel_gpu_top
         \li The binary has to be made set-UID root, e.g. via \c{sudo chmod +s $(which intel_gpu_top)},
-            or the application-manager has to be run as the \c root user.
+            or the application manager has to be run as the \c root user.
     \endtable
 
     \sa update

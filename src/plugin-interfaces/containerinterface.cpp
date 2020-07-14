@@ -64,7 +64,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 
     \value NormalExit The application exited normally.
     \value CrashExit  The application crashed.
-    \value ForcedExit The application was killed by the application-manager, since it ignored the
+    \value ForcedExit The application was killed by the application manager, since it ignored the
                       quit request originating from a call to ApplicationManager::stopApplication.
 
     \sa ApplicationObject::lastExitStatus, QProcess::ExitStatus
@@ -97,7 +97,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 
 /*! \fn bool ContainerInterface::attachApplication(const QVariantMap &application)
 
-    The application-manager calls this function, when an \a application has to be attached to this
+    The application manager calls this function, when an \a application has to be attached to this
     container instance: the \a application map closely corresponds to the application's meta-data
     returned from the ApplicationManager::get() method:
 
@@ -158,7 +158,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 */
 
 /*! \fn bool ContainerInterface::setProgram(const QString &program)
-    This function is called by the application-manager in order to set the \a program to execute
+    This function is called by the application manager in order to set the \a program to execute
     when starting the process. This function will be called before start().
     Needs to return \c true if \a program is valid within this container or \c false otherwise.
 
@@ -166,7 +166,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 */
 
 /*! \fn void ContainerInterface::setBaseDirectory(const QString &baseDirectory)
-    Called by the application-manager to set the initial working directory for the process within
+    Called by the application manager to set the initial working directory for the process within
     the container to \a baseDirectory.
 */
 
@@ -178,15 +178,15 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 */
 
 /*! \fn QString ContainerInterface::mapContainerPathToHost(const QString &containerPath) const
-    The application-manager will call this function whenever paths have to be mapped between the
-    filesystem namespace of the application's container and the application-manager.
+    The application manager will call this function whenever paths have to be mapped between the
+    filesystem namespace of the application's container and the application manager.
 
     You can simply return \a containerPath, if both are running in the same namespace.
 */
 
 /*! \fn QString ContainerInterface::mapHostPathToContainer(const QString &hostPath) const
-    The application-manager will call this function whenever paths have to be mapped between the
-    filesystem namespace of the application-manager and the application's container.
+    The application manager will call this function whenever paths have to be mapped between the
+    filesystem namespace of the application manager and the application's container.
 
     You can simply return \a hostPath, if both are running in the same namespace.
 */
@@ -213,8 +213,8 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \row
       \li \c QT_SCALE_FACTOR
       \li Empty (unset), to prevent scaling of wayland clients relative to the compositor. Otherwise
-          running the application-manager on a 4K desktop with scaling would result in double-scaled
-          applications within the application-manager.
+          running the application manager on a 4K desktop with scaling would result in double-scaled
+          applications within the application manager.
     \row
       \li \c QT_WAYLAND_SHELL_INTEGRATION
       \li Set to \c xdg-shell. This is the preferred wayland shell integration.
@@ -229,7 +229,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \endtable
 
     The \a amConfig map is a collection of settings that are communicated to the program from the
-    application-manager. The same information is already encoded in the \c AM_CONFIG environment
+    application manager. The same information is already encoded in the \c AM_CONFIG environment
     variable within \a runtimeEnvironment, but it would be tedious to reparse that YAML fragment
     in the container plugin.
     These are the currently defined fields:
@@ -242,12 +242,12 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \row
       \li \c baseDir
       \li string
-      \li The base directory from where the application-manager was started. Needed for relative
+      \li The base directory from where the application manager was started. Needed for relative
           import paths.
     \row
       \li \c dbus/p2p
       \li string
-      \li The D-Bus address for the peer-to-peer bus between the application-manager and this
+      \li The D-Bus address for the peer-to-peer bus between the application manager and this
           application.
     \row
       \li \c dbus/org.freedesktop.Notifications
@@ -261,11 +261,11 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \row
       \li \c logging/rules
       \li array<string>
-      \li The Qt logging rules as set in the application-manager's main config.
+      \li The Qt logging rules as set in the application manager's main config.
     \row
       \li \c systemProperties
       \li object
-      \li The project specific \l{system properties} that were set via the application-manager's
+      \li The project specific \l{system properties} that were set via the application manager's
           main config file.
     \row
       \li \c runtimeConfiguration
@@ -278,22 +278,22 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \row
       \li \c ui/iconThemeName
       \li string
-      \li If set in the application-manager, this will forward the icon theme name to the application
+      \li If set in the application manager, this will forward the icon theme name to the application
           (see QIcon::setThemeName()).
     \row
       \li \c ui/iconThemeSearchPaths
       \li string
-      \li If set in the application-manager, this will forward the icon theme search paths to the
+      \li If set in the application manager, this will forward the icon theme search paths to the
           application (see QIcon::setThemeSearchPaths()).
     \row
       \li \c ui/opengl
       \li object
-      \li If a specific OpenGL configuration is requested either globally for the application-manager
+      \li If a specific OpenGL configuration is requested either globally for the application manager
           or just for this application (via its \c info.yaml manifest), this field will contain the
           \l{OpenGL Specification}{required OpenGL configuration}.
     \endtable
 
-    The application-manager will only ever call this function once for any given instance.
+    The application manager will only ever call this function once for any given instance.
 
     This function should return \c true in case it succeeded or \c false otherwise. In case it
     returns \c true, the implementation needs to either emit the started() or
@@ -308,14 +308,14 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     Should return the native process identifier for the running process, if available. If no process
     is currently running, \c 0 is returned.
 
-    \note The process identifier needs to be translated into the application-manager's PID
+    \note The process identifier needs to be translated into the application manager's PID
           namespace, if the container solution is managing its own, private namespace.
-    \note This identifier is needed to support security features within the application-manager:
+    \note This identifier is needed to support security features within the application manager:
           Having a valid PID for every container is necessary (a) in order for Wayland windows to
           only be accepted when coming from known PIDs and (b) for system services to retrieve
           meta-data on applications via the D-Bus call ApplicationManager::identifyApplication().
           If you need a quick workaround during development for Wayland to accept windows from any
-          PID, then run the application-manager with \c{--no-security}.
+          PID, then run the application manager with \c{--no-security}.
 */
 
 /*! \fn QProcess::ProcessState ContainerInterface::state() const
@@ -327,7 +327,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 
 /*! \fn void ContainerInterface::kill()
 
-    Called by the application-manager, if it wants to kill the current process within the
+    Called by the application manager, if it wants to kill the current process within the
     container, causing it to exit immediately.
 
     On Unix, the equivalent would be sending a \c SIGKILL signal.
@@ -337,7 +337,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 
 /*! \fn void ContainerInterface::terminate()
 
-    Called by the application-manager, when attempting to terminate the process within the container.
+    Called by the application manager, when attempting to terminate the process within the container.
 
     The process may not exit as a result of calling this function.
     On Unix, the equivalent would be sending a \c SIGTERM signal.
@@ -349,7 +349,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 /*! \fn void ContainerInterface::ready()
 
     If the container implementation needs to do potentially expensive initialization work in the
-    background, it can tell the application-manager to delay calling start() until it has emitted
+    background, it can tell the application manager to delay calling start() until it has emitted
     this signal.
 
     In case this is not needed, then you never have to emit this signal, but you are expected to
@@ -394,7 +394,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \brief A plugin interface for custom container solutions.
 
     This is the interface that you have to implement, if you want to get your own custom container
-    solution into the application-manager.
+    solution into the application manager.
 
     For an example, please see \c{examples/software-container}. This example shows the integration
     of Pelagicore's SoftwareContainers (which are essentially nice-to-use LXC wrappers).
@@ -409,13 +409,13 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 */
 
 /*! \fn void ContainerManagerInterface::setConfiguration(const QVariantMap &configuration)
-    Called by the application-manager after parsing its configuration files. The \a configuration
+    Called by the application manager after parsing its configuration files. The \a configuration
     map corresponds to the (optional) container specific configuration as described in the
     \l{Add Container Integration Settings}{container documentation}.
 */
 
 /*! \fn ContainerInterface *ContainerManagerInterface::create(bool isQuickLaunch, const QVector<int> &stdioRedirections, const QMap<QString, QString> &debugWrapperEnvironment, const QStringList &debugWrapperCommand)
-    The application-manager will call this function every time it needs to create a specific
+    The application manager will call this function every time it needs to create a specific
     container for a direct application launch, or a runtime quick-launcher (depending on the value
     of the \a isQuickLaunch parameter).
 

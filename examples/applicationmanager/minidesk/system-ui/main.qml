@@ -85,7 +85,7 @@ Window {
         }
     }
 
-    // System-UI chrome for applications
+    // System UI chrome for applications
     Repeater {
         model: ListModel { id: topLevelWindowsModel }
 
@@ -137,7 +137,7 @@ Window {
         }
     }
 
-    // System-UI for a pop-up
+    // System UI for a pop-up
     WindowItem {
         id: popUpContainer
         z: 9998
@@ -154,7 +154,7 @@ Window {
         }
     }
 
-    // System-UI for a notification
+    // System UI for a notification
     Text {
         z: 9999
         font.pixelSize: 46

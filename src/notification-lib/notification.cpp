@@ -47,12 +47,12 @@
     \qmltype Notification
     \inqmlmodule QtApplicationManager
     \ingroup common-instantiatable
-    \brief An abstraction layer to enable QML applications to issue notifications to the System-UI.
+    \brief An abstraction layer to enable QML applications to issue notifications to the System UI.
 
     The Notification type is available for QML applications by either creating a Notification item
-    statically or by dynamically calling ApplicationInterface::createNotification. A System-UI can
+    statically or by dynamically calling ApplicationInterface::createNotification. A System UI can
     also create Notification instances.
-    For all other applications and services, the notification service of the application-manager
+    For all other applications and services, the notification service of the application manager
     is available via a freedesktop.org compliant \l{https://developer.gnome.org/notification-spec/}
     {org.freedesktop.Notifications} D-Bus interface.
 
@@ -60,7 +60,7 @@
           \l{https://developer.gnome.org/notification-spec/} {org.freedesktop.Notifications specification}
           because it is not possible to directly link to the documentation of a specific property.
 
-    The server/System-UI side of the notification infrastructure is implemented by NotificationManager.
+    The server/System UI side of the notification infrastructure is implemented by NotificationManager.
 */
 
 
@@ -253,7 +253,7 @@ bool Notification::isSticky() const
 
     The default value is \c false.
 
-    \note This is an application-manager specific extension to the protocol: it uses the
+    \note This is an application manager specific extension to the protocol: it uses the
           \c{x-pelagicore-show-progress} hint to communicate this value.
 */
 bool Notification::isShowingProgress() const
@@ -268,7 +268,7 @@ bool Notification::isShowingProgress() const
     the notification. The special value \c -1 can be used to request a busy indicator.
     The default value is \c -1.
 
-    \note This is an application-manager specific extension to the protocol: it uses the
+    \note This is an application manager specific extension to the protocol: it uses the
           \c{x-pelagicore-progress} hint to communicate this value.
 */
 qreal Notification::progress() const
@@ -346,7 +346,7 @@ bool Notification::dismissOnAction() const
 
     Holds a custom variant property that lets the user attach arbitrary meta-data to this notification.
 
-    \note This is an application-manager specific extension to the protocol: it uses the
+    \note This is an application manager specific extension to the protocol: it uses the
           \c{x-pelagicore-extended} hint to communicate this value.
 */
 QVariantMap Notification::extended() const

@@ -90,8 +90,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
 #if defined(AM_TESTRUNNER)
         const char *additionalDescription =
-                "Additional testrunner commandline options can be set after the -- argument\n" \
-                "Use -- -help to show all available testrunner commandline options.";
+                "Additional testrunner command line options can be set after the -- argument\n" \
+                "Use -- -help to show all available testrunner command line options.";
         bool onlyOnePositionalArgument = false;
 #else
         const char *additionalDescription = nullptr;

@@ -29,7 +29,7 @@
 /*!
 
     \qmlmodule QtApplicationManager.SystemUI 2.0
-    \title Qt Application Manager System-UI QML types
+    \title Qt Application Manager System UI QML types
     \ingroup qmlmodules
 */
 
@@ -43,6 +43,6 @@
 /*!
 
     \qmlmodule QtApplicationManager 2.0
-    \title Qt Application Manager QML types common to System-UI and applications
+    \title Qt Application Manager QML types common to System UI and applications
     \ingroup qmlmodules
 */

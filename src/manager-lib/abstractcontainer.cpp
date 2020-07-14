@@ -52,12 +52,12 @@
     \ingroup system-ui-non-instantiable
     \brief The handle for a container, that an application's \l Runtime is using.
 
-    Instances of this class are available to the System-UI via an application's \l Runtime object,
+    Instances of this class are available to the System UI via an application's \l Runtime object,
     while an application is running. Please see the \l{Containers}{Container documentation} for
-    an in-depth description of containers within the application-manager.
+    an in-depth description of containers within the application manager.
 
     \note Applications running in single-process mode (even ones using the \c qml-inprocess runtime
-          while the application-manager is running in multi-process mode) will have no Container
+          while the application manager is running in multi-process mode) will have no Container
           object associated.
 */
 /*!

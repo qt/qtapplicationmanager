@@ -51,7 +51,7 @@
     - minus the notification functionality - is available on a private peer-to-peer
     D-Bus interface.
 
-    For every application that is started in multi-process mode, the application-manager creates
+    For every application that is started in multi-process mode, the application manager creates
     a private P2P D-Bus connection and communicates the connection address to the application's
     process via the environment variable \c AM_DBUS_PEER_ADDRESS. Only the application itself is
     able to connect to this P2P D-Bus - no further access policies are required on this bus.
@@ -69,7 +69,7 @@
             \c{src/dbus/io.qt.applicationmanager.applicationinterface.xml}
     \row
         \li \b /RuntimeInterface \br \e io.qt.ApplicationManager.RuntimeInterface
-        \li The direct interface between the application-manager and the launcher process, used to
+        \li The direct interface between the application manager and the launcher process, used to
             implement custom launchers: the definition is in the source distribution at
             \c{src/dbus/io.qt.applicationmanager.runtimeinterface.xml}
     \row
@@ -153,7 +153,7 @@
 /*!
     \qmlsignal ApplicationInterface::quit()
 
-    The application-manager will send out this signal to an application to request a
+    The application manager will send out this signal to an application to request a
     controlled shutdown. The application is given a certain amount of time defined in
     the configuration (\c quitTime). If the time elapses before acknowledgeQuit() is
     called, the application will simply be killed.

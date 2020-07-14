@@ -100,11 +100,11 @@ private:
                 conn = QDBusConnection::connectToBus(dbus, qSL("custom"));
             }
         } else {
-            throw Exception(Error::IO, "Could not find the D-Bus interface of a running Application-Manager instance.\n(did you start the appman with '--dbus none'?");
+            throw Exception(Error::IO, "Could not find the D-Bus interface of a running application manager instance.\n(did you start the appman with '--dbus none'?");
         }
 
         if (!conn.isConnected()) {
-            throw Exception(Error::IO, "Could not connect to the Application-Manager D-Bus interface %1 at %2: %3")
+            throw Exception(Error::IO, "Could not connect to the application manager D-Bus interface %1 at %2: %3")
                 .arg(iface, dbus, conn.lastError().message());
         }
         return conn;
@@ -507,7 +507,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                 auto stateReply = dbus.manager()->applicationRunState(appId);
                 stateReply.waitForFinished();
                 if (stateReply.isError())
-                    throw Exception(Error::IO, "failed to get the current run-state from application-manager: %1").arg(stateReply.error().message());
+                    throw Exception(Error::IO, "failed to get the current run-state from application manager: %1").arg(stateReply.error().message());
 
                 if (stateReply.value() == 0 /* NotRunning */)
                     isStopped = true;
@@ -531,7 +531,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                 auto getReply = dbus.manager()->get(id);
                 getReply.waitForFinished();
                 if (getReply.isError())
-                    throw Exception(Error::IO, "failed to get exit code from application-manager: %1").arg(getReply.error().message());
+                    throw Exception(Error::IO, "failed to get exit code from application manager: %1").arg(getReply.error().message());
                 fprintf(stdout, "\n --- application has quit ---\n\n");
                 auto app = getReply.value();
                 qApp->exit(app.value(qSL("lastExitCode"), 1).toInt());

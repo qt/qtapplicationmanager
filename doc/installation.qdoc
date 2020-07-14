@@ -265,7 +265,7 @@ The runtime configuration of the application manager is done through command lin
 one or more configuration files.
 
 Normally, the basic configuration is done via two separate config files:
-one for target system specific setup and one for System-UI specific settings. The
+one for target system specific setup and one for System UI specific settings. The
 default location for the system specific part is \c{/opt/am}. A standard
 setup is shipped with the application manager in the \c{template-opt} directory.
 
@@ -279,7 +279,7 @@ sudo chown $(whoami) /opt/am -R
 Alternatively, you can copy the contents of \c{template-opt} somewhere else; be sure to
 edit the \c{config.yaml} file to reflect the changed paths.
 
-Once this is done, add a file called \c{am-config.yaml} to your System-UI with UI specific
+Once this is done, add a file called \c{am-config.yaml} to your System UI with UI specific
 settings. For example, the QML import path, path to built-in apps, and so on.
 
 With everything in place, you can start the application manager:

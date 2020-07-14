@@ -151,7 +151,7 @@ private:
     Impl *m_impl{nullptr};
     bool m_objectFollowsItemSize{true};
 
-    // The only purpose of this item is to ensure all WindowItem children added by System-UI code ends up
+    // The only purpose of this item is to ensure all WindowItem children added by System UI code ends up
     // in front of WindowItem's internal QWaylandQuickItem (or the application's root item in case of
     // inprocess)
     QQuickItem *m_contentItem;

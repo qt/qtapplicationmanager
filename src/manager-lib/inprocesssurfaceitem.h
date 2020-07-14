@@ -52,7 +52,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 /*
- *  Item exposed to the system UI
+ *  Item exposed to the System UI
  */
 class InProcessSurfaceItem : public QQuickItem
 {
@@ -67,7 +67,7 @@ public:
     QVariantMap windowPropertiesAsVariantMap() const;
 
     // Whether the surface is visible on the client (application) side.
-    // The when application hides its surface, system UI should, in an animated way,
+    // The when application hides its surface, System UI should, in an animated way,
     // remove it from user's view.
     // That's why a client shouldn't have control over the actual visible property
     // of its surface item.

@@ -50,9 +50,9 @@
 
     A WindowObject represents a window from a client application. Each visible
     ApplicationManagerWindow on the application side will be reflected by a
-    corresponding WindowObject on the server, System-UI, side.
+    corresponding WindowObject on the server, System UI, side.
 
-    To render a WindowObject inside your System-UI you have to assign it to a WindowItem.
+    To render a WindowObject inside your System UI you have to assign it to a WindowItem.
 
     \sa WindowItem
 */
@@ -63,7 +63,7 @@
     Sets the application window's shared property identified by \a name to the given \a value.
     Returns \c true when successful.
 
-    These properties are shared between the System-UI and the client application: in single-process
+    These properties are shared between the System UI and the client application: in single-process
     mode simply via a QVariantMap; in multi-process mode the sharing is done via Qt's extended
     surface Wayland extension. Changes from the client side are notified by the
     windowPropertyChanged() signal.
@@ -161,7 +161,7 @@
     \qmlsignal WindowObject::windowPropertyChanged(string name, var value)
 
     Notifies that the window property with \a name has a new \a value.
-    Window property changes can be caused either by the System-UI (via WindowObject::setWindowProperty)
+    Window property changes can be caused either by the System UI (via WindowObject::setWindowProperty)
     or by the application that created that window (via ApplicationManagerWindow::setWindowProperty).
 
     \sa setWindowProperty

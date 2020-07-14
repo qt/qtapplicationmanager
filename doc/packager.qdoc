@@ -65,13 +65,13 @@ developer only (development mode), and packages that are signed by a trusted app
 
         \c{--json}: Output in JSON format instead of YAML.
 
-        \c{--extra-metadata} or \c{-m}: Add the given YAML snippet on the commandline to the
+        \c{--extra-metadata} or \c{-m}: Add the given YAML snippet on the command line to the
             packages's \c extra meta-data (see also ApplicationInstaller::taskRequestingInstallationAcknowledge).
 
         \c{--extra-metadata-file} or \c{-M}: Add the given YAML file to the
             packages's \c extra meta-data (see also ApplicationInstaller::taskRequestingInstallationAcknowledge)
 
-        \c{--extra-signed-metadata} or \c{-s}: Add the given YAML snippet on the commandline to the
+        \c{--extra-signed-metadata} or \c{-s}: Add the given YAML snippet on the command line to the
             packages's \c extraSigned meta-data (see also ApplicationInstaller::taskRequestingInstallationAcknowledge)
 
         \c{--extra-signed-metadata-file} or \c{-S}: Add the given YAML file to the

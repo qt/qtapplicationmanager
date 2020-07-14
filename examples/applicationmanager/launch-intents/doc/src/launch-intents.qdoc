@@ -47,7 +47,7 @@ ApplicationObject abstraction layer directly to launch appliations, but instead 
 that can start the same application, triggering different functionality within the application.
 
 \note \e Any intent directed at an application would launch it, if it was not already running. For
-      the purpose of this example we are calling our intents \c launch, but the application-manager
+      the purpose of this example we are calling our intents \c launch, but the application manager
       does not attach a special meaning to this name.
 
 All the intents' icons and names that are in the \c launcher category are on the left. You can click

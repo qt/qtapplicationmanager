@@ -128,7 +128,7 @@ Window {
     Connections {
         target: WindowManager
         function onWindowAdded(window) {
-            console.log("System-UI: onWindowAdded: " + window);
+            console.log("System UI: onWindowAdded: " + window);
             if (WindowManager.count >= ApplicationManager.count)
                 statsTimer.start();
         }
@@ -158,12 +158,12 @@ Window {
         onTriggered: {
             systemUiMonitor.running = false;
             var load = avg(systemUiMonitor, systemUiMonitor.count, "cpuLoad");
-            var rss = "System-UI RSS Max: " + format((max(systemUiMonitor, systemUiMonitor.count, "memoryRss.total")
+            var rss = "System UI RSS Max: " + format((max(systemUiMonitor, systemUiMonitor.count, "memoryRss.total")
                                                       / 1e6).toFixed(0)) + " MB";
-            var pss = "System-UI PSS Max: " + format((max(systemUiMonitor, systemUiMonitor.count, "memoryPss.total")
+            var pss = "System UI PSS Max: " + format((max(systemUiMonitor, systemUiMonitor.count, "memoryPss.total")
                                                       / 1e6).toFixed(0)) + " MB";
-            var fps = "System-UI FPS Avg: " + format(systemFrameTimer.averageFps.toFixed(1)) + " fps";
-            var cpuLoad = "System-UI CPU Load Avg: " + format((load * 100).toFixed(1)) + " %";
+            var fps = "System UI FPS Avg: " + format(systemFrameTimer.averageFps.toFixed(1)) + " fps";
+            var cpuLoad = "System UI CPU Load Avg: " + format((load * 100).toFixed(1)) + " %";
             var gpuLoad = "System GPU Load Avg: " + format((avg(systemUiMonitor, systemUiMonitor.count, "gpuLoad")
                                                             * 100).toFixed(0)) + " %";
 
@@ -187,7 +187,7 @@ Window {
 
             var accCpuLoad = "Acc. CPU Load Avg: " + format((totalCPULoad * 100).toFixed(1)) + " %";
 
-            console.log(benchCategory, "System-UI Resolution: " + root.width + "x" + root.height + " | App Resolution: "
+            console.log(benchCategory, "System UI Resolution: " + root.width + "x" + root.height + " | App Resolution: "
                                          +  windows.itemAt(0).width + "x" + windows.itemAt(0).height);
             console.log(benchCategory, cpuLoad + " | " + accCpuLoad + " | " + gpuLoad + " | " + fps + " | " + rss
                                          + " | " + pss + " | " + appFPS + " | " + appRSS + " | " + appPSS);

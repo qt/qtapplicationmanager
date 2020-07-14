@@ -205,7 +205,7 @@ void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCE
             m_configuration = docs.first().toMap();
     } catch (const Exception &e) {
         throw Exception("Runtime launcher could not parse the YAML configuration coming from the "
-                        "application-manager: %1").arg(e.errorString());
+                        "application manager: %1").arg(e.errorString());
     }
 
     m_baseDir = m_configuration.value(qSL("baseDir")).toString() + qL1C('/');

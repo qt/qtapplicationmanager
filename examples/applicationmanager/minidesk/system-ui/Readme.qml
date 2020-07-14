@@ -66,7 +66,7 @@ Item {
             id: heading
             color: "cornflowerblue"
             font { pixelSize: 20; weight: Font.Bold }
-            text: "Minimal Desktop System-UI in pure QML"
+            text: "Minimal Desktop System UI in pure QML"
         }
 
         Text {
@@ -83,7 +83,7 @@ Item {
                   "\u2022 The System UI and App2 react to window property changes with a debug message\n" +
                   "\u2022 Stop or restart App1 animations with a click\n" +
                   "\u2022 App1 sends rotation angle as a window property to System UI on stop\n" +
-                  "\u2022 App1 shows a pop-up on the System-UI while it is paused\n" +
+                  "\u2022 App1 shows a pop-up on the System UI while it is paused\n" +
                   "\u2022 App2 makes use of an IPC extension when it starts\n" +
                   "\u2022 App2 logs the document URL that started it\n" +
                   "\u2022 App2 triggers a notification in the System UI when the bulb icon is clicked\n" +

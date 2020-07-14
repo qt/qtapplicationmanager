@@ -66,11 +66,11 @@
     \ingroup common-singletons
     \brief A tool for startup performance analysis.
 
-    The StartupTimer is a class for measuring the startup performance of the System-UI, as well as
-    applications started by application-manager.
+    The StartupTimer is a class for measuring the startup performance of the System UI, as well as
+    applications started by the application manager.
 
     Using the checkpoint function, you can log the time that elapsed since the executable was
-    started. In case of the System-UI, this is the time since the process was forked. This is also
+    started. In case of the System UI, this is the time since the process was forked. This is also
     true for applications that are not quick-launched. Quick-launched applications attach to a
     process that has been pre-forked before the application has been started. In this case the
     timer will be reset to the actual application start. The time is reported using a monotonic
@@ -84,11 +84,11 @@
     Anything other than \c 1 will be interpreted as the name of a file that is used instead of the
     console.
 
-    When activated, this report will always be printed for the System-UI. If the application-manager
+    When activated, this report will always be printed for the System UI. If the application manager
     is running in multi-process mode, additional reports will also be printed for every QML
     application that is started. Note that the bar widths can only be compared within a report.
 
-    The application-manager and its QML launcher will already create a lot of checkpoints on their
+    The application manager and its QML launcher will already create a lot of checkpoints on their
     own and will also call createReport themselves after all the C++ side setup has finished. You
     can however add arbitrary checkpoints yourself using the QML API: access to the StartupTimer
     object is possible through a the \c StartupTimer root-context property in the QML engine.
@@ -102,7 +102,7 @@
         #color-blue   { background-color: #5454ff; color: #000000 }
     </style>
     <pre>
-<span id="color-orange">== STARTUP TIMING REPORT: System-UI ==</span>
+<span id="color-orange">== STARTUP TIMING REPORT: System UI ==</span>
 <span id="color-green">0'110.001</span> entered main                                <span id="color-blue">   </span>
 <span id="color-green">0'110.015</span> after basic initialization                  <span id="color-blue">   </span>
 <span id="color-green">0'110.311</span> after sudo server fork                      <span id="color-blue">   </span>
@@ -155,8 +155,8 @@
      \qmlproperty bool StartupTimer::automaticReporting
 
      You can set this property to \c false, if you want to prevent the automatic report generation
-     that is done by the application-manager. This can be useful, if you are using some form of
-     staged loading in the System-UI and want to create the report at a later time.
+     that is done by the application manager. This can be useful, if you are using some form of
+     staged loading in the System UI and want to create the report at a later time.
 
      \note Please note that you need to set this property to \c false before the load operation of
            the main qml file is finished: ideally in the root elements \c Component.onCompleted

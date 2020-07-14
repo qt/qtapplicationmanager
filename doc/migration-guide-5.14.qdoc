@@ -50,7 +50,7 @@ work as expected when specified in a legacy manifest.
 
 The \c documentUrl parameter in the ApplicationObject::start() and
 ApplicationManager::startApplication() calls is still fully supported. This also ties into the
-open-URL handling via ApplicationMananger::openUrl() and Qt::openUrlExternally(), which use the \c
+open-URL handling via ApplicationManager::openUrl() and Qt::openUrlExternally(), which use the \c
 documentUrl parameter to communicate the URL to open towards the application. Although there are no
 plans to retire this API, you still might want to switch over to the more versatile intent
 framework, depending on your use-case.
@@ -64,7 +64,7 @@ alias manifests: \l{Launch Applications Using Intents System UI Example}
 Installable applications were already referred to as "packages", but were just represented by an
 ApplicationObject handle within the the application manager. Now that 5.14 added support for
 multiple applications within a single package, all packages - even built-in ones - are represented
-by a PackageObject handle, which in turn holds references to all the contianed applications. For
+by a PackageObject handle, which in turn holds references to all the contained applications. For
 legacy applications, this results in the PackageObject referring to just a single application.
 
 A new PackageManager singleton was added, which acts as an item model for all PackageObjects in the
@@ -99,7 +99,7 @@ exactly one location defined in this list.
 
 The internal application database - a cache of the known application manifest files - was
 completely re-done in 5.14. All manifest files are now scanned on startup, so the \c -r / \c
---recreate-database commandline option is not needed anymore. Along the same lines the \c --database
+--recreate-database command line option is not needed anymore. Along the same lines the \c --database
 option and the \c applications/database configuration key are not needed anymore, because the new
 application database is just treated as a standard cache file and is stored in the appropriate
 system directories (see also QStandardPaths::CacheLocation).

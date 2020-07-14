@@ -142,7 +142,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     // startup times slightly: less allocations and copies. MSVC cannot cope with multi-line though
 
     const char *description =
-        "In addition to the commandline options below, the following environment\n"
+        "In addition to the command line options below, the following environment\n"
         "variables can be set:\n\n"
         "  AM_STARTUP_TIMER  If set to 1, a startup performance analysis will be printed\n"
         "                    on the console. Anything other than 1 will be interpreted\n"

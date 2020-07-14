@@ -33,9 +33,9 @@
 
 \section1 Introduction
 
-The application-manager uses a very simple package format: a standard UNIX gzip-compressed TAR
+The application manager uses a very simple package format: a standard UNIX gzip-compressed TAR
 archive. Metadata is embedded as normal files, but using the reserved name prefix \c --PACKAGE-.
-Even though USTAR tar archives support a lot of features, the application-manager only supports
+Even though USTAR tar archives support a lot of features, the application manager only supports
 standard files and directories with relative paths only (using \c ../ in a path is not allowed).
 Modes, except the owner's \c x bit, are ignored.
 

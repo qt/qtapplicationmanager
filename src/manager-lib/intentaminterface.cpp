@@ -177,7 +177,7 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
 {
     IntentServerSystemInterface::initialize(server);
 
-    // this is a dummy connection for the system-ui, so that we can route replies
+    // this is a dummy connection for the System UI, so that we can route replies
     // back to it without any ugly hacks in the core IntentServer code.
     IntentServerInProcessIpcConnection::createSystemUi(this);
 
@@ -231,7 +231,7 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
 bool IntentServerAMImplementation::checkApplicationCapabilities(const QString &applicationId,
                                                                 const QStringList &requiredCapabilities)
 {
-    if (applicationId == sysUiId) // The System-UI bypasses the capabilities check
+    if (applicationId == sysUiId) // The System UI bypasses the capabilities check
         return true;
 
     const auto app = ApplicationManager::instance()->application(applicationId);
@@ -574,9 +574,9 @@ QT_BEGIN_NAMESPACE_AM
     \inqmlmodule QtApplicationManager.SystemUI
     \inherits IntentHandler
     \ingroup system-ui-instantiable
-    \brief A handler for intent requests received within the system ui.
+    \brief A handler for intent requests received within the System UI.
 
-    If intents need to be handled from within the system ui, you need to have a corresponding
+    If intents need to be handled from within the System UI, you need to have a corresponding
     IntentServerHandler instance that is actually able to handle incoming requests. This class gives
     you the flexibility to handle multiple, different intent ids via a single IntentServerHandler
     instance or have a dedicated IntentServerHandler instance for every intent id (or any

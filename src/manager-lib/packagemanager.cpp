@@ -82,7 +82,7 @@
 
     \note Unlike the deprecated ApplicationInstaller class, the PackageManager singleton and its
           corresponding DBus API are always available. Disabling the installer functionality via the
-          application-manager's \l{Configuration} will just lead to package (de-) installations
+          application manager's \l{Configuration} will just lead to package (de-) installations
           failing instantly.
 
     The type is derived from \c QAbstractListModel, so it can be used directly as a model from QML.
@@ -112,7 +112,7 @@
     \row
         \li \c isBlocked
         \li bool
-        \li A boolean value that gets set when the application-manager needs to block any
+        \li A boolean value that gets set when the application manager needs to block any
             application within this package from running: this is normally only the case while an
             update is being applied.
     \row
@@ -247,7 +247,7 @@
     Following this signal, either cancelTask() or acknowledgePackageInstallation() has to be called
     for this \a taskId, to either cancel the installation or try to complete it.
 
-    The PackageManager has two convenience functions to help the System-UI with verifying the
+    The PackageManager has two convenience functions to help the System UI with verifying the
     meta-data: compareVersions() and, in case you are using reverse-DNS notation for application-ids,
     validateDnsName().
 
@@ -617,7 +617,7 @@ QVariantMap PackageManager::get(int index) const
     Returns the PackageObject corresponding to the given \a index in the model, or \c null if the
     index is invalid.
 
-    \note The object ownership of the returned PackageObject stays with the application-manager.
+    \note The object ownership of the returned PackageObject stays with the application manager.
           If you want to store this pointer, you can use the PackageManager's QAbstractListModel
           signals or the packageAboutToBeRemoved signal to get notified if the object is about
           to be deleted on the C++ side.
@@ -637,7 +637,7 @@ Package *PackageManager::package(int index) const
     Returns the PackageObject corresponding to the given package \a id, or \c null if the id does
     not exist.
 
-    \note The object ownership of the returned PackageObject stays with the application-manager.
+    \note The object ownership of the returned PackageObject stays with the application manager.
           If you want to store this pointer, you can use the PackageManager's QAbstractListModel
           signals or the packageAboutToBeRemoved signal to get notified if the object is about
           to be deleted on the C++ side.

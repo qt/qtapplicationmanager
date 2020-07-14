@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
     // As we don't know the app-id yet, we are registering a place holder so we are able to see
     // something in the dlt logs if general errors occur.
-    Logging::setDltApplicationId("QTLQ", "Qt Application-Manager Launcher QML");
+    Logging::setDltApplicationId("QTLQ", "Qt Application Manager Launcher QML");
     Logging::setApplicationId("qml-launcher");
     Logging::initialize();
 
@@ -372,7 +372,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         dltId = uniqueId;
     }
     if (dltDescription.isEmpty())
-        dltDescription = QByteArray("Application-Manager App: ") + applicationId.toLocal8Bit();
+        dltDescription = QByteArray("Qt Application Manager App: ") + applicationId.toLocal8Bit();
     Logging::setDltApplicationId(dltId, dltDescription);
     Logging::registerUnregisteredDltContexts();
 

@@ -31,24 +31,24 @@
 \example applicationmanager/intents
 \title Intents System UI and Applications Example
 \image intents-example.png The Intents example with all applications running.
-\brief Three applications and a System-UI communicating over Intents.
+\brief Three applications and a System UI communicating over Intents.
 \ingroup applicationmanager-examples
 
 \section1 Introduction
 
-This example shows how the System-UI and applications can send and receive Intents. Similar to the
-\l{"Hello World!" System-UI Example}, the window management aspect is kept to a minimum to focus
-only on Intents: the 2x2 grid on the right will always show the System-UI part (gray) in the
+This example shows how the System UI and applications can send and receive Intents. Similar to the
+\l{"Hello World!" System UI Example}, the window management aspect is kept to a minimum to focus
+only on Intents: the 2x2 grid on the right will always show the System UI part (gray) in the
 top-left corner, while the three apps (red, green and blue) will dynamically occupy the other
 corner in the order they are started. You can see the names and icons for the available
 applications on the left; click on their respective icons to start and stop these applications.
 
-Each application, as well as the System-UI, look alike and have the same functionality available in
+Each application, as well as the System UI, look alike and have the same functionality available in
 the UI: You can choose from one of the available intent IDs in the top combo-box (labeled \e Intent),
 and optionally also specify the corresponding application that should handle the chosen request
 (labeled \e Application).
 Clicking the \e Request button will create and send the corresponding intent request to the
-application-manager's IntentServer for handling:
+application manager's IntentServer for handling:
 \list
 \li The combination of \e Intent and \e Application was valid and the target application was able to
     handle the request; the \l{IntentRequest::result}{result of this request} will be shown
@@ -60,19 +60,19 @@ application-manager's IntentServer for handling:
     labeled \e Request.
 
 \li The \e Application was not specified, plus the \e Intent chosen can be handled by more than one
-    application; in this case the example's System-UI will display a dialog, prompting the user
+    application; in this case the example's System UI will display a dialog, prompting the user
     to \l{IntentServer::disambiguationRequest}{disambiguate the request}.
 \endlist
 
 
 \section1 Files and Folder Structure
 
-This example comprises of a System-UI and three sample applications ("Red Intents", "Green Intents"
-and "Blue Intents"), resulting in four separate QML applications in total. System-UI is also just a
+This example comprises of a System UI and three sample applications ("Red Intents", "Green Intents"
+and "Blue Intents"), resulting in four separate QML applications in total. System UI is also just a
 QML application in the end, albeit a special one.
 
 Each application is put in its own separate directory as described below. Since the QtQuickControls
-2 based UI is used by all the applications and the System-UI, its components live in a shared
+2 based UI is used by all the applications and the System UI, its components live in a shared
 directory.
 
 \list
@@ -111,7 +111,7 @@ definition of the intents that this application can handle.
 
 \section1 Running the Example
 
-Assuming the \c appman executable is in your path, you can run the System-UI as follows:
+Assuming the \c appman executable is in your path, you can run the System UI as follows:
 
 \badcode
 examples/applicationmanager/intents$ appman --builtin-apps-manifest-dir ./apps system-ui.qml
@@ -154,11 +154,11 @@ also defined in this file, so for the \c rotate-window intent this would be:
 
 \snippet applicationmanager/intents/shared/IntentsApplicationWindow.qml Intent Animation
 
-In QML, only implementing the IntentHandlers is not sufficient, because the application-manager
+In QML, only implementing the IntentHandlers is not sufficient, because the application manager
 needs to have information on which application supports which intents. This information must be
-available to the application-manager \b before the applications run, to facilitate auto-starting
+available to the application manager \b before the applications run, to facilitate auto-starting
 applications on intent requests.
-As for every other application configuration in the application-manager, this is done through the
+As for every other application configuration in the application manager, this is done through the
 application's manifest file \c info.yaml:
 
 The \b Red application defines three available intents:
@@ -197,19 +197,19 @@ required capability, while the \b Green doesn't.
 \printto
 
 
-\section1 System-UI Implementation
+\section1 System UI Implementation
 
-Apart from the left side bar that deals with starting and stopping the apps, the System-UI has two
+Apart from the left side bar that deals with starting and stopping the apps, the System UI has two
 special features that deal with the intent mechanism:
 
 \list
-    \li Handling Intents in the System-UI and
+    \li Handling Intents in the System UI and
     \li Disambiguation of Intent Requests
 \endlist
 
-\section2 Handling Intents in the System-UI
+\section2 Handling Intents in the System UI
 
-Intents can not only be handled in applications, but also in the System-UI. Since the System-UI is
+Intents can not only be handled in applications, but also in the System UI. Since the System UI is
 always running, we do not need to rely on \c info.yaml manifest files to define the supported
 intents, but instead can declare the needed meta-data directly as properties of the
 IntentServerHandler component. The IntentServerHandler is actually derived from IntentHandler, so

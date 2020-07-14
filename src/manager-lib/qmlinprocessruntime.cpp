@@ -327,8 +327,8 @@ qint64 QmlInProcessRuntime::applicationProcessId() const
 }
 
 /*! \internal
-  In single process mode, every app plus the system-ui itself run within the same QQmlEngine. For
-  some operations, we need to figure out though, which app/system-ui is the currently "active" one.
+  In single process mode, every app plus the System UI itself run within the same QQmlEngine. For
+  some operations, we need to figure out though, which app/System UI is the currently "active" one.
   In order to do that we need an anchor or hint: the \a object parameter. Each QObject exposed to
   QML has an associated QQmlContext. For objects created by apps, we can deduce the apps's root
   context from this object context. This fails however, if the object is a singleton or an object

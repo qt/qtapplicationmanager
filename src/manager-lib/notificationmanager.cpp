@@ -451,7 +451,7 @@ int NotificationManager::indexOfNotification(uint id) const
 /*!
     \qmlmethod NotificationManager::acknowledgeNotification(int id)
 
-    This function needs to be called by the System-UI when the user acknowledged the notification
+    This function needs to be called by the System UI when the user acknowledged the notification
     identified by \a id (most likely by clicking on it).
 */
 void NotificationManager::acknowledgeNotification(uint id)
@@ -462,12 +462,12 @@ void NotificationManager::acknowledgeNotification(uint id)
 /*!
     \qmlmethod NotificationManager::triggerNotificationAction(int id, string actionId)
 
-    This function needs to be called by the System-UI when the user triggered a notification action.
+    This function needs to be called by the System UI when the user triggered a notification action.
 
     The notification is identified by \a id and the action by \a actionId.
 
     \note You should only use action-ids that have been set for the the given notification (see the
-    \l {Notification::}{actions} role). However, the application-manager will accept and forward any
+    \l {Notification::}{actions} role). However, the application manager will accept and forward any
     arbitrary string. Be aware that this string is broadcast on the session D-Bus when running in
     multi-process mode.
 */
@@ -497,7 +497,7 @@ void NotificationManager::triggerNotificationAction(uint id, const QString &acti
 /*!
     \qmlmethod NotificationManager::dismissNotification(int id)
 
-    This function needs to be called by the System-UI when the notification identified by \a id is
+    This function needs to be called by the System UI when the notification identified by \a id is
     no longer needed.
 
     The creator of the notification will be notified about this dismissal.

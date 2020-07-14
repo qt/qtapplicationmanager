@@ -61,7 +61,7 @@ QT_BEGIN_NAMESPACE_AM
     \ingroup common-singletons
     \brief Singleton that provides functions to create Intent requests.
 
-    This type can be used both in applications as well as within the System-UI to create intent
+    This type can be used both in applications as well as within the System UI to create intent
     requests. This type is only the factory, returning instances of the type IntentRequest. See
     the IntentRequest documentation for details on how to actually handle these asynchronous calls.
 
@@ -182,7 +182,7 @@ IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, co
 /*! \qmlmethod IntentRequest IntentClient::sendIntentRequest(string intentId, string applicationId, var parameters)
     \overload
 
-    Instead of letting the system-ui (or the user) choose which application should handle your
+    Instead of letting the System UI (or the user) choose which application should handle your
     request, you can use this overload to hardcode the \a applicationId that is required to handle
     it. The request will fail, if this specified application doesn't exist or can't handle this
     specific request, even though other applications would be able to do it.

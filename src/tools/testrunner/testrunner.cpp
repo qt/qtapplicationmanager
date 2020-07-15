@@ -43,21 +43,18 @@
 #include "testrunner.h"
 
 #include <QCoreApplication>
-#include <QAbstractEventDispatcher>
 #include <QEventLoop>
 #include <QQmlEngine>
 #include <QRegExp>
-#include <QRegularExpression>
 #include <QDir>
 #include <QFileInfo>
 
 #include <qlogging.h>
 #include <QtTest/qtestsystem.h>
 #include <private/quicktestresult_p.h>
-#include <private/qtestlog_p.h>
 #include "testrunner_p.h"
+#include "amtest.h"
 
-#include "utilities.h"
 
 QT_BEGIN_NAMESPACE
 namespace QTest {
@@ -67,75 +64,6 @@ namespace QTest {
 QT_END_NAMESPACE
 
 QT_BEGIN_NAMESPACE_AM
-
-AmTest::AmTest()
-{}
-
-AmTest *AmTest::instance()
-{
-    static QPointer<AmTest> object = new AmTest;
-    if (!object) {
-        qWarning("A new appman test object has been created, the behavior may be compromised");
-        object = new AmTest;
-    }
-    return object;
-}
-
-int AmTest::timeoutFactor() const
-{
-    return QT_PREPEND_NAMESPACE_AM(timeoutFactor)();
-}
-
-static QtMsgType convertMsgType(AmTest::MsgType type)
-{
-    QtMsgType ret;
-
-    switch (type) {
-    case AmTest::WarningMsg: ret = QtWarningMsg; break;
-    case AmTest::CriticalMsg: ret = QtCriticalMsg; break;
-    case AmTest::FatalMsg: ret = QtFatalMsg; break;
-    case AmTest::InfoMsg: ret = QtInfoMsg; break;
-    default: ret = QtDebugMsg;
-    }
-    return ret;
-}
-
-void AmTest::ignoreMessage(MsgType type, const char *msg)
-{
-    QTestLog::ignoreMessage(convertMsgType(type), msg);
-}
-
-void AmTest::ignoreMessage(MsgType type, const QRegExp &expression)
-{
-#ifndef QT_NO_REGULAREXPRESSION
-    QRegularExpression re(expression.pattern());
-    if (expression.caseSensitivity() == Qt::CaseInsensitive)
-        re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
-    QTestLog::ignoreMessage(convertMsgType(type), re);
-#else
-    Q_UNUSED(type);
-    Q_UNUSED(expression);
-    qWarning() << "Cannot ignore message: regular expressions are not supported";
-#endif
-}
-
-int AmTest::observeObjectDestroyed(QObject *obj)
-{
-    static int idx = 0;
-    int index = idx++;
-
-    connect(obj, &QObject::destroyed, [this, index] () {
-        emit objectDestroyed(index);
-    });
-
-    return index;
-}
-
-void AmTest::aboutToBlock()
-{
-    emit QAbstractEventDispatcher::instance()->aboutToBlock();
-}
-
 
 QTestRootObject::QTestRootObject(QObject *parent)
     : QObject(parent)

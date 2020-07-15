@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-configuration
+---
+quicklaunch:
+    runtimesPerContainer: 1
+    idleLoad: 1.0
+
+systemProperties:
+  private:
+    quickLaunch: true

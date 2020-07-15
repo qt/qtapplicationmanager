@@ -1,0 +1,9 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'appappapp1appappapp2appappapp3appappapp4appappapp5appappapp6appappapp7'
+icon:    'icon.png'
+code:    'app.qml'
+runtime: 'qml'
+name:
+  en: 'Large App'

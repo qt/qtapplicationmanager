@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2019 Luxoft Sweden AB
-** Copyright (C) 2018 Pelagicore AG
+** Copyright (C) 2020 Luxoft Sweden AB
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Qt Application Manager.
@@ -40,46 +39,12 @@
 **
 ****************************************************************************/
 
-#pragma once
+import QtQuick 2.15
+import QtApplicationManager.Application 2.0
 
-#include <QObject>
-#include <QtQml/qqmlpropertymap.h>
-#include <QPointer>
-
-#include <QtAppManCommon/global.h>
-
-QT_BEGIN_NAMESPACE_AM
-
-class QTestRootObject : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(bool windowShown READ windowShown NOTIFY windowShownChanged)
-    Q_PROPERTY(bool hasTestCase READ hasTestCase WRITE setHasTestCase NOTIFY hasTestCaseChanged)
-    Q_PROPERTY(QObject *defined READ defined)
-
-public:
-    QTestRootObject(QObject *parent = nullptr);
-
-    static QTestRootObject *instance();
-
-    bool hasTestCase() const { return m_hasTestCase; }
-    void setHasTestCase(bool value) { m_hasTestCase = value; emit hasTestCaseChanged(); }
-
-    bool windowShown() const { return m_windowShown; }
-    void setWindowShown(bool value) { m_windowShown = value; emit windowShownChanged(); }
-    QQmlPropertyMap *defined() const { return m_defined; }
-
-    void init() { setWindowShown(false); setHasTestCase(false); }
-
-Q_SIGNALS:
-    void windowShownChanged();
-    void hasTestCaseChanged();
-
-private:
-    bool m_windowShown;
-    bool m_hasTestCase;
-    QQmlPropertyMap *m_defined;
-    friend class TestRunner;
-};
-
-QT_END_NAMESPACE_AM
+Connections {
+    target: ApplicationInterface
+    function onQuit() {
+        target.acknowledgeQuit();
+    }
+}

@@ -17,3 +17,6 @@ SUBDIRS = \
     configs \
     lifecycle \
     resources
+
+linux: SUBDIRS += \
+    processtitle

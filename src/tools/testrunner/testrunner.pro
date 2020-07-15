@@ -12,10 +12,12 @@ QT += qmltest qmltest-private
 
 HEADERS += \
     testrunner.h \
-    testrunner_p.h
+    testrunner_p.h \
+    amtest.h
 
 SOURCES += \
-    testrunner.cpp
+    testrunner.cpp \
+    amtest.cpp
 
 # For android installing the binaries doesn't make sense, as it's a command-line utility which doesn't work on android anyway.
 android: INSTALLS=

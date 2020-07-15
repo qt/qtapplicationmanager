@@ -62,6 +62,7 @@
 #include "utilities.h"
 #include "notificationmanager.h"
 #include "dbus-utilities.h"
+#include "processtitle.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -351,10 +352,12 @@ bool NativeRuntime::start()
 
         if (!Logging::isDltEnabled())
             args << qSL("--no-dlt-logging");
-    }
+    } else {
+        if (m_isQuickLauncher)
+            args << qSL("--quicklaunch");
 
-    if (m_isQuickLauncher)
-        args << qSL("--quicklaunch");
+        args << QString::fromLocal8Bit(ProcessTitle::placeholderArgument);    // must be last argument
+    }
 
     m_process = m_container->start(args, env, config);
 

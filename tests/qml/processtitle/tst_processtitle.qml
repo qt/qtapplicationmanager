@@ -69,7 +69,7 @@ TestCase {
     function test_launcher_qml_data() {
         return [ { tag: "small", appId: "test.processtitle.app", resId: "test.processtitle.app" },
                  { tag: "large", appId: "appappapp1appappapp2appappapp3appappapp4appappapp5appappapp6appappapp7",
-                                 resId: "appappapp1appappapp2appappapp3appappapp4appappapp5appappapp6appappapp7" } ];
+                                 resId: "appappapp1appappapp2appappapp3appappapp4appappapp5appappapp6appa" } ];
     }
 
     function test_launcher_qml(data) {
@@ -85,8 +85,7 @@ TestCase {
                 return pid
             });
             wait(250);
-            // there's a \0 between executable and argument instead of a space
-            // verify(AmTest.cmdLine(pid).endsWith(executable + quickArg));
+            verify(AmTest.cmdLine(pid).endsWith(executable + quickArg));
         } else {
             sigIdx = 1;
             quickArg = ""
@@ -105,10 +104,9 @@ TestCase {
         pid = processStatus.processId;
         verify(AmTest.ps(pid).endsWith(executable + ": " + data.resId + quickArg));
         verify(AmTest.cmdLine(pid).endsWith(executable + ": " + data.resId + quickArg));
-        // /proc/<pid>/environ is broken
-        // verify(AmTest.environment(pid).includes("AM_CONFIG=%YAML"));
-        // verify(AmTest.environment(pid).includes("AM_NO_DLT_LOGGING=1"));
-        // verify(AmTest.environment(pid).includes("WAYLAND_DISPLAY="));
+        verify(AmTest.environment(pid).includes("AM_CONFIG=%YAML"));
+        verify(AmTest.environment(pid).includes("AM_NO_DLT_LOGGING=1"));
+        verify(AmTest.environment(pid).includes("WAYLAND_DISPLAY="));
 
         runStateChangedSpy.clear();
         ApplicationManager.stopAllApplications();

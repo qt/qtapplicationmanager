@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
 {
     StartupTimer::instance()->checkpoint("entered main");
 
+    ProcessTitle::adjustArgumentCount(argc);
+
     QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Launcher"));
     QCoreApplication::setOrganizationName(qSL("QtProject"));
     QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
@@ -375,13 +377,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     Logging::registerUnregisteredDltContexts();
 
     // Dress up the ps output to make it easier to correlate all the launcher processes
-    {
-        QByteArray id = applicationId.toLocal8Bit();
-        QByteArray args;
-        if (qApp->arguments().size() > 1)
-            args = qApp->arguments().mid(1).join(qL1C(' ')).toLocal8Bit();
-        ProcessTitle::setTitle("%s%s%s", id.constData(), args.isEmpty() ? "" : " ", args.constData());
-    }
+    ProcessTitle::augmentCommand(applicationId.toLocal8Bit().constData());
 
     QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(qSL("runtimeParameters")));
 

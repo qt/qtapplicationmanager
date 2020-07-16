@@ -885,7 +885,7 @@ static QString replaceEnvVars(QString string)
     while (true) {
         if ((posBeg = string.indexOf(qL1S("${"), posEnd + 1)) < 0)
             break;
-        if ((posEnd = string.indexOf('}', posBeg + 2)) < 0)
+        if ((posEnd = string.indexOf(qL1C('}'), posBeg + 2)) < 0)
             break;
 
         const QString varName = string.mid(posBeg + 2, posEnd - posBeg - 2);

@@ -121,7 +121,7 @@ QString AmTest::ps(int pid)
     QProcess process;
     process.start(qSL("ps"), QStringList{qSL("--no-headers"), QString::number(pid)});
     if (process.waitForFinished(5000)) {
-        QString str = process.readAllStandardOutput();
+        QString str = QString::fromLocal8Bit(process.readAllStandardOutput());
         str.chop(1);
         return str;
     }
@@ -130,13 +130,13 @@ QString AmTest::ps(int pid)
 
 QString AmTest::cmdLine(int pid)
 {
-    QFile file(QString("/proc/%1/cmdline").arg(pid));
-    return file.open(QFile::ReadOnly) ? file.readLine() : QString();
+    QFile file(QString::fromUtf8("/proc/%1/cmdline").arg(pid));
+    return file.open(QFile::ReadOnly) ? QString::fromLocal8Bit(file.readLine()) : QString();
 }
 
 QString AmTest::environment(int pid)
 {
-    QFile file(QString("/proc/%1/environ").arg(pid));
+    QFile file(QString::fromUtf8("/proc/%1/environ").arg(pid));
     return file.open(QFile::ReadOnly) ? QTextStream(&file).readAll() : QString();
 }
 
@@ -146,7 +146,7 @@ int AmTest::findChildProcess(int ppid, const QString &substr)
     process.start(qSL("ps"), QStringList{qSL("--ppid"), QString::number(ppid), qSL("-o"),
                                          qSL("pid,args"), qSL("--no-headers")});
     if (process.waitForFinished(5000)) {
-        QString str = process.readAllStandardOutput();
+        const QString str = QString::fromLocal8Bit(process.readAllStandardOutput());
         QRegularExpression re(qSL(" *(\\d*) .*") + substr);
         QRegularExpressionMatch match = re.match(str);
         if (match.hasMatch())

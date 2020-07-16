@@ -104,7 +104,7 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
 {
     Q_ASSERT(!testRunnerArguments.isEmpty());
 
-    const QString name = QFileInfo(testRunnerArguments.at(0)).fileName() + "::" + QDir().relativeFilePath(testFile);
+    const QString name = QFileInfo(testRunnerArguments.at(0)).fileName() + qSL("::") + QDir().relativeFilePath(testFile);
     static const char *programName = strdup(name.toLocal8Bit().constData());
     QuickTestResult::setProgramName(programName);
 

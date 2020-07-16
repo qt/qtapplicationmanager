@@ -138,7 +138,7 @@ QStringList PackageDatabase::findManifestsInDir(const QDir &manifestDir, bool sc
     for (const QString &pkgDirName : pkgDirNames) {
         try {
             // ignore left-overs from the installer
-            if (pkgDirName.endsWith('+') || pkgDirName.endsWith('-'))
+            if (pkgDirName.endsWith(qL1C('+')) || pkgDirName.endsWith(qL1C('-')))
                 continue;
 
             // ignore filesystem problems

@@ -154,7 +154,7 @@ ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString
 
 
 QVariantMap PackageUtilities::headerDataForDigest = QVariantMap {
-    { "extraSigned", QVariantMap() }
+    { qSL("extraSigned"), QVariantMap() }
 };
 
 void PackageUtilities::addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest)

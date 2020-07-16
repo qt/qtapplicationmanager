@@ -247,8 +247,8 @@ bool InstallationReport::serialize(QIODevice *to) const
         return false;
 
     QVariantMap header {
-        { "formatVersion", 3 },
-        { "formatType", "am-installation-report" }
+        { qSL("formatVersion"), 3 },
+        { qSL("formatType"), qSL("am-installation-report") }
     };
     QVariantMap root {
         { qSL("packageId"), packageId() },

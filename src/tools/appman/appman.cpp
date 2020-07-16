@@ -109,7 +109,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
         a.setup(&cfg);
 #if defined(AM_TESTRUNNER)
-        a.qmlEngine()->rootContext()->setContextProperty("buildConfig", cfg.buildConfig());
+        a.qmlEngine()->rootContext()->setContextProperty(qSL("buildConfig"), cfg.buildConfig());
 #endif
         a.loadQml(cfg.loadDummyData());
         a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());

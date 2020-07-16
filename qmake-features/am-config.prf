@@ -9,7 +9,7 @@ CONFIG += exceptions
     CONFIG *= headless
 }
 
-DEFINES += QT_MESSAGELOGCONTEXT
+DEFINES += QT_MESSAGELOGCONTEXT QT_NO_CAST_FROM_ASCII QT_NO_CAST_TO_ASCII
 
 # CONFIG += sanitizer sanitize_address sanitize_undefined
 

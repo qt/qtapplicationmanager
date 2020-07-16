@@ -1534,7 +1534,7 @@ bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
 {
     try {
         // check if we have enough parts: e.g. "tld.company.app" would have 3 parts
-        QStringList parts = name.split('.');
+        QStringList parts = name.split(qL1C('.'));
         if (parts.size() < minimalPartCount) {
             throw Exception(Error::Parse, "the minimum amount of parts (subdomains) is %1 (found %2)")
                 .arg(minimalPartCount).arg(parts.size());

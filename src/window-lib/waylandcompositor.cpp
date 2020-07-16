@@ -174,7 +174,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     create();
 
     // set a sensible default keymap
-    defaultSeat()->keymap()->setLayout(QLocale::system().name().section('_', 1, 1).toLower());
+    defaultSeat()->keymap()->setLayout(QLocale::system().name().section(qL1C('_'), 1, 1).toLower());
 }
 
 void WaylandCompositor::xdgPing(WindowSurface* surface)

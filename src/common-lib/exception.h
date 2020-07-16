@@ -110,6 +110,12 @@ public:
         return arg(static_cast<QList<QString>>(sl));
     }
 
+    Exception &arg(const char *str) Q_DECL_NOEXCEPT
+    {
+        m_errorString = m_errorString.arg(QString::fromUtf8(str));
+        return *this;
+    }
+
     // this will generate compiler errors if there's no suitable QString::arg(const Ts &) overload
     template <typename... Ts> Exception &arg(const Ts & ...ts) Q_DECL_NOEXCEPT
     {

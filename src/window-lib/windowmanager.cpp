@@ -633,10 +633,14 @@ void WindowManager::setupWindow(Window *window)
             emit windowPropertyChanged(win, name, value);
     });
 
-    connect(window, &Window::isBeingDisplayedChanged, this, [this, window]() {
-        if (window->contentState() == Window::NoSurface && !window->isBeingDisplayed()) {
-            removeWindow(window);
-            releaseWindow(window);
+    // In very rare cases window->deleteLater() is processed before the isBeingDisplayedChanged
+    // handler below, i.e. the window destructor runs before the handler.
+    QPointer<Window> guardedWindow = window;
+    connect(window, &Window::isBeingDisplayedChanged, this, [this, guardedWindow]() {
+        if (!guardedWindow.isNull() && guardedWindow->contentState() == Window::NoSurface
+            && !guardedWindow->isBeingDisplayed()) {
+            removeWindow(guardedWindow);
+            releaseWindow(guardedWindow);
         }
     }, Qt::QueuedConnection);
 

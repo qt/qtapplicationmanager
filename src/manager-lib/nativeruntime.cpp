@@ -176,6 +176,7 @@ bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
     } else {
         QDBusConnection connection(m_dbusConnectionName);
         ApplicationIPCManager::instance()->registerInterfaces(this, connection, app);
+        emit applicationReadyOnPeerDBus(connection, app);
         ret = startApplicationViaLauncher();
     }
 
@@ -358,6 +359,8 @@ bool NativeRuntime::start()
 
         args << QString::fromLocal8Bit(ProcessTitle::placeholderArgument);    // must be last argument
     }
+
+    emit signaler()->aboutToStart(this);
 
     m_process = m_container->start(args, env, config);
 

@@ -183,7 +183,7 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
 
     // The IntentServer itself doesn't know about the p2p D-Bus or the AM itself, so we need to
     // wire it up to both interfaces from the outside
-    connect(&ApplicationManager::instance()->internalSignals, &ApplicationManagerInternalSignals::newRuntimeCreated,
+    connect(AbstractRuntime::signaler(), &RuntimeSignaler::aboutToStart,
             intentServer(), [this](AbstractRuntime *runtime) {
 #if defined(AM_MULTI_PROCESS)
         if (NativeRuntime *nativeRuntime = qobject_cast<NativeRuntime *>(runtime)) {
@@ -519,7 +519,7 @@ QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,
         sendErrorReply(QDBusError::NotSupported, qL1S("No matching intent handler registered."));
         return QString();
     } else {
-         return irs->requestId().toString();
+        return irs->requestId().toString();
     }
 }
 

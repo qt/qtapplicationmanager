@@ -101,6 +101,12 @@ private:
     QStringList m_iconThemeSearchPaths;
 };
 
+class RuntimeSignaler : public QObject
+{
+    Q_OBJECT
+signals:
+    void aboutToStart(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);
+};
 
 class AbstractRuntime : public QObject
 {
@@ -138,6 +144,8 @@ public:
 
     virtual bool start() = 0;
     virtual void stop(bool forceKill = false) = 0;
+
+    static RuntimeSignaler* signaler();
 
 signals:
     void stateChanged(QT_PREPEND_NAMESPACE_AM(Am::RunState) newState);

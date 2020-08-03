@@ -154,6 +154,8 @@ bool QmlInProcessRuntime::start()
         return false;
     }
 
+    emit signaler()->aboutToStart(this);
+
     // We are running each application in it's own, separate Qml context.
     // This way, we can export an unique ApplicationInterface object for each app
     QQmlContext *appContext = new QQmlContext(m_inProcessQmlEngine->rootContext(), this);

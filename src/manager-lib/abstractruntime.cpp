@@ -95,6 +95,12 @@ QVariantMap AbstractRuntime::systemProperties() const
     return QVariantMap();
 }
 
+RuntimeSignaler *AbstractRuntime::signaler()
+{
+    static RuntimeSignaler rs;
+    return &rs;
+}
+
 QByteArray AbstractRuntime::securityToken() const
 {
     return m_securityToken;

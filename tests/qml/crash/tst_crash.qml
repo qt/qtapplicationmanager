@@ -74,9 +74,6 @@ TestCase {
     }
 
     function test_crash(data) {
-        if (ApplicationManager.singleProcess)
-            skip("Application crash recovery not supported in single-process mode");
-
         ApplicationManager.startApplication(appId);
         runStateChangedSpy.wait(3000);
         runStateChangedSpy.wait(3000);

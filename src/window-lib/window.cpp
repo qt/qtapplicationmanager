@@ -193,7 +193,6 @@ Window::Window(Application *app)
 
 Window::~Window()
 {
-    emit _windowDestroyed();
 }
 
 Application *Window::application() const

@@ -177,7 +177,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
         m_clp.addOption({ qSL("build-config"),     qSL("Dumps the build configuration and exits.") });
 
     m_clp.addPositionalArgument(qSL("qml-file"),   qSL("The main QML file."));
-    m_clp.addOption({ qSL("log-instant"),          qSL("Log instantly at start-up, neglect configuration") });
+    m_clp.addOption({ qSL("log-instant"),          qSL("Log instantly at start-up, neglect logging configuration.") });
     m_clp.addOption({ qSL("database"),             qSL("Deprecated (ingored)."), qSL("file") });
     m_clp.addOption({ qSL("builtin-apps-manifest-dir"), qSL("Base directory for built-in application manifests."), qSL("dir") });
     m_clp.addOption({ qSL("installation-dir"),     qSL("Base directory for package installations."), qSL("dir") });

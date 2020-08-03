@@ -12,11 +12,11 @@ SUBDIRS = \
     installer \
     quicklaunch \
     intents \
-    crash/apps/tld.test.crash/terminator2 \
-    crash \
     configs \
     lifecycle \
     resources
 
-linux: SUBDIRS += \
+multi-process: SUBDIRS += \
+    crash/apps/tld.test.crash/terminator2 \
+    crash \
     processtitle

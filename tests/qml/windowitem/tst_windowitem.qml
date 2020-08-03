@@ -42,6 +42,7 @@
 
 import QtQuick 2.3
 import QtTest 1.0
+import QtApplicationManager 2.0
 import QtApplicationManager.SystemUI 2.0
 
 Item {
@@ -109,9 +110,10 @@ Item {
     }
 
     SignalSpy {
-        id: spyDestroyed
-        signalName: "_windowDestroyed"
-    }
+        id: objectDestroyedSpy
+        target: AmTest
+        signalName: "objectDestroyed"
+    }
 
     TestCase {
         id: testCase
@@ -262,8 +264,8 @@ Item {
             var secondWindowItem = windowItemsRepeater.itemAt(1);
 
             var window = WindowManager.get(0).window;
-            spyDestroyed.target = window;
-            spyDestroyed.clear();
+            objectDestroyedSpy.clear();
+            var destroyId = AmTest.observeObjectDestroyed(window);
 
             compare(window.contentState, WindowObject.SurfaceWithContent);
             app.stop();
@@ -271,7 +273,7 @@ Item {
             // The WindowObject should still exist, albeit without a surface, even though
             // no longer present in WindowManager's model.
             tryCompare(WindowManager, "count", 0);
-            compare(spyDestroyed.count, 0);
+            compare(objectDestroyedSpy.count, 0)
             tryCompare(window, "contentState", WindowObject.NoSurface);
 
             // Destroy all WindowItems
@@ -281,8 +283,8 @@ Item {
 
             // Now that there are no WindowItems using that WindowObject anymore, it should
             // eventually be deleted by WindowManager
-            spyDestroyed.wait();
-            compare(spyDestroyed.count, 1);
+            objectDestroyedSpy.wait();
+            compare(objectDestroyedSpy.signalArguments[0][0], destroyId);
         }
 
         /*

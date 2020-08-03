@@ -99,8 +99,8 @@ void tst_Main::initTestCase()
     if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    m_verbose = qEnvironmentVariableIsSet("VERBOSE_TEST");
-    qInfo() << "Verbose mode is" << (m_verbose ? "on" : "off") << "(changed by (un)setting $VERBOSE_TEST)";
+    m_verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
+    qInfo() << "Verbose mode is" << (m_verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
 }
 
 void tst_Main::copyRecursively(const QString &sourcePath, const QString &destPath)

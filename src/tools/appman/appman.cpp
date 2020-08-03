@@ -58,6 +58,7 @@
 #include "qtyaml.h"
 
 #if defined(AM_TESTRUNNER)
+#  include <QWindow>
 #  include "testrunner.h"
 #endif
 
@@ -104,7 +105,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         StartupTimer::instance()->checkpoint("after command line parse");
 #if defined(AM_TESTRUNNER)
         TestRunner::initialize(cfg.mainQmlFile(), cfg.testRunnerArguments());
-        cfg.setForceVerbose(qEnvironmentVariableIsSet("VERBOSE_TEST"));
+        cfg.setForceVerbose(qEnvironmentVariableIsSet("AM_VERBOSE_TEST"));
 #endif
         a.setup(&cfg);
 #if defined(AM_TESTRUNNER)
@@ -114,8 +115,13 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
 
 #if defined(AM_TESTRUNNER)
+        if (qEnvironmentVariableIsSet("AM_BACKGROUND_TEST") && !a.topLevelWindows().isEmpty()) {
+            QWindow *w = a.topLevelWindows().first();
+            w->setFlag(Qt::WindowStaysOnBottomHint);
+            w->setFlag(Qt::WindowDoesNotAcceptFocus);
+        }
         qInfo().nospace().noquote() << "Verbose mode is " << (cfg.verbose() ? "on" : "off")
-                                    << " (change by (un)setting $VERBOSE_TEST)\n TEST: " << cfg.mainQmlFile()
+                                    << " (change by (un)setting $AM_VERBOSE_TEST)\n TEST: " << cfg.mainQmlFile()
                                     << " in " << (cfg.forceMultiProcess() ? "multi" : "single") << "-process mode";
         return TestRunner::exec();
 #else

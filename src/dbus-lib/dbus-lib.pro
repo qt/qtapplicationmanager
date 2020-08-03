@@ -59,7 +59,7 @@ recreate-applicationmanager-dbus-xml.CONFIG = phony
 recreate-applicationmanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager-lib/applicationmanager.h -o $$PWD/io.qt.applicationmanager.xml
 
 recreate-packagemanager-dbus-xml.CONFIG = phony
-recreate-packagemanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../installer-lib/packagemanager.h -o $$PWD/io.qt.packagemanager.xml
+recreate-packagemanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager-lib/packagemanager.h -o $$PWD/io.qt.packagemanager.xml
 
 recreate-windowmanager-dbus-xml.CONFIG = phony
 recreate-windowmanager-dbus-xml.commands = $$QDBUSCPP2XML -a $$PWD/../manager/windowmanager.h -o $$PWD/io.qt.windowmanager.xml

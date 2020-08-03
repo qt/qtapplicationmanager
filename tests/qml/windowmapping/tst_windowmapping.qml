@@ -160,9 +160,6 @@ TestCase {
     }
 
     function test_amwin_loader() {
-        if (!ApplicationManager.singleProcess)
-            skip("Sporadically crashes in QtWaylandClient::QWaylandDisplay::flushRequests()");
-
         tryCompare(WindowManager, "count", 0);
 
         var app = ApplicationManager.application("test.winmap.loader");

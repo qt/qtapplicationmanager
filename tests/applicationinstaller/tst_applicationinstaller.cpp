@@ -226,10 +226,10 @@ void tst_PackageManager::initTestCase()
     if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    bool verbose = qEnvironmentVariableIsSet("VERBOSE_TEST");
+    bool verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
     if (!verbose)
         QLoggingCategory::setFilterRules(qSL("am.installer.debug=false"));
-    qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(changed by (un)setting $VERBOSE_TEST)";
+    qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
 
     spyTimeout *= timeoutFactor();
 

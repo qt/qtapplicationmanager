@@ -160,6 +160,10 @@ void tst_Main::destroyMain()
         delete main;
         main = nullptr;
     }
+    if (config) {
+        delete config;
+        config = nullptr;
+    }
 }
 
 void tst_Main::cleanup()

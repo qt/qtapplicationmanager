@@ -153,7 +153,7 @@ private:
     QStringList m_defaultConfigFilePaths;
     QString m_buildConfigFilePath;
     QCommandLineParser m_clp;
-    ConfigurationData *m_data;
+    QScopedPointer<ConfigurationData> m_data;
     QString m_mainQmlFile;
     bool m_onlyOnePositionalArgument = false;
     bool m_forceVerbose = false;

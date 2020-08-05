@@ -125,6 +125,9 @@ void tst_Application::runtimeDestroyed()
 
     delete app;
     delete runtimeManager;
+    delete ai;
+    delete pkg;
+    delete pi;
 }
 
 QTEST_APPLESS_MAIN(tst_Application)

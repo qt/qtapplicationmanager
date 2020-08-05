@@ -211,6 +211,7 @@ IntentServer::IntentServer(IntentServerSystemInterface *systemInterface, QObject
 
 IntentServer::~IntentServer()
 {
+    qDeleteAll(m_intents);
     s_instance = nullptr;
 }
 

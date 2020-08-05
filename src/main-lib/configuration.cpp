@@ -327,14 +327,14 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         cacheOptions |= AbstractConfigCache::ClearCache;
 
     if (configFilePaths.isEmpty()) {
-        m_data = new ConfigurationData();
+        m_data.reset(new ConfigurationData());
     } else {
         ConfigCache<ConfigurationData> cache(configFilePaths, qSL("config"), "CFGD",
                                              ConfigurationData::DataStreamVersion, cacheOptions);
 
         try {
             cache.parse();
-            m_data = cache.takeMergedResult();
+            m_data.reset(cache.takeMergedResult());
         } catch (const Exception &e) {
             showParserMessage(e.errorString() + qL1C('\n'), ErrorMessage);
             exit(1);
@@ -349,8 +349,10 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         buffer.open(QIODevice::ReadOnly);
         try {
             ConfigurationData *cd = ConfigCacheAdaptor<ConfigurationData>::loadFromSource(&buffer, qSL("command line"));
-            if (cd)
-                ConfigCacheAdaptor<ConfigurationData>::merge(m_data, cd);
+            if (cd) {
+                ConfigCacheAdaptor<ConfigurationData>::merge(m_data.data(), cd);
+                delete cd;
+            }
         } catch (const Exception &e) {
             showParserMessage(QString::fromLatin1("Could not parse --option value: %1.\n")
                               .arg(e.errorString()),

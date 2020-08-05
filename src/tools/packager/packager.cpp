@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
 
     try {
-        PackagingJob *p = nullptr;
+        QScopedPointer<PackagingJob> p;
 
         // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
         switch (command(clp)) {
@@ -204,11 +204,11 @@ int main(int argc, char *argv[])
                                                                  clp.values(qSL("extra-signed-metadata-file")),
                                                                  true);
 
-            p = PackagingJob::create(clp.positionalArguments().at(1),
-                                     clp.positionalArguments().at(2),
-                                     extraMetaDataMap,
-                                     extraSignedMetaDataMap,
-                                     clp.isSet(qSL("json")));
+            p.reset(PackagingJob::create(clp.positionalArguments().at(1),
+                                         clp.positionalArguments().at(2),
+                                         extraMetaDataMap,
+                                         extraSignedMetaDataMap,
+                                         clp.isSet(qSL("json"))));
             break;
         }
         case DevSignPackage:
@@ -223,11 +223,11 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 5)
                 clp.showHelp(1);
 
-            p = PackagingJob::developerSign(clp.positionalArguments().at(1),
-                                            clp.positionalArguments().at(2),
-                                            clp.positionalArguments().at(3),
-                                            clp.positionalArguments().at(4),
-                                            clp.isSet(qSL("json")));
+            p.reset(PackagingJob::developerSign(clp.positionalArguments().at(1),
+                                                clp.positionalArguments().at(2),
+                                                clp.positionalArguments().at(3),
+                                                clp.positionalArguments().at(4),
+                                                clp.isSet(qSL("json"))));
             break;
 
         case DevVerifyPackage:
@@ -239,8 +239,8 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() < 3)
                 clp.showHelp(1);
 
-            p = PackagingJob::developerVerify(clp.positionalArguments().at(1),
-                                              clp.positionalArguments().mid(2));
+            p.reset(PackagingJob::developerVerify(clp.positionalArguments().at(1),
+                                                  clp.positionalArguments().mid(2)));
             break;
 
         case StoreSignPackage:
@@ -256,12 +256,12 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 6)
                 clp.showHelp(1);
 
-            p = PackagingJob::storeSign(clp.positionalArguments().at(1),
-                                        clp.positionalArguments().at(2),
-                                        clp.positionalArguments().at(3),
-                                        clp.positionalArguments().at(4),
-                                        clp.positionalArguments().at(5),
-                                        clp.isSet(qSL("json")));
+            p.reset(PackagingJob::storeSign(clp.positionalArguments().at(1),
+                                            clp.positionalArguments().at(2),
+                                            clp.positionalArguments().at(3),
+                                            clp.positionalArguments().at(4),
+                                            clp.positionalArguments().at(5),
+                                            clp.isSet(qSL("json"))));
             break;
 
         case StoreVerifyPackage:
@@ -274,9 +274,9 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() < 4)
                 clp.showHelp(1);
 
-            p = PackagingJob::storeVerify(clp.positionalArguments().at(1),
-                                          clp.positionalArguments().mid(2, clp.positionalArguments().size() - 3),
-                                          *--clp.positionalArguments().cend());
+            p.reset(PackagingJob::storeVerify(clp.positionalArguments().at(1),
+                                              clp.positionalArguments().mid(2, clp.positionalArguments().size() - 3),
+                                              *--clp.positionalArguments().cend()));
             break;
 
         case YamlToJson: {

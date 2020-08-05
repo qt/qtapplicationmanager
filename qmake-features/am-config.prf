@@ -11,6 +11,8 @@ CONFIG += exceptions
 
 DEFINES += QT_MESSAGELOGCONTEXT
 
+# CONFIG += sanitizer sanitize_address sanitize_undefined
+
 win32-msvc*:QMAKE_CXXFLAGS += /FS /wd4290 /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS
 
 disable-installer:DEFINES *= AM_DISABLE_INSTALLER

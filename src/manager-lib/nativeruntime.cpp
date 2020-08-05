@@ -569,7 +569,6 @@ void NativeRuntimeApplicationInterface::finishedInitialization()
 
 NativeRuntimeInterface::NativeRuntimeInterface(NativeRuntime *runtime)
     : QObject(runtime)
-    , m_runtime(runtime)
 { }
 
 

@@ -124,24 +124,19 @@ the application. A custom container plugin must forward these variables or adjus
   \li Not set, but explicitly unset by the application manager. Make sure to leave it unset, to
       use the automatic Wayland input method implementation.
 \row
+  \li \c{QT_SCALE_FACTOR}
+  \li Empty (unset), to prevent scaling of wayland clients relative to the compositor. Otherwise
+      running the application manager on a 4K desktop with scaling would result in double-scaled
+      applications within the application manager.
+\row
+  \li \c{QT_WAYLAND_SHELL_INTEGRATION}
+  \li Set to \c{xdg-shell}. This is the preferred wayland shell integration.
+\row
   \li \c{DBUS_SESSION_BUS_ADDRESS}
   \li The standard D-Bus session bus.
 \row
-  \li \c{AM_DBUS_PEER_ADDRESS}
-  \li Holds the D-Bus socket identifier for the private peer-to-peer bus between the application
-      manager and the application itself. If your container uses its own filesystem namespace,
-      make sure that this socket is forwarded accordingly.
-\row
-  \li \c{AM_DBUS_NOTIFICATION_BUS_ADDRESS}
-  \li Since the \c{org.freedesktop.Notifications} interface could be on a different bus from the
-      rest of the D-Bus interfaces, the application manager needs to explicitly tell the
-      application where to look for this interface.
-\row
-  \li \c{AM_BASE_DIR}
-  \li The current directory for the application manager.
-\row
-  \li \c{AM_RUNTIME_SYSTEM_PROPERTIES}
-  \li The public part of the \l{system-properties}{system properties}, encoded as a YAML document.
+  \li \c{AM_CONFIG}
+  \li A YAML, UTF-8 string encoded version of the \l{amConfigDetails}{amConfig} map.
 \row
   \li \c{AM_NO_DLT_LOGGING}
   \li Tells the application to not use DLT for logging.

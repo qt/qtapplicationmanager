@@ -53,8 +53,9 @@
 
     For every application that is started in multi-process mode, the application manager creates
     a private P2P D-Bus connection and communicates the connection address to the application's
-    process via the environment variable \c AM_DBUS_PEER_ADDRESS. Only the application itself is
-    able to connect to this P2P D-Bus - no further access policies are required on this bus.
+    process as part of the YAML snippet in the environment variable \c AM_CONFIG. Only the
+    application itself is able to connect to this P2P D-Bus - no further access policies are
+    required on this bus.
 
     Using this connection, you will have access to different interfaces (note that due to
     this not being a bus, the service name is always an empty string):

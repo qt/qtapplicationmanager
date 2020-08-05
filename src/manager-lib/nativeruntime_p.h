@@ -84,9 +84,6 @@ signals:
     Q_SCRIPTABLE void startApplication(const QString &baseDir, const QString &app, const QString &document,
                                        const QString &mimeType, const QVariantMap &application,
                                        const QVariantMap &systemProperties);
-
-private:
-    NativeRuntime *m_runtime;
 };
 
 QT_END_NAMESPACE_AM

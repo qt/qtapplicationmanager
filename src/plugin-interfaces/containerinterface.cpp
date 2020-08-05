@@ -191,7 +191,9 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     You can simply return \a hostPath, if both are running in the same namespace.
 */
 
-/*! \fn bool ContainerInterface::start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment, const QVariantMap &amConfig)
+/*! \fn bool ContainerInterface::start(const QStringList &arguments,
+                                       const QMap<QString, QString> &runtimeEnvironment,
+                                       const QVariantMap &amConfig)
     This function will be called to asynchronously start the application's program (as set by
     setProgram()), with the additional command line \a arguments and with the additional environment
     variables from \a runtimeEnvironment.
@@ -220,7 +222,7 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
       \li Set to \c xdg-shell. This is the preferred wayland shell integration.
     \row
       \li \c AM_CONFIG
-      \li A YAML, UTF-8 encoded version of \a amConfig (see below).
+      \li A YAML, UTF-8 string encoded version of the \a amConfig map (see below).
     \row
       \li \c AM_NO_DLT_LOGGING
       \li Only set to \c 1, if DLT logging is to be switched off (otherwise not set at all).
@@ -229,10 +231,12 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     \endtable
 
     The \a amConfig map is a collection of settings that are communicated to the program from the
-    application manager. The same information is already encoded in the \c AM_CONFIG environment
-    variable within \a runtimeEnvironment, but it would be tedious to reparse that YAML fragment
-    in the container plugin.
-    These are the currently defined fields:
+    application manager. The same information is already string encoded in the \c AM_CONFIG
+    environment variable within \a runtimeEnvironment, but it would be tedious to reparse that YAML
+    fragment in the container plugin.
+
+    \target amConfigDetails
+    These are the currently defined fields in amConfig:
 
     \table
     \header

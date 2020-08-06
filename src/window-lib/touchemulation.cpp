@@ -84,3 +84,5 @@ bool TouchEmulation::isSupported()
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_touchemulation.cpp"

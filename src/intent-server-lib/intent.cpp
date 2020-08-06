@@ -253,3 +253,5 @@ QStringList Intent::categories() const
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_intent.cpp"

@@ -368,3 +368,5 @@ void IntentClientRequest::doFinish()
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_intentclientrequest.cpp"

@@ -1107,3 +1107,5 @@ QString Main::hardwareId() const
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_main.cpp"

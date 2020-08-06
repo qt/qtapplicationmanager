@@ -197,3 +197,5 @@
     a MIME-type request. In the latter case \a mimeType contains the MIME-type detected
     by the application manager.
 */
+
+#include "moc_applicationinterface.cpp"

@@ -245,3 +245,5 @@ UnixSignalHandler::SigHandler::SigHandler(int signal, bool qt, const std::functi
 
 
 QT_END_NAMESPACE_AM
+
+#include "moc_unixsignalhandler.cpp"

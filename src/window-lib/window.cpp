@@ -225,3 +225,5 @@ bool Window::isBeingDisplayed() const
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_window.cpp"

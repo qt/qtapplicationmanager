@@ -599,3 +599,5 @@ void SoftwareContainer::containerExited(uint exitCode)
     emit finished(WEXITSTATUS(exitCode), WIFEXITED(exitCode) ? NormalExit : CrashExit);
     deleteLater();
 }
+
+#include "moc_softwarecontainer.cpp"

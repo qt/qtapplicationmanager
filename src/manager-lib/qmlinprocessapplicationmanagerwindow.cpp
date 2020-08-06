@@ -367,3 +367,5 @@ void QmlInProcessApplicationManagerWindow::setOpacity(qreal value)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_qmlinprocessapplicationmanagerwindow.cpp"

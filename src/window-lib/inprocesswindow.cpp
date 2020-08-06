@@ -112,7 +112,7 @@ void InProcessWindow::close()
     m_surfaceItem->close();
 }
 
-bool QtAM::InProcessWindow::isPopup() const
+bool InProcessWindow::isPopup() const
 {
     return false;
 }
@@ -123,3 +123,5 @@ QPoint InProcessWindow::requestedPopupPosition() const
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_inprocesswindow.cpp"

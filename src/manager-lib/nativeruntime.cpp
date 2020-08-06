@@ -602,3 +602,7 @@ AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, Appl
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_nativeruntime.cpp"
+
+#include "moc_nativeruntime_p.cpp"

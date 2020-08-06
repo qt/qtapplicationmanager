@@ -169,3 +169,5 @@ bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager, const QStr
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_runtimefactory.cpp"

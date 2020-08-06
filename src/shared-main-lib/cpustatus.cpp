@@ -147,3 +147,5 @@ QStringList CpuStatus::roleNames() const
 {
     return { qSL("cpuLoad") };
 }
+
+#include "moc_cpustatus.cpp"

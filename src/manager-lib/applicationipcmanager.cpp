@@ -338,3 +338,5 @@ void ApplicationIPCManager::registerInterfaces(AbstractRuntime *runtime, const Q
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_applicationipcmanager.cpp"

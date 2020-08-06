@@ -75,3 +75,5 @@ void QmlLogger::warnings(const QList<QQmlError> &list)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_qmllogger.cpp"

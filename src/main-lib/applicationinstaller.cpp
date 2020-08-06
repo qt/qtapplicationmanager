@@ -343,3 +343,5 @@ QObject *ApplicationInstaller::instanceForQml(QQmlEngine *, QJSEngine *)
 */
 
 QT_END_NAMESPACE_AM
+
+#include "moc_applicationinstaller.cpp"

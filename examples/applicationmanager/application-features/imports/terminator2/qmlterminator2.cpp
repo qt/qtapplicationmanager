@@ -104,3 +104,5 @@ void TerminatorThread::run()
 {
     m_terminator->accessIllegalMemory();
 }
+
+#include "moc_qmlterminator2.cpp"

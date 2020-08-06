@@ -292,3 +292,5 @@ QJSEngine *ApplicationModel::getJSEngine() const
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_applicationmodel.cpp"

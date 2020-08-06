@@ -267,3 +267,5 @@ void DBusApplicationInterface::notificationActionTriggered(uint notificationId, 
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_dbusapplicationinterface.cpp"

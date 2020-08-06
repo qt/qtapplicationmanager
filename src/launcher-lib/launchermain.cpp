@@ -274,3 +274,5 @@ void LauncherMain::setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_launchermain.cpp"

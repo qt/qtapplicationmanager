@@ -256,3 +256,5 @@ void AbstractRuntimeManager::setIconTheme(const QStringList &themeSearchPaths, c
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_abstractruntime.cpp"

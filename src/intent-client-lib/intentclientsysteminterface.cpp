@@ -58,3 +58,5 @@ void IntentClientSystemInterface::initialize(IntentClient *intentClient)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_intentclientsysteminterface.cpp"

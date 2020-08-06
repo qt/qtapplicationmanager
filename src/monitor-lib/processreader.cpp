@@ -358,3 +358,5 @@ bool ProcessReader::readMemory(Memory &mem)
 }
 
 #endif
+
+#include "moc_processreader.cpp"

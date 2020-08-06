@@ -669,3 +669,5 @@ void NotificationManagerPrivate::closeNotification(uint id, CloseReason reason)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_notificationmanager.cpp"

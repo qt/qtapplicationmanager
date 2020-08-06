@@ -368,3 +368,5 @@ void IpcWrapperSignalRelay::onPropertiesChanged(const QString &interfaceName, co
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_ipcwrapperobject_p.cpp"

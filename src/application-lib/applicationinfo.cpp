@@ -208,7 +208,7 @@ QStringList ApplicationInfo::supportedMimeTypes() const
     return m_supportedMimeTypes;
 }
 
-QString QtAM::ApplicationInfo::documentUrl() const
+QString ApplicationInfo::documentUrl() const
 {
     return m_documentUrl;
 }

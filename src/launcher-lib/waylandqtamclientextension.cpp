@@ -149,3 +149,5 @@ void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surfa
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_waylandqtamclientextension_p.cpp"

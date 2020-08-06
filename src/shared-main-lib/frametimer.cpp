@@ -321,3 +321,5 @@ void FrameTimer::setInterval(int value)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_frametimer.cpp"

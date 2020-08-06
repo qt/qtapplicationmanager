@@ -187,3 +187,5 @@ void IoStatus::addIoReader(const QString &deviceName)
     IoReader *ior = new IoReader(deviceName.toLocal8Bit().constData());
     m_ioHash.insert(deviceName, ior);
 }
+
+#include "moc_iostatus.cpp"

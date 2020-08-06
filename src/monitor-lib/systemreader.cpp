@@ -854,3 +854,5 @@ void MemoryWatcher::checkMemoryConsumption()
 QT_END_NAMESPACE_AM
 
 #endif // !defined(Q_OS_LINUX)
+
+#include "moc_systemreader.cpp"

@@ -177,3 +177,5 @@ void AbstractContainerManager::setConfiguration(const QVariantMap &configuration
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_abstractcontainer.cpp"

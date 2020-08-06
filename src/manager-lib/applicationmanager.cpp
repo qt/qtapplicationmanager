@@ -1460,3 +1460,5 @@ void ApplicationManager::removeApplication(ApplicationInfo *appInfo, Package *pa
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_applicationmanager.cpp"

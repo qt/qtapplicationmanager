@@ -229,3 +229,5 @@ void WaylandWindow::close()
 QT_END_NAMESPACE_AM
 
 #endif // AM_MULTI_PROCESS
+
+#include "moc_waylandwindow.cpp"

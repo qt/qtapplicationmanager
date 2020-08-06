@@ -501,3 +501,5 @@ QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(Application) *app)
         debug << "(null)";
     return debug;
 }
+
+#include "moc_application.cpp"

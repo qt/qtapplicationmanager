@@ -1052,3 +1052,5 @@ bool WindowManager::eventFilter(QObject *watched, QEvent *event)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_windowmanager.cpp"

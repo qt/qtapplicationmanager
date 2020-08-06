@@ -71,3 +71,5 @@ IntentServerRequest *IntentServerSystemInterface::requestToSystem(const QString 
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_intentserversysteminterface.cpp"

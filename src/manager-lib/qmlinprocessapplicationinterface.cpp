@@ -315,3 +315,5 @@ void QmlInProcessApplicationInterfaceExtension::setName(const QString &name)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_qmlinprocessapplicationinterface.cpp"

@@ -155,3 +155,5 @@ void MemoryStatus::update()
         emit memoryUsedChanged();
     }
 }
+
+#include "moc_memorystatus.cpp"

@@ -171,3 +171,5 @@ void DBusApplicationInterfaceExtension::onInterfaceCreated(const QString &interf
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_dbusapplicationinterfaceextension.cpp"

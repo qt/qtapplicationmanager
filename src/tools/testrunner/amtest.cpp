@@ -157,3 +157,5 @@ int AmTest::findChildProcess(int ppid, const QString &substr)
 #endif  // Q_OS_LINIX
 
 QT_END_NAMESPACE_AM
+
+#include "moc_amtest.cpp"

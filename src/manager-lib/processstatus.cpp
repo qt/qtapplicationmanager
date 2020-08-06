@@ -390,3 +390,5 @@ QStringList ProcessStatus::roleNames() const
 {
     return { qSL("cpuLoad"), qSL("memoryVirtual"), qSL("memoryRss"), qSL("memoryPss") };
 }
+
+#include "moc_processstatus.cpp"

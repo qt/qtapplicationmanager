@@ -198,3 +198,5 @@ QVariantMap ApplicationManagerWindow::windowProperties() const
 
 
 QT_END_NAMESPACE_AM
+
+#include "moc_applicationmanagerwindow_p.cpp"

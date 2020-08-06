@@ -272,3 +272,5 @@ void QuickLauncher::shutDown()
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_quicklauncher.cpp"

@@ -494,3 +494,5 @@ quint64 StartupTimer::systemUpTime() const
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_startuptimer.cpp"

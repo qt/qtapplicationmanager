@@ -160,3 +160,5 @@ QStringList GpuStatus::roleNames() const
     return { qSL("gpuLoad") };
 }
 
+
+#include "moc_gpustatus.cpp"

@@ -388,3 +388,5 @@ AbstractRuntime *QmlInProcessRuntimeManager::create(AbstractContainer *container
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_qmlinprocessruntime.cpp"

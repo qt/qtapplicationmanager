@@ -153,3 +153,5 @@ int TestRunner::exec()
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_testrunner_p.cpp"

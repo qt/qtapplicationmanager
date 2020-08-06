@@ -119,3 +119,5 @@ void WindowFrameTimer::disconnectFromWaylandSurface()
 
 
 QT_END_NAMESPACE_AM
+
+#include "moc_windowframetimer.cpp"

@@ -1002,7 +1002,7 @@ bool Configuration::verbose() const
     return value<bool>("verbose") || m_forceVerbose;
 }
 
-void QtAM::Configuration::setForceVerbose(bool forceVerbose)
+void Configuration::setForceVerbose(bool forceVerbose)
 {
     m_forceVerbose = forceVerbose;
 }

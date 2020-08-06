@@ -753,3 +753,5 @@ bool ApplicationIPCInterfaceAttached::resolveProxy() const
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_applicationipcinterface.cpp"

@@ -260,3 +260,5 @@ void WaylandCompositor::onPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurfa
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_waylandcompositor.cpp"

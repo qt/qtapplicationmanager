@@ -1582,3 +1582,5 @@ bool removeRecursiveHelper(const QString &path)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_packagemanager.cpp"

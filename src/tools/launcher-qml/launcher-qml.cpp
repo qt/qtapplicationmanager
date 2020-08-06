@@ -652,3 +652,5 @@ void HeadlessIncubationController::timerEvent(QTimerEvent *)
 {
     incubateFor(25);
 }
+
+#include "moc_launcher-qml_p.cpp"

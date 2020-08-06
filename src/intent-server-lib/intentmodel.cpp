@@ -283,3 +283,5 @@ QJSEngine *IntentModel::getJSEngine() const
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_intentmodel.cpp"

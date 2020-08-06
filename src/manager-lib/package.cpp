@@ -388,3 +388,5 @@ void Package::removeApplication(Application *application)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_package.cpp"

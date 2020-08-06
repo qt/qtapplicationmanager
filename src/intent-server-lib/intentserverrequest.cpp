@@ -132,3 +132,5 @@ void IntentServerRequest::setHandlingApplicationId(const QString &applicationId)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_intentserverrequest.cpp"

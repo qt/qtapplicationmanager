@@ -577,3 +577,7 @@ void PackageExtractorPrivate::downloadProgressChanged(qint64 downloaded, qint64 
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_packageextractor.cpp"
+
+#include "moc_packageextractor_p.cpp"

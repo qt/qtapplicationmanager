@@ -331,3 +331,5 @@ AbstractContainer *ProcessContainerManager::create(Application *app, const QVect
 
 QT_END_NAMESPACE_AM
 
+
+#include "moc_processcontainer.cpp"

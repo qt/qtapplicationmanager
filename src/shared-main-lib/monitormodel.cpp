@@ -496,3 +496,5 @@ QVariantMap MonitorModel::get(int row) const
 
     return map;
 }
+
+#include "moc_monitormodel.cpp"

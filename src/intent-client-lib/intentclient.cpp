@@ -307,3 +307,5 @@ void IntentClient::errorReplyFromApplication(IntentClientRequest *icr, const QSt
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_intentclient.cpp"

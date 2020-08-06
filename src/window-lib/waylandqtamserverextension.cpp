@@ -107,3 +107,5 @@ void WaylandQtAMServerExtension::qtam_extension_set_window_property(QtWaylandSer
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_waylandqtamserverextension_p.cpp"

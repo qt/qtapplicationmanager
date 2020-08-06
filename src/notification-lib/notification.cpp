@@ -628,3 +628,5 @@ void Notification::libnotifyNotificationClosed(uint reason)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_notification.cpp"

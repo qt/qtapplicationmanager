@@ -468,3 +468,5 @@ void WindowItem::WaylandImpl::setupSecondaryView()
 #endif // AM_MULTI_PROCESS
 
 QT_END_NAMESPACE_AM
+
+#include "moc_windowitem.cpp"

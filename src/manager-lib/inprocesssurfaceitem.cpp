@@ -167,3 +167,5 @@ void InProcessSurfaceItem::close()
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_inprocesssurfaceitem.cpp"

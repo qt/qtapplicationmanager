@@ -424,3 +424,5 @@ void PackageCreatorPrivate::setError(Error errorCode, const QString &errorString
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_packagecreator.cpp"

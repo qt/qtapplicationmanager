@@ -187,3 +187,5 @@ void PluginContainerProcess::terminate()
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_plugincontainer.cpp"

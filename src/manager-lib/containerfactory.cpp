@@ -123,3 +123,5 @@ bool ContainerFactory::registerContainer(AbstractContainerManager *manager, cons
 
 
 QT_END_NAMESPACE_AM
+
+#include "moc_containerfactory.cpp"

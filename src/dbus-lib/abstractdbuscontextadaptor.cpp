@@ -61,3 +61,5 @@ QDBusContext *AbstractDBusContextAdaptor::dbusContextFor(QDBusAbstractAdaptor *a
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_abstractdbuscontextadaptor.cpp"

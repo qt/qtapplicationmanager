@@ -131,3 +131,5 @@ void AsynchronousTask::run()
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_asynchronoustask.cpp"

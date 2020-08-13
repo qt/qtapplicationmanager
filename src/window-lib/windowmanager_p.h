@@ -61,6 +61,7 @@ public:
     int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
 
     WaylandCompositor *waylandCompositor = nullptr;
+    QVector<int> extraWaylandSockets;
 
     static QString applicationId(Application *app, WindowSurface *windowSurface);
 #endif

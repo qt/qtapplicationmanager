@@ -156,6 +156,11 @@ struct ConfigurationData
         bool noUiWatchdog = false;
     } flags;
 
+    struct {
+        QString socketName;
+        QVariantList extraSockets;
+    } wayland;
+
     // command-line only:
     struct {
         QString waylandSocketName;

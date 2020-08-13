@@ -128,7 +128,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         return MainBase::exec();
 #endif
     } catch (const Exception &e) {
-        qCCritical(LogSystem) << "ERROR:" << e.errorString();
+        qCCritical(LogSystem).noquote() << "ERROR:" << e.errorString();
         return 2;
     }
 }

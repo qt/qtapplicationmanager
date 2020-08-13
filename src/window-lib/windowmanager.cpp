@@ -51,6 +51,7 @@
 #include <QThread>
 #include <QQmlComponent>
 #include <private/qabstractanimation_p.h>
+#include <QLocalServer>
 
 #if defined(AM_MULTI_PROCESS)
 #  include "waylandcompositor.h"
@@ -406,6 +407,30 @@ void WindowManager::enableWatchdog(bool enable)
 #endif
 }
 
+bool WindowManager::addWaylandSocket(QLocalServer *waylandSocket)
+{
+#if defined(AM_MULTI_PROCESS)
+    if (d->waylandCompositor) {
+        qCWarning(LogGraphics) << "Cannot add extra Wayland sockets after the compositor has been created"
+                                  " (tried to add:" << waylandSocket->fullServerName() << ").";
+        delete waylandSocket;
+        return false;
+    }
+
+    if (!waylandSocket || (waylandSocket->socketDescriptor() < 0)) {
+        delete waylandSocket;
+        return false;
+    }
+
+    waylandSocket->setParent(this);
+    d->extraWaylandSockets << waylandSocket->socketDescriptor();
+    return true;
+#else
+    Q_UNUSED(waylandSocket)
+    return true;
+#endif
+}
+
 int WindowManager::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
@@ -663,6 +688,9 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
     if (!ApplicationManager::instance()->isSingleProcess()) {
         if (!d->waylandCompositor) {
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName);
+            for (const auto &extraSocket : d->extraWaylandSockets)
+                d->waylandCompositor->addSocketDescriptor(extraSocket);
+
             connect(d->waylandCompositor, &QWaylandCompositor::surfaceCreated,
                     this, &WindowManager::waylandSurfaceCreated);
             connect(d->waylandCompositor, &WaylandCompositor::surfaceMapped,

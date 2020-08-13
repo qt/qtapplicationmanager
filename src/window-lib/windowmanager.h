@@ -56,6 +56,7 @@ QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
 QT_FORWARD_DECLARE_CLASS(QWindow)
 QT_FORWARD_DECLARE_CLASS(QQmlComponent)
+QT_FORWARD_DECLARE_CLASS(QLocalServer)
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -90,6 +91,8 @@ public:
     void setSlowAnimations(bool slowAnimations);
 
     void enableWatchdog(bool enable);
+
+    bool addWaylandSocket(QLocalServer *waylandSocket);
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;

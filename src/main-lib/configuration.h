@@ -129,6 +129,7 @@ public:
     int quickLaunchRuntimesPerContainer() const;
 
     QString waylandSocketName() const;
+    QVariantList waylandExtraSockets() const;
 
     QVariantMap managerCrashAction() const;
 

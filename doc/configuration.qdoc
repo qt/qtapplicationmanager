@@ -408,6 +408,7 @@ or across multiple config files, the final value is resolved based on these rule
                 is expensive, resource-wise.
     \row
         \li \b --wayland-socket-name
+            \br [\c wayland/socketName]
         \li string
         \li A filesystem name for the Wayland socket that should be used when creating the
             compositor component. (default: auto-detected by \c libwayland-server, most likely
@@ -415,7 +416,25 @@ or across multiple config files, the final value is resolved based on these rule
             \note You can only specify the name here, but not a path: Wayland will always create
                   this socket in \c{$XDG_RUNTIME_DIR}. The compositor will fail to start if this
                   directory is not writable or if the environment variable is not even set in the
-                  first place.
+                  first place. See \c wayland/extraSockets below for a way to circumvent this
+                  limitation.
+    \row
+        \li [\c wayland/extraSockets]
+        \li list<object>
+        \li A list of additional sockets that are added to the Wayland server. Each object in the
+            list consists of the following fields
+            \list
+                \li \c path: the absolute path of the socket.
+                \li \c permissions: the numeric permission of the socket - can be given in octal, e.g. \c 0640.
+                \li \c userId: the numeric uid of the socket.
+                \li \c groupId: the numeric gid of the socket.
+            \endlist
+            Only \c path is required, while the other fields are optional and fall back to
+            QLocalServer defaults.
+
+            If the application manager is runing under \c sudo or with setuid-root, it will use
+            its extended privileges to apply the optional \c permissions, \c userId and \c groupId
+            settings.
     \row
         \li \b --disable-installer
             \br [\c installer/disable]

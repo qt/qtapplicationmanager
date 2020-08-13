@@ -463,6 +463,7 @@ bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t
             return true;
 
         const QByteArray localPath = path.toLocal8Bit();
+        bool noModeChange = (permissions == static_cast<mode_t>(-1));
         mode_t mode = permissions;
 
         if (type == RecursiveOperationType::LeaveDirectory) {
@@ -475,7 +476,8 @@ bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t
                 mode |= 0100;
         }
 
-        return ((chmod(localPath, mode) == 0) && (chown(localPath, user, group) == 0));
+        return ((noModeChange ? true : (chmod(localPath, mode) == 0))
+                && (chown(localPath, user, group) == 0));
     };
 
     try {
@@ -483,6 +485,7 @@ bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t
             throw Exception(errno, "could not recursively set owner and permission on %1 to %2:%3 / %4")
                 .arg(fileOrDir).arg(user).arg(group).arg(permissions, 4, 8, QLatin1Char('0'));
         }
+        return true;
     } catch (const Exception &e) {
         m_errorString = e.errorString();
         return false;
@@ -492,8 +495,8 @@ bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t
     Q_UNUSED(user)
     Q_UNUSED(group)
     Q_UNUSED(permissions)
-#endif // Q_OS_LINUX
     return false;
+#endif // Q_OS_LINUX
 }
 
 QT_END_NAMESPACE_AM

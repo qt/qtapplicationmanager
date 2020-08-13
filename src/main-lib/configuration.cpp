@@ -399,7 +399,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 2;
+const quint32 ConfigurationData::DataStreamVersion = 3;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -456,7 +456,10 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->flags.noUiWatchdog
        >> cd->flags.developmentMode
        >> cd->flags.forceMultiProcess
-       >> cd->flags.forceSingleProcess;
+       >> cd->flags.forceSingleProcess
+       >> cd->wayland.socketName
+       >> cd->wayland.extraSockets;
+
     return cd;
 }
 
@@ -513,7 +516,9 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << flags.noUiWatchdog
        << flags.developmentMode
        << flags.forceMultiProcess
-       << flags.forceSingleProcess;
+       << flags.forceSingleProcess
+       << wayland.socketName
+       << wayland.extraSockets;
 }
 
 template <typename T> void mergeField(T &into, const T &from, const T &def)
@@ -604,6 +609,8 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(flags.developmentMode);
     MERGE_FIELD(flags.forceMultiProcess);
     MERGE_FIELD(flags.forceSingleProcess);
+    MERGE_FIELD(wayland.socketName);
+    MERGE_FIELD(wayland.extraSockets);
 }
 
 QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
@@ -812,6 +819,26 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                             cd->flags.developmentMode = p->parseScalar().toBool(); } },
                       { "noUiWatchdog", false, YamlParser::Scalar, [&cd](YamlParser *p) {
                             cd->flags.noUiWatchdog = p->parseScalar().toBool(); } },
+                  }); } },
+            { "wayland", false, YamlParser::Map, [&cd](YamlParser *p) {
+                  p->parseFields({
+                      { "socketName", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->wayland.socketName = p->parseScalar().toString(); } },
+                      { "extraSockets", false, YamlParser::List, [&cd](YamlParser *p) {
+                            p->parseList([&cd](YamlParser *p) {
+                                QVariantMap wes;
+                                p->parseFields({
+                                    { "path", true, YamlParser::Scalar, [&wes](YamlParser *p) {
+                                          wes.insert(qSL("path"), p->parseScalar().toString()); } },
+                                    { "permissions", false, YamlParser::Scalar, [&wes](YamlParser *p) {
+                                          wes.insert(qSL("permissions"), p->parseScalar().toInt()); } },
+                                    { "userId", false, YamlParser::Scalar, [&wes](YamlParser *p) {
+                                          wes.insert(qSL("userId"), p->parseScalar().toInt()); } },
+                                    { "groupId", false, YamlParser::Scalar, [&wes](YamlParser *p) {
+                                          wes.insert(qSL("groupId"), p->parseScalar().toInt()); } }
+                                });
+                                cd->wayland.extraSockets.append(wes);
+                            }); } }
                   }); } },
             { "systemProperties", false, YamlParser::Map, [&cd](YamlParser *p) {
                   cd->systemProperties = p->parseMap(); } },
@@ -1202,6 +1229,9 @@ QString Configuration::waylandSocketName() const
             return socketName;
     }
 
+    if (!m_data->wayland.socketName.isEmpty())
+        return m_data->wayland.socketName;
+
 #  if defined(Q_OS_LINUX)
     // modelled after wl_socket_lock() in wayland_server.c
     const QString xdgDir = qEnvironmentVariable("XDG_RUNTIME_DIR") + qSL("/");
@@ -1223,6 +1253,11 @@ QString Configuration::waylandSocketName() const
 #endif
     return QString();
 
+}
+
+QVariantList Configuration::waylandExtraSockets() const
+{
+    return m_data->wayland.extraSockets;
 }
 
 QVariantMap Configuration::managerCrashAction() const

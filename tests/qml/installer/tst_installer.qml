@@ -129,6 +129,8 @@ TestCase {
         compare(stateList[1], PackageObject.Installed)
         stateList = []
 
+        compare(PackageManager.package(pkgId).version, "1.0");
+
         id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
                                                      + "/packages/test-update-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
@@ -144,6 +146,8 @@ TestCase {
         compare(stateList[0], PackageObject.BeingUpdated)
         compare(stateList[1], PackageObject.Installed)
         stateList = []
+
+        compare(PackageManager.package(pkgId).version, "2.0");
 
         id = PackageManager.removePackage(pkgId, false, false);
 

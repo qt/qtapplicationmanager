@@ -100,7 +100,11 @@ UnixSignalHandler *UnixSignalHandler::instance()
 const char *UnixSignalHandler::signalName(int sig)
 {
 #if defined(Q_OS_UNIX)
+#if  __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 32
+    return sigdescr_np(sig);
+#else
     return sys_siglist[sig];
+#endif
 #else
     Q_UNUSED(sig)
     return "<unknown>";

@@ -11,12 +11,12 @@ quicklaunch:
 
 runtimes:
   qml:
-    resources: "${CONFIG_PWD}/appcommon/appcommonfile.rcc"
-    importPaths: "qrc:/appcommon/qml"
+    resources: "appcommon/appcommonfile.rcc"
+    importPaths: [ "qrc:/appcommon/qml", "relative" ]
     quicklaunchQml: "qrc:/appcommon/Quicklaunch.qml"
 
 ui:
   importPaths: "qrc:///qml"
   resources:
-    - "${CONFIG_PWD}/systemuifile.rcc"
+    - "systemuifile.rcc"
     - "${CONFIG_PWD}/systemuiplugin"   # libsystemuiplugin.so would only work on Linux

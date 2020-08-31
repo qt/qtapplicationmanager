@@ -103,6 +103,10 @@ private:
 
     bool m_stopIfNoVisibleSurfaces = false;
 
+    void loadResources(const QStringList &resources, const QString &baseDir);
+    void addPluginPaths(const QStringList &pluginPaths, const QString &baseDir);
+    void addImportPaths(const QStringList &importPaths, const QString &baseDir);
+
 #if !defined(AM_HEADLESS)
     // used by QmlInProcessApplicationManagerWindow to register surfaceItems
     void addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface);

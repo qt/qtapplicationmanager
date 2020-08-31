@@ -240,8 +240,9 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
 
     const QStringList resources = variantToStringList(m_configuration.value(qSL("resources")));
     for (const QString &resource: resources) {
-        if (!loadResource(resource))
-            qCWarning(LogSystem) << "Cannot register resource:" << resource;
+        const QString path = QFileInfo(resource).isRelative() ? launcher->baseDir() + resource : resource;
+        if (!loadResource(path))
+            qCWarning(LogSystem) << "Cannot register resource:" << path;
     }
 
     QString absolutePluginPath;

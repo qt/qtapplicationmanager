@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2019 Luxoft Sweden AB
+** Copyright (C) 2020 Luxoft Sweden AB
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Qt Application Manager.
@@ -39,12 +39,8 @@
 **
 ****************************************************************************/
 
-import QtApplicationManager.Application 2.0
-import forms 1.0
-import elements 1.0
+import QtQuick 2.11
 
-ApplicationManagerWindow {
-    YellowRect {}
-    AquaRect {}
-    LinenRect {}
+Rectangle {
+    color: "linen"
 }

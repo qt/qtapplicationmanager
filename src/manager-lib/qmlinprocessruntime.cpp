@@ -105,42 +105,30 @@ bool QmlInProcessRuntime::start()
         return false;
     }
 
+    const QString currentDir = QDir::currentPath() + QDir::separator();
     const QString codeDir = m_app->codeDir() + QDir::separator();
 
-    const QStringList resources = variantToStringList(configuration().value(qSL("resources")))
-                                  + variantToStringList(m_app->runtimeParameters().value(qSL("resources")));
-    for (const QString &resource : resources) {
-        const QString path = QFileInfo(resource).isRelative() ? codeDir + resource : resource;
-        static QStringList cache;
-        if (!cache.contains(path)) {
-            if (!loadResource(path))
-                qCWarning(LogQmlRuntime) << "Cannot register resource:" << path;
-            cache.append(path);
-        }
-    }
+    loadResources(variantToStringList(configuration().value(qSL("resources"))), currentDir);
+    loadResources(variantToStringList(m_app->runtimeParameters().value(qSL("resources"))), codeDir);
 
     if (m_app->runtimeParameters().value(qSL("loadDummyData")).toBool()) {
         qCDebug(LogSystem) << "Loading dummy-data";
         loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->info()->absoluteCodeFilePath()).path());
     }
 
-    const QStringList pluginPaths = variantToStringList(configuration().value(qSL("pluginPaths")))
-                                  + variantToStringList(m_app->runtimeParameters().value(qSL("pluginPaths")));
-
-    if (!pluginPaths.isEmpty()) {
-        const QString codeDir = m_app->codeDir() + QDir::separator();
-        for (const QString &path : pluginPaths)
-            qApp->addLibraryPath(QFileInfo(path).isRelative() ? codeDir + path : path);
-
+    const QStringList configPluginPaths = variantToStringList(configuration().value(qSL("pluginPaths")));
+    const QStringList runtimePluginPaths = variantToStringList(m_app->runtimeParameters().value(qSL("pluginPaths")));
+    if (!configPluginPaths.isEmpty() || !runtimePluginPaths.isEmpty()) {
+        addPluginPaths(configPluginPaths, currentDir);
+        addPluginPaths(runtimePluginPaths, codeDir);
         qCDebug(LogSystem) << "Updated plugin paths:" << qApp->libraryPaths();
     }
 
-    const QStringList importPaths = variantToStringList(configuration().value(qSL("importPaths")))
-                                  + variantToStringList(m_app->runtimeParameters().value(qSL("importPaths")));
-    if (!importPaths.isEmpty()) {
-        for (const QString &path : importPaths)
-            m_inProcessQmlEngine->addImportPath(toAbsoluteFilePath(path, codeDir));
-
+    const QStringList configImportPaths = variantToStringList(configuration().value(qSL("importPaths")));
+    const QStringList runtimeImportPaths = variantToStringList(m_app->runtimeParameters().value(qSL("importPaths")));
+    if (!configImportPaths.isEmpty() || !runtimeImportPaths.isEmpty()) {
+        addImportPaths(configImportPaths, currentDir);
+        addImportPaths(runtimeImportPaths, codeDir);
         qCDebug(LogSystem) << "Updated Qml import paths:" << m_inProcessQmlEngine->importPathList();
     }
 
@@ -291,6 +279,31 @@ void QmlInProcessRuntime::onSurfaceItemReleased(InProcessSurfaceItem *surface)
         if (state() == Am::NotRunning)
             deleteLater();
     }
+}
+
+void QmlInProcessRuntime::loadResources(const QStringList &resources, const QString &baseDir)
+{
+    for (const QString &resource : resources) {
+        const QString path = QFileInfo(resource).isRelative() ? baseDir + resource : resource;
+        static QStringList cache;
+        if (!cache.contains(path)) {
+            if (!loadResource(path))
+                qCWarning(LogQmlRuntime) << "Cannot register resource:" << path;
+            cache.append(path);
+        }
+    }
+}
+
+void QmlInProcessRuntime::addPluginPaths(const QStringList &pluginPaths, const QString &baseDir)
+{
+    for (const QString &path : pluginPaths)
+        QCoreApplication::addLibraryPath(QFileInfo(path).isRelative() ? baseDir + path : path);
+}
+
+void QmlInProcessRuntime::addImportPaths(const QStringList &importPaths, const QString &baseDir)
+{
+    for (const QString &path : importPaths)
+        m_inProcessQmlEngine->addImportPath(toAbsoluteFilePath(path, baseDir));
 }
 
 void QmlInProcessRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface)

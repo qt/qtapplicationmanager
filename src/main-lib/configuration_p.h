@@ -160,18 +160,6 @@ struct ConfigurationData
         QString socketName;
         QVariantList extraSockets;
     } wayland;
-
-    // command-line only:
-    struct {
-        QString waylandSocketName;
-        bool noFullscreen = false;
-        bool verbose = false;
-        bool slowAnimations = false;
-        bool noDltLogging = false;
-        bool singlePackage = false;
-        bool qmlDebug = false;
-        bool touchEmulation = false;
-    } commandLine;
 };
 
 QT_END_NAMESPACE_AM

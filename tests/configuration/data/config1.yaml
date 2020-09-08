@@ -1,0 +1,98 @@
+formatVersion: 1
+formatType: am-configuration
+---
+runtimes:
+  r-test:
+    r-parameter: r-value
+
+containers:
+  selection: selectionFunction
+  c-test:
+    c-parameter: c-value
+
+intents:
+  disable: true
+  timeouts:
+    disambiguation: 1
+    startApplication: 2
+    replyFromApplication: 3
+    replyFromSystem: 4
+
+plugins:
+  startup: [ s1, s2 ]
+  container: [ c1, c2 ]
+
+logging:
+  dlt:
+    id: 'dltid'
+    description: 'dltdesc'
+  rules: [ lr1, lr2 ]
+  messagePattern: 'msgPattern'
+  useAMConsoleLogger: true
+
+installer:
+  disable: true
+  caCertificates: [ cert1, cert2 ]
+
+dbus:
+  iface1:
+    register: 'foobus'
+
+quicklaunch:
+  idleLoad: 0.5
+  runtimesPerContainer: 5
+
+ui:
+  opengl:
+    desktopProfile: 'compatibility'
+    esMajorVersion: 5
+    esMinorVersion: 15
+  enableTouchEmulation: true
+  iconThemeSearchPaths: [ itsp1, itsp2 ]
+  iconThemeName: mytheme
+  style: mystyle
+  loadDummyData: true
+  importPaths: [ ip1, ip2 ]
+  pluginPaths: [ pp1, pp2 ]
+  windowIcon: 'icon.png'
+  fullscreen: true
+  mainQml: main.qml
+  resources: [ r1, r2 ]
+
+applications:
+  builtinAppsManifestDir: 'builtin-dir'
+  installationDir: 'installation-dir'
+  documentDir: 'doc-dir'
+
+crashAction:
+  printBacktrace: true
+  printQmlStack: true
+  waitForGdbAttach: true
+  dumpCore: true
+
+systemProperties:
+  public:
+    public-prop: public-value
+  protected:
+    protected-prop: protected-value
+  private:
+    private-prop: private-value
+
+flags:
+  forceSingleProcess: true
+  forceMultiProcess: true
+  noSecurity: true
+  developmentMode: true
+  noUiWatchdog: true
+
+wayland:
+  socketName: "my-wlsock-42"
+  extraSockets:
+    - path: path-es1
+      permissions: 0440
+      userId: 1
+      groupId: 2
+    - path: path-es2
+      permissions: 0222
+      userId: 3
+      groupId: 4

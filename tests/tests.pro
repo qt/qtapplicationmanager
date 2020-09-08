@@ -20,6 +20,7 @@ SUBDIRS = \
     debugwrapper \
     qml \
     yaml \
+    configuration \
 
 linux*:SUBDIRS += \
     sudo \

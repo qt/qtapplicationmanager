@@ -100,7 +100,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
 
         Configuration cfg(additionalDescription, onlyOnePositionalArgument);
-        cfg.parse();
+        cfg.parseWithArguments(QCoreApplication::arguments());
 
         StartupTimer::instance()->checkpoint("after command line parse");
 #if defined(AM_TESTRUNNER)

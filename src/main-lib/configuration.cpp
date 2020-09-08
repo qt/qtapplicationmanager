@@ -178,7 +178,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
 
     m_clp.addPositionalArgument(qSL("qml-file"),   qSL("The main QML file."));
     m_clp.addOption({ qSL("log-instant"),          qSL("Log instantly at start-up, neglect logging configuration.") });
-    m_clp.addOption({ qSL("database"),             qSL("Deprecated (ingored)."), qSL("file") });
+    m_clp.addOption({ qSL("database"),             qSL("Deprecated (ignored)."), qSL("file") });
     m_clp.addOption({ qSL("builtin-apps-manifest-dir"), qSL("Base directory for built-in application manifests."), qSL("dir") });
     m_clp.addOption({ qSL("installation-dir"),     qSL("Base directory for package installations."), qSL("dir") });
     m_clp.addOption({ qSL("document-dir"),         qSL("Base directory for per-package document directories."), qSL("dir") });
@@ -275,7 +275,7 @@ void Configuration::showParserMessage(const QString &message, MessageType type)
 void Configuration::parse(QStringList *deploymentWarnings)
 {
     Q_UNUSED(deploymentWarnings)
-    parse();
+    parseWithArguments(QCoreApplication::arguments());
 }
 
 void Configuration::parse()
@@ -530,6 +530,11 @@ template <typename T> void mergeField(T &into, const T &from, const T &def)
 void mergeField(QVariantMap &into, const QVariantMap &from, const QVariantMap & /*def*/)
 {
     recursiveMergeVariantMap(into, from);
+}
+
+void mergeField(QStringList &into, const QStringList &from, const QStringList & /*def*/)
+{
+    into.append(from);
 }
 
 template <typename T> void mergeField(QList<T> &into, const QList<T> &from, const QList<T> & /*def*/)

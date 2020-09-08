@@ -1,0 +1,88 @@
+formatVersion: 1
+formatType: am-configuration
+---
+runtimes:
+  r-test:
+    r-parameter: xr-value
+  r-test2:
+    r-parameter2: r-value2
+
+containers:
+  selection:
+    - '2': second
+
+  c-test:
+    c-parameter: xc-value
+  c-test2:
+      c-parameter2: c-value2
+
+intents:
+  timeouts:
+    disambiguation: 5
+    startApplication: 6
+    replyFromApplication: 7
+    replyFromSystem: 8
+
+plugins:
+  startup: s3
+  container: [ c3, c4 ]
+
+logging:
+  dlt:
+    id: 'dltid2'
+    description: 'dltdesc2'
+  rules: lr3
+  messagePattern: 'msgPattern2'
+  useAMConsoleLogger: 'auto'
+
+installer:
+  disable: true
+  caCertificates: [ cert3 ]
+
+dbus:
+  iface1:
+    register: 'foobus1'
+  iface2:
+    register: 'foobus2'
+
+quicklaunch:
+  idleLoad: 0.2
+  runtimesPerContainer: 3
+
+ui:
+  opengl:
+    desktopProfile: 'classic'
+    esMajorVersion: 1
+    esMinorVersion: 0
+  enableTouchEmulation: true
+  iconThemeSearchPaths: [ itsp3 ]
+  iconThemeName: mytheme2
+  style: mystyle2
+  loadDummyData: true
+  importPaths: ip3
+  pluginPaths: pp3
+  windowIcon: 'icon2.png'
+  fullscreen: true
+  mainQml: main2.qml
+  resources: r3
+
+applications:
+  builtinAppsManifestDir: 'builtin-dir2'
+  installationDir: 'installation-dir2'
+  documentDir: 'doc-dir2'
+
+systemProperties:
+  public:
+    public-prop: xpublic-value
+    public-prop2: public-value2
+  protected:
+    protected-prop: xprotected-value
+    protected-prop2: protected-value2
+  private:
+    private-prop: xprivate-value
+    private-prop2: private-value2
+
+wayland:
+  socketName: "other-wlsock-0"
+  extraSockets:
+    - path: path-es3

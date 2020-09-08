@@ -74,7 +74,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         Main a(argc, argv);
 
         Configuration cfg;
-        cfg.parse();
+        cfg.parseWithArguments(QCoreApplication::arguments());
 
         a.setup(&cfg);
         a.loadQml(cfg.loadDummyData());

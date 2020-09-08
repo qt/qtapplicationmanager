@@ -143,7 +143,7 @@ void tst_Main::initMain()
     auto pathList = QStringList(amConfigPath);
 
     config = new DefaultConfiguration(pathList, QString());
-    config->parse();
+    config->parseWithArguments(QCoreApplication::arguments());
     if (m_verbose)
         config->setForceVerbose(true);
 

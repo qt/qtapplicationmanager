@@ -130,7 +130,7 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
 
     // Register the test object and application manager test add-on
     qmlRegisterSingletonType<QTestRootObject>("Qt.test.qtestroot", 1, 0, "QTestRootObject", testRootObject);
-    qmlRegisterSingletonType<AmTest>("QtApplicationManager", 2, 0, "AmTest", amTest);
+    qmlRegisterSingletonType<AmTest>("QtApplicationManager.SystemUI", 2, 0, "AmTest", amTest);
 
     QTestRootObject::instance()->init();
 }

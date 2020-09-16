@@ -424,7 +424,7 @@ int main(int argc, char *argv[])
         case RemovePackage:
             clp.addOption({ { qSL("f"), qSL("force") }, qSL("Force removal of package.") });
             clp.addOption({ { qSL("k"), qSL("keep-documents") }, qSL("Keep the document folder of the application.") });
-            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
+            clp.addPositionalArgument(qSL("package-id"), qSL("The id of an installed package."));
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)

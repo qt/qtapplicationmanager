@@ -32,17 +32,16 @@ _appman()
     local cur opts
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    opts="--app-image-mount-dir --build-config --builtin-apps-manifest-dir -c --clear-cache --config-file \
---database --dbus --disable-installer --force-multi-process --force-single-process --fullscreen --help -I \
---installed-apps-manifest-dir --load-dummydata --log-instant --logging-rule --no-cache --no-dlt-logging \
---no-fullscreen --no-security --no-ui-watchdog -o --option --qml-debug --single-app \
---slow-animations --verbose --version --wayland-socket-name"
+    opts="-c -h -o -v -I --build-config --builtin-apps-manifest-dir --clear-cache --clear-config-cache --config-file \
+--development-mode --dbus --disable-installer --disable-intents --document-dir --enable-touch-emulation \
+--force-multi-process --force-single-process --fullscreen --help --load-dummydata --log-instant --logging-rule \
+--no-cache --no-config-cache --no-dlt-logging --no-fullscreen --no-security --no-ui-watchdog --option --qml-debug \
+--single-app --slow-animations --verbose --version --wayland-socket-name"
     dbusopts="session system none"
 
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
     else
-        COMPREPLY=( $(compgen -W "${dbusopts}" -- ${cur}) )
         if [ ${COMP_CWORD} -gt 1 ] && [[ ${COMP_WORDS[COMP_CWORD-1]} == "--dbus" ]] ; then
             COMPREPLY=( $(compgen -W "${dbusopts}" -- ${cur}) )
         else
@@ -58,9 +57,9 @@ _appman-controller()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     commands="start-application debug-application stop-application stop-all-applications list-applications \
-show-application install-package remove-package list-installation-tasks cancel-installation-task \
-list-installation-locations show-installation-location"
-    opts="-h -v --help --version"
+show-application list-packages show-package install-package remove-package list-installation-tasks \
+cancel-installation-task list-installation-locations show-installation-location"
+    opts="-h -v --help --help-all --version"
 
     if [ ${COMP_CWORD} -eq 1 ] && [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
@@ -75,7 +74,7 @@ list-installation-locations show-installation-location"
             COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
         elif [ ${pos} -eq 2 ]; then
             case "${args[0]}" in
-            start-application|debug-application|stop-application|show-application|remove-package)
+            start-application|debug-application|stop-application|show-application)
                 eval cmd="${COMP_WORDS[0]}"
                 apps="$(${cmd} list-applications 2> /dev/null)"
                 COMPREPLY=( $(compgen -W "${apps}" -- ${cur}) )
@@ -93,6 +92,11 @@ list-installation-locations show-installation-location"
                 apps="$(${cmd} list-applications 2> /dev/null)"
                 COMPREPLY=( $(compgen -W "${apps}" -- ${cur}) )
                 ;;
+            show-package|remove-package)
+                eval cmd="${COMP_WORDS[0]}"
+                packages="$(${cmd} list-packages 2> /dev/null)"
+                COMPREPLY=( $(compgen -W "${packages}" -- ${cur}) )
+                ;;
             esac
         fi
     fi
@@ -104,8 +108,8 @@ _appman-packager()
     local cur commands opts pos args
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    commands="create-package dev-sign-package dev-verify-package store-sign-package store-verify-package"
-    opts="-h -v --help --version"
+    commands="create-package dev-sign-package dev-verify-package store-sign-package store-verify-package yaml-to-json"
+    opts="-h -v --help --help-all --version"
 
     if [ ${COMP_CWORD} -eq 1 ] && [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
@@ -127,7 +131,7 @@ _appman-packager()
             dev-sign-package|store-sign-package)
                 [ ${pos} -lt 5 ] && file=1
                 ;;
-            dev-verify-package|store-verify-package)
+            dev-verify-package|store-verify-package|yaml-to-json)
                 file=1
                 ;;
             esac

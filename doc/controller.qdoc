@@ -80,6 +80,15 @@ The following commands are available:
     \li Shows the current metadata for the given application in YAML format. Alternatively, use
         \c{--json} to get the metadata in JSON format instead.
 \row
+    \li \span {style="white-space: nowrap"} {\c list-packages}
+    \li (none)
+    \li Outputs all available package IDs on the console, one per line.
+\row
+    \li \span {style="white-space: nowrap"} {\c show-package}
+    \li \c{<package-id>}
+    \li Shows the current metadata for the given package in YAML format. Alternatively, use
+        \c{--json} to get the metadata in JSON format instead.
+\row
     \li \span {style="white-space: nowrap"} {\c install-package}
     \li \c{<package>}
     \li Installs the package given on the command-line. If the package file is specified as \c{-},
@@ -89,13 +98,13 @@ The following commands are available:
         the System UI's logic.
 \row
     \li \span {style="white-space: nowrap"} {\c remove-package}
-    \li \c{<application-id>}
-    \li Removes the package that previously installed the application, specified with
-        \c application-id. The following options are supported:
+    \li \c{<package-id>}
+    \li Removes the package, specified with \c package-id. The following options are
+        supported:
 
         \c{-f, --force}: Force removal of package.
 
-        \c{-k, --keep-documents}: Keep the document folder of the application.
+        \c{-k, --keep-documents}: Keep the document folder of the package.
 \row
     \li \span {style="white-space: nowrap"} {\c list-installation-locations}
     \li (none)

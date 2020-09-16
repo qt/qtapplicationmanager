@@ -88,7 +88,7 @@ private:
     void qtam_extension_window_property_changed(wl_surface *surface, const QString &name, wl_array *value) override;
 
     QMap<QWindow *, QVariantMap> m_windowProperties;
-    QMap<::wl_surface *, QWindow *> m_windows;
+    QMap<QWindow *, ::wl_surface *> m_windowToSurface;
 };
 
 QT_END_NAMESPACE_AM

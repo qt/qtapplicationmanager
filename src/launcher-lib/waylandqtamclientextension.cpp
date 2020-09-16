@@ -44,7 +44,7 @@
 
 #include <QWindow>
 #include <QGuiApplication>
-#include <QPlatformSurfaceEvent>
+#include <QEvent>
 #include <qpa/qplatformnativeinterface.h>
 
 #include <QtAppManCommon/logging.h>
@@ -64,29 +64,31 @@ WaylandQtAMClientExtension::~WaylandQtAMClientExtension()
 
 bool WaylandQtAMClientExtension::eventFilter(QObject *o, QEvent *e)
 {
-    if (e->type() == QEvent::PlatformSurface) {
-        QWindow *window = qobject_cast<QWindow *>(o);
-        if (!window)
-            return false;
+    if (e->type() == QEvent::Expose) {
         if (!isActive()) {
-            qCWarning(LogGraphics) << "Tried to (un)register a Wayland qtam_extended_surface, but the extension itself is not active";
+            qCWarning(LogGraphics) << "WaylandQtAMClientExtension is not active";
             return false;
         }
 
-        switch (static_cast<QPlatformSurfaceEvent *>(e)->surfaceEventType()) {
-        case QPlatformSurfaceEvent::SurfaceCreated: {
-            auto surface = static_cast<struct ::wl_surface *>(QGuiApplication::platformNativeInterface()->nativeResourceForWindow("surface", window));
-            m_windows.insert(surface, window);
-            const QVariantMap wp = windowProperties(window);
-            for (auto it = wp.cbegin(); it != wp.cend(); ++it)
-                sendPropertyToServer(surface, it.key(), it.value());
-            break;
-        }
-        case QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed:
-            // NOOP
-            break;
-        }
+        if (static_cast<QExposeEvent *>(e)->region().isNull())
+            return false;
+
+        QWindow *window = qobject_cast<QWindow *>(o);
+        Q_ASSERT(window);
+
+        if (m_windowToSurface.contains(window))
+            return false;
+
+        auto surface = static_cast<struct ::wl_surface *>
+                       (QGuiApplication::platformNativeInterface()->nativeResourceForWindow("surface", window));
+        m_windowToSurface.insert(window, surface);
+        const QVariantMap wp = windowProperties(window);
+        for (auto it = wp.cbegin(); it != wp.cend(); ++it)
+            sendPropertyToServer(surface, it.key(), it.value());
+    } else if (e->type() == QEvent::Hide) {
+        m_windowToSurface.remove(qobject_cast<QWindow *>(o));
     }
+
     return false;
 }
 
@@ -95,7 +97,8 @@ QVariantMap WaylandQtAMClientExtension::windowProperties(QWindow *window) const
     return m_windowProperties.value(window);
 }
 
-void WaylandQtAMClientExtension::sendPropertyToServer(struct ::wl_surface *surface, const QString &name, const QVariant &value)
+void WaylandQtAMClientExtension::sendPropertyToServer(struct ::wl_surface *surface, const QString &name,
+                                                      const QVariant &value)
 {
     QByteArray byteValue;
     QDataStream ds(&byteValue, QIODevice::WriteOnly);
@@ -106,8 +109,9 @@ void WaylandQtAMClientExtension::sendPropertyToServer(struct ::wl_surface *surfa
 
 void WaylandQtAMClientExtension::setWindowProperty(QWindow *window, const QString &name, const QVariant &value)
 {
-    if (setWindowPropertyHelper(window, name, value)) {
-        auto surface = static_cast<struct ::wl_surface *>(QGuiApplication::platformNativeInterface()->nativeResourceForWindow("surface", window));
+    if (setWindowPropertyHelper(window, name, value) && m_windowToSurface.contains(window)) {
+        auto surface = static_cast<struct ::wl_surface *>
+                       (QGuiApplication::platformNativeInterface()->nativeResourceForWindow("surface", window));
         if (surface)
             sendPropertyToServer(surface, name, value);
     }
@@ -133,14 +137,15 @@ void WaylandQtAMClientExtension::clearWindowPropertyCache(QWindow *window)
     m_windowProperties.remove(window);
 }
 
-void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surface *surface, const QString &name, wl_array *value)
+void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surface *surface, const QString &name,
+                                                                        wl_array *value)
 {
     const QByteArray data = QByteArray::fromRawData(static_cast<char *>(value->data), int(value->size));
     QDataStream ds(data);
     QVariant variantValue;
     ds >> variantValue;
 
-    QWindow *window = m_windows.value(surface);
+    QWindow *window = m_windowToSurface.key(surface);
     qCDebug(LogWaylandDebug) << "CLIENT <<prop<<" << window << name << variantValue;
     if (!window)
         return;

@@ -45,6 +45,7 @@
 #include <QWindow>
 #include <QGuiApplication>
 #include <QEvent>
+#include <QExposeEvent>
 #include <qpa/qplatformnativeinterface.h>
 
 #include <QtAppManCommon/logging.h>

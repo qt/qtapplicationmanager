@@ -97,6 +97,14 @@ qtHaveModule(qml):SOURCES += \
     qmlinprocessruntime.cpp \
     qmlinprocessapplicationinterface.cpp \
 
+qtHaveModule(waylandcompositor)|!disable-installer {
+    HEADERS += \
+        sudo.h \
+
+    SOURCES += \
+        sudo.cpp \
+}
+
 # we have an external plugin interface with signals, so we need to
 # compile the moc-data into the exporting binary (appman itself)
 HEADERS += ../plugin-interfaces/containerinterface.h
@@ -112,13 +120,11 @@ HEADERS += ../plugin-interfaces/containerinterface.h
         deinstallationtask.h \
         installationtask.h \
         scopeutilities.h \
-        sudo.h \
 
     SOURCES += \
         installationtask.cpp \
         deinstallationtask.cpp \
         scopeutilities.cpp \
-        sudo.cpp \
 }
 
 load(qt_module)

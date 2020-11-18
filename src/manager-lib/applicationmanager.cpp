@@ -43,6 +43,7 @@
 
 #include <QCoreApplication>
 #include <QUrl>
+#include <QRegularExpression>
 #include <QFileInfo>
 #include <QProcess>
 #include <QDir>
@@ -691,7 +692,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
 
                 if ((hasAsterisk && key.length() == 1)
                         || (!hasAsterisk && key == app->id())
-                        || QRegExp(key, Qt::CaseSensitive, QRegExp::Wildcard).exactMatch(app->id())) {
+                        || QRegularExpression(QRegularExpression::wildcardToRegularExpression(key)).match(app->id()).hasMatch()) {
                     containerId = value;
                     break;
                 }

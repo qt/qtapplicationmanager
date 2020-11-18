@@ -102,7 +102,7 @@ void WaylandQtAMClientExtension::sendPropertyToServer(struct ::wl_surface *surfa
                                                       const QVariant &value)
 {
     QByteArray byteValue;
-    QDataStream ds(&byteValue, QIODevice::WriteOnly);
+    QDataStream ds(&byteValue, QDataStream::WriteOnly);
     ds << value;
     qCDebug(LogWaylandDebug) << "CLIENT >>prop>>" << surface << name << value;
     set_window_property(surface, name, byteValue);

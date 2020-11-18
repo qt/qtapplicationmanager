@@ -226,7 +226,7 @@ void WindowItem::createImpl(bool inProcess)
 #endif // AM_MULTI_PROCESS
 }
 
-void WindowItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
+void WindowItem::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     m_contentItem->setWidth(newGeometry.width());
     m_contentItem->setHeight(newGeometry.height());
@@ -234,7 +234,7 @@ void WindowItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeo
     if (m_impl && newGeometry.isValid())
         m_impl->updateSize(newGeometry.size());
 
-    QQuickItem::geometryChanged(newGeometry, oldGeometry);
+    QQuickItem::geometryChange(newGeometry, oldGeometry);
 }
 
 bool WindowItem::primary() const
@@ -417,8 +417,6 @@ void WindowItem::WaylandImpl::setup(Window *window)
 void WindowItem::WaylandImpl::createWaylandItem()
 {
     m_waylandItem = new QWaylandQuickItem(q);
-
-    m_waylandItem->setSizeFollowsSurface(false);
 
     connect(m_waylandItem, &QWaylandQuickItem::surfaceDestroyed, q, [this]() {
         // keep the buffer there to allow us to animate the window destruction

@@ -194,11 +194,11 @@ void PackageInfo::writeToDataStream(QDataStream &ds) const
        << m_baseDir.absolutePath()
        << serializedReport;
 
-    ds << m_applications.size();
+    ds << int(m_applications.size());
     for (const auto &app : m_applications)
         app->writeToDataStream(ds);
 
-    ds << m_intents.size();
+    ds << int(m_intents.size());
     for (const auto &intent : m_intents)
         intent->writeToDataStream(ds);
 }

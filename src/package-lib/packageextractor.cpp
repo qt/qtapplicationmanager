@@ -46,7 +46,6 @@
 #include <QAtomicInt>
 #include <QFile>
 #include <QDir>
-#include <QRegExp>
 #include <QDataStream>
 #include <QUrl>
 #include <QDebug>

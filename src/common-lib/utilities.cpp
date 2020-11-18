@@ -339,7 +339,7 @@ void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from)
 
             // we're trying not to detach, so we're using v_cast to avoid copies
             if (needsMerge && (toValue.type() == QVariant::Map))
-                recursiveMergeMap(v_cast<QVariantMap>(&toValue.data_ptr()), fromValue.toMap());
+                recursiveMergeMap(qt6_v_cast<QVariantMap>(&toValue.data_ptr()), fromValue.toMap());
             else if (needsMerge && (toValue.type() == QVariant::List))
                 into->insert(it.key(), toValue.toList() + fromValue.toList());
             else

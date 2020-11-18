@@ -76,9 +76,13 @@ enum class Error {
 
 QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Error))
+QT_BEGIN_NAMESPACE
 
-inline QDebug &operator<<(QDebug &debug, QT_PREPEND_NAMESPACE_AM(Error) error)
+inline QDebug &operator<<(QDebug &debug, const QT_PREPEND_NAMESPACE_AM(Error) &error)
 {
     return debug << int(error);
 }
+
+QT_END_NAMESPACE
+
+Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Error))

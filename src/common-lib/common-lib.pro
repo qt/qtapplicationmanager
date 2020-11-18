@@ -6,7 +6,6 @@ load(am-config)
 
 QT = core core-private network concurrent
 qtHaveModule(geniviextras):QT *= geniviextras
-android:QT *= androidextras
 qtHaveModule(dbus):QT *= dbus
 qtHaveModule(qml):QT *= qml qml-private
 

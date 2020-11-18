@@ -203,7 +203,7 @@ void QmlInProcessApplicationManagerWindow::componentComplete()
     // called, so we don't depend on the existence of onCompleted handlers (and conform to multi-
     // process mode; there is no guarantee though, since multi-process is inherently asynchronous).
 
-    for (auto a = QQmlComponent::qmlAttachedProperties(this); a; a = a->next) {
+    for (auto a = QQmlComponent::qmlAttachedProperties(this); a; a = a->next()) {
         auto appWindow = qobject_cast<QmlInProcessApplicationManagerWindow *>(a->parent());
         if (!appWindow || appWindow != this)
             continue;

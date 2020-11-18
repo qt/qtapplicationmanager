@@ -42,6 +42,7 @@
 
 #include "waylandqtamserverextension_p.h"
 
+#include <QDataStream>
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandResource>
 #include <QtWaylandCompositor/QWaylandSurface>
@@ -64,7 +65,7 @@ void WaylandQtAMServerExtension::setWindowProperty(QWaylandSurface *surface, con
 {
     if (setWindowPropertyHelper(surface, name, value)) {
         QByteArray byteValue;
-        QDataStream ds(&byteValue, QIODevice::WriteOnly);
+        QDataStream ds(&byteValue, QDataStream::WriteOnly);
         ds << value;
 
         Resource *target = resourceMap().value(surface->waylandClient());

@@ -106,17 +106,17 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.dltDescription(), qSL(""));
     QCOMPARE(c.resources(), {});
 
-    QCOMPARE(c.openGLConfiguration(), {});
+    QCOMPARE(c.openGLConfiguration(), QVariantMap {});
 
     QCOMPARE(c.installationLocations(), {});
 
     QCOMPARE(c.containerSelectionConfiguration(), {});
-    QCOMPARE(c.containerConfigurations(), {});
-    QCOMPARE(c.runtimeConfigurations(), {});
+    QCOMPARE(c.containerConfigurations(), QVariantMap {});
+    QCOMPARE(c.runtimeConfigurations(), QVariantMap {});
 
     QCOMPARE(c.dbusRegistration("iface1"), qSL("auto"));
 
-    QCOMPARE(c.rawSystemProperties(), {});
+    QCOMPARE(c.rawSystemProperties(), QVariantMap {});
 
     QCOMPARE(c.quickLaunchIdleLoad(), qreal(0));
     QCOMPARE(c.quickLaunchRuntimesPerContainer(), 0);
@@ -131,7 +131,7 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.waylandSocketName(), defaultWaylandSocketName);
     QCOMPARE(c.waylandExtraSockets(), {});
 
-    QCOMPARE(c.managerCrashAction(), {});
+    QCOMPARE(c.managerCrashAction(), QVariantMap {});
 
     QCOMPARE(c.caCertificates(), {});
 
@@ -491,17 +491,17 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.dltDescription(), qSL(""));
     QCOMPARE(c.resources(), {});
 
-    QCOMPARE(c.openGLConfiguration(), {});
+    QCOMPARE(c.openGLConfiguration(), QVariantMap {});
 
     QCOMPARE(c.installationLocations(), {});
 
     QCOMPARE(c.containerSelectionConfiguration(), {});
-    QCOMPARE(c.containerConfigurations(), {});
-    QCOMPARE(c.runtimeConfigurations(), {});
+    QCOMPARE(c.containerConfigurations(), QVariantMap{});
+    QCOMPARE(c.runtimeConfigurations(), QVariantMap{});
 
     QCOMPARE(c.dbusRegistration("iface1"), qSL("system"));
 
-    QCOMPARE(c.rawSystemProperties(), {});
+    QCOMPARE(c.rawSystemProperties(), QVariantMap {});
 
     QCOMPARE(c.quickLaunchIdleLoad(), qreal(0));
     QCOMPARE(c.quickLaunchRuntimesPerContainer(), 0);
@@ -509,7 +509,7 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.waylandSocketName(), qSL("wlsock-1"));
     QCOMPARE(c.waylandExtraSockets(), {});
 
-    QCOMPARE(c.managerCrashAction(), {});
+    QCOMPARE(c.managerCrashAction(), QVariantMap {});
 
     QCOMPARE(c.caCertificates(), {});
 

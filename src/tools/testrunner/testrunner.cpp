@@ -45,7 +45,7 @@
 #include <QCoreApplication>
 #include <QEventLoop>
 #include <QQmlEngine>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QDir>
 #include <QFileInfo>
 

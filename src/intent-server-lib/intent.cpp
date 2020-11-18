@@ -201,7 +201,7 @@ bool Intent::checkParameterMatch(const QVariantMap &parameters) const
             bool foundMatch = false;
             const QVariantList rvlist = requiredValue.toList();
             for (const QVariant &rv2 : rvlist) {
-                if (actualValue.canConvert(int(rv2.type())) && actualValue == rv2) {
+                if (actualValue.canConvert(rv2.metaType()) && actualValue == rv2) {
                     foundMatch = true;
                     break;
                 }

@@ -91,13 +91,15 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DE
 
     connect(m_dbusInterface, &IoQtApplicationManagerIntentInterfaceInterface::replyFromSystem,
             intentClient, [this](const QString &requestId, bool error, const QVariantMap &result) {
-        emit replyFromSystem(requestId, error, convertFromDBusVariant(result).toMap());
+        emit replyFromSystem(QUuid::fromString(requestId), error,
+                             convertFromDBusVariant(result).toMap());
     });
 
     connect(m_dbusInterface, &IoQtApplicationManagerIntentInterfaceInterface::requestToApplication,
             intentClient, [this](const QString &requestId, const QString &id,
             const QString &applicationId, const QVariantMap &parameters) {
-        emit requestToApplication(requestId, id, QString(), applicationId, convertFromDBusVariant(parameters).toMap());
+        emit requestToApplication(QUuid::fromString(requestId), id, QString(), applicationId,
+                                  convertFromDBusVariant(parameters).toMap());
     });
 }
 

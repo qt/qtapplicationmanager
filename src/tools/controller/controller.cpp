@@ -220,7 +220,7 @@ public:
     }
 
 protected:
-    bool notify(QObject *o, QEvent *e)
+    bool notify(QObject *o, QEvent *e) override
     {
         try {
             return QCoreApplication::notify(o, e);

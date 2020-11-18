@@ -182,7 +182,7 @@ IpcWrapperObject::IpcWrapperObject(const QString &service, const QString &path, 
                                           m_wrapperHelper, SLOT(onPropertiesChanged(QString,QVariantMap,QStringList)));
 
     QMetaObjectBuilder mob;
-    mob.setFlags(QMetaObjectBuilder::DynamicMetaObject);
+    mob.setFlags(DynamicMetaObject);
 
     const QMetaObject *mo = m_dbusInterface->metaObject();
 
@@ -213,7 +213,7 @@ IpcWrapperObject::IpcWrapperObject(const QString &service, const QString &path, 
         for (int i = mo->methodOffset(); i < mo->methodCount(); ++i) {
             QMetaMethod mm = mo->method(i);
             if ((pass == 1) == (mm.methodType() == QMetaMethod::Signal)) {
-                QByteArray resultTypeName = QMetaType::typeName(mm.returnType());
+                QByteArray resultTypeName = QMetaType(mm.returnType()).name();
                 if (mm.returnType() == qMetaTypeId<QDBusVariant>())
                     resultTypeName = "QVariant";
 
@@ -292,7 +292,7 @@ int IpcWrapperObject::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
         QMetaProperty mp = metaObject()->property(metaObject()->propertyOffset() + _id);
         QVariant value = dbusmp.read(m_dbusInterface);
         value = convertFromDBusVariant(value);
-        QMetaType::construct(int(mp.type()), _a[0], value.data());
+        mp.metaType().construct(_a[0], value.data());
         break;
     }
     case QMetaObject::WriteProperty: {
@@ -300,7 +300,7 @@ int IpcWrapperObject::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
         int valueType = mp.userType();
         if (valueType == qMetaTypeId<QDBusVariant>())
             valueType = QMetaType::QVariant;
-        QVariant value(valueType, _a[0]);
+        QVariant value(QMetaType(valueType), _a[0]);
         value = convertFromJSVariant(value);
         if (mp.userType() == qMetaTypeId<QDBusVariant>()) {
             QDBusVariant dbv = QDBusVariant(value);
@@ -316,7 +316,7 @@ int IpcWrapperObject::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 
         QList<QVariant> args;
         for (int i = 0; i < mm.parameterCount(); ++i) {
-            args << QVariant(mm.parameterType(i), _a[i + 1]);
+            args << QVariant(mm.parameterMetaType(i), _a[i + 1]);
         }
 
         QDBusMessage reply = m_dbusInterface->callWithArgumentList(QDBus::Block, qL1S(mm.name()), args);
@@ -325,7 +325,7 @@ int IpcWrapperObject::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 
             value = convertFromDBusVariant(reply.arguments().at(0));
         }
-        QMetaType::construct(mm.returnType(), _a[0], value.data());
+        mm.returnMetaType().construct(_a[0], value.data());
         break;
     }
     default:

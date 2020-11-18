@@ -46,7 +46,7 @@
 
 #include <QGuiApplication>
 #include <QMouseEvent>
-#include <QTouchDevice>
+#include <QPointingDevice>
 #include <QWindow>
 #include <QTest>
 
@@ -65,6 +65,10 @@
 #  define XCB_GE_GENERIC 35
 #endif
 
+#if defined None
+#  undef None
+#endif
+
 QT_BEGIN_NAMESPACE_AM
 
 using QTest::QTouchEventSequence;
@@ -74,7 +78,7 @@ static Qt::MouseButton xcbButtonToQtMouseButton(xcb_button_t detail)
 {
     switch (detail) {
     case 1: return Qt::LeftButton;
-    case 2: return Qt::MidButton;
+    case 2: return Qt::MiddleButton;
     case 3: return Qt::RightButton;
         // don't care about the rest
     default: return Qt::NoButton;
@@ -102,9 +106,10 @@ TouchEmulationX11::TouchEmulationX11()
     qGuiApp->installNativeEventFilter(this);
 
     // Create a fake touch device to deliver our synthesized events
-    m_touchDevice = new QTouchDevice;
-    m_touchDevice->setType(QTouchDevice::TouchScreen);
-    QWindowSystemInterface::registerTouchDevice(m_touchDevice);
+    m_touchDevice = new QPointingDevice(qSL("Fake Touch"), -1, QInputDevice::DeviceType::TouchScreen,
+                                        QPointingDevice::PointerType::Finger,
+                                        QInputDevice::Capability::None, 0, 0);
+    QWindowSystemInterface::registerInputDevice(m_touchDevice);
 
     queryForXInput2();
 }
@@ -123,7 +128,7 @@ void TouchEmulationX11::queryForXInput2()
     }
 }
 
-bool TouchEmulationX11::nativeEventFilter(const QByteArray &eventType, void *message, long * /*result*/)
+bool TouchEmulationX11::nativeEventFilter(const QByteArray &eventType, void *message, qintptr * /*result*/)
 {
     if (eventType != "xcb_generic_event_t")
         return false; // just ignore non-XCB-native events

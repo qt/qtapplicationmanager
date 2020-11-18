@@ -47,6 +47,7 @@
 #include <private/qvariant_p.h>
 
 #include "logging.h"
+#include "utilities.h"
 #include "qml-utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -73,18 +74,18 @@ void fixNullValuesForQml(QVariant &v)
 {
     switch (static_cast<int>(v.type())) {
     case QVariant::List: {
-        QVariantList *list = v_cast<QVariantList>(&v.data_ptr());
+        QVariantList *list = qt6_v_cast<QVariantList>(&v.data_ptr());
         fixNullValuesForQml(*list);
         break;
     }
     case QVariant::Map: {
-        QVariantMap *map = v_cast<QVariantMap>(&v.data_ptr());
+        QVariantMap *map = qt6_v_cast<QVariantMap>(&v.data_ptr());
         fixNullValuesForQml(*map);
         break;
     }
     case QVariant::Invalid: {
         QVariant v2 = QVariant::fromValue(nullptr);
-        qSwap(v.data_ptr(), v2.data_ptr());
+        std::swap(v.data_ptr(), v2.data_ptr());
         break;
     }
     }

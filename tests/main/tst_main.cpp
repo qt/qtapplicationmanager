@@ -79,12 +79,13 @@ private:
 
 tst_Main::tst_Main()
 {
-    argc = 3;
+    argc = 4;
     argv = new char*[argc + 1];
     argv[0] = qstrdup("tst_Main");
     argv[1] = qstrdup("--dbus");
     argv[2] = qstrdup("none");
-    argv[3] = nullptr;
+    argv[3] = qstrdup("--no-cache");
+    argv[4] = nullptr;
 }
 
 tst_Main::~tst_Main()

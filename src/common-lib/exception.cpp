@@ -86,7 +86,7 @@ Exception::Exception(Exception &&move) Q_DECL_NOEXCEPT
     : m_errorCode(move.m_errorCode)
     , m_errorString(move.m_errorString)
 {
-    qSwap(m_whatBuffer, move.m_whatBuffer);
+    std::swap(m_whatBuffer, move.m_whatBuffer);
 }
 
 Exception::~Exception() Q_DECL_NOEXCEPT

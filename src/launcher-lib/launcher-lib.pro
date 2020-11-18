@@ -37,6 +37,8 @@ SOURCES += \
     WAYLANDCLIENTSOURCES += ../wayland-extensions/qtam-extension.xml
     HEADERS += waylandqtamclientextension_p.h
     SOURCES += waylandqtamclientextension.cpp
+
+    PKGCONFIG += wayland-client
 }
 
 HEADERS += \

@@ -45,7 +45,6 @@
 #include <QRegularExpression>
 #include <QDebug>
 #include <QtNumeric>
-#include <QTextCodec>
 #include <QFileInfo>
 #include <QDir>
 
@@ -189,7 +188,6 @@ public:
     QString sourceName;
     QString sourceDir;
     QByteArray data;
-    QTextCodec *codec = nullptr;
     bool parsedHeader = false;
     yaml_parser_t parser;
     yaml_event_t event;
@@ -218,10 +216,11 @@ YamlParser::YamlParser(const QByteArray &data, const QString &fileName)
     if (d->event.type != YAML_STREAM_START_EVENT)
         throw Exception("Invalid YAML data");
     switch (d->event.data.stream_start.encoding) {
+    case YAML_UTF8_ENCODING:    break;
     default:
-    case YAML_UTF8_ENCODING:    d->codec = QTextCodec::codecForName("UTF-8"); break;
-    case YAML_UTF16LE_ENCODING: d->codec = QTextCodec::codecForName("UTF-16LE"); break;
-    case YAML_UTF16BE_ENCODING: d->codec = QTextCodec::codecForName("UTF-16BE"); break;
+    case YAML_UTF16LE_ENCODING:
+    case YAML_UTF16BE_ENCODING:
+        throw Exception("Only UTF-8 is supported as a YAML encoding");
     }
 }
 
@@ -321,8 +320,8 @@ QString YamlParser::parseString() const
     Q_ASSERT(d->event.data.scalar.value);
     Q_ASSERT(static_cast<int>(d->event.data.scalar.length) >= 0);
 
-    return QTextDecoder(d->codec).toUnicode(reinterpret_cast<const char *>(d->event.data.scalar.value),
-                                            static_cast<int>(d->event.data.scalar.length));
+    return QString::fromUtf8(reinterpret_cast<const char *>(d->event.data.scalar.value),
+                             static_cast<int>(d->event.data.scalar.length));
 }
 
 QVariant YamlParser::parseScalar() const
@@ -666,7 +665,7 @@ YamlParserException::YamlParserException(YamlParser *p, const char *errorString)
     bool isProblem = p->d->parser.problem;
     yaml_mark_t &mark = isProblem ? p->d->parser.problem_mark : p->d->parser.mark;
 
-    QString context = QTextDecoder(p->d->codec).toUnicode(p->d->data);
+    QString context = QString::fromUtf8(p->d->data);
     int lpos = context.lastIndexOf(qL1C('\n'), int(mark.index ? mark.index - 1 : 0));
     int rpos = context.indexOf(qL1C('\n'), int(mark.index));
     context = context.mid(lpos + 1, rpos == -1 ? context.size() : rpos - lpos - 1);

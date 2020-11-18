@@ -255,7 +255,7 @@ SudoInterface::SudoInterface()
 bool SudoInterface::sendMessage(int socket, const QByteArray &msg, MessageType type, const QString &errorString)
 {
     QByteArray packet;
-    QDataStream ds(&packet, QIODevice::WriteOnly);
+    QDataStream ds(&packet, QDataStream::WriteOnly);
     ds << errorString << msg;
     packet.prepend((type == Request) ? "RQST" : "RPLY");
 
@@ -278,7 +278,7 @@ QByteArray SudoInterface::receiveMessage(int socket, MessageType type, QString *
 
     QByteArray packet(recvBuffer + headerSize, int(bytesReceived) - headerSize);
 
-    QDataStream ds(&packet, QIODevice::ReadOnly);
+    QDataStream ds(&packet, QDataStream::ReadOnly);
     QByteArray msg;
     ds >> *errorString >> msg;
     return msg;
@@ -318,9 +318,9 @@ template <typename R, typename C, typename ...Ps> R returnType(R (C::*)(Ps...));
 
 #define CALL(FUNC_NAME, PARAM) \
     QByteArray msg; \
-    QDataStream(&msg, QIODevice::WriteOnly) << #FUNC_NAME << PARAM; \
+    QDataStream(&msg, QDataStream::WriteOnly) << #FUNC_NAME << PARAM; \
     QByteArray reply = call(msg); \
-    QDataStream result(&reply, QIODevice::ReadOnly); \
+    QDataStream result(&reply, QDataStream::ReadOnly); \
     decltype(returnType(&SudoClient::FUNC_NAME)) r; \
     result >> r; \
     return r
@@ -340,7 +340,7 @@ void SudoClient::stopServer()
 #ifdef Q_OS_LINUX
     if (!m_shortCircuit && m_socket >= 0) {
         QByteArray msg;
-        QDataStream(&msg, QIODevice::WriteOnly) << "stopServer";
+        QDataStream(&msg, QDataStream::WriteOnly) << "stopServer";
         sendMessage(m_socket, msg, Request);
     }
 #endif
@@ -419,7 +419,7 @@ QByteArray SudoServer::receive(const QByteArray &msg)
     QByteArray function(functionArray);
     delete [] functionArray;
     QByteArray reply;
-    QDataStream result(&reply, QIODevice::WriteOnly);
+    QDataStream result(&reply, QDataStream::WriteOnly);
     m_errorString.clear();
 
     if (function == "removeRecursive") {

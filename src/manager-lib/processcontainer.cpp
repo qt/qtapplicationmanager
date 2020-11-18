@@ -56,12 +56,14 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class HostQProcess : public QProcess // clazy:exclude=missing-qobject-macro
+
+HostProcess::HostProcess()
+    : m_process(new QProcess)
 {
-protected:
-    void setupChildProcess() override
-    {
+    m_process->setProcessChannelMode(QProcess::ForwardedChannels);
+    m_process->setInputChannelMode(QProcess::ForwardedInputChannel);
 #if defined(Q_OS_UNIX)
+    m_process->setChildProcessModifier([this]() {
         if (m_stopBeforeExec) {
             fprintf(stderr, "\n*** a 'process' container was started in stopped state ***\nthe process is suspended via SIGSTOP and you can attach a debugger to it via\n\n   gdb -p %d\n\n", getpid());
             raise(SIGSTOP);
@@ -75,20 +77,8 @@ protected:
                 ::close(fd);
             }
         }
+    });
 #endif
-    }
-
-public:
-    bool m_stopBeforeExec = false;
-    QVector<int> m_stdioRedirections;
-};
-
-
-HostProcess::HostProcess()
-    : m_process(new HostQProcess)
-{
-    m_process->setProcessChannelMode(QProcess::ForwardedChannels);
-    m_process->setInputChannelMode(QProcess::ForwardedInputChannel);
 }
 
 HostProcess::~HostProcess()
@@ -119,7 +109,7 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
 #if defined(Q_OS_UNIX)
     // make sure that the redirection fds do not have a close-on-exec flag, since we need them
     // in the child process.
-    for (int fd : qAsConst(m_process->m_stdioRedirections)) {
+    for (int fd : qAsConst(m_stdioRedirections)) {
         if (fd < 0)
             continue;
         int flags = fcntl(fd, F_GETFD);
@@ -134,7 +124,7 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
     // we are forked now and the child process has received a copy of all redirected fds
     // now it's time to close our fds, since we don't need them anymore (plus we would block
     // the tty where they originated from)
-    for (int fd : qAsConst(m_process->m_stdioRedirections)) {
+    for (int fd : qAsConst(m_stdioRedirections)) {
         if (fd >= 0)
             ::close(fd);
     }
@@ -173,12 +163,12 @@ Am::RunState HostProcess::state() const
 
 void HostProcess::setStdioRedirections(const QVector<int> &stdioRedirections)
 {
-    m_process->m_stdioRedirections = stdioRedirections;
+    m_stdioRedirections = stdioRedirections;
 }
 
 void HostProcess::setStopBeforeExec(bool stopBeforeExec)
 {
-    m_process->m_stopBeforeExec = stopBeforeExec;
+    m_stopBeforeExec = stopBeforeExec;
 }
 
 

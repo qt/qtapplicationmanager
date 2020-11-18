@@ -287,7 +287,7 @@ int main(int argc, char **argv)
         QDir outDir;
 
         if (clp.isSet(qSL("install")) && clp.positionalArguments().isEmpty()) {
-            outDir.setPath(QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath));
+            outDir.setPath(QLibraryInfo::path(QLibraryInfo::Qml2ImportsPath));
             if (!outDir.exists())
                 throw Exception("Qt's QML2 imports directory (%1) is missing.")
                     .arg(outDir.absolutePath());

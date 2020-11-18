@@ -48,6 +48,7 @@
 #include <QMetaObject>
 #include <private/qv4engine_p.h>
 #include <private/qqmlcontext_p.h>
+#include <private/qqmlcontextdata_p.h>
 
 #if !defined(AM_HEADLESS)
 #  include <QQuickView>
@@ -367,7 +368,7 @@ QmlInProcessRuntime *QmlInProcessRuntime::determineRuntime(QObject *object)
         // if this didn't work out, check out the calling context
         if (QQmlEngine *engine = qmlEngine(object)) {
             if (QV4::ExecutionEngine *v4 = engine->handle()) {
-                if (QQmlContextData *callingContext = v4->callingQmlContext())
+                if (QQmlContextData *callingContext = v4->callingQmlContext().data())
                     runtime = findRuntime(callingContext->asQQmlContext());
             }
         }

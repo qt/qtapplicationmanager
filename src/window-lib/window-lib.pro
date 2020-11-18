@@ -36,6 +36,8 @@ multi-process:!headless {
 
     CONFIG *= wayland-scanner generated_privates
     private_headers.CONFIG += no_check_exists
+
+    PKGCONFIG += wayland-server
 }
 
 !headless:HEADERS += \

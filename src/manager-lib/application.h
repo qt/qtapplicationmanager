@@ -182,6 +182,10 @@ private:
 
 QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(const QT_PREPEND_NAMESPACE_AM(Application *))
+QT_BEGIN_NAMESPACE
 
 QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(Application) *app);
+
+QT_END_NAMESPACE
+
+Q_DECLARE_METATYPE(const QT_PREPEND_NAMESPACE_AM(Application *))

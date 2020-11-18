@@ -31,7 +31,6 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QUrl>
-#include <QRegExp>
 #include <QDirIterator>
 #include <QMessageAuthenticationCode>
 #include <QJsonDocument>

@@ -194,7 +194,7 @@ bool NativeRuntime::initialize()
             // try the main binaries directory
             possibleLocations.append(QCoreApplication::applicationDirPath());
             // try Qt's bin folder
-            possibleLocations.append(QLibraryInfo::location(QLibraryInfo::BinariesPath));
+            possibleLocations.append(QLibraryInfo::path(QLibraryInfo::BinariesPath));
             // try the AM's build directory
             possibleLocations.append(qApp->property("_am_build_dir").toString() + qSL("/bin")); // set by main.cpp
             // if everything fails, try to locate it in $PATH

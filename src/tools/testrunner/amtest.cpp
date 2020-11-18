@@ -90,12 +90,9 @@ void AmTest::ignoreMessage(MsgType type, const char *msg)
     QTestLog::ignoreMessage(convertMsgType(type), msg);
 }
 
-void AmTest::ignoreMessage(MsgType type, const QRegExp &expression)
+void AmTest::ignoreMessage(MsgType type, const QRegularExpression &expression)
 {
-    QRegularExpression re(expression.pattern());
-    if (expression.caseSensitivity() == Qt::CaseInsensitive)
-        re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
-    QTestLog::ignoreMessage(convertMsgType(type), re);
+    QTestLog::ignoreMessage(convertMsgType(type), expression);
 }
 
 int AmTest::observeObjectDestroyed(QObject *obj)

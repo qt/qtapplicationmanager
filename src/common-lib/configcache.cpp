@@ -149,7 +149,7 @@ void *AbstractConfigCache::takeResult(int index) const
     Q_ASSERT(!(d->options & MergedResult));
     void *result = nullptr;
     if (index >= 0 && index < d->cache.size())
-        qSwap(result, d->cache[index].content);
+        std::swap(result, d->cache[index].content);
     return result;
 }
 
@@ -223,7 +223,7 @@ void AbstractConfigCache::parse()
                 }
 
                 if (ds.status() != QDataStream::Ok)
-                    throw Exception("failed to read cache content");
+                    throw Exception("failed to read cache content (%1)").arg(ds.status());
 
                 cacheIsValid = true;
 
@@ -245,6 +245,7 @@ void AbstractConfigCache::parse()
 
             } catch (const Exception &e) {
                 qWarning(LogCache) << "Failed to read cache:" << e.what();
+                cache.clear();
             }
         }
     } else if (d->options.testFlag(ClearCache)) {
@@ -368,11 +369,11 @@ void AbstractConfigCache::parse()
             // everything is parsed now, so we can write a new cache file
 
             try {
-                QFile cacheFile(cacheFilePath);
-                if (!cacheFile.open(QFile::WriteOnly | QFile::Truncate))
+                QFile newCacheFile(cacheFilePath);
+                if (!newCacheFile.open(QFile::WriteOnly | QFile::Truncate))
                     throw Exception(cacheFile, "failed to open file for writing");
 
-                QDataStream ds(&cacheFile);
+                QDataStream ds(&newCacheFile);
                 CacheHeader cacheHeader;
                 cacheHeader.baseName = d->cacheBaseName;
                 cacheHeader.typeId = d->typeId;

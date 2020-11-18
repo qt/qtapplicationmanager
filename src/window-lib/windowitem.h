@@ -93,7 +93,7 @@ public:
     static void contentItemData_clear(QQmlListProperty<QObject> *property);
 
 protected:
-    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+    void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 signals:
     void windowChanged();
     void primaryChanged();

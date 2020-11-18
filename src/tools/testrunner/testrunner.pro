@@ -8,7 +8,7 @@ DEFINES += AM_TESTRUNNER
 
 CONFIG *= console
 
-QT += qmltest qmltest-private
+QT += qmltest qmltest-private testlib-private
 
 HEADERS += \
     testrunner.h \

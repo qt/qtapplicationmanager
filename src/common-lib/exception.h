@@ -91,7 +91,7 @@ public:
     }
 
     // this will generate compiler errors if there's no suitable QString::arg(const C &) overload
-    template <typename C> typename QtPrivate::QEnableIf<QtPrivate::IsSequentialContainer<C>::Value, Exception>::Type &
+    template <typename C> typename std::enable_if<QtPrivate::IsSequentialContainer<C>::Value, Exception>::type &
     arg(const C &c) Q_DECL_NOEXCEPT
     {
         QString s;
@@ -102,12 +102,6 @@ public:
         }
         m_errorString = m_errorString.arg(s);
         return *this;
-    }
-
-    // QStringList is always special
-    Exception &arg(const QStringList &sl) Q_DECL_NOEXCEPT
-    {
-        return arg(static_cast<QList<QString>>(sl));
     }
 
     Exception &arg(const char *str) Q_DECL_NOEXCEPT

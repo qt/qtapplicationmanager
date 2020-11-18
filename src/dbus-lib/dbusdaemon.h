@@ -54,9 +54,6 @@ public:
     ~DBusDaemonProcess() override;
 
     static void start() Q_DECL_NOEXCEPT_EXPR(false);
-
-protected:
-    void setupChildProcess() override;
 };
 
 QT_END_NAMESPACE_AM

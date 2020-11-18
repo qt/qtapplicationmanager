@@ -112,10 +112,6 @@ void SharedMain::initialize()
 
     s_initialized = true;
 
-#  if !defined(QT_NO_SESSIONMANAGER)
-        QGuiApplication::setFallbackSessionManagementEnabled(false);
-#  endif
-
     // this is needed for both WebEngine and Wayland Multi-screen rendering
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 

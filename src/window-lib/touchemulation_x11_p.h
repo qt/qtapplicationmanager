@@ -51,7 +51,7 @@
 #include <QObject>
 #include <QWindow>
 
-QT_FORWARD_DECLARE_CLASS(QTouchDevice)
+QT_FORWARD_DECLARE_CLASS(QPointingDevice)
 QT_FORWARD_DECLARE_CLASS(QWindow)
 
 QT_BEGIN_NAMESPACE_AM
@@ -60,7 +60,7 @@ class TouchEmulationX11 : public TouchEmulation, public QAbstractNativeEventFilt
 {
 public:
     TouchEmulationX11();
-    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
+    bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
 
 private:
     void queryForXInput2();
@@ -72,7 +72,7 @@ private:
     void backupEventData(void *event);
     void restoreEventData(void *event);
 
-    QTouchDevice *m_touchDevice = nullptr;
+    QPointingDevice *m_touchDevice = nullptr;
     bool m_haveXInput2 = false;
     bool m_leftButtonIsPressed = false;
 

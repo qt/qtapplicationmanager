@@ -534,11 +534,11 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
 
                         // parameter types need to match - the only exception is if we expect
                         // a QVariant, since we can convert the parameter implicitly
-                        if (argsCopy[ai].typeName() != QMetaType::typeName(expectedTypes.at(ai + 1))) {
+                        if (argsCopy[ai].typeName() != QMetaType(expectedTypes.at(ai + 1)).name()) {
                             if (expectedTypes.at(ai + 1) != QMetaType::QVariant) {
                                 matched = false;
                                 qWarning() << "MISMATCHED PARAMETER" << ai + 1 << "ON FUNCTION" << function
-                                           << "- EXPECTED" << QMetaType::typeName(expectedTypes.at(ai + 1))
+                                           << "- EXPECTED" << QMetaType(expectedTypes.at(ai + 1)).name()
                                            << "- RECEIVED" << argsCopy[ai].typeName();
                                 break;
                             }
@@ -572,8 +572,6 @@ bool IpcProxyObject::handleMessage(const QDBusMessage &message, const QDBusConne
     } else if (interface == qL1S("org.freedesktop.DBus.Properties")) {
         if (message.arguments().at(0) != m_interfaceName)
             return false;
-
-        const QMetaObject *mo = m_object->metaObject();
 
         if (function == "Get") {
             QByteArray name = message.arguments().at(1).toString().toLatin1();
@@ -660,7 +658,7 @@ void IpcProxyObject::relaySignal(int signalIndex, void **argv)
 
                 QList<QVariant> args;
                 for (int i = 0; i < mm.parameterCount(); ++i) {
-                    args << convertFromJSVariant(QVariant(mm.parameterType(i), argv[i + 1]));
+                    args << convertFromJSVariant(QVariant(mm.parameterMetaType(i), argv[i + 1]));
                 }
 
                 QDBusMessage message = QDBusMessage::createSignal(pathName, m_interfaceName, qL1S(mm.name()));

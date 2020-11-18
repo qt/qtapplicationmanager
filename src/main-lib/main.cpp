@@ -77,7 +77,7 @@
 #  include <QGuiApplication>
 #  include <QQuickView>
 #  include <QQuickItem>
-#  include <QTouchDevice>
+#  include <QInputDevice>
 #  include <private/qopenglcontext_p.h>
 #  include <QLocalServer>
 #endif
@@ -684,6 +684,7 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
                               bool slowAnimations, bool uiWatchdog)
 {
 #if defined(AM_HEADLESS)
+    Q_UNUSED(waylandExtraSockets)
     Q_UNUSED(waylandSocketName)
     Q_UNUSED(slowAnimations)
     Q_UNUSED(uiWatchdog)
@@ -755,6 +756,8 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
 
         m_windowManager->addWaylandSocket(extraSocket.take());
     }
+#else
+    Q_UNUSED(waylandExtraSockets)
 #endif
 
     QObject::connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::newRuntimeCreated,
@@ -771,7 +774,7 @@ void Main::setupTouchEmulation(bool enableTouchEmulation)
 #else
     if (enableTouchEmulation) {
         if (TouchEmulation::isSupported()) {
-            if (QTouchDevice::devices().isEmpty()) {
+            if (TouchEmulation::hasPhysicalTouchscreen()) {
                 TouchEmulation::createInstance();
                 qCDebug(LogGraphics) << "Touch emulation is enabled: all mouse events will be "
                                         "converted to touch events.";

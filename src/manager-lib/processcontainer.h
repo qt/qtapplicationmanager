@@ -66,8 +66,6 @@ public:
 };
 
 
-class HostQProcess;
-
 class HostProcess : public AbstractContainerProcess
 {
     Q_OBJECT
@@ -91,8 +89,10 @@ public slots:
     void setStopBeforeExec(bool stopBeforeExec);
 
 private:
-    HostQProcess *m_process;
+    QProcess *m_process;
     qint64 m_pid = 0;
+    bool m_stopBeforeExec = false;
+    QVector<int> m_stdioRedirections;
 };
 
 class ProcessContainer : public AbstractContainer

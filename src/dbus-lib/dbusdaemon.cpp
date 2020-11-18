@@ -76,21 +76,19 @@ DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
 #endif
     setProgram(program);
     setArguments(arguments);
+
+#if defined(Q_OS_LINUX)
+    setChildProcessModifier([]() {
+        // at least on Linux we can make sure that those dbus-daemons are always killed
+        prctl(PR_SET_PDEATHSIG, SIGKILL);
+    });
+#endif
 }
 
 DBusDaemonProcess::~DBusDaemonProcess()
 {
     kill();
     waitForFinished();
-}
-
-void DBusDaemonProcess::setupChildProcess()
-{
-#  if defined(Q_OS_LINUX)
-    // at least on Linux we can make sure that those dbus-daemons are always killed
-    prctl(PR_SET_PDEATHSIG, SIGKILL);
-#  endif
-    QProcess::setupChildProcess();
 }
 
 void DBusDaemonProcess::start() Q_DECL_NOEXCEPT_EXPR(false)

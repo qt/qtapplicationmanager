@@ -42,6 +42,7 @@
 
 #include <QtAppManCommon/global.h>
 #include <QGuiApplication>
+#include <QInputDevice>
 #include "touchemulation.h"
 #if defined(AM_ENABLE_TOUCH_EMULATION)
 #  include "touchemulation_x11_p.h"
@@ -80,6 +81,16 @@ bool TouchEmulation::isSupported()
     if (QGuiApplication::platformName() == qL1S("xcb"))
         return true;
 #endif
+    return false;
+}
+
+bool QtAM::TouchEmulation::hasPhysicalTouchscreen()
+{
+    const auto devs = QInputDevice::devices();
+    for (auto dev : devs) {
+        if (dev->type() == QInputDevice::DeviceType::TouchScreen)
+            return true;
+    }
     return false;
 }
 

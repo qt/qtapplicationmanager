@@ -573,7 +573,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             QSurfaceFormat surfaceFormat = m_window->format();
             surfaceFormat.setAlphaBufferSize(8);
             m_window->setFormat(surfaceFormat);
-            m_window->setClearBeforeRendering(true);
             m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
         }
     }

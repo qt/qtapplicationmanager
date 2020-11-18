@@ -133,7 +133,6 @@ IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(Packag
 
     QObject::connect(&packageManager->internalSignals, &PackageManagerInternalSignals::registerIntent,
                      intentServer, [intentServer](IntentInfo *intentInfo, Package *package) {
-
         if (!intentServer->addIntent(intentInfo->id(), package->id(), intentInfo->handlingApplicationId(),
                                      intentInfo->requiredCapabilities(),
                                      intentInfo->visibility() == IntentInfo::Public ? Intent::Public
@@ -434,7 +433,7 @@ void IntentServerInProcessIpcConnection::requestToApplication(IntentServerReques
     // behavior in single- and multi-process mode
     QMetaObject::invokeMethod(this, [this, irs]() {
         auto clientInterface = m_interface->intentClientSystemInterface();
-        emit clientInterface->requestToApplication(irs->requestId().toString(), irs->intentId(),
+        emit clientInterface->requestToApplication(irs->requestId(), irs->intentId(),
                                                    irs->requestingApplicationId(),
                                                    irs->handlingApplicationId(), irs->parameters());
     }, Qt::QueuedConnection);
@@ -446,7 +445,7 @@ void IntentServerInProcessIpcConnection::replyFromSystem(IntentServerRequest *ir
     // behavior in single- and multi-process mode
     QMetaObject::invokeMethod(this, [this, irs]() {
         auto clientInterface = m_interface->intentClientSystemInterface();
-        emit clientInterface->replyFromSystem(irs->requestId().toString(), !irs->succeeded(), irs->result());
+        emit clientInterface->replyFromSystem(irs->requestId(), !irs->succeeded(), irs->result());
     }, Qt::QueuedConnection);
 }
 
@@ -526,7 +525,7 @@ QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,
 void IntentServerDBusIpcConnection::replyFromApplication(const QString &requestId, bool error,
                                                          const QVariantMap &result)
 {
-    emit m_interface->replyFromApplication(application()->id(), requestId, error,
+    emit m_interface->replyFromApplication(application()->id(), QUuid::fromString(requestId), error,
                                            convertFromDBusVariant(result).toMap());
 }
 

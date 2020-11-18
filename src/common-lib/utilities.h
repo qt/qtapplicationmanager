@@ -157,4 +157,10 @@ inline bool loadResource(const QString &resource)
            : (QResource::registerResource(resource) || QLibrary(QDir().absoluteFilePath(resource)).load());
 }
 
+// Qt6 removed v_cast, but the "replacement" QVariant::Private::get is const only
+template <typename T> T *qt6_v_cast(QVariant::Private *vp)
+{
+    return static_cast<T *>(const_cast<void *>(vp->storage()));
+}
+
 QT_END_NAMESPACE_AM

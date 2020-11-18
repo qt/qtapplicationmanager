@@ -63,6 +63,7 @@ public:
     static TouchEmulation *instance();
 
     static bool isSupported();
+    static bool hasPhysicalTouchscreen();
 
 private:
     static TouchEmulation *s_instance;

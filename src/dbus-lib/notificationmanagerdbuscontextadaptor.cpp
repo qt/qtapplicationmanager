@@ -47,7 +47,7 @@
 
 #include "notificationmanagerdbuscontextadaptor.h"
 #include "notificationmanager.h"
-#include "org.freedesktop.notifications_adaptor.h"
+#include "notifications_adaptor.h"
 
 QT_BEGIN_NAMESPACE_AM
 

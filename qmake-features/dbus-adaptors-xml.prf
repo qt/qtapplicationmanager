@@ -2,9 +2,13 @@
 load(moc)
 qtPrepareTool(QDBUSXML2CPP, qdbusxml2cpp)
 
+defineReplace(am_qdbusOutputBasename) {
+    return($$lower($$section($$list($$basename(1)),.,-2,-2)))
+}
+
 adaptors_header.commands = $$QDBUSXML2CPP -i dbus-utilities.h -a ${QMAKE_FILE_OUT}: ${QMAKE_FILE_IN}
 adaptors_header.depends += $$QDBUSXML2CPP_EXE
-adaptors_header.output = ${QMAKE_FILE_BASE}_adaptor$${first(QMAKE_EXT_H)}
+adaptors_header.output = ${QMAKE_FUNC_FILE_IN_am_qdbusOutputBasename}_adaptor$${first(QMAKE_EXT_H)}
 adaptors_header.name = DBUS adaptor header for ${QMAKE_FILE_IN}
 adaptors_header.variable_out = dbus_adaptor_headers
 adaptors_header.input = ADAPTORS_XML

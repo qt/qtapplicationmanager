@@ -42,7 +42,7 @@
 
 #include "windowmanagerdbuscontextadaptor.h"
 #include "windowmanager.h"
-#include "io.qt.windowmanager_adaptor.h"
+#include "windowmanager_adaptor.h"
 
 QT_BEGIN_NAMESPACE_AM
 

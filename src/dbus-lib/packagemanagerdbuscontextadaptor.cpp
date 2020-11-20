@@ -43,7 +43,7 @@
 #include "packagemanagerdbuscontextadaptor.h"
 #include "package.h"
 #include "packagemanager.h"
-#include "io.qt.packagemanager_adaptor.h"
+#include "packagemanager_adaptor.h"
 #include "dbuspolicy.h"
 #include "exception.h"
 #include "logging.h"

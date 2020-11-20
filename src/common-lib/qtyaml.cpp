@@ -83,30 +83,30 @@ static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style) 
 {
     yaml_event_t event;
 
-    switch (value.type()) {
+    switch (value.metaType().id()) {
     default:
-    case QVariant::Invalid:
+    case QMetaType::UnknownType:
         emitYamlScalar(e, "~");
         break;
-    case QVariant::Bool:
+    case QMetaType::Bool:
         emitYamlScalar(e, value.toBool() ? "true" : "false");
         break;
-    case QVariant::Int:
-    case QVariant::LongLong:
+    case QMetaType::Int:
+    case QMetaType::LongLong:
         emitYamlScalar(e, QByteArray::number(value.toLongLong()));
         break;
-    case QVariant::UInt:
-    case QVariant::ULongLong:
+    case QMetaType::UInt:
+    case QMetaType::ULongLong:
         emitYamlScalar(e, QByteArray::number(value.toULongLong()));
         break;
-    case QVariant::Double:
+    case QMetaType::Double:
         emitYamlScalar(e, QByteArray::number(value.toDouble()));
         break;
-    case QVariant::String:
+    case QMetaType::QString:
         emitYamlScalar(e, value.toString().toUtf8(), true);
         break;
-    case QVariant::List:
-    case QVariant::StringList: {
+    case QMetaType::QVariantList:
+    case QMetaType::QStringList: {
         yerr(yaml_sequence_start_event_initialize(&event, nullptr, nullptr, 1, style == FlowStyle ? YAML_FLOW_SEQUENCE_STYLE : YAML_BLOCK_SEQUENCE_STYLE));
         yerr(yaml_emitter_emit(e, &event));
 
@@ -118,7 +118,7 @@ static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style) 
         yerr(yaml_emitter_emit(e, &event));
         break;
     }
-    case QVariant::Map: {
+    case QMetaType::QVariantMap: {
         yerr(yaml_mapping_start_event_initialize(&event, nullptr, nullptr, 1, style == FlowStyle ? YAML_FLOW_MAPPING_STYLE : YAML_BLOCK_MAPPING_STYLE));
         yerr(yaml_emitter_emit(e, &event));
 
@@ -477,7 +477,7 @@ QString YamlParser::parseMapKey()
 {
     if (isScalar()) {
         QVariant key = parseScalar();
-        if (key.type() == QVariant::String)
+        if (key.metaType() == QMetaType::fromType<QString>())
             return key.toString();
     }
     throw YamlParserException(this, "Only strings are supported as mapping keys");

@@ -93,12 +93,12 @@ public:
 
     static QString defaultIdentifier() { return qSL("foo"); }
 
-    bool inProcess() const
+    bool inProcess() const override
     {
         return !AbstractRuntimeManager::inProcess();
     }
 
-    TestRuntime *create(AbstractContainer *container, Application *app)
+    TestRuntime *create(AbstractContainer *container, Application *app) override
     {
         return new TestRuntime(container, app, this);
     }

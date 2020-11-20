@@ -260,7 +260,7 @@ public:
         return QString::fromLocal8Bit(m_fifoPath);
     }
 
-    void run()
+    void run() override
     {
 #ifdef Q_OS_UNIX
         int fifoFd = QT_OPEN(m_fifoPath, O_WRONLY);

@@ -311,7 +311,7 @@ IpcProxyObject::IpcProxyObject(QObject *object, const QString &serviceName, cons
                                      << "but the annotated function" << slotName << "is missing";
             }
         } else {
-            if (dbusType(int(mp.type()))) {
+            if (dbusType(mp.metaType().id())) {
                 m_properties << i;
             } else {
                 qCWarning(LogQmlIpc) << "Ignoring property" << mp.name()
@@ -354,7 +354,7 @@ QByteArray IpcProxyObject::createIntrospectionXml()
             readWrite += "write";
 
         xml = xml + "  <property name=\"" + mp.name()
-                + "\" type=\"" + dbusType(int(mp.type()))
+                + "\" type=\"" + dbusType(mp.metaType().id())
                 + "\" access=\"" + readWrite
                 + "\" />\n";
     }
@@ -388,7 +388,7 @@ QByteArray IpcProxyObject::createIntrospectionXml()
         for (int pi = 0; pi < types.count(); ++pi) {
             if (pi == 0 && types.at(0) == QMetaType::Void)
                 continue;
-            xml = xml + "    <arg name=\"" + (pi == 0 ? "result" : mm.parameterNames().at(pi - 1))
+            xml = xml + "    <arg name=\"" + (pi == 0 ? QByteArray("result") : mm.parameterNames().at(pi - 1))
                     + "\" type=\"" + dbusType(types.at(pi))
                     + "\" direction=\"" + (pi == 0 ? "out" : "in")
                     + "\" />\n";

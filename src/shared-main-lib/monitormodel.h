@@ -72,8 +72,8 @@ public:
     QQmlListProperty<QObject> dataSources();
 
     static void dataSources_append(QQmlListProperty<QObject> *property, QObject *value);
-    static int dataSources_count(QQmlListProperty<QObject> *property);
-    static QObject *dataSources_at(QQmlListProperty<QObject> *property, int index);
+    static qsizetype dataSources_count(QQmlListProperty<QObject> *property);
+    static QObject *dataSources_at(QQmlListProperty<QObject> *property, qsizetype index);
     static void dataSources_clear(QQmlListProperty<QObject> *property);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;

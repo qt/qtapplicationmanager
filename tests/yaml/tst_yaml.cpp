@@ -101,9 +101,9 @@ void tst_Yaml::parser()
         YamlParser::Fields fields;
         for (const auto &pair : tests) {
             YamlParser::FieldType type = YamlParser::Scalar;
-            if (pair.second.type() == QVariant::List)
+            if (pair.second.metaType() == QMetaType::fromType<QVariantList>())
                 type = YamlParser::List;
-            else if (pair.second.type() == QVariant::Map)
+            else if (pair.second.metaType() == QMetaType::fromType<QVariantMap>())
                 type = YamlParser::Map;
             QVariant value = pair.second;
 
@@ -112,7 +112,7 @@ void tst_Yaml::parser()
                 case YamlParser::Scalar: {
                     QVERIFY(p->isScalar());
                     QVariant v = p->parseScalar();
-                    QCOMPARE(int(v.type()), int(value.type()));
+                    QCOMPARE(int(v.metaType().id()), value.metaType().id());
                     QVERIFY(v == value);
                     break;
                 }
@@ -136,7 +136,7 @@ void tst_Yaml::parser()
                 { "ext-string", true, YamlParser::Scalar, [](YamlParser *p) {
                       QVERIFY(p->isScalar());
                       QVariant v = p->parseScalar();
-                      QCOMPARE(v.type(), QVariant::String);
+                      QCOMPARE(v.metaType(), QMetaType::fromType<QString>());
                       QCOMPARE(v.toString(), "ext string");
                   } }
             };

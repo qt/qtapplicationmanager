@@ -75,8 +75,8 @@ YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
 */
 inline QStringList variantToStringList(const QVariant &v)
 {
-    return (v.type() == QVariant::String) ? QStringList(v.toString())
-                                          : v.toStringList();
+    return (v.metaType() == QMetaType::fromType<QString>()) ? QStringList(v.toString())
+                                                            : v.toStringList();
 }
 
 // Translate between QFile and QUrl (resource) representations.

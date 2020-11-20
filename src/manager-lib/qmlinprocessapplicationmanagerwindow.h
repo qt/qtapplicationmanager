@@ -105,8 +105,8 @@ public:
     void componentComplete() override;
 
     static void data_append(QQmlListProperty<QObject> *property, QObject *value);
-    static int data_count(QQmlListProperty<QObject> *property);
-    static QObject *data_at(QQmlListProperty<QObject> *property, int index);
+    static qsizetype data_count(QQmlListProperty<QObject> *property);
+    static QObject *data_at(QQmlListProperty<QObject> *property, qsizetype index);
     static void data_clear(QQmlListProperty<QObject> *property);
 
     // Getters and setters for QWindow properties

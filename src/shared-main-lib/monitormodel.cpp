@@ -193,13 +193,13 @@ void MonitorModel::dataSources_append(QQmlListProperty<QObject> *property, QObje
     that->appendDataSource(dataSource);
 }
 
-int MonitorModel::dataSources_count(QQmlListProperty<QObject> *property)
+qsizetype MonitorModel::dataSources_count(QQmlListProperty<QObject> *property)
 {
     auto *that = static_cast<MonitorModel*>(property->object);
     return that->m_dataSources.count();
 }
 
-QObject *MonitorModel::dataSources_at(QQmlListProperty<QObject> *property, int index)
+QObject *MonitorModel::dataSources_at(QQmlListProperty<QObject> *property, qsizetype index)
 {
     auto *that = static_cast<MonitorModel*>(property->object);
     return that && that->m_dataSources.count() > index && index >= 0 ? that->m_dataSources.at(index)->obj : nullptr;

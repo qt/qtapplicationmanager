@@ -552,7 +552,7 @@ QStringList Notification::libnotifyActionList() const
     if (isAcknowledgeable())
         actionList << qSL("default") << QString();
     for (const QVariant &action : m_actions) {
-        if (action.type() == QVariant::String) {
+        if (action.metaType() == QMetaType::fromType<QString>()) {
             actionList << action.toString() << QString();
         } else {
             QVariantMap map = action.toMap();

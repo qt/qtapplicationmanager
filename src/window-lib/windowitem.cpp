@@ -305,7 +305,7 @@ void WindowItem::contentItemData_append(QQmlListProperty<QObject> *property, QOb
     itemProperty.append(&itemProperty, value);
 }
 
-int WindowItem::contentItemData_count(QQmlListProperty<QObject> *property)
+qsizetype WindowItem::contentItemData_count(QQmlListProperty<QObject> *property)
 {
     auto *that = static_cast<WindowItem*>(property->object);
     if (!QQuickItemPrivate::get(that->m_contentItem)->data().count)
@@ -314,7 +314,7 @@ int WindowItem::contentItemData_count(QQmlListProperty<QObject> *property)
     return itemProperty.count(&itemProperty);
 }
 
-QObject *WindowItem::contentItemData_at(QQmlListProperty<QObject> *property, int index)
+QObject *WindowItem::contentItemData_at(QQmlListProperty<QObject> *property, qsizetype index)
 {
     auto *that = static_cast<WindowItem*>(property->object);
     QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->m_contentItem)->data();

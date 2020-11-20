@@ -47,7 +47,7 @@
 
 #include "applicationmanagerdbuscontextadaptor.h"
 #include "applicationmanager.h"
-#include "io.qt.applicationmanager_adaptor.h"
+#include "applicationmanager_adaptor.h"
 #include "dbuspolicy.h"
 #include "exception.h"
 #include "logging.h"

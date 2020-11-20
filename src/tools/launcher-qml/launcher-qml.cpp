@@ -410,8 +410,10 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     }
 
     QVariant resVar = runtimeParameters.value(qSL("resources"));
-    const QVariantList resources = (resVar.type() == QVariant::String) ? QVariantList{resVar}
-                                                                       : qdbus_cast<QVariantList>(resVar);
+    const QVariantList resources = (resVar.metaType() == QMetaType::fromType<QString>())
+            ? QVariantList{resVar}
+            : qdbus_cast<QVariantList>(resVar);
+
     for (const QVariant &resource : resources) {
         if (!loadResource(resource.toString()))
             qCWarning(LogQmlRuntime) << "Cannot register resource:" << resource.toString();
@@ -474,8 +476,10 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     }
 
     QVariant pluginPaths = runtimeParameters.value(qSL("pluginPaths"));
-    const QVariantList ppvl = (pluginPaths.type() == QVariant::String) ? QVariantList{pluginPaths}
-                                                                       : qdbus_cast<QVariantList>(pluginPaths);
+    const QVariantList ppvl = (pluginPaths.metaType() == QMetaType::fromType<QString>())
+            ? QVariantList{pluginPaths}
+            : qdbus_cast<QVariantList>(pluginPaths);
+
     for (const QVariant &v : ppvl) {
         const QString path = v.toString();
         if (QFileInfo(path).isRelative())
@@ -486,8 +490,10 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     qCDebug(LogQmlRuntime) << "Plugin paths:" << qApp->libraryPaths();
 
     QVariant imports = runtimeParameters.value(qSL("importPaths"));
-    const QVariantList ipvl = (imports.type() == QVariant::String) ? QVariantList{imports}
-                                                                   : qdbus_cast<QVariantList>(imports);
+    const QVariantList ipvl = (imports.metaType() == QMetaType::fromType<QString>())
+            ? QVariantList{imports}
+            : qdbus_cast<QVariantList>(imports);
+
     for (const QVariant &v : ipvl) {
         const QString path = v.toString();
         const QFileInfo fi(path);

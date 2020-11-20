@@ -189,15 +189,15 @@ bool Intent::checkParameterMatch(const QVariantMap &parameters) const
         const QVariant requiredValue = rit.value();
         const QVariant actualValue = pit.value();
 
-        switch (requiredValue.type()) {
-        case QVariant::String: {
+        switch (requiredValue.metaType().id()) {
+        case QMetaType::QString: {
             QRegularExpression regexp(requiredValue.toString());
             auto match = regexp.match(actualValue.toString());
             if (!match.hasMatch())
                 return false;
             break;
         }
-        case QVariant::List: {
+        case QMetaType::QVariantList: {
             bool foundMatch = false;
             const QVariantList rvlist = requiredValue.toList();
             for (const QVariant &rv2 : rvlist) {

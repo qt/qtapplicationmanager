@@ -72,18 +72,18 @@ void fixNullValuesForQml(QVariantMap &map)
 
 void fixNullValuesForQml(QVariant &v)
 {
-    switch (static_cast<int>(v.type())) {
-    case QVariant::List: {
+    switch (v.metaType().id()) {
+    case QMetaType::QVariantList: {
         QVariantList *list = qt6_v_cast<QVariantList>(&v.data_ptr());
         fixNullValuesForQml(*list);
         break;
     }
-    case QVariant::Map: {
+    case QMetaType::QVariantMap: {
         QVariantMap *map = qt6_v_cast<QVariantMap>(&v.data_ptr());
         fixNullValuesForQml(*map);
         break;
     }
-    case QVariant::Invalid: {
+    case QMetaType::UnknownType: {
         QVariant v2 = QVariant::fromValue(nullptr);
         std::swap(v.data_ptr(), v2.data_ptr());
         break;

@@ -686,15 +686,15 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
 
                   // this is easy to get wrong in the config file, so we do not just ignore a map here
                   // (this will in turn trigger the warning below)
-                  if (containerSelection.type() == QVariant::Map)
+                  if (containerSelection.metaType() == QMetaType::fromType<QVariantMap>())
                       containerSelection = QVariantList { containerSelection };
 
-                  if (containerSelection.type() == QVariant::String) {
+                  if (containerSelection.metaType() == QMetaType::fromType<QString>()) {
                       config.append(qMakePair(qSL("*"), containerSelection.toString()));
-                  } else if (containerSelection.type() == QVariant::List) {
+                  } else if (containerSelection.metaType() == QMetaType::fromType<QVariantList>()) {
                       QVariantList list = containerSelection.toList();
                       for (const QVariant &v : list) {
-                          if (v.type() == QVariant::Map) {
+                          if (v.metaType() == QMetaType::fromType<QVariantMap>()) {
                               QVariantMap map = v.toMap();
 
                               if (map.size() != 1) {
@@ -1106,7 +1106,7 @@ QVariant Configuration::useAMConsoleLogger() const
     // false = don't use the am logger
     // invalid = don't use the am logger when QT_MESSAGE_PATTERN is set
     const QVariant &val = m_data->logging.useAMConsoleLogger;
-    if (val.type() == QVariant::Bool)
+    if (val.metaType() == QMetaType::fromType<bool>())
         return val;
     else
         return QVariant();

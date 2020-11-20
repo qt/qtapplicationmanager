@@ -88,8 +88,8 @@ public:
     QQmlListProperty<QObject> contentItemData();
 
     static void contentItemData_append(QQmlListProperty<QObject> *property, QObject *value);
-    static int contentItemData_count(QQmlListProperty<QObject> *property);
-    static QObject *contentItemData_at(QQmlListProperty<QObject> *property, int index);
+    static qsizetype contentItemData_count(QQmlListProperty<QObject> *property);
+    static QObject *contentItemData_at(QQmlListProperty<QObject> *property, qsizetype index);
     static void contentItemData_clear(QQmlListProperty<QObject> *property);
 
 protected:

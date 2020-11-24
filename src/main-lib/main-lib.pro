@@ -4,11 +4,8 @@ MODULE = appman_main
 
 load(am-config)
 
-QT = core network qml core-private
+QT = core network qml core-private gui quick
 enable-widgets:QT *= widgets
-!headless:QT *= gui quick
-qtHaveModule(pssdp):QT *= pssdp
-qtHaveModule(pshellserver):QT *= pshellserver
 QT *= \
     appman_common-private \
     appman_application-private \
@@ -18,8 +15,8 @@ QT *= \
     appman_monitor-private \
     appman_shared_main-private \
     appman_intent_server-private \
+    appman_window-private \
 
-!headless:QT *= appman_window-private
 !disable-external-dbus-interfaces:qtHaveModule(dbus):QT *= dbus appman_dbus-private
 
 CONFIG *= static internal_module
@@ -35,8 +32,6 @@ HEADERS += \
     configuration_p.h \
     defaultconfiguration.h \
     applicationinstaller.h \
-
-!headless:HEADERS += \
     windowframetimer.h \
 
 SOURCES += \
@@ -44,8 +39,6 @@ SOURCES += \
     configuration.cpp \
     defaultconfiguration.cpp \
     applicationinstaller.cpp \
-
-!headless:SOURCES += \
     windowframetimer.cpp \
 
 load(qt_module)

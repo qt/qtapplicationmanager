@@ -42,8 +42,6 @@
 
 #pragma once
 
-#if !defined(AM_HEADLESS)
-
 #include <QtAppManSharedMain/frametimer.h>
 #include <QtAppManCommon/global.h>
 
@@ -74,5 +72,3 @@ private:
 };
 
 QT_END_NAMESPACE_AM
-
-#endif // !AM_HEADLESS

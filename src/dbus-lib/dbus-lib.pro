@@ -8,6 +8,7 @@ QT = core dbus
 QT_FOR_PRIVATE *= \
     appman_common-private \
     appman_manager-private \
+    appman_window-private \
 
 CONFIG *= static internal_module
 CONFIG -= create_cmake
@@ -19,6 +20,7 @@ HEADERS += \
     abstractdbuscontextadaptor.h \
     applicationmanagerdbuscontextadaptor.h \
     notificationmanagerdbuscontextadaptor.h \
+    windowmanagerdbuscontextadaptor.h \
 
 SOURCES += \
     dbuspolicy.cpp \
@@ -26,22 +28,17 @@ SOURCES += \
     abstractdbuscontextadaptor.cpp \
     applicationmanagerdbuscontextadaptor.cpp \
     notificationmanagerdbuscontextadaptor.cpp \
+    windowmanagerdbuscontextadaptor.cpp \
 
 ADAPTORS_XML = \
     io.qt.applicationmanager.xml \
+    io.qt.windowmanager.xml \
     org.freedesktop.notifications.xml \
 
 !disable-installer {
     HEADERS += packagemanagerdbuscontextadaptor.h
     SOURCES += packagemanagerdbuscontextadaptor.cpp
     ADAPTORS_XML += io.qt.packagemanager.xml
-}
-
-!headless{
-    QT *= appman_window-private
-    HEADERS += windowmanagerdbuscontextadaptor.h
-    SOURCES += windowmanagerdbuscontextadaptor.cpp
-    ADAPTORS_XML += io.qt.windowmanager.xml
 }
 
 OTHER_FILES = \

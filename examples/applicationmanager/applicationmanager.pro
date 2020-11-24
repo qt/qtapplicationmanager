@@ -1,6 +1,5 @@
 load(am-config)
 
-requires(!headless)
 requires(!disable-installer)
 
 TEMPLATE = subdirs
@@ -16,9 +15,6 @@ SUBDIRS = \
     process-status \
     startup-plugin \
     intents \
-
-# remove the !headless and handle this in the example when we switch to the new configure system
-SUBDIRS += \
     custom-appman \
 
 linux:!android:SUBDIRS += \

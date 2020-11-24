@@ -4,8 +4,7 @@ MODULE = appman_window
 
 load(am-config)
 
-QT = core network qml core-private
-!headless:QT *= gui quick
+QT = core network qml core-private gui quick
 QT_FOR_PRIVATE *= \
     appman_common-private \
     appman_application-private \
@@ -15,7 +14,22 @@ QT_FOR_PRIVATE *= \
 CONFIG *= static internal_module
 CONFIG -= create_cmake
 
-multi-process:!headless {
+HEADERS += \
+    window.h \
+    windowitem.h \
+    inprocesswindow.h \
+    windowmanager.h \
+    windowmanager_p.h \
+    touchemulation.h \
+
+SOURCES += \
+    window.cpp \
+    windowitem.cpp \
+    inprocesswindow.cpp \
+    windowmanager.cpp \
+    touchemulation.cpp \
+
+multi-process {
     HEADERS += \
         waylandcompositor.h \
         waylandwindow.h \
@@ -40,23 +54,8 @@ multi-process:!headless {
     PKGCONFIG += wayland-server
 }
 
-!headless:HEADERS += \
-    window.h \
-    windowitem.h \
-    inprocesswindow.h \
-    windowmanager.h \
-    windowmanager_p.h \
-    touchemulation.h \
-
-!headless:SOURCES += \
-    window.cpp \
-    windowitem.cpp \
-    inprocesswindow.cpp \
-    windowmanager.cpp \
-    touchemulation.cpp \
-
 # build the touch emulation only on X11 setups
-!headless:config_touchemulation {
+config_touchemulation {
     PKGCONFIG *= xcb x11 xi
     QT *= gui-private testlib
     HEADERS += touchemulation_x11_p.h

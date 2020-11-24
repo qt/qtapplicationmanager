@@ -5,7 +5,8 @@ requires(linux|android|macos|ios|win32:!winrt)
 }
 requires(!Qt_version_needs_to_be_at_least_5_15_0)
 
-!tools-only:!qtHaveModule(qml):error("The QtQml library is required for a non 'tools-only' build")
+!tools-only:requires(qtHaveModule(gui))
+!tools-only:requires(qtHaveModule(qml))
 
 TEMPLATE = subdirs
 CONFIG += ordered
@@ -22,15 +23,15 @@ else:contains(QT_BUILD_PARTS, "examples"):CONFIG += enable-examples
     load(configure)
     qtCompileTest(libarchive)
     qtCompileTest(libyaml)
-    !headless:qtHaveModule(gui):qtCompileTest(touchemulation)
+    qtHaveModule(gui):qtCompileTest(touchemulation)
 }
 
-qtHaveModule(waylandcompositor):qtHaveModule(quick):qtConfig(opengl):CONFIG += am_compatible_compositor
+qtHaveModule(waylandcompositor):qtHaveModule(quick):qtHaveModule(gui):qtConfig(opengl):CONFIG += am_compatible_compositor
 
 load(am-config)
 
 force-single-process:force-multi-process:error("You cannot both specify force-single-process and force-multi-process")
-force-multi-process:!headless:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")
+force-multi-process:!am_compatible_compositor:error("You forced multi-process mode, but the QtCompositor module is not available")
 
 !disable-installer:if(linux|force-libcrypto) {
     !if(contains(QT_CONFIG,"openssl")|contains(QT_CONFIG,"openssl-linked")|contains(QT_CONFIG,"ssl")):error("Qt was built without OpenSSL support.")
@@ -95,7 +96,6 @@ printConfigLine("Debug or release", $$check_debug, white)
 printConfigLine("Installation prefix", $$INSTALL_PREFIX, auto)
 printConfigLine("Tools only build", $$yesNo(CONFIG(tools-only)), auto)
 printConfigLine("Enable support for QtWidgets", $$yesNo(CONFIG(enable-widgets)), auto)
-printConfigLine("Headless", $$yesNo(CONFIG(headless)), auto)
 printConfigLine("Touch emulation", $$yesNo(CONFIG(config_touchemulation)), auto)
 printConfigLine("QtCompositor support", $$yesNo(CONFIG(am_compatible_compositor)), auto)
 printConfigLine("Multi-process mode", $$check_multi, auto)
@@ -104,8 +104,6 @@ printConfigLine("Ext. DBus interfaces enabled", $$yesNo(!CONFIG(disable-external
 printConfigLine("Tests enabled", $$yesNo(CONFIG(enable-tests)), auto)
 printConfigLine("Examples enabled", $$yesNo(CONFIG(enable-examples)), auto)
 !disable-installer:printConfigLine("Crypto backend", $$check_crypto, auto)
-printConfigLine("SSDP support", $$yesNo(qtHaveModule(pssdp)), auto)
-printConfigLine("Shellserver support", $$yesNo(qtHaveModule(pshellserver)), auto)
 printConfigLine("Genivi support", $$yesNo(qtHaveModule(geniviextras)), auto)
 unix:printConfigLine("libbacktrace support", $$check_libbacktrace, auto)
 windows:printConfigLine("StackWalker support", $$check_stackwalker, auto)

@@ -3,8 +3,7 @@ TARGET   = appman-launcher-qml
 
 load(am-config)
 
-QT = qml dbus core-private
-!headless:QT += quick gui gui-private quick-private
+QT = qml dbus core-private quick gui gui-private quick-private
 QT *= \
     appman_common-private \
     appman_monitor-private \

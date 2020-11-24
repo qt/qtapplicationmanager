@@ -151,10 +151,8 @@ signals:
     void stateChanged(QT_PREPEND_NAMESPACE_AM(Am::RunState) newState);
     void finished(int exitCode, Am::ExitStatus status);
 
-#if !defined(AM_HEADLESS)
     // these signals are for in-process mode runtimes only
     void inProcessSurfaceItemReady(QSharedPointer<InProcessSurfaceItem> window);
-#endif
 
 protected:
     explicit AbstractRuntime(AbstractContainer *container, Application *app, AbstractRuntimeManager *manager);

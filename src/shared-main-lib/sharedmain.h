@@ -45,9 +45,7 @@
 #include <QtAppManCommon/global.h>
 #include <QVariantMap>
 #include <QStringList>
-#if !defined(AM_HEADLESS)
-#  include <QSurfaceFormat>
-#endif
+#include <QSurfaceFormat>
 
 QT_FORWARD_DECLARE_STRUCT(QQmlDebuggingEnabler)
 
@@ -64,21 +62,16 @@ public:
     void setupIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
     void setupQmlDebugging(bool qmlDebugging);
     void setupLogging(bool verbose, const QStringList &loggingRules, const QString &messagePattern, const QVariant &useAMConsoleLogger);
-    void setupOpenGL(const QVariantMap &openGLConfiguration);
-
-#if !defined(AM_HEADLESS)
+    void setupOpenGL(const QVariantMap &openGLConfiguration);\
     void checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const;
-#endif
 
 private:
     QQmlDebuggingEnabler *m_debuggingEnabler = nullptr;
 
-#if !defined(AM_HEADLESS)
     static bool s_initialized;
     QSurfaceFormat::OpenGLContextProfile m_requestedOpenGLProfile = QSurfaceFormat::NoProfile;
     int m_requestedOpenGLMajorVersion = -1;
     int m_requestedOpenGLMinorVersion = -1;
-#endif
 };
 
 QT_END_NAMESPACE_AM

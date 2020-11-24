@@ -56,17 +56,6 @@ QT_FORWARD_DECLARE_CLASS(QQuickWindow)
 
 QT_BEGIN_NAMESPACE_AM
 
-// maybe make this configurable for specific workloads?
-class HeadlessIncubationController : public QObject, public QQmlIncubationController // clazy:exclude=missing-qobject-macro
-{
-public:
-    HeadlessIncubationController(QObject *parent);
-
-protected:
-    void timerEvent(QTimerEvent *) override;
-};
-
-
 class LauncherMain;
 class DBusApplicationInterface;
 
@@ -89,7 +78,6 @@ private:
     QVariantMap m_configuration;
     bool m_launched = false;
     bool m_quickLaunched;
-#if !defined(AM_HEADLESS)
     QQuickWindow *m_window = nullptr;
     QVector<QPointer<QQuickWindow>> m_allWindows;
 
@@ -100,8 +88,6 @@ protected:
 
 private slots:
     void updateSlowAnimations(bool isSlow);
-
-#endif
 };
 
 QT_END_NAMESPACE_AM

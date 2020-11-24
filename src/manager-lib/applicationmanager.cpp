@@ -832,13 +832,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
             }
         };
 
-#if defined(AM_HEADLESS)
-        bool tryStartNow = true;
-#else
-        bool tryStartNow = isWindowManagerCompositorReady();
-#endif
-
-        if (tryStartNow) {
+        if (isWindowManagerCompositorReady()) {
             return tryStartInContainer();
         } else {
             connect(this, &ApplicationManager::windowManagerCompositorReadyChanged, tryStartInContainer);

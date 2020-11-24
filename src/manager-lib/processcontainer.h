@@ -44,7 +44,9 @@
 
 #include <QtAppManManager/abstractcontainer.h>
 #include <QtAppManManager/amnamespace.h>
-#include <QProcess>
+
+QT_FORWARD_DECLARE_CLASS(QProcess)
+QT_FORWARD_DECLARE_CLASS(QProcessEnvironment)
 
 QT_BEGIN_NAMESPACE_AM
 

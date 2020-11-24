@@ -72,25 +72,12 @@
 #include <QQmlDebuggingEnabler>
 #include <QNetworkInterface>
 #include <private/qabstractanimation_p.h>
-
-#if !defined(AM_HEADLESS)
-#  include <QGuiApplication>
-#  include <QQuickView>
-#  include <QQuickItem>
-#  include <QInputDevice>
-#  include <private/qopenglcontext_p.h>
-#  include <QLocalServer>
-#endif
-
-#if defined(QT_PSHELLSERVER_LIB)
-#  include <PShellServer/PTelnetServer>
-#  include <PShellServer/PAbstractShell>
-#  include <PShellServer/PDeclarativeShell>
-#endif
-
-#if defined(QT_PSSDP_LIB)
-#  include <PSsdp/PSsdpService>
-#endif
+#include <QGuiApplication>
+#include <QQuickView>
+#include <QQuickItem>
+#include <QInputDevice>
+#include <private/qopenglcontext_p.h>
+#include <QLocalServer>
 
 #include "global.h"
 #include "logging.h"
@@ -123,16 +110,14 @@
 #include "intentserver.h"
 #include "intentaminterface.h"
 
-#if !defined(AM_HEADLESS)
-#  include "windowmanager.h"
-#  include "qmlinprocessapplicationmanagerwindow.h"
-#  if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
-#    include "windowmanagerdbuscontextadaptor.h"
-#  endif
-#  include "touchemulation.h"
-#  include "windowframetimer.h"
-#  include "gpustatus.h"
+#include "windowmanager.h"
+#include "qmlinprocessapplicationmanagerwindow.h"
+#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+#  include "windowmanagerdbuscontextadaptor.h"
 #endif
+#include "touchemulation.h"
+#include "windowframetimer.h"
+#include "gpustatus.h"
 
 #include "configuration.h"
 #include "utilities.h"
@@ -193,19 +178,12 @@ Main::Main(int &argc, char **argv)
 
 Main::~Main()
 {
-#if defined(QT_PSSDP_LIB)
-    if (m_ssdpOk)
-        m_ssdp.setActive(false);
-#endif // QT_PSSDP_LIB
-
     delete m_engine;
 
     delete m_intentServer;
     delete m_notificationManager;
-#  if !defined(AM_HEADLESS)
     delete m_windowManager;
     delete m_view;
-#  endif
     delete m_applicationManager;
 #if !defined(AM_DISABLE_INSTALLER)
     delete m_applicationInstaller;
@@ -284,8 +262,6 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupWindowManager(cfg->waylandSocketName(), cfg->waylandExtraSockets(),
                        cfg->slowAnimations(), cfg->noUiWatchdog());
     setupTouchEmulation(cfg->enableTouchEmulation());
-    setupShellServer(QString(), 0); // remove
-    setupSSDPService();
 
     setupDBus(std::bind(&Configuration::dbusRegistration, cfg, std::placeholders::_1),
               std::bind(&Configuration::dbusPolicy, cfg, std::placeholders::_1));
@@ -331,15 +307,11 @@ void Main::shutDown(int exitCode)
     } else {
         down |= QuickLauncherDown;
     }
-#if !defined(AM_HEADLESS)
     if (m_windowManager) {
         connect(m_windowManager, &WindowManager::shutDownFinished,
                 this, []() { checkShutDownFinished(WindowManagerDown); });
         m_windowManager->shutDown();
     }
-#else
-    checkShutDownFinished(WindowManagerDown);
-#endif
 
     QTimer::singleShot(5000, [exitCode] {
         QStringList resources;
@@ -632,17 +604,12 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
 
     qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 2, 0, "Notification");
     qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager.Application", 2, 0, "ApplicationInterfaceExtension");
-
-#if !defined(AM_HEADLESS)
     qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
-#endif
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
-#if !defined(AM_HEADLESS)
     qmlRegisterType<WindowFrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
-#endif
     qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
@@ -666,10 +633,6 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
 
 void Main::setupWindowTitle(const QString &title, const QString &iconPath)
 {
-#if defined(AM_HEADLESS)
-    Q_UNUSED(title)
-    Q_UNUSED(iconPath)
-#else
     // For development only: set an icon, so you know which window is the AM
     if (Q_UNLIKELY(!isRunningOnEmbedded())) {
         if (!iconPath.isEmpty())
@@ -677,18 +640,11 @@ void Main::setupWindowTitle(const QString &title, const QString &iconPath)
         if (!title.isEmpty())
             QGuiApplication::setApplicationDisplayName(title);
     }
-#endif // AM_HEADLESS
 }
 
 void Main::setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets,
                               bool slowAnimations, bool uiWatchdog)
 {
-#if defined(AM_HEADLESS)
-    Q_UNUSED(waylandExtraSockets)
-    Q_UNUSED(waylandSocketName)
-    Q_UNUSED(slowAnimations)
-    Q_UNUSED(uiWatchdog)
-#else
     QUnifiedTimer::instance()->setSlowModeEnabled(slowAnimations);
 
     m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName);
@@ -764,14 +720,10 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
                      m_windowManager, &WindowManager::setupInProcessRuntime);
     QObject::connect(m_applicationManager, &ApplicationManager::applicationWasActivated,
                      m_windowManager, &WindowManager::raiseApplicationWindow);
-#endif
 }
 
 void Main::setupTouchEmulation(bool enableTouchEmulation)
 {
-#if defined(AM_HEADLESS)
-    Q_UNUSED(enableTouchEmulation)
-#else
     if (enableTouchEmulation) {
         if (TouchEmulation::isSupported()) {
             if (TouchEmulation::hasPhysicalTouchscreen()) {
@@ -787,7 +739,6 @@ void Main::setupTouchEmulation(bool enableTouchEmulation)
                                       "build time or the platform does not support it.";
         }
     }
-#endif
 }
 
 void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
@@ -822,9 +773,6 @@ void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
 
 void Main::showWindow(bool showFullscreen)
 {
-#if defined(AM_HEADLESS)
-    Q_UNUSED(showFullscreen)
-#else
     setQuitOnLastWindowClosed(false);
     connect(this, &QGuiApplication::lastWindowClosed, this, [this]() { shutDown(); });
 
@@ -867,11 +815,11 @@ void Main::showWindow(bool showFullscreen)
         static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {
             // this is a queued signal, so there may be still one in the queue after calling disconnect()
             if (conn) {
-#  if defined(Q_CC_MSVC)
+#if defined(Q_CC_MSVC)
                 qApp->disconnect(conn); // MSVC cannot distinguish between static and non-static overloads in lambdas
-#  else
+#else
                 QObject::disconnect(conn);
-#  endif
+#endif
                 auto st = StartupTimer::instance();
                 st->checkFirstFrame();
                 st->createAutomaticReport(qSL("System UI"));
@@ -901,82 +849,7 @@ void Main::showWindow(bool showFullscreen)
         });
         StartupTimer::instance()->createAutomaticReport(qSL("System UI"));
     }
-#endif
 }
-
-void Main::setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false)
-{
-     //TODO: could be delayed as well
-#if defined(QT_PSHELLSERVER_LIB)
-    struct AMShellFactory : public PAbstractShellFactory
-    {
-    public:
-        AMShellFactory(QQmlEngine *engine, QObject *object)
-            : m_engine(engine)
-            , m_object(object)
-        {
-            Q_ASSERT(engine);
-            Q_ASSERT(object);
-        }
-
-        PAbstractShell *create(QObject *parent)
-        {
-            return new PDeclarativeShell(m_engine, m_object, parent);
-        }
-
-    private:
-        QQmlEngine *m_engine;
-        QObject *m_object;
-    };
-
-    // have a JavaScript shell reachable via telnet protocol
-    PTelnetServer telnetServer;
-    AMShellFactory shellFactory(m_engine, m_engine->rootObjects().constFirst());
-    telnetServer.setShellFactory(&shellFactory);
-
-    if (!telnetServer.listen(QHostAddress(telnetAddress), telnetPort)) {
-        throw Exception("could not start Telnet server");
-    } else {
-        qCDebug(LogSystem) << "Telnet server listening on \n " << telnetServer.serverAddress().toString()
-                           << "port" << telnetServer.serverPort();
-    }
-
-    // register all objects that should be reachable from the telnet shell
-    m_engine->rootContext()->setContextProperty("_ApplicationManager", m_am);
-    m_engine->rootContext()->setContextProperty("_WindowManager", m_wm);
-#else
-    Q_UNUSED(telnetAddress)
-    Q_UNUSED(telnetPort)
-#endif // QT_PSHELLSERVER_LIB
-}
-
-void Main::setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false)
-{
-     //TODO: could be delayed as well
-#if defined(QT_PSSDP_LIB)
-    // announce ourselves via SSDP (the discovery protocol of UPnP)
-
-    QUuid uuid = QUuid::createUuid(); // should really be QUuid::Time version...
-    PSsdpService ssdp;
-
-    bool ssdpOk = ssdp.initialize();
-    if (!ssdpOk) {
-        throw Exception(LogSystem, "could not initialze SSDP service");
-    } else {
-        ssdp.setDevice(uuid, QLatin1String("application-manager"), 1, QLatin1String("pelagicore.com"));
-
-#  if defined(QT_PSHELLSERVER_LIB)
-        QMap<QString, QString> extraTelnet;
-        extraTelnet.insert("LOCATION", QString::fromLatin1("${HOST}:%1").arg(telnetServer.serverPort()));
-        ssdp.addService(QLatin1String("jsshell"), 1, QLatin1String("pelagicore.com"), extraTelnet);
-#  endif // QT_PSHELLSERVER_LIB
-
-        ssdp.setActive(true);
-    }
-    m_engine->rootContext()->setContextProperty("ssdp", &ssdp);
-#endif // QT_PSSDP_LIB
-}
-
 
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 
@@ -1080,12 +953,10 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
                      "io.qt.ApplicationManager", "/PackageManager");
     }
 #  endif
-#  if !defined(AM_HEADLESS)
     addInterface(new WindowManagerDBusContextAdaptor(m_windowManager),
                  "io.qt.ApplicationManager", "/WindowManager");
     addInterface(new NotificationManagerDBusContextAdaptor(m_notificationManager),
                  "org.freedesktop.Notifications", "/org/freedesktop/Notifications");
-#  endif
     addInterface(new ApplicationManagerDBusContextAdaptor(m_applicationManager),
                  "io.qt.ApplicationManager", "/ApplicationManager");
 

@@ -4,8 +4,7 @@ MODULE = appman_manager
 
 load(am-config)
 
-QT = core network qml
-!headless:QT *= gui gui-private quick qml-private quick-private
+QT = core network qml gui gui-private quick qml-private quick-private
 QT_FOR_PRIVATE *= \
     appman_common-private \
     appman_application-private \
@@ -60,10 +59,8 @@ HEADERS += \
     package.h \
     packagemanager.h \
     packagemanager_p.h \
-
-!headless:HEADERS += \
     qmlinprocessapplicationmanagerwindow.h \
-    inprocesssurfaceitem.h
+    inprocesssurfaceitem.h \
 
 qtHaveModule(qml):HEADERS += \
     qmlinprocessruntime.h \
@@ -88,10 +85,8 @@ SOURCES += \
     processstatus.cpp \
     packagemanager.cpp \
     package.cpp \
-
-!headless:SOURCES += \
     qmlinprocessapplicationmanagerwindow.cpp \
-    inprocesssurfaceitem.cpp
+    inprocesssurfaceitem.cpp \
 
 qtHaveModule(qml):SOURCES += \
     qmlinprocessruntime.cpp \

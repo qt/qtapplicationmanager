@@ -4,9 +4,8 @@ MODULE = appman_launcher
 
 load(am-config)
 
-QT = qml dbus core-private
+QT = qml dbus core-private quick gui gui-private quick-private
 enable-widgets:QT *= widgets
-!headless:QT += quick gui gui-private quick-private
 QT_FOR_PRIVATE *= \
     appman_common-private \
     appman_shared_main-private \
@@ -25,12 +24,10 @@ SOURCES += \
     dbusapplicationinterfaceextension.cpp \
     dbusnotification.cpp \
     launchermain.cpp \
-    intentclientdbusimplementation.cpp
-
-!headless:SOURCES += \
+    intentclientdbusimplementation.cpp \
     applicationmanagerwindow.cpp \
 
-!headless:qtHaveModule(waylandclient) {
+qtHaveModule(waylandclient) {
     QT *= waylandclient waylandclient-private
     CONFIG *= wayland-scanner generated_privates
     private_headers.CONFIG += no_check_exists
@@ -48,9 +45,7 @@ HEADERS += \
     dbusapplicationinterfaceextension.h \
     dbusnotification.h \
     launchermain.h \
-    intentclientdbusimplementation.h
-
-!headless:HEADERS += \
-    applicationmanagerwindow_p.h
+    intentclientdbusimplementation.h \
+    applicationmanagerwindow_p.h \
 
 load(qt_module)

@@ -47,10 +47,7 @@
 #include <QtAppManCommon/global.h>
 #include <functional>
 
-#if defined(AM_HEADLESS)
-#  include <QCoreApplication>
-typedef QCoreApplication MainBase;
-#elif defined(AM_ENABLE_WIDGETS)
+#if defined(AM_ENABLE_WIDGETS)
 #  include <QApplication>
 #  include <QSurfaceFormat>
 typedef QApplication MainBase;
@@ -131,9 +128,6 @@ protected:
     void setupWindowTitle(const QString &title, const QString &iconPath);
     void setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets, bool slowAnimations, bool uiWatchdog);
     void setupTouchEmulation(bool enableTouchEmulation);
-
-    void setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false);
 
     enum SystemProperties {
         SP_ThirdParty = 0,

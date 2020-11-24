@@ -55,12 +55,9 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QtCore/private/qcoreapplication_p.h>
-
-#if !defined(AM_HEADLESS)
-#  include <QGuiApplication>
-#  include <QIcon>
-#  include <private/qopenglcontext_p.h>
-#endif
+#include <QGuiApplication>
+#include <QIcon>
+#include <private/qopenglcontext_p.h>
 
 #include "global.h"
 #include "logging.h"
@@ -78,7 +75,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-#if !defined(AM_HEADLESS)
 static QMap<int, QString> openGLProfileNames = {
     { QSurfaceFormat::NoProfile,            qSL("default") },
     { QSurfaceFormat::CoreProfile,          qSL("core") },
@@ -86,16 +82,13 @@ static QMap<int, QString> openGLProfileNames = {
 };
 
 bool QtAM::SharedMain::s_initialized = false;
-#endif
 
 SharedMain::SharedMain()
 {
-#if !defined(AM_HEADLESS)
     if (Q_UNLIKELY(!s_initialized || !QCoreApplication::instance())) {
         qCritical() << "ERROR: Q(Gui)Application must be instantiated after SharedMain::initialize "
                        "has been called and before SharedMain is instantiated";
     }
-#endif
 }
 
 SharedMain::~SharedMain()
@@ -106,7 +99,6 @@ SharedMain::~SharedMain()
 // Initialization routine that needs to be called BEFORE the Q*Application constructor
 void SharedMain::initialize()
 {
-#if !defined(AM_HEADLESS)
     if (Q_UNLIKELY(QCoreApplication::instance()))
         qCritical() << "ERROR: SharedMain::initialize must be called before Q(Gui)Application is instantiated.";
 
@@ -121,11 +113,10 @@ void SharedMain::initialize()
     // in setupOpenGL().
     qt_gl_set_global_share_context(new QOpenGLContext());
 
-#  if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
+#if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
     // set a reasonable default for OSes/distros that do not set this by default
     if (!qEnvironmentVariableIsSet("XDG_RUNTIME_DIR"))
         setenv("XDG_RUNTIME_DIR", QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toLocal8Bit(), 1);
-#  endif
 #endif
 }
 
@@ -139,13 +130,8 @@ int &SharedMain::preConstructor(int &argc)
 
 void SharedMain::setupIconTheme(const QStringList &themeSearchPaths, const QString &themeName)
 {
-#if defined(AM_HEADLESS)
-    Q_UNUSED(themeSearchPaths)
-    Q_UNUSED(themeName)
-#else
     QIcon::setThemeSearchPaths(themeSearchPaths);
     QIcon::setThemeName(themeName);
-#endif
 }
 
 void SharedMain::setupQmlDebugging(bool qmlDebugging)
@@ -183,9 +169,6 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
 
 void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
 {
-#if defined(AM_HEADLESS)
-    Q_UNUSED(openGLConfiguration)
-#else
     QString profileName = openGLConfiguration.value(qSL("desktopProfile")).toString();
     int majorVersion = openGLConfiguration.value(qSL("esMajorVersion"), -1).toInt();
     int minorVersion = openGLConfiguration.value(qSL("esMinorVersion"), -1).toInt();
@@ -258,10 +241,8 @@ void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
 
     // check if we got what we requested on the OpenGL side
     checkOpenGLFormat("global shared context", globalContext->format());
-#endif
 }
 
-#if !defined(AM_HEADLESS)
 void SharedMain::checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const
 {
     if ((m_requestedOpenGLProfile != QSurfaceFormat::NoProfile)
@@ -283,6 +264,5 @@ void SharedMain::checkOpenGLFormat(const char *what, const QSurfaceFormat &forma
         }
     }
 }
-#endif
 
 QT_END_NAMESPACE_AM

@@ -88,7 +88,6 @@ private:
     bool m_foundInfo = false;
     bool m_foundIcon = false;
     QString m_iconFileName;
-    bool m_locked = false;
     uint m_extractedFileCount = 0;
     bool m_managerApproval = false;
     QScopedPointer<PackageInfo> m_package;

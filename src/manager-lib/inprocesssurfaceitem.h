@@ -42,8 +42,6 @@
 
 #pragma once
 
-#if !defined(AM_HEADLESS)
-
 #include <QColor>
 #include <QQuickItem>
 #include <QPointer>
@@ -106,5 +104,3 @@ QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem*))
 Q_DECLARE_METATYPE(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)>)
-
-#endif  // !AM_HEADLESS

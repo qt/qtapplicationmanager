@@ -85,7 +85,7 @@ this simple case, we use the application manager's default YAML parsing, so we i
 then calling the relevant setup routines on the \c Main object.
 
 Depending on your application manager's configuration, the \c Main object can be derived
-differently: headless, with widgets, or standard. So, you need to know the correct base class for
+differently: with widgets, or standard. So, you need to know the correct base class for
 the exec() call. However, the \c MainBase typedef circumvents this problem.
 
 Most functions in the application manager throw exceptions that are derived from \c std::exception,

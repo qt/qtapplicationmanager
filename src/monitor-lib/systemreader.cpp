@@ -72,11 +72,9 @@ QT_END_NAMESPACE_AM
 #  include <QProcess>
 #  include <QCoreApplication>
 #  include <QAtomicInteger>
-#  if !defined(AM_HEADLESS)
-#    include <QOffscreenSurface>
-#    include <QOpenGLContext>
-#    include <QOpenGLFunctions>
-#  endif
+#  include <QOffscreenSurface>
+#  include <QOpenGLContext>
+#  include <QOpenGLFunctions>
 
 #  include <sys/eventfd.h>
 #  include <fcntl.h>
@@ -167,7 +165,6 @@ GpuVendor::Vendor GpuVendor::get()
 void GpuVendor::fetch()
 {
     QByteArray vendor;
-#  if !defined(AM_HEADLESS)
     auto readVendor = [&vendor](QOpenGLContext *c) {
         const GLubyte *p = c->functions()->glGetString(GL_VENDOR);
         if (p)
@@ -187,7 +184,6 @@ void GpuVendor::fetch()
             context.doneCurrent();
         }
     }
-#  endif
     if (vendor.contains("intel"))
         s_vendor = Intel;
     else if (vendor.contains("nvidia"))
@@ -811,6 +807,8 @@ qreal IoReader::readLoadValue()
 MemoryThreshold::MemoryThreshold(const QList<qreal> &thresholds)
 {
     Q_UNUSED(thresholds)
+    Q_UNUSED(m_initialized)
+    Q_UNUSED(m_enabled)
 }
 
 MemoryThreshold::~MemoryThreshold()
@@ -834,7 +832,11 @@ bool MemoryThreshold::setEnabled(bool enabled)
 
 MemoryWatcher::MemoryWatcher(QObject *parent)
     : QObject(parent)
-{ }
+{
+    Q_UNUSED(m_memLimit)
+    Q_UNUSED(hasMemoryLowWarning)
+    Q_UNUSED(hasMemoryCriticalWarning)
+}
 
 void MemoryWatcher::setThresholds(qreal warning, qreal critical)
 {

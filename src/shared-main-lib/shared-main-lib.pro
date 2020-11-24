@@ -4,8 +4,7 @@ MODULE = appman_shared_main
 
 load(am-config)
 
-QT = core network qml
-!headless:QT *= gui gui-private quick
+QT = core network qml gui gui-private quick
 QT *= \
     appman_common-private \
     appman_monitor-private \
@@ -20,6 +19,8 @@ HEADERS += \
     iostatus.h \
     memorystatus.h \
     monitormodel.h \
+    frametimer.h \
+    gpustatus.h \
 
 SOURCES += \
     sharedmain.cpp \
@@ -28,12 +29,6 @@ SOURCES += \
     iostatus.cpp \
     memorystatus.cpp \
     monitormodel.cpp \
-
-!headless:HEADERS += \
-    frametimer.h \
-    gpustatus.h \
-
-!headless:SOURCES += \
     frametimer.cpp \
     gpustatus.cpp \
 

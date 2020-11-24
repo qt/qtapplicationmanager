@@ -105,7 +105,7 @@ SUBDIRS = \
         launcher_lib \
 
     # This tool links against everything to extract the Qml type information
-    !disable-installer:qtHaveModule(qml):qtHaveModule(dbus):!headless:SUBDIRS += \
+    !disable-installer:qtHaveModule(qml):qtHaveModule(dbus):SUBDIRS += \
         tools_dumpqmltypes \
 
     multi-process:qtHaveModule(qml):qtHaveModule(dbus):SUBDIRS += \

@@ -1,5 +1,3 @@
-requires(!headless)
-
 TEMPLATE = app
 TARGET   = appman-dumpqmltypes
 

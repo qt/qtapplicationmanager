@@ -51,7 +51,7 @@
 
 #include <QtAppManCommon/qtyaml.h>
 
-#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+#if defined(QT_WAYLANDCLIENT_LIB)
 #  include <QWindow>
 #  include "waylandqtamclientextension_p.h"
 #endif
@@ -78,7 +78,7 @@ LauncherMain *LauncherMain::instance()
 
 void LauncherMain::registerWaylandExtensions() Q_DECL_NOEXCEPT
 {
-#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+#if defined(QT_WAYLANDCLIENT_LIB)
      m_waylandExtension = new WaylandQtAMClientExtension();
      connect(m_waylandExtension, &WaylandQtAMClientExtension::windowPropertyChanged,
              this, &LauncherMain::windowPropertyChanged);
@@ -155,7 +155,7 @@ QStringList LauncherMain::iconThemeSearchPaths() const
 
 QVariantMap LauncherMain::windowProperties(QWindow *window) const
 {
-#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+#if defined(QT_WAYLANDCLIENT_LIB)
     if (m_waylandExtension && window)
         return m_waylandExtension->windowProperties(window);
 #else
@@ -166,7 +166,7 @@ QVariantMap LauncherMain::windowProperties(QWindow *window) const
 
 void LauncherMain::setWindowProperty(QWindow *window, const QString &name, const QVariant &value)
 {
-#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+#if defined(QT_WAYLANDCLIENT_LIB)
     if (m_waylandExtension && window)
         m_waylandExtension->setWindowProperty(window, name, value);
 #else
@@ -178,7 +178,7 @@ void LauncherMain::setWindowProperty(QWindow *window, const QString &name, const
 
 void LauncherMain::clearWindowPropertyCache(QWindow *window)
 {
-#if !defined(AM_HEADLESS) && defined(QT_WAYLANDCLIENT_LIB)
+#if defined(QT_WAYLANDCLIENT_LIB)
     if (m_waylandExtension && window)
         m_waylandExtension->clearWindowPropertyCache(window);
 #else

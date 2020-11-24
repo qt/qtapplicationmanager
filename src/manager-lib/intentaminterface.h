@@ -240,7 +240,6 @@ private:
     Q_DISABLE_COPY(IntentServerHandler)
     Intent *m_intent = nullptr; // DRY: just a container for our otherwise needed members vars
     QVector<Intent *> m_registeredIntents;
-    bool m_completed = false;
 };
 
 QT_END_NAMESPACE_AM

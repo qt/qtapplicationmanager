@@ -58,9 +58,10 @@ DeinstallationTask::DeinstallationTask(Package *package, const QString &installa
     , m_package(package)
     , m_installationPath(installationPath)
     , m_documentPath(documentPath)
-    , m_forceDeinstallation(forceDeinstallation)
     , m_keepDocuments(keepDocuments)
 {
+    Q_UNUSED(forceDeinstallation) // this was used in the past to deal with SD-Card problems
+
     m_packageId = m_package->id(); // in base class
 }
 

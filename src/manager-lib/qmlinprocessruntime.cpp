@@ -49,14 +49,10 @@
 #include <private/qv4engine_p.h>
 #include <private/qqmlcontext_p.h>
 #include <private/qqmlcontextdata_p.h>
+#include <QQuickView>
 
-#if !defined(AM_HEADLESS)
-#  include <QQuickView>
-
-#  include "qmlinprocessapplicationmanagerwindow.h"
-#  include "inprocesssurfaceitem.h"
-#endif
-
+#include "qmlinprocessapplicationmanagerwindow.h"
+#include "inprocesssurfaceitem.h"
 #include "logging.h"
 #include "application.h"
 #include "qmlinprocessruntime.h"
@@ -83,19 +79,16 @@ QmlInProcessRuntime::QmlInProcessRuntime(Application *app, QmlInProcessRuntimeMa
 
 QmlInProcessRuntime::~QmlInProcessRuntime()
 {
-#if !defined(AM_HEADLESS)
     // if there is still a window present at this point, fire the 'closing' signal (probably) again,
     // because it's still the duty of WindowManager together with qml-ui to free and delete this item!!
     for (int i = m_surfaces.size(); i; --i)
         m_surfaces.at(i-1)->setVisibleClientSide(false);
-#endif
 }
 
 bool QmlInProcessRuntime::start()
 {
-#if !defined(AM_HEADLESS)
     Q_ASSERT(!m_rootObject);
-#endif
+
     setState(Am::StartingUp);
 
     if (!m_inProcessQmlEngine)
@@ -169,7 +162,7 @@ bool QmlInProcessRuntime::start()
                 delete obj;
                 return;
             }
-#if !defined(AM_HEADLESS)
+
             if (!qobject_cast<QmlInProcessApplicationManagerWindow*>(obj)) {
                 QQuickItem *item = qobject_cast<QQuickItem*>(obj);
                 if (item) {
@@ -179,7 +172,7 @@ bool QmlInProcessRuntime::start()
                 }
             }
             m_rootObject = obj;
-#endif
+
             if (!m_document.isEmpty())
                 openDocument(m_document, QString());
             setState(Am::Running);
@@ -193,7 +186,6 @@ void QmlInProcessRuntime::stop(bool forceKill)
     setState(Am::ShuttingDown);
     emit aboutToStop();
 
-#if !defined(AM_HEADLESS)
     for (int i = m_surfaces.size(); i; --i)
         m_surfaces.at(i-1)->setVisibleClientSide(false);
 
@@ -201,7 +193,6 @@ void QmlInProcessRuntime::stop(bool forceKill)
         delete m_rootObject;
         m_rootObject = nullptr;
     }
-#endif
 
     if (forceKill) {
 #if defined(Q_OS_UNIX)
@@ -236,16 +227,11 @@ void QmlInProcessRuntime::finish(int exitCode, Am::ExitStatus status)
         if (m_app)
             m_app->setCurrentRuntime(nullptr);
         setState(Am::NotRunning);
-#if !defined(AM_HEADLESS)
+
         if (m_surfaces.isEmpty())
             deleteLater();
-#else
-        deleteLater();
-#endif
     }, Qt::QueuedConnection);
 }
-
-#if !defined(AM_HEADLESS)
 
 void QmlInProcessRuntime::stopIfNoVisibleSurfaces()
 {
@@ -327,8 +313,6 @@ void QmlInProcessRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceIt
         emit inProcessSurfaceItemReady(surface);
     }
 }
-
-#endif // !AM_HEADLESS
 
 void QmlInProcessRuntime::openDocument(const QString &document, const QString &mimeType)
 {

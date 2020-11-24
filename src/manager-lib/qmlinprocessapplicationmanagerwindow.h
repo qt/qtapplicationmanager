@@ -42,12 +42,11 @@
 
 #pragma once
 
-#if !defined(AM_HEADLESS)
-#  include <QSharedPointer>
-#  include <QQmlParserStatus>
-#  include <QColor>
-#  include <QQuickItem>
-#  include <QtAppManCommon/global.h>
+#include <QQmlParserStatus>
+#include <QSharedPointer>
+#include <QColor>
+#include <QQuickItem>
+#include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlComponentAttached)
 
@@ -207,5 +206,3 @@ private:
 };
 
 QT_END_NAMESPACE_AM
-
-#endif // !AM_HEADLESS

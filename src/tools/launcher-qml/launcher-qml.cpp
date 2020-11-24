@@ -63,17 +63,12 @@
 
 #include <QtAppManLauncher/launchermain.h>
 
-#if !defined(AM_HEADLESS)
-#  include <QGuiApplication>
-#  include <QQuickItem>
-#  include <QQuickView>
-#  include <QQuickWindow>
+#include <QGuiApplication>
+#include <QQuickItem>
+#include <QQuickView>
+#include <QQuickWindow>
 
-#  include <QtAppManLauncher/private/applicationmanagerwindow_p.h>
-#else
-#  include <QCoreApplication>
-#endif
-
+#include <QtAppManLauncher/private/applicationmanagerwindow_p.h>
 #include "dbusapplicationinterface.h"
 #include "dbusapplicationinterfaceextension.h"
 #include "dbusnotification.h"
@@ -96,18 +91,13 @@
 
 // shared-main-lib
 #include "cpustatus.h"
-#if !defined(AM_HEADLESS)
-#  include "frametimer.h"
-#  include "gpustatus.h"
-#endif
+#include "frametimer.h"
+#include "gpustatus.h"
 #include "iostatus.h"
 #include "memorystatus.h"
 #include "monitormodel.h"
 
-#if defined(AM_HEADLESS)
-#  include <QCoreApplication>
-using Application = QCoreApplication;
-#elif defined(AM_ENABLE_WIDGETS)
+#if defined(AM_ENABLE_WIDGETS)
 #  include <QApplication>
 using Application = QApplication;
 #else
@@ -209,29 +199,23 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
     connect(&m_engine, &QObject::destroyed, QCoreApplication::instance(), &QCoreApplication::quit);
     CrashHandler::setQmlEngine(&m_engine);
 
-#if !defined(AM_HEADLESS)
     qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
-#endif
     qmlRegisterType<DBusNotification>("QtApplicationManager", 2, 0, "Notification");
     qmlRegisterType<DBusApplicationInterfaceExtension>("QtApplicationManager.Application", 2, 0,
                                                        "ApplicationInterfaceExtension");
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
-#if !defined(AM_HEADLESS)
     qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
-#endif
     qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 1, 0, "CpuStatus");
-#if !defined(AM_HEADLESS)
     qmlRegisterType<FrameTimer>("QtApplicationManager", 1, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 1, 0, "GpuStatus");
-#endif
     qmlRegisterType<IoStatus>("QtApplicationManager", 1, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 1, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 1, 0, "MonitorModel");
@@ -449,7 +433,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
                 LauncherMain::instance(), &LauncherMain::setSlowAnimations);
     }
 
-#if !defined(AM_HEADLESS)
     // Going through the LauncherMain instance here is a bit weird, and should be refactored
     // sometime. Having the flag there makes sense though, because this class can also be used for
     // custom launchers.
@@ -460,7 +443,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     // we need to catch all show events to apply the slow-animations
     QCoreApplication::instance()->installEventFilter(this);
-#endif
 
     QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
     auto startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
@@ -533,7 +515,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     bool createStartupReportNow = true;
 
-#if !defined(AM_HEADLESS)
     QObject *topLevel = topLevels.at(0);
     m_window = qobject_cast<QQuickWindow *>(topLevel);
     if (!m_window) {
@@ -587,9 +568,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     for (StartupInterface *iface : qAsConst(startupPlugins))
         iface->beforeWindowShow(m_window);
 
-#else
-    m_engine.setIncubationController(new HeadlessIncubationController(&m_engine));
-#endif
     qCDebug(LogQmlRuntime) << "component loading and creating complete.";
 
     StartupTimer::instance()->checkpoint("component loading and creating complete.");
@@ -600,7 +578,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         emit m_applicationInterface->openDocument(document, mimeType);
 }
 
-#if !defined(AM_HEADLESS)
 bool Controller::eventFilter(QObject *o, QEvent *e)
 {
     if (e && (e->type() == QEvent::Show) && qobject_cast<QQuickWindow *>(o)) {
@@ -619,11 +596,11 @@ void Controller::updateSlowAnimationsForWindow(QQuickWindow *window)
     *connection = connect(window, &QQuickWindow::beforeRendering,
                           this, [connection] {
         if (connection && *connection) {
-#  if defined(Q_CC_MSVC)
+#if defined(Q_CC_MSVC)
             qApp->disconnect(*connection); // MSVC cannot distinguish between static and non-static overloads in lambdas
-#  else
+#else
             QObject::disconnect(*connection);
-#  endif
+#endif
             QUnifiedTimer::instance()->setSlowModeEnabled(LauncherMain::instance()->slowAnimations());
             delete connection;
         }
@@ -645,18 +622,5 @@ void Controller::updateSlowAnimations(bool isSlow)
     }
 }
 
-#endif  // !defined(AM_HEADLESS)
-
-
-HeadlessIncubationController::HeadlessIncubationController(QObject *parent)
-    : QObject(parent)
-{
-    startTimer(50);
-}
-
-void HeadlessIncubationController::timerEvent(QTimerEvent *)
-{
-    incubateFor(25);
-}
 
 #include "moc_launcher-qml_p.cpp"

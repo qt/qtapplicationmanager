@@ -52,10 +52,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QBuffer>
-
-#if !defined(AM_HEADLESS)
-#  include <QGuiApplication>
-#endif
+#include <QGuiApplication>
 
 #include <functional>
 
@@ -1222,7 +1219,6 @@ int Configuration::quickLaunchRuntimesPerContainer() const
 
 QString Configuration::waylandSocketName() const
 {
-#if !defined(AM_HEADLESS)
     QString socketName = m_clp.value(qSL("wayland-socket-name")); // get the default value
     if (!socketName.isEmpty())
         return socketName;
@@ -1237,7 +1233,7 @@ QString Configuration::waylandSocketName() const
     if (!m_data->wayland.socketName.isEmpty())
         return m_data->wayland.socketName;
 
-#  if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX)
     // modelled after wl_socket_lock() in wayland_server.c
     const QString xdgDir = qEnvironmentVariable("XDG_RUNTIME_DIR") + qSL("/");
     const QString pattern = qSL("qtam-wayland-%1");
@@ -1254,7 +1250,6 @@ QString Configuration::waylandSocketName() const
             }
         }
     }
-#  endif
 #endif
     return QString();
 

@@ -82,18 +82,14 @@ public:
 public slots:
     bool start() override;
     void stop(bool forceKill = false) override;
-#if !defined(AM_HEADLESS)
     void stopIfNoVisibleSurfaces();
-#endif
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface
 
 private slots:
     void finish(int exitCode, Am::ExitStatus status);
-#if !defined(AM_HEADLESS)
     void onSurfaceItemReleased(InProcessSurfaceItem*);
-#endif
 
 private:
     static const char *s_runtimeKey;
@@ -107,7 +103,6 @@ private:
     void addPluginPaths(const QStringList &pluginPaths, const QString &baseDir);
     void addImportPaths(const QStringList &importPaths, const QString &baseDir);
 
-#if !defined(AM_HEADLESS)
     // used by QmlInProcessApplicationManagerWindow to register surfaceItems
     void addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface);
 
@@ -117,7 +112,6 @@ private:
     QList< QSharedPointer<InProcessSurfaceItem> > m_surfaces;
 
     friend class QmlInProcessApplicationManagerWindow; // for emitting signals on behalf of this class in onComplete
-#endif
 };
 
 QT_END_NAMESPACE_AM

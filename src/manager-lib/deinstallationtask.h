@@ -66,7 +66,6 @@ private:
     Package *m_package;
     QString m_installationPath;
     QString m_documentPath;
-    bool m_forceDeinstallation;
     bool m_keepDocuments;
     bool m_canBeCanceled = true;
     bool m_canceled = false;

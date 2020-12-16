@@ -13,8 +13,8 @@ defineTest(printConfigLine) {
 
     isEmpty(width):width = 30
 
-    unix:system("test -t 2") { # check if we are on unix and stderr is a tty
-        macos:echo="echo"
+    !equals(QMAKE_HOST.os, Windows):system("test -t 2") { # check if we are on unix and stderr is a tty
+        equals(QMAKE_HOST.os, Darwin):echo="echo"
         else:echo="/bin/echo -e"
 
         equals(color, "auto") {

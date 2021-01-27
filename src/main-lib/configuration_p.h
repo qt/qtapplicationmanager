@@ -153,6 +153,7 @@ struct ConfigurationData
         bool forceMultiProcess = false;
         bool noSecurity = false;
         bool developmentMode = false;
+        bool allowUnsignedPackages = false;
         bool noUiWatchdog = false;
     } flags;
 

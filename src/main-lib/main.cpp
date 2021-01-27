@@ -211,7 +211,6 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 {
     // basics that are needed in multiple setup functions below
     m_noSecurity = cfg->noSecurity();
-    m_developmentMode = cfg->developmentMode();
     m_builtinAppsManifestDirs = cfg->builtinAppsManifestDirs();
     m_installationDir = cfg->installationDir();
     m_documentDir = cfg->documentDir();
@@ -252,7 +251,7 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     if (m_installationDir.isEmpty() || cfg->disableInstaller()) {
         StartupTimer::instance()->checkpoint("skipping installer");
     } else {
-        setupInstaller(cfg->caCertificates(),
+        setupInstaller(cfg->developmentMode(), cfg->allowUnsignedPackages(), cfg->caCertificates(),
                        std::bind(&Configuration::applicationUserIdSeparation, cfg,
                                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     }
@@ -513,7 +512,7 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     }
 }
 
-void Main::setupInstaller(const QStringList &caCertificatePaths,
+void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &caCertificatePaths,
                           const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if !defined(AM_DISABLE_INSTALLER)
@@ -549,12 +548,13 @@ void Main::setupInstaller(const QStringList &caCertificatePaths,
 
     m_applicationInstaller = ApplicationInstaller::createInstance(m_packageManager);
 
-    if (m_developmentMode)
+    if (devMode)
         m_packageManager->setDevelopmentMode(true);
 
-    if (m_noSecurity) {
+    if (m_noSecurity || allowUnsigned)
         m_packageManager->setAllowInstallationOfUnsignedPackages(true);
-    } else {
+
+    if (!m_noSecurity) {
         QList<QByteArray> caCertificateList;
 
         for (const auto &caFile : caCertificatePaths) {

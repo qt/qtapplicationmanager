@@ -457,7 +457,8 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->flags.forceMultiProcess
        >> cd->flags.forceSingleProcess
        >> cd->wayland.socketName
-       >> cd->wayland.extraSockets;
+       >> cd->wayland.extraSockets
+       >> cd->flags.allowUnsignedPackages;
 
     return cd;
 }
@@ -517,7 +518,8 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << flags.forceMultiProcess
        << flags.forceSingleProcess
        << wayland.socketName
-       << wayland.extraSockets;
+       << wayland.extraSockets
+       << flags.allowUnsignedPackages;
 }
 
 template <typename T> void mergeField(T &into, const T &from, const T &def)
@@ -615,6 +617,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(flags.forceSingleProcess);
     MERGE_FIELD(wayland.socketName);
     MERGE_FIELD(wayland.extraSockets);
+    MERGE_FIELD(flags.allowUnsignedPackages);
 }
 
 QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
@@ -1056,6 +1059,11 @@ bool Configuration::noSecurity() const
 bool Configuration::developmentMode() const
 {
     return value<bool>("development-mode", m_data->flags.developmentMode);
+}
+
+bool Configuration::allowUnsignedPackages() const
+{
+    return m_data->flags.allowUnsignedPackages;
 }
 
 bool Configuration::noUiWatchdog() const

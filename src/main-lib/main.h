@@ -120,7 +120,7 @@ protected:
                       int replyFromApplicationTimeout, int replyFromSystemTimeout) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
                          int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupInstaller(const QStringList &caCertificatePaths,
+    void setupInstaller(bool devMode, bool allowUnsigned, const QStringList &caCertificatePaths,
                         const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
     void registerPackages();
 
@@ -168,7 +168,6 @@ private:
     QVector<QVariantMap> m_systemProperties;
 
     bool m_noSecurity = false;
-    bool m_developmentMode = false;
     QStringList m_builtinAppsManifestDirs;
     QString m_installationDir;
     QString m_documentDir;

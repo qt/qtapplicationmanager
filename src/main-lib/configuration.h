@@ -93,6 +93,7 @@ public:
     bool loadDummyData() const;
     bool noSecurity() const;
     bool developmentMode() const;
+    bool allowUnsignedPackages() const;
     bool noUiWatchdog() const;
     bool noDltLogging() const;
     bool forceSingleProcess() const;

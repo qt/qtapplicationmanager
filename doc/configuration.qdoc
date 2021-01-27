@@ -306,6 +306,12 @@ or across multiple config files, the final value is resolved based on these rule
         \li Allows the installation of packages that only come with a valid developer signature.
             (default: false)
     \row
+        \li [\c flags/allowUnsignedPackages]
+        \li bool
+        \li Allows the installation of packages that have no signature at all. Only use this in
+            production, if you are verifying packages by other means, while also limiting the
+            access to the installer API. (default: false)
+    \row
         \li \b --no-ui-watchdog
             \br [\c flags/noUiWatchdog]
         \li bool

@@ -281,6 +281,29 @@ void QmlInProcessRuntime::onSurfaceItemReleased(InProcessSurfaceItem *surface)
     }
 }
 
+void QmlInProcessRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface)
+{
+    // Below check is only needed if the root element is a QtObject.
+    // It should be possible to remove this, once proper visible handling is in place.
+    if (state() != Am::NotRunning && state() != Am::ShuttingDown) {
+        m_stopIfNoVisibleSurfaces = false; // the appearance of a new surface disarms that death trigger
+        if (!m_surfaces.contains(surface)) {
+            m_surfaces.append(surface);
+            InProcessSurfaceItem *surfacePtr = surface.data();
+            connect(surfacePtr, &InProcessSurfaceItem::released, this, [this, surfacePtr]() {
+                onSurfaceItemReleased(surfacePtr);
+            });
+            connect(surfacePtr, &InProcessSurfaceItem::visibleClientSideChanged, this, [this]() {
+                if (m_stopIfNoVisibleSurfaces && !hasVisibleSurfaces())
+                    stop();
+            });
+        }
+        emit inProcessSurfaceItemReady(surface);
+    }
+}
+
+#endif // !AM_HEADLESS
+
 void QmlInProcessRuntime::loadResources(const QStringList &resources, const QString &baseDir)
 {
     for (const QString &resource : resources) {
@@ -305,29 +328,6 @@ void QmlInProcessRuntime::addImportPaths(const QStringList &importPaths, const Q
     for (const QString &path : importPaths)
         m_inProcessQmlEngine->addImportPath(toAbsoluteFilePath(path, baseDir));
 }
-
-void QmlInProcessRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface)
-{
-    // Below check is only needed if the root element is a QtObject.
-    // It should be possible to remove this, once proper visible handling is in place.
-    if (state() != Am::NotRunning && state() != Am::ShuttingDown) {
-        m_stopIfNoVisibleSurfaces = false; // the appearance of a new surface disarms that death trigger
-        if (!m_surfaces.contains(surface)) {
-            m_surfaces.append(surface);
-            InProcessSurfaceItem *surfacePtr = surface.data();
-            connect(surfacePtr, &InProcessSurfaceItem::released, this, [this, surfacePtr]() {
-                onSurfaceItemReleased(surfacePtr);
-            });
-            connect(surfacePtr, &InProcessSurfaceItem::visibleClientSideChanged, this, [this]() {
-                if (m_stopIfNoVisibleSurfaces && !hasVisibleSurfaces())
-                    stop();
-            });
-        }
-        emit inProcessSurfaceItemReady(surface);
-    }
-}
-
-#endif // !AM_HEADLESS
 
 void QmlInProcessRuntime::openDocument(const QString &document, const QString &mimeType)
 {

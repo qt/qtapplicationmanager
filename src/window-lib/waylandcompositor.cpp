@@ -89,6 +89,11 @@ void WindowSurface::sendResizing(const QSize &size)
         m_wlSurface->sendConfigure(size, QWaylandWlShellSurface::NoneEdge);
 }
 
+QWaylandXdgSurface *WindowSurface::xdgSurface() const
+{
+    return m_xdgSurface;
+}
+
 WaylandCompositor *WindowSurface::compositor() const
 {
     return m_compositor;
@@ -241,6 +246,7 @@ void WaylandCompositor::onXdgSurfaceCreated(QWaylandXdgSurface *xdgSurface)
         if (windowSurface->hasContent())
             emit this->surfaceMapped(windowSurface);
     });
+    emit windowSurface->xdgSurfaceChanged();
 }
 
 void WaylandCompositor::onTopLevelCreated(QWaylandXdgToplevel *topLevel, QWaylandXdgSurface *xdgSurface)

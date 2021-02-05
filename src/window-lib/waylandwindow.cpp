@@ -104,6 +104,9 @@ WaylandWindow::WaylandWindow(Application *app, WindowSurface *surf)
                     this, &WaylandWindow::requestedPopupPositionChanged);
         }
 
+        connect(m_surface, &WindowSurface::xdgSurfaceChanged,
+                this, &WaylandWindow::waylandXdgSurfaceChanged);
+
         enableOrDisablePing();
     }
 }
@@ -218,6 +221,11 @@ void WaylandWindow::resize(const QSize &newSize)
 QWaylandQuickSurface* WaylandWindow::waylandSurface() const
 {
     return m_surface;
+}
+
+QWaylandXdgSurface *WaylandWindow::waylandXdgSurface() const
+{
+    return m_surface ? m_surface->xdgSurface() : nullptr;
 }
 
 void WaylandWindow::close()

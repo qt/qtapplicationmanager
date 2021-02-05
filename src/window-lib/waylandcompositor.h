@@ -87,7 +87,9 @@ class WindowSurface : public QWaylandQuickSurface
     Q_OBJECT
 public:
     WindowSurface(WaylandCompositor *comp, QWaylandClient *client, uint id, int version);
+    QWaylandSurface *surface() const;
     QWaylandWlShellSurface *shellSurface() const;
+    QWaylandXdgSurface *xdgSurface() const;
     WaylandCompositor *compositor() const;
 
     QString applicationId() const;
@@ -95,11 +97,6 @@ public:
     QRect popupGeometry() const;
     void sendResizing(const QSize &size);
 
-private:
-    void setShellSurface(QWaylandWlShellSurface *ss);
-
-public:
-    QWaylandSurface *surface() const;
     qint64 processId() const;
     QWindow *outputWindow() const;
 
@@ -109,6 +106,10 @@ public:
 signals:
     void pong();
     void popupGeometryChanged();
+    void xdgSurfaceChanged();
+
+private:
+    void setShellSurface(QWaylandWlShellSurface *ss);
 
 private:
     QWaylandSurface *m_surface;

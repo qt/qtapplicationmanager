@@ -171,7 +171,7 @@ void AbstractConfigCache::parse()
 
     // normalize all yaml file names
     QStringList rawFilePaths;
-    for (const auto &rawFile : d->rawFiles) {
+    for (const auto &rawFile : qAsConst(d->rawFiles)) {
         const auto path = QFileInfo(rawFile).canonicalFilePath();
         if (path.isEmpty())
             throw Exception("file %1 does not exist").arg(rawFile);
@@ -216,7 +216,10 @@ void AbstractConfigCache::parse()
                         ce.content = loadFromCache(ds);
                 }
                 if (d->options & MergedResult) {
-                    mergedContent = loadFromCache(ds);
+                    bool hasMerged = false;
+                    ds >> hasMerged;
+                    if (hasMerged)
+                        mergedContent = loadFromCache(ds);
 
                     if (!mergedContent)
                         throw Exception("failed to read merged cache content");
@@ -338,8 +341,12 @@ void AbstractConfigCache::parse()
                 buffer.open(QIODevice::ReadOnly);
                 ce.content = loadFromSource(&buffer, ce.filePath);
             } catch (const Exception &e) {
-                throw Exception("Could not parse file '%1': %2")
-                        .arg(ce.filePath).arg(e.errorString());
+                if (d->options.testFlag(IgnoreBroken)) {
+                    ce.content = nullptr;
+                } else {
+                    throw Exception("Could not parse file '%1': %2")
+                            .arg(ce.filePath).arg(e.errorString());
+                }
             }
         };
 
@@ -352,12 +359,14 @@ void AbstractConfigCache::parse()
         if (d->options & MergedResult) {
             // we cannot parallelize this step, since subsequent config files can overwrite
             // or append to values
-            mergedContent = cache.at(0).content;
-            cache[0].content = nullptr;
-            for (int i = 1; i < cache.size(); ++i) {
+            for (int i = 0; i < cache.size(); ++i) {
                 ConfigCacheEntry &ce = cache[i];
-                merge(mergedContent, ce.content);
-                destruct(ce.content);
+                if (!mergedContent) {
+                    mergedContent = ce.content;
+                } else if (ce.content) {
+                    merge(mergedContent, ce.content);
+                    destruct(ce.content);
+                }
                 ce.content = nullptr;
             }
         }
@@ -389,8 +398,11 @@ void AbstractConfigCache::parse()
                         saveToCache(ds, ce.content);
                 }
 
-                if (d->options & MergedResult)
-                    saveToCache(ds, mergedContent);
+                if (d->options & MergedResult) {
+                    ds << bool(mergedContent);
+                    if (mergedContent)
+                        saveToCache(ds, mergedContent);
+                }
 
                 if (ds.status() != QDataStream::Ok)
                     throw Exception("error writing content");

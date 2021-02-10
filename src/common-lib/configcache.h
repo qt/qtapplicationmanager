@@ -71,7 +71,8 @@ public:
         None          = 0x0,
         MergedResult  = 0x1,
         NoCache       = 0x2,
-        ClearCache    = 0x4
+        ClearCache    = 0x4,
+        IgnoreBroken  = 0x8,
     };
     Q_DECLARE_FLAGS(Options, Option)
 

@@ -335,6 +335,8 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         try {
             cache.parse();
             m_data.reset(cache.takeMergedResult());
+            if (m_data.isNull())
+                m_data.reset(new ConfigurationData());
         } catch (const Exception &e) {
             showParserMessage(e.errorString() + qL1C('\n'), ErrorMessage);
             exit(1);

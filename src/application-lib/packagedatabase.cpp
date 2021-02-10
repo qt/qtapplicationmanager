@@ -182,13 +182,13 @@ void PackageDatabase::parse()
         QStringList manifestFiles;
 
         // parallelize this
-        for (const QString &dir : m_builtInPackagesDirs)
+        for (const QString &dir : qAsConst(m_builtInPackagesDirs))
             manifestFiles << findManifestsInDir(dir, true);
         int installedOffset = manifestFiles.size();
         if (!m_installedPackagesDir.isEmpty())
             manifestFiles << findManifestsInDir(m_installedPackagesDir, false);
 
-        AbstractConfigCache::Options cacheOptions = AbstractConfigCache::None;
+        AbstractConfigCache::Options cacheOptions = AbstractConfigCache::IgnoreBroken;
         if (!m_loadFromCache)
             cacheOptions |= AbstractConfigCache::ClearCache;
         if (!m_loadFromCache && !m_saveToCache)
@@ -202,7 +202,13 @@ void PackageDatabase::parse()
             bool isBuiltIn = (i < installedOffset);
             QString manifestFile = manifestFiles.at(i);
             QDir pkgDir = QFileInfo(manifestFile).dir();
-            QScopedPointer<PackageInfo>pkg(cache.takeResult(i));
+            QScopedPointer<PackageInfo> pkg(cache.takeResult(i));
+
+            if (pkg.isNull()) { // the YAML file was not parseable and we ignore broken manifests
+                qCWarning(LogSystem) << "The file" << manifestFile << "is not a valid manifest YAML"
+                                        " file and will be ignored.";
+                continue;
+            }
 
             if (pkg->id() != pkgDir.dirName()) {
                 throw Exception("an info.yaml for built-in packages must be in a directory that has"

@@ -90,6 +90,7 @@ public:
     QWaylandWlShellSurface *shellSurface() const;
     WaylandCompositor *compositor() const;
 
+    QString applicationId() const;
     bool isPopup() const;
     QRect popupGeometry() const;
     void sendResizing(const QSize &size);

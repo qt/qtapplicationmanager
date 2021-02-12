@@ -102,7 +102,7 @@ public:
     QVector<Application *> applications() const;
 
     Application *fromId(const QString &id) const;
-    Application *fromProcessId(qint64 pid) const;
+    QVector<Application *> fromProcessId(qint64 pid) const;
     Application *fromSecurityToken(const QByteArray &securityToken) const;
     QVector<Application *> schemeHandlers(const QString &scheme) const;
     QVector<Application *> mimeTypeHandlers(const QString &mimeType) const;
@@ -151,6 +151,7 @@ public:
     Q_SCRIPTABLE bool openUrl(const QString &url);
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;
     Q_SCRIPTABLE QString identifyApplication(qint64 pid) const;
+    Q_SCRIPTABLE QStringList identifyAllApplications(qint64 pid) const;
     Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(Am::RunState) applicationRunState(const QString &id) const;
 
     ApplicationManagerInternalSignals internalSignals;

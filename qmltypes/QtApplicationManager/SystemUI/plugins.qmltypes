@@ -1124,6 +1124,11 @@ Module {
             Parameter { name: "pid"; type: "int"; }
         }
         Method {
+            name: "identifyAllApplications"
+            type: "QStringList"
+            Parameter { name: "pid"; type: "int"; }
+        }
+        Method {
             name: "applicationRunState"
             type: "RunState"
             Parameter { name: "id"; type: "string"; }

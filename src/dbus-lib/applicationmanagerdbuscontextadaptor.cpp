@@ -206,6 +206,12 @@ QString ApplicationManagerAdaptor::identifyApplication(qlonglong pid)
     return ApplicationManager::instance()->identifyApplication(pid);
 }
 
+QStringList ApplicationManagerAdaptor::identifyAllApplications(qlonglong pid)
+{
+    AM_AUTHENTICATE_DBUS(QStringList)
+    return ApplicationManager::instance()->identifyAllApplications(pid);
+}
+
 bool ApplicationManagerAdaptor::openUrl(const QString &url)
 {
     AM_AUTHENTICATE_DBUS(bool)

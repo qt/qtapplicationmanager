@@ -140,7 +140,11 @@ bool DBusPolicy::check(QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &func
 
         if (!ip->m_capabilities.isEmpty()) {
             pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
-            QStringList appCaps = ApplicationManager::instance()->capabilities(ApplicationManager::instance()->identifyApplication(pid));
+            const auto apps = ApplicationManager::instance()->identifyAllApplications(pid);
+            if (apps.size() > 1)
+                throw "multiple apps per pid are not supported";
+            const QString appId = !apps.isEmpty() ? apps.constFirst() : QString();
+            QStringList appCaps = ApplicationManager::instance()->capabilities(appId);
             bool match = false;
             for (const QString &cap : ip->m_capabilities)
                 match = match && std::binary_search(appCaps.cbegin(), appCaps.cend(), cap);

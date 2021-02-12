@@ -514,19 +514,23 @@ Application *ApplicationManager::fromId(const QString &id) const
     return nullptr;
 }
 
-Application *ApplicationManager::fromProcessId(qint64 pid) const
+QVector<Application *> ApplicationManager::fromProcessId(qint64 pid) const
 {
+    QVector<Application *> apps;
+
     // pid could be an indirect child (e.g. when started via gdbserver)
     qint64 appmanPid = QCoreApplication::applicationPid();
 
     while ((pid > 1) && (pid != appmanPid)) {
         for (Application *app : d->apps) {
+            if (apps.contains(app))
+                continue;
             if (app->currentRuntime() && (app->currentRuntime()->applicationProcessId() == pid))
-                return app;
+                apps.append(app);
         }
         pid = getParentPid(pid);
     }
-    return nullptr;
+    return apps;
 }
 
 Application *ApplicationManager::fromSecurityToken(const QByteArray &securityToken) const
@@ -1124,12 +1128,37 @@ QStringList ApplicationManager::capabilities(const QString &id) const
     Validates the process running with process-identifier \a pid as a process started by the
     application manager.
 
+    \note If multiple applications are running within the same container process, this function
+          will return only the first matching application. See identifyAllApplications() for
+          a way to retrieve all application ids.
+
     Returns the application's \c id on success, or an empty string on failure.
 */
 QString ApplicationManager::identifyApplication(qint64 pid) const
 {
-    Application *app = fromProcessId(pid);
-    return app ? app->id() : QString();
+    const auto apps = fromProcessId(pid);
+    return !apps.isEmpty() ? apps.constFirst()->id() : QString();
+}
+
+/*!
+    \qmlmethod list<string> ApplicationManager::identifyAllApplications(int pid)
+
+    Validates the process running with process-identifier \a pid as a process started by the
+    application manager.
+
+    If multiple applications are running within the same container process, this function will
+    return all those application ids.
+
+    Returns a list with the applications' \c ids on success, or an empty list on failure.
+*/
+QStringList ApplicationManager::identifyAllApplications(qint64 pid) const
+{
+    const auto apps = fromProcessId(pid);
+    QStringList result;
+    result.reserve(apps.size());
+    for (const auto &app : apps)
+        result << app->id();
+    return result;
 }
 
 void ApplicationManager::shutDown()

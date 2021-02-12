@@ -95,6 +95,10 @@
       <arg type="s" direction="out"/>
       <arg name="pid" type="x" direction="in"/>
     </method>
+    <method name="identifyAllApplications">
+      <arg type="as" direction="out"/>
+      <arg name="pid" type="x" direction="in"/>
+    </method>
     <method name="applicationRunState">
       <arg type="u" direction="out"/>
       <arg name="id" type="s" direction="in"/>

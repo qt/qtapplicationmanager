@@ -808,11 +808,27 @@ void WindowManager::waylandSurfaceCreated(QWaylandSurface *surface)
 void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 {
     qint64 processId = surface->processId();
-    Application *app = ApplicationManager::instance()->fromProcessId(processId);
+    const auto apps = ApplicationManager::instance()->fromProcessId(processId);
+    Application *app = nullptr;
+
+    if (apps.size() == 1) {
+        app = apps.constFirst();
+    } else if (apps.size() > 1) {
+        // if there is more than one app within the same process, check the XDG surface appId
+        const QString xdgAppId = surface->applicationId();
+        if (!xdgAppId.isEmpty()) {
+            for (const auto &checkApp : apps) {
+                if (checkApp->id() == xdgAppId) {
+                    app = checkApp;
+                    break;
+                }
+            }
+        }
+    }
 
     if (!app && ApplicationManager::instance()->securityChecksEnabled()) {
         qCCritical(LogGraphics) << "SECURITY ALERT: an unknown application with pid" << processId
-                               << "tried to map a Wayland surface!";
+                                << "tried to map a Wayland surface!";
         return;
     }
 

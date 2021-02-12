@@ -99,6 +99,13 @@ WaylandCompositor *WindowSurface::compositor() const
     return m_compositor;
 }
 
+QString WindowSurface::applicationId() const
+{
+    if (m_xdgSurface && m_xdgSurface->toplevel())
+        return m_xdgSurface->toplevel()->appId();
+    return { };
+}
+
 bool WindowSurface::isPopup() const
 {
     return m_popup;
@@ -172,7 +179,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     auto wmext = new QWaylandQtWindowManager(this);
     connect(wmext, &QWaylandQtWindowManager::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
-        if (ApplicationManager::instance()->fromProcessId(client->processId()))
+        if (!ApplicationManager::instance()->fromProcessId(client->processId()).isEmpty())
             ApplicationManager::instance()->openUrl(url.toString());
     });
 

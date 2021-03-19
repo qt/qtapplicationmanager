@@ -45,6 +45,7 @@
 
 #include <QtAppManCommon/global.h>
 #include <QLoggingCategory>
+#include <QMutex>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -98,6 +99,7 @@ private:
     static QtMessageHandler s_defaultQtHandler;
     static QByteArray s_applicationId;
     static QVariant s_useAMConsoleLoggerConfig;
+    static QMutex s_deferredMessagesMutex;
 };
 
 void am_trace(QDebug);

@@ -40,6 +40,7 @@
 #include <QThreadStorage>
 #include <QAtomicInteger>
 #include <QCoreApplication>
+#include <QMutexLocker>
 
 #include "global.h"
 #include "logging.h"
@@ -191,6 +192,7 @@ QStringList Logging::s_rules;
 QtMessageHandler Logging::s_defaultQtHandler = nullptr;
 QByteArray Logging::s_applicationId = QByteArray();
 QVariant Logging::s_useAMConsoleLoggerConfig = QVariant();
+QMutex Logging::s_deferredMessagesMutex;
 
 static std::vector<DeferredMessage> s_deferredMessages;
 
@@ -379,6 +381,7 @@ void Logging::messageHandler(QtMsgType msgType, const QMessageLogContext &contex
 
 void Logging::deferredMessageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
+    QMutexLocker lock(&s_deferredMessagesMutex);
     s_deferredMessages.emplace_back(msgType, context, message);
 }
 
@@ -449,6 +452,9 @@ void Logging::useAMConsoleLogger(const QVariant &config)
 
 void Logging::completeSetup()
 {
+    qInstallMessageHandler(messageHandler);
+
+    QMutexLocker lock(&s_deferredMessagesMutex);
     for (const DeferredMessage &msg : s_deferredMessages) {
         QLoggingCategory cat(msg.category);
         if (cat.isEnabled(msg.msgType)) {
@@ -456,9 +462,7 @@ void Logging::completeSetup()
             messageHandler(msg.msgType, context, msg.message);
         }
     }
-
     std::vector<DeferredMessage>().swap(s_deferredMessages);
-    qInstallMessageHandler(messageHandler);
 }
 
 QByteArray Logging::applicationId()
@@ -473,6 +477,7 @@ void Logging::setApplicationId(const QByteArray &appId)
 
 bool Logging::deferredMessages()
 {
+    QMutexLocker lock(&s_deferredMessagesMutex);
     return !s_deferredMessages.empty();
 }
 

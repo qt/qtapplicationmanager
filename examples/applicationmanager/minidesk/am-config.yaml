@@ -28,6 +28,7 @@ ui:
 systemProperties:
   protected:
     light: on
+    nullValueCrashCheckOnDBus: ~
 
 # development setup:
 flags:

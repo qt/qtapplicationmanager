@@ -116,7 +116,7 @@ bool ApplicationManagerAdaptor::singleProcess() const
 
 QVariantMap ApplicationManagerAdaptor::systemProperties() const
 {
-    return ApplicationManager::instance()->systemProperties();
+    return convertFromJSVariant(ApplicationManager::instance()->systemProperties()).toMap();
 }
 
 QStringList ApplicationManagerAdaptor::applicationIds()

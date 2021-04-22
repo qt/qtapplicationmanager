@@ -554,14 +554,14 @@ QString NativeRuntimeApplicationInterface::version() const
 QVariantMap NativeRuntimeApplicationInterface::systemProperties() const
 {
     if (m_runtime)
-        return m_runtime->systemProperties();
+        return convertFromJSVariant(m_runtime->systemProperties()).toMap();
     return QVariantMap();
 }
 
 QVariantMap NativeRuntimeApplicationInterface::applicationProperties() const
 {
     if (m_runtime && m_runtime->application())
-        return m_runtime->application()->info()->allAppProperties();
+        return convertFromJSVariant(m_runtime->application()->info()->allAppProperties()).toMap();
     return QVariantMap();
 }
 

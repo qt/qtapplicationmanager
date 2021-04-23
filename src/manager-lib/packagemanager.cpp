@@ -1093,8 +1093,8 @@ QString PackageManager::removePackage(const QString &packageId, bool keepDocumen
 
 #if !defined(AM_DISABLE_INSTALLER)
     if (!d->disableInstaller) {
-        if (Package *package = fromId(packageId)) {
-            return enqueueTask(new DeinstallationTask(package, d->installationPath,
+        if (fromId(packageId)) {
+            return enqueueTask(new DeinstallationTask(packageId, d->installationPath,
                                                       d->documentPath, force, keepDocuments));
         }
     }

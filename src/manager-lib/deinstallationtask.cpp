@@ -51,17 +51,16 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-DeinstallationTask::DeinstallationTask(Package *package, const QString &installationPath,
+DeinstallationTask::DeinstallationTask(const QString &packageId, const QString &installationPath,
                                        const QString &documentPath, bool forceDeinstallation,
                                        bool keepDocuments, QObject *parent)
     : AsynchronousTask(parent)
-    , m_package(package)
     , m_installationPath(installationPath)
     , m_documentPath(documentPath)
     , m_forceDeinstallation(forceDeinstallation)
     , m_keepDocuments(keepDocuments)
 {
-    m_packageId = m_package->id(); // in base class
+    m_packageId = packageId; // in base class
 }
 
 bool DeinstallationTask::cancel()
@@ -73,31 +72,38 @@ bool DeinstallationTask::cancel()
 
 void DeinstallationTask::execute()
 {
-    // these have been checked in PackageManager::removePackage() already
-    Q_ASSERT(m_package);
-    Q_ASSERT(m_package->info());
-
     bool managerApproval = false;
 
     try {
-        if (m_package->isBuiltIn() && !m_package->builtInHasRemovableUpdate())
-            throw Exception("There is no removable update for the built-in package %1").arg(m_package->id());
+        // we cannot rely on a check in PackageManager::removePackage()
+        // things might have changed in the meantime (e.g. multiple deinstallation request)
+        auto package = PackageManager::instance()->package(packageId());
+        if (!package) {
+            // the package has already been deinstalled - nothing more to do here
+            throw Exception(Error::NotInstalled, "Cannot remove package %1 because it is not installed")
+                    .arg(m_packageId);
+        }
 
-        if (!m_package->info()->installationReport())
-            throw Exception("Cannot remove package %1 due to missing installation report").arg(m_package->id());
+        Q_ASSERT(package->info());
+
+        if (package->isBuiltIn() && !package->builtInHasRemovableUpdate())
+            throw Exception("There is no removable update for the built-in package %1").arg(packageId());
+
+        if (!package->info()->installationReport())
+            throw Exception("Cannot remove package %1 due to missing installation report").arg(packageId());
 
         // we need to call those PackageManager methods in the correct thread
         // this will also exclusively lock the package for us
         QMetaObject::invokeMethod(PackageManager::instance(), [this, &managerApproval]()
-            { managerApproval = PackageManager::instance()->startingPackageRemoval(m_package->id()); },
+            { managerApproval = PackageManager::instance()->startingPackageRemoval(packageId()); },
             Qt::BlockingQueuedConnection);
 
         if (!managerApproval)
-            throw Exception("PackageManager rejected the removal of package %1").arg(m_package->id());
+            throw Exception("PackageManager rejected the removal of package %1").arg(packageId());
 
         // if any of the apps in the package were running before, we now need to wait until all of
         // them have actually stopped
-        while (!m_canceled && !m_package->areAllApplicationsStoppedDueToBlock())
+        while (!m_canceled && !package->areAllApplicationsStoppedDueToBlock())
             QThread::msleep(30);
 
         // there's a small race condition here, but not doing a planned cancellation isn't harmful
@@ -109,13 +115,13 @@ void DeinstallationTask::execute()
         ScopedRenamer appDirRename;
 
         if (!m_keepDocuments) {
-            if (!docDirRename.rename(QDir(m_documentPath).absoluteFilePath(m_package->id()),
+            if (!docDirRename.rename(QDir(m_documentPath).absoluteFilePath(packageId()),
                                      ScopedRenamer::NameToNameMinus)) {
                 throw Exception(Error::IO, "could not rename %1 to %1-").arg(docDirRename.baseName());
             }
         }
 
-        if (!appDirRename.rename(QDir(m_installationPath).absoluteFilePath(m_package->id()),
+        if (!appDirRename.rename(QDir(m_installationPath).absoluteFilePath(packageId()),
                                  ScopedRenamer::NameToNameMinus)) {
             throw Exception(Error::IO, "could not rename %1 to %1-").arg(appDirRename.baseName());
         }
@@ -135,7 +141,7 @@ void DeinstallationTask::execute()
         // we need to call those PackageManager methods in the correct thread
         bool finishOk = false;
         QMetaObject::invokeMethod(PackageManager::instance(), [this, &finishOk]()
-            { finishOk = PackageManager::instance()->finishedPackageInstall(m_package->id()); },
+            { finishOk = PackageManager::instance()->finishedPackageInstall(packageId()); },
             Qt::BlockingQueuedConnection);
 
         if (!finishOk)
@@ -146,7 +152,7 @@ void DeinstallationTask::execute()
         if (managerApproval) {
             bool cancelOk = false;
             QMetaObject::invokeMethod(PackageManager::instance(), [this, &cancelOk]()
-                { cancelOk = PackageManager::instance()->canceledPackageInstall(m_package->id()); },
+                { cancelOk = PackageManager::instance()->canceledPackageInstall(packageId()); },
                 Qt::BlockingQueuedConnection);
 
             if (!cancelOk)

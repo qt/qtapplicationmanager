@@ -54,7 +54,7 @@ class DeinstallationTask : public AsynchronousTask
     Q_OBJECT
 
 public:
-    DeinstallationTask(ApplicationInfo *app, const InstallationLocation &installationLocation,
+    DeinstallationTask(const QString &appId, const InstallationLocation &installationLocation,
                        bool forceDeinstallation, bool keepDocuments, QObject *parent = nullptr);
 
     bool cancel() override;
@@ -63,7 +63,6 @@ protected:
     void execute() override;
 
 private:
-    ApplicationInfo *m_app;
     const InstallationLocation &m_installationLocation;
     bool m_forceDeinstallation;
     bool m_keepDocuments;

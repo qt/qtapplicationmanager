@@ -798,7 +798,7 @@ QString ApplicationInstaller::removePackage(const QString &id, bool keepDocument
             const InstallationLocation &il = installationLocationFromId(report->installationLocationId());
 
             if (il.isValid() && (il.id() == report->installationLocationId()))
-                return enqueueTask(new DeinstallationTask(a->nonAliasedInfo(), il, force, keepDocuments));
+                return enqueueTask(new DeinstallationTask(id, il, force, keepDocuments));
         }
     }
     return QString();

@@ -52,15 +52,14 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-DeinstallationTask::DeinstallationTask(ApplicationInfo *app, const InstallationLocation &installationLocation,
+DeinstallationTask::DeinstallationTask(const QString &appId, const InstallationLocation &installationLocation,
                                        bool forceDeinstallation, bool keepDocuments, QObject *parent)
     : AsynchronousTask(parent)
-    , m_app(app)
     , m_installationLocation(installationLocation)
     , m_forceDeinstallation(forceDeinstallation)
     , m_keepDocuments(keepDocuments)
 {
-    m_applicationId = m_app->id(); // in base class
+    m_applicationId = appId; // in base class
 }
 
 bool DeinstallationTask::cancel()
@@ -72,28 +71,37 @@ bool DeinstallationTask::cancel()
 
 void DeinstallationTask::execute()
 {
-    // these have been checked in ApplicationInstaller::removePackage() already
-    Q_ASSERT(m_app);
-    Q_ASSERT(m_app->installationReport());
-    Q_ASSERT(m_app->installationReport()->installationLocationId() == m_installationLocation.id());
-    Q_ASSERT(m_installationLocation.isValid());
-
     bool managerApproval = false;
 
     try {
+        // we cannot rely on a check in ApplicationInstaller::removePackage()
+        // things might have changed in the meantime (e.g. multiple deinstallation request)
+        AbstractApplication *a = ApplicationManager::instance()->fromId(m_applicationId);
+        if (!a) {
+            // the package has already been deinstalled - nothing more to do here
+            throw Exception(Error::NotInstalled, "Cannot remove package %1 because it is not installed")
+                    .arg(m_applicationId);
+        }
+        ApplicationInfo *app = a->nonAliasedInfo();
+
+        Q_ASSERT(app);
+        Q_ASSERT(app->installationReport());
+        Q_ASSERT(app->installationReport()->installationLocationId() == m_installationLocation.id());
+        Q_ASSERT(m_installationLocation.isValid());
+
         // we need to call those ApplicationManager methods in the correct thread
         // this will also exclusively lock the application for us
         QMetaObject::invokeMethod(ApplicationManager::instance(),
                                   "startingApplicationRemoval",
                                   Qt::BlockingQueuedConnection,
                                   Q_RETURN_ARG(bool, managerApproval),
-                                  Q_ARG(QString, m_app->id()));
+                                  Q_ARG(QString, m_applicationId));
         if (!managerApproval)
-            throw Exception("ApplicationManager rejected the removal of app %1").arg(m_app->id());
+            throw Exception("ApplicationManager rejected the removal of app %1").arg(m_applicationId);
 
         // if the app was running before, we now need to wait until is has actually stopped
         while (!m_canceled &&
-               (ApplicationManager::instance()->applicationRunState(m_app->id()) != Am::NotRunning)) {
+               (ApplicationManager::instance()->applicationRunState(m_applicationId) != Am::NotRunning)) {
             QThread::msleep(30);
         }
         // there's a small race condition here, but not doing a planned cancellation isn't harmful
@@ -107,14 +115,14 @@ void DeinstallationTask::execute()
         ScopedRenamer manifestRename;
 
         if (!m_keepDocuments) {
-            if (!docDirRename.rename(QDir(m_installationLocation.documentPath()).absoluteFilePath(m_app->id()),
+            if (!docDirRename.rename(QDir(m_installationLocation.documentPath()).absoluteFilePath(m_applicationId),
                                      ScopedRenamer::NameToNameMinus)) {
                 throw Exception(Error::IO, "could not rename %1 to %1-").arg(docDirRename.baseName());
             }
         }
 
         if (m_installationLocation.isRemovable()) {
-            QString imageFile = QDir(m_installationLocation.installationPath()).absoluteFilePath(m_app->id() + qSL(".appimg"));
+            QString imageFile = QDir(m_installationLocation.installationPath()).absoluteFilePath(m_applicationId + qSL(".appimg"));
 
             if (m_installationLocation.isMounted() && QFile::exists(imageFile)) {
                 // the correct medium is currently mounted
@@ -128,13 +136,13 @@ void DeinstallationTask::execute()
                     throw Exception(Error::MediumNotAvailable, "cannot delete application %1 without the removable medium it was installed on").arg(m_applicationId);
             }
         } else {
-            if (!appDirRename.rename(QDir(m_installationLocation.installationPath()).absoluteFilePath(m_app->id()),
+            if (!appDirRename.rename(QDir(m_installationLocation.installationPath()).absoluteFilePath(m_applicationId),
                                      ScopedRenamer::NameToNameMinus)) {
                 throw Exception(Error::IO, "could not rename %1 to %1-").arg(appDirRename.baseName());
             }
         }
 
-        if (!manifestRename.rename(ApplicationInstaller::instance()->manifestDirectory()->absoluteFilePath(m_app->id()),
+        if (!manifestRename.rename(ApplicationInstaller::instance()->manifestDirectory()->absoluteFilePath(m_applicationId),
                                    ScopedRenamer::NameToNameMinus)) {
             throw Exception(Error::IO, "could not rename %1 to %1-").arg(manifestRename.baseName());
         }

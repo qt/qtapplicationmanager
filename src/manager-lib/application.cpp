@@ -490,11 +490,8 @@ void Application::setLastExitCodeAndStatus(int exitCode, Am::ExitStatus exitStat
     }
 }
 
-QT_END_NAMESPACE_AM
 
-QT_BEGIN_NAMESPACE
-
-QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(Application) *app)
+QDebug operator<<(QDebug debug, const Application *app)
 {
     debug << "Application Object:";
     if (app)
@@ -504,6 +501,6 @@ QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(Application) *app)
     return debug;
 }
 
-QT_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 #include "moc_application.cpp"

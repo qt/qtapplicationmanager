@@ -74,15 +74,11 @@ enum class Error {
     Intents = 60
 };
 
-QT_END_NAMESPACE_AM
-
-QT_BEGIN_NAMESPACE
-
-inline QDebug &operator<<(QDebug &debug, const QT_PREPEND_NAMESPACE_AM(Error) &error)
+inline QDebug &operator<<(QDebug &debug, Error error)
 {
     return debug << int(error);
 }
 
-QT_END_NAMESPACE
+QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Error))

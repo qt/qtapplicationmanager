@@ -180,12 +180,8 @@ private:
 
 };
 
+QDebug operator<<(QDebug debug, const Application *app);
+
 QT_END_NAMESPACE_AM
-
-QT_BEGIN_NAMESPACE
-
-QDebug operator<<(QDebug debug, const QT_PREPEND_NAMESPACE_AM(Application) *app);
-
-QT_END_NAMESPACE
 
 Q_DECLARE_METATYPE(const QT_PREPEND_NAMESPACE_AM(Application *))

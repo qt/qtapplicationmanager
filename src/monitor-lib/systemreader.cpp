@@ -154,6 +154,7 @@ GpuVendor::Vendor GpuVendor::get()
 void GpuVendor::fetch()
 {
     QByteArray vendor;
+#if !defined(QT_NO_OPENGL)
     auto readVendor = [&vendor](QOpenGLContext *c) {
         const GLubyte *p = c->functions()->glGetString(GL_VENDOR);
         if (p)
@@ -173,6 +174,7 @@ void GpuVendor::fetch()
             context.doneCurrent();
         }
     }
+#endif
     if (vendor.contains("intel"))
         s_vendor = Intel;
     else if (vendor.contains("nvidia"))

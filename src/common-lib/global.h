@@ -30,7 +30,8 @@
 ****************************************************************************/
 
 #pragma once
-#include <qglobal.h>
+#include <QtCore/qglobal.h>
+#include <QtAppManCommon/qtappman_common-config.h>
 
 #define QT_BEGIN_NAMESPACE_AM  namespace QtAM {
 #define QT_END_NAMESPACE_AM    }

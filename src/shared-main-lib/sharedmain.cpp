@@ -93,6 +93,7 @@ void SharedMain::initialize()
 
     s_initialized = true;
 
+#if !defined(QT_NO_OPENGL)
     // this is needed for both WebEngine and Wayland Multi-screen rendering
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
@@ -101,6 +102,7 @@ void SharedMain::initialize()
     // to parse the requested format from the config files - the creation is completed later
     // in setupOpenGL().
     qt_gl_set_global_share_context(new QOpenGLContext());
+#endif
 
 #if defined(Q_OS_UNIX) && defined(AM_MULTI_PROCESS)
     // set a reasonable default for OSes/distros that do not set this by default
@@ -158,6 +160,7 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
 
 void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
 {
+#if !defined(QT_NO_OPENGL)
     QString profileName = openGLConfiguration.value(qSL("desktopProfile")).toString();
     int majorVersion = openGLConfiguration.value(qSL("esMajorVersion"), -1).toInt();
     int minorVersion = openGLConfiguration.value(qSL("esMinorVersion"), -1).toInt();
@@ -230,10 +233,14 @@ void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
 
     // check if we got what we requested on the OpenGL side
     checkOpenGLFormat("global shared context", globalContext->format());
+#else
+    Q_UNUSED(openGLConfiguration)
+#endif
 }
 
 void SharedMain::checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const
 {
+#if !defined(QT_NO_OPENGL)
     if ((m_requestedOpenGLProfile != QSurfaceFormat::NoProfile)
             && (format.profile() != m_requestedOpenGLProfile)) {
         qCWarning(LogGraphics) << "Failed to get the requested OpenGL profile"
@@ -252,6 +259,10 @@ void SharedMain::checkOpenGLFormat(const char *what, const QSurfaceFormat &forma
                                              << format.minorVersion() << " instead";
         }
     }
+#else
+    Q_UNUSED(what)
+    Q_UNUSED(format)
+#endif
 }
 
 QT_END_NAMESPACE_AM

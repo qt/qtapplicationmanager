@@ -1,0 +1,22 @@
+
+qt_internal_add_test(tst_runtime
+    SOURCES
+        ../error-checking.h
+        tst_runtime.cpp
+    DEFINES
+        AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_SOURCE_DIR}/../../data/\\\"
+    PUBLIC_LIBRARIES
+        Qt::Network
+        Qt::Qml
+        Qt::AppManApplicationPrivate
+        Qt::AppManCommonPrivate
+        Qt::AppManManagerPrivate
+)
+
+## Scopes:
+#####################################################################
+
+qt_internal_extend_target(tst_runtime CONDITION TARGET Qt::DBus
+    PUBLIC_LIBRARIES
+        Qt::DBus
+)

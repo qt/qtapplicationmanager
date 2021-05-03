@@ -50,6 +50,7 @@
 #include <qplatformdefs.h>
 
 #include <QtAppManLauncher/launchermain.h>
+#include <QtAppManWindow/qtappman_window-config.h>
 
 #include <QGuiApplication>
 #include <QQuickItem>
@@ -85,7 +86,7 @@
 #include "memorystatus.h"
 #include "monitormodel.h"
 
-#if defined(AM_ENABLE_WIDGETS)
+#if defined(AM_WIDGETS_SUPPORT)
 #  include <QApplication>
 using Application = QApplication;
 #else

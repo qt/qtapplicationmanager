@@ -32,6 +32,7 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
+#include <QtAppManWindow/qtappman_window-config.h>
 #include "touchemulation.h"
 
 #if defined(AM_ENABLE_TOUCH_EMULATION)

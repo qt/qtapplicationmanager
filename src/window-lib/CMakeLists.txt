@@ -1,0 +1,59 @@
+# Generated from window-lib.pro.
+
+#####################################################################
+## AppManWindow Module:
+#####################################################################
+
+# temporary hack to get around the "#pragma once not allowed in cpp" error
+set(QT_FEATURE_headersclean FALSE)
+
+qt_internal_add_module(AppManWindowPrivate
+    CONFIG_MODULE_NAME appman_window
+    STATIC
+    EXCEPTIONS
+    INTERNAL_MODULE
+    SOURCES
+        inprocesswindow.cpp inprocesswindow.h
+        touchemulation.cpp touchemulation.h
+        window.cpp window.h
+        windowitem.cpp windowitem.h
+        windowmanager.cpp windowmanager.h windowmanager_p.h
+    LIBRARIES
+        Qt::AppManApplicationPrivate
+        Qt::AppManCommonPrivate
+        Qt::AppManManagerPrivate
+        Qt::AppManMonitorPrivate
+    PUBLIC_LIBRARIES
+        Qt::Core
+        Qt::CorePrivate
+        Qt::Gui
+        Qt::Network
+        Qt::Qml
+        Qt::Quick
+)
+
+if(QT_FEATURE_multi_process)
+
+    qt6_generate_wayland_protocol_server_sources(AppManWindowPrivate
+        FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/../wayland-extensions/qtam-extension.xml
+    )
+
+    qt_internal_extend_target(AppManWindowPrivate
+        SOURCES
+            waylandcompositor.cpp waylandcompositor.h
+            waylandqtamserverextension.cpp waylandqtamserverextension_p.h
+            waylandwindow.cpp waylandwindow.h
+        PUBLIC_LIBRARIES
+            Qt::WaylandCompositor
+    )
+endif()
+
+qt_internal_extend_target(AppManWindowPrivate CONDITION QT_FEATURE_touch_emulation
+    SOURCES
+        touchemulation_x11.cpp touchemulation_x11_p.h
+    LIBRARIES
+        Qt::GuiPrivate
+        Qt::Test
+        X11::Xi
+)

@@ -1,3 +1,5 @@
+requires(false)
+
 load(am-config)
 
 requires(!disable-installer)

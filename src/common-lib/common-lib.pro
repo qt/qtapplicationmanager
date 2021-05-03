@@ -11,14 +11,12 @@ qtHaveModule(qml):QT *= qml qml-private
 
 linux:LIBS += -ldl
 
-versionAtLeast(QT.geniviextras.VERSION, 1.1.0) {
-    DEFINES += AM_GENIVIEXTRAS_LAZY_INIT
-}
+qtHaveModule(geniviextras):DEFINES *= AM_GENIVIEXTRAS_LAZY_INIT
 
 CONFIG *= static internal_module
 CONFIG -= create_cmake
 
-include($$SOURCE_DIR/3rdparty/libyaml.pri)
+include($$PWD/../../3rdparty/libyaml.pri)
 contains(DEFINES, "AM_USE_LIBBACKTRACE"):include($$SOURCE_DIR/3rdparty/libbacktrace.pri)
 contains(DEFINES, "AM_USE_STACKWALKER"):include($$SOURCE_DIR/3rdparty/stackwalker.pri)
 

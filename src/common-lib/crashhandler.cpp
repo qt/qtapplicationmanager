@@ -30,6 +30,7 @@
 ****************************************************************************/
 
 #include <inttypes.h>
+#include <typeinfo>
 
 #if defined(QT_QML_LIB)
 #  include <QPointer>
@@ -57,6 +58,9 @@
 #    define STDERR_FILENO _fileno(stderr)
 #  endif
 #  define write(a, b, c) _write(a, b, static_cast<unsigned int>(c))
+#  if defined(Q_CC_MINGW)
+#    include <cxxabi.h>
+#  endif
 #endif
 
 QT_BEGIN_NAMESPACE_AM
@@ -117,7 +121,6 @@ static struct InitBacktrace
 #    pragma warning(pop)
 
 #  elif defined(Q_OS_WINDOWS) && defined(Q_CC_MINGW)
-#    include <cxxabi.h>
 // this will make it run before all other static constructor functions
 static void initBacktrace() __attribute__((constructor(101)));
 
@@ -656,7 +659,9 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
         // SDK used to compile this code
         typedef HRESULT(WINAPI* GetThreadDescriptionType)(HANDLE hThread, PWSTR *description);
         if (auto GetThreadDescriptionFunc = reinterpret_cast<GetThreadDescriptionType>(
-                    GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "GetThreadDescription"))) {
+                    reinterpret_cast<QFunctionPointer>(
+                        GetProcAddress(::GetModuleHandle(L"kernel32.dll"),
+                                       "GetThreadDescription")))) {
             WCHAR *desc = nullptr;
             if (SUCCEEDED(GetThreadDescriptionFunc(GetCurrentThread(), &desc)))
                 wcscpy_s(threadName, sizeof(threadName) / sizeof(*threadName), desc);

@@ -51,6 +51,10 @@
 #include "applicationipcinterface.h"
 #include "applicationipcinterface_p.h"
 
+#if defined(interface)
+#  undef interface
+#endif
+
 /*!
     \qmltype ApplicationIPCInterface
     \ingroup system-ui-instantiable

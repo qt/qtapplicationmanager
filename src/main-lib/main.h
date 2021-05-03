@@ -33,9 +33,10 @@
 
 #include <QUrl>
 #include <QtAppManCommon/global.h>
+#include <QtAppManWindow/qtappman_window-config.h>
 #include <functional>
 
-#if defined(AM_ENABLE_WIDGETS)
+#if defined(AM_WIDGETS_SUPPORT)
 #  include <QApplication>
 #  include <QSurfaceFormat>
 typedef QApplication MainBase;

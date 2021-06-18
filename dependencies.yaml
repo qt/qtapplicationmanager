@@ -1,13 +1,10 @@
 dependencies:
   ../qtbase:
-    ref: f380c87731472eb59495b7823b7c6243b3aa11f4
+    ref: e473d96e65e7cf3190c6c16acace6359964d0bee
     required: true
-    shared: true
   ../qtdeclarative:
-    ref: 249db12b6020cc3a8f04841b1e28cd529f4929d9
+    ref: 22169421d462e01dbda9aff54e71dd1ed62ee90f
     required: true
-    shared: true
   ../qtwayland:
-    ref: 0c93bfd8679319cc906544141287c0e973b8555d
+    ref: f8ee89885ee5142cd4595f7243575e763b589561
     required: false
-    shared: true

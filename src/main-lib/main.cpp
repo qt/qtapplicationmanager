@@ -574,6 +574,8 @@ void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &c
 
     StartupTimer::instance()->checkpoint("after installer setup");
 #else
+    Q_UNUSED(devMode)
+    Q_UNUSED(allowUnsigned)
     Q_UNUSED(caCertificatePaths)
     Q_UNUSED(userIdSeparation)
 #endif // AM_DISABLE_INSTALLER

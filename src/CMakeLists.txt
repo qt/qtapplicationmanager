@@ -6,10 +6,10 @@ qt_feature_evaluate_features("${CMAKE_CURRENT_SOURCE_DIR}/window-lib/configure.c
 add_subdirectory(3rdparty)
 add_subdirectory(common-lib)
 add_subdirectory(application-lib)
-add_subdirectory(package-lib)
 
 if(QT_FEATURE_installer)
     add_subdirectory(crypto-lib)
+    add_subdirectory(package-lib)
 endif()
 
 # if(NOT QT_FEATURE_tools_only)

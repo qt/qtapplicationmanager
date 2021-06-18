@@ -361,7 +361,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
                                         "has been removed:";
         }
 
-        for (const auto iloc : ilocs) {
+        for (const auto &iloc : ilocs) {
             QVariantMap map = iloc.toMap();
             QString id = map.value(qSL("id")).toString();
             if (id == qSL("internal-0")) {

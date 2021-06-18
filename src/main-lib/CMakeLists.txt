@@ -33,7 +33,6 @@ qt_internal_add_module(AppManMainPrivate
         Qt::AppManManagerPrivate
         Qt::AppManMonitorPrivate
         Qt::AppManNotificationPrivate
-        Qt::AppManPackagePrivate
         Qt::AppManSharedMainPrivate
         Qt::AppManWindowPrivate
 )
@@ -48,6 +47,12 @@ qt_internal_extend_target(AppManMainPrivate CONDITION TARGET Qt::DBus AND QT_FEA
         Qt::DBus
         Qt::AppManDBusPrivate
 )
+
+qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_installer
+    PUBLIC_LIBRARIES
+        Qt::AppManPackagePrivate
+)
+
 
 qt_internal_extend_target(AppManMainPrivate CONDITION WIN32
     PUBLIC_LIBRARIES

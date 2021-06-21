@@ -248,6 +248,11 @@ void AbstractConfigCache::parse()
 
             } catch (const Exception &e) {
                 qWarning(LogCache) << "Failed to read cache:" << e.what();
+                cache.clear();
+                if (d->options & MergedResult) {
+                    destruct(mergedContent);
+                    mergedContent = nullptr;
+                }
             }
         }
     } else if (d->options.testFlag(ClearCache)) {

@@ -17,19 +17,10 @@ set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/hello-world")
 
 find_package(Qt6 COMPONENTS Core)
 find_package(Qt6 COMPONENTS Gui)
+find_package(Qt6 COMPONENTS AppManMainPrivate)
 
-)
-set_target_properties(hello-world PROPERTIES
-    WIN32_EXECUTABLE TRUE
-    MACOSX_BUNDLE TRUE
-)
-target_link_libraries(hello-world PUBLIC
-    Qt::Core
-    Qt::Gui
-)
-
-install(TARGETS hello-world
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+qt6_am_add_systemui_wrapper(hello-world
+    MAIN_QML_FILE system-ui.qml
+    EXTRA_FILES apps
+    EXTRA_ARGS --builtin-apps-manifest-dir apps
 )

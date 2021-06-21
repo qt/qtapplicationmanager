@@ -52,6 +52,8 @@
 import QtQuick 2.11
 import QtApplicationManager.Application 2.0
 import QtWayland.Compositor 1.3
+import QtWayland.Compositor.XdgShell
+import QtWayland.Compositor.WlShell
 
 ApplicationManagerWindow {
     id: root
@@ -81,10 +83,6 @@ ApplicationManagerWindow {
 
         WlShell {
             onWlShellSurfaceCreated: shellSurfaces.append({shellSurface: shellSurface});
-        }
-
-        XdgShellV6 {
-            onToplevelCreated: shellSurfaces.append({shellSurface: xdgSurface});
         }
 
         XdgShell {

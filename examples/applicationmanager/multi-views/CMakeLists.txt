@@ -17,19 +17,10 @@ set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/multi-views")
 
 find_package(Qt6 COMPONENTS Core)
 find_package(Qt6 COMPONENTS Gui)
+find_package(Qt6 COMPONENTS AppManMainPrivate)
 
-)
-set_target_properties(multi-views PROPERTIES
-    WIN32_EXECUTABLE TRUE
-    MACOSX_BUNDLE TRUE
-)
-target_link_libraries(multi-views PUBLIC
-    Qt::Core
-    Qt::Gui
-)
-
-install(TARGETS multi-views
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+qt6_am_add_systemui_wrapper(multi-views
+    CONFIG_YAML am-config.yaml
+    EXTRA_FILES apps system-ui
+    EXTRA_ARGS --verbose
 )

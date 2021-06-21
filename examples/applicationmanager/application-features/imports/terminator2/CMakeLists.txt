@@ -21,15 +21,17 @@ find_package(Qt6 COMPONENTS Qml)
 find_package(Qt6 COMPONENTS Quick)
 
 qt6_add_qml_module(terminator2plugin
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_BINARY_DIR}/../../apps/crash/Terminator"
-    VERSION 1.0
+    OUTPUT_DIRECTORY "../../apps/crash/Terminator"
+    VERSION 2.0
     URI "Terminator"
-    INSTALL_LOCATION ${INSTALL_EXAMPLEDIR}
+    NO_GENERATE_PLUGIN_SOURCE
+    PLUGIN_TARGET terminator2plugin
 )
 
 target_sources(terminator2plugin PRIVATE
     qmlterminator2.cpp qmlterminator2.h
 )
+
 set_target_properties(terminator2plugin PROPERTIES
     WIN32_EXECUTABLE TRUE
     MACOSX_BUNDLE TRUE
@@ -45,4 +47,8 @@ install(TARGETS terminator2plugin
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
     BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
     LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/../../apps/crash/Terminator/qmldir"
+    DESTINATION "${INSTALL_EXAMPLEDIR}"
 )

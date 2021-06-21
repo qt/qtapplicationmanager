@@ -1,7 +1,7 @@
 # Generated from application-features.pro.
 
 cmake_minimum_required(VERSION 3.14)
-project(ui LANGUAGES CXX)
+project(application-features LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -15,16 +15,12 @@ endif()
 
 set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/application-features")
 
-)
-set_target_properties(ui PROPERTIES
-    WIN32_EXECUTABLE TRUE
-    MACOSX_BUNDLE TRUE
+find_package(Qt6 COMPONENTS AppManMainPrivate)
+
+qt6_am_add_systemui_wrapper(application-features
+    CONFIG_YAML am-config.yaml
+    EXTRA_FILES apps system-ui
 )
 
-install(TARGETS ui
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
-)
 add_subdirectory(imports)
 add_subdirectory(native)

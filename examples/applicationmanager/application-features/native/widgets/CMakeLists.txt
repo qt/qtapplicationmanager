@@ -30,8 +30,8 @@ target_link_libraries(widgets PUBLIC
     Qt::Core
     Qt::Gui
     Qt::Widgets
-    appman_commonPrivate
-    appman_launcherPrivate
+    Qt::AppManCommonPrivate
+    Qt::AppManLauncherPrivate
 )
 
 install(TARGETS widgets

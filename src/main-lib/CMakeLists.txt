@@ -35,6 +35,8 @@ qt_internal_add_module(AppManMainPrivate
         Qt::AppManNotificationPrivate
         Qt::AppManSharedMainPrivate
         Qt::AppManWindowPrivate
+    EXTRA_CMAKE_FILES
+        Qt6AppManMainPrivateMacros.cmake
 )
 
 qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_am_widgets_support AND TARGET Qt::Widgets

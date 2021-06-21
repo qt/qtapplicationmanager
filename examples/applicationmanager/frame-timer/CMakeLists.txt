@@ -17,19 +17,9 @@ set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/frame-timer")
 
 find_package(Qt6 COMPONENTS Core)
 find_package(Qt6 COMPONENTS Gui)
+find_package(Qt6 COMPONENTS AppManMainPrivate)
 
-)
-set_target_properties(frame-timer PROPERTIES
-    WIN32_EXECUTABLE TRUE
-    MACOSX_BUNDLE TRUE
-)
-target_link_libraries(frame-timer PUBLIC
-    Qt::Core
-    Qt::Gui
-)
-
-install(TARGETS frame-timer
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+qt6_am_add_systemui_wrapper(frame-timer
+    CONFIG_YAML am-config.yaml
+    EXTRA_FILES apps system-ui
 )

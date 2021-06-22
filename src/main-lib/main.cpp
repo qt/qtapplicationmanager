@@ -567,10 +567,12 @@ void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &c
     if (Q_UNLIKELY(hardwareId().isEmpty()))
         throw Exception("the installer is enabled, but the device-id is empty");
 
-    if (Q_UNLIKELY(!m_installationDir.isEmpty() && !QDir::root().mkpath(m_installationDir)))
-        throw Exception("could not create package installation directory: \'%1\'").arg(m_installationDir);
-    if (Q_UNLIKELY(!m_documentDir.isEmpty() && !QDir::root().mkpath(m_documentDir)))
-        throw Exception("could not create document directory for packages: \'%1\'").arg(m_documentDir);
+    if (!isRunningOnEmbedded()) { // this is just for convenience sake during development
+        if (Q_UNLIKELY(!m_installationDir.isEmpty() && !QDir::root().mkpath(m_installationDir)))
+            throw Exception("could not create package installation directory: \'%1\'").arg(m_installationDir);
+        if (Q_UNLIKELY(!m_documentDir.isEmpty() && !QDir::root().mkpath(m_documentDir)))
+            throw Exception("could not create document directory for packages: \'%1\'").arg(m_documentDir);
+    }
 
     StartupTimer::instance()->checkpoint("after installer setup checks");
 

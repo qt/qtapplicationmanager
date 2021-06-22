@@ -37,11 +37,12 @@
 #include <QVariantMap>
 #include <QList>
 #include <QUrl>
+#include <QtAppManCommon/global.h>
+
 #if defined(AM_MULTI_PROCESS)
 #  include <QDBusConnection>
 #  include <QDBusContext>
 #endif
-#include <QtAppManCommon/global.h>
 #include <QtAppManIntentServer/intentserversysteminterface.h>
 #include <QtAppManIntentServer/intent.h>
 #include <QtAppManIntentClient/intentclientsysteminterface.h>

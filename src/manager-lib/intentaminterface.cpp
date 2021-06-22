@@ -29,6 +29,7 @@
 **
 ****************************************************************************/
 
+#include "global.h"
 #if defined(AM_MULTI_PROCESS)
 #  include <QDBusMessage>
 #  include <QDBusConnection>

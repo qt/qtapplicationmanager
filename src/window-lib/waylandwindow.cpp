@@ -29,9 +29,9 @@
 **
 ****************************************************************************/
 
-#if defined(AM_MULTI_PROCESS)
 
 #include "global.h"
+#if defined(AM_MULTI_PROCESS)
 #include "logging.h"
 #include "applicationmanager.h"
 #include "application.h"

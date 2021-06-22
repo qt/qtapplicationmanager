@@ -41,12 +41,12 @@
 #include <QQmlComponent>
 #include <private/qabstractanimation_p.h>
 #include <QLocalServer>
+#include "global.h"
 
 #if defined(AM_MULTI_PROCESS)
 #  include "waylandcompositor.h"
 #endif
 
-#include "global.h"
 #include "logging.h"
 #include "application.h"
 #include "applicationmanager.h"

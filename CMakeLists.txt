@@ -33,7 +33,7 @@ find_package(Qt6 ${PROJECT_VERSION} QUIET CONFIG OPTIONAL_COMPONENTS
     QuickTest
     Widgets
     ZlibPrivate
-    GeniviExtras
+    DltLogging
 )
 
 if(NOT TARGET Qt::Gui OR NOT TARGET Qt::Quick)

@@ -52,7 +52,7 @@ qtam_internal_add_dbus_adaptor(AppManDBusPrivate
         -i dbus-utilities.h
 )
 
-if (QT_FEATURE_installer)
+if (QT_FEATURE_am_installer)
     qtam_internal_add_dbus_adaptor(AppManDBusPrivate
         DBUS_ADAPTOR_SOURCES
             io.qt.packagemanager.xml

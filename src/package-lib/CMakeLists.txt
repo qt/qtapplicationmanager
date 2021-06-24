@@ -26,12 +26,12 @@ qt_internal_add_module(AppManPackagePrivate
         Qt::Network
 )
 
-qt_internal_extend_target(AppManPackagePrivate CONDITION QT_FEATURE_system_libarchive
+qt_internal_extend_target(AppManPackagePrivate CONDITION QT_FEATURE_am_system_libarchive
     LIBRARIES
         WrapLibArchive::WrapLibArchive
 )
 
-qt_internal_extend_target(AppManPackagePrivate CONDITION NOT QT_FEATURE_system_libarchive
+qt_internal_extend_target(AppManPackagePrivate CONDITION NOT QT_FEATURE_am_system_libarchive
     LIBRARIES
         Qt::BundledLibArchive
 )

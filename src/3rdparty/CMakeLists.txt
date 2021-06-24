@@ -1,15 +1,15 @@
-if(NOT QT_FEATURE_system_libarchive AND QT_FEATURE_installer)
+if(NOT QT_FEATURE_am_system_libarchive AND QT_FEATURE_am_installer)
     add_subdirectory(libarchive)
 endif()
 
-if(NOT QT_FEATURE_system_libyaml)
+if(NOT QT_FEATURE_am_system_libyaml)
     add_subdirectory(libyaml)
 endif()
 
-if(QT_FEATURE_libbacktrace)
+if(QT_FEATURE_am_libbacktrace)
     add_subdirectory(libbacktrace)
 endif()
 
-if(QT_FEATURE_stackwalker)
+if(QT_FEATURE_am_stackwalker)
     add_subdirectory(stackwalker)
 endif()

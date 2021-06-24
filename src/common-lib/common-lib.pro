@@ -11,7 +11,7 @@ qtHaveModule(qml):QT *= qml qml-private
 
 linux:LIBS += -ldl
 
-qtHaveModule(geniviextras):DEFINES *= AM_GENIVIEXTRAS_LAZY_INIT
+qtHaveModule(geniviextras):DEFINES *= AM_DLTLOGGING_LAZY_INIT
 
 CONFIG *= static internal_module
 CONFIG -= create_cmake

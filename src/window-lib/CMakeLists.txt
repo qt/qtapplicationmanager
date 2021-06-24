@@ -32,7 +32,7 @@ qt_internal_add_module(AppManWindowPrivate
         Qt::Quick
 )
 
-if(QT_FEATURE_multi_process)
+if(QT_FEATURE_am_multi_process)
 
     qt6_generate_wayland_protocol_server_sources(AppManWindowPrivate
         FILES
@@ -49,7 +49,7 @@ if(QT_FEATURE_multi_process)
     )
 endif()
 
-qt_internal_extend_target(AppManWindowPrivate CONDITION QT_FEATURE_touch_emulation
+qt_internal_extend_target(AppManWindowPrivate CONDITION QT_FEATURE_am_touch_emulation
     SOURCES
         touchemulation_x11.cpp touchemulation_x11_p.h
     LIBRARIES

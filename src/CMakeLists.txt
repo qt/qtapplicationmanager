@@ -7,12 +7,12 @@ add_subdirectory(3rdparty)
 add_subdirectory(common-lib)
 add_subdirectory(application-lib)
 
-if(QT_FEATURE_installer)
+if(QT_FEATURE_am_installer)
     add_subdirectory(crypto-lib)
     add_subdirectory(package-lib)
 endif()
 
-# if(NOT QT_FEATURE_tools_only)
+if(NOT QT_FEATURE_am_tools_only)
     add_subdirectory(plugin-interfaces)
     add_subdirectory(notification-lib)
     add_subdirectory(monitor-lib)
@@ -22,7 +22,7 @@ endif()
     add_subdirectory(manager-lib)
     add_subdirectory(window-lib)
 
-    if(TARGET Qt::DBus AND QT_FEATURE_external_dbus_interfaces)
+    if(TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces)
         add_subdirectory(dbus-lib)
     endif()
 
@@ -35,17 +35,17 @@ endif()
     endif()
 
     # This tool links against everything to extract the Qml type information
-    if (QT_FEATURE_installer AND TARGET Qt::DBus)
+    if (QT_FEATURE_am_installer AND TARGET Qt::DBus)
         add_subdirectory(tools/dumpqmltypes)
     endif()
 
-    if (TARGET Qt::DBus AND QT_FEATURE_multi_process)
+    if (TARGET Qt::DBus AND QT_FEATURE_am_multi_process)
         add_subdirectory(tools/launcher-qml)
     endif()
-# endif()
+endif()
 
-if(NOT CMAKE_CROSSCOMPILING OR QT_FEATURE_tools_only)
-    if (QT_FEATURE_installer)
+if(NOT CMAKE_CROSSCOMPILING OR QT_FEATURE_am_tools_only)
+    if (QT_FEATURE_am_installer)
         add_subdirectory(tools/packager)
     endif()
 

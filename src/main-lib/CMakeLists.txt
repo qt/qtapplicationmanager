@@ -37,18 +37,18 @@ qt_internal_add_module(AppManMainPrivate
         Qt::AppManWindowPrivate
 )
 
-qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_widgets_support AND TARGET Qt::Widgets
+qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_am_widgets_support AND TARGET Qt::Widgets
     PUBLIC_LIBRARIES
         Qt::Widgets
 )
 
-qt_internal_extend_target(AppManMainPrivate CONDITION TARGET Qt::DBus AND QT_FEATURE_external_dbus_interfaces
+qt_internal_extend_target(AppManMainPrivate CONDITION TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces
     PUBLIC_LIBRARIES
         Qt::DBus
         Qt::AppManDBusPrivate
 )
 
-qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_installer
+qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_am_installer
     PUBLIC_LIBRARIES
         Qt::AppManPackagePrivate
 )

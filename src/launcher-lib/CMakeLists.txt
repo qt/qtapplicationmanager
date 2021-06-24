@@ -38,7 +38,7 @@ qt_internal_add_module(AppManLauncherPrivate
         Qt::QuickPrivate
 )
 
-qt_internal_extend_target(AppManLauncherPrivate CONDITION QT_FEATURE_widgets_support AND TARGET Qt::Widgets
+qt_internal_extend_target(AppManLauncherPrivate CONDITION QT_FEATURE_am_widgets_support AND TARGET Qt::Widgets
     PUBLIC_LIBRARIES
         Qt::Widgets
 )

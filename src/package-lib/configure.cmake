@@ -11,7 +11,7 @@ qt_find_package(WrapLibArchive PROVIDED_TARGETS WrapLibArchive::WrapLibArchive M
 
 #### Features
 
-qt_feature("system-libarchive" PRIVATE
+qt_feature("am-system-libarchive" PRIVATE
     LABEL "Using system libarchive"
     CONDITION WrapLibArchive_FOUND
     ENABLE INPUT_libarchive STREQUAL 'system'
@@ -19,5 +19,5 @@ qt_feature("system-libarchive" PRIVATE
 )
 
 qt_configure_add_summary_section(NAME "Qt Application Manager [Packaging module]")
-qt_configure_add_summary_entry(ARGS "system-libarchive")
+qt_configure_add_summary_entry(ARGS "am-system-libarchive")
 qt_configure_end_summary_section() # end of "Qt ApplicationManger" section

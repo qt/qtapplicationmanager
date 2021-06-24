@@ -58,7 +58,7 @@ qt_internal_add_module(AppManManagerPrivate
         Qt::QuickPrivate
 )
 
-qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_multi_process
+qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_am_multi_process
     SOURCES
         nativeruntime.cpp nativeruntime.h nativeruntime_p.h
         processcontainer.cpp processcontainer.h
@@ -67,19 +67,19 @@ qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_multi_proces
         dl
 )
 
-if (QT_FEATURE_multi_process)
+if (QT_FEATURE_am_multi_process)
     qtam_internal_add_dbus_adaptor(AppManManagerPrivate
         DBUS_ADAPTOR_SOURCES
             ../dbus-lib/io.qt.applicationmanager.intentinterface.xml
     )
 endif()
 
-qt_internal_extend_target(AppManManagerPrivate CONDITION (TARGET Qt::WaylandCompositor OR QT_FEATURE_installer)
+qt_internal_extend_target(AppManManagerPrivate CONDITION (TARGET Qt::WaylandCompositor OR QT_FEATURE_am_installer)
     SOURCES
         sudo.cpp sudo.h
 )
 
-qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_installer
+qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_am_installer
     SOURCES
         deinstallationtask.cpp deinstallationtask.h
         installationtask.cpp installationtask.h

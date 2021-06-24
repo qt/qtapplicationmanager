@@ -69,9 +69,9 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 #  include <android/log.h>
 #endif
 
-#if defined(QT_GENIVIEXTRAS_LIB)
-#  include <QtGeniviExtras/QtDlt>
-#  include <QtGeniviExtras/QDltRegistration>
+#if defined(AM_USE_DLTLOGGING)
+#  include <QtDltLogging/QtDlt>
+#  include <QtDltLogging/QDltRegistration>
 #else
 #  define QDLT_LOGGING_CATEGORY(a,b,c,d) Q_LOGGING_CATEGORY(a,b)
 #  define QDLT_FALLBACK_CATEGORY(a)
@@ -84,7 +84,7 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 
 QT_BEGIN_NAMESPACE_AM
 
-#if defined(QT_GENIVIEXTRAS_LIB)
+#if defined(AM_USE_DLTLOGGING)
 static const char *s_defaultSystemUiDltId = "QTAM";
 static const char *s_defaultSystemUiDltDescription = "Qt Application Manager";
 #endif
@@ -185,7 +185,7 @@ struct DeferredMessage {
 
 
 bool Logging::s_dltEnabled =
-#if defined(QT_GENIVIEXTRAS_LIB)
+#if defined(AM_USE_DLTLOGGING)
         true;
 #else
         false;
@@ -372,7 +372,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
 void Logging::messageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
-#if defined(QT_GENIVIEXTRAS_LIB)
+#if defined(AM_USE_DLTLOGGING)
     if (s_dltEnabled)
         QDltRegistration::messageHandler(msgType, context, message);
 #endif
@@ -422,7 +422,7 @@ void Logging::setFilterRules(const QStringList &rules)
 {
     s_rules = rules;
     QString rulesStr = rules.join(qL1C('\n'));
-#if defined(QT_GENIVIEXTRAS_LIB)
+#if defined(AM_USE_DLTLOGGING)
     if (s_dltEnabled)
         rulesStr += qSL("\ngeneral=true");
 #endif
@@ -493,7 +493,7 @@ void Logging::setDltEnabled(bool enabled)
 
 void Logging::registerUnregisteredDltContexts()
 {
-#ifdef AM_GENIVIEXTRAS_LAZY_INIT
+#if defined(AM_USE_DLTLOGGING)
     if (s_dltEnabled)
         globalDltRegistration()->registerUnregisteredContexts();
 #endif
@@ -501,7 +501,7 @@ void Logging::registerUnregisteredDltContexts()
 
 void Logging::setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dltAppDescription)
 {
-#if defined(QT_GENIVIEXTRAS_LIB)
+#if defined(AM_USE_DLTLOGGING)
     if (s_dltEnabled) {
         const QByteArray id = dltAppId.isEmpty() ? QByteArray(s_defaultSystemUiDltId) : dltAppId;
         const QByteArray description = dltAppDescription.isEmpty() ? QByteArray(s_defaultSystemUiDltDescription)
@@ -516,7 +516,7 @@ void Logging::setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dlt
 
 void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription)
 {
-#if defined(QT_GENIVIEXTRAS_LIB)
+#if defined(AM_USE_DLTLOGGING)
     if (s_dltEnabled)
         globalDltRegistration()->registerApplication(dltAppId, dltAppDescription);
 #else
@@ -527,7 +527,7 @@ void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &
 
 void Logging::logToDlt(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
-#if defined(QT_GENIVIEXTRAS_LIB)
+#if defined(AM_USE_DLTLOGGING)
     if (s_dltEnabled)
         QDltRegistration::messageHandler(msgType, context, message);
 #else

@@ -37,11 +37,9 @@ qt_internal_add_module(AppManCommonPrivate
         Qt::QmlPrivate
 )
 
-qt_internal_extend_target(AppManCommonPrivate CONDITION TARGET Qt::GeniviExtras
-    DEFINES
-        AM_GENIVIEXTRAS_LAZY_INIT
+qt_internal_extend_target(AppManCommonPrivate CONDITION TARGET Qt::DltLogging
     PUBLIC_LIBRARIES
-        Qt::GeniviExtras
+        Qt::DltLogging
 )
 
 qt_internal_extend_target(AppManCommonPrivate CONDITION TARGET Qt::DBus
@@ -56,22 +54,22 @@ qt_internal_extend_target(AppManCommonPrivate CONDITION LINUX
         dl
 )
 
-qt_internal_extend_target(AppManCommonPrivate CONDITION QT_FEATURE_libbacktrace
+qt_internal_extend_target(AppManCommonPrivate CONDITION QT_FEATURE_am_libbacktrace
     LIBRARIES
         Qt::BundledBacktrace
 )
 
-qt_internal_extend_target(AppManCommonPrivate CONDITION QT_FEATURE_stackwalker
+qt_internal_extend_target(AppManCommonPrivate CONDITION QT_FEATURE_am_stackwalker
     LIBRARIES
         Qt::BundledStackwalker
 )
 
-qt_internal_extend_target(AppManCommonPrivate CONDITION QT_FEATURE_system_libyaml
+qt_internal_extend_target(AppManCommonPrivate CONDITION QT_FEATURE_am_system_libyaml
     LIBRARIES
         WrapLibYaml::WrapLibYaml
 )
 
-qt_internal_extend_target(AppManCommonPrivate CONDITION NOT QT_FEATURE_system_libyaml
+qt_internal_extend_target(AppManCommonPrivate CONDITION NOT QT_FEATURE_am_system_libyaml
     LIBRARIES
         Qt::BundledLibYaml
 )

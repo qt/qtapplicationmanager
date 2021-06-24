@@ -606,7 +606,10 @@ public:
     void OnOutput(LPCSTR) override { }
     void OnDbgHelpErr(LPCSTR errorString, DWORD lastError, DWORD64 address) override
     {
-        logBacktraceLine(logToDestination, 0, nullptr, address, nullptr, 0, lastError, errorString);
+        // ignore SymGetLineFromAddr64 "errors" - they are not really errors, but just missing
+        // debug symbol information.
+        if (strcmp(errorString, "SymGetLineFromAddr64") || (lastError != 487))
+            logBacktraceLine(logToDestination, 0, nullptr, address, nullptr, 0, lastError, errorString);
     }
     void OnSymInit(LPCSTR, DWORD, LPCSTR) override { }
     void OnLoadModule(LPCSTR, LPCSTR, DWORD64, DWORD, DWORD, LPCSTR, LPCSTR, ULONGLONG) override { }

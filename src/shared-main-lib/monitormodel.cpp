@@ -162,7 +162,7 @@ MonitorModel::~MonitorModel()
 
 /*!
     \qmlproperty list<object> MonitorModel::dataSources
-    \default
+    \qmldefault
 
     List of data sources for the MonitorModel to use. A data source can be any QtObject containing
     at least a \c roleNames property and an \c update() function. For more information, see

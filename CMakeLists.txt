@@ -42,3 +42,9 @@ if(NOT TARGET Qt::Gui OR NOT TARGET Qt::Quick)
 endif()
 
 qt_build_repo()
+
+add_custom_target(QtApplicationManagerDoc)
+
+qt_internal_add_docs(QtApplicationManagerDoc
+    doc/qtapplicationmanager.qdocconf
+)

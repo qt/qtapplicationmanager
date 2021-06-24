@@ -62,7 +62,7 @@ feature set of the application manager:
 To build the application manager with all its features, the following components are required:
 
 \list
-    \li \b Qt 5.15.0 or higher.
+    \li \b Qt 6.2.0 or higher.
 
     \li \b openssl \e{- Linux only and only if you need the installer functionality}.
         Qt needs to be built with openssl support. The required minimum version is defined by Qt.
@@ -76,7 +76,7 @@ apt-get install libyaml-dev libarchive-dev libssl-dev
 \endcode
 
 \note On platforms without \c pkg-config (for example, Windows or macOS) as well as on platforms
-that lack one of the dependencies, the bundled versions of these libraries from the \c 3rdparty
+that lack one of the dependencies, the bundled versions of these libraries from the \c src/3rdparty
 folder are automatically used instead. Make sure you are aware of the licensing implications,
 since these bundled 3rdparty libs will be linked in as static libraries. This option is not meant
 for production, but for development and testing environments only.
@@ -92,137 +92,110 @@ to single-process mode, if certain dependencies are not available, such as:
 \li The \c QtDBus module is available.
 \endlist
 
-You can force the build mode via the respective \c -config options \c force-multi-process and
-\c force-single-process, as described below.
+You can force the build mode via the respective \c --force-multi-process and
+\c --force-single-process command line options, as described below.
 
 \target build
 \section1 Build
 
-The application manager uses \c qmake for its build system. The basic installation steps are:
+The application manager uses \c cmake for its build system. The basic installation steps are:
 
 \code
-qmake && make && make install
+mkdir <builddir>
+  && cd <builddir>
+  && cmake <srcdir> <options>
+  && cmake --build .
+  && cmake --install .
+\endcode
+or
+\code
+mkdir <builddir>
+  && cd <builddir>
+  && <qtbase>/bin/qt-configure-module <srcdir> <options>
+  && cmake --build .
+  && cmake --install .
 \endcode
 
-There are various options that can be given to \c qmake to tailor the build to suit your needs:
+There are various options that can be given to \c cmake to tailor the build to suit your needs.
+
+With Qt's new cmake based build system, there are three ways to set configure options for Qt
+modules:
+
+\list 1
+  \li You can call \c cmake from a shell and specify the options as \c -DINPUT_<option>=<value>
+      directly on the cmake command line
+  \li You can also use the \c cmake-gui or Qt Creator's built-in configuration UI to change options
+      after the first cmake run
+  \li Again on the command line, there is Qt's convenience cmake wrapper \c qt-configure-module,
+      which lets you specify the options as normal command line options: \c --<option>=<value>
+\endlist
 
 \table
 \header
   \li Option
   \li Description
 \row
-  \li \c{-config force-libcrypto}
-  \li Force a build against OpenSSL, even on Windows and macOS.
+  \li \c{libarchive}
+  \li Set to \c system to force a build against the system libarchive, or \c qt to not build against
+      the system libarchive, even if one was detected.
 \row
-  \li \c{-config force-system-libarchive}
-  \li Force a build against the system libarchive.
+  \li \c{libyaml}
+  \li Set to \c system to force a build against the system libyaml, or \c qt to not build against the
+      system libyaml, even if one was detected.
 \row
-  \li \c{-config no-system-libarchive}
-  \li Do not build against the system libarchive, even if one was detected.
-\row
-  \li \c{-config force-system-libyaml}
-  \li Force a build against the system libyaml.
-\row
-  \li \c{-config no-system-libyaml}
-  \li Do not build against the system libyaml, even if one was detected.
-\row
-  \li \c{-config force-single-process}
+  \li \c{force-single-process}
   \li Force a single-process build, even if Qt's Wayland \c compositor module is available.
+      \br The corresponding cmake input is \c{-DINPUT_force_mode=single}.
 \row
-  \li \c{-config force-multi-process}
+  \li \c{force-multi-process}
   \li Force a multi-process build - this will break if Qt's Wayland \c compositor module is not
       available.
+      \br The corresponding cmake input is \c{-DINPUT_force_mode=multi}.
 \row
-  \li \c{-config enable-tests}
-  \li Include unit-tests in the build.
-\row
-  \li \c{-config enable-examples}
-  \li Include examples in the build.
-\row
-  \li \c{-config disable-installer}
+  \li \c{installer}
     \target config disable installer
-  \li Disable the installer part.
+  \li Set to \c no to disable the installer part.
 \row
-  \li \c{-config disable-external-dbus-interfaces}
-  \li Completely disable the external D-Bus interfaces. The internal communication channel between
-      the applications and the application manager will still be based on a peer-to-peer D-Bus.
+  \li \c{external-dbus-interfaces}
+  \li Set to \c no to completely disable the external D-Bus interfaces. The internal communication
+      channel between the applications and the application manager will still be based on a
+      peer-to-peer D-Bus.
 \row
-  \li \c{-config tools-only}
-  \li Build tools only: \l{Controller}{appman-controller} and \l{Packager}{appman-packager}.
+  \li \c{tools-only}
+  \li Set to \c yes to only build tools: \l{Controller}{appman-controller} and
+      \l{Packager}{appman-packager}.
 \row
-  \li \c{-config install-prefix=<path>}
-  \li Uses \c path as the base directory for \c{make install}.
-      If you do not specify an \c install-prefix when you run qmake, then the application manager
-      will behave like a standard Qt module:
-      \list
-      \li in developer builds, the binaries will be compiled directly to \c ${qtbase}/bin
-      \li in prefix builds, the binaries will be compiled to \c ${builddir}/bin
-      \endlist
-
-      If you specify an \c install-prefix, this means:
-      \list
-      \li in developer builds, the binaries will be compiled directly to \c ${install-prefix}/bin
-      \li in prefix builds, the binaries will be compiled to \c ${builddir}/bin
-      \endlist
-
-      Additionally, all binaries on Linux will get an absolute \c RPATH / \c RUNPATH when configured
-      with an \c install-prefix. This allows you to run the binaries from the build directory
-      directly without any weird side-effects. Linux pulls in the system-Qt, if it cannot find
-      the necessary libs in \c RUNPATH.
-
-      Ultimately, the application manager is a Qt module. This means that all libraries and headers
-      are always installed into \c ${qtbase} to make them accessible via standard Qt mechanisms.
+  \li \c{widgets-support}
+  \li Set to \c yes to enable support for Qt widgets. This option can be useful to enable the use
+      of some development tools using Qt widgets.
 \row
-  \li \c{-config systemd-workaround}
-  \li Paramount if you are running systemd and plan to support SD-Card installations. Works
-      around systemd interfering with loopback mounts.
+  \li \c{hardware-id=<id>}
+  \li If set, compiles in \c id as a hard-coded hardware-id; see \l{The Hardware ID} for more
+      information.
 \row
-  \li \c{-config enable-widgets}
-  \li Enables support for Qt widgets. This option can be useful to enable the use of some
-      development graphical tools using Qt widgets.
+  \li \c{libbacktrace}
+  \li If set to \c yes, enables building and linking against \c libbacktrace in the 3rdparty folder.
+      This gives you readable backtraces for crashes on Linux, but also increases the binary size
+      slightly. For debug builds, this option is enabled by default.
+      Set to \c no disables building and linking against \c libbacktrace.
 \row
-  \li \c{-config hardware-id=<id>}
-  \li Compiles in \c id as a hard-coded hardware ID; see \l{The Hardware ID} for more information.
-\row
-  \li \c{-config hardware-id-from-file=<file>}
-  \li The hardware-id is read from the specified \c file at runtime; see \l{The Hardware ID} for
-      more information.
-\row
-  \li \c{-config enable-libbacktrace}
-  \li Enables building and linking against \c libbacktrace in the 3rdparty folder. This gives
-      you readable backtraces on Linux on crashes, but also increases the binary size slightly.
-      For debug builds, this option is enabled by default.
-\row
-  \li \c{-config enable-stackwalker}
-  \li Enables building and linking against \c stackwalker in the 3rdparty folder. This gives
-      you readable backtraces on Windows on crashes, but also increases the binary size slightly.
-      For debug builds, this option is enabled by default.
-\row
-  \li \c{-config disable-libbacktrace}
-  \li Disables building and linking against \c libbacktrace in the 3rdparty folder.
-\row
-  \li \c{-config disable-stackwalker}
-  \li Disables building and linking against \c stackwalker in the 3rdparty folder.
+  \li \c{stackwalker}
+  \li If set to \c yes, enables building and linking against \c stackwalker in the 3rdparty folder.
+      This gives you readable backtraces for crashes on Windows, but also increases the binary size
+      slightly. For debug builds, this option is enabled by default.
+      Set to \c no disables building and linking against \c stackwalker.
 \endtable
 
 \section2 The Hardware ID
 
-The installer part of the application manager needs a unique device ID for two reasons:
-\list 1
-\li If you want to deliver application packages that are bound to a specific device unit from your
-    app-store. The use case here is to prevent customers from buying apps once and then sharing them
-    with others for free.
-
-\li When you install application packages onto an SD card that can be removed by the user. The use
-    case here is that we need to be able to detect which SD card "belongs" to which device, in case
-    the user is swapping the same card between devices.
-\endlist
+The installer part of the application manager needs a unique device ID, if you want to deliver
+application packages that are bound to a specific device unit from your app-store. The use case here
+is to prevent customers from buying apps once and then sharing them with others for free.
 
 Since the application manager doesn't know, at build time, how a potential app-store will be
-configured, and if installations on removable SD-cards are enabled, the application manager tries
-to create a unique ID based on the MAC address of the first configured ethernet device. If the
-ethernet device is not configured at all, or configured after the application manager starts, this
-scenario will not work.
+configured, the application manager tries to create a unique ID based on the MAC address of the
+first configured ethernet device. If the ethernet device is not configured at all, or configured
+after the application manager starts, this scenario will not work.
 
 There are three different ways to specify a hardware ID:
 
@@ -230,12 +203,12 @@ There are three different ways to specify a hardware ID:
 \li No configure option: use the MAC address of the first ethernet device. Typically, this option
     works out of the box.
 
-\li \c{qmake --config hardware-id=yourID} hardcodes the ID to \c yourID. This option is ideal, if
+\li \c{hardware-id=yourID} hardcodes the ID to \c yourID. This option is ideal, if
     you do not use any application manager features that require this ID to be unique and if you
     cannot (or do not want to) guarantee that an ethernet device is up when the application manager
     starts.
 
-\li \c{qmake --config hardware-id-from-file=yourFile} makes the application manager read the
+\li \c{hardware-id=@yourFile} makes the application manager read the
     contents of \c yourFile at startup and uses its content as the ID; instead of the ethernet MAC
     address. This option is useful if your device has a unique device ID available via \c /proc or
     \c /sys and you want to use features that require such an ID.
@@ -244,6 +217,7 @@ There are three different ways to specify a hardware ID:
 All executables, including the unit tests, can be found in the build folder's \c bin directory, after
 compiling.
 
+\omit
 \section1 Generate Code-Coverage Data
 
 Instead of doing a normal build, you can also create a coverage build by running \c{make coverage}.
@@ -258,6 +232,8 @@ make check-coverage
 \endcode
 
 The command line output provides you the URL to the generated report.
+
+\endomit
 
 \section1 System Setup
 

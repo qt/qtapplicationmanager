@@ -1013,10 +1013,12 @@ QString Main::hardwareId() const
     if (hardwareId.isEmpty()) {
 #if defined(AM_HARDWARE_ID)
         hardwareId = QString::fromLocal8Bit(AM_HARDWARE_ID);
-#elif defined(AM_HARDWARE_ID_FROM_FILE)
-        QFile f(QString::fromLocal8Bit(AM_HARDWARE_ID_FROM_FILE));
-        if (f.open(QFile::ReadOnly))
-            hardwareId = QString::fromLocal8Bit(f.readAll().trimmed());
+        if (hardwareId.startsWith(qL1C('@'))) {
+            QFile f(hardwareId.mid(1));
+            hardwareId.clear();
+            if (f.open(QFile::ReadOnly))
+                hardwareId = QString::fromLocal8Bit(f.readAll().trimmed());
+        }
 #else
         QVector<QNetworkInterface> candidateIfaces;
         for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {

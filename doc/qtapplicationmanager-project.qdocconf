@@ -1,5 +1,5 @@
-project = ApplicationManager
-description = Public API of the application manager: QML and DBus
+project = QtApplicationManager
+description = QtApplicationManager Reference Documentation
 url = https://doc.qt.io/QtApplicationManager
 version = $QT_VERSION
 
@@ -57,28 +57,27 @@ sourcedirs += \
 imagedirs += ../doc/images
 exampledirs = ../examples
 
-depends += qtcore qtquick qtqml qtdoc qtwaylandcompositor qtwidgets dltlogging
-qhp.projects                               = ApplicationManager
-qhp.ApplicationManager.file                = applicationmanager.qhp
-qhp.ApplicationManager.namespace           = io.qt.applicationmanager.$QT_VERSION_TAG
-qhp.ApplicationManager.virtualFolder       = applicationmanager
-qhp.ApplicationManager.indexTitle          = Qt Application Manager
-qhp.ApplicationManager.indexRoot           =
+depends += qtcore qtquick qtqml qtdoc qtwaylandcompositor qtwidgets qtdltlogging
+qhp.projects                                 = QtApplicationManager
+qhp.QtApplicationManager.file                = qtapplicationmanager.qhp
+qhp.QtApplicationManager.namespace           = org.qt-project.qtapplicationmanager.$QT_VERSION_TAG
+qhp.QtApplicationManager.virtualFolder       = qtapplicationmanager
+qhp.QtApplicationManager.indexTitle          = Qt Application Manager
+qhp.QtApplicationManager.indexRoot           =
 
-qhp.ApplicationManager.filterAttributes = ApplicationManager $QT_VERSION
-qhp.ApplicationManager.customFilters.ApplicationManager.name = Application Manager $QT_VERSION
-qhp.ApplicationManager.customFilters.ApplicationManager.filterAttributes = ApplicationManager $QT_VERSION
+qhp.QtApplicationManager.filterAttributes = QtApplicationManager $QT_VERSION
+qhp.QtApplicationManager.customFilters.QtApplicationManager.name = Qt Application Manager $QT_VERSION
+qhp.QtApplicationManager.customFilters.QtApplicationManager.filterAttributes = QtApplicationManager $QT_VERSION
 
-qhp.ApplicationManager.subprojects = manual qmltypes
-qhp.ApplicationManager.subprojects.manual.title = Qt Application Manager
-qhp.ApplicationManager.subprojects.manual.indexTitle = Qt Application Manager
-qhp.ApplicationManager.subprojects.manual.type = manual
+qhp.QtApplicationManager.subprojects = manual qmltypes
+qhp.QtApplicationManager.subprojects.manual.title = Qt Application Manager
+qhp.QtApplicationManager.subprojects.manual.indexTitle = Qt Application Manager
+qhp.QtApplicationManager.subprojects.manual.type = manual
 
-qhp.ApplicationManager.subprojects.qmltypes.title = QML Types
-qhp.ApplicationManager.subprojects.qmltypes.indexTitle = Qt Application Manager QML Types
-qhp.ApplicationManager.subprojects.qmltypes.selectors = qmltype
-qhp.ApplicationManager.subprojects.qmltypes.sortPages = true
+qhp.QtApplicationManager.subprojects.qmltypes.title = QML Types
+qhp.QtApplicationManager.subprojects.qmltypes.indexTitle = Qt Application Manager QML Types
+qhp.QtApplicationManager.subprojects.qmltypes.selectors = qmltype
+qhp.QtApplicationManager.subprojects.qmltypes.sortPages = true
 
-navigation.homepage    = "Qt Automotive Suite"
 navigation.landingpage = "Qt Application Manager"
 buildversion = "Qt Application Manager $QT_VERSION"

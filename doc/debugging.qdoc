@@ -35,7 +35,7 @@
 \section1 Logging
 
 The application manager installs its own message handler to format logging output neatly. If the
-\l{Qt DLT Logging}{QtQtDltLogging} module is available, this message handler passes the output
+\l {Qt DLT Logging} {QtDltLogging} module is available, this message handler passes the output
 to GENIVI Diagnostic Log and Trace (DLT).
 
 \section2 Categories

@@ -71,10 +71,26 @@ qt_feature("am-stackwalker" PRIVATE
 )
 qt_feature_definition("am-stackwalker" "AM_USE_STACKWALKER")
 
+qt_feature("am-has-hardware-id" PRIVATE
+    LABEL "Hardware-id for the installer"
+    CONDITION ON
+    DISABLE INPUT_hardware_id STREQUAL ''
+)
+qt_feature_definition("am-has-hardware-id" "AM_HARDWARE_ID" VALUE "\"${INPUT_hardware_id}\"")
+
 qt_configure_add_summary_section(NAME "Qt Application Manager")
 qt_configure_add_summary_entry(ARGS "am-system-libyaml")
 qt_configure_add_summary_entry(ARGS "am-multi-process")
 qt_configure_add_summary_entry(ARGS "am-installer")
+if (QT_FEATURE_am_has_hardware_id)
+    qt_configure_add_summary_entry(
+        TYPE "message"
+        ARGS "${QT_FEATURE_LABEL_am_has_hardware_id}"
+        MESSAGE "yes (${INPUT_hardware_id})"
+    )
+else()
+    qt_configure_add_summary_entry(ARGS "am-has-hardware-id")
+endif()
 qt_configure_add_summary_entry(ARGS "am-external-dbus-interfaces")
 qt_configure_add_summary_entry(ARGS "am-tools-only")
 qt_configure_add_summary_entry(ARGS "am-dltlogging")

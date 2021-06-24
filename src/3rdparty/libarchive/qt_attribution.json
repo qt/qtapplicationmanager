@@ -1,7 +1,7 @@
 {
     "Id": "libarchive",
     "Name": "libarchive",
-    "QDocModule": "applicationmanager",
+    "QDocModule": "qtapplicationmanager",
     "QtUsage": "Optionally used in Qt ApplicationManager. Configure with -config force-system-libarchive to avoid.",
 
     "Description": "Multi-format archive and compression library.",

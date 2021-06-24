@@ -1,7 +1,7 @@
 {
     "Id": "libbacktrace",
     "Name": "libbacktrace",
-    "QDocModule": "applicationmanager",
+    "QDocModule": "qtapplicationmanager",
     "QtUsage": "Automatically used in Qt ApplicationManager, if available. Configure with -config disable-libbacktrace to avoid.",
 
     "Description": "Standalone fork of libbacktrace - libbacktrace prints stack traces.",

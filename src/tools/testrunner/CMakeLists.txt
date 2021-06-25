@@ -11,7 +11,7 @@ qt_internal_add_tool(${target_name}
     SOURCES
         ../appman/appman.cpp
         amtest.cpp amtest.h
-        testrunner.cpp testrunner.h testrunner_p.h
+        testrunner.cpp testrunner.h
     DEFINES
         AM_TESTRUNNER
     PUBLIC_LIBRARIES

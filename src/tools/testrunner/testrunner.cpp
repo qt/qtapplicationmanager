@@ -40,8 +40,8 @@
 
 #include <qlogging.h>
 #include <QtTest/qtestsystem.h>
+#include <private/quicktest_p.h>
 #include <private/quicktestresult_p.h>
-#include "testrunner_p.h"
 #include "amtest.h"
 
 
@@ -53,34 +53,6 @@ namespace QTest {
 QT_END_NAMESPACE
 
 QT_BEGIN_NAMESPACE_AM
-
-QTestRootObject::QTestRootObject(QObject *parent)
-    : QObject(parent)
-    , m_windowShown(false)
-    , m_hasTestCase(false)
-    , m_defined(new QQmlPropertyMap(this))
-{
-#if defined(QT_OPENGL_ES_2_ANGLE)
-    m_defined->insert(QLatin1String("QT_OPENGL_ES_2_ANGLE"), QVariant(true));
-#endif
-}
-
-QTestRootObject *QTestRootObject::instance()
-{
-    static QPointer<QTestRootObject> object = new QTestRootObject;
-    if (!object) {
-        qWarning("A new test root object has been created, the behavior may be compromised");
-        object = new QTestRootObject;
-    }
-    return object;
-}
-
-static QObject *testRootObject(QQmlEngine *engine, QJSEngine *jsEngine)
-{
-    Q_UNUSED(engine);
-    Q_UNUSED(jsEngine);
-    return QTestRootObject::instance();
-}
 
 static QObject *amTest(QQmlEngine *engine, QJSEngine *jsEngine)
 {
@@ -118,7 +90,6 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
     qputenv("QT_QTESTLIB_RUNNING", "1");
 
     // Register the test object and application manager test add-on
-    qmlRegisterSingletonType<QTestRootObject>("Qt.test.qtestroot", 1, 0, "QTestRootObject", testRootObject);
     qmlRegisterSingletonType<AmTest>("QtApplicationManager.SystemUI", 2, 0, "AmTest", amTest);
 
     QTestRootObject::instance()->init();
@@ -142,5 +113,3 @@ int TestRunner::exec()
 }
 
 QT_END_NAMESPACE_AM
-
-#include "moc_testrunner_p.cpp"

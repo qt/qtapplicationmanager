@@ -223,24 +223,24 @@ void AbstractConfigCache::parse()
 
                 // check if we can use the cache as-is, or if we need to cherry-pick parts
                 if (rawFilePaths.count() == cache.count()) {
+                    cacheIsComplete = true;
+
                     for (int i = 0; i < rawFilePaths.count(); ++i) {
                         const ConfigCacheEntry &ce = cache.at(i);
-                        if (rawFilePaths.at(i) != ce.filePath)
-                            throw Exception("the cached file names do not match the current set (or their order changed)");
-                        if (!mergedContent && !ce.content)
-                            throw Exception("cache entry has invalid content");
+
+                        if ((rawFilePaths.at(i) != ce.filePath) || !ce.content)
+                            cacheIsComplete = false;
                     }
-                    cacheIsComplete = true;
                 }
                 d->cacheWasRead = true;
 
             } catch (const Exception &e) {
                 qWarning(LogCache) << "Failed to read cache:" << e.what();
-                cache.clear();
-                if (d->options & MergedResult) {
-                    destruct(mergedContent);
-                    mergedContent = nullptr;
-                }
+            }
+
+            if (!cacheIsComplete && (d->options & MergedResult)) {
+                destruct(mergedContent);
+                mergedContent = nullptr;
             }
         }
     } else if (d->options.testFlag(ClearCache)) {
@@ -266,7 +266,7 @@ void AbstractConfigCache::parse()
             // if we already got this file in the cache, then use the entry
             bool found = false;
             for (auto it = cache.cbegin(); it != cache.cend(); ++it) {
-                if (it->filePath == rawFilePath) {
+                if ((it->filePath == rawFilePath) && it->content) {
                     ce = *it;
                     found = true;
                     qCDebug(LogCache) << d->cacheBaseName << "found cache entry for" << it->filePath;
@@ -353,13 +353,12 @@ void AbstractConfigCache::parse()
             // or append to values
             for (int i = 0; i < cache.size(); ++i) {
                 ConfigCacheEntry &ce = cache[i];
-                if (!mergedContent) {
-                    mergedContent = ce.content;
-                } else if (ce.content) {
-                    merge(mergedContent, ce.content);
-                    destruct(ce.content);
+                if (ce.content) {
+                    if (!mergedContent)
+                        mergedContent = clone(ce.content);
+                    else
+                        merge(mergedContent, ce.content);
                 }
-                ce.content = nullptr;
             }
         }
 

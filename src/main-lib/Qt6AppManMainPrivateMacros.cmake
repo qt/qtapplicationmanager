@@ -17,12 +17,16 @@ function(qt6_am_add_systemui_wrapper target)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
-        "NO_INSTALL" "MAIN_QML_FILE" "CONFIG_YAML;EXTRA_FILES;EXTRA_ARGS"
+        "NO_INSTALL" "MAIN_QML_FILE;EXECUTABLE" "CONFIG_YAML;EXTRA_FILES;EXTRA_ARGS"
     )
 
     file(CONFIGURE OUTPUT main.cpp
          CONTENT "int main(int, char *[]){}"
     )
+
+    if (NOT ARG_EXECUTABLE)
+        set(ARG_EXECUTABLE "${QT_CMAKE_EXPORT_NAMESPACE}::appman")
+    endif()
 
     set(CMD_ARGS)
     set(ALL_EXTRA_FILES)
@@ -41,10 +45,14 @@ function(qt6_am_add_systemui_wrapper target)
 
     if (ARG_EXTRA_FILES)
         foreach(F ${ARG_EXTRA_FILES})
-            file(GLOB_RECURSE MY_EXTRA_FILES
-                RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-                "${F}/*"
-            )
+            if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${F})
+                file(GLOB_RECURSE MY_EXTRA_FILES
+                    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+                    "${F}/*"
+                )
+            else()
+                set(MY_EXTRA_FILES ${F})
+            endif()
             list(APPEND ALL_EXTRA_FILES ${MY_EXTRA_FILES})
             foreach(B ${MY_EXTRA_FILES})
                 qt_am_internal_create_copy_command(${B})
@@ -74,7 +82,7 @@ if defined QT_PLUGIN_PATH (
 ) else (
     set QT_PLUGIN_PATH=${plugindir}
 )
-${CMAKE_INSTALL_PREFIX}/${INSTALL_BINDIR}/$<TARGET_FILE_NAME:${QT_CMAKE_EXPORT_NAMESPACE}::appman> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} %*
+${CMAKE_INSTALL_PREFIX}/${INSTALL_BINDIR}/$<TARGET_FILE_NAME:${ARG_EXECUTABLE}> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} %*
 EndLocal
 "
         )
@@ -83,7 +91,7 @@ EndLocal
         set(WRAPPER_SCRIPT "_${target}${WRAPPER_SUFFIX}")
         file(GENERATE OUTPUT ${WRAPPER_SCRIPT} CONTENT
 "#!/bin/sh
-exec ${CMAKE_INSTALL_PREFIX}/${INSTALL_BINDIR}/$<TARGET_FILE_NAME:${QT_CMAKE_EXPORT_NAMESPACE}::appman> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
+exec ${CMAKE_INSTALL_PREFIX}/${INSTALL_BINDIR}/$<TARGET_FILE_NAME:${ARG_EXECUTABLE}> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
 "
         )
     endif()
@@ -126,3 +134,96 @@ if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
         qt6_am_add_systemui_wrapper(${ARGV})
     endfunction()
 endif()
+
+function (qt_am_internal_add_qml_test target)
+    cmake_parse_arguments(
+        PARSE_ARGV 1
+        ARG
+        "" "TEST_FILE;TESTDATA_DIR" "CONFIG_YAML;EXTRA_FILES;CONFIGURATIONS"
+    )
+
+    if (NOT ARG_TEST_FILE)
+        message(FATAL_ERROR "TEST_FILE needs to be provided")
+    endif()
+
+    if (NOT ARG_CONFIGURATIONS)
+        set(ARG_CONFIGURATIONS CONFIG NAME single-process ARGS --force-single-process)
+
+        if (FEATURE_am_multi_process)
+            list(APPEND ARG_CONFIGURATIONS CONFIG NAME multi-process ARGS --force-multi-process)
+        endif()
+    endif()
+
+    # Parse the CONFIGURATIONS arguments and split it into multiple configurations
+    # Each configuration needs to start with the CONFIG keyword
+    # Because cmake doesn't support nested lists, we create a string for every configuration
+    set(CONFIGS)
+    foreach(CONFIGURATION ${ARG_CONFIGURATIONS})
+        if (CONFIGURATION STREQUAL "CONFIG")
+                list(JOIN CONFIG " " CONFIG_STR)
+                list(APPEND CONFIGS "${CONFIG_STR}")
+                set(CONFIG)
+        else()
+            list(APPEND CONFIG ${CONFIGURATION})
+        endif()
+    endforeach()
+    list(JOIN CONFIG " " CONFIG_STR)
+    list(APPEND CONFIGS "${CONFIG_STR}")
+
+    foreach(CONFIG ${CONFIGS})
+        # Convert the configuration string back to a list of options
+        string(REPLACE " " ";" CONFIG ${CONFIG})
+        cmake_parse_arguments(
+            CONFIG_ARG
+            "" "NAME;CONDITION" "ARGS" ${CONFIG}
+        )
+
+        if (NOT CONFIG_ARG_NAME)
+            message(FATAL_ERROR "CONFIGURATION needs to have a NAME")
+        endif()
+
+        if (NOT CONFIG_ARG_CONDITION)
+            set(CONFIG_ARG_CONDITION ON)
+        endif()
+
+        qt_evaluate_config_expression(result ${CONFIG_ARG_CONDITION})
+        if (${result})
+            set(WRAPPER_ARGS)
+            if (ARG_CONFIG_YAML)
+                list(APPEND WRAPPER_ARGS CONFIG_YAML ${ARG_CONFIG_YAML})
+            endif()
+
+            if (ARG_EXTRA_FILES)
+                list(APPEND WRAPPER_ARGS EXTRA_FILES ${ARG_EXTRA_FILES})
+            endif()
+
+            if (ARG_TESTDATA_DIR)
+                list(APPEND WRAPPER_ARGS EXTRA_ARGS "-o \'systemProperties: { public: { AM_TESTDATA_DIR: ${ARG_TESTDATA_DIR} } }'")
+            endif()
+
+            list(APPEND WRAPPER_ARGS EXTRA_ARGS --no-cache --no-dlt-logging)
+            if (APPLE)
+                list(APPEND WRAPPER_ARGS EXTRA_ARGS --dbus=none)
+            endif()
+
+            if (CONFIG_ARG_ARGS)
+                list(APPEND WRAPPER_ARGS EXTRA_ARGS ${CONFIG_ARG_ARGS} --)
+            else()
+                list(APPEND WRAPPER_ARGS EXTRA_ARGS --)
+            endif()
+
+            qt6_am_add_systemui_wrapper(${target}_${CONFIG_ARG_NAME}
+                EXECUTABLE ${QT_CMAKE_EXPORT_NAMESPACE}::appman-qmltestrunner
+                MAIN_QML_FILE ${ARG_TEST_FILE}
+                NO_INSTALL
+                ${EXTRA_FILES_ARG_STR}
+                ${WRAPPER_ARGS}
+            )
+
+            qt_internal_add_test(${target}_${CONFIG_ARG_NAME}
+            )
+        endif()
+    endforeach()
+
+endfunction()
+

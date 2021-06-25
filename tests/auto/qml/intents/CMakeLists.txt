@@ -4,10 +4,14 @@
 ## intents Binary:
 #####################################################################
 
-qt_internal_add_executable(intents
-    GUI
-    PUBLIC_LIBRARIES
-        Qt::Gui
+qt_am_internal_add_qml_test(tst_intents
+    CONFIG_YAML am-config.yaml
+    EXTRA_FILES apps am-config-quick.yaml
+    TEST_FILE tst_intents.qml
+    CONFIGURATIONS
+        CONFIG NAME single-process ARGS --force-single-process
+        CONFIG NAME multi-process CONDITION FEATURE_am_multi_process ARGS --force-multi-process
+        CONFIG NAME config-quick CONDITION FEATURE_am_multi_process ARGS --force-multi-process -c am-config-quick.yaml
 )
 
 #### Keys ignored in scope 1:.:.:intents.pro:<TRUE>:

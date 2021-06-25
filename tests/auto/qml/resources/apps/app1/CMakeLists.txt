@@ -23,6 +23,7 @@ qt_internal_add_resource(app1plugin "app1plugin"
         ${app1plugin_resource_files}
 )
 
+qt_add_binary_resources(app1file app1file.qrc)
 
 #### Keys ignored in scope 1:.:.:app1.pro:<TRUE>:
 # OTHER_FILES = "info.yaml" "icon.png"

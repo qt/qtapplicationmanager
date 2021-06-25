@@ -36,6 +36,8 @@ find_package(Qt6 ${PROJECT_VERSION} QUIET CONFIG OPTIONAL_COMPONENTS
     DltLogging
 )
 
+include(src/main-lib/Qt6AppManMainPrivateMacros.cmake)
+
 if(NOT TARGET Qt::Gui OR NOT TARGET Qt::Quick)
     message(NOTICE "Skipping the build as QtGui and/or QtQuick are not available.")
     return()

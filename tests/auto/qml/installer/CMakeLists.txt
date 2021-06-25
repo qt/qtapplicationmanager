@@ -4,10 +4,11 @@
 ## installer Binary:
 #####################################################################
 
-qt_internal_add_executable(installer
-    GUI
-    PUBLIC_LIBRARIES
-        Qt::Gui
+qt_am_internal_add_qml_test(tst_installer
+    CONFIG_YAML am-config.yaml
+    EXTRA_FILES apps
+    TESTDATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../data
+    TEST_FILE tst_installer.qml
 )
 
 #### Keys ignored in scope 1:.:.:installer.pro:<TRUE>:

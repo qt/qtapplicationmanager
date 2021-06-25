@@ -4,10 +4,9 @@
 ## processtitle Binary:
 #####################################################################
 
-qt_internal_add_executable(processtitle
-    GUI
-    PUBLIC_LIBRARIES
-        Qt::Gui
+qt_am_internal_add_qml_test(tst_processtitle
+    CONFIG_YAML am-config.yaml
+    TEST_FILE tst_processtitle.qml
 )
 
 #### Keys ignored in scope 1:.:.:processtitle.pro:<TRUE>:

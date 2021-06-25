@@ -98,6 +98,7 @@ protected:
     virtual void *loadFromCache(QDataStream &ds) = 0;
     virtual void saveToCache(QDataStream &ds, const void *t) = 0;
     virtual void merge(void *to, const void *from) = 0;
+    virtual void *clone(void *t) = 0;
     virtual void destruct(void *t) = 0;
 
 private:
@@ -151,10 +152,20 @@ protected:
     { m_adaptor.saveToCache(ds, static_cast<const T *>(t)); }
     void merge(void *to, const void *from) override
     { m_adaptor.merge(static_cast<T *>(to), static_cast<const T *>(from)); }
+    void *clone(void *t) override
+    { return doClone(static_cast<T *>(t)); }
     void destruct(void *t) override
     { delete static_cast<T *>(t); }
 
     ADAPTOR m_adaptor;
+
+private:
+    template <typename U = T> typename std::enable_if<std::is_copy_constructible<U>::value, void *>::type
+    doClone(T *t)
+    { return new T(*static_cast<T *>(t)); }
+    template <typename U = T> typename std::enable_if<!std::is_copy_constructible<U>::value, void *>::type
+    doClone(T *)
+    { Q_ASSERT_X(false, "ConfigCache::clone", "trying to clone non-copy-constructible content"); return nullptr; }
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractConfigCache::Options)

@@ -18,7 +18,3 @@ qt_internal_add_3rdparty_library(BundledStackwalker
 qt_disable_warnings(BundledStackwalker)
 qt_set_symbol_visibility_hidden(BundledStackwalker)
 
-#### Keys ignored in scope 1:.:.:stackwalker.pro:<TRUE>:
-# QMAKE_CFLAGS = "/D_CRT_SECURE_NO_WARNINGS"
-# TEMPLATE = "lib"
-# _REQUIREMENTS = "windows && msvc"

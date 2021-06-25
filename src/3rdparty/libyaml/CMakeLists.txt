@@ -32,12 +32,3 @@ qt_internal_add_3rdparty_library(BundledLibYaml
 
 qt_disable_warnings(BundledLibYaml)
 qt_set_symbol_visibility_hidden(BundledLibYaml)
-
-#### Keys ignored in scope 2:.:.:libyaml.pro:win32-msvc_x_:
-# QMAKE_CFLAGS = "/D_CRT_SECURE_NO_WARNINGS"
-
-#### Keys ignored in scope 3:.:.:libyaml.pro:GCC:
-# QMAKE_CFLAGS = "-Wno-unused"
-
-#### Keys ignored in scope 4:.:.:libyaml.pro:CLANG:
-# QMAKE_CFLAGS = "-Wall" "-W" "-Wno-unused"

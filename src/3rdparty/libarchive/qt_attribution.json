@@ -2,11 +2,11 @@
     "Id": "libarchive",
     "Name": "libarchive",
     "QDocModule": "qtapplicationmanager",
-    "QtUsage": "Optionally used in Qt ApplicationManager. Configure with -config force-system-libarchive to avoid.",
+    "QtUsage": "Optionally used in Qt ApplicationManager. Configure with --libarchive=system to avoid.",
 
     "Description": "Multi-format archive and compression library.",
-    "Homepage": "http://www.libarchive.org/",
-    "Version": "3.3.2",
+    "Homepage": "https://www.libarchive.org/",
+    "Version": "3.5.1",
 
     "License": "BSD 2-clause \"Simplified\" License",
     "LicenseId": "BSD-2-Clause",

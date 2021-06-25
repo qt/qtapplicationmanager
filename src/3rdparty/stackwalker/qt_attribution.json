@@ -2,7 +2,7 @@
     "Id": "stackwalker",
     "Name": "StackWalker",
     "QDocModule": "qtapplicationmanager",
-    "QtUsage": "Automatically used in Qt ApplicationManager, if available. Configure with -config disable-stackwalker to avoid.",
+    "QtUsage": "Automatically used in Qt ApplicationManager, if available. Configure with --stackwalker=no to avoid.",
 
     "Description": "Walking the callstack in windows applications.",
     "Homepage": "https://github.com/JochenKalmbach/StackWalker",

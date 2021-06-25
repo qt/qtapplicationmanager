@@ -31,17 +31,6 @@ qt_internal_add_3rdparty_library(BundledBacktrace
 qt_disable_warnings(BundledBacktrace)
 qt_set_symbol_visibility_hidden(BundledBacktrace)
 
-#####################################################################
-
-#### Keys ignored in scope 2:.:.:libbacktrace.pro:win32-msvc_x_:
-# QMAKE_CFLAGS = "/D_CRT_SECURE_NO_WARNINGS"
-
-#### Keys ignored in scope 3:.:.:libbacktrace.pro:GCC:
-# QMAKE_CFLAGS = "-Wno-unused" "-funwind-tables" "-Wno-switch" "-Wno-enum-compare"
-
-#### Keys ignored in scope 4:.:.:libbacktrace.pro:CLANG:
-# QMAKE_CFLAGS = "-Wall" "-W" "-Wno-unused"
-
 qt_internal_extend_target(BundledBacktrace CONDITION LINUX
     SOURCES
         libbacktrace/elf.c

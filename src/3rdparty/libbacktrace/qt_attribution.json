@@ -2,14 +2,14 @@
     "Id": "libbacktrace",
     "Name": "libbacktrace",
     "QDocModule": "qtapplicationmanager",
-    "QtUsage": "Automatically used in Qt ApplicationManager, if available. Configure with -config disable-libbacktrace to avoid.",
+    "QtUsage": "Automatically used in Qt ApplicationManager, if available. Configure with --libbacktrace=no to avoid.",
 
-    "Description": "Standalone fork of libbacktrace - libbacktrace prints stack traces.",
-    "Homepage": "https://github.com/ErwanLegrand/libbacktrace",
-    "Version": "2016-05-18",
+    "Description": "A C library that may be linked into a C/C++ program to produce symbolic backtraces.",
+    "Homepage": "https://github.com/ianlancetaylor/libbacktrace",
+    "Version": "2021-05-31",
 
     "License": "BSD 3-clause \"New\" or \"Revised\" License",
     "LicenseId": "BSD-3-Clause",
     "LicenseFile": "LICENSE",
-    "Copyright": "Copyright (C) 2012-2016 Free Software Foundation, Inc."
+    "Copyright": "Copyright (C) 2012-2021 Free Software Foundation, Inc."
 }

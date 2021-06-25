@@ -111,15 +111,6 @@ qt_internal_extend_target(BundledLibArchive CONDITION WIN32
         crypt32
 )
 
-#### Keys ignored in scope 6:.:.:libarchive.pro:win32-msvc_x_:
-# QMAKE_CFLAGS = "/wd4146" "/wd4133" "/D_CRT_SECURE_NO_WARNINGS"
-
-#### Keys ignored in scope 7:.:.:libarchive.pro:GCC:
-# QMAKE_CFLAGS = "-Wno-unused" "-Wno-sign-compare" "-Wno-old-style-declaration"
-
-#### Keys ignored in scope 8:.:.:libarchive.pro:CLANG:
-# QMAKE_CFLAGS = "-Wall" "-W" "-Wno-unused" "-Wno-sign-compare"
-
 qt_internal_extend_target(BundledLibArchive CONDITION ANDROID
     DEFINES
         PLATFORM_CONFIG_H=\\\"config-android.h\\\"

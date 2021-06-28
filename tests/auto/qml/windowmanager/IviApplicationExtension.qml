@@ -30,7 +30,8 @@
 
 import QtQuick 2.11
 import QtApplicationManager.SystemUI 2.0
-import QtWayland.Compositor 1.1
+import QtWayland.Compositor 1.3
+import QtWayland.Compositor.IviApplication
 
 QtObject {
     property Component iviComp: Component {

@@ -1,8 +1,0 @@
-!isEmpty(INSTALL_PREFIX) {
-    prefix_build {
-        target.path = $${INSTALL_PREFIX}/bin
-        CONFIG -= relative_qt_rpath
-    } else {
-        DESTDIR = $${INSTALL_PREFIX}/bin
-    }
-}

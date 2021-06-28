@@ -3,10 +3,6 @@
 # depend on appman_common-private
 requires(false)
 
-load(am-config)
-
-requires(!disable-installer)
-
 TEMPLATE = subdirs
 
 SUBDIRS = \

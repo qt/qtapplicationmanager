@@ -43,6 +43,8 @@ if(NOT TARGET Qt::Gui OR NOT TARGET Qt::Quick)
     return()
 endif()
 
+## COVERAGE ###########################################################
+
 if(AM_COVERAGE)
     if(NOT (LINUX AND (GCC OR CLANG)))
         message(FATAL_ERROR "Coverage builds are only supported on Linux, using GCC or Clang.")
@@ -87,10 +89,27 @@ if(AM_COVERAGE)
     )
 endif()
 
+## BUILD ##############################################################
+
 qt_build_repo()
+
+## DOCUMENTATION ######################################################
 
 add_custom_target(QtApplicationManagerDoc)
 
 qt_internal_add_docs(QtApplicationManagerDoc
     doc/qtapplicationmanager.qdocconf
 )
+
+## QMAKE FEATURES #####################################################
+
+if(NOT QT_BUILD_STANDALONE_TESTS)
+    # Copy mkspecs for users preferring qmake builds
+    set(mkspecs_install_dir "${INSTALL_MKSPECSDIR}")
+    qt_path_join(mkspecs_install_dir ${QT_INSTALL_DIR} ${mkspecs_install_dir})
+
+    qt_copy_or_install(DIRECTORY qmake-features/
+        DESTINATION "${mkspecs_install_dir}"
+        FILES_MATCHING PATTERN "*.pr[if]"
+    )
+endif()

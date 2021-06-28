@@ -29,25 +29,8 @@
 **
 ****************************************************************************/
 
-#include <errno.h>
-#include <qplatformdefs.h>
 #include "sysfsreader.h"
 
-#define EINTR_LOOP(cmd) __extension__ ({__typeof__(cmd) res = 0; do { res = cmd; } while (res == -1 && errno == EINTR); res; })
-
-static inline int qt_safe_open(const char *pathname, int flags, mode_t mode = 0777)
-{
-    flags |= O_CLOEXEC;
-    int fd = EINTR_LOOP(QT_OPEN(pathname, flags, mode));
-    // unknown flags are ignored, so we have no way of verifying if
-    // O_CLOEXEC was accepted
-    if (fd != -1)
-        ::fcntl(fd, F_SETFD, FD_CLOEXEC);
-    return fd;
-}
-
-#undef QT_OPEN
-#define QT_OPEN         qt_safe_open
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -55,18 +38,16 @@ SysFsReader::SysFsReader(const QByteArray &path, int maxRead)
     : m_path(path)
 {
     m_buffer.resize(maxRead);
-    m_fd = QT_OPEN(m_path, QT_OPEN_RDONLY);
+    m_fd.setFileName(QString::fromLocal8Bit(path));
+    m_fd.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
 }
 
 SysFsReader::~SysFsReader()
-{
-    if (m_fd >= 0)
-        QT_CLOSE(m_fd);
-}
+{ }
 
 bool SysFsReader::isOpen() const
 {
-    return m_fd >= 0;
+    return m_fd.isOpen();
 }
 
 QByteArray SysFsReader::fileName() const
@@ -76,15 +57,15 @@ QByteArray SysFsReader::fileName() const
 
 QByteArray SysFsReader::readValue() const
 {
-    if (m_fd < 0)
+    if (!m_fd.isOpen())
         return QByteArray();
-    if (EINTR_LOOP(QT_LSEEK(m_fd, 0, SEEK_SET)) != QT_OFF_T(0))
+    if (!m_fd.seek(0))
         return QByteArray();
 
     int offset = 0;
     int read = 0;
     do {
-        read = int(EINTR_LOOP(QT_READ(m_fd, m_buffer.data() + offset, size_t(m_buffer.size() - offset))));
+        read = m_fd.read(m_buffer.data() + offset, m_buffer.size() - offset);
         if (read < 0)
             return QByteArray();
         else if (read < (m_buffer.size() - offset))

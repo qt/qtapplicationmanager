@@ -3,8 +3,6 @@ qt_internal_add_test(tst_systemreader
     SOURCES
         ../error-checking.h
         tst_systemreader.cpp
-    DEFINES
-        AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_BINARY_DIR}/\\\"
     PUBLIC_LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate
@@ -14,8 +12,14 @@ qt_internal_add_test(tst_systemreader
         Qt::AppManWindowPrivate
 )
 
-## Scopes:
-#####################################################################
+qt_internal_add_resource(tst_systemreader "systemreader_testdata"
+    PREFIX
+        "/"
+    FILES
+        "root/proc/1234/cgroup"
+        "root/sys/fs/cgroup/memory/system.slice/run-u5853.scope/memory.limit_in_bytes"
+        "root/sys/fs/cgroup/memory/system.slice/run-u5853.scope/memory.stat"
+)
 
 qt_internal_extend_target(tst_systemreader CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES

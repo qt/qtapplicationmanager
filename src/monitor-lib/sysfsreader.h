@@ -32,6 +32,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QFile>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -46,7 +47,7 @@ public:
     QByteArray readValue() const;
 
 private:
-    int m_fd = -1;
+    mutable QFile m_fd; // seek() is non-const
     QByteArray m_path;
     mutable QByteArray m_buffer;
 

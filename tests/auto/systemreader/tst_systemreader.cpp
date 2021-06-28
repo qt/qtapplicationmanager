@@ -50,7 +50,7 @@ private slots:
 
 tst_SystemReader::tst_SystemReader()
 {
-    g_systemRootDir = qL1S(AM_TESTDATA_DIR "/root");
+    g_systemRootDir = qL1S(":/root");
 }
 
 void tst_SystemReader::cgroupProcessInfo()

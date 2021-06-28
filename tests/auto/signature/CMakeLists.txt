@@ -28,13 +28,6 @@ qt_internal_add_resource(tst_signature "tst_signature"
         ${tst_signature_resource_files}
 )
 
-
-#### Keys ignored in scope 1:.:.:signature.pro:<TRUE>:
-# OTHER_FILES = "create-test-data.sh"
-
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_signature CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

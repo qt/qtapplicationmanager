@@ -1,8 +1,3 @@
-# Generated from libyaml.pro.
-
-#####################################################################
-## BundledLibYaml Generic Library:
-#####################################################################
 
 qt_internal_add_3rdparty_library(BundledLibYaml
     QMAKE_LIB_NAME yaml

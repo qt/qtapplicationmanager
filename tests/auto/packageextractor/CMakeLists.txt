@@ -12,9 +12,6 @@ qt_internal_add_test(tst_packageextractor
         Qt::AppManPackagePrivate
 )
 
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_packageextractor CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

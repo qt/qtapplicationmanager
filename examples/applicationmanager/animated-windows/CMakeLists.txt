@@ -1,4 +1,3 @@
-# Generated from animated-windows.pro.
 
 cmake_minimum_required(VERSION 3.14)
 project(animated-windows LANGUAGES CXX)

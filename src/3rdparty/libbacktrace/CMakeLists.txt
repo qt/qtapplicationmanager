@@ -1,8 +1,3 @@
-# Generated from libbacktrace.pro.
-
-#####################################################################
-## BundledBacktrace Generic Library:
-#####################################################################
 
 qt_internal_add_3rdparty_library(BundledBacktrace
     QMAKE_LIB_NAME backtrace

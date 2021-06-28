@@ -1,4 +1,3 @@
-# Generated from monitormodel.pro.
 
 qt_am_internal_add_qml_test(tst_monitormodel
     EXTRA_FILES PropertyField.qml SystemMonitorChart.qml

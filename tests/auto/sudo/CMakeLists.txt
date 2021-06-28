@@ -11,12 +11,6 @@ qt_internal_add_test(tst_sudo
         Qt::AppManManagerPrivate
 )
 
-#### Keys ignored in scope 1:.:.:sudo.pro:<TRUE>:
-# COVERAGE_RUNTIME = "sudo"
-
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_sudo CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

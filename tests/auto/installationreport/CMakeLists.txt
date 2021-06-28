@@ -12,9 +12,6 @@ qt_internal_add_test(tst_installationreport
         Qt::AppManCryptoPrivate
 )
 
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_installationreport CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

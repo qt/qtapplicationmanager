@@ -10,9 +10,6 @@ qt_internal_add_test(tst_debugwrapper
         Qt::AppManManagerPrivate
 )
 
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_debugwrapper CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

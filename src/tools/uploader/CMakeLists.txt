@@ -1,8 +1,3 @@
-# Generated from uploader.pro.
-
-#####################################################################
-## package-uploader Tool:
-#####################################################################
 
 qt_get_tool_target_name(target_name package-uploader)
 qt_internal_add_tool(${target_name}
@@ -15,6 +10,3 @@ qt_internal_add_tool(${target_name}
         Qt::Network
         Qt::AppManCommonPrivate
 )
-
-#### Keys ignored in scope 1:.:.:uploader.pro:<TRUE>:
-# TEMPLATE = "app"

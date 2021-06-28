@@ -1,3 +1,4 @@
+
 if(NOT QT_FEATURE_am_system_libarchive AND QT_FEATURE_am_installer)
     add_subdirectory(libarchive)
 endif()

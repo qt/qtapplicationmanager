@@ -26,13 +26,6 @@ qt_internal_add_resource(tst_main "main"
         ${main_resource_files}
 )
 
-
-#### Keys ignored in scope 1:.:.:main.pro:<TRUE>:
-# OTHER_FILES = "am-config.yaml"
-
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_main CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

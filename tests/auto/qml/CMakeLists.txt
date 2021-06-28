@@ -1,4 +1,3 @@
-# Generated from qml.pro.
 
 # Setup the test when called as a completely standalone project.
 if(TARGET Qt6::Core)

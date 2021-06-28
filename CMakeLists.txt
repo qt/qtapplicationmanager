@@ -1,4 +1,3 @@
-# Generated from application-manager.pro.
 
 cmake_minimum_required(VERSION 3.16)
 

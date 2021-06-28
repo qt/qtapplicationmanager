@@ -1,8 +1,3 @@
-# Generated from libarchive.pro.
-
-#####################################################################
-## BundledArchive Generic Library:
-#####################################################################
 
 if (APPLE)
     find_package(Iconv)

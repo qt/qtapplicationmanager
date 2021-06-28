@@ -1,8 +1,3 @@
-# Generated from stackwalker.pro.
-
-#####################################################################
-## BundledStackwalker Generic Library:
-#####################################################################
 
 qt_internal_add_3rdparty_library(BundledStackwalker
     QMAKE_LIB_NAME stackwalker
@@ -17,4 +12,3 @@ qt_internal_add_3rdparty_library(BundledStackwalker
 )
 qt_disable_warnings(BundledStackwalker)
 qt_set_symbol_visibility_hidden(BundledStackwalker)
-

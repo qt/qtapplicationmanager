@@ -1,8 +1,3 @@
-# Generated from dumpqmltypes.pro.
-
-#####################################################################
-## appman-dumpqmltypes Tool:
-#####################################################################
 
 qt_get_tool_target_name(target_name appman-dumpqmltypes)
 qt_internal_add_tool(${target_name}
@@ -23,15 +18,6 @@ qt_internal_add_tool(${target_name}
         Qt::AppManSharedMainPrivate
         Qt::AppManWindowPrivate
 )
-
-#### Keys ignored in scope 1:.:.:dumpqmltypes.pro:<TRUE>:
-# TEMPLATE = "app"
-
-## Scopes:
-#####################################################################
-
-#### Keys ignored in scope 2:.:.:dumpqmltypes.pro:NOT CMAKE_CROSSCOMPILING:
-# QT_TOOL_ENV = <EMPTY>
 
 #### Keys ignored in scope 3:.:.:dumpqmltypes.pro:build_pass OR NOT debug_and_release:
 # INSTALLS = "qmltypes_file"

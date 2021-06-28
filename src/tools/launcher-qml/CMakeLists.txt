@@ -1,8 +1,3 @@
-# Generated from launcher-qml.pro.
-
-#####################################################################
-## appman-launcher-qml Tool:
-#####################################################################
 
 qt_get_tool_target_name(target_name appman-launcher-qml)
 qt_internal_add_tool(${target_name}
@@ -26,6 +21,3 @@ qt_internal_add_tool(${target_name}
         Qt::AppManPluginInterfacesPrivate
         Qt::AppManSharedMainPrivate
 )
-
-#### Keys ignored in scope 1:.:.:launcher-qml.pro:<TRUE>:
-# TEMPLATE = "app"

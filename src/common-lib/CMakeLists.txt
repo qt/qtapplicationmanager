@@ -1,8 +1,3 @@
-# Generated from common-lib.pro.
-
-#####################################################################
-## AppManCommon Module:
-#####################################################################
 
 qt_find_package(WrapLibYaml PROVIDED_TARGETS WrapLibYaml::WrapLibYaml)
 

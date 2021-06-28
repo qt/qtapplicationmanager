@@ -1,8 +1,3 @@
-# Generated from plugin-interfaces.pro.
-
-#####################################################################
-## AppManPluginInterfaces Module:
-#####################################################################
 
 # temporary hack to get around the "#pragma once not allowed in cpp" error
 set(QT_FEATURE_headersclean FALSE)

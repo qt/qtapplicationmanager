@@ -1,4 +1,3 @@
-# Generated from launch-intents.pro.
 
 cmake_minimum_required(VERSION 3.14)
 project(launch-intents LANGUAGES CXX)

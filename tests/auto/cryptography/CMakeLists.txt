@@ -11,9 +11,6 @@ qt_internal_add_test(tst_cryptography
         Qt::AppManCryptoPrivate
 )
 
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_cryptography CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

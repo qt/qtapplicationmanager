@@ -1,8 +1,3 @@
-# Generated from appman.pro.
-
-#####################################################################
-## appman Tool:
-#####################################################################
 
 qt_get_tool_target_name(target_name appman)
 qt_internal_add_tool(${target_name}

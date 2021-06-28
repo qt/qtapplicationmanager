@@ -13,12 +13,6 @@ qt_internal_add_test(tst_applicationinstaller
         Qt::AppManPackagePrivate
 )
 
-#### Keys ignored in scope 1:.:.:applicationinstaller.pro:<TRUE>:
-# COVERAGE_RUNTIME = "sudo"
-
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_applicationinstaller CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

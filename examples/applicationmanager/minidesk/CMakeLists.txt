@@ -1,4 +1,3 @@
-# Generated from minidesk.pro.
 
 cmake_minimum_required(VERSION 3.14)
 project(minidesk LANGUAGES CXX)

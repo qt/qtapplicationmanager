@@ -1,4 +1,3 @@
-# Generated from softwarecontainer-plugin.pro.
 
 cmake_minimum_required(VERSION 3.14)
 project(softwarecontainer-plugin LANGUAGES CXX)

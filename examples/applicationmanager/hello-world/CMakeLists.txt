@@ -1,4 +1,3 @@
-# Generated from hello-world.pro.
 
 cmake_minimum_required(VERSION 3.14)
 project(hello-world LANGUAGES CXX)

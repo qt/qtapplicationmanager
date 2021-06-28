@@ -1,4 +1,3 @@
-# Generated from examples.pro.
 
 qt_examples_build_begin()
 

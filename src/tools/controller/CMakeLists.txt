@@ -1,8 +1,3 @@
-# Generated from controller.pro.
-
-#####################################################################
-## appman-controller Tool:
-#####################################################################
 
 qt_get_tool_target_name(target_name appman-controller)
 qt_internal_add_tool(${target_name}

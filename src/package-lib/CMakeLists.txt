@@ -1,8 +1,3 @@
-# Generated from package-lib.pro.
-
-#####################################################################
-## AppManPackage Module:
-#####################################################################
 
 qt_find_package(WrapLibArchive PROVIDED_TARGETS WrapLibArchive::WrapLibArchive)
 

@@ -1,4 +1,3 @@
-# Generated from frame-timer.pro.
 
 cmake_minimum_required(VERSION 3.14)
 project(frame-timer LANGUAGES CXX)

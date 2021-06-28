@@ -24,10 +24,6 @@ qt_internal_add_resource(tst_yaml "qmake_immediate"
         ${qmake_immediate_resource_files}
 )
 
-
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_yaml CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

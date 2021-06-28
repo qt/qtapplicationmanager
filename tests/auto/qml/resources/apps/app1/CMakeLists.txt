@@ -1,8 +1,3 @@
-# Generated from app1.pro.
-
-#####################################################################
-## app1plugin Generic Library:
-#####################################################################
 
 qt_internal_add_cmake_library(app1plugin
     MODULE
@@ -24,10 +19,5 @@ qt_internal_add_resource(app1plugin "app1plugin"
 )
 
 qt_add_binary_resources(app1file app1file.qrc)
-
-#### Keys ignored in scope 1:.:.:app1.pro:<TRUE>:
-# OTHER_FILES = "info.yaml" "icon.png"
-# RESOURCE_SOURCE = "app1file.qrc"
-# TEMPLATE = "lib"
 
 qt_autogen_tools_initial_setup(app1plugin)

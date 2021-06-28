@@ -14,9 +14,6 @@ qt_internal_add_test(tst_processreader
         Qt::AppManWindowPrivate
 )
 
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_processreader CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

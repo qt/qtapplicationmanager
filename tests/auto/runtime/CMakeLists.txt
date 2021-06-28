@@ -13,9 +13,6 @@ qt_internal_add_test(tst_runtime
         Qt::AppManManagerPrivate
 )
 
-## Scopes:
-#####################################################################
-
 qt_internal_extend_target(tst_runtime CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus

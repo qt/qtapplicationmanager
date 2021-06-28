@@ -1,4 +1,3 @@
-# Generated from application-features.pro.
 
 cmake_minimum_required(VERSION 3.14)
 project(application-features LANGUAGES CXX)

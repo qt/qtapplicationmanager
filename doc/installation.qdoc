@@ -217,23 +217,22 @@ There are three different ways to specify a hardware ID:
 All executables, including the unit tests, can be found in the build folder's \c bin directory, after
 compiling.
 
-\omit
+
 \section1 Generate Code-Coverage Data
 
-Instead of doing a normal build, you can also create a coverage build by running \c{make coverage}.
-Since every compile step needs to be instrumented with special compiler flags, make sure to run
-\c{make clean} before \c{make coverage}.
+Instead of doing a normal build, you can also create a coverage build by running
+\c{cmake -DAM_COVERAGE=ON}. Since every compile step needs to be instrumented with special compiler
+flags, make sure to create a new build directory, or at least clean an existing one.
 
 Using a build like this enables you to generate HTML coverage reports with the following command
 in the build directory:
 
 \badcode
-make check-coverage
+cmake --build . --target check_coverage
 \endcode
 
 The command line output provides you the URL to the generated report.
 
-\endomit
 
 \section1 System Setup
 

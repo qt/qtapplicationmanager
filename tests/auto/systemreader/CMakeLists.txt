@@ -4,7 +4,7 @@ qt_internal_add_test(tst_systemreader
         ../error-checking.h
         tst_systemreader.cpp
     DEFINES
-        AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_SOURCE_DIR}/\\\"
+        AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_BINARY_DIR}/\\\"
     PUBLIC_LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate

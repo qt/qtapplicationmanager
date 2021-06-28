@@ -4,7 +4,7 @@ qt_internal_add_test(tst_packageextractor
         ../error-checking.h
         tst_packageextractor.cpp
     DEFINES
-        AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_SOURCE_DIR}/../../data/\\\"
+        AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_BINARY_DIR}/../../data/\\\"
     PUBLIC_LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate

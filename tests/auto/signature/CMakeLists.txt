@@ -27,3 +27,7 @@ qt_internal_extend_target(tst_signature CONDITION TARGET Qt::DBus
     PUBLIC_LIBRARIES
         Qt::DBus
 )
+
+add_custom_target("Other-Files-Signature-Test" SOURCES
+    create-test-data.sh
+)

@@ -94,10 +94,30 @@ qt_build_repo()
 
 ## DOCUMENTATION ######################################################
 
-add_custom_target(QtApplicationManagerDoc)
+file(GLOB_RECURSE allDocFiles "doc/*.qdoc" "doc/*.png" "doc/*.qdocconf")
 
-qt_internal_add_docs(QtApplicationManagerDoc
+add_custom_target(Documentation SOURCES
+    doc/QtApplicationManagerDoc
+    ${allDocFiles}
+)
+
+qt_internal_add_docs(Documentation
     doc/qtapplicationmanager.qdocconf
+)
+
+file(GLOB licenses "LICENSE.*[^~]")
+file(GLOB templateYamls "template-opt/am/*.yaml")
+
+add_custom_target("Other-Files" SOURCES
+    .cmake.conf
+    configure.cmake
+    qt_cmdline.cmake
+    dependencies.yaml
+    sync.profile
+    ${licenses}
+    ${templateYamls}
+    util/bash/appman-prompt
+    util/bash/README
 )
 
 ## QMAKE FEATURES #####################################################

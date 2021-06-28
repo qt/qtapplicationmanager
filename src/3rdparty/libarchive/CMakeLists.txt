@@ -142,3 +142,17 @@ else()
             Qt::ZlibPrivate
     )
 endif()
+
+add_custom_target(Other-Files-BundledLibArchive SOURCES
+    qt_attribution.json
+    config-android.h
+    config-ios.h
+    config-macos.h
+    config-unix.h
+    config-windows.h
+    libarchive/config-freebsd.h
+    README.md
+    NEWS
+    INSTALL
+    COPYING
+)

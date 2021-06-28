@@ -5,13 +5,17 @@ file(GLOB_RECURSE TEST_DATA_FILES
     hello-world.red/*
     manifests/*
     create-test-packages.sh
-    ext2image
     icon.png
     info-big.yaml
     info.yaml
     testfile
     utilities.sh
 )
+
+add_custom_target(Test-Data-Files SOURCES
+    ${TEST_DATA_FILES}
+)
+
 foreach(file ${TEST_DATA_FILES})
     if (NOT ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
         add_custom_command(OUTPUT ${file}

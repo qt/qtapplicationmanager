@@ -14,16 +14,11 @@ qt_internal_add_test(tst_main
         Qt::AppManManagerPrivate
 )
 
-# Resources:
-set(main_resource_files
-    "dummy.qml"
-)
-
-qt_internal_add_resource(tst_main "main"
+qt_internal_add_resource(tst_main "main_testdata"
     PREFIX
         "/foo"
     FILES
-        ${main_resource_files}
+        "dummy.qml"
 )
 
 qt_internal_extend_target(tst_main CONDITION TARGET Qt::DBus

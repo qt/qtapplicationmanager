@@ -11,21 +11,16 @@ qt_internal_add_test(tst_signature
         Qt::AppManCryptoPrivate
 )
 
-# Resources:
-set(tst_signature_resource_files
-    "signature-openssl.p7"
-    "signature-securityframework.p7"
-    "signature-wincrypt.p7"
-    "signing-no-key.p12"
-    "signing.p12"
-    "verifying.crt"
-)
-
-qt_internal_add_resource(tst_signature "tst_signature"
+qt_internal_add_resource(tst_signature "signature_testdata"
     PREFIX
         "/"
     FILES
-        ${tst_signature_resource_files}
+        "signature-openssl.p7"
+        "signature-securityframework.p7"
+        "signature-wincrypt.p7"
+        "signing-no-key.p12"
+        "signing.p12"
+        "verifying.crt"
 )
 
 qt_internal_extend_target(tst_signature CONDITION TARGET Qt::DBus

@@ -11,18 +11,13 @@ qt_internal_add_test(tst_configuration
         Qt::AppManMainPrivate
 )
 
-# Resources:
-set(qmake_immediate_resource_files
-    "data/config1.yaml"
-    "data/config2.yaml"
-    "data/empty.yaml"
-)
-
 qt_internal_add_resource(tst_configuration "qmake_immediate"
     PREFIX
         "/"
     FILES
-        ${qmake_immediate_resource_files}
+        "data/config1.yaml"
+        "data/config2.yaml"
+        "data/empty.yaml"
 )
 
 qt_internal_extend_target(tst_configuration CONDITION TARGET Qt::DBus

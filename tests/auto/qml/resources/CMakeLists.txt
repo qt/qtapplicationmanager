@@ -6,16 +6,11 @@ qt_internal_add_cmake_library(systemuiplugin
         Qt::Core
 )
 
-# Resources:
-set(systemuiplugin_resource_files
-    "qml/widgets/MagentaRect.qml"
-)
-
-qt_internal_add_resource(systemuiplugin "systemuiplugin"
+qt_internal_add_resource(systemuiplugin "systemuiplugin_data"
     PREFIX
         "/"
     FILES
-        ${systemuiplugin_resource_files}
+        "qml/widgets/MagentaRect.qml"
 )
 
 qt_am_internal_add_qml_test(tst_resource

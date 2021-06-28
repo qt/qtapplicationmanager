@@ -10,18 +10,13 @@ qt_internal_add_test(tst_yaml
         Qt::AppManCommonPrivate
 )
 
-# Resources:
-set(qmake_immediate_resource_files
-    "data/cache1.yaml"
-    "data/cache2.yaml"
-    "data/test.yaml"
-)
-
-qt_internal_add_resource(tst_yaml "qmake_immediate"
+qt_internal_add_resource(tst_yaml "yaml_testdata"
     PREFIX
         "/"
     FILES
-        ${qmake_immediate_resource_files}
+        "data/cache1.yaml"
+        "data/cache2.yaml"
+        "data/test.yaml"
 )
 
 qt_internal_extend_target(tst_yaml CONDITION TARGET Qt::DBus

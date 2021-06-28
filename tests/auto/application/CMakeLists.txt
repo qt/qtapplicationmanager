@@ -12,16 +12,11 @@ qt_internal_add_test(tst_application
         Qt::AppManManagerPrivate
 )
 
-# Resources:
-set(tst_application_resource_files
-    "info.yaml"
-)
-
-qt_internal_add_resource(tst_application "tst_application"
+qt_internal_add_resource(tst_application "application_testdata"
     PREFIX
         "/"
     FILES
-        ${tst_application_resource_files}
+        "info.yaml"
 )
 
 qt_internal_extend_target(tst_application CONDITION TARGET Qt::DBus

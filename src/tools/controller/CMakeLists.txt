@@ -17,13 +17,16 @@ qt_internal_add_tool(${target_name}
         Qt::Network
         Qt::AppManCommonPrivate
 )
-qt_internal_extend_target(${target_name}
-    DBUS_INTERFACE_SOURCES
+
+if (TARGET ${target_name})
+    qt_internal_extend_target(${target_name}
+        DBUS_INTERFACE_SOURCES
         ../../dbus-lib/io.qt.packagemanager.xml
-)
-qt_internal_extend_target(${target_name}
-    DBUS_INTERFACE_SOURCES
+    )
+    qt_internal_extend_target(${target_name}
+        DBUS_INTERFACE_SOURCES
         ../../dbus-lib/io.qt.applicationmanager.xml
-    DBUS_INTERFACE_FLAGS
+        DBUS_INTERFACE_FLAGS
         -i dbus-utilities.h
-)
+    )
+endif()

@@ -21,14 +21,8 @@ qt_internal_add_tool(${target_name}
         Qt::AppManMainPrivate
 )
 
-## Scopes:
-#####################################################################
+if (TARGET ${target_name})
+    include(QtAppManBuildConfig)
 
-#### Keys ignored in scope 2:.:.:testrunner.pro:ANDROID:
-# INSTALLS = <EMPTY>
-
-#### Keys ignored in scope 6:.:../appman:../appman/appman.pro:UNIX AND EXISTS _ss_SOURCE_DIR/.git:
-# GIT_VERSION = "$$system(cd "$$SOURCE_DIR" && git describe --tags --always --dirty 2>/dev/null)"
-
-#### Keys ignored in scope 7:.:../appman:../appman/appman.pro:else:
-# GIT_VERSION = "unknown"
+    qtam_internal_add_build_config(${target_name})
+endif()

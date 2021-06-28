@@ -36,6 +36,7 @@ qt_internal_add_module(AppManMainPrivate
         Qt::AppManSharedMainPrivate
         Qt::AppManWindowPrivate
     EXTRA_CMAKE_FILES
+        wrapper.cpp.in
         Qt6AppManMainPrivateMacros.cmake
 )
 

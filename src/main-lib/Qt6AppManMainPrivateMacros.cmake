@@ -1,3 +1,5 @@
+set(_AM_MACROS_LOCATION ${CMAKE_CURRENT_LIST_DIR})
+
 function(qt_am_internal_create_copy_command file)
     if (NOT ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
         add_custom_command(OUTPUT ${file}
@@ -18,10 +20,6 @@ function(qt6_am_add_systemui_wrapper target)
         PARSE_ARGV 1
         ARG
         "NO_INSTALL" "MAIN_QML_FILE;EXECUTABLE" "CONFIG_YAML;EXTRA_FILES;EXTRA_ARGS"
-    )
-
-    file(CONFIGURE OUTPUT main.cpp
-         CONTENT "int main(int, char *[]){}"
     )
 
     if (NOT ARG_EXECUTABLE)
@@ -63,35 +61,31 @@ function(qt6_am_add_systemui_wrapper target)
     string(JOIN " " CMD_ARGS_STR ${CMD_ARGS})
     string(JOIN " " CMD_EXTRA_ARGS_STR ${ARG_EXTRA_ARGS})
 
+    configure_file(${_AM_MACROS_LOCATION}/wrapper.cpp.in main.cpp)
+
+    qt_internal_collect_command_environment(test_env_path test_env_plugin_path)
+
     if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
         set(WRAPPER_SUFFIX ".bat")
-        set(WRAPPER_SCRIPT "_${target}${WRAPPER_SUFFIX}")
-        set(bindir "${QT_BUILD_INTERNALS_RELOCATABLE_INSTALL_PREFIX}/${INSTALL_BINDIR}")
-        set(plugindir "${QT_BUILD_INTERNALS_RELOCATABLE_INSTALL_PREFIX}/${INSTALL_PLUGINSDIR}")
-        get_filename_component(bindir "${bindir}" REALPATH)
-        file(TO_NATIVE_PATH "${bindir}" bindir)
-        get_filename_component(plugindir "${plugindir}" REALPATH)
-        file(TO_NATIVE_PATH "${plugindir}" plugindir)
+        set(WRAPPER_SCRIPT "_${target}$<CONFIG>${WRAPPER_SUFFIX}")
 
         file(GENERATE OUTPUT ${WRAPPER_SCRIPT} CONTENT
 "@echo off
 SetLocal EnableDelayedExpansion
-(set PATH=${bindir};!PATH!)
-if defined QT_PLUGIN_PATH (
-    set QT_PLUGIN_PATH=${plugindir};!QT_PLUGIN_PATH!
-) else (
-    set QT_PLUGIN_PATH=${plugindir}
-)
-${CMAKE_INSTALL_PREFIX}/${INSTALL_BINDIR}/$<TARGET_FILE_NAME:${ARG_EXECUTABLE}> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} %*
+(set PATH=${test_env_path})
+(set QT_PLUGIN_PATH=${test_env_plugin_path})
+$<TARGET_FILE_NAME:${ARG_EXECUTABLE}> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} %*
 EndLocal
 "
         )
     else()
         set(WRAPPER_SUFFIX ".sh")
-        set(WRAPPER_SCRIPT "_${target}${WRAPPER_SUFFIX}")
+        set(WRAPPER_SCRIPT "_${target}$<CONFIG>${WRAPPER_SUFFIX}")
         file(GENERATE OUTPUT ${WRAPPER_SCRIPT} CONTENT
 "#!/bin/sh
-exec ${CMAKE_INSTALL_PREFIX}/${INSTALL_BINDIR}/$<TARGET_FILE_NAME:${ARG_EXECUTABLE}> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
+export PATH=${test_env_path}
+export QT_PLUGIN_PATH=${test_env_plugin_path}
+exec $<TARGET_FILE_NAME:${ARG_EXECUTABLE}> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
 "
         )
     endif()

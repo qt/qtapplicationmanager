@@ -1,0 +1,6 @@
+// The following variables in the comment
+// make sure the file is regenerated when
+// the arguments change and force the POST_BUILD
+// step to be executed as well
+// ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE}
+int main(int, char *[]){}

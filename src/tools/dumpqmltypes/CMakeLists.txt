@@ -19,9 +19,40 @@ qt_internal_add_tool(${target_name}
         Qt::AppManWindowPrivate
 )
 
-#### Keys ignored in scope 3:.:.:dumpqmltypes.pro:build_pass OR NOT debug_and_release:
-# INSTALLS = "qmltypes_file"
-# QMAKE_POST_LINK = "$$QMLPLUGINDUMP" "$$SOURCE_DIR/qmltypes"
-# qmltypes_file.CONFIG = "no_check_exist" "directory"
-# qmltypes_file.files = "$$SOURCE_DIR/qmltypes/QtApplicationManager"
-# qmltypes_file.path = "$$[QT_INSTALL_QML]"
+if(TARGET ${target_name} AND NOT CMAKE_CROSSCOMPILING)
+    set(qml_install_dir "${INSTALL_QMLDIR}")
+    qt_path_join(qml_install_dir ${QT_INSTALL_DIR} ${qml_install_dir})
+
+    if(QT_WILL_INSTALL)
+        qt_install(
+            DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/qmltypes/QtApplicationManager"
+            DESTINATION "${qml_install_dir}"
+        )
+    else()
+        set(COPY_COMMAND COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/qmltypes" "${qml_install_dir}")
+    endif()
+
+    qt_internal_collect_command_environment(env_path env_plugin_path)
+
+    # We have to set the env to get the PATH set to find the Qt libraries
+    # needed by the appman-dumpqmltypes binary (we cannot guarantee that the
+    # target is in $QTDIR/bin)
+    # In addition $<TARGET_FILE:...> will result in a broken path to the
+    # tool in a multi-config build, because Qt only builds the tools once.
+    # Hence we need to construct the path to the tool ourselves (copied from
+    # QtToolHelpers.cmake)
+
+    set(tool_path "${QT_BUILD_DIR}/${INSTALL_BINDIR}/appman-dumpqmltypes")
+
+    add_custom_command(
+        TARGET ${target_name}
+        POST_BUILD
+        BYPRODUCTS "qmltypes"
+        COMMAND "${CMAKE_COMMAND}" -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
+                "${tool_path}" "${CMAKE_CURRENT_BINARY_DIR}/qmltypes"
+        ${COPY_COMMAND}
+        DEPENDS "${tool_path}"
+        COMMENT "Generating qmltypes using ${tool_path}"
+        VERBATIM
+    )
+endif()

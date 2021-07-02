@@ -66,18 +66,20 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
     Q_ASSERT(!testRunnerArguments.isEmpty());
 
     const QString name = QFileInfo(testRunnerArguments.at(0)).fileName() + qSL("::") + QDir().relativeFilePath(testFile);
-    static const char *programName = strdup(name.toLocal8Bit().constData());
+    static const char *programName = qstrdup(name.toLocal8Bit().constData());
     QuickTestResult::setProgramName(programName);
 
     // Convert all the arguments back into a char * array.
     // These need to be alive as long as the program is running!
     static QVector<char *> testArgV;
     for (const auto &arg : testRunnerArguments)
-        testArgV << strdup(arg.toLocal8Bit().constData());
+        testArgV << qstrdup(arg.toLocal8Bit().constData());
 
     atexit([]() {
-        free(const_cast<char*>(programName));
-        std::for_each(testArgV.constBegin(), testArgV.constEnd(), free);
+        delete [] programName;
+        std::for_each(testArgV.constBegin(), testArgV.constEnd(), [](char *arg) {
+            delete [] arg;
+        });
     });
 
     QuickTestResult::setCurrentAppname(testArgV.constFirst());

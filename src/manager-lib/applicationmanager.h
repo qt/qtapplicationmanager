@@ -168,6 +168,8 @@ signals:
     Q_SCRIPTABLE void applicationAboutToBeRemoved(const QString &id);
     Q_SCRIPTABLE void applicationChanged(const QString &id, const QStringList &changedRoles);
 
+    Q_SCRIPTABLE void windowManagerCompositorReadyChanged(bool ready);
+
     void openUrlRequested(const QString &requestId, const QString &url, const QString &mimeType, const QStringList &possibleAppIds);
 
     void memoryLowWarning();
@@ -176,7 +178,6 @@ signals:
     void containerSelectionFunctionChanged();
     void shuttingDownChanged();
     void shutDownFinished();
-    void windowManagerCompositorReadyChanged(bool ready);
 
 private slots:
     void openUrlRelay(const QUrl &url);

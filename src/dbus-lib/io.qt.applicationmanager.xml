@@ -8,6 +8,7 @@
     <property name="systemProperties" type="a{sv}" access="read">
       <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
     </property>
+    <property name="windowManagerCompositorReady" type="b" access="read"/>
     <signal name="applicationWasActivated">
       <arg name="id" type="s" direction="out"/>
       <arg name="aliasId" type="s" direction="out"/>
@@ -27,6 +28,9 @@
     <signal name="applicationRunStateChanged">
       <arg name="id" type="s" direction="out"/>
       <arg name="runState" type="u" direction="out"/>
+    </signal>
+    <signal name="windowManagerCompositorReadyChanged">
+      <arg name="ready" type="b" direction="out"/>
     </signal>
     <method name="applicationIds">
       <arg type="as" direction="out"/>

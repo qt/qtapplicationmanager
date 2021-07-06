@@ -72,6 +72,8 @@ ApplicationManagerAdaptor::ApplicationManagerAdaptor(QObject *parent)
             this, &ApplicationManagerAdaptor::applicationAboutToBeRemoved);
     connect(am, &ApplicationManager::applicationWasActivated,
             this, &ApplicationManagerAdaptor::applicationWasActivated);
+    connect(am, &ApplicationManager::windowManagerCompositorReadyChanged,
+            this, &ApplicationManagerAdaptor::windowManagerCompositorReadyChanged);
 
     // connect this signal via a lambda, since it needs a type conversion
     connect(am, &ApplicationManager::applicationRunStateChanged,
@@ -106,6 +108,11 @@ bool ApplicationManagerAdaptor::singleProcess() const
 QVariantMap ApplicationManagerAdaptor::systemProperties() const
 {
     return convertFromJSVariant(ApplicationManager::instance()->systemProperties()).toMap();
+}
+
+bool ApplicationManagerAdaptor::windowManagerCompositorReady() const
+{
+    return ApplicationManager::instance()->isWindowManagerCompositorReady();
 }
 
 QStringList ApplicationManagerAdaptor::applicationIds()

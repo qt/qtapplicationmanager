@@ -386,7 +386,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 3;
+const quint32 ConfigurationData::DataStreamVersion = 4;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)

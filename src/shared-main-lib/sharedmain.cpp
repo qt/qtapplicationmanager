@@ -47,6 +47,8 @@
 #include <QGuiApplication>
 #include <QIcon>
 #include <private/qopenglcontext_p.h>
+#include <private/qguiapplication_p.h>
+#include <qpa/qplatformintegration.h>
 
 #include "global.h"
 #include "logging.h"
@@ -75,9 +77,20 @@ bool QtAM::SharedMain::s_initialized = false;
 SharedMain::SharedMain()
 {
     if (Q_UNLIKELY(!s_initialized || !QCoreApplication::instance())) {
-        qCritical() << "ERROR: Q(Gui)Application must be instantiated after SharedMain::initialize "
-                       "has been called and before SharedMain is instantiated";
+        qCCritical(LogSystem) << "ERROR: Q(Gui)Application must be instantiated after SharedMain::initialize "
+                                 "has been called and before SharedMain is instantiated";
     }
+#if !defined(QT_NO_OPENGL)
+    if (!(QGuiApplicationPrivate::instance()
+            && QGuiApplicationPrivate::instance()->platformIntegration()
+            && QGuiApplicationPrivate::instance()->platformIntegration()->hasCapability(QPlatformIntegration::OpenGL))) {
+        qCCritical(LogGraphics) << "No OpenGL capable Wayland client buffer integration available: "
+                                   "this application can only use software rendering";
+    }
+#else
+    qCCritical(LogGraphics) << "Qt has been compiled without OpenGL support: "
+                               "this application will use software rendering";
+#endif
 }
 
 SharedMain::~SharedMain()
@@ -89,7 +102,7 @@ SharedMain::~SharedMain()
 void SharedMain::initialize()
 {
     if (Q_UNLIKELY(QCoreApplication::instance()))
-        qCritical() << "ERROR: SharedMain::initialize must be called before Q(Gui)Application is instantiated.";
+        qCCritical(LogSystem) << "ERROR: SharedMain::initialize must be called before Q(Gui)Application is instantiated";
 
     s_initialized = true;
 

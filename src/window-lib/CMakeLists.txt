@@ -41,6 +41,7 @@ if(QT_FEATURE_am_multi_process)
             waylandwindow.cpp waylandwindow.h
         PUBLIC_LIBRARIES
             Qt::WaylandCompositor
+            Qt::WaylandCompositorPrivate
     )
 endif()
 

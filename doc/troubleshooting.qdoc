@@ -48,6 +48,8 @@ solve them.
         \li \l{ts-04}{How do I find out if my applications use hardware acceleration?}
     \row
         \li \l{ts-05}{How do I enable hardware acceleration?}
+    \row
+        \li \l{ts-06}{My applications are crashing immediately within the application manager. What are some possible solutions?}
 \endtable
 
 \target ts-01
@@ -114,9 +116,22 @@ You can force Qt to use Opengl ES2 by using the \c --opengl es2 configure option
 
 Additionally, you also need to make sure that the \c wayland-egl integration plugin is built. If
 the plugin built successfully, you should have the following file:
-\e <QT_DIR>/plugins/wayland-graphics-integration-client/libwayland-egl.so
+\e <QT_DIR>/plugins/wayland-graphics-integration-client/libqt-plugin-wayland-egl.so
 
 If that file isn't available, check QtWayland's configure summary and make sure this plugin is
 built.
+
+\target ts-06
+
+\b{My applications are crashing immediately within the application manager. What are some possible solutions?}
+
+Your system setup might not allow Wayland clients to use OpenGL. In this case both the application
+manager and the QML application launcher output a critical log message if hardware accelerated
+rendering is not possible for applications.
+
+Make sure to enable hardware acceleration.
+
+You can also force software rendering by setting the environment variable \c $QT_QUICK_BACKEND to
+\c software, but only if your applications aren't using OpenGL features (e.g. shaders) explicitly.
 
 */

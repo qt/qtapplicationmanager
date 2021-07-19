@@ -45,6 +45,7 @@
 
 #if defined(AM_MULTI_PROCESS)
 #  include "waylandcompositor.h"
+#  include <private/qwaylandcompositor_p.h>
 #endif
 
 #include "logging.h"
@@ -689,6 +690,11 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             qputenv("WAYLAND_DISPLAY", d->waylandCompositor->socketName());
             qCInfo(LogGraphics).nospace() << "WindowManager: running in Wayland mode [socket: "
                                            << d->waylandCompositor->socketName() << "]";
+            // SHM is always loaded
+            if (QWaylandCompositorPrivate::get(d->waylandCompositor)->clientBufferIntegrations().size() <= 1) {
+                qCCritical(LogGraphics) << "No OpenGL capable Wayland client buffer integration available: "
+                                           "Wayland client applications can only use software rendering";
+            }
             ApplicationManager::instance()->setWindowManagerCompositorReady(true);
         } else {
             d->waylandCompositor->registerOutputWindow(view);

@@ -211,13 +211,8 @@ stopped. The QML engine doesn't allow you to unload parts of the object hierarch
 If your application needs to support both, single-process mode and multi-process mode, you must
 define a set of Inter-Process Communication (IPC) interfaces between the application and System UI,
 and always stick to them. Consider making these interfaces part of your review policy. While you
-can use any IPC mechanism that suits your use case, the application manager includes an IPC
-mechanism that fully abstracts the single-process vs. multi-process difference. This mechanism
-also makes it easy to create new interfaces for QML developers.
-
-Be aware that the application manager's IPC is not suitable to interface your entire middleware.
-Its sole purpose is to avoid a situation where there is a large number of one-off daemons that need
-to be kept track of, involving various pieces of state information that need to be shared between
-the System UI and some or all applications.
+can use any IPC mechanism that suits your use case, the application manager includes an \l{Intents}
+based IPC mechanism that fully abstracts the single-process vs. multi-process difference. This
+mechanism also makes it easy to create new interfaces for QML developers.
 
 */

@@ -62,12 +62,6 @@
         \li The direct interface between the application manager and the launcher process, used to
             implement custom launchers: the definition is in the source distribution at
             \c{src/dbus/io.qt.applicationmanager.runtimeinterface.xml}
-    \row
-        \li \b /ExtensionInterfaces/<ext_name> \br \e <ext.name>
-        \li Any IPC interface registered via the ApplicationIPCManager (and matching the corresponding
-            filter), will be exported on this P2P connection. The path name is constructed from the
-            interface name by replacing every character that is not alpha-numeric with an underscore
-            (\c{_}).
     \endtable
 
     If you are re-implementing the client side, note that the remote interfaces are not

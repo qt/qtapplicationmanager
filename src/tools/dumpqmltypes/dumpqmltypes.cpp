@@ -33,8 +33,6 @@
 #include <QtAppManManager/applicationmanager.h>
 #include <QtAppManManager/applicationmodel.h>
 #include <QtAppManManager/amnamespace.h>
-#include <QtAppManManager/applicationipcmanager.h>
-#include <QtAppManManager/applicationipcinterface.h>
 #include <QtAppManManager/application.h>
 #include <QtAppManManager/abstractruntime.h>
 #include <QtAppManManager/abstractcontainer.h>
@@ -46,7 +44,6 @@
 #include <QtAppManWindow/window.h>
 #include <QtAppManWindow/windowitem.h>
 #include <QtAppManLauncher/dbusapplicationinterface.h>
-#include <QtAppManLauncher/dbusapplicationinterfaceextension.h>
 #include <QtAppManLauncher/private/applicationmanagerwindow_p.h>
 #include <QtAppManIntentServer/intent.h>
 #include <QtAppManIntentServer/intentserver.h>
@@ -77,18 +74,14 @@ static const QVector<const QMetaObject *> all = {
     &ApplicationInstaller::staticMetaObject,
     &PackageManager::staticMetaObject,
     &NotificationManager::staticMetaObject,
-    &ApplicationIPCManager::staticMetaObject,
     &Application::staticMetaObject,
     &AbstractRuntime::staticMetaObject,
     &AbstractContainer::staticMetaObject,
     &Notification::staticMetaObject,
     &DBusApplicationInterface::staticMetaObject,
-    &DBusApplicationInterfaceExtension::staticMetaObject,
     &ApplicationManagerWindow::staticMetaObject,
     &ApplicationModel::staticMetaObject,
     &Am::staticMetaObject,
-    &ApplicationIPCInterface::staticMetaObject,
-    &ApplicationIPCInterfaceAttached::staticMetaObject,
 
     // window-lib
     &WindowManager::staticMetaObject,

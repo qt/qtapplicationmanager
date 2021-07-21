@@ -7,7 +7,7 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 2.0", "QtQuick 2.0" ]
+    dependencies: [ "QtQuick.Window 2.2", "QtQuick 2.2" ]
     Component {
         name: "ProcessStatus"
         exports: [ "QtApplicationManager.SystemUI/ProcessStatus 2.0" ]
@@ -368,25 +368,6 @@ Module {
         }
     }
     Component {
-        name: "ApplicationIPCInterfaceAttached"
-        exports: [ "QtApplicationManager.SystemUI/ApplicationIPCInterfaceAttached 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
-        prototype: "QObject"
-        Property { name: "sender"; type: "string"; isReadonly: true }
-        Property { name: "receivers"; type: "QVariant"; }
-        Property { name: "inProcessReceiversOnly"; type: "QVariant"; isReadonly: true }
-    }
-    Component {
-        name: "ApplicationIPCInterface"
-        exports: [ "QtApplicationManager.SystemUI/ApplicationIPCInterface 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
-        prototype: "QObject"
-        Property { name: "serviceObject"; type: "QObject"; isPointer: true; }
-        Signal {
-            name: "serviceObjectChanged"
-        }
-    }
-    Component {
         name: "Am"
         exports: [ "QtApplicationManager.SystemUI/Am 2.0" ]
         exportMetaObjectRevisions: [ 0 ]
@@ -429,25 +410,6 @@ Module {
             name: "mapFromSource"
             type: "int"
             Parameter { name: "sourceIndex"; type: "int"; }
-        }
-    }
-    Component {
-        name: "DBusApplicationInterfaceExtension"
-        exports: [ "QtApplicationManager.SystemUI/ApplicationInterfaceExtension 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
-        prototype: "QObject"
-        Property { name: "name"; type: "string"; }
-        Property { name: "ready"; type: "bool"; isReadonly: true }
-        Property { name: "object"; type: "QObject"; isPointer: true; isReadonly: true }
-        Signal {
-            name: "readyChanged"
-        }
-        Signal {
-            name: "objectChanged"
-        }
-        Method {
-            name: "setName"
-            Parameter { name: "name"; type: "string"; }
         }
     }
     Component {
@@ -578,24 +540,6 @@ Module {
             name: "name"
             type: "string"
             Parameter { name: "language"; type: "string"; }
-        }
-    }
-    Component {
-        name: "ApplicationIPCManager"
-        exports: [ "QtApplicationManager.SystemUI/ApplicationIPCManager 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
-        prototype: "QObject"
-        isSingleton: true
-        Signal {
-            name: "interfaceCreated"
-            Parameter { name: "iface"; type: "ApplicationIPCInterface"; isPointer: true; }
-        }
-        Method {
-            name: "registerInterface"
-            type: "bool"
-            Parameter { name: "interface"; type: "ApplicationIPCInterface"; isPointer: true; }
-            Parameter { name: "name"; type: "string"; }
-            Parameter { name: "filter"; type: "QVariantMap"; }
         }
     }
     Component {
@@ -997,6 +941,10 @@ Module {
             Parameter { name: "changedRoles"; type: "QStringList"; }
         }
         Signal {
+            name: "windowManagerCompositorReadyChanged"
+            Parameter { name: "ready"; type: "bool"; }
+        }
+        Signal {
             name: "openUrlRequested"
             Parameter { name: "requestId"; type: "string"; }
             Parameter { name: "url"; type: "string"; }
@@ -1017,10 +965,6 @@ Module {
         }
         Signal {
             name: "shutDownFinished"
-        }
-        Signal {
-            name: "windowManagerCompositorReadyChanged"
-            Parameter { name: "ready"; type: "bool"; }
         }
         Method {
             name: "shutDown"

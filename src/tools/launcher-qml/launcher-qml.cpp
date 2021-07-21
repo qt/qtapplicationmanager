@@ -59,7 +59,6 @@
 
 #include <QtAppManLauncher/private/applicationmanagerwindow_p.h>
 #include "dbusapplicationinterface.h"
-#include "dbusapplicationinterfaceextension.h"
 #include "dbusnotification.h"
 #include "notification.h"
 #include "qtyaml.h"
@@ -190,8 +189,6 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
 
     qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
     qmlRegisterType<DBusNotification>("QtApplicationManager", 2, 0, "Notification");
-    qmlRegisterType<DBusApplicationInterfaceExtension>("QtApplicationManager.Application", 2, 0,
-                                                       "ApplicationInterfaceExtension");
 
     // monitor-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");

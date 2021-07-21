@@ -31,6 +31,7 @@
 
 import QtQuick 2.4
 import QtTest 1.0
+import QtApplicationManager 2.0
 import QtApplicationManager.SystemUI 2.0
 
 
@@ -41,12 +42,14 @@ TestCase {
     visible: true
 
 
-    ApplicationIPCInterface {
-        id: appif
-        signal trigger(string type)
-        readonly property var _decltype_func: { "int": [ "string" ] }
-        function func(str) { return str === "bar" ? 42: 0; }
-        Component.onCompleted: ApplicationIPCManager.registerInterface(this, "test.configs.interface", {});
+    IntentServerHandler {
+         intentIds: "system-func"
+         visibility: IntentObject.Public
+
+         onRequestReceived: function(request) {
+             let str = request.parameters["str"]
+             request.sendReply({ "int": str === "bar" ? 42: 0 })
+         }
     }
 
     SignalSpy {
@@ -91,7 +94,7 @@ TestCase {
         compare(windowAddedSpy.count, 1);
         var window = windowAddedSpy.signalArguments[0][0];
         compare(window.windowProperty("prop1"), "foo");
-        appif.trigger("PropertyChange");
+        IntentClient.sendIntentRequest("test-window-property", "test.configs.app", { })
         windowPropertyChangedSpy.wait();
         compare(windowPropertyChangedSpy.count, 1);
         compare(windowPropertyChangedSpy.signalArguments[0][0], window);
@@ -99,7 +102,7 @@ TestCase {
         windowPropertyChangedSpy.clear();
 
         if (!ApplicationManager.systemProperties.nodbus) {
-            appif.trigger("Notification");
+            IntentClient.sendIntentRequest("test-notification", "test.configs.app", { })
             tryVerify(function() { return NotificationManager.count === 1; });
             compare(NotificationManager.get(0).summary, "Test");
         }

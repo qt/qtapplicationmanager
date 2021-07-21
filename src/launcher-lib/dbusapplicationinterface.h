@@ -47,7 +47,6 @@ class DBusNotification;
 class Notification;
 class IntentClientRequest;
 class Controller;
-class DBusApplicationInterfaceExtension;
 
 
 class DBusApplicationInterface : public ApplicationInterface
@@ -98,7 +97,6 @@ private:
 
     friend class DBusNotification;
     friend class Controller;
-    friend class DBusApplicationInterfaceExtension;
 };
 
 QT_END_NAMESPACE_AM

@@ -54,7 +54,6 @@ The following features are supported:
     \li Stop or restart App1 animations with a click
     \li App1 sends rotation angle as a window property to System UI on stop
     \li App1 shows a pop up on the System UI when it is paused
-    \li App2 makes use of an IPC extension when it starts
     \li App2 logs the document URL that started it
     \li App2 triggers a notification in the System UI, when the bulb icon is clicked
     \li Show Wayland client windows that originate from processes outside of \c appman
@@ -62,8 +61,7 @@ The following features are supported:
 
 \note This example can be run in single-process or multi-process mode. In the walkthrough below, we
 use multi-process and its corresponding terminology. The terms \e client and \e application;
-\e server and \e {System UI} are used interchangeably. The System UI comprises both compositing and
-generic Inter-Process Communication (IPC).
+\e server and \e {System UI} are used interchangeably.
 
 To start the example, navigate to the \c minidesk folder, and run the following command:
 \badcode
@@ -198,7 +196,7 @@ notification. For brevity, the example only presents the first notification.
 
 \quotefromfile applicationmanager/minidesk/system-ui/main.qml
 \skipto Handler for WindowManager signals
-\printto IPC extension
+\printto /^\}/
 
 This is the vital part of the System UI, where the window (surfaces) of the applications are mapped
 to \l{WindowItem}s in the System UI. When a new application window is available (becomes visible),
@@ -218,32 +216,6 @@ instance in KDE's Calculator:
 \badcode
 $ QT_WAYLAND_DISABLE_WINDOWDECORATION=1 WAYLAND_DISPLAY=qtam-wayland-0 kcalc -platform wayland
 \endcode
-
-\section2 Inter-Process Communication (IPC) Extension
-
-The following snippet demonstrates how the \l{ApplicationIPCInterface} can be used to define an IPC
-extension. The IPC interface has to be defined in the System UI, for instance:
-
-\printuntil Component.onCompleted
-\printline }
-
-Here, a \c pi property is defined, as well as a \c computed signal and a \c circumference function.
-After registering this interface with
-\l{ApplicationIPCManager::registerInterface()}{ApplicationIPCManager.registerInterface()}, it can
-be used from the application processes.
-
-On the application side, the \l{ApplicationInterfaceExtension} type has to be used. Here's how
-App2 makes use of this interface extension:
-
-\quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app2/app2.qml
-\skipto ApplicationInterfaceExtension
-\printuntil onPiChanged
-\printuntil /^\s{4}\}/
-
-The interface is used here as soon as it's ready. Of course, the interface can be accessed from
-elsewhere, too. The \l{ApplicationInterfaceExtension::name}{ApplicationInterfaceExtension.name}
-must match the name it was registered with in
-\l{ApplicationIPCManager::registerInterface()}{ApplicationIPCManager.registerInterface()}.
 
 \section2 Application Termination
 

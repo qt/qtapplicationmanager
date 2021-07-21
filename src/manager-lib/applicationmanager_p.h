@@ -54,8 +54,6 @@ public:
     QString currentLocale;
     QHash<int, QByteArray> roleNames;
 
-    QVector<IpcProxyObject *> interfaceExtensions;
-
     QList<QPair<QString, QString>> containerSelectionConfig;
     QJSValue containerSelectionFunction;
 

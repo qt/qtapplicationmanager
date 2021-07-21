@@ -29,14 +29,15 @@
 **
 ****************************************************************************/
 
+import QtQuick 2.0
+import QtApplicationManager 2.0
 import QtApplicationManager.Application 2.0
 
 ApplicationManagerWindow {
     width: 320
     height: 240
 
-    ApplicationInterfaceExtension {
-        name: "quicklaunch.interface"
-        onReadyChanged: object.acknowledge();
+    Component.onCompleted: {
+        IntentClient.sendIntentRequest("quicklaunch-ready", { })
     }
 }

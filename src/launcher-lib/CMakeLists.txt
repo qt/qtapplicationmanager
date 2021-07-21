@@ -10,10 +10,8 @@ qt_internal_add_module(AppManLauncherPrivate
     SOURCES
         applicationmanagerwindow.cpp applicationmanagerwindow_p.h
         dbusapplicationinterface.cpp dbusapplicationinterface.h
-        dbusapplicationinterfaceextension.cpp dbusapplicationinterfaceextension.h
         dbusnotification.cpp dbusnotification.h
         intentclientdbusimplementation.cpp intentclientdbusimplementation.h
-        ipcwrapperobject.cpp ipcwrapperobject.h ipcwrapperobject_p.h
         launchermain.cpp launchermain.h
     DBUS_INTERFACE_SOURCES
         ../dbus-lib/io.qt.applicationmanager.intentinterface.xml

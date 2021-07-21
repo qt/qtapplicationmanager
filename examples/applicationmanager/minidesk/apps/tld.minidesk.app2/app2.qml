@@ -81,22 +81,4 @@ ApplicationManagerWindow {
             target.acknowledgeQuit();
         }
     }
-
-    ApplicationInterfaceExtension {
-        id: extension
-        name: "tld.minidesk.interface"
-
-        onReadyChanged: console.log("App2: circumference function returned: "
-                              + object.circumference(2.0, "plate") + ", it used pi = " + object.pi);
-    }
-
-    Connections {
-        target: extension.object
-        function onComputed(what) {
-            console.log("App2: " + what + " has been computed");
-        }
-        function onPiChanged() {
-            console.log("App2: pi changed: " + target.pi);
-        }
-    }
 }

@@ -46,7 +46,6 @@ QT_BEGIN_NAMESPACE_AM
 
 class ApplicationManagerPrivate;
 class AbstractRuntime;
-class IpcProxyObject;
 
 // A place to collect signals used internally by appman without polluting
 // ApplicationManager's public QML API.

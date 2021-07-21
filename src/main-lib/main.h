@@ -145,7 +145,6 @@ private:
     PackageDatabase *m_packageDatabase = nullptr;
     PackageManager *m_packageManager = nullptr;
     ApplicationManager *m_applicationManager = nullptr;
-    ApplicationIPCManager *m_applicationIPCManager = nullptr;
 #if !defined(AM_DISABLE_INSTALLER)
     ApplicationInstaller *m_applicationInstaller = nullptr;
 #endif

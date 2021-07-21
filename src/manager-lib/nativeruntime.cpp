@@ -47,7 +47,6 @@
 #include "runtimefactory.h"
 #include "qtyaml.h"
 #include "applicationinterface.h"
-#include "applicationipcmanager.h"
 #include "utilities.h"
 #include "notificationmanager.h"
 #include "dbus-utilities.h"
@@ -164,7 +163,6 @@ bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
         ret = true;
     } else {
         QDBusConnection connection(m_dbusConnectionName);
-        ApplicationIPCManager::instance()->registerInterfaces(this, connection, app);
         emit applicationReadyOnPeerDBus(connection, app);
         ret = startApplicationViaLauncher();
     }

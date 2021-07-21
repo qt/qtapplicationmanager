@@ -37,10 +37,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-void fixNullValuesForQml(QVariant &v);
-void fixNullValuesForQml(QVariantList &list);
-void fixNullValuesForQml(QVariantMap &map);
-
 void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory);
 
 QT_END_NAMESPACE_AM

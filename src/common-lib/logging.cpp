@@ -125,10 +125,6 @@ static const char *s_defaultSystemUiDltDescription = "Qt Application Manager";
     \li \c QMRT
     \li QML runtime messages
 \row
-    \li \c am.qml.ipc
-    \li \c QMIP
-    \li QML IPC messages
-\row
     \li \c am.notify
     \li \c NTFY
     \li Notification sub-system messages
@@ -161,7 +157,6 @@ QDLT_LOGGING_CATEGORY(LogWaylandDebug, "am.wayland.debug", "WAYL", "Wayland rela
 QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "General QML related messages")
 QDLT_LOGGING_CATEGORY(LogRuntime, "am.runtime", "RT", "Runtime messages")
 QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime messages")
-QDLT_LOGGING_CATEGORY(LogQmlIpc, "am.qml.ipc", "QMIP", "QML IPC messages")
 QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notifications sub-system messages")
 QDLT_LOGGING_CATEGORY(LogDeployment, "am.deployment", "DPLM", "Deployment hints")
 QDLT_LOGGING_CATEGORY(LogIntents, "am.intent", "INTN", "Intents sub-system messages")

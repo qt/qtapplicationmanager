@@ -15,8 +15,6 @@ qt_internal_add_module(AppManManagerPrivate
         abstractruntime.cpp abstractruntime.h
         amnamespace.h
         application.cpp application.h
-        applicationipcinterface.cpp applicationipcinterface.h applicationipcinterface_p.h
-        applicationipcmanager.cpp applicationipcmanager.h
         applicationmanager.cpp applicationmanager.h applicationmanager_p.h
         applicationmodel.cpp applicationmodel.h
         asynchronoustask.cpp asynchronoustask.h

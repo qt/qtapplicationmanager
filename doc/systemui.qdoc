@@ -143,8 +143,7 @@ side. The application should do all the necessary clean-ups and then confirm tha
 terminates with \l{ApplicationInterface::acknowledgeQuit()}.
 
 You can implement other life-cycle management features that are tailored to the specific
-requirements of IPC mechanisms like window properties, \l{ApplicationInterfaceExtension},
-or proprietary IPCs.
+requirements of IPC mechanisms like window properties, \l{Intents}, or proprietary IPCs.
 
 For more information, see the \l{Desktop System UI Example}.
 

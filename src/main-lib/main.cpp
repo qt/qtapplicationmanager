@@ -42,8 +42,6 @@
 #  include "notificationmanagerdbuscontextadaptor.h"
 #endif
 
-#include "applicationipcmanager.h"
-
 #include <QFile>
 #include <QDir>
 #include <QStringList>
@@ -113,7 +111,6 @@
 #include "crashhandler.h"
 #include "qmllogger.h"
 #include "startuptimer.h"
-#include "applicationipcmanager.h"
 #include "unixsignalhandler.h"
 
 // monitor-lib
@@ -178,7 +175,6 @@ Main::~Main()
 #endif
     delete m_packageManager;
     delete m_quickLauncher;
-    delete m_applicationIPCManager;
 
     delete RuntimeFactory::instance();
     delete ContainerFactory::instance();
@@ -487,11 +483,6 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     m_notificationManager = NotificationManager::createInstance();
     StartupTimer::instance()->checkpoint("after NotificationManager instantiation");
 
-    m_applicationIPCManager = ApplicationIPCManager::createInstance();
-    connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::newRuntimeCreated,
-            m_applicationIPCManager, &ApplicationIPCManager::attachToRuntime);
-    StartupTimer::instance()->checkpoint("after ApplicationIPCManager instantiation");
-
     if (quickLaunchRuntimesPerContainer > 0) {
         m_quickLauncher = QuickLauncher::createInstance(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad);
         StartupTimer::instance()->checkpoint("after quick-launcher setup");
@@ -595,7 +586,6 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
         qputenv("QT_QUICK_CONTROLS_STYLE", quickControlsStyle.toLocal8Bit());
 
     qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 2, 0, "Notification");
-    qmlRegisterType<QmlInProcessApplicationInterfaceExtension>("QtApplicationManager.Application", 2, 0, "ApplicationInterfaceExtension");
     qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
 
     // monitor-lib

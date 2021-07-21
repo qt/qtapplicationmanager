@@ -36,7 +36,7 @@ import QtApplicationManager.Application 2.0
 ApplicationManagerWindow {
     id: root
 
-    onWindowPropertyChanged: {
+    onWindowPropertyChanged: function(name, value) {
         if (name === "trigger" && value === "now")
             root.setWindowProperty("ack", "done");
     }
@@ -47,21 +47,22 @@ ApplicationManagerWindow {
         timeout: 20
     }
 
-    ApplicationInterfaceExtension {
-        id: extension
-        name: "test.configs.interface"
-
+    IntentHandler {
+        intentIds: "test-window-property"
+        onRequestReceived: function(request) {
+            root.setWindowProperty("prop1", "bar");
+            request.sendReply({ })
+        }
     }
-
-    Connections {
-        target: extension.object
-        function onTrigger(type) {
-            if (type === "Notification") {
-                if (target.func("bar") === 42)
+    IntentHandler {
+        intentIds: "test-notification"
+        onRequestReceived: function(request) {
+            let funcReq = IntentClient.sendIntentRequest("system-func", { "str": "bar" })
+            funcReq.onReplyReceived.connect(function() {
+                if (funcReq.succeeded && funcReq.result["int"] === 42)
                     notification.show();
-            } else if (type === "PropertyChange") {
-                root.setWindowProperty("prop1", "bar");
-            }
+            })
+            request.sendReply({ })
         }
     }
 

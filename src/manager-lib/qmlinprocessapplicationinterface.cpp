@@ -39,8 +39,6 @@
 #include "application.h"
 #include "applicationmanager.h"
 #include "notificationmanager.h"
-#include "applicationipcmanager.h"
-#include "applicationipcinterface.h"
 #include "intentclientrequest.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -193,114 +191,6 @@ uint QmlInProcessNotification::libnotifyShow()
                                                    icon().toString(), summary(), body(),
                                                    libnotifyActionList(), libnotifyHints(),
                                                    timeout());
-}
-
-/*!
-    \qmltype ApplicationInterfaceExtension
-    \inqmlmodule QtApplicationManager.Application
-    \ingroup app
-    \brief Client side access to IPC interface extensions in the System UI.
-
-    This is the client side type used to access IPC interfaces, registered via the ApplicationIPCManager
-    on the System UI side.
-
-    \qml
-    ApplicationInterfaceExtension {
-        id: testInterface
-        name: "io.qt.test.interface"
-
-        onReadyChanged: {
-            if (ready)
-                var v = object.testFunction(42, "string")
-        }
-    }
-    \endqml
-*/
-
-/*!
-    \qmlproperty string ApplicationInterfaceExtension::name
-
-    The name of the interface, as it was registered by ApplicationIPCManager::registerInterface.
-*/
-
-/*!
-    \qmlproperty bool ApplicationInterfaceExtension::ready
-    \readonly
-
-    This property will change to \c true, as soon as the connection to the remote interface has
-    succeeded. In multi-process setups, it takes a few milli-seconds to establish the D-Bus
-    connection.
-*/
-
-/*!
-    \qmlproperty QtObject ApplicationInterfaceExtension::object
-    \readonly
-
-    The actual IPC object, which has all the signals, slots and properties exported from the server
-    side. Will be null, until ready becomes \c true.
-*/
-
-QmlInProcessApplicationInterfaceExtension::QmlInProcessApplicationInterfaceExtension(QObject *parent)
-    : QObject(parent)
-{ }
-
-QString QmlInProcessApplicationInterfaceExtension::name() const
-{
-    return m_name;
-}
-
-bool QmlInProcessApplicationInterfaceExtension::isReady() const
-{
-    return m_object;
-}
-
-QObject *QmlInProcessApplicationInterfaceExtension::object() const
-{
-    return m_object;
-}
-
-void QmlInProcessApplicationInterfaceExtension::classBegin()
-{ }
-
-void QmlInProcessApplicationInterfaceExtension::componentComplete()
-{
-    m_complete = true;
-
-    if (m_name.isEmpty()) {
-        qCWarning(LogQmlIpc) << "ApplicationInterfaceExtension.name is not set.";
-        return;
-    }
-
-    connect(ApplicationIPCManager::instance(), &ApplicationIPCManager::interfaceCreated,
-            this, &QmlInProcessApplicationInterfaceExtension::resolveObject);
-
-    if (isReady()) {
-        emit objectChanged();
-        emit readyChanged();
-    }
-}
-
-void QmlInProcessApplicationInterfaceExtension::resolveObject()
-{
-    const auto ifaces = ApplicationIPCManager::instance()->interfaces();
-    for (ApplicationIPCInterface *iface : ifaces) {
-        if ((iface->interfaceName() == m_name)) {
-            m_object = iface->serviceObject();
-            emit objectChanged();
-            emit readyChanged();
-            break;
-        }
-    }
-}
-
-void QmlInProcessApplicationInterfaceExtension::setName(const QString &name)
-{
-    if (!m_complete) {
-        m_name = name;
-        resolveObject();
-    } else {
-        qmlWarning(this) << "Cannot change the name property of an ApplicationInterfaceExtension after creation.";
-    }
 }
 
 QT_END_NAMESPACE_AM

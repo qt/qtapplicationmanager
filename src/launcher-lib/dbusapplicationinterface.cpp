@@ -41,10 +41,8 @@
 
 #include "global.h"
 #include "dbusapplicationinterface.h"
-#include "dbusapplicationinterfaceextension.h"
 #include "dbusnotification.h"
 #include "notification.h"
-#include "ipcwrapperobject.h"
 #include "utilities.h"
 #include "intentclient.h"
 #include "intentclientrequest.h"
@@ -147,8 +145,6 @@ bool DBusApplicationInterface::initialize(bool hasRuntime)
             qCritical("ERROR: could not create the org.freedesktop.Notifications interface on D-Bus");
         }
     }
-
-    DBusApplicationInterfaceExtension::initialize(m_connection);
 
     auto intentClientDBusInterface = new IntentClientDBusImplementation(m_connection.name());
     if (!IntentClient::createInstance(intentClientDBusInterface)) {

@@ -53,11 +53,14 @@ TestCase {
         signalName: "runStateChanged"
     }
 
-    ApplicationIPCInterface {
-        function acknowledge() { acknowledged = true; }
-        Component.onCompleted: ApplicationIPCManager.registerInterface(this, "quicklaunch.interface", {});
-    }
+    IntentServerHandler {
+        intentIds: "quicklaunch-ready"
+        visibility: IntentObject.Public
 
+        onRequestReceived: function(request) {
+            acknowledged = true
+        }
+    }
 
     function test_quicklaunch() {
         var app = ApplicationManager.application("tld.test.quicklaunch");

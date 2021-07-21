@@ -177,20 +177,4 @@ Window {
             console.log("SystemUI: OnWindowPropertyChanged [" + window + "] - " + name + ": " + value);
         }
     }
-
-    // IPC extension
-    ApplicationIPCInterface {
-        property double pi
-        signal computed(string what)
-        readonly property var _decltype_circumference: { "double": [ "double", "string" ] }
-        function circumference(radius, thing) {
-            console.log("SystemUI: circumference(" + radius + ", \"" + thing + "\") has been called");
-            pi = 3.14;
-            var circ = 2 * pi * radius;
-            computed("circumference for " + thing);
-            return circ;
-        }
-
-        Component.onCompleted: ApplicationIPCManager.registerInterface(this, "tld.minidesk.interface", {});
-    }
 }

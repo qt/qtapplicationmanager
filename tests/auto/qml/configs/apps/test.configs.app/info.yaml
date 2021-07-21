@@ -7,3 +7,7 @@ code:    'app.qml'
 runtime: 'qml'
 name:
   en: 'ApplicationManager Application'
+
+intents:
+- id: test-window-property
+- id: test-notification

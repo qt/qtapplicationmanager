@@ -56,6 +56,7 @@ For a high-level overview, see \l{The Qt Application Manager}{Introduction to th
     \li \l{Single-Process vs. Multi-Process Mode}
     \li \l{Migrating code from 5.11 to 5.12}
     \li \l{Migrating code from 5.13 to 5.14}
+    \li \l{Migrating code from 5.15 to 6.2}
 \endlist
 
 \section1 Tools

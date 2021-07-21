@@ -41,45 +41,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-/*! \internal
-    Traverse an arbitrarily deep QVariantMap and replace all invalid QVariants with null values
-    that QML is able to understand. We're doing some nasty trickery with v_cast to prevent
-    copies due to detaching.
-*/
-
-void fixNullValuesForQml(QVariantList &list)
-{
-    for (auto it = list.cbegin(); it != list.cend(); ++it)
-        fixNullValuesForQml(const_cast<QVariant &>(*it));
-}
-
-void fixNullValuesForQml(QVariantMap &map)
-{
-    for (auto it = map.cbegin(); it != map.cend(); ++it)
-        fixNullValuesForQml(const_cast<QVariant &>(it.value()));
-}
-
-void fixNullValuesForQml(QVariant &v)
-{
-    switch (v.metaType().id()) {
-    case QMetaType::QVariantList: {
-        QVariantList *list = qt6_v_cast<QVariantList>(&v.data_ptr());
-        fixNullValuesForQml(*list);
-        break;
-    }
-    case QMetaType::QVariantMap: {
-        QVariantMap *map = qt6_v_cast<QVariantMap>(&v.data_ptr());
-        fixNullValuesForQml(*map);
-        break;
-    }
-    case QMetaType::UnknownType: {
-        QVariant v2 = QVariant::fromValue(nullptr);
-        std::swap(v.data_ptr(), v2.data_ptr());
-        break;
-    }
-    }
-}
-
 // copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
 void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory)
 {

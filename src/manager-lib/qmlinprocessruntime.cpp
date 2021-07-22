@@ -78,8 +78,6 @@ bool QmlInProcessRuntime::start()
 {
     Q_ASSERT(!m_rootObject);
 
-    setState(Am::StartingUp);
-
     if (!m_inProcessQmlEngine)
         return false;
 
@@ -127,6 +125,8 @@ bool QmlInProcessRuntime::start()
 
     emit signaler()->aboutToStart(this);
 
+    setState(Am::StartingUp);
+
     // We are running each application in it's own, separate Qml context.
     // This way, we can export an unique ApplicationInterface object for each app
     QQmlContext *appContext = new QQmlContext(m_inProcessQmlEngine->rootContext(), this);
@@ -161,10 +161,10 @@ bool QmlInProcessRuntime::start()
                 }
             }
             m_rootObject = obj;
+            setState(Am::Running);
 
             if (!m_document.isEmpty())
                 openDocument(m_document, QString());
-            setState(Am::Running);
         }
     }, Qt::QueuedConnection);
     return true;

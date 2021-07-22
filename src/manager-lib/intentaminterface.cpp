@@ -227,7 +227,7 @@ bool IntentServerAMImplementation::checkApplicationCapabilities(const QString &a
         return false;
 
     auto capabilities = app->capabilities();
-    for (auto cap : requiredCapabilities) {
+    for (const auto &cap : requiredCapabilities) {
         if (!capabilities.contains(cap))
             return false;
     }
@@ -296,14 +296,18 @@ void IntentClientAMImplementation::initialize(IntentClient *intentClient) Q_DECL
 
 void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest> icr)
 {
-    IntentServerRequest *isr = m_issi->requestToSystem(icr->requestingApplicationId(), icr->intentId(),
-                                                       icr->applicationId(), icr->parameters());
+    // we need to delay the request by one event loop iteration to (a) avoid a race condition
+    // on app startup and (b) have consistent behavior in single- and multi-process mode
 
-    QUuid requestId = isr ? isr->requestId() : QUuid();
+    QMetaObject::invokeMethod(m_ic, [icr, this]() {
+        IntentServerRequest *isr = m_issi->requestToSystem(icr->requestingApplicationId(), icr->intentId(),
+                                                           icr->applicationId(), icr->parameters());
+        QUuid requestId = isr ? isr->requestId() : QUuid();
 
-    QMetaObject::invokeMethod(m_ic, [icr, requestId, this]() {
-        emit requestToSystemFinished(icr.data(), requestId, requestId.isNull(),
-                                     requestId.isNull() ? qL1S("No matching intent handler registered.") : QString());
+        QMetaObject::invokeMethod(m_ic, [icr, requestId, this]() {
+            emit requestToSystemFinished(icr.data(), requestId, requestId.isNull(),
+                                         requestId.isNull() ? qL1S("No matching intent handler registered.") : QString());
+        }, Qt::QueuedConnection);
     }, Qt::QueuedConnection);
 }
 
@@ -392,13 +396,11 @@ IntentServerInProcessIpcConnection *IntentServerInProcessIpcConnection::create(A
                                                                                IntentServerAMImplementation *iface)
 {
     auto ipcConnection = new IntentServerInProcessIpcConnection(application, iface);
-    if (application) {
-        QMetaObject::invokeMethod(ipcConnection,
-                                  [ipcConnection, application]() { ipcConnection->setReady(application); },
-                                  Qt::QueuedConnection);
-    } else {
+    if (application)
+        ipcConnection->setReady(application);
+    else
         ipcConnection->m_ready = true;
-    }
+
     s_ipcConnections << ipcConnection;
     return ipcConnection;
 }

@@ -91,6 +91,7 @@ public:
     // mainly for debugging and auto tests
     bool parseReadFromCache() const;
     bool parseWroteToCache() const;
+    QString cacheFilePath() const;
 
 protected:
     virtual void *loadFromSource(QIODevice *source, const QString &fileName) = 0;

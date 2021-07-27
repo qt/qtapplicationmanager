@@ -175,15 +175,12 @@ void AbstractConfigCache::parse()
         const auto path = QFileInfo(rawFile).canonicalFilePath();
         if (path.isEmpty())
             throw Exception("file %1 does not exist").arg(rawFile);
+        if (rawFilePaths.contains(path))
+            throw Exception("duplicate files are not allowed - found %1 at least two times").arg(path);
         rawFilePaths << path;
     }
 
-    // find the correct cache location and make sure it exists
-    const QDir cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    if (!cacheLocation.exists())
-        cacheLocation.mkpath(qSL("."));
-    const QString cacheFilePath = cacheLocation.absoluteFilePath(qSL("appman-%1.cache").arg(d->cacheBaseName));
-    QFile cacheFile(cacheFilePath);
+    QFile cacheFile(cacheFilePath());
 
     QAtomicInt cacheIsValid = false;
     QAtomicInt cacheIsComplete = false;
@@ -191,9 +188,9 @@ void AbstractConfigCache::parse()
     QVector<ConfigCacheEntry> cache;
     void *mergedContent = nullptr;
 
-    qCDebug(LogCache) << d->cacheBaseName << "cache file:" << cacheFilePath;
-    qCDebug(LogCache) << d->cacheBaseName << "use-cache:" << (d->options & NoCache ? "no" : "yes")
-                      << "/ clear-cache:" << (d->options & ClearCache ? "yes" : "no");
+    qCDebug(LogCache) << d->cacheBaseName << "cache file:" << cacheFile.fileName();
+    qCDebug(LogCache) << d->cacheBaseName << "read cache?" << ((d->options & (ClearCache | NoCache)) ? "no" : "yes")
+                      << "/ write cache?" << ((d->options & NoCache) ? "no" : "yes");
     qCDebug(LogCache) << d->cacheBaseName << "reading:" << rawFilePaths;
 
     if (!d->options.testFlag(NoCache) && !d->options.testFlag(ClearCache)) {
@@ -249,11 +246,7 @@ void AbstractConfigCache::parse()
             } catch (const Exception &e) {
                 qWarning(LogCache) << "Failed to read cache:" << e.what();
             }
-
-            if (!cacheIsComplete && (d->options & MergedResult)) {
-                destruct(mergedContent);
-                mergedContent = nullptr;
-            }
+            cacheFile.close();
         }
     } else if (d->options.testFlag(ClearCache)) {
         cacheFile.remove();
@@ -331,8 +324,13 @@ void AbstractConfigCache::parse()
                       << (timer.nsecsElapsed() / 1000) << "usec";
     qCDebug(LogCache) << d->cacheBaseName << "still complete:" << (cacheIsComplete ? "yes" : "no");
 
-    if (!cacheIsComplete && !rawFilePaths.isEmpty()) {
+    if (!cacheIsComplete) {
         // we have read a partial cache or none at all - parse what's not cached yet
+        if (d->options & MergedResult) {
+            destruct(mergedContent);
+            mergedContent = nullptr;
+        }
+
         QAtomicInt count;
 
         auto parseConfigFile = [this, &count](ConfigCacheEntry &ce) {
@@ -381,11 +379,11 @@ void AbstractConfigCache::parse()
             // everything is parsed now, so we can write a new cache file
 
             try {
-                QFile cacheFile(cacheFilePath);
-                if (!cacheFile.open(QFile::WriteOnly | QFile::Truncate))
-                    throw Exception(cacheFile, "failed to open file for writing");
+                QFile newCacheFile(cacheFile.fileName());
+                if (!newCacheFile.open(QFile::WriteOnly | QFile::Truncate))
+                    throw Exception(newCacheFile, "failed to open file for writing");
 
-                QDataStream ds(&cacheFile);
+                QDataStream ds(&newCacheFile);
                 CacheHeader cacheHeader;
                 cacheHeader.baseName = d->cacheBaseName;
                 cacheHeader.typeId = d->typeId;
@@ -447,6 +445,15 @@ bool AbstractConfigCache::parseReadFromCache() const
 bool AbstractConfigCache::parseWroteToCache() const
 {
     return d->cacheWasWritten;
+}
+
+QString AbstractConfigCache::cacheFilePath() const
+{
+    // find the correct cache location and make sure it exists
+    static const QDir dir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
+    if (!dir.exists())
+        dir.mkpath(qSL("."));
+    return dir.absoluteFilePath(qSL("appman-%1.cache").arg(d->cacheBaseName));
 }
 
 QT_END_NAMESPACE_AM

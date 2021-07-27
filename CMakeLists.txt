@@ -33,6 +33,7 @@ find_package(Qt6 ${PROJECT_VERSION} QUIET CONFIG OPTIONAL_COMPONENTS
     Widgets
     ZlibPrivate
     DltLogging
+    WaylandGlobalPrivate # remove after QTBUG-95388 is fixed
 )
 
 include(src/main-lib/Qt6AppManMainPrivateMacros.cmake)

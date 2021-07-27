@@ -1,5 +1,6 @@
 name: cache2
 file: ${FILE}
+value: "FOOBAR"
 
 ## content for a merge test
 #bool: false

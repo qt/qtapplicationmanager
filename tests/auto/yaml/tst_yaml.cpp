@@ -240,6 +240,7 @@ struct CacheTest
 {
     QString name;
     QString file;
+    QString value;
 };
 
 // GCC < 7 bug, currently still in RHEL7, https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56480
@@ -258,25 +259,28 @@ public:
         p.parseFields({ { "name", true, YamlParser::Scalar, [&ct](YamlParser *p) {
                           ct->name = p->parseScalar().toString(); } },
                         { "file", true, YamlParser::Scalar, [&ct](YamlParser *p) {
-                          ct->file = p->parseScalar().toString(); } }
+                          ct->file = p->parseScalar().toString(); } },
+                        { "value", false, YamlParser::Scalar, [&ct](YamlParser *p) {
+                          ct->value = p->parseScalar().toString(); } }
                       });
         return ct.release();
     }
     CacheTest *loadFromCache(QDataStream &ds)
     {
         CacheTest *ct = new CacheTest;
-        ds >> ct->name >> ct->file;
+        ds >> ct->name >> ct->file >> ct->value;
         return ct;
     }
     void saveToCache(QDataStream &ds, const CacheTest *ct)
     {
-        ds << ct->name << ct->file;
+        ds << ct->name << ct->file << ct->value;
     }
 
     void merge(CacheTest *ct1, const CacheTest *ct2)
     {
         ct1->name = ct2->name;
         ct1->file = ct1->file + qSL(",") + ct2->file;
+        ct1->value.append(ct2->value);
     }
     void preProcessSourceContent(QByteArray &sourceContent, const QString &fileName)
     {
@@ -319,11 +323,27 @@ void tst_Yaml::cache()
     QTest::ignoreMessage(QtWarningMsg, "Failed to read cache: failed to parse cache header");
     wrongType.parse();
     QVERIFY(!wrongType.parseReadFromCache());
+
+    ConfigCache<CacheTest> duplicateCache({ qSL(":/cache1.yaml"), qSL(":/cache1.yaml") }, "cache-test", "DTST", 1, AbstractConfigCache::None);
+    try {
+        duplicateCache.parse();
+        QVERIFY(false);
+    }  catch (const Exception &e) {
+        QVERIFY(e.errorString().contains(qSL("duplicate")));
+    }
 }
 
 void tst_Yaml::mergedCache()
 {
-    QStringList files = { ":/data/cache1.yaml", ":/data/cache2.yaml" };
+    // we need cache2 modifieable, so we copy it to a temp file
+    QTemporaryFile cache2File(qSL("cache2"));
+    QVERIFY(cache2File.open());
+    QFile cache2Resource(qSL(":/data/cache2.yaml"));
+    QVERIFY(cache2Resource.open(QIODevice::ReadOnly));
+    QVERIFY(cache2File.write(cache2Resource.readAll()) > 0);
+    QVERIFY(cache2File.flush());
+
+    QStringList files = { qSL(":/data/cache1.yaml"), cache2File.fileName() };
 
     for (int step = 0; step < 4; ++step) {
         AbstractConfigCache::Options options = AbstractConfigCache::MergedResult;
@@ -345,6 +365,24 @@ void tst_Yaml::mergedCache()
             QVERIFY2(false, e.what());
         }
     }
+
+    // modify one of the YAML files to see if the merged result gets invalidated
+
+    QVERIFY(cache2File.seek(0));
+    QByteArray ba = cache2File.readAll();
+    QVERIFY(ba.size() > 0);
+    QByteArray ba2 = ba;
+    ba2.replace("FOOBAR", "foobar");
+    QVERIFY(ba != ba2);
+    QVERIFY(cache2File.seek(0));
+    QCOMPARE(cache2File.write(ba2), ba2.size());
+    QVERIFY(cache2File.flush());
+
+    ConfigCache<CacheTest> brokenCache(files, "cache-test", "MTST", 1, AbstractConfigCache::MergedResult);
+    QTest::ignoreMessage(QtWarningMsg, "Failed to read Cache: cached file checksums do not match");
+    brokenCache.parse();
+    QVERIFY(brokenCache.parseReadFromCache());
+    QCOMPARE(brokenCache.takeMergedResult()->value, qSL("foobar"));
 }
 
 class YamlRunnable : public QRunnable

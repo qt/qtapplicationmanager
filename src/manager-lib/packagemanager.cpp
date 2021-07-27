@@ -327,10 +327,11 @@ void PackageManager::registerPackages()
     // map all the built-in packages first
     const auto builtinPackages = d->database->builtInPackages();
     for (auto packageInfo : builtinPackages) {
-        if (Package *existingPackage = fromId(packageInfo->id())) {
+        auto existingPackageInfos = pkgs.value(packageInfo->id());
+        if (existingPackageInfos.first) {
             throw Exception(Error::Package, "Found more than one built-in package with id '%1': here: %2 and there: %3")
                     .arg(packageInfo->id())
-                    .arg(existingPackage->info()->manifestPath())
+                    .arg(existingPackageInfos.first->manifestPath())
                     .arg(packageInfo->manifestPath());
         }
         pkgs.insert(packageInfo->id(), qMakePair(packageInfo, nullptr));

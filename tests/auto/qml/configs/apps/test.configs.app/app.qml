@@ -44,7 +44,6 @@ ApplicationManagerWindow {
     Notification {
         id: notification
         summary: "Test"
-        timeout: 20
     }
 
     IntentHandler {

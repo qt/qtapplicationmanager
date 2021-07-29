@@ -32,6 +32,7 @@
 #pragma once
 
 #include <QObject>
+#include <QtPlugin>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QWindow)

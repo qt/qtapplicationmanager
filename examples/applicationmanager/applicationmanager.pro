@@ -1,7 +1,3 @@
-# temporarily disabled because the module.pri files generated from the cmake
-# are wrong: e.g. appman_main-private depends on appman_common, while it should
-# depend on appman_common-private
-requires(false)
 
 TEMPLATE = subdirs
 

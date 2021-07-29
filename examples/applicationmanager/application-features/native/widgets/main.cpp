@@ -54,10 +54,10 @@
 #include <QDialog>
 #include <QVBoxLayout>
 
-#include "launchermain.h"
-#include "logging.h"
-#include "dbusapplicationinterface.h"
-#include "dbusnotification.h"
+#include <QtAppManCommon/logging.h>
+#include <QtAppManLauncher/launchermain.h>
+#include <QtAppManLauncher/dbusapplicationinterface.h>
+#include <QtAppManLauncher/dbusnotification.h>
 
 
 int main(int argc, char *argv[])

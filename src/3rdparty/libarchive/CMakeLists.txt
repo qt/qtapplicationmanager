@@ -1,6 +1,9 @@
 
-if (APPLE)
-    find_package(Iconv)
+# Handle the conditional finding of either system zlib or qt zlib.
+if(NOT QT_FEATURE_system_zlib)
+    find_package(Qt6 COMPONENTS ZlibPrivate)
+elseif(NOT TARGET WrapZLIB::WrapZLIB)
+    qt_find_package(WrapZLIB PROVIDED_TARGETS WrapZLIB::WrapZLIB)
 endif()
 
 qt_internal_add_3rdparty_library(BundledLibArchive
@@ -82,12 +85,11 @@ qt_internal_extend_target(BundledLibArchive CONDITION MACOS
         PLATFORM_CONFIG_H=\\\"config-macos.h\\\"
     PUBLIC_LIBRARIES
         ${FWCoreServices}
-        Iconv::Iconv
 )
 
-qt_internal_extend_target(BundledLibArchive CONDITION IOS
+qt_internal_extend_target(BundledLibArchive CONDITION APPLE
     PUBLIC_LIBRARIES
-        Iconv::Iconv
+        iconv
 )
 
 qt_internal_extend_target(BundledLibArchive CONDITION WIN32
@@ -129,11 +131,9 @@ qt_internal_extend_target(BundledLibArchive CONDITION UNIX
 )
 
 if (QT_FEATURE_system_zlib)
-    find_package(ZLIB)
-
     qt_internal_extend_target(BundledLibArchive
         LIBRARIES
-            ZLIB::ZLIB
+            WrapZLIB::WrapZLIB
     )
 else()
     qt_internal_extend_target(BundledLibArchive

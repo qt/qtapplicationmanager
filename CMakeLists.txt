@@ -128,8 +128,12 @@ if(NOT QT_BUILD_STANDALONE_TESTS)
     set(mkspecs_install_dir "${INSTALL_MKSPECSDIR}")
     qt_path_join(mkspecs_install_dir ${QT_INSTALL_DIR} ${mkspecs_install_dir})
 
-    qt_copy_or_install(DIRECTORY qmake-features/
-        DESTINATION "${mkspecs_install_dir}"
-        FILES_MATCHING PATTERN "*.pr[if]"
+    file(GLOB QMAKE_FEATURES
+        "qmake-features/*.prf"
+    )
+
+    qt_copy_or_install(
+        FILES "${QMAKE_FEATURES}"
+        DESTINATION "${mkspecs_install_dir}/features"
     )
 endif()

@@ -32,6 +32,7 @@
 #pragma once
 
 #include <QObject>
+#include <QtPlugin>
 #include <QStringList>
 #include <QVariantMap>
 #include <QVector>

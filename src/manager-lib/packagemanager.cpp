@@ -365,8 +365,8 @@ void PackageManager::registerPackages()
         registerPackage(it.value().first, it.value().second);
 }
 
-void PackageManager::registerPackage(PackageInfo *packageInfo, PackageInfo *updatedPackageInfo,
-                                     bool currentlyBeingInstalled)
+Package *PackageManager::registerPackage(PackageInfo *packageInfo, PackageInfo *updatedPackageInfo,
+                                         bool currentlyBeingInstalled)
 {
     auto *package = new Package(packageInfo, currentlyBeingInstalled ? Package::BeingInstalled
                                                                      : Package::Installed);
@@ -376,8 +376,7 @@ void PackageManager::registerPackage(PackageInfo *packageInfo, PackageInfo *upda
     QQmlEngine::setObjectOwnership(package, QQmlEngine::CppOwnership);
 
     if (currentlyBeingInstalled) {
-        bool blocked = package->block();
-        Q_ASSERT(blocked);
+        Q_ASSERT(package->isBlocked());
 
         beginInsertRows(QModelIndex(), d->packages.count(), d->packages.count());
         qCDebug(LogSystem) << "Installing package:";
@@ -397,6 +396,8 @@ void PackageManager::registerPackage(PackageInfo *packageInfo, PackageInfo *upda
 
     if (!currentlyBeingInstalled)
         registerApplicationsAndIntentsOfPackage(package);
+
+    return package;
 }
 
 void PackageManager::registerApplicationsAndIntentsOfPackage(Package *package)
@@ -1304,19 +1305,19 @@ void PackageManager::handleFailure(AsynchronousTask *task)
 #endif // !defined(AM_DISABLE_INSTALLER)
 
 
-bool PackageManager::startingPackageInstallation(PackageInfo *info)
+Package *PackageManager::startingPackageInstallation(PackageInfo *info)
 {
     // ownership of info is transferred to PackageManager
     QScopedPointer<PackageInfo> newInfo(info);
 
     if (!newInfo || newInfo->id().isEmpty())
-        return false;
+        return nullptr;
 
     Package *package = fromId(newInfo->id());
 
     if (package) { // update
         if (!package->block())
-            return false;
+            return nullptr;
 
         // do not overwrite the base-info / update-info yet - only after a successful installation
         d->pendingPackageInfoUpdates.insert(package, newInfo.take());
@@ -1324,11 +1325,12 @@ bool PackageManager::startingPackageInstallation(PackageInfo *info)
         package->setState(Package::BeingUpdated);
         package->setProgress(0);
         emitDataChanged(package);
+        return package;
+
     } else { // installation
         // add a new package to the model and block it
-        registerPackage(newInfo.take(), nullptr, true);
+        return registerPackage(newInfo.take(), nullptr, true);
     }
-    return true;
 }
 
 bool PackageManager::startingPackageRemoval(const QString &id)

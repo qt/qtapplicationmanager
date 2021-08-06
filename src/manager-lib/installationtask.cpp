@@ -31,6 +31,7 @@
 
 #include <QTemporaryDir>
 #include <QMessageAuthenticationCode>
+#include <QPointer>
 
 #include "logging.h"
 #include "packagemanager_p.h"
@@ -339,12 +340,22 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         // this will also exclusively lock the application for us
         // m_package ownership is transferred to the ApplicationManager
         QString packageId = m_package->id(); // m_package is gone after the invoke
-        QMetaObject::invokeMethod(PackageManager::instance(), [this]()
-            { m_managerApproval = PackageManager::instance()->startingPackageInstallation(m_package.take()); },
+        QPointer<Package> newPackage;
+        QMetaObject::invokeMethod(PackageManager::instance(), [this, &newPackage]()
+            { newPackage = PackageManager::instance()->startingPackageInstallation(m_package.take()); },
             Qt::BlockingQueuedConnection);
+        m_managerApproval = !newPackage.isNull();
 
         if (!m_managerApproval)
             throw Exception("PackageManager declined the installation of %1").arg(packageId);
+
+        // if any of the apps in the package were running before, we now need to wait until all of
+        // them have actually stopped
+        while (!m_canceled && newPackage && !newPackage->areAllApplicationsStoppedDueToBlock())
+            QThread::msleep(30);
+
+        if (m_canceled || newPackage.isNull())
+            throw Exception(Error::Canceled, "canceled");
 
         // we're not interested in any other files from here on...
         m_extractor->setFileExtractedCallback(nullptr);

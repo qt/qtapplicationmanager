@@ -310,9 +310,9 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
     if (m_foundIcon && m_foundInfo) {
         qCDebug(LogInstaller) << "emit taskRequestingInstallationAcknowledge" << id() << "for package" << m_package->id();
 
-        auto package = new Package(m_package.data(), Package::BeingInstalled);
-
-        emit m_pm->taskRequestingInstallationAcknowledge(id(), package,
+        // this is a temporary just for the signal emission below
+        m_tempPackageForAcknowledge.reset(new Package(m_package.data(), Package::BeingInstalled));
+        emit m_pm->taskRequestingInstallationAcknowledge(id(), m_tempPackageForAcknowledge.get(),
                                                          m_extractor->installationReport().extraMetaData(),
                                                          m_extractor->installationReport().extraSignedMetaData());
 

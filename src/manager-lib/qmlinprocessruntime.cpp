@@ -232,9 +232,9 @@ void QmlInProcessRuntime::finish(int exitCode, Am::ExitStatus status)
         qCDebug(LogSystem) << "QmlInProcessRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
                            << ") exited with code:" << exitCode << "status:" << status;
         emit finished(exitCode, status);
+        setState(Am::NotRunning);
         if (m_app)
             m_app->setCurrentRuntime(nullptr);
-        setState(Am::NotRunning);
 #if !defined(AM_HEADLESS)
         if (m_surfaces.isEmpty())
             deleteLater();

@@ -245,10 +245,10 @@ void NativeRuntime::shutdown(int exitCode, Am::ExitStatus status)
 
     emit finished(exitCode, status);
 
+    setState(Am::NotRunning);
     if (m_app)
         m_app->setCurrentRuntime(nullptr);
 
-    setState(Am::NotRunning);
     deleteLater();
 }
 

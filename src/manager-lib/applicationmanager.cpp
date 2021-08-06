@@ -66,6 +66,7 @@
 #include "debugwrapper.h"
 #include "amnamespace.h"
 #include "package.h"
+#include "packagemanager.h"
 
 /*!
     \qmltype ApplicationManager
@@ -395,7 +396,22 @@ ApplicationManager *ApplicationManager::createInstance(bool singleProcess)
     qRegisterMetaType<Am::ExitStatus>();
     qRegisterMetaType<Am::ProcessError>();
 
-    return s_instance = am.take();
+    if (Q_UNLIKELY(!PackageManager::instance()))
+        qFatal("ApplicationManager::createInstance() was called before a PackageManager singleton was instantiated.");
+
+    s_instance = am.take();
+    connect(&PackageManager::instance()->internalSignals, &PackageManagerInternalSignals::registerApplication,
+            s_instance, [](ApplicationInfo *applicationInfo, Package *package) {
+        instance()->addApplication(applicationInfo, package);
+        qCDebug(LogSystem).nospace().noquote() << " ++ application: " << applicationInfo->id() << " [package: " << package->id() << "]";
+    });
+    connect(&PackageManager::instance()->internalSignals, &PackageManagerInternalSignals::unregisterApplication,
+            s_instance, [](ApplicationInfo *applicationInfo, Package *package) {
+        instance()->removeApplication(applicationInfo, package);
+        qCDebug(LogSystem).nospace().noquote() << " -- application: " << applicationInfo->id() << " [package: " << package->id() << "]";
+    });
+
+    return s_instance;
 }
 
 ApplicationManager *ApplicationManager::instance()

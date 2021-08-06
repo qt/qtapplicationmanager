@@ -461,17 +461,6 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     m_packageManager = PackageManager::createInstance(m_packageDatabase, m_documentDir);
     m_applicationManager = ApplicationManager::createInstance(m_isSingleProcessMode);
 
-    connect(&m_packageManager->internalSignals, &PackageManagerInternalSignals::registerApplication,
-            m_applicationManager, [this](ApplicationInfo *applicationInfo, Package *package) {
-        m_applicationManager->addApplication(applicationInfo, package);
-        qCDebug(LogSystem).nospace().noquote() << " ++ application: " << applicationInfo->id() << " [package: " << package->id() << "]";
-    });
-    connect(&m_packageManager->internalSignals, &PackageManagerInternalSignals::unregisterApplication,
-            m_applicationManager, [this](ApplicationInfo *applicationInfo, Package *package) {
-        m_applicationManager->removeApplication(applicationInfo, package);
-        qCDebug(LogSystem).nospace().noquote() << " -- application: " << applicationInfo->id() << " [package: " << package->id() << "]";
-    });
-
     if (m_noSecurity)
         m_applicationManager->setSecurityChecksEnabled(false);
 

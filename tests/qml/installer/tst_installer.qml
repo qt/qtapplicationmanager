@@ -77,10 +77,22 @@ TestCase {
     }
 
     SignalSpy {
+        id: taskBlockingUntilInstallationAcknowledgeSpy
+        target: PackageManager
+        signalName: "taskBlockingUntilInstallationAcknowledge"
+    }
+
+    SignalSpy {
         id: applicationChangedSpy
         target: ApplicationManager
         signalName: "applicationChanged"
     }
+
+    SignalSpy {
+        id: applicationRunStateChangedSpy
+        target: ApplicationManager
+        signalName: "applicationRunStateChanged"
+    }
 
 
     function init() {
@@ -260,5 +272,50 @@ TestCase {
 
         verify(!pkg.blocked)
         compare(pkg.version, "v1");
+    }
+
+    function test_5stop_on_update() {
+        taskStateChangedSpy.clear()
+        taskBlockingUntilInstallationAcknowledgeSpy.clear()
+        applicationRunStateChangedSpy.clear()
+
+        // start the app
+        var app = ApplicationManager.application("hello-world.red")
+        verify(app)
+        verify(app.start())
+        applicationRunStateChangedSpy.wait(spyTimeout);
+        compare(applicationRunStateChangedSpy.count, 1);
+        compare(applicationRunStateChangedSpy.signalArguments[0][0], "hello-world.red")
+        compare(applicationRunStateChangedSpy.signalArguments[0][1], Am.StartingUp)
+        applicationRunStateChangedSpy.clear()
+        applicationRunStateChangedSpy.wait(spyTimeout);
+        compare(applicationRunStateChangedSpy.count, 1);
+        compare(applicationRunStateChangedSpy.signalArguments[0][0], "hello-world.red")
+        compare(applicationRunStateChangedSpy.signalArguments[0][1], Am.Running)
+        applicationRunStateChangedSpy.clear()
+
+        // now install the update
+        var id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
+                                                         + "/packages/hello-world.red.appkg")
+        taskBlockingUntilInstallationAcknowledgeSpy.wait(spyTimeout);
+        compare(taskBlockingUntilInstallationAcknowledgeSpy.count, 1);
+        compare(taskBlockingUntilInstallationAcknowledgeSpy.signalArguments[0][0], id);
+        taskBlockingUntilInstallationAcknowledgeSpy.clear();
+
+        // make sure the app gets shut down during the update
+        compare(applicationRunStateChangedSpy.count, 2);
+        compare(applicationRunStateChangedSpy.signalArguments[0][0], "hello-world.red")
+        compare(applicationRunStateChangedSpy.signalArguments[0][1], Am.ShuttingDown)
+        compare(applicationRunStateChangedSpy.signalArguments[1][0], "hello-world.red")
+        compare(applicationRunStateChangedSpy.signalArguments[1][1], Am.NotRunning)
+        applicationRunStateChangedSpy.clear()
+
+        PackageManager.acknowledgePackageInstallation(id);
+
+        taskFinishedSpy.wait(spyTimeout);
+        var pkg = PackageManager.package("hello-world.red")
+        compare(pkg.version, "red");
+        taskFinishedSpy.clear();
+        applicationChangedSpy.clear();
     }
 }

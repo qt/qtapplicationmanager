@@ -171,7 +171,11 @@ QT_BEGIN_NAMESPACE_AM
 Package::Package(PackageInfo *packageInfo, State initialState)
     : m_info(packageInfo)
     , m_state(initialState)
-{ }
+{
+    // calling block() would lead to the AM waiting for the not-yet installed apps to quit
+    if (initialState == BeingInstalled)
+        m_blocked = 1;
+}
 
 QString Package::id() const
 {

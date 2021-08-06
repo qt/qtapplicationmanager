@@ -796,7 +796,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
         return false;
     }
 
-    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app](Am::RunState newRuntimeState) {
+    connect(runtime, &AbstractRuntime::stateChanged, app, [this, app](Am::RunState newRuntimeState) {
         app->setRunState(newRuntimeState);
         emit applicationRunStateChanged(app->id(), newRuntimeState);
         emitDataChanged(app, QVector<int> { IsRunning, IsStartingUp, IsShuttingDown });

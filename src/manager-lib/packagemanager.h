@@ -198,8 +198,7 @@ signals:
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);
 
 protected:
-
-    bool startingPackageInstallation(PackageInfo *info);
+    Package *startingPackageInstallation(PackageInfo *info);
     bool startingPackageRemoval(const QString &id);
     bool finishedPackageInstall(const QString &id);
     bool canceledPackageInstall(const QString &id);
@@ -214,8 +213,8 @@ private:
 
 private:
     void emitDataChanged(Package *package, const QVector<int> &roles = QVector<int>());
-    void registerPackage(PackageInfo *packageInfo, PackageInfo *updatedPackageInfo,
-                         bool currentlyBeingInstalled = false);
+    Package *registerPackage(PackageInfo *packageInfo, PackageInfo *updatedPackageInfo,
+                             bool currentlyBeingInstalled = false);
     void registerApplicationsAndIntentsOfPackage(Package *package);
     void unregisterApplicationsAndIntentsOfPackage(Package *package);
     static void registerQmlTypes();

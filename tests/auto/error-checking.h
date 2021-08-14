@@ -37,8 +37,8 @@
     if (_expected_errstr.startsWith(QLatin1String("~"))) { \
         QRegularExpression re(_expected_errstr.mid(1)); \
         QVERIFY2(re.match(_actual_errstr).hasMatch(), \
-                 qPrintable("\n    Got     : " + _actual_errstr.toLocal8Bit() + \
-                            "\n    Expected: " + _expected_errstr.toLocal8Bit())); \
+                 QByteArray("\n    Got     : ") + _actual_errstr.toLocal8Bit() + \
+                 QByteArray("\n    Expected: ") + _expected_errstr.toLocal8Bit()); \
     } else { \
         QCOMPARE(_actual_errstr, _expected_errstr); \
     } \

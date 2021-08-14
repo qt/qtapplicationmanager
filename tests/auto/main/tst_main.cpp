@@ -110,25 +110,25 @@ void tst_Main::copyRecursively(const QString &sourcePath, const QString &destPat
     QDir destDir(destPath);
 
     QStringList subdirNames = sourceDir.entryList(QDir::NoDotAndDotDot | QDir::AllDirs);
-    for (auto subdirName : subdirNames) {
+    for (const auto &subdirName : subdirNames) {
         destDir.mkdir(subdirName);
         copyRecursively(sourceDir.filePath(subdirName), destDir.filePath(subdirName));
     }
 
     QStringList fileNames = sourceDir.entryList(QDir::Files | QDir::Hidden);
-    for (auto fileName : fileNames)
+    for (const auto &fileName : fileNames)
         QFile::copy(sourceDir.filePath(fileName), destDir.filePath(fileName));
 }
 
 void tst_Main::cleanUpInstallationDir()
 {
     {
-        QDir testTmpDir("/tmp/am-test-main");
+        QDir testTmpDir(qSL("/tmp/am-test-main"));
         if (testTmpDir.exists())
             testTmpDir.removeRecursively();
     }
-    QDir tmpDir("/tmp");
-    tmpDir.mkdir("am-test-main");
+    QDir tmpDir(qSL("/tmp"));
+    tmpDir.mkdir(qSL("am-test-main"));
 }
 
 void tst_Main::init()
@@ -179,39 +179,24 @@ void tst_Main::installPackage(const QString &pkgPath)
 {
     auto packageManager = PackageManager::instance();
 
-    bool installationFinished = false;
-
     connect(packageManager, &PackageManager::taskRequestingInstallationAcknowledge,
             this, [packageManager](const QString &taskId, Package *,
                                    const QVariantMap &, const QVariantMap &) {
             packageManager->acknowledgePackageInstallation(taskId);
     });
 
-    connect(packageManager, &PackageManager::taskFinished,
-            this, [&installationFinished](const QString &) {
-            installationFinished = true;
-    });
-
+    QSignalSpy finishedSpy(packageManager, &PackageManager::taskFinished);
     packageManager->startPackageInstallation(QUrl::fromLocalFile(pkgPath));
-
-    QTRY_VERIFY(installationFinished);
+    QTRY_VERIFY(finishedSpy.count() == 1);
 }
 
 void tst_Main::removePackage(const QString &id)
 {
     auto packageManager = PackageManager::instance();
 
-    bool removalFinished = false;
-
-    connect(packageManager, &PackageManager::taskFinished,
-            this, [this, &removalFinished](const QString &) {
-        Q_UNUSED(this); // gcc 9.2 bug: without capturing 'this', broken code will be generated
-        removalFinished = true;
-    });
-
+    QSignalSpy finishedSpy(packageManager, &PackageManager::taskFinished);
     packageManager->removePackage(id, false /* keepDocuments */);
-
-    QTRY_VERIFY(removalFinished);
+    QTRY_VERIFY(finishedSpy.count() == 1);
 }
 
 /*
@@ -295,7 +280,7 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
  */
 void tst_Main::updateForBuiltInAlreadyInstalled()
 {
-    copyRecursively(QFINDTESTDATA("dir-with-update-already-installed"), "/tmp/am-test-main");
+    copyRecursively(QFINDTESTDATA("dir-with-update-already-installed"), qSL("/tmp/am-test-main"));
 
     initMain();
 
@@ -356,9 +341,9 @@ void tst_Main::mainQmlFile()
     QFETCH(QString, expectedErrorMsg);
 
     QStringList arguments;
-    arguments << "tst_Main";
-    arguments << "--dbus";
-    arguments << "none";
+    arguments << qSL("tst_Main");
+    arguments << qSL("--dbus");
+    arguments << qSL("none");
     arguments << mainQml;
 
     main = new Main(argc, argv);
@@ -370,7 +355,7 @@ void tst_Main::mainQmlFile()
         main->setup(config);
         QVERIFY2(expectedErrorMsg.isEmpty(), "Exception was expected, but none was thrown");
     } catch (const std::exception &e) {
-        QCOMPARE(e.what(), expectedErrorMsg);
+        QCOMPARE(QString::fromLocal8Bit(e.what()), expectedErrorMsg);
     }
 
     delete config;

@@ -414,7 +414,7 @@ void tst_Configuration::mergedConfig()
 void tst_Configuration::commandLineConfig()
 {
     Configuration c;
-    QStringList commandLine { qSL("test"), qSL("--no-cache") };
+    QByteArrayList commandLine { "test", "--no-cache" };
 
     commandLine << "--builtin-apps-manifest-dir" << "builtin-dir-cl1"
                 << "--builtin-apps-manifest-dir" << "builtin-dir-cl2"
@@ -443,7 +443,11 @@ void tst_Configuration::commandLineConfig()
                 << "--enable-touch-emulation"
                 << "main-cl.qml";
 
-    c.parseWithArguments(commandLine);
+    QStringList strCommandLine;
+    for (const auto &c : qAsConst(commandLine))
+        strCommandLine << QString::fromLatin1(c);
+
+    c.parseWithArguments(strCommandLine);
 
     QVERIFY(c.noCache());
 

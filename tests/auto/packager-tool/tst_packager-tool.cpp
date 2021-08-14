@@ -141,7 +141,7 @@ void tst_PackagerTool::cleanup()
 
     QDir dir(m_workDir.path());
     QStringList fileNames = dir.entryList(QDir::Files);
-    for (auto fileName : fileNames)
+    for (const auto &fileName : fileNames)
         dir.remove(fileName);
 }
 
@@ -280,10 +280,10 @@ void tst_PackagerTool::brokenMetadata_data()
     QTest::addColumn<QVariant>("yamlValue");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("missing-name")       << qSL("name")    << QVariant() << "~.*Required fields are missing: name.*";
-    QTest::newRow("missing-runtime")    << qSL("runtime") << QVariant() << "~.*Required fields are missing: runtime";
-    QTest::newRow("missing-identifier") << qSL("id")      << QVariant() << "~.*Required fields are missing: id";
-    QTest::newRow("missing-code")       << qSL("code")    << QVariant() << "~.*Required fields are missing: code";
+    QTest::newRow("missing-name")       << "name"    << QVariant() << "~.*Required fields are missing: name.*";
+    QTest::newRow("missing-runtime")    << "runtime" << QVariant() << "~.*Required fields are missing: runtime";
+    QTest::newRow("missing-identifier") << "id"      << QVariant() << "~.*Required fields are missing: id";
+    QTest::newRow("missing-code")       << "code"    << QVariant() << "~.*Required fields are missing: code";
 }
 
 void tst_PackagerTool::brokenMetadata()

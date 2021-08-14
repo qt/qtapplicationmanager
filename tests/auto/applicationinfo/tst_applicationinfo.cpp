@@ -127,7 +127,7 @@ void tst_ApplicationInfo::application()
     QVERIFY(pkg->categories().startsWith(qSL("bar")));
     QVERIFY(pkg->categories().endsWith(qSL("foo")));
 
-    ApplicationInfo *app = pkg->applications().size() == 1 ? pkg->applications().first() : nullptr;
+    ApplicationInfo *app = pkg->applications().size() == 1 ? pkg->applications().constFirst() : nullptr;
     QVERIFY(app);
     QCOMPARE(QFileInfo(app->codeFilePath()).fileName(), qSL("Test.qml"));
     QCOMPARE(app->runtimeName(), qSL("qml"));

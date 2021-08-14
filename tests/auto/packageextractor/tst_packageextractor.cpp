@@ -109,34 +109,34 @@ void tst_PackageExtractor::extractAndVerify_data()
     QMap<QString, qint64> noSizes;
 
     QTest::newRow("normal") << "packages/test.appkg"
-                            << true << QString()
+                            << true << ""
                             << QStringList {
-                                   "info.yaml",
-                                   "icon.png",
-                                   "test",
+                                   qSL("info.yaml"),
+                                   qSL("icon.png"),
+                                   qSL("test"),
                                    m_taest }
                             << QMap<QString, QByteArray> {
-                                   { "test", "test\n" },
+                                   { qSL("test"), "test\n" },
                                    { m_taest, "test with umlaut\n" } }
                             << noSizes;
 
     QTest::newRow("big") << "packages/bigtest.appkg"
-                         << true << QString()
+                         << true << ""
                          << QStringList {
-                                "info.yaml",
-                                "icon.png",
-                                "test",
+                                qSL("info.yaml"),
+                                qSL("icon.png"),
+                                qSL("test"),
                                 m_taest,
-                                "bigtest" }
+                                qSL("bigtest") }
                          << QMap<QString, QByteArray> {
-                                { "test", "test\n" },
+                                { qSL("test"), "test\n" },
                                 { m_taest, "test with umlaut\n" } }
                          << QMap<QString, qint64> {
                                 // { "info.yaml", 213 }, // this is different on Windows: \n vs. \r\n
-                                { "icon.png", 1157 },
-                                { "bigtest", 5*1024*1024 },
-                                { "test", 5 },
-                                {  m_taest, 17 } };
+                                { qSL("icon.png"), 1157 },
+                                { qSL("bigtest"), 5*1024*1024 },
+                                { qSL("test"), 5 },
+                                { m_taest, 17 } };
 
     QTest::newRow("invalid-url")    << "packages/no-such-file.appkg"
                                     << false << "~Error opening .*: (No such file or directory|The system cannot find the file specified\\.)"
@@ -165,7 +165,7 @@ void tst_PackageExtractor::extractAndVerify()
     QFETCH(ByteArrayMap, content);
     QFETCH(IntMap, sizes);
 
-    PackageExtractor extractor(QUrl::fromLocalFile(AM_TESTDATA_DIR + path), m_extractDir->path());
+    PackageExtractor extractor(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR) + path), m_extractDir->path());
     bool result = extractor.extract();
 
     if (expectedSuccess) {

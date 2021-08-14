@@ -110,10 +110,10 @@ tst_Runtime::tst_Runtime()
 
 void tst_Runtime::factory()
 {
-    RuntimeFactory *rf = RuntimeFactory::instance();
+    QScopedPointer<RuntimeFactory> rf { RuntimeFactory::instance() };
 
     QVERIFY(rf);
-    QVERIFY(rf == RuntimeFactory::instance());
+    QVERIFY(rf.get() == RuntimeFactory::instance());
     QVERIFY(rf->runtimeIds().isEmpty());
 
     QVERIFY(rf->registerRuntime(new TestRuntimeManager(qSL("foo"), qApp)));
@@ -136,20 +136,20 @@ void tst_Runtime::factory()
     QCOMPARE(temp.write(yaml), yaml.size());
     temp.close();
 
-    Application *a = nullptr;
+    QScopedPointer<Application> a;
     try {
         PackageInfo *pi = PackageInfo::fromManifest(temp.fileName());
         QVERIFY(pi);
         Package *p = new Package(pi);
-        a = new Application(pi->applications().first(), p);
+        a.reset(new Application(pi->applications().constFirst(), p));
     } catch (const Exception &e) {
         QVERIFY2(false, qPrintable(e.errorString()));
     }
     QVERIFY(a);
 
-    AbstractRuntime *r = rf->create(nullptr, a);
+    QScopedPointer<AbstractRuntime> r { rf->create(nullptr, a.get()) };
     QVERIFY(r);
-    QVERIFY(r->application() == a);
+    QVERIFY(r->application() == a.get());
     QVERIFY(r->manager()->inProcess());
     QVERIFY(r->state() == Am::NotRunning);
     QVERIFY(r->applicationProcessId() == 0);
@@ -166,10 +166,6 @@ void tst_Runtime::factory()
     r->stop();
     QVERIFY(r->state() == Am::NotRunning);
     QVERIFY(!r->securityToken().isEmpty());
-
-    delete r;
-    delete rf;
-    delete a;
 }
 
 QTEST_MAIN(tst_Runtime)

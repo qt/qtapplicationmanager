@@ -159,10 +159,10 @@ private:
         else if (base.isEmpty())
             base = workDir.absoluteFilePath(sub);
         else
-            base = workDir.absoluteFilePath(base + '/' + sub);
+            base = workDir.absoluteFilePath(base + qL1C('/') + sub);
 
         if (QDir(base).exists())
-            return base + '/';
+            return base + qL1C('/');
         else
             return base;
     }
@@ -354,16 +354,16 @@ void tst_PackageManager::packageInstallation_data()
 
     QVariantMap nomd { }; // no meta-data
     QVariantMap extramd = QVariantMap {
-        { "extra", QVariantMap {
-            { "array", QVariantList { 1, 2 } },
-            { "foo", "bar" },
-            { "foo2","bar2" },
-            { "key", "value" } } },
-        { "extraSigned", QVariantMap {
-            { "sfoo", "sbar" },
-            { "sfoo2", "sbar2" },
-            { "signed-key", "signed-value" },
-            { "signed-object", QVariantMap { { "k1", "v1" }, { "k2", "v2" } } }
+        { qSL("extra"), QVariantMap {
+            { qSL("array"), QVariantList { 1, 2 } },
+            { qSL("foo"), qSL("bar") },
+            { qSL("foo2"),qSL("bar2") },
+            { qSL("key"), qSL("value") } } },
+        { qSL("extraSigned"), QVariantMap {
+            { qSL("sfoo"), qSL("sbar") },
+            { qSL("sfoo2"), qSL("sbar2") },
+            { qSL("signed-key"), qSL("signed-value") },
+            { qSL("signed-object"), QVariantMap { { qSL("k1"), qSL("v1") }, { qSL("k2"), qSL("v2") } } }
         } }
     };
 
@@ -450,7 +450,8 @@ void tst_PackageManager::packageInstallation()
 
         // install (or update) the package
 
-        QUrl url = QUrl::fromLocalFile(AM_TESTDATA_DIR "packages/" + (pass == 1 ? packageName : updatePackageName));
+        QUrl url = QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/")
+                                       + (pass == 1 ? packageName : updatePackageName));
         QString taskId = m_pm->startPackageInstallation(url);
         QVERIFY(!taskId.isEmpty());
         m_pm->acknowledgePackageInstallation(taskId);
@@ -480,7 +481,7 @@ void tst_PackageManager::packageInstallation()
             QVERIFY(QFile::exists(installationDir + qSL("/com.pelagicore.test/.installation-report.yaml")));
             QVERIFY(QDir(documentDir + qSL("/com.pelagicore.test")).exists());
 
-            QString fileCheckPath = installationDir + "/com.pelagicore.test";
+            QString fileCheckPath = installationDir + qSL("/com.pelagicore.test");
 
             // now check the installed files
 
@@ -489,7 +490,7 @@ void tst_PackageManager::packageInstallation()
             QVERIFY2(files == QStringList({ qSL("icon.png"), qSL("info.yaml"), qSL("test"), QString::fromUtf8("t\xc3\xa4st") }),
                      qPrintable(files.join(qSL(", "))));
 
-            QFile f(fileCheckPath + "/test");
+            QFile f(fileCheckPath + qSL("/test"));
             QVERIFY(f.open(QFile::ReadOnly));
             QCOMPARE(f.readAll(), QByteArray(pass == 1 ? "test\n" : "test update\n"));
             f.close();
@@ -538,7 +539,7 @@ void tst_PackageManager::packageInstallation()
 
 
 Q_DECLARE_METATYPE(std::function<bool()>)
-typedef QMultiMap<QString, std::function<bool()>> FunctionMap;
+typedef QMultiMap<QByteArray, std::function<bool()>> FunctionMap;
 Q_DECLARE_METATYPE(FunctionMap)
 
 void tst_PackageManager::simulateErrorConditions_data()
@@ -583,12 +584,12 @@ void tst_PackageManager::simulateErrorConditions()
         clearSignalSpies();
     }
 
-    foreach (const auto &f, functions.values(qSL("before-start")))
+    foreach (const auto &f, functions.values("before-start"))
         QVERIFY(f());
 
     taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
 
-    foreach (const auto &f, functions.values(qSL("after-start")))
+    foreach (const auto &f, functions.values("after-start"))
         QVERIFY(f());
 
     m_pm->acknowledgePackageInstallation(taskId);
@@ -598,7 +599,7 @@ void tst_PackageManager::simulateErrorConditions()
     AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(), errorString);
     clearSignalSpies();
 
-    foreach (const auto &f, functions.values(qSL("after-failed")))
+    foreach (const auto &f, functions.values("after-failed"))
         QVERIFY(f());
 
     if (testUpdate) {

@@ -93,8 +93,8 @@ void tst_PackageCreator::createAndVerify_data()
     QTest::addColumn<bool>("expectedSuccess");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("basic") << QStringList { qSL("testfile") } << true << QString();
-    QTest::newRow("no-such-file") << QStringList { qSL("tastfile") } << false << qSL("~file not found: .*");
+    QTest::newRow("basic") << QStringList { qSL("testfile") } << true << "";
+    QTest::newRow("no-such-file") << QStringList { qSL("tastfile") } << false << "~file not found: .*";
 }
 
 void tst_PackageCreator::createAndVerify()

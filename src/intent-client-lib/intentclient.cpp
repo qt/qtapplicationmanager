@@ -141,12 +141,9 @@ void IntentClient::registerHandler(IntentHandler *handler)
 
 void IntentClient::unregisterHandler(IntentHandler *handler)
 {
-    for (auto it = m_handlers.begin(); it != m_handlers.end(); ) {
-        if (it.value() == handler)
-            it = m_handlers.erase(it);
-        else
-            ++it;
-    }
+    m_handlers.erase(std::remove_if(m_handlers.begin(), m_handlers.end(),
+                                    [handler](const auto &h) { return h == handler; }),
+                     m_handlers.end());
 }
 
 /*! \qmlmethod IntentRequest IntentClient::sendIntentRequest(string intentId, var parameters)
@@ -224,7 +221,7 @@ void IntentClient::requestToSystemFinished(IntentClientRequest *icr, const QUuid
 void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result)
 {
     IntentClientRequest *icr = nullptr;
-    auto it = std::find_if(m_waiting.begin(), m_waiting.end(),
+    auto it = std::find_if(m_waiting.cbegin(), m_waiting.cend(),
                            [requestId](IntentClientRequest *ir) -> bool {
             return (ir->requestId() == requestId);
     });

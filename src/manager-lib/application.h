@@ -150,7 +150,7 @@ signals:
     void lastExitCodeChanged();
     void lastExitStatusChanged();
     void activated();
-    void stateChanged(State state);
+    void stateChanged(QT_PREPEND_NAMESPACE_AM(Application::State) state);
     void runStateChanged(QT_PREPEND_NAMESPACE_AM(Am::RunState) state);
     void blockedChanged(bool blocked);
 

@@ -155,7 +155,6 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
         return false;
 
     // sanity checks
-    pl = line;
     for (pl = line; pl < (line + 4) && ok; ++pl)
         ok = ((*pl >= '0' && *pl <= '9') || (*pl >= 'a' && *pl <= 'f'));
     while (strlen(line) == lineLen - 1 && line[lineLen - 2] != '\n') {

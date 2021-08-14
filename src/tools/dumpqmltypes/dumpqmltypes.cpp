@@ -285,7 +285,7 @@ int main(int argc, char **argv)
                 throw Exception("Qt's QML2 imports directory (%1) is missing.")
                     .arg(outDir.absolutePath());
         } else if (clp.positionalArguments().count() == 1) {
-            outDir.setPath(clp.positionalArguments().first());
+            outDir.setPath(clp.positionalArguments().constFirst());
             if (!outDir.mkpath(qSL(".")))
                 throw Exception("Cannot create destination directory %1.").arg(outDir.absolutePath());
         } else {

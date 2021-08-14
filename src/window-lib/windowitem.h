@@ -58,7 +58,7 @@ class WindowItem : public QQuickItem
                                           WRITE setObjectFollowsItemSize
                                           NOTIFY objectFollowsItemSizeChanged)
 
-    Q_PROPERTY(QQmlListProperty<QObject> contentItemData READ contentItemData)
+    Q_PROPERTY(QQmlListProperty<QObject> contentItemData READ contentItemData NOTIFY contentItemDataChanged)
     Q_CLASSINFO("DefaultProperty", "contentItemData")
 
 public:
@@ -87,6 +87,8 @@ signals:
     void windowChanged();
     void primaryChanged();
     void objectFollowsItemSizeChanged();
+    void contentItemDataChanged();
+
 private slots:
     void updateImplicitSize();
 private:

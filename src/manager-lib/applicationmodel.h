@@ -63,7 +63,7 @@ public:
     void setSortFunction(const QJSValue &callback);
 
     Q_INVOKABLE int indexOfApplication(const QString &id) const;
-    Q_INVOKABLE int indexOfApplication(Application *application) const;
+    Q_INVOKABLE int indexOfApplication(QT_PREPEND_NAMESPACE_AM(Application) *application) const;
     Q_INVOKABLE int mapToSource(int ourIndex) const;
     Q_INVOKABLE int mapFromSource(int sourceIndex) const;
 

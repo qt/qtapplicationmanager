@@ -124,7 +124,10 @@ void IntentHandler::setIntentIds(const QStringList &intentIds)
         qmlWarning(this) << "Cannot change the intentIds property of an IntentHandler after creation.";
         return;
     }
-    m_intentIds = intentIds;
+    if (m_intentIds != intentIds) {
+        m_intentIds = intentIds;
+        emit intentIdsChanged(intentIds);
+    }
 }
 
 void IntentHandler::componentComplete()

@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
                                 .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
                                 .arg(md.second.isEmpty() ? qSL("option") : md.second);
                     }
-                    for (auto doc : docs)
+                    for (const auto &doc : docs)
                         recursiveMergeVariantMap(result, doc.toMap());
                 }
                 return result;

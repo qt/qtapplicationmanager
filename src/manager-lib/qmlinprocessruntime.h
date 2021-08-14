@@ -78,7 +78,7 @@ signals:
 
 private slots:
     void finish(int exitCode, Am::ExitStatus status);
-    void onSurfaceItemReleased(InProcessSurfaceItem*);
+    void onSurfaceItemReleased(QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem) *surface);
 
 private:
     static const char *s_runtimeKey;

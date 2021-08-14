@@ -91,7 +91,7 @@ class AbstractContainer : public QObject
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/Container 2.0 UNCREATABLE")
 
-    Q_PROPERTY(QString controlGroup READ controlGroup WRITE setControlGroup)
+    Q_PROPERTY(QString controlGroup READ controlGroup WRITE setControlGroup NOTIFY controlGroupChanged)
 
 public:
     virtual ~AbstractContainer();
@@ -120,7 +120,8 @@ signals:
     void ready();
     void memoryLowWarning();
     void memoryCriticalWarning();
-    void applicationChanged(Application *newApplication);
+    void applicationChanged(QT_PREPEND_NAMESPACE_AM(Application) *newApplication);
+    void controlGroupChanged(const QString &controlGroup);
 
 protected:
     explicit AbstractContainer(AbstractContainerManager *manager, Application *app);

@@ -31,7 +31,6 @@
 
 #include <QDebug>
 #include <QFileInfo>
-#include <QPointer>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusMessage>
@@ -53,7 +52,7 @@ struct DBusPolicyEntry
     QStringList m_capabilities;
 };
 
-static QMap<QPointer<QDBusAbstractAdaptor>, QMap<QByteArray, DBusPolicyEntry> > policies;
+static QHash<QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry> > policies;
 
 
 bool DBusPolicy::add(QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlFragment)
@@ -93,7 +92,7 @@ bool DBusPolicy::add(QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlF
         result.insert(func, dbp);
     }
 
-    policies.insert(QPointer<QDBusAbstractAdaptor>(dbusAdaptor), result);
+    policies.insert(dbusAdaptor, result);
     return true;
 }
 
@@ -116,7 +115,7 @@ bool DBusPolicy::check(QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &func
     if (!dbusContext->calledFromDBus())
         return false;
 
-    auto ia = policies.constFind(QPointer<QDBusAbstractAdaptor>(dbusAdaptor));
+    auto ia = policies.constFind(dbusAdaptor);
     if (ia == policies.cend())
         return false;
 

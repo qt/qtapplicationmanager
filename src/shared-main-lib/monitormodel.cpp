@@ -198,6 +198,7 @@ void MonitorModel::dataSources_clear(QQmlListProperty<QObject> *property)
 {
     auto *that = static_cast<MonitorModel*>(property->object);
     that->clearDataSources();
+    emit that->dataSourcesChanged();
 }
 
 void MonitorModel::clearDataSources()

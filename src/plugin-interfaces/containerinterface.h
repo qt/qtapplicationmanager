@@ -96,9 +96,9 @@ public:
 Q_SIGNALS:
     void ready();
     void started();
-    void errorOccured(ProcessError processError);
-    void finished(int exitCode, ExitStatus exitStatus);
-    void stateChanged(RunState state);
+    void errorOccured(ContainerInterface::ProcessError processError);
+    void finished(int exitCode, ContainerInterface::ExitStatus exitStatus);
+    void stateChanged(ContainerInterface::RunState state);
 };
 
 class ContainerManagerInterface

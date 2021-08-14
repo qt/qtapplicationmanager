@@ -226,10 +226,9 @@ StartupTimer::StartupTimer()
 
     // Get system up time
     // Resource https://msdn.microsoft.com/en-us/library/windows/desktop/ms724411(v=vs.85).aspx
-    if (m_initialized) {
+    if (m_initialized)
         m_systemUpTime = GetTickCount64();
-        emit systemUpTimeChanged(m_systemUpTime);
-    }
+
 #elif defined(Q_OS_LINUX)
     // Linux is stupid: there's only one way to get your own process' start time with a high
     // resolution: using the async netlink protocol to get a 'taskstat', but this is highly complex
@@ -301,7 +300,6 @@ StartupTimer::StartupTimer()
             if (bytesRead > 0) {
                 buffer[bytesRead] = 0;
                 m_systemUpTime = quint64(strtod(buffer, nullptr) * 1000);
-                emit systemUpTimeChanged(m_systemUpTime);
             }
             QT_CLOSE(fd);
         }
@@ -338,7 +336,6 @@ StartupTimer::StartupTimer()
         int mibNames[2] = { CTL_KERN, KERN_BOOTTIME };
         if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), &bootTime, &bootTimeLen, nullptr, 0) == 0 ) {
             m_systemUpTime = quint64(time(nullptr) - bootTime.tv_sec) * 1000; // we don't need more precision on macOS
-            emit systemUpTimeChanged(m_systemUpTime);
         }
     }
 

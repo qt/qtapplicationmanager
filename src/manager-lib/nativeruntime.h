@@ -86,9 +86,12 @@ signals:
     void aboutToStop(); // used for the ApplicationInterface
     void interfaceCreated(const QString &interfaceName);
 
-    void applicationConnectedToPeerDBus(const QDBusConnection &connection, Application *application);
-    void applicationReadyOnPeerDBus(const QDBusConnection &connection, Application *application);
-    void applicationDisconnectedFromPeerDBus(const QDBusConnection &connection, Application *application);
+    void applicationConnectedToPeerDBus(const QDBusConnection &connection,
+                                        QT_PREPEND_NAMESPACE_AM(Application) *application);
+    void applicationReadyOnPeerDBus(const QDBusConnection &connection,
+                                    QT_PREPEND_NAMESPACE_AM(Application) *application);
+    void applicationDisconnectedFromPeerDBus(const QDBusConnection &connection,
+                                             QT_PREPEND_NAMESPACE_AM(Application) *application);
 
 private slots:
     void onProcessStarted();

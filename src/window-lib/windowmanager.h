@@ -90,9 +90,9 @@ public:
 
     Q_INVOKABLE int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-    Q_INVOKABLE Window *window(int index) const;
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Window) *window(int index) const;
     Q_INVOKABLE QList<QObject *> windowsOfApplication(const QString &id) const;
-    Q_INVOKABLE int indexOfWindow(Window *window) const;
+    Q_INVOKABLE int indexOfWindow(QT_PREPEND_NAMESPACE_AM(Window) *window) const;
     Q_INVOKABLE QObject *addExtension(QQmlComponent *component) const;
 
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -101,11 +101,11 @@ signals:
     void countChanged();
     void raiseApplicationWindow(const QString &applicationId, const QString &applicationAliasId);
 
-    void windowAdded(Window *window);
-    void windowAboutToBeRemoved(Window *window);
-    void windowContentStateChanged(Window *window);
+    void windowAdded(QT_PREPEND_NAMESPACE_AM(Window) *window);
+    void windowAboutToBeRemoved(QT_PREPEND_NAMESPACE_AM(Window) *window);
+    void windowContentStateChanged(QT_PREPEND_NAMESPACE_AM(Window) *window);
 
-    void windowPropertyChanged(Window *window, const QString &name, const QVariant &value);
+    void windowPropertyChanged(QT_PREPEND_NAMESPACE_AM(Window) *window, const QString &name, const QVariant &value);
 
     void compositorViewRegistered(QQuickWindow *view);
 
@@ -113,10 +113,10 @@ signals:
 
     void slowAnimationsChanged(bool);
 
-    void _inProcessSurfaceItemReleased(QSharedPointer<InProcessSurfaceItem>);
+    void _inProcessSurfaceItemReleased(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)>);
 
 private slots:
-    void inProcessSurfaceItemCreated(QSharedPointer<InProcessSurfaceItem> surfaceItem);
+    void inProcessSurfaceItemCreated(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)> surfaceItem);
     void setupWindow(QT_PREPEND_NAMESPACE_AM(Window) *window);
 
 public:

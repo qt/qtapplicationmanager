@@ -184,7 +184,7 @@ bool TouchEmulationX11::nativeEventFilter(const QByteArray &eventType, void *mes
                             fixed1616ToReal(xiDeviceEvent->event_y));
                 break;
             case XI_Motion:
-                result = handleMotionNotify(
+                handleMotionNotify(
                             static_cast<WId>(xiDeviceEvent->event),
                             xiDeviceEvent->mods.base_mods,
                             fixed1616ToReal(xiDeviceEvent->event_x),

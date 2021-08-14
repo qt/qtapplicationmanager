@@ -77,8 +77,8 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
                          const QVariantMap &packageExtraSignedMetaData) {
         auto map = PackageManager::instance()->get(package);
         map.remove(qSL("package")); // cannot marshall QObject *
-        taskRequestingInstallationAcknowledge(taskId, map, packageExtraMetaData,
-                                              packageExtraSignedMetaData);
+        emit taskRequestingInstallationAcknowledge(taskId, map, packageExtraMetaData,
+                                                   packageExtraSignedMetaData);
     });
     connect(pm, &PackageManager::taskStarted,
             this, &PackageManagerAdaptor::taskStarted);

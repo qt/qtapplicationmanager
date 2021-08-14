@@ -1072,7 +1072,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
 */
 void ApplicationManager::acknowledgeOpenUrlRequest(const QString &requestId, const QString &appId)
 {
-    for (auto it = d->openUrlRequests.begin(); it != d->openUrlRequests.end(); ++it) {
+    for (auto it = d->openUrlRequests.cbegin(); it != d->openUrlRequests.cend(); ++it) {
         if (it->requestId == requestId) {
             if (it->possibleAppIds.contains(appId)) {
                 try {
@@ -1101,7 +1101,7 @@ void ApplicationManager::acknowledgeOpenUrlRequest(const QString &requestId, con
 */
 void ApplicationManager::rejectOpenUrlRequest(const QString &requestId)
 {
-    for (auto it = d->openUrlRequests.begin(); it != d->openUrlRequests.end(); ++it) {
+    for (auto it = d->openUrlRequests.cbegin(); it != d->openUrlRequests.cend(); ++it) {
         if (it->requestId == requestId) {
             d->openUrlRequests.erase(it);
             break;

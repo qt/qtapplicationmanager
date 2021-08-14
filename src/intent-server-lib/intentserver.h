@@ -101,9 +101,10 @@ public:
                                                                const QVariantMap &parameters = QVariantMap{}) const;
     Q_INVOKABLE int indexOfIntent(const QString &intentId, const QString &applicationId,
                                   const QVariantMap &parameters = QVariantMap{}) const;
-    Q_INVOKABLE int indexOfIntent(Intent *intent);
+    Q_INVOKABLE int indexOfIntent(QT_PREPEND_NAMESPACE_AM(Intent) *intent);
 
-    Q_INVOKABLE void acknowledgeDisambiguationRequest(const QUuid &requestId, Intent *selectedIntent);
+    Q_INVOKABLE void acknowledgeDisambiguationRequest(const QUuid &requestId,
+                                                      QT_PREPEND_NAMESPACE_AM(Intent) *selectedIntent);
     Q_INVOKABLE void rejectDisambiguationRequest(const QUuid &requestId);
 
 signals:

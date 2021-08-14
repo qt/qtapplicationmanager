@@ -59,11 +59,15 @@ class PackageManagerInternalSignals : public QObject
 signals:
     // the slots connected to these signals are allowed to throw Exception objects, if the
     // connection is direct!
-    void registerApplication(ApplicationInfo *applicationInfo, Package *package);
-    void unregisterApplication(ApplicationInfo *applicationInfo, Package *package);
+    void registerApplication(QT_PREPEND_NAMESPACE_AM(ApplicationInfo) *applicationInfo,
+                             QT_PREPEND_NAMESPACE_AM(Package) *package);
+    void unregisterApplication(QT_PREPEND_NAMESPACE_AM(ApplicationInfo) *applicationInfo,
+                               QT_PREPEND_NAMESPACE_AM(Package) *package);
 
-    void registerIntent(IntentInfo *intentInfo, Package *package);
-    void unregisterIntent(IntentInfo *intentInfo, Package *package);
+    void registerIntent(QT_PREPEND_NAMESPACE_AM(IntentInfo) *intentInfo,
+                        QT_PREPEND_NAMESPACE_AM(Package) *package);
+    void unregisterIntent(QT_PREPEND_NAMESPACE_AM(IntentInfo) *intentInfo,
+                          QT_PREPEND_NAMESPACE_AM(Package) *package);
 };
 
 class PackageManager : public QAbstractListModel
@@ -81,8 +85,8 @@ class PackageManager : public QAbstractListModel
     Q_PROPERTY(QVariantMap installationLocation READ installationLocation CONSTANT)
     Q_PROPERTY(QVariantMap documentLocation READ documentLocation CONSTANT)
 
-    Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled)
-    Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId)
+    Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled CONSTANT)
+    Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId CONSTANT)
 
 public:
     Q_ENUMS(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState))
@@ -115,8 +119,8 @@ public:
 
     int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-    Q_INVOKABLE Package *package(int index) const;
-    Q_INVOKABLE Package *package(const QString &id) const;
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Package) *package(int index) const;
+    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Package) *package(const QString &id) const;
     Q_INVOKABLE int indexOfPackage(const QString &id) const;
 
     bool developmentMode() const;
@@ -180,7 +184,8 @@ signals:
                                        QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) newState);
 
     // installation only
-    Q_SCRIPTABLE void taskRequestingInstallationAcknowledge(const QString &taskId, Package *package,
+    Q_SCRIPTABLE void taskRequestingInstallationAcknowledge(const QString &taskId,
+                                                            QT_PREPEND_NAMESPACE_AM(Package) *package,
                                                             const QVariantMap &packageExtraMetaData,
                                                             const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);

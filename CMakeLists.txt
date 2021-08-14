@@ -10,6 +10,11 @@ project(QtApplicationManager # special case
 )
 
 set(QT_NO_INTERNAL_COMPATIBILITY_FUNCTIONS TRUE)
+add_compile_definitions(
+    QT_STRICT_ITERATORS
+    QT_NO_CAST_TO_ASCII
+    QT_NO_CAST_FROM_ASCII
+)
 
 # populate the platform check variables
 find_package(Qt6 ${PROJECT_VERSION} CONFIG REQUIRED COMPONENTS BuildInternals)

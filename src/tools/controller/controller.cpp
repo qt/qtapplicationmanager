@@ -608,7 +608,7 @@ void listApplications() Q_DECL_NOEXCEPT_EXPR(false)
         throw Exception(Error::IO, "failed to call applicationIds via DBus: %1").arg(reply.error().message());
 
     const auto applicationIds = reply.value();
-    for (auto applicationId : applicationIds)
+    for (const auto &applicationId : applicationIds)
         fprintf(stdout, "%s\n", qPrintable(applicationId));
     qApp->quit();
 }
@@ -638,7 +638,7 @@ void listPackages() Q_DECL_NOEXCEPT_EXPR(false)
         throw Exception(Error::IO, "failed to call packageIds via DBus: %1").arg(reply.error().message());
 
     const auto packageIds = reply.value();
-    for (auto packageId : packageIds)
+    for (const auto &packageId : packageIds)
         fprintf(stdout, "%s\n", qPrintable(packageId));
     qApp->quit();
 }
@@ -800,7 +800,7 @@ void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false)
         throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
 
     const auto taskIds = reply.value();
-    for (auto taskId : taskIds)
+    for (const auto &taskId : taskIds)
         fprintf(stdout, "%s\n", qPrintable(taskId));
     qApp->quit();
 }
@@ -823,7 +823,7 @@ void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXP
             throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
 
         const auto taskIds = reply.value();
-        for (auto taskId : taskIds)
+        for (const auto &taskId : taskIds)
             cancelTaskIds << taskId;
     } else {
         cancelTaskIds << taskId;
@@ -862,7 +862,7 @@ void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXP
         }
     });
 
-    for (auto cancelTaskId : qAsConst(cancelTaskIds)) {
+    for (const auto &cancelTaskId : qAsConst(cancelTaskIds)) {
         fprintf(stdout, "Canceling installation task %s...\n", qPrintable(cancelTaskId));
 
         // cancel the task

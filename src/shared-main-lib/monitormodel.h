@@ -45,7 +45,7 @@ class MonitorModel : public QAbstractListModel
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager/MonitorModel 2.0")
 
-    Q_PROPERTY(QQmlListProperty<QObject> dataSources READ dataSources)
+    Q_PROPERTY(QQmlListProperty<QObject> dataSources READ dataSources NOTIFY dataSourcesChanged)
     Q_CLASSINFO("DefaultProperty", "dataSources")
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
@@ -88,6 +88,7 @@ signals:
     void intervalChanged();
     void runningChanged();
     void maximumCountChanged();
+    void dataSourcesChanged();
 
 private slots:
     void readDataSourcesAndAddRow();

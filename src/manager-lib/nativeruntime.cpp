@@ -186,7 +186,7 @@ bool NativeRuntime::initialize()
             possibleLocations.append(qApp->property("_am_build_dir").toString() + qSL("/bin")); // set by main.cpp
             // if everything fails, try to locate it in $PATH
             const auto paths = qgetenv("PATH").split(QDir::listSeparator().toLatin1());
-            for (auto path : paths)
+            for (const auto &path : paths)
                 possibleLocations.append(QString::fromLocal8Bit(path));
         }
 

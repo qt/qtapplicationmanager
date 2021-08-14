@@ -296,7 +296,7 @@ void Main::shutDown(int exitCode)
         m_windowManager->shutDown();
     }
 
-    QTimer::singleShot(5000, [exitCode] {
+    QTimer::singleShot(5000, this, [exitCode] {
         QStringList resources;
         if (!(down & ApplicationManagerDown))
             resources << qSL("runtimes");

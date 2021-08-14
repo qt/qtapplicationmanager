@@ -146,6 +146,7 @@ void QmlInProcessApplicationManagerWindow::data_append(QQmlListProperty<QObject>
 
     QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
     itemProperty.append(&itemProperty, value);
+    emit that->dataChanged();
 }
 
 qsizetype QmlInProcessApplicationManagerWindow::data_count(QQmlListProperty<QObject> *property)
@@ -169,6 +170,7 @@ void QmlInProcessApplicationManagerWindow::data_clear(QQmlListProperty<QObject> 
     auto *that = static_cast<QmlInProcessApplicationManagerWindow*>(property->object);
     QQmlListProperty<QObject> itemProperty = QQuickItemPrivate::get(that->contentItem())->data();
     itemProperty.clear(&itemProperty);
+    emit that->dataChanged();
 }
 
 void QmlInProcessApplicationManagerWindow::componentComplete()

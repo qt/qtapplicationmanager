@@ -978,10 +978,9 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 
         // filter out alias and apps not matching appId (if set)
         QVector<Application *> apps = ApplicationManager::instance()->applications();
-        auto it = std::remove_if(apps.begin(), apps.end(), [appId](Application *app) {
+        apps.erase(std::remove_if(apps.begin(), apps.end(), [appId](const Application *app) {
             return app->isAlias() || (!appId.isEmpty() && (appId != app->id()));
-        });
-        apps.erase(it, apps.end());
+        }), apps.end());
 
         auto grabbers = new QList<QSharedPointer<const QQuickItemGrabResult>>;
 

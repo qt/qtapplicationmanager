@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
     QHttpPart packagePart;
     packagePart.setHeader(QNetworkRequest::ContentTypeHeader, qSL("application/octet-stream"));
     packagePart.setHeader(QNetworkRequest::ContentDispositionHeader, qSL("form-data; name=\"package\";filename=\"package.appkg\""));
-    QFile *packageFile = new QFile(clp.positionalArguments().first());
+    QFile *packageFile = new QFile(clp.positionalArguments().constFirst());
     if (!packageFile->open(QIODevice::ReadOnly))
         printErrorAndExit(packageFile->errorString(), 3);
     packagePart.setBodyDevice(packageFile);

@@ -51,8 +51,8 @@ public:
 
     int timeoutFactor() const;
 
-    Q_INVOKABLE void ignoreMessage(MsgType type, const char* msg);
-    Q_INVOKABLE void ignoreMessage(MsgType type, const QRegularExpression &expression);
+    Q_INVOKABLE void ignoreMessage(QT_PREPEND_NAMESPACE_AM(AmTest::MsgType) type, const char* msg);
+    Q_INVOKABLE void ignoreMessage(QT_PREPEND_NAMESPACE_AM(AmTest::MsgType) type, const QRegularExpression &expression);
     Q_INVOKABLE int observeObjectDestroyed(QObject *obj);
     Q_INVOKABLE void aboutToBlock();
 #if defined(Q_OS_LINUX)

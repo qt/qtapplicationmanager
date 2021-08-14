@@ -597,7 +597,7 @@ void Controller::updateSlowAnimations(bool isSlow)
 {
     QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
 
-    for (auto it = m_allWindows.begin(); it != m_allWindows.end(); ) {
+    for (auto it = m_allWindows.cbegin(); it != m_allWindows.cend(); ) {
         QPointer<QQuickWindow> window = *it;
         if (!window) {
             m_allWindows.erase(it);

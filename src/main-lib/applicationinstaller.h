@@ -60,8 +60,8 @@ class ApplicationInstaller : public QObject
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT)
     Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT)
 
-    Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled)
-    Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId)
+    Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled CONSTANT)
+    Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId CONSTANT)
 
 
 public:

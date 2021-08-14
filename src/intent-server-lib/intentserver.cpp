@@ -529,13 +529,13 @@ void IntentServer::processRequestQueue()
 
             if (!isSignalConnected(QMetaMethod::fromSignal(&IntentServer::disambiguationRequest))) {
                 // If the System UI does not react to the signal, then just use the first match.
-                isr->setHandlingApplicationId(isr->potentialIntents().first()->packageId());
+                isr->setHandlingApplicationId(isr->potentialIntents().constFirst()->packageId());
             } else {
                 m_disambiguationQueue.enqueue(isr);
                 isr->setState(IntentServerRequest::State::WaitingForDisambiguation);
                 qCDebug(LogIntents) << "Waiting for disambiguation on intent" << isr->intentId();
                 if (m_disambiguationTimeout > 0) {
-                    QTimer::singleShot(m_disambiguationTimeout, [this, isr]() {
+                    QTimer::singleShot(m_disambiguationTimeout, this, [this, isr]() {
                         if (m_disambiguationQueue.removeOne(isr)) {
                             isr->setRequestFailed(qSL("Disambiguation timed out after %1 ms").arg(m_disambiguationTimeout));
                             enqueueRequest(isr);
@@ -559,7 +559,7 @@ void IntentServer::processRequestQueue()
             m_startingAppQueue.enqueue(isr);
             isr->setState(IntentServerRequest::State::WaitingForApplicationStart);
             if (m_startingAppTimeout > 0) {
-                QTimer::singleShot(m_startingAppTimeout, [this, isr]() {
+                QTimer::singleShot(m_startingAppTimeout, this, [this, isr]() {
                     if (m_startingAppQueue.removeOne(isr)) {
                         isr->setRequestFailed(qSL("Starting handler application timed out after %1 ms").arg(m_startingAppTimeout));
                         enqueueRequest(isr);
@@ -586,7 +586,7 @@ void IntentServer::processRequestQueue()
             m_sentToAppQueue.enqueue(isr);
             isr->setState(IntentServerRequest::State::WaitingForReplyFromApplication);
             if (m_sentToAppTimeout > 0) {
-                QTimer::singleShot(m_sentToAppTimeout, [this, isr]() {
+                QTimer::singleShot(m_sentToAppTimeout, this, [this, isr]() {
                     if (m_sentToAppQueue.removeOne(isr)) {
                         isr->setRequestFailed(qSL("Waiting for reply from handler application timed out after %1 ms").arg(m_sentToAppTimeout));
                         enqueueRequest(isr);
@@ -714,7 +714,7 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
 {
     // check if any intent request is waiting for this app to start
     bool foundOne = false;
-    for (auto it = m_startingAppQueue.begin(); it != m_startingAppQueue.end(); ) {
+    for (auto it = m_startingAppQueue.cbegin(); it != m_startingAppQueue.cend(); ) {
         auto isr = *it;
         if (isr->handlingApplicationId() == applicationId) {
             qCDebug(LogIntents) << "Intent request" << isr->intentId()

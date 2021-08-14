@@ -69,7 +69,7 @@ class QmlInProcessApplicationManagerWindow : public QObject, public QQmlParserSt
     //Q_PROPERTY(Qt::ScreenOrientation contentOrientation READ contentOrientation WRITE reportContentOrientationChange NOTIFY contentOrientationChanged)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged)
 
-    Q_PROPERTY(QQmlListProperty<QObject> data READ data)
+    Q_PROPERTY(QQmlListProperty<QObject> data READ data NOTIFY dataChanged)
 
     Q_CLASSINFO("DefaultProperty", "data")
 
@@ -150,6 +150,7 @@ public slots:
 signals:
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void colorChanged();
+    void dataChanged();
 
     // signals for QWindow properties
     void titleChanged();

@@ -127,7 +127,7 @@ public:
 
 signals:
     void bulkChange();
-    void stateChanged(State state);
+    void stateChanged(QT_PREPEND_NAMESPACE_AM(Package::State) state);
     void blockedChanged(bool blocked);
     void applicationsChanged();
 

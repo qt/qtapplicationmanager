@@ -639,7 +639,7 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
         }
     }
     QStringList fieldsMissing;
-    for (auto field : fields) {
+    for (const auto &field : fields) {
         if (field.required && !fieldsFound.contains(qL1S(field.name)))
             fieldsMissing.append(qL1S(field.name));
     }

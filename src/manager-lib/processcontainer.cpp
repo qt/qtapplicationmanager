@@ -222,6 +222,7 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
             }
         }
         m_currentControlGroup = groupName;
+        emit controlGroupChanged(groupName);
         return true;
     }
     return false;

@@ -102,7 +102,7 @@ class AbstractRuntime : public QObject
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/Runtime 2.0 UNCREATABLE")
 
-    Q_PROPERTY(AbstractContainer *container READ container)
+    Q_PROPERTY(AbstractContainer *container READ container CONSTANT)
 
 public:
     virtual ~AbstractRuntime();
@@ -141,7 +141,7 @@ signals:
     void finished(int exitCode, Am::ExitStatus status);
 
     // these signals are for in-process mode runtimes only
-    void inProcessSurfaceItemReady(QSharedPointer<InProcessSurfaceItem> window);
+    void inProcessSurfaceItemReady(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)> window);
 
 protected:
     explicit AbstractRuntime(AbstractContainer *container, Application *app, AbstractRuntimeManager *manager);

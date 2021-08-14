@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     popup1->setStyleSheet(QStringLiteral("QPushButton { background-color : limegreen; color : white; font-size: 24px; }"));
     QObject::connect(&button1, &QPushButton::clicked, [&popup1, &launcher] () {
         popup1->setVisible(!popup1->isVisible());
-        launcher.setWindowProperty(popup1->windowHandle(), "type", QStringLiteral("pop-up"));
+        launcher.setWindowProperty(popup1->windowHandle(), QStringLiteral("type"), QStringLiteral("pop-up"));
     });
 
     // Notification

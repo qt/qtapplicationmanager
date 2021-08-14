@@ -105,16 +105,16 @@ QT_USE_NAMESPACE_AM
 static QStringList substituteCommand(const QStringList &debugWrapperCommand, const QString &program,
                                      const QStringList &arguments)
 {
-    QString stringifiedArguments = arguments.join(qL1C(' '));
+    QString stringifiedArguments = arguments.join(QLatin1Char(' '));
     QStringList result;
 
     for (const QString &s : debugWrapperCommand) {
-        if (s == qSL("%arguments%")) {
+        if (s == QStringLiteral("%arguments%")) {
             result << arguments;
         } else {
             QString str(s);
-            str.replace(qL1S("%program%"), program);
-            str.replace(qL1S("%arguments%"), stringifiedArguments);
+            str.replace(QStringLiteral("%program%"), program);
+            str.replace(QStringLiteral("%arguments%"), stringifiedArguments);
             result << str;
         }
     }
@@ -188,12 +188,12 @@ ContainerInterface *SoftwareContainerManager::create(bool isQuickLaunch, const Q
         }
     }
 
-    QString config = qSL("[]");
-    QVariant v = configuration().value("createConfig");
+    QString config = QStringLiteral("[]");
+    QVariant v = configuration().value(QStringLiteral("createConfig"));
     if (v.isValid())
         config = QString::fromUtf8(QJsonDocument::fromVariant(v).toJson(QJsonDocument::Compact));
 
-    QDBusMessage reply = m_interface->call(QDBus::Block, "Create", config);
+    QDBusMessage reply = m_interface->call(QDBus::Block, QStringLiteral("Create"), config);
     if (reply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "SoftwareContainer failed to create a new container:" << reply.errorMessage()
                    << "(config was:" << config << ")";
@@ -285,12 +285,12 @@ bool SoftwareContainer::attachApplication(const QVariantMap &application)
     m_state = StartingUp;
     m_application = application;
 
-    m_hostPath = application.value(qSL("codeDir")).toString();
+    m_hostPath = application.value(QStringLiteral("codeDir")).toString();
     if (m_hostPath.isEmpty())
         m_hostPath = QDir::currentPath();
 
-    m_appRelativeCodePath = application.value(qSL("codeFilePath")).toString();
-    m_containerPath = qSL("/app");
+    m_appRelativeCodePath = application.value(QStringLiteral("codeFilePath")).toString();
+    m_containerPath = QStringLiteral("/app");
 
     // If this is a quick launch instance, we need to renew the capabilities
     // and send the bindmounts.
@@ -345,7 +345,7 @@ QString SoftwareContainer::mapHostPathToContainer(const QString &hostPath) const
 
     QFileInfo fileInfo(hostPath);
     if (fileInfo.isFile())
-        containerPath = m_containerPath + QString("/") + fileInfo.fileName();
+        containerPath = m_containerPath + QStringLiteral("/") + fileInfo.fileName();
 
     return containerPath;
 }
@@ -357,9 +357,9 @@ bool SoftwareContainer::sendCapabilities()
         return false;
 
     // this is the one and only capability in io.qt.ApplicationManager.Application.json
-    static const QStringList capabilities { qSL("io.qt.ApplicationManager.Application") };
+    static const QStringList capabilities { QStringLiteral("io.qt.ApplicationManager.Application") };
 
-    QDBusMessage reply = iface->call(QDBus::Block, "SetCapabilities", m_id, QVariant::fromValue(capabilities));
+    QDBusMessage reply = iface->call(QDBus::Block, QStringLiteral("SetCapabilities"), m_id, QVariant::fromValue(capabilities));
     if (reply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "SoftwareContainer failed to set capabilities to" << capabilities << ":" << reply.errorMessage();
         return false;
@@ -373,7 +373,7 @@ bool SoftwareContainer::sendBindMounts()
     if (!iface)
         return false;
 
-    QFileInfo fontCacheInfo(qSL("/var/cache/fontconfig"));
+    QFileInfo fontCacheInfo(QStringLiteral("/var/cache/fontconfig"));
 
     QVector<std::tuple<QString, QString, bool>> bindMounts; // bool == isReadOnly
     // the private P2P D-Bus
@@ -397,7 +397,8 @@ bool SoftwareContainer::sendBindMounts()
     QList<QDBusPendingReply<>> bindMountResults;
 
     for (auto it = bindMounts.cbegin(); it != bindMounts.cend(); ++it)
-        bindMountResults << iface->asyncCall("BindMount", m_id, std::get<0>(*it), std::get<1>(*it), std::get<2>(*it));
+        bindMountResults << iface->asyncCall(QStringLiteral("BindMount"), m_id, std::get<0>(*it),
+                                             std::get<1>(*it), std::get<2>(*it));
 
     for (const auto &pending : qAsConst(bindMountResults))
         QDBusPendingCallWatcher(pending).waitForFinished();
@@ -506,10 +507,10 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
     // we start with a copy of the AM's environment, but some variables would overwrite important
     // redirections set by SC gateways.
     static const QStringList forbiddenVars = {
-        qSL("XDG_RUNTIME_DIR"),
-        qSL("DBUS_SESSION_BUS_ADDRESS"),
-        qSL("DBUS_SYSTEM_BUS_ADDRESS"),
-        qSL("PULSE_SERVER")
+        QStringLiteral("XDG_RUNTIME_DIR"),
+        QStringLiteral("DBUS_SESSION_BUS_ADDRESS"),
+        QStringLiteral("DBUS_SYSTEM_BUS_ADDRESS"),
+        QStringLiteral("PULSE_SERVER")
     };
 
     // since we have to translate between a QProcessEnvironment and a QMap<>, we cache the result
@@ -517,7 +518,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
     if (baseEnvVars.isEmpty()) {
         QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
         const auto keys = env.keys();
-        for (const auto key : keys) {
+        for (const auto &key : keys) {
             if (!key.isEmpty() && !forbiddenVars.contains(key))
                 baseEnvVars.insert(key, env.value(key));
         }
@@ -554,9 +555,11 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
     sleep(10000000);
 #endif
 
-    auto reply = iface->call(QDBus::Block, "Execute", m_id, cmdLine, m_containerPath, QString::fromLocal8Bit(m_fifoPath), venvVars);
+    auto reply = iface->call(QDBus::Block, QStringLiteral("Execute"), m_id, cmdLine,
+                             m_containerPath, QString::fromLocal8Bit(m_fifoPath), venvVars);
     if (reply.type() == QDBusMessage::ErrorMessage) {
-        qWarning() << "SoftwareContainer failed to execute application" << m_id << "in directory" << m_containerPath << "in the container:" << reply.errorMessage();
+        qWarning() << "SoftwareContainer failed to execute application" << m_id << "in directory"
+                   << m_containerPath << "in the container:" << reply.errorMessage();
         return false;
     }
 
@@ -585,7 +588,7 @@ void SoftwareContainer::kill()
     auto iface = manager()->interface();
 
     if (iface) {
-        QDBusMessage reply = iface->call(QDBus::Block, "Destroy", m_id);
+        QDBusMessage reply = iface->call(QDBus::Block, QStringLiteral("Destroy"), m_id);
         if (reply.type() == QDBusMessage::ErrorMessage) {
             qWarning() << "SoftwareContainer failed to destroy container" << reply.errorMessage();
         }

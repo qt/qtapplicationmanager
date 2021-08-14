@@ -205,7 +205,8 @@ QString Package::name() const
 QVariantMap Package::names() const
 {
     QVariantMap names;
-    for (auto it = info()->names().cbegin(); it != info()->names().cend(); ++it)
+    const auto nmap = info()->names();
+    for (auto it = nmap.cbegin(); it != nmap.cend(); ++it)
         names.insert(it.key(), it.value());
     return names;
 }
@@ -228,7 +229,8 @@ QString Package::description() const
 QVariantMap Package::descriptions() const
 {
     QVariantMap descriptions;
-    for (auto it = info()->descriptions().cbegin(); it != info()->descriptions().cend(); ++it)
+    const auto dmap = info()->descriptions();
+    for (auto it = dmap.cbegin(); it != dmap.cend(); ++it)
         descriptions.insert(it.key(), it.value());
     return descriptions;
 }

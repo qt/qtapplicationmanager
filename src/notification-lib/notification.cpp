@@ -76,7 +76,7 @@ Notification::Notification(QObject *parent, Notification::ConstructionMode mode)
     : QObject(parent)
 {
     if (mode == Dynamic)
-        componentComplete();
+        Notification::componentComplete();
 }
 
 /*!

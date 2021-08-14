@@ -1443,10 +1443,11 @@ bool PackageManager::finishedPackageInstall(const QString &id)
 
         // cleanup
         package->unblock();
-        delete package;
 
         // remove the package from the package db
         d->database->removePackageInfo(package->info());
+
+        delete package;
         break;
     }
     }

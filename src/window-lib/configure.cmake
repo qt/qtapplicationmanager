@@ -2,7 +2,7 @@
 
 #### Libraries
 
-find_package(X11)
+qt_find_package(X11)
 
 #### Tests
 

@@ -47,7 +47,9 @@ qt_feature_definition("am-external-dbus-interfaces" "AM_DISABLE_EXTERNAL_DBUS_IN
 
 qt_feature("am-tools-only" PRIVATE
     LABEL "Tools only build"
-    CONDITION INPUT_tools_only STREQUAL 'yes'
+    AUTODETECT OFF
+    ENABLE INPUT_tools_only STREQUAL 'yes'
+    DISABLE INPUT_tools_only STREQUAL 'no'
 )
 
 qt_feature("am-dltlogging" PRIVATE

@@ -35,13 +35,16 @@ qt_feature_definition("am-multi-process" "AM_MULTI_PROCESS")
 qt_feature("am-installer" PRIVATE
     LABEL "Enable the installer component"
     CONDITION QT_FEATURE_ssl
+    ENABLE INPUT_installer STREQUAL 'yes'
     DISABLE INPUT_installer STREQUAL 'no'
 )
 qt_feature_definition("am-installer" "AM_DISABLE_INSTALLER" NEGATE)
 
 qt_feature("am-external-dbus-interfaces" PRIVATE
     LABEL "Enable external DBus interfaces"
-    CONDITION NOT INPUT_external_dbus_interfaces STREQUAL 'no' AND TARGET Qt::DBus
+    CONDITION TARGET Qt::DBus
+    ENABLE INPUT_external_dbus_interfaces STREQUAL 'yes'
+    DISABLE INPUT_external_dbus_interfaces STREQUAL 'no'
 )
 qt_feature_definition("am-external-dbus-interfaces" "AM_DISABLE_EXTERNAL_DBUS_INTERFACES" NEGATE)
 
@@ -55,21 +58,26 @@ qt_feature("am-tools-only" PRIVATE
 qt_feature("am-dltlogging" PRIVATE
     LABEL "Enable logging via DLT"
     CONDITION TARGET Qt::DltLogging
+    ENABLE INPUT_dltlogging STREQUAL 'yes'
     DISABLE INPUT_dltlogging STREQUAL 'no'
 )
 qt_feature_definition("am-dltlogging" "AM_USE_DLTLOGGING")
 
 qt_feature("am-libbacktrace" PRIVATE
     LABEL "Enable support for libbacktrace"
-    CONDITION LINUX AND ( ( INPUT_libbacktrace STREQUAL 'yes' ) OR ( ( CMAKE_BUILD_TYPE STREQUAL "Debug" ) AND ( NOT INPUT_libbacktrace STREQUAL 'no' ) ) )
+    CONDITION LINUX AND ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
     EMIT_IF LINUX
+    ENABLE INPUT_libbacktrace STREQUAL 'yes'
+    DISABLE INPUT_libbacktrace STREQUAL 'no'
 )
 qt_feature_definition("am-libbacktrace" "AM_USE_LIBBACKTRACE")
 
 qt_feature("am-stackwalker" PRIVATE
     LABEL "Enable support for StackWalker"
-    CONDITION WIN32 AND ( ( INPUT_stackwalker STREQUAL 'yes' ) OR ( ( CMAKE_BUILD_TYPE STREQUAL "Debug") AND (NOT INPUT_stackwalker STREQUAL 'no' ) ) )
+    CONDITION WIN32 AND ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
     EMIT_IF WIN32
+    ENABLE INPUT_stackwalker STREQUAL 'yes'
+    DISABLE INPUT_stackwalker STREQUAL 'no'
 )
 qt_feature_definition("am-stackwalker" "AM_USE_STACKWALKER")
 

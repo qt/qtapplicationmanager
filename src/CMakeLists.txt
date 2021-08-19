@@ -44,7 +44,7 @@ if(NOT QT_FEATURE_am_tools_only)
     endif()
 endif()
 
-if(NOT CMAKE_CROSSCOMPILING OR QT_FEATURE_am_tools_only)
+if(NOT QT_FEATURE_cross_compile OR QT_FEATURE_am_tools_only)
     if (QT_FEATURE_am_installer)
         add_subdirectory(tools/packager)
     endif()

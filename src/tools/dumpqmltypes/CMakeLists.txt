@@ -19,7 +19,7 @@ qt_internal_add_tool(${target_name}
         Qt::AppManWindowPrivate
 )
 
-if(TARGET ${target_name} AND NOT CMAKE_CROSSCOMPILING)
+if(TARGET ${target_name} AND NOT QT_FEATURE_cross_compile)
     set(qml_install_dir "${INSTALL_QMLDIR}")
     qt_path_join(qml_install_dir ${QT_INSTALL_DIR} ${qml_install_dir})
 

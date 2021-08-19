@@ -17,7 +17,9 @@ qt_feature_definition("am-touch-emulation" "AM_ENABLE_TOUCH_EMULATION")
 
 qt_feature("am-widgets-support" PRIVATE PUBLIC
     LABEL "Enable support for Qt widgets"
-    CONDITION INPUT_widgets_support STREQUAL 'yes' AND TARGET Qt::Widgets
+    CONDITION TARGET Qt::Widgets
+    ENABLE INPUT_widgets_support STREQUAL 'yes'
+    DISABLE INPUT_widgets_support STREQUAL 'no'
 )
 qt_feature_definition("am-widgets-support" "AM_WIDGETS_SUPPORT")
 

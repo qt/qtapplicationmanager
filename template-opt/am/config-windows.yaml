@@ -1,8 +1,0 @@
-formatVersion: 1
-formatType: am-configuration
----
-# installations will go into the standard /opt/am hierarchy
-
-applications:
-  installationDir: "c:/cygwin/opt/am/apps"
-  documentDir: "c:/cygwin/opt/am/docs"

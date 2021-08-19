@@ -239,29 +239,19 @@ The command line output provides you the URL to the generated report.
 The runtime configuration of the application manager is done through command line switches and
 one or more configuration files.
 
-Normally, the basic configuration is done via two separate config files:
-one for target system specific setup and one for System UI specific settings. The
-default location for the system specific part is \c{/opt/am}. A standard
-setup is shipped with the application manager in the \c{template-opt} directory.
+Ideally, in a production setup, the basic configuration is done via two separate config files:
+one for target system specific setup and one for System UI specific settings. The target system
+specific one would for example have the path to installation directories and the required
+logging settings; the System UI specific one would for example have the QML import path and
+the paths to built-in apps.
 
-You can stick with the default, via the following command:
-
-\badcode
-sudo cp -r template-opt/am /opt
-sudo chown $(whoami) /opt/am -R
-\endcode
-
-Alternatively, you can copy the contents of \c{template-opt} somewhere else; be sure to
-edit the \c{config.yaml} file to reflect the changed paths.
-
-Once this is done, add a file called \c{am-config.yaml} to your System UI with UI specific
-settings. For example, the QML import path, path to built-in apps, and so on.
-
-With everything in place, you can start the application manager:
+If you have the target settings in \c /etc/target-am-config.yaml and the System UI with its
+\c am-config.yaml and \c main.qml files at \c /path/to/system-ui, you can then the
+application manager like so:
 
 \badcode
 cd /path/to/system-ui
-appman -c /opt/am/config.yaml -c am-config.yaml --verbose main.qml
+appman -c /etc/target-am-config.yaml -c am-config.yaml --verbose main.qml
 \endcode
 
 \c{--verbose} gives you verbose output, which is quite helpful when first setting up the environment

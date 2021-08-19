@@ -112,7 +112,6 @@ qt_internal_add_docs(Documentation
 )
 
 file(GLOB licenses "LICENSE.*[^~]")
-file(GLOB templateYamls "template-opt/am/*.yaml")
 
 add_custom_target("Other-Files" SOURCES
     .cmake.conf
@@ -121,7 +120,6 @@ add_custom_target("Other-Files" SOURCES
     dependencies.yaml
     sync.profile
     ${licenses}
-    ${templateYamls}
     util/bash/appman-prompt
     util/bash/README
 )

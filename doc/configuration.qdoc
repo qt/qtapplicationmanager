@@ -120,8 +120,6 @@ or across multiple config files, the final value is resolved based on these rule
             The application manager saves the result of parsing and evaluating all the
             configuration files into a cache. This cache is loaded on subsequent starts, if the
             exact set of config files is used, unchanged.
-
-            (default: \c /opt/am/config.yaml)
     \row
         \li \b --no-cache
         \li bool

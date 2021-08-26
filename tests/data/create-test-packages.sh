@@ -45,7 +45,11 @@ isMac=0
 [ "$LC_ALL" = "C" ] && { echo "WARNING: unsetting \$LC_ALL, since it is set to \"C\" (most likely by a wrapper script or QtCreator)"; unset LC_ALL; }
 
 # let the c-library resolve all the indirect settings
-eval "x$(locale | grep LC_CTYPE= | head -n1)"
+if ! command -v locale &> /dev/null; then
+  xLC_CTYPE="${LC_CTYPE:-${LC_ALL:-${LANG}}}" # no locale command available
+else
+  eval "x$(locale | grep LC_CTYPE= | head -n1)"
+fi
 
 # now check for character encoding
 case "${xLC_CTYPE}" in

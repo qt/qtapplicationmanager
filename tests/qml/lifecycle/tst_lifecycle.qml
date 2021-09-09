@@ -142,4 +142,23 @@ TestCase {
         while (app.runState !== ApplicationObject.Running)
             runStateChangedSpy.wait();
     }
+
+    function test_restart() {
+        function onRunstateChanged(id, runState) {
+            if (runState === Am.NotRunning) {
+                ApplicationManager.applicationRunStateChanged.disconnect(onRunstateChanged);
+                ApplicationManager.startApplication(id);
+            }
+        }
+        ApplicationManager.applicationRunStateChanged.connect(onRunstateChanged);
+
+        app.start();
+        while (app.runState !== ApplicationObject.Running)
+            runStateChangedSpy.wait();
+        app.stop();
+        runStateChangedSpy.wait();
+        compare(app.runState, ApplicationObject.ShuttingDown);
+        while (app.runState !== ApplicationObject.Running)
+            runStateChangedSpy.wait();
+    }
 }

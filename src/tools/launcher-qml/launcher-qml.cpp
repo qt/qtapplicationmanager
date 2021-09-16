@@ -256,7 +256,6 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
         QQmlComponent registerWindowComp(&m_engine);
         registerWindowComp.setData(QByteArray::fromRawData(registerWindowQml, sizeof(registerWindowQml) - 1), QUrl());
         QScopedPointer<QObject> dummy(registerWindowComp.create());
-        registerWindowComp.completeCreate();
     }
 
     StartupTimer::instance()->checkpoint("after window registration");

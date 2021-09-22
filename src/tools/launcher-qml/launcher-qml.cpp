@@ -460,7 +460,14 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 #endif
 
     QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
-    auto startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
+    QVector<StartupInterface *> startupPlugins;
+    try {
+        startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
+    } catch (const Exception &e) {
+        qCCritical(LogQmlRuntime) << qPrintable(e.errorString());
+        QCoreApplication::exit(2);
+        return;
+    }
     for (StartupInterface *iface : qAsConst(startupPlugins))
         iface->initialize(m_applicationInterface ? m_applicationInterface->systemProperties() : QVariantMap());
 

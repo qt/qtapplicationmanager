@@ -77,7 +77,7 @@ UnixSignalHandler::UnixSignalHandler()
 {
     // Setup alternate signal stack (to get backtrace for stack overflow)
     // Canonical size might not be suffcient to get QML backtrace, so we double it
-    constexpr size_t stackSize = SIGSTKSZ * 2;
+    size_t stackSize = SIGSTKSZ * 2;
     stack_t sigstack;
     // valgrind will report this as leaked: nothing we can do about it
     sigstack.ss_sp = malloc_valgrind_ignore(stackSize);

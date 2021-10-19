@@ -32,7 +32,7 @@
 \example applicationmanager/hello-world
 \brief Learn how to write your first System UI.
 \ingroup applicationmanager-examples
-\title "Hello World!" System UI Example
+\title System UI Example: "Hello World!"
 \image hello-world-example.png The Hello World example with two applications running.
 
 \section1 Introduction

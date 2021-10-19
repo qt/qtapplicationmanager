@@ -38,10 +38,10 @@
 This example shows you how to use intents as a basis for a launcher in a System UI.
 
 \b Prerequisites: You're already familiar with the concepts and topics introduced in the
-   \l {"Hello World!" System UI Example}. This example uses the same folder structure and can be
+   \l {System UI Example: "Hello World!"}. This example uses the same folder structure and can be
    started in the same way.
 
-Unlike the \l{"Hello World!" System UI Example}{Hello World} example, we are not using the
+Unlike the \l{System UI Example: "Hello World!"}{Hello World} example, we are not using the
 ApplicationObject abstraction layer directly to launch appliations, but instead we are using
 \c launch intents registered by the packages. This way we can have multiple icons in a launcher
 that can start the same application, triggering different functionality within the application.

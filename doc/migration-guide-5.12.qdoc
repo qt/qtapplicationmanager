@@ -155,7 +155,7 @@ WindowItem {
 }
 \endcode
 
-See the new \l{"Hello World!" System UI Example}{Hello World} and \l{Animated Windows System UI Example}{Animated Windows}
+See the new \l{System UI Example: "Hello World!"}{Hello World} and \l{Animated Windows System UI Example}{Animated Windows}
 examples for further explanations on the new way of manipulating windows in your System UI.
 
 \section2 WindowManager signals

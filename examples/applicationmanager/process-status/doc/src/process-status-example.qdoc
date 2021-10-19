@@ -39,10 +39,10 @@
 
 This example shows you how to use the \l ProcessStatus component to display information about
 an application's process. It is based on the simpler
-\l{"Hello World!" System UI Example}{Hello World}.
+\l{System UI Example: "Hello World!"}{Hello World}.
 
 \b Prerequisites: You're already familiar with the concepts and topics introduced in the
-   \l {"Hello World!" System UI Example}.
+   \l {System UI Example: "Hello World!"}.
 
 On the left, the built-in applications are listed in a column, where each application has a row
 that contains its icon and name, next to a tabbed view that shows information about the

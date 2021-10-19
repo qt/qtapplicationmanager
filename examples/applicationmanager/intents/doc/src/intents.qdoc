@@ -38,7 +38,7 @@
 \section1 Introduction
 
 This example shows how the System UI and applications can send and receive Intents. Similar to the
-\l{"Hello World!" System UI Example}, the window management aspect is kept to a minimum to focus
+\l{System UI Example: "Hello World!"}, the window management aspect is kept to a minimum to focus
 only on Intents: the 2x2 grid on the right will always show the System UI part (gray) in the
 top-left corner, while the three apps (red, green and blue) will dynamically occupy the other
 corner in the order they are started. You can see the names and icons for the available

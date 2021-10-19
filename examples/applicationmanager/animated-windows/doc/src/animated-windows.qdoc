@@ -40,9 +40,9 @@
 This example shows you how to animate windows to appear and disappear, in a System UI.
 
 \b Prerequisites: You're already familiar with the concepts and topics introduced in the
-   \l {"Hello World!" System UI Example}.
+   \l {System UI Example: "Hello World!"}.
 
-Unlike with the \l{"Hello World!" System UI Example}{Hello World} example, most Graphical User
+Unlike with the \l{System UI Example: "Hello World!"}{Hello World} example, most Graphical User
 Interfaces (GUIs) avoid making sudden, abrupt, changes as they can confuse the user and are not
 visually pleasant. So, when the WindowManager creates a new WindowObject, we want to animate its
 appearance instead of simply having it pop up on the screen. Likewise, once a WindowObject loses

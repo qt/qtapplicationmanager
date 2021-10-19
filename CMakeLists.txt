@@ -102,13 +102,19 @@ qt_build_repo()
 
 file(GLOB_RECURSE allDocFiles "doc/*.qdoc" "doc/*.png" "doc/*.qdocconf")
 
+if(QT_BUILD_ONLINE_DOCS)
+    set(DOC_CONF "doc/online/qtapplicationmanager.qdocconf")
+else()
+    set(DOC_CONF "doc/qtapplicationmanager.qdocconf")
+endif()
+
 add_custom_target(Documentation SOURCES
     doc/QtApplicationManagerDoc
     ${allDocFiles}
 )
 
 qt_internal_add_docs(Documentation
-    doc/qtapplicationmanager.qdocconf
+    ${DOC_CONF}
 )
 
 file(GLOB licenses "LICENSE.*[^~]")

@@ -5,7 +5,11 @@ version = $QT_VERSION
 
 # needed for the new clang based qdoc parser in Qt 5.11
 moduleheader = QtApplicationManagerDoc
-includepaths = -I .
+includepaths = -I.
+
+# TODO: the doc build target doesn't currently provide any Qt include paths
+# Add a relative path - might not be correct depending on Qt's build config
+includepaths += -I$QT_INSTALL_DOCS/../include
 
 # \obsolete generates broken links and/or missing docs when used for QML
 macro.qmlobsolete = "This method is obsolete. It is provided to keep old source code working. We strongly advise against using it in new code."

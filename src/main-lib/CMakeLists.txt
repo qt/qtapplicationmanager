@@ -51,6 +51,10 @@ qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_am_installer
         Qt::AppManPackagePrivate
 )
 
+qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_am_multi_process
+    PUBLIC_LIBRARIES
+        Qt::WaylandCompositor
+)
 
 qt_internal_extend_target(AppManMainPrivate CONDITION WIN32
     PUBLIC_LIBRARIES

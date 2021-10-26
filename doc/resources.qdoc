@@ -40,8 +40,8 @@ multi-process modes.
 
 \section1 Compile Resources
 
-You can add resources as \l{External Binary Resources}{external binary resources} or as
-\l{Compiled-In Resources}{compiled-in resources}; both are generated from a \c .qrc file.
+You can add resources as \l{External Resource Files}{external binary resources} or as
+\l{Resource Collection Files}{compiled-in resources}; both are generated from a \c .qrc file.
 Typically, external binary resources are stored in a file with the \c .rcc extension, whereas
 compiled-in resources are stored in libraries in the Application Manager context.
 

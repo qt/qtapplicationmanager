@@ -38,9 +38,6 @@
 #include <QtAppManCommon/global.h>
 #include <limits>
 
-#if defined(AM_MULTI_PROCESS)
-#  include <QtWaylandCompositor/QWaylandQuickSurface>
-#endif
 
 QT_BEGIN_NAMESPACE_AM
 

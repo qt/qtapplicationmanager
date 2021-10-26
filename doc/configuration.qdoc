@@ -239,7 +239,7 @@ or across multiple config files, the final value is resolved based on these rule
         \li [\c ui/resources]
         \li array<string>
         \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that
-            have resources \l{Compiled-In Resources}{compiled-in} and registers them within the
+            have resources \l{Resource Collection Files}{compiled-in} and registers them within the
             System UI process. Resources can be accessed with the ":" or "qrc://" file path prefix.
     \row
         \li [\c plugins]
@@ -597,7 +597,7 @@ an additional column specifying which runtime a configuration option applies to:
         \li qml
         \li array<string>
         \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that
-            have resources \l{Compiled-In Resources}{compiled-in} and registers them within each
+            have resources \l{Resource Collection Files}{compiled-in} and registers them within each
             QML runtime. Consequently, all running QML applications will include these resources.
             The resources can be accessed with the ":" or "qrc://" file path prefix.
     \row

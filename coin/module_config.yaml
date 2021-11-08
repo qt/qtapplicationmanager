@@ -16,7 +16,12 @@ accept_configuration:
 
 instructions:
   Build:
-    - !include "{{qt/qtbase}}/coin_module_build_template_v2.yaml"
+  - type: EnvironmentVariable
+    variableName: BUILD_DOCUMENTATION
+    variableValue: "1"
+  - type: Group
+    instructions:
+        - !include "{{qt/qtbase}}/coin_module_build_template_v2.yaml"
 
   Test:
     - type: Group

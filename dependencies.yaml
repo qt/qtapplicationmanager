@@ -8,3 +8,6 @@ dependencies:
   ../qtwayland:
     ref: 4a0f9415da79361239b0a860510836c0abd2635a
     required: false
+  ../qttools:
+    ref: afdf59fe3cac92a1212cdff00dbe96d1c29b04eb
+    required: false

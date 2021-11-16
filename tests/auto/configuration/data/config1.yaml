@@ -84,6 +84,7 @@ flags:
   noSecurity: true
   developmentMode: true
   noUiWatchdog: true
+  allowUnsignedPackages: true
 
 wayland:
   socketName: "my-wlsock-42"

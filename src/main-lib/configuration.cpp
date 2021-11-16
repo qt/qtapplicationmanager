@@ -829,6 +829,8 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                             cd->flags.developmentMode = p->parseScalar().toBool(); } },
                       { "noUiWatchdog", false, YamlParser::Scalar, [&cd](YamlParser *p) {
                             cd->flags.noUiWatchdog = p->parseScalar().toBool(); } },
+                      { "allowUnsignedPackages", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->flags.allowUnsignedPackages = p->parseScalar().toBool(); } },
                   }); } },
             { "wayland", false, YamlParser::Map, [&cd](YamlParser *p) {
                   p->parseFields({

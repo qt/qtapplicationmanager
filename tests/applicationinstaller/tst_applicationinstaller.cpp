@@ -59,7 +59,7 @@ class AllowInstallations
 {
 public:
     enum Type {
-        AllowUnsinged,
+        AllowUnsigned,
         RequireDevSigned,
         RequireStoreSigned
     };
@@ -69,7 +69,7 @@ public:
         , m_oldDevMode(PackageManager::instance()->developmentMode())
     {
         switch (t) {
-        case AllowUnsinged:
+        case AllowUnsigned:
             PackageManager::instance()->setAllowInstallationOfUnsignedPackages(true);
             PackageManager::instance()->setDevelopmentMode(false);
             break;
@@ -439,7 +439,7 @@ void tst_PackageManager::packageInstallation()
 
     AllowInstallations allow(storeSigned ? AllowInstallations::RequireStoreSigned
                                          : (devSigned ? AllowInstallations::RequireDevSigned
-                                                      : AllowInstallations::AllowUnsinged));
+                                                      : AllowInstallations::AllowUnsigned));
 
     int lastPass = (updatePackageName.isEmpty() ? 1 : 2);
     // pass 1 is the installation / pass 2 is the update (if needed)

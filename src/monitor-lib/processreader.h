@@ -84,9 +84,9 @@ private:
     bool readSmaps(const QByteArray &smapsFile, Memory &mem);
 
     QScopedPointer<SysFsReader> m_statReader;
-#endif
     QElapsedTimer m_elapsedTime;
     quint64 m_lastCpuUsage = 0.0;
+#endif
 
     qint64 m_pid = 0;
     bool m_memoryReportingEnabled = true;

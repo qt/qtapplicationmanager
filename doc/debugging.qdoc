@@ -30,7 +30,10 @@
 /*!
 
 \page debugging.html
+\ingroup qtappman
+\ingroup qtappman-highlights
 \title Logging and Debugging
+\brief The application manager installs its own message handler to format logging output neatly.
 
 \section1 Logging
 

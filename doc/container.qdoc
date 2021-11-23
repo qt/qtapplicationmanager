@@ -31,6 +31,9 @@
 
 \page containers.html
 \title Containers
+\ingroup qtappman
+\ingroup qtappman-highlights
+\brief Describes an execution environment for an executable.
 
 In the application manager context, a \b container describes an execution environment for an
 executable: either an application's binary or its runtime binary, in multi-process mode. The
@@ -97,7 +100,7 @@ in multi-process mode:
       devices. For GPUs that follow Linux standards, such as Intel, make sure to have
       \c{/dev/dri/*} available within the container.
   \li You have to implement PID mapping in your plugin; unless your container solution shares its
-      PID namespace with the rest of the ssytem. This is necessary if you want to make use of the
+      PID namespace with the rest of the system. This is necessary if you want to make use of the
       application manager's security features. Each connection coming into the application manager
       via the Wayland or D-Bus Unix local sockets is queried for the PID of the application that
       requests the connection. The application manager verifies these PIDs against the PIDs of all
@@ -165,8 +168,8 @@ plugins:
   container: [ "/full/path/to/softwarecontainers.so", "/another/plugin.so" ]
 \endcode
 
-Note that the application manager does \b not load plugins automatically if they are placed
-in a specific directory, since container plugins control the central security mechanism for
+\note The application manager does \b not load plugins automatically if they are placed
+in a specific directory. This is because container plugins control the central security mechanism for
 separating applications.
 
 \target container-integration
@@ -195,8 +198,8 @@ The \c process container accepts the following configuration settings:
     \li \c controlGroups
     \li object
     \li A two-stage mapping object to allow for more readable code when dealing with \c cgroups
-        from the System UI via Container::controlGroup. The top-level keys are readable group names
-        that are used to interface with Container::controlGroup. The values themselves are maps
+        from the System UI via Container::controlGroup. The top-level \c keys are readable group names
+        that are used to interface with Container::controlGroup. The values themselves are \c maps
         between multiple low-level \c cgroup sub-system names and the actual \c cgroup names within
         those sub-systems, such as:
 
@@ -232,7 +235,7 @@ control which container integration is used:
       preserve the order of the mappings. Each key is interpreted as a standard Unix wildcard
       expression that is matched against the application ID. The first match stops the algorithm
       and the mapping's value is used as the container integration ID. If no matches are found,
-      the resulting containter integration ID is an empty string.
+      the resulting container integration ID is an empty string.
 
     \badcode
     containers:

@@ -30,7 +30,10 @@
 /*!
 
 \page system-ui.html
+\ingroup qtappman
+\ingroup qtappman-highlights
 \title The System UI
+\brief Describes the part of a UI which starts and stops any application, on a device
 
 The System UI is the part of a UI which starts and stops any application, on a device. It's
 responsible for managing the application windows and compositing them in a specific way. For
@@ -47,13 +50,13 @@ The System UI has the following tasks:
         \li Description
     \row
         \li Compositing
-        \li Manage multiple applications' surfaces, known as windows. \br
+        \li Manages multiple applications' surfaces, known as windows. \br
             Arrange these windows on one or more physical screens, according to the required
             design. \br
             Handle window decoration, transition effects and other system-wide user experience.
     \row
         \li Communication Interface
-        \li Act as a channel to exchange information between applciations and itself, such as to
+        \li Act as a channel to exchange information between applications and itself, such as to
             switch the language.
     \row
         \li Input Handling
@@ -109,7 +112,7 @@ One example of a simple System UI is the one written for the "Hello World!" Syst
 
 \section2 Notifications
 
-In cases where you'd like to display notificiations or pop-ups, applications or clients can
+In cases where you'd like to display notifications or pop-ups, applications or clients can
 create these with \l{ApplicationInterface::createNotification()}. They are then made available
 on the System UI via the \l{NotificationManager}.
 
@@ -178,7 +181,7 @@ Below are some key practices to consider when you write a System UI:
 
 \list
     \li \b{Always test your System UI and its applications on the target as early as possible.}
-        This is especially useful because the combination of your target hardware and the
+        This is especially important because the combination of your target hardware and the
         asynchronous Wayland protocol may result in some timing constraints on some parts of
         the system. For example, when are window properties available to the System UI, after
         an application has started. These constraints are best identified as early as possible.
@@ -188,7 +191,7 @@ Below are some key practices to consider when you write a System UI:
         it's likely that a different mechanism is used on the target platform, compared to your
         development machine. Testing on the target hardware as early as possible can help to
         bring forward any issues with the sharing mechanism or side effects from other graphic
-        intense elements, such as shader effects or 3D engine integrations.
+        intense elements, such as shader effects or 3D engine integration.
     \li \b{Allow the System UI to stop applications that take up too much memory or CPU.}
         Design your system in such a way that lets the System UI stop applications when necessary,
         particularly in situations where hardware resources like memory or CPU is low. This
@@ -205,14 +208,14 @@ Below are some key practices to consider when you write a System UI:
 \list
     \li If the root element of the System UI is an Item, the application manager creates a
         QQuickWindow for it and sets the Item as its root Item.
-    \li If the root element of the System UI is a Window -- or an Item that is wrapped in a Window
-        -- the window is shown initially, regardless of the value of its \c visible property.
+    \li If the root element of the System UI is a Window, or an Item that is wrapped in a Window
+        the window is shown initially, regardless of the value of its \c visible property.
 \endlist
 
 \section1 Related Information
 
 \list
-    \li \l{Write Applications}
+    \li \l{Writing Applications}
     \li \l{QtApplicationManager.SystemUI QML module}
 \endlist
 

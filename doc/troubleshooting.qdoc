@@ -30,48 +30,48 @@
 /*!
 
 \page troubleshoot.html
-\title Troubleshoot
+\ingroup qtappman
+\ingroup qtappman-highlights
+\title Troubleshooting
+\brief Lists possible issues you may encounter while using QtApplicationManager and how to solve them.
 
 This section lists possible issues you may encounter while using QtApplicationManager and how to
 solve them.
 
 \table
     \header
-        \li Possible Issues
+        \li Possible Issues or questions.
     \row
-        \li \l{ts-01}{How do I check whether my application manager instance is running in multi-process mode?}
+        \li \l{How do I check whether my application manager instance is running in multi-process mode?}
     \row
-        \li \l{ts-02}{How do I find out why my application manager instance doesn't support multi-process mode?}
+        \li \l{How do I find out why my application manager instance doesn't support multi-process mode?}
     \row
-        \li \l{ts-03}{My applications are running slowly within the application manager. What are some possible solutions?}
+        \li \l{My applications are running slowly within the application manager. What are some possible solutions?}
     \row
-        \li \l{ts-04}{How do I find out if my applications use hardware acceleration?}
+        \li \l{How do I find out if my applications use hardware acceleration?}
     \row
-        \li \l{ts-05}{How do I enable hardware acceleration?}
+        \li \l{How do I enable hardware acceleration?}
     \row
-        \li \l{ts-06}{My applications are crashing immediately within the application manager. What are some possible solutions?}
+        \li \l{My applications are crashing immediately within the application manager. What are some possible solutions?}
 \endtable
 
-\target ts-01
-\b{How do I check whether my application manager instance is running in multi-process mode?}
+\section1 How do I check whether my application manager instance is running in multi-process mode?
 
 Start the Application manager with the \c --verbose argument and verify that you see
 \c{WindowManager: running in Wayland mode} in the output. Alternatively, start an application and
 make sure that you can see at least one \c appman-launcher-qml process running.
 
-\target ts-02
-\b{How do I find out why my application manager instance doesn't support multi-process mode?}
+\section1 How do I find out why my application manager instance doesn't support multi-process mode?
 
 Check the "Application Manager configuration", which is visible when you run the \c qmake command.
 It's possible that your configuration doesn't support the \c QtCompositor module.
 
-\target ts-03
-\b{My applications are running slowly within the application manager. What are some possible solutions?}
+\section1 My applications are running slowly within the application manager. What are some possible solutions?
 
 Verify if your applications are running with hardware acceleration.
 
-\target ts-04
-\b{How do I find out if my applications use hardware acceleration?}
+
+\section1 How do I find out if my applications use hardware acceleration?
 
 Run the \c appman, with the environment variable \c QSG_INFO=1. When you start an application, you
 should see a similar output:
@@ -94,8 +94,8 @@ If \c GL_RENDERER is \c llvmpipe, you're using software rendering for your Wayla
 \note This information is also available for the System UI itself, based on the application's ID in
 the prefix. In the example above, \c{com.pelagicore.music} is truncated to \c{c.p.music}.
 
-\target ts-05
-\b{How do I enable hardware acceleration?}
+
+\section1 How do I enable hardware acceleration?
 
 This depends on your hardware and operating system:
 
@@ -112,7 +112,7 @@ Desktop OpenGL. In Qt's configure summary, verify that you see the following lin
     OpenGL ES 2.0 ........................ yes
 \endcode
 
-You can force Qt to use Opengl ES2 by using the \c --opengl es2 configure option.
+You can force Qt to use OpenGL ES2 by using the \c --opengl es2 configure option.
 
 Additionally, you also need to make sure that the \c wayland-egl integration plugin is built. If
 the plugin built successfully, you should have the following file:
@@ -123,7 +123,7 @@ built.
 
 \target ts-06
 
-\b{My applications are crashing immediately within the application manager. What are some possible solutions?}
+\section1 My applications are crashing immediately within the application manager. What are some possible solutions?
 
 Your system setup might not allow Wayland clients to use OpenGL. In this case both the application
 manager and the QML application launcher output a critical log message if hardware accelerated
@@ -132,6 +132,7 @@ rendering is not possible for applications.
 Make sure to enable hardware acceleration.
 
 You can also force software rendering by setting the environment variable \c $QT_QUICK_BACKEND to
-\c software, but only if your applications aren't using OpenGL features (e.g. shaders) explicitly.
+\c software, but only if your applications aren't using OpenGL features explicitly.
+For example, shaders.
 
 */

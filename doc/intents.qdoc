@@ -28,7 +28,10 @@
 /*!
 
 \page intents.html
+\ingroup qtappman
+\ingroup qtappman-highlights
 \title Intents
+\brief Discusses the application manager's intent system and its API.
 
 Much like the intent concept used on mobile operating systems, the application manager's intent
 system is built around the idea of having a light weight inter-process communication (IPC)
@@ -43,21 +46,24 @@ system to display an image file: if the system has an image viewer application i
 registered itself for handling the \c showImage intent, then any application could display image
 files without knowing any specifics of the image viewer application.
 
-
 The \l{https://developer.android.com/guide/components/intents-filters}{Android documentation} also
 has a nice introduction to this concept.
 
+\section1 The Application Manager's Approach to Intents
 The application manager's approach to intents is much simpler: although it (still) lacks a few
-features compared to other solutions (e.g. support for binary data or system broadcasts), it also
-comes with a very simple and straight forward API.
+features compared to other solutions. For example, support for binary data or system broadcasts.
+However, compared to other solutions, it comes with a very simple and straight forward API.
 
 \note While mobile operating systems provide you with both the intent \b mechanism as well as a
 description of all the defined \b{intent APIs}, the application manager is only providing the
 mechanism. This is in line with the philosophy used in other modules within the application
 manager, where the System UI is responsible for defining the system's interface and behavior.
 
+\section1 Intents Terminology
+
 Here is some terminology to make it easier to understand the difference between all the IDs
 involved in an intent request:
+
 \list
 \li the \c intentId: the name or class of an intent. In complex systems it makes sense to use
     reverse-DNS notation here, e.g. \c io.qt.openUrl.
@@ -73,10 +79,12 @@ involved in an intent request:
 \endlist
 
 Arbitrary data can be attached to an intent request (see IntentClient::sendIntentRequest) and to an
-intent request reply (see IntentRequest::sendReply). Please be aware that this data needs to be
-first serialized from JavaScript objects to the underlying IPC transport and then deserialized back
-to a JavaScript object on the receiving side. Restricting the types used within the parameters and
-result object to JSON types is strongly advised.
+intent request reply (see IntentRequest::sendReply).
+
+\warning This data needs to be first serialized from JavaScript objects to the
+underlying IPC transport and then de-serialized back to a JavaScript object on
+the receiving side. Restricting the types used within the parameters and result
+object to JSON types is strongly advised.
 
 
 \section1 Registering Intents
@@ -125,7 +133,7 @@ used to track the completion and possible result value of this request.
 Within the System UI you can use exactly the same mechanism to create and track intent requests.
 
 
-\section1 Disambiguating Intent Request in the System UI
+\section1 Disambiguating an Intent Request in the System UI
 
 In case an incoming intent request could potentially be handled by more than one application, the
 application manager will reach out to the System UI to disambiguate the request and pick an

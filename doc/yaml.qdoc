@@ -30,6 +30,7 @@
 /*!
 
 \page yaml.html
+\ingroup qtappman
 \title YAML Syntax
 
 All YAML files used in the application manager are parsed using a YAML 1.1 compliant parser.

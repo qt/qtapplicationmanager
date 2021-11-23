@@ -30,10 +30,13 @@
 /*!
 
 \page howto-apps.html
-\title Write Applications
+\ingroup qtappman
+\ingroup qtappman-highlights
+\title Writing Applications
+\brief Discusses writing an application to run as a client within the application manager.
 
 Writing an application to run as a client within the application manager is similar to writing a
-stand-alone QML application, except for these three additional tasks:
+stand-alone QML application, except for these three additional tasks or limitations:
 
 \list 1
     \li If you write a QML application, make your QML scene's root element an
@@ -86,8 +89,8 @@ The integration adds an additional \c{package} target to the Makefile. You can c
 application in one of two ways:
 
 \list
-    \li call \c{make package} on the command line
-    \li add \c{make package} as an additional build step in QtCreator
+    \li Call \c{make package} on the command line.
+    \li Add \c{make package} as an additional build step in QtCreator.
 \endlist
 
 \section3 Simple QML Applications

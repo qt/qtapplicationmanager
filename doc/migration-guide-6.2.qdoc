@@ -28,9 +28,12 @@
 /*!
 
 \page migration-guide-6.2.html
+\ingroup qtappman
+\ingroup qtappman-highlights
 \title Migrating code from 5.15 to 6.2
+\brief Discusses factors for moving from the Qt 5 to Qt 6 release of the Application Manager.
 
-Qt Application Manager 6.2 added no new APIs, but switched the build system from qmake to cmake and
+Qt Application Manager 6.2 added no new APIs, but switched the build system from qmake to CMake and
 finally removed the deprecated legacy \c ApplicationInterfaceExtension IPC mechanism.
 A direct replacement for the old IPC had been added in 5.14 already in form of the new \l{Intents}
 mechanism.

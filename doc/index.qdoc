@@ -42,22 +42,8 @@ compositing window manager using the APIs that are exported from the C++ side.
 For a high-level overview, see \l{The Qt Application Manager}{Introduction to the Qt Application Manager}.
 
 \section1 Important topics
-\list
-    \li \l{Installation}
-    \li \l{Configuration}
-    \li \l{Troubleshoot}
-    \li \l{The System UI}
-    \li \l{Write Applications}
-    \li \l{Application Installer}
-    \li \l{Logging and Debugging}
-    \li \l{Containers}
-    \li \l{Intents}
-    \li \l{Use Qt Resources}
-    \li \l{Single-Process vs. Multi-Process Mode}
-    \li \l{Migrating code from 5.11 to 5.12}
-    \li \l{Migrating code from 5.13 to 5.14}
-    \li \l{Migrating code from 5.15 to 6.2}
-\endlist
+
+\annotatedlist qtappman-highlights
 
 \section1 Tools
 \annotatedlist qtappman-tools

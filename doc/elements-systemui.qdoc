@@ -31,7 +31,9 @@
 
 \page qml-sysui.html
 \title QtApplicationManager.SystemUI QML module
-\brief Qt Application Manager module for use in a System UI
+\ingroup qtappman
+\ingroup qtappman-highlights
+\brief Qt Application Manager module for use in a System UI.
 
 The QtApplicationManager.SystemUI QML module contains the components and types to use in a
 System UI.
@@ -41,7 +43,7 @@ Singleton QML types need not be declared, they are referenced by their type name
 Instantiable QML types are declared with their name followed by curly braces. These
 declarations may be nested, creating parent-child relationships between the items.
 
-Non-Instantiable QML types are return values provided to the System UI code, that allow the user
+QML types that cannot be instantiated are return values provided to the System UI code, that allow the user
 direct access to data that would otherwise only be available (partially) through the singletons'
 item models.
 

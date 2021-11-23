@@ -23,4 +23,4 @@ include($QT_INSTALL_DOCS/global/html-footer-online.qdocconf)
 HTML.nosubdirs = "false"
 HTML.outputsubdir = "applicationmanager"
 
-include(../applicationmanager-project.qdocconf)
+include(../qtapplicationmanager-project.qdocconf)

@@ -31,7 +31,9 @@
 
 \page qml-apps.html
 \title QtApplicationManager.Application QML module
-\brief Qt Application Manager module to use in applications.
+\ingroup qtappman
+\ingroup qtappman-highlights
+\brief Contains the components and types to use in an application.
 
 The QtApplicationManager.Application QML module contains the components and types to use in an
 application.

@@ -29,16 +29,20 @@
 /*!
 
 \page use-qt-resources.html
-\title Use Qt Resources
+\title Using Qt Resources
+\brief Discusses compiling, loading and accesses resources in your program's executable.
+\ingroup qtappman
+\ingroup qtappman-highlights
+
 
 \l{The Qt Resource System} lets you store files in your program's executable. In some ways,
 this feature resembles a dedicated file system, which we call \e{resource file system}. Usually,
 this file system contains QML code and other assets like images. If you use the QML compiler, the
-compiled code is always placed in the resource file system. There are a few application manager
+compiled code is always placed in the resource file system. This leads to a few application manager
 specific considerations, especially when your application needs to support both single-process and
 multi-process modes.
 
-\section1 Compile Resources
+\section1 Compiling Resources
 
 You can add resources as \l{External Resource Files}{external binary resources} or as
 \l{Resource Collection Files}{compiled-in resources}; both are generated from a \c .qrc file.
@@ -48,39 +52,40 @@ compiled-in resources are stored in libraries in the Application Manager context
 It's important to understand that each process has its own resource file system. Consequently, to
 support multi-process mode, resources must be generated separately for the System UI and for each
 application. Conversely, in single-process mode there is only one resource file system and you must
-ensure that file paths don't clash. To prevent clashes, we recommend to prefix each application
+ensure that file paths don't clash. To prevent clashes, we recommend you prefix each application
 file path with the unique application ID.
 
 Consider the following application file structure:
 
 \badcode
 apps
-|---- app1
+|---- spaceinvaders
 |     |---- main.qml
-|     |---- app1.qrc
+|     |---- spaceinvaders.qrc
 |     ...
-|---- app2
+|---- grandtheftdolphin
 |     |---- main.qml
-|     |---- app2.qrc
+|     |---- grandtheftdolphin.qrc
 |     ...
 \endcode
 
 Without a prefix, in single-process mode, the \c main.qml files would clash. To avoid this, the
-\c .qrc file for app1 should read like this:
+\c .qrc file for spaceinvaders should read like this:
 
 \badcode
 <!DOCTYPE RCC><RCC version="1.0">
-<qresource prefix="app1">
+<qresource prefix="spaceinvaders">
     <file>main.qml</file>
 </qresource>
 </RCC>
 \endcode
 
-For \c app2 the prefix should be "app2", respectively. Generally, all files contained in any
-\c .qrc file should be unique; this also includes files that the System UI uses.
+For \c grandtheftdolphin the prefix should be "grandtheftdolphin", respectively.
+Generally, all files contained in any \c .qrc file should be unique; this also
+includes files that the System UI uses.
 
 
-\section1 Load Resources
+\section1 Loading Resources
 
 In addition to the approaches described in \l{The Qt Resource System}, the Application Manager
 provides configuration options to load resources, both -- external binary resources and
@@ -109,15 +114,15 @@ multi-process mode the application resources are also loaded into the applicatio
 startup. In single-process mode, resources are loaded when the application first starts and then
 reused on subsequent invocations; they are never unloaded.
 
-\section1 Access Resources
+\section1 Accessing Resources
 
 The application manager allows for file access in the resource file system, either with the URL
 scheme (\c{qrc}) or the file name prefix (\c{:}). Both these options require an absolute file path
 in the resource file system, such as:
 
 \list
-  \li \c{qrc:/app1/main.qml} or \c{qrc:///app1/main.qml}
-  \li \c{:/app1/main.qml}
+  \li \c{qrc:/spaceinvaders/main.qml} or \c{qrc:///spaceinvaders/main.qml}
+  \li \c{:/spaceinvaders/main.qml}
 \endlist
 
 While the Qt Application Manager accepts this relaxed naming structure, the QML engine

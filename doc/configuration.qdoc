@@ -30,11 +30,13 @@
 /*!
 
 \page configuration.html
+\ingroup qtappman
+\ingroup qtappman-highlights
 \title Configuration
-
+\brief Configure the application manager through configuration (config) files and the command line.
 \section1 Main Configuration
 
-You can configure the application manager through config files and the command line. To display the
+You can configure the application manager through configuration (config) files and the command line. To display the
 currently supported command line options, run \c{appman --help}. Some of these options can also be
 set via config files that are referenced on the command line with the \c{--config-file <filename>}
 option.
@@ -75,10 +77,10 @@ or across multiple config files, the final value is resolved based on these rule
         on the command line. Values are overridden by config files, as they are loaded.
     \li Options that are specified directly via the command line always override values in any
         config file.
-    \li There is one exception: options that expect a list of values, such as \c -I or
-        \c ui/importPaths. In this case, all values, regardless of where they are specified, are
-        merged into one single, final list.
 \endlist
+\note There is one exception: options that expect a list of values, such as \c -I or
+\c ui/importPaths. In this case, all values, regardless of where they are specified, are
+merged into one single, final list.
 
 \table 100%
     \header
@@ -109,7 +111,7 @@ or across multiple config files, the final value is resolved based on these rule
             file, for example, to split the configuration cleanly, into a device specific and a
             UI specific part. All the config files' content are merged in the order in which they
             appear on the command line: keys that didn't appear in an earlier config value are
-            taken as is; duplicate keys are merged according to the following algorithm:
+            taken as is; duplicate keys are merged according to the following rules:
             \list 1
                 \li Scalar values overwrite earlier config values.
                 \li Lists are appended to the content from earlier lists.
@@ -182,7 +184,7 @@ or across multiple config files, the final value is resolved based on these rule
         \li \b --dbus
         \li string
         \li Registers the ApplicationManager, ApplicationInstaller, NotificationManager, and
-            WindowManager on the specified D-Bus: can be a full D-Bus bus specification string,
+            WindowManager on the specified D-Bus. This can be a full D-Bus bus specification string,
             \c session, \c system, \c auto (default), or \c none (for no registration at all).
 
             Use the \c auto keyword on the desktop or during development only. This keyword implies
@@ -195,8 +197,6 @@ or across multiple config files, the final value is resolved based on these rule
             keeping the NotificationManager on the session bus. See the more advanced config-file
             option\c dbus below.
 
-            \note As of Qt 5.13, the new \c auto keyword replaces the old \c --start-session-dbus
-                  flag.
     \row
         \li [\c dbus]
         \li map<object>

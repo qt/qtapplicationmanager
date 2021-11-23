@@ -30,7 +30,11 @@
 /*!
 
 \page installer.html
+\ingroup qtappman
+\ingroup qtappman-highlights
+\ingroup qtappman-tools
 \title Package Installer
+\brief Discusses the installer tool which dynamically installs, updates and removes packages.
 \keyword Installer
 
 \section1 Dynamically Installing, Updating, and Removing Packages
@@ -39,8 +43,8 @@ After applications have been packaged by the \l {Packager}{\c appman-packager} t
 installed by the application manager at runtime. There are two interfaces for this functionality:
 
 \list
-    \li a QML interface for use within the application manager process
-    \li a D-Bus interface for use by any process that is allowed to talk to the application
+    \li A QML interface for use within the application manager process.
+    \li A D-Bus interface for use by any process that is allowed to talk to the application
         manager's \c PackageManager interface.
 \endlist
 
@@ -91,7 +95,7 @@ that you need two Certificate Authorities (CAs):
       in P12 format. The developers use these certificates to developer-sign their packages, using
       the \l {Packager}, before submitting to an app store.
   \li An \e {App-Store CA}: responsible for creating certificates for use by app store server
-      backends to store-sign packages, before they are downloaded and installed onto devices.
+      back ends to store-sign packages, before they are downloaded and installed onto devices.
 \endlist
 
 Both these CAs can be the same or they can be derived from a common root CA.

@@ -30,11 +30,14 @@
 /*!
 
 \page introduction.html
+\ingroup qtappman
+\ingroup qtappman-highlights
 \title The Qt Application Manager
+\brief Provides an introduction and overview of Qt Application Manager.
 
-The Qt Application Manager is a daemon that helps you to create embedded Linux systems that
-have a highly complex UI setup, which you can optionally split into a multi-process setup to
-increase flexibility and stability.
+The Qt Application Manager is a headless daemon that helps you to create embedded
+Linux systems with a highly complex UI setup, which you can optionally split into
+a multi-process setup to increase flexibility and stability.
 
 \image  qt-application-manager.png
 \caption Qt Application Manager Architecture

@@ -99,7 +99,9 @@ private:
     QString m_iconThemeName;
     QStringList m_iconThemeSearchPaths;
     QVariant m_useAMConsoleLogger;
+#if defined(QT_WAYLANDCLIENT_LIB)
     WaylandQtAMClientExtension *m_waylandExtension = nullptr;
+#endif
 };
 
 QT_END_NAMESPACE_AM

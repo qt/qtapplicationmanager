@@ -63,7 +63,12 @@ function(qt6_am_add_systemui_wrapper target)
 
     configure_file(${_AM_MACROS_LOCATION}/wrapper.cpp.in main.cpp)
 
-    qt_internal_collect_command_environment(test_env_path test_env_plugin_path)
+    if (COMMAND qt_internal_collect_command_environment)
+        qt_internal_collect_command_environment(test_env_path test_env_plugin_path)
+    else()
+        set(test_env_path "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}")
+        set(test_env_plugin_path "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}")
+    endif()
 
     if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
         set(WRAPPER_SUFFIX ".bat")

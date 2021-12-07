@@ -61,7 +61,7 @@ function(qt6_am_add_systemui_wrapper target)
     string(JOIN " " CMD_ARGS_STR ${CMD_ARGS})
     string(JOIN " " CMD_EXTRA_ARGS_STR ${ARG_EXTRA_ARGS})
 
-    configure_file(${_AM_MACROS_LOCATION}/wrapper.cpp.in main.cpp)
+    configure_file(${_AM_MACROS_LOCATION}/wrapper.cpp.in wrapper.cpp)
 
     if (COMMAND qt_internal_collect_command_environment)
         qt_internal_collect_command_environment(test_env_path test_env_plugin_path)
@@ -97,7 +97,7 @@ exec $<TARGET_FILE_NAME:${ARG_EXECUTABLE}> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR}
 
 
     add_executable(${target}
-        ${CMAKE_CURRENT_BINARY_DIR}/main.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/wrapper.cpp
         # Add all files we copy to the build folder as sources to the main executable
         # This makes all files show up in the IDE
         ${ALL_EXTRA_FILES}

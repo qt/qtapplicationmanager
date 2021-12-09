@@ -85,3 +85,11 @@ qhp.QtApplicationManager.subprojects.qmltypes.sortPages = true
 
 navigation.landingpage = "Qt Application Manager"
 buildversion = "Qt Application Manager $QT_VERSION"
+
+manifestmeta.filters                    =  appman applicationmanager qtapplicationmanager
+manifestmeta.appman.names               = *
+manifestmeta.appman.tags                = appman
+manifestmeta.applicationmanager.names   = *
+manifestmeta.applicationmanager.tags    = applicationmanager
+manifestmeta.qtapplicationmanager.names = *
+manifestmeta.qtapplicationmanager.tags  = qtapplicationmanager

@@ -138,7 +138,7 @@ TestCase {
                     {tag: "custom-error", intentId: "custom-error", appId: "intents1", succeeding: false,
                         errorMessage: "custom error" },
                     {tag: "cannot-start", intentId: "cannot-start-intent", appId: "cannot-start", succeeding: false,
-                        errorMessage: /Starting handler application timed out after .*/ },
+                        errorMessage: /Starting handler application timed out after .*/, isTimeout: true },
                 ];
     }
 
@@ -154,7 +154,10 @@ TestCase {
         var req = IntentClient.sendIntentRequest(data.intentId, data.appId, params)
         verify(req)
         requestSpy.target = req
-        tryCompare(requestSpy, "count", 1, 1000)
+        let requestTimeout = 1000
+        if (data.isTimeout)
+            requestTimeout *= 10
+        tryCompare(requestSpy, "count", 1, requestTimeout)
         compare(req.succeeded, data.succeeding)
         if (req.succeeded) {
             compare(req.result, { "from": data.appId, "in": params })

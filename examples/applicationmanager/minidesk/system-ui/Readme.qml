@@ -83,7 +83,6 @@ Item {
                   "\u2022 Stop or restart App1 animations with a click\n" +
                   "\u2022 App1 sends rotation angle as a window property to System UI on stop\n" +
                   "\u2022 App1 shows a pop-up on the System UI while it is paused\n" +
-                  "\u2022 App2 makes use of an IPC extension when it starts\n" +
                   "\u2022 App2 logs the document URL that started it\n" +
                   "\u2022 App2 triggers a notification in the System UI when the bulb icon is clicked\n" +
                   "\u2022 Show Wayland client windows that originate from processes outside of appman"

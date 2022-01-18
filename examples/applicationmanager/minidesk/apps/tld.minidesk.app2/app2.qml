@@ -70,7 +70,9 @@ ApplicationManagerWindow {
         }
     }
 
-    onWindowPropertyChanged: console.log("App2: onWindowPropertyChanged - " + name + ": " + value);
+    onWindowPropertyChanged: (window, name, value) => {
+        console.log("App2: onWindowPropertyChanged - " + name + ": " + value);
+    }
 
     Connections {
         target: ApplicationInterface

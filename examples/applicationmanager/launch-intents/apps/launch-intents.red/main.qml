@@ -68,7 +68,7 @@ ApplicationManagerWindow {
 
     IntentHandler {
         intentIds: [ "launch", "another-launch" ]
-        onRequestReceived: {
+        onRequestReceived: (request) => {
             if (request.intentId === "launch")
                 txt.counter++
             else

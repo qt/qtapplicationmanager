@@ -17,6 +17,7 @@ set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/application-fe
 find_package(Qt6 COMPONENTS Core)
 find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS Widgets)
+find_package(Qt6 COMPONENTS AppManLauncherPrivate)
 
 qt_add_executable(widgets
     main.cpp
@@ -24,12 +25,12 @@ qt_add_executable(widgets
 set_target_properties(widgets PROPERTIES
     WIN32_EXECUTABLE TRUE
     MACOSX_BUNDLE TRUE
+    RUNTIME_OUTPUT_DIRECTORY ../../apps/widgets
 )
 target_link_libraries(widgets PUBLIC
     Qt::Core
     Qt::Gui
     Qt::Widgets
-    Qt::AppManCommonPrivate
     Qt::AppManLauncherPrivate
 )
 

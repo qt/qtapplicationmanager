@@ -65,7 +65,7 @@ ApplicationManagerWindow {
 
     IntentHandler {
         intentIds: [ "launch" ]
-        onRequestReceived: {
+        onRequestReceived: (request) => {
             txt.counter++
             request.sendReply({})
         }

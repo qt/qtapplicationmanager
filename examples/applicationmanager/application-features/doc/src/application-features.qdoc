@@ -64,7 +64,7 @@ variable appropriately.
 To start a client with this environment variable set via command line:
 
 \badcode
-WAYLAND_DISPLAY=qtam-wayland-nested qmlscene client.qml -platform wayland
+WAYLAND_DISPLAY=qtam-wayland-nested qml client.qml -platform wayland
 \endcode
 
 This command only works in multi-process mode, since the nested compositor needs a real window as

@@ -103,7 +103,7 @@ Item {
             height: parent.height / 2
             title: "System UI"
 
-            onRequest: {
+            onRequest: (intentId, applicationId, parameters) => {
                 var request = IntentClient.sendIntentRequest(intentId, applicationId, parameters)
                 request.onReplyReceived.connect(function() {
                     sysui_page.setResult(request.requestId, request.succeeded,
@@ -121,7 +121,7 @@ Item {
                 names: { "en": "Rotate System UI" }
                 visibility: IntentObject.Public
 
-                onRequestReceived: {
+                onRequestReceived: (request) => {
                     rotationAnimation.start()
                     request.sendReply({ "wasRequestedBy": request.requestingApplicationId })
                 }

@@ -65,7 +65,7 @@ ApplicationManagerWindow {
         title: ApplicationInterface.name["en"]
 
         //! [Send Intent]
-        onRequest: {
+        onRequest: (intentId, applicationId, parameters) => {
             var request = IntentClient.sendIntentRequest(intentId, applicationId, parameters)
             request.onReplyReceived.connect(function() {
                 intentPage.setResult(request.requestId, request.succeeded,
@@ -107,7 +107,7 @@ ApplicationManagerWindow {
     //! [Intent Handler]
     IntentHandler {
         intentIds: "rotate-window"
-        onRequestReceived: {
+        onRequestReceived: (request) => {
             rotationAnimation.start()
             request.sendReply({ "done": true })
         }
@@ -116,7 +116,7 @@ ApplicationManagerWindow {
 
     IntentHandler {
         intentIds: "scale-window"
-        onRequestReceived: {
+        onRequestReceived: (request) => {
             scaleAnimation.start()
             request.sendReply({ "done": true })
         }
@@ -124,7 +124,7 @@ ApplicationManagerWindow {
 
     IntentHandler {
         intentIds: "blink-window"
-        onRequestReceived: {
+        onRequestReceived: (request) => {
             blinkAnimation.start()
             request.sendReply({ "done": true })
         }
@@ -132,7 +132,7 @@ ApplicationManagerWindow {
 
     IntentHandler {
         intentIds: "blue-window-private"
-        onRequestReceived: {
+        onRequestReceived: (request) => {
             blueAnimation.start()
             request.sendReply({ "done": true })
         }

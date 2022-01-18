@@ -69,7 +69,7 @@ ApplicationManagerWindow {
         textFormat: Text.RichText
         text: "This Wayland<sup>*</sup> client window implements a Wayland compositor (nested compositor). " +
               "To display Wayland clients here, set:<br><br><b>WAYLAND_DISPLAY=qtam-wayland-nested</b>" +
-              "<br><br>For instance:<br>WAYLAND_DISPLAY=qtam-wayland-nested qmlscene client.qml -platform wayland" +
+              "<br><br>For instance:<br>WAYLAND_DISPLAY=qtam-wayland-nested qml client.qml -platform wayland" +
               "<br><br><small>* in multi-process mode</small>"
     }
 
@@ -82,11 +82,11 @@ ApplicationManagerWindow {
         }
 
         WlShell {
-            onWlShellSurfaceCreated: shellSurfaces.append({shellSurface: shellSurface});
+            onWlShellSurfaceCreated: (shellSurface) => shellSurfaces.append({shellSurface: shellSurface});
         }
 
         XdgShell {
-            onToplevelCreated: shellSurfaces.append({shellSurface: xdgSurface});
+            onToplevelCreated: (toplevel, xdgSurface) => shellSurfaces.append({shellSurface: xdgSurface});
         }
     }
 
@@ -100,5 +100,5 @@ ApplicationManagerWindow {
 
     Component.onCompleted: console.info("Start a client application in the nested compositor for instance with:\n  " +
                                         "WAYLAND_DISPLAY=qtam-wayland-nested QT_WAYLAND_DISABLE_WINDOWDECORATION=1 " +
-                                        "QT_WAYLAND_SHELL_INTEGRATION=xdg-shell qmlscene client.qml -platform wayland");
+                                        "QT_WAYLAND_SHELL_INTEGRATION=xdg-shell qml client.qml -platform wayland");
 }

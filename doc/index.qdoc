@@ -84,6 +84,6 @@ under commercial licenses, and in addition under the \l{BSD 3-clause "New" or "R
 Furthermore Qt ApplicationManager potentially contains third party modules under following
 permissive licenses:
 
-\generatelist{groupsbymodule attributions-applicationmanager}
+\generatelist{groupsbymodule attributions-qtapplicationmanager}
 
 */

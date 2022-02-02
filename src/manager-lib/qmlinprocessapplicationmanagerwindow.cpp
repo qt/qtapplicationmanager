@@ -46,6 +46,7 @@ QmlInProcessApplicationManagerWindow::QmlInProcessApplicationManagerWindow(QObje
     , m_surfaceItem(new InProcessSurfaceItem)
 {
     m_surfaceItem->setInProcessApplicationManagerWindow(this);
+    m_surfaceItem->setColor(QColorConstants::White);
 
     connect(m_surfaceItem.data(), &QQuickItem::widthChanged,
             this, &QmlInProcessApplicationManagerWindow::widthChanged);

@@ -146,7 +146,7 @@
     \row
         \li \c categories
         \li list<string>
-        \li The categories this application is registered for via its meta-data file (currently work in progress).
+        \li The categories this application is registered for via its meta-data file.
 
     \row
         \li \c version

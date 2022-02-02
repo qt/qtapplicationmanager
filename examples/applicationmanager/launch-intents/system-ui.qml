@@ -58,7 +58,7 @@ Item {
 
     IntentModel {
         id: intentModel
-        filterFunction: function(i) { return i.categories.contains("launcher") }
+        filterFunction: function(i) { return i.categories.includes("launcher") }
         sortFunction: function(li, ri) { return li.name > ri.name }
     }
 

@@ -307,8 +307,8 @@ bool NativeRuntime::start()
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
     }
 
-    for (QMapIterator<QString, QVariant> it(configuration().value(qSL("environmentVariables")).toMap()); it.hasNext(); ) {
-        it.next();
+    const auto envVars = configuration().value(qSL("environmentVariables")).toMap();
+    for (auto it = envVars.cbegin(); it != envVars.cend(); ++it) {
         if (!it.key().isEmpty())
             env.insert(it.key(), it.value().toString());
     }
@@ -321,8 +321,7 @@ bool NativeRuntime::start()
                 qCWarning(LogSystem) << "Due to enabled security checks, the environmentVariables for"
                                      << m_app->id() << "(given in info.yaml) will be ignored";
             } else {
-                for (QMapIterator<QString, QVariant> it(envVars); it.hasNext(); ) {
-                    it.next();
+                for (auto it = envVars.cbegin(); it != envVars.cend(); ++it) {
                     if (!it.key().isEmpty())
                         env.insert(it.key(), it.value().toString());
                 }

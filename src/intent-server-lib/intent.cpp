@@ -166,9 +166,7 @@ QString Intent::applicationId() const
 
 bool Intent::checkParameterMatch(const QVariantMap &parameters) const
 {
-    QMapIterator<QString, QVariant> rit(m_parameterMatch);
-    while (rit.hasNext()) {
-        rit.next();
+    for (auto rit = m_parameterMatch.cbegin(); rit != m_parameterMatch.cend(); ++rit) {
         const QString &paramName = rit.key();
         auto pit = parameters.find(paramName);
         if (pit == parameters.cend())

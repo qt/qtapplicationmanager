@@ -205,11 +205,10 @@ void QmlInProcessApplicationManagerWindow::componentComplete()
             m_attachedCompleteHandlers.removeAll(a);
 
             if (m_attachedCompleteHandlers.isEmpty()) {
-                QMutableVectorIterator<QmlInProcessApplicationManagerWindow *> iter(s_inCompleteWindows);
-                while (iter.hasNext()) {
-                    QmlInProcessApplicationManagerWindow *win = iter.next();
+                for (auto it = s_inCompleteWindows.cbegin(); it != s_inCompleteWindows.cend(); ) {
+                    QmlInProcessApplicationManagerWindow *win = *it;
                     if (win->m_attachedCompleteHandlers.isEmpty()) {
-                        iter.remove();
+                        it = s_inCompleteWindows.erase(it);
                         win->notifyRuntimeAboutSurface();
                     } else {
                         break;

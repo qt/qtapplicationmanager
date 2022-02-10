@@ -138,8 +138,9 @@ if (QT_FEATURE_system_zlib)
 else()
     qt_internal_extend_target(BundledLibArchive
         LIBRARIES
-            Qt::Core
             Qt::ZlibPrivate
+        PUBLIC_LIBRARIES
+            Qt::Core
     )
 endif()
 

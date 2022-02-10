@@ -39,9 +39,10 @@ if(QT_FEATURE_am_multi_process)
             waylandcompositor.cpp waylandcompositor.h
             waylandqtamserverextension.cpp waylandqtamserverextension_p.h
             waylandwindow.cpp waylandwindow.h
+        LIBRARIES
+            Qt::WaylandCompositorPrivate
         PUBLIC_LIBRARIES
             Qt::WaylandCompositor
-            Qt::WaylandCompositorPrivate
     )
 endif()
 
@@ -50,6 +51,7 @@ qt_internal_extend_target(AppManWindowPrivate CONDITION QT_FEATURE_am_touch_emul
         touchemulation_x11.cpp touchemulation_x11_p.h
     LIBRARIES
         Qt::GuiPrivate
+    PUBLIC_LIBRARIES
         Qt::Test
         X11::Xi
 )

@@ -169,6 +169,12 @@
     \endlist
 */
 /*!
+    \qmlproperty Package ApplicationObject::package
+    \readonly
+
+    Returns the Package object that contains this application.
+*/
+/*!
     \qmlsignal ApplicationObject::activated()
 
     This signal is emitted when the application is started or when it's already running but has

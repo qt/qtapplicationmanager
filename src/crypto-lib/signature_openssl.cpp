@@ -121,10 +121,6 @@ public:
 QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
                                     const QByteArray &signingCertificatePassword) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    // Although OpenSSL could, the macOS Security Framework cannot process empty detached data
-    if (hash.isEmpty())
-        throw OpenSslException("cannot sign an empty hash value");
-
     OpenSslPointer<BIO> bioPkcs12(am_BIO_new_mem_buf(signingCertificatePkcs12.constData(), signingCertificatePkcs12.size()));
     if (!bioPkcs12)
         throw OpenSslException("Could not create BIO buffer for PKCS#12 data");

@@ -71,6 +71,11 @@ QByteArray Signature::create(const QByteArray &signingCertificatePkcs12, const Q
 {
     d->error.clear();
     try {
+        // Although OpenSSL could, the macOS Security Framework (pre macOS 12) cannot
+        // process empty detached data. So we better just not support it at all.
+        if (d->hash.isEmpty())
+            throw Exception("cannot sign an empty hash value");
+
         QByteArray sig = d->create(signingCertificatePkcs12, signingCertificatePassword);
 //        // very useful while debugging
 //        QFile f(QDir::home().absoluteFilePath("sig.der"));

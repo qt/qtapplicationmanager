@@ -66,6 +66,8 @@ public:
     }
 };
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
                                     const QByteArray &signingCertificatePassword) Q_DECL_NOEXCEPT_EXPR(false)
@@ -82,11 +84,8 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
         QCFString importPassword = QString::fromUtf8(signingCertificatePassword);
         QByteArray keyChainPassword = Cryptography::generateRandomBytes(16);
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         // tempnam() is the best thing we can use here, since we cannot supply a file handle
         if ((err = SecKeychainCreate(tempnam(0, 0), 16, keyChainPassword, false, nullptr, &localKeyChain)))
-#pragma clang diagnostic pop
             throw SecurityException(err, "could not create local key-chain");
 
         const void *optionKeys[] = { kSecImportExportPassphrase, kSecImportExportKeychain };
@@ -200,5 +199,7 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
 
     return true;
 }
+
+#pragma clang diagnostic pop
 
 QT_END_NAMESPACE_AM

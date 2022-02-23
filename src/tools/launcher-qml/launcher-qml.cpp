@@ -169,6 +169,8 @@ int main(int argc, char *argv[])
         launcher.setupIconTheme(launcher.iconThemeSearchPaths(), launcher.iconThemeName());
         launcher.registerWaylandExtensions();
 
+        Logging::setDltLongMessageBehavior(launcher.dltLongMessageBehavior());
+
         StartupTimer::instance()->checkpoint("after basic initialization");
 
         if (!directLoadManifest.isEmpty()) {

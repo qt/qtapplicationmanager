@@ -96,6 +96,7 @@ struct ConfigurationData
         struct {
             QString id;
             QString description;
+            QString longMessageBehavior;
         } dlt;
         QStringList rules;
         QString messagePattern;

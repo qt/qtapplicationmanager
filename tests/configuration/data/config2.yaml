@@ -31,6 +31,7 @@ logging:
   dlt:
     id: 'dltid2'
     description: 'dltdesc2'
+    longMessageBehavior: 'truncate'
   rules: lr3
   messagePattern: 'msgPattern2'
   useAMConsoleLogger: 'auto'

@@ -73,6 +73,7 @@ public:
     QVariantMap systemProperties() const;
     QStringList loggingRules() const;
     QVariant useAMConsoleLogger() const;
+    QString dltLongMessageBehavior() const;
 
     QString p2pDBusName() const;
     QString notificationDBusName() const;
@@ -110,6 +111,7 @@ private:
     QString m_iconThemeName;
     QStringList m_iconThemeSearchPaths;
     QVariant m_useAMConsoleLogger;
+    QString m_dltLongMessageBehavior;
     WaylandQtAMClientExtension *m_waylandExtension = nullptr;
 };
 

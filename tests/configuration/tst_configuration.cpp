@@ -189,6 +189,7 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.enableTouchEmulation(), true);
     QCOMPARE(c.dltId(), qSL("dltid"));
     QCOMPARE(c.dltDescription(), qSL("dltdesc"));
+    QCOMPARE(c.dltLongMessageBehavior(), qSL("split"));
     QCOMPARE(c.resources(), QStringList({ qSL("r1"), qSL("r2") }));
 
     QCOMPARE(c.openGLConfiguration(), QVariantMap
@@ -319,6 +320,7 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.enableTouchEmulation(), true);
     QCOMPARE(c.dltId(), qSL("dltid2"));
     QCOMPARE(c.dltDescription(), qSL("dltdesc2"));
+    QCOMPARE(c.dltLongMessageBehavior(), qSL("truncate"));
     QCOMPARE(c.resources(), QStringList({ qSL("r1"), qSL("r2"), qSL("r3") }));
 
     QCOMPARE(c.openGLConfiguration(), QVariantMap

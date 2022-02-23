@@ -823,7 +823,10 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 
     if (!app && ApplicationManager::instance()->securityChecksEnabled()) {
         qCCritical(LogGraphics) << "SECURITY ALERT: an unknown application with pid" << processId
-                                << "tried to map a Wayland surface!";
+                                << "tried to map a Wayland surface!"
+                                << "\n  You can disable this check by using the commandline option "
+                                   "'--no-security' or by adding 'flags/noSecurity: yes' to the "
+                                   "configuration.";
         return;
     }
 

@@ -82,6 +82,18 @@ or across multiple config files, the final value is resolved based on these rule
 \c ui/importPaths. In this case, all values, regardless of where they are specified, are
 merged into one single, final list.
 
+A very minimalistic \c am-config.yaml example would be something like this, which defines the
+main qml entry point and two import paths:
+
+\badcode
+formatVersion: 1
+formatType: am-configuration
+---
+ui:
+  mainQml: "${CONFIG_PWD}/main.qml"
+  importPaths: [ "${CONFIG_PWD}/imports/shared", "${CONFIG_PWD}/imports/sysui" ]
+\endcode
+
 \table 100%
     \header
         \li Command Line \br [\c {Config Key}]
@@ -428,8 +440,8 @@ merged into one single, final list.
             \br [\c wayland/socketName]
         \li string
         \li A filesystem name for the Wayland socket that should be used when creating the
-            compositor component. (default: auto-detected by \c libwayland-server, most likely
-            \c wayland-0)
+            compositor component. (default: auto-detected by the application manager, most likely
+            \c qtam-wayland-0)
             \note You can only specify the name here, but not a path: Wayland will always create
                   this socket in \c{$XDG_RUNTIME_DIR}. The compositor will fail to start if this
                   directory is not writable or if the environment variable is not even set in the

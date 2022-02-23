@@ -204,6 +204,7 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupQmlDebugging(cfg->qmlDebugging());
     if (!cfg->dltId().isEmpty() || !cfg->dltDescription().isEmpty())
         Logging::setSystemUiDltId(cfg->dltId().toLocal8Bit(), cfg->dltDescription().toLocal8Bit());
+    Logging::setDltLongMessageBehavior(cfg->dltLongMessageBehavior());
     Logging::registerUnregisteredDltContexts();
     setupLogging(cfg->verbose(), cfg->loggingRules(), cfg->messagePattern(), cfg->useAMConsoleLogger());
 

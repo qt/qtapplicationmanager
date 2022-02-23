@@ -386,7 +386,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 5;
+const quint32 ConfigurationData::DataStreamVersion = 6;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -409,6 +409,7 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->plugins.container
        >> cd->logging.dlt.id
        >> cd->logging.dlt.description
+       >> cd->logging.dlt.longMessageBehavior
        >> cd->logging.rules
        >> cd->logging.messagePattern
        >> cd->logging.useAMConsoleLogger
@@ -471,6 +472,7 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << plugins.container
        << logging.dlt.id
        << logging.dlt.description
+       << logging.dlt.longMessageBehavior
        << logging.rules
        << logging.messagePattern
        << logging.useAMConsoleLogger
@@ -570,6 +572,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(plugins.container);
     MERGE_FIELD(logging.dlt.id);
     MERGE_FIELD(logging.dlt.description);
+    MERGE_FIELD(logging.dlt.longMessageBehavior);
     MERGE_FIELD(logging.rules);
     MERGE_FIELD(logging.messagePattern);
     MERGE_FIELD(logging.useAMConsoleLogger);
@@ -726,7 +729,17 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                                 { "id", false, YamlParser::Scalar, [&cd](YamlParser *p) {
                                       cd->logging.dlt.id = p->parseScalar().toString(); } },
                                 { "description", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->logging.dlt.description = p->parseScalar().toString(); } }
+                                      cd->logging.dlt.description = p->parseScalar().toString(); } },
+                                { "longMessageBehavior", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                                      static const QStringList validValues {
+                                          qL1S("split"), qL1S("truncate"), qL1S("pass")
+                                      };
+                                      QString s = p->parseScalar().toString().trimmed();
+                                      if (!s.isEmpty() && !validValues.contains(s)) {
+                                          throw YamlParserException(p, "dlt.longMessageBehavior needs to be one of %1").arg(validValues);
+                                      }
+                                      cd->logging.dlt.longMessageBehavior = s;
+                                  } }
                             }); } }
                   }); } },
             { "installer", false, YamlParser::Map, [&cd](YamlParser *p) {
@@ -1147,6 +1160,11 @@ QString Configuration::dltId() const
 QString Configuration::dltDescription() const
 {
     return value<QString>(nullptr, m_data->logging.dlt.description);
+}
+
+QString Configuration::dltLongMessageBehavior() const
+{
+    return value<QString>(nullptr, m_data->logging.dlt.longMessageBehavior);
 }
 
 QStringList Configuration::resources() const

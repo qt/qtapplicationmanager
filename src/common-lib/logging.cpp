@@ -192,6 +192,7 @@ QStringList Logging::s_rules;
 QtMessageHandler Logging::s_defaultQtHandler = nullptr;
 QByteArray Logging::s_applicationId = QByteArray();
 QVariant Logging::s_useAMConsoleLoggerConfig = QVariant();
+QString Logging::s_dltLongMessageBehavior = QString();
 QMutex Logging::s_deferredMessagesMutex;
 
 static std::vector<DeferredMessage> s_deferredMessages;
@@ -522,6 +523,29 @@ void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &
 #else
     Q_UNUSED(dltAppId)
     Q_UNUSED(dltAppDescription)
+#endif
+}
+
+QString Logging::dltLongMessageBehavior()
+{
+    return s_dltLongMessageBehavior;
+}
+
+void Logging::setDltLongMessageBehavior(const QString &behaviorString)
+{
+    if (!s_dltEnabled)
+        return;
+
+    s_dltLongMessageBehavior = behaviorString;
+
+#if defined(AM_USE_DLTLOGGING)
+    QDltRegistration::LongMessageBehavior behavior = QDltRegistration::LongMessageBehavior::Truncate;
+    if (behaviorString == qL1S("split"))
+        behavior = QDltRegistration::LongMessageBehavior::Split;
+    else if (behaviorString == qL1S("pass"))
+        behavior = QDltRegistration::LongMessageBehavior::Pass;
+
+    globalDltRegistration()->setLongMessageBehavior(behavior);
 #endif
 }
 

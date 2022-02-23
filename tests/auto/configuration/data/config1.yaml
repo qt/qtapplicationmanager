@@ -26,6 +26,7 @@ logging:
   dlt:
     id: 'dltid'
     description: 'dltdesc'
+    longMessageBehavior: 'split'
   rules: [ lr1, lr2 ]
   messagePattern: 'msgPattern'
   useAMConsoleLogger: true

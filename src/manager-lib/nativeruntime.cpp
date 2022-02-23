@@ -262,6 +262,9 @@ bool NativeRuntime::start()
         { qSL("useAMConsoleLogger"), Logging::useAMConsoleLogger() }
     };
 
+    if (Logging::isDltEnabled())
+        loggingConfig.insert(qSL("dltLongMessageBehavior"), Logging::dltLongMessageBehavior());
+
     QVariantMap uiConfig;
     if (m_slowAnimations)
         uiConfig.insert(qSL("slowAnimations"), true);

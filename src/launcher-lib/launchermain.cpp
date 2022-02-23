@@ -116,6 +116,11 @@ QVariant LauncherMain::useAMConsoleLogger() const
     return m_useAMConsoleLogger;
 }
 
+QString LauncherMain::dltLongMessageBehavior() const
+{
+    return m_dltLongMessageBehavior;
+}
+
 QString LauncherMain::p2pDBusName() const
 {
     return qSL("am");
@@ -204,6 +209,7 @@ void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCE
     QVariantMap loggingConfig = m_configuration.value(qSL("logging")).toMap();
     m_loggingRules = variantToStringList(loggingConfig.value(qSL("rules")));
     m_useAMConsoleLogger = loggingConfig.value(qSL("useAMConsoleLogger"));
+    m_dltLongMessageBehavior = loggingConfig.value(qSL("dltLongMessageBehavior")).toString();
 
     QVariantMap dbusConfig = m_configuration.value(qSL("dbus")).toMap();
     m_dbusAddressP2P = dbusConfig.value(qSL("p2p")).toString();

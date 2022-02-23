@@ -374,6 +374,14 @@ merged into one single, final list.
             augment the short DLT application ID with a more verbose definition.
             \note A default description is used until this configuration option has been applied.
     \row
+        \li [\c logging/dlt/longMessageBehavior]
+        \li string
+        \li Configures how very long messages (more than ~1000 characters) should be handled when
+            using automotive DLT. The default behavior is to truncate the message to the maximum
+            possible size. Other options are \c split to cut the message into several smaller
+            messages, \c pass to forward it as-is to DLT or \c truncate to explicitly request the
+            default behvior.
+    \row
         \li \b --no-dlt-logging
         \li bool
         \li Disables logging using automotive DLT. This option is especially useful when no

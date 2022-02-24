@@ -1,9 +1,11 @@
-requires(linux|android|macos|ios|win32:!winrt)
+requires(linux|android|macos:!arm64|ios|win32:!winrt)
 !versionAtLeast(QT_VERSION, 5.15.0) {
     log("$$escape_expand(\\n\\n) *** The QtApplicationManager module needs to be built against Qt 5.15.0+ ***$$escape_expand(\\n\\n)")
     CONFIG += Qt_version_needs_to_be_at_least_5_15_0
 }
 requires(!Qt_version_needs_to_be_at_least_5_15_0)
+contains(QMAKE_APPLE_DEVICE_ARCHS, "arm64"): CONFIG += no_support_for_macos_arm64
+requires(!no_support_for_macos_arm64)
 
 !tools-only:!qtHaveModule(qml):error("The QtQml library is required for a non 'tools-only' build")
 

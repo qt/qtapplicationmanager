@@ -100,6 +100,6 @@ private:
     bool m_taken = false;
 };
 
-QT_END_NAMESPACE_AM
+Q_DECLARE_OPERATORS_FOR_FLAGS(ScopedRenamer::Modes)
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(QT_PREPEND_NAMESPACE_AM(ScopedRenamer::Modes))
+QT_END_NAMESPACE_AM

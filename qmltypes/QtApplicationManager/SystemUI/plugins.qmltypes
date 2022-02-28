@@ -236,7 +236,7 @@ Module {
     }
     Component {
         name: "Window"
-        exports: [ "QtApplicationManager.SystemUI/Window 2.0" ]
+        exports: [ "QtApplicationManager.SystemUI/WindowObject 2.0" ]
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isCreatable: false
@@ -997,6 +997,10 @@ Module {
             Parameter { name: "changedRoles"; type: "QStringList"; }
         }
         Signal {
+            name: "windowManagerCompositorReadyChanged"
+            Parameter { name: "ready"; type: "bool"; }
+        }
+        Signal {
             name: "openUrlRequested"
             Parameter { name: "requestId"; type: "string"; }
             Parameter { name: "url"; type: "string"; }
@@ -1017,10 +1021,6 @@ Module {
         }
         Signal {
             name: "shutDownFinished"
-        }
-        Signal {
-            name: "windowManagerCompositorReadyChanged"
-            Parameter { name: "ready"; type: "bool"; }
         }
         Method {
             name: "shutDown"

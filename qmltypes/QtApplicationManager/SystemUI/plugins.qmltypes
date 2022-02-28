@@ -232,13 +232,16 @@ Module {
         Signal {
             name: "objectFollowsItemSizeChanged"
         }
+        Signal {
+            name: "contentItemDataChanged"
+        }
         Method {
             name: "makePrimary"
         }
     }
     Component {
         name: "Window"
-        exports: [ "QtApplicationManager.SystemUI/Window 2.0" ]
+        exports: [ "QtApplicationManager.SystemUI/WindowObject 2.0" ]
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isCreatable: false
@@ -434,6 +437,10 @@ Module {
             name: "applicationChanged"
             Parameter { name: "newApplication"; type: "Application"; isPointer: true; }
         }
+        Signal {
+            name: "controlGroupChanged"
+            Parameter { name: "controlGroup"; type: "string"; }
+        }
     }
     Component {
         name: "AbstractRuntime"
@@ -453,7 +460,7 @@ Module {
         }
         Signal {
             name: "inProcessSurfaceItemReady"
-            Parameter { name: "window"; type: "QSharedPointer<InProcessSurfaceItem>"; }
+            Parameter { name: "window"; type: "InProcessSurfaceItem>"; }
         }
     }
     Component {

@@ -30,6 +30,9 @@ Module {
         Signal {
             name: "maximumCountChanged"
         }
+        Signal {
+            name: "dataSourcesChanged"
+        }
         Method {
             name: "clear"
         }

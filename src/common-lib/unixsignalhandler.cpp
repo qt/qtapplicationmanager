@@ -128,8 +128,8 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
         auto that = UnixSignalHandler::instance();
         that->m_currentSignal = sig;
 
-        for (const auto &h : that->m_handlers) {
-            if (h.m_signal == sig) {
+        for (const auto &h : qAsConst(that->m_handlers)) {
+            if ((h.m_signal == sig) && !h.m_disabled) {
                 if (!h.m_qt) {
                     h.m_handler(sig);
                 } else {
@@ -146,10 +146,14 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
             }
         }
         if (that->m_resetSignalMask) {
-            // someone called resetToDefault - now's a good time to handle it
-            that->m_handlers.remove_if([that](const SigHandler &h) {
-                return that->m_resetSignalMask & am_sigmask(h.m_signal);
-            });
+            // Someone called resetToDefault - now's a good time to handle it.
+            // We can not remove the entries in the list, because that would (a) allocate and (b)
+            // step on code that might be iterating over the list in the "Forwarded" handler.
+
+            for (const auto &h : qAsConst(that->m_handlers)) {
+                if (that->m_resetSignalMask & am_sigmask(h.m_signal))
+                    h.m_disabled = true;
+            }
             that->m_resetSignalMask = 0;
         }
         that->m_currentSignal = 0;
@@ -175,8 +179,8 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
                     return;
                 }
 
-                for (const auto &h : UnixSignalHandler::instance()->m_handlers) {
-                    if (h.m_qt && h.m_signal == sig)
+                for (const auto &h : qAsConst(m_handlers)) {
+                    if (h.m_qt && (h.m_signal == sig) && !h.m_disabled)
                         h.m_handler(sig);
                 }
             });
@@ -189,8 +193,8 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
                 // this lambda is the "signal handler" multiplexer within the Qt event loop
                 m_winLock.lock();
                 for (const int &sig : qAsConst(m_signalsForEventLoop)) {
-                    for (const auto &h : UnixSignalHandler::instance()->m_handlers) {
-                        if (h.m_qt && h.m_signal == sig)
+                    for (const auto &h : qAsConst(m_handlers)) {
+                        if (h.m_qt && (h.m_signal == sig) && !h.m_disabled)
                             h.m_handler(sig);
                     }
                 }
@@ -201,12 +205,14 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
 #else
         qCWarning(LogSystem) << "Unix signal handling via 'ForwardedToEventLoopHandler' is not "
                                 "supported on this platform";
-        //TODO: use the private QWindowsPipe{Reader,Writer} classes in QtBase on Windows
         return false;
 #endif
     }
 
-    // STL'ish for append with construct in place
+    // This is UB! We cannot guarantee that the signal handler is not currently executing and
+    // iterating over this list. In practice, this is a none-issue in the AM however, because all
+    // install() calls are done right at startup time.
+    // To do it right, we would need a lock-free list structure for m_handlers.
     for (int sig : sigs)
         m_handlers.emplace_back(sig, handlerType == ForwardedToEventLoopHandler, handler);
 

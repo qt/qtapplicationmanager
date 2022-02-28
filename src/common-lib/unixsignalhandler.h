@@ -82,6 +82,7 @@ private:
         int m_signal;
         bool m_qt;
         std::function<void(int)> m_handler;
+        mutable QAtomicInteger<bool> m_disabled;
     };
 
     std::list<SigHandler> m_handlers; // we're using STL to avoid (accidental) implicit copies

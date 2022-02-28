@@ -68,7 +68,8 @@ StartupInterface::~StartupInterface() { }
     # Applications
     runtimes:
       qml:
-        startup: "path/to/libappmanplugin.so"
+        plugins:
+          startup: "path/to/libappmanplugin.so"
     \endcode
 
     The functions are called in the following order:

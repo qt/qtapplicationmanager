@@ -57,6 +57,17 @@ class Application;
 class AbstractRuntime;
 class WaylandCompositor;
 
+
+// A place to collect signals used internally by appman without polluting
+// WindowManager's public QML API.
+class WindowManagerInternalSignals : public QObject
+{
+    Q_OBJECT
+signals:
+    // Emitted right before the WaylandCompositor instance is created
+    void compositorAboutToBeCreated();
+};
+
 class WindowManager : public QAbstractListModel
 {
     Q_OBJECT
@@ -95,6 +106,9 @@ public:
     Q_INVOKABLE int indexOfWindow(QT_PREPEND_NAMESPACE_AM(Window) *window) const;
     Q_INVOKABLE QObject *addExtension(QQmlComponent *component) const;
 
+    WindowManagerInternalSignals internalSignals;
+
+protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 signals:
@@ -112,8 +126,6 @@ signals:
     void shutDownFinished();
 
     void slowAnimationsChanged(bool);
-
-    void _inProcessSurfaceItemReleased(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)>);
 
 private slots:
     void inProcessSurfaceItemCreated(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)> surfaceItem);

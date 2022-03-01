@@ -687,6 +687,9 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 #if defined(AM_MULTI_PROCESS)
     if (!ApplicationManager::instance()->isSingleProcess()) {
         if (!d->waylandCompositor) {
+            // this will trigger the creation of extra sockets in main.cpp
+            emit internalSignals.compositorAboutToBeCreated();
+
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName);
             for (const auto &extraSocket : d->extraWaylandSockets)
                 d->waylandCompositor->addSocketDescriptor(extraSocket);

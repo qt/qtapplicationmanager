@@ -702,66 +702,82 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
     m_windowManager->enableWatchdog(!uiWatchdog);
 
 #if defined(QT_WAYLANDCOMPOSITOR_LIB)
-    for (const auto &v : waylandExtraSockets) {
-        const QVariantMap &wes = v.toMap();
+    connect(&m_windowManager->internalSignals, &WindowManagerInternalSignals::compositorAboutToBeCreated,
+            this, [this, waylandExtraSockets] {
+        // This needs to be delayed until directly before creating the Wayland compositor.
+        // Otherwise we have a "dangling" socket you cannot connect to.
 
-        const QString path = wes.value(qSL("path")).toString();
+        for (const auto &v : waylandExtraSockets) {
+            const QVariantMap &wes = v.toMap();
 
-        if (path.isEmpty())
-            continue;
-        QFileInfo fi(path);
-        if (!fi.dir().mkpath(qSL(".")))
-            throw Exception("could not create path to extra Wayland socket: %1").arg(path);
+            const QString path = wes.value(qSL("path")).toString();
 
-        auto sudo = SudoClient::instance();
+            if (path.isEmpty())
+                continue;
 
-        if (!sudo || sudo->isFallbackImplementation())
-            QLocalServer::removeServer(path); // if it fails, we'll notice in listen() right away
-        else
-            sudo->removeRecursive(path);
+            try {
+                QFileInfo fi(path);
+                if (!fi.dir().mkpath(qSL(".")))
+                    throw Exception("could not create path to extra Wayland socket: %1").arg(path);
 
-        QScopedPointer<QLocalServer> extraSocket(new QLocalServer);
-        extraSocket->setMaxPendingConnections(0); // disable Qt's new connection handling
-        if (!extraSocket->listen(path)) {
-            throw Exception("could not listen on extra Wayland socket %1: %2")
-                .arg(path, extraSocket->errorString());
-        }
-        int mode = wes.value(qSL("permissions"), -1).toInt();
-        int uid = wes.value(qSL("userId"), -1).toInt();
-        int gid = wes.value(qSL("groupId"), -1).toInt();
+                auto sudo = SudoClient::instance();
 
-        QByteArray encodedPath = QFile::encodeName(path);
-
-        if ((mode > 0) || (uid != -1) || (gid != -1)) {
-            if (!sudo || sudo->isFallbackImplementation()) {
-                if (mode > 0) {
-                    if (::chmod(encodedPath, static_cast<mode_t>(mode)) != 0)
-                        throw Exception(errno, "could not chmod(mode: %1) the extra Wayland socket %2")
-                            .arg(QString::number(mode, 8), path);
-                }
-                if ((uid != -1) || (gid != -1)) {
-                    if (::chown(encodedPath, static_cast<uid_t>(uid), static_cast<gid_t>(gid)) != 0)
-                        throw Exception(errno, "could not chown(uid: %1, gid: %2) the extra Wayland socket %3")
-                            .arg(uid).arg(gid).arg(path);
-                }
-            } else {
-                if (!sudo->setOwnerAndPermissionsRecursive(path, static_cast<uid_t>(uid),
-                                                           static_cast<gid_t>(gid),
-                                                           static_cast<mode_t>(mode))) {
-                    throw Exception(Error::IO, "could not change the owner to %1:%2 and the permission"
-                                               " bits to %3 for the extra Wayland socket %4: %5")
-                            .arg(uid).arg(gid).arg(mode, 0, 8).arg(path).arg(sudo->lastError());
-                }
-                // if we changed the owner, ~QLocalServer might not be able to clean up the
-                // socket inode, so we need to sudo this removal as well
-                QObject::connect(extraSocket.data(), &QObject::destroyed, [path, sudo]() {
+                if (!sudo || sudo->isFallbackImplementation()) {
+                    if (!QLocalServer::removeServer(path)) {
+                        throw Exception("could not clean up leftover extra Wayland socket %1").arg(path);
+                    }
+                } else {
                     sudo->removeRecursive(path);
-                });
+                }
+
+                QScopedPointer<QLocalServer> extraSocket(new QLocalServer);
+                extraSocket->setMaxPendingConnections(0); // disable Qt's new connection handling
+                if (!extraSocket->listen(path)) {
+                    throw Exception("could not listen on extra Wayland socket %1: %2")
+                        .arg(path, extraSocket->errorString());
+                }
+                int mode = wes.value(qSL("permissions"), -1).toInt();
+                int uid = wes.value(qSL("userId"), -1).toInt();
+                int gid = wes.value(qSL("groupId"), -1).toInt();
+
+                QByteArray encodedPath = QFile::encodeName(path);
+
+                if ((mode > 0) || (uid != -1) || (gid != -1)) {
+                    if (!sudo || sudo->isFallbackImplementation()) {
+                        if (mode > 0) {
+                            if (::chmod(encodedPath, static_cast<mode_t>(mode)) != 0)
+                                throw Exception(errno, "could not chmod(mode: %1) the extra Wayland socket %2")
+                                    .arg(QString::number(mode, 8), path);
+                        }
+                        if ((uid != -1) || (gid != -1)) {
+                            if (::chown(encodedPath, static_cast<uid_t>(uid), static_cast<gid_t>(gid)) != 0)
+                                throw Exception(errno, "could not chown(uid: %1, gid: %2) the extra Wayland socket %3")
+                                    .arg(uid).arg(gid).arg(path);
+                        }
+                    } else {
+                        if (!sudo->setOwnerAndPermissionsRecursive(path, static_cast<uid_t>(uid),
+                                                                   static_cast<gid_t>(gid),
+                                                                   static_cast<mode_t>(mode))) {
+                            throw Exception(Error::IO, "could not change the owner to %1:%2 and the permission"
+                                                       " bits to %3 for the extra Wayland socket %4: %5")
+                                    .arg(uid).arg(gid).arg(mode, 0, 8).arg(path).arg(sudo->lastError());
+                        }
+                        // if we changed the owner, ~QLocalServer might not be able to clean up the
+                        // socket inode, so we need to sudo this removal as well
+                        QObject::connect(extraSocket.data(), &QObject::destroyed, [path, sudo]() {
+                            sudo->removeRecursive(path);
+                        });
+                    }
+                }
+
+                m_windowManager->addWaylandSocket(extraSocket.take());
+            } catch (const std::exception &e) {
+                qCCritical(LogSystem) << "ERROR:" << e.what();
             }
         }
-
-        m_windowManager->addWaylandSocket(extraSocket.take());
-    }
+    });
+#else
+    Q_UNUSED(waylandExtraSockets)
 #endif
 
     QObject::connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::newRuntimeCreated,

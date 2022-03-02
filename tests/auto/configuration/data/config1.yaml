@@ -48,7 +48,6 @@ ui:
     desktopProfile: 'compatibility'
     esMajorVersion: 5
     esMinorVersion: 15
-  enableTouchEmulation: true
   iconThemeSearchPaths: [ itsp1, itsp2 ]
   iconThemeName: mytheme
   style: mystyle

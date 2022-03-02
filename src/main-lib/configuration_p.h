@@ -113,7 +113,6 @@ struct ConfigurationData
 
     struct {
         QVariantMap opengl;
-        bool enableTouchEmulation = false;
         QStringList iconThemeSearchPaths;
         QString iconThemeName;
         QString style;

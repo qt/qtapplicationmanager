@@ -9,7 +9,6 @@ qt_internal_add_module(AppManWindowPrivate
     INTERNAL_MODULE
     SOURCES
         inprocesswindow.cpp inprocesswindow.h
-        touchemulation.cpp touchemulation.h
         window.cpp window.h
         windowitem.cpp windowitem.h
         windowmanager.cpp windowmanager.h windowmanager_p.h
@@ -45,13 +44,3 @@ if(QT_FEATURE_am_multi_process)
             Qt::WaylandCompositor
     )
 endif()
-
-qt_internal_extend_target(AppManWindowPrivate CONDITION QT_FEATURE_am_touch_emulation
-    SOURCES
-        touchemulation_x11.cpp touchemulation_x11_p.h
-    LIBRARIES
-        Qt::GuiPrivate
-    PUBLIC_LIBRARIES
-        Qt::Test
-        X11::Xi
-)

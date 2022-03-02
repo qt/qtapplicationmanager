@@ -191,7 +191,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     m_clp.addOption({ qSL("single-app"),           qSL("Runs a single application only (ignores the database)"), qSL("info.yaml file") }); // rename single-package
     m_clp.addOption({ qSL("logging-rule"),         qSL("Adds a standard Qt logging rule."), qSL("rule") });
     m_clp.addOption({ qSL("qml-debug"),            qSL("Enables QML debugging and profiling.") });
-    m_clp.addOption({ qSL("enable-touch-emulation"), qSL("Enables the touch emulation, converting mouse to touch events.") });
+    m_clp.addOption({ qSL("enable-touch-emulation"), qSL("Deprecated (ignored).") });
 }
 
 QVariant Configuration::buildConfig() const
@@ -386,7 +386,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 6;
+const quint32 ConfigurationData::DataStreamVersion = 7;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -431,7 +431,6 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->ui.pluginPaths
        >> cd->ui.iconThemeName
        >> cd->ui.loadDummyData
-       >> cd->ui.enableTouchEmulation
        >> cd->ui.iconThemeSearchPaths
        >> cd->ui.opengl
        >> cd->applications.builtinAppsManifestDir
@@ -494,7 +493,6 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << ui.pluginPaths
        << ui.iconThemeName
        << ui.loadDummyData
-       << ui.enableTouchEmulation
        << ui.iconThemeSearchPaths
        << ui.opengl
        << applications.builtinAppsManifestDir
@@ -594,7 +592,6 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(ui.pluginPaths);
     MERGE_FIELD(ui.iconThemeName);
     MERGE_FIELD(ui.loadDummyData);
-    MERGE_FIELD(ui.enableTouchEmulation);
     MERGE_FIELD(ui.iconThemeSearchPaths);
     MERGE_FIELD(ui.opengl);
     MERGE_FIELD(applications.builtinAppsManifestDir);
@@ -767,8 +764,9 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                   }); } },
             { "ui", false, YamlParser::Map, [&cd](YamlParser *p) {
                   p->parseFields({
-                      { "enableTouchEmulation", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->ui.enableTouchEmulation = p->parseScalar().toBool(); } },
+                      { "enableTouchEmulation", false, YamlParser::Scalar, [](YamlParser *p) {
+                            qCDebug(LogDeployment) << "ignoring 'enableTouchEmulation'";
+                            (void) p->parseScalar(); } },
                       { "iconThemeSearchPaths", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
                             cd->ui.iconThemeSearchPaths = p->parseStringOrStringList(); } },
                       { "iconThemeName", false, YamlParser::Scalar, [&cd](YamlParser *p) {
@@ -1145,11 +1143,6 @@ QString Configuration::iconThemeName() const
 QStringList Configuration::iconThemeSearchPaths() const
 {
     return m_data->ui.iconThemeSearchPaths;
-}
-
-bool Configuration::enableTouchEmulation() const
-{
-    return value("enable-touch-emulation", m_data->ui.enableTouchEmulation);
 }
 
 QString Configuration::dltId() const

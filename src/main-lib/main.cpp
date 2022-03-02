@@ -101,7 +101,6 @@
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 #  include "windowmanagerdbuscontextadaptor.h"
 #endif
-#include "touchemulation.h"
 #include "windowframetimer.h"
 #include "gpustatus.h"
 
@@ -246,7 +245,6 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupWindowTitle(QString(), cfg->windowIcon());
     setupWindowManager(cfg->waylandSocketName(), cfg->waylandExtraSockets(),
                        cfg->slowAnimations(), cfg->noUiWatchdog());
-    setupTouchEmulation(cfg->enableTouchEmulation());
 
     setupDBus(std::bind(&Configuration::dbusRegistration, cfg, std::placeholders::_1),
               std::bind(&Configuration::dbusPolicy, cfg, std::placeholders::_1));
@@ -721,25 +719,6 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
                      m_windowManager, &WindowManager::setupInProcessRuntime);
     QObject::connect(m_applicationManager, &ApplicationManager::applicationWasActivated,
                      m_windowManager, &WindowManager::raiseApplicationWindow);
-}
-
-void Main::setupTouchEmulation(bool enableTouchEmulation)
-{
-    if (enableTouchEmulation) {
-        if (TouchEmulation::isSupported()) {
-            if (TouchEmulation::hasPhysicalTouchscreen()) {
-                TouchEmulation::createInstance();
-                qCDebug(LogGraphics) << "Touch emulation is enabled: all mouse events will be "
-                                        "converted to touch events.";
-            } else {
-                qCDebug(LogGraphics) << "Touch emulation is disabled, because at least one touch "
-                                        "input device was detected";
-            }
-        } else {
-            qCWarning(LogGraphics) << "Touch emulation cannot be enabled. Either it was disabled at "
-                                      "build time or the platform does not support it.";
-        }
-    }
 }
 
 void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)

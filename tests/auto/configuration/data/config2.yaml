@@ -55,7 +55,6 @@ ui:
     desktopProfile: 'classic'
     esMajorVersion: 1
     esMinorVersion: 0
-  enableTouchEmulation: true
   iconThemeSearchPaths: [ itsp3 ]
   iconThemeName: mytheme2
   style: mystyle2

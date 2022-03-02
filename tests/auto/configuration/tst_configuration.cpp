@@ -102,7 +102,6 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.style(), qSL(""));
     QCOMPARE(c.iconThemeName(), qSL(""));
     QCOMPARE(c.iconThemeSearchPaths(), {});
-    QCOMPARE(c.enableTouchEmulation(), false);
     QCOMPARE(c.dltId(), qSL(""));
     QCOMPARE(c.dltDescription(), qSL(""));
     QCOMPARE(c.resources(), {});
@@ -186,7 +185,6 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.style(), qSL("mystyle"));
     QCOMPARE(c.iconThemeName(), qSL("mytheme"));
     QCOMPARE(c.iconThemeSearchPaths(), QStringList({ qSL("itsp1"), qSL("itsp2") }));
-    QCOMPARE(c.enableTouchEmulation(), true);
     QCOMPARE(c.dltId(), qSL("dltid"));
     QCOMPARE(c.dltDescription(), qSL("dltdesc"));
     QCOMPARE(c.dltLongMessageBehavior(), qSL("split"));
@@ -317,7 +315,6 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.style(), qSL("mystyle2"));
     QCOMPARE(c.iconThemeName(), qSL("mytheme2"));
     QCOMPARE(c.iconThemeSearchPaths(), QStringList({ qSL("itsp1"), qSL("itsp2"), qSL("itsp3") }));
-    QCOMPARE(c.enableTouchEmulation(), true);
     QCOMPARE(c.dltId(), qSL("dltid2"));
     QCOMPARE(c.dltDescription(), qSL("dltdesc2"));
     QCOMPARE(c.dltLongMessageBehavior(), qSL("truncate"));
@@ -445,7 +442,6 @@ void tst_Configuration::commandLineConfig()
                 << "--logging-rule" << "cl-lr1"
                 << "--logging-rule" << "cl-lr2"
                 << "--qml-debug"
-                << "--enable-touch-emulation"
                 << "main-cl.qml";
 
     QStringList strCommandLine;
@@ -495,7 +491,6 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.style(), qSL(""));
     QCOMPARE(c.iconThemeName(), qSL(""));
     QCOMPARE(c.iconThemeSearchPaths(), {});
-    QCOMPARE(c.enableTouchEmulation(), true);
     QCOMPARE(c.dltId(), qSL(""));
     QCOMPARE(c.dltDescription(), qSL(""));
     QCOMPARE(c.resources(), {});

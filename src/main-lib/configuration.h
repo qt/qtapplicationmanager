@@ -95,7 +95,6 @@ public:
     QString style() const;
     QString iconThemeName() const;
     QStringList iconThemeSearchPaths() const;
-    bool enableTouchEmulation() const;
     QString dltId() const;
     QString dltDescription() const;
     QString dltLongMessageBehavior() const;

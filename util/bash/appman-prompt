@@ -34,7 +34,7 @@ _appman()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     opts="-c -h -o -v -I --build-config --builtin-apps-manifest-dir --clear-cache --clear-config-cache --config-file \
---development-mode --dbus --disable-installer --disable-intents --document-dir --enable-touch-emulation \
+--development-mode --dbus --disable-installer --disable-intents --document-dir \
 --force-multi-process --force-single-process --fullscreen --help --load-dummydata --log-instant --logging-rule \
 --no-cache --no-config-cache --no-dlt-logging --no-fullscreen --no-security --no-ui-watchdog --option --qml-debug \
 --single-app --slow-animations --verbose --version --wayland-socket-name"

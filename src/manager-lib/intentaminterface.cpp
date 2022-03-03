@@ -127,6 +127,7 @@ IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(Packag
                                      intentInfo->visibility() == IntentInfo::Public ? Intent::Public
                                                                                     : Intent::Private,
                                      intentInfo->parameterMatch(), intentInfo->names(),
+                                     intentInfo->descriptions(),
                                      QUrl::fromLocalFile(package->info()->baseDir().absoluteFilePath(intentInfo->icon())),
                                      intentInfo->categories())) {
             throw Exception(Error::Intents, "could not add intent %1 for package %2")
@@ -653,6 +654,11 @@ QVariantMap IntentServerHandler::names() const
     return m_intent->names();
 }
 
+QVariantMap IntentServerHandler::descriptions() const
+{
+    return m_intent->descriptions();
+}
+
 QStringList IntentServerHandler::categories() const
 {
     return m_intent->categories();
@@ -688,7 +694,20 @@ void IntentServerHandler::setNames(const QVariantMap &names)
         qmlWarning(this) << "Cannot change the names property of an IntentServerHandler after creation.";
         return;
     }
-    m_intent->m_names = names;
+    m_intent->m_names.clear();
+    for (auto it = names.cbegin(); it != names.cend(); ++it)
+        m_intent->m_names.insert(it.key(), it.value().toString());
+}
+
+void IntentServerHandler::setDescriptions(const QVariantMap &descriptions)
+{
+    if (isComponentCompleted()) {
+        qmlWarning(this) << "Cannot change the descriptions property of an IntentServerHandler after creation.";
+        return;
+    }
+    m_intent->m_descriptions.clear();
+    for (auto it = descriptions.cbegin(); it != descriptions.cend(); ++it)
+        m_intent->m_descriptions.insert(it.key(), it.value().toString());
 }
 
 void IntentServerHandler::setCategories(const QStringList &categories)
@@ -742,14 +761,17 @@ void IntentServerHandler::componentComplete()
     const auto ids = intentIds();
     for (const auto &intentId : ids) {
         // convert from QVariantMap to QMap<QString, QString>
-        QMap<QString, QString> names;
+        QMap<QString, QString> names, descriptions;
         const auto qvm_names = m_intent->names();
+        const auto qvm_descriptions = m_intent->descriptions();
         for (auto it = qvm_names.cbegin(); it != qvm_names.cend(); ++it)
             names.insert(it.key(), it.value().toString());
+        for (auto it = qvm_descriptions.cbegin(); it != qvm_descriptions.cend(); ++it)
+            descriptions.insert(it.key(), it.value().toString());
 
         auto intent = is->addIntent(intentId, sysUiId, sysUiId, m_intent->requiredCapabilities(),
                                     m_intent->visibility(), m_intent->parameterMatch(), names,
-                                    m_intent->icon(), m_intent->categories());
+                                    descriptions, m_intent->icon(), m_intent->categories());
         if (intent)
             m_registeredIntents << intent;
         else

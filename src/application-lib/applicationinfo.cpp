@@ -82,7 +82,7 @@ QVariantMap ApplicationInfo::allAppProperties() const
 }
 
 
-const quint32 ApplicationInfo::DataStreamVersion = 3;
+const quint32 ApplicationInfo::DataStreamVersion = 4;
 
 
 void ApplicationInfo::writeToDataStream(QDataStream &ds) const
@@ -100,7 +100,11 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
        << m_capabilities
        << m_openGLConfiguration
        << m_dltConfiguration
-       << m_supportedMimeTypes;
+       << m_supportedMimeTypes
+       << m_categories
+       << m_names
+       << m_descriptions
+       << m_icon;
 }
 
 ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
@@ -120,7 +124,11 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
        >> app->m_capabilities
        >> app->m_openGLConfiguration
        >> app->m_dltConfiguration
-       >> app->m_supportedMimeTypes;
+       >> app->m_supportedMimeTypes
+       >> app->m_categories
+       >> app->m_names
+       >> app->m_descriptions
+       >> app->m_icon;
 
     uniqueCounter = qMax(uniqueCounter, app->m_uniqueNumber);
     app->m_capabilities.sort();
@@ -141,13 +149,13 @@ QVariantMap ApplicationInfo::toVariantMap() const
 
     {
         QVariantMap displayName;
-        auto names = packageInfo()->names();
-        for (auto it = names.constBegin(); it != names.constEnd(); ++it)
+        const auto n = names();
+        for (auto it = n.constBegin(); it != n.constEnd(); ++it)
             displayName.insert(it.key(), it.value());
         map[qSL("displayName")] = displayName;
     }
 
-    map[qSL("displayIcon")] = packageInfo()->icon();
+    map[qSL("displayIcon")] = icon();
     map[qSL("applicationProperties")] = m_allAppProperties;
     map[qSL("codeFilePath")] = m_codeFilePath;
     map[qSL("runtimeName")] = m_runtimeName;
@@ -155,7 +163,7 @@ QVariantMap ApplicationInfo::toVariantMap() const
     map[qSL("capabilities")] = m_capabilities;
     map[qSL("mimeTypes")] = m_supportedMimeTypes;
 
-    map[qSL("categories")] = packageInfo()->categories();
+    map[qSL("categories")] = categories();
     map[qSL("version")] = packageInfo()->version();
     map[qSL("baseDir")] = packageInfo()->baseDir().absolutePath();
     map[qSL("codeDir")] = map[qSL("baseDir")];     // 5.12 backward compatibility
@@ -215,6 +223,26 @@ bool ApplicationInfo::supportsApplicationInterface() const
 QVariantMap ApplicationInfo::dltConfiguration() const
 {
     return m_dltConfiguration;
+}
+
+QStringList ApplicationInfo::categories() const
+{
+    return m_categories.isEmpty() ? m_packageInfo->categories() : m_categories;
+}
+
+QMap<QString, QString> ApplicationInfo::names() const
+{
+    return m_names.isEmpty() ? m_packageInfo->names() : m_names;
+}
+
+QMap<QString, QString> ApplicationInfo::descriptions() const
+{
+    return m_descriptions.isEmpty() ? m_packageInfo->descriptions() : m_descriptions;
+}
+
+QString ApplicationInfo::icon() const
+{
+    return m_icon.isEmpty() ? m_packageInfo->icon() : m_icon;
 }
 
 QT_END_NAMESPACE_AM

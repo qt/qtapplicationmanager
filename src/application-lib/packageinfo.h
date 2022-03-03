@@ -62,9 +62,7 @@ public:
     QString id() const;
 
     QMap<QString, QString> names() const;
-    QString name(const QString &language) const;
     QMap<QString, QString> descriptions() const;
-    QString description(const QString &language) const;
     QString icon() const;
     QStringList categories() const;
 
@@ -86,7 +84,6 @@ public:
     static PackageInfo *readFromDataStream(QDataStream &ds);
 
     static bool isValidApplicationId(const QString &appId, QString *errorString = nullptr);
-    static bool isValidIcon(const QString &icon, QString *errorString = nullptr);
 
     QString manifestPath() const;
 
@@ -100,7 +97,7 @@ private:
     QMap<QString, QString> m_names; // language -> name
     QMap<QString, QString> m_descriptions; // language -> description
     QStringList m_categories;
-    QString m_icon; // relative to info.json location
+    QString m_icon; // relative to the manifest's location
     QString m_version;
     bool m_builtIn = false; // system package - not removable
     uint m_uid = uint(-1); // unix user id - move to installationReport

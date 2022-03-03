@@ -55,6 +55,8 @@ class Intent : public QObject
     Q_PROPERTY(QUrl icon READ icon CONSTANT)
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QVariantMap names READ names CONSTANT)
+    Q_PROPERTY(QString description READ description CONSTANT)
+    Q_PROPERTY(QVariantMap descriptions READ descriptions CONSTANT)
     Q_PROPERTY(QStringList categories READ categories CONSTANT)
 
 public:
@@ -87,7 +89,8 @@ private:
     Intent(const QString &intentId, const QString &packageId, const QString &applicationId,
            const QStringList &capabilities, Intent::Visibility visibility,
            const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
-           const QUrl &icon, const QStringList &categories);
+           const QMap<QString, QString> &descriptions, const QUrl &icon,
+           const QStringList &categories);
 
     QString m_intentId;
     Visibility m_visibility = Private;
@@ -97,12 +100,14 @@ private:
     QString m_packageId;
     QString m_applicationId;
 
-    QVariantMap m_names; // language -> name
+    QMap<QString, QString> m_names; // language -> name
+    QMap<QString, QString> m_descriptions; // language -> description
     QStringList m_categories;
     QUrl m_icon;
 
     friend class IntentServer;
     friend class IntentServerHandler;
+    friend class TestPackageLoader; // for auto tests only
 };
 
 QT_END_NAMESPACE_AM

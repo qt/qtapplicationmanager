@@ -198,6 +198,7 @@ class IntentServerHandler : public IntentHandler
     // handlers
     Q_PROPERTY(QUrl icon READ icon WRITE setIcon)
     Q_PROPERTY(QVariantMap names READ names WRITE setNames)
+    Q_PROPERTY(QVariantMap descriptions READ descriptions WRITE setDescriptions)
     Q_PROPERTY(QStringList categories READ categories WRITE setCategories)
     Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Intent)::Visibility visibility READ visibility WRITE setVisibility)
     Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities WRITE setRequiredCapabilities)
@@ -209,6 +210,7 @@ public:
 
     QUrl icon() const;
     QVariantMap names() const;
+    QVariantMap descriptions() const;
     QStringList categories() const;
     Intent::Visibility visibility() const;
     QStringList requiredCapabilities() const;
@@ -217,6 +219,7 @@ public:
 public slots:
     void setIcon(const QUrl &icon);
     void setNames(const QVariantMap &names);
+    void setDescriptions(const QVariantMap &descriptions);
     void setCategories(const QStringList &categories);
     void setVisibility(Intent::Visibility visibility);
     void setRequiredCapabilities(const QStringList &requiredCapabilities);

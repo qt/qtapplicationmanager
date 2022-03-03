@@ -1,0 +1,8 @@
+formatVersion: 1
+formatType: am-package
+---
+id: 'minimal'
+applications:
+  - id: 'minimal.app'
+    code: 'minimal.qml'
+    runtime: 'qml'

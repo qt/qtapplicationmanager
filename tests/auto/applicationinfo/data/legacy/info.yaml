@@ -1,15 +1,15 @@
 formatVersion: 1
 formatType: am-application
 ---
-id:      'com.pelagicore.test'
-icon:    'icon.png'
-code:    'Test.qml'
+id: 'legacy'
+icon: 'icon.png'
+code: 'legacy.qml'
 runtime: 'qml'
 runtimeParameters:
   loadDummyData: true
 name:
-  en: 'english'
-  de: 'deutsch'
+  en: 'legacy.en'
+  de: 'legacy.de'
 
 version: v1
 
@@ -24,4 +24,3 @@ capabilities:
 categories:
 - "foo"
 - "bar"
-

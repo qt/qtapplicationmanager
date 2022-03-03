@@ -67,9 +67,7 @@ public:
     QStringList categories() const;
 
     QMap<QString, QString> names() const;
-    QString name(const QString &language) const;
     QMap<QString, QString> descriptions() const;
-    QString description(const QString &language) const;
     QString icon() const;
 
     void writeToDataStream(QDataStream &ds) const;
@@ -86,7 +84,7 @@ private:
     QStringList m_categories;
     QMap<QString, QString> m_names; // language -> name
     QMap<QString, QString> m_descriptions; // language -> description
-    QString m_icon; // relative to info.json location
+    QString m_icon; // relative to the manifest's location
 
     friend class YamlPackageScanner;
     Q_DISABLE_COPY(IntentInfo)

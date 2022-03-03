@@ -30,6 +30,7 @@
 ****************************************************************************/
 
 #include "intent.h"
+#include "utilities.h"
 
 #include <QRegularExpression>
 #include <QVariant>
@@ -112,6 +113,61 @@ QT_BEGIN_NAMESPACE_AM
     receive by setting a parameterMatch on this \c mimeType parameter, e.g.
     \c{{ mimeType: "^image/.*\.png$" }}
 */
+/*!
+    \qmlproperty url IntentObject::icon
+    \readonly
+
+    The URL of the intent's icon - can be used as the source property of an \l Image.
+    If the intent does not specify an \c icon, this will return the same as the containing
+    PackageObject::icon.
+*/
+/*!
+    \qmlproperty string IntentObject::name
+    \readonly
+
+    Returns the localized name of the intent - as provided in the info.yaml file - in the currently
+    active locale.
+
+    This is a convenience property, that takes the mapping returned by the \l names property,
+    and then tries to return the value for these keys if available: first the current locale's id,
+    then \c en_US, then \c en and lastly the first available key.
+
+    If no mapping is available, this will return the \l intentId.
+*/
+/*!
+    \qmlproperty var IntentObject::names
+    \readonly
+
+    Returns an object with all the language code to localized name mappings as provided in the
+    intent's info.yaml file. If the intent does not specify a \c names object, this will
+    return the same as the containing PackageObject::names.
+*/
+/*!
+    \qmlproperty string IntentObject::description
+    \readonly
+
+    Returns the localized description of the intent - as provided in the info.yaml file - in the
+    currently active locale.
+
+    This property uses the same algorithm as the \l name property, but for the description.
+*/
+/*!
+    \qmlproperty var IntentObject::descriptions
+    \readonly
+
+    Returns an object with all the language code to localized description mappings as provided in
+    the intent's info.yaml file. If the intent does not specify a \c descriptions object,
+    this will return the same as the containing PackageObject::descriptions.
+*/
+/*!
+    \qmlproperty list<string> IntentObject::categories
+    \readonly
+
+    A list of category names the intent should be associated with. This is mainly for displaying
+    the intent within a fixed set of categories in the System UI.
+    If the intent does not specify a \c categories list, this will return the same as the
+    containing PackageObject::categories.
+*/
 
 
 Intent::Intent()
@@ -120,18 +176,19 @@ Intent::Intent()
 Intent::Intent(const QString &id, const QString &packageId, const QString &applicationId,
                const QStringList &capabilities, Intent::Visibility visibility,
                const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
-               const QUrl &icon, const QStringList &categories)
+               const QMap<QString, QString> &descriptions, const QUrl &icon,
+               const QStringList &categories)
     : m_intentId(id)
     , m_visibility(visibility)
     , m_requiredCapabilities(capabilities)
     , m_parameterMatch(parameterMatch)
     , m_packageId(packageId)
     , m_applicationId(applicationId)
+    , m_names(names)
+    , m_descriptions(descriptions)
     , m_categories(categories)
     , m_icon(icon)
 {
-    for (auto it = names.cbegin(); it != names.cend(); ++it)
-        m_names.insert(it.key(), it.value());
 }
 
 QString Intent::intentId() const
@@ -213,24 +270,28 @@ QUrl Intent::icon() const
 
 QString Intent::name() const
 {
-    QVariant name;
-    if (!m_names.isEmpty()) {
-        name = m_names.value(QLocale::system().name()); //TODO: language changes
-        if (name.isNull())
-            name = m_names.value(qSL("en"));
-        if (name.isNull())
-            name = m_names.value(qSL("en_US"));
-        if (name.isNull())
-            name = *m_names.constBegin();
-    } else {
-        name = intentId();
-    }
-    return name.toString();
+    return translateFromMap(m_names, intentId());
 }
 
 QVariantMap Intent::names() const
 {
-    return m_names;
+    QVariantMap vm;
+    for (auto it = m_names.cbegin(); it != m_names.cend(); ++it)
+        vm.insert(it.key(), it.value());
+    return vm;
+}
+
+QString Intent::description() const
+{
+    return translateFromMap(m_descriptions);
+}
+
+QVariantMap Intent::descriptions() const
+{
+    QVariantMap vm;
+    for (auto it = m_descriptions.cbegin(); it != m_descriptions.cend(); ++it)
+        vm.insert(it.key(), it.value());
+    return vm;
 }
 
 QStringList Intent::categories() const

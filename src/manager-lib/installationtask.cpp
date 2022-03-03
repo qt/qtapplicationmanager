@@ -177,7 +177,7 @@ void InstallationTask::execute()
             throw Exception(m_extractor->errorCode(), m_extractor->errorString());
 
         if (!m_foundInfo || !m_foundIcon)
-            throw Exception(Error::Package, "package did not contain a valid info.json and icon file");
+            throw Exception(Error::Package, "package did not contain a valid info.yaml and icon file");
 
         QList<QByteArray> chainOfTrust = m_pm->caCertificates();
 

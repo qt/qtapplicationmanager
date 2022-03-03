@@ -62,6 +62,12 @@ class Application : public QObject
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationObject 2.0 UNCREATABLE")
 
     Q_PROPERTY(QString id READ id CONSTANT)
+    Q_PROPERTY(QString name READ name NOTIFY bulkChange)
+    Q_PROPERTY(QVariantMap names READ names NOTIFY bulkChange)
+    Q_PROPERTY(QString description READ description NOTIFY bulkChange)
+    Q_PROPERTY(QVariantMap descriptions READ descriptions NOTIFY bulkChange)
+    Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
+    Q_PROPERTY(QUrl icon READ icon NOTIFY bulkChange)
     Q_PROPERTY(QString runtimeName READ runtimeName CONSTANT)
     Q_PROPERTY(QVariantMap runtimeParameters READ runtimeParameters CONSTANT)
     Q_PROPERTY(QStringList capabilities READ capabilities CONSTANT)
@@ -76,11 +82,9 @@ class Application : public QObject
     Q_PROPERTY(Package *package READ package CONSTANT)
 
     // legacy, forwarded to Package
-    Q_PROPERTY(QUrl icon READ icon NOTIFY bulkChange)
     Q_PROPERTY(bool builtIn READ isBuiltIn CONSTANT)
     Q_PROPERTY(bool alias READ isAlias CONSTANT)
     Q_PROPERTY(Application *nonAliased READ nonAliased CONSTANT)
-    Q_PROPERTY(QStringList categories READ categories CONSTANT)
     Q_PROPERTY(QString version READ version CONSTANT)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged)
@@ -111,16 +115,18 @@ public:
     // legacy compatibility
     bool isAlias() const { return false; }
     Application *nonAliased() { return this; }
-    QStringList categories() const;
-    QUrl icon() const;
     QString documentUrl() const;
     QStringList supportedMimeTypes() const;
-    QString name() const;
-    Q_INVOKABLE QString name(const QString &language) const;
     bool isBlocked() const;
 
     // Properties that mainly forward content from ApplicationInfo
     QString id() const;
+    QUrl icon() const;
+    QStringList categories() const;
+    QString name() const;
+    QVariantMap names() const;
+    QString description() const;
+    QVariantMap descriptions() const;
     bool isBuiltIn() const;
     QString runtimeName() const;
     QVariantMap runtimeParameters() const;

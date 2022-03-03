@@ -74,6 +74,9 @@ inline QUrl filePathToUrl(const QString &path, const QString &baseDir)
                                      : QUrl::fromUserInput(path, baseDir, QUrl::AssumeLocalFile);
 }
 
+// Used in {Package,Application,Intent}::name()
+QString translateFromMap(const QMap<QString, QString> &languageToName, const QString &defaultName = {});
+
 inline QString urlToLocalFilePath(const QUrl &url)
 {
     if (url.isLocalFile())

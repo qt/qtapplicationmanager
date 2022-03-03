@@ -72,7 +72,8 @@ public:
     Intent *addIntent(const QString &id, const QString &packageId, const QString &handlingApplicationId,
                       const QStringList &capabilities, Intent::Visibility visibility,
                       const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
-                      const QUrl &icon, const QStringList &categories);
+                      const QMap<QString, QString> &descriptions, const QUrl &icon,
+                      const QStringList &categories);
 
     void removeIntent(Intent *intent);
 

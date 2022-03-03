@@ -82,19 +82,9 @@ QMap<QString, QString> PackageInfo::names() const
     return m_names;
 }
 
-QString PackageInfo::name(const QString &language) const
-{
-    return m_names.value(language);
-}
-
 QMap<QString, QString> PackageInfo::descriptions() const
 {
     return m_descriptions;
-}
-
-QString PackageInfo::description(const QString &language) const
-{
-    return m_descriptions.value(language);
 }
 
 QString PackageInfo::icon() const
@@ -273,25 +263,6 @@ bool PackageInfo::isValidApplicationId(const QString &appId, QString *errorStrin
         }
         if (spaceOnly)
             throw Exception(Error::Parse, "must not consist of only white-space characters");
-
-        return true;
-    } catch (const Exception &e) {
-        if (errorString)
-            *errorString = e.errorString();
-        return false;
-    }
-}
-
-bool PackageInfo::isValidIcon(const QString &icon, QString *errorString)
-{
-    try {
-        if (icon.isEmpty())
-            throw Exception("empty path");
-
-        QFileInfo fileInfo(icon);
-
-        if (fileInfo.fileName() != icon)
-            throw Exception("'%1' is not a valid file name").arg(icon);
 
         return true;
     } catch (const Exception &e) {

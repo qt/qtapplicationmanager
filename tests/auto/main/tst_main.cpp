@@ -216,10 +216,10 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     QCOMPARE(intents->count(), 2);
 
     auto app1 = appMan->application(0);
-    QCOMPARE(app1->name(qSL("en")), qSL("Hello Red"));
+    QCOMPARE(app1->names().value(qSL("en")), qSL("Hello Red"));
     QCOMPARE(app1->id(), qSL("red1"));
     auto app2 = appMan->application(1);
-    QCOMPARE(app2->name(qSL("en")), qSL("Hello Red"));
+    QCOMPARE(app2->names().value(qSL("en")), qSL("Hello Red"));
     QCOMPARE(app2->id(), qSL("red2"));
 
     auto intent1 = intents->applicationIntent(qSL("red.intent1"), qSL("red1"));
@@ -248,7 +248,7 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     app1 = appMan->application(0);
 
     // but with different contents
-    QCOMPARE(app1->name(qSL("en")), qSL("Hello Updated Red"));
+    QCOMPARE(app1->names().value(qSL("en")), qSL("Hello Updated Red"));
     intent1 = intents->applicationIntent(qSL("red.intent1"), qSL("red1"));
     QVERIFY(!intent1);
 
@@ -260,7 +260,7 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     QCOMPARE(intents->count(), 2);
 
     app1 = appMan->application(0);
-    QCOMPARE(app1->name(qSL("en")), qSL("Hello Red"));
+    QCOMPARE(app1->names().value(qSL("en")), qSL("Hello Red"));
     intent1 = intents->applicationIntent(qSL("red.intent1"), qSL("red1"));
     QVERIFY(intent1);
     QCOMPARE(intent1->intentId(), qSL("red.intent1"));
@@ -288,7 +288,7 @@ void tst_Main::updateForBuiltInAlreadyInstalled()
     QCOMPARE(appMan->count(), 1);
 
     auto app = appMan->application(0);
-    QCOMPARE(app->name(qSL("en")), qSL("Hello Updated Red"));
+    QCOMPARE(app->names().value(qSL("en")), qSL("Hello Updated Red"));
 }
 
 /*
@@ -309,7 +309,7 @@ void tst_Main::loadDatabaseWithUpdatedBuiltInApp()
     QCOMPARE(appMan->count(), 1);
 
     auto app = appMan->application(0);
-    QCOMPARE(app->name(qSL("en")), qSL("Hello Updated Red"));
+    QCOMPARE(app->names().value(qSL("en")), qSL("Hello Updated Red"));
 }
 
 void tst_Main::mainQmlFile_data()

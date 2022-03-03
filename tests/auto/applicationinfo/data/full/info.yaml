@@ -1,0 +1,118 @@
+formatVersion: 1
+formatType: am-package
+---
+id: 'full'
+icon: 'full.png'
+version: 'v1'
+name:
+  en: 'pkg.name.en'
+  de: 'pkg.name.de'
+description:
+  en: 'pkg.desc.en'
+  de: 'pkg.desc.de'
+categories:
+  - pkg.cat.1
+  - pkg.cat.2
+applications:
+  - id: 'full.app.1'
+    code: 'app1.qml'
+    runtime: 'qml'
+    runtimeParameters:
+      loadDummyDate: true
+      importPaths: [ a, b ]
+      resources: [ c, d ]
+      pluginPaths: [ e, f ]
+      environmentVariables:
+         foo: bar
+    supportsApplicationInterface: yes
+    capabilities:
+      - app1.cap
+    opengl:
+      desktopProfile: core
+      esMajorVersion: 3
+      esMinorVersion: 2
+    applicationProperties:
+      protected:
+        custom.app1.key: 42
+      private:
+       not: visible
+    logging:
+      dlt:
+        id: app1.dlt.id
+        description: "app1.dlt.desc"
+    icon: 'app1.png'
+    name:
+      en: 'app1.name.en'
+      de: 'app1.name.de'
+    description:
+      en: 'app1.desc.en'
+      de: 'app1.desc.de'
+    categories:
+      - app1.cat.1
+      - app1.cat.2
+  - id: 'full.app.2'
+    code: 'app2.exe'
+    runtime: 'native'
+    runtimeParameters:
+      arguments: [ "-3", "-4" ]
+      environmentVariables:
+         bar: foo
+    supportsApplicationInterface: yes
+    capabilities:
+      - app2.cap.1
+      - app2.cap.2
+    opengl:
+      desktopProfile: compatibility
+      esMajorVersion: 2
+      esMinorVersion: 0
+    applicationProperties:
+      protected:
+        custom.app2.key: "custom.app2.value"
+    logging:
+      dlt:
+        id: app2.dlt.id
+        description: "app2.dlt.desc"
+    icon: 'app2.png'
+    name:
+      en: 'app2.name.en'
+      de: 'app2.name.de'
+    description:
+      en: 'app2.desc.en'
+      de: 'app2.desc.de'
+    categories:
+      - app2.cat.1
+      - app2.cat.2
+
+intents:
+- id: full.int.1
+  handlingApplicationId: full.app.1
+  visibility: private
+  requiredCapabilities: [ 'int1.cap.1', 'int1.cap.2' ]
+  parameterMatch:
+    mimeType: "^image/.*\\.png$"
+  icon: 'int1.png'
+  name:
+    en: 'int1.name.en'
+    de: 'int1.name.de'
+  description:
+    en: 'int1.desc.en'
+    de: 'int1.desc.de'
+  categories:
+    - int1.cat.1
+    - int1.cat.2
+- id: full.int.2
+  handlingApplicationId: full.app.2
+  visibility: public
+  requiredCapabilities: [ 'int2.cap.1', 'int2.cap.2' ]
+  parameterMatch:
+    test: "foo"
+  icon: 'int2.png'
+  name:
+    en: 'int2.name.en'
+    de: 'int2.name.de'
+  description:
+    en: 'int2.desc.en'
+    de: 'int2.desc.de'
+  categories:
+    - int2.cat.1
+    - int2.cat.2

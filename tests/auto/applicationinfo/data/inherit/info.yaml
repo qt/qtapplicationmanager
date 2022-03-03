@@ -1,0 +1,28 @@
+formatVersion: 1
+formatType: am-package
+---
+id: 'inherit'
+icon: 'pkg.png'
+name:
+  en: 'pkg.name.en'
+  de: 'pkg.name.de'
+description:
+  en: 'pkg.desc.en'
+  de: 'pkg.desc.de'
+categories:
+  - pkg.cat.1
+  - pkg.cat.2
+
+applications:
+  - id: 'inherit.app.1'
+    code: 'app1.qml'
+    runtime: 'qml'
+  - id: 'inherit.app.2'
+    code: 'app2.exe'
+    runtime: 'native'
+
+intents:
+- id: inherit.int.1
+  handlingApplicationId: inherit.app.1
+- id: inherit.int.2
+  handlingApplicationId: inherit.app.2

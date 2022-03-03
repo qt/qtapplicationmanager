@@ -98,16 +98,13 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
             if (legacyAppInfo)
                 legacyAppInfo->m_id = pkgInfo->id();
         });
-        fields.emplace_back("icon", true, YamlParser::Scalar, [&pkgInfo](YamlParser *p) {
+        fields.emplace_back("icon", false, YamlParser::Scalar, [&pkgInfo](YamlParser *p) {
             pkgInfo->m_icon = p->parseString();
         });
-        fields.emplace_back("name", true, YamlParser::Map, [&pkgInfo](YamlParser *p) {
+        fields.emplace_back("name", false, YamlParser::Map, [&pkgInfo](YamlParser *p) {
             auto nameMap = p->parseMap();
             for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
                 pkgInfo->m_names.insert(it.key(), it.value().toString());
-
-            if (pkgInfo->m_names.isEmpty())
-                throw YamlParserException(p, "the 'name' field must not be empty");
         });
         if (!legacy) {
             fields.emplace_back("description", false, YamlParser::Map, [&pkgInfo](YamlParser *p) {
@@ -207,6 +204,23 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                         if (appIds.contains(id))
                             throw YamlParserException(p, "found two applications with the same id %1").arg(id);
                         appInfo->m_id = id;
+                    });
+                    appFields.emplace_back("icon", false, YamlParser::Scalar, [&appInfo](YamlParser *p) {
+                        appInfo->m_icon = p->parseString();
+                    });
+                    appFields.emplace_back("name", false, YamlParser::Map, [&appInfo](YamlParser *p) {
+                        const auto nameMap = p->parseMap();
+                        for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
+                            appInfo->m_names.insert(it.key(), it.value().toString());
+                    });
+                    appFields.emplace_back("description", false, YamlParser::Map, [&appInfo](YamlParser *p) {
+                        const auto descriptionMap = p->parseMap();
+                        for (auto it = descriptionMap.constBegin(); it != descriptionMap.constEnd(); ++it)
+                            appInfo->m_descriptions.insert(it.key(), it.value().toString());
+                    });
+                    appFields.emplace_back("categories", false, YamlParser::Scalar | YamlParser::List, [&appInfo](YamlParser *p) {
+                        appInfo->m_categories = p->parseStringOrStringList();
+                        appInfo->m_categories.sort();
                     });
                     appFields.emplace_back("code", true, YamlParser::Scalar, [&appInfo](YamlParser *p) {
                         appInfo->m_codeFilePath = p->parseString();

@@ -125,14 +125,15 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
     \li \c name
     \target package-name-map
     \li object
-    \li \e Required. An object containing language (\c string) to display name (\c string)
+    \li An optional object containing language (\c string) to display name (\c string)
         mappings. The language identifiers need to adhere to the standard POSIX locale definition.
-        For more information, see \l{QLocale}. At least one mapping needs to be present. However,
-        it is good practice to supply the English (\c en) mapping, at least, as a fallback.
+        For more information, see \l{QLocale}. It is good practice to supply at least the English
+        (\c en) mapping, as a fallback. If not supplying any mapping at all, the name will be the
+        same as the \c id.
 \row
     \li \c description
     \li object
-    \li \e An optional object containing language (\c string) to descriptive name (\c string)
+    \li An optional object containing language (\c string) to descriptive name (\c string)
         mappings. This field uses the same syntax as the \c name field.
 \row
     \li \c categories
@@ -256,6 +257,28 @@ The fields used for each item within the \c applications list are as follows:
     \li If provided, it is used as the automotive DLT application description, which allows to
         augment the short DLT application ID with a more verbose description. If not explicitly
         provided, a default description is used.
+\row
+    \li \c name
+    \li object
+    \li The name of the application. It will default to the \c name field in the global package
+        section, but it can be overwritten for each application by specifying this field.
+\row
+    \li \c icon
+    \li string
+    \li The icon of the application. It will default to the \c icon field in the global package
+        section, but it can be overwritten for each application by specifying this field.
+\row
+    \li \c description
+    \li object
+    \li The description of the application. It will default to the \c description field in the
+        global package section, but it can be overwritten for each application by specifying this
+        field.
+\row
+    \li \c categories
+    \li object
+    \li The list of categories for this application. It will default to the \c categories field in
+        the global package section, but it can be overwritten for each application by specifying
+        this field.
 \endtable
 
 \target manifest-intent
@@ -301,23 +324,23 @@ The fields used for each item within the \c intents list are as follows:
 \row
     \li \c name
     \li object
-    \li The name of the intent. It will default to the \c name field in the global section, but it
-        can be overridden for each intent by specifying this field.
+    \li The name of the intent. It will default to the \c name field in the global package section,
+        but it can be overwritten for each intent by specifying this field.
 \row
     \li \c icon
     \li string
-    \li The icon of the intent. It will default to the \c icon field in the global section, but it
-        can be overridden for each intent by specifying this field.
+    \li The icon of the intent. It will default to the \c icon field in the global package section,
+        but it can be overwritten for each intent by specifying this field.
 \row
     \li \c description
     \li object
     \li The description of the intent. It will default to the \c description field in the global
-        section, but it can be overridden for each intent by specifying this field.
+        package section, but it can be overwritten for each intent by specifying this field.
 \row
     \li \c categories
     \li object
     \li The list of categories for this intent. It will default to the \c categories field in the
-        global section, but it can be overridden for each intent by specifying this field.
+        global package section, but it can be overwritten for each intent by specifying this field.
 \endtable
 
 

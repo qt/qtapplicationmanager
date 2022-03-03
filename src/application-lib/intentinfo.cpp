@@ -78,19 +78,9 @@ QMap<QString, QString> IntentInfo::names() const
     return m_names.isEmpty() ? m_packageInfo->names() : m_names;
 }
 
-QString IntentInfo::name(const QString &language) const
-{
-    return m_names.isEmpty() ? m_packageInfo->name(language) : m_names.value(language);
-}
-
 QMap<QString, QString> IntentInfo::descriptions() const
 {
-    return m_descriptions;
-}
-
-QString IntentInfo::description(const QString &language) const
-{
-    return m_descriptions.value(language);
+    return m_descriptions.isEmpty() ? m_packageInfo->descriptions() : m_descriptions;
 }
 
 QString IntentInfo::icon() const

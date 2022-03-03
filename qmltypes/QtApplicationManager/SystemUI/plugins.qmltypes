@@ -107,6 +107,8 @@ Module {
         Property { name: "icon"; type: "QUrl"; isReadonly: true }
         Property { name: "name"; type: "string"; isReadonly: true }
         Property { name: "names"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "description"; type: "string"; isReadonly: true }
+        Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true }
         Property { name: "categories"; type: "QStringList"; isReadonly: true }
     }
     Component {
@@ -468,6 +470,12 @@ Module {
         prototype: "QObject"
         isCreatable: false
         Property { name: "id"; type: "string"; isReadonly: true }
+        Property { name: "name"; type: "string"; isReadonly: true }
+        Property { name: "names"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "description"; type: "string"; isReadonly: true }
+        Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "categories"; type: "QStringList"; isReadonly: true }
+        Property { name: "icon"; type: "QUrl"; isReadonly: true }
         Property { name: "runtimeName"; type: "string"; isReadonly: true }
         Property { name: "runtimeParameters"; type: "QVariantMap"; isReadonly: true }
         Property { name: "capabilities"; type: "QStringList"; isReadonly: true }
@@ -480,11 +488,9 @@ Module {
         Property { name: "codeDir"; type: "string"; isReadonly: true }
         Property { name: "runState"; type: "RunState"; isReadonly: true }
         Property { name: "package"; type: "Package"; isPointer: true; isReadonly: true }
-        Property { name: "icon"; type: "QUrl"; isReadonly: true }
         Property { name: "builtIn"; type: "bool"; isReadonly: true }
         Property { name: "alias"; type: "bool"; isReadonly: true }
         Property { name: "nonAliased"; type: "Application"; isPointer: true; isReadonly: true }
-        Property { name: "categories"; type: "QStringList"; isReadonly: true }
         Property { name: "version"; type: "string"; isReadonly: true }
         Property { name: "state"; type: "State"; isReadonly: true }
         Property { name: "blocked"; type: "bool"; isReadonly: true }
@@ -542,11 +548,6 @@ Module {
         }
         Method {
             name: "stop"
-        }
-        Method {
-            name: "name"
-            type: "string"
-            Parameter { name: "language"; type: "string"; }
         }
     }
     Component {

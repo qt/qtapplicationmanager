@@ -285,4 +285,20 @@ void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from)
     recursiveMergeMap(&into, from);
 }
 
+QString translateFromMap(const QMap<QString, QString> &languageToName, const QString &defaultName)
+{
+    if (!languageToName.isEmpty()) {
+        QString name = languageToName.value(QLocale::system().name()); //TODO: language changes
+        if (name.isNull())
+            name = languageToName.value(qSL("en"));
+        if (name.isNull())
+            name = languageToName.value(qSL("en_US"));
+        if (name.isNull())
+            name = languageToName.first();
+        return name;
+    } else {
+        return defaultName;
+    }
+}
+
 QT_END_NAMESPACE_AM

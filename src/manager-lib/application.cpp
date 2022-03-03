@@ -35,6 +35,7 @@
 #include "package.h"
 #include "exception.h"
 #include "logging.h"
+#include "utilities.h"
 
 #include <QDebug>
 
@@ -199,14 +200,6 @@
 
     \sa ApplicationManager::stopApplication
 */
-
-/*!
-    \qmlproperty url ApplicationObject::icon
-    \readonly
-    \qmlobsolete
-
-    Use PackageObject::icon
-*/
 /*!
     \qmlproperty bool ApplicationObject::builtIn
     \readonly
@@ -235,13 +228,6 @@
     Always returns the ApplicationObject itself.
 */
 /*!
-    \qmlproperty list<string> ApplicationObject::categories
-    \readonly
-    \qmlobsolete
-
-    Use PackageObject::categories.
-*/
-/*!
     \qmlproperty string ApplicationObject::version
     \readonly
     \qmlobsolete
@@ -263,12 +249,66 @@
     Use PackageObject::version.
 */
 /*!
-    \qmlmethod string ApplicationObject::name(string language)
+    \qmlproperty enumeration ApplicationObject::state
+    \readonly
     \qmlobsolete
 
-    Use the PackageObject::names property.
+    Use PackageObject::state.
+*/
+/*!
+    \qmlproperty url ApplicationObject::icon
+    \readonly
 
-    Returns the name of the application in the given \a language.
+    The URL of the application's icon - can be used as the source property of an \l Image.
+    If the application does not specify an \c icon, this will return the same as the containing
+    PackageObject::icon.
+*/
+/*!
+    \qmlproperty string ApplicationObject::name
+    \readonly
+
+    Returns the localized name of the application - as provided in the info.yaml file - in the currently
+    active locale.
+
+    This is a convenience property, that takes the mapping returned by the \l names property,
+    and then tries to return the value for these keys if available: first the current locale's id,
+    then \c en_US, then \c en and lastly the first available key.
+
+    If no mapping is available, this will return the \l id.
+*/
+/*!
+    \qmlproperty var ApplicationObject::names
+    \readonly
+
+    Returns an object with all the language code to localized name mappings as provided in the
+    application's info.yaml file. If the application does not specify a \c names object, this will
+    return the same as the containing PackageObject::names.
+*/
+/*!
+    \qmlproperty string ApplicationObject::description
+    \readonly
+
+    Returns the localized description of the application - as provided in the info.yaml file - in the
+    currently active locale.
+
+    This property uses the same algorithm as the \l name property, but for the description.
+*/
+/*!
+    \qmlproperty var ApplicationObject::descriptions
+    \readonly
+
+    Returns an object with all the language code to localized description mappings as provided in
+    the applications's info.yaml file. If the application does not specify a \c descriptions object,
+    this will return the same as the containing PackageObject::descriptions.
+*/
+/*!
+    \qmlproperty list<string> ApplicationObject::categories
+    \readonly
+
+    A list of category names the application should be associated with. This is mainly for
+    displaying the application within a fixed set of categories in the System UI.
+    If the application does not specify a \c categories list, this will return the same as
+    the containing PackageObject::categories.
 */
 
 QT_BEGIN_NAMESPACE_AM
@@ -370,12 +410,15 @@ QStringList Application::capabilities() const
 
 QStringList Application::categories() const
 {
-    return package()->categories();
+    return m_info->categories();
 }
 
 QUrl Application::icon() const
 {
-    return package()->icon();
+    if (info()->icon().isEmpty())
+        return QUrl();
+
+    return QUrl::fromLocalFile(packageInfo()->baseDir().absoluteFilePath(info()->icon()));
 }
 
 QStringList Application::supportedMimeTypes() const
@@ -390,12 +433,30 @@ QString Application::documentUrl() const
 
 QString Application::name() const
 {
-    return package()->name();
+    return translateFromMap(m_info->names(), id());
 }
 
-QString Application::name(const QString &language) const
+QVariantMap Application::names() const
 {
-    return package()->names().value(language).toString();
+    QVariantMap vm;
+    const auto map = m_info->names();
+    for (auto it = map.cbegin(); it != map.cend(); ++it)
+        vm.insert(it.key(), it.value());
+    return vm;
+}
+
+QString Application::description() const
+{
+    return translateFromMap(m_info->descriptions());
+}
+
+QVariantMap Application::descriptions() const
+{
+    QVariantMap vm;
+    const auto map = m_info->descriptions();
+    for (auto it = map.cbegin(); it != map.cend(); ++it)
+        vm.insert(it.key(), it.value());
+    return vm;
 }
 
 bool Application::isBlocked() const

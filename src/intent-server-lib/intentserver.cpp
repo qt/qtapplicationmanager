@@ -235,7 +235,8 @@ Intent *IntentServer::addIntent(const QString &id, const QString &packageId,
                                 const QString &handlingApplicationId,
                                 const QStringList &capabilities, Intent::Visibility visibility,
                                 const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
-                                const QUrl &icon, const QStringList &categories)
+                                const QMap<QString, QString> &descriptions, const QUrl &icon,
+                                const QStringList &categories)
 {
     try {
         if (id.isEmpty())
@@ -257,7 +258,7 @@ Intent *IntentServer::addIntent(const QString &id, const QString &packageId,
     }
 
     auto intent = new Intent(id, packageId, handlingApplicationId, capabilities, visibility,
-                             parameterMatch, names, icon, categories);
+                             parameterMatch, names, descriptions, icon, categories);
     QQmlEngine::setObjectOwnership(intent, QQmlEngine::CppOwnership);
 
     beginInsertRows(QModelIndex(), rowCount(), rowCount());

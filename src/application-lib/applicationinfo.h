@@ -71,13 +71,19 @@ public:
     bool supportsApplicationInterface() const;
     QVariantMap dltConfiguration() const;
 
+    QStringList categories() const;
+
+    QMap<QString, QString> names() const;
+    QMap<QString, QString> descriptions() const;
+    QString icon() const;
+
     void writeToDataStream(QDataStream &ds) const;
     static ApplicationInfo *readFromDataStream(PackageInfo *pkg, QDataStream &ds);
 
 private:
     void read(QDataStream &ds);
 
-    // static part from info.json
+    // static part from the manifest
     PackageInfo *m_packageInfo;
 
     QString m_id;
@@ -86,7 +92,7 @@ private:
     QVariantMap m_sysAppProperties;
     QVariantMap m_allAppProperties;
 
-    QString m_codeFilePath; // relative to info.json location
+    QString m_codeFilePath; // relative to the manifest's location
     QString m_runtimeName;
     QVariantMap m_runtimeParameters;
     bool m_supportsApplicationInterface = false;
@@ -95,6 +101,11 @@ private:
     QStringList m_supportedMimeTypes; // deprecated
     QString m_documentUrl; // deprecated
     QVariantMap m_dltConfiguration;
+
+    QStringList m_categories;
+    QMap<QString, QString> m_names; // language -> name
+    QMap<QString, QString> m_descriptions; // language -> description
+    QString m_icon; // relative to the manifest's location
 
     friend class ApplicationManager; // needed to update installation status
     friend class PackageDatabase; // needed to create ApplicationInfo objects

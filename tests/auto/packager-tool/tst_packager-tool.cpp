@@ -280,7 +280,6 @@ void tst_PackagerTool::brokenMetadata_data()
     QTest::addColumn<QVariant>("yamlValue");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("missing-name")       << "name"    << QVariant() << "~.*Required fields are missing: name.*";
     QTest::newRow("missing-runtime")    << "runtime" << QVariant() << "~.*Required fields are missing: runtime";
     QTest::newRow("missing-identifier") << "id"      << QVariant() << "~.*Required fields are missing: id";
     QTest::newRow("missing-code")       << "code"    << QVariant() << "~.*Required fields are missing: code";

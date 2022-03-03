@@ -35,6 +35,7 @@
 #include "packageinfo.h"
 #include "applicationinfo.h"
 #include "application.h"
+#include "utilities.h"
 
 /*!
     \qmltype PackageObject
@@ -97,6 +98,11 @@
     Returns the localized name of the package - as provided in the info.yaml file - in the currently
     active locale.
 
+    This is a convenience property, that takes the mapping returned by the \l names property,
+    and then tries to return the value for these keys if available: first the current locale's id,
+    then \c en_US, then \c en and lastly the first available key.
+
+    If no mapping is available, this will return the \l id.
 */
 /*!
     \qmlproperty var PackageObject::names
@@ -112,6 +118,7 @@
     Returns the localized description of the package - as provided in the info.yaml file - in the
     currently active locale.
 
+    This property uses the same algorithm as the \l name property, but for the description.
 */
 /*!
     \qmlproperty var PackageObject::descriptions
@@ -187,19 +194,7 @@ QString Package::version() const
 
 QString Package::name() const
 {
-    QString name;
-    if (!info()->names().isEmpty()) {
-        name = info()->name(QLocale::system().name()); //TODO: language changes
-        if (name.isEmpty())
-            name = info()->name(qSL("en"));
-        if (name.isEmpty())
-            name = info()->name(qSL("en_US"));
-        if (name.isEmpty())
-            name = *info()->names().constBegin();
-    } else {
-        name = id();
-    }
-    return name;
+    return translateFromMap(info()->names(), id());
 }
 
 QVariantMap Package::names() const
@@ -213,17 +208,7 @@ QVariantMap Package::names() const
 
 QString Package::description() const
 {
-    QString description;
-    if (!info()->descriptions().isEmpty()) {
-        description = info()->description(QLocale::system().name()); //TODO: language changes
-        if (description.isEmpty())
-            description = info()->description(qSL("en"));
-        if (description.isEmpty())
-            description = info()->description(qSL("en_US"));
-        if (description.isEmpty())
-            description = *info()->descriptions().constBegin();
-    }
-    return description;
+    return translateFromMap(info()->descriptions());
 }
 
 QVariantMap Package::descriptions() const

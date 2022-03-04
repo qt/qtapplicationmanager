@@ -73,7 +73,10 @@ PackageDatabase::PackageDatabase(const QStringList &builtInPackagesDirs,
     : m_builtInPackagesDirs(builtInPackagesDirs)
     , m_installedPackagesDir(installedPackagesDir)
     , m_installedPackagesMountPoint(installedPackagesMountPoint)
-{ }
+{
+    qCDebug(LogInstaller) << "Loading built-in apps from:" << m_builtInPackagesDirs;
+    qCDebug(LogInstaller) << "Loading installed apps from:" << m_installedPackagesDir;
+}
 
 PackageDatabase::PackageDatabase(const QString &singlePackagePath)
     : m_singlePackagePath(singlePackagePath)

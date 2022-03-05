@@ -301,4 +301,18 @@ QString translateFromMap(const QMap<QString, QString> &languageToName, const QSt
     }
 }
 
+bool loadResource(const QString &resource)
+{
+    QString afp = QDir().absoluteFilePath(resource);
+
+    bool ok = false;
+    ok = ok || (QLibrary::isLibrary(resource) && QLibrary(afp).load());
+    ok = ok || QResource::registerResource(resource);
+    ok = ok || QLibrary(afp).load();
+#if defined(Q_OS_WINDOWS)
+    ok = ok || QLibrary(afp % u'd').load();
+#endif
+    return ok;
+}
+
 QT_END_NAMESPACE_AM

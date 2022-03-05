@@ -30,9 +30,11 @@ instructions:
       disable_if:
         condition: or
         conditions:
+            # this shouldn't be necessary, but the CI non-deterministically freezes when running tst_main,
+            # independent of toolchain (MSVC, MingW) or OS version (10, 11)
           - condition: property
             property: host.os
-            in_values: ["Windows", "MacOS"]
+            in_values: ["Windows"]
           - condition: property
             property: target.os
             in_values: ["IOS", "Android", "WebAssembly"]

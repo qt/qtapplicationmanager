@@ -364,6 +364,8 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
 
 ApplicationManagerPrivate::~ApplicationManagerPrivate()
 {
+    for (const QString &scheme : qAsConst(registeredMimeSchemes))
+        QDesktopServices::unsetUrlHandler(scheme);
     qDeleteAll(apps);
 }
 

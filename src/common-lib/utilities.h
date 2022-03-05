@@ -141,12 +141,7 @@ QVector<T *> loadPlugins(const char *type, const QStringList &files) Q_DECL_NOEX
 }
 
 // Load a Qt resource, either in the form of a resource file or a plugin
-inline bool loadResource(const QString &resource)
-{
-    return QLibrary::isLibrary(resource)
-           ? (QLibrary(QDir().absoluteFilePath(resource)).load() || QResource::registerResource(resource))
-           : (QResource::registerResource(resource) || QLibrary(QDir().absoluteFilePath(resource)).load());
-}
+bool loadResource(const QString &resource);
 
 // Qt6 removed v_cast, but the "replacement" QVariant::Private::get is const only
 template <typename T> T *qt6_v_cast(QVariant::Private *vp)

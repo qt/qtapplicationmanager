@@ -43,7 +43,7 @@ TestCase {
     property var capsApplication
     // Either appman is build in single-process mode or it was started with --force-single-process
     property bool singleProcess : Qt.application.arguments.indexOf("--force-single-process") !== -1
-                                  || buildConfig[0].CONFIG.indexOf("multi-process") === -1
+                                  || !buildConfig[0].QT_FEATURES.QT_FEATURE_am_multi_process
     property QtObject windowHandler: QtObject {
         function windowAddedHandler(window) {
             // console.info("window " + window + " added");
@@ -294,10 +294,10 @@ TestCase {
                         exitCode: 0, exitStatus: Am.NormalExit },
                     {tag: "ForceKill", appId: "tld.test.simple2", index: 1, forceKill: true,
                         exitCode: Qt.platform.os !== 'windows' ? 9 : 0,
-                        exitStatus: Qt.platform.os !== 'windows' ? Am.ForcedExit : Am.CrashExit },
+                        exitStatus: Am.ForcedExit },
                     {tag: "AutoTerminate", appId: "tld.test.simple2", index: 1, forceKill: false,
                         exitCode: Qt.platform.os !== 'windows' ? 15 : 0,
-                        exitStatus: Qt.platform.os !== 'windows' ? Am.ForcedExit : Am.CrashExit }
+                        exitStatus: Am.ForcedExit }
                 ];
     }
 

@@ -262,6 +262,8 @@ void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
 
     // check if we got what we requested on the OpenGL side
     checkOpenGLFormat("global shared context", globalContext->format());
+
+    qAddPostRoutine([]() { delete qt_gl_global_share_context(); });
 #endif
 }
 

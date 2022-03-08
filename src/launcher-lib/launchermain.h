@@ -112,7 +112,9 @@ private:
     QStringList m_iconThemeSearchPaths;
     QVariant m_useAMConsoleLogger;
     QString m_dltLongMessageBehavior;
-    WaylandQtAMClientExtension *m_waylandExtension = nullptr;
+#if defined(QT_WAYLANDCLIENT_LIB)
+    QScopedPointer<WaylandQtAMClientExtension> m_waylandExtension;
+#endif
 };
 
 QT_END_NAMESPACE_AM

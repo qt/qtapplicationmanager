@@ -161,6 +161,11 @@ ApplicationModel::ApplicationModel(QObject *parent)
     connect(this, &QAbstractItemModel::modelReset, this, &ApplicationModel::countChanged);
 }
 
+ApplicationModel::~ApplicationModel()
+{
+    delete d;
+}
+
 int ApplicationModel::count() const
 {
     return rowCount();

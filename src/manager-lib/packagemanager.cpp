@@ -1491,6 +1491,7 @@ bool PackageManager::canceledPackageInstall(const QString &id)
         return false;
 
     case Package::BeingInstalled: {
+        // remove the package from the model
         int row = d->packages.indexOf(package);
         if (row >= 0) {
             emit packageAboutToBeRemoved(package->id());
@@ -1498,13 +1499,21 @@ bool PackageManager::canceledPackageInstall(const QString &id)
             d->packages.removeAt(row);
             endRemoveRows();
         }
+
+        // cleanup
         package->unblock();
+
+        // it's not yet added to the package db, so we need to delete ourselves
+        delete package->info();
+
         delete package;
         break;
     }
     case Package::BeingUpdated:
     case Package::BeingDowngraded:
     case Package::BeingRemoved:
+        delete d->pendingPackageInfoUpdates.take(package);
+
         package->setState(Package::Installed);
         package->setProgress(0);
         emitDataChanged(package, QVector<int> { IsUpdating });

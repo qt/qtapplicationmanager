@@ -165,6 +165,11 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     , m_amExtension(new WaylandQtAMServerExtension(this))
     , m_textInputManager(new QWaylandTextInputManager(this))
 {
+    m_wlShell->setParent(this);
+    m_xdgShell->setParent(this);
+    m_amExtension->setParent(this);
+    m_textInputManager->setParent(this);
+
     setSocketName(waylandSocketName.toUtf8());
     registerOutputWindow(window);
 
@@ -187,6 +192,13 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
 
     // set a sensible default keymap
     defaultSeat()->keymap()->setLayout(QLocale::system().name().section(qL1C('_'), 1, 1).toLower());
+}
+
+WaylandCompositor::~WaylandCompositor()
+{
+    // QWayland leaks like sieve everywhere, but we need this explicit delete to be able
+    // to suppress the rest via LSAN leak suppression files
+    delete defaultSeat();
 }
 
 void WaylandCompositor::xdgPing(WindowSurface* surface)

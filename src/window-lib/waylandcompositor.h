@@ -128,6 +128,8 @@ class WaylandCompositor : public QWaylandQuickCompositor // clazy:exclude=missin
     Q_OBJECT
 public:
     WaylandCompositor(QQuickWindow* window, const QString &waylandSocketName);
+    ~WaylandCompositor() override;
+
     void registerOutputWindow(QQuickWindow *window);
 
     WaylandQtAMServerExtension *amExtension();

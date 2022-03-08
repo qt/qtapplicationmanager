@@ -53,6 +53,7 @@ class ApplicationModel : public QSortFilterProxyModel
 
 public:
     ApplicationModel(QObject *parent = nullptr);
+    ~ApplicationModel() override;
 
     int count() const;
 

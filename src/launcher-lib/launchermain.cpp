@@ -67,8 +67,8 @@ LauncherMain *LauncherMain::instance()
 void LauncherMain::registerWaylandExtensions() Q_DECL_NOEXCEPT
 {
 #if defined(QT_WAYLANDCLIENT_LIB)
-     m_waylandExtension = new WaylandQtAMClientExtension();
-     connect(m_waylandExtension, &WaylandQtAMClientExtension::windowPropertyChanged,
+     m_waylandExtension.reset(new WaylandQtAMClientExtension());
+     connect(m_waylandExtension.get(), &WaylandQtAMClientExtension::windowPropertyChanged,
              this, &LauncherMain::windowPropertyChanged);
 #endif
 }

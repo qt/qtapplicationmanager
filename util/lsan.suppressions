@@ -1,0 +1,4 @@
+leak:*QWayland*
+leak:libxkbcommon.so
+leak:libwayland-client.so
+leak:*QQuickPointerDevice*

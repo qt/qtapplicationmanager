@@ -1,0 +1,9 @@
+You need these suppressions when running with Wayland, as QtWaylandCompositor
+does not delete anything on shutdown:
+
+export LSAN_OPTIONS="suppressions=<path/to/appman>/util/lsan.suppressions"
+
+
+Please note: the qml/resources auto-test will report leaks, but these
+are deliberate: we cannot unload resource files once they are loaded in
+single-process mode.

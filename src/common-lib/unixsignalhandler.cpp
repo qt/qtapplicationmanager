@@ -40,6 +40,8 @@
 #if defined(Q_OS_WIN)
 #  include <windows.h>
 #  include <synchapi.h>
+#else
+#  include <sys/mman.h>
 #endif
 
 
@@ -54,11 +56,6 @@ UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)
 UnixSignalHandler *UnixSignalHandler::s_instance = nullptr;
 
 #if defined(Q_OS_UNIX)
-// make it clear in the valgrind backtrace that this is a deliberate leak
-static void *malloc_valgrind_ignore(size_t size)
-{
-    return malloc(size);
-}
 
 UnixSignalHandler::UnixSignalHandler()
     : QObject()
@@ -68,11 +65,17 @@ UnixSignalHandler::UnixSignalHandler()
     // Canonical size might not be suffcient to get QML backtrace, so we double it
     size_t stackSize = SIGSTKSZ * 2;
     stack_t sigstack;
-    // valgrind will report this as leaked: nothing we can do about it
-    sigstack.ss_sp = malloc_valgrind_ignore(stackSize);
-    sigstack.ss_size = stackSize;
-    sigstack.ss_flags = 0;
-    sigaltstack(&sigstack, nullptr);
+    // ASAN and valgrind would report malloc() as a leak. In addition, we avoid the
+    // signal stack being close to a possibly corrupted heap this way.
+    sigstack.ss_sp = mmap(nullptr, stackSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (sigstack.ss_sp != MAP_FAILED) {
+        sigstack.ss_size = stackSize;
+        sigstack.ss_flags = 0;
+        sigaltstack(&sigstack, nullptr);
+    } else {
+        // this code runs before all other static constructors
+        qWarning("WARNING: UnixSignalHandler failed to allocate memory for an alternate signal stack.");
+    }
 }
 #else
 UnixSignalHandler::UnixSignalHandler() : QObject()

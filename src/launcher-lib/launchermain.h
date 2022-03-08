@@ -102,7 +102,7 @@ private:
     QVariant m_useAMConsoleLogger;
     QString m_dltLongMessageBehavior;
 #if defined(QT_WAYLANDCLIENT_LIB)
-    WaylandQtAMClientExtension *m_waylandExtension = nullptr;
+    QScopedPointer<WaylandQtAMClientExtension> m_waylandExtension;
 #endif
 };
 

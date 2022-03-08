@@ -43,7 +43,7 @@ QT_BEGIN_NAMESPACE_AM
 class ApplicationManagerWindowPrivate
 {
 public:
-    LauncherMain *launcherMain = nullptr;
+    QPointer<LauncherMain> launcherMain = nullptr;
 };
 
 
@@ -126,7 +126,8 @@ ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
 
 ApplicationManagerWindow::~ApplicationManagerWindow()
 {
-    d->launcherMain->clearWindowPropertyCache(this);
+    if (d->launcherMain)
+        d->launcherMain->clearWindowPropertyCache(this);
     delete d;
 }
 

@@ -78,7 +78,7 @@ class Main : public MainBase, protected SharedMain
 
 public:
     Main(int &argc, char **argv);
-    ~Main();
+    ~Main() override;
 
     bool isSingleProcessMode() const;
     bool isRunningOnEmbedded() const;

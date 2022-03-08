@@ -280,6 +280,8 @@ void IntentServer::removeIntent(Intent *intent)
         endRemoveRows();
 
         emit countChanged();
+
+        delete intent;
     }
 }
 

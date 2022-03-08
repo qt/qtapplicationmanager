@@ -100,7 +100,7 @@ private:
     QStringList m_iconThemeSearchPaths;
     QVariant m_useAMConsoleLogger;
 #if defined(QT_WAYLANDCLIENT_LIB)
-    WaylandQtAMClientExtension *m_waylandExtension = nullptr;
+    QScopedPointer<WaylandQtAMClientExtension> m_waylandExtension;
 #endif
 };
 

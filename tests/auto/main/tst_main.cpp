@@ -40,6 +40,7 @@
 #include "main.h"
 #include "intentserver.h"
 #include "intent.h"
+#include "startuptimer.h"
 #include <QtAppManMain/defaultconfiguration.h>
 
 
@@ -62,38 +63,28 @@ private slots:
     void loadDatabaseWithUpdatedBuiltInApp();
     void mainQmlFile_data();
     void mainQmlFile();
+    void startupTimer();
 
 private:
     void cleanUpInstallationDir();
     void installPackage(const QString &path);
     void removePackage(const QString &id);
-    void initMain();
+    void initMain(const QString &mainQml = { });
     void destroyMain();
     void copyRecursively(const QString &sourceDir, const QString &destDir);
-    int argc;
-    char **argv;
-    Main *main{nullptr};
-    DefaultConfiguration *config{nullptr};
+    int argc = 0;
+    char **argv = nullptr;
+    Main *main = nullptr;
+    bool mainSetupDone = false;
+    DefaultConfiguration *config = nullptr;
     bool m_verbose = false;
 };
 
 tst_Main::tst_Main()
-{
-    argc = 4;
-    argv = new char*[argc + 1];
-    argv[0] = qstrdup("tst_Main");
-    argv[1] = qstrdup("--dbus");
-    argv[2] = qstrdup("none");
-    argv[3] = qstrdup("--no-cache");
-    argv[4] = nullptr;
-}
+{ }
 
 tst_Main::~tst_Main()
-{
-    for (int i = 0; i < argc; ++i)
-        delete []argv[i];
-    delete []argv;
-}
+{ }
 
 void tst_Main::initTestCase()
 {
@@ -136,19 +127,26 @@ void tst_Main::init()
     cleanUpInstallationDir();
 }
 
-void tst_Main::initMain()
+void tst_Main::initMain(const QString &mainQml)
 {
+    argc = mainQml.isNull() ? 4 : 5;
+    argv = new char*[argc + 1];
+    argv[0] = qstrdup("tst_Main");
+    argv[1] = qstrdup("--dbus");
+    argv[2] = qstrdup("none");
+    argv[3] = qstrdup("--no-cache");
+    if (!mainQml.isNull())
+        argv[4] = qstrdup(mainQml.toLocal8Bit());
+    argv[argc] = nullptr;
+
     main = new Main(argc, argv);
-
-    QString amConfigPath = QFINDTESTDATA("am-config.yaml");
-    auto pathList = QStringList(amConfigPath);
-
-    config = new DefaultConfiguration(pathList, QString());
+    config = new DefaultConfiguration({ QFINDTESTDATA("am-config.yaml") }, QString());
     config->parseWithArguments(QCoreApplication::arguments());
     if (m_verbose)
         config->setForceVerbose(true);
 
     main->setup(config);
+    mainSetupDone = true;
 
     PackageManager::instance()->setAllowInstallationOfUnsignedPackages(true);
 }
@@ -156,23 +154,30 @@ void tst_Main::initMain()
 void tst_Main::destroyMain()
 {
     if (main) {
-        main->shutDown();
-        main->exec();
+        if (mainSetupDone) {
+            main->shutDown();
+            main->exec();
+        }
         delete main;
         main = nullptr;
+        mainSetupDone = false;
     }
     if (config) {
         delete config;
         config = nullptr;
+    }
+    if (argc && argv) {
+        for (int i = 0; i < argc; ++i)
+            delete [] argv[i];
+        delete [] argv;
+        argc = 0;
+        argv = nullptr;
     }
 }
 
 void tst_Main::cleanup()
 {
     destroyMain();
-
-    delete config;
-    config = nullptr;
 }
 
 void tst_Main::installPackage(const QString &pkgPath)
@@ -340,28 +345,39 @@ void tst_Main::mainQmlFile()
     QFETCH(QString, mainQml);
     QFETCH(QString, expectedErrorMsg);
 
-    QStringList arguments;
-    arguments << qSL("tst_Main");
-    arguments << qSL("--dbus");
-    arguments << qSL("none");
-    arguments << mainQml;
-
-    main = new Main(argc, argv);
-
-    config = new DefaultConfiguration(QStringList(QFINDTESTDATA("am-config.yaml")), QString());
-    config->parseWithArguments(arguments);
-
     try {
-        main->setup(config);
+        initMain(mainQml);
         QVERIFY2(expectedErrorMsg.isEmpty(), "Exception was expected, but none was thrown");
     } catch (const std::exception &e) {
         QCOMPARE(QString::fromLocal8Bit(e.what()), expectedErrorMsg);
     }
+}
 
-    delete config;
-    config = nullptr;
-    delete main;
-    main = nullptr;
+void tst_Main::startupTimer()
+{
+    QTemporaryFile tmp;
+    tmp.setAutoRemove(false);
+    QVERIFY(tmp.open());
+    tmp.close();
+
+    QString fn = tmp.fileName();
+
+    auto cleanup = qScopeGuard([fn]{ QFile::remove(fn); });
+
+    delete StartupTimer::instance();
+    qputenv("AM_STARTUP_TIMER", fn.toLocal8Bit());
+    StartupTimer::instance();
+
+    initMain();
+
+    StartupTimer::instance()->createReport(qSL("TEST"));
+
+    QFile f(fn);
+    QVERIFY(f.open(QIODevice::ReadOnly));
+    auto report = f.readAll();
+
+    QVERIFY(report.startsWith("\n== STARTUP TIMING REPORT: TEST =="));
+    QVERIFY(report.contains("after QML engine instantiation"));
 }
 
 QTEST_APPLESS_MAIN(tst_Main)

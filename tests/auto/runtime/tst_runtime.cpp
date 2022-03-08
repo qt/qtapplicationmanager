@@ -137,11 +137,13 @@ void tst_Runtime::factory()
     temp.close();
 
     QScopedPointer<Application> a;
+    QScopedPointer<PackageInfo> pi;
+    QScopedPointer<Package> p;
     try {
-        PackageInfo *pi = PackageInfo::fromManifest(temp.fileName());
+        pi.reset(PackageInfo::fromManifest(temp.fileName()));
         QVERIFY(pi);
-        Package *p = new Package(pi);
-        a.reset(new Application(pi->applications().constFirst(), p));
+        p.reset(new Package(pi.get()));
+        a.reset(new Application(pi->applications().constFirst(), p.get()));
     } catch (const Exception &e) {
         QVERIFY2(false, qPrintable(e.errorString()));
     }

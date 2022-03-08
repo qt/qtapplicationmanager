@@ -311,6 +311,9 @@ void tst_Yaml::cache()
             QVERIFY(ct2);
             QCOMPARE(ct2->name, qSL("cache2"));
             QCOMPARE(ct2->file, qSL(":/data/cache2.yaml"));
+
+            delete ct1;
+            delete ct2;
         } catch (const Exception &e) {
             QVERIFY2(false, e.what());
         }
@@ -364,6 +367,8 @@ void tst_Yaml::mergedCache()
             QVERIFY(ct);
             QCOMPARE(ct->name, QFileInfo(files.last()).baseName());
             QCOMPARE(ct->file, files.join(qSL(",")));
+
+            delete ct;
         } catch (const Exception &e) {
             QVERIFY2(false, e.what());
         }
@@ -385,7 +390,9 @@ void tst_Yaml::mergedCache()
     QTest::ignoreMessage(QtWarningMsg, "Failed to read Cache: cached file checksums do not match");
     brokenCache.parse();
     QVERIFY(brokenCache.parseReadFromCache());
-    QCOMPARE(brokenCache.takeMergedResult()->value, qSL("foobar"));
+    CacheTest *ct = brokenCache.takeMergedResult();
+    QCOMPARE(ct->value, qSL("foobar"));
+    delete ct;
 }
 
 class YamlRunnable : public QRunnable

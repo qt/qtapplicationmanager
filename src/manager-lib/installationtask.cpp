@@ -309,6 +309,13 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
     }
 
     if (m_foundIcon && m_foundInfo) {
+        bool doubleInstallation = false;
+        QMetaObject::invokeMethod(PackageManager::instance(), [this, &doubleInstallation]() {
+            doubleInstallation = PackageManager::instance()->isPackageInstallationActive(m_packageId);
+        }, Qt::BlockingQueuedConnection);
+        if (doubleInstallation)
+            throw Exception(Error::Package, "Cannot install the same package %1 multiple times in parallel").arg(m_packageId);
+
         qCDebug(LogInstaller) << "emit taskRequestingInstallationAcknowledge" << id() << "for package" << m_package->id();
 
         // this is a temporary just for the signal emission below

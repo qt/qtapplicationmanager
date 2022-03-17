@@ -144,6 +144,8 @@ public:
     QVariantMap installationLocation() const;
     QVariantMap documentLocation() const;
 
+    bool isPackageInstallationActive(const QString &packageId) const;
+
     // Q_SCRIPTABLEs are available via both QML and D-Bus
     Q_SCRIPTABLE QStringList packageIds() const;
     Q_SCRIPTABLE QVariantMap get(const QString &packageId) const;

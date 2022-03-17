@@ -120,6 +120,7 @@ private slots:
     void cancelPackageInstallation();
 
     void parallelPackageInstallation();
+    void doublePackageInstallation();
 
     void validateDnsName_data();
     void validateDnsName();
@@ -682,6 +683,28 @@ void tst_PackageManager::parallelPackageInstallation()
     m_pm->acknowledgePackageInstallation(task1Id);
     QVERIFY(m_finishedSpy->wait(spyTimeout));
     QCOMPARE(m_finishedSpy->first()[0].toString(), task1Id);
+
+    clearSignalSpies();
+}
+
+void tst_PackageManager::doublePackageInstallation()
+{
+    QString task1Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    QVERIFY(!task1Id.isEmpty());
+    QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
+    QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), task1Id);
+
+    QString task2Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    QVERIFY(!task2Id.isEmpty());
+    m_pm->acknowledgePackageInstallation(task2Id);
+    QVERIFY(m_failedSpy->wait(spyTimeout));
+    QCOMPARE(m_failedSpy->first()[0].toString(), task2Id);
+    QCOMPARE(m_failedSpy->first()[2].toString(), qL1S("Cannot install the same package com.pelagicore.test multiple times in parallel"));
+
+    clearSignalSpies();
+    m_pm->cancelTask(task1Id);
+    QVERIFY(m_failedSpy->wait(spyTimeout));
+    QCOMPARE(m_failedSpy->first()[0].toString(), task1Id);
 
     clearSignalSpies();
 }

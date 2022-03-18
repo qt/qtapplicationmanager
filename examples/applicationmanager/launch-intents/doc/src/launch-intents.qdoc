@@ -166,7 +166,7 @@ both intents:
 
 \quotefromfile applicationmanager/launch-intents/apps/launch-intents.red/main.qml
 \skipto IntentHandler {
-\printto onRequestReceived: {
+\printto onRequestReceived:
 
 The signal handler for incoming intent request can then disambiguate between the requested intents
 based on their \c intentId and increase either the normal \c counter or the \c anotherCounter

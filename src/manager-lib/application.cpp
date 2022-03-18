@@ -249,13 +249,6 @@
     Use PackageObject::version.
 */
 /*!
-    \qmlproperty enumeration ApplicationObject::state
-    \readonly
-    \qmlobsolete
-
-    Use PackageObject::state.
-*/
-/*!
     \qmlproperty url ApplicationObject::icon
     \readonly
 

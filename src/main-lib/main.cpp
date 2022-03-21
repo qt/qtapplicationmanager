@@ -544,7 +544,7 @@ void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &c
 
     // we only output these deployment warnings, if we are on embedded, applicationUserIdSeparation
     // is enabled and either...
-    if (isRunningOnEmbedded() && userIdSeparation) {
+    if (isRunningOnEmbedded() && userIdSeparation && userIdSeparation(nullptr, nullptr, nullptr)) {
         // ... the user forgot to call Sudo::forkServer() quite early in main()
         if (Q_UNLIKELY(!SudoClient::instance())) {
             qCWarning(LogDeployment) << "In order for the package-manager to support \"applicationUserIdSeparation\", "

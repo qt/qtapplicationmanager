@@ -401,7 +401,7 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
     reportFile.close();
 
     // create the document directories when installing (not needed on updates)
-    if (mode == Installation) {
+    if ((mode == Installation) && !m_documentPath.isEmpty()) {
         // this package may have been installed earlier and the document directory may not have been removed
         if (!documentDirectory.cd(m_packageId)) {
             if (!documentDirCreator.create(documentDirectory.absoluteFilePath(m_packageId)))

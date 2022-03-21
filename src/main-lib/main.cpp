@@ -491,6 +491,15 @@ void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &c
                                     "even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
     }
 
+    // make sure the installation and document dirs are valid
+    Q_ASSERT(!m_installationDir.isEmpty());
+    const auto instPath = QDir(m_installationDir).canonicalPath();
+    const auto docPath = m_documentDir.isEmpty() ? QString { }
+                                                 : QDir(m_documentDir).canonicalPath();
+
+    if (!docPath.isEmpty() && (instPath.startsWith(docPath) || docPath.startsWith(instPath)))
+        throw Exception("either installationDir or documentDir cannot be a sub-directory of the other");
+
     // we only output these deployment warnings, if we are on embedded, applicationUserIdSeparation
     // is enabled and either...
     if (isRunningOnEmbedded() && userIdSeparation && userIdSeparation(nullptr, nullptr, nullptr)) {

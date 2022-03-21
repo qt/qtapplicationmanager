@@ -192,6 +192,9 @@ ui:
         \li string
         \li The base directory for per-package document storage directories.
             (default: empty/disabled)
+
+            Please note, that if you do not set a \c documentDir here, no per-application
+            document directories will be created when installing new packages.
     \row
         \li [\c applications/installationDirMountPoint]
         \li string

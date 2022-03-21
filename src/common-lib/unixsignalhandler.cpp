@@ -134,7 +134,8 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
                     h.m_handler(sig);
                 } else {
 #if defined(Q_OS_UNIX)
-                    (void) write(that->m_pipe[1], &sig, sizeof(int));
+                    auto dummy = write(that->m_pipe[1], &sig, sizeof(int));
+                    Q_UNUSED(dummy)
 #elif defined(Q_OS_WIN)
                     // we're running in a separate thread now
                     that->m_winLock.lock();
@@ -163,7 +164,8 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
     if (handlerType == ForwardedToEventLoopHandler) {
 #if defined(Q_OS_UNIX)
         if ((m_pipe[0] == -1) && qApp) {
-            (void) pipe(m_pipe);
+            auto dummy = pipe(m_pipe);
+            Q_UNUSED(dummy)
 
             auto sn = new QSocketNotifier(m_pipe[0], QSocketNotifier::Read, this);
             connect(sn, &QSocketNotifier::activated, qApp, [this]() {

@@ -816,7 +816,7 @@ QVariantMap PackageManager::installationLocation() const
 */
 QVariantMap PackageManager::documentLocation() const
 {
-    return locationMap(d->documentPath);
+    return d->documentPath.isEmpty() ? QVariantMap { } : locationMap(d->documentPath);
 }
 
 void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
@@ -864,7 +864,8 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
 
             if (valid) {
                 validPaths.insert(d->installationPath, pkg->id() + QDir::separator());
-                validPaths.insert(d->documentPath, pkg->id() + QDir::separator());
+                if (!d->documentPath.isEmpty())
+                    validPaths.insert(d->documentPath, pkg->id() + QDir::separator());
             } else {
                 if (startingPackageRemoval(pkg->id())) {
                     if (finishedPackageInstall(pkg->id()))

@@ -320,6 +320,11 @@ or across multiple config files, the final value is resolved based on these rule
             production, if you are verifying packages by other means, while also limiting the
             access to the installer API. (default: false)
     \row
+        \li [\c flags/allowUnknownUiClients]
+        \li bool
+        \li If set, the Wayland compositor will accept surfaces from clients that have not been
+            started by the application manager. (default: false)
+    \row
         \li \b --no-ui-watchdog
             \br [\c flags/noUiWatchdog]
         \li bool

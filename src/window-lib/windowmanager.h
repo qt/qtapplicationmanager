@@ -88,6 +88,7 @@ class WindowManager : public QAbstractListModel
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT)
     Q_PROPERTY(bool slowAnimations READ slowAnimations WRITE setSlowAnimations NOTIFY slowAnimationsChanged)
+    Q_PROPERTY(bool allowUnknownUiClients READ allowUnknownUiClients CONSTANT)
 
 public:
     ~WindowManager() override;
@@ -100,7 +101,8 @@ public:
     bool isRunningOnDesktop() const;
     bool slowAnimations() const;
     void setSlowAnimations(bool slowAnimations);
-
+    bool allowUnknownUiClients() const;
+    void setAllowUnknownUiClients(bool enable);
     void enableWatchdog(bool enable);
 
     bool addWaylandSocket(QLocalServer *waylandSocket);

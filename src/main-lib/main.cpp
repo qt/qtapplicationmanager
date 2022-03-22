@@ -282,8 +282,8 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setLibraryPaths(libraryPaths() + cfg->pluginPaths());
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
-    setupWindowManager(cfg->waylandSocketName(), cfg->waylandExtraSockets(),
-                       cfg->slowAnimations(), cfg->noUiWatchdog());
+    setupWindowManager(cfg->waylandSocketName(), cfg->waylandExtraSockets(), cfg->slowAnimations(),
+                       cfg->noUiWatchdog(), cfg->allowUnknownUiClients());
     setupTouchEmulation(cfg->enableTouchEmulation());
     setupShellServer(QString(), 0); // remove
     setupSSDPService();
@@ -697,16 +697,18 @@ void Main::setupWindowTitle(const QString &title, const QString &iconPath)
 }
 
 void Main::setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets,
-                              bool slowAnimations, bool uiWatchdog)
+                              bool slowAnimations, bool uiWatchdog, bool allowUnknownUiClients)
 {
 #if defined(AM_HEADLESS)
     Q_UNUSED(waylandSocketName)
     Q_UNUSED(slowAnimations)
     Q_UNUSED(uiWatchdog)
+    Q_UNUSED(allowUnknownUiClients)
 #else
     QUnifiedTimer::instance()->setSlowModeEnabled(slowAnimations);
 
     m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName);
+    m_windowManager->setAllowUnknownUiClients(m_noSecurity || allowUnknownUiClients);
     m_windowManager->setSlowAnimations(slowAnimations);
     m_windowManager->enableWatchdog(!uiWatchdog);
 

@@ -95,6 +95,7 @@ public:
     bool noSecurity() const;
     bool developmentMode() const;
     bool allowUnsignedPackages() const;
+    bool allowUnknownUiClients() const;
     bool noUiWatchdog() const;
     bool noDltLogging() const;
     bool forceSingleProcess() const;

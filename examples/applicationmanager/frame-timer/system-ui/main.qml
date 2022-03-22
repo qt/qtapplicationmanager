@@ -198,7 +198,7 @@ Window {
                 // Title bar text
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: model.window.application.name("en") + " application window"
+                    text: model.window.application.names["en"] + " application window"
                 }
 
                 // Raises the window when the title bar is clicked and moves it around when dragged.

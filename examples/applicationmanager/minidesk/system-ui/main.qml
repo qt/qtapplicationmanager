@@ -94,7 +94,7 @@ Window {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Decoration: " + (model.window.application ? model.window.application.name("en")
+                text: "Decoration: " + (model.window.application ? model.window.application.names["en"]
                                                                  : 'External Application')
             }
 

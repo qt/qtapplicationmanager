@@ -111,7 +111,7 @@ Rectangle {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: (windowItem.primary ? "Primary: " : "Secondary: ") + model.window.application.name("en")
+                text: (windowItem.primary ? "Primary: " : "Secondary: ") + model.window.application.names["en"]
             }
 
             MouseArea {

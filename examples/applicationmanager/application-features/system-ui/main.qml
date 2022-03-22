@@ -81,7 +81,7 @@ Window {
 
                     Text {
                         id: appid
-                        text: application.name("en")
+                        text: application.names["en"]
                     }
                 }
 
@@ -129,7 +129,8 @@ Window {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: model.window.application ? model.window.application.name("en") : 'External Application'
+                    text: model.window.application ? model.window.application.names["en"]
+                                                   : 'External Application'
                 }
 
                 MouseArea {

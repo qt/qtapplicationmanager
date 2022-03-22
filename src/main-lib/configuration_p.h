@@ -143,6 +143,7 @@ struct ConfigurationData
         bool noSecurity = false;
         bool developmentMode = false;
         bool allowUnsignedPackages = false;
+        bool allowUnknownUiClients = false;
         bool noUiWatchdog = false;
     } flags;
 

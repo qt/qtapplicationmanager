@@ -299,6 +299,7 @@ Module {
         Property { name: "count"; type: "int"; isReadonly: true }
         Property { name: "runningOnDesktop"; type: "bool"; isReadonly: true }
         Property { name: "slowAnimations"; type: "bool"; }
+        Property { name: "allowUnknownUiClients"; type: "bool"; isReadonly: true }
         Signal {
             name: "countChanged"
         }

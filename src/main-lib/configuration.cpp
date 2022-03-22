@@ -386,7 +386,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 7;
+const quint32 ConfigurationData::DataStreamVersion = 8;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -447,7 +447,8 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->flags.forceSingleProcess
        >> cd->wayland.socketName
        >> cd->wayland.extraSockets
-       >> cd->flags.allowUnsignedPackages;
+       >> cd->flags.allowUnsignedPackages
+       >> cd->flags.allowUnknownUiClients;
 
     return cd;
 }
@@ -509,7 +510,8 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << flags.forceSingleProcess
        << wayland.socketName
        << wayland.extraSockets
-       << flags.allowUnsignedPackages;
+       << flags.allowUnsignedPackages
+       << flags.allowUnknownUiClients;
 }
 
 template <typename T> void mergeField(T &into, const T &from, const T &def)
@@ -609,6 +611,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(wayland.socketName);
     MERGE_FIELD(wayland.extraSockets);
     MERGE_FIELD(flags.allowUnsignedPackages);
+    MERGE_FIELD(flags.allowUnknownUiClients);
 }
 
 QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
@@ -832,6 +835,8 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                             cd->flags.noUiWatchdog = p->parseScalar().toBool(); } },
                       { "allowUnsignedPackages", false, YamlParser::Scalar, [&cd](YamlParser *p) {
                             cd->flags.allowUnsignedPackages = p->parseScalar().toBool(); } },
+                      { "allowUnknownUiClients", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->flags.allowUnknownUiClients = p->parseScalar().toBool(); } },
                   }); } },
             { "wayland", false, YamlParser::Map, [&cd](YamlParser *p) {
                   p->parseFields({
@@ -1075,6 +1080,11 @@ bool Configuration::developmentMode() const
 bool Configuration::allowUnsignedPackages() const
 {
     return m_data->flags.allowUnsignedPackages;
+}
+
+bool Configuration::allowUnknownUiClients() const
+{
+    return m_data->flags.allowUnknownUiClients;
 }
 
 bool Configuration::noUiWatchdog() const

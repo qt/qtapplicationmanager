@@ -67,6 +67,7 @@ public:
 
     bool shuttingDown = false;
     bool slowAnimations = false;
+    bool allowUnknownUiClients = false;
 
     QList<QQuickWindow *> views;
     QString waylandSocketName;

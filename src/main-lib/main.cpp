@@ -243,8 +243,8 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setLibraryPaths(libraryPaths() + cfg->pluginPaths());
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
-    setupWindowManager(cfg->waylandSocketName(), cfg->waylandExtraSockets(),
-                       cfg->slowAnimations(), cfg->noUiWatchdog());
+    setupWindowManager(cfg->waylandSocketName(), cfg->waylandExtraSockets(), cfg->slowAnimations(),
+                       cfg->noUiWatchdog(), cfg->allowUnknownUiClients());
 
     setupDBus(std::bind(&Configuration::dbusRegistration, cfg, std::placeholders::_1),
               std::bind(&Configuration::dbusPolicy, cfg, std::placeholders::_1));
@@ -637,11 +637,12 @@ void Main::setupWindowTitle(const QString &title, const QString &iconPath)
 }
 
 void Main::setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets,
-                              bool slowAnimations, bool uiWatchdog)
+                              bool slowAnimations, bool uiWatchdog, bool allowUnknownUiClients)
 {
     QUnifiedTimer::instance()->setSlowModeEnabled(slowAnimations);
 
     m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName);
+    m_windowManager->setAllowUnknownUiClients(m_noSecurity || allowUnknownUiClients);
     m_windowManager->setSlowAnimations(slowAnimations);
     m_windowManager->enableWatchdog(!uiWatchdog);
 

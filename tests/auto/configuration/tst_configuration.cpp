@@ -94,6 +94,7 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.developmentMode(), false);
     QCOMPARE(c.noUiWatchdog(), false);
     QCOMPARE(c.allowUnsignedPackages(), false);
+    QCOMPARE(c.allowUnknownUiClients(), false);
     QCOMPARE(c.forceSingleProcess(), false);
     QCOMPARE(c.forceMultiProcess(), false);
     QCOMPARE(c.loggingRules(), {});
@@ -177,6 +178,7 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.developmentMode(), true);
     QCOMPARE(c.noUiWatchdog(), true);
     QCOMPARE(c.allowUnsignedPackages(), true);
+    QCOMPARE(c.allowUnknownUiClients(), true);
     QCOMPARE(c.forceSingleProcess(), true);
     QCOMPARE(c.forceMultiProcess(), true);
     QCOMPARE(c.loggingRules(), QStringList({ qSL("lr1"), qSL("lr2") }));
@@ -307,6 +309,7 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.developmentMode(), true);
     QCOMPARE(c.noUiWatchdog(), true);
     QCOMPARE(c.allowUnsignedPackages(), true);
+    QCOMPARE(c.allowUnknownUiClients(), true);
     QCOMPARE(c.forceSingleProcess(), true);
     QCOMPARE(c.forceMultiProcess(), true);
     QCOMPARE(c.loggingRules(), QStringList({ qSL("lr1"), qSL("lr2"), qSL("lr3") }));

@@ -339,6 +339,16 @@ void WindowManager::setSlowAnimations(bool slowAnimations)
     }
 }
 
+bool WindowManager::allowUnknownUiClients() const
+{
+    return d->allowUnknownUiClients;
+}
+
+void WindowManager::setAllowUnknownUiClients(bool enable)
+{
+    d->allowUnknownUiClients = enable;
+}
+
 void WindowManager::updateViewSlowMode(QQuickWindow *view)
 {
     // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
@@ -824,7 +834,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
         }
     }
 
-    if (!app && ApplicationManager::instance()->securityChecksEnabled()) {
+    if (!app && !d->allowUnknownUiClients) {
         qCCritical(LogGraphics) << "SECURITY ALERT: an unknown application with pid" << processId
                                 << "tried to map a Wayland surface!"
                                 << "\n  You can disable this check by using the commandline option "

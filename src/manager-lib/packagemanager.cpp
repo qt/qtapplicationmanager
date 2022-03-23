@@ -839,6 +839,15 @@ QVariantMap PackageManager::documentLocation() const
     return locationMap(d->documentPath);
 }
 
+bool PackageManager::isPackageInstallationActive(const QString &packageId) const
+{
+    for (const auto *t : qAsConst(d->installationTaskList)) {
+        if (t->packageId() == packageId)
+            return true;
+    }
+    return false;
+}
+
 void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (d->cleanupBrokenInstallationsDone)

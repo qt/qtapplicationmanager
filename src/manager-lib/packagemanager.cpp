@@ -1536,8 +1536,8 @@ bool PackageManager::canceledPackageInstall(const QString &id)
 */
 int PackageManager::compareVersions(const QString &version1, const QString &version2)
 {
-    int vn1Suffix = -1;
-    int vn2Suffix = -1;
+    qsizetype vn1Suffix = -1;
+    qsizetype vn2Suffix = -1;
     QVersionNumber vn1 = QVersionNumber::fromString(version1, &vn1Suffix);
     QVersionNumber vn2 = QVersionNumber::fromString(version2, &vn2Suffix);
 

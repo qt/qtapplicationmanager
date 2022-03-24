@@ -51,7 +51,7 @@ public:
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
 
-    AbstractContainer *create(Application *app, const QVector<int> &stdioRedirections,
+    AbstractContainer *create(Application *app, QVector<int> &&stdioRedirections,
                               const QMap<QString, QString> &debugWrapperEnvironment,
                               const QStringList &debugWrapperCommand) override;
 };
@@ -68,7 +68,7 @@ public:
     virtual qint64 processId() const override;
     virtual Am::RunState state() const override;
 
-    void setStdioRedirections(const QVector<int> &stdioRedirections);
+    void setStdioRedirections(QVector<int> &&stdioRedirections);
     void setWorkingDirectory(const QString &dir);
     void setProcessEnvironment(const QProcessEnvironment &environment);
 
@@ -92,7 +92,7 @@ class ProcessContainer : public AbstractContainer
 
 public:
     explicit ProcessContainer(ProcessContainerManager *manager, Application *app,
-                              const QVector<int> &stdioRedirections,
+                              QVector<int> &&stdioRedirections,
                               const QMap<QString, QString> &debugWrapperEnvironment,
                               const QStringList &debugWrapperCommand);
     ~ProcessContainer() override;

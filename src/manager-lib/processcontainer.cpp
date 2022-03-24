@@ -34,6 +34,7 @@
 
 #include "global.h"
 #include "logging.h"
+#include "utilities.h"
 #include "containerfactory.h"
 #include "application.h"
 #include "processcontainer.h"
@@ -75,6 +76,7 @@ HostProcess::HostProcess()
 
 HostProcess::~HostProcess()
 {
+    closeAndClearFileDescriptors(m_stdioRedirections);
     m_process->disconnect(this);
     delete m_process;
 }
@@ -97,30 +99,12 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
             this, [this](QProcess::ProcessState newState) {
         emit stateChanged(static_cast<Am::RunState>(newState));
     });
-
-#if defined(Q_OS_UNIX)
-    // make sure that the redirection fds do not have a close-on-exec flag, since we need them
-    // in the child process.
-    for (int fd : qAsConst(m_stdioRedirections)) {
-        if (fd < 0)
-            continue;
-        int flags = fcntl(fd, F_GETFD);
-        if (flags & FD_CLOEXEC)
-            fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC);
-    }
-#endif
-
     m_process->start(program, arguments);
 
-#if defined(Q_OS_UNIX)
     // we are forked now and the child process has received a copy of all redirected fds
     // now it's time to close our fds, since we don't need them anymore (plus we would block
     // the tty where they originated from)
-    for (int fd : qAsConst(m_stdioRedirections)) {
-        if (fd >= 0)
-            ::close(fd);
-    }
-#endif
+    closeAndClearFileDescriptors(m_stdioRedirections);
 }
 
 void HostProcess::setWorkingDirectory(const QString &dir)
@@ -153,9 +137,23 @@ Am::RunState HostProcess::state() const
     return static_cast<Am::RunState>(m_process->state());
 }
 
-void HostProcess::setStdioRedirections(const QVector<int> &stdioRedirections)
+void HostProcess::setStdioRedirections(QVector<int> &&stdioRedirections)
 {
+    // we own the file descriptors now
+    closeAndClearFileDescriptors(m_stdioRedirections);
     m_stdioRedirections = stdioRedirections;
+
+#if defined(Q_OS_UNIX)
+    // make sure that the redirection fds do not have a close-on-exec flag, since we need them
+    // in the child process.
+    for (int fd : qAsConst(m_stdioRedirections)) {
+        if (fd < 0)
+            continue;
+        int flags = fcntl(fd, F_GETFD);
+        if (flags & FD_CLOEXEC)
+            fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC);
+    }
+#endif
 }
 
 void HostProcess::setStopBeforeExec(bool stopBeforeExec)
@@ -165,7 +163,7 @@ void HostProcess::setStopBeforeExec(bool stopBeforeExec)
 
 
 ProcessContainer::ProcessContainer(ProcessContainerManager *manager, Application *app,
-                                   const QVector<int> &stdioRedirections,
+                                   QVector<int> &&stdioRedirections,
                                    const QMap<QString, QString> &debugWrapperEnvironment,
                                    const QStringList &debugWrapperCommand)
     : AbstractContainer(manager, app)
@@ -175,7 +173,9 @@ ProcessContainer::ProcessContainer(ProcessContainerManager *manager, Application
 { }
 
 ProcessContainer::~ProcessContainer()
-{ }
+{
+    closeAndClearFileDescriptors(m_stdioRedirections);
+}
 
 QString ProcessContainer::controlGroup() const
 {
@@ -267,7 +267,7 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
     process->setWorkingDirectory(m_baseDirectory);
     process->setProcessEnvironment(penv);
     process->setStopBeforeExec(configuration().value(qSL("stopBeforeExec")).toBool());
-    process->setStdioRedirections(m_stdioRedirections);
+    process->setStdioRedirections(std::move(m_stdioRedirections));
 
     QString command = m_program;
     QStringList args = arguments;
@@ -305,11 +305,12 @@ bool ProcessContainerManager::supportsQuickLaunch() const
     return true;
 }
 
-AbstractContainer *ProcessContainerManager::create(Application *app, const QVector<int> &stdioRedirections,
+AbstractContainer *ProcessContainerManager::create(Application *app, QVector<int> &&stdioRedirections,
                                                    const QMap<QString, QString> &debugWrapperEnvironment,
                                                    const QStringList &debugWrapperCommand)
 {
-    return new ProcessContainer(this, app, stdioRedirections, debugWrapperEnvironment, debugWrapperCommand);
+    return new ProcessContainer(this, app, std::move(stdioRedirections), debugWrapperEnvironment,
+                                debugWrapperCommand);
 }
 
 QT_END_NAMESPACE_AM

@@ -418,6 +418,11 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
     vector are either open OS file descriptors for redirections or \c -1.
     \c{[-1, 5, 5]} would mean: ignore \c stdin and redirect both \c stdout and \c stderr to fd \c 5.
 
+    The ownership of these file descriptors is transferred if, and only if, a new ContainerInterface
+    is successfully instantiated (i.e. the return value is not nullptr). They then have to be closed
+    either immediately, in case this plugin is not able to use them, or latest, when the started
+    application has finished.
+
     The \a debugWrapperEnvironment is an optional string map for environment variables and their
     values, if a debug-wrapper is to be used (the \a debugWrapperCommand is not empty - see below).
     An empty value in this map means, that the environment variable denoted by its key shall be

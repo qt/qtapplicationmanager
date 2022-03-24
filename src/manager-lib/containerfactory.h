@@ -54,7 +54,7 @@ public:
 
     AbstractContainerManager *manager(const QString &id);
     AbstractContainer *create(const QString &id, Application *app,
-                              const QVector<int> &stdioRedirections = QVector<int>(),
+                              QVector<int> &&stdioRedirections = QVector<int>(),
                               const QMap<QString, QString> &debugWrapperEnvironment = QMap<QString, QString>(),
                               const QStringList &debugWrapperCommand = QStringList());
 

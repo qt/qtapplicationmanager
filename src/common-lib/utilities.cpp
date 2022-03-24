@@ -36,6 +36,7 @@
 #include <QCoreApplication>
 #include <QNetworkInterface>
 #include <QPluginLoader>
+#include <qplatformdefs.h>
 #include <private/qvariant_p.h>
 
 #include "utilities.h"
@@ -315,6 +316,15 @@ bool loadResource(const QString &resource)
     ok = ok || QLibrary(afp % u'd').load();
 #endif
     return ok;
+}
+
+void closeAndClearFileDescriptors(QVector<int> &fdList)
+{
+    for (int fd : qAsConst(fdList)) {
+        if (fd >= 0)
+            QT_CLOSE(fd);
+    }
+    fdList.clear();
 }
 
 QT_END_NAMESPACE_AM

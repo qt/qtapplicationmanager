@@ -29,7 +29,7 @@
 **
 ****************************************************************************/
 
-#include <qplatformdefs.h>
+#include <qglobal.h>
 #if defined(Q_OS_UNIX)
 #  include <unistd.h>
 #endif
@@ -165,27 +165,15 @@ bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QStrin
 #  else
     Q_UNUSED(redirections)
 #  endif // defined(Q_OS_UNIX)
-    int result = false;
     auto am = ApplicationManager::instance();
     try {
-        result = am->startApplicationInternal(id, documentUrl, QString(), debugWrapper, stdioRedirections);
+        return am->startApplicationInternal(id, documentUrl, QString(), debugWrapper,
+                                            std::move(stdioRedirections));
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
         AbstractDBusContextAdaptor::dbusContextFor(this)->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
-        result = false;
+        return false;
     }
-
-    if (!result) {
-        // we have to close the fds in this case, otherwise we block the tty where the fds are
-        // originating from.
-        //TODO: this really needs to fixed centrally (e.g. via the DebugWrapper), but this is the most
-        //      common error case for now.
-        for (int fd : qAsConst(stdioRedirections)) {
-            if (fd >= 0)
-                QT_CLOSE(fd);
-        }
-    }
-    return result;
 }
 
 QVariantMap ApplicationManagerAdaptor::get(const QString &id)
@@ -246,27 +234,15 @@ bool ApplicationManagerAdaptor::startApplication(const QString &id, const QtAM::
 #  else
     Q_UNUSED(redirections)
 #  endif // defined(Q_OS_UNIX)
-    int result = false;
     auto am = ApplicationManager::instance();
     try {
-        result = am->startApplicationInternal(id, documentUrl, QString(), QString(), stdioRedirections);
+        return am->startApplicationInternal(id, documentUrl, QString(), QString(),
+                                            std::move(stdioRedirections));
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
         AbstractDBusContextAdaptor::dbusContextFor(this)->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"), e.errorString());
-        result = false;
+        return false;
     }
-
-    if (!result) {
-        // we have to close the fds in this case, otherwise we block the tty where the fds are
-        // originating from.
-        //TODO: this really needs to fixed centrally (e.g. via the DebugWrapper), but this is the most
-        //      common error case for now.
-        for (int fd : qAsConst(stdioRedirections)) {
-            if (fd >= 0)
-                QT_CLOSE(fd);
-        }
-    }
-    return result;
 }
 
 void ApplicationManagerAdaptor::stopAllApplications()

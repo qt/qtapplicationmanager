@@ -55,7 +55,7 @@ public:
     QString identifier() const;
     virtual bool supportsQuickLaunch() const;
 
-    virtual AbstractContainer *create(Application *app, const QVector<int> &stdioRedirections,
+    virtual AbstractContainer *create(Application *app, QVector<int> &&stdioRedirections,
                                       const QMap<QString, QString> &debugWrapperEnvironment,
                                       const QStringList &debugWrapperCommand) = 0;
 

@@ -208,11 +208,22 @@ ContainerInterface *SoftwareContainerManager::create(bool isQuickLaunch, const Q
     }
 
     // calculate where to dump stdout/stderr
-    int outputFd = stdioRedirections.value(STDERR_FILENO, -1);
-    if (outputFd < 0)
-        outputFd = stdioRedirections.value(STDOUT_FILENO, -1);
-    if ((::fcntl(outputFd, F_GETFD) < 0) && (errno == EBADF))
-        outputFd = STDOUT_FILENO;
+    // also close all file descriptors that we do not need
+    int inFd = stdioRedirections.value(STDIN_FILENO, -1);
+    int outFd = stdioRedirections.value(STDOUT_FILENO, -1);
+    int errFd = stdioRedirections.value(STDERR_FILENO, -1);
+    int outputFd = STDOUT_FILENO;
+
+    if (inFd >= 0)
+        ::close(inFd);
+    if (errFd >= 0)
+        outputFd = errFd;
+    if (outFd >= 0) {
+        if (errFd < 0)
+            outputFd = outFd;
+        else
+            ::close(outFd);
+    }
 
     SoftwareContainer *container = new SoftwareContainer(this, isQuickLaunch, containerId,
                                                          outputFd, debugWrapperEnvironment,

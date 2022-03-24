@@ -146,4 +146,7 @@ template <typename T> T *qt6_v_cast(QVariant::Private *vp)
     return static_cast<T *>(const_cast<void *>(vp->storage()));
 }
 
+// close all valid file descriptors and then clear the (non-const) vector
+void closeAndClearFileDescriptors(QVector<int> &fdList);
+
 QT_END_NAMESPACE_AM

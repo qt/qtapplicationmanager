@@ -30,6 +30,7 @@
 ****************************************************************************/
 
 #include <functional>
+#include <utilities.h>
 #include <application.h>
 #include "plugincontainer.h"
 
@@ -50,14 +51,17 @@ bool PluginContainerManager::supportsQuickLaunch() const
     return m_interface->supportsQuickLaunch();
 }
 
-AbstractContainer *PluginContainerManager::create(Application *app, const QVector<int> &stdioRedirections,
+AbstractContainer *PluginContainerManager::create(Application *app, QVector<int> &&stdioRedirections,
                                                   const QMap<QString, QString> &debugWrapperEnvironment,
                                                   const QStringList &debugWrapperCommand)
 {
+    // stdioRedirections should really be changed to 'move', but we would break the plugin API.
     auto containerInterface = m_interface->create(app == nullptr, stdioRedirections,
                                                   debugWrapperEnvironment, debugWrapperCommand);
-    if (!containerInterface)
+    if (!containerInterface) {
+        closeAndClearFileDescriptors(stdioRedirections);
         return nullptr;
+    }
     return new PluginContainer(this, app, containerInterface);
 }
 

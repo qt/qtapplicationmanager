@@ -34,6 +34,7 @@
 #include <QThreadPool>
 
 #include "logging.h"
+#include "utilities.h"
 #include "application.h"
 #include "abstractruntime.h"
 #include "abstractcontainer.h"
@@ -73,14 +74,16 @@ AbstractContainerManager *ContainerFactory::manager(const QString &id)
 }
 
 AbstractContainer *ContainerFactory::create(const QString &id, Application *app,
-                                            const QVector<int> &stdioRedirections,
+                                            QVector<int> &&stdioRedirections,
                                             const QMap<QString, QString> &debugWrapperEnvironment,
                                             const QStringList &debugWrapperCommand)
 {
     AbstractContainerManager *acm = manager(id);
-    if (!acm)
+    if (!acm) {
+        closeAndClearFileDescriptors(stdioRedirections);
         return nullptr;
-    return acm->create(app, stdioRedirections, debugWrapperEnvironment, debugWrapperCommand);
+    }
+    return acm->create(app, std::move(stdioRedirections), debugWrapperEnvironment, debugWrapperCommand);
 }
 
 void ContainerFactory::setConfiguration(const QVariantMap &configuration)

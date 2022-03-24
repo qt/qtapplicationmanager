@@ -39,11 +39,15 @@
 #include <QUuid>
 #include <QThread>
 #include <QMimeDatabase>
+#include <qplatformdefs.h>
 #if defined(QT_GUI_LIB)
 #  include <QDesktopServices>
 #endif
 #if defined(Q_OS_UNIX)
 #  include <signal.h>
+#endif
+#if defined(Q_OS_WINDOWS)
+#  define write(a, b, c) _write(a, b, static_cast<unsigned int>(c))
 #endif
 
 #include "global.h"
@@ -616,8 +620,12 @@ void ApplicationManager::registerMimeTypes()
 bool ApplicationManager::startApplicationInternal(const QString &appId, const QString &documentUrl,
                                                   const QString &documentMimeType,
                                                   const QString &debugWrapperSpecification,
-                                                  const QVector<int> &stdioRedirections)  Q_DECL_NOEXCEPT_EXPR(false)
+                                                  QVector<int> &&stdioRedirections)  Q_DECL_NOEXCEPT_EXPR(false)
 {
+    auto redirectionGuard = qScopeGuard([&stdioRedirections]() {
+        closeAndClearFileDescriptors(stdioRedirections);
+    });
+
     if (d->shuttingDown)
         throw Exception("Cannot start applications during shutdown");
     Application *app = fromId(appId);
@@ -672,6 +680,10 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
             if (!debugWrapperCommand.isEmpty()) {
                 throw Exception("Application %1 is already running - cannot start with debug-wrapper: %2")
                         .arg(app->id(), debugWrapperSpecification);
+            }
+            if (hasStdioRedirections) {
+                throw Exception("Application %1 is already running - cannot set standard IO redirections")
+                        .arg(app->id());
             }
             if (!documentUrl.isNull())
                 runtime->openDocument(documentUrl, documentMimeType);
@@ -765,7 +777,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
             }
 
             if (!container) {
-                container = ContainerFactory::instance()->create(containerId, app, stdioRedirections,
+                container = ContainerFactory::instance()->create(containerId, app, std::move(stdioRedirections),
                                                                  debugEnvironmentVariables, debugWrapperCommand);
             } else {
                 container->setApplication(app);
@@ -776,7 +788,22 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
             }
             if (runtime)
                 attachRuntime = true;
+
+        } else { // inProcess
+            if (hasStdioRedirections) {
+                static const char *noRedirectMsg = "NOTE: redirecting standard IO is not possible for in-process runtimes";
+
+                int fd = stdioRedirections.value(2, -1);
+                if (fd < 0)
+                    fd = stdioRedirections.value(1, -1);
+                if (fd >= 0) {
+                    write(fd, noRedirectMsg, qstrlen(noRedirectMsg));
+                    write(fd, "\n", 1);
+                }
+                qCWarning(LogSystem) << noRedirectMsg;
+            }
         }
+
         if (!runtime)
             runtime = RuntimeFactory::instance()->create(container, app);
 

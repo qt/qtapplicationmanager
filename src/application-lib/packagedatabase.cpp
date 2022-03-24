@@ -43,6 +43,7 @@
 #include "configcache.h"
 #include "filesystemmountwatcher.h"
 
+#include <memory>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -192,9 +193,9 @@ void PackageDatabase::parse(PackageLocations packageLocations)
             for (int i = 0; i < manifestFiles.size(); ++i) {
                 QString manifestFile = manifestFiles.at(i);
                 QDir pkgDir = QFileInfo(manifestFile).dir();
-                QScopedPointer<PackageInfo> pkg(cache.takeResult(i));
+                std::unique_ptr<PackageInfo> pkg(cache.takeResult(i));
 
-                if (pkg.isNull()) { // the YAML file was not parseable and we ignore broken manifests
+                if (!pkg) { // the YAML file was not parseable and we ignore broken manifests
                     qCWarning(LogSystem) << "The file" << manifestFile << "is not a valid manifest YAML"
                                             " file and will be ignored.";
                     continue;
@@ -205,7 +206,7 @@ void PackageDatabase::parse(PackageLocations packageLocations)
                                     " the same name as the package's id: found '%1'").arg(pkg->id());
                 }
                 pkg->setBuiltIn(true);
-                m_builtInPackages.append(pkg.take());
+                m_builtInPackages.append(pkg.release());
             }
             m_parsedPackageLocations |= Builtin;
         }
@@ -279,9 +280,9 @@ void PackageDatabase::parseInstalled()
         QDir pkgDir = QFileInfo(manifestFile).dir();
 
         try {
-            QScopedPointer<PackageInfo> pkg(cache.takeResult(i));
+            std::unique_ptr<PackageInfo> pkg(cache.takeResult(i));
 
-            if (pkg.isNull()) { // the YAML file was not parseable and we ignore broken manifests
+            if (!pkg) { // the YAML file was not parseable and we ignore broken manifests
                 qCWarning(LogSystem) << "The file" << manifestFile << "is not a valid manifest YAML"
                                         " file and will be ignored.";
                 continue;
@@ -296,7 +297,7 @@ void PackageDatabase::parseInstalled()
             if (!f.open(QFile::ReadOnly))
                 throw Exception(f, "failed to open the installation report");
 
-            QScopedPointer<InstallationReport> report(new InstallationReport(pkg->id()));
+            auto report = std::make_unique<InstallationReport>(pkg->id());
             try {
                 report->deserialize(&f);
             } catch (const Exception &e) {
@@ -304,9 +305,9 @@ void PackageDatabase::parseInstalled()
                         .arg(f.fileName()).arg(e.errorString());
             }
 
-            pkg->setInstallationReport(report.take());
+            pkg->setInstallationReport(report.release());
             pkg->setBaseDir(pkgDir.path());
-            m_installedPackages.append(pkg.take());
+            m_installedPackages.append(pkg.release());
 
         } catch (const Exception &e) {
             qCWarning(LogInstaller) << "Ignoring broken package at" << pkgDir.absolutePath()

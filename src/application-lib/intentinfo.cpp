@@ -33,6 +33,8 @@
 #include "intentinfo.h"
 #include "packageinfo.h"
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
 
@@ -111,7 +113,7 @@ IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
 {
     //NOTE: increment DataStreamVersion above, if you make any changes here
 
-    QScopedPointer<IntentInfo> intent(new IntentInfo(pkg));
+    auto intent = std::make_unique<IntentInfo>(pkg);
     QString visibilityStr;
 
     ds >> intent->m_id
@@ -127,7 +129,7 @@ IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
     intent->m_visibility = (visibilityStr == qSL("public")) ? Public : Private;
     intent->m_categories.sort();
 
-    return intent.take();
+    return intent.release();
 }
 
 QT_END_NAMESPACE_AM

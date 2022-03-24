@@ -38,6 +38,8 @@
 #include "abstractcontainer.h"
 #include "runtimefactory.h"
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
 RuntimeFactory *RuntimeFactory::s_instance = nullptr;
@@ -76,7 +78,7 @@ AbstractRuntimeManager *RuntimeFactory::manager(const QString &id)
 
 AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, Application *app)
 {
-    QScopedPointer<AbstractContainer> ac(container);
+    std::unique_ptr<AbstractContainer> ac(container);
 
     if (!app || app->runtimeName().isEmpty() || app->currentRuntime())
         return nullptr;
@@ -85,7 +87,7 @@ AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, Applicatio
     if (!arm)
         return nullptr;
 
-    AbstractRuntime *art = arm->create(ac.take(), app);
+    AbstractRuntime *art = arm->create(ac.release(), app);
 
     if (art) {
         art->setSlowAnimations(m_slowAnimations);
@@ -96,13 +98,13 @@ AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, Applicatio
 
 AbstractRuntime *RuntimeFactory::createQuickLauncher(AbstractContainer *container, const QString &id)
 {
-    QScopedPointer<AbstractContainer> ac(container);
+    std::unique_ptr<AbstractContainer> ac(container);
 
     AbstractRuntimeManager *arm = manager(id);
     if (!arm)
         return nullptr;
 
-    auto runtime = arm->create(ac.take(), nullptr);
+    auto runtime = arm->create(ac.release(), nullptr);
     if (runtime)
         runtime->setSlowAnimations(m_slowAnimations);
     return runtime;

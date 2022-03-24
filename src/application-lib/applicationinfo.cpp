@@ -38,6 +38,8 @@
 #include "packageinfo.h"
 #include "utilities.h"
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
 //TODO Make this really unique
@@ -111,7 +113,7 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
 {
     //NOTE: increment DataStreamVersion above, if you make any changes here
 
-    QScopedPointer<ApplicationInfo> app(new ApplicationInfo(pkg));
+    auto app = std::make_unique<ApplicationInfo>(pkg);
 
     ds >> app->m_id
        >> app->m_uniqueNumber
@@ -133,7 +135,7 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
     uniqueCounter = qMax(uniqueCounter, app->m_uniqueNumber);
     app->m_capabilities.sort();
 
-    return app.take();
+    return app.release();
 }
 
 

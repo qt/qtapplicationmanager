@@ -47,6 +47,7 @@
 #include <QQmlEngine>
 #include <QQmlInfo>
 
+#include <memory>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -143,8 +144,8 @@ IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemIn
     if (Q_UNLIKELY(!systemInterface))
         qFatal("IntentServer::createInstance() was called without a systemInterface.");
 
-    QScopedPointer<IntentServer> is(new IntentServer(systemInterface));
-    systemInterface->initialize(is.data());
+    std::unique_ptr<IntentServer> is(new IntentServer(systemInterface));
+    systemInterface->initialize(is.get());
 
     qmlRegisterType<Intent>("QtApplicationManager.SystemUI", 2, 0, "IntentObject");
     qmlRegisterType<IntentModel>("QtApplicationManager.SystemUI", 2, 0, "IntentModel");
@@ -154,7 +155,7 @@ IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemIn
         QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
         return instance();
     });
-    return s_instance = is.take();
+    return s_instance = is.release();
 }
 
 IntentServer *IntentServer::instance()

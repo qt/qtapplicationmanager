@@ -38,6 +38,7 @@
 #include "installationreport.h"
 #include "yamlpackagescanner.h"
 
+#include <memory>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -185,7 +186,7 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
 {
     //NOTE: increment DataStreamVersion above, if you make any changes here
 
-    QScopedPointer<PackageInfo> pkg(new PackageInfo);
+    std::unique_ptr<PackageInfo> pkg(new PackageInfo);
 
     QString baseDir;
     QByteArray serializedReport;
@@ -217,7 +218,7 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
     int applicationsSize;
     ds >> applicationsSize;
     while (--applicationsSize >= 0) {
-        if (auto app = ApplicationInfo::readFromDataStream(pkg.data(), ds))
+        if (auto app = ApplicationInfo::readFromDataStream(pkg.get(), ds))
             pkg->m_applications << app;
         else
             return nullptr;
@@ -226,13 +227,13 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
     int intentsSize;
     ds >> intentsSize;
     while (--intentsSize >= 0) {
-        if (auto intent = IntentInfo::readFromDataStream(pkg.data(), ds))
+        if (auto intent = IntentInfo::readFromDataStream(pkg.get(), ds))
             pkg->m_intents << intent;
         else
             return nullptr;
     }
 
-    return pkg.take();
+    return pkg.release();
 }
 
 bool PackageInfo::isValidApplicationId(const QString &appId, QString *errorString)

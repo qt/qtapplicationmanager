@@ -302,7 +302,7 @@ bool PackageCreatorPrivate::create()
                     if (archive_write_data(ar, buffer, static_cast<size_t>(bytesRead)) == -1)
                         throw ArchiveException(ar, "could not write to archive");
 
-                    digest.addData(buffer, qsizetype(bytesRead));
+                    digest.addData({ buffer, qsizetype(bytesRead) });
                 }
 
                 if (fileSize != fi.size())

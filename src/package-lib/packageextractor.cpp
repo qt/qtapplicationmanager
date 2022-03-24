@@ -376,7 +376,7 @@ void PackageExtractorPrivate::extract()
 
                     switch (packageEntryType) {
                     case PackageEntry_File:
-                        digest.addData(buffer, int(bytesRead));
+                        digest.addData(buffer, qsizetype(bytesRead));
 
                         if (!f.write(buffer, bytesRead))
                             throw Exception(f, "could not write to file");

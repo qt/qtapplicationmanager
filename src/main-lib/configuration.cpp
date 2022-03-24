@@ -43,6 +43,7 @@
 #include <QGuiApplication>
 
 #include <functional>
+#include <memory>
 
 #if defined(Q_OS_LINUX)
 #  include <sys/file.h>
@@ -661,7 +662,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
         if (!fileName.isEmpty())
             pwd = QFileInfo(fileName).absoluteDir().path();
 
-        QScopedPointer<ConfigurationData> cd(new ConfigurationData);
+        auto cd = std::make_unique<ConfigurationData>();
 
         YamlParser::Fields fields = {
             { "runtimes", false, YamlParser::Map, [&cd](YamlParser *p) {
@@ -875,7 +876,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
         };
 
         p.parseFields(fields);
-        return cd.take();
+        return cd.release();
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse config file %1: %2")
                 .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : qSL("<stream>"), e.errorString());

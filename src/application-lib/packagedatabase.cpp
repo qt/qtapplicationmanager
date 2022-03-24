@@ -42,6 +42,8 @@
 #include "logging.h"
 #include "configcache.h"
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
 // the templated adaptor class needed to instantiate ConfigCache<PackageInfo> in parse() below
@@ -193,9 +195,9 @@ void PackageDatabase::parse()
             bool isBuiltIn = (i < installedOffset);
             QString manifestFile = manifestFiles.at(i);
             QDir pkgDir = QFileInfo(manifestFile).dir();
-            QScopedPointer<PackageInfo> pkg(cache.takeResult(i));
+            std::unique_ptr<PackageInfo> pkg(cache.takeResult(i));
 
-            if (pkg.isNull()) { // the YAML file was not parseable and we ignore broken manifests
+            if (!pkg) { // the YAML file was not parseable and we ignore broken manifests
                 qCWarning(LogSystem) << "The file" << manifestFile << "is not a valid manifest YAML"
                                         " file and will be ignored.";
                 continue;
@@ -207,13 +209,13 @@ void PackageDatabase::parse()
             }
             if (isBuiltIn) {
                 pkg->setBuiltIn(true);
-                m_builtInPackages.append(pkg.take());
+                m_builtInPackages.append(pkg.release());
             } else { // 3rd-party apps
                 QFile f(pkgDir.absoluteFilePath(qSL(".installation-report.yaml")));
                 if (!f.open(QFile::ReadOnly))
                     throw Exception(f, "failed to open the installation report");
 
-                QScopedPointer<InstallationReport> report(new InstallationReport(pkg->id()));
+                auto report = std::make_unique<InstallationReport>(pkg->id());
                 try {
                     report->deserialize(&f);
                 } catch (const Exception &e) {
@@ -221,9 +223,9 @@ void PackageDatabase::parse()
                             .arg(f.fileName()).arg(e.errorString());
                 }
 
-                pkg->setInstallationReport(report.take());
+                pkg->setInstallationReport(report.release());
                 pkg->setBaseDir(pkgDir.path());
-                m_installedPackages.append(pkg.take());
+                m_installedPackages.append(pkg.release());
             }
         }
     }

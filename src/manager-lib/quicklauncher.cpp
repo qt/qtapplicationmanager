@@ -41,6 +41,8 @@
 #include "quicklauncher.h"
 #include "systemreader.h"
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
 QuickLauncher *QuickLauncher::s_instance = nullptr;
@@ -139,16 +141,16 @@ void QuickLauncher::rebuild()
             if (done >= 1)
                 continue;
 
-            QScopedPointer<AbstractContainer> ac(ContainerFactory::instance()->create(entry->m_containerId, nullptr));
+            std::unique_ptr<AbstractContainer> ac(ContainerFactory::instance()->create(entry->m_containerId, nullptr));
             if (!ac) {
                 qCWarning(LogSystem) << "ERROR: Could not create quick-launch container with id"
                                      << entry->m_containerId;
                 continue;
             }
 
-            QScopedPointer<AbstractRuntime> ar;
+            std::unique_ptr<AbstractRuntime> ar;
             if (!entry->m_runtimeId.isEmpty()) {
-                ar.reset(RuntimeFactory::instance()->createQuickLauncher(ac.take(), entry->m_runtimeId));
+                ar.reset(RuntimeFactory::instance()->createQuickLauncher(ac.release(), entry->m_runtimeId));
                 if (!ar) {
                     qCWarning(LogSystem) << "ERROR: Could not create quick-launch runtime with id"
                                          << entry->m_runtimeId << "within container with id"
@@ -162,8 +164,8 @@ void QuickLauncher::rebuild()
                     continue;
                 }
             }
-            AbstractContainer *container = ar ? ar.data()->container() : ac.take();
-            AbstractRuntime *runtime = ar.take();
+            AbstractContainer *container = ar ? ar.get()->container() : ac.release();
+            AbstractRuntime *runtime = ar.release();
 
             connect(container, &AbstractContainer::destroyed, this, [this, container]() { removeEntry(container, nullptr); });
             if (runtime)

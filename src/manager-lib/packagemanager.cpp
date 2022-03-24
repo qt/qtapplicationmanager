@@ -57,6 +57,7 @@
 #  endif
 #endif
 
+#include <memory>
 
 /*!
     \qmltype PackageManager
@@ -290,10 +291,10 @@ PackageManager *PackageManager::createInstance(PackageDatabase *packageDatabase,
 
     Q_ASSERT(packageDatabase);
 
-    QScopedPointer<PackageManager> pm(new PackageManager(packageDatabase, documentPath));
+    std::unique_ptr<PackageManager> pm(new PackageManager(packageDatabase, documentPath));
     registerQmlTypes();
 
-    return s_instance = pm.take();
+    return s_instance = pm.release();
 }
 
 PackageManager *PackageManager::instance()
@@ -1318,7 +1319,7 @@ void PackageManager::handleFailure(AsynchronousTask *task)
 Package *PackageManager::startingPackageInstallation(PackageInfo *info)
 {
     // ownership of info is transferred to PackageManager
-    QScopedPointer<PackageInfo> newInfo(info);
+    std::unique_ptr<PackageInfo> newInfo(info);
 
     if (!newInfo || newInfo->id().isEmpty())
         return nullptr;
@@ -1330,7 +1331,7 @@ Package *PackageManager::startingPackageInstallation(PackageInfo *info)
             return nullptr;
 
         // do not overwrite the base-info / update-info yet - only after a successful installation
-        d->pendingPackageInfoUpdates.insert(package, newInfo.take());
+        d->pendingPackageInfoUpdates.insert(package, newInfo.release());
 
         package->setState(Package::BeingUpdated);
         package->setProgress(0);
@@ -1339,7 +1340,7 @@ Package *PackageManager::startingPackageInstallation(PackageInfo *info)
 
     } else { // installation
         // add a new package to the model and block it
-        return registerPackage(newInfo.take(), nullptr, true);
+        return registerPackage(newInfo.release(), nullptr, true);
     }
 }
 
@@ -1394,7 +1395,7 @@ bool PackageManager::finishedPackageInstall(const QString &id)
         // attach the installation report (unless we're just downgrading a built-in)
         if (!isDowngrade) {
             QFile irfile(newPackageInfo->baseDir().absoluteFilePath(qSL(".installation-report.yaml")));
-            QScopedPointer<InstallationReport> ir(new InstallationReport(package->id()));
+            auto ir = std::make_unique<InstallationReport>(package->id());
             irfile.open(QFile::ReadOnly);
             try {
                 ir->deserialize(&irfile);
@@ -1404,7 +1405,7 @@ bool PackageManager::finishedPackageInstall(const QString &id)
                                          << e.errorString();
                 return false;
             }
-            newPackageInfo->setInstallationReport(ir.take());
+            newPackageInfo->setInstallationReport(ir.release());
         }
 
         if (isUpdate || isDowngrade) {

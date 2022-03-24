@@ -47,6 +47,8 @@
 #include "yamlpackagescanner.h"
 #include "utilities.h"
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
 YamlPackageScanner::YamlPackageScanner()
@@ -78,14 +80,15 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
         }
 
         QStringList appIds; // duplicate check
-        QScopedPointer<PackageInfo> pkgInfo(new PackageInfo);
+        std::unique_ptr<PackageInfo> pkgInfo(new PackageInfo);
         if (!fileName.isEmpty()) {
             QFileInfo fi(fileName);
             pkgInfo->m_baseDir = fi.absoluteDir();
             pkgInfo->m_manifestName = fi.fileName();
         }
 
-        QScopedPointer<ApplicationInfo> legacyAppInfo(legacy ? new ApplicationInfo(pkgInfo.data()) : nullptr);
+        std::unique_ptr<ApplicationInfo> legacyAppInfo =
+                legacy ? std::make_unique<ApplicationInfo>(pkgInfo.get()) : nullptr;
 
         // ----------------- package -----------------
 
@@ -194,7 +197,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
         if (!legacy) {
             fields.emplace_back("applications", true, YamlParser::List, [&pkgInfo, &appIds](YamlParser *p) {
                 p->parseList([&pkgInfo, &appIds](YamlParser *p) {
-                    QScopedPointer<ApplicationInfo> appInfo(new ApplicationInfo(pkgInfo.data()));
+                    auto appInfo = std::make_unique<ApplicationInfo>(pkgInfo.get());
                     YamlParser::Fields appFields;
 
                     appFields.emplace_back("id", true, YamlParser::Scalar, [&appInfo, &appIds](YamlParser *p) {
@@ -280,7 +283,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
 
                     p->parseFields(appFields);
                     appIds << appInfo->id();
-                    pkgInfo->m_applications << appInfo.take();
+                    pkgInfo->m_applications << appInfo.release();
                 });
             });
         }
@@ -290,7 +293,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
         fields.emplace_back("intents", false, YamlParser::List, [&pkgInfo, &appIds, legacy](YamlParser *p) {
             QStringList intentIds; // duplicate check
             p->parseList([&pkgInfo, &appIds, &intentIds, legacy](YamlParser *p) {
-                QScopedPointer<IntentInfo> intentInfo(new IntentInfo(pkgInfo.data()));
+                auto intentInfo = std::make_unique<IntentInfo>(pkgInfo.get());
                 YamlParser::Fields intentFields;
 
                 intentFields.emplace_back("id", true, YamlParser::Scalar, [&intentInfo, &intentIds, &pkgInfo](YamlParser *p) {
@@ -356,18 +359,18 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                     }
                 }
 
-                pkgInfo->m_intents << intentInfo.take();
+                pkgInfo->m_intents << intentInfo.release();
             });
         });
 
         p.parseFields(fields);
 
         if (legacy)
-            pkgInfo->m_applications << legacyAppInfo.take();
+            pkgInfo->m_applications << legacyAppInfo.release();
 
         // validate the ids, runtime names and all referenced files
         pkgInfo->validate();
-        return pkgInfo.take();
+        return pkgInfo.release();
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse manifest file %1: %2")
                 .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : qSL("<stream>"), e.errorString());

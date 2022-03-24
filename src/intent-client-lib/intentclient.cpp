@@ -40,6 +40,7 @@
 #include "logging.h"
 
 #include <exception>
+#include <memory>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -80,14 +81,14 @@ IntentClient *IntentClient::createInstance(IntentClientSystemInterface *systemIn
     if (Q_UNLIKELY(!systemInterface))
         qFatal("IntentClient::createInstance() was called without a systemInterface.");
 
-    QScopedPointer<IntentClient> ic(new IntentClient(systemInterface));
+    std::unique_ptr<IntentClient> ic(new IntentClient(systemInterface));
     try {
-        systemInterface->initialize(ic.data());
+        systemInterface->initialize(ic.get());
     } catch (const std::exception &exc) {
         qCWarning(LogIntents) << "Failed to initialize IntentClient:" << exc.what();
         return nullptr;
     }
-    return s_instance = ic.take();
+    return s_instance = ic.release();
 }
 
 IntentClient *IntentClient::instance()

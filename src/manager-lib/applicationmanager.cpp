@@ -68,6 +68,8 @@
 #include "package.h"
 #include "packagemanager.h"
 
+#include <memory>
+
 /*!
     \qmltype ApplicationManager
     \inqmlmodule QtApplicationManager.SystemUI
@@ -376,7 +378,7 @@ ApplicationManager *ApplicationManager::createInstance(bool singleProcess)
     if (Q_UNLIKELY(s_instance))
         qFatal("ApplicationManager::createInstance() was called a second time.");
 
-    QScopedPointer<ApplicationManager> am(new ApplicationManager(singleProcess));
+    std::unique_ptr<ApplicationManager> am(new ApplicationManager(singleProcess));
 
     qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager.SystemUI", 2, 0, "ApplicationManager",
                                                  &ApplicationManager::instanceForQml);
@@ -401,7 +403,7 @@ ApplicationManager *ApplicationManager::createInstance(bool singleProcess)
     if (Q_UNLIKELY(!PackageManager::instance()))
         qFatal("ApplicationManager::createInstance() was called before a PackageManager singleton was instantiated.");
 
-    s_instance = am.take();
+    s_instance = am.release();
     connect(&PackageManager::instance()->internalSignals, &PackageManagerInternalSignals::registerApplication,
             s_instance, [](ApplicationInfo *applicationInfo, Package *package) {
         instance()->addApplication(applicationInfo, package);

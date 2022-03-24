@@ -46,6 +46,8 @@
 #include "sudo.h"
 #include "installationtask.h"
 
+#include <memory>
+
 /*
   Overview of what happens on an installation of an app with <id> to <location>:
 
@@ -319,7 +321,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         qCDebug(LogInstaller) << "emit taskRequestingInstallationAcknowledge" << id() << "for package" << m_package->id();
 
         // this is a temporary just for the signal emission below
-        m_tempPackageForAcknowledge.reset(new Package(m_package.data(), Package::BeingInstalled));
+        m_tempPackageForAcknowledge.reset(new Package(m_package.get(), Package::BeingInstalled));
         emit m_pm->taskRequestingInstallationAcknowledge(id(), m_tempPackageForAcknowledge.get(),
                                                          m_extractor->installationReport().extraMetaData(),
                                                          m_extractor->installationReport().extraSignedMetaData());
@@ -349,7 +351,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         QString packageId = m_package->id(); // m_package is gone after the invoke
         QPointer<Package> newPackage;
         QMetaObject::invokeMethod(PackageManager::instance(), [this, &newPackage]()
-            { newPackage = PackageManager::instance()->startingPackageInstallation(m_package.take()); },
+            { newPackage = PackageManager::instance()->startingPackageInstallation(m_package.release()); },
             Qt::BlockingQueuedConnection);
         m_managerApproval = !newPackage.isNull();
 

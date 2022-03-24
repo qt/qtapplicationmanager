@@ -40,6 +40,8 @@
 #include <QtAppManManager/asynchronoustask.h>
 #include <QtAppManManager/scopeutilities.h>
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
 class Package;
@@ -80,7 +82,7 @@ private:
     QString m_iconFileName;
     uint m_extractedFileCount = 0;
     bool m_managerApproval = false;
-    QScopedPointer<PackageInfo> m_package;
+    std::unique_ptr<PackageInfo> m_package;
     uint m_applicationUid = uint(-1);
     QScopedPointer<Package> m_tempPackageForAcknowledge;
 

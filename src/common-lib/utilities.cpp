@@ -66,6 +66,8 @@
 #  include <qplatformdefs.h>
 #endif
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
 /*! \internal
@@ -300,12 +302,12 @@ QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files
                 throw Exception("could not load %1 plugin %2: %3")
                         .arg(qL1S(type)).arg(pluginFilePath, pluginLoader.errorString());
             }
-            QScopedPointer<QObject> iface(pluginLoader.instance());
+            std::unique_ptr<QObject> iface(pluginLoader.instance());
             if (Q_UNLIKELY(!iface || !iface->qt_metacast(iid))) {
                 throw Exception("could not get an instance of '%1' from the %2 plugin %3")
                         .arg(qL1S(iid)).arg(qL1S(type)).arg(pluginFilePath);
             }
-            interfaces << iface.take();
+            interfaces << iface.release();
         }
     } catch (const Exception &) {
         qDeleteAll(interfaces);

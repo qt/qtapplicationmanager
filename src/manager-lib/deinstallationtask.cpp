@@ -114,7 +114,7 @@ void DeinstallationTask::execute()
         ScopedRenamer docDirRename;
         ScopedRenamer appDirRename;
 
-        if (!m_keepDocuments || !m_documentPath.isEmpty()) {
+        if (!m_keepDocuments && !m_documentPath.isEmpty()) {
             if (!docDirRename.rename(QDir(m_documentPath).absoluteFilePath(packageId()),
                                      ScopedRenamer::NameToNameMinus)) {
                 throw Exception(Error::IO, "could not rename %1 to %1-").arg(docDirRename.baseName());

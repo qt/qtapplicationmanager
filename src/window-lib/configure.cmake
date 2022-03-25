@@ -2,7 +2,9 @@
 
 #### Libraries
 
-qt_find_package(X11)
+if (NOT TARGET X11::X11)
+    qt_find_package(X11 PROVIDED_TARGETS X11::X11 MODULE_NAME gui QMAKE_LIB xlib MARK_OPTIONAL)
+endif()
 
 #### Tests
 

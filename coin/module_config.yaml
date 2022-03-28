@@ -5,6 +5,9 @@ accept_configuration:
     - condition: property
       property: features
       not_contains_value: Disable
+    - condition: property
+      property: target.os
+      not_equals_value: QNX
     - condition: or
       conditions:
         - condition: property

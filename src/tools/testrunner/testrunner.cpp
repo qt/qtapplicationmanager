@@ -93,20 +93,22 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
 
     // Register the test object and application manager test add-on
     qmlRegisterSingletonType<AmTest>("QtApplicationManager.SystemUI", 2, 0, "AmTest", amTest);
-
-    QTestRootObject::instance()->init();
 }
 
-int TestRunner::exec()
+int TestRunner::exec(QQmlEngine *qmlEngine)
 {
     QEventLoop eventLoop;
 
-    QTestRootObject::instance()->setWindowShown(true);
+    int typeId = qmlTypeId("QtTest", 1, 2, "QTestRootObject");
+    QTestRootObject* inst = qmlEngine->singletonInstance<QTestRootObject*>(typeId);
+    inst->init();
+
+    inst->setWindowShown(true);
 
     if (QTest::printAvailableFunctions)
         return 0;
 
-    if (QTestRootObject::instance()->hasTestCase())
+    if (inst->hasTestCase())
         eventLoop.exec();
 
     QuickTestResult::setProgramName(nullptr);

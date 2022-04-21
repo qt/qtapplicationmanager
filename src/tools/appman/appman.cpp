@@ -111,7 +111,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         qInfo().nospace().noquote() << "Verbose mode is " << (cfg.verbose() ? "on" : "off")
                                     << " (change by (un)setting $AM_VERBOSE_TEST)\n TEST: " << cfg.mainQmlFile()
                                     << " in " << (cfg.forceMultiProcess() ? "multi" : "single") << "-process mode";
-        return TestRunner::exec();
+        return TestRunner::exec(a.qmlEngine());
 #else
         return MainBase::exec();
 #endif

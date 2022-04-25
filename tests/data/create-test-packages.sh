@@ -43,11 +43,12 @@ isMac=0
 # unconditionally in the build environment, overriding a potentially valid $LANG setting.
 [ "$LC_ALL" = "C" ] && { echo "WARNING: unsetting \$LC_ALL, since it is set to \"C\" (most likely by a wrapper script or QtCreator)"; unset LC_ALL; }
 
-# let the c-library resolve all the indirect settings
-eval "x$(locale | grep LC_CTYPE= | head -n1)"
-
-# now check for character encoding
-[ "${xLC_CTYPE%%UTF-8}" = "$xLC_CTYPE" ] && { echo "The appman-packager needs to be run within an UTF-8 locale variant"; exit 1; }
+# set a well-known UTF-8 locale: C.UTF-8 is the obvious choice, but macOS doesn't support it
+if [ "$isMac" = "1" ]; then
+  export LC_ALL=en_US.UTF-8
+else
+  export LC_ALL=C.UTF-8
+fi
 
 . utilities.sh
 

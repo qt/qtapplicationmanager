@@ -40,26 +40,12 @@ isMac=0
 # check basic requirement
 [ ! -d certificates ] && { echo "Please cd to the tests/data directory before running this script"; exit 1; }
 
-# having $LC_ALL set to "C" will screw us big time - especially since QtCreator sets this
-# unconditionally in the build environment, overriding a potentially valid $LANG setting.
-[ "$LC_ALL" = "C" ] && { echo "WARNING: unsetting \$LC_ALL, since it is set to \"C\" (most likely by a wrapper script or QtCreator)"; unset LC_ALL; }
-
-# let the c-library resolve all the indirect settings
-if ! command -v locale &> /dev/null; then
-  xLC_CTYPE="${LC_CTYPE:-${LC_ALL:-${LANG}}}" # no locale command available
+# set a well-known UTF-8 locale: C.UTF-8 is the obvious choice, but macOS doesn't support it
+if [ "$isMac" = "1" ]; then
+  export LC_ALL=en_US.UTF-8
 else
-  eval "x$(locale | grep LC_CTYPE= | head -n1)"
+  export LC_ALL=C.UTF-8
 fi
-
-# now check for character encoding
-case "${xLC_CTYPE}" in
-*.UTF8|*.utf8|*.UTF-8)
-    ;;
-*)
-    echo "The appman-packager needs to be run within an UTF-8 locale variant"
-    exit 1
-    ;;
-esac
 
 . utilities.sh
 

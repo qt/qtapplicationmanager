@@ -197,7 +197,7 @@ function (qt_am_internal_add_qml_test target)
             endif()
 
             if (ARG_TESTDATA_DIR)
-                list(APPEND WRAPPER_ARGS EXTRA_ARGS "-o \'systemProperties: { public: { AM_TESTDATA_DIR: ${ARG_TESTDATA_DIR} } }'")
+                list(APPEND WRAPPER_ARGS EXTRA_ARGS -o "\"systemProperties: { public: { AM_TESTDATA_DIR: ${ARG_TESTDATA_DIR} } }\"")
             endif()
 
             list(APPEND WRAPPER_ARGS EXTRA_ARGS --no-cache --no-dlt-logging)

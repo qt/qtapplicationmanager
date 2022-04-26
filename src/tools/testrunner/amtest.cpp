@@ -29,6 +29,7 @@
 ****************************************************************************/
 
 #include <QPointer>
+#include <QDir>
 #include <QRegularExpression>
 #include <QAbstractEventDispatcher>
 #if defined(Q_OS_LINUX)
@@ -99,6 +100,11 @@ int AmTest::observeObjectDestroyed(QObject *obj)
 void AmTest::aboutToBlock()
 {
     emit QAbstractEventDispatcher::instance()->aboutToBlock();
+}
+
+bool AmTest::dirExists(const QString &dir)
+{
+    return QDir(dir).exists();
 }
 
 #if defined(Q_OS_LINUX)

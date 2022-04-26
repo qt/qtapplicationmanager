@@ -478,7 +478,8 @@ void tst_PackageManager::packageInstallation()
 
             // check files
 
-            //TODO: remove system((QString::fromUtf8("find ") + m_workDir.path()).toLocal8Bit().constData());
+            //QDirIterator it(m_workDir.path(), QDirIterator::Subdirectories);
+            //while (it.hasNext()) { qDebug() << it.next(); }
 
             QVERIFY(QFile::exists(installationDir + qSL("/com.pelagicore.test/.installation-report.yaml")));
             QVERIFY(QDir(documentDir + qSL("/com.pelagicore.test")).exists());
@@ -488,7 +489,12 @@ void tst_PackageManager::packageInstallation()
             // now check the installed files
 
             QStringList files = QDir(fileCheckPath).entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
+#if defined(Q_OS_WIN)
+            // files starting with . are not considered hidden on Windows
+            files = files.filter(QRegularExpression(qSL("^[^.].*")));
+#endif
             files.sort();
+
             QVERIFY2(files == QStringList({ qSL("icon.png"), qSL("info.yaml"), qSL("test"), QString::fromUtf8("t\xc3\xa4st") }),
                      qPrintable(files.join(qSL(", "))));
 

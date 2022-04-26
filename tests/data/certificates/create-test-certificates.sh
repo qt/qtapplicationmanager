@@ -98,7 +98,8 @@ info "Generating the \"other\" CA"
 runSSL req -config openssl-other-ca.cnf -x509 -days 3650 -new -newkey rsa:2048 -nodes -keyout other-ca-priv.key -out other-ca.crt
 touch other-index.txt
 echo '01' > other-serial.txt
-runSSL req -batch -subj '/C=DE/ST=Foo/L=Bar/CN=www.other.com' -newkey rsa:2048 -nodes -keyout other-priv.key -out other.csr
+# the double // is needed to get around MSYS hardwired path replacement
+runSSL req -config openssl-other-ca.cnf -batch -subj '//C=DE/ST=Foo/L=Bar/CN=www.other.com' -newkey rsa:2048 -nodes -keyout other-priv.key -out other.csr
 runSSL ca -batch -config openssl-other-ca.cnf -policy signing_policy -extensions signing_req -out other.crt -infiles other.csr
 runSSL pkcs12 -export -out other.p12 -password pass:password -inkey other-priv.key -nodes -certfile other-ca.crt -in other.crt -name "Other Certificate"
 

@@ -64,7 +64,7 @@ eval ${@:1:$# - 1}
 ( cd certificates && ./create-test-certificates.sh )
 
 dst="packages"
-tmp=$(mktemp -d "${TMPDIR:-/tmp/}$(basename $0).XXXXXXXXXXXX")
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/$(basename $0).XXXXXXXXXXXX")
 src="$tmp/source"
 
 removeTmp() { rm -rf "$tmp"; }

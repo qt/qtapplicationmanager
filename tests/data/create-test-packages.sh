@@ -155,7 +155,8 @@ packager create-package "$dst/hello-world.red.appkg" hello-world.red
 ### v2 packages for testing updates
 
 echo "test update" >"$src/test"
-sed -i'' 's/version: "1.0"/version: "2.0"/' "$src/info.yaml"
+sed -i.bak 's/version: "1.0"/version: "2.0"/' "$src/info.yaml"
+rm -f "$src/info.yaml.bak"
 
 info "Create update package"
 packager create-package "$dst/test-update.appkg" "$src"
@@ -164,7 +165,8 @@ info "Dev-sign update package"
 packager dev-sign-package "$dst/test-update.appkg" "$dst/test-update-dev-signed.appkg" certificates/dev2.p12 password
 
 echo "test" >"$src/test"
-sed -i'' 's/version: "2.0"/version: "1.0"/' "$src/info.yaml"
+sed -i.bak 's/version: "2.0"/version: "1.0"/' "$src/info.yaml"
+rm -f "$src/info.yaml.bak"
 
 ###  big packages
 

@@ -9,4 +9,4 @@ version: '1.0'
 name:
   en: 'Crash test'
 runtimeParameters:
-  importPaths: [ "terminator2" ]
+  importPaths: [ "." ]

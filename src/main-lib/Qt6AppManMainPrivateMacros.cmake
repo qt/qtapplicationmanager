@@ -148,7 +148,7 @@ function (qt_am_internal_add_qml_test target)
     if (NOT ARG_CONFIGURATIONS)
         set(ARG_CONFIGURATIONS CONFIG NAME single-process ARGS --force-single-process)
 
-        if (FEATURE_am_multi_process)
+        if (QT_FEATURE_am_multi_process)
             list(APPEND ARG_CONFIGURATIONS CONFIG NAME multi-process ARGS --force-multi-process)
         endif()
     endif()

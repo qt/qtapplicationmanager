@@ -1,4 +1,17 @@
-TEMPLATE = aux
+# The following is needed to let the qmltests run on coin
+# coin is using a custom prf to detect all test cases which need to be run
+# during the build phase.
+# The custom prf mandates that it needs to be a binary and qmltestcase or testcase
+# is loaded.
+# Load qmltestcase to directly use the created targets and helper functions
+load(qmltestcase)
+# Also set it in CONFIG to make sure the custom prf in coin detects it as well.
+CONFIG += qmltestcase
+# Create an empty dummy library to make the custom prf in coin happy
+TEMPLATE = lib
+CONFIG -= debug_and_release
+# Create a static lib on MSVC because dynamic libs can't be empty in MSVC
+msvc: CONFIG += static
 
 load(am-config)
 
@@ -38,6 +51,7 @@ prefix_build {
         AM_TESTRUNNER_DIR = $$[QT_INSTALL_BINS]
     }
 }
+AM_TESTRUNNER_DIR = $$[QT_INSTALL_BINS]
 
 # The check command
 COMMAND += $$AM_TESTRUNNER_DIR/appman-qmltestrunner --no-cache --no-dlt-logging
@@ -62,13 +76,14 @@ OTHER_FILES += $$AM_CONFIG
 
 # Make AM_TESTDATA_DIR known
 !isEmpty(AM_TESTDATA_DIR) {
-    COMMAND += -o \'systemProperties: { public: { AM_TESTDATA_DIR: $$AM_TESTDATA_DIR } }\'
+    COMMAND += -o \"systemProperties: { public: { AM_TESTDATA_DIR: $$AM_TESTDATA_DIR } }\"
 }
 
 !isEmpty(TESTRUN_CWD):!contains(TESTRUN_CWD, ^\\./?): \
     COMMAND = cd $$shell_path($$TESTRUN_CWD) && $$eval(COMMAND)
 
-QMAKE_EXTRA_TARGETS *= check
+!contains(QMAKE_EXTRA_TARGETS, "check"): QMAKE_EXTRA_TARGETS *= check
+else: check.commands = ""
 
 # Set default test configuration (each config is run separately)
 isEmpty(TEST_CONFIGURATIONS) {
@@ -82,7 +97,7 @@ for(file, TEST_FILES) {
         check.commands += $$COMMAND $$absolute_path($$file, $$_PRO_FILE_PWD_) $${config} -- $(TESTARGS) &&
     }
 }
-msvc:check.commands += VER>NUL
+win32:check.commands += VER>NUL
 else:check.commands += true;
 OTHER_FILES += $$TEST_FILES
 

@@ -51,6 +51,10 @@ OTHER_FILES += \
         # qmake would create a default check target implicitly, but since we need 'testdata' as an
         # dependency, we have to set it up explicitly
         check.depends = testdata $$check.depends
+
+        # add the first target to make sure the testdata is created already at the compile step
+        first.depends = testdata
+        QMAKE_EXTRA_TARGETS *= first
     }
     QMAKE_EXTRA_TARGETS *= check
 }

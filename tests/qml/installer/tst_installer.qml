@@ -49,6 +49,15 @@ TestCase {
     name: "Installer"
     when: windowShown
 
+    property string packageDir: ApplicationManager.systemProperties.AM_TESTDATA_DIR + "/packages/"
+
+    // this should be initTestCase(), but a skip() there doesn't skip the whole TestCase the
+    // same way as it works on the C++ side, so we have to call this from every test function
+    function checkSkip() {
+        if (!AmTest.dirExists(packageDir))
+            skip("No test packages available in the data/ directory")
+    }
+
     property var stateList: []
     property int spyTimeout: 5000 * AmTest.timeoutFactor
 
@@ -111,6 +120,8 @@ TestCase {
     }
 
     function test_1states() {
+        checkSkip()
+
         PackageManager.packageAdded.connect(function(pkgId) {
             var pkg = PackageManager.package(pkgId);
             stateList.push(pkg.state)
@@ -121,8 +132,7 @@ TestCase {
         })
 
         taskStateChangedSpy.clear();
-        var id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
-                                                         + "/packages/test-dev-signed.appkg")
+        var id = PackageManager.startPackageInstallation(packageDir + "test-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -142,8 +152,7 @@ TestCase {
 
         compare(PackageManager.package(pkgId).version, "1.0");
 
-        id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
-                                                     + "/packages/test-update-dev-signed.appkg")
+        id = PackageManager.startPackageInstallation(packageDir + "test-update-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -187,8 +196,9 @@ TestCase {
     }
 
     function test_2cancel_update() {
-        var id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
-                                                         + "/packages/test-dev-signed.appkg")
+        checkSkip()
+
+        var id = PackageManager.startPackageInstallation(packageDir + "test-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -203,8 +213,7 @@ TestCase {
         var pkg = PackageManager.package(pkgId);
         compare(pkg.version, "1.0");
 
-        id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
-                                                     + "/packages/test-update-dev-signed.appkg")
+        id = PackageManager.startPackageInstallation(packageDir + "test-update-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         pkgId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
         compare(pkgId, "com.pelagicore.test");
@@ -218,14 +227,15 @@ TestCase {
     }
 
     function test_3cancel_builtin_update() {
+        checkSkip()
+
         taskStateChangedSpy.clear()
         var pkg = PackageManager.package("hello-world.red");
         verify(pkg.builtIn);
         compare(pkg.icon.toString().slice(-9), "icon1.png")
         compare(pkg.version, "v1");
 
-        var id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
-                                                     + "/packages/hello-world.red.appkg")
+        var id = PackageManager.startPackageInstallation(packageDir + "hello-world.red.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -241,10 +251,11 @@ TestCase {
     }
 
     function test_4builtin_update_downgrade() {
+        checkSkip()
+
         taskStateChangedSpy.clear()
 
-        var id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
-                                                     + "/packages/hello-world.red.appkg")
+        var id = PackageManager.startPackageInstallation(packageDir + "hello-world.red.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -275,6 +286,8 @@ TestCase {
     }
 
     function test_5stop_on_update() {
+        checkSkip()
+
         taskStateChangedSpy.clear()
         taskBlockingUntilInstallationAcknowledgeSpy.clear()
         applicationRunStateChangedSpy.clear()
@@ -295,8 +308,7 @@ TestCase {
         applicationRunStateChangedSpy.clear()
 
         // now install the update
-        var id = PackageManager.startPackageInstallation(ApplicationManager.systemProperties.AM_TESTDATA_DIR
-                                                         + "/packages/hello-world.red.appkg")
+        var id = PackageManager.startPackageInstallation(packageDir + "hello-world.red.appkg")
         taskBlockingUntilInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskBlockingUntilInstallationAcknowledgeSpy.count, 1);
         compare(taskBlockingUntilInstallationAcknowledgeSpy.signalArguments[0][0], id);

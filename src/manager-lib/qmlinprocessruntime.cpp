@@ -43,6 +43,7 @@
 #include "qmlinprocessapplicationmanagerwindow.h"
 #include "inprocesssurfaceitem.h"
 #include "logging.h"
+#include "exception.h"
 #include "application.h"
 #include "qmlinprocessruntime.h"
 #include "qmlinprocessapplicationinterface.h"
@@ -263,8 +264,11 @@ void QmlInProcessRuntime::loadResources(const QStringList &resources, const QStr
         const QString path = QFileInfo(resource).isRelative() ? baseDir + resource : resource;
         static QStringList cache;
         if (!cache.contains(path)) {
-            if (!loadResource(path))
-                qCWarning(LogQmlRuntime) << "Cannot register resource:" << path;
+            try {
+                loadResource(path);
+            } catch (const Exception &e) {
+                qCWarning(LogQmlRuntime).noquote() << e.errorString();
+            }
             cache.append(path);
         }
     }

@@ -213,8 +213,12 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
     const QStringList resources = variantToStringList(m_configuration.value(qSL("resources")));
     for (const QString &resource: resources) {
         const QString path = QFileInfo(resource).isRelative() ? launcher->baseDir() + resource : resource;
-        if (!loadResource(path))
-            qCWarning(LogSystem) << "Cannot register resource:" << path;
+
+        try {
+            loadResource(path);
+        } catch (const Exception &e) {
+            qCWarning(LogSystem).noquote() << e.errorString();
+        }
     }
 
     QString absolutePluginPath;
@@ -386,8 +390,11 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             : qdbus_cast<QVariantList>(resVar);
 
     for (const QVariant &resource : resources) {
-        if (!loadResource(resource.toString()))
-            qCWarning(LogQmlRuntime) << "Cannot register resource:" << resource.toString();
+        try {
+            loadResource(resource.toString());
+        } catch (const Exception &e) {
+            qCWarning(LogSystem).noquote() << e.errorString();
+        }
     }
 
     const QUrl qmlFileUrl = filePathToUrl(qmlFile, baseDir);

@@ -304,18 +304,33 @@ QString translateFromMap(const QMap<QString, QString> &languageToName, const QSt
     }
 }
 
-bool loadResource(const QString &resource)
+void loadResource(const QString &resource) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString afp = QDir().absoluteFilePath(resource);
-
-    bool ok = false;
-    ok = ok || (QLibrary::isLibrary(resource) && QLibrary(afp).load());
-    ok = ok || QResource::registerResource(resource);
-    ok = ok || QLibrary(afp).load();
+    QStringList errors;
+    QString debugSuffix;
 #if defined(Q_OS_WINDOWS)
-    ok = ok || QLibrary(afp % u'd').load();
+    debugSuffix = qSL("d");
+#elif defined(Q_OS_MACOS)
+    debugSuffix = qSL("_debug");
 #endif
-    return ok;
+
+    if (QResource::registerResource(resource))
+        return;
+    errors.append(qL1S("Cannot load as Qt Resource file"));
+
+    QLibrary lib(afp);
+    if (lib.load())
+        return;
+    errors.append(lib.errorString());
+
+    if (!debugSuffix.isEmpty()) {
+        QLibrary libd(afp % debugSuffix);
+        if (libd.load())
+            return;
+        errors.append(libd.errorString());
+    }
+    throw Exception("Failed to load resource %1:\n  * %2").arg(resource).arg(errors.join(qL1S("\n  * ")));
 }
 
 void closeAndClearFileDescriptors(QVector<int> &fdList)

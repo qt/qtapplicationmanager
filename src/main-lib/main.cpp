@@ -318,8 +318,11 @@ QQmlApplicationEngine *Main::qmlEngine() const
 void Main::registerResources(const QStringList &resources) const
 {
     for (const QString &resource: resources) {
-        if (!loadResource(resource))
-            qCWarning(LogSystem) << "Cannot register resource:" << resource;
+        try {
+            loadResource(resource);
+        } catch (const Exception &e) {
+            qCWarning(LogSystem).noquote() << e.errorString();
+        }
     }
 }
 

@@ -74,7 +74,7 @@ qt_feature_definition("am-libbacktrace" "AM_USE_LIBBACKTRACE")
 
 qt_feature("am-stackwalker" PRIVATE
     LABEL "Enable support for StackWalker"
-    CONDITION WIN32 AND ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
+    CONDITION WIN32 AND MSVC AND ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
     EMIT_IF WIN32
     ENABLE INPUT_stackwalker STREQUAL 'yes'
     DISABLE INPUT_stackwalker STREQUAL 'no'

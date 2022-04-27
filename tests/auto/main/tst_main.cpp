@@ -41,6 +41,7 @@
 #include "intentserver.h"
 #include "intent.h"
 #include "startuptimer.h"
+#include "utilities.h"
 #include <QtAppManMain/defaultconfiguration.h>
 
 
@@ -78,9 +79,11 @@ private:
     bool mainSetupDone = false;
     DefaultConfiguration *config = nullptr;
     bool m_verbose = false;
+    int m_spyTimeout;
 };
 
 tst_Main::tst_Main()
+    : m_spyTimeout(5000 * timeoutFactor())
 { }
 
 tst_Main::~tst_Main()
@@ -192,7 +195,7 @@ void tst_Main::installPackage(const QString &pkgPath)
 
     QSignalSpy finishedSpy(packageManager, &PackageManager::taskFinished);
     packageManager->startPackageInstallation(QUrl::fromLocalFile(pkgPath));
-    QTRY_VERIFY(finishedSpy.count() == 1);
+    QTRY_VERIFY_WITH_TIMEOUT(finishedSpy.count() == 1, m_spyTimeout);
 }
 
 void tst_Main::removePackage(const QString &id)
@@ -201,7 +204,7 @@ void tst_Main::removePackage(const QString &id)
 
     QSignalSpy finishedSpy(packageManager, &PackageManager::taskFinished);
     packageManager->removePackage(id, false /* keepDocuments */);
-    QTRY_VERIFY(finishedSpy.count() == 1);
+    QTRY_VERIFY_WITH_TIMEOUT(finishedSpy.count() == 1, m_spyTimeout);
 }
 
 /*

@@ -69,7 +69,7 @@ TestCase {
 
     function initTestCase() {
         //Wait for the debugging wrappers to be setup.
-        wait(2000);
+        wait(2000 * AmTest.timeoutFactor);
         WindowManager.windowAdded.connect(windowHandler.windowAddedHandler)
         WindowManager.windowContentStateChanged.connect(windowHandler.windowContentStateChangedHandler)
 
@@ -212,7 +212,7 @@ TestCase {
 
         appModelCountSpy.clear();
         appModel.filterFunction = function(app) { return app.capabilities.indexOf("cameraAccess") >= 0; };
-        appModelCountSpy.wait(1000);
+        appModelCountSpy.wait(1000 * AmTest.timeoutFactor);
         compare(appModelCountSpy.count, 1);
         compare(appModel.count, 1);
         compare(appModel.indexOfApplication(capsApplication.id), 0);
@@ -278,7 +278,7 @@ TestCase {
 
     function checkApplicationState(id, state) {
         if (runStateChangedSpy.count < 1)
-            runStateChangedSpy.wait(10000);
+            runStateChangedSpy.wait(10000 * AmTest.timeoutFactor);
         verify(runStateChangedSpy.count)
         compare(runStateChangedSpy.signalArguments[0][0], id)
         compare(runStateChangedSpy.signalArguments[0][1], state)
@@ -386,7 +386,7 @@ TestCase {
         ApplicationManager.stopAllApplications(data.forceKill);
 
         while (runStateChangedSpy.count < 4)
-            runStateChangedSpy.wait(10000);
+            runStateChangedSpy.wait(10000 * AmTest.timeoutFactor);
 
         var args = runStateChangedSpy.signalArguments
 

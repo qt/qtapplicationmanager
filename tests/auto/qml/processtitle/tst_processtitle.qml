@@ -39,6 +39,7 @@ TestCase {
     name: "ProcessTitle"
     visible: true
 
+    property int spyTimeout: 5000 * AmTest.timeoutFactor
     property int sysuiPid
 
     ProcessStatus {
@@ -71,8 +72,8 @@ TestCase {
             tryVerify(function() {
                 pid =  AmTest.findChildProcess(sysuiPid, executable + quickArg);
                 return pid
-            });
-            wait(250);
+            }, spyTimeout);
+            wait(250 * AmTest.timeoutFactor);
             verify(AmTest.cmdLine(pid).endsWith(executable + quickArg));
         } else {
             sigIdx = 1;
@@ -81,9 +82,9 @@ TestCase {
 
         runStateChangedSpy.clear();
         verify(ApplicationManager.startApplication(data.appId));
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
         if (sigIdx === 1)
-            runStateChangedSpy.wait();
+            runStateChangedSpy.wait(spyTimeout);
 
         compare(runStateChangedSpy.signalArguments[sigIdx][0], data.appId);
         compare(runStateChangedSpy.signalArguments[sigIdx][1], ApplicationObject.Running);
@@ -98,8 +99,8 @@ TestCase {
 
         runStateChangedSpy.clear();
         ApplicationManager.stopAllApplications();
-        runStateChangedSpy.wait();
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
+        runStateChangedSpy.wait(spyTimeout);
         compare(runStateChangedSpy.signalArguments[1][1], ApplicationObject.NotRunning);
     }
 }

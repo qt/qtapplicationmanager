@@ -51,7 +51,7 @@ ApplicationManagerWindow {
 
     // A way for test code to trigger ApplicationManagerWindow's size changes from
     // the client side
-    onWindowPropertyChanged: {
+    onWindowPropertyChanged: function(name, value) {
         if (name === "requestedWidth")
             root.width = value;
         else if (name === "requestedHeight")

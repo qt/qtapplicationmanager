@@ -39,7 +39,8 @@ TestCase {
     name: "WindowMapping"
     visible: true
 
-    property var lastWindowAdded;
+    property int spyTimeout: 5000 * AmTest.timeoutFactor
+    property var lastWindowAdded
 
     WindowItem {
         id: chrome
@@ -116,7 +117,7 @@ TestCase {
             }
 
             if (numRunningApps > 0) {
-                wait(2000);
+                wait(2000 * AmTest.timeoutFactor);
             } else
                 break;
         }
@@ -130,71 +131,71 @@ TestCase {
 
         compare(windowAddedSpy.count, 0);
         app.start("show-main");
-        tryCompare(windowAddedSpy, "count", 1);
+        tryCompare(windowAddedSpy, "count", 1, spyTimeout);
 
         compare(windowAboutToBeRemovedSpy.count, 0);
         app.stop();
-        tryCompare(windowAboutToBeRemovedSpy, "count", 1);
+        tryCompare(windowAboutToBeRemovedSpy, "count", 1, spyTimeout);
     }
 
     function test_amwin_advanced() {
         var app = ApplicationManager.application("test.winmap.amwin2");
         app.start("show-sub");
-        wait(2000);
+        wait(2000 * AmTest.timeoutFactor);
         compare(WindowManager.count, 0);
 
         app.start("show-main");
-        tryCompare(WindowManager, "count", 2);
+        tryCompare(WindowManager, "count", 2, spyTimeout);
     }
 
     function test_amwin_loader() {
-        tryCompare(WindowManager, "count", 0);
+        tryCompare(WindowManager, "count", 0, spyTimeout);
 
         var app = ApplicationManager.application("test.winmap.loader");
 
         app.start("show-sub");
-        tryCompare(WindowManager, "count", 2);
+        tryCompare(WindowManager, "count", 2, spyTimeout);
 
         app.start("hide-sub");
-        tryCompare(WindowManager, "count", 1);
+        tryCompare(WindowManager, "count", 1, spyTimeout);
 
         app.start("show-sub");
-        tryCompare(WindowManager, "count", 2);
+        tryCompare(WindowManager, "count", 2, spyTimeout);
     }
 
     function test_amwin_peculiarities() {
         var app = ApplicationManager.application("test.winmap.amwin2");
 
-        tryCompare(WindowManager, "count", 0);
+        tryCompare(WindowManager, "count", 0, spyTimeout);
 
         app.start("show-main");
-        tryCompare(WindowManager, "count", 1);
+        tryCompare(WindowManager, "count", 1, spyTimeout);
 
         app.start("show-sub");
-        tryCompare(WindowManager, "count", 2);
+        tryCompare(WindowManager, "count", 2, spyTimeout);
 
         // Single- vs. multiprocess difference:
         app.start("show-sub2");
         var expectedWindowCount;
         // A Window's effective visible state solely depends on Window hierarchy.
         expectedWindowCount = 3;
-        tryCompare(WindowManager, "count", expectedWindowCount);
+        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
 
         app.start("hide-sub");
         expectedWindowCount -= 1;
-        tryCompare(WindowManager, "count", expectedWindowCount);
+        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
 
         // Make child (sub) window visible again, parent (main) window is still visible
         app.start("show-sub");
         expectedWindowCount += 1;
-        tryCompare(WindowManager, "count", expectedWindowCount);
+        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
 
         // This is weird Window behavior: a child window becomes only visible, when the parent
         // window is visible, but when you change the parent window back to invisible, the child
         // will NOT become invisible.
         app.start("hide-main");
         expectedWindowCount -= 1;
-        tryCompare(WindowManager, "count", expectedWindowCount);
+        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
 
         // Single- vs. multiprocess difference:
         app.start("hide-sub");
@@ -203,9 +204,9 @@ TestCase {
         } else {
             // This is even more weird Window behavior: when the parent window is invisible, it is
             // not possible any more to explicitly set the child window to invisible.
-            wait(50);
+            wait(50 * AmTest.timeoutFactor);
         }
-        tryCompare(WindowManager, "count", expectedWindowCount);
+        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
     }
 
     function test_default_data() {
@@ -224,11 +225,11 @@ TestCase {
         var app = ApplicationManager.application(data.appId);
         verify(chrome.window === null);
         app.start();
-        tryCompare(WindowManager, "count", 1);
-        tryVerify(function () { return chrome.window !== null });
+        tryCompare(WindowManager, "count", 1, spyTimeout);
+        tryVerify(function () { return chrome.window !== null }, spyTimeout);
 
         app.stop();
-        tryCompare(WindowManager, "count", 0);
+        tryCompare(WindowManager, "count", 0, spyTimeout);
     }
 
     function test_mapping_data() {
@@ -247,16 +248,16 @@ TestCase {
         compare(WindowManager.count, 0);
 
         app.start("show-main");
-        tryCompare(WindowManager, "count", 1);
+        tryCompare(WindowManager, "count", 1, spyTimeout);
 
         app.start("show-sub");
-        tryCompare(WindowManager, "count", 2);
+        tryCompare(WindowManager, "count", 2, spyTimeout);
 
         app.start("hide-sub");
-        tryCompare(WindowManager, "count", 1);
+        tryCompare(WindowManager, "count", 1, spyTimeout);
 
         app.stop();
-        tryCompare(WindowManager, "count", 0);
+        tryCompare(WindowManager, "count", 0, spyTimeout);
     }
 
     function test_wayland_ping_pong() {
@@ -269,12 +270,12 @@ TestCase {
 
         AmTest.ignoreMessage(AmTest.CriticalMsg, /Stopping application.*because we did not receive a Wayland-Pong/);
         app.start();
-        tryCompare(app, "runState", Am.Running);
+        tryCompare(app, "runState", Am.Running, spyTimeout);
         runStateChangedSpy.clear();
-        wait(2200);
-        runStateChangedSpy.wait(2000);
+        wait(2200 * AmTest.timeoutFactor);
+        runStateChangedSpy.wait(spyTimeout);
         compare(runStateChangedSpy.signalArguments[0][1], Am.ShuttingDown);
-        runStateChangedSpy.wait(2000);
+        runStateChangedSpy.wait(spyTimeout);
         compare(runStateChangedSpy.signalArguments[1][1], Am.NotRunning);
     }
 
@@ -283,17 +284,17 @@ TestCase {
 
         windowPropertyChangedSpy.clear();
         app.start();
-        tryCompare(WindowManager, "count", 1);
+        tryCompare(WindowManager, "count", 1, spyTimeout);
 
         app.start("show-main");
-        windowPropertyChangedSpy.wait(2000);
+        windowPropertyChangedSpy.wait(spyTimeout);
         compare(windowPropertyChangedSpy.count, 1);
 
         compare(lastWindowAdded.windowProperty("key1"), "val1");
         compare(lastWindowAdded.windowProperty("objectName"), 42);
 
         lastWindowAdded.setWindowProperty("key2", "val2");
-        windowPropertyChangedSpy.wait(2000);
+        windowPropertyChangedSpy.wait(spyTimeout);
         compare(windowPropertyChangedSpy.count, 2);
 
         var allProps = lastWindowAdded.windowProperties()
@@ -309,14 +310,14 @@ TestCase {
         var app = ApplicationManager.application("test.winmap.amwin");
 
         app.start("show-main");
-        tryCompare(WindowManager, "count", 1);
+        tryCompare(WindowManager, "count", 1, spyTimeout);
 
         compare(lastWindowAdded.windowProperty("objectName"), 42);
 
         app.start("hide-main");
-        tryCompare(WindowManager, "count", 0);
+        tryCompare(WindowManager, "count", 0, spyTimeout);
         app.start("show-main");
-        tryCompare(WindowManager, "count", 1);
+        tryCompare(WindowManager, "count", 1, spyTimeout);
 
         compare(lastWindowAdded.windowProperty("objectName"), 42);
     }

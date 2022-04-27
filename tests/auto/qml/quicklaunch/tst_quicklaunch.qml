@@ -40,6 +40,7 @@ TestCase {
     when: windowShown
     name: "Quicklaunch"
 
+    property int spyTimeout: 5000 * AmTest.timeoutFactor
     property bool acknowledged: false
 
     SignalSpy {
@@ -66,27 +67,27 @@ TestCase {
         var app = ApplicationManager.application("tld.test.quicklaunch");
         runStateChangedSpy.target = app;
 
-        wait(1000);
+        wait(1000 * AmTest.timeoutFactor);
         // Check for quick-launching is done every second in appman. After 1s now, this test
         // sometimes caused some race where the app would not be started at all in the past:
         app.start();
-        windowAddedSpy.wait(3000);
-        tryCompare(testCase, "acknowledged", true);
+        windowAddedSpy.wait(spyTimeout);
+        tryCompare(testCase, "acknowledged", true, spyTimeout);
         runStateChangedSpy.clear();
         app.stop(true);
-        runStateChangedSpy.wait(3000);    // wait for ShuttingDown
-        runStateChangedSpy.wait(3000);    // wait for NotRunning
+        runStateChangedSpy.wait(spyTimeout);    // wait for ShuttingDown
+        runStateChangedSpy.wait(spyTimeout);    // wait for NotRunning
 
-        wait(1000);
+        wait(1000 * AmTest.timeoutFactor);
         // Unfortunately there is no reliable means to determine, whether a quicklaunch process
         // is running, but after at least 2s now, there should be a process that can be attached to.
         acknowledged = false;
         app.start();
-        windowAddedSpy.wait(3000);
-        tryCompare(testCase, "acknowledged", true);
+        windowAddedSpy.wait(spyTimeout);
+        tryCompare(testCase, "acknowledged", true, spyTimeout);
         runStateChangedSpy.clear();
         app.stop(true);
-        runStateChangedSpy.wait(3000);    // wait for ShuttingDown
-        runStateChangedSpy.wait(3000);    // wait for NotRunning
+        runStateChangedSpy.wait(spyTimeout);    // wait for ShuttingDown
+        runStateChangedSpy.wait(spyTimeout);    // wait for NotRunning
     }
 }

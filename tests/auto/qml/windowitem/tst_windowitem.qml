@@ -39,6 +39,8 @@ Item {
     height: 500
     visible: true
 
+    property int spyTimeout: 5000 * AmTest.timeoutFactor
+
     Repeater {
         id: windowItemsRepeater
         model: ListModel { id: windowItemsModel }
@@ -138,7 +140,7 @@ Item {
                 }
 
                 if (numRunningApps > 0) {
-                    wait(50);
+                    wait(100 * AmTest.timeoutFactor);
                 } else
                     break;
             }
@@ -158,8 +160,8 @@ Item {
             app = ApplicationManager.application("test.windowitem.app");
             app.start();
 
-            tryCompare(root.chosenModel, "count", 1);
-            tryCompare(WindowManager, "count", 1);
+            tryCompare(root.chosenModel, "count", 1, spyTimeout);
+            tryCompare(WindowManager, "count", 1, spyTimeout);
         }
 
         /*
@@ -214,7 +216,9 @@ Item {
             Check that once the primary WindowItem is destroyed,
             the remaining one takes over the primary role.
          */
-        function test_destroyPrimaryRemainingTakesOver() {
+        // the function is called 'x*' on purpose: QML tests are executed in alphabetical
+        // order and running this directly after the close* functions crashes in RHI
+        function test_xdestroyPrimaryRemainingTakesOver() {
             initWindowItemsModel();
             var firstWindowItem = windowItemsRepeater.itemAt(0);
 
@@ -235,7 +239,7 @@ Item {
             compare(windowItemsModel.count, 1);
 
             // And the remaining item takes over the primary role.
-            tryCompare(secondWindowItem, "primary", true);
+            tryCompare(secondWindowItem, "primary", true, spyTimeout);
         }
 
         /*
@@ -260,9 +264,9 @@ Item {
 
             // The WindowObject should still exist, albeit without a surface, even though
             // no longer present in WindowManager's model.
-            tryCompare(WindowManager, "count", 0);
+            tryCompare(WindowManager, "count", 0, spyTimeout);
             compare(objectDestroyedSpy.count, 0)
-            tryCompare(window, "contentState", WindowObject.NoSurface);
+            tryCompare(window, "contentState", WindowObject.NoSurface, spyTimeout);
 
             // Destroy all WindowItems
             firstWindowItem = null;
@@ -271,7 +275,7 @@ Item {
 
             // Now that there are no WindowItems using that WindowObject anymore, it should
             // eventually be deleted by WindowManager
-            objectDestroyedSpy.wait();
+            objectDestroyedSpy.wait(spyTimeout);
             compare(objectDestroyedSpy.signalArguments[0][0], destroyId);
         }
 
@@ -303,13 +307,13 @@ Item {
                 window.setWindowProperty("requestedWidth", width);
                 window.setWindowProperty("requestedHeight", height);
 
-                tryCompare(window, "size", Qt.size(width,height));
-                tryCompare(windowItem, "width", width);
-                tryCompare(windowItem, "height", height);
+                tryCompare(window, "size", Qt.size(width,height), spyTimeout);
+                tryCompare(windowItem, "width", width, spyTimeout);
+                tryCompare(windowItem, "height", height, spyTimeout);
 
                 width += 5;
                 height += 5;
-                wait(10);
+                wait(50 * AmTest.timeoutFactor);
             }
         }
 
@@ -323,7 +327,7 @@ Item {
             var windowItem = sizedWindowItemsRepeater.itemAt(0);
             var window = windowItem.window
 
-            tryCompare(window, "size", Qt.size(windowItem.width, windowItem.height));
+            tryCompare(window, "size", Qt.size(windowItem.width, windowItem.height), spyTimeout);
         }
 
         /*
@@ -338,15 +342,15 @@ Item {
 
             windowItem.width = 200;
             windowItem.height = 100;
-            tryCompare(window, "size", Qt.size(200, 100));
+            tryCompare(window, "size", Qt.size(200, 100), spyTimeout);
 
             windowItem.width = 201;
             windowItem.height = 101;
-            tryCompare(window, "size", Qt.size(201, 101));
+            tryCompare(window, "size", Qt.size(201, 101), spyTimeout);
 
             windowItem.width = 202;
             windowItem.height = 102;
-            tryCompare(window, "size", Qt.size(202, 102));
+            tryCompare(window, "size", Qt.size(202, 102), spyTimeout);
         }
 
         /*
@@ -362,15 +366,15 @@ Item {
 
             windowItem.width = 200;
             windowItem.height = 100;
-            tryCompare(window, "size", Qt.size(123, 321));
+            tryCompare(window, "size", Qt.size(123, 321), spyTimeout);
 
             windowItem.width = 201;
             windowItem.height = 101;
-            tryCompare(window, "size", Qt.size(123, 321));
+            tryCompare(window, "size", Qt.size(123, 321), spyTimeout);
 
             windowItem.width = 202;
             windowItem.height = 102;
-            tryCompare(window, "size", Qt.size(123, 321));
+            tryCompare(window, "size", Qt.size(123, 321), spyTimeout);
         }
 
         /*
@@ -385,7 +389,7 @@ Item {
 
             app.stop();
 
-            tryCompare(window, "contentState", WindowObject.NoSurface);
+            tryCompare(window, "contentState", WindowObject.NoSurface, spyTimeout);
 
             window.close();
         }
@@ -404,8 +408,8 @@ Item {
             app = ApplicationManager.application("test.windowitem.multiwin");
             app.start();
 
-            tryCompare(windowItemsModel, "count", 2);
-            tryCompare(WindowManager, "count", 2);
+            tryCompare(windowItemsModel, "count", 2, spyTimeout);
+            tryCompare(WindowManager, "count", 2, spyTimeout);
 
             var firstWindow = windowItemsModel.get(0).window;
             var secondWindow = windowItemsModel.get(1).window;
@@ -415,19 +419,19 @@ Item {
 
             firstWindow.close();
 
-            tryCompare(firstWindow, "contentState", WindowObject.NoSurface);
+            tryCompare(firstWindow, "contentState", WindowObject.NoSurface, spyTimeout);
             windowItemsModel.remove(0);
             firstWindow = null;
 
-            wait(100);
+            wait(100 * AmTest.timeoutFactor);
 
             compare(app.runState, Am.Running);
             compare(secondWindow.contentState, WindowObject.SurfaceWithContent);
 
             secondWindow.close();
 
-            tryCompare(secondWindow, "contentState", WindowObject.NoSurface);
-            tryCompare(app, "runState", Am.NotRunning);
+            tryCompare(secondWindow, "contentState", WindowObject.NoSurface, spyTimeout);
+            tryCompare(app, "runState", Am.NotRunning, spyTimeout);
         }
 
         /*
@@ -446,7 +450,7 @@ Item {
 
             // There's nothing in front of the wayland item (at least nothing visible).
             // The touch event will reach it.
-            tryVerify(function() { return window.windowProperty("clickCount") === 1; });
+            tryVerify(function() { return window.windowProperty("clickCount") === 1; }, spyTimeout);
             compare(windowItem.clickCount, 0);
 
             windowItem.mouseAreaVisible = true;
@@ -456,7 +460,7 @@ Item {
 
             // Since a visible MouseArea is now in front of WindowItem's internal wayland item
             // the second touch event was caught by that MouseArea instead.
-            tryCompare(windowItem, "clickCount", 1);
+            tryCompare(windowItem, "clickCount", 1, spyTimeout);
             compare(window.windowProperty("clickCount"), 1);
 
         }
@@ -475,7 +479,7 @@ Item {
 
             app.stop();
 
-            tryCompare(window, "contentState", WindowObject.NoSurface);
+            tryCompare(window, "contentState", WindowObject.NoSurface, spyTimeout);
             compare(window.windowProperty("foo"), "bar");
         }
     }

@@ -43,6 +43,7 @@
 #include "packageextractor.h"
 #include "installationreport.h"
 #include "packageutilities.h"
+#include "utilities.h"
 
 #include "../error-checking.h"
 
@@ -296,7 +297,7 @@ void tst_PackageExtractor::extractFromFifo()
 
     PackageExtractor extractor(QUrl::fromLocalFile(fifo.path()), m_extractDir->path());
     QVERIFY2(extractor.extract(), qPrintable(extractor.errorString()));
-    QTRY_VERIFY(fifo.isFinished());
+    QTRY_VERIFY_WITH_TIMEOUT(fifo.isFinished(), 5000 * timeoutFactor());
 }
 
 int main(int argc, char *argv[])

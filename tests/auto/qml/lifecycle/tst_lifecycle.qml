@@ -38,6 +38,7 @@ TestCase {
     name: "LifeCycleTest"
     visible: true
 
+    property int spyTimeout: 5000 * AmTest.timeoutFactor
     property var app: ApplicationManager.application("tld.test.lifecycle");
 
 
@@ -86,8 +87,8 @@ TestCase {
         var index = AmTest.observeObjectDestroyed(app.runtime);
         app.stop();
         while (app.runState !== ApplicationObject.NotRunning)
-            runStateChangedSpy.wait();
-        objectDestroyedSpy.wait();
+            runStateChangedSpy.wait(spyTimeout);
+        objectDestroyedSpy.wait(spyTimeout);
         compare(objectDestroyedSpy.signalArguments[0][0], index);
     }
 
@@ -95,27 +96,27 @@ TestCase {
     // Start followed by quick stop/start in single-porcess mode caused an abort in the past
     function test_fast_stop_start() {
         app.start();
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.StartingUp);
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.Running);
 
         objectDestroyedSpy.clear();
         var index = AmTest.observeObjectDestroyed(app.runtime);
 
         app.stop();
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.ShuttingDown);
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.NotRunning);
 
         app.start();
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.StartingUp);
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.Running);
 
-        objectDestroyedSpy.wait();
+        objectDestroyedSpy.wait(spyTimeout);
         compare(objectDestroyedSpy.signalArguments[0][0], index);
     }
 
@@ -125,11 +126,11 @@ TestCase {
         stopTimer.start();
 
         while (app.runState !== ApplicationObject.NotRunning)
-            runStateChangedSpy.wait();
+            runStateChangedSpy.wait(spyTimeout);
 
         app.start();
         while (app.runState !== ApplicationObject.Running)
-            runStateChangedSpy.wait();
+            runStateChangedSpy.wait(spyTimeout);
     }
 
     function test_restart() {
@@ -143,11 +144,11 @@ TestCase {
 
         app.start();
         while (app.runState !== ApplicationObject.Running)
-            runStateChangedSpy.wait();
+            runStateChangedSpy.wait(spyTimeout);
         app.stop();
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.ShuttingDown);
         while (app.runState !== ApplicationObject.Running)
-            runStateChangedSpy.wait();
+            runStateChangedSpy.wait(spyTimeout);
     }
 }

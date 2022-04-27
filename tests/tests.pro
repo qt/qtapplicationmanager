@@ -39,10 +39,15 @@ OTHER_FILES += \
     qtPrepareTool(APPMAN_PACKAGER, appman-packager)
 
     unix {
+        OPENSSL_HOME = $$(OPENSSL_HOME)
+        !isEmpty(OPENSSL_HOME): {
+            EXTRA_PATH=$$OPENSSL_HOME/bin
+        }
+
         # create test data on the fly - this is needed for the CI server
         testdata.target = testdata
         testdata.depends = $$PWD/data/create-test-packages.sh $$APPMAN_PACKAGER_EXE
-        testdata.commands = (cd $$PWD/data ; ./create-test-packages.sh $$APPMAN_PACKAGER)
+        testdata.commands = (cd $$PWD/data ;PATH=\"$$EXTRA_PATH:$$(PATH)\" ./create-test-packages.sh $$APPMAN_PACKAGER)
         QMAKE_EXTRA_TARGETS += testdata
 
         # qmake would create a default check target implicitly, but since we need 'testdata' as an

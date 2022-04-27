@@ -51,6 +51,7 @@ TestCase {
     name: "Configs"
     visible: true
 
+    property int spyTimeout: 5000 * AmTest.timeoutFactor
 
     ApplicationIPCInterface {
         id: appif
@@ -89,8 +90,8 @@ TestCase {
     function cleanup() {
         runStateChangedSpy.clear();
         ApplicationManager.stopApplication("test.configs.app");
-        runStateChangedSpy.wait();
-        runStateChangedSpy.wait();
+        runStateChangedSpy.wait(spyTimeout);
+        runStateChangedSpy.wait(spyTimeout);
         compare(runStateChangedSpy.signalArguments[1][1], ApplicationObject.NotRunning);
     }
 
@@ -98,12 +99,12 @@ TestCase {
         compare(NotificationManager.count, 0);
         compare(windowAddedSpy.count, 0);
         verify(ApplicationManager.startApplication("test.configs.app"))
-        windowAddedSpy.wait();
+        windowAddedSpy.wait(spyTimeout);
         compare(windowAddedSpy.count, 1);
         var window = windowAddedSpy.signalArguments[0][0];
         compare(window.windowProperty("prop1"), "foo");
         appif.trigger("PropertyChange");
-        windowPropertyChangedSpy.wait();
+        windowPropertyChangedSpy.wait(spyTimeout);
         compare(windowPropertyChangedSpy.count, 1);
         compare(windowPropertyChangedSpy.signalArguments[0][0], window);
         compare(window.windowProperty("prop1"), "bar");
@@ -111,16 +112,16 @@ TestCase {
 
         if (!ApplicationManager.systemProperties.nodbus) {
             appif.trigger("Notification");
-            tryVerify(function() { return NotificationManager.count === 1; });
+            tryVerify(function() { return NotificationManager.count === 1; }, spyTimeout);
             compare(NotificationManager.get(0).summary, "Test");
         }
 
         window.setWindowProperty("trigger", "now");
-        windowPropertyChangedSpy.aboutToBlockWait();
+        windowPropertyChangedSpy.aboutToBlockWait(spyTimeout);
         compare(windowPropertyChangedSpy.signalArguments[0][0], window);
         compare(window.windowProperty("trigger"), "now");
 
-        windowPropertyChangedSpy.wait();
+        windowPropertyChangedSpy.wait(spyTimeout);
         compare(windowPropertyChangedSpy.signalArguments[1][0], window);
         compare(window.windowProperty("ack"), "done");
     }

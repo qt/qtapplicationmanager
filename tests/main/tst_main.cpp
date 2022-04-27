@@ -40,6 +40,7 @@
 #include "main.h"
 #include "intentserver.h"
 #include "intent.h"
+#include "utilities.h"
 #include <QtAppManMain/defaultconfiguration.h>
 
 
@@ -75,9 +76,11 @@ private:
     Main *main{nullptr};
     DefaultConfiguration *config{nullptr};
     bool m_verbose = false;
+    int m_spyTimeout;
 };
 
 tst_Main::tst_Main()
+    : m_spyTimeout(5000 * timeoutFactor())
 {
     argc = 3;
     argv = new char*[argc + 1];
@@ -192,8 +195,7 @@ void tst_Main::installPackage(const QString &pkgPath)
     });
 
     packageManager->startPackageInstallation(QUrl::fromLocalFile(pkgPath));
-
-    QTRY_VERIFY(installationFinished);
+    QTRY_VERIFY_WITH_TIMEOUT(installationFinished, m_spyTimeout);
 }
 
 void tst_Main::removePackage(const QString &id)
@@ -209,8 +211,7 @@ void tst_Main::removePackage(const QString &id)
     });
 
     packageManager->removePackage(id, false /* keepDocuments */);
-
-    QTRY_VERIFY(removalFinished);
+    QTRY_VERIFY_WITH_TIMEOUT(removalFinished, m_spyTimeout);
 }
 
 /*

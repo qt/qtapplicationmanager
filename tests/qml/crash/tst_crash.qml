@@ -49,6 +49,7 @@ TestCase {
     when: windowShown
     name: "Crashtest"
 
+    property int spyTimeout: 3000 * AmTest.timeoutFactor
     property string appId: "tld.test.crash"
     property var app: ApplicationManager.application(appId);
 
@@ -75,11 +76,11 @@ TestCase {
 
     function test_crash(data) {
         ApplicationManager.startApplication(appId);
-        runStateChangedSpy.wait(3000);
-        runStateChangedSpy.wait(3000);
+        runStateChangedSpy.wait(spyTimeout);
+        runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.Running);
         ApplicationManager.startApplication(appId, data.tag);
-        runStateChangedSpy.wait(3000);
+        runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.NotRunning);
         if (data.tag === "gracefully") {
             compare(app.lastExitStatus, ApplicationObject.NormalExit);

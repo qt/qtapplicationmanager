@@ -61,6 +61,7 @@
 #include "error.h"
 #include "exception.h"
 #include "logging.h"
+#include "utilities.h"
 #include "runtimefactory.h"
 #include "intentserver.h"
 #include "intentclient.h"
@@ -94,20 +95,20 @@ IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(Packag
     auto intentServer = IntentServer::createInstance(intentServerAMInterface);
     auto intentClient = IntentClient::createInstance(intentClientAMInterface);
 
-    intentServer->setDisambiguationTimeout(disambiguationTimeout);
-    intentServer->setStartApplicationTimeout(startApplicationTimeout);
+    intentServer->setDisambiguationTimeout(disambiguationTimeout * timeoutFactor());
+    intentServer->setStartApplicationTimeout(startApplicationTimeout * timeoutFactor());
 
     // These timeouts are for the same thing - the time needed for the application's handler to
     // generate a reply - but one is for the server side, while the other for the client side.
     // Having two separate config values would be confusing, so we set the application side to
     // 90% of the server side, because the communication overhead is not included there.
     {
-        int t = replyFromApplicationTimeout;
+        int t = replyFromApplicationTimeout * timeoutFactor();
         intentServer->setReplyFromApplicationTimeout(t);
         intentClient->setReplyFromApplicationTimeout(t <= 0 ? t : int(t * 0.9));
     }
 
-    intentClient->setReplyFromSystemTimeout(replyFromSystemTimeout);
+    intentClient->setReplyFromSystemTimeout(replyFromSystemTimeout * timeoutFactor());
 
     // this way, deleting the server (the return value of this factory function) will get rid
     // of both client and server as well as both their AM interfaces

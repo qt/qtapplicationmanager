@@ -102,7 +102,7 @@ Item {
                 }
 
                 if (numRunningApps > 0) {
-                    wait(50);
+                    wait(100 * AmTest.timeoutFactor);
                 } else
                     break;
             }
@@ -131,8 +131,8 @@ Item {
             var app = ApplicationManager.application("test.windowitem2.app");
             app.start();
 
-            tryVerify(function() { return windowItem.window !== null });
-            wait(50);
+            tryVerify(function() { return windowItem.window !== null }, 5000 * AmTest.timeoutFactor);
+            wait(100 * AmTest.timeoutFactor);
 
             app.stop();
         }

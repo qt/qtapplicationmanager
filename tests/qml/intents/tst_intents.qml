@@ -51,6 +51,8 @@ TestCase {
     when: windowShown
     name: "Intents"
 
+    property int spyTimeout: 1000 * AmTest.timeoutFactor
+
     property var stdParams: { "para": "meter" }
     property var matchParams: { "list": "a", "int": 42, "string": "foo_x_bar", "complex": { "a": 1 } }
 
@@ -166,7 +168,10 @@ TestCase {
         var req = IntentClient.sendIntentRequest(data.intentId, data.appId, params)
         verify(req)
         requestSpy.target = req
-        tryCompare(requestSpy, "count", 1, 1000)
+        let requestTimeout = spyTimeout
+        if (data.isTimeout)
+            requestTimeout *= 10
+        tryCompare(requestSpy, "count", 1, requestTimeout)
         compare(req.succeeded, data.succeeding)
         if (req.succeeded) {
             compare(req.result, { "from": data.appId, "in": params })
@@ -212,7 +217,7 @@ TestCase {
         requestSpy.target = req
 
         if (data.action !== "none") {
-            tryCompare(disambiguateSpy, "count", 1, 1000)
+            tryCompare(disambiguateSpy, "count", 1, spyTimeout)
             var possibleIntents = disambiguateSpy.signalArguments[0][1]
             compare(possibleIntents.length, 2)
             compare(possibleIntents[0].intentId, intentId)
@@ -235,7 +240,7 @@ TestCase {
             disambiguateSpy.clear()
         }
 
-        tryCompare(requestSpy, "count", 1, data.action === "timeout" ? 15000 : 1000)
+        tryCompare(requestSpy, "count", 1, spyTimeout * (data.action === "timeout" ? 15 : 1))
         var succeeding = data.succeeding
         compare(req.succeeded, succeeding)
         if (succeeding) {

@@ -65,7 +65,7 @@ TestCase {
             if (!ApplicationManager.windowManagerCompositorReady) {
                 var extnull = Qt.createComponent("IviApplicationExtension.qml").createObject(null).addExtension();
                 compare(extnull, null);
-                windowManagerCompositorReadyChangedSpy.wait(2000);
+                windowManagerCompositorReadyChangedSpy.wait(2000 * AmTest.timeoutFactor);
                 verify(ApplicationManager.windowManagerCompositorReady);
             }
             var extension = Qt.createComponent("IviApplicationExtension.qml").createObject(null).addExtension();

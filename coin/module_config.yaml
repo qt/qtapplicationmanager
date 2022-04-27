@@ -27,6 +27,9 @@ instructions:
         - !include "{{qt/qtbase}}/coin_module_build_template_v2.yaml"
 
   Test:
+    - type: EnvironmentVariable
+      variableName: AM_TIMEOUT_FACTOR
+      variableValue: 4
     - type: Group
       instructions:
         - !include "{{qt/qtbase}}/coin_module_test_template_v3.yaml"
@@ -39,6 +42,3 @@ instructions:
           - condition: property
             property: target.os
             in_values: ["IOS", "Android", "WebAssembly"]
-    - type: EnvironmentVariable
-      variableName: AM_TIMEOUT_FACTOR
-      variableValue: 4

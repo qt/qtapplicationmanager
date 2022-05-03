@@ -206,6 +206,10 @@ int timeoutFactor()
     static int tf = 0;
     if (!tf) {
         tf = qMax(1, qEnvironmentVariableIntValue("AM_TIMEOUT_FACTOR"));
+        if (tf == 1 && qEnvironmentVariable("QTEST_ENVIRONMENT") == qSL("ci")) {
+            tf = 6;
+            qInfo() << "Detected CI environment. Setting AM_TIMEOUT_FACTOR to 6";
+        }
         if (tf > 1)
             qInfo() << "All timeouts are multiplied by" << tf << "(changed by (un)setting $AM_TIMEOUT_FACTOR)";
     }

@@ -97,6 +97,7 @@ public:
     bool allowUnsignedPackages() const;
     bool allowUnknownUiClients() const;
     bool noUiWatchdog() const;
+    void setForceNoUiWatchdog(bool noUiWatchdog);
     bool noDltLogging() const;
     bool forceSingleProcess() const;
     bool forceMultiProcess() const;
@@ -163,6 +164,7 @@ private:
     QString m_mainQmlFile;
     bool m_onlyOnePositionalArgument = false;
     bool m_forceVerbose = false;
+    bool m_forceNoUiWatchdog = false;
     mutable QString m_installationDir; // cached value
     mutable QString m_documentDir;     // cached value
 };

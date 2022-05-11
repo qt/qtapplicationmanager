@@ -130,7 +130,7 @@ protected:
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());
     void setupWindowTitle(const QString &title, const QString &iconPath);
     void setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets,
-                            bool slowAnimations, bool uiWatchdog, bool allowUnknownUiClients);
+                            bool slowAnimations, bool noUiWatchdog, bool allowUnknownUiClients);
     void setupTouchEmulation(bool enableTouchEmulation);
 
     void setupShellServer(const QString &telnetAddress, quint16 telnetPort) Q_DECL_NOEXCEPT_EXPR(false);

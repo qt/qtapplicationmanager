@@ -1106,7 +1106,12 @@ bool Configuration::allowUnknownUiClients() const
 
 bool Configuration::noUiWatchdog() const
 {
-    return value<bool>("no-ui-watchdog", m_data->flags.noUiWatchdog);
+    return value<bool>("no-ui-watchdog", m_data->flags.noUiWatchdog) || m_forceNoUiWatchdog;
+}
+
+void Configuration::setForceNoUiWatchdog(bool noUiWatchdog)
+{
+    m_forceNoUiWatchdog = noUiWatchdog;
 }
 
 bool Configuration::noDltLogging() const

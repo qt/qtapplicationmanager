@@ -51,7 +51,7 @@ TestCase {
     when: windowShown
     name: "Intents"
 
-    property int spyTimeout: 1000 * AmTest.timeoutFactor
+    property int spyTimeout: 4000 * AmTest.timeoutFactor
 
     property var stdParams: { "para": "meter" }
     property var matchParams: { "list": "a", "int": 42, "string": "foo_x_bar", "complex": { "a": 1 } }

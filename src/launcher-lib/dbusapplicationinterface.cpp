@@ -30,6 +30,7 @@
 ****************************************************************************/
 
 #include <QDBusConnection>
+#include <QDBusConnectionInterface>
 #include <QDBusInterface>
 #include <QDBusMessage>
 #include <QDBusReply>
@@ -38,6 +39,7 @@
 #include <QPointer>
 #include <QCoreApplication>
 #include <QThread>
+#include <QElapsedTimer>
 
 #include "global.h"
 #include "dbusapplicationinterface.h"
@@ -47,6 +49,10 @@
 #include "intentclient.h"
 #include "intentclientrequest.h"
 #include "intentclientdbusimplementation.h"
+
+#ifdef interface // in case windows.h got included somehow
+#  undef interface
+#endif
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -72,7 +78,16 @@ bool DBusApplicationInterface::initialize(bool hasRuntime)
 
     auto tryConnect = [](const QString &service, const QString &path, const QString &interfaceName,
                          const QDBusConnection &conn, QObject *parent) -> QDBusInterface * {
-        for (int i = 0; i < 100; ++i) {
+        if (!service.isEmpty() && conn.interface()) {
+            if (!conn.interface()->isServiceRegistered(service))
+                return nullptr;
+        }
+
+        QElapsedTimer timer;
+        timer.start();
+
+        while (timer.elapsed() < (100 * timeout)) { // 100msec base line
+            // this constructor can block up to 25sec (!), if the service is not registered!
             QDBusInterface *iface = new QDBusInterface(service, path, interfaceName, conn, parent);
             if (!iface->lastError().isValid())
                 return iface;
@@ -86,7 +101,7 @@ bool DBusApplicationInterface::initialize(bool hasRuntime)
                                  qSL("io.qt.ApplicationManager.ApplicationInterface"), m_connection, this);
 
     if (!m_applicationIf) {
-        qCritical("ERROR: could not connect to the ApplicationInterface on the P2P D-Bus");
+        qCritical("ERROR: could not connect to the ApplicationInterface signals on the P2P D-Bus");
         return false;
     }
 
@@ -115,7 +130,7 @@ bool DBusApplicationInterface::initialize(bool hasRuntime)
         ok = connect(m_runtimeIf, SIGNAL(startApplication(QString,QString,QString,QString,QVariantMap,QVariantMap)),
                      this,        SIGNAL(startApplication(QString,QString,QString,QString,QVariantMap,QVariantMap)));
         if (!ok) {
-            qCritical("ERROR: could not connect the RuntimeInterface via D-Bus: %s",
+            qCritical("ERROR: could not connect the RuntimeInterface signals via D-Bus: %s",
                       qPrintable(m_runtimeIf->lastError().name()));
         }
     }
@@ -138,11 +153,15 @@ bool DBusApplicationInterface::initialize(bool hasRuntime)
             ok = ok && connect(m_notifyIf, SIGNAL(ActionInvoked(uint,QString)),
                                this, SLOT(notificationActionTriggered(uint,QString)));
 
-            if (!ok)
-                qCritical("ERROR: could not connect the org.freedesktop.Notifications interface via D-Bus: %s",
+            if (!ok) {
+                qCritical("ERROR: could not connect the org.freedesktop.Notifications signals via D-Bus: %s",
                           qPrintable(m_notifyIf->lastError().name()));
+
+                delete m_notifyIf;
+                m_notifyIf = nullptr;
+            }
         } else {
-            qCritical("ERROR: could not create the org.freedesktop.Notifications interface on D-Bus");
+            qCritical("ERROR: could not connect to the org.freedesktop.Notifications interface via D-Bus");
         }
     }
 

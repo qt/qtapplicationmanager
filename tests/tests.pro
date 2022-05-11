@@ -3,6 +3,12 @@ TEMPLATE = subdirs
 load(am-config)
 requires(!disable-installer)
 
+TARGET_OSVERSION_COIN=$$(TARGET_OSVERSION_COIN)
+equals(TARGET_OSVERSION_COIN, qemu) {
+    message("Disable testing on QEMU as it is known to be broken!")
+    return()
+}
+
 SUBDIRS = \
     manual \
     application \

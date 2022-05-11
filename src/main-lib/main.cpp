@@ -1030,7 +1030,10 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, c
         conn = QDBusConnection::sessionBus();
     } else if (dbusName == qL1S("auto")) {
         dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
-        conn = QDBusConnection::sessionBus();
+        // we cannot be using QDBusConnection::sessionBus() here, because some plugin
+        // might have called that function before we could spawn our own session bus. In
+        // this case, Qt has cached the bus name and we would get the old one back.
+        conn = QDBusConnection::connectToBus(dbusAddress, qSL("qtam_session"));
         if (!conn.isConnected())
             return;
         dbusName = qL1S("session");

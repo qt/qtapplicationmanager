@@ -116,7 +116,7 @@ protected:
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());
     void setupWindowTitle(const QString &title, const QString &iconPath);
     void setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets,
-                            bool slowAnimations, bool uiWatchdog, bool allowUnknownUiClients);
+                            bool slowAnimations, bool noUiWatchdog, bool allowUnknownUiClients);
 
     enum SystemProperties {
         SP_ThirdParty = 0,

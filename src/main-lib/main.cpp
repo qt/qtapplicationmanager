@@ -640,14 +640,14 @@ void Main::setupWindowTitle(const QString &title, const QString &iconPath)
 }
 
 void Main::setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets,
-                              bool slowAnimations, bool uiWatchdog, bool allowUnknownUiClients)
+                              bool slowAnimations, bool noUiWatchdog, bool allowUnknownUiClients)
 {
     QUnifiedTimer::instance()->setSlowModeEnabled(slowAnimations);
 
     m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName);
     m_windowManager->setAllowUnknownUiClients(m_noSecurity || allowUnknownUiClients);
     m_windowManager->setSlowAnimations(slowAnimations);
-    m_windowManager->enableWatchdog(!uiWatchdog);
+    m_windowManager->enableWatchdog(!noUiWatchdog);
 
 #if defined(QT_WAYLANDCOMPOSITOR_LIB)
     connect(&m_windowManager->internalSignals, &WindowManagerInternalSignals::compositorAboutToBeCreated,

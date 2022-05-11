@@ -94,6 +94,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #if defined(AM_TESTRUNNER)
         TestRunner::initialize(cfg.mainQmlFile(), cfg.testRunnerArguments());
         cfg.setForceVerbose(qEnvironmentVariableIsSet("AM_VERBOSE_TEST"));
+        cfg.setForceNoUiWatchdog(true); // this messes up test results on slow CI systems otherwise
 #endif
         a.setup(&cfg);
 #if defined(AM_TESTRUNNER)

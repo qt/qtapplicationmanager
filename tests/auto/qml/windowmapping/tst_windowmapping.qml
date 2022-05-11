@@ -264,6 +264,8 @@ TestCase {
 
         if (ApplicationManager.singleProcess)
             skip("Wayland ping-pong is only supported in multi-process mode");
+        else
+            skip("Wayland ping-pong is disabled in the testrunner due to interferences with other tests");
 
         AmTest.ignoreMessage(AmTest.CriticalMsg, /Stopping application.*because we did not receive a Wayland-Pong/);
         app.start();

@@ -116,10 +116,10 @@ TestCase {
                     numRunningApps += 1;
             }
 
-            if (numRunningApps > 0) {
-                wait(2000 * AmTest.timeoutFactor);
-            } else
+            if (numRunningApps == 0)
                 break;
+
+            wait(100);
         }
 
         windowAddedSpy.clear();

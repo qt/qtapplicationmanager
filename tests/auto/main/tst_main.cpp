@@ -377,7 +377,7 @@ void tst_Main::startupTimer()
 
     QFile f(fn);
     QVERIFY(f.open(QIODevice::ReadOnly));
-    auto report = f.readAll();
+    auto report = f.readAll().replace('\r', QByteArray { });
 
     QVERIFY(report.startsWith("\n== STARTUP TIMING REPORT: TEST =="));
     QVERIFY(report.contains("after QML engine instantiation"));

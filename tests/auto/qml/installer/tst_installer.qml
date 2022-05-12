@@ -120,7 +120,7 @@ TestCase {
         })
 
         taskStateChangedSpy.clear();
-        var id = PackageManager.startPackageInstallation(packageDir + "test-dev-signed.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "test-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -140,7 +140,7 @@ TestCase {
 
         compare(PackageManager.package(pkgId).version, "1.0");
 
-        id = PackageManager.startPackageInstallation(packageDir + "test-update-dev-signed.appkg")
+        id = PackageManager.startPackageInstallation("file:" + packageDir + "test-update-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -186,7 +186,7 @@ TestCase {
     function test_2cancel_update() {
         checkSkip()
 
-        var id = PackageManager.startPackageInstallation(packageDir + "test-dev-signed.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "test-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -201,7 +201,7 @@ TestCase {
         var pkg = PackageManager.package(pkgId);
         compare(pkg.version, "1.0");
 
-        id = PackageManager.startPackageInstallation(packageDir + "test-update-dev-signed.appkg")
+        id = PackageManager.startPackageInstallation("file:" + packageDir + "test-update-dev-signed.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         pkgId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
         compare(pkgId, "com.pelagicore.test");
@@ -223,7 +223,7 @@ TestCase {
         compare(pkg.icon.toString().slice(-9), "icon1.png")
         compare(pkg.version, "v1");
 
-        var id = PackageManager.startPackageInstallation(packageDir + "hello-world.red.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "hello-world.red.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -243,7 +243,7 @@ TestCase {
 
         taskStateChangedSpy.clear()
 
-        var id = PackageManager.startPackageInstallation(packageDir + "hello-world.red.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "hello-world.red.appkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -296,7 +296,7 @@ TestCase {
         applicationRunStateChangedSpy.clear()
 
         // now install the update
-        var id = PackageManager.startPackageInstallation(packageDir + "hello-world.red.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "hello-world.red.appkg")
         taskBlockingUntilInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskBlockingUntilInstallationAcknowledgeSpy.count, 1);
         compare(taskBlockingUntilInstallationAcknowledgeSpy.signalArguments[0][0], id);

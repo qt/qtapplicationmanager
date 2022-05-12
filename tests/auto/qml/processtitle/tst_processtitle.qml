@@ -74,6 +74,10 @@ TestCase {
                 return pid
             }, spyTimeout);
             wait(250 * AmTest.timeoutFactor);
+
+            if (AmTest.cmdLine(pid).includes("/qemu-"))
+                skip("This doesn't work inside qemu")
+
             verify(AmTest.cmdLine(pid).endsWith(executable + quickArg));
         } else {
             sigIdx = 1;
@@ -91,6 +95,10 @@ TestCase {
 
         processStatus.applicationId = data.appId;
         pid = processStatus.processId;
+
+        if (AmTest.cmdLine(pid).includes("/qemu-"))
+            skip("This doesn't work inside qemu")
+
         verify(AmTest.ps(pid).endsWith(executable + ": " + data.resId + quickArg));
         verify(AmTest.cmdLine(pid).endsWith(executable + ": " + data.resId + quickArg));
         verify(AmTest.environment(pid).includes("AM_CONFIG=%YAML"));

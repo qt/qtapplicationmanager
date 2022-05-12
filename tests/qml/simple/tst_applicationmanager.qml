@@ -306,10 +306,10 @@ TestCase {
                         exitCode: 0, exitStatus: Am.NormalExit },
                     {tag: "ForceKill", appId: "tld.test.simple2", index: 1, forceKill: true,
                         exitCode: Qt.platform.os !== 'windows' ? 9 : 0,
-                        exitStatus: Qt.platform.os !== 'windows' ? Am.ForcedExit : Am.CrashExit },
+                        exitStatus: Am.ForcedExit },
                     {tag: "AutoTerminate", appId: "tld.test.simple2", index: 1, forceKill: false,
                         exitCode: Qt.platform.os !== 'windows' ? 15 : 0,
-                        exitStatus: Qt.platform.os !== 'windows' ? Am.ForcedExit : Am.CrashExit }
+                        exitStatus: Am.ForcedExit }
                 ];
     }
 

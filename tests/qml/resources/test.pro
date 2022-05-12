@@ -8,11 +8,3 @@ FILES = am-config.yaml \
         apps/app2/icon.png apps/app2/info.yaml
 DESTDIR = $$OUT_PWD
 load(am-qml-testcase)
-
-RESOURCE_SOURCE = systemuifile.qrc
-load(generate-resource)
-
-TEMPLATE = lib
-TARGET = systemuiplugin
-CONFIG += plugin
-RESOURCES = systemuiplugin.qrc

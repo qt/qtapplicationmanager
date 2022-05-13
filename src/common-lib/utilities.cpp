@@ -177,15 +177,17 @@ qint64 getParentPid(qint64 pid)
     PROCESSENTRY32 pe32;
     pe32.dwSize = sizeof(pe32);
     HANDLE hProcess = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, pid);
-    if (Process32First(hProcess, &pe32)) {
-        do {
-            if (pe32.th32ProcessID == pid) {
-                ppid = pe32.th32ParentProcessID;
-                break;
-            }
-        } while (Process32Next(hProcess, &pe32));
+    if (hProcess != INVALID_HANDLE_VALUE) {
+        if (Process32First(hProcess, &pe32)) {
+            do {
+                if (pe32.th32ProcessID == pid) {
+                    ppid = pe32.th32ParentProcessID;
+                    break;
+                }
+            } while (Process32Next(hProcess, &pe32));
+        }
+        CloseHandle(hProcess);
     }
-    CloseHandle(hProcess);
 #else
     Q_UNUSED(pid)
 #endif

@@ -338,15 +338,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
     if (consoleWidth <= 0) {
 #if defined(Q_OS_WIN)
-        // do not use QMutex to avoid possible recursions
-        static CRITICAL_SECTION cs;
-        static bool csInitialized = false;
-        if (!csInitialized)
-            InitializeCriticalSection(&cs);
-
-        EnterCriticalSection(&cs);
         OutputDebugStringA(out.constData());
-        LeaveCriticalSection(&cs);
         return;
 
 #elif defined(Q_OS_ANDROID)

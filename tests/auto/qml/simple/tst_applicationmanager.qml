@@ -68,8 +68,6 @@ TestCase {
     }
 
     function initTestCase() {
-        //Wait for the debugging wrappers to be setup.
-        wait(2000 * AmTest.timeoutFactor);
         WindowManager.windowAdded.connect(windowHandler.windowAddedHandler)
         WindowManager.windowContentStateChanged.connect(windowHandler.windowContentStateChangedHandler)
 

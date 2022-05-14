@@ -54,42 +54,38 @@ class Logging
 public:
     static void initialize();
     static void initialize(int argc, const char * const *argv);
-    static void messageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
-    static void deferredMessageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
+
     static QStringList filterRules();
     static void setFilterRules(const QStringList &rules);
+
     static void setMessagePattern(const QString &pattern);
+
     static QVariant useAMConsoleLogger();
-    static void useAMConsoleLogger(const QVariant &config);
+    static void setUseAMConsoleLogger(const QVariant &config);
+
+    static bool hasDeferredMessages();
     static void completeSetup();
 
     static QByteArray applicationId();
     static void setApplicationId(const QByteArray &appId);
 
-    static bool deferredMessages();
-
     // DLT functionality
     static bool isDltEnabled();
     static void setDltEnabled(bool enabled);
 
-    static void registerUnregisteredDltContexts();
     static void setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dltAppDescription);
     static void setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription);
+
+    static void registerUnregisteredDltContexts();
+
     static QString dltLongMessageBehavior();
     static void setDltLongMessageBehavior(const QString &behaviorString);
 
     static void logToDlt(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
 
 private:
-    static bool s_dltEnabled;
-    static bool s_messagePatternDefined;
-    static bool s_useAMConsoleLogger;
-    static QStringList s_rules;
-    static QtMessageHandler s_defaultQtHandler;
-    static QByteArray s_applicationId;
-    static QVariant s_useAMConsoleLoggerConfig;
-    static QString s_dltLongMessageBehavior;
-    static QMutex s_deferredMessagesMutex;
+    static void messageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
+    static void deferredMessageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
 };
 
 void am_trace(QDebug);
@@ -104,18 +100,15 @@ template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest...
 class Console
 {
 public:
-    static void init();
+    static bool ensureInitialized();
 
-    static bool supportsAnsiColor;
-    static bool isRunningInQtCreator;
-    static bool hasConsoleWindow;
+    static bool supportsAnsiColor();
+    static bool isRunningInQtCreator();
+    static bool hasConsoleWindow();
     static int width();
 
     enum Color { Off = 0, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, BrightFlag = 0x80 };
     static QByteArray &colorize(QByteArray &out, int color, bool forceNoColor = false);
-
-private:
-    static QAtomicInt consoleWidthCached;
 };
 
 QT_END_NAMESPACE_AM

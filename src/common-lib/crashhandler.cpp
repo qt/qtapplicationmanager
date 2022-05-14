@@ -65,33 +65,50 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-static bool printBacktrace;
-static bool printQmlStack;
-static bool dumpCore;
-static int waitForGdbAttach;
 
-static char *demangleBuffer;
-static size_t demangleBufferSize;
+struct CrashHandlerGlobal
+{
+    bool consoleInitialized = false; // dummy value to force instantiation in initBacktrace()
+    bool printBacktrace = true;
+    bool printQmlStack = true;
+    bool dumpCore = true;
+    int waitForGdbAttach = 0;
 
-static QByteArray *backtraceLineOut;
-static QByteArray *backtraceLineTmp;
+    char *demangleBuffer;
+    size_t demangleBufferSize;
 
-static QPointer<QQmlEngine> qmlEngine;
+    QByteArray *backtraceLineOut;
+    QByteArray *backtraceLineTmp;
+
+    QPointer<QQmlEngine> qmlEngine;
+
+    CrashHandlerGlobal()
+    {
+        demangleBufferSize = 768;
+        demangleBuffer = static_cast<char *>(malloc(demangleBufferSize));
+
+        backtraceLineOut = new QByteArray();
+        backtraceLineOut->reserve(2 * int(demangleBufferSize));
+        backtraceLineTmp = new QByteArray();
+        backtraceLineTmp->reserve(32);
+    }
+};
+
+Q_GLOBAL_STATIC(CrashHandlerGlobal, chg);
 
 
 void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
 {
-    printBacktrace = config.value(qSL("printBacktrace"), printBacktrace).toBool();
-    printQmlStack = config.value(qSL("printQmlStack"), printQmlStack).toBool();
-    waitForGdbAttach = config.value(qSL("waitForGdbAttach"), waitForGdbAttach).toInt() * timeoutFactor();
-    dumpCore = config.value(qSL("dumpCore"), dumpCore).toBool();
+    chg()->printBacktrace = config.value(qSL("printBacktrace"), chg()->printBacktrace).toBool();
+    chg()->printQmlStack = config.value(qSL("printQmlStack"), chg()->printQmlStack).toBool();
+    chg()->waitForGdbAttach = config.value(qSL("waitForGdbAttach"), chg()->waitForGdbAttach).toInt() * timeoutFactor();
+    chg()->dumpCore = config.value(qSL("dumpCore"), chg()->dumpCore).toBool();
 }
-
 
 void CrashHandler::setQmlEngine(QQmlEngine *engine)
 {
 #if defined(QT_QML_LIB)
-    qmlEngine = engine;
+    chg()->qmlEngine = engine;
 #else
     Q_UNUSED(engine)
 #endif
@@ -99,11 +116,10 @@ void CrashHandler::setQmlEngine(QQmlEngine *engine)
 
 #if defined(Q_OS_WINDOWS) || (defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID))
 
-#  if defined(Q_OS_UNIX)
+#  if defined(Q_OS_UNIX) || (defined(Q_OS_WINDOWS) && defined(Q_CC_MINGW))
 // this will make it run before all other static constructor functions
 static void initBacktrace() __attribute__((constructor(101)));
 
-static void initBacktraceUnix();
 
 #  elif defined(Q_OS_WINDOWS) && defined(Q_CC_MSVC)
 // this will make it run before all other static constructor functions
@@ -112,20 +128,18 @@ static void initBacktraceUnix();
 #    pragma init_seg(compiler)
 
 static void initBacktrace();
-static void initBacktraceWindows();
 
 static struct InitBacktrace
 {
     InitBacktrace() { initBacktrace(); }
 } dummy;
 #    pragma warning(pop)
+#  endif
 
-#  elif defined(Q_OS_WINDOWS) && defined(Q_CC_MINGW)
-// this will make it run before all other static constructor functions
-static void initBacktrace() __attribute__((constructor(101)));
-
+#  if defined(Q_OS_UNIX)
+static void initBacktraceUnix();
+#  else
 static void initBacktraceWindows();
-
 #  endif
 
 static void initBacktrace()
@@ -146,20 +160,10 @@ static void initBacktrace()
     // uncaught std::exception derived exception (prints what())
     // throw std::logic_error("test output");
 
-    printBacktrace = true;
-    printQmlStack = true;
-    dumpCore = true;
-    waitForGdbAttach = 0;
+    if (qEnvironmentVariableIsSet("AM_NO_CRASH_HANDLER"))
+        return;
 
-    demangleBufferSize = 768;
-    demangleBuffer = static_cast<char *>(malloc(demangleBufferSize));
-
-    backtraceLineOut = new QByteArray();
-    backtraceLineOut->reserve(2 * int(demangleBufferSize));
-    backtraceLineTmp = new QByteArray();
-    backtraceLineTmp->reserve(32);
-
-    Console::init();
+    chg()->consoleInitialized = Console::ensureInitialized(); // enforce instantiation of both
 
 #  if defined(Q_OS_UNIX)
     initBacktraceUnix();
@@ -196,45 +200,48 @@ static void logBacktraceLine(LogToDestination logTo, int level, const char *symb
                              uintptr_t offset = 0, const char *file = nullptr, int line = -1,
                              int errorCode = 0, const char *errorString = nullptr)
 {
-    bool wantClickableUrl = (Console::isRunningInQtCreator && !Console::hasConsoleWindow);
+    bool wantClickableUrl = (Console::isRunningInQtCreator() && !Console::hasConsoleWindow());
     bool forceNoColor = (logTo != Console);
     bool isError = (errorString);
 
-    backtraceLineOut->clear();
-    backtraceLineTmp->setNum(level);
-    backtraceLineOut->append(4 - backtraceLineTmp->size(), ' ');
-    backtraceLineOut->append(*backtraceLineTmp);
-    backtraceLineOut->append(": ");
-    Console::colorize(*backtraceLineOut, Console::BrightFlag, forceNoColor);
-    if (isError) {
-        Console::colorize(*backtraceLineOut, Console::Red, forceNoColor);
-        backtraceLineOut->append("ERROR: ");
-        Console::colorize(*backtraceLineOut, Console::Off, forceNoColor);
-        backtraceLineOut->append(errorString);
-        backtraceLineTmp->setNum(errorCode);
-        backtraceLineOut->append(" (");
-        backtraceLineOut->append(*backtraceLineTmp);
-        backtraceLineOut->append(")");
-    } else {
-        backtraceLineOut->append(symbol ? symbol : "?");
-    }
-    Console::colorize(*backtraceLineOut, Console::Off, forceNoColor);
-    if (offset) {
-        backtraceLineTmp->setNum(static_cast<qulonglong>(offset), 16);
+    QByteArray *lineOut = chg()->backtraceLineOut;
+    QByteArray *lineTmp = chg()->backtraceLineTmp;
 
-        backtraceLineOut->append(" [");
-        Console::colorize(*backtraceLineOut, Console::Cyan, forceNoColor);
-        backtraceLineOut->append(*backtraceLineTmp);
-        Console::colorize(*backtraceLineOut, Console::Off, forceNoColor);
-        backtraceLineOut->append(']');
+    lineOut->clear();
+    lineTmp->setNum(level);
+    lineOut->append(4 - lineTmp->size(), ' ');
+    lineOut->append(*lineTmp);
+    lineOut->append(": ");
+    Console::colorize(*lineOut, Console::BrightFlag, forceNoColor);
+    if (isError) {
+        Console::colorize(*lineOut, Console::Red, forceNoColor);
+        lineOut->append("ERROR: ");
+        Console::colorize(*lineOut, Console::Off, forceNoColor);
+        lineOut->append(errorString);
+        lineTmp->setNum(errorCode);
+        lineOut->append(" (");
+        lineOut->append(*lineTmp);
+        lineOut->append(")");
+    } else {
+        lineOut->append(symbol ? symbol : "?");
+    }
+    Console::colorize(*lineOut, Console::Off, forceNoColor);
+    if (offset) {
+        lineTmp->setNum(static_cast<qulonglong>(offset), 16);
+
+        lineOut->append(" [");
+        Console::colorize(*lineOut, Console::Cyan, forceNoColor);
+        lineOut->append(*lineTmp);
+        Console::colorize(*lineOut, Console::Off, forceNoColor);
+        lineOut->append(']');
     }
     if (file) {
         bool lineValid = (line > 0 && line <= 9999999);
         if (lineValid || wantClickableUrl)
-            backtraceLineTmp->setNum(lineValid ? line : 0);
+            lineTmp->setNum(lineValid ? line : 0);
 
-        backtraceLineOut->append(" in ");
-        Console::colorize(*backtraceLineOut, Console::Magenta, forceNoColor);
+        lineOut->append(" in ");
+        Console::colorize(*lineOut, Console::Magenta, forceNoColor);
 
         static const char *filePrefix =
 #  if defined(Q_OS_WINDOWS)
@@ -245,26 +252,26 @@ static void logBacktraceLine(LogToDestination logTo, int level, const char *symb
 
         bool isFileUrl = (strncmp(file, filePrefix, sizeof(filePrefix) - 1) == 0);
         if (!isFileUrl && wantClickableUrl)
-            backtraceLineOut->append(filePrefix);
-        backtraceLineOut->append((isFileUrl && !wantClickableUrl) ? file + sizeof(filePrefix) - 1 : file);
-        Console::colorize(*backtraceLineOut, Console::Off, forceNoColor);
+            lineOut->append(filePrefix);
+        lineOut->append((isFileUrl && !wantClickableUrl) ? file + sizeof(filePrefix) - 1 : file);
+        Console::colorize(*lineOut, Console::Off, forceNoColor);
 
         if (lineValid || wantClickableUrl) {
-            backtraceLineOut->append(':');
-            Console::colorize(*backtraceLineOut, Console::BrightFlag | Console::Magenta, forceNoColor);
-            backtraceLineOut->append(*backtraceLineTmp);
-            Console::colorize(*backtraceLineOut, Console::Off, forceNoColor);
+            lineOut->append(':');
+            Console::colorize(*lineOut, Console::BrightFlag | Console::Magenta, forceNoColor);
+            lineOut->append(*lineTmp);
+            Console::colorize(*lineOut, Console::Off, forceNoColor);
         }
     }
 
-    logMsg(logTo, backtraceLineOut->constData());
+    logMsg(logTo, lineOut->constData());
 }
 
 static void logQmlBacktrace(LogToDestination logTo)
 {
 #  if defined(QT_QML_LIB)
-    if (printQmlStack && qmlEngine) {
-        const QV4::ExecutionEngine *qv4engine = qmlEngine->handle();
+    if (chg()->printQmlStack && chg()->qmlEngine) {
+        const QV4::ExecutionEngine *qv4engine = chg()->qmlEngine->handle();
         if (qv4engine) {
             const QV4::StackTrace stackTrace = qv4engine->stackTrace();
             if (stackTrace.size()) {
@@ -342,9 +349,10 @@ static void initBacktraceUnix()
         const char *typeName = type->name();
         if (typeName) {
             int status;
-            demangleBuffer = abi::__cxa_demangle(typeName, demangleBuffer, &demangleBufferSize, &status);
-            if (status == 0 && *demangleBuffer) {
-                typeName = demangleBuffer;
+            chg()->demangleBuffer = abi::__cxa_demangle(typeName, chg()->demangleBuffer,
+                                                        &chg()->demangleBufferSize, &status);
+            if (status == 0 && *chg()->demangleBuffer) {
+                typeName = chg()->demangleBuffer;
             }
         }
         try {
@@ -398,7 +406,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
     logMsgF(logTo, "\n > where: %s thread, TID: %ld, pthread ID: " AM_PTHREAD_T_FMT,
             threadName, tid, pthreadId);
 
-    if (printBacktrace) {
+    if (chg()->printBacktrace) {
         if (!QLibraryInfo::isDebugBuild()) {
             logMsgF(logTo, "\n > Your binary is built in release mode. The following backtrace might be inaccurate.");
             logMsgF(logTo, " > Please consider using a debug build for a more accurate backtrace.");
@@ -430,8 +438,9 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
 
             if (symname) {
                 int status;
-                demangleBuffer = abi::__cxa_demangle(symname, demangleBuffer, &demangleBufferSize, &status);
-                name = (status == 0 && *demangleBuffer) ? demangleBuffer : symname;
+                chg()->demangleBuffer = abi::__cxa_demangle(symname, chg()->demangleBuffer,
+                                                            &chg()->demangleBufferSize, &status);
+                name = (status == 0 && *chg()->demangleBuffer) ? chg()->demangleBuffer : symname;
             }
             logBacktraceLine(btdata->logTo, btdata->level, name, pc);
         };
@@ -442,10 +451,12 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
 
             if (function) {
                 int status;
-                demangleBuffer = abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
+                chg()->demangleBuffer = abi::__cxa_demangle(function, chg()->demangleBuffer,
+                                                            &chg()->demangleBufferSize, &status);
 
                 logBacktraceLine(btdata->logTo, btdata->level,
-                                 (status == 0 && *demangleBuffer) ? demangleBuffer : function,
+                                 (status == 0 && *chg()->demangleBuffer) ? chg()->demangleBuffer
+                                                                         : function,
                                  pc, filename, lineno);
             } else {
                 backtrace_syminfo(btdata->state, pc, syminfoCallback, errorCallback, data);
@@ -512,8 +523,10 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
                         *end = 0;
 
                         int status;
-                        demangleBuffer = abi::__cxa_demangle(function, demangleBuffer, &demangleBufferSize, &status);
-                        name = (status == 0 && *demangleBuffer) ? demangleBuffer : function;
+                        chg()->demangleBuffer = abi::__cxa_demangle(function, chg()->demangleBuffer,
+                                                                    &chg()->demangleBufferSize, &status);
+                        name = (status == 0 && *chg()->demangleBuffer) ? chg()->demangleBuffer
+                                                                       : function;
                     } else {
                         name = symbols[i];
                         if (function && (function == offset))
@@ -539,15 +552,15 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
 
     logCrashInfo(Console, why, stackFramesToIgnore);
 
-    if (waitForGdbAttach > 0) {
+    if (chg()->waitForGdbAttach > 0) {
         logMsgF(Console, "\n > the process will be suspended for %d seconds and you can attach a debugger"
-                         " to it via\n\n   gdb -p %d\n", waitForGdbAttach, getpid());
+                         " to it via\n\n   gdb -p %d\n", chg()->waitForGdbAttach, getpid());
         static jmp_buf jmpenv;
         signal(SIGALRM, [](int) {
             longjmp(jmpenv, 1);
         });
         if (!setjmp(jmpenv)) {
-            alarm(static_cast<unsigned int>(waitForGdbAttach));
+            alarm(static_cast<unsigned int>(chg()->waitForGdbAttach));
 
             sigset_t mask;
             sigemptyset(&mask);
@@ -558,7 +571,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
         }
     }
 
-    if (Logging::deferredMessages()) {
+    if (Logging::hasDeferredMessages()) {
         logMsg(Console, "\n > Accumulated logging output\n");
         Logging::completeSetup();
     }
@@ -572,7 +585,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     signal(SIGTERM, SIG_IGN);
     kill(0, SIGTERM);
 
-    if (dumpCore) {
+    if (chg()->dumpCore) {
         logMsg(Console, "\n > the process will be aborted (core dumped)\n");
         abort();
     }
@@ -676,7 +689,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
     logMsgF(logTo, "\n > why: %s", why);
     logMsgF(logTo, "\n > where: %S thread, TID: %lu", threadName, tid);
 
-    if (printBacktrace && context) {
+    if (chg()->printBacktrace && context) {
 #  if defined(AM_USE_STACKWALKER)
         logMsg(logTo, "\n > C++ backtrace:");
         AMStackWalker sw(logTo, stackFramesToIgnore);
@@ -846,7 +859,7 @@ static LONG WINAPI windowsExceptionFilter(EXCEPTION_POINTERS *ep)
     logCrashInfo(Console, buffer, stackFramesToIgnore,
                  suppressBacktrace ? nullptr : ep->ContextRecord);
 
-    if (Logging::deferredMessages()) {
+    if (Logging::hasDeferredMessages()) {
         logMsg(Console, "\n > Accumulated logging output\n");
         Logging::completeSetup();
     }
@@ -882,9 +895,10 @@ static void initBacktraceWindows()
             const char *typeName = type->name();
             if (typeName) {
                 int status;
-                demangleBuffer = abi::__cxa_demangle(typeName, demangleBuffer, &demangleBufferSize, &status);
-                if (status == 0 && *demangleBuffer) {
-                    typeName = demangleBuffer;
+                chg()->demangleBuffer = abi::__cxa_demangle(typeName, chg()->demangleBuffer,
+                                                            &chg()->demangleBufferSize, &status);
+                if (status == 0 && *chg()->demangleBuffer) {
+                    typeName = chg()->demangleBuffer;
                 }
             }
             try {

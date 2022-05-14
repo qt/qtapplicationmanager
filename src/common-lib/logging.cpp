@@ -86,8 +86,8 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 QT_BEGIN_NAMESPACE_AM
 
 #if defined(AM_USE_DLTLOGGING)
-static const char *s_defaultSystemUiDltId = "QTAM";
-static const char *s_defaultSystemUiDltDescription = "Qt Application Manager";
+static constexpr const char *s_defaultSystemUiDltId = "QTAM";
+static constexpr const char *s_defaultSystemUiDltDescription = "Qt Application Manager";
 #endif
 
 /*
@@ -166,7 +166,8 @@ QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "Messages without dedicated 
 QDLT_FALLBACK_CATEGORY(LogGeneral)
 
 
-struct DeferredMessage {
+struct DeferredMessage
+{
     DeferredMessage(QtMsgType _msgType, const QMessageLogContext &_context, const QString &_message);
     DeferredMessage(DeferredMessage &&other) Q_DECL_NOEXCEPT;
     ~DeferredMessage();
@@ -179,23 +180,30 @@ struct DeferredMessage {
     const QString message;
 };
 
-
-bool Logging::s_dltEnabled =
+struct LoggingGlobal
+{
+    bool dltEnabled =
 #if defined(AM_USE_DLTLOGGING)
-        true;
+            true;
 #else
-        false;
+            false;
 #endif
-bool Logging::s_messagePatternDefined = false;
-bool Logging::s_useAMConsoleLogger = false;
-QStringList Logging::s_rules;
-QtMessageHandler Logging::s_defaultQtHandler = nullptr;
-QByteArray Logging::s_applicationId = QByteArray();
-QVariant Logging::s_useAMConsoleLoggerConfig = QVariant();
-QString Logging::s_dltLongMessageBehavior = QString();
-QMutex Logging::s_deferredMessagesMutex;
+    bool messagePatternDefined = false;
+    bool useAMConsoleLogger = false;
+    bool noCustomLogging = false;
+    QStringList rules;
+    QtMessageHandler defaultQtHandler = nullptr;
+    QByteArray applicationId;
+    QVariant useAMConsoleLoggerConfig;
+    QString dltLongMessageBehavior;
 
-static std::vector<DeferredMessage> s_deferredMessages;
+    QMutex deferredMessagesMutex;
+    std::vector<DeferredMessage> deferredMessages;
+
+    ~LoggingGlobal();
+};
+
+Q_GLOBAL_STATIC(LoggingGlobal, lg)
 
 DeferredMessage::DeferredMessage(QtMsgType _msgType, const QMessageLogContext &_context, const QString &_message)
     : msgType(_msgType)
@@ -242,7 +250,6 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         out.reserve(512);
     out.resize(0);
 
-    Console::init();
     int consoleWidth = Console::width();
 
     // Find out, if we have a valid code location and prepare the output strings
@@ -363,19 +370,19 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 void Logging::messageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
 #if defined(AM_USE_DLTLOGGING)
-    if (s_dltEnabled)
+    if (lg()->dltEnabled)
         QDltRegistration::messageHandler(msgType, context, message);
 #endif
-    if (Q_UNLIKELY(!s_useAMConsoleLogger))
-        s_defaultQtHandler(msgType, context, message);
+    if (Q_UNLIKELY(!lg()->useAMConsoleLogger))
+        lg()->defaultQtHandler(msgType, context, message);
     else
         colorLogToStderr(msgType, context, message);
 }
 
 void Logging::deferredMessageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
-    QMutexLocker lock(&s_deferredMessagesMutex);
-    s_deferredMessages.emplace_back(msgType, context, message);
+    QMutexLocker lock(&lg()->deferredMessagesMutex);
+    lg()->deferredMessages.emplace_back(msgType, context, message);
 }
 
 void Logging::initialize()
@@ -385,36 +392,48 @@ void Logging::initialize()
 
 void Logging::initialize(int argc, const char * const *argv)
 {
+    if (qEnvironmentVariableIsSet("AM_NO_CUSTOM_LOGGING")) {
+        lg()->noCustomLogging = true;
+        lg()->dltEnabled = false;
+        return;
+    }
+
+    if (qEnvironmentVariableIsSet("AM_NO_DLT_LOGGING"))
+        lg()->dltEnabled = false;
+
     bool instantLogging = false;
     if (argc > 0 && argv) {
         for (int i = 1; i < argc; ++i) {
             if (strcmp("--no-dlt-logging", argv[i]) == 0)
-                Logging::setDltEnabled(false);
+                lg()->dltEnabled = false;
             else if (strcmp("--log-instant", argv[i]) == 0)
                 instantLogging = true;
         }
     }
 
+    lg()->messagePatternDefined = qEnvironmentVariableIsSet("QT_MESSAGE_PATTERN");
+    lg()->defaultQtHandler = instantLogging ? qInstallMessageHandler(messageHandler)
+                                            : qInstallMessageHandler(deferredMessageHandler);
+}
+
+LoggingGlobal::~LoggingGlobal()
+{
     // we do an unnecessary (but cheap) qInstallMessageHandler() at program exit, but this way
     // we cannot forget to dump the deferred messages whenever we exit
-    atexit(Logging::completeSetup);
-
-    s_messagePatternDefined = qEnvironmentVariableIsSet("QT_MESSAGE_PATTERN");
-    s_defaultQtHandler = instantLogging ? qInstallMessageHandler(messageHandler)
-                                        : qInstallMessageHandler(deferredMessageHandler);
+    Logging::completeSetup();
 }
 
 QStringList Logging::filterRules()
 {
-    return s_rules;
+    return lg()->rules;
 }
 
 void Logging::setFilterRules(const QStringList &rules)
 {
-    s_rules = rules;
+    lg()->rules = rules;
     QString rulesStr = rules.join(qL1C('\n'));
 #if defined(AM_USE_DLTLOGGING)
-    if (s_dltEnabled)
+    if (lg()->dltEnabled)
         rulesStr += qSL("\ngeneral=true");
 #endif
     QLoggingCategory::setFilterRules(rulesStr);
@@ -422,72 +441,74 @@ void Logging::setFilterRules(const QStringList &rules)
 
 void Logging::setMessagePattern(const QString &pattern)
 {
-    if (!pattern.isEmpty() && !s_messagePatternDefined) {
+    if (!pattern.isEmpty() && !lg()->messagePatternDefined && !lg()->noCustomLogging) {
         qputenv("QT_MESSAGE_PATTERN", pattern.toLocal8Bit()); // pass on to application processes, however for the
         qSetMessagePattern(pattern);  // System UI this might be too late, so set pattern explicitly here.
-        s_messagePatternDefined = true;
+        lg()->messagePatternDefined = true;
     }
 }
 
 QVariant Logging::useAMConsoleLogger()
 {
-    return s_useAMConsoleLoggerConfig;
+    return lg()->useAMConsoleLoggerConfig;
 }
 
-void Logging::useAMConsoleLogger(const QVariant &config)
+void Logging::setUseAMConsoleLogger(const QVariant &config)
 {
-    s_useAMConsoleLoggerConfig = config;
-    if (s_useAMConsoleLoggerConfig.userType() == QMetaType::Bool)
-        s_useAMConsoleLogger = s_useAMConsoleLoggerConfig.toBool();
+    lg()->useAMConsoleLoggerConfig = config;
+    if (lg()->useAMConsoleLoggerConfig.userType() == QMetaType::Bool)
+        lg()->useAMConsoleLogger = lg()->useAMConsoleLoggerConfig.toBool();
     else
-        s_useAMConsoleLogger = !s_messagePatternDefined;
+        lg()->useAMConsoleLogger = !lg()->messagePatternDefined;
 }
 
 void Logging::completeSetup()
 {
-    qInstallMessageHandler(messageHandler);
+    if (!lg()->noCustomLogging) {
+        qInstallMessageHandler(messageHandler);
 
-    QMutexLocker lock(&s_deferredMessagesMutex);
-    for (const DeferredMessage &msg : s_deferredMessages) {
-        QLoggingCategory cat(msg.category);
-        if (cat.isEnabled(msg.msgType)) {
-            QMessageLogContext context(msg.file, msg.line, msg.function, msg.category);
-            messageHandler(msg.msgType, context, msg.message);
+        QMutexLocker lock(&lg()->deferredMessagesMutex);
+        for (const DeferredMessage &msg : lg()->deferredMessages) {
+            QLoggingCategory cat(msg.category);
+            if (cat.isEnabled(msg.msgType)) {
+                QMessageLogContext context(msg.file, msg.line, msg.function, msg.category);
+                messageHandler(msg.msgType, context, msg.message);
+            }
         }
+        std::vector<DeferredMessage>().swap(lg()->deferredMessages);
     }
-    std::vector<DeferredMessage>().swap(s_deferredMessages);
 }
 
 QByteArray Logging::applicationId()
 {
-    return s_applicationId;
+    return lg()->applicationId;
 }
 
 void Logging::setApplicationId(const QByteArray &appId)
 {
-    s_applicationId = appId;
+    lg()->applicationId = appId;
 }
 
-bool Logging::deferredMessages()
+bool Logging::hasDeferredMessages()
 {
-    QMutexLocker lock(&s_deferredMessagesMutex);
-    return !s_deferredMessages.empty();
+    QMutexLocker lock(&lg()->deferredMessagesMutex);
+    return !lg()->deferredMessages.empty();
 }
 
 bool Logging::isDltEnabled()
 {
-    return s_dltEnabled;
+    return lg()->dltEnabled;
 }
 
 void Logging::setDltEnabled(bool enabled)
 {
-    s_dltEnabled = enabled;
+    lg()->dltEnabled = enabled;
 }
 
 void Logging::registerUnregisteredDltContexts()
 {
 #if defined(AM_USE_DLTLOGGING)
-    if (s_dltEnabled)
+    if (lg()->dltEnabled)
         globalDltRegistration()->registerUnregisteredContexts();
 #endif
 }
@@ -495,7 +516,7 @@ void Logging::registerUnregisteredDltContexts()
 void Logging::setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dltAppDescription)
 {
 #if defined(AM_USE_DLTLOGGING)
-    if (s_dltEnabled) {
+    if (lg()->dltEnabled) {
         const QByteArray id = dltAppId.isEmpty() ? QByteArray(s_defaultSystemUiDltId) : dltAppId;
         const QByteArray description = dltAppDescription.isEmpty() ? QByteArray(s_defaultSystemUiDltDescription)
                                                                    : dltAppDescription;
@@ -510,7 +531,7 @@ void Logging::setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dlt
 void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription)
 {
 #if defined(AM_USE_DLTLOGGING)
-    if (s_dltEnabled)
+    if (lg()->dltEnabled)
         globalDltRegistration()->registerApplication(dltAppId, dltAppDescription);
 #else
     Q_UNUSED(dltAppId)
@@ -520,15 +541,15 @@ void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &
 
 QString Logging::dltLongMessageBehavior()
 {
-    return s_dltLongMessageBehavior;
+    return lg()->dltLongMessageBehavior;
 }
 
 void Logging::setDltLongMessageBehavior(const QString &behaviorString)
 {
-    if (!s_dltEnabled)
+    if (!lg()->dltEnabled)
         return;
 
-    s_dltLongMessageBehavior = behaviorString;
+    lg()->dltLongMessageBehavior = behaviorString;
 
 #if defined(AM_USE_DLTLOGGING)
     QDltRegistration::LongMessageBehavior behavior = QDltRegistration::LongMessageBehavior::Truncate;
@@ -544,7 +565,7 @@ void Logging::setDltLongMessageBehavior(const QString &behaviorString)
 void Logging::logToDlt(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
 #if defined(AM_USE_DLTLOGGING)
-    if (s_dltEnabled)
+    if (lg()->dltEnabled)
         QDltRegistration::messageHandler(msgType, context, message);
 #else
     Q_UNUSED(msgType)
@@ -556,134 +577,155 @@ void Logging::logToDlt(QtMsgType msgType, const QMessageLogContext &context, con
 void am_trace(QDebug)
 { }
 
-bool Console::supportsAnsiColor = false;
-bool Console::isRunningInQtCreator = false;
-bool Console::hasConsoleWindow = false;
-QAtomicInt Console::consoleWidthCached(0);
-
-void Console::init()
+struct ConsoleGlobal
 {
-    static bool once = false;
-    if (!once) {
-        once = true;
+    bool supportsAnsiColor = false;
+    bool hasConsoleWindow = false;
+    bool isRunningInQtCreator = false;
+    QAtomicInt consoleWidthCached = 0;
 
-        enum { ColorAuto, ColorOff, ColorOn } forceColor = ColorAuto;
-        const QByteArray forceColorOutput = qgetenv("AM_FORCE_COLOR_OUTPUT");
-        if (forceColorOutput == "off" || forceColorOutput == "0")
-            forceColor = ColorOff;
-        else if (forceColorOutput == "on" || forceColorOutput == "1")
-            forceColor = ColorOn;
+    ConsoleGlobal();
+};
+
+Q_GLOBAL_STATIC(ConsoleGlobal, cg)
+
+ConsoleGlobal::ConsoleGlobal()
+{
+    enum { ColorAuto, ColorOff, ColorOn } forceColor = ColorAuto;
+    const QByteArray forceColorOutput = qgetenv("AM_FORCE_COLOR_OUTPUT");
+    if (forceColorOutput == "off" || forceColorOutput == "0")
+        forceColor = ColorOff;
+    else if (forceColorOutput == "on" || forceColorOutput == "1")
+        forceColor = ColorOn;
 
 #if defined(Q_OS_UNIX)
-        if (::isatty(STDERR_FILENO)) {
-            hasConsoleWindow = true;
-            supportsAnsiColor = true;
-        }
+    if (::isatty(STDERR_FILENO)) {
+        hasConsoleWindow = true;
+        supportsAnsiColor = true;
+    }
 
 #elif defined(Q_OS_WIN)
-        HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
-        if (h != INVALID_HANDLE_VALUE) {
-
-            if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10) {
-                // enable ANSI mode on Windows 10
-                DWORD mode = 0;
-                if (GetConsoleMode(h, &mode)) {
-                    mode |= 0x04;
-                    if (SetConsoleMode(h, mode)) {
-                        supportsAnsiColor = true;
-                        hasConsoleWindow = true;
-                    }
-                }
+    HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
+    if (h != INVALID_HANDLE_VALUE) {
+        // enable ANSI mode on Windows 10
+        DWORD mode = 0;
+        if (GetConsoleMode(h, &mode)) {
+            mode |= 0x04;
+            if (SetConsoleMode(h, mode)) {
+                supportsAnsiColor = true;
+                hasConsoleWindow = true;
             }
         }
+    }
 #endif
 
-        qint64 pid = QCoreApplication::applicationPid();
-        forever {
-            pid = getParentPid(pid);
-            if (pid <= 1)
-                break;
+    qint64 pid = QCoreApplication::applicationPid();
+    for (int level = 0; level < 5; ++level) { // only check 5 levels deep
+        pid = getParentPid(pid);
+        if (pid <= 1)
+            break;
 
 #if defined(Q_OS_LINUX)
-            static QString checkCreator = qSL("/proc/%1/exe");
-            QFileInfo fi(checkCreator.arg(pid));
-            if (fi.symLinkTarget().contains(qSL("qtcreator"))) {
-                isRunningInQtCreator = true;
-                break;
-            }
+        static QString checkCreator = qSL("/proc/%1/exe");
+        QFileInfo fi(checkCreator.arg(pid));
+        if (fi.symLinkTarget().contains(qSL("qtcreator"))) {
+            isRunningInQtCreator = true;
+            break;
+        }
 #elif defined(Q_OS_MACOS)
-            static char buffer[PROC_PIDPATHINFO_MAXSIZE + 1];
-            int len = proc_pidpath(pid, buffer, sizeof(buffer) - 1);
-            if ((len > 0) && QByteArray::fromRawData(buffer, len).contains("Qt Creator")) {
-                isRunningInQtCreator = true;
-                break;
-            }
+        static char buffer[PROC_PIDPATHINFO_MAXSIZE + 1];
+        int len = proc_pidpath(pid, buffer, sizeof(buffer) - 1);
+        if ((len > 0) && QByteArray::fromRawData(buffer, len).contains("Qt Creator")) {
+            isRunningInQtCreator = true;
+            break;
+        }
 #elif defined(Q_OS_WIN)
-            HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, pid);
-            if (hProcess) {
-                wchar_t exeName[1024] = { 0 };
-                DWORD exeNameSize = sizeof(exeName) - 1;
-                if (QueryFullProcessImageNameW(hProcess, 0, exeName, &exeNameSize)) {
-                    if (QString::fromWCharArray(exeName, exeNameSize).contains(qSL("qtcreator.exe")))
-                        isRunningInQtCreator = true;
+        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, pid);
+        if (hProcess) {
+            wchar_t exeName[1024] = { 0 };
+            DWORD exeNameSize = sizeof(exeName) - 1;
+            if (QueryFullProcessImageNameW(hProcess, 0, exeName, &exeNameSize)) {
+                if (QString::fromWCharArray(exeName, exeNameSize).contains(qSL("qtcreator.exe"))) {
+                    isRunningInQtCreator = true;
+                    break;
                 }
             }
-#endif
         }
+#endif
+    }
 
-        if (forceColor != ColorAuto)
-            supportsAnsiColor = (forceColor == ColorOn);
-        else if (!supportsAnsiColor)
-            supportsAnsiColor = isRunningInQtCreator;
+    if (forceColor != ColorAuto)
+        supportsAnsiColor = (forceColor == ColorOn);
+    else if (!supportsAnsiColor)
+        supportsAnsiColor = isRunningInQtCreator;
 
 #if defined(Q_OS_UNIX) && defined(SIGWINCH)
-        UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, SIGWINCH, [](int) {
-            // we are in a signal handler, so we just clear the cached value in the atomic int
-            consoleWidthCached = 0;
-        });
+    UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, SIGWINCH, [](int) {
+        // we are in a signal handler, so we just clear the cached value in the atomic int
+        cg()->consoleWidthCached = 0;
+    });
 #elif defined(Q_OS_WIN)
-        class ConsoleThread : public QThread
+    class ConsoleThread : public QThread
+    {
+    public:
+        ConsoleThread(QObject *parent)
+            : QThread(parent)
+        { }
+
+        ~ConsoleThread()
         {
-        public:
-            ConsoleThread(QObject *parent)
-                : QThread(parent)
-            { }
+            terminate();
+            wait();
+        }
 
-            ~ConsoleThread()
-            {
-                terminate();
-                wait();
+    protected:
+        void run() override
+        {
+            HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+            DWORD mode = 0;
+            if (!GetConsoleMode(h, &mode))
+                return;
+            if (!SetConsoleMode(h, mode | ENABLE_WINDOW_INPUT))
+                return;
+
+            INPUT_RECORD ir;
+            DWORD irRead = 0;
+            while (ReadConsoleInputW(h, &ir, 1, &irRead)) {
+                if ((irRead == 1) && (ir.EventType == WINDOW_BUFFER_SIZE_EVENT))
+                    cg()->consoleWidthCached = 0;
             }
-
-        protected:
-            void run() override
-            {
-                HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-                DWORD mode = 0;
-                if (!GetConsoleMode(h, &mode))
-                    return;
-                if (!SetConsoleMode(h, mode | ENABLE_WINDOW_INPUT))
-                    return;
-
-                INPUT_RECORD ir;
-                DWORD irRead = 0;
-                while (ReadConsoleInputW(h, &ir, 1, &irRead)) {
-                    if ((irRead == 1) && (ir.EventType == WINDOW_BUFFER_SIZE_EVENT))
-                        consoleWidthCached = 0;
-                }
-            }
-        };
-        (new ConsoleThread(qApp))->start();
+        }
+    };
+    qAddPreRoutine([]() { (new ConsoleThread(QCoreApplication::instance()))->start(); });
 #endif // Q_OS_WIN
-    }
+}
+
+bool Console::ensureInitialized()
+{
+    return cg();
+}
+
+bool Console::supportsAnsiColor()
+{
+    return cg()->supportsAnsiColor;
+}
+
+bool Console::isRunningInQtCreator()
+{
+    return cg()->isRunningInQtCreator;
+}
+
+bool Console::hasConsoleWindow()
+{
+    return cg()->hasConsoleWindow;
 }
 
 int Console::width()
 {
-    int consoleWidthCalculated = consoleWidthCached;
+    int consoleWidthCalculated = cg()->consoleWidthCached;
 
     if (consoleWidthCalculated <= 0) {
-        if (hasConsoleWindow) {
+        if (cg()->hasConsoleWindow) {
 #if defined(Q_OS_UNIX)
             struct ::winsize ws;
             if ((::ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == 0) && (ws.ws_col > 0))
@@ -695,9 +737,9 @@ int Console::width()
                 consoleWidthCalculated = csbi.dwSize.X;
 #endif
         }
-        consoleWidthCached = consoleWidthCalculated;
+        cg()->consoleWidthCached = consoleWidthCalculated;
     }
-    if ((consoleWidthCalculated <= 0) && isRunningInQtCreator)
+    if ((consoleWidthCalculated <= 0) && cg()->isRunningInQtCreator)
         return 120;
     else
         return consoleWidthCalculated;
@@ -718,7 +760,7 @@ QByteArray &Console::colorize(QByteArray &out, int ansiColor, bool forceNoColor)
         "\x1b[37m" // gray
     };
 
-    if (forceNoColor || !supportsAnsiColor)
+    if (forceNoColor || !cg()->supportsAnsiColor)
         return out;
     if (ansiColor & BrightFlag)
         out.append(ansiColors[0]);

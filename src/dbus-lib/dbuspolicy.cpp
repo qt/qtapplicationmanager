@@ -52,7 +52,11 @@ struct DBusPolicyEntry
     QStringList m_capabilities;
 };
 
-static QHash<QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry> > policies;
+static QHash<QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry>> &policies()
+{
+    static QHash<QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry>> hash;
+    return hash;
+}
 
 
 bool DBusPolicy::add(QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlFragment)
@@ -92,7 +96,7 @@ bool DBusPolicy::add(QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlF
         result.insert(func, dbp);
     }
 
-    policies.insert(dbusAdaptor, result);
+    policies().insert(dbusAdaptor, result);
     return true;
 }
 
@@ -115,8 +119,8 @@ bool DBusPolicy::check(QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &func
     if (!dbusContext->calledFromDBus())
         return false;
 
-    auto ia = policies.constFind(dbusAdaptor);
-    if (ia == policies.cend())
+    auto ia = policies().constFind(dbusAdaptor);
+    if (ia == policies().cend())
         return false;
 
     auto ip = (*ia).find(function);

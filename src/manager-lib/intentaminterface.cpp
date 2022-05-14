@@ -66,7 +66,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-static QString sysUiId = qSL(":sysui:");
+
+static QString sysUiId() { return qSL(":sysui:"); }
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -221,7 +222,7 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
 bool IntentServerAMImplementation::checkApplicationCapabilities(const QString &applicationId,
                                                                 const QStringList &requiredCapabilities)
 {
-    if (applicationId == sysUiId) // The System UI bypasses the capabilities check
+    if (applicationId == sysUiId()) // The System UI bypasses the capabilities check
         return true;
 
     const auto app = ApplicationManager::instance()->application(applicationId);
@@ -276,7 +277,7 @@ QString IntentClientAMImplementation::currentApplicationId(QObject *hint)
 {
     QmlInProcessRuntime *runtime = QmlInProcessRuntime::determineRuntime(hint);
 
-    return runtime ? runtime->application()->info()->id() : sysUiId;
+    return runtime ? runtime->application()->info()->id() : sysUiId();
 }
 
 void IntentClientAMImplementation::initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false)
@@ -356,7 +357,7 @@ void IntentServerIpcConnection::setReady(Application *application)
         return;
     m_application = application;
     m_ready = true;
-    emit applicationIsReady((isInProcess() && !application) ? sysUiId : application->id());
+    emit applicationIsReady((isInProcess() && !application) ? sysUiId() : application->id());
 }
 
 IntentServerIpcConnection *IntentServerIpcConnection::find(const QString &appId)
@@ -417,7 +418,7 @@ IntentServerInProcessIpcConnection *IntentServerInProcessIpcConnection::createSy
 
 QString IntentServerInProcessIpcConnection::applicationId() const
 {
-    return m_isSystemUi ? sysUiId : IntentServerIpcConnection::applicationId();
+    return m_isSystemUi ? sysUiId() : IntentServerIpcConnection::applicationId();
 }
 
 void IntentServerInProcessIpcConnection::requestToApplication(IntentServerRequest *irs)
@@ -756,8 +757,8 @@ void IntentServerHandler::componentComplete()
     }
 
     IntentServer *is = IntentServer::instance();
-    is->addPackage(sysUiId);
-    is->addApplication(sysUiId, sysUiId);
+    is->addPackage(sysUiId());
+    is->addApplication(sysUiId(), sysUiId());
 
     const auto ids = intentIds();
     for (const auto &intentId : ids) {
@@ -770,7 +771,7 @@ void IntentServerHandler::componentComplete()
         for (auto it = qvm_descriptions.cbegin(); it != qvm_descriptions.cend(); ++it)
             descriptions.insert(it.key(), it.value().toString());
 
-        auto intent = is->addIntent(intentId, sysUiId, sysUiId, m_intent->requiredCapabilities(),
+        auto intent = is->addIntent(intentId, sysUiId(), sysUiId(), m_intent->requiredCapabilities(),
                                     m_intent->visibility(), m_intent->parameterMatch(), names,
                                     descriptions, m_intent->icon(), m_intent->categories());
         if (intent)

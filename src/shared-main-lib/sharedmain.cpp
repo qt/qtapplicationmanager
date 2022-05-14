@@ -66,11 +66,15 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-static QMap<int, QString> openGLProfileNames = {
-    { QSurfaceFormat::NoProfile,            qSL("default") },
-    { QSurfaceFormat::CoreProfile,          qSL("core") },
-    { QSurfaceFormat::CompatibilityProfile, qSL("compatibility") }
-};
+static const QMap<int, QString> &openGLProfileNames()
+{
+    static const QMap<int, QString> map = {
+        { QSurfaceFormat::NoProfile,            qSL("default") },
+        { QSurfaceFormat::CoreProfile,          qSL("core") },
+        { QSurfaceFormat::CompatibilityProfile, qSL("compatibility") }
+    };
+    return map;
+}
 
 bool QtAM::SharedMain::s_initialized = false;
 
@@ -166,7 +170,7 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
                                                                : loggingRules;
     Logging::setFilterRules(rules);
     Logging::setMessagePattern(messagePattern);
-    Logging::useAMConsoleLogger(useAMConsoleLogger);
+    Logging::setUseAMConsoleLogger(useAMConsoleLogger);
     Logging::completeSetup();
     StartupTimer::instance()->checkpoint("after logging setup");
 }
@@ -223,7 +227,7 @@ void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
         }
     }
     if (!profileName.isEmpty()) {
-        int profile = openGLProfileNames.key(profileName, -1);
+        int profile = openGLProfileNames().key(profileName, -1);
 
         if (profile == -1) {
             qCWarning(LogGraphics) << "Requested an invalid OpenGL profile:" << profileName;
@@ -259,9 +263,9 @@ void SharedMain::checkOpenGLFormat(const char *what, const QSurfaceFormat &forma
     if ((m_requestedOpenGLProfile != QSurfaceFormat::NoProfile)
             && (format.profile() != m_requestedOpenGLProfile)) {
         qCWarning(LogGraphics) << "Failed to get the requested OpenGL profile"
-                               << openGLProfileNames.value(m_requestedOpenGLProfile) << "for the"
+                               << openGLProfileNames().value(m_requestedOpenGLProfile) << "for the"
                                << what << "- got"
-                               << openGLProfileNames.value(format.profile()) << "instead.";
+                               << openGLProfileNames().value(format.profile()) << "instead.";
     }
     if (m_requestedOpenGLMajorVersion > -1) {
         if ((format.majorVersion() != m_requestedOpenGLMajorVersion )

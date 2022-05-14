@@ -30,6 +30,12 @@ instructions:
     - type: EnvironmentVariable
       variableName: AM_TIMEOUT_FACTOR
       variableValue: 4
+    - type: EnvironmentVariable
+      variableName: AM_NO_CUSTOM_LOGGING
+      variableValue: 1
+    - type: EnvironmentVariable
+      variableName: AM_NO_CRASH_HANDLER
+      variableValue: 1
     - type: Group
       instructions:
         - !include "{{qt/qtbase}}/coin_module_test_template_v3.yaml"

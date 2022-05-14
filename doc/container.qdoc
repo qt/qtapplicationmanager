@@ -143,7 +143,7 @@ the application. A custom container plugin must forward these variables or adjus
   \li A YAML, UTF-8 string encoded version of the \l{amConfigDetails}{amConfig} map.
 \row
   \li \c{AM_NO_DLT_LOGGING}
-  \li Tells the application to not use DLT for logging.
+  \li Tells the application to not use DLT for logging, if set to \c 1.
 \endtable
 
 \section1 Configuration

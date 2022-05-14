@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
     QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
 
-    if (qEnvironmentVariableIsSet("AM_NO_DLT_LOGGING"))
+    if (qEnvironmentVariableIntValue("AM_NO_DLT_LOGGING") == 1)
         Logging::setDltEnabled(false);
 
     // The common-lib is already registering the DLT Application for the application manager.

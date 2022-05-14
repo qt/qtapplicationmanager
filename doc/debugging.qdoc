@@ -56,18 +56,24 @@ This is a (incomplete) list of environment variables that influence the logging 
     \li Variable
     \li Description
 \row
+    \li AM_NO_CUSTOM_LOGGING
+    \li If set to \c 1, debug output is not redirected to DLT, colorized or nicely formatted.
+\row
+    \li AM_NO_DLT_LOGGING
+    \li If set to \c 1, debug output is not redirected to DLT.
+\row
     \li AM_STARTUP_TIMER
-    \li If set to 1, a startup performance analysis is printed on the console. Anything other than
-        1 is interpreted as the name of a file to use, instead of the console. For more
+    \li If set to \c 1, a startup performance analysis is printed to the console. Anything other
+        than \c 1 is interpreted as the name of a file to use, instead of the console. For more
         information, see StartupTimer.
 \row
     \li AM_FORCE_COLOR_OUTPUT
     \li Can be set to \c on to force color output to the console or to \c off to disable it. Any
-        other value results in the default, auto-detection behavior.
+        other value enables the default, auto-detection behavior.
 \row
     \li AM_TIMEOUT_FACTOR
     \li An integer factor that slows down all timed wait statements within the application manager.
-    Useful if running in slow wrappers, such as Valgrind. The default value is \c 1.
+        Useful if running in slow wrappers, such as Valgrind. The default value is \c 1.
 \row
     \li QT_MESSAGE_PATTERN
     \li Setting this variable has the same effect as described in
@@ -103,6 +109,20 @@ with the \c --qml-debug argument. For more information, see \l{QML Debugging Inf
 \note Although the concept is called "debug" wrappers, these wrappers are not limited to debugging
 tasks only. They are also useful for various other tasks that involve running the application under
 test through a wrapper, like profiling tools.
+
+\section2 Environment Variables
+
+This is a (incomplete) list of environment variables that influence debugging at runtime:
+
+\table
+\header
+    \li Variable
+    \li Description
+\row
+    \li AM_NO_CRASH_HANDLER
+    \li If set to \c 1, no crash handler is installed. Use this, if the application manager's
+        crash handler is interfering with other debugging tools you are using.
+\endtable
 
 \target DebugWrappers
 \section2 Use Debug Wrappers

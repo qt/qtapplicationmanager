@@ -130,13 +130,23 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     const char *description =
         "In addition to the command line options below, the following environment\n"
         "variables can be set:\n\n"
-        "  AM_STARTUP_TIMER  If set to 1, a startup performance analysis will be printed\n"
-        "                    on the console. Anything other than 1 will be interpreted\n"
-        "                    as the name of a file that is used instead of the console.\n"
+        "  AM_STARTUP_TIMER       If set to '1', a startup performance analysis is\n"
+        "                         printed to the console. Anything other than '1' is\n"
+        "                         interpreted as the name of a file to use, instead\n"
+        "                         of the console.\n"
         "\n"
-        "  AM_FORCE_COLOR_OUTPUT  Can be set to 'on' to force color output to the console\n"
-        "                         and to 'off' to disable it. Any other value will result\n"
-        "                         in the default, auto-detection behavior.\n";
+        "  AM_FORCE_COLOR_OUTPUT  Can be set to 'on' to force color output to the\n"
+        "                         console and to 'off' to disable it. Any other value\n"
+        "                         enables the default, auto-detection behavior.\n"
+        "\n"
+        "  AM_NO_CUSTOM_LOGGING   If set to '1', debug output is not redirected to DLT,\n"
+        "                         colorized or nicely formatted.\n"
+        "\n"
+        "  AM_NO_DLT_LOGGING      If set to '1', debug output is not redirected to DLT.\n"
+        "\n"
+        "  AM_NO_CRASH_HANDLER    If set to '1', no crash handler is installed. Use\n"
+        "                         this, if the application manager's crash handler is\n"
+        "                         interfering with other debugging tools you are using.\n";
 
     m_clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qSL("\n\n")
                                     + (additionalDescription ? (qL1S(additionalDescription) + qSL("\n\n")) : QString())

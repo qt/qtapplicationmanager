@@ -392,13 +392,13 @@ void Logging::initialize()
 
 void Logging::initialize(int argc, const char * const *argv)
 {
-    if (qEnvironmentVariableIsSet("AM_NO_CUSTOM_LOGGING")) {
+    if (qEnvironmentVariableIntValue("AM_NO_CUSTOM_LOGGING") == 1) {
         lg()->noCustomLogging = true;
         lg()->dltEnabled = false;
         return;
     }
 
-    if (qEnvironmentVariableIsSet("AM_NO_DLT_LOGGING"))
+    if (qEnvironmentVariableIntValue("AM_NO_DLT_LOGGING") == 1)
         lg()->dltEnabled = false;
 
     bool instantLogging = false;

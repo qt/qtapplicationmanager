@@ -307,8 +307,15 @@ bool NativeRuntime::start()
         { qSL("QT_WAYLAND_SHELL_INTEGRATION"), qSL("xdg-shell")},
     };
 
+    for (const auto *var : {
+         "AM_STARTUP_TIMER", "AM_NO_CUSTOM_LOGGING", "AM_NO_CRASH_HANDLER", "AM_FORCE_COLOR_OUTPUT",
+         "AM_TIMEOUT_FACTOR", "QT_MESSAGE_PATTERN" }) {
+        if (qEnvironmentVariableIsSet(var))
+            env.insert(QString::fromLatin1(var), qEnvironmentVariable(var));
+    }
+
     if (!Logging::isDltEnabled()) {
-        // sadly we still need this, since we need to disable DLT as soon as possible
+        // we need this to disable DLT as soon as possible
         env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
     }
 

@@ -160,7 +160,7 @@ static void initBacktrace()
     // uncaught std::exception derived exception (prints what())
     // throw std::logic_error("test output");
 
-    if (qEnvironmentVariableIsSet("AM_NO_CRASH_HANDLER"))
+    if (qEnvironmentVariableIntValue("AM_NO_CRASH_HANDLER") == 1)
         return;
 
     chg()->consoleInitialized = Console::ensureInitialized(); // enforce instantiation of both

@@ -178,7 +178,7 @@ static void logMsg(LogToDestination logTo, const char *msg, int msgLen = -1)
 {
     if (logTo == Console) {
         auto dummy = write(STDERR_FILENO, msg, msgLen >= 0 ? size_t(msgLen) : strlen(msg));
-        dummy = write(STDERR_FILENO, "\n", 1);
+        dummy += write(STDERR_FILENO, "\n", 1);
         Q_UNUSED(dummy)
     } else if (logTo == Dlt) {
         Logging::logToDlt(QtMsgType::QtFatalMsg, QMessageLogContext(), QLatin1String(msg, msgLen));

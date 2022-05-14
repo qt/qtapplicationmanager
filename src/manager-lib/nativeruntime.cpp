@@ -113,12 +113,14 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
         // for example running the app via gdbserver
         qint64 appmanPid = QCoreApplication::applicationPid();
 
-        while ((pid > 1) && (pid != appmanPid)) {
+        int level = 0;
+        while ((pid > 1) && (pid != appmanPid) && (level < 5)) {
             if (applicationProcessId() == pid) {
                 onDBusPeerConnection(connection);
                 return;
             }
             pid = getParentPid(pid);
+            ++level;
         }
 
         QDBusConnection::disconnectFromPeer(connection.name());

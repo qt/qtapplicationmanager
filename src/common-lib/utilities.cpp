@@ -180,7 +180,7 @@ qint64 getParentPid(qint64 pid)
     if (hProcess != INVALID_HANDLE_VALUE) {
         if (Process32First(hProcess, &pe32)) {
             do {
-                if (pe32.th32ProcessID == pid) {
+                if ((pe32.th32ProcessID == pid) && (pe32.th32ParentProcessID != pid)) {
                     ppid = pe32.th32ParentProcessID;
                     break;
                 }

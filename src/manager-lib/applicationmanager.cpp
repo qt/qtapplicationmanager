@@ -534,7 +534,8 @@ QVector<Application *> ApplicationManager::fromProcessId(qint64 pid) const
     // pid could be an indirect child (e.g. when started via gdbserver)
     qint64 appmanPid = QCoreApplication::applicationPid();
 
-    while ((pid > 1) && (pid != appmanPid)) {
+    int level = 0;
+    while ((pid > 1) && (pid != appmanPid) && (level < 5)) {
         for (Application *app : d->apps) {
             if (apps.contains(app))
                 continue;
@@ -542,6 +543,7 @@ QVector<Application *> ApplicationManager::fromProcessId(qint64 pid) const
                 apps.append(app);
         }
         pid = getParentPid(pid);
+        ++level;
     }
     return apps;
 }

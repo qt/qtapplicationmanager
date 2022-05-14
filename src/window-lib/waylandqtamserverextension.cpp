@@ -59,7 +59,7 @@ void WaylandQtAMServerExtension::setWindowProperty(QWaylandSurface *surface, con
 
         Resource *target = resourceMap().value(surface->waylandClient());
         if (target) {
-            qDebug(LogWaylandDebug) << "SERVER >>prop>>" << surface << name << value;
+            qDebug(LogWaylandDebug) << "window property: server send" << surface << name << value;
             send_window_property_changed(target->handle, surface->resource(), name, byteValue);
         }
     }
@@ -92,7 +92,7 @@ void WaylandQtAMServerExtension::qtam_extension_set_window_property(QtWaylandSer
     QVariant variantValue;
     ds >> variantValue;
 
-    qCDebug(LogWaylandDebug) << "SERVER <<prop<<" << surface << name << variantValue;
+    qCDebug(LogWaylandDebug) << "window property: server receive" << surface << name << variantValue;
     setWindowPropertyHelper(surface, name, variantValue);
 }
 

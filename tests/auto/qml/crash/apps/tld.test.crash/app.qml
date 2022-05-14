@@ -31,12 +31,12 @@
 
 import QtQuick 2.3
 import QtApplicationManager.Application 2.0
-import Terminator 2.0
+import QmlCrash 2.0
 
 ApplicationManagerWindow {
     function accessIllegalMemory()
     {
-        Terminator.accessIllegalMemory();
+        QmlCrash.accessIllegalMemory();
     }
 
     Connections {
@@ -44,13 +44,13 @@ ApplicationManagerWindow {
         function onOpenDocument(documentUrl) {
             switch (documentUrl) {
             case "illegalMemory": accessIllegalMemory(); break;
-            case "illegalMemoryInThread": Terminator.accessIllegalMemoryInThread(); break;
-            case "stackOverflow": Terminator.forceStackOverflow(); break;
-            case "divideByZero": Terminator.divideByZero(); break;
-            case "unhandledException": Terminator.throwUnhandledException(); break;
-            case "abort": Terminator.abort(); break;
-            case "raise": Terminator.raise(7); break;
-            case "gracefully": Terminator.exitGracefully(); break;
+            case "illegalMemoryInThread": QmlCrash.accessIllegalMemoryInThread(); break;
+            case "stackOverflow": QmlCrash.forceStackOverflow(); break;
+            case "divideByZero": QmlCrash.divideByZero(); break;
+            case "unhandledException": QmlCrash.throwUnhandledException(); break;
+            case "abort": QmlCrash.abort(); break;
+            case "raise": QmlCrash.raise(7); break;
+            case "gracefully": QmlCrash.exitGracefully(); break;
             }
         }
     }

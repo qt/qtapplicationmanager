@@ -34,7 +34,7 @@
 #include <QThread>
 
 
-class TerminatorPlugin : public QQmlExtensionPlugin
+class QmlCrashPlugin : public QQmlExtensionPlugin
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QQmlExtensionInterface")
@@ -44,12 +44,12 @@ public:
 };
 
 
-class Terminator : public QObject
+class QmlCrash : public QObject
 {
     Q_OBJECT
 
 public:
-    Terminator(QObject *parent) : QObject(parent) {}
+    QmlCrash(QObject *parent) : QObject(parent) {}
 
     Q_INVOKABLE void accessIllegalMemory() const;
     Q_INVOKABLE void accessIllegalMemoryInThread();
@@ -62,14 +62,14 @@ public:
 };
 
 
-class TerminatorThread : public QThread
+class QmlCrashThread : public QThread
 {
     Q_OBJECT
 
 public:
-    explicit TerminatorThread(Terminator *parent);
+    explicit QmlCrashThread(QmlCrash *parent);
 
 private:
     void run() override;
-    Terminator *m_terminator;
+    QmlCrash *m_qmlCrash;
 };

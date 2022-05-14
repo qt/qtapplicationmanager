@@ -31,20 +31,20 @@
 #include <QQmlEngine>
 #include <QJSEngine>
 
-#include "qmlterminator2.h"
+#include "qmlcrash.h"
 
 #include <signal.h>
 
 
-static QObject *terminator_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
+static QObject *qmlCrash_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
     Q_UNUSED(scriptEngine)
-    return new Terminator(engine);
+    return new QmlCrash(engine);
 }
 
-void TerminatorPlugin::registerTypes(const char *uri)
+void QmlCrashPlugin::registerTypes(const char *uri)
 {
-    qmlRegisterSingletonType<Terminator>(uri, 2, 0, "Terminator", terminator_provider);
+    qmlRegisterSingletonType<QmlCrash>(uri, 2, 0, "QmlCrash", qmlCrash_provider);
 }
 
 
@@ -53,18 +53,18 @@ static void abortWithVeryLongSymbolNameOnTheStack800CharactersLong_CallMeIshmael
     ::abort();
 }
 
-void Terminator::accessIllegalMemory() const
+void QmlCrash::accessIllegalMemory() const
 {
     *(int*)1 = 42;
 }
 
-void Terminator::accessIllegalMemoryInThread()
+void QmlCrash::accessIllegalMemoryInThread()
 {
-    TerminatorThread *t = new TerminatorThread(this);
+    QmlCrashThread *t = new QmlCrashThread(this);
     t->start();
 }
 
-void Terminator::forceStackOverflow() const
+void QmlCrash::forceStackOverflow() const
 {
     static constexpr int len = 100000;
     volatile char buf[len];
@@ -73,42 +73,42 @@ void Terminator::forceStackOverflow() const
         forceStackOverflow();
 }
 
-void Terminator::divideByZero() const
+void QmlCrash::divideByZero() const
 {
     int d = 0;
     volatile int x = 42 / d;
     Q_UNUSED(x)
 }
 
-void Terminator::abort() const
+void QmlCrash::abort() const
 {
     abortWithVeryLongSymbolNameOnTheStack800CharactersLong_CallMeIshmaelSomeYearsAgoNeverMindHowLongPreciselyHavingLittleOrNoMoneyInMyPurseAndNothingParticularToInterestMeOnShoreIThoughIWouldSailAboutALittlAndSeeTheWateryPartOfTheWorldItIsAWayIHaveOfDrivingOffTheSpleenAndRegulatingTheCirculationWhenenverIFindMyselfGrowingGrimAboutTheMouthWheneverItIsADampDrizzlyNovemberInMySoulWheneverIFindMyselfInvoluntarilyPausingBeforeCoffinWarehousesAndBringingUpTheRearOfEveryFuneralIMeetAndEspeciallyWheneverMyHyposGetSuchAnUpperHandOfMeThatItRequiresAStrongMoralPrincipleToPreventMeFromDeliberatelySteppingIntoTheStreetAndMethodicallyKnockingPeoplesHatsOffThenIAccountItHighTimeToGetToSeaAsSoonAsICanThisIsMySubstituteForPistolAndBallWithAPhilosophicalFlourishCatoThrowsHimselfUponHisSwordIQuietlyTakeToTheShip();
 }
 
-void Terminator::raise(int sig) const
+void QmlCrash::raise(int sig) const
 {
     ::raise(sig);
 }
 
-void Terminator::throwUnhandledException() const
+void QmlCrash::throwUnhandledException() const
 {
     throw 42;
 }
 
-void Terminator::exitGracefully() const
+void QmlCrash::exitGracefully() const
 {
     exit(5);
 }
 
 
-TerminatorThread::TerminatorThread(Terminator *parent)
-    : QThread(parent), m_terminator(parent)
+QmlCrashThread::QmlCrashThread(QmlCrash *parent)
+    : QThread(parent)
+    , m_qmlCrash(parent)
+{ }
+
+void QmlCrashThread::run()
 {
+    m_qmlCrash->accessIllegalMemory();
 }
 
-void TerminatorThread::run()
-{
-    m_terminator->accessIllegalMemory();
-}
-
-#include "moc_qmlterminator2.cpp"
+#include "moc_qmlcrash.cpp"

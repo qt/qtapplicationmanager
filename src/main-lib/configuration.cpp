@@ -904,53 +904,12 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
     }
 }
 
-
-// getters
-
-static QString replaceEnvVars(QString string)
-{
-    // note: we cannot replace ${CONFIG_PWD} here, since we have lost that information during
-    //       the config file merge!
-
-    static QHash<QString, QString> replacement;
-    if (replacement.isEmpty()) {
-        QMetaEnum locations = QMetaEnum::fromType<QStandardPaths::StandardLocation>();
-        for (int i = 0; i < locations.keyCount(); ++i) {
-            replacement.insert(qSL("stdpath:") + qL1S(locations.key(i)),
-                               QStandardPaths::writableLocation(static_cast<QStandardPaths::StandardLocation>(locations.value(i))));
-        }
-        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-        QStringList envNames = env.keys();
-        for (const auto &envName : qAsConst(envNames))
-            replacement.insert(qSL("env:") + envName, env.value(envName));
-    }
-
-    // this will return immediately, if no vars are referenced
-    int posBeg = -1;
-    int posEnd = -1;
-    while (true) {
-        if ((posBeg = string.indexOf(qL1S("${"), posEnd + 1)) < 0)
-            break;
-        if ((posEnd = string.indexOf(qL1C('}'), posBeg + 2)) < 0)
-            break;
-
-        const QString varName = string.mid(posBeg + 2, posEnd - posBeg - 2);
-        const QString varValue = replacement.value(varName);
-        string.replace(posBeg, varName.length() + 3, varValue);
-
-        // varName and varValue most likely have a different length, so we have to adjust
-        posEnd = posEnd - 3 - varName.length() + varValue.length();
-    }
-    return string;
-}
-
-
 QString Configuration::mainQmlFile() const
 {
     if (!m_clp.positionalArguments().isEmpty())
         return m_clp.positionalArguments().at(0);
     else
-        return replaceEnvVars(m_data->ui.mainQml);
+        return m_data->ui.mainQml;
 }
 
 bool Configuration::noCache() const

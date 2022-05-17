@@ -24,7 +24,7 @@ function(qtam_internal_add_dbus_adaptor target)
             string(SUBSTRING "${file_ext}" 1 -1 file_name) # cut of leading '.'
         endif()
         string(TOLOWER "${file_name}" file_name)
-        set(file_name "${file_name}_adaptor.cpp")
+        set(file_name "${CMAKE_CURRENT_BINARY_DIR}/${file_name}_adaptor.cpp")
 
         # remove the .cpp file from SOURCES
         get_target_property(srcs ${target} SOURCES)

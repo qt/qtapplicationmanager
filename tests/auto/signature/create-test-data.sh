@@ -33,7 +33,15 @@ echo "Recreating test data"
 
 certdir="../data/certificates/"
 
-[ -f $certdir/dev1.p12 ] || { echo "Please generate test certificates in $certdir first"; exit 1; }
+if [ ! -f $certdir/dev1.p12 ]; then
+  if [ -n "$BUILD_DIR" ] && [ -f "$BUILD_DIR/tests/data/certificates/dev1.p12" ]; then
+    certdir="$BUILD_DIR/tests/data/certificates/"
+  else
+    echo "Please generate test certificates in $certdir first or set"
+    echo "  \$BUILD_DIR to point to your build folder."
+    exit 1
+  fi
+fi
 
 cp $certdir/dev1.p12 signing.p12
 openssl pkcs12 -export -out signing-no-key.p12 -password pass:password -inkey $certdir/dev1-priv.key -nodes -certfile $certdir/ca.crt -in $certdir/dev1.crt -name "Developer 1 Certificate (no key)" -nokeys

@@ -33,6 +33,7 @@
 
 #include "global.h"
 #include "signature.h"
+#include "cryptography.h"
 
 QT_USE_NAMESPACE_AM
 
@@ -56,7 +57,14 @@ private:
 };
 
 tst_Signature::tst_Signature()
-{ }
+{
+    // OpenSSL3 changed a few defaults and it will not accept old PKCS12 certificates
+    // anymore. Regenerating "signing.p12" doesn't help, because the macOS/iOS
+    // SecurityFramework cannot deal with the new algorithms used by OpenSSL3.
+    // The only way out for this cross-platform test case is to enable the so called
+    // "legacy provider" in OpenSSL3 and continue testing with the old certificate.
+    Cryptography::enableOpenSsl3LegacyProvider();
+}
 
 void tst_Signature::initTestCase()
 {
@@ -129,15 +137,15 @@ void tst_Signature::crossPlatform()
 
     if (qEnvironmentVariableIsSet("AM_CREATE_SIGNATURE_FILE")) {
         QFile *nativeFile = nullptr;
-#if defined(AM_USE_LIBCRYPTO)
-        nativeFile = &fileOpenSsl;
-#elif defined(Q_OS_WIN)
+#if defined(Q_OS_WIN)
         nativeFile = &fileWinCrypt;
 #elif defined(Q_OS_OSX)
         nativeFile = &fileSecurityFramework;
+#else
+        nativeFile = &fileOpenSsl;
 #endif
         QVERIFY(nativeFile);
-        QFile f(qL1S(AM_TESTDATA_DIR "/../signature") + nativeFile->fileName().mid(1));
+        QFile f(qL1S(AM_TESTSOURCE_DIR "/../signature") + nativeFile->fileName().mid(1));
         QVERIFY2(f.open(QFile::WriteOnly | QFile::Truncate), qPrintable(f.errorString()));
 
         Signature s(hash);

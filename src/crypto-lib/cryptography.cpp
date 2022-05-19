@@ -56,6 +56,8 @@
 QT_BEGIN_NAMESPACE_AM
 
 Q_GLOBAL_STATIC(QMutex, initMutex)
+static bool openSslInitialized = false;
+static bool loadOpenSsl3LegacyProvider = false;
 
 // clazy:excludeall=non-pod-global-static
 static AM_LIBCRYPTO_FUNCTION(ERR_error_string_n, void(*)(unsigned long, char *, size_t));
@@ -65,6 +67,7 @@ QT_END_NAMESPACE_AM
 #endif
 
 QT_BEGIN_NAMESPACE_AM
+
 
 QByteArray Cryptography::generateRandomBytes(int size)
 {
@@ -91,14 +94,23 @@ QByteArray Cryptography::generateRandomBytes(int size)
 void Cryptography::initialize()
 {
 #if defined(AM_USE_LIBCRYPTO)
-    static bool openSslInitialized = false;
-
     QMutexLocker locker(initMutex());
     if (!openSslInitialized) {
-        if (!LibCryptoFunctionBase::initialize())
+        if (!LibCryptoFunctionBase::initialize(loadOpenSsl3LegacyProvider))
             qFatal("Could not load libcrypto");
         openSslInitialized = true;
     }
+#endif
+}
+
+void Cryptography::enableOpenSsl3LegacyProvider()
+{
+#if defined(AM_USE_LIBCRYPTO)
+    QMutexLocker locker(initMutex());
+    if (openSslInitialized)
+        qCritical("Cryptography::enableOpenSsl3LegacyProvider() needs to be called before using any other crypto functions.");
+    else
+        loadOpenSsl3LegacyProvider = true;
 #endif
 }
 

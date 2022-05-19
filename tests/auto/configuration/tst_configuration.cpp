@@ -124,12 +124,12 @@ void tst_Configuration::defaultConfig()
 
     QString defaultWaylandSocketName =
 #if defined(Q_OS_LINUX)
-            qSL("qtam-wayland-0");
+            qSL("qtam-wayland-");
 #else
             QString();
 #endif
-
-    QCOMPARE(c.waylandSocketName(), defaultWaylandSocketName);
+    // we cannot rely on the actual display number, when running on Wayland Desktop
+    QVERIFY(c.waylandSocketName().startsWith(defaultWaylandSocketName));
     QCOMPARE(c.waylandExtraSockets(), {});
 
     QCOMPARE(c.managerCrashAction(), QVariantMap {});

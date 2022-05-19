@@ -54,6 +54,8 @@ QByteArray generateRandomBytes(int size);
 
 void initialize();
 
+void enableOpenSsl3LegacyProvider(); // needs to be called before any other crypto functions
+
 QString errorString(qint64 osCryptoError, const char *errorDescription = nullptr);
 
 }

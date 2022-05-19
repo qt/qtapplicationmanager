@@ -23,7 +23,7 @@ function(qt6_am_add_systemui_wrapper target)
     )
 
     if (NOT ARG_EXECUTABLE)
-        set(ARG_EXECUTABLE "${QT_CMAKE_EXPORT_NAMESPACE}::appman")
+        set(ARG_EXECUTABLE "appman")
     endif()
 
     set(CMD_ARGS)
@@ -79,7 +79,7 @@ function(qt6_am_add_systemui_wrapper target)
 SetLocal EnableDelayedExpansion
 (set \"PATH=${test_env_path};%PATH%\")
 (set \"QT_PLUGIN_PATH=${test_env_plugin_path}\")
-$<SHELL_PATH:$<TARGET_FILE:${ARG_EXECUTABLE}>> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} %*
+${ARG_EXECUTABLE}.exe ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} %*
 EndLocal
 "
         )
@@ -90,7 +90,7 @@ EndLocal
 "#!/bin/sh
 export PATH=\"${test_env_path}:$PATH\"
 export QT_PLUGIN_PATH=\"${test_env_plugin_path}\"
-exec $<TARGET_FILE_NAME:${ARG_EXECUTABLE}> ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
+exec ${ARG_EXECUTABLE} ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
 "
         )
     endif()
@@ -212,7 +212,7 @@ function (qt_am_internal_add_qml_test target)
             endif()
 
             qt6_am_add_systemui_wrapper(${target}_${CONFIG_ARG_NAME}
-                EXECUTABLE ${QT_CMAKE_EXPORT_NAMESPACE}::appman-qmltestrunner
+                EXECUTABLE appman-qmltestrunner
                 MAIN_QML_FILE ${ARG_TEST_FILE}
                 NO_INSTALL
                 ${EXTRA_FILES_ARG_STR}

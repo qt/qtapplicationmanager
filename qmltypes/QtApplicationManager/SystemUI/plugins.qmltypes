@@ -7,7 +7,7 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 2.2", "QtQuick 2.2" ]
+    dependencies: [ "QtQuick.Window 6.2", "QtQuick 6.2" ]
     Component {
         name: "ProcessStatus"
         exports: [ "QtApplicationManager.SystemUI/ProcessStatus 2.0" ]
@@ -50,7 +50,7 @@ Module {
         name: "IntentModel"
         exports: [ "QtApplicationManager.SystemUI/IntentModel 2.0" ]
         exportMetaObjectRevisions: [ 0 ]
-        prototype: "QSortFilterProxyModel"
+        prototype: "QObject"
         Property { name: "count"; type: "int"; isReadonly: true }
         Property { name: "filterFunction"; type: "QJSValue"; }
         Property { name: "sortFunction"; type: "QJSValue"; }
@@ -98,6 +98,7 @@ Module {
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isCreatable: false
+        Enum { name: "Visibility"; values: [ "Public", "Private" ] }
         Property { name: "intentId"; type: "string"; isReadonly: true }
         Property { name: "packageId"; type: "string"; isReadonly: true }
         Property { name: "applicationId"; type: "string"; isReadonly: true }
@@ -142,38 +143,38 @@ Module {
         }
         Method {
             name: "intent"
-            type: "Intent*"
+            type: "Intent"; isPointer: true;
             Parameter { name: "index"; type: "int"; }
         }
         Method {
             name: "applicationIntent"
-            type: "Intent*"
+            type: "Intent"; isPointer: true;
             Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "applicationId"; type: "string"; }
             Parameter { name: "parameters"; type: "QVariantMap"; }
         }
         Method {
             name: "applicationIntent"
-            type: "Intent*"
+            type: "Intent"; isPointer: true;
             Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "applicationId"; type: "string"; }
         }
         Method {
             name: "packageIntent"
-            type: "Intent*"
+            type: "Intent"; isPointer: true;
             Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "packageId"; type: "string"; }
             Parameter { name: "parameters"; type: "QVariantMap"; }
         }
         Method {
             name: "packageIntent"
-            type: "Intent*"
+            type: "Intent"; isPointer: true;
             Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "packageId"; type: "string"; }
         }
         Method {
             name: "packageIntent"
-            type: "Intent*"
+            type: "Intent"; isPointer: true;
             Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "packageId"; type: "string"; }
             Parameter { name: "applicationId"; type: "string"; }
@@ -181,7 +182,7 @@ Module {
         }
         Method {
             name: "packageIntent"
-            type: "Intent*"
+            type: "Intent"; isPointer: true;
             Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "packageId"; type: "string"; }
             Parameter { name: "applicationId"; type: "string"; }
@@ -245,6 +246,7 @@ Module {
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isCreatable: false
+        Enum { name: "ContentState"; values: [ "SurfaceWithContent", "SurfaceNoContent", "NoSurface" ] }
         Property { name: "size"; type: "QSize"; isReadonly: true }
         Property { name: "contentState"; type: "ContentState"; isReadonly: true }
         Property { name: "application"; type: "Application"; isPointer: true; isReadonly: true }
@@ -348,7 +350,7 @@ Module {
         }
         Method {
             name: "window"
-            type: "Window*"
+            type: "Window"; isPointer: true;
             Parameter { name: "index"; type: "int"; }
         }
         Method {
@@ -363,7 +365,7 @@ Module {
         }
         Method {
             name: "addExtension"
-            type: "QObject*"
+            type: "QObject"; isPointer: true;
             Parameter { name: "component"; type: "QQmlComponent"; isPointer: true; }
         }
         Method {
@@ -379,12 +381,15 @@ Module {
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isCreatable: false
+        Enum { name: "ExitStatus"; values: [ "NormalExit", "CrashExit", "ForcedExit" ] }
+        Enum { name: "RunState"; values: [ "NotRunning", "StartingUp", "Running", "ShuttingDown" ] }
+        Enum { name: "ProcessError"; values: [ "FailedToStart", "Crashed", "Timedout", "ReadError", "WriteError", "UnknownError" ] }
     }
     Component {
         name: "ApplicationModel"
         exports: [ "QtApplicationManager.SystemUI/ApplicationModel 2.0" ]
         exportMetaObjectRevisions: [ 0 ]
-        prototype: "QSortFilterProxyModel"
+        prototype: "QObject"
         Property { name: "count"; type: "int"; isReadonly: true }
         Property { name: "filterFunction"; type: "QJSValue"; }
         Property { name: "sortFunction"; type: "QJSValue"; }
@@ -470,6 +475,7 @@ Module {
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isCreatable: false
+        Enum { name: "State"; values: [ "Installed", "BeingInstalled", "BeingUpdated", "BeingDowngraded", "BeingRemoved" ] }
         Property { name: "id"; type: "string"; isReadonly: true }
         Property { name: "name"; type: "string"; isReadonly: true }
         Property { name: "names"; type: "QVariantMap"; isReadonly: true }
@@ -679,12 +685,12 @@ Module {
         }
         Method {
             name: "package"
-            type: "Package*"
+            type: "Package"; isPointer: true;
             Parameter { name: "index"; type: "int"; }
         }
         Method {
             name: "package"
-            type: "Package*"
+            type: "Package"; isPointer: true;
             Parameter { name: "id"; type: "string"; }
         }
         Method {
@@ -985,12 +991,12 @@ Module {
         }
         Method {
             name: "application"
-            type: "Application*"
+            type: "Application"; isPointer: true;
             Parameter { name: "index"; type: "int"; }
         }
         Method {
             name: "application"
-            type: "Application*"
+            type: "Application"; isPointer: true;
             Parameter { name: "id"; type: "string"; }
         }
         Method {

@@ -7,7 +7,7 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 2.2", "QtQuick 2.2" ]
+    dependencies: [ "QtQuick.Window 6.2", "QtQuick 6.2" ]
     Component {
         name: "MonitorModel"
         exports: [ "QtApplicationManager/MonitorModel 2.0" ]
@@ -139,6 +139,7 @@ Module {
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isCreatable: false
+        Enum { name: "Direction"; values: [ "ToSystem", "ToApplication" ] }
         Property { name: "requestId"; type: "QUuid"; isReadonly: true }
         Property { name: "direction"; type: "Direction"; isReadonly: true }
         Property { name: "intentId"; type: "string"; isReadonly: true }
@@ -171,13 +172,13 @@ Module {
         isSingleton: true
         Method {
             name: "sendIntentRequest"
-            type: "IntentClientRequest*"
+            type: "IntentClientRequest"; isPointer: true;
             Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "parameters"; type: "QVariantMap"; }
         }
         Method {
             name: "sendIntentRequest"
-            type: "IntentClientRequest*"
+            type: "IntentClientRequest"; isPointer: true;
             Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "applicationId"; type: "string"; }
             Parameter { name: "parameters"; type: "QVariantMap"; }
@@ -188,6 +189,7 @@ Module {
         exports: [ "QtApplicationManager/Notification 2.0" ]
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
+        Enum { name: "Priority"; values: [ "Low", "Normal", "Critical" ] }
         Property { name: "notificationId"; type: "uint"; isReadonly: true }
         Property { name: "visible"; type: "bool"; }
         Property { name: "summary"; type: "string"; }

@@ -167,6 +167,28 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
     if (type.isEmpty() || revMajor < 0 || revMinor < 0)
         throw Exception("Class %1 has an invalid AM-QmlType class info").arg(mo->className());
 
+    // check the AM-QmlVirtualSuperClasses Q_CLASSINFO
+    // used to parse up to <n> super classes in addition to the current class and use the
+    // topmost one for naming (useful, if the actual type is a virtual base class)
+    int parseSuperClasses = 0;
+    int superIdx = mo->indexOfClassInfo("AM-QmlVirtualSuperClasses");
+    if (superIdx >= mo->classInfoOffset()) {
+        parseSuperClasses = QByteArray(mo->classInfo(superIdx).value()).toInt();
+    }
+
+    const QMetaObject *supermo = mo;
+    for (int i = parseSuperClasses; i; --i)
+        supermo = supermo->superClass();
+
+    // parse the AM-QmlPrototype Q_CLASSINFO
+    // used to specify a different prototype than the actual C++ base class
+    // (useful, if the actual C++ base class should not be exposed to QML)
+    QByteArray prototype = stripNamespace(supermo->superClass()->className());
+    int protoIdx = mo->indexOfClassInfo("AM-QmlPrototype");
+    if (protoIdx >= mo->classInfoOffset()) {
+        prototype = mo->classInfo(protoIdx).value();
+    }
+
     QByteArray str;
     QByteArray indent1 = QByteArray(level * 4, ' ');
     QByteArray indent2 = QByteArray((level + 1) * 4, ' ');
@@ -177,18 +199,41 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
 
     str = str
             + "Component {\n"
-            + indent2 + "name: \"" + stripNamespace(mo->className()) + "\"\n"
+            + indent2 + "name: \"" + stripNamespace(supermo->className()) + "\"\n"
             + indent2 + "exports: [ \"" + type + " "
                       + QByteArray::number(revMajor) + "." + QByteArray::number(revMinor) + "\" ]\n"
             + indent2 + "exportMetaObjectRevisions: [ 0 ]\n";
     if (mo->superClass())
-        str = str + indent2 + "prototype: \"" + stripNamespace(mo->superClass()->className()) + "\"\n";
+        str = str + indent2 + "prototype: \"" + prototype + "\"\n";
     if (isSingleton)
         str = str + indent2 + "isSingleton: true\n";
     if (isUncreatable)
         str = str + indent2 + "isCreatable: false\n";
 
-    for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
+
+    int propertyOffset = supermo->propertyOffset();
+    int methodOffset = supermo->methodOffset();
+    int enumeratorOffset = supermo->enumeratorOffset();
+
+    for (int i = enumeratorOffset; i < mo->enumeratorCount(); ++i) {
+        QMetaEnum e = mo->enumerator(i);
+
+        QByteArray values;
+        for (int k = 0; k < e.keyCount(); ++k) {
+            if (k)
+                values.append(", ");
+            values.append('"');
+            values.append(e.key(k));
+            values.append('"');
+        }
+
+        str = str
+                + indent2
+                + "Enum { name: \"" + e.enumName()
+                + "\"; values: [ " + values + " ] }\n";
+    }
+
+    for (int i = propertyOffset; i < mo->propertyCount(); ++i) {
         QMetaProperty p = mo->property(i);
         if (QByteArray(p.name()).startsWith('_')) // ignore "private"
             continue;
@@ -204,7 +249,7 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
         str = str + " }\n";
     }
 
-    for (int i = mo->methodOffset(); i < mo->methodCount(); ++i) {
+    for (int i = methodOffset; i < mo->methodCount(); ++i) {
         QMetaMethod m = mo->method(i);
         if (m.name().startsWith('_')) // ignore "private"
             continue;
@@ -223,8 +268,12 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
         }
 
         str = str + indent2 + methodtype + " {\n" + indent3 + "name: \"" + m.name() + "\"\n";
-        if (qstrcmp(m.typeName(), "void") != 0)
-            str = str + indent3 + "type: \"" + mapTypeName(m.typeName(), false) + "\"\n";
+        if (qstrcmp(m.typeName(), "void") != 0) {
+            str = str + indent3 + "type: \"" + mapTypeName(m.typeName(), true) + "\"";
+            if (QByteArray(m.typeName()).endsWith('*'))
+                str += "; isPointer: true;";
+            str += "\n";
+        }
 
         for (int j = 0; j < m.parameterCount(); ++j) {
             str = str
@@ -354,7 +403,7 @@ int main(int argc, char **argv)
                     "// appman-dumpqmltypes\n"
                     "\n"
                     "Module {\n"
-                    "    dependencies: [ \"QtQuick.Window 2.${QT_MINOR_VERSION}\", \"QtQuick 2.${QT_MINOR_VERSION}\" ]\n";
+                    "    dependencies: [ \"QtQuick.Window 6.${QT_MINOR_VERSION}\", \"QtQuick 6.${QT_MINOR_VERSION}\" ]\n";
             const char *footer = "}\n";
 
             typesOut << QByteArray(header).replace("${QT_MINOR_VERSION}",

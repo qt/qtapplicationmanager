@@ -7,7 +7,7 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 2.2", "QtQuick 2.2" ]
+    dependencies: [ "QtQuick.Window 6.2", "QtQuick 6.2" ]
     Component {
         name: "IntentHandler"
         exports: [ "QtApplicationManager.Application/IntentHandler 2.0" ]
@@ -49,14 +49,45 @@ Module {
         }
     }
     Component {
-        name: "DBusApplicationInterface"
+        name: "ApplicationInterface"
         exports: [ "QtApplicationManager.Application/ApplicationInterface 2.0" ]
         exportMetaObjectRevisions: [ 0 ]
-        prototype: "ApplicationInterface"
+        prototype: "QObject"
         isCreatable: false
+        Property { name: "applicationId"; type: "string"; isReadonly: true }
+        Property { name: "name"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "icon"; type: "QUrl"; isReadonly: true }
+        Property { name: "version"; type: "string"; isReadonly: true }
+        Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "applicationProperties"; type: "QVariantMap"; isReadonly: true }
+        Signal {
+            name: "quit"
+        }
+        Signal {
+            name: "memoryLowWarning"
+        }
+        Signal {
+            name: "memoryCriticalWarning"
+        }
+        Signal {
+            name: "openDocument"
+            Parameter { name: "documentUrl"; type: "string"; }
+            Parameter { name: "mimeType"; type: "string"; }
+        }
+        Signal {
+            name: "interfaceCreated"
+            Parameter { name: "interfaceName"; type: "string"; }
+        }
+        Signal {
+            name: "slowAnimationsChanged"
+            Parameter { name: "isSlow"; type: "bool"; }
+        }
+        Method {
+            name: "finishedInitialization"
+        }
         Method {
             name: "createNotification"
-            type: "Notification*"
+            type: "Notification"; isPointer: true;
         }
         Method {
             name: "acknowledgeQuit"

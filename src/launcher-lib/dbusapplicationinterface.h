@@ -53,6 +53,7 @@ class DBusApplicationInterface : public ApplicationInterface
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/ApplicationInterface 2.0 UNCREATABLE")
+    Q_CLASSINFO("AM-QmlVirtualSuperClasses", "1")
 
 public:
     explicit DBusApplicationInterface(const QString &dbusConnectionName,

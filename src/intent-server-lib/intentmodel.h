@@ -45,6 +45,7 @@ class IntentModel : public QSortFilterProxyModel
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentModel 2.0")
+    Q_CLASSINFO("AM-QmlPrototype", "QObject")
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(QJSValue filterFunction READ filterFunction WRITE setFilterFunction NOTIFY filterFunctionChanged)

@@ -48,6 +48,7 @@ QT_FORWARD_DECLARE_CLASS(QWaylandResource)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShellSurface)
 QT_FORWARD_DECLARE_CLASS(QWaylandTextInputManager)
+QT_FORWARD_DECLARE_CLASS(QWaylandQtTextInputMethodManager)
 
 QT_FORWARD_DECLARE_CLASS(QWaylandXdgShell)
 QT_FORWARD_DECLARE_CLASS(QWaylandXdgSurface)
@@ -140,6 +141,7 @@ protected:
     QWaylandXdgShell *m_xdgShell;
     QVector<QWaylandOutput *> m_outputs;
     WaylandQtAMServerExtension *m_amExtension;
+    QWaylandQtTextInputMethodManager *m_qtTextInputMethodManager;
     QWaylandTextInputManager *m_textInputManager;
     QMap<uint, QPointer<WindowSurface>> m_xdgPingMap;
 };

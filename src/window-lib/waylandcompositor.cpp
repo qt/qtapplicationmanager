@@ -44,11 +44,9 @@
 
 #include <QWaylandWlShell>
 #include <QWaylandXdgShell>
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-#  include <private/qwaylandxdgshell_p.h>
-#endif
 #include <QWaylandQuickOutput>
 #include <QWaylandTextInputManager>
+#include <QWaylandQtTextInputMethodManager>
 #include <QWaylandQtWindowManager>
 #include "waylandqtamserverextension_p.h"
 
@@ -152,12 +150,22 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     , m_wlShell(new QWaylandWlShell(this))
     , m_xdgShell(new QWaylandXdgShell(this))
     , m_amExtension(new WaylandQtAMServerExtension(this))
+    , m_qtTextInputMethodManager(new QWaylandQtTextInputMethodManager(this))
     , m_textInputManager(new QWaylandTextInputManager(this))
 {
+    // We are instantiating both the semi-official TextInputManager protocol (which has some
+    // traction upstream, but also has known defects) and our own QtTextInputMethodManager
+    // (which was added in Qt 6 to mimic our internal C++ interfaces and works perfectly stable).
+    // Clients can then choose which protocol they want to use. QtVirtualKeyboard will use the
+    // QtTextInputMethodManager automatically.
+    //TODO: find out, why all 6.4 based clients are crashing at startup, if we instantiate the two
+    //      extensions in the opposite order.
+
     m_wlShell->setParent(this);
     m_xdgShell->setParent(this);
     m_amExtension->setParent(this);
     m_textInputManager->setParent(this);
+    m_qtTextInputMethodManager->setParent(this);
 
     setSocketName(waylandSocketName.toUtf8());
     registerOutputWindow(window);

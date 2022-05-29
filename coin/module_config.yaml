@@ -16,6 +16,14 @@ accept_configuration:
         - condition: property
           property: host.arch
           not_equals_value: ARM64
+    - condition: or
+      conditions:
+        - condition: property
+          property: platformDependency.target.os
+          not_equals_value: MacOS
+        - condition: property
+          property: platformDependency.host.arch
+          not_equals_value: ARM64
 
 instructions:
   Build:

@@ -6,7 +6,6 @@
 #pragma once
 
 #include <QObject>
-#include <QScopedPointer>
 #include <QVariantMap>
 #include <QUrl>
 #include <QtAppManApplication/applicationinfo.h>

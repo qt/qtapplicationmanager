@@ -7,7 +7,6 @@
 
 #include <QObject>
 #include <QSharedPointer>
-#include <QScopedPointer>
 
 #include <QtAppManWindow/window.h>
 #include <QtAppManManager/inprocesssurfaceitem.h>

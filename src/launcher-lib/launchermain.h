@@ -8,6 +8,8 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManSharedMain/sharedmain.h>
 
+#include <memory>
+
 QT_FORWARD_DECLARE_CLASS(QWindow)
 
 QT_BEGIN_NAMESPACE_AM
@@ -76,7 +78,7 @@ private:
     QVariant m_useAMConsoleLogger;
     QString m_dltLongMessageBehavior;
 #if defined(QT_WAYLANDCLIENT_LIB)
-    QScopedPointer<WaylandQtAMClientExtension> m_waylandExtension;
+    std::unique_ptr<WaylandQtAMClientExtension> m_waylandExtension;
 #endif
 };
 

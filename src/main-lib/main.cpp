@@ -654,7 +654,7 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
                     sudo->removeRecursive(path);
                 }
 
-                QScopedPointer<QLocalServer> extraSocket(new QLocalServer);
+                std::unique_ptr<QLocalServer> extraSocket(new QLocalServer);
                 extraSocket->setMaxPendingConnections(0); // disable Qt's new connection handling
                 if (!extraSocket->listen(path)) {
                     throw Exception("could not listen on extra Wayland socket %1: %2")
@@ -688,13 +688,13 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
                         }
                         // if we changed the owner, ~QLocalServer might not be able to clean up the
                         // socket inode, so we need to sudo this removal as well
-                        QObject::connect(extraSocket.data(), &QObject::destroyed, [path, sudo]() {
+                        QObject::connect(extraSocket.get(), &QObject::destroyed, [path, sudo]() {
                             sudo->removeRecursive(path);
                         });
                     }
                 }
 
-                m_windowManager->addWaylandSocket(extraSocket.take());
+                m_windowManager->addWaylandSocket(extraSocket.release());
             } catch (const std::exception &e) {
                 qCCritical(LogSystem) << "ERROR:" << e.what();
             }

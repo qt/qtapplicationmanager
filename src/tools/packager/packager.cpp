@@ -3,6 +3,9 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
+#include <memory>
+#include <stdio.h>
+
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QStringList>
@@ -10,8 +13,6 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QDebug>
-
-#include <stdio.h>
 
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/qtyaml.h>
@@ -111,7 +112,7 @@ int main(int argc, char *argv[])
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
 
     try {
-        QScopedPointer<PackagingJob> p;
+        std::unique_ptr<PackagingJob> p;
 
         // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
         switch (command(clp)) {

@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <QtAppManCommon/global.h>
-
-#include <QtAppManMonitor/systemreader.h>
+#include <memory>
 
 #include <QObject>
-#include <QScopedPointer>
+
+#include <QtAppManCommon/global.h>
+#include <QtAppManMonitor/systemreader.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -35,7 +35,7 @@ signals:
     void gpuLoadChanged();
 
 private:
-    QScopedPointer<GpuReader> m_gpuReader;
+    std::unique_ptr<GpuReader> m_gpuReader;
     qreal m_gpuLoad;
 };
 

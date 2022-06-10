@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <memory>
+
 #include <QCoreApplication>
 #include <QProcess>
 #include <QDBusServer>
@@ -567,11 +569,11 @@ AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, Appl
 {
     if (!container)
         return nullptr;
-    QScopedPointer<NativeRuntime> nrt(new NativeRuntime(container, app, this));
+    std::unique_ptr<NativeRuntime> nrt(new NativeRuntime(container, app, this));
     if (!nrt || !nrt->initialize())
         return nullptr;
 
-    return nrt.take();
+    return nrt.release();
 }
 
 QT_END_NAMESPACE_AM

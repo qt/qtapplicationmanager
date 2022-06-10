@@ -11,6 +11,8 @@
 #include <QVariantMap>
 #include <QVector>
 
+#include <memory>
+
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QDataStream)
@@ -79,7 +81,7 @@ private:
     QVector<IntentInfo *> m_intents;
 
     // added by installer
-    QScopedPointer<InstallationReport> m_installationReport;
+    std::unique_ptr<InstallationReport> m_installationReport;
     QDir m_baseDir;
 
     friend class YamlPackageScanner;

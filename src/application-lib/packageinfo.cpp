@@ -111,7 +111,7 @@ QVector<IntentInfo *> PackageInfo::intents() const
 
 const InstallationReport *PackageInfo::installationReport() const
 {
-    return m_installationReport.data();
+    return m_installationReport.get();
 }
 
 void PackageInfo::setInstallationReport(InstallationReport *report)

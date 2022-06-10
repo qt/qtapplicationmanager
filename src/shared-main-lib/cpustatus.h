@@ -5,12 +5,13 @@
 
 #pragma once
 
-#include <QtAppManCommon/global.h>
-
-#include <QtAppManMonitor/systemreader.h>
+#include <memory>
 
 #include <QObject>
-#include <QScopedPointer>
+
+#include <QtAppManCommon/global.h>
+#include <QtAppManMonitor/systemreader.h>
+
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -37,7 +38,7 @@ signals:
     void cpuLoadChanged();
 
 private:
-    QScopedPointer<CpuReader> m_cpuReader;
+    std::unique_ptr<CpuReader> m_cpuReader;
     qreal m_cpuLoad;
 };
 

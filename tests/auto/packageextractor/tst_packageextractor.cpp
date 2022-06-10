@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
+#include <memory>
+
 #include <QtTest>
 #include <QtNetwork>
 #include <QTemporaryDir>
@@ -45,7 +47,7 @@ private slots:
 
 private:
     QString m_taest;
-    QScopedPointer<QTemporaryDir> m_extractDir;
+    std::unique_ptr<QTemporaryDir> m_extractDir;
 };
 
 tst_PackageExtractor::tst_PackageExtractor()

@@ -55,8 +55,6 @@ public:
     void checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const;
 
 private:
-    QQmlDebuggingEnabler *m_debuggingEnabler = nullptr;
-
     static bool s_initialized;
     QSurfaceFormat::OpenGLContextProfile m_requestedOpenGLProfile = QSurfaceFormat::NoProfile;
     int m_requestedOpenGLMajorVersion = -1;

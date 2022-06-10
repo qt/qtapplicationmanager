@@ -98,9 +98,7 @@ SharedMain::SharedMain()
 }
 
 SharedMain::~SharedMain()
-{
-    delete m_debuggingEnabler;
-}
+{ }
 
 // Initialization routine that needs to be called BEFORE the Q*Application constructor
 void SharedMain::initialize()
@@ -149,7 +147,7 @@ void SharedMain::setupQmlDebugging(bool qmlDebugging)
 
     if (hasJSDebugArg || qmlDebugging) {
 #if !defined(QT_NO_QML_DEBUGGER)
-        m_debuggingEnabler = new QQmlDebuggingEnabler(true);
+        QQmlDebuggingEnabler::enableDebugging(true);
         if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
             qCCritical(LogRuntime) << "The default 'debug' logging category was disabled. "
                                       "Re-enabling it for the QML Debugger interface to work correctly.";

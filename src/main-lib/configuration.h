@@ -11,6 +11,8 @@
 #include <QVector>
 #include <QCommandLineParser>
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
 struct ConfigurationData;
@@ -121,7 +123,7 @@ private:
     QStringList m_defaultConfigFilePaths;
     QString m_buildConfigFilePath;
     QCommandLineParser m_clp;
-    QScopedPointer<ConfigurationData> m_data;
+    std::unique_ptr<ConfigurationData> m_data;
     QString m_mainQmlFile;
     bool m_onlyOnePositionalArgument = false;
     bool m_forceVerbose = false;

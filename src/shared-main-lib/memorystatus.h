@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <QtAppManCommon/global.h>
-
-#include <QtAppManMonitor/systemreader.h>
+#include <memory>
 
 #include <QObject>
-#include <QScopedPointer>
+
+#include <QtAppManCommon/global.h>
+#include <QtAppManMonitor/systemreader.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -37,7 +37,7 @@ signals:
     void memoryUsedChanged();
 
 private:
-    QScopedPointer<MemoryReader> m_memoryReader;
+    std::unique_ptr<MemoryReader> m_memoryReader;
     quint64 m_memoryUsed;
 };
 

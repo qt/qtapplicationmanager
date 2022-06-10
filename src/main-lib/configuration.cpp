@@ -305,7 +305,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         try {
             cache.parse();
             m_data.reset(cache.takeMergedResult());
-            if (m_data.isNull())
+            if (!m_data)
                 m_data.reset(new ConfigurationData());
         } catch (const Exception &e) {
             showParserMessage(e.errorString() + qL1C('\n'), ErrorMessage);
@@ -322,7 +322,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         try {
             ConfigurationData *cd = ConfigCacheAdaptor<ConfigurationData>::loadFromSource(&buffer, qSL("command line"));
             if (cd) {
-                ConfigCacheAdaptor<ConfigurationData>::merge(m_data.data(), cd);
+                ConfigCacheAdaptor<ConfigurationData>::merge(m_data.get(), cd);
                 delete cd;
             }
         } catch (const Exception &e) {

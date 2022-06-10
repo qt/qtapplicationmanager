@@ -4,7 +4,6 @@
 
 #include <QDir>
 #include <QFile>
-#include <QScopedPointer>
 #include <QDataStream>
 
 #include "packagedatabase.h"

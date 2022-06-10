@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <memory>
+
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlDebuggingEnabler>
@@ -235,7 +237,7 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
         static const char registerWindowQml[] = "import QtQuick 2.0\nimport QtQuick.Window 2.2\nQtObject { }\n";
         QQmlComponent registerWindowComp(&m_engine);
         registerWindowComp.setData(QByteArray::fromRawData(registerWindowQml, sizeof(registerWindowQml) - 1), QUrl());
-        QScopedPointer<QObject> dummy(registerWindowComp.create());
+        std::unique_ptr<QObject> dummy(registerWindowComp.create());
     }
 
     StartupTimer::instance()->checkpoint("after window registration");
@@ -283,7 +285,7 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
     if (!quicklaunchQml.isEmpty() && quickLaunched) {
         QQmlComponent quicklaunchComp(&m_engine, filePathToUrl(quicklaunchQml, launcher->baseDir()));
         if (!quicklaunchComp.isError()) {
-            QScopedPointer<QObject> quicklaunchInstance(quicklaunchComp.create());
+            std::unique_ptr<QObject> quicklaunchInstance(quicklaunchComp.create());
         } else {
             const QList<QQmlError> errors = quicklaunchComp.errors();
             for (const QQmlError &error : errors)

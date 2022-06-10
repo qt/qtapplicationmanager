@@ -58,7 +58,7 @@ private:
     bool m_managerApproval = false;
     std::unique_ptr<PackageInfo> m_package;
     uint m_applicationUid = uint(-1);
-    QScopedPointer<Package> m_tempPackageForAcknowledge;
+    std::unique_ptr<Package> m_tempPackageForAcknowledge;
 
     // changes to these 4 member variables are protected by m_mutex
     PackageExtractor *m_extractor = nullptr;

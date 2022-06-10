@@ -12,7 +12,7 @@
 #include <QtAppManCommon/global.h>
 
 #if defined(Q_OS_LINUX)
-#  include <QScopedPointer>
+#  include <memory>
 #  include <QtAppManMonitor/sysfsreader.h>
 #endif
 
@@ -57,7 +57,7 @@ private:
 #if defined(Q_OS_LINUX)
     bool readSmaps(const QByteArray &smapsFile, Memory &mem);
 
-    QScopedPointer<SysFsReader> m_statReader;
+    std::unique_ptr<SysFsReader> m_statReader;
     QElapsedTimer m_elapsedTime;
     quint64 m_lastCpuUsage = 0.0;
 #endif

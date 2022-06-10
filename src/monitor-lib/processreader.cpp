@@ -70,7 +70,7 @@ qreal ProcessReader::readCpuLoad()
         m_elapsedTime.start();
     }
 
-    if (m_statReader.isNull() || !m_statReader->isOpen()) {
+    if (!m_statReader || !m_statReader->isOpen()) {
         m_lastCpuUsage = 0.0;
         return 0.0;
     }

@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <QScopedPointer>
+
 #include "exception.h"
 #include "cryptography.h"
 #include "libcryptofunction.h"
@@ -100,7 +102,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
         throw OpenSslException("Could not create BIO buffer for PKCS#12 data");
 
     //PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12);
-    OpenSslPointer<PKCS12> pkcs12(am_d2i_PKCS12_bio(bioPkcs12.data(), nullptr));
+    OpenSslPointer<PKCS12> pkcs12(am_d2i_PKCS12_bio(bioPkcs12.get(), nullptr));
     if (!pkcs12)
         throw OpenSslException("Could not read PKCS#12 data from BIO buffer");
 
@@ -108,7 +110,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
     EVP_PKEY *tempSignKey = nullptr;
     X509 *tempSignCert = nullptr;
     STACK_OF_X509 *tempCaCerts = nullptr;
-    int parseOk = am_PKCS12_parse(pkcs12.data(), signingCertificatePassword.constData(), &tempSignKey, &tempSignCert, &tempCaCerts);
+    int parseOk = am_PKCS12_parse(pkcs12.get(), signingCertificatePassword.constData(), &tempSignKey, &tempSignCert, &tempCaCerts);
     OpenSslPointer<EVP_PKEY> signKey(tempSignKey);
     OpenSslPointer<X509> signCert(tempSignCert);
     OpenSslPointer<STACK_OF_X509> caCerts(tempCaCerts);
@@ -126,8 +128,8 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
         throw OpenSslException("Could not create a BIO buffer for the hash");
 
     //PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs, BIO *data, int flags);
-    OpenSslPointer<PKCS7> signature(am_PKCS7_sign(signCert.data(), signKey.data(), caCerts.data(),
-                                                  bioHash.data(), 0x40 /*PKCS7_DETACHED*/));
+    OpenSslPointer<PKCS7> signature(am_PKCS7_sign(signCert.get(), signKey.get(), caCerts.get(),
+                                                  bioHash.get(), 0x40 /*PKCS7_DETACHED*/));
     if (!signature)
         throw OpenSslException("Could not create the PKCS#7 signature");
 
@@ -136,13 +138,13 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
         throw OpenSslException("Could not create a BIO buffer for the PKCS#7 signature");
 
     // int PEM_write_bio_PKCS7(BIO *bp, PKCS7 *x);
-    //if (!am_PEM_ASN1_write_bio((i2d_of_void *) am_i2d_PKCS7.functionPointer(), PEM_STRING_PKCS7, bioSignature.data(), signature.data(), nullptr, nullptr, 0, nullptr, nullptr))
-    if (!am_i2d_PKCS7_bio(bioSignature.data(), signature.data()))
+    //if (!am_PEM_ASN1_write_bio((i2d_of_void *) am_i2d_PKCS7.functionPointer(), PEM_STRING_PKCS7, bioSignature.get(), signature.get(), nullptr, nullptr, 0, nullptr, nullptr))
+    if (!am_i2d_PKCS7_bio(bioSignature.get(), signature.get()))
         throw OpenSslException("Could not write the PKCS#7 signature to the BIO buffer");
 
     char *data = nullptr;
-    // long size = BIO_get_mem_data(bioSignature.data(), &data);
-    int size = static_cast<int>(am_BIO_ctrl(bioSignature.data(), 3 /*BIO_CTRL_INFO*/, 0, reinterpret_cast<char *>(&data)));
+    // long size = BIO_get_mem_data(bioSignature.get(), &data);
+    int size = static_cast<int>(am_BIO_ctrl(bioSignature.get(), 3 /*BIO_CTRL_INFO*/, 0, reinterpret_cast<char *>(&data)));
     if (size <= 0 || !data)
         throw OpenSslException("The BIO buffer for the PKCS#7 signature is invalid");
 
@@ -157,8 +159,8 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
         throw OpenSslException("Could not create BIO buffer for PKCS#7 data");
 
     // PKCS7 *PEM_read_bio_PKCS7(BIO *bp, PKCS7 **x, pem_password_cb *cb, void *u);
-    //OpenSslPointer<PKCS7> signature((PKCS7 *) am_PEM_ASN1_read_bio((d2i_of_void *) am_d2i_PKCS7.functionPointer(), PEM_STRING_PKCS7, bioSignature.data(), nullptr, nullptr, nullptr));
-    OpenSslPointer<PKCS7> signature(am_d2i_PKCS7_bio(bioSignature.data(), nullptr));
+    //OpenSslPointer<PKCS7> signature((PKCS7 *) am_PEM_ASN1_read_bio((d2i_of_void *) am_d2i_PKCS7.functionPointer(), PEM_STRING_PKCS7, bioSignature.get(), nullptr, nullptr, nullptr));
+    OpenSslPointer<PKCS7> signature(am_d2i_PKCS7_bio(bioSignature.get(), nullptr));
     if (!signature)
         throw OpenSslException("Could not read PKCS#7 data from BIO buffer");
 
@@ -176,21 +178,21 @@ bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
             throw OpenSslException("Could not create BIO buffer for a certificate");
 
         // BIO_eof(b) == (int)BIO_ctrl(b,BIO_CTRL_EOF,0,NULL)
-        while (!am_BIO_ctrl(bioCert.data(), 2 /*BIO_CTRL_EOF*/, 0, nullptr)) {
-            //OpenSslPointer<X509> cert(PEM_read_bio_X509(bioCert.data(), 0, 0, 0));
+        while (!am_BIO_ctrl(bioCert.get(), 2 /*BIO_CTRL_EOF*/, 0, nullptr)) {
+            //OpenSslPointer<X509> cert(PEM_read_bio_X509(bioCert.get(), 0, 0, 0));
             OpenSslPointer<X509> cert(static_cast<X509 *>(am_PEM_ASN1_read_bio(reinterpret_cast<d2i_of_void *>((Cryptography::LibCryptoFunctionBase::isOpenSSL11() ? am_d2i_X509_AUX : am_d2i_X509).functionPointer()),
-                                                                               "CERTIFICATE" /*PEM_STRING_X509*/, bioCert.data(),
+                                                                               "CERTIFICATE" /*PEM_STRING_X509*/, bioCert.get(),
                                                                                nullptr, nullptr, nullptr)));
             if (!cert)
                 throw OpenSslException("Could not load a certificate from the chain of trust");
-            if (!am_X509_STORE_add_cert(certChain.data(), cert.data()))
+            if (!am_X509_STORE_add_cert(certChain.get(), cert.get()))
                 throw OpenSslException("Could not add a certificate from the chain of trust to the certificate store");
             // X509 certs are ref-counted, so we need to "free" the one we got via PEM_read_bio
         }
     }
 
     // int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata, BIO *out, int flags);
-    if (am_PKCS7_verify(signature.data(), nullptr, certChain.data(), bioHash.data(), nullptr, 0x8 /*PKCS7_NOCHAIN*/) != 1) {
+    if (am_PKCS7_verify(signature.get(), nullptr, certChain.get(), bioHash.get(), nullptr, 0x8 /*PKCS7_NOCHAIN*/) != 1) {
         bool failed = (am_ERR_get_error() != 0);
         if (failed)
             throw OpenSslException("Failed to verify signature");

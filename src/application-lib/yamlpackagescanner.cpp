@@ -9,7 +9,6 @@
 #include <QJsonArray>
 #include <QFile>
 #include <QFileInfo>
-#include <QScopedPointer>
 
 #include "global.h"
 #include "qtyaml.h"

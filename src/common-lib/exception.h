@@ -8,7 +8,6 @@
 #include <QString>
 #include <QDir>
 #include <QByteArray>
-#include <QScopedPointer>
 #include <QException>
 
 #include <exception>

@@ -3,6 +3,10 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
+#include <memory>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <QFile>
 #include <QFileInfo>
 #include <QUrl>
@@ -10,9 +14,6 @@
 #include <QMessageAuthenticationCode>
 #include <QJsonDocument>
 #include <QTemporaryDir>
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "exception.h"
 #include "signature.h"
@@ -126,7 +127,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
 
         // check metadata
         QString infoName = qSL("info.yaml");
-        QScopedPointer<PackageInfo> package(PackageInfo::fromManifest(source.absoluteFilePath(infoName)));
+        std::unique_ptr<PackageInfo> package(PackageInfo::fromManifest(source.absoluteFilePath(infoName)));
 
         // warn the user that old-style manifests are going to be deprecated in the future
         try {

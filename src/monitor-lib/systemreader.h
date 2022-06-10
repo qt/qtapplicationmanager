@@ -11,8 +11,9 @@
 #include <QObject>
 #include <QtAppManCommon/global.h>
 
+#include <memory>
+
 #if defined(Q_OS_LINUX)
-#  include <QScopedPointer>
 #  include <QtAppManMonitor/sysfsreader.h>
 QT_FORWARD_DECLARE_CLASS(QSocketNotifier)
 #endif
@@ -30,7 +31,7 @@ private:
     qint64 m_lastTotal = 0;
     qreal m_load = 1;
 #if defined(Q_OS_LINUX)
-    static QScopedPointer<SysFsReader> s_sysFs;
+    static std::unique_ptr<SysFsReader> s_sysFs;
 #endif
     Q_DISABLE_COPY(CpuReader)
 };
@@ -81,7 +82,7 @@ public:
 private:
     static quint64 s_totalValue;
 #if defined(Q_OS_LINUX)
-    QScopedPointer<SysFsReader> m_sysFs;
+    std::unique_ptr<SysFsReader> m_sysFs;
     const QString m_groupPath;
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     static int s_pageSize;
@@ -101,7 +102,7 @@ private:
     QElapsedTimer m_lastCheck;
     qint64 m_lastIoTime = 0;
     qreal m_load = 1;
-    QScopedPointer<SysFsReader> m_sysFs;
+    std::unique_ptr<SysFsReader> m_sysFs;
 #endif
     Q_DISABLE_COPY(IoReader)
 };
@@ -161,8 +162,8 @@ private:
     qreal m_memLimit;
     bool hasMemoryLowWarning = false;
     bool hasMemoryCriticalWarning = false;
-    QScopedPointer<MemoryThreshold> m_threshold;
-    QScopedPointer<MemoryReader> m_reader;
+    std::unique_ptr<MemoryThreshold> m_threshold;
+    std::unique_ptr<MemoryReader> m_reader;
 };
 
 #if defined(Q_OS_LINUX)

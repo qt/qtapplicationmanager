@@ -8,7 +8,6 @@
 #include <QMutex>
 #include <QList>
 #include <QSet>
-#include <QScopedPointer>
 #include <QThread>
 
 #include <QtAppManManager/packagemanager.h>

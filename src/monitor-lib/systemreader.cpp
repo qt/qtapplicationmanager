@@ -69,7 +69,7 @@ int dprintf(int fd, const char *format, ...)
 
 #endif
 
-QScopedPointer<SysFsReader> CpuReader::s_sysFs;
+std::unique_ptr<SysFsReader> CpuReader::s_sysFs;
 
 CpuReader::CpuReader()
 {
@@ -533,8 +533,8 @@ bool MemoryWatcher::startWatching(const QString &groupPath)
     m_memLimit = groupPath.isEmpty() ? m_reader->totalValue() : m_reader->groupLimit();
 
     m_threshold.reset(new MemoryThreshold({m_warning, m_critical}));
-    connect(m_threshold.data(), &MemoryThreshold::thresholdTriggered, this, &MemoryWatcher::checkMemoryConsumption);
-    return m_threshold->setEnabled(true, groupPath, m_reader.data());
+    connect(m_threshold.get(), &MemoryThreshold::thresholdTriggered, this, &MemoryWatcher::checkMemoryConsumption);
+    return m_threshold->setEnabled(true, groupPath, m_reader.get());
 }
 
 void MemoryWatcher::checkMemoryConsumption()

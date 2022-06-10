@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
+#include <memory>
+
 #include <QtTest>
 #include <QQmlEngine>
 
@@ -85,7 +87,7 @@ tst_Runtime::tst_Runtime()
 
 void tst_Runtime::factory()
 {
-    QScopedPointer<RuntimeFactory> rf { RuntimeFactory::instance() };
+    std::unique_ptr<RuntimeFactory> rf { RuntimeFactory::instance() };
 
     QVERIFY(rf);
     QVERIFY(rf.get() == RuntimeFactory::instance());
@@ -111,9 +113,9 @@ void tst_Runtime::factory()
     QCOMPARE(temp.write(yaml), yaml.size());
     temp.close();
 
-    QScopedPointer<Application> a;
-    QScopedPointer<PackageInfo> pi;
-    QScopedPointer<Package> p;
+    std::unique_ptr<Application> a;
+    std::unique_ptr<PackageInfo> pi;
+    std::unique_ptr<Package> p;
     try {
         pi.reset(PackageInfo::fromManifest(temp.fileName()));
         QVERIFY(pi);
@@ -124,17 +126,17 @@ void tst_Runtime::factory()
     }
     QVERIFY(a);
 
-    QScopedPointer<AbstractRuntime> r { rf->create(nullptr, a.get()) };
+    std::unique_ptr<AbstractRuntime> r { rf->create(nullptr, a.get()) };
     QVERIFY(r);
     QVERIFY(r->application() == a.get());
     QVERIFY(r->manager()->inProcess());
     QVERIFY(r->state() == Am::NotRunning);
     QVERIFY(r->applicationProcessId() == 0);
     {
-        QScopedPointer<QQmlEngine> engine(new QQmlEngine());
+        std::unique_ptr<QQmlEngine> engine(new QQmlEngine());
         QVERIFY(!r->inProcessQmlEngine());
-        r->setInProcessQmlEngine(engine.data());
-        QVERIFY(r->inProcessQmlEngine() == engine.data());
+        r->setInProcessQmlEngine(engine.get());
+        QVERIFY(r->inProcessQmlEngine() == engine.get());
         r->setInProcessQmlEngine(nullptr);
     }
     QVERIFY(r->start());

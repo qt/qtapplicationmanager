@@ -7,7 +7,7 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 6.2", "QtQuick 6.2" ]
+    dependencies: [ "QtQuick.Window 6.4", "QtQuick 6.4" ]
     Component {
         name: "MonitorModel"
         exports: [ "QtApplicationManager/MonitorModel 2.0" ]

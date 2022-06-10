@@ -82,6 +82,7 @@ class PackageManager : public QAbstractListModel
     Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT)
     Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT)
 
+    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
     Q_PROPERTY(QVariantMap installationLocation READ installationLocation CONSTANT)
     Q_PROPERTY(QVariantMap documentLocation READ documentLocation CONSTANT)
 
@@ -122,6 +123,8 @@ public:
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Package) *package(int index) const;
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Package) *package(const QString &id) const;
     Q_INVOKABLE int indexOfPackage(const QString &id) const;
+
+    bool isReady() const;
 
     bool developmentMode() const;
     void setDevelopmentMode(bool enable);
@@ -172,6 +175,7 @@ public:
     PackageManagerInternalSignals internalSignals;
 
 signals:
+    Q_SCRIPTABLE void readyChanged(bool b);
     Q_SCRIPTABLE void countChanged();
 
     Q_SCRIPTABLE void packageAdded(const QString &id);

@@ -7,7 +7,7 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 6.2", "QtQuick 6.2" ]
+    dependencies: [ "QtQuick.Window 6.4", "QtQuick 6.4" ]
     Component {
         name: "ProcessStatus"
         exports: [ "QtApplicationManager.SystemUI/ProcessStatus 2.0" ]
@@ -623,10 +623,15 @@ Module {
         Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true }
         Property { name: "developmentMode"; type: "bool"; isReadonly: true }
         Property { name: "hardwareId"; type: "string"; isReadonly: true }
+        Property { name: "ready"; type: "bool"; isReadonly: true }
         Property { name: "installationLocation"; type: "QVariantMap"; isReadonly: true }
         Property { name: "documentLocation"; type: "QVariantMap"; isReadonly: true }
         Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true }
         Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true }
+        Signal {
+            name: "readyChanged"
+            Parameter { name: "b"; type: "bool"; }
+        }
         Signal {
             name: "countChanged"
         }

@@ -85,6 +85,10 @@
           application manager's \l{Configuration} will just lead to package (de-) installations
           failing instantly.
 
+    Please be aware that setting the \c{applications/installationDirMountPoint} configuration
+    option might delay the initialization of the package database. In this case, make sure to check
+    that the \l ready property is \c true before interacting with the PackageManager.
+
     The type is derived from \c QAbstractListModel, so it can be used directly as a model from QML.
 
     \target PackageManager Roles
@@ -379,6 +383,8 @@ void PackageManager::registerPackages()
     // now that we have a consistent pkg db, we can clean up the installed packages
     cleanupBrokenInstallations();
 
+    emit readyChanged(d->cleanupBrokenInstallationsDone);
+
 #if !defined(AM_DISABLE_INSTALLER)
     // something might have been queued already before the cleanup had finished
     triggerExecuteNextTask();
@@ -672,6 +678,22 @@ int PackageManager::indexOfPackage(const QString &id) const
             return i;
     }
     return -1;
+}
+
+/*!
+    \qmlproperty bool PackageManager::ready
+
+    Loading the package database might be delayed at startup if the
+    \c{applications/installationDirMountPoint} configuration option is set.
+
+    If your system is relying on this behavior, you should always check if the \l ready property is
+    \c true before accessing information about installed packages.
+    \note Calls to startPackageInstallation() and removePackage() while ready is still \c false
+          will be queued and executed once the package database is fully loaded.
+*/
+bool PackageManager::isReady() const
+{
+    return d->cleanupBrokenInstallationsDone;
 }
 
 bool PackageManager::developmentMode() const

@@ -451,6 +451,8 @@ Item {
 
             windowItem.mouseAreaVisible = true;
 
+            wait(500) // prevent the next click to be detected as a double-click
+
             touchEvent(windowItem).press(0).commit();
             touchEvent(windowItem).release(0).commit();
 

@@ -333,6 +333,9 @@ void tst_Main::mainQmlFile()
 
 void tst_Main::startupTimer()
 {
+#if defined(Q_OS_QNX)
+    QSKIP("StartupTimer not yet supported on QNX");
+#endif
     QTemporaryFile tmp;
     tmp.setAutoRemove(false);
     QVERIFY(tmp.open());

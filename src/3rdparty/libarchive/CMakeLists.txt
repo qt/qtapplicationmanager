@@ -118,7 +118,12 @@ qt_internal_extend_target(BundledLibArchive CONDITION IOS AND NOT MACOS
         PLATFORM_CONFIG_H=\\\"config-ios.h\\\"
 )
 
-qt_internal_extend_target(BundledLibArchive CONDITION UNIX AND NOT ANDROID AND NOT IOS AND NOT MACOS
+qt_internal_extend_target(BundledLibArchive CONDITION QNX
+    DEFINES
+        PLATFORM_CONFIG_H=\\\"config-qnx.h\\\"
+)
+
+qt_internal_extend_target(BundledLibArchive CONDITION UNIX AND NOT ANDROID AND NOT IOS AND NOT MACOS AND NOT QNX
     DEFINES
         PLATFORM_CONFIG_H=\\\"config-unix.h\\\"
 )

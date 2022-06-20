@@ -20,8 +20,12 @@ add_compile_definitions(
 find_package(Qt6 ${PROJECT_VERSION} CONFIG REQUIRED COMPONENTS BuildInternals)
 
 if(NOT (ANDROID OR IOS OR LINUX OR MACOS OR (WIN32 AND NOT WINRT)))
-    message(NOTICE "Skipping the build as building is only supported on Windows, macOS, Linux, Android and iOS.")
-    return()
+    if (QNX)
+        message(NOTICE "QNX is not officially supported - continuing anyway ...")
+    else()
+        message(NOTICE "Skipping the build as building is only supported on Windows, macOS, Linux, Android and iOS.")
+        return()
+    endif()
 endif()
 
 # find the all modules (Gui isn't really optional, but we have to deal with a no-gui CI configuration)

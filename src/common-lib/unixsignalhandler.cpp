@@ -29,7 +29,7 @@ UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)
 
 UnixSignalHandler *UnixSignalHandler::s_instance = nullptr;
 
-#if defined(Q_OS_UNIX)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
 
 UnixSignalHandler::UnixSignalHandler()
     : QObject()
@@ -195,7 +195,7 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
     for (int sig : sigs)
         m_handlers.emplace_back(sig, handlerType == ForwardedToEventLoopHandler, handler);
 
-#if defined(Q_OS_UNIX)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
     struct sigaction sigact;
     sigact.sa_flags = SA_ONSTACK;
     sigact.sa_handler = sigHandler;

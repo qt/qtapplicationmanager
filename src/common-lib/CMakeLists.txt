@@ -52,6 +52,11 @@ qt_internal_extend_target(AppManCommonPrivate CONDITION LINUX
         dl
 )
 
+qt_internal_extend_target(AppManCommonPrivate CONDITION QNX
+    PUBLIC_LIBRARIES
+        backtrace
+)
+
 qt_internal_extend_target(AppManCommonPrivate CONDITION QT_FEATURE_am_libbacktrace
     LIBRARIES
         Qt::BundledBacktrace

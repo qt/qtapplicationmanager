@@ -5,9 +5,6 @@ accept_configuration:
     - condition: property
       property: features
       not_contains_value: Disable
-    - condition: property
-      property: target.os
-      not_equals_value: QNX
     - condition: or
       conditions:
         - condition: property
@@ -30,6 +27,13 @@ instructions:
   - type: EnvironmentVariable
     variableName: BUILD_DOCUMENTATION
     variableValue: "1"
+  - type: AppendToEnvironmentVariable
+    variableName: NON_QTBASE_TARGET_CMAKE_ARGS
+    variableValue: "-DINPUT_hardware_id=dummyHwId -DQT_FORCE_BUILD_TOOLS=ON"
+    enable_if:
+      condition: property
+      property: target.os
+      equals_value: QNX
   - type: Group
     instructions:
         - !include "{{qt/qtbase}}/coin_module_build_template_v2.yaml"

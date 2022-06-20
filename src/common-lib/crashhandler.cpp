@@ -23,6 +23,8 @@
 #  include<unistd.h>
 #  if defined(Q_OS_MACOS)
 #    define AM_PTHREAD_T_FMT "%p"
+#  elif defined(Q_OS_QNX)
+#    define AM_PTHREAD_T_FMT "%x"
 #  else
 #    define AM_PTHREAD_T_FMT "%lx"
 #  endif
@@ -269,11 +271,17 @@ QT_END_NAMESPACE_AM
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
 
+#  if defined(Q_OS_QNX)
+#    include <process.h>
+#    include <backtrace.h>
+#    include <QtCore/private/qcore_unix_p.h>
+#  else
+#    include <execinfo.h>
+#    include <sys/syscall.h>
+#  endif
 #  include <cxxabi.h>
-#  include <execinfo.h>
 #  include <setjmp.h>
 #  include <signal.h>
-#  include <sys/syscall.h>
 #  include <pthread.h>
 #  include <stdio.h>
 
@@ -354,7 +362,16 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
     const char *title = ProcessTitle::title();
     char who[256];
     if (!title) {
-        ssize_t whoLen = readlink("/proc/self/exe", who, sizeof(who) -1);
+#if !defined(Q_OS_QNX)
+        ssize_t whoLen = readlink("/proc/self/exe", who, sizeof(who) - 1);
+#else
+        int fd = qt_safe_open("/proc/self/exefile", O_RDONLY);
+        ssize_t whoLen = 0;
+        if (fd != -1) {
+            whoLen = qt_safe_read(fd, who, sizeof(who) - 1);
+            close(fd);
+        }
+#endif
         who[std::max(ssize_t(0), whoLen)] = '\0';
         title = who;
     }
@@ -363,6 +380,9 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
 #if defined(Q_OS_LINUX)
     long tid = syscall(SYS_gettid);
     bool isMainThread = (tid == pid);
+#elif defined(Q_OS_QNX)
+    long tid = gettid();
+    bool isMainThread = (tid == 1);
 #else
     long tid = -1;
     bool isMainThread = pthread_main_np();
@@ -463,6 +483,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
 
 #  else // !defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
         Q_UNUSED(stackFramesToIgnore);
+#    if !defined(Q_OS_QNX)
         void *addrArray[1024];
         int addrCount = backtrace(addrArray, sizeof(addrArray) / sizeof(*addrArray));
 
@@ -510,6 +531,20 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
                 }
             }
         }
+#    else
+        constexpr int frames = 20;
+        bt_addr_t addrs[frames];
+        bt_memmap_t memmap;
+        char out[1024];
+        char fmt[] = "%a: %f (%o) + %l";
+
+        bt_get_backtrace(&bt_acc_self, addrs, frames);
+        bt_load_memmap(&bt_acc_self, &memmap);
+        bt_sprnf_addrs(&memmap, addrs, frames, fmt, out, sizeof(out), nullptr);
+
+        logMsg(logTo, "\n > C++ backtrace:");
+        logMsg(logTo, out);
+#    endif
 #  endif // defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
     }
     logQmlBacktrace(logTo);

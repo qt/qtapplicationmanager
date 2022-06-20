@@ -89,8 +89,8 @@ public:
     static QMultiMap<QString, QString> currentMountPoints()
     {
         QMultiMap<QString, QString> result;
-#if defined(Q_OS_WIN)
-        return result; // no mounts on Windows
+#if defined(Q_OS_WIN) || defined (Q_OS_QNX)
+        return result; // no mounts on Windows, not supported on QNX
 
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
         struct statfs *sfs = nullptr;

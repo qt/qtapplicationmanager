@@ -292,7 +292,7 @@ QT_END_NAMESPACE_AM
 
 QT_BEGIN_NAMESPACE_AM
 
-static Q_NORETURN void crashHandler(const char *why, int stackFramesToIgnore);
+Q_NORETURN static void crashHandler(const char *why, int stackFramesToIgnore);
 
 static void initBacktraceUnix()
 {

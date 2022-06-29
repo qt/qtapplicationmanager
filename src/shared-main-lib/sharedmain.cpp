@@ -121,7 +121,11 @@ void SharedMain::setupQmlDebugging(bool qmlDebugging)
 
     if (hasJSDebugArg || qmlDebugging) {
 #if !defined(QT_NO_QML_DEBUGGER)
+#if QT_VERSION < QT_VERSION_CHECK(6, 4, 0)
+        static auto debuggingEnabler = std::make_unique<QQmlDebuggingEnabler>(true);
+#else
         QQmlDebuggingEnabler::enableDebugging(true);
+#endif
         if (!QLoggingCategory::defaultCategory()->isDebugEnabled()) {
             qCCritical(LogRuntime) << "The default 'debug' logging category was disabled. "
                                       "Re-enabling it for the QML Debugger interface to work correctly.";

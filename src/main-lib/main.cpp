@@ -289,7 +289,8 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     setupSSDPService();
 
     setupDBus(std::bind(&Configuration::dbusRegistration, cfg, std::placeholders::_1),
-              std::bind(&Configuration::dbusPolicy, cfg, std::placeholders::_1));
+              std::bind(&Configuration::dbusPolicy, cfg, std::placeholders::_1),
+              cfg->instanceId());
 }
 
 bool Main::isSingleProcessMode() const
@@ -1011,7 +1012,9 @@ void Main::setupSSDPService() Q_DECL_NOEXCEPT_EXPR(false)
 
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 
-void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName, const char *interfaceName, const char *path) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName,
+                              const char *interfaceName, const char *path,
+                              const QString &instanceId) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QString dbusAddress;
     QDBusConnection conn((QString()));
@@ -1069,7 +1072,11 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, c
         // Write the bus address of the interface to a file in /tmp. This is needed for the
         // controller tool, which does not even have a session bus, when started via ssh.
 
-        QFile f(QDir::temp().absoluteFilePath(qL1S(interfaceName) + qSL(".dbus")));
+        QString fileName = qL1S(interfaceName) % qSL(".dbus");
+        if (!instanceId.isEmpty())
+            fileName = instanceId % u'-' % fileName;
+
+        QFile f(QDir::temp().absoluteFilePath(fileName));
         QByteArray dbusUtf8 = dbusAddress.isEmpty() ? dbusName.toUtf8() : dbusAddress.toUtf8();
         if (!f.open(QFile::WriteOnly | QFile::Truncate) || (f.write(dbusUtf8) != dbusUtf8.size()))
             throw Exception(f, "Could not write D-Bus address of interface %1").arg(qL1S(interfaceName));
@@ -1085,7 +1092,8 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, c
 
 
 void Main::setupDBus(const std::function<QString(const char *)> &busForInterface,
-                     const std::function<QVariantMap(const char *)> &policyForInterface)
+                     const std::function<QVariantMap(const char *)> &policyForInterface,
+                     const QString &instanceId)
 {
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
     registerDBusTypes();
@@ -1163,7 +1171,8 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
                     continue;
 
                 registerDBusObject(dbusAdaptor->generatedAdaptor(), dbusName,
-                                   std::get<2>(iface),interfaceName, std::get<3>(iface));
+                                   std::get<2>(iface),interfaceName, std::get<3>(iface),
+                                   instanceId);
                 if (!DBusPolicy::add(dbusAdaptor->generatedAdaptor(), policyForInterface(interfaceName)))
                     throw Exception(Error::DBus, "could not set DBus policy for %1").arg(qL1S(interfaceName));
             }

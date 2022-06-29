@@ -38,6 +38,7 @@
 #include <QDBusPendingReply>
 #include <QDBusError>
 #include <QMetaObject>
+#include <QStringBuilder>
 
 #include <functional>
 
@@ -63,6 +64,13 @@ public:
         registerDBusTypes();
     }
 
+    void setInstanceId(const QString &instanceId)
+    {
+        m_instanceId = instanceId;
+        if (!m_instanceId.isEmpty())
+            m_instanceId.append(u'-');
+    }
+
     void connectToManager() Q_DECL_NOEXCEPT_EXPR(false)
     {
         if (m_manager)
@@ -86,7 +94,7 @@ private:
     {
         QDBusConnection conn(iface);
 
-        QFile f(QDir::temp().absoluteFilePath(QString(qSL("%1.dbus")).arg(iface)));
+        QFile f(QDir::temp().absoluteFilePath(m_instanceId % QString(qSL("%1.dbus")).arg(iface)));
         QString dbus;
         if (f.open(QFile::ReadOnly)) {
             dbus = QString::fromUtf8(f.readAll());
@@ -124,6 +132,7 @@ public:
 private:
     IoQtPackageManagerInterface *m_packager = nullptr;
     IoQtApplicationManagerInterface *m_manager = nullptr;
+    QString m_instanceId;
 };
 
 static class DBus dbus;
@@ -144,7 +153,8 @@ enum Command {
     ListInstallationTasks,
     CancelInstallationTask,
     ListInstallationLocations,
-    ShowInstallationLocation
+    ShowInstallationLocation,
+    ListInstances,
 };
 
 // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
@@ -166,7 +176,8 @@ static struct {
     { ListInstallationTasks,     "list-installation-tasks",     "List all active installation tasks." },
     { CancelInstallationTask,    "cancel-installation-task",    "Cancel an active installation task." },
     { ListInstallationLocations, "list-installation-locations", "List all installaton locations." },
-    { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." }
+    { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." },
+    { ListInstances,    "list-instances",    "List all named application manager instances." },
 };
 
 static Command command(QCommandLineParser &clp)
@@ -200,6 +211,7 @@ static void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false);
 static void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
 static void showInstallationLocation(bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
+static void listInstances() Q_DECL_NOEXCEPT_EXPR(false);
 
 class ThrowingApplication : public QCoreApplication // clazy:exclude=missing-qobject-macro
 {
@@ -256,10 +268,11 @@ int main(int argc, char *argv[])
     }
 
     desc += "\nMore information about each command can be obtained by running\n" \
-            "  appman-controller <command> --help";
+            " appman-controller <command> --help";
 
     QCommandLineParser clp;
 
+    clp.addOption({ { qSL("instance-id") }, qSL("Connect to the named instance."), qSL("instance-id") });
     clp.addHelpOption();
     clp.addVersionOption();
 
@@ -273,6 +286,8 @@ int main(int argc, char *argv[])
     // this.
     clp.parse(QCoreApplication::arguments());
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
+
+    dbus.setInstanceId(clp.value(qSL("instance-id")));
 
     // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     try {
@@ -473,6 +488,11 @@ int main(int argc, char *argv[])
 
             a.runLater(std::bind(showInstallationLocation,
                                  clp.isSet(qSL("json"))));
+            break;
+
+        case ListInstances:
+            clp.process(a);
+            a.runLater(listInstances);
             break;
         }
 
@@ -893,5 +913,26 @@ void showInstallationLocation(bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
     auto installationLocation = dbus.packager()->installationLocation().variant().toMap();
     fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(installationLocation).toJson().constData()
                                    : QtYaml::yamlFromVariantDocuments({ installationLocation }).constData());
+    qApp->quit();
+}
+
+void listInstances()
+{
+    QString dir = QDir::temp().absolutePath() % u"/";
+    QString suffix = qSL("io.qt.ApplicationManager.dbus");
+
+    QDirIterator dit(dir, { u"*" % suffix });
+    while (dit.hasNext()) {
+        QByteArray name = dit.next().toLocal8Bit();
+        name.chop(suffix.length());
+        name = name.mid(dir.length());
+        if (name.isEmpty()) {
+            name = "(no instance id)";
+        } else {
+            name.chop(1); // remove the '-' separator
+            name = '"' % name % '"';
+        }
+        fprintf(stdout, "%s\n", name.constData());
+    }
     qApp->quit();
 }

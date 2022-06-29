@@ -154,4 +154,7 @@ inline bool loadResource(const QString &resource)
            : (QResource::registerResource(resource) || QLibrary(QDir().absoluteFilePath(resource)).load());
 }
 
+// make sure that the given id can be used as a filename
+void validateIdForFilesystemUsage(const QString &id) Q_DECL_NOEXCEPT_EXPR(false);
+
 QT_END_NAMESPACE_AM

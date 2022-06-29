@@ -47,6 +47,7 @@
 #include "applicationinfo.h"
 #include "intentinfo.h"
 #include "exception.h"
+#include "utilities.h"
 #include "installationreport.h"
 #include "yamlpackagescanner.h"
 
@@ -259,33 +260,8 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
 
 bool PackageInfo::isValidApplicationId(const QString &appId, QString *errorString)
 {
-    // we need to make sure that we can use the name as directory in a filesystem and inode names
-    // are limited to 255 characters in Linux. We need to subtract a safety margin for prefixes
-    // or suffixes though:
-    static const int maxLength = 150;
-
     try {
-        if (appId.isEmpty())
-            throw Exception(Error::Parse, "must not be empty");
-
-        if (appId.length() > maxLength)
-            throw Exception(Error::Parse, "the maximum length is %1 characters (found %2 characters)").arg(maxLength, appId.length());
-
-        // all characters need to be ASCII minus any filesystem special characters:
-        bool spaceOnly = true;
-        static const char forbiddenChars[] = "<>:\"/\\|?*";
-        for (int pos = 0; pos < appId.length(); ++pos) {
-            ushort ch = appId.at(pos).unicode();
-            if ((ch < 0x20) || (ch > 0x7f) || strchr(forbiddenChars, ch & 0xff)) {
-                throw Exception(Error::Parse, "must consist of printable ASCII characters only, except any of \'%1'")
-                        .arg(QString::fromLatin1(forbiddenChars));
-            }
-            if (spaceOnly)
-                spaceOnly = QChar(ch).isSpace();
-        }
-        if (spaceOnly)
-            throw Exception(Error::Parse, "must not consist of only white-space characters");
-
+        validateIdForFilesystemUsage(appId);
         return true;
     } catch (const Exception &e) {
         if (errorString)

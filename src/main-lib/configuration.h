@@ -67,6 +67,7 @@ public:
     virtual void parseWithArguments(const QStringList &arguments);
     QVariant buildConfig() const;
 
+    QString instanceId() const;
     QString mainQmlFile() const;
 
     bool noCache() const;

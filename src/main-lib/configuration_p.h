@@ -67,6 +67,7 @@ struct ConfigurationData
     void saveToCache(QDataStream &ds) const;
     void mergeFrom(const ConfigurationData *from);
 
+    QString instanceId;
 
     struct Runtimes {
         QVariantMap configurations;

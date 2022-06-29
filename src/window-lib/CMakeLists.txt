@@ -24,6 +24,8 @@ qt_internal_add_module(AppManWindowPrivate
         Qt::Network
         Qt::Qml
         Qt::Quick
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 if(QT_FEATURE_am_multi_process)

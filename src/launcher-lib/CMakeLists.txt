@@ -29,6 +29,8 @@ qt_internal_add_module(AppManLauncherPrivate
         Qt::Qml
         Qt::Quick
         Qt::QuickPrivate
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 qt_internal_extend_target(AppManLauncherPrivate CONDITION QT_FEATURE_am_widgets_support AND TARGET Qt::Widgets

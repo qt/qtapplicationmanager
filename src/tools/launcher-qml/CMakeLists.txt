@@ -20,4 +20,6 @@ qt_internal_add_tool(${target_name}
         Qt::AppManNotificationPrivate
         Qt::AppManPluginInterfacesPrivate
         Qt::AppManSharedMainPrivate
+    DEFINES
+        AM_COMPILING_LAUNCHER
 )

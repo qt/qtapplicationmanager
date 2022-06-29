@@ -11,6 +11,8 @@ qt_internal_add_tool(${target_name}
         Qt::DBus
         Qt::Network
         Qt::AppManCommonPrivate
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 if (TARGET ${target_name})

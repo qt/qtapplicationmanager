@@ -93,6 +93,14 @@ needs a \c type window property to differentiate between normal windows and popu
 This application only works in multi-process mode, as application processes cannot be started in
 single-process mode.
 
+Linking against the private application manager modules is prohibited by default to prevent
+potential problems with duplicate symbols coming from QML plugins. However here building against
+them is both intended and required, so we need to set the define \c AM_COMPILING_LAUNCHER:
+
+\quotefromfile applicationmanager/application-features/native/widgets/CMakeLists.txt
+\skipuntil /allows us to link against/
+\printuntil /AM_COMPILING_LAUNCHER/
+
 The C++ code for the native widgets application is as follows:
 
 \quotefromfile applicationmanager/application-features/native/widgets/main.cpp

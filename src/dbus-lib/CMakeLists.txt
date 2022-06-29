@@ -21,6 +21,8 @@ qt_internal_add_module(AppManDBusPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::DBus
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 # QMAKE_EXTRA_TARGETS = "recreate-dbus-xml" "recreate-applicationmanager-dbus-xml" "recreate-packagemanager-dbus-xml" "recreate-windowmanager-dbus-xml"

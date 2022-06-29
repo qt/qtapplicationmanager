@@ -13,4 +13,6 @@ qt_internal_add_tool(${target_name}
         Qt::AppManCommonPrivate
         Qt::AppManCryptoPrivate
         Qt::AppManPackagePrivate
+    DEFINES
+        AM_COMPILING_APPMAN
 )

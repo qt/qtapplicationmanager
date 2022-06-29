@@ -17,6 +17,8 @@ qt_internal_add_tool(${target_name}
         Qt::AppManNotificationPrivate
         Qt::AppManSharedMainPrivate
         Qt::AppManWindowPrivate
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 set(qml_install_dir "${INSTALL_QMLDIR}")

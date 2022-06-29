@@ -31,6 +31,8 @@ qt_internal_add_module(AppManCommonPrivate
         Qt::Network
         Qt::Qml
         Qt::QmlPrivate
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 qt_internal_extend_target(AppManCommonPrivate CONDITION TARGET Qt::DltLogging

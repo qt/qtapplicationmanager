@@ -9,4 +9,6 @@ qt_internal_add_tool(${target_name}
     PUBLIC_LIBRARIES
         Qt::Network
         Qt::AppManCommonPrivate
+    DEFINES
+        AM_COMPILING_APPMAN
 )

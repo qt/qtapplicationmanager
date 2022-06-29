@@ -14,4 +14,6 @@ qt_internal_add_module(AppManNotificationPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Qml
+    DEFINES
+        AM_COMPILING_APPMAN
 )

@@ -25,6 +25,14 @@ If you still require this behavior, this example provides a starting point that 
 custom implementation upon. Keep in mind, that this custom application manager executable needs a
 System UI to display something on the screen, just like the standard \c appman executable.
 
+Linking against those application manager modules is prohibited by default to prevent
+potential problems with duplicate symbols coming from QML plugins. However here building against
+them is both intended and required, so we need to set the define \c AM_COMPILING_APPMAN:
+
+\quotefromfile applicationmanager/custom-appman/CMakeLists.txt
+\skipuntil /allows us to link against/
+\printuntil /AM_COMPILING_APPMAN/
+
 The following is a breakdown of the minimal code necessary:
 
 \quotefromfile applicationmanager/custom-appman/custom-appman.cpp

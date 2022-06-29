@@ -6,7 +6,6 @@
 #include <tuple>
 
 #include <QtDBus/QtDBus>
-#include <QtAppManCommon/global.h>
 #include <QJsonDocument>
 #include <QSocketNotifier>
 #include <QMetaObject>
@@ -52,7 +51,6 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, QMap<QString,QStr
 QT_END_NAMESPACE
 
 
-QT_USE_NAMESPACE_AM
 
 // unfortunately, this is a copy of the code from debugwrapper.cpp
 static QStringList substituteCommand(const QStringList &debugWrapperCommand, const QString &program,

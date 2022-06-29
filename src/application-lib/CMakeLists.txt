@@ -21,4 +21,6 @@ qt_internal_add_module(AppManApplicationPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Network
+    DEFINES
+        AM_COMPILING_APPMAN
 )

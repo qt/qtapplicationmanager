@@ -19,4 +19,6 @@ qt_internal_add_module(AppManIntentServerPrivate
         Qt::Core
         Qt::Network
         Qt::Qml
+    DEFINES
+        AM_COMPILING_APPMAN
 )

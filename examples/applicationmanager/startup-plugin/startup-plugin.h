@@ -5,7 +5,6 @@
 
 #include <QLoggingCategory>
 #include <QtAppManPluginInterfaces/startupinterface.h>
-#include <QtAppManCommon/global.h>
 
 Q_DECLARE_LOGGING_CATEGORY(LogMe)
 

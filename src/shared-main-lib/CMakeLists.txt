@@ -25,4 +25,6 @@ qt_internal_add_module(AppManSharedMainPrivate
         Qt::Quick
         Qt::AppManCommonPrivate
         Qt::AppManMonitorPrivate
+    DEFINES
+        AM_COMPILING_APPMAN
 )

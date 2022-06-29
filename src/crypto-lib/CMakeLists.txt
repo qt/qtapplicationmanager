@@ -14,6 +14,8 @@ qt_internal_add_module(AppManCryptoPrivate
         Qt::AppManCommonPrivate
     PUBLIC_LIBRARIES
         Qt::Core
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 

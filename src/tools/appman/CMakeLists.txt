@@ -8,6 +8,8 @@ qt_internal_add_tool(${target_name}
         appman.cpp
     PUBLIC_LIBRARIES
         Qt::AppManMainPrivate
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 if (TARGET ${target_name})

@@ -19,6 +19,8 @@ qt_internal_add_module(AppManPackagePrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Network
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 qt_internal_extend_target(AppManPackagePrivate CONDITION QT_FEATURE_am_system_libarchive

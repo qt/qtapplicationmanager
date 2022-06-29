@@ -22,6 +22,10 @@ find_package(Qt6 COMPONENTS AppManLauncherPrivate)
 qt_add_executable(widgets
     main.cpp
 )
+
+# This define flags us as a "launcher" and allows us to link against the AppMan's private libraries
+target_compile_definitions(widgets PRIVATE AM_COMPILING_LAUNCHER)
+
 set_target_properties(widgets PROPERTIES
     WIN32_EXECUTABLE TRUE
     MACOSX_BUNDLE TRUE

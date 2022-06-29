@@ -20,6 +20,10 @@ find_package(Qt6 COMPONENTS AppManMainPrivate)
 qt_add_executable(custom-appman
     custom-appman.cpp
 )
+
+# This define flags us as an "appman" and allows us to link against the AppMan's private libraries
+target_compile_definitions(custom-appman PRIVATE AM_COMPILING_APPMAN)
+
 set_target_properties(custom-appman PROPERTIES
     WIN32_EXECUTABLE FALSE
     MACOSX_BUNDLE FALSE

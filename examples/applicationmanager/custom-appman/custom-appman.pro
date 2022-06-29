@@ -6,6 +6,9 @@ CONFIG -= app_bundle qml_debug
 
 DEFINES += QT_MESSAGELOGCONTEXT
 
+# This define flags us as an "appman" and allows us to link against the AppMan's private libraries
+DEFINES *= AM_COMPILING_APPMAN
+
 QT = appman_main-private
 
 SOURCES = custom-appman.cpp

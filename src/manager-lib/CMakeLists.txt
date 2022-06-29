@@ -49,6 +49,8 @@ qt_internal_add_module(AppManManagerPrivate
         Qt::QmlPrivate
         Qt::Quick
         Qt::QuickPrivate
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_am_multi_process

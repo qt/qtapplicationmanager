@@ -15,6 +15,8 @@ qt_internal_add_module(AppManMonitorPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Gui
+    DEFINES
+        AM_COMPILING_APPMAN
 )
 
 qt_internal_extend_target(AppManMonitorPrivate CONDITION LINUX

@@ -318,4 +318,33 @@ void closeAndClearFileDescriptors(QVector<int> &fdList)
     fdList.clear();
 }
 
+void validateIdForFilesystemUsage(const QString &id)  Q_DECL_NOEXCEPT_EXPR(false)
+{
+    // we need to make sure that we can use the name as directory in a filesystem and inode names
+    // are limited to 255 characters in Linux. We need to subtract a safety margin for prefixes
+    // or suffixes though:
+    static const int maxLength = 150;
+
+    if (id.isEmpty())
+        throw Exception(Error::Parse, "must not be empty");
+
+    if (id.length() > maxLength)
+        throw Exception(Error::Parse, "the maximum length is %1 characters (found %2 characters)").arg(maxLength, id.length());
+
+    // all characters need to be ASCII minus any filesystem special characters:
+    bool spaceOnly = true;
+    static const char forbiddenChars[] = "<>:\"/\\|?*";
+    for (int pos = 0; pos < id.length(); ++pos) {
+        ushort ch = id.at(pos).unicode();
+        if ((ch < 0x20) || (ch > 0x7f) || strchr(forbiddenChars, ch & 0xff)) {
+            throw Exception(Error::Parse, "must consist of printable ASCII characters only, except any of \'%1'")
+                    .arg(QString::fromLatin1(forbiddenChars));
+        }
+        if (spaceOnly)
+            spaceOnly = QChar(ch).isSpace();
+    }
+    if (spaceOnly)
+        throw Exception(Error::Parse, "must not consist of only white-space characters");
+}
+
 QT_END_NAMESPACE_AM

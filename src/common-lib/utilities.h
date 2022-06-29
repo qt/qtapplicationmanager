@@ -123,4 +123,7 @@ template <typename T> T *qt6_v_cast(QVariant::Private *vp)
 // close all valid file descriptors and then clear the (non-const) vector
 void closeAndClearFileDescriptors(QVector<int> &fdList);
 
+// make sure that the given id can be used as a filename
+void validateIdForFilesystemUsage(const QString &id) Q_DECL_NOEXCEPT_EXPR(false);
+
 QT_END_NAMESPACE_AM

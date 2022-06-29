@@ -177,6 +177,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     m_clp.addOption({ qSL("logging-rule"),         qSL("Adds a standard Qt logging rule."), qSL("rule") });
     m_clp.addOption({ qSL("qml-debug"),            qSL("Enables QML debugging and profiling.") });
     m_clp.addOption({ qSL("enable-touch-emulation"), qSL("Deprecated (ignored).") });
+    m_clp.addOption({ qSL("instance-id"),          qSL("Use this id to distinguish between multiple instances."), qSL("id") });
 }
 
 QVariant Configuration::buildConfig() const
@@ -283,6 +284,16 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         }
     }
 
+    if (m_clp.isSet(qSL("instance-id"))) {
+        auto id = m_clp.value(qSL("instance-id"));
+        try {
+            validateIdForFilesystemUsage(id);
+        } catch (const Exception &e) {
+            showParserMessage(qSL("Invalid instance-id (%1): %2\n").arg(id, e.errorString()), ErrorMessage);
+            exit(1);
+        }
+    }
+
 #if defined(AM_TIME_CONFIG_PARSING)
     QElapsedTimer timer;
     timer.start();
@@ -371,7 +382,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 8;
+const quint32 ConfigurationData::DataStreamVersion = 9;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -433,7 +444,8 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->wayland.socketName
        >> cd->wayland.extraSockets
        >> cd->flags.allowUnsignedPackages
-       >> cd->flags.allowUnknownUiClients;
+       >> cd->flags.allowUnknownUiClients
+       >> cd->instanceId;
 
     return cd;
 }
@@ -496,7 +508,8 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << wayland.socketName
        << wayland.extraSockets
        << flags.allowUnsignedPackages
-       << flags.allowUnknownUiClients;
+       << flags.allowUnknownUiClients
+       << instanceId;
 }
 
 template <typename T> void mergeField(T &into, const T &from, const T &def)
@@ -597,6 +610,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(wayland.extraSockets);
     MERGE_FIELD(flags.allowUnsignedPackages);
     MERGE_FIELD(flags.allowUnknownUiClients);
+    MERGE_FIELD(instanceId);
 }
 
 QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
@@ -655,6 +669,15 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
         auto cd = std::make_unique<ConfigurationData>();
 
         YamlParser::Fields fields = {
+            { "instanceId", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                  auto id = p->parseString();
+                  try {
+                      validateIdForFilesystemUsage(id);
+                      cd->instanceId = id;
+                  } catch (const Exception &e) {
+                      throw YamlParserException(p, "invalid instanaceId: %1").arg(e.errorString());
+                  }
+              } },
             { "runtimes", false, YamlParser::Map, [&cd](YamlParser *p) {
                   cd->runtimes.configurations = p->parseMap(); } },
             { "containers", false, YamlParser::Map, [&cd](YamlParser *p) {
@@ -886,6 +909,11 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
         throw Exception(e.errorCode(), "Failed to parse config file %1: %2")
                 .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : qSL("<stream>"), e.errorString());
     }
+}
+
+QString Configuration::instanceId() const
+{
+    return value<QString>("instance-id", m_data->instanceId);
 }
 
 QString Configuration::mainQmlFile() const

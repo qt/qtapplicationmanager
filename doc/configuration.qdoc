@@ -136,6 +136,14 @@ ui:
             configuration files, but before more specific, direct options such as \c --fullscreen
             (which can be rewritten as \c{ -o 'ui: { fullscreen: no }'}).
     \row
+        \target instance-id
+        \li \b --instance-id
+            \br [\c instanceId]
+        \li string
+        \li Assign an unique name to this application manager instance. Only useful if you are
+            running multiple instances at the same time and you need to address them via the
+            \l{Controller}{appman-controller tool}.
+    \row
         \li \b --database
             \br [\c applications/database]
         \li string

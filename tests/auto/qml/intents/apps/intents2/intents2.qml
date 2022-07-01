@@ -19,7 +19,7 @@ QtObject {
 
     property var handler: IntentHandler {
         intentIds: [ "both", "only2" ]
-        onRequestReceived: {
+        onRequestReceived: (request) => {
             Qt.callLater(function() {
                 request.sendReply({ "from": ApplicationInterface.applicationId, "in": request.parameters})
             })

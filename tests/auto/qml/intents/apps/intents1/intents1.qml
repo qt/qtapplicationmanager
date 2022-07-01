@@ -19,14 +19,14 @@ QtObject {
 
     property var handler: IntentHandler {
         intentIds: [ "only1", "both", "match" ]
-        onRequestReceived: {
+        onRequestReceived: (request) => {
             request.sendReply({ "from": ApplicationInterface.applicationId, "in": request.parameters})
         }
     }
 
     property var customErrorHandler: IntentHandler {
         intentIds: [ "custom-error" ]
-        onRequestReceived: {
+        onRequestReceived: (request) => {
             request.sendErrorReply("custom error")
         }
     }

@@ -32,6 +32,7 @@ android:DEFINES += PLATFORM_CONFIG_H=\\\"config-android.h\\\"
 else:win32:DEFINES += PLATFORM_CONFIG_H=\\\"config-windows.h\\\"
 else:macos:DEFINES += PLATFORM_CONFIG_H=\\\"config-macos.h\\\"
 else:ios:DEFINES += PLATFORM_CONFIG_H=\\\"config-ios.h\\\"
+else:qnx:DEFINES += PLATFORM_CONFIG_H=\\\"config-qnx.h\\\"
 else:DEFINES += PLATFORM_CONFIG_H=\\\"config-unix.h\\\"
 
 OTHER_FILES += \

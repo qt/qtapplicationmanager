@@ -109,7 +109,7 @@ private:
     static am_sigmask_t am_sigmask(int sig);
     QAtomicInteger<am_sigmask_t> m_resetSignalMask;
 #if defined(Q_OS_UNIX)
-    int m_pipe[2];
+    int m_pipe[2] = { -1, -1 };
 #elif defined(Q_OS_WIN)
     QMutex m_winLock;
     QWinEventNotifier *m_winEvent = nullptr;

@@ -1,4 +1,7 @@
-requires(linux|android|macos:!arm64|ios|win32:!winrt)
+requires(linux|android|macos:!arm64|ios|win32:!winrt|qnx)
+qnx {
+   log("$$escape_expand(\\n)QNX is not officially supported - continuing anyway ...$$escape_expand(\\n\\n)")
+}
 !versionAtLeast(QT_VERSION, 5.15.0) {
     log("$$escape_expand(\\n\\n) *** The QtApplicationManager module needs to be built against Qt 5.15.0+ ***$$escape_expand(\\n\\n)")
     CONFIG += Qt_version_needs_to_be_at_least_5_15_0

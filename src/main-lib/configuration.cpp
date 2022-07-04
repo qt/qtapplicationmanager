@@ -186,10 +186,8 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("Deprecated (ignored)."), qSL("dir") });
     m_clp.addOption({ qSL("disable-installer"),    qSL("Disable the application installer sub-system.") });
     m_clp.addOption({ qSL("disable-intents"),      qSL("Disable the intents sub-system.") });
-#if defined(QT_DBUS_LIB)
     m_clp.addOption({ qSL("dbus"),                 qSL("Register on the specified D-Bus."), qSL("<bus>|system|session|none|auto"), qSL("auto") });
     m_clp.addOption({ qSL("start-session-dbus"),   qSL("Deprecated (ignored).") });
-#endif
     m_clp.addOption({ qSL("fullscreen"),           qSL("Display in full-screen.") });
     m_clp.addOption({ qSL("no-fullscreen"),        qSL("Do not display in full-screen.") });
     m_clp.addOption({ qSL("I"),                    qSL("Additional QML import path."), qSL("dir") });

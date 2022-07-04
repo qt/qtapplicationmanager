@@ -64,17 +64,17 @@ UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)
 
 UnixSignalHandler *UnixSignalHandler::s_instance = nullptr;
 
-#if defined(Q_OS_UNIX)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
 // make it clear in the valgrind backtrace that this is a deliberate leak
 static void *malloc_valgrind_ignore(size_t size)
 {
     return malloc(size);
 }
+#endif
 
 UnixSignalHandler::UnixSignalHandler()
-    : QObject()
-    , m_pipe { -1, -1 }
 {
+#if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
     // Setup alternate signal stack (to get backtrace for stack overflow)
     // Canonical size might not be suffcient to get QML backtrace, so we double it
     size_t stackSize = SIGSTKSZ * 2;
@@ -84,11 +84,8 @@ UnixSignalHandler::UnixSignalHandler()
     sigstack.ss_size = stackSize;
     sigstack.ss_flags = 0;
     sigaltstack(&sigstack, nullptr);
-}
-#else
-UnixSignalHandler::UnixSignalHandler() : QObject()
-{ }
 #endif
+}
 
 UnixSignalHandler *UnixSignalHandler::instance()
 {
@@ -229,7 +226,7 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
     for (int sig : sigs)
         m_handlers.emplace_back(sig, handlerType == ForwardedToEventLoopHandler, handler);
 
-#if defined(Q_OS_UNIX)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
     struct sigaction sigact;
     sigact.sa_flags = SA_ONSTACK;
     sigact.sa_handler = sigHandler;

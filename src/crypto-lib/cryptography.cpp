@@ -162,6 +162,8 @@ QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescrip
         result.append(QString::number(osCryptoError));
 #  endif
     }
+#else
+    Q_UNUSED(osCryptoError)
 #endif
 
     return result;

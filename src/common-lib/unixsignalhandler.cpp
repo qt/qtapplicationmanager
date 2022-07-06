@@ -29,12 +29,9 @@ UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)
 
 UnixSignalHandler *UnixSignalHandler::s_instance = nullptr;
 
-#if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
-
 UnixSignalHandler::UnixSignalHandler()
-    : QObject()
-    , m_pipe { -1, -1 }
 {
+#if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
     // Setup alternate signal stack (to get backtrace for stack overflow)
     // Canonical size might not be suffcient to get QML backtrace, so we double it
     size_t stackSize = SIGSTKSZ * 2;
@@ -50,11 +47,8 @@ UnixSignalHandler::UnixSignalHandler()
         // this code runs before all other static constructors
         qWarning("WARNING: UnixSignalHandler failed to allocate memory for an alternate signal stack.");
     }
-}
-#else
-UnixSignalHandler::UnixSignalHandler() : QObject()
-{ }
 #endif
+}
 
 UnixSignalHandler *UnixSignalHandler::instance()
 {

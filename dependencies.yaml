@@ -1,13 +1,13 @@
 dependencies:
   ../tqtc-qtbase:
-    ref: 427d2c096679f940799eeea5b34e2b4f5ae5c896
+    ref: 282ce3e3cc21189e9e916ced7a0e3c10d10413fe
     required: true
   ../tqtc-qtdeclarative:
-    ref: aa8dfabf0d23264eefcb1cb2cb52620e7c60f1f0
+    ref: 09b9a4904d80ae9fc5ecd0ef249c2742337b6234
     required: true
   ../tqtc-qttools:
-    ref: dbb0fa786f8b4868bb8dc2a8d7884f18e1e8f2a9
+    ref: 7ba1b3827d59790ab2bdac6c0c65122b515af265
     required: false
   ../tqtc-qtwayland:
-    ref: d19b208f5e13db5fd5f1ff3227b237d9d74f6a34
+    ref: 4827bd2c8a0cda1308022ae11b68dffb31828996
     required: false

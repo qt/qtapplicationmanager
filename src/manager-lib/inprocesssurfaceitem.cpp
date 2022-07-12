@@ -101,6 +101,9 @@ bool InProcessSurfaceItem::visibleClientSide() const
 
 QSGNode *InProcessSurfaceItem::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
 {
+    if (m_color.alpha() == 0)
+        return oldNode;  // no need to render fully transparent node
+
     QSGSimpleRectNode *node = static_cast<QSGSimpleRectNode *>(oldNode);
     if (!node) {
         node = new QSGSimpleRectNode(clipRect(), m_color);

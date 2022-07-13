@@ -640,8 +640,9 @@ an additional column specifying which runtime a configuration option applies to:
         \li \c backgroundColor
         \li qml
         \li string
-        \li If set, the main window of the app gets this color set as the default clear color.
-            This option also gives the surface an 8-bit alpha buffer.
+        \li This option is deprecated and will be removed in the next release. Please use the
+            ApplicationManagerWindow's \c color property instead.
+
     \row
         \li \c quitTime
         \li qml

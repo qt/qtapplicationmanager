@@ -7,7 +7,7 @@ qt_internal_add_tool(${target_name}
     SOURCES
         controller.cpp
         interrupthandler.cpp interrupthandler.h
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::DBus
         Qt::Network
         Qt::AppManCommonPrivate

@@ -7,7 +7,7 @@ qt_internal_add_tool(${target_name}
     SOURCES
         packager.cpp
         packagingjob.cpp packagingjob.h
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate

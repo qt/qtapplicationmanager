@@ -5,7 +5,7 @@ qt_internal_add_tool(${target_name}
     TOOLS_TARGET AppManMainPrivate
     SOURCES
         dumpqmltypes.cpp
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
         Qt::AppManIntentClientPrivate

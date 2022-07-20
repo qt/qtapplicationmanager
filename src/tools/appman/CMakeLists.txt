@@ -6,7 +6,7 @@ qt_internal_add_tool(${target_name}
     TOOLS_TARGET AppManMainPrivate
     SOURCES
         appman.cpp
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::AppManMainPrivate
     DEFINES
         AM_COMPILING_APPMAN

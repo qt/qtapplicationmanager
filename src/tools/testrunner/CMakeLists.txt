@@ -10,7 +10,7 @@ qt_internal_add_tool(${target_name}
     DEFINES
         AM_TESTRUNNER
         AM_COMPILING_APPMAN
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::QuickTest
         Qt::QuickTestPrivate
         Qt::TestPrivate

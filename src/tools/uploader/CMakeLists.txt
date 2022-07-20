@@ -6,7 +6,7 @@ qt_internal_add_tool(${target_name}
     TOOLS_TARGET AppManMainPrivate
     SOURCES
         uploader.cpp
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Network
         Qt::AppManCommonPrivate
     DEFINES

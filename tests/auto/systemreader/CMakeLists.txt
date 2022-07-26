@@ -3,7 +3,7 @@ qt_internal_add_test(tst_systemreader
     SOURCES
         ../error-checking.h
         tst_systemreader.cpp
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
@@ -22,6 +22,6 @@ qt_internal_add_resource(tst_systemreader "systemreader_testdata"
 )
 
 qt_internal_extend_target(tst_systemreader CONDITION TARGET Qt::DBus
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::DBus
 )

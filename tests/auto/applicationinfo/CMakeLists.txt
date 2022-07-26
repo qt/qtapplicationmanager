@@ -3,7 +3,7 @@ qt_internal_add_test(tst_applicationinfo
     SOURCES
         ../error-checking.h
         tst_applicationinfo.cpp
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
@@ -22,6 +22,6 @@ qt_internal_add_resource(tst_applicationinfo "yaml_testdata"
 )
 
 qt_internal_extend_target(tst_applicationinfo CONDITION TARGET Qt::DBus
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::DBus
 )

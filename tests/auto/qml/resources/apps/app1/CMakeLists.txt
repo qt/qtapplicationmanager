@@ -1,7 +1,7 @@
 
 qt_internal_add_cmake_library(app1plugin
     MODULE
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Core
         Qt::Gui
 )

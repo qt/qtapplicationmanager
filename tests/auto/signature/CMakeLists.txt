@@ -5,7 +5,7 @@ qt_internal_add_test(tst_signature
         tst_signature.cpp
     DEFINES
         AM_TESTSOURCE_DIR=\\\"${CMAKE_CURRENT_SOURCE_DIR}\\\"
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Network
         Qt::AppManCommonPrivate
         Qt::AppManCryptoPrivate
@@ -24,7 +24,7 @@ qt_internal_add_resource(tst_signature "signature_testdata"
 )
 
 qt_internal_extend_target(tst_signature CONDITION TARGET Qt::DBus
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::DBus
 )
 

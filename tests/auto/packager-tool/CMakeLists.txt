@@ -8,7 +8,7 @@ qt_internal_add_test(tst_packager-tool
         AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_BINARY_DIR}/../../data/\\\"
     INCLUDE_DIRECTORIES
         ../../../src/tools/packager
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
@@ -18,6 +18,6 @@ qt_internal_add_test(tst_packager-tool
 )
 
 qt_internal_extend_target(tst_packager-tool CONDITION TARGET Qt::DBus
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::DBus
 )

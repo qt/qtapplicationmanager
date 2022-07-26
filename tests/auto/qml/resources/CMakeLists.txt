@@ -2,7 +2,7 @@
 qt_internal_add_cmake_library(systemuiplugin
     MODULE
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Core
 )
 

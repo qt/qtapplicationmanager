@@ -5,7 +5,7 @@ qt_internal_add_test(tst_installationreport
         tst_installationreport.cpp
     DEFINES
         AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_BINARY_DIR}/../../data/\\\"
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
@@ -13,6 +13,6 @@ qt_internal_add_test(tst_installationreport
 )
 
 qt_internal_extend_target(tst_installationreport CONDITION TARGET Qt::DBus
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::DBus
 )

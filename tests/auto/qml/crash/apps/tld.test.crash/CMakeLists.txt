@@ -4,7 +4,7 @@ qt_internal_add_cmake_library(qmlcrashplugin
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/QmlCrash"
     SOURCES
         ../../qmlcrash/qmlcrash.cpp ../../qmlcrash/qmlcrash.h
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Core
         Qt::Gui
         Qt::Qml

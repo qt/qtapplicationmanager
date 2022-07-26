@@ -5,7 +5,7 @@ qt_internal_add_test(tst_configuration
         tst_configuration.cpp
     DEFINES
         AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_BINARY_DIR}/../../data/\\\"
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Network
         Qt::AppManCommonPrivate
         Qt::AppManMainPrivate
@@ -21,6 +21,6 @@ qt_internal_add_resource(tst_configuration "qmake_immediate"
 )
 
 qt_internal_extend_target(tst_configuration CONDITION TARGET Qt::DBus
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::DBus
 )

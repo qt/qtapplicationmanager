@@ -11,7 +11,6 @@
 #include <QNetworkInterface>
 #include <QPluginLoader>
 #include <qplatformdefs.h>
-#include <private/qvariant_p.h>
 
 #include "utilities.h"
 #include "exception.h"

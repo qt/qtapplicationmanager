@@ -8,7 +8,6 @@
 #include <QStandardPaths>
 #include <QMetaEnum>
 #include <QProcessEnvironment>
-#include <private/qvariant_p.h>
 
 #include <QDataStream>
 #include <QFileInfo>

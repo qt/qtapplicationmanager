@@ -7,7 +7,6 @@
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <private/qqmlmetatype_p.h>
-#include <private/qvariant_p.h>
 
 #include "logging.h"
 #include "utilities.h"

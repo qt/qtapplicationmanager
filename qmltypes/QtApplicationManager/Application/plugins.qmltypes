@@ -7,7 +7,7 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 6.4", "QtQuick 6.4" ]
+    dependencies: [ "QtQuick.Window 6.5", "QtQuick 6.5" ]
     Component {
         name: "IntentHandler"
         exports: [ "QtApplicationManager.Application/IntentHandler 2.0" ]

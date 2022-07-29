@@ -32,15 +32,16 @@ if(NOT QT_FEATURE_am_tools_only)
 
     if(TARGET Qt::DBus)
         add_subdirectory(launcher-lib)
-    endif()
+        add_subdirectory(tools/controller)
 
-    # This tool links against everything to extract the Qml type information
-    if (QT_FEATURE_am_installer AND TARGET Qt::DBus)
-        add_subdirectory(tools/dumpqmltypes)
-    endif()
+        # This tool links against everything to extract the Qml type information
+        if (QT_FEATURE_am_installer)
+            add_subdirectory(tools/dumpqmltypes)
+        endif()
 
-    if (TARGET Qt::DBus AND QT_FEATURE_am_multi_process)
-        add_subdirectory(tools/launcher-qml)
+        if (QT_FEATURE_am_multi_process)
+            add_subdirectory(tools/launcher-qml)
+        endif()
     endif()
 endif()
 
@@ -50,8 +51,4 @@ if(NOT QT_FEATURE_cross_compile OR QT_FEATURE_am_tools_only)
     endif()
 
     add_subdirectory(tools/uploader)
-endif()
-
-if(TARGET Qt::DBus)
-    add_subdirectory(tools/controller)
 endif()

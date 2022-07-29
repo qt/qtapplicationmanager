@@ -991,6 +991,7 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
 #else
     Q_UNUSED(busForInterface)
     Q_UNUSED(policyForInterface)
+    Q_UNUSED(instanceId)
 #endif // defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
 }
 

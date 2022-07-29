@@ -1,8 +1,6 @@
 
-qt_get_tool_target_name(target_name appman-qmltestrunner)
-qt_internal_add_tool(${target_name}
+qt_internal_add_app(appman-qmltestrunner
     EXCEPTIONS
-    TOOLS_TARGET AppManMainPrivate
     SOURCES
         ../appman/appman.cpp
         amtest.cpp amtest.h
@@ -17,8 +15,6 @@ qt_internal_add_tool(${target_name}
         Qt::AppManMainPrivate
 )
 
-if (TARGET ${target_name})
-    include(QtAppManBuildConfig)
+include(QtAppManBuildConfig)
 
-    qtam_internal_add_build_config(${target_name})
-endif()
+qtam_internal_add_build_config(appman-qmltestrunner)

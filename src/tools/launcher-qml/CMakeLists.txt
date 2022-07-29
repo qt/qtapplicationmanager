@@ -1,8 +1,6 @@
 
-qt_get_tool_target_name(target_name appman-launcher-qml)
-qt_internal_add_tool(${target_name}
+qt_internal_add_app(appman-launcher-qml
     EXCEPTIONS
-    TOOLS_TARGET AppManMainPrivate
     SOURCES
         launcher-qml.cpp launcher-qml_p.h
     PUBLIC_LIBRARIES

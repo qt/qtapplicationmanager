@@ -1,9 +1,6 @@
 
-qt_get_tool_target_name(target_name appman-controller)
-qt_internal_add_tool(${target_name}
-    USER_FACING
+qt_internal_add_app(appman-controller
     EXCEPTIONS
-    TOOLS_TARGET AppManMainPrivate
     SOURCES
         controller.cpp
         interrupthandler.cpp interrupthandler.h
@@ -15,15 +12,13 @@ qt_internal_add_tool(${target_name}
         AM_COMPILING_APPMAN
 )
 
-if (TARGET ${target_name})
-    qt_internal_extend_target(${target_name}
-        DBUS_INTERFACE_SOURCES
+qt_internal_extend_target(appman-controller
+    DBUS_INTERFACE_SOURCES
         ../../dbus-lib/io.qt.packagemanager.xml
-    )
-    qt_internal_extend_target(${target_name}
-        DBUS_INTERFACE_SOURCES
+)
+qt_internal_extend_target(appman-controller
+    DBUS_INTERFACE_SOURCES
         ../../dbus-lib/io.qt.applicationmanager.xml
-        DBUS_INTERFACE_FLAGS
+    DBUS_INTERFACE_FLAGS
         -i dbus-utilities.h
-    )
-endif()
+)

@@ -49,6 +49,7 @@
 #include <QList>
 #include <QMap>
 #include <QPair>
+#include <QElapsedTimer>
 
 #include <QtAppManCommon/global.h>
 
@@ -100,7 +101,8 @@ private:
     Q_DISABLE_COPY(IntentClient)
     static IntentClient *s_instance;
 
-    QList<IntentClientRequest *> m_waiting;
+    QList<QPointer<IntentClientRequest>> m_waiting;
+    QElapsedTimer m_lastWaitingCleanup;
     QMap<QPair<QString, QString>, IntentHandler *> m_handlers; // intentId + appId -> handler
 
     // no timeouts by default -- these have to be set at runtime

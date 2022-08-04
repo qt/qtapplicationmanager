@@ -277,6 +277,9 @@ void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest>
     // on app startup and (b) have consistent behavior in single- and multi-process mode
 
     QMetaObject::invokeMethod(m_ic, [icr, this]() {
+        if (!icr)
+            return;
+
         IntentServerRequest *isr = m_issi->requestToSystem(icr->requestingApplicationId(), icr->intentId(),
                                                            icr->applicationId(), icr->parameters());
         QUuid requestId = isr ? isr->requestId() : QUuid();

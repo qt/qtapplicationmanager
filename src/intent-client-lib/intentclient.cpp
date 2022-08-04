@@ -86,6 +86,7 @@ IntentClient::IntentClient(IntentClientSystemInterface *systemInterface, QObject
     : QObject(parent)
     , m_systemInterface(systemInterface)
 {
+    m_lastWaitingCleanup.start();
     m_systemInterface->setParent(this);
 }
 
@@ -197,8 +198,8 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
 {
     IntentClientRequest *icr = nullptr;
     auto it = std::find_if(m_waiting.cbegin(), m_waiting.cend(),
-                           [requestId](IntentClientRequest *ir) -> bool {
-            return (ir->requestId() == requestId);
+                           [requestId](const QPointer<IntentClientRequest> &ir) -> bool {
+            return ir && (ir->requestId() == requestId);
     });
 
     if (it == m_waiting.cend()) {
@@ -209,6 +210,12 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
     }
     icr = *it;
     m_waiting.erase(it);
+
+    // make sure to periodically remove all requests that were gc'ed before a reply was received
+    if (m_lastWaitingCleanup.elapsed() > 1000) {
+        m_waiting.removeAll({ });
+        m_lastWaitingCleanup.start();
+    }
 
     if (error)
         icr->setErrorMessage(result.value(qSL("errorMessage")).toString());

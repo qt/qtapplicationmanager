@@ -55,6 +55,8 @@
 #include "configcache.h"
 #include "filesystemmountwatcher.h"
 
+#include <cstdlib>
+
 
 QT_BEGIN_NAMESPACE_AM
 

@@ -284,6 +284,7 @@ QT_END_NAMESPACE_AM
 #  include <signal.h>
 #  include <pthread.h>
 #  include <stdio.h>
+#  include <stdlib.h>
 
 #  if defined(AM_USE_LIBBACKTRACE)
 #    include <libbacktrace/backtrace.h>

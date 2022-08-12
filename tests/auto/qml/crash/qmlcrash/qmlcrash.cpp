@@ -9,6 +9,7 @@
 #include "qmlcrash.h"
 
 #include <signal.h>
+#include <stdlib.h>
 
 
 static QObject *qmlCrash_provider(QQmlEngine *engine, QJSEngine *scriptEngine)

@@ -33,6 +33,7 @@
 #include "qmlterminator2.h"
 
 #include <signal.h>
+#include <stdlib.h>
 
 
 static QObject *terminator_provider(QQmlEngine *engine, QJSEngine *scriptEngine)

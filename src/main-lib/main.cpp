@@ -42,6 +42,7 @@
 ****************************************************************************/
 
 #include <memory>
+#include <cstdlib>
 #include <qglobal.h>
 
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)

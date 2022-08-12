@@ -17,6 +17,7 @@
 #include "filesystemmountwatcher.h"
 
 #include <memory>
+#include <cstdlib>
 
 QT_BEGIN_NAMESPACE_AM
 

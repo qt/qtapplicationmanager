@@ -773,8 +773,9 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
                 if (fd < 0)
                     fd = stdioRedirections.value(1, -1);
                 if (fd >= 0) {
-                    write(fd, noRedirectMsg, qstrlen(noRedirectMsg));
-                    write(fd, "\n", 1);
+                    auto dummy = write(fd, noRedirectMsg, qstrlen(noRedirectMsg));
+                    dummy += write(fd, "\n", 1);
+                    Q_UNUSED(dummy)
                 }
                 qCWarning(LogSystem) << noRedirectMsg;
             }

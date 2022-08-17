@@ -116,9 +116,7 @@ void IntentClient::registerHandler(IntentHandler *handler)
 
 void IntentClient::unregisterHandler(IntentHandler *handler)
 {
-    m_handlers.erase(std::remove_if(m_handlers.begin(), m_handlers.end(),
-                                    [handler](const auto &h) { return h == handler; }),
-                     m_handlers.end());
+    m_handlers.removeIf([handler](auto it) { return it.value() == handler; });
 }
 
 /*! \qmlmethod IntentRequest IntentClient::sendIntentRequest(string intentId, var parameters)

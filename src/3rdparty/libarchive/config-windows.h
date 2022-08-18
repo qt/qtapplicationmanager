@@ -22,14 +22,14 @@
 #define HAVE_UNSIGNED___INT64
 
 /* The sizes of various standard integer types. */
-#define SIZE_OF_SHORT 2
-#define SIZE_OF_INT 4
-#define SIZE_OF_LONG 4
-#define SIZE_OF_LONG_LONG 8
-#define SIZE_OF_UNSIGNED_SHORT 2
-#define SIZE_OF_UNSIGNED 4
-#define SIZE_OF_UNSIGNED_LONG 4
-#define SIZE_OF_UNSIGNED_LONG_LONG 8
+#define SIZEOF_SHORT 2
+#define SIZEOF_INT 4
+#define SIZEOF_LONG 4
+#define SIZEOF_LONG_LONG 8
+#define SIZEOF_UNSIGNED_SHORT 2
+#define SIZEOF_UNSIGNED 4
+#define SIZEOF_UNSIGNED_LONG 4
+#define SIZEOF_UNSIGNED_LONG_LONG 8
 
 /*
  * If we lack int64_t, define it to the first of __int64, int, long, and long long
@@ -40,17 +40,17 @@ typedef __int64 int64_t;
 #define HAVE_INT64_T
 #endif
 
-#if !defined(HAVE_INT64_T) && SIZE_OF_INT == 8
+#if !defined(HAVE_INT64_T) && SIZEOF_INT == 8
 typedef int int64_t;
 #define HAVE_INT64_T
 #endif
 
-#if !defined(HAVE_INT64_T) && SIZE_OF_LONG == 8
+#if !defined(HAVE_INT64_T) && SIZEOF_LONG == 8
 typedef long int64_t;
 #define HAVE_INT64_T
 #endif
 
-#if !defined(HAVE_INT64_T) && SIZE_OF_LONG_LONG == 8
+#if !defined(HAVE_INT64_T) && SIZEOF_LONG_LONG == 8
 typedef long long int64_t;
 #define HAVE_INT64_T
 #endif
@@ -62,12 +62,12 @@ typedef long long int64_t;
 /*
  * Similarly for int32_t
  */
-#if !defined(HAVE_INT32_T) && SIZE_OF_INT == 4
+#if !defined(HAVE_INT32_T) && SIZEOF_INT == 4
 typedef long int32_t;
 #define HAVE_INT32_T
 #endif
 
-#if !defined(HAVE_INT32_T) && SIZE_OF_LONG == 4
+#if !defined(HAVE_INT32_T) && SIZEOF_LONG == 4
 typedef long int32_t;
 #define HAVE_INT32_T
 #endif
@@ -79,12 +79,12 @@ typedef long int32_t;
 /*
  * Similarly for int16_t
  */
-#if !defined(HAVE_INT16_T) && SIZE_OF_INT == 2
+#if !defined(HAVE_INT16_T) && SIZEOF_INT == 2
 typedef int int16_t;
 #define HAVE_INT16_T
 #endif
 
-#if !defined(HAVE_INT16_T) && SIZE_OF_SHORT == 2
+#if !defined(HAVE_INT16_T) && SIZEOF_SHORT == 2
 typedef short int16_t;
 #define HAVE_INT16_T
 #endif
@@ -101,17 +101,17 @@ typedef unsigned __int64 uint64_t;
 #define HAVE_UINT64_T
 #endif
 
-#if !defined(HAVE_UINT64_T) && SIZE_OF_UNSIGNED == 8
+#if !defined(HAVE_UINT64_T) && SIZEOF_UNSIGNED == 8
 typedef unsigned uint64_t;
 #define HAVE_UINT64_T
 #endif
 
-#if !defined(HAVE_UINT64_T) && SIZE_OF_UNSIGNED_LONG == 8
+#if !defined(HAVE_UINT64_T) && SIZEOF_UNSIGNED_LONG == 8
 typedef unsigned long uint64_t;
 #define HAVE_UINT64_T
 #endif
 
-#if !defined(HAVE_UINT64_T) && SIZE_OF_UNSIGNED_LONG_LONG == 8
+#if !defined(HAVE_UINT64_T) && SIZEOF_UNSIGNED_LONG_LONG == 8
 typedef unsigned long long uint64_t;
 #define HAVE_UINT64_T
 #endif
@@ -124,12 +124,12 @@ typedef unsigned long long uint64_t;
 /*
  * Similarly for uint32_t
  */
-#if !defined(HAVE_UINT32_T) && SIZE_OF_UNSIGNED == 4
+#if !defined(HAVE_UINT32_T) && SIZEOF_UNSIGNED == 4
 typedef unsigned uint32_t;
 #define HAVE_UINT32_T
 #endif
 
-#if !defined(HAVE_UINT32_T) && SIZE_OF_UNSIGNED_LONG == 4
+#if !defined(HAVE_UINT32_T) && SIZEOF_UNSIGNED_LONG == 4
 typedef unsigned long uint32_t;
 #define HAVE_UINT32_T
 #endif
@@ -141,12 +141,12 @@ typedef unsigned long uint32_t;
 /*
  * Similarly for uint16_t
  */
-#if !defined(HAVE_UINT16_T) && SIZE_OF_UNSIGNED == 2
+#if !defined(HAVE_UINT16_T) && SIZEOF_UNSIGNED == 2
 typedef unsigned uint16_t;
 #define HAVE_UINT16_T
 #endif
 
-#if !defined(HAVE_UINT16_T) && SIZE_OF_UNSIGNED_SHORT == 2
+#if !defined(HAVE_UINT16_T) && SIZEOF_UNSIGNED_SHORT == 2
 typedef unsigned short uint16_t;
 #define HAVE_UINT16_T
 #endif

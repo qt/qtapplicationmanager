@@ -6,10 +6,10 @@
 
     "Description": "A C library that may be linked into a C/C++ program to produce symbolic backtraces.",
     "Homepage": "https://github.com/ianlancetaylor/libbacktrace",
-    "Version": "2021-05-31",
+    "Version": "2022-07-09",
 
     "License": "BSD 3-clause \"New\" or \"Revised\" License",
     "LicenseId": "BSD-3-Clause",
     "LicenseFile": "LICENSE",
-    "Copyright": "Copyright (C) 2012-2021 Free Software Foundation, Inc."
+    "Copyright": "Copyright (C) 2012-2022 Free Software Foundation, Inc."
 }

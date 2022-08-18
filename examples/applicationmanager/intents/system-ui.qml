@@ -3,11 +3,11 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-import QtQuick 2.11
-import QtQuick.Controls 2.4
-import QtQuick.Layouts 1.4
-import QtApplicationManager.SystemUI 2.0
-import QtApplicationManager 2.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtApplicationManager.SystemUI
+import QtApplicationManager
 import "shared"
 
 Item {
@@ -57,12 +57,16 @@ Item {
             title: "System UI"
 
             onRequest: (intentId, applicationId, parameters) => {
-                var request = IntentClient.sendIntentRequest(intentId, applicationId, parameters)
+                let request = IntentClient.sendIntentRequest(intentId, applicationId, parameters)
                 request.onReplyReceived.connect(function() {
                     sysui_page.setResult(request.requestId, request.succeeded,
                                          request.succeeded ? request.result : request.errorMessage)
                 })
             }
+            onBroadcast: (intentId, parameters) => {
+                IntentClient.broadcastIntentRequest(intentId, parameters)
+            }
+
             RotationAnimation on rotation {
                 id: rotationAnimation
                 running: false

@@ -94,7 +94,7 @@ Module {
     }
     Component {
         name: "Intent"
-        exports: [ "QtApplicationManager.SystemUI/IntentObject 2.0" ]
+        exports: [ "QtApplicationManager.SystemUI/IntentObject 2.1" ]
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isCreatable: false
@@ -111,6 +111,7 @@ Module {
         Property { name: "description"; type: "string"; isReadonly: true }
         Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true }
         Property { name: "categories"; type: "QStringList"; isReadonly: true }
+        Property { name: "handleOnlyWhenRunning"; type: "bool"; isReadonly: true }
     }
     Component {
         name: "IntentServer"

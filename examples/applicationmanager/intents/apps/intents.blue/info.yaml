@@ -16,7 +16,7 @@ intents:
 - id: scale-window
   name:
     en: Scale Blue
-- id: blink-window
+- id: broadcast/blink-window
   name:
     en: Blink Blue
 - id: blue-window-private

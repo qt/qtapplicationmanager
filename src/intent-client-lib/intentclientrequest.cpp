@@ -126,6 +126,15 @@ QT_BEGIN_NAMESPACE_AM
     \sa succeeded
 */
 
+/*! \qmlproperty bool IntentRequest::broadcast
+    \readonly
+    \since 6.5
+
+    Only Set to \c true, if the received request is a broadcast.
+
+    \note Valid only on received requests.
+*/
+
 /*! \qmlsignal IntentRequest::replyReceived()
 
     This signal gets emitted when a reply to an intent request is available. The signal handler
@@ -145,7 +154,7 @@ IntentClientRequest::Direction IntentClientRequest::direction() const
 IntentClientRequest::~IntentClientRequest()
 {
     // the incoming request was gc'ed on the JavaScript side, but no reply was sent yet
-    if ((direction() == Direction::ToApplication) && !m_finished)
+    if ((direction() == Direction::ToApplication) && !m_finished && !m_broadcast)
         sendErrorReply(qSL("Request not handled"));
 }
 
@@ -172,6 +181,11 @@ QString IntentClientRequest::requestingApplicationId() const
 QVariantMap IntentClientRequest::parameters() const
 {
     return m_parameters;
+}
+
+bool IntentClientRequest::isBroadcast() const
+{
+    return m_broadcast;
 }
 
 bool IntentClientRequest::succeeded() const
@@ -210,6 +224,11 @@ void IntentClientRequest::sendReply(const QVariantMap &result)
         qmlWarning(this) << "Calling IntentRequest::sendReply on requests originating from this application is a no-op.";
         return;
     }
+    if (m_broadcast) {
+        qmlWarning(this) << "Calling IntentRequest::sendReply on broadcast requests is a no-op.";
+        return;
+    }
+
     IntentClient *ic = IntentClient::instance();
 
     if (QThread::currentThread() != ic->thread()) {
@@ -239,6 +258,10 @@ void IntentClientRequest::sendErrorReply(const QString &errorMessage)
 {
     if (m_direction == Direction::ToSystem) {
         qmlWarning(this) << "Calling IntentRequest::sendErrorReply on requests originating from this application is a no-op.";
+        return;
+    }
+    if (m_broadcast) {
+        qmlWarning(this) << "Calling IntentRequest::sendErrorReply on broadcast requests is a no-op.";
         return;
     }
     IntentClient *ic = IntentClient::instance();
@@ -286,7 +309,8 @@ void IntentClientRequest::connectNotify(const QMetaMethod &signal)
 
 IntentClientRequest::IntentClientRequest(Direction direction, const QString &requestingApplicationId,
                                          const QUuid &id, const QString &intentId,
-                                         const QString &applicationId, const QVariantMap &parameters)
+                                         const QString &applicationId, const QVariantMap &parameters,
+                                         bool broadcast)
     : QObject()
     , m_direction(direction)
     , m_id(id)
@@ -294,6 +318,7 @@ IntentClientRequest::IntentClientRequest(Direction direction, const QString &req
     , m_requestingApplicationId(requestingApplicationId)
     , m_applicationId(applicationId)
     , m_parameters(parameters)
+    , m_broadcast(broadcast)
 { }
 
 void IntentClientRequest::setRequestId(const QUuid &requestId)

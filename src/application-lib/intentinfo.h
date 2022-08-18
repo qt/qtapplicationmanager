@@ -44,6 +44,8 @@ public:
     QMap<QString, QString> descriptions() const;
     QString icon() const;
 
+    bool handleOnlyWhenRunning() const;
+
     void writeToDataStream(QDataStream &ds) const;
     static IntentInfo *readFromDataStream(PackageInfo *pkg, QDataStream &ds);
 
@@ -59,6 +61,8 @@ private:
     QMap<QString, QString> m_names; // language -> name
     QMap<QString, QString> m_descriptions; // language -> description
     QString m_icon; // relative to the manifest's location
+
+    bool m_handleOnlyWhenRunning = false;
 
     friend class YamlPackageScanner;
     Q_DISABLE_COPY(IntentInfo)

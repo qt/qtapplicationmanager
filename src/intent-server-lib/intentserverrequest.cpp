@@ -9,18 +9,22 @@ QT_BEGIN_NAMESPACE_AM
 
 IntentServerRequest::IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
                                          const QVector<Intent *> &potentialIntents,
-                                         const QVariantMap &parameters)
+                                         const QVariantMap &parameters, bool broadcast)
     : m_id(QUuid::createUuid())
     , m_state(State::ReceivedRequest)
+    , m_broadcast(broadcast)
     , m_intentId(intentId)
     , m_requestingApplicationId(requestingApplicationId)
-    , m_potentialIntents(potentialIntents)
     , m_parameters(parameters)
 {
     Q_ASSERT(!potentialIntents.isEmpty());
+    Q_ASSERT(!broadcast || (potentialIntents.size() == 1));
+
+    for (auto *intent : potentialIntents)
+        m_potentialIntents << intent;
 
     if (potentialIntents.size() == 1)
-        setHandlingApplicationId(potentialIntents.first()->applicationId());
+        setSelectedIntent(potentialIntents.constFirst());
 }
 
 IntentServerRequest::State IntentServerRequest::state() const
@@ -43,14 +47,19 @@ QString IntentServerRequest::requestingApplicationId() const
     return m_requestingApplicationId;
 }
 
-QString IntentServerRequest::handlingApplicationId() const
+Intent *IntentServerRequest::selectedIntent() const
 {
-    return m_handlingApplicationId;
+    return m_selectedIntent.get();
 }
 
 QVector<Intent *> IntentServerRequest::potentialIntents() const
 {
-    return m_potentialIntents;
+    QVector<Intent *> out;
+    for (auto &intent : m_potentialIntents) {
+        if (intent)
+            out << intent.get();
+    }
+    return out;
 }
 
 QVariantMap IntentServerRequest::parameters() const
@@ -66,6 +75,11 @@ bool IntentServerRequest::succeeded() const
 QVariantMap IntentServerRequest::result() const
 {
     return m_result;
+}
+
+bool IntentServerRequest::isBroadcast() const
+{
+    return m_broadcast;
 }
 
 void IntentServerRequest::setRequestFailed(const QString &errorMessage)
@@ -88,9 +102,10 @@ void IntentServerRequest::setState(IntentServerRequest::State newState)
     m_state = newState;
 }
 
-void IntentServerRequest::setHandlingApplicationId(const QString &applicationId)
+void IntentServerRequest::setSelectedIntent(Intent *intent)
 {
-    m_handlingApplicationId = applicationId;
+    if (m_potentialIntents.contains(intent))
+        m_selectedIntent = intent;
 }
 
 QT_END_NAMESPACE_AM

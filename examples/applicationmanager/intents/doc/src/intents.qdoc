@@ -24,8 +24,8 @@ Each application, as well as the System UI, look alike and have the same functio
 the UI: You can choose from one of the available intent IDs in the top combo-box (labeled \e Intent),
 and optionally also specify the corresponding application that should handle the chosen request
 (labeled \e Application).
-Clicking the \e Request button will create and send the corresponding intent request to the
-application manager's IntentServer for handling:
+Clicking the \e Request / \e Broadcast button will create and send the corresponding intent request
+to the application manager's IntentServer for handling:
 \list
 \li The combination of \e Intent and \e Application was valid and the target application was able to
     handle the request; the \l{IntentRequest::result}{result of this request} will be shown
@@ -53,6 +53,7 @@ Each application is put in its own separate directory as described below. Since 
 directory.
 
 \list
+\li \tt{am-config.yaml}
 \li \tt{system-ui.qml}
 \li \tt{\b{apps}}
     \list
@@ -91,38 +92,42 @@ definition of the intents that this application can handle.
 Assuming the \c appman executable is in your path, you can run the System UI as follows:
 
 \badcode
-examples/applicationmanager/intents$ appman --builtin-apps-manifest-dir ./apps system-ui.qml
+examples/applicationmanager/intents$ appman -c am-config.yaml
 \endcode
-
-Adding \c{-o "ui: { style: material }" } will make the example look and feel a lot nicer.
 
 And this is what you should see:
 
 \image intents-launched.png
 
-For information on these and other command line options you can run \tt{appman --help} or have a
-look at the \l{Configuration} documentation.
+For information on the contents of \c am-config.yaml and other command line options you can run
+\tt{appman --help} or have a look at the \l{Configuration} documentation.
 
 
 \section1 Application Implementation
 
 All the applications (red, green and blue) are identical and their \c main.qml just
-instantiates the shared IntentsApplicationWindow component.
+instantiates the shared \c IntentsApplicationWindow component.
 
 \snippet applicationmanager/intents/apps/intents.red/main.qml Main
 
 The IntentsApplicationWindow component is actually a top-level ApplicationManagerWindow, with its
 UI contents being defined by instantiating the \c IntentsUIPage component, that is also shared. This
 UI component does not have any intent-specific code, so the actual sending is done in the signal
-handler attached to the IntentsUIPage request signal:
+handlers attached to the IntentsUIPage request and broadcast signals:
 
 \snippet applicationmanager/intents/shared/IntentsApplicationWindow.qml Send Intent
+
+and
+
+\snippet applicationmanager/intents/shared/IntentsApplicationWindow.qml Broadcast Intent
 
 After calling IntentClient::sendIntentRequest with the parameters as chosen in the UI, the
 example code will connect a function object to the \l{IntentRequest::replyReceived}
 {request's replyReceived} signal. The result is placed in the \e Request field in the UI.
+Broadcasts on the other hand do not generate replies.
 
-In addition, it defines all the necessary IntentHandlers for the applications, for example:
+In addition, IntentsApplicationWindow defines all the necessary IntentHandlers for the applications,
+for example:
 
 \snippet applicationmanager/intents/shared/IntentsApplicationWindow.qml Intent Handler
 
@@ -153,13 +158,16 @@ intents in the \b Blue application.
 
 
 The \b Green application defines only two available intents. Note that even though this
-application has an IntentHandler for the \c blink-window intent through the shared
+application has an IntentHandler for the \c scale-window intent through the shared
 IntentsApplicationWindow component, this handler is never called, since this intent ID is not
 registered with the system via the \c info.yaml manifest:
 
 \quotefromfile applicationmanager/intents/apps/intents.green/info.yaml
 \skipto intents:
 \printto
+
+On top of that, the \c broadcast/blink-window intent is marked as \c{handleOnlyWhenRunning: yes},
+which prevents auto-starting the \c Green application on broadcasts of this specific intent.
 
 The \b Blue application has the most complex intent definition. In addition to handling the same
 three intents as the \b Red application, it registers the \c blue-window-private intent that has the

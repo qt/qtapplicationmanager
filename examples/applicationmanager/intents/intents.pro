@@ -20,12 +20,12 @@ target.path = $$[QT_INSTALL_EXAMPLES]/applicationmanager/intents
 INSTALLS += target
 
 AM_COPY_DIRECTORIES += apps shared
-AM_COPY_FILES += system-ui.qml
+AM_COPY_FILES += system-ui.qml am-config.yaml
 
 prefix_build:tpath = $$target.path
 else:tpath = $$_PRO_FILE_PWD_
 
-AM_DEFAULT_ARGS = --builtin-apps-manifest-dir $$tpath/apps -o \"ui: { style: Material }\" $$tpath/system-ui.qml
+AM_DEFAULT_ARGS = -c $$tpath/am-config.yaml
 
 example_sources.path = $$target.path
 example_sources.files = $$AM_COPY_FILES $$AM_COPY_DIRECTORIES

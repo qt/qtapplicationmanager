@@ -18,3 +18,4 @@ intents:
     string: "^foo_.*_bar$"
     complex: { 'a': 1 }
 - id: custom-error
+- id: broadcast/ping

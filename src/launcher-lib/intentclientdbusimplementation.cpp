@@ -40,9 +40,12 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DE
         QQmlEngine::setObjectOwnership(IntentClient::instance(), QQmlEngine::CppOwnership);
         return IntentClient::instance();
     });
+    qmlRegisterRevision<IntentClient, 1>("QtApplicationManager", 2, 1);
 
     qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 2, 0, "IntentRequest",
                                                     qSL("Cannot create objects of type IntentRequest"));
+    qmlRegisterUncreatableType<IntentClientRequest, 1>("QtApplicationManager", 2, 1, "IntentRequest",
+                                                       qSL("Cannot create objects of type IntentRequest"));
     qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 2, 0, "IntentHandler");
 
 

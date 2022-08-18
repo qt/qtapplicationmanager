@@ -54,8 +54,8 @@ public:
     IpcConnection *findClientIpc(const QString &appId) override;
 
     void startApplication(const QString &appId) override;
-    void requestToApplication(IpcConnection *clientIPC, IntentServerRequest *irs) override;
-    void replyFromSystem(IpcConnection *clientIPC, IntentServerRequest *irs) override;
+    void requestToApplication(IpcConnection *clientIPC, IntentServerRequest *isr) override;
+    void replyFromSystem(IpcConnection *clientIPC, IntentServerRequest *isr) override;
 
 private:
     IntentClientSystemInterface *m_icsi = nullptr;
@@ -94,8 +94,8 @@ public:
     bool isReady() const;
     void setReady(Application *application);
 
-    virtual void replyFromSystem(IntentServerRequest *irs) = 0;
-    virtual void requestToApplication(IntentServerRequest *irs) = 0;
+    virtual void replyFromSystem(IntentServerRequest *isr) = 0;
+    virtual void requestToApplication(IntentServerRequest *isr) = 0;
 
 signals:
     void applicationIsReady(const QString &applicationId);
@@ -122,8 +122,8 @@ public:
 
     QString applicationId() const override;
 
-    void replyFromSystem(IntentServerRequest *irs) override;
-    void requestToApplication(IntentServerRequest *irs) override;
+    void replyFromSystem(IntentServerRequest *isr) override;
+    void requestToApplication(IntentServerRequest *isr) override;
 
 private:
     IntentServerInProcessIpcConnection(Application *application, IntentServerAMImplementation *iface);
@@ -146,8 +146,8 @@ public:
     ~IntentServerDBusIpcConnection() override;
 
     QString requestToSystem(const QString &intentId, const QString &applicationId, const QVariantMap &parameters);
-    void replyFromSystem(IntentServerRequest *irs) override;
-    void requestToApplication(IntentServerRequest *irs) override;
+    void replyFromSystem(IntentServerRequest *isr) override;
+    void requestToApplication(IntentServerRequest *isr) override;
     void replyFromApplication(const QString &requestId, bool error, const QVariantMap &result);
 
 

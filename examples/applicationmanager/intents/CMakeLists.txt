@@ -19,7 +19,6 @@ find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt6_am_add_systemui_wrapper(intents
-    MAIN_QML_FILE system-ui.qml
+    CONFIG_YAML am-config.yaml
     EXTRA_FILES apps shared
-    EXTRA_ARGS --builtin-apps-manifest-dir apps -o \"ui: { style: Material }\"
 )

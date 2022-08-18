@@ -10,6 +10,7 @@
 #include <QVariantMap>
 #include <QUuid>
 #include <QVector>
+#include <QPointer>
 #include <QtAppManCommon/global.h>
 #include <QtAppManIntentServer/intent.h>
 
@@ -23,7 +24,8 @@ class IntentServerRequest
 
 public:
     IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
-                        const QVector<Intent *> &potentialIntents, const QVariantMap &parameters);
+                        const QVector<Intent *> &potentialIntents, const QVariantMap &parameters,
+                        bool broadcast);
 
     enum class State {
         ReceivedRequest,
@@ -41,14 +43,15 @@ public:
     QUuid requestId() const;
     QString intentId() const;
     QString requestingApplicationId() const;
-    QString handlingApplicationId() const;
+    Intent *selectedIntent() const;
     QVector<Intent *> potentialIntents() const;
     QVariantMap parameters() const;
     bool succeeded() const;
     QVariantMap result() const;
+    bool isBroadcast() const;
 
     void setState(State newState);
-    void setHandlingApplicationId(const QString &applicationId);
+    void setSelectedIntent(Intent *intent);
 
     void setRequestFailed(const QString &errorMessage);
     void setRequestSucceeded(const QVariantMap &result);
@@ -57,10 +60,11 @@ private:
     QUuid m_id;
     State m_state;
     bool m_succeeded = false;
+    bool m_broadcast = false;
     QString m_intentId;
     QString m_requestingApplicationId;
-    QString m_handlingApplicationId;
-    QVector<Intent *> m_potentialIntents;
+    QPointer<Intent> m_selectedIntent;
+    QVector<QPointer<Intent>> m_potentialIntents;
     QVariantMap m_parameters;
     QVariantMap m_result;
 };

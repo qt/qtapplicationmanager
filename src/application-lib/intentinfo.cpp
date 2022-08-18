@@ -64,8 +64,13 @@ QString IntentInfo::icon() const
     return m_icon.isEmpty() ? m_packageInfo->icon() : m_icon;
 }
 
+bool IntentInfo::handleOnlyWhenRunning() const
+{
+    return m_handleOnlyWhenRunning;
+}
 
-const quint32 IntentInfo::DataStreamVersion = 2;
+
+const quint32 IntentInfo::DataStreamVersion = 3;
 
 
 void IntentInfo::writeToDataStream(QDataStream &ds) const
@@ -80,7 +85,8 @@ void IntentInfo::writeToDataStream(QDataStream &ds) const
        << m_categories
        << m_names
        << m_descriptions
-       << m_icon;
+       << m_icon
+       << m_handleOnlyWhenRunning;
 }
 
 IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
@@ -98,7 +104,8 @@ IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
        >> intent->m_categories
        >> intent->m_names
        >> intent->m_descriptions
-       >> intent->m_icon;
+       >> intent->m_icon
+       >> intent->m_handleOnlyWhenRunning;
 
     intent->m_visibility = (visibilityStr == qSL("public")) ? Public : Private;
     intent->m_categories.sort();

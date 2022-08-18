@@ -48,10 +48,10 @@ involved in an intent request:
 \li the \c applicationId denotes the application that is responsible for handling the request. This
     directly maps to the ApplicationObject::id value.
     If the handling application is in fact the System UI, this id will have the special value
-    \c {:sysui:}.
+    IntentClient::systemUiId (\c{:sysui:}).
 \li the \c requestingApplicationId does the same as the \c applicationId, but for the application
     sending the request. If the requesting application is in fact the System UI, this id will have
-    the special value \c {:sysui:}.
+    the special value IntentClient::systemUiId (\c{:sysui:}).
 \endlist
 
 Arbitrary data can be attached to an intent request (see IntentClient::sendIntentRequest) and to an

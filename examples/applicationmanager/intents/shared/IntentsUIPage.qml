@@ -3,9 +3,10 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-import QtQuick 2.11
-import QtQuick.Controls 2.4
-import QtQuick.Layouts 1.4
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtApplicationManager
 
 Rectangle {
     id: root
@@ -19,6 +20,7 @@ Rectangle {
     }
 
     signal request(string intentId, string applicationId, var parameters)
+    signal broadcast(string intentId, var parameters)
 
     color: "white"
     Rectangle {
@@ -50,25 +52,32 @@ Rectangle {
         Label { text: "Intent:" }
         ComboBox {
             id: cbIntent
-            model: [ "rotate-window", "scale-window", "blink-window", "blue-window-private" ]
+            model: [ "rotate-window", "scale-window", "blue-window-private", "broadcast/blink-window" ]
+            property bool isBroadcast: currentText.startsWith("broadcast/")
             Layout.fillWidth: true
         }
         Label { text: "Application:" }
         ComboBox {
             id: cbApplication
-            model: [ "<not specified>", "intents.red", "intents.green", "intents.blue", ":sysui:" ]
+            model: [ "<not specified>", "intents.red", "intents.green", "intents.blue", IntentClient.systemUiId ]
+            enabled: !cbIntent.isBroadcast
+            property bool needsDisambiguation: currentIndex === 0
             Layout.fillWidth: true
         }
         Button {
             id: btRequest
-            text: "Request"
+            text: cbIntent.isBroadcast ? "Broadcast" : "Request"
             Layout.columnSpan: 2
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignCenter
 
             onClicked: {
-                var appId = cbApplication.currentIndex === 0 ? "" : cbApplication.currentText
-                root.request(cbIntent.currentText, appId, { "Request": { "Parameters": { "Testing": 1 }}})
+                if (cbIntent.isBroadcast) {
+                    root.broadcast(cbIntent.currentText, { "Broadcast": { "Parameters": { "Testing": 42 }}})
+                } else {
+                    let appId = cbApplication.needsDisambiguation ? "" : cbApplication.currentText
+                    root.request(cbIntent.currentText, appId, { "Request": { "Parameters": { "Testing": 1 }}})
+                }
             }
         }
         Label { text: "Request:" }

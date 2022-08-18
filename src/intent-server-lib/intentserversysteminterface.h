@@ -37,9 +37,9 @@ public:
 
     IntentServerRequest *requestToSystem(const QString &requestingApplicationId, const QString &intentId,
                                          const QString &applicationId, const QVariantMap &parameters);
-    virtual void replyFromSystem(IpcConnection *clientIPC, IntentServerRequest *irs) = 0;
+    virtual void replyFromSystem(IpcConnection *clientIPC, IntentServerRequest *isr) = 0;
 
-    virtual void requestToApplication(IpcConnection *clientIPC, IntentServerRequest *irs) = 0;
+    virtual void requestToApplication(IpcConnection *clientIPC, IntentServerRequest *isr) = 0;
 
 signals:
     void applicationWasStarted(const QString &appId);

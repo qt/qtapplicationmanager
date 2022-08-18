@@ -318,6 +318,9 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                     intentInfo->m_categories = p->parseStringOrStringList();
                     intentInfo->m_categories.sort();
                 });
+                intentFields.emplace_back("handleOnlyWhenRunning", false, YamlParser::Scalar, [&intentInfo](YamlParser *p) {
+                    intentInfo->m_handleOnlyWhenRunning = p->parseScalar().toBool();
+                });
 
                 p->parseFields(intentFields);
 

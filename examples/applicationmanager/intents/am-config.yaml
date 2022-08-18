@@ -1,0 +1,15 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+
+ui:
+  mainQml: "${CONFIG_PWD}/system-ui.qml"
+  style: Material
+
+# development setup:
+flags:
+  noSecurity: yes
+  noUiWatchdog: yes
+  developmentMode: yes

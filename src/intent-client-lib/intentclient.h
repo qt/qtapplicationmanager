@@ -26,13 +26,17 @@ class IntentClientSystemInterface;
 class IntentClient : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IntentClient 2.0 SINGLETON")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IntentClient 2.1 SINGLETON")
+    Q_PROPERTY(QString systemUiId READ systemUiId CONSTANT REVISION 1)
 
 public:
     ~IntentClient() override;
     static IntentClient *createInstance(IntentClientSystemInterface *systemInterface);
     static IntentClient *instance();
 
+    QString systemUiId() const;
+
+    int replyFromSystemTimeout() const;
     void setReplyFromSystemTimeout(int timeout);
     void setReplyFromApplicationTimeout(int timeout);
 
@@ -49,6 +53,9 @@ public:
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *sendIntentRequest(const QString &intentId,
                                                                                 const QString &applicationId,
                                                                                 const QVariantMap &parameters);
+
+    Q_REVISION(1) Q_INVOKABLE bool broadcastIntentRequest(const QString &intentId,
+                                                             const QVariantMap &parameters);
 
 private:
     void requestToSystemFinished(IntentClientRequest *icr, const QUuid &newRequestId,

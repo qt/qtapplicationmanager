@@ -19,7 +19,7 @@ class IntentClient;
 class IntentClientRequest : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IntentRequest 2.0 UNCREATABLE")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IntentRequest 2.1 UNCREATABLE")
 
     Q_PROPERTY(QUuid requestId READ requestId NOTIFY requestIdChanged)
     Q_PROPERTY(Direction direction READ direction CONSTANT)
@@ -30,6 +30,7 @@ class IntentClientRequest : public QObject
     Q_PROPERTY(bool succeeded READ succeeded NOTIFY replyReceived)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY replyReceived)
     Q_PROPERTY(QVariantMap result READ result NOTIFY replyReceived)
+    Q_PROPERTY(bool broadcast READ isBroadcast CONSTANT REVISION 1)
 
 public:
     enum class Direction { ToSystem, ToApplication };
@@ -43,6 +44,7 @@ public:
     QString applicationId() const;
     QString requestingApplicationId() const;
     QVariantMap parameters() const;
+    bool isBroadcast() const;
 
     const QVariantMap result() const;
     bool succeeded() const;
@@ -62,7 +64,8 @@ protected:
 
 private:
     IntentClientRequest(Direction direction, const QString &requestingApplicationId, const QUuid &id,
-                        const QString &intentId, const QString &applicationId, const QVariantMap &parameters);
+                        const QString &intentId, const QString &applicationId, const QVariantMap &parameters,
+                        bool broadcast);
 
     void setRequestId(const QUuid &requestId);
     void setResult(const QVariantMap &result);
@@ -83,6 +86,7 @@ private:
     //  ToSystem: we have received the final result or errorMessage via replyReceived()
     //  ToApplication: the request was handled and send(Error)Reply was called
     bool m_finished = false;
+    bool m_broadcast = false;
 
     Q_DISABLE_COPY(IntentClientRequest)
 

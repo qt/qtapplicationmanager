@@ -285,6 +285,15 @@ The fields used for each item within the \c intents list are as follows:
         application will be used as the default handler for all intents.
         The given application id has to be from within this package.
 \row
+    \li \c handleOnlyWhenRunning
+    \li bool
+    \li By default, applications are automatically started when a request is targeted at them, but
+        they are not currently running. Setting the \c handleOnlyWhenRunning flag to \c true will
+        prevent this behavior and any requests for this intent will only be forwarded to its
+        handling application, if the application is actuallly running.
+        This is useful for system-wide broadcasts that are only relevant if an application is active
+        (e.g. changes in internet availability).
+\row
     \li \c requiredCapabilities
     \li list<string>
     \li Limit the client applications that are able to call this intent to applications having at

@@ -41,9 +41,6 @@
 QT_BEGIN_NAMESPACE_AM
 
 
-static QString sysUiId() { return qSL(":sysui:"); }
-
-
 //////////////////////////////////////////////////////////////////////////
 // vvv IntentAMImplementation vvv
 
@@ -105,7 +102,7 @@ IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(Packag
                                      intentInfo->parameterMatch(), intentInfo->names(),
                                      intentInfo->descriptions(),
                                      QUrl::fromLocalFile(package->info()->baseDir().absoluteFilePath(intentInfo->icon())),
-                                     intentInfo->categories())) {
+                                     intentInfo->categories(), intentInfo->handleOnlyWhenRunning())) {
             throw Exception(Error::Intents, "could not add intent %1 for package %2")
                 .arg(intentInfo->id()).arg(package->id());
         }
@@ -196,7 +193,7 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
 bool IntentServerAMImplementation::checkApplicationCapabilities(const QString &applicationId,
                                                                 const QStringList &requiredCapabilities)
 {
-    if (applicationId == sysUiId()) // The System UI bypasses the capabilities check
+    if (applicationId == IntentClient::instance()->systemUiId()) // The System UI bypasses the capabilities check
         return true;
 
     const auto app = ApplicationManager::instance()->application(applicationId);
@@ -223,15 +220,15 @@ void IntentServerAMImplementation::startApplication(const QString &appId)
 }
 
 void IntentServerAMImplementation::requestToApplication(IntentServerSystemInterface::IpcConnection *clientIPC,
-                                                        IntentServerRequest *irs)
+                                                        IntentServerRequest *isr)
 {
-    reinterpret_cast<IntentServerIpcConnection *>(clientIPC)->requestToApplication(irs);
+    reinterpret_cast<IntentServerIpcConnection *>(clientIPC)->requestToApplication(isr);
 }
 
 void IntentServerAMImplementation::replyFromSystem(IntentServerSystemInterface::IpcConnection *clientIPC,
-                                                   IntentServerRequest *irs)
+                                                   IntentServerRequest *isr)
 {
-    reinterpret_cast<IntentServerIpcConnection *>(clientIPC)->replyFromSystem(irs);
+    reinterpret_cast<IntentServerIpcConnection *>(clientIPC)->replyFromSystem(isr);
 }
 
 
@@ -251,7 +248,7 @@ QString IntentClientAMImplementation::currentApplicationId(QObject *hint)
 {
     QmlInProcessRuntime *runtime = QmlInProcessRuntime::determineRuntime(hint);
 
-    return runtime ? runtime->application()->info()->id() : sysUiId();
+    return runtime ? runtime->application()->info()->id() : IntentClient::instance()->systemUiId();
 }
 
 void IntentClientAMImplementation::initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false)
@@ -263,9 +260,12 @@ void IntentClientAMImplementation::initialize(IntentClient *intentClient) Q_DECL
         QQmlEngine::setObjectOwnership(IntentClient::instance(), QQmlEngine::CppOwnership);
         return IntentClient::instance();
     });
+    qmlRegisterRevision<IntentClient, 1>("QtApplicationManager", 2, 1);
 
     qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 2, 0, "IntentRequest",
                                                     qSL("Cannot create objects of type IntentRequest"));
+    qmlRegisterUncreatableType<IntentClientRequest, 1>("QtApplicationManager", 2, 1, "IntentRequest",
+                                                       qSL("Cannot create objects of type IntentRequest"));
     qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 2, 0, "IntentHandler");
 
     qmlRegisterType<IntentServerHandler>("QtApplicationManager.SystemUI", 2, 0, "IntentServerHandler");
@@ -334,7 +334,8 @@ void IntentServerIpcConnection::setReady(Application *application)
         return;
     m_application = application;
     m_ready = true;
-    emit applicationIsReady((isInProcess() && !application) ? sysUiId() : application->id());
+    emit applicationIsReady((isInProcess() && !application) ? IntentClient::instance()->systemUiId()
+                                                            : application->id());
 }
 
 IntentServerIpcConnection *IntentServerIpcConnection::find(const QString &appId)
@@ -395,28 +396,29 @@ IntentServerInProcessIpcConnection *IntentServerInProcessIpcConnection::createSy
 
 QString IntentServerInProcessIpcConnection::applicationId() const
 {
-    return m_isSystemUi ? sysUiId() : IntentServerIpcConnection::applicationId();
+    return m_isSystemUi ? IntentClient::instance()->systemUiId()
+                        : IntentServerIpcConnection::applicationId();
 }
 
-void IntentServerInProcessIpcConnection::requestToApplication(IntentServerRequest *irs)
+void IntentServerInProcessIpcConnection::requestToApplication(IntentServerRequest *isr)
 {
     // we need decouple the server/client interface at this point to have a consistent
     // behavior in single- and multi-process mode
-    QMetaObject::invokeMethod(this, [this, irs]() {
+    QMetaObject::invokeMethod(this, [this, isr]() {
         auto clientInterface = m_interface->intentClientSystemInterface();
-        emit clientInterface->requestToApplication(irs->requestId(), irs->intentId(),
-                                                   irs->requestingApplicationId(),
-                                                   irs->handlingApplicationId(), irs->parameters());
+        emit clientInterface->requestToApplication(isr->requestId(), isr->intentId(),
+                                                   isr->isBroadcast() ? qSL(":broadcast:") : isr->requestingApplicationId(),
+                                                   isr->selectedIntent()->applicationId(), isr->parameters());
     }, Qt::QueuedConnection);
 }
 
-void IntentServerInProcessIpcConnection::replyFromSystem(IntentServerRequest *irs)
+void IntentServerInProcessIpcConnection::replyFromSystem(IntentServerRequest *isr)
 {
     // we need decouple the server/client interface at this point to have a consistent
     // behavior in single- and multi-process mode
-    QMetaObject::invokeMethod(this, [this, irs]() {
+    QMetaObject::invokeMethod(this, [this, isr]() {
         auto clientInterface = m_interface->intentClientSystemInterface();
-        emit clientInterface->replyFromSystem(irs->requestId(), !irs->succeeded(), irs->result());
+        emit clientInterface->replyFromSystem(isr->requestId(), !isr->succeeded(), isr->result());
     }, Qt::QueuedConnection);
 }
 
@@ -465,17 +467,21 @@ IntentServerDBusIpcConnection *IntentServerDBusIpcConnection::find(QDBusConnecti
     return nullptr;
 }
 
-void IntentServerDBusIpcConnection::requestToApplication(IntentServerRequest *irs)
+void IntentServerDBusIpcConnection::requestToApplication(IntentServerRequest *isr)
 {
-    emit m_adaptor->requestToApplication(irs->requestId().toString(), irs->intentId(),
-                                         irs->handlingApplicationId(),
-                                         convertFromJSVariant(irs->parameters()).toMap());
+    Q_ASSERT(isr && isr->selectedIntent());
+
+    emit m_adaptor->requestToApplication(isr->requestId().toString(), isr->intentId(),
+                                         isr->selectedIntent()->applicationId(),
+                                         convertFromJSVariant(isr->parameters()).toMap());
 }
 
-void IntentServerDBusIpcConnection::replyFromSystem(IntentServerRequest *irs)
+void IntentServerDBusIpcConnection::replyFromSystem(IntentServerRequest *isr)
 {
-    emit m_adaptor->replyFromSystem(irs->requestId().toString(), !irs->succeeded(),
-                                    convertFromJSVariant(irs->result()).toMap());
+    Q_ASSERT(isr);
+
+    emit m_adaptor->replyFromSystem(isr->requestId().toString(), !isr->succeeded(),
+                                    convertFromJSVariant(isr->result()).toMap());
 }
 
 QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,
@@ -483,13 +489,13 @@ QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,
                                                        const QVariantMap &parameters)
 {
     auto requestingApplicationId = application() ? application()->id() : QString();
-    auto irs = m_interface->requestToSystem(requestingApplicationId, intentId, applicationId,
+    auto isr = m_interface->requestToSystem(requestingApplicationId, intentId, applicationId,
                                             convertFromDBusVariant(parameters).toMap());
-    if (!irs) {
+    if (!isr) {
         sendErrorReply(QDBusError::NotSupported, qL1S("No matching intent handler registered."));
         return QString();
     } else {
-        return irs->requestId().toString();
+        return isr->requestId().toString();
     }
 }
 
@@ -733,9 +739,11 @@ void IntentServerHandler::componentComplete()
         return;
     }
 
+    QString sysUiId = IntentClient::instance()->systemUiId();
+
     IntentServer *is = IntentServer::instance();
-    is->addPackage(sysUiId());
-    is->addApplication(sysUiId(), sysUiId());
+    is->addPackage(sysUiId);
+    is->addApplication(sysUiId, sysUiId);
 
     const auto ids = intentIds();
     for (const auto &intentId : ids) {
@@ -748,9 +756,10 @@ void IntentServerHandler::componentComplete()
         for (auto it = qvm_descriptions.cbegin(); it != qvm_descriptions.cend(); ++it)
             descriptions.insert(it.key(), it.value().toString());
 
-        auto intent = is->addIntent(intentId, sysUiId(), sysUiId(), m_intent->requiredCapabilities(),
+        auto intent = is->addIntent(intentId, sysUiId, sysUiId, m_intent->requiredCapabilities(),
                                     m_intent->visibility(), m_intent->parameterMatch(), names,
-                                    descriptions, m_intent->icon(), m_intent->categories());
+                                    descriptions, m_intent->icon(), m_intent->categories(),
+                                    m_intent->handleOnlyWhenRunning());
         if (intent)
             m_registeredIntents << intent;
         else

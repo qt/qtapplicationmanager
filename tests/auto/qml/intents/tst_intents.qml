@@ -5,8 +5,8 @@
 
 import QtQuick 2.4
 import QtTest 1.0
-import QtApplicationManager 2.0
-import QtApplicationManager.SystemUI 2.0
+import QtApplicationManager 2.1
+import QtApplicationManager.SystemUI 2.1
 
 TestCase {
     id: testCase
@@ -216,5 +216,47 @@ TestCase {
             compare(req.result, {})
         }
         requestSpy.clear()
+    }
+
+    IntentServerHandler {
+        id: broadcastReceiver
+        intentIds: [ "broadcast/pong" ]
+        visibility: IntentObject.Public
+        onRequestReceived: (request) => {
+            pongsReceived.push(request.parameters.from)
+        }
+        property var pongsReceived: []
+    }
+
+
+    function test_zbroadcast() { // 'z' to make it run as the last test
+        let am = ApplicationManager
+
+        // stop all running applications
+        am.stopAllApplications(true)
+        tryVerify(() => { return am.applicationRunState("intents1") === Am.NotRunning })
+        tryVerify(() => { return am.applicationRunState("intents2.1") === Am.NotRunning })
+
+        broadcastReceiver.pongsReceived = []
+
+        // broadcast ping -> only intents1 should be auto-started
+        verify(IntentClient.broadcastIntentRequest("broadcast/ping", { }))
+
+        tryVerify(() => { return am.applicationRunState("intents1") === Am.Running })
+        tryVerify(() => { return am.applicationRunState("intents2.1") === Am.NotRunning })
+
+        tryVerify(() => { return broadcastReceiver.pongsReceived.join() === "intents1"})
+
+        // manually start intents2.1 and ping again -> both apps should receive it
+
+        verify(am.startApplication("intents2.1"))
+        tryVerify(() => { return am.applicationRunState("intents2.1") === Am.Running })
+        wait(250 * AmTest.timeoutFactor) // it takes a bit for the intents IPC to get initialized
+
+        broadcastReceiver.pongsReceived = []
+
+        verify(IntentClient.broadcastIntentRequest("broadcast/ping", { }))
+
+        tryVerify(() => { return broadcastReceiver.pongsReceived.sort().join() === "intents1,intents2" })
     }
 }

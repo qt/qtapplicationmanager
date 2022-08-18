@@ -25,4 +25,11 @@ QtObject {
             })
         }
     }
+
+    property var broadcastHandler: IntentHandler {
+        intentIds: [ "broadcast/ping" ]
+        onRequestReceived: (request) => {
+            IntentClient.broadcastIntentRequest("broadcast/pong", { "from": "intents2" })
+        }
+    }
 }

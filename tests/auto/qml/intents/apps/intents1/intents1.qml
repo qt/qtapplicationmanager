@@ -30,4 +30,11 @@ QtObject {
             request.sendErrorReply("custom error")
         }
     }
+
+    property var broadcastHandler: IntentHandler {
+        intentIds: [ "broadcast/ping" ]
+        onRequestReceived: (request) => {
+            IntentClient.broadcastIntentRequest("broadcast/pong", { "from": "intents1" })
+        }
+    }
 }

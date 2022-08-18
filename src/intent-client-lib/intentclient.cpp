@@ -71,6 +71,20 @@ IntentClient *IntentClient::instance()
     return s_instance;
 }
 
+/*! \qmlproperty string IntentClient::systemUiId
+
+    The hardcoded, special application id for targeting the System UI with an intent request.
+*/
+QString IntentClient::systemUiId() const
+{
+    return qSL(":sysui:");
+}
+
+int IntentClient::replyFromSystemTimeout() const
+{
+    return m_replyFromSystemTimeout;
+}
+
 void IntentClient::setReplyFromSystemTimeout(int timeout)
 {
     m_replyFromSystemTimeout = timeout;
@@ -145,12 +159,17 @@ IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, co
     it. The request will fail, if this specified application doesn't exist or can't handle this
     specific request, even though other applications would be able to do it.
 
+    There is the special application id \c IntentClient.systemUiId which can be used to target the
+    System UI.
+
     \sa sendIntentRequest
 */
 IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, const QString &applicationId,
                                                      const QVariantMap &parameters)
 {
     if (intentId.isEmpty())
+        return nullptr;
+    if (applicationId == qSL(":broadcast:")) // reserved
         return nullptr;
 
     //TODO: check that parameters only contains basic datatypes. convertFromJSVariant() does most of
@@ -162,13 +181,37 @@ IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, co
     return icr;
 }
 
+/*! \qmlmethod bool IntentClient::broadcastIntentRequest(string intentId, var parameters)
+    \since 6.5
+
+    Broadcasts an intent request with the given \a intentId to the system. The additional
+    \a parameters are specific to the requested \a intentId, but the format is always the same: a
+    standard JavaScript object, which can also be just empty if the requested intent doesn't
+    require any parameters.
+
+    Broadcast requests do not generate replies. The return value is only ever \c false, if you
+    call this function with invalid arguments.
+*/
+bool IntentClient::broadcastIntentRequest(const QString &intentId, const QVariantMap &parameters)
+{
+    if (intentId.isEmpty())
+        return false;
+
+    //TODO: check that parameters only contains basic datatypes. convertFromJSVariant() does most of
+    //      this already, but doesn't bail out on unconvertible types (yet)
+
+    requestToSystem(m_systemInterface->currentApplicationId(this), intentId, qSL(":broadcast:"), parameters);
+    return true;
+}
+
 IntentClientRequest *IntentClient::requestToSystem(const QString &requestingApplicationId,
                                                    const QString &intentId, const QString &applicationId,
                                                    const QVariantMap &parameters)
 {
     IntentClientRequest *ir = new IntentClientRequest(IntentClientRequest::Direction::ToSystem,
                                                       requestingApplicationId, QUuid(),
-                                                      intentId, applicationId, parameters);
+                                                      intentId, applicationId, parameters,
+                                                      applicationId == qSL(":broadcast:"));
 
     qCDebug(LogIntents) << "Application" << requestingApplicationId << "created an intent request for"
                         << intentId << "(application:" << applicationId << ")";
@@ -180,6 +223,11 @@ void IntentClient::requestToSystemFinished(IntentClientRequest *icr, const QUuid
 {
     if (!icr)
         return;
+
+    if (icr->isBroadcast()) {
+        icr->deleteLater();
+        return;
+    }
 
     if (error) {
         icr->setErrorMessage(errorMessage);
@@ -228,17 +276,20 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
                                         const QString &requestingApplicationId,
                                         const QString &applicationId, const QVariantMap &parameters)
 {
+    bool broadcast = (requestingApplicationId == qSL(":broadcast:"));
+
     qCDebug(LogIntents) << "Client: Incoming intent request" << requestId << "to application" << applicationId
-                        << "for intent" << intentId << "parameters" << parameters;
+                        << "for intent" << intentId << (broadcast ? "(broadcast)" : "") << "parameters" << parameters;
 
     IntentClientRequest *icr = new IntentClientRequest(IntentClientRequest::Direction::ToApplication,
                                                        requestingApplicationId, requestId, intentId,
-                                                       applicationId, parameters);
+                                                       applicationId, parameters, broadcast);
 
     IntentHandler *handler = m_handlers.value(qMakePair(intentId, applicationId));
     if (handler) {
         QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
-        icr->startTimeout(m_replyFromApplicationTimeout);
+        if (!broadcast)
+            icr->startTimeout(m_replyFromApplicationTimeout);
 
         emit handler->requestReceived(icr);
     } else {

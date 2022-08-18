@@ -12,6 +12,7 @@ intents:
 - id: rotate-window
   name:
     en: Rotate Green
-- id: scale-window
+- id: broadcast/blink-window
   name:
-    en: Scale Green
+    en: Blink Green
+  handleOnlyWhenRunning: yes

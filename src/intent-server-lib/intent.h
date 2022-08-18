@@ -17,7 +17,7 @@ QT_BEGIN_NAMESPACE_AM
 class Intent : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentObject 2.0 UNCREATABLE")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentObject 2.1 UNCREATABLE")
 
     Q_PROPERTY(QString intentId READ intentId CONSTANT)
     Q_PROPERTY(QString packageId READ packageId CONSTANT)
@@ -32,6 +32,8 @@ class Intent : public QObject
     Q_PROPERTY(QString description READ description CONSTANT)
     Q_PROPERTY(QVariantMap descriptions READ descriptions CONSTANT)
     Q_PROPERTY(QStringList categories READ categories CONSTANT)
+
+    Q_PROPERTY(bool handleOnlyWhenRunning READ handleOnlyWhenRunning CONSTANT REVISION 1)
 
 public:
     enum Visibility {
@@ -59,12 +61,14 @@ public:
     QVariantMap descriptions() const;
     QStringList categories() const;
 
+    bool handleOnlyWhenRunning() const;
+
 private:
     Intent(const QString &intentId, const QString &packageId, const QString &applicationId,
            const QStringList &capabilities, Intent::Visibility visibility,
            const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
            const QMap<QString, QString> &descriptions, const QUrl &icon,
-           const QStringList &categories);
+           const QStringList &categories, bool handleOnlyWhenRunning);
 
     QString m_intentId;
     Visibility m_visibility = Private;
@@ -78,6 +82,8 @@ private:
     QMap<QString, QString> m_descriptions; // language -> description
     QStringList m_categories;
     QUrl m_icon;
+
+    bool m_handleOnlyWhenRunning = false;
 
     friend class IntentServer;
     friend class IntentServerHandler;

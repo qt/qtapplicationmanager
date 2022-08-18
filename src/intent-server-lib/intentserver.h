@@ -47,7 +47,7 @@ public:
                       const QStringList &capabilities, Intent::Visibility visibility,
                       const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
                       const QMap<QString, QString> &descriptions, const QUrl &icon,
-                      const QStringList &categories);
+                      const QStringList &categories, bool handleOnlyWhenRunning);
 
     void removeIntent(Intent *intent);
 

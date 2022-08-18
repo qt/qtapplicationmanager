@@ -142,6 +142,18 @@ QT_BEGIN_NAMESPACE_AM
     If the intent does not specify a \c categories list, this will return the same as the
     containing PackageObject::categories.
 */
+/*!
+    \qmlproperty bool IntentObject::handleOnlyWhenRunning
+    \readonly
+    \since 6.5
+
+    By default, applications are automatically started when a request is targeted at them, but
+    they are not currently running. If this property is set to \c true, then any requests for this
+    intent will only be forwarded to its handling application, if the application is actuallly
+    running.
+    This is useful for system-wide broadcasts that are only relevant if an application is active
+    (e.g. changes in internet availability).
+*/
 
 
 Intent::Intent()
@@ -151,7 +163,7 @@ Intent::Intent(const QString &id, const QString &packageId, const QString &appli
                const QStringList &capabilities, Intent::Visibility visibility,
                const QVariantMap &parameterMatch, const QMap<QString, QString> &names,
                const QMap<QString, QString> &descriptions, const QUrl &icon,
-               const QStringList &categories)
+               const QStringList &categories, bool handleOnlyWhenRunning)
     : m_intentId(id)
     , m_visibility(visibility)
     , m_requiredCapabilities(capabilities)
@@ -162,6 +174,7 @@ Intent::Intent(const QString &id, const QString &packageId, const QString &appli
     , m_descriptions(descriptions)
     , m_categories(categories)
     , m_icon(icon)
+    , m_handleOnlyWhenRunning(handleOnlyWhenRunning)
 {
 }
 
@@ -271,6 +284,11 @@ QVariantMap Intent::descriptions() const
 QStringList Intent::categories() const
 {
     return m_categories;
+}
+
+bool Intent::handleOnlyWhenRunning() const
+{
+    return m_handleOnlyWhenRunning;
 }
 
 QT_END_NAMESPACE_AM

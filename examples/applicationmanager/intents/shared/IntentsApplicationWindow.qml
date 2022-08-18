@@ -3,9 +3,9 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-import QtQuick 2.11
-import QtApplicationManager.Application 2.0
-import QtApplicationManager 2.0
+import QtQuick
+import QtApplicationManager.Application
+import QtApplicationManager
 
 ApplicationManagerWindow {
     id: root
@@ -19,13 +19,19 @@ ApplicationManagerWindow {
 
         //! [Send Intent]
         onRequest: (intentId, applicationId, parameters) => {
-            var request = IntentClient.sendIntentRequest(intentId, applicationId, parameters)
+            let request = IntentClient.sendIntentRequest(intentId, applicationId, parameters)
             request.onReplyReceived.connect(function() {
                 intentPage.setResult(request.requestId, request.succeeded,
                                      request.succeeded ? request.result : request.errorMessage)
             })
         }
         //! [Send Intent]
+
+        //! [Broadcast Intent]
+        onBroadcast: (intentId, parameters) => {
+            IntentClient.broadcastIntentRequest(intentId, parameters)
+        }
+        //! [Broadcast Intent]
 
         //! [Intent Animation]
         RotationAnimation on rotation {
@@ -76,18 +82,17 @@ ApplicationManagerWindow {
     }
 
     IntentHandler {
-        intentIds: "blink-window"
+        intentIds: "blue-window-private"
         onRequestReceived: (request) => {
-            blinkAnimation.start()
+            blueAnimation.start()
             request.sendReply({ "done": true })
         }
     }
 
     IntentHandler {
-        intentIds: "blue-window-private"
+        intentIds: "broadcast/blink-window"
         onRequestReceived: (request) => {
-            blueAnimation.start()
-            request.sendReply({ "done": true })
+            blinkAnimation.start()
         }
     }
 }

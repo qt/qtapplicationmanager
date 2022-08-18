@@ -61,7 +61,7 @@ public:
                                       ii->parameterMatch(), ii->names(),
                                       ii->descriptions(),
                                       QUrl::fromLocalFile(m_pi->baseDir().absoluteFilePath(ii->icon())),
-                                      ii->categories());
+                                      ii->categories(), ii->handleOnlyWhenRunning());
                 }
             }
         } catch (const Exception &e) {

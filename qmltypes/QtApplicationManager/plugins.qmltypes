@@ -135,7 +135,7 @@ Module {
     }
     Component {
         name: "IntentClientRequest"
-        exports: [ "QtApplicationManager/IntentRequest 2.0" ]
+        exports: [ "QtApplicationManager/IntentRequest 2.1" ]
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isCreatable: false
@@ -149,6 +149,7 @@ Module {
         Property { name: "succeeded"; type: "bool"; isReadonly: true }
         Property { name: "errorMessage"; type: "string"; isReadonly: true }
         Property { name: "result"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "broadcast"; type: "bool"; isReadonly: true }
         Signal {
             name: "requestIdChanged"
         }
@@ -166,10 +167,11 @@ Module {
     }
     Component {
         name: "IntentClient"
-        exports: [ "QtApplicationManager/IntentClient 2.0" ]
+        exports: [ "QtApplicationManager/IntentClient 2.1" ]
         exportMetaObjectRevisions: [ 0 ]
         prototype: "QObject"
         isSingleton: true
+        Property { name: "systemUiId"; type: "string"; isReadonly: true }
         Method {
             name: "sendIntentRequest"
             type: "IntentClientRequest"; isPointer: true;
@@ -181,6 +183,12 @@ Module {
             type: "IntentClientRequest"; isPointer: true;
             Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "applicationId"; type: "string"; }
+            Parameter { name: "parameters"; type: "QVariantMap"; }
+        }
+        Method {
+            name: "broadcastIntentRequest"
+            type: "bool"
+            Parameter { name: "intentId"; type: "string"; }
             Parameter { name: "parameters"; type: "QVariantMap"; }
         }
     }

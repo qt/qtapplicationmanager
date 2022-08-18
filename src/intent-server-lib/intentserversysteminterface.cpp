@@ -14,8 +14,11 @@ void IntentServerSystemInterface::initialize(IntentServer *intentServer)
 
     connect(this, &IntentServerSystemInterface::replyFromApplication,
             m_is, &IntentServer::replyFromApplication);
+
+    // we need to explicitly decouple here via QueuedConnection. Otherwise the request queue
+    // handling in IntentServer can get out of sync
     connect(this, &IntentServerSystemInterface::applicationWasStarted,
-            m_is, &IntentServer::applicationWasStarted);
+            m_is, &IntentServer::applicationWasStarted, Qt::QueuedConnection);
 }
 
 IntentServer *IntentServerSystemInterface::intentServer() const

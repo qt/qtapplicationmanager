@@ -18,7 +18,7 @@ system-bus; don't run it with \c{--dbus none}.
 
 If you are running multiple application manager instances in the same system, you need to first
 \l{instance-id}{assign unique instance-ids} to each of them and then you can address them
-individually from the \c appman-controller tool by using the \c instance-id command line option.
+individually from the \c appman-controller tool by using the \c --instance-id command line option.
 
 The following commands are available:
 
@@ -31,7 +31,7 @@ The following commands are available:
     \li \span {style="white-space: nowrap"} {\c start-application}
     \li \c{<application-id>}
 
-        \c{[document-url]} [optional]
+        \c{[document-url]}
     \li Starts the application with \c application-id within the application manager.
 \row
     \li \span {style="white-space: nowrap"} {\c debug-application}
@@ -39,7 +39,7 @@ The following commands are available:
 
         \c{<application-id>}
 
-        \c{[document-url]} [optional]
+        \c{[document-url]}
     \li Starts the application with \c application-id within the application manager using
         a debug-wrapper. For more information, see \l{DebugWrappers}.
 \row
@@ -94,6 +94,34 @@ The following commands are available:
     \li \c{<installation-location>}
     \li Shows details for the specified \c installation-location in YAML format. Alternatively, use
         \c{--json} to get the location details in JSON format instead.
+\row
+    \li \span {style="white-space: nowrap"} {\c list-instances}
+    \li (none)
+    \li Lists all currently running \l{instance-id}{named} application manager instances.
+\row
+    \li \span {style="white-space: nowrap"} {\c inject-intent-request}
+    \li \c{<intent-id>}
+
+        \c{[parameters as json string]}
+    \li Injects an intent request into the application manager for testing or debugging purposes.
+        This only works, if the application manager is running in \l{development-mode}{developmentMode}.
+
+        The parameters have to be supplied as a single argument JSON string - make sure to correctly
+        escape any quotation marks when running from a shell.
+
+        By default, the injected intent request will have a requesting application id of \c{:sysui:}
+        (the System UI) and no handling application id. You can use the following command line
+        options to change this behavior:
+
+        \c{--requesting-application-id} Fake the requesting application id.
+
+        \c{--application-id} Specify the handling application id to prevent disambiguation.
+
+        \c{--broadcast} Instead of a directed request, create a broadcast.
+
+        Please note that \c{--application-id} and \c{--broadcast} are mutually exclusive.
+
+        For successful non-broadcast requests, the result will be printed to the console as JSON.
 \endtable
 
 The \c{appman-controller} naturally supports the standard Unix \c{--help} command-line option.

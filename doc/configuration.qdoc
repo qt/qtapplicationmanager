@@ -302,6 +302,7 @@ ui:
         \li Disables all security related checks. Use this option in a development setup only;
             never in production. (default: false)
     \row
+        \target development-mode
         \li \b --development-mode
             \br [\c flags/developmentMode]
         \li bool

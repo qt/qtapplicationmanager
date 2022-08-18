@@ -11,10 +11,12 @@
 #include "applicationmanagerdbuscontextadaptor.h"
 #include "applicationmanager.h"
 #include "applicationmanager_adaptor.h"
+#include "packagemanager.h"
 #include "dbuspolicy.h"
 #include "exception.h"
 #include "logging.h"
-
+#include "intentclient.h"
+#include "intentclientrequest.h"
 
 
 QT_BEGIN_NAMESPACE_AM
@@ -239,4 +241,105 @@ void ApplicationManagerAdaptor::stopApplication(const QString &id, bool forceKil
 {
     AM_AUTHENTICATE_DBUS(void)
     ApplicationManager::instance()->stopApplication(id, forceKill);
+}
+
+QString ApplicationManagerAdaptor::sendIntentRequestAs(const QString &requestingApplicationId,
+                                                       const QString &intentId, const QString &applicationId,
+                                                       const QString &jsonParameters)
+{
+    AM_AUTHENTICATE_DBUS(QString)
+
+    QDBusContext *dbusContext = AbstractDBusContextAdaptor::dbusContextFor(this);
+    dbusContext->setDelayedReply(true);
+
+    if (!PackageManager::instance()->developmentMode()) {
+        dbusContext->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"),
+                                    qL1S("Only supported if 'developmentMode' is active"));
+        return { };
+    }
+
+    if (intentId.isEmpty()) {
+        dbusContext->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"),
+                                    qL1S("intentId cannot be empty"));
+        return { };
+    }
+
+    QVariantMap parameters;
+    if (!jsonParameters.trimmed().isEmpty()) {
+        QJsonParseError parseError;
+        auto jsDoc = QJsonDocument::fromJson(jsonParameters.toUtf8(), &parseError);
+        if (jsDoc.isNull()) {
+            dbusContext->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"),
+                                        qL1S("jsonParameters is not a valid JSON document: ")
+                                        + parseError.errorString());
+            return { };
+        }
+        parameters = jsDoc.toVariant().toMap();
+    }
+
+    auto dbusMsg = new QDBusMessage(dbusContext->message());
+    auto dbusName = dbusContext->connection().name();
+
+    const QString reqAppId = requestingApplicationId.isEmpty() ? IntentClient::instance()->systemUiId()
+                                                               : requestingApplicationId;
+
+    auto icr = IntentClient::instance()->requestToSystem(reqAppId, intentId, applicationId, parameters);
+    icr->startTimeout(IntentClient::instance()->replyFromSystemTimeout());
+
+    // clang-code-model: this slot is always called (even on timeouts), so dbusMsg does not leak
+    connect(icr, &IntentClientRequest::replyReceived, this, [icr, dbusMsg, dbusName]() {
+        bool succeeded = icr->succeeded();
+        QDBusConnection conn(dbusName);
+
+        if (succeeded) {
+            auto jsonResult = QString::fromUtf8(QJsonDocument::fromVariant(icr->result()).toJson());
+            conn.send(dbusMsg->createReply(jsonResult));
+        } else {
+            conn.send(dbusMsg->createErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"),
+                                                icr->errorMessage()));
+        }
+        delete dbusMsg;
+        icr->deleteLater();
+    });
+
+    return { };
+}
+
+void ApplicationManagerAdaptor::broadcastIntentRequestAs(const QString &requestingApplicationId,
+                                                         const QString &intentId,
+                                                         const QString &jsonParameters)
+{
+    AM_AUTHENTICATE_DBUS(void)
+
+    QDBusContext *dbusContext = AbstractDBusContextAdaptor::dbusContextFor(this);
+
+    if (!PackageManager::instance()->developmentMode()) {
+        dbusContext->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"),
+                                    qL1S("Only supported if 'developmentMode' is active"));
+        return;
+    }
+
+    if (intentId.isEmpty()) {
+        dbusContext->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"),
+                                    qL1S("intentId cannot be empty"));
+        return;
+    }
+
+    QVariantMap parameters;
+    if (!jsonParameters.trimmed().isEmpty()) {
+        QJsonParseError parseError;
+        auto jsDoc = QJsonDocument::fromJson(jsonParameters.toUtf8(), &parseError);
+        if (jsDoc.isNull()) {
+            dbusContext->sendErrorReply(qL1S("org.freedesktop.DBus.Error.Failed"),
+                                        qL1S("jsonParameters is not a valid JSON document: ")
+                                        + parseError.errorString());
+            return;
+        }
+        parameters = jsDoc.toVariant().toMap();
+    }
+
+    const QString reqAppId = requestingApplicationId.isEmpty() ? IntentClient::instance()->systemUiId()
+                                                               : requestingApplicationId;
+
+    IntentClient::instance()->requestToSystem(reqAppId, intentId, qSL(":broadcast:"), parameters);
 }

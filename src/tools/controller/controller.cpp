@@ -131,6 +131,7 @@ enum Command {
     ListInstallationLocations,
     ShowInstallationLocation,
     ListInstances,
+    InjectIntentRequest,
 };
 
 // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
@@ -154,6 +155,7 @@ static struct {
     { ListInstallationLocations, "list-installation-locations", "List all installaton locations." },
     { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." },
     { ListInstances,    "list-instances",    "List all named application manager instances." },
+    { InjectIntentRequest,       "inject-intent-request",       "Inject an intent request for testing." },
 };
 
 static Command command(QCommandLineParser &clp)
@@ -188,6 +190,10 @@ static void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXC
 static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
 static void showInstallationLocation(bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstances() Q_DECL_NOEXCEPT_EXPR(false);
+static void injectIntentRequest(const QString &intentId, bool isBroadcast,
+                                const QString &applicationId, const QString &requestingApplicationId,
+                                const QString &jsonParameters) Q_DECL_NOEXCEPT_EXPR(false);
+
 
 class ThrowingApplication : public QCoreApplication // clazy:exclude=missing-qobject-macro
 {
@@ -469,6 +475,32 @@ int main(int argc, char *argv[])
         case ListInstances:
             clp.process(a);
             a.runLater(listInstances);
+            break;
+
+        case InjectIntentRequest:
+            clp.addPositionalArgument(qSL("intent-id"), qSL("The id of the intent."));
+            clp.addPositionalArgument(qSL("parameters"), qSL("The optional parameters for this request."), qSL("[json-parameters]"));
+            clp.addOption({ qSL("requesting-application-id"), qSL("Fake the requesting application id."), qSL("id"), qSL(":sysui:") });
+            clp.addOption({ qSL("application-id"), qSL("Specify the handling application id."), qSL("id") });
+            clp.addOption({ qSL("broadcast"), qSL("Create a broadcast request.") });
+            clp.process(a);
+
+            bool isBroadcast = clp.isSet(qSL("broadcast"));
+            QString appId = clp.value(qSL("application-id"));
+            QString requestingAppId = clp.value(qSL("requesting-application-id"));
+
+            if (!appId.isEmpty() && isBroadcast)
+                throw Exception("You cannot use --application-id and --broadcast at the same time.");
+
+            if (clp.positionalArguments().size() > 3)
+                clp.showHelp(1);
+
+            QString jsonParams;
+            if (clp.positionalArguments().size() == 3)
+                jsonParams = clp.positionalArguments().at(2);
+
+            a.runLater(std::bind(injectIntentRequest, clp.positionalArguments().at(1),
+                                 isBroadcast, requestingAppId, appId, jsonParams));
             break;
         }
 
@@ -910,5 +942,33 @@ void listInstances()
         }
         fprintf(stdout, "%s\n", name.constData());
     }
+    qApp->quit();
+}
+
+void injectIntentRequest(const QString &intentId, bool isBroadcast,
+                         const QString &requestingApplicationId, const QString &applicationId,
+                         const QString &jsonParameters) Q_DECL_NOEXCEPT_EXPR(false)
+{
+    dbus.connectToManager();
+
+    if (isBroadcast) {
+        auto reply = dbus.manager()->broadcastIntentRequestAs(requestingApplicationId,
+                    intentId,
+                    jsonParameters);
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call broadcastIntentRequest via DBus: %1").arg(reply.error().message());
+    } else {
+        auto reply = dbus.manager()->sendIntentRequestAs(requestingApplicationId,
+                    intentId,
+                    applicationId,
+                    jsonParameters);
+        reply.waitForFinished();
+        if (reply.isError())
+            throw Exception(Error::IO, "failed to call sendIntentRequest via DBus: %1").arg(reply.error().message());
+        const auto jsonResult = reply.value();
+        fprintf(stdout, "%s\n", qPrintable(jsonResult));
+    }
+
     qApp->quit();
 }

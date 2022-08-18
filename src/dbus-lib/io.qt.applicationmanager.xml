@@ -107,5 +107,17 @@
       <arg type="u" direction="out"/>
       <arg name="id" type="s" direction="in"/>
     </method>
+    <method name="sendIntentRequestAs">
+      <arg type="s" direction="out"/>
+      <arg name="requestingApplicationId" type="s" direction="in"/>
+      <arg name="intentId" type="s" direction="in"/>
+      <arg name="applicationId" type="s" direction="in"/>
+      <arg name="jsonParameters" type="s" direction="in"/>
+    </method>
+    <method name="broadcastIntentRequestAs">
+      <arg name="requestingApplicationId" type="s" direction="in"/>
+      <arg name="intentId" type="s" direction="in"/>
+      <arg name="jsonParameters" type="s" direction="in"/>
+    </method>
   </interface>
 </node>

@@ -18,6 +18,7 @@ qt_internal_add_module(AppManDBusPrivate
         Qt::AppManCommonPrivate
         Qt::AppManManagerPrivate
         Qt::AppManWindowPrivate
+        Qt::AppManIntentClientPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::DBus

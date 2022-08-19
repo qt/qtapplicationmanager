@@ -169,6 +169,7 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 {
     // basics that are needed in multiple setup functions below
     m_noSecurity = cfg->noSecurity();
+    m_developmentMode = cfg->developmentMode();
     m_builtinAppsManifestDirs = cfg->builtinAppsManifestDirs();
     m_installationDir = cfg->installationDir();
     m_installationDirMountPoint = cfg->installationDirMountPoint();
@@ -211,7 +212,7 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
     if (m_installationDir.isEmpty() || cfg->disableInstaller()) {
         StartupTimer::instance()->checkpoint("skipping installer");
     } else {
-        setupInstaller(cfg->developmentMode(), cfg->allowUnsignedPackages(), cfg->caCertificates(),
+        setupInstaller(cfg->allowUnsignedPackages(), cfg->caCertificates(),
                        std::bind(&Configuration::applicationUserIdSeparation, cfg,
                                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     }
@@ -443,6 +444,8 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
 
     if (m_noSecurity)
         m_applicationManager->setSecurityChecksEnabled(false);
+    if (m_developmentMode)
+        m_packageManager->setDevelopmentMode(true);
 
     m_applicationManager->setSystemProperties(m_systemProperties.at(SP_SystemUi));
     m_applicationManager->setContainerSelectionConfiguration(containerSelectionConfiguration);
@@ -460,7 +463,7 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     }
 }
 
-void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &caCertificatePaths,
+void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths,
                           const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if !defined(AM_DISABLE_INSTALLER)
@@ -507,9 +510,6 @@ void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &c
 
     m_applicationInstaller = ApplicationInstaller::createInstance(m_packageManager);
 
-    if (devMode)
-        m_packageManager->setDevelopmentMode(true);
-
     if (m_noSecurity || allowUnsigned)
         m_packageManager->setAllowInstallationOfUnsignedPackages(true);
 
@@ -542,7 +542,6 @@ void Main::setupInstaller(bool devMode, bool allowUnsigned, const QStringList &c
 
     StartupTimer::instance()->checkpoint("after installer setup");
 #else
-    Q_UNUSED(devMode)
     Q_UNUSED(allowUnsigned)
     Q_UNUSED(caCertificatePaths)
     Q_UNUSED(userIdSeparation)

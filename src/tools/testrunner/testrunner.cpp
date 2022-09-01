@@ -75,7 +75,6 @@ int TestRunner::exec(QQmlEngine *qmlEngine)
 
     int typeId = qmlTypeId("QtTest", 1, 2, "QTestRootObject");
     QTestRootObject* inst = qmlEngine->singletonInstance<QTestRootObject*>(typeId);
-    inst->init();
 
     inst->setWindowShown(true);
 

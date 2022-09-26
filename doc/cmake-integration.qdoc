@@ -1,0 +1,16 @@
+// Copyright (C) 2022 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+
+\page cmake-integration.html
+\title CMake Integration
+\ingroup qtappman
+\brief Qt Application Manager specific CMake functionality.
+
+The QtAppManMainPrivate package provides the following CMake functions:
+
+\section3 Commands
+\annotatedlist cmake-macros-qtapplicationmanager
+
+*/

@@ -30,6 +30,7 @@ For a high-level overview, see \l{The Qt Application Manager}{Introduction to th
     \li \l{QtApplicationManager QML module}
     \li \l{QtApplicationManager.SystemUI QML module}
     \li \l{QtApplicationManager.Application QML module}
+    \li \l{CMake Integration}
 \endlist
 
 \section1 Examples

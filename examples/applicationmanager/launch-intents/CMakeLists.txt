@@ -19,6 +19,7 @@ find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt6_am_add_systemui_wrapper(launch-intents
+    INSTALL_DIR "${INSTALL_EXAMPLEDIR}"
     MAIN_QML_FILE system-ui.qml
     EXTRA_FILES apps
     EXTRA_ARGS --builtin-apps-manifest-dir apps

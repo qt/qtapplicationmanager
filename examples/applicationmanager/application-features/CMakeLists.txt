@@ -17,6 +17,7 @@ set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/application-fe
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt6_am_add_systemui_wrapper(application-features
+    INSTALL_DIR "${INSTALL_EXAMPLEDIR}"
     CONFIG_YAML am-config.yaml
     EXTRA_FILES apps system-ui
 )

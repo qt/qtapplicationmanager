@@ -19,6 +19,7 @@ find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt6_am_add_systemui_wrapper(frame-timer
+    INSTALL_DIR "${INSTALL_EXAMPLEDIR}"
     CONFIG_YAML am-config.yaml
     EXTRA_FILES apps system-ui
 )

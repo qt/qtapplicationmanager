@@ -1,0 +1,62 @@
+// Copyright (C) 2021 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+\page cmake-qt6-am-add-systemui-wrapper.html
+\ingroup cmake-macros-qtapplicationmanager
+
+\title qt_am_add_systemui_wrapper
+\target qt6_am_add_systemui_wrapper
+
+\brief Creates a basic wrapper script to run a System UI using the appman binary.
+
+\section1 Synopsis
+
+\badcode
+qt_am_add_systemui_wrapper(
+    target
+    [EXECUTABLE appman-executable]
+    [MAIN_QML_FILE main.qml]
+    [CONFIG_YAML config.yaml ...]
+    [EXTRA_ARGS ...]
+    [EXTRA_FILES ...]
+    [INSTALL_DIR install-dir]
+)
+\endcode
+
+\versionlessCMakeCommandsNote qt6_am_add_systemui_wrapper()
+
+\section1 Description
+
+Generates a \c .bat (Windows) or \c .sh (macOS, Linux) wrapper in the build directory to easily run
+your QML based System UI referenced by \c target on the desktop or within Qt Creator. It will also
+automatically copy the required files from the source to the build directory: these are the \c
+MAIN_QML_FILE, any \c CONFIG_YAML files as well as all \c EXTRA_FILES.
+
+If you also want this command to automatically generate installation rules for all files, you can
+specify the destination directory via \c INSTALL_DIR. By default, no installation rule is created.
+
+If you want to use a custom build of the application manager, you can do that by using \c
+EXECUTABLE. Otherwise, the \c appman binary of the current Qt build will be used.
+
+All \c EXTRA_ARGS will be appended to the command line when running the \c EXECUTABLE from the
+wrapper script.
+
+For very simple setups, specifying just the \c MAIN_QML_FILE is enough. If you already have an \c
+am-config.yaml, you can reference that via \c CONFIG_YAML. In case your main.qml is already set in
+the YAML config file, you do not need to specify it here again.
+
+Please note that this command will not scale when your project is becoming more sophisticated over
+time. It is only meant to help you get started without diving too deep into CMake.
+
+\section1 Examples
+
+Here is a snippet from the \l applicationmanager/minidesk example, showing how this function is
+used there:
+
+\quotefromfile applicationmanager/minidesk/CMakeLists.txt
+
+\skipto qt6_am_add_systemui_wrapper
+\printuntil /^\)/
+
+*/

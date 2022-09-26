@@ -7,8 +7,8 @@ function(qt_am_internal_create_copy_command file)
                         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${file}
                         COMMENT "Copying file: ${file}")
     endif()
-    if (NOT ARG_NO_INSTALL)
-        get_filename_component(dest ${INSTALL_EXAMPLEDIR}/${file} DIRECTORY)
+    if (ARG_INSTALL_DIR)
+        get_filename_component(dest ${ARG_INSTALL_DIR}/${file} DIRECTORY)
         install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${file}
             DESTINATION ${dest}
         )
@@ -19,7 +19,7 @@ function(qt6_am_add_systemui_wrapper target)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
-        "NO_INSTALL" "MAIN_QML_FILE;EXECUTABLE" "CONFIG_YAML;EXTRA_FILES;EXTRA_ARGS"
+        "" "MAIN_QML_FILE;EXECUTABLE;INSTALL_DIR" "CONFIG_YAML;EXTRA_FILES;EXTRA_ARGS"
     )
 
     if (NOT ARG_EXECUTABLE)
@@ -121,9 +121,9 @@ exec ${ARG_EXECUTABLE} ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE
         COMMAND ${CMAKE_COMMAND} -E copy ${WRAPPER_SCRIPT} $<TARGET_FILE_NAME:${target}>
     )
 
-    if (NOT ARG_NO_INSTALL)
+    if (ARG_INSTALL_DIR)
         install(PROGRAMS $<TARGET_FILE:${target}>
-            DESTINATION "${INSTALL_EXAMPLEDIR}"
+            DESTINATION "${ARG_INSTALL_DIR}"
         )
     endif()
 endfunction()
@@ -214,7 +214,6 @@ function (qt_am_internal_add_qml_test target)
             qt6_am_add_systemui_wrapper(${target}_${CONFIG_ARG_NAME}
                 EXECUTABLE appman-qmltestrunner
                 MAIN_QML_FILE ${ARG_TEST_FILE}
-                NO_INSTALL
                 ${EXTRA_FILES_ARG_STR}
                 ${WRAPPER_ARGS}
             )

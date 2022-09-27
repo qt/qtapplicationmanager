@@ -43,6 +43,9 @@
     part of the application manager. It provides both a DBus and QML APIs for
     all of its functionality.
 
+    Please also see the \l{Package Installation} documentation for more in-depth information about
+    package installations.
+
     \note Unlike the deprecated ApplicationInstaller class, the PackageManager singleton and its
           corresponding DBus API are always available. Disabling the installer functionality via the
           application manager's \l{Configuration} will just lead to package (de-) installations

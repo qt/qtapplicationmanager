@@ -8,9 +8,8 @@
 \page installer.html
 \ingroup qtappman
 \ingroup qtappman-highlights
-\ingroup qtappman-tools
-\title Package Installer
-\brief Discusses the installer tool which dynamically installs, updates and removes packages.
+\title Package Installation
+\brief Discusses the package installation infrastructure.
 \keyword Installer
 
 \section1 Dynamically Installing, Updating, and Removing Packages
@@ -80,7 +79,7 @@ For the device, you need to install one or both of these CA certificates, includ
 intermediary ones. But, this depends on the type of package you want the user to be able to
 install. Which CA certificates to load is specified via \l {ca certificates} {the config file}.
 
-The application manager sources has a script,
+The application manager sources have a script,
 \c tests/data/certificates/create-test-certificates.sh, that sets up such a PKI for the internal
 unit tests. This script is \b not for use in production, but only for use in developing with
 signed packages.

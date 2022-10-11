@@ -673,6 +673,8 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
             return false;
 
         case Am::NotRunning:
+            throw Exception("Application %1 is not running, but still has a Runtime object attached")
+                    .arg(app->id());
             break;
         }
     }
@@ -810,12 +812,14 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
         qCDebug(LogSystem) << "  documentUrl:" << documentUrl;
 
     if (inProcess) {
-        bool ok = runtime->start();
-        if (ok)
+        bool successfullyStarted = runtime->start();
+
+        if (successfullyStarted)
             emitActivated(app);
         else
-            runtime->deleteLater();
-        return ok;
+            delete runtime;
+
+        return successfullyStarted;
     } else {
         // We can only start the app when both the container and the windowmanager are ready.
         // Using a state-machine would be one option, but then we would need that state-machine
@@ -827,7 +831,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
             if (successfullyStarted)
                 emitActivated(app);
             else
-                runtime->deleteLater(); // ~Runtime() will clean app->nonAliased()->m_runtime
+                delete runtime; // ~Runtime() will clean up app->m_runtime
 
             return successfullyStarted;
         };

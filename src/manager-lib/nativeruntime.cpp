@@ -145,9 +145,7 @@ bool NativeRuntime::attachApplicationToQuickLauncher(Application *app)
         ret = startApplicationViaLauncher();
     }
 
-    if (ret)
-        setState(Am::Running);
-
+    setState(ret ? Am::Running : Am::NotRunning);
     return ret;
 }
 

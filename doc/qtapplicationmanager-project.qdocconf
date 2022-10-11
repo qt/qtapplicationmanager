@@ -61,7 +61,7 @@ sourcedirs += \
 imagedirs += ../doc/images
 exampledirs = ../examples
 
-depends += qtcore qtquick qtqml qtdoc qtwaylandcompositor qtwidgets qtdltlogging
+depends += qtcore qtquick qtqml qtdoc qtcmake qtwaylandcompositor qtwidgets qtdltlogging
 qhp.projects                                 = QtApplicationManager
 qhp.QtApplicationManager.file                = qtapplicationmanager.qhp
 qhp.QtApplicationManager.namespace           = org.qt-project.qtapplicationmanager.$QT_VERSION_TAG

@@ -926,10 +926,10 @@ void showInstallationLocation(bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
 
 void listInstances()
 {
-    QString dir = QDir::temp().absolutePath() % u"/";
+    QString dir = QDir::temp().absolutePath() % u'/';
     QString suffix = qSL("io.qt.ApplicationManager.dbus");
 
-    QDirIterator dit(dir, { u"*" % suffix });
+    QDirIterator dit(dir, { u'*' % suffix });
     while (dit.hasNext()) {
         QByteArray name = dit.next().toLocal8Bit();
         name.chop(suffix.length());

@@ -98,6 +98,10 @@ You can force the build mode via the respective \c -config options \c force-mult
 \target build
 \section1 Build
 
+\note If you want to build within QtCreator, you have to make sure that the
+\b{qmake system() behavior when parsing:} setting in \b{Projects} > \b{Build Settings} >
+\b{General} is set to \c Ignore.
+
 The application manager uses \c qmake for its build system. The basic installation steps are:
 
 \code

@@ -20,7 +20,9 @@
 #include <QtCore/private/qcoreapplication_p.h>
 #include <QGuiApplication>
 #include <QIcon>
-#include <private/qopenglcontext_p.h>
+#if !defined(QT_NO_OPENGL)
+#  include <private/qopenglcontext_p.h>
+#endif
 #include <private/qguiapplication_p.h>
 #include <qpa/qplatformintegration.h>
 

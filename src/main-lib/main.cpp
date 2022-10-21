@@ -37,7 +37,6 @@
 #include <QQuickView>
 #include <QQuickItem>
 #include <QInputDevice>
-#include <private/qopenglcontext_p.h>
 #include <QLocalServer>
 
 #include "global.h"

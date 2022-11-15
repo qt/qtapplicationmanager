@@ -8,16 +8,13 @@
 #include <QQuickItem>
 #include <QtAppManCommon/global.h>
 
-#if defined(AM_MULTI_PROCESS)
-#include <QWaylandQuickItem>
-#endif // AM_MULTI_PROCESS
-
 QT_BEGIN_NAMESPACE_AM
 
 class Window;
 class InProcessWindow;
 #if defined(AM_MULTI_PROCESS)
 class WaylandWindow;
+class WaylandQuickIgnoreKeyItem;
 #endif // AM_MULTI_PROCESS
 
 
@@ -57,6 +54,7 @@ public:
 
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+
 signals:
     void windowChanged();
     void primaryChanged();
@@ -78,6 +76,7 @@ private:
         virtual Window *window() const = 0;
         virtual void setupPrimaryView() = 0;
         virtual void setupSecondaryView() = 0;
+        virtual void forwardActiveFocus() = 0;
         WindowItem *q;
     };
 
@@ -90,6 +89,7 @@ private:
         Window *window() const override;
         void setupPrimaryView() override;
         void setupSecondaryView() override;
+        void forwardActiveFocus() override;
 
         InProcessWindow *m_inProcessWindow{nullptr};
         QQuickItem *m_shaderEffectSource{nullptr};
@@ -107,9 +107,10 @@ private:
         void setupPrimaryView() override;
         void setupSecondaryView() override;
         void createWaylandItem();
+        void forwardActiveFocus() override;
 
         WaylandWindow *m_waylandWindow{nullptr};
-        QWaylandQuickItem *m_waylandItem{nullptr};
+        WaylandQuickIgnoreKeyItem *m_waylandItem{nullptr};
     };
 #endif // AM_MULTI_PROCESS
 

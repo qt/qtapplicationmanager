@@ -1,0 +1,7 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installationDir: "/tmp/am/apps"
+  documentDir: "/tmp/am/docs"

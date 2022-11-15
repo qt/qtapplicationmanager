@@ -25,7 +25,7 @@ static bool isName(const QByteArray &key)
 }
 
 InProcessSurfaceItem::InProcessSurfaceItem(QQuickItem *parent)
-    : QQuickItem(parent)
+    : QQuickFocusScope(parent)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     setClip(true);
@@ -83,7 +83,7 @@ bool InProcessSurfaceItem::eventFilter(QObject *o, QEvent *e)
         }
     }
 
-    return QQuickItem::eventFilter(o, e);
+    return QQuickFocusScope::eventFilter(o, e);
 }
 
 void InProcessSurfaceItem::setVisibleClientSide(bool value)

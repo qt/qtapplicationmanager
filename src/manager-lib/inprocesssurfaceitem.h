@@ -6,8 +6,8 @@
 #pragma once
 
 #include <QColor>
-#include <QQuickItem>
 #include <QPointer>
+#include <private/qquickfocusscope_p.h>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -15,7 +15,7 @@ QT_BEGIN_NAMESPACE_AM
 /*
  *  Item exposed to the System UI
  */
-class InProcessSurfaceItem : public QQuickItem
+class InProcessSurfaceItem : public QQuickFocusScope
 {
     Q_OBJECT
 public:

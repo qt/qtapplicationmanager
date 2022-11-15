@@ -160,6 +160,16 @@ compatibility. The following are some examples:
 \endlist
 
 
+\section1 Input
+
+There are some peculiarities in terms of keyboard input, caused amongst others by the fact, that
+Wayland clients (applications) cannot report back to the System UI, whether they have accepted a
+key event. In multi-process mode key events will be passed to both, the System UI and applications.
+This is also the case in single-process mode, however, if the application accepts the event, the
+System UI will not get it any more. This can be circumvented by using \l{Shortcut}s or installing a
+global event filter in the System UI.
+
+
 \section1 Resource Consumption
 
 CPU usage on a multi-core system may be more efficient in multi-process mode, since the OS can

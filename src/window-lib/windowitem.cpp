@@ -7,6 +7,7 @@
 #include "window.h"
 
 #if defined(AM_MULTI_PROCESS)
+#include <QWaylandQuickItem>
 #include "waylandcompositor.h"
 #include "waylandwindow.h"
 #endif // AM_MULTI_PROCESS
@@ -108,6 +109,11 @@ WindowItem::WindowItem(QQuickItem *parent)
     m_contentItem->setZ(2);
     m_contentItem->setWidth(width());
     m_contentItem->setHeight(height());
+
+    connect(this, &QQuickItem::activeFocusChanged, this, [this] () {
+        if (hasActiveFocus() && m_impl)
+            m_impl->forwardActiveFocus();
+    });
 }
 
 WindowItem::~WindowItem()
@@ -354,11 +360,35 @@ void WindowItem::InProcessImpl::setupSecondaryView()
     }
 }
 
+void WindowItem::InProcessImpl::forwardActiveFocus()
+{
+    m_inProcessWindow->rootItem()->forceActiveFocus();
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // WindowItem::WaylandImpl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #if defined(AM_MULTI_PROCESS)
+
+class WaylandQuickIgnoreKeyItem : public QWaylandQuickItem
+{
+public:
+    WaylandQuickIgnoreKeyItem(QQuickItem *parent) : QWaylandQuickItem(parent) {}
+
+protected:
+    void keyPressEvent(QKeyEvent *event) override
+    {
+        QWaylandQuickItem::keyPressEvent(event);
+        event->ignore();
+    }
+
+    void keyReleaseEvent(QKeyEvent *event) override
+    {
+        QWaylandQuickItem::keyReleaseEvent(event);
+        event->ignore();
+    }
+};
 
 WindowItem::WaylandImpl::~WaylandImpl()
 {
@@ -377,16 +407,24 @@ void WindowItem::WaylandImpl::setup(Window *window)
 
     m_waylandItem->setBufferLocked(false);
     m_waylandItem->setSurface(m_waylandWindow->surface());
+
+    if (q->hasActiveFocus())
+        forwardActiveFocus();
 }
 
 void WindowItem::WaylandImpl::createWaylandItem()
 {
-    m_waylandItem = new QWaylandQuickItem(q);
+    m_waylandItem = new WaylandQuickIgnoreKeyItem(q);
 
-    connect(m_waylandItem, &QWaylandQuickItem::surfaceDestroyed, q, [this]() {
+    connect(m_waylandItem, &WaylandQuickIgnoreKeyItem::surfaceDestroyed, q, [this]() {
         // keep the buffer there to allow us to animate the window destruction
         m_waylandItem->setBufferLocked(true);
     });
+}
+
+void WindowItem::WaylandImpl::forwardActiveFocus()
+{
+    m_waylandItem->forceActiveFocus();
 }
 
 void WindowItem::WaylandImpl::tearDown()

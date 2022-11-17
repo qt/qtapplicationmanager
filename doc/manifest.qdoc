@@ -388,6 +388,7 @@ that specifies which runtime a configuration option applies to:
         \endlist
 \row
     \li \c documentUrl
+    \li native, qml, qml-in-process
     \li string
     \li An optional default document URL to use if the application is started without
         specifying a document URL (see \l{ApplicationManager::startApplication}).

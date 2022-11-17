@@ -28,10 +28,10 @@ such plugin at any point and it cannot be switched out at runtime. If you are us
 plugin, one that does not talk to a windowing system, such as EGL full-screen on an embedded
 device, you can only open one full screen window: the System UI.
 
-Now, each top-level window can have only one scene graph, and each tree of QtQuick items needs to
-be ties to only one scene graph. Consequently, you will always have only one window, one scene
-graph, and one QML engine in your System UI; no matter whether applications run within the
-System UI's process, or in separate processes.
+Now, each top-level window can have only one scene graph, and each tree of QtQuick items ties to
+only one scene graph. Consequently, you will always have only one window, one scene graph, and one
+QML engine in your System UI; no matter whether applications run within the System UI's process, or
+in separate processes.
 
 
 \section1 Single-process Mode
@@ -66,9 +66,9 @@ call functions that you need.
 
 Since single-process mode only has one QML engine, shared between the System UI and all
 applications, any QML import paths provided, for example via \c am-config.yaml, is taken into
-consideration when the engine is resolving import statements. Import statements provided by the
-application manifest file, \c info.yaml, are only considered once the application has started,
-but is still loaded even after the application has stopped.
+consideration when the engine is resolving import statements. Import paths provided by the
+application manifest file, \c info.yaml, are only considered once the application has started, but
+are still loaded even after the application has stopped.
 
 In multi-process mode, only import paths specific to an application are considered. Additionally,
 absolute import paths cannot be used in \c info.yaml files, due to potential restrictions imposed
@@ -93,14 +93,15 @@ whenever a new plugin needs to be loaded.
 
 The application manager is built with multi-process support, as long as Qt's Wayland compositor
 module is available. To disable multi-process support, explicitly specify the
-\c {-config force-single-process} option. If you specify the \c {-config force-multi-process}
+\c {force-single-process} option. If you specify the \c {force-multi-process}
 option, and the compositor is not available, the configuration step fails.
 
 If the application manager supports single-process mode only, QML applications that use the \c qml
 runtime will always run in the same process as the System UI. In this case, native applications
-are omitted, since they can only run in a dedicated process. This difference is the entry point:
-\c native runtimes have an executable and \c qml runtimes have a main QML file. For the latter the
-application manager provides the executable (\c appman-launcher) in multi-process mode.
+are omitted, since they can only run in a dedicated process. The difference is imposed by the
+entry point: \c native runtimes have an executable and \c qml runtimes have a main QML file. For
+the latter the application manager provides the executable (\c appman-launcher) in multi-process
+mode.
 
 If the application manager is built with multi-process mode, you can still force it to run in
 single-process mode by passing \c --force-single-process on the command line. This results in

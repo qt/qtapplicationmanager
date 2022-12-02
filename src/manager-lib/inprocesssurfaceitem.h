@@ -5,6 +5,10 @@
 
 #pragma once
 
+#if 0
+#pragma qt_sync_skip_header_check
+#endif
+
 #include <QColor>
 #include <QPointer>
 #include <private/qquickfocusscope_p.h>

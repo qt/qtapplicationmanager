@@ -26,6 +26,8 @@ qt_internal_add_module(AppManWindowPrivate
         Qt::Quick
     DEFINES
         AM_COMPILING_APPMAN
+    PRIVATE_HEADER_FILTERS
+        "^qwayland-.*\.h|^wayland-.*-protocol\.h"
 )
 
 if(QT_FEATURE_am_multi_process)
@@ -45,4 +47,6 @@ if(QT_FEATURE_am_multi_process)
         PUBLIC_LIBRARIES
             Qt::WaylandCompositor
     )
+
+    qt_internal_add_autogen_sync_header_dependencies(AppManWindowPrivate WaylandCompositor)
 endif()

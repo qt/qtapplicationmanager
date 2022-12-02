@@ -31,6 +31,8 @@ qt_internal_add_module(AppManLauncherPrivate
         Qt::QuickPrivate
     DEFINES
         AM_COMPILING_APPMAN
+    PRIVATE_HEADER_FILTERS
+        "^qwayland-.*\.h|^wayland-.*-protocol\.h"
 )
 
 qt_internal_extend_target(AppManLauncherPrivate CONDITION QT_FEATURE_am_widgets_support AND TARGET Qt::Widgets
@@ -44,6 +46,8 @@ if(TARGET Qt::WaylandClient)
         FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/../wayland-extensions/qtam-extension.xml
     )
+
+    qt_internal_add_autogen_sync_header_dependencies(AppManLauncherPrivate WaylandClient)
 endif()
 
 qt_internal_extend_target(AppManLauncherPrivate CONDITION TARGET Qt::WaylandClient

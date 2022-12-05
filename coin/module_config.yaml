@@ -1,4 +1,5 @@
 version: 2
+tags: ["documentation"]
 accept_configuration:
   condition: and
   conditions:

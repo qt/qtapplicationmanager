@@ -10,6 +10,8 @@
 
 \brief Creates a basic wrapper script to run a System UI using the appman binary.
 
+\preliminarycmakecommand
+
 \section1 Synopsis
 
 \badcode
@@ -46,8 +48,9 @@ For very simple setups, specifying just the \c MAIN_QML_FILE is enough. If you a
 am-config.yaml, you can reference that via \c CONFIG_YAML. In case your main.qml is already set in
 the YAML config file, you do not need to specify it here again.
 
-Please note that this command will not scale when your project is becoming more sophisticated over
-time. It is only meant to help you get started without diving too deep into CMake.
+\warning Please note that this command will not scale when your project is becoming more
+sophisticated over time. It is only meant to help you get started without diving too deep into
+CMake.
 
 \section1 Examples
 

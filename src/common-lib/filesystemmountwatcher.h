@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <QObject>
-#include <QMultiMap>
+#include <QtCore/QObject>
+#include <QtCore/QMultiMap>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

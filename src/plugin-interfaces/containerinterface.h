@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <QtPlugin>
-#include <QStringList>
-#include <QVariantMap>
-#include <QVector>
+#include <QtCore/QObject>
+#include <QtCore/QtPlugin>
+#include <QtCore/QStringList>
+#include <QtCore/QVariantMap>
+#include <QtCore/QVector>
 
 class ContainerInterface : public QObject
 {

@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QAbstractListModel>
-#include <QStringList>
-#include <QVariantList>
-#include <QJSValue>
+#include <QtCore/QAbstractListModel>
+#include <QtCore/QStringList>
+#include <QtCore/QVariantList>
+#include <QtQml/QJSValue>
 #include <QtAppManCommon/global.h>
 #include <QtAppManManager/application.h>
 

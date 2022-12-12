@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <QObject>
-#include <QAbstractListModel>
+#include <QtCore/QObject>
+#include <QtCore/QAbstractListModel>
 #include <QtAppManCommon/global.h>
 #include <QtAppManApplication/packageinfo.h>
 #include <QtAppManManager/asynchronoustask.h>

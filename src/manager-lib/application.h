@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <QObject>
-#include <QVariantMap>
-#include <QUrl>
+#include <QtCore/QObject>
+#include <QtCore/QVariantMap>
+#include <QtCore/QUrl>
 #include <QtAppManApplication/applicationinfo.h>
 #include <QtAppManApplication/packageinfo.h>
 #include <QtAppManManager/amnamespace.h>

@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QString>
-#include <QDir>
-#include <QByteArray>
-#include <QException>
+#include <QtCore/QString>
+#include <QtCore/QDir>
+#include <QtCore/QByteArray>
+#include <QtCore/QException>
 
 #include <exception>
 #include <QtAppManCommon/error.h>

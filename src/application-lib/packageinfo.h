@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <QDir>
-#include <QMap>
-#include <QString>
-#include <QStringList>
-#include <QVariantMap>
-#include <QVector>
+#include <QtCore/QDir>
+#include <QtCore/QMap>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QVariantMap>
+#include <QtCore/QVector>
 
 #include <memory>
 

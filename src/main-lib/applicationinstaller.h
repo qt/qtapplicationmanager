@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <QObject>
-#include <QVariant>
-#include <QUrl>
-#include <QStringList>
-#include <QDir>
-#include <QDebug>
+#include <QtCore/QObject>
+#include <QtCore/QVariant>
+#include <QtCore/QUrl>
+#include <QtCore/QStringList>
+#include <QtCore/QDir>
+#include <QtCore/QDebug>
 #include <QtAppManCommon/error.h>
 #include <QtAppManCommon/logging.h>
 #include <QtAppManManager/applicationmanager.h>

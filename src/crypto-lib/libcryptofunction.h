@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <qglobal.h>
+#include <QtCore/qglobal.h>
 #include <utility>
 #include <QtAppManCommon/global.h>
 

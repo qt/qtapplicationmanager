@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <QThread>
-#include <QMutex>
+#include <QtCore/QThread>
+#include <QtCore/QMutex>
 
 #include <QtAppManCommon/error.h>
 

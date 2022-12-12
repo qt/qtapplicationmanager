@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QUrl>
-#include <QStringList>
-#include <QWaitCondition>
-#include <QMutex>
+#include <QtCore/QUrl>
+#include <QtCore/QStringList>
+#include <QtCore/QWaitCondition>
+#include <QtCore/QMutex>
 
 #include <QtAppManApplication/installationreport.h>
 #include <QtAppManManager/asynchronoustask.h>

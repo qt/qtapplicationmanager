@@ -5,23 +5,23 @@
 
 #pragma once
 
-#include <QUrl>
+#include <QtCore/QUrl>
 #include <QtAppManCommon/global.h>
 #include <QtAppManWindow/qtappman_window-config.h>
 #include <functional>
 
 #if defined(AM_WIDGETS_SUPPORT)
-#  include <QApplication>
-#  include <QSurfaceFormat>
+#  include <QtWidgets/QApplication>
+#  include <QtGui/QSurfaceFormat>
 typedef QApplication MainBase;
 #else
-#  include <QGuiApplication>
-#  include <QSurfaceFormat>
+#  include <QtGui/QGuiApplication>
+#  include <QtGui/QSurfaceFormat>
 typedef QGuiApplication MainBase;
 #endif
 
 #include <QtAppManSharedMain/sharedmain.h>
-#include <QVector>
+#include <QtCore/QVector>
 
 QT_FORWARD_DECLARE_CLASS(QQmlApplicationEngine)
 QT_FORWARD_DECLARE_CLASS(QQuickView)

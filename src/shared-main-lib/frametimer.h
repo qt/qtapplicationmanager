@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QElapsedTimer>
-#include <QObject>
-#include <QPointer>
-#include <QTimer>
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QObject>
+#include <QtCore/QPointer>
+#include <QtCore/QTimer>
 #include <QtAppManCommon/global.h>
 #include <limits>
 

@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QByteArray>
-#include <QMutex>
+#include <QtCore/QString>
+#include <QtCore/QByteArray>
+#include <QtCore/QMutex>
 #include <qplatformdefs.h>
 
 #ifdef Q_OS_UNIX

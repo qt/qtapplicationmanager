@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <QVariantMap>
-#include <QPointer>
-#include <QQuickItem>
-#include <QSet>
+#include <QtCore/QObject>
+#include <QtCore/QVariantMap>
+#include <QtCore/QPointer>
+#include <QtQuick/QQuickItem>
+#include <QtCore/QSet>
 #include <QtAppManCommon/global.h>
 #include <QtAppManManager/application.h>
 

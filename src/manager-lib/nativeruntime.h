@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <qglobal.h>
+#include <QtCore/qglobal.h>
 
-#include <QtPlugin>
-#include <QVector>
+#include <QtCore/QtPlugin>
+#include <QtCore/QVector>
 
 #include <QtAppManManager/abstractruntime.h>
 #include <QtAppManManager/abstractcontainer.h>

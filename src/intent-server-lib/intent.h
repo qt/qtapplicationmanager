@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QUrl>
-#include <QStringList>
-#include <QVariantMap>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QUrl>
+#include <QtCore/QStringList>
+#include <QtCore/QVariantMap>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

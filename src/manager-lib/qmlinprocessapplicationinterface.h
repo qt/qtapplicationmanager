@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <QVector>
-#include <QPointer>
-#include <QQmlParserStatus>
+#include <QtCore/QVector>
+#include <QtCore/QPointer>
+#include <QtQml/QQmlParserStatus>
 
 #include <QtAppManApplication/applicationinterface.h>
 #include <QtAppManNotification/notification.h>

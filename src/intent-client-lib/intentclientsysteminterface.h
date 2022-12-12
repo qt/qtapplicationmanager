@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QPointer>
-#include <QUuid>
-#include <QVariantMap>
+#include <QtCore/QObject>
+#include <QtCore/QPointer>
+#include <QtCore/QUuid>
+#include <QtCore/QVariantMap>
 #include <QtAppManCommon/global.h>
 
 

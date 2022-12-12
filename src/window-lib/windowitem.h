@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <QQuickItem>
+#include <QtQuick/QQuickItem>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

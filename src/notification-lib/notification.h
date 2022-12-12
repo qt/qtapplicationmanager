@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QUrl>
-#include <QVariantMap>
-#include <QQmlParserStatus>
+#include <QtCore/QObject>
+#include <QtCore/QUrl>
+#include <QtCore/QVariantMap>
+#include <QtQml/QQmlParserStatus>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

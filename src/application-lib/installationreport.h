@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QString>
-#include <QStringList>
-#include <QByteArray>
-#include <QVariantMap>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QByteArray>
+#include <QtCore/QVariantMap>
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QIODevice)

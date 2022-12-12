@@ -10,13 +10,13 @@
 
 #if defined(AM_MULTI_PROCESS)
 
-#include <QWaylandQuickCompositor>
+#include <QtWaylandCompositor/QWaylandQuickCompositor>
 
-#include <QWaylandQuickSurface>
-#include <QWaylandQuickItem>
+#include <QtWaylandCompositor/QWaylandQuickSurface>
+#include <QtWaylandCompositor/QWaylandQuickItem>
 
-#include <QMap>
-#include <QPointer>
+#include <QtCore/QMap>
+#include <QtCore/QPointer>
 
 QT_FORWARD_DECLARE_CLASS(QWaylandResource)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)

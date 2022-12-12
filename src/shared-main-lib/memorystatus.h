@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include <QObject>
+#include <QtCore/QObject>
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManMonitor/systemreader.h>

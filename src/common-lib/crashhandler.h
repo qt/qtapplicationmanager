@@ -6,7 +6,7 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QVariantMap>
+#include <QtCore/QVariantMap>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 

@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <QAbstractListModel>
+#include <QtCore/QAbstractListModel>
 #include <QtAppManCommon/global.h>
 #include <QtQml/qqmllist.h>
-#include <QList>
-#include <QStringList>
-#include <QTimer>
+#include <QtCore/QList>
+#include <QtCore/QStringList>
+#include <QtCore/QTimer>
 
 QT_BEGIN_NAMESPACE_AM
 

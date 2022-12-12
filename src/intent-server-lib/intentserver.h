@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <QAbstractListModel>
-#include <QVariantMap>
-#include <QVector>
-#include <QUuid>
-#include <QQueue>
+#include <QtCore/QAbstractListModel>
+#include <QtCore/QVariantMap>
+#include <QtCore/QVector>
+#include <QtCore/QUuid>
+#include <QtCore/QQueue>
 #include <QtAppManCommon/global.h>
 #include <QtAppManIntentServer/intent.h>
 

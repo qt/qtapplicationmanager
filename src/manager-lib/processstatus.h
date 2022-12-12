@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <QAtomicInteger>
-#include <QObject>
-#include <QPointer>
-#include <QThread>
-#include <QVariant>
+#include <QtCore/QAtomicInteger>
+#include <QtCore/QObject>
+#include <QtCore/QPointer>
+#include <QtCore/QThread>
+#include <QtCore/QVariant>
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManManager/amnamespace.h>

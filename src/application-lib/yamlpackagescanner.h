@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <QIODevice>
+#include <QtCore/QIODevice>
 #include <QtAppManApplication/packagescanner.h>
 
 QT_BEGIN_NAMESPACE_AM

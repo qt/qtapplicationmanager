@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <QObject>
-#include <QPair>
-#include <QVector>
+#include <QtCore/QObject>
+#include <QtCore/QPair>
+#include <QtCore/QVector>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

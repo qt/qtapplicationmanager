@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <QMutex>
-#include <QElapsedTimer>
-#include <QObject>
+#include <QtCore/QMutex>
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QObject>
 
 #include <QtAppManCommon/global.h>
 

@@ -6,10 +6,10 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QStringList>
-#include <QVariantMap>
-#include <QVector>
-#include <QCommandLineParser>
+#include <QtCore/QStringList>
+#include <QtCore/QVariantMap>
+#include <QtCore/QVector>
+#include <QtCore/QCommandLineParser>
 
 #include <memory>
 

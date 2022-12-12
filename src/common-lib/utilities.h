@@ -5,15 +5,15 @@
 
 #pragma once
 
-#include <QVector>
-#include <QPair>
-#include <QByteArray>
-#include <QVariant>
-#include <QString>
-#include <QUrl>
-#include <QDir>
-#include <QResource>
-#include <QLibrary>
+#include <QtCore/QVector>
+#include <QtCore/QPair>
+#include <QtCore/QByteArray>
+#include <QtCore/QVariant>
+#include <QtCore/QString>
+#include <QtCore/QUrl>
+#include <QtCore/QDir>
+#include <QtCore/QResource>
+#include <QtCore/QLibrary>
 
 #include <QtAppManCommon/global.h>
 

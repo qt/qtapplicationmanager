@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 #pragma once
 
-#include <QString>
-#include <QByteArray>
+#include <QtCore/QString>
+#include <QtCore/QByteArray>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

@@ -7,7 +7,7 @@
 
 #include <QtAppManManager/abstractruntime.h>
 
-#include <QSharedPointer>
+#include <QtCore/QSharedPointer>
 
 QT_BEGIN_NAMESPACE_AM
 

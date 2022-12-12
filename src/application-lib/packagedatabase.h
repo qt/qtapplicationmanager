@@ -5,8 +5,8 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QVector>
-#include <QString>
+#include <QtCore/QVector>
+#include <QtCore/QString>
 
 #include <QtAppManApplication/packageinfo.h>
 

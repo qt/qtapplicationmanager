@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <QByteArray>
-#include <QString>
+#include <QtCore/QByteArray>
+#include <QtCore/QString>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

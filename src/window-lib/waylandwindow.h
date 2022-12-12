@@ -9,9 +9,9 @@
 
 #if defined(AM_MULTI_PROCESS)
 
-#include <QWaylandQuickSurface>
-#include <QWaylandXdgShell>
-#include <QTimer>
+#include <QtWaylandCompositor/QWaylandQuickSurface>
+#include <QtWaylandCompositor/QWaylandXdgShell>
+#include <QtCore/QTimer>
 
 QT_BEGIN_NAMESPACE_AM
 

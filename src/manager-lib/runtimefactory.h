@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <QHash>
-#include <QObject>
+#include <QtCore/QHash>
+#include <QtCore/QObject>
 
 #include <QtAppManCommon/global.h>
 

@@ -6,8 +6,8 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QObject>
-#include <QDBusContext>
+#include <QtCore/QObject>
+#include <QtDBus/QDBusContext>
 
 QT_FORWARD_DECLARE_CLASS(QDBusAbstractAdaptor)
 

@@ -6,10 +6,10 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QVariant>
+#include <QtCore/QVariant>
 
 #if defined(QT_DBUS_LIB)
-#  include <QDBusUnixFileDescriptor>
+#  include <QtDBus/QDBusUnixFileDescriptor>
 
 QT_BEGIN_NAMESPACE_AM
 typedef QMap<QString, QDBusUnixFileDescriptor> UnixFdMap;

@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <QMap>
-#include <QString>
-#include <QStringList>
-#include <QVariantMap>
-#include <QVector>
+#include <QtCore/QMap>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QVariantMap>
+#include <QtCore/QVector>
 
 #include <QtAppManCommon/global.h>
 

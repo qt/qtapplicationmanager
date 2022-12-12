@@ -7,10 +7,10 @@
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManApplication/packageinfo.h>
-#include <QUrl>
-#include <QString>
-#include <QAtomicInt>
-#include <QObject>
+#include <QtCore/QUrl>
+#include <QtCore/QString>
+#include <QtCore/QAtomicInt>
+#include <QtCore/QObject>
 
 QT_BEGIN_NAMESPACE_AM
 

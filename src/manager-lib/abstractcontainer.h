@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QVariantMap>
-#include <QVector>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QVariantMap>
+#include <QtCore/QVector>
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManManager/amnamespace.h>

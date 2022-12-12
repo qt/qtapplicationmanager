@@ -6,11 +6,11 @@
 
 #include <functional>
 
-#include <QPair>
-#include <QVector>
-#include <QStringList>
-#include <QVariant>
-#include <QIODevice>
+#include <QtCore/QPair>
+#include <QtCore/QVector>
+#include <QtCore/QStringList>
+#include <QtCore/QVariant>
+#include <QtCore/QIODevice>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

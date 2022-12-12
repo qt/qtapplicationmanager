@@ -6,9 +6,9 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QVariantMap>
-#include <QStringList>
-#include <QSurfaceFormat>
+#include <QtCore/QVariantMap>
+#include <QtCore/QStringList>
+#include <QtGui/QSurfaceFormat>
 
 QT_FORWARD_DECLARE_STRUCT(QQmlDebuggingEnabler)
 

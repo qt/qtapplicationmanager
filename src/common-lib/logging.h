@@ -6,8 +6,8 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QLoggingCategory>
-#include <QMutex>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
 
 QT_BEGIN_NAMESPACE_AM
 

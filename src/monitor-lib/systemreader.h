@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QByteArray>
-#include <QPair>
-#include <QElapsedTimer>
-#include <QObject>
+#include <QtCore/QByteArray>
+#include <QtCore/QPair>
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QObject>
 #include <QtAppManCommon/global.h>
 
 #include <memory>

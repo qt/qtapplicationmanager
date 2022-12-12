@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <QDebug>
+#include <QtCore/QDebug>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

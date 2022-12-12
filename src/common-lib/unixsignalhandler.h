@@ -6,8 +6,8 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QObject>
-#include <QAtomicInteger>
+#include <QtCore/QObject>
+#include <QtCore/QAtomicInteger>
 
 #include <initializer_list>
 #include <list>
@@ -18,8 +18,8 @@
 #if defined(Q_OS_UNIX)
 #  include <unistd.h>
 #elif defined(Q_OS_WIN)
-#  include <QMutex>
-#  include <QWinEventNotifier>
+#  include <QtCore/QMutex>
+#  include <QtCore/QWinEventNotifier>
 #endif
 
 QT_BEGIN_NAMESPACE_AM

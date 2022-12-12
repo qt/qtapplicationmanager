@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <QSortFilterProxyModel>
-#include <QJSValue>
+#include <QtCore/QSortFilterProxyModel>
+#include <QtQml/QJSValue>
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QJSEngine);

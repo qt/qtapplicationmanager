@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <QQmlParserStatus>
-#include <QSharedPointer>
-#include <QColor>
-#include <QQuickItem>
+#include <QtQml/QQmlParserStatus>
+#include <QtCore/QSharedPointer>
+#include <QtGui/QColor>
+#include <QtQuick/QQuickItem>
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlComponentAttached)

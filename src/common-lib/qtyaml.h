@@ -8,11 +8,11 @@
 #include <functional>
 #include <vector>
 
-#include <QJsonParseError>
-#include <QVector>
-#include <QByteArray>
-#include <QString>
-#include <QVariant>
+#include <QtCore/QJsonParseError>
+#include <QtCore/QVector>
+#include <QtCore/QByteArray>
+#include <QtCore/QString>
+#include <QtCore/QVariant>
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/exception.h>
 

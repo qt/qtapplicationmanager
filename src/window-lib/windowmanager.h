@@ -6,7 +6,7 @@
 #pragma once
 
 #include <functional>
-#include <QAbstractListModel>
+#include <QtCore/QAbstractListModel>
 #include <QtAppManCommon/global.h>
 
 #if defined(AM_MULTI_PROCESS)

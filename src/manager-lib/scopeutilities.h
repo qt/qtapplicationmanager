@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QDir>
-#include <QFile>
+#include <QtCore/QString>
+#include <QtCore/QDir>
+#include <QtCore/QFile>
 
 #include <QtAppManCommon/global.h>
 

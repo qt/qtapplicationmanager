@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QPointer>
-#include <QSharedPointer>
-#include <QVariantMap>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QPointer>
+#include <QtCore/QSharedPointer>
+#include <QtCore/QVariantMap>
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManManager/amnamespace.h>

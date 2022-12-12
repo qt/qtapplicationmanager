@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QVariantMap>
-#include <QList>
-#include <QMap>
-#include <QPair>
-#include <QElapsedTimer>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QVariantMap>
+#include <QtCore/QList>
+#include <QtCore/QMap>
+#include <QtCore/QPair>
+#include <QtCore/QElapsedTimer>
 
 #include <QtAppManCommon/global.h>
 

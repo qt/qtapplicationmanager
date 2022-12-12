@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <QPointer>
+#include <QtCore/QPointer>
 #include <QtAppManIntentClient/intentclientsysteminterface.h>
 
 class IoQtApplicationManagerIntentInterfaceInterface;

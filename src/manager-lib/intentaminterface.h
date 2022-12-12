@@ -5,17 +5,17 @@
 
 #pragma once
 
-#include <QObject>
-#include <QVector>
-#include <QString>
-#include <QVariantMap>
-#include <QList>
-#include <QUrl>
+#include <QtCore/QObject>
+#include <QtCore/QVector>
+#include <QtCore/QString>
+#include <QtCore/QVariantMap>
+#include <QtCore/QList>
+#include <QtCore/QUrl>
 #include <QtAppManCommon/global.h>
 
 #if defined(AM_MULTI_PROCESS)
-#  include <QDBusConnection>
-#  include <QDBusContext>
+#  include <QtDBus/QDBusConnection>
+#  include <QtDBus/QDBusContext>
 #endif
 #include <QtAppManIntentServer/intentserversysteminterface.h>
 #include <QtAppManIntentServer/intent.h>

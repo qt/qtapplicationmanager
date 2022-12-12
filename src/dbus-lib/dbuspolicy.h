@@ -6,8 +6,8 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QVariantMap>
-#include <QByteArray>
+#include <QtCore/QVariantMap>
+#include <QtCore/QByteArray>
 
 QT_FORWARD_DECLARE_CLASS(QDBusAbstractAdaptor)
 

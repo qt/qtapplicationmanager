@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <QObject>
-#include <QSharedPointer>
+#include <QtCore/QObject>
+#include <QtCore/QSharedPointer>
 
 #include <QtAppManWindow/window.h>
 #include <QtAppManManager/inprocesssurfaceitem.h>

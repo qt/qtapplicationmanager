@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <QVector>
-#include <QPair>
-#include <QByteArray>
-#include <QElapsedTimer>
+#include <QtCore/QObject>
+#include <QtCore/QVector>
+#include <QtCore/QPair>
+#include <QtCore/QByteArray>
+#include <QtCore/QElapsedTimer>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

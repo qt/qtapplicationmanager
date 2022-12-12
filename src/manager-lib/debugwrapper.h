@@ -7,8 +7,8 @@
 
 #include <QtAppManCommon/global.h>
 
-#include <QStringList>
-#include <QMap>
+#include <QtCore/QStringList>
+#include <QtCore/QMap>
 
 QT_BEGIN_NAMESPACE_AM
 

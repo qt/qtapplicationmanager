@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <QPointer>
-#include <QVector>
-#include <QDBusConnection>
+#include <QtCore/QPointer>
+#include <QtCore/QVector>
+#include <QtDBus/QDBusConnection>
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManApplication/applicationinterface.h>

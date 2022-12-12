@@ -7,10 +7,10 @@
 
 #include <QtAppManCommon/global.h>
 
-#include <QHash>
-#include <QObject>
-#include <QStringList>
-#include <QVariant>
+#include <QtCore/QHash>
+#include <QtCore/QObject>
+#include <QtCore/QStringList>
+#include <QtCore/QVariant>
 
 #include <QtAppManMonitor/systemreader.h>
 

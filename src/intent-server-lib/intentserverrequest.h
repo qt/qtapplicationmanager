@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QVariantMap>
-#include <QUuid>
-#include <QVector>
-#include <QPointer>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QVariantMap>
+#include <QtCore/QUuid>
+#include <QtCore/QVector>
+#include <QtCore/QPointer>
 #include <QtAppManCommon/global.h>
 #include <QtAppManIntentServer/intent.h>
 

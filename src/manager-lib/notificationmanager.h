@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <QObject>
-#include <QAbstractListModel>
+#include <QtCore/QObject>
+#include <QtCore/QAbstractListModel>
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)

@@ -6,8 +6,8 @@
 #pragma once
 
 #include <QtAppManCommon/global.h>
-#include <QQmlEngine>
-#include <qqml.h>
+#include <QtQml/QQmlEngine>
+#include <QtQml/qqml.h>
 
 QT_BEGIN_NAMESPACE_AM
 

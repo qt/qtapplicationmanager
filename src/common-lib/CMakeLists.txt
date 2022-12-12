@@ -12,7 +12,7 @@ qt_internal_add_module(AppManCommonPrivate
     SOURCES
         configcache.cpp configcache.h configcache_p.h
         crashhandler.cpp crashhandler.h
-        dbus-utilities.cpp
+        dbus-utilities.cpp dbus-utilities.h
         error.h
         exception.cpp exception.h
         filesystemmountwatcher.cpp filesystemmountwatcher.h
@@ -41,8 +41,6 @@ qt_internal_extend_target(AppManCommonPrivate CONDITION TARGET Qt::DltLogging
 )
 
 qt_internal_extend_target(AppManCommonPrivate CONDITION TARGET Qt::DBus
-    SOURCES
-        dbus-utilities.h
     PUBLIC_LIBRARIES
         Qt::DBus
 )

@@ -7,7 +7,10 @@
 
 #include <qqmlinfo.h>
 
+#if defined(AM_MULTI_PROCESS)
 #include "waylandwindow.h"
+#endif
+
 #include "inprocesswindow.h"
 #include "qmlinprocessapplicationmanagerwindow.h"
 

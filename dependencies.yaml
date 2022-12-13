@@ -11,3 +11,6 @@ dependencies:
   ../qtwayland:
     ref: c76f9bcd6704736998871d9c0cbd64e69f59757a
     required: false
+  ../qtdltlogging:
+    ref: f13f35eecf5ad93507f6a4fc06edfc3ea34417f3
+    required: false

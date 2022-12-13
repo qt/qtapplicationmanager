@@ -93,3 +93,6 @@ manifestmeta.applicationmanager.names   = *
 manifestmeta.applicationmanager.tags    = applicationmanager
 manifestmeta.qtapplicationmanager.names = *
 manifestmeta.qtapplicationmanager.tags  = qtapplicationmanager
+
+# Fail the documentation build if there are more warnings than the limit
+warninglimit = 0

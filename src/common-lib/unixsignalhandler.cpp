@@ -99,7 +99,7 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
         auto that = UnixSignalHandler::instance();
         that->m_currentSignal = sig;
 
-        for (const auto &h : qAsConst(that->m_handlers)) {
+        for (const auto &h : std::as_const(that->m_handlers)) {
             if ((h.m_signal == sig) && !h.m_disabled) {
                 if (!h.m_qt) {
                     h.m_handler(sig);
@@ -122,7 +122,7 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
             // We can not remove the entries in the list, because that would (a) allocate and (b)
             // step on code that might be iterating over the list in the "Forwarded" handler.
 
-            for (const auto &h : qAsConst(that->m_handlers)) {
+            for (const auto &h : std::as_const(that->m_handlers)) {
                 if (that->m_resetSignalMask & am_sigmask(h.m_signal))
                     h.m_disabled = true;
             }
@@ -152,7 +152,7 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
                     return;
                 }
 
-                for (const auto &h : qAsConst(m_handlers)) {
+                for (const auto &h : std::as_const(m_handlers)) {
                     if (h.m_qt && (h.m_signal == sig) && !h.m_disabled)
                         h.m_handler(sig);
                 }
@@ -165,8 +165,8 @@ bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<in
             connect(m_winEvent, &QWinEventNotifier::activated, qApp, [this]() {
                 // this lambda is the "signal handler" multiplexer within the Qt event loop
                 m_winLock.lock();
-                for (const int &sig : qAsConst(m_signalsForEventLoop)) {
-                    for (const auto &h : qAsConst(m_handlers)) {
+                for (const int &sig : std::as_const(m_signalsForEventLoop)) {
+                    for (const auto &h : std::as_const(m_handlers)) {
                         if (h.m_qt && (h.m_signal == sig) && !h.m_disabled)
                             h.m_handler(sig);
                     }

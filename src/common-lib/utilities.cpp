@@ -310,7 +310,7 @@ void loadResource(const QString &resource) Q_DECL_NOEXCEPT_EXPR(false)
 
 void closeAndClearFileDescriptors(QVector<int> &fdList)
 {
-    for (int fd : qAsConst(fdList)) {
+    for (int fd : std::as_const(fdList)) {
         if (fd >= 0)
             QT_CLOSE(fd);
     }

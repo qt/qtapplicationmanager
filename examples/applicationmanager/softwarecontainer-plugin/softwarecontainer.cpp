@@ -362,7 +362,7 @@ bool SoftwareContainer::sendBindMounts()
         bindMountResults << iface->asyncCall(QStringLiteral("BindMount"), m_id, std::get<0>(*it),
                                              std::get<1>(*it), std::get<2>(*it));
 
-    for (const auto &pending : qAsConst(bindMountResults))
+    for (const auto &pending : std::as_const(bindMountResults))
         QDBusPendingCallWatcher(pending).waitForFinished();
 
     for (int i = 0; i < bindMounts.size(); ++i) {
@@ -457,7 +457,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
 
     // SC expects a plain string instead of individual args
     QString cmdLine;
-    for (const auto &part : qAsConst(command)) {
+    for (const auto &part : std::as_const(command)) {
         if (!cmdLine.isEmpty())
             cmdLine.append(QLatin1Char(' '));
         cmdLine.append(QLatin1Char('\"'));

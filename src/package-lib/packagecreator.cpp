@@ -197,7 +197,7 @@ bool PackageCreatorPrivate::create()
         // Calculate the total size first, so we can report progress later on
 
         qint64 allFilesSize = 0;
-        for (const QString &file : qAsConst(allFiles)) {
+        for (const QString &file : std::as_const(allFiles)) {
             QFileInfo fi(m_sourcePath + file);
 
             if (!fi.exists())
@@ -210,7 +210,7 @@ bool PackageCreatorPrivate::create()
 
         // Iterate over all files in the report
 
-        for (const QString &file : qAsConst(allFiles)) {
+        for (const QString &file : std::as_const(allFiles)) {
             if (q->wasCanceled())
                 throw Exception(Error::Canceled);
 

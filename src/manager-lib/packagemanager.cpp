@@ -829,7 +829,7 @@ QVariantMap PackageManager::documentLocation() const
 
 bool PackageManager::isPackageInstallationActive(const QString &packageId) const
 {
-    for (const auto *t : qAsConst(d->installationTaskList)) {
+    for (const auto *t : std::as_const(d->installationTaskList)) {
         if (t->packageId() == packageId)
             return true;
     }
@@ -865,7 +865,7 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
             checkFiles << pkgDir + qSL("/.installation-report.yaml");
             checkDirs << pkgDir;
 
-            for (const QString &checkFile : qAsConst(checkFiles)) {
+            for (const QString &checkFile : std::as_const(checkFiles)) {
                 QFileInfo fi(checkFile);
                 if (!fi.exists() || !fi.isFile() || !fi.isReadable()) {
                     valid = false;
@@ -1201,7 +1201,7 @@ bool PackageManager::cancelTask(const QString &taskId)
 #if !defined(AM_DISABLE_INSTALLER)
     if (!d->disableInstaller) {
         // incoming tasks can be forcefully canceled right away
-        for (AsynchronousTask *task : qAsConst(d->incomingTaskList)) {
+        for (AsynchronousTask *task : std::as_const(d->incomingTaskList)) {
             if (task->id() == taskId) {
                 task->forceCancel();
                 task->deleteLater();
@@ -1219,7 +1219,7 @@ bool PackageManager::cancelTask(const QString &taskId)
         if (d->activeTask && d->activeTask->id() == taskId)
             return d->activeTask->cancel();
 
-        for (AsynchronousTask *task : qAsConst(d->installationTaskList)) {
+        for (AsynchronousTask *task : std::as_const(d->installationTaskList)) {
             if (task->id() == taskId)
                 return task->cancel();
         }

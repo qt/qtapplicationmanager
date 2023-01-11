@@ -423,7 +423,7 @@ void tst_Configuration::commandLineConfig()
                 << "main-cl.qml";
 
     QStringList strCommandLine;
-    for (const auto &c : qAsConst(commandLine))
+    for (const auto &c : std::as_const(commandLine))
         strCommandLine << QString::fromLatin1(c);
 
     c.parseWithArguments(strCommandLine);

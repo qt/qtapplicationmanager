@@ -120,7 +120,7 @@ void HostProcess::setStdioRedirections(QVector<int> &&stdioRedirections)
 #if defined(Q_OS_UNIX)
     // make sure that the redirection fds do not have a close-on-exec flag, since we need them
     // in the child process.
-    for (int fd : qAsConst(m_stdioRedirections)) {
+    for (int fd : std::as_const(m_stdioRedirections)) {
         if (fd < 0)
             continue;
         int flags = fcntl(fd, F_GETFD);

@@ -423,7 +423,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         QCoreApplication::exit(2);
         return;
     }
-    for (StartupInterface *iface : qAsConst(startupPlugins))
+    for (StartupInterface *iface : std::as_const(startupPlugins))
         iface->initialize(m_applicationInterface ? m_applicationInterface->systemProperties() : QVariantMap());
 
     bool loadDummyData = runtimeParameters.value(qSL("loadDummyData")).toBool()
@@ -463,7 +463,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     }
     qCDebug(LogQmlRuntime) << "Qml import paths:" << m_engine.importPathList();
 
-    for (StartupInterface *iface : qAsConst(startupPlugins))
+    for (StartupInterface *iface : std::as_const(startupPlugins))
         iface->beforeQmlEngineLoad(&m_engine);
 
     StartupTimer::instance()->checkpoint("after loading plugins and import paths");
@@ -487,7 +487,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     }
 
-    for (StartupInterface *iface : qAsConst(startupPlugins))
+    for (StartupInterface *iface : std::as_const(startupPlugins))
         iface->afterQmlEngineLoad(&m_engine);
 
     bool createStartupReportNow = true;
@@ -528,7 +528,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
                 st->checkFirstFrame();
                 st->createAutomaticReport(applicationId);
 
-                for (StartupInterface *iface : qAsConst(startupPlugins))
+                for (StartupInterface *iface : std::as_const(startupPlugins))
                     iface->afterWindowShow(m_window);
             }
         });
@@ -542,7 +542,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     }
 
     // needed, even though we do not explicitly show() the window any more
-    for (StartupInterface *iface : qAsConst(startupPlugins))
+    for (StartupInterface *iface : std::as_const(startupPlugins))
         iface->beforeWindowShow(m_window);
 
     qCDebug(LogQmlRuntime) << "component loading and creating complete.";

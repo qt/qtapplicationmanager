@@ -974,7 +974,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 
         auto grabbers = new QList<QSharedPointer<const QQuickItemGrabResult>>;
 
-        for (const Window *w : qAsConst(d->windowsInModel)) {
+        for (const Window *w : std::as_const(d->windowsInModel)) {
             if (apps.contains(w->application())) {
                 if (attributeName.isEmpty()
                         || (w->windowProperty(attributeName).toString() == attributeValue)) {

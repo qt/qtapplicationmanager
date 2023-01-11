@@ -222,7 +222,7 @@ void QuickLauncher::shutDown()
     bool waitForRemove = false;
 
     for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
-        for (const auto &car : qAsConst(entry->m_containersAndRuntimes)) {
+        for (const auto &car : std::as_const(entry->m_containersAndRuntimes)) {
             if (car.second)
                 car.second->stop();
             else if (car.first)

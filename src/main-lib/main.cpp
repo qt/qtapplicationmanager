@@ -325,7 +325,7 @@ void Main::parseSystemProperties(const QVariantMap &rawSystemProperties)
     for (auto it = pri.cbegin(); it != pri.cend(); ++it)
         m_systemProperties[SP_SystemUi].insert(it.key(), it.value());
 
-    for (auto iface : qAsConst(m_startupPlugins))
+    for (auto iface : std::as_const(m_startupPlugins))
         iface->initialize(m_systemProperties.at(SP_SystemUi));
 }
 
@@ -377,10 +377,10 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
         ContainerFactory::instance()->registerContainer(new ProcessContainerManager());
 #endif
         auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", containerPluginPaths);
-        for (auto iface : qAsConst(containerPlugins))
+        for (auto iface : std::as_const(containerPlugins))
             ContainerFactory::instance()->registerContainer(new PluginContainerManager(iface));
     }
-    for (auto iface : qAsConst(m_startupPlugins))
+    for (auto iface : std::as_const(m_startupPlugins))
         iface->afterRuntimeRegistration();
 
     ContainerFactory::instance()->setConfiguration(containerConfigurations);
@@ -710,7 +710,7 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
 
 void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    for (auto iface : qAsConst(m_startupPlugins))
+    for (auto iface : std::as_const(m_startupPlugins))
         iface->beforeQmlEngineLoad(m_engine);
 
     // protect our namespace from this point onward
@@ -732,7 +732,7 @@ void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
     if (Q_UNLIKELY(m_engine->rootObjects().isEmpty()))
         throw Exception("Qml scene does not have a root object");
 
-    for (auto iface : qAsConst(m_startupPlugins))
+    for (auto iface : std::as_const(m_startupPlugins))
         iface->afterQmlEngineLoad(m_engine);
 
     StartupTimer::instance()->checkpoint("after loading main QML file");
@@ -763,7 +763,7 @@ void Main::showWindow(bool showFullscreen)
             m_engine->setIncubationController(window->incubationController());
     }
 
-    for (auto iface : qAsConst(m_startupPlugins))
+    for (auto iface : std::as_const(m_startupPlugins))
         iface->beforeWindowShow(window);
 
     if (!window) {
@@ -802,7 +802,7 @@ void Main::showWindow(bool showFullscreen)
         // now check the surface format, in case we had requested a specific GL version/profile
         checkOpenGLFormat("main window", window->format());
 
-        for (auto iface : qAsConst(m_startupPlugins))
+        for (auto iface : std::as_const(m_startupPlugins))
             iface->afterWindowShow(window);
 
         StartupTimer::instance()->checkpoint("after window show");
@@ -891,7 +891,7 @@ void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, c
 
         static QStringList filesToDelete;
         if (filesToDelete.isEmpty())
-            atexit([]() { for (const QString &ftd : qAsConst(filesToDelete)) QFile::remove(ftd); });
+            atexit([]() { for (const QString &ftd : std::as_const(filesToDelete)) QFile::remove(ftd); });
         filesToDelete << f.fileName();
     }
 }

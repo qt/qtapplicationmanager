@@ -889,7 +889,7 @@ void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXP
         }
     });
 
-    for (const auto &cancelTaskId : qAsConst(cancelTaskIds)) {
+    for (const auto &cancelTaskId : std::as_const(cancelTaskIds)) {
         fprintf(stdout, "Canceling installation task %s...\n", qPrintable(cancelTaskId));
 
         // cancel the task

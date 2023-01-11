@@ -385,7 +385,7 @@ int main(int argc, char **argv)
                                                    QByteArray::number(QLibraryInfo::version().minorVersion()));
 
             auto mos = imports.values(*it);
-            for (const auto &mo : qAsConst(mos))
+            for (const auto &mo : std::as_const(mos))
                 typesOut << qmlTypeForMetaObect(mo, 1, true);
 
             typesOut << footer;

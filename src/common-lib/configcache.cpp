@@ -133,7 +133,7 @@ void AbstractConfigCache::parse()
 
     // normalize all yaml file names
     QStringList rawFilePaths;
-    for (const auto &rawFile : qAsConst(d->rawFiles)) {
+    for (const auto &rawFile : std::as_const(d->rawFiles)) {
         const auto path = QFileInfo(rawFile).canonicalFilePath();
         if (path.isEmpty())
             throw Exception("file %1 does not exist").arg(rawFile);
@@ -389,7 +389,7 @@ void AbstractConfigCache::parse()
 
 void AbstractConfigCache::clear()
 {
-    for (auto &ce : qAsConst(d->cache))
+    for (auto &ce : std::as_const(d->cache))
         destruct(ce.content);
     d->cache.clear();
     d->cacheIndex.clear();

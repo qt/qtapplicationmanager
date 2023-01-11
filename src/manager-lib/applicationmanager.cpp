@@ -344,7 +344,7 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
 
 ApplicationManagerPrivate::~ApplicationManagerPrivate()
 {
-    for (const QString &scheme : qAsConst(registeredMimeSchemes))
+    for (const QString &scheme : std::as_const(registeredMimeSchemes))
         QDesktopServices::unsetUrlHandler(scheme);
     qDeleteAll(apps);
 }
@@ -570,7 +570,7 @@ void ApplicationManager::registerMimeTypes()
     QSet<QString> schemes;
     schemes << qSL("file") << qSL("http") << qSL("https");
 
-    for (Application *app : qAsConst(d->apps)) {
+    for (Application *app : std::as_const(d->apps)) {
         const auto mimeTypes = app->supportedMimeTypes();
         for (const QString &mime : mimeTypes) {
             int pos = mime.indexOf(QLatin1Char('/'));
@@ -584,9 +584,9 @@ void ApplicationManager::registerMimeTypes()
     QSet<QString> unregisterSchemes = d->registeredMimeSchemes;
     unregisterSchemes.subtract(schemes);
 
-    for (const QString &scheme : qAsConst(unregisterSchemes))
+    for (const QString &scheme : std::as_const(unregisterSchemes))
         QDesktopServices::unsetUrlHandler(scheme);
-    for (const QString &scheme : qAsConst(registerSchemes))
+    for (const QString &scheme : std::as_const(registerSchemes))
         QDesktopServices::setUrlHandler(scheme, this, "openUrlRelay");
 
     d->registeredMimeSchemes = schemes;
@@ -687,7 +687,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
             containerId = qSL("process");
         } else {
             // check config file
-            for (const auto &it : qAsConst(d->containerSelectionConfig)) {
+            for (const auto &it : std::as_const(d->containerSelectionConfig)) {
                 const QString &key = it.first;
                 const QString &value = it.second;
                 bool hasAsterisk = key.contains(qL1C('*'));
@@ -945,7 +945,7 @@ void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 */
 void ApplicationManager::stopAllApplications(bool forceKill)
 {
-    for (Application *app : qAsConst(d->apps)) {
+    for (Application *app : std::as_const(d->apps)) {
         AbstractRuntime *rt = app->currentRuntime();
         if (rt)
             rt->stop(forceKill);
@@ -1038,7 +1038,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
                         mimeTypeName,
                         QStringList()
             };
-            for (const auto &app : qAsConst(apps))
+            for (const auto &app : std::as_const(apps))
                 req.possibleAppIds << app->id();
             d->openUrlRequests << req;
 
@@ -1179,7 +1179,7 @@ void ApplicationManager::shutDown()
 
     auto shutdownHelper = [this]() {
         bool activeRuntime = false;
-        for (Application *app : qAsConst(d->apps)) {
+        for (Application *app : std::as_const(d->apps)) {
             AbstractRuntime *rt = app->currentRuntime();
             if (rt) {
                 activeRuntime = true;
@@ -1190,7 +1190,7 @@ void ApplicationManager::shutDown()
             emit shutDownFinished();
     };
 
-    for (Application *app : qAsConst(d->apps)) {
+    for (Application *app : std::as_const(d->apps)) {
         AbstractRuntime *rt = app->currentRuntime();
         if (rt) {
             connect(rt, &AbstractRuntime::destroyed,
@@ -1428,7 +1428,7 @@ void ApplicationManager::addApplication(ApplicationInfo *appInfo, Package *packa
 {
     // check for id clashes outside of the package (the scanner made sure the package itself is
     // consistent and doesn't have duplicates already)
-    for (Application *checkApp : qAsConst(d->apps)) {
+    for (Application *checkApp : std::as_const(d->apps)) {
         if ((checkApp->id() == appInfo->id()) && (checkApp->package() != package)) {
             throw Exception("found an application with the same id in package %1")
                 .arg(checkApp->packageInfo()->id());

@@ -123,7 +123,7 @@ void tst_PackageCreator::createAndVerify()
 
     // check the contents of the files
 
-    for (const QString &file : qAsConst(files)) {
+    for (const QString &file : std::as_const(files)) {
         QFile src(m_baseDir.absoluteFilePath(file));
         QVERIFY2(src.open(QFile::ReadOnly), qPrintable(src.errorString()));
         QByteArray data = src.readAll();

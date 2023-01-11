@@ -803,7 +803,7 @@ IntentServerRequest *IntentServer::requestToSystem(const QString &requestingAppl
     }
 
     if (broadcast) {
-        for (auto intent : qAsConst(intents)) {
+        for (auto intent : std::as_const(intents)) {
             auto isr = new IntentServerRequest(requestingApplicationId, intentId, { intent }, parameters, broadcast);
             enqueueRequest(isr);
         }

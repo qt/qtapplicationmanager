@@ -340,7 +340,7 @@ void IntentServerIpcConnection::setReady(Application *application)
 
 IntentServerIpcConnection *IntentServerIpcConnection::find(const QString &appId)
 {
-    for (auto ipcConnection : qAsConst(s_ipcConnections)) {
+    for (auto ipcConnection : std::as_const(s_ipcConnections)) {
         if (ipcConnection->applicationId() == appId)
             return ipcConnection;
     }
@@ -457,7 +457,7 @@ IntentServerDBusIpcConnection *IntentServerDBusIpcConnection::find(QDBusConnecti
 {
     QString connectionName = connection.name();
 
-    for (auto ipcConnection : qAsConst(s_ipcConnections)) {
+    for (auto ipcConnection : std::as_const(s_ipcConnections)) {
         if (ipcConnection->isInProcess())
             continue;
         auto dbusIpcConnection = static_cast<IntentServerDBusIpcConnection *>(ipcConnection);

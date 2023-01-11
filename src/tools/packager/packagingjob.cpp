@@ -240,7 +240,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
 
         // read certificates
         QList<QByteArray> certificates;
-        for (const QString &cert : qAsConst(m_certificateFiles)) {
+        for (const QString &cert : std::as_const(m_certificateFiles)) {
             QFile cf(cert);
             if (!cf.open(QIODevice::ReadOnly))
                 throw Exception(cf, "could not open certificate file");

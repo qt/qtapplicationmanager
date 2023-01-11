@@ -87,7 +87,7 @@ void tst_DebugWrapper::specification()
 
     for (auto it = env.cbegin(); it != env.cend(); ++it)
         strEnv.insert(QString::fromLatin1(it.key()), QString::fromLatin1(it.value()));
-    for (const auto &c : qAsConst(cmd))
+    for (const auto &c : std::as_const(cmd))
         strCmd << QString::fromLatin1(c);
 
     QCOMPARE(DebugWrapper::parseSpecification(spec, resultCmd, resultEnv), valid);
@@ -127,11 +127,11 @@ void tst_DebugWrapper::substitute()
     QFETCH(QByteArrayList, result);
 
     QStringList strCmd, strArguments, strResult;
-    for (const auto &c : qAsConst(cmd))
+    for (const auto &c : std::as_const(cmd))
         strCmd << QString::fromLatin1(c);
-    for (const auto &a : qAsConst(arguments))
+    for (const auto &a : std::as_const(arguments))
         strArguments << QString::fromLatin1(a);
-    for (const auto &r : qAsConst(result))
+    for (const auto &r : std::as_const(result))
         strResult << QString::fromLatin1(r);
 
     QCOMPARE(DebugWrapper::substituteCommand(strCmd, program, strArguments), strResult);

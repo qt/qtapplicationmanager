@@ -35,6 +35,13 @@ instructions:
       condition: property
       property: target.os
       equals_value: QNX
+  - type: PrependToEnvironmentVariable
+    variableName: PATH
+    variableValue: "/home/qt/openssl-3.0.7/bin:"
+    enable_if:
+      condition: property
+      property: target.osVersion
+      equals_value: "openSUSE_15_4"
   - type: Group
     instructions:
         - !include "{{qt/qtbase}}/coin_module_build_template_v2.yaml"

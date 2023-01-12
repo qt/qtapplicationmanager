@@ -3,7 +3,7 @@ qt_internal_add_app(appman-launcher-qml
     EXCEPTIONS
     SOURCES
         launcher-qml.cpp launcher-qml_p.h
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::CorePrivate
         Qt::DBus
         Qt::Gui

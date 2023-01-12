@@ -16,3 +16,4 @@ qt_internal_add_tool(${target_name}
     DEFINES
         AM_COMPILING_APPMAN
 )
+qt_internal_return_unless_building_tools()

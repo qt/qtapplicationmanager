@@ -60,7 +60,7 @@ bool Cryptography::LibCryptoFunctionBase::initialize(bool loadOpenSsl3LegacyProv
         unsigned long version = 0;
 
         if (am_OpenSSL_version_num.functionPointer())
-            version = am_OpenSSL_version_num();  // 1.1
+            version = am_OpenSSL_version_num();  // 1.1 and 3.x
         else if (am_SSLeay.functionPointer())
             version = am_SSLeay(); // 1.0
 

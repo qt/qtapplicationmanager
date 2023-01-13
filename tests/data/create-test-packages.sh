@@ -7,13 +7,10 @@
 #set -x
 set -e
 
-isWin=0
-isMac=0
-[ "$OS" == "Windows_NT" ] && isWin=1
-[ "$(uname)" == "Darwin" ] && isMac=1
-
 # check basic requirement
 [ ! -d certificates ] && { echo "Please cd to the tests/data directory before running this script"; exit 1; }
+
+. ./utilities.sh
 
 # set a well-known UTF-8 locale: C.UTF-8 is the obvious choice, but macOS doesn't support it
 if [ "$isMac" = "1" ]; then
@@ -21,8 +18,6 @@ if [ "$isMac" = "1" ]; then
 else
   export LC_ALL=C.UTF-8
 fi
-
-. utilities.sh
 
 usage()
 {

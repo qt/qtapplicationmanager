@@ -8,7 +8,8 @@ R="\033[0;31m"
 G="\033[0;32m"
 W="\033[0m"
 
-[ `uname` == 'Darwin' ] && isMac=1 || isMac=0
+[ "$OS" == "Windows_NT" ] && isWin=1 || isWin=0
+[ "$(uname)" == "Darwin" ] && isMac=1 || isMac=0
 
 echo()
 {

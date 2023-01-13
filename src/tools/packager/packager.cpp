@@ -17,6 +17,7 @@
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/qtyaml.h>
 #include <QtAppManCommon/utilities.h>
+#include <QtAppManCrypto/cryptography.h>
 #include <QtAppManPackage/packageutilities.h>
 #include "packagingjob.h"
 
@@ -64,6 +65,9 @@ static Command command(QCommandLineParser &clp)
 
 int main(int argc, char *argv[])
 {
+    // enable OpenSSL3 to load old certificates
+    Cryptography::enableOpenSsl3LegacyProvider();
+
     PackageUtilities::ensureCorrectLocale();
 
     QCoreApplication::setApplicationName(qSL("Qt ApplicationManager Packager"));

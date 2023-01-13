@@ -11,7 +11,6 @@
 #include "logging.h"
 #include "main.h"
 #include "configuration.h"
-#include "packageutilities.h"
 #if !defined(AM_DISABLE_INSTALLER)
 #  include "sudo.h"
 #endif

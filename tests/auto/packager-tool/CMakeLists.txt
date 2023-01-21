@@ -5,7 +5,7 @@ qt_internal_add_test(tst_packager-tool
         ../error-checking.h
         tst_packager-tool.cpp
     DEFINES
-        AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_BINARY_DIR}/../../data/\\\"
+        AM_TESTDATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../../data/"
     INCLUDE_DIRECTORIES
         ../../../src/tools/packager
     LIBRARIES

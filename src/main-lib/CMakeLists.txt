@@ -14,7 +14,7 @@ qt_internal_add_module(AppManMainPrivate
         main.cpp main.h
         windowframetimer.cpp windowframetimer.h
     DEFINES
-        AM_BUILD_DIR=\\\"\\\"
+        AM_BUILD_DIR=""
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::CorePrivate

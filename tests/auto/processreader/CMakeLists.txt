@@ -4,7 +4,7 @@ qt_internal_add_test(tst_processreader
         ../error-checking.h
         tst_processreader.cpp
     DEFINES
-        AM_TESTDATA_DIR=\\\"${CMAKE_CURRENT_BINARY_DIR}/../../data/\\\"
+        AM_TESTDATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../../data/"
     LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate

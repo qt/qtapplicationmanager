@@ -4,7 +4,7 @@ qt_internal_add_test(tst_signature
         ../error-checking.h
         tst_signature.cpp
     DEFINES
-        AM_TESTSOURCE_DIR=\\\"${CMAKE_CURRENT_SOURCE_DIR}\\\"
+        AM_TESTSOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
     LIBRARIES
         Qt::Network
         Qt::AppManCommonPrivate

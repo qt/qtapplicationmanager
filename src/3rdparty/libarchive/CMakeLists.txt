@@ -82,7 +82,7 @@ qt_set_symbol_visibility_hidden(BundledLibArchive)
 
 qt_internal_extend_target(BundledLibArchive CONDITION MACOS
     DEFINES
-        PLATFORM_CONFIG_H=\\\"config-macos.h\\\"
+        PLATFORM_CONFIG_H="config-macos.h"
     PUBLIC_LIBRARIES
         ${FWCoreServices}
 )
@@ -100,7 +100,7 @@ qt_internal_extend_target(BundledLibArchive CONDITION WIN32
         libarchive/archive_write_disk_windows.c
         libarchive/filter_fork_windows.c
     DEFINES
-        PLATFORM_CONFIG_H=\\\"config-windows.h\\\"
+        PLATFORM_CONFIG_H="config-windows.h"
     PUBLIC_DEFINES
         LIBARCHIVE_STATIC
     PUBLIC_LIBRARIES
@@ -110,22 +110,22 @@ qt_internal_extend_target(BundledLibArchive CONDITION WIN32
 
 qt_internal_extend_target(BundledLibArchive CONDITION ANDROID
     DEFINES
-        PLATFORM_CONFIG_H=\\\"config-android.h\\\"
+        PLATFORM_CONFIG_H="config-android.h"
 )
 
 qt_internal_extend_target(BundledLibArchive CONDITION IOS AND NOT MACOS
     DEFINES
-        PLATFORM_CONFIG_H=\\\"config-ios.h\\\"
+        PLATFORM_CONFIG_H="config-ios.h"
 )
 
 qt_internal_extend_target(BundledLibArchive CONDITION QNX
     DEFINES
-        PLATFORM_CONFIG_H=\\\"config-qnx.h\\\"
+        PLATFORM_CONFIG_H="config-qnx.h"
 )
 
 qt_internal_extend_target(BundledLibArchive CONDITION UNIX AND NOT ANDROID AND NOT IOS AND NOT MACOS AND NOT QNX
     DEFINES
-        PLATFORM_CONFIG_H=\\\"config-unix.h\\\"
+        PLATFORM_CONFIG_H="config-unix.h"
 )
 
 qt_internal_extend_target(BundledLibArchive CONDITION UNIX

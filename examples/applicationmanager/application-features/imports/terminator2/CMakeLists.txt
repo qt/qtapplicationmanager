@@ -25,6 +25,7 @@ qt6_add_qml_module(terminator2plugin
     URI "Terminator"
     NO_GENERATE_PLUGIN_SOURCE
     PLUGIN_TARGET terminator2plugin
+    RESOURCE_PREFIX /
 )
 
 target_sources(terminator2plugin PRIVATE

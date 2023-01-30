@@ -144,6 +144,11 @@ int main(int argc, char *argv[])
     Logging::initialize();
 
     try {
+        const QString socket = QDir(qEnvironmentVariable("XDG_RUNTIME_DIR"))
+                          .filePath(qEnvironmentVariable("WAYLAND_DISPLAY"));
+        if (!QFileInfo::exists(socket))
+            throw Exception("Cannot start application: no wayland display - expected socket at: %1").arg(socket);
+
         LauncherMain::initialize();
         Application app(argc, argv);
         LauncherMain launcher;

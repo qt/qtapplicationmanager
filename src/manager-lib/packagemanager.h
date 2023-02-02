@@ -15,6 +15,11 @@
 #  include <QtAppManManager/deinstallationtask.h>
 #endif
 
+#if defined(Q_MOC_RUN) && !defined(__attribute__) && !defined(__declspec)
+#  define QT_PREPEND_NAMESPACE_AM(name) QtAM::name
+#  error "This pre-processor scope is for qdbuscpp2xml only, but it seems something else triggered it"
+#endif
+
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)

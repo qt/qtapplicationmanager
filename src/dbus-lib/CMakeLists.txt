@@ -26,16 +26,6 @@ qt_internal_add_module(AppManDBusPrivate
         AM_COMPILING_APPMAN
 )
 
-# QMAKE_EXTRA_TARGETS = "recreate-dbus-xml" "recreate-applicationmanager-dbus-xml" "recreate-packagemanager-dbus-xml" "recreate-windowmanager-dbus-xml"
-# recreate-applicationmanager-dbus-xml.CONFIG = "phony"
-# recreate-applicationmanager-dbus-xml.commands = "$$QDBUSCPP2XML" "-a" "$$PWD/../manager-lib/applicationmanager.h" "-o" "$$PWD/io.qt.applicationmanager.xml"
-# recreate-dbus-xml.depends = "recreate-applicationmanager-dbus-xml" "recreate-applicationinstaller-dbus-xml" "recreate-windowmanager-dbus-xml"
-# recreate-packagemanager-dbus-xml.CONFIG = "phony"
-# recreate-packagemanager-dbus-xml.commands = "$$QDBUSCPP2XML" "-a" "$$PWD/../manager-lib/packagemanager.h" "-o" "$$PWD/io.qt.packagemanager.xml"
-# recreate-windowmanager-dbus-xml.CONFIG = "phony"
-# recreate-windowmanager-dbus-xml.commands = "$$QDBUSCPP2XML" "-a" "$$PWD/../manager/windowmanager.h" "-o" "$$PWD/io.qt.windowmanager.xml"
-
-
 qtam_internal_add_dbus_adaptor(AppManDBusPrivate
     DBUS_ADAPTOR_SOURCES
         io.qt.applicationmanager.xml
@@ -66,4 +56,25 @@ add_custom_target("DBus-Interface-XMLs" SOURCES
     io.qt.applicationmanager.xml
     io.qt.windowmanager.xml
     org.freedesktop.notifications.xml
+)
+
+qt_generate_dbus_interface(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../manager-lib/applicationmanager.h
+    ${CMAKE_CURRENT_BINARY_DIR}/io.qt.applicationmanager.xml.regen
+)
+
+qt_generate_dbus_interface(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../manager-lib/packagemanager.h
+    ${CMAKE_CURRENT_BINARY_DIR}/io.qt.packagemanager.xml.regen
+)
+
+qt_generate_dbus_interface(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../window-lib/windowmanager.h
+    ${CMAKE_CURRENT_BINARY_DIR}/io.qt.windowmanager.xml.regen
+)
+
+add_custom_target(dbus_xml_regen DEPENDS
+    ${CMAKE_CURRENT_BINARY_DIR}/io.qt.applicationmanager.xml.regen
+    ${CMAKE_CURRENT_BINARY_DIR}/io.qt.packagemanager.xml.regen
+    ${CMAKE_CURRENT_BINARY_DIR}/io.qt.windowmanager.xml.regen
 )

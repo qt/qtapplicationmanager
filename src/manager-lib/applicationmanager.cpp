@@ -616,7 +616,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
 {
     if (d->shuttingDown)
         throw Exception("Cannot start applications during shutdown");
-    Application *app = fromId(appId);
+    QPointer<Application> app = fromId(appId);
     if (!app)
         throw Exception("Cannot start application: id '%1' is not known").arg(appId);
     if (app->isBlocked())
@@ -787,10 +787,14 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
         return false;
     }
 
-    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app](Am::RunState newRuntimeState) {
-        app->setRunState(newRuntimeState);
-        emit applicationRunStateChanged(app->id(), newRuntimeState);
-        emitDataChanged(app, QVector<int> { IsRunning, IsStartingUp, IsShuttingDown });
+    // if an app is stopped because of a removal and the container is slow to stop, we might
+    // end up with a dead app pointer in this callback at some point
+    connect(runtime, &AbstractRuntime::stateChanged, this, [this, app, appId](Am::RunState newRuntimeState) {
+        if (app)
+            app->setRunState(newRuntimeState);
+        emit applicationRunStateChanged(appId, newRuntimeState);
+        if (app)
+            emitDataChanged(app, QVector<int> { IsRunning, IsStartingUp, IsShuttingDown });
     });
 
     if (!documentUrl.isNull())
@@ -818,8 +822,11 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
         // object plus the per-app state. Relying on 2 lambdas is the easier choice for now.
 
         auto doStartInContainer = [this, app, attachRuntime, runtime]() -> bool {
-            bool successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app)
-                                                     : runtime->start();
+            bool successfullyStarted = false;
+            if (app) {
+                successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app)
+                                                    : runtime->start();
+            }
             if (successfullyStarted)
                 emitActivated(app);
             else

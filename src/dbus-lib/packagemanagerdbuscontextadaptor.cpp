@@ -37,6 +37,16 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
 {
     auto pm = PackageManager::instance();
 
+    connect(pm, &PackageManager::countChanged,
+            this, &PackageManagerAdaptor::countChanged);
+    connect(pm, &PackageManager::readyChanged,
+            this, &PackageManagerAdaptor::readyChanged);
+    connect(pm, &PackageManager::packageAdded,
+            this, &PackageManagerAdaptor::packageAdded);
+    connect(pm, &PackageManager::packageChanged,
+            this, &PackageManagerAdaptor::packageChanged);
+    connect(pm, &PackageManager::packageAboutToBeRemoved,
+            this, &PackageManagerAdaptor::packageAboutToBeRemoved);
     connect(pm, &PackageManager::taskBlockingUntilInstallationAcknowledge,
             this, &PackageManagerAdaptor::taskBlockingUntilInstallationAcknowledge);
     connect(pm, &PackageManager::taskFailed,
@@ -57,9 +67,9 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
     connect(pm, &PackageManager::taskStarted,
             this, &PackageManagerAdaptor::taskStarted);
     connect(pm, &PackageManager::taskStateChanged,
-            [this](const QString &taskId, AsynchronousTask::TaskState newState) {
-                emit taskStateChanged(taskId, taskStateToString(newState));
-            });
+            this, [this](const QString &taskId, AsynchronousTask::TaskState newState) {
+        emit taskStateChanged(taskId, taskStateToString(newState));
+    });
 }
 
 PackageManagerAdaptor::~PackageManagerAdaptor()
@@ -80,19 +90,29 @@ uint PackageManagerAdaptor::commonApplicationGroupId() const
     return PackageManager::instance()->commonApplicationGroupId();
 }
 
+int PackageManagerAdaptor::count() const
+{
+    return PackageManager::instance()->count();
+}
+
 bool PackageManagerAdaptor::developmentMode() const
 {
     return PackageManager::instance()->developmentMode();
 }
 
-QDBusVariant PackageManagerAdaptor::installationLocation() const
+QVariantMap PackageManagerAdaptor::installationLocation() const
 {
-    return QDBusVariant(PackageManager::instance()->installationLocation());
+    return PackageManager::instance()->installationLocation();
 }
 
-QDBusVariant PackageManagerAdaptor::documentLocation() const
+bool PackageManagerAdaptor::ready() const
 {
-    return QDBusVariant(PackageManager::instance()->documentLocation());
+    return PackageManager::instance()->isReady();
+}
+
+QVariantMap PackageManagerAdaptor::documentLocation() const
+{
+    return PackageManager::instance()->documentLocation();
 }
 
 void PackageManagerAdaptor::acknowledgePackageInstallation(const QString &taskId)
@@ -178,4 +198,16 @@ QStringList PackageManagerAdaptor::activeTaskIds()
 {
     AM_AUTHENTICATE_DBUS(QStringList)
     return PackageManager::instance()->activeTaskIds();
+}
+
+bool PackageManagerAdaptor::validateDnsName(const QString &name)
+{
+    AM_AUTHENTICATE_DBUS(bool)
+    return PackageManager::instance()->validateDnsName(name);
+}
+
+bool PackageManagerAdaptor::validateDnsName(const QString &name, int minimumParts)
+{
+    AM_AUTHENTICATE_DBUS(bool)
+    return PackageManager::instance()->validateDnsName(name, minimumParts);
 }

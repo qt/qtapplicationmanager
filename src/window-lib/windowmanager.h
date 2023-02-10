@@ -80,7 +80,7 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE int count() const;
+    int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Window) *window(int index) const;
     Q_INVOKABLE QList<QObject *> windowsOfApplication(const QString &id) const;
@@ -93,7 +93,9 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 signals:
-    void countChanged();
+    Q_SCRIPTABLE void countChanged();
+    Q_SCRIPTABLE void slowAnimationsChanged(bool);
+
     void raiseApplicationWindow(const QString &applicationId, const QString &applicationAliasId);
 
     void windowAdded(QT_PREPEND_NAMESPACE_AM(Window) *window);
@@ -105,8 +107,6 @@ signals:
     void compositorViewRegistered(QQuickWindow *view);
 
     void shutDownFinished();
-
-    void slowAnimationsChanged(bool);
 
 private slots:
     void inProcessSurfaceItemCreated(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)> surfaceItem);

@@ -26,14 +26,14 @@ struct DBusPolicyEntry
     QStringList m_capabilities;
 };
 
-static QHash<QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry>> &policies()
+static QHash<const QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry>> &policies()
 {
-    static QHash<QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry>> hash;
+    static QHash<const QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry>> hash;
     return hash;
 }
 
 
-bool DBusPolicy::add(QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlFragment)
+bool DBusPolicy::add(const QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlFragment)
 {
     QMap<QByteArray, DBusPolicyEntry> result;
     const QMetaObject *mo = dbusAdaptor->metaObject();
@@ -75,7 +75,7 @@ bool DBusPolicy::add(QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlF
 }
 
 
-bool DBusPolicy::check(QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &function)
+bool DBusPolicy::check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &function)
 {
 #if !defined(Q_OS_UNIX)
     Q_UNUSED(dbusAdaptor)

@@ -61,16 +61,19 @@ add_custom_target("DBus-Interface-XMLs" SOURCES
 qt_generate_dbus_interface(
     ${CMAKE_CURRENT_SOURCE_DIR}/../manager-lib/applicationmanager.h
     ${CMAKE_CURRENT_BINARY_DIR}/io.qt.applicationmanager.xml.regen
+    OPTIONS -a -t "QtAM::Am::RunState=u" -t "QtAM::UnixFdMap=a{sh}"
 )
 
 qt_generate_dbus_interface(
     ${CMAKE_CURRENT_SOURCE_DIR}/../manager-lib/packagemanager.h
     ${CMAKE_CURRENT_BINARY_DIR}/io.qt.packagemanager.xml.regen
+    OPTIONS -a -t "QtAM::AsynchronousTask::TaskState=s"
 )
 
 qt_generate_dbus_interface(
     ${CMAKE_CURRENT_SOURCE_DIR}/../window-lib/windowmanager.h
     ${CMAKE_CURRENT_BINARY_DIR}/io.qt.windowmanager.xml.regen
+    OPTIONS -a
 )
 
 add_custom_target(dbus_xml_regen DEPENDS

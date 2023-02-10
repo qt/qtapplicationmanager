@@ -6,6 +6,7 @@
 #include "windowmanagerdbuscontextadaptor.h"
 #include "windowmanager.h"
 #include "windowmanager_adaptor.h"
+#include "dbuspolicy.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -23,10 +24,25 @@ QT_USE_NAMESPACE_AM
 
 WindowManagerAdaptor::WindowManagerAdaptor(QObject *parent)
     : QDBusAbstractAdaptor(parent)
-{ }
+{
+    connect(WindowManager::instance(), &WindowManager::countChanged,
+            this, &WindowManagerAdaptor::countChanged);
+    connect(WindowManager::instance(), &WindowManager::slowAnimationsChanged,
+            this, &WindowManagerAdaptor::slowAnimationsChanged);
+}
 
 WindowManagerAdaptor::~WindowManagerAdaptor()
 { }
+
+bool WindowManagerAdaptor::allowUnknownUiClients() const
+{
+    return WindowManager::instance()->allowUnknownUiClients();
+}
+
+int WindowManagerAdaptor::count() const
+{
+    return WindowManager::instance()->count();
+}
 
 bool WindowManagerAdaptor::runningOnDesktop() const
 {
@@ -45,5 +61,6 @@ void WindowManagerAdaptor::setSlowAnimations(bool slow)
 
 bool WindowManagerAdaptor::makeScreenshot(const QString &filename, const QString &selector)
 {
+    AM_AUTHENTICATE_DBUS(bool)
     return WindowManager::instance()->makeScreenshot(filename, selector);
 }

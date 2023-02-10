@@ -908,7 +908,7 @@ void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToPackager();
 
-    auto installationLocation = dbus.packager()->installationLocation().variant().toMap();
+    auto installationLocation = dbus.packager()->installationLocation();
     if (!installationLocation.isEmpty())
         fputs("internal-0\n", stdout);
     qApp->quit();
@@ -918,7 +918,7 @@ void showInstallationLocation(bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToPackager();
 
-    auto installationLocation = dbus.packager()->installationLocation().variant().toMap();
+    auto installationLocation = dbus.packager()->installationLocation();
     fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(installationLocation).toJson().constData()
                                    : QtYaml::yamlFromVariantDocuments({ installationLocation }).constData());
     qApp->quit();

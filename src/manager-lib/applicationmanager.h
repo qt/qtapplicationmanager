@@ -44,12 +44,12 @@ class ApplicationManager : public QAbstractListModel
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT)
-    Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged)
+    Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged SCRIPTABLE false)
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled CONSTANT)
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
     Q_PROPERTY(bool windowManagerCompositorReady READ isWindowManagerCompositorReady NOTIFY windowManagerCompositorReadyChanged)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT)
-    Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
+    Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged SCRIPTABLE false)
 
 public:
     ~ApplicationManager() override;

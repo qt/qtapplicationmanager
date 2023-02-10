@@ -1,16 +1,33 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
   <interface name="io.qt.PackageManager">
+    <property name="count" type="i" access="read"/>
     <property name="allowInstallationOfUnsignedPackages" type="b" access="read"/>
     <property name="developmentMode" type="b" access="read"/>
+    <property name="ready" type="b" access="read"/>
+    <property name="installationLocation" type="a{sv}" access="read">
+      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
+    </property>
+    <property name="documentLocation" type="a{sv}" access="read">
+      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
+    </property>
     <property name="applicationUserIdSeparation" type="b" access="read"/>
     <property name="commonApplicationGroupId" type="u" access="read"/>
-    <property name="installationLocation" type="v" access="read">
-      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
-    </property>
-    <property name="documentLocation" type="v" access="read">
-      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
-    </property>
+    <signal name="readyChanged">
+      <arg name="b" type="b" direction="out"/>
+    </signal>
+    <signal name="countChanged">
+    </signal>
+    <signal name="packageAdded">
+      <arg name="id" type="s" direction="out"/>
+    </signal>
+    <signal name="packageAboutToBeRemoved">
+      <arg name="id" type="s" direction="out"/>
+    </signal>
+    <signal name="packageChanged">
+      <arg name="id" type="s" direction="out"/>
+      <arg name="changedRoles" type="as" direction="out"/>
+    </signal>
     <signal name="taskStarted">
       <arg name="taskId" type="s" direction="out"/>
     </signal>
@@ -30,6 +47,9 @@
       <arg name="taskId" type="s" direction="out"/>
       <arg name="newState" type="s" direction="out"/>
     </signal>
+    <signal name="taskBlockingUntilInstallationAcknowledge">
+      <arg name="taskId" type="s" direction="out"/>
+    </signal>
     <signal name="taskRequestingInstallationAcknowledge">
       <arg name="taskId" type="s" direction="out"/>
       <arg name="packageAsVariantMap" type="a{sv}" direction="out"/>
@@ -39,16 +59,27 @@
       <arg name="packageExtraSignedMetaData" type="a{sv}" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="QVariantMap"/>
     </signal>
-    <signal name="taskBlockingUntilInstallationAcknowledge">
-      <arg name="taskId" type="s" direction="out"/>
-    </signal>
     <method name="packageIds">
       <arg type="as" direction="out"/>
     </method>
     <method name="get">
       <arg type="a{sv}" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
-      <arg name="id" type="s" direction="in"/>
+      <arg name="packageId" type="s" direction="in"/>
+    </method>
+    <method name="installedPackageSize">
+      <arg type="x" direction="out"/>
+      <arg name="packageId" type="s" direction="in"/>
+    </method>
+    <method name="installedPackageExtraMetaData">
+      <arg type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="packageId" type="s" direction="in"/>
+    </method>
+    <method name="installedPackageExtraSignedMetaData">
+      <arg type="a{sv}" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="packageId" type="s" direction="in"/>
     </method>
     <method name="startPackageInstallation">
       <arg type="s" direction="out"/>
@@ -88,19 +119,14 @@
       <arg name="version1" type="s" direction="in"/>
       <arg name="version2" type="s" direction="in"/>
     </method>
-    <method name="installedPackageSize">
-      <arg type="x" direction="out"/>
-      <arg name="id" type="s" direction="in"/>
+    <method name="validateDnsName">
+      <arg type="b" direction="out"/>
+      <arg name="name" type="s" direction="in"/>
+      <arg name="minimumParts" type="i" direction="in"/>
     </method>
-    <method name="installedPackageExtraMetaData">
-      <arg type="a{sv}" direction="out"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
-      <arg name="id" type="s" direction="in"/>
-    </method>
-    <method name="installedPackageExtraSignedMetaData">
-      <arg type="a{sv}" direction="out"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
-      <arg name="id" type="s" direction="in"/>
+    <method name="validateDnsName">
+      <arg type="b" direction="out"/>
+      <arg name="name" type="s" direction="in"/>
     </method>
   </interface>
 </node>

@@ -52,14 +52,14 @@ signals:
 class PackageManager : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_CLASSINFO("D-Bus Interface", "io.qt.PackageManager")
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/PackageManager 2.0 SINGLETON")
 
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
     // these are const on purpose - these should never change in a running system
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT)
     Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT)
-    Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT)
+    Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT SCRIPTABLE false)
 
     Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
     Q_PROPERTY(QVariantMap installationLocation READ installationLocation CONSTANT)
@@ -142,7 +142,7 @@ public:
     Q_SCRIPTABLE void acknowledgePackageInstallation(const QString &taskId);
     Q_SCRIPTABLE QString removePackage(const QString &id, bool keepDocuments, bool force = false);
 
-    Q_SCRIPTABLE AsynchronousTask::TaskState taskState(const QString &taskId) const;
+    Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) taskState(const QString &taskId) const;
     Q_SCRIPTABLE QString taskPackageId(const QString &taskId) const;
     Q_SCRIPTABLE QStringList activeTaskIds() const;
     Q_SCRIPTABLE bool cancelTask(const QString &taskId);
@@ -169,10 +169,10 @@ signals:
                                        QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) newState);
 
     // installation only
-    Q_SCRIPTABLE void taskRequestingInstallationAcknowledge(const QString &taskId,
-                                                            QT_PREPEND_NAMESPACE_AM(Package) *package,
-                                                            const QVariantMap &packageExtraMetaData,
-                                                            const QVariantMap &packageExtraSignedMetaData);
+    void taskRequestingInstallationAcknowledge(const QString &taskId,
+                                               QT_PREPEND_NAMESPACE_AM(Package) *package,
+                                               const QVariantMap &packageExtraMetaData,
+                                               const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);
 
 protected:

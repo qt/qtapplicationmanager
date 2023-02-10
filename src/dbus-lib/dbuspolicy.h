@@ -16,8 +16,8 @@ QT_BEGIN_NAMESPACE_AM
 class DBusPolicy
 {
 public:
-    static bool add(QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlFragment);
-    static bool check(QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &function);
+    static bool add(const QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlFragment);
+    static bool check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &function);
 };
 
 QT_END_NAMESPACE_AM

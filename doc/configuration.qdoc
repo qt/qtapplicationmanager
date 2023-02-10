@@ -531,6 +531,8 @@ policies.
         policy configuration. The keys into this map are the undecorated D-Bus function names, such
         as \c startApplication. When a key is specified, the corresponding function's access policy
         is \c deny, until you add \c allow criterias -- all of which are AND-ed together.
+        Due to the way D-Bus properties are implemented, these policy only apply to methods, but
+        not to property getters and setters.
 \endtable
 
 The code snippet below shows a simple example, that only allows applications with the \c appstore

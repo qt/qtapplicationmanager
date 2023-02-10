@@ -307,6 +307,10 @@ Module {
             name: "countChanged"
         }
         Signal {
+            name: "slowAnimationsChanged"
+            Parameter { name: ""; type: "bool"; }
+        }
+        Signal {
             name: "raiseApplicationWindow"
             Parameter { name: "applicationId"; type: "string"; }
             Parameter { name: "applicationAliasId"; type: "string"; }
@@ -335,14 +339,6 @@ Module {
         }
         Signal {
             name: "shutDownFinished"
-        }
-        Signal {
-            name: "slowAnimationsChanged"
-            Parameter { name: ""; type: "bool"; }
-        }
-        Method {
-            name: "count"
-            type: "int"
         }
         Method {
             name: "get"
@@ -580,10 +576,6 @@ Module {
             name: "notificationChanged"
             Parameter { name: "id"; type: "uint"; }
             Parameter { name: "rolesChanged"; type: "QStringList"; }
-        }
-        Method {
-            name: "count"
-            type: "int"
         }
         Method {
             name: "get"

@@ -22,7 +22,7 @@ class NotificationManager : public QAbstractListModel
     Q_CLASSINFO("D-Bus Interface", "org.freedesktop.Notifications")
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/NotificationManager 2.0 SINGLETON")
 
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged SCRIPTABLE false)
 
 public:
     ~NotificationManager() override;
@@ -35,7 +35,7 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE int count() const;
+    int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
     Q_INVOKABLE QVariantMap notification(uint id) const;
     Q_INVOKABLE int indexOfNotification(uint id) const;

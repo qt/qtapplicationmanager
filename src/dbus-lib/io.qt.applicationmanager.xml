@@ -5,10 +5,14 @@
     <property name="singleProcess" type="b" access="read"/>
     <property name="securityChecksEnabled" type="b" access="read"/>
     <property name="dummy" type="b" access="read"/>
+    <property name="windowManagerCompositorReady" type="b" access="read"/>
     <property name="systemProperties" type="a{sv}" access="read">
       <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
     </property>
-    <property name="windowManagerCompositorReady" type="b" access="read"/>
+    <signal name="applicationRunStateChanged">
+      <arg name="id" type="s" direction="out"/>
+      <arg name="runState" type="u" direction="out"/>
+    </signal>
     <signal name="applicationWasActivated">
       <arg name="id" type="s" direction="out"/>
       <arg name="aliasId" type="s" direction="out"/>
@@ -24,10 +28,6 @@
     <signal name="applicationChanged">
       <arg name="id" type="s" direction="out"/>
       <arg name="changedRoles" type="as" direction="out"/>
-    </signal>
-    <signal name="applicationRunStateChanged">
-      <arg name="id" type="s" direction="out"/>
-      <arg name="runState" type="u" direction="out"/>
     </signal>
     <signal name="windowManagerCompositorReadyChanged">
       <arg name="ready" type="b" direction="out"/>
@@ -83,9 +83,9 @@
       <arg name="id" type="s" direction="in"/>
     </method>
     <method name="stopAllApplications">
+      <arg name="forceKill" type="b" direction="in"/>
     </method>
     <method name="stopAllApplications">
-        <arg name="forceKill" type="b" direction="in"/>
     </method>
     <method name="openUrl">
       <arg type="b" direction="out"/>

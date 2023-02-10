@@ -192,8 +192,9 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 
     setMainQmlFile(cfg->mainQmlFile());
     setupSingleOrMultiProcess(cfg->forceSingleProcess(), cfg->forceMultiProcess());
-    setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->openGLConfiguration(),
+    setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->runtimeAdditionalLaunchers(),
                                cfg->containerConfigurations(), cfg->pluginFilePaths("container"),
+                               cfg->openGLConfiguration(),
                                cfg->iconThemeSearchPaths(), cfg->iconThemeName());
 
     loadPackageDatabase(cfg->clearCache() || cfg->noCache(), cfg->singleApp());
@@ -360,8 +361,9 @@ void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiPro
 #endif
 }
 
-void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &openGLConfiguration,
+void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QStringList &runtimeAdditionalLaunchers,
                                       const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
+                                      const QVariantMap &openGLConfiguration,
                                       const QStringList &iconThemeSearchPaths, const QString &iconThemeName)
 {
     if (m_isSingleProcessMode) {
@@ -372,9 +374,14 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
 #if defined(AM_MULTI_PROCESS)
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager());
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(qSL("qml")));
-        //RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(qSL("html")));
+
+        for (const QString &runtimeId : runtimeAdditionalLaunchers)
+            RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(runtimeId));
 
         ContainerFactory::instance()->registerContainer(new ProcessContainerManager());
+#else
+        if (!runtimeAdditionalLaunchers.isEmpty())
+            qCWarning(LogSystem) << "Addtional runtime launchers are ignored in single-process mode";
 #endif
         auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", containerPluginPaths);
         for (auto iface : std::as_const(containerPlugins))

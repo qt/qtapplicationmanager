@@ -75,8 +75,9 @@ protected:
                    const std::function<QVariantMap(const char *)> &policyForInterface, const QString &instanceId);
     void setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QVariantMap &openGLConfiguration,
+    void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QStringList &runtimeAdditionalLaunchers,
                                     const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
+                                    const QVariantMap &openGLConfiguration,
                                     const QStringList &iconThemeSearchPaths, const QString &iconThemeName);
     void loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) Q_DECL_NOEXCEPT_EXPR(false);
     void setupIntents(int disambiguationTimeout, int startApplicationTimeout,

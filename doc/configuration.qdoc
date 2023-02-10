@@ -408,6 +408,10 @@ ui:
         \li This option can be used to specify options for runtimes, as a map of key-value pairs.
             The key is the runtime's name; the value is interpreted by the respective runtime
             implementation. For more information, see \l {Runtime Configuration}.
+            There is one special key named \c{additionalLaunchers}: the value is an array of \c id
+            strings, and all these ids are registered as custom runtimes. A corresponding
+            \c{appman-launcher-<id>} executable is expected to be available when launching apps
+            based on the respective runtime.
     \row
         \li [\c containers]
         \li map<object>

@@ -88,6 +88,7 @@ void tst_Configuration::defaultConfig()
 
     QCOMPARE(c.containerSelectionConfiguration(), {});
     QCOMPARE(c.containerConfigurations(), QVariantMap {});
+    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList {});
     QCOMPARE(c.runtimeConfigurations(), QVariantMap {});
 
     QCOMPARE(c.dbusRegistration("iface1"), qSL("auto"));
@@ -192,6 +193,7 @@ void tst_Configuration::simpleConfig()
                         {  qSL("r-parameter"), qSL("r-value") }
                     } }
               }));
+    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList(qSL("a")));
 
     QCOMPARE(c.dbusRegistration("iface1"), qSL("foobus"));
 
@@ -333,6 +335,7 @@ void tst_Configuration::mergedConfig()
                     } }
 
               }));
+    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList({ qSL("a"), qSL("b"), qSL("c") }));
 
     QCOMPARE(c.dbusRegistration("iface1"), qSL("foobus1"));
     QCOMPARE(c.dbusRegistration("iface2"), qSL("foobus2"));
@@ -480,6 +483,7 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.containerSelectionConfiguration(), {});
     QCOMPARE(c.containerConfigurations(), QVariantMap{});
     QCOMPARE(c.runtimeConfigurations(), QVariantMap{});
+    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList{});
 
     QCOMPARE(c.dbusRegistration("iface1"), qSL("system"));
 

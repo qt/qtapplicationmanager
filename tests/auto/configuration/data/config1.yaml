@@ -2,6 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 runtimes:
+  additionalLaunchers: a
   r-test:
     r-parameter: r-value
 

@@ -32,6 +32,7 @@ struct ConfigurationData
     QString instanceId;
 
     struct Runtimes {
+        QStringList additionalLaunchers;
         QVariantMap configurations;
     } runtimes;
 

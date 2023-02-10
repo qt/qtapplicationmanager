@@ -375,7 +375,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 9;
+const quint32 ConfigurationData::DataStreamVersion = 10;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -438,7 +438,8 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->wayland.extraSockets
        >> cd->flags.allowUnsignedPackages
        >> cd->flags.allowUnknownUiClients
-       >> cd->instanceId;
+       >> cd->instanceId
+       >> cd->runtimes.additionalLaunchers;
 
     return cd;
 }
@@ -502,7 +503,8 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << wayland.extraSockets
        << flags.allowUnsignedPackages
        << flags.allowUnknownUiClients
-       << instanceId;
+       << instanceId
+       << runtimes.additionalLaunchers;
 }
 
 template <typename T> void mergeField(T &into, const T &from, const T &def)
@@ -604,6 +606,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(flags.allowUnsignedPackages);
     MERGE_FIELD(flags.allowUnknownUiClients);
     MERGE_FIELD(instanceId);
+    MERGE_FIELD(runtimes.additionalLaunchers);
 }
 
 QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
@@ -672,7 +675,10 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                   }
               } },
             { "runtimes", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  cd->runtimes.configurations = p->parseMap(); } },
+                  cd->runtimes.configurations = p->parseMap();
+                  QVariant additionalLaunchers = cd->runtimes.configurations.take(qSL("additionalLaunchers"));
+                  cd->runtimes.additionalLaunchers = variantToStringList(additionalLaunchers);
+              } },
             { "containers", false, YamlParser::Map, [&cd](YamlParser *p) {
                   cd->containers.configurations = p->parseMap();
 
@@ -1163,6 +1169,11 @@ QList<QPair<QString, QString>> Configuration::containerSelectionConfiguration() 
 QVariantMap Configuration::containerConfigurations() const
 {
     return m_data->containers.configurations;
+}
+
+QStringList Configuration::runtimeAdditionalLaunchers() const
+{
+    return m_data->runtimes.additionalLaunchers;
 }
 
 QVariantMap Configuration::runtimeConfigurations() const

@@ -86,6 +86,7 @@ public:
 
     QList<QPair<QString, QString>> containerSelectionConfiguration() const;
     QVariantMap containerConfigurations() const;
+    QStringList runtimeAdditionalLaunchers() const;
     QVariantMap runtimeConfigurations() const;
 
     QVariantMap dbusPolicy(const char *interfaceName) const;

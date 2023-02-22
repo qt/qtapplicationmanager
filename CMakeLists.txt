@@ -1,6 +1,8 @@
 
 cmake_minimum_required(VERSION 3.16)
 
+set(MIN_QT_VERSION 6.5.0)
+
 include(.cmake.conf)
 project(QtApplicationManager # special case
     VERSION "${QT_REPO_MODULE_VERSION}"
@@ -44,6 +46,10 @@ find_package(Qt6 ${PROJECT_VERSION} QUIET CONFIG OPTIONAL_COMPONENTS
     DltLogging
     WaylandGlobalPrivate # remove after QTBUG-95388 is fixed
 )
+
+if (${Qt6_VERSION} VERSION_LESS "${MIN_QT_VERSION}")
+    message(FATAL_ERROR "Qt ${MIN_QT_VERSION} or newer is required for building version ${PROJECT_VERSION} of the QtApplicationManager")
+endif()
 
 include(src/main-lib/Qt6AppManMainPrivateMacros.cmake)
 

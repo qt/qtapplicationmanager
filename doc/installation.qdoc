@@ -40,7 +40,7 @@ feature set of the application manager:
 To build the application manager with all its features, the following components are required:
 
 \list
-    \li \b Qt 6.2.0 or higher.
+    \li \b Qt 6.5.0 or higher.
     \li \b openssl \e{- Linux only and only if you need the installer functionality}.
         Qt needs to be built with openssl support. The required minimum version is defined by Qt.
     \li \b libyaml 1.6 or higher.

@@ -86,6 +86,15 @@ with the \c --qml-debug argument. For more information, see \l{QML Debugging Inf
 tasks only. They are also useful for various other tasks that involve running the application under
 test through a wrapper, like profiling tools.
 
+When it comes to debugging via \c gdb or \c gdbserver specifically, you might also want to have a
+look at \l{https://doc.qt.io/qtcreator/creator-debugger-operating-modes.html}
+{the debugging documentation in the QtCreator manual}.
+
+If you need to use \c gdbserver (to debug apps in multi-process mode, or to debug the appman process
+itself), check out \l{https://doc.qt.io/qtcreator/creator-debugger-operating-modes.html#remote-debugging}
+{the chapter about remote debugging}.
+
+
 \section2 Environment Variables
 
 This is a (incomplete) list of environment variables that influence debugging at runtime:

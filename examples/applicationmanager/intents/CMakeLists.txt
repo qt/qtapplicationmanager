@@ -20,6 +20,7 @@ find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt6_am_add_systemui_wrapper(intents
     INSTALL_DIR "${INSTALL_EXAMPLEDIR}"
+    MAIN_QML_FILE system-ui.qml
     CONFIG_YAML am-config.yaml
     EXTRA_FILES apps shared
 )

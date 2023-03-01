@@ -36,6 +36,7 @@
 #include <QFileInfo>
 #include <QDBusConnection>
 #include <QDBusPendingReply>
+#include <QDBusServiceWatcher>
 #include <QDBusError>
 #include <QMetaObject>
 #include <QStringBuilder>
@@ -56,8 +57,10 @@
 
 QT_USE_NAMESPACE_AM
 
-class DBus : public QObject // clazy:exclude=missing-qobject-macro
+class DBus : public QObject
 {
+    Q_OBJECT
+
 public:
     DBus()
     {
@@ -89,6 +92,9 @@ public:
         m_packager = new IoQtPackageManagerInterface(qSL("io.qt.ApplicationManager"), qSL("/PackageManager"), conn, this);
     }
 
+signals:
+    void disconnected(QString reason);
+
 private:
     QDBusConnection connectTo(const QString &iface) Q_DECL_NOEXCEPT_EXPR(false)
     {
@@ -115,7 +121,51 @@ private:
             throw Exception(Error::IO, "Could not connect to the application manager D-Bus interface %1 at %2: %3")
                 .arg(iface, dbus, conn.lastError().message());
         }
+
+        installDisconnectWatcher(conn, qSL("io.qt.ApplicationManager"));
         return conn;
+    }
+
+    void installDisconnectWatcher(const QDBusConnection &conn, const QString &serviceName)
+    {
+        if (m_disconnectedEmitted)
+            return;
+
+        if (!m_connections.contains(conn.name())) {
+            auto *watcher = new QDBusServiceWatcher(serviceName, conn, QDBusServiceWatcher::WatchForOwnerChange, this);
+            connect(watcher, &QDBusServiceWatcher::serviceOwnerChanged,
+                    this, [this](const QString &, const QString &, const QString &) {
+                disconnectDetected(qSL("owner changed"));
+            });
+            m_connections.append(conn.name());
+        }
+
+        // serviceOwnerChanged does not work if the bus-daemon process dies (as is the case when
+        // the AM starts its own session bus in --dbus=auto mode and then later crashes, killing
+        // the bus-daemon with it).
+        // QDBusConnection::isConnected() does not have a change signal, so we have to poll.
+        if (!m_disconnectTimer) {
+            m_disconnectTimer = new QTimer(this);
+            connect(m_disconnectTimer, &QTimer::timeout, this, [this]() {
+                for (const auto &name : qAsConst(m_connections)) {
+                    if (!QDBusConnection(name).isConnected()) {
+                        disconnectDetected(qSL("bus died"));
+                        break;
+                    }
+                }
+            });
+            m_disconnectTimer->start(500);
+        }
+    }
+
+    void disconnectDetected(const QString &reason)
+    {
+        if (!m_disconnectedEmitted) {
+            emit disconnected(reason);
+            m_disconnectedEmitted = true;
+            if (m_disconnectTimer)
+                m_disconnectTimer->stop();
+        }
     }
 
 public:
@@ -133,6 +183,9 @@ private:
     IoQtPackageManagerInterface *m_packager = nullptr;
     IoQtApplicationManagerInterface *m_manager = nullptr;
     QString m_instanceId;
+    QStringList m_connections;
+    QTimer *m_disconnectTimer = nullptr;
+    bool m_disconnectedEmitted = false;
 };
 
 static class DBus dbus;
@@ -208,7 +261,7 @@ static void showPackage(const QString &packageId, bool asJson = false) Q_DECL_NO
 static void installPackage(const QString &packageUrl, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false);
 static void removePackage(const QString &packageId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false);
-static void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXPR(false);
+static void cancelInstallationTask(bool all, const QString &singleTaskId) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
 static void showInstallationLocation(bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
 static void listInstances() Q_DECL_NOEXCEPT_EXPR(false);
@@ -311,8 +364,8 @@ int main(int argc, char *argv[])
             clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
             clp.process(a);
 
-            int args = clp.positionalArguments().size();
-            if (args < 2 || args > 3)
+            int args = int(clp.positionalArguments().size());
+            if ((args < 2) || (args > 3))
                 clp.showHelp(1);
 
             QMap<QString, int> stdRedirections;
@@ -342,8 +395,8 @@ int main(int argc, char *argv[])
             clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
             clp.process(a);
 
-            int args = clp.positionalArguments().size();
-            if (args < 3 || args > 4)
+            int args = int(clp.positionalArguments().size());
+            if ((args < 3) || (args > 4))
                 clp.showHelp(1);
 
             QMap<QString, int> stdRedirections;
@@ -503,7 +556,7 @@ int main(int argc, char *argv[])
 
     } catch (const Exception &e) {
         fprintf(stderr, "ERROR: %s\n", qPrintable(e.errorString()));
-        return 1;
+        return int(e.errorCode());
     }
 }
 
@@ -544,6 +597,12 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
     static bool isStarted = false;
 
     if (!stdRedirections.isEmpty()) {
+        // just bail out, if the AM or bus dies
+        QObject::connect(&dbus, &DBus::disconnected,
+                         qApp, [](const QString &reason) {
+            throw Exception(Error::IO, "application might not be running: lost connection to the D-Bus service (%1)").arg(reason);
+        });
+
         // in case application quits -> quit the controller
         QObject::connect(dbus.manager(), &IoQtApplicationManagerInterface::applicationRunStateChanged,
                          qApp, [appId](const QString &id, uint runState) {
@@ -580,18 +639,14 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
     }
 
     isStarted = reply.value();
-    if (stdRedirections.isEmpty()) {
+    if (stdRedirections.isEmpty() || !isStarted) {
         qApp->exit(isStarted ? 0 : 2);
     } else {
-        if (!isStarted) {
-            qApp->exit(2);
-        } else {
-            InterruptHandler::install([appId](int) {
-                auto reply = dbus.manager()->stopApplication(appId, true);
-                reply.waitForFinished();
-                qApp->exit(1);
-            });
-        }
+        InterruptHandler::install([appId](int) {
+            auto stopReply = dbus.manager()->stopApplication(appId, true);
+            stopReply.waitForFinished();
+            qApp->exit(1);
+        });
     }
 }
 
@@ -710,14 +765,19 @@ void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EX
     dbus.connectToManager();
     dbus.connectToPackager();
 
+    // just bail out, if the AM or bus dies
+    QObject::connect(&dbus, &DBus::disconnected,
+                     qApp, [](const QString &reason) {
+        throw Exception(Error::IO, "package might not be installed: lost connection to the D-Bus service (%1)").arg(reason);
+    });
+
     // all the async lambdas below need to share this variable
     static QString installationId;
 
     // as soon as we have the manifest available: get the app id and acknowledge the installation
-
     if (acknowledge) {
         QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskRequestingInstallationAcknowledge,
-                         [](const QString &taskId, const QVariantMap &metadata) {
+                         qApp, [](const QString &taskId, const QVariantMap &metadata) {
             if (taskId != installationId)
                 return;
             QString packageId = metadata.value(qSL("packageId")).toString();
@@ -729,18 +789,16 @@ void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EX
     }
 
     // on failure: quit
-
     QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFailed,
-                     [](const QString &taskId, int errorCode, const QString &errorString) {
+                     qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
         throw Exception(Error::IO, "failed to install package: %1 (code: %2)").arg(errorString).arg(errorCode);
     });
 
     // on success
-
     QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFinished,
-                     [](const QString &taskId) {
+                     qApp, [](const QString &taskId) {
         if (taskId != installationId)
             return;
         fprintf(stdout, "Package installation finished successfully.\n");
@@ -762,8 +820,8 @@ void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EX
 
     InterruptHandler::install([](int) {
         fprintf(stdout, "Cancelling package installation.\n");
-        auto reply = dbus.packager()->cancelTask(installationId);
-        reply.waitForFinished();
+        auto cancelReply = dbus.packager()->cancelTask(installationId);
+        cancelReply.waitForFinished();
         qApp->exit(1);
     });
 }
@@ -775,30 +833,33 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) Q_D
     dbus.connectToManager();
     dbus.connectToPackager();
 
+    // just bail out, if the AM or bus dies
+    QObject::connect(&dbus, &DBus::disconnected,
+                     qApp, [](const QString &reason) {
+        throw Exception(Error::IO, "package might not be removed: lost connection to the D-Bus service (%1)").arg(reason);
+    });
+
     // both the async lambdas below need to share this variables
     static QString installationId;
 
     // on failure: quit
-
     QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFailed,
-                     [](const QString &taskId, int errorCode, const QString &errorString) {
+                     qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
         throw Exception(Error::IO, "failed to remove package: %1 (code: %2)").arg(errorString).arg(errorCode);
     });
 
     // on success
-
     QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFinished,
-                     [](const QString &taskId) {
+                     qApp, [](const QString &taskId) {
         if (taskId != installationId)
             return;
         fprintf(stdout, "Package removal finished successfully.\n");
         qApp->quit();
     });
 
-    // start the package installation
-
+    // start the package removal
     auto reply = dbus.packager()->removePackage(packageId, keepDocuments, force);
     reply.waitForFinished();
     if (reply.isError())
@@ -825,11 +886,17 @@ void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false)
 }
 
 
-void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXPR(false)
+void cancelInstallationTask(bool all, const QString &singleTaskId) Q_DECL_NOEXCEPT_EXPR(false)
 {
     dbus.connectToPackager();
 
-    // both the async lambdas below need to share this variables
+    // just bail out, if the AM or bus dies
+    QObject::connect(&dbus, &DBus::disconnected,
+                     qApp, [](const QString &reason) {
+        throw Exception(Error::IO, "installation task(s) might not be canceled: lost connection to the D-Bus service (%1)").arg(reason);
+    });
+
+    // both the async lambdas below need to share these variables
     static QStringList cancelTaskIds;
     static int result = 0;
 
@@ -842,19 +909,19 @@ void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXP
             throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
 
         const auto taskIds = reply.value();
-        for (auto taskId : taskIds)
+        cancelTaskIds.reserve(taskIds.size());
+        for (const auto &taskId : taskIds)
             cancelTaskIds << taskId;
     } else {
-        cancelTaskIds << taskId;
+        cancelTaskIds << singleTaskId;
     }
 
     if (cancelTaskIds.isEmpty())
         qApp->quit();
 
     // on task failure
-
     QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFailed,
-                     [](const QString &taskId, int errorCode, const QString &errorString) {
+                     qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (cancelTaskIds.removeOne(taskId)) {
             if (errorCode != int(Error::Canceled)) {
                 fprintf(stdout, "Could not cancel task %s anymore - the installation task already failed (%s).\n",
@@ -869,9 +936,8 @@ void cancelInstallationTask(bool all, const QString &taskId) Q_DECL_NOEXCEPT_EXP
     });
 
     // on success
-
     QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFinished,
-                     [](const QString &taskId) {
+                     qApp, [](const QString &taskId) {
         if (cancelTaskIds.removeOne(taskId)) {
             fprintf(stdout, "Could not cancel task %s anymore - the installation task already finished successfully.\n",
                     qPrintable(taskId));
@@ -936,3 +1002,5 @@ void listInstances()
     }
     qApp->quit();
 }
+
+#include "controller.moc"

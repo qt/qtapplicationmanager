@@ -972,26 +972,21 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
     }
 
     if (!noneOnly) {
-        try {
-            qCDebug(LogSystem) << "Registering D-Bus services:";
+        qCDebug(LogSystem) << "Registering D-Bus services:";
 
-            for (auto &&iface : ifaces) {
-                AbstractDBusContextAdaptor *dbusAdaptor = std::get<0>(iface);
-                QString &dbusName = std::get<1>(iface);
-                const char *interfaceName = std::get<4>(iface);
+        for (auto &&iface : ifaces) {
+            AbstractDBusContextAdaptor *dbusAdaptor = std::get<0>(iface);
+            QString &dbusName = std::get<1>(iface);
+            const char *interfaceName = std::get<4>(iface);
 
-                if (dbusName.isEmpty())
-                    continue;
+            if (dbusName.isEmpty())
+                continue;
 
-                registerDBusObject(dbusAdaptor->generatedAdaptor(), dbusName,
-                                   std::get<2>(iface),interfaceName, std::get<3>(iface),
-                                   instanceId);
-                if (!DBusPolicy::add(dbusAdaptor->generatedAdaptor(), policyForInterface(interfaceName)))
-                    throw Exception(Error::DBus, "could not set DBus policy for %1").arg(qL1S(interfaceName));
-            }
-        } catch (const std::exception &e) {
-            qCCritical(LogSystem) << "ERROR:" << e.what();
-            qApp->exit(2);
+            registerDBusObject(dbusAdaptor->generatedAdaptor(), dbusName,
+                               std::get<2>(iface),interfaceName, std::get<3>(iface),
+                               instanceId);
+            if (!DBusPolicy::add(dbusAdaptor->generatedAdaptor(), policyForInterface(interfaceName)))
+                throw Exception(Error::DBus, "could not set DBus policy for %1").arg(qL1S(interfaceName));
         }
     }
 #else

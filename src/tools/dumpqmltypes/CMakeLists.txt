@@ -19,19 +19,19 @@ qt_internal_add_tool(${target_name}
         Qt::AppManWindowPrivate
 )
 
+set(qml_install_dir "${INSTALL_QMLDIR}")
+qt_path_join(qml_install_dir ${QT_INSTALL_DIR} ${qml_install_dir})
+
+if(QT_WILL_INSTALL)
+    qt_install(
+        DIRECTORY "${CMAKE_SOURCE_DIR}/qmltypes/QtApplicationManager"
+        DESTINATION "${qml_install_dir}"
+    )
+else()
+    set(COPY_COMMAND COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/qmltypes" "${qml_install_dir}")
+endif()
+
 if(TARGET ${target_name} AND NOT QT_FEATURE_cross_compile)
-    set(qml_install_dir "${INSTALL_QMLDIR}")
-    qt_path_join(qml_install_dir ${QT_INSTALL_DIR} ${qml_install_dir})
-
-    if(QT_WILL_INSTALL)
-        qt_install(
-            DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/qmltypes/QtApplicationManager"
-            DESTINATION "${qml_install_dir}"
-        )
-    else()
-        set(COPY_COMMAND COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/qmltypes" "${qml_install_dir}")
-    endif()
-
     qt_internal_collect_command_environment(env_path env_plugin_path)
 
     # We have to set the env to get the PATH set to find the Qt libraries
@@ -49,7 +49,7 @@ if(TARGET ${target_name} AND NOT QT_FEATURE_cross_compile)
         POST_BUILD
         BYPRODUCTS "qmltypes"
         COMMAND "${CMAKE_COMMAND}" -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
-                "${tool_path}" "${CMAKE_CURRENT_BINARY_DIR}/qmltypes"
+                "${tool_path}" "${CMAKE_SOURCE_DIR}/qmltypes"
         ${COPY_COMMAND}
         DEPENDS "${tool_path}"
         COMMENT "Generating qmltypes using ${tool_path}"

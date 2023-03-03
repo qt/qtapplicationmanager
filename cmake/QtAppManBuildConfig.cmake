@@ -6,19 +6,23 @@ function(qtam_internal_add_build_config target)
     endif()
 
     # get the git version, if available
-    file(READ ${CMAKE_SOURCE_DIR}/.tag GIT_VERSION)
-    STRING(REGEX REPLACE "\n" "" GIT_VERSION "${GIT_VERSION}")
-    if(GIT_VERSION STREQUAL "\$Format:%H\$")
-        set(GIT_VERSION "unknown")
-        if(EXISTS ${CMAKE_SOURCE_DIR}/.git)
-            execute_process(
-                COMMAND git describe --tags --always --dirty
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                OUTPUT_VARIABLE GIT_VERSION
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-                ERROR_QUIET
-            )
+    if(EXISTS "${PROJECT_SOURCE_DIR}/.tag")
+        file(READ ${PROJECT_SOURCE_DIR}/.tag GIT_VERSION)
+        STRING(REGEX REPLACE "\n" "" GIT_VERSION "${GIT_VERSION}")
+        if(GIT_VERSION STREQUAL "\$Format:%H\$")
+            set(GIT_VERSION "unknown")
+            if(EXISTS ${CMAKE_SOURCE_DIR}/.git)
+                execute_process(
+                    COMMAND git describe --tags --always --dirty
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    OUTPUT_VARIABLE GIT_VERSION
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    ERROR_QUIET
+                )
+            endif()
         endif()
+    else()
+        set(GIT_VERSION "")
     endif()
 
     # generate the necessary strings to be backward compatible with qmake

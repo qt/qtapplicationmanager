@@ -20,7 +20,7 @@ struct ConfigCacheEntry
 struct CacheHeader
 {
     enum { Magic = 0x23d39366, // dd if=/dev/random bs=4 count=1 status=none | xxd -p
-           Version = 3 };
+           Version = 3 | (QT_VERSION_MAJOR << 24) };
 
     quint32 magic = Magic;
     quint32 version = Version;

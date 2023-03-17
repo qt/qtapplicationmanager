@@ -329,9 +329,8 @@ QVariant YamlParser::parseScalar() const
 {
     QString scalar = parseString();
 
-    if (scalar.isEmpty()
-            || d->event.data.scalar.style == YAML_SINGLE_QUOTED_SCALAR_STYLE
-            || d->event.data.scalar.style == YAML_DOUBLE_QUOTED_SCALAR_STYLE) {
+    if (d->event.data.scalar.style == YAML_SINGLE_QUOTED_SCALAR_STYLE
+        || d->event.data.scalar.style == YAML_DOUBLE_QUOTED_SCALAR_STYLE) {
         return scalar;
     }
 
@@ -576,79 +575,84 @@ QStringList YamlParser::parseStringOrStringList()
     }
 }
 
+static QString mapEventNames(const QVector<yaml_event_type_t> &events)
+{
+    static const QHash<yaml_event_type_t, const char *> eventNames = {
+        { YAML_NO_EVENT,             "nothing" },
+        { YAML_STREAM_START_EVENT,   "stream start" },
+        { YAML_STREAM_END_EVENT,     "stream end" },
+        { YAML_DOCUMENT_START_EVENT, "document start" },
+        { YAML_DOCUMENT_END_EVENT,   "document end" },
+        { YAML_ALIAS_EVENT,          "alias" },
+        { YAML_SCALAR_EVENT,         "scalar" },
+        { YAML_SEQUENCE_START_EVENT, "sequence start" },
+        { YAML_SEQUENCE_END_EVENT,   "sequence end" },
+        { YAML_MAPPING_START_EVENT,  "mapping start" },
+        { YAML_MAPPING_END_EVENT,    "mapping end" }
+    };
+    QString names;
+    for (int i = 0; i < events.size(); ++i) {
+        if (i)
+            names.append(i == (events.size() - 1) ? qL1S(" or ") : qL1S(", "));
+        names.append(qL1S(eventNames.value(events.at(i), "<unknown>")));
+    }
+    return names;
+};
+
 void YamlParser::parseFields(const std::vector<Field> &fields)
 {
-    if (!isMap())
-        throw YamlParserException(this, "Expected a map (type %1) to parse fields from, but got type %2")
-            .arg(YAML_MAPPING_START_EVENT).arg(d->event.type);
-
     QVector<QString> fieldsFound;
 
-    while (true) {
-        nextEvent(); // read key
-        if (d->event.type == YAML_MAPPING_END_EVENT)
-            break;
-        QString key = parseMapKey();
-        if (fieldsFound.contains(key))
-            throw YamlParserException(this, "Found duplicate key '%1' in mapping").arg(key);
-
-        auto field = fields.cbegin();
-        for (; field != fields.cend(); ++field) {
-            if (key == qL1S(field->name))
+    if (!isMap()) {
+        // an empty document is ok - we just have to check for required fields below
+        if (!isScalar() || (parseScalar() != QVariant::fromValue(nullptr))) {
+            throw YamlParserException(this, "Expected a map (type '%1') to parse fields from, but got type '%2'")
+                .arg(mapEventNames({ YAML_MAPPING_START_EVENT })).arg(mapEventNames({ d->event.type }));
+        }
+    } else {
+        while (true) {
+            nextEvent(); // read key
+            if (d->event.type == YAML_MAPPING_END_EVENT)
                 break;
-        }
-        if (field == fields.cend())
-            throw YamlParserException(this, "Field '%1' is not valid in this context").arg(key);
-        fieldsFound << key;
+            QString key = parseMapKey();
+            if (fieldsFound.contains(key))
+                throw YamlParserException(this, "Found duplicate key '%1' in mapping").arg(key);
 
-        nextEvent(); // read value
-        QVector<yaml_event_type_t> allowedEvents;
-        if (field->types & YamlParser::Scalar)
-            allowedEvents.append(YAML_SCALAR_EVENT);
-        if (field->types & YamlParser::Map)
-            allowedEvents.append(YAML_MAPPING_START_EVENT);
-        if (field->types & YamlParser::List)
-            allowedEvents.append(YAML_SEQUENCE_START_EVENT);
+            auto field = fields.cbegin();
+            for (; field != fields.cend(); ++field) {
+                if (key == qL1S(field->name))
+                    break;
+            }
+            if (field == fields.cend())
+                throw YamlParserException(this, "Field '%1' is not valid in this context").arg(key);
+            fieldsFound << key;
 
-        if (!allowedEvents.contains(d->event.type)) { // ALIASES MISSING HERE!
-            auto mapEventNames = [](const QVector<yaml_event_type_t> &events) -> QString {
-                static const QHash<yaml_event_type_t, const char *> eventNames = {
-                    { YAML_NO_EVENT,             "nothing" },
-                    { YAML_STREAM_START_EVENT,   "stream start" },
-                    { YAML_STREAM_END_EVENT,     "stream end" },
-                    { YAML_DOCUMENT_START_EVENT, "document start" },
-                    { YAML_DOCUMENT_END_EVENT,   "document end" },
-                    { YAML_ALIAS_EVENT,          "alias" },
-                    { YAML_SCALAR_EVENT,         "scalar" },
-                    { YAML_SEQUENCE_START_EVENT, "sequence start" },
-                    { YAML_SEQUENCE_END_EVENT,   "sequence end" },
-                    { YAML_MAPPING_START_EVENT,  "mapping start" },
-                    { YAML_MAPPING_END_EVENT,    "mapping end" }
-                };
-                QString names;
-                for (int i = 0; i < events.size(); ++i) {
-                    if (i)
-                        names.append(i == (events.size() - 1) ? qL1S(" or ") : qL1S(", "));
-                    names.append(qL1S(eventNames.value(events.at(i), "<unknown>")));
-                }
-                return names;
-            };
+            nextEvent(); // read value
+            QVector<yaml_event_type_t> allowedEvents;
+            if (field->types & YamlParser::Scalar)
+                allowedEvents.append(YAML_SCALAR_EVENT);
+            if (field->types & YamlParser::Map)
+                allowedEvents.append(YAML_MAPPING_START_EVENT);
+            if (field->types & YamlParser::List)
+                allowedEvents.append(YAML_SEQUENCE_START_EVENT);
 
-            throw YamlParserException(this, "Field '%1' expected to be of type '%2', but got '%3'")
-                            .arg(field->name).arg(mapEventNames(allowedEvents)).arg(mapEventNames({ d->event.type }));
-        }
+            if (!allowedEvents.contains(d->event.type)) { // ALIASES MISSING HERE!
+                throw YamlParserException(this, "Field '%1' expected to be of type '%2', but got '%3'")
+                    .arg(field->name).arg(mapEventNames(allowedEvents)).arg(mapEventNames({ d->event.type }));
+            }
 
-        yaml_event_type_t typeBefore = d->event.type;
-        yaml_event_type_t typeAfter;
-        switch (typeBefore) {
-        case YAML_MAPPING_START_EVENT: typeAfter = YAML_MAPPING_END_EVENT; break;
-        case YAML_SEQUENCE_START_EVENT: typeAfter = YAML_SEQUENCE_END_EVENT; break;
-        default: typeAfter = typeBefore; break;
-        }
-        field->callback(this);
-        if (d->event.type != typeAfter) {
-            throw YamlParserException(this, "Invalid YAML event state after field callback for '%3': expected %1, but got %2")
-                .arg(typeAfter).arg(d->event.type).arg(key);
+            yaml_event_type_t typeBefore = d->event.type;
+            yaml_event_type_t typeAfter;
+            switch (typeBefore) {
+            case YAML_MAPPING_START_EVENT: typeAfter = YAML_MAPPING_END_EVENT; break;
+            case YAML_SEQUENCE_START_EVENT: typeAfter = YAML_SEQUENCE_END_EVENT; break;
+            default: typeAfter = typeBefore; break;
+            }
+            field->callback(this);
+            if (d->event.type != typeAfter) {
+                throw YamlParserException(this, "Invalid YAML event state after field callback for '%3': expected %1, but got %2")
+                    .arg(typeAfter).arg(d->event.type).arg(key);
+            }
         }
     }
     QStringList fieldsMissing;

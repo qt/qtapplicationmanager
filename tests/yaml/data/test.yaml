@@ -15,6 +15,7 @@ bool-false: false
 bool-no: no
 null-literal: null
 null-tilde: ~
+null-empty:
 string-unquoted: unquoted
 string-singlequoted: 'singlequoted'
 string-doublequoted: "doublequoted"

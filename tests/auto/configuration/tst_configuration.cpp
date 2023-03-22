@@ -247,7 +247,7 @@ void tst_Configuration::simpleConfig()
 
 void tst_Configuration::mergedConfig()
 {
-    Configuration c({ qSL(":/data/config1.yaml"), qSL(":/data/config2.yaml") }, qSL(":/build-config.yaml"));
+    Configuration c({ qSL(":/data/") }, qSL(":/build-config.yaml"));
     c.parseWithArguments({ qSL("test"), qSL("--no-cache") });
 
     QVERIFY(c.noCache());

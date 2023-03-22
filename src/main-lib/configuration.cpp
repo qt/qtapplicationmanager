@@ -327,7 +327,18 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     timer.start();
 #endif
 
-    QStringList configFilePaths = m_clp.values(qSL("config-file"));
+    const QStringList rawConfigFilePaths = m_clp.values(qSL("config-file"));
+    QStringList configFilePaths;
+    configFilePaths.reserve(rawConfigFilePaths.size());
+    for (const auto &path : rawConfigFilePaths) {
+        if (QFileInfo(path).isDir()) {
+            const auto entries = QDir(path).entryInfoList({ qSL("*.yaml") }, QDir::Files, QDir::Name);
+            for (const auto &entry : entries)
+                configFilePaths << entry.filePath();
+        } else {
+            configFilePaths << path;
+        }
+    }
 
     AbstractConfigCache::Options cacheOptions = AbstractConfigCache::MergedResult;
     if (noCache())

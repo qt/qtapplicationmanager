@@ -121,6 +121,9 @@ or across multiple config files, the final value is resolved based on these rule
             configuration files into a cache. This cache is loaded on subsequent starts, if the
             exact set of config files is used, unchanged.
 
+            In case the given argument is a directory, all files with a \c{.yaml} extension will be
+            loaded from that directory in alphabetical order (ASCII sort order, non-recursive).
+
             (default: \c /opt/am/config.yaml)
     \row
         \li \b --no-cache

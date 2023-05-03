@@ -72,7 +72,12 @@ DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
 
     arguments << address;
 #elif defined(Q_OS_WIN)
-    arguments << qSL(" --address=tcp:host=localhost");
+    arguments << qSL("--address=tcp:host=localhost");
+#elif defined(Q_OS_LINUX)
+    // some dbus implementations create an abstract socket by default, while others create
+    // a file based one. we need a file based one however, because that socket might get
+    // mapped into a container.
+    arguments << qSL("--address=unix:dir=/tmp");
 #endif
     setProgram(program);
     setArguments(arguments);

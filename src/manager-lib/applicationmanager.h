@@ -49,7 +49,7 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
     Q_PROPERTY(bool windowManagerCompositorReady READ isWindowManagerCompositorReady NOTIFY windowManagerCompositorReadyChanged)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT)
-    Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged SCRIPTABLE false)
+    Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
 
 public:
     ~ApplicationManager() override;

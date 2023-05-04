@@ -1246,13 +1246,6 @@ QString Configuration::waylandSocketName() const
     if (!socketName.isEmpty())
         return socketName;
 
-    const char *envName = "WAYLAND_DISPLAY";
-    if (qEnvironmentVariableIsSet(envName)) {
-        socketName = qEnvironmentVariable(envName);
-        if (!QGuiApplication::platformName().startsWith(qSL("wayland")) || (socketName != qSL("wayland-0")))
-            return socketName;
-    }
-
     if (!m_data->wayland.socketName.isEmpty())
         return m_data->wayland.socketName;
 

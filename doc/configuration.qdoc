@@ -577,7 +577,7 @@ of these available interfaces are as follows:
     \row
         \li \c org.freedesktop.Notifications
         \li Not application manager specific - this interface adheres to the
-            \l {freedesktop.org specification}
+            \l {org.freedesktop.Notifications} {freedesktop.org specification}
 \endtable
 
 \section1 Runtime Configuration

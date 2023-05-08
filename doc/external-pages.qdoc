@@ -5,3 +5,8 @@
     \externalpage https://doc-snapshots.qt.io/qtdltlogging/
     \title Qt DLT Logging
 */
+
+/*!
+    \externalpage https://specifications.freedesktop.org/notification-spec/
+    \title org.freedesktop.Notifications
+*/

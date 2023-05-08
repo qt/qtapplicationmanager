@@ -16,12 +16,12 @@
     statically or by dynamically calling ApplicationInterface::createNotification. A System UI can
     also create Notification instances.
     For all other applications and services, the notification service of the application manager
-    is available via a freedesktop.org compliant \l{https://developer.gnome.org/notification-spec/}
-    {org.freedesktop.Notifications} D-Bus interface.
+    is available via a freedesktop.org compliant \l {org.freedesktop.Notifications} D-Bus
+    interface.
 
     \note Most of the property documentation text is copied straight from the
-          \l{https://developer.gnome.org/notification-spec/} {org.freedesktop.Notifications specification}
-          because it is not possible to directly link to the documentation of a specific property.
+          \l {org.freedesktop.Notifications} specification because it is not possible to directly
+          link to the documentation of a specific property.
 
     The server/System UI side of the notification infrastructure is implemented by NotificationManager.
 */

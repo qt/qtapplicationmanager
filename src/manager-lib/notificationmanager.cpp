@@ -18,10 +18,6 @@
 #include "package.h"
 
 /*!
-    \externalpage https://developer.gnome.org/notification-spec/
-    \title freedesktop.org specification
-*/
-/*!
     \qmltype NotificationManager
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-singletons
@@ -37,8 +33,8 @@
     \target NotificationManager Roles
 
     The following roles are available in this model - also take a look at the
-    \l {freedesktop.org specification} for an in-depth explanation of these fields
-    and how clients should populate them:
+    \l {org.freedesktop.Notifications} {freedesktop.org specification} for an
+    in-depth explanation of these fields and how clients should populate them:
 
     \table
     \header

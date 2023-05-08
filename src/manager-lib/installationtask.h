@@ -18,6 +18,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+class Application;
 class Package;
 class PackageInfo;
 class PackageManager;
@@ -59,6 +60,7 @@ private:
     std::unique_ptr<PackageInfo> m_package;
     uint m_applicationUid = uint(-1);
     std::unique_ptr<Package> m_tempPackageForAcknowledge;
+    std::vector<std::unique_ptr<Application>> m_tempApplicationsForAcknowledge;
 
     // changes to these 4 member variables are protected by m_mutex
     PackageExtractor *m_extractor = nullptr;

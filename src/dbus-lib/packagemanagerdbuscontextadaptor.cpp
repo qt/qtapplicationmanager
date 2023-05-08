@@ -44,6 +44,7 @@
 #include "package.h"
 #include "packagemanager.h"
 #include "io.qt.packagemanager_adaptor.h"
+#include "applicationmanager.h"
 #include "dbuspolicy.h"
 #include "exception.h"
 #include "logging.h"
@@ -88,8 +89,19 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
                          const QVariantMap &packageExtraSignedMetaData) {
         auto map = PackageManager::instance()->get(package);
         map.remove(qSL("package")); // cannot marshall QObject *
-        taskRequestingInstallationAcknowledge(taskId, map, packageExtraMetaData,
-                                              packageExtraSignedMetaData);
+
+        const auto apps = package->applications(); // these are QObject * (legacy API)
+        QVariantList appList;
+        appList.reserve(apps.size());
+        for (const auto *obj : apps) {
+            QVariantMap app = ApplicationManager::instance()->get(obj->property("id").toString());
+            app.remove(qSL("application"));  // cannot marshall QObject *
+            appList.append(app);
+        }
+        map.insert(qSL("applications"), appList);
+
+        emit taskRequestingInstallationAcknowledge(taskId, map, packageExtraMetaData,
+                                                   packageExtraSignedMetaData);
     });
     connect(pm, &PackageManager::taskStarted,
             this, &PackageManagerAdaptor::taskStarted);

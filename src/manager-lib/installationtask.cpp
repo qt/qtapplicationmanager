@@ -50,6 +50,8 @@
 #include "package.h"
 #include "packageinfo.h"
 #include "packageextractor.h"
+#include "application.h"
+#include "applicationinfo.h"
 #include "exception.h"
 #include "packagemanager.h"
 #include "sudo.h"
@@ -331,7 +333,13 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         qCDebug(LogInstaller) << "emit taskRequestingInstallationAcknowledge" << id() << "for package" << m_package->id();
 
         // this is a temporary just for the signal emission below
-        m_tempPackageForAcknowledge.reset(new Package(m_package.data(), Package::BeingInstalled));
+        m_tempPackageForAcknowledge.reset(new Package(m_package.get(), Package::BeingInstalled));
+        const auto &applicationInfos = m_package.get()->applications();
+        for (const auto &applicationInfo : applicationInfos) {
+            auto tempApp = new Application(applicationInfo, m_tempPackageForAcknowledge.get());
+            m_tempPackageForAcknowledge->addApplication(tempApp);
+            m_tempApplicationsForAcknowledge.emplace_back(tempApp);
+        }
         emit m_pm->taskRequestingInstallationAcknowledge(id(), m_tempPackageForAcknowledge.get(),
                                                          m_extractor->installationReport().extraMetaData(),
                                                          m_extractor->installationReport().extraSignedMetaData());

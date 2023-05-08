@@ -136,7 +136,16 @@ TestCase {
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
-        var pkgId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
+
+        // this Package is temporary and it will be gone, as soon as we call
+        // acknowledgePackageInstallation below
+        var pkg = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1]
+        var pkgId = pkg.id
+        compare(pkgId, "com.pelagicore.test")
+        compare(pkg.applications.length, 1)
+        compare(pkg.applications[0].id, "com.pelagicore.test")
+        compare(pkg.applications[0].runtimeName, "native")
+
         taskRequestingInstallationAcknowledgeSpy.clear();
         PackageManager.acknowledgePackageInstallation(id);
 

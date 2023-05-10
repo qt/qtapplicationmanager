@@ -173,7 +173,7 @@ static void ProcessTitleInitialize(int argc, char *argv[], char *envp[])
 
 // register as a .init function that is automatically run before main()
 decltype(ProcessTitleInitialize) *init_ProcessTitleInitialize
-    __attribute__((section(".init_array"))) = ProcessTitleInitialize;
+    __attribute__((section(".init_array"), used)) = ProcessTitleInitialize;
 
 void ProcessTitle::setTitle(const char *fmt, ...)
 {

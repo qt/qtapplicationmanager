@@ -359,12 +359,13 @@ int main(int argc, char *argv[])
                 stdRedirections[qSL("err")] = 2;
             bool restart = clp.isSet(qSL("restart"));
 
-            a.runLater(std::bind(startOrDebugApplication,
-                                 QString(),
-                                 clp.positionalArguments().at(1),
-                                 stdRedirections,
-                                 restart,
-                                 args == 3 ? clp.positionalArguments().at(2) : QString()));
+            a.runLater([=, &clp]() {
+                startOrDebugApplication(QString(),
+                                        clp.positionalArguments().at(1),
+                                        stdRedirections,
+                                        restart,
+                                        args == 3 ? clp.positionalArguments().at(2) : QString());
+            });
             break;
         }
         case DebugApplication: {
@@ -390,12 +391,13 @@ int main(int argc, char *argv[])
                 stdRedirections[qSL("err")] = 2;
             bool restart = clp.isSet(qSL("restart"));
 
-            a.runLater(std::bind(startOrDebugApplication,
-                                 clp.positionalArguments().at(1),
-                                 clp.positionalArguments().at(2),
-                                 stdRedirections,
-                                 restart,
-                                 args == 3 ? clp.positionalArguments().at(2) : QString()));
+            a.runLater([=, &clp]() {
+                startOrDebugApplication(clp.positionalArguments().at(1),
+                                        clp.positionalArguments().at(2),
+                                        stdRedirections,
+                                        restart,
+                                        args == 3 ? clp.positionalArguments().at(2) : QString());
+            });
             break;
         }
         case StopAllApplications:
@@ -403,7 +405,7 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 1)
                 clp.showHelp(1);
 
-            a.runLater(stopAllApplications);
+            a.runLater([=]() { stopAllApplications(); });
             break;
 
         case StopApplication:
@@ -414,14 +416,15 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(stopApplication,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("f"))));
+            a.runLater([=, &clp]() {
+                stopApplication(clp.positionalArguments().at(1),
+                                clp.isSet(qSL("f")));
+            });
             break;
 
         case ListApplications:
             clp.process(a);
-            a.runLater(listApplications);
+            a.runLater([=]() { listApplications(); });
             break;
 
         case ShowApplication:
@@ -432,14 +435,15 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(showApplication,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("json"))));
+            a.runLater([=, &clp]() {
+                showApplication(clp.positionalArguments().at(1),
+                                clp.isSet(qSL("json")));
+            });
             break;
 
         case ListPackages:
             clp.process(a);
-            a.runLater(listPackages);
+            a.runLater([=]() { listPackages(); });
             break;
 
         case ShowPackage:
@@ -450,9 +454,10 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(showPackage,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("json"))));
+            a.runLater([=, &clp]() {
+                showPackage(clp.positionalArguments().at(1),
+                            clp.isSet(qSL("json")));
+            });
             break;
 
         case InstallPackage:
@@ -466,9 +471,10 @@ int main(int argc, char *argv[])
             if (clp.isSet(qSL("l")))
                 fprintf(stderr, "Ignoring the deprecated -l option.\n");
 
-            a.runLater(std::bind(installPackage,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("a"))));
+            a.runLater([=, &clp]() {
+                installPackage(clp.positionalArguments().at(1),
+                               clp.isSet(qSL("a")));
+            });
             break;
 
         case RemovePackage:
@@ -480,15 +486,16 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(removePackage,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("k")),
-                                 clp.isSet(qSL("f"))));
+            a.runLater([=, &clp]() {
+                removePackage(clp.positionalArguments().at(1),
+                              clp.isSet(qSL("k")),
+                              clp.isSet(qSL("f")));
+            });
             break;
 
         case ListInstallationTasks:
             clp.process(a);
-            a.runLater(listInstallationTasks);
+            a.runLater([=]() { listInstallationTasks(); });
             break;
 
         case CancelInstallationTask: {
@@ -501,14 +508,15 @@ int main(int argc, char *argv[])
             if (!(((args == 1) && all) || ((args == 2) && !all)))
                 clp.showHelp(1);
 
-            a.runLater(std::bind(cancelInstallationTask,
-                                 all,
-                                 args == 2 ? clp.positionalArguments().at(1) : QString()));
+            a.runLater([=, &clp]() {
+                cancelInstallationTask(all,
+                                       args == 2 ? clp.positionalArguments().at(1) : QString());
+            });
             break;
         }
         case ListInstallationLocations:
             clp.process(a);
-            a.runLater(listInstallationLocations);
+            a.runLater([=]() { listInstallationLocations(); });
             break;
 
         case ShowInstallationLocation:
@@ -521,13 +529,14 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() == 2)
                 fprintf(stderr, "Ignoring the deprecated installation-location.\n");
 
-            a.runLater(std::bind(showInstallationLocation,
-                                 clp.isSet(qSL("json"))));
+            a.runLater([=, &clp]() {
+                showInstallationLocation(clp.isSet(qSL("json")));
+            });
             break;
 
         case ListInstances:
             clp.process(a);
-            a.runLater(listInstances);
+            a.runLater([=]() { listInstances(); });
             break;
 
         case InjectIntentRequest:
@@ -552,8 +561,10 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() == 3)
                 jsonParams = clp.positionalArguments().at(2);
 
-            a.runLater(std::bind(injectIntentRequest, clp.positionalArguments().at(1),
-                                 isBroadcast, requestingAppId, appId, jsonParams));
+            a.runLater([=, &clp]() {
+                injectIntentRequest(clp.positionalArguments().at(1),
+                                    isBroadcast, requestingAppId, appId, jsonParams);
+            });
             break;
         }
 

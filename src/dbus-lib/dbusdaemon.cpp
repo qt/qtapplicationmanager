@@ -34,6 +34,8 @@
 #if defined(Q_OS_LINUX)
 #  include <sys/prctl.h>
 #  include <sys/signal.h>
+#  include <dlfcn.h>
+#  include <QVersionNumber>
 #endif
 #include <QCoreApplication>
 #include <QIODevice>
@@ -44,6 +46,24 @@
 #include "logging.h"
 
 QT_BEGIN_NAMESPACE_AM
+
+#if defined(Q_OS_LINUX)
+static QVersionNumber dbusVersion()
+{
+    typedef void (*am_dbus_get_version_t)(int *, int *, int *);
+    static am_dbus_get_version_t am_dbus_get_version = nullptr;
+
+    if (!am_dbus_get_version)
+        am_dbus_get_version = reinterpret_cast<am_dbus_get_version_t>(dlsym(RTLD_DEFAULT, "dbus_get_version"));
+
+    if (!am_dbus_get_version)
+        qFatal("ERROR: could not resolve 'dbus_get_version' from libdbus-1");
+
+    int major = 0, minor = 0, patch = 0;
+    am_dbus_get_version(&major, &minor, &patch);
+    return QVersionNumber(major, minor, patch);
+}
+#endif
 
 DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
     : QProcess(parent)
@@ -66,7 +86,12 @@ DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
     // some dbus implementations create an abstract socket by default, while others create
     // a file based one. we need a file based one however, because that socket might get
     // mapped into a container.
-    arguments << qSL("--address=unix:dir=/tmp");
+    if (dbusVersion() >= QVersionNumber(1, 11, 14)) {
+        arguments << qSL("--address=unix:dir=/tmp");
+    } else {
+        arguments << QString(qSL("--address=unix:path=") + QDir::tempPath() + qSL("am-")
+                             + QString::number(QCoreApplication::applicationPid()) + qSL("-session.bus"));
+    }
 #endif
     setProgram(program);
     setArguments(arguments);

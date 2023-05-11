@@ -94,6 +94,11 @@ GpuStatus::GpuStatus(QObject *parent)
     m_gpuReader->setActive(true);
 }
 
+GpuStatus::~GpuStatus()
+{
+    m_gpuReader->setActive(false);
+}
+
 /*!
     \qmlproperty real GpuStatus::gpuLoad
     \readonly

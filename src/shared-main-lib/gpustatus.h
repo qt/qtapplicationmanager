@@ -63,6 +63,7 @@ class GpuStatus : public QObject
 
 public:
     GpuStatus(QObject *parent = nullptr);
+    ~GpuStatus() override;
 
     qreal gpuLoad() const;
 

@@ -197,22 +197,19 @@ public:
             setArguments({ qSL("dmon"), qSL("--select"), qSL("u") });
         }
 
-        QObject::connect(this, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-                         this, [this](int exitCode, QProcess::ExitStatus) {
-            if (m_refCount) {
-                qCWarning(LogSystem) << "Failed to run GPU monitoring tool:"
-                                     << program() << arguments().join(qSL(" ")) << " - "
-                                     << "exited with code:" << exitCode;
-            }
+        connect(this, static_cast<void(QProcess::*)(QProcess::ProcessError error)>(&QProcess::errorOccurred),
+                this, [this](QProcess::ProcessError error) {
+            if (m_refCount)
+                qCWarning(LogSystem) << "GPU monitoring tool:" << program() << "caused error:" << error;
         });
 
-        QObject::connect(this, &QProcess::readyReadStandardOutput, this, [this]() {
+        connect(this, &QProcess::readyReadStandardOutput, this, [this]() {
             while (canReadLine()) {
                 const QByteArray str = readLine();
                 if (str.isEmpty() || (str.at(0) == '#'))
                     continue;
 
-                int pos = 0;
+                int pos = (GpuVendor::get() == GpuVendor::Intel) ? 50 : 0;
                 QVector<qreal> values;
 
                 while (pos < str.size() && values.size() < 2) {
@@ -233,11 +230,11 @@ public:
 
                 switch (GpuVendor::get()) {
                 case GpuVendor::Intel:
-                    if (values.size() >= 2)
-                        m_lastValue = values.at(1) / 100;
+                    if (values.size() > 0)
+                        m_lastValue = values.at(0) / 100;
                     break;
                 case GpuVendor::Nvidia:
-                    if (values.size() >= 2) {
+                    if (values.size() > 1) {
                         if (qFuzzyIsNull(values.at(0)))  // hardcoded to first gfx card
                             m_lastValue = values.at(1) / 100;
                     }
@@ -252,25 +249,15 @@ public:
 
     void ref()
     {
-        if (m_refCount.ref()) {
-            if (!isRunning()) {
-                start(QIODevice::ReadOnly);
-                if (!waitForStarted(2000)) {
-                    qCWarning(LogSystem) << "Could not start GPU monitoring tool:"
-                                         << program() << arguments().join(qSL(" ")) << " - "
-                                         << errorString();
-                }
-            }
-        }
+        if (m_refCount.ref() && !isRunning())
+            start(QIODevice::ReadOnly);
     }
 
     void deref()
     {
-        if (!m_refCount.deref()) {
-            if (isRunning()) {
-                kill();
-                waitForFinished();
-            }
+        if (!m_refCount.deref() && isRunning()) {
+            kill();
+            waitForFinished();
         }
     }
 

@@ -50,7 +50,7 @@ DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
     program = qSL("/usr/local/bin/dbus-daemon");
     // brew's dbus-daemon needs an address, because it will otherwise assume that it was
     // started via launchd and expects its address in $DBUS_LAUNCHD_SESSION_BUS_SOCKET
-    QString address = qSL("--address=unix:path=") + QDir::tempPath() + qSL("am-")
+    QString address = qSL("--address=unix:path=") + QDir::tempPath() + qSL("/am-")
             + QString::number(QCoreApplication::applicationPid()) + qSL("-session.bus");
 
     arguments << address;
@@ -63,7 +63,7 @@ DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
     if (dbusVersion() >= QVersionNumber(1, 11, 14)) {
         arguments << qSL("--address=unix:dir=/tmp");
     } else {
-        arguments << QString(qSL("--address=unix:path=") + QDir::tempPath() + qSL("am-")
+        arguments << QString(qSL("--address=unix:path=") + QDir::tempPath() + qSL("/am-")
                              + QString::number(QCoreApplication::applicationPid()) + qSL("-session.bus"));
     }
 #endif

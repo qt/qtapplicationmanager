@@ -9,5 +9,5 @@ dependencies:
     ref: fedbe21eaa6fac90d75c597942351591dc9c2783
     required: false
   ../qtwayland:
-    ref: ddd153dd5ea8453d6bbe92ee8433303e1293f3f7
+    ref: da24dc9eec438a891e6d36b1bced349563101b34
     required: false

@@ -123,8 +123,8 @@
     \endtable
 
     The actual backend implementation that is receiving the notifications from other process is
-    fully compliant to the D-Bus interface of the \l {freedesktop.org specification} for
-    notifications.
+    fully compliant to the D-Bus interface of the \l {org.freedesktop.Notifications}
+    {freedesktop.org specification} for notifications.
 
     For testing purposes, the \e notify-send tool from the \e libnotify package can be used to create
     notifications.

@@ -91,9 +91,10 @@
         \li bool
         \li See the client side documentation of Notification::dismissOnAction
     \row
-        \li \c isClickable
+        \li \c isAcknowledgeable
         \li bool
-        \li See the client side documentation of Notification::clickable
+        \li See the client side documentation of Notification::acknowledgeable
+            For backwards compatibility, \c isClickable can also be used to refer to this role.
     \row
         \li \c isSytemNotification
         \li url
@@ -151,7 +152,8 @@ enum Roles
     Actions,
     DismissOnAction,
 
-    IsClickable,
+    IsAcknowledgeable,
+    IsClickable, // legacy, replaced by IsAcknowledgeable
     IsSystemNotification,
 
     IsShowingProgress,
@@ -178,7 +180,6 @@ struct NotificationData
     QVariantList actions; // list of single element maps: <id (as string) --> text (as string)>
     bool dismissOnAction;
     bool isSticky;
-    bool isClickable;
     bool isSystemNotification;
     bool isShowingProgress;
     qreal progress;
@@ -268,6 +269,7 @@ NotificationManager::NotificationManager(QObject *parent)
     d->roleNames.insert(ShowActionsAsIcons, "showActionsAsIcons");
     d->roleNames.insert(Actions, "actions");
     d->roleNames.insert(DismissOnAction, "dismissOnAction");
+    d->roleNames.insert(IsAcknowledgeable, "isAcknowledgeable");
     d->roleNames.insert(IsClickable, "isClickable");
     d->roleNames.insert(IsSystemNotification, "isSytemNotification");
     d->roleNames.insert(IsShowingProgress, "isShowingProgress");
@@ -287,13 +289,13 @@ int NotificationManager::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
-    return d->notifications.count();
+    return int(d->notifications.count());
 }
 
 QVariant NotificationManager::data(const QModelIndex &index, int role) const
 {
     if (index.parent().isValid() || !index.isValid())
-        return QVariant();
+        return { };
 
     const NotificationData *n = d->notifications.at(index.row());
 
@@ -326,7 +328,8 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
     }
     case DismissOnAction:
         return n->dismissOnAction;
-    case IsClickable:
+    case IsClickable: // legacy
+    case IsAcknowledgeable:
         return n->actions.contains(QVariantMap { { qSL("default"), QString() } });
     case IsSystemNotification:
         return n->isSystemNotification;
@@ -341,7 +344,7 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
     case Extended:
         return n->extended;
     }
-    return QVariant();
+    return { };
 }
 
 QHash<int, QByteArray> NotificationManager::roleNames() const
@@ -574,7 +577,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
     n->extended = convertFromDBusVariant(hints.value(qSL("x-pelagicore-extended"))).toMap();
 
     if (replaces) {
-        QModelIndex idx = index(d->notifications.indexOf(n), 0);
+        QModelIndex idx = index(int(d->notifications.indexOf(n)), 0);
         emit dataChanged(idx, idx);
         static const auto nChanged = QMetaMethod::fromSignal(&NotificationManager::notificationChanged);
         if (isSignalConnected(nChanged)) {

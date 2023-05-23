@@ -245,7 +245,7 @@ Module {
         }
         Signal {
             name: "acknowledgeableChanged"
-            Parameter { name: "clickable"; type: "bool"; }
+            Parameter { name: "acknowledgeable"; type: "bool"; }
         }
         Signal {
             name: "timeoutChanged"

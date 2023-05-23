@@ -572,44 +572,52 @@ QT_BEGIN_NAMESPACE_AM
 
 /*! \qmlproperty url IntentServerHandler::icon
 
-    The intent's icon - see  the \l{manifest-intent}{manifest documentation} for more
-    details.
+    The intent's icon.
+    This corresponds to the \c icon field in the \l{manifest-intent}{manifest documentation}.
 
     \note Any changes to this property after component completion will have no effect.
 */
 /*! \qmlproperty object IntentServerHandler::names
 
-    The intent's name - see  the \l{manifest-intent}{manifest documentation} for more
-    details.
+    An object with all the language code to localized name mappings for this intent.
+    This corresponds to the \c name field in the \l{manifest-intent}{manifest documentation}.
+
+    \note Any changes to this property after component completion will have no effect.
+*/
+/*! \qmlproperty object IntentServerHandler::descriptions
+
+    An object with all the language code to localized description mappings for this intent.
+    This corresponds to the \c description field in the \l{manifest-intent}{manifest documentation}.
 
     \note Any changes to this property after component completion will have no effect.
 */
 /*! \qmlproperty list<string> IntentServerHandler::categories
 
-    The intent's categories - see  the \l{manifest-intent}{manifest documentation} for more
-    details.
+    The intent's categories.
+    This corresponds to the \c categories field in the \l{manifest-intent}{manifest documentation}.
 
     \note Any changes to this property after component completion will have no effect.
 */
 /*! \qmlproperty enum IntentServerHandler::visibility
 
-    The intent's visibility - see  the \l{manifest-intent}{manifest documentation} for more
-    details.
-    Can be either \c IntentObject.Public or \c IntentObject.Private (the default).
+    The intent's visibility. Can be either \c IntentObject.Public or \c IntentObject.Private
+    (the default).
+    This corresponds to the \c visibility field in the \l{manifest-intent}{manifest documentation}.
 
     \note Any changes to this property after component completion will have no effect.
 */
 /*! \qmlproperty list<string> IntentServerHandler::requiredCapabilities
 
-    The intent's required capabilities - see  the \l{manifest-intent}{manifest documentation} for
-    more details.
+    The intent's required capabilities.
+    This corresponds to the \c requiredCapabilities field in the \l{manifest-intent}
+    {manifest documentation}.
 
     \note Any changes to this property after component completion will have no effect.
 */
 /*! \qmlproperty object IntentServerHandler::parameterMatch
 
-    The intent's parameter requirements - see  the \l{manifest-intent}{manifest documentation} for
-    more details.
+    The intent's parameter requirements.
+    This corresponds to the \c parameterMatch field in the \l{manifest-intent}{manifest documentation}.
 
     \note Any changes to this property after component completion will have no effect.
 */

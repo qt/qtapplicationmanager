@@ -56,8 +56,7 @@ apt-get install libyaml-dev libarchive-dev libssl-dev
 that lack one of the prerequisites, the bundled versions of these libraries from the \c src/3rdparty
 folder are automatically used instead. Make sure you are aware of the licensing implications,
 since these bundled 3rdparty libs will be linked in as static libraries.
-
-\warning This option is not meant for production, but for development and testing environments only.
+This option is not meant for production, but for development and testing environments only.
 
 \section1 Multi-process vs. Single-process
 

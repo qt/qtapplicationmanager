@@ -250,7 +250,7 @@
     \qmlsignal ApplicationManager::applicationAdded(string id)
 
     This signal is emitted after a new application, identified by \a id, has been installed via the
-    ApplicationInstaller. The model has already been update before this signal is sent out.
+    PackageManager. The model has already been update before this signal is sent out.
 
     \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
           will also emit these "high-level" signals for System-UIs that cannot work directly on the
@@ -261,7 +261,7 @@
     \qmlsignal ApplicationManager::applicationAboutToBeRemoved(string id)
 
     This signal is emitted before an existing application, identified by \a id, is removed via the
-    ApplicationInstaller.
+    PackageManager.
 
     \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
           will also emit these "high-level" signals for System-UIs that cannot work directly on the
@@ -1071,7 +1071,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
     \note This signal is only emitted, if there is a receiver connected at all - see openUrl for the
           fallback behavior.
 
-    The receiver of this signal can inspect the requested \a url an its \a mimeType. It can then
+    The receiver of this signal can inspect the requested \a url and its \a mimeType. It can then
     either call acknowledgeOpenUrlRequest to choose from one of the supplied \a possibleAppIds or
     rejectOpenUrlRequest to ignore the request. In both cases the unique \a requestId needs to be
     sent to identify the request.

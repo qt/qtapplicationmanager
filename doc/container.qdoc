@@ -34,12 +34,25 @@ Custom container solutions can be added via plugins. These plugins need not to b
 of the application manager, but they need to be built against a private Qt module to get the
 interface definition:
 
+Here's a snippet on how to do this with cmake:
 \badcode
+...
+find_package(Qt6 COMPONENTS AppManPluginInterfacesPrivate)
+qt_add_plugin(mycontainer-plugin)
+target_link_libraries(mycontainer-plugin PUBLIC Qt::AppManPluginInterfacesPrivate)
+...
+\endcode
+
+Here's the qmake version:
+
+\badcode
+...
 TEMPLATE = lib
 CONFIG += plugin
 TARGET = mycontainer-plugin
 
 QT += appman_plugininterfaces-private
+...
 \endcode
 
 Then, you only have to implement two classes that derive from \l ContainerInterface

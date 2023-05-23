@@ -94,7 +94,7 @@ signals:
     void imageChanged(const QUrl &image);
     void categoryChanged(const QString &category);
     void priorityChanged(int priority);
-    void acknowledgeableChanged(bool clickable);
+    void acknowledgeableChanged(bool acknowledgeable);
     void timeoutChanged(int timeout);
     void stickyChanged(bool sticky);
     void showProgressChanged(bool showProgress);

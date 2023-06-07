@@ -26,6 +26,7 @@
 #include <QtAppManIntentClient/intentclient.h>
 #include <QtAppManIntentClient/intentclientrequest.h>
 #include <QtAppManIntentClient/intenthandler.h>
+#include <QtAppManManager/intentaminterface.h>
 #include <QtAppManSharedMain/cpustatus.h>
 #include <QtAppManSharedMain/gpustatus.h>
 #include <QtAppManSharedMain/memorystatus.h>
@@ -66,12 +67,14 @@ static const QVector<const QMetaObject *> all = {
     // intent-client-lib
     &IntentClient::staticMetaObject,
     &IntentClientRequest::staticMetaObject,
+    &AbstractIntentHandler::staticMetaObject,
     &IntentHandler::staticMetaObject,
 
     // intent-server-lib
     &IntentServer::staticMetaObject,
     &Intent::staticMetaObject,
     &IntentModel::staticMetaObject,
+    &IntentServerHandler::staticMetaObject,
 
     // monitor-lib
     &CpuStatus::staticMetaObject,
@@ -83,27 +86,31 @@ static const QVector<const QMetaObject *> all = {
     &MonitorModel::staticMetaObject
 };
 
+static const QMap<QString, QStringList> moduleDepends = {
+    { qSL("QtApplicationManager.SystemUI"),    { qSL("QtApplicationManager") } },
+    { qSL("QtApplicationManager.Application"), { qSL("QtApplicationManager"), qSL("QtQuick") } },
+    { qSL("QtApplicationManager"),             { qSL("QtQuick") } },
+};
 
 static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool indentFirstLine)
 {
     static auto stripNamespace = [](const QByteArray &identifier) -> QByteArray {
-        int pos = identifier.lastIndexOf("::");
-        return pos < 0 ? identifier : identifier.mid(pos + 2);
+#define AM_EMPTY_TOKEN
+        static const QByteArray qtamNamespace = QT_STRINGIFY(QT_PREPEND_NAMESPACE_AM(AM_EMPTY_TOKEN));
+#undef AM_EMPTY_TOKEN
+
+        if (identifier.startsWith(qtamNamespace))
+            return identifier.mid(qtamNamespace.length());
+        return identifier;
     };
     static auto mapTypeName = [](const QByteArray &type, bool stripPointer) -> QByteArray {
-        if (type == "QString") {
-            return "string";
-        } else if (type == "qlonglong") {
-            return "int";
-        } else {
-            QByteArray ba = type;
-            if (ba.startsWith("const "))
-                ba = ba.mid(6);
-            ba = stripNamespace(ba);
-            if (stripPointer && ba.endsWith('*'))
-                ba.chop(1);
-            return ba;
-        }
+        QByteArray ba = type;
+        if (ba.startsWith("const "))
+            ba = ba.mid(6);
+        ba = stripNamespace(ba);
+        if (stripPointer && ba.endsWith('*'))
+            ba.chop(1);
+        return ba;
     };
 
     // parse the AM-QmlType Q_CLASSINFO
@@ -164,6 +171,13 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
         prototype = mo->classInfo(protoIdx).value();
     }
 
+    // parse the DefaultProperty Q_CLASSINFO
+    QByteArray defaultProperty;
+    int defaultPropertyIdx = mo->indexOfClassInfo("DefaultProperty");
+    if (defaultPropertyIdx >= mo->classInfoOffset()) {
+        defaultProperty = mo->classInfo(defaultPropertyIdx).value();
+    }
+
     QByteArray str;
     QByteArray indent1 = QByteArray(level * 4, ' ');
     QByteArray indent2 = QByteArray((level + 1) * 4, ' ');
@@ -172,18 +186,27 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
     if (indentFirstLine)
         str.append(indent1);
 
+    QByteArrayList exports;
+    QByteArrayList exportRevs;
+    for (int minor = revMinor; minor >= 0; --minor) {
+        exports << QByteArray("\"" + type + " " + QByteArray::number(revMajor) + "."
+                              + QByteArray::number(minor) + "\"");
+        exportRevs << QByteArray::number(revMajor * 256 + minor);
+    }
+
     str = str
-            + "Component {\n"
-            + indent2 + "name: \"" + stripNamespace(supermo->className()) + "\"\n"
-            + indent2 + "exports: [ \"" + type + " "
-                      + QByteArray::number(revMajor) + "." + QByteArray::number(revMinor) + "\" ]\n"
-            + indent2 + "exportMetaObjectRevisions: [ 0 ]\n";
+          + "Component {\n"
+          + indent2 + "name: \"" + stripNamespace(supermo->className()) + "\"\n"
+          + indent2 + "exports: [ " + exports.join(", ") + " ]\n"
+          + indent2 + "exportMetaObjectRevisions: [ " + exportRevs.join(", ") + " ]\n";
     if (mo->superClass())
         str = str + indent2 + "prototype: \"" + prototype + "\"\n";
     if (isSingleton)
         str = str + indent2 + "isSingleton: true\n";
     if (isUncreatable)
         str = str + indent2 + "isCreatable: false\n";
+    if (!defaultProperty.isEmpty())
+        str = str + indent2 + "defaultProperty: \"" + defaultProperty + "\"\n";
 
 
     int propertyOffset = supermo->propertyOffset();
@@ -216,11 +239,15 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
         str = str
                 + indent2
                 + "Property { name: \"" + p.name()
-                + "\"; type: \"" + mapTypeName(p.typeName(), true) + "\";";
+                + "\"; type: \"" + mapTypeName(p.typeName(), true) + "\"";
+        if (int rev = p.revision())
+            str += "; revision: " + QByteArray::number(rev);
         if (QByteArray(p.typeName()).endsWith('*'))
-            str += " isPointer: true;";
+            str += "; isPointer: true";
         if (!p.isWritable())
-            str += " isReadonly: true";
+            str += "; isReadonly: true";
+        if (p.isConstant())
+            str += "; isConstant: true";
         str = str + " }\n";
     }
 
@@ -245,8 +272,10 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
         str = str + indent2 + methodtype + " {\n" + indent3 + "name: \"" + m.name() + "\"\n";
         if (qstrcmp(m.typeName(), "void") != 0) {
             str = str + indent3 + "type: \"" + mapTypeName(m.typeName(), true) + "\"";
+            if (int rev = m.revision())
+                str += "; revision: " + QByteArray::number(rev);
             if (QByteArray(m.typeName()).endsWith('*'))
-                str += "; isPointer: true;";
+                str += "; isPointer: true";
             str += "\n";
         }
 
@@ -254,9 +283,11 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
             str = str
                     + indent3 + "Parameter { name: \""
                     + m.parameterNames().at(j) + "\"; type: \""
-                    + mapTypeName(m.parameterTypes().at(j), true) + "\";";
+                    + mapTypeName(m.parameterTypes().at(j), true) + "\"";
             if (m.parameterTypes().at(j).endsWith('*'))
-                str += " isPointer: true;";
+                str += "; isPointer: true";
+            if (m.parameterTypes().at(j).startsWith("const "))
+                str += "; isConstant: true";
             str = str + " }\n";
         }
 
@@ -361,6 +392,9 @@ int main(int argc, char **argv)
                 throw Exception(qmldirFile, "Failed to open for writing");
             QTextStream qmldirOut(&qmldirFile);
             qmldirOut << "typeinfo plugins.qmltypes\n";
+            const QStringList depends = moduleDepends.value(*it);
+            for (const auto &md : depends)
+                qmldirOut << "depends " << md << " auto\n";
             qmldirFile.close();
 
             QFile typesFile(importDir.absoluteFilePath(qSL("plugins.qmltypes")));
@@ -377,8 +411,7 @@ int main(int argc, char **argv)
                     "// This file was auto-generated by:\n"
                     "// appman-dumpqmltypes\n"
                     "\n"
-                    "Module {\n"
-                    "    dependencies: [ \"QtQuick.Window 6.${QT_MINOR_VERSION}\", \"QtQuick 6.${QT_MINOR_VERSION}\" ]\n";
+                    "Module {\n";
             const char *footer = "}\n";
 
             typesOut << QByteArray(header).replace("${QT_MINOR_VERSION}",

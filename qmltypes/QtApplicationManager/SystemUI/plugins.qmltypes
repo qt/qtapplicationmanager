@@ -7,53 +7,94 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 6.5", "QtQuick 6.5" ]
     Component {
         name: "ProcessStatus"
         exports: [ "QtApplicationManager.SystemUI/ProcessStatus 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "applicationId"; type: "string"; }
-        Property { name: "processId"; type: "int"; isReadonly: true }
+        Property { name: "applicationId"; type: "QString" }
+        Property { name: "processId"; type: "qlonglong"; isReadonly: true }
         Property { name: "cpuLoad"; type: "double"; isReadonly: true }
         Property { name: "memoryVirtual"; type: "QVariantMap"; isReadonly: true }
         Property { name: "memoryRss"; type: "QVariantMap"; isReadonly: true }
         Property { name: "memoryPss"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "memoryReportingEnabled"; type: "bool"; }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true }
+        Property { name: "memoryReportingEnabled"; type: "bool" }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
         Signal {
             name: "applicationIdChanged"
-            Parameter { name: "applicationId"; type: "string"; }
+            Parameter { name: "applicationId"; type: "QString" }
         }
         Signal {
             name: "processIdChanged"
-            Parameter { name: "processId"; type: "int"; }
+            Parameter { name: "processId"; type: "qlonglong" }
         }
         Signal {
             name: "cpuLoadChanged"
         }
         Signal {
             name: "memoryReportingChanged"
-            Parameter { name: "memoryVirtual"; type: "QVariantMap"; }
-            Parameter { name: "memoryRss"; type: "QVariantMap"; }
-            Parameter { name: "memoryPss"; type: "QVariantMap"; }
+            Parameter { name: "memoryVirtual"; type: "QVariantMap" }
+            Parameter { name: "memoryRss"; type: "QVariantMap" }
+            Parameter { name: "memoryPss"; type: "QVariantMap" }
         }
         Signal {
             name: "memoryReportingEnabledChanged"
-            Parameter { name: "enabled"; type: "bool"; }
+            Parameter { name: "enabled"; type: "bool" }
         }
         Method {
             name: "update"
         }
     }
     Component {
+        name: "IntentServerHandler"
+        exports: [ "QtApplicationManager.SystemUI/IntentServerHandler 2.0" ]
+        exportMetaObjectRevisions: [ 512 ]
+        prototype: "AbstractIntentHandler"
+        Property { name: "intentIds"; type: "QStringList" }
+        Property { name: "icon"; type: "QUrl" }
+        Property { name: "names"; type: "QVariantMap" }
+        Property { name: "descriptions"; type: "QVariantMap" }
+        Property { name: "categories"; type: "QStringList" }
+        Property { name: "visibility"; type: "Intent::Visibility" }
+        Property { name: "requiredCapabilities"; type: "QStringList" }
+        Property { name: "parameterMatch"; type: "QVariantMap" }
+        Method {
+            name: "setIcon"
+            Parameter { name: "icon"; type: "QUrl" }
+        }
+        Method {
+            name: "setNames"
+            Parameter { name: "names"; type: "QVariantMap" }
+        }
+        Method {
+            name: "setDescriptions"
+            Parameter { name: "descriptions"; type: "QVariantMap" }
+        }
+        Method {
+            name: "setCategories"
+            Parameter { name: "categories"; type: "QStringList" }
+        }
+        Method {
+            name: "setVisibility"
+            Parameter { name: "visibility"; type: "Intent::Visibility" }
+        }
+        Method {
+            name: "setRequiredCapabilities"
+            Parameter { name: "requiredCapabilities"; type: "QStringList" }
+        }
+        Method {
+            name: "setParameterMatch"
+            Parameter { name: "parameterMatch"; type: "QVariantMap" }
+        }
+    }
+    Component {
         name: "IntentModel"
         exports: [ "QtApplicationManager.SystemUI/IntentModel 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "filterFunction"; type: "QJSValue"; }
-        Property { name: "sortFunction"; type: "QJSValue"; }
+        Property { name: "filterFunction"; type: "QJSValue" }
+        Property { name: "sortFunction"; type: "QJSValue" }
         Signal {
             name: "countChanged"
         }
@@ -66,164 +107,165 @@ Module {
         Method {
             name: "indexOfIntent"
             type: "int"
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "applicationId"; type: "string"; }
-            Parameter { name: "parameters"; type: "QVariantMap"; }
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "applicationId"; type: "QString" }
+            Parameter { name: "parameters"; type: "QVariantMap" }
         }
         Method {
             name: "indexOfIntent"
             type: "int"
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "applicationId"; type: "string"; }
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "applicationId"; type: "QString" }
         }
         Method {
             name: "indexOfIntent"
             type: "int"
-            Parameter { name: "intent"; type: "Intent"; isPointer: true; }
+            Parameter { name: "intent"; type: "Intent"; isPointer: true }
         }
         Method {
             name: "mapToSource"
             type: "int"
-            Parameter { name: "ourIndex"; type: "int"; }
+            Parameter { name: "ourIndex"; type: "int" }
         }
         Method {
             name: "mapFromSource"
             type: "int"
-            Parameter { name: "sourceIndex"; type: "int"; }
+            Parameter { name: "sourceIndex"; type: "int" }
         }
     }
     Component {
         name: "Intent"
-        exports: [ "QtApplicationManager.SystemUI/IntentObject 2.1" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exports: [ "QtApplicationManager.SystemUI/IntentObject 2.1", "QtApplicationManager.SystemUI/IntentObject 2.0" ]
+        exportMetaObjectRevisions: [ 513, 512 ]
         prototype: "QObject"
         isCreatable: false
         Enum { name: "Visibility"; values: [ "Public", "Private" ] }
-        Property { name: "intentId"; type: "string"; isReadonly: true }
-        Property { name: "packageId"; type: "string"; isReadonly: true }
-        Property { name: "applicationId"; type: "string"; isReadonly: true }
-        Property { name: "visibility"; type: "Visibility"; isReadonly: true }
-        Property { name: "requiredCapabilities"; type: "QStringList"; isReadonly: true }
-        Property { name: "parameterMatch"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "icon"; type: "QUrl"; isReadonly: true }
-        Property { name: "name"; type: "string"; isReadonly: true }
-        Property { name: "names"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "description"; type: "string"; isReadonly: true }
-        Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "categories"; type: "QStringList"; isReadonly: true }
-        Property { name: "handleOnlyWhenRunning"; type: "bool"; isReadonly: true }
+        Property { name: "intentId"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "packageId"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "applicationId"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "visibility"; type: "Intent::Visibility"; isReadonly: true; isConstant: true }
+        Property { name: "requiredCapabilities"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "parameterMatch"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "icon"; type: "QUrl"; isReadonly: true; isConstant: true }
+        Property { name: "name"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "names"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "description"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "categories"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "handleOnlyWhenRunning"; type: "bool"; revision: 513; isReadonly: true; isConstant: true }
     }
     Component {
         name: "IntentServer"
         exports: [ "QtApplicationManager.SystemUI/IntentServer 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
         Property { name: "count"; type: "int"; isReadonly: true }
         Signal {
             name: "intentAdded"
-            Parameter { name: "intent"; type: "Intent"; isPointer: true; }
+            Parameter { name: "intent"; type: "Intent"; isPointer: true }
         }
         Signal {
             name: "intentAboutToBeRemoved"
-            Parameter { name: "intent"; type: "Intent"; isPointer: true; }
+            Parameter { name: "intent"; type: "Intent"; isPointer: true }
         }
         Signal {
             name: "countChanged"
         }
         Signal {
             name: "disambiguationRequest"
-            Parameter { name: "requestId"; type: "QUuid"; }
-            Parameter { name: "potentialIntents"; type: "QList<QObject*>"; }
-            Parameter { name: "parameters"; type: "QVariantMap"; }
+            Parameter { name: "requestId"; type: "QUuid" }
+            Parameter { name: "potentialIntents"; type: "QList<QObject*>" }
+            Parameter { name: "parameters"; type: "QVariantMap" }
         }
         Method {
             name: "get"
             type: "QVariantMap"
-            Parameter { name: "index"; type: "int"; }
+            Parameter { name: "index"; type: "int" }
         }
         Method {
             name: "intent"
-            type: "Intent"; isPointer: true;
-            Parameter { name: "index"; type: "int"; }
+            type: "Intent"; isPointer: true
+            Parameter { name: "index"; type: "int" }
         }
         Method {
             name: "applicationIntent"
-            type: "Intent"; isPointer: true;
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "applicationId"; type: "string"; }
-            Parameter { name: "parameters"; type: "QVariantMap"; }
+            type: "Intent"; isPointer: true
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "applicationId"; type: "QString" }
+            Parameter { name: "parameters"; type: "QVariantMap" }
         }
         Method {
             name: "applicationIntent"
-            type: "Intent"; isPointer: true;
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "applicationId"; type: "string"; }
+            type: "Intent"; isPointer: true
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "applicationId"; type: "QString" }
         }
         Method {
             name: "packageIntent"
-            type: "Intent"; isPointer: true;
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "packageId"; type: "string"; }
-            Parameter { name: "parameters"; type: "QVariantMap"; }
+            type: "Intent"; isPointer: true
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "packageId"; type: "QString" }
+            Parameter { name: "parameters"; type: "QVariantMap" }
         }
         Method {
             name: "packageIntent"
-            type: "Intent"; isPointer: true;
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "packageId"; type: "string"; }
+            type: "Intent"; isPointer: true
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "packageId"; type: "QString" }
         }
         Method {
             name: "packageIntent"
-            type: "Intent"; isPointer: true;
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "packageId"; type: "string"; }
-            Parameter { name: "applicationId"; type: "string"; }
-            Parameter { name: "parameters"; type: "QVariantMap"; }
+            type: "Intent"; isPointer: true
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "packageId"; type: "QString" }
+            Parameter { name: "applicationId"; type: "QString" }
+            Parameter { name: "parameters"; type: "QVariantMap" }
         }
         Method {
             name: "packageIntent"
-            type: "Intent"; isPointer: true;
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "packageId"; type: "string"; }
-            Parameter { name: "applicationId"; type: "string"; }
+            type: "Intent"; isPointer: true
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "packageId"; type: "QString" }
+            Parameter { name: "applicationId"; type: "QString" }
         }
         Method {
             name: "indexOfIntent"
             type: "int"
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "applicationId"; type: "string"; }
-            Parameter { name: "parameters"; type: "QVariantMap"; }
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "applicationId"; type: "QString" }
+            Parameter { name: "parameters"; type: "QVariantMap" }
         }
         Method {
             name: "indexOfIntent"
             type: "int"
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "applicationId"; type: "string"; }
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "applicationId"; type: "QString" }
         }
         Method {
             name: "indexOfIntent"
             type: "int"
-            Parameter { name: "intent"; type: "Intent"; isPointer: true; }
+            Parameter { name: "intent"; type: "Intent"; isPointer: true }
         }
         Method {
             name: "acknowledgeDisambiguationRequest"
-            Parameter { name: "requestId"; type: "QUuid"; }
-            Parameter { name: "selectedIntent"; type: "Intent"; isPointer: true; }
+            Parameter { name: "requestId"; type: "QUuid" }
+            Parameter { name: "selectedIntent"; type: "Intent"; isPointer: true }
         }
         Method {
             name: "rejectDisambiguationRequest"
-            Parameter { name: "requestId"; type: "QUuid"; }
+            Parameter { name: "requestId"; type: "QUuid" }
         }
     }
     Component {
         name: "WindowItem"
         exports: [ "QtApplicationManager.SystemUI/WindowItem 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QQuickItem"
-        Property { name: "window"; type: "Window"; isPointer: true; }
+        defaultProperty: "contentItemData"
+        Property { name: "window"; type: "Window"; isPointer: true }
         Property { name: "primary"; type: "bool"; isReadonly: true }
-        Property { name: "objectFollowsItemSize"; type: "bool"; }
+        Property { name: "objectFollowsItemSize"; type: "bool" }
         Property { name: "contentItemData"; type: "QQmlListProperty<QObject>"; isReadonly: true }
         Signal {
             name: "windowChanged"
@@ -244,22 +286,22 @@ Module {
     Component {
         name: "Window"
         exports: [ "QtApplicationManager.SystemUI/WindowObject 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         isCreatable: false
         Enum { name: "ContentState"; values: [ "SurfaceWithContent", "SurfaceNoContent", "NoSurface" ] }
         Property { name: "size"; type: "QSize"; isReadonly: true }
-        Property { name: "contentState"; type: "ContentState"; isReadonly: true }
-        Property { name: "application"; type: "Application"; isPointer: true; isReadonly: true }
-        Property { name: "popup"; type: "bool"; isReadonly: true }
+        Property { name: "contentState"; type: "Window::ContentState"; isReadonly: true }
+        Property { name: "application"; type: "Application"; isPointer: true; isReadonly: true; isConstant: true }
+        Property { name: "popup"; type: "bool"; isReadonly: true; isConstant: true }
         Property { name: "requestedPopupPosition"; type: "QPoint"; isReadonly: true }
         Signal {
             name: "sizeChanged"
         }
         Signal {
             name: "windowPropertyChanged"
-            Parameter { name: "name"; type: "string"; }
-            Parameter { name: "value"; type: "QVariant"; }
+            Parameter { name: "name"; type: "QString" }
+            Parameter { name: "value"; type: "QVariant" }
         }
         Signal {
             name: "isBeingDisplayedChanged"
@@ -273,13 +315,13 @@ Module {
         Method {
             name: "setWindowProperty"
             type: "bool"
-            Parameter { name: "name"; type: "string"; }
-            Parameter { name: "value"; type: "QVariant"; }
+            Parameter { name: "name"; type: "QString" }
+            Parameter { name: "value"; type: "QVariant" }
         }
         Method {
             name: "windowProperty"
             type: "QVariant"
-            Parameter { name: "name"; type: "string"; }
+            Parameter { name: "name"; type: "QString" }
         }
         Method {
             name: "windowProperties"
@@ -290,52 +332,52 @@ Module {
         }
         Method {
             name: "resize"
-            Parameter { name: "size"; type: "QSize"; }
+            Parameter { name: "size"; type: "QSize" }
         }
     }
     Component {
         name: "WindowManager"
         exports: [ "QtApplicationManager.SystemUI/WindowManager 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
         Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "runningOnDesktop"; type: "bool"; isReadonly: true }
-        Property { name: "slowAnimations"; type: "bool"; }
-        Property { name: "allowUnknownUiClients"; type: "bool"; isReadonly: true }
+        Property { name: "runningOnDesktop"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "slowAnimations"; type: "bool" }
+        Property { name: "allowUnknownUiClients"; type: "bool"; isReadonly: true; isConstant: true }
         Signal {
             name: "countChanged"
         }
         Signal {
             name: "slowAnimationsChanged"
-            Parameter { name: ""; type: "bool"; }
+            Parameter { name: ""; type: "bool" }
         }
         Signal {
             name: "raiseApplicationWindow"
-            Parameter { name: "applicationId"; type: "string"; }
-            Parameter { name: "applicationAliasId"; type: "string"; }
+            Parameter { name: "applicationId"; type: "QString" }
+            Parameter { name: "applicationAliasId"; type: "QString" }
         }
         Signal {
             name: "windowAdded"
-            Parameter { name: "window"; type: "Window"; isPointer: true; }
+            Parameter { name: "window"; type: "Window"; isPointer: true }
         }
         Signal {
             name: "windowAboutToBeRemoved"
-            Parameter { name: "window"; type: "Window"; isPointer: true; }
+            Parameter { name: "window"; type: "Window"; isPointer: true }
         }
         Signal {
             name: "windowContentStateChanged"
-            Parameter { name: "window"; type: "Window"; isPointer: true; }
+            Parameter { name: "window"; type: "Window"; isPointer: true }
         }
         Signal {
             name: "windowPropertyChanged"
-            Parameter { name: "window"; type: "Window"; isPointer: true; }
-            Parameter { name: "name"; type: "string"; }
-            Parameter { name: "value"; type: "QVariant"; }
+            Parameter { name: "window"; type: "Window"; isPointer: true }
+            Parameter { name: "name"; type: "QString" }
+            Parameter { name: "value"; type: "QVariant" }
         }
         Signal {
             name: "compositorViewRegistered"
-            Parameter { name: "view"; type: "QQuickWindow"; isPointer: true; }
+            Parameter { name: "view"; type: "QQuickWindow"; isPointer: true }
         }
         Signal {
             name: "shutDownFinished"
@@ -343,39 +385,39 @@ Module {
         Method {
             name: "get"
             type: "QVariantMap"
-            Parameter { name: "index"; type: "int"; }
+            Parameter { name: "index"; type: "int" }
         }
         Method {
             name: "window"
-            type: "Window"; isPointer: true;
-            Parameter { name: "index"; type: "int"; }
+            type: "Window"; isPointer: true
+            Parameter { name: "index"; type: "int" }
         }
         Method {
             name: "windowsOfApplication"
             type: "QList<QObject*>"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "indexOfWindow"
             type: "int"
-            Parameter { name: "window"; type: "Window"; isPointer: true; }
+            Parameter { name: "window"; type: "Window"; isPointer: true }
         }
         Method {
             name: "addExtension"
-            type: "QObject"; isPointer: true;
-            Parameter { name: "component"; type: "QQmlComponent"; isPointer: true; }
+            type: "QObject"; isPointer: true
+            Parameter { name: "component"; type: "QQmlComponent"; isPointer: true }
         }
         Method {
             name: "makeScreenshot"
             type: "bool"
-            Parameter { name: "filename"; type: "string"; }
-            Parameter { name: "selector"; type: "string"; }
+            Parameter { name: "filename"; type: "QString" }
+            Parameter { name: "selector"; type: "QString" }
         }
     }
     Component {
         name: "Am"
         exports: [ "QtApplicationManager.SystemUI/Am 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         isCreatable: false
         Enum { name: "ExitStatus"; values: [ "NormalExit", "CrashExit", "ForcedExit" ] }
@@ -385,11 +427,11 @@ Module {
     Component {
         name: "ApplicationModel"
         exports: [ "QtApplicationManager.SystemUI/ApplicationModel 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "filterFunction"; type: "QJSValue"; }
-        Property { name: "sortFunction"; type: "QJSValue"; }
+        Property { name: "filterFunction"; type: "QJSValue" }
+        Property { name: "sortFunction"; type: "QJSValue" }
         Signal {
             name: "countChanged"
         }
@@ -402,31 +444,31 @@ Module {
         Method {
             name: "indexOfApplication"
             type: "int"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "indexOfApplication"
             type: "int"
-            Parameter { name: "application"; type: "Application"; isPointer: true; }
+            Parameter { name: "application"; type: "Application"; isPointer: true }
         }
         Method {
             name: "mapToSource"
             type: "int"
-            Parameter { name: "ourIndex"; type: "int"; }
+            Parameter { name: "ourIndex"; type: "int" }
         }
         Method {
             name: "mapFromSource"
             type: "int"
-            Parameter { name: "sourceIndex"; type: "int"; }
+            Parameter { name: "sourceIndex"; type: "int" }
         }
     }
     Component {
         name: "AbstractContainer"
         exports: [ "QtApplicationManager.SystemUI/Container 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         isCreatable: false
-        Property { name: "controlGroup"; type: "string"; }
+        Property { name: "controlGroup"; type: "QString" }
         Signal {
             name: "ready"
         }
@@ -438,67 +480,67 @@ Module {
         }
         Signal {
             name: "applicationChanged"
-            Parameter { name: "newApplication"; type: "Application"; isPointer: true; }
+            Parameter { name: "newApplication"; type: "Application"; isPointer: true }
         }
         Signal {
             name: "controlGroupChanged"
-            Parameter { name: "controlGroup"; type: "string"; }
+            Parameter { name: "controlGroup"; type: "QString" }
         }
     }
     Component {
         name: "AbstractRuntime"
         exports: [ "QtApplicationManager.SystemUI/Runtime 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         isCreatable: false
-        Property { name: "container"; type: "AbstractContainer"; isPointer: true; isReadonly: true }
+        Property { name: "container"; type: "AbstractContainer"; isPointer: true; isReadonly: true; isConstant: true }
         Signal {
             name: "stateChanged"
-            Parameter { name: "newState"; type: "RunState"; }
+            Parameter { name: "newState"; type: "Am::RunState" }
         }
         Signal {
             name: "finished"
-            Parameter { name: "exitCode"; type: "int"; }
-            Parameter { name: "status"; type: "ExitStatus"; }
+            Parameter { name: "exitCode"; type: "int" }
+            Parameter { name: "status"; type: "Am::ExitStatus" }
         }
         Signal {
             name: "inProcessSurfaceItemReady"
-            Parameter { name: "window"; type: "InProcessSurfaceItem>"; }
+            Parameter { name: "window"; type: "QSharedPointer<QtAM::InProcessSurfaceItem>" }
         }
     }
     Component {
         name: "Application"
         exports: [ "QtApplicationManager.SystemUI/ApplicationObject 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         isCreatable: false
         Enum { name: "State"; values: [ "Installed", "BeingInstalled", "BeingUpdated", "BeingDowngraded", "BeingRemoved" ] }
-        Property { name: "id"; type: "string"; isReadonly: true }
-        Property { name: "name"; type: "string"; isReadonly: true }
+        Property { name: "id"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "name"; type: "QString"; isReadonly: true }
         Property { name: "names"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "description"; type: "string"; isReadonly: true }
+        Property { name: "description"; type: "QString"; isReadonly: true }
         Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true }
         Property { name: "categories"; type: "QStringList"; isReadonly: true }
         Property { name: "icon"; type: "QUrl"; isReadonly: true }
-        Property { name: "runtimeName"; type: "string"; isReadonly: true }
-        Property { name: "runtimeParameters"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "capabilities"; type: "QStringList"; isReadonly: true }
-        Property { name: "documentUrl"; type: "string"; isReadonly: true }
-        Property { name: "supportedMimeTypes"; type: "QStringList"; isReadonly: true }
-        Property { name: "applicationProperties"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "runtimeName"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "runtimeParameters"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "capabilities"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "documentUrl"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "supportedMimeTypes"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "applicationProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true }
         Property { name: "runtime"; type: "AbstractRuntime"; isPointer: true; isReadonly: true }
         Property { name: "lastExitCode"; type: "int"; isReadonly: true }
-        Property { name: "lastExitStatus"; type: "ExitStatus"; isReadonly: true }
-        Property { name: "codeDir"; type: "string"; isReadonly: true }
-        Property { name: "runState"; type: "RunState"; isReadonly: true }
-        Property { name: "package"; type: "Package"; isPointer: true; isReadonly: true }
-        Property { name: "builtIn"; type: "bool"; isReadonly: true }
-        Property { name: "alias"; type: "bool"; isReadonly: true }
-        Property { name: "nonAliased"; type: "Application"; isPointer: true; isReadonly: true }
-        Property { name: "version"; type: "string"; isReadonly: true }
-        Property { name: "state"; type: "State"; isReadonly: true }
+        Property { name: "lastExitStatus"; type: "Am::ExitStatus"; isReadonly: true }
+        Property { name: "codeDir"; type: "QString"; isReadonly: true }
+        Property { name: "runState"; type: "Am::RunState"; isReadonly: true }
+        Property { name: "package"; type: "Package"; isPointer: true; isReadonly: true; isConstant: true }
+        Property { name: "builtIn"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "alias"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "nonAliased"; type: "Application"; isPointer: true; isReadonly: true; isConstant: true }
+        Property { name: "version"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "state"; type: "Application::State"; isReadonly: true }
         Property { name: "blocked"; type: "bool"; isReadonly: true }
-        Property { name: "supportsApplicationInterface"; type: "bool"; isReadonly: true }
+        Property { name: "supportsApplicationInterface"; type: "bool"; isReadonly: true; isConstant: true }
         Signal {
             name: "bulkChange"
         }
@@ -516,20 +558,20 @@ Module {
         }
         Signal {
             name: "stateChanged"
-            Parameter { name: "state"; type: "State"; }
+            Parameter { name: "state"; type: "Application::State" }
         }
         Signal {
             name: "runStateChanged"
-            Parameter { name: "state"; type: "RunState"; }
+            Parameter { name: "state"; type: "Am::RunState" }
         }
         Signal {
             name: "blockedChanged"
-            Parameter { name: "blocked"; type: "bool"; }
+            Parameter { name: "blocked"; type: "bool" }
         }
         Method {
             name: "start"
             type: "bool"
-            Parameter { name: "documentUrl"; type: "string"; }
+            Parameter { name: "documentUrl"; type: "QString" }
         }
         Method {
             name: "start"
@@ -538,17 +580,17 @@ Module {
         Method {
             name: "debug"
             type: "bool"
-            Parameter { name: "debugWrapper"; type: "string"; }
-            Parameter { name: "documentUrl"; type: "string"; }
+            Parameter { name: "debugWrapper"; type: "QString" }
+            Parameter { name: "documentUrl"; type: "QString" }
         }
         Method {
             name: "debug"
             type: "bool"
-            Parameter { name: "debugWrapper"; type: "string"; }
+            Parameter { name: "debugWrapper"; type: "QString" }
         }
         Method {
             name: "stop"
-            Parameter { name: "forceKill"; type: "bool"; }
+            Parameter { name: "forceKill"; type: "bool" }
         }
         Method {
             name: "stop"
@@ -557,7 +599,7 @@ Module {
     Component {
         name: "NotificationManager"
         exports: [ "QtApplicationManager.SystemUI/NotificationManager 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
         Property { name: "count"; type: "int"; isReadonly: true }
@@ -566,135 +608,135 @@ Module {
         }
         Signal {
             name: "notificationAdded"
-            Parameter { name: "id"; type: "uint"; }
+            Parameter { name: "id"; type: "uint" }
         }
         Signal {
             name: "notificationAboutToBeRemoved"
-            Parameter { name: "id"; type: "uint"; }
+            Parameter { name: "id"; type: "uint" }
         }
         Signal {
             name: "notificationChanged"
-            Parameter { name: "id"; type: "uint"; }
-            Parameter { name: "rolesChanged"; type: "QStringList"; }
+            Parameter { name: "id"; type: "uint" }
+            Parameter { name: "rolesChanged"; type: "QStringList" }
         }
         Method {
             name: "get"
             type: "QVariantMap"
-            Parameter { name: "index"; type: "int"; }
+            Parameter { name: "index"; type: "int" }
         }
         Method {
             name: "notification"
             type: "QVariantMap"
-            Parameter { name: "id"; type: "uint"; }
+            Parameter { name: "id"; type: "uint" }
         }
         Method {
             name: "indexOfNotification"
             type: "int"
-            Parameter { name: "id"; type: "uint"; }
+            Parameter { name: "id"; type: "uint" }
         }
         Method {
             name: "acknowledgeNotification"
-            Parameter { name: "id"; type: "uint"; }
+            Parameter { name: "id"; type: "uint" }
         }
         Method {
             name: "triggerNotificationAction"
-            Parameter { name: "id"; type: "uint"; }
-            Parameter { name: "actionId"; type: "string"; }
+            Parameter { name: "id"; type: "uint" }
+            Parameter { name: "actionId"; type: "QString" }
         }
         Method {
             name: "dismissNotification"
-            Parameter { name: "id"; type: "uint"; }
+            Parameter { name: "id"; type: "uint" }
         }
     }
     Component {
         name: "PackageManager"
         exports: [ "QtApplicationManager.SystemUI/PackageManager 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
         Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true }
-        Property { name: "developmentMode"; type: "bool"; isReadonly: true }
-        Property { name: "hardwareId"; type: "string"; isReadonly: true }
+        Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "developmentMode"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "hardwareId"; type: "QString"; isReadonly: true; isConstant: true }
         Property { name: "ready"; type: "bool"; isReadonly: true }
-        Property { name: "installationLocation"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "documentLocation"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true }
-        Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true }
+        Property { name: "installationLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "documentLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true; isConstant: true }
         Signal {
             name: "readyChanged"
-            Parameter { name: "b"; type: "bool"; }
+            Parameter { name: "b"; type: "bool" }
         }
         Signal {
             name: "countChanged"
         }
         Signal {
             name: "packageAdded"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Signal {
             name: "packageAboutToBeRemoved"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Signal {
             name: "packageChanged"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "changedRoles"; type: "QStringList"; }
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "changedRoles"; type: "QStringList" }
         }
         Signal {
             name: "taskStarted"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Signal {
             name: "taskProgressChanged"
-            Parameter { name: "taskId"; type: "string"; }
-            Parameter { name: "progress"; type: "double"; }
+            Parameter { name: "taskId"; type: "QString" }
+            Parameter { name: "progress"; type: "double" }
         }
         Signal {
             name: "taskFinished"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Signal {
             name: "taskFailed"
-            Parameter { name: "taskId"; type: "string"; }
-            Parameter { name: "errorCode"; type: "int"; }
-            Parameter { name: "errorString"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
+            Parameter { name: "errorCode"; type: "int" }
+            Parameter { name: "errorString"; type: "QString" }
         }
         Signal {
             name: "taskStateChanged"
-            Parameter { name: "taskId"; type: "string"; }
-            Parameter { name: "newState"; type: "TaskState"; }
+            Parameter { name: "taskId"; type: "QString" }
+            Parameter { name: "newState"; type: "AsynchronousTask::TaskState" }
         }
         Signal {
             name: "taskRequestingInstallationAcknowledge"
-            Parameter { name: "taskId"; type: "string"; }
-            Parameter { name: "package"; type: "Package"; isPointer: true; }
-            Parameter { name: "packageExtraMetaData"; type: "QVariantMap"; }
-            Parameter { name: "packageExtraSignedMetaData"; type: "QVariantMap"; }
+            Parameter { name: "taskId"; type: "QString" }
+            Parameter { name: "package"; type: "Package"; isPointer: true }
+            Parameter { name: "packageExtraMetaData"; type: "QVariantMap" }
+            Parameter { name: "packageExtraSignedMetaData"; type: "QVariantMap" }
         }
         Signal {
             name: "taskBlockingUntilInstallationAcknowledge"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "get"
             type: "QVariantMap"
-            Parameter { name: "index"; type: "int"; }
+            Parameter { name: "index"; type: "int" }
         }
         Method {
             name: "package"
-            type: "Package"; isPointer: true;
-            Parameter { name: "index"; type: "int"; }
+            type: "Package"; isPointer: true
+            Parameter { name: "index"; type: "int" }
         }
         Method {
             name: "package"
-            type: "Package"; isPointer: true;
-            Parameter { name: "id"; type: "string"; }
+            type: "Package"; isPointer: true
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "indexOfPackage"
             type: "int"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "packageIds"
@@ -703,54 +745,54 @@ Module {
         Method {
             name: "get"
             type: "QVariantMap"
-            Parameter { name: "packageId"; type: "string"; }
+            Parameter { name: "packageId"; type: "QString" }
         }
         Method {
             name: "installedPackageSize"
-            type: "int"
-            Parameter { name: "packageId"; type: "string"; }
+            type: "qlonglong"
+            Parameter { name: "packageId"; type: "QString" }
         }
         Method {
             name: "installedPackageExtraMetaData"
             type: "QVariantMap"
-            Parameter { name: "packageId"; type: "string"; }
+            Parameter { name: "packageId"; type: "QString" }
         }
         Method {
             name: "installedPackageExtraSignedMetaData"
             type: "QVariantMap"
-            Parameter { name: "packageId"; type: "string"; }
+            Parameter { name: "packageId"; type: "QString" }
         }
         Method {
             name: "startPackageInstallation"
-            type: "string"
-            Parameter { name: "sourceUrl"; type: "string"; }
+            type: "QString"
+            Parameter { name: "sourceUrl"; type: "QString" }
         }
         Method {
             name: "acknowledgePackageInstallation"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "removePackage"
-            type: "string"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "keepDocuments"; type: "bool"; }
-            Parameter { name: "force"; type: "bool"; }
+            type: "QString"
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "keepDocuments"; type: "bool" }
+            Parameter { name: "force"; type: "bool" }
         }
         Method {
             name: "removePackage"
-            type: "string"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "keepDocuments"; type: "bool"; }
+            type: "QString"
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "keepDocuments"; type: "bool" }
         }
         Method {
             name: "taskState"
-            type: "TaskState"
-            Parameter { name: "taskId"; type: "string"; }
+            type: "AsynchronousTask::TaskState"
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "taskPackageId"
-            type: "string"
-            Parameter { name: "taskId"; type: "string"; }
+            type: "QString"
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "activeTaskIds"
@@ -759,70 +801,70 @@ Module {
         Method {
             name: "cancelTask"
             type: "bool"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "compareVersions"
             type: "int"
-            Parameter { name: "version1"; type: "string"; }
-            Parameter { name: "version2"; type: "string"; }
+            Parameter { name: "version1"; type: "QString" }
+            Parameter { name: "version2"; type: "QString" }
         }
         Method {
             name: "validateDnsName"
             type: "bool"
-            Parameter { name: "name"; type: "string"; }
-            Parameter { name: "minimumParts"; type: "int"; }
+            Parameter { name: "name"; type: "QString" }
+            Parameter { name: "minimumParts"; type: "int" }
         }
         Method {
             name: "validateDnsName"
             type: "bool"
-            Parameter { name: "name"; type: "string"; }
+            Parameter { name: "name"; type: "QString" }
         }
     }
     Component {
         name: "ApplicationInstaller"
         exports: [ "QtApplicationManager.SystemUI/ApplicationInstaller 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         isSingleton: true
-        Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true }
-        Property { name: "developmentMode"; type: "bool"; isReadonly: true }
-        Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true }
-        Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true }
+        Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "developmentMode"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true; isConstant: true }
         Signal {
             name: "taskStarted"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Signal {
             name: "taskProgressChanged"
-            Parameter { name: "taskId"; type: "string"; }
-            Parameter { name: "progress"; type: "double"; }
+            Parameter { name: "taskId"; type: "QString" }
+            Parameter { name: "progress"; type: "double" }
         }
         Signal {
             name: "taskFinished"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Signal {
             name: "taskFailed"
-            Parameter { name: "taskId"; type: "string"; }
-            Parameter { name: "errorCode"; type: "int"; }
-            Parameter { name: "errorString"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
+            Parameter { name: "errorCode"; type: "int" }
+            Parameter { name: "errorString"; type: "QString" }
         }
         Signal {
             name: "taskStateChanged"
-            Parameter { name: "taskId"; type: "string"; }
-            Parameter { name: "newState"; type: "TaskState"; }
+            Parameter { name: "taskId"; type: "QString" }
+            Parameter { name: "newState"; type: "AsynchronousTask::TaskState" }
         }
         Signal {
             name: "taskRequestingInstallationAcknowledge"
-            Parameter { name: "taskId"; type: "string"; }
-            Parameter { name: "applicationAsVariantMap"; type: "QVariantMap"; }
-            Parameter { name: "packageExtraMetaData"; type: "QVariantMap"; }
-            Parameter { name: "packageExtraSignedMetaData"; type: "QVariantMap"; }
+            Parameter { name: "taskId"; type: "QString" }
+            Parameter { name: "applicationAsVariantMap"; type: "QVariantMap" }
+            Parameter { name: "packageExtraMetaData"; type: "QVariantMap" }
+            Parameter { name: "packageExtraSignedMetaData"; type: "QVariantMap" }
         }
         Signal {
             name: "taskBlockingUntilInstallationAcknowledge"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "installationLocationIds"
@@ -830,46 +872,46 @@ Module {
         }
         Method {
             name: "installationLocationIdFromApplication"
-            type: "string"
-            Parameter { name: "applicationId"; type: "string"; }
+            type: "QString"
+            Parameter { name: "applicationId"; type: "QString" }
         }
         Method {
             name: "getInstallationLocation"
             type: "QVariantMap"
-            Parameter { name: "installationLocationId"; type: "string"; }
+            Parameter { name: "installationLocationId"; type: "QString" }
         }
         Method {
             name: "startPackageInstallation"
-            type: "string"
-            Parameter { name: "installationLocationId"; type: "string"; }
-            Parameter { name: "sourceUrl"; type: "string"; }
+            type: "QString"
+            Parameter { name: "installationLocationId"; type: "QString" }
+            Parameter { name: "sourceUrl"; type: "QString" }
         }
         Method {
             name: "acknowledgePackageInstallation"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "removePackage"
-            type: "string"
-            Parameter { name: "applicationId"; type: "string"; }
-            Parameter { name: "keepDocuments"; type: "bool"; }
-            Parameter { name: "force"; type: "bool"; }
+            type: "QString"
+            Parameter { name: "applicationId"; type: "QString" }
+            Parameter { name: "keepDocuments"; type: "bool" }
+            Parameter { name: "force"; type: "bool" }
         }
         Method {
             name: "removePackage"
-            type: "string"
-            Parameter { name: "applicationId"; type: "string"; }
-            Parameter { name: "keepDocuments"; type: "bool"; }
+            type: "QString"
+            Parameter { name: "applicationId"; type: "QString" }
+            Parameter { name: "keepDocuments"; type: "bool" }
         }
         Method {
             name: "taskState"
-            type: "TaskState"
-            Parameter { name: "taskId"; type: "string"; }
+            type: "AsynchronousTask::TaskState"
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "taskApplicationId"
-            type: "string"
-            Parameter { name: "taskId"; type: "string"; }
+            type: "QString"
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "activeTaskIds"
@@ -878,91 +920,91 @@ Module {
         Method {
             name: "cancelTask"
             type: "bool"
-            Parameter { name: "taskId"; type: "string"; }
+            Parameter { name: "taskId"; type: "QString" }
         }
         Method {
             name: "compareVersions"
             type: "int"
-            Parameter { name: "version1"; type: "string"; }
-            Parameter { name: "version2"; type: "string"; }
+            Parameter { name: "version1"; type: "QString" }
+            Parameter { name: "version2"; type: "QString" }
         }
         Method {
             name: "validateDnsName"
             type: "bool"
-            Parameter { name: "name"; type: "string"; }
-            Parameter { name: "minimumParts"; type: "int"; }
+            Parameter { name: "name"; type: "QString" }
+            Parameter { name: "minimumParts"; type: "int" }
         }
         Method {
             name: "validateDnsName"
             type: "bool"
-            Parameter { name: "name"; type: "string"; }
+            Parameter { name: "name"; type: "QString" }
         }
         Method {
             name: "installedApplicationSize"
-            type: "int"
-            Parameter { name: "applicationId"; type: "string"; }
+            type: "qlonglong"
+            Parameter { name: "applicationId"; type: "QString" }
         }
         Method {
             name: "installedApplicationExtraMetaData"
             type: "QVariantMap"
-            Parameter { name: "applicationId"; type: "string"; }
+            Parameter { name: "applicationId"; type: "QString" }
         }
         Method {
             name: "installedApplicationExtraSignedMetaData"
             type: "QVariantMap"
-            Parameter { name: "applicationId"; type: "string"; }
+            Parameter { name: "applicationId"; type: "QString" }
         }
     }
     Component {
         name: "ApplicationManager"
         exports: [ "QtApplicationManager.SystemUI/ApplicationManager 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
         Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "singleProcess"; type: "bool"; isReadonly: true }
+        Property { name: "singleProcess"; type: "bool"; isReadonly: true; isConstant: true }
         Property { name: "shuttingDown"; type: "bool"; isReadonly: true }
-        Property { name: "securityChecksEnabled"; type: "bool"; isReadonly: true }
-        Property { name: "dummy"; type: "bool"; isReadonly: true }
+        Property { name: "securityChecksEnabled"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "dummy"; type: "bool"; isReadonly: true; isConstant: true }
         Property { name: "windowManagerCompositorReady"; type: "bool"; isReadonly: true }
-        Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "containerSelectionFunction"; type: "QJSValue"; }
+        Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "containerSelectionFunction"; type: "QJSValue" }
         Signal {
             name: "applicationRunStateChanged"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "runState"; type: "RunState"; }
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "runState"; type: "Am::RunState" }
         }
         Signal {
             name: "applicationWasActivated"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "aliasId"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "aliasId"; type: "QString" }
         }
         Signal {
             name: "countChanged"
         }
         Signal {
             name: "applicationAdded"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Signal {
             name: "applicationAboutToBeRemoved"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Signal {
             name: "applicationChanged"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "changedRoles"; type: "QStringList"; }
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "changedRoles"; type: "QStringList" }
         }
         Signal {
             name: "windowManagerCompositorReadyChanged"
-            Parameter { name: "ready"; type: "bool"; }
+            Parameter { name: "ready"; type: "bool" }
         }
         Signal {
             name: "openUrlRequested"
-            Parameter { name: "requestId"; type: "string"; }
-            Parameter { name: "url"; type: "string"; }
-            Parameter { name: "mimeType"; type: "string"; }
-            Parameter { name: "possibleAppIds"; type: "QStringList"; }
+            Parameter { name: "requestId"; type: "QString" }
+            Parameter { name: "url"; type: "QString" }
+            Parameter { name: "mimeType"; type: "QString" }
+            Parameter { name: "possibleAppIds"; type: "QStringList" }
         }
         Signal {
             name: "memoryLowWarning"
@@ -985,36 +1027,36 @@ Module {
         Method {
             name: "get"
             type: "QVariantMap"
-            Parameter { name: "index"; type: "int"; }
+            Parameter { name: "index"; type: "int" }
         }
         Method {
             name: "application"
-            type: "Application"; isPointer: true;
-            Parameter { name: "index"; type: "int"; }
+            type: "Application"; isPointer: true
+            Parameter { name: "index"; type: "int" }
         }
         Method {
             name: "application"
-            type: "Application"; isPointer: true;
-            Parameter { name: "id"; type: "string"; }
+            type: "Application"; isPointer: true
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "indexOfApplication"
             type: "int"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "indexOfApplication"
             type: "int"
-            Parameter { name: "application"; type: "Application"; isPointer: true; }
+            Parameter { name: "application"; type: "Application"; isPointer: true }
         }
         Method {
             name: "acknowledgeOpenUrlRequest"
-            Parameter { name: "requestId"; type: "string"; }
-            Parameter { name: "appId"; type: "string"; }
+            Parameter { name: "requestId"; type: "QString" }
+            Parameter { name: "appId"; type: "QString" }
         }
         Method {
             name: "rejectOpenUrlRequest"
-            Parameter { name: "requestId"; type: "string"; }
+            Parameter { name: "requestId"; type: "QString" }
         }
         Method {
             name: "applicationIds"
@@ -1023,44 +1065,44 @@ Module {
         Method {
             name: "get"
             type: "QVariantMap"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "startApplication"
             type: "bool"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "documentUrl"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "documentUrl"; type: "QString" }
         }
         Method {
             name: "startApplication"
             type: "bool"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "debugApplication"
             type: "bool"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "debugWrapper"; type: "string"; }
-            Parameter { name: "documentUrl"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "debugWrapper"; type: "QString" }
+            Parameter { name: "documentUrl"; type: "QString" }
         }
         Method {
             name: "debugApplication"
             type: "bool"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "debugWrapper"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "debugWrapper"; type: "QString" }
         }
         Method {
             name: "stopApplication"
-            Parameter { name: "id"; type: "string"; }
-            Parameter { name: "forceKill"; type: "bool"; }
+            Parameter { name: "id"; type: "QString" }
+            Parameter { name: "forceKill"; type: "bool" }
         }
         Method {
             name: "stopApplication"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "stopAllApplications"
-            Parameter { name: "forceKill"; type: "bool"; }
+            Parameter { name: "forceKill"; type: "bool" }
         }
         Method {
             name: "stopAllApplications"
@@ -1068,27 +1110,27 @@ Module {
         Method {
             name: "openUrl"
             type: "bool"
-            Parameter { name: "url"; type: "string"; }
+            Parameter { name: "url"; type: "QString" }
         }
         Method {
             name: "capabilities"
             type: "QStringList"
-            Parameter { name: "id"; type: "string"; }
+            Parameter { name: "id"; type: "QString" }
         }
         Method {
             name: "identifyApplication"
-            type: "string"
-            Parameter { name: "pid"; type: "int"; }
+            type: "QString"
+            Parameter { name: "pid"; type: "qlonglong" }
         }
         Method {
             name: "identifyAllApplications"
             type: "QStringList"
-            Parameter { name: "pid"; type: "int"; }
+            Parameter { name: "pid"; type: "qlonglong" }
         }
         Method {
             name: "applicationRunState"
-            type: "RunState"
-            Parameter { name: "id"; type: "string"; }
+            type: "Am::RunState"
+            Parameter { name: "id"; type: "QString" }
         }
     }
 }

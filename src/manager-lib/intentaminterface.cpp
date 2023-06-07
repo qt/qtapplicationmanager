@@ -623,7 +623,7 @@ QT_BEGIN_NAMESPACE_AM
 */
 
 IntentServerHandler::IntentServerHandler(QObject *parent)
-    : IntentHandler(parent)
+    : AbstractIntentHandler(parent)
     , m_intent(new Intent())
 { }
 
@@ -774,7 +774,7 @@ void IntentServerHandler::componentComplete()
             qmlWarning(this) << "IntentServerHandler: could not add intent" << intentId;
     }
 
-    IntentHandler::componentComplete();
+    AbstractIntentHandler::componentComplete();
 }
 
 QT_END_NAMESPACE_AM

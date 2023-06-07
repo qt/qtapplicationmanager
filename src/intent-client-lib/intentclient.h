@@ -17,7 +17,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class IntentHandler;
+class AbstractIntentHandler;
 class IntentClientRequest;
 class IntentClientSystemInterface;
 
@@ -27,7 +27,7 @@ class IntentClient : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IntentClient 2.1 SINGLETON")
-    Q_PROPERTY(QString systemUiId READ systemUiId CONSTANT REVISION 1)
+    Q_PROPERTY(QString systemUiId READ systemUiId CONSTANT REVISION(2, 1))
 
 public:
     ~IntentClient() override;
@@ -45,8 +45,8 @@ public:
     void replyFromApplication(IntentClientRequest *icr, const QVariantMap &result);
     void errorReplyFromApplication(IntentClientRequest *icr, const QString &errorMessage);
 
-    void registerHandler(IntentHandler *handler);
-    void unregisterHandler(IntentHandler *handler);
+    void registerHandler(AbstractIntentHandler *handler);
+    void unregisterHandler(AbstractIntentHandler *handler);
 
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *sendIntentRequest(const QString &intentId,
                                                                                 const QVariantMap &parameters);
@@ -54,7 +54,7 @@ public:
                                                                                 const QString &applicationId,
                                                                                 const QVariantMap &parameters);
 
-    Q_REVISION(1) Q_INVOKABLE bool broadcastIntentRequest(const QString &intentId,
+    Q_REVISION(2, 1) Q_INVOKABLE bool broadcastIntentRequest(const QString &intentId,
                                                              const QVariantMap &parameters);
 
 private:
@@ -72,7 +72,7 @@ private:
 
     QList<QPointer<IntentClientRequest>> m_waiting;
     QElapsedTimer m_lastWaitingCleanup;
-    QMap<QPair<QString, QString>, IntentHandler *> m_handlers; // intentId + appId -> handler
+    QMap<QPair<QString, QString>, AbstractIntentHandler *> m_handlers; // intentId + appId -> handler
 
     // no timeouts by default -- these have to be set at runtime
     int m_replyFromSystemTimeout = 0;

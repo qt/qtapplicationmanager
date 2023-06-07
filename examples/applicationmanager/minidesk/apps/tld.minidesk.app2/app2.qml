@@ -33,7 +33,7 @@ ApplicationManagerWindow {
             console.log("App2: onOpenDocument - " + documentUrl);
         }
         function onQuit() {
-            target.acknowledgeQuit();
+            ApplicationInterface.acknowledgeQuit();
         }
     }
 }

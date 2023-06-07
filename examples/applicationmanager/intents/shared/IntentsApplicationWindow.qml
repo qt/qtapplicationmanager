@@ -65,7 +65,7 @@ ApplicationManagerWindow {
 
     //! [Intent Handler]
     IntentHandler {
-        intentIds: "rotate-window"
+        intentIds: [ "rotate-window" ]
         onRequestReceived: (request) => {
             rotationAnimation.start()
             request.sendReply({ "done": true })
@@ -74,7 +74,7 @@ ApplicationManagerWindow {
     //! [Intent Handler]
 
     IntentHandler {
-        intentIds: "scale-window"
+        intentIds: [ "scale-window" ]
         onRequestReceived: (request) => {
             scaleAnimation.start()
             request.sendReply({ "done": true })
@@ -82,7 +82,7 @@ ApplicationManagerWindow {
     }
 
     IntentHandler {
-        intentIds: "blue-window-private"
+        intentIds: [ "blue-window-private" ]
         onRequestReceived: (request) => {
             blueAnimation.start()
             request.sendReply({ "done": true })
@@ -90,7 +90,7 @@ ApplicationManagerWindow {
     }
 
     IntentHandler {
-        intentIds: "broadcast/blink-window"
+        intentIds: [ "broadcast/blink-window" ]
         onRequestReceived: (request) => {
             blinkAnimation.start()
         }

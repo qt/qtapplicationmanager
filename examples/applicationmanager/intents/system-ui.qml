@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -23,17 +25,23 @@ Item {
         Repeater {
             model: ApplicationManager
             Column {
+                id: delegate
+                required property bool isRunning
+                required property var icon
+                required property var application
+                required property string name
                 Image {
-                    source: model.icon
+                    source: delegate.icon
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: model.isRunning ? application.stop() : application.start()
+                        onClicked: delegate.isRunning ? delegate.application.stop()
+                                                      : delegate.application.start()
                     }
                 }
                 Text {
                     width: parent.width
                     font.pixelSize: 10
-                    text: model.name
+                    text: delegate.name
                     horizontalAlignment: Text.AlignHCenter
                 }
             }
@@ -74,7 +82,7 @@ Item {
             }
             //! [IntentServerHandler]
             IntentServerHandler {
-                intentIds: "rotate-window"
+                intentIds: [ "rotate-window" ]
                 names: { "en": "Rotate System UI" }
                 visibility: IntentObject.Public
 
@@ -89,6 +97,7 @@ Item {
         Repeater {
             model: WindowManager
             WindowItem {
+                required property var model
                 width: sysui_page.width
                 height: sysui_page.height
                 window: model.window
@@ -177,6 +186,8 @@ Item {
                 Layout.fillHeight: true
 
                 delegate: ItemDelegate {
+                    required property int index
+                    required property var modelData
                     property ApplicationObject application: ApplicationManager.application(modelData.applicationId)
                     width: parent.width
                     text: modelData.name + " (" + modelData.applicationId + ")"

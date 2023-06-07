@@ -16,16 +16,22 @@ Item {
         Repeater {
             model: ApplicationManager
             Column {
+                id: delegate
+                required property bool isRunning
+                required property var icon
+                required property var application
+                required property string name
                 Image {
-                    source: model.icon
+                    source: delegate.icon
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: model.isRunning ? application.stop() : application.start()
+                        onClicked: delegate.isRunning ? delegate.application.stop()
+                                                      : delegate.application.start()
                     }
                 }
                 Text {
                     font.pixelSize: 20
-                    text: model.name
+                    text: delegate.name
                 }
             }
         }
@@ -37,6 +43,7 @@ Item {
         Repeater {
             model: WindowManager
             WindowItem {
+                required property var model
                 width: 600
                 height: 200
                 window: model.window

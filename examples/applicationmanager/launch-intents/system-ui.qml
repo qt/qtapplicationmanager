@@ -21,23 +21,29 @@ Item {
         Repeater {
             model: intentModel
             Column {
+                id: delegate
+                required property url icon
+                required property string applicationId
+                required property string intentId
+                required property string name
                 Image {
-                    source: model.icon
+                    source: delegate.icon
                     MouseArea {
                         anchors.fill: parent
                         onPressAndHold: {
-                            var app = ApplicationManager.application(model.applicationId)
+                            var app = ApplicationManager.application(delegate.applicationId)
                             if (app.runState === Am.Running)
                                 app.stop()
                         }
                         onClicked: {
-                            IntentClient.sendIntentRequest(model.intentId, model.applicationId, {})
+                            IntentClient.sendIntentRequest(delegate.intentId,
+                                                           delegate.applicationId, {})
                         }
                     }
                 }
                 Text {
                     font.pixelSize: 20
-                    text: model.name
+                    text: delegate.name
                 }
             }
         }
@@ -49,6 +55,7 @@ Item {
         Repeater {
             model: WindowManager
             WindowItem {
+                required property var model
                 width: 600
                 height: 200
                 window: model.window

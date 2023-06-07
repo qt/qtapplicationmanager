@@ -2,6 +2,8 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+pragma ComponentBehavior: Bound
+
 import QtQuick 2.11
 import QtApplicationManager.Application 2.0
 import QtWayland.Compositor 1.3
@@ -35,19 +37,21 @@ ApplicationManagerWindow {
         }
 
         WlShell {
-            onWlShellSurfaceCreated: (shellSurface) => shellSurfaces.append({shellSurface: shellSurface});
+            onWlShellSurfaceCreated: (shellSurface) => root.shellSurfaces.append({shellSurface: shellSurface});
         }
 
         XdgShell {
-            onToplevelCreated: (toplevel, xdgSurface) => shellSurfaces.append({shellSurface: xdgSurface});
+            onToplevelCreated: (toplevel, xdgSurface) => root.shellSurfaces.append({shellSurface: xdgSurface});
         }
     }
 
     Repeater {
-        model: shellSurfaces
+        model: root.shellSurfaces
         ShellSurfaceItem {
+            required property var modelData
+            required property int index
             shellSurface: modelData
-            onSurfaceDestroyed: shellSurfaces.remove(index)
+            onSurfaceDestroyed: root.shellSurfaces.remove(index)
         }
     }
 

@@ -29,9 +29,8 @@ ApplicationManagerWindow {
             running: true
             onTriggered: {
                 rectangle.rotation += 1;
-                root.contentItem.grabToImage(function(result) {
-                    foo.push(result);
-                });
+                let s = "*".repeat(100000);
+                foo.push(s);
             }
             property var foo: []
         }

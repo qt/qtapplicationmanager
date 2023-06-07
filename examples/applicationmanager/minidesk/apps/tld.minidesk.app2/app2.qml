@@ -23,7 +23,7 @@ ApplicationManagerWindow {
         }
     }
 
-    onWindowPropertyChanged: (window, name, value) => {
+    onWindowPropertyChanged: (name, value) => {
         console.log("App2: onWindowPropertyChanged - " + name + ": " + value);
     }
 

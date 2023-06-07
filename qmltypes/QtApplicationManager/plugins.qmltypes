@@ -7,17 +7,17 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 6.5", "QtQuick 6.5" ]
     Component {
         name: "MonitorModel"
         exports: [ "QtApplicationManager/MonitorModel 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
+        defaultProperty: "dataSources"
         Property { name: "dataSources"; type: "QQmlListProperty<QObject>"; isReadonly: true }
         Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "maximumCount"; type: "int"; }
-        Property { name: "interval"; type: "int"; }
-        Property { name: "running"; type: "bool"; }
+        Property { name: "maximumCount"; type: "int" }
+        Property { name: "interval"; type: "int" }
+        Property { name: "running"; type: "bool" }
         Signal {
             name: "countChanged"
         }
@@ -39,22 +39,22 @@ Module {
         Method {
             name: "get"
             type: "QVariantMap"
-            Parameter { name: "row"; type: "int"; }
+            Parameter { name: "row"; type: "int" }
         }
     }
     Component {
         name: "FrameTimer"
         exports: [ "QtApplicationManager/FrameTimer 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         Property { name: "averageFps"; type: "double"; isReadonly: true }
         Property { name: "minimumFps"; type: "double"; isReadonly: true }
         Property { name: "maximumFps"; type: "double"; isReadonly: true }
         Property { name: "jitterFps"; type: "double"; isReadonly: true }
-        Property { name: "window"; type: "QObject"; isPointer: true; }
-        Property { name: "interval"; type: "int"; }
-        Property { name: "running"; type: "bool"; }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true }
+        Property { name: "window"; type: "QObject"; isPointer: true }
+        Property { name: "interval"; type: "int" }
+        Property { name: "running"; type: "bool" }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
         Signal {
             name: "updated"
         }
@@ -74,11 +74,11 @@ Module {
     Component {
         name: "IoStatus"
         exports: [ "QtApplicationManager/IoStatus 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "deviceNames"; type: "QStringList"; }
+        Property { name: "deviceNames"; type: "QStringList" }
         Property { name: "ioLoad"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
         Signal {
             name: "deviceNamesChanged"
         }
@@ -92,11 +92,11 @@ Module {
     Component {
         name: "MemoryStatus"
         exports: [ "QtApplicationManager/MemoryStatus 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "totalMemory"; type: "qulonglong"; isReadonly: true }
+        Property { name: "totalMemory"; type: "qulonglong"; isReadonly: true; isConstant: true }
         Property { name: "memoryUsed"; type: "qulonglong"; isReadonly: true }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
         Signal {
             name: "memoryUsedChanged"
         }
@@ -107,10 +107,10 @@ Module {
     Component {
         name: "GpuStatus"
         exports: [ "QtApplicationManager/GpuStatus 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         Property { name: "gpuLoad"; type: "double"; isReadonly: true }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
         Signal {
             name: "gpuLoadChanged"
         }
@@ -121,11 +121,11 @@ Module {
     Component {
         name: "CpuStatus"
         exports: [ "QtApplicationManager/CpuStatus 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         Property { name: "cpuLoad"; type: "double"; isReadonly: true }
-        Property { name: "cpuCores"; type: "int"; isReadonly: true }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true }
+        Property { name: "cpuCores"; type: "int"; isReadonly: true; isConstant: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
         Signal {
             name: "cpuLoadChanged"
         }
@@ -134,22 +134,36 @@ Module {
         }
     }
     Component {
+        name: "AbstractIntentHandler"
+        exports: [ "QtApplicationManager/AbstractIntentHandler 2.0" ]
+        exportMetaObjectRevisions: [ 512 ]
+        prototype: "QObject"
+        isCreatable: false
+        Signal {
+            name: "intentIdsChanged"
+        }
+        Signal {
+            name: "requestReceived"
+            Parameter { name: "request"; type: "IntentClientRequest"; isPointer: true }
+        }
+    }
+    Component {
         name: "IntentClientRequest"
-        exports: [ "QtApplicationManager/IntentRequest 2.1" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exports: [ "QtApplicationManager/IntentRequest 2.1", "QtApplicationManager/IntentRequest 2.0" ]
+        exportMetaObjectRevisions: [ 513, 512 ]
         prototype: "QObject"
         isCreatable: false
         Enum { name: "Direction"; values: [ "ToSystem", "ToApplication" ] }
         Property { name: "requestId"; type: "QUuid"; isReadonly: true }
-        Property { name: "direction"; type: "Direction"; isReadonly: true }
-        Property { name: "intentId"; type: "string"; isReadonly: true }
-        Property { name: "applicationId"; type: "string"; isReadonly: true }
-        Property { name: "requestingApplicationId"; type: "string"; isReadonly: true }
-        Property { name: "parameters"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "direction"; type: "IntentClientRequest::Direction"; isReadonly: true; isConstant: true }
+        Property { name: "intentId"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "applicationId"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "requestingApplicationId"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "parameters"; type: "QVariantMap"; isReadonly: true; isConstant: true }
         Property { name: "succeeded"; type: "bool"; isReadonly: true }
-        Property { name: "errorMessage"; type: "string"; isReadonly: true }
+        Property { name: "errorMessage"; type: "QString"; isReadonly: true }
         Property { name: "result"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "broadcast"; type: "bool"; isReadonly: true }
+        Property { name: "broadcast"; type: "bool"; revision: 513; isReadonly: true; isConstant: true }
         Signal {
             name: "requestIdChanged"
         }
@@ -158,201 +172,201 @@ Module {
         }
         Method {
             name: "sendReply"
-            Parameter { name: "result"; type: "QVariantMap"; }
+            Parameter { name: "result"; type: "QVariantMap" }
         }
         Method {
             name: "sendErrorReply"
-            Parameter { name: "errorMessage"; type: "string"; }
+            Parameter { name: "errorMessage"; type: "QString" }
         }
     }
     Component {
         name: "IntentClient"
-        exports: [ "QtApplicationManager/IntentClient 2.1" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exports: [ "QtApplicationManager/IntentClient 2.1", "QtApplicationManager/IntentClient 2.0" ]
+        exportMetaObjectRevisions: [ 513, 512 ]
         prototype: "QObject"
         isSingleton: true
-        Property { name: "systemUiId"; type: "string"; isReadonly: true }
+        Property { name: "systemUiId"; type: "QString"; revision: 513; isReadonly: true; isConstant: true }
         Method {
             name: "sendIntentRequest"
-            type: "IntentClientRequest"; isPointer: true;
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "parameters"; type: "QVariantMap"; }
+            type: "IntentClientRequest"; isPointer: true
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "parameters"; type: "QVariantMap" }
         }
         Method {
             name: "sendIntentRequest"
-            type: "IntentClientRequest"; isPointer: true;
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "applicationId"; type: "string"; }
-            Parameter { name: "parameters"; type: "QVariantMap"; }
+            type: "IntentClientRequest"; isPointer: true
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "applicationId"; type: "QString" }
+            Parameter { name: "parameters"; type: "QVariantMap" }
         }
         Method {
             name: "broadcastIntentRequest"
-            type: "bool"
-            Parameter { name: "intentId"; type: "string"; }
-            Parameter { name: "parameters"; type: "QVariantMap"; }
+            type: "bool"; revision: 513
+            Parameter { name: "intentId"; type: "QString" }
+            Parameter { name: "parameters"; type: "QVariantMap" }
         }
     }
     Component {
         name: "Notification"
         exports: [ "QtApplicationManager/Notification 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         Enum { name: "Priority"; values: [ "Low", "Normal", "Critical" ] }
         Property { name: "notificationId"; type: "uint"; isReadonly: true }
-        Property { name: "visible"; type: "bool"; }
-        Property { name: "summary"; type: "string"; }
-        Property { name: "body"; type: "string"; }
-        Property { name: "icon"; type: "QUrl"; }
-        Property { name: "image"; type: "QUrl"; }
-        Property { name: "category"; type: "string"; }
-        Property { name: "priority"; type: "int"; }
-        Property { name: "acknowledgeable"; type: "bool"; }
-        Property { name: "timeout"; type: "int"; }
-        Property { name: "sticky"; type: "bool"; }
-        Property { name: "showProgress"; type: "bool"; }
-        Property { name: "progress"; type: "double"; }
-        Property { name: "actions"; type: "QVariantList"; }
-        Property { name: "showActionsAsIcons"; type: "bool"; }
-        Property { name: "dismissOnAction"; type: "bool"; }
-        Property { name: "extended"; type: "QVariantMap"; }
+        Property { name: "visible"; type: "bool" }
+        Property { name: "summary"; type: "QString" }
+        Property { name: "body"; type: "QString" }
+        Property { name: "icon"; type: "QUrl" }
+        Property { name: "image"; type: "QUrl" }
+        Property { name: "category"; type: "QString" }
+        Property { name: "priority"; type: "int" }
+        Property { name: "acknowledgeable"; type: "bool" }
+        Property { name: "timeout"; type: "int" }
+        Property { name: "sticky"; type: "bool" }
+        Property { name: "showProgress"; type: "bool" }
+        Property { name: "progress"; type: "double" }
+        Property { name: "actions"; type: "QVariantList" }
+        Property { name: "showActionsAsIcons"; type: "bool" }
+        Property { name: "dismissOnAction"; type: "bool" }
+        Property { name: "extended"; type: "QVariantMap" }
         Signal {
             name: "notificationIdChanged"
-            Parameter { name: "notificationId"; type: "uint"; }
+            Parameter { name: "notificationId"; type: "uint" }
         }
         Signal {
             name: "summaryChanged"
-            Parameter { name: "summary"; type: "string"; }
+            Parameter { name: "summary"; type: "QString" }
         }
         Signal {
             name: "bodyChanged"
-            Parameter { name: "body"; type: "string"; }
+            Parameter { name: "body"; type: "QString" }
         }
         Signal {
             name: "iconChanged"
-            Parameter { name: "icon"; type: "QUrl"; }
+            Parameter { name: "icon"; type: "QUrl" }
         }
         Signal {
             name: "imageChanged"
-            Parameter { name: "image"; type: "QUrl"; }
+            Parameter { name: "image"; type: "QUrl" }
         }
         Signal {
             name: "categoryChanged"
-            Parameter { name: "category"; type: "string"; }
+            Parameter { name: "category"; type: "QString" }
         }
         Signal {
             name: "priorityChanged"
-            Parameter { name: "priority"; type: "int"; }
+            Parameter { name: "priority"; type: "int" }
         }
         Signal {
             name: "acknowledgeableChanged"
-            Parameter { name: "acknowledgeable"; type: "bool"; }
+            Parameter { name: "acknowledgeable"; type: "bool" }
         }
         Signal {
             name: "timeoutChanged"
-            Parameter { name: "timeout"; type: "int"; }
+            Parameter { name: "timeout"; type: "int" }
         }
         Signal {
             name: "stickyChanged"
-            Parameter { name: "sticky"; type: "bool"; }
+            Parameter { name: "sticky"; type: "bool" }
         }
         Signal {
             name: "showProgressChanged"
-            Parameter { name: "showProgress"; type: "bool"; }
+            Parameter { name: "showProgress"; type: "bool" }
         }
         Signal {
             name: "progressChanged"
-            Parameter { name: "progress"; type: "double"; }
+            Parameter { name: "progress"; type: "double" }
         }
         Signal {
             name: "actionsChanged"
-            Parameter { name: "actions"; type: "QVariantList"; }
+            Parameter { name: "actions"; type: "QVariantList" }
         }
         Signal {
             name: "showActionsAsIconsChanged"
-            Parameter { name: "showActionsAsIcons"; type: "bool"; }
+            Parameter { name: "showActionsAsIcons"; type: "bool" }
         }
         Signal {
             name: "dismissOnActionChanged"
-            Parameter { name: "dismissOnAction"; type: "bool"; }
+            Parameter { name: "dismissOnAction"; type: "bool" }
         }
         Signal {
             name: "extendedChanged"
-            Parameter { name: "extended"; type: "QVariantMap"; }
+            Parameter { name: "extended"; type: "QVariantMap" }
         }
         Signal {
             name: "visibleChanged"
-            Parameter { name: "visible"; type: "bool"; }
+            Parameter { name: "visible"; type: "bool" }
         }
         Signal {
             name: "acknowledged"
         }
         Signal {
             name: "actionTriggered"
-            Parameter { name: "actionId"; type: "string"; }
+            Parameter { name: "actionId"; type: "QString" }
         }
         Method {
             name: "setSummary"
-            Parameter { name: "summary"; type: "string"; }
+            Parameter { name: "summary"; type: "QString" }
         }
         Method {
             name: "setBody"
-            Parameter { name: "boy"; type: "string"; }
+            Parameter { name: "boy"; type: "QString" }
         }
         Method {
             name: "setIcon"
-            Parameter { name: "icon"; type: "QUrl"; }
+            Parameter { name: "icon"; type: "QUrl" }
         }
         Method {
             name: "setImage"
-            Parameter { name: "image"; type: "QUrl"; }
+            Parameter { name: "image"; type: "QUrl" }
         }
         Method {
             name: "setCategory"
-            Parameter { name: "category"; type: "string"; }
+            Parameter { name: "category"; type: "QString" }
         }
         Method {
             name: "setPriority"
-            Parameter { name: "priority"; type: "int"; }
+            Parameter { name: "priority"; type: "int" }
         }
         Method {
             name: "setAcknowledgeable"
-            Parameter { name: "acknowledgeable"; type: "bool"; }
+            Parameter { name: "acknowledgeable"; type: "bool" }
         }
         Method {
             name: "setTimeout"
-            Parameter { name: "timeout"; type: "int"; }
+            Parameter { name: "timeout"; type: "int" }
         }
         Method {
             name: "setSticky"
-            Parameter { name: "sticky"; type: "bool"; }
+            Parameter { name: "sticky"; type: "bool" }
         }
         Method {
             name: "setShowProgress"
-            Parameter { name: "showProgress"; type: "bool"; }
+            Parameter { name: "showProgress"; type: "bool" }
         }
         Method {
             name: "setProgress"
-            Parameter { name: "progress"; type: "double"; }
+            Parameter { name: "progress"; type: "double" }
         }
         Method {
             name: "setActions"
-            Parameter { name: "actions"; type: "QVariantList"; }
+            Parameter { name: "actions"; type: "QVariantList" }
         }
         Method {
             name: "setShowActionsAsIcons"
-            Parameter { name: "showActionsAsIcons"; type: "bool"; }
+            Parameter { name: "showActionsAsIcons"; type: "bool" }
         }
         Method {
             name: "setDismissOnAction"
-            Parameter { name: "dismissOnAction"; type: "bool"; }
+            Parameter { name: "dismissOnAction"; type: "bool" }
         }
         Method {
             name: "setExtended"
-            Parameter { name: "extended"; type: "QVariantMap"; }
+            Parameter { name: "extended"; type: "QVariantMap" }
         }
         Method {
             name: "setVisible"
-            Parameter { name: "visible"; type: "bool"; }
+            Parameter { name: "visible"; type: "bool" }
         }
         Method {
             name: "show"

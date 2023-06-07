@@ -78,42 +78,48 @@ QT_BEGIN_NAMESPACE_AM
 */
 
 IntentHandler::IntentHandler(QObject *parent)
+    : AbstractIntentHandler(parent)
+{ }
+
+
+AbstractIntentHandler::AbstractIntentHandler(QObject *parent)
     : QObject(parent)
 { }
 
-IntentHandler::~IntentHandler()
+AbstractIntentHandler::~AbstractIntentHandler()
 {
     if (auto ie = IntentClient::instance())
         ie->unregisterHandler(this);
 }
 
-QStringList IntentHandler::intentIds() const
+QStringList AbstractIntentHandler::intentIds() const
 {
     return m_intentIds;
 }
 
-void IntentHandler::setIntentIds(const QStringList &intentIds)
+void AbstractIntentHandler::setIntentIds(const QStringList &intentIds)
 {
     if (isComponentCompleted()) {
-        qmlWarning(this) << "Cannot change the intentIds property of an IntentHandler after creation.";
+        qmlWarning(this) << "Cannot change the intentIds property of an intent handler after creation.";
         return;
     }
     if (m_intentIds != intentIds) {
         m_intentIds = intentIds;
-        emit intentIdsChanged(intentIds);
+        emit intentIdsChanged();
     }
 }
 
-void IntentHandler::componentComplete()
+void AbstractIntentHandler::classBegin()
+{
+}
+
+void AbstractIntentHandler::componentComplete()
 {
     IntentClient::instance()->registerHandler(this);
     m_completed = true;
 }
 
-void IntentHandler::classBegin()
-{ }
-
-bool IntentHandler::isComponentCompleted() const
+bool AbstractIntentHandler::isComponentCompleted() const
 {
     return m_completed;
 }

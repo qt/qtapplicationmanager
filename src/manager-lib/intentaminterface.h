@@ -162,7 +162,7 @@ private:
 #endif // defined(AM_MULTI_PROCESS)
 
 // server-side IntentHandlers
-class IntentServerHandler : public IntentHandler
+class IntentServerHandler : public AbstractIntentHandler
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentServerHandler 2.0")
@@ -170,6 +170,7 @@ class IntentServerHandler : public IntentHandler
     // the following properties cannot be changed after construction (hence, also no 'changed' signal)
     // these replace the meta-data that's provided through the info.yaml manifests for client-side
     // handlers
+    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds)
     Q_PROPERTY(QUrl icon READ icon WRITE setIcon)
     Q_PROPERTY(QVariantMap names READ names WRITE setNames)
     Q_PROPERTY(QVariantMap descriptions READ descriptions WRITE setDescriptions)

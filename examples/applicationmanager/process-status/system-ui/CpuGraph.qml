@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+pragma ComponentBehavior: Bound
+
 import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtApplicationManager 2.0
@@ -33,6 +35,7 @@ Pane {
         }
 
         delegate: Rectangle {
+            required property var model
             width: (root.width / monitorModel.count) * 0.8
             height: model.cpuLoad * root.height
             y: root.height - height

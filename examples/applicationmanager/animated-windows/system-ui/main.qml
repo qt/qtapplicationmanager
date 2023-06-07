@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+pragma ComponentBehavior: Bound
+
 import QtQuick 2.4
 import QtQuick.Layouts 1.11
 import QtApplicationManager.SystemUI 2.0
@@ -22,30 +24,35 @@ Rectangle {
         Repeater {
             model: ApplicationManager
             ColumnLayout {
+                id: delegate
+                required property bool isRunning
+                required property var icon
+                required property var application
+                required property string name
                 Layout.alignment: Qt.AlignHCenter
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
-                    width: 100; height: 100; radius: width/4
-                    color: model.isRunning ? "darkgrey" : "lightgrey"
+                    implicitWidth: 100; implicitHeight: 100; radius: width/4
+                    color: delegate.isRunning ? "darkgrey" : "lightgrey"
                     Image {
                         anchors.fill: parent
-                        source: icon
+                        source: delegate.icon
                         sourceSize.width: 100
                         sourceSize.height: 100
                     }
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
-                            if (model.isRunning)
-                                application.stop();
+                            if (delegate.isRunning)
+                                delegate.application.stop();
                             else
-                                application.start();
+                                delegate.application.start();
                         }
                     }
                 }
                 Text {
                     Layout.alignment: Qt.AlignHCenter
-                    text: model.name + " application"
+                    text: delegate.name + " application"
                     horizontalAlignment: Text.AlignHCenter
                 }
             }
@@ -59,22 +66,24 @@ Rectangle {
 
         delegate: Rectangle {
             id: winChrome
+            required property WindowObject window
+            required property int index
 
             width: 400; height: 320
-            z: model.index
+            z: index
             color: "tan"
 
             // Title bar text
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: model.window.application.names["en"] + " application window"
+                text: winChrome.window.application.names["en"] + " application window"
             }
 
             // Raises the window when the title bar is clicked and moves it around when dragged.
             MouseArea {
                 anchors.fill: parent
                 drag.target: parent
-                onPressed: windowsModel.move(model.index, windowsModel.count-1, 1);
+                onPressed: windowsModel.move(winChrome.index, windowsModel.count-1, 1);
             }
 
             // Close button
@@ -90,7 +99,7 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: model.window.close()
+                    onClicked: winChrome.window.close()
                 }
             }
 
@@ -100,12 +109,12 @@ Rectangle {
                 anchors.fill: parent
                 anchors.margins: 3
                 anchors.topMargin: 25
-                window: model.window
+                window: winChrome.window
             }
 
             Component.onCompleted: {
-                winChrome.x =  300 + model.index * 50;
-                winChrome.y =  10 + model.index * 30;
+                winChrome.x =  300 + winChrome.index * 50;
+                winChrome.y =  10 + winChrome.index * 30;
             }
 
             // Its default state represents a closed window. It's the starting point for
@@ -118,12 +127,13 @@ Rectangle {
             states: [
                 State {
                     name: "open"
-                    when: model.window && model.window.contentState === WindowObject.SurfaceWithContent
+                    when: winChrome.window && winChrome.window.contentState === WindowObject.SurfaceWithContent
                     PropertyChanges {
-                        target:  winChrome
-                        opacity: 1
-                        scale: 1
-                        visible: true
+                        winChrome {
+                            opacity: 1
+                            scale: 1
+                            visible: true
+                        }
                     }
                 }
             ]
@@ -152,8 +162,8 @@ Rectangle {
                 }
             ]
 
-            readonly property bool safeToRemove: fullyDisappeared && model.window && model.window.contentState === WindowObject.NoSurface
-            onSafeToRemoveChanged: if (safeToRemove) windowsModel.remove(model.index, 1)
+            readonly property bool safeToRemove: fullyDisappeared && winChrome.window && winChrome.window.contentState === WindowObject.NoSurface
+            onSafeToRemoveChanged: if (safeToRemove) windowsModel.remove(winChrome.index, 1)
         }
     }
 

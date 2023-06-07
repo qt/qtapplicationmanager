@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+pragma ComponentBehavior: Bound
+
 import QtQuick 2.11
 import QtQuick.Window 2.11
 import QtApplicationManager.SystemUI 2.0
@@ -26,12 +28,17 @@ Window {
             model: ApplicationManager
 
             Image {
+                id: delegate
+                required property bool isRunning
+                required property var icon
+                required property var application
                 source: icon
                 opacity: isRunning ? 0.3 : 1.0
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: isRunning ? application.stop() : application.start("documentUrl");
+                    onClicked: delegate.isRunning ? delegate.application.stop()
+                                                  : delegate.application.start("documentUrl");
                 }
             }
         }
@@ -42,19 +49,22 @@ Window {
         model: ListModel { id: topLevelWindowsModel }
 
         delegate: Image {
+            id: winChrome
+            required property WindowObject window
+            required property int index
             source: "chrome-bg.png"
-            z: model.index
+            z: index
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Decoration: " + (model.window.application ? model.window.application.names["en"]
-                                                                 : 'External Application')
+                text: "Decoration: " + (winChrome.window.application ? winChrome.window.application.names["en"]
+                                                                     : 'External Application')
             }
 
             MouseArea {
                 anchors.fill: parent
                 drag.target: parent
-                onPressed: topLevelWindowsModel.move(model.index, topLevelWindowsModel.count - 1, 1);
+                onPressed: topLevelWindowsModel.move(winChrome.index, topLevelWindowsModel.count - 1, 1);
             }
 
             Rectangle {
@@ -63,7 +73,7 @@ Window {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: model.window.close();
+                    onClicked: winChrome.window.close();
                 }
             }
 
@@ -71,20 +81,20 @@ Window {
                 anchors.fill: parent
                 anchors.margins: 3
                 anchors.topMargin: 25
-                window: model.window
+                window: winChrome.window
 
                 Connections {
-                    target: window
+                    target: winChrome.window
                     function onContentStateChanged() {
-                        if (window.contentState === WindowObject.NoSurface)
-                            topLevelWindowsModel.remove(model.index, 1);
+                        if (winChrome.window.contentState === WindowObject.NoSurface)
+                            topLevelWindowsModel.remove(winChrome.index, 1);
                     }
                 }
             }
 
             Component.onCompleted: {
-                x = 300 + model.index * 50;
-                y =  10 + model.index * 30;
+                x = 300 + winChrome.index * 50;
+                y =  10 + winChrome.index * 30;
             }
         }
     }

@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+pragma ComponentBehavior: Bound
+
 import QtQuick 2.4
 import QtApplicationManager.SystemUI 2.0
 
@@ -26,6 +28,10 @@ Rectangle {
             model: ApplicationManager
 
             Image {
+                id: delegate
+                required property bool isRunning
+                required property var icon
+                required property var application
                 source: icon
 
                 Text {
@@ -33,16 +39,16 @@ Rectangle {
                     fontSizeMode: Text.Fit; minimumPixelSize: 10; font.pixelSize: height
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    text: model.isRunning ? "Stop" : "Start"
+                    text: delegate.isRunning ? "Stop" : "Start"
                 }
 
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        if (model.isRunning)
-                            application.stop();
+                        if (delegate.isRunning)
+                            delegate.application.stop()
                         else
-                            application.start();
+                            delegate.application.start()
                     }
                 }
             }
@@ -55,22 +61,24 @@ Rectangle {
 
         delegate: Rectangle {
             id: winChrome
+            required property WindowObject window
+            required property int index
 
             width: 400; height: 320
-            z: model.index
+            z: index
             color: "tan"
 
             property bool manuallyClosed: false
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: (windowItem.primary ? "Primary: " : "Secondary: ") + model.window.application.names["en"]
+                text: (windowItem.primary ? "Primary: " : "Secondary: ") + winChrome.window.application.names["en"]
             }
 
             MouseArea {
                 anchors.fill: parent
                 drag.target: parent
-                onPressed: topLevelWindowsModel.move(model.index, topLevelWindowsModel.count-1, 1);
+                onPressed: topLevelWindowsModel.move(winChrome.index, topLevelWindowsModel.count-1, 1)
             }
 
             Rectangle {
@@ -86,7 +94,7 @@ Rectangle {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        winChrome.manuallyClosed = true;
+                        winChrome.manuallyClosed = true
                     }
                 }
             }
@@ -115,7 +123,7 @@ Rectangle {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        topLevelWindowsModel.append({"window":model.window});
+                        topLevelWindowsModel.append({"window": winChrome.window})
                     }
                 }
             }
@@ -125,23 +133,26 @@ Rectangle {
                 anchors.fill: parent
                 anchors.margins: 3
                 anchors.topMargin: 25
-                window: model.window
+                window: winChrome.window
             }
 
             Component.onCompleted: {
-                winChrome.x =  300 + model.index * 50;
-                winChrome.y =  10 + model.index * 30;
+                winChrome.x =  300 + winChrome.index * 50
+                winChrome.y =  10 + winChrome.index * 30
             }
 
             states: [
                 State {
                     name: "open"
-                    when: model.window && model.window.contentState === WindowObject.SurfaceWithContent && !manuallyClosed
+                    when: winChrome.window
+                          && winChrome.window.contentState === WindowObject.SurfaceWithContent
+                          && !winChrome.manuallyClosed
                     PropertyChanges {
-                        target:  winChrome
-                        opacity: 1
-                        scale: 1
-                        visible: true
+                        winChrome {
+                            opacity: 1
+                            scale: 1
+                            visible: true
+                        }
                     }
                 }
             ]
@@ -161,8 +172,9 @@ Rectangle {
                         PropertyAction { target: winChrome; property: "visible"; value: true } // we wanna see the window during the closing animation
                         NumberAnimation { target: winChrome; properties: "opacity,scale"; duration: 500; easing.type: Easing.InQuad}
                         ScriptAction { script: {
-                            if (model.window.contentState === WindowObject.NoSurface || winChrome.manuallyClosed)
-                                topLevelWindowsModel.remove(model.index, 1);
+                            if (winChrome.window.contentState === WindowObject.NoSurface
+                                    || winChrome.manuallyClosed)
+                                topLevelWindowsModel.remove(winChrome.index, 1)
                         } }
                     }
                 }
@@ -174,7 +186,7 @@ Rectangle {
     Connections {
         target: WindowManager
         function onWindowAdded(window) {
-            topLevelWindowsModel.append({"window":window});
+            topLevelWindowsModel.append({"window":window})
         }
     }
 }

@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+pragma ComponentBehavior: Bound
+
 import QtQuick 2.4
 import QtQuick.Controls 2.4
 import QtApplicationManager.SystemUI 2.0
@@ -45,6 +47,7 @@ Pane {
         Repeater {
             model: ApplicationManager
             ApplicationDisplay {
+                required property var model
                 name: model.name
                 application: model.application
             }
@@ -60,6 +63,7 @@ Pane {
         Repeater {
             model: WindowManager
             WindowItem {
+                required property var model
                 width: windowsColumn.width
                 height: 200
                 window: model.window

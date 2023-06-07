@@ -2,6 +2,8 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+pragma ComponentBehavior: Bound
+
 import QtQuick 2.11
 import QtQuick.Window 2.11
 import QtApplicationManager.SystemUI 2.0
@@ -23,6 +25,10 @@ Window {
             model: ApplicationManager
 
             Image {
+                id: delegate
+                required property var application
+                required property bool isRunning
+                required property var icon
                 source: icon
                 opacity: isRunning ? 0.3 : 1.0
 
@@ -34,7 +40,7 @@ Window {
 
                     Text {
                         id: appid
-                        text: application.names["en"]
+                        text: delegate.application.names["en"]
                     }
                 }
 
@@ -42,7 +48,8 @@ Window {
                     id: imouse
                     anchors.fill: parent
                     hoverEnabled: true
-                    onClicked: isRunning ? application.stop() : application.start();
+                    onClicked: delegate.isRunning ? delegate.application.stop()
+                                                  : delegate.application.start();
                 }
             }
         }
@@ -53,11 +60,13 @@ Window {
 
         delegate: Rectangle {
             id: chrome
+            required property WindowObject window
+            required property int index
             width: draggrab.x + 10; height: draggrab.y + 10
             color: "transparent"
             border.width: 3
             border.color: "grey"
-            z: model.index
+            z: index
 
             Image {
                 id: draggrab
@@ -82,14 +91,14 @@ Window {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: model.window.application ? model.window.application.names["en"]
-                                                   : 'External Application'
+                    text: chrome.window.application ? chrome.window.application.names["en"]
+                                                    : 'External Application'
                 }
 
                 MouseArea {
                     anchors.fill: parent
                     drag.target: chrome
-                    onPressed: topLevelWindowsModel.move(model.index, topLevelWindowsModel.count - 1, 1);
+                    onPressed: topLevelWindowsModel.move(chrome.index, topLevelWindowsModel.count - 1, 1);
                 }
 
                 Rectangle {
@@ -98,7 +107,7 @@ Window {
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: model.window.close();
+                        onClicked: chrome.window.close();
                     }
                 }
             }
@@ -107,20 +116,20 @@ Window {
                 anchors.fill: parent
                 anchors.margins: 3
                 anchors.topMargin: 25
-                window: model.window
+                window: chrome.window
 
                 Connections {
-                    target: window
+                    target: chrome.window
                     function onContentStateChanged() {
-                        if (window.contentState === WindowObject.NoSurface)
-                            topLevelWindowsModel.remove(model.index, 1);
+                        if (chrome.window.contentState === WindowObject.NoSurface)
+                            topLevelWindowsModel.remove(chrome.index, 1);
                     }
                 }
             }
 
             Component.onCompleted: {
-                x = 200 + model.index * 50;
-                y =  20 + model.index * 30;
+                x = 200 + chrome.index * 50;
+                y =  20 + chrome.index * 30;
             }
         }
     }
@@ -128,14 +137,16 @@ Window {
     Repeater {
         model: ListModel { id: popupsModel }
         delegate: WindowItem {
+            id: win
+            required property var model
             z: 9999 + model.index
             anchors.centerIn: parent
             window: model.window
             Connections {
-                target: model.window
+                target: win.model.window
                 function onContentStateChanged() {
-                    if (model.window.contentState === WindowObject.NoSurface)
-                        popupsModel.remove(model.index, 1);
+                    if (win.model.window.contentState === WindowObject.NoSurface)
+                        popupsModel.remove(win.model.index, 1);
                 }
             }
         }

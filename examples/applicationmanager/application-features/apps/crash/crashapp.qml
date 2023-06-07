@@ -2,8 +2,10 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-import QtQuick 2.11
-import QtApplicationManager.Application 2.0
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtApplicationManager.Application
 import Terminator 2.0
 
 ApplicationManagerWindow {
@@ -27,8 +29,9 @@ ApplicationManagerWindow {
     Grid {
         columns: 2
         Repeater {
-            model: Object.keys(methods)
+            model: Object.keys(root.methods)
             Rectangle {
+                required property var modelData
                 width: root.width / 2
                 height: root.height / 4
                 border.width: 1
@@ -40,14 +43,14 @@ ApplicationManagerWindow {
                     verticalAlignment: Text.AlignVCenter
                     wrapMode: Text.Wrap
                     font.pointSize: 14
-                    text: methods[modelData]
+                    text: root.methods[parent.modelData]
                 }
 
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        switch (modelData) {
-                        case "illegalMemory": accessIllegalMemory(); break;
+                        switch (parent.modelData) {
+                        case "illegalMemory": root.accessIllegalMemory(); break;
                         case "illegalMemoryInThread": Terminator.accessIllegalMemoryInThread(); break;
                         case "stackOverflow": Terminator.forceStackOverflow(); break;
                         case "divideByZero": Terminator.divideByZero(); break;

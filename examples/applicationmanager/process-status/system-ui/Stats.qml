@@ -12,6 +12,7 @@ import QtApplicationManager.SystemUI 2.0
  when all that is needed is the latest information on a given application process.
  */
 Grid {
+    id: root
     spacing: 10
     columns: 2
     rows: 5

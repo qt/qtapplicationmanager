@@ -108,7 +108,7 @@ IntentClient::~IntentClient()
     s_instance = nullptr;
 }
 
-void IntentClient::registerHandler(IntentHandler *handler)
+void IntentClient::registerHandler(AbstractIntentHandler *handler)
 {
     QString applicationId = m_systemInterface->currentApplicationId(handler);
 
@@ -128,7 +128,7 @@ void IntentClient::registerHandler(IntentHandler *handler)
     }
 }
 
-void IntentClient::unregisterHandler(IntentHandler *handler)
+void IntentClient::unregisterHandler(AbstractIntentHandler *handler)
 {
     m_handlers.removeIf([handler](auto it) { return it.value() == handler; });
 }
@@ -285,7 +285,7 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
                                                        requestingApplicationId, requestId, intentId,
                                                        applicationId, parameters, broadcast);
 
-    IntentHandler *handler = m_handlers.value(qMakePair(intentId, applicationId));
+    AbstractIntentHandler *handler = m_handlers.value(qMakePair(intentId, applicationId));
     if (handler) {
         QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
         if (!broadcast)

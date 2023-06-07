@@ -33,7 +33,7 @@ class Intent : public QObject
     Q_PROPERTY(QVariantMap descriptions READ descriptions CONSTANT)
     Q_PROPERTY(QStringList categories READ categories CONSTANT)
 
-    Q_PROPERTY(bool handleOnlyWhenRunning READ handleOnlyWhenRunning CONSTANT REVISION 1)
+    Q_PROPERTY(bool handleOnlyWhenRunning READ handleOnlyWhenRunning CONSTANT REVISION(2, 1))
 
 public:
     enum Visibility {

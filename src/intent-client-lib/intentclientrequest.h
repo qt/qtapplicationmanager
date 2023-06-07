@@ -30,7 +30,7 @@ class IntentClientRequest : public QObject
     Q_PROPERTY(bool succeeded READ succeeded NOTIFY replyReceived)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY replyReceived)
     Q_PROPERTY(QVariantMap result READ result NOTIFY replyReceived)
-    Q_PROPERTY(bool broadcast READ isBroadcast CONSTANT REVISION 1)
+    Q_PROPERTY(bool broadcast READ isBroadcast CONSTANT REVISION(2, 1))
 
 public:
     enum class Direction { ToSystem, ToApplication };

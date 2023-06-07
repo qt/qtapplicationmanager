@@ -7,41 +7,32 @@ import QtQuick.tooling 1.2
 // appman-dumpqmltypes
 
 Module {
-    dependencies: [ "QtQuick.Window 6.5", "QtQuick 6.5" ]
     Component {
         name: "IntentHandler"
         exports: [ "QtApplicationManager.Application/IntentHandler 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
-        prototype: "QObject"
-        Property { name: "intentIds"; type: "QStringList"; }
-        Signal {
-            name: "intentIdsChanged"
-            Parameter { name: "intentId"; type: "QStringList"; }
-        }
-        Signal {
-            name: "requestReceived"
-            Parameter { name: "request"; type: "IntentClientRequest"; isPointer: true; }
-        }
+        exportMetaObjectRevisions: [ 512 ]
+        prototype: "AbstractIntentHandler"
+        Property { name: "intentIds"; type: "QStringList" }
     }
     Component {
         name: "ApplicationManagerWindow"
         exports: [ "QtApplicationManager.Application/ApplicationManagerWindow 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QQuickWindowQmlImpl"
         Signal {
             name: "windowPropertyChanged"
-            Parameter { name: "name"; type: "string"; }
-            Parameter { name: "value"; type: "QVariant"; }
+            Parameter { name: "name"; type: "QString" }
+            Parameter { name: "value"; type: "QVariant" }
         }
         Method {
             name: "setWindowProperty"
-            Parameter { name: "name"; type: "string"; }
-            Parameter { name: "value"; type: "QVariant"; }
+            Parameter { name: "name"; type: "QString" }
+            Parameter { name: "value"; type: "QVariant" }
         }
         Method {
             name: "windowProperty"
             type: "QVariant"
-            Parameter { name: "name"; type: "string"; }
+            Parameter { name: "name"; type: "QString" }
         }
         Method {
             name: "windowProperties"
@@ -51,15 +42,16 @@ Module {
     Component {
         name: "ApplicationInterface"
         exports: [ "QtApplicationManager.Application/ApplicationInterface 2.0" ]
-        exportMetaObjectRevisions: [ 0 ]
+        exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
+        isSingleton: true
         isCreatable: false
-        Property { name: "applicationId"; type: "string"; isReadonly: true }
-        Property { name: "name"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "icon"; type: "QUrl"; isReadonly: true }
-        Property { name: "version"; type: "string"; isReadonly: true }
-        Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "applicationProperties"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "applicationId"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "name"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "icon"; type: "QUrl"; isReadonly: true; isConstant: true }
+        Property { name: "version"; type: "QString"; isReadonly: true; isConstant: true }
+        Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "applicationProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true }
         Signal {
             name: "quit"
         }
@@ -71,23 +63,23 @@ Module {
         }
         Signal {
             name: "openDocument"
-            Parameter { name: "documentUrl"; type: "string"; }
-            Parameter { name: "mimeType"; type: "string"; }
+            Parameter { name: "documentUrl"; type: "QString" }
+            Parameter { name: "mimeType"; type: "QString" }
         }
         Signal {
             name: "interfaceCreated"
-            Parameter { name: "interfaceName"; type: "string"; }
+            Parameter { name: "interfaceName"; type: "QString" }
         }
         Signal {
             name: "slowAnimationsChanged"
-            Parameter { name: "isSlow"; type: "bool"; }
+            Parameter { name: "isSlow"; type: "bool" }
         }
         Method {
             name: "finishedInitialization"
         }
         Method {
             name: "createNotification"
-            type: "Notification"; isPointer: true;
+            type: "Notification"; isPointer: true
         }
         Method {
             name: "acknowledgeQuit"

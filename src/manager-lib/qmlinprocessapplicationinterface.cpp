@@ -24,7 +24,13 @@ QmlInProcessApplicationInterface::QmlInProcessApplicationInterface(QmlInProcessR
     connect(ApplicationManager::instance(), &ApplicationManager::memoryLowWarning,
             this, &ApplicationInterface::memoryLowWarning);
     connect(runtime, &QmlInProcessRuntime::aboutToStop,
-            this, &ApplicationInterface::quit);
+            this, [this]() {
+        static const QMetaMethod quitSignal = QMetaMethod::fromSignal(&ApplicationInterface::quit);
+        if (isSignalConnected(quitSignal))
+            emit quit();
+        else
+            acknowledgeQuit();
+    });
 
     QmlInProcessNotification::initialize();
 }

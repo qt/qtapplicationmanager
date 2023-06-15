@@ -655,6 +655,7 @@ an additional column specifying which runtime a configuration option applies to:
 
     \row
         \li \c quitTime
+            \target qml quitTime
         \li qml
         \li int
         \li Defines the grace period in milliseconds, that an application is given for shutting

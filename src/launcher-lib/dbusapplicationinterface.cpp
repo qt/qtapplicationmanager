@@ -109,7 +109,7 @@ bool DBusApplicationInterface::initialize(bool hasRuntime)
         }
     }
 
-    ok = ok && connect(m_applicationIf, SIGNAL(quit()), this, SIGNAL(quit()));
+    ok = ok && connect(m_applicationIf, SIGNAL(quit()), SLOT(handleQuit()));
     ok = ok && connect(m_applicationIf, SIGNAL(memoryLowWarning()), this, SIGNAL(memoryLowWarning()));
     ok = ok && connect(m_applicationIf, SIGNAL(memoryCriticalWarning()), this, SIGNAL(memoryCriticalWarning()));
     ok = ok && connect(m_applicationIf, SIGNAL(openDocument(QString,QString)), this, SIGNAL(openDocument(QString,QString)));
@@ -187,6 +187,15 @@ void DBusApplicationInterface::finishedInitialization()
 {
     if (m_applicationIf->isValid())
         m_applicationIf->asyncCall(qSL("finishedInitialization"));
+}
+
+void DBusApplicationInterface::handleQuit()
+{
+    static const QMetaMethod quitSignal = QMetaMethod::fromSignal(&ApplicationInterface::quit);
+    if (isSignalConnected(quitSignal))
+        emit quit();
+    else
+        acknowledgeQuit();
 }
 
 QVariantMap DBusApplicationInterface::systemProperties() const

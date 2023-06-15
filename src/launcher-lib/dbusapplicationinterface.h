@@ -45,6 +45,7 @@ public:
     Q_INVOKABLE void finishedInitialization() override;
 
 private slots:
+    void handleQuit();
     void notificationClosed(uint notificationId, uint reason);
     void notificationActionTriggered(uint notificationId, const QString &actionId);
 private:

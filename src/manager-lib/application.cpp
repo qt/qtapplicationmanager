@@ -172,6 +172,10 @@
     in order to allow a clean shutdown. Use \a forceKill set to \c true only as a last resort to
     kill hanging applications.
 
+    QML applications and native applications that \l {manifest supportsApplicationInterface}
+    {support the ApplicationInterface} will be notified via ApplicationInterface::quit().
+    All other applications will be sent the Unix \c TERM signal.
+
     \sa ApplicationManager::stopApplication
 */
 /*!

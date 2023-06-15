@@ -178,6 +178,7 @@ The fields used for each item within the \c applications list are as follows:
         See \l{runtime-parameters-details}{runtime parameters} for a full list.
 \row
     \li \c supportsApplicationInterface
+        \target manifest supportsApplicationInterface
     \li bool
     \li If set to \c true the application must implement the \l ApplicationInterface API.
         In this case the application manager will wait until the application is connected to the

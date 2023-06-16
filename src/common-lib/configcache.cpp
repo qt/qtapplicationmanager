@@ -306,6 +306,8 @@ void AbstractConfigCache::parse()
                 ce.content = loadFromSource(&buffer, ce.filePath);
             } catch (const Exception &e) {
                 if (d->options.testFlag(IgnoreBroken)) {
+                    qCWarning(LogCache, "Could not parse file '%s': %s (file will be ignored)",
+                              qPrintable(ce.filePath), qPrintable(e.errorString()));
                     ce.content = nullptr;
                 } else {
                     throw Exception("Could not parse file '%1': %2")

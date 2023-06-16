@@ -135,8 +135,8 @@
 
     \row
         \li \c application
-        \li Application
-        \li The underlying application object for quick access to the properties outside of a
+        \li ApplicationObject
+        \li The underlying \l ApplicationObject for quick access to the properties outside of a
             model delegate.
     \endtable
 

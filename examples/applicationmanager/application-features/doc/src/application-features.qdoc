@@ -66,7 +66,7 @@ program (the System UI).
 The QML code for the crash simulation and recovery application is as follows:
 
 \quotefromfile applicationmanager/application-features/apps/crash/crashapp.qml
-\skipto import QtQuick 2.11
+\skipto import QtQuick
 \printuntil case "gracefully": Terminator.exitGracefully(); break;
 \printuntil /^\}/
 

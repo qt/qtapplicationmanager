@@ -5,11 +5,11 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.11
-import QtQuick.Layouts 1.11
-import QtQuick.Window 2.11
-import QtApplicationManager 2.0
-import QtApplicationManager.SystemUI 2.0
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Window
+import QtApplicationManager
+import QtApplicationManager.SystemUI
 
 Window {
     id: sysuiWindow

@@ -49,7 +49,7 @@ its root element.
 The QML code for the nested compositor application is as follows:
 
 \quotefromfile applicationmanager/application-features/apps/compositor/compositor.qml
-\skipto import QtQuick 2.11
+\skipto import QtQuick
 \printuntil /^\}/
 
 \section2 Crash Simulation and Recovery
@@ -78,7 +78,7 @@ as the application's root element.
 The QML code for the two top-level windows application is as follows:
 
 \quotefromfile applicationmanager/application-features/apps/twins/twins.qml
-\skipto import QtQuick 2.11
+\skipto import QtQuick
 \printuntil Component.onCompleted: setWindowProperty("type", "pop-up");
 \printuntil /^\}/
 

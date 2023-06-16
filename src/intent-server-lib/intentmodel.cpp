@@ -38,8 +38,8 @@
     com.pelagicore.test package:
 
     \qml
-    import QtQuick 2.6
-    import QtApplicationManager.SystemUI 2.0
+    import QtQuick
+    import QtApplicationManager.SystemUI
 
     ListView {
         model: IntentModel {

@@ -5,9 +5,9 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.4
-import QtQuick.Layouts 1.11
-import QtApplicationManager.SystemUI 2.0
+import QtQuick
+import QtQuick.Layouts
+import QtApplicationManager.SystemUI
 
 Rectangle {
     width: 1024

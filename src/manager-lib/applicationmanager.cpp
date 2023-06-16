@@ -146,8 +146,8 @@
     After importing, you can just use the ApplicationManager singleton as follows:
 
     \qml
-    import QtQuick 2.0
-    import QtApplicationManager.SystemUI 2.0
+    import QtQuick
+    import QtApplicationManager.SystemUI
 
     ListView {
         id: appList

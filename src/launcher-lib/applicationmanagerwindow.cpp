@@ -35,13 +35,13 @@ public:
 
     The QML import for this item is
 
-    \c{import QtApplicationManager.Application 2.0}
+    \c{import QtApplicationManager.Application}
 
     After importing, you can instantiate the QML item like so:
 
     \qml
-    import QtQuick 2.0
-    import QtApplicationManager.Application 2.0
+    import QtQuick
+    import QtApplicationManager.Application
 
     ApplicationManagerWindow {
         Text {
@@ -60,7 +60,7 @@ public:
     \li Add a second file named \c ApplicationManagerWindow.qml, with the following content
 
     \qml
-    import QtQuick 2.0
+    import QtQuick
 
     Item {
         width: 1280   // use your screen width here

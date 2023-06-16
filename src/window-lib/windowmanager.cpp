@@ -95,8 +95,8 @@
     for window show and hide animations:
 
     \qml
-    import QtQuick 2.10
-    import QtApplicationManager.SystemUI 2.0
+    import QtQuick
+    import QtApplicationManager.SystemUI
 
     // Simple solution for a full-screen setup
     Item {
@@ -536,7 +536,7 @@ int WindowManager::indexOfWindow(Window *window) const
     only be added, once ApplicationManager::windowManagerCompositorReady is true, for example:
 
     \code
-    import QtWayland.Compositor.TextureSharingExtension 1.0
+    import QtWayland.Compositor.TextureSharingExtension
 
     Component {
         id: texshare

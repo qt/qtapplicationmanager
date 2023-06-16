@@ -6,7 +6,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtApplicationManager.Application
-import Terminator 2.0
+import Terminator
 
 ApplicationManagerWindow {
     id: root

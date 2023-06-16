@@ -804,7 +804,7 @@ void Main::showWindow(bool showFullscreen)
         if (Q_LIKELY(showFullscreen))
             window->showFullScreen();
         else
-            window->show();
+            window->setVisible(true);
 
         // now check the surface format, in case we had requested a specific GL version/profile
         checkOpenGLFormat("main window", window->format());

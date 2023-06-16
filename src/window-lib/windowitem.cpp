@@ -350,7 +350,7 @@ void WindowItem::InProcessImpl::setupSecondaryView()
         QQmlEngine *engine = QQmlEngine::contextForObject(q)->engine();
         QQmlComponent component(engine);
 
-        component.setData("import QtQuick 2.7\nShaderEffectSource { anchors.fill: parent }", QUrl());
+        component.setData("import QtQuick\nShaderEffectSource { anchors.fill: parent }", QUrl());
         m_shaderEffectSource = qobject_cast<QQuickItem *>(component.create());
         m_shaderEffectSource->setParent(q);
         m_shaderEffectSource->setParentItem(q);

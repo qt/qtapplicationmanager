@@ -5,10 +5,10 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.11
-import QtQuick.Controls 2.4
-import QtApplicationManager 2.0
-import QtApplicationManager.SystemUI 2.0
+import QtQuick
+import QtQuick.Controls
+import QtApplicationManager
+import QtApplicationManager.SystemUI
 
 /*
     This file shows how to use ProcessStatus inside a MonitorModel to draw a graph

@@ -5,9 +5,9 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.11
-import QtQuick.Window 2.11
-import QtApplicationManager.SystemUI 2.0
+import QtQuick
+import QtQuick.Window
+import QtApplicationManager.SystemUI
 
 Window {
     title: "Minidesk - QtApplicationManager Example"

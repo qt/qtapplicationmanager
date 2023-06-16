@@ -5,9 +5,9 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.4
-import QtQuick.Controls 2.4
-import QtApplicationManager.SystemUI 2.0
+import QtQuick
+import QtQuick.Controls
+import QtApplicationManager.SystemUI
 
 Pane {
     width: 900

@@ -4,9 +4,9 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.11
-import QtApplicationManager.Application 2.0
-import QtWayland.Compositor 1.3
+import QtQuick
+import QtApplicationManager.Application
+import QtWayland.Compositor
 import QtWayland.Compositor.XdgShell
 import QtWayland.Compositor.WlShell
 

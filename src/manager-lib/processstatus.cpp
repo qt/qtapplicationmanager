@@ -28,9 +28,9 @@
     application process.
 
     \qml
-    import QtQuick 2.11
-    import QtApplicationManager 2.0
-    import QtApplicationManager.SystemUI 2.0
+    import QtQuick
+    import QtApplicationManager
+    import QtApplicationManager.SystemUI
 
     Item {
         id: root
@@ -56,9 +56,9 @@
     values over time:
 
     \qml
-    import QtQuick 2.11
-    import QtApplicationManager 2.0
-    import QtApplicationManager.SystemUI 2.0
+    import QtQuick
+    import QtApplicationManager
+    import QtApplicationManager.SystemUI
     ...
     MonitorModel {
         running: true

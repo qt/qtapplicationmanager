@@ -1,9 +1,9 @@
 // Copyright (C) 2021 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-import QtQuick 2.12
-import QtApplicationManager 2.0
-import QtApplicationManager.SystemUI 2.0
+import QtQuick
+import QtApplicationManager
+import QtApplicationManager.SystemUI
 
 Item {
     width: 800

@@ -2,8 +2,8 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-import QtQuick 2.11
-import QtApplicationManager.Application 2.0
+import QtQuick
+import QtApplicationManager.Application
 
 QtObject {
     property var win1: ApplicationManagerWindow {

@@ -27,8 +27,8 @@
     The snippet below shows how to use it for plotting a system's CPU load in a simple bar graph:
 
     \qml
-    import QtQuick 2.11
-    import QtApplicationManager 2.0
+    import QtQuick
+    import QtApplicationManager
 
     ListView {
         id: listView

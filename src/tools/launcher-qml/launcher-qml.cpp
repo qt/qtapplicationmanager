@@ -239,7 +239,7 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
     // property will fail with [unknown property type]. First seen when trying to
     // write a nested Wayland-compositor where assigning to WaylandOutput.window failed.
     {
-        static const char registerWindowQml[] = "import QtQuick 2.0\nimport QtQuick.Window 2.2\nQtObject { }\n";
+        static const char registerWindowQml[] = "import QtQuick\nimport QtQuick.Window\nQtObject { }\n";
         QQmlComponent registerWindowComp(&m_engine);
         registerWindowComp.setData(QByteArray::fromRawData(registerWindowQml, sizeof(registerWindowQml) - 1), QUrl());
         std::unique_ptr<QObject> dummy(registerWindowComp.create());

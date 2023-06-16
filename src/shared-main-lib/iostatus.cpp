@@ -20,8 +20,8 @@
     previous values over time.
 
     \qml
-    import QtQuick 2.11
-    import QtApplicationManager 2.0
+    import QtQuick
+    import QtApplicationManager
     ...
     MonitorModel {
         IoStatus {
@@ -33,8 +33,8 @@
     You can also use it alongside a Timer for instance, when you're only interested in its current value.
 
     \qml
-    import QtQuick 2.11
-    import QtApplicationManager 2.0
+    import QtQuick
+    import QtApplicationManager
     ...
     IoStatus {
         id: ioStatus

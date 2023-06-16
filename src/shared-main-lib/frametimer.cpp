@@ -21,8 +21,8 @@
     The following snippet shows how to use FrameTimer to display the frame-rate of a Window:
 
     \qml
-    import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtQuick
+    import QtApplicationManager
 
     Window {
         id: toplevelWindow
@@ -42,8 +42,8 @@
     previous values over time:
 
     \qml
-    import QtQuick 2.11
-    import QtApplicationManager 1.0
+    import QtQuick
+    import QtApplicationManager
 
     Window {
         id: toplevelWindow

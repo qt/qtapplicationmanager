@@ -537,13 +537,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
                     iface->afterWindowShow(m_window);
             }
         });
-
-        if (m_configuration.contains(qSL("backgroundColor"))) {
-            QSurfaceFormat surfaceFormat = m_window->format();
-            surfaceFormat.setAlphaBufferSize(8);
-            m_window->setFormat(surfaceFormat);
-            m_window->setColor(QColor(m_configuration.value(qSL("backgroundColor")).toString()));
-        }
     }
 
     // needed, even though we do not explicitly show() the window any more

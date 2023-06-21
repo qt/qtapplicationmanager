@@ -25,13 +25,17 @@ public:
     \qmltype ApplicationManagerWindow
     \inqmlmodule QtApplicationManager.Application
     \ingroup app
-    \brief The window root item required in a multi-process environment.
+    \inherits Window
+    \brief The window root element of an application
 
     This QML item can be used as the root item in your QML application. In doing so, you enable
     your application to be usable in both single-process (EGL fullscreen, desktop) and
-    multi-process (Wayland) mode. It inherits from \l Window in multi-process and from \l Item in
-    single-process mode. In contrast to a \l Window it is visible by default. Additional details can
-    be found in the section about \l {The Root Element}{the root element}.
+    multi-process (Wayland) mode. It inherits from \l Window in multi-process and from \l QtObject
+    in single-process mode. In contrast to a \l Window it is visible by default. This documentation
+    reflects the Window inheritance. Note that only a subset of the Window type members have been
+    added to ApplicationManagerWindow when derived from QtObject. Additional details can be found
+    in the section about \l {The Root Element}{the root element} and \l {Application Windows}
+    {application windows}.
 
     The QML import for this item is
 
@@ -51,32 +55,32 @@ public:
     \endqml
 
     In order to make your applications easily runnable outside of the application manager, even
-    though you are using a ApplicationManagerWindow as a root item, you can simply provide this
+    though you are using an ApplicationManagerWindow as a root item, you can simply provide this
     little dummy import to your application.
 
     \list 1
     \li Pick a base dir and create a \c{QtApplicationManager.Application} directory in it
-    \li Add a file named \c qmldir there, consisting of the single line \c{ApplicationManagerWindow 2.0 ApplicationManagerWindow.qml}
+    \li Add a file named \c qmldir there, consisting of the single line
+        \c{ApplicationManagerWindow 2.0 ApplicationManagerWindow.qml}
     \li Add a second file named \c ApplicationManagerWindow.qml, with the following content
 
     \qml
     import QtQuick
 
-    Item {
+    Window {
+        signal windowPropertyChanged
+        function setWindowProperty(name, value) {}
+        // ... add additional dummy members that are used by your implementation
+
         width: 1280   // use your screen width here
         height: 600   // use your screen height here
-
-        function close() {}
-        function showFullScreen() {}
-        function showMaximized() {}
-        function showNormal() {}
+        visible: true
     }
     \endqml
 
     \endlist
 
-    Now you can run your appication within \c qmlscene (or \c qml) with e.g.
-    \c{qmlscene -I <path to base dir>}
+    Now you can run your appication for instance with: \c{qml -I <path to base dir>}
 */
 
 ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)

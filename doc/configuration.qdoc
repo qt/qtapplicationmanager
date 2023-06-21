@@ -647,13 +647,6 @@ an additional column specifying which runtime a configuration option applies to:
         \li Loads QML dummy-data into the app, just like \c qmlscene and \c qml would.
             (default: false)
     \row
-        \li \c backgroundColor
-        \li qml
-        \li string
-        \li This option is deprecated and will be removed in the next release. Please use the
-            ApplicationManagerWindow's \c color property instead.
-
-    \row
         \li \c quitTime
             \target qml quitTime
         \li qml

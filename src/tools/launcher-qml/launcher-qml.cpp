@@ -17,6 +17,7 @@
 #include <QMetaObject>
 #include <QRegularExpression>
 #include <QCommandLineParser>
+#include <QLibraryInfo>
 
 #include <QDBusConnection>
 #include <QDBusInterface>
@@ -419,10 +420,19 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     // we need to catch all show events to apply the slow-animations
     QCoreApplication::instance()->installEventFilter(this);
 
+    QStringList systemStartupPluginPaths;
+    const QDir systemStartupPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + qSL("appman_startup"));
+    for (const auto &pluginName : systemStartupPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot)) {
+        const QString filePath = systemStartupPluginDir.absoluteFilePath(pluginName);
+        if (!QLibrary::isLibrary(filePath))
+            continue;
+        systemStartupPluginPaths += filePath;
+    }
+
     QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
     QVector<StartupInterface *> startupPlugins;
     try {
-        startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginFiles);
+        startupPlugins = loadPlugins<StartupInterface>("startup", systemStartupPluginPaths + startupPluginFiles);
     } catch (const Exception &e) {
         qCCritical(LogQmlRuntime) << qPrintable(e.errorString());
         QCoreApplication::exit(2);

@@ -38,6 +38,7 @@
 #include <QQuickItem>
 #include <QInputDevice>
 #include <QLocalServer>
+#include <QLibraryInfo>
 
 #include "global.h"
 #include "logging.h"
@@ -305,7 +306,16 @@ void Main::registerResources(const QStringList &resources) const
 
 void Main::loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    m_startupPlugins = loadPlugins<StartupInterface>("startup", startupPluginPaths);
+    QStringList systemStartupPluginPaths;
+    const QDir systemStartupPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + qSL("appman_startup"));
+    for (const auto &pluginName : systemStartupPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot)) {
+        const QString filePath = systemStartupPluginDir.absoluteFilePath(pluginName);
+        if (!QLibrary::isLibrary(filePath))
+            continue;
+        systemStartupPluginPaths += filePath;
+    }
+
+    m_startupPlugins = loadPlugins<StartupInterface>("startup", systemStartupPluginPaths + startupPluginPaths);
     StartupTimer::instance()->checkpoint("after startup-plugin load");
 }
 
@@ -385,7 +395,16 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
         if (!runtimeAdditionalLaunchers.isEmpty())
             qCWarning(LogSystem) << "Addtional runtime launchers are ignored in single-process mode";
 #endif
-        auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", containerPluginPaths);
+        QStringList systemContainerPluginPaths;
+        const QDir systemContainerPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + qSL("appman_container"));
+        for (const auto &pluginName : systemContainerPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot)) {
+            const QString filePath = systemContainerPluginDir.absoluteFilePath(pluginName);
+            if (!QLibrary::isLibrary(filePath))
+                continue;
+            systemContainerPluginPaths += filePath;
+        }
+
+        auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", systemContainerPluginPaths + containerPluginPaths);
         for (auto iface : std::as_const(containerPlugins)) {
             auto pcm = new PluginContainerManager(iface);
             pluginContainerManagers << pcm;

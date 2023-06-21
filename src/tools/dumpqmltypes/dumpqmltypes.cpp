@@ -391,6 +391,7 @@ int main(int argc, char **argv)
             if (!qmldirFile.open(QFile::WriteOnly))
                 throw Exception(qmldirFile, "Failed to open for writing");
             QTextStream qmldirOut(&qmldirFile);
+            qmldirOut << "module " << *it << "\n";
             qmldirOut << "typeinfo plugins.qmltypes\n";
             const QStringList depends = moduleDepends.value(*it);
             for (const auto &md : depends)

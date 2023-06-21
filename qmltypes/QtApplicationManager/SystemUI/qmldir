@@ -1,2 +1,3 @@
+module QtApplicationManager.SystemUI
 typeinfo plugins.qmltypes
 depends QtApplicationManager auto

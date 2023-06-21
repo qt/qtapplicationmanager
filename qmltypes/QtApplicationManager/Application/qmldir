@@ -1,3 +1,4 @@
+module QtApplicationManager.Application
 typeinfo plugins.qmltypes
 depends QtApplicationManager auto
 depends QtQuick auto

@@ -22,7 +22,7 @@ class ContainerFactory : public QObject
 
 public:
     static ContainerFactory *instance();
-    ~ContainerFactory();
+    ~ContainerFactory() override;
 
     QStringList containerIds() const;
 
@@ -36,6 +36,7 @@ public:
 
     bool registerContainer(AbstractContainerManager *manager);
     bool registerContainer(AbstractContainerManager *manager, const QString &identifier);
+    bool disableContainer(const QString &identifier);
 
 private:
     ContainerFactory(QObject *parent = nullptr);

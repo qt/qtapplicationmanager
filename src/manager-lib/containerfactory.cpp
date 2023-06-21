@@ -86,6 +86,11 @@ bool ContainerFactory::registerContainer(AbstractContainerManager *manager, cons
     return true;
 }
 
+bool ContainerFactory::disableContainer(const QString &identifier)
+{
+    return m_containers.take(identifier);
+}
+
 
 QT_END_NAMESPACE_AM
 

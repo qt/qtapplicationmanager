@@ -5,16 +5,28 @@
 
 #pragma once
 
+#include <memory>
 #include <QtAppManManager/abstractcontainer.h>
 #include <QtAppManPluginInterfaces/containerinterface.h>
 
 QT_BEGIN_NAMESPACE_AM
+
+class PluginContainerHelperFunctions final : public ContainerHelperFunctions
+{
+public:
+    void closeAndClearFileDescriptors(QVector<int> &fdList) override;
+    QStringList substituteCommand(const QStringList &debugWrapperCommand,
+                                  const QString &program, const QStringList &arguments) override;
+};
 
 class PluginContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
 public:
     PluginContainerManager(ContainerManagerInterface *managerInterface, QObject *parent = nullptr);
+    ~PluginContainerManager() override;
+
+    bool initialize();
 
     static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
@@ -27,6 +39,7 @@ public:
 
 private:
     ContainerManagerInterface *m_interface;
+    std::unique_ptr<PluginContainerHelperFunctions> m_helpers;
 };
 
 class PluginContainer;
@@ -73,7 +86,6 @@ public:
 protected:
     explicit PluginContainer(AbstractContainerManager *manager, Application *app, ContainerInterface *containerInterface);
     ContainerInterface *m_interface;
-    PluginContainerProcess *m_process;
     bool m_startCalled = false;
 
     friend class PluginContainerProcess;

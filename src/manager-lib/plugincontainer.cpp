@@ -7,13 +7,27 @@
 #include <utilities.h>
 #include <application.h>
 #include "plugincontainer.h"
+#include "debugwrapper.h"
+#include "sudo.h"
 
 QT_BEGIN_NAMESPACE_AM
 
 PluginContainerManager::PluginContainerManager(ContainerManagerInterface *managerInterface, QObject *parent)
     : AbstractContainerManager(managerInterface->identifier(), parent)
     , m_interface(managerInterface)
-{ }
+    , m_helpers(new PluginContainerHelperFunctions)
+{
+}
+
+PluginContainerManager::~PluginContainerManager()
+{
+    delete m_interface;
+}
+
+bool PluginContainerManager::initialize()
+{
+    return m_interface->initialize(m_helpers.get());
+}
 
 QString PluginContainerManager::defaultIdentifier()
 {
@@ -103,8 +117,8 @@ AbstractContainerProcess *PluginContainer::start(const QStringList &arguments, c
 PluginContainer::PluginContainer(AbstractContainerManager *manager, Application *app, ContainerInterface *containerInterface)
     : AbstractContainer(manager, app)
     , m_interface(containerInterface)
-    , m_process(new PluginContainerProcess(this))
 {
+    m_process = new PluginContainerProcess(this);
     m_process->setParent(this);
 
     connect(containerInterface, &ContainerInterface::ready, this, &PluginContainer::ready);
@@ -151,6 +165,18 @@ void PluginContainerProcess::kill()
 void PluginContainerProcess::terminate()
 {
     m_container->m_interface->terminate();
+}
+
+void PluginContainerHelperFunctions::closeAndClearFileDescriptors(QVector<int> &fdList)
+{
+    ::QtAM::closeAndClearFileDescriptors(fdList);
+}
+
+QStringList PluginContainerHelperFunctions::substituteCommand(const QStringList &debugWrapperCommand,
+                                                              const QString &program,
+                                                              const QStringList &arguments)
+{
+    return DebugWrapper::substituteCommand(debugWrapperCommand, program, arguments);
 }
 
 QT_END_NAMESPACE_AM

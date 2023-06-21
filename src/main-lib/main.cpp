@@ -366,6 +366,8 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
                                       const QVariantMap &openGLConfiguration,
                                       const QStringList &iconThemeSearchPaths, const QString &iconThemeName)
 {
+    QVector<PluginContainerManager *> pluginContainerManagers;
+
     if (m_isSingleProcessMode) {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager());
         RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager(qSL("qml")));
@@ -384,13 +386,24 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
             qCWarning(LogSystem) << "Addtional runtime launchers are ignored in single-process mode";
 #endif
         auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", containerPluginPaths);
-        for (auto iface : std::as_const(containerPlugins))
-            ContainerFactory::instance()->registerContainer(new PluginContainerManager(iface));
+        for (auto iface : std::as_const(containerPlugins)) {
+            auto pcm = new PluginContainerManager(iface);
+            pluginContainerManagers << pcm;
+            ContainerFactory::instance()->registerContainer(pcm);
+        }
     }
     for (auto iface : std::as_const(m_startupPlugins))
         iface->afterRuntimeRegistration();
 
     ContainerFactory::instance()->setConfiguration(containerConfigurations);
+
+    for (auto pcm : std::as_const(pluginContainerManagers)) {
+        if (!pcm->initialize()) {
+            ContainerFactory::instance()->disableContainer(pcm->identifier());
+            qCWarning(LogSystem).noquote() << "Disabling container plugin" << pcm->identifier() << "as it failed to initialize";
+        }
+    }
+
     RuntimeFactory::instance()->setConfiguration(runtimeConfigurations);
     RuntimeFactory::instance()->setSystemOpenGLConfiguration(openGLConfiguration);
     RuntimeFactory::instance()->setIconTheme(iconThemeSearchPaths, iconThemeName);

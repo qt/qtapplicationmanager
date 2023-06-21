@@ -42,6 +42,7 @@ public:
 
     virtual bool removeRecursive(const QString &fileOrDir) = 0;
     virtual bool setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions) = 0;
+    virtual bool bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid = 0) = 0;
 
 protected:
     enum MessageType { Request, Reply };
@@ -63,7 +64,7 @@ class SudoServer;
 class SudoClient : public SudoInterface
 {
 public:
-    static SudoClient *createInstance(int socketFd, SudoServer *shortCircuit = 0);
+    static SudoClient *createInstance(int socketFd, SudoServer *shortCircuit = nullptr);
 
     static SudoClient *instance();
 
@@ -71,6 +72,7 @@ public:
 
     bool removeRecursive(const QString &fileOrDir) override;
     bool setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions) override;
+    bool bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid) override;
 
     void stopServer();
 
@@ -98,6 +100,7 @@ public:
 
     bool removeRecursive(const QString &fileOrDir) override;
     bool setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions) override;
+    bool bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid) override;
 
     QString lastError() const { return m_errorString; }
 

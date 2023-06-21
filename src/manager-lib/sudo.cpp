@@ -30,6 +30,9 @@
 #  include <sys/ioctl.h>
 #  include <sys/stat.h>
 #  include <sys/prctl.h>
+#  include <sys/mount.h>
+#  include <sys/syscall.h>
+#  include <sched.h>
 #  include <linux/capability.h>
 
 // These two functions are implemented in glibc, but the header file is
@@ -64,6 +67,61 @@ extern "C" int capget(cap_user_header_t header, const cap_user_data_t data);
 // Declared as weak symbol here, so we can check at runtime if we were compiled against libgcov
 extern "C" void __gcov_init() __attribute__((weak));
 
+
+#ifndef OPEN_TREE_CLONE
+#  define OPEN_TREE_CLONE 1
+#endif
+
+#ifndef OPEN_TREE_CLOEXEC
+#  define OPEN_TREE_CLOEXEC O_CLOEXEC
+#endif
+
+#ifndef SYS_open_tree
+#  define SYS_open_tree 428
+#endif
+
+#ifndef MOVE_MOUNT_F_EMPTY_PATH
+#  define MOVE_MOUNT_F_EMPTY_PATH 0x00000004
+#endif
+
+#ifndef SYS_move_mount
+#  define SYS_move_mount 429
+#endif
+
+#ifndef MOUNT_ATTR_RDONLY
+#  define MOUNT_ATTR_RDONLY 0x00000001
+#endif
+
+#ifndef SYS_mount_setattr
+#  define SYS_mount_setattr 442
+#endif
+
+#ifndef MOUNT_ATTR_SIZE_VER0
+#  define MOUNT_ATTR_SIZE_VER0 32
+
+struct mount_attr {
+    __u64 attr_set;
+    __u64 attr_clr;
+    __u64 propagation;
+    __u64 userns_fd;
+};
+#endif
+
+#ifndef AT_RECURSIVE
+#  define AT_RECURSIVE 0x8000
+#endif
+
+#ifndef AT_EMPTY_PATH
+#  define AT_EMPTY_PATH 0x1000
+#endif
+
+#ifndef SYS_mount_setattr
+#  define SYS_mount_setattr 442
+#endif
+
+#ifndef SYS_pidfd_open
+#  define SYS_pidfd_open 434
+#endif
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -156,6 +214,8 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         // Drop as many capabilities as possible, just to be on the safe side
         static const quint32 neededCapabilities[] = {
             CAP_SYS_ADMIN,
+            CAP_SYS_CHROOT,
+            CAP_SYS_PTRACE,
             CAP_CHOWN,
             CAP_FOWNER,
             CAP_DAC_OVERRIDE
@@ -298,6 +358,12 @@ bool SudoClient::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t
     CALL(setOwnerAndPermissionsRecursive, fileOrDir << user << group << permissions);
 }
 
+bool SudoClient::bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
+                                     quint64 namespacePid)
+{
+    CALL(bindMountFileSystem, from << to << readOnly << namespacePid);
+}
+
 void SudoClient::stopServer()
 {
 #ifdef Q_OS_LINUX
@@ -396,6 +462,13 @@ QByteArray SudoServer::receive(const QByteArray &msg)
         mode_t permissions;
         params >> fileOrDir >> user >> group >> permissions;
         result << setOwnerAndPermissionsRecursive(fileOrDir, user, group, permissions);
+    } else if (function == "bindMountFileSystem") {
+        QString from;
+        QString to;
+        bool readOnly;
+        quint64 namespacePid;
+        params >> from >> to >> readOnly >> namespacePid;
+        result << bindMountFileSystem(from, to, readOnly, namespacePid);
     } else if (function == "stopServer") {
         m_stop = true;
     } else {
@@ -458,6 +531,63 @@ bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t
     Q_UNUSED(user)
     Q_UNUSED(group)
     Q_UNUSED(permissions)
+    return false;
+#endif // Q_OS_LINUX
+}
+
+bool SudoServer::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid)
+{
+#if defined(Q_OS_LINUX)
+    bool result = true;
+    int oldNsFd = -1;
+
+    try {
+        // Create a detached mount point for our source location
+        int fromFd = ::syscall(SYS_open_tree, -EBADF, from.toLocal8Bit().constData(), OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE);
+        if (fromFd < 0)
+            throw Exception(errno, "could not create a detached mount point for %1").arg(from);
+
+        if (readOnly) {
+            ::mount_attr mountAttr { MOUNT_ATTR_RDONLY, 0, 0, 0 };
+            if (::syscall(SYS_mount_setattr, fromFd, "", AT_EMPTY_PATH | AT_RECURSIVE, &mountAttr, sizeof(mountAttr)) < 0)
+                throw Exception(errno, "could not set the detached mount point for %1 to read-only").arg(from);
+        }
+
+        if (namespacePid) {
+            // Save our current mount namespace to be able to restore it later
+            oldNsFd = open("/proc/self/ns/mnt", O_RDONLY);
+            if (oldNsFd < 0)
+                throw Exception(errno, "could not open our own mount namespace");
+
+            int pidFd = ::syscall(SYS_pidfd_open, pid_t(namespacePid), 0);
+            if (pidFd < 0)
+                throw Exception(errno, "process %1 is not available").arg(namespacePid);
+            if (::setns(pidFd, CLONE_NEWNS) < 0)
+                throw Exception(errno, "could not enter the mount namespace of process %1").arg(namespacePid);
+        }
+
+        // Mount the detached mount point to the final location within the mount namespace
+        if (::syscall(SYS_move_mount, fromFd, "", -EBADF, to.toLocal8Bit().constData(), MOVE_MOUNT_F_EMPTY_PATH) < 0)
+            throw Exception(errno, "could not move the detached mount point to %1").arg(to);
+
+    } catch (const Exception &e) {
+        result = false;
+        m_errorString = e.errorString();
+    }
+
+    if ((oldNsFd >= 0) && namespacePid) {
+        // Restore our old mount namespace
+        if (::setns(oldNsFd, CLONE_NEWNS) < 0)
+            qFatal() << "SudoHelper process is halted: could not reset the mount namespace:" << strerror(errno);
+    }
+
+    return result;
+#else
+    Q_UNUSED(from)
+    Q_UNUSED(to)
+    Q_UNUSED(readOnly)
+    Q_UNUSED(namespacePid)
+    m_errorString = qL1S("bindMountFileSystem is only available on Linux");
     return false;
 #endif // Q_OS_LINUX
 }

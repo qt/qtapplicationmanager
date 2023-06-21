@@ -42,8 +42,7 @@ public:
     };
     Q_ENUM(ProcessError)
 
-
-    virtual ~ContainerInterface();
+    virtual ~ContainerInterface() override;
 
     virtual bool attachApplication(const QVariantMap &application) = 0;
 
@@ -75,10 +74,27 @@ Q_SIGNALS:
     void stateChanged(ContainerInterface::RunState state);
 };
 
+// This interface is offered by the AM to the plugin - a pointer to a concrete implementation
+// is supplied to the plugin by implementing ContainerManagerInterface::initialize()
+class ContainerHelperFunctions
+{
+    Q_DISABLE_COPY_MOVE(ContainerHelperFunctions)
+
+protected:
+    ContainerHelperFunctions() = default;
+    ~ContainerHelperFunctions() = default;
+
+public:
+    virtual void closeAndClearFileDescriptors(QVector<int> &fdList) = 0;
+    virtual QStringList substituteCommand(const QStringList &debugWrapperCommand,
+                                          const QString &program, const QStringList &arguments) = 0;
+};
+
 class ContainerManagerInterface
 {
 public:
     virtual ~ContainerManagerInterface();
+    virtual bool initialize(ContainerHelperFunctions *helpers);
 
     virtual QString identifier() const = 0;
     virtual bool supportsQuickLaunch() const = 0;

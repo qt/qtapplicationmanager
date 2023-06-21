@@ -9,6 +9,8 @@ ContainerInterface::~ContainerInterface() { }
 
 ContainerManagerInterface::~ContainerManagerInterface() { }
 
+bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return true; }
+
 /*! \class ContainerInterface
     \inmodule QtApplicationManager
     \brief An interface for custom container instances.
@@ -365,6 +367,18 @@ ContainerManagerInterface::~ContainerManagerInterface() { }
 
     For an example, please see \c{examples/software-container}. This example shows the integration
     of Pelagicore's SoftwareContainers (which are essentially nice-to-use LXC wrappers).
+*/
+
+/*! \fn void ContainerManagerInterface::initialize(ContainerHelperFunctions *helpers)
+    This function is called by the application manager right after your plugin has been loaded,
+    your interface has been instantiated and the configuration was set via setConfiguration.
+
+    The \a helpers interface gives you access to common functionality that can be shared between
+    different container plugin implementations. The pointer is owned by the application manager and
+    is valid during the lifetime of the interface.
+
+    Return \c true if your plugin is usable, given its configuration and system state. If not,
+    then return \c false and the application manager will disable this container plugin.
 */
 
 /*! \fn QString ContainerManagerInterface::identifier() const

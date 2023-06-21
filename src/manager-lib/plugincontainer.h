@@ -17,6 +17,9 @@ public:
     void closeAndClearFileDescriptors(QVector<int> &fdList) override;
     QStringList substituteCommand(const QStringList &debugWrapperCommand,
                                   const QString &program, const QStringList &arguments) override;
+
+    void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
+                         quint64 namespacePid) override;
 };
 
 class PluginContainerManager : public AbstractContainerManager

@@ -179,6 +179,17 @@ QStringList PluginContainerHelperFunctions::substituteCommand(const QStringList 
     return DebugWrapper::substituteCommand(debugWrapperCommand, program, arguments);
 }
 
+void PluginContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to,
+                                                         bool readOnly, quint64 namespacePid)
+{
+    if (auto sudo = SudoClient::instance()) {
+        if (!sudo->bindMountFileSystem(from, to, readOnly, namespacePid))
+            throw std::runtime_error(sudo->lastError().toLocal8Bit());
+    } else {
+        throw std::runtime_error("Cannot call bindMountFileSystem: sudo functionality is not available");
+    }
+}
+
 QT_END_NAMESPACE_AM
 
 #include "moc_plugincontainer.cpp"

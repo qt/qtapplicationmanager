@@ -69,6 +69,10 @@ class RuntimeSignaler : public QObject
     Q_OBJECT
 signals:
     void aboutToStart(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);
+    // this signal is for in-process mode runtimes only
+    void inProcessSurfaceItemReady(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime,
+                                   QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)> window);
+
 };
 
 class AbstractRuntime : public QObject
@@ -113,9 +117,6 @@ public:
 signals:
     void stateChanged(QT_PREPEND_NAMESPACE_AM(Am::RunState) newState);
     void finished(int exitCode, Am::ExitStatus status);
-
-    // these signals are for in-process mode runtimes only
-    void inProcessSurfaceItemReady(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)> window);
 
 protected:
     explicit AbstractRuntime(AbstractContainer *container, Application *app, AbstractRuntimeManager *manager);

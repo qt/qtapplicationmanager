@@ -35,7 +35,6 @@ public:
     Q_INVOKABLE Notification *createNotification();
     Q_INVOKABLE virtual void acknowledgeQuit() const;
 #endif
-    Q_SCRIPTABLE virtual void finishedInitialization() = 0;
 
 signals:
     Q_SCRIPTABLE void quit();
@@ -43,7 +42,6 @@ signals:
     Q_SCRIPTABLE void memoryCriticalWarning();
 
     Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
-    Q_SCRIPTABLE void interfaceCreated(const QString &interfaceName);
 
     Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
 

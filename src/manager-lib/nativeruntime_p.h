@@ -26,7 +26,7 @@ public:
     QVariantMap systemProperties() const override;
     QVariantMap applicationProperties() const override;
 
-    virtual void finishedInitialization() override;
+    Q_SCRIPTABLE void finishedInitialization();
 
 signals:
     void applicationFinishedInitialization();

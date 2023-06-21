@@ -45,9 +45,11 @@ class WindowManagerInternalSignals : public QObject
 signals:
     // Emitted right before the WaylandCompositor instance is created
     void compositorAboutToBeCreated();
+    void shutDownFinished();
 };
 
 class WindowManager : public QAbstractListModel
+
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.WindowManager")
@@ -104,12 +106,9 @@ signals:
 
     void windowPropertyChanged(QT_PREPEND_NAMESPACE_AM(Window) *window, const QString &name, const QVariant &value);
 
-    void compositorViewRegistered(QQuickWindow *view);
-
-    void shutDownFinished();
-
 private slots:
-    void inProcessSurfaceItemCreated(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)> surfaceItem);
+    void inProcessSurfaceItemCreated(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime,
+                                     QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)> surfaceItem);
     void setupWindow(QT_PREPEND_NAMESPACE_AM(Window) *window);
 
 public:

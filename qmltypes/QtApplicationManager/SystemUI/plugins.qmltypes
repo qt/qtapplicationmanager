@@ -375,13 +375,6 @@ Module {
             Parameter { name: "name"; type: "QString" }
             Parameter { name: "value"; type: "QVariant" }
         }
-        Signal {
-            name: "compositorViewRegistered"
-            Parameter { name: "view"; type: "QQuickWindow"; isPointer: true }
-        }
-        Signal {
-            name: "shutDownFinished"
-        }
         Method {
             name: "get"
             type: "QVariantMap"
@@ -502,10 +495,6 @@ Module {
             name: "finished"
             Parameter { name: "exitCode"; type: "int" }
             Parameter { name: "status"; type: "Am::ExitStatus" }
-        }
-        Signal {
-            name: "inProcessSurfaceItemReady"
-            Parameter { name: "window"; type: "QSharedPointer<QtAM::InProcessSurfaceItem>" }
         }
     }
     Component {
@@ -1017,9 +1006,6 @@ Module {
         }
         Signal {
             name: "shuttingDownChanged"
-        }
-        Signal {
-            name: "shutDownFinished"
         }
         Method {
             name: "shutDown"

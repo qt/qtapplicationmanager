@@ -58,7 +58,6 @@ public slots:
 
 signals:
     void aboutToStop(); // used for the ApplicationInterface
-    void interfaceCreated(const QString &interfaceName);
 
     void applicationConnectedToPeerDBus(const QDBusConnection &connection,
                                         QT_PREPEND_NAMESPACE_AM(Application) *application);

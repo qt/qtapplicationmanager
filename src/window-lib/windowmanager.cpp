@@ -251,7 +251,7 @@ void WindowManager::shutDown()
     d->shuttingDown = true;
 
     if (d->allWindows.isEmpty())
-        QMetaObject::invokeMethod(this, &WindowManager::shutDownFinished, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(&internalSignals, &WindowManagerInternalSignals::shutDownFinished, Qt::QueuedConnection);
 }
 
 /*!
@@ -359,6 +359,9 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
     d->qmlEngine = qmlEngine;
 
     qApp->installEventFilter(this);
+
+    connect(AbstractRuntime::signaler(), &RuntimeSignaler::inProcessSurfaceItemReady,
+            this, &WindowManager::inProcessSurfaceItemCreated);
 }
 
 WindowManager::~WindowManager()
@@ -586,12 +589,8 @@ QObject *WindowManager::addExtension(QQmlComponent *component) const
 void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 {
     // special hacks to get in-process mode working transparently
-    if (runtime->manager()->inProcess()) {
+    if (runtime->manager()->inProcess())
         runtime->setInProcessQmlEngine(d->qmlEngine);
-
-        connect(runtime, &AbstractRuntime::inProcessSurfaceItemReady,
-                this, &WindowManager::inProcessSurfaceItemCreated);
-    }
 }
 
 /*
@@ -610,7 +609,7 @@ void WindowManager::releaseWindow(Window *window)
     window->deleteLater();
 
     if (d->shuttingDown && (count() == 0))
-        QMetaObject::invokeMethod(this, &WindowManager::shutDownFinished, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(&internalSignals, &WindowManagerInternalSignals::shutDownFinished, Qt::QueuedConnection);
 }
 
 /*
@@ -694,7 +693,6 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
     if (!once)
         qCInfo(LogGraphics) << "WindowManager: running in single-process mode [forced at compile-time]";
 #endif
-    emit compositorViewRegistered(view);
 
     if (!once)
         once = true;
@@ -703,14 +701,14 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 /*! \internal
     Only used for in-process surfaces
  */
-void WindowManager::inProcessSurfaceItemCreated(QSharedPointer<InProcessSurfaceItem> surfaceItem)
+void WindowManager::inProcessSurfaceItemCreated(AbstractRuntime *runtime,
+                                                QSharedPointer<InProcessSurfaceItem> surfaceItem)
 {
-    AbstractRuntime *rt = qobject_cast<AbstractRuntime *>(sender());
-    if (!rt) {
+    if (!runtime) {
         qCCritical(LogSystem) << "This function must be called by a signal of Runtime!";
         return;
     }
-    Application *app = rt->application() ? rt->application()->nonAliased() : nullptr;
+    Application *app = runtime->application() ? runtime->application()->nonAliased() : nullptr;
     if (!app) {
         qCCritical(LogSystem) << "This function must be called by a signal of Runtime which actually has an application attached!";
         return;

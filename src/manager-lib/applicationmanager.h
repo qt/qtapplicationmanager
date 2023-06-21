@@ -34,6 +34,7 @@ class ApplicationManagerInternalSignals : public QObject
 signals:
     // Emitted every time a new Runtime object is created
     void newRuntimeCreated(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);
+    void shutDownFinished();
 };
 
 class ApplicationManager : public QAbstractListModel
@@ -143,7 +144,6 @@ signals:
 
     void containerSelectionFunctionChanged();
     void shuttingDownChanged();
-    void shutDownFinished();
 
 private slots:
     void openUrlRelay(const QUrl &url);

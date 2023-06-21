@@ -256,7 +256,7 @@ void Main::shutDown(int exitCode)
     };
 
     if (m_applicationManager) {
-        connect(m_applicationManager, &ApplicationManager::shutDownFinished,
+        connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::shutDownFinished,
                 this, []() { checkShutDownFinished(ApplicationManagerDown); });
         m_applicationManager->shutDown();
     }
@@ -268,7 +268,7 @@ void Main::shutDown(int exitCode)
         down |= QuickLauncherDown;
     }
     if (m_windowManager) {
-        connect(m_windowManager, &WindowManager::shutDownFinished,
+        connect(&m_windowManager->internalSignals, &WindowManagerInternalSignals::shutDownFinished,
                 this, []() { checkShutDownFinished(WindowManagerDown); });
         m_windowManager->shutDown();
     }

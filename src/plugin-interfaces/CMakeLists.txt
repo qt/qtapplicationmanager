@@ -7,6 +7,9 @@ qt_internal_add_module(AppManPluginInterfacesPrivate
     STATIC
     EXCEPTIONS
     INTERNAL_MODULE
+    PLUGIN_TYPES
+        appman_container
+        appman_startup
     SOURCES
         containerinterface.cpp containerinterface.h
         startupinterface.cpp startupinterface.h

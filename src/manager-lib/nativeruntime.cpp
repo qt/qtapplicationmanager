@@ -497,8 +497,6 @@ NativeRuntimeApplicationInterface::NativeRuntimeApplicationInterface(NativeRunti
             this, &ApplicationInterface::memoryCriticalWarning);
     connect(runtime, &NativeRuntime::aboutToStop,
             this, &ApplicationInterface::quit);
-    connect(runtime, &NativeRuntime::interfaceCreated,
-                     this, &ApplicationInterface::interfaceCreated);
 }
 
 QString NativeRuntimeApplicationInterface::applicationId() const

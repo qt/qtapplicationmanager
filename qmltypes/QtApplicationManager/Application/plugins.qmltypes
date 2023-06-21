@@ -67,15 +67,8 @@ Module {
             Parameter { name: "mimeType"; type: "QString" }
         }
         Signal {
-            name: "interfaceCreated"
-            Parameter { name: "interfaceName"; type: "QString" }
-        }
-        Signal {
             name: "slowAnimationsChanged"
             Parameter { name: "isSlow"; type: "bool" }
-        }
-        Method {
-            name: "finishedInitialization"
         }
         Method {
             name: "createNotification"
@@ -83,9 +76,6 @@ Module {
         }
         Method {
             name: "acknowledgeQuit"
-        }
-        Method {
-            name: "finishedInitialization"
         }
     }
 }

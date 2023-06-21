@@ -277,7 +277,7 @@ void QmlInProcessRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceIt
                     stop();
             });
         }
-        emit inProcessSurfaceItemReady(surface);
+        emit signaler()->inProcessSurfaceItemReady(this, surface);
     }
 }
 

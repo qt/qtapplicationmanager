@@ -1200,7 +1200,7 @@ void ApplicationManager::shutDown()
             }
         }
         if (!activeRuntime)
-            emit shutDownFinished();
+            emit internalSignals.shutDownFinished();
     };
 
     for (Application *app : std::as_const(d->apps)) {

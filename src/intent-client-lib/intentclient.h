@@ -27,7 +27,7 @@ class IntentClient : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IntentClient 2.1 SINGLETON")
-    Q_PROPERTY(QString systemUiId READ systemUiId CONSTANT REVISION(2, 1))
+    Q_PROPERTY(QString systemUiId READ systemUiId CONSTANT REVISION(2, 1) FINAL)
 
 public:
     ~IntentClient() override;

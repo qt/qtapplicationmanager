@@ -18,10 +18,10 @@ class MemoryStatus : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager/MemoryStatus 2.0")
-    Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT)
-    Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryUsedChanged)
+    Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT FINAL)
+    Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryUsedChanged FINAL)
 
-    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
+    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT FINAL)
 
 public:
     MemoryStatus(QObject *parent = nullptr);

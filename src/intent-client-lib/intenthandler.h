@@ -51,7 +51,7 @@ class IntentHandler : public AbstractIntentHandler
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/IntentHandler 2.0")
-    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds NOTIFY intentIdsChanged)
+    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds NOTIFY intentIdsChanged FINAL)
 
 public:
     IntentHandler(QObject *parent = nullptr);

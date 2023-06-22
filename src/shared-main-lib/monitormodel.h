@@ -19,14 +19,14 @@ class MonitorModel : public QAbstractListModel
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager/MonitorModel 2.0")
 
-    Q_PROPERTY(QQmlListProperty<QObject> dataSources READ dataSources NOTIFY dataSourcesChanged)
+    Q_PROPERTY(QQmlListProperty<QObject> dataSources READ dataSources NOTIFY dataSourcesChanged FINAL)
     Q_CLASSINFO("DefaultProperty", "dataSources")
 
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(int maximumCount READ maximumCount WRITE setMaximumCount  NOTIFY maximumCountChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
+    Q_PROPERTY(int maximumCount READ maximumCount WRITE setMaximumCount  NOTIFY maximumCountChanged FINAL)
 
-    Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged)
-    Q_PROPERTY(bool running READ running WRITE setRunning NOTIFY runningChanged)
+    Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged FINAL)
+    Q_PROPERTY(bool running READ running WRITE setRunning NOTIFY runningChanged FINAL)
 
 public:
     MonitorModel(QObject *parent = nullptr);

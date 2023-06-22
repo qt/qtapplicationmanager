@@ -12,14 +12,14 @@ Module {
         exports: [ "QtApplicationManager.SystemUI/ProcessStatus 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "applicationId"; type: "QString" }
-        Property { name: "processId"; type: "qlonglong"; isReadonly: true }
-        Property { name: "cpuLoad"; type: "double"; isReadonly: true }
-        Property { name: "memoryVirtual"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "memoryRss"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "memoryPss"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "applicationId"; type: "QString"; isFinal: true }
+        Property { name: "processId"; type: "qlonglong"; isReadonly: true; isFinal: true }
+        Property { name: "cpuLoad"; type: "double"; isReadonly: true; isFinal: true }
+        Property { name: "memoryVirtual"; type: "QVariantMap"; isReadonly: true; isFinal: true }
+        Property { name: "memoryRss"; type: "QVariantMap"; isReadonly: true; isFinal: true }
+        Property { name: "memoryPss"; type: "QVariantMap"; isReadonly: true; isFinal: true }
         Property { name: "memoryReportingEnabled"; type: "bool" }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "applicationIdChanged"
             Parameter { name: "applicationId"; type: "QString" }
@@ -50,14 +50,14 @@ Module {
         exports: [ "QtApplicationManager.SystemUI/IntentServerHandler 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "AbstractIntentHandler"
-        Property { name: "intentIds"; type: "QStringList" }
-        Property { name: "icon"; type: "QUrl" }
-        Property { name: "names"; type: "QVariantMap" }
-        Property { name: "descriptions"; type: "QVariantMap" }
-        Property { name: "categories"; type: "QStringList" }
-        Property { name: "visibility"; type: "Intent::Visibility" }
-        Property { name: "requiredCapabilities"; type: "QStringList" }
-        Property { name: "parameterMatch"; type: "QVariantMap" }
+        Property { name: "intentIds"; type: "QStringList"; isFinal: true }
+        Property { name: "icon"; type: "QUrl"; isFinal: true }
+        Property { name: "names"; type: "QVariantMap"; isFinal: true }
+        Property { name: "descriptions"; type: "QVariantMap"; isFinal: true }
+        Property { name: "categories"; type: "QStringList"; isFinal: true }
+        Property { name: "visibility"; type: "Intent::Visibility"; isFinal: true }
+        Property { name: "requiredCapabilities"; type: "QStringList"; isFinal: true }
+        Property { name: "parameterMatch"; type: "QVariantMap"; isFinal: true }
         Method {
             name: "setIcon"
             Parameter { name: "icon"; type: "QUrl" }
@@ -92,9 +92,9 @@ Module {
         exports: [ "QtApplicationManager.SystemUI/IntentModel 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "filterFunction"; type: "QJSValue" }
-        Property { name: "sortFunction"; type: "QJSValue" }
+        Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
+        Property { name: "filterFunction"; type: "QJSValue"; isFinal: true }
+        Property { name: "sortFunction"; type: "QJSValue"; isFinal: true }
         Signal {
             name: "countChanged"
         }
@@ -140,19 +140,19 @@ Module {
         prototype: "QObject"
         isCreatable: false
         Enum { name: "Visibility"; values: [ "Public", "Private" ] }
-        Property { name: "intentId"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "packageId"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "applicationId"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "visibility"; type: "Intent::Visibility"; isReadonly: true; isConstant: true }
-        Property { name: "requiredCapabilities"; type: "QStringList"; isReadonly: true; isConstant: true }
-        Property { name: "parameterMatch"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "icon"; type: "QUrl"; isReadonly: true; isConstant: true }
-        Property { name: "name"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "names"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "description"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "categories"; type: "QStringList"; isReadonly: true; isConstant: true }
-        Property { name: "handleOnlyWhenRunning"; type: "bool"; revision: 513; isReadonly: true; isConstant: true }
+        Property { name: "intentId"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "packageId"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "applicationId"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "visibility"; type: "Intent::Visibility"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "requiredCapabilities"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "parameterMatch"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "icon"; type: "QUrl"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "name"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "names"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "description"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "categories"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "handleOnlyWhenRunning"; type: "bool"; revision: 513; isReadonly: true; isConstant: true; isFinal: true }
     }
     Component {
         name: "IntentServer"
@@ -160,7 +160,7 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
-        Property { name: "count"; type: "int"; isReadonly: true }
+        Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
         Signal {
             name: "intentAdded"
             Parameter { name: "intent"; type: "Intent"; isPointer: true }
@@ -263,10 +263,10 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QQuickItem"
         defaultProperty: "contentItemData"
-        Property { name: "window"; type: "Window"; isPointer: true }
-        Property { name: "primary"; type: "bool"; isReadonly: true }
+        Property { name: "window"; type: "Window"; isPointer: true; isFinal: true }
+        Property { name: "primary"; type: "bool"; isReadonly: true; isFinal: true }
         Property { name: "objectFollowsItemSize"; type: "bool" }
-        Property { name: "contentItemData"; type: "QQmlListProperty<QObject>"; isReadonly: true }
+        Property { name: "contentItemData"; type: "QQmlListProperty<QObject>"; isReadonly: true; isFinal: true }
         Signal {
             name: "windowChanged"
         }
@@ -290,11 +290,11 @@ Module {
         prototype: "QObject"
         isCreatable: false
         Enum { name: "ContentState"; values: [ "SurfaceWithContent", "SurfaceNoContent", "NoSurface" ] }
-        Property { name: "size"; type: "QSize"; isReadonly: true }
-        Property { name: "contentState"; type: "Window::ContentState"; isReadonly: true }
-        Property { name: "application"; type: "Application"; isPointer: true; isReadonly: true; isConstant: true }
-        Property { name: "popup"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "requestedPopupPosition"; type: "QPoint"; isReadonly: true }
+        Property { name: "size"; type: "QSize"; isReadonly: true; isFinal: true }
+        Property { name: "contentState"; type: "Window::ContentState"; isReadonly: true; isFinal: true }
+        Property { name: "application"; type: "Application"; isPointer: true; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "popup"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "requestedPopupPosition"; type: "QPoint"; isReadonly: true; isFinal: true }
         Signal {
             name: "sizeChanged"
         }
@@ -341,10 +341,10 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
-        Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "runningOnDesktop"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "slowAnimations"; type: "bool" }
-        Property { name: "allowUnknownUiClients"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
+        Property { name: "runningOnDesktop"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "slowAnimations"; type: "bool"; isFinal: true }
+        Property { name: "allowUnknownUiClients"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "countChanged"
         }
@@ -422,9 +422,9 @@ Module {
         exports: [ "QtApplicationManager.SystemUI/ApplicationModel 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "filterFunction"; type: "QJSValue" }
-        Property { name: "sortFunction"; type: "QJSValue" }
+        Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
+        Property { name: "filterFunction"; type: "QJSValue"; isFinal: true }
+        Property { name: "sortFunction"; type: "QJSValue"; isFinal: true }
         Signal {
             name: "countChanged"
         }
@@ -461,7 +461,7 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         isCreatable: false
-        Property { name: "controlGroup"; type: "QString" }
+        Property { name: "controlGroup"; type: "QString"; isFinal: true }
         Signal {
             name: "ready"
         }
@@ -486,7 +486,7 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         isCreatable: false
-        Property { name: "container"; type: "AbstractContainer"; isPointer: true; isReadonly: true; isConstant: true }
+        Property { name: "container"; type: "AbstractContainer"; isPointer: true; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "stateChanged"
             Parameter { name: "newState"; type: "Am::RunState" }
@@ -504,32 +504,32 @@ Module {
         prototype: "QObject"
         isCreatable: false
         Enum { name: "State"; values: [ "Installed", "BeingInstalled", "BeingUpdated", "BeingDowngraded", "BeingRemoved" ] }
-        Property { name: "id"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "name"; type: "QString"; isReadonly: true }
-        Property { name: "names"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "description"; type: "QString"; isReadonly: true }
-        Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "categories"; type: "QStringList"; isReadonly: true }
-        Property { name: "icon"; type: "QUrl"; isReadonly: true }
-        Property { name: "runtimeName"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "runtimeParameters"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "capabilities"; type: "QStringList"; isReadonly: true; isConstant: true }
-        Property { name: "documentUrl"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "supportedMimeTypes"; type: "QStringList"; isReadonly: true; isConstant: true }
-        Property { name: "applicationProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "runtime"; type: "AbstractRuntime"; isPointer: true; isReadonly: true }
-        Property { name: "lastExitCode"; type: "int"; isReadonly: true }
-        Property { name: "lastExitStatus"; type: "Am::ExitStatus"; isReadonly: true }
-        Property { name: "codeDir"; type: "QString"; isReadonly: true }
-        Property { name: "runState"; type: "Am::RunState"; isReadonly: true }
-        Property { name: "package"; type: "Package"; isPointer: true; isReadonly: true; isConstant: true }
-        Property { name: "builtIn"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "alias"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "nonAliased"; type: "Application"; isPointer: true; isReadonly: true; isConstant: true }
-        Property { name: "version"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "state"; type: "Application::State"; isReadonly: true }
-        Property { name: "blocked"; type: "bool"; isReadonly: true }
-        Property { name: "supportsApplicationInterface"; type: "bool"; isReadonly: true; isConstant: true }
+        Property { name: "id"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "name"; type: "QString"; isReadonly: true; isFinal: true }
+        Property { name: "names"; type: "QVariantMap"; isReadonly: true; isFinal: true }
+        Property { name: "description"; type: "QString"; isReadonly: true; isFinal: true }
+        Property { name: "descriptions"; type: "QVariantMap"; isReadonly: true; isFinal: true }
+        Property { name: "categories"; type: "QStringList"; isReadonly: true; isFinal: true }
+        Property { name: "icon"; type: "QUrl"; isReadonly: true; isFinal: true }
+        Property { name: "runtimeName"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "runtimeParameters"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "capabilities"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "documentUrl"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "supportedMimeTypes"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "applicationProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "runtime"; type: "AbstractRuntime"; isPointer: true; isReadonly: true; isFinal: true }
+        Property { name: "lastExitCode"; type: "int"; isReadonly: true; isFinal: true }
+        Property { name: "lastExitStatus"; type: "Am::ExitStatus"; isReadonly: true; isFinal: true }
+        Property { name: "codeDir"; type: "QString"; isReadonly: true; isFinal: true }
+        Property { name: "runState"; type: "Am::RunState"; isReadonly: true; isFinal: true }
+        Property { name: "package"; type: "Package"; isPointer: true; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "builtIn"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "alias"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "nonAliased"; type: "Application"; isPointer: true; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "version"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "state"; type: "Application::State"; isReadonly: true; isFinal: true }
+        Property { name: "blocked"; type: "bool"; isReadonly: true; isFinal: true }
+        Property { name: "supportsApplicationInterface"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "bulkChange"
         }
@@ -591,7 +591,7 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
-        Property { name: "count"; type: "int"; isReadonly: true }
+        Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
         Signal {
             name: "countChanged"
         }
@@ -643,15 +643,15 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
-        Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "developmentMode"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "hardwareId"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "ready"; type: "bool"; isReadonly: true }
-        Property { name: "installationLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "documentLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true; isConstant: true }
+        Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
+        Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "developmentMode"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "hardwareId"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "ready"; type: "bool"; isReadonly: true; isFinal: true }
+        Property { name: "installationLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "documentLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "readyChanged"
             Parameter { name: "b"; type: "bool" }
@@ -816,10 +816,10 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         isSingleton: true
-        Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "developmentMode"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true; isConstant: true }
+        Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "developmentMode"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "taskStarted"
             Parameter { name: "taskId"; type: "QString" }
@@ -950,14 +950,14 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
-        Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "singleProcess"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "shuttingDown"; type: "bool"; isReadonly: true }
-        Property { name: "securityChecksEnabled"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "dummy"; type: "bool"; isReadonly: true; isConstant: true }
-        Property { name: "windowManagerCompositorReady"; type: "bool"; isReadonly: true }
-        Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "containerSelectionFunction"; type: "QJSValue" }
+        Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
+        Property { name: "singleProcess"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "shuttingDown"; type: "bool"; isReadonly: true; isFinal: true }
+        Property { name: "securityChecksEnabled"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "dummy"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "windowManagerCompositorReady"; type: "bool"; isReadonly: true; isFinal: true }
+        Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "containerSelectionFunction"; type: "QJSValue"; isFinal: true }
         Signal {
             name: "applicationRunStateChanged"
             Parameter { name: "id"; type: "QString" }

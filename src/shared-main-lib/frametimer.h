@@ -20,17 +20,17 @@ class FrameTimer : public QObject
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager/FrameTimer 2.0")
 
-    Q_PROPERTY(qreal averageFps READ averageFps NOTIFY updated)
-    Q_PROPERTY(qreal minimumFps READ minimumFps NOTIFY updated)
-    Q_PROPERTY(qreal maximumFps READ maximumFps NOTIFY updated)
-    Q_PROPERTY(qreal jitterFps READ jitterFps NOTIFY updated)
+    Q_PROPERTY(qreal averageFps READ averageFps NOTIFY updated FINAL)
+    Q_PROPERTY(qreal minimumFps READ minimumFps NOTIFY updated FINAL)
+    Q_PROPERTY(qreal maximumFps READ maximumFps NOTIFY updated FINAL)
+    Q_PROPERTY(qreal jitterFps READ jitterFps NOTIFY updated FINAL)
 
-    Q_PROPERTY(QObject* window READ window WRITE setWindow NOTIFY windowChanged)
+    Q_PROPERTY(QObject* window READ window WRITE setWindow NOTIFY windowChanged FINAL)
 
-    Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged)
-    Q_PROPERTY(bool running READ running WRITE setRunning NOTIFY runningChanged)
+    Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged FINAL)
+    Q_PROPERTY(bool running READ running WRITE setRunning NOTIFY runningChanged FINAL)
 
-    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
+    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT FINAL)
 
 public:
     FrameTimer(QObject *parent = nullptr);

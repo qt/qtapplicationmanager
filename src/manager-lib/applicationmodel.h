@@ -22,9 +22,9 @@ class ApplicationModel : public QSortFilterProxyModel
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationModel 2.0")
     Q_CLASSINFO("AM-QmlPrototype", "QObject")
 
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(QJSValue filterFunction READ filterFunction WRITE setFilterFunction NOTIFY filterFunctionChanged)
-    Q_PROPERTY(QJSValue sortFunction READ sortFunction WRITE setSortFunction NOTIFY sortFunctionChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
+    Q_PROPERTY(QJSValue filterFunction READ filterFunction WRITE setFilterFunction NOTIFY filterFunctionChanged FINAL)
+    Q_PROPERTY(QJSValue sortFunction READ sortFunction WRITE setSortFunction NOTIFY sortFunctionChanged FINAL)
 
 public:
     ApplicationModel(QObject *parent = nullptr);

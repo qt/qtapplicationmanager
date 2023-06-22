@@ -20,19 +20,19 @@ class Package : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/PackageObject 2.0 UNCREATABLE")
-    Q_PROPERTY(QString id READ id CONSTANT)
-    Q_PROPERTY(bool builtIn READ isBuiltIn NOTIFY bulkChange)
-    Q_PROPERTY(bool builtInHasRemovableUpdate READ builtInHasRemovableUpdate NOTIFY bulkChange)
-    Q_PROPERTY(QUrl icon READ icon NOTIFY bulkChange)
-    Q_PROPERTY(QString version READ version NOTIFY bulkChange)
-    Q_PROPERTY(QString name READ name NOTIFY bulkChange)
-    Q_PROPERTY(QVariantMap names READ names NOTIFY bulkChange)
-    Q_PROPERTY(QString description READ description NOTIFY bulkChange)
-    Q_PROPERTY(QVariantMap descriptions READ descriptions NOTIFY bulkChange)
-    Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange)
-    Q_PROPERTY(State state READ state NOTIFY stateChanged)
-    Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged)
-    Q_PROPERTY(QList<QObject *> applications READ applications NOTIFY applicationsChanged)
+    Q_PROPERTY(QString id READ id CONSTANT FINAL)
+    Q_PROPERTY(bool builtIn READ isBuiltIn NOTIFY bulkChange FINAL)
+    Q_PROPERTY(bool builtInHasRemovableUpdate READ builtInHasRemovableUpdate NOTIFY bulkChange FINAL)
+    Q_PROPERTY(QUrl icon READ icon NOTIFY bulkChange FINAL)
+    Q_PROPERTY(QString version READ version NOTIFY bulkChange FINAL)
+    Q_PROPERTY(QString name READ name NOTIFY bulkChange FINAL)
+    Q_PROPERTY(QVariantMap names READ names NOTIFY bulkChange FINAL)
+    Q_PROPERTY(QString description READ description NOTIFY bulkChange FINAL)
+    Q_PROPERTY(QVariantMap descriptions READ descriptions NOTIFY bulkChange FINAL)
+    Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange FINAL)
+    Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
+    Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged FINAL)
+    Q_PROPERTY(QList<QObject *> applications READ applications NOTIFY applicationsChanged FINAL)
 
 public:
     enum State {

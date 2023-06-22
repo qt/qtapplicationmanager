@@ -20,10 +20,10 @@ class IoStatus : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IoStatus 2.0")
-    Q_PROPERTY(QStringList deviceNames READ deviceNames WRITE setDeviceNames NOTIFY deviceNamesChanged)
-    Q_PROPERTY(QVariantMap ioLoad READ ioLoad NOTIFY ioLoadChanged)
+    Q_PROPERTY(QStringList deviceNames READ deviceNames WRITE setDeviceNames NOTIFY deviceNamesChanged FINAL)
+    Q_PROPERTY(QVariantMap ioLoad READ ioLoad NOTIFY ioLoadChanged FINAL)
 
-    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT)
+    Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT FINAL)
 
 public:
     IoStatus(QObject *parent = nullptr);

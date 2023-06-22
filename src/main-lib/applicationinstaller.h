@@ -31,11 +31,11 @@ class ApplicationInstaller : public QObject
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationInstaller 2.0 SINGLETON")
 
     // both are const on purpose - these should never change in a running system
-    Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT)
-    Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT)
+    Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT FINAL)
+    Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT FINAL)
 
-    Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled CONSTANT)
-    Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId CONSTANT)
+    Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled CONSTANT FINAL)
+    Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId CONSTANT FINAL)
 
 
 public:

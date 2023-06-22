@@ -19,21 +19,21 @@ class Intent : public QObject
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentObject 2.1 UNCREATABLE")
 
-    Q_PROPERTY(QString intentId READ intentId CONSTANT)
-    Q_PROPERTY(QString packageId READ packageId CONSTANT)
-    Q_PROPERTY(QString applicationId READ applicationId CONSTANT)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Intent)::Visibility visibility READ visibility CONSTANT)
-    Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities CONSTANT)
-    Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch CONSTANT)
+    Q_PROPERTY(QString intentId READ intentId CONSTANT FINAL)
+    Q_PROPERTY(QString packageId READ packageId CONSTANT FINAL)
+    Q_PROPERTY(QString applicationId READ applicationId CONSTANT FINAL)
+    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Intent)::Visibility visibility READ visibility CONSTANT FINAL)
+    Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities CONSTANT FINAL)
+    Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch CONSTANT FINAL)
 
-    Q_PROPERTY(QUrl icon READ icon CONSTANT)
-    Q_PROPERTY(QString name READ name CONSTANT)
-    Q_PROPERTY(QVariantMap names READ names CONSTANT)
-    Q_PROPERTY(QString description READ description CONSTANT)
-    Q_PROPERTY(QVariantMap descriptions READ descriptions CONSTANT)
-    Q_PROPERTY(QStringList categories READ categories CONSTANT)
+    Q_PROPERTY(QUrl icon READ icon CONSTANT FINAL)
+    Q_PROPERTY(QString name READ name CONSTANT FINAL)
+    Q_PROPERTY(QVariantMap names READ names CONSTANT FINAL)
+    Q_PROPERTY(QString description READ description CONSTANT FINAL)
+    Q_PROPERTY(QVariantMap descriptions READ descriptions CONSTANT FINAL)
+    Q_PROPERTY(QStringList categories READ categories CONSTANT FINAL)
 
-    Q_PROPERTY(bool handleOnlyWhenRunning READ handleOnlyWhenRunning CONSTANT REVISION(2, 1))
+    Q_PROPERTY(bool handleOnlyWhenRunning READ handleOnlyWhenRunning CONSTANT REVISION(2, 1) FINAL)
 
 public:
     enum Visibility {

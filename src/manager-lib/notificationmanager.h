@@ -22,7 +22,7 @@ class NotificationManager : public QAbstractListModel
     Q_CLASSINFO("D-Bus Interface", "org.freedesktop.Notifications")
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/NotificationManager 2.0 SINGLETON")
 
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
 
 public:
     ~NotificationManager() override;

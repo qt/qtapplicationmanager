@@ -21,16 +21,16 @@ class IntentClientRequest : public QObject
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IntentRequest 2.1 UNCREATABLE")
 
-    Q_PROPERTY(QUuid requestId READ requestId NOTIFY requestIdChanged)
-    Q_PROPERTY(Direction direction READ direction CONSTANT)
-    Q_PROPERTY(QString intentId READ intentId CONSTANT)
-    Q_PROPERTY(QString applicationId READ applicationId CONSTANT)
-    Q_PROPERTY(QString requestingApplicationId READ requestingApplicationId CONSTANT)
-    Q_PROPERTY(QVariantMap parameters READ parameters CONSTANT)
-    Q_PROPERTY(bool succeeded READ succeeded NOTIFY replyReceived)
-    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY replyReceived)
-    Q_PROPERTY(QVariantMap result READ result NOTIFY replyReceived)
-    Q_PROPERTY(bool broadcast READ isBroadcast CONSTANT REVISION(2, 1))
+    Q_PROPERTY(QUuid requestId READ requestId NOTIFY requestIdChanged FINAL)
+    Q_PROPERTY(Direction direction READ direction CONSTANT FINAL)
+    Q_PROPERTY(QString intentId READ intentId CONSTANT FINAL)
+    Q_PROPERTY(QString applicationId READ applicationId CONSTANT FINAL)
+    Q_PROPERTY(QString requestingApplicationId READ requestingApplicationId CONSTANT FINAL)
+    Q_PROPERTY(QVariantMap parameters READ parameters CONSTANT FINAL)
+    Q_PROPERTY(bool succeeded READ succeeded NOTIFY replyReceived FINAL)
+    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY replyReceived FINAL)
+    Q_PROPERTY(QVariantMap result READ result NOTIFY replyReceived FINAL)
+    Q_PROPERTY(bool broadcast READ isBroadcast CONSTANT REVISION(2, 1) FINAL)
 
 public:
     enum class Direction { ToSystem, ToApplication };

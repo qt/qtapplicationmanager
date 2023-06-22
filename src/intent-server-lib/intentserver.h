@@ -26,7 +26,7 @@ class IntentServer : public QAbstractListModel
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentServer 2.0 SINGLETON")
 
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
 
 public:
     ~IntentServer() override;

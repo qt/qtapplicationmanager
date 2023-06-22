@@ -248,6 +248,8 @@ static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool ind
             str += "; isReadonly: true";
         if (p.isConstant())
             str += "; isConstant: true";
+        if (p.isFinal())
+            str += "; isFinal: true";
         str = str + " }\n";
     }
 

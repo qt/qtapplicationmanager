@@ -23,13 +23,13 @@ class WindowItem : public QQuickItem
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/WindowItem 2.0")
 
-    Q_PROPERTY(Window* window READ window WRITE setWindow NOTIFY windowChanged)
-    Q_PROPERTY(bool primary READ primary NOTIFY primaryChanged)
+    Q_PROPERTY(Window* window READ window WRITE setWindow NOTIFY windowChanged FINAL)
+    Q_PROPERTY(bool primary READ primary NOTIFY primaryChanged FINAL)
     Q_PROPERTY(bool objectFollowsItemSize READ objectFollowsItemSize
                                           WRITE setObjectFollowsItemSize
                                           NOTIFY objectFollowsItemSizeChanged)
 
-    Q_PROPERTY(QQmlListProperty<QObject> contentItemData READ contentItemData NOTIFY contentItemDataChanged)
+    Q_PROPERTY(QQmlListProperty<QObject> contentItemData READ contentItemData NOTIFY contentItemDataChanged FINAL)
     Q_CLASSINFO("DefaultProperty", "contentItemData")
 
 public:

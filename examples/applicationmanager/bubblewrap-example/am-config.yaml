@@ -1,0 +1,57 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+
+ui:
+  mainQml: "${CONFIG_PWD}/system-ui.qml"
+
+runtimes:
+  qml:
+    importPaths: "${CONFIG_PWD}/imports"
+
+quicklaunch:
+  runtimesPerContainer: 1
+
+containers:
+  bubblewrap:
+    # 'no': host network, or 'yes': no network at all, or a path to a setup script
+    unshareNetwork: no
+    # You can use this script as a starting point. It has to be adapted to
+    # your network setup though.
+    # unshareNetwork: 'sudo "${CONFIG_PWD}/bubblewrap-network-setup.sh"'
+
+    # set to yes, if you build against a system or Installer Qt and the launcher cannot be found
+    bindMountHome: yes
+    configuration:
+      symlink:
+        usr/lib: '/lib'
+        usr/lib64: '/lib64'
+        usr/bin: [ '/bin', '/sbin' ]
+      ro-bind:
+        /usr/bin: '/usr/bin'
+        /usr/lib: '/usr/lib'
+        /usr/lib64: '/usr/lib64'
+        /etc: '/etc'
+        /usr/share/fonts: '/usr/share/fonts'
+        /usr/share/fontconfig: '/usr/share/fontconfig'
+        /usr/share/ca-certificates: '/usr/share/ca-certificates'
+        /sys/dev/char: '/sys/dev/char'
+        ${CONFIG_PWD}/imports: '${CONFIG_PWD}/imports'
+      ro-bind-try:
+        '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'
+        /usr/share/glvnd/egl_vendor.d: '/usr/share/glvnd/egl_vendor.d'
+        /usr/share/X11/xkb: '/usr/share/X11/xkb'
+        /run/resolvconf: '/run/resolvconf'
+      dev: '/dev'
+      dev-bind:
+        /dev/dri: '/dev/dri'
+      tmpfs:
+        /tmp
+      proc:
+        /proc
+
+  selection:
+    - '*': bubblewrap
+

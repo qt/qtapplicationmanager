@@ -48,7 +48,7 @@ class Configuration;
 class Main : public MainBase, protected SharedMain
 {
     Q_OBJECT
-    Q_PROPERTY(bool singleProcessMode READ isSingleProcessMode CONSTANT)
+    Q_PROPERTY(bool singleProcessMode READ isSingleProcessMode CONSTANT FINAL)
 
 public:
     Main(int &argc, char **argv);

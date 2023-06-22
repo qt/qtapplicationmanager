@@ -20,8 +20,8 @@ class WindowSurface;
 class WaylandWindow : public Window
 {
     Q_OBJECT
-    Q_PROPERTY(QWaylandQuickSurface *waylandSurface READ waylandSurface NOTIFY waylandSurfaceChanged)
-    Q_PROPERTY(QWaylandXdgSurface *waylandXdgSurface READ waylandXdgSurface NOTIFY waylandXdgSurfaceChanged)
+    Q_PROPERTY(QWaylandQuickSurface *waylandSurface READ waylandSurface NOTIFY waylandSurfaceChanged FINAL)
+    Q_PROPERTY(QWaylandXdgSurface *waylandXdgSurface READ waylandXdgSurface NOTIFY waylandXdgSurfaceChanged FINAL)
 
 public:
     WaylandWindow(Application *app, WindowSurface *surface);

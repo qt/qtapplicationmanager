@@ -13,11 +13,11 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QAbstractListModel"
         defaultProperty: "dataSources"
-        Property { name: "dataSources"; type: "QQmlListProperty<QObject>"; isReadonly: true }
-        Property { name: "count"; type: "int"; isReadonly: true }
-        Property { name: "maximumCount"; type: "int" }
-        Property { name: "interval"; type: "int" }
-        Property { name: "running"; type: "bool" }
+        Property { name: "dataSources"; type: "QQmlListProperty<QObject>"; isReadonly: true; isFinal: true }
+        Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
+        Property { name: "maximumCount"; type: "int"; isFinal: true }
+        Property { name: "interval"; type: "int"; isFinal: true }
+        Property { name: "running"; type: "bool"; isFinal: true }
         Signal {
             name: "countChanged"
         }
@@ -47,14 +47,14 @@ Module {
         exports: [ "QtApplicationManager/FrameTimer 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "averageFps"; type: "double"; isReadonly: true }
-        Property { name: "minimumFps"; type: "double"; isReadonly: true }
-        Property { name: "maximumFps"; type: "double"; isReadonly: true }
-        Property { name: "jitterFps"; type: "double"; isReadonly: true }
-        Property { name: "window"; type: "QObject"; isPointer: true }
-        Property { name: "interval"; type: "int" }
-        Property { name: "running"; type: "bool" }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "averageFps"; type: "double"; isReadonly: true; isFinal: true }
+        Property { name: "minimumFps"; type: "double"; isReadonly: true; isFinal: true }
+        Property { name: "maximumFps"; type: "double"; isReadonly: true; isFinal: true }
+        Property { name: "jitterFps"; type: "double"; isReadonly: true; isFinal: true }
+        Property { name: "window"; type: "QObject"; isPointer: true; isFinal: true }
+        Property { name: "interval"; type: "int"; isFinal: true }
+        Property { name: "running"; type: "bool"; isFinal: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "updated"
         }
@@ -76,9 +76,9 @@ Module {
         exports: [ "QtApplicationManager/IoStatus 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "deviceNames"; type: "QStringList" }
-        Property { name: "ioLoad"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "deviceNames"; type: "QStringList"; isFinal: true }
+        Property { name: "ioLoad"; type: "QVariantMap"; isReadonly: true; isFinal: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "deviceNamesChanged"
         }
@@ -94,9 +94,9 @@ Module {
         exports: [ "QtApplicationManager/MemoryStatus 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "totalMemory"; type: "qulonglong"; isReadonly: true; isConstant: true }
-        Property { name: "memoryUsed"; type: "qulonglong"; isReadonly: true }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "totalMemory"; type: "qulonglong"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "memoryUsed"; type: "qulonglong"; isReadonly: true; isFinal: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "memoryUsedChanged"
         }
@@ -109,8 +109,8 @@ Module {
         exports: [ "QtApplicationManager/GpuStatus 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "gpuLoad"; type: "double"; isReadonly: true }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "gpuLoad"; type: "double"; isReadonly: true; isFinal: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "gpuLoadChanged"
         }
@@ -123,9 +123,9 @@ Module {
         exports: [ "QtApplicationManager/CpuStatus 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
-        Property { name: "cpuLoad"; type: "double"; isReadonly: true }
-        Property { name: "cpuCores"; type: "int"; isReadonly: true; isConstant: true }
-        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true }
+        Property { name: "cpuLoad"; type: "double"; isReadonly: true; isFinal: true }
+        Property { name: "cpuCores"; type: "int"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "roleNames"; type: "QStringList"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "cpuLoadChanged"
         }
@@ -154,16 +154,16 @@ Module {
         prototype: "QObject"
         isCreatable: false
         Enum { name: "Direction"; values: [ "ToSystem", "ToApplication" ] }
-        Property { name: "requestId"; type: "QUuid"; isReadonly: true }
-        Property { name: "direction"; type: "IntentClientRequest::Direction"; isReadonly: true; isConstant: true }
-        Property { name: "intentId"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "applicationId"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "requestingApplicationId"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "parameters"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "succeeded"; type: "bool"; isReadonly: true }
-        Property { name: "errorMessage"; type: "QString"; isReadonly: true }
-        Property { name: "result"; type: "QVariantMap"; isReadonly: true }
-        Property { name: "broadcast"; type: "bool"; revision: 513; isReadonly: true; isConstant: true }
+        Property { name: "requestId"; type: "QUuid"; isReadonly: true; isFinal: true }
+        Property { name: "direction"; type: "IntentClientRequest::Direction"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "intentId"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "applicationId"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "requestingApplicationId"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "parameters"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "succeeded"; type: "bool"; isReadonly: true; isFinal: true }
+        Property { name: "errorMessage"; type: "QString"; isReadonly: true; isFinal: true }
+        Property { name: "result"; type: "QVariantMap"; isReadonly: true; isFinal: true }
+        Property { name: "broadcast"; type: "bool"; revision: 513; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "requestIdChanged"
         }
@@ -185,7 +185,7 @@ Module {
         exportMetaObjectRevisions: [ 513, 512 ]
         prototype: "QObject"
         isSingleton: true
-        Property { name: "systemUiId"; type: "QString"; revision: 513; isReadonly: true; isConstant: true }
+        Property { name: "systemUiId"; type: "QString"; revision: 513; isReadonly: true; isConstant: true; isFinal: true }
         Method {
             name: "sendIntentRequest"
             type: "IntentClientRequest"; isPointer: true
@@ -212,23 +212,23 @@ Module {
         exportMetaObjectRevisions: [ 512 ]
         prototype: "QObject"
         Enum { name: "Priority"; values: [ "Low", "Normal", "Critical" ] }
-        Property { name: "notificationId"; type: "uint"; isReadonly: true }
-        Property { name: "visible"; type: "bool" }
-        Property { name: "summary"; type: "QString" }
-        Property { name: "body"; type: "QString" }
-        Property { name: "icon"; type: "QUrl" }
-        Property { name: "image"; type: "QUrl" }
-        Property { name: "category"; type: "QString" }
-        Property { name: "priority"; type: "int" }
-        Property { name: "acknowledgeable"; type: "bool" }
-        Property { name: "timeout"; type: "int" }
-        Property { name: "sticky"; type: "bool" }
-        Property { name: "showProgress"; type: "bool" }
-        Property { name: "progress"; type: "double" }
-        Property { name: "actions"; type: "QVariantList" }
-        Property { name: "showActionsAsIcons"; type: "bool" }
-        Property { name: "dismissOnAction"; type: "bool" }
-        Property { name: "extended"; type: "QVariantMap" }
+        Property { name: "notificationId"; type: "uint"; isReadonly: true; isFinal: true }
+        Property { name: "visible"; type: "bool"; isFinal: true }
+        Property { name: "summary"; type: "QString"; isFinal: true }
+        Property { name: "body"; type: "QString"; isFinal: true }
+        Property { name: "icon"; type: "QUrl"; isFinal: true }
+        Property { name: "image"; type: "QUrl"; isFinal: true }
+        Property { name: "category"; type: "QString"; isFinal: true }
+        Property { name: "priority"; type: "int"; isFinal: true }
+        Property { name: "acknowledgeable"; type: "bool"; isFinal: true }
+        Property { name: "timeout"; type: "int"; isFinal: true }
+        Property { name: "sticky"; type: "bool"; isFinal: true }
+        Property { name: "showProgress"; type: "bool"; isFinal: true }
+        Property { name: "progress"; type: "double"; isFinal: true }
+        Property { name: "actions"; type: "QVariantList"; isFinal: true }
+        Property { name: "showActionsAsIcons"; type: "bool"; isFinal: true }
+        Property { name: "dismissOnAction"; type: "bool"; isFinal: true }
+        Property { name: "extended"; type: "QVariantMap"; isFinal: true }
         Signal {
             name: "notificationIdChanged"
             Parameter { name: "notificationId"; type: "uint" }

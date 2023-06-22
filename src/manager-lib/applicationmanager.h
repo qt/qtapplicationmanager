@@ -43,14 +43,14 @@ class ApplicationManager : public QAbstractListModel
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationManager 2.0 SINGLETON")
 
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT)
-    Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged SCRIPTABLE false)
-    Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled CONSTANT)
-    Q_PROPERTY(bool dummy READ isDummy CONSTANT)  // set to false here and true in the dummydata imports
-    Q_PROPERTY(bool windowManagerCompositorReady READ isWindowManagerCompositorReady NOTIFY windowManagerCompositorReadyChanged)
-    Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT)
-    Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
+    Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT FINAL)
+    Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged SCRIPTABLE false FINAL)
+    Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled CONSTANT FINAL)
+    Q_PROPERTY(bool dummy READ isDummy CONSTANT FINAL)  // set to false here and true in the dummydata imports
+    Q_PROPERTY(bool windowManagerCompositorReady READ isWindowManagerCompositorReady NOTIFY windowManagerCompositorReadyChanged FINAL)
+    Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT FINAL)
+    Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged FINAL)
 
 public:
     ~ApplicationManager() override;

@@ -170,14 +170,14 @@ class IntentServerHandler : public AbstractIntentHandler
     // the following properties cannot be changed after construction (hence, also no 'changed' signal)
     // these replace the meta-data that's provided through the info.yaml manifests for client-side
     // handlers
-    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds)
-    Q_PROPERTY(QUrl icon READ icon WRITE setIcon)
-    Q_PROPERTY(QVariantMap names READ names WRITE setNames)
-    Q_PROPERTY(QVariantMap descriptions READ descriptions WRITE setDescriptions)
-    Q_PROPERTY(QStringList categories READ categories WRITE setCategories)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Intent)::Visibility visibility READ visibility WRITE setVisibility)
-    Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities WRITE setRequiredCapabilities)
-    Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch WRITE setParameterMatch)
+    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds FINAL)
+    Q_PROPERTY(QUrl icon READ icon WRITE setIcon FINAL)
+    Q_PROPERTY(QVariantMap names READ names WRITE setNames FINAL)
+    Q_PROPERTY(QVariantMap descriptions READ descriptions WRITE setDescriptions FINAL)
+    Q_PROPERTY(QStringList categories READ categories WRITE setCategories FINAL)
+    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Intent)::Visibility visibility READ visibility WRITE setVisibility FINAL)
+    Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities WRITE setRequiredCapabilities FINAL)
+    Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch WRITE setParameterMatch FINAL)
 
 public:
     IntentServerHandler(QObject *parent = nullptr);

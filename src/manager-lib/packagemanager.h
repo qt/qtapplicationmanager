@@ -55,18 +55,18 @@ class PackageManager : public QAbstractListModel
     Q_CLASSINFO("D-Bus Interface", "io.qt.PackageManager")
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/PackageManager 2.0 SINGLETON")
 
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     // these are const on purpose - these should never change in a running system
-    Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT)
-    Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT)
-    Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT SCRIPTABLE false)
+    Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT FINAL)
+    Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT FINAL)
+    Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT SCRIPTABLE false FINAL)
 
-    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
-    Q_PROPERTY(QVariantMap installationLocation READ installationLocation CONSTANT)
-    Q_PROPERTY(QVariantMap documentLocation READ documentLocation CONSTANT)
+    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged FINAL)
+    Q_PROPERTY(QVariantMap installationLocation READ installationLocation CONSTANT FINAL)
+    Q_PROPERTY(QVariantMap documentLocation READ documentLocation CONSTANT FINAL)
 
-    Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled CONSTANT)
-    Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId CONSTANT)
+    Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled CONSTANT FINAL)
+    Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId CONSTANT FINAL)
 
 public:
     Q_ENUMS(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState))

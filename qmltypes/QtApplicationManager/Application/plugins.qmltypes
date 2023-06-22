@@ -12,7 +12,7 @@ Module {
         exports: [ "QtApplicationManager.Application/IntentHandler 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
         prototype: "AbstractIntentHandler"
-        Property { name: "intentIds"; type: "QStringList" }
+        Property { name: "intentIds"; type: "QStringList"; isFinal: true }
     }
     Component {
         name: "ApplicationManagerWindow"
@@ -46,12 +46,12 @@ Module {
         prototype: "QObject"
         isSingleton: true
         isCreatable: false
-        Property { name: "applicationId"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "name"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "icon"; type: "QUrl"; isReadonly: true; isConstant: true }
-        Property { name: "version"; type: "QString"; isReadonly: true; isConstant: true }
-        Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true }
-        Property { name: "applicationProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true }
+        Property { name: "applicationId"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "name"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "icon"; type: "QUrl"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "version"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "applicationProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "quit"
         }

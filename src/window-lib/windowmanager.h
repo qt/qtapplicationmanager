@@ -55,10 +55,10 @@ class WindowManager : public QAbstractListModel
     Q_CLASSINFO("D-Bus Interface", "io.qt.WindowManager")
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/WindowManager 2.0 SINGLETON")
 
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT)
-    Q_PROPERTY(bool slowAnimations READ slowAnimations WRITE setSlowAnimations NOTIFY slowAnimationsChanged)
-    Q_PROPERTY(bool allowUnknownUiClients READ allowUnknownUiClients CONSTANT)
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
+    Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT FINAL)
+    Q_PROPERTY(bool slowAnimations READ slowAnimations WRITE setSlowAnimations NOTIFY slowAnimationsChanged FINAL)
+    Q_PROPERTY(bool allowUnknownUiClients READ allowUnknownUiClients CONSTANT FINAL)
 
 public:
     ~WindowManager() override;

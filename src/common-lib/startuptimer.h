@@ -17,9 +17,9 @@ QT_BEGIN_NAMESPACE_AM
 class StartupTimer : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(quint64 timeToFirstFrame READ timeToFirstFrame NOTIFY timeToFirstFrameChanged)
-    Q_PROPERTY(quint64 systemUpTime READ systemUpTime NOTIFY systemUpTimeChanged)
-    Q_PROPERTY(bool automaticReporting READ automaticReporting WRITE setAutomaticReporting NOTIFY automaticReportingChanged)
+    Q_PROPERTY(quint64 timeToFirstFrame READ timeToFirstFrame NOTIFY timeToFirstFrameChanged FINAL)
+    Q_PROPERTY(quint64 systemUpTime READ systemUpTime NOTIFY systemUpTimeChanged FINAL)
+    Q_PROPERTY(bool automaticReporting READ automaticReporting WRITE setAutomaticReporting NOTIFY automaticReportingChanged FINAL)
 
 public:
     static StartupTimer *instance();

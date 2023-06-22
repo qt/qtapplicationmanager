@@ -13,7 +13,7 @@ QT_BEGIN_NAMESPACE_AM
 class AmTest : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int timeoutFactor READ timeoutFactor CONSTANT)
+    Q_PROPERTY(int timeoutFactor READ timeoutFactor CONSTANT FINAL)
 
     AmTest();
 

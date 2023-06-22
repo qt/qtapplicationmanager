@@ -44,6 +44,7 @@ if(NOT QT_FEATURE_am_tools_only)
         endif()
     endif()
 endif()
+add_subdirectory(plugins)
 
 if(NOT QT_FEATURE_cross_compile OR QT_FEATURE_am_tools_only)
     if (QT_FEATURE_am_installer)

@@ -1,0 +1,108 @@
+// Copyright (C) 2023 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+
+\example applicationmanager/bubblewrap-example
+\brief Learn how to use Bubblewrap Containers with the Application Manager.
+\ingroup applicationmanager-examples
+\title Bubblewrap Container Example
+\image bubblewrap-example.png Bubblewrap Container Example
+
+\section1 Introduction
+
+This example shows you how to launch applications within a \l{Bubblewrap Container}{bubblewrap
+container} for extra security.
+
+\b Prerequisites: You're already familiar with the concepts and topics introduced in the
+   \l {System UI Example: "Hello World!"}. This example uses the same folder structure and can be
+   started in the same way.
+
+A Bubblewrap container uses the \l{bubblewrap}{bwrap} command-line utility to start a process in a
+separate kernel namespace. This is similar to how Docker works, but has the benefit that no extra
+daemon needs to be running. Bubblewrap is also used by \l{Flatpak} to sandbox applications.
+
+\section1 Configuration
+
+First we need to select which applications should use the bubblewrap container. In this example we
+use it for all our examples by setting a wildcard for the \l {selection} key in the am-config.yaml
+
+\quotefromfile applicationmanager/bubblewrap-example/am-config.yaml
+\skipto containers:
+\printuntil containers:
+\skipto selection:
+\printto
+
+The next thing we need is the actual container configuration. Without this configuration our
+applications would not start and stop with an error similar to this:
+
+\badcode
+bwrap: execvp /usr/bin/appman-launcher-qml: No such file or directory
+\endcode
+
+This happens because the default configuration of the bubblewrap container doesn't share any
+directory into the newly created kernel namespace. That basically means we tried to start a
+application without having any user-space libraries.
+
+A good starting point for the container configuration is shown here:
+\quotefromfile applicationmanager/bubblewrap-example/am-config.yaml
+\skipto containers:
+\printuntil bubblewrap:
+\skipto configuration:
+\printto selection:
+
+We configure the container to use parts of our own rootfs and bind mount it into the kernel
+namespace. In a similar way we also configure it to use its own \c tmpfs and \c procfs filesystem.
+
+\section1 Running the example
+
+When starting the example you should see a window similar to this:
+
+\image bubblewrap-example.png
+
+Once you press one of the icons on the left side, the corresponding application is started and its
+window is shown on the right side, similar to the \l {System UI Example: "Hello World!"}.
+
+The first application is a browser and uses \l QtWebengine to show the Qt homepage. The second
+application is network info, which shows all ip addresses of the system. Last but not least the
+'Simple QML' application shows a button to exit the process with a specific exit code.
+
+\section1 Quick launch
+
+Right now all our applications are started when the corresponding button is pressed. This involves
+starting a new container process and within this container process start the application process,
+which then starts loading the application's QML code.
+
+When quick-launch is enabled, a container running the application managers's QML launcher is
+started in the background. Once the application should be started the QML launcher just needs to
+load the application QML code. For this to work correctly with the bubblewrap container, root
+permissions are needed, in order to mount the correct application directory into the container.
+
+In the am-config.yaml the quick launch is enabled like this:
+\quotefromfile applicationmanager/bubblewrap-example/am-config.yaml
+\skipto quicklaunch:
+\printuntil runtimesPerContainer:
+
+To see quick-launch in action, you need to start the example with "sudo".
+
+\section1 Network isolation
+
+Similar to quick-launch, another feature also needs root permissions: the network isolation.
+Right now the container has full network acccess. The network access can be configured with the
+following snippet in the am-config.yaml:
+
+\quotefromfile applicationmanager/bubblewrap-example/am-config.yaml
+\skipto containers:
+\printuntil unshareNetwork:
+\printuntil unshareNetwork:
+
+If the applications shouldn't have any network access, you can change the \c unshareNetwork option
+to \c yes. If you start the networkinfo application you will see that no ip address is available
+inside the container anymore. Similar the browser application doesn't have a network.
+
+Another option is to set \c unshareNetwork to the path of a script. This script will be executed
+for every container and can be used to setup the network devices accordingly. The script which is
+provided with this example creates a new network device on the host and shares this device into the
+container. The newly created network device can now be bridged and filtered on the host side
+without any changes inside the container.
+*/

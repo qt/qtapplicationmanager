@@ -86,12 +86,6 @@ static const QVector<const QMetaObject *> all = {
     &MonitorModel::staticMetaObject
 };
 
-static const QMap<QString, QStringList> moduleDepends = {
-    { qSL("QtApplicationManager.SystemUI"),    { qSL("QtApplicationManager") } },
-    { qSL("QtApplicationManager.Application"), { qSL("QtApplicationManager"), qSL("QtQuick") } },
-    { qSL("QtApplicationManager"),             { qSL("QtQuick") } },
-};
-
 static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool indentFirstLine)
 {
     static auto stripNamespace = [](const QByteArray &identifier) -> QByteArray {
@@ -395,9 +389,9 @@ int main(int argc, char **argv)
             QTextStream qmldirOut(&qmldirFile);
             qmldirOut << "module " << *it << "\n";
             qmldirOut << "typeinfo plugins.qmltypes\n";
-            const QStringList depends = moduleDepends.value(*it);
-            for (const auto &md : depends)
-                qmldirOut << "depends " << md << " auto\n";
+            qmldirOut << "depends QtQuick auto\n";
+            if (it->startsWith(qSL("QtApplicationManager.")))
+                qmldirOut << "import QtApplicationManager auto\n";
             qmldirFile.close();
 
             QFile typesFile(importDir.absoluteFilePath(qSL("plugins.qmltypes")));

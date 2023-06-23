@@ -74,8 +74,8 @@
     null value.
 
     \note Whenever this function is changed, the filter is reevaluated. Changes in the source model
-    are reflected. Since the type is derived from QSortFilterProxyModel, the
-    \l {QSortFilterProxyModel::invalidate()}{invalidate()} slot can be used to force a reevaluation.
+    are reflected. To force a complete reevaluation, call \l {IntentModel::invalidate()}
+    {invalidate()}.
 */
 
 /*!
@@ -90,8 +90,7 @@
     null value.
 
     \note Whenever this function is changed, the model is sorted. Changes in the source model are
-    reflected. Since the type is derived from QSortFilterProxyModel, the
-    \l {QSortFilterProxyModel::invalidate()}{invalidate()} slot can be used to force a sort.
+    reflected. To force a complete reevaluation, call \l {IntentModel::invalidate()}{invalidate()}.
 */
 
 
@@ -236,6 +235,16 @@ int IntentModel::mapToSource(int ourIndex) const
 int IntentModel::mapFromSource(int sourceIndex) const
 {
     return QSortFilterProxyModel::mapFromSource(sourceModel()->index(sourceIndex, 0)).row();
+}
+
+/*!
+    \qmlmethod IntentModel::invalidate()
+
+    Forces a reevaluation of the model.
+*/
+void IntentModel::invalidate()
+{
+    QSortFilterProxyModel::invalidate();
 }
 
 QJSEngine *IntentModel::getJSEngine() const

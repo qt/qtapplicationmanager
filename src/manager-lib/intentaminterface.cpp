@@ -600,8 +600,8 @@ QT_BEGIN_NAMESPACE_AM
 */
 /*! \qmlproperty enum IntentServerHandler::visibility
 
-    The intent's visibility. Can be either \c IntentObject.Public or \c IntentObject.Private
-    (the default).
+    The intent's visibility. Can be either \c IntentObject.Public (the default) or
+    \c IntentObject.Private.
     This corresponds to the \c visibility field in the \l{manifest-intent}{manifest documentation}.
 
     \note Any changes to this property after component completion will have no effect.

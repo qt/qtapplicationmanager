@@ -71,7 +71,7 @@ private:
            const QStringList &categories, bool handleOnlyWhenRunning);
 
     QString m_intentId;
-    Visibility m_visibility = Private;
+    Visibility m_visibility = Public;
     QStringList m_requiredCapabilities;
     QVariantMap m_parameterMatch;
 

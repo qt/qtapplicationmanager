@@ -54,6 +54,14 @@ applications:
   capabilities:
   - cameraAccess
   - locationAccess
+
+intents:
+- id: setFrequency
+  handlingApplicationId: com.pelagicore.radio.app
+  name:
+    en: "Change the radio frequency"
+- id: systemAboutToShutDown # broadcast from the sys-ui
+  handleOnlyWhenRunning: yes
 \endcode
 
 The fields within the \c info.yaml file header (first YAML document) are as follows:

@@ -65,7 +65,8 @@ object to JSON types is strongly advised.
 
 \section1 Registering Intents
 
-Each application defines the intents it is capable of handling in its \c info.yaml manifest file.
+Each application defines the intents it is capable of handling in its \l{Manifest Definition}
+{\c info.yaml manifest file}.
 Please note that neither the packager tool nor the application manager are able to validate the
 intent ids in the manifest file to be valid for your specific project.
 

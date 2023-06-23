@@ -179,14 +179,20 @@ QStringList PluginContainerHelperFunctions::substituteCommand(const QStringList 
     return DebugWrapper::substituteCommand(debugWrapperCommand, program, arguments);
 }
 
+bool PluginContainerHelperFunctions::hasRootPrivileges()
+{
+    return SudoClient::instance() && !SudoClient::instance()->isFallbackImplementation();
+}
+
 void PluginContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to,
                                                          bool readOnly, quint64 namespacePid)
 {
-    if (auto sudo = SudoClient::instance()) {
+    auto sudo = SudoClient::instance();
+    if (sudo && !sudo->isFallbackImplementation()) {
         if (!sudo->bindMountFileSystem(from, to, readOnly, namespacePid))
             throw std::runtime_error(sudo->lastError().toLocal8Bit());
     } else {
-        throw std::runtime_error("Cannot call bindMountFileSystem: sudo functionality is not available");
+        throw std::runtime_error("Cannot call bindMountFileSystem: root privileges are required. Run appman via 'sudo' or 'chmod +s'.");
     }
 }
 

@@ -57,8 +57,10 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
 
     const QStringList allContainerIds = cf->containerIds();
     for (const QString &containerId : allContainerIds) {
-        if (!cf->manager(containerId)->supportsQuickLaunch())
+        if (!cf->manager(containerId)->supportsQuickLaunch()) {
+            qCDebug(LogSystem).noquote() << " * container: " << containerId << " does not support quick-launch";
             continue;
+        }
 
         const QStringList allRuntimeIds = rf->runtimeIds();
         for (const QString &runtimeId : allRuntimeIds) {
@@ -74,8 +76,8 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
 
             m_quickLaunchPool << entry;
 
-            qCDebug(LogSystem).nospace().noquote() << " * " << entry.m_containerId << " / "
-                                                   << (entry.m_runtimeId.isEmpty() ? qSL("(no runtime)") : entry.m_runtimeId)
+            qCDebug(LogSystem).nospace().noquote() << " * container: " << entry.m_containerId << " / runtime: "
+                                                   << (entry.m_runtimeId.isEmpty() ? qSL("(none)") : entry.m_runtimeId)
                                                    << " [at max: " << runtimesPerContainer << "]";
         }
     }

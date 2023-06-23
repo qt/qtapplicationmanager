@@ -88,6 +88,7 @@ public:
     virtual void closeAndClearFileDescriptors(QVector<int> &fdList) = 0;
     virtual QStringList substituteCommand(const QStringList &debugWrapperCommand,
                                           const QString &program, const QStringList &arguments) = 0;
+    virtual bool hasRootPrivileges() = 0;
 
     // this function will run with root privileges and throw std::execptions on error:
     virtual void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,

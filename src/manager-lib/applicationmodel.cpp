@@ -75,9 +75,8 @@
 
     \note Whenever this function is changed, the filter is reevaluated. However, dynamic properties
     used in this function, like \c isRunning, don't trigger a reevaluation when those properties
-    change. Changes in the source model are reflected. Since the type is derived from
-    QSortFilterProxyModel, the \l {QSortFilterProxyModel::invalidate()}{invalidate()} slot can be
-    used to force a reevaluation.
+    change. Changes in the source model are reflected. To force a complete reevaluation, call
+    \l {ApplicationModel::invalidate()}{invalidate()}.
 */
 
 /*!
@@ -91,11 +90,10 @@
     If you need no sorting at all, you should set this property to an undefined (the default) or
     null value.
 
-    \note Whenever this function is changed, the model is sorted. However, dynamic properties
-    used in this function, like \c isRunning, don't trigge a sort when when those properties change.
-    Changes in the source model are reflected. Since the type is derived from
-    QSortFilterProxyModel, the \l {QSortFilterProxyModel::invalidate()}{invalidate()} slot can be
-    used to force a sort.
+    \note Whenever this function is changed, the model is sorted. However, dynamic properties used
+    in this function, like \c isRunning, don't trigge a sort when when those properties change.
+    Changes in the source model are reflected. To force a complete reevaluation, call
+    \l {ApplicationModel::invalidate()}{invalidate()}.
 */
 
 
@@ -250,6 +248,16 @@ int ApplicationModel::mapToSource(int ourIndex) const
 int ApplicationModel::mapFromSource(int sourceIndex) const
 {
     return QSortFilterProxyModel::mapFromSource(sourceModel()->index(sourceIndex, 0)).row();
+}
+
+/*!
+    \qmlmethod ApplicationModel::invalidate()
+
+    Forces a reevaluation of the model.
+*/
+void ApplicationModel::invalidate()
+{
+    QSortFilterProxyModel::invalidate();
 }
 
 QJSEngine *ApplicationModel::getJSEngine() const

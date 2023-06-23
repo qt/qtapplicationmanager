@@ -42,6 +42,7 @@ public:
     Q_INVOKABLE int indexOfApplication(QT_PREPEND_NAMESPACE_AM(Application) *application) const;
     Q_INVOKABLE int mapToSource(int ourIndex) const;
     Q_INVOKABLE int mapFromSource(int sourceIndex) const;
+    Q_INVOKABLE void invalidate();
 
 protected:
     using QSortFilterProxyModel::mapToSource;

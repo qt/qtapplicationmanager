@@ -41,6 +41,7 @@ public:
     Q_INVOKABLE int indexOfIntent(QT_PREPEND_NAMESPACE_AM(Intent) *intent);
     Q_INVOKABLE int mapToSource(int ourIndex) const;
     Q_INVOKABLE int mapFromSource(int sourceIndex) const;
+    Q_INVOKABLE void invalidate();
 
 protected:
     using QSortFilterProxyModel::mapToSource;

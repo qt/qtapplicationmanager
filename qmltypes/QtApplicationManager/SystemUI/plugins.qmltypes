@@ -132,6 +132,9 @@ Module {
             type: "int"
             Parameter { name: "sourceIndex"; type: "int" }
         }
+        Method {
+            name: "invalidate"
+        }
     }
     Component {
         name: "Intent"
@@ -453,6 +456,9 @@ Module {
             name: "mapFromSource"
             type: "int"
             Parameter { name: "sourceIndex"; type: "int" }
+        }
+        Method {
+            name: "invalidate"
         }
     }
     Component {

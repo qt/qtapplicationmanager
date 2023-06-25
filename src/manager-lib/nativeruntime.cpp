@@ -358,11 +358,11 @@ void NativeRuntime::stop(bool forceKill)
     setState(Am::ShuttingDown);
     emit aboutToStop();
 
-    if (!m_connectedToApplicationInterface) {
+    if (forceKill) {
+        m_process->kill();
+    } else if (!m_connectedToApplicationInterface) {
         //The launcher didn't connected to the ApplicationInterface yet, so it won't get the quit signal
         m_process->terminate();
-    } else if (forceKill) {
-        m_process->kill();
     } else {
         bool ok;
         int qt = configuration().value(qSL("quitTime")).toInt(&ok);

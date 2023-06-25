@@ -13,6 +13,7 @@
 #include <QTimer>
 #include <QUuid>
 #include <QLibraryInfo>
+#include <QStringBuilder>
 
 #include "global.h"
 #include "logging.h"
@@ -197,9 +198,35 @@ void NativeRuntime::shutdown(int exitCode, Am::ExitStatus status)
         status = Am::ForcedExit;
 
     if (!m_isQuickLauncher || m_connectedToApplicationInterface) {
-        qCDebug(LogSystem) << "NativeRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
-                           << "pid:" << m_process->processId() << ") exited with code:" << exitCode
-                           << "status:" << status;
+        QByteArray cause = "exited";
+        bool printWarning = false;
+        switch (status) {
+        case Am::ForcedExit:
+            cause = "was force exited (" + QByteArray(exitCode == SIGTERM ? "terminated" : "killed") + ")";
+            printWarning = true;
+            break;
+        case Am::CrashExit:
+            cause = "received signal: " + QByteArray::number(exitCode) + " ("
+                    + QByteArray(::strsignal(exitCode)) + ")";
+            printWarning = true;
+            break;
+        default:
+            if (exitCode != 0) {
+                cause = "exited with code: " + QByteArray::number(exitCode);
+                printWarning = true;
+            }
+            break;
+        }
+
+        if (printWarning) {
+            qCWarning(LogSystem, "Runtime for application '%s' (pid: %lld) %s",
+                      (m_app ? qPrintable(m_app->id()) : "<quicklauncher>"), m_process->processId(),
+                      cause.constData());
+        } else {
+            qCDebug(LogSystem, "Runtime for application '%s' (pid: %lld) %s",
+                    (m_app ? qPrintable(m_app->id()) : "<quicklauncher>"), m_process->processId(),
+                    cause.constData());
+        }
     }
     m_connectedToApplicationInterface = m_dbusConnection = false;
 

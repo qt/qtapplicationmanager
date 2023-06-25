@@ -58,7 +58,7 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
     const QStringList allContainerIds = cf->containerIds();
     for (const QString &containerId : allContainerIds) {
         if (!cf->manager(containerId)->supportsQuickLaunch()) {
-            qCDebug(LogSystem).noquote() << " * container: " << containerId << " does not support quick-launch";
+            qCDebug(LogSystem).noquote() << " * container:" << containerId << "does not support quick-launch";
             continue;
         }
 

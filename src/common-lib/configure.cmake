@@ -26,7 +26,7 @@ qt_feature("am-system-libyaml" PRIVATE
 
 qt_feature("am-multi-process" PUBLIC
     LABEL "Multi-process mode"
-    CONDITION TARGET Qt::DBus AND TARGET Qt::WaylandCompositor AND LINUX
+    CONDITION TARGET Qt::DBus AND TARGET Qt::WaylandCompositor AND LINUX AND QT_FEATURE_shared
     ENABLE INPUT_force_mode STREQUAL 'multi'
     DISABLE INPUT_force_mode STREQUAL 'single'
 )

@@ -375,7 +375,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
             auto childPidIt = root.constFind(u"child-pid"_s);
             if (childPidIt != root.constEnd()) {
                 m_namespacePid = quint64(childPidIt->toInteger());
-                qCDebug(lcBwrap) << "Namespace pid for app" << m_application[u"id"_s].toString()
+                qCDebug(lcBwrap) << "Namespace pid for app" << m_application.value(u"id"_s).toString()
                                  << "=" << m_namespacePid;
 
                 bool success = false;

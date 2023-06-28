@@ -815,56 +815,47 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     if (!documentUrl.isEmpty())
         qCDebug(LogSystem) << "  documentUrl:" << documentUrl;
 
-    if (inProcess) {
-        bool successfullyStarted = runtime->start();
+    // We can only start the app when both the container and the windowmanager are ready.
+    // Using a state-machine would be one option, but then we would need that state-machine
+    // object plus the per-app state. Relying on 2 lambdas is the easier choice for now.
 
-        if (successfullyStarted)
+    auto doStartInContainer = [this, app, attachRuntime, runtime, containerId]() -> bool {
+        bool successfullyStarted = false;
+        if (app) {
+            successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app)
+                                                : runtime->start();
+        }
+        if (successfullyStarted) {
             emitActivated(app);
-        else
-            delete runtime;
-
-        return successfullyStarted;
-    } else {
-        // We can only start the app when both the container and the windowmanager are ready.
-        // Using a state-machine would be one option, but then we would need that state-machine
-        // object plus the per-app state. Relying on 2 lambdas is the easier choice for now.
-
-        auto doStartInContainer = [this, app, attachRuntime, runtime]() -> bool {
-            bool successfullyStarted = false;
-            if (app) {
-                successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app)
-                                                    : runtime->start();
-            }
-            if (successfullyStarted)
-                emitActivated(app);
-            else
-                delete runtime; // ~Runtime() will clean up app->m_runtime
-
-            return successfullyStarted;
-        };
-
-        auto tryStartInContainer = [container, doStartInContainer]() -> bool {
-            if (container->isReady()) {
-                // Since the container is already ready, start the app immediately
-                return doStartInContainer();
-            } else {
-                // We postpone the starting of the application to a later point in time,
-                // since the container is not ready yet
-#  if defined(Q_CC_MSVC)
-                qApp->connect(container, &AbstractContainer::ready, doStartInContainer); // MSVC cannot distinguish between static and non-static overloads in lambdas
-# else
-                connect(container, &AbstractContainer::ready, doStartInContainer);
-#endif
-                return true;
-            }
-        };
-
-        if (isWindowManagerCompositorReady()) {
-            return tryStartInContainer();
         } else {
-            connect(this, &ApplicationManager::windowManagerCompositorReadyChanged, tryStartInContainer);
+            qCWarning(LogSystem) << "Failed to start application" << app->id() << "in container"
+                                 << containerId << "using runtime" << runtime->manager()->identifier();
+            delete runtime; // ~Runtime() will clean up app->m_runtime
+        }
+        return successfullyStarted;
+    };
+
+    auto tryStartInContainer = [container, inProcess, doStartInContainer]() -> bool {
+        if (inProcess || container->isReady()) {
+            // Since the container is already ready, start the app immediately
+            return doStartInContainer();
+        } else {
+            // We postpone the starting of the application to a later point in time,
+            // since the container is not ready yet
+#  if defined(Q_CC_MSVC)
+            qApp->connect(container, &AbstractContainer::ready, doStartInContainer); // MSVC cannot distinguish between static and non-static overloads in lambdas
+# else
+            connect(container, &AbstractContainer::ready, doStartInContainer);
+#endif
             return true;
         }
+    };
+
+    if (inProcess || isWindowManagerCompositorReady()) {
+        return tryStartInContainer();
+    } else {
+        connect(this, &ApplicationManager::windowManagerCompositorReadyChanged, tryStartInContainer);
+        return true;
     }
 }
 

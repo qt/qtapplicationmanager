@@ -436,6 +436,16 @@ ui:
                 potentially freeze your device if you have a container plugin where instantiation
                 is expensive, resource-wise.
     \row
+        \li [\c quicklaunch/failedStartLimit]
+        \li int
+        \li Any quick launch container/runtime combination that fails to successfully start more
+            often than \c failedStartLimit within \c failedStartLimitIntervalSec, will get disabled.
+            (default: 5)
+    \row
+        \li [\c quicklaunch/failedStartLimitIntervalSec]
+        \li int
+        \li See \c failedStartLimit above. (default: 10)
+    \row
         \li \b --wayland-socket-name
             \br [\c wayland/socketName]
         \li string

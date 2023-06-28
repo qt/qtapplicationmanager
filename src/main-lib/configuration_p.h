@@ -85,6 +85,8 @@ struct ConfigurationData
     struct {
         double idleLoad = 0.;
         int runtimesPerContainer = 0;
+        int failedStartLimit = 5;
+        int failedStartLimitIntervalSec = 10;
     } quicklaunch;
 
     struct {

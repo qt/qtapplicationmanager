@@ -200,8 +200,9 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 
     loadPackageDatabase(cfg->clearCache() || cfg->noCache(), cfg->singleApp());
 
-    setupSingletons(cfg->containerSelectionConfiguration(), cfg->quickLaunchRuntimesPerContainer(),
-                    cfg->quickLaunchIdleLoad());
+    setupSingletons(cfg->containerSelectionConfiguration());
+    setupQuickLauncher(cfg->quickLaunchRuntimesPerContainer(), cfg->quickLaunchIdleLoad(),
+                       cfg->quickLaunchFailedStartLimit(), cfg->quickLaunchFailedStartLimitIntervalSec());
 
     if (!cfg->disableIntents()) {
         setupIntents(cfg->intentTimeoutForDisambiguation(), cfg->intentTimeoutForStartApplication(),
@@ -473,9 +474,7 @@ void Main::setupIntents(int disambiguationTimeout, int startApplicationTimeout,
     StartupTimer::instance()->checkpoint("after IntentServer instantiation");
 }
 
-void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
-                           int quickLaunchRuntimesPerContainer,
-                           qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_packageManager = PackageManager::createInstance(m_packageDatabase, m_documentDir);
     m_applicationManager = ApplicationManager::createInstance(m_isSingleProcessMode);
@@ -492,9 +491,14 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
 
     m_notificationManager = NotificationManager::createInstance();
     StartupTimer::instance()->checkpoint("after NotificationManager instantiation");
+}
 
+void Main::setupQuickLauncher(int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
+                              int failedStartLimit, int failedStartLimitIntervalSec) Q_DECL_NOEXCEPT_EXPR(false)
+{
     if (quickLaunchRuntimesPerContainer > 0) {
-        m_quickLauncher = QuickLauncher::createInstance(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad);
+        m_quickLauncher = QuickLauncher::createInstance(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad,
+                                                        failedStartLimit, failedStartLimitIntervalSec);
         StartupTimer::instance()->checkpoint("after quick-launcher setup");
     } else {
         qCDebug(LogSystem) << "Not setting up the quick-launch pool (runtimesPerContainer is 0)";

@@ -96,6 +96,10 @@ static constexpr const char *s_defaultSystemUiDltDescription = "Qt Application M
     \li \c RT
     \li Runtime messages
 \row
+    \li \c am.quicklaunch
+    \li \c QL
+    \li Quick-Launcher messages
+\row
     \li \c am.runtime.qml
     \li \c QMRT
     \li QML runtime messages
@@ -131,6 +135,7 @@ QDLT_LOGGING_CATEGORY(LogGraphics, "am.graphics", "GRPH", "OpenGL/UI related mes
 QDLT_LOGGING_CATEGORY(LogWaylandDebug, "am.wayland.debug", "WAYL", "Wayland related messages")
 QDLT_LOGGING_CATEGORY(LogQml, "am.qml", "QML", "General QML related messages")
 QDLT_LOGGING_CATEGORY(LogRuntime, "am.runtime", "RT", "Runtime messages")
+QDLT_LOGGING_CATEGORY(LogQuickLaunch, "am.quicklaunch", "QL", "Quick-Launcher messages")
 QDLT_LOGGING_CATEGORY(LogQmlRuntime, "am.runtime.qml", "QMRT", "QML runtime messages")
 QDLT_LOGGING_CATEGORY(LogNotifications, "am.notify", "NTFY", "Notifications sub-system messages")
 QDLT_LOGGING_CATEGORY(LogDeployment, "am.deployment", "DPLM", "Deployment hints")

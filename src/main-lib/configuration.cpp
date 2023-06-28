@@ -386,7 +386,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 10;
+const quint32 ConfigurationData::DataStreamVersion = 11;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -450,7 +450,9 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->flags.allowUnsignedPackages
        >> cd->flags.allowUnknownUiClients
        >> cd->instanceId
-       >> cd->runtimes.additionalLaunchers;
+       >> cd->runtimes.additionalLaunchers
+       >> cd->quicklaunch.failedStartLimit
+       >> cd->quicklaunch.failedStartLimitIntervalSec;
 
     return cd;
 }
@@ -515,7 +517,9 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << flags.allowUnsignedPackages
        << flags.allowUnknownUiClients
        << instanceId
-       << runtimes.additionalLaunchers;
+       << runtimes.additionalLaunchers
+       << quicklaunch.failedStartLimit
+       << quicklaunch.failedStartLimitIntervalSec;
 }
 
 template <typename T> void mergeField(T &into, const T &from, const T &def)
@@ -618,6 +622,8 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(flags.allowUnknownUiClients);
     MERGE_FIELD(instanceId);
     MERGE_FIELD(runtimes.additionalLaunchers);
+    MERGE_FIELD(quicklaunch.failedStartLimit);
+    MERGE_FIELD(quicklaunch.failedStartLimitIntervalSec);
 }
 
 QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
@@ -782,6 +788,10 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                             cd->quicklaunch.idleLoad = p->parseScalar().toDouble(); } },
                       { "runtimesPerContainer", false, YamlParser::Scalar, [&cd](YamlParser *p) {
                             cd->quicklaunch.runtimesPerContainer = p->parseScalar().toInt(); } },
+                     { "failedStartLimit", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                          cd->quicklaunch.runtimesPerContainer = p->parseScalar().toInt(); } },
+                     { "failedStartLimitIntervalSec", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                          cd->quicklaunch.runtimesPerContainer = p->parseScalar().toInt(); } },
                   }); } },
             { "ui", false, YamlParser::Map, [&cd](YamlParser *p) {
                   p->parseFields({
@@ -1238,6 +1248,16 @@ int Configuration::quickLaunchRuntimesPerContainer() const
     // or you have a typo in your YAML, which could potentially freeze your target (container
     // construction can be expensive)
     return qBound(0, m_data->quicklaunch.runtimesPerContainer, 10);
+}
+
+int Configuration::quickLaunchFailedStartLimit() const
+{
+    return m_data->quicklaunch.failedStartLimit;
+}
+
+int Configuration::quickLaunchFailedStartLimitIntervalSec() const
+{
+    return m_data->quicklaunch.failedStartLimitIntervalSec;
 }
 
 QString Configuration::waylandSocketName() const

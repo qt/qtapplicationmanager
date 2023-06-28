@@ -21,7 +21,9 @@ class QuickLauncher : public QObject
     Q_OBJECT
 
 public:
-    static QuickLauncher *createInstance(int runtimesPerContainer, qreal idleLoad);
+    static QuickLauncher *createInstance(int runtimesPerContainer, qreal idleLoad,
+                                         int failedStartLimit, int failedStartLimitIntervalSec);
+
     static QuickLauncher *instance();
     ~QuickLauncher() override;
 
@@ -38,20 +40,26 @@ protected:
     void timerEvent(QTimerEvent *te) override;
 
 private:
-    QuickLauncher(QObject *parent = nullptr);
+    QuickLauncher(int runtimesPerContainer, qreal idleLoad, int failedStartLimit,
+                  int failedStartLimitIntervalSec, QObject *parent = nullptr);
     QuickLauncher(const QuickLauncher &);
-    void initialize(int runtimesPerContainer, qreal idleLoad);
     QuickLauncher &operator=(const QuickLauncher &);
     static QuickLauncher *s_instance;
 
     void triggerRebuild(int delay = 0);
     void removeEntry(AbstractContainer *container, AbstractRuntime *runtime);
+    void checkFailedStarts();
 
     struct QuickLaunchEntry
     {
         QString m_containerId;
         QString m_runtimeId;
         int m_maximum = 1;
+        bool m_disabled = false;
+
+        void addFailure();
+        QVector<qint64> m_failedTimeStamps; // msecs since epoch when the instance failed
+
         QList<QPair<AbstractContainer *, AbstractRuntime *>> m_containersAndRuntimes;
     };
 
@@ -61,6 +69,8 @@ private:
     bool m_isIdle = false;
     qreal m_idleThreshold;
     bool m_shuttingDown = false;
+    int m_failedStartLimit;
+    int m_failedStartLimitIntervalSec;
 };
 
 QT_END_NAMESPACE_AM

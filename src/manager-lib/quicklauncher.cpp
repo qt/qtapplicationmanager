@@ -5,6 +5,7 @@
 
 #include <QCoreApplication>
 #include <QTimer>
+#include <QDateTime>
 #include <QMetaObject>
 
 #include "logging.h"
@@ -21,13 +22,14 @@ QT_BEGIN_NAMESPACE_AM
 
 QuickLauncher *QuickLauncher::s_instance = nullptr;
 
-QuickLauncher *QuickLauncher::createInstance(int runtimesPerContainer, qreal idleLoad)
+QuickLauncher *QuickLauncher::createInstance(int runtimesPerContainer, qreal idleLoad,
+                                             int failedStartLimit, int failedStartLimitIntervalSec)
 {
     if (Q_UNLIKELY(s_instance))
         qFatal("QuickLauncher instance already exists");
 
-    s_instance = new QuickLauncher();
-    s_instance->initialize(runtimesPerContainer, idleLoad);
+    s_instance = new QuickLauncher(runtimesPerContainer, idleLoad, failedStartLimit,
+                                   failedStartLimitIntervalSec);
     return s_instance;
 }
 
@@ -35,10 +37,6 @@ QuickLauncher *QuickLauncher::instance()
 {
     return s_instance;
 }
-
-QuickLauncher::QuickLauncher(QObject *parent)
-    : QObject(parent)
-{ }
 
 QuickLauncher::~QuickLauncher()
 {
@@ -48,17 +46,21 @@ QuickLauncher::~QuickLauncher()
     s_instance = nullptr;
 }
 
-void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
+QuickLauncher::QuickLauncher(int runtimesPerContainer, qreal idleLoad, int failedStartLimit,
+                             int failedStartLimitIntervalSec, QObject *parent)
+    : QObject(parent)
+    , m_failedStartLimit(qMax(0, failedStartLimit))
+    , m_failedStartLimitIntervalSec(qMax(0, failedStartLimitIntervalSec))
 {
     ContainerFactory *cf = ContainerFactory::instance();
     RuntimeFactory *rf = RuntimeFactory::instance();
 
-    qCDebug(LogSystem) << "Setting up the quick-launch pool:";
+    qCDebug(LogQuickLaunch) << "Setting up the quick-launch pool:";
 
     const QStringList allContainerIds = cf->containerIds();
     for (const QString &containerId : allContainerIds) {
         if (!cf->manager(containerId)->supportsQuickLaunch()) {
-            qCDebug(LogSystem).noquote() << " * container:" << containerId << "does not support quick-launch";
+            qCDebug(LogQuickLaunch).noquote() << " * container:" << containerId << "does not support quick-launch";
             continue;
         }
 
@@ -76,9 +78,10 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
 
             m_quickLaunchPool << entry;
 
-            qCDebug(LogSystem).nospace().noquote() << " * container: " << entry.m_containerId << " / runtime: "
-                                                   << (entry.m_runtimeId.isEmpty() ? qSL("(none)") : entry.m_runtimeId)
-                                                   << " [at max: " << runtimesPerContainer << "]";
+            qCDebug(LogQuickLaunch).nospace().noquote()
+                << " * container: " << entry.m_containerId << " / runtime: "
+                << (entry.m_runtimeId.isEmpty() ? qSL("(none)") : entry.m_runtimeId)
+                << " [at max: " << runtimesPerContainer << "]";
         }
     }
 
@@ -112,6 +115,9 @@ void QuickLauncher::rebuild()
     int done = 0;
 
     for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
+        if (entry->m_disabled)
+            continue;
+
         if (entry->m_containersAndRuntimes.size() < entry->m_maximum) {
             todo += (entry->m_maximum - entry->m_containersAndRuntimes.size());
             if (done >= 1)
@@ -119,8 +125,9 @@ void QuickLauncher::rebuild()
 
             std::unique_ptr<AbstractContainer> ac(ContainerFactory::instance()->create(entry->m_containerId, nullptr));
             if (!ac) {
-                qCWarning(LogSystem) << "ERROR: Could not create quick-launch container with id"
-                                     << entry->m_containerId;
+                entry->addFailure();
+                qCWarning(LogQuickLaunch) << "ERROR: Could not create quick-launch container"
+                                          << entry->m_containerId;
                 continue;
             }
 
@@ -128,33 +135,62 @@ void QuickLauncher::rebuild()
             if (!entry->m_runtimeId.isEmpty()) {
                 ar.reset(RuntimeFactory::instance()->createQuickLauncher(ac.release(), entry->m_runtimeId));
                 if (!ar) {
-                    qCWarning(LogSystem) << "ERROR: Could not create quick-launch runtime with id"
-                                         << entry->m_runtimeId << "within container with id"
-                                         << entry->m_containerId;
+                    entry->addFailure();
+                    qCWarning(LogQuickLaunch) << "ERROR: Could not create quick-launch runtime"
+                                              << entry->m_runtimeId << "within container"
+                                              << entry->m_containerId;
                     continue;
                 }
                 if (!ar->start()) {
-                    qCWarning(LogSystem) << "ERROR: Could not start quick-launch runtime with id"
-                                         << entry->m_runtimeId << "within container with id"
-                                         << entry->m_containerId;
+                    entry->addFailure();
+                    qCWarning(LogQuickLaunch) << "ERROR: Could not start quick-launch runtime"
+                                              << entry->m_runtimeId << "within container"
+                                              << entry->m_containerId;
                     continue;
                 }
             }
             AbstractContainer *container = ar ? ar.get()->container() : ac.release();
             AbstractRuntime *runtime = ar.release();
 
-            connect(container, &AbstractContainer::destroyed, this, [this, container]() { removeEntry(container, nullptr); });
-            if (runtime)
-                connect(runtime, &AbstractRuntime::destroyed, this, [this, runtime]() { removeEntry(nullptr, runtime); });
+            if (container->process()) {
+                connect(container->process(), &AbstractContainerProcess::finished,
+                        this, [this, container, runtime](int exitCode, Am::ExitStatus status) {
+                    if ((status == Am::CrashExit) || ((status == Am::NormalExit) && exitCode)) {
+                        for (auto e = m_quickLaunchPool.begin(); e != m_quickLaunchPool.end(); ++e) {
+                            for (int i = 0; i < e->m_containersAndRuntimes.size(); ++i) {
+                                auto car = e->m_containersAndRuntimes.at(i);
+                                if ((car.first == container) && (car.second == runtime)) {
+                                    e->addFailure();
+                                    checkFailedStarts();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            connect(container, &AbstractContainer::destroyed,
+                    this, [this, container]() {
+                removeEntry(container, nullptr);
+            });
+            if (runtime) {
+                connect(runtime, &AbstractRuntime::destroyed,
+                        this, [this, runtime]() {
+                    removeEntry(nullptr, runtime);
+                });
+            }
 
             entry->m_containersAndRuntimes << qMakePair(container, runtime);
             ++done;
 
-            qCDebug(LogSystem).noquote() << "Added a new entry to the quick-launch pool:"
-                                         << entry->m_containerId << "/"
-                                         << (entry->m_runtimeId.isEmpty() ? qSL("(no runtime)") : entry->m_runtimeId);
+            qCDebug(LogQuickLaunch) << "Added new quick-launch entry for container:"
+                                    << entry->m_containerId << "/ runtime:"
+                                    << (entry->m_runtimeId.isEmpty() ? qSL("(none)") : entry->m_runtimeId);
         }
     }
+
+    checkFailedStarts();
+
     if (todo > done)
         triggerRebuild(1000);
 }
@@ -174,7 +210,9 @@ void QuickLauncher::removeEntry(AbstractContainer *container, AbstractRuntime *r
             auto car = entry->m_containersAndRuntimes.at(i);
             if ((container && car.first == container)
                     || (runtime && car.second == runtime)) {
-                qCDebug(LogSystem) << "Removed quicklaunch entry for container/runtime" << container << runtime;
+                qCDebug(LogQuickLaunch) << "Removed quick-launch entry for container:"
+                                        << entry->m_containerId << "/ runtime:"
+                                        << (entry->m_runtimeId.isEmpty() ? qSL("(none)") : entry->m_runtimeId);
 
                 entry->m_containersAndRuntimes.removeAt(i--);
                 carRemoved++;
@@ -187,6 +225,30 @@ void QuickLauncher::removeEntry(AbstractContainer *container, AbstractRuntime *r
     // without this guard, it would emit the signal multiple times)
     if (m_shuttingDown && (carRemoved > 0) && (carCount == 0))
         emit shutDownFinished();
+}
+
+void QuickLauncher::checkFailedStarts()
+{
+    qint64 intervalStart = QDateTime::currentMSecsSinceEpoch() - (m_failedStartLimitIntervalSec * 1000);
+
+    for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
+        if (entry->m_disabled)
+            continue;
+
+        entry->m_failedTimeStamps.removeIf([=](qint64 ts) { return ts < intervalStart; });
+
+        if (m_failedStartLimit && m_failedStartLimitIntervalSec
+                && (entry->m_failedTimeStamps.size() >= m_failedStartLimit)) {
+            qCWarning(LogQuickLaunch) << "Disabling quick-launch for container:"
+                                      << entry->m_containerId << "/ runtime:"
+                                      << (entry->m_runtimeId.isEmpty() ? qSL("(none)") : entry->m_runtimeId)
+                                      << "due to too many failed start attempts:"
+                                      << entry->m_failedTimeStamps.size() << "failed starts within"
+                                      << m_failedStartLimitIntervalSec << "seconds";
+            entry->m_disabled = true;
+            entry->m_failedTimeStamps.clear();
+        }
+    }
 }
 
 QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString &containerId, const QString &runtimeId)
@@ -236,6 +298,11 @@ void QuickLauncher::shutDown()
     }
     if (!waitForRemove)
         QMetaObject::invokeMethod(this, &QuickLauncher::shutDownFinished, Qt::QueuedConnection);
+}
+
+void QuickLauncher::QuickLaunchEntry::addFailure()
+{
+    m_failedTimeStamps << QDateTime::currentMSecsSinceEpoch();
 }
 
 QT_END_NAMESPACE_AM

@@ -82,8 +82,9 @@ protected:
     void loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) Q_DECL_NOEXCEPT_EXPR(false);
     void setupIntents(int disambiguationTimeout, int startApplicationTimeout,
                       int replyFromApplicationTimeout, int replyFromSystemTimeout) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration,
-                         int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupQuickLauncher(int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
+                            int failedStartLimit, int failedStartLimitIntervalSec) Q_DECL_NOEXCEPT_EXPR(false);
     void setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths,
                         const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
     void registerPackages();

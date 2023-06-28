@@ -98,6 +98,8 @@ public:
 
     qreal quickLaunchIdleLoad() const;
     int quickLaunchRuntimesPerContainer() const;
+    int quickLaunchFailedStartLimit() const;
+    int quickLaunchFailedStartLimitIntervalSec() const;
 
     QString waylandSocketName() const;
     QVariantList waylandExtraSockets() const;

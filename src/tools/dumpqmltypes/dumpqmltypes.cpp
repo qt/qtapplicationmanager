@@ -14,6 +14,7 @@
 #include <QtAppManManager/notificationmanager.h>
 #include <QtAppManNotification/notification.h>
 #include <QtAppManManager/notificationmanager.h>
+#include <QtAppManManager/notificationmodel.h>
 #include <QtAppManManager/qmlinprocessapplicationinterface.h>
 #include <QtAppManWindow/windowmanager.h>
 #include <QtAppManWindow/window.h>
@@ -50,6 +51,7 @@ static const QVector<const QMetaObject *> all = {
     &ApplicationInstaller::staticMetaObject,
     &PackageManager::staticMetaObject,
     &NotificationManager::staticMetaObject,
+    &NotificationModel::staticMetaObject,
     &Application::staticMetaObject,
     &AbstractRuntime::staticMetaObject,
     &AbstractContainer::staticMetaObject,

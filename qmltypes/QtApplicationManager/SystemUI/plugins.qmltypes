@@ -592,6 +592,47 @@ Module {
         }
     }
     Component {
+        name: "NotificationModel"
+        exports: [ "QtApplicationManager.SystemUI/NotificationModel 2.2", "QtApplicationManager.SystemUI/NotificationModel 2.1", "QtApplicationManager.SystemUI/NotificationModel 2.0" ]
+        exportMetaObjectRevisions: [ 514, 513, 512 ]
+        prototype: "QObject"
+        Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
+        Property { name: "filterFunction"; type: "QJSValue"; isFinal: true }
+        Property { name: "sortFunction"; type: "QJSValue"; isFinal: true }
+        Signal {
+            name: "countChanged"
+        }
+        Signal {
+            name: "filterFunctionChanged"
+        }
+        Signal {
+            name: "sortFunctionChanged"
+        }
+        Method {
+            name: "indexOfNotification"
+            type: "int"
+            Parameter { name: "notificationId"; type: "uint" }
+        }
+        Method {
+            name: "indexOfNotification"
+            type: "int"
+            Parameter { name: "notification"; type: "Notification"; isPointer: true }
+        }
+        Method {
+            name: "mapToSource"
+            type: "int"
+            Parameter { name: "ourIndex"; type: "int" }
+        }
+        Method {
+            name: "mapFromSource"
+            type: "int"
+            Parameter { name: "sourceIndex"; type: "int" }
+        }
+        Method {
+            name: "invalidate"
+        }
+    }
+    Component {
         name: "NotificationManager"
         exports: [ "QtApplicationManager.SystemUI/NotificationManager 2.0" ]
         exportMetaObjectRevisions: [ 512 ]

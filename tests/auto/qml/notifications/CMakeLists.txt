@@ -1,0 +1,1 @@
+qt_am_internal_add_qml_test(tst_notifications TEST_FILE tst_notifications.qml)

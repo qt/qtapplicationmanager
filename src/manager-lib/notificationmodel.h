@@ -1,5 +1,4 @@
-// Copyright (C) 2021 The Qt Company Ltd.
-// Copyright (C) 2019 Luxoft Sweden AB
+// Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #pragma once
@@ -12,13 +11,13 @@ QT_FORWARD_DECLARE_CLASS(QJSEngine);
 
 QT_BEGIN_NAMESPACE_AM
 
-class Intent;
-class IntentModelPrivate;
+class NotificationModelPrivate;
+class Notification;
 
-class IntentModel : public QSortFilterProxyModel
+class NotificationModel : public QSortFilterProxyModel
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentModel 2.0")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/NotificationModel 2.2")
     Q_CLASSINFO("AM-QmlPrototype", "QObject")
 
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
@@ -26,7 +25,8 @@ class IntentModel : public QSortFilterProxyModel
     Q_PROPERTY(QJSValue sortFunction READ sortFunction WRITE setSortFunction NOTIFY sortFunctionChanged FINAL)
 
 public:
-    IntentModel(QObject *parent = nullptr);
+    NotificationModel(QObject *parent = nullptr);
+    ~NotificationModel() override;
 
     int count() const;
 
@@ -36,9 +36,8 @@ public:
     QJSValue sortFunction() const;
     void setSortFunction(const QJSValue &callback);
 
-    Q_INVOKABLE int indexOfIntent(const QString &intentId, const QString &applicationId,
-                                  const QVariantMap &parameters = {}) const;
-    Q_INVOKABLE int indexOfIntent(QT_PREPEND_NAMESPACE_AM(Intent) *intent);
+    Q_INVOKABLE int indexOfNotification(uint notificationId) const;
+    Q_INVOKABLE int indexOfNotification(QT_PREPEND_NAMESPACE_AM(Notification) *notification) const;
     Q_INVOKABLE int mapToSource(int ourIndex) const;
     Q_INVOKABLE int mapFromSource(int sourceIndex) const;
     Q_INVOKABLE void invalidate();
@@ -56,7 +55,7 @@ signals:
     void sortFunctionChanged();
 
 private:
-    IntentModelPrivate *d;
+    NotificationModelPrivate *d;
 };
 
 QT_END_NAMESPACE_AM

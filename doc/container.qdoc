@@ -18,21 +18,88 @@ simple as a Unix process.
 
 \section1 Predefined Containers
 
-The application manager comes with one built-in container type: the \c process container,
-that spawns a new Unix process to execute the requested binary.
+\annotatedlist qtappman-containers
 
-In addition, you can find a basic integration of Pelagicore's
-\l{https://github.com/Pelagicore/softwarecontainer}{SoftwareContainer} in \c
-examples/applicationmanager/softwarecontainer-plugin. For more information, see
-\l{SoftwareContainer Plugin Example}. This example can be used as a blueprint to either create a
-customer-specific production version of a SoftwareContainer plugin, or to integrate another
-container solution.
+\section1 Configuration
+
+A container configuration has three parts:
+
+\list 1
+  \li Configure which containers are available when \l{load-plugins}{loading} the container plugins
+  \li Add specific settings for each container integration available. See the container specific
+      documentation for more information.
+  \li Configure which container solution to \l{container-selection}{select} to run a specific
+      application
+\endlist
+
+\target load-plugins
+\section1 Load Container Plugins
+
+To configure an existing container plugin for use in the application manager, you need to
+add its full path to the list of plugins to load in the application manager's config file:
+
+\badcode
+plugins:
+  container: [ "/full/path/to/softwarecontainers.so", "/another/plugin.so" ]
+\endcode
+
+Plugins installed into Qt's plugin directory into the \c appman_container folder are picked
+up automatically, but you still need to enable the usage of the container using the
+\l{container-selection}{container selection} configuration.
+
+\target container-selection
+\section1 Container Selection Configuration
+
+When you start an application from within the application manager, there are multiple ways to
+control which container integration is used:
+
+\list 1
+  \li If the config file does not contain the \c containers/selection key, the container
+      integration ID defaults to \c process.
+  \li If the \c containers/selection key exists, its contents are parsed as a list of maps, where
+      each map has a single mapping only. While this single mapping is awkward, it is necessary to
+      preserve the order of the mappings. Each key is interpreted as a standard Unix wildcard
+      expression that is matched against the application ID. The first match stops the algorithm
+      and the mapping's value is used as the container integration ID. If no matches are found,
+      the resulting container integration ID is an empty string.
+
+    \badcode
+    containers:
+      selection:
+      - com.pelagicore.*: "process"
+      - com.navigation: "special-container"
+      - '*': "softwarecontainers"  # a single asterisk needs to be quoted
+    \endcode
+
+  \li Afterwards, if the System UI did set the ApplicationManager::containerSelectionFunction
+      property to a valid JavaScript function, this function is called with the first parameter set
+      to the application's ID and the second parameter set to the container integration ID that
+      resulted from step 1 and 2.
+
+    \badcode
+    ApplicationManager.containerSelectionFunction = function(appId, containerId) {
+        var app = ApplicationManager.application(appId)
+        if (app.capabilities.indexOf("non-secure") != -1)
+            return "process"
+        else
+            return containerId
+    }
+    \endcode
+\endlist
+
 
 \section1 Extend with Container Plugins
 
 Custom container solutions can be added via plugins. These plugins need not to be built as part
 of the application manager, but they need to be built against a private Qt module to get the
-interface definition:
+interface definition.
+
+The \l{SoftwareContainer Plugin Example} can be used as a blueprint to either create a
+customer-specific production version of a SoftwareContainer plugin, or to integrate another
+container solution.
+
+Following a brief introduction what steps needs to be done to build your own plugin. First you
+need to configure your build system.
 
 Here's a snippet on how to do this with cmake:
 \badcode
@@ -135,44 +202,21 @@ the application. A custom container plugin must forward these variables or adjus
   \li Tells the application to not use DLT for logging, if set to \c 1.
 \endtable
 
-\section1 Configuration
+*/
 
-A container configuration has three parts:
+/*!
+\page process-container.html
+\title Process Container
+\ingroup qtappman-containers
+\brief Spawns a new Unix process to execute the requested binary.
 
-\list 1
-  \li Configure which containers are available when \l{load-plugins}{loading} the container plugins
-  \li Add specific settings for each \l{container-integration}{container integration} available
-  \li Configure which container solution to \l{container-selection}{select} to run a specific
-      application
-\endlist
-
-\target load-plugins
-\section1 Load Container Plugins
-
-To configure an existing container plugin for use in the application manager, you need to
-add its full path to the list of plugins to load in the application manager's config file:
-
-\badcode
-plugins:
-  container: [ "/full/path/to/softwarecontainers.so", "/another/plugin.so" ]
-\endcode
-
-\note The application manager does \b not load plugins automatically if they are placed
-in a specific directory. This is because container plugins control the central security mechanism for
-separating applications.
-
-\target container-integration
-\section1 Add Container Integration Settings
-
-Each container integration has a unique ID, which can be used to add settings to the
-application manager's config file, such as:
+The \c process container is built into the application manager and enabled by default. It can be
+configured in the application manager config file using its unique ID: \c process:
 
 \badcode
 containers:
   process:
     defaultControlGroup: "foo"
-  softwarecontainers:
-    bar: [ 1, 2, 3 ]
 \endcode
 
 The \c process container accepts the following configuration settings:
@@ -207,47 +251,101 @@ The \c process container accepts the following configuration settings:
     \li string
     \li The default control group for an application when it is first launched.
 \endtable
+*/
 
-For other container plugins, refer to their respective documentation.
+/*!
+\page bubblewrap-container.html
+\title Bubblewrap Container
+\ingroup qtappman-containers
+\brief Spawns a process in a kernel namespace using the bubblewrap utility.
 
-\target container-selection
-\section1 Container Selection Configuration
+The \c bubblewrap container uses the \l{bubblewrap} utility to create a new kernel namespace and
+runs the requested binary in this sandbox isolated from the rest of the system. This is the base
+technology used in the \l{Flatpak}{Linux Flatpak ecosystem}. See the \l {Bubblewrap Container Example}
+for an example setup with test applications.
 
-When you start an application from within the application manager, there are multiple ways to
-control which container integration is used:
+the \c bubblewrap container is built as a plugin and loaded, but not enabled by default. It can be
+configured in the application manager's config file using its unique ID: \c bubblewrap:
 
-\list 1
-  \li If the config file does not contain the \c containers/selection key, the container
-      integration ID defaults to \c process.
-  \li If the \c containers/selection key exists, its contents are parsed as a list of maps, where
-      each map has a single mapping only. While this single mapping is awkward, it is necessary to
-      preserve the order of the mappings. Each key is interpreted as a standard Unix wildcard
-      expression that is matched against the application ID. The first match stops the algorithm
-      and the mapping's value is used as the container integration ID. If no matches are found,
-      the resulting container integration ID is an empty string.
+\badcode
+containers:
+  bubblewrap:
+    unshareNetwork: no
+    bindMountHome: yes
+    configuration:
+      symlink:
+        usr/lib: '/lib'
+        usr/lib64: '/lib64'
+        usr/bin: [ '/bin', '/sbin' ]
+      ro-bind:
+        /usr/bin: '/usr/bin'
+        /usr/lib: '/usr/lib'
+        /usr/lib64: '/usr/lib64'
+        /etc: '/etc'
+        /usr/share/fonts: '/usr/share/fonts'
+        /usr/share/fontconfig: '/usr/share/fontconfig'
+        /usr/share/ca-certificates: '/usr/share/ca-certificates'
+        /sys/dev/char: '/sys/dev/char'
+        ${CONFIG_PWD}/imports: '${CONFIG_PWD}/imports'
+      ro-bind-try:
+        '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'
+        /usr/share/glvnd/egl_vendor.d: '/usr/share/glvnd/egl_vendor.d'
+        /usr/share/X11/xkb: '/usr/share/X11/xkb'
+        /run/resolvconf: '/run/resolvconf'
+      dev: '/dev'
+      dev-bind:
+        /dev/dri: '/dev/dri'
+      tmpfs:
+        /tmp
+      proc:
+        /proc
+\endcode
+
+The \c bubblewrap container accepts the following configuration settings:
+
+\table
+  \header
+    \li Settings Name
+    \li Type
+    \li Description
+  \row
+    \li \c bwrap-location
+    \li string
+    \li The path to the \c bwrap binary. If no path is configured the standard \c{$PATH} is used to
+        find the executable.
+
+  \row
+    \li \c configuration
+    \li object
+    \li A two-stage mapping object to configure the sandboxing of the plugin. The top-level \c keys
+        are translated into options passed to the bubblewrap binary. The values themselves are used
+        as arguments for those options. Here is an example configuration:
 
     \badcode
-    containers:
-      selection:
-      - com.pelagicore.*: "process"
-      - com.navigation: "special-container"
-      - '*': "softwarecontainers"  # a single asterisk needs to be quoted
+    configuration:
+      symlink:
+        usr/lib: '/lib'
+        usr/lib64: '/lib64'
+        usr/bin: [ '/bin', '/sbin' ]
+      ro-bind:
+        /usr/bin: '/usr/bin'
+        /usr/lib: '/usr/lib'
+        /usr/lib64: '/usr/lib64'
     \endcode
 
-  \li Afterwards, if the System UI did set the ApplicationManager::containerSelectionFunction
-      property to a valid JavaScript function, this function is called with the first parameter set
-      to the application's ID and the second parameter set to the container integration ID that
-      resulted from step 1 and 2.
+  \row
+    \li \c bindMountHome
+    \li bool
+    \li Mounts the whole Home directory of the current user into the container. This can be used
+        for development purposes. (default: false)
 
-    \badcode
-    ApplicationManager.containerSelectionFunction = function(appId, containerId) {
-        var app = ApplicationManager.application(appId)
-        if (app.capabilities.indexOf("non-secure") != -1)
-            return "process"
-        else
-            return containerId
-    }
-    \endcode
-\endlist
+  \row
+    \li \c unshareNetwork
+    \li string
+    \li Network configuration of the container. When configured as \c yes (default), no network is
+        shared into the container. With \c no, the full host network is shared. For a more detailed
+        configuration a path to a shell script can be set. The shell script is executed when the
+        container starts and stops. See \l {Bubblewrap Container Example} for an example script.
 
+\endtable
 */

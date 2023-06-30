@@ -10,3 +10,14 @@
     \externalpage https://specifications.freedesktop.org/notification-spec/
     \title org.freedesktop.Notifications
 */
+
+/*!
+    \externalpage https://github.com/containers/bubblewrap
+    \title bubblewrap
+*/
+
+/*!
+    \externalpage https://flatpak.org/
+    \title Flatpak
+*/
+

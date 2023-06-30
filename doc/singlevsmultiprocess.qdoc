@@ -153,9 +153,11 @@ compatibility. The following are some examples:
            sharing the same QML scene.
     \endlist
 \li Many properties, functions, and signals defined in a Window are not yet re-implemented in the
-    single-process version of ApplicationManagerWindow.
+    single-process version of ApplicationManagerWindow (amongst others the \c opacity property).
 \li The \c color property needs to be provided with pre-multiplied alpha in multi-process and with
-    plain alpha in single-process mode.
+    straight alpha in single-process mode.
+\li In multi-process mode, when an ApplicationManagerWindow is clicked or touched, it will take
+    the focus, whereas in single-process mode the focus doesn't change.
 \li An error encountered in a code block due to properties or methods described above will cause
     subsequent statements not to be evaluated in multi-process mode; but this is not the case in
     single-process mode.

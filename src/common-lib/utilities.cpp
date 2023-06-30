@@ -10,6 +10,8 @@
 #include <QCoreApplication>
 #include <QNetworkInterface>
 #include <QPluginLoader>
+#include <QQmlContext>
+#include <QQmlEngine>
 #include <qplatformdefs.h>
 
 #include "utilities.h"
@@ -344,6 +346,12 @@ void validateIdForFilesystemUsage(const QString &id)  Q_DECL_NOEXCEPT_EXPR(false
     }
     if (spaceOnly)
         throw Exception(Error::Parse, "must not consist of only white-space characters");
+}
+
+QJSEngine *getJSEngine(const QObject *obj)
+{
+    QQmlContext *context = QQmlEngine::contextForObject(obj);
+    return context ? reinterpret_cast<QJSEngine*>(context->engine()) : nullptr;
 }
 
 QT_END_NAMESPACE_AM

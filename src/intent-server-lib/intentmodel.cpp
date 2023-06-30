@@ -2,7 +2,6 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlInfo>
 #include <QJSEngine>
@@ -13,6 +12,7 @@
 #include "intentserver.h"
 #include "intentmodel.h"
 #include "intent.h"
+#include "utilities.h"
 
 
 /*!
@@ -49,6 +49,7 @@
         }
 
         delegate: Image {
+            required property string icon
             source: icon
         }
     }
@@ -127,10 +128,11 @@ bool IntentModel::filterAcceptsRow(int source_row, const QModelIndex &source_par
 {
     Q_UNUSED(source_parent)
 
-    if (!d->m_engine)
-        d->m_engine = getJSEngine();
-    if (!d->m_engine)
-        qCWarning(LogSystem) << "IntentModel can't filter without a JavaScript engine";
+    if (!d->m_engine) {
+        d->m_engine = getJSEngine(this);
+        if (!d->m_engine)
+            qCWarning(LogIntents) << "IntentModel can't filter without a JavaScript engine";
+    }
 
     if (d->m_engine && d->m_filterFunction.isCallable()) {
         const QObject *intent = IntentServer::instance()->intent(source_row);
@@ -143,10 +145,11 @@ bool IntentModel::filterAcceptsRow(int source_row, const QModelIndex &source_par
 
 bool IntentModel::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const
 {
-    if (!d->m_engine)
-        d->m_engine = getJSEngine();
-    if (!d->m_engine)
-        qCWarning(LogSystem) << "IntentModel can't sort without a JavaScript engine";
+    if (!d->m_engine) {
+        d->m_engine = getJSEngine(this);
+        if (!d->m_engine)
+            qCWarning(LogIntents) << "IntentModel can't sort without a JavaScript engine";
+    }
 
     if (d->m_engine && d->m_sortFunction.isCallable()) {
         const QObject *intent1 = IntentServer::instance()->intent(source_left.row());
@@ -245,12 +248,6 @@ int IntentModel::mapFromSource(int sourceIndex) const
 void IntentModel::invalidate()
 {
     QSortFilterProxyModel::invalidate();
-}
-
-QJSEngine *IntentModel::getJSEngine() const
-{
-    QQmlContext *context = QQmlEngine::contextForObject(this);
-    return context ? reinterpret_cast<QJSEngine*>(context->engine()) : nullptr;
 }
 
 QT_END_NAMESPACE_AM

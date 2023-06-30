@@ -20,6 +20,7 @@
 #include <functional>
 
 QT_FORWARD_DECLARE_CLASS(QDir)
+QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -125,5 +126,7 @@ void closeAndClearFileDescriptors(QVector<int> &fdList);
 
 // make sure that the given id can be used as a filename
 void validateIdForFilesystemUsage(const QString &id) Q_DECL_NOEXCEPT_EXPR(false);
+
+QJSEngine *getJSEngine(const QObject *obj);
 
 QT_END_NAMESPACE_AM

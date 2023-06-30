@@ -16,6 +16,7 @@
 #include "qml-utilities.h"
 #include "dbus-utilities.h"
 #include "package.h"
+#include "notificationmodel.h"
 
 /*!
     \qmltype NotificationManager
@@ -230,6 +231,7 @@ NotificationManager *NotificationManager::createInstance()
     if (Q_UNLIKELY(s_instance))
         qFatal("NotificationManager::createInstance() was called a second time.");
 
+    qmlRegisterType<NotificationModel>("QtApplicationManager.SystemUI", 2, 2, "NotificationModel");
     qmlRegisterSingletonType<NotificationManager>("QtApplicationManager.SystemUI", 2, 0, "NotificationManager",
                                                  &NotificationManager::instanceForQml);
     return s_instance = new NotificationManager();

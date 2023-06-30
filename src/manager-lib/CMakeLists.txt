@@ -23,6 +23,7 @@ qt_internal_add_module(AppManManagerPrivate
         inprocesssurfaceitem.cpp inprocesssurfaceitem.h
         intentaminterface.cpp intentaminterface.h
         notificationmanager.cpp notificationmanager.h
+        notificationmodel.cpp notificationmodel.h
         package.cpp package.h
         packagemanager.cpp packagemanager.h packagemanager_p.h
         plugincontainer.cpp plugincontainer.h

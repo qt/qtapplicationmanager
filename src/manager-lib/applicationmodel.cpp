@@ -3,7 +3,6 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlInfo>
 #include <QJSEngine>
@@ -14,6 +13,7 @@
 #include "applicationmanager.h"
 #include "applicationmodel.h"
 #include "application.h"
+#include "utilities.h"
 
 
 /*!
@@ -49,6 +49,7 @@
         }
 
         delegate: Image {
+            required property string icon
             source: icon
         }
     }
@@ -135,10 +136,11 @@ bool ApplicationModel::filterAcceptsRow(int source_row, const QModelIndex &sourc
 {
     Q_UNUSED(source_parent)
 
-    if (!d->m_engine)
-        d->m_engine = getJSEngine();
-    if (!d->m_engine)
-        qCWarning(LogSystem) << "ApplicationModel can't filter without a JavaScript engine";
+    if (!d->m_engine) {
+        d->m_engine = getJSEngine(this);
+        if (!d->m_engine)
+            qCWarning(LogSystem) << "ApplicationModel can't filter without a JavaScript engine";
+    }
 
     if (d->m_engine && d->m_filterFunction.isCallable()) {
         const QObject *app = ApplicationManager::instance()->application(source_row);
@@ -151,10 +153,11 @@ bool ApplicationModel::filterAcceptsRow(int source_row, const QModelIndex &sourc
 
 bool ApplicationModel::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const
 {
-    if (!d->m_engine)
-        d->m_engine = getJSEngine();
-    if (!d->m_engine)
-        qCWarning(LogSystem) << "ApplicationModel can't sort without a JavaScript engine";
+    if (!d->m_engine) {
+        d->m_engine = getJSEngine(this);
+        if (!d->m_engine)
+            qCWarning(LogSystem) << "ApplicationModel can't sort without a JavaScript engine";
+    }
 
     if (d->m_engine && d->m_sortFunction.isCallable()) {
         const QObject *app1 = ApplicationManager::instance()->application(source_left.row());
@@ -258,12 +261,6 @@ int ApplicationModel::mapFromSource(int sourceIndex) const
 void ApplicationModel::invalidate()
 {
     QSortFilterProxyModel::invalidate();
-}
-
-QJSEngine *ApplicationModel::getJSEngine() const
-{
-    QQmlContext *context = QQmlEngine::contextForObject(this);
-    return context ? reinterpret_cast<QJSEngine*>(context->engine()) : nullptr;
 }
 
 QT_END_NAMESPACE_AM

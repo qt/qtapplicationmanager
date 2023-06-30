@@ -57,8 +57,6 @@ signals:
     void sortFunctionChanged();
 
 private:
-    QJSEngine *getJSEngine() const;
-
     ApplicationModelPrivate *d;
 };
 

@@ -89,7 +89,7 @@ public:
 
 protected:
     explicit PluginContainer(AbstractContainerManager *manager, Application *app, ContainerInterface *containerInterface);
-    ContainerInterface *m_interface;
+    std::unique_ptr<ContainerInterface> m_interface;
     bool m_startCalled = false;
 
     friend class PluginContainerProcess;

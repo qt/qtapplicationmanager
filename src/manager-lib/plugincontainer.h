@@ -42,6 +42,7 @@
 
 #pragma once
 
+#include <memory>
 #include <QtAppManManager/abstractcontainer.h>
 #include <QtAppManPluginInterfaces/containerinterface.h>
 
@@ -109,7 +110,7 @@ public:
 
 protected:
     explicit PluginContainer(AbstractContainerManager *manager, Application *app, ContainerInterface *containerInterface);
-    ContainerInterface *m_interface;
+    std::unique_ptr<ContainerInterface> m_interface;
     PluginContainerProcess *m_process;
     bool m_startCalled = false;
 

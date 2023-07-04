@@ -349,12 +349,19 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
 
     // read from fifo and dump to message handler
     QSocketNotifier *sn = new QSocketNotifier(m_statusPipeFd[0], QSocketNotifier::Read, this);
-    connect(sn, &QSocketNotifier::activated, this, [this](int pipeFd) {
+    connect(sn, &QSocketNotifier::activated, this, [this, sn](int pipeFd) {
         do {
             char buffer[1024];
             qsizetype bytesRead = qt_safe_read(pipeFd, buffer, sizeof(buffer));
-            if (bytesRead <= 0)
+
+            if (bytesRead <= 0) {
+                // eof or hard error
+                if ((bytesRead == 0) || (errno != EAGAIN)) {
+                    qt_safe_close(pipeFd);
+                    sn->setEnabled(false);
+                }
                 break;
+            }
             m_statusBuffer.append(buffer, bytesRead);
         } while (true);
 
@@ -369,7 +376,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
             QJsonDocument json = QJsonDocument::fromJson(line, &jsonError);
             if (jsonError.error != QJsonParseError::NoError) {
                 qCDebug(lcBwrap) << "Parsing bwrap status json failed:" << jsonError.errorString();
-                return;
+                continue;
             }
             auto root = json.object();
             auto childPidIt = root.constFind(u"child-pid"_s);

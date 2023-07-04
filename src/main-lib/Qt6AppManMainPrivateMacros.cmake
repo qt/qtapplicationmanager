@@ -19,7 +19,7 @@ function(qt6_am_add_systemui_wrapper target)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
-        "" "MAIN_QML_FILE;EXECUTABLE;INSTALL_DIR" "CONFIG_YAML;EXTRA_FILES;EXTRA_ARGS"
+        "" "MAIN_QML_FILE;EXECUTABLE;INSTALL_DIR" "CONFIG_YAML;EXTRA_FILES;EXTRA_FILES_GLOB;EXTRA_ARGS"
     )
 
     if (NOT ARG_EXECUTABLE)
@@ -42,11 +42,18 @@ function(qt6_am_add_systemui_wrapper target)
     endif()
 
     if (ARG_EXTRA_FILES)
+        set(GLOB_BASE_PATTERN *.qml *.js *.json *.yaml *.png *.jpg *.svg)
+        if (ARG_EXTRA_FILES_GLOB)
+            set(GLOB_BASE_PATTERN ${ARG_EXTRA_FILES_GLOB})
+        endif()
+
         foreach(F ${ARG_EXTRA_FILES})
             if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${F})
+                set(GLOB_PATTERN ${GLOB_BASE_PATTERN})
+                list(TRANSFORM GLOB_PATTERN PREPEND "${F}/")
                 file(GLOB_RECURSE MY_EXTRA_FILES
                     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-                    "${F}/*"
+                    ${GLOB_PATTERN}
                 )
             else()
                 set(MY_EXTRA_FILES ${F})

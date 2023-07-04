@@ -13,8 +13,6 @@ qt_internal_add_module(AppManMainPrivate
         defaultconfiguration.cpp defaultconfiguration.h
         main.cpp main.h
         windowframetimer.cpp windowframetimer.h
-    DEFINES
-        AM_BUILD_DIR=""
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::CorePrivate
@@ -34,6 +32,7 @@ qt_internal_add_module(AppManMainPrivate
         wrapper.cpp.in
         Qt6AppManMainPrivateMacros.cmake
     DEFINES
+        AM_BUILD_DIR="${CMAKE_BINARY_DIR}"
         AM_COMPILING_APPMAN
 )
 

@@ -42,7 +42,7 @@ function(qt6_am_add_systemui_wrapper target)
     endif()
 
     if (ARG_EXTRA_FILES)
-        set(GLOB_BASE_PATTERN *.qml *.js *.json *.yaml *.png *.jpg *.svg)
+        set(GLOB_BASE_PATTERN *.qml *.js qmldir *.json *.yaml *.png *.jpg *.svg)
         if (ARG_EXTRA_FILES_GLOB)
             set(GLOB_BASE_PATTERN ${ARG_EXTRA_FILES_GLOB})
         endif()

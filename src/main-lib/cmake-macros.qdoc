@@ -37,8 +37,8 @@ automatically copy the required files from the source to the build directory: th
 MAIN_QML_FILE, any \c CONFIG_YAML files as well as all \c EXTRA_FILES.
 
 Any directory in \c EXTRA_FILES will be recursively copied. By default the file types are limited
-to \c {*.qml *.js *.json *.yaml *.png *.jpg *.svg}, but you can supply a custom glob pattern via
-\c EXTRA_FILES_GLOB (see CMake's \c file(GLOB) command for details).
+to \c {*.qml *.js qmldir *.json *.yaml *.png *.jpg *.svg}, but you can supply a custom glob pattern
+via \c EXTRA_FILES_GLOB (see CMake's \c file(GLOB) command for details).
 
 If you also want this command to automatically generate installation rules for all files, you can
 specify the destination directory via \c INSTALL_DIR. By default, no installation rule is created.

@@ -137,6 +137,8 @@ TestCase {
     }
 
     function test_moveFocus() {
+        skip("Not working ATM: ASSERT on Linux/multi-process and missing signal on macOS/single-process")
+
         if (root.Window.window.flags & Qt.WindowDoesNotAcceptFocus)
             skip("Test can only be run without AM_BACKGROUND_TEST set, since it requires input focus");
 

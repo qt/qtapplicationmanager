@@ -66,7 +66,7 @@ process which keeps the root privileges while the main process permanently drops
 This \c try block is the heart of the custom application manager. You need to create a \c Main
 object, which is a class derived from QGuiApplication, plus a suitable configuration object. In
 this simple case, we use the application manager's default YAML parsing, so we instantiate a
-\c DefaultConfiguration object. The rest of the function involves parsing the configuration and
+\c Configuration object. The rest of the function involves parsing the configuration and
 then calling the relevant setup routines on the \c Main object.
 
 Depending on your application manager's configuration, the \c Main object can be derived

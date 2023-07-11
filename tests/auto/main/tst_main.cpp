@@ -17,7 +17,7 @@
 #include "intent.h"
 #include "startuptimer.h"
 #include "utilities.h"
-#include <QtAppManMain/defaultconfiguration.h>
+#include <QtAppManMain/configuration.h>
 
 
 QT_USE_NAMESPACE_AM
@@ -52,7 +52,7 @@ private:
     char **argv = nullptr;
     Main *main = nullptr;
     bool mainSetupDone = false;
-    DefaultConfiguration *config = nullptr;
+    Configuration *config = nullptr;
     bool m_verbose = false;
     int m_spyTimeout;
 };
@@ -118,7 +118,7 @@ void tst_Main::initMain(const QString &mainQml)
     argv[argc] = nullptr;
 
     main = new Main(argc, argv);
-    config = new DefaultConfiguration({ QFINDTESTDATA("am-config.yaml") }, QString());
+    config = new Configuration({ QFINDTESTDATA("am-config.yaml") }, QString());
     config->parseWithArguments(QCoreApplication::arguments());
     if (m_verbose)
         config->setForceVerbose(true);

@@ -11,7 +11,6 @@ QT_BEGIN_NAMESPACE_AM
 
 namespace PackageUtilities
 {
-Q_DECL_DEPRECATED bool ensureCorrectLocale(QStringList *warnings);
 bool ensureCorrectLocale();
 bool checkCorrectLocale();
 }

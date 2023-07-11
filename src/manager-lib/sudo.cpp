@@ -138,12 +138,6 @@ QT_END_NAMESPACE_AM
 
 QT_BEGIN_NAMESPACE_AM
 
-void Sudo::forkServer(DropPrivileges dropPrivileges, QStringList *warnings)
-{
-    Q_UNUSED(warnings)
-    forkServer(dropPrivileges);
-}
-
 void Sudo::forkServer(DropPrivileges dropPrivileges)
 {
     bool canSudo = false;

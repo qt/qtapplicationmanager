@@ -239,23 +239,6 @@ void Configuration::showParserMessage(const QString &message, MessageType type)
 
 // ^^^^ copied from QCommandLineParser ... why is this not public API?
 
-void Configuration::parse(QStringList *deploymentWarnings)
-{
-    Q_UNUSED(deploymentWarnings)
-    parseWithArguments(QCoreApplication::arguments());
-}
-
-void Configuration::parse()
-{
-    parseWithArguments(QCoreApplication::arguments());
-}
-
-void Configuration::parseWithArguments(const QStringList &arguments, QStringList *deploymentWarnings)
-{
-    Q_UNUSED(deploymentWarnings)
-    parseWithArguments(arguments);
-}
-
 void Configuration::parseWithArguments(const QStringList &arguments)
 {
     if (!m_clp.parse(arguments)) {

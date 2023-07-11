@@ -159,12 +159,6 @@ Main::~Main()
     The caller has to make sure that cfg will be available even after this function returns:
     we will access the cfg object from delayed init functions via lambdas!
 */
-void Main::setup(const Configuration *cfg, const QStringList &deploymentWarnings) Q_DECL_NOEXCEPT_EXPR(false)
-{
-    Q_UNUSED(deploymentWarnings)
-    setup(cfg);
-}
-
 void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 {
     // basics that are needed in multiple setup functions below

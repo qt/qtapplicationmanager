@@ -22,12 +22,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-bool PackageUtilities::ensureCorrectLocale(QStringList *warnings)
-{
-    Q_UNUSED(warnings)
-    return ensureCorrectLocale();
-}
-
 bool PackageUtilities::ensureCorrectLocale()
 {
     static bool once = false;

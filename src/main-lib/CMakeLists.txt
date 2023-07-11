@@ -10,7 +10,6 @@ qt_internal_add_module(AppManMainPrivate
     SOURCES
         applicationinstaller.cpp applicationinstaller.h
         configuration.cpp configuration.h configuration_p.h
-        defaultconfiguration.cpp defaultconfiguration.h
         main.cpp main.h
         windowframetimer.cpp windowframetimer.h
     PUBLIC_LIBRARIES

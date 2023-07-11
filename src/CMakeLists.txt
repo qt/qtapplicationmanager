@@ -43,6 +43,10 @@ if(NOT QT_FEATURE_am_tools_only)
             add_subdirectory(tools/launcher-qml)
         endif()
     endif()
+
+    if(QT_FEATURE_am_package_server)
+        add_subdirectory(tools/package-server)
+    endif()
 endif()
 add_subdirectory(plugins)
 

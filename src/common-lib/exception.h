@@ -26,7 +26,7 @@ public:
     explicit Exception(Error errorCode, const char *errorString = nullptr) Q_DECL_NOEXCEPT;
     explicit Exception(Error errorCode, const QString &errorString) Q_DECL_NOEXCEPT;
     explicit Exception(int _errno, const char *errorString) Q_DECL_NOEXCEPT;
-    explicit Exception(const QFile &file, const char *errorString) Q_DECL_NOEXCEPT;
+    explicit Exception(const QFileDevice &file, const char *errorString) Q_DECL_NOEXCEPT;
 
     Exception(const Exception &copy) Q_DECL_NOEXCEPT;
     Exception(Exception &&move) Q_DECL_NOEXCEPT;

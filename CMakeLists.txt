@@ -45,6 +45,7 @@ find_package(Qt6 ${PROJECT_VERSION} QUIET CONFIG OPTIONAL_COMPONENTS
     ZlibPrivate
     DltLogging
     WaylandGlobalPrivate # remove after QTBUG-95388 is fixed
+    HttpServer
 )
 
 if (${Qt6_VERSION} VERSION_LESS "${MIN_QT_VERSION}")

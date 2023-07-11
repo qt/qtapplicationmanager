@@ -48,6 +48,13 @@ qt_feature("am-external-dbus-interfaces" PRIVATE
 )
 qt_feature_definition("am-external-dbus-interfaces" "AM_DISABLE_EXTERNAL_DBUS_INTERFACES" NEGATE)
 
+qt_feature("am-package-server" PRIVATE
+    LABEL "Build the package-server"
+    CONDITION TARGET Qt::HttpServer
+    ENABLE INPUT_package_server STREQUAL 'yes'
+    DISABLE INPUT_package_server STREQUAL 'no'
+)
+
 qt_feature("am-tools-only" PRIVATE
     LABEL "Tools only build"
     AUTODETECT OFF
@@ -103,6 +110,7 @@ else()
 endif()
 qt_configure_add_summary_entry(ARGS "am-external-dbus-interfaces")
 qt_configure_add_summary_entry(ARGS "am-tools-only")
+qt_configure_add_summary_entry(ARGS "am-package-server")
 qt_configure_add_summary_entry(ARGS "am-dltlogging")
 qt_configure_add_summary_entry(ARGS "am-libbacktrace")
 qt_configure_add_summary_entry(ARGS "am-stackwalker")

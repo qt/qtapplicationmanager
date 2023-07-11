@@ -35,8 +35,8 @@ Exception::Exception(int _errno, const char *errorString) Q_DECL_NOEXCEPT
     , m_errorString(qL1S(errorString) + qSL(": ") + QString::fromLocal8Bit(strerror(_errno)))
 { }
 
-Exception::Exception(const QFile &file, const char *errorString) Q_DECL_NOEXCEPT
-    : m_errorCode(file.error() == QFile::PermissionsError ? Error::Permissions : Error::IO)
+Exception::Exception(const QFileDevice &file, const char *errorString) Q_DECL_NOEXCEPT
+    : m_errorCode(file.error() == QFileDevice::PermissionsError ? Error::Permissions : Error::IO)
     , m_errorString(qL1S(errorString) + qSL(" (") + file.fileName() + qSL("): ") + file.errorString())
 { }
 

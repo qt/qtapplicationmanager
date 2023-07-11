@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include <QFile>
+#include <QSaveFile>
 #include <QFileInfo>
 #include <QUrl>
 #include <QDirIterator>
@@ -115,7 +116,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         if (m_destinationName.isEmpty())
             throw Exception(Error::Package, "no destination package name given");
 
-        QFile destination(m_destinationName);
+        QSaveFile destination(m_destinationName);
         if (!destination.open(QIODevice::WriteOnly | QIODevice::Truncate))
             throw Exception(destination, "could not create package file");
 
@@ -225,6 +226,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         PackageCreator creator(source, &destination, report);
         if (!creator.create())
             throw Exception(Error::Package, "could not create package %1: %2").arg(package->id()).arg(creator.errorString());
+        destination.commit();
 
         QVariantMap md = creator.metaData();
         m_output = QString::fromUtf8(m_asJson ? QJsonDocument::fromVariant(md).toJson()
@@ -300,7 +302,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         if (m_destinationName.isEmpty())
             throw Exception(Error::Package, "no destination package name given");
 
-        QFile destination(m_destinationName);
+        QSaveFile destination(m_destinationName);
         if (!destination.open(QIODevice::WriteOnly | QIODevice::Truncate))
             throw Exception(destination, "could not create package file");
 
@@ -331,6 +333,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
 
         if (!creator.create())
             throw Exception(Error::Package, "could not create package %1: %2").arg(m_destinationName).arg(creator.errorString());
+        destination.commit();
 
         QVariantMap md = creator.metaData();
         m_output = QString::fromUtf8(m_asJson ? QJsonDocument::fromVariant(md).toJson()

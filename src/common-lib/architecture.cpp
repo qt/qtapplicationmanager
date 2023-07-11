@@ -14,7 +14,7 @@ QT_BEGIN_NAMESPACE_AM
     Tries to identify a binary file by its magic number and returns an unique identifier.
     If \a fileName is not a binary file, an empty string is returned.
 
-    The package-server tool uses these identifiers to support multiple architecture of the same
+    The appman-package-server uses these identifiers to support multiple architecture of the same
     package.
 
     https://en.wikipedia.org/wiki/Executable_and_Linkable_Format

@@ -1,0 +1,457 @@
+// Copyright (C) 2023 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+
+\page appman-package-server.html
+\title Package-Server
+\brief A command-line utility for serve packages for dynamic installation.
+\ingroup qtappman-tools
+
+The \c{appman-package-server} is a command-line utility that can be used by the developer to
+simulate an app-store or update-server like backend and conveniently test package installations
+over HTTP connections.
+
+Its main purpose is for interactive use on a developer's desktop machine, but it can also be used
+on a server to distribute packages to multiple devices or other developers' machines during the
+development phase.
+
+\note Do not use this tool in a production environment!
+
+\section1 Configuration
+
+This server accepts unsigned as well as developer-signed packages. The \l{Packager}
+{\c appman-packager} can create all these variations. On the download side it distributes
+unsigned packages by default, but can be configured to store-sign packages on the fly.
+
+
+Please also see the \l{Package Installation} documentation for more in-depth information about
+package installations.
+
+There is not much to configure when running the server. The only thing that needs to be specified
+is a data directory that the package-server will use to manage packages.
+All configuration options are available both via command-line arguments and via a YAML based
+configuration file.
+If an \c{amps-config.yaml} file exists in the data directory, it will be parsed implicitly. These
+configuration files can be created and edited manually, but there's also the convenient
+ \b --create-config option to generate or modify the file using command-line arguments.
+
+Command-line options always take precedence over the configuration file though.
+
+\table
+\header
+  \li Argument
+      \br [YAML field]
+  \li Description
+\row
+  \li \b --dd or \b --data-directory \c{<dir>}
+  \li The data directory to use. This defaults to the current directory, but only if it contains
+      an \c{amps-config.yaml} file. Otherwise you need to specify the directory explicitly.
+\row
+  \li \b --la or \b --listen-address \c{<address>}
+      \br \c{[listenAddress]}
+  \li The network address to listen on. Can be one of \c{<ip address>}, \c any or \c localhost.
+      An optional port number can be appended to any of the options via \c{:<port number>}.
+      The default is \c{localhost:8020}.
+\row
+  \li \b --pi or \b --project-id \c{<id>}
+      \br \c{[projectId]}
+  \li Set the project id to a non-empty ASCII string. The default is \c{PROJECT}. This setting is
+      optional, but helps to make sure packages are not mixed between incompatible projects.
+\row
+  \li \b --sc \c{<certificate file>}
+      \br \c{[storeSignCertificate]}
+  \li The certificate file for signing store downloads. The default is no certificate, which
+      means that downloads are simply not store signed.
+\row
+  \li \b --sp \c{<password>}
+      \br \c{[storeSignPassword]}
+  \li The password for the store signing certificate. The default is no password.
+\row
+  \li \b --dc \c{<certificate file>}
+      \br \c{[developerVerificationCaCertificates]}
+  \li The CA certificate files to verify developer signatures on upload. The command-line option
+      can be used multiple times, while the YAML field accepts a list of strings, if multiple CA
+      certificates are needed. The default is to not verify developer signatures at all.
+\row
+  \li \b --cc or \b --create-config
+  \li Save the current configuration to the config file \c{amps-config.yaml} in the data directory.
+      This makes it easy to generate a configuration file for future use from known good
+      command-line arguments. Settings from an existing config file are preserved, comments are not.
+\endtable
+
+The \c{appman-package-server} naturally supports the standard Unix \b{--help} command-line option.
+
+\section2 Example Configuration File
+
+These configuration files follow the same pattern as all YAML files used by the application-manager.
+The first document representing a file-format header and the second document being the actual
+configuration data:
+
+\badcode
+%YAML 1.1
+---
+formatType: amps-configuration
+formatVersion: 1
+---
+listenAddress: 'any:7070'
+projectId: 'HELLO'
+\endcode
+
+\section2 Command-line Output
+
+This is an example output, starting the package-server on a console with ANSI color support:
+\raw HTML
+<pre class="cpp plain">
+$ appman-package-server --dd /tmp/ps-data
+<span style="font-weight:bold;color:green;">Qt ApplicationManager Package Server</span>
+&gt; Data directory: <span style="font-weight:bold;color:purple;">/tmp/ps-data</span>
+&gt; Project: <span style="font-weight:bold;color:teal;">PROJECT</span>
+&gt; Verify developer signature on upload: <span style="color:red;">no</span>
+&gt; Add store signature on download: <span style="color:red;">no</span>
+&gt; Scanning .packages
+<span style="color:green;"> + adding   </span><span style="font-weight:bold;color:teal;">hello-world.red</span> [all]
+&gt; HTTP server listening on: <span style="font-weight:bold;color:blue;">127.0.0.1:8020</span>
+</pre>
+\endraw
+
+\section1 Glossary
+
+\table
+\header
+  \li Term
+  \li Meaning
+\row
+  \li id
+  \li A unique identifier for a package. This is usually a reverse domain name, but can be
+      anything as long as it is unique. See \l{Manifest Definition}{the manifest definition} for
+      more information.
+\row
+  \li architecture
+  \li To facilitate a mixed development environment (e.g. Windows and macOS desktops,
+      Linux/ARM targets), the same packages can be built for multiple architectures and
+      the package-server is able to distribute the matching one to the requesting client.
+      The \e architecture is a string that identifies the binary architecture of a package. It is a
+      token that shouldn't be parsed or interpreted by user code.
+      On the client side, the current architecture can be retrieved via
+      PackageManager::architecture. On the server side, the package-server parses the contents
+      of any uploaded package to determine the architecture, based on any binary or shared
+      library found within. If no such file is found, the architecture defaults to \c{all}
+      (platform-independent).
+
+\row
+  \li hardware-id
+  \li The installer part of the application manager needs a unique device ID, if you want to
+      deliver application packages that are bound to a specific device unit from an app-store.
+      The use case here is to prevent customers from buying apps once and then sharing them with
+      others for free.
+      The support for this feature in the package-server isn't about security, but to make it easy
+      for developers who need to test this mechanism.
+      See the \l{hardware-id} documentation in the Installation chapter for more information.
+\endtable
+
+\section1 Usage
+
+The available packages can be maintained both via file-system operations and via an HTTP REST API.
+The package-server creates a \c{.packages} directory inside the data directory. This directory
+contains the actual packages and is managed by the package-server. You can remove packages from
+this directory, but you have to restart the server if you do.
+
+\section2 File-System Operations
+
+The package-server creates two special directories inside the data directory: \c{upload} and
+\c{remove}:
+\list
+\li Any valid package file placed into the \c{upload} directory will be parsed and - after
+    verification - moved and renamed to the internal \c{.packages} directory.
+\li Any file that is created in the \c{remove} directory, has its filename matched against
+    all package ids or the combination of package id and architecture. All matching packages
+    are then removed from the internal \c{.packages} directory.
+    Usually you would use the \c touch command to create these filenames.
+\endlist
+
+\section3 Examples
+
+\badcode
+# Upload a package:
+$ cp app.ampkg <datadir>/upload/
+
+# Remove the 'hello.world' packages for all architectures:
+$ touch <datadir>/remove/hello.world
+
+# Remove the 'hello.world' package for Windows 64bit only:
+$ touch <datadir>/remove/hello.world_windows_x86_64
+\endcode
+
+\section2 HTTP REST Interface
+
+The package-server provides an HTTP REST API to both upload and download packages. As this is
+strictly a development tool only, there is no support for authentication or authorization!
+
+The following table lists the available API endpoints:
+
+
+\hr  \omit ********************************************************************************** \endomit
+
+
+\section3 /hello \e{(GET or POST)}
+
+This should always be the first call to the server, as this verifies that the \e project-id matches
+between client and server. Technically there is no need to call this endpoint to setup a session,
+but it is recommended to do so, to guarantee project compatibility.
+
+\section4 Arguments
+
+\table
+\row
+  \li \b project-id
+  \li \e required
+  \li <project-id>
+\endtable
+
+\section4 Result
+
+The server will respond with HTTP code 200 and a JSON object containing the following fields:
+\table
+\row
+  \li \b status
+  \li Either \b ok or \b incompatible-project-id.
+\endtable
+
+
+\hr \omit ******************************************************************************** \endomit
+
+
+\section3 /package/list \e{(GET or POST)}
+
+Returns a list of available packages. This list can additionally be filtered via the optional
+\e category, \e filter and \e architecture parameters.
+
+\section4 Arguments
+
+\table
+\row
+  \li \b category
+  \li \e optional
+  \li Only return packages that are in the given category.
+\row
+  \li \b filter
+  \li \e optional
+  \li Only return packages whose names contain the given string.
+\row
+  \li \b architecture
+  \li \e optional
+  \li Only return packages that are compatible with the given architecture.
+\endtable
+
+\section4 Result
+
+The server will respond with HTTP code 200 (ok) and a JSON array of objects, each containing the
+following fields:
+
+\table
+\row
+  \li \b id
+  \li The id of the package.
+\row
+  \li \b architecture
+  \li The architecture of the package.
+\row
+  \li \b names
+  \li All the names of the package as an object (see \l{Manifest Definition}{the manifest definition} for more details).
+\row
+  \li \b descriptions
+  \li All the descriptions of the package as an object (see \l{Manifest Definition}{the manifest definition} for more details).
+\row
+  \li \b version
+  \li The version string of the package.
+\row
+  \li \b categories
+  \li A list of category names of the package.
+\row
+  \li \b iconUrl
+  \li A relative URL on this server to the icon file of the package.
+\endtable
+
+
+\hr  \omit ********************************************************************************** \endomit
+
+
+\section3 /package/icon \e{(GET or POST)}
+
+Returns the icon of a package as a standard PNG image file download.
+
+\section4 Arguments
+
+\table
+\row
+  \li \b id
+  \li \e required
+  \li Specify the id of the package to get the icon for.
+\row
+  \li \b architecture
+  \li \e optional
+  \li Specify the architecture of the requested package. If omitted, the server will
+      use the platform independent (\c all) package, if available.
+\endtable
+
+\section4 Result
+
+There are multiple possible scenarios:
+\table
+\row
+  \li 404 (not found)
+  \li No package can be found for \e id or the package does not contain an icon.
+\row
+  \li 200 (ok)
+  \li A matching package containing an icon was found and the download started.
+      The icon is sent with the mime-type set as \c image/png.
+\endtable
+
+
+\hr \omit ******************************************************************************** \endomit
+
+
+\section3 /package/download \e{(GET or POST)}
+
+Request a download of a package identified by \e id. The package is store-signed, if the server is
+configured to do. If the request parameters include a \e hardware-id, it will be incorporated into
+the store signature.
+
+\section4 Arguments
+
+\table
+\row
+  \li \b id
+  \li \e required
+  \li Specify the id of the package to download.
+\row
+  \li \b architecture
+  \li \e optional
+  \li Specify the architecture of the package to download. If omitted, the server will
+      use the platform independent (\c all) package, if available.
+\row
+  \li \b hardware-id
+  \li \e optional
+  \li The hardware id of the device that is downloading the package. If specified, the
+      package's store signature will include this token.
+\endtable
+
+\section4 Result
+
+There are multiple possible scenarios:
+\table
+\row
+  \li 404 (not found)
+  \li No package can be found for \e id.
+\row
+  \li 500 (internal error)
+  \li The package-server was instructed to store-sign the download package, but the signing
+      failed. The detailed error message is printed on the server's console.
+\row
+  \li 200 (ok)
+  \li A matching package was found, it was store-signed (if configured) and the download
+      started. The package is sent with the mime-type set as \c application/octet-stream.
+\endtable
+
+
+\hr \omit ******************************************************************************** \endomit
+
+
+\section3 /package/upload \e{(PUT)}
+
+Upload a package to the server. The server will parse and verify the package. If the package
+is valid, it will be added to server's list of available packages. If something failed, the
+server will respond with an error message.
+
+\section4 Result
+
+The server will respond with HTTP code 200 and a JSON object containing the following fields:
+\table
+\row
+  \li \b status
+  \li \b ok, if the package was uploaded successfully, \b fail otherwise.
+\row
+  \li \b result
+  \li One of \b added (a new package was uploaded), \b updated (an existing package was updated) or
+      \b{no changes} (the exact same package had already been uploaded before).
+\row
+  \li \b id
+  \li The \e id of the uploaded package.
+\row
+  \li \b architecture
+  \li The \e architecture of the uploaded package.
+\row
+  \li \b message
+  \li If the upload failed, this field contains a human readable error message.
+\endtable
+
+
+\hr \omit ******************************************************************************** \endomit
+
+
+\section3 /package/remove \e{(POST)}
+
+Sends a package removal request to the server. The server will remove all packages that match the
+given \e id and \e architecture. If no \e architecture is specified, all architectures for the
+given package are removed.
+
+\section4 Arguments
+
+\table
+\row
+  \li \b id
+  \li \e required
+  \li Specify the id of the package to remove.
+\row
+  \li \b architecture
+  \li \e optional
+  \li If specified, only remove the package for the given architecture.
+\endtable
+
+\section4 Result
+
+The server will respond with HTTP code 200 and a JSON object containing the following fields:
+\table
+\row
+  \li \b status
+  \li \b ok if at least one package was removed, \b fail otherwise.
+\row
+  \li \b removed
+  \li The number of removed packages (as integer).
+\endtable
+
+
+\hr \omit ******************************************************************************** \endomit
+
+
+\section3 /category/list \e{(GET or POST)}
+
+Returns all category names that are defined by all the currently available packages on the server.
+
+\section4 Result
+
+The server will respond with HTTP code 200 and a JSON array of category names. If there are no
+packages available, or none of them have categories, the array will be empty.
+
+
+\hr \omit ******************************************************************************** \endomit
+
+\section3 Examples
+
+\badcode
+# Send a hello request:
+$ curl -s 'http://localhost:8020/hello?project-id=MYPROJID' | json_pp
+
+# Upload a package:
+$ curl -s -X PUT --data-binary "@hello-world.ampkg" 'http://localhost:8020/package/upload' | json_pp
+
+# Remove a package:
+$ curl -s -X POST 'http://localhost:8020/package/remove?id=hello.world&architecture=all' | json_pp
+
+# Download a package for Linux/x86-64, bound to a specific hardware id:
+$ curl -s -X POST 'http://localhost:8020/package/download?id=hello.world&architecture=linux_x86_64&hardware-id=08154711'
+
+\endcode
+
+*/

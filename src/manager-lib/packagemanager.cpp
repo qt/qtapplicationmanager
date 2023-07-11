@@ -704,7 +704,7 @@ void PackageManager::setAllowInstallationOfUnsignedPackages(bool enable)
 
     This property will return the \l{The Hardware ID}{hardware id} for the current system.
 
-    Package repositories (like for example the package-server tool) can use these hardware ids
+    Package repositories (like for example the appman-package-server) can use these hardware ids
     to limit the distribution of packages to specific devices via digital signatures.
 */
 QString PackageManager::hardwareId() const
@@ -723,7 +723,7 @@ void PackageManager::setHardwareId(const QString &hwId)
 
     A unique string identifying the architecture of the current system.
 
-    Package repositories (like for example the package-server tool) can use these identifiers
+    Package repositories (like for example the appman-package-server) can use these identifiers
     to support multiple architecture-specific builds of the same package.
 */
 QString PackageManager::architecture() const

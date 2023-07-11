@@ -688,7 +688,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                       validateIdForFilesystemUsage(id);
                       cd->instanceId = id;
                   } catch (const Exception &e) {
-                      throw YamlParserException(p, "invalid instanaceId: %1").arg(e.errorString());
+                      throw YamlParserException(p, "invalid instanceId: %1").arg(e.errorString());
                   }
               } },
             { "runtimes", false, YamlParser::Map, [&cd](YamlParser *p) {

@@ -2,6 +2,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(bubblewrap-example LANGUAGES CXX)
 
+qt_policy(SET QTP0001 NEW)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOMOC ON)

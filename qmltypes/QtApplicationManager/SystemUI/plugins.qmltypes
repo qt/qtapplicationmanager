@@ -653,6 +653,7 @@ Module {
         Property { name: "allowInstallationOfUnsignedPackages"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
         Property { name: "developmentMode"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
         Property { name: "hardwareId"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "architecture"; type: "QString"; isReadonly: true; isConstant: true; isFinal: true }
         Property { name: "ready"; type: "bool"; isReadonly: true; isFinal: true }
         Property { name: "installationLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
         Property { name: "documentLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }

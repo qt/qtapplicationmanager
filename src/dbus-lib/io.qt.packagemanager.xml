@@ -4,6 +4,8 @@
     <property name="count" type="i" access="read"/>
     <property name="allowInstallationOfUnsignedPackages" type="b" access="read"/>
     <property name="developmentMode" type="b" access="read"/>
+    <property name="hardwareId" type="s" access="read"/>
+    <property name="architecture" type="s" access="read"/>
     <property name="ready" type="b" access="read"/>
     <property name="installationLocation" type="a{sv}" access="read">
       <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>

@@ -6,9 +6,11 @@
 #include <QMetaMethod>
 #include <QQmlEngine>
 #include <QVersionNumber>
+#include <QCoreApplication>
 #include "packagemanager.h"
 #include "packagedatabase.h"
 #include "packagemanager_p.h"
+#include "architecture.h"
 #include "applicationinfo.h"
 #include "intentinfo.h"
 #include "package.h"
@@ -713,6 +715,20 @@ QString PackageManager::hardwareId() const
 void PackageManager::setHardwareId(const QString &hwId)
 {
     d->hardwareId = hwId;
+}
+
+/*!
+    \qmlproperty string PackageManager::architecture
+    \readonly
+
+    A unique string identifying the architecture of the current system.
+
+    Package repositories (like for example the package-server tool) can use these identifiers
+    to support multiple architecture-specific builds of the same package.
+*/
+QString PackageManager::architecture() const
+{
+    return Architecture::identify(QCoreApplication::applicationFilePath());
 }
 
 bool PackageManager::isApplicationUserIdSeparationEnabled() const

@@ -19,7 +19,7 @@ Window {
 
     Text {
         anchors.bottom: parent.bottom
-        text: (ApplicationManager.singleProcess ? "Single" : "Multi") + "-Process Mode"
+        text: (ApplicationManager.singleProcess ? "Single" : "Multi") + "-Process Mode  |  " + PackageManager.architecture
     }
 
     // Application launcher panel

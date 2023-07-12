@@ -59,7 +59,8 @@ class PackageManager : public QAbstractListModel
     // these are const on purpose - these should never change in a running system
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT FINAL)
     Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT FINAL)
-    Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT SCRIPTABLE false FINAL)
+    Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT FINAL)
+    Q_PROPERTY(QString architecture READ architecture CONSTANT FINAL)
 
     Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged FINAL)
     Q_PROPERTY(QVariantMap installationLocation READ installationLocation CONSTANT FINAL)
@@ -111,6 +112,7 @@ public:
     void setAllowInstallationOfUnsignedPackages(bool enable);
     QString hardwareId() const;
     void setHardwareId(const QString &hwId);
+    QString architecture() const;
 //    bool securityChecksEnabled() const;
 //    void setSecurityChecksEnabled(bool enabled);
 

@@ -112,6 +112,16 @@ bool PackageManagerAdaptor::developmentMode() const
     return PackageManager::instance()->developmentMode();
 }
 
+QString PackageManagerAdaptor::hardwareId() const
+{
+    return PackageManager::instance()->hardwareId();
+}
+
+QString PackageManagerAdaptor::architecture() const
+{
+    return PackageManager::instance()->architecture();
+}
+
 QVariantMap PackageManagerAdaptor::installationLocation() const
 {
     return PackageManager::instance()->installationLocation();

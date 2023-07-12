@@ -10,6 +10,7 @@ qt_internal_add_module(AppManCommonPrivate
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        architecture.cpp architecture.h
         configcache.cpp configcache.h configcache_p.h
         crashhandler.cpp crashhandler.h
         dbus-utilities.cpp dbus-utilities.h

@@ -133,7 +133,7 @@ modules:
       \br The corresponding cmake input is \c{-DINPUT_force_mode=multi}.
 \row
   \li \c{installer}
-    \target config disable installer
+  \target config disable installer
   \li Set to \c no to disable the installer part.
 \row
   \li \c{external-dbus-interfaces}

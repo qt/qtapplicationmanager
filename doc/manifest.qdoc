@@ -107,8 +107,8 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
         \c info.yaml and can be in any image format that Qt supports.
 \row
     \li \c name
-    \target package-name-map
     \li object
+    \target package-name-map
     \li An optional object containing language (\c string) to display name (\c string)
         mappings. The language identifiers need to adhere to the standard POSIX locale definition.
         For more information, see \l{QLocale}. It is good practice to supply at least the English
@@ -186,8 +186,8 @@ The fields used for each item within the \c applications list are as follows:
         See \l{runtime-parameters-details}{runtime parameters} for a full list.
 \row
     \li \c supportsApplicationInterface
-        \target manifest supportsApplicationInterface
     \li bool
+    \target manifest supportsApplicationInterface
     \li If set to \c true the application must implement the \l ApplicationInterface API.
         In this case the application manager will wait until the application is connected to the
         ApplicationInterface on the P2P D-Bus until it marks it as 'running'. For runtimes that

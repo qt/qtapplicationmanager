@@ -139,10 +139,10 @@ ui:
             configuration files, but before more specific, direct options such as \c --fullscreen
             (which can be rewritten as \c{ -o 'ui: { fullscreen: no }'}).
     \row
-        \target instance-id
         \li \b --instance-id
             \br [\c instanceId]
         \li string
+        \target instance-id
         \li Assign an unique name to this application manager instance. Only useful if you are
             running multiple instances at the same time and you need to address them via the
             \l{Controller}{appman-controller tool}.
@@ -261,9 +261,9 @@ ui:
                 (see \l Containers).
             \endlist
     \row
-        \target system properties
         \li [\c systemProperties]
         \li object
+        \target system properties
         \li Exports user-defined properties (key/value pairs) to the System UI and applications.
             This field can only have the following children, that control access to the actual
             properties: \c private, \c protected, and \c public; other children are ignored.
@@ -298,22 +298,23 @@ ui:
         \li bool
         \li Loads QML dummy data into the System UI, similar to \c qmlscene and \c qml.
     \row
-        \target no-security
         \li \b --no-security
             \br [\c flags/noSecurity]
         \li bool
+        \target no-security
         \li Disables all security related checks. Use this option in a development setup only;
             never in production. (default: false)
     \row
-        \target development-mode
         \li \b --development-mode
             \br [\c flags/developmentMode]
         \li bool
+        \target development-mode
         \li Allows the installation of packages that only come with a valid developer signature.
             (default: false)
     \row
         \li [\c flags/allowUnsignedPackages]
         \li bool
+        \target allow-unsigned-packages
         \li Allows the installation of packages that have no signature at all. Only use this in
             production, if you are verifying packages by other means, while also limiting the
             access to the installer API. (default: false)
@@ -482,8 +483,8 @@ ui:
             not even compile it in the first place, in the \l{config disable installer}{qmake step}.
     \row
         \li [\c installer/caCertificates]
-            \target ca certificates
         \li list<string>
+        \target ca certificates
         \li A list of file paths to CA-certifcates that are used to verify packages. For more
             details, see the \l {Public Key Infrastructure} {Installer documentation}.
     \row
@@ -498,14 +499,14 @@ ui:
             \l{OpenGL Specification}.
     \row
         \li [\c ui/iconThemeName]
-            \target iconThemeName
         \li string
+        \target iconThemeName
         \li Specifies which icon theme to use. See \l{iconThemeSearchPaths}{ui/iconThemeSearchPaths}
             for details on how to add a path to a custom theme.
     \row
         \li [\c ui/iconThemeSearchPaths]
-            \target iconThemeSearchPaths
         \li list<string>
+        \target iconThemeSearchPaths
         \li Adds additional icon theme search paths to the System UI and all apps. This option can
             be used to add a custom icon theme to the search path and load it by specifying
             \l{iconThemeName} {ui/iconThemeName}.
@@ -515,8 +516,8 @@ ui:
         \li Disables the intent sub-system at runtime completely.
     \row
         \li [\c intents/timeouts]
-            \target intentConfiguration
         \li object
+        \target intentConfiguration
         \li Lets you specify the processing timeouts used in the intent
             sub-system. For more details, see \l{Intent Timeout Specification}.
 
@@ -658,9 +659,9 @@ an additional column specifying which runtime a configuration option applies to:
             (default: false)
     \row
         \li \c quitTime
-            \target qml quitTime
         \li qml
         \li int
+        \target qml quitTime
         \li Defines the grace period in milliseconds, that an application is given for shutting
             down. This is the time limit between receiving the
             \l{ApplicationInterface::quit()}{quit()} signal and responding with

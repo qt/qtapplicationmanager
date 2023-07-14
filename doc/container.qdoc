@@ -227,9 +227,9 @@ The \c process container accepts the following configuration settings:
     \li Type
     \li Description
   \row
-    \target control group mapping
     \li \c controlGroups
     \li object
+    \target control group mapping
     \li A two-stage mapping object to allow for more readable code when dealing with \c cgroups
         from the System UI via Container::controlGroup. The top-level \c keys are readable group names
         that are used to interface with Container::controlGroup. The values themselves are \c maps

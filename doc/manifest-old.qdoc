@@ -105,8 +105,8 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
         \c info.yaml and can be in any image format that Qt supports.
 \row
     \li \c name
-    \target application-name-map
     \li object
+    \target application-name-map
     \li \e Required. An object containing language (\c string) to display name (\c string)
         mappings. The language identifiers need to adhere to the standard POSIX locale definition.
         For more information, see \l{QLocale}. At least one mapping needs to be present. However,
@@ -161,8 +161,8 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
         \c true. Otherwise the default is \c false.
 \row
     \li \c mimeTypes
-    \target mimeTypes field
     \li array<string>
+    \target mimeTypes field
     \li An optional array of MIME types the application can handle. The application manager
         supports the classic file name or content to MIME type matching, as well as URL scheme
         matching. For more information, see \l{ApplicationManager::openUrl}.

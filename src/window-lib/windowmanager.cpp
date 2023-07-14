@@ -67,14 +67,14 @@
             information about the application in the ApplicationManager model.
     \row
         \li \c window
-        \target windowmanager-window-role
         \li WindowObject
+        \target windowmanager-window-role
         \li The WindowObject containing the client surface. To display it you have to put it in a
             WindowItem
     \row
         \li \c contentState
-        \target windowmanager-contentState-role
         \li WindowObject::ContentState
+        \target windowmanager-contentState-role
         \li The content state of the WindowObject. See WindowObject::contentState
     \endtable
 

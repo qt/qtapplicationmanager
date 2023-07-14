@@ -110,8 +110,8 @@
         \li The currently installed version of this package.
     \row
         \li \c package
-        \li Package
-        \li The underlying package object for quick access to the properties outside of a
+        \li PackageObject
+        \li The underlying PackageObject for quick access to the properties outside of a
             model delegate.
     \endtable
 

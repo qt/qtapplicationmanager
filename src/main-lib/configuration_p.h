@@ -70,11 +70,6 @@ struct ConfigurationData
     struct {
         bool disable = false;
         QStringList caCertificates;
-        struct {
-            int minUserId = -1;
-            int maxUserId = -1;
-            int commonGroupId = -1;
-        } applicationUserIdSeparation;
     } installer;
 
     struct {

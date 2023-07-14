@@ -50,8 +50,8 @@ public:
     bool allowInstallationOfUnsignedPackages() const { return m_pm->allowInstallationOfUnsignedPackages(); }
     QString hardwareId() const { return m_pm->hardwareId(); }
 
-    bool isApplicationUserIdSeparationEnabled() const { return m_pm->isApplicationUserIdSeparationEnabled(); }
-    uint commonApplicationGroupId() const { return m_pm->commonApplicationGroupId(); }
+    bool isApplicationUserIdSeparationEnabled() const { return false; }
+    uint commonApplicationGroupId() const { return uint(-1); }
 
     // Q_SCRIPTABLEs are available via both QML and D-Bus
     Q_SCRIPTABLE QStringList installationLocationIds() const { return { qL1S("internal-0") }; }

@@ -323,9 +323,6 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
             path.chop(1); // remove the '+'
             m_package->setBaseDir(QDir(path));
         }
-        // we need to find a free uid before we call startingApplicationInstallation
-        m_package->m_uid = m_pm->findUnusedUserId();
-        m_applicationUid = m_package->m_uid;
 
         // we need to call those ApplicationManager methods in the correct thread
         // this will also exclusively lock the application for us
@@ -399,25 +396,6 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
                 throw Exception(Error::IO, "could not create the document directory %1").arg(documentDirectory.filePath(m_packageId));
         }
     }
-#ifdef Q_OS_UNIX
-    // update the owner, group and permission bits on both the installation and document directories
-    SudoClient *root = SudoClient::instance();
-
-    if (m_pm->isApplicationUserIdSeparationEnabled() && root) {
-        uid_t uid = m_applicationUid;
-        gid_t gid = m_pm->commonApplicationGroupId();
-
-        if (!root->setOwnerAndPermissionsRecursive(documentDirectory.filePath(m_packageId), uid, gid, 02700)) {
-            throw Exception(Error::IO, "could not recursively change the owner to %1:%2 and the permission bits to %3 in %4")
-                    .arg(uid).arg(gid).arg(02700, 0, 8).arg(documentDirectory.filePath(m_packageId));
-        }
-
-        if (!root->setOwnerAndPermissionsRecursive(m_extractionDir.path(), uid, gid, 0440)) {
-            throw Exception(Error::IO, "could not recursively change the owner to %1:%2 and the permission bits to %3 in %4")
-                    .arg(uid).arg(gid).arg(0440, 0, 8).arg(m_extractionDir.absolutePath());
-        }
-    }
-#endif
 
     // final rename
 

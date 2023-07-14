@@ -83,8 +83,7 @@ protected:
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) Q_DECL_NOEXCEPT_EXPR(false);
     void setupQuickLauncher(int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
                             int failedStartLimit, int failedStartLimitIntervalSec) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths,
-                        const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) Q_DECL_NOEXCEPT_EXPR(false);
     void registerPackages();
 
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());

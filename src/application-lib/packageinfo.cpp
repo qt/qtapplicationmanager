@@ -120,7 +120,7 @@ void PackageInfo::setInstallationReport(InstallationReport *report)
 }
 
 
-const quint32 PackageInfo::DataStreamVersion = 2 \
+const quint32 PackageInfo::DataStreamVersion = 3 \
         + (ApplicationInfo::DataStreamVersion << 8) \
         + (IntentInfo::DataStreamVersion << 16);
 
@@ -144,7 +144,6 @@ void PackageInfo::writeToDataStream(QDataStream &ds) const
        << m_categories
        << m_version
        << m_builtIn
-       << m_uid
        << m_baseDir.absolutePath()
        << serializedReport;
 
@@ -173,7 +172,6 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
        >> pkg->m_categories
        >> pkg->m_version
        >> pkg->m_builtIn
-       >> pkg->m_uid
        >> baseDir
        >> serializedReport;
 

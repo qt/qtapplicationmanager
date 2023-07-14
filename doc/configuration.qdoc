@@ -520,11 +520,6 @@ ui:
         \target intentConfiguration
         \li Lets you specify the processing timeouts used in the intent
             sub-system. For more details, see \l{Intent Timeout Specification}.
-
-    \omit
-    telnetPort and telnetAddress: these are configuring the Pelagicore proprietary telnet component
-    applicationUserIdSeparation: this should be factored out into a container plugin
-    \endomit
 \endtable
 
 \section1 D-Bus Specification

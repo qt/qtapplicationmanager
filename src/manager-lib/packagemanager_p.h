@@ -34,10 +34,6 @@ public:
 
     bool developmentMode = false;
     bool allowInstallationOfUnsignedPackages = false;
-    bool userIdSeparation = false;
-    uint minUserId = uint(-1);
-    uint maxUserId = uint(-1);
-    uint commonGroupId = uint(-1);
 
     QString installationPath;
     QString documentPath;

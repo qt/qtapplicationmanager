@@ -45,7 +45,6 @@ public:
     bool isBuiltIn() const;
     void setBuiltIn(bool builtIn);
     QString version() const;
-    uint uid() const { return m_uid; }
 
     const QDir &baseDir() const;
     void setBaseDir(const QDir &dir);
@@ -76,7 +75,6 @@ private:
     QString m_icon; // relative to the manifest's location
     QString m_version;
     bool m_builtIn = false; // system package - not removable
-    uint m_uid = uint(-1); // unix user id - move to installationReport
     QVector<ApplicationInfo *> m_applications;
     QVector<IntentInfo *> m_intents;
 

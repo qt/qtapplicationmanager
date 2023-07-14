@@ -657,8 +657,6 @@ Module {
         Property { name: "ready"; type: "bool"; isReadonly: true; isFinal: true }
         Property { name: "installationLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
         Property { name: "documentLocation"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
-        Property { name: "applicationUserIdSeparation"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
-        Property { name: "commonApplicationGroupId"; type: "uint"; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "readyChanged"
             Parameter { name: "b"; type: "bool" }

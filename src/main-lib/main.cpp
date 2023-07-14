@@ -205,13 +205,11 @@ void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 
     registerPackages();
 
-    if (m_installationDir.isEmpty() || cfg->disableInstaller()) {
+    if (m_installationDir.isEmpty() || cfg->disableInstaller())
         StartupTimer::instance()->checkpoint("skipping installer");
-    } else {
-        setupInstaller(cfg->allowUnsignedPackages(), cfg->caCertificates(),
-                       std::bind(&Configuration::applicationUserIdSeparation, cfg,
-                                 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    }
+    else
+        setupInstaller(cfg->allowUnsignedPackages(), cfg->caCertificates());
+
     setLibraryPaths(libraryPaths() + cfg->pluginPaths());
     setupQmlEngine(cfg->importPaths(), cfg->style());
     setupWindowTitle(QString(), cfg->windowIcon());
@@ -499,8 +497,7 @@ void Main::setupQuickLauncher(int quickLaunchRuntimesPerContainer, qreal quickLa
     }
 }
 
-void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths,
-                          const std::function<bool(uint *, uint *, uint *)> &userIdSeparation) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if !defined(AM_DISABLE_INSTALLER)
     if (Q_UNLIKELY(!PackageUtilities::checkCorrectLocale())) {
@@ -517,20 +514,6 @@ void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePa
 
     if (!docPath.isEmpty() && (instPath.startsWith(docPath) || docPath.startsWith(instPath)))
         throw Exception("either installationDir or documentDir cannot be a sub-directory of the other");
-
-    // we only output these deployment warnings, if we are on embedded, applicationUserIdSeparation
-    // is enabled and either...
-    if (isRunningOnEmbedded() && userIdSeparation && userIdSeparation(nullptr, nullptr, nullptr)) {
-        // ... the user forgot to call Sudo::forkServer() quite early in main()
-        if (Q_UNLIKELY(!SudoClient::instance())) {
-            qCWarning(LogDeployment) << "In order for the package-manager to support \"applicationUserIdSeparation\", "
-                                        "please call Sudo::forkServer() as early as possible in main()";
-        // ... or the user called Sudo::forkServer() explicitly AND that called failed.
-        } else if (Q_UNLIKELY(SudoClient::instance()->isFallbackImplementation())) {
-            qCWarning(LogDeployment) << "In order for the package-manager to support \"applicationUserIdSeparation\", "
-                                        "please run as root either via sudo or SUID (preferred)";
-        }
-    }
 
     if (Q_UNLIKELY(hardwareId().isEmpty()))
         throw Exception("the installer is enabled, but the device-id is empty");
@@ -564,23 +547,12 @@ void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePa
         m_packageManager->setCACertificates(caCertificateList);
     }
 
-    uint minUserId, maxUserId, commonGroupId;
-    if (userIdSeparation && userIdSeparation(&minUserId, &maxUserId, &commonGroupId)) {
-#  if defined(Q_OS_LINUX)
-        if (!m_packageManager->enableApplicationUserIdSeparation(minUserId, maxUserId, commonGroupId))
-            throw Exception("could not enable application user-id separation in the installer.");
-#  else
-        qCCritical(LogSystem) << "WARNING: application user-id separation requested, but not possible on this platform.";
-#  endif // Q_OS_LINUX
-    }
-
     m_packageManager->enableInstaller();
 
     StartupTimer::instance()->checkpoint("after installer setup");
 #else
     Q_UNUSED(allowUnsigned)
     Q_UNUSED(caCertificatePaths)
-    Q_UNUSED(userIdSeparation)
 #endif // AM_DISABLE_INSTALLER
 }
 

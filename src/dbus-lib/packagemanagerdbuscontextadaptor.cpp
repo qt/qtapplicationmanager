@@ -92,16 +92,6 @@ bool PackageManagerAdaptor::allowInstallationOfUnsignedPackages() const
     return PackageManager::instance()->allowInstallationOfUnsignedPackages();
 }
 
-bool PackageManagerAdaptor::applicationUserIdSeparation() const
-{
-    return PackageManager::instance()->isApplicationUserIdSeparationEnabled();
-}
-
-uint PackageManagerAdaptor::commonApplicationGroupId() const
-{
-    return PackageManager::instance()->commonApplicationGroupId();
-}
-
 int PackageManagerAdaptor::count() const
 {
     return PackageManager::instance()->count();

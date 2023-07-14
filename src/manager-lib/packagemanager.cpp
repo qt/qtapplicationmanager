@@ -731,51 +731,6 @@ QString PackageManager::architecture() const
     return Architecture::identify(QCoreApplication::applicationFilePath());
 }
 
-bool PackageManager::isApplicationUserIdSeparationEnabled() const
-{
-    return d->userIdSeparation;
-}
-
-uint PackageManager::commonApplicationGroupId() const
-{
-    return d->commonGroupId;
-}
-
-bool PackageManager::enableApplicationUserIdSeparation(uint minUserId, uint maxUserId, uint commonGroupId)
-{
-    if (minUserId >= maxUserId || minUserId == uint(-1) || maxUserId == uint(-1) || commonGroupId == uint(-1))
-        return false;
-#if !defined(AM_DISABLE_INSTALLER)
-    d->userIdSeparation = true;
-    d->minUserId = minUserId;
-    d->maxUserId = maxUserId;
-    d->commonGroupId = commonGroupId;
-    return true;
-#else
-    return false;
-#endif
-}
-
-uint PackageManager::findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false)
-{
-    if (!isApplicationUserIdSeparationEnabled())
-        return uint(-1);
-
-    for (uint uid = d->minUserId; uid <= d->maxUserId; ++uid) {
-        bool match = false;
-        for (Package *package : d->packages) {
-            if (package->info()->uid() == uid) {
-                match = true;
-                break;
-            }
-        }
-        if (!match)
-            return uid;
-    }
-    throw Exception("could not find a free user-id for application separation in the range %1 to %2")
-            .arg(d->minUserId).arg(d->maxUserId);
-}
-
 QList<QByteArray> PackageManager::caCertificates() const
 {
     return d->chainOfTrust;
@@ -956,16 +911,9 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
             if ((!fi.isDir() && !fi.isFile()) || !validNames.contains(name)) {
                 qCDebug(LogInstaller) << "cleanup: removing unreferenced inode" << name;
 
-                if (SudoClient::instance()) {
-                    if (!SudoClient::instance()->removeRecursive(fi.absoluteFilePath())) {
-                        throw Exception(Error::IO, "could not remove broken installation leftover %1: %2")
-                            .arg(fi.absoluteFilePath()).arg(SudoClient::instance()->lastError());
-                    }
-                } else {
-                    if (!recursiveOperation(fi.absoluteFilePath(), safeRemove)) {
-                        throw Exception(Error::IO, "could not remove broken installation leftover %1 (maybe due to missing root privileges)")
-                            .arg(fi.absoluteFilePath());
-                    }
+                if (!removeRecursiveHelper(fi.absoluteFilePath())) {
+                    throw Exception(Error::IO, "could not remove broken installation leftover %1 (maybe due to missing root privileges)")
+                        .arg(fi.absoluteFilePath());
                 }
             }
         }
@@ -1641,11 +1589,9 @@ bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
 
 bool removeRecursiveHelper(const QString &path)
 {
-#if !defined(AM_DISABLE_INSTALLER)
-    if (PackageManager::instance()->isApplicationUserIdSeparationEnabled() && SudoClient::instance())
+    if (SudoClient::instance())
         return SudoClient::instance()->removeRecursive(path);
     else
-#endif
         return recursiveOperation(path, safeRemove);
 }
 

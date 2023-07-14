@@ -58,7 +58,6 @@ private:
     uint m_extractedFileCount = 0;
     bool m_managerApproval = false;
     std::unique_ptr<PackageInfo> m_package;
-    uint m_applicationUid = uint(-1);
     std::unique_ptr<Package> m_tempPackageForAcknowledge;
     std::vector<std::unique_ptr<Application>> m_tempApplicationsForAcknowledge;
 

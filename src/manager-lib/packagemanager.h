@@ -66,9 +66,6 @@ class PackageManager : public QAbstractListModel
     Q_PROPERTY(QVariantMap installationLocation READ installationLocation CONSTANT FINAL)
     Q_PROPERTY(QVariantMap documentLocation READ documentLocation CONSTANT FINAL)
 
-    Q_PROPERTY(bool applicationUserIdSeparation READ isApplicationUserIdSeparationEnabled CONSTANT FINAL)
-    Q_PROPERTY(uint commonApplicationGroupId READ commonApplicationGroupId CONSTANT FINAL)
-
 public:
     Q_ENUMS(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState))
 
@@ -113,14 +110,6 @@ public:
     QString hardwareId() const;
     void setHardwareId(const QString &hwId);
     QString architecture() const;
-//    bool securityChecksEnabled() const;
-//    void setSecurityChecksEnabled(bool enabled);
-
-    bool isApplicationUserIdSeparationEnabled() const;
-    uint commonApplicationGroupId() const;
-
-    bool enableApplicationUserIdSeparation(uint minUserId, uint maxUserId, uint commonGroupId);
-
     void setCACertificates(const QList<QByteArray> &chainOfTrust);
 
     void cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false);
@@ -199,7 +188,6 @@ private:
     void unregisterApplicationsAndIntentsOfPackage(Package *package);
     static void registerQmlTypes();
     QList<QByteArray> caCertificates() const;
-    uint findUnusedUserId() const Q_DECL_NOEXCEPT_EXPR(false);
 
 private:
     explicit PackageManager(PackageDatabase *packageDatabase,

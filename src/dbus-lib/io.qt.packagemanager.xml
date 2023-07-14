@@ -13,8 +13,6 @@
     <property name="documentLocation" type="a{sv}" access="read">
       <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
     </property>
-    <property name="applicationUserIdSeparation" type="b" access="read"/>
-    <property name="commonApplicationGroupId" type="u" access="read"/>
     <signal name="readyChanged">
       <arg name="b" type="b" direction="out"/>
     </signal>

@@ -369,7 +369,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 }
 
 
-const quint32 ConfigurationData::DataStreamVersion = 11;
+const quint32 ConfigurationData::DataStreamVersion = 12;
 
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -381,6 +381,7 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
 
     ConfigurationData *cd = new ConfigurationData;
     ds >> cd->runtimes.configurations
+       >> cd->runtimes.additionalLaunchers
        >> cd->containers.configurations
        >> cd->containers.selection
        >> cd->intents.disable
@@ -398,13 +399,12 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->logging.useAMConsoleLogger
        >> cd->installer.disable
        >> cd->installer.caCertificates
-       >> cd->installer.applicationUserIdSeparation.maxUserId
-       >> cd->installer.applicationUserIdSeparation.minUserId
-       >> cd->installer.applicationUserIdSeparation.commonGroupId
        >> cd->dbus.policies
        >> cd->dbus.registrations
        >> cd->quicklaunch.idleLoad
        >> cd->quicklaunch.runtimesPerContainer
+       >> cd->quicklaunch.failedStartLimit
+       >> cd->quicklaunch.failedStartLimitIntervalSec
        >> cd->ui.style
        >> cd->ui.mainQml
        >> cd->ui.resources
@@ -428,14 +428,11 @@ ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
        >> cd->flags.developmentMode
        >> cd->flags.forceMultiProcess
        >> cd->flags.forceSingleProcess
-       >> cd->wayland.socketName
-       >> cd->wayland.extraSockets
        >> cd->flags.allowUnsignedPackages
        >> cd->flags.allowUnknownUiClients
-       >> cd->instanceId
-       >> cd->runtimes.additionalLaunchers
-       >> cd->quicklaunch.failedStartLimit
-       >> cd->quicklaunch.failedStartLimitIntervalSec;
+       >> cd->wayland.socketName
+       >> cd->wayland.extraSockets
+       >> cd->instanceId;
 
     return cd;
 }
@@ -448,6 +445,7 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
     //            loadFromCache(), saveToCache() and mergeFrom() at the same time!
 
     ds << runtimes.configurations
+       << runtimes.additionalLaunchers
        << containers.configurations
        << containers.selection
        << intents.disable
@@ -465,13 +463,12 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << logging.useAMConsoleLogger
        << installer.disable
        << installer.caCertificates
-       << installer.applicationUserIdSeparation.maxUserId
-       << installer.applicationUserIdSeparation.minUserId
-       << installer.applicationUserIdSeparation.commonGroupId
        << dbus.policies
        << dbus.registrations
        << quicklaunch.idleLoad
        << quicklaunch.runtimesPerContainer
+       << quicklaunch.failedStartLimit
+       << quicklaunch.failedStartLimitIntervalSec
        << ui.style
        << ui.mainQml
        << ui.resources
@@ -495,14 +492,11 @@ void ConfigurationData::saveToCache(QDataStream &ds) const
        << flags.developmentMode
        << flags.forceMultiProcess
        << flags.forceSingleProcess
-       << wayland.socketName
-       << wayland.extraSockets
        << flags.allowUnsignedPackages
        << flags.allowUnknownUiClients
-       << instanceId
-       << runtimes.additionalLaunchers
-       << quicklaunch.failedStartLimit
-       << quicklaunch.failedStartLimitIntervalSec;
+       << wayland.socketName
+       << wayland.extraSockets
+       << instanceId;
 }
 
 template <typename T> void mergeField(T &into, const T &from, const T &def)
@@ -551,6 +545,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     static const ConfigurationData def;
 
     MERGE_FIELD(runtimes.configurations);
+    MERGE_FIELD(runtimes.additionalLaunchers);
     MERGE_FIELD(containers.configurations);
     MERGE_FIELD(containers.selection);
 
@@ -569,13 +564,12 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(logging.useAMConsoleLogger);
     MERGE_FIELD(installer.disable);
     MERGE_FIELD(installer.caCertificates);
-    MERGE_FIELD(installer.applicationUserIdSeparation.maxUserId);
-    MERGE_FIELD(installer.applicationUserIdSeparation.minUserId);
-    MERGE_FIELD(installer.applicationUserIdSeparation.commonGroupId);
     MERGE_FIELD(dbus.policies);
     MERGE_FIELD(dbus.registrations);
     MERGE_FIELD(quicklaunch.idleLoad);
     MERGE_FIELD(quicklaunch.runtimesPerContainer);
+    MERGE_FIELD(quicklaunch.failedStartLimit);
+    MERGE_FIELD(quicklaunch.failedStartLimitIntervalSec);
     MERGE_FIELD(ui.style);
     MERGE_FIELD(ui.mainQml);
     MERGE_FIELD(ui.resources);
@@ -599,14 +593,11 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(flags.developmentMode);
     MERGE_FIELD(flags.forceMultiProcess);
     MERGE_FIELD(flags.forceSingleProcess);
-    MERGE_FIELD(wayland.socketName);
-    MERGE_FIELD(wayland.extraSockets);
     MERGE_FIELD(flags.allowUnsignedPackages);
     MERGE_FIELD(flags.allowUnknownUiClients);
+    MERGE_FIELD(wayland.socketName);
+    MERGE_FIELD(wayland.extraSockets);
     MERGE_FIELD(instanceId);
-    MERGE_FIELD(runtimes.additionalLaunchers);
-    MERGE_FIELD(quicklaunch.failedStartLimit);
-    MERGE_FIELD(quicklaunch.failedStartLimitIntervalSec);
 }
 
 QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
@@ -755,15 +746,6 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                             cd->installer.disable = p->parseScalar().toBool(); } },
                       { "caCertificates", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
                             cd->installer.caCertificates = p->parseStringOrStringList(); } },
-                      { "applicationUserIdSeparation", false, YamlParser::Map, [&cd](YamlParser *p) {
-                            p->parseFields({
-                                { "minUserId", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->installer.applicationUserIdSeparation.minUserId = p->parseScalar().toInt(); } },
-                                { "maxUserId", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->installer.applicationUserIdSeparation.maxUserId = p->parseScalar().toInt(); } },
-                                { "commonGroupId", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->installer.applicationUserIdSeparation.commonGroupId = p->parseScalar().toInt(); } }
-                            }); } }
                   }); } },
             { "quicklaunch", false, YamlParser::Map, [&cd](YamlParser *p) {
                   p->parseFields({
@@ -1203,21 +1185,6 @@ QString Configuration::dbusRegistration(const char *interfaceName) const
 QVariantMap Configuration::rawSystemProperties() const
 {
     return m_data->systemProperties;
-}
-
-bool Configuration::applicationUserIdSeparation(uint *minUserId, uint *maxUserId, uint *commonGroupId) const
-{
-    const auto &sep = m_data->installer.applicationUserIdSeparation;
-    if (sep.minUserId >= 0 && sep.maxUserId >= 0 && sep.commonGroupId >= 0) {
-        if (minUserId)
-            *minUserId = sep.minUserId;
-        if (maxUserId)
-            *maxUserId = sep.maxUserId;
-        if (commonGroupId)
-            *commonGroupId = sep.commonGroupId;
-        return true;
-    }
-    return false;
 }
 
 qreal Configuration::quickLaunchIdleLoad() const

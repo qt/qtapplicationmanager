@@ -25,7 +25,8 @@ daemon needs to be running. Bubblewrap is also used by \l{Flatpak} to sandbox ap
 \section1 Configuration
 
 First we need to select which applications should use the bubblewrap container. In this example we
-use it for all our examples by setting a wildcard for the \l {selection} key in the am-config.yaml
+use it for all our examples by setting a wildcard for the \l{container-selection}{selection} key
+in the am-config.yaml
 
 \quotefromfile applicationmanager/bubblewrap-example/am-config.yaml
 \skipto containers:

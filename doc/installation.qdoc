@@ -93,6 +93,9 @@ mkdir <builddir>
   && cmake --install .
 \endcode
 
+All executables, including the unit tests, can be found in the build folder's \c bin directory, after
+compiling.
+
 There are various options that can be given to \c CMake to tailor the build to suit your needs.
 
 With Qt's new CMake based build system, there are three ways to set configure options for Qt
@@ -154,13 +157,13 @@ modules:
   \li If set to \c yes, enables building and linking against \c libbacktrace in the 3rdparty folder.
       This gives you readable backtraces for crashes on Linux, but also increases the binary size
       slightly. For debug builds, this option is enabled by default.
-      Set to \c no disables building and linking against \c libbacktrace.
+      Setting this to \c no disables building and linking against \c libbacktrace.
 \row
   \li \c{stackwalker}
   \li If set to \c yes, enables building and linking against \c stackwalker in the 3rdparty folder.
       This gives you readable backtraces for crashes on Windows, but also increases the binary size
       slightly. For debug builds, this option is enabled by default.
-      Set to \c no disables building and linking against \c stackwalker.
+      Settings this to \c no disables building and linking against \c stackwalker.
 \endtable
 
 \section2 The Hardware ID
@@ -190,9 +193,6 @@ There are three different ways to specify a hardware ID:
     address. This option is useful if your device has a unique device ID available via \c /proc or
     \c /sys and you want to use features that require such an ID.
 \endlist
-
-All executables, including the unit tests, can be found in the build folder's \c bin directory, after
-compiling.
 
 
 \section1 Generate Code-Coverage Data

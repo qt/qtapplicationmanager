@@ -392,7 +392,7 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
 /*! \fn void ContainerManagerInterface::setConfiguration(const QVariantMap &configuration)
     Called by the application manager after parsing its configuration files. The \a configuration
     map corresponds to the (optional) container specific configuration as described in the
-    \l{Add Container Integration Settings}{container documentation}.
+    \l{Containers}{container documentation}.
 */
 
 /*! \fn ContainerInterface *ContainerManagerInterface::create(bool isQuickLaunch, const QVector<int> &stdioRedirections, const QMap<QString, QString> &debugWrapperEnvironment, const QStringList &debugWrapperCommand)

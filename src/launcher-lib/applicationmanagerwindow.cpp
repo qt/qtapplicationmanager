@@ -26,7 +26,7 @@ public:
     \inqmlmodule QtApplicationManager.Application
     \ingroup app
     \inherits Window
-    \brief The window root element of an application
+    \brief The window root element of an application.
 
     This QML item can be used as the root item in your QML application. In doing so, you enable
     your application to be usable in both single-process (EGL fullscreen, desktop) and

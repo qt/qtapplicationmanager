@@ -662,6 +662,13 @@ bool PackageManager::isReady() const
     return d->cleanupBrokenInstallationsDone;
 }
 
+/*!
+    \qmlproperty bool PackageManager::developmentMode
+    \readonly
+
+    This readonly property reflects the \l{development-mode}{\c developmentMode} setting in the
+    configuration file.
+*/
 bool PackageManager::developmentMode() const
 {
     return d->developmentMode;
@@ -672,6 +679,13 @@ void PackageManager::setDevelopmentMode(bool enable)
     d->developmentMode = enable;
 }
 
+/*!
+    \qmlproperty string PackageManager::allowInstallationOfUnsignedPackages
+    \readonly
+
+    This readonly property reflects the \l{allow-unsigned-packages}{\c allowUnsignedPackages}
+    setting in the configuration file.
+*/
 bool PackageManager::allowInstallationOfUnsignedPackages() const
 {
     return d->allowInstallationOfUnsignedPackages;
@@ -682,6 +696,15 @@ void PackageManager::setAllowInstallationOfUnsignedPackages(bool enable)
     d->allowInstallationOfUnsignedPackages = enable;
 }
 
+/*!
+    \qmlproperty string PackageManager::hardwareId
+    \readonly
+
+    This property will return the \l{The Hardware ID}{hardware id} for the current system.
+
+    Package repositories (like for example the package-server tool) can use these hardware ids
+    to limit the distribution of packages to specific devices via digital signatures.
+*/
 QString PackageManager::hardwareId() const
 {
     return d->hardwareId;

@@ -67,10 +67,11 @@ if(AM_COVERAGE)
     endif()
 
     set(QT_BUILD_TESTS ON)
-    set(GCC_COVERAGE_COMPILE_FLAGS "-fprofile-arcs -ftest-coverage")
-    set(GCC_COVERAGE_LINK_FLAGS    "-fprofile-arcs -fprofile-generate -lgcov --coverage")
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
+    set(QT_BUILD_TESTS_BY_DEFAULT ON)
+    add_compile_options(-fprofile-arcs -ftest-coverage)
+    add_link_options(-fprofile-arcs -fprofile-generate --coverage)
+    add_compile_definitions(AM_COVERAGE)
+    link_libraries(gcov)
 
     set(GCOV_EXCLUDE
         '/usr/*'
@@ -99,7 +100,7 @@ if(AM_COVERAGE)
         echo \"\\n\\nCoverage info is available at file://`pwd`/branch-coverage/index.html\\n\"
 
         DEPENDS
-            tests/auto/install
+            qtapplicationmanager create-test-packages
         USES_TERMINAL
     )
 endif()

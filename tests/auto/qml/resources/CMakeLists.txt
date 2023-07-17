@@ -20,6 +20,7 @@ qt_am_internal_add_qml_test(tst_resource
 )
 
 qt_add_binary_resources(systemuifile systemuifile.qrc)
+add_dependencies(systemuiplugin systemuifile)
 
 qt_autogen_tools_initial_setup(systemuiplugin)
 add_subdirectory(appcommon)

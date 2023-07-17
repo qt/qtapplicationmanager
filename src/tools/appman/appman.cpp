@@ -50,14 +50,13 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
         Main a(argc, argv);
 
-#if defined(AM_TESTRUNNER)
-        const char *additionalDescription =
-                "Additional testrunner command line options can be set after the -- argument\n" \
-                "Use -- -help to show all available testrunner command line options.";
-        bool onlyOnePositionalArgument = false;
-#else
         const char *additionalDescription = nullptr;
         bool onlyOnePositionalArgument = true;
+#if defined(AM_TESTRUNNER)
+        additionalDescription =
+                "Additional testrunner command line options can be set after the -- argument\n" \
+                "Use -- -help to show all available testrunner command line options.";
+        onlyOnePositionalArgument = false;
 #endif
 
         Configuration cfg(additionalDescription, onlyOnePositionalArgument);

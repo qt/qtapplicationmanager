@@ -17,7 +17,24 @@ ApplicationManagerWindow {
 
     Notification {
         id: notification
+        priority: Notification.Low
         summary: "Test"
+        body: "Body"
+        category: "Category"
+        icon: "file:///icon"
+        image: "file:///image"
+        actions: [ { "a1": "Action 1" }, { "a2": "Action 2" } ]
+        showActionsAsIcons: false
+        dismissOnAction: true
+        acknowledgeable: true
+        showProgress: true
+        progress: 0.5
+        sticky: true
+        extended: { "key": 42 }
+
+        onActionTriggered: (actionId) => {
+            IntentClient.sendIntentRequest("notification-action", { "actionId": actionId })
+        }
     }
 
     IntentHandler {

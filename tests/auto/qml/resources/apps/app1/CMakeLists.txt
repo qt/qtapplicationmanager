@@ -14,5 +14,6 @@ qt_internal_add_resource(app1plugin "app1plugin"
 )
 
 qt_add_binary_resources(app1file app1file.qrc)
+add_dependencies(app1plugin app1file)
 
 qt_autogen_tools_initial_setup(app1plugin)

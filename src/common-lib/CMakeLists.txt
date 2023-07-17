@@ -75,3 +75,8 @@ qt_internal_extend_target(AppManCommonPrivate CONDITION NOT QT_FEATURE_am_system
     LIBRARIES
         Qt::BundledLibYaml
 )
+
+qt_internal_extend_target(AppManCommonPrivate CONDITION AM_COVERAGE
+    LIBRARIES
+        gcov
+)

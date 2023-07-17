@@ -295,6 +295,11 @@ QT_END_NAMESPACE_AM
 #  elif defined(Q_OS_MACOS)
 #    include <mach-o/dyld.h>
 #  endif
+#  if defined(AM_COVERAGE)
+extern "C" {
+#    include <gcov.h>
+}
+#  endif
 
 #  include "unixsignalhandler.h"
 #  include "processtitle.h"
@@ -594,6 +599,10 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     // make sure to terminate our sub-process as well, but not ourselves
     signal(SIGTERM, SIG_IGN);
     kill(0, SIGTERM);
+
+#if defined(AM_COVERAGE)
+    __gcov_dump();
+#endif
 
     if (chg()->dumpCore) {
         logMsg(Console, "\n > the process will be aborted (core dumped)\n");

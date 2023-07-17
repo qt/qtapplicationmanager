@@ -1,2 +1,3 @@
 
 qt_add_binary_resources(appcommonfile appcommonfile.qrc)
+add_dependencies(systemuiplugin appcommonfile)

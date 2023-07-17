@@ -1,0 +1,4 @@
+# QDirIterator on /tmp doesn't list anything on qemu
+# might be related to https://gitlab.com/qemu-project/qemu/-/issues/263
+[instances]
+b2qt

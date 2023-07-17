@@ -1,0 +1,11 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/builtin-apps"
+  installationDir: "/tmp/am-test-controller-tool/apps"
+  documentDir: "/tmp/am-test-controller-tool/docs"
+
+ui:
+  mainQml: "${CONFIG_PWD}/system-ui.qml"
+instanceId: controller-test-id

@@ -86,8 +86,14 @@ packager create-package "$dst/test.appkg" "$src"
 info "Dev-sign package"
 packager dev-sign-package "$dst/test.appkg" "$dst/test-dev-signed.appkg" certificates/dev1.p12 password
 
+info "Dev-verify package"
+packager dev-verify-package "$dst/test-dev-signed.appkg" certificates/devca.crt certificates/ca.crt
+
 info "Store-sign package"
 packager store-sign-package "$dst/test.appkg" "$dst/test-store-signed.appkg" certificates/store.p12 password "foobar"
+
+info "Store-verify package"
+packager store-verify-package "$dst/test-store-signed.appkg" certificates/ca.crt "foobar"
 
 info "Store-sign dev package"
 packager store-sign-package "$dst/test-dev-signed.appkg" "$dst/test-store-dev-signed.appkg" certificates/store.p12 password "foobar"

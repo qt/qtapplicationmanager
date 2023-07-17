@@ -951,8 +951,8 @@ Module {
     }
     Component {
         name: "ApplicationManager"
-        exports: [ "QtApplicationManager.SystemUI/ApplicationManager 2.0" ]
-        exportMetaObjectRevisions: [ 512 ]
+        exports: [ "QtApplicationManager.SystemUI/ApplicationManager 2.2", "QtApplicationManager.SystemUI/ApplicationManager 2.1", "QtApplicationManager.SystemUI/ApplicationManager 2.0" ]
+        exportMetaObjectRevisions: [ 514, 513, 512 ]
         prototype: "QAbstractListModel"
         isSingleton: true
         Property { name: "count"; type: "int"; isReadonly: true; isFinal: true }
@@ -963,6 +963,8 @@ Module {
         Property { name: "windowManagerCompositorReady"; type: "bool"; isReadonly: true; isFinal: true }
         Property { name: "systemProperties"; type: "QVariantMap"; isReadonly: true; isConstant: true; isFinal: true }
         Property { name: "containerSelectionFunction"; type: "QJSValue"; isFinal: true }
+        Property { name: "availableRuntimeIds"; type: "QStringList"; revision: 514; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "availableContainerIds"; type: "QStringList"; revision: 514; isReadonly: true; isConstant: true; isFinal: true }
         Signal {
             name: "applicationRunStateChanged"
             Parameter { name: "id"; type: "QString" }

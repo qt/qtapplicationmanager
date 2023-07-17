@@ -41,7 +41,7 @@ class ApplicationManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationManager 2.0 SINGLETON")
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationManager 2.2 SINGLETON")
 
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT FINAL)
@@ -51,6 +51,8 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(bool windowManagerCompositorReady READ isWindowManagerCompositorReady NOTIFY windowManagerCompositorReadyChanged FINAL)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT FINAL)
     Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged FINAL)
+    Q_PROPERTY(QStringList availableRuntimeIds READ availableRuntimeIds CONSTANT FINAL REVISION(2, 2))
+    Q_PROPERTY(QStringList availableContainerIds READ availableContainerIds CONSTANT FINAL REVISION(2, 2))
 
 public:
     ~ApplicationManager() override;
@@ -63,6 +65,8 @@ public:
     bool isShuttingDown() const;
     QVariantMap systemProperties() const;
     void setSystemProperties(const QVariantMap &map);
+    QStringList availableRuntimeIds() const;
+    QStringList availableContainerIds() const;
 
     void addApplication(ApplicationInfo *appInfo, Package *package);
     void removeApplication(ApplicationInfo *appInfo, Package *package);

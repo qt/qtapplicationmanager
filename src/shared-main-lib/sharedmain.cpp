@@ -33,7 +33,6 @@
 #include "utilities.h"
 #include "exception.h"
 #include "crashhandler.h"
-#include "qmllogger.h"
 #include "startuptimer.h"
 #include "unixsignalhandler.h"
 

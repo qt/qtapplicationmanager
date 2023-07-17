@@ -360,6 +360,7 @@ ApplicationManager *ApplicationManager::createInstance(bool singleProcess)
 
     qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager.SystemUI", 2, 0, "ApplicationManager",
                                                  &ApplicationManager::instanceForQml);
+    qmlRegisterRevision<ApplicationManager, 2>("QtApplicationManager.SystemUI", 2, 2);
     qmlRegisterType<ApplicationModel>("QtApplicationManager.SystemUI", 2, 0, "ApplicationModel");
     qmlRegisterUncreatableType<Application>("QtApplicationManager.SystemUI", 2, 0, "ApplicationObject",
                                             qSL("Cannot create objects of type ApplicationObject"));
@@ -377,6 +378,8 @@ ApplicationManager *ApplicationManager::createInstance(bool singleProcess)
     qRegisterMetaType<Am::RunState>();
     qRegisterMetaType<Am::ExitStatus>();
     qRegisterMetaType<Am::ProcessError>();
+
+    qmlRegisterModule("QtApplicationManager", 2, 2);
 
     if (Q_UNLIKELY(!PackageManager::instance()))
         qFatal("ApplicationManager::createInstance() was called before a PackageManager singleton was instantiated.");
@@ -485,6 +488,16 @@ void ApplicationManager::setWindowManagerCompositorReady(bool ready)
         d->windowManagerCompositorReady = ready;
         emit windowManagerCompositorReadyChanged(ready);
     }
+}
+
+QStringList ApplicationManager::availableRuntimeIds() const
+{
+    return RuntimeFactory::instance()->runtimeIds();
+}
+
+QStringList ApplicationManager::availableContainerIds() const
+{
+    return ContainerFactory::instance()->containerIds();
 }
 
 QVector<Application *> ApplicationManager::applications() const

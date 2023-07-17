@@ -264,7 +264,10 @@ runs the requested binary in this sandbox isolated from the rest of the system. 
 technology used in the \l{Flatpak}{Linux Flatpak ecosystem}. See the \l {Bubblewrap Container Example}
 for an example setup with test applications.
 
-the \c bubblewrap container is built as a plugin and loaded, but not enabled by default. It can be
+At least \c bubblewrap version 0.5 needs to be installed on the target system. Using the latest
+upstream release is recommended though.
+
+The \c bubblewrap container is built as a plugin and loaded, but not enabled by default. It can be
 configured in the application manager's config file using its unique ID: \c bubblewrap:
 
 \badcode

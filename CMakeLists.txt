@@ -79,6 +79,7 @@ if(AM_COVERAGE)
         '${CMAKE_CURRENT_LIST_DIR}/tests/*'
         '${CMAKE_CURRENT_LIST_DIR}/examples/*'
         '${CMAKE_CURRENT_LIST_DIR}/src/3rdparty/*'
+        '${CMAKE_CURRENT_LIST_DIR}/src/plugin-interfaces/*'
         'moc_*'
         '${CMAKE_CURRENT_BINARY_DIR}/*'
     )

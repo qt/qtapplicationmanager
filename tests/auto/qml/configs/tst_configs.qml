@@ -27,6 +27,17 @@ TestCase {
          }
     }
 
+    property string lastActionId
+
+    IntentServerHandler {
+         intentIds: "notification-action"
+
+         onRequestReceived: function(request) {
+             lastActionId = request.parameters["actionId"]
+             request.sendReply({ })
+         }
+    }
+
     SignalSpy {
         id: windowAddedSpy
         target: WindowManager
@@ -78,8 +89,32 @@ TestCase {
 
         if (!ApplicationManager.systemProperties.nodbus) {
             IntentClient.sendIntentRequest("test-notification", "test.configs.app", { })
-            tryVerify(function() { return NotificationManager.count === 1; }, spyTimeout);
-            compare(NotificationManager.get(0).summary, "Test");
+            tryCompare(NotificationManager, "count", 1, spyTimeout);
+
+            let n = NotificationManager.get(0)
+            compare(n.applicationId, "test.configs.app")
+            compare(n.priority, Notification.Low)
+            compare(n.summary, "Test")
+            compare(n.body, "Body")
+            compare(n.category, "Category")
+            compare(n.icon, "file:///icon")
+            compare(n.image, "file:///image" )
+            compare(n.actions, [ { "a1": "Action 1" }, { "a2": "Action 2" } ])
+            compare(n.showActionsAsIcons, false)
+            compare(n.dismissOnAction, true)
+            compare(n.isAcknowledgeable, true)
+            compare(n.isSytemNotification, false)
+            compare(n.isShowingProgress, true)
+            compare(n.progress, 0.5)
+            compare(n.isSticky, true)
+            compare(n.timeout, 0)
+            compare(n.extended, { "key": 42 })
+
+            NotificationManager.triggerNotificationAction(n.id, "a2")
+            tryCompare(testCase, "lastActionId", "a2", spyTimeout)
+
+            NotificationManager.dismissNotification(n.id)
+            tryCompare(NotificationManager, "count", 0, spyTimeout);
         }
 
         window.setWindowProperty("trigger", "now");

@@ -30,12 +30,7 @@ public:
     Q_INVOKABLE int observeObjectDestroyed(QObject *obj);
     Q_INVOKABLE void aboutToBlock();
     Q_INVOKABLE bool dirExists(const QString &dir);
-#if defined(Q_OS_LINUX)
-    Q_INVOKABLE QString ps(int pid);
-    Q_INVOKABLE QString cmdLine(int pid);
-    Q_INVOKABLE QString environment(int pid);
-    Q_INVOKABLE int findChildProcess(int ppid, const QString &substr);
-#endif
+    Q_INVOKABLE QVariantMap runProgram(const QStringList &commandLine);
 
 Q_SIGNALS:
     void objectDestroyed(int index);

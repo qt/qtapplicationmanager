@@ -44,15 +44,19 @@ TestCase {
             sigIdx = 0;
             quickArg = " --quicklaunch"
             tryVerify(function() {
-                pid =  AmTest.findChildProcess(sysuiPid, executable + quickArg);
+                let out = AmTest.runProgram([ "ps", "--ppid", sysuiPid, "-o", "pid,args", "--no-headers"]).stdout
+                const re = new RegExp(" *(\\d*) .*" + executable + quickArg)
+                let match = re.exec(out)
+                pid = match ? match[1] : 0
                 return pid
             }, spyTimeout);
             wait(250 * AmTest.timeoutFactor);
 
-            if (AmTest.cmdLine(pid).includes("/qemu-"))
+            let cmdLine = AmTest.runProgram([ "cat", `/proc/${pid}/cmdline` ]).stdout.split('\0')[0]
+            if (cmdLine.includes("/qemu-"))
                 skip("This doesn't work inside qemu")
 
-            verify(AmTest.cmdLine(pid).endsWith(executable + quickArg));
+            verify(cmdLine.endsWith(executable + quickArg));
         } else {
             sigIdx = 1;
             quickArg = ""
@@ -70,14 +74,19 @@ TestCase {
         processStatus.applicationId = data.appId;
         pid = processStatus.processId;
 
-        if (AmTest.cmdLine(pid).includes("/qemu-"))
+        let cmdLine = AmTest.runProgram([ "cat", `/proc/${pid}/cmdline` ]).stdout.split('\0')[0]
+        if (cmdLine.includes("/qemu-"))
             skip("This doesn't work inside qemu")
 
-        verify(AmTest.ps(pid).endsWith(executable + ": " + data.resId + quickArg));
-        verify(AmTest.cmdLine(pid).endsWith(executable + ": " + data.resId + quickArg));
-        verify(AmTest.environment(pid).includes("AM_CONFIG=%YAML"));
-        verify(AmTest.environment(pid).includes("AM_NO_DLT_LOGGING=1"));
-        verify(AmTest.environment(pid).includes("WAYLAND_DISPLAY="));
+        verify(AmTest.runProgram([ "ps", "--no-headers", pid ]).stdout.trim()
+               .endsWith(executable + ": " + data.resId + quickArg));
+
+        verify(cmdLine.endsWith(executable + ": " + data.resId + quickArg));
+
+        let environment = AmTest.runProgram([ "cat", `/proc/${pid}/environ` ]).stdout
+        verify(environment.includes("AM_CONFIG=%YAML"));
+        verify(environment.includes("AM_NO_DLT_LOGGING=1"));
+        verify(environment.includes("WAYLAND_DISPLAY="));
 
         runStateChangedSpy.clear();
         ApplicationManager.stopAllApplications();

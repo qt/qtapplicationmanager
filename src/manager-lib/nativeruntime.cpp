@@ -456,8 +456,8 @@ bool NativeRuntime::startApplicationViaLauncher()
     QString pathInContainer = m_container->mapHostPathToContainer(m_app->info()->absoluteCodeFilePath());
 
     emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
-                                              convertFromJSVariant(QVariant(m_app->info()->toVariantMap())).toMap(),
-                                              convertFromJSVariant(QVariant(systemProperties())).toMap());
+                                              convertFromJSVariant(m_app->info()->toVariantMap()).toMap(),
+                                              convertFromJSVariant(systemProperties()).toMap());
     return true;
 }
 

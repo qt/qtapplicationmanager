@@ -157,7 +157,7 @@ QVariantMap ApplicationManagerAdaptor::get(const QString &id)
     AM_AUTHENTICATE_DBUS(QVariantMap)
     auto map = ApplicationManager::instance()->get(id);
     map.remove(qSL("application")); // cannot marshall QObject *
-    return map;
+    return convertFromJSVariant(map).toMap();
 }
 
 QString ApplicationManagerAdaptor::identifyApplication(qlonglong pid)

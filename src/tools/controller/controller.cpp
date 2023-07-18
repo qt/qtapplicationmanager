@@ -704,7 +704,7 @@ void showApplication(const QString &appId, bool asJson) Q_DECL_NOEXCEPT_EXPR(fal
     if (reply.isError())
         throw Exception(Error::IO, "failed to get application via DBus: %1").arg(reply.error().message());
 
-    QVariant app = reply.value();
+    QVariant app = convertFromDBusVariant(reply.value());
     fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(app).toJson().constData()
                                    : QtYaml::yamlFromVariantDocuments({ app }).constData());
     qApp->quit();
@@ -734,7 +734,7 @@ void showPackage(const QString &packageId, bool asJson) Q_DECL_NOEXCEPT_EXPR(fal
     if (reply.isError())
         throw Exception(Error::IO, "failed to get package via DBus: %1").arg(reply.error().message());
 
-    QVariant package = reply.value();
+    QVariant package = convertFromDBusVariant(reply.value());
     fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(package).toJson().constData()
                                    : QtYaml::yamlFromVariantDocuments({ package }).constData());
     qApp->quit();

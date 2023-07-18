@@ -6,10 +6,7 @@
 #include <QDir>
 #include <QRegularExpression>
 #include <QAbstractEventDispatcher>
-#if defined(Q_OS_LINUX)
-#  include <QTextStream>
-#  include <QProcess>
-#endif
+#include <QProcess>
 #include <private/qtestlog_p.h>
 #include "amtest.h"
 #include "utilities.h"
@@ -81,51 +78,38 @@ bool AmTest::dirExists(const QString &dir)
     return QDir(dir).exists();
 }
 
-#if defined(Q_OS_LINUX)
-QString AmTest::ps(int pid)
+QVariantMap AmTest::runProgram(const QStringList &commandLine)
 {
-    QProcess process;
-    process.start(qSL("ps"), QStringList{qSL("--no-headers"), QString::number(pid)});
-    QString str;
-    if (process.waitForFinished(5000 * timeoutFactor()))
-        str = QString::fromLocal8Bit(process.readAllStandardOutput().trimmed());
-    return str;
-}
+    QVariantMap result {
+        { qSL("stdout"), QString() },
+        { qSL("stderr"), QString() },
+        { qSL("exitCode"), -1 },
+        { qSL("error"), QString() },
+    };
 
-QString AmTest::cmdLine(int pid)
-{
-    QFile file(QString::fromUtf8("/proc/%1/cmdline").arg(pid));
-    QString str;
-    if (file.open(QFile::ReadOnly)) {
-        str = QString::fromLocal8Bit(file.readLine().trimmed());
-        int nullPos = str.indexOf(QChar::Null);
-        if (nullPos >= 0)
-            str.truncate(nullPos);
+    if (commandLine.isEmpty()) {
+        result[qSL("error")] = qL1S("no command");
+    } else {
+#if QT_CONFIG(process)
+        QProcess process;
+        process.start(commandLine[0], commandLine.mid(1));
+        if (!process.waitForStarted(5000 * timeoutFactor())) {
+            result[qSL("error")] = qL1S("could not start process");
+        } else {
+            if (!process.waitForFinished(5000 * timeoutFactor()))
+                result[qSL("error")] = qL1S("process did not exit");
+            else
+                result[qSL("exitCode")] = process.exitCode();
+
+            result[qSL("stdout")] = QString::fromLocal8Bit(process.readAllStandardOutput());
+            result[qSL("stderr")] = QString::fromLocal8Bit(process.readAllStandardError());
+        }
+#else
+        result[qSL("error")] = qL1S("runProgram is not available in this build");
+#endif
     }
-    return str;
+    return result;
 }
-
-QString AmTest::environment(int pid)
-{
-    QFile file(QString::fromUtf8("/proc/%1/environ").arg(pid));
-    return file.open(QFile::ReadOnly) ? QTextStream(&file).readAll() : QString();
-}
-
-int AmTest::findChildProcess(int ppid, const QString &substr)
-{
-    QProcess process;
-    process.start(qSL("ps"), QStringList{qSL("--ppid"), QString::number(ppid), qSL("-o"),
-                                         qSL("pid,args"), qSL("--no-headers")});
-    if (process.waitForFinished(5000 * timeoutFactor())) {
-        const QString str = QString::fromLocal8Bit(process.readAllStandardOutput());
-        QRegularExpression re(qSL(" *(\\d*) .*") + substr);
-        QRegularExpressionMatch match = re.match(str);
-        if (match.hasMatch())
-            return match.captured(1).toInt();
-    }
-    return 0;
-}
-#endif  // Q_OS_LINIX
 
 QT_END_NAMESPACE_AM
 

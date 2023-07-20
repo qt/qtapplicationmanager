@@ -34,6 +34,10 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
 {
     Q_ASSERT(!testRunnerArguments.isEmpty());
 
+#if defined(Q_OS_WINDOWS)
+    qputenv("QT_FORCE_STDERR_LOGGING", "1");
+#endif
+
     // Convert all the arguments back into a char * array.
     // qtest_qParseArgs copies all data, so we can get rid of the array afterwards
     QVector<char *> argv;

@@ -143,7 +143,7 @@ void SharedMain::setupQmlDebugging(bool qmlDebugging)
 void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
                               const QString &messagePattern, const QVariant &useAMConsoleLogger)
 {
-    const QStringList rules = verbose ? QStringList() << qSL("*=true") << qSL("qt.*.debug=false") << qSL("am.wayland.debug=false")
+    const QStringList rules = verbose ? QStringList({ qSL("*=true"), qSL("qt.*.debug=false"), qSL("am.wayland.debug=false"), qSL("qt.qml.overloadresolution.info=false") })
                                       : loggingRules.isEmpty() ? QStringList(qSL("*.debug=false"))
                                                                : loggingRules;
     Logging::setFilterRules(rules);

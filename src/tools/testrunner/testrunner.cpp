@@ -39,6 +39,10 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
 {
     Q_ASSERT(!testRunnerArguments.isEmpty());
 
+#if defined(Q_OS_WINDOWS)
+    qputenv("QT_FORCE_STDERR_LOGGING", "1");
+#endif
+
     const QString name = QFileInfo(testRunnerArguments.at(0)).fileName() + qSL("::") + QDir().relativeFilePath(testFile);
     static const char *programName = qstrdup(name.toLocal8Bit().constData());
     QuickTestResult::setProgramName(programName);

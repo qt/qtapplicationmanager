@@ -997,16 +997,16 @@ void listInstances()
 
     QDirIterator dit(dir, { u'*' % suffix });
     while (dit.hasNext()) {
-        QByteArray name = dit.next().toLocal8Bit();
+        QString name = dit.next();
         name.chop(suffix.length());
         name = name.mid(dir.length());
         if (name.isEmpty()) {
-            name = "(no instance id)";
+            name = qSL("(no instance id)");
         } else {
             name.chop(1); // remove the '-' separator
-            name = '"' % name % '"';
+            name = u'"' % name % u'"';
         }
-        fprintf(stdout, "%s\n", name.constData());
+        fprintf(stdout, "%s\n", name.toLocal8Bit().constData());
     }
     qApp->quit();
 }

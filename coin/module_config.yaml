@@ -30,7 +30,7 @@ instructions:
     variableValue: "1"
   - type: AppendToEnvironmentVariable
     variableName: NON_QTBASE_TARGET_CMAKE_ARGS
-    variableValue: "-DINPUT_hardware_id=dummyHwId -DQT_FORCE_BUILD_TOOLS=ON"
+    variableValue: " -DINPUT_hardware_id=dummyHwId -DQT_FORCE_BUILD_TOOLS=ON"
     enable_if:
       condition: property
       property: target.os

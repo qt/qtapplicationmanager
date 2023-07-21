@@ -112,9 +112,9 @@ void tst_Signature::crossPlatform()
 
     if (qEnvironmentVariableIsSet("AM_CREATE_SIGNATURE_FILE")) {
         QFile *nativeFile = nullptr;
-#if defined(Q_OS_WIN)
+#if defined(Q_OS_WINDOWS)
         nativeFile = &fileWinCrypt;
-#elif defined(Q_OS_OSX)
+#elif defined(Q_OS_MACOS)
         nativeFile = &fileSecurityFramework;
 #else
         nativeFile = &fileOpenSsl;

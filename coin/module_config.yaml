@@ -56,4 +56,4 @@ instructions:
       disable_if:
         condition: property
         property: target.os
-        in_values: ["IOS", "Android", "WebAssembly"]
+        in_values: ["IOS", "Android", "WebAssembly", "QNX"]

@@ -8,9 +8,9 @@
 #include <QCoreApplication>
 #include <QEventLoop>
 #include <QQmlEngine>
-#include <QRegularExpression>
-#include <QDir>
 #include <QFileInfo>
+#include <QVector>
+#include <QScopeGuard>
 
 #include <qlogging.h>
 #include <QtTest/qtestsystem.h>
@@ -28,45 +28,47 @@ QT_END_NAMESPACE
 
 QT_BEGIN_NAMESPACE_AM
 
-static QObject *amTest(QQmlEngine *engine, QJSEngine *jsEngine)
-{
-    Q_UNUSED(engine);
-    Q_UNUSED(jsEngine);
-    return AmTest::instance();
-}
 
-void TestRunner::initialize(const QString &testFile, const QStringList &testRunnerArguments)
+void TestRunner::initialize(const QString &testFile, const QStringList &testRunnerArguments,
+                            const QString &sourceFile)
 {
     Q_ASSERT(!testRunnerArguments.isEmpty());
 
-    const QString name = QFileInfo(testRunnerArguments.at(0)).fileName() + qSL("::") + QDir().relativeFilePath(testFile);
-    static const char *programName = qstrdup(name.toLocal8Bit().constData());
-    QuickTestResult::setProgramName(programName);
-
     // Convert all the arguments back into a char * array.
-    // These need to be alive as long as the program is running!
-    static QVector<char *> testArgV;
-    for (const auto &arg : testRunnerArguments)
-        testArgV << qstrdup(arg.toLocal8Bit().constData());
-
-    atexit([]() {
-        delete [] programName;
-        std::for_each(testArgV.constBegin(), testArgV.constEnd(), [](char *arg) {
-            delete [] arg;
-        });
+    // qtest_qParseArgs copies all data, so we can get rid of the array afterwards
+    QVector<char *> argv;
+    auto cleanup = qScopeGuard([&argv]() {
+        std::for_each(argv.cbegin(), argv.cend(), [](char *arg) { delete [] arg; });
     });
+    int argc = int(testRunnerArguments.size());
+    argv.resize(argc + 1);
+    for (int i = 0; i < argc; ++i)
+        argv[i] = qstrdup(testRunnerArguments.at(i).toLocal8Bit());
+    argv[argc] = nullptr;
 
-    QuickTestResult::setCurrentAppname(testArgV.constFirst());
+    if (!sourceFile.isEmpty()) {
+        if (QFileInfo(sourceFile).fileName() != QFileInfo(testFile).fileName())
+            qWarning() << "appman-qmltestrunner: source file" << sourceFile << "does not match test file" << testFile;
+        else
+            QTest::setMainSourcePath(sourceFile.toLocal8Bit());
+    }
+    QuickTestResult::setCurrentAppname(argv.at(0));
+    QuickTestResult::setProgramName("appman-qmltestrunner");
 
     // Allocate a QuickTestResult to create QBenchmarkGlobalData, otherwise the benchmark options don't work
-    QuickTestResult result;
+    volatile QuickTestResult result;
+
     // We would call QuickTestResult::parseArgs here, but that would include qml options in the help
     // which we don't support
-    QTest::qtest_qParseArgs(testArgV.size(), testArgV.data(), false /*no qml options*/);
+    QTest::qtest_qParseArgs(argc, argv.data(), false /*no qml options*/);
+
     qputenv("QT_QTESTLIB_RUNNING", "1");
 
     // Register the test object and application manager test add-on
-    qmlRegisterSingletonType<AmTest>("QtApplicationManager.SystemUI", 2, 0, "AmTest", amTest);
+    qmlRegisterSingletonType<AmTest>("QtApplicationManager.SystemUI", 2, 0, "AmTest",
+                                     [](QQmlEngine *, QJSEngine *) {
+        return AmTest::instance();
+    });
 }
 
 int TestRunner::exec(QQmlEngine *qmlEngine)

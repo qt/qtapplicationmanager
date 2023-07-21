@@ -203,6 +203,9 @@ function (qt_am_internal_add_qml_test target)
                 list(APPEND WRAPPER_ARGS EXTRA_FILES ${ARG_EXTRA_FILES})
             endif()
 
+            list(APPEND WRAPPER_ARGS EXTRA_ARGS
+                --qmltestrunner-source-file "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_TEST_FILE}")
+
             if (ARG_TESTDATA_DIR)
                 list(APPEND WRAPPER_ARGS EXTRA_ARGS -o "\"systemProperties: { public: { AM_TESTDATA_DIR: ${ARG_TESTDATA_DIR} } }\"")
             endif()

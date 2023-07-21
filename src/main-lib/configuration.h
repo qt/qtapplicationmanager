@@ -106,6 +106,7 @@ public:
     QStringList pluginFilePaths(const char *type) const;
 
     QStringList testRunnerArguments() const;
+    QString testRunnerSourceFile() const;
 
 private:
     enum MessageType { UsageMessage, ErrorMessage };

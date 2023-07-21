@@ -174,6 +174,12 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     m_clp.addOption({ qSL("qml-debug"),            qSL("Enables QML debugging and profiling.") });
     m_clp.addOption({ qSL("enable-touch-emulation"), qSL("Deprecated (ignored).") });
     m_clp.addOption({ qSL("instance-id"),          qSL("Use this id to distinguish between multiple instances."), qSL("id") });
+
+    { // qmltestrunner specific, necessary for CI blacklisting
+        QCommandLineOption qtrsf { qSL("qmltestrunner-source-file"), qSL("appman-qmltestrunner only: set the source file path of the test."), qSL("file") };
+        qtrsf.setFlags(QCommandLineOption::HiddenFromHelp);
+        m_clp.addOption(qtrsf);
+    }
 }
 
 QVariant Configuration::buildConfig() const
@@ -1273,6 +1279,11 @@ QStringList Configuration::testRunnerArguments() const
         targs.removeFirst();
     targs.prepend(QCoreApplication::arguments().constFirst());
     return targs;
+}
+
+QString Configuration::testRunnerSourceFile() const
+{
+    return m_clp.value(qSL("qmltestrunner-source-file"));
 }
 
 QT_END_NAMESPACE_AM

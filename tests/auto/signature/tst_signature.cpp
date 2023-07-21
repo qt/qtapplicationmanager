@@ -148,7 +148,7 @@ void tst_Signature::crossPlatform()
     QVERIFY2(s.verify(sigSecurityFramework, m_verifyingPEM), qPrintable(s.errorString()));
 }
 
-QTEST_APPLESS_MAIN(tst_Signature)
+QTEST_GUILESS_MAIN(tst_Signature)
 
 #include "tst_signature.moc"
 

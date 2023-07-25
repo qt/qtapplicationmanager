@@ -8,12 +8,12 @@ _appman()
     local cur opts
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    opts="-c -h -o -v -I --build-config --builtin-apps-manifest-dir --clear-cache --clear-config-cache --config-file \
---development-mode --dbus --disable-installer --disable-intents --document-dir \
---force-multi-process --force-single-process --fullscreen --help --load-dummydata --log-instant --logging-rule \
---no-cache --no-config-cache --no-dlt-logging --no-fullscreen --no-security --no-ui-watchdog --option --qml-debug \
---single-app --slow-animations --verbose --version --wayland-socket-name"
-    dbusopts="session system none"
+    opts="-c -h -o -v -I --build-config --builtin-apps-manifest-dir --clear-cache --config-file --development-mode \
+--dbus --disable-installer --disable-intents --document-dir --force-multi-process --force-single-process --fullscreen \
+--help --instance-id --load-dummydata --log-instant --logging-rule --no-cache --no-dlt-logging --no-fullscreen \
+--no-security --no-ui-watchdog --option --qml-debug --single-app --slow-animations --verbose --version \
+--wayland-socket-name"
+    dbusopts="auto session system none"
 
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
@@ -34,7 +34,7 @@ _appman-controller()
     cur="${COMP_WORDS[COMP_CWORD]}"
     commands="start-application debug-application stop-application stop-all-applications list-applications \
 show-application list-packages show-package install-package remove-package list-installation-tasks \
-cancel-installation-task list-installation-locations show-installation-location"
+cancel-installation-task list-installation-locations show-installation-location list-instances inject-intent-request"
     opts="-h -v --help --help-all --version"
 
     if [ ${COMP_CWORD} -eq 1 ] && [[ ${cur} == -* ]] ; then

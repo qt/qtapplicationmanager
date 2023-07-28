@@ -274,7 +274,7 @@ void tst_Yaml::cache()
 
     for (int step = 0; step < 2; ++step) {
         try {
-            ConfigCache<CacheTest> cache(files, qSL("cache-test"), "CTST", 1,
+            ConfigCache<CacheTest> cache(files, qSL("cache-test"), { 'C','T','S','T' }, 1,
                                          step == 0 ? AbstractConfigCache::ClearCache
                                                    : AbstractConfigCache::None);
             cache.parse();
@@ -296,18 +296,21 @@ void tst_Yaml::cache()
         }
     }
 
-    ConfigCache<CacheTest> wrongVersion(files, qSL("cache-test"), "CTST", 2, AbstractConfigCache::None);
+    ConfigCache<CacheTest> wrongVersion(files, qSL("cache-test"), { 'C','T','S','T' }, 2,
+                                        AbstractConfigCache::None);
     QTest::ignoreMessage(QtWarningMsg, "Failed to read cache: failed to parse cache header");
     wrongVersion.parse();
     QVERIFY(!wrongVersion.parseReadFromCache());
 
-    ConfigCache<CacheTest> wrongType(files, qSL("cache-test"), "XTST", 1, AbstractConfigCache::None);
+    ConfigCache<CacheTest> wrongType(files, qSL("cache-test"), { 'X','T','S','T' }, 1,
+                                     AbstractConfigCache::None);
     QTest::ignoreMessage(QtWarningMsg, "Failed to read cache: failed to parse cache header");
     wrongType.parse();
     QVERIFY(!wrongType.parseReadFromCache());
 
     ConfigCache<CacheTest> duplicateCache({ qSL(":/cache1.yaml"), qSL(":/cache1.yaml") },
-                                          qSL("cache-test"), "DTST", 1, AbstractConfigCache::None);
+                                          qSL("cache-test"), { 'D','T','S','T' }, 1,
+                                          AbstractConfigCache::None);
     try {
         duplicateCache.parse();
         QVERIFY(false);
@@ -336,7 +339,7 @@ void tst_Yaml::mergedCache()
             std::reverse(files.begin(), files.end());
 
         try {
-            ConfigCache<CacheTest> cache(files, qSL("cache-test"), "MTST", 1, options);
+            ConfigCache<CacheTest> cache(files, qSL("cache-test"), { 'M','T','S','T' }, 1, options);
             cache.parse();
             QVERIFY(cache.parseReadFromCache() == (step % 2 == 1));
             QVERIFY(cache.parseWroteToCache() == (step % 2 == 0));
@@ -363,7 +366,8 @@ void tst_Yaml::mergedCache()
     QCOMPARE(cache2File.write(ba2), ba2.size());
     QVERIFY(cache2File.flush());
 
-    ConfigCache<CacheTest> brokenCache(files, qSL("cache-test"), "MTST", 1, AbstractConfigCache::MergedResult);
+    ConfigCache<CacheTest> brokenCache(files, qSL("cache-test"), { 'M','T','S','T' }, 1,
+                                       AbstractConfigCache::MergedResult);
     QTest::ignoreMessage(QtWarningMsg, "Failed to read Cache: cached file checksums do not match");
     brokenCache.parse();
     QVERIFY(brokenCache.parseReadFromCache());

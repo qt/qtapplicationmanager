@@ -60,14 +60,10 @@ QDebug operator<<(QDebug dbg, const ConfigCacheEntry &ce)
 }
 
 
-static quint32 makeTypeId(const char typeIdStr[4])
+static quint32 makeTypeId(const std::array<char, 4> &typeIdStr)
 {
-    if (typeIdStr) {
-        return (quint32(typeIdStr[0])) | (quint32(typeIdStr[1]) << 8)
-                | (quint32(typeIdStr[2]) << 16) | (quint32(typeIdStr[3]) << 24);
-    } else {
-        return 0;
-    }
+    return (quint32(typeIdStr[0])) | (quint32(typeIdStr[1]) << 8)
+           | (quint32(typeIdStr[2]) << 16) | (quint32(typeIdStr[3]) << 24);
 }
 
 bool CacheHeader::isValid(const QString &baseName, quint32 typeId, quint32 typeVersion) const
@@ -82,7 +78,7 @@ bool CacheHeader::isValid(const QString &baseName, quint32 typeId, quint32 typeV
 
 
 AbstractConfigCache::AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName,
-                                         const char typeId[4], quint32 version, Options options)
+                                         const std::array<char, 4> &typeId, quint32 version, Options options)
     : d(new ConfigCachePrivate)
 {
     d->options = options;

@@ -25,7 +25,7 @@ class ApplicationInfo
 public:
     ApplicationInfo(PackageInfo *packageInfo);
 
-    static const quint32 DataStreamVersion;
+    static quint32 dataStreamVersion();
 
     PackageInfo *packageInfo() const;
 

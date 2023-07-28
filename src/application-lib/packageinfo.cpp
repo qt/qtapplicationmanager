@@ -119,15 +119,16 @@ void PackageInfo::setInstallationReport(InstallationReport *report)
     m_installationReport.reset(report);
 }
 
-
-const quint32 PackageInfo::DataStreamVersion = 3 \
-        + (ApplicationInfo::DataStreamVersion << 8) \
-        + (IntentInfo::DataStreamVersion << 16);
-
+quint32 PackageInfo::dataStreamVersion()
+{
+    return 3
+           + (ApplicationInfo::dataStreamVersion() << 8)
+           + (IntentInfo::dataStreamVersion() << 16);
+}
 
 void PackageInfo::writeToDataStream(QDataStream &ds) const
 {
-    //NOTE: increment DataStreamVersion above, if you make any changes here
+    //NOTE: increment dataStreamVersion() above, if you make any changes here
 
     QByteArray serializedReport;
 
@@ -158,7 +159,7 @@ void PackageInfo::writeToDataStream(QDataStream &ds) const
 
 PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
 {
-    //NOTE: increment DataStreamVersion above, if you make any changes here
+    //NOTE: increment dataStreamVersion() above, if you make any changes here
 
     std::unique_ptr<PackageInfo> pkg(new PackageInfo);
 

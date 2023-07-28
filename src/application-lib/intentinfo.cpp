@@ -69,13 +69,14 @@ bool IntentInfo::handleOnlyWhenRunning() const
     return m_handleOnlyWhenRunning;
 }
 
-
-const quint32 IntentInfo::DataStreamVersion = 3;
-
+quint32 IntentInfo::dataStreamVersion()
+{
+    return 3;
+}
 
 void IntentInfo::writeToDataStream(QDataStream &ds) const
 {
-    //NOTE: increment DataStreamVersion above, if you make any changes here
+    //NOTE: increment dataStreamVersion() above, if you make any changes here
 
     ds << m_id
        << (m_visibility == Public ? qSL("public") : qSL("private"))
@@ -91,7 +92,7 @@ void IntentInfo::writeToDataStream(QDataStream &ds) const
 
 IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
 {
-    //NOTE: increment DataStreamVersion above, if you make any changes here
+    //NOTE: increment dataStreamVersion() above, if you make any changes here
 
     auto intent = std::make_unique<IntentInfo>(pkg);
     QString visibilityStr;

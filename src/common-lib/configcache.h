@@ -5,6 +5,7 @@
 #pragma once
 
 #include <functional>
+#include <array>
 
 #include <QtCore/QPair>
 #include <QtCore/QVector>
@@ -39,7 +40,7 @@ public:
     Q_DECLARE_FLAGS(Options, Option)
 
     AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName,
-                        const char typeId[4] = nullptr, quint32 version = 0, Options options = None);
+                        const std::array<char, 4> &typeId, quint32 version = 0, Options options = None);
     virtual ~AbstractConfigCache();
 
     virtual void parse();
@@ -76,8 +77,8 @@ public:
     using AbstractConfigCache::Option;
     using AbstractConfigCache::Options;
 
-    ConfigCache(const QStringList &configFiles, const QString &cacheBaseName, const char typeId[4],
-            qint32 typeVersion = 0, Options options = None)
+    ConfigCache(const QStringList &configFiles, const QString &cacheBaseName, const std::array<char, 4> &typeId,
+            quint32 typeVersion = 0, Options options = None)
         : AbstractConfigCache(configFiles, cacheBaseName, typeId, typeVersion, options)
     { }
 

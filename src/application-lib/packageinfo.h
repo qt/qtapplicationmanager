@@ -31,7 +31,7 @@ class PackageInfo
 public:
     ~PackageInfo();
 
-    static const quint32 DataStreamVersion;
+    static quint32 dataStreamVersion();
 
     void validate() const Q_DECL_NOEXCEPT_EXPR(false);
 

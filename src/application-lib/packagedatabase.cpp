@@ -160,8 +160,8 @@ void PackageDatabase::parse(PackageLocations packageLocations)
             for (const QString &dir : m_builtInPackagesDirs)
                 manifestFiles << findManifestsInDir(dir, true);
 
-            ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb-builtin"), "PKGB",
-                                           PackageInfo::DataStreamVersion, cacheOptions);
+            ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb-builtin"), { 'P','K','G','B' },
+                                           PackageInfo::dataStreamVersion(), cacheOptions);
             cache.parse();
 
             for (int i = 0; i < manifestFiles.size(); ++i) {
@@ -245,8 +245,8 @@ void PackageDatabase::parseInstalled()
     if (!m_loadFromCache && !m_saveToCache)
         cacheOptions |= AbstractConfigCache::NoCache;
 
-    ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb-installed"), "PKGI",
-                                   PackageInfo::DataStreamVersion, cacheOptions);
+    ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb-installed"), { 'P','K','G','I' },
+                                   PackageInfo::dataStreamVersion(), cacheOptions);
     cache.parse();
 
     for (int i = 0; i < manifestFiles.size(); ++i) {

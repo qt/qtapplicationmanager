@@ -21,7 +21,7 @@ QT_BEGIN_NAMESPACE_AM
 
 struct ConfigurationData
 {
-    static const quint32 DataStreamVersion;
+    static quint32 dataStreamVersion();
 
     static ConfigurationData *loadFromSource(QIODevice *source, const QString &fileName);
     static QByteArray substituteVars(const QByteArray &sourceContent, const QString &fileName);

@@ -24,7 +24,6 @@ qt_internal_add_module(AppManCommonPrivate
         processtitle.cpp processtitle.h
         qml-utilities.cpp qml-utilities.h
         qtyaml.cpp qtyaml.h
-        startuptimer.cpp startuptimer.h
         unixsignalhandler.cpp unixsignalhandler.h
         utilities.cpp utilities.h
     PUBLIC_LIBRARIES

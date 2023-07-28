@@ -288,6 +288,8 @@ QQmlApplicationEngine *Main::qmlEngine() const
 
 void Main::registerResources(const QStringList &resources) const
 {
+    if (resources.isEmpty())
+        return;
     for (const QString &resource: resources) {
         try {
             loadResource(resource);
@@ -295,6 +297,7 @@ void Main::registerResources(const QStringList &resources) const
             qCWarning(LogSystem).noquote() << e.errorString();
         }
     }
+    StartupTimer::instance()->checkpoint("after resource registration");
 }
 
 void Main::loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false)
@@ -586,7 +589,7 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 2, 0, "Notification");
     qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
 
-    // monitor-lib
+    // shared-main-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
     qmlRegisterType<WindowFrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
@@ -594,6 +597,11 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
     qmlRegisterType<ProcessStatus>("QtApplicationManager.SystemUI", 2, 0, "ProcessStatus");
+    qmlRegisterSingletonType<StartupTimer>("QtApplicationManager", 2, 0, "StartupTimer",
+                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
+        QQmlEngine::setObjectOwnership(StartupTimer::instance(), QQmlEngine::CppOwnership);
+        return StartupTimer::instance();
+    });
 
     StartupTimer::instance()->checkpoint("after QML registrations");
 
@@ -606,7 +614,6 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
     m_engine->setImportPathList(m_engine->importPathList() + importPaths);
-    m_engine->rootContext()->setContextProperty(qSL("StartupTimer"), StartupTimer::instance());
 
     StartupTimer::instance()->checkpoint("after QML engine instantiation");
 }

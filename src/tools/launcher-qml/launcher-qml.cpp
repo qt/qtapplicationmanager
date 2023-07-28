@@ -174,21 +174,18 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
     qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
     qmlRegisterType<DBusNotification>("QtApplicationManager", 2, 0, "Notification");
 
-    // monitor-lib
+    // shared-main-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
     qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
     qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
     qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
-
-    // monitor-lib
-    qmlRegisterType<CpuStatus>("QtApplicationManager", 1, 0, "CpuStatus");
-    qmlRegisterType<FrameTimer>("QtApplicationManager", 1, 0, "FrameTimer");
-    qmlRegisterType<GpuStatus>("QtApplicationManager", 1, 0, "GpuStatus");
-    qmlRegisterType<IoStatus>("QtApplicationManager", 1, 0, "IoStatus");
-    qmlRegisterType<MemoryStatus>("QtApplicationManager", 1, 0, "MemoryStatus");
-    qmlRegisterType<MonitorModel>("QtApplicationManager", 1, 0, "MonitorModel");
+    qmlRegisterSingletonType<StartupTimer>("QtApplicationManager", 2, 0, "StartupTimer",
+                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
+        QQmlEngine::setObjectOwnership(StartupTimer::instance(), QQmlEngine::CppOwnership);
+        return StartupTimer::instance();
+    });
 
     m_configuration = launcher->runtimeConfiguration();
 
@@ -489,7 +486,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     qmlProtectModule("QtApplicationManager", 2);
     qmlProtectModule("QtApplicationManager.Application", 2);
 
-    m_engine.rootContext()->setContextProperty(qSL("StartupTimer"), StartupTimer::instance());
     m_engine.load(qmlFileUrl);
 
     StartupTimer::instance()->checkpoint("after engine loading main qml file");

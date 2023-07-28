@@ -35,6 +35,7 @@
 #include <QtAppManManager/processstatus.h>
 #include <QtAppManSharedMain/frametimer.h>
 #include <QtAppManSharedMain/monitormodel.h>
+#include <QtAppManSharedMain/startuptimer.h>
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/exception.h>
 
@@ -78,14 +79,15 @@ static const QVector<const QMetaObject *> all = {
     &IntentModel::staticMetaObject,
     &IntentServerHandler::staticMetaObject,
 
-    // monitor-lib
+    // shared-main-lib
     &CpuStatus::staticMetaObject,
     &GpuStatus::staticMetaObject,
     &MemoryStatus::staticMetaObject,
     &IoStatus::staticMetaObject,
     &ProcessStatus::staticMetaObject,
     &FrameTimer::staticMetaObject,
-    &MonitorModel::staticMetaObject
+    &MonitorModel::staticMetaObject,
+    &StartupTimer::staticMetaObject,
 };
 
 static QByteArray qmlTypeForMetaObect(const QMetaObject *mo, int level, bool indentFirstLine)

@@ -8,6 +8,39 @@ import QtQuick.tooling 1.2
 
 Module {
     Component {
+        name: "StartupTimer"
+        exports: [ "QtApplicationManager/StartupTimer 2.0" ]
+        exportMetaObjectRevisions: [ 512 ]
+        prototype: "QObject"
+        isSingleton: true
+        Property { name: "timeToFirstFrame"; type: "qulonglong"; isReadonly: true; isFinal: true }
+        Property { name: "systemUpTime"; type: "qulonglong"; isReadonly: true; isFinal: true }
+        Property { name: "automaticReporting"; type: "bool"; isFinal: true }
+        Signal {
+            name: "timeToFirstFrameChanged"
+            Parameter { name: "timeToFirstFrame"; type: "qulonglong" }
+        }
+        Signal {
+            name: "systemUpTimeChanged"
+            Parameter { name: "systemUpTime"; type: "qulonglong" }
+        }
+        Signal {
+            name: "automaticReportingChanged"
+            Parameter { name: "setAutomaticReporting"; type: "bool" }
+        }
+        Method {
+            name: "checkpoint"
+            Parameter { name: "name"; type: "QString" }
+        }
+        Method {
+            name: "createReport"
+            Parameter { name: "title"; type: "QString" }
+        }
+        Method {
+            name: "createReport"
+        }
+    }
+    Component {
         name: "MonitorModel"
         exports: [ "QtApplicationManager/MonitorModel 2.0" ]
         exportMetaObjectRevisions: [ 512 ]

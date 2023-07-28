@@ -18,6 +18,8 @@ QT_BEGIN_NAMESPACE_AM
 class StartupTimer : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/StartupTimer 2.0 SINGLETON")
+
     Q_PROPERTY(quint64 timeToFirstFrame READ timeToFirstFrame NOTIFY timeToFirstFrameChanged FINAL)
     Q_PROPERTY(quint64 systemUpTime READ systemUpTime NOTIFY systemUpTimeChanged FINAL)
     Q_PROPERTY(bool automaticReporting READ automaticReporting WRITE setAutomaticReporting NOTIFY automaticReportingChanged FINAL)
@@ -38,7 +40,6 @@ public:
     void checkFirstFrame();
     void reset();
 
-public slots:
     void setAutomaticReporting(bool enableAutomaticReporting);
 
 signals:

@@ -16,6 +16,7 @@ qt_internal_add_module(AppManSharedMainPrivate
         monitormodel.cpp monitormodel.h
         qmllogger.cpp qmllogger.h
         sharedmain.cpp sharedmain.h
+        startuptimer.cpp startuptimer.h
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Gui

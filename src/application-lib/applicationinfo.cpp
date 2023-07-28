@@ -57,13 +57,14 @@ QVariantMap ApplicationInfo::allAppProperties() const
     return m_allAppProperties;
 }
 
-
-const quint32 ApplicationInfo::DataStreamVersion = 4;
-
+quint32 ApplicationInfo::dataStreamVersion()
+{
+    return 4;
+}
 
 void ApplicationInfo::writeToDataStream(QDataStream &ds) const
 {
-    //NOTE: increment DataStreamVersion above, if you make any changes here
+    //NOTE: increment dataStreamVersion() above, if you make any changes here
 
     ds << m_id
        << m_uniqueNumber
@@ -85,7 +86,7 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
 
 ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
 {
-    //NOTE: increment DataStreamVersion above, if you make any changes here
+    //NOTE: increment dataStreamVersion() above, if you make any changes here
 
     auto app = std::make_unique<ApplicationInfo>(pkg);
 

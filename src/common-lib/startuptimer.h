@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdio>
 #include <QtCore/QObject>
 #include <QtCore/QVector>
 #include <QtCore/QPair>
@@ -49,6 +50,8 @@ private:
     StartupTimer();
     static StartupTimer *s_instance;
 
+    static QByteArray formatMicroSecs(quint64 micros);
+
     FILE *m_output = nullptr;
     bool m_initialized = false;
     bool m_automaticReporting = true;
@@ -56,7 +59,7 @@ private:
     quint64 m_timeToFirstFrame = 0;
     quint64 m_systemUpTime = 0;
     QElapsedTimer m_timer;
-    QVector<QPair<quint64, QByteArray>> m_checkpoints;
+    QVector<std::pair<quint64, QByteArray>> m_checkpoints;
 
     Q_DISABLE_COPY_MOVE(StartupTimer)
 };

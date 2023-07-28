@@ -18,6 +18,8 @@
 #include "global.h"
 #include "utilities.h"
 #include "logging.h"
+#include "console.h"
+#include "colorprint.h"
 
 #if defined(Q_OS_UNIX)
 #  include<unistd.h>
@@ -51,22 +53,16 @@ struct CrashHandlerGlobal
     int waitForGdbAttach = 0;
 
     char *demangleBuffer;
-    size_t demangleBufferSize;
+    size_t demangleBufferSize = 768;
 
-    QByteArray *backtraceLineOut;
-    QByteArray *backtraceLineTmp;
+    QByteArray backtraceLineOut;
 
     QPointer<QQmlEngine> qmlEngine;
 
     CrashHandlerGlobal()
     {
-        demangleBufferSize = 768;
         demangleBuffer = static_cast<char *>(malloc(demangleBufferSize));
-
-        backtraceLineOut = new QByteArray();
-        backtraceLineOut->reserve(2 * int(demangleBufferSize));
-        backtraceLineTmp = new QByteArray();
-        backtraceLineTmp->reserve(32);
+        backtraceLineOut.reserve(2 * int(demangleBufferSize));
     }
 };
 
@@ -176,71 +172,53 @@ static void logBacktraceLine(LogToDestination logTo, int level, const char *symb
                              uintptr_t offset = 0, const char *file = nullptr, int line = -1,
                              int errorCode = 0, const char *errorString = nullptr)
 {
-    bool wantClickableUrl = (Console::isRunningInQtCreator() && !Console::hasConsoleWindow());
-    bool forceNoColor = (logTo != Console);
-    bool isError = (errorString);
+    Q_UNUSED(offset) // not really helpful
 
-    QByteArray *lineOut = chg()->backtraceLineOut;
-    QByteArray *lineTmp = chg()->backtraceLineTmp;
+    if (level > 999)
+        return;
 
-    lineOut->clear();
-    lineTmp->setNum(level);
-    lineOut->append(4 - lineTmp->size(), ' ');
-    lineOut->append(*lineTmp);
-    lineOut->append(": ");
-    Console::colorize(*lineOut, Console::BrightFlag, forceNoColor);
-    if (isError) {
-        Console::colorize(*lineOut, Console::Red, forceNoColor);
-        lineOut->append("ERROR: ");
-        Console::colorize(*lineOut, Console::Off, forceNoColor);
-        lineOut->append(errorString);
-        lineTmp->setNum(errorCode);
-        lineOut->append(" (");
-        lineOut->append(*lineTmp);
-        lineOut->append(")");
-    } else {
-        lineOut->append(symbol ? symbol : "?");
-    }
-    Console::colorize(*lineOut, Console::Off, forceNoColor);
-    if (offset) {
-        lineTmp->setNum(static_cast<qulonglong>(offset), 16);
+    bool wantClickableUrl = (Console::isRunningInQtCreator() && !Console::stderrIsConsoleWindow());
 
-        lineOut->append(" [");
-        Console::colorize(*lineOut, Console::Cyan, forceNoColor);
-        lineOut->append(*lineTmp);
-        Console::colorize(*lineOut, Console::Off, forceNoColor);
-        lineOut->append(']');
-    }
+    QByteArray &lineOut = chg()->backtraceLineOut;
+    lineOut.resize(0);
+
+    // Only use color when logging to a console that supports it and when we do not want
+    // clickable URLs (QtCreator is not parsing lines containing ANSI codes)
+    ColorPrint cprt(lineOut, (logTo == Console) && Console::stderrSupportsAnsiColor() && !wantClickableUrl);
+
+    char levelStr[5];
+    qsnprintf(levelStr, sizeof(levelStr), "%4d", level);
+    cprt << levelStr << ": ";
+
+    if (errorString)
+        cprt << ColorPrint::bred << "ERROR: " << ColorPrint::reset << errorString << " (" << errorCode << ')';
+    else
+        cprt << ColorPrint::bwhite << (symbol ? symbol : "?") << ColorPrint::reset;
+
     if (file) {
-        bool lineValid = (line > 0 && line <= 9999999);
-        if (lineValid || wantClickableUrl)
-            lineTmp->setNum(lineValid ? line : 0);
-
-        lineOut->append(" in ");
-        Console::colorize(*lineOut, Console::Magenta, forceNoColor);
-
         static const char *filePrefix =
 #  if defined(Q_OS_WINDOWS)
                 "file:///";
 #  else
                 "file://";
 #  endif
-
         bool isFileUrl = (strncmp(file, filePrefix, sizeof(filePrefix) - 1) == 0);
-        if (!isFileUrl && wantClickableUrl)
-            lineOut->append(filePrefix);
-        lineOut->append((isFileUrl && !wantClickableUrl) ? file + sizeof(filePrefix) - 1 : file);
-        Console::colorize(*lineOut, Console::Off, forceNoColor);
 
-        if (lineValid || wantClickableUrl) {
-            lineOut->append(':');
-            Console::colorize(*lineOut, Console::BrightFlag | Console::Magenta, forceNoColor);
-            lineOut->append(*lineTmp);
-            Console::colorize(*lineOut, Console::Off, forceNoColor);
-        }
+        cprt << " in " << ColorPrint::magenta;
+        if (!isFileUrl && wantClickableUrl)   // we need a file:// prefix, but don't have one
+            cprt << filePrefix;
+        if (isFileUrl && !wantClickableUrl)   // we have a file:// prefix, but don't want one
+            cprt << (file + sizeof(filePrefix) - 1);
+        else
+            cprt << file;
+        cprt << ColorPrint::reset;
+
+        bool lineValid = (line > 0 && line <= 9999999);
+        if (lineValid || wantClickableUrl)
+            cprt << ':' << ColorPrint::bmagenta << (lineValid ? line : 0) << ColorPrint::reset;
     }
 
-    logMsg(logTo, lineOut->constData());
+    logMsg(logTo, lineOut.constData());
 }
 
 static void logQmlBacktrace(LogToDestination logTo)
@@ -249,13 +227,17 @@ static void logQmlBacktrace(LogToDestination logTo)
     if (chg()->printQmlStack && chg()->qmlEngine) {
         const QV4::ExecutionEngine *qv4engine = chg()->qmlEngine->handle();
         if (qv4engine) {
+            // Both stackTrace() and toLocal8Bit() are allocating memory. We can't do anything about
+            // stackTrace(), so replacing toLocal8Bit with QStringEncoder and stack based char
+            // buffers doesn't really help.
+
             const QV4::StackTrace stackTrace = qv4engine->stackTrace();
             if (stackTrace.size()) {
                 logMsg(logTo, "\n > QML backtrace:");
                 for (int frame = 0; frame < stackTrace.size(); ++frame) {
                     const auto &stackFrame = stackTrace.at(frame);
                     logBacktraceLine(logTo, frame, stackFrame.function.toLocal8Bit().constData(),
-                                       0, stackFrame.source.toLocal8Bit().constData(), stackFrame.line);
+                                     0, stackFrame.source.toLocal8Bit().constData(), stackFrame.line);
                 }
             } else {
                 logMsg(logTo, "\n > QML backtrace: empty");

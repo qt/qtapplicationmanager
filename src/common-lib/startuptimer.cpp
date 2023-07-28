@@ -4,12 +4,11 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include "startuptimer.h"
-#include "logging.h"
+#include "console.h"
+#include "colorprint.h"
 
 #if defined(Q_OS_WIN)
 #  include <windows.h>
-#  include <io.h>
-#  define isatty _isatty
 #elif defined(Q_OS_LINUX)
 #  include <ctime>
 #  include <qplatformdefs.h>
@@ -149,26 +148,19 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-struct SplitSeconds
+QByteArray StartupTimer::formatMicroSecs(quint64 micros)
 {
-    int sec;
-    int msec;
-    int usec;
-};
-
-static SplitSeconds splitMicroSecs(quint64 micros)
-{
-    SplitSeconds ss;
-
-    ss.sec = 0;
+    int sec = 0;
     if (micros > 1000 * 1000) {
-        ss.sec = int(micros / (1000 * 1000));
+        sec = int(micros / (1000 * 1000));
         micros %= (1000 * 1000);
     }
-    ss.msec = int(micros / 1000);
-    ss.usec = int(micros % 1000);
+    int msec = int(micros / 1000);
+    int usec = int(micros % 1000);
 
-    return ss;
+    char timeBuffer[20];
+    qsnprintf(timeBuffer, sizeof(timeBuffer), "%d'%03d.%03d", sec, msec, usec);
+    return QByteArray(timeBuffer);
 }
 
 StartupTimer::StartupTimer()
@@ -372,14 +364,13 @@ void StartupTimer::checkFirstFrame()
 void StartupTimer::reset()
 {
     if (m_initialized) {
-        SplitSeconds delta = splitMicroSecs(quint64(m_timer.nsecsElapsed() / 1000) + m_processCreation);
+        QByteArray timeString = formatMicroSecs(quint64(m_timer.nsecsElapsed() / 1000) + m_processCreation);
         m_timer.restart();
         m_checkpoints.clear();
         m_processCreation = 0;
 
-        const QString text = QString::asprintf("started %d'%03d.%03d after process launch",
-                                                         delta.sec, delta.msec, delta.usec);
-        m_checkpoints << qMakePair(0, text.toLocal8Bit().constData());
+        const QByteArray text = "started " + timeString + " after process launch";
+        m_checkpoints.emplace_back(0, text);
     }
 }
 
@@ -405,13 +396,11 @@ void StartupTimer::setAutomaticReporting(bool enableAutomaticReporting)
 void StartupTimer::createReport(const QString &title)
 {
     if (m_output && !m_checkpoints.isEmpty()) {
-        bool ansiColorSupport = false;
-        if (m_output == stderr)
-            ansiColorSupport = Console::supportsAnsiColor();
+        bool ansiColorSupport = (m_output == stderr) ? Console::stderrSupportsAnsiColor() : false;
+        ColorPrint cprt(m_output, ansiColorSupport);
 
-        constexpr const char *plainFormat = "\n== STARTUP TIMING REPORT: %s ==\n";
-        constexpr const char *colorFormat = "\n\033[33m== STARTUP TIMING REPORT: %s ==\033[0m\n";
-        fprintf(m_output, ansiColorSupport ? colorFormat : plainFormat, title.toLocal8Bit().data());
+        cprt << '\n' << ColorPrint::yellow << "== STARTUP TIMING REPORT: " << title << " =="
+             << ColorPrint::reset << '\n';
 
         static const int barCols = 60;
 
@@ -427,18 +416,14 @@ void StartupTimer::createReport(const QString &title)
 
         for (const auto &[usecTotal, text] : std::as_const(m_checkpoints)) {
             auto cells = qsizetype(usecTotal / usecPerCell);
-            QByteArray bar(cells, ansiColorSupport ? ' ' : '#');
-            QByteArray spacing(maxTextLen - text.length(), ' ');
-            SplitSeconds ss = splitMicroSecs(usecTotal);
+            QByteArray timeString = formatMicroSecs(usecTotal);
 
-            constexpr const char *plainFormat = "%d'%03d.%03d %s %s#%s\n";
-            constexpr const char *colorFormat = "\033[32m%d'%03d.%03d\033[0m %s %s\033[44m %s\033[0m\n";
-
-            fprintf(m_output, ansiColorSupport ? colorFormat : plainFormat,
-                    ss.sec, ss.msec, ss.usec, text.constData(), spacing.constData(), bar.constData());
+            cprt << ColorPrint::bgreen << timeString << ColorPrint::reset << ' '
+                 << text << ColorPrint::repeat(maxTextLen - text.length() + 1, ' ')
+                 << ColorPrint::blue << ColorPrint::blueBg
+                 << ColorPrint::repeat(cells + 1, '=')
+                 << ColorPrint::reset << '\n';
         }
-
-        fflush(m_output);
         m_checkpoints.clear();
     }
 }

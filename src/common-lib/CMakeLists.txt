@@ -11,7 +11,9 @@ qt_internal_add_module(AppManCommonPrivate
     INTERNAL_MODULE
     SOURCES
         architecture.cpp architecture.h
+        colorprint.h colorprint.cpp
         configcache.cpp configcache.h configcache_p.h
+        console.h console.cpp
         crashhandler.cpp crashhandler.h
         dbus-utilities.cpp dbus-utilities.h
         error.h

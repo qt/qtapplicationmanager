@@ -24,6 +24,7 @@ class ApplicationInfo
 {
 public:
     ApplicationInfo(PackageInfo *packageInfo);
+    ~ApplicationInfo() = default;
 
     static quint32 dataStreamVersion();
 
@@ -86,7 +87,7 @@ private:
     friend class InstallationTask; // needed to set m_uid and m_builtin during the installation
 
     friend class YamlPackageScanner;
-    Q_DISABLE_COPY(ApplicationInfo)
+    Q_DISABLE_COPY_MOVE(ApplicationInfo)
 };
 
 QT_END_NAMESPACE_AM

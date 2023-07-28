@@ -84,7 +84,7 @@ public:
         recursiveOperation(path(), safeRemove);
     }
 private:
-    Q_DISABLE_COPY(TemporaryDir)
+    Q_DISABLE_COPY_MOVE(TemporaryDir)
 };
 
 

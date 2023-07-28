@@ -14,12 +14,11 @@
 
 #include "configcache.h"
 #include "configcache_p.h"
-#include "utilities.h"
 #include "exception.h"
 #include "logging.h"
 
 // use QtConcurrent to parse the files, if there are more than x files
-#define AM_PARALLEL_THRESHOLD  1
+constexpr int AM_PARALLEL_THRESHOLD = 1;
 
 
 QT_BEGIN_NAMESPACE_AM
@@ -228,11 +227,11 @@ void AbstractConfigCache::parse()
 
             // if we already got this file in the cache, then use the entry
             bool found = false;
-            for (auto it = cache.cbegin(); it != cache.cend(); ++it) {
-                if ((it->filePath == rawFilePath) && it->content) {
-                    ce = *it;
+            for (const auto &c : std::as_const(cache)) {
+                if ((c.filePath == rawFilePath) && c.content) {
+                    ce = c;
                     found = true;
-                    qCDebug(LogCache) << d->cacheBaseName << "found cache entry for" << it->filePath;
+                    qCDebug(LogCache) << d->cacheBaseName << "found cache entry for" << c.filePath;
                     break;
                 }
             }
@@ -321,8 +320,7 @@ void AbstractConfigCache::parse()
         if (d->options & MergedResult) {
             // we cannot parallelize this step, since subsequent config files can overwrite
             // or append to values
-            for (int i = 0; i < cache.size(); ++i) {
-                ConfigCacheEntry &ce = cache[i];
+            for (const ConfigCacheEntry &ce : std::as_const(cache)) {
                 if (ce.content) {
                     if (!mergedContent)
                         mergedContent = clone(ce.content);
@@ -351,8 +349,7 @@ void AbstractConfigCache::parse()
                 cacheHeader.entries = quint32(cache.size());
                 ds << cacheHeader;
 
-                for (int i = 0; i < cache.size(); ++i) {
-                    const ConfigCacheEntry &ce = cache.at(i);
+                for (const ConfigCacheEntry &ce : std::as_const(cache)) {
                     ds << ce;
                     // qCDebug(LogCache) << "SAVING" << ce << ce.content;
                     if (ce.content)

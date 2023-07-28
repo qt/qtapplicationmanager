@@ -68,8 +68,10 @@ void WindowFrameTimer::connectToWaylandSurface()
     disconnectFromWaylandSurface();
 
     m_waylandSurface = waylandWindow->waylandSurface();
-    if (m_waylandSurface)
-        connect(m_waylandSurface, &QWaylandQuickSurface::redraw, this, &WindowFrameTimer::newFrame, Qt::UniqueConnection);
+    if (m_waylandSurface) {
+        connect(m_waylandSurface, &QWaylandQuickSurface::redraw,
+                this, &WindowFrameTimer::newFrame, Qt::UniqueConnection);
+    }
 }
 
 void WindowFrameTimer::disconnectFromWaylandSurface()

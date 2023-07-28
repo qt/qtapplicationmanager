@@ -23,7 +23,7 @@ class IntentInfo
 {
 public:
     IntentInfo(PackageInfo *packageInfo);
-    ~IntentInfo();
+    ~IntentInfo() = default;
 
     static quint32 dataStreamVersion();
 
@@ -65,7 +65,7 @@ private:
     bool m_handleOnlyWhenRunning = false;
 
     friend class YamlPackageScanner;
-    Q_DISABLE_COPY(IntentInfo)
+    Q_DISABLE_COPY_MOVE(IntentInfo)
 };
 
 QT_END_NAMESPACE_AM

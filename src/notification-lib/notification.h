@@ -148,7 +148,7 @@ private:
     static const int defaultTimeout = 2000;
 
 private:
-    Q_DISABLE_COPY(Notification)
+    Q_DISABLE_COPY_MOVE(Notification)
 };
 
 QT_END_NAMESPACE_AM

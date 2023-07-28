@@ -25,7 +25,7 @@ public:
     QDir dir();
 
 private:
-    Q_DISABLE_COPY(ScopedDirectoryCreator)
+    Q_DISABLE_COPY_MOVE(ScopedDirectoryCreator)
 
     QString m_path;
     bool m_created = false;
@@ -55,7 +55,7 @@ public:
 private:
     bool interalUndoRename();
     static bool internalRename(const QDir &dir, const QString &from, const QString &to);
-    Q_DISABLE_COPY(ScopedRenamer)
+    Q_DISABLE_COPY_MOVE(ScopedRenamer)
     QDir m_basePath;
     QString m_name;
     Modes m_requested;

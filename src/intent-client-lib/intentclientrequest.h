@@ -88,7 +88,7 @@ private:
     bool m_finished = false;
     bool m_broadcast = false;
 
-    Q_DISABLE_COPY(IntentClientRequest)
+    Q_DISABLE_COPY_MOVE(IntentClientRequest)
 
     friend class IntentClient;
 };

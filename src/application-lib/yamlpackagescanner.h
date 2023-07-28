@@ -14,7 +14,7 @@ QT_BEGIN_NAMESPACE_AM
 class YamlPackageScanner : public PackageScanner
 {
 public:
-    YamlPackageScanner();
+    YamlPackageScanner() = default;
 
     PackageInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
     PackageInfo *scan(QIODevice *source, const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;

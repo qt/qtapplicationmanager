@@ -3,7 +3,7 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <typeinfo>
 
 #if defined(QT_QML_LIB)
@@ -280,11 +280,11 @@ QT_END_NAMESPACE_AM
 #    include <sys/syscall.h>
 #  endif
 #  include <cxxabi.h>
-#  include <setjmp.h>
-#  include <signal.h>
+#  include <csetjmp>
+#  include <csignal>
 #  include <pthread.h>
-#  include <stdio.h>
-#  include <stdlib.h>
+#  include <cstdio>
+#  include <cstdlib>
 
 #  if defined(AM_USE_LIBBACKTRACE)
 #    include <libbacktrace/backtrace.h>
@@ -336,7 +336,7 @@ static void initBacktraceUnix()
 
         const char *typeName = type->name();
         if (typeName) {
-            int status;
+            int status = 1;
             chg()->demangleBuffer = abi::__cxa_demangle(typeName, chg()->demangleBuffer,
                                                         &chg()->demangleBufferSize, &status);
             if (status == 0 && *chg()->demangleBuffer) {
@@ -437,7 +437,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
             const char *name = nullptr;
 
             if (symname) {
-                int status;
+                int status = 1;
                 chg()->demangleBuffer = abi::__cxa_demangle(symname, chg()->demangleBuffer,
                                                             &chg()->demangleBufferSize, &status);
                 name = (status == 0 && *chg()->demangleBuffer) ? chg()->demangleBuffer : symname;
@@ -450,7 +450,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
             auto btdata = static_cast<btData *>(data);
 
             if (function) {
-                int status;
+                int status = 1;
                 chg()->demangleBuffer = abi::__cxa_demangle(function, chg()->demangleBuffer,
                                                             &chg()->demangleBufferSize, &status);
 

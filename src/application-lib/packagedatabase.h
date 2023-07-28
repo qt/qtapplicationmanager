@@ -24,7 +24,7 @@ public:
     PackageDatabase(const QStringList &builtInPackagesDirs, const QString &installedPackagesDir = QString(),
                     const QString &installedPackagesMountPoint = QString());
     PackageDatabase(const QString &singlePackagePath);
-    ~PackageDatabase();
+    ~PackageDatabase() override;
 
     enum PackageLocation { None = 0x0, Builtin = 0x01, Installed = 0x02, All = 0x03 };
     Q_DECLARE_FLAGS(PackageLocations, PackageLocation)
@@ -49,7 +49,7 @@ signals:
     void installedPackagesParsed();
 
 private:
-    Q_DISABLE_COPY(PackageDatabase)
+    Q_DISABLE_COPY_MOVE(PackageDatabase)
 
     bool builtInHasRemovableUpdate(PackageInfo *packageInfo) const;
     QStringList findManifestsInDir(const QDir &manifestDir, bool scanningBuiltInApps);

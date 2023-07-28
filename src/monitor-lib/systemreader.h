@@ -33,7 +33,7 @@ private:
 #if defined(Q_OS_LINUX)
     static std::unique_ptr<SysFsReader> s_sysFs;
 #endif
-    Q_DISABLE_COPY(CpuReader)
+    Q_DISABLE_COPY_MOVE(CpuReader)
 };
 
 class GpuVendor {
@@ -64,7 +64,7 @@ private:
 #if defined(Q_OS_LINUX)
     static GpuTool *s_gpuToolProcess;
 #endif
-    Q_DISABLE_COPY(GpuReader)
+    Q_DISABLE_COPY_MOVE(GpuReader)
 };
 
 
@@ -87,7 +87,7 @@ private:
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     static int s_pageSize;
 #endif
-    Q_DISABLE_COPY(MemoryReader)
+    Q_DISABLE_COPY_MOVE(MemoryReader)
 };
 
 class IoReader
@@ -104,7 +104,7 @@ private:
     qreal m_load = 1;
     std::unique_ptr<SysFsReader> m_sysFs;
 #endif
-    Q_DISABLE_COPY(IoReader)
+    Q_DISABLE_COPY_MOVE(IoReader)
 };
 
 class MemoryThreshold : public QObject

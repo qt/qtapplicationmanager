@@ -17,7 +17,7 @@
 #include "utilities.h"
 #include "exception.h"
 
-#include <errno.h>
+#include <cerrno>
 
 #if defined(Q_OS_UNIX)
 #  include <unistd.h>
@@ -43,7 +43,7 @@ QT_BEGIN_NAMESPACE_AM
 YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
                            const QVector<YamlFormat> &formatTypesAndVersions) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    int actualSize = docs.size();
+    qsizetype actualSize = docs.size();
     if (actualSize < 1)
         throw Exception("no header YAML document found");
 
@@ -220,18 +220,19 @@ bool recursiveOperation(const QDir &path, const std::function<bool (const QStrin
 QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QVector<QObject *> interfaces;
+    interfaces.reserve(files.size());
 
     try {
         for (const QString &pluginFilePath : files) {
             QPluginLoader pluginLoader(pluginFilePath);
             if (Q_UNLIKELY(!pluginLoader.load())) {
                 throw Exception("could not load %1 plugin %2: %3")
-                        .arg(qL1S(type)).arg(pluginFilePath, pluginLoader.errorString());
+                        .arg(type).arg(pluginFilePath, pluginLoader.errorString());
             }
             std::unique_ptr<QObject> iface(pluginLoader.instance());
             if (Q_UNLIKELY(!iface || !iface->qt_metacast(iid))) {
                 throw Exception("could not get an instance of '%1' from the %2 plugin %3")
-                        .arg(qL1S(iid)).arg(qL1S(type)).arg(pluginFilePath);
+                        .arg(iid).arg(type).arg(pluginFilePath);
             }
             interfaces << iface.release();
         }
@@ -246,10 +247,10 @@ void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from)
 {
     // no auto allowed, since this is a recursive lambda
     std::function<void(QVariantMap *, const QVariantMap &)> recursiveMergeMap =
-            [&recursiveMergeMap](QVariantMap *into, const QVariantMap &from) {
-        for (auto it = from.constBegin(); it != from.constEnd(); ++it) {
+            [&recursiveMergeMap](QVariantMap *innerInto, const QVariantMap &innerFrom) {
+        for (auto it = innerFrom.constBegin(); it != innerFrom.constEnd(); ++it) {
             QVariant fromValue = it.value();
-            QVariant &toValue = (*into)[it.key()];
+            QVariant &toValue = (*innerInto)[it.key()];
 
             bool needsMerge = (toValue.metaType() == fromValue.metaType());
 
@@ -257,9 +258,9 @@ void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from)
             if (needsMerge && (toValue.metaType() == QMetaType::fromType<QVariantMap>()))
                 recursiveMergeMap(qt6_v_cast<QVariantMap>(&toValue.data_ptr()), fromValue.toMap());
             else if (needsMerge && (toValue.metaType() == QMetaType::fromType<QVariantList>()))
-                into->insert(it.key(), toValue.toList() + fromValue.toList());
+                innerInto->insert(it.key(), toValue.toList() + fromValue.toList());
             else
-                into->insert(it.key(), fromValue);
+                innerInto->insert(it.key(), fromValue);
         }
     };
     recursiveMergeMap(&into, from);
@@ -307,7 +308,7 @@ void loadResource(const QString &resource) Q_DECL_NOEXCEPT_EXPR(false)
             return;
         errors.append(libd.errorString());
     }
-    throw Exception("Failed to load resource %1:\n  * %2").arg(resource).arg(errors.join(qL1S("\n  * ")));
+    throw Exception("Failed to load resource %1:\n  * %2").arg(resource).arg(errors.join(qSL("\n  * ")));
 }
 
 void closeAndClearFileDescriptors(QVector<int> &fdList)

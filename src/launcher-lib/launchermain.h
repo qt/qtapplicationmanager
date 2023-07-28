@@ -61,7 +61,7 @@ signals:
 
 private:
     static LauncherMain *s_instance;
-    Q_DISABLE_COPY(LauncherMain)
+    Q_DISABLE_COPY_MOVE(LauncherMain)
 
     QVariantMap m_configuration;
     QString m_baseDir;

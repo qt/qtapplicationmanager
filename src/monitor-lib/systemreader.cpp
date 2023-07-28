@@ -344,7 +344,6 @@ qreal IoReader::readLoadValue()
     QByteArray str = m_sysFs->readValue();
 
     int pos = 0;
-    int total = 0;
     QVector<qint64> values;
 
     while (pos < str.size() && values.size() < 11) {
@@ -356,7 +355,6 @@ qreal IoReader::readLoadValue()
         char *endPtr = nullptr;
         qint64 val = strtoll(str.constData() + pos, &endPtr, 10); // check missing for over-/underflow
         values << val;
-        total += val;
         pos = int(endPtr - str.constData() + 1);
     }
 
@@ -476,19 +474,16 @@ bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryR
 void MemoryThreshold::readEventFd()
 {
     if (m_eventFd >= 0) {
-        int handled = 0;
         quint64 counter;
 
         ssize_t r = QT_READ(m_eventFd, &counter, sizeof(counter));
-        if (r == sizeof(counter)) {
-            handled++;
-        } else if (r < 0) {
+        if (r < 0) {
             if (errno == EWOULDBLOCK)
                 return;
              qWarning() << "Error reading from eventFD:" << strerror(errno);
         } else if (r == 0) {
              return;
-        } else {
+        } else if (r != sizeof(counter)) {
              qWarning() << "Short read" << r << "on eventFD!";
         }
 

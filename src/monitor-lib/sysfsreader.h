@@ -25,7 +25,7 @@ private:
     QByteArray m_path;
     mutable QByteArray m_buffer;
 
-    Q_DISABLE_COPY(SysFsReader)
+    Q_DISABLE_COPY_MOVE(SysFsReader)
 };
 
 QT_END_NAMESPACE_AM

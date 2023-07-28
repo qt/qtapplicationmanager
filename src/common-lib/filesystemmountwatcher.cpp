@@ -31,12 +31,12 @@ public:
             if (m_procMountsFd >= 0) {
                 m_procMountsNotifier = new QSocketNotifier(m_procMountsFd, QSocketNotifier::Exception);
                 QObject::connect(m_procMountsNotifier, &QSocketNotifier::activated,
-                                 [this]() { mountsChanged(); });
+                                 m_procMountsNotifier, [this]() { mountsChanged(); });
             }
         } else {
             m_autoTestMountTabWatcher = new QFileSystemWatcher({ QString::fromLocal8Bit(s_mountTabFile) });
             QObject::connect(m_autoTestMountTabWatcher, &QFileSystemWatcher::fileChanged,
-                             [this]() { mountsChanged(); });
+                             m_autoTestMountTabWatcher, [this]() { mountsChanged(); });
         }
 #endif
     }

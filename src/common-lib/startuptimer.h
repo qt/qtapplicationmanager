@@ -23,7 +23,7 @@ class StartupTimer : public QObject
 
 public:
     static StartupTimer *instance();
-    ~StartupTimer();
+    ~StartupTimer() override;
 
     Q_INVOKABLE void checkpoint(const QString &name);
     Q_INVOKABLE void createReport(const QString &title = QString());
@@ -58,7 +58,7 @@ private:
     QElapsedTimer m_timer;
     QVector<QPair<quint64, QByteArray>> m_checkpoints;
 
-    Q_DISABLE_COPY(StartupTimer)
+    Q_DISABLE_COPY_MOVE(StartupTimer)
 };
 
 QT_END_NAMESPACE_AM

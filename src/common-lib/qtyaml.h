@@ -47,8 +47,6 @@ private:
     QString m_errorString;
 };
 
-QVector<QVariant> variantDocumentsFromYaml(const QByteArray &yaml, ParseError *error = nullptr);
-
 enum YamlStyle { FlowStyle, BlockStyle };
 
 QByteArray yamlFromVariantDocuments(const QVector<QVariant> &maps, YamlStyle style = BlockStyle);
@@ -112,7 +110,7 @@ public:
     void parseFields(const Fields &fields);
 
 private:
-    Q_DISABLE_COPY(YamlParser)
+    Q_DISABLE_COPY_MOVE(YamlParser)
 
     QString parseMapKey();
 

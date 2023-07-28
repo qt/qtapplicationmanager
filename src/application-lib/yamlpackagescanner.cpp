@@ -24,9 +24,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-YamlPackageScanner::YamlPackageScanner()
-{ }
-
 PackageInfo *YamlPackageScanner::scan(const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QFile f(fileName);

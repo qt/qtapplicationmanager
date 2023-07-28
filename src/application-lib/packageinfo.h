@@ -84,7 +84,7 @@ private:
 
     friend class YamlPackageScanner;
     friend class InstallationTask;
-    Q_DISABLE_COPY(PackageInfo)
+    Q_DISABLE_COPY_MOVE(PackageInfo)
 };
 
 QT_END_NAMESPACE_AM

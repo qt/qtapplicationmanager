@@ -204,7 +204,7 @@ protected:
     void componentComplete() override;
 
 private:
-    Q_DISABLE_COPY(IntentServerHandler)
+    Q_DISABLE_COPY_MOVE(IntentServerHandler)
     Intent *m_intent = nullptr; // DRY: just a container for our otherwise needed members vars
     QVector<Intent *> m_registeredIntents;
 };

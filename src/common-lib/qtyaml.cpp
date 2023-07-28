@@ -34,7 +34,7 @@ static void emitYamlScalar(yaml_emitter_t *e, const QByteArray &ba, bool quoting
                                       nullptr,
                                       nullptr,
                                       reinterpret_cast<yaml_char_t *>(const_cast<char *>(ba.constData())),
-                                      ba.size(),
+                                      int(ba.size()),
                                       1,
                                       1,
                                       quoting ? YAML_SINGLE_QUOTED_SCALAR_STYLE : YAML_ANY_SCALAR_STYLE));
@@ -558,7 +558,7 @@ static QString mapEventNames(const QVector<yaml_event_type_t> &events)
         names.append(qL1S(eventNames.value(events.at(i), "<unknown>")));
     }
     return names;
-};
+}
 
 void YamlParser::parseFields(const std::vector<Field> &fields)
 {
@@ -581,7 +581,7 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
 
             auto field = fields.cbegin();
             for (; field != fields.cend(); ++field) {
-                if (key == qL1S(field->name))
+                if (key == QString::fromLatin1(field->name))
                     break;
             }
             if (field == fields.cend())
@@ -632,10 +632,10 @@ YamlParserException::YamlParserException(YamlParser *p, const char *errorString)
     yaml_mark_t &mark = isProblem ? p->d->parser.problem_mark : p->d->parser.mark;
 
     QString context = QString::fromUtf8(p->d->data);
-    int lpos = context.lastIndexOf(qL1C('\n'), int(mark.index ? mark.index - 1 : 0));
-    int rpos = context.indexOf(qL1C('\n'), int(mark.index));
+    qsizetype lpos = context.lastIndexOf(qL1C('\n'), qsizetype(mark.index ? mark.index - 1 : 0));
+    qsizetype rpos = context.indexOf(qL1C('\n'), qsizetype(mark.index));
     context = context.mid(lpos + 1, rpos == -1 ? context.size() : rpos - lpos - 1);
-    int contextPos = int(mark.index) - (lpos + 1);
+    qsizetype contextPos = qsizetype(mark.index) - (lpos + 1);
 
     m_errorString.append(qSL(":\nfile://%1:%2:%3: error").arg(p->sourcePath()).arg(mark.line + 1).arg(mark.column + 1));
     if (errorString)

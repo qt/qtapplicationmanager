@@ -67,7 +67,7 @@ private:
 
 private:
     IntentClient(IntentClientSystemInterface *systemInterface, QObject *parent = nullptr);
-    Q_DISABLE_COPY(IntentClient)
+    Q_DISABLE_COPY_MOVE(IntentClient)
     static IntentClient *s_instance;
 
     QList<QPointer<IntentClientRequest>> m_waiting;

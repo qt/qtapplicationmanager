@@ -66,7 +66,7 @@ protected:
     virtual void destruct(void *t) = 0;
 
 private:
-    Q_DISABLE_COPY(AbstractConfigCache)
+    Q_DISABLE_COPY_MOVE(AbstractConfigCache)
 
     ConfigCachePrivate *d;
 };
@@ -82,7 +82,7 @@ public:
         : AbstractConfigCache(configFiles, cacheBaseName, typeId, typeVersion, options)
     { }
 
-    ~ConfigCache()
+    ~ConfigCache() override
     {
         clear();
     }
@@ -121,15 +121,17 @@ protected:
     void destruct(void *t) override
     { delete static_cast<T *>(t); }
 
+private:
     ADAPTOR m_adaptor;
 
-private:
     template <typename U = T> typename std::enable_if<std::is_copy_constructible<U>::value, void *>::type
     doClone(T *t)
     { return new T(*static_cast<T *>(t)); }
     template <typename U = T> typename std::enable_if<!std::is_copy_constructible<U>::value, void *>::type
     doClone(T *)
     { Q_ASSERT_X(false, "ConfigCache::clone", "trying to clone non-copy-constructible content"); return nullptr; }
+
+    Q_DISABLE_COPY_MOVE(ConfigCache)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractConfigCache::Options)

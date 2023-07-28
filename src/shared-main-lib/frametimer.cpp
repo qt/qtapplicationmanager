@@ -186,7 +186,8 @@ bool FrameTimer::connectToQuickWindow()
     if (!quickWindow)
         return false;
 
-    connect(quickWindow, &QQuickWindow::frameSwapped, this, &FrameTimer::newFrame, Qt::UniqueConnection);
+    connect(quickWindow, &QQuickWindow::frameSwapped,
+            this, &FrameTimer::newFrame, Qt::UniqueConnection);
     return true;
 }
 

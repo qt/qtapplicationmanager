@@ -9,7 +9,6 @@
 #include "logging.h"
 #include "applicationmanager.h"
 #include "application.h"
-#include "windowmanager.h"
 #include "waylandwindow.h"
 #include "waylandcompositor.h"
 #include "waylandqtamserverextension_p.h"

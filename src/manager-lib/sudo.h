@@ -54,7 +54,7 @@ protected:
 protected:
     SudoInterface();
 private:
-    Q_DISABLE_COPY(SudoInterface)
+    Q_DISABLE_COPY_MOVE(SudoInterface)
 };
 
 class SudoServer;

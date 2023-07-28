@@ -61,7 +61,8 @@ int AmTest::observeObjectDestroyed(QObject *obj)
     static int idx = 0;
     int index = idx++;
 
-    connect(obj, &QObject::destroyed, [this, index] () {
+    connect(obj, &QObject::destroyed,
+            this, [this, index] () {
         emit objectDestroyed(index);
     });
 

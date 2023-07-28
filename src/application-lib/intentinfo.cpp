@@ -16,9 +16,6 @@ IntentInfo::IntentInfo(PackageInfo *packageInfo)
     : m_packageInfo(packageInfo)
 { }
 
-IntentInfo::~IntentInfo()
-{ }
-
 QString IntentInfo::id() const
 {
     return m_id;

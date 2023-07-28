@@ -934,7 +934,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
         return result;
     };
 
-    QRegularExpression re(QStringLiteral("^([a-z.-]+)?(\\[([a-zA-Z0-9_.]+)=([^\\]]*)\\])?(:([0-9]+))?"));
+    static const QRegularExpression re(qSL("^([a-z.-]+)?(\\[([a-zA-Z0-9_.]+)=([^\\]]*)\\])?(:([0-9]+))?"));
     auto match = re.match(selector);
     QString screenId = match.captured(6);
     QString appId = match.captured(1);

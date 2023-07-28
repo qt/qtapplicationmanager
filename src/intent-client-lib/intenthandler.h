@@ -41,7 +41,7 @@ protected:
     bool isComponentCompleted() const;
 
 private:
-    Q_DISABLE_COPY(AbstractIntentHandler)
+    Q_DISABLE_COPY_MOVE(AbstractIntentHandler)
 
     QStringList m_intentIds;
     bool m_completed = false;
@@ -57,7 +57,7 @@ public:
     IntentHandler(QObject *parent = nullptr);
 
 private:
-    Q_DISABLE_COPY(IntentHandler)
+    Q_DISABLE_COPY_MOVE(IntentHandler)
 };
 
 QT_END_NAMESPACE_AM

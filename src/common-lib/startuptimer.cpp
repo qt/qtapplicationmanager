@@ -11,7 +11,7 @@
 #  include <io.h>
 #  define isatty _isatty
 #elif defined(Q_OS_LINUX)
-#  include <time.h>
+#  include <ctime>
 #  include <qplatformdefs.h>
 #  include <sys/syscall.h>
 #  include <sys/sysinfo.h>
@@ -64,7 +64,7 @@
         #color-orange { color: #b26818 }
         #color-blue   { background-color: #5454ff; color: #000000 }
     </style>
-    <pre>
+    <pre class="cpp plain">
 <span id="color-orange">== STARTUP TIMING REPORT: System UI ==</span>
 <span id="color-green">0'110.001</span> entered main                                <span id="color-blue">   </span>
 <span id="color-green">0'110.015</span> after basic initialization                  <span id="color-blue">   </span>
@@ -166,7 +166,7 @@ static SplitSeconds splitMicroSecs(quint64 micros)
         micros %= (1000 * 1000);
     }
     ss.msec = int(micros / 1000);
-    ss.usec = micros % 1000;
+    ss.usec = int(micros % 1000);
 
     return ss;
 }
@@ -242,7 +242,7 @@ StartupTimer::StartupTimer()
         return result;
     };
 
-    quint32 threadJiffies;
+    quint32 threadJiffies = 0;
     pthread_t pt;
     void *threadJiffiesOk = nullptr;
 
@@ -415,23 +415,21 @@ void StartupTimer::createReport(const QString &title)
 
         static const int barCols = 60;
 
-        quint64 delta = m_checkpoints.isEmpty() ? 0 : m_checkpoints.last().first;
-        qreal usecPerCell = delta / barCols;
+        quint64 delta = m_checkpoints.isEmpty() ? 0 : m_checkpoints.constLast().first;
+        quint64 usecPerCell = delta ? (delta / barCols) : 1;
 
-        int maxTextLen = 0;
-        for (int i = 0; i < m_checkpoints.size(); ++i) {
-            int textLen = m_checkpoints.at(i).second.length();
+        qsizetype maxTextLen = 0;
+        for (const auto &cp : std::as_const(m_checkpoints)) {
+            qsizetype textLen = cp.second.length();
             if (textLen > maxTextLen)
                 maxTextLen = textLen;
         }
 
-        for (int i = 0; i < m_checkpoints.size(); ++i) {
-            quint64 usec = m_checkpoints.at(i).first;
-            const QByteArray text = m_checkpoints.at(i).second;
-            int cells = int(usec / usecPerCell);
+        for (const auto &[usecTotal, text] : std::as_const(m_checkpoints)) {
+            auto cells = qsizetype(usecTotal / usecPerCell);
             QByteArray bar(cells, ansiColorSupport ? ' ' : '#');
             QByteArray spacing(maxTextLen - text.length(), ' ');
-            SplitSeconds ss = splitMicroSecs(usec);
+            SplitSeconds ss = splitMicroSecs(usecTotal);
 
             constexpr const char *plainFormat = "%d'%03d.%03d %s %s#%s\n";
             constexpr const char *colorFormat = "\033[32m%d'%03d.%03d\033[0m %s %s\033[44m %s\033[0m\n";

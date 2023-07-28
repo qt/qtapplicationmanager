@@ -181,7 +181,7 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
     if (!serializedReport.isEmpty()) {
         QBuffer buffer(&serializedReport);
         buffer.open(QBuffer::ReadOnly);
-        pkg->m_installationReport.reset(new InstallationReport(pkg->id()));
+        pkg->m_installationReport = std::make_unique<InstallationReport>(pkg->id());
         try {
             pkg->m_installationReport->deserialize(&buffer);
         } catch (...) {
@@ -189,7 +189,7 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
         }
     }
 
-    int applicationsSize;
+    int applicationsSize = 0;
     ds >> applicationsSize;
     while (--applicationsSize >= 0) {
         if (auto app = ApplicationInfo::readFromDataStream(pkg.get(), ds))
@@ -198,7 +198,7 @@ PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
             return nullptr;
     }
 
-    int intentsSize;
+    int intentsSize = 0;
     ds >> intentsSize;
     while (--intentsSize >= 0) {
         if (auto intent = IntentInfo::readFromDataStream(pkg.get(), ds))

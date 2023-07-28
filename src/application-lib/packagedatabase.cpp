@@ -9,7 +9,6 @@
 #include "packagedatabase.h"
 #include "packageinfo.h"
 #include "yamlpackagescanner.h"
-#include "applicationinfo.h"
 #include "installationreport.h"
 #include "exception.h"
 #include "logging.h"

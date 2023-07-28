@@ -24,6 +24,8 @@ class ApplicationInterface : public QObject
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true FINAL)
 
 public:
+    ~ApplicationInterface() override = default;
+
     virtual QString applicationId() const = 0;
     virtual QVariantMap name() const = 0;
     virtual QUrl icon() const = 0;
@@ -51,7 +53,7 @@ protected:
     { }
 
 private:
-    Q_DISABLE_COPY(ApplicationInterface)
+    Q_DISABLE_COPY_MOVE(ApplicationInterface)
 };
 
 QT_END_NAMESPACE_AM

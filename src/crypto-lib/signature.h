@@ -25,7 +25,7 @@ public:
 
 private:
     SignaturePrivate *d;
-    Q_DISABLE_COPY(Signature)
+    Q_DISABLE_COPY_MOVE(Signature)
 };
 
 QT_END_NAMESPACE_AM

@@ -23,6 +23,8 @@ class WindowItem : public QQuickItem
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/WindowItem 2.0")
 
+    //TODO for Qt7: rename the "window" property, as QQuickItem has a window() getter and a
+    // windowChanged() signal.
     Q_PROPERTY(Window* window READ window WRITE setWindow NOTIFY windowChanged FINAL)
     Q_PROPERTY(bool primary READ primary NOTIFY primaryChanged FINAL)
     Q_PROPERTY(bool objectFollowsItemSize READ objectFollowsItemSize

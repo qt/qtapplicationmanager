@@ -595,7 +595,10 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
     if (timeout > 0) {
         delete n->timer;
         QTimer *t = new QTimer(this);
-        connect(t, &QTimer::timeout, [this,id,t]() { d->closeNotification(id, TimeoutExpired); t->deleteLater(); });
+        connect(t, &QTimer::timeout,
+                this, [this, id, t]() {
+            d->closeNotification(id, TimeoutExpired); t->deleteLater();
+        });
         t->start(timeout);
         n->timer = t;
     }

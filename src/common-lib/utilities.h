@@ -58,7 +58,7 @@ inline QString urlToLocalFilePath(const QUrl &url)
         return url.toLocalFile();
     else if (url.scheme() == qSL("qrc"))
         return qL1C(':') + url.path();
-    return QString();
+    return { };
 }
 
 inline QString toAbsoluteFilePath(const QString &path, const QString &baseDir = QDir::currentPath())

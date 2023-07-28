@@ -111,7 +111,7 @@ private:
 
 private:
     IntentServer(IntentServerSystemInterface *systemInterface, QObject *parent = nullptr);
-    Q_DISABLE_COPY(IntentServer)
+    Q_DISABLE_COPY_MOVE(IntentServer)
     static IntentServer *s_instance;
 
     static QHash<int, QByteArray> s_roleNames;

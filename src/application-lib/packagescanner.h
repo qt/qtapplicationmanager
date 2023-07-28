@@ -25,7 +25,7 @@ protected:
     PackageScanner() = default;
 
 private:
-    Q_DISABLE_COPY(PackageScanner)
+    Q_DISABLE_COPY_MOVE(PackageScanner)
 };
 
 QT_END_NAMESPACE_AM

@@ -228,7 +228,9 @@ StartupTimer::StartupTimer()
                 for (int field = 0, pos = 0; pos < bytesRead; ) {
                     if (buffer[pos++] == ' ') {
                         if (++field == 21) {
-                            *reinterpret_cast<quint32 *>(resultPtr) = quint32(strtoul(buffer + pos, nullptr, 10));
+                            const QByteArrayView fieldView { buffer + pos, bytesRead - pos };
+                            auto jiffies = fieldView.mid(0, fieldView.indexOf(' ')).toUInt();
+                            *reinterpret_cast<quint32 *>(resultPtr) = jiffies;
                             result = reinterpret_cast<void *>(1);
                             break;
                         }
@@ -273,7 +275,9 @@ StartupTimer::StartupTimer()
             ssize_t bytesRead = QT_READ(fd, buffer, sizeof(buffer) - 1);
             if (bytesRead > 0) {
                 buffer[bytesRead] = 0;
-                m_systemUpTime = quint64(strtod(buffer, nullptr) * 1000);
+                const QByteArrayView fieldView { buffer, bytesRead };
+                auto uptime = fieldView.mid(0, fieldView.indexOf(' ')).toDouble();
+                m_systemUpTime = quint64(uptime * 1000);
             }
             QT_CLOSE(fd);
         }

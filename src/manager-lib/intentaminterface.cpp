@@ -25,7 +25,6 @@
 #include "exception.h"
 #include "logging.h"
 #include "utilities.h"
-#include "runtimefactory.h"
 #include "intentserver.h"
 #include "intentclient.h"
 #include "intentserverrequest.h"

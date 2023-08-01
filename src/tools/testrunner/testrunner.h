@@ -5,18 +5,19 @@
 
 #pragma once
 
-#include <QtAppManCommon/global.h>
 #include <QStringList>
+#include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
+class Configuration;
+
 class TestRunner
 {
 public:
-    static void initialize(const QString &testFile, const QStringList &testRunnerArguments,
-                           const QString &sourceFile = { });
+    static void setup(Configuration *cfg);
     static int exec(QQmlEngine *qmlEngine);
 };
 

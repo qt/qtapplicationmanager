@@ -19,7 +19,6 @@
 #include "qtyaml.h"
 
 #if defined(AM_TESTRUNNER)
-#  include <QWindow>
 #  include "testrunner.h"
 #endif
 
@@ -30,7 +29,15 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 {
     StartupTimer::instance()->checkpoint("entered main");
 
+    const char *additionalDescription = nullptr;
+    bool onlyOnePositionalArgument = true;
+
 #if defined(AM_TESTRUNNER)
+    additionalDescription =
+        "Additional testrunner command line options can be set after the -- argument\n" \
+        "Use -- -help to show all available testrunner command line options.";
+    onlyOnePositionalArgument = false;
+
     QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Test Runner"));
 #else
     QCoreApplication::setApplicationName(qSL("Qt Application Manager"));
@@ -50,40 +57,18 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
         Main a(argc, argv);
 
-        const char *additionalDescription = nullptr;
-        bool onlyOnePositionalArgument = true;
-#if defined(AM_TESTRUNNER)
-        additionalDescription =
-                "Additional testrunner command line options can be set after the -- argument\n" \
-                "Use -- -help to show all available testrunner command line options.";
-        onlyOnePositionalArgument = false;
-#endif
-
         Configuration cfg(additionalDescription, onlyOnePositionalArgument);
         cfg.parseWithArguments(QCoreApplication::arguments());
 
         StartupTimer::instance()->checkpoint("after command line parse");
 #if defined(AM_TESTRUNNER)
-        TestRunner::initialize(cfg.mainQmlFile(), cfg.testRunnerArguments(), cfg.testRunnerSourceFile());
-        cfg.setForceVerbose(qEnvironmentVariableIsSet("AM_VERBOSE_TEST"));
-        cfg.setForceNoUiWatchdog(true); // this messes up test results on slow CI systems otherwise
+        TestRunner::setup(&cfg);
 #endif
         a.setup(&cfg);
-#if defined(AM_TESTRUNNER)
-        a.qmlEngine()->rootContext()->setContextProperty(qSL("buildConfig"), cfg.buildConfig());
-#endif
         a.loadQml(cfg.loadDummyData());
         a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
 
 #if defined(AM_TESTRUNNER)
-        if (qEnvironmentVariableIsSet("AM_BACKGROUND_TEST") && !a.topLevelWindows().isEmpty()) {
-            QWindow *w = a.topLevelWindows().first();
-            w->setFlag(Qt::WindowStaysOnBottomHint);
-            w->setFlag(Qt::WindowDoesNotAcceptFocus);
-        }
-        qInfo().nospace().noquote() << "Verbose mode is " << (cfg.verbose() ? "on" : "off")
-                                    << " (change by (un)setting $AM_VERBOSE_TEST)\n TEST: " << cfg.mainQmlFile()
-                                    << " in " << (cfg.forceMultiProcess() ? "multi" : "single") << "-process mode";
         return TestRunner::exec(a.qmlEngine());
 #else
         return MainBase::exec();

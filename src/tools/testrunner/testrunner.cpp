@@ -5,17 +5,19 @@
 
 #include "testrunner.h"
 
-#include <QCoreApplication>
+#include <QGuiApplication>
 #include <QEventLoop>
 #include <QQmlEngine>
 #include <QFileInfo>
 #include <QVector>
 #include <QScopeGuard>
+#include <QWindow>
 
 #include <qlogging.h>
 #include <QtTest/qtestsystem.h>
 #include <private/quicktest_p.h>
 #include <private/quicktestresult_p.h>
+#include "configuration.h"
 #include "amtest.h"
 
 
@@ -29,9 +31,14 @@ QT_END_NAMESPACE
 QT_BEGIN_NAMESPACE_AM
 
 
-void TestRunner::initialize(const QString &testFile, const QStringList &testRunnerArguments,
-                            const QString &sourceFile)
+void TestRunner::setup(Configuration *cfg)
 {
+    const QString testFile = cfg->mainQmlFile();
+    const QString sourceFile = cfg->testRunnerSourceFile();
+    const QStringList testRunnerArguments = cfg->testRunnerArguments();
+    cfg->setForceVerbose(qEnvironmentVariableIsSet("AM_VERBOSE_TEST"));
+    cfg->setForceNoUiWatchdog(true); // this messes up test results on slow CI systems otherwise
+
     Q_ASSERT(!testRunnerArguments.isEmpty());
 
 #if defined(Q_OS_WINDOWS)
@@ -69,14 +76,25 @@ void TestRunner::initialize(const QString &testFile, const QStringList &testRunn
     qputenv("QT_QTESTLIB_RUNNING", "1");
 
     // Register the test object and application manager test add-on
+    qApp->setProperty("_am_buildConfig", cfg->buildConfig());
     qmlRegisterSingletonType<AmTest>("QtApplicationManager.SystemUI", 2, 0, "AmTest",
                                      [](QQmlEngine *, QJSEngine *) {
         return AmTest::instance();
     });
+
+    qInfo().nospace().noquote() << "Verbose mode is " << (cfg->verbose() ? "on" : "off")
+                                << " (change by (un)setting $AM_VERBOSE_TEST)\n TEST: " << testFile
+                                << " in " << (cfg->forceMultiProcess() ? "multi" : "single") << "-process mode";
 }
 
 int TestRunner::exec(QQmlEngine *qmlEngine)
 {
+    if (qEnvironmentVariableIsSet("AM_BACKGROUND_TEST") && !qApp->topLevelWindows().isEmpty()) {
+        QWindow *w = qApp->topLevelWindows().first();
+        w->setFlag(Qt::WindowStaysOnBottomHint);
+        w->setFlag(Qt::WindowDoesNotAcceptFocus);
+    }
+
     QEventLoop eventLoop;
 
     int typeId = qmlTypeId("QtTest", 1, 2, "QTestRootObject");

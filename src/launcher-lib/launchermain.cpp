@@ -155,12 +155,12 @@ void LauncherMain::clearWindowPropertyCache(QWindow *window)
 
 QString LauncherMain::applicationId() const
 {
-    return property("__am_applicationId").toString();
+    return property("_am_applicationId").toString();
 }
 
 void LauncherMain::setApplicationId(const QString &applicationId)
 {
-    setProperty("__am_applicationId", applicationId);
+    setProperty("_am_applicationId", applicationId);
 }
 
 void LauncherMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCEPT_EXPR(false)

@@ -7,12 +7,14 @@
 #include <QRegularExpression>
 #include <QAbstractEventDispatcher>
 #include <QProcess>
+#include <QCoreApplication>
 #include <private/qtestlog_p.h>
 #include "amtest.h"
 #include "utilities.h"
 
 
 QT_BEGIN_NAMESPACE_AM
+
 
 AmTest::AmTest()
 {}
@@ -30,6 +32,11 @@ AmTest *AmTest::instance()
 int AmTest::timeoutFactor() const
 {
     return QT_PREPEND_NAMESPACE_AM(timeoutFactor)();
+}
+
+QVariant AmTest::buildConfig() const
+{
+    return qApp->property("_am_buildConfig");
 }
 
 static QtMsgType convertMsgType(AmTest::MsgType type)

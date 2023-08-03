@@ -1,0 +1,11 @@
+formatType: am-package
+formatVersion: 1
+---
+id:   'builtin.blue'
+icon: 'icon.png'
+name:
+  en: 'Builtin Blue'
+applications:
+- id:      'builtin.blue'
+  code:    'main.qml'
+  runtime: 'qml'

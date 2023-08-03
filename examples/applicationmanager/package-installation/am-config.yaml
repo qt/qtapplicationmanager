@@ -1,0 +1,22 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  installationDir: "/tmp/package-server-example/apps"
+
+ui:
+  fullscreen: no
+  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
+  style: Universal
+
+systemProperties:
+  public:
+    packageServer:
+      url: "http://localhost:8020"
+      projectId: 'PROJECT'
+
+# development setup:
+flags:
+  noSecurity: yes
+  noUiWatchdog: yes

@@ -116,6 +116,8 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         if (m_destinationName.isEmpty())
             throw Exception(Error::Package, "no destination package name given");
 
+        QFileInfo(m_destinationName).absoluteDir().mkpath(qSL("."));
+
         QSaveFile destination(m_destinationName);
         if (!destination.open(QIODevice::WriteOnly | QIODevice::Truncate))
             throw Exception(destination, "could not create package file");

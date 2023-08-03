@@ -1,0 +1,14 @@
+// Copyright (C) 2023 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+
+\example applicationmanager/package-installation
+\brief Learn how to implement dynamic package installations and removals.
+\ingroup applicationmanager-examples
+\title Package Installation Example
+\image package-installation-example.png The Package Installation example installing a package.
+
+\section1 Introduction
+
+*/

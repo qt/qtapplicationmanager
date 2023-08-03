@@ -5,7 +5,7 @@
 
 _appman()
 {
-    local cur opts
+    local cur opts dbusopts
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     opts="-c -h -o -v -I --build-config --builtin-apps-manifest-dir --clear-cache --config-file --development-mode \
@@ -21,7 +21,7 @@ _appman()
         if [ ${COMP_CWORD} -gt 1 ] && [[ ${COMP_WORDS[COMP_CWORD-1]} == "--dbus" ]] ; then
             COMPREPLY=( $(compgen -W "${dbusopts}" -- ${cur}) )
         else
-            COMPREPLY=( $( compgen -f -- ${cur}) )
+            COMPREPLY=( $(compgen -f -- ${cur}) )
         fi
     fi
 }
@@ -56,7 +56,7 @@ cancel-installation-task list-installation-locations show-installation-location 
                 COMPREPLY=( $(compgen -W "${apps}" -- ${cur}) )
                 ;;
             install-package)
-                COMPREPLY=( $( compgen -f -- ${cur}) )
+                COMPREPLY=( $(compgen -f -- ${cur}) )
                 ;;
             cancel-installation-task)
                 eval cmd="${COMP_WORDS[0]}"
@@ -111,8 +111,25 @@ _appman-packager()
                 file=1
                 ;;
             esac
-            [ ${file} -eq 1 ] && COMPREPLY=( $( compgen -f -- ${cur}) )
+            [ ${file} -eq 1 ] && COMPREPLY=( $(compgen -f -- ${cur}) )
         fi
     fi
 }
 complete -o filenames -F _appman-packager appman-packager
+
+_appman-package-server()
+{
+    local cur opts fopts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts="-h -v --help --help-all --version --dd --data-directory --la --listen-address --pi --project-id \
+--sc --sp --dc --cc --create-config"
+    fopts=("--dd" "--data-directory" "--sc" "--dc")
+
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    elif [ ${COMP_CWORD} -gt 1 ] && [[ " ${fopts[*]} " = *" ${COMP_WORDS[COMP_CWORD-1]} "* ]] ; then
+        COMPREPLY=( $(compgen -f -- ${cur}) )
+    fi
+}
+complete -o filenames -F _appman-package-server appman-package-server

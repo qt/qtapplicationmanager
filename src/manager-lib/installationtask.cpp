@@ -334,9 +334,11 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
 
         // this is a temporary just for the signal emission below
         m_tempPackageForAcknowledge.reset(new Package(m_package.get(), Package::BeingInstalled));
+        m_tempPackageForAcknowledge->moveToThread(m_pm->thread());
         const auto &applicationInfos = m_package.get()->applications();
         for (const auto &applicationInfo : applicationInfos) {
             auto tempApp = new Application(applicationInfo, m_tempPackageForAcknowledge.get());
+            tempApp->moveToThread(m_pm->thread());
             m_tempPackageForAcknowledge->addApplication(tempApp);
             m_tempApplicationsForAcknowledge.emplace_back(tempApp);
         }

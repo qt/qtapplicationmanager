@@ -174,6 +174,9 @@ struct LoggingGlobal
     QMutex deferredMessagesMutex;
     std::vector<DeferredMessage> deferredMessages;
 
+    // Try to re-use a 512 byte buffer per thread as much as possible to avoid allocations.
+    QThreadStorage<QByteArray> outBuffers;
+
     ~LoggingGlobal();
 };
 
@@ -215,9 +218,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
     if (msgType < QtDebugMsg || msgType > QtInfoMsg)
         msgType = QtCriticalMsg;
 
-    // Try to re-use a 512 byte buffer per thread as much as possible to avoid allocations.
-    static QThreadStorage<QByteArray> outBuffers;
-    QByteArray &out = outBuffers.localData();
+    QByteArray &out = lg()->outBuffers.localData();
     if (out.capacity() > 512)
         out.clear();
     if (!out.capacity())
@@ -395,6 +396,10 @@ LoggingGlobal::~LoggingGlobal()
     // we do an unnecessary (but cheap) qInstallMessageHandler() at program exit, but this way
     // we cannot forget to dump the deferred messages whenever we exit
     Logging::completeSetup();
+
+    // we are dead now, so make sure that anyone logging after this point will not crash the program
+    if (defaultQtHandler)
+        qInstallMessageHandler(defaultQtHandler);
 }
 
 QStringList Logging::filterRules()

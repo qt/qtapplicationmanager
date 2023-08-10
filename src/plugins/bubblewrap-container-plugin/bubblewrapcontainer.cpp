@@ -293,7 +293,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
     connect(m_process, &QProcess::started, this, [this]() {
         // Close write end of the pipe
         QT_CLOSE(m_statusPipeFd[1]);
-        m_statusPipeFd[1] = 0;
+        m_statusPipeFd[1] = -1;
 
         m_pid = m_process->processId();
 

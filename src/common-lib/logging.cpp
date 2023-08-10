@@ -424,6 +424,10 @@ LoggingGlobal::~LoggingGlobal()
     // we do an unnecessary (but cheap) qInstallMessageHandler() at program exit, but this way
     // we cannot forget to dump the deferred messages whenever we exit
     Logging::completeSetup();
+
+    // we are dead now, so make sure that anyone logging after this point will not crash the program
+    if (defaultQtHandler)
+        qInstallMessageHandler(defaultQtHandler);
 }
 
 QStringList Logging::filterRules()

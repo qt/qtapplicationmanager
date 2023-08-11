@@ -211,3 +211,5 @@ bool FileSystemMountWatcher::setMountTabFileForTesting(const QString &mtabFile)
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_filesystemmountwatcher.cpp"

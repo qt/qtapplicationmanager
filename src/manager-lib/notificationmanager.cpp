@@ -135,7 +135,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 namespace {
-enum Roles
+enum NMRoles
 {
     Id = Qt::UserRole + 2000,
 
@@ -258,25 +258,25 @@ NotificationManager::NotificationManager(QObject *parent)
     connect(this, &QAbstractItemModel::modelReset, this, &NotificationManager::countChanged);
 
     d->q = this;
-    d->roleNames.insert(Id, "id");
-    d->roleNames.insert(ApplicationId, "applicationId");
-    d->roleNames.insert(Priority, "priority");
-    d->roleNames.insert(Summary, "summary");
-    d->roleNames.insert(Body, "body");
-    d->roleNames.insert(Category, "category");
-    d->roleNames.insert(Icon, "icon");
-    d->roleNames.insert(Image, "image");
-    d->roleNames.insert(ShowActionsAsIcons, "showActionsAsIcons");
-    d->roleNames.insert(Actions, "actions");
-    d->roleNames.insert(DismissOnAction, "dismissOnAction");
-    d->roleNames.insert(IsAcknowledgeable, "isAcknowledgeable");
-    d->roleNames.insert(IsClickable, "isClickable");
-    d->roleNames.insert(IsSystemNotification, "isSytemNotification");
-    d->roleNames.insert(IsShowingProgress, "isShowingProgress");
-    d->roleNames.insert(Progress, "progress");
-    d->roleNames.insert(IsSticky, "isSticky");
-    d->roleNames.insert(Timeout, "timeout");
-    d->roleNames.insert(Extended, "extended");
+    d->roleNames.insert(NMRoles::Id, "id");
+    d->roleNames.insert(NMRoles::ApplicationId, "applicationId");
+    d->roleNames.insert(NMRoles::Priority, "priority");
+    d->roleNames.insert(NMRoles::Summary, "summary");
+    d->roleNames.insert(NMRoles::Body, "body");
+    d->roleNames.insert(NMRoles::Category, "category");
+    d->roleNames.insert(NMRoles::Icon, "icon");
+    d->roleNames.insert(NMRoles::Image, "image");
+    d->roleNames.insert(NMRoles::ShowActionsAsIcons, "showActionsAsIcons");
+    d->roleNames.insert(NMRoles::Actions, "actions");
+    d->roleNames.insert(NMRoles::DismissOnAction, "dismissOnAction");
+    d->roleNames.insert(NMRoles::IsAcknowledgeable, "isAcknowledgeable");
+    d->roleNames.insert(NMRoles::IsClickable, "isClickable");
+    d->roleNames.insert(NMRoles::IsSystemNotification, "isSytemNotification");
+    d->roleNames.insert(NMRoles::IsShowingProgress, "isShowingProgress");
+    d->roleNames.insert(NMRoles::Progress, "progress");
+    d->roleNames.insert(NMRoles::IsSticky, "isSticky");
+    d->roleNames.insert(NMRoles::Timeout, "timeout");
+    d->roleNames.insert(NMRoles::Extended, "extended");
 }
 
 NotificationManager::~NotificationManager()
@@ -300,48 +300,48 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
     const NotificationData *n = d->notifications.at(index.row());
 
     switch (role) {
-    case Id:
+    case NMRoles::Id:
         return n->id;
-    case ApplicationId:
+    case NMRoles::ApplicationId:
         return n->application ? n->application->id() : QString();
-    case Priority:
+    case NMRoles::Priority:
         return n->priority;
-    case Summary:
+    case NMRoles::Summary:
         return n->summary;
-    case Body:
+    case NMRoles::Body:
         return n->body;
-    case Category:
+    case NMRoles::Category:
         return n->category;
-    case Icon:
+    case NMRoles::Icon:
          if (!n->iconUrl.isEmpty())
              return n->iconUrl;
          return n->application && n->application->package() ? n->application->package()->icon()
                                                             : QString();
-    case Image:
+    case NMRoles::Image:
         return n->imageUrl;
-    case ShowActionsAsIcons:
+    case NMRoles::ShowActionsAsIcons:
         return n->showActionIcons;
-    case Actions: {
+    case NMRoles::Actions: {
         QVariantList actions = n->actions;
         actions.removeAll(QVariantMap { { qSL("default"), QString() } });
         return actions;
     }
-    case DismissOnAction:
+    case NMRoles::DismissOnAction:
         return n->dismissOnAction;
-    case IsClickable: // legacy
-    case IsAcknowledgeable:
+    case NMRoles::IsClickable: // legacy
+    case NMRoles::IsAcknowledgeable:
         return n->actions.contains(QVariantMap { { qSL("default"), QString() } });
-    case IsSystemNotification:
+    case NMRoles::IsSystemNotification:
         return n->isSystemNotification;
-    case IsShowingProgress:
+    case NMRoles::IsShowingProgress:
         return n->isShowingProgress;
-    case Progress:
+    case NMRoles::Progress:
         return n->isShowingProgress ? n->progress : -1;
-    case IsSticky:
+    case NMRoles::IsSticky:
         return n->timeout == 0;
-    case Timeout:
+    case NMRoles::Timeout:
         return n->timeout;
-    case Extended:
+    case NMRoles::Extended:
         return n->extended;
     }
     return { };

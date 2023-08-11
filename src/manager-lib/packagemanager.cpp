@@ -244,7 +244,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-enum Roles
+enum PMRoles
 {
     Id = Qt::UserRole,
     Name,
@@ -451,16 +451,16 @@ void PackageManager::registerQmlTypes()
                                         qSL("Cannot create objects of type PackageObject"));
     qRegisterMetaType<Package *>("Package*");
 
-    s_roleNames.insert(Id, "packageId");
-    s_roleNames.insert(Name, "name");
-    s_roleNames.insert(Description, "description");
-    s_roleNames.insert(Icon, "icon");
-    s_roleNames.insert(IsBlocked, "isBlocked");
-    s_roleNames.insert(IsUpdating, "isUpdating");
-    s_roleNames.insert(IsRemovable, "isRemovable");
-    s_roleNames.insert(UpdateProgress, "updateProgress");
-    s_roleNames.insert(Version, "version");
-    s_roleNames.insert(PackageItem, "package");
+    s_roleNames.insert(PMRoles::Id, "packageId");
+    s_roleNames.insert(PMRoles::Name, "name");
+    s_roleNames.insert(PMRoles::Description, "description");
+    s_roleNames.insert(PMRoles::Icon, "icon");
+    s_roleNames.insert(PMRoles::IsBlocked, "isBlocked");
+    s_roleNames.insert(PMRoles::IsUpdating, "isUpdating");
+    s_roleNames.insert(PMRoles::IsRemovable, "isRemovable");
+    s_roleNames.insert(PMRoles::UpdateProgress, "updateProgress");
+    s_roleNames.insert(PMRoles::Version, "version");
+    s_roleNames.insert(PMRoles::PackageItem, "package");
 }
 
 PackageManager::PackageManager(PackageDatabase *packageDatabase,
@@ -538,25 +538,25 @@ QVariant PackageManager::data(const QModelIndex &index, int role) const
 QVariant PackageManager::dataForRole(Package *package, int role) const
 {
     switch (role) {
-    case Id:
+    case PMRoles::Id:
         return package->id();
-    case Name:
+    case PMRoles::Name:
         return package->name();
-    case Description:
+    case PMRoles::Description:
         return package->description();
-    case Icon:
+    case PMRoles::Icon:
         return package->icon();
-    case IsBlocked:
+    case PMRoles::IsBlocked:
         return package->isBlocked();
-    case IsUpdating:
+    case PMRoles::IsUpdating:
         return package->state() != Package::Installed;
-    case UpdateProgress:
+    case PMRoles::UpdateProgress:
         return package->progress();
-    case IsRemovable:
+    case PMRoles::IsRemovable:
         return !package->isBuiltIn();
-    case Version:
+    case PMRoles::Version:
         return package->version();
-    case PackageItem:
+    case PMRoles::PackageItem:
         return QVariant::fromValue(package);
     default:
         return QVariant();
@@ -1299,7 +1299,7 @@ void PackageManager::executeNextTask()
             package->setProgress(p);
             // Icon will be in a "+" suffixed directory during installation. So notify about a change on its
             // location as well.
-            emitDataChanged(package, QVector<int> { Icon, UpdateProgress });
+            emitDataChanged(package, QVector<int> { PMRoles::Icon, PMRoles::UpdateProgress });
         }
     });
 
@@ -1398,7 +1398,7 @@ bool PackageManager::startingPackageRemoval(const QString &id)
                                                            : Package::BeingRemoved);
 
     package->setProgress(0);
-    emitDataChanged(package, QVector<int> { IsUpdating });
+    emitDataChanged(package, QVector<int> { PMRoles::IsUpdating });
     return true;
 }
 
@@ -1537,7 +1537,7 @@ bool PackageManager::canceledPackageInstall(const QString &id)
 
         package->setState(Package::Installed);
         package->setProgress(0);
-        emitDataChanged(package, QVector<int> { IsUpdating });
+        emitDataChanged(package, QVector<int> { PMRoles::IsUpdating });
 
         package->unblock();
         break;

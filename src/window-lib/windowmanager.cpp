@@ -203,14 +203,12 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-namespace {
-enum Roles
+enum WMRoles
 {
     Id = Qt::UserRole + 1000,
     WindowRole,
     ContentState
 };
-}
 
 WindowManager *WindowManager::s_instance = nullptr;
 
@@ -352,9 +350,9 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
     Q_UNUSED(waylandSocketName)
 #endif
 
-    d->roleNames.insert(Id, "applicationId");
-    d->roleNames.insert(WindowRole, "window");
-    d->roleNames.insert(ContentState, "contentState");
+    d->roleNames.insert(WMRoles::Id, "applicationId");
+    d->roleNames.insert(WMRoles::WindowRole, "window");
+    d->roleNames.insert(WMRoles::ContentState, "contentState");
 
     d->qmlEngine = qmlEngine;
 
@@ -426,15 +424,15 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
     Window *win = d->windowsInModel.at(index.row());
 
     switch (role) {
-    case Id:
+    case WMRoles::Id:
         if (win->application()) {
             return win->application()->nonAliased()->id();
         } else {
             return QString();
         }
-    case WindowRole:
+    case WMRoles::WindowRole:
         return QVariant::fromValue(win);
-    case ContentState:
+    case WMRoles::ContentState:
         return win->contentState();
     }
     return QVariant();
@@ -761,7 +759,7 @@ void WindowManager::setupWindow(Window *window)
             QModelIndex modelIndex = QAbstractListModel::index(index);
             qCDebug(LogGraphics).nospace() << "emitting dataChanged, index: " << modelIndex.row()
                     << ", contentState: " << window->contentState();
-            emit dataChanged(modelIndex, modelIndex, QVector<int>() << ContentState);
+            emit dataChanged(modelIndex, modelIndex, QVector<int>() << WMRoles::ContentState);
         }
 
         if (contentState == Window::NoSurface) {

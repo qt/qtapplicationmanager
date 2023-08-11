@@ -312,3 +312,5 @@ QVector<PackageInfo *> PackageDatabase::builtInPackages() const
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_packagedatabase.cpp"

@@ -289,7 +289,7 @@
     happens implicitly after the System UI's main QML has been loaded.
 */
 
-enum Roles
+enum AMRoles
 {
     Id = Qt::UserRole,
     Name,
@@ -321,25 +321,25 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
 {
     currentLocale = QLocale::system().name(); //TODO: language changes
 
-    roleNames.insert(Id, "applicationId");
-    roleNames.insert(Name, "name");
-    roleNames.insert(Icon, "icon");
-    roleNames.insert(IsRunning, "isRunning");
-    roleNames.insert(IsStartingUp, "isStartingUp");
-    roleNames.insert(IsShuttingDown, "isShuttingDown");
-    roleNames.insert(IsBlocked, "isBlocked");
-    roleNames.insert(IsUpdating, "isUpdating");
-    roleNames.insert(IsRemovable, "isRemovable");
-    roleNames.insert(UpdateProgress, "updateProgress");
-    roleNames.insert(CodeFilePath, "codeFilePath");
-    roleNames.insert(RuntimeName, "runtimeName");
-    roleNames.insert(RuntimeParameters, "runtimeParameters");
-    roleNames.insert(Capabilities, "capabilities");
-    roleNames.insert(Categories, "categories");
-    roleNames.insert(Version, "version");
-    roleNames.insert(ApplicationItem, "application");
-    roleNames.insert(LastExitCode, "lastExitCode");
-    roleNames.insert(LastExitStatus, "lastExitStatus");
+    roleNames.insert(AMRoles::Id, "applicationId");
+    roleNames.insert(AMRoles::Name, "name");
+    roleNames.insert(AMRoles::Icon, "icon");
+    roleNames.insert(AMRoles::IsRunning, "isRunning");
+    roleNames.insert(AMRoles::IsStartingUp, "isStartingUp");
+    roleNames.insert(AMRoles::IsShuttingDown, "isShuttingDown");
+    roleNames.insert(AMRoles::IsBlocked, "isBlocked");
+    roleNames.insert(AMRoles::IsUpdating, "isUpdating");
+    roleNames.insert(AMRoles::IsRemovable, "isRemovable");
+    roleNames.insert(AMRoles::UpdateProgress, "updateProgress");
+    roleNames.insert(AMRoles::CodeFilePath, "codeFilePath");
+    roleNames.insert(AMRoles::RuntimeName, "runtimeName");
+    roleNames.insert(AMRoles::RuntimeParameters, "runtimeParameters");
+    roleNames.insert(AMRoles::Capabilities, "capabilities");
+    roleNames.insert(AMRoles::Categories, "categories");
+    roleNames.insert(AMRoles::Version, "version");
+    roleNames.insert(AMRoles::ApplicationItem, "application");
+    roleNames.insert(AMRoles::LastExitCode, "lastExitCode");
+    roleNames.insert(AMRoles::LastExitStatus, "lastExitStatus");
 }
 
 ApplicationManagerPrivate::~ApplicationManagerPrivate()
@@ -815,7 +815,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
             app->setRunState(newRuntimeState);
         emit applicationRunStateChanged(appId, newRuntimeState);
         if (app)
-            emitDataChanged(app, QVector<int> { IsRunning, IsStartingUp, IsShuttingDown });
+            emitDataChanged(app, QVector<int> { AMRoles::IsRunning, AMRoles::IsStartingUp, AMRoles::IsShuttingDown });
     });
 
     if (!documentUrl.isNull())
@@ -1266,43 +1266,43 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
     Application *app = d->apps.at(index.row());
 
     switch (role) {
-    case Id:
+    case AMRoles::Id:
         return app->id();
-    case Name:
+    case AMRoles::Name:
         return app->name();
-    case Icon:
+    case AMRoles::Icon:
         return app->icon();
-    case IsRunning:
+    case AMRoles::IsRunning:
         return app->currentRuntime() ? (app->currentRuntime()->state() == Am::Running) : false;
-    case IsStartingUp:
+    case AMRoles::IsStartingUp:
         return app->currentRuntime() ? (app->currentRuntime()->state() == Am::StartingUp) : false;
-    case IsShuttingDown:
+    case AMRoles::IsShuttingDown:
         return app->currentRuntime() ? (app->currentRuntime()->state() == Am::ShuttingDown) : false;
-    case IsBlocked:
+    case AMRoles::IsBlocked:
         return app->isBlocked();
-    case IsUpdating:
+    case AMRoles::IsUpdating:
         return app->state() != Application::Installed;
-    case UpdateProgress:
+    case AMRoles::UpdateProgress:
         return app->progress();
-    case IsRemovable:
+    case AMRoles::IsRemovable:
         return !app->isBuiltIn();
-    case CodeFilePath:
+    case AMRoles::CodeFilePath:
         return app->info()->absoluteCodeFilePath();
-    case RuntimeName:
+    case AMRoles::RuntimeName:
         return app->runtimeName();
-    case RuntimeParameters:
+    case AMRoles::RuntimeParameters:
         return app->runtimeParameters();
-    case Capabilities:
+    case AMRoles::Capabilities:
         return app->capabilities();
-    case Categories:
+    case AMRoles::Categories:
         return app->categories();
-    case Version:
+    case AMRoles::Version:
         return app->version();
-    case ApplicationItem:
+    case AMRoles::ApplicationItem:
         return QVariant::fromValue(app);
-    case LastExitCode:
+    case AMRoles::LastExitCode:
         return app->lastExitCode();
-    case LastExitStatus:
+    case AMRoles::LastExitStatus:
         return app->lastExitStatus();
     }
     return QVariant();
@@ -1469,7 +1469,7 @@ void ApplicationManager::addApplication(ApplicationInfo *appInfo, Package *packa
 
     connect(app, &Application::blockedChanged,
             this, [this, app]() {
-        emitDataChanged(app, QVector<int> { IsBlocked });
+        emitDataChanged(app, QVector<int> { AMRoles::IsBlocked });
     });
     connect(app, &Application::bulkChange,
             this, [this, app]() {
@@ -1519,3 +1519,4 @@ void ApplicationManager::removeApplication(ApplicationInfo *appInfo, Package *pa
 QT_END_NAMESPACE_AM
 
 #include "moc_applicationmanager.cpp"
+#include "moc_amnamespace.cpp" // amnamespace is header only, so we include it here

@@ -225,3 +225,5 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
         return QJsonArray::fromStringList(packages->categories());
     });
 }
+
+#include "moc_pshttpinterface.cpp"

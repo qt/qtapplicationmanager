@@ -445,3 +445,5 @@ QString PSPackage::architectureOrAll() const
 {
     return architecture.isEmpty() ? u"all"_s  : architecture;
 }
+
+#include "moc_pspackages.cpp"

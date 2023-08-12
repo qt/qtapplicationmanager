@@ -142,8 +142,8 @@ modules:
       peer-to-peer D-Bus.
 \row
   \li \c{tools-only}
-  \li Set to \c yes to only build tools: \l{Controller}{appman-controller} and
-      \l{Packager}{appman-packager}.
+  \li Set to \c yes to create a build that only compiles the tools (as in \e{Qt build tools}, that
+      are only built for the host Qt when cross compiling): \l{Packager}{appman-packager}.
 \row
   \li \c{package-server}
   \li Set to \c no to disable building the \l{Package-Server}{appman-package-server} tool, and \c

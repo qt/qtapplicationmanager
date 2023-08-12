@@ -28,6 +28,8 @@ endforeach()
 
 qt_internal_collect_command_environment(env_path env_plugin_path)
 
+qt_am_internal_find_host_packager()
+
 if (WIN32)
     find_program(bash bash.exe
                  PATHS ENV PATH
@@ -44,18 +46,12 @@ if (WIN32)
         # /mingw64/bin to $PATH, which in most cases has incompatible versions of the stdc++ and
         # gcc libs, preventing the appman-packager from starting.
 
-        if (NOT TARGET ${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager)
-            find_package(Qt6 COMPONENTS AppManMainPrivateTools)
-        endif()
         add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/packages
                            COMMAND ${bash} -c 'export PATH="`cygpath -u -p \"${env_path}\"`:$$PATH" \; ${CMAKE_CURRENT_BINARY_DIR}/create-test-packages.sh $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>'
                            DEPENDS ${ALL_TEST_DATA_FILES}
         )
     endif()
 else()
-    if (NOT TARGET ${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager)
-        find_package(Qt6 COMPONENTS AppManMainPrivateTools)
-    endif()
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/packages
                        COMMAND "${CMAKE_COMMAND}" -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
                                ${CMAKE_CURRENT_BINARY_DIR}/create-test-packages.sh $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>

@@ -1,5 +1,36 @@
 set(_AM_MACROS_LOCATION ${CMAKE_CURRENT_LIST_DIR})
 
+function(qt_am_internal_find_host_packager)
+    if(TARGET ${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager)
+        return()
+    endif()
+    if(NOT QT_HOST_PATH)
+        find_package(Qt6 COMPONENTS AppManMainPrivateTools)
+        return()
+    endif()
+    # Try to find the host version of the packager:
+    # Set up QT_HOST_PATH as an extra root path to look for the Tools package.
+    # If toolchain file already provides host paths in a predefined order, we shouldn't break it.
+    if(NOT "${QT_HOST_PATH_CMAKE_DIR}" IN_LIST CMAKE_PREFIX_PATH)
+        list(PREPEND CMAKE_PREFIX_PATH "${QT_HOST_PATH_CMAKE_DIR}")
+    endif()
+    if(NOT "${QT_HOST_PATH}" IN_LIST CMAKE_FIND_ROOT_PATH)
+        list(PREPEND CMAKE_FIND_ROOT_PATH "${QT_HOST_PATH}")
+    endif()
+    if(NOT "${QT_HOST_PATH}" IN_LIST CMAKE_PROGRAM_PATH)
+        list(PREPEND CMAKE_PROGRAM_PATH "${QT_HOST_PATH}")
+    endif()
+    # This can't use the find_package(Qt6 COMPONENTS) signature, because Qt6Config uses NO_DEFAULT
+    # and won't look at the prepend extra find root paths.
+    find_package(Qt6AppManMainPrivateTools ${PROJECT_VERSION} CONFIG
+        PATHS
+            ${_qt_additional_packages_prefix_path}
+            ${_qt_additional_packages_prefix_path_env}
+            ${QT_HOST_PATH_CMAKE_DIR}
+        NO_DEFAULT_PATH
+    )
+endfunction()
+
 function(qt_am_internal_create_copy_command file)
     if (NOT ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
         add_custom_command(OUTPUT ${file}

@@ -27,6 +27,7 @@ if(NOT QT_FEATURE_am_tools_only)
     endif()
 
     add_subdirectory(main-lib)
+    add_subdirectory(plugins)
     add_subdirectory(tools/appman)
     add_subdirectory(tools/testrunner)
 
@@ -48,7 +49,6 @@ if(NOT QT_FEATURE_am_tools_only)
         add_subdirectory(tools/package-server)
     endif()
 endif()
-add_subdirectory(plugins)
 
 if(NOT QT_FEATURE_cross_compile OR QT_FEATURE_am_tools_only)
     if (QT_FEATURE_am_installer)

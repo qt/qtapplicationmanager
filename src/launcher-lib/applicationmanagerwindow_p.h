@@ -27,6 +27,9 @@ public:
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;
     Q_INVOKABLE QVariantMap windowProperties() const;
 
+protected:
+    void classBegin() override;
+
 signals:
     void windowPropertyChanged(const QString &name, const QVariant &value);
 

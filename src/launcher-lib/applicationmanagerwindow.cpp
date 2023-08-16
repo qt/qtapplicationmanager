@@ -87,13 +87,6 @@ ApplicationManagerWindow::ApplicationManagerWindow(QWindow *parent)
     : QQuickWindowQmlImpl(parent)
     , d(new ApplicationManagerWindowPrivate())
 {
-    setFlags(flags() | Qt::FramelessWindowHint);
-    setWidth(1024);
-    setHeight(768);
-    setVisible(true);
-
-    (void) winId(); // force allocation of platform resources
-
     d->launcherMain = LauncherMain::instance();
     connect(d->launcherMain, &LauncherMain::windowPropertyChanged,
             this, [this](QWindow *window, const QString &name, const QVariant &value) {
@@ -153,6 +146,20 @@ QVariant ApplicationManagerWindow::windowProperty(const QString &name) const
 QVariantMap ApplicationManagerWindow::windowProperties() const
 {
     return d->launcherMain->windowProperties(const_cast<ApplicationManagerWindow *>(this));
+}
+
+void ApplicationManagerWindow::classBegin()
+{
+    QQuickWindowQmlImpl::classBegin();
+    // For historical reasons, we deviate from the standard Window behavior.
+    // We cannot set this is in the constructor, because the base class thinks it's
+    // componentComplete between the constructor and classBegin.
+    setFlags(flags() | Qt::FramelessWindowHint);
+    setWidth(1024);
+    setHeight(768);
+    setVisible(true);
+
+    create(); // force allocation of platform resources
 }
 
 /*!

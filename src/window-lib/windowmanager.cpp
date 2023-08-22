@@ -69,8 +69,14 @@
         \li \c window
         \li WindowObject
         \target windowmanager-window-role
-        \li The WindowObject containing the client surface. To display it you have to put it in a
+        \li The \l WindowObject containing the client surface. To display it you have to put it in a
             WindowItem
+    \row
+        \li \c windowObject
+        \li WindowObject
+        \li Exactly the same as \c window. This was added to keep the role names between the
+            PackageManager and WindowManager models as similar as possible.
+            This role was introduced in Qt version 6.6.
     \row
         \li \c contentState
         \li WindowObject::ContentState
@@ -207,6 +213,7 @@ enum WMRoles
 {
     Id = Qt::UserRole + 1000,
     WindowRole,
+    WindowObjectRole,
     ContentState
 };
 
@@ -352,6 +359,7 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
 
     d->roleNames.insert(WMRoles::Id, "applicationId");
     d->roleNames.insert(WMRoles::WindowRole, "window");
+    d->roleNames.insert(WMRoles::WindowObjectRole, "windowObject");
     d->roleNames.insert(WMRoles::ContentState, "contentState");
 
     d->qmlEngine = qmlEngine;
@@ -431,6 +439,7 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
             return QString();
         }
     case WMRoles::WindowRole:
+    case WMRoles::WindowObjectRole:
         return QVariant::fromValue(win);
     case WMRoles::ContentState:
         return win->contentState();

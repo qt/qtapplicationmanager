@@ -62,13 +62,15 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
                          const QVariantMap &packageExtraSignedMetaData) {
         auto map = PackageManager::instance()->get(package);
         map.remove(qSL("package")); // cannot marshall QObject *
+        map.remove(qSL("packageObject")); // cannot marshall QObject *
 
         const auto apps = package->applications(); // these are QObject * (legacy API)
         QVariantList appList;
         appList.reserve(apps.size());
         for (const auto *obj : apps) {
             QVariantMap app = ApplicationManager::instance()->get(obj->property("id").toString());
-            app.remove(qSL("application"));  // cannot marshall QObject *
+            app.remove(qSL("application"));        // cannot marshall QObject *
+            app.remove(qSL("applicationObject"));  // cannot marshall QObject *
             appList.append(app);
         }
         map.insert(qSL("applications"), appList);
@@ -156,7 +158,8 @@ QVariantMap PackageManagerAdaptor::get(const QString &id)
 {
     AM_AUTHENTICATE_DBUS(QVariantMap)
     auto map = PackageManager::instance()->get(id);
-    map.remove(qSL("package")); // cannot marshall QObject *
+    map.remove(qSL("package"));       // cannot marshall QObject *
+    map.remove(qSL("packageObject")); // cannot marshall QObject *
     return convertFromJSVariant(map).toMap();
 }
 

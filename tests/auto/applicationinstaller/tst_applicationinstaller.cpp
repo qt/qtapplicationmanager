@@ -567,12 +567,14 @@ void tst_PackageManager::simulateErrorConditions()
         clearSignalSpies();
     }
 
-    foreach (const auto &f, functions.values("before-start"))
+    const auto beforeStart = functions.values("before-start");
+    for (const auto &f : beforeStart)
         QVERIFY(f());
 
     taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(qL1S(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
 
-    foreach (const auto &f, functions.values("after-start"))
+    const auto afterStart = functions.values("after-start");
+    for (const auto &f : afterStart)
         QVERIFY(f());
 
     m_pm->acknowledgePackageInstallation(taskId);
@@ -582,7 +584,8 @@ void tst_PackageManager::simulateErrorConditions()
     AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(), errorString);
     clearSignalSpies();
 
-    foreach (const auto &f, functions.values("after-failed"))
+    const auto afterFailed = functions.values("after-failed");
+    for (const auto &f : afterFailed)
         QVERIFY(f());
 
     if (testUpdate) {

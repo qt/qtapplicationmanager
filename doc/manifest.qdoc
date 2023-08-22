@@ -8,7 +8,7 @@
 \ingroup qtappman-highlights
 \keyword info.yaml metadata manifest format
 \title Manifest Definition
-\brief Describes the current metadata format (\c am-package, version \c 1) that was introduced with the 5.14 release.
+\brief Describes the current metadata format for packages.
 
 \note This page describes the current metadata format (\c am-package, version \c 1) that was
       introduced with the 5.14 release. For the old format - that is still supported - please see

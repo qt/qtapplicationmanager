@@ -138,6 +138,12 @@
         \li ApplicationObject
         \li The underlying \l ApplicationObject for quick access to the properties outside of a
             model delegate.
+    \row
+        \li \c applicationObject
+        \li ApplicationObject
+        \li Exactly the same as \c application. This was added to keep the role names between the
+            PackageManager and ApplicationManager models as similar as possible.
+            This role was introduced in Qt version 6.6.
     \endtable
 
     \note The index-based API is currently not available via DBus. However, the same functionality
@@ -311,6 +317,8 @@ enum AMRoles
     Categories,
     Version,
     ApplicationItem,
+    ApplicationObject, // needed to keep the roles similar to PackageManager
+
     LastExitCode,
     LastExitStatus
 };
@@ -338,6 +346,7 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
     roleNames.insert(AMRoles::Categories, "categories");
     roleNames.insert(AMRoles::Version, "version");
     roleNames.insert(AMRoles::ApplicationItem, "application");
+    roleNames.insert(AMRoles::ApplicationObject, "applicationObject");
     roleNames.insert(AMRoles::LastExitCode, "lastExitCode");
     roleNames.insert(AMRoles::LastExitStatus, "lastExitStatus");
 }
@@ -1299,6 +1308,7 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
     case AMRoles::Version:
         return app->version();
     case AMRoles::ApplicationItem:
+    case AMRoles::ApplicationObject:
         return QVariant::fromValue(app);
     case AMRoles::LastExitCode:
         return app->lastExitCode();

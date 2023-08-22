@@ -111,8 +111,16 @@
     \row
         \li \c package
         \li PackageObject
-        \li The underlying PackageObject for quick access to the properties outside of a
+        \li The underlying \l PackageObject for quick access to the properties outside of a
             model delegate.
+            \note The name \c package is a reserved JavaScript keyword in \e strict mode, so
+            you have to use the \c packageObject role instead if you need to define a
+            \c {required property PackageObject package} in your delegate when using \e strict mode.
+    \row
+        \li \c packageObject
+        \li PackageObject
+        \li Exactly the same as \c package, but also works in JavaScript \e strict mode.
+            This role was introduced in Qt version 6.6.
     \endtable
 
     \target Task States
@@ -259,6 +267,7 @@ enum PMRoles
 
     Version,
     PackageItem,
+    PackageObject, // needed, because "package" is a reserved JS keyword in "strict" mode
 };
 
 PackageManager *PackageManager::s_instance = nullptr;
@@ -460,7 +469,8 @@ void PackageManager::registerQmlTypes()
     s_roleNames.insert(PMRoles::IsRemovable, "isRemovable");
     s_roleNames.insert(PMRoles::UpdateProgress, "updateProgress");
     s_roleNames.insert(PMRoles::Version, "version");
-    s_roleNames.insert(PMRoles::PackageItem, "package");
+    s_roleNames.insert(PMRoles::PackageItem, "package"); // "package" is a reserved JS keyword in "strict" mode
+    s_roleNames.insert(PMRoles::PackageObject, "packageObject");
 }
 
 PackageManager::PackageManager(PackageDatabase *packageDatabase,
@@ -557,6 +567,7 @@ QVariant PackageManager::dataForRole(Package *package, int role) const
     case PMRoles::Version:
         return package->version();
     case PMRoles::PackageItem:
+    case PMRoles::PackageObject:
         return QVariant::fromValue(package);
     default:
         return QVariant();

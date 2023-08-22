@@ -80,9 +80,15 @@ QT_BEGIN_NAMESPACE_AM
         \li The categories this intent is registered for via its meta-data file.
     \row
         \li \c intent
-        \li Intent
-        \li The underlying Intent object for quick access to the properties outside of a
+        \li IntentObject
+        \li The underlying \l IntentObject for quick access to the properties outside of a
             model delegate.
+    \row
+        \li \c intentObject
+        \li IntentObject
+        \li Exactly the same as \c intent. This was added to keep the role names between the
+            PackageManager and IntentServer models as similar as possible.
+            This role was introduced in Qt version 6.6.
     \endtable
 */
 
@@ -105,7 +111,8 @@ enum Roles
     Name,
     Icon,
     Categories,
-    IntentItem
+    IntentItem,
+    IntentObject, // needed to keep the roles similar to PackageManager
 };
 
 IntentServer *IntentServer::s_instance = nullptr;
@@ -170,6 +177,7 @@ IntentServer::IntentServer(IntentServerSystemInterface *systemInterface, QObject
         s_roleNames.insert(Icon, "icon");
         s_roleNames.insert(Categories, "categories");
         s_roleNames.insert(IntentItem, "intent");
+        s_roleNames.insert(IntentObject, "intentObject");
     }
 }
 
@@ -333,6 +341,7 @@ QVariant IntentServer::data(const QModelIndex &index, int role) const
     case Categories:
         return intent->categories();
     case IntentItem:
+    case IntentObject:
         return QVariant::fromValue(intent);
     }
     return QVariant();

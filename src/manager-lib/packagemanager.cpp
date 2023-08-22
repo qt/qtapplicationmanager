@@ -992,6 +992,9 @@ QStringList PackageManager::packageIds() const
     See the \l {PackageManager Roles}{role names} for the expected object fields.
 
     Returns an empty object if the specified \a packageId is invalid.
+
+    \note This is very inefficient if you only want to access a single property from QML; use
+          package() instead to access the PackageObject's properties directly.
 */
 QVariantMap PackageManager::get(const QString &packageId) const
 {

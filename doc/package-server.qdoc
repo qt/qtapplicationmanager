@@ -147,7 +147,8 @@ $ appman-package-server --dd /tmp/ps-data
       others for free.
       The support for this feature in the package-server isn't about security, but to make it easy
       for developers who need to test this mechanism.
-      See the \l{hardware-id} documentation in the Installation chapter for more information.
+      See the \l{The Hardware ID}{hardware id} documentation in the Installation chapter for more
+      information.
 \endtable
 
 \section1 Usage

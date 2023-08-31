@@ -22,21 +22,21 @@ containers:
     bindMountHome: yes
     configuration:
       symlink:
-        usr/lib: '/lib'
-        usr/lib64: '/lib64'
         usr/bin: [ '/bin', '/sbin' ]
       ro-bind:
+        /lib: '/lib'
+        /lib64: '/lib64'
         /usr/bin: '/usr/bin'
         /usr/lib: '/usr/lib'
         /usr/lib64: '/usr/lib64'
         /etc: '/etc'
         /usr/share/fonts: '/usr/share/fonts'
         /usr/share/fontconfig: '/usr/share/fontconfig'
-        /usr/share/ca-certificates: '/usr/share/ca-certificates'
         /sys/dev/char: '/sys/dev/char'
       ro-bind-try:
         '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'
         /usr/share/glvnd/egl_vendor.d: '/usr/share/glvnd/egl_vendor.d'
+        /usr/share/ca-certificates: '/usr/share/ca-certificates'
         /usr/share/X11/xkb: '/usr/share/X11/xkb'
         /run/resolvconf: '/run/resolvconf'
       dev: '/dev'

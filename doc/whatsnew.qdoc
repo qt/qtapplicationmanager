@@ -1,0 +1,66 @@
+// Copyright (C) 2023 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+
+\page whatsnew.html
+\ingroup qtappman
+\ingroup qtappman-highlights
+\title What's New
+\brief Important changes in Qt Application Manager
+
+\section1 Qt ApplicationManager 6.6
+
+Two new features have been added:
+\list
+    \li NotificationModel will now complement the existing ApplicationModel and IntentModel classes.
+    \li The application manager now comes with a \c bubblewrap container integration: this uses the
+        \l{bubblewrap} utility to create a new kernel namespace and runs the requested binary in
+        this sandbox isolated from the rest of the system. This is the base technology used in the
+        \l{Flatpak}{Linux Flatpak ecosystem}. See the \l {Bubblewrap Container Example} for an
+        example setup with test applications.
+\endlist
+
+In addition, there have been some changes in functionality:
+\list
+    \li The IntentServerHandler::visibility property now defaults to \b Public instead of
+        \b Private, the same way as it works for client-side intent definitions in an app's manifest
+        file.
+
+    \li QML applications will now quit immediately when requested to via
+        ApplicationManager::stopApplication(), if no handler is connected to the
+        ApplicationInterface::quit() signal. These applications would have been force-terminated
+        only after a 250msec timeout before.
+
+    \li The quick launch mechanism can now detect broken runtime/container combinations and will
+        disable them instead of re-trying to start them in an infinite loop. This can be fine tuned
+        via the new \c failedStartLimit and \c failedStartLimitIntervalSec configuration parameters.
+
+    \li In order to support JavaScript's \e strict mode, the \c package role of the PackageManager
+        singleton had to be renamed to \c packageObject, as \c package is a reserved JS keyword in
+        strict mode. The old \c package role is still available in non-strict mode. All the other
+        singleton models got a similar \c *Object alias role to keep the APIs consistent.
+\endlist
+
+
+\section1 Qt ApplicationManager 6.3
+
+The APIs and manifest definitions concerning the Package,
+Application and Intent fields for \c icon, \c name and \c description have
+been cleaned up.
+All three support the same API now, with the package's fields acting as a fallback for both the
+application and intent objects.
+Due to a clash between the property \c name and the function \c name in ApplicationObject,
+user code that called the \c{Application.name(language)} function before, now needs to replace
+this with \c{Application.names[language]}.
+
+
+\section1 Qt Application Manager 6.2
+
+No new APIs were added, but the build system switched from qmake to CMake and
+the deprecated legacy \c ApplicationInterfaceExtension IPC mechanism was
+finally removed.
+A direct replacement for the old IPC had been added in 5.14 already in form of the new \l{Intents}
+mechanism.
+
+*/

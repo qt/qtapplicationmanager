@@ -23,7 +23,7 @@
 
 #if defined(Q_OS_UNIX)
 #  include<unistd.h>
-#  if defined(Q_OS_MACOS)
+#  if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
 #    define AM_PTHREAD_T_FMT "%p"
 #  elif defined(Q_OS_QNX)
 #    define AM_PTHREAD_T_FMT "%x"

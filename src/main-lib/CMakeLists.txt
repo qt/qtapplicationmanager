@@ -21,6 +21,7 @@ qt_internal_add_module(AppManMainPrivate
         Qt::Quick
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
+        Qt::AppManIntentClientPrivate
         Qt::AppManIntentServerPrivate
         Qt::AppManManagerPrivate
         Qt::AppManMonitorPrivate
@@ -35,15 +36,43 @@ qt_internal_add_module(AppManMainPrivate
         AM_COMPILING_APPMAN
 )
 
+if (TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces)
+    qtam_internal_add_dbus_adaptor(AppManMainPrivate
+        DBUS_ADAPTOR_SOURCES
+            ${CMAKE_SOURCE_DIR}/dbus-interfaces/io.qt.applicationmanager.xml
+            ${CMAKE_SOURCE_DIR}/dbus-interfaces/io.qt.windowmanager.xml
+            ${CMAKE_SOURCE_DIR}/dbus-interfaces/org.freedesktop.notifications.xml
+        DBUS_ADAPTOR_FLAGS
+            -i dbus-utilities.h
+    )
+
+    qt_internal_extend_target(AppManMainPrivate
+        SOURCES
+            applicationmanageradaptor_dbus.cpp
+            notificationmanageradaptor_dbus.cpp
+            windowmanageradaptor_dbus.cpp
+        PUBLIC_LIBRARIES
+            Qt::DBus
+            Qt::AppManDBusPrivate
+    )
+
+    if (QT_FEATURE_am_installer)
+        qtam_internal_add_dbus_adaptor(AppManMainPrivate
+            DBUS_ADAPTOR_SOURCES
+                ${CMAKE_SOURCE_DIR}/dbus-interfaces/io.qt.packagemanager.xml
+            DBUS_ADAPTOR_FLAGS
+                -i dbus-utilities.h
+        )
+        qt_internal_extend_target(AppManMainPrivate
+            SOURCES
+                packagemanageradaptor_dbus.cpp
+        )
+    endif()
+endif()
+
 qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_am_widgets_support AND TARGET Qt::Widgets
     PUBLIC_LIBRARIES
         Qt::Widgets
-)
-
-qt_internal_extend_target(AppManMainPrivate CONDITION TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces
-    PUBLIC_LIBRARIES
-        Qt::DBus
-        Qt::AppManDBusPrivate
 )
 
 qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_am_installer

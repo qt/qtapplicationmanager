@@ -22,7 +22,7 @@ if(NOT QT_FEATURE_am_tools_only)
     add_subdirectory(manager-lib)
     add_subdirectory(window-lib)
 
-    if(TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces)
+    if(TARGET Qt::DBus)
         add_subdirectory(dbus-lib)
     endif()
 

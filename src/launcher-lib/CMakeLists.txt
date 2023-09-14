@@ -14,7 +14,7 @@ qt_internal_add_module(AppManLauncherPrivate
         intentclientdbusimplementation.cpp intentclientdbusimplementation.h
         launchermain.cpp launchermain.h
     DBUS_INTERFACE_SOURCES
-        ../dbus-lib/io.qt.applicationmanager.intentinterface.xml
+        ${CMAKE_SOURCE_DIR}/dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
     LIBRARIES
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate

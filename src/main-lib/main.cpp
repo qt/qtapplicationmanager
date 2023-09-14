@@ -12,9 +12,11 @@
 #  include <QDBusAbstractAdaptor>
 #  include "dbusdaemon.h"
 #  include "dbuspolicy.h"
-#  include "applicationmanagerdbuscontextadaptor.h"
-#  include "packagemanagerdbuscontextadaptor.h"
-#  include "notificationmanagerdbuscontextadaptor.h"
+#  include "dbuscontextadaptor.h"
+#  include "applicationmanager_adaptor.h"
+#  include "packagemanager_adaptor.h"
+#  include "windowmanager_adaptor.h"
+#  include "notifications_adaptor.h"
 #endif
 
 #include <QFile>
@@ -73,9 +75,6 @@
 
 #include "windowmanager.h"
 #include "qmlinprocessapplicationmanagerwindow.h"
-#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
-#  include "windowmanagerdbuscontextadaptor.h"
-#endif
 #include "windowframetimer.h"
 #include "gpustatus.h"
 
@@ -153,6 +152,10 @@ Main::~Main()
     delete RuntimeFactory::instance();
     delete ContainerFactory::instance();
     delete StartupTimer::instance();
+
+#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+    delete DBusPolicy::instance();
+#endif
 }
 
 /*! \internal
@@ -922,15 +925,18 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
 #if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
     registerDBusTypes();
 
-    // <0> AbstractDBusContextAdaptor instance
+    DBusPolicy::createInstance([](qint64 pid) { return ApplicationManager::instance()->identifyAllApplications(pid); },
+                               [](const QString &appId) { return ApplicationManager::instance()->capabilities(appId); });
+
+    // <0> DBusContextAdaptor instance
     // <1> D-Bus name (extracted from callback function busForInterface)
     // <2> D-Bus service
     // <3> D-Bus path
     // <4> Interface name (extracted from Q_CLASSINFO below)
 
-    std::vector<std::tuple<AbstractDBusContextAdaptor *, QString, const char *, const char *, const char *>> ifaces;
+    std::vector<std::tuple<DBusContextAdaptor *, QString, const char *, const char *, const char *>> ifaces;
 
-    auto addInterface = [&ifaces, &busForInterface](AbstractDBusContextAdaptor *adaptor, const char *service, const char *path) {
+    auto addInterface = [&ifaces, &busForInterface](DBusContextAdaptor *adaptor, const char *service, const char *path) {
         int idx = adaptor->parent()->metaObject()->indexOfClassInfo("D-Bus Interface");
         if (idx < 0) {
             throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
@@ -942,15 +948,15 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
 
 #  if !defined(AM_DISABLE_INSTALLER)
     if (m_packageManager) {
-        addInterface(new PackageManagerDBusContextAdaptor(m_packageManager),
+        addInterface(DBusContextAdaptor::create<PackageManagerAdaptor>(m_packageManager),
                      "io.qt.ApplicationManager", "/PackageManager");
     }
 #  endif
-    addInterface(new WindowManagerDBusContextAdaptor(m_windowManager),
+    addInterface(DBusContextAdaptor::create<WindowManagerAdaptor>(m_windowManager),
                  "io.qt.ApplicationManager", "/WindowManager");
-    addInterface(new NotificationManagerDBusContextAdaptor(m_notificationManager),
+    addInterface(DBusContextAdaptor::create<NotificationsAdaptor>(m_notificationManager),
                  "org.freedesktop.Notifications", "/org/freedesktop/Notifications");
-    addInterface(new ApplicationManagerDBusContextAdaptor(m_applicationManager),
+    addInterface(DBusContextAdaptor::create<ApplicationManagerAdaptor>(m_applicationManager),
                  "io.qt.ApplicationManager", "/ApplicationManager");
 
     bool autoOnly = true;
@@ -984,17 +990,17 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
         qCDebug(LogSystem) << "Registering D-Bus services:";
 
         for (auto &&iface : ifaces) {
-            AbstractDBusContextAdaptor *dbusAdaptor = std::get<0>(iface);
+            auto *generatedAdaptor = std::get<0>(iface)->generatedAdaptor<QDBusAbstractAdaptor>();
             QString &dbusName = std::get<1>(iface);
             const char *interfaceName = std::get<4>(iface);
 
             if (dbusName.isEmpty())
                 continue;
 
-            registerDBusObject(dbusAdaptor->generatedAdaptor(), dbusName,
+            registerDBusObject(generatedAdaptor, dbusName,
                                std::get<2>(iface),interfaceName, std::get<3>(iface),
                                instanceId);
-            if (!DBusPolicy::add(dbusAdaptor->generatedAdaptor(), policyForInterface(interfaceName)))
+            if (!DBusPolicy::instance()->add(generatedAdaptor, policyForInterface(interfaceName)))
                 throw Exception(Error::DBus, "could not set DBus policy for %1").arg(qL1S(interfaceName));
         }
     }

@@ -15,23 +15,37 @@
 
 #include "utilities.h"
 #include "dbuspolicy.h"
-#include "applicationmanager.h"
+#include "dbuscontextadaptor.h"
+
 
 QT_BEGIN_NAMESPACE_AM
 
-struct DBusPolicyEntry
-{
-    QList<uint> m_uids;
-    QStringList m_executables;
-    QStringList m_capabilities;
-};
+DBusPolicy *DBusPolicy::s_instance = nullptr;
 
-static QHash<const QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry>> &policies()
+DBusPolicy::~DBusPolicy()
 {
-    static QHash<const QDBusAbstractAdaptor *, QMap<QByteArray, DBusPolicyEntry>> hash;
-    return hash;
+    Q_ASSERT(s_instance == this);
+    s_instance = nullptr;
 }
 
+DBusPolicy *DBusPolicy::instance()
+{
+    return s_instance;
+}
+
+// This uses function pointers to avoid strict coupling between AM modules:
+// * applicationIdsForPid normally maps to ApplicationManager::identifyAllApplications
+// * capabilitiesForApplicationId normally maps to ApplicationManager::capabilities
+
+DBusPolicy *DBusPolicy::createInstance(const std::function<QStringList (qint64)> &applicationIdsForPid,
+                                       const std::function<QStringList (const QString &)> &capabilitiesForApplicationId)
+{
+    Q_ASSERT(!s_instance);
+    s_instance = new DBusPolicy();
+    s_instance->m_applicationIdsForPid = applicationIdsForPid;
+    s_instance->m_capabilitiesForApplicationId = capabilitiesForApplicationId;
+    return s_instance;
+}
 
 bool DBusPolicy::add(const QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlFragment)
 {
@@ -70,7 +84,7 @@ bool DBusPolicy::add(const QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap 
         result.insert(func, dbp);
     }
 
-    policies().insert(dbusAdaptor, result);
+    m_policies.insert(dbusAdaptor, result);
     return true;
 }
 
@@ -84,17 +98,14 @@ bool DBusPolicy::check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray
 #else
     if (!dbusAdaptor)
         return false;
-    QObject *realObject = dbusAdaptor->parent();
-    if (!realObject)
-        return false;
-    QDBusContext *dbusContext = reinterpret_cast<QDBusContext *>(realObject->qt_metacast("QDBusContext"));
+    QDBusContext *dbusContext = qobject_cast<DBusContextAdaptor *>(dbusAdaptor->parent());
     if (!dbusContext)
         return false;
     if (!dbusContext->calledFromDBus())
         return false;
 
-    auto ia = policies().constFind(dbusAdaptor);
-    if (ia == policies().cend())
+    auto ia = m_policies.constFind(dbusAdaptor);
+    if (ia == m_policies.cend())
         return false;
 
     auto ip = (*ia).find(function);
@@ -105,12 +116,16 @@ bool DBusPolicy::check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray
         uint pid = uint(-1);
 
         if (!ip->m_capabilities.isEmpty()) {
+            if (!m_capabilitiesForApplicationId || !m_applicationIdsForPid)
+                return false;
+
             pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
-            const auto apps = ApplicationManager::instance()->identifyAllApplications(pid);
+
+            const QStringList apps = m_applicationIdsForPid(pid);
             if (apps.size() > 1)
                 throw "multiple apps per pid are not supported";
             const QString appId = !apps.isEmpty() ? apps.constFirst() : QString();
-            QStringList appCaps = ApplicationManager::instance()->capabilities(appId);
+            const QStringList appCaps = m_capabilitiesForApplicationId(appId);
             bool match = false;
             for (const QString &cap : ip->m_capabilities)
                 match = match && std::binary_search(appCaps.cbegin(), appCaps.cend(), cap);

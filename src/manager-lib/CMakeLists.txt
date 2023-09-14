@@ -66,7 +66,7 @@ qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_am_multi_pro
 if (QT_FEATURE_am_multi_process)
     qtam_internal_add_dbus_adaptor(AppManManagerPrivate
         DBUS_ADAPTOR_SOURCES
-            ../dbus-lib/io.qt.applicationmanager.intentinterface.xml
+            ${CMAKE_SOURCE_DIR}/dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
     )
 endif()
 

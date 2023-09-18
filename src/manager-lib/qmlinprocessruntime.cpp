@@ -45,7 +45,7 @@ QmlInProcessRuntime::~QmlInProcessRuntime()
 {
     // if there is still a window present at this point, fire the 'closing' signal (probably) again,
     // because it's still the duty of WindowManager together with qml-ui to free and delete this item!!
-    for (int i = m_surfaces.size(); i; --i)
+    for (auto i = m_surfaces.size(); i; --i)
         m_surfaces.at(i-1)->setVisibleClientSide(false);
 }
 
@@ -150,7 +150,7 @@ void QmlInProcessRuntime::stop(bool forceKill)
     setState(Am::ShuttingDown);
     emit aboutToStop();
 
-    for (int i = m_surfaces.size(); i; --i)
+    for (auto i = m_surfaces.size(); i; --i)
         m_surfaces.at(i-1)->setVisibleClientSide(false);
 
     if (m_surfaces.isEmpty()) {

@@ -20,8 +20,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-IntentClientDBusImplementation::IntentClientDBusImplementation(const QString &dbusName)
-    : IntentClientSystemInterface()
+IntentClientDBusImplementation::IntentClientDBusImplementation(const QString &dbusName, QObject *parent)
+    : IntentClientSystemInterface(parent)
     , m_dbusName(dbusName)
 { }
 

@@ -103,11 +103,6 @@ AbstractRuntimeManager *AbstractRuntime::manager() const
     return m_manager;
 }
 
-bool AbstractRuntime::needsLauncher() const
-{
-    return false;
-}
-
 bool AbstractRuntime::isQuickLauncher() const
 {
     return false;

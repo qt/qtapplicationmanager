@@ -22,6 +22,7 @@ class IntentClientSystemInterface : public QObject
     Q_OBJECT
 
 public:
+    IntentClientSystemInterface(QObject *parent = nullptr);
     virtual ~IntentClientSystemInterface() = default;
 
     virtual void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false);

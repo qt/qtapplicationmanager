@@ -13,11 +13,11 @@
 #if defined(AM_WIDGETS_SUPPORT)
 #  include <QtWidgets/QApplication>
 #  include <QtGui/QSurfaceFormat>
-typedef QApplication MainBase;
+using MainBase = QApplication;
 #else
 #  include <QtGui/QGuiApplication>
 #  include <QtGui/QSurfaceFormat>
-typedef QGuiApplication MainBase;
+using MainBase = QGuiApplication;
 #endif
 
 #include <QtAppManSharedMain/sharedmain.h>

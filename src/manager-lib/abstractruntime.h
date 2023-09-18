@@ -89,7 +89,6 @@ public:
     Application *application() const;
     AbstractRuntimeManager *manager() const;
 
-    virtual bool needsLauncher() const;
     virtual bool isQuickLauncher() const;
     virtual bool attachApplicationToQuickLauncher(Application *app);
 

@@ -9,6 +9,10 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+IntentClientSystemInterface::IntentClientSystemInterface(QObject *parent)
+    : QObject(parent)
+{ }
+
 void IntentClientSystemInterface::initialize(IntentClient *intentClient)
 {
     m_ic = intentClient;
@@ -19,6 +23,7 @@ void IntentClientSystemInterface::initialize(IntentClient *intentClient)
     connect(this, &IntentClientSystemInterface::requestToApplication,
             m_ic, &IntentClient::requestToApplication);
 }
+
 
 QT_END_NAMESPACE_AM
 

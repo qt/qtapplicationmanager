@@ -15,7 +15,7 @@ QT_BEGIN_NAMESPACE_AM
 class IntentClientDBusImplementation : public IntentClientSystemInterface
 {
 public:
-    IntentClientDBusImplementation(const QString &dbusName);
+    IntentClientDBusImplementation(const QString &dbusName, QObject *parent = nullptr);
 
     void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false) override;
 

@@ -1,5 +1,9 @@
 
 qt_find_package(WrapLibYaml PROVIDED_TARGETS WrapLibYaml::WrapLibYaml)
+if(TARGET WrapBacktrace::WrapBacktrace)
+    qt_internal_disable_find_package_global_promotion(WrapBacktrace::WrapBacktrace)
+endif()
+qt_find_package(WrapBacktrace PROVIDED_TARGETS WrapBacktrace::WrapBacktrace)
 
 # temporary hack to get around the "#pragma once not allowed in cpp" error
 set(QT_FEATURE_headersclean FALSE)
@@ -55,6 +59,11 @@ qt_internal_extend_target(AppManCommonPrivate CONDITION LINUX
 qt_internal_extend_target(AppManCommonPrivate CONDITION QNX
     PUBLIC_LIBRARIES
         backtrace
+)
+
+qt_internal_extend_target(AppManCommonPrivate CONDITION TARGET WrapBacktrace::WrapBacktrace
+    PUBLIC_LIBRARIES
+        WrapBacktrace::WrapBacktrace
 )
 
 qt_internal_extend_target(AppManCommonPrivate CONDITION QT_FEATURE_am_libbacktrace

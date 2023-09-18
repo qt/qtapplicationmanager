@@ -17,7 +17,7 @@ qt_internal_add_module(AppManMonitorPrivate
         Qt::Gui
 )
 
-qt_internal_extend_target(AppManMonitorPrivate CONDITION LINUX
+qt_internal_extend_target(AppManMonitorPrivate CONDITION (LINUX OR ANDROID)
     SOURCES
         sysfsreader.cpp sysfsreader.h
 )

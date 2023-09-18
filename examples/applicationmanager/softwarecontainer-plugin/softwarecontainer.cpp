@@ -408,7 +408,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
 
     // create an unique fifo name in /tmp
     m_fifoPath = QDir::tempPath().toLocal8Bit() + "/sc-" + QUuid::createUuid().toByteArray().mid(1,36) + ".fifo";
-    if (mkfifo(m_fifoPath, 0600) != 0) {
+    if (::mkfifo(m_fifoPath, 0600) != 0) {
         qWarning() << "Failed to create FIFO at" << m_fifoPath << "to redirect stdout/stderr out of the container:" << strerror(errno);
         m_fifoPath.clear();
         return false;
@@ -416,7 +416,7 @@ bool SoftwareContainer::start(const QStringList &arguments, const QMap<QString, 
 
     // open fifo for reading
     // due to QTBUG-15261 (bytesAvailable() on a fifo always returns 0) we use a raw fd
-    m_fifoFd = QT_OPEN(m_fifoPath, O_RDONLY | O_NONBLOCK);
+    m_fifoFd = ::open(m_fifoPath, O_RDONLY | O_NONBLOCK);
     if (m_fifoFd < 0) {
         qWarning() << "Failed to open FIFO at" << m_fifoPath << "for reading:" << strerror(errno);
         return false;

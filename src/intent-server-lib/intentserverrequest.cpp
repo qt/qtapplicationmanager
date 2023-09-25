@@ -52,9 +52,9 @@ Intent *IntentServerRequest::selectedIntent() const
     return m_selectedIntent.get();
 }
 
-QVector<Intent *> IntentServerRequest::potentialIntents() const
+QList<Intent *> IntentServerRequest::potentialIntents() const
 {
-    QVector<Intent *> out;
+    QList<Intent *> out;
     for (auto &intent : m_potentialIntents) {
         if (intent)
             out << intent.get();

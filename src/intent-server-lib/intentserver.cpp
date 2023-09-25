@@ -531,7 +531,10 @@ void IntentServer::processRequestQueue()
                         }
                     });
                 }
-                emit disambiguationRequest(isr->requestId(), convertToQml(isr->potentialIntents()),
+                //TODO: we really should copy here, because the Intent pointers may die: a disambiguation might
+                //      be active, while one of the apps involved is removed or updated
+
+                emit disambiguationRequest(isr->requestId(), isr->potentialIntents(),
                                            isr->parameters());
             }
         }
@@ -615,17 +618,6 @@ void IntentServer::processRequestQueue()
     }
 
     triggerRequestQueue();
-}
-
-QList<QObject *> IntentServer::convertToQml(const QVector<Intent *> &intents)
-{
-    //TODO: we really should copy here, because the Intent pointers may die: a disambiguation might
-    //      be active, while one of the apps involved is removed or updated
-
-    QList<QObject *> ol;
-    for (auto intent : intents)
-        ol << intent;
-    return ol;
 }
 
 QString IntentServer::packageIdForApplicationId(const QString &applicationId) const

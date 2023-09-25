@@ -178,7 +178,7 @@ Module {
         Signal {
             name: "disambiguationRequest"
             Parameter { name: "requestId"; type: "QUuid" }
-            Parameter { name: "potentialIntents"; type: "QList<QObject*>" }
+            Parameter { name: "potentialIntents"; type: "QList<QtAM::Intent*>" }
             Parameter { name: "parameters"; type: "QVariantMap" }
         }
         Method {
@@ -390,7 +390,7 @@ Module {
         }
         Method {
             name: "windowsOfApplication"
-            type: "QList<QObject*>"
+            type: "QList<QtAM::Window*>"
             Parameter { name: "id"; type: "QString" }
         }
         Method {

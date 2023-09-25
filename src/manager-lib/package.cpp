@@ -205,16 +205,9 @@ QStringList Package::categories() const
     return info()->categories();
 }
 
-QList<QObject *> Package::applications() const
+QVector<Application *> Package::applications() const
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    QList<QObject *> result;
-    for (auto app : m_applications)
-        result << app;
-    return result;
-#else
-    return QList<QObject *>(m_applications.cbegin(), m_applications.cend());
-#endif
+    return m_applications;
 }
 
 QUrl Package::icon() const

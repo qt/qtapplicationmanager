@@ -85,7 +85,7 @@ public:
     int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
     Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Window) *window(int index) const;
-    Q_INVOKABLE QList<QObject *> windowsOfApplication(const QString &id) const;
+    Q_INVOKABLE QList<QT_PREPEND_NAMESPACE_AM(Window) *> windowsOfApplication(const QString &id) const;
     Q_INVOKABLE int indexOfWindow(QT_PREPEND_NAMESPACE_AM(Window) *window) const;
     Q_INVOKABLE QObject *addExtension(QQmlComponent *component) const;
 

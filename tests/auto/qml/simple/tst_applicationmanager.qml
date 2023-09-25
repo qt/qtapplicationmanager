@@ -18,10 +18,13 @@ TestCase {
     // Either appman is build in single-process mode or it was started with --force-single-process
     property bool singleProcess : Qt.application.arguments.indexOf("--force-single-process") !== -1
                                   || !AmTest.buildConfig[0].QT_FEATURES.QT_FEATURE_am_multi_process
+    property WindowObject lastWindowAdded: null
     property QtObject windowHandler: QtObject {
         function windowAddedHandler(window) {
             // console.info("window " + window + " added");
+            lastWindowAdded = window
         }
+
 
         function windowContentStateChangedHandler(window) {
             // console.info("window content state = " + window.contentState);
@@ -299,6 +302,11 @@ TestCase {
         compare(listView.currentItem.modelData.isStartingUp, false)
         compare(listView.currentItem.modelData.isRunning, true)
         compare(listView.currentItem.modelData.isShuttingDown, false)
+
+        // make sure we have a window
+        tryCompare(WindowManager, "count", 1)
+        compare(WindowManager.windowsOfApplication(data.appId).length, 1)
+        compare(WindowManager.windowsOfApplication(data.appId)[0], lastWindowAdded)
 
         ApplicationManager.stopApplication(data.appId, data.forceKill);
 

@@ -516,9 +516,9 @@ Window *WindowManager::window(int index) const
           signals or the windowAboutToBeRemoved signal to get notified if the objects are about
           to be deleted on the C++ side.
 */
-QList<QObject *> WindowManager::windowsOfApplication(const QString &id) const
+QList<Window *> WindowManager::windowsOfApplication(const QString &id) const
 {
-    QList<QObject *> result;
+    QList<Window *> result;
     for (Window *window : d->windowsInModel) {
         if (window->application() && window->application()->id() == id)
             result << window;

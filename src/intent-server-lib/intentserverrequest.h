@@ -44,7 +44,7 @@ public:
     QString intentId() const;
     QString requestingApplicationId() const;
     Intent *selectedIntent() const;
-    QVector<Intent *> potentialIntents() const;
+    QList<Intent *> potentialIntents() const;
     QVariantMap parameters() const;
     bool succeeded() const;
     QVariantMap result() const;

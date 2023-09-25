@@ -88,9 +88,8 @@ signals:
 
     void countChanged();
 
-    // QML can only accept QList<QObject *> as signal parameter. Using QList<Intent *> or
-    // QVector<QObject> will lead to an undefined QVariant on the QML side.
-    void disambiguationRequest(const QUuid &requestId, const QList<QObject *> &potentialIntents,
+    void disambiguationRequest(const QUuid &requestId,
+                               const QList<QT_PREPEND_NAMESPACE_AM(Intent) *> &potentialIntents,
                                const QVariantMap &parameters);
     /// ^^^ QML API ^^^
 
@@ -106,7 +105,6 @@ private:
     void enqueueRequest(IntentServerRequest *isr);
     void processRequestQueue();
 
-    static QList<QObject *> convertToQml(const QVector<Intent *> &intents);
     QString packageIdForApplicationId(const QString &applicationId) const;
 
 private:

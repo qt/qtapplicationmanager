@@ -7,6 +7,7 @@
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManApplication/packageinfo.h>
+#include <QtAppManManager/application.h>
 #include <QtCore/QUrl>
 #include <QtCore/QString>
 #include <QtCore/QAtomicInt>
@@ -32,7 +33,7 @@ class Package : public QObject
     Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange FINAL)
     Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
     Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged FINAL)
-    Q_PROPERTY(QList<QObject *> applications READ applications NOTIFY applicationsChanged FINAL)
+    Q_PROPERTY(QList<QtAM::Application *> applications READ applications NOTIFY applicationsChanged FINAL)
 
 public:
     enum State {
@@ -56,7 +57,7 @@ public:
     QString description() const;
     QVariantMap descriptions() const;
     QStringList categories() const;
-    QList<QObject *> applications() const;
+    QList<Application *> applications() const;
 
     State state() const { return m_state; }
     qreal progress() const { return m_progress; }
@@ -114,7 +115,7 @@ private:
     QAtomicInt m_blocked;
     QAtomicInt m_blockedAppsCount;
     QVector<ApplicationInfo *> m_blockedApps;
-    QVector<Application *> m_applications;
+    QList<Application *> m_applications;
 };
 
 QT_END_NAMESPACE_AM

@@ -135,6 +135,20 @@ ApplicationInstaller::ApplicationInstaller(PackageManager *pm, QObject *parent)
             { qSL("manifestDir"), baseDir },                     // 5.12 compatibility
             { qSL("installationLocationId"), qSL("internal-0") } // 5.13 compatibility
         };
+        if (package->applications().size() == 1) {
+            // legacy support for single-application packages
+            auto app = static_cast<Application *>(package->applications().first());
+
+            applicationData[qSL("codeFilePath")] = app->info()->codeFilePath();
+            applicationData[qSL("runtimeName")] = app->runtimeName();
+            applicationData[qSL("runtimeParameters")] = app->runtimeParameters();
+            applicationData[qSL("capabilities")] = app->capabilities();
+            applicationData[qSL("mimeTypes")] = app->supportedMimeTypes();
+            applicationData[qSL("categories")] = app->categories();
+            applicationData[qSL("supportsApplicationInterface")] = app->supportsApplicationInterface()
+                    ? QStringLiteral("true") : QString();
+            applicationData[qSL("dlt")] = app->info()->dltConfiguration();
+        }
 
         emit taskRequestingInstallationAcknowledge(taskId, applicationData, packageExtraMetaData,
                                                    packageExtraSignedMetaData);

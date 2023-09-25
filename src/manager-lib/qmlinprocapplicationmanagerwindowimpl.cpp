@@ -3,6 +3,9 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <QQuickWindow>
+#include <QtQuick/private/qquickitem_p.h>
+
 #include "logging.h"
 #include "applicationmanagerwindow.h"
 #include "qmlinprocapplicationmanagerwindowimpl.h"
@@ -10,7 +13,6 @@
 #include "qmlinprocruntime.h"
 #include <private/qqmlcomponentattached_p.h>
 
-#include <QtQuick/private/qquickitem_p.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -20,7 +22,7 @@ QmlInProcApplicationManagerWindowImpl::QmlInProcApplicationManagerWindowImpl(App
     : ApplicationManagerWindowImpl(window)
     , m_surfaceItem(new InProcessSurfaceItem)
 {
-    m_surfaceItem->setInProcessApplicationManagerWindow(window);
+    m_surfaceItem->setApplicationManagerWindow(window);
     m_surfaceItem->setColor(QColorConstants::White);
 
     QObject::connect(m_surfaceItem.data(), &QQuickItem::widthChanged,
@@ -34,6 +36,47 @@ QmlInProcApplicationManagerWindowImpl::QmlInProcApplicationManagerWindowImpl(App
 
     QObject::connect(m_surfaceItem.data(), &InProcessSurfaceItem::closeRequested,
                      window, &ApplicationManagerWindow::close);
+
+    if (m_surfaceItem->window())
+        connectActiveFocusItem();
+    QObject::connect(m_surfaceItem.data(), &InProcessSurfaceItem::windowChanged,
+                     window, [this]() { connectActiveFocusItem(); });
+}
+void QmlInProcApplicationManagerWindowImpl::connectActiveFocusItem()
+{
+    QObject::disconnect(m_activeFocusItemConnection);
+
+    if (m_surfaceItem->window()) {
+        // We can only track the AFI of our Window directly, but we keep a pointer to the AFI,
+        // if it is a child of our InProcessSurfaceItem
+
+        m_activeFocusItemConnection = QObject::connect(m_surfaceItem->window(), &QQuickWindow::activeFocusItemChanged,
+                                                       amWindow(), [this]() {
+            auto *afi = m_surfaceItem->window() ? m_surfaceItem->window()->activeFocusItem()
+                                                : nullptr;
+            if (afi) {
+                bool found = false;
+                QQuickItem *p = afi->parentItem();
+                while (p) {
+                    if (p == m_surfaceItem) {
+                        found = true;
+                        break;
+                    }
+                    p = p->parentItem();
+                }
+                if (!found)
+                    afi = nullptr;
+            }
+            if (afi != m_activeFocusItem) {
+                bool activeChanged = (bool(afi) != bool(m_activeFocusItem));
+                m_activeFocusItem = afi;
+
+                if (activeChanged)
+                    emit amWindow()->activeChanged();
+                emit amWindow()->activeFocusItemChanged();
+            }
+        });
+    }
 }
 
 QmlInProcApplicationManagerWindowImpl::~QmlInProcApplicationManagerWindowImpl()
@@ -168,22 +211,21 @@ void QmlInProcApplicationManagerWindowImpl::findParentWindow(QObject *object)
 
     auto surfaceItem = qobject_cast<InProcessSurfaceItem *>(object);
     if (surfaceItem) {
-        setParentWindow(static_cast<ApplicationManagerWindow *>(surfaceItem->inProcessApplicationManagerWindow()));
+        setParentWindow(surfaceItem->applicationManagerWindow());
     } else {
-        auto inProcessAppWindow = qobject_cast<ApplicationManagerWindow *>(object);
-        if (inProcessAppWindow)
-            setParentWindow(inProcessAppWindow);
+        if (auto window = qobject_cast<ApplicationManagerWindow *>(object))
+            setParentWindow(window);
         else
             findParentWindow(object->parent());
     }
 }
 
-void QmlInProcApplicationManagerWindowImpl::setParentWindow(ApplicationManagerWindow *inProcessAppWindow)
+void QmlInProcApplicationManagerWindowImpl::setParentWindow(ApplicationManagerWindow *newParentWindow)
 {
     if (m_parentWindow && m_parentVisibleConnection)
         QObject::disconnect(m_parentVisibleConnection);
 
-    m_parentWindow = inProcessAppWindow;
+    m_parentWindow = newParentWindow;
 
     if (m_parentWindow) {
         m_parentVisibleConnection = QObject::connect(
@@ -223,7 +265,7 @@ int QmlInProcApplicationManagerWindowImpl::width() const
 
 void QmlInProcApplicationManagerWindowImpl::setWidth(int w)
 {
-    m_surfaceItem->setWidth(w);
+    m_surfaceItem->setWidth(qBound(m_minimumWidth, w, m_maximumWidth));
 }
 
 int QmlInProcApplicationManagerWindowImpl::height() const
@@ -233,38 +275,58 @@ int QmlInProcApplicationManagerWindowImpl::height() const
 
 void QmlInProcApplicationManagerWindowImpl::setHeight(int h)
 {
-    m_surfaceItem->setHeight(h);
+    m_surfaceItem->setHeight(qBound(m_minimumHeight, h, m_maximumHeight));
 }
 
 void QmlInProcApplicationManagerWindowImpl::setMinimumWidth(int minw)
 {
+    if ((minw < 0) || (minw > WindowSizeMax))
+        return;
+
     if (m_minimumWidth != minw) {
         m_minimumWidth = minw;
         emit amWindow()->minimumWidthChanged();
+        if (width() < minw)
+            setWidth(minw);
     }
 }
 
 void QmlInProcApplicationManagerWindowImpl::setMinimumHeight(int minh)
 {
+    if ((minh < 0) || (minh > WindowSizeMax))
+        return;
+
     if (m_minimumHeight != minh) {
         m_minimumHeight = minh;
         emit amWindow()->minimumHeightChanged();
+        if (height() < minh)
+            setHeight(minh);
     }
 }
 
 void QmlInProcApplicationManagerWindowImpl::setMaximumWidth(int maxw)
 {
+    if ((maxw < 0) || (maxw > WindowSizeMax))
+        return;
+
     if (m_maximumWidth != maxw) {
         m_maximumWidth = maxw;
         emit amWindow()->maximumWidthChanged();
+        if (width() > maxw)
+            setWidth(maxw);
     }
 }
 
 void QmlInProcApplicationManagerWindowImpl::setMaximumHeight(int maxh)
 {
+    if ((maxh < 0) || (maxh > WindowSizeMax))
+        return;
+
     if (m_maximumHeight != maxh) {
         m_maximumHeight = maxh;
         emit amWindow()->maximumHeightChanged();
+        if (height() > maxh)
+            setHeight(maxh);
     }
 }
 
@@ -300,6 +362,67 @@ void QmlInProcApplicationManagerWindowImpl::setColor(const QColor &c)
     if (color() != c) {
         m_surfaceItem->setColor(c);
         emit amWindow()->colorChanged();
+    }
+}
+
+bool QmlInProcApplicationManagerWindowImpl::isActive() const
+{
+    return (m_activeFocusItem);
+}
+
+QQuickItem *QmlInProcApplicationManagerWindowImpl::activeFocusItem() const
+{
+    return m_activeFocusItem;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// ApplicationManagerWindowAttached
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+QmlInProcApplicationManagerWindowAttachedImpl::QmlInProcApplicationManagerWindowAttachedImpl(ApplicationManagerWindowAttached *windowAttached, QQuickItem *attacheeItem)
+    : ApplicationManagerWindowAttachedImpl(windowAttached, attacheeItem)
+{ }
+
+ApplicationManagerWindow *QmlInProcApplicationManagerWindowAttachedImpl::findApplicationManagerWindow()
+{
+    if (!attacheeItem())
+        return nullptr;
+
+    auto ipsurface = findInProcessSurfaceItem();
+    return ipsurface ? ipsurface->applicationManagerWindow() : nullptr;
+}
+
+InProcessSurfaceItem *QmlInProcApplicationManagerWindowAttachedImpl::findInProcessSurfaceItem()
+{
+    // Connect to all parent items' parentChanged() signals, up to root or an InProcessSurfaceItem.
+    // If one of them changes, disconnect all parentChanged connections, then find the new
+    // InProcessSurfaceItem and re-connect.
+
+    for (const auto &connection : std::as_const(m_parentChangeConnections))
+        QObject::disconnect(connection);
+
+    InProcessSurfaceItem *ipsurface = nullptr;
+    QQuickItem *p = attacheeItem();
+    while (p && !ipsurface) {
+        ipsurface = qobject_cast<InProcessSurfaceItem *>(p);
+        if (!ipsurface) {
+            m_parentChangeConnections << QObject::connect(p, &QQuickItem::parentChanged,
+                                                          amWindowAttached(), [this]() { onParentChanged(); });
+        }
+        p = p->parentItem();
+    }
+    return ipsurface;
+}
+
+void QmlInProcApplicationManagerWindowAttachedImpl::onParentChanged()
+{
+    InProcessSurfaceItem *ipsurface = findInProcessSurfaceItem();
+
+    if (!amWindowAttached()->window()
+            || (ipsurface != amWindowAttached()->window()->backingObject())) {
+        onWindowChanged(ipsurface ? ipsurface->applicationManagerWindow() : nullptr);
     }
 }
 

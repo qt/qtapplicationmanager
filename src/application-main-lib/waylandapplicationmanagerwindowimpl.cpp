@@ -24,18 +24,21 @@ class AMQuickWindowQmlImpl : public QQuickWindowQmlImpl
 {
     Q_OBJECT
 public:
-    AMQuickWindowQmlImpl(QWindow *parent)
-        : QQuickWindowQmlImpl(parent)
+    AMQuickWindowQmlImpl(ApplicationManagerWindow *amwindow)
+        : QQuickWindowQmlImpl(nullptr)
+        , m_amwindow(amwindow)
     { }
     using QQuickWindowQmlImpl::classBegin;
     using QQuickWindowQmlImpl::componentComplete;
+
+    ApplicationManagerWindow *m_amwindow;
 };
 
 WaylandApplicationManagerWindowImpl::WaylandApplicationManagerWindowImpl(ApplicationManagerWindow *window,
                                                                          ApplicationMain *applicationMain)
     : ApplicationManagerWindowImpl(window)
     , m_applicationMain(applicationMain)
-    , m_qwindow(new AMQuickWindowQmlImpl(nullptr))
+    , m_qwindow(new AMQuickWindowQmlImpl(window))
 {
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::windowTitleChanged,
                      window, &ApplicationManagerWindow::titleChanged);
@@ -63,6 +66,8 @@ WaylandApplicationManagerWindowImpl::WaylandApplicationManagerWindowImpl(Applica
                      window, &ApplicationManagerWindow::colorChanged);
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::activeChanged,
                      window, &ApplicationManagerWindow::activeChanged);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::activeFocusItemChanged,
+                     window, &ApplicationManagerWindow::activeFocusItemChanged);
 }
 
 WaylandApplicationManagerWindowImpl::~WaylandApplicationManagerWindowImpl()
@@ -294,6 +299,35 @@ void WaylandApplicationManagerWindowImpl::setColor(const QColor &c)
 bool WaylandApplicationManagerWindowImpl::isActive() const
 {
     return m_qwindow->isActive();
+}
+
+QQuickItem *WaylandApplicationManagerWindowImpl::activeFocusItem() const
+{
+    return m_qwindow->activeFocusItem();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// WaylandApplicationManagerWindowAttachedImpl
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+WaylandApplicationManagerWindowAttachedImpl::WaylandApplicationManagerWindowAttachedImpl(ApplicationManagerWindowAttached *windowAttached, QQuickItem *attacheeItem)
+    : ApplicationManagerWindowAttachedImpl(windowAttached, attacheeItem)
+{ }
+
+ApplicationManagerWindow *WaylandApplicationManagerWindowAttachedImpl::findApplicationManagerWindow()
+{
+    if (!attacheeItem())
+        return nullptr;
+
+    QObject::connect(attacheeItem(), &QQuickItem::windowChanged,
+                     amWindowAttached(), [this](QQuickWindow *newWin) {
+        auto *quickWindow = qobject_cast<AMQuickWindowQmlImpl *>(newWin);
+        onWindowChanged(quickWindow ? quickWindow->m_amwindow : nullptr);
+    });
+    auto *quickWindow = qobject_cast<AMQuickWindowQmlImpl *>(attacheeItem()->window());
+    return quickWindow ? quickWindow->m_amwindow : nullptr;
 }
 
 QT_END_NAMESPACE_AM

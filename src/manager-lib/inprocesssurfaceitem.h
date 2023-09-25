@@ -16,6 +16,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+class ApplicationManagerWindow;
+
 /*
  *  Item exposed to the System UI
  */
@@ -44,8 +46,8 @@ public:
 
     void close();
 
-    QObject *inProcessApplicationManagerWindow() { return m_inProcessAppManWindow.data(); }
-    void setInProcessApplicationManagerWindow(QObject* win) { m_inProcessAppManWindow = win; }
+    ApplicationManagerWindow *applicationManagerWindow();
+    void setApplicationManagerWindow(ApplicationManagerWindow *win);
 
 signals:
     void visibleClientSideChanged();
@@ -64,7 +66,7 @@ private:
     QObject m_windowProperties;
     bool m_visibleClientSide = true;
     QColor m_color;
-    QPointer<QObject> m_inProcessAppManWindow;
+    QPointer<ApplicationManagerWindow> m_amWindow;
 };
 
 QT_END_NAMESPACE_AM

@@ -229,6 +229,10 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QStrin
     ApplicationManagerWindowImpl::setFactory([](ApplicationManagerWindow *window) {
         return new QmlInProcApplicationManagerWindowImpl(window);
     });
+    ApplicationManagerWindowAttachedImpl::setFactory([](ApplicationManagerWindowAttached *windowAttached,
+                                                        QQuickItem *attacheeItem) {
+        return new QmlInProcApplicationManagerWindowAttachedImpl(windowAttached, attacheeItem);
+    });
     SystemFrameTimerImpl::setFactory([](FrameTimer *frameTimer) {
         return new SystemFrameTimerImpl(frameTimer);
     });

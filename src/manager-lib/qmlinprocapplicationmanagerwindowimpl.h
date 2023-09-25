@@ -58,7 +58,8 @@ public:
     void setOpacity(qreal opactity) override;
     QColor color() const override;
     void setColor(const QColor &c) override;
-    bool isActive() const override { return m_active; }
+    bool isActive() const override;
+    QQuickItem *activeFocusItem() const override;
 
     bool setWindowProperty(const QString &name, const QVariant &value) override;
     QVariant windowProperty(const QString &name) const override;
@@ -72,7 +73,8 @@ private:
     void notifyRuntimeAboutSurface();
     void determineRuntime();
     void findParentWindow(QObject *object);
-    void setParentWindow(ApplicationManagerWindow *inProcessAppWindow);
+    void setParentWindow(ApplicationManagerWindow *newParentWindow);
+    void connectActiveFocusItem();
 
     static QVector<QmlInProcApplicationManagerWindowImpl *> s_inCompleteWindows;
 
@@ -81,19 +83,37 @@ private:
     QVector<QQmlComponentAttached *> m_attachedCompleteHandlers;
     ApplicationManagerWindow *m_parentWindow = nullptr;
     QMetaObject::Connection m_parentVisibleConnection;
+    QMetaObject::Connection m_activeFocusItemConnection;
 
 private:
     QString m_title;
-    int m_x;
-    int m_y;
-    int m_minimumWidth;
-    int m_minimumHeight;
-    int m_maximumWidth;
-    int m_maximumHeight;
-    bool m_active;
-    qreal m_opacity;
+    int m_x = 0;
+    int m_y = 0;
+    int m_minimumWidth = 0;
+    int m_minimumHeight = 0;
+    static const int WindowSizeMax = (1 << 24) - 1; // same as QWINDOWSIZE_MAX
+    int m_maximumWidth = WindowSizeMax;
+    int m_maximumHeight = WindowSizeMax;
+    qreal m_opacity = 1;
+    QQuickItem *m_activeFocusItem = nullptr;
 
     friend class QmlInProcRuntime; // for setting the m_runtime member
+};
+
+
+class QmlInProcApplicationManagerWindowAttachedImpl : public ApplicationManagerWindowAttachedImpl
+{
+public:
+    QmlInProcApplicationManagerWindowAttachedImpl(ApplicationManagerWindowAttached *windowAttached,
+                                                  QQuickItem *attacheeItem);
+
+    ApplicationManagerWindow *findApplicationManagerWindow() override;
+
+private:
+    void onParentChanged();
+    InProcessSurfaceItem *findInProcessSurfaceItem();
+
+    QVector<QMetaObject::Connection> m_parentChangeConnections;
 };
 
 QT_END_NAMESPACE_AM

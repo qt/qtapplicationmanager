@@ -10,6 +10,7 @@
 #include <QtGui/QColor>
 #include <QtQml/QQmlParserStatus>
 #include <QtQml/QQmlListProperty>
+#include <QtQml/QQmlEngine>
 #include <QtAppManCommon/global.h>
 
 
@@ -19,6 +20,8 @@ QT_FORWARD_DECLARE_CLASS(QQuickItem)
 QT_BEGIN_NAMESPACE_AM
 
 class ApplicationManagerWindowImpl;
+class ApplicationManagerWindowAttached;
+class ApplicationManagerWindowAttachedImpl;
 
 
 class ApplicationManagerWindow : public QObject, public QQmlParserStatus
@@ -26,10 +29,11 @@ class ApplicationManagerWindow : public QObject, public QQmlParserStatus
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/ApplicationManagerWindow 2.0")
     Q_INTERFACES(QQmlParserStatus)
+    QML_ATTACHED(ApplicationManagerWindowAttached)
     Q_PROPERTY(bool inProcess READ isInProcess CONSTANT FINAL)
     Q_PROPERTY(QObject *backingObject READ backingObject CONSTANT FINAL)
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged FINAL)
-    Q_PROPERTY(QQuickItem* contentItem READ contentItem CONSTANT FINAL)
+    Q_PROPERTY(QQuickItem *contentItem READ contentItem CONSTANT FINAL)
 
     // QWindow properties
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
@@ -48,6 +52,7 @@ class ApplicationManagerWindow : public QObject, public QQmlParserStatus
     //Q_PROPERTY(Visibility visibility READ visibility WRITE setVisibility NOTIFY visibilityChanged FINAL)
     //Q_PROPERTY(Qt::ScreenOrientation contentOrientation READ contentOrientation WRITE reportContentOrientationChange NOTIFY contentOrientationChanged FINAL)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged FINAL)
+    Q_PROPERTY(QQuickItem *activeFocusItem READ activeFocusItem NOTIFY activeFocusItemChanged FINAL)
 
     Q_PROPERTY(QQmlListProperty<QObject> data READ data NOTIFY dataChanged FINAL)
 
@@ -56,6 +61,8 @@ class ApplicationManagerWindow : public QObject, public QQmlParserStatus
 public:
     explicit ApplicationManagerWindow(QObject *parent = nullptr);
     ~ApplicationManagerWindow() override;
+
+    static ApplicationManagerWindowAttached *qmlAttachedProperties(QObject *object);
 
     bool isInProcess() const;
     QObject *backingObject() const;
@@ -106,6 +113,8 @@ public:
     Q_SIGNAL void colorChanged();
     bool isActive() const;
     Q_SIGNAL void activeChanged();
+    QQuickItem *activeFocusItem() const;
+    Q_SIGNAL void activeFocusItemChanged();
 
     Q_INVOKABLE bool setWindowProperty(const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;
@@ -134,6 +143,53 @@ private:
     static qsizetype data_count(QQmlListProperty<QObject> *property);
     static QObject *data_at(QQmlListProperty<QObject> *property, qsizetype index);
     static void data_clear(QQmlListProperty<QObject> *property);
+
+    Q_DISABLE_COPY_MOVE(ApplicationManagerWindow)
 };
+
+class ApplicationManagerWindowAttached : public QObject
+{
+    Q_OBJECT
+    QML_ANONYMOUS
+    Q_PROPERTY(ApplicationManagerWindow *window READ window NOTIFY windowChanged FINAL)
+    Q_PROPERTY(QObject *backingObject READ backingObject NOTIFY backingObjectChanged FINAL)
+//    Q_PROPERTY(QWindow::Visibility visibility READ visibility NOTIFY visibilityChanged FINAL)
+    Q_PROPERTY(bool active READ isActive NOTIFY activeChanged FINAL)
+    Q_PROPERTY(QQuickItem *activeFocusItem READ activeFocusItem NOTIFY activeFocusItemChanged FINAL)
+    Q_PROPERTY(QQuickItem *contentItem READ contentItem NOTIFY contentItemChanged FINAL)
+    Q_PROPERTY(int width READ width NOTIFY widthChanged FINAL)
+    Q_PROPERTY(int height READ height NOTIFY heightChanged FINAL)
+
+public:
+    explicit ApplicationManagerWindowAttached(QObject *attachee);
+
+    ApplicationManagerWindow *window() const;
+    Q_SIGNAL void windowChanged();
+    QObject *backingObject() const;
+    Q_SIGNAL void backingObjectChanged();
+//    QWindow::Visibility visibility() const;
+//    Q_SIGNAL void visibilityChanged();
+    bool isActive() const;
+    Q_SIGNAL void activeChanged();
+    QQuickItem *activeFocusItem() const;
+    Q_SIGNAL void activeFocusItemChanged();
+    QQuickItem *contentItem() const;
+    Q_SIGNAL void contentItemChanged();
+    int width() const;
+    Q_SIGNAL void widthChanged();
+    int height() const;
+    Q_SIGNAL void heightChanged();
+
+    QQuickItem *attachee();
+    void reconnect(ApplicationManagerWindow *newWin); // callback for implementation
+
+protected:
+    std::unique_ptr<ApplicationManagerWindowAttachedImpl> m_impl;
+    QPointer<ApplicationManagerWindow> m_amwindow;
+
+private:
+    Q_DISABLE_COPY_MOVE(ApplicationManagerWindowAttached)
+};
+
 
 QT_END_NAMESPACE_AM

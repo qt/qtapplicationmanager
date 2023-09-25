@@ -27,4 +27,44 @@ ApplicationManagerWindow *ApplicationManagerWindowImpl::amWindow()
     return m_amwindow;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// ApplicationManagerWindowAttachedImpl
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+std::function<ApplicationManagerWindowAttachedImpl *(ApplicationManagerWindowAttached *, QQuickItem *)> ApplicationManagerWindowAttachedImpl::s_factory;
+
+ApplicationManagerWindowAttachedImpl::ApplicationManagerWindowAttachedImpl(ApplicationManagerWindowAttached *windowAttached,
+                                                                           QQuickItem *attacheeItem)
+    : m_amWindowAttached(windowAttached)
+    , m_attacheeItem(attacheeItem)
+{ }
+
+void ApplicationManagerWindowAttachedImpl::setFactory(const std::function<ApplicationManagerWindowAttachedImpl *(ApplicationManagerWindowAttached *, QQuickItem *)> &factory)
+{
+    s_factory = factory;
+}
+
+ApplicationManagerWindowAttachedImpl *ApplicationManagerWindowAttachedImpl::create(ApplicationManagerWindowAttached *windowAttached, QQuickItem *attacheeItem)
+{
+    return s_factory ? s_factory(windowAttached, attacheeItem) : nullptr;
+}
+
+ApplicationManagerWindowAttached *ApplicationManagerWindowAttachedImpl::amWindowAttached() const
+{
+    return m_amWindowAttached;
+}
+
+QQuickItem *ApplicationManagerWindowAttachedImpl::attacheeItem() const
+{
+    return m_attacheeItem;
+}
+
+void ApplicationManagerWindowAttachedImpl::onWindowChanged(ApplicationManagerWindow *newWin)
+{
+    m_amWindowAttached->reconnect(newWin);
+}
+
+
 QT_END_NAMESPACE_AM

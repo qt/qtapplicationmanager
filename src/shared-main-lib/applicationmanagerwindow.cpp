@@ -80,6 +80,11 @@ ApplicationManagerWindow::~ApplicationManagerWindow()
     setVisible(false);
 }
 
+ApplicationManagerWindowAttached *ApplicationManagerWindow::qmlAttachedProperties(QObject *object)
+{
+    return new ApplicationManagerWindowAttached(object);
+}
+
 QQmlListProperty<QObject> ApplicationManagerWindow::data()
 {
     return QQmlListProperty<QObject>(this, nullptr,
@@ -349,6 +354,90 @@ bool ApplicationManagerWindow::isActive() const
 {
     return m_impl->isActive();
 }
+
+QQuickItem *ApplicationManagerWindow::activeFocusItem() const
+{
+    return m_impl->activeFocusItem();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// ApplicationManagerWindowAttached
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+ApplicationManagerWindowAttached::ApplicationManagerWindowAttached(QObject *attachee)
+    : QObject(attachee)
+{
+    if (auto *attacheeItem = qobject_cast<QQuickItem*>(attachee)) {
+        m_impl.reset(ApplicationManagerWindowAttachedImpl::create(this, attacheeItem));
+
+        if (auto *amwindow = m_impl->findApplicationManagerWindow())
+            reconnect(amwindow);
+    }
+}
+
+
+void ApplicationManagerWindowAttached::reconnect(ApplicationManagerWindow *newWin)
+{
+    if (newWin == m_amwindow)
+        return;
+
+    if (m_amwindow)
+        QObject::disconnect(m_amwindow, nullptr, this, nullptr);
+
+    m_amwindow = newWin;
+    emit windowChanged();
+    emit backingObjectChanged();
+    emit contentItemChanged();
+
+    if (m_amwindow) {
+        QObject::connect(m_amwindow, &ApplicationManagerWindow::activeChanged,
+                         this, &ApplicationManagerWindowAttached::activeChanged);
+        QObject::connect(m_amwindow, &ApplicationManagerWindow::activeFocusItemChanged,
+                         this, &ApplicationManagerWindowAttached::activeFocusItemChanged);
+        QObject::connect(m_amwindow, &ApplicationManagerWindow::widthChanged,
+                         this, &ApplicationManagerWindowAttached::widthChanged);
+        QObject::connect(m_amwindow, &ApplicationManagerWindow::heightChanged,
+                         this, &ApplicationManagerWindowAttached::heightChanged);
+    }
+}
+
+ApplicationManagerWindow *ApplicationManagerWindowAttached::window() const
+{
+    return m_amwindow.get();
+}
+
+QObject *ApplicationManagerWindowAttached::backingObject() const
+{
+    return m_amwindow ? m_amwindow->backingObject() : nullptr;
+}
+
+bool ApplicationManagerWindowAttached::isActive() const
+{
+    return m_amwindow ? m_amwindow->isActive() : false;
+}
+
+QQuickItem *ApplicationManagerWindowAttached::activeFocusItem() const
+{
+    return m_amwindow ? m_amwindow->activeFocusItem() : nullptr;
+}
+
+QQuickItem *ApplicationManagerWindowAttached::contentItem() const
+{
+    return m_amwindow ? m_amwindow->contentItem() : nullptr;
+}
+
+int ApplicationManagerWindowAttached::width() const
+{
+    return m_amwindow ? m_amwindow->height() : 0;
+}
+
+int ApplicationManagerWindowAttached::height() const
+{
+    return m_amwindow ? m_amwindow->height() : 0;
+}
+
 
 QT_END_NAMESPACE_AM
 

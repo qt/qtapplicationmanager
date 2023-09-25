@@ -8,10 +8,12 @@
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQuickItem)
+QT_FORWARD_DECLARE_CLASS(QQuickWindow)
 
 QT_BEGIN_NAMESPACE_AM
 
 class ApplicationManagerWindow;
+class ApplicationManagerWindowAttached;
 
 
 class ApplicationManagerWindowImpl
@@ -59,6 +61,7 @@ public:
     virtual void setColor(const QColor &c) = 0;
 
     virtual bool isActive() const = 0;
+    virtual QQuickItem *activeFocusItem() const = 0;
 
     virtual bool setWindowProperty(const QString &name, const QVariant &value) = 0;
     virtual QVariant windowProperty(const QString &name) const = 0;
@@ -77,6 +80,35 @@ private:
 
     static std::function<ApplicationManagerWindowImpl *(ApplicationManagerWindow *)> s_factory;
     Q_DISABLE_COPY_MOVE(ApplicationManagerWindowImpl)
+};
+
+
+class ApplicationManagerWindowAttachedImpl
+{
+public:
+    static void setFactory(const std::function<ApplicationManagerWindowAttachedImpl *(ApplicationManagerWindowAttached *, QQuickItem *)> &factory);
+
+    static ApplicationManagerWindowAttachedImpl *create(ApplicationManagerWindowAttached *window,
+                                                        QQuickItem *attacheeItem);
+
+    virtual ~ApplicationManagerWindowAttachedImpl() = default;
+
+    ApplicationManagerWindowAttached *amWindowAttached() const;
+    QQuickItem *attacheeItem() const;
+
+    virtual ApplicationManagerWindow *findApplicationManagerWindow() = 0;
+    void onWindowChanged(ApplicationManagerWindow *newWin);
+
+protected:
+    ApplicationManagerWindowAttachedImpl(ApplicationManagerWindowAttached *windowAttached,
+                                         QQuickItem *attacheeItem);
+
+private:
+    ApplicationManagerWindowAttached *m_amWindowAttached;
+    QQuickItem *m_attacheeItem;
+
+    static std::function<ApplicationManagerWindowAttachedImpl *(ApplicationManagerWindowAttached *, QQuickItem *)> s_factory;
+    Q_DISABLE_COPY_MOVE(ApplicationManagerWindowAttachedImpl)
 };
 
 QT_END_NAMESPACE_AM

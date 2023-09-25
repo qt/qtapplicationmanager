@@ -56,6 +56,7 @@ public:
     QColor color() const override;
     void setColor(const QColor &c) override;
     bool isActive() const override;
+    QQuickItem *activeFocusItem() const override;
 
     bool setWindowProperty(const QString &name, const QVariant &value) override;
     QVariant windowProperty(const QString &name) const override;
@@ -68,6 +69,16 @@ public:
 private:
     ApplicationMain *m_applicationMain = nullptr;
     AMQuickWindowQmlImpl *m_qwindow = nullptr;
+};
+
+
+class WaylandApplicationManagerWindowAttachedImpl : public ApplicationManagerWindowAttachedImpl
+{
+public:
+    WaylandApplicationManagerWindowAttachedImpl(ApplicationManagerWindowAttached *windowAttached,
+                                                QQuickItem *attacheeItem);
+
+    ApplicationManagerWindow *findApplicationManagerWindow() override;
 };
 
 QT_END_NAMESPACE_AM

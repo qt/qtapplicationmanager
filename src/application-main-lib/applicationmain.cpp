@@ -53,6 +53,10 @@ ApplicationMain::ApplicationMain(int &argc, char **argv) noexcept
     WaylandApplicationManagerWindowImpl::setFactory([this](ApplicationManagerWindow *window) {
         return new WaylandApplicationManagerWindowImpl(window, this);
     });
+    WaylandApplicationManagerWindowAttachedImpl::setFactory([](ApplicationManagerWindowAttached *windowAttached,
+                                                               QQuickItem *attacheeItem) {
+        return new WaylandApplicationManagerWindowAttachedImpl(windowAttached, attacheeItem);
+    });
 }
 
 ApplicationMain::~ApplicationMain()

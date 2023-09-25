@@ -36,6 +36,7 @@ Module {
         Property { name: "visible"; type: "bool"; isFinal: true }
         Property { name: "active"; type: "bool"; isReadonly: true; isFinal: true }
         Property { name: "opacity"; type: "double"; isFinal: true }
+        Property { name: "activeFocusItem"; type: "QQuickItem"; isPointer: true; isReadonly: true; isFinal: true }
         Property { name: "data"; type: "QQmlListProperty<QObject>"; isReadonly: true; isFinal: true }
         Signal {
             name: "dataChanged"
@@ -78,6 +79,9 @@ Module {
         }
         Signal {
             name: "activeChanged"
+        }
+        Signal {
+            name: "activeFocusItemChanged"
         }
         Signal {
             name: "windowPropertyChanged"

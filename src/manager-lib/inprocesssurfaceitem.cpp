@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include "inprocesssurfaceitem.h"
+#include "applicationmanagerwindow.h"
 #include <QQmlEngine>
 #include <QSGSimpleRectNode>
 
@@ -130,6 +131,16 @@ void InProcessSurfaceItem::setColor(const QColor &c)
 void InProcessSurfaceItem::close()
 {
     emit closeRequested();
+}
+
+ApplicationManagerWindow *InProcessSurfaceItem::applicationManagerWindow()
+{
+    return m_amWindow.data();
+}
+
+void InProcessSurfaceItem::setApplicationManagerWindow(ApplicationManagerWindow *win)
+{
+    m_amWindow = win;
 }
 
 QT_END_NAMESPACE_AM

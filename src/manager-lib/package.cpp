@@ -134,6 +134,12 @@
     the package are stopped and are prevented from being started while in this state.
     This is normally only the case while an update is being applied.
 */
+/*!
+    \qmlproperty list<ApplicationObject> PackageObject::applications
+    \readonly
+
+    Returns a list of ApplicationObjects that are part of this package.
+*/
 
 QT_BEGIN_NAMESPACE_AM
 

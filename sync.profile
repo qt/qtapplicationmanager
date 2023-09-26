@@ -3,12 +3,11 @@
     "QtAppManCrypto" => "$basedir/src/crypto-lib",
     "QtAppManApplication" => "$basedir/src/application-lib",
     "QtAppManPackage" => "$basedir/src/package-lib",
-    "QtAppManNotification" => "$basedir/src/notification-lib",
     "QtAppManManager" => "$basedir/src/manager-lib",
     "QtAppManSharedMain" => "$basedir/src/shared-main-lib",
     "QtAppManMain" => "$basedir/src/main-lib",
     "QtAppManWindow" => "$basedir/src/window-lib",
-    "QtAppManLauncher" => "$basedir/src/launcher-lib",
+    "QtAppManLauncher" => "$basedir/src/application-main-lib",
     "QtAppManPluginInterfaces" => "$basedir/src/plugin-interfaces",
     "QtAppManMonitor" => "$basedir/src/monitor-lib",
     "QtAppManDBus" => "$basedir/src/dbus-lib",
@@ -35,7 +34,7 @@
     "qtwayland" => "",
 );
 %inject_headers = (
-    "$basedir/src/launcher-lib" => [
+    "$basedir/src/application-main-lib" => [
         "^qwayland-qtam-extension.h",
         "^wayland-qtam-extension-client-protocol.h",
     ],

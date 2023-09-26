@@ -65,17 +65,17 @@
 #  include "nativeruntime.h"
 #endif
 #include "plugincontainer.h"
+#include "notification.h"
 #include "notificationmanager.h"
-#include "qmlinprocessruntime.h"
-#include "qmlinprocessapplicationinterface.h"
+#include "qmlinprocruntime.h"
 #include "qml-utilities.h"
 #include "dbus-utilities.h"
 #include "intentserver.h"
 #include "intentaminterface.h"
 
 #include "windowmanager.h"
-#include "qmlinprocessapplicationmanagerwindow.h"
-#include "windowframetimer.h"
+#include "applicationmanagerwindow.h"
+#include "frametimer.h"
 #include "gpustatus.h"
 
 #include "configuration.h"
@@ -378,10 +378,10 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
     QVector<PluginContainerManager *> pluginContainerManagers;
 
     if (m_isSingleProcessMode) {
-        RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager());
-        RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager(qSL("qml")));
+        RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager());
+        RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager(qSL("qml")));
     } else {
-        RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager());
+        RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager());
 #if defined(AM_MULTI_PROCESS)
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager());
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(qSL("qml")));
@@ -589,12 +589,12 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     if (!quickControlsStyle.isEmpty())
         qputenv("QT_QUICK_CONTROLS_STYLE", quickControlsStyle.toLocal8Bit());
 
-    qmlRegisterType<QmlInProcessNotification>("QtApplicationManager", 2, 0, "Notification");
-    qmlRegisterType<QmlInProcessApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
+    qmlRegisterType<Notification>("QtApplicationManager", 2, 0, "Notification");
+    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
 
     // shared-main-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
-    qmlRegisterType<WindowFrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
+    qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
     qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
     qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
     qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");

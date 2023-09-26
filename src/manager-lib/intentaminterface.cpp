@@ -30,7 +30,7 @@
 #include "intentserverrequest.h"
 #include "intentclientrequest.h"
 #include "intentaminterface.h"
-#include "qmlinprocessruntime.h"
+#include "qmlinprocruntime.h"
 #include "application.h"
 #include "applicationmanager.h"
 #include "package.h"
@@ -174,8 +174,8 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
             });
         } else
 #endif // defined(AM_MULTI_PROCESS)
-        if (QmlInProcessRuntime *qmlRuntime = qobject_cast<QmlInProcessRuntime *>(runtime)) {
-            connect(qmlRuntime, &QmlInProcessRuntime::stateChanged,
+            if (QmlInProcRuntime *qmlRuntime = qobject_cast<QmlInProcRuntime *>(runtime)) {
+                connect(qmlRuntime, &QmlInProcRuntime::stateChanged,
                     intentServer(), [this, qmlRuntime](Am::RunState newState) {
                 if (!qmlRuntime->application())
                     return;
@@ -245,7 +245,7 @@ IntentClientAMImplementation::IntentClientAMImplementation(IntentServerAMImpleme
 
 QString IntentClientAMImplementation::currentApplicationId(QObject *hint)
 {
-    QmlInProcessRuntime *runtime = QmlInProcessRuntime::determineRuntime(hint);
+    QmlInProcRuntime *runtime = QmlInProcRuntime::determineRuntime(hint);
 
     return runtime ? runtime->application()->info()->id() : IntentClient::instance()->systemUiId();
 }
@@ -740,7 +740,7 @@ void IntentServerHandler::setParameterMatch(const QVariantMap &parameterMatch)
 
 void IntentServerHandler::componentComplete()
 {
-    if (QmlInProcessRuntime::determineRuntime(this)) {
+    if (QmlInProcRuntime::determineRuntime(this)) {
         qmlWarning(this) << "Using IntentServerHandler for handling events in an application "
                             "context does not work. Use IntentHandler instead";
         return;

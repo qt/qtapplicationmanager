@@ -1,9 +1,10 @@
-// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2023 The Qt Company Ltd.
 // Copyright (C) 2019 Luxoft Sweden AB
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include "frametimer.h"
+#include "frametimerimpl.h"
 
 #include <QQuickWindow>
 #include <qqmlinfo.h>
@@ -67,29 +68,17 @@ const qreal FrameTimer::MicrosInSec = qreal(1000 * 1000);
 
 FrameTimer::FrameTimer(QObject *parent)
     : QObject(parent)
+    , m_impl(FrameTimerImpl::create(this))
 {
+    // Not installing a factory is ok for this class. It will just be usable for QQuickWindows
+    // this way, but that's enough for the Wayland client use-case.
+
     m_updateTimer.setInterval(1000);
     connect(&m_updateTimer, &QTimer::timeout, this, &FrameTimer::update);
 }
 
-void FrameTimer::newFrame()
-{
-    int frameTime = m_timer.isValid() ? qMax(1, int(m_timer.nsecsElapsed() / 1000)) : IdealFrameTime;
-    m_timer.restart();
-
-    m_count++;
-    m_sum += frameTime;
-    m_min = qMin(m_min, frameTime);
-    m_max = qMax(m_max, frameTime);
-    m_jitter += qAbs(MicrosInSec / IdealFrameTime - MicrosInSec / frameTime);
-}
-
-void FrameTimer::reset()
-{
-    m_count = m_sum = m_max = 0;
-    m_jitter = 0;
-    m_min = std::numeric_limits<int>::max();
-}
+FrameTimer::~FrameTimer()
+{ }
 
 /*!
     \qmlproperty real FrameTimer::averageFps
@@ -161,44 +150,34 @@ QObject *FrameTimer::window() const
     return m_window;
 }
 
-void FrameTimer::setWindow(QObject *value)
+void FrameTimer::setWindow(QObject *window)
 {
-    if (m_window == value)
+    if (m_window == window)
         return;
+    if (m_impl)
+        m_impl->disconnectFromAppManWindow(window);
+    if (m_frameSwapConnection)
+        disconnect(m_frameSwapConnection);
 
-    disconnectFromAppManWindow();
-    if (m_window)
-        disconnect(m_window, nullptr, this, nullptr);
-
-    m_window = value;
+    m_window = window;
 
     if (m_window) {
-        if (!connectToQuickWindow() && !connectToAppManWindow())
+        bool connected = false;
+
+        if (auto *quickWindow = qobject_cast<QQuickWindow*>(m_window)) {
+            m_frameSwapConnection = connect(quickWindow, &QQuickWindow::frameSwapped,
+                                            this, &FrameTimer::reportFrameSwap, Qt::UniqueConnection);
+            connected = (m_frameSwapConnection);
+        }
+        if (!connected && m_impl)
+            connected = m_impl->connectToAppManWindow(window);
+
+        if (!connected)
             qmlWarning(this) << "The given window is neither a QQuickWindow nor a WindowObject.";
     }
 
     emit windowChanged();
 }
-
-bool FrameTimer::connectToQuickWindow()
-{
-    QQuickWindow *quickWindow = qobject_cast<QQuickWindow*>(m_window);
-    if (!quickWindow)
-        return false;
-
-    connect(quickWindow, &QQuickWindow::frameSwapped,
-            this, &FrameTimer::newFrame, Qt::UniqueConnection);
-    return true;
-}
-
-bool FrameTimer::connectToAppManWindow()
-{
-    return false;
-}
-
-
-void FrameTimer::disconnectFromAppManWindow()
-{ }
 
 /*!
     \qmlproperty list<string> FrameTimer::roleNames
@@ -234,7 +213,9 @@ void FrameTimer::update()
 
     // Start counting again for the next sampling period but keep m_timer running because
     // we still need the diff between the last rendered frame and the upcoming one.
-    reset();
+    m_count = m_sum = m_max = 0;
+    m_jitter = 0;
+    m_min = std::numeric_limits<int>::max();
 
     emit updated();
 }
@@ -253,12 +234,12 @@ bool FrameTimer::running() const
     return m_updateTimer.isActive();
 }
 
-void FrameTimer::setRunning(bool value)
+void FrameTimer::setRunning(bool running)
 {
-    if (value && !m_updateTimer.isActive()) {
+    if (running && !m_updateTimer.isActive()) {
         m_updateTimer.start();
         emit runningChanged();
-    } else if (!value && m_updateTimer.isActive()) {
+    } else if (!running && m_updateTimer.isActive()) {
         m_updateTimer.stop();
         emit runningChanged();
     }
@@ -276,12 +257,30 @@ int FrameTimer::interval() const
     return m_updateTimer.interval();
 }
 
-void FrameTimer::setInterval(int value)
+void FrameTimer::setInterval(int interval)
 {
-    if (value != m_updateTimer.interval()) {
-        m_updateTimer.setInterval(value);
+    if (interval != m_updateTimer.interval()) {
+        m_updateTimer.setInterval(interval);
         emit intervalChanged();
     }
+}
+
+void FrameTimer::reportFrameSwap()
+{
+    int frameTime = m_timer.isValid() ? qMax(1, int(m_timer.nsecsElapsed() / 1000))
+                                      : IdealFrameTime;
+    m_timer.restart();
+
+    ++m_count;
+    m_sum += frameTime;
+    m_min = qMin(m_min, frameTime);
+    m_max = qMax(m_max, frameTime);
+    m_jitter += qAbs(MicrosInSec / IdealFrameTime - MicrosInSec / frameTime);
+}
+
+FrameTimerImpl *FrameTimer::implementation()
+{
+    return m_impl.get();
 }
 
 QT_END_NAMESPACE_AM

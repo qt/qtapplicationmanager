@@ -8,12 +8,19 @@ qt_internal_add_module(AppManSharedMainPrivate
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        applicationinterface.cpp applicationinterface.h
+        applicationinterfaceimpl.cpp applicationinterfaceimpl.h
+        applicationmanagerwindow.h applicationmanagerwindow.cpp
+        applicationmanagerwindowimpl.h applicationmanagerwindowimpl.cpp
         cpustatus.cpp cpustatus.h
         frametimer.cpp frametimer.h
+        frametimerimpl.cpp frametimerimpl.h
         gpustatus.cpp gpustatus.h
         iostatus.cpp iostatus.h
         memorystatus.cpp memorystatus.h
         monitormodel.cpp monitormodel.h
+        notification.cpp notification.h
+        notificationimpl.cpp notificationimpl.h
         qmllogger.cpp qmllogger.h
         sharedmain.cpp sharedmain.h
         startuptimer.cpp startuptimer.h
@@ -24,8 +31,14 @@ qt_internal_add_module(AppManSharedMainPrivate
         Qt::Network
         Qt::Qml
         Qt::Quick
+        Qt::QuickPrivate
         Qt::AppManCommonPrivate
         Qt::AppManMonitorPrivate
     DEFINES
         AM_COMPILING_APPMAN
+)
+
+target_sources(AppManSharedMainPrivate
+  PRIVATE
+    frametimerimpl.h frametimerimpl.cpp
 )

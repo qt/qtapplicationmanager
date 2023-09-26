@@ -9,14 +9,14 @@ qt_internal_add_module(AppManWindowPrivate
     INTERNAL_MODULE
     SOURCES
         inprocesswindow.cpp inprocesswindow.h
+        systemframetimerimpl.cpp systemframetimerimpl.h
         window.cpp window.h
         windowitem.cpp windowitem.h
         windowmanager.cpp windowmanager.h windowmanager_p.h
     LIBRARIES
-        Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
         Qt::AppManManagerPrivate
-        Qt::AppManMonitorPrivate
+        Qt::AppManSharedMainPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::CorePrivate

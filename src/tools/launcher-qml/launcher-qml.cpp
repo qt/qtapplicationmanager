@@ -26,17 +26,16 @@
 #include <private/qabstractanimation_p.h> // For QUnifiedTimer
 #include <qplatformdefs.h>
 
-#include <QtAppManLauncher/launchermain.h>
-#include <QtAppManWindow/qtappman_window-config.h>
-
 #include <QGuiApplication>
 #include <QQuickItem>
 #include <QQuickView>
 #include <QQuickWindow>
 
-#include <QtAppManLauncher/private/applicationmanagerwindow_p.h>
-#include "dbusapplicationinterface.h"
-#include "dbusnotification.h"
+#include "applicationmain.h"
+#include "applicationmanagerwindow.h"
+#include "waylandapplicationmanagerwindowimpl.h"
+#include "applicationinterface.h"
+#include "dbusapplicationinterfaceimpl.h"
 #include "notification.h"
 #include "qtyaml.h"
 #include "global.h"
@@ -61,14 +60,6 @@
 #include "iostatus.h"
 #include "memorystatus.h"
 #include "monitormodel.h"
-
-#if defined(AM_WIDGETS_SUPPORT)
-#  include <QApplication>
-using Application = QApplication;
-#else
-#  include <QGuiApplication>
-using Application = QGuiApplication;
-#endif
 
 
 QT_USE_NAMESPACE_AM
@@ -104,32 +95,30 @@ int main(int argc, char *argv[])
         if (!QFileInfo::exists(socket))
             throw Exception("Cannot start application: no wayland display - expected socket at: %1").arg(socket);
 
-        LauncherMain::initialize();
-        Application app(argc, argv);
-        LauncherMain launcher;
+        ApplicationMain am(argc, argv);
 
         QCommandLineParser clp;
         clp.addHelpOption();
         clp.addOption({ qSL("qml-debug"),   qSL("Enables QML debugging and profiling.") });
         clp.addOption({ qSL("quicklaunch"), qSL("Starts the launcher in the quicklaunching mode.") });
         clp.addOption({ qSL("directload") , qSL("The info.yaml to start (you can add '@<appid>' to start a specific app within the package, instead of the first one)."), qSL("info.yaml") });
-        clp.process(app);
+        clp.process(am);
 
         bool quicklaunched = clp.isSet(qSL("quicklaunch"));
         QString directLoadManifest = clp.value(qSL("directload"));
 
         if (directLoadManifest.isEmpty())
-            launcher.loadConfiguration();
+            am.loadConfiguration();
 
-        CrashHandler::setCrashActionConfiguration(launcher.runtimeConfiguration().value(qSL("crashAction")).toMap());
+        CrashHandler::setCrashActionConfiguration(am.runtimeConfiguration().value(qSL("crashAction")).toMap());
         // the verbose flag has already been factored into the rules:
-        launcher.setupLogging(false, launcher.loggingRules(), QString(), launcher.useAMConsoleLogger());
-        launcher.setupQmlDebugging(clp.isSet(qSL("qml-debug")));
-        launcher.setupOpenGL(launcher.openGLConfiguration());
-        launcher.setupIconTheme(launcher.iconThemeSearchPaths(), launcher.iconThemeName());
-        launcher.registerWaylandExtensions();
+        am.setupLogging(false, am.loggingRules(), QString(), am.useAMConsoleLogger());
+        am.setupQmlDebugging(clp.isSet(qSL("qml-debug")));
+        am.setupOpenGL(am.openGLConfiguration());
+        am.setupIconTheme(am.iconThemeSearchPaths(), am.iconThemeName());
+        am.registerWaylandExtensions();
 
-        Logging::setDltLongMessageBehavior(launcher.dltLongMessageBehavior());
+        Logging::setDltLongMessageBehavior(am.dltLongMessageBehavior());
 
         StartupTimer::instance()->checkpoint("after basic initialization");
 
@@ -145,14 +134,14 @@ int main(int argc, char *argv[])
             if (!fi.exists() || fi.fileName() != qSL("info.yaml"))
                 throw Exception("--directload needs a valid info.yaml file as parameter");
             directLoadManifest = fi.absoluteFilePath();
-            new Controller(&launcher, quicklaunched, qMakePair(directLoadManifest, directLoadAppId));
+            new Controller(&am, quicklaunched, qMakePair(directLoadManifest, directLoadAppId));
         } else {
-            launcher.setupDBusConnections();
+            am.setupDBusConnections();
             StartupTimer::instance()->checkpoint("after dbus initialization");
-            new Controller(&launcher, quicklaunched);
+            new Controller(&am, quicklaunched);
         }
 
-        return app.exec();
+        return am.exec();
 
     } catch (const std::exception &e) {
         qCCritical(LogQmlRuntime) << "ERROR:" << e.what();
@@ -160,19 +149,20 @@ int main(int argc, char *argv[])
     }
 }
 
-Controller::Controller(LauncherMain *launcher, bool quickLaunched)
-    : Controller(launcher, quickLaunched, qMakePair(QString{}, QString{}))
+Controller::Controller(ApplicationMain *am, bool quickLaunched)
+    : Controller(am, quickLaunched, qMakePair(QString{}, QString{}))
 { }
 
-Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<QString, QString> &directLoad)
-    : QObject(launcher)
+Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QString, QString> &directLoad)
+    : QObject(am)
     , m_quickLaunched(quickLaunched)
 {
     connect(&m_engine, &QObject::destroyed, QCoreApplication::instance(), &QCoreApplication::quit);
     CrashHandler::setQmlEngine(&m_engine);
 
+    // shared-qmlapi-lib
     qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
-    qmlRegisterType<DBusNotification>("QtApplicationManager", 2, 0, "Notification");
+    qmlRegisterType<Notification>("QtApplicationManager", 2, 0, "Notification");
 
     // shared-main-lib
     qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
@@ -187,11 +177,11 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
         return StartupTimer::instance();
     });
 
-    m_configuration = launcher->runtimeConfiguration();
+    m_configuration = am->runtimeConfiguration();
 
     const QStringList resources = variantToStringList(m_configuration.value(qSL("resources")));
     for (const QString &resource: resources) {
-        const QString path = QFileInfo(resource).isRelative() ? launcher->baseDir() + resource : resource;
+        const QString path = QFileInfo(resource).isRelative() ? am->baseDir() + resource : resource;
 
         try {
             loadResource(path);
@@ -204,7 +194,7 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
     QStringList pluginPaths = variantToStringList(m_configuration.value(qSL("pluginPaths")));
     for (QString &path : pluginPaths) {
         if (QFileInfo(path).isRelative())
-            path.prepend(launcher->baseDir());
+            path.prepend(am->baseDir());
         else if (absolutePluginPath.isEmpty())
             absolutePluginPath = path;
 
@@ -222,7 +212,7 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
         const QFileInfo fi(path);
         if (fi.isNativePath() && fi.isAbsolute() && absoluteImportPath.isEmpty())
             absoluteImportPath = path;
-        m_engine.addImportPath(toAbsoluteFilePath(path, launcher->baseDir()));
+        m_engine.addImportPath(toAbsoluteFilePath(path, am->baseDir()));
     }
 
     if (!absoluteImportPath.isEmpty()) {
@@ -232,27 +222,13 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
 
     StartupTimer::instance()->checkpoint("after application config initialization");
 
-    // This is a bit of a hack to make ApplicationManagerWindow known as a sub-class
-    // of QWindow. Without this, assigning an ApplicationManagerWindow to a QWindow*
-    // property will fail with [unknown property type]. First seen when trying to
-    // write a nested Wayland-compositor where assigning to WaylandOutput.window failed.
-    {
-        static const char registerWindowQml[] = "import QtQuick\nimport QtQuick.Window\nQtObject { }\n";
-        QQmlComponent registerWindowComp(&m_engine);
-        registerWindowComp.setData(QByteArray::fromRawData(registerWindowQml, sizeof(registerWindowQml) - 1), QUrl());
-        std::unique_ptr<QObject> dummy(registerWindowComp.create());
-    }
-
-    StartupTimer::instance()->checkpoint("after window registration");
-
     if (directLoad.first.isEmpty()) {
-        m_applicationInterface = new DBusApplicationInterface(launcher->p2pDBusName(),
-                                                             launcher->notificationDBusName(), this);
-        connect(m_applicationInterface, &DBusApplicationInterface::startApplication,
-                this, &Controller::startApplication);
-        if (!m_applicationInterface->initialize(true))
-            throw Exception("Could not connect to the application manager's ApplicationInterface on the peer D-Bus");
+        am->connectDBusInterfaces(true);
 
+        m_applicationInterface = ApplicationInterface::create<DBusApplicationInterfaceImpl>(this, am);
+
+        connect(am, &ApplicationMain::startApplication,
+                this, &Controller::startApplication);
     } else {
         QMetaObject::invokeMethod(this, [this, directLoad]() {
             PackageInfo *pi;
@@ -286,7 +262,7 @@ Controller::Controller(LauncherMain *launcher, bool quickLaunched, const QPair<Q
 
     const QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
     if (!quicklaunchQml.isEmpty() && quickLaunched) {
-        QQmlComponent quicklaunchComp(&m_engine, filePathToUrl(quicklaunchQml, launcher->baseDir()));
+        QQmlComponent quicklaunchComp(&m_engine, filePathToUrl(quicklaunchQml, am->baseDir()));
         if (!quicklaunchComp.isError()) {
             std::unique_ptr<QObject> quicklaunchInstance(quicklaunchComp.create());
         } else {
@@ -308,7 +284,9 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     m_launched = true;
 
     static QString applicationId = application.value(qSL("id")).toString();
-    LauncherMain::instance()->setApplicationId(applicationId);
+    auto *am = ApplicationMain::instance();
+    am->setApplication(convertFromDBusVariant(application).toMap());
+    am->setSystemProperties(convertFromDBusVariant(systemProperties).toMap());
 
     if (m_quickLaunched) {
         //StartupTimer::instance()->createReport(applicationId  + qSL(" [process launch]"));
@@ -388,31 +366,17 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     if (m_applicationInterface) {
         m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
 
-        m_applicationInterface->m_name = qdbus_cast<QVariantMap>(application.value(qSL("displayName")));
-        m_applicationInterface->m_icon = application.value(qSL("displayIcon")).toString();
-        m_applicationInterface->m_version = application.value(qSL("version")).toString();
-
-        QVariantMap &svm = m_applicationInterface->m_systemProperties;
-        svm = qdbus_cast<QVariantMap>(systemProperties);
-        for (auto it = svm.begin(); it != svm.end(); ++it)
-            it.value() = convertFromDBusVariant(it.value());
-
-        QVariantMap &avm = m_applicationInterface->m_applicationProperties;
-        avm = qdbus_cast<QVariantMap>(application.value(qSL("applicationProperties")));
-        for (auto it = avm.begin(); it != avm.end(); ++it)
-            it.value() = convertFromDBusVariant(it.value());
-
         connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
-                LauncherMain::instance(), &LauncherMain::setSlowAnimations);
+                ApplicationMain::instance(), &ApplicationMain::setSlowAnimations);
     }
 
-    // Going through the LauncherMain instance here is a bit weird, and should be refactored
+    // Going through the ApplicationMain instance here is a bit weird, and should be refactored
     // sometime. Having the flag there makes sense though, because this class can also be used for
     // custom launchers.
-    connect(LauncherMain::instance(), &LauncherMain::slowAnimationsChanged,
+    connect(ApplicationMain::instance(), &ApplicationMain::slowAnimationsChanged,
             this, &Controller::updateSlowAnimations);
 
-    updateSlowAnimations(LauncherMain::instance()->slowAnimations());
+    updateSlowAnimations(ApplicationMain::instance()->slowAnimations());
 
     // we need to catch all show events to apply the slow-animations
     QCoreApplication::instance()->installEventFilter(this);
@@ -582,7 +546,7 @@ void Controller::updateSlowAnimationsForWindow(QQuickWindow *window)
 #else
             QObject::disconnect(*connection);
 #endif
-            QUnifiedTimer::instance()->setSlowModeEnabled(LauncherMain::instance()->slowAnimations());
+            QUnifiedTimer::instance()->setSlowModeEnabled(ApplicationMain::instance()->slowAnimations());
             delete connection;
         }
     }, Qt::DirectConnection);

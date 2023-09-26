@@ -14,19 +14,23 @@
 #include <QUuid>
 #include <QLibraryInfo>
 #include <QStringBuilder>
+#include <QDBusConnection>
+#include "dbuscontextadaptor.h"
 
 #include "global.h"
 #include "logging.h"
 #include "application.h"
 #include "applicationmanager.h"
 #include "nativeruntime.h"
-#include "nativeruntime_p.h"
 #include "qtyaml.h"
 #include "applicationinterface.h"
 #include "utilities.h"
 #include "notificationmanager.h"
 #include "dbus-utilities.h"
 #include "processtitle.h"
+
+#include "runtimeinterface_adaptor.h"
+#include "applicationinterface_adaptor.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -69,6 +73,8 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
     : AbstractRuntime(container, app, manager)
     , m_isQuickLauncher(app == nullptr)
     , m_startedViaLauncher(manager->identifier() != qL1S("native"))
+    , m_dbusApplicationInterface(DBusContextAdaptor::create<ApplicationInterfaceAdaptor>(this))
+    , m_dbusRuntimeInterface(DBusContextAdaptor::create<RuntimeInterfaceAdaptor>(this))
 {
     QDir().mkdir(qSL("/tmp/dbus-qtam"));
     QString dbusAddress = QUuid::createUuid().toString().mid(1,36);
@@ -296,6 +302,8 @@ bool NativeRuntime::start()
 
     if (!m_startedViaLauncher && !m_isQuickLauncher)
         config.insert(qSL("systemProperties"), systemProperties());
+    if (m_app)
+        config.insert(qSL("application"), convertFromJSVariant(m_app->info()->toVariantMap()).toMap());
     if (!uiConfig.isEmpty())
         config.insert(qSL("ui"), uiConfig);
 
@@ -430,27 +438,23 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
     m_dbusConnectionName = connection.name();
     QDBusConnection conn = connection;
 
-    m_applicationInterface = new NativeRuntimeApplicationInterface(this);
-    if (!conn.registerObject(qSL("/ApplicationInterface"), m_applicationInterface, QDBusConnection::ExportScriptableContents))
-        qCWarning(LogSystem) << "ERROR: could not register the /ApplicationInterface object on the peer DBus:" << conn.lastError().name() << conn.lastError().message();
+    if (!m_dbusApplicationInterface->registerOnDBus(conn, qSL("/ApplicationInterface"))) {
+        qCWarning(LogSystem) << "ERROR: could not register the /ApplicationInterface object on the peer DBus:"
+                             << conn.lastError().message();
+    }
 
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-    QDBusConnection::sessionBus().registerObject(qSL("/Application%1/ApplicationInterface").arg(applicationProcessId()),
-                                                 m_applicationInterface, QDBusConnection::ExportScriptableContents);
+    m_dbusApplicationInterface->registerOnDBus(QDBusConnection::sessionBus(), qSL("/Application%1/ApplicationInterface").arg(applicationProcessId()));
 #endif
-    // we need to delay the actual start call, until the launcher side is ready to
-    // listen to the interface
-    connect(m_applicationInterface, &NativeRuntimeApplicationInterface::applicationFinishedInitialization,
-            this, &NativeRuntime::onApplicationFinishedInitialization);
 
     if (m_startedViaLauncher) {
-        m_runtimeInterface = new NativeRuntimeInterface(this);
-        if (!conn.registerObject(qSL("/RuntimeInterface"), m_runtimeInterface, QDBusConnection::ExportScriptableContents))
-            qCWarning(LogSystem) << "ERROR: could not register the /RuntimeInterface object on the peer DBus.";
+        if (!m_dbusRuntimeInterface->registerOnDBus(conn, qSL("/RuntimeInterface"))) {
+            qCWarning(LogSystem) << "ERROR: could not register the /RuntimeInterface object on the peer DBus:"
+                                 << conn.lastError().message();
+        }
 
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-        QDBusConnection::sessionBus().registerObject(qSL("/Application%1/RuntimeInterface").arg(applicationProcessId()),
-                                                     m_runtimeInterface, QDBusConnection::ExportScriptableContents);
+        m_dbusRuntimeInterface->registerOnDBus(QDBusConnection::sessionBus(), qSL("/Application%1/RuntimeInterface").arg(applicationProcessId()));
 #endif
     }
     // the server side of the p2p bus can be setup now, but the client is not able service any
@@ -458,7 +462,7 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
     emit applicationConnectedToPeerDBus(conn, m_app);
 }
 
-void NativeRuntime::onApplicationFinishedInitialization()
+void NativeRuntime::applicationFinishedInitialization()
 {
     m_connectedToApplicationInterface = true;
 
@@ -466,7 +470,7 @@ void NativeRuntime::onApplicationFinishedInitialization()
         // now we know which app was launched, so initialize any additional interfaces on the p2p bus
         emit applicationReadyOnPeerDBus(QDBusConnection(m_dbusConnectionName), m_app);
 
-        if (m_startedViaLauncher && m_runtimeInterface)
+        if (m_startedViaLauncher && m_dbusRuntimeInterface->isRegistered())
             startApplicationViaLauncher();
 
         setState(Am::Running);
@@ -475,15 +479,16 @@ void NativeRuntime::onApplicationFinishedInitialization()
 
 bool NativeRuntime::startApplicationViaLauncher()
 {
-    if (!m_startedViaLauncher || !m_runtimeInterface || !m_app)
+    if (!m_startedViaLauncher || !m_dbusRuntimeInterface->isRegistered() || !m_app)
         return false;
 
     QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
     QString pathInContainer = m_container->mapHostPathToContainer(m_app->info()->absoluteCodeFilePath());
 
-    emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
-                                              convertFromJSVariant(m_app->info()->toVariantMap()).toMap(),
-                                              convertFromJSVariant(systemProperties()).toMap());
+    emit m_dbusRuntimeInterface->generatedAdaptor<RuntimeInterfaceAdaptor>()
+        ->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
+                           convertFromJSVariant(m_app->info()->toVariantMap()).toMap(),
+                           convertFromJSVariant(systemProperties()).toMap());
     return true;
 }
 
@@ -496,79 +501,22 @@ void NativeRuntime::openDocument(const QString &document, const QString &mimeTyp
 {
    m_document = document;
    m_mimeType = mimeType;
-   if (m_applicationInterface)
-       emit m_applicationInterface->openDocument(document, mimeType);
+   if (m_dbusApplicationInterface->isRegistered()) {
+        emit m_dbusApplicationInterface->generatedAdaptor<ApplicationInterfaceAdaptor>()
+            ->openDocument(document, mimeType);
+   }
 }
 
 void NativeRuntime::setSlowAnimations(bool slow)
 {
     if (m_slowAnimations != slow) {
         m_slowAnimations = slow;
-        if (m_applicationInterface)
-            emit m_applicationInterface->slowAnimationsChanged(slow);
+        if (m_dbusApplicationInterface->isRegistered()) {
+            emit m_dbusApplicationInterface->generatedAdaptor<ApplicationInterfaceAdaptor>()
+                ->slowAnimationsChanged(slow);
+        }
     }
 }
-
-NativeRuntimeApplicationInterface::NativeRuntimeApplicationInterface(NativeRuntime *runtime)
-    : ApplicationInterface(runtime)
-    , m_runtime(runtime)
-{
-    connect(ApplicationManager::instance(), &ApplicationManager::memoryLowWarning,
-            this, &ApplicationInterface::memoryLowWarning);
-    connect(ApplicationManager::instance(), &ApplicationManager::memoryCriticalWarning,
-            this, &ApplicationInterface::memoryCriticalWarning);
-    connect(runtime->container(), &AbstractContainer::memoryLowWarning,
-            this, &ApplicationInterface::memoryLowWarning);
-    connect(runtime->container(), &AbstractContainer::memoryCriticalWarning,
-            this, &ApplicationInterface::memoryCriticalWarning);
-    connect(runtime, &NativeRuntime::aboutToStop,
-            this, &ApplicationInterface::quit);
-}
-
-QString NativeRuntimeApplicationInterface::applicationId() const
-{
-    if (m_runtime->application())
-        return m_runtime->application()->id();
-    return QString();
-}
-
-QVariantMap NativeRuntimeApplicationInterface::name() const
-{
-    return QVariantMap();    // only provided to QML apps currently
-}
-
-QUrl NativeRuntimeApplicationInterface::icon() const
-{
-    return QUrl();    // only provided to QML apps currently
-}
-
-QString NativeRuntimeApplicationInterface::version() const
-{
-    return QString();    // only provided to QML apps currently
-}
-
-QVariantMap NativeRuntimeApplicationInterface::systemProperties() const
-{
-    if (m_runtime)
-        return convertFromJSVariant(m_runtime->systemProperties()).toMap();
-    return QVariantMap();
-}
-
-QVariantMap NativeRuntimeApplicationInterface::applicationProperties() const
-{
-    if (m_runtime && m_runtime->application())
-        return convertFromJSVariant(m_runtime->application()->info()->allAppProperties()).toMap();
-    return QVariantMap();
-}
-
-void NativeRuntimeApplicationInterface::finishedInitialization()
-{
-    emit applicationFinishedInitialization();
-}
-
-NativeRuntimeInterface::NativeRuntimeInterface(NativeRuntime *runtime)
-    : QObject(runtime)
-{ }
 
 
 NativeRuntimeManager::NativeRuntimeManager(QObject *parent)
@@ -603,5 +551,3 @@ AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, Appl
 QT_END_NAMESPACE_AM
 
 #include "moc_nativeruntime.cpp"
-
-#include "moc_nativeruntime_p.cpp"

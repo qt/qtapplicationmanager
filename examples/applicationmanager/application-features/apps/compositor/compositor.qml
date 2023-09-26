@@ -32,7 +32,7 @@ ApplicationManagerWindow {
         socketName: "qtam-wayland-nested"
 
         WaylandOutput {
-            window: root
+            window: root.backingObject
             sizeFollowsWindow: true
         }
 

@@ -92,13 +92,13 @@ Module {
             name: "updated"
         }
         Signal {
-            name: "intervalChanged"
+            name: "windowChanged"
         }
         Signal {
             name: "runningChanged"
         }
         Signal {
-            name: "windowChanged"
+            name: "intervalChanged"
         }
         Method {
             name: "update"

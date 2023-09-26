@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2023 The Qt Company Ltd.
 // Copyright (C) 2019 Luxoft Sweden AB
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
@@ -7,6 +7,7 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
+#include <QtCore/QMetaObject>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtAppManCommon/global.h>
@@ -14,6 +15,8 @@
 
 
 QT_BEGIN_NAMESPACE_AM
+
+class FrameTimerImpl;
 
 class FrameTimer : public QObject
 {
@@ -34,10 +37,12 @@ class FrameTimer : public QObject
 
 public:
     FrameTimer(QObject *parent = nullptr);
+    ~FrameTimer() override;
 
     QStringList roleNames() const;
 
     Q_INVOKABLE void update();
+    Q_SIGNAL void updated();
 
     qreal averageFps() const;
     qreal minimumFps() const;
@@ -45,32 +50,26 @@ public:
     qreal jitterFps() const;
 
     QObject *window() const;
-    void setWindow(QObject *value);
+    void setWindow(QObject *window);
+    Q_SIGNAL void windowChanged();
 
     bool running() const;
-    void setRunning(bool value);
+    void setRunning(bool running);
+    Q_SIGNAL void runningChanged();
 
     int interval() const;
-    void setInterval(int value);
+    void setInterval(int interval);
+    Q_SIGNAL void intervalChanged();
 
-signals:
-    void updated();
-    void intervalChanged();
-    void runningChanged();
-    void windowChanged();
+    void reportFrameSwap();
 
-protected slots:
-    void newFrame();
+    FrameTimerImpl *implementation();
 
 protected:
-    virtual bool connectToAppManWindow();
-    virtual void disconnectFromAppManWindow();
-
-    QPointer<QObject> m_window;
+    std::unique_ptr<FrameTimerImpl> m_impl;
 
 private:
-    void reset();
-    bool connectToQuickWindow();
+    QPointer<QObject> m_window;
 
     int m_count = 0;
     int m_sum = 0;
@@ -86,6 +85,8 @@ private:
     qreal m_minimumFps;
     qreal m_maximumFps;
     qreal m_jitterFps;
+
+    QMetaObject::Connection m_frameSwapConnection;
 
     static const int IdealFrameTime = 16667; // usec - could be made configurable via an env variable
     static const qreal MicrosInSec;

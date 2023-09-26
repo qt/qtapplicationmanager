@@ -9,10 +9,12 @@ import QtApplicationManager.Application 2.0
 ApplicationManagerWindow {
     id: root
     visible: false
+    objectName: "root"
 
     ApplicationManagerWindow {
         id: sub
         visible: false
+        objectName: "sub"
         Component.onCompleted: setWindowProperty("type", "sub");
     }
 
@@ -23,6 +25,7 @@ ApplicationManagerWindow {
         ApplicationManagerWindow {
             id: sub2
             visible: false
+            objectName: "sub2"
             Component.onCompleted: setWindowProperty("type", "sub2");
         }
     }

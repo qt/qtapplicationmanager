@@ -1,6 +1,6 @@
 TEMPLATE = app
 CONFIG += install_ok
-QT += widgets appman_launcher-private
+QT += widgets appman_application_main-private
 
 SOURCES = main.cpp
 

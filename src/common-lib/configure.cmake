@@ -6,10 +6,14 @@
 set(INPUT_libyaml "undefined" CACHE STRING "")
 set_property(CACHE INPUT_libyaml PROPERTY STRINGS undefined qt system)
 
+set(INPUT_libarchive "undefined" CACHE STRING "")
+set_property(CACHE INPUT_libarchive PROPERTY STRINGS undefined qt system)
+
 
 #### Libraries
 
 qt_find_package(WrapLibYaml PROVIDED_TARGETS WrapLibYaml::WrapLibYaml MODULE_NAME appman_common QMAKE_LIB yaml)
+qt_find_package(WrapLibArchive PROVIDED_TARGETS WrapLibArchive::WrapLibArchive MODULE_NAME appman_package QMAKE_LIB archive)
 
 
 #### Tests
@@ -22,6 +26,13 @@ qt_feature("am-system-libyaml" PRIVATE
     CONDITION WrapLibYaml_FOUND
     ENABLE INPUT_libyaml STREQUAL 'system'
     DISABLE INPUT_libyaml STREQUAL 'qt'
+)
+
+qt_feature("am-system-libarchive" PRIVATE
+    LABEL "Using system libarchive"
+    CONDITION WrapLibArchive_FOUND
+    ENABLE INPUT_libarchive STREQUAL 'system'
+    DISABLE INPUT_libarchive STREQUAL 'qt'
 )
 
 qt_feature("am-multi-process" PUBLIC
@@ -95,8 +106,17 @@ qt_feature("am-has-hardware-id" PRIVATE
 )
 qt_feature_definition("am-has-hardware-id" "AM_HARDWARE_ID" VALUE "\"${INPUT_hardware_id}\"")
 
+qt_feature("am-widgets-support" PRIVATE PUBLIC
+    LABEL "Enable support for Qt widgets"
+    CONDITION TARGET Qt::Widgets
+    ENABLE INPUT_widgets_support STREQUAL 'yes'
+    DISABLE INPUT_widgets_support STREQUAL 'no'
+)
+qt_feature_definition("am-widgets-support" "AM_WIDGETS_SUPPORT")
+
 qt_configure_add_summary_section(NAME "Qt Application Manager")
 qt_configure_add_summary_entry(ARGS "am-system-libyaml")
+qt_configure_add_summary_entry(ARGS "am-system-libarchive")
 qt_configure_add_summary_entry(ARGS "am-multi-process")
 qt_configure_add_summary_entry(ARGS "am-installer")
 if (QT_FEATURE_am_has_hardware_id)
@@ -109,6 +129,7 @@ else()
     qt_configure_add_summary_entry(ARGS "am-has-hardware-id")
 endif()
 qt_configure_add_summary_entry(ARGS "am-external-dbus-interfaces")
+qt_configure_add_summary_entry(ARGS "am-widgets-support")
 qt_configure_add_summary_entry(ARGS "am-tools-only")
 qt_configure_add_summary_entry(ARGS "am-package-server")
 qt_configure_add_summary_entry(ARGS "am-dltlogging")

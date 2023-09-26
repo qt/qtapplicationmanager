@@ -17,7 +17,7 @@ set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/application-fe
 find_package(Qt6 COMPONENTS Core)
 find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS Widgets)
-find_package(Qt6 COMPONENTS AppManLauncherPrivate)
+find_package(Qt6 COMPONENTS AppManApplicationMainPrivate)
 
 qt_add_executable(widgets
     main.cpp
@@ -35,7 +35,7 @@ target_link_libraries(widgets PUBLIC
     Qt::Core
     Qt::Gui
     Qt::Widgets
-    Qt::AppManLauncherPrivate
+    Qt::AppManApplicationMainPrivate
 )
 
 install(TARGETS widgets

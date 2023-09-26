@@ -28,9 +28,10 @@ qt_internal_add_module(AppManManagerPrivate
         packagemanager.cpp packagemanager.h packagemanager_p.h
         plugincontainer.cpp plugincontainer.h
         processstatus.cpp processstatus.h
-        qmlinprocessapplicationmanagerwindow.cpp qmlinprocessapplicationmanagerwindow.h
-        qmlinprocessapplicationinterface.cpp qmlinprocessapplicationinterface.h
-        qmlinprocessruntime.cpp qmlinprocessruntime.h
+        qmlinprocapplicationmanagerwindowimpl.cpp qmlinprocapplicationmanagerwindowimpl.h
+        qmlinprocapplicationinterfaceimpl.cpp qmlinprocapplicationinterfaceimpl.h
+        qmlinprocnotificationimpl.cpp qmlinprocnotificationimpl.h
+        qmlinprocruntime.cpp qmlinprocruntime.h
         quicklauncher.cpp quicklauncher.h
         runtimefactory.cpp runtimefactory.h
     LIBRARIES
@@ -39,8 +40,8 @@ qt_internal_add_module(AppManManagerPrivate
         Qt::AppManIntentClientPrivate
         Qt::AppManIntentServerPrivate
         Qt::AppManMonitorPrivate
-        Qt::AppManNotificationPrivate
         Qt::AppManPluginInterfacesPrivate
+        Qt::AppManSharedMainPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Gui
@@ -54,19 +55,26 @@ qt_internal_add_module(AppManManagerPrivate
         AM_COMPILING_APPMAN
 )
 
-qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_am_multi_process
-    SOURCES
-        nativeruntime.cpp nativeruntime.h nativeruntime_p.h
-        processcontainer.cpp processcontainer.h
-    PUBLIC_LIBRARIES
-        Qt::DBus
-        dl
-)
 
 if (QT_FEATURE_am_multi_process)
     qtam_internal_add_dbus_adaptor(AppManManagerPrivate
         DBUS_ADAPTOR_SOURCES
-            ${CMAKE_SOURCE_DIR}/dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
+            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.applicationinterface.xml
+            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.runtimeinterface.xml
+            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
+        DBUS_ADAPTOR_FLAGS
+            -i dbus-utilities.h
+    )
+    qt_internal_extend_target(AppManManagerPrivate
+        SOURCES
+            applicationinterfaceadaptor_dbus.cpp
+            runtimeinterfaceadaptor_dbus.cpp
+            nativeruntime.cpp nativeruntime.h
+            processcontainer.cpp processcontainer.h
+        PUBLIC_LIBRARIES
+            Qt::DBus
+            Qt::AppManDBusPrivate
+            dl
     )
 endif()
 

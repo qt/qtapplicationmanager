@@ -26,11 +26,10 @@ headerdirs += \
     ../src/common-lib \
     ../src/intent-client-lib \
     ../src/intent-server-lib \
-    ../src/launcher-lib \
+    ../src/application-main-lib \
     ../src/main-lib \
     ../src/manager-lib \
     ../src/monitor-lib \
-    ../src/notification-lib \
     ../src/package-lib \
     ../src/shared-main-lib \
     ../src/window-lib \
@@ -43,11 +42,10 @@ sourcedirs += \
     ../src/common-lib \
     ../src/intent-client-lib \
     ../src/intent-server-lib \
-    ../src/launcher-lib \
+    ../src/application-main-lib \
     ../src/main-lib \
     ../src/manager-lib \
     ../src/monitor-lib \
-    ../src/notification-lib \
     ../src/package-lib \
     ../src/shared-main-lib \
     ../src/window-lib \

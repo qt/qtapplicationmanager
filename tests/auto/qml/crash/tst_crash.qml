@@ -43,7 +43,7 @@ TestCase {
         runStateChangedSpy.wait(spyTimeout);
         compare(app.runState, ApplicationObject.Running);
         ApplicationManager.startApplication(appId, data.tag);
-        runStateChangedSpy.wait(spyTimeout);
+        runStateChangedSpy.wait(spyTimeout * 5); // libbacktrace can be slow
         compare(app.runState, ApplicationObject.NotRunning);
         if (data.tag === "gracefully") {
             compare(app.lastExitStatus, ApplicationObject.NormalExit);

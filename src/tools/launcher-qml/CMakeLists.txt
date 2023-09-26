@@ -13,11 +13,9 @@ qt_internal_add_app(appman-launcher-qml
         Qt::QuickPrivate
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
-        Qt::AppManLauncherPrivate
-        Qt::AppManMonitorPrivate
-        Qt::AppManNotificationPrivate
-        Qt::AppManPluginInterfacesPrivate
         Qt::AppManSharedMainPrivate
+        Qt::AppManApplicationMainPrivate
+        Qt::AppManPluginInterfacesPrivate
     DEFINES
         AM_COMPILING_LAUNCHER
 )

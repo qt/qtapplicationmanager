@@ -13,16 +13,21 @@
 #include <QtAppManManager/abstractruntime.h>
 #include <QtAppManManager/abstractcontainer.h>
 #include <QtAppManManager/amnamespace.h>
+#include <QtAppManDBus/dbuscontextadaptor.h>
+
 
 QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 QT_FORWARD_DECLARE_CLASS(QDBusServer)
+
+class RuntimeInterfaceAdaptor;
+class ApplicationInterfaceAdaptor;
 
 QT_BEGIN_NAMESPACE_AM
 
 class Notification;
 class NativeRuntime;
-class NativeRuntimeInterface;
-class NativeRuntimeApplicationInterface;
+
+
 class NativeRuntimeManager : public AbstractRuntimeManager
 {
     Q_OBJECT
@@ -52,6 +57,8 @@ public:
 
     bool sendNotificationUpdate(Notification *n);
 
+    void applicationFinishedInitialization(); // called by the D-Bus adaptor
+
 public slots:
     bool start() override;
     void stop(bool forceKill = false) override;
@@ -71,7 +78,6 @@ private slots:
     void onProcessFinished(int exitCode, Am::ExitStatus status);
     void onProcessError(Am::ProcessError error);
     void onDBusPeerConnection(const QDBusConnection &connection);
-    void onApplicationFinishedInitialization();
 
 protected:
     explicit NativeRuntime(AbstractContainer *container, Application *app, NativeRuntimeManager *parent);
@@ -91,8 +97,8 @@ private:
     bool m_dbusConnection = false;
     QString m_dbusConnectionName;
 
-    NativeRuntimeApplicationInterface *m_applicationInterface = nullptr;
-    NativeRuntimeInterface *m_runtimeInterface = nullptr;
+    std::unique_ptr<DBusContextAdaptor> m_dbusApplicationInterface;
+    std::unique_ptr<DBusContextAdaptor> m_dbusRuntimeInterface;
     AbstractContainerProcess *m_process = nullptr;
     QDBusServer *m_applicationInterfaceServer;
     bool m_slowAnimations = false;

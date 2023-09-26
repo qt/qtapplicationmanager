@@ -14,7 +14,7 @@
 #include "packagedatabase.h"
 #include "packagemanager.h"
 #include "packagingjob.h"
-#include "qmlinprocessruntime.h"
+#include "qmlinprocruntime.h"
 #include "runtimefactory.h"
 #include "utilities.h"
 
@@ -107,7 +107,7 @@ void tst_PackagerTool::initTestCase()
     m_storePassword = qSL("password");
     m_storeCertificate = qL1S(AM_TESTDATA_DIR "certificates/store.p12");
 
-    RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager(qSL("qml")));
+    RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager(qSL("qml")));
 }
 
 void tst_PackagerTool::cleanup()

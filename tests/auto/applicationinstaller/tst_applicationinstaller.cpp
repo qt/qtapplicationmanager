@@ -17,7 +17,7 @@
 #include "error.h"
 #include "private/packageutilities_p.h"
 #include "runtimefactory.h"
-#include "qmlinprocessruntime.h"
+#include "qmlinprocruntime.h"
 #include "packageutilities.h"
 
 #include "../error-checking.h"
@@ -286,7 +286,7 @@ void tst_PackageManager::initTestCase()
 
     // make sure we have a valid runtime available. The important part is
     // that we have a runtime called "native" - the functionality does not matter.
-    RuntimeFactory::instance()->registerRuntime(new QmlInProcessRuntimeManager(qSL("native")));
+    RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager(qSL("native")));
 }
 
 void tst_PackageManager::cleanupTestCase()

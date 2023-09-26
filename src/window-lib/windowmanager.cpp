@@ -34,6 +34,8 @@
 #include "waylandwindow.h"
 #include "inprocesswindow.h"
 #include "qml-utilities.h"
+#include "qmlinprocapplicationmanagerwindowimpl.h"
+#include "systemframetimerimpl.h"
 
 
 /*!
@@ -223,6 +225,13 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QStrin
 {
     if (s_instance)
         qFatal("WindowManager::createInstance() was called a second time.");
+
+    ApplicationManagerWindowImpl::setFactory([](ApplicationManagerWindow *window) {
+        return new QmlInProcApplicationManagerWindowImpl(window);
+    });
+    SystemFrameTimerImpl::setFactory([](FrameTimer *frameTimer) {
+        return new SystemFrameTimerImpl(frameTimer);
+    });
 
     qmlRegisterSingletonType<WindowManager>("QtApplicationManager.SystemUI", 2, 0, "WindowManager",
                                             &WindowManager::instanceForQml);

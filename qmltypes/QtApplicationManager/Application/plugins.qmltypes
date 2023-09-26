@@ -18,7 +18,67 @@ Module {
         name: "ApplicationManagerWindow"
         exports: [ "QtApplicationManager.Application/ApplicationManagerWindow 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
-        prototype: "QQuickWindowQmlImpl"
+        prototype: "QObject"
+        defaultProperty: "data"
+        Property { name: "inProcess"; type: "bool"; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "backingObject"; type: "QObject"; isPointer: true; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "color"; type: "QColor"; isFinal: true }
+        Property { name: "contentItem"; type: "QQuickItem"; isPointer: true; isReadonly: true; isConstant: true; isFinal: true }
+        Property { name: "title"; type: "QString"; isFinal: true }
+        Property { name: "x"; type: "int"; isFinal: true }
+        Property { name: "y"; type: "int"; isFinal: true }
+        Property { name: "width"; type: "int"; isFinal: true }
+        Property { name: "height"; type: "int"; isFinal: true }
+        Property { name: "minimumWidth"; type: "int"; isFinal: true }
+        Property { name: "minimumHeight"; type: "int"; isFinal: true }
+        Property { name: "maximumWidth"; type: "int"; isFinal: true }
+        Property { name: "maximumHeight"; type: "int"; isFinal: true }
+        Property { name: "visible"; type: "bool"; isFinal: true }
+        Property { name: "active"; type: "bool"; isReadonly: true; isFinal: true }
+        Property { name: "opacity"; type: "double"; isFinal: true }
+        Property { name: "data"; type: "QQmlListProperty<QObject>"; isReadonly: true; isFinal: true }
+        Signal {
+            name: "dataChanged"
+        }
+        Signal {
+            name: "titleChanged"
+        }
+        Signal {
+            name: "xChanged"
+        }
+        Signal {
+            name: "yChanged"
+        }
+        Signal {
+            name: "widthChanged"
+        }
+        Signal {
+            name: "heightChanged"
+        }
+        Signal {
+            name: "minimumWidthChanged"
+        }
+        Signal {
+            name: "minimumHeightChanged"
+        }
+        Signal {
+            name: "maximumWidthChanged"
+        }
+        Signal {
+            name: "maximumHeightChanged"
+        }
+        Signal {
+            name: "visibleChanged"
+        }
+        Signal {
+            name: "opacityChanged"
+        }
+        Signal {
+            name: "colorChanged"
+        }
+        Signal {
+            name: "activeChanged"
+        }
         Signal {
             name: "windowPropertyChanged"
             Parameter { name: "name"; type: "QString" }
@@ -26,6 +86,7 @@ Module {
         }
         Method {
             name: "setWindowProperty"
+            type: "bool"
             Parameter { name: "name"; type: "QString" }
             Parameter { name: "value"; type: "QVariant" }
         }
@@ -37,6 +98,18 @@ Module {
         Method {
             name: "windowProperties"
             type: "QVariantMap"
+        }
+        Method {
+            name: "close"
+        }
+        Method {
+            name: "showFullScreen"
+        }
+        Method {
+            name: "showMaximized"
+        }
+        Method {
+            name: "showNormal"
         }
     }
     Component {

@@ -7,7 +7,6 @@
 
 #include <QtCore/QUrl>
 #include <QtAppManCommon/global.h>
-#include <QtAppManWindow/qtappman_window-config.h>
 #include <functional>
 
 #if defined(AM_WIDGETS_SUPPORT)

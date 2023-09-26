@@ -9,7 +9,6 @@ qt_internal_add_module(AppManApplicationPrivate
     INTERNAL_MODULE
     SOURCES
         applicationinfo.cpp applicationinfo.h
-        applicationinterface.cpp applicationinterface.h
         installationreport.cpp installationreport.h
         intentinfo.cpp intentinfo.h
         packagedatabase.cpp packagedatabase.h

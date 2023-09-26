@@ -18,16 +18,16 @@ QT_FORWARD_DECLARE_CLASS(QQuickWindow)
 
 QT_BEGIN_NAMESPACE_AM
 
-class LauncherMain;
-class DBusApplicationInterface;
+class ApplicationMain;
+class ApplicationInterface;
 
 class Controller : public QObject
 {
     Q_OBJECT
 
 public:
-    Controller(LauncherMain *launcher, bool quickLaunched);
-    Controller(LauncherMain *launcher, bool quickLaunched, const QPair<QString, QString> &directLoad);
+    Controller(ApplicationMain *am, bool quickLaunched);
+    Controller(ApplicationMain *am, bool quickLaunched, const QPair<QString, QString> &directLoad);
 
 public slots:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
@@ -36,7 +36,7 @@ public slots:
 
 private:
     QQmlApplicationEngine m_engine;
-    DBusApplicationInterface *m_applicationInterface = nullptr;
+    ApplicationInterface *m_applicationInterface = nullptr;
     QVariantMap m_configuration;
     bool m_launched = false;
     bool m_quickLaunched;

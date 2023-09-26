@@ -1,0 +1,20 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="io.qt.ApplicationManager.ApplicationInterface">
+    <signal name="quit">
+    </signal>
+    <signal name="memoryLowWarning">
+    </signal>
+    <signal name="memoryCriticalWarning">
+    </signal>
+    <signal name="openDocument">
+      <arg name="documentUrl" type="s" direction="out"/>
+      <arg name="mimeType" type="s" direction="out"/>
+    </signal>
+    <method name="finishedInitialization">
+    </method>
+    <signal name="slowAnimationsChanged">
+      <arg name="isSlow" type="b" direction="out"/>
+    </signal>
+  </interface>
+</node>

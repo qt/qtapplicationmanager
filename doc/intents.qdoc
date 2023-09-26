@@ -143,8 +143,8 @@ The D-Bus API closely resembles the QML API. The intent, application and request
 strings, while the parameters are converted between JavaScript objects and D-Bus \c {a{sv}} variant
 dictionaries.
 
-If you are using the application manager's convenience \c{launcher-lib} as a basic building block
-for your mixed native and QML application, then all the D-Bus handling is already implemented for
-you and you can use the IntentHandler items as described above.
+If you are using the application manager's convenience \c{applicationmain-lib} as a basic building
+block for your mixed native and QML application, then all the D-Bus handling is already implemented
+for you and you can use the IntentHandler items as described above.
 
 */

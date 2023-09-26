@@ -39,7 +39,7 @@ doc/**/*.sh
 src/tools/*/*_interface.*
 src/tools/*/*_adaptor.*
 src/dbus-lib/*_adaptor.h
-src/launcher-lib/*-qtam-extension*
+src/applicationmain-lib/*-qtam-extension*
 src/window-lib/*-qtam-extension*
 
 src/tools/testrunner/build-config.yaml

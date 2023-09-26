@@ -59,10 +59,6 @@ if(NOT TARGET Qt::Gui OR NOT TARGET Qt::Quick)
     return()
 endif()
 
-if (TARGET Qt::DBus)
-    add_subdirectory(dbus-interfaces)
-endif()
-
 ## COVERAGE ###########################################################
 
 if(AM_COVERAGE)

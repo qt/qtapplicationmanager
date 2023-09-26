@@ -4,16 +4,13 @@ qt_internal_add_app(appman-dumpqmltypes
     SOURCES
         dumpqmltypes.cpp
     LIBRARIES
-        Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
         Qt::AppManIntentClientPrivate
         Qt::AppManIntentServerPrivate
-        Qt::AppManLauncherPrivate
-        Qt::AppManMainPrivate
         Qt::AppManManagerPrivate
         Qt::AppManMonitorPrivate
-        Qt::AppManNotificationPrivate
         Qt::AppManSharedMainPrivate
+        Qt::AppManMainPrivate
         Qt::AppManWindowPrivate
     DEFINES
         AM_COMPILING_APPMAN

@@ -32,6 +32,8 @@ InProcessSurfaceItem::InProcessSurfaceItem(QQuickItem *parent)
     setClip(true);
     setFlag(ItemHasContents);
     m_windowProperties.installEventFilter(this);
+
+    setFocusOnClick(true);
 }
 
 InProcessSurfaceItem::~InProcessSurfaceItem()
@@ -85,6 +87,59 @@ bool InProcessSurfaceItem::eventFilter(QObject *o, QEvent *e)
     }
 
     return QQuickFocusScope::eventFilter(o, e);
+}
+
+bool InProcessSurfaceItem::focusOnClick() const
+{
+    return m_focusOnClick;
+}
+
+void InProcessSurfaceItem::setFocusOnClick(bool newFocusOnClick)
+{
+    if (m_focusOnClick != newFocusOnClick) {
+        m_focusOnClick = newFocusOnClick;
+
+        setAcceptTouchEvents(newFocusOnClick);
+        setAcceptedMouseButtons(newFocusOnClick ? Qt::AllButtons : Qt::NoButton);
+        setFiltersChildMouseEvents(newFocusOnClick);
+
+        emit focusOnClickChanged();
+    }
+}
+
+void InProcessSurfaceItem::mousePressEvent(QMouseEvent *e)
+{
+    Q_ASSERT(m_focusOnClick);
+
+    QQuickFocusScope::mousePressEvent(e);
+    delayedForceActiveFocus();
+}
+
+void InProcessSurfaceItem::touchEvent(QTouchEvent *e)
+{
+    Q_ASSERT(m_focusOnClick);
+
+    QQuickFocusScope::touchEvent(e);
+    if (e->type() == QEvent::TouchBegin)
+        delayedForceActiveFocus();
+}
+
+bool InProcessSurfaceItem::childMouseEventFilter(QQuickItem *item, QEvent *e)
+{
+    Q_UNUSED(item)
+    Q_ASSERT(m_focusOnClick);
+
+    if ((e->type() == QEvent::MouseButtonPress) || (e->type() == QEvent::TouchBegin))
+        delayedForceActiveFocus();
+    return false;
+}
+
+void InProcessSurfaceItem::delayedForceActiveFocus()
+{
+    QMetaObject::invokeMethod(this, [this]() {
+            if (m_amWindow && !m_amWindow->activeFocusItem())
+                forceActiveFocus(Qt::ActiveWindowFocusReason);
+        }, Qt::QueuedConnection);
 }
 
 void InProcessSurfaceItem::setVisibleClientSide(bool value)

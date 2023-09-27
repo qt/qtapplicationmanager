@@ -101,7 +101,7 @@ QT_BEGIN_NAMESPACE_AM
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 WindowItem::WindowItem(QQuickItem *parent)
-    : QQuickItem(parent)
+    : QQuickFocusScope(parent)
     , m_contentItem(new QQuickItem(this))
 {
     m_contentItem->setParent(this);
@@ -299,6 +299,17 @@ void WindowItem::contentItemData_clear(QQmlListProperty<QObject> *property)
     emit that->contentItemDataChanged();
 }
 
+bool WindowItem::focusOnClick() const
+{
+    return m_impl ? m_impl->focusOnClick() : false;
+}
+
+void WindowItem::setFocusOnClick(bool newFocusOnClick)
+{
+    if (m_impl)
+        m_impl->setFocusOnClick(newFocusOnClick);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // WindowItem::InProcessImpl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -309,10 +320,15 @@ void WindowItem::InProcessImpl::setup(Window *window)
     Q_ASSERT(window && window->isInProcess());
 
     m_inProcessWindow = static_cast<InProcessWindow*>(window);
+    connect(m_inProcessWindow->rootItem(), &InProcessSurfaceItem::focusOnClickChanged,
+            q, &WindowItem::focusOnClickChanged);
 }
 
 void WindowItem::InProcessImpl::tearDown()
 {
+    disconnect(m_inProcessWindow->rootItem(), &InProcessSurfaceItem::focusOnClickChanged,
+               q, &WindowItem::focusOnClickChanged);
+
     if (m_shaderEffectSource) {
         delete m_shaderEffectSource;
         m_shaderEffectSource = nullptr;
@@ -362,8 +378,21 @@ void WindowItem::InProcessImpl::setupSecondaryView()
 
 void WindowItem::InProcessImpl::forwardActiveFocus()
 {
-    m_inProcessWindow->rootItem()->forceActiveFocus();
+    if (m_inProcessWindow)
+        m_inProcessWindow->rootItem()->forceActiveFocus();
 }
+
+bool WindowItem::InProcessImpl::focusOnClick() const
+{
+    return m_inProcessWindow ? m_inProcessWindow->rootItem()->focusOnClick() : false;
+}
+
+void WindowItem::InProcessImpl::setFocusOnClick(bool focusOnClick)
+{
+    if (m_inProcessWindow)
+        m_inProcessWindow->rootItem()->setFocusOnClick(focusOnClick);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // WindowItem::WaylandImpl
@@ -420,11 +449,23 @@ void WindowItem::WaylandImpl::createWaylandItem()
         // keep the buffer there to allow us to animate the window destruction
         m_waylandItem->setBufferLocked(true);
     });
+    connect(m_waylandItem, &QWaylandQuickItem::focusOnClickChanged,
+            q, &WindowItem::focusOnClickChanged);
 }
 
 void WindowItem::WaylandImpl::forwardActiveFocus()
 {
     m_waylandItem->forceActiveFocus();
+}
+
+bool WindowItem::WaylandImpl::focusOnClick() const
+{
+    return m_waylandItem->focusOnClick();
+}
+
+void WindowItem::WaylandImpl::setFocusOnClick(bool focusOnClick)
+{
+    m_waylandItem->setFocusOnClick(focusOnClick);
 }
 
 void WindowItem::WaylandImpl::tearDown()

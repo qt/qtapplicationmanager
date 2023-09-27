@@ -46,6 +46,10 @@ public:
 
     void close();
 
+    bool focusOnClick() const;
+    void setFocusOnClick(bool newFocusOnClick);
+    Q_SIGNAL void focusOnClickChanged();
+
     ApplicationManagerWindow *applicationManagerWindow();
     void setApplicationManagerWindow(ApplicationManagerWindow *win);
 
@@ -60,11 +64,17 @@ signals:
 
 protected:
     bool eventFilter(QObject *o, QEvent *e) override;
+    void mousePressEvent(QMouseEvent *e) override;
+    void touchEvent(QTouchEvent *e) override;
+    bool childMouseEventFilter(QQuickItem *item, QEvent *e) override;
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
 
 private:
+    void delayedForceActiveFocus();
+
     QObject m_windowProperties;
     bool m_visibleClientSide = true;
+    bool m_focusOnClick = false;
     QColor m_color;
     QPointer<ApplicationManagerWindow> m_amWindow;
 };

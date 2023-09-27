@@ -5,7 +5,12 @@
 
 #pragma once
 
+#if 0
+#pragma qt_sync_skip_header_check
+#endif
+
 #include <QtQuick/QQuickItem>
+#include <QtQuick/private/qquickfocusscope_p.h>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -18,7 +23,7 @@ class WaylandQuickIgnoreKeyItem;
 #endif // AM_MULTI_PROCESS
 
 
-class WindowItem : public QQuickItem
+class WindowItem : public QQuickFocusScope
 {
     Q_OBJECT
     Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/WindowItem 2.0")
@@ -32,6 +37,7 @@ class WindowItem : public QQuickItem
                                           NOTIFY objectFollowsItemSizeChanged)
 
     Q_PROPERTY(QQmlListProperty<QObject> contentItemData READ contentItemData NOTIFY contentItemDataChanged FINAL)
+    Q_PROPERTY(bool focusOnClick READ focusOnClick WRITE setFocusOnClick NOTIFY focusOnClickChanged REVISION(2, 7) FINAL)
     Q_CLASSINFO("DefaultProperty", "contentItemData")
 
 public:
@@ -53,6 +59,10 @@ public:
     static qsizetype contentItemData_count(QQmlListProperty<QObject> *property);
     static QObject *contentItemData_at(QQmlListProperty<QObject> *property, qsizetype index);
     static void contentItemData_clear(QQmlListProperty<QObject> *property);
+
+    bool focusOnClick() const;
+    void setFocusOnClick(bool newFocusOnClick);
+    Q_SIGNAL void focusOnClickChanged();
 
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
@@ -79,6 +89,8 @@ private:
         virtual void setupPrimaryView() = 0;
         virtual void setupSecondaryView() = 0;
         virtual void forwardActiveFocus() = 0;
+        virtual bool focusOnClick() const = 0;
+        virtual void setFocusOnClick(bool focusOnClick) = 0;
         WindowItem *q;
     };
 
@@ -92,6 +104,8 @@ private:
         void setupPrimaryView() override;
         void setupSecondaryView() override;
         void forwardActiveFocus() override;
+        bool focusOnClick() const override;
+        void setFocusOnClick(bool focusOnClick) override;
 
         InProcessWindow *m_inProcessWindow{nullptr};
         QQuickItem *m_shaderEffectSource{nullptr};
@@ -110,6 +124,8 @@ private:
         void setupSecondaryView() override;
         void createWaylandItem();
         void forwardActiveFocus() override;
+        bool focusOnClick() const override;
+        void setFocusOnClick(bool focusOnClick) override;
 
         WaylandWindow *m_waylandWindow{nullptr};
         WaylandQuickIgnoreKeyItem *m_waylandItem{nullptr};

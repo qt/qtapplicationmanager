@@ -264,12 +264,16 @@ Module {
         name: "WindowItem"
         exports: [ "QtApplicationManager.SystemUI/WindowItem 2.0" ]
         exportMetaObjectRevisions: [ 512 ]
-        prototype: "QQuickItem"
+        prototype: "QQuickFocusScope"
         defaultProperty: "contentItemData"
         Property { name: "window"; type: "Window"; isPointer: true; isFinal: true }
         Property { name: "primary"; type: "bool"; isReadonly: true; isFinal: true }
         Property { name: "objectFollowsItemSize"; type: "bool" }
         Property { name: "contentItemData"; type: "QQmlListProperty<QObject>"; isReadonly: true; isFinal: true }
+        Property { name: "focusOnClick"; type: "bool"; isFinal: true }
+        Signal {
+            name: "focusOnClickChanged"
+        }
         Signal {
             name: "windowChanged"
         }

@@ -310,6 +310,11 @@ void WindowItem::setFocusOnClick(bool newFocusOnClick)
         m_impl->setFocusOnClick(newFocusOnClick);
 }
 
+QQuickItem *WindowItem::backingItem() const
+{
+    return m_impl ? m_impl->backingItem() : nullptr;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // WindowItem::InProcessImpl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,6 +398,10 @@ void WindowItem::InProcessImpl::setFocusOnClick(bool focusOnClick)
         m_inProcessWindow->rootItem()->setFocusOnClick(focusOnClick);
 }
 
+QQuickItem *WindowItem::InProcessImpl::backingItem()
+{
+    return m_inProcessWindow ? m_inProcessWindow->rootItem() : nullptr;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // WindowItem::WaylandImpl
@@ -470,6 +479,11 @@ bool WindowItem::WaylandImpl::focusOnClick() const
 void WindowItem::WaylandImpl::setFocusOnClick(bool focusOnClick)
 {
     m_waylandItem->setFocusOnClick(focusOnClick);
+}
+
+QQuickItem *WindowItem::WaylandImpl::backingItem()
+{
+    return m_waylandItem;
 }
 
 void WindowItem::WaylandImpl::tearDown()

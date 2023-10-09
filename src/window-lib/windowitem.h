@@ -38,6 +38,7 @@ class WindowItem : public QQuickFocusScope
 
     Q_PROPERTY(QQmlListProperty<QObject> contentItemData READ contentItemData NOTIFY contentItemDataChanged FINAL)
     Q_PROPERTY(bool focusOnClick READ focusOnClick WRITE setFocusOnClick NOTIFY focusOnClickChanged REVISION(2, 7) FINAL)
+    Q_PROPERTY(QQuickItem *backingItem READ backingItem NOTIFY windowChanged REVISION(2, 7) FINAL)
     Q_CLASSINFO("DefaultProperty", "contentItemData")
 
 public:
@@ -46,6 +47,7 @@ public:
 
     Window *window() const;
     void setWindow(Window *window);
+    QQuickItem *backingItem() const;
 
     bool primary() const;
     Q_INVOKABLE void makePrimary();
@@ -91,6 +93,7 @@ private:
         virtual void forwardActiveFocus() = 0;
         virtual bool focusOnClick() const = 0;
         virtual void setFocusOnClick(bool focusOnClick) = 0;
+        virtual QQuickItem *backingItem() = 0;
         WindowItem *q;
     };
 
@@ -106,6 +109,7 @@ private:
         void forwardActiveFocus() override;
         bool focusOnClick() const override;
         void setFocusOnClick(bool focusOnClick) override;
+        QQuickItem *backingItem() override;
 
         InProcessWindow *m_inProcessWindow{nullptr};
         QQuickItem *m_shaderEffectSource{nullptr};
@@ -126,6 +130,7 @@ private:
         void forwardActiveFocus() override;
         bool focusOnClick() const override;
         void setFocusOnClick(bool focusOnClick) override;
+        QQuickItem *backingItem() override;
 
         WaylandWindow *m_waylandWindow{nullptr};
         WaylandQuickIgnoreKeyItem *m_waylandItem{nullptr};

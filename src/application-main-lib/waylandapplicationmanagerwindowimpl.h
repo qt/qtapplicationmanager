@@ -67,7 +67,7 @@ public:
     void showNormal() override;
 
 private:
-    ApplicationMain *m_applicationMain = nullptr;
+    QPointer<ApplicationMain> m_applicationMain;
     AMQuickWindowQmlImpl *m_qwindow = nullptr;
 };
 

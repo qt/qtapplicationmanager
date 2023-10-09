@@ -271,6 +271,7 @@ Module {
         Property { name: "objectFollowsItemSize"; type: "bool" }
         Property { name: "contentItemData"; type: "QQmlListProperty<QObject>"; isReadonly: true; isFinal: true }
         Property { name: "focusOnClick"; type: "bool"; isFinal: true }
+        Property { name: "backingItem"; type: "QQuickItem"; isPointer: true; isReadonly: true; isFinal: true }
         Signal {
             name: "focusOnClickChanged"
         }

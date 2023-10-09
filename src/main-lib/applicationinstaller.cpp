@@ -176,6 +176,7 @@ ApplicationInstaller::ApplicationInstaller(PackageManager *pm, QObject *parent)
             // legacy support for single-application packages
             auto app = static_cast<Application *>(package->applications().first());
 
+            applicationData[qSL("applicationProperties")] = app->info()->allAppProperties();
             applicationData[qSL("codeFilePath")] = app->info()->codeFilePath();
             applicationData[qSL("runtimeName")] = app->runtimeName();
             applicationData[qSL("runtimeParameters")] = app->runtimeParameters();

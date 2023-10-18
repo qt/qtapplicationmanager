@@ -32,7 +32,7 @@ if(NOT QT_FEATURE_cross_compile)
         POST_BUILD
         BYPRODUCTS "qmltypes"
         COMMAND "${CMAKE_COMMAND}" -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
-                "$<TARGET_FILE:appman-dumpqmltypes>" "${CMAKE_SOURCE_DIR}/qmltypes"
+                "$<TARGET_FILE:appman-dumpqmltypes>" "${PROJECT_SOURCE_DIR}/qmltypes"
         COMMENT "Generating qmltypes using appman-dumpqmltypes"
         VERBATIM
     )
@@ -44,14 +44,14 @@ qt_path_join(qml_install_dir ${QT_INSTALL_DIR} ${qml_install_dir})
 
 if(QT_WILL_INSTALL)
     qt_install(
-        DIRECTORY "${CMAKE_SOURCE_DIR}/qmltypes/QtApplicationManager"
+        DIRECTORY "${PROJECT_SOURCE_DIR}/qmltypes/QtApplicationManager"
         DESTINATION "${qml_install_dir}"
     )
 else()
     add_custom_command(
         TARGET appman-dumpqmltypes
         POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/qmltypes" "${qml_install_dir}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/qmltypes" "${qml_install_dir}"
         COMMENT "Copying qmltypes to Qt directory"
         VERBATIM
     )

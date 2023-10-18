@@ -563,7 +563,7 @@ QObject *WindowManager::addExtension(QQmlComponent *component) const
         return nullptr;
     }
 
-    QObject *obj = component->beginCreate(qmlContext(this));
+    QObject *obj = component->beginCreate(qmlContext(component));
     auto extension = qobject_cast<QWaylandCompositorExtension*>(obj);
 
     if (extension)

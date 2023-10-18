@@ -2,6 +2,7 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+pragma ComponentBehavior: Bound
 import QtQuick 2.11
 import QtApplicationManager.SystemUI 2.0
 import QtWayland.Compositor 1.3

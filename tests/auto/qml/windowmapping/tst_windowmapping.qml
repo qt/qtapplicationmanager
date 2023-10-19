@@ -171,15 +171,8 @@ TestCase {
         expectedWindowCount -= 1;
         tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
 
-        // Single- vs. multiprocess difference:
         app.start("hide-sub");
-        if (ApplicationManager.singleProcess) {
-            expectedWindowCount -= 1;
-        } else {
-            // This is even more weird Window behavior: when the parent window is invisible, it is
-            // not possible any more to explicitly set the child window to invisible.
-            wait(50 * AmTest.timeoutFactor);
-        }
+        expectedWindowCount -= 1;
         tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
     }
 

@@ -10,10 +10,6 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManApplication/packageinfo.h>
 #include <QtAppManManager/asynchronoustask.h>
-#if !defined(AM_DISABLE_INSTALLER)
-#  include <QtAppManManager/installationtask.h>
-#  include <QtAppManManager/deinstallationtask.h>
-#endif
 
 #if defined(Q_MOC_RUN) && !defined(__attribute__) && !defined(__declspec)
 #  define QT_PREPEND_NAMESPACE_AM(name) QtAM::name
@@ -29,6 +25,8 @@ QT_BEGIN_NAMESPACE_AM
 class PackageDatabase;
 class Package;
 class PackageManagerPrivate;
+class InstallationTask;
+class DeinstallationTask;
 
 // A place to collect signals used internally by appman without polluting
 // PackageManager's public QML API.
@@ -172,13 +170,11 @@ protected:
     bool finishedPackageInstall(const QString &id);
     bool canceledPackageInstall(const QString &id);
 
-#if !defined(AM_DISABLE_INSTALLER)
 private:
     void executeNextTask();
     void triggerExecuteNextTask();
     QString enqueueTask(AsynchronousTask *task);
     void handleFailure(AsynchronousTask *task);
-#endif
 
 private:
     void emitDataChanged(Package *package, const QVector<int> &roles = QVector<int>());

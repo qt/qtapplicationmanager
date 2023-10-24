@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
 #include <QtAppManManager/packagemanager.h>
-#include <QtAppManMain/applicationinstaller.h>
 #include <QtAppManManager/applicationmanager.h>
 #include <QtAppManManager/applicationmodel.h>
 #include <QtAppManManager/amnamespace.h>
@@ -48,7 +47,6 @@ QT_USE_NAMESPACE_AM
 static const QVector<const QMetaObject *> all = {
     // manager-lib
     &ApplicationManager::staticMetaObject,
-    &ApplicationInstaller::staticMetaObject,
     &PackageManager::staticMetaObject,
     &NotificationManager::staticMetaObject,
     &NotificationModel::staticMetaObject,

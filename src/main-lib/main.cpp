@@ -52,9 +52,8 @@
 #include "packagedatabase.h"
 #include "installationreport.h"
 #include "yamlpackagescanner.h"
+#include "sudo.h"
 #if !defined(AM_DISABLE_INSTALLER)
-#  include "applicationinstaller.h"
-#  include "sudo.h"
 #  include "packageutilities.h"
 #endif
 #include "runtimefactory.h"
@@ -143,9 +142,6 @@ Main::~Main()
     delete m_windowManager;
     delete m_view;
     delete m_applicationManager;
-#if !defined(AM_DISABLE_INSTALLER)
-    delete m_applicationInstaller;
-#endif
     delete m_packageManager;
     delete m_quickLauncher;
 
@@ -532,8 +528,6 @@ void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePa
     }
 
     StartupTimer::instance()->checkpoint("after installer setup checks");
-
-    m_applicationInstaller = ApplicationInstaller::createInstance(m_packageManager);
 
     if (m_noSecurity || allowUnsigned)
         m_packageManager->setAllowInstallationOfUnsignedPackages(true);
@@ -946,12 +940,8 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
         ifaces.emplace_back(adaptor, busForInterface(interfaceName), service, path, interfaceName);
     };
 
-#  if !defined(AM_DISABLE_INSTALLER)
-    if (m_packageManager) {
-        addInterface(DBusContextAdaptor::create<PackageManagerAdaptor>(m_packageManager),
-                     "io.qt.ApplicationManager", "/PackageManager");
-    }
-#  endif
+    addInterface(DBusContextAdaptor::create<PackageManagerAdaptor>(m_packageManager),
+                 "io.qt.ApplicationManager", "/PackageManager");
     addInterface(DBusContextAdaptor::create<WindowManagerAdaptor>(m_windowManager),
                  "io.qt.ApplicationManager", "/WindowManager");
     addInterface(DBusContextAdaptor::create<NotificationsAdaptor>(m_notificationManager),

@@ -8,7 +8,6 @@ qt_internal_add_module(AppManMainPrivate
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
-        applicationinstaller.cpp applicationinstaller.h
         configuration.cpp configuration.h configuration_p.h
         main.cpp main.h
     PUBLIC_LIBRARIES
@@ -54,18 +53,16 @@ if (TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces)
             Qt::AppManDBusPrivate
     )
 
-    if (QT_FEATURE_am_installer)
-        qtam_internal_add_dbus_adaptor(AppManMainPrivate
-            DBUS_ADAPTOR_SOURCES
-                ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.packagemanager.xml
-            DBUS_ADAPTOR_FLAGS
-                -i dbus-utilities.h
-        )
-        qt_internal_extend_target(AppManMainPrivate
-            SOURCES
-                packagemanageradaptor_dbus.cpp
-        )
-    endif()
+    qtam_internal_add_dbus_adaptor(AppManMainPrivate
+        DBUS_ADAPTOR_SOURCES
+            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.packagemanager.xml
+        DBUS_ADAPTOR_FLAGS
+            -i dbus-utilities.h
+    )
+    qt_internal_extend_target(AppManMainPrivate
+        SOURCES
+            packagemanageradaptor_dbus.cpp
+    )
 endif()
 
 qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_am_widgets_support AND TARGET Qt::Widgets

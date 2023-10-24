@@ -11,9 +11,7 @@
 #include "logging.h"
 #include "main.h"
 #include "configuration.h"
-#if !defined(AM_DISABLE_INSTALLER)
-#  include "sudo.h"
-#endif
+#include "sudo.h"
 #include "startuptimer.h"
 #include "exception.h"
 #include "qtyaml.h"
@@ -50,10 +48,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     StartupTimer::instance()->checkpoint("after basic initialization");
 
     try {
-#if !defined(AM_DISABLE_INSTALLER)
         Sudo::forkServer(Sudo::DropPrivilegesPermanently);
         StartupTimer::instance()->checkpoint("after sudo server fork");
-#endif
 
         Main a(argc, argv);
 

@@ -44,6 +44,7 @@ public:
     QList<QByteArray> chainOfTrust;
     bool cleanupBrokenInstallationsDone = false;
 
+#if !defined(AM_DISABLE_INSTALLER)
     QList<AsynchronousTask *> incomingTaskList;     // incoming queue
     QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge
     AsynchronousTask *activeTask = nullptr;         // currently active
@@ -57,6 +58,7 @@ public:
             all += activeTask;
         return all;
     }
+#endif
 };
 
 QT_END_NAMESPACE_AM

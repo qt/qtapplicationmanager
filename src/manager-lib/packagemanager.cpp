@@ -19,6 +19,10 @@
 #include "exception.h"
 #include "sudo.h"
 #include "utilities.h"
+#if !defined(AM_DISABLE_INSTALLER)
+#  include "installationtask.h"
+#  include "deinstallationtask.h"
+#endif
 
 #if defined(Q_OS_WIN)
 #  include <windows.h>
@@ -1229,23 +1233,34 @@ bool PackageManager::cancelTask(const QString &taskId)
     return false;
 }
 
-#if !defined(AM_DISABLE_INSTALLER)
-
 QString PackageManager::enqueueTask(AsynchronousTask *task)
 {
+#if defined(AM_DISABLE_INSTALLER)
+    Q_UNUSED(task)
+    Q_ASSERT_X(false, "PackageManager::enqueueTask", "Installer is disabled");
+    return { };
+#else
     d->incomingTaskList.append(task);
     triggerExecuteNextTask();
     return task->id();
+#endif
 }
 
 void PackageManager::triggerExecuteNextTask()
 {
+#if defined(AM_DISABLE_INSTALLER)
+    Q_ASSERT_X(false, "PackageManager::triggerExecuteNextTask", "Installer is disabled");
+#else
     if (!QMetaObject::invokeMethod(this, &PackageManager::executeNextTask, Qt::QueuedConnection))
         qCCritical(LogSystem) << "ERROR: failed to invoke method checkQueue";
+#endif
 }
 
 void PackageManager::executeNextTask()
 {
+#if defined(AM_DISABLE_INSTALLER)
+    Q_ASSERT_X(false, "PackageManager::executeNextTask", "Installer is disabled");
+#else
     if (!d->cleanupBrokenInstallationsDone || d->activeTask || d->incomingTaskList.isEmpty())
         return;
 
@@ -1318,16 +1333,19 @@ void PackageManager::executeNextTask()
     d->activeTask = task;
     task->setState(AsynchronousTask::Executing);
     task->start();
+#endif
 }
 
 void PackageManager::handleFailure(AsynchronousTask *task)
 {
+#if defined(AM_DISABLE_INSTALLER)
+    Q_UNUSED(task)
+    Q_ASSERT_X(false, "PackageManager::handleFailure", "Installer is disabled");
+#else
     qCDebug(LogInstaller) << "emit failed" << task->id() << task->errorCode() << task->errorString();
     emit taskFailed(task->id(), int(task->errorCode()), task->errorString());
+#endif
 }
-
-#endif // !defined(AM_DISABLE_INSTALLER)
-
 
 Package *PackageManager::startingPackageInstallation(PackageInfo *info)
 {

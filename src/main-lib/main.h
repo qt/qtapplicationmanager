@@ -36,7 +36,6 @@ class ApplicationIPCManager;
 class PackageDatabase;
 class PackageManager;
 class ApplicationManager;
-class ApplicationInstaller;
 class NotificationManager;
 class IntentServer;
 class WindowManager;
@@ -118,9 +117,6 @@ private:
     PackageDatabase *m_packageDatabase = nullptr;
     PackageManager *m_packageManager = nullptr;
     ApplicationManager *m_applicationManager = nullptr;
-#if !defined(AM_DISABLE_INSTALLER)
-    ApplicationInstaller *m_applicationInstaller = nullptr;
-#endif
     NotificationManager *m_notificationManager = nullptr;
     IntentServer *m_intentServer = nullptr;
     WindowManager *m_windowManager = nullptr;

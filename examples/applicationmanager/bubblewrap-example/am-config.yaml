@@ -16,11 +16,10 @@ quicklaunch:
 
 containers:
   bubblewrap:
-    # 'no': host network, or 'yes': no network at all, or a path to a setup script
-    unshareNetwork: no
+    sharedNamespaces: [ '-all', '+net' ]
     # You can use this script as a starting point. It has to be adapted to
-    # your network setup though.
-    # unshareNetwork: 'sudo "${CONFIG_PWD}/bubblewrap-network-setup.sh"'
+    # your network setup though:
+    # networkSetupScript: 'sudo "${CONFIG_PWD}/bubblewrap-network-setup.sh"'
 
     # set to yes, if you build against a system or Installer Qt and the launcher cannot be found
     bindMountHome: yes
@@ -54,4 +53,3 @@ containers:
 
   selection:
     - '*': bubblewrap
-

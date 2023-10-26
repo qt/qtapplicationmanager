@@ -74,19 +74,88 @@ void BubblewrapContainerManager::setConfiguration(const QVariantMap &configurati
     if (m_configuration.value(u"bindMountHome"_s).toBool())
         m_bwrapArguments += { u"--ro-bind"_s, QDir::homePath(), QDir::homePath() };
 
+    m_bwrapArguments += u"--clearenv"_s;
+
     // network setup
-    QVariant unshareNet = m_configuration.value(u"unshareNetwork"_s);
-    if (unshareNet.typeId() == QMetaType::Bool) {
-        m_unshareNetwork = unshareNet.toBool();
-    } else {
-        m_unshareNetwork = true;
-        m_networkSetupScript = unshareNet.toString();
+    QStringList sharedNamespaces = { u"-all"_s };
+
+    const QVariant unshareNetwork = m_configuration.value(u"unshareNetwork"_s);
+    if (unshareNetwork.isValid()) {
+        qCWarning(lcBwrap) << "The 'unshareNetwork' config value is deprecated, use 'sharedNamespaces' instead";
+
+        if (unshareNetwork.typeId() == QMetaType::Bool) {
+            if (unshareNetwork.toBool() == false)
+                sharedNamespaces.append(u"+net"_s);
+        } else {
+            m_networkSetupScript = unshareNetwork.toString();
+        }
+    }
+    static const QStringList knownNamespaces = { u"all"_s, u"net"_s, u"user"_s, u"ipc"_s,
+                                                u"pid"_s, u"net"_s, u"uts"_s, u"cgroup"_s };
+
+    sharedNamespaces = m_configuration.value(u"sharedNamespaces"_s, sharedNamespaces).toStringList();
+
+    QStringList namespaceList;
+    bool minusAll = true;
+    bool firstNSEntry = true;
+    for (const auto &sns : std::as_const(sharedNamespaces)) {
+        bool plus = sns.startsWith(u'+');
+        bool minus = sns.startsWith(u'-');
+
+        if (!plus && !minus) {
+            qCWarning(lcBwrap) << "'sharedNamespaces' must start with + or -, ignoring" << sns;
+            continue;
+        }
+
+        const QString ns = sns.mid(1);
+        if (!knownNamespaces.contains(ns)) {
+            qCWarning(lcBwrap) << "'sharedNamespaces' can only be one of" << knownNamespaces.join(u", ")
+                               << ", ignoring" << sns;
+            continue;
+        }
+
+        if (firstNSEntry) {
+            if (ns != u"all"_s) {
+                qCWarning(lcBwrap) << "'sharedNamespaces' must start with +all or -all, ignoring" << sns;
+                break;
+            }
+            minusAll = minus;
+            firstNSEntry = false;
+        } else {
+            if ((plus && !minusAll) || (minus && minusAll)) {
+                qCWarning(lcBwrap) << "'sharedNamespaces' should not repeat the +/- from the first 'all' entry, ignoring" << sns;
+                continue;
+            }
+            namespaceList << ns;
+        }
+    }
+    bool sharedNetwork = true; // for better diagnostics down below
+
+    if (minusAll) { // unshare everything, but...
+        if (namespaceList.isEmpty()) {
+            m_bwrapArguments += u"--unshare-all"_s;
+            sharedNetwork = false;
+        } else {
+            const auto allNamespaces = knownNamespaces.mid(1); // skip "all"
+            for (const auto &ns : allNamespaces) {
+                if (!namespaceList.contains(ns)) {
+                    m_bwrapArguments += u"--unshare-"_s + ns;
+                    sharedNetwork = sharedNetwork && (ns != u"net"_s);
+                }
+            }
+        }
+    } else { // share everything, but...
+        for (const auto &ns : std::as_const(namespaceList)) {
+            m_bwrapArguments += u"--unshare-"_s + ns;
+            sharedNetwork = sharedNetwork && (ns != u"net"_s);
+        }
     }
 
-    m_bwrapArguments += u"--clearenv"_s;
-    m_bwrapArguments += u"--unshare-all"_s;
-    if (!m_unshareNetwork)
-        m_bwrapArguments += u"--share-net"_s;
+    m_networkSetupScript = m_configuration.value(u"networkSetupScript"_s, m_networkSetupScript).toString();
+
+    if (!m_networkSetupScript.isEmpty() && sharedNetwork)
+        qCWarning(lcBwrap) << "'networkSetupScript' is set, but the network namespace is already shared via 'sharedNamespaces'.";
+
     m_bwrapArguments += u"--die-with-parent"_s;
     m_bwrapArguments += u"--new-session"_s;
 

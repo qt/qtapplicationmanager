@@ -114,6 +114,5 @@ private:
     QVariantMap m_configuration;
     QStringList m_bwrapArguments;
     QString m_bwrapPath;
-    bool m_unshareNetwork = false;
     QString m_networkSetupScript;
 };

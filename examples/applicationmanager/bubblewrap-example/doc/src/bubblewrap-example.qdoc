@@ -94,14 +94,15 @@ following snippet in the am-config.yaml:
 
 \quotefromfile applicationmanager/bubblewrap-example/am-config.yaml
 \skipto containers:
-\printuntil unshareNetwork:
-\printuntil unshareNetwork:
+\printuntil sharedNamespaces:
+\printuntil networkSetupScript:
 
-If the applications shouldn't have any network access, you can change the \c unshareNetwork option
-to \c yes. If you start the networkinfo application you will see that no ip address is available
-inside the container anymore. Similar the browser application doesn't have a network.
+If the applications shouldn't have any network access at all, you can change the
+\c sharedNamespaces option to \c{[ '-all' ]}. If you then start the networkinfo application, you
+will see that no ip address is available inside the container anymore. Likewise, the browser
+application doesn't have network access.
 
-Another option is to set \c unshareNetwork to the path of a script. This script will be executed
+Another option is to set \c networkSetupScript to the path of a script. This script will be executed
 for every container and can be used to setup the network devices accordingly. The script which is
 provided with this example creates a new network device on the host and shares this device into the
 container. The newly created network device can now be bridged and filtered on the host side

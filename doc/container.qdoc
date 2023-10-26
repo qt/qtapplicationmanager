@@ -273,7 +273,7 @@ configured in the application manager's config file using its unique ID: \c bubb
 \badcode
 containers:
   bubblewrap:
-    unshareNetwork: no
+    sharedNamespaces: [ '-all', '+net' ]
     bindMountHome: yes
     configuration:
       symlink:
@@ -343,12 +343,28 @@ The \c bubblewrap container accepts the following configuration settings:
         for development purposes. (default: false)
 
   \row
+    \li \c sharedNamespaces
+    \li list<string>
+    \li This gives you fine-grained control over the shared kernel namespaces that are (not) shared
+        with the container. The following namespaces are supported:
+        \c{all, net, user, ipc, pid, net, uts, cgroup}.
+        Each entry has to be prefixed with \b{+} or \b{-} to indicate whether the namespace should
+        be shared or not. The first entry has to be \c all and sets the baseline: you can unshare
+        all and then share specific namespaces (\c{-all, +pid, +ipc}), or you can share all and
+        then unshare individual namespaces (\c{+all, -net}). (default: \c{-all})
+
+  \row
+    \li \c networkSetupScript
+    \li string
+    \li The path to a shell script, that is executed when the container starts and stops in order
+        to correctly setup and shutdown networking for the container.
+        See the \l {Bubblewrap Container Example} for an example script.
+        \note You most likely want to have the network namespace shared, if you set this option:
+              \c{ sharedNamespaces: [ '-all', '+net' ]}
+
+  \row
     \li \c unshareNetwork
     \li string
-    \li Network configuration of the container. When configured as \c yes (default), no network is
-        shared into the container. With \c no, the full host network is shared. For a more detailed
-        configuration a path to a shell script can be set. The shell script is executed when the
-        container starts and stops. See \l {Bubblewrap Container Example} for an example script.
-
+    \li \e Deprecated. Please use \c sharedNamespaces and \c networkSetupScript instead.
 \endtable
 */

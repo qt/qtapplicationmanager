@@ -329,7 +329,8 @@ void tst_Yaml::mergedCache()
     QVERIFY(cache2File.write(cache2Resource.readAll()) > 0);
     QVERIFY(cache2File.flush());
 
-    QStringList files = { qSL(":/data/cache1.yaml"), cache2File.fileName() };
+    const QString cache2FileName = QFileInfo(cache2File).absoluteFilePath();
+    QStringList files = { qSL(":/data/cache1.yaml"), cache2FileName };
 
     for (int step = 0; step < 4; ++step) {
         AbstractConfigCache::Options options = AbstractConfigCache::MergedResult;

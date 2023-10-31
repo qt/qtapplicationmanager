@@ -191,6 +191,24 @@ void WaylandCompositor::registerOutputWindow(QQuickWindow* window)
     output->setSizeFollowsWindow(true);
     m_outputs.append(output);
     window->winId();
+
+    // Qt doesn't automatically de-focus a Wayland client, if a control in the Sys-UI gets focus
+    //TODO: check if upstreaming to QtWaylandCompositor is an option
+    connect(window, &QQuickWindow::activeFocusItemChanged,
+            this, [this, window]() {
+        QQuickItem *lastFocusItem = window->property("_am_lastFocusItem").value<QQuickItem *>();
+        QQuickItem *currentFocusItem = window->activeFocusItem();
+
+        window->setProperty("_am_lastFocusItem", QVariant::fromValue(currentFocusItem));
+
+        if ((lastFocusItem != currentFocusItem)
+            && qobject_cast<QWaylandQuickItem *>(lastFocusItem)
+            && !qobject_cast<QWaylandQuickItem *>(currentFocusItem)) {
+
+            if (QWaylandSeat *target = defaultSeat())
+                target->setKeyboardFocus(nullptr);
+        }
+    });
 }
 
 WaylandQtAMServerExtension *WaylandCompositor::amExtension()

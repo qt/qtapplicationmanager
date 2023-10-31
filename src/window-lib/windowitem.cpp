@@ -110,8 +110,8 @@ WindowItem::WindowItem(QQuickItem *parent)
     m_contentItem->setWidth(width());
     m_contentItem->setHeight(height());
 
-    connect(this, &QQuickItem::activeFocusChanged, this, [this] () {
-        if (hasActiveFocus() && m_impl)
+    connect(this, &QQuickItem::activeFocusChanged, this, [this](bool hasFocus) {
+        if (hasFocus && m_impl)
             m_impl->forwardActiveFocus();
     });
 }
@@ -400,6 +400,10 @@ void WindowItem::InProcessImpl::setFocusOnClick(bool focusOnClick)
 
 #if defined(AM_MULTI_PROCESS)
 
+// Wayland has no concept of clients ignoring/accepting key events, but even if it did, we'd get
+// back the response far too late to be useful. In order to give the sys-ui a chance to handle
+// key-events at all when a Wayland client has focus, we need to set the "ignore" flag on these
+// events.
 class WaylandQuickIgnoreKeyItem : public QWaylandQuickItem
 {
 public:
@@ -455,7 +459,7 @@ void WindowItem::WaylandImpl::createWaylandItem()
 
 void WindowItem::WaylandImpl::forwardActiveFocus()
 {
-    m_waylandItem->forceActiveFocus();
+    m_waylandItem->takeFocus();
 }
 
 bool WindowItem::WaylandImpl::focusOnClick() const

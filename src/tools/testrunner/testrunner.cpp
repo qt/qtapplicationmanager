@@ -77,8 +77,11 @@ void TestRunner::setup(Configuration *cfg)
 
     // Register the test object and application manager test add-on
     qApp->setProperty("_am_buildConfig", cfg->buildConfig());
-    qmlRegisterSingletonType<AmTest>("QtApplicationManager.SystemUI", 2, 0, "AmTest",
+
+    // this is the only non-declarative registration, as this is only available for test runs
+    qmlRegisterSingletonType<AmTest>("QtApplicationManager.Test", 2, 0, "AmTest",
                                      [](QQmlEngine *, QJSEngine *) {
+        QQmlEngine::setObjectOwnership(AmTest::instance(), QQmlEngine::CppOwnership);
         return AmTest::instance();
     });
 

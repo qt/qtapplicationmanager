@@ -583,23 +583,6 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     if (!quickControlsStyle.isEmpty())
         qputenv("QT_QUICK_CONTROLS_STYLE", quickControlsStyle.toLocal8Bit());
 
-    qmlRegisterType<Notification>("QtApplicationManager", 2, 0, "Notification");
-    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
-
-    // shared-main-lib
-    qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
-    qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
-    qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
-    qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
-    qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
-    qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
-    qmlRegisterType<ProcessStatus>("QtApplicationManager.SystemUI", 2, 0, "ProcessStatus");
-    qmlRegisterSingletonType<StartupTimer>("QtApplicationManager", 2, 0, "StartupTimer",
-                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
-        QQmlEngine::setObjectOwnership(StartupTimer::instance(), QQmlEngine::CppOwnership);
-        return StartupTimer::instance();
-    });
-
     StartupTimer::instance()->checkpoint("after QML registrations");
 
     m_engine = new QQmlApplicationEngine(this);

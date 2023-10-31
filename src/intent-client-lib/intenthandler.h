@@ -23,7 +23,6 @@ class AbstractIntentHandler : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/AbstractIntentHandler 2.0 UNCREATABLE")
 
 public:
     AbstractIntentHandler(QObject *parent = nullptr);
@@ -42,7 +41,6 @@ protected:
 class IntentHandler : public AbstractIntentHandler
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/IntentHandler 2.0")
     Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds NOTIFY intentIdsChanged FINAL)
 
 public:

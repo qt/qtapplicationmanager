@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtTest
 import QtApplicationManager.SystemUI
+import QtApplicationManager.Test
 
 TestCase {
     id: root

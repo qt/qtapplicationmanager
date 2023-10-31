@@ -32,8 +32,6 @@ class Package;
 class Application : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationObject 2.0 UNCREATABLE")
-
     Q_PROPERTY(QString id READ id CONSTANT FINAL)
     Q_PROPERTY(QString name READ name NOTIFY bulkChange FINAL)
     Q_PROPERTY(QVariantMap names READ names NOTIFY bulkChange FINAL)

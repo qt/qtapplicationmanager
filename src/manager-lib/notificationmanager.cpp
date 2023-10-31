@@ -236,9 +236,6 @@ NotificationManager *NotificationManager::createInstance()
         return new QmlInProcNotificationImpl(notification, applicationId);
     });
 
-    qmlRegisterType<NotificationModel>("QtApplicationManager.SystemUI", 2, 2, "NotificationModel");
-    qmlRegisterSingletonType<NotificationManager>("QtApplicationManager.SystemUI", 2, 0, "NotificationManager",
-                                                  &NotificationManager::instanceForQml);
     return s_instance = new NotificationManager();
 }
 
@@ -247,12 +244,6 @@ NotificationManager *NotificationManager::instance()
     if (!s_instance)
         qFatal("NotificationManager::instance() was called before createInstance().");
     return s_instance;
-}
-
-QObject *NotificationManager::instanceForQml(QQmlEngine *, QJSEngine *)
-{
-    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
-    return instance();
 }
 
 NotificationManager::NotificationManager(QObject *parent)

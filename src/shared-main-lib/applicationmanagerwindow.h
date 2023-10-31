@@ -27,7 +27,6 @@ class ApplicationManagerWindowAttachedImpl;
 class ApplicationManagerWindow : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.Application/ApplicationManagerWindow 2.0")
     Q_INTERFACES(QQmlParserStatus)
     QML_ATTACHED(ApplicationManagerWindowAttached)
     Q_PROPERTY(bool inProcess READ isInProcess CONSTANT FINAL)

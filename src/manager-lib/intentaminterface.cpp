@@ -253,21 +253,6 @@ QString IntentClientAMImplementation::currentApplicationId(QObject *hint)
 void IntentClientAMImplementation::initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false)
 {
     IntentClientSystemInterface::initialize(intentClient);
-
-    qmlRegisterSingletonType<IntentClient>("QtApplicationManager", 2, 0, "IntentClient",
-                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
-        QQmlEngine::setObjectOwnership(IntentClient::instance(), QQmlEngine::CppOwnership);
-        return IntentClient::instance();
-    });
-    qmlRegisterRevision<IntentClient, 1>("QtApplicationManager", 2, 1);
-
-    qmlRegisterUncreatableType<IntentClientRequest>("QtApplicationManager", 2, 0, "IntentRequest",
-                                                    qSL("Cannot create objects of type IntentRequest"));
-    qmlRegisterUncreatableType<IntentClientRequest, 1>("QtApplicationManager", 2, 1, "IntentRequest",
-                                                       qSL("Cannot create objects of type IntentRequest"));
-    qmlRegisterType<IntentHandler>("QtApplicationManager.Application", 2, 0, "IntentHandler");
-
-    qmlRegisterType<IntentServerHandler>("QtApplicationManager.SystemUI", 2, 0, "IntentServerHandler");
 }
 
 void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest> icr)

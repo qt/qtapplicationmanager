@@ -237,14 +237,7 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QStrin
         return new SystemFrameTimerImpl(frameTimer);
     });
 
-    qmlRegisterSingletonType<WindowManager>("QtApplicationManager.SystemUI", 2, 0, "WindowManager",
-                                            &WindowManager::instanceForQml);
-
-    qmlRegisterUncreatableType<Window>("QtApplicationManager.SystemUI", 2, 0, "WindowObject", qSL("Cannot create objects of type WindowObject"));
     qRegisterMetaType<Window*>("Window*");
-
-    qmlRegisterType<WindowItem>("QtApplicationManager.SystemUI", 2, 0, "WindowItem");
-
     qRegisterMetaType<InProcessSurfaceItem*>("InProcessSurfaceItem*");
     qRegisterMetaType<QSharedPointer<InProcessSurfaceItem>>("QSharedPointer<InProcessSurfaceItem>");
 
@@ -256,12 +249,6 @@ WindowManager *WindowManager::instance()
     if (!s_instance)
         qFatal("WindowManager::instance() was called before createInstance().");
     return s_instance;
-}
-
-QObject *WindowManager::instanceForQml(QQmlEngine *, QJSEngine *)
-{
-    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
-    return instance();
 }
 
 void WindowManager::shutDown()

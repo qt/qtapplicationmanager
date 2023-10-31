@@ -367,28 +367,9 @@ ApplicationManager *ApplicationManager::createInstance(bool singleProcess)
 
     std::unique_ptr<ApplicationManager> am(new ApplicationManager(singleProcess));
 
-    qmlRegisterSingletonType<ApplicationManager>("QtApplicationManager.SystemUI", 2, 0, "ApplicationManager",
-                                                 &ApplicationManager::instanceForQml);
-    qmlRegisterRevision<ApplicationManager, 2>("QtApplicationManager.SystemUI", 2, 2);
-    qmlRegisterType<ApplicationModel>("QtApplicationManager.SystemUI", 2, 0, "ApplicationModel");
-    qmlRegisterUncreatableType<Application>("QtApplicationManager.SystemUI", 2, 0, "ApplicationObject",
-                                            qSL("Cannot create objects of type ApplicationObject"));
-    qRegisterMetaType<Application*>("Application*");
-    qmlRegisterUncreatableType<AbstractRuntime>("QtApplicationManager.SystemUI", 2, 0, "Runtime",
-                                                qSL("Cannot create objects of type Runtime"));
-    qRegisterMetaType<AbstractRuntime*>("AbstractRuntime*");
-    qmlRegisterUncreatableType<AbstractContainer>("QtApplicationManager.SystemUI", 2, 0, "Container",
-                                                  qSL("Cannot create objects of type Container"));
-    qRegisterMetaType<AbstractContainer*>("AbstractContainer*");
-
-    qmlRegisterUncreatableType<Am>("QtApplicationManager.SystemUI", 2, 0, "Am",
-                                   qSL("Cannot create objects of type Am"));
-
     qRegisterMetaType<Am::RunState>();
     qRegisterMetaType<Am::ExitStatus>();
     qRegisterMetaType<Am::ProcessError>();
-
-    qmlRegisterModule("QtApplicationManager", 2, 2);
 
     if (Q_UNLIKELY(!PackageManager::instance()))
         qFatal("ApplicationManager::createInstance() was called before a PackageManager singleton was instantiated.");
@@ -413,12 +394,6 @@ ApplicationManager *ApplicationManager::instance()
     if (!s_instance)
         qFatal("ApplicationManager::instance() was called before createInstance().");
     return s_instance;
-}
-
-QObject *ApplicationManager::instanceForQml(QQmlEngine *, QJSEngine *)
-{
-    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
-    return instance();
 }
 
 ApplicationManager::ApplicationManager(bool singleProcess, QObject *parent)

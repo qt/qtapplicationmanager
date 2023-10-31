@@ -26,7 +26,6 @@ class WaylandQuickIgnoreKeyItem;
 class WindowItem : public QQuickFocusScope
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/WindowItem 2.0")
 
     //TODO for Qt7: rename the "window" property, as QQuickItem has a window() getter and a
     // windowChanged() signal.

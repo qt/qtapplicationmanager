@@ -14,6 +14,7 @@ qt_internal_add_app(appman-launcher-qml
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
         Qt::AppManSharedMainPrivate
+        Qt::AppManQmlApplicationPrivate
         Qt::AppManApplicationMainPrivate
         Qt::AppManPluginInterfacesPrivate
     DEFINES

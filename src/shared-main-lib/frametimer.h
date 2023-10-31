@@ -21,8 +21,6 @@ class FrameTimerImpl;
 class FrameTimer : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/FrameTimer 2.0")
-
     Q_PROPERTY(qreal averageFps READ averageFps NOTIFY updated FINAL)
     Q_PROPERTY(qreal minimumFps READ minimumFps NOTIFY updated FINAL)
     Q_PROPERTY(qreal maximumFps READ maximumFps NOTIFY updated FINAL)

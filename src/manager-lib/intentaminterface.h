@@ -165,8 +165,6 @@ private:
 class IntentServerHandler : public AbstractIntentHandler
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentServerHandler 2.0")
-
     // the following properties cannot be changed after construction (hence, also no 'changed' signal)
     // these replace the meta-data that's provided through the info.yaml manifests for client-side
     // handlers

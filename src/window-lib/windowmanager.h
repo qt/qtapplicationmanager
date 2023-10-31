@@ -53,8 +53,6 @@ class WindowManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.WindowManager")
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/WindowManager 2.0 SINGLETON")
-
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(bool runningOnDesktop READ isRunningOnDesktop CONSTANT FINAL)
     Q_PROPERTY(bool slowAnimations READ slowAnimations WRITE setSlowAnimations NOTIFY slowAnimationsChanged FINAL)
@@ -64,7 +62,6 @@ public:
     ~WindowManager() override;
     static WindowManager *createInstance(QQmlEngine *qmlEngine, const QString &waylandSocketName = QString());
     static WindowManager *instance();
-    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
     void shutDown();
 

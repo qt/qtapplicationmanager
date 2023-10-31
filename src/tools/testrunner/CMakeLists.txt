@@ -13,6 +13,8 @@ qt_internal_add_app(appman-qmltestrunner
         Qt::QuickTestPrivate
         Qt::TestPrivate
         Qt::AppManMainPrivate
+        Qt::AppManQmlSystemUIPrivate
+        Qt::AppManQmlApplicationPrivate
 )
 
 include(QtAppManBuildConfig)

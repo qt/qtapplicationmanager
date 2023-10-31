@@ -25,8 +25,6 @@ class WindowItem;
 class Window : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/WindowObject 2.0 UNCREATABLE")
-
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged FINAL)
     Q_PROPERTY(ContentState contentState READ contentState NOTIFY contentStateChanged FINAL)
     Q_PROPERTY(Application* application READ application CONSTANT FINAL)

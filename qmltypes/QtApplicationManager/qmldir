@@ -1,3 +1,0 @@
-module QtApplicationManager
-typeinfo plugins.qmltypes
-depends QtQuick auto

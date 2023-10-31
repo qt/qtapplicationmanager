@@ -128,15 +128,6 @@ IntentServer *IntentServer::createInstance(IntentServerSystemInterface *systemIn
     std::unique_ptr<IntentServer> is(new IntentServer(systemInterface));
     systemInterface->initialize(is.get());
 
-    qmlRegisterType<Intent>("QtApplicationManager.SystemUI", 2, 0, "IntentObject");
-    qmlRegisterType<Intent, 1>("QtApplicationManager.SystemUI", 2, 1, "IntentObject");
-    qmlRegisterType<IntentModel>("QtApplicationManager.SystemUI", 2, 0, "IntentModel");
-
-    qmlRegisterSingletonType<IntentServer>("QtApplicationManager.SystemUI", 2, 0, "IntentServer",
-                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
-        QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
-        return instance();
-    });
     return s_instance = is.release();
 }
 

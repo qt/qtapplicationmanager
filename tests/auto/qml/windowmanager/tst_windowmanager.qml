@@ -5,6 +5,7 @@
 import QtQuick 2.11
 import QtTest 1.0
 import QtApplicationManager.SystemUI 2.0
+import QtApplicationManager.Test
 
 TestCase {
     id: testCase

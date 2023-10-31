@@ -6,6 +6,7 @@
 import QtQuick 2.3
 import QtTest 1.0
 import QtApplicationManager.SystemUI 2.0
+import QtApplicationManager.Test
 
 // Tests are meaningless in single-process mode, but still work
 

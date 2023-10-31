@@ -18,9 +18,13 @@
 #include "main.h"
 #include "exception.h"
 #include "utilities.h"
+#include "qml-utilities.h"
 #include "qtyaml.h"
 #include <QtAppManMain/configuration.h>
 
+
+AM_QML_REGISTER_TYPES(QtApplicationManager_SystemUI)
+AM_QML_REGISTER_TYPES(QtApplicationManager)
 
 QT_USE_NAMESPACE_AM
 using namespace QtYaml;

@@ -25,17 +25,13 @@ if(NOT QT_FEATURE_am_tools_only)
     add_subdirectory(window-lib)
     add_subdirectory(main-lib)
     add_subdirectory(plugins)
+    add_subdirectory(qml)
     add_subdirectory(tools/appman)
     add_subdirectory(tools/testrunner)
 
     if(TARGET Qt::DBus)
         add_subdirectory(application-main-lib)
         add_subdirectory(tools/controller)
-
-        # This tool links against everything to extract the Qml type information
-        if (QT_FEATURE_am_installer)
-            add_subdirectory(tools/dumpqmltypes)
-        endif()
 
         if (QT_FEATURE_am_multi_process)
             add_subdirectory(tools/launcher-qml)

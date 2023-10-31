@@ -32,11 +32,8 @@
 #include <QQuickWindow>
 
 #include "applicationmain.h"
-#include "applicationmanagerwindow.h"
-#include "waylandapplicationmanagerwindowimpl.h"
 #include "applicationinterface.h"
 #include "dbusapplicationinterfaceimpl.h"
-#include "notification.h"
 #include "qtyaml.h"
 #include "global.h"
 #include "logging.h"
@@ -53,13 +50,9 @@
 #include "qml-utilities.h"
 #include "launcher-qml_p.h"
 
-// shared-main-lib
-#include "cpustatus.h"
-#include "frametimer.h"
-#include "gpustatus.h"
-#include "iostatus.h"
-#include "memorystatus.h"
-#include "monitormodel.h"
+
+AM_QML_REGISTER_TYPES(QtApplicationManager)
+AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
 
 
 QT_USE_NAMESPACE_AM
@@ -159,23 +152,6 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QStr
 {
     connect(&m_engine, &QObject::destroyed, QCoreApplication::instance(), &QCoreApplication::quit);
     CrashHandler::setQmlEngine(&m_engine);
-
-    // shared-qmlapi-lib
-    qmlRegisterType<ApplicationManagerWindow>("QtApplicationManager.Application", 2, 0, "ApplicationManagerWindow");
-    qmlRegisterType<Notification>("QtApplicationManager", 2, 0, "Notification");
-
-    // shared-main-lib
-    qmlRegisterType<CpuStatus>("QtApplicationManager", 2, 0, "CpuStatus");
-    qmlRegisterType<FrameTimer>("QtApplicationManager", 2, 0, "FrameTimer");
-    qmlRegisterType<GpuStatus>("QtApplicationManager", 2, 0, "GpuStatus");
-    qmlRegisterType<IoStatus>("QtApplicationManager", 2, 0, "IoStatus");
-    qmlRegisterType<MemoryStatus>("QtApplicationManager", 2, 0, "MemoryStatus");
-    qmlRegisterType<MonitorModel>("QtApplicationManager", 2, 0, "MonitorModel");
-    qmlRegisterSingletonType<StartupTimer>("QtApplicationManager", 2, 0, "StartupTimer",
-                                           [](QQmlEngine *, QJSEngine *) -> QObject * {
-        QQmlEngine::setObjectOwnership(StartupTimer::instance(), QQmlEngine::CppOwnership);
-        return StartupTimer::instance();
-    });
 
     m_configuration = am->runtimeConfiguration();
 

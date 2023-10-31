@@ -15,7 +15,6 @@ QT_BEGIN_NAMESPACE_AM
 class Am : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/Am 2.0 UNCREATABLE")
 
 public:
     // we cannot use QProcess enums directly, since some supported platforms might

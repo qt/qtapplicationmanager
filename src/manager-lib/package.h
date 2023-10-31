@@ -20,7 +20,6 @@ class Application;
 class Package : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/PackageObject 2.0 UNCREATABLE")
     Q_PROPERTY(QString id READ id CONSTANT FINAL)
     Q_PROPERTY(bool builtIn READ isBuiltIn NOTIFY bulkChange FINAL)
     Q_PROPERTY(bool builtInHasRemovableUpdate READ builtInHasRemovableUpdate NOTIFY bulkChange FINAL)

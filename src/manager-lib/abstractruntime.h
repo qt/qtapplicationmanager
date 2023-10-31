@@ -78,8 +78,6 @@ signals:
 class AbstractRuntime : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/Runtime 2.0 UNCREATABLE")
-
     Q_PROPERTY(AbstractContainer *container READ container CONSTANT FINAL)
 
 public:

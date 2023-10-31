@@ -17,8 +17,6 @@ QT_BEGIN_NAMESPACE_AM
 class MonitorModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/MonitorModel 2.0")
-
     Q_PROPERTY(QQmlListProperty<QObject> dataSources READ dataSources NOTIFY dataSourcesChanged FINAL)
     Q_CLASSINFO("DefaultProperty", "dataSources")
 

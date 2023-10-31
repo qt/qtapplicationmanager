@@ -12,5 +12,6 @@ qt_internal_add_test(tst_controller-tool
         Qt::AppManCommonPrivate
         Qt::AppManIntentServerPrivate
         Qt::AppManMainPrivate
+        Qt::AppManQmlSystemUIPrivate
         Qt::AppManManagerPrivate
 )

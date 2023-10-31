@@ -51,8 +51,6 @@ class PackageManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.PackageManager")
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/PackageManager 2.0 SINGLETON")
-
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     // these are const on purpose - these should never change in a running system
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT FINAL)
@@ -77,7 +75,6 @@ public:
     static PackageManager *createInstance(PackageDatabase *packageDatabase,
                                           const QString &documentPath);
     static PackageManager *instance();
-    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
     void enableInstaller();
     void registerPackages();

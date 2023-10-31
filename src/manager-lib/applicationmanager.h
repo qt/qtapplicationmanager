@@ -41,8 +41,6 @@ class ApplicationManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/ApplicationManager 2.2 SINGLETON")
-
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT FINAL)
     Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged SCRIPTABLE false FINAL)
@@ -58,7 +56,6 @@ public:
     ~ApplicationManager() override;
     static ApplicationManager *createInstance(bool singleProcess);
     static ApplicationManager *instance();
-    static QObject *instanceForQml(QQmlEngine *qmlEngine, QJSEngine *);
 
     bool isSingleProcess() const;
     bool isDummy() const { return false; }

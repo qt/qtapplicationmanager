@@ -17,8 +17,6 @@ QT_BEGIN_NAMESPACE_AM
 class Intent : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager.SystemUI/IntentObject 2.1 UNCREATABLE")
-
     Q_PROPERTY(QString intentId READ intentId CONSTANT FINAL)
     Q_PROPERTY(QString packageId READ packageId CONSTANT FINAL)
     Q_PROPERTY(QString applicationId READ applicationId CONSTANT FINAL)

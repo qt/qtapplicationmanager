@@ -4,6 +4,7 @@
 import QtQuick
 import QtTest
 import QtApplicationManager.SystemUI
+import QtApplicationManager.Test
 
 TestCase {
     id: root

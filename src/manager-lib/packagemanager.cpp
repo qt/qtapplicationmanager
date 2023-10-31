@@ -300,12 +300,6 @@ PackageManager *PackageManager::instance()
     return s_instance;
 }
 
-QObject *PackageManager::instanceForQml(QQmlEngine *, QJSEngine *)
-{
-    QQmlEngine::setObjectOwnership(instance(), QQmlEngine::CppOwnership);
-    return instance();
-}
-
 void PackageManager::enableInstaller()
 {
 #if !defined(AM_DISABLE_INSTALLER)
@@ -460,10 +454,6 @@ QVector<Package *> PackageManager::packages() const
 
 void PackageManager::registerQmlTypes()
 {
-    qmlRegisterSingletonType<PackageManager>("QtApplicationManager.SystemUI", 2, 0, "PackageManager",
-                                             &PackageManager::instanceForQml);
-    qmlRegisterUncreatableType<Package>("QtApplicationManager.SystemUI", 2, 0, "PackageObject",
-                                        qSL("Cannot create objects of type PackageObject"));
     qRegisterMetaType<Package *>("Package*");
 
     s_roleNames.insert(PMRoles::Id, "packageId");

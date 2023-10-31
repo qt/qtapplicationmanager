@@ -19,7 +19,6 @@ QT_BEGIN_NAMESPACE_AM
 class IoStatus : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("AM-QmlType", "QtApplicationManager/IoStatus 2.0")
     Q_PROPERTY(QStringList deviceNames READ deviceNames WRITE setDeviceNames NOTIFY deviceNamesChanged FINAL)
     Q_PROPERTY(QVariantMap ioLoad READ ioLoad NOTIFY ioLoadChanged FINAL)
 

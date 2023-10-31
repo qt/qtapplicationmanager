@@ -16,7 +16,7 @@ ApplicationManagerWindow {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                var notification = ApplicationInterface.createNotification();
+                let notification = ApplicationInterface.createNotification();
                 notification.summary = "Let there be light!"
                 notification.show();
             }

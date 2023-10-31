@@ -34,14 +34,13 @@ ApplicationManagerWindow {
                     rotation.pause();
                     root.setWindowProperty("rotation", parent.rotation);
                 }
-                popUp.visible = rotation.paused;
             }
         }
     }
 
     ApplicationManagerWindow {
         id: popUp
-        visible: false
+        visible: rotation.paused
         color: "orangered"
 
         Text {

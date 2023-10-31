@@ -28,9 +28,9 @@ Item {
             text: "The following features are supported:\n" +
                   "\u2022 Start applications by clicking on an icon in the top left\n" +
                   "\u2022 Stop an application by clicking on the icon in the top left again\n" +
-                  "\u2022 Close application windows by clicking on the top left window decoration rectangle\n" +
-                  "\u2022 Bring applications forward by clicking on the decoration\n" +
-                  "\u2022 Drag windows by pressing on the window decoration and moving them\n" +
+                  "\u2022 Close an application window by clicking on the window's close icon\n" +
+                  "\u2022 Raise a window and set focus by pressing on the window (focus window is blue)\n" +
+                  "\u2022 Drag a window by pressing on the top window decoration and moving them\n" +
                   "\u2022 The System UI sends a 'propA' change when an app starts\n" +
                   "\u2022 The System UI and App2 react to window property changes with a debug message\n" +
                   "\u2022 Stop or restart App1 animations with a click\n" +

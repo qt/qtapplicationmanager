@@ -6,7 +6,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Window
 import QtApplicationManager.SystemUI
 
 Window {
@@ -19,7 +18,7 @@ Window {
 
     Text {
         anchors.bottom: parent.bottom
-        text: (ApplicationManager.singleProcess ? "Single" : "Multi") + "-Process Mode  |  " + PackageManager.architecture
+        text: `${ApplicationManager.singleProcess ? "Single" : "Multi"}-process mode  |  ${PackageManager.architecture}`
     }
 
     // Application launcher panel
@@ -28,17 +27,15 @@ Window {
             model: ApplicationManager
 
             Image {
-                id: delegate
+                required property string icon
                 required property bool isRunning
-                required property var icon
-                required property var application
+                required property ApplicationObject application
                 source: icon
                 opacity: isRunning ? 0.3 : 1.0
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: delegate.isRunning ? delegate.application.stop()
-                                                  : delegate.application.start("documentUrl");
+                    onClicked: parent.isRunning ? parent.application.stop() : parent.application.start("documentUrl");
                 }
             }
         }
@@ -48,36 +45,43 @@ Window {
     Repeater {
         model: ListModel { id: topLevelWindowsModel }
 
-        delegate: Image {
+        delegate: FocusScope {
             id: winChrome
-            required property WindowObject window
             required property int index
-            source: "chrome-bg.png"
+            required property WindowObject window
+
+            width: chromeImg.width
+            height: chromeImg.height
             z: index
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "Decoration: " + (winChrome.window.application ? winChrome.window.application.names["en"]
-                                                                     : 'External Application')
-            }
+            Image {
+                id: chromeImg
+                source: winChrome.activeFocus ? "chrome-active.png" : "chrome-bg.png"
 
-            MouseArea {
-                anchors.fill: parent
-                drag.target: parent
-                onPressed: topLevelWindowsModel.move(winChrome.index, topLevelWindowsModel.count - 1, 1);
-            }
-
-            Rectangle {
-                width: 25; height: 25
-                color: "chocolate"
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: (25 - contentHeight) / 2
+                    color: "white"
+                    text: "Decoration: " + (winChrome.window.application?.names["en"] ?? 'External Application')
+                }
 
                 MouseArea {
-                    anchors.fill: parent
-                    onClicked: winChrome.window.close();
+                    width: chromeImg.width; height: 25
+                    drag.target: winChrome
+                    onPressed: winItem.forceActiveFocus();
+                }
+
+                Image {
+                    source: "close.png"
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: winChrome.window.close();
+                    }
                 }
             }
 
             WindowItem {
+                id: winItem
                 anchors.fill: parent
                 anchors.margins: 3
                 anchors.topMargin: 25
@@ -92,9 +96,15 @@ Window {
                 }
             }
 
+            onFocusChanged: (focus) => {
+                if (focus)
+                    topLevelWindowsModel.move(winChrome.index, topLevelWindowsModel.count - 1, 1);
+            }
+
             Component.onCompleted: {
                 x = 300 + winChrome.index * 50;
                 y =  10 + winChrome.index * 30;
+                winItem.forceActiveFocus();
             }
         }
     }
@@ -109,9 +119,8 @@ Window {
         Connections {
             target: popUpContainer.window
             function onContentStateChanged() {
-                if (popUpContainer.window.contentState === WindowObject.NoSurface) {
+                if (popUpContainer.window.contentState === WindowObject.NoSurface)
                     popUpContainer.window = null;
-                }
             }
         }
     }

@@ -22,9 +22,9 @@ The following features are supported:
 \list
     \li Start applications by clicking on an icon in the top left
     \li Stop an application by clicking on the icon in the top left again
-    \li Close application windows by clicking on the top left window decoration rectangle
-    \li Bring applications forward by clicking on the decoration
-    \li Drag windows by pressing on the window decoration and moving them
+    \li Close an application window by clicking on the window's close icon
+    \li Raise a window and set focus by pressing on the window (focus window is blue)
+    \li Drag a window by pressing on the top window decoration and moving them
     \li The System UI sends a 'propA' change when an app starts
     \li The System UI and App2 react to window property changes with a debug message
     \li Stop or restart App1 animations with a click
@@ -89,15 +89,16 @@ WindowManager. The code that populates the window role of this ListModel is show
 now let's focus on what this Repeater's delegate consists of:
 
 \list
-    \li A mostly transparent background \l{Image}. The location depends on the \c model.index,
-        hence each application window has a different initial location.
+    \li The enclosing type is a \l{FocusSope} that allows to track focus changes.
+    \li A mostly transparent \l{Image} that acts as the window decoration (border). A blue border
+        indicates the focus window, otherwise the border is grey. The location depends on the
+        \c model.index, hence each application window has a different initial location.
     \li The name of the application that created that window, prefixed with "Decoration" on top.
         This name is from the related ApplicationObject, defined in the application's
         \l{Manifest Definition}{info.yaml} file.
-    \li A MouseArea for dragging and raising the window. The MouseArea fills the entire window. The
-        WindowItem containing the application's window is placed on top of it and hence it will not
-        handle dragging.
-    \li A small chocolate-colored \l Rectangle on the top left corner for closing the window (see
+    \li A MouseArea for dragging and raising the window. Only the top decoration bar is covered by
+        that area and will hence handle dragging.
+    \li A close icon on the top left corner for closing the window (see
         \l{WindowObject::close()}{WindowObject.close()}). Since our sample applications only have one
         top-level window, closing it causes the corresponding application to quit.
     \li The centerpiece: a \l WindowItem to render the \c WindowObject in the System UI; similar to
@@ -159,7 +160,7 @@ API on the application (client) side and the \l{NotificationManager} API on the 
 side. The following code is invoked when you click on the \e bulb icon in App2:
 
 \quotefromfile applicationmanager/minidesk/apps/tld.minidesk.app2/app2.qml
-\skipto var notification
+\skipto let notification
 \printuntil notification.show();
 
 App2 creates a new \l{Notification} element, sets its \l{Notification::summary}{summary} property

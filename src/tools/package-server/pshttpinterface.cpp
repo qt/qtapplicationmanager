@@ -49,7 +49,7 @@ void PSHttpInterface::listen()
     else
         host = QHostAddress(hostStr);
 
-    quint16 port = quint16(d->cfg->listenUrl.port(0));
+    auto port = quint16(d->cfg->listenUrl.port(0));
 
     auto usedPort = d->server->listen(host, port);
     if (usedPort == 0)
@@ -66,19 +66,17 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
 {
     static constexpr auto GetOrPost = QHttpServerRequest::Method::Post | QHttpServerRequest::Method::Get;
 
-    d->server->route(u"/hello"_s, GetOrPost, [=](const QHttpServerRequest &req) {
+    d->server->route(u"/hello"_s, GetOrPost, [this](const QHttpServerRequest &req) {
         const auto query = req.query();
         QString status = u"ok"_s;
 
         if (query.queryItemValue(u"project-id"_s) != d->cfg->projectId)
             status = u"incompatible-project-id"_s;
 
-        const QString hwId = query.queryItemValue(u"hardware-id"_s);
-
         return QJsonObject { { u"status"_s, status } };
     });
 
-    d->server->route(u"/package/list"_s, GetOrPost, [=](const QHttpServerRequest &req) {
+    d->server->route(u"/package/list"_s, GetOrPost, [packages](const QHttpServerRequest &req) {
         const auto query = req.query();
         const QString architecture = query.queryItemValue(u"architecture"_s);
         const QString category = query.queryItemValue(u"category"_s);
@@ -118,7 +116,7 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
         return QHttpServerResponse { pkgs };
     });
 
-    d->server->route(u"/package/icon"_s, GetOrPost, [=](const QHttpServerRequest &req) {
+    d->server->route(u"/package/icon"_s, GetOrPost, [packages](const QHttpServerRequest &req) {
         const auto query = req.query();
         QString id = query.queryItemValue(u"id"_s);
         const QString architecture = query.queryItemValue(u"architecture"_s);
@@ -130,7 +128,7 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
         return QHttpServerResponse(QHttpServerResponse::StatusCode::NotFound);
     });
 
-    d->server->route(u"/package/download"_s, GetOrPost, [=](const QHttpServerRequest &req) {
+    d->server->route(u"/package/download"_s, GetOrPost, [this, packages](const QHttpServerRequest &req) {
         const auto query = req.query();
         QString id = query.queryItemValue(u"id"_s);
         const QString architecture = query.queryItemValue(u"architecture"_s);
@@ -160,7 +158,7 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
         return QHttpServerResponse(QHttpServerResponse::StatusCode::NotFound);
     });
 
-    d->server->route(u"/package/upload"_s, QHttpServerRequest::Method::Put, [=](const QHttpServerRequest &req) {
+    d->server->route(u"/package/upload"_s, QHttpServerRequest::Method::Put, [packages](const QHttpServerRequest &req) {
         try {
             const QByteArray pkgData = req.body();
             if (!pkgData.startsWith("\x1f\x8b")) // .gz
@@ -202,7 +200,7 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
         }
     });
 
-    d->server->route(u"/package/remove"_s, QHttpServerRequest::Method::Post, [=](const QHttpServerRequest &req) {
+    d->server->route(u"/package/remove"_s, QHttpServerRequest::Method::Post, [packages](const QHttpServerRequest &req) {
         const auto query = req.query();
         const QString id = query.queryItemValue(u"id"_s);
         const QString architecture = query.queryItemValue(u"architecture"_s);
@@ -221,7 +219,7 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
                            { u"removed"_s, QString::number(removeCount) } };
     });
 
-    d->server->route(u"/category/list"_s, GetOrPost, [=](const QHttpServerRequest &) {
+    d->server->route(u"/category/list"_s, GetOrPost, [packages](const QHttpServerRequest &) {
         return QJsonArray::fromStringList(packages->categories());
     });
 }

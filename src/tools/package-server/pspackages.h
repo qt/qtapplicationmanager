@@ -50,7 +50,7 @@ public:
 
     std::pair<UploadResult, PSPackage *> upload(const QString &filePath);
     void storeSign(PSPackage *sp, const QString &hardwareId, QIODevice *destination);
-    int removeIf(std::function<bool (PSPackage *)> pred);
+    int removeIf(const std::function<bool (PSPackage *)> &pred);
 
 private:
     std::unique_ptr<PSPackagesPrivate> d;

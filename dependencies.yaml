@@ -14,3 +14,6 @@ dependencies:
   ../qtwayland:
     ref: c22eeb63f8d2a202e1ed6b8674e09836c2bffdeb
     required: false
+  ../qthttpserver:
+    ref: 1fd40bd5a1d85e6fa71b96386004bd3b7ca76ce3
+    required: false

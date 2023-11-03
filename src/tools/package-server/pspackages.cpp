@@ -22,14 +22,22 @@
 #include "psconfiguration.h"
 #include "package-server.h"
 
+#if defined(Q_OS_UNIX)
+#  include <csignal>
+#  define AM_PS_SIGNALS  { SIGTERM, SIGINT, SIGFPE, SIGSEGV, SIGPIPE, SIGABRT, SIGQUIT }
+#else
+#  include <windows.h>
+#  define AM_PS_SIGNALS  { SIGTERM, SIGINT }
+#endif
+
 
 QT_USE_NAMESPACE_AM
 using namespace Qt::StringLiterals;
 
-static const QString UploadDir   = u"upload"_s;
-static const QString RemoveDir   = u"remove"_s;
-static const QString PackagesDir = u".packages"_s;
-static const QString LockFile    = u".lock"_s;
+static const QString UploadDirName   = u"upload"_s;
+static const QString RemoveDirName   = u"remove"_s;
+static const QString PackagesDirName = u".packages"_s;
+static const QString LockFileName    = u".lock"_s;
 
 
 PSPackages::PSPackages(PSConfiguration *cfg, QObject *parent)
@@ -49,7 +57,7 @@ void PSPackages::initialize()
     QDir &dd = d->cfg->dataDirectory;
 
     // create a lock file to avoid data corruption
-    d->lockFile = std::make_unique<QLockFile>(dd.absoluteFilePath(LockFile));
+    d->lockFile = std::make_unique<QLockFile>(dd.absoluteFilePath(LockFileName));
     d->lockFile->setStaleLockTime(0); // this is a long-lived lock
     if (!d->lockFile->tryLock(1000)) {
         QString msg;
@@ -61,45 +69,51 @@ void PSPackages::initialize()
         }
         throw Exception("could not lock the data directory %1%2")
             .arg(dd.absolutePath()).arg(msg);
-    } else {
-        // make sure to always clean up the lock file, even if we crash
-        d->lockFilePath = d->lockFile->fileName().toLocal8Bit();
-
-        UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler,
-                                               { SIGTERM, SIGINT, SIGFPE, SIGSEGV, SIGPIPE, SIGABRT, SIGQUIT },
-                                               [this](int sig) {
-                                                   UnixSignalHandler::instance()->resetToDefault(sig);
-                                                   if (!d->lockFilePath.isEmpty())
-                                                       ::unlink(d->lockFilePath.constData());
-                                                   ::kill(0, sig);
-                                               });
     }
 
-    if (!dd.mkpath(PackagesDir)) {
+    // make sure to always clean up the lock file, even if we crash
+    d->lockFilePath = d->lockFile->fileName().toLocal8Bit();
+
+
+    UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, AM_PS_SIGNALS,
+                                           [this](int sig) {
+        UnixSignalHandler::instance()->resetToDefault(sig);
+#if defined(Q_OS_WINDOWS)
+        if (!d->lockFilePath.isEmpty())
+            ::DeleteFileW((LPCWSTR) d->lockFile->fileName().utf16());
+        ::raise(sig);
+#else
+        if (!d->lockFilePath.isEmpty())
+            ::unlink(d->lockFilePath.constData());
+        ::kill(0, sig);
+#endif
+    });
+
+    if (!dd.mkpath(PackagesDirName)) {
         throw Exception("could not create a '%1' directory inside the data directory %2")
-            .arg(PackagesDir).arg(dd.absolutePath());
+            .arg(PackagesDirName).arg(dd.absolutePath());
     }
-    if (!dd.mkpath(UploadDir)) {
+    if (!dd.mkpath(UploadDirName)) {
         throw Exception("could not create an '%1' directory inside the data directory %2")
-            .arg(UploadDir).arg(dd.absolutePath());
+            .arg(UploadDirName).arg(dd.absolutePath());
     }
-    if (!dd.mkpath(RemoveDir)) {
+    if (!dd.mkpath(RemoveDirName)) {
         throw Exception("could not create an '%1' directory inside the data directory %2")
-            .arg(RemoveDir).arg(dd.absolutePath());
+            .arg(RemoveDirName).arg(dd.absolutePath());
     }
 
     d->scanPackages();
     d->scanUploads();
     d->scanRemoves();
 
-    auto dirWatcher = new QFileSystemWatcher({ dd.absoluteFilePath(UploadDir),
-                                              dd.absoluteFilePath(RemoveDir) }, this);
+    auto dirWatcher = new QFileSystemWatcher({ dd.absoluteFilePath(UploadDirName),
+                                              dd.absoluteFilePath(RemoveDirName) }, this);
     QObject::connect(dirWatcher, &QFileSystemWatcher::directoryChanged,
                      this, [&](const QString &dir) {
         const auto dirName = QDir(dir).dirName();
-        if (dirName == RemoveDir)
+        if (dirName == RemoveDirName)
             d->scanRemoves();
-        else if (dirName == UploadDir)
+        else if (dirName == UploadDirName)
             d->scanUploads();
     });
 }
@@ -147,7 +161,7 @@ PSPackage *PSPackages::scan(const QString &filePath)
         throw Exception("could not extract package: %1").arg(pe.errorString());
 
     if (!d->cfg->developerVerificationCaCertificates.isEmpty()) {
-        InstallationReport report = pe.installationReport();
+        const InstallationReport &report = pe.installationReport();
 
         // check signatures
         if (report.developerSignature().isEmpty()) {
@@ -176,32 +190,31 @@ PSPackage *PSPackages::scan(const QString &filePath)
 
 QStringList PSPackages::categories() const
 {
-    QSet<QString> categories;
+    QStringList categories;
 
-    for (auto iit = d->packages.cbegin(); iit != d->packages.cend(); ++iit) {
-        for (auto ait = iit->cbegin(); ait != iit->cend(); ++ait) {
-            const auto pkgCats = (*ait)->packageInfo->categories();
-            for (const auto &pkgCat : pkgCats)
-                categories.insert(pkgCat);
-        }
+    for (const auto &pkg : std::as_const(d->packages)) {
+        for (const PSPackage *sp : pkg)
+            categories += sp->packageInfo->categories();
     }
-    QStringList catList { categories.cbegin(), categories.cend() };
-    catList.sort();
-    return catList;
+
+    categories.removeDuplicates();
+    categories.sort();
+    return categories;
 }
 
 QList<PSPackage *> PSPackages::byArchitecture(const QString &architecture) const
 {
-    QList<PSPackage *> result;
+    QList<PSPackage *> packages;
 
-    for (auto iit = d->packages.cbegin(); iit != d->packages.cend(); ++iit) {
-        auto ait = iit->constFind(architecture);
-        if ((ait == iit->cend()) && !architecture.isEmpty())
-            ait = iit->constFind({ });
-        if (ait != iit->cend())
-            result << ait.value();
+    for (const auto &pkg : std::as_const(d->packages)) {
+        PSPackage *sp = pkg.value(architecture, nullptr);
+        if (!sp && !architecture.isEmpty())
+            sp = pkg.value({ }, nullptr);
+        if (sp)
+            packages.append(sp);
     }
-    return result;
+
+    return packages;
 }
 
 PSPackage *PSPackages::byIdAndArchitecture(const QString &id, const QString &architecture) const
@@ -212,7 +225,7 @@ PSPackage *PSPackages::byIdAndArchitecture(const QString &id, const QString &arc
     return sp;
 }
 
-int PSPackages::removeIf(std::function<bool(PSPackage *)> pred)
+int PSPackages::removeIf(const std::function<bool(PSPackage *)> &pred)
 {
     int count = 0;
 
@@ -250,7 +263,7 @@ std::pair<PSPackages::UploadResult, PSPackage *> PSPackages::upload(const QStrin
         QString id = scannedSp->id;
         QString architecture = scannedSp->architecture;
 
-        const QString finalPath = d->cfg->dataDirectory.absoluteFilePath(PackagesDir) + u'/'
+        const QString finalPath = d->cfg->dataDirectory.absoluteFilePath(PackagesDirName) + u'/'
                                   + id + u'_' + scannedSp->architectureOrAll() + u".ampkg"_s;
 
         auto existingSp = d->packages.value(id).value(architecture, nullptr);
@@ -353,10 +366,10 @@ void PSPackages::storeSign(PSPackage *sp, const QString &hardwareId, QIODevice *
 void PSPackagesPrivate::scanRemoves()
 {
     int fileCount = 0;
-    QDirIterator dit(cfg->dataDirectory.absoluteFilePath(RemoveDir), QDir::Files);
+    QDirIterator dit(cfg->dataDirectory.absoluteFilePath(RemoveDirName), QDir::Files);
     while (dit.hasNext()) {
         if (++fileCount == 1)
-            colorOut() << "> Scanning " << RemoveDir;
+            colorOut() << "> Scanning " << RemoveDirName;
 
         dit.next();
         QString matchStr = dit.fileName();
@@ -380,10 +393,10 @@ void PSPackagesPrivate::scanRemoves()
 void PSPackagesPrivate::scanUploads()
 {
     int fileCount = 0;
-    QDirIterator dit(cfg->dataDirectory.absoluteFilePath(UploadDir), QDir::Files);
+    QDirIterator dit(cfg->dataDirectory.absoluteFilePath(UploadDirName), QDir::Files);
     while (dit.hasNext()) {
         if (++fileCount == 1)
-            colorOut() << "> Scanning " << UploadDir;
+            colorOut() << "> Scanning " << UploadDirName;
 
         try {
             q->upload(dit.next());
@@ -394,10 +407,10 @@ void PSPackagesPrivate::scanUploads()
 void PSPackagesPrivate::scanPackages()
 {
     Q_ASSERT(packages.isEmpty());
-    colorOut() << "> Scanning " << PackagesDir;
+    colorOut() << "> Scanning " << PackagesDirName;
 
     int fileCount = 0;
-    QDirIterator dit(cfg->dataDirectory.absoluteFilePath(PackagesDir), QDir::Files);
+    QDirIterator dit(cfg->dataDirectory.absoluteFilePath(PackagesDirName), QDir::Files);
     while (dit.hasNext()) {
         ++fileCount;
 

@@ -12,7 +12,7 @@ QT_BEGIN_NAMESPACE_AM
 
 /*! \qmltype IntentHandler
     \inqmlmodule QtApplicationManager.Application
-    \ingroup application-instantiatable
+    \ingroup app-instantiatable
     \brief A handler for intent requests received by applications.
 
     Any application that has intents listed in its manifest file needs to have a corresponding

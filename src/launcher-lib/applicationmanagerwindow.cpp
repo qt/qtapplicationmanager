@@ -24,7 +24,7 @@ public:
 /*!
     \qmltype ApplicationManagerWindow
     \inqmlmodule QtApplicationManager.Application
-    \ingroup app
+    \ingroup app-instantiatable
     \inherits Window
     \brief The window root element of an application.
 

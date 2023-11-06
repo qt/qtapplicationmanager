@@ -10,6 +10,21 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+AbstractIntentHandler::AbstractIntentHandler(QObject *parent)
+    : QObject(parent)
+{ }
+
+AbstractIntentHandler::~AbstractIntentHandler()
+{
+    if (auto ie = IntentClient::instance())
+        ie->unregisterHandler(this);
+}
+
+QStringList AbstractIntentHandler::intentIds() const
+{
+    return m_intentIds;
+}
+
 /*! \qmltype IntentHandler
     \inqmlmodule QtApplicationManager.Application
     \ingroup application-instantiatable
@@ -21,9 +36,9 @@ QT_BEGIN_NAMESPACE_AM
     instance or have a dedicated IntentHandler instance for every intent id (or any combination of
     those).
 
-    \note For handling intent requests within the System UI, you have to use the derived component
-          IntentServerHandler, which works the same way, but provides all the necessary meta-data
-          from within QML.
+    \note For handling intent requests within the System UI, you have to use the System UI side
+          component IntentServerHandler, which works the same way, but provides all the necessary
+          meta-data from within QML.
 
     Here is a fairly standard way to handle an incoming intent request and send out a result or
     error message:
@@ -81,25 +96,9 @@ IntentHandler::IntentHandler(QObject *parent)
     : AbstractIntentHandler(parent)
 { }
 
-
-AbstractIntentHandler::AbstractIntentHandler(QObject *parent)
-    : QObject(parent)
-{ }
-
-AbstractIntentHandler::~AbstractIntentHandler()
+void IntentHandler::setIntentIds(const QStringList &intentIds)
 {
-    if (auto ie = IntentClient::instance())
-        ie->unregisterHandler(this);
-}
-
-QStringList AbstractIntentHandler::intentIds() const
-{
-    return m_intentIds;
-}
-
-void AbstractIntentHandler::setIntentIds(const QStringList &intentIds)
-{
-    if (isComponentCompleted()) {
+    if (m_completed) {
         qmlWarning(this) << "Cannot change the intentIds property of an intent handler after creation.";
         return;
     }
@@ -109,19 +108,18 @@ void AbstractIntentHandler::setIntentIds(const QStringList &intentIds)
     }
 }
 
-void AbstractIntentHandler::classBegin()
-{
-}
+void IntentHandler::classBegin()
+{ }
 
-void AbstractIntentHandler::componentComplete()
+void IntentHandler::componentComplete()
 {
     IntentClient::instance()->registerHandler(this);
     m_completed = true;
 }
 
-bool AbstractIntentHandler::isComponentCompleted() const
+void IntentHandler::internalRequestReceived(IntentClientRequest *request)
 {
-    return m_completed;
+    emit requestReceived(request);
 }
 
 QT_END_NAMESPACE_AM

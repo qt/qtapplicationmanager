@@ -291,7 +291,7 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
         if (!broadcast)
             icr->startTimeout(m_replyFromApplicationTimeout);
 
-        emit handler->requestReceived(icr);
+        handler->internalRequestReceived(icr);
     } else {
         qCDebug(LogIntents) << "No Intent handler registered for intent" << intentId;
         errorReplyFromApplication(icr, qSL("No matching IntentHandler found."));

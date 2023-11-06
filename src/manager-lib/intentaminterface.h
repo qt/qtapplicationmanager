@@ -191,7 +191,7 @@ public:
     QStringList requiredCapabilities() const;
     QVariantMap parameterMatch() const;
 
-public slots:
+    void setIntentIds(const QStringList &intentId);
     void setIcon(const QUrl &icon);
     void setNames(const QVariantMap &names);
     void setDescriptions(const QVariantMap &descriptions);
@@ -200,13 +200,21 @@ public slots:
     void setRequiredCapabilities(const QStringList &requiredCapabilities);
     void setParameterMatch(const QVariantMap &parameterMatch);
 
+signals:
+    void intentIdsChanged();
+    void requestReceived(QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *request);
+
 protected:
+    void classBegin() override;
     void componentComplete() override;
+    void internalRequestReceived(IntentClientRequest *request) override;
 
 private:
-    Q_DISABLE_COPY_MOVE(IntentServerHandler)
     Intent *m_intent = nullptr; // DRY: just a container for our otherwise needed members vars
     QVector<Intent *> m_registeredIntents;
+    bool m_completed = false;
+
+    Q_DISABLE_COPY_MOVE(IntentServerHandler)
 };
 
 QT_END_NAMESPACE_AM

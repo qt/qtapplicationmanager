@@ -547,7 +547,6 @@ QT_BEGIN_NAMESPACE_AM
 
 /*! \qmltype IntentServerHandler
     \inqmlmodule QtApplicationManager.SystemUI
-    \inherits IntentHandler
     \ingroup system-ui-instantiable
     \brief A handler for intent requests received within the System UI.
 
@@ -569,6 +568,13 @@ QT_BEGIN_NAMESPACE_AM
     application context via IntentHandler.
 */
 
+/*! \qmlproperty list<string> IntentServerHandler::intentIds
+
+    Every handler needs to register at least one unique intent id that it will handle. Having
+    multiple IntentServerHandlers that are registering the same intent id is not possible.
+
+    \note Any changes to this property after component completion will have no effect.
+*/
 /*! \qmlproperty url IntentServerHandler::icon
 
     The intent's icon.
@@ -619,6 +625,13 @@ QT_BEGIN_NAMESPACE_AM
     This corresponds to the \c parameterMatch field in the \l{manifest-intent}{manifest documentation}.
 
     \note Any changes to this property after component completion will have no effect.
+*/
+/*! \qmlsignal IntentServerHandler::requestReceived(IntentRequest request)
+
+    This signal will be emitted once for every incoming intent \a request that this handler was
+    registered for via its intentIds property.
+
+    For details, please see the IntentHandler::requestReceived documentation.
 */
 
 IntentServerHandler::IntentServerHandler(QObject *parent)
@@ -671,9 +684,21 @@ QVariantMap IntentServerHandler::parameterMatch() const
     return m_intent->parameterMatch();
 }
 
+void IntentServerHandler::setIntentIds(const QStringList &intentIds)
+{
+    if (m_completed) {
+        qmlWarning(this) << "Cannot change the intentIds property of an intent handler after creation.";
+        return;
+    }
+    if (m_intentIds != intentIds) {
+        m_intentIds = intentIds;
+        emit intentIdsChanged();
+    }
+}
+
 void IntentServerHandler::setIcon(const QUrl &icon)
 {
-    if (isComponentCompleted()) {
+    if (m_completed) {
         qmlWarning(this) << "Cannot change the icon property of an IntentServerHandler after creation.";
         return;
     }
@@ -682,7 +707,7 @@ void IntentServerHandler::setIcon(const QUrl &icon)
 
 void IntentServerHandler::setNames(const QVariantMap &names)
 {
-    if (isComponentCompleted()) {
+    if (m_completed) {
         qmlWarning(this) << "Cannot change the names property of an IntentServerHandler after creation.";
         return;
     }
@@ -693,7 +718,7 @@ void IntentServerHandler::setNames(const QVariantMap &names)
 
 void IntentServerHandler::setDescriptions(const QVariantMap &descriptions)
 {
-    if (isComponentCompleted()) {
+    if (m_completed) {
         qmlWarning(this) << "Cannot change the descriptions property of an IntentServerHandler after creation.";
         return;
     }
@@ -704,7 +729,7 @@ void IntentServerHandler::setDescriptions(const QVariantMap &descriptions)
 
 void IntentServerHandler::setCategories(const QStringList &categories)
 {
-    if (isComponentCompleted()) {
+    if (m_completed) {
         qmlWarning(this) << "Cannot change the categories property of an IntentServerHandler after creation.";
         return;
     }
@@ -713,7 +738,7 @@ void IntentServerHandler::setCategories(const QStringList &categories)
 
 void IntentServerHandler::setVisibility(Intent::Visibility visibility)
 {
-    if (isComponentCompleted()) {
+    if (m_completed) {
         qmlWarning(this) << "Cannot change the visibility property of an IntentServerHandler after creation.";
         return;
     }
@@ -722,7 +747,7 @@ void IntentServerHandler::setVisibility(Intent::Visibility visibility)
 
 void IntentServerHandler::setRequiredCapabilities(const QStringList &requiredCapabilities)
 {
-    if (isComponentCompleted()) {
+    if (m_completed) {
         qmlWarning(this) << "Cannot change the requiredCapabilities property of an IntentServerHandler after creation.";
         return;
     }
@@ -731,12 +756,15 @@ void IntentServerHandler::setRequiredCapabilities(const QStringList &requiredCap
 
 void IntentServerHandler::setParameterMatch(const QVariantMap &parameterMatch)
 {
-    if (isComponentCompleted()) {
+    if (m_completed) {
         qmlWarning(this) << "Cannot change the parameterMatch property of an IntentServerHandler after creation.";
         return;
     }
     m_intent->m_parameterMatch = parameterMatch;
 }
+
+void IntentServerHandler::classBegin()
+{ }
 
 void IntentServerHandler::componentComplete()
 {
@@ -773,7 +801,13 @@ void IntentServerHandler::componentComplete()
             qmlWarning(this) << "IntentServerHandler: could not add intent" << intentId;
     }
 
-    AbstractIntentHandler::componentComplete();
+    IntentClient::instance()->registerHandler(this);
+    m_completed = true;
+}
+
+void IntentServerHandler::internalRequestReceived(IntentClientRequest *request)
+{
+    emit requestReceived(request);
 }
 
 QT_END_NAMESPACE_AM

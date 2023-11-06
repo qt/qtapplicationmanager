@@ -17,6 +17,8 @@ QT_BEGIN_NAMESPACE_AM
 
 class IntentClientRequest;
 
+// This base class is used in 2 derived classes, each in a different QML namespace.
+// Having the common signals here does work, but messes up the code model in Creator.
 class AbstractIntentHandler : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
@@ -28,23 +30,13 @@ public:
     ~AbstractIntentHandler() override;
 
     QStringList intentIds() const;
-    void setIntentIds(const QStringList &intentId);
 
-signals:
-    void intentIdsChanged();
-
-    void requestReceived(QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *request);
+    virtual void internalRequestReceived(IntentClientRequest *req) = 0;
 
 protected:
-    void classBegin() override;
-    void componentComplete() override;
-    bool isComponentCompleted() const;
-
-private:
-    Q_DISABLE_COPY_MOVE(AbstractIntentHandler)
-
     QStringList m_intentIds;
-    bool m_completed = false;
+
+    Q_DISABLE_COPY_MOVE(AbstractIntentHandler)
 };
 
 class IntentHandler : public AbstractIntentHandler
@@ -56,10 +48,21 @@ class IntentHandler : public AbstractIntentHandler
 public:
     IntentHandler(QObject *parent = nullptr);
 
+    void setIntentIds(const QStringList &intentId);
+
+signals:
+    void intentIdsChanged();
+    void requestReceived(QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *request);
+
+protected:
+    void classBegin() override;
+    void componentComplete() override;
+    void internalRequestReceived(IntentClientRequest *request) override;
+
 private:
+    bool m_completed = false;
+
     Q_DISABLE_COPY_MOVE(IntentHandler)
 };
 
 QT_END_NAMESPACE_AM
-
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(IntentHandler) *)

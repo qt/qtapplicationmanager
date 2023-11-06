@@ -23,5 +23,5 @@ declarations may be nested, creating parent-child relationships between the item
 \annotatedlist app-singletons
 
 \section1 Instantiable QML Types
-\annotatedlist app
+\annotatedlist app-instantiatable
 */

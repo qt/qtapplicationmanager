@@ -24,8 +24,8 @@ public:
 /*!
     \qmltype ApplicationManagerWindow
     \inqmlmodule QtApplicationManager.Application
-    \ingroup app
-    \brief The window root item required in a multi-process environment.
+    \ingroup app-instantiatable
+    \brief The window root element of an application.
 
     This QML item can be used as the root item in your QML application. In doing so, you enable
     your application to be usable in both single-process (EGL fullscreen, desktop) and

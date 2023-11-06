@@ -6,7 +6,7 @@ applications:
 
 runtimes:
   qml:
-    quitTime: 5000
+    quitTime: 10000  # coin can be VERY slow
 
 flags:
   developmentMode: yes

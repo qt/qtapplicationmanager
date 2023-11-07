@@ -46,16 +46,16 @@ package installations.
         \c{--json}: Output in JSON format instead of YAML.
 
         \c{--extra-metadata} or \c{-m}: Add the given YAML snippet on the command line to the
-            packages's \c extra meta-data (see also ApplicationInstaller::taskRequestingInstallationAcknowledge).
+            packages's \c extra meta-data (see also PackageManager::taskRequestingInstallationAcknowledge).
 
         \c{--extra-metadata-file} or \c{-M}: Add the given YAML file to the
-            packages's \c extra meta-data (see also ApplicationInstaller::taskRequestingInstallationAcknowledge)
+            packages's \c extra meta-data (see also PackageManager::taskRequestingInstallationAcknowledge)
 
         \c{--extra-signed-metadata} or \c{-s}: Add the given YAML snippet on the command line to the
-            packages's \c extraSigned meta-data (see also ApplicationInstaller::taskRequestingInstallationAcknowledge)
+            packages's \c extraSigned meta-data (see also PackageManager::taskRequestingInstallationAcknowledge)
 
         \c{--extra-signed-metadata-file} or \c{-S}: Add the given YAML file to the
-            packages's \c extra meta-data (see also ApplicationInstaller::taskRequestingInstallationAcknowledge)
+            packages's \c extra meta-data (see also PackageManager::taskRequestingInstallationAcknowledge)
 
         All of the extra-meta-data options are merged together, so all options can be used together
         and each option can also be given multiple times. The signed fields are added to the

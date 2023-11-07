@@ -133,23 +133,23 @@ sources at intervals and store a history of these values. You can use this data 
 purposes, such as to plot its previous values over time. For more information, see the
 \l{Display Information about Application Processes Example}.
 
-\section2 Application Installer
+\section2 Package Manager
 
 The \l{ApplicationManager} provides a list of all available applications in the
 \l{ApplicationModel}. In addition to applications bundled with the System UI,
 \e{system applications}, the ApplicationManager also provides a way to install new applications
-at runtime. These applications are maintained by the \l{ApplicationInstaller} singleton.
+at runtime. These applications are maintained by the \l{PackageManager} singleton.
 
-To start an installation, use \l{ApplicationInstaller::startPackageInstallation}. Once all
+To start an installation, use \l{PackageManager::startPackageInstallation}. Once all
 metadata from the application's package is extracted, the
-\l{ApplicationInstaller::taskRequestingInstallationAcknowledge} signal is emitted. This signal
+\l{PackageManager::taskRequestingInstallationAcknowledge} signal is emitted. This signal
 can be used to give you more information about the package, such as the name, size, or
 permissions. This installation needs to be confirmed using
-\l{ApplicationInstaller::acknowledgePackageInstallation}. After the installation is complete,
+\l{PackageManager::acknowledgePackageInstallation}. After the installation is complete,
 you can start the new application, as described in the \l{Life-Cycle}. To remove applications
-that have been installed, use \l{ApplicationInstaller::removePackage}.
+that have been installed, use \l{PackageManager::removePackage}.
 
-For more information, see \l{Application Installer}.
+For more information, see \l{Package Installation}.
 
 \section1 Best Practices When You Write a System UI
 

@@ -96,7 +96,7 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
         \c{!#$%&'`^~_+-=.,;()[]{}}. If you are building a larger system with third party
         applications, it is good practice to use reverse DNS notation for the application IDs to
         help keep track of your IDs in the long run. The helper function
-        \l{ApplicationInstaller::validateDnsName} can help you to enforce this policy from the
+        \l{PackageManager::validateDnsName} can help you to enforce this policy from the
         System UI.
 \row
     \li \c icon

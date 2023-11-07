@@ -52,7 +52,7 @@ about changes to an \c info.yaml file, you have to force a rebuild of this datab
 \c{appman --recreate-database}.
 
 \note Dynamically adding, updating, or removing individual applications is supported via the
-ApplicationInstaller interface.
+PackageManager interface.
 
 \section2 qmake Integration
 

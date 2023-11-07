@@ -71,7 +71,7 @@ examples/applicationmanager/hello-world$ appman --builtin-apps-manifest-dir ./ap
 
 The \c --builtin-apps-manifest-dir command line parameter tells \c appman where to find bult-in
 applications, in this case the \c apps subdirectory. Built-in applications are those that come
-pre-installed and cannot be removed via the ApplicationInstaller APIs. The next parameter is the
+pre-installed and cannot be removed via the PackageManager APIs. The next parameter is the
 System UI's \c main.qml filename, \c system-ui.qml.
 
 The screenshot below is what you should see:

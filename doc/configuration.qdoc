@@ -190,7 +190,7 @@ ui:
     \row
         \li \b --dbus
         \li string
-        \li Registers the ApplicationManager, ApplicationInstaller, NotificationManager, and
+        \li Registers the ApplicationManager, PackageManager, NotificationManager, and
             WindowManager on the specified D-Bus. This can be a full D-Bus bus specification string,
             \c session, \c system, \c auto (default), or \c none (for no registration at all).
 
@@ -210,7 +210,7 @@ ui:
         \li Allows for more fine-grained control over D-Bus registrations and function call
             policies. Every key (with one exception - see next) in this map corresponds to the
             D-Bus interface name you want to configure (\c io.qt.ApplicationManager,
-            \c io.qt.ApplicationInstaller, \c io.qt.WindowManager, and \c org.freedesktop.Notifications).
+            \c io.qt.PackageManager, \c io.qt.WindowManager, and \c org.freedesktop.Notifications).
             If such a key is present, it takes precedence over the \c dbus command line option.
             Each key's value is a \l{D-Bus specification} object.
     \row
@@ -555,7 +555,7 @@ function, while preventing anyone to remotely call \c acknowledgePackageInstalla
 \badcode
 ...
 dbus:
-  io.qt.ApplicationInstaller:
+  io.qt.PackageManager:
     register: 'session'
     policy:
       startPackageInstallation:
@@ -575,8 +575,8 @@ of these available interfaces are as follows:
         \li \c io.qt.ApplicationManager
         \li ApplicationManager
     \row
-        \li \c io.qt.ApplicationInstaller
-        \li ApplicationInstaller
+        \li \c io.qt.PackageManager
+        \li PackageManager
     \row
         \li \c io.qt.WindowManager
         \li WindowManager

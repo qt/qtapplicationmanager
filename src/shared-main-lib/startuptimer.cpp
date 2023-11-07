@@ -79,7 +79,7 @@
 <span id="color-green">0'158.477</span> after NotificationManager instantiation     <span id="color-blue">     </span>
 <span id="color-green">0'158.534</span> after SystemMonitor instantiation           <span id="color-blue">     </span>
 <span id="color-green">0'158.572</span> after quick-launcher setup                  <span id="color-blue">     </span>
-<span id="color-green">0'159.130</span> after ApplicationInstaller instantiation    <span id="color-blue">     </span>
+<span id="color-green">0'159.130</span> after PackageManager instantiation          <span id="color-blue">     </span>
 <span id="color-green">0'159.192</span> after QML registrations                     <span id="color-blue">     </span>
 <span id="color-green">0'164.888</span> after QML engine instantiation              <span id="color-blue">     </span>
 <span id="color-green">0'189.619</span> after D-Bus registrations                   <span id="color-blue">     </span>

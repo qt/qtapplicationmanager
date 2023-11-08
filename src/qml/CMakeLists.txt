@@ -1,5 +1,6 @@
 
 qt_internal_add_qml_module(AppManQmlPrivate
+    CONFIG_MODULE_NAME appman_qml
     URI QtApplicationManager
     VERSION "${PROJECT_VERSION}"
     NO_PLUGIN
@@ -17,6 +18,7 @@ qt_internal_add_qml_module(AppManQmlPrivate
 )
 
 qt_internal_add_qml_module(AppManQmlSystemUIPrivate
+    CONFIG_MODULE_NAME appman_qml_systemui
     URI QtApplicationManager.SystemUI
     VERSION "${PROJECT_VERSION}"
     NO_PLUGIN
@@ -39,6 +41,7 @@ qt_internal_add_qml_module(AppManQmlSystemUIPrivate
 )
 
 qt_internal_add_qml_module(AppManQmlApplicationPrivate
+    CONFIG_MODULE_NAME appman_qml_application
     URI QtApplicationManager.Application
     VERSION "${PROJECT_VERSION}"
     NO_PLUGIN

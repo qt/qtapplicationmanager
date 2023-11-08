@@ -5,6 +5,7 @@
 
 #include "frametimer.h"
 #include "frametimerimpl.h"
+#include "applicationmanagerwindow.h"
 
 #include <QQuickWindow>
 #include <qqmlinfo.h>
@@ -164,7 +165,11 @@ void FrameTimer::setWindow(QObject *window)
     if (m_window) {
         bool connected = false;
 
-        if (auto *quickWindow = qobject_cast<QQuickWindow*>(m_window)) {
+        QQuickWindow *quickWindow = qobject_cast<QQuickWindow*>(m_window);
+        if (auto *amWindow = qobject_cast<ApplicationManagerWindow *>(m_window))
+            quickWindow = qobject_cast<QQuickWindow *>(amWindow->backingObject());
+
+        if (quickWindow) {
             m_frameSwapConnection = connect(quickWindow, &QQuickWindow::frameSwapped,
                                             this, &FrameTimer::reportFrameSwap, Qt::UniqueConnection);
             connected = (m_frameSwapConnection);
@@ -173,7 +178,7 @@ void FrameTimer::setWindow(QObject *window)
             connected = m_impl->connectToAppManWindow(window);
 
         if (!connected)
-            qmlWarning(this) << "The given window is neither a QQuickWindow nor a WindowObject.";
+            qmlWarning(this) << "The given window is neither a QQuickWindow, ApplicationManagerWindow nor a WindowObject.";
     }
 
     emit windowChanged();

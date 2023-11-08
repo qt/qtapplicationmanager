@@ -50,8 +50,16 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DE
     connect(m_dbusInterface, &IoQtApplicationManagerIntentInterfaceInterface::requestToApplication,
             intentClient, [this](const QString &requestId, const QString &id,
             const QString &applicationId, const QVariantMap &parameters) {
-        emit requestToApplication(QUuid::fromString(requestId), id, QString(), applicationId,
-                                  convertFromDBusVariant(parameters).toMap());
+        // Broadcasts were introduced after the DBus API was finalized. Instead of adding a complete
+        // "version 2" DBus interface, we simply append the string "@broadcast" to the requestId
+        // for broadcasts.
+
+        bool isBroadcast = requestId.endsWith(qSL("@broadcast"));
+        QUuid requestIdUuid = QUuid::fromString(isBroadcast ? requestId.chopped(10) : requestId);
+        QString requestingApplicationId = isBroadcast ? qSL(":broadcast:") : QString();
+
+        emit requestToApplication(requestIdUuid, id, requestingApplicationId,
+                                  applicationId, convertFromDBusVariant(parameters).toMap());
     });
 }
 

@@ -455,7 +455,14 @@ void IntentServerDBusIpcConnection::requestToApplication(IntentServerRequest *is
 {
     Q_ASSERT(isr && isr->selectedIntent());
 
-    emit m_adaptor->requestToApplication(isr->requestId().toString(), isr->intentId(),
+    // Broadcasts were introduced after the DBus API was finalized. Instead of adding a complete
+    // "version 2" DBus interface, we simply append the string "@broadcast" to the requestId
+    // for broadcasts.
+    QString requestIdStr = isr->requestId().toString();
+    if (isr->isBroadcast())
+        requestIdStr.append(qSL("@broadcast"));
+
+    emit m_adaptor->requestToApplication(requestIdStr, isr->intentId(),
                                          isr->selectedIntent()->applicationId(),
                                          convertFromJSVariant(isr->parameters()).toMap());
 }

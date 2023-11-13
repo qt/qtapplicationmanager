@@ -2,7 +2,7 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // Copyright (C) 2018 Pelagicore AG
 // Copyright (C) 2016 Klarälvdalens Datakonsult AB, a KDAB Group company
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial
 
 #pragma once
 

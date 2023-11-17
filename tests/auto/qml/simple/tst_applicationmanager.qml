@@ -269,11 +269,9 @@ TestCase {
                     {tag: "Debug", appId: "tld.test.simple1", index: 0, forceKill: false,
                         exitCode: 0, exitStatus: Am.NormalExit },
                     {tag: "ForceKill", appId: "tld.test.simple2", index: 1, forceKill: true,
-                        exitCode: Qt.platform.os !== 'windows' ? 9 : 0,
-                        exitStatus: Am.ForcedExit },
+                        exitCode: 9, exitStatus: Am.ForcedExit },
                     {tag: "AutoTerminate", appId: "tld.test.simple2", index: 1, forceKill: false,
-                        exitCode: Qt.platform.os !== 'windows' ? 15 : 0,
-                        exitStatus: Am.ForcedExit }
+                        exitCode: 15, exitStatus: Am.ForcedExit }
                 ];
     }
 

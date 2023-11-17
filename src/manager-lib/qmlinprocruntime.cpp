@@ -28,9 +28,6 @@
 #include "utilities.h"
 #include "qml-utilities.h"
 
-#if defined(Q_OS_UNIX)
-#  include <signal.h>
-#endif
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -159,12 +156,7 @@ void QmlInProcRuntime::stop(bool forceKill)
     }
 
     if (forceKill) {
-#if defined(Q_OS_UNIX)
-        int exitCode = SIGKILL;
-#else
-        int exitCode = 0;
-#endif
-        finish(exitCode, Am::ForcedExit);
+        finish(9 /* POSIX SIGKILL */, Am::ForcedExit);
         return;
     }
 
@@ -173,12 +165,7 @@ void QmlInProcRuntime::stop(bool forceKill)
     if (!ok || qt < 0)
         qt = 250;
     QTimer::singleShot(qt, this, [this]() {
-#if defined(Q_OS_UNIX)
-        int exitCode = SIGTERM;
-#else
-        int exitCode = 0;
-#endif
-        finish(exitCode, Am::ForcedExit);
+        finish(15 /* POSIX SIGTERM */, Am::ForcedExit);
     });
 }
 

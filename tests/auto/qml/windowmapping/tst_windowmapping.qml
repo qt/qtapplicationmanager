@@ -174,6 +174,11 @@ TestCase {
 
         app.start("hide-sub");
         expectedWindowCount -= 1;
+        if ((PackageManager.compareVersions(AmTest.qtVersion, "6.7.0") < 0)
+                && !ApplicationManager.singleProcess) {
+            // old pre-6.7, broken QWindow behavior
+            expectedWindowCount += 1;
+        }
         tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
     }
 

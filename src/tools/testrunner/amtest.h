@@ -17,6 +17,7 @@ class AmTest : public QObject
     Q_OBJECT
     Q_PROPERTY(int timeoutFactor READ timeoutFactor CONSTANT FINAL)
     Q_PROPERTY(QVariant buildConfig READ buildConfig CONSTANT FINAL)
+    Q_PROPERTY(QString qtVersion READ qtVersion CONSTANT FINAL)
 
     AmTest();
 
@@ -28,6 +29,7 @@ public:
 
     int timeoutFactor() const;
     QVariant buildConfig() const;
+    QString qtVersion() const;
 
     Q_INVOKABLE void ignoreMessage(QT_PREPEND_NAMESPACE_AM(AmTest::MsgType) type, const char* msg);
     Q_INVOKABLE void ignoreMessage(QT_PREPEND_NAMESPACE_AM(AmTest::MsgType) type, const QRegularExpression &expression);

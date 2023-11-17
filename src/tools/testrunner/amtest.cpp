@@ -39,6 +39,11 @@ QVariant AmTest::buildConfig() const
     return qApp->property("_am_buildConfig");
 }
 
+QString AmTest::qtVersion() const
+{
+    return QLatin1String(QT_VERSION_STR);
+}
+
 static QtMsgType convertMsgType(AmTest::MsgType type)
 {
     QtMsgType ret;

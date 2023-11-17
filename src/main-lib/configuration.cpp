@@ -796,9 +796,9 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                       { "runtimesPerContainer", false, YamlParser::Scalar, [&cd](YamlParser *p) {
                             cd->quicklaunch.runtimesPerContainer = p->parseScalar().toInt(); } },
                      { "failedStartLimit", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                          cd->quicklaunch.runtimesPerContainer = p->parseScalar().toInt(); } },
+                          cd->quicklaunch.failedStartLimit = p->parseScalar().toInt(); } },
                      { "failedStartLimitIntervalSec", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                          cd->quicklaunch.runtimesPerContainer = p->parseScalar().toInt(); } },
+                          cd->quicklaunch.failedStartLimitIntervalSec = p->parseScalar().toInt(); } },
                   }); } },
             { "ui", false, YamlParser::Map, [&cd](YamlParser *p) {
                   p->parseFields({

@@ -30,7 +30,6 @@ class ForeignApplicationInterface
 {
     Q_GADGET
     QML_FOREIGN(QtAM::ApplicationInterface)
-    QML_NAMED_ELEMENT(ApplicationInterface)
     QML_ADDED_IN_VERSION(2, 0)
     QML_ANONYMOUS
 };

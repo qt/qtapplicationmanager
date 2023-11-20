@@ -44,4 +44,4 @@ inline QDebug &operator<<(QDebug &debug, Error error)
 
 QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Error))
+Q_DECLARE_METATYPE(QtAM::Error)

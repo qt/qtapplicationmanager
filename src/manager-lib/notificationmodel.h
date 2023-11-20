@@ -34,7 +34,7 @@ public:
     void setSortFunction(const QJSValue &callback);
 
     Q_INVOKABLE int indexOfNotification(uint notificationId) const;
-    Q_INVOKABLE int indexOfNotification(QT_PREPEND_NAMESPACE_AM(Notification) *notification) const;
+    Q_INVOKABLE int indexOfNotification(QtAM::Notification *notification) const;
     Q_INVOKABLE int mapToSource(int ourIndex) const;
     Q_INVOKABLE int mapFromSource(int sourceIndex) const;
     Q_INVOKABLE void invalidate();

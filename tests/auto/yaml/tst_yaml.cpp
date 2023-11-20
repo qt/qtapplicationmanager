@@ -222,12 +222,7 @@ struct CacheTest
     QString value;
 };
 
-// GCC < 7 bug, currently still in RHEL7, https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56480
-// this should simply be:
-// template<> class QT_PREPEND_NAMESPACE_AM(ConfigCacheAdaptor<CacheTest>)
-
-QT_BEGIN_NAMESPACE_AM
-template<> class ConfigCacheAdaptor<CacheTest>
+template<> class QtAM::ConfigCacheAdaptor<CacheTest>
 {
 public:
     CacheTest *loadFromSource(QIODevice *source, const QString &fileName)
@@ -266,7 +261,6 @@ public:
         sourceContent.replace("${FILE}", fileName.toUtf8());
     }
 };
-QT_END_NAMESPACE_AM
 
 void tst_Yaml::cache()
 {

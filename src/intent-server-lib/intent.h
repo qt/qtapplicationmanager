@@ -20,7 +20,7 @@ class Intent : public QObject
     Q_PROPERTY(QString intentId READ intentId CONSTANT FINAL)
     Q_PROPERTY(QString packageId READ packageId CONSTANT FINAL)
     Q_PROPERTY(QString applicationId READ applicationId CONSTANT FINAL)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Intent)::Visibility visibility READ visibility CONSTANT FINAL)
+    Q_PROPERTY(QtAM::Intent::Visibility visibility READ visibility CONSTANT FINAL)
     Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities CONSTANT FINAL)
     Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch CONSTANT FINAL)
 
@@ -90,4 +90,4 @@ private:
 
 QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Intent *))
+Q_DECLARE_METATYPE(QtAM::Intent *)

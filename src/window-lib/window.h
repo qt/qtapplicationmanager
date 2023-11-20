@@ -26,8 +26,8 @@ class Window : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged FINAL)
-    Q_PROPERTY(ContentState contentState READ contentState NOTIFY contentStateChanged FINAL)
-    Q_PROPERTY(Application* application READ application CONSTANT FINAL)
+    Q_PROPERTY(QtAM::Window::ContentState contentState READ contentState NOTIFY contentStateChanged FINAL)
+    Q_PROPERTY(QtAM::Application *application READ application CONSTANT FINAL)
     Q_PROPERTY(bool popup READ isPopup CONSTANT FINAL)
     Q_PROPERTY(QPoint requestedPopupPosition READ requestedPopupPosition NOTIFY requestedPopupPositionChanged FINAL)
 
@@ -89,4 +89,4 @@ protected:
 
 QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(Window*))
+Q_DECLARE_METATYPE(QtAM::Window*)

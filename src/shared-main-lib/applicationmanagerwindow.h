@@ -28,7 +28,6 @@ class ApplicationManagerWindow : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
-    QML_ATTACHED(ApplicationManagerWindowAttached)
     Q_PROPERTY(bool inProcess READ isInProcess CONSTANT FINAL)
     Q_PROPERTY(QObject *backingObject READ backingObject CONSTANT FINAL)
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged FINAL)
@@ -149,8 +148,7 @@ private:
 class ApplicationManagerWindowAttached : public QObject
 {
     Q_OBJECT
-    QML_ANONYMOUS
-    Q_PROPERTY(ApplicationManagerWindow *window READ window NOTIFY windowChanged FINAL)
+    Q_PROPERTY(QtAM::ApplicationManagerWindow *window READ window NOTIFY windowChanged FINAL)
     Q_PROPERTY(QObject *backingObject READ backingObject NOTIFY backingObjectChanged FINAL)
 //    Q_PROPERTY(QWindow::Visibility visibility READ visibility NOTIFY visibilityChanged FINAL)
     Q_PROPERTY(bool active READ isActive NOTIFY activeChanged FINAL)

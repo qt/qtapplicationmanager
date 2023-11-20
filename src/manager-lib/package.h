@@ -30,7 +30,7 @@ class Package : public QObject
     Q_PROPERTY(QString description READ description NOTIFY bulkChange FINAL)
     Q_PROPERTY(QVariantMap descriptions READ descriptions NOTIFY bulkChange FINAL)
     Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange FINAL)
-    Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
+    Q_PROPERTY(QtAM::Package::State state READ state NOTIFY stateChanged FINAL)
     Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged FINAL)
     Q_PROPERTY(QList<QtAM::Application *> applications READ applications NOTIFY applicationsChanged FINAL)
 
@@ -101,7 +101,7 @@ public:
 
 signals:
     void bulkChange();
-    void stateChanged(QT_PREPEND_NAMESPACE_AM(Package::State) state);
+    void stateChanged(QtAM::Package::State state);
     void blockedChanged(bool blocked);
     void applicationsChanged();
 

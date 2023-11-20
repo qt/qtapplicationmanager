@@ -64,30 +64,30 @@ public:
     int count() const;
 
     Q_INVOKABLE QVariantMap get(int index) const;
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Intent) *intent(int index) const;
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Intent) *applicationIntent(const QString &intentId, const QString &applicationId,
-                                                                   const QVariantMap &parameters = QVariantMap{}) const;
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Intent) *packageIntent(const QString &intentId, const QString &packageId,
-                                                               const QVariantMap &parameters = QVariantMap{}) const;
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Intent) *packageIntent(const QString &intentId, const QString &packageId,
-                                                               const QString &applicationId,
-                                                               const QVariantMap &parameters = QVariantMap{}) const;
+    Q_INVOKABLE QtAM::Intent *intent(int index) const;
+    Q_INVOKABLE QtAM::Intent *applicationIntent(const QString &intentId, const QString &applicationId,
+                                                const QVariantMap &parameters = QVariantMap{}) const;
+    Q_INVOKABLE QtAM::Intent *packageIntent(const QString &intentId, const QString &packageId,
+                                            const QVariantMap &parameters = QVariantMap{}) const;
+    Q_INVOKABLE QtAM::Intent *packageIntent(const QString &intentId, const QString &packageId,
+                                            const QString &applicationId,
+                                            const QVariantMap &parameters = QVariantMap{}) const;
     Q_INVOKABLE int indexOfIntent(const QString &intentId, const QString &applicationId,
                                   const QVariantMap &parameters = QVariantMap{}) const;
-    Q_INVOKABLE int indexOfIntent(QT_PREPEND_NAMESPACE_AM(Intent) *intent);
+    Q_INVOKABLE int indexOfIntent(QtAM::Intent *intent);
 
     Q_INVOKABLE void acknowledgeDisambiguationRequest(const QUuid &requestId,
-                                                      QT_PREPEND_NAMESPACE_AM(Intent) *selectedIntent);
+                                                      QtAM::Intent *selectedIntent);
     Q_INVOKABLE void rejectDisambiguationRequest(const QUuid &requestId);
 
 signals:
-    void intentAdded(QT_PREPEND_NAMESPACE_AM(Intent) *intent);
-    void intentAboutToBeRemoved(QT_PREPEND_NAMESPACE_AM(Intent) *intent);
+    void intentAdded(QtAM::Intent *intent);
+    void intentAboutToBeRemoved(QtAM::Intent *intent);
 
     void countChanged();
 
     void disambiguationRequest(const QUuid &requestId,
-                               const QList<QT_PREPEND_NAMESPACE_AM(Intent) *> &potentialIntents,
+                               const QList<QtAM::Intent *> &potentialIntents,
                                const QVariantMap &parameters);
     /// ^^^ QML API ^^^
 

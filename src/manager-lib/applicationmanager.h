@@ -12,10 +12,6 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManManager/application.h>
 
-#if defined(Q_MOC_RUN) && !defined(__attribute__) && !defined(__declspec)
-#  define QT_PREPEND_NAMESPACE_AM(name) QtAM::name
-#  error "This pre-processor scope is for qdbuscpp2xml only, but it seems something else triggered it"
-#endif
 
 QT_FORWARD_DECLARE_CLASS(QDir)
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -33,7 +29,7 @@ class ApplicationManagerInternalSignals : public QObject
     Q_OBJECT
 signals:
     // Emitted every time a new Runtime object is created
-    void newRuntimeCreated(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);
+    void newRuntimeCreated(QtAM::AbstractRuntime *runtime);
     void shutDownFinished();
 };
 
@@ -101,10 +97,10 @@ public:
 
     int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Application) *application(int index) const;
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Application) *application(const QString &id) const;
+    Q_INVOKABLE QtAM::Application *application(int index) const;
+    Q_INVOKABLE QtAM::Application *application(const QString &id) const;
     Q_INVOKABLE int indexOfApplication(const QString &id) const;
-    Q_INVOKABLE int indexOfApplication(QT_PREPEND_NAMESPACE_AM(Application) *application) const;
+    Q_INVOKABLE int indexOfApplication(QtAM::Application *application) const;
 
     Q_INVOKABLE void acknowledgeOpenUrlRequest(const QString &requestId, const QString &appId);
     Q_INVOKABLE void rejectOpenUrlRequest(const QString &requestId);
@@ -120,7 +116,7 @@ public:
     Q_SCRIPTABLE QStringList capabilities(const QString &id) const;
     Q_SCRIPTABLE QString identifyApplication(qint64 pid) const;
     Q_SCRIPTABLE QStringList identifyAllApplications(qint64 pid) const;
-    Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(Am::RunState) applicationRunState(const QString &id) const;
+    Q_SCRIPTABLE QtAM::Am::RunState applicationRunState(const QString &id) const;
 
     ApplicationManagerInternalSignals internalSignals;
 
@@ -128,7 +124,7 @@ public slots:
     void shutDown();
 
 signals:
-    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QT_PREPEND_NAMESPACE_AM(Am::RunState) runState);
+    Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QtAM::Am::RunState runState);
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
     Q_SCRIPTABLE void countChanged();
 

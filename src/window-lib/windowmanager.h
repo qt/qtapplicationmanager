@@ -9,10 +9,6 @@
 #include <QtCore/QAbstractListModel>
 #include <QtAppManCommon/global.h>
 
-#if defined(Q_MOC_RUN) && !defined(__attribute__) && !defined(__declspec)
-#  define QT_PREPEND_NAMESPACE_AM(name) QtAM::name
-#  error "This pre-processor scope is for qdbuscpp2xml only, but it seems something else triggered it"
-#endif
 
 #if defined(AM_MULTI_PROCESS)
 QT_FORWARD_DECLARE_CLASS(QWaylandSurface)
@@ -81,9 +77,9 @@ public:
 
     int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Window) *window(int index) const;
-    Q_INVOKABLE QList<QT_PREPEND_NAMESPACE_AM(Window) *> windowsOfApplication(const QString &id) const;
-    Q_INVOKABLE int indexOfWindow(QT_PREPEND_NAMESPACE_AM(Window) *window) const;
+    Q_INVOKABLE QtAM::Window *window(int index) const;
+    Q_INVOKABLE QList<QtAM::Window *> windowsOfApplication(const QString &id) const;
+    Q_INVOKABLE int indexOfWindow(QtAM::Window *window) const;
     Q_INVOKABLE QObject *addExtension(QQmlComponent *component) const;
 
     WindowManagerInternalSignals internalSignals;
@@ -97,16 +93,16 @@ signals:
 
     void raiseApplicationWindow(const QString &applicationId, const QString &applicationAliasId);
 
-    void windowAdded(QT_PREPEND_NAMESPACE_AM(Window) *window);
-    void windowAboutToBeRemoved(QT_PREPEND_NAMESPACE_AM(Window) *window);
-    void windowContentStateChanged(QT_PREPEND_NAMESPACE_AM(Window) *window);
+    void windowAdded(QtAM::Window *window);
+    void windowAboutToBeRemoved(QtAM::Window *window);
+    void windowContentStateChanged(QtAM::Window *window);
 
-    void windowPropertyChanged(QT_PREPEND_NAMESPACE_AM(Window) *window, const QString &name, const QVariant &value);
+    void windowPropertyChanged(QtAM::Window *window, const QString &name, const QVariant &value);
 
 private slots:
-    void inProcessSurfaceItemCreated(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime,
-                                     QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)> surfaceItem);
-    void setupWindow(QT_PREPEND_NAMESPACE_AM(Window) *window);
+    void inProcessSurfaceItemCreated(QtAM::AbstractRuntime *runtime,
+                                     QSharedPointer<QtAM::InProcessSurfaceItem> surfaceItem);
+    void setupWindow(QtAM::Window *window);
 
 public:
     Q_SCRIPTABLE bool makeScreenshot(const QString &filename, const QString &selector);
@@ -114,12 +110,12 @@ public:
     QList<QQuickWindow *> compositorViews() const;
 
     // evil hook to support in-process runtimes
-    void setupInProcessRuntime(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime);
+    void setupInProcessRuntime(QtAM::AbstractRuntime *runtime);
 
 #if defined(AM_MULTI_PROCESS)
 private slots:
     void waylandSurfaceCreated(QWaylandSurface *surface);
-    void waylandSurfaceMapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
+    void waylandSurfaceMapped(QtAM::WindowSurface *surface);
 
 private:
     void handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *surface);

@@ -50,7 +50,7 @@ public:
 
 signals:
     void intentIdsChanged();
-    void requestReceived(QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *request);
+    void requestReceived(QtAM::IntentClientRequest *request);
 
 protected:
     void classBegin() override;

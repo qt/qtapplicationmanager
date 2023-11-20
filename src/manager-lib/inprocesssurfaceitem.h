@@ -81,5 +81,5 @@ private:
 
 QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem*))
-Q_DECLARE_METATYPE(QSharedPointer<QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem)>)
+Q_DECLARE_METATYPE(QtAM::InProcessSurfaceItem*)
+Q_DECLARE_METATYPE(QSharedPointer<QtAM::InProcessSurfaceItem>)

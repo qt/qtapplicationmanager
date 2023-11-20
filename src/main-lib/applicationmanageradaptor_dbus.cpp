@@ -43,7 +43,7 @@ ApplicationManagerAdaptor::ApplicationManagerAdaptor(QObject *parent)
 
     // connect this signal via a lambda, since it needs a type conversion
     connect(am, &ApplicationManager::applicationRunStateChanged,
-            this, [this](const QString &id, QT_PREPEND_NAMESPACE_AM(Am::RunState) runState) {
+            this, [this](const QString &id, QtAM::Am::RunState runState) {
         emit applicationRunStateChanged(id, runState);
     });
 }

@@ -518,14 +518,14 @@ IntentInterfaceAdaptor::~IntentInterfaceAdaptor()
 void IntentInterfaceAdaptor::replyFromApplication(const QString &requestId, bool error,
                                                   const QVariantMap &result)
 {
-    auto peer = static_cast<QT_PREPEND_NAMESPACE_AM(IntentServerDBusIpcConnection) *>(parent());
+    auto peer = static_cast<QtAM::IntentServerDBusIpcConnection *>(parent());
     peer->replyFromApplication(requestId, error, result);
 }
 
 QString IntentInterfaceAdaptor::requestToSystem(const QString &intentId, const QString &applicationId,
                                                 const QVariantMap &parameters)
 {
-    auto peer = static_cast<QT_PREPEND_NAMESPACE_AM(IntentServerDBusIpcConnection) *>(parent());
+    auto peer = static_cast<QtAM::IntentServerDBusIpcConnection *>(parent());
     return peer->requestToSystem(intentId, applicationId, parameters);
 }
 

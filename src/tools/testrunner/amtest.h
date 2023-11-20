@@ -31,8 +31,8 @@ public:
     QVariant buildConfig() const;
     QString qtVersion() const;
 
-    Q_INVOKABLE void ignoreMessage(QT_PREPEND_NAMESPACE_AM(AmTest::MsgType) type, const char* msg);
-    Q_INVOKABLE void ignoreMessage(QT_PREPEND_NAMESPACE_AM(AmTest::MsgType) type, const QRegularExpression &expression);
+    Q_INVOKABLE void ignoreMessage(QtAM::AmTest::MsgType type, const char* msg);
+    Q_INVOKABLE void ignoreMessage(QtAM::AmTest::MsgType type, const QRegularExpression &expression);
     Q_INVOKABLE int observeObjectDestroyed(QObject *obj);
     Q_INVOKABLE void aboutToBlock();
     Q_INVOKABLE bool dirExists(const QString &dir);

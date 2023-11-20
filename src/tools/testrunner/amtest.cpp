@@ -31,7 +31,7 @@ AmTest *AmTest::instance()
 
 int AmTest::timeoutFactor() const
 {
-    return QT_PREPEND_NAMESPACE_AM(timeoutFactor)();
+    return QtAM::timeoutFactor();
 }
 
 QVariant AmTest::buildConfig() const

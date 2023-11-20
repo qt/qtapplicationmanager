@@ -47,11 +47,11 @@ public:
     void registerHandler(AbstractIntentHandler *handler);
     void unregisterHandler(AbstractIntentHandler *handler);
 
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *sendIntentRequest(const QString &intentId,
-                                                                                const QVariantMap &parameters);
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *sendIntentRequest(const QString &intentId,
-                                                                                const QString &applicationId,
-                                                                                const QVariantMap &parameters);
+    Q_INVOKABLE QtAM::IntentClientRequest *sendIntentRequest(const QString &intentId,
+                                                             const QVariantMap &parameters);
+    Q_INVOKABLE QtAM::IntentClientRequest *sendIntentRequest(const QString &intentId,
+                                                             const QString &applicationId,
+                                                             const QVariantMap &parameters);
 
     Q_REVISION(2, 1) Q_INVOKABLE bool broadcastIntentRequest(const QString &intentId,
                                                              const QVariantMap &parameters);

@@ -46,7 +46,7 @@ public:
     QVariantMap systemProperties() const;
     QVariantMap applicationProperties() const;
 
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Notification *) createNotification();
+    Q_INVOKABLE QtAM::Notification *createNotification();
     Q_INVOKABLE void acknowledgeQuit();
 
 signals:

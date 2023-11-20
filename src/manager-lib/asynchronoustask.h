@@ -52,7 +52,7 @@ public:
     virtual bool postExecute();
 
 signals:
-    void stateChanged(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) newState);
+    void stateChanged(QtAM::AsynchronousTask::TaskState newState);
     void progress(qreal p);
 
 protected:

@@ -173,7 +173,7 @@ class IntentServerHandler : public AbstractIntentHandler
     Q_PROPERTY(QVariantMap names READ names WRITE setNames FINAL)
     Q_PROPERTY(QVariantMap descriptions READ descriptions WRITE setDescriptions FINAL)
     Q_PROPERTY(QStringList categories READ categories WRITE setCategories FINAL)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Intent)::Visibility visibility READ visibility WRITE setVisibility FINAL)
+    Q_PROPERTY(QtAM::Intent::Visibility visibility READ visibility WRITE setVisibility FINAL)
     Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities WRITE setRequiredCapabilities FINAL)
     Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch WRITE setParameterMatch FINAL)
 
@@ -200,7 +200,7 @@ public:
 
 signals:
     void intentIdsChanged();
-    void requestReceived(QT_PREPEND_NAMESPACE_AM(IntentClientRequest) *request);
+    void requestReceived(QtAM::IntentClientRequest *request);
 
 protected:
     void classBegin() override;

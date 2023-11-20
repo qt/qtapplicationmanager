@@ -45,19 +45,19 @@ class Application : public QObject
     Q_PROPERTY(QString documentUrl READ documentUrl CONSTANT FINAL)
     Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes CONSTANT FINAL)
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT FINAL)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(AbstractRuntime) *runtime READ currentRuntime NOTIFY runtimeChanged FINAL)
+    Q_PROPERTY(QtAM::AbstractRuntime *runtime READ currentRuntime NOTIFY runtimeChanged FINAL)
     Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged FINAL)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Am::ExitStatus) lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged FINAL)
+    Q_PROPERTY(QtAM::Am::ExitStatus lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged FINAL)
     Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange FINAL)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Am::RunState) runState READ runState NOTIFY runStateChanged FINAL)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Package) *package READ package CONSTANT FINAL)
+    Q_PROPERTY(QtAM::Am::RunState runState READ runState NOTIFY runStateChanged FINAL)
+    Q_PROPERTY(QtAM::Package *package READ package CONSTANT FINAL)
 
     // legacy, forwarded to Package
     Q_PROPERTY(bool builtIn READ isBuiltIn CONSTANT FINAL)
     Q_PROPERTY(bool alias READ isAlias CONSTANT FINAL)
-    Q_PROPERTY(QT_PREPEND_NAMESPACE_AM(Application) *nonAliased READ nonAliased CONSTANT FINAL)
+    Q_PROPERTY(QtAM::Application *nonAliased READ nonAliased CONSTANT FINAL)
     Q_PROPERTY(QString version READ version CONSTANT FINAL)
-    Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
+    Q_PROPERTY(QtAM::Application::State state READ state NOTIFY stateChanged FINAL)
     Q_PROPERTY(bool blocked READ isBlocked NOTIFY blockedChanged FINAL)
 
     // internal
@@ -127,8 +127,8 @@ signals:
     void lastExitCodeChanged();
     void lastExitStatusChanged();
     void activated();
-    void stateChanged(QT_PREPEND_NAMESPACE_AM(Application::State) state);
-    void runStateChanged(QT_PREPEND_NAMESPACE_AM(Am::RunState) state);
+    void stateChanged(QtAM::Application::State state);
+    void runStateChanged(QtAM::Am::RunState state);
     void blockedChanged(bool blocked);
 
 private:
@@ -149,4 +149,4 @@ QDebug operator<<(QDebug debug, const Application *app);
 
 QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(const QT_PREPEND_NAMESPACE_AM(Application *))
+Q_DECLARE_METATYPE(const QtAM::Application *)

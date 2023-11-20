@@ -55,9 +55,9 @@ public slots:
 
 signals:
     void started();
-    void errorOccured(Am::ProcessError error);
-    void finished(int exitCode, Am::ExitStatus status);
-    void stateChanged(Am::RunState newState);
+    void errorOccured(QtAM::Am::ProcessError error);
+    void finished(int exitCode, QtAM::Am::ExitStatus status);
+    void stateChanged(QtAM::Am::RunState newState);
 };
 
 class AbstractContainer : public QObject
@@ -92,7 +92,7 @@ signals:
     void ready();
     void memoryLowWarning();
     void memoryCriticalWarning();
-    void applicationChanged(QT_PREPEND_NAMESPACE_AM(Application) *newApplication);
+    void applicationChanged(QtAM::Application *newApplication);
     void controlGroupChanged(const QString &controlGroup);
 
 protected:
@@ -109,4 +109,4 @@ protected:
 
 QT_END_NAMESPACE_AM
 
-Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(AbstractContainer *))
+Q_DECLARE_METATYPE(QtAM::AbstractContainer *)

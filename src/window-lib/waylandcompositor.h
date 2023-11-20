@@ -101,7 +101,7 @@ public:
     void xdgPing(WindowSurface*);
 
 signals:
-    void surfaceMapped(QT_PREPEND_NAMESPACE_AM(WindowSurface) *surface);
+    void surfaceMapped(QtAM::WindowSurface *surface);
 
 protected:
     void doCreateSurface(QWaylandClient *client, uint id, int version);

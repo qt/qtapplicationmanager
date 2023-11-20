@@ -20,7 +20,7 @@ public:
     QString filePath;
     QString architecture;
     QByteArray sha1;
-    std::unique_ptr<QT_PREPEND_NAMESPACE_AM(PackageInfo)> packageInfo;
+    std::unique_ptr<QtAM::PackageInfo> packageInfo;
 
     QString architectureOrAll() const;
 };

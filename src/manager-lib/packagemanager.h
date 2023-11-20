@@ -11,11 +11,6 @@
 #include <QtAppManApplication/packageinfo.h>
 #include <QtAppManManager/asynchronoustask.h>
 
-#if defined(Q_MOC_RUN) && !defined(__attribute__) && !defined(__declspec)
-#  define QT_PREPEND_NAMESPACE_AM(name) QtAM::name
-#  error "This pre-processor scope is for qdbuscpp2xml only, but it seems something else triggered it"
-#endif
-
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
@@ -36,15 +31,15 @@ class PackageManagerInternalSignals : public QObject
 signals:
     // the slots connected to these signals are allowed to throw Exception objects, if the
     // connection is direct!
-    void registerApplication(QT_PREPEND_NAMESPACE_AM(ApplicationInfo) *applicationInfo,
-                             QT_PREPEND_NAMESPACE_AM(Package) *package);
-    void unregisterApplication(QT_PREPEND_NAMESPACE_AM(ApplicationInfo) *applicationInfo,
-                               QT_PREPEND_NAMESPACE_AM(Package) *package);
+    void registerApplication(QtAM::ApplicationInfo *applicationInfo,
+                             QtAM::Package *package);
+    void unregisterApplication(QtAM::ApplicationInfo *applicationInfo,
+                               QtAM::Package *package);
 
-    void registerIntent(QT_PREPEND_NAMESPACE_AM(IntentInfo) *intentInfo,
-                        QT_PREPEND_NAMESPACE_AM(Package) *package);
-    void unregisterIntent(QT_PREPEND_NAMESPACE_AM(IntentInfo) *intentInfo,
-                          QT_PREPEND_NAMESPACE_AM(Package) *package);
+    void registerIntent(QtAM::IntentInfo *intentInfo,
+                        QtAM::Package *package);
+    void unregisterIntent(QtAM::IntentInfo *intentInfo,
+                          QtAM::Package *package);
 };
 
 class PackageManager : public QAbstractListModel
@@ -63,7 +58,7 @@ class PackageManager : public QAbstractListModel
     Q_PROPERTY(QVariantMap documentLocation READ documentLocation CONSTANT FINAL)
 
 public:
-    Q_ENUMS(QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState))
+    Q_ENUMS(QtAM::AsynchronousTask::TaskState)
 
     enum CacheMode {
         NoCache,
@@ -92,8 +87,8 @@ public:
 
     int count() const;
     Q_INVOKABLE QVariantMap get(int index) const;
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Package) *package(int index) const;
-    Q_INVOKABLE QT_PREPEND_NAMESPACE_AM(Package) *package(const QString &id) const;
+    Q_INVOKABLE QtAM::Package *package(int index) const;
+    Q_INVOKABLE QtAM::Package *package(const QString &id) const;
     Q_INVOKABLE int indexOfPackage(const QString &id) const;
 
     bool isReady() const;
@@ -128,7 +123,7 @@ public:
     Q_SCRIPTABLE void acknowledgePackageInstallation(const QString &taskId);
     Q_SCRIPTABLE QString removePackage(const QString &id, bool keepDocuments, bool force = false);
 
-    Q_SCRIPTABLE QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) taskState(const QString &taskId) const;
+    Q_SCRIPTABLE QtAM::AsynchronousTask::TaskState taskState(const QString &taskId) const;
     Q_SCRIPTABLE QString taskPackageId(const QString &taskId) const;
     Q_SCRIPTABLE QStringList activeTaskIds() const;
     Q_SCRIPTABLE bool cancelTask(const QString &taskId);
@@ -152,11 +147,11 @@ signals:
     Q_SCRIPTABLE void taskFinished(const QString &taskId);
     Q_SCRIPTABLE void taskFailed(const QString &taskId, int errorCode, const QString &errorString);
     Q_SCRIPTABLE void taskStateChanged(const QString &taskId,
-                                       QT_PREPEND_NAMESPACE_AM(AsynchronousTask::TaskState) newState);
+                                       QtAM::AsynchronousTask::TaskState newState);
 
     // installation only
     void taskRequestingInstallationAcknowledge(const QString &taskId,
-                                               QT_PREPEND_NAMESPACE_AM(Package) *package,
+                                               QtAM::Package *package,
                                                const QVariantMap &packageExtraMetaData,
                                                const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);

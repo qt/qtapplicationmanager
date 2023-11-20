@@ -33,7 +33,7 @@ public:
     virtual void replyFromApplication(QPointer<IntentClientRequest> icr) = 0;
 
 signals:
-    void requestToSystemFinished(QPointer<QT_PREPEND_NAMESPACE_AM(IntentClientRequest)> icr,
+    void requestToSystemFinished(QPointer<QtAM::IntentClientRequest> icr,
                                  const QUuid &newRequestId, bool error, const QString &errorMessage);
     void replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result);
 

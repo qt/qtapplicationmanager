@@ -126,7 +126,7 @@ void registerDBusTypes()
     if (!once) {
         qDBusRegisterMetaType<QUrl>();
         qDBusRegisterMetaType<QMap<QString, QDBusUnixFileDescriptor>>();
-        qDBusRegisterMetaType<QT_PREPEND_NAMESPACE_AM(UnixFdMap)>();
+        qDBusRegisterMetaType<QtAM::UnixFdMap>();
         once = true;
     }
 #endif
@@ -155,7 +155,7 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, QUrl &url)
     return argument;
 }
 
-QDBusArgument &operator<<(QDBusArgument &argument, const QT_PREPEND_NAMESPACE_AM(UnixFdMap) &fdMap)
+QDBusArgument &operator<<(QDBusArgument &argument, const QtAM::UnixFdMap &fdMap)
 {
     argument.beginMap(qMetaTypeId<QString>(), qMetaTypeId<QDBusUnixFileDescriptor>());
     for (auto it = fdMap.cbegin(); it != fdMap.cend(); ++it) {
@@ -168,7 +168,7 @@ QDBusArgument &operator<<(QDBusArgument &argument, const QT_PREPEND_NAMESPACE_AM
     return argument;
 }
 
-const QDBusArgument &operator>>(const QDBusArgument &argument, QT_PREPEND_NAMESPACE_AM(UnixFdMap) &fdMap)
+const QDBusArgument &operator>>(const QDBusArgument &argument, QtAM::UnixFdMap &fdMap)
 {
     argument.beginMap();
     fdMap.clear();

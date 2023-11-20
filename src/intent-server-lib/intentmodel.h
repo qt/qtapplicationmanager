@@ -35,7 +35,7 @@ public:
 
     Q_INVOKABLE int indexOfIntent(const QString &intentId, const QString &applicationId,
                                   const QVariantMap &parameters = {}) const;
-    Q_INVOKABLE int indexOfIntent(QT_PREPEND_NAMESPACE_AM(Intent) *intent);
+    Q_INVOKABLE int indexOfIntent(QtAM::Intent *intent);
     Q_INVOKABLE int mapToSource(int ourIndex) const;
     Q_INVOKABLE int mapFromSource(int sourceIndex) const;
     Q_INVOKABLE void invalidate();

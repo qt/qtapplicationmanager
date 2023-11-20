@@ -50,8 +50,8 @@ signals:
     void aboutToStop(); // used for the ApplicationInterface
 
 private slots:
-    void finish(int exitCode, Am::ExitStatus status);
-    void onSurfaceItemReleased(QT_PREPEND_NAMESPACE_AM(InProcessSurfaceItem) *surface);
+    void finish(int exitCode, QtAM::Am::ExitStatus status);
+    void onSurfaceItemReleased(QtAM::InProcessSurfaceItem *surface);
 
 private:
     static const char *s_runtimeKey;

@@ -101,9 +101,6 @@ void WaylandApplicationManagerWindowImpl::classBegin()
         } else if (auto *indirectWindow = qobject_cast<ApplicationManagerWindow *>(p)) {
             parentWindow = static_cast<WaylandApplicationManagerWindowImpl *>(indirectWindow->implementation())->m_qwindow;
             break;
-        } else if (auto *quickItem = qobject_cast<QQuickItem *>(p)){
-            parentWindow = quickItem->window();
-            break;
         } else {
             p = p->parent();
         }

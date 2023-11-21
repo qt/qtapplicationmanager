@@ -17,7 +17,7 @@ TestCase {
     property int spyTimeout: 5000 * AmTest.timeoutFactor
     property var lastWindowAdded
 
-    WindowItem {
+    component WindowChrome: WindowItem {
         id: chrome
         anchors.fill: parent
 
@@ -28,16 +28,16 @@ TestCase {
                     chrome.window = null;
             }
         }
+    }
 
-        WindowItem {
+    WindowChrome {
+        id: topChrome
+
+        WindowChrome {
             id: subChrome
-            anchors.fill: parent
-            Connections {
-                target: subChrome.window
-                function onContentStateChanged() {
-                    if (subChrome.window.contentState === WindowObject.NoSurface)
-                        subChrome.window = null;
-                }
+
+            WindowChrome {
+                id: sub2Chrome
             }
         }
     }
@@ -47,8 +47,10 @@ TestCase {
         function onWindowAdded(window) {
             if (window.windowProperty("type") === "sub")
                 subChrome.window = window;
+            else if (window.windowProperty("type") === "sub2")
+                sub2Chrome.window = window;
             else
-                chrome.window = window;
+                topChrome.window = window;
 
             testCase.lastWindowAdded = window;
         }
@@ -182,6 +184,43 @@ TestCase {
         tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
     }
 
+    function test_quitOnLastClosed() {
+        var app = ApplicationManager.application("test.winmap.amwin2");
+
+        tryCompare(WindowManager, "count", 0, spyTimeout);
+        app.start("show-main");
+        tryCompare(WindowManager, "count", 1, spyTimeout);
+        compare(app.runState, Am.Running);
+        topChrome.window.close();
+        AmTest.aboutToBlock();
+        tryCompare(app, "runState", Am.NotRunning, spyTimeout);
+
+        tryCompare(WindowManager, "count", 0, spyTimeout);
+        app.start("show-main");
+        tryCompare(WindowManager, "count", 1, spyTimeout);
+        app.start("show-sub");
+        tryCompare(WindowManager, "count", 2, spyTimeout);
+        app.start("show-sub2");
+        tryCompare(WindowManager, "count", 3, spyTimeout);
+        compare(app.runState, Am.Running);
+        topChrome.window.close();
+        AmTest.aboutToBlock();
+        tryCompare(app, "runState", Am.NotRunning, spyTimeout);
+
+        tryCompare(WindowManager, "count", 0, spyTimeout);
+        app.start("show-main");
+        tryCompare(WindowManager, "count", 1, spyTimeout);
+        app.start("show-sub");
+        tryCompare(WindowManager, "count", 2, spyTimeout);
+        tryVerify(function() { return subChrome != null }, spyTimeout);
+        compare(app.runState, Am.Running);
+        subChrome.window.close();
+        AmTest.aboutToBlock();
+        tryCompare(subChrome, "window", null, spyTimeout);
+        wait(200);
+        compare(app.runState, Am.Running);
+    }
+
     function test_default_data() {
         return [ { tag: "ApplicationManagerWindow", appId: "test.winmap.amwin" },
                  // skipping QtObject, as it doesn't show anything
@@ -196,10 +235,10 @@ TestCase {
         compare(WindowManager.count, 0);
 
         var app = ApplicationManager.application(data.appId);
-        verify(chrome.window === null);
+        verify(topChrome.window === null);
         app.start();
         tryCompare(WindowManager, "count", 1, spyTimeout);
-        tryVerify(function () { return chrome.window !== null }, spyTimeout);
+        tryVerify(function () { return topChrome.window !== null }, spyTimeout);
 
         app.stop();
         tryCompare(WindowManager, "count", 0, spyTimeout);

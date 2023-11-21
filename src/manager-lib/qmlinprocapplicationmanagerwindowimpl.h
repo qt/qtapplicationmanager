@@ -73,7 +73,7 @@ private:
     void notifyRuntimeAboutSurface();
     void determineRuntime();
     void findParentWindow(QObject *object);
-    void setParentWindow(ApplicationManagerWindow *newParentWindow);
+    void setRelations(ApplicationManagerWindow *newParentWindow);
     void connectActiveFocusItem();
 
     static QVector<QmlInProcApplicationManagerWindowImpl *> s_inCompleteWindows;
@@ -82,6 +82,7 @@ private:
     QmlInProcRuntime *m_runtime = nullptr;
     QVector<QQmlComponentAttached *> m_attachedCompleteHandlers;
     ApplicationManagerWindow *m_parentWindow = nullptr;
+    QVector<ApplicationManagerWindow*> m_childWindows;
     QMetaObject::Connection m_parentVisibleConnection;
     QMetaObject::Connection m_activeFocusItemConnection;
 

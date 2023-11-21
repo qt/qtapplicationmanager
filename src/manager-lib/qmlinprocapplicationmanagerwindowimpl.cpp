@@ -94,6 +94,9 @@ QObject *QmlInProcApplicationManagerWindowImpl::backingObject() const
 
 void QmlInProcApplicationManagerWindowImpl::close()
 {
+    for (const auto &child: std::as_const(m_childWindows))
+        child->close();
+
     amWindow()->setVisible(false);
     if (m_runtime) {
         // Queued because the runtime might end up deleting this object
@@ -211,23 +214,25 @@ void QmlInProcApplicationManagerWindowImpl::findParentWindow(QObject *object)
 
     auto surfaceItem = qobject_cast<InProcessSurfaceItem *>(object);
     if (surfaceItem) {
-        setParentWindow(surfaceItem->applicationManagerWindow());
+        setRelations(surfaceItem->applicationManagerWindow());
     } else {
         if (auto window = qobject_cast<ApplicationManagerWindow *>(object))
-            setParentWindow(window);
+            setRelations(window);
         else
             findParentWindow(object->parent());
     }
 }
 
-void QmlInProcApplicationManagerWindowImpl::setParentWindow(ApplicationManagerWindow *newParentWindow)
+void QmlInProcApplicationManagerWindowImpl::setRelations(ApplicationManagerWindow *newParentWindow)
 {
-    if (m_parentWindow && m_parentVisibleConnection)
-        QObject::disconnect(m_parentVisibleConnection);
+    // Only static window hieararchy supported
+    Q_ASSERT(!m_parentWindow && !m_parentVisibleConnection);
 
     m_parentWindow = newParentWindow;
 
     if (m_parentWindow) {
+        static_cast<QmlInProcApplicationManagerWindowImpl*>
+            (m_parentWindow->implementation())->m_childWindows.append(amWindow());
         m_parentVisibleConnection = QObject::connect(
             m_parentWindow, &ApplicationManagerWindow::visibleChanged,
             amWindow(), [this]() { notifyRuntimeAboutSurface(); });

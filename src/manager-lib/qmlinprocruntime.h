@@ -65,7 +65,7 @@ private:
     void addPluginPaths(const QStringList &pluginPaths, const QString &baseDir);
     void addImportPaths(const QStringList &importPaths, const QString &baseDir);
 
-    // used by QmlInProcApplicationManagerWindow to register surfaceItems
+    // used by QmlInProcApplicationManagerWindowImpl to register surfaceItems
     void addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface);
 
     bool hasVisibleSurfaces() const;

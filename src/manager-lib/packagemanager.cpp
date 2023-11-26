@@ -828,10 +828,14 @@ QVariantMap PackageManager::documentLocation() const
 
 bool PackageManager::isPackageInstallationActive(const QString &packageId) const
 {
+#if !defined(AM_DISABLE_INSTALLER)
     for (const auto *t : std::as_const(d->installationTaskList)) {
         if (t->packageId() == packageId)
             return true;
     }
+#else
+    Q_UNUSED(packageId)
+#endif
     return false;
 }
 

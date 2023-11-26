@@ -61,7 +61,7 @@ qt_feature_definition("am-external-dbus-interfaces" "AM_DISABLE_EXTERNAL_DBUS_IN
 
 qt_feature("am-package-server" PRIVATE
     LABEL "Build the package-server"
-    CONDITION TARGET Qt::HttpServer
+    CONDITION TARGET Qt::HttpServer AND QT_FEATURE_am_installer
     ENABLE INPUT_package_server STREQUAL 'yes'
     DISABLE INPUT_package_server STREQUAL 'no'
 )

@@ -1,4 +1,9 @@
 
+if (NOT QT_FEATURE_am_installer)
+    message(WARNING "QT_FEATURE_am_installer is disabled, skipping all auto tests")
+    return()
+endif()
+
 add_subdirectory(application)
 add_subdirectory(applicationinfo)
 add_subdirectory(applicationinstaller)

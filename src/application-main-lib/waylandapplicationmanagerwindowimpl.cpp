@@ -68,6 +68,8 @@ WaylandApplicationManagerWindowImpl::WaylandApplicationManagerWindowImpl(Applica
                      window, &ApplicationManagerWindow::activeChanged);
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::activeFocusItemChanged,
                      window, &ApplicationManagerWindow::activeFocusItemChanged);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::visibilityChanged,
+                     window, &ApplicationManagerWindow::visibilityChanged);
 }
 
 WaylandApplicationManagerWindowImpl::~WaylandApplicationManagerWindowImpl()
@@ -158,9 +160,34 @@ void WaylandApplicationManagerWindowImpl::close()
     m_qwindow->close();
 }
 
+QWindow::Visibility WaylandApplicationManagerWindowImpl::visibility() const
+{
+    return m_qwindow->visibility();
+}
+
+void WaylandApplicationManagerWindowImpl::setVisibility(QWindow::Visibility newVisibility)
+{
+    m_qwindow->setVisibility(newVisibility);
+}
+
+void WaylandApplicationManagerWindowImpl::hide()
+{
+    m_qwindow->hide();
+}
+
+void WaylandApplicationManagerWindowImpl::show()
+{
+    m_qwindow->show();
+}
+
 void WaylandApplicationManagerWindowImpl::showFullScreen()
 {
     m_qwindow->showFullScreen();
+}
+
+void WaylandApplicationManagerWindowImpl::showMinimized()
+{
+    m_qwindow->showMinimized();
 }
 
 void WaylandApplicationManagerWindowImpl::showMaximized()

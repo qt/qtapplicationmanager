@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <QtGui/QColor>
+#include <QtGui/QWindow>
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QQuickItem)
@@ -68,7 +69,12 @@ public:
     virtual QVariantMap windowProperties() const = 0;
 
     virtual void close() = 0;
+    virtual QWindow::Visibility visibility() const = 0;
+    virtual void setVisibility(QWindow::Visibility visibility) = 0;
+    virtual void hide() = 0;
+    virtual void show() = 0;
     virtual void showFullScreen() = 0;
+    virtual void showMinimized() = 0;
     virtual void showMaximized() = 0;
     virtual void showNormal() = 0;
 

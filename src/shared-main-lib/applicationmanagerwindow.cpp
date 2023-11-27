@@ -210,9 +210,24 @@ void ApplicationManagerWindow::close()
     m_impl->close();
 }
 
+void ApplicationManagerWindow::hide()
+{
+    m_impl->hide();
+}
+
+void ApplicationManagerWindow::show()
+{
+    m_impl->show();
+}
+
 void ApplicationManagerWindow::showFullScreen()
 {
     m_impl->showFullScreen();
+}
+
+void ApplicationManagerWindow::showMinimized()
+{
+    m_impl->showMinimized();
 }
 
 void ApplicationManagerWindow::showMaximized()
@@ -360,6 +375,15 @@ QQuickItem *ApplicationManagerWindow::activeFocusItem() const
     return m_impl->activeFocusItem();
 }
 
+QWindow::Visibility ApplicationManagerWindow::visibility() const
+{
+    return m_impl->visibility();
+}
+
+void ApplicationManagerWindow::setVisibility(QWindow::Visibility newVisibility)
+{
+    m_impl->setVisibility(newVisibility);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ApplicationManagerWindowAttached
@@ -400,6 +424,8 @@ void ApplicationManagerWindowAttached::reconnect(ApplicationManagerWindow *newWi
                          this, &ApplicationManagerWindowAttached::widthChanged);
         QObject::connect(m_amwindow, &ApplicationManagerWindow::heightChanged,
                          this, &ApplicationManagerWindowAttached::heightChanged);
+        QObject::connect(m_amwindow, &ApplicationManagerWindow::visibilityChanged,
+                         this, &ApplicationManagerWindowAttached::visibilityChanged);
     }
 }
 
@@ -411,6 +437,11 @@ ApplicationManagerWindow *ApplicationManagerWindowAttached::window() const
 QObject *ApplicationManagerWindowAttached::backingObject() const
 {
     return m_amwindow ? m_amwindow->backingObject() : nullptr;
+}
+
+QWindow::Visibility ApplicationManagerWindowAttached::visibility() const
+{
+    return m_amwindow ? m_amwindow->visibility() : QWindow::Hidden;
 }
 
 bool ApplicationManagerWindowAttached::isActive() const

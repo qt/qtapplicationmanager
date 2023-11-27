@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <QtGui/QColor>
+#include <QtGui/QWindow>
 #include <QtQml/QQmlParserStatus>
 #include <QtQml/QQmlListProperty>
 #include <QtQml/QQmlEngine>
@@ -35,8 +36,6 @@ class ApplicationManagerWindow : public QObject, public QQmlParserStatus
 
     // QWindow properties
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
-    //Q_PROPERTY(Qt::WindowModality modality READ modality WRITE setModality NOTIFY modalityChanged FINAL)
-    //Q_PROPERTY(Qt::WindowFlags flags READ flags WRITE setFlags FINAL)
     Q_PROPERTY(int x READ x WRITE setX NOTIFY xChanged FINAL)
     Q_PROPERTY(int y READ y WRITE setY NOTIFY yChanged FINAL)
     Q_PROPERTY(int width READ width WRITE setWidth NOTIFY widthChanged FINAL)
@@ -47,8 +46,7 @@ class ApplicationManagerWindow : public QObject, public QQmlParserStatus
     Q_PROPERTY(int maximumHeight READ maximumHeight WRITE setMaximumHeight NOTIFY maximumHeightChanged FINAL)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged FINAL)
     Q_PROPERTY(bool active READ isActive NOTIFY activeChanged FINAL)
-    //Q_PROPERTY(Visibility visibility READ visibility WRITE setVisibility NOTIFY visibilityChanged FINAL)
-    //Q_PROPERTY(Qt::ScreenOrientation contentOrientation READ contentOrientation WRITE reportContentOrientationChange NOTIFY contentOrientationChanged FINAL)
+    Q_PROPERTY(QWindow::Visibility visibility READ visibility WRITE setVisibility NOTIFY visibilityChanged FINAL)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged FINAL)
     Q_PROPERTY(QQuickItem *activeFocusItem READ activeFocusItem NOTIFY activeFocusItemChanged FINAL)
 
@@ -113,6 +111,9 @@ public:
     Q_SIGNAL void activeChanged();
     QQuickItem *activeFocusItem() const;
     Q_SIGNAL void activeFocusItemChanged();
+    QWindow::Visibility visibility() const;
+    void setVisibility(QWindow::Visibility newVisibility);
+    Q_SIGNAL void visibilityChanged(QWindow::Visibility newVisibility);
 
     Q_INVOKABLE bool setWindowProperty(const QString &name, const QVariant &value);
     Q_INVOKABLE QVariant windowProperty(const QString &name) const;
@@ -120,16 +121,12 @@ public:
     Q_SIGNAL void windowPropertyChanged(const QString &name, const QVariant &value);
 
     Q_INVOKABLE void close();
+    Q_INVOKABLE void hide();
+    Q_INVOKABLE void show();
     Q_INVOKABLE void showFullScreen();
+    Q_INVOKABLE void showMinimized();
     Q_INVOKABLE void showMaximized();
     Q_INVOKABLE void showNormal();
-
-    // following QWindow slots aren't implemented yet:
-    //    void hide()
-    //    void lower()
-    //    void raise()
-    //    void show()
-    //    void showMinimized()
 
     ApplicationManagerWindowImpl *implementation();
 
@@ -150,7 +147,7 @@ class ApplicationManagerWindowAttached : public QObject
     Q_OBJECT
     Q_PROPERTY(QtAM::ApplicationManagerWindow *window READ window NOTIFY windowChanged FINAL)
     Q_PROPERTY(QObject *backingObject READ backingObject NOTIFY backingObjectChanged FINAL)
-//    Q_PROPERTY(QWindow::Visibility visibility READ visibility NOTIFY visibilityChanged FINAL)
+    Q_PROPERTY(QWindow::Visibility visibility READ visibility NOTIFY visibilityChanged FINAL)
     Q_PROPERTY(bool active READ isActive NOTIFY activeChanged FINAL)
     Q_PROPERTY(QQuickItem *activeFocusItem READ activeFocusItem NOTIFY activeFocusItemChanged FINAL)
     Q_PROPERTY(QQuickItem *contentItem READ contentItem NOTIFY contentItemChanged FINAL)
@@ -164,8 +161,8 @@ public:
     Q_SIGNAL void windowChanged();
     QObject *backingObject() const;
     Q_SIGNAL void backingObjectChanged();
-//    QWindow::Visibility visibility() const;
-//    Q_SIGNAL void visibilityChanged();
+    QWindow::Visibility visibility() const;
+    Q_SIGNAL void visibilityChanged();
     bool isActive() const;
     Q_SIGNAL void activeChanged();
     QQuickItem *activeFocusItem() const;

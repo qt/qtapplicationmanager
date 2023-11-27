@@ -62,7 +62,12 @@ public:
     QVariant windowProperty(const QString &name) const override;
     QVariantMap windowProperties() const override;
     void close() override;
+    QWindow::Visibility visibility() const override;
+    void setVisibility(QWindow::Visibility newVisibility) override;
+    void hide() override;
+    void show() override;
     void showFullScreen() override;
+    void showMinimized() override;
     void showMaximized() override;
     void showNormal() override;
 

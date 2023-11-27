@@ -104,19 +104,79 @@ void QmlInProcApplicationManagerWindowImpl::close()
     }
 }
 
+QWindow::Visibility QmlInProcApplicationManagerWindowImpl::visibility() const
+{
+    return m_visibility;
+}
+
+void QmlInProcApplicationManagerWindowImpl::setVisibility(QWindow::Visibility newVisibility)
+{
+    // copied from qwindow.cpp:
+    switch (newVisibility) {
+    case QWindow::Hidden:
+        hide();
+        break;
+    case QWindow::AutomaticVisibility:
+        show();
+        break;
+    case QWindow::Windowed:
+        showNormal();
+        break;
+    case QWindow::Minimized:
+        showMinimized();
+        break;
+    case QWindow::Maximized:
+        showMaximized();
+        break;
+    case QWindow::FullScreen:
+        showFullScreen();
+        break;
+    default:
+        Q_ASSERT(false);
+    }
+}
+
+void QmlInProcApplicationManagerWindowImpl::updateVisibility(QWindow::Visibility newVisibility)
+{
+    if (m_visibility != newVisibility) {
+        m_visibility = newVisibility;
+        emit amWindow()->visibilityChanged(m_visibility);
+    }
+}
+
+void QmlInProcApplicationManagerWindowImpl::hide()
+{
+    amWindow()->setVisible(false);
+    updateVisibility(QWindow::Hidden);
+}
+
+void QmlInProcApplicationManagerWindowImpl::show()
+{
+    showNormal();
+}
+
 void QmlInProcApplicationManagerWindowImpl::showFullScreen()
 {
     amWindow()->setVisible(true);
+    updateVisibility(QWindow::FullScreen);
+}
+
+void QmlInProcApplicationManagerWindowImpl::showMinimized()
+{
+    amWindow()->setVisible(true);
+    updateVisibility(QWindow::Minimized);
 }
 
 void QmlInProcApplicationManagerWindowImpl::showMaximized()
 {
     amWindow()->setVisible(true);
+    updateVisibility(QWindow::Maximized);
 }
 
 void QmlInProcApplicationManagerWindowImpl::showNormal()
 {
     amWindow()->setVisible(true);
+    updateVisibility(QWindow::Windowed);
 }
 
 bool QmlInProcApplicationManagerWindowImpl::setWindowProperty(const QString &name, const QVariant &value)

@@ -65,7 +65,12 @@ public:
     QVariant windowProperty(const QString &name) const override;
     QVariantMap windowProperties() const override;
     void close() override;
+    QWindow::Visibility visibility() const override;
+    void setVisibility(QWindow::Visibility newVisibility) override;
+    void hide() override;
+    void show() override;
     void showFullScreen() override;
+    void showMinimized() override;
     void showMaximized() override;
     void showNormal() override;
 
@@ -75,6 +80,7 @@ private:
     void findParentWindow(QObject *object);
     void setRelations(ApplicationManagerWindow *newParentWindow);
     void connectActiveFocusItem();
+    void updateVisibility(QWindow::Visibility newVisibility);
 
     static QVector<QmlInProcApplicationManagerWindowImpl *> s_inCompleteWindows;
 
@@ -97,6 +103,7 @@ private:
     int m_maximumHeight = WindowSizeMax;
     qreal m_opacity = 1;
     QQuickItem *m_activeFocusItem = nullptr;
+    QWindow::Visibility m_visibility = QWindow::Hidden;
 
     friend class QmlInProcRuntime; // for setting the m_runtime member
 };

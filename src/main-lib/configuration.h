@@ -109,10 +109,6 @@ public:
     QString testRunnerSourceFile() const;
 
 private:
-    enum MessageType { UsageMessage, ErrorMessage };
-
-    void showParserMessage(const QString &message, MessageType type);
-
     template <typename T> T value(const char *clname, const T &cfvalue = T()) const
     {
         Q_UNUSED(clname)

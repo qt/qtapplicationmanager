@@ -15,6 +15,8 @@
 #include <QBuffer>
 #include <QGuiApplication>
 
+#include <cstdlib>
+#include <cstdio>
 #include <functional>
 #include <memory>
 
@@ -197,60 +199,10 @@ QVariant Configuration::buildConfig() const
 Configuration::~Configuration()
 { }
 
-// vvvv copied from QCommandLineParser ... why is this not public API?
-
-#if defined(Q_OS_ANDROID)
-#  include <android/log.h>
-#elif defined(Q_OS_WIN) && !defined(Q_OS_WINCE) && !defined(Q_OS_WINRT)
-#  include <windows.h>
-
-// Return whether to use a message box. Use handles if a console can be obtained
-// or we are run with redirected handles (for example, by QProcess).
-static inline bool displayMessageBox()
-{
-    if (GetConsoleWindow())
-        return false;
-    STARTUPINFO startupInfo;
-    startupInfo.cb = sizeof(STARTUPINFO);
-    GetStartupInfo(&startupInfo);
-    return !(startupInfo.dwFlags & STARTF_USESTDHANDLES);
-}
-#endif // Q_OS_WIN && !QT_BOOTSTRAPPED && !Q_OS_WIN && !Q_OS_WINRT
-
-void Configuration::showParserMessage(const QString &message, MessageType type)
-{
-#if defined(Q_OS_WIN) && !defined(Q_OS_WINCE) && !defined(Q_OS_WINRT)
-    if (displayMessageBox()) {
-        const UINT flags = MB_OK | MB_TOPMOST | MB_SETFOREGROUND
-            | (type == UsageMessage ? MB_ICONINFORMATION : MB_ICONERROR);
-        QString title;
-        if (QCoreApplication::instance())
-            title = QCoreApplication::instance()->property("applicationDisplayName").toString();
-        if (title.isEmpty())
-            title = QCoreApplication::applicationName();
-        MessageBoxW(0, reinterpret_cast<const wchar_t *>(message.utf16()),
-                    reinterpret_cast<const wchar_t *>(title.utf16()), flags);
-        return;
-    }
-#elif defined(Q_OS_ANDROID)
-    static QByteArray appName = QCoreApplication::applicationName().toLocal8Bit();
-
-    __android_log_write(type == UsageMessage ? ANDROID_LOG_WARN : ANDROID_LOG_ERROR,
-                        appName.constData(), qPrintable(message));
-    return;
-
-#endif // Q_OS_WIN && !QT_BOOTSTRAPPED && !Q_OS_WIN && !Q_OS_WINRT
-    fputs(qPrintable(message), type == UsageMessage ? stdout : stderr);
-}
-
-// ^^^^ copied from QCommandLineParser ... why is this not public API?
-
 void Configuration::parseWithArguments(const QStringList &arguments)
 {
-    if (!m_clp.parse(arguments)) {
-        showParserMessage(m_clp.errorText() + qL1C('\n'), ErrorMessage);
-        exit(1);
-    }
+    if (!m_clp.parse(arguments))
+        throw Exception(m_clp.errorText());
 
     if (m_clp.isSet(qSL("version")))
         m_clp.showVersion();
@@ -261,11 +213,10 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     if (!m_buildConfigFilePath.isEmpty() && m_clp.isSet(qSL("build-config"))) {
         QFile f(m_buildConfigFilePath);
         if (f.open(QFile::ReadOnly)) {
-            showParserMessage(QString::fromLocal8Bit(f.readAll()), UsageMessage);
-            exit(0);
+            ::fprintf(stdout, "%s\n", f.readAll().constData());
+            ::exit(0);
         } else {
-            showParserMessage(qL1S("Could not find the embedded build config.\n"), ErrorMessage);
-            exit(1);
+            throw Exception("Could not find the embedded build config.");
         }
     }
 
@@ -274,8 +225,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         try {
             validateIdForFilesystemUsage(id);
         } catch (const Exception &e) {
-            showParserMessage(qSL("Invalid instance-id (%1): %2\n").arg(id, e.errorString()), ErrorMessage);
-            exit(1);
+            throw Exception("Invalid instance-id (%1): %2\n").arg(id, e.errorString());
         }
     }
 
@@ -309,15 +259,10 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         ConfigCache<ConfigurationData> cache(configFilePaths, qSL("config"), { 'C','F','G','D' },
                                              ConfigurationData::dataStreamVersion(), cacheOptions);
 
-        try {
-            cache.parse();
-            m_data.reset(cache.takeMergedResult());
-            if (!m_data)
-                m_data.reset(new ConfigurationData());
-        } catch (const Exception &e) {
-            showParserMessage(e.errorString() + qL1C('\n'), ErrorMessage);
-            exit(1);
-        }
+        cache.parse();
+        m_data.reset(cache.takeMergedResult());
+        if (!m_data)
+            m_data.reset(new ConfigurationData());
     }
 
     const QStringList options = m_clp.values(qSL("o"));
@@ -333,18 +278,13 @@ void Configuration::parseWithArguments(const QStringList &arguments)
                 delete cd;
             }
         } catch (const Exception &e) {
-            showParserMessage(QString::fromLatin1("Could not parse --option value: %1.\n")
-                              .arg(e.errorString()),
-                              ErrorMessage);
-            exit(1);
+            throw Exception("Could not parse --option value: %1").arg(e.errorString());
         }
     }
 
     // early sanity checks
-    if (m_onlyOnePositionalArgument && (m_clp.positionalArguments().size() > 1)) {
-        showParserMessage(qL1S("Only one main qml file can be specified.\n"), ErrorMessage);
-        exit(1);
-    }
+    if (m_onlyOnePositionalArgument && (m_clp.positionalArguments().size() > 1))
+        throw Exception("Only one main qml file can be specified.");
 
     if (installationDir().isEmpty()) {
         const auto ilocs = m_data->installationLocations;

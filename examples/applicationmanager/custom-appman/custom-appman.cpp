@@ -7,7 +7,6 @@
 #include <QtAppManCommon/logging.h>
 #include <QtAppManMain/main.h>
 #include <QtAppManMain/configuration.h>
-#include <QtAppManPackage/packageutilities.h>
 #include <QtAppManManager/sudo.h>
 
 

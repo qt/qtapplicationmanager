@@ -16,13 +16,14 @@
 #include "applicationinfo.h"
 #include "exception.h"
 #include "packagemanager.h"
-#include "sudo.h"
 #include "utilities.h"
 #include "signature.h"
-#include "sudo.h"
 #include "installationtask.h"
 
 #include <memory>
+#ifdef Q_OS_UNIX
+#  include <unistd.h>
+#endif
 
 /*
   Overview of what happens on an installation of an app with <id> to <location>:

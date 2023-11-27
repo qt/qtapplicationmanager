@@ -34,6 +34,7 @@ qt_internal_add_module(AppManManagerPrivate
         qmlinprocruntime.cpp qmlinprocruntime.h
         quicklauncher.cpp quicklauncher.h
         runtimefactory.cpp runtimefactory.h
+        sudo.cpp sudo.h
     LIBRARIES
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
@@ -77,11 +78,6 @@ if (QT_FEATURE_am_multi_process)
             dl
     )
 endif()
-
-qt_internal_extend_target(AppManManagerPrivate CONDITION (TARGET Qt::WaylandCompositor OR QT_FEATURE_am_installer)
-    SOURCES
-        sudo.cpp sudo.h
-)
 
 qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_am_installer
     SOURCES

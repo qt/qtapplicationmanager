@@ -1,4 +1,9 @@
 
+if (NOT QT_FEATURE_am_installer)
+    message(WARNING "QT_FEATURE_am_installer is disabled, cannot generate test packages")
+    return()
+endif()
+
 file(GLOB_RECURSE TEST_DATA_FILES
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     certificates/*

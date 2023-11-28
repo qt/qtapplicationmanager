@@ -70,6 +70,8 @@ WaylandApplicationManagerWindowImpl::WaylandApplicationManagerWindowImpl(Applica
                      window, &ApplicationManagerWindow::activeFocusItemChanged);
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::visibilityChanged,
                      window, &ApplicationManagerWindow::visibilityChanged);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::closing,
+                     window, &ApplicationManagerWindow::closing);
 
     // pass-through signals from the actual QQuickWindow
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::frameSwapped,

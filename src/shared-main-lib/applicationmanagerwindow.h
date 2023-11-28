@@ -12,6 +12,7 @@
 #include <QtQml/QQmlParserStatus>
 #include <QtQml/QQmlListProperty>
 #include <QtQml/QQmlEngine>
+#include <QtQuick/QQuickWindow>
 #include <QtAppManCommon/global.h>
 
 
@@ -121,6 +122,7 @@ public:
     Q_SIGNAL void windowPropertyChanged(const QString &name, const QVariant &value);
 
     Q_INVOKABLE void close();
+    Q_SIGNAL void closing(QQuickCloseEvent *close);
     Q_INVOKABLE void hide();
     Q_INVOKABLE void show();
     Q_INVOKABLE void showFullScreen();

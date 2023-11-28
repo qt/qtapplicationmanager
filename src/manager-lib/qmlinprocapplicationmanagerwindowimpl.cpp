@@ -3,8 +3,11 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <memory>
+
 #include <QQuickWindow>
 #include <QtQuick/private/qquickitem_p.h>
+#include <QtQuick/private/qquickevents_p_p.h>
 
 #include "logging.h"
 #include "applicationmanagerwindow.h"
@@ -128,10 +131,15 @@ void QmlInProcApplicationManagerWindowImpl::close()
     for (const auto &child: std::as_const(m_childWindows))
         child->close();
 
-    amWindow()->setVisible(false);
-    if (m_runtime) {
-        // Queued because the runtime might end up deleting this object
-        QMetaObject::invokeMethod(m_runtime, &QmlInProcRuntime::stopIfNoVisibleSurfaces, Qt::QueuedConnection);
+    auto ce = std::make_unique<QQuickCloseEvent>();
+    emit amWindow()->closing(ce.get());
+
+    if (ce->isAccepted()) {
+        amWindow()->setVisible(false);
+        if (m_runtime) {
+            // Queued because the runtime might end up deleting this object
+            QMetaObject::invokeMethod(m_runtime, &QmlInProcRuntime::stopIfNoVisibleSurfaces, Qt::QueuedConnection);
+        }
     }
 }
 

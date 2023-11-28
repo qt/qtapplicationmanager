@@ -70,6 +70,30 @@ WaylandApplicationManagerWindowImpl::WaylandApplicationManagerWindowImpl(Applica
                      window, &ApplicationManagerWindow::activeFocusItemChanged);
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::visibilityChanged,
                      window, &ApplicationManagerWindow::visibilityChanged);
+
+    // pass-through signals from the actual QQuickWindow
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::frameSwapped,
+                     window, &ApplicationManagerWindow::frameSwapped);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::sceneGraphInitialized,
+                     window, &ApplicationManagerWindow::sceneGraphInitialized);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::sceneGraphInvalidated,
+                     window, &ApplicationManagerWindow::sceneGraphInvalidated);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::beforeSynchronizing,
+                     window, &ApplicationManagerWindow::beforeSynchronizing);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::afterSynchronizing,
+                     window, &ApplicationManagerWindow::afterSynchronizing);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::beforeRendering,
+                     window, &ApplicationManagerWindow::beforeRendering);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::afterRendering,
+                     window, &ApplicationManagerWindow::afterRendering);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::afterAnimating,
+                     window, &ApplicationManagerWindow::afterAnimating);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::sceneGraphAboutToStop,
+                     window, &ApplicationManagerWindow::sceneGraphAboutToStop);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::beforeFrameBegin,
+                     window, &ApplicationManagerWindow::beforeFrameBegin);
+    QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::afterFrameEnd,
+                     window, &ApplicationManagerWindow::afterFrameEnd);
 }
 
 WaylandApplicationManagerWindowImpl::~WaylandApplicationManagerWindowImpl()
@@ -198,6 +222,21 @@ void WaylandApplicationManagerWindowImpl::showMaximized()
 void WaylandApplicationManagerWindowImpl::showNormal()
 {
     m_qwindow->showNormal();
+}
+
+void WaylandApplicationManagerWindowImpl::update()
+{
+    m_qwindow->update();
+}
+
+void WaylandApplicationManagerWindowImpl::releaseResources()
+{
+    m_qwindow->releaseResources();
+}
+
+void WaylandApplicationManagerWindowImpl::requestUpdate()
+{
+    m_qwindow->requestUpdate();
 }
 
 QString WaylandApplicationManagerWindowImpl::title() const

@@ -78,6 +78,13 @@ public:
     virtual void showMaximized() = 0;
     virtual void showNormal() = 0;
 
+    // pass-through slots to the actual QQuickWindow
+    virtual void update() = 0;
+    virtual void releaseResources() = 0;
+
+    // pass-through slots to the actual QWindow
+    virtual void requestUpdate() = 0;
+
 protected:
     ApplicationManagerWindowImpl(ApplicationManagerWindow *window);
 

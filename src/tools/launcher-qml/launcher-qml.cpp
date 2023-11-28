@@ -51,10 +51,6 @@
 #include "launcher-qml_p.h"
 
 
-AM_QML_REGISTER_TYPES(QtApplicationManager)
-AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
-
-
 QT_USE_NAMESPACE_AM
 
 

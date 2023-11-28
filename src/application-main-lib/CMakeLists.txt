@@ -19,18 +19,20 @@ qt_internal_add_module(AppManApplicationMainPrivate
         ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
         ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/org.freedesktop.notifications.xml
     LIBRARIES
+        Qt::CorePrivate
+        Qt::GuiPrivate
+        Qt::QuickPrivate
+    PUBLIC_LIBRARIES
+        Qt::DBus
+        Qt::Gui
+        Qt::Qml
+        Qt::Quick
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
         Qt::AppManIntentClientPrivate
         Qt::AppManSharedMainPrivate
-    PUBLIC_LIBRARIES
-        Qt::CorePrivate
-        Qt::DBus
-        Qt::Gui
-        Qt::GuiPrivate
-        Qt::Qml
-        Qt::Quick
-        Qt::QuickPrivate
+        Qt::AppManQmlPrivate
+        Qt::AppManQmlApplicationPrivate
     DEFINES
         AM_COMPILING_APPMAN
     PRIVATE_HEADER_FILTERS
@@ -54,7 +56,8 @@ endif()
 qt_internal_extend_target(AppManApplicationMainPrivate CONDITION TARGET Qt::WaylandClient
     SOURCES
         waylandqtamclientextension.cpp waylandqtamclientextension_p.h
+    LIBRARIES
+        Qt::WaylandClientPrivate
     PUBLIC_LIBRARIES
         Qt::WaylandClient
-        Qt::WaylandClientPrivate
 )

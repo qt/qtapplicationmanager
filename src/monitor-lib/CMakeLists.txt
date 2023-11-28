@@ -10,11 +10,10 @@ qt_internal_add_module(AppManMonitorPrivate
     SOURCES
         processreader.cpp processreader.h
         systemreader.cpp systemreader.h
-    LIBRARIES
-        Qt::AppManCommonPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Gui
+        Qt::AppManCommonPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )

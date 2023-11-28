@@ -36,6 +36,15 @@ qt_internal_add_module(AppManManagerPrivate
         runtimefactory.cpp runtimefactory.h
         sudo.cpp sudo.h
     LIBRARIES
+        Qt::GuiPrivate
+        Qt::QmlPrivate
+    PUBLIC_LIBRARIES
+        Qt::Core
+        Qt::Gui
+        Qt::Network
+        Qt::Qml
+        Qt::Quick
+        Qt::QuickPrivate
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
         Qt::AppManIntentClientPrivate
@@ -43,15 +52,6 @@ qt_internal_add_module(AppManManagerPrivate
         Qt::AppManMonitorPrivate
         Qt::AppManPluginInterfacesPrivate
         Qt::AppManSharedMainPrivate
-    PUBLIC_LIBRARIES
-        Qt::Core
-        Qt::Gui
-        Qt::GuiPrivate
-        Qt::Network
-        Qt::Qml
-        Qt::QmlPrivate
-        Qt::Quick
-        Qt::QuickPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )
@@ -84,7 +84,7 @@ qt_internal_extend_target(AppManManagerPrivate CONDITION QT_FEATURE_am_installer
         deinstallationtask.cpp deinstallationtask.h
         installationtask.cpp installationtask.h
         scopeutilities.cpp scopeutilities.h
-    LIBRARIES
+    PUBLIC_LIBRARIES
         Qt::AppManCryptoPrivate
         Qt::AppManPackagePrivate
 )

@@ -15,15 +15,10 @@
 #include "startuptimer.h"
 #include "exception.h"
 #include "qtyaml.h"
-#include "qml-utilities.h"
 
 #if defined(AM_TESTRUNNER)
 #  include "testrunner.h"
 #endif
-
-AM_QML_REGISTER_TYPES(QtApplicationManager_SystemUI)
-AM_QML_REGISTER_TYPES(QtApplicationManager)
-AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
 
 
 QT_USE_NAMESPACE_AM

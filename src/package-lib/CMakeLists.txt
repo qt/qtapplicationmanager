@@ -13,12 +13,11 @@ qt_internal_add_module(AppManPackagePrivate
         packagecreator.cpp packagecreator.h packagecreator_p.h
         packageextractor.cpp packageextractor.h packageextractor_p.h
         packageutilities.cpp packageutilities.h packageutilities_p.h
-    LIBRARIES
-        Qt::AppManApplicationPrivate
-        Qt::AppManCommonPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Network
+        Qt::AppManApplicationPrivate
+        Qt::AppManCommonPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )

@@ -8,10 +8,5 @@ qt_internal_add_test(tst_controller-tool
     LIBRARIES
         Qt::DBus
         Qt::Network
-        Qt::AppManApplicationPrivate
-        Qt::AppManCommonPrivate
-        Qt::AppManIntentServerPrivate
         Qt::AppManMainPrivate
-        Qt::AppManQmlSystemUIPrivate
-        Qt::AppManManagerPrivate
 )

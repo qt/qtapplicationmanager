@@ -23,9 +23,6 @@
 #include <QtAppManMain/configuration.h>
 
 
-AM_QML_REGISTER_TYPES(QtApplicationManager_SystemUI)
-AM_QML_REGISTER_TYPES(QtApplicationManager)
-
 QT_USE_NAMESPACE_AM
 using namespace QtYaml;
 

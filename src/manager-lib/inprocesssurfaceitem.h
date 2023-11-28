@@ -11,7 +11,7 @@
 
 #include <QColor>
 #include <QPointer>
-#include <private/qquickfocusscope_p.h>
+#include <QtQuick/private/qquickfocusscope_p.h>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM

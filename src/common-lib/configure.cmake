@@ -50,7 +50,7 @@ qt_feature_definition("am-multi-process" "AM_MULTI_PROCESS")
 
 qt_feature("am-installer" PRIVATE
     LABEL "Enable the installer component"
-    CONDITION QT_FEATURE_ssl
+    CONDITION QT_FEATURE_ssl AND NOT IOS
     ENABLE INPUT_installer STREQUAL 'yes'
     DISABLE INPUT_installer STREQUAL 'no'
 )

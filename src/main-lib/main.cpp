@@ -95,6 +95,10 @@
 #include "../plugin-interfaces/startupinterface.h"
 
 
+AM_QML_REGISTER_TYPES(QtApplicationManager_SystemUI)
+AM_QML_REGISTER_TYPES(QtApplicationManager)
+AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
+
 QT_BEGIN_NAMESPACE_AM
 
 // We need to do some things BEFORE the Q*Application constructor runs, so we're using this

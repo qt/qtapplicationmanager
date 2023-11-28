@@ -15,11 +15,10 @@ qt_internal_add_module(AppManApplicationPrivate
         packageinfo.cpp packageinfo.h
         packagescanner.h
         yamlpackagescanner.cpp yamlpackagescanner.h
-    LIBRARIES
-        Qt::AppManCommonPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Network
+        Qt::AppManCommonPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )

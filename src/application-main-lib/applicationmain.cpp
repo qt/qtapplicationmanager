@@ -21,6 +21,7 @@
 #  include "waylandqtamclientextension_p.h"
 #endif
 #include "dbus-utilities.h"
+#include "qml-utilities.h"
 #include "applicationinterface_interface.h"
 #include "runtimeinterface_interface.h"
 #include "notifications_interface.h"
@@ -34,6 +35,8 @@
 #  undef interface
 #endif
 
+AM_QML_REGISTER_TYPES(QtApplicationManager)
+AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
 
 QT_BEGIN_NAMESPACE_AM
 

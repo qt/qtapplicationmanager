@@ -11,11 +11,10 @@ qt_internal_add_module(AppManDBusPrivate
         dbuscontextadaptor.cpp dbuscontextadaptor.h
         dbusdaemon.cpp dbusdaemon.h
         dbuspolicy.cpp dbuspolicy.h
-    LIBRARIES
-        Qt::AppManCommonPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::DBus
+        Qt::AppManCommonPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )

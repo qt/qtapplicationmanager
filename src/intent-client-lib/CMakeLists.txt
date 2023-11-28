@@ -12,12 +12,11 @@ qt_internal_add_module(AppManIntentClientPrivate
         intentclientrequest.cpp intentclientrequest.h
         intentclientsysteminterface.cpp intentclientsysteminterface.h
         intenthandler.cpp intenthandler.h
-    LIBRARIES
-        Qt::AppManCommonPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Network
         Qt::Qml
+        Qt::AppManCommonPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )

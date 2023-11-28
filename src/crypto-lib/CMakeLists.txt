@@ -10,10 +10,9 @@ qt_internal_add_module(AppManCryptoPrivate
     SOURCES
         cryptography.cpp cryptography.h
         signature.cpp signature.h signature_p.h
-    LIBRARIES
-        Qt::AppManCommonPrivate
     PUBLIC_LIBRARIES
         Qt::Core
+        Qt::AppManCommonPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )
@@ -30,10 +29,11 @@ qt_internal_extend_target(AppManCryptoPrivate CONDITION WIN32
 qt_internal_extend_target(AppManCryptoPrivate CONDITION MACOS
     SOURCES
         signature_macos.cpp
+    LIBRARIES
+        Qt::CorePrivate
     PUBLIC_LIBRARIES
         ${FWCoreFoundation}
         ${FWSecurity}
-        Qt::CorePrivate
 )
 
 qt_internal_extend_target(AppManCryptoPrivate CONDITION (UNIX AND NOT MACOS)

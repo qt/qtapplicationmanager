@@ -10,7 +10,7 @@ qt_internal_add_qml_module(AppManQmlPrivate
         qtapplicationmanager_p.h
     DEPENDENCIES
         QtQuick
-    LIBRARIES
+    PUBLIC_LIBRARIES
         Qt::AppManSharedMainPrivate
         Qt::AppManIntentClientPrivate
     DEFINES
@@ -31,7 +31,7 @@ qt_internal_add_qml_module(AppManQmlSystemUIPrivate
     IMPORTS
         QtApplicationManager/auto
         QtQuick
-    LIBRARIES
+    PUBLIC_LIBRARIES
         Qt::AppManManagerPrivate
         Qt::AppManWindowPrivate
         Qt::AppManIntentServerPrivate
@@ -54,7 +54,7 @@ qt_internal_add_qml_module(AppManQmlApplicationPrivate
     IMPORTS
         QtApplicationManager/auto
         QtQuick
-    LIBRARIES
+    PUBLIC_LIBRARIES
         Qt::AppManSharedMainPrivate
         Qt::AppManIntentClientPrivate
         Qt::AppManQmlPrivate

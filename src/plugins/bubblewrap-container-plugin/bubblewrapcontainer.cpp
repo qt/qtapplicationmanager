@@ -9,8 +9,7 @@
 #include <QLibraryInfo>
 #include <QLoggingCategory>
 #include <QDir>
-#include <qplatformdefs.h>
-#include <QtCore/private/qcore_unix_p.h>
+#include <QtCore/private/qcore_unix_p.h> // qt_safe_read
 
 #include <unistd.h>
 #include <sys/stat.h>

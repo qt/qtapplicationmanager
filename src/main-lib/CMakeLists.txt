@@ -10,9 +10,10 @@ qt_internal_add_module(AppManMainPrivate
     SOURCES
         configuration.cpp configuration.h configuration_p.h
         main.cpp main.h
+    LIBRARIES
+        Qt::CorePrivate
     PUBLIC_LIBRARIES
         Qt::Core
-        Qt::CorePrivate
         Qt::Gui
         Qt::Network
         Qt::Qml
@@ -25,6 +26,8 @@ qt_internal_add_module(AppManMainPrivate
         Qt::AppManMonitorPrivate
         Qt::AppManSharedMainPrivate
         Qt::AppManWindowPrivate
+        Qt::AppManQmlSystemUIPrivate
+        Qt::AppManQmlApplicationPrivate
     EXTRA_CMAKE_FILES
         wrapper.cpp.in
         Qt6AppManMainPrivateMacros.cmake

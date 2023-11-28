@@ -18,7 +18,7 @@
 #  undef SystemFunction036
 #endif
 
-#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#if defined(Q_OS_MACOS)
 #  include <QtCore/private/qcore_mac_p.h>
 #  include <Security/SecBase.h>
 #  include <Availability.h>
@@ -114,7 +114,7 @@ QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescrip
         result.append(QString::fromWCharArray(msg).trimmed());
         HeapFree(GetProcessHeap(), 0, msg);
     }
-#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#elif defined(Q_OS_MACOS)
     if (osCryptoError) {
 #  if QT_MACOS_IOS_PLATFORM_SDK_EQUAL_OR_ABOVE(100300, 110300)
         if (__builtin_available(macOS 10.3, iOS 12.3, *)) {

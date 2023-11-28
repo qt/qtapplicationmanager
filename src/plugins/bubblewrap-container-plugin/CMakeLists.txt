@@ -7,7 +7,7 @@ qt_internal_add_plugin(BubblewrapContainerPlugin
         bubblewrapcontainer.cpp bubblewrapcontainer.h
     LIBRARIES
         Qt::Core
+        Qt::CorePrivate
         Qt::DBus
-        Qt::AppManCommonPrivate
         Qt::AppManPluginInterfacesPrivate
 )

@@ -24,14 +24,15 @@ qt_internal_add_module(AppManSharedMainPrivate
         qmllogger.cpp qmllogger.h
         sharedmain.cpp sharedmain.h
         startuptimer.cpp startuptimer.h
+    LIBRARIES
+        Qt::GuiPrivate
+        Qt::QuickPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Gui
-        Qt::GuiPrivate
         Qt::Network
         Qt::Qml
         Qt::Quick
-        Qt::QuickPrivate
         Qt::AppManCommonPrivate
         Qt::AppManMonitorPrivate
     DEFINES

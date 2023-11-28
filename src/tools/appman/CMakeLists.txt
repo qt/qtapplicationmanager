@@ -5,8 +5,6 @@ qt_internal_add_app(appman
         appman.cpp
     LIBRARIES
         Qt::AppManMainPrivate
-        Qt::AppManQmlSystemUIPrivate
-        Qt::AppManQmlApplicationPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )

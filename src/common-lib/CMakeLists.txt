@@ -30,13 +30,14 @@ qt_internal_add_module(AppManCommonPrivate
         qtyaml.cpp qtyaml.h
         unixsignalhandler.cpp unixsignalhandler.h
         utilities.cpp utilities.h
+    LIBRARIES
+        Qt::CorePrivate
+        Qt::QmlPrivate
     PUBLIC_LIBRARIES
         Qt::Concurrent
         Qt::Core
-        Qt::CorePrivate
         Qt::Network
         Qt::Qml
-        Qt::QmlPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )

@@ -14,16 +14,16 @@ qt_internal_add_module(AppManWindowPrivate
         windowitem.cpp windowitem.h
         windowmanager.cpp windowmanager.h windowmanager_p.h
     LIBRARIES
-        Qt::AppManCommonPrivate
-        Qt::AppManManagerPrivate
-        Qt::AppManSharedMainPrivate
+        Qt::CorePrivate
     PUBLIC_LIBRARIES
         Qt::Core
-        Qt::CorePrivate
         Qt::Gui
         Qt::Network
         Qt::Qml
         Qt::Quick
+        Qt::AppManCommonPrivate
+        Qt::AppManManagerPrivate
+        Qt::AppManSharedMainPrivate
     DEFINES
         AM_COMPILING_APPMAN
     PRIVATE_HEADER_FILTERS

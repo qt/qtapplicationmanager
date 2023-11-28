@@ -1,0 +1,7 @@
+<!-- Only needed for qmake -->
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="qt/qml/Sequel">
+    <file>CrashAnimation.qml</file>
+    <file>qmldir</file>
+</qresource>
+</RCC>

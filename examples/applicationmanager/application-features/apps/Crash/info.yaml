@@ -1,11 +1,12 @@
 formatVersion: 1
 formatType: am-application
 ---
-id:      'crash'
+id:      'Crash'
 icon:    'icon.png'
-code:    'crashapp.qml'
+code:    ':/qt/qml/Crash/crashapp.qml'
 runtime: 'qml'
 name:
   en: 'Crash Simulation'
 runtimeParameters:
+  resources: [ "libcrashmodule" ]
   importPaths: [ "." ]

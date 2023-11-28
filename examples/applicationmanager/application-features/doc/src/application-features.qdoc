@@ -48,7 +48,7 @@ its root element.
 
 The QML code for the nested compositor application is as follows:
 
-\quotefromfile applicationmanager/application-features/apps/compositor/compositor.qml
+\quotefromfile applicationmanager/application-features/apps/Compositor/compositor.qml
 \skipto import QtQuick
 \printuntil /^\}/
 
@@ -65,9 +65,9 @@ program (the System UI).
 
 The QML code for the crash simulation and recovery application is as follows:
 
-\quotefromfile applicationmanager/application-features/apps/crash/crashapp.qml
+\quotefromfile applicationmanager/application-features/apps/Crash/crashapp.qml
 \skipto import QtQuick
-\printuntil case "gracefully": Terminator.exitGracefully(); break;
+\printuntil crashAnimation.mode = parent.modelData;
 \printuntil /^\}/
 
 \section2 Two Top-Level Windows
@@ -77,7 +77,7 @@ as the application's root element.
 
 The QML code for the two top-level windows application is as follows:
 
-\quotefromfile applicationmanager/application-features/apps/twins/twins.qml
+\quotefromfile applicationmanager/application-features/apps/Twins/twins.qml
 \skipto import QtQuick
 \printuntil Component.onCompleted: setWindowProperty("type", "pop-up");
 \printuntil /^\}/
@@ -97,13 +97,13 @@ Linking against the private application manager modules is prohibited by default
 potential problems with duplicate symbols coming from QML plugins. However here building against
 them is both intended and required, so we need to set the define \c AM_COMPILING_LAUNCHER:
 
-\quotefromfile applicationmanager/application-features/native/widgets/CMakeLists.txt
+\quotefromfile applicationmanager/application-features/apps/Widgets/CMakeLists.txt
 \skipuntil /allows us to link against/
 \printuntil /AM_COMPILING_LAUNCHER/
 
 The C++ code for the native widgets application is as follows:
 
-\quotefromfile applicationmanager/application-features/native/widgets/main.cpp
+\quotefromfile applicationmanager/application-features/apps/Widgets/main.cpp
 \skipto #include <QApplication>
 \printuntil /^\}/
 

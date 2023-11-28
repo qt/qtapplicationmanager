@@ -16,7 +16,8 @@ logging:
 
 ui:
   fullscreen: no
-  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
+  mainQml: ":/qt/qml/SystemUi/main.qml"
+  resources: [ "${CONFIG_PWD}/SystemUi/libsystemuimodule" ]
 
 # development setup:
 flags:

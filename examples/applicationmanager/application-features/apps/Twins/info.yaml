@@ -1,9 +1,9 @@
 formatVersion: 1
 formatType: am-application
 ---
-id:      'compositor'
+id:      'Twins'
 icon:    'icon.png'
-code:    'compositor.qml'
+code:    'twins.qml'
 runtime: 'qml'
 name:
-  en: 'Nested Compositor'
+  en: 'Two Top-Level Windows'

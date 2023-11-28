@@ -1,0 +1,6 @@
+<!-- Only needed for qmake -->
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="qt/qml/Crash">
+    <file>crashapp.qml</file>
+</qresource>
+</RCC>

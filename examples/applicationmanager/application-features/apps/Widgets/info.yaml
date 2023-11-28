@@ -1,7 +1,7 @@
 formatVersion: 1
 formatType: am-application
 ---
-id:      'widgets'
+id:      'Widgets'
 name:
   en: 'Native Widgets'
 icon:    'icon.png'

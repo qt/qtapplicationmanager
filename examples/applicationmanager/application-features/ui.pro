@@ -6,25 +6,25 @@ OTHER_FILES += \
     application-features.qmlproject \
     doc/src/*.qdoc \
     doc/images/*.png \
-    system-ui/*.qml \
-    system-ui/*.png \
-    apps/compositor/*.yaml \
-    apps/compositor/*.qml \
-    apps/compositor/*.png \
-    apps/crash/*.yaml \
-    apps/crash/*.qml \
-    apps/crash/*.png \
-    apps/twins/*.yaml \
-    apps/twins/*.qml \
-    apps/twins/*.png \
-    apps/widgets/*.yaml \
-    apps/widgets/*.png
+    SystemUi/*.qml \
+    SystemUi/*.png \
+    apps/Compositor/*.yaml \
+    apps/Compositor/*.qml \
+    apps/Compositor/*.png \
+    apps/Crash/*.yaml \
+    apps/Crash/*.qml \
+    apps/Crash/*.png \
+    apps/Twins/*.yaml \
+    apps/Twins/*.qml \
+    apps/Twins/*.png \
+    apps/Widgets/*.yaml \
+    apps/Widgets/*.png
 
 target.path = $$[QT_INSTALL_EXAMPLES]/applicationmanager/application-features
 INSTALLS += target
 
-AM_COPY_DIRECTORIES += apps system-ui
-AM_COPY_FILES += am-config.yaml
+AM_COPY_DIRECTORIES += apps SystemUi
+AM_COPY_FILES += am-config.yaml client.qml
 
 prefix_build:tpath = $$target.path
 else:tpath = $$OUT_PWD

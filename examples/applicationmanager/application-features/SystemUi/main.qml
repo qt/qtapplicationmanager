@@ -5,7 +5,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Window
 import QtApplicationManager.SystemUI
 
 Window {
@@ -26,9 +25,10 @@ Window {
 
             Image {
                 id: delegate
-                required property var application
+                required property string icon
                 required property bool isRunning
-                required property var icon
+                required property ApplicationObject application
+
                 source: icon
                 opacity: isRunning ? 0.3 : 1.0
 
@@ -48,8 +48,7 @@ Window {
                     id: imouse
                     anchors.fill: parent
                     hoverEnabled: true
-                    onClicked: delegate.isRunning ? delegate.application.stop()
-                                                  : delegate.application.start();
+                    onClicked: delegate.isRunning ? delegate.application.stop() : delegate.application.start();
                 }
             }
         }
@@ -62,6 +61,7 @@ Window {
             id: chrome
             required property WindowObject window
             required property int index
+
             width: draggrab.x + 10; height: draggrab.y + 10
             color: "transparent"
             border.width: 3
@@ -91,8 +91,7 @@ Window {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: chrome.window.application ? chrome.window.application.names["en"]
-                                                    : 'External Application'
+                    text: chrome.window.application ? chrome.window.application.names["en"] : 'External Application'
                 }
 
                 MouseArea {
@@ -101,10 +100,8 @@ Window {
                     onPressed: topLevelWindowsModel.move(chrome.index, topLevelWindowsModel.count - 1, 1);
                 }
 
-                Rectangle {
-                    width: 25; height: 25
-                    color: "chocolate"
-
+                Image {
+                    source: "close.png"
                     MouseArea {
                         anchors.fill: parent
                         onClicked: chrome.window.close();
@@ -139,9 +136,11 @@ Window {
         delegate: WindowItem {
             id: win
             required property var model
+
             z: 9999 + model.index
             anchors.centerIn: parent
             window: model.window
+
             Connections {
                 target: win.model.window
                 function onContentStateChanged() {
@@ -163,8 +162,8 @@ Window {
     Connections {
         target: WindowManager
         function onWindowAdded(window) {
-            var model = window.windowProperty("type") === "pop-up" ? popupsModel : topLevelWindowsModel;
-            model.append({"window":window});
+            let model = window.windowProperty("type") === "pop-up" ? popupsModel : topLevelWindowsModel;
+            model.append({ "window": window });
         }
     }
 

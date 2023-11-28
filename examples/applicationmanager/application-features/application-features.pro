@@ -1,4 +1,5 @@
 TEMPLATE = subdirs
 SUBDIRS = ui.pro \
-          imports \
-          native
+          SystemUi \
+          apps/Crash \
+          apps/Widgets

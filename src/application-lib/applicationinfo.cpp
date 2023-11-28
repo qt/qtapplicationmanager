@@ -4,10 +4,8 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include <QDataStream>
-#include <QBuffer>
 
 #include "applicationinfo.h"
-#include "exception.h"
 #include "installationreport.h"
 #include "packageinfo.h"
 #include "utilities.h"

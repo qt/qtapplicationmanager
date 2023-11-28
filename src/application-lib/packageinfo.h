@@ -17,8 +17,6 @@
 
 QT_FORWARD_DECLARE_CLASS(QDataStream)
 
-class tst_Application;
-
 QT_BEGIN_NAMESPACE_AM
 
 class InstallationReport;

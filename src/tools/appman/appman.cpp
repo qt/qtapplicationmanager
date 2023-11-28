@@ -44,19 +44,12 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
     QCoreApplication::setApplicationVersion(qSL(QT_AM_VERSION_STR));
 
-    Logging::initialize(argc, argv);
-    StartupTimer::instance()->checkpoint("after basic initialization");
-
     try {
-        Sudo::forkServer(Sudo::DropPrivilegesPermanently);
-        StartupTimer::instance()->checkpoint("after sudo server fork");
-
-        Main a(argc, argv);
+        Main a(argc, argv, Main::InitFlag::ForkSudoServer | Main::InitFlag::InitializeLogging);
 
         Configuration cfg(additionalDescription, onlyOnePositionalArgument);
         cfg.parseWithArguments(QCoreApplication::arguments());
 
-        StartupTimer::instance()->checkpoint("after command line parse");
 #if defined(AM_TESTRUNNER)
         TestRunner::setup(&cfg);
 #endif
@@ -67,7 +60,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #if defined(AM_TESTRUNNER)
         return TestRunner::exec(a.qmlEngine());
 #else
-        return MainBase::exec();
+        return Main::exec();
 #endif
     } catch (const Exception &e) {
         qCCritical(LogSystem).noquote() << "ERROR:" << e.errorString();

@@ -5,14 +5,19 @@
 
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QUrl>
 #include <QtAppManCommon/global.h>
-#include <functional>
+#include <QtAppManCommon/logging.h>
+#include <QtAppManManager/sudo.h>
 
 #if defined(AM_WIDGETS_SUPPORT)
 #  include <QtWidgets/QApplication>
 #  include <QtGui/QSurfaceFormat>
+QT_BEGIN_NAMESPACE_AM
 using MainBase = QApplication;
+QT_END_NAMESPACE_AM
 #else
 #  include <QtGui/QGuiApplication>
 #  include <QtGui/QSurfaceFormat>
@@ -49,7 +54,14 @@ class Main : public MainBase, protected SharedMain
     Q_PROPERTY(bool singleProcessMode READ isSingleProcessMode CONSTANT FINAL)
 
 public:
-    Main(int &argc, char **argv);
+    enum class InitFlag {
+        InitializeLogging  = 0x01,
+        ForkSudoServer     = 0x02
+    };
+    Q_DECLARE_FLAGS(InitFlags, InitFlag)
+    Q_FLAG(InitFlags)
+
+    Main(int &argc, char **argv, InitFlags initFlags = { });
     ~Main() override;
 
     bool isSingleProcessMode() const;
@@ -62,6 +74,8 @@ public:
     Q_INVOKABLE void shutDown(int exitCode = 0);
 
     QQmlApplicationEngine *qmlEngine() const;
+
+    static int exec();
 
 protected:
     void registerResources(const QStringList &resources) const;
@@ -103,7 +117,7 @@ private:
                             const char *interfaceName, const char *path,
                             const QString &instanceId) Q_DECL_NOEXCEPT_EXPR(false);
 #endif
-    static int &preConstructor(int &argc);
+    static int &preConstructor(int &argc, char **argv, InitFlags initFlags);
 
 private:
     bool m_isSingleProcessMode = false;
@@ -132,4 +146,7 @@ private:
     QString m_installationDirMountPoint;
 };
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(Main::InitFlags)
+
 QT_END_NAMESPACE_AM
+

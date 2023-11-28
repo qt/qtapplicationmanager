@@ -49,29 +49,28 @@ the application manager's symbols are namespaced - \c QT_USE_NAMESPACE_AM expand
 
 Generally, it's a good idea to set an application name and version.
 
-\printline Logging::init
+\printuntil Main a
 
-We want the application manager's logging part to be initialized as early as possible, especially
-when we are dealing with DLT logging.
+This \c try block is the heart of the custom application manager. You need to create a \c Main
+object, which is a class derived from QGuiApplication (or QApplication, if widgets support is
+enabled). In this case, we are supplying two init flags to the Main constructor:
 
-\printline Sudo::forkServer
+The first init flag, \c ForkSudoServer, is useful for the installer part of the application
+manager: if the executable is setuid-root, this will implicitly fork off a child process, which
+does keep the root privileges while the main process permanently drops them.
 
-Again, for the installer part only, an additional setup step is necessary before running the
-QApplication constructor: if the executable is setuid-root, this call will \c fork off a child
-process which keeps the root privileges while the main process permanently drops them.
+The second init flag, \c InitializeLogging, sets up the application manager's logging part
+implicitly for us (this is especially useful when dealing with DLT logging).
+
+Both parts could be initialized explicitly as well, but this is not needed in most cases.
 
 \printuntil return 2
 \printline }
 
-This \c try block is the heart of the custom application manager. You need to create a \c Main
-object, which is a class derived from QGuiApplication, plus a suitable configuration object. In
-this simple case, we use the application manager's default YAML parsing, so we instantiate a
-\c Configuration object. The rest of the function involves parsing the configuration and
-then calling the relevant setup routines on the \c Main object.
-
-Depending on your application manager's configuration, the \c Main object can be derived
-differently: with widgets, or standard. So, you need to know the correct base class for
-the exec() call. However, the \c MainBase typedef circumvents this problem.
+The application manager needs a suitable configuration object. In this case, we use the
+application manager's default YAML parsing, so we instantiate a \c Configuration object. The rest
+of the function involves parsing the configuration and then calling the relevant setup routines on
+the \c Main object.
 
 Most functions in the application manager throw exceptions that are derived from \c std::exception,
 so a \c catch handler is compulsory.

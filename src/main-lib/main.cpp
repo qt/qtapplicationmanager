@@ -103,8 +103,16 @@ QT_BEGIN_NAMESPACE_AM
 
 // We need to do some things BEFORE the Q*Application constructor runs, so we're using this
 // old trick to do this hooking transparently for the user of the class.
-int &Main::preConstructor(int &argc)
+int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
 {
+    if (initFlags & InitFlag::InitializeLogging) {
+        Logging::initialize(argc, argv);
+        StartupTimer::instance()->checkpoint("after logging initialization");
+    }
+    if (initFlags & InitFlag::ForkSudoServer) {
+        Sudo::forkServer(Sudo::DropPrivilegesPermanently);
+        StartupTimer::instance()->checkpoint("after sudo server fork");
+    }
 #if !defined(AM_DISABLE_INSTALLER)
     // try to set a reasonable locale - we later verify with checkCorrectLocale() if we succeeded
     PackageUtilities::ensureCorrectLocale();
@@ -112,8 +120,8 @@ int &Main::preConstructor(int &argc)
     return argc;
 }
 
-Main::Main(int &argc, char **argv)
-    : MainBase(SharedMain::preConstructor(Main::preConstructor(argc)), argv)
+Main::Main(int &argc, char **argv, InitFlags initFlags)
+    : MainBase(SharedMain::preConstructor(Main::preConstructor(argc, argv, initFlags)), argv)
     , SharedMain()
 {
     m_isRunningOnEmbedded =
@@ -164,6 +172,8 @@ Main::~Main()
 */
 void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
 {
+    StartupTimer::instance()->checkpoint("after configuration parsing");
+
     // basics that are needed in multiple setup functions below
     m_noSecurity = cfg->noSecurity();
     m_developmentMode = cfg->developmentMode();
@@ -287,6 +297,11 @@ void Main::shutDown(int exitCode)
 QQmlApplicationEngine *Main::qmlEngine() const
 {
     return m_engine;
+}
+
+int Main::exec()
+{
+    return MainBase::exec();
 }
 
 void Main::registerResources(const QStringList &resources) const

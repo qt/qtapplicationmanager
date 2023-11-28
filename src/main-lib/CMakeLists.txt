@@ -10,6 +10,7 @@ qt_internal_add_module(AppManMainPrivate
     SOURCES
         configuration.cpp configuration.h configuration_p.h
         main.cpp main.h
+        mainmacro.h
     LIBRARIES
         Qt::CorePrivate
     PUBLIC_LIBRARIES
@@ -34,6 +35,10 @@ qt_internal_add_module(AppManMainPrivate
     DEFINES
         AM_BUILD_DIR="${CMAKE_BINARY_DIR}"
         AM_COMPILING_APPMAN
+)
+
+target_sources(AppManMainPrivate PRIVATE
+    mainmacro.h
 )
 
 if (TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces)

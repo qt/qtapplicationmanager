@@ -431,11 +431,24 @@ ui:
     \row
         \li [\c quicklaunch/runtimesPerContainer]
         \li int
-        \li Specifies how many quick launchers should always be ready for all active container/
-            runtime combinations. (default: 0)
+        \li Specifies how many quick launchers should always be ready for any container/runtime
+            combination. (default: 0)
+
+            There are different ways to set this value:
+            \list
+            \li A single integer value, which will apply to all possible container/runtime
+                combinations.
+            \li A mapping from container IDs to an integer value, which will apply to all possible
+                runtime IDs within the respective container.
+            \li A mapping from container IDs to a mapping from runtime IDs to an integer value,
+                which will apply only to the respective container/runtime combination.
+            \endlist
+            Approach 2 and 3 can be freely mixed, with the special wildcard ID \c{"*"} denoting
+            "any container ID" or "any runtime ID".
+
             \note Values bigger than 10 are ignored, since this does not make sense and could also
-                potentially freeze your device if you have a container plugin where instantiation
-                is expensive, resource-wise.
+                  potentially freeze your device if you have a container plugin where instantiation
+                  is expensive, resource-wise.
     \row
         \li [\c quicklaunch/failedStartLimit]
         \li int

@@ -447,7 +447,7 @@ QString YamlParser::parseMapKey()
 QVariantMap YamlParser::parseMap()
 {
     if (!isMap())
-        return QVariantMap {};
+        throw YamlParserException(this, "Cannot parse non-map as map");
 
     QVariantMap map;
     while (true) {

@@ -10,6 +10,7 @@
 #include <QVariantMap>
 #include <QVector>
 #include <QSet>
+#include <QHash>
 
 QT_FORWARD_DECLARE_CLASS(QIODevice)
 
@@ -79,7 +80,7 @@ struct ConfigurationData
 
     struct {
         double idleLoad = 0.;
-        int runtimesPerContainer = 0;
+        QHash<std::pair<QString, QString>, int> runtimesPerContainer;
         int failedStartLimit = 5;
         int failedStartLimitIntervalSec = 10;
     } quicklaunch;

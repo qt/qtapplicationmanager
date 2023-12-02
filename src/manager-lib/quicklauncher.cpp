@@ -22,8 +22,9 @@ QT_BEGIN_NAMESPACE_AM
 
 QuickLauncher *QuickLauncher::s_instance = nullptr;
 
-QuickLauncher *QuickLauncher::createInstance(int runtimesPerContainer, qreal idleLoad,
-                                             int failedStartLimit, int failedStartLimitIntervalSec)
+QuickLauncher *QuickLauncher::createInstance(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
+                                             qreal idleLoad, int failedStartLimit,
+                                             int failedStartLimitIntervalSec)
 {
     if (Q_UNLIKELY(s_instance))
         qFatal("QuickLauncher instance already exists");
@@ -46,12 +47,27 @@ QuickLauncher::~QuickLauncher()
     s_instance = nullptr;
 }
 
-QuickLauncher::QuickLauncher(int runtimesPerContainer, qreal idleLoad, int failedStartLimit,
-                             int failedStartLimitIntervalSec, QObject *parent)
+QuickLauncher::QuickLauncher(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
+                             qreal idleLoad, int failedStartLimit, int failedStartLimitIntervalSec,
+                             QObject *parent)
     : QObject(parent)
     , m_failedStartLimit(qMax(0, failedStartLimit))
     , m_failedStartLimitIntervalSec(qMax(0, failedStartLimitIntervalSec))
 {
+    auto findMaximum = [&runtimesPerContainer](const QuickLaunchEntry &qle) -> int {
+        static const QString anyId = qSL("*");
+
+        for (const auto &key : { std::make_pair(qle.m_containerId, qle.m_runtimeId),
+                               std::make_pair(qle.m_containerId, anyId),
+                               std::make_pair(anyId, qle.m_runtimeId),
+                               std::make_pair(anyId, anyId) }) {
+            auto it = runtimesPerContainer.find(key);
+            if (it != runtimesPerContainer.end())
+                return it.value();
+        }
+        return 0;
+    };
+
     ContainerFactory *cf = ContainerFactory::instance();
     RuntimeFactory *rf = RuntimeFactory::instance();
 
@@ -64,6 +80,8 @@ QuickLauncher::QuickLauncher(int runtimesPerContainer, qreal idleLoad, int faile
             continue;
         }
 
+        bool foundRuntimeWithoutQuickLaunch = false;
+
         const QStringList allRuntimeIds = rf->runtimeIds();
         for (const QString &runtimeId : allRuntimeIds) {
             if (rf->manager(runtimeId)->inProcess())
@@ -71,17 +89,30 @@ QuickLauncher::QuickLauncher(int runtimesPerContainer, qreal idleLoad, int faile
 
             QuickLaunchEntry entry;
             entry.m_containerId = containerId;
-            entry.m_maximum = runtimesPerContainer;
 
-            if (rf->manager(runtimeId)->supportsQuickLaunch())
+            if (rf->manager(runtimeId)->supportsQuickLaunch()) {
                 entry.m_runtimeId = runtimeId;
+            } else {
+                // we can still quick-launch a container without a runtime
+                if (foundRuntimeWithoutQuickLaunch)
+                    continue;
+                foundRuntimeWithoutQuickLaunch = true;
+            }
+
+            // if you need more than 10 quicklaunchers per runtime, you're probably doing something wrong
+            // or you have a typo in your YAML, which could potentially freeze your target (container
+            // construction can be expensive)
+            entry.m_maximum = qBound(0, findMaximum(entry), 10);
+
+            if (!entry.m_maximum)
+                continue;
 
             m_quickLaunchPool << entry;
 
             qCDebug(LogQuickLaunch).nospace().noquote()
                 << " * container: " << entry.m_containerId << " / runtime: "
                 << (entry.m_runtimeId.isEmpty() ? qSL("(none)") : entry.m_runtimeId)
-                << " [at max: " << runtimesPerContainer << "]";
+                << " [at max: " << entry.m_maximum << "]";
         }
     }
 

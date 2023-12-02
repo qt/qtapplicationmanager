@@ -49,7 +49,14 @@ dbus:
 
 quicklaunch:
   idleLoad: 0.2
-  runtimesPerContainer: 3
+  runtimesPerContainer:
+    c-foo:
+      r-foo: 1
+      r-bar: 2
+    c-bar: 4
+
+  failedStartLimit: 44
+  failedStartLimitIntervalSec: 45
 
 ui:
   opengl:

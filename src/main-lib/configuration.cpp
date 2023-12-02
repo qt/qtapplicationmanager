@@ -316,7 +316,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 
 quint32 ConfigurationData::dataStreamVersion()
 {
-    return 12;
+    return 13;
 }
 
 ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
@@ -465,6 +465,11 @@ void mergeField(QStringList &into, const QStringList &from, const QStringList & 
 template <typename T> void mergeField(QList<T> &into, const QList<T> &from, const QList<T> & /*def*/)
 {
     into.append(from);
+}
+
+template <typename T, typename U> void mergeField(QHash<T, U> &into, const QHash<T, U> &from, const QHash<T, U> & /*def*/)
+{
+    into.insert(from);
 }
 
 void mergeField(QList<QPair<QString, QString>> &into, const QList<QPair<QString, QString>> &from,
@@ -698,12 +703,53 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                   p->parseFields({
                       { "idleLoad", false, YamlParser::Scalar, [&cd](YamlParser *p) {
                             cd->quicklaunch.idleLoad = p->parseScalar().toDouble(); } },
-                      { "runtimesPerContainer", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->quicklaunch.runtimesPerContainer = p->parseScalar().toInt(); } },
-                     { "failedStartLimit", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                          cd->quicklaunch.failedStartLimit = p->parseScalar().toInt(); } },
-                     { "failedStartLimitIntervalSec", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                          cd->quicklaunch.failedStartLimitIntervalSec = p->parseScalar().toInt(); } },
+                      { "runtimesPerContainer", false, YamlParser::Scalar | YamlParser::Map, [&cd](YamlParser *p) {
+                            // this can be set to different things:
+                            //  - just a number -> the same count for any container/runtime combo (the only option pre 6.7)
+                            //  - a "<container-id>": mapping -> you can map to
+                            //    - just a number -> the same count for any runtime in these containers
+                            //    - a "<runtime-id>": mapping -> a specific count for this container/runtime combo
+                            static const QString anyId = qSL("*");
+
+                            if (p->isScalar()) {
+                                bool ok;
+                                int rpc = p->parseScalar().toInt(&ok);
+                                if (!ok || (rpc < 0) || (rpc > 10))
+                                    throw YamlParserException(p, "quicklaunch.runtimesPerContainer count needs to be between 0 and 10");
+
+                                cd->quicklaunch.runtimesPerContainer[{ anyId, anyId }] = rpc;
+                            } else {
+                                const QVariantMap containerIdMap = p->parseMap();
+                                for (auto cit = containerIdMap.cbegin(); cit != containerIdMap.cend(); ++cit) {
+                                    const QString &containerId = cit.key();
+                                    const QVariant &value = cit.value();
+
+                                    switch (value.metaType().id()) {
+                                    case QMetaType::Int:
+                                        cd->quicklaunch.runtimesPerContainer[{ containerId, anyId }] = value.toInt();
+                                        break;
+                                    case QMetaType::QVariantMap: {
+                                        const QVariantMap runtimeIdMap = value.toMap();
+                                        for (auto rit = runtimeIdMap.cbegin(); rit != runtimeIdMap.cend(); ++rit) {
+                                            const QString &runtimeId = rit.key();
+                                            bool ok;
+                                            int rpc = rit.value().toInt(&ok);
+                                            if (!ok || (rpc < 0) || (rpc > 10))
+                                                throw YamlParserException(p, "quicklaunch.runtimesPerContainer count needs to be between 0 and 10");
+
+                                            cd->quicklaunch.runtimesPerContainer[{ containerId, runtimeId }] = rpc;
+                                        }
+                                        break;
+                                    }
+                                    default:
+                                        throw YamlParserException(p, "quicklaunch.runtimesPerContainer is invalid");
+                                    }
+                                }
+                            } } },
+                      { "failedStartLimit", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->quicklaunch.failedStartLimit = p->parseScalar().toInt(); } },
+                      { "failedStartLimitIntervalSec", false, YamlParser::Scalar, [&cd](YamlParser *p) {
+                            cd->quicklaunch.failedStartLimitIntervalSec = p->parseScalar().toInt(); } },
                   }); } },
             { "ui", false, YamlParser::Map, [&cd](YamlParser *p) {
                   p->parseFields({
@@ -1139,12 +1185,9 @@ qreal Configuration::quickLaunchIdleLoad() const
     return m_data->quicklaunch.idleLoad;
 }
 
-int Configuration::quickLaunchRuntimesPerContainer() const
+QHash<std::pair<QString, QString>, int> Configuration::quickLaunchRuntimesPerContainer() const
 {
-    // if you need more than 10 quicklaunchers per runtime, you're probably doing something wrong
-    // or you have a typo in your YAML, which could potentially freeze your target (container
-    // construction can be expensive)
-    return qBound(0, m_data->quicklaunch.runtimesPerContainer, 10);
+    return m_data->quicklaunch.runtimesPerContainer;
 }
 
 int Configuration::quickLaunchFailedStartLimit() const

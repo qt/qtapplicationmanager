@@ -590,11 +590,12 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     StartupTimer::instance()->checkpoint("after NotificationManager instantiation");
 }
 
-void Main::setupQuickLauncher(int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
-                              int failedStartLimit, int failedStartLimitIntervalSec) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupQuickLauncher(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
+                              qreal idleLoad, int failedStartLimit,
+                              int failedStartLimitIntervalSec) Q_DECL_NOEXCEPT_EXPR(false)
 {
-    if (quickLaunchRuntimesPerContainer > 0) {
-        m_quickLauncher = QuickLauncher::createInstance(quickLaunchRuntimesPerContainer, quickLaunchIdleLoad,
+    if (!runtimesPerContainer.isEmpty()) {
+        m_quickLauncher = QuickLauncher::createInstance(runtimesPerContainer, idleLoad,
                                                         failedStartLimit, failedStartLimitIntervalSec);
         StartupTimer::instance()->checkpoint("after quick-launcher setup");
     } else {

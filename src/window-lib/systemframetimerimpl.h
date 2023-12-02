@@ -19,13 +19,13 @@ class SystemFrameTimerImpl : public FrameTimerImpl
 public:
     SystemFrameTimerImpl(FrameTimer *frameTimer);
 
-    bool connectToAppManWindow(QObject *window) override;
-    void disconnectFromAppManWindow(QObject *window) override;
+    bool connectToSystemWindow(QObject *window) override;
+    void disconnectFromSystemWindow(QObject *window) override;
 
 private:
-    void disconnectFromWaylandSurface();
 #if defined(AM_MULTI_PROCESS)
-    QPointer<QWaylandQuickSurface> m_waylandSurface;
+    QMetaObject::Connection m_surfaceChangeConnection;
+    QMetaObject::Connection m_redrawConnection;
 #endif
 };
 

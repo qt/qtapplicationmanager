@@ -155,10 +155,13 @@ void FrameTimer::setWindow(QObject *window)
 {
     if (m_window == window)
         return;
-    if (m_impl)
-        m_impl->disconnectFromAppManWindow(window);
-    if (m_frameSwapConnection)
+
+    if (m_frameSwapConnection) {
         disconnect(m_frameSwapConnection);
+        m_frameSwapConnection = { };
+    } else if (m_impl) {
+        m_impl->disconnectFromSystemWindow(m_window);
+    }
 
     m_window = window;
 
@@ -166,16 +169,22 @@ void FrameTimer::setWindow(QObject *window)
         bool connected = false;
 
         QQuickWindow *quickWindow = qobject_cast<QQuickWindow*>(m_window);
-        if (auto *amWindow = qobject_cast<ApplicationManagerWindow *>(m_window))
+        if (auto *amWindow = qobject_cast<ApplicationManagerWindow *>(m_window)) {
+            if (amWindow->isInProcess()) {
+                qmlWarning(this) << "It makes no sense to measure the FPS of an application's window in single-process mode."
+                                    " FrameTimer won't operate with the given window.";
+                return;
+            }
             quickWindow = qobject_cast<QQuickWindow *>(amWindow->backingObject());
+        }
 
         if (quickWindow) {
             m_frameSwapConnection = connect(quickWindow, &QQuickWindow::frameSwapped,
-                                            this, &FrameTimer::reportFrameSwap, Qt::UniqueConnection);
+                                            this, &FrameTimer::reportFrameSwap);
             connected = (m_frameSwapConnection);
         }
         if (!connected && m_impl)
-            connected = m_impl->connectToAppManWindow(window);
+            connected = m_impl->connectToSystemWindow(m_window);
 
         if (!connected)
             qmlWarning(this) << "The given window is neither a QQuickWindow, ApplicationManagerWindow nor a WindowObject.";

@@ -19,53 +19,49 @@ SystemFrameTimerImpl::SystemFrameTimerImpl(FrameTimer *frameTimer)
     : FrameTimerImpl(frameTimer)
 { }
 
-bool SystemFrameTimerImpl::connectToAppManWindow(QObject *window)
+bool SystemFrameTimerImpl::connectToSystemWindow(QObject *window)
 {
-    if (!window)
-        return false;
-
-    if (auto amwin = qobject_cast<ApplicationManagerWindow *>(window)) {
-        if (amwin->isInProcess()) {
-            qmlWarning(frameTimer()) << "It makes no sense to measure the FPS of an application's window in single-process mode."
-                                        " FrameTimer won't operate with the given window.";
-            return true;
-        }
-    }
-
-    if (auto *winobj = qobject_cast<Window *>(window)) {
-        if (qobject_cast<InProcessWindow *>(winobj)) {
-            qmlWarning(frameTimer()) << "It makes no sense to measure the FPS of a WindowObject in single-process mode."
-                                        " FrameTimer won't operate with the given window.";
-        }
-#if defined(AM_MULTI_PROCESS)
-        else if (auto *wlwin = qobject_cast<WaylandWindow *>(winobj)) {
-            QObject::connect(wlwin, &WaylandWindow::waylandSurfaceChanged,
-                             frameTimer(), [this, wlwin]() {
-                    disconnectFromAppManWindow(nullptr);
-
-                    m_waylandSurface = wlwin->waylandSurface();
-                    if (m_waylandSurface) {
-                        QObject::connect(m_waylandSurface, &QWaylandQuickSurface::redraw,
-                                         frameTimer(), &FrameTimer::reportFrameSwap, Qt::UniqueConnection);
-                    }
-            }, Qt::UniqueConnection);
-        }
-#endif
+    if (qobject_cast<InProcessWindow *>(window)) {
+        qmlWarning(frameTimer()) << "It makes no sense to measure the FPS of a WindowObject in single-process mode."
+                                    " FrameTimer won't operate with the given window.";
         return true;
     }
+#if defined(AM_MULTI_PROCESS)
+    if (auto *wlwin = qobject_cast<WaylandWindow *>(window)) {
+        auto connectToWaylandSurface = [this](WaylandWindow *waylandWindow) {
+            if (m_redrawConnection) {
+                QObject::disconnect(m_redrawConnection);
+                m_redrawConnection = { };
+            }
+
+            if (auto surface = waylandWindow ? waylandWindow->waylandSurface() : nullptr) {
+                m_redrawConnection = QObject::connect(surface, &QWaylandQuickSurface::redraw,
+                                                      frameTimer(), &FrameTimer::reportFrameSwap);
+            }
+        };
+
+        m_surfaceChangeConnection = QObject::connect(wlwin, &WaylandWindow::waylandSurfaceChanged,
+                                                     frameTimer(), [=]() {
+            connectToWaylandSurface(wlwin);
+        });
+        connectToWaylandSurface(wlwin);
+        return true;
+    }
+#endif
     return false;
 }
 
-void SystemFrameTimerImpl::disconnectFromAppManWindow(QObject *window)
+void SystemFrameTimerImpl::disconnectFromSystemWindow(QObject *window)
 {
     Q_UNUSED(window)
-
 #if defined(AM_MULTI_PROCESS)
-    if (m_waylandSurface) {
-        QObject::disconnect(m_waylandSurface, &QWaylandQuickSurface::redraw,
-                            frameTimer(), &FrameTimer::reportFrameSwap);
-
-        m_waylandSurface = nullptr;
+    if (m_redrawConnection) {
+        QObject::disconnect(m_redrawConnection);
+        m_redrawConnection = { };
+    }
+    if (m_surfaceChangeConnection) {
+        QObject::disconnect(m_surfaceChangeConnection);
+        m_surfaceChangeConnection = { };
     }
 #endif
 }

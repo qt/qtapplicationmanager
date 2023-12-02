@@ -22,8 +22,8 @@ public:
 
     FrameTimer *frameTimer();
 
-    virtual bool connectToAppManWindow(QObject *window) = 0;
-    virtual void disconnectFromAppManWindow(QObject *window) = 0;
+    virtual bool connectToSystemWindow(QObject *window) = 0;
+    virtual void disconnectFromSystemWindow(QObject *window) = 0;
 
     void reportFrameSwap();
 

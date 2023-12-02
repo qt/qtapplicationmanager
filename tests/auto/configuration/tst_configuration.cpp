@@ -96,7 +96,7 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.rawSystemProperties(), QVariantMap {});
 
     QCOMPARE(c.quickLaunchIdleLoad(), qreal(0));
-    QCOMPARE(c.quickLaunchRuntimesPerContainer(), 0);
+    QVERIFY(c.quickLaunchRuntimesPerContainer().isEmpty());
 
     QString defaultWaylandSocketName =
 #if defined(Q_OS_LINUX)
@@ -211,7 +211,10 @@ void tst_Configuration::simpleConfig()
               }));
 
     QCOMPARE(c.quickLaunchIdleLoad(), qreal(0.5));
-    QCOMPARE(c.quickLaunchRuntimesPerContainer(), 5);
+    QHash<std::pair<QString, QString>, int> rpc { { { qSL("*"), qSL("*")}, 5 } };
+    QCOMPARE(c.quickLaunchRuntimesPerContainer(), rpc);
+    QCOMPARE(c.quickLaunchFailedStartLimit(), 42);
+    QCOMPARE(c.quickLaunchFailedStartLimitIntervalSec(), 43);
 
     QCOMPARE(c.waylandSocketName(), qSL("my-wlsock-42"));
 
@@ -357,7 +360,15 @@ void tst_Configuration::mergedConfig()
               }));
 
     QCOMPARE(c.quickLaunchIdleLoad(), qreal(0.2));
-    QCOMPARE(c.quickLaunchRuntimesPerContainer(), 3);
+    QHash<std::pair<QString, QString>, int> rpc = {
+        { { qSL("*"), qSL("*") }, 5 },
+        { { qSL("c-foo"), qSL("r-foo") }, 1 },
+        { { qSL("c-foo"), qSL("r-bar") }, 2 },
+        { { qSL("c-bar"), qSL("*") }, 4 },
+    };
+    QCOMPARE(c.quickLaunchRuntimesPerContainer(), rpc);
+    QCOMPARE(c.quickLaunchFailedStartLimit(), 44);
+    QCOMPARE(c.quickLaunchFailedStartLimitIntervalSec(), 45);
 
     QCOMPARE(c.waylandSocketName(), qSL("other-wlsock-0"));
 
@@ -490,7 +501,7 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.rawSystemProperties(), QVariantMap {});
 
     QCOMPARE(c.quickLaunchIdleLoad(), qreal(0));
-    QCOMPARE(c.quickLaunchRuntimesPerContainer(), 0);
+    QVERIFY(c.quickLaunchRuntimesPerContainer().isEmpty());
 
     QCOMPARE(c.waylandSocketName(), qSL("wlsock-1"));
     QCOMPARE(c.waylandExtraSockets(), {});

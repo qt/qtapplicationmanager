@@ -92,7 +92,7 @@ public:
     QVariantMap rawSystemProperties() const;
 
     qreal quickLaunchIdleLoad() const;
-    int quickLaunchRuntimesPerContainer() const;
+    QHash<std::pair<QString, QString>, int> quickLaunchRuntimesPerContainer() const;
     int quickLaunchFailedStartLimit() const;
     int quickLaunchFailedStartLimitIntervalSec() const;
 

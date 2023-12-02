@@ -93,8 +93,8 @@ protected:
     void setupIntents(int disambiguationTimeout, int startApplicationTimeout,
                       int replyFromApplicationTimeout, int replyFromSystemTimeout) Q_DECL_NOEXCEPT_EXPR(false);
     void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupQuickLauncher(int quickLaunchRuntimesPerContainer, qreal quickLaunchIdleLoad,
-                            int failedStartLimit, int failedStartLimitIntervalSec) Q_DECL_NOEXCEPT_EXPR(false);
+    void setupQuickLauncher(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
+                            qreal idleLoad, int failedStartLimit, int failedStartLimitIntervalSec) Q_DECL_NOEXCEPT_EXPR(false);
     void setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) Q_DECL_NOEXCEPT_EXPR(false);
     void registerPackages();
 

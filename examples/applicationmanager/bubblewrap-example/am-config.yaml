@@ -12,7 +12,10 @@ runtimes:
     importPaths: "${CONFIG_PWD}/imports"
 
 quicklaunch:
-  runtimesPerContainer: 1
+  runtimesPerContainer:
+    bubblewrap:
+      qml: 1
+    '*': 0
 
 containers:
   bubblewrap:

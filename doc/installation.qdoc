@@ -43,8 +43,8 @@ To build the application manager with all its features, the following components
     \li \b Qt 6.5.0 or higher.
     \li \b openssl \e{- Linux only and only if you need the installer functionality}.
         Qt needs to be built with openssl support. The required minimum version is defined by Qt.
-    \li \b libyaml 1.6 or higher.
-    \li \b libarchive 3.0 or higher \e{- if you need the installer functionality}.
+    \li \b libyaml 2.2 or higher.
+    \li \b libarchive 3.4 or higher \e{- if you need the installer functionality}.
 \endlist
 
 On Debian-based systems, this command installs the three required packages:

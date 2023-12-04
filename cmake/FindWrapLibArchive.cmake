@@ -5,7 +5,7 @@ if(TARGET WrapLibArchive::WrapLibArchive)
     return()
 endif()
 
-find_package(LibArchive)
+find_package(LibArchive 3.4)
 
 if (NOT LibArchive_FOUND)
     set(WrapLibArchive_FOUND FALSE)

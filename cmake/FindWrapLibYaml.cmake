@@ -6,7 +6,7 @@ if(TARGET WrapLibYaml::WrapLibYaml)
 endif()
 
 find_package(PkgConfig)
-pkg_check_modules(pc_libyaml yaml-0.1 IMPORTED_TARGET)
+pkg_check_modules(pc_libyaml yaml-0.1>=0.2.2 IMPORTED_TARGET)
 
 
 if (NOT pc_libyaml_FOUND)

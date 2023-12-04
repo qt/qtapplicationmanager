@@ -6,10 +6,10 @@
 
     "Description": "Multi-format archive and compression library.",
     "Homepage": "https://www.libarchive.org/",
-    "Version": "3.6.2",
+    "Version": "3.7.2",
 
     "License": "BSD 2-clause \"Simplified\" License",
     "LicenseId": "BSD-2-Clause",
     "LicenseFile": "COPYING",
-    "Copyright": "(c) 2003-2017 Tim Kientzle et al. - see COPYING and the individual file headers"
+    "Copyright": "(c) 2003-2018 Tim Kientzle et al. - see COPYING and the individual file headers"
 }

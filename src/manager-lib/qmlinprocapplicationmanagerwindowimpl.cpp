@@ -114,7 +114,9 @@ void QmlInProcApplicationManagerWindowImpl::connectActiveFocusItem()
 }
 
 QmlInProcApplicationManagerWindowImpl::~QmlInProcApplicationManagerWindowImpl()
-{ }
+{
+    QmlInProcApplicationManagerWindowImpl::setVisible(false);
+}
 
 bool QmlInProcApplicationManagerWindowImpl::isInProcess() const
 {

@@ -76,9 +76,7 @@ ApplicationManagerWindow::ApplicationManagerWindow(QObject *parent)
 { }
 
 ApplicationManagerWindow::~ApplicationManagerWindow()
-{
-    setVisible(false);
-}
+{ }
 
 ApplicationManagerWindowAttached *ApplicationManagerWindow::qmlAttachedProperties(QObject *object)
 {

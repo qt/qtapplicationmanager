@@ -49,6 +49,7 @@
 #include "processtitle.h"
 #include "qml-utilities.h"
 #include "launcher-qml_p.h"
+#include "applicationmanagerwindow.h"
 
 
 QT_USE_NAMESPACE_AM
@@ -438,30 +439,38 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     for (StartupInterface *iface : std::as_const(startupPlugins))
         iface->afterQmlEngineLoad(&m_engine);
 
-    bool createStartupReportNow = true;
-
     QObject *topLevel = topLevels.at(0);
-    m_window = qobject_cast<QQuickWindow *>(topLevel);
-    if (!m_window) {
-        QQuickItem *contentItem = qobject_cast<QQuickItem *>(topLevel);
-        if (contentItem) {
-            QQuickView* view = new QQuickView(&m_engine, nullptr);
-            m_window = view;
-            view->setContent(qmlFileUrl, nullptr, topLevel);
-            view->setVisible(contentItem->isVisible());
-            connect(contentItem, &QQuickItem::visibleChanged, this, [view, contentItem]() {
-                view->setVisible(contentItem->isVisible());
-            });
-        }
+    if (auto amw = qobject_cast<ApplicationManagerWindow*>(topLevel)) {
+        m_window = qobject_cast<QQuickWindow*>(amw->backingObject());
     } else {
-        if (!m_engine.incubationController())
-            m_engine.setIncubationController(m_window->incubationController());
-        createStartupReportNow = false; // create the startup report later, since we have a window
+        m_window = qobject_cast<QQuickWindow *>(topLevel);
+        if (!m_window) {
+            QQuickItem *contentItem = qobject_cast<QQuickItem *>(topLevel);
+            if (contentItem) {
+                QQuickView* view = new QQuickView(&m_engine, nullptr);
+                m_window = view;
+                view->setContent(qmlFileUrl, nullptr, topLevel);
+                view->setVisible(contentItem->isVisible());
+                connect(contentItem, &QQuickItem::visibleChanged, this, [view, contentItem]() {
+                    view->setVisible(contentItem->isVisible());
+                });
+            }
+        }
     }
 
     StartupTimer::instance()->checkpoint("after creating and setting application window");
 
+    // needed, even though we do not explicitly show() the window any more
+    for (StartupInterface *iface : std::as_const(startupPlugins))
+        iface->beforeWindowShow(m_window);
+
+    qCDebug(LogQmlRuntime) << "component loading and creating complete.";
+
+    StartupTimer::instance()->checkpoint("component loading and creating complete.");
+
     if (m_window) {
+        Q_ASSERT(m_engine.incubationController());
+
         // not sure if this is needed .. or even the best thing to do ... see connects above, they seem to work better
         QObject::connect(&m_engine, &QQmlEngine::quit, m_window, &QObject::deleteLater);
 
@@ -480,17 +489,9 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
                     iface->afterWindowShow(m_window);
             }
         });
-    }
-
-    // needed, even though we do not explicitly show() the window any more
-    for (StartupInterface *iface : std::as_const(startupPlugins))
-        iface->beforeWindowShow(m_window);
-
-    qCDebug(LogQmlRuntime) << "component loading and creating complete.";
-
-    StartupTimer::instance()->checkpoint("component loading and creating complete.");
-    if (createStartupReportNow)
+    } else {
         StartupTimer::instance()->createAutomaticReport(applicationId);
+    }
 
     if (!document.isEmpty() && m_applicationInterface)
         emit m_applicationInterface->openDocument(document, mimeType);

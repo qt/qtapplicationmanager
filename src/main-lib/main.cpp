@@ -847,7 +847,9 @@ void Main::showWindow(bool showFullscreen)
     QQuickWindow *window = nullptr;
     QObject *rootObject = m_engine->rootObjects().constFirst();
 
-    if (!rootObject->isWindowType()) {
+    if (rootObject->isWindowType()) {
+        window = qobject_cast<QQuickWindow *>(rootObject);
+    } else {
         QQuickItem *contentItem = qobject_cast<QQuickItem *>(rootObject);
         if (contentItem) {
             m_view = new QQuickView(m_engine, nullptr);
@@ -858,10 +860,6 @@ void Main::showWindow(bool showFullscreen)
             });
             window = m_view;
         }
-    } else {
-        window = qobject_cast<QQuickWindow *>(rootObject);
-        if (!m_engine->incubationController())
-            m_engine->setIncubationController(window->incubationController());
     }
 
     for (auto iface : std::as_const(m_startupPlugins))
@@ -878,6 +876,8 @@ void Main::showWindow(bool showFullscreen)
     }
 
     if (window) {
+        Q_ASSERT(m_engine->incubationController());
+
         StartupTimer::instance()->checkpoint("after Window instantiation/setup");
 
         static QMetaObject::Connection conn = QObject::connect(window, &QQuickWindow::frameSwapped, this, []() {

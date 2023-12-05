@@ -46,7 +46,7 @@ private:
 };
 
 
-#define AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
+#define QT_AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
 do { \
     if (!DBusPolicy::instance()->check(this, __FUNCTION__)) \
         return RETURN_TYPE(); \

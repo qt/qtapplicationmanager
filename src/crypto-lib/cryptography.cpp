@@ -24,7 +24,7 @@
 #  include <Availability.h>
 #endif
 
-#if defined(AM_USE_LIBCRYPTO)
+#if defined(QT_AM_USE_LIBCRYPTO)
 #  include "libcryptofunction.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -34,7 +34,7 @@ static bool openSslInitialized = false;
 static bool loadOpenSsl3LegacyProvider = false;
 
 // clazy:excludeall=non-pod-global-static
-static AM_LIBCRYPTO_FUNCTION(ERR_error_string_n, void(*)(unsigned long, char *, size_t));
+static QT_AM_LIBCRYPTO_FUNCTION(ERR_error_string_n, void(*)(unsigned long, char *, size_t));
 
 QT_END_NAMESPACE_AM
 
@@ -67,7 +67,7 @@ QByteArray Cryptography::generateRandomBytes(int size)
 
 void Cryptography::initialize()
 {
-#if defined(AM_USE_LIBCRYPTO)
+#if defined(QT_AM_USE_LIBCRYPTO)
     QMutexLocker locker(initMutex());
     if (!openSslInitialized) {
         if (!LibCryptoFunctionBase::initialize(loadOpenSsl3LegacyProvider))
@@ -79,7 +79,7 @@ void Cryptography::initialize()
 
 void Cryptography::enableOpenSsl3LegacyProvider()
 {
-#if defined(AM_USE_LIBCRYPTO)
+#if defined(QT_AM_USE_LIBCRYPTO)
     QMutexLocker locker(initMutex());
     if (openSslInitialized)
         qCritical("Cryptography::enableOpenSsl3LegacyProvider() needs to be called before using any other crypto functions.");
@@ -96,7 +96,7 @@ QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescrip
         result.append(QLatin1String(": "));
     }
 
-#if defined(AM_USE_LIBCRYPTO)
+#if defined(QT_AM_USE_LIBCRYPTO)
     if (osCryptoError) {
         char msg[512];
         msg[sizeof(msg) - 1] = 0;

@@ -278,7 +278,7 @@ QT_END_NAMESPACE_AM
 #  elif defined(Q_OS_MACOS)
 #    include <mach-o/dyld.h>
 #  endif
-#  if defined(AM_COVERAGE)
+#  if defined(QT_AM_COVERAGE)
 extern "C" {
 #    include <gcov.h>
 }
@@ -583,7 +583,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     signal(SIGTERM, SIG_IGN);
     kill(0, SIGTERM);
 
-#if defined(AM_COVERAGE)
+#if defined(QT_AM_COVERAGE)
     __gcov_dump();
 #endif
 

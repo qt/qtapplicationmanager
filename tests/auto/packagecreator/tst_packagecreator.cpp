@@ -95,7 +95,7 @@ void tst_PackageCreator::createAndVerify()
         QVERIFY(creator.errorCode() != Error::Canceled);
         QVERIFY(!creator.wasCanceled());
 
-        AM_CHECK_ERRORSTRING(creator.errorString(), errorString);
+        QT_AM_CHECK_ERRORSTRING(creator.errorString(), errorString);
         return;
     }
 

@@ -29,37 +29,37 @@ struct d2i_of_void;
 typedef int pem_password_cb (char *, int, int, void *);
 
 // deleter
-static AM_LIBCRYPTO_FUNCTION(X509_free, void(*)(X509 *));
-static AM_LIBCRYPTO_FUNCTION(BIO_free, int(*)(BIO *), 0);
-static AM_LIBCRYPTO_FUNCTION(PKCS7_free, void(*)(PKCS7 *));
-static AM_LIBCRYPTO_FUNCTION(EVP_PKEY_free, void(*)(EVP_PKEY *));
-static AM_LIBCRYPTO_FUNCTION(PKCS12_free, void(*)(PKCS12 *));
-static AM_LIBCRYPTO_FUNCTION(X509_STORE_free, void(*)(X509_STORE *));
-static AM_LIBCRYPTO_FUNCTION(sk_pop_free, void(*)(STACK_OF_X509 *, void(*)(void *)));         // 1.0
-static AM_LIBCRYPTO_FUNCTION(OPENSSL_sk_pop_free, void(*)(STACK_OF_X509 *, void(*)(void *))); // 1.1
+static QT_AM_LIBCRYPTO_FUNCTION(X509_free, void(*)(X509 *));
+static QT_AM_LIBCRYPTO_FUNCTION(BIO_free, int(*)(BIO *), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_free, void(*)(PKCS7 *));
+static QT_AM_LIBCRYPTO_FUNCTION(EVP_PKEY_free, void(*)(EVP_PKEY *));
+static QT_AM_LIBCRYPTO_FUNCTION(PKCS12_free, void(*)(PKCS12 *));
+static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_free, void(*)(X509_STORE *));
+static QT_AM_LIBCRYPTO_FUNCTION(sk_pop_free, void(*)(STACK_OF_X509 *, void(*)(void *)));         // 1.0
+static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_sk_pop_free, void(*)(STACK_OF_X509 *, void(*)(void *))); // 1.1
 
 // error handling
-static AM_LIBCRYPTO_FUNCTION(ERR_get_error, unsigned long(*)(), 4|64 /*ERR_R_INTERNAL_ERROR*/);
+static QT_AM_LIBCRYPTO_FUNCTION(ERR_get_error, unsigned long(*)(), 4|64 /*ERR_R_INTERNAL_ERROR*/);
 
 // create
-static AM_LIBCRYPTO_FUNCTION(BIO_ctrl, long(*)(BIO *, int, long, void *), 0);
-static AM_LIBCRYPTO_FUNCTION(d2i_PKCS12_bio, PKCS12 *(*)(BIO *, PKCS12 **), nullptr);
-static AM_LIBCRYPTO_FUNCTION(PKCS12_parse, int (*)(PKCS12 *, const char *, EVP_PKEY **, X509 **, STACK_OF_X509 **ca), 0);
-static AM_LIBCRYPTO_FUNCTION(PKCS7_sign, PKCS7 *(*)(X509 *, EVP_PKEY *, STACK_OF_X509 *, BIO *, int), nullptr);
-static AM_LIBCRYPTO_FUNCTION(BIO_new, BIO *(*)(BIO_METHOD *), nullptr);
-static AM_LIBCRYPTO_FUNCTION(BIO_s_mem, BIO_METHOD *(*)(), nullptr);
-static AM_LIBCRYPTO_FUNCTION(PEM_ASN1_write_bio, int (*)(i2d_of_void *, const char *, BIO *, void *, const EVP_CIPHER *, unsigned char *, int, pem_password_cb *, void *), 0);
-static AM_LIBCRYPTO_FUNCTION(i2d_PKCS7_bio, int (*)(BIO *, PKCS7 *), 0);
-static AM_LIBCRYPTO_FUNCTION(d2i_PKCS7_bio, PKCS7 *(*)(BIO *, PKCS7 **), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(BIO_ctrl, long(*)(BIO *, int, long, void *), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(d2i_PKCS12_bio, PKCS12 *(*)(BIO *, PKCS12 **), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(PKCS12_parse, int (*)(PKCS12 *, const char *, EVP_PKEY **, X509 **, STACK_OF_X509 **ca), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_sign, PKCS7 *(*)(X509 *, EVP_PKEY *, STACK_OF_X509 *, BIO *, int), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(BIO_new, BIO *(*)(BIO_METHOD *), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(BIO_s_mem, BIO_METHOD *(*)(), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(PEM_ASN1_write_bio, int (*)(i2d_of_void *, const char *, BIO *, void *, const EVP_CIPHER *, unsigned char *, int, pem_password_cb *, void *), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(i2d_PKCS7_bio, int (*)(BIO *, PKCS7 *), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(d2i_PKCS7_bio, PKCS7 *(*)(BIO *, PKCS7 **), nullptr);
 
 // verify
-static AM_LIBCRYPTO_FUNCTION(BIO_new_mem_buf, BIO *(*)(const void *, int), nullptr);
-static AM_LIBCRYPTO_FUNCTION(PEM_ASN1_read_bio, void *(*)(d2i_of_void *, const char *, BIO *, void **, pem_password_cb *, void *), nullptr);
-static AM_LIBCRYPTO_FUNCTION(d2i_X509, X509 *(*)(X509 **, const unsigned char **, long), nullptr);     // 1.0
-static AM_LIBCRYPTO_FUNCTION(d2i_X509_AUX, X509 *(*)(X509 **, const unsigned char **, long), nullptr); // 1.1
-static AM_LIBCRYPTO_FUNCTION(X509_STORE_new, X509_STORE *(*)(), nullptr);
-static AM_LIBCRYPTO_FUNCTION(X509_STORE_add_cert, int (*)(X509_STORE *, X509 *), 0);
-static AM_LIBCRYPTO_FUNCTION(PKCS7_verify, int (*)(PKCS7 *, STACK_OF_X509 *, X509_STORE *, BIO *, BIO *, int), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(BIO_new_mem_buf, BIO *(*)(const void *, int), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(PEM_ASN1_read_bio, void *(*)(d2i_of_void *, const char *, BIO *, void **, pem_password_cb *, void *), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(d2i_X509, X509 *(*)(X509 **, const unsigned char **, long), nullptr);     // 1.0
+static QT_AM_LIBCRYPTO_FUNCTION(d2i_X509_AUX, X509 *(*)(X509 **, const unsigned char **, long), nullptr); // 1.1
+static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_new, X509_STORE *(*)(), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_add_cert, int (*)(X509_STORE *, X509 *), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_verify, int (*)(PKCS7 *, STACK_OF_X509 *, X509_STORE *, BIO *, BIO *, int), 0);
 
 struct OpenSslDeleter {
     static inline void cleanup(X509 *x509)

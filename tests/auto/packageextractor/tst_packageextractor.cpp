@@ -153,7 +153,7 @@ void tst_PackageExtractor::extractAndVerify()
         QVERIFY(extractor.errorCode() != Error::Canceled);
         QVERIFY(!extractor.wasCanceled());
 
-        AM_CHECK_ERRORSTRING(extractor.errorString(), errorString);
+        QT_AM_CHECK_ERRORSTRING(extractor.errorString(), errorString);
         return;
     }
 

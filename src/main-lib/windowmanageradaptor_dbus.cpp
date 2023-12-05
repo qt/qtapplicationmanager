@@ -52,6 +52,6 @@ void WindowManagerAdaptor::setSlowAnimations(bool slow)
 
 bool WindowManagerAdaptor::makeScreenshot(const QString &filename, const QString &selector)
 {
-    AM_AUTHENTICATE_DBUS(bool)
+    QT_AM_AUTHENTICATE_DBUS(bool)
     return WindowManager::instance()->makeScreenshot(filename, selector);
 }

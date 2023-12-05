@@ -83,19 +83,19 @@ bool ApplicationManagerAdaptor::windowManagerCompositorReady() const
 
 QStringList ApplicationManagerAdaptor::applicationIds()
 {
-    AM_AUTHENTICATE_DBUS(QStringList)
+    QT_AM_AUTHENTICATE_DBUS(QStringList)
     return ApplicationManager::instance()->applicationIds();
 }
 
 uint ApplicationManagerAdaptor::applicationRunState(const QString &id)
 {
-    AM_AUTHENTICATE_DBUS(uint)
+    QT_AM_AUTHENTICATE_DBUS(uint)
     return ApplicationManager::instance()->applicationRunState(id);
 }
 
 QStringList ApplicationManagerAdaptor::capabilities(const QString &id)
 {
-    AM_AUTHENTICATE_DBUS(QStringList)
+    QT_AM_AUTHENTICATE_DBUS(QStringList)
     return ApplicationManager::instance()->capabilities(id);
 }
 
@@ -111,7 +111,7 @@ bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QStrin
 
 bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QString &debugWrapper, const QtAM::UnixFdMap &redirections, const QString &documentUrl)
 {
-    AM_AUTHENTICATE_DBUS(bool)
+    QT_AM_AUTHENTICATE_DBUS(bool)
 
     QVector<int> stdioRedirections = { -1, -1, -1 };
 
@@ -145,7 +145,7 @@ bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QStrin
 
 QVariantMap ApplicationManagerAdaptor::get(const QString &id)
 {
-    AM_AUTHENTICATE_DBUS(QVariantMap)
+    QT_AM_AUTHENTICATE_DBUS(QVariantMap)
     auto map = ApplicationManager::instance()->get(id);
     map.remove(qSL("application"));       // cannot marshall QObject *
     map.remove(qSL("applicationObject")); // cannot marshall QObject *
@@ -154,19 +154,19 @@ QVariantMap ApplicationManagerAdaptor::get(const QString &id)
 
 QString ApplicationManagerAdaptor::identifyApplication(qlonglong pid)
 {
-    AM_AUTHENTICATE_DBUS(QString)
+    QT_AM_AUTHENTICATE_DBUS(QString)
     return ApplicationManager::instance()->identifyApplication(pid);
 }
 
 QStringList ApplicationManagerAdaptor::identifyAllApplications(qlonglong pid)
 {
-    AM_AUTHENTICATE_DBUS(QStringList)
+    QT_AM_AUTHENTICATE_DBUS(QStringList)
     return ApplicationManager::instance()->identifyAllApplications(pid);
 }
 
 bool ApplicationManagerAdaptor::openUrl(const QString &url)
 {
-    AM_AUTHENTICATE_DBUS(bool)
+    QT_AM_AUTHENTICATE_DBUS(bool)
     return ApplicationManager::instance()->openUrl(url);
 }
 
@@ -182,7 +182,7 @@ bool ApplicationManagerAdaptor::startApplication(const QString &id, const QStrin
 
 bool ApplicationManagerAdaptor::startApplication(const QString &id, const QtAM::UnixFdMap &redirections, const QString &documentUrl)
 {
-    AM_AUTHENTICATE_DBUS(bool)
+    QT_AM_AUTHENTICATE_DBUS(bool)
 
     QVector<int> stdioRedirections = { -1, -1, -1 };
 
@@ -221,7 +221,7 @@ void ApplicationManagerAdaptor::stopAllApplications()
 
 void ApplicationManagerAdaptor::stopAllApplications(bool forceKill)
 {
-    AM_AUTHENTICATE_DBUS(void)
+    QT_AM_AUTHENTICATE_DBUS(void)
     ApplicationManager::instance()->stopAllApplications(forceKill);
 }
 
@@ -232,7 +232,7 @@ void ApplicationManagerAdaptor::stopApplication(const QString &id)
 
 void ApplicationManagerAdaptor::stopApplication(const QString &id, bool forceKill)
 {
-    AM_AUTHENTICATE_DBUS(void)
+    QT_AM_AUTHENTICATE_DBUS(void)
     ApplicationManager::instance()->stopApplication(id, forceKill);
 }
 
@@ -240,7 +240,7 @@ QString ApplicationManagerAdaptor::sendIntentRequestAs(const QString &requesting
                                                        const QString &intentId, const QString &applicationId,
                                                        const QString &jsonParameters)
 {
-    AM_AUTHENTICATE_DBUS(QString)
+    QT_AM_AUTHENTICATE_DBUS(QString)
 
     QDBusContext *dbusContext = DBusContextAdaptor::dbusContextFor(this);
     dbusContext->setDelayedReply(true);
@@ -301,7 +301,7 @@ void ApplicationManagerAdaptor::broadcastIntentRequestAs(const QString &requesti
                                                          const QString &intentId,
                                                          const QString &jsonParameters)
 {
-    AM_AUTHENTICATE_DBUS(void)
+    QT_AM_AUTHENTICATE_DBUS(void)
 
     QDBusContext *dbusContext = DBusContextAdaptor::dbusContextFor(this);
 

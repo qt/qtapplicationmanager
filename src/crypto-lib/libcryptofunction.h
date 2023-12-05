@@ -96,7 +96,7 @@ public:
     }
 };
 
-#define AM_LIBCRYPTO_FUNCTION(f, typeof_f, ...) Cryptography::LibCryptoFunction<typeof_f> am_ ## f(#f, ##__VA_ARGS__)
+#define QT_AM_LIBCRYPTO_FUNCTION(f, typeof_f, ...) Cryptography::LibCryptoFunction<typeof_f> am_ ## f(#f, ##__VA_ARGS__)
 
 }
 

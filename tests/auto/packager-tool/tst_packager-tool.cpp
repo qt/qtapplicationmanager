@@ -277,7 +277,7 @@ void tst_PackagerTool::brokenMetadata()
 
     QString error;
     QVERIFY2(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), error), qPrintable(error));
-    AM_CHECK_ERRORSTRING(error, errorString);
+    QT_AM_CHECK_ERRORSTRING(error, errorString);
 }
 
 /*

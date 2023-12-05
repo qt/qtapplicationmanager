@@ -41,7 +41,7 @@ qt_internal_extend_target(AppManCryptoPrivate CONDITION (UNIX AND NOT MACOS)
         libcryptofunction.cpp libcryptofunction.h
         signature_openssl.cpp
     DEFINES
-        AM_USE_LIBCRYPTO
+        QT_AM_USE_LIBCRYPTO
     PUBLIC_LIBRARIES
         Qt::Network
 )

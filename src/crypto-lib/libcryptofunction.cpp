@@ -10,23 +10,23 @@
 #include "libcryptofunction.h"
 
 // we want at least openssl 1.0.1 or 1.1.0
-#define AM_MINIMUM_OPENSSL10_VERSION 0x1000100fL
-#define AM_MINIMUM_OPENSSL11_VERSION 0x1010000fL
-#define AM_MINIMUM_OPENSSL30_VERSION 0x3000000fL
+#define QT_AM_MINIMUM_OPENSSL10_VERSION 0x1000100fL
+#define QT_AM_MINIMUM_OPENSSL11_VERSION 0x1010000fL
+#define QT_AM_MINIMUM_OPENSSL30_VERSION 0x3000000fL
 
 QT_BEGIN_NAMESPACE_AM
 
 // clazy:excludeall=non-pod-global-static
-static AM_LIBCRYPTO_FUNCTION(SSLeay, unsigned long(*)(), 0);
-static AM_LIBCRYPTO_FUNCTION(OPENSSL_add_all_algorithms_noconf, void(*)());
-static AM_LIBCRYPTO_FUNCTION(ERR_load_crypto_strings, void(*)());
+static QT_AM_LIBCRYPTO_FUNCTION(SSLeay, unsigned long(*)(), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_add_all_algorithms_noconf, void(*)());
+static QT_AM_LIBCRYPTO_FUNCTION(ERR_load_crypto_strings, void(*)());
 
-static AM_LIBCRYPTO_FUNCTION(OpenSSL_version_num, unsigned long(*)(), 0);
-static AM_LIBCRYPTO_FUNCTION(OPENSSL_init_crypto, int(*)(uint64_t, void *), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(OpenSSL_version_num, unsigned long(*)(), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_init_crypto, int(*)(uint64_t, void *), 0);
 
 struct OSSL_PROVIDER;
 struct OSSL_LIB_CTX;
-static AM_LIBCRYPTO_FUNCTION(OSSL_PROVIDER_load, OSSL_PROVIDER *(*)(OSSL_LIB_CTX *, const char *), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(OSSL_PROVIDER_load, OSSL_PROVIDER *(*)(OSSL_LIB_CTX *, const char *), nullptr);
 
 QLibrary *Cryptography::LibCryptoFunctionBase::s_library = nullptr;
 bool Cryptography::LibCryptoFunctionBase::s_isOpenSSL11 = false;
@@ -65,10 +65,10 @@ bool Cryptography::LibCryptoFunctionBase::initialize(bool loadOpenSsl3LegacyProv
             version = am_SSLeay(); // 1.0
 
         if (version > 0) {
-            if (version >= AM_MINIMUM_OPENSSL11_VERSION) {
+            if (version >= QT_AM_MINIMUM_OPENSSL11_VERSION) {
                 s_isOpenSSL11 = true;
 
-                if (version >= AM_MINIMUM_OPENSSL30_VERSION) {
+                if (version >= QT_AM_MINIMUM_OPENSSL30_VERSION) {
                     s_isOpenSSL30 = true;
 
                     if (loadOpenSsl3LegacyProvider) {
@@ -84,13 +84,13 @@ bool Cryptography::LibCryptoFunctionBase::initialize(bool loadOpenSsl3LegacyProv
                                                | 8 /*OPENSSL_INIT_ADD_ALL_DIGESTS*/
                                                | 2 /*OPENSSL_INIT_LOAD_CRYPTO_STRINGS*/,
                                                nullptr) == 1);
-            } else if (version >= AM_MINIMUM_OPENSSL10_VERSION) {
+            } else if (version >= QT_AM_MINIMUM_OPENSSL10_VERSION) {
                 am_OPENSSL_add_all_algorithms_noconf();
                 am_ERR_load_crypto_strings();
                 return true;
             } else {
                 qCritical("Loaded libcrypto (%s), but the version is too old: 0x%08lx (minimum supported version is: 0x%08lx)",
-                          qPrintable(s_library->fileName()), version, AM_MINIMUM_OPENSSL10_VERSION);
+                          qPrintable(s_library->fileName()), version, QT_AM_MINIMUM_OPENSSL10_VERSION);
             }
         } else {
             qCritical("Could not get version information from libcrypto: neither of the symbols 'SSLeay' or 'OpenSSL_version_num' were found");

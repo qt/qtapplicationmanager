@@ -441,7 +441,7 @@ void tst_PackageManager::packageInstallation()
             QVERIFY(m_failedSpy->wait(spyTimeout));
             QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
 
-            AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(), errorString);
+            QT_AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(), errorString);
         } else {
             // ...in case of expected success
 
@@ -581,7 +581,7 @@ void tst_PackageManager::simulateErrorConditions()
 
     QVERIFY(m_failedSpy->wait(spyTimeout));
     QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
-    AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(), errorString);
+    QT_AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(), errorString);
     clearSignalSpies();
 
     const auto afterFailed = functions.values("after-failed");

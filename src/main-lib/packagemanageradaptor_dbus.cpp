@@ -123,31 +123,31 @@ QVariantMap PackageManagerAdaptor::documentLocation() const
 
 void PackageManagerAdaptor::acknowledgePackageInstallation(const QString &taskId)
 {
-    AM_AUTHENTICATE_DBUS(void)
+    QT_AM_AUTHENTICATE_DBUS(void)
     return PackageManager::instance()->acknowledgePackageInstallation(taskId);
 }
 
 bool PackageManagerAdaptor::cancelTask(const QString &taskId)
 {
-    AM_AUTHENTICATE_DBUS(bool)
+    QT_AM_AUTHENTICATE_DBUS(bool)
     return PackageManager::instance()->cancelTask(taskId);
 }
 
 int PackageManagerAdaptor::compareVersions(const QString &version1, const QString &version2)
 {
-    AM_AUTHENTICATE_DBUS(int)
+    QT_AM_AUTHENTICATE_DBUS(int)
     return PackageManager::instance()->compareVersions(version1, version2);
 }
 
 QStringList PackageManagerAdaptor::packageIds()
 {
-    AM_AUTHENTICATE_DBUS(QStringList)
+    QT_AM_AUTHENTICATE_DBUS(QStringList)
     return PackageManager::instance()->packageIds();
 }
 
 QVariantMap PackageManagerAdaptor::get(const QString &id)
 {
-    AM_AUTHENTICATE_DBUS(QVariantMap)
+    QT_AM_AUTHENTICATE_DBUS(QVariantMap)
     auto map = PackageManager::instance()->get(id);
     map.remove(qSL("package"));       // cannot marshall QObject *
     map.remove(qSL("packageObject")); // cannot marshall QObject *
@@ -156,20 +156,20 @@ QVariantMap PackageManagerAdaptor::get(const QString &id)
 
 qlonglong PackageManagerAdaptor::installedPackageSize(const QString &packageId)
 {
-    AM_AUTHENTICATE_DBUS(qlonglong)
+    QT_AM_AUTHENTICATE_DBUS(qlonglong)
     return PackageManager::instance()->installedPackageSize(packageId);
 }
 
 QVariantMap PackageManagerAdaptor::installedPackageExtraMetaData(const QString &packageId)
 {
-    AM_AUTHENTICATE_DBUS(QVariantMap)
+    QT_AM_AUTHENTICATE_DBUS(QVariantMap)
     const auto map = PackageManager::instance()->installedPackageExtraMetaData(packageId);
     return convertFromJSVariant(map).toMap();
 }
 
 QVariantMap PackageManagerAdaptor::installedPackageExtraSignedMetaData(const QString &packageId)
 {
-    AM_AUTHENTICATE_DBUS(QVariantMap)
+    QT_AM_AUTHENTICATE_DBUS(QVariantMap)
     const auto map = PackageManager::instance()->installedPackageExtraSignedMetaData(packageId);
     return convertFromJSVariant(map).toMap();
 }
@@ -181,42 +181,42 @@ QString PackageManagerAdaptor::removePackage(const QString &packageId, bool keep
 
 QString PackageManagerAdaptor::removePackage(const QString &packageId, bool keepDocuments, bool force)
 {
-    AM_AUTHENTICATE_DBUS(QString)
+    QT_AM_AUTHENTICATE_DBUS(QString)
     return PackageManager::instance()->removePackage(packageId, keepDocuments, force);
 }
 
 QString PackageManagerAdaptor::startPackageInstallation(const QString &sourceUrl)
 {
-    AM_AUTHENTICATE_DBUS(QString)
+    QT_AM_AUTHENTICATE_DBUS(QString)
     return PackageManager::instance()->startPackageInstallation(sourceUrl);
 }
 
 QString PackageManagerAdaptor::taskState(const QString &taskId)
 {
-    AM_AUTHENTICATE_DBUS(QString)
+    QT_AM_AUTHENTICATE_DBUS(QString)
     return taskStateToString(PackageManager::instance()->taskState(taskId));
 }
 
 QString PackageManagerAdaptor::taskPackageId(const QString &taskId)
 {
-    AM_AUTHENTICATE_DBUS(QString)
+    QT_AM_AUTHENTICATE_DBUS(QString)
     return PackageManager::instance()->taskPackageId(taskId);
 }
 
 QStringList PackageManagerAdaptor::activeTaskIds()
 {
-    AM_AUTHENTICATE_DBUS(QStringList)
+    QT_AM_AUTHENTICATE_DBUS(QStringList)
     return PackageManager::instance()->activeTaskIds();
 }
 
 bool PackageManagerAdaptor::validateDnsName(const QString &name)
 {
-    AM_AUTHENTICATE_DBUS(bool)
+    QT_AM_AUTHENTICATE_DBUS(bool)
     return PackageManager::instance()->validateDnsName(name);
 }
 
 bool PackageManagerAdaptor::validateDnsName(const QString &name, int minimumParts)
 {
-    AM_AUTHENTICATE_DBUS(bool)
+    QT_AM_AUTHENTICATE_DBUS(bool)
     return PackageManager::instance()->validateDnsName(name, minimumParts);
 }

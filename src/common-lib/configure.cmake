@@ -1,3 +1,8 @@
+
+if (NOT QT_CONFIGURE_RUNNING)
+    include(QtAppManVersionDefines)
+endif()
+
 # all features are prefixed with "am" to prevent clashes with features in
 # other Qt modules
 
@@ -136,5 +141,3 @@ qt_configure_add_summary_entry(ARGS "am-dltlogging")
 qt_configure_add_summary_entry(ARGS "am-libbacktrace")
 qt_configure_add_summary_entry(ARGS "am-stackwalker")
 qt_configure_end_summary_section() # end of "Qt ApplicationManger" section
-
-qt_extra_definition("AM_VERSION" "\"${PROJECT_VERSION}\"" PUBLIC)

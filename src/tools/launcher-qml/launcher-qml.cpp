@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Launcher"));
     QCoreApplication::setOrganizationName(qSL("QtProject"));
     QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
-    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
+    QCoreApplication::setApplicationVersion(qSL(QT_AM_VERSION_STR));
 
     if (qEnvironmentVariableIntValue("AM_NO_DLT_LOGGING") == 1)
         Logging::setDltEnabled(false);

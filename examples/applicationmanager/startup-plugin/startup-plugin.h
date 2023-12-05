@@ -15,6 +15,8 @@ class TestStartupInterface : public QObject, public StartupInterface
     Q_INTERFACES(StartupInterface)
 
 public:
+    TestStartupInterface();
+
     // StartupInterface
     void initialize(const QVariantMap &systemProperties) Q_DECL_NOEXCEPT_EXPR(false) override;
     void afterRuntimeRegistration() Q_DECL_NOEXCEPT_EXPR(false) override;

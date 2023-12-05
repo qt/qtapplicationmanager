@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(qSL("Qt Application Manager Controller"));
     QCoreApplication::setOrganizationName(qSL("QtProject"));
     QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
-    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
+    QCoreApplication::setApplicationVersion(qSL(QT_AM_VERSION_STR));
 
     ThrowingApplication a(argc, argv);
 

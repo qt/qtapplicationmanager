@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     QCoreApplication::setApplicationName(u"Qt ApplicationManager Package Server"_s);
     QCoreApplication::setOrganizationName(u"QtProject"_s);
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
-    QCoreApplication::setApplicationVersion(u""_s AM_VERSION);
+    QCoreApplication::setApplicationVersion(u""_s QT_AM_VERSION_STR);
 
     QCoreApplication a(argc, argv);
 

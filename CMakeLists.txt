@@ -134,8 +134,17 @@ file(GLOB licenses "LICENSE.*[^~]")
 
 add_custom_target("Other-Files" SOURCES
     .cmake.conf
-    configure.cmake
     qt_cmdline.cmake
+    src/common-lib/qt_cmdline.cmake
+    src/package-lib/qt_cmdline.cmake
+    src/window-lib/qt_cmdline.cmake
+    src/common-lib/configure.cmake
+    src/plugin-interfaces/configure.cmake
+    cmake/FindWrapLibArchive.cmake
+    cmake/FindWrapLibYaml.cmake
+    cmake/QtAppManHelpers.cmake
+    cmake/QtAppManBuildConfig.cmake
+    cmake/QtAppManVersionDefines.cmake
     dependencies.yaml
     sync.profile
     ${licenses}

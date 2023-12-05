@@ -10,6 +10,8 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariantMap>
 #include <QtCore/QVector>
+#include <QtAppManPluginInterfaces/qtappman_plugininterfaces-config.h>
+
 
 class ContainerInterface : public QObject
 {

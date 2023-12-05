@@ -47,7 +47,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
     QCoreApplication::setOrganizationName(qSL("QtProject"));
     QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
-    QCoreApplication::setApplicationVersion(qSL(AM_VERSION));
+    QCoreApplication::setApplicationVersion(qSL(QT_AM_VERSION_STR));
 
     Logging::initialize(argc, argv);
     StartupTimer::instance()->checkpoint("after basic initialization");

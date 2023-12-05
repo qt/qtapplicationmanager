@@ -7,6 +7,11 @@
 
 Q_LOGGING_CATEGORY(LogMe, "am.start")
 
+TestStartupInterface::TestStartupInterface()
+{
+    qCWarning(LogMe) << "Startup plugin was built against QT_AM_VERSION =" << QT_AM_VERSION_STR;
+}
+
 void TestStartupInterface::initialize(const QVariantMap &systemProperties) Q_DECL_NOEXCEPT_EXPR(false)
 {
     qCWarning(LogMe) << "Startup initialize - systemProperties:" << systemProperties;

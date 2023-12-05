@@ -7,6 +7,8 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QtPlugin>
+#include <QtAppManPluginInterfaces/qtappman_plugininterfaces-config.h>
+
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QWindow)

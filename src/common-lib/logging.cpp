@@ -14,6 +14,7 @@
 #include "logging.h"
 #include "console.h"
 #include "colorprint.h"
+#include "qtappman_common-config_p.h"
 
 #include <cstdio>
 
@@ -24,7 +25,7 @@
 #  include <android/log.h>
 #endif
 
-#if defined(AM_USE_DLTLOGGING)
+#if QT_CONFIG(am_dltlogging)
 #  include <QtDltLogging/QtDlt>
 #  include <QtDltLogging/QDltRegistration>
 #else
@@ -39,7 +40,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-#if defined(AM_USE_DLTLOGGING)
+#if QT_CONFIG(am_dltlogging)
 static constexpr const char *s_defaultSystemUiDltId = "QTAM";
 static constexpr const char *s_defaultSystemUiDltDescription = "Qt Application Manager";
 #endif
@@ -141,12 +142,7 @@ struct DeferredMessage
 
 struct LoggingGlobal
 {
-    bool dltEnabled =
-#if defined(AM_USE_DLTLOGGING)
-            true;
-#else
-            false;
-#endif
+    bool dltEnabled = QT_CONFIG(am_dltlogging);
     bool messagePatternDefined = false;
     bool useAMConsoleLogger = false;
     bool noCustomLogging = false;
@@ -372,7 +368,7 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
 
 void Logging::messageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
-#if defined(AM_USE_DLTLOGGING)
+#if QT_CONFIG(am_dltlogging)
     if (lg()->dltEnabled)
         QDltRegistration::messageHandler(msgType, context, message);
 #endif
@@ -439,10 +435,8 @@ void Logging::setFilterRules(const QStringList &rules)
 {
     lg()->rules = rules;
     QString rulesStr = rules.join(qL1C('\n'));
-#if defined(AM_USE_DLTLOGGING)
-    if (lg()->dltEnabled)
+    if (QT_CONFIG(am_dltlogging) && lg()->dltEnabled)
         rulesStr += qSL("\ngeneral=true");
-#endif
     QLoggingCategory::setFilterRules(rulesStr);
 }
 
@@ -514,7 +508,7 @@ void Logging::setDltEnabled(bool enabled)
 
 void Logging::registerUnregisteredDltContexts()
 {
-#if defined(AM_USE_DLTLOGGING)
+#if QT_CONFIG(am_dltlogging)
     if (lg()->dltEnabled)
         globalDltRegistration()->registerUnregisteredContexts();
 #endif
@@ -522,7 +516,7 @@ void Logging::registerUnregisteredDltContexts()
 
 void Logging::setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dltAppDescription)
 {
-#if defined(AM_USE_DLTLOGGING)
+#if QT_CONFIG(am_dltlogging)
     if (lg()->dltEnabled) {
         const QByteArray id = dltAppId.isEmpty() ? QByteArray(s_defaultSystemUiDltId) : dltAppId;
         const QByteArray description = dltAppDescription.isEmpty() ? QByteArray(s_defaultSystemUiDltDescription)
@@ -537,7 +531,7 @@ void Logging::setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dlt
 
 void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &dltAppDescription)
 {
-#if defined(AM_USE_DLTLOGGING)
+#if QT_CONFIG(am_dltlogging)
     if (lg()->dltEnabled)
         globalDltRegistration()->registerApplication(dltAppId, dltAppDescription);
 #else
@@ -558,7 +552,7 @@ void Logging::setDltLongMessageBehavior(const QString &behaviorString)
 
     lg()->dltLongMessageBehavior = behaviorString;
 
-#if defined(AM_USE_DLTLOGGING)
+#if QT_CONFIG(am_dltlogging)
     QDltRegistration::LongMessageBehavior behavior = QDltRegistration::LongMessageBehavior::Truncate;
     if (behaviorString == qL1S("split"))
         behavior = QDltRegistration::LongMessageBehavior::Split;
@@ -571,7 +565,7 @@ void Logging::setDltLongMessageBehavior(const QString &behaviorString)
 
 void Logging::logToDlt(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
-#if defined(AM_USE_DLTLOGGING)
+#if QT_CONFIG(am_dltlogging)
     if (lg()->dltEnabled)
         QDltRegistration::messageHandler(msgType, context, message);
 #else

@@ -13,7 +13,7 @@
 #include <QtCore/QUrl>
 #include <QtAppManCommon/global.h>
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 #  include <QtDBus/QDBusConnection>
 #  include <QtDBus/QDBusContext>
 #endif
@@ -131,7 +131,7 @@ private:
     bool m_isSystemUi = false;
 };
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 
 // ... derived for P2P DBus clients
 class IntentServerDBusIpcConnection : public IntentServerIpcConnection, public QDBusContext

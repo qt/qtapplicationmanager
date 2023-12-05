@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include "global.h"
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 #  include <QDBusMessage>
 #  include <QDBusConnection>
 #  include <QDBusPendingCallWatcher>
@@ -146,7 +146,7 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
     // wire it up to both interfaces from the outside
     connect(AbstractRuntime::signaler(), &RuntimeSignaler::aboutToStart,
             intentServer(), [this](AbstractRuntime *runtime) {
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
         if (NativeRuntime *nativeRuntime = qobject_cast<NativeRuntime *>(runtime)) {
             connect(nativeRuntime, &NativeRuntime::applicationConnectedToPeerDBus,
                     intentServer(), [this](const QDBusConnection &connection, Application *application) {
@@ -411,7 +411,7 @@ void IntentServerInProcessIpcConnection::replyFromSystem(IntentServerRequest *is
 //////////////////////////////////////////////////////////////////////////
 // vvv IntentServerDBusIpcConnection vvv
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 
 IntentServerDBusIpcConnection::IntentServerDBusIpcConnection(QDBusConnection connection,
                                                              Application *application,
@@ -506,7 +506,7 @@ void IntentServerDBusIpcConnection::replyFromApplication(const QString &requestI
 
 QT_END_NAMESPACE_AM
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 
 IntentInterfaceAdaptor::IntentInterfaceAdaptor(QObject *parent)
     : QDBusAbstractAdaptor(parent)

@@ -10,7 +10,7 @@
 #include <QtCore/QVector>
 #include <QtAppManCommon/global.h>
 #include <QtAppManSharedMain/sharedmain.h>
-#if defined(AM_WIDGETS_SUPPORT)
+#if QT_CONFIG(am_widgets_support)
 #  include <QtWidgets/QApplication>
 using ApplicationMainBase = QApplication;
 #else

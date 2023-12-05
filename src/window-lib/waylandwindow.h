@@ -7,7 +7,7 @@
 
 #include <QtAppManWindow/window.h>
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 
 #include <QtWaylandCompositor/QWaylandQuickSurface>
 #include <QtWaylandCompositor/QWaylandXdgShell>
@@ -71,4 +71,4 @@ private:
 
 QT_END_NAMESPACE_AM
 
-#endif // AM_MULTI_PROCESS
+#endif // QT_CONFIG(am_multi_process)

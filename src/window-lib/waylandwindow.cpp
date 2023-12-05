@@ -5,7 +5,7 @@
 
 
 #include "global.h"
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 #include "logging.h"
 #include "applicationmanager.h"
 #include "application.h"
@@ -198,6 +198,6 @@ void WaylandWindow::close()
 
 QT_END_NAMESPACE_AM
 
-#endif // AM_MULTI_PROCESS
+#endif // QT_CONFIG(am_multi_process)
 
 #include "moc_waylandwindow.cpp"

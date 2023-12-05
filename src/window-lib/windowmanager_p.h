@@ -20,7 +20,7 @@ class WindowManagerPrivate
 public:
     int findWindowBySurfaceItem(QQuickItem *quickItem) const;
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
 
     WaylandCompositor *waylandCompositor = nullptr;

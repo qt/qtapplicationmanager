@@ -19,7 +19,7 @@
 #include "exception.h"
 #include "sudo.h"
 #include "utilities.h"
-#if !defined(AM_DISABLE_INSTALLER)
+#if QT_CONFIG(am_installer)
 #  include "installationtask.h"
 #  include "deinstallationtask.h"
 #endif
@@ -302,9 +302,7 @@ PackageManager *PackageManager::instance()
 
 void PackageManager::enableInstaller()
 {
-#if !defined(AM_DISABLE_INSTALLER)
-    d->disableInstaller = false;
-#endif
+    d->enableInstaller = QT_CONFIG(am_installer);
 }
 
 void PackageManager::registerPackages()
@@ -360,7 +358,7 @@ void PackageManager::registerPackages()
 
     emit readyChanged(d->cleanupBrokenInstallationsDone);
 
-#if !defined(AM_DISABLE_INSTALLER)
+#if QT_CONFIG(am_installer)
     // something might have been queued already before the cleanup had finished
     triggerExecuteNextTask();
 #endif
@@ -828,7 +826,7 @@ QVariantMap PackageManager::documentLocation() const
 
 bool PackageManager::isPackageInstallationActive(const QString &packageId) const
 {
-#if !defined(AM_DISABLE_INSTALLER)
+#if QT_CONFIG(am_installer)
     for (const auto *t : std::as_const(d->installationTaskList)) {
         if (t->packageId() == packageId)
             return true;
@@ -844,7 +842,7 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
     if (d->cleanupBrokenInstallationsDone)
         return;
 
-#if !defined(AM_DISABLE_INSTALLER)
+#if QT_CONFIG(am_installer)
     // Check that everything in the app-db is available
     //    -> if not, remove from app-db
 
@@ -927,7 +925,7 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
             }
         }
     }
-#endif // !defined(AM_DISABLE_INSTALLER)
+#endif // QT_CONFIG(am_installer)
 
     d->cleanupBrokenInstallationsDone = true;
 }
@@ -1020,8 +1018,8 @@ QString PackageManager::startPackageInstallation(const QUrl &sourceUrl)
 {
     AM_TRACE(LogInstaller, sourceUrl)
 
-#if !defined(AM_DISABLE_INSTALLER)
-    if (!d->disableInstaller)
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller)
         return enqueueTask(new InstallationTask(d->installationPath, d->documentPath, sourceUrl));
 #endif
     return QString();
@@ -1069,8 +1067,8 @@ void PackageManager::acknowledgePackageInstallation(const QString &taskId)
 {
     AM_TRACE(LogInstaller, taskId)
 
-#if !defined(AM_DISABLE_INSTALLER)
-    if (!d->disableInstaller) {
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
         const auto allTasks = d->allTasks();
 
         for (AsynchronousTask *task : allTasks) {
@@ -1103,8 +1101,8 @@ QString PackageManager::removePackage(const QString &packageId, bool keepDocumen
 {
     AM_TRACE(LogInstaller, packageId, keepDocuments, force)
 
-#if !defined(AM_DISABLE_INSTALLER)
-    if (!d->disableInstaller) {
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
         if (fromId(packageId)) {
             return enqueueTask(new DeinstallationTask(packageId, d->installationPath,
                                                       d->documentPath, force, keepDocuments));
@@ -1125,8 +1123,8 @@ QString PackageManager::removePackage(const QString &packageId, bool keepDocumen
 */
 AsynchronousTask::TaskState PackageManager::taskState(const QString &taskId) const
 {
-#if !defined(AM_DISABLE_INSTALLER)
-    if (!d->disableInstaller) {
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
         const auto allTasks = d->allTasks();
 
         for (const AsynchronousTask *task : allTasks) {
@@ -1152,8 +1150,8 @@ AsynchronousTask::TaskState PackageManager::taskState(const QString &taskId) con
 */
 QString PackageManager::taskPackageId(const QString &taskId) const
 {
-#if !defined(AM_DISABLE_INSTALLER)
-    if (!d->disableInstaller) {
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
         const auto allTasks = d->allTasks();
 
         for (const AsynchronousTask *task : allTasks) {
@@ -1175,8 +1173,8 @@ QString PackageManager::taskPackageId(const QString &taskId) const
 QStringList PackageManager::activeTaskIds() const
 {
     QStringList result;
-#if !defined(AM_DISABLE_INSTALLER)
-    if (!d->disableInstaller) {
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
         const auto allTasks = d->allTasks();
 
         for (const AsynchronousTask *task : allTasks)
@@ -1197,8 +1195,8 @@ bool PackageManager::cancelTask(const QString &taskId)
 {
     AM_TRACE(LogInstaller, taskId)
 
-#if !defined(AM_DISABLE_INSTALLER)
-    if (!d->disableInstaller) {
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
         // incoming tasks can be forcefully canceled right away
         for (AsynchronousTask *task : std::as_const(d->incomingTaskList)) {
             if (task->id() == taskId) {
@@ -1229,32 +1227,30 @@ bool PackageManager::cancelTask(const QString &taskId)
 
 QString PackageManager::enqueueTask(AsynchronousTask *task)
 {
-#if defined(AM_DISABLE_INSTALLER)
-    Q_UNUSED(task)
-    Q_ASSERT_X(false, "PackageManager::enqueueTask", "Installer is disabled");
-    return { };
-#else
+#if QT_CONFIG(am_installer)
     d->incomingTaskList.append(task);
     triggerExecuteNextTask();
     return task->id();
+#else
+    Q_UNUSED(task)
+    Q_ASSERT_X(false, "PackageManager::enqueueTask", "Installer is disabled");
+    return { };
 #endif
 }
 
 void PackageManager::triggerExecuteNextTask()
 {
-#if defined(AM_DISABLE_INSTALLER)
-    Q_ASSERT_X(false, "PackageManager::triggerExecuteNextTask", "Installer is disabled");
-#else
+#if QT_CONFIG(am_installer)
     if (!QMetaObject::invokeMethod(this, &PackageManager::executeNextTask, Qt::QueuedConnection))
         qCCritical(LogSystem) << "ERROR: failed to invoke method checkQueue";
+#else
+    Q_ASSERT_X(false, "PackageManager::triggerExecuteNextTask", "Installer is disabled");
 #endif
 }
 
 void PackageManager::executeNextTask()
 {
-#if defined(AM_DISABLE_INSTALLER)
-    Q_ASSERT_X(false, "PackageManager::executeNextTask", "Installer is disabled");
-#else
+#if QT_CONFIG(am_installer)
     if (!d->cleanupBrokenInstallationsDone || d->activeTask || d->incomingTaskList.isEmpty())
         return;
 
@@ -1327,17 +1323,19 @@ void PackageManager::executeNextTask()
     d->activeTask = task;
     task->setState(AsynchronousTask::Executing);
     task->start();
+#else
+    Q_ASSERT_X(false, "PackageManager::executeNextTask", "Installer is disabled");
 #endif
 }
 
 void PackageManager::handleFailure(AsynchronousTask *task)
 {
-#if defined(AM_DISABLE_INSTALLER)
-    Q_UNUSED(task)
-    Q_ASSERT_X(false, "PackageManager::handleFailure", "Installer is disabled");
-#else
+#if QT_CONFIG(am_installer)
     qCDebug(LogInstaller) << "emit failed" << task->id() << task->errorCode() << task->errorString();
     emit taskFailed(task->id(), int(task->errorCode()), task->errorString());
+#else
+    Q_UNUSED(task)
+    Q_ASSERT_X(false, "PackageManager::handleFailure", "Installer is disabled");
 #endif
 }
 

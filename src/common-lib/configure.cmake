@@ -46,15 +46,13 @@ qt_feature("am-multi-process" PUBLIC
     ENABLE INPUT_force_mode STREQUAL 'multi'
     DISABLE INPUT_force_mode STREQUAL 'single'
 )
-qt_feature_definition("am-multi-process" "AM_MULTI_PROCESS")
 
-qt_feature("am-installer" PRIVATE
+qt_feature("am-installer" PUBLIC
     LABEL "Enable the installer component"
     CONDITION QT_FEATURE_ssl AND NOT IOS
     ENABLE INPUT_installer STREQUAL 'yes'
     DISABLE INPUT_installer STREQUAL 'no'
 )
-qt_feature_definition("am-installer" "AM_DISABLE_INSTALLER" NEGATE)
 
 qt_feature("am-external-dbus-interfaces" PRIVATE
     LABEL "Enable external DBus interfaces"
@@ -62,7 +60,6 @@ qt_feature("am-external-dbus-interfaces" PRIVATE
     ENABLE INPUT_external_dbus_interfaces STREQUAL 'yes'
     DISABLE INPUT_external_dbus_interfaces STREQUAL 'no'
 )
-qt_feature_definition("am-external-dbus-interfaces" "AM_DISABLE_EXTERNAL_DBUS_INTERFACES" NEGATE)
 
 qt_feature("am-package-server" PRIVATE
     LABEL "Build the package-server"
@@ -84,7 +81,6 @@ qt_feature("am-dltlogging" PRIVATE
     ENABLE INPUT_dltlogging STREQUAL 'yes'
     DISABLE INPUT_dltlogging STREQUAL 'no'
 )
-qt_feature_definition("am-dltlogging" "AM_USE_DLTLOGGING")
 
 qt_feature("am-libbacktrace" PRIVATE
     LABEL "Enable support for libbacktrace"
@@ -93,7 +89,6 @@ qt_feature("am-libbacktrace" PRIVATE
     ENABLE INPUT_libbacktrace STREQUAL 'yes'
     DISABLE INPUT_libbacktrace STREQUAL 'no'
 )
-qt_feature_definition("am-libbacktrace" "AM_USE_LIBBACKTRACE")
 
 qt_feature("am-stackwalker" PRIVATE
     LABEL "Enable support for StackWalker"
@@ -102,22 +97,20 @@ qt_feature("am-stackwalker" PRIVATE
     ENABLE INPUT_stackwalker STREQUAL 'yes'
     DISABLE INPUT_stackwalker STREQUAL 'no'
 )
-qt_feature_definition("am-stackwalker" "AM_USE_STACKWALKER")
 
 qt_feature("am-has-hardware-id" PRIVATE
     LABEL "Hardware-id for the installer"
     CONDITION ON
     DISABLE INPUT_hardware_id STREQUAL ''
 )
-qt_feature_definition("am-has-hardware-id" "AM_HARDWARE_ID" VALUE "\"${INPUT_hardware_id}\"")
+qt_feature_definition("am-has-hardware-id" "QT_AM_HARDWARE_ID" VALUE "\"${INPUT_hardware_id}\"")
 
-qt_feature("am-widgets-support" PRIVATE PUBLIC
+qt_feature("am-widgets-support" PUBLIC
     LABEL "Enable support for Qt widgets"
     CONDITION TARGET Qt::Widgets
     ENABLE INPUT_widgets_support STREQUAL 'yes'
     DISABLE INPUT_widgets_support STREQUAL 'no'
 )
-qt_feature_definition("am-widgets-support" "AM_WIDGETS_SUPPORT")
 
 qt_configure_add_summary_section(NAME "Qt Application Manager")
 qt_configure_add_summary_entry(ARGS "am-system-libyaml")

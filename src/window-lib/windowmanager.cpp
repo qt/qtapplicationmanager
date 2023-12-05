@@ -17,7 +17,7 @@
 #include <QLocalServer>
 #include "global.h"
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 #  include "waylandcompositor.h"
 #  include <private/qwaylandcompositor_p.h>
 #endif
@@ -351,7 +351,7 @@ WindowManager::WindowManager(QQmlEngine *qmlEngine, const QString &waylandSocket
     : QAbstractListModel()
     , d(new WindowManagerPrivate())
 {
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     d->waylandSocketName = waylandSocketName;
 #else
     Q_UNUSED(waylandSocketName)
@@ -374,7 +374,7 @@ WindowManager::~WindowManager()
 {
     qApp->removeEventFilter(this);
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     delete d->waylandCompositor;
 #endif
     delete d;
@@ -383,7 +383,7 @@ WindowManager::~WindowManager()
 
 void WindowManager::enableWatchdog(bool enable)
 {
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     WaylandWindow::m_watchdogEnabled = enable;
 #else
     Q_UNUSED(enable);
@@ -392,7 +392,7 @@ void WindowManager::enableWatchdog(bool enable)
 
 bool WindowManager::addWaylandSocket(QLocalServer *waylandSocket)
 {
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     if (d->waylandCompositor) {
         qCWarning(LogGraphics) << "Cannot add extra Wayland sockets after the compositor has been created"
                                   " (tried to add:" << waylandSocket->fullServerName() << ").";
@@ -566,7 +566,7 @@ int WindowManager::indexOfWindow(Window *window) const
  */
 QObject *WindowManager::addExtension(QQmlComponent *component) const
 {
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     if (!component || ApplicationManager::instance()->isSingleProcess())
         return nullptr;
 
@@ -664,7 +664,7 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
 
     updateViewSlowMode(view);
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     if (!ApplicationManager::instance()->isSingleProcess()) {
         if (!d->waylandCompositor) {
             // this will trigger the creation of extra sockets in main.cpp
@@ -783,7 +783,7 @@ void WindowManager::setupWindow(Window *window)
 }
 
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 
 void WindowManager::waylandSurfaceCreated(QWaylandSurface *surface)
 {
@@ -835,7 +835,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     }
 }
 
-#endif // defined(AM_MULTI_PROCESS)
+#endif // QT_CONFIG(am_multi_process)
 
 /*!
     \qmlsignal WindowManager::windowPropertyChanged(WindowObject window, string name, var value)
@@ -1041,7 +1041,7 @@ QList<QQuickWindow *> WindowManager::compositorViews() const
     return d->views;
 }
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 
 int WindowManagerPrivate::findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const
 {
@@ -1068,7 +1068,7 @@ QString WindowManagerPrivate::applicationId(Application *app, WindowSurface *win
         return qSL("<unknown client>");
 }
 
-#endif // defined(AM_MULTI_PROCESS)
+#endif // QT_CONFIG(am_multi_process)
 
 bool WindowManager::eventFilter(QObject *watched, QEvent *event)
 {

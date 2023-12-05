@@ -12,7 +12,7 @@
 #include <QtAppManCommon/logging.h>
 #include <QtAppManManager/sudo.h>
 
-#if defined(AM_WIDGETS_SUPPORT)
+#if QT_CONFIG(am_widgets_support)
 #  include <QtWidgets/QApplication>
 #  include <QtGui/QSurfaceFormat>
 QT_BEGIN_NAMESPACE_AM
@@ -112,11 +112,6 @@ protected:
     QString hardwareId() const;
 
 private:
-#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
-    void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName,
-                            const char *interfaceName, const char *path,
-                            const QString &instanceId) Q_DECL_NOEXCEPT_EXPR(false);
-#endif
     static int &preConstructor(int &argc, char **argv, InitFlags initFlags);
 
 private:

@@ -8,7 +8,7 @@
 
 #include <QtAppManCommon/global.h>
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 
 #include <QtWaylandCompositor/QWaylandQuickCompositor>
 
@@ -122,4 +122,4 @@ protected:
 
 QT_END_NAMESPACE_AM
 
-#endif // AM_MULTIPROCESS
+#endif // QT_CONFIG(am_multi_process)

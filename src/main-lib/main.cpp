@@ -7,7 +7,9 @@
 #include <cstdlib>
 #include <qglobal.h>
 
-#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+#include "qtappman_common-config_p.h"
+
+#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
 #  include <QDBusConnection>
 #  include <QDBusAbstractAdaptor>
 #  include "dbusdaemon.h"
@@ -53,13 +55,13 @@
 #include "installationreport.h"
 #include "yamlpackagescanner.h"
 #include "sudo.h"
-#if !defined(AM_DISABLE_INSTALLER)
+#if QT_CONFIG(am_installer)
 #  include "packageutilities.h"
 #endif
 #include "runtimefactory.h"
 #include "containerfactory.h"
 #include "quicklauncher.h"
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 #  include "processcontainer.h"
 #  include "nativeruntime.h"
 #endif
@@ -101,6 +103,88 @@ AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
 
 QT_BEGIN_NAMESPACE_AM
 
+
+#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
+
+static void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName,
+                               const char *interfaceName, const char *path,
+                               const QString &instanceId) Q_DECL_NOEXCEPT_EXPR(false)
+{
+    QString dbusAddress;
+    QDBusConnection conn((QString()));
+
+    if (dbusName.isEmpty()) {
+        return;
+    } else if (dbusName == qL1S("system")) {
+        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SYSTEM_BUS_ADDRESS"));
+#  if defined(Q_OS_LINUX)
+        if (dbusAddress.isEmpty())
+            dbusAddress = qL1S("unix:path=/var/run/dbus/system_bus_socket");
+#  endif
+        conn = QDBusConnection::systemBus();
+    } else if (dbusName == qL1S("session")) {
+        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
+        conn = QDBusConnection::sessionBus();
+    } else if (dbusName == qL1S("auto")) {
+        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
+        // we cannot be using QDBusConnection::sessionBus() here, because some plugin
+        // might have called that function before we could spawn our own session bus. In
+        // this case, Qt has cached the bus name and we would get the old one back.
+        conn = QDBusConnection::connectToBus(dbusAddress, qSL("qtam_session"));
+        if (!conn.isConnected())
+            return;
+        dbusName = qL1S("session");
+    } else {
+        dbusAddress = dbusName;
+        conn = QDBusConnection::connectToBus(dbusAddress, qSL("custom"));
+    }
+
+    if (!conn.isConnected()) {
+        throw Exception("could not connect to D-Bus (%1): %2")
+            .arg(dbusAddress.isEmpty() ? dbusName : dbusAddress).arg(conn.lastError().message());
+    }
+
+    if (adaptor->parent() && adaptor->parent()->parent()) {
+        // we need this information later on to tell apps where services are listening
+        adaptor->parent()->parent()->setProperty("_am_dbus_name", dbusName);
+        adaptor->parent()->parent()->setProperty("_am_dbus_address", dbusAddress);
+    }
+
+    if (!conn.registerObject(qL1S(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
+        throw Exception("could not register object %1 on D-Bus (%2): %3")
+            .arg(qL1S(path)).arg(dbusName).arg(conn.lastError().message());
+    }
+
+    if (!conn.registerService(qL1S(serviceName))) {
+        throw Exception("could not register service %1 on D-Bus (%2): %3")
+            .arg(qL1S(serviceName)).arg(dbusName).arg(conn.lastError().message());
+    }
+
+    qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
+
+    if (QByteArray::fromRawData(interfaceName, int(qstrlen(interfaceName))).startsWith("io.qt.")) {
+        // Write the bus address of the interface to a file in /tmp. This is needed for the
+        // controller tool, which does not even have a session bus, when started via ssh.
+
+        QString fileName = qL1S(interfaceName) % qSL(".dbus");
+        if (!instanceId.isEmpty())
+            fileName = instanceId % u'-' % fileName;
+
+        QFile f(QDir::temp().absoluteFilePath(fileName));
+        QByteArray dbusUtf8 = dbusAddress.isEmpty() ? dbusName.toUtf8() : dbusAddress.toUtf8();
+        if (!f.open(QFile::WriteOnly | QFile::Truncate) || (f.write(dbusUtf8) != dbusUtf8.size()))
+            throw Exception(f, "Could not write D-Bus address of interface %1").arg(qL1S(interfaceName));
+
+        static QStringList filesToDelete;
+        if (filesToDelete.isEmpty())
+            atexit([]() { for (const QString &ftd : std::as_const(filesToDelete)) QFile::remove(ftd); });
+        filesToDelete << f.fileName();
+    }
+}
+
+#endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
+
+
 // We need to do some things BEFORE the Q*Application constructor runs, so we're using this
 // old trick to do this hooking transparently for the user of the class.
 int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
@@ -113,7 +197,7 @@ int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
         Sudo::forkServer(Sudo::DropPrivilegesPermanently);
         StartupTimer::instance()->checkpoint("after sudo server fork");
     }
-#if !defined(AM_DISABLE_INSTALLER)
+#if QT_CONFIG(am_installer)
     // try to set a reasonable locale - we later verify with checkCorrectLocale() if we succeeded
     PackageUtilities::ensureCorrectLocale();
 #endif
@@ -161,7 +245,7 @@ Main::~Main()
     delete ContainerFactory::instance();
     delete StartupTimer::instance();
 
-#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
     delete DBusPolicy::instance();
 #endif
 }
@@ -378,7 +462,7 @@ void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiPro
     if (forceMultiProcess && m_isSingleProcessMode)
         throw Exception("You cannot enforce multi- and single-process mode at the same time.");
 
-#if !defined(AM_MULTI_PROCESS)
+#if !QT_CONFIG(am_multi_process)
     if (forceMultiProcess)
         throw Exception("This application manager build is not multi-process capable.");
     m_isSingleProcessMode = true;
@@ -397,7 +481,7 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
         RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager(qSL("qml")));
     } else {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager());
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager());
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(qSL("qml")));
 
@@ -520,7 +604,7 @@ void Main::setupQuickLauncher(int quickLaunchRuntimesPerContainer, qreal quickLa
 
 void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) Q_DECL_NOEXCEPT_EXPR(false)
 {
-#if !defined(AM_DISABLE_INSTALLER)
+#if QT_CONFIG(am_installer)
     if (Q_UNLIKELY(!PackageUtilities::checkCorrectLocale())) {
         // we should really throw here, but so many embedded systems are badly set up
         qCWarning(LogDeployment) << "The appman installer needs a UTF-8 locale to work correctly: "
@@ -572,7 +656,7 @@ void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePa
 #else
     Q_UNUSED(allowUnsigned)
     Q_UNUSED(caCertificatePaths)
-#endif // AM_DISABLE_INSTALLER
+#endif // QT_CONFIG(am_installer)
 }
 
 void Main::registerPackages()
@@ -833,92 +917,11 @@ void Main::showWindow(bool showFullscreen)
     }
 }
 
-#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
-
-void Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName,
-                              const char *interfaceName, const char *path,
-                              const QString &instanceId) Q_DECL_NOEXCEPT_EXPR(false)
-{
-    QString dbusAddress;
-    QDBusConnection conn((QString()));
-
-    if (dbusName.isEmpty()) {
-        return;
-    } else if (dbusName == qL1S("system")) {
-        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SYSTEM_BUS_ADDRESS"));
-#  if defined(Q_OS_LINUX)
-        if (dbusAddress.isEmpty())
-            dbusAddress = qL1S("unix:path=/var/run/dbus/system_bus_socket");
-#  endif
-        conn = QDBusConnection::systemBus();
-    } else if (dbusName == qL1S("session")) {
-        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
-        conn = QDBusConnection::sessionBus();
-    } else if (dbusName == qL1S("auto")) {
-        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
-        // we cannot be using QDBusConnection::sessionBus() here, because some plugin
-        // might have called that function before we could spawn our own session bus. In
-        // this case, Qt has cached the bus name and we would get the old one back.
-        conn = QDBusConnection::connectToBus(dbusAddress, qSL("qtam_session"));
-        if (!conn.isConnected())
-            return;
-        dbusName = qL1S("session");
-    } else {
-        dbusAddress = dbusName;
-        conn = QDBusConnection::connectToBus(dbusAddress, qSL("custom"));
-    }
-
-    if (!conn.isConnected()) {
-        throw Exception("could not connect to D-Bus (%1): %2")
-                .arg(dbusAddress.isEmpty() ? dbusName : dbusAddress).arg(conn.lastError().message());
-    }
-
-    if (adaptor->parent() && adaptor->parent()->parent()) {
-        // we need this information later on to tell apps where services are listening
-        adaptor->parent()->parent()->setProperty("_am_dbus_name", dbusName);
-        adaptor->parent()->parent()->setProperty("_am_dbus_address", dbusAddress);
-    }
-
-    if (!conn.registerObject(qL1S(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
-        throw Exception("could not register object %1 on D-Bus (%2): %3")
-                .arg(qL1S(path)).arg(dbusName).arg(conn.lastError().message());
-    }
-
-    if (!conn.registerService(qL1S(serviceName))) {
-        throw Exception("could not register service %1 on D-Bus (%2): %3")
-                .arg(qL1S(serviceName)).arg(dbusName).arg(conn.lastError().message());
-    }
-
-    qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
-
-    if (QByteArray::fromRawData(interfaceName, int(qstrlen(interfaceName))).startsWith("io.qt.")) {
-        // Write the bus address of the interface to a file in /tmp. This is needed for the
-        // controller tool, which does not even have a session bus, when started via ssh.
-
-        QString fileName = qL1S(interfaceName) % qSL(".dbus");
-        if (!instanceId.isEmpty())
-            fileName = instanceId % u'-' % fileName;
-
-        QFile f(QDir::temp().absoluteFilePath(fileName));
-        QByteArray dbusUtf8 = dbusAddress.isEmpty() ? dbusName.toUtf8() : dbusAddress.toUtf8();
-        if (!f.open(QFile::WriteOnly | QFile::Truncate) || (f.write(dbusUtf8) != dbusUtf8.size()))
-            throw Exception(f, "Could not write D-Bus address of interface %1").arg(qL1S(interfaceName));
-
-        static QStringList filesToDelete;
-        if (filesToDelete.isEmpty())
-            atexit([]() { for (const QString &ftd : std::as_const(filesToDelete)) QFile::remove(ftd); });
-        filesToDelete << f.fileName();
-    }
-}
-
-#endif // defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
-
-
 void Main::setupDBus(const std::function<QString(const char *)> &busForInterface,
                      const std::function<QVariantMap(const char *)> &policyForInterface,
                      const QString &instanceId)
 {
-#if defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
     registerDBusTypes();
 
     DBusPolicy::createInstance([](qint64 pid) { return ApplicationManager::instance()->identifyAllApplications(pid); },
@@ -1000,15 +1003,15 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
     Q_UNUSED(busForInterface)
     Q_UNUSED(policyForInterface)
     Q_UNUSED(instanceId)
-#endif // defined(QT_DBUS_LIB) && !defined(AM_DISABLE_EXTERNAL_DBUS_INTERFACES)
+#endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
 }
 
 QString Main::hardwareId() const
 {
     static QString hardwareId;
     if (hardwareId.isEmpty()) {
-#if defined(AM_HARDWARE_ID)
-        hardwareId = QString::fromLocal8Bit(AM_HARDWARE_ID);
+#if defined(QT_AM_HARDWARE_ID)
+        hardwareId = QString::fromLocal8Bit(QT_AM_HARDWARE_ID);
         if (hardwareId.startsWith(qL1C('@'))) {
             QFile f(hardwareId.mid(1));
             hardwareId.clear();

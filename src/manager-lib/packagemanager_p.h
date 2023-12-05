@@ -14,6 +14,7 @@
 #include <QtAppManApplication/packagedatabase.h>
 #include <QtAppManManager/asynchronoustask.h>
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/private/qtappman_common-config_p.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -27,11 +28,7 @@ public:
 
     QMap<Package *, PackageInfo *> pendingPackageInfoUpdates;
 
-#if defined(AM_DISABLE_INSTALLER)
-    static constexpr
-#endif
-    bool disableInstaller = true;
-
+    bool enableInstaller = false;
     bool developmentMode = false;
     bool allowInstallationOfUnsignedPackages = false;
 
@@ -44,7 +41,7 @@ public:
     QList<QByteArray> chainOfTrust;
     bool cleanupBrokenInstallationsDone = false;
 
-#if !defined(AM_DISABLE_INSTALLER)
+#if QT_CONFIG(am_installer)
     QList<AsynchronousTask *> incomingTaskList;     // incoming queue
     QList<AsynchronousTask *> installationTaskList; // installation jobs in state >= AwaitingAcknowledge
     AsynchronousTask *activeTask = nullptr;         // currently active

@@ -6,11 +6,11 @@
 #include "windowitem.h"
 #include "window.h"
 
-#if defined(AM_MULTI_PROCESS)
-#include <QWaylandQuickItem>
-#include "waylandcompositor.h"
-#include "waylandwindow.h"
-#endif // AM_MULTI_PROCESS
+#if QT_CONFIG(am_multi_process)
+#  include <QWaylandQuickItem>
+#  include "waylandcompositor.h"
+#  include "waylandwindow.h"
+#endif
 
 #include "applicationmanager.h"
 #include "inprocesswindow.h"
@@ -172,7 +172,7 @@ Window *WindowItem::window() const
 
 void WindowItem::createImpl(bool inProcess)
 {
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     if (inProcess) {
         if (m_impl && !m_impl->isInProcess()) {
             delete m_impl;
@@ -188,11 +188,11 @@ void WindowItem::createImpl(bool inProcess)
         if (!m_impl)
             m_impl = new WaylandImpl(this);
     }
-#else // AM_MULTI_PROCESS
+#else
     Q_ASSERT(inProcess);
     if (!m_impl)
         m_impl = new InProcessImpl(this);
-#endif // AM_MULTI_PROCESS
+#endif
 }
 
 void WindowItem::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
@@ -407,7 +407,7 @@ QQuickItem *WindowItem::InProcessImpl::backingItem()
 // WindowItem::WaylandImpl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 
 // Wayland has no concept of clients ignoring/accepting key events, but even if it did, we'd get
 // back the response far too late to be useful. In order to give the sys-ui a chance to handle
@@ -525,7 +525,7 @@ void WindowItem::WaylandImpl::setupSecondaryView()
     m_waylandItem->setTouchEventsEnabled(false);
 }
 
-#endif // AM_MULTI_PROCESS
+#endif // QT_CONFIG(am_multi_process)
 
 QT_END_NAMESPACE_AM
 

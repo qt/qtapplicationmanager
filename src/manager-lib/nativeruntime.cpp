@@ -39,7 +39,7 @@ QT_BEGIN_NAMESPACE_AM
 
 // #define EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS 1
 
-#if defined(AM_MULTI_PROCESS) && defined(Q_OS_LINUX)
+#if QT_CONFIG(am_multi_process) && defined(Q_OS_LINUX)
 QT_END_NAMESPACE_AM
 #  include <dlfcn.h>
 #  include <sys/socket.h>
@@ -83,7 +83,7 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
 
     connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
             this, [this](const QDBusConnection &connection) {
-#if defined(AM_MULTI_PROCESS) && defined(Q_OS_LINUX)
+#if QT_CONFIG(am_multi_process) && defined(Q_OS_LINUX)
         qint64 pid = getDBusPeerPid(connection);
         if (pid <= 0) {
             QDBusConnection::disconnectFromPeer(connection.name());

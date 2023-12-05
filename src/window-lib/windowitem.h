@@ -17,10 +17,10 @@ QT_BEGIN_NAMESPACE_AM
 
 class Window;
 class InProcessWindow;
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 class WaylandWindow;
 class WaylandQuickIgnoreKeyItem;
-#endif // AM_MULTI_PROCESS
+#endif
 
 
 class WindowItem : public QQuickFocusScope
@@ -114,7 +114,7 @@ private:
         QQuickItem *m_shaderEffectSource{nullptr};
     };
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     struct WaylandImpl : public Impl {
         WaylandImpl(WindowItem *windowItem) : Impl(windowItem) {}
         ~WaylandImpl();
@@ -134,7 +134,7 @@ private:
         WaylandWindow *m_waylandWindow{nullptr};
         WaylandQuickIgnoreKeyItem *m_waylandItem{nullptr};
     };
-#endif // AM_MULTI_PROCESS
+#endif // QT_CONFIG(am_multi_process)
 
     Impl *m_impl{nullptr};
     bool m_objectFollowsItemSize{true};

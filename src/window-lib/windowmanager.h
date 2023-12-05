@@ -10,7 +10,7 @@
 #include <QtAppManCommon/global.h>
 
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 QT_FORWARD_DECLARE_CLASS(QWaylandSurface)
 #endif
 
@@ -112,7 +112,7 @@ public:
     // evil hook to support in-process runtimes
     void setupInProcessRuntime(QtAM::AbstractRuntime *runtime);
 
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 private slots:
     void waylandSurfaceCreated(QWaylandSurface *surface);
     void waylandSurfaceMapped(QtAM::WindowSurface *surface);

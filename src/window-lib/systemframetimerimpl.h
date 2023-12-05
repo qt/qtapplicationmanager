@@ -23,7 +23,7 @@ public:
     void disconnectFromSystemWindow(QObject *window) override;
 
 private:
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     QMetaObject::Connection m_surfaceChangeConnection;
     QMetaObject::Connection m_redrawConnection;
 #endif

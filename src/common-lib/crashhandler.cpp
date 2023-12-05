@@ -20,6 +20,7 @@
 #include "logging.h"
 #include "console.h"
 #include "colorprint.h"
+#include "qtappman_common-config_p.h"
 
 #if defined(Q_OS_UNIX)
 #  include<unistd.h>
@@ -268,7 +269,7 @@ QT_END_NAMESPACE_AM
 #  include <cstdio>
 #  include <cstdlib>
 
-#  if defined(AM_USE_LIBBACKTRACE)
+#  if QT_CONFIG(am_libbacktrace)
 #    include <libbacktrace/backtrace.h>
 #    include <libbacktrace/backtrace-supported.h>
 #  endif
@@ -397,7 +398,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
 #  endif
         }
 
-#  if defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
+#  if QT_CONFIG(am_libbacktrace) && defined(BACKTRACE_SUPPORTED)
         struct btData
         {
             LogToDestination logTo;
@@ -469,7 +470,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
         //backtrace_print(state, stackFramesToIgnore, stderr);
         backtrace_simple(state, stackFramesToIgnore, simpleCallback, errorCallback, &data);
 
-#  else // !defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
+#  else // QT_CONFIG(am_libbacktrace) && defined(BACKTRACE_SUPPORTED)
         Q_UNUSED(stackFramesToIgnore);
 #    if !defined(Q_OS_QNX)
         void *addrArray[1024];
@@ -533,7 +534,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
         logMsg(logTo, "\n > C++ backtrace:");
         logMsg(logTo, out);
 #    endif
-#  endif // defined(AM_USE_LIBBACKTRACE) && defined(BACKTRACE_SUPPORTED)
+#  endif // QT_CONFIG(am_libbacktrace) && defined(BACKTRACE_SUPPORTED)
     }
     logQmlBacktrace(logTo);
 }
@@ -600,7 +601,7 @@ QT_END_NAMESPACE_AM
 
 #  include <windows.h>
 #  include <dbghelp.h>
-#  if defined(AM_USE_STACKWALKER)
+#  if QT_CONFIG(am_stackwalker)
 #    include <stackwalker.h>
 #  endif
 
@@ -608,7 +609,7 @@ QT_BEGIN_NAMESPACE_AM
 
 static DWORD mainThreadId = GetCurrentThreadId();
 
-#  if defined(AM_USE_STACKWALKER)
+#  if QT_CONFIG(am_stackwalker)
 
 class AMStackWalker : public StackWalker
 {
@@ -653,7 +654,7 @@ private:
     int ignoreUpToLevel = 0;
 };
 
-#  endif // defined(AM_USE_STACKWALKER)
+#  endif // QT_CONFIG(am_stackwalker)
 
 static void logCrashInfo(LogToDestination logTo, const char *why, int stackFramesToIgnore, CONTEXT *context)
 {
@@ -691,7 +692,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
     logMsgF(logTo, "\n > where: %S thread, TID: %lu", threadName, tid);
 
     if (chg()->printBacktrace && context) {
-#  if defined(AM_USE_STACKWALKER)
+#  if QT_CONFIG(am_stackwalker)
         logMsg(logTo, "\n > C++ backtrace:");
         AMStackWalker sw(logTo, stackFramesToIgnore);
         sw.ShowCallstack(GetCurrentThread(), context);
@@ -705,7 +706,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
                );
         Q_UNUSED(context)
         Q_UNUSED(stackFramesToIgnore)
-#  endif // defined(AM_USE_STACKWALKER)
+#  endif // QT_CONFIG(am_stackwalker)
     }
     logQmlBacktrace(logTo);
 }

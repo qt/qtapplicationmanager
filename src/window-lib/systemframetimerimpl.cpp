@@ -8,7 +8,7 @@
 #include "applicationmanagerwindow.h"
 #include "frametimer.h"
 #include "inprocesswindow.h"
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
 #  include "waylandwindow.h"
 #endif
 
@@ -26,7 +26,7 @@ bool SystemFrameTimerImpl::connectToSystemWindow(QObject *window)
                                     " FrameTimer won't operate with the given window.";
         return true;
     }
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     if (auto *wlwin = qobject_cast<WaylandWindow *>(window)) {
         auto connectToWaylandSurface = [this](WaylandWindow *waylandWindow) {
             if (m_redrawConnection) {
@@ -54,7 +54,7 @@ bool SystemFrameTimerImpl::connectToSystemWindow(QObject *window)
 void SystemFrameTimerImpl::disconnectFromSystemWindow(QObject *window)
 {
     Q_UNUSED(window)
-#if defined(AM_MULTI_PROCESS)
+#if QT_CONFIG(am_multi_process)
     if (m_redrawConnection) {
         QObject::disconnect(m_redrawConnection);
         m_redrawConnection = { };

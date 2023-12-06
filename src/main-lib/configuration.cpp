@@ -550,6 +550,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
 QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
 {
     QByteArray string = sourceContent;
+    QByteArray path;
     int posBeg = -1;
     int posEnd = -1;
     while (true) {
@@ -562,7 +563,6 @@ QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, co
 
         QByteArray varValue;
         if (varName == "CONFIG_PWD") {
-            static QByteArray path;
             if (path.isEmpty() && !fileName.isEmpty())
                 path = QFileInfo(fileName).path().toUtf8();
             varValue = path;

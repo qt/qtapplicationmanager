@@ -3,10 +3,12 @@
     "Name": "libarchive",
     "QDocModule": "qtapplicationmanager",
     "QtUsage": "Optionally used in Qt ApplicationManager. Configure with --libarchive=system to avoid.",
+    "SecurityCritical": true,
 
     "Description": "Multi-format archive and compression library.",
     "Homepage": "https://www.libarchive.org/",
     "Version": "3.7.2",
+    "DownloadLocation": "https://github.com/libarchive/libarchive/releases/download/v3.7.2/libarchive-3.7.2.tar.xz",
 
     "License": "BSD 2-clause \"Simplified\" License",
     "LicenseId": "BSD-2-Clause",

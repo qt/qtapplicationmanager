@@ -993,7 +993,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                             if (itemList.count() == 0)
                                 continue;
 
-                            // TODO: Care about multiple views?
+                            // grab the first view - they all have the same content anyway
                             WindowItem *windowItem = itemList.first();
 
                             onScreen = windowItem->QQuickItem::window() == view;

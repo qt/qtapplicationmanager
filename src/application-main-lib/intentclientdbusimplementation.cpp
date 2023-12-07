@@ -84,7 +84,8 @@ void IntentClientDBusImplementation::replyFromApplication(QPointer<IntentClientR
     if (icr) {
         m_dbusInterface->replyFromApplication(icr->requestId().toString(), !icr->succeeded(),
                                               convertFromJSVariant(icr->result()).toMap());
-        //TODO: should we wait for the call completion - how/why would we report a possible failure?
+        // Checking for errors here is futile. Even if we would detect an error or timeout, we
+        // couldn't do anything about it, as that would mean that the AM process is dead or frozen.
     }
 }
 

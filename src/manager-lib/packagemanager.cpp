@@ -174,8 +174,6 @@
     \unicode{0x2192} \c Cleanup \unicode{0x2192} \c Finished. Again, the task can fail at any point.
 */
 
-//TODO: THIS IS MISSING AN EXAMPLE!
-
 /*!
     \qmlsignal PackageManager::taskStateChanged(string taskId, string newState)
 

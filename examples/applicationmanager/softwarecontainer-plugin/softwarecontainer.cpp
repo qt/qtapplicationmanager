@@ -563,7 +563,6 @@ void SoftwareContainer::kill()
 
 void SoftwareContainer::terminate()
 {
-    //TODO: handle graceful shutdown
     kill();
 }
 

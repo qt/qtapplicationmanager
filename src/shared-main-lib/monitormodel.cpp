@@ -374,14 +374,12 @@ void MonitorModel::fillDataRow(DataRow *dataRow)
 
 void MonitorModel::readDataSource(DataSource *dataSource, DataRow *dataRow)
 {
-    // TODO: check if successful
     QMetaObject::invokeMethod(dataSource->obj, "update", Qt::DirectConnection);
 
-    for (int i = 0; i < dataSource->roleNames.count(); i++) {
-        // TODO: check index exists
-        int roleIndex = m_roleNameToIndex[dataSource->roleNames[i]];
-
-        QVariant variant = QQmlProperty::read(dataSource->obj, QLatin1String(dataSource->roleNames[i]));
+    for (const auto &roleName : std::as_const(dataSource->roleNames)) {
+        Q_ASSERT(m_roleNameToIndex.contains(roleName));
+        int roleIndex = m_roleNameToIndex.value(roleName);
+        QVariant variant = QQmlProperty::read(dataSource->obj, QString::fromLatin1(roleName));
         dataRow->dataFromRoleIndex[roleIndex] = variant;
     }
 }

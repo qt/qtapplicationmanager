@@ -9,6 +9,57 @@
 \title What's New
 \brief Important changes in Qt Application Manager
 
+\section1 Qt ApplicationManager 6.7
+
+The application manager now has full support for QML tooling (like compilation) for System UIs
+and applications. In order to achieve this, large parts of the QML object implementations had to be
+rewritten. This means that some APIs are no longer backwards-compatible.
+We tried to keep the changes to a minimum and provide compatibility aliases where possible, but
+some changes were unavoidable.
+
+The most important change is that ApplicationManagerWindow is now derived from QObject in
+both single- and multi-process applications (before it was derived from \l FocusScope in
+single-process mode and \l Window in multi-process mode). While there are negative and positive
+implications for multi-process applications, these include a lot of benefits for single-process
+or mixed-mode applications, where there is now a consistent API with a lot more common functionality
+for all cases:
+
+\list
+    \li The new API closely mirrors Qt's existing \l{Window} API, including the attached properties.
+    \li Tracking the window's \l{ApplicationManagerWindow::}{active} state and its
+        \l{ApplicationManagerWindow::}{activeFocusItem} is now supported also in single-process mode.
+    \li There still is full access to the \l{ApplicationManagerWindow::}{backingObject} (\l Window
+        or \l Item) if needed.
+\endlist
+
+There are also changes to the private C++ API that might affect you if you are implementing plugins
+and custom appman or launcher executables:
+\list
+    \li Defines for configurable features (e.g. \c AM_MULTI_PROCESS) have been removed, as the same
+        functionality is already available via Qt's feature macro (e.g.
+        \c {QT_CONFIG(am_multi_process)}).
+    \li As the application manager supports building against older Qt versions (down to the latest
+        LTS release), you now also get application manager specific version defines similar to the
+        Qt ones (\c{ QT_AM_VERSION{,_STR,_MAJOR,_MINOR,_PATCH} }).
+    \li The module \c Qt::AppManLauncherPrivate was renamed to \c Qt::AppManApplicationMainPrivate
+        and the class \c LauncherMain to \c ApplicationMain to better reflect their purpose: this
+        module started as the basis for the QML launcher but evolved into a generic building block
+        for launchers as well as native applications alike.
+\endlist
+
+In addition, here are some additional, noteworthy changes:
+\list
+    \li The \l{Bubblewrap Container} plugin is now a lot more flexible when it comes to kernel
+        namespace (un)sharing.
+    \li The ApplicationInstaller singleton that was deprecated in 5.14 has now finally been removed.
+    \li A new tool named \l{Package-Server}{appman-package-server} has been added that takes over
+        the role of the deprecated companion project
+        \l{https://doc.qt.io/QtAutoDeploymentServer/index.html}{Qt Automotive Suite Deployment Server}.
+        As with the deprecated project, this is not meant to be an app store backend for production,
+        but rather an easy to use tool for developers or CI environments to test and verify package
+        installations. This also comes with a new \l{Package Installation Example}{example}.
+\endlist
+
 \section1 Qt ApplicationManager 6.6
 
 Two new features have been added:

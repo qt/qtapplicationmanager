@@ -522,9 +522,6 @@ void IntentServer::processRequestQueue()
                         }
                     });
                 }
-                //TODO: we really should copy here, because the Intent pointers may die: a disambiguation might
-                //      be active, while one of the apps involved is removed or updated
-
                 emit disambiguationRequest(isr->requestId(), isr->potentialIntents(),
                                            isr->parameters());
             }
@@ -540,7 +537,7 @@ void IntentServer::processRequestQueue()
         if (!handlerIPC) {
             qCDebug(LogIntents) << "Intent handler" << isr->selectedIntent()->applicationId() << "is not running";
 
-            if (isr->potentialIntents().constFirst()->handleOnlyWhenRunning()) {
+            if (isr->selectedIntent()->handleOnlyWhenRunning()) {
                 qCDebug(LogIntents) << " * skipping, because 'handleOnlyWhenRunning' is set";
                 isr->setRequestFailed(qSL("Skipping delivery due to handleOnlyWhenRunning"));
             } else {

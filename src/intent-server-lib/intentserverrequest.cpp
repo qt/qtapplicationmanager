@@ -20,11 +20,17 @@ IntentServerRequest::IntentServerRequest(const QString &requestingApplicationId,
     Q_ASSERT(!potentialIntents.isEmpty());
     Q_ASSERT(!broadcast || (potentialIntents.size() == 1));
 
-    for (auto *intent : potentialIntents)
-        m_potentialIntents << intent;
+    // Intents may die during handling (app removal), so we create shadow copies for QML
+    m_potentialIntents.reserve(potentialIntents.size());
+    for (auto *intent : potentialIntents) {
+        Q_ASSERT(intent);
+        auto copy = intent->copy();
+        copy->setParent(this); // for automatic deletion and ownership
+        m_potentialIntents << copy;
+    }
 
     if (potentialIntents.size() == 1)
-        setSelectedIntent(potentialIntents.constFirst());
+        m_selectedIntent = m_potentialIntents.constFirst();
 }
 
 IntentServerRequest::State IntentServerRequest::state() const
@@ -49,17 +55,12 @@ QString IntentServerRequest::requestingApplicationId() const
 
 Intent *IntentServerRequest::selectedIntent() const
 {
-    return m_selectedIntent.get();
+    return m_selectedIntent;
 }
 
 QList<Intent *> IntentServerRequest::potentialIntents() const
 {
-    QList<Intent *> out;
-    for (auto &intent : m_potentialIntents) {
-        if (intent)
-            out << intent.get();
-    }
-    return out;
+    return m_potentialIntents;
 }
 
 QVariantMap IntentServerRequest::parameters() const
@@ -104,7 +105,7 @@ void IntentServerRequest::setState(IntentServerRequest::State newState)
 
 void IntentServerRequest::setSelectedIntent(Intent *intent)
 {
-    if (m_potentialIntents.contains(intent))
+    if (!intent || m_potentialIntents.contains(intent))
         m_selectedIntent = intent;
 }
 

@@ -18,9 +18,9 @@ QT_BEGIN_NAMESPACE_AM
 
 class IntentServer;
 
-class IntentServerRequest
+class IntentServerRequest : public QObject
 {
-    Q_GADGET
+    Q_OBJECT
 
 public:
     IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
@@ -63,8 +63,10 @@ private:
     bool m_broadcast = false;
     QString m_intentId;
     QString m_requestingApplicationId;
-    QPointer<Intent> m_selectedIntent;
-    QVector<QPointer<Intent>> m_potentialIntents;
+    // These are copies of the real intents, as QML cannot cope with QPointer<Intent> and the
+    // real Intent pointers could die during handling, due to app removal.
+    Intent *m_selectedIntent = nullptr;
+    QVector<Intent *> m_potentialIntents;
     QVariantMap m_parameters;
     QVariantMap m_result;
 };

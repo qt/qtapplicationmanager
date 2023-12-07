@@ -393,7 +393,10 @@ void tst_ControllerTool::startStop()
     }
     QTRY_VERIFY(app->runState() == Am::NotRunning);
     {
-        ControllerTool ctrl({ qSL("debug-application"), qSL("FOO=BAR"), app->id() });
+        // debug-application does not work in single-process mode
+        bool sp = ApplicationManager::instance()->isSingleProcess();
+        ControllerTool ctrl(sp ? QStringList { qSL("start-application"), app->id() }
+                               : QStringList { qSL("debug-application"), qSL("FOO=BAR"), app->id() });
         QVERIFY2(ctrl.call(), ctrl.failure);
     }
     QTRY_VERIFY(app->runState() == Am::Running);

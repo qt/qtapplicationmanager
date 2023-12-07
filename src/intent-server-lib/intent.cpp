@@ -178,6 +178,13 @@ Intent::Intent(const QString &id, const QString &packageId, const QString &appli
 {
 }
 
+Intent *Intent::copy() const
+{
+    return new Intent(m_intentId, m_packageId, m_applicationId, m_requiredCapabilities,
+                      m_visibility, m_parameterMatch, m_names, m_descriptions, m_icon,
+                      m_categories, m_handleOnlyWhenRunning);
+}
+
 QString Intent::intentId() const
 {
     return m_intentId;

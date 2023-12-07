@@ -546,7 +546,7 @@ void IntentServer::processRequestQueue()
         if (!handlerIPC) {
             qCDebug(LogIntents) << "Intent handler" << isr->selectedIntent()->applicationId() << "is not running";
 
-            if (isr->potentialIntents().constFirst()->handleOnlyWhenRunning()) {
+            if (isr->selectedIntent()->handleOnlyWhenRunning()) {
                 qCDebug(LogIntents) << " * skipping, because 'handleOnlyWhenRunning' is set";
                 isr->setRequestFailed(qSL("Skipping delivery due to handleOnlyWhenRunning"));
             } else {

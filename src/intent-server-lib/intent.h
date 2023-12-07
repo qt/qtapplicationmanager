@@ -70,6 +70,8 @@ private:
            const QMap<QString, QString> &descriptions, const QUrl &icon,
            const QStringList &categories, bool handleOnlyWhenRunning);
 
+    Intent *copy() const; // needed during long-lived disambiguation requests
+
     QString m_intentId;
     Visibility m_visibility = Public;
     QStringList m_requiredCapabilities;
@@ -87,6 +89,7 @@ private:
 
     friend class IntentServer;
     friend class IntentServerHandler;
+    friend class IntentServerRequest;
     friend class TestPackageLoader; // for auto tests only
 };
 

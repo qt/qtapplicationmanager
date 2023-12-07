@@ -66,6 +66,7 @@ bool QmlInProcRuntime::start()
     loadResources(variantToStringList(m_app->runtimeParameters().value(qSL("resources"))), codeDir);
 
     if (m_app->runtimeParameters().value(qSL("loadDummyData")).toBool()) {
+        qCWarning(LogDeployment) << "Loading dummy data is deprecated and will be removed soon";
         qCDebug(LogSystem) << "Loading dummy-data";
         loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->info()->absoluteCodeFilePath()).path());
     }

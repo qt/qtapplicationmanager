@@ -296,7 +296,7 @@ ui:
         \li \b --load-dummydata
             \br [\c ui/loadDummyData]
         \li bool
-        \li Loads QML dummy data into the System UI, similar to \c qmlscene and \c qml.
+        \li Deprecated. Loads QML dummy data into the System UI, similar to \c qmlscene and \c qml.
     \row
         \li \b --no-security
             \br [\c flags/noSecurity]
@@ -650,7 +650,7 @@ an additional column specifying which runtime a configuration option applies to:
         \li \c loadDummyData
         \li qml
         \li bool
-        \li Loads QML dummy-data into the app, just like \c qmlscene and \c qml would.
+        \li Deprecated. Loads QML dummy-data into the app, just like \c qmlscene and \c qml would.
             (default: false)
     \row
         \li \c quitTime

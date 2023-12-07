@@ -378,6 +378,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
             || m_configuration.value(qSL("loadDummydata")).toBool();
 
     if (loadDummyData) {
+        qCWarning(LogDeployment) << "Loading dummy data is deprecated and will be removed soon";
         qCDebug(LogQmlRuntime) << "loading dummy-data";
         loadQmlDummyDataFiles(&m_engine, QFileInfo(qmlFileStr).path());
     }

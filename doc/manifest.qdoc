@@ -49,7 +49,7 @@ applications:
   code: "radio.qml"
 
   runtime: qml
-  runtimeParameters: { loadDummyData: true }
+  runtimeParameters: { quitTime: 100 }
 
   capabilities:
   - cameraAccess
@@ -352,8 +352,8 @@ that specifies which runtime a configuration option applies to:
     \li \c loadDummyData
     \li qml, qml-in-process
     \li bool
-    \li Automatically load dummy data for the application, using the same algorithm as Qt's
-        \c qmlscene and \c qml tools. By default no dummy data is loaded.
+    \li Deprecated. Automatically load dummy data for the application, using the same algorithm as
+        Qt's \c qmlscene and \c qml tools. By default no dummy data is loaded.
 \row
     \li \c importPaths
     \li qml, qml-in-process

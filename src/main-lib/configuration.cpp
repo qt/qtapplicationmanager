@@ -163,7 +163,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     m_clp.addOption({ qSL("I"),                    qSL("Additional QML import path."), qSL("dir") });
     m_clp.addOption({ { qSL("v"), qSL("verbose") }, qSL("Verbose output.") });
     m_clp.addOption({ qSL("slow-animations"),      qSL("Run all animations in slow motion.") });
-    m_clp.addOption({ qSL("load-dummydata"),       qSL("Loads QML dummy-data.") });
+    m_clp.addOption({ qSL("load-dummydata"),       qSL("Deprecated. Loads QML dummy-data.") });
     m_clp.addOption({ qSL("no-security"),          qSL("Disables all security related checks (dev only!)") });
     m_clp.addOption({ qSL("development-mode"),     qSL("Enable development mode, allowing installation of dev-signed packages.") });
     m_clp.addOption({ qSL("no-ui-watchdog"),       qSL("Disables detecting hung UI applications (e.g. via Wayland's ping/pong).") });

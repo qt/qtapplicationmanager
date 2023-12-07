@@ -819,6 +819,8 @@ void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
     qmlProtectModule("QtApplicationManager.SystemUI", 2);
 
     if (Q_UNLIKELY(loadDummyData)) {
+        qCWarning(LogDeployment) << "Loading dummy data is deprecated and will be removed soon";
+
         if (m_mainQmlLocalFile.isEmpty()) {
             qCDebug(LogQml) << "Not loading QML dummy data on non-local URL" << m_mainQml;
         } else {

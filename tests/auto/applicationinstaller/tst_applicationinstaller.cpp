@@ -716,7 +716,7 @@ void tst_PackageManager::validateDnsName_data()
     QTest::newRow("invalid-char1") << "com.pelagi_core.test" << 3 << false;
     QTest::newRow("invalid-char2") << "com.pelagi#core.test" << 3 << false;
     QTest::newRow("invalid-char3") << "com.pelagi$core.test" << 3 << false;
-    QTest::newRow("invalid-char3") << "com.pelagi@core.test" << 3 << false;
+    QTest::newRow("invalid-char4") << "com.pelagi@core.test" << 3 << false;
     QTest::newRow("unicode-char") << QString::fromUtf8("c\xc3\xb6m.pelagicore.test") << 3 << false;
     QTest::newRow("upper-case") << "com.Pelagicore.test" << 3 << false;
     QTest::newRow("dash-at-start") << "com.-pelagicore.test" << 3 << false;
@@ -755,16 +755,16 @@ void tst_PackageManager::compareVersions_data()
     QTest::newRow("10") << "1.99" << "2.0" << -1;
     QTest::newRow("11") << "1.9" << "11" << -1;
     QTest::newRow("12") << "9" << "10" << -1;
-    QTest::newRow("12") << "9a" << "10" << -1;
-    QTest::newRow("13") << "9-a" << "10" << -1;
-    QTest::newRow("14") << "13.403.51-alpha2+gi" << "13.403.51-alpha2+git" << -1;
-    QTest::newRow("15") << "13.403.51-alpha1+git" << "13.403.51-alpha2+git" << -1;
-    QTest::newRow("16") << "13.403.51-alpha2+git" << "13.403.51-beta1+git" << -1;
-    QTest::newRow("17") << "13.403.51-alpha2+git" << "13.403.52" << -1;
-    QTest::newRow("18") << "13.403.51-alpha2+git" << "13.403.52-alpha2+git" << -1;
-    QTest::newRow("19") << "13.403.51-alpha2+git" << "13.404" << -1;
-    QTest::newRow("20") << "13.402" << "13.403.51-alpha2+git" << -1;
-    QTest::newRow("21") << "12.403.51-alpha2+git" << "13.403.51-alpha2+git" << -1;
+    QTest::newRow("13") << "9a" << "10" << -1;
+    QTest::newRow("14") << "9-a" << "10" << -1;
+    QTest::newRow("15") << "13.403.51-alpha2+gi" << "13.403.51-alpha2+git" << -1;
+    QTest::newRow("16") << "13.403.51-alpha1+git" << "13.403.51-alpha2+git" << -1;
+    QTest::newRow("17") << "13.403.51-alpha2+git" << "13.403.51-beta1+git" << -1;
+    QTest::newRow("18") << "13.403.51-alpha2+git" << "13.403.52" << -1;
+    QTest::newRow("19") << "13.403.51-alpha2+git" << "13.403.52-alpha2+git" << -1;
+    QTest::newRow("20") << "13.403.51-alpha2+git" << "13.404" << -1;
+    QTest::newRow("21") << "13.402" << "13.403.51-alpha2+git" << -1;
+    QTest::newRow("22") << "12.403.51-alpha2+git" << "13.403.51-alpha2+git" << -1;
 }
 
 void tst_PackageManager::compareVersions()

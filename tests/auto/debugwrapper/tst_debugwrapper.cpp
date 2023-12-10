@@ -70,7 +70,7 @@ void tst_DebugWrapper::specification_data()
     QTest::newRow("y") << "a=b %program% c d" << true << ByteArrayMap {{ "a", "b" }} << QByteArrayList { "%program%", "c", "d", "%arguments%" };
     QTest::newRow("x") << "a=b %arguments%" << true << ByteArrayMap {{ "a", "b" }} << QByteArrayList { "%arguments%", "%program%" };
     QTest::newRow("w") << "%program% %arguments%" << true << noenv << QByteArrayList { "%program%", "%arguments%" };
-    QTest::newRow("w") << "%program% foo-%program% foo-%arguments%-bar %arguments%" << true << noenv << QByteArrayList { "%program%", "foo-%program%", "foo-%arguments%-bar", "%arguments%" };
+    QTest::newRow("v") << "%program% foo-%program% foo-%arguments%-bar %arguments%" << true << noenv << QByteArrayList { "%program%", "foo-%program%", "foo-%arguments%-bar", "%arguments%" };
 }
 
 void tst_DebugWrapper::specification()

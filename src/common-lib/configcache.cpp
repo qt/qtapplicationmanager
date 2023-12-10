@@ -146,9 +146,9 @@ void AbstractConfigCache::parse()
     void *mergedContent = nullptr;
 
     qCDebug(LogCache) << d->cacheBaseName << "cache file:" << cacheFile.fileName();
-    qCDebug(LogCache) << d->cacheBaseName << "read cache?" << ((d->options & (ClearCache | NoCache)) ? "no" : "yes")
-                      << "/ write cache?" << ((d->options & NoCache) ? "no" : "yes");
-    qCDebug(LogCache) << d->cacheBaseName << "reading:" << rawFilePaths;
+    qCDebug(LogCache) << d->cacheBaseName << "read cache:" << ((d->options & (ClearCache | NoCache)) ? "no" : "yes")
+                      << "/ write cache:" << ((d->options & NoCache) ? "no" : "yes");
+    qCDebug(LogCache) << d->cacheBaseName << "reading:" << qPrintable(rawFilePaths.join(qSL(", ")));
 
     if (!d->options.testFlag(NoCache) && !d->options.testFlag(ClearCache)) {
         if (cacheFile.open(QFile::ReadOnly)) {

@@ -610,8 +610,7 @@ void IntentServer::processRequestQueue()
                 m_systemInterface->replyFromSystem(clientIPC, isr);
             }
         }
-        QMetaObject::invokeMethod(this, [isr]() { delete isr; }, Qt::QueuedConnection); // aka deleteLater for non-QObject
-        isr = nullptr;
+        isr->deleteLater();
     }
 
     triggerRequestQueue();

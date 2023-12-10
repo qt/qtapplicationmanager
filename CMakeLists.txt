@@ -107,6 +107,17 @@ if(AM_COVERAGE)
     )
 endif()
 
+## SANITIZE ###########################################################
+
+if (AM_SANITIZE)
+    if (MSVC)
+        set(ECM_ENABLE_SANITIZERS address)
+    else()
+        set(ECM_ENABLE_SANITIZERS address undefined)
+    endif()
+    include(3rdparty/extra-cmake-modules/modules/ECMEnableSanitizers)
+endif()
+
 ## BUILD ##############################################################
 
 qt_build_repo()

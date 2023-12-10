@@ -317,7 +317,7 @@ bool NativeRuntime::start()
 
     for (const auto *var : {
          "AM_STARTUP_TIMER", "AM_NO_CUSTOM_LOGGING", "AM_NO_CRASH_HANDLER", "AM_FORCE_COLOR_OUTPUT",
-         "AM_TIMEOUT_FACTOR", "QT_MESSAGE_PATTERN" }) {
+         "AM_TIMEOUT_FACTOR", "QT_MESSAGE_PATTERN", "ASAN_OPTIONS", "LSAN_OPTIONS", "TSAN_OPTIONS" }) {
         if (qEnvironmentVariableIsSet(var))
             env.insert(QString::fromLatin1(var), qEnvironmentVariable(var));
     }

@@ -400,9 +400,10 @@ void IntentServerInProcessIpcConnection::replyFromSystem(IntentServerRequest *is
 {
     // we need decouple the server/client interface at this point to have a consistent
     // behavior in single- and multi-process mode
-    QMetaObject::invokeMethod(this, [this, isr]() {
+    QMetaObject::invokeMethod(this, [this, requestId = isr->requestId(), error = !isr->succeeded(),
+                                     result = isr->result()]() {
         auto clientInterface = m_interface->intentClientSystemInterface();
-        emit clientInterface->replyFromSystem(isr->requestId(), !isr->succeeded(), isr->result());
+        emit clientInterface->replyFromSystem(requestId, error, result);
     }, Qt::QueuedConnection);
 }
 

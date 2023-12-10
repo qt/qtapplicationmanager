@@ -34,6 +34,7 @@ TestCase {
 
         onRequestReceived: function(request) {
             acknowledged = true
+            request.sendReply({ })
         }
     }
 

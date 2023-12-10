@@ -154,6 +154,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     connect(m_xdgShell, &QWaylandXdgShell::pong, this, &WaylandCompositor::onXdgPongReceived);
 
     auto wmext = new QWaylandQtWindowManager(this);
+    wmext->setParent(this);
     connect(wmext, &QWaylandQtWindowManager::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
         if (!ApplicationManager::instance()->fromProcessId(client->processId()).isEmpty())
             ApplicationManager::instance()->openUrl(url.toString());

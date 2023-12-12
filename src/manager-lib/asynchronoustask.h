@@ -39,7 +39,6 @@ public:
     TaskState state() const;
     void setState(TaskState state);
 
-    bool hasFailed() const;
     Error errorCode() const;
     QString errorString() const;
 
@@ -61,7 +60,7 @@ protected:
     void run() override final;
 
 protected:
-    QMutex m_mutex;
+    mutable QMutex m_mutex;
 
     QString m_id;
     QString m_packageId;

@@ -25,29 +25,29 @@ QString AsynchronousTask::id() const
 
 AsynchronousTask::TaskState AsynchronousTask::state() const
 {
+    QMutexLocker locker(&m_mutex);
     return m_state;
 }
 
 void AsynchronousTask::setState(AsynchronousTask::TaskState state)
 {
+    QMutexLocker locker(&m_mutex);
     if (m_state != state) {
         m_state = state;
-        emit stateChanged(m_state);
+        locker.unlock();
+        emit stateChanged(state);
     }
-}
-
-bool AsynchronousTask::hasFailed() const
-{
-    return (m_state == Failed);
 }
 
 Error AsynchronousTask::errorCode() const
 {
+    QMutexLocker locker(&m_mutex);
     return m_errorCode;
 }
 
 QString AsynchronousTask::errorString() const
 {
+    QMutexLocker locker(&m_mutex);
     return m_errorString;
 }
 
@@ -59,7 +59,7 @@ bool AsynchronousTask::cancel()
 
 bool AsynchronousTask::forceCancel()
 {
-    if (m_state == Queued) {
+    if (state() == Queued) {
         setError(Error::Canceled, qSL("canceled"));
         return true;
     }
@@ -68,6 +68,7 @@ bool AsynchronousTask::forceCancel()
 
 QString AsynchronousTask::packageId() const
 {
+    QMutexLocker locker(&m_mutex);
     return m_packageId;
 }
 
@@ -83,8 +84,12 @@ bool AsynchronousTask::postExecute()
 
 void AsynchronousTask::setError(Error errorCode, const QString &errorString)
 {
-    m_errorCode = errorCode;
-    m_errorString = errorString;
+    {
+        // setState() also locks
+        QMutexLocker locker(&m_mutex);
+        m_errorCode = errorCode;
+        m_errorString = errorString;
+    }
     setState(Failed);
 }
 

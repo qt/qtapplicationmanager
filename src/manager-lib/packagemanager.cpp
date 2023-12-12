@@ -1280,9 +1280,7 @@ void PackageManager::executeNextTask()
 
     AsynchronousTask *task = d->incomingTaskList.takeFirst();
 
-    if (task->hasFailed()) {
-        task->setState(AsynchronousTask::Failed);
-
+    if (task->state() == AsynchronousTask::Failed) {
         handleFailure(task);
 
         task->deleteLater();
@@ -1311,11 +1309,10 @@ void PackageManager::executeNextTask()
     });
 
     connect(task, &AsynchronousTask::finished, this, [this, task]() {
-        task->setState(task->hasFailed() ? AsynchronousTask::Failed : AsynchronousTask::Finished);
-
-        if (task->hasFailed()) {
+        if (task->state() == AsynchronousTask::Failed) {
             handleFailure(task);
         } else {
+            task->setState(AsynchronousTask::Finished);
             qCDebug(LogInstaller) << "emit finished" << task->id();
             emit taskFinished(task->id());
         }

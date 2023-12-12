@@ -29,6 +29,7 @@ DeinstallationTask::DeinstallationTask(const QString &packageId, const QString &
 
 bool DeinstallationTask::cancel()
 {
+    QMutexLocker locker(&m_mutex);
     if (m_canBeCanceled)
         m_canceled = true;
     return m_canceled;
@@ -70,10 +71,12 @@ void DeinstallationTask::execute()
         while (!m_canceled && !package->areAllApplicationsStoppedDueToBlock())
             QThread::msleep(30);
 
-        // there's a small race condition here, but not doing a planned cancellation isn't harmful
-        m_canBeCanceled = false;
-        if (m_canceled)
-            throw Exception(Error::Canceled, "canceled");
+        {
+            QMutexLocker locker(&m_mutex);
+            m_canBeCanceled = false;
+            if (m_canceled)
+                throw Exception(Error::Canceled, "canceled");
+        }
 
         ScopedRenamer docDirRename;
         ScopedRenamer appDirRename;

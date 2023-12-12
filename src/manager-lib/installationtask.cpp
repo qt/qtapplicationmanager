@@ -263,7 +263,9 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         if (m_iconFileName.isEmpty())
             throw Exception(Error::Package, "the 'icon' field in info.yaml cannot be empty or absent.");
 
+        m_mutex.lock();
         m_packageId = m_package->id();
+        m_mutex.unlock();
 
         m_foundInfo = true;
     } else if (m_extractedFileCount == 2) {

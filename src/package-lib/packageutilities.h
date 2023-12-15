@@ -11,7 +11,10 @@ QT_BEGIN_NAMESPACE_AM
 
 namespace PackageUtilities
 {
+QT_DEPRECATED_X("Not needed anymore starting with 6.7 - will be removed in 6.9")
 bool ensureCorrectLocale();
+
+QT_DEPRECATED_X("Not needed anymore starting with 6.7 - will be removed in 6.9")
 bool checkCorrectLocale();
 }
 

@@ -197,10 +197,6 @@ int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
         Sudo::forkServer(Sudo::DropPrivilegesPermanently);
         StartupTimer::instance()->checkpoint("after sudo server fork");
     }
-#if QT_CONFIG(am_installer)
-    // try to set a reasonable locale - we later verify with checkCorrectLocale() if we succeeded
-    PackageUtilities::ensureCorrectLocale();
-#endif
     return argc;
 }
 
@@ -606,12 +602,6 @@ void Main::setupQuickLauncher(const QHash<std::pair<QString, QString>, int> &run
 void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) Q_DECL_NOEXCEPT_EXPR(false)
 {
 #if QT_CONFIG(am_installer)
-    if (Q_UNLIKELY(!PackageUtilities::checkCorrectLocale())) {
-        // we should really throw here, but so many embedded systems are badly set up
-        qCWarning(LogDeployment) << "The appman installer needs a UTF-8 locale to work correctly: "
-                                    "even automatically switching to C.UTF-8 or en_US.UTF-8 failed.";
-    }
-
     // make sure the installation and document dirs are valid
     Q_ASSERT(!m_installationDir.isEmpty());
     const auto instPath = QDir(m_installationDir).canonicalPath();

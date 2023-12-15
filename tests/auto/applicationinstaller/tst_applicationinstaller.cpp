@@ -209,7 +209,6 @@ void tst_PackageManager::initTestCase()
 
     spyTimeout *= timeoutFactor();
 
-    QVERIFY(PackageUtilities::checkCorrectLocale());
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
     m_sudo = SudoClient::instance();
     QVERIFY(m_sudo);
@@ -786,8 +785,6 @@ static tst_PackageManager *tstPackageManager = nullptr;
 
 int main(int argc, char **argv)
 {
-    PackageUtilities::ensureCorrectLocale();
-
     try {
         Sudo::forkServer(Sudo::DropPrivilegesPermanently);
         startedSudoServer = true;

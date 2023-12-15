@@ -240,7 +240,7 @@ void PackageExtractorPrivate::extract()
 
             __LA_MODE_T entryMode = archive_entry_mode(entry);
             PackageEntryType packageEntryType;
-            QString entryPath = QString::fromWCharArray(archive_entry_pathname_w(entry))
+            QString entryPath = QString::fromUtf8(archive_entry_pathname_utf8(entry))
                     .normalized(QString::NormalizationForm_C);
 
             switch (entryMode & S_IFMT) {

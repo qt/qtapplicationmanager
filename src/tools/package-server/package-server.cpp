@@ -28,8 +28,6 @@ int main(int argc, char **argv)
     // enable OpenSSL3 to load old certificates
     Cryptography::enableOpenSsl3LegacyProvider();
 
-    PackageUtilities::ensureCorrectLocale();
-
     QCoreApplication::setApplicationName(u"Qt ApplicationManager Package Server"_s);
     QCoreApplication::setOrganizationName(u"QtProject"_s);
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
@@ -38,11 +36,6 @@ int main(int argc, char **argv)
     QCoreApplication a(argc, argv);
 
     try {
-        if (!PackageUtilities::checkCorrectLocale()) {
-            throw Exception("the package-server needs a UTF-8 locale to work correctly:\n"
-                            "       even automatically switching to C.UTF-8 or en_US.UTF-8 failed.");
-        }
-
         auto cfg = std::make_unique<PSConfiguration>();
         cfg->parse(a.arguments());
 

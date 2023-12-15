@@ -278,7 +278,7 @@ QVariantList Notification::actions() const
     \qmlproperty bool Notification::showActionsAsIcons
 
     Holds a hint supplied by the client on how to present the \c actions. If this property is \c false,
-    the notification actions should be shown in text form. Otherwise, the \c actionText should be
+    the notification actions should be shown in text form. Otherwise, the \c actionId should be
     taken as an icon name conforming to the \c freedesktop.org icon naming specification (in a
     closed system, these could also be any icon specification string that the notification server
     understands).

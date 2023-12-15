@@ -427,6 +427,8 @@ void NotificationManager::acknowledgeNotification(uint id)
     \qmlmethod NotificationManager::triggerNotificationAction(int id, string actionId)
 
     This function needs to be called by the System UI when the user triggered a notification action.
+    Unless the notification is made resident (\c {dismissOnAction} is \c false), the notification
+    will also be dismissed.
 
     The notification is identified by \a id and the action by \a actionId.
 
@@ -434,6 +436,8 @@ void NotificationManager::acknowledgeNotification(uint id)
     \l {Notification::}{actions} role). However, the application manager will accept and forward any
     arbitrary string. Be aware that this string is broadcast on the session D-Bus when running in
     multi-process mode.
+
+    \sa dismissNotification()
 */
 void NotificationManager::triggerNotificationAction(uint id, const QString &actionId)
 {
@@ -455,6 +459,9 @@ void NotificationManager::triggerNotificationAction(uint id, const QString &acti
                                       << (actionId.length() > 20 ? (actionId.left(20) + qSL("...")) : actionId);
         }
         emit ActionInvoked(id, actionId);
+
+        if (n->dismissOnAction)
+            dismissNotification(id);
     }
 }
 

@@ -36,20 +36,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-/*! \internal
-  This is a workaround for the stupid filename encoding handling in libarchive:
-  the 'hdrcharset' option is not taken into consideration at all, plus the Windows
-  version simply defaults to hard-coded (non-UTF8) encoding.
-  This trick gets us consistent behavior on all platforms.
-*/
-static void fixed_archive_entry_set_pathname(archive_entry *entry, const QString &pathname)
-{
-    wchar_t *wchars = new wchar_t[size_t(pathname.length()) + 1];
-    wchars[pathname.toWCharArray(wchars)] = 0;
-    archive_entry_copy_pathname_w(entry, wchars);
-    delete[] wchars;
-}
-
 
 PackageCreator::PackageCreator(const QDir &sourceDir, QIODevice *output, const InstallationReport &report, QObject *parent)
     : QObject(parent)
@@ -247,7 +233,7 @@ bool PackageCreatorPrivate::create()
             if (!entry)
                 throw Exception(Error::Archive, "[libarchive] could not create a new archive_entry object");
 
-            fixed_archive_entry_set_pathname(entry, file); // please note: this is a special function (see top of file)
+            archive_entry_set_pathname_utf8(entry, file.toUtf8().constData());
             archive_entry_set_size(entry, static_cast<__LA_INT64_T>(fi.size()));
             archive_entry_set_mode(entry, mode);
 
@@ -361,7 +347,7 @@ bool PackageCreatorPrivate::addVirtualFile(struct archive *ar, const QString &fi
     struct archive_entry *entry = archive_entry_new();
 
     if (entry) {
-        fixed_archive_entry_set_pathname(entry, file);
+        archive_entry_set_pathname_utf8(entry, file.toUtf8().constData());
         archive_entry_set_mode(entry, S_IFREG | S_IREAD);
         archive_entry_set_size(entry, data.size());
         archive_entry_set_mtime(entry, time(nullptr), 0);

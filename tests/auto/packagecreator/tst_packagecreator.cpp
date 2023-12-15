@@ -56,8 +56,6 @@ void tst_PackageCreator::initTestCase()
 
     m_isCygwin = tar.readAllStandardOutput().contains("Cygwin");
 
-    QVERIFY(PackageUtilities::checkCorrectLocale());
-
     if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 }
@@ -152,7 +150,6 @@ QString tst_PackageCreator::escapeFilename(const QString &name)
 
 int main(int argc, char *argv[])
 {
-    PackageUtilities::ensureCorrectLocale();
     QCoreApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
     tst_PackageCreator tc;

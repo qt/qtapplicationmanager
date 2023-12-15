@@ -732,6 +732,20 @@ The following conditions are handled:
         \li Specifies a timeout in seconds while the crashed program is being held in the stopped
             state, waiting for a debugger to attach. Any value \c{<= 0} skips this step.
             (default: 0)
+    \row
+        \li \c stackFramesToIgnore/onCrash
+        \li int
+        \li The number of stack frames that should not be printed in a backtrace. This is to avoid
+            having both the operating system's and the application manager's internal handling
+            routines show up in the backtrace. (default: sensible values for the latest XCode and
+            latest gcc versions)
+    \row
+        \li \c stackFramesToIgnore/onException
+        \li int
+        \li The number of stack frames that should not be printed in a backtrace. This is to avoid
+            having both the C++ library's and the application manager's internal handling
+            routines show up in the backtrace. (default: sensible values for the latest XCode and
+            latest gcc versions)
 \endtable
 
 

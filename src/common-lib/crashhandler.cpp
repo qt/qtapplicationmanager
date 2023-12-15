@@ -52,6 +52,18 @@ struct CrashHandlerGlobal
     bool printQmlStack = true;
     bool dumpCore = true;
     int waitForGdbAttach = 0;
+    int stackFramesToIgnoreOnCrash = // Make the backtrace start where the signal interrupted the normal program flow
+#if defined(Q_OS_MACOS)
+        12;  // XCode 14
+#else
+        9; // gcc/libstdc++ 13.2
+#endif
+    int stackFramesToIgnoreOnException = // Make the backtrace start at std::terminate
+#if defined(Q_OS_MACOS)
+        6;  // XCode 14
+#else
+        5; // gcc/libstdc++ 13.2
+#endif
 
     char *demangleBuffer;
     size_t demangleBufferSize = 768;
@@ -76,6 +88,9 @@ void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
     chg()->printQmlStack = config.value(qSL("printQmlStack"), chg()->printQmlStack).toBool();
     chg()->waitForGdbAttach = config.value(qSL("waitForGdbAttach"), chg()->waitForGdbAttach).toInt() * timeoutFactor();
     chg()->dumpCore = config.value(qSL("dumpCore"), chg()->dumpCore).toBool();
+    QVariantMap stackFramesToIgnore = config.value(qSL("stackFramesToIgnore")).toMap();
+    chg()->stackFramesToIgnoreOnCrash = stackFramesToIgnore.value(qSL("onCrash"), chg()->stackFramesToIgnoreOnCrash).toInt();
+    chg()->stackFramesToIgnoreOnException = stackFramesToIgnore.value(qSL("onException"), chg()->stackFramesToIgnoreOnException).toInt();
 }
 
 void CrashHandler::setQmlEngine(QQmlEngine *engine)
@@ -174,6 +189,11 @@ static void logBacktraceLine(LogToDestination logTo, int level, const char *symb
                              int errorCode = 0, const char *errorString = nullptr)
 {
     Q_UNUSED(offset) // not really helpful
+#if defined(Q_OS_MACOS)
+    // skip those unhelpful "executable file is not an executable" messages
+    if (!level && !symbol && !offset && !file && !errorCode)
+        return;
+#endif
 
     if (level > 999)
         return;
@@ -264,6 +284,9 @@ QT_END_NAMESPACE_AM
 #  endif
 #  include <cxxabi.h>
 #  include <csetjmp>
+#  if defined(Q_OS_MACOS) && defined(setjmp)
+#    undef setjmp // macOS defines this as a self-recursive macro in C++ mode
+#  endif
 #  include <csignal>
 #  include <pthread.h>
 #  include <cstdio>
@@ -303,19 +326,15 @@ static void initBacktraceUnix()
         UnixSignalHandler::instance()->resetToDefault(sig);
         char buffer[256];
         snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, UnixSignalHandler::signalName(sig));
-        // 8 means to remove 8 stack frames: this way the backtrace starts at the point where
-        // the signal reception interrupted the normal program flow
-        crashHandler(buffer, 8);
+        crashHandler(buffer, chg()->stackFramesToIgnoreOnCrash);
     });
 
     std::set_terminate([]() {
         char buffer [1024];
 
         auto type = abi::__cxa_current_exception_type();
-        if (!type) {
-            // 3 means to remove 3 stack frames: this way the backtrace starts at std::terminate
-            crashHandler("terminate was called although no exception was thrown", 3);
-        }
+        if (!type)
+            crashHandler("terminate was called although no exception was thrown", 0);
 
         const char *typeName = type->name();
         if (typeName) {
@@ -338,8 +357,7 @@ static void initBacktraceUnix()
             snprintf(buffer, sizeof(buffer), "uncaught exception of type %s", typeName);
         }
 
-        // 4 means to remove 4 stack frames: this way the backtrace starts at std::terminate
-        crashHandler(buffer, 4);
+        crashHandler(buffer, chg()->stackFramesToIgnoreOnException);
     });
 
     // create a new process group, so that we are able to kill all children with ::kill(0, ...)
@@ -395,6 +413,9 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
             logMsgF(logTo, " > Please consider using a debug build for a more accurate backtrace.");
 #  if defined(Q_OS_MACOS)
             logMsgF(logTo, " > E.g. by running the binary using DYLD_IMAGE_SUFFIX=_debug");
+#    if defined(Q_PROCESSOR_ARM_64)
+            logMsgF(logTo, " > Backtraces on macOS/arm64 may not be available.");
+#    endif
 #  endif
         }
 
@@ -402,8 +423,8 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
         struct btData
         {
             LogToDestination logTo;
-            backtrace_state *state;
             int level;
+            backtrace_state *state;
         };
 
         static auto errorCallback = [](void *data, const char *msg, int errnum) {
@@ -466,12 +487,11 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
                                                                errorCallback, nullptr);
 
         logMsg(logTo, "\n > C++ backtrace:");
-        btData data = { logTo, state, 0 };
+        btData data = { logTo, 0, state };
         //backtrace_print(state, stackFramesToIgnore, stderr);
         backtrace_simple(state, stackFramesToIgnore, simpleCallback, errorCallback, &data);
 
 #  else // QT_CONFIG(am_libbacktrace) && defined(BACKTRACE_SUPPORTED)
-        Q_UNUSED(stackFramesToIgnore);
 #    if !defined(Q_OS_QNX)
         void *addrArray[1024];
         int addrCount = backtrace(addrArray, sizeof(addrArray) / sizeof(*addrArray));
@@ -486,7 +506,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
                 logMsg(logTo, " > no symbol names available");
             } else {
                 logMsg(logTo, "\n > C++ backtrace:");
-                for (int i = 1; i < addrCount; ++i) {
+                for (int i = 1 + stackFramesToIgnore; i < addrCount; ++i) {
                     char *function = nullptr;
                     char *offset = nullptr;
                     char *end = nullptr;
@@ -516,11 +536,13 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
                         if (function && (function == offset))
                             *(function - 1) = 0;
                     }
-                    logBacktraceLine(logTo, i, name, offset ? strtoull(offset + 1, nullptr, 16) : 0);
+                    logBacktraceLine(logTo, i - 1 - stackFramesToIgnore, name,
+                                     offset ? strtoull(offset + 1, nullptr, 16) : 0);
                 }
             }
         }
 #    else
+        Q_UNUSED(stackFramesToIgnore);
         constexpr int frames = 20;
         bt_addr_t addrs[frames];
         bt_memmap_t memmap;

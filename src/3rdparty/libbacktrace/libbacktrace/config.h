@@ -7,4 +7,6 @@
 #define HAVE_SYNC_FUNCTIONS 1
 #define HAVE_LIBDWARF_DWARF_H 1
 #define HAVE_LINK_H 1
-
+#if defined(__APPLE__)
+#  define HAVE_MACH_O_DYLD_H
+#endif

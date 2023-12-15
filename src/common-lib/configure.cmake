@@ -84,15 +84,15 @@ qt_feature("am-dltlogging" PRIVATE
 
 qt_feature("am-libbacktrace" PRIVATE
     LABEL "Enable support for libbacktrace"
-    CONDITION LINUX AND ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
-    EMIT_IF LINUX
+    CONDITION (LINUX OR MACOS) AND (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    EMIT_IF (LINUX OR MACOS)
     ENABLE INPUT_libbacktrace STREQUAL 'yes'
     DISABLE INPUT_libbacktrace STREQUAL 'no'
 )
 
 qt_feature("am-stackwalker" PRIVATE
     LABEL "Enable support for StackWalker"
-    CONDITION WIN32 AND MSVC AND ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
+    CONDITION WIN32 AND MSVC AND (CMAKE_BUILD_TYPE STREQUAL "Debug")
     EMIT_IF WIN32
     ENABLE INPUT_stackwalker STREQUAL 'yes'
     DISABLE INPUT_stackwalker STREQUAL 'no'

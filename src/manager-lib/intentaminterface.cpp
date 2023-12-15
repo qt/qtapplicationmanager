@@ -403,11 +403,14 @@ void IntentServerInProcessIpcConnection::requestToApplication(IntentServerReques
 {
     // we need decouple the server/client interface at this point to have a consistent
     // behavior in single- and multi-process mode
-    QMetaObject::invokeMethod(this, [this, isr]() {
+    QMetaObject::invokeMethod(this, [this, requestId = isr->requestId(), intentId = isr->intentId(),
+                                     requestingApplicationId = isr->isBroadcast() ? qSL(":broadcast:")
+                                                                                  : isr->requestingApplicationId(),
+                                     applicationId = isr->selectedIntent()->applicationId(),
+                                     parameters = isr->parameters()]() {
         auto clientInterface = m_interface->intentClientSystemInterface();
-        emit clientInterface->requestToApplication(isr->requestId(), isr->intentId(),
-                                                   isr->isBroadcast() ? qSL(":broadcast:") : isr->requestingApplicationId(),
-                                                   isr->selectedIntent()->applicationId(), isr->parameters());
+        emit clientInterface->requestToApplication(requestId, intentId, requestingApplicationId,
+                                                   applicationId, parameters);
     }, Qt::QueuedConnection);
 }
 

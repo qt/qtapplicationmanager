@@ -176,7 +176,8 @@ void PackageDatabase::parse(PackageLocations packageLocations)
 
                 if (pkg->id() != pkgDir.dirName()) {
                     throw Exception("an info.yaml for packages must be in a directory that has"
-                                    " the same name as the package's id: found '%1'").arg(pkg->id());
+                                    " the same name as the package's id: found id '%1' in directory '%2'")
+                        .arg(pkg->id(), pkgDir.path());
                 }
                 pkg->setBuiltIn(true);
                 m_builtInPackages.append(pkg.release());
@@ -263,7 +264,8 @@ void PackageDatabase::parseInstalled()
 
             if (pkg->id() != pkgDir.dirName()) {
                 throw Exception("an info.yaml for packages must be in a directory that has"
-                                " the same name as the package's id: found '%1'").arg(pkg->id());
+                                " the same name as the package's id: found id '%1' in directory '%2'")
+                    .arg(pkg->id(), pkgDir.path());
             }
 
             QFile f(pkgDir.absoluteFilePath(qSL(".installation-report.yaml")));

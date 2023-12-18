@@ -24,6 +24,8 @@ DeinstallationTask::DeinstallationTask(const QString &packageId, const QString &
 {
     Q_UNUSED(forceDeinstallation) // this was used in the past to deal with SD-Card problems
 
+    setObjectName(qSL("QtAM-DeinstallationTask"));
+
     m_packageId = packageId; // in base class
 }
 

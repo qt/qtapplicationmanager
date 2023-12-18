@@ -98,7 +98,9 @@ InstallationTask::InstallationTask(const QString &installationPath, const QStrin
     , m_installationPath(installationPath)
     , m_documentPath(documentPath)
     , m_sourceUrl(sourceUrl)
-{ }
+{
+    setObjectName(qSL("QtAM-InstallationTask"));
+}
 
 InstallationTask::~InstallationTask()
 { }

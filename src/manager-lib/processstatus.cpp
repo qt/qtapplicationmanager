@@ -109,6 +109,7 @@ ProcessStatus::ProcessStatus(QObject *parent)
 {
     if (m_instanceCount == 0) {
         m_workerThread = new QThread;
+        m_workerThread->setObjectName(qSL("QtAM-ProcessStatus"));
         m_workerThread->start();
     }
     ++m_instanceCount;

@@ -95,7 +95,7 @@ WaylandApplicationManagerWindowImpl::~WaylandApplicationManagerWindowImpl()
     delete m_qwindow.get();
 }
 
-bool WaylandApplicationManagerWindowImpl::isInProcess() const
+bool WaylandApplicationManagerWindowImpl::isSingleProcess() const
 {
     return false;
 }

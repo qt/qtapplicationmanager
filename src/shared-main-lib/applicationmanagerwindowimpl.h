@@ -28,7 +28,7 @@ public:
 
     ApplicationManagerWindow *amWindow();
 
-    virtual bool isInProcess() const = 0;
+    virtual bool isSingleProcess() const = 0;
     virtual QObject *backingObject() const = 0;
 
     virtual void classBegin() = 0;

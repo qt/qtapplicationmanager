@@ -31,7 +31,7 @@ class ApplicationManagerWindow : public QObject, public QQmlParserStatus
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
     QML_ATTACHED(QtAM::ApplicationManagerWindowAttached)
-    Q_PROPERTY(bool inProcess READ isInProcess CONSTANT FINAL)
+    Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT FINAL)
     Q_PROPERTY(QObject *backingObject READ backingObject CONSTANT FINAL)
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged FINAL)
     Q_PROPERTY(QQuickItem *contentItem READ contentItem CONSTANT FINAL)
@@ -62,7 +62,7 @@ public:
 
     static ApplicationManagerWindowAttached *qmlAttachedProperties(QObject *object);
 
-    bool isInProcess() const;
+    bool isSingleProcess() const;
     QObject *backingObject() const;
 
     QQmlListProperty<QObject> data();

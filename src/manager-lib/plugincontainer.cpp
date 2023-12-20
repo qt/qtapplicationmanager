@@ -10,6 +10,8 @@
 #include "debugwrapper.h"
 #include "sudo.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 PluginContainerManager::PluginContainerManager(ContainerManagerInterface *managerInterface, QObject *parent)
@@ -31,7 +33,7 @@ bool PluginContainerManager::initialize()
 
 QString PluginContainerManager::defaultIdentifier()
 {
-    return qSL("invalid-plugin");
+    return u"invalid-plugin"_s;
 }
 
 bool PluginContainerManager::supportsQuickLaunch() const

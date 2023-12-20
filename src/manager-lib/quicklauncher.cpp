@@ -18,6 +18,8 @@
 
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 QuickLauncher *QuickLauncher::s_instance = nullptr;
@@ -55,7 +57,7 @@ QuickLauncher::QuickLauncher(const QHash<std::pair<QString, QString>, int> &runt
     , m_failedStartLimitIntervalSec(qMax(0, failedStartLimitIntervalSec))
 {
     auto findMaximum = [&runtimesPerContainer](const QuickLaunchEntry &qle) -> int {
-        static const QString anyId = qSL("*");
+        static const QString anyId = u"*"_s;
 
         for (const auto &key : { std::make_pair(qle.m_containerId, qle.m_runtimeId),
                                std::make_pair(qle.m_containerId, anyId),
@@ -111,7 +113,7 @@ QuickLauncher::QuickLauncher(const QHash<std::pair<QString, QString>, int> &runt
 
             qCDebug(LogQuickLaunch).nospace().noquote()
                 << " * container: " << entry.m_containerId << " / runtime: "
-                << (entry.m_runtimeId.isEmpty() ? qSL("(none)") : entry.m_runtimeId)
+                << (entry.m_runtimeId.isEmpty() ? u"(none)"_s : entry.m_runtimeId)
                 << " [at max: " << entry.m_maximum << "]";
         }
     }
@@ -216,7 +218,7 @@ void QuickLauncher::rebuild()
 
             qCDebug(LogQuickLaunch) << "Added new quick-launch entry for container:"
                                     << entry->m_containerId << "/ runtime:"
-                                    << (entry->m_runtimeId.isEmpty() ? qSL("(none)") : entry->m_runtimeId);
+                                    << (entry->m_runtimeId.isEmpty() ? u"(none)"_s : entry->m_runtimeId);
         }
     }
 
@@ -243,7 +245,7 @@ void QuickLauncher::removeEntry(AbstractContainer *container, AbstractRuntime *r
                     || (runtime && car.second == runtime)) {
                 qCDebug(LogQuickLaunch) << "Removed quick-launch entry for container:"
                                         << entry->m_containerId << "/ runtime:"
-                                        << (entry->m_runtimeId.isEmpty() ? qSL("(none)") : entry->m_runtimeId);
+                                        << (entry->m_runtimeId.isEmpty() ? u"(none)"_s : entry->m_runtimeId);
 
                 entry->m_containersAndRuntimes.removeAt(i--);
                 carRemoved++;
@@ -272,7 +274,7 @@ void QuickLauncher::checkFailedStarts()
                 && (entry->m_failedTimeStamps.size() >= m_failedStartLimit)) {
             qCWarning(LogQuickLaunch) << "Disabling quick-launch for container:"
                                       << entry->m_containerId << "/ runtime:"
-                                      << (entry->m_runtimeId.isEmpty() ? qSL("(none)") : entry->m_runtimeId)
+                                      << (entry->m_runtimeId.isEmpty() ? u"(none)"_s : entry->m_runtimeId)
                                       << "due to too many failed start attempts:"
                                       << entry->m_failedTimeStamps.size() << "failed starts within"
                                       << m_failedStartLimitIntervalSec << "seconds";

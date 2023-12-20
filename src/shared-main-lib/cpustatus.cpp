@@ -7,6 +7,8 @@
 
 #include <QThread>
 
+using namespace Qt::StringLiterals;
+
 /*!
     \qmltype CpuStatus
     \inqmlmodule QtApplicationManager
@@ -108,7 +110,7 @@ void CpuStatus::update()
 */
 QStringList CpuStatus::roleNames() const
 {
-    return { qSL("cpuLoad") };
+    return { u"cpuLoad"_s };
 }
 
 #include "moc_cpustatus.cpp"

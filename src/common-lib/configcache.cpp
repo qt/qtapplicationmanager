@@ -17,6 +17,8 @@
 #include "exception.h"
 #include "logging.h"
 
+using namespace Qt::StringLiterals;
+
 // use QtConcurrent to parse the files, if there are more than x files
 constexpr int AM_PARALLEL_THRESHOLD = 1;
 
@@ -148,7 +150,7 @@ void AbstractConfigCache::parse()
     qCDebug(LogCache) << d->cacheBaseName << "cache file:" << cacheFile.fileName();
     qCDebug(LogCache) << d->cacheBaseName << "read cache:" << ((d->options & (ClearCache | NoCache)) ? "no" : "yes")
                       << "/ write cache:" << ((d->options & NoCache) ? "no" : "yes");
-    qCDebug(LogCache) << d->cacheBaseName << "reading:" << qPrintable(rawFilePaths.join(qSL(", ")));
+    qCDebug(LogCache) << d->cacheBaseName << "reading:" << qPrintable(rawFilePaths.join(u", "_s));
 
     if (!d->options.testFlag(NoCache) && !d->options.testFlag(ClearCache)) {
         if (cacheFile.open(QFile::ReadOnly)) {
@@ -409,8 +411,8 @@ QString AbstractConfigCache::cacheFilePath() const
     // find the correct cache location and make sure it exists
     static const QDir dir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
     if (!dir.exists())
-        dir.mkpath(qSL("."));
-    return dir.absoluteFilePath(qSL("appman-%1.cache").arg(d->cacheBaseName));
+        dir.mkpath(u"."_s);
+    return dir.absoluteFilePath(u"appman-%1.cache"_s.arg(d->cacheBaseName));
 }
 
 QT_END_NAMESPACE_AM

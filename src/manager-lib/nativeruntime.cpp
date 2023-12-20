@@ -32,6 +32,8 @@
 #include "runtimeinterface_adaptor.h"
 #include "applicationinterface_adaptor.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 // You can enable this define to get all P2P-bus objects onto the session bus
@@ -72,13 +74,13 @@ static qint64 getDBusPeerPid(const QDBusConnection &conn)
 NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, NativeRuntimeManager *manager)
     : AbstractRuntime(container, app, manager)
     , m_isQuickLauncher(app == nullptr)
-    , m_startedViaLauncher(manager->identifier() != qL1S("native"))
+    , m_startedViaLauncher(manager->identifier() != u"native")
     , m_dbusApplicationInterface(DBusContextAdaptor::create<ApplicationInterfaceAdaptor>(this))
     , m_dbusRuntimeInterface(DBusContextAdaptor::create<RuntimeInterfaceAdaptor>(this))
 {
-    QDir().mkdir(qSL("/tmp/dbus-qtam"));
+    QDir().mkdir(u"/tmp/dbus-qtam"_s);
     QString dbusAddress = QUuid::createUuid().toString().mid(1,36);
-    m_applicationInterfaceServer = new QDBusServer(qSL("unix:path=/tmp/dbus-qtam/dbus-qtam-") + dbusAddress, this);
+    m_applicationInterfaceServer = new QDBusServer(u"unix:path=/tmp/dbus-qtam/dbus-qtam-"_s + dbusAddress, this);
     m_applicationInterfaceServer->setAnonymousAuthenticationAllowed(true);
 
     connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
@@ -165,14 +167,14 @@ bool NativeRuntime::initialize()
             // try Qt's bin folder
             possibleLocations.append(QLibraryInfo::path(QLibraryInfo::BinariesPath));
             // try the AM's build directory
-            possibleLocations.append(qApp->property("_am_build_dir").toString() + qSL("/bin")); // set by main.cpp
+            possibleLocations.append(qApp->property("_am_build_dir").toString() + u"/bin"_s); // set by main.cpp
             // if everything fails, try to locate it in $PATH
             const auto paths = qgetenv("PATH").split(QDir::listSeparator().toLatin1());
             for (const auto &path : paths)
                 possibleLocations.append(QString::fromLocal8Bit(path));
         }
 
-        const QString launcherName = qSL("/appman-launcher-") + manager()->identifier();
+        const QString launcherName = u"/appman-launcher-"_s + manager()->identifier();
         for (const QString &possibleLocation : possibleLocations) {
             QFileInfo fi(possibleLocation + launcherName);
 
@@ -260,22 +262,22 @@ bool NativeRuntime::start()
     }
 
     QVariantMap dbusConfig = {
-        { qSL("p2p"), applicationInterfaceServer()->address() },
-        { qSL("org.freedesktop.Notifications"), NotificationManager::instance()->property("_am_dbus_name").toString()}
+        { u"p2p"_s, applicationInterfaceServer()->address() },
+        { u"org.freedesktop.Notifications"_s, NotificationManager::instance()->property("_am_dbus_name").toString()}
     };
 
     QVariantMap loggingConfig = {
-        { qSL("dlt"), Logging::isDltEnabled() },
-        { qSL("rules"), Logging::filterRules() },
-        { qSL("useAMConsoleLogger"), Logging::useAMConsoleLogger() }
+        { u"dlt"_s, Logging::isDltEnabled() },
+        { u"rules"_s, Logging::filterRules() },
+        { u"useAMConsoleLogger"_s, Logging::useAMConsoleLogger() }
     };
 
     if (Logging::isDltEnabled())
-        loggingConfig.insert(qSL("dltLongMessageBehavior"), Logging::dltLongMessageBehavior());
+        loggingConfig.insert(u"dltLongMessageBehavior"_s, Logging::dltLongMessageBehavior());
 
     QVariantMap uiConfig;
     if (m_slowAnimations)
-        uiConfig.insert(qSL("slowAnimations"), true);
+        uiConfig.insert(u"slowAnimations"_s, true);
 
     QVariantMap openGLConfig;
     if (m_app)
@@ -283,36 +285,36 @@ bool NativeRuntime::start()
     if (openGLConfig.isEmpty())
         openGLConfig = manager()->systemOpenGLConfiguration();
     if (!openGLConfig.isEmpty())
-        uiConfig.insert(qSL("opengl"), openGLConfig);
+        uiConfig.insert(u"opengl"_s, openGLConfig);
 
     QString iconThemeName = manager()->iconThemeName();
     QStringList iconThemeSearchPaths = manager()->iconThemeSearchPaths();
     if (!iconThemeName.isEmpty())
-        uiConfig.insert(qSL("iconThemeName"), iconThemeName);
+        uiConfig.insert(u"iconThemeName"_s, iconThemeName);
     if (!iconThemeSearchPaths.isEmpty())
-        uiConfig.insert(qSL("iconThemeSearchPaths"), iconThemeSearchPaths);
+        uiConfig.insert(u"iconThemeSearchPaths"_s, iconThemeSearchPaths);
 
     QVariantMap config = {
-        { qSL("logging"), loggingConfig },
-        { qSL("baseDir"), QDir::currentPath() },
-        { qSL("runtimeConfiguration"), configuration() },
-        { qSL("securityToken"), qL1S(securityToken().toHex()) },
-        { qSL("dbus"), dbusConfig }
+        { u"logging"_s, loggingConfig },
+        { u"baseDir"_s, QDir::currentPath() },
+        { u"runtimeConfiguration"_s, configuration() },
+        { u"securityToken"_s, QString::fromLatin1(securityToken().toHex()) },
+        { u"dbus"_s, dbusConfig }
     };
 
     if (!m_startedViaLauncher && !m_isQuickLauncher)
-        config.insert(qSL("systemProperties"), systemProperties());
+        config.insert(u"systemProperties"_s, systemProperties());
     if (m_app)
-        config.insert(qSL("application"), convertFromJSVariant(m_app->info()->toVariantMap()).toMap());
+        config.insert(u"application"_s, convertFromJSVariant(m_app->info()->toVariantMap()).toMap());
     if (!uiConfig.isEmpty())
-        config.insert(qSL("ui"), uiConfig);
+        config.insert(u"ui"_s, uiConfig);
 
     QMap<QString, QString> env = {
-        { qSL("QT_QPA_PLATFORM"), qSL("wayland") },
-        { qSL("QT_IM_MODULE"), QString() },     // Applications should use wayland text input
-        { qSL("QT_SCALE_FACTOR"), QString() },  // do not scale wayland clients
-        { qSL("AM_CONFIG"), QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ config })) },
-        { qSL("QT_WAYLAND_SHELL_INTEGRATION"), qSL("xdg-shell")},
+        { u"QT_QPA_PLATFORM"_s, u"wayland"_s },
+        { u"QT_IM_MODULE"_s, QString() },     // Applications should use wayland text input
+        { u"QT_SCALE_FACTOR"_s, QString() },  // do not scale wayland clients
+        { u"AM_CONFIG"_s, QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ config })) },
+        { u"QT_WAYLAND_SHELL_INTEGRATION"_s, u"xdg-shell"_s},
     };
 
     for (const auto *var : {
@@ -324,17 +326,17 @@ bool NativeRuntime::start()
 
     if (!Logging::isDltEnabled()) {
         // we need this to disable DLT as soon as possible
-        env.insert(qSL("AM_NO_DLT_LOGGING"), qSL("1"));
+        env.insert(u"AM_NO_DLT_LOGGING"_s, u"1"_s);
     }
 
-    const auto envVars = configuration().value(qSL("environmentVariables")).toMap();
+    const auto envVars = configuration().value(u"environmentVariables"_s).toMap();
     for (auto it = envVars.cbegin(); it != envVars.cend(); ++it) {
         if (!it.key().isEmpty())
             env.insert(it.key(), it.value().toString());
     }
 
     if (m_app) {
-        const auto envVars = m_app->runtimeParameters().value(qSL("environmentVariables")).toMap();
+        const auto envVars = m_app->runtimeParameters().value(u"environmentVariables"_s).toMap();
 
         if (!envVars.isEmpty()) {
             if (ApplicationManager::instance()->securityChecksEnabled()) {
@@ -352,16 +354,16 @@ bool NativeRuntime::start()
     QStringList args;
 
     if (!m_startedViaLauncher) {
-        args.append(variantToStringList(m_app->runtimeParameters().value(qSL("arguments"))));
+        args.append(variantToStringList(m_app->runtimeParameters().value(u"arguments"_s)));
 
         if (!m_document.isNull())
-            args << qSL("--start-argument") << m_document;
+            args << u"--start-argument"_s << m_document;
 
         if (!Logging::isDltEnabled())
-            args << qSL("--no-dlt-logging");
+            args << u"--no-dlt-logging"_s;
     } else {
         if (m_isQuickLauncher)
-            args << qSL("--quicklaunch");
+            args << u"--quicklaunch"_s;
 
         args << QString::fromLocal8Bit(ProcessTitle::placeholderArgument);    // must be last argument
     }
@@ -399,7 +401,7 @@ void NativeRuntime::stop(bool forceKill)
         m_process->terminate();
     } else {
         bool ok;
-        int qt = configuration().value(qSL("quitTime")).toInt(&ok);
+        int qt = configuration().value(u"quitTime"_s).toInt(&ok);
         if (!ok || qt < 0)
             qt = 250;
         QTimer::singleShot(qt, this, [this]() {
@@ -438,23 +440,23 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
     m_dbusConnectionName = connection.name();
     QDBusConnection conn = connection;
 
-    if (!m_dbusApplicationInterface->registerOnDBus(conn, qSL("/ApplicationInterface"))) {
+    if (!m_dbusApplicationInterface->registerOnDBus(conn, u"/ApplicationInterface"_s)) {
         qCWarning(LogSystem) << "ERROR: could not register the /ApplicationInterface object on the peer DBus:"
                              << conn.lastError().message();
     }
 
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-    m_dbusApplicationInterface->registerOnDBus(QDBusConnection::sessionBus(), qSL("/Application%1/ApplicationInterface").arg(applicationProcessId()));
+    m_dbusApplicationInterface->registerOnDBus(QDBusConnection::sessionBus(), u"/Application%1/ApplicationInterface"_s.arg(applicationProcessId()));
 #endif
 
     if (m_startedViaLauncher) {
-        if (!m_dbusRuntimeInterface->registerOnDBus(conn, qSL("/RuntimeInterface"))) {
+        if (!m_dbusRuntimeInterface->registerOnDBus(conn, u"/RuntimeInterface"_s)) {
             qCWarning(LogSystem) << "ERROR: could not register the /RuntimeInterface object on the peer DBus:"
                                  << conn.lastError().message();
         }
 
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
-        m_dbusRuntimeInterface->registerOnDBus(QDBusConnection::sessionBus(), qSL("/Application%1/RuntimeInterface").arg(applicationProcessId()));
+        m_dbusRuntimeInterface->registerOnDBus(QDBusConnection::sessionBus(), u"/Application%1/RuntimeInterface"_s.arg(applicationProcessId()));
 #endif
     }
     // the server side of the p2p bus can be setup now, but the client is not able service any
@@ -529,12 +531,12 @@ NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
 
 QString NativeRuntimeManager::defaultIdentifier()
 {
-    return qSL("native");
+    return u"native"_s;
 }
 
 bool NativeRuntimeManager::supportsQuickLaunch() const
 {
-    return identifier() != qL1S("native");
+    return identifier() != u"native";
 }
 
 AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, Application *app)

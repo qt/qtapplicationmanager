@@ -48,6 +48,8 @@
 
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
 /*!
     \qmltype ApplicationManager
     \inqmlmodule QtApplicationManager.SystemUI
@@ -538,10 +540,10 @@ QVector<Application *> ApplicationManager::schemeHandlers(const QString &scheme)
     for (Application *app : d->apps) {
         const auto mimeTypes = app->supportedMimeTypes();
         for (const QString &mime : mimeTypes) {
-            int pos = mime.indexOf(QLatin1Char('/'));
+            auto pos = mime.indexOf(u'/');
 
             if ((pos > 0)
-                    && (mime.left(pos) == qL1S("x-scheme-handler"))
+                    && (mime.left(pos) == u"x-scheme-handler")
                     && (mime.mid(pos + 1) == scheme)) {
                 handlers << app;
             }
@@ -565,14 +567,14 @@ void ApplicationManager::registerMimeTypes()
 {
 #if defined(QT_GUI_LIB)
     QSet<QString> schemes;
-    schemes << qSL("file") << qSL("http") << qSL("https");
+    schemes << u"file"_s << u"http"_s << u"https"_s;
 
     for (Application *app : std::as_const(d->apps)) {
         const auto mimeTypes = app->supportedMimeTypes();
         for (const QString &mime : mimeTypes) {
-            int pos = mime.indexOf(QLatin1Char('/'));
+            auto pos = mime.indexOf(u'/');
 
-            if ((pos > 0) && (mime.left(pos) == qL1S("x-scheme-handler")))
+            if ((pos > 0) && (mime.left(pos) == u"x-scheme-handler"))
                 schemes << mime.mid(pos + 1);
         }
     }
@@ -681,13 +683,13 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
 
     if (!inProcess) {
         if (d->containerSelectionConfig.isEmpty()) {
-            containerId = qSL("process");
+            containerId = u"process"_s;
         } else {
             // check config file
             for (const auto &it : std::as_const(d->containerSelectionConfig)) {
                 const QString &key = it.first;
                 const QString &value = it.second;
-                bool hasAsterisk = key.contains(qL1C('*'));
+                bool hasAsterisk = key.contains(u'*');
 
                 if ((hasAsterisk && key.length() == 1)
                         || (!hasAsterisk && key == app->id())
@@ -722,7 +724,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
                     cannotUseQuickLaunch = "the app is started using a debug-wrapper";
                 else if (hasStdioRedirections)
                     cannotUseQuickLaunch = "standard I/O is redirected";
-                else if (!app->runtimeParameters().value(qSL("environmentVariables")).toMap().isEmpty())
+                else if (!app->runtimeParameters().value(u"environmentVariables"_s).toMap().isEmpty())
                     cannotUseQuickLaunch = "the app requests custom environment variables";
                 else if (app->info()->openGLConfiguration() != runtimeManager->systemOpenGLConfiguration())
                     cannotUseQuickLaunch = "the app requests a custom OpenGL configuration";
@@ -1011,7 +1013,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
 
     if (url.isValid()) {
         QString scheme = url.scheme();
-        if (scheme != qL1S("file"))
+        if (scheme != u"file")
             apps = schemeHandlers(scheme);
 
         if (apps.isEmpty()) {
@@ -1221,7 +1223,7 @@ void ApplicationManager::emitDataChanged(Application *app, const QVector<int> &r
         if (isSignalConnected(appChanged)) {
             QStringList stringRoles;
             for (auto role : roles)
-                stringRoles << qL1S(d->roleNames[role]);
+                stringRoles << QString::fromLatin1(d->roleNames[role]);
             emit applicationChanged(app->id(), stringRoles);
         }
     }
@@ -1324,7 +1326,7 @@ QVariantMap ApplicationManager::get(int index) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(qL1S(it.value()), data(this->index(index), it.key()));
+        map.insert(QString::fromLatin1(it.value()), data(this->index(index), it.key()));
     return map;
 }
 

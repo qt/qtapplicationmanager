@@ -434,9 +434,9 @@ QStringList Logging::filterRules()
 void Logging::setFilterRules(const QStringList &rules)
 {
     lg()->rules = rules;
-    QString rulesStr = rules.join(qL1C('\n'));
+    QString rulesStr = rules.join(u'\n');
     if (QT_CONFIG(am_dltlogging) && lg()->dltEnabled)
-        rulesStr += qSL("\ngeneral=true");
+        rulesStr += u"\ngeneral=true";
     QLoggingCategory::setFilterRules(rulesStr);
 }
 
@@ -554,9 +554,9 @@ void Logging::setDltLongMessageBehavior(const QString &behaviorString)
 
 #if QT_CONFIG(am_dltlogging)
     QDltRegistration::LongMessageBehavior behavior = QDltRegistration::LongMessageBehavior::Truncate;
-    if (behaviorString == qL1S("split"))
+    if (behaviorString == u"split")
         behavior = QDltRegistration::LongMessageBehavior::Split;
-    else if (behaviorString == qL1S("pass"))
+    else if (behaviorString == u"pass")
         behavior = QDltRegistration::LongMessageBehavior::Pass;
 
     globalDltRegistration()->setLongMessageBehavior(behavior);

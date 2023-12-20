@@ -17,6 +17,8 @@
 #include "global.h"
 #include "logging.h"
 
+using namespace Qt::StringLiterals;
+
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -25,12 +27,12 @@ bool PackageUtilities::ensureCorrectLocale() { return true; }
 bool PackageUtilities::checkCorrectLocale() { return true; }
 
 ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString)
-    : Exception(Error::Archive, qSL("[libarchive] ") + qL1S(errorString) + qSL(": ") + QString::fromLocal8Bit(::archive_error_string(ar)))
+    : Exception(Error::Archive, u"[libarchive] "_s + QString::fromLatin1(errorString) + u": "_s + QString::fromLocal8Bit(::archive_error_string(ar)))
 { }
 
 
 QVariantMap PackageUtilities::headerDataForDigest = QVariantMap {
-    { qSL("extraSigned"), QVariantMap() }
+    { u"extraSigned"_s, QVariantMap() }
 };
 
 void PackageUtilities::addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest)

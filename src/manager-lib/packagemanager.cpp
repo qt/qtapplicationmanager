@@ -39,6 +39,9 @@
 
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
+
 /*!
     \qmltype PackageManager
     \inqmlmodule QtApplicationManager.SystemUI
@@ -498,7 +501,7 @@ QVariantMap PackageManager::get(Package *package) const
     if (package) {
         QHash<int, QByteArray> roles = roleNames();
         for (auto it = roles.begin(); it != roles.end(); ++it)
-            map.insert(qL1S(it.value()), dataForRole(package, it.key()));
+            map.insert(QString::fromLatin1(it.value()), dataForRole(package, it.key()));
     }
     return map;
 }
@@ -513,7 +516,7 @@ void PackageManager::emitDataChanged(Package *package, const QVector<int> &roles
         if (isSignalConnected(pkgChanged)) {
             QStringList stringRoles;
             for (auto role : roles)
-                stringRoles << qL1S(s_roleNames[role]);
+                stringRoles << QString::fromLatin1(s_roleNames[role]);
             emit packageChanged(package->id(), stringRoles);
         }
     }
@@ -770,9 +773,9 @@ static QVariantMap locationMap(const QString &path)
 
 
     return QVariantMap {
-        { qSL("path"), path },
-        { qSL("deviceSize"), bytesTotal },
-        { qSL("deviceFree"), bytesFree }
+        { u"path"_s, path },
+        { u"deviceSize"_s, bytesTotal },
+        { u"deviceFree"_s, bytesFree }
     };
 }
 
@@ -860,8 +863,8 @@ void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
             QStringList checkDirs;
             QStringList checkFiles;
 
-            checkFiles << pkgDir + qSL("/info.yaml");
-            checkFiles << pkgDir + qSL("/.installation-report.yaml");
+            checkFiles << pkgDir + u"/info.yaml"_s;
+            checkFiles << pkgDir + u"/.installation-report.yaml"_s;
             checkDirs << pkgDir;
 
             for (const QString &checkFile : std::as_const(checkFiles)) {
@@ -1412,7 +1415,7 @@ bool PackageManager::finishedPackageInstall(const QString &id)
 
         // attach the installation report (unless we're just downgrading a built-in)
         if (!isDowngrade) {
-            QFile irfile(newPackageInfo->baseDir().absoluteFilePath(qSL(".installation-report.yaml")));
+            QFile irfile(newPackageInfo->baseDir().absoluteFilePath(u".installation-report.yaml"_s));
             auto ir = std::make_unique<InstallationReport>(package->id());
             irfile.open(QFile::ReadOnly);
             try {
@@ -1564,7 +1567,7 @@ bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
 {
     try {
         // check if we have enough parts: e.g. "tld.company.app" would have 3 parts
-        QStringList parts = name.split(qL1C('.'));
+        QStringList parts = name.split(u'.');
         if (parts.size() < minimalPartCount) {
             throw Exception(Error::Parse, "the minimum amount of parts (subdomains) is %1 (found %2)")
                 .arg(minimalPartCount).arg(parts.size());

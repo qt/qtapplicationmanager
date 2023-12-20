@@ -8,6 +8,8 @@
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/global.h>
 
+using namespace Qt::StringLiterals;
+
 QT_USE_NAMESPACE_AM
 
 class tst_Configuration : public QObject
@@ -34,7 +36,7 @@ tst_Configuration::tst_Configuration()
 void tst_Configuration::defaultConfig()
 {
     Configuration c;
-    c.parseWithArguments({ qSL("test"), qSL("--no-cache") });
+    c.parseWithArguments({ u"test"_s, u"--no-cache"_s });
 
     QVERIFY(c.noCache());
 
@@ -43,16 +45,16 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.verbose(), false);
     QCOMPARE(c.slowAnimations(), false);
     QCOMPARE(c.noDltLogging(), false);
-    QCOMPARE(c.singleApp(), qSL(""));
+    QCOMPARE(c.singleApp(), u""_s);
     QCOMPARE(c.qmlDebugging(), false);
 
     // values from config file
-    QCOMPARE(c.mainQmlFile(), qSL(""));
+    QCOMPARE(c.mainQmlFile(), u""_s);
 
     QCOMPARE(c.builtinAppsManifestDirs(), {});
-    QCOMPARE(c.documentDir(), qSL(""));
+    QCOMPARE(c.documentDir(), u""_s);
 
-    QCOMPARE(c.installationDir(), qSL(""));
+    QCOMPARE(c.installationDir(), u""_s);
     QCOMPARE(c.disableInstaller(), false);
     QCOMPARE(c.disableIntents(), false);
     QCOMPARE(c.intentTimeoutForDisambiguation(), 10000);
@@ -61,7 +63,7 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.intentTimeoutForReplyFromSystem(), 20000);
 
     QCOMPARE(c.fullscreen(), false);
-    QCOMPARE(c.windowIcon(), qSL(""));
+    QCOMPARE(c.windowIcon(), u""_s);
     QCOMPARE(c.importPaths(), {});
     QCOMPARE(c.pluginPaths(), {});
     QCOMPARE(c.loadDummyData(), false);
@@ -73,13 +75,13 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.forceSingleProcess(), false);
     QCOMPARE(c.forceMultiProcess(), false);
     QCOMPARE(c.loggingRules(), {});
-    QCOMPARE(c.messagePattern(), qSL(""));
+    QCOMPARE(c.messagePattern(), u""_s);
     QCOMPARE(c.useAMConsoleLogger(), QVariant());
-    QCOMPARE(c.style(), qSL(""));
-    QCOMPARE(c.iconThemeName(), qSL(""));
+    QCOMPARE(c.style(), u""_s);
+    QCOMPARE(c.iconThemeName(), u""_s);
     QCOMPARE(c.iconThemeSearchPaths(), {});
-    QCOMPARE(c.dltId(), qSL(""));
-    QCOMPARE(c.dltDescription(), qSL(""));
+    QCOMPARE(c.dltId(), u""_s);
+    QCOMPARE(c.dltDescription(), u""_s);
     QCOMPARE(c.resources(), {});
 
     QCOMPARE(c.openGLConfiguration(), QVariantMap {});
@@ -91,7 +93,7 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList {});
     QCOMPARE(c.runtimeConfigurations(), QVariantMap {});
 
-    QCOMPARE(c.dbusRegistration("iface1"), qSL("auto"));
+    QCOMPARE(c.dbusRegistration("iface1"), u"auto"_s);
 
     QCOMPARE(c.rawSystemProperties(), QVariantMap {});
 
@@ -100,7 +102,7 @@ void tst_Configuration::defaultConfig()
 
     QString defaultWaylandSocketName =
 #if defined(Q_OS_LINUX)
-            qSL("qtam-wayland-");
+            u"qtam-wayland-"_s;
 #else
             QString();
 #endif
@@ -118,8 +120,8 @@ void tst_Configuration::defaultConfig()
 
 void tst_Configuration::simpleConfig()
 {
-    Configuration c({ qSL(":/data/config1.yaml") }, qSL(":/build-config.yaml"));
-    c.parseWithArguments({ qSL("test"), qSL("--no-cache") });
+    Configuration c({ u":/data/config1.yaml"_s }, u":/build-config.yaml"_s);
+    c.parseWithArguments({ u"test"_s, u"--no-cache"_s });
 
     QVERIFY(c.noCache());
 
@@ -128,16 +130,16 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.verbose(), false);
     QCOMPARE(c.slowAnimations(), false);
     QCOMPARE(c.noDltLogging(), false);
-    QCOMPARE(c.singleApp(), qSL(""));
+    QCOMPARE(c.singleApp(), u""_s);
     QCOMPARE(c.qmlDebugging(), false);
 
     // values from config file
-    QCOMPARE(c.mainQmlFile(), qSL("main.qml"));
+    QCOMPARE(c.mainQmlFile(), u"main.qml"_s);
 
-    QCOMPARE(c.builtinAppsManifestDirs(), { qSL("builtin-dir") });
-    QCOMPARE(c.documentDir(), qSL("doc-dir"));
+    QCOMPARE(c.builtinAppsManifestDirs(), { u"builtin-dir"_s });
+    QCOMPARE(c.documentDir(), u"doc-dir"_s);
 
-    QCOMPARE(c.installationDir(), qSL("installation-dir"));
+    QCOMPARE(c.installationDir(), u"installation-dir"_s);
     QCOMPARE(c.disableInstaller(), true);
     QCOMPARE(c.disableIntents(), true);
     QCOMPARE(c.intentTimeoutForDisambiguation(), 1);
@@ -146,9 +148,9 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.intentTimeoutForReplyFromSystem(), 4);
 
     QCOMPARE(c.fullscreen(), true);
-    QCOMPARE(c.windowIcon(), qSL("icon.png"));
-    QCOMPARE(c.importPaths(), QStringList({ pwd.absoluteFilePath(qSL("ip1")), pwd.absoluteFilePath(qSL("ip2")) }));
-    QCOMPARE(c.pluginPaths(), QStringList({ qSL("pp1"), qSL("pp2") }));
+    QCOMPARE(c.windowIcon(), u"icon.png"_s);
+    QCOMPARE(c.importPaths(), QStringList({ pwd.absoluteFilePath(u"ip1"_s), pwd.absoluteFilePath(u"ip2"_s) }));
+    QCOMPARE(c.pluginPaths(), QStringList({ u"pp1"_s, u"pp2"_s }));
     QCOMPARE(c.loadDummyData(), true);
     QCOMPARE(c.noSecurity(), true);
     QCOMPARE(c.developmentMode(), true);
@@ -157,101 +159,101 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.allowUnknownUiClients(), true);
     QCOMPARE(c.forceSingleProcess(), true);
     QCOMPARE(c.forceMultiProcess(), true);
-    QCOMPARE(c.loggingRules(), QStringList({ qSL("lr1"), qSL("lr2") }));
-    QCOMPARE(c.messagePattern(), qSL("msgPattern"));
+    QCOMPARE(c.loggingRules(), QStringList({ u"lr1"_s, u"lr2"_s }));
+    QCOMPARE(c.messagePattern(), u"msgPattern"_s);
     QCOMPARE(c.useAMConsoleLogger(), QVariant(true));
-    QCOMPARE(c.style(), qSL("mystyle"));
-    QCOMPARE(c.iconThemeName(), qSL("mytheme"));
-    QCOMPARE(c.iconThemeSearchPaths(), QStringList({ qSL("itsp1"), qSL("itsp2") }));
-    QCOMPARE(c.dltId(), qSL("dltid"));
-    QCOMPARE(c.dltDescription(), qSL("dltdesc"));
-    QCOMPARE(c.dltLongMessageBehavior(), qSL("split"));
-    QCOMPARE(c.resources(), QStringList({ qSL("r1"), qSL("r2") }));
+    QCOMPARE(c.style(), u"mystyle"_s);
+    QCOMPARE(c.iconThemeName(), u"mytheme"_s);
+    QCOMPARE(c.iconThemeSearchPaths(), QStringList({ u"itsp1"_s, u"itsp2"_s }));
+    QCOMPARE(c.dltId(), u"dltid"_s);
+    QCOMPARE(c.dltDescription(), u"dltdesc"_s);
+    QCOMPARE(c.dltLongMessageBehavior(), u"split"_s);
+    QCOMPARE(c.resources(), QStringList({ u"r1"_s, u"r2"_s }));
 
     QCOMPARE(c.openGLConfiguration(), QVariantMap
              ({
-                  { qSL("desktopProfile"), qSL("compatibility") },
-                  { qSL("esMajorVersion"), 5 },
-                  { qSL("esMinorVersion"), 15 }
+                  { u"desktopProfile"_s, u"compatibility"_s },
+                  { u"esMajorVersion"_s, 5 },
+                  { u"esMinorVersion"_s, 15 }
               }));
 
     QCOMPARE(c.installationLocations(), {});
 
     QList<QPair<QString, QString>> containerSelectionConfiguration {
-        { qSL("*"), qSL("selectionFunction") }
+        { u"*"_s, u"selectionFunction"_s }
     };
     QCOMPARE(c.containerSelectionConfiguration(), containerSelectionConfiguration);
     QCOMPARE(c.containerConfigurations(), QVariantMap
              ({
-                  { qSL("c-test"), QVariantMap {
-                        {  qSL("c-parameter"), qSL("c-value") }
+                  { u"c-test"_s, QVariantMap {
+                        {  u"c-parameter"_s, u"c-value"_s }
                     } }
               }));
     QCOMPARE(c.runtimeConfigurations(), QVariantMap
              ({
-                  { qSL("r-test"), QVariantMap {
-                        {  qSL("r-parameter"), qSL("r-value") }
+                  { u"r-test"_s, QVariantMap {
+                        {  u"r-parameter"_s, u"r-value"_s }
                     } }
               }));
-    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList(qSL("a")));
+    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList(u"a"_s));
 
-    QCOMPARE(c.dbusRegistration("iface1"), qSL("foobus"));
+    QCOMPARE(c.dbusRegistration("iface1"), u"foobus"_s);
 
     QCOMPARE(c.rawSystemProperties(), QVariantMap
              ({
-                  { qSL("public"), QVariantMap {
-                        {  qSL("public-prop"), qSL("public-value") }
+                  { u"public"_s, QVariantMap {
+                        {  u"public-prop"_s, u"public-value"_s }
                     } },
-                  { qSL("protected"), QVariantMap {
-                        {  qSL("protected-prop"), qSL("protected-value") }
+                  { u"protected"_s, QVariantMap {
+                        {  u"protected-prop"_s, u"protected-value"_s }
                     } },
-                  { qSL("private"), QVariantMap {
-                        {  qSL("private-prop"), qSL("private-value") }
+                  { u"private"_s, QVariantMap {
+                        {  u"private-prop"_s, u"private-value"_s }
                     } }
               }));
 
     QCOMPARE(c.quickLaunchIdleLoad(), qreal(0.5));
-    QHash<std::pair<QString, QString>, int> rpc { { { qSL("*"), qSL("*")}, 5 } };
+    QHash<std::pair<QString, QString>, int> rpc { { { u"*"_s, u"*"_s}, 5 } };
     QCOMPARE(c.quickLaunchRuntimesPerContainer(), rpc);
     QCOMPARE(c.quickLaunchFailedStartLimit(), 42);
     QCOMPARE(c.quickLaunchFailedStartLimitIntervalSec(), 43);
 
-    QCOMPARE(c.waylandSocketName(), qSL("my-wlsock-42"));
+    QCOMPARE(c.waylandSocketName(), u"my-wlsock-42"_s);
 
     QCOMPARE(c.waylandExtraSockets(), QVariantList
              ({
                   QVariantMap {
-                      { qSL("path"), qSL("path-es1") },
-                      { qSL("permissions"), 0440 },
-                      { qSL("userId"), 1 },
-                      { qSL("groupId"), 2 }
+                      { u"path"_s, u"path-es1"_s },
+                      { u"permissions"_s, 0440 },
+                      { u"userId"_s, 1 },
+                      { u"groupId"_s, 2 }
                   },
                   QVariantMap {
-                      { qSL("path"), qSL("path-es2") },
-                      { qSL("permissions"), 0222 },
-                      { qSL("userId"), 3 },
-                      { qSL("groupId"), 4 }
+                      { u"path"_s, u"path-es2"_s },
+                      { u"permissions"_s, 0222 },
+                      { u"userId"_s, 3 },
+                      { u"groupId"_s, 4 }
                   }
               }));
 
     QCOMPARE(c.managerCrashAction(), QVariantMap
              ({
-                  { qSL("printBacktrace"), true },
-                  { qSL("printQmlStack"), true },
-                  { qSL("waitForGdbAttach"), true },
-                  { qSL("dumpCore"), true }
+                  { u"printBacktrace"_s, true },
+                  { u"printQmlStack"_s, true },
+                  { u"waitForGdbAttach"_s, true },
+                  { u"dumpCore"_s, true }
               }));
 
-    QCOMPARE(c.caCertificates(), QStringList({ qSL("cert1"), qSL("cert2") }));
+    QCOMPARE(c.caCertificates(), QStringList({ u"cert1"_s, u"cert2"_s }));
 
-    QCOMPARE(c.pluginFilePaths("startup"), QStringList({ qSL("s1"), qSL("s2") }));
-    QCOMPARE(c.pluginFilePaths("container"), QStringList({ qSL("c1"), qSL("c2") }));
+    QCOMPARE(c.pluginFilePaths("startup"), QStringList({ u"s1"_s, u"s2"_s }));
+    QCOMPARE(c.pluginFilePaths("container"), QStringList({ u"c1"_s, u"c2"_s }));
 }
 
 void tst_Configuration::mergedConfig()
 {
-    Configuration c({ qSL(":/data/") }, qSL(":/build-config.yaml"));
-    c.parseWithArguments({ qSL("test"), qSL("--no-cache") });
+    Configuration c({ u":/data/"_s }, u":/build-config.yaml"_s);
+    c.parseWithArguments({ u"test"_s, u"--no-cache"_s });
 
     QVERIFY(c.noCache());
 
@@ -260,16 +262,16 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.verbose(), false);
     QCOMPARE(c.slowAnimations(), false);
     QCOMPARE(c.noDltLogging(), false);
-    QCOMPARE(c.singleApp(), qSL(""));
+    QCOMPARE(c.singleApp(), u""_s);
     QCOMPARE(c.qmlDebugging(), false);
 
     // values from config file
-    QCOMPARE(c.mainQmlFile(), qSL("main2.qml"));
+    QCOMPARE(c.mainQmlFile(), u"main2.qml"_s);
 
-    QCOMPARE(c.builtinAppsManifestDirs(), QStringList({ qSL("builtin-dir"), qSL("builtin-dir2") }));
-    QCOMPARE(c.documentDir(), qSL("doc-dir2"));
+    QCOMPARE(c.builtinAppsManifestDirs(), QStringList({ u"builtin-dir"_s, u"builtin-dir2"_s }));
+    QCOMPARE(c.documentDir(), u"doc-dir2"_s);
 
-    QCOMPARE(c.installationDir(), qSL("installation-dir2"));
+    QCOMPARE(c.installationDir(), u"installation-dir2"_s);
     QCOMPARE(c.disableInstaller(), true);
     QCOMPARE(c.disableIntents(), true);
     QCOMPARE(c.intentTimeoutForDisambiguation(), 5);
@@ -278,12 +280,12 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.intentTimeoutForReplyFromSystem(), 8);
 
     QCOMPARE(c.fullscreen(), true);
-    QCOMPARE(c.windowIcon(), qSL("icon2.png"));
+    QCOMPARE(c.windowIcon(), u"icon2.png"_s);
     QCOMPARE(c.importPaths(), QStringList
-             ({ pwd.absoluteFilePath(qSL("ip1")),
-                pwd.absoluteFilePath(qSL("ip2")),
-                pwd.absoluteFilePath(qSL("ip3")) }));
-    QCOMPARE(c.pluginPaths(), QStringList({ qSL("pp1"), qSL("pp2"), qSL("pp3") }));
+             ({ pwd.absoluteFilePath(u"ip1"_s),
+                pwd.absoluteFilePath(u"ip2"_s),
+                pwd.absoluteFilePath(u"ip3"_s) }));
+    QCOMPARE(c.pluginPaths(), QStringList({ u"pp1"_s, u"pp2"_s, u"pp3"_s }));
     QCOMPARE(c.loadDummyData(), true);
     QCOMPARE(c.noSecurity(), true);
     QCOMPARE(c.developmentMode(), true);
@@ -292,117 +294,117 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.allowUnknownUiClients(), true);
     QCOMPARE(c.forceSingleProcess(), true);
     QCOMPARE(c.forceMultiProcess(), true);
-    QCOMPARE(c.loggingRules(), QStringList({ qSL("lr1"), qSL("lr2"), qSL("lr3") }));
-    QCOMPARE(c.messagePattern(), qSL("msgPattern2"));
+    QCOMPARE(c.loggingRules(), QStringList({ u"lr1"_s, u"lr2"_s, u"lr3"_s }));
+    QCOMPARE(c.messagePattern(), u"msgPattern2"_s);
     QCOMPARE(c.useAMConsoleLogger(), QVariant());
-    QCOMPARE(c.style(), qSL("mystyle2"));
-    QCOMPARE(c.iconThemeName(), qSL("mytheme2"));
-    QCOMPARE(c.iconThemeSearchPaths(), QStringList({ qSL("itsp1"), qSL("itsp2"), qSL("itsp3") }));
-    QCOMPARE(c.dltId(), qSL("dltid2"));
-    QCOMPARE(c.dltDescription(), qSL("dltdesc2"));
-    QCOMPARE(c.dltLongMessageBehavior(), qSL("truncate"));
-    QCOMPARE(c.resources(), QStringList({ qSL("r1"), qSL("r2"), qSL("r3") }));
+    QCOMPARE(c.style(), u"mystyle2"_s);
+    QCOMPARE(c.iconThemeName(), u"mytheme2"_s);
+    QCOMPARE(c.iconThemeSearchPaths(), QStringList({ u"itsp1"_s, u"itsp2"_s, u"itsp3"_s }));
+    QCOMPARE(c.dltId(), u"dltid2"_s);
+    QCOMPARE(c.dltDescription(), u"dltdesc2"_s);
+    QCOMPARE(c.dltLongMessageBehavior(), u"truncate"_s);
+    QCOMPARE(c.resources(), QStringList({ u"r1"_s, u"r2"_s, u"r3"_s }));
 
     QCOMPARE(c.openGLConfiguration(), QVariantMap
              ({
-                  { qSL("desktopProfile"), qSL("classic") },
-                  { qSL("esMajorVersion"), 1 },
-                  { qSL("esMinorVersion"), 0 },
+                  { u"desktopProfile"_s, u"classic"_s },
+                  { u"esMajorVersion"_s, 1 },
+                  { u"esMinorVersion"_s, 0 },
               }));
 
     QCOMPARE(c.installationLocations(), {});
 
     QList<QPair<QString, QString>> containerSelectionConfiguration {
-        { qSL("*"), qSL("selectionFunction") },
-        { qSL("2"), qSL("second") }
+        { u"*"_s, u"selectionFunction"_s },
+        { u"2"_s, u"second"_s }
     };
     QCOMPARE(c.containerSelectionConfiguration(), containerSelectionConfiguration);
     QCOMPARE(c.containerConfigurations(), QVariantMap
              ({
-                  { qSL("c-test"), QVariantMap {
-                        {  qSL("c-parameter"), qSL("xc-value") },
+                  { u"c-test"_s, QVariantMap {
+                        {  u"c-parameter"_s, u"xc-value"_s },
                     } },
-                  { qSL("c-test2"), QVariantMap {
-                        {  qSL("c-parameter2"), qSL("c-value2") },
+                  { u"c-test2"_s, QVariantMap {
+                        {  u"c-parameter2"_s, u"c-value2"_s },
                     } }
 
               }));
 
     QCOMPARE(c.runtimeConfigurations(), QVariantMap
              ({
-                  { qSL("r-test"), QVariantMap {
-                        {  qSL("r-parameter"), qSL("xr-value") },
+                  { u"r-test"_s, QVariantMap {
+                        {  u"r-parameter"_s, u"xr-value"_s },
                     } },
-                  { qSL("r-test2"), QVariantMap {
-                        {  qSL("r-parameter2"), qSL("r-value2") },
+                  { u"r-test2"_s, QVariantMap {
+                        {  u"r-parameter2"_s, u"r-value2"_s },
                     } }
 
               }));
-    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList({ qSL("a"), qSL("b"), qSL("c") }));
+    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList({ u"a"_s, u"b"_s, u"c"_s }));
 
-    QCOMPARE(c.dbusRegistration("iface1"), qSL("foobus1"));
-    QCOMPARE(c.dbusRegistration("iface2"), qSL("foobus2"));
+    QCOMPARE(c.dbusRegistration("iface1"), u"foobus1"_s);
+    QCOMPARE(c.dbusRegistration("iface2"), u"foobus2"_s);
 
     QCOMPARE(c.rawSystemProperties(), QVariantMap
              ({
-                  { qSL("public"), QVariantMap {
-                        {  qSL("public-prop"), qSL("xpublic-value") },
-                        {  qSL("public-prop2"), qSL("public-value2") }
+                  { u"public"_s, QVariantMap {
+                        {  u"public-prop"_s, u"xpublic-value"_s },
+                        {  u"public-prop2"_s, u"public-value2"_s }
                     } },
-                  { qSL("protected"), QVariantMap {
-                        {  qSL("protected-prop"), qSL("xprotected-value") },
-                        {  qSL("protected-prop2"), qSL("protected-value2") }
+                  { u"protected"_s, QVariantMap {
+                        {  u"protected-prop"_s, u"xprotected-value"_s },
+                        {  u"protected-prop2"_s, u"protected-value2"_s }
                     } },
-                  { qSL("private"), QVariantMap {
-                        {  qSL("private-prop"), qSL("xprivate-value") },
-                        {  qSL("private-prop2"), qSL("private-value2") }
+                  { u"private"_s, QVariantMap {
+                        {  u"private-prop"_s, u"xprivate-value"_s },
+                        {  u"private-prop2"_s, u"private-value2"_s }
                     } }
               }));
 
     QCOMPARE(c.quickLaunchIdleLoad(), qreal(0.2));
     QHash<std::pair<QString, QString>, int> rpc = {
-        { { qSL("*"), qSL("*") }, 5 },
-        { { qSL("c-foo"), qSL("r-foo") }, 1 },
-        { { qSL("c-foo"), qSL("r-bar") }, 2 },
-        { { qSL("c-bar"), qSL("*") }, 4 },
+        { { u"*"_s, u"*"_s }, 5 },
+        { { u"c-foo"_s, u"r-foo"_s }, 1 },
+        { { u"c-foo"_s, u"r-bar"_s }, 2 },
+        { { u"c-bar"_s, u"*"_s }, 4 },
     };
     QCOMPARE(c.quickLaunchRuntimesPerContainer(), rpc);
     QCOMPARE(c.quickLaunchFailedStartLimit(), 44);
     QCOMPARE(c.quickLaunchFailedStartLimitIntervalSec(), 45);
 
-    QCOMPARE(c.waylandSocketName(), qSL("other-wlsock-0"));
+    QCOMPARE(c.waylandSocketName(), u"other-wlsock-0"_s);
 
     QCOMPARE(c.waylandExtraSockets(), QVariantList
              ({
                   QVariantMap {
-                      { qSL("path"), qSL("path-es1") },
-                      { qSL("permissions"), 0440 },
-                      { qSL("userId"), 1 },
-                      { qSL("groupId"), 2 }
+                      { u"path"_s, u"path-es1"_s },
+                      { u"permissions"_s, 0440 },
+                      { u"userId"_s, 1 },
+                      { u"groupId"_s, 2 }
                   },
                   QVariantMap {
-                      { qSL("path"), qSL("path-es2") },
-                      { qSL("permissions"), 0222 },
-                      { qSL("userId"), 3 },
-                      { qSL("groupId"), 4 }
+                      { u"path"_s, u"path-es2"_s },
+                      { u"permissions"_s, 0222 },
+                      { u"userId"_s, 3 },
+                      { u"groupId"_s, 4 }
                   },
                   QVariantMap {
-                      { qSL("path"), qSL("path-es3") },
+                      { u"path"_s, u"path-es3"_s },
                   }
               }));
 
     QCOMPARE(c.managerCrashAction(), QVariantMap
              ({
-                  { qSL("printBacktrace"), true },
-                  { qSL("printQmlStack"), true },
-                  { qSL("waitForGdbAttach"), true },
-                  { qSL("dumpCore"), true }
+                  { u"printBacktrace"_s, true },
+                  { u"printQmlStack"_s, true },
+                  { u"waitForGdbAttach"_s, true },
+                  { u"dumpCore"_s, true }
               }));
 
-    QCOMPARE(c.caCertificates(), QStringList({ qSL("cert1"), qSL("cert2"), qSL("cert3") }));
+    QCOMPARE(c.caCertificates(), QStringList({ u"cert1"_s, u"cert2"_s, u"cert3"_s }));
 
-    QCOMPARE(c.pluginFilePaths("container"), QStringList({ qSL("c1"), qSL("c2"), qSL("c3"), qSL("c4") }));
-    QCOMPARE(c.pluginFilePaths("startup"), QStringList({ qSL("s1"), qSL("s2"), qSL("s3") }));
+    QCOMPARE(c.pluginFilePaths("container"), QStringList({ u"c1"_s, u"c2"_s, u"c3"_s, u"c4"_s }));
+    QCOMPARE(c.pluginFilePaths("startup"), QStringList({ u"s1"_s, u"s2"_s, u"s3"_s }));
 }
 
 void tst_Configuration::commandLineConfig()
@@ -449,16 +451,16 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.verbose(), true);
     QCOMPARE(c.slowAnimations(), true);
     QCOMPARE(c.noDltLogging(), true);
-    QCOMPARE(c.singleApp(), qSL("appname"));
+    QCOMPARE(c.singleApp(), u"appname"_s);
     QCOMPARE(c.qmlDebugging(), true);
 
     // values from config file
-    QCOMPARE(c.mainQmlFile(), qSL("main-cl.qml"));
+    QCOMPARE(c.mainQmlFile(), u"main-cl.qml"_s);
 
-    QCOMPARE(c.builtinAppsManifestDirs(), QStringList({ qSL("builtin-dir-cl1"), qSL("builtin-dir-cl2") }));
-    QCOMPARE(c.documentDir(), qSL("document-dir-cl"));
+    QCOMPARE(c.builtinAppsManifestDirs(), QStringList({ u"builtin-dir-cl1"_s, u"builtin-dir-cl2"_s }));
+    QCOMPARE(c.documentDir(), u"document-dir-cl"_s);
 
-    QCOMPARE(c.installationDir(), qSL("installation-dir-cl"));
+    QCOMPARE(c.installationDir(), u"installation-dir-cl"_s);
     QCOMPARE(c.disableInstaller(), true);
     QCOMPARE(c.disableIntents(), true);
     QCOMPARE(c.intentTimeoutForDisambiguation(), 10000);
@@ -467,9 +469,9 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.intentTimeoutForReplyFromSystem(), 20000);
 
     QCOMPARE(c.fullscreen(), false);
-    QCOMPARE(c.windowIcon(), qSL(""));
-    QCOMPARE(c.importPaths(), QStringList({ pwd.absoluteFilePath(qSL("ip-cl1")),
-                                            pwd.absoluteFilePath(qSL("ip-cl2")) }));
+    QCOMPARE(c.windowIcon(), u""_s);
+    QCOMPARE(c.importPaths(), QStringList({ pwd.absoluteFilePath(u"ip-cl1"_s),
+                                            pwd.absoluteFilePath(u"ip-cl2"_s) }));
     QCOMPARE(c.pluginPaths(), {});
     QCOMPARE(c.loadDummyData(), true);
     QCOMPARE(c.noSecurity(), true);
@@ -477,14 +479,14 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.noUiWatchdog(), true);
     QCOMPARE(c.forceSingleProcess(), true);
     QCOMPARE(c.forceMultiProcess(), true);
-    QCOMPARE(c.loggingRules(), QStringList({ qSL("cl-lr1"), qSL("cl-lr2") }));
-    QCOMPARE(c.messagePattern(), qSL(""));
+    QCOMPARE(c.loggingRules(), QStringList({ u"cl-lr1"_s, u"cl-lr2"_s }));
+    QCOMPARE(c.messagePattern(), u""_s);
     QCOMPARE(c.useAMConsoleLogger(), QVariant());
-    QCOMPARE(c.style(), qSL(""));
-    QCOMPARE(c.iconThemeName(), qSL(""));
+    QCOMPARE(c.style(), u""_s);
+    QCOMPARE(c.iconThemeName(), u""_s);
     QCOMPARE(c.iconThemeSearchPaths(), {});
-    QCOMPARE(c.dltId(), qSL(""));
-    QCOMPARE(c.dltDescription(), qSL(""));
+    QCOMPARE(c.dltId(), u""_s);
+    QCOMPARE(c.dltDescription(), u""_s);
     QCOMPARE(c.resources(), {});
 
     QCOMPARE(c.openGLConfiguration(), QVariantMap {});
@@ -496,14 +498,14 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.runtimeConfigurations(), QVariantMap{});
     QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList{});
 
-    QCOMPARE(c.dbusRegistration("iface1"), qSL("system"));
+    QCOMPARE(c.dbusRegistration("iface1"), u"system"_s);
 
     QCOMPARE(c.rawSystemProperties(), QVariantMap {});
 
     QCOMPARE(c.quickLaunchIdleLoad(), qreal(0));
     QVERIFY(c.quickLaunchRuntimesPerContainer().isEmpty());
 
-    QCOMPARE(c.waylandSocketName(), qSL("wlsock-1"));
+    QCOMPARE(c.waylandSocketName(), u"wlsock-1"_s);
     QCOMPARE(c.waylandExtraSockets(), {});
 
     QCOMPARE(c.managerCrashAction(), QVariantMap {});

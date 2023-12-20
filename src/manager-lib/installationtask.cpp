@@ -25,6 +25,9 @@
 #  include <unistd.h>
 #endif
 
+using namespace Qt::StringLiterals;
+
+
 /*
   Overview of what happens on an installation of an app with <id> to <location>:
 
@@ -99,7 +102,7 @@ InstallationTask::InstallationTask(const QString &installationPath, const QStrin
     , m_documentPath(documentPath)
     , m_sourceUrl(sourceUrl)
 {
-    setObjectName(qSL("QtAM-InstallationTask"));
+    setObjectName(u"QtAM-InstallationTask"_s);
 }
 
 InstallationTask::~InstallationTask()
@@ -252,7 +255,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
     ++m_extractedFileCount;
 
     if (m_extractedFileCount == 1) {
-        if (file != qL1S("info.yaml"))
+        if (file != u"info.yaml")
             throw Exception(Error::Package, "info.yaml must be the first file in the package. Got %1")
                 .arg(file);
 
@@ -319,7 +322,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
 
         startInstallation();
 
-        QFile::copy(oldDestinationDirectory.filePath(qSL("info.yaml")), m_extractionDir.filePath(qSL("info.yaml")));
+        QFile::copy(oldDestinationDirectory.filePath(u"info.yaml"_s), m_extractionDir.filePath(u"info.yaml"_s));
         QFile::copy(oldDestinationDirectory.filePath(m_iconFileName), m_extractionDir.filePath(m_iconFileName));
 
         {
@@ -361,8 +364,8 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 {
     // 2. delete old, partial installation
 
-    QDir installationDir = QString(m_installationPath + qL1C('/'));
-    QString installationTarget = m_packageId + qL1C('+');
+    QDir installationDir = QString(m_installationPath + u'/');
+    QString installationTarget = m_packageId + u'+';
     if (installationDir.exists(installationTarget)) {
         if (!removeRecursiveHelper(installationDir.absoluteFilePath(installationTarget)))
             throw Exception("could not remove old, partial installation %1/%2").arg(installationDir).arg(installationTarget);
@@ -390,7 +393,7 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
     // create the installation report
     InstallationReport report = m_extractor->installationReport();
 
-    QFile reportFile(m_extractionDir.absoluteFilePath(qSL(".installation-report.yaml")));
+    QFile reportFile(m_extractionDir.absoluteFilePath(u".installation-report.yaml"_s));
     if (!reportFile.open(QFile::WriteOnly) || !report.serialize(&reportFile))
         throw Exception(reportFile, "could not write the installation report");
     reportFile.close();
@@ -431,7 +434,7 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 
     // this should not be necessary, but it also won't hurt
     if (mode == Update)
-        removeRecursiveHelper(m_applicationDir.absolutePath() + qL1C('-'));
+        removeRecursiveHelper(m_applicationDir.absolutePath() + u'-');
 
 #ifdef Q_OS_UNIX
     // write files to the filesystem

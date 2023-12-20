@@ -37,6 +37,8 @@
 #include "packagemanager.h"
 #include "applicationinfo.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 
@@ -151,7 +153,7 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
             connect(nativeRuntime, &NativeRuntime::applicationConnectedToPeerDBus,
                     intentServer(), [this](const QDBusConnection &connection, Application *application) {
                 qCDebug(LogIntents) << "IntentServer: applicationConnectedToPeerDBus"
-                                    << (application ? application->id() : qSL("<launcher>"));
+                                    << (application ? application->id() : u"<launcher>"_s);
 
                 IntentServerDBusIpcConnection::create(connection, application, this);
             });
@@ -270,7 +272,7 @@ void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest>
 
         QMetaObject::invokeMethod(m_ic, [icr, requestId, this]() {
             emit requestToSystemFinished(icr.data(), requestId, requestId.isNull(),
-                                         requestId.isNull() ? qL1S("No matching intent handler registered.") : QString());
+                                         requestId.isNull() ? u"No matching intent handler registered."_s : QString());
         }, Qt::QueuedConnection);
     }, Qt::QueuedConnection);
 }
@@ -389,7 +391,7 @@ void IntentServerInProcessIpcConnection::requestToApplication(IntentServerReques
     // we need decouple the server/client interface at this point to have a consistent
     // behavior in single- and multi-process mode
     QMetaObject::invokeMethod(this, [this, requestId = isr->requestId(), intentId = isr->intentId(),
-                                     requestingApplicationId = isr->isBroadcast() ? qSL(":broadcast:")
+                                     requestingApplicationId = isr->isBroadcast() ? u":broadcast:"_s
                                                                                   : isr->requestingApplicationId(),
                                      applicationId = isr->selectedIntent()->applicationId(),
                                      parameters = isr->parameters()]() {
@@ -424,12 +426,12 @@ IntentServerDBusIpcConnection::IntentServerDBusIpcConnection(QDBusConnection con
 {
     m_connectionName = connection.name();
     m_adaptor = new IntentInterfaceAdaptor(this);
-    connection.registerObject(qSL("/IntentServer"), this, QDBusConnection::ExportAdaptors);
+    connection.registerObject(u"/IntentServer"_s, this, QDBusConnection::ExportAdaptors);
 }
 
 IntentServerDBusIpcConnection::~IntentServerDBusIpcConnection()
 {
-    QDBusConnection(m_connectionName).unregisterObject(qSL("/IntentServer"));
+    QDBusConnection(m_connectionName).unregisterObject(u"/IntentServer"_s);
 }
 
 IntentServerDBusIpcConnection *IntentServerDBusIpcConnection::create(QDBusConnection connection,
@@ -464,7 +466,7 @@ void IntentServerDBusIpcConnection::requestToApplication(IntentServerRequest *is
     // for broadcasts.
     QString requestIdStr = isr->requestId().toString();
     if (isr->isBroadcast())
-        requestIdStr.append(qSL("@broadcast"));
+        requestIdStr.append(u"@broadcast"_s);
 
     emit m_adaptor->requestToApplication(requestIdStr, isr->intentId(),
                                          isr->selectedIntent()->applicationId(),
@@ -487,7 +489,7 @@ QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,
     auto isr = m_interface->requestToSystem(requestingApplicationId, intentId, applicationId,
                                             convertFromDBusVariant(parameters).toMap());
     if (!isr) {
-        sendErrorReply(QDBusError::NotSupported, qL1S("No matching intent handler registered."));
+        sendErrorReply(QDBusError::NotSupported, u"No matching intent handler registered."_s);
         return QString();
     } else {
         return isr->requestId().toString();

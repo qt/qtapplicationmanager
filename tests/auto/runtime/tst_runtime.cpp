@@ -14,6 +14,8 @@
 #include "runtimefactory.h"
 #include "exception.h"
 
+using namespace Qt::StringLiterals;
+
 QT_USE_NAMESPACE_AM
 
 class tst_Runtime : public QObject
@@ -68,7 +70,7 @@ public:
         : AbstractRuntimeManager(id, parent)
     { }
 
-    static QString defaultIdentifier() { return qSL("foo"); }
+    static QString defaultIdentifier() { return u"foo"_s; }
 
     bool inProcess() const override
     {
@@ -93,8 +95,8 @@ void tst_Runtime::factory()
     QVERIFY(rf.get() == RuntimeFactory::instance());
     QVERIFY(rf->runtimeIds().isEmpty());
 
-    QVERIFY(rf->registerRuntime(new TestRuntimeManager(qSL("foo"), qApp)));
-    QVERIFY(rf->runtimeIds() == QStringList() << qSL("foo"));
+    QVERIFY(rf->registerRuntime(new TestRuntimeManager(u"foo"_s, qApp)));
+    QVERIFY(rf->runtimeIds() == QStringList() << u"foo"_s);
 
     QVERIFY(!rf->create(nullptr, nullptr));
 

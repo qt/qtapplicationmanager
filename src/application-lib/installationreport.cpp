@@ -18,6 +18,8 @@
 #include "exception.h"
 #include "installationreport.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 // you can generate a new set with
@@ -135,55 +137,55 @@ void InstallationReport::deserialize(QIODevice *from)
     m_files.clear();
 
     auto docs = YamlParser::parseAllDocuments(from->readAll());
-    checkYamlFormat(docs, 3 /*number of expected docs*/, { { qSL("am-installation-report"), 3 } });
+    checkYamlFormat(docs, 3 /*number of expected docs*/, { { u"am-installation-report"_s, 3 } });
 
     const QVariantMap &root = docs.at(1).toMap();
 
     try {
         if (m_packageId.isEmpty()) {
-            m_packageId = root[qSL("packageId")].toString();
+            m_packageId = root[u"packageId"_s].toString();
             if (m_packageId.isEmpty())
                 throw Exception("packageId is empty");
-        } else if (root[qSL("packageId")].toString() != m_packageId) {
+        } else if (root[u"packageId"_s].toString() != m_packageId) {
             throw Exception("packageId does not match: expected '%1', but got '%2'")
-                    .arg(m_packageId).arg(root[qSL("packageId")].toString());
+                    .arg(m_packageId).arg(root[u"packageId"_s].toString());
         }
 
-        m_diskSpaceUsed = root[qSL("diskSpaceUsed")].toULongLong();
-        m_digest = QByteArray::fromHex(root[qSL("digest")].toString().toLatin1());
+        m_diskSpaceUsed = root[u"diskSpaceUsed"_s].toULongLong();
+        m_digest = QByteArray::fromHex(root[u"digest"_s].toString().toLatin1());
         if (m_digest.isEmpty())
             throw Exception("digest is empty");
 
-        auto devSig = root.find(qSL("developerSignature"));
+        auto devSig = root.find(u"developerSignature"_s);
         if (devSig != root.end()) {
             m_developerSignature = QByteArray::fromBase64(devSig.value().toString().toLatin1());
             if (m_developerSignature.isEmpty())
                 throw Exception("developerSignature is empty");
         }
-        auto storeSig = root.find(qSL("storeSignature"));
+        auto storeSig = root.find(u"storeSignature"_s);
         if (storeSig != root.end()) {
             m_storeSignature = QByteArray::fromBase64(storeSig.value().toString().toLatin1());
             if (m_storeSignature.isEmpty())
                 throw Exception("storeSignature is empty");
         }
-        auto extra = root.find(qSL("extra"));
+        auto extra = root.find(u"extra"_s);
         if (extra != root.end()) {
             m_extraMetaData = extra.value().toMap();
             if (m_extraMetaData.isEmpty())
                 throw Exception("extra metadata is empty");
         }
-        auto extraSigned = root.find(qSL("extraSigned"));
+        auto extraSigned = root.find(u"extraSigned"_s);
         if (extraSigned != root.end()) {
             m_extraSignedMetaData = extraSigned.value().toMap();
             if (m_extraSignedMetaData.isEmpty())
                 throw Exception("extraSigned metadata is empty");
         }
-        m_files = root[qSL("files")].toStringList();
+        m_files = root[u"files"_s].toStringList();
         if (m_files.isEmpty())
             throw Exception("No files");
 
         // see if the file has been tampered with by checking the hmac
-        QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(qSL("hmac")).toString().toLatin1());
+        QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(u"hmac"_s).toString().toLatin1());
         QByteArray hmacKey = QByteArray::fromRawData(reinterpret_cast<const char *>(privateHmacKeyData),
                                                      sizeof(privateHmacKeyData));
 
@@ -209,24 +211,24 @@ bool InstallationReport::serialize(QIODevice *to) const
         return false;
 
     QVariantMap header {
-        { qSL("formatVersion"), 3 },
-        { qSL("formatType"), qSL("am-installation-report") }
+        { u"formatVersion"_s, 3 },
+        { u"formatType"_s, u"am-installation-report"_s }
     };
     QVariantMap root {
-        { qSL("packageId"), packageId() },
-        { qSL("diskSpaceUsed"), diskSpaceUsed() },
-        { qSL("digest"), QLatin1String(digest().toHex()) }
+        { u"packageId"_s, packageId() },
+        { u"diskSpaceUsed"_s, diskSpaceUsed() },
+        { u"digest"_s, QString::fromLatin1(digest().toHex()) }
     };
     if (!m_developerSignature.isEmpty())
-        root[qSL("developerSignature")] = QLatin1String(m_developerSignature.toBase64());
+        root[u"developerSignature"_s] = QString::fromLatin1(m_developerSignature.toBase64());
     if (!m_storeSignature.isEmpty())
-        root[qSL("storeSignature")] = QLatin1String(m_storeSignature.toBase64());
+        root[u"storeSignature"_s] = QString::fromLatin1(m_storeSignature.toBase64());
     if (!m_extraMetaData.isEmpty())
-        root[qSL("extra")] = m_extraMetaData;
+        root[u"extra"_s] = m_extraMetaData;
     if (!m_extraSignedMetaData.isEmpty())
-        root[qSL("extraSigned")] = m_extraSignedMetaData;
+        root[u"extraSigned"_s] = m_extraSignedMetaData;
 
-    root[qSL("files")] = files();
+    root[u"files"_s] = files();
 
     QVector<QVariant> docs;
     docs << header;

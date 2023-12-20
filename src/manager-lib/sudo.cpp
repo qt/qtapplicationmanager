@@ -20,6 +20,8 @@
 
 #include <errno.h>
 
+using namespace Qt::StringLiterals;
+
 #if defined(Q_OS_LINUX)
 # include "processtitle.h"
 
@@ -288,7 +290,7 @@ QByteArray SudoInterface::receiveMessage(int socket, MessageType type, QString *
     auto bytesReceived = EINTR_LOOP(recv(socket, recvBuffer, sizeof(recvBuffer), 0));
 
     if ((bytesReceived < headerSize) || qstrncmp(recvBuffer, (type == Request ? "RQST" : "RPLY"), 4)) {
-        *errorString = qL1S("failed to receive command from the SudoClient process");
+        *errorString = u"failed to receive command from the SudoClient process"_s;
         //qCCritical(LogSystem) << *errorString;
         return QByteArray();
     }
@@ -389,7 +391,7 @@ QByteArray SudoClient::call(const QByteArray &msg)
 #endif
 
     //qCCritical(LogSystem) << "failed to send command to the SudoServer process";
-    m_errorString = qL1S("failed to send command to the SudoServer process");
+    m_errorString = u"failed to send command to the SudoServer process"_s;
     return QByteArray();
 }
 
@@ -467,7 +469,7 @@ QByteArray SudoServer::receive(const QByteArray &msg)
         m_stop = true;
     } else {
         reply.truncate(0);
-        m_errorString = QString::fromLatin1("unknown function '%1' called in SudoServer").arg(qL1S(function));
+        m_errorString = u"unknown function '%1' called in SudoServer"_s.arg(QString::fromLatin1(function));
     }
     return reply;
 }
@@ -581,7 +583,7 @@ bool SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
     Q_UNUSED(to)
     Q_UNUSED(readOnly)
     Q_UNUSED(namespacePid)
-    m_errorString = qL1S("bindMountFileSystem is only available on Linux");
+    m_errorString = u"bindMountFileSystem is only available on Linux"_s;
     return false;
 #endif // Q_OS_LINUX
 }

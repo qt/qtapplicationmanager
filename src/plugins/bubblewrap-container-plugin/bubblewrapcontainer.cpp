@@ -537,7 +537,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
     bwrapCommand += { u"--setenv"_s, u"DBUS_SESSION_BUS_ADDRESS"_s, QString::fromLocal8Bit(dbusSessionBusAddress) };
 
     for (const auto &key : QProcessEnvironment::systemEnvironment().keys()) {
-        if (key.startsWith(u"LC_"_s) || key == u"LANG"_s)
+        if (key.startsWith(u"LC_"_s) || key == u"LANG")
             bwrapCommand += { u"--setenv"_s, key, QProcessEnvironment::systemEnvironment().value(key)};
     }
 

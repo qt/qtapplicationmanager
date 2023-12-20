@@ -453,9 +453,10 @@ QString Application::codeDir() const
         return packageInfo()->baseDir().absolutePath();
     case Package::BeingInstalled:
     case Package::BeingUpdated:
-        return packageInfo()->baseDir().absolutePath() + QLatin1Char('+');
+    case Package::BeingDowngraded:
+        return packageInfo()->baseDir().absolutePath() + u'+';
     case Package::BeingRemoved:
-        return packageInfo()->baseDir().absolutePath() + QLatin1Char('-');
+        return packageInfo()->baseDir().absolutePath() + u'-';
     }
 }
 

@@ -13,6 +13,8 @@
 
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 RuntimeFactory *RuntimeFactory::s_instance = nullptr;
@@ -45,7 +47,7 @@ AbstractRuntimeManager *RuntimeFactory::manager(const QString &id)
         return nullptr;
     AbstractRuntimeManager *arm = m_runtimes.value(id);
     if (!arm)
-        arm = m_runtimes.value(id + qSL("-inprocess"));
+        arm = m_runtimes.value(id + u"-inprocess"_s);
     return arm;
 }
 

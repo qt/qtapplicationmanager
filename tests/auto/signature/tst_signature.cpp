@@ -10,6 +10,8 @@
 #include "signature.h"
 #include "cryptography.h"
 
+using namespace Qt::StringLiterals;
+
 QT_USE_NAMESPACE_AM
 
 class tst_Signature : public QObject
@@ -43,17 +45,17 @@ tst_Signature::tst_Signature()
 
 void tst_Signature::initTestCase()
 {
-    QFile s(qSL(":/signing.p12"));
+    QFile s(u":/signing.p12"_s);
     QVERIFY(s.open(QIODevice::ReadOnly));
     m_signingP12 = s.readAll();
     QVERIFY(!m_signingP12.isEmpty());
 
-    QFile snk(qSL(":/signing-no-key.p12"));
+    QFile snk(u":/signing-no-key.p12"_s);
     QVERIFY(snk.open(QIODevice::ReadOnly));
     m_signingNoKeyP12 = snk.readAll();
     QVERIFY(!m_signingNoKeyP12.isEmpty());
 
-    QFile v(qSL(":/verifying.crt"));
+    QFile v(u":/verifying.crt"_s);
     QVERIFY(v.open(QIODevice::ReadOnly));
     m_verifyingPEM << v.readAll();
     QVERIFY(!m_verifyingPEM.first().isEmpty());
@@ -80,35 +82,35 @@ void tst_Signature::check()
     QVERIFY(!s2.verify(signature, m_verifyingPEM));
 
     QVERIFY(s.create(m_signingP12, m_signingPassword + "not").isEmpty());
-    QVERIFY2(s.errorString().contains(qSL("not parse")), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(u"not parse"_s), qPrintable(s.errorString()));
 
     QVERIFY(s.create(QByteArray(), m_signingPassword).isEmpty());
-    QVERIFY2(s.errorString().contains(qSL("not read")), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(u"not read"_s), qPrintable(s.errorString()));
 
     Signature s3(QByteArray(4096, 'x'));
     QVERIFY(!s3.create(m_signingP12, m_signingPassword).isEmpty());
 
     QVERIFY(!s.verify(signature, QList<QByteArray>()));
-    QVERIFY2(s.errorString().contains(qSL("Failed to verify")), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(u"Failed to verify"_s), qPrintable(s.errorString()));
     QVERIFY(!s.verify(signature, QList<QByteArray>() << m_signingP12));
-    QVERIFY2(s.errorString().contains(qSL("not load")), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(u"not load"_s), qPrintable(s.errorString()));
     QVERIFY(!s.verify(hash, QList<QByteArray>() << m_signingP12));
-    QVERIFY2(s.errorString().contains(qSL("not read")), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(u"not read"_s), qPrintable(s.errorString()));
 
     Signature s4 { QByteArray() };
     QVERIFY(s4.create(m_signingP12, m_signingPassword).isEmpty());
 
     QVERIFY(s.create(m_signingNoKeyP12, m_signingPassword).isEmpty());
-    QVERIFY2(s.errorString().contains(qSL("private key")), qPrintable(s.errorString()));
+    QVERIFY2(s.errorString().contains(u"private key"_s), qPrintable(s.errorString()));
 }
 
 void tst_Signature::crossPlatform()
 {
     QByteArray hash = "hello\nworld!";
 
-    QFile fileOpenSsl(qSL(":/signature-openssl.p7"));
-    QFile fileWinCrypt(qSL(":/signature-wincrypt.p7"));
-    QFile fileSecurityFramework(qSL(":/signature-securityframework.p7"));
+    QFile fileOpenSsl(u":/signature-openssl.p7"_s);
+    QFile fileWinCrypt(u":/signature-wincrypt.p7"_s);
+    QFile fileSecurityFramework(u":/signature-securityframework.p7"_s);
 
     if (qEnvironmentVariableIsSet("AM_CREATE_SIGNATURE_FILE")) {
         QFile *nativeFile = nullptr;
@@ -120,7 +122,7 @@ void tst_Signature::crossPlatform()
         nativeFile = &fileOpenSsl;
 #endif
         QVERIFY(nativeFile);
-        QFile f(qL1S(AM_TESTSOURCE_DIR "/../signature") + nativeFile->fileName().mid(1));
+        QFile f(QString::fromLatin1(AM_TESTSOURCE_DIR "/../signature") + nativeFile->fileName().mid(1));
         QVERIFY2(f.open(QFile::WriteOnly | QFile::Truncate), qPrintable(f.errorString()));
 
         Signature s(hash);

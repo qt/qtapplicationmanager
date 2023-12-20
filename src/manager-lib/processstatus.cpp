@@ -16,6 +16,9 @@
 
 #include <limits>
 
+using namespace Qt::StringLiterals;
+
+
 /*!
     \qmltype ProcessStatus
     \inqmlmodule QtApplicationManager.SystemUI
@@ -109,7 +112,7 @@ ProcessStatus::ProcessStatus(QObject *parent)
 {
     if (m_instanceCount == 0) {
         m_workerThread = new QThread;
-        m_workerThread->setObjectName(qSL("QtAM-ProcessStatus"));
+        m_workerThread->setObjectName(u"QtAM-ProcessStatus"_s);
         m_workerThread->start();
     }
     ++m_instanceCount;
@@ -254,15 +257,15 @@ void ProcessStatus::fetchReadings()
     m_cpuLoad = m_reader->cpuLoad;
 
     // Although smaps claims to report kB it's actually KiB (2^10 = 1024 Bytes)
-    m_memoryVirtual[qSL("total")] = static_cast<quint64>(m_reader->memory.totalVm) << 10;
-    m_memoryVirtual[qSL("text")] = static_cast<quint64>(m_reader->memory.textVm) << 10;
-    m_memoryVirtual[qSL("heap")] = static_cast<quint64>(m_reader->memory.heapVm) << 10;
-    m_memoryRss[qSL("total")] = static_cast<quint64>(m_reader->memory.totalRss) << 10;
-    m_memoryRss[qSL("text")] = static_cast<quint64>(m_reader->memory.textRss) << 10;
-    m_memoryRss[qSL("heap")] = static_cast<quint64>(m_reader->memory.heapRss) << 10;
-    m_memoryPss[qSL("total")] = static_cast<quint64>(m_reader->memory.totalPss) << 10;
-    m_memoryPss[qSL("text")] = static_cast<quint64>(m_reader->memory.textPss) << 10;
-    m_memoryPss[qSL("heap")] = static_cast<quint64>(m_reader->memory.heapPss) << 10;
+    m_memoryVirtual[u"total"_s] = static_cast<quint64>(m_reader->memory.totalVm) << 10;
+    m_memoryVirtual[u"text"_s] = static_cast<quint64>(m_reader->memory.textVm) << 10;
+    m_memoryVirtual[u"heap"_s] = static_cast<quint64>(m_reader->memory.heapVm) << 10;
+    m_memoryRss[u"total"_s] = static_cast<quint64>(m_reader->memory.totalRss) << 10;
+    m_memoryRss[u"text"_s] = static_cast<quint64>(m_reader->memory.textRss) << 10;
+    m_memoryRss[u"heap"_s] = static_cast<quint64>(m_reader->memory.heapRss) << 10;
+    m_memoryPss[u"total"_s] = static_cast<quint64>(m_reader->memory.totalPss) << 10;
+    m_memoryPss[u"text"_s] = static_cast<quint64>(m_reader->memory.textPss) << 10;
+    m_memoryPss[u"heap"_s] = static_cast<quint64>(m_reader->memory.heapPss) << 10;
 }
 
 /*!
@@ -352,7 +355,7 @@ void ProcessStatus::setMemoryReportingEnabled(bool enabled)
 */
 QStringList ProcessStatus::roleNames() const
 {
-    return { qSL("cpuLoad"), qSL("memoryVirtual"), qSL("memoryRss"), qSL("memoryPss") };
+    return { u"cpuLoad"_s, u"memoryVirtual"_s, u"memoryRss"_s, u"memoryPss"_s };
 }
 
 #include "moc_processstatus.cpp"

@@ -13,6 +13,8 @@
 #include "package.h"
 #include "abstractruntime.h"
 
+using namespace Qt::StringLiterals;
+
 QT_USE_NAMESPACE_AM
 
 class TestRuntime : public AbstractRuntime
@@ -54,7 +56,7 @@ public:
         : AbstractRuntimeManager(id, parent)
     { }
 
-    static QString defaultIdentifier() { return qSL("foo"); }
+    static QString defaultIdentifier() { return u"foo"_s; }
 
     bool inProcess() const override
     {
@@ -82,12 +84,12 @@ private slots:
 // the application no longer holds a reference to it
 void tst_Application::runtimeDestroyed()
 {
-    auto pi = PackageInfo::fromManifest(qL1S(":/info.yaml"));
+    auto pi = PackageInfo::fromManifest(u":/info.yaml"_s);
     auto pkg = new Package(pi);
     auto ai = new ApplicationInfo(pi);
     auto app = new Application(ai, pkg);
 
-    auto runtimeManager = new TestRuntimeManager(qSL("foo"), qApp);
+    auto runtimeManager = new TestRuntimeManager(u"foo"_s, qApp);
     auto runtime = runtimeManager->create(nullptr, app);
 
     app->setCurrentRuntime(runtime);

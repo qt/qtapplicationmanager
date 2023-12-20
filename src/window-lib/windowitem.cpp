@@ -23,6 +23,8 @@
 #include <QQmlProperty>
 #include <QtQuick/private/qquickitem_p.h>
 
+using namespace Qt::StringLiterals;
+
 /*!
     \qmltype WindowItem
     \inqmlmodule QtApplicationManager.SystemUI
@@ -376,7 +378,7 @@ void WindowItem::InProcessImpl::setupSecondaryView()
         m_shaderEffectSource->setParent(q);
         m_shaderEffectSource->setParentItem(q);
 
-        QQmlProperty::write(m_shaderEffectSource, QStringLiteral("sourceItem"),
+        QQmlProperty::write(m_shaderEffectSource, u"sourceItem"_s,
                 QVariant::fromValue(m_inProcessWindow->rootItem()));
     }
 }

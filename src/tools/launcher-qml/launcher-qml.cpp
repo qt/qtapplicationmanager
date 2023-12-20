@@ -51,6 +51,8 @@
 #include "launcher-qml_p.h"
 #include "applicationmanagerwindow.h"
 
+using namespace Qt::StringLiterals;
+
 
 QT_USE_NAMESPACE_AM
 
@@ -61,10 +63,10 @@ int main(int argc, char *argv[])
 
     ProcessTitle::adjustArgumentCount(argc);
 
-    QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Launcher"));
-    QCoreApplication::setOrganizationName(qSL("QtProject"));
-    QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
-    QCoreApplication::setApplicationVersion(qSL(QT_AM_VERSION_STR));
+    QCoreApplication::setApplicationName(u"Qt Application Manager QML Launcher"_s);
+    QCoreApplication::setOrganizationName(u"QtProject"_s);
+    QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
+    QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
 
     if (qEnvironmentVariableIntValue("AM_NO_DLT_LOGGING") == 1)
         Logging::setDltEnabled(false);
@@ -89,21 +91,21 @@ int main(int argc, char *argv[])
 
         QCommandLineParser clp;
         clp.addHelpOption();
-        clp.addOption({ qSL("qml-debug"),   qSL("Enables QML debugging and profiling.") });
-        clp.addOption({ qSL("quicklaunch"), qSL("Starts the launcher in the quicklaunching mode.") });
-        clp.addOption({ qSL("directload") , qSL("The info.yaml to start (you can add '@<appid>' to start a specific app within the package, instead of the first one)."), qSL("info.yaml") });
+        clp.addOption({ u"qml-debug"_s,   u"Enables QML debugging and profiling."_s });
+        clp.addOption({ u"quicklaunch"_s, u"Starts the launcher in the quicklaunching mode."_s });
+        clp.addOption({ u"directload"_s , u"The info.yaml to start (you can add '@<appid>' to start a specific app within the package, instead of the first one)."_s, u"info.yaml"_s });
         clp.process(am);
 
-        bool quicklaunched = clp.isSet(qSL("quicklaunch"));
-        QString directLoadManifest = clp.value(qSL("directload"));
+        bool quicklaunched = clp.isSet(u"quicklaunch"_s);
+        QString directLoadManifest = clp.value(u"directload"_s);
 
         if (directLoadManifest.isEmpty())
             am.loadConfiguration();
 
-        CrashHandler::setCrashActionConfiguration(am.runtimeConfiguration().value(qSL("crashAction")).toMap());
+        CrashHandler::setCrashActionConfiguration(am.runtimeConfiguration().value(u"crashAction"_s).toMap());
         // the verbose flag has already been factored into the rules:
         am.setupLogging(false, am.loggingRules(), QString(), am.useAMConsoleLogger());
-        am.setupQmlDebugging(clp.isSet(qSL("qml-debug")));
+        am.setupQmlDebugging(clp.isSet(u"qml-debug"_s));
         am.setupOpenGL(am.openGLConfiguration());
         am.setupIconTheme(am.iconThemeSearchPaths(), am.iconThemeName());
         am.registerWaylandExtensions();
@@ -114,14 +116,14 @@ int main(int argc, char *argv[])
 
         if (!directLoadManifest.isEmpty()) {
             QString directLoadAppId;
-            int appPos = directLoadManifest.indexOf(qSL("@"));
+            int appPos = directLoadManifest.indexOf(u"@"_s);
             if (appPos > 0) {
                 directLoadAppId = directLoadManifest.mid(appPos + 1);
                 directLoadManifest.truncate(appPos);
             }
 
             QFileInfo fi(directLoadManifest);
-            if (!fi.exists() || fi.fileName() != qSL("info.yaml"))
+            if (!fi.exists() || fi.fileName() != u"info.yaml"_s)
                 throw Exception("--directload needs a valid info.yaml file as parameter");
             directLoadManifest = fi.absoluteFilePath();
             new Controller(&am, quicklaunched, qMakePair(directLoadManifest, directLoadAppId));
@@ -152,7 +154,7 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QStr
 
     m_configuration = am->runtimeConfiguration();
 
-    const QStringList resources = variantToStringList(m_configuration.value(qSL("resources")));
+    const QStringList resources = variantToStringList(m_configuration.value(u"resources"_s));
     for (const QString &resource: resources) {
         const QString path = QFileInfo(resource).isRelative() ? am->baseDir() + resource : resource;
 
@@ -164,7 +166,7 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QStr
     }
 
     QString absolutePluginPath;
-    QStringList pluginPaths = variantToStringList(m_configuration.value(qSL("pluginPaths")));
+    QStringList pluginPaths = variantToStringList(m_configuration.value(u"pluginPaths"_s));
     for (QString &path : pluginPaths) {
         if (QFileInfo(path).isRelative())
             path.prepend(am->baseDir());
@@ -180,7 +182,7 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QStr
     }
 
     QString absoluteImportPath;
-    QStringList importPaths = variantToStringList(m_configuration.value(qSL("importPaths")));
+    QStringList importPaths = variantToStringList(m_configuration.value(u"importPaths"_s));
     for (QString &path : importPaths) {
         const QFileInfo fi(path);
         if (fi.isNativePath() && fi.isAbsolute() && absoluteImportPath.isEmpty())
@@ -233,7 +235,7 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QStr
         }, Qt::QueuedConnection);
     }
 
-    const QString quicklaunchQml = m_configuration.value((qSL("quicklaunchQml"))).toString();
+    const QString quicklaunchQml = m_configuration.value((u"quicklaunchQml"_s)).toString();
     if (!quicklaunchQml.isEmpty() && quickLaunched) {
         QQmlComponent quicklaunchComp(&m_engine, filePathToUrl(quicklaunchQml, am->baseDir()));
         if (!quicklaunchComp.isError()) {
@@ -256,25 +258,25 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     m_launched = true;
 
-    static QString applicationId = application.value(qSL("id")).toString();
+    static QString applicationId = application.value(u"id"_s).toString();
     auto *am = ApplicationMain::instance();
     am->setApplication(convertFromDBusVariant(application).toMap());
     am->setSystemProperties(convertFromDBusVariant(systemProperties).toMap());
 
     if (m_quickLaunched) {
-        //StartupTimer::instance()->createReport(applicationId  + qSL(" [process launch]"));
+        //StartupTimer::instance()->createReport(applicationId  + u" [process launch]"_s);
         StartupTimer::instance()->reset();
     } else {
         StartupTimer::instance()->checkpoint("starting application");
     }
 
     //Change the DLT Application description, to easily identify the application on the DLT logs.
-    const QVariantMap dlt = qdbus_cast<QVariantMap>(application.value(qSL("dlt")));
-    QByteArray dltId = dlt.value(qSL("id")).toString().toLocal8Bit();
-    QByteArray dltDescription = dlt.value(qSL("description")).toString().toLocal8Bit();
+    const QVariantMap dlt = qdbus_cast<QVariantMap>(application.value(u"dlt"_s));
+    QByteArray dltId = dlt.value(u"id"_s).toString().toLocal8Bit();
+    QByteArray dltDescription = dlt.value(u"description"_s).toString().toLocal8Bit();
     if (dltId.isEmpty()) {
         char uniqueId[5];
-        qsnprintf(uniqueId, sizeof(uniqueId), "A%03d", application.value(qSL("uniqueNumber")).toInt());
+        qsnprintf(uniqueId, sizeof(uniqueId), "A%03d", application.value(u"uniqueNumber"_s).toInt());
         dltId = uniqueId;
     }
     if (dltDescription.isEmpty())
@@ -285,7 +287,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     // Dress up the ps output to make it easier to correlate all the launcher processes
     ProcessTitle::augmentCommand(applicationId.toLocal8Bit().constData());
 
-    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(qSL("runtimeParameters")));
+    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(u"runtimeParameters"_s));
 
     qCDebug(LogQmlRuntime) << "loading" << applicationId << "- main:" << qmlFile << "- document:" << document
                            << "- mimeType:" << mimeType << "- parameters:" << runtimeParameters
@@ -300,11 +302,11 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     if (!applicationId.isEmpty()) {
         // shorten application id to make the debug output more readable
 
-        auto sl = applicationId.split(qL1C('.'));
+        auto sl = applicationId.split(u'.');
         applicationId.clear();
         for (int i = 0; i < sl.size() - 1; ++i) {
             applicationId.append(sl.at(i).at(0));
-            applicationId.append(qL1C('.'));
+            applicationId.append(u'.');
         }
         applicationId.append(sl.last());
         Logging::setApplicationId(applicationId.toLocal8Bit());
@@ -314,7 +316,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     }
 
-    QVariant resVar = runtimeParameters.value(qSL("resources"));
+    QVariant resVar = runtimeParameters.value(u"resources"_s);
     const QVariantList resources = (resVar.metaType() == QMetaType::fromType<QString>())
             ? QVariantList{resVar}
             : qdbus_cast<QVariantList>(resVar);
@@ -337,7 +339,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     }
 
     if (m_applicationInterface) {
-        m_engine.rootContext()->setContextProperty(qSL("ApplicationInterface"), m_applicationInterface);
+        m_engine.rootContext()->setContextProperty(u"ApplicationInterface"_s, m_applicationInterface);
 
         connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
                 ApplicationMain::instance(), &ApplicationMain::setSlowAnimations);
@@ -355,7 +357,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     QCoreApplication::instance()->installEventFilter(this);
 
     QStringList systemStartupPluginPaths;
-    const QDir systemStartupPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + qSL("appman_startup"));
+    const QDir systemStartupPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + u"appman_startup"_s);
     for (const auto &pluginName : systemStartupPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot)) {
         const QString filePath = systemStartupPluginDir.absoluteFilePath(pluginName);
         if (!QLibrary::isLibrary(filePath))
@@ -363,7 +365,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         systemStartupPluginPaths += filePath;
     }
 
-    QStringList startupPluginFiles = variantToStringList(m_configuration.value(qSL("plugins")).toMap().value(qSL("startup")));
+    QStringList startupPluginFiles = variantToStringList(m_configuration.value(u"plugins"_s).toMap().value(u"startup"_s));
     QVector<StartupInterface *> startupPlugins;
     try {
         startupPlugins = loadPlugins<StartupInterface>("startup", systemStartupPluginPaths + startupPluginFiles);
@@ -375,8 +377,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     for (StartupInterface *iface : std::as_const(startupPlugins))
         iface->initialize(m_applicationInterface ? m_applicationInterface->systemProperties() : QVariantMap());
 
-    bool loadDummyData = runtimeParameters.value(qSL("loadDummyData")).toBool()
-            || m_configuration.value(qSL("loadDummydata")).toBool();
+    bool loadDummyData = runtimeParameters.value(u"loadDummyData"_s).toBool()
+            || m_configuration.value(u"loadDummydata"_s).toBool();
 
     if (loadDummyData) {
         qCWarning(LogDeployment) << "Loading dummy data is deprecated and will be removed soon";
@@ -384,7 +386,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         loadQmlDummyDataFiles(&m_engine, QFileInfo(qmlFileStr).path());
     }
 
-    QVariant pluginPaths = runtimeParameters.value(qSL("pluginPaths"));
+    QVariant pluginPaths = runtimeParameters.value(u"pluginPaths"_s);
     const QVariantList ppvl = (pluginPaths.metaType() == QMetaType::fromType<QString>())
             ? QVariantList{pluginPaths}
             : qdbus_cast<QVariantList>(pluginPaths);
@@ -398,7 +400,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     }
     qCDebug(LogQmlRuntime) << "Plugin paths:" << qApp->libraryPaths();
 
-    QVariant imports = runtimeParameters.value(qSL("importPaths"));
+    QVariant imports = runtimeParameters.value(u"importPaths"_s);
     const QVariantList ipvl = (imports.metaType() == QMetaType::fromType<QString>())
             ? QVariantList{imports}
             : qdbus_cast<QVariantList>(imports);

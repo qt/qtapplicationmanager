@@ -12,12 +12,14 @@
 #include "utilities.h"
 #include "qml-utilities.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 // copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
 void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory)
 {
-    QDir dir(directory + qSL("/dummydata"), qSL("*.qml"));
+    QDir dir(directory + u"/dummydata"_s, u"*.qml"_s);
     QStringList list = dir.entryList();
     for (int i = 0; i < list.size(); ++i) {
         QString qml = list.at(i);

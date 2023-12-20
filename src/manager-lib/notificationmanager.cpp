@@ -19,6 +19,8 @@
 #include "notificationmodel.h"
 #include "qmlinprocnotificationimpl.h"
 
+using namespace Qt::StringLiterals;
+
 /*!
     \qmltype NotificationManager
     \inqmlmodule QtApplicationManager.SystemUI
@@ -321,14 +323,14 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
         return n->showActionIcons;
     case NMRoles::Actions: {
         QVariantList actions = n->actions;
-        actions.removeAll(QVariantMap { { qSL("default"), QString() } });
+        actions.removeAll(QVariantMap { { u"default"_s, QString() } });
         return actions;
     }
     case NMRoles::DismissOnAction:
         return n->dismissOnAction;
     case NMRoles::IsClickable: // legacy
     case NMRoles::IsAcknowledgeable:
-        return n->actions.contains(QVariantMap { { qSL("default"), QString() } });
+        return n->actions.contains(QVariantMap { { u"default"_s, QString() } });
     case NMRoles::IsSystemNotification:
         return n->isSystemNotification;
     case NMRoles::IsShowingProgress:
@@ -379,7 +381,7 @@ QVariantMap NotificationManager::get(int index) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(qL1S(it.value()), data(QAbstractListModel::index(index), it.key()));
+        map.insert(QString::fromLatin1(it.value()), data(QAbstractListModel::index(index), it.key()));
     return map;
 }
 
@@ -416,7 +418,7 @@ int NotificationManager::indexOfNotification(uint id) const
 */
 void NotificationManager::acknowledgeNotification(uint id)
 {
-    triggerNotificationAction(id, qSL("default"));
+    triggerNotificationAction(id, u"default"_s);
 }
 
 /*!
@@ -452,7 +454,7 @@ void NotificationManager::triggerNotificationAction(uint id, const QString &acti
         }
         if (!found) {
             qCDebug(LogNotifications) << "Requested to trigger a notification action, but the action is not registered:"
-                                      << (actionId.length() > 20 ? (actionId.left(20) + qSL("...")) : actionId);
+                                      << (actionId.length() > 20 ? (actionId.left(20) + u"..."_s) : actionId);
         }
         emit ActionInvoked(id, actionId);
 
@@ -481,8 +483,8 @@ QString NotificationManager::GetServerInformation(QString &vendor, QString &vers
 {
     //qCDebug(LogNotifications) << "GetServerInformation";
     vendor = qApp->organizationName();
-    version = qSL("1.0");
-    spec_version = qSL("1.2");
+    version = u"1.0"_s;
+    spec_version = u"1.2"_s;
     return qApp->applicationName();
 }
 
@@ -492,14 +494,14 @@ QString NotificationManager::GetServerInformation(QString &vendor, QString &vers
 QStringList NotificationManager::GetCapabilities()
 {
     //qCDebug(LogNotifications) << "GetCapabilities";
-    return QStringList() << qSL("action-icons")
-                         << qSL("actions")
-                         << qSL("body")
-                         << qSL("body-hyperlinks")
-                         << qSL("body-images")
-                         << qSL("body-markup")
-                         << qSL("icon-static")
-                         << qSL("persistence");
+    return QStringList() << u"action-icons"_s
+                         << u"actions"_s
+                         << u"body"_s
+                         << u"body-hyperlinks"_s
+                         << u"body-images"_s
+                         << u"body-markup"_s
+                         << u"icon-static"_s
+                         << u"persistence"_s;
 }
 
 /*! \internal
@@ -557,29 +559,29 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
         return 0;
     }
     n->application = app;
-    n->priority = hints.value(qSL("urgency"), QVariant(0)).toUInt();
+    n->priority = hints.value(u"urgency"_s, QVariant(0)).toUInt();
     n->summary = summary;
     n->body = body;
-    n->category = hints.value(qSL("category")).toString();
+    n->category = hints.value(u"category"_s).toString();
     n->iconUrl = app_icon;
 
-    if (hints.contains(qSL("image-data"))) {
+    if (hints.contains(u"image-data"_s)) {
         //TODO: how can we parse this - the dbus sig of value is "(iiibiiay)"
-    } else if (hints.contains(qSL("image-path"))) {
-        n->imageUrl = hints.value(qSL("image-path")).toString();
+    } else if (hints.contains(u"image-path"_s)) {
+        n->imageUrl = hints.value(u"image-path"_s).toString();
     }
 
-    n->showActionIcons = hints.value(qSL("action-icons")).toBool();
+    n->showActionIcons = hints.value(u"action-icons"_s).toBool();
     n->actions.clear();
     for (int ai = 0; ai != (actions.size() & ~1); ai += 2)
         n->actions.append(QVariantMap { { actions.at(ai), actions.at(ai + 1) } });
-    n->dismissOnAction = !hints.value(qSL("resident")).toBool();
+    n->dismissOnAction = !hints.value(u"resident"_s).toBool();
 
-    n->isSystemNotification = hints.value(qSL("x-pelagicore-system-notification")).toBool();
-    n->isShowingProgress = hints.value(qSL("x-pelagicore-show-progress")).toBool();
-    n->progress = hints.value(qSL("x-pelagicore-progress")).toReal();
+    n->isSystemNotification = hints.value(u"x-pelagicore-system-notification"_s).toBool();
+    n->isShowingProgress = hints.value(u"x-pelagicore-show-progress"_s).toBool();
+    n->progress = hints.value(u"x-pelagicore-progress"_s).toReal();
     n->timeout = qMax(0, timeout);
-    n->extended = convertFromDBusVariant(hints.value(qSL("x-pelagicore-extended"))).toMap();
+    n->extended = convertFromDBusVariant(hints.value(u"x-pelagicore-extended"_s)).toMap();
 
     if (replaces) {
         QModelIndex idx = index(int(d->notifications.indexOf(n)), 0);

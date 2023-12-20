@@ -27,6 +27,9 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 #  include "unixsignalhandler.h"
 #endif
 
+using namespace Qt::StringLiterals;
+
+
 struct ConsoleGlobal
 {
     bool stdoutSupportsAnsiColor = false;
@@ -94,9 +97,8 @@ ConsoleGlobal::ConsoleGlobal()
             break;
 
 #if defined(Q_OS_LINUX)
-        static QString checkCreator = qSL("/proc/%1/exe");
-        QFileInfo fi(checkCreator.arg(pid));
-        if (fi.symLinkTarget().contains(qSL("qtcreator"))) {
+        QFileInfo fi(u"/proc/%1/exe"_s.arg(pid));
+        if (fi.symLinkTarget().contains(u"qtcreator")) {
             isRunningInQtCreator = true;
             break;
         }
@@ -113,7 +115,7 @@ ConsoleGlobal::ConsoleGlobal()
             wchar_t exeName[1024] = { 0 };
             DWORD exeNameSize = sizeof(exeName) - 1;
             if (QueryFullProcessImageNameW(hProcess, 0, exeName, &exeNameSize)) {
-                if (QString::fromWCharArray(exeName, exeNameSize).contains(qSL("qtcreator"))) {
+                if (QString::fromWCharArray(exeName, exeNameSize).contains(u"qtcreator"_s)) {
                     isRunningInQtCreator = true;
                     break;
                 }

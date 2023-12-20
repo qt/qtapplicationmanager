@@ -18,6 +18,8 @@
 
 #include "intentinterface_interface.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 IntentClientDBusImplementation::IntentClientDBusImplementation(const QString &dbusName, QObject *parent)
@@ -36,7 +38,7 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DE
     IntentClientSystemInterface::initialize(intentClient);
 
     m_dbusInterface = new IoQtApplicationManagerIntentInterfaceInterface(
-                QString(), qSL("/IntentServer"), QDBusConnection(m_dbusName), intentClient);
+                QString(), u"/IntentServer"_s, QDBusConnection(m_dbusName), intentClient);
 
     if (!m_dbusInterface->isValid())
         throw std::logic_error("Could not connect to the /IntentServer object on the P2P D-Bus");
@@ -54,9 +56,9 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DE
         // "version 2" DBus interface, we simply append the string "@broadcast" to the requestId
         // for broadcasts.
 
-        bool isBroadcast = requestId.endsWith(qSL("@broadcast"));
+        bool isBroadcast = requestId.endsWith(u"@broadcast"_s);
         QUuid requestIdUuid = QUuid::fromString(isBroadcast ? requestId.chopped(10) : requestId);
-        QString requestingApplicationId = isBroadcast ? qSL(":broadcast:") : QString();
+        QString requestingApplicationId = isBroadcast ? u":broadcast:"_s : QString();
 
         emit requestToApplication(requestIdUuid, id, requestingApplicationId,
                                   applicationId, convertFromDBusVariant(parameters).toMap());

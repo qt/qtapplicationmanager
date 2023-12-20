@@ -40,6 +40,9 @@ QT_END_NAMESPACE_AM
 
 #endif
 
+using namespace Qt::StringLiterals;
+
+
 QT_BEGIN_NAMESPACE_AM
 
 
@@ -49,7 +52,7 @@ QByteArray Cryptography::generateRandomBytes(int size)
 
     if (size > 0) {
 #if defined(Q_OS_UNIX)
-        QFile f(qSL("/dev/urandom"));
+        QFile f(u"/dev/urandom"_s);
         if (f.open(QIODevice::ReadOnly)) {
             result = f.read(size);
             if (result.size() != size)
@@ -93,7 +96,7 @@ QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescrip
     QString result;
     if (errorDescription && *errorDescription) {
         result = QString::fromLatin1(errorDescription);
-        result.append(QLatin1String(": "));
+        result.append(u": "_s);
     }
 
 #if defined(QT_AM_USE_LIBCRYPTO)

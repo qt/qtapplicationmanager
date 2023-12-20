@@ -38,6 +38,8 @@
 #  define S_IEXEC S_IXUSR
 #endif
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 PackageExtractor::PackageExtractor(const QUrl &downloadUrl, const QDir &destinationDir, QObject *parent)
@@ -54,7 +56,7 @@ QDir PackageExtractor::destinationDirectory() const
 
 void PackageExtractor::setDestinationDirectory(const QDir &destinationDir)
 {
-    d->m_destinationPath = destinationDir.absolutePath() + qL1C('/');
+    d->m_destinationPath = destinationDir.absolutePath() + u'/';
 }
 
 void PackageExtractor::setFileExtractedCallback(const std::function<void(const QString &)> &callback)
@@ -100,7 +102,7 @@ Error PackageExtractor::errorCode() const
 
 QString PackageExtractor::errorString() const
 {
-    return wasCanceled() ? qSL("canceled") : (d->m_failed ? d->m_errorString : QString());
+    return wasCanceled() ? u"canceled"_s : (d->m_failed ? d->m_errorString : QString());
 }
 
 /*! \internal
@@ -256,11 +258,11 @@ void PackageExtractorPrivate::extract()
 
             // Check if this entry is special (metadata vs. data)
 
-            if (entryPath == qL1S("--PACKAGE-HEADER--"))
+            if (entryPath == u"--PACKAGE-HEADER--")
                 packageEntryType = PackageEntry_Header;
-            else if (entryPath.startsWith(qL1S("--PACKAGE-FOOTER--")))
+            else if (entryPath.startsWith(u"--PACKAGE-FOOTER--"))
                 packageEntryType = PackageEntry_Footer;
-            else if (entryPath.startsWith(qL1S("--")))
+            else if (entryPath.startsWith(u"--"))
                 throw Exception(Error::Package, "filename %1 in the archive starts with the reserved characters '--'").arg(entryPath);
 
             // The first (and only the first) file in every package needs to be --PACKAGE-HEADER--
@@ -274,28 +276,28 @@ void PackageExtractorPrivate::extract()
 
             switch (packageEntryType) {
             case PackageEntry_Dir:
-                if (!entryPath.endsWith(qL1C('/')))
+                if (!entryPath.endsWith(u'/'))
                     throw Exception(Error::Package, "invalid archive entry '%1': directory name is missing '/' at the end").arg(entryPath);
                 entryPath.chop(1);
                 Q_FALLTHROUGH();
 
             case PackageEntry_File: {
                 // get the directory, where the new entry will be created
-                QDir entryDir(QString(m_destinationPath + entryPath).section(qL1C('/'), 0, -2));
+                QDir entryDir(QString(m_destinationPath + entryPath).section(u'/', 0, -2));
                 if (!entryDir.exists())
                     throw Exception(Error::Package, "invalid archive entry '%1': parent directory is missing").arg(entryPath);
 
-                QString entryCanonicalPath = entryDir.canonicalPath() + qL1C('/');
-                QString baseCanonicalPath = QDir(m_destinationPath).canonicalPath() + qL1C('/');
+                QString entryCanonicalPath = entryDir.canonicalPath() + u'/';
+                QString baseCanonicalPath = QDir(m_destinationPath).canonicalPath() + u'/';
 
                 // security check: make sure that entryCanonicalPath is NOT outside of baseCanonicalPath
                 if (!entryCanonicalPath.startsWith(baseCanonicalPath))
                     throw Exception(Error::Package, "invalid archive entry '%1': pointing outside of extraction directory").arg(entryPath);
 
                 if (packageEntryType == PackageEntry_Dir) {
-                    QString entryName = entryPath.section(qL1C('/'), -1, -1);
+                    QString entryName = entryPath.section(u'/', -1, -1);
 
-                    if ((entryName != qL1S(".")) && !entryDir.mkdir(entryName))
+                    if ((entryName != u".") && !entryDir.mkdir(entryName))
                         throw Exception(Error::IO, "could not create directory '%1'").arg(entryDir.filePath(entryName));
 
                     archive_read_data_skip(ar);
@@ -425,7 +427,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
                 .arg(e.errorString());
     }
 
-    const QString formatType = isHeader ? qSL("am-package-header") : qSL("am-package-footer");
+    const QString formatType = isHeader ? u"am-package-header"_s : u"am-package-footer"_s;
     int formatVersion = 0;
     try {
         formatVersion = checkYamlFormat(docs, -2 /*at least 2 docs*/, { { formatType, 2 },
@@ -437,10 +439,10 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
     QVariantMap map = docs.at(1).toMap();
 
     if (isHeader) {
-        const QString idField = (formatVersion == 1) ? qSL("applicationId") : qSL("packageId");
+        const QString idField = (formatVersion == 1) ? u"applicationId"_s : u"packageId"_s;
 
         QString packageId = map.value(idField).toString();
-        quint64 diskSpaceUsed = map.value(qSL("diskSpaceUsed")).toULongLong();
+        quint64 diskSpaceUsed = map.value(u"diskSpaceUsed"_s).toULongLong();
 
         if (packageId.isNull() || !PackageInfo::isValidApplicationId(packageId))
             throw Exception(Error::Package, "metadata has an invalid %2 field (%1)").arg(packageId).arg(idField);
@@ -450,8 +452,8 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
             throw Exception(Error::Package, "metadata has an invalid diskSpaceUsed field (%1)").arg(diskSpaceUsed);
         m_report.setDiskSpaceUsed(diskSpaceUsed);
 
-        m_report.setExtraMetaData(map.value(qSL("extra")).toMap());
-        m_report.setExtraSignedMetaData(map.value(qSL("extraSigned")).toMap());
+        m_report.setExtraMetaData(map.value(u"extra"_s).toMap());
+        m_report.setExtraSignedMetaData(map.value(u"extraSigned"_s).toMap());
 
         PackageUtilities::addHeaderDataToDigest(map, digest);
 
@@ -459,7 +461,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
         for (int i = 2; i < docs.size(); ++i)
             map.insert(docs.at(i).toMap());
 
-        QByteArray packageDigest = QByteArray::fromHex(map.value(qSL("digest")).toString().toLatin1());
+        QByteArray packageDigest = QByteArray::fromHex(map.value(u"digest"_s).toString().toLatin1());
 
         if (packageDigest.isEmpty())
             throw Exception(Error::Package, "metadata is missing the digest field");
@@ -469,8 +471,8 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
         if (calculatedDigest != packageDigest)
             throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2").arg(calculatedDigest.toHex()).arg(packageDigest.toHex());
 
-        m_report.setStoreSignature(QByteArray::fromBase64(map.value(qSL("storeSignature")).toString().toLatin1()));
-        m_report.setDeveloperSignature(QByteArray::fromBase64(map.value(qSL("developerSignature")).toString().toLatin1()));
+        m_report.setStoreSignature(QByteArray::fromBase64(map.value(u"storeSignature"_s).toString().toLatin1()));
+        m_report.setDeveloperSignature(QByteArray::fromBase64(map.value(u"developerSignature"_s).toString().toLatin1()));
     }
 }
 

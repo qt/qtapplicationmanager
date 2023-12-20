@@ -28,6 +28,8 @@
 #include "utilities.h"
 #include "qml-utilities.h"
 
+using namespace Qt::StringLiterals;
+
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -62,25 +64,25 @@ bool QmlInProcRuntime::start()
     const QString currentDir = QDir::currentPath() + QDir::separator();
     const QString codeDir = m_app->codeDir() + QDir::separator();
 
-    loadResources(variantToStringList(configuration().value(qSL("resources"))), currentDir);
-    loadResources(variantToStringList(m_app->runtimeParameters().value(qSL("resources"))), codeDir);
+    loadResources(variantToStringList(configuration().value(u"resources"_s)), currentDir);
+    loadResources(variantToStringList(m_app->runtimeParameters().value(u"resources"_s)), codeDir);
 
-    if (m_app->runtimeParameters().value(qSL("loadDummyData")).toBool()) {
+    if (m_app->runtimeParameters().value(u"loadDummyData"_s).toBool()) {
         qCWarning(LogDeployment) << "Loading dummy data is deprecated and will be removed soon";
         qCDebug(LogSystem) << "Loading dummy-data";
         loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->info()->absoluteCodeFilePath()).path());
     }
 
-    const QStringList configPluginPaths = variantToStringList(configuration().value(qSL("pluginPaths")));
-    const QStringList runtimePluginPaths = variantToStringList(m_app->runtimeParameters().value(qSL("pluginPaths")));
+    const QStringList configPluginPaths = variantToStringList(configuration().value(u"pluginPaths"_s));
+    const QStringList runtimePluginPaths = variantToStringList(m_app->runtimeParameters().value(u"pluginPaths"_s));
     if (!configPluginPaths.isEmpty() || !runtimePluginPaths.isEmpty()) {
         addPluginPaths(configPluginPaths, currentDir);
         addPluginPaths(runtimePluginPaths, codeDir);
         qCDebug(LogSystem) << "Updated plugin paths:" << qApp->libraryPaths();
     }
 
-    const QStringList configImportPaths = variantToStringList(configuration().value(qSL("importPaths")));
-    const QStringList runtimeImportPaths = variantToStringList(m_app->runtimeParameters().value(qSL("importPaths")));
+    const QStringList configImportPaths = variantToStringList(configuration().value(u"importPaths"_s));
+    const QStringList runtimeImportPaths = variantToStringList(m_app->runtimeParameters().value(u"importPaths"_s));
     if (!configImportPaths.isEmpty() || !runtimeImportPaths.isEmpty()) {
         addImportPaths(configImportPaths, currentDir);
         addImportPaths(runtimeImportPaths, codeDir);
@@ -106,7 +108,7 @@ bool QmlInProcRuntime::start()
     QQmlContext *appContext = new QQmlContext(m_inProcessQmlEngine->rootContext(), this);
 
     m_applicationIf = ApplicationInterface::create<QmlInProcApplicationInterfaceImpl>(this, this);
-    appContext->setContextProperty(qSL("ApplicationInterface"), m_applicationIf);
+    appContext->setContextProperty(u"ApplicationInterface"_s, m_applicationIf);
 
     if (appContext->setProperty(s_runtimeKey, QVariant::fromValue(this)))
         qCritical() << "Could not set" << s_runtimeKey << "property in QML context";
@@ -162,7 +164,7 @@ void QmlInProcRuntime::stop(bool forceKill)
     }
 
     bool ok;
-    int qt = configuration().value(qSL("quitTime")).toInt(&ok);
+    int qt = configuration().value(u"quitTime"_s).toInt(&ok);
     if (!ok || qt < 0)
         qt = 250;
     QTimer::singleShot(qt, this, [this]() {
@@ -173,7 +175,7 @@ void QmlInProcRuntime::stop(bool forceKill)
 void QmlInProcRuntime::finish(int exitCode, Am::ExitStatus status)
 {
     QMetaObject::invokeMethod(this, [this, exitCode, status]() {
-        qCDebug(LogSystem) << "QmlInProcRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
+        qCDebug(LogSystem) << "QmlInProcRuntime (id:" << (m_app ? m_app->id() : u"(none)"_s)
                            << ") exited with code:" << exitCode << "status:" << status;
         emit finished(exitCode, status);
         if (m_app)
@@ -325,7 +327,7 @@ QmlInProcRuntimeManager::QmlInProcRuntimeManager(const QString &id, QObject *par
 
 QString QmlInProcRuntimeManager::defaultIdentifier()
 {
-    return qSL("qml-inprocess");
+    return u"qml-inprocess"_s;
 }
 
 bool QmlInProcRuntimeManager::inProcess() const

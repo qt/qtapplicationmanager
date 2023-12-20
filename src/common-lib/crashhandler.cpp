@@ -42,6 +42,8 @@
 #  endif
 #endif
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 
@@ -84,13 +86,13 @@ Q_GLOBAL_STATIC(CrashHandlerGlobal, chg);
 
 void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
 {
-    chg()->printBacktrace = config.value(qSL("printBacktrace"), chg()->printBacktrace).toBool();
-    chg()->printQmlStack = config.value(qSL("printQmlStack"), chg()->printQmlStack).toBool();
-    chg()->waitForGdbAttach = config.value(qSL("waitForGdbAttach"), chg()->waitForGdbAttach).toInt() * timeoutFactor();
-    chg()->dumpCore = config.value(qSL("dumpCore"), chg()->dumpCore).toBool();
-    QVariantMap stackFramesToIgnore = config.value(qSL("stackFramesToIgnore")).toMap();
-    chg()->stackFramesToIgnoreOnCrash = stackFramesToIgnore.value(qSL("onCrash"), chg()->stackFramesToIgnoreOnCrash).toInt();
-    chg()->stackFramesToIgnoreOnException = stackFramesToIgnore.value(qSL("onException"), chg()->stackFramesToIgnoreOnException).toInt();
+    chg()->printBacktrace = config.value(u"printBacktrace"_s, chg()->printBacktrace).toBool();
+    chg()->printQmlStack = config.value(u"printQmlStack"_s, chg()->printQmlStack).toBool();
+    chg()->waitForGdbAttach = config.value(u"waitForGdbAttach"_s, chg()->waitForGdbAttach).toInt() * timeoutFactor();
+    chg()->dumpCore = config.value(u"dumpCore"_s, chg()->dumpCore).toBool();
+    QVariantMap stackFramesToIgnore = config.value(u"stackFramesToIgnore"_s).toMap();
+    chg()->stackFramesToIgnoreOnCrash = stackFramesToIgnore.value(u"onCrash"_s, chg()->stackFramesToIgnoreOnCrash).toInt();
+    chg()->stackFramesToIgnoreOnException = stackFramesToIgnore.value(u"onException"_s, chg()->stackFramesToIgnoreOnException).toInt();
 }
 
 void CrashHandler::setQmlEngine(QQmlEngine *engine)
@@ -169,7 +171,7 @@ static void logMsg(LogToDestination logTo, const char *msg, int msgLen = -1)
         dummy += write(STDERR_FILENO, "\n", 1);
         Q_UNUSED(dummy)
     } else if (logTo == Dlt) {
-        Logging::logToDlt(QtMsgType::QtFatalMsg, QMessageLogContext(), QLatin1String(msg, msgLen));
+        Logging::logToDlt(QtMsgType::QtFatalMsg, QMessageLogContext(), QString::fromLatin1(msg, msgLen));
     }
 }
 

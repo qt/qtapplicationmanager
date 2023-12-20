@@ -16,11 +16,6 @@ QT_BEGIN_NAMESPACE_AM
 // make sure the namespace exists
 QT_END_NAMESPACE_AM
 
-// make the source a lot less ugly and more readable (until we can finally use user defined literals)
-#define qL1S(x) QLatin1String(x)
-#define qL1C(x) QLatin1Char(x)
-#define qSL(x) QStringLiteral(x)
-
 #if !defined(AM_COMPILING_APPMAN) && !defined(AM_COMPILING_LAUNCHER) && !defined(QT_TESTCASE_BUILDDIR)
 #  if defined(AM_FORCE_COMPILING_AGAINST_MODULES)
 #    warning "You have forced compiling against AppMan modules outside of a (custom) appman binary or launcher build."

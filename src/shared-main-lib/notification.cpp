@@ -7,6 +7,9 @@
 #include "notificationimpl.h"
 #include "global.h"
 
+using namespace Qt::StringLiterals;
+
+
 /*!
     \qmltype Notification
     \inqmlmodule QtApplicationManager
@@ -522,7 +525,7 @@ QStringList Notification::libnotifyActionList() const
 {
     QStringList actionList;
     if (isAcknowledgeable())
-        actionList << qSL("default") << QString();
+        actionList << u"default"_s << QString();
     for (const QVariant &action : m_actions) {
         if (action.metaType() == QMetaType::fromType<QString>()) {
             actionList << action.toString() << QString();
@@ -541,18 +544,18 @@ QStringList Notification::libnotifyActionList() const
 QVariantMap Notification::libnotifyHints() const
 {
     QVariantMap hints;
-    hints.insert(qSL("action-icons"), showActionsAsIcons());
-    hints.insert(qSL("urgency"), int(priority()));
+    hints.insert(u"action-icons"_s, showActionsAsIcons());
+    hints.insert(u"urgency"_s, int(priority()));
     if (!category().isEmpty())
-        hints.insert(qSL("category"), category());
+        hints.insert(u"category"_s, category());
     if (!image().isEmpty())
-        hints.insert(qSL("image-path"), image().toString());
+        hints.insert(u"image-path"_s, image().toString());
     if (isShowingProgress()) {
-        hints.insert(qSL("x-pelagicore-show-progress"), true);
-        hints.insert(qSL("x-pelagicore-progress"), progress());
+        hints.insert(u"x-pelagicore-show-progress"_s, true);
+        hints.insert(u"x-pelagicore-progress"_s, progress());
     }
     if (!extended().isEmpty())
-        hints.insert(qSL("x-pelagicore-extended"), extended());
+        hints.insert(u"x-pelagicore-extended"_s, extended());
 
     return hints;
 }
@@ -593,7 +596,7 @@ void Notification::close()
 
 void Notification::triggerAction(const QString &actionId)
 {
-    if (actionId == qL1S("default"))
+    if (actionId == u"default")
         emit acknowledged();
     else
         emit actionTriggered(actionId);

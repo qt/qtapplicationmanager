@@ -27,7 +27,7 @@ void QmlLogger::warnings(const QList<QQmlError> &list)
         if (err.object())
             func = err.object()->objectName().toLocal8Bit();
         QByteArray file;
-        if (err.url().scheme() == qL1S("file"))
+        if (err.url().scheme() == u"file")
             file = err.url().toLocalFile().toLocal8Bit();
         else
             file = err.url().toDisplayString().toLocal8Bit();

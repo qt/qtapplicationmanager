@@ -21,6 +21,9 @@
 #include <QtAppManPackage/packageutilities.h>
 #include "packagingjob.h"
 
+using namespace Qt::StringLiterals;
+
+
 QT_USE_NAMESPACE_AM
 
 enum Command {
@@ -55,7 +58,9 @@ static Command command(QCommandLineParser &clp)
         for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
             if (cmd == commandTable[i].name) {
                 clp.clearPositionalArguments();
-                clp.addPositionalArgument(qL1S(cmd), qL1S(commandTable[i].description), qL1S(cmd));
+                clp.addPositionalArgument(QString::fromLatin1(cmd),
+                                          QString::fromLatin1(commandTable[i].description),
+                                          QString::fromLatin1(cmd));
                 return commandTable[i].command;
             }
         }
@@ -68,10 +73,10 @@ int main(int argc, char *argv[])
     // enable OpenSSL3 to load old certificates
     Cryptography::enableOpenSsl3LegacyProvider();
 
-    QCoreApplication::setApplicationName(qSL("Qt ApplicationManager Packager"));
-    QCoreApplication::setOrganizationName(qSL("QtProject"));
-    QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
-    QCoreApplication::setApplicationVersion(qSL(QT_AM_VERSION_STR));
+    QCoreApplication::setApplicationName(u"Qt ApplicationManager Packager"_s);
+    QCoreApplication::setOrganizationName(u"QtProject"_s);
+    QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
+    QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
 
     QCoreApplication a(argc, argv);
 
@@ -91,12 +96,12 @@ int main(int argc, char *argv[])
             "  appman-packager <command> --help";
 
     QCommandLineParser clp;
-    clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qL1S(desc));
+    clp.setApplicationDescription(u"\n"_s + QCoreApplication::applicationName() + QString::fromLatin1(desc));
 
     clp.addHelpOption();
     clp.addVersionOption();
 
-    clp.addPositionalArgument(qSL("command"), qSL("The command to execute."));
+    clp.addPositionalArgument(u"command"_s, u"The command to execute."_s);
 
     // ignore unknown options for now -- the sub-commands may need them later
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
@@ -114,22 +119,22 @@ int main(int argc, char *argv[])
         switch (command(clp)) {
         default:
         case NoCommand:
-            if (clp.isSet(qSL("version")))
+            if (clp.isSet(u"version"_s))
                 clp.showVersion();
-            if (clp.isSet(qSL("help")))
+            if (clp.isSet(u"help"_s))
                 clp.showHelp();
             clp.showHelp(1);
             break;
 
         case CreatePackage: {
-            clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
-            clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
-            clp.addOption({{ qSL("extra-metadata"),      qSL("m") }, qSL("Add extra meta-data to the package, supplied on the command line."), qSL("yaml-snippet") });
-            clp.addOption({{ qSL("extra-metadata-file"), qSL("M") }, qSL("Add extra meta-data to the package, read from file."), qSL("yaml-file") });
-            clp.addOption({{ qSL("extra-signed-metadata"),      qSL("s") }, qSL("Add extra, digitally signed, meta-data to the package, supplied on the command line."), qSL("yaml-snippet") });
-            clp.addOption({{ qSL("extra-signed-metadata-file"), qSL("S") }, qSL("Add extra, digitally signed, meta-data to the package, read from file."), qSL("yaml-file") });
-            clp.addPositionalArgument(qSL("package"),          qSL("The file name of the created package."));
-            clp.addPositionalArgument(qSL("source-directory"), qSL("The package's content root directory."));
+            clp.addOption({ u"verbose"_s, u"Dump the package's meta-data header and footer information to stdout."_s });
+            clp.addOption({ u"json"_s,    u"Output in JSON format instead of YAML."_s });
+            clp.addOption({{ u"extra-metadata"_s,      u"m"_s }, u"Add extra meta-data to the package, supplied on the command line."_s, u"yaml-snippet"_s });
+            clp.addOption({{ u"extra-metadata-file"_s, u"M"_s }, u"Add extra meta-data to the package, read from file."_s, u"yaml-file"_s });
+            clp.addOption({{ u"extra-signed-metadata"_s,      u"s"_s }, u"Add extra, digitally signed, meta-data to the package, supplied on the command line."_s, u"yaml-snippet"_s });
+            clp.addOption({{ u"extra-signed-metadata-file"_s, u"S"_s }, u"Add extra, digitally signed, meta-data to the package, read from file."_s, u"yaml-file"_s });
+            clp.addPositionalArgument(u"package"_s,          u"The file name of the created package."_s);
+            clp.addPositionalArgument(u"source-directory"_s, u"The package's content root directory."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() != 3)
@@ -155,13 +160,13 @@ int main(int argc, char *argv[])
                     } catch (const Exception &e) {
                         throw Exception(Error::IO, "in --extra-%1metadata%2 %3: %4")
                                 .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
-                                .arg(md.second.isEmpty() ? qSL("option") : md.second)
+                                .arg(md.second.isEmpty() ? u"option"_s : md.second)
                                 .arg(e.errorString());
                     }
                     if (docs.size() < 1) {
                         throw Exception("Could not parse --extra-%1metadata%2 %3: Invalid document format")
                                 .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
-                                .arg(md.second.isEmpty() ? qSL("option") : md.second);
+                                .arg(md.second.isEmpty() ? u"option"_s : md.second);
                     }
                     for (const auto &doc : docs)
                         recursiveMergeVariantMap(result, doc.toMap());
@@ -169,27 +174,27 @@ int main(int argc, char *argv[])
                 return result;
             };
 
-            QVariantMap extraMetaDataMap = parseYamlMetada(clp.values(qSL("extra-metadata")),
-                                                           clp.values(qSL("extra-metadata-file")),
+            QVariantMap extraMetaDataMap = parseYamlMetada(clp.values(u"extra-metadata"_s),
+                                                           clp.values(u"extra-metadata-file"_s),
                                                            false);
-            QVariantMap extraSignedMetaDataMap = parseYamlMetada(clp.values(qSL("extra-signed-metadata")),
-                                                                 clp.values(qSL("extra-signed-metadata-file")),
+            QVariantMap extraSignedMetaDataMap = parseYamlMetada(clp.values(u"extra-signed-metadata"_s),
+                                                                 clp.values(u"extra-signed-metadata-file"_s),
                                                                  true);
 
             p.reset(PackagingJob::create(clp.positionalArguments().at(1),
                                          clp.positionalArguments().at(2),
                                          extraMetaDataMap,
                                          extraSignedMetaDataMap,
-                                         clp.isSet(qSL("json"))));
+                                         clp.isSet(u"json"_s)));
             break;
         }
         case DevSignPackage:
-            clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
-            clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
-            clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
-            clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
-            clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
-            clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
+            clp.addOption({ u"verbose"_s, u"Dump the package's meta-data header and footer information to stdout."_s });
+            clp.addOption({ u"json"_s,    u"Output in JSON format instead of YAML."_s });
+            clp.addPositionalArgument(u"package"_s,        u"File name of the unsigned package (input)."_s);
+            clp.addPositionalArgument(u"signed-package"_s, u"File name of the signed package (output)."_s);
+            clp.addPositionalArgument(u"certificate"_s,    u"PKCS#12 certificate file."_s);
+            clp.addPositionalArgument(u"password"_s,       u"Password for the PKCS#12 certificate."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() != 5)
@@ -199,13 +204,13 @@ int main(int argc, char *argv[])
                                                 clp.positionalArguments().at(2),
                                                 clp.positionalArguments().at(3),
                                                 clp.positionalArguments().at(4),
-                                                clp.isSet(qSL("json"))));
+                                                clp.isSet(u"json"_s)));
             break;
 
         case DevVerifyPackage:
-            clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
-            clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
-            clp.addPositionalArgument(qSL("certificates"), qSL("The developer's CA certificate file(s)."), qSL("certificates..."));
+            clp.addOption({ u"verbose"_s, u"Print details regarding the verification to stdout."_s });
+            clp.addPositionalArgument(u"package"_s,      u"File name of the signed package (input)."_s);
+            clp.addPositionalArgument(u"certificates"_s, u"The developer's CA certificate file(s)."_s, u"certificates..."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() < 3)
@@ -216,13 +221,13 @@ int main(int argc, char *argv[])
             break;
 
         case StoreSignPackage:
-            clp.addOption({ qSL("verbose"), qSL("Dump the package's meta-data header and footer information to stdout.") });
-            clp.addOption({ qSL("json"),    qSL("Output in JSON format instead of YAML.") });
-            clp.addPositionalArgument(qSL("package"),        qSL("File name of the unsigned package (input)."));
-            clp.addPositionalArgument(qSL("signed-package"), qSL("File name of the signed package (output)."));
-            clp.addPositionalArgument(qSL("certificate"),    qSL("PKCS#12 certificate file."));
-            clp.addPositionalArgument(qSL("password"),       qSL("Password for the PKCS#12 certificate."));
-            clp.addPositionalArgument(qSL("hardware-id"),    qSL("Unique hardware id to which this package gets bound."));
+            clp.addOption({ u"verbose"_s, u"Dump the package's meta-data header and footer information to stdout."_s });
+            clp.addOption({ u"json"_s,    u"Output in JSON format instead of YAML."_s });
+            clp.addPositionalArgument(u"package"_s,        u"File name of the unsigned package (input)."_s);
+            clp.addPositionalArgument(u"signed-package"_s, u"File name of the signed package (output)."_s);
+            clp.addPositionalArgument(u"certificate"_s,    u"PKCS#12 certificate file."_s);
+            clp.addPositionalArgument(u"password"_s,       u"Password for the PKCS#12 certificate."_s);
+            clp.addPositionalArgument(u"hardware-id"_s,    u"Unique hardware id to which this package gets bound."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() != 6)
@@ -233,14 +238,14 @@ int main(int argc, char *argv[])
                                             clp.positionalArguments().at(3),
                                             clp.positionalArguments().at(4),
                                             clp.positionalArguments().at(5),
-                                            clp.isSet(qSL("json"))));
+                                            clp.isSet(u"json"_s)));
             break;
 
         case StoreVerifyPackage:
-            clp.addOption({ qSL("verbose"), qSL("Print details regarding the verification to stdout.") });
-            clp.addPositionalArgument(qSL("package"),      qSL("File name of the signed package (input)."));
-            clp.addPositionalArgument(qSL("certificates"), qSL("Store CA certificate file(s)."), qSL("certificates..."));
-            clp.addPositionalArgument(qSL("hardware-id"),  qSL("Unique hardware id to which this package was bound."));
+            clp.addOption({ u"verbose"_s, u"Print details regarding the verification to stdout."_s });
+            clp.addPositionalArgument(u"package"_s,      u"File name of the signed package (input)."_s);
+            clp.addPositionalArgument(u"certificates"_s, u"Store CA certificate file(s)."_s, u"certificates..."_s);
+            clp.addPositionalArgument(u"hardware-id"_s,  u"Unique hardware id to which this package was bound."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() < 4)
@@ -252,17 +257,17 @@ int main(int argc, char *argv[])
             break;
 
         case YamlToJson: {
-            clp.addOption({{ qSL("i"), qSL("document-index") }, qSL("Only output the specified YAML sub-document."), qSL("index") });
-            clp.addPositionalArgument(qSL("yaml-file"), qSL("YAML file name, defaults to stdin (input)."));
+            clp.addOption({{ u"i"_s, u"document-index"_s }, u"Only output the specified YAML sub-document."_s, u"index"_s });
+            clp.addPositionalArgument(u"yaml-file"_s, u"YAML file name, defaults to stdin (input)."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() > 2)
                 clp.showHelp(1);
 
             QString yamlName = (clp.positionalArguments().size() == 2) ? clp.positionalArguments().at(1)
-                                                                       : qSL("-");
+                                                                       : u"-"_s;
             QFile yaml(yamlName);
-            if (yamlName == qL1S("-")) {
+            if (yamlName == u"-") {
                 if (!yaml.open(0, QIODevice::ReadOnly))
                     throw Exception("Could not open stdin for reading");
             } else if (!yaml.open(QIODevice::ReadOnly)) {
@@ -271,11 +276,11 @@ int main(int argc, char *argv[])
 
             QVector<QVariant> docs = YamlParser::parseAllDocuments(yaml.readAll());
             QJsonDocument json;
-            if (clp.isSet(qSL("i"))) {
+            if (clp.isSet(u"i"_s)) {
                 bool isInt;
-                int index = clp.value(qSL("i")).toInt(&isInt);
+                int index = clp.value(u"i"_s).toInt(&isInt);
                 if (!isInt || index < 0) {
-                    throw Exception("Invalid document index specified: %1").arg(clp.value(qSL("i")));
+                    throw Exception("Invalid document index specified: %1").arg(clp.value(u"i"_s));
                 } else if (index >= docs.size()) {
                     throw Exception("Requested YAML sub document at index %1, but only indices 0 to %2 are available in this document.")
                             .arg(index).arg(docs.size() - 1);
@@ -294,7 +299,7 @@ int main(int argc, char *argv[])
             return 2;
 
         p->execute();
-        if (clp.isSet(qSL("verbose")) && !p->output().isEmpty())
+        if (clp.isSet(u"verbose"_s) && !p->output().isEmpty())
             fprintf(stdout, "%s\n", qPrintable(p->output()));
         return p->resultCode();
     } catch (const Exception &e) {

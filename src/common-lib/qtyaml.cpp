@@ -16,6 +16,8 @@
 #include "qtyaml.h"
 #include "exception.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 
@@ -174,7 +176,7 @@ static QString mapEventNames(const QVector<yaml_event_type_t> &events)
     QString names;
     for (int i = 0; i < events.size(); ++i) {
         if (i)
-            names.append(i == (events.size() - 1) ? qL1S(" or ") : qL1S(", "));
+            names.append(i == (events.size() - 1) ? u" or " : u", ");
         names.append(QString::fromLatin1(eventNames.value(events.at(i), "<unknown>")));
     }
     return names;
@@ -342,39 +344,39 @@ QVariant YamlParser::parseScalar() const
     };
 
     static const StaticMapping staticMappings[] = { // keep this sorted for bsearch !!
-        { qSL(""),      ValueNull },
-        { qSL(".INF"),  ValueInf },
-        { qSL(".Inf"),  ValueInf },
-        { qSL(".NAN"),  ValueNaN },
-        { qSL(".NaN"),  ValueNaN },
-        { qSL(".inf"),  ValueInf },
-        { qSL(".nan"),  ValueNaN },
-        { qSL("FALSE"), ValueFalse },
-        { qSL("False"), ValueFalse },
-        { qSL("N"),     ValueFalse },
-        { qSL("NO"),    ValueFalse },
-        { qSL("NULL"),  ValueNull },
-        { qSL("No"),    ValueFalse },
-        { qSL("Null"),  ValueNull },
-        { qSL("OFF"),   ValueFalse },
-        { qSL("Off"),   ValueFalse },
-        { qSL("ON"),    ValueTrue },
-        { qSL("On"),    ValueTrue },
-        { qSL("TRUE"),  ValueTrue },
-        { qSL("True"),  ValueTrue },
-        { qSL("Y"),     ValueTrue },
-        { qSL("YES"),   ValueTrue },
-        { qSL("Yes"),   ValueTrue },
-        { qSL("false"), ValueFalse },
-        { qSL("n"),     ValueFalse },
-        { qSL("no"),    ValueFalse },
-        { qSL("null"),  ValueNull },
-        { qSL("off"),   ValueFalse },
-        { qSL("on"),    ValueTrue },
-        { qSL("true"),  ValueTrue },
-        { qSL("y"),     ValueTrue },
-        { qSL("yes"),   ValueTrue },
-        { qSL("~"),     ValueNull }
+        { u""_s,      ValueNull },
+        { u".INF"_s,  ValueInf },
+        { u".Inf"_s,  ValueInf },
+        { u".NAN"_s,  ValueNaN },
+        { u".NaN"_s,  ValueNaN },
+        { u".inf"_s,  ValueInf },
+        { u".nan"_s,  ValueNaN },
+        { u"FALSE"_s, ValueFalse },
+        { u"False"_s, ValueFalse },
+        { u"N"_s,     ValueFalse },
+        { u"NO"_s,    ValueFalse },
+        { u"NULL"_s,  ValueNull },
+        { u"No"_s,    ValueFalse },
+        { u"Null"_s,  ValueNull },
+        { u"OFF"_s,   ValueFalse },
+        { u"Off"_s,   ValueFalse },
+        { u"ON"_s,    ValueTrue },
+        { u"On"_s,    ValueTrue },
+        { u"TRUE"_s,  ValueTrue },
+        { u"True"_s,  ValueTrue },
+        { u"Y"_s,     ValueTrue },
+        { u"YES"_s,   ValueTrue },
+        { u"Yes"_s,   ValueTrue },
+        { u"false"_s, ValueFalse },
+        { u"n"_s,     ValueFalse },
+        { u"no"_s,    ValueFalse },
+        { u"null"_s,  ValueNull },
+        { u"off"_s,   ValueFalse },
+        { u"on"_s,    ValueTrue },
+        { u"true"_s,  ValueTrue },
+        { u"y"_s,     ValueTrue },
+        { u"yes"_s,   ValueTrue },
+        { u"~"_s,     ValueNull }
     };
 
     static const char *firstCharStaticMappings = ".FNOTYfnoty~";
@@ -404,11 +406,11 @@ QVariant YamlParser::parseScalar() const
         // QRegularExpression is lacking such a functionality. Creating all the objects from
         // scratch in every thread is expensive though, so we count on match() being thread-safe.
         static const QRegularExpression numberRegExps[] = {
-            QRegularExpression(qSL("\\A[-+]?(0|[1-9][0-9_]*)\\z")), // decimal
-            QRegularExpression(qSL("\\A[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?\\z")), // float
-            QRegularExpression(qSL("\\A[-+]?0x[0-9a-fA-F_]+\\z")),  // hexadecimal
-            QRegularExpression(qSL("\\A[-+]?0b[0-1_]+\\z")),        // binary
-            QRegularExpression(qSL("\\A[-+]?0[0-7_]+\\z")),         // octal
+            QRegularExpression(u"\\A[-+]?(0|[1-9][0-9_]*)\\z"_s), // decimal
+            QRegularExpression(u"\\A[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?\\z"_s), // float
+            QRegularExpression(u"\\A[-+]?0x[0-9a-fA-F_]+\\z"_s),  // hexadecimal
+            QRegularExpression(u"\\A[-+]?0b[0-1_]+\\z"_s),        // binary
+            QRegularExpression(u"\\A[-+]?0[0-7_]+\\z"_s),         // octal
         };
         for (size_t numberIndex = 0; numberIndex < (sizeof(numberRegExps) / sizeof(*numberRegExps)); ++numberIndex) {
             if (numberRegExps[numberIndex].match(scalar).hasMatch()) {
@@ -416,8 +418,8 @@ QVariant YamlParser::parseScalar() const
                 QVariant val;
 
                 // YAML allows _ as a grouping separator
-                if (scalar.contains(qL1C('_')))
-                    scalar = scalar.replace(qL1C('_'), qSL(""));
+                if (scalar.contains(u'_'))
+                    scalar = scalar.replace(u'_', u""_s);
 
                 if (numberIndex == 1) {
                     val = scalar.toDouble(&ok);
@@ -427,7 +429,7 @@ QVariant YamlParser::parseScalar() const
                     switch (numberIndex) {
                     case 0: base = 10; break;
                     case 2: base = 16; break;
-                    case 3: base = 2; scalar.replace(qSL("0b"), qSL("")); break; // Qt chokes on 0b
+                    case 3: base = 2; scalar.replace(u"0b"_s, u""_s); break; // Qt chokes on 0b
                     case 4: base = 8; break;
                     }
 
@@ -575,13 +577,13 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
             nextEvent(); // read key
             if (d->event.type == YAML_MAPPING_END_EVENT)
                 break;
-            QString key = parseMapKey();
+            const QString key = parseMapKey();
             if (fieldsFound.contains(key))
                 throw YamlParserException(this, "Found duplicate key '%1' in mapping").arg(key);
 
             auto field = fields.cbegin();
             for (; field != fields.cend(); ++field) {
-                if (key == QString::fromLatin1(field->name))
+                if (key == field->name)
                     break;
             }
             if (field == fields.cend())
@@ -618,8 +620,8 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
     }
     QStringList fieldsMissing;
     for (const auto &field : fields) {
-        if (field.required && !fieldsFound.contains(qL1S(field.name)))
-            fieldsMissing.append(qL1S(field.name));
+        if (field.required && !fieldsFound.contains(field.name))
+            fieldsMissing.append(field.name);
     }
     if (!fieldsMissing.isEmpty())
         throw YamlParserException(this, "Required fields are missing: %1").arg(fieldsMissing);
@@ -632,18 +634,18 @@ YamlParserException::YamlParserException(YamlParser *p, const char *errorString)
     yaml_mark_t &mark = isProblem ? p->d->parser.problem_mark : p->d->parser.mark;
 
     QString context = QString::fromUtf8(p->d->data);
-    qsizetype lpos = context.lastIndexOf(qL1C('\n'), qsizetype(mark.index ? mark.index - 1 : 0));
-    qsizetype rpos = context.indexOf(qL1C('\n'), qsizetype(mark.index));
+    qsizetype lpos = context.lastIndexOf(u'\n', qsizetype(mark.index ? mark.index - 1 : 0));
+    qsizetype rpos = context.indexOf(u'\n', qsizetype(mark.index));
     context = context.mid(lpos + 1, rpos == -1 ? context.size() : rpos - lpos - 1);
     qsizetype contextPos = qsizetype(mark.index) - (lpos + 1);
 
-    m_errorString.append(qSL(":\nfile://%1:%2:%3: error").arg(p->sourcePath()).arg(mark.line + 1).arg(mark.column + 1));
+    m_errorString.append(u":\nfile://%1:%2:%3: error"_s.arg(p->sourcePath()).arg(mark.line + 1).arg(mark.column + 1));
     if (errorString)
-        m_errorString.append(qSL(": %1").arg(qL1S(errorString)));
+        m_errorString.append(u": %1"_s.arg(QString::fromLatin1(errorString)));
     if (isProblem)
-        m_errorString.append(qSL(": %1").arg(QString::fromUtf8(p->d->parser.problem)));
+        m_errorString.append(u": %1"_s.arg(QString::fromUtf8(p->d->parser.problem)));
     if (!context.isEmpty())
-        m_errorString.append(qSL("\n %1\n %2^").arg(context, QString(contextPos, qL1C(' '))));
+        m_errorString.append(u"\n %1\n %2^"_s.arg(context, QString(contextPos, u' ')));
 }
 
 QT_END_NAMESPACE_AM

@@ -5,6 +5,8 @@
 
 #include "gpustatus.h"
 
+using namespace Qt::StringLiterals;
+
 /*!
     \qmltype GpuStatus
     \inqmlmodule QtApplicationManager
@@ -125,7 +127,7 @@ void GpuStatus::update()
 */
 QStringList GpuStatus::roleNames() const
 {
-    return { qSL("gpuLoad") };
+    return { u"gpuLoad"_s };
 }
 
 

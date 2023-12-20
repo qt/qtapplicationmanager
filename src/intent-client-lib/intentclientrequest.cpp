@@ -12,6 +12,9 @@
 #include <QPointer>
 #include <QTimer>
 
+using namespace Qt::StringLiterals;
+
+
 QT_BEGIN_NAMESPACE_AM
 
 /*! \qmltype IntentRequest
@@ -155,7 +158,7 @@ IntentClientRequest::~IntentClientRequest()
 {
     // the incoming request was gc'ed on the JavaScript side, but no reply was sent yet
     if ((direction() == Direction::ToApplication) && !m_finished && !m_broadcast)
-        sendErrorReply(qSL("Request not handled"));
+        sendErrorReply(u"Request not handled"_s);
 }
 
 QUuid IntentClientRequest::requestId() const
@@ -285,9 +288,9 @@ void IntentClientRequest::startTimeout(int timeout)
     QTimer::singleShot(timeout, this, [this, timeout]() {
         if (!m_finished) {
             if (direction() == Direction::ToApplication)
-                sendErrorReply(qSL("Intent request to application timed out after %1 ms").arg(timeout));
+                sendErrorReply(u"Intent request to application timed out after %1 ms"_s.arg(timeout));
             else
-                setErrorMessage(qSL("No reply received from Intent server after %1 ms").arg(timeout));
+                setErrorMessage(u"No reply received from Intent server after %1 ms"_s.arg(timeout));
         }
     });
 }

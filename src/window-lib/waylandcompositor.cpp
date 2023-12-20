@@ -108,11 +108,7 @@ void WindowSurface::close()
     if (m_topLevel) {
         m_topLevel->sendClose();
     } else if (m_popup) {
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-        QWaylandXdgPopupPrivate::get(m_popup)->send_popup_done();
-#else
         m_popup->sendPopupDone();
-#endif
     } else {
         qCWarning(LogGraphics) << "The Wayland surface" << this << "is not using the XDG Shell extension. Unable to send close signal.";
     }
